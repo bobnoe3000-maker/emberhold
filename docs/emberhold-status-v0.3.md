@@ -34,7 +34,7 @@ and work order: `emberhold-iso-pivot-tdp.md`.
 |---|---|
 | **Isometric 2:1 presentation, fine 16×8 tiles** | More readable depth + world detail density than flat top-down; matches the studio's proven Torchfall visual language. Tile geometry (TW/TH/ZH) is parameterized, so density is config, not a rewrite |
 | **Pivot is render-layer only; sim/saves/determinism frozen** | The `/sim` seam holds: elevation is a pure `heightAt(coords,seed)`, walkability adds a height-equality check, `core.js` needs zero changes. The whole point of the headless architecture, paying off |
-| **Dolls stay 1×, billboarded upright** | No character-art rework; existing paper-doll system drops in. (See open item — the pivot buys *world* detail, not *character* detail) |
+| **Characters get a detailed larger sprite (24×36), decoupled from tile resolution** | Shrinking dolls to the fine-tile scale made the hero read as a map marker and the whole scene look zoomed-out and samey. Characters keep on-screen presence and gain detail (defined face, shaded torso + belt/trim, sleeves + hands, boots, outline + ground shadow) while the world stays dense. Same paper-doll recipe system (skin / hair / cloth / outfit tokens) — a richer drawer. **Amends the iso-pivot TDP**: supersedes its "character billboard 1× (16×20) / no doll changes" (§2, §4.4, non-goals). Verified in the iso re-render mockup. |
 | **Lighting is render-time, quantized to 6 steps** | Never touches the sim → determinism and saves unaffected; the banded look is the aesthetic, not a limitation |
 | Blob-47 autotiler parked, not deleted | May serve cave-floor material transitions later; diamond floor/face generators replace it for the overworld |
 
@@ -53,11 +53,11 @@ sim-untouched framing is exactly right. Four things I'd flag before/while buildi
    `ramp[Math.min(i, len-1)]`) — keep that as the contract. Making *floor material* ramps 4 shades
    is good, but do **not** force every token ramp to 4: `TRUNK` (2) and `CANOPY` (3) are indexed
    deliberately by the tree drawer. "All ramps are 4 shades" as written would break those.
-2. **The pivot buys world detail, not character detail.** Finer tiles + iso depth make the *world*
-   read richer, but dolls are unchanged 16×20 billboards (~2.5 tile-heights). If "more detail" is
-   also meant for characters, that's a separate doll rework (larger canvas / iso-facing frames) and
-   should be its own decision — see open items. Recommendation: ship the world pivot first, judge
-   character detail on-device before committing to a doll rework.
+2. **~~The pivot buys world detail, not character detail.~~ [Resolved Aug 2026]** The 1× billboard
+   made characters shrink to the fine-tile scale and read as map markers. Decision: rework the dolls
+   now — characters render at a **detailed 24×36 sprite, decoupled from tile resolution** (§2), so
+   detail is added to characters too, not just the world. Folded into Phase 1a item #1. Remaining
+   doll work: iso-facing walk frames for the larger sprite (Phase 1a/1b art task).
 3. **Plateau content stays decorative until ramps land.** With height-equality walkability and ramps
    deferred to Phase 1b, plateaus are unreachable. Fine as a visual tease — just don't gate any
    required content (chests with real loot, POIs) onto a plateau until ramps exist. The mockup's
@@ -106,8 +106,9 @@ Phaser swap if justified, Capacitor wrap, cloud save) · post-launch by data (co
 
 ## 5. Open items
 1. **Iso pivot build** — Phase 1a item #1; on-device 60fps gate is the acceptance bar.
-2. **Character detail decision** — does the "finer detail" goal extend to dolls (a separate rework),
-   or is the world-detail gain enough? Judge on-device after the pivot (§3.2).
+2. ✅ **Character detail — decided.** Dolls reworked to a detailed 24×36 sprite, decoupled from tile
+   resolution (§2, §3.2), verified in the iso re-render. Remaining: iso-facing walk frames at the
+   new size (art task, Phase 1a/1b).
 3. **Height ramps** — Phase 1b; needed before plateaus hold required content (§3.3).
 4. **Day/night cycle** — cheap now (mood configs are a dusk↔night ambient lerp); land with 1a tuning.
 5. **Name** — Emberhold still a placeholder; decide before store assets.

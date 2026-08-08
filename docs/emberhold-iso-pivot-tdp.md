@@ -5,6 +5,13 @@ Converts the Phase 0 flat top-down presentation to the Torchfall-style isometric
 validated by the two mockup rounds, at the fine tile scale (16×8). Amends Phase 1a in
 `emberhold-status-v0.2.md`; this work is Phase 1a item #1 and blocks feel-tuning.
 
+> **Amendment (Aug 2026) — characters are NOT 1× billboards.** After review, shrinking dolls to the
+> fine-tile scale read as zoomed-out/samey. Characters now render at a **detailed 24×36 sprite,
+> decoupled from tile resolution** (same paper-doll recipe tokens, richer drawer + outline + ground
+> shadow). This supersedes every "1× / 16×20 / no doll changes" statement below — specifically the
+> §2 "Character billboard" row, the §4.4 prop-set framing, and the "no doll changes" non-goal. Sim,
+> saves, and determinism are still untouched. See `emberhold-status-v0.3.md` §2/§3.2 for the decision.
+
 ---
 
 ## 1. Goals & non-goals
