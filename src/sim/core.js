@@ -92,5 +92,38 @@ export function createSim(seed) {
     state.t += TICK_DT;
   }
 
-  return { state, world, bus, commands, tick };
+  // ---- persistence seam ----
+  // The sim owns its serialized shape; /persist handles storage + versioning.
+  // Everything the world can't re-derive from the seed lives here: player
+  // position, counters, the sim clock, and the resource mods/HP overlay.
+  function snapshot() {
+    const p = state.player;
+    return {
+      seed: world.seed,
+      t: state.t,
+      player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
+      counters: { ...state.counters },
+      mods: [...world.mods.keys()],      // every value is {cleared:true}; keys rebuild it
+      hp: [...world.hp.entries()],       // ["x,y", hitsLeft] — partial harvest progress
+    };
+  }
+
+  function restore(data) {
+    state.t = data.t ?? 0;
+    const p = state.player;
+    p.x = p.px = data.player.x;
+    p.y = p.py = data.player.y;
+    p.dir = data.player.dir ?? 'down';
+    p.mirror = !!data.player.mirror;
+    p.moving = false; p.frame = 0; p.frameAcc = 0;
+    state.counters.wood = data.counters?.wood ?? 0;
+    state.counters.stone = data.counters?.stone ?? 0;
+    world.mods.clear();
+    for (const k of data.mods ?? []) world.mods.set(k, { cleared: true });
+    world.hp.clear();
+    for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
+    bus.emit('countersChanged', { ...state.counters });   // resync any HUD listeners
+  }
+
+  return { state, world, bus, commands, tick, snapshot, restore };
 }

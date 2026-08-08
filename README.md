@@ -33,6 +33,16 @@ folder onto Netlify also works for one-off deploys.)
 - **Drag anywhere** — floating joystick, analog speed
 - **Tap a tree or rock** — harvest (3 hits); "too far" toast outside reach
 
+## Saves
+
+Your session persists automatically to `localStorage` (autosave every 15s and on
+tab-hide/close) and restores on load. A save is just the world seed + what you changed:
+player position, counters, and the harvested-resource overlay (including partial-harvest
+progress) — the world is re-derived from the seed. Schema is versioned (`SAVE_VERSION`)
+with a migration hook from day one. Persistence lives in `src/persist/save.js`; the sim
+owns the serialized shape via `snapshot()` / `restore()` in `core.js`, so `/sim` stays
+headless (the round-trip is covered by `smoke-test.mjs`).
+
 ## Architecture
 
 ```
@@ -52,6 +62,8 @@ src/
   ui/
     input.js      floating joystick + tap, feeds command queue
     hud.js        DOM overlay bound to sim events
+  persist/      browser-only. Never imported by /sim.
+    save.js       versioned localStorage saves + lifecycle autosave
   main.js       boot + fixed-timestep loop with render interpolation
 ```
 

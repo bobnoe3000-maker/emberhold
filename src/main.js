@@ -6,6 +6,7 @@ import { createInput } from './ui/input.js';
 import { createHud } from './ui/hud.js';
 import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
+import { loadInto, createAutosave } from './persist/save.js';
 
 const WORLD_SEED = 20260807;
 
@@ -13,7 +14,12 @@ const canvas = document.getElementById('game');
 const sim = createSim(WORLD_SEED);
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
-createHud(sim);
+createHud(sim);   // subscribe before restore, so a loaded counters event repaints
+
+// Restore a prior session for this world (player, counters, harvested resources).
+// Must run before the first render so restored mods are reflected in chunk bakes.
+loadInto(sim);
+createAutosave(sim);
 
 // Hero: deterministic recipe from the world seed's recipe stream.
 const heroRng = mulberry32(streamSeed(WORLD_SEED, STREAM.RECIPE));

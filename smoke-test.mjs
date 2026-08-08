@@ -44,6 +44,34 @@ const r2 = rollRecipe(mulberry32(streamSeed(SEED, STREAM.RECIPE)));
 console.log('hero recipe stable:', JSON.stringify(r1) === JSON.stringify(r2));
 console.log('hero:', JSON.stringify(r1));
 
+// save/load round-trip: snapshot → fresh sim → restore → identical player, counters, cleared resource
+const snap = sim.snapshot();
+const reloaded = createSim(SEED);
+reloaded.restore(snap);
+const rp = reloaded.state.player;
+const posMatch = rp.x === p.x && rp.y === p.y && rp.dir === p.dir && rp.mirror === p.mirror;
+const countMatch = reloaded.state.counters.wood === sim.state.counters.wood
+  && reloaded.state.counters.stone === sim.state.counters.stone;
+console.log('save round-trip (player + counters):', posMatch && countMatch);
+console.log('save round-trip (harvested stays gone):', resourceAt(reloaded.world, found.tx, found.ty) === null);
+
+// partial-harvest HP survives a save: hit a fresh resource once, snapshot, restore, finish it off
+let res2 = null;
+outer2: for (let r = 1; r < 60 && !res2; r++)
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    const tx = Math.floor(p.x) + dx, ty = Math.floor(p.y) + dy;
+    if ((tx !== found.tx || ty !== found.ty) && resourceAt(sim.world, tx, ty)) { res2 = { tx, ty }; break outer2; }
+  }
+p.x = res2.tx + 1.5; p.y = res2.ty + 0.5;
+sim.commands.push({ type: 'harvest', tx: res2.tx, ty: res2.ty }); sim.tick();   // 1 of 3 hits landed
+const cont = createSim(SEED);
+cont.restore(sim.snapshot());
+cont.state.player.x = res2.tx + 1.5; cont.state.player.y = res2.ty + 0.5;
+let destroyed = false;
+cont.bus.on('harvested', () => { destroyed = true; });
+for (let i = 0; i < 2; i++) { cont.commands.push({ type: 'harvest', tx: res2.tx, ty: res2.ty }); cont.tick(); }
+console.log('save round-trip (partial harvest resumes: 2 more hits finish it):', destroyed);
+
 // tile sanity: sample 2000 tiles, count types
 let counts = [0, 0, 0];
 for (let i = 0; i < 2000; i++) counts[tileType(sim.world, (i * 7919) % 500 - 250, (i * 104729) % 500 - 250)]++;
