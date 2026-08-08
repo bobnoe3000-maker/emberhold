@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emberhold — Assetforge v0</title>
+<style>
+  :root{
+    --bg:#101018; --panel:#181826; --panel2:#1f1f30; --line:#2c2c42;
+    --ink:#e8e4da; --dim:#8f8ca4; --ember:#ff9440; --ember2:#e2572b;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:var(--bg)}
+  body{
+    font-family:var(--mono); color:var(--ink); background:var(--bg);
+    max-width:480px; margin:0 auto; padding:14px 12px 60px;
+  }
+  header{padding:10px 2px 18px}
+  header h1{font-size:20px; letter-spacing:2px; font-weight:700}
+  header h1 em{color:var(--ember); font-style:normal}
+  header p{color:var(--dim); font-size:11px; margin-top:4px; letter-spacing:.5px}
+  section{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px; margin-bottom:14px;
+  }
+  h2{
+    font-size:11px; letter-spacing:2px; color:var(--ember);
+    text-transform:uppercase; margin-bottom:10px;
+  }
+  h2 span{color:var(--dim); letter-spacing:0; text-transform:none; font-weight:400}
+  canvas{image-rendering:pixelated; image-rendering:crisp-edges; display:block}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  button{
+    font-family:var(--mono); font-size:12px; color:var(--ink);
+    background:var(--panel2); border:1px solid var(--line); border-radius:6px;
+    padding:7px 12px; cursor:pointer; min-height:36px;
+  }
+  button:active{transform:translateY(1px)}
+  button.on{background:var(--ember2); border-color:var(--ember); color:#fff}
+  button.ember{border-color:var(--ember); color:var(--ember)}
+  .swatches{display:flex; flex-direction:column; gap:6px}
+  .ramp{display:flex; align-items:center; gap:8px}
+  .ramp .lbl{width:74px; font-size:10px; color:var(--dim); letter-spacing:1px}
+  .ramp .chips{display:flex; gap:3px}
+  .chip{width:22px; height:22px; border-radius:4px; border:1px solid #00000055}
+  #mapWrap{border:1px solid var(--line); border-radius:6px; overflow:hidden; margin-top:10px}
+  #mapCanvas{width:100%}
+  #atlasWrap{display:none; margin-top:10px; border:1px solid var(--line); border-radius:6px; overflow:hidden}
+  #atlasCanvas{width:100%}
+  .cast{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px}
+  .cast canvas{width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:6px}
+  #heroWrap{display:flex; gap:12px; margin-top:12px; align-items:flex-start}
+  #heroCanvas{width:112px; background:var(--panel2); border:1px solid var(--line); border-radius:6px}
+  #recipeBox{
+    flex:1; font-size:9.5px; line-height:1.5; color:var(--dim);
+    background:#0c0c14; border:1px solid var(--line); border-radius:6px;
+    padding:8px; white-space:pre-wrap; word-break:break-all; min-height:112px;
+  }
+  .tiers{display:flex; gap:10px; margin-top:10px}
+  .tier{text-align:center}
+  .tier canvas{width:48px; background:var(--panel2); border:1px solid var(--line); border-radius:6px; margin:0 auto}
+  .tier .t{font-size:9px; color:var(--dim); margin-top:4px; letter-spacing:1px}
+  .note{font-size:10px; color:var(--dim); margin-top:10px; line-height:1.5}
+  .seed{font-size:10px; color:var(--dim); margin-left:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>EMBER<em>HOLD</em> · ASSETFORGE <em>v0</em></h1>
+  <p>palette tokens → blob-47 terrain → paper-doll settlers. all deterministic, all code.</p>
+</header>
+
+<!-- ============ 1. PALETTES ============ -->
+<section>
+  <h2>01 · Palette tokens <span>— generators reference names, never hex</span></h2>
+  <div class="swatches" id="swatches"></div>
+  <div class="tiers" id="tiers"></div>
+  <div class="note">Gear tiers get signature metal ramps so progression reads at a glance. Swords below are generated from the ramp — same generator, four tiers.</div>
+</section>
+
+<!-- ============ 2. TERRAIN ============ -->
+<section>
+  <h2>02 · Blob-47 autotiler <span>— water → dirt → grass, two passes, one generator</span></h2>
+  <div class="row" id="biomeTabs"></div>
+  <div id="mapWrap"><canvas id="mapCanvas" width="352" height="416"></canvas></div>
+  <div class="row" style="margin-top:10px">
+    <button id="rerollWorld" class="ember">↻ Reroll world</button>
+    <button id="toggleAtlas">47-form atlas</button>
+    <span class="seed" id="worldSeedLbl"></span>
+  </div>
+  <div id="atlasWrap"><canvas id="atlasCanvas" width="256" height="192"></canvas></div>
+</section>
+
+<!-- ============ 3. CHARACTERS ============ -->
+<section>
+  <h2>03 · Paper-doll settlers <span>— recipe → sprite, socket contract, 4-dir walk</span></h2>
+  <div class="row">
+    <button data-dir="down" class="dirBtn on">↓</button>
+    <button data-dir="left" class="dirBtn">←</button>
+    <button data-dir="up" class="dirBtn">↑</button>
+    <button data-dir="right" class="dirBtn">→</button>
+    <button id="toggleWalk">⏸ walk</button>
+    <button id="rerollCast" class="ember">↻ Reroll cast</button>
+  </div>
+  <div class="cast" id="cast"></div>
+  <div id="heroWrap">
+    <canvas id="heroCanvas" width="16" height="20"></canvas>
+    <div id="recipeBox"></div>
+  </div>
+  <div class="note">Tap any settler to reroll just them. The hero's recipe (right) is the entire asset: same data drives player, settlers, NPCs — dyes and cosmetics are palette swaps. Tools are drawn at the <b>handR socket</b> from the SOCKETS contract.</div>
+</section>
+
+<script>
+'use strict';
+/* =========================================================================
+   EMBERHOLD ASSETFORGE v0
+   1. RNG + noise (deterministic)
+   2. Palette token system + biome remaps + tier metal ramps
+   3. Blob-47 autotiler (canonical mask → 47 forms) + layered demo map
+   4. Paper-doll: recipe → pixels, SOCKETS contract, WALK anim data
+   ========================================================================= */
+
+/* ---------- 1. RNG + NOISE ---------- */
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// position-stable hash → [0,1). Same (x,y,s) = same value, forever.
+function hash2(x, y, s){
+  let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(s, 974634679);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+function vnoise(x, y, s){
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const a = hash2(xi, yi, s),     b = hash2(xi + 1, yi, s);
+  const c = hash2(xi, yi + 1, s), d = hash2(xi + 1, yi + 1, s);
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y, s){
+  return 0.62 * vnoise(x, y, s) + 0.38 * vnoise(x * 2.17 + 31, y * 2.17 + 17, s + 7);
+}
+
+/* ---------- 2. PALETTE TOKENS ---------- */
+const INK = '#161020';
+
+const BIOMES = {
+  meadow: {
+    name: 'Meadow',
+    GRASS: ['#9ed468','#66a844','#457c36','#2e5a2c'],
+    DIRT:  ['#cfa070','#ab784c','#85583a','#5e3e2b'],
+    WATER: ['#8fd8ea','#46a2d8','#2c72b0'],
+    ACCENT: '#e86a9a', ACCENT2: '#f2e074',
+  },
+  snow: {
+    name: 'Snow',
+    GRASS: ['#eef4fa','#c4d6ea','#93aed0','#6684ac'],   // snowpack
+    DIRT:  ['#9aa0b4','#767c94','#585e78','#3e4460'],   // frozen ground
+    WATER: ['#b8e6f2','#6cb4dc','#3f7fb4'],
+    ACCENT: '#7fd4e8', ACCENT2: '#e8ecf4',
+  },
+  desert: {
+    name: 'Desert',
+    GRASS: ['#e2ce7c','#c0a854','#96803e','#6c5a2e'],   // scrub
+    DIRT:  ['#f2dca8','#d8b478','#b08c54','#83663c'], // sand
+    WATER: ['#8fe0dc','#48b4b8','#2c8290'],
+    ACCENT: '#e2572b', ACCENT2: '#8fce5a',
+  },
+};
+
+const SKINS = [
+  ['#ffe4c8','#f2be92','#c98a60'],
+  ['#f8d0a8','#e0a878','#b07850'],
+  ['#e8b488','#c88c5c','#96603c'],
+  ['#c08858','#9c6840','#70472c'],
+  ['#96603c','#78482c','#503020'],
+  ['#6c4630','#523424','#382218'],
+];
+const HAIRC = ['#2c2436','#5c3a26','#8c5c2c','#cc9440','#dcd4cc','#b03c3c','#3c6cb0','#7c50a0'];
+const CLOTH = ['#b04040','#3c6cb0','#3c8c58','#8c5aa0','#cc9440','#5c6c7c','#7c4c3c','#48908c','#a0567c','#6c7c44'];
+const LEATHER = '#3c2c20';
+const WOODC = ['#a87848','#7c5834'];
+
+const METAL = {  // tier signature ramps: [edge/highlight, base, shade, deep]
+  T1: ['#f0b078','#cc7c44','#98542c','#6c3820'],   // copper
+  T2: ['#dce0e8','#a8b0c0','#707c90','#485468'],   // iron
+  T3: ['#a8f0dc','#58c8a8','#348c7c','#1c5c58'],   // deepsilver
+  T4: ['#f0c8ff','#b070e8','#7440b0','#442078'],   // riftsteel
+};
+
+/* ---------- swatch UI ---------- */
+(function renderSwatches(){
+  const host = document.getElementById('swatches');
+  const rows = [
+    ['GRASS', BIOMES.meadow.GRASS], ['DIRT', BIOMES.meadow.DIRT],
+    ['WATER', BIOMES.meadow.WATER],
+    ['SKIN', SKINS.map(s => s[1])], ['HAIR', HAIRC], ['CLOTH', CLOTH],
+  ];
+  for(const [lbl, cols] of rows){
+    const r = document.createElement('div'); r.className = 'ramp';
+    r.innerHTML = `<div class="lbl">${lbl}</div>`;
+    const c = document.createElement('div'); c.className = 'chips';
+    for(const col of cols){
+      const d = document.createElement('div'); d.className = 'chip';
+      d.style.background = col; c.appendChild(d);
+    }
+    r.appendChild(c); host.appendChild(r);
+  }
+})();
+
+/* tier swords — generated from the ramp */
+function drawSword(ctx, ramp, s){
+  ctx.clearRect(0, 0, 12, 14);
+  const px = (x, y, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1); };
+  px(5, 0, ramp[0]);                                     // tip
+  for(let y = 1; y <= 7; y++){ px(5, y, ramp[0]); px(6, y, ramp[2]); } // blade
+  px(5, 4, ramp[1]);                                     // glint break
+  for(let x = 3; x <= 8; x++) px(x, 8, ramp[2]);         // guard
+  px(3, 8, ramp[0]); px(8, 8, ramp[3]);
+  px(5, 9, WOODC[1]); px(6, 9, WOODC[1]);                // grip
+  px(5, 10, WOODC[0]); px(6, 10, WOODC[1]);
+  px(5, 11, ramp[1]); px(6, 11, ramp[3]);                // pommel
+  outlineBuffer(ctx, 12, 14);
+}
+(function renderTiers(){
+  const host = document.getElementById('tiers');
+  for(const t of ['T1','T2','T3','T4']){
+    const d = document.createElement('div'); d.className = 'tier';
+    const cv = document.createElement('canvas'); cv.width = 12; cv.height = 14;
+    d.appendChild(cv);
+    const l = document.createElement('div'); l.className = 't'; l.textContent = t;
+    d.appendChild(l); host.appendChild(d);
+    drawSword(cv.getContext('2d'), METAL[t]);
+  }
+})();
+
+/* outline pass: ink any transparent pixel 4-adjacent to a filled one */
+function outlineBuffer(ctx, w, h){
+  const img = ctx.getImageData(0, 0, w, h), d = img.data;
+  const filled = (x, y) => x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 0;
+  const marks = [];
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    if(d[(y * w + x) * 4 + 3] === 0 &&
+       (filled(x-1,y) || filled(x+1,y) || filled(x,y-1) || filled(x,y+1))) marks.push([x,y]);
+  }
+  ctx.fillStyle = INK;
+  for(const [x, y] of marks) ctx.fillRect(x, y, 1, 1);
+}
+
+/* ---------- 3. BLOB-47 AUTOTILER ----------
+   Mask bits: 1=N 2=NE 4=E 8=SE 16=S 32=SW 64=W 128=NW (set = same terrain).
+   Canonical form: a diagonal only matters if both adjacent cardinals match. */
+function canonical(m){
+  if(!((m & 1) && (m & 4)))  m &= ~2;
+  if(!((m & 4) && (m & 16))) m &= ~8;
+  if(!((m & 16) && (m & 64))) m &= ~32;
+  if(!((m & 1) && (m & 64))) m &= ~128;
+  return m;
+}
+const FORMS = (() => {           // the 47 canonical masks
+  const s = new Set();
+  for(let m = 0; m < 256; m++) s.add(canonical(m));
+  return [...s].sort((a, b) => a - b);
+})();
+
+function ditherPick(r, ramp){    // weighted shade pick for organic fill
+  return r < 0.10 ? ramp[0] : r < 0.78 ? ramp[1] : r < 0.95 ? ramp[2] : ramp[3];
+}
+
+/* Draw one 16px blob tile: `top` terrain over `under`, edges where mask bits are absent. */
+function drawBlobTile(ctx, ox, oy, mask, top, under, seed){
+  const m = canonical(mask);
+  const g = [];                                   // 16x16 color grid
+  for(let y = 0; y < 16; y++){ g[y] = [];
+    for(let x = 0; x < 16; x++)
+      g[y][x] = ditherPick(hash2(ox * 16 + x, oy * 16 + y, seed), top);
+  }
+  const uPick = (x, y) => ditherPick(hash2(ox * 16 + x, oy * 16 + y, seed + 99), under);
+  const n = !(m & 1), e = !(m & 4), s = !(m & 16), w = !(m & 64);
+
+  // cardinal edges: 2px under-terrain band + 1px dark rim
+  for(let x = 0; x < 16; x++){
+    if(n){ g[0][x] = uPick(x, 0); g[1][x] = uPick(x, 1); g[2][x] = top[3]; }
+    if(s){ g[15][x] = uPick(x, 15); g[14][x] = uPick(x, 14); g[13][x] = top[3]; }
+  }
+  for(let y = 0; y < 16; y++){
+    if(w){ g[y][0] = uPick(0, y); g[y][1] = uPick(1, y); if(!((n && y <= 1) || (s && y >= 14))) g[y][2] = top[3]; }
+    if(e){ g[y][15] = uPick(15, y); g[y][14] = uPick(14, y); if(!((n && y <= 1) || (s && y >= 14))) g[y][13] = top[3]; }
+  }
+  // outer corner rounding
+  if(n && w) g[2][2] = uPick(2, 2);
+  if(n && e) g[2][13] = uPick(13, 2);
+  if(s && w) g[13][2] = uPick(2, 13);
+  if(s && e) g[13][13] = uPick(13, 13);
+  // inner corners: cardinals match but the diagonal doesn't → small notch
+  if(!(m & 128) && (m & 1) && (m & 64)){ g[0][0] = uPick(0,0); g[0][1] = uPick(1,0); g[1][0] = uPick(0,1); g[1][1] = top[3]; }
+  if(!(m & 2)   && (m & 1) && (m & 4)) { g[0][15] = uPick(15,0); g[0][14] = uPick(14,0); g[1][15] = uPick(15,1); g[1][14] = top[3]; }
+  if(!(m & 32)  && (m & 16) && (m & 64)){ g[15][0] = uPick(0,15); g[14][0] = uPick(0,14); g[15][1] = uPick(1,15); g[14][1] = top[3]; }
+  if(!(m & 8)   && (m & 16) && (m & 4)){ g[15][15] = uPick(15,15); g[15][14] = uPick(14,15); g[14][15] = uPick(15,14); g[14][14] = top[3]; }
+
+  for(let y = 0; y < 16; y++) for(let x = 0; x < 16; x++){
+    ctx.fillStyle = g[y][x]; ctx.fillRect(ox * 16 + x, oy * 16 + y, 1, 1);
+  }
+}
+
+function drawWaterTile(ctx, ox, oy, ramp, seed){
+  for(let y = 0; y < 16; y++) for(let x = 0; x < 16; x++){
+    const r = hash2(ox * 16 + x, oy * 16 + y, seed + 500);
+    let c = r < 0.85 ? ramp[1] : ramp[2];
+    // sparse horizontal glints
+    if(r > 0.975 && hash2(ox * 16 + x + 1, oy * 16 + y, seed + 500) > 0.85) c = ramp[0];
+    ctx.fillStyle = c; ctx.fillRect(ox * 16 + x, oy * 16 + y, 1, 1);
+  }
+}
+
+/* ---------- terrain demo map: water → dirt(blob) → grass(blob) → decor ---------- */
+const MAPW = 22, MAPH = 26;
+let worldSeed = 20260807;
+let biomeKey = 'meadow';
+
+function tileType(x, y, seed){       // 0 water, 1 dirt, 2 grass
+  const h = fbm(x / 6.5, y / 6.5, seed);
+  return h < 0.40 ? 0 : h < 0.53 ? 1 : 2;
+}
+function neighborMask(x, y, seed, pred){
+  const at = (dx, dy) => pred(tileType(x + dx, y + dy, seed));
+  let m = 0;
+  if(at(0,-1)) m |= 1;   if(at(1,-1)) m |= 2;
+  if(at(1,0))  m |= 4;   if(at(1,1))  m |= 8;
+  if(at(0,1))  m |= 16;  if(at(-1,1)) m |= 32;
+  if(at(-1,0)) m |= 64;  if(at(-1,-1)) m |= 128;
+  return m;
+}
+function renderMap(){
+  const B = BIOMES[biomeKey];
+  const ctx = document.getElementById('mapCanvas').getContext('2d');
+  for(let y = 0; y < MAPH; y++) for(let x = 0; x < MAPW; x++){
+    const t = tileType(x, y, worldSeed);
+    drawWaterTile(ctx, x, y, B.WATER, worldSeed);
+    if(t >= 1) drawBlobTile(ctx, x, y, neighborMask(x, y, worldSeed, v => v >= 1), B.DIRT, B.WATER, worldSeed);
+    if(t === 2) drawBlobTile(ctx, x, y, neighborMask(x, y, worldSeed, v => v === 2), B.GRASS, B.DIRT, worldSeed);
+  }
+  // decor pass on interior grass
+  for(let y = 0; y < MAPH; y++) for(let x = 0; x < MAPW; x++){
+    if(tileType(x, y, worldSeed) !== 2) continue;
+    if(neighborMask(x, y, worldSeed, v => v === 2) !== 255) continue;
+    const r = hash2(x, y, worldSeed + 1234);
+    const px = (dx, dy, c) => { ctx.fillStyle = c; ctx.fillRect(x*16+dx, y*16+dy, 1, 1); };
+    const cx = 4 + Math.floor(hash2(x, y, worldSeed + 55) * 8);
+    const cy = 4 + Math.floor(hash2(x, y, worldSeed + 66) * 8);
+    if(r < 0.10){                                   // flower
+      px(cx, cy, B.ACCENT); px(cx+1, cy, B.ACCENT2); px(cx, cy+1, B.GRASS[3]);
+    } else if(r < 0.22){                            // tuft
+      px(cx, cy, B.GRASS[0]); px(cx+2, cy+1, B.GRASS[0]); px(cx+1, cy-1, B.GRASS[0]);
+    } else if(r < 0.28){                            // pebble
+      px(cx, cy, B.DIRT[1]); px(cx+1, cy, B.DIRT[2]);
+    }
+  }
+  document.getElementById('worldSeedLbl').textContent = 'seed ' + worldSeed;
+}
+function renderAtlas(){
+  const B = BIOMES[biomeKey];
+  const ctx = document.getElementById('atlasCanvas').getContext('2d');
+  ctx.fillStyle = '#0c0c14'; ctx.fillRect(0, 0, 256, 192);
+  FORMS.forEach((m, i) => {
+    drawBlobTile(ctx, i % 16, Math.floor(i / 16), m, B.GRASS, B.DIRT, 77);
+  });
+}
+
+/* biome tabs */
+(function(){
+  const host = document.getElementById('biomeTabs');
+  for(const key of Object.keys(BIOMES)){
+    const b = document.createElement('button');
+    b.textContent = BIOMES[key].name;
+    if(key === biomeKey) b.classList.add('on');
+    b.onclick = () => {
+      biomeKey = key;
+      host.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      renderMap(); renderAtlas();
+    };
+    host.appendChild(b);
+  }
+})();
+document.getElementById('rerollWorld').onclick = () => { worldSeed = (Math.random() * 1e9) | 0; renderMap(); };
+document.getElementById('toggleAtlas').onclick = (e) => {
+  const w = document.getElementById('atlasWrap');
+  const show = w.style.display !== 'block';
+  w.style.display = show ? 'block' : 'none';
+  e.target.classList.toggle('on', show);
+  if(show) renderAtlas();
+};
+
+/* ---------- 4. PAPER-DOLL ----------
+   Frame: 16w x 20h. Recipe → deterministic sprite. Directions: down/up/side
+   (side mirrored for left). Anim + sockets are data, not code. */
+
+const SOCKETS = {           // anchor points parts & tools attach to (per dir)
+  down: { head:{x:8,y:2}, handL:{x:4,y:12}, handR:{x:11,y:12}, back:{x:8,y:10} },
+  up:   { head:{x:8,y:2}, handL:{x:11,y:12}, handR:{x:4,y:12}, back:{x:8,y:9}  },
+  side: { head:{x:8,y:2}, handL:{x:7,y:12},  handR:{x:9,y:12}, back:{x:6,y:10} },
+};
+
+const WALK = {              // MAGE_ANIM-style: pure data, offsets in pixels
+  fps: 8,
+  frames: [
+    { bob: 0,  legL: -1, legR: 0,  armL:  1, armR: -1, stride:  1 },
+    { bob: -1, legL: 0,  legR: 0,  armL:  0, armR:  0, stride:  0 },
+    { bob: 0,  legL: 0,  legR: -1, armL: -1, armR:  1, stride: -1 },
+    { bob: -1, legL: 0,  legR: 0,  armL:  0, armR:  0, stride:  0 },
+  ],
+};
+const IDLE = { fps: 8, frames: [{ bob: 0, legL: 0, legR: 0, armL: 0, armR: 0, stride: 0 }] };
+
+const HAIR_STYLES = ['bald','short','spiky','long','bun','hood'];
+const OUTFITS = ['tunic','apron','vest','robe','guard'];
+const TOOLS = ['pick','hoe','hammer'];
+
+function rollRecipe(rng){
+  return {
+    skin: (rng() * SKINS.length) | 0,
+    hair: { style: HAIR_STYLES[(rng() * HAIR_STYLES.length) | 0],
+            color: HAIRC[(rng() * HAIRC.length) | 0] },
+    outfit: OUTFITS[(rng() * OUTFITS.length) | 0],
+    c1: CLOTH[(rng() * CLOTH.length) | 0],
+    c2: CLOTH[(rng() * CLOTH.length) | 0],
+    tier: 'T' + (1 + ((rng() * 4) | 0)),
+    tool: rng() < 0.35 ? TOOLS[(rng() * TOOLS.length) | 0] : null,
+  };
+}
+
+/* paint a doll into a 16x20 ctx. dir: 'down'|'up'|'side'; mirror flips x. */
+function drawDoll(ctx, R, dir, anim, f, mirror){
+  ctx.clearRect(0, 0, 16, 20);
+  const buf = ctx;
+  const A = anim.frames[f % anim.frames.length];
+  const skin = SKINS[R.skin], hairC = R.hair.color;
+  const robe = R.outfit === 'robe';
+  const guard = R.outfit === 'guard';
+  const bodyC = guard ? METAL[R.tier][1] : R.c1;
+  const trimC = guard ? METAL[R.tier][0] : (R.outfit === 'apron' ? '#e8dcc8' : R.c2);
+  const legC  = robe ? R.c1 : (guard ? '#484858' : R.c2);
+  const px = (x, y, c) => {
+    if(y < 0 || y > 19) return;
+    buf.fillStyle = c; buf.fillRect(mirror ? 15 - x : x, y, 1, 1);
+  };
+  const rect = (x0, y0, x1, y1, c) => { for(let y = y0; y <= y1; y++) for(let x = x0; x <= x1; x++) px(x, y, c); };
+  const bob = A.bob;
+  const side = dir === 'side';
+
+  /* -- legs & boots (not bobbed) -- */
+  const sL = side ? A.stride : 0, sR = side ? -A.stride : 0;
+  const legTop = 15;
+  const drawLeg = (x0, lift, sh) => {
+    const bootY = 18 + lift;                      // lift −1 = foot raised
+    rect(x0 + sh, legTop, x0 + 1 + sh, bootY - 1, legC);
+    rect(x0 + sh, bootY, x0 + 1 + sh, bootY, LEATHER);
+  };
+  drawLeg(6, A.legL, sL);
+  drawLeg(8, A.legR, sR);
+
+  /* -- torso -- */
+  const bodyBot = robe ? 17 : 14;
+  rect(5, 9 + bob, 10, bodyBot + (robe ? 0 : bob), bodyC);
+  if(robe) rect(5, 17, 10, 17, trimC);                    // hem
+  else if(R.outfit === 'tunic') rect(5, 13 + bob, 10, 13 + bob, LEATHER);   // belt
+  else if(R.outfit === 'apron') rect(6, 10 + bob, 9, 14 + bob, trimC);      // bib
+  else if(R.outfit === 'vest'){ rect(5, 9 + bob, 5, 14 + bob, R.c2); rect(10, 9 + bob, 10, 14 + bob, R.c2); }
+  else if(guard) rect(5, 9 + bob, 10, 9 + bob, trimC);                      // pauldron line
+  rect(10, 10 + bob, 10, bodyBot - 1 + (robe ? 0 : bob), shade(bodyC));     // right shade
+
+  /* -- arms (sleeve over skin) -- */
+  const arm = (x, off) => {
+    rect(x, 10 + bob + off, x, 11 + bob + off, guard ? METAL[R.tier][2] : bodyC);
+    rect(x, 12 + bob + off, x, 13 + bob + off, skin[1]);
+  };
+  if(side){ arm(9 + A.stride, A.armR); }        // near arm only, swings with stride
+  else { arm(4, A.armL); arm(11, A.armR); }
+
+  /* -- head -- */
+  rect(5, 3 + bob, 10, 8 + bob, skin[1]);
+  rect(5, 8 + bob, 10, 8 + bob, skin[2]);                 // jaw shadow
+  rect(5, 3 + bob, 10, 3 + bob, skin[0]);                 // brow light
+  if(dir === 'down'){ px(6, 6 + bob, INK); px(9, 6 + bob, INK); }
+  if(side){ px(9, 6 + bob, INK); px(11, 6 + bob, skin[1]); px(11, 7 + bob, skin[2]); } // eye + nose
+
+  /* -- hair -- */
+  drawHair(R.hair.style, dir, bob, hairC, skin, px, rect);
+
+  /* -- tool at handR socket -- */
+  if(R.tool && dir !== 'up') drawTool(R.tool, METAL[R.tier], SOCKETS[side ? 'side' : dir].handR, bob + A.armR, px);
+
+  outlineBuffer(ctx, 16, 20);
+}
+function shade(hex){   // quick darken for right-side shading
+  const n = parseInt(hex.slice(1), 16);
+  const d = v => Math.max(0, v - 36);
+  return '#' + ((d(n >> 16) << 16) | (d((n >> 8) & 255) << 8) | d(n & 255)).toString(16).padStart(6, '0');
+}
+function drawHair(style, dir, bob, c, skin, px, rect){
+  const dark = shade(c);
+  const back = dir === 'up';
+  if(style === 'bald'){ if(!back) rect(5, 2 + bob, 10, 2 + bob, skin[0]); else rect(5, 2 + bob, 10, 5 + bob, skin[1]); return; }
+  rect(5, 1 + bob, 10, 2 + bob, c);                                   // cap
+  px(5, 3 + bob, c); px(10, 3 + bob, dark);                           // temples
+  if(back) rect(5, 3 + bob, 10, 6 + bob, c);                          // back of head
+  if(style === 'spiky'){ px(5, 0 + bob, c); px(7, 0 + bob, c); px(9, 0 + bob, c); }
+  if(style === 'bun'){ px(7, 0 + bob, c); px(8, 0 + bob, dark); }
+  if(style === 'long'){
+    rect(4, 2 + bob, 4, 8 + bob, c); rect(11, 2 + bob, 11, 8 + bob, dark);
+    if(back) rect(5, 3 + bob, 10, 9 + bob, c);
+  }
+  if(style === 'hood'){
+    rect(4, 0 + bob, 11, 2 + bob, c);
+    rect(4, 3 + bob, 4, 8 + bob, c); rect(11, 3 + bob, 11, 8 + bob, dark);
+    px(5, 3 + bob, dark); px(10, 3 + bob, dark);
+    if(back) rect(5, 3 + bob, 10, 8 + bob, c);
+  }
+}
+function drawTool(kind, ramp, sock, yOff, px){
+  const x = sock.x + 1, y = sock.y + yOff;
+  for(let i = 0; i < 4; i++) px(x, y + 1 - i + 2, i % 2 ? WOODC[0] : WOODC[1]);  // haft
+  if(kind === 'pick'){ px(x - 1, y - 2, ramp[1]); px(x, y - 2, ramp[0]); px(x + 1, y - 2, ramp[1]); px(x - 1, y - 1, ramp[2]); px(x + 1, y - 1, ramp[2]); }
+  if(kind === 'hoe'){ px(x, y - 2, ramp[0]); px(x + 1, y - 2, ramp[1]); px(x + 1, y - 1, ramp[2]); }
+  if(kind === 'hammer'){ px(x - 1, y - 2, ramp[1]); px(x, y - 2, ramp[0]); px(x - 1, y - 1, ramp[2]); px(x, y - 1, ramp[2]); }
+}
+
+/* ---------- cast + hero ---------- */
+const CAST_N = 8;
+let castSeeds = [], heroSeed = 0;
+let dirKey = 'down';                 // down/up/left/right
+let walking = true, frame = 0;
+
+function rerollCast(){
+  castSeeds = Array.from({length: CAST_N}, () => (Math.random() * 1e9) | 0);
+  heroSeed = castSeeds[0];
+  buildRecipes();
+}
+let recipes = [], heroRecipe = null;
+function buildRecipes(){
+  recipes = castSeeds.map(s => rollRecipe(mulberry32(s)));
+  heroRecipe = recipes[0];
+  document.getElementById('recipeBox').textContent =
+    '// settler recipe (seed ' + heroSeed + ')\n' + JSON.stringify(heroRecipe, null, 1);
+}
+const castHost = document.getElementById('cast');
+const castCtxs = [];
+for(let i = 0; i < CAST_N; i++){
+  const cv = document.createElement('canvas'); cv.width = 16; cv.height = 20;
+  cv.onclick = () => { castSeeds[i] = (Math.random() * 1e9) | 0; if(i === 0) heroSeed = castSeeds[0]; buildRecipes(); paintAll(); };
+  castHost.appendChild(cv); castCtxs.push(cv.getContext('2d'));
+}
+const heroCtx = document.getElementById('heroCanvas').getContext('2d');
+
+function paintAll(){
+  const side = dirKey === 'left' || dirKey === 'right';
+  const dir = side ? 'side' : dirKey;
+  const mirror = dirKey === 'left';
+  const anim = walking ? WALK : IDLE;
+  recipes.forEach((R, i) => drawDoll(castCtxs[i], R, dir, anim, frame + i, mirror));
+  drawDoll(heroCtx, heroRecipe, dir, anim, frame, mirror);
+}
+
+document.querySelectorAll('.dirBtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.dirBtn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); dirKey = b.dataset.dir; paintAll();
+});
+document.getElementById('rerollCast').onclick = () => { rerollCast(); paintAll(); };
+const walkBtn = document.getElementById('toggleWalk');
+walkBtn.onclick = () => { walking = !walking; walkBtn.textContent = walking ? '⏸ walk' : '▶ walk'; paintAll(); };
+
+/* respect reduced motion */
+if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){
+  walking = false; walkBtn.textContent = '▶ walk';
+}
+
+/* ---------- boot ---------- */
+renderMap();
+rerollCast();
+paintAll();
+setInterval(() => { if(walking){ frame++; paintAll(); } }, 1000 / WALK.fps);
+</script>
+</body>
+</html>
