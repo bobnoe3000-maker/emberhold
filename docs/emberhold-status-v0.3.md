@@ -75,11 +75,18 @@ Phase 0 ✅. Phase 1a re-sequenced so the **iso pivot is item #1** (it blocks fe
 tune scale/joystick/tap feel against a presentation you're about to replace).
 
 ### Phase 1a — Iso pivot, feel & persistence *(in progress)*
-1. **Iso pivot (fine tiles)** — per `emberhold-iso-pivot-tdp.md` §6 work order: `iso.js` projection +
-   input mapping → port unlit diamond/face/prop generators + chunk bake → quantized light overlay +
-   emissives → `world.js` elevation + water basins + walk rule + spawn guard → waypost/path POIs →
-   on-device tune. Exit: walkable iso overworld with plateaus, a water basin, correct cliff faces at
-   all four chunk-border orientations, tap-harvest works at 16×8. **Blocks the rest of 1a.**
+1. **Iso pivot (fine tiles)** — per `emberhold-iso-pivot-tdp.md` §6 work order. **Blocks the rest of 1a.**
+   - ✅ **Step 1 landed:** `render/iso.js` (project / unproject / resolveTap, node-tested), diamond
+     floor tiles (`drawFloorDiamond`), detailed 24×36 billboard character (`drawDollDetailed`), iso
+     camera + depth-sort, iso joystick mapping + tap with fat-finger snap, torch overlay. Rendered at
+     **flat** elevation (all tiles h0). Old renderer parked in `renderer-flat.js`. `render-smoke-test.mjs`
+     added (stub-canvas paint check); both test harnesses green.
+   - **Next:** chunk-bake iso geometry (60fps — current build paints per-tile per-frame, ~3k drawImage/frame,
+     fine on desktop, needs baking for mobile) → `world.js` elevation + water basins + walk rule + spawn
+     guard → quantized per-tile lighting + emissives → waypost/path POIs → **iso-facing walk frames** for the
+     24×36 sprite (currently a front billboard, mirrored when moving left) → on-device tune.
+   - Exit: walkable iso overworld with plateaus, a water basin, correct cliff faces at all four
+     chunk-border orientations, tap-harvest works at 16×8 at 60fps.
 2. ✅ **Save/load v0** — done.
 3. **On-device pass** — 60fps across a chunk border near a cliff + 2 torches; tune scale, joystick,
    ambient, and the tap fat-finger snap radius at the new tile size.

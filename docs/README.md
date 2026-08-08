@@ -9,7 +9,8 @@ the header of each status doc for what it replaces.
 | [emberhold-status-v0.3.md](./emberhold-status-v0.3.md) | Project status & plan (v0.3) — folds in save/load + the iso pivot | **Current** plan of record |
 | [emberhold-iso-pivot-tdp.md](./emberhold-iso-pivot-tdp.md) | Technical design plan for the isometric fine-tile pivot | **Active** implementation spec (Phase 1a #1) |
 | [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Foundational; presentation amended to iso, roadmap superseded by the status doc |
-| [iso-mockup-fine.html](./iso-mockup-fine.html) | The locked iso visual-spec proof — 16×8 diamonds, elevation, quantized lighting (open in a browser) | Reference the pivot spec was locked from |
+| [art-style-iso.html](./art-style-iso.html) | Confirmed iso art-direction field guide — terrain, cliffs, props, and the **detailed 24×36 characters** (open in a browser) | **Current** visual reference (matches the locked decision) |
+| [iso-mockup-fine.html](./iso-mockup-fine.html) | The original iso visual-spec proof — 16×8 diamonds, elevation, quantized lighting | Reference the pivot spec was locked from (pre-detailed-doll) |
 | [assetforge-v0.html](./assetforge-v0.html) | Original procedural art-pipeline proof (palettes, blob-47, paper-doll) | Historical — flat top-down; blob-47 now parked |
 | [emberhold-status-v0.2.md](./emberhold-status-v0.2.md) | Prior status (v0.2) | Superseded by v0.3 |
 

@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emberhold — Isometric Art Direction</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#0b0910}img{max-width:100%}</style>
+</head>
+<body>
+<style>
+.ehi{
+  --ground:#0b0910; --panel:#141220; --panel2:#1a1728; --line:#26233a; --line2:#3a3550;
+  --ink:#ece7dc; --dim:#928ea6; --dim2:#6f6a86; --ember:#ff9440; --ember-deep:#e2572b;
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  background:var(--ground); color:var(--ink); font-family:var(--serif); line-height:1.6;
+  -webkit-font-smoothing:antialiased; padding:0 0 80px; overflow-x:hidden;
+}
+.ehi *{box-sizing:border-box}
+.ehi canvas{image-rendering:pixelated; image-rendering:crisp-edges; display:block; height:auto}
+.ehi .wrap{max-width:960px; margin:0 auto; padding:0 22px}
+.ehi .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--ember); font-weight:600}
+.ehi .kicker{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--dim); text-transform:uppercase}
+
+/* hero */
+.ehi .hero{position:relative; padding:60px 22px 34px; border-bottom:1px solid var(--line);
+  background:radial-gradient(120% 90% at 50% -10%, rgba(255,148,64,.10), transparent 55%)}
+.ehi .hero-inner{max-width:960px; margin:0 auto; display:flex; gap:38px; align-items:center; flex-wrap:wrap; justify-content:center}
+.ehi .hero-copy{flex:1 1 320px; min-width:280px}
+.ehi h1{font-family:var(--serif); font-weight:700; font-size:clamp(38px,7vw,64px); line-height:.96; letter-spacing:-.02em; margin:14px 0 0; text-wrap:balance}
+.ehi h1 em{font-style:normal; color:var(--ember)}
+.ehi .lede{font-size:clamp(15px,2.3vw,18px); color:#cfc9d8; margin-top:18px; max-width:48ch}
+.ehi .lede b{color:var(--ink); font-weight:600}
+.ehi .spec{display:flex; gap:8px 22px; flex-wrap:wrap; margin-top:22px}
+.ehi .spec div{font-family:var(--mono); font-size:11px; color:var(--dim)}
+.ehi .spec b{color:var(--ink)}
+
+.ehi .phone{flex:0 0 auto; width:270px; max-width:74vw; border-radius:30px; padding:9px;
+  background:linear-gradient(160deg,#231c30,#100b18);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.8), 0 0 0 1px var(--line2)}
+.ehi .phone .screen{position:relative; border-radius:22px; overflow:hidden; background:#000; aspect-ratio:9/16}
+.ehi .phone canvas{width:100%; height:100%; object-fit:cover}
+.ehi .notch{position:absolute; top:0; left:50%; transform:translateX(-50%); width:96px; height:20px; background:#100b18; border-radius:0 0 12px 12px; z-index:5}
+
+/* controls */
+.ehi .controls{display:flex; gap:10px; align-items:center; margin:26px 0 8px; flex-wrap:wrap}
+.ehi .btn{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--ink);
+  background:var(--panel2); border:1px solid var(--line2); border-radius:7px; padding:8px 14px; min-height:38px; cursor:pointer}
+.ehi .btn:hover{border-color:var(--ember); color:var(--ember)}
+.ehi .btn:active{transform:translateY(1px)}
+.ehi .btn.on{background:var(--ember-deep); border-color:var(--ember); color:#fff}
+.ehi .btn:focus-visible{outline:2px solid var(--ember); outline-offset:2px}
+
+/* sections */
+.ehi section{padding:48px 0 6px}
+.ehi .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:4px; flex-wrap:wrap}
+.ehi h2{font-family:var(--serif); font-weight:600; font-size:clamp(24px,3.6vw,32px); letter-spacing:-.01em; margin:0}
+.ehi .sec-sub{font-size:15px; color:var(--dim); max-width:64ch; margin:8px 0 22px}
+.ehi .sec-sub b{color:#cfc9d8; font-weight:600}
+.ehi .divider{height:1px; background:linear-gradient(90deg,var(--line),transparent); margin-top:6px}
+.ehi .tag{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; padding:3px 8px; border-radius:999px; font-weight:600; white-space:nowrap}
+.ehi .tag.new{color:#0d0913; background:var(--ember)}
+.ehi .tag.check{color:#7fd88f; border:1px solid rgba(127,216,143,.4)}
+
+/* specimen grid */
+.ehi .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}
+.ehi .spec-card{background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column}
+.ehi .spec-card .frame{background:#0b0910; display:flex; align-items:center; justify-content:center; padding:10px}
+.ehi .spec-card .frame canvas{width:100%}
+.ehi .spec-card .cap{padding:11px 13px; border-top:1px solid var(--line)}
+.ehi .spec-card .cap .t{font-family:var(--serif); font-size:14.5px; color:var(--ink)}
+.ehi .spec-card .cap .d{font-family:var(--mono); font-size:10px; color:var(--dim); letter-spacing:.02em; margin-top:3px; line-height:1.5}
+.ehi .char-row{display:flex; gap:14px; flex-wrap:wrap}
+.ehi .char-chip{width:170px; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.ehi .char-chip .frame{background:#0b0910; display:flex; justify-content:center; padding:8px}
+.ehi .char-chip .frame canvas{width:100%; image-rendering:pixelated}
+.ehi .char-chip .cl{font-family:var(--mono); font-size:10px; color:var(--dim); padding:8px 10px; border-top:1px solid var(--line); letter-spacing:.02em; line-height:1.4}
+.ehi .char-chip.hl{border-color:rgba(255,148,64,.45)}
+.ehi .char-chip.hl .cl{color:var(--ember)}
+
+/* composites */
+.ehi .composite{background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden}
+.ehi .composite .frame{background:#0b0910; padding:12px; display:flex; justify-content:center}
+.ehi .composite .frame canvas{max-width:min(100%,420px); width:100%}
+.ehi .composite .cap{padding:12px 15px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:space-between; align-items:flex-start}
+.ehi .composite .cap p{font-family:var(--mono); font-size:11px; color:var(--dim); margin:0; line-height:1.5}
+.ehi .composite .cap p b{color:var(--ink)}
+.ehi .two{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+
+.ehi footer{max-width:960px; margin:52px auto 0; padding:24px 22px 0; border-top:1px solid var(--line)}
+.ehi footer p{font-family:var(--mono); font-size:11px; color:var(--dim2); line-height:1.7; max-width:74ch}
+.ehi footer p b{color:var(--dim)}
+
+@media (max-width:660px){ .ehi .two{grid-template-columns:1fr} }
+</style>
+
+<div class="ehi">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="eyebrow">Art Direction · Isometric Pivot · Verification</div>
+        <h1>EMBER<em>HOLD</em></h1>
+        <p class="lede">The new visual language: <b>2:1 isometric</b> at fine <b>16×8</b> tiles — elevation, cliff faces, quantized torch light. Every panel below is drawn by the <b>locked iso generators</b> so you can confirm each element renders correctly: terrain, cliffs, trees, props, characters, light.</p>
+        <div class="spec">
+          <div><b>Tile</b> 16×8 diamond</div>
+          <div><b>Step</b> ZH 6px</div>
+          <div><b>Heights</b> 0·1·2</div>
+          <div><b>Light</b> 6-step quantized</div>
+          <div><b>Dolls</b> detailed 24×36</div>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <canvas id="heroCv" width="270" height="480"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="controls">
+      <span class="kicker" style="margin-right:4px">Mood</span>
+      <button class="btn on" id="btnDusk">Dusk</button>
+      <button class="btn" id="btnNight">Night</button>
+      <button class="btn" id="btnReroll" style="margin-left:auto">↻ Reroll world</button>
+    </div>
+
+    <!-- ============ COMPONENT CHECK ============ -->
+    <section>
+      <div class="sec-head">
+        <div class="eyebrow">Component check</div>
+        <h2>Every element, isolated</h2>
+        <span class="tag check">Reverify</span>
+      </div>
+      <p class="sec-sub">Each specimen renders one part of the system on its own, brightly lit, so you can read the pixels and confirm it's correct before judging the composite.</p>
+      <div class="grid">
+        <div class="spec-card"><div class="frame"><canvas id="cMat" width="132" height="70"></canvas></div>
+          <div class="cap"><div class="t">Terrain materials</div><div class="d">grass · dirt · water · stone — 3-shade dither + checker value-step</div></div></div>
+        <div class="spec-card"><div class="frame"><canvas id="cElev" width="132" height="120"></canvas></div>
+          <div class="cap"><div class="t">Elevation &amp; cliffs</div><div class="d">plateau (h2) + basin (h0); SE face full, SW face ×0.72, ribbed, depth-faded</div></div></div>
+        <div class="spec-card"><div class="frame"><canvas id="cProps" width="150" height="96"></canvas></div>
+          <div class="cap"><div class="t">Flora &amp; props</div><div class="d">tree (seeded lean) · torch (emissive halo) · chest · pillar · glint</div></div></div>
+        <div class="spec-card"><div class="frame"><canvas id="cLightD" width="150" height="88"></canvas></div>
+          <div class="cap"><div class="t">Torch pool · dusk</div><div class="d">ambient 0.14 → banded falloff, warm L² push</div></div></div>
+        <div class="spec-card"><div class="frame"><canvas id="cLightN" width="150" height="88"></canvas></div>
+          <div class="cap"><div class="t">Torch pool · night</div><div class="d">ambient 0.045 → tighter pool, same quantization</div></div></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ CHARACTERS ============ -->
+    <section>
+      <div class="sec-head">
+        <div class="eyebrow">Characters</div>
+        <h2>Original size, more detail</h2>
+        <span class="tag new">Revised</span>
+      </div>
+      <p class="sec-sub">Feedback taken. The world keeps its fine tiles, but characters no longer shrink to match — that was making everything read the same and look zoomed-out. Dolls now render at a <b>larger, higher-detail sprite (24×36)</b>: defined face, shaded torso with belt and trim, sleeves + hands, boots, and an outline + ground shadow. <b>Detail is decoupled from tile resolution</b>, so the hero keeps presence and reads as a character, not a map marker.</p>
+      <div class="char-row">
+        <div class="char-chip"><div class="frame"><canvas id="chOld" width="96" height="120"></canvas></div><div class="cl">Before · 1× billboard (16×20)</div></div>
+        <div class="char-chip hl"><div class="frame"><canvas id="chNew" width="96" height="120"></canvas></div><div class="cl">After · detailed (24×36) — same scale</div></div>
+        <div class="char-chip"><div class="frame"><canvas id="chHero" width="96" height="120"></canvas></div><div class="cl">Hero</div></div>
+        <div class="char-chip"><div class="frame"><canvas id="chSettler" width="96" height="120"></canvas></div><div class="cl">Settler · quest mote</div></div>
+        <div class="char-chip"><div class="frame"><canvas id="chHooded" width="96" height="120"></canvas></div><div class="cl">Hooded</div></div>
+      </div>
+      <p class="sec-sub" style="font-family:var(--mono); font-size:10.5px; margin-top:16px; margin-bottom:0">Before/after are drawn at the <b>same tile scale</b> — only the character sprite changed. Same paper-doll recipe system (skin / hair / cloth / outfit tokens), just a richer drawer.</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ COMPOSITE A ============ -->
+    <section>
+      <div class="sec-head">
+        <div class="eyebrow">Composite A</div>
+        <h2>Emberwood overworld</h2>
+        <span class="tag new">New direction</span>
+      </div>
+      <p class="sec-sub">Everything at once: plateau (NW), pond basin with cliff faces (E), a dirt path with waypost torches, scattered trees, hero + settler. This is the target overworld read.</p>
+      <div class="composite">
+        <div class="frame"><canvas id="sceneA" width="384" height="540"></canvas></div>
+        <div class="cap"><p><b>Open overworld</b> — pond basin, plateau, waypost path. Corner minimap, kind-coloured. Toggle Dusk/Night and reroll above.</p><span class="tag new">New</span></div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ============ COMPOSITE B ============ -->
+    <section>
+      <div class="sec-head">
+        <div class="eyebrow">Composite B</div>
+        <h2>Barrow Court</h2>
+        <span class="tag new">New direction</span>
+      </div>
+      <p class="sec-sub">A ruin variant — the same generators exercising stone floors, standing stones (pillars), braziers, and a <b>void pit</b> with deep negative-height faces (the geometry Phase 2 caves will lean on).</p>
+      <div class="composite">
+        <div class="frame"><canvas id="sceneB" width="384" height="540"></canvas></div>
+        <div class="cap"><p><b>Overworld ruin</b> — void pit, standing stones, braziers, hooded figure. Deep faces on the pit prove the negative-height path renders clean.</p><span class="tag new">New</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        <b>What this is.</b> A verification re-render of the art-direction pivot. Every canvas runs the
+        <b>locked iso generators</b> from <b>iso-mockup-fine.html</b> (the spec source) — geometry consts
+        TW=16 · TH=8 · ZH=6, quantized 6-step lighting, and the revised detailed 24×36 character dolls. This is <b>presentation only</b>:
+        the headless sim, saves, determinism, and paper-doll recipes are unchanged. Scenes are seeded, so the
+        same seed yields the same world. Full spec: <b>docs/emberhold-iso-pivot-tdp.md</b>; plan of record:
+        <b>docs/emberhold-status-v0.3.md</b>.
+      </p>
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= rng (sim/rng.js) ================= */
+function hash2(x,y,s){let h=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,974634679);h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296;}
+function mulberry32(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function vnoise(x,y,s){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const a=hash2(xi,yi,s),b=hash2(xi+1,yi,s),c=hash2(xi,yi+1,s),d=hash2(xi+1,yi+1,s);const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+
+/* ================= geometry (iso.js consts) ================= */
+const TW=16,TH=8,HW=TW/2,HH=TH/2,ZH=6;
+
+/* ================= palette (Emberwood iso tokens) ================= */
+const INK='#0b0910';
+const GRASS=['#5a7040','#3c5030','#293a25','#182618'];
+const DIRT=['#7e5f42','#5a422c','#3e2f20','#2a2014'];
+const STONE=['#6a6478','#4c4858','#363344','#232130'];
+const WALLG=['#4a4438','#38332a','#28241e'];
+const WALLS=['#524e62','#3c3948','#2a2836'];
+const WATER=['#3a5c74','#2c4c62','#1a3448','#102230'];
+const TRUNK=['#4c3a28','#32271a'];
+const CANOPY=['#33502c','#22381c','#142412'];
+const ACCENT='#a8546c',ACCENT2='#c9a14e';
+const FLAME=['#ffe9a0','#ffb050','#e2572b'];
+const SKINS=[['#f4d6b6','#e0ac80','#b07a52'],['#e8c096','#cc9868','#9c6c44'],['#d0a074','#ac7c50','#805436'],['#a87850','#885c3a','#5c3e28'],['#845430','#663f26','#442a1a'],['#5c3c28','#452c1e','#2e1d14']];
+const HAIRC=['#241c2c','#4c3020','#744c26','#a87834','#b8b0a8','#8c3434'];
+const CLOTH=['#8c3838','#345888','#356e4a','#70487c','#a87834','#4c5866','#63402f'];
+const LEATHER='#33251b';
+
+/* ================= shading (quantized, L² warm push) ================= */
+const shadeCache=new Map();
+function shade(hex,L){const key=hex+'|'+L;let v=shadeCache.get(key);if(v)return v;const n=parseInt(hex.slice(1),16);const m=0.07+0.93*L,w=L*L;const r=Math.min(255,((n>>16)&255)*m+46*w);const g=Math.min(255,((n>>8)&255)*m+24*w);const b=(n&255)*m;v='rgb('+(r|0)+','+(g|0)+','+(b|0)+')';shadeCache.set(key,v);return v;}
+const quant=(L)=>Math.min(1,Math.max(0,Math.round(L*6)/6));
+function shadeHex(hex){const n=parseInt(hex.slice(1),16);const d=v=>Math.max(0,v-36);return'#'+((d(n>>16)<<16)|(d((n>>8)&255)<<8)|d(n&255)).toString(16).padStart(6,'0');}
+
+/* ================= scene models (from mockup) ================= */
+function buildSceneA(seed){
+  const W=25,H=31,g=[];
+  for(let y=0;y<H;y++){g[y]=[];for(let x=0;x<W;x++){const n=vnoise(x/7,y/7,seed);let cell={kind:'grass',h:1,prop:null};if(n>0.72&&x<13&&y<13)cell.h=2;g[y][x]=cell;}}
+  for(let y=13;y<=19;y++)for(let x=15;x<=21;x++){const d=Math.hypot(x-18,y-16);if(d<3.4+hash2(x,y,seed)*0.9)g[y][x]={kind:'water',h:0,prop:null};}
+  for(let t=0;t<=42;t++){const x=Math.round(3+t*0.5),y=Math.round(27-t*0.58+Math.sin(t*0.35)*1.6);for(const[dx,dy]of[[0,0],[1,0],[0,1]]){const yy=y+dy,xx=x+dx;if(g[yy]&&g[yy][xx]&&g[yy][xx].kind==='grass'&&g[yy][xx].h===1)g[yy][xx]={kind:'dirt',h:1,prop:null};}}
+  const rng=mulberry32(seed+9);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=g[y][x];if(c.kind==='grass'&&rng()<0.085)c.prop='tree';else if(c.kind==='grass'&&rng()<0.02)c.prop='glint';}
+  for(const[x,y]of[[6,22],[11,15],[17,8]])if(g[y]&&g[y][x]){g[y][x].kind='dirt';g[y][x].h=1;g[y][x].prop='torch';}
+  if(g[6]&&g[6][6]&&g[6][6].h===2){g[6][6].prop='chest';g[6][6].kind='grass';}
+  return{g,W,H,wall:WALLG,actors:[{x:12,y:18,kind:'hero'},{x:13,y:19,kind:'settler'}]};
+}
+function buildSceneB(seed){
+  const W=25,H=31,g=[];
+  for(let y=0;y<H;y++){g[y]=[];for(let x=0;x<W;x++){let cell={kind:'stone',h:1,prop:null};if(vnoise(x/5,y/5,seed+50)>0.78)cell.h=2;if(x<3||y<3||x>W-4||y>H-4){if(vnoise(x/4,y/4,seed+80)>0.55)cell={kind:'grass',h:1,prop:null};}g[y][x]=cell;}}
+  for(let y=12;y<=17;y++)for(let x=9;x<=15;x++)g[y][x]={kind:'void',h:-3,prop:null};
+  const rng=mulberry32(seed+21);
+  for(const[x,y]of[[6,9],[18,9],[6,20],[18,20],[12,6]])if(g[y][x].kind==='stone')g[y][x].prop='pillar';
+  for(const[x,y]of[[7,14],[17,15],[12,21]])if(g[y][x].kind!=='void')g[y][x].prop='torch';
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=g[y][x];if(!c.prop&&c.kind==='stone'&&rng()<0.035)c.prop='glint';if(!c.prop&&c.kind==='grass'&&rng()<0.13)c.prop='tree';}
+  g[20][10].prop='chest';
+  return{g,W,H,wall:WALLS,actors:[{x:12,y:19,kind:'hero'},{x:15,y:19,kind:'hooded'}]};
+}
+
+/* ================= lighting ================= */
+function lightAt(sources,x,y,ambient){let L=ambient;for(const s of sources){const d=Math.hypot(x-s.x,y-s.y);if(d<s.r)L=Math.max(L,(1-d/s.r)*s.i);}return quant(L);}
+
+/* ================= drawers (ported from mockup) ================= */
+function inDiamond(rx,ry){return Math.abs(rx-(TW-1)/2)/HW+Math.abs(ry-(TH-1)/2)/HH<=1.001;}
+function drawFloor(c,cx,y0,cell,wx,wy,L,seed){
+  const ramp=cell.kind==='grass'?GRASS:cell.kind==='dirt'?DIRT:cell.kind==='water'?WATER:STONE;
+  const checker=(wx+wy)&1;
+  for(let ry=0;ry<TH;ry++)for(let rx=0;rx<TW;rx++){
+    if(!inDiamond(rx,ry))continue;
+    const r=hash2(wx*TW+rx,wy*TH+ry,seed);let i=r<0.12?0:r<0.80?1:r<0.96?2:3;
+    if(checker&&i>0)i-=1;let col=ramp[Math.min(i,ramp.length-1)];
+    if(cell.kind==='water'&&r>0.985)col=WATER[0];
+    const edge=(Math.abs(rx-(TW-1)/2)/HW+Math.abs(ry-(TH-1)/2)/HH)>0.86&&ry>=HH;
+    if(edge)col=ramp[ramp.length-1];
+    c.fillStyle=shade(col,L);c.fillRect(cx-HW+rx,y0+ry,1,1);
+  }
+}
+function drawFaces(c,cx,y0,cell,nR,nL,wall,L,wx,wy,seed){
+  const mk=(lower,side)=>{
+    if(lower===null)return;const dh=cell.h-lower;if(dh<=0)return;
+    const depth=Math.min(24,dh*ZH+(lower<=-3?14:0));
+    for(let rx=0;rx<HW;rx++){
+      const xpx=side==='R'?cx+rx:cx-HW+rx;
+      const yE=side==='R'?y0+TH-((rx+1)>>1):y0+HH+((rx+1)>>1);
+      for(let d=0;d<depth;d++){
+        const rib=((side==='R'?rx:HW-1-rx)&3)<2?0:1;
+        const r=hash2(wx*HW+rx+(side==='R'?400:0),wy*64+d,seed+7);
+        let base=wall[rib+(r>0.9?1:0)]||wall[2];
+        const fade=Math.max(0.12,1-d/depth*0.85);const sideMul=side==='L'?0.72:1;
+        c.fillStyle=shade(base,quant(L*fade*sideMul));c.fillRect(xpx,yE+d,1,1);
+      }
+    }
+  };
+  mk(nR,'R');mk(nL,'L');
+}
+function drawTree(c,cx,anchorY,L,wx,wy,seed){
+  const px=(x,y,col)=>{c.fillStyle=shade(col,L);c.fillRect(cx-8+x,anchorY-26+y,1,1);};
+  const h=(a,b)=>hash2(wx*31+a,wy*31+b,seed+42);
+  for(let y=17;y<=25;y++){px(7,y,TRUNK[0]);px(8,y,TRUNK[1]);}px(6,24,TRUNK[1]);px(9,24,TRUNK[1]);
+  const rows=[[6,3],[4,5],[3,7],[2,7],[2,7],[3,7],[4,6],[5,4],[7,2]];
+  rows.forEach(([x0,half],i)=>{const y=3+i;for(let x=8-half;x<=8+half;x++){if(x<0||x>15)continue;const r=h(x,y);let col=r<0.16?CANOPY[0]:r<0.7?CANOPY[1]:CANOPY[2];if(y>=9)col=r<0.5?CANOPY[1]:CANOPY[2];px(x,y,col);}});
+  if(h(3,3)<0.3)px(12,8,ACCENT2);
+}
+function drawTorch(c,cx,by){
+  const px=(x,y,col)=>{c.fillStyle=col;c.fillRect(cx+x,by+y,1,1);};
+  px(0,-2,TRUNK[0]);px(0,-3,TRUNK[1]);px(0,-4,TRUNK[0]);px(0,-5,TRUNK[1]);
+  px(-1,-7,FLAME[2]);px(1,-7,FLAME[2]);px(0,-7,FLAME[1]);px(0,-8,FLAME[1]);px(0,-9,FLAME[0]);
+  const g=c.createRadialGradient(cx,by-7,1,cx,by-7,9);g.addColorStop(0,'rgba(255,176,80,0.30)');g.addColorStop(1,'rgba(255,176,80,0)');
+  c.fillStyle=g;c.beginPath();c.arc(cx,by-7,9,0,Math.PI*2);c.fill();
+}
+function drawPillar(c,cx,by,L){const px=(x,y,col)=>{c.fillStyle=shade(col,L);c.fillRect(cx+x,by+y,1,1);};for(let y=-9;y<=-1;y++){px(-1,y,STONE[1]);px(0,y,STONE[2]);px(1,y,STONE[3]);}px(-1,-10,STONE[0]);px(0,-10,STONE[1]);px(1,-10,STONE[2]);}
+function drawChest(c,cx,by,L){const px=(x,y,col)=>{c.fillStyle=shade(col,L);c.fillRect(cx+x,by+y,1,1);};for(let x=-2;x<=2;x++){px(x,-4,TRUNK[0]);px(x,-3,TRUNK[0]);px(x,-2,TRUNK[1]);px(x,-1,TRUNK[1]);}px(0,-3,ACCENT2);}
+function drawGlint(c,cx,by,L,r){c.fillStyle=r<0.5?'#e8e4da':ACCENT2;c.fillRect(cx,by-1,1,1);c.fillStyle='rgba(255,255,255,0.22)';c.fillRect(cx-1,by-1,3,1);c.fillRect(cx,by-2,1,3);}
+function drawDollSimple(c,cx,anchorY,R,L,hpFrac){
+  const px=(x,y,col)=>{c.fillStyle=shade(col,L);c.fillRect(cx-8+x,anchorY-20+y,1,1);};
+  const rect=(x0,y0,x1,y1,col)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)px(x,y,col);};
+  const skin=SKINS[R.skin],hood=R.outfit==='hood';const bodyC=R.c1,legC=R.c2;
+  rect(6,15,7,17,legC);rect(8,15,9,17,legC);rect(6,18,7,18,LEATHER);rect(8,18,9,18,LEATHER);
+  rect(5,9,10,14,bodyC);rect(5,13,10,13,LEATHER);rect(10,10,10,13,shadeHex(bodyC));
+  rect(4,10,4,11,bodyC);rect(11,10,11,11,bodyC);rect(4,12,4,13,skin[1]);rect(11,12,11,13,skin[1]);
+  rect(5,3,10,8,skin[1]);rect(5,8,10,8,skin[2]);rect(5,3,10,3,skin[0]);px(6,6,INK);px(9,6,INK);
+  if(hood){rect(4,0,11,2,R.hairC);rect(4,3,4,8,R.hairC);rect(11,3,11,8,shadeHex(R.hairC));px(5,3,shadeHex(R.hairC));px(10,3,shadeHex(R.hairC));}
+  else{rect(5,1,10,2,R.hairC);px(5,3,R.hairC);px(10,3,shadeHex(R.hairC));}
+  if(hpFrac!=null){c.fillStyle='rgba(10,8,16,0.8)';c.fillRect(cx-6,anchorY-25,12,3);c.fillStyle='#5ad46a';c.fillRect(cx-5,anchorY-24,Math.round(10*hpFrac),1);}
+}
+/* ---- detailed doll (24×36): larger + more detail, decoupled from tile scale ---- */
+const DDW=24,DDH=36;
+function lighten(hex,amt){const n=parseInt(hex.slice(1),16);const u=v=>Math.min(255,v+amt);return'#'+((u(n>>16)<<16)|(u((n>>8)&255)<<8)|u(n&255)).toString(16).padStart(6,'0');}
+function outlineDoll(c,w,h){const img=c.getImageData(0,0,w,h),d=img.data;const F=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&d[(y*w+x)*4+3]>0;const m=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(d[(y*w+x)*4+3]===0&&(F(x-1,y)||F(x+1,y)||F(x,y-1)||F(x,y+1)))m.push([x,y]);}c.fillStyle=INK;for(const[x,y]of m)c.fillRect(x,y,1,1);}
+let _doll=null;
+function buildDetailedDoll(R,L){
+  if(!_doll){_doll=document.createElement('canvas');_doll.width=DDW;_doll.height=DDH;}
+  const cv=_doll;const c=cv.getContext('2d');c.clearRect(0,0,DDW,DDH);
+  const px=(x,y,col)=>{c.fillStyle=shade(col,L);c.fillRect(x,y,1,1);};
+  const rect=(x0,y0,x1,y1,col)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)px(x,y,col);};
+  const skin=SKINS[R.skin],hood=R.outfit==='hood';
+  const body=R.c1,bodyD=shadeHex(body),bodyL=lighten(body,26);
+  const pants=R.c2,pantsD=shadeHex(pants);
+  const hairC=R.hairC,hairD=shadeHex(hairC),hairL=lighten(hairC,26);
+  // legs
+  rect(8,25,10,31,pants);rect(13,25,15,31,pants);
+  rect(8,25,8,31,pantsD);rect(15,25,15,31,pantsD);rect(11,25,12,31,pantsD);
+  // boots
+  rect(8,32,10,34,LEATHER);rect(13,32,15,34,LEATHER);px(7,34,LEATHER);px(16,34,LEATHER);
+  px(8,32,lighten(LEATHER,22));px(13,32,lighten(LEATHER,22));
+  // torso
+  rect(6,14,17,24,body);rect(6,14,7,24,bodyL);rect(16,14,17,24,bodyD);rect(6,14,17,14,bodyL);
+  rect(10,13,13,13,bodyD);            // collar
+  rect(11,15,11,21,bodyD);            // center fold
+  rect(6,22,17,22,LEATHER);px(11,22,ACCENT2);px(12,22,ACCENT2);  // belt + buckle
+  rect(6,24,17,24,bodyD);             // hem trim
+  // arms
+  rect(4,15,5,20,body);rect(4,15,4,20,bodyL);rect(4,21,5,23,skin[1]);px(4,23,skin[2]);
+  rect(18,15,19,20,bodyD);rect(19,15,19,20,shadeHex(bodyD));rect(18,21,19,23,skin[1]);px(19,23,skin[2]);
+  // neck
+  rect(11,12,12,12,skin[2]);
+  // head
+  rect(9,4,14,4,skin[1]);rect(8,5,15,10,skin[1]);rect(9,11,14,11,skin[1]);
+  rect(8,5,8,10,skin[0]);px(9,4,skin[0]);                        // left highlight
+  rect(15,5,15,10,skin[2]);px(14,11,skin[2]);rect(9,11,14,11,skin[2]); // right + chin shade
+  px(10,7,INK);px(13,7,INK);          // eyes
+  px(11,8,skin[2]);px(12,8,skin[2]);  // nose
+  px(11,10,skin[2]);px(12,10,skin[2]);// mouth
+  // hair / hood
+  if(hood){
+    rect(7,1,16,3,body);rect(7,3,8,10,body);rect(15,3,16,10,bodyD);rect(8,1,12,1,bodyL);
+    rect(9,4,14,5,bodyD);             // inner brow shadow
+  } else {
+    rect(9,1,14,1,hairC);rect(8,2,15,3,hairC);rect(9,4,14,4,hairC);
+    rect(8,4,8,6,hairC);rect(15,4,15,6,hairD);
+    rect(9,1,12,1,hairL);px(14,2,hairD);px(15,3,hairD);
+  }
+  outlineDoll(c,DDW,DDH);
+  return cv;
+}
+function drawActor(c,cx,by,R,L,kind){
+  // ground shadow (flattened oval, keeps the figure planted in iso)
+  for(let ry=-2;ry<=2;ry++){const ww=Math.max(0,Math.round(6*(1-Math.abs(ry)/3)));c.fillStyle='rgba(8,6,12,0.30)';c.fillRect(cx-ww,by+ry+1,ww*2,1);}
+  const sprite=buildDetailedDoll(R,L);
+  c.drawImage(sprite,Math.round(cx-DDW/2),by-34);
+  const hp=kind==='hero'?0.9:1;
+  c.fillStyle='rgba(10,8,16,0.82)';c.fillRect(cx-7,by-40,14,3);
+  c.fillStyle='#5ad46a';c.fillRect(cx-6,by-39,Math.round(12*hp),1);
+  if(kind==='settler'){c.fillStyle=ACCENT2;c.fillRect(cx+6,by-44,1,1);}
+}
+function drawMinimap(c,scene,W,H,px0){
+  const S=2,mw=W*S,mh=H*S,x0=px0-mw-8,y0=8;
+  c.fillStyle='rgba(10,8,16,0.75)';c.fillRect(x0-3,y0-3,mw+6,mh+6);c.strokeStyle='#3a3650';c.strokeRect(x0-3.5,y0-3.5,mw+7,mh+7);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const cell=scene.g[y][x];if(cell.kind==='void')continue;c.fillStyle=cell.kind==='water'?'#1a3448':cell.h===2?'#565064':'#3c3846';if(cell.kind==='grass'||cell.kind==='dirt')c.fillStyle=cell.h===2?'#44503a':'#333d2c';c.fillRect(x0+x*S,y0+y*S,S,S);}
+  c.fillStyle='#6ad4e8';c.fillRect(x0+scene.actors[0].x*S,y0+scene.actors[0].y*S,S,S);
+  c.fillStyle=ACCENT2;c.fillRect(x0+scene.actors[1].x*S,y0+scene.actors[1].y*S,S,S);
+  c.fillStyle=ACCENT2;c.font='8px monospace';c.textAlign='right';c.fillText('⌐ MAP',x0+mw+2,y0+mh+12);
+}
+
+/* ================= generalized renderer ================= */
+function renderScene(canvas,scene,seed,mood,opts){
+  opts=opts||{};
+  const c=canvas.getContext('2d');c.imageSmoothingEnabled=false;
+  const W=scene.W,H=scene.H,cw=canvas.width,ch=canvas.height;
+  if(!opts.noBg){c.fillStyle=INK;c.fillRect(0,0,cw,ch);}
+  const ox=opts.ox!=null?opts.ox:cw/2;
+  const oy=opts.oy!=null?opts.oy:Math.round((ch-(W+H-2)*HH-40)/2)+20;
+  const sources=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(scene.g[y][x].prop==='torch')sources.push({x:x+0.5,y:y+0.5,r:4.4,i:1});
+  const heroLight=opts.heroLight!==false&&scene.actors&&scene.actors[0];
+  if(heroLight)sources.push({x:scene.actors[0].x+0.5,y:scene.actors[0].y+0.5,r:mood.heroR||5.4,i:1});
+  const actorAt=(x,y)=>scene.actors?scene.actors.find(a=>a.x===x&&a.y===y):null;
+  for(let s=0;s<W+H-1;s++){
+    for(let x=Math.max(0,s-H+1);x<=Math.min(W-1,s);x++){
+      const y=s-x,cell=scene.g[y][x];
+      const cx=ox+(x-y)*HW,y0=oy+(x+y)*HH-Math.max(cell.h,0)*ZH;
+      const L=lightAt(sources,x+0.5,y+0.5,mood.ambient);
+      if(cell.kind!=='void'){
+        const nR=x+1<W?(scene.g[y][x+1].kind==='void'?-3:scene.g[y][x+1].h):cell.h;
+        const nL=y+1<H?(scene.g[y+1][x].kind==='void'?-3:scene.g[y+1][x].h):cell.h;
+        drawFaces(c,cx,y0,cell,nR,nL,scene.wall,L,x,y,seed);
+        drawFloor(c,cx,y0,cell,x,y,L,seed);
+      }
+      const by=y0+HH+1;
+      if(cell.prop==='tree')drawTree(c,cx,by,L,x,y,seed);
+      if(cell.prop==='pillar')drawPillar(c,cx,by,L);
+      if(cell.prop==='chest')drawChest(c,cx,by,L);
+      if(cell.prop==='glint')drawGlint(c,cx,by,L,hash2(x,y,seed+3));
+      if(cell.prop==='torch')drawTorch(c,cx,by);
+      const a=actorAt(x,y);
+      if(a){
+        const Lp=Math.max(L,0.85);
+        const R=a.kind==='hero'?{skin:1,hairC:HAIRC[5],outfit:'hair',c1:CLOTH[6],c2:CLOTH[5]}
+          :a.kind==='settler'?{skin:3,hairC:HAIRC[1],outfit:'hair',c1:CLOTH[2],c2:CLOTH[6]}
+          :{skin:4,hairC:'#2c2436',outfit:'hood',c1:'#3a3548',c2:'#2c2838'};
+        if(opts.dollMode==='old'){
+          drawDollSimple(c,cx,by,R,Lp,a.kind==='hero'?0.9:1);
+          if(a.kind==='settler'){c.fillStyle=ACCENT2;c.fillRect(cx+5,by-24,1,1);}
+        } else {
+          drawActor(c,cx,by,R,Lp,a.kind);
+        }
+      }
+    }
+  }
+  if(opts.minimap&&scene.actors&&scene.actors.length>=2)drawMinimap(c,scene,W,H,cw);
+}
+
+/* ================= specimen scene builders ================= */
+function grid(W,H,fill){const g=[];for(let y=0;y<H;y++){g[y]=[];for(let x=0;x<W;x++)g[y][x]=fill(x,y);}return g;}
+function specMaterials(){
+  const kinds=['grass','dirt','water','stone'];
+  const g=grid(4,1,(x)=>({kind:kinds[x],h:1,prop:null}));
+  return{g,W:4,H:1,wall:WALLG,actors:[]};
+}
+function specElevation(seed){
+  const g=grid(6,6,(x,y)=>{
+    if(x<2&&y<2)return{kind:'grass',h:2,prop:null};
+    if(x>=3&&x<=4&&y>=3&&y<=4)return{kind:'water',h:0,prop:null};
+    return{kind:'grass',h:1,prop:null};
+  });
+  return{g,W:6,H:6,wall:WALLG,actors:[]};
+}
+function specProps(){
+  const g=grid(6,1,()=>({kind:'grass',h:1,prop:null}));
+  g[0][0].prop='tree';g[0][1].prop='glint';g[0][2].prop='torch';g[0][3].prop='chest';g[0][4].prop='pillar';g[0][5].prop='tree';
+  return{g,W:6,H:1,wall:WALLG,actors:[]};
+}
+function specLight(){
+  const g=grid(9,4,()=>({kind:'grass',h:1,prop:null}));
+  g[2][4].prop='torch';
+  return{g,W:9,H:4,wall:WALLG,actors:[]};
+}
+
+/* ===== tight-crop specimen renderer: render into a shared offscreen with no bg,
+   find the content bbox, blit it into a canvas sized to fit — so each card fills
+   with its subject (no dead space that reads as blank when partially scrolled). ===== */
+let _off=null;
+function getOff(w,h){if(!_off)_off=document.createElement('canvas');if(_off.width<w)_off.width=w;if(_off.height<h)_off.height=h;return _off;}
+function renderTight(id,scene,seed,mood,opts){
+  const cvs=document.getElementById(id);if(!cvs)return;
+  const W=scene.W,H=scene.H;
+  const ow=(W+H-2)*HW+32, oh=(W+H-2)*HH+150, oyTop=80;
+  const off=getOff(ow,oh);const oc=off.getContext('2d');oc.clearRect(0,0,off.width,off.height);
+  renderScene(off,scene,seed,mood,Object.assign({},opts,{noBg:true,ox:ow/2,oy:oyTop}));
+  const img=oc.getImageData(0,0,ow,oh).data;
+  let minX=ow,minY=oh,maxX=0,maxY=0,found=false;
+  for(let y=0;y<oh;y++){const row=y*ow*4;for(let x=0;x<ow;x++){if(img[row+x*4+3]>8){found=true;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}}
+  if(!found){minX=0;minY=0;maxX=Math.min(ow,40)-1;maxY=Math.min(oh,40)-1;}
+  const pad=3,bw=maxX-minX+1,bh=maxY-minY+1;
+  cvs.width=bw+pad*2;cvs.height=bh+pad*2;
+  const dc=cvs.getContext('2d');dc.imageSmoothingEnabled=false;
+  dc.fillStyle=INK;dc.fillRect(0,0,cvs.width,cvs.height);
+  dc.drawImage(off,minX,minY,bw,bh,pad,pad,bw,bh);
+}
+
+/* ================= boot ================= */
+let seed=774411,moodKey='dusk';
+const MOODS={dusk:{ambient:0.14,heroR:5.6},night:{ambient:0.045,heroR:5.0}};
+function charScene(kind){const g=grid(3,3,()=>({kind:'grass',h:1,prop:null}));return{g,W:3,H:3,wall:WALLG,actors:[{x:1,y:1,kind}]};}
+
+const jobs=[];
+function job(id,fn){jobs.push({id,fn});fn();}
+
+// specimens — tight-cropped so each fills its card
+job('cMat',()=>renderTight('cMat',specMaterials(),42,{ambient:0.92},{heroLight:false}));
+job('cElev',()=>renderTight('cElev',specElevation(7),7,{ambient:0.66},{heroLight:false}));
+job('cProps',()=>renderTight('cProps',specProps(),99,{ambient:0.74},{heroLight:false}));
+job('cLightD',()=>renderTight('cLightD',specLight(),3,{ambient:0.14},{heroLight:false}));
+job('cLightN',()=>renderTight('cLightN',specLight(),3,{ambient:0.045},{heroLight:false}));
+// character chips — before/after at the same tile scale, then the detailed trio
+job('chOld',()=>renderTight('chOld',charScene('hero'),7,{ambient:0.9},{heroLight:false,dollMode:'old'}));
+job('chNew',()=>renderTight('chNew',charScene('hero'),7,{ambient:0.9},{heroLight:false,dollMode:'new'}));
+job('chHero',()=>renderTight('chHero',charScene('hero'),7,{ambient:0.9},{heroLight:false,dollMode:'new'}));
+job('chSettler',()=>renderTight('chSettler',charScene('settler'),7,{ambient:0.9},{heroLight:false,dollMode:'new'}));
+job('chHooded',()=>renderTight('chHooded',charScene('hooded'),7,{ambient:0.9},{heroLight:false,dollMode:'new'}));
+// composites — fixed-size camera crops
+job('sceneA',()=>renderScene(document.getElementById('sceneA'),buildSceneA(seed),seed,MOODS[moodKey],{minimap:true}));
+job('sceneB',()=>renderScene(document.getElementById('sceneB'),buildSceneB(seed+9999),seed+9999,moodKey==='dusk'?{ambient:0.10,heroR:5.4}:MOODS.night,{minimap:true}));
+job('heroCv',()=>renderScene(document.getElementById('heroCv'),buildSceneA(seed),seed,MOODS[moodKey],{minimap:false}));
+
+// iOS Safari drops canvas backing stores under memory pressure — repaint on scroll-in.
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver((es)=>{for(const e of es){if(e.isIntersecting){const j=jobs.find(j=>j.id===e.target.id);if(j)j.fn();}}},{rootMargin:'150px'});
+  for(const j of jobs){const el=document.getElementById(j.id);if(el)io.observe(el);}
+}
+
+function renderComposites(){for(const id of ['sceneA','sceneB','heroCv']){const j=jobs.find(j=>j.id===id);if(j)j.fn();}}
+function setMood(k){moodKey=k;document.getElementById('btnDusk').classList.toggle('on',k==='dusk');document.getElementById('btnNight').classList.toggle('on',k==='night');renderComposites();}
+document.getElementById('btnDusk').onclick=()=>setMood('dusk');
+document.getElementById('btnNight').onclick=()=>setMood('night');
+document.getElementById('btnReroll').onclick=()=>{seed=(Math.random()*1e9)|0;renderComposites();};
+})();
+</script>
+
+</body>
+</html>

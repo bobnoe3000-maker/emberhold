@@ -76,3 +76,27 @@ console.log('save round-trip (partial harvest resumes: 2 more hits finish it):',
 let counts = [0, 0, 0];
 for (let i = 0; i < 2000; i++) counts[tileType(sim.world, (i * 7919) % 500 - 250, (i * 104729) % 500 - 250)]++;
 console.log('tile mix (water/dirt/grass):', counts);
+
+// iso geometry: project → unproject round-trips exactly for all heights
+import { project, unproject, screenDirToWorld, resolveTap } from './src/render/iso.js';
+let isoOk = true;
+for (let h = 0; h <= 2; h++) for (let x = -20; x <= 20; x += 3) for (let y = -20; y <= 20; y += 3) {
+  const s = project(x, y, h), w = unproject(s.sx, s.sy, h);
+  if (Math.abs(w.x - x) > 1e-9 || Math.abs(w.y - y) > 1e-9) isoOk = false;
+}
+console.log('iso project/unproject round-trip:', isoOk);
+// a screen point at a tile's center floors back to that tile
+let tileOk = true;
+for (const [tx, ty] of [[3, 7], [-4, 2], [12, 18]]) {
+  const c = project(tx + 0.5, ty + 0.5, 0), w = unproject(c.sx, c.sy, 0);
+  if (Math.floor(w.x) !== tx || Math.floor(w.y) !== ty) tileOk = false;
+}
+console.log('iso tap-to-tile (center floors correctly):', tileOk);
+// drag down-right → move toward +x/+y (front); drag up → -x/-y
+const dr = screenDirToWorld(2, 2), up = screenDirToWorld(0, -2);
+console.log('iso drag mapping (down-right → +x+y, up → −x−y):',
+  dr.x > 0 && dr.y > 0 && up.x < 0 && up.y < 0);
+// fat-finger snap: a tap just off a resource tile snaps onto it
+const snapAt = project(5.9, 5.1, 0);   // near tile (5,5) but nudged
+const snapped = resolveTap(snapAt.sx, snapAt.sy, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
+console.log('iso fat-finger snap:', snapped.tx === 5 && snapped.ty === 5);

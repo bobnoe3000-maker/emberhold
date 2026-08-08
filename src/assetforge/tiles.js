@@ -1,7 +1,33 @@
-// tiles.js — blob-47 autotiler. One generator for any terrain-over-terrain pair.
+// tiles.js — terrain generators.
+//   Isometric: drawFloorDiamond (the overworld art direction, since v0.3).
+//   Blob-47 autotiler: parked here for cave-floor material transitions later.
 // Mask bits: 1=N 2=NE 4=E 8=SE 16=S 32=SW 64=W 128=NW (set = same terrain).
 
 import { hash2 } from '../sim/rng.js';
+import { TW, TH, HW, HH } from '../render/iso.js';
+
+// True if pixel (rx,ry) lies inside the tile diamond.
+export function inDiamond(rx, ry) {
+  return Math.abs(rx - (TW - 1) / 2) / HW + Math.abs(ry - (TH - 1) / 2) / HH <= 1.001;
+}
+
+// Draw one unlit floor diamond (TW×TH) at pixel (ox,oy). Lighting is applied at
+// composite time, so this bakes full-bright. 3-shade dither + a checkerboard
+// value-step on tile parity + a dark seam on the two lower diamond edges.
+// Ramps may be 3 or 4 shades — the index is clamped (contract: drawers clamp).
+export function drawFloorDiamond(ctx, ox, oy, ramp, checkerParity, ditherSeed) {
+  for (let ry = 0; ry < TH; ry++) for (let rx = 0; rx < TW; rx++) {
+    if (!inDiamond(rx, ry)) continue;
+    const r = hash2(rx, ry, ditherSeed);
+    let i = r < 0.12 ? 0 : r < 0.80 ? 1 : r < 0.96 ? 2 : 3;
+    if (checkerParity && i > 0) i -= 1;
+    let col = ramp[Math.min(i, ramp.length - 1)];
+    const edge = (Math.abs(rx - (TW - 1) / 2) / HW + Math.abs(ry - (TH - 1) / 2) / HH) > 0.86 && ry >= HH;
+    if (edge) col = ramp[ramp.length - 1];
+    ctx.fillStyle = col;
+    ctx.fillRect(ox + rx, oy + ry, 1, 1);
+  }
+}
 
 export function canonical(m) {
   if (!((m & 1) && (m & 4)))  m &= ~2;

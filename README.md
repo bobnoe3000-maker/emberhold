@@ -53,12 +53,14 @@ src/
     world.js      terrain = f(x, y, seed); mods Map stores only player changes
     core.js       fixed 20 Hz tick, movement + collision, harvest
   assetforge/   art as code, deterministic
-    tiles.js      blob-47 autotiler (any terrain-over-terrain pair)
-    doll.js       paper-doll: recipe → sprite, SOCKETS contract, WALK anim data
+    tiles.js      iso floor diamonds (drawFloorDiamond) + parked blob-47 autotiler
+    doll.js       paper-doll: recipe → sprite; drawDoll (16×20) + drawDollDetailed (24×36 iso)
     props.js      trees + rocks, seeded per-tile variation
   render/       swappable presentation (Phaser can replace this wholesale)
+    iso.js        geometry source of truth: project / unproject / resolveTap (pure, tested)
     palette.js    dark token system (Emberwood biome) + character tokens
-    renderer.js   chunk bake cache (512px offscreens), y-sort, torch light
+    renderer.js   iso painter: diamond floors, depth-sort, detailed doll, torch light
+    renderer-flat.js  PARKED original top-down renderer (rollback)
   ui/
     input.js      floating joystick + tap, feeds command queue
     hud.js        DOM overlay bound to sim events
@@ -73,9 +75,10 @@ src/
 3. Input → commands → sim → events → render. No layer skips the bus.
 4. Same seed = same world = same hero, on every device, forever.
 
-**Verify the sim headlessly:**
+**Verify headlessly (run both before every push):**
 ```bash
-node smoke-test.mjs
+node smoke-test.mjs         # sim determinism, saves, iso geometry round-trips
+node render-smoke-test.mjs  # iso renderer boots + paints with no NaN/undefined draws
 ```
 
 ## Renderer note
@@ -85,20 +88,25 @@ keeps the repo zero-build. The Phaser recommendation from the design doc stands 
 want its tilemap culling, particles, and audio: the swap is contained to `/render` because
 the sim never touches it. Capacitor wrap (Phase 5) points at this same folder.
 
-## Art direction — pivoting to isometric
+## Art direction — isometric (pivot in progress)
 
-The build currently ships the **flat top-down** renderer described above. The art direction
-is pivoting to a **2:1 isometric** language at fine 16×8 tiles (elevation, cliff faces,
-quantized torch lighting) — presentation only; the headless sim, saves, determinism, and
-paper-doll characters are unchanged. This is **Phase 1a item #1** and is speced for
-implementation in [`docs/emberhold-iso-pivot-tdp.md`](docs/emberhold-iso-pivot-tdp.md); the
-visual spec is proven in [`docs/iso-mockup-fine.html`](docs/iso-mockup-fine.html). The code
-in `src/render` + `src/assetforge/tiles.js` will change; `src/sim` will not.
+The build now renders in a **2:1 isometric** language: fine 16×8 diamond tiles and a detailed
+24×36 character sprite (`src/render/iso.js` is the geometry source; `renderer.js` is the iso
+painter). This is **presentation only** — the headless sim, saves, determinism, and the
+paper-doll *recipe* system are unchanged. The previous flat top-down renderer is parked in
+`src/render/renderer-flat.js` for rollback (flip the import in `main.js`).
 
-## Next (Phase 1a — iso pivot, then the moment loop)
+**Landed (pivot step 1):** iso projection + input mapping, diamond floor tiles, detailed
+billboarded character, iso tap + fat-finger snap — at **flat** elevation.
+**Next steps** (per [`docs/emberhold-iso-pivot-tdp.md`](docs/emberhold-iso-pivot-tdp.md) §6):
+chunk-baked geometry for 60fps, then `world.js` elevation (basins/plateaus/cliff faces) +
+walk rule, quantized per-tile lighting, and the character's **iso-facing walk frames**.
+Visual spec proof: [`docs/art-style-iso.html`](docs/art-style-iso.html).
 
-- **Iso pivot** (new `render/iso.js`, diamond tile/face + prop generators, quantized light overlay)
-- On-device feel pass at the new tile scale (fps, joystick, tap snap)
-- Second biome (iso palette + height-profile remap)
-- Auto-path on tap-to-move · audio v0
+## Next (Phase 1a — finish the iso pivot, then the moment loop)
+
+- Chunk-bake iso geometry (60fps) · on-device feel pass (scale, joystick, tap snap)
+- `world.js` elevation + water basins + walk rule; quantized per-tile lighting
+- Iso-facing walk frames for the 24×36 character
+- Second biome (iso palette + height-profile remap) · auto-path on tap-to-move · audio v0
 - Then Phase 1b: combat, inventory + crafting bottom sheets, tool-in-hand, height ramps

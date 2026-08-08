@@ -1,22 +1,26 @@
-// renderer.js — lean canvas renderer. The sim doesn't know this file exists.
-// Chunks bake once to offscreen canvases (512px), rebake only on modification.
-// Swapping this layer for Phaser later touches nothing in /sim.
+// renderer.js — isometric canvas renderer (art direction v0.3). The sim doesn't
+// know this file exists; swapping it touches nothing in /sim. Flat elevation for
+// now (all tiles at h0) — heightAt / cliff faces land in a later pivot step.
+// The previous flat top-down renderer is parked in renderer-flat.js for rollback.
 
-import { CHUNK, TILE, T, tileType, resourceAt, neighborMask, chunkOf } from '../sim/world.js';
-import { drawBlobTile, drawWaterTile } from '../assetforge/tiles.js';
+import { T, tileType, resourceAt } from '../sim/world.js';
+import { drawFloorDiamond } from '../assetforge/tiles.js';
 import { drawTree, drawRock, TREE_W, TREE_H, ROCK_W, ROCK_H } from '../assetforge/props.js';
-import { drawDoll, WALK, IDLE, DOLL_W, DOLL_H } from '../assetforge/doll.js';
+import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { EMBERWOOD, LIGHT, INK } from './palette.js';
 import { hash2 } from '../sim/rng.js';
+import { TW, TH, HW, ZH, project, unproject, resolveTap } from './iso.js';
 
-const CHUNK_PX = CHUNK * TILE;
-const MAX_CACHED_CHUNKS = 24;
-const PROP_VARIANTS = 8;          // pre-baked sprite variants per prop kind
+const PROP_VARIANTS = 8;
+const FLOOR_VARIANTS = 6;
+const TREE_AX = 8, TREE_AY = 25;    // sprite ground anchors
+const ROCK_AX = 8, ROCK_AY = 13;
+const DOLL_AX = 12, DOLL_AY = 34;   // feet within the 24×36 sprite
 
 export function createRenderer(canvas, sim, input) {
   const ctx = canvas.getContext('2d');
   const pal = EMBERWOOD;
-  let scale = 3, vw = 0, vh = 0;
+  let S = 3, vw = 0, vh = 0;
 
   function resize() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -25,162 +29,132 @@ export function createRenderer(canvas, sim, input) {
     canvas.width = vw; canvas.height = vh;
     canvas.style.width = window.innerWidth + 'px';
     canvas.style.height = window.innerHeight + 'px';
-    // aim for ~9 tiles across in portrait, integer scale
-    scale = Math.max(2, Math.round(vw / (9.5 * TILE)));
+    S = Math.max(2, Math.round(vw / (18 * TW)));   // ~18 tiles across, integer scale
     ctx.imageSmoothingEnabled = false;
   }
   window.addEventListener('resize', resize);
   resize();
 
-  // ---- chunk cache ----
-  const chunks = new Map();       // "cx,cy" -> { cv, at }
-  function bakeChunk(cx, cy) {
-    const cv = document.createElement('canvas');
-    cv.width = CHUNK_PX; cv.height = CHUNK_PX;
-    const c = cv.getContext('2d');
-    const world = sim.world, seed = world.ws;
-    for (let ty = 0; ty < CHUNK; ty++) for (let tx = 0; tx < CHUNK; tx++) {
-      const wx = cx * CHUNK + tx, wy = cy * CHUNK + ty;
-      const t = tileType(world, wx, wy);
-      drawWaterTile(c, tx * TILE, ty * TILE, wx, wy, pal.WATER, seed);
-      if (t >= T.DIRT)
-        drawBlobTile(c, tx * TILE, ty * TILE, wx, wy,
-          neighborMask(world, wx, wy, (v) => v >= T.DIRT), pal.DIRT, pal.WATER, seed);
-      if (t === T.GRASS)
-        drawBlobTile(c, tx * TILE, ty * TILE, wx, wy,
-          neighborMask(world, wx, wy, (v) => v === T.GRASS), pal.GRASS, pal.DIRT, seed);
-    }
-    // decor pass (interior grass only)
-    for (let ty = 0; ty < CHUNK; ty++) for (let tx = 0; tx < CHUNK; tx++) {
-      const wx = cx * CHUNK + tx, wy = cy * CHUNK + ty;
-      if (tileType(world, wx, wy) !== T.GRASS) continue;
-      if (neighborMask(world, wx, wy, (v) => v === T.GRASS) !== 255) continue;
-      const r = hash2(wx, wy, seed + 1234);
-      if (r > 0.30) continue;
-      const dx = 4 + Math.floor(hash2(wx, wy, seed + 55) * 8);
-      const dy = 4 + Math.floor(hash2(wx, wy, seed + 66) * 8);
-      const px = (ox, oy, col) => { c.fillStyle = col; c.fillRect(tx * TILE + dx + ox, ty * TILE + dy + oy, 1, 1); };
-      if (r < 0.07) { px(0, 0, pal.ACCENT); px(1, 0, pal.ACCENT2); px(0, 1, pal.GRASS[3]); }
-      else if (r < 0.20) { px(0, 0, pal.GRASS[0]); px(2, 1, pal.GRASS[0]); px(1, -1, pal.GRASS[0]); }
-      else { px(0, 0, pal.DIRT[1]); px(1, 0, pal.DIRT[2]); }
-    }
-    return cv;
-  }
-  function getChunk(cx, cy) {
-    const key = cx + ',' + cy;
-    let e = chunks.get(key);
-    if (!e) {
-      e = { cv: bakeChunk(cx, cy), at: 0 };
-      chunks.set(key, e);
-      if (chunks.size > MAX_CACHED_CHUNKS) {          // LRU evict
-        let oldK = null, oldAt = Infinity;
-        for (const [k, v] of chunks) if (v.at < oldAt) { oldAt = v.at; oldK = k; }
-        chunks.delete(oldK);
+  // ---- baked floor diamonds: floorCache[material][parity][variant] (unlit) ----
+  const floorCache = {};
+  (function bakeFloors() {
+    const seed = sim.world.ws;
+    for (const [mat, ramp] of [['grass', pal.GRASS], ['dirt', pal.DIRT], ['water', pal.WATER]]) {
+      floorCache[mat] = [[], []];
+      for (let parity = 0; parity < 2; parity++) for (let v = 0; v < FLOOR_VARIANTS; v++) {
+        const cv = document.createElement('canvas'); cv.width = TW; cv.height = TH;
+        drawFloorDiamond(cv.getContext('2d'), 0, 0, ramp, parity, (seed ^ (v * 131 + mat.length * 7)) >>> 0);
+        floorCache[mat][parity].push(cv);
       }
     }
-    e.at = performance.now();
-    return e.cv;
-  }
-  sim.bus.on('harvested', ({ tx, ty }) => {
-    chunks.delete(chunkOf(tx) + ',' + chunkOf(ty));   // rebake on next draw
-  });
+  })();
 
   // ---- prop sprite variants (baked once) ----
   const treeCache = [], rockCache = [];
   for (let i = 0; i < PROP_VARIANTS; i++) {
-    const tcv = document.createElement('canvas'); tcv.width = TREE_W; tcv.height = TREE_H;
-    drawTree(tcv.getContext('2d'), pal, i * 7, i * 13, sim.world.ws);
-    treeCache.push(tcv);
-    const rcv = document.createElement('canvas'); rcv.width = ROCK_W; rcv.height = ROCK_H;
-    drawRock(rcv.getContext('2d'), pal, i * 11, i * 5, sim.world.ws);
-    rockCache.push(rcv);
+    const t = document.createElement('canvas'); t.width = TREE_W; t.height = TREE_H;
+    drawTree(t.getContext('2d'), pal, i * 7, i * 13, sim.world.ws); treeCache.push(t);
+    const r = document.createElement('canvas'); r.width = ROCK_W; r.height = ROCK_H;
+    drawRock(r.getContext('2d'), pal, i * 11, i * 5, sim.world.ws); rockCache.push(r);
   }
 
-  // ---- player doll frames (baked once from the hero recipe) ----
-  const dollCache = new Map();    // "dir|frame|mirror|moving" -> canvas
-  function dollFrame(recipe, dir, frame, mirror, moving) {
-    const key = dir + '|' + frame + '|' + mirror + '|' + moving;
+  // ---- player doll frames (detailed 24×36, baked from the hero recipe) ----
+  const dollCache = new Map();
+  let heroRecipe = null;
+  function setHero(recipe) { heroRecipe = recipe; dollCache.clear(); }
+  function dollFrame(frame, mirror) {
+    const key = frame + '|' + mirror;
     let cv = dollCache.get(key);
     if (!cv) {
-      cv = document.createElement('canvas');
-      cv.width = DOLL_W; cv.height = DOLL_H;
-      drawDoll(cv.getContext('2d'), recipe, dir, moving ? WALK : IDLE, frame, mirror);
+      cv = document.createElement('canvas'); cv.width = DETAIL_W; cv.height = DETAIL_H;
+      drawDollDetailed(cv.getContext('2d'), heroRecipe, frame, mirror);
       dollCache.set(key, cv);
     }
     return cv;
   }
 
-  let heroRecipe = null;
-  function setHero(recipe) { heroRecipe = recipe; dollCache.clear(); }
-
   // ---- hit flash ----
-  let flash = null;               // { tx, ty, until }
+  let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
 
   function render(alpha, now) {
     const p = sim.state.player;
     const ix = p.px + (p.x - p.px) * alpha;
     const iy = p.py + (p.y - p.py) * alpha;
-    const s = TILE * scale;
-    // camera: player slightly below vertical center (see ahead when moving up)
-    const camX = ix * s - vw / 2;
-    const camY = iy * s - vh * 0.56;
+    const pc = project(ix, iy, 0);
+    const originX = Math.round(vw / 2 - pc.sx * S);
+    const originY = Math.round(vh * 0.56 - pc.sy * S);
+    const toScreen = (wx, wy, h) => { const q = project(wx, wy, h || 0); return { x: originX + q.sx * S, y: originY + q.sy * S }; };
 
     ctx.fillStyle = INK;
     ctx.fillRect(0, 0, vw, vh);
 
-    // visible chunk window
-    const cx0 = Math.floor(camX / (CHUNK_PX * scale)), cy0 = Math.floor(camY / (CHUNK_PX * scale));
-    const cx1 = Math.floor((camX + vw) / (CHUNK_PX * scale)), cy1 = Math.floor((camY + vh) / (CHUNK_PX * scale));
-    for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
-      ctx.drawImage(getChunk(cx, cy),
-        Math.round(cx * CHUNK_PX * scale - camX), Math.round(cy * CHUNK_PX * scale - camY),
-        CHUNK_PX * scale, CHUNK_PX * scale);
+    // visible tile AABB by unprojecting the four screen corners (flat, h0)
+    const seed = sim.world.ws;
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    for (const [sx, sy] of [[0, 0], [vw, 0], [0, vh], [vw, vh]]) {
+      const w = unproject((sx - originX) / S, (sy - originY) / S, 0);
+      minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x);
+      minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
+    }
+    minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1;
+    maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
+
+    // floors
+    const TWs = TW * S, THs = TH * S;
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
+      const s = toScreen(tx, ty, 0);
+      if (s.x < -TWs || s.x > vw + TWs || s.y < -THs || s.y > vh + THs) continue;   // rhombus cull
+      const t = tileType(sim.world, tx, ty);
+      const mat = t === T.WATER ? 'water' : t === T.DIRT ? 'dirt' : 'grass';
+      const parity = (tx + ty) & 1;
+      const v = (hash2(tx, ty, seed) * FLOOR_VARIANTS) | 0;
+      ctx.drawImage(floorCache[mat][parity][v], Math.round(s.x - HW * S), Math.round(s.y), TWs, THs);
     }
 
-    // props + player, y-sorted
-    const tx0 = Math.floor(camX / s) - 1, ty0 = Math.floor(camY / s) - 2;
-    const tx1 = Math.floor((camX + vw) / s) + 1, ty1 = Math.floor((camY + vh) / s) + 1;
+    // props + player, depth-sorted by (x + y)
     const drawables = [];
-    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
       const kind = resourceAt(sim.world, tx, ty);
       if (!kind) continue;
-      const v = Math.floor(hash2(tx, ty, 7777) * PROP_VARIANTS);
-      drawables.push({ y: ty + 1, kind, tx, ty, v });
+      drawables.push({ d: tx + ty, kind, tx, ty, v: (hash2(tx, ty, 7777) * PROP_VARIANTS) | 0 });
     }
-    drawables.push({ y: iy + 0.2, kind: 'player' });
-    drawables.sort((a, b) => a.y - b.y);
+    drawables.push({ d: ix + iy + 0.01, kind: 'player' });
+    drawables.sort((a, b) => a.d - b.d);
 
     const flashing = flash && now < flash.until ? flash : null;
-    for (const d of drawables) {
-      if (d.kind === 'player') {
-        const cv = dollFrame(heroRecipe, p.dir === 'side' ? 'side' : p.dir, p.frame, p.mirror, p.moving);
-        ctx.drawImage(cv,
-          Math.round(ix * s - camX) - (DOLL_W / 2) * scale,
-          Math.round(iy * s - camY) - (DOLL_H - 2) * scale,   // feet anchored at player pos
-          DOLL_W * scale, DOLL_H * scale);
+    for (const dr of drawables) {
+      if (dr.kind === 'player') {
+        const g = toScreen(ix, iy, 0);
+        ctx.fillStyle = 'rgba(8,6,12,0.30)';                 // ground shadow
+        for (let r = -2; r <= 2; r++) {
+          const ww = Math.max(0, Math.round(6 * (1 - Math.abs(r) / 3))) * S;
+          ctx.fillRect(Math.round(g.x - ww), Math.round(g.y + (r + 1) * S), ww * 2, S);
+        }
+        const cv = dollFrame(p.moving ? p.frame : 0, p.mirror);
+        ctx.drawImage(cv, Math.round(g.x - DOLL_AX * S), Math.round(g.y - DOLL_AY * S), DETAIL_W * S, DETAIL_H * S);
         continue;
       }
-      const isTree = d.kind === 'tree';
-      const cv = isTree ? treeCache[d.v] : rockCache[d.v];
+      const isTree = dr.kind === 'tree';
+      const cv = isTree ? treeCache[dr.v] : rockCache[dr.v];
       const w = isTree ? TREE_W : ROCK_W, h = isTree ? TREE_H : ROCK_H;
-      const jx = flashing && flashing.tx === d.tx && flashing.ty === d.ty ? (Math.random() < 0.5 ? -1 : 1) * scale : 0;
-      ctx.drawImage(cv,
-        Math.round(d.tx * s - camX) + jx,
-        Math.round((d.ty + 1) * s - h * scale - camY),
-        w * scale, h * scale);
+      const ax = isTree ? TREE_AX : ROCK_AX, ay = isTree ? TREE_AY : ROCK_AY;
+      const g = toScreen(dr.tx + 0.5, dr.ty + 0.5, 0);
+      const jx = flashing && flashing.tx === dr.tx && flashing.ty === dr.ty ? (hash2((now / 40) | 0, dr.tx, dr.ty) < 0.5 ? -1 : 1) * S : 0;
+      ctx.drawImage(cv, Math.round(g.x - ax * S) + jx, Math.round(g.y - ay * S), w * S, h * S);
     }
 
-    // torch light: dark veil with a warm hole punched at the player
-    const light = document.__lightCv || (document.__lightCv = document.createElement('canvas'));
+    // torch light: dark veil with a warm hole punched at the player (unchanged model)
+    const g = toScreen(ix, iy, 0);
+    const light = document.__ehLight || (document.__ehLight = document.createElement('canvas'));
     if (light.width !== vw || light.height !== vh) { light.width = vw; light.height = vh; }
     const lc = light.getContext('2d');
     lc.globalCompositeOperation = 'source-over';
     lc.fillStyle = LIGHT.ambient;
     lc.fillRect(0, 0, vw, vh);
-    const pxx = ix * s - camX, pyy = iy * s - camY - 6 * scale;
+    const pxx = g.x, pyy = g.y - 14 * S;
     const flick = 1 + (hash2((now / 90) | 0, 3, 9) - 0.5) * LIGHT.flicker;
-    const rad = LIGHT.torchRadius * s * flick;
+    const rad = LIGHT.torchRadius * TW * S * flick;
     const grad = lc.createRadialGradient(pxx, pyy, rad * 0.2, pxx, pyy, rad);
     grad.addColorStop(0, 'rgba(0,0,0,1)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -188,7 +162,6 @@ export function createRenderer(canvas, sim, input) {
     lc.fillStyle = grad;
     lc.beginPath(); lc.arc(pxx, pyy, rad, 0, Math.PI * 2); lc.fill();
     ctx.drawImage(light, 0, 0);
-    // warm inner glow
     const wg = ctx.createRadialGradient(pxx, pyy, 0, pxx, pyy, rad * 0.6);
     wg.addColorStop(0, LIGHT.torchInner);
     wg.addColorStop(1, 'rgba(255,176,102,0)');
@@ -198,24 +171,28 @@ export function createRenderer(canvas, sim, input) {
     // joystick
     const j = input.joystick();
     if (j) {
+      const k = vw / window.innerWidth;
       ctx.strokeStyle = 'rgba(232,228,218,0.25)';
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(j.bx, j.by, 46 * (vw / window.innerWidth), 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(j.bx, j.by, 46 * k, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = 'rgba(255,148,64,0.5)';
-      ctx.beginPath(); ctx.arc(j.kx, j.ky, 18 * (vw / window.innerWidth), 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(j.kx, j.ky, 18 * k, 0, Math.PI * 2); ctx.fill();
     }
   }
 
   return {
     render, setHero, resize,
+    // Screen (CSS px) → tile, via iso inverse at flat height with fat-finger snap.
     screenToTile(sxPx, syPx, alpha) {
       const p = sim.state.player;
       const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
-      const s = TILE * scale;
+      const pc = project(ix, iy, 0);
+      const originX = Math.round(vw / 2 - pc.sx * S), originY = Math.round(vh * 0.56 - pc.sy * S);
       const dpr = vw / window.innerWidth;
-      const wx = (sxPx * dpr + ix * s - vw / 2) / s;
-      const wy = (syPx * dpr + iy * s - vh * 0.56) / s;
-      return { tx: Math.floor(wx), ty: Math.floor(wy) };
+      return resolveTap((sxPx * dpr - originX) / S, (syPx * dpr - originY) / S, {
+        heightAt: () => 0,                                   // flat for now
+        hasResource: (tx, ty) => !!resourceAt(sim.world, tx, ty),
+      });
     },
   };
 }

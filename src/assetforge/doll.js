@@ -150,3 +150,56 @@ function drawTool(kind, ramp, sock, yOff, px) {
   if (kind === 'hoe') { px(x, y - 2, ramp[0]); px(x + 1, y - 2, ramp[1]); px(x + 1, y - 1, ramp[2]); }
   if (kind === 'hammer') { px(x - 1, y - 2, ramp[1]); px(x, y - 2, ramp[0]); px(x - 1, y - 1, ramp[2]); px(x, y - 1, ramp[2]); }
 }
+
+// ---- detailed doll (24×36) — the iso art direction (v0.3). Larger + more
+// detail than the 16×20 above, decoupled from tile scale so characters keep
+// presence. Front-facing billboard with a walk bob + left mirror; drawn unlit
+// (lighting is a composite-time overlay). Same recipe tokens as rollRecipe().
+export const DETAIL_W = 24, DETAIL_H = 36;
+const BUCKLE = '#c9a14e';
+function lighten(hex, amt) {
+  const n = parseInt(hex.slice(1), 16), u = (v) => Math.min(255, v + amt);
+  return '#' + ((u(n >> 16) << 16) | (u((n >> 8) & 255) << 8) | u(n & 255)).toString(16).padStart(6, '0');
+}
+export function drawDollDetailed(ctx, R, frame, mirror) {
+  ctx.clearRect(0, 0, DETAIL_W, DETAIL_H);
+  const b = [0, -1, 0, -1][frame & 3];          // walk bob on the upper body
+  const skin = SKINS[R.skin] || SKINS[0];
+  const hairC = (R.hair && R.hair.color) || HAIRC[0];
+  const style = (R.hair && R.hair.style) || 'short';
+  const body = R.c1 || CLOTH[0], bodyD = shade(body), bodyL = lighten(body, 26);
+  const pants = R.c2 || CLOTH[1], pantsD = shade(pants);
+  const hairD = shade(hairC), hairL = lighten(hairC, 26);
+  const hood = style === 'hood', bald = style === 'bald';
+  const px = (x, y, c) => { if (y < 0 || y > DETAIL_H - 1) return; ctx.fillStyle = c; ctx.fillRect(mirror ? DETAIL_W - 1 - x : x, y, 1, 1); };
+  const rect = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px(x, y, c); };
+  // legs + boots (not bobbed)
+  rect(8, 25, 10, 31, pants); rect(13, 25, 15, 31, pants);
+  rect(8, 25, 8, 31, pantsD); rect(15, 25, 15, 31, pantsD); rect(11, 25, 12, 31, pantsD);
+  rect(8, 32, 10, 34, LEATHER); rect(13, 32, 15, 34, LEATHER); px(7, 34, LEATHER); px(16, 34, LEATHER);
+  px(8, 32, lighten(LEATHER, 22)); px(13, 32, lighten(LEATHER, 22));
+  // torso
+  rect(6, 14 + b, 17, 24 + b, body); rect(6, 14 + b, 7, 24 + b, bodyL); rect(16, 14 + b, 17, 24 + b, bodyD); rect(6, 14 + b, 17, 14 + b, bodyL);
+  rect(10, 13 + b, 13, 13 + b, bodyD); rect(11, 15 + b, 11, 21 + b, bodyD);
+  rect(6, 22 + b, 17, 22 + b, LEATHER); px(11, 22 + b, BUCKLE); px(12, 22 + b, BUCKLE);
+  rect(6, 24 + b, 17, 24 + b, bodyD);
+  // arms
+  rect(4, 15 + b, 5, 20 + b, body); rect(4, 15 + b, 4, 20 + b, bodyL); rect(4, 21 + b, 5, 23 + b, skin[1]); px(4, 23 + b, skin[2]);
+  rect(18, 15 + b, 19, 20 + b, bodyD); rect(18, 21 + b, 19, 23 + b, skin[1]); px(19, 23 + b, skin[2]);
+  // neck + head
+  rect(11, 12 + b, 12, 12 + b, skin[2]);
+  rect(9, 4 + b, 14, 4 + b, skin[1]); rect(8, 5 + b, 15, 10 + b, skin[1]); rect(9, 11 + b, 14, 11 + b, skin[1]);
+  rect(8, 5 + b, 8, 10 + b, skin[0]); px(9, 4 + b, skin[0]);
+  rect(15, 5 + b, 15, 10 + b, skin[2]); px(14, 11 + b, skin[2]); rect(9, 11 + b, 14, 11 + b, skin[2]);
+  px(10, 7 + b, INK); px(13, 7 + b, INK); px(11, 8 + b, skin[2]); px(12, 8 + b, skin[2]); px(11, 10 + b, skin[2]); px(12, 10 + b, skin[2]);
+  // hair / hood
+  if (hood) {
+    rect(7, 1 + b, 16, 3 + b, body); rect(7, 3 + b, 8, 10 + b, body); rect(15, 3 + b, 16, 10 + b, bodyD); rect(8, 1 + b, 12, 1 + b, bodyL); rect(9, 4 + b, 14, 5 + b, bodyD);
+  } else if (!bald) {
+    rect(9, 1 + b, 14, 1 + b, hairC); rect(8, 2 + b, 15, 3 + b, hairC); rect(9, 4 + b, 14, 4 + b, hairC);
+    rect(8, 4 + b, 8, 6 + b, hairC); rect(15, 4 + b, 15, 6 + b, hairD);
+    rect(9, 1 + b, 12, 1 + b, hairL); px(14, 2 + b, hairD); px(15, 3 + b, hairD);
+    if (style === 'long') { rect(8, 7 + b, 8, 10 + b, hairC); rect(15, 7 + b, 15, 10 + b, hairD); }
+  }
+  outlineBuffer(ctx, DETAIL_W, DETAIL_H);
+}

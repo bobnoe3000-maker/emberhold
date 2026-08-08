@@ -7,6 +7,7 @@ import { createHud } from './ui/hud.js';
 import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
 import { loadInto, createAutosave } from './persist/save.js';
+import { screenDirToWorld } from './render/iso.js';
 
 const WORLD_SEED = 20260807;
 
@@ -46,7 +47,12 @@ function frame(now) {
 
   while (acc >= TICK_DT) {
     const v = input.vec();
-    if (v) sim.commands.push({ type: 'move', x: v.x, y: v.y });
+    if (v) {                                   // screen drag → iso world direction
+      const w = screenDirToWorld(v.x, v.y);
+      const len = Math.hypot(w.x, w.y) || 1;
+      const mag = Math.min(1, Math.hypot(v.x, v.y));
+      sim.commands.push({ type: 'move', x: (w.x / len) * mag, y: (w.y / len) * mag });
+    }
     sim.tick();
     acc -= TICK_DT;
   }
