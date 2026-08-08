@@ -4,41 +4,42 @@
 import { hash2 } from '../sim/rng.js';
 import { outlineBuffer } from './doll.js';
 
-export const TREE_W = 16, TREE_H = 26;   // canopy overhangs the tile above
-export const ROCK_W = 16, ROCK_H = 14;
+// Sprite sizes + ground anchors (the pixel that sits on the tile center).
+// Trees stand ~1.3× the 24×36 character so they read as canopy overhead, not scrub.
+export const TREE_W = 22, TREE_H = 46, TREE_AX = 11, TREE_AY = 45;
+export const ROCK_W = 16, ROCK_H = 14, ROCK_AX = 8, ROCK_AY = 13;
 
-// Draw into a transparent ctx of TREE_W x TREE_H. Anchor: trunk base at (8, 25).
+// Draw into a transparent ctx of TREE_W x TREE_H. Anchor: trunk base at (11, 45).
 export function drawTree(ctx, pal, wx, wy, seed) {
   ctx.clearRect(0, 0, TREE_W, TREE_H);
-  const px = (x, y, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1); };
+  const px = (x, y, c) => { if (x < 0 || x > TREE_W - 1) return; ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1); };
   const h = (a, b) => hash2(wx * 31 + a, wy * 31 + b, seed + 4242);
   const lean = h(1, 1) < 0.5 ? 0 : (h(1, 1) < 0.75 ? -1 : 1);
-  const C = pal.CANOPY, T = pal.TRUNK;
+  const C = pal.CANOPY, T = pal.TRUNK, cx = 11;
 
-  // trunk
-  for (let y = 17; y <= 25; y++) { px(7 + lean, y, T[0]); px(8 + lean, y, T[1]); }
-  px(6 + lean, 24, T[1]); px(9 + lean, 24, T[1]);          // root flare
+  // trunk (12 tall) + root flare
+  for (let y = 32; y <= 44; y++) { px(cx - 1, y, T[0]); px(cx, y, T[1]); px(cx + 1, y, T[1]); }
+  px(cx - 2, 43, T[1]); px(cx + 2, 43, T[1]);
+  px(cx - 2, 44, T[1]); px(cx + 2, 44, T[1]);
 
-  // canopy: stacked ellipse rows, widest mid, dithered three shades
-  const rows = [
-    [6, 3], [4, 5], [3, 7], [2, 7], [2, 7], [3, 7], [4, 6], [5, 4], [7, 2],
-  ];
-  rows.forEach(([x0, halfW], i) => {
-    const y = 3 + i;
-    const cx0 = 8 + lean * ((i / rows.length) | 0);
-    for (let x = cx0 - halfW - (8 - x0 - halfW); x <= cx0 + halfW; x++) {
-      const xx = x;
-      if (xx < 0 || xx > 15) continue;
-      const r = h(xx, y);
-      let c = r < 0.16 ? C[0] : r < 0.72 ? C[1] : C[2];
-      if (y >= 9) c = r < 0.5 ? C[1] : C[2];               // underside darker
-      px(xx, y, c);
+  // canopy: a lens-profile blob (narrow top, widest ~⅓ down, tapering), dithered
+  for (let y = 3; y <= 34; y++) {
+    const t = (y - 3) / 31;
+    const half = Math.round(10 * Math.sin(Math.PI * Math.min(1, t * 1.08)));
+    if (half <= 0) continue;
+    const lc = cx + Math.round(lean * t * 2);              // lean grows toward the crown
+    for (let x = lc - half; x <= lc + half; x++) {
+      const r = h(x, y);
+      const edge = (x === lc - half || x === lc + half);
+      if (edge && r < 0.4) continue;                        // ragged silhouette
+      let c = r < 0.16 ? C[0] : r < 0.7 ? C[1] : C[2];
+      if (y >= 22) c = r < 0.5 ? C[1] : C[2];               // underside darker
+      px(x, y, c);
     }
-  });
-  // crown highlight + hanging tips
-  px(6, 2, C[0]); px(9, 2, C[0]);
-  px(4, 12, C[2]); px(11, 12, C[2]);
-  if (h(3, 3) < 0.35) px(12, 8, pal.ACCENT2);              // rare ember mote
+  }
+  // crown highlights + a rare ember mote
+  px(cx - 3, 7, C[0]); px(cx + 2, 6, C[0]);
+  if (h(3, 3) < 0.3) px(cx + 5, 17, pal.ACCENT2);
   outlineBuffer(ctx, TREE_W, TREE_H);
 }
 

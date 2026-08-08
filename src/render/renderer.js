@@ -5,7 +5,7 @@
 
 import { T, tileType, resourceAt } from '../sim/world.js';
 import { drawFloorDiamond } from '../assetforge/tiles.js';
-import { drawTree, drawRock, TREE_W, TREE_H, ROCK_W, ROCK_H } from '../assetforge/props.js';
+import { drawTree, drawRock, TREE_W, TREE_H, ROCK_W, ROCK_H, TREE_AX, TREE_AY, ROCK_AX, ROCK_AY } from '../assetforge/props.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { EMBERWOOD, LIGHT, INK } from './palette.js';
 import { hash2 } from '../sim/rng.js';
@@ -13,9 +13,11 @@ import { TW, TH, HW, ZH, project, unproject, resolveTap } from './iso.js';
 
 const PROP_VARIANTS = 8;
 const FLOOR_VARIANTS = 6;
-const TREE_AX = 8, TREE_AY = 25;    // sprite ground anchors
-const ROCK_AX = 8, ROCK_AY = 13;
 const DOLL_AX = 12, DOLL_AY = 34;   // feet within the 24×36 sprite
+// Iso lighting: the torch reveals more world than the old flat view did (iso shows
+// ~18 tiles across vs ~9), and the veil is lighter so twilight land reads, not black.
+const TORCH_TILES = 7;
+const AMBIENT = 'rgba(9,7,18,0.20)';   // dusk twilight: land stays readable, torch adds a warm pool
 
 export function createRenderer(canvas, sim, input) {
   const ctx = canvas.getContext('2d');
@@ -150,11 +152,11 @@ export function createRenderer(canvas, sim, input) {
     if (light.width !== vw || light.height !== vh) { light.width = vw; light.height = vh; }
     const lc = light.getContext('2d');
     lc.globalCompositeOperation = 'source-over';
-    lc.fillStyle = LIGHT.ambient;
+    lc.fillStyle = AMBIENT;
     lc.fillRect(0, 0, vw, vh);
     const pxx = g.x, pyy = g.y - 14 * S;
     const flick = 1 + (hash2((now / 90) | 0, 3, 9) - 0.5) * LIGHT.flicker;
-    const rad = LIGHT.torchRadius * TW * S * flick;
+    const rad = TORCH_TILES * TW * S * flick;
     const grad = lc.createRadialGradient(pxx, pyy, rad * 0.2, pxx, pyy, rad);
     grad.addColorStop(0, 'rgba(0,0,0,1)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
