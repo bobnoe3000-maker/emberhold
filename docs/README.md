@@ -6,21 +6,26 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
-| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1) | Foundational; roadmap superseded by the status doc below |
-| [emberhold-status-v0.2.md](./emberhold-status-v0.2.md) | Project status & re-baselined plan (v0.2) | **Current** plan of record |
-| [assetforge-v0.html](./assetforge-v0.html) | Interactive proof of the procedural art pipeline (palettes, blob-47 autotiler, paper-doll) | Reference; open in a browser |
+| [emberhold-status-v0.3.md](./emberhold-status-v0.3.md) | Project status & plan (v0.3) — folds in save/load + the iso pivot | **Current** plan of record |
+| [emberhold-iso-pivot-tdp.md](./emberhold-iso-pivot-tdp.md) | Technical design plan for the isometric fine-tile pivot | **Active** implementation spec (Phase 1a #1) |
+| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Foundational; presentation amended to iso, roadmap superseded by the status doc |
+| [iso-mockup-fine.html](./iso-mockup-fine.html) | The locked iso visual-spec proof — 16×8 diamonds, elevation, quantized lighting (open in a browser) | Reference the pivot spec was locked from |
+| [assetforge-v0.html](./assetforge-v0.html) | Original procedural art-pipeline proof (palettes, blob-47, paper-doll) | Historical — flat top-down; blob-47 now parked |
+| [emberhold-status-v0.2.md](./emberhold-status-v0.2.md) | Prior status (v0.2) | Superseded by v0.3 |
 
 ## Conventions
 
-- **Status docs are versioned** (`-v0.2`, …). Bump the version on a re-baseline
+- **Status docs are versioned** (`-v0.2`, `-v0.3`, …). Bump the version on a re-baseline
   rather than editing history; state what the new version supersedes in its header.
-- **The design doc is the "why."** Amend it in place when a locked decision changes,
-  and note the change in the next status doc's decision log.
+- **The design doc is the "why."** Amend it in place when a locked decision changes
+  (see its v0.3 iso banner), and note the change in the current status doc's decision log.
 - Implementation lives at the repo root (`index.html`, `src/`); these docs describe
   intent, not the running build. Keep the two in sync when a phase ships.
 
 ## Build progress (quick pointer)
 
-Phase 0 (walkable procedural world, portrait, one thumb) is complete and at the repo
-root. Save/load v0 (seed + diffs → localStorage, versioned, autosave) has since landed.
-See `emberhold-status-v0.2.md` §4 for the phase plan and open items.
+Phase 0 (walkable procedural world, portrait, one thumb) is complete and deployed to `main`.
+Save/load v0 (seed + diffs → localStorage, versioned, autosave) has shipped. The next build is
+the **isometric pivot** — Phase 1a item #1, which blocks feel-tuning. See
+`emberhold-status-v0.3.md` §4 for the phase plan and `emberhold-iso-pivot-tdp.md` §6 for the
+step-by-step work order.

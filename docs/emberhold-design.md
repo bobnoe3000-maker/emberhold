@@ -4,6 +4,8 @@
 
 > Scope note: this is an original game that borrows Necesse's *genre systems and loop structure* (top-down survival sandbox + boss-gated progression + colony sim). All names, art, characters, world lore, and content are original. Game mechanics are fair game; assets and IP are not — so nothing here copies Necesse's art, names, or specific content.
 
+> **v0.3 amendment (Aug 2026) — isometric presentation.** The renderer has pivoted from flat top-down to a **2:1 dimetric isometric** language at fine **16×8** tiles: an elevation field (basins / ground / plateaus), auto-generated cliff faces, and per-tile **quantized** torch lighting. This changes *presentation only* — the headless sim, saves, determinism, and the paper-doll characters are unchanged (dolls billboard upright at 1×). Where this doc describes flat top-down terrain — **§5 Portrait-First UX** screen zones and **§6.2 Terrain** (blob-47 autotiling) — read them through the iso lens: blob-47 is parked in favor of diamond floor/face generators, and the world view is isometric. The authoritative art + render spec is **emberhold-iso-pivot-tdp.md**; the current plan of record is **emberhold-status-v0.3.md**.
+
 ---
 
 ## 1. Vision & Design Pillars

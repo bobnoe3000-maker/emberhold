@@ -85,10 +85,20 @@ keeps the repo zero-build. The Phaser recommendation from the design doc stands 
 want its tilemap culling, particles, and audio: the swap is contained to `/render` because
 the sim never touches it. Capacitor wrap (Phase 5) points at this same folder.
 
-## Next (Phase 1 — the moment loop)
+## Art direction — pivoting to isometric
 
-- Second biome + biome blending
-- Combat v0: auto-attack, dodge, 4 enemies, drops
-- Inventory + crafting bottom sheets (workbench, furnace, ~25 items)
-- Tool in hand from crafting (the doll's handR socket is already wired)
-- Auto-path on tap-to-move
+The build currently ships the **flat top-down** renderer described above. The art direction
+is pivoting to a **2:1 isometric** language at fine 16×8 tiles (elevation, cliff faces,
+quantized torch lighting) — presentation only; the headless sim, saves, determinism, and
+paper-doll characters are unchanged. This is **Phase 1a item #1** and is speced for
+implementation in [`docs/emberhold-iso-pivot-tdp.md`](docs/emberhold-iso-pivot-tdp.md); the
+visual spec is proven in [`docs/iso-mockup-fine.html`](docs/iso-mockup-fine.html). The code
+in `src/render` + `src/assetforge/tiles.js` will change; `src/sim` will not.
+
+## Next (Phase 1a — iso pivot, then the moment loop)
+
+- **Iso pivot** (new `render/iso.js`, diamond tile/face + prop generators, quantized light overlay)
+- On-device feel pass at the new tile scale (fps, joystick, tap snap)
+- Second biome (iso palette + height-profile remap)
+- Auto-path on tap-to-move · audio v0
+- Then Phase 1b: combat, inventory + crafting bottom sheets, tool-in-hand, height ramps

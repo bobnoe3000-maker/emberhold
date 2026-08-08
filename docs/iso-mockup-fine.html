@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Emberhold — Iso Overworld Mockups (fine tiles)</title>
+<style>
+  :root{ --bg:#0b0910; --panel:#141220; --line:#26233a; --ink:#e8e4da; --dim:#8f8ca4; --ember:#ff9440; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{ background:var(--bg); color:var(--ink); font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+        max-width:480px; margin:0 auto; padding:14px 12px 50px; }
+  header{padding:8px 2px 14px}
+  h1{font-size:17px; letter-spacing:2px} h1 em{color:var(--ember); font-style:normal}
+  header p{color:var(--dim); font-size:11px; margin-top:4px}
+  .controls{display:flex; gap:8px; margin-bottom:12px}
+  button{ font-family:inherit; font-size:12px; color:var(--ink); background:var(--panel);
+          border:1px solid var(--line); border-radius:6px; padding:8px 14px; min-height:38px; cursor:pointer }
+  button.on{background:#e2572b; border-color:var(--ember); color:#fff}
+  button.ember{border-color:var(--ember); color:var(--ember)}
+  .scene{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:14px}
+  .scene h2{font-size:10px; letter-spacing:2px; color:var(--ember); text-transform:uppercase; margin-bottom:8px}
+  .scene h2 span{color:var(--dim); letter-spacing:0; text-transform:none; font-weight:400}
+  canvas{width:100%; display:block; image-rendering:pixelated; image-rendering:crisp-edges; border-radius:6px}
+  .note{font-size:10px; color:var(--dim); line-height:1.55; margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>EMBER<em>HOLD</em> — ISO MOCKUPS · FINE TILES</h1>
+  <p>16×8 diamonds (¼ area) · ~24 tiles across · dolls @1× ≈ 2.5 tile-heights, reference proportion</p>
+</header>
+<div class="controls">
+  <button id="btnDusk" class="on">Dusk</button>
+  <button id="btnNight">Night</button>
+  <button id="btnReroll" class="ember" style="margin-left:auto">↻ Reroll</button>
+</div>
+
+<div class="scene">
+  <h2>Mock A · Emberwood <span>— open overworld: pond basin, plateau, waypost path</span></h2>
+  <canvas id="sceneA" width="384" height="540"></canvas>
+</div>
+<div class="scene">
+  <h2>Mock B · Barrow Court <span>— overworld ruin: void pit, standing stones, braziers</span></h2>
+  <canvas id="sceneB" width="384" height="540"></canvas>
+  <div class="note">
+    Same generators, quarter-area tiles: TW/TH/ZH are parameters now, so density is a config
+    choice, not a rewrite. Characters keep full native doll detail at 1× billboarding.
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============ rng ============ */
+function hash2(x,y,s){ let h=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,974634679);
+  h=Math.imul(h^(h>>>13),1274126177); h^=h>>>16; return (h>>>0)/4294967296; }
+function mulberry32(seed){ let a=seed>>>0; return function(){ a|=0; a=(a+0x6D2B79F5)|0;
+  let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function vnoise(x,y,s){ const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
+  const a=hash2(xi,yi,s),b=hash2(xi+1,yi,s),c=hash2(xi,yi+1,s),d=hash2(xi+1,yi+1,s);
+  const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf); return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; }
+
+/* ============ tile geometry (parameterized — the whole point) ============ */
+const TW=16, TH=8, HW=TW/2, HH=TH/2, ZH=6;
+
+/* ============ palette tokens (Emberwood, dark) ============ */
+const INK='#0b0910';
+const GRASS=['#5a7040','#3c5030','#293a25','#182618'];
+const DIRT =['#7e5f42','#5a422c','#3e2f20','#2a2014'];
+const STONE=['#6a6478','#4c4858','#363344','#232130'];
+const WALLG=['#4a4438','#38332a','#28241e'];
+const WALLS=['#524e62','#3c3948','#2a2836'];
+const WATER=['#3a5c74','#2c4c62','#1a3448','#102230'];
+const TRUNK=['#4c3a28','#32271a'];
+const CANOPY=['#33502c','#22381c','#142412'];
+const ACCENT='#a8546c', ACCENT2='#c9a14e';
+const FLAME=['#ffe9a0','#ffb050','#e2572b'];
+
+const SKINS=[['#f4d6b6','#e0ac80','#b07a52'],['#e8c096','#cc9868','#9c6c44'],['#d0a074','#ac7c50','#805436'],
+             ['#a87850','#885c3a','#5c3e28'],['#845430','#663f26','#442a1a'],['#5c3c28','#452c1e','#2e1d14']];
+const HAIRC=['#241c2c','#4c3020','#744c26','#a87834','#b8b0a8','#8c3434'];
+const CLOTH=['#8c3838','#345888','#356e4a','#70487c','#a87834','#4c5866','#63402f'];
+const LEATHER='#33251b';
+
+/* ============ light shading (quantized) ============ */
+const shadeCache=new Map();
+function shade(hex,L){
+  const key=hex+'|'+L;
+  let v=shadeCache.get(key); if(v) return v;
+  const n=parseInt(hex.slice(1),16);
+  const m=0.07+0.93*L, w=L*L;
+  const r=Math.min(255,((n>>16)&255)*m+46*w);
+  const g=Math.min(255,((n>>8)&255)*m+24*w);
+  const b=(n&255)*m;
+  v='rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
+  shadeCache.set(key,v); return v;
+}
+const quant=(L)=>Math.min(1,Math.max(0,Math.round(L*6)/6));
+function shadeHex(hex){ const n=parseInt(hex.slice(1),16); const d=v=>Math.max(0,v-36);
+  return '#'+((d(n>>16)<<16)|(d((n>>8)&255)<<8)|d(n&255)).toString(16).padStart(6,'0'); }
+
+/* ============ scene model ============ */
+function buildSceneA(seed){
+  const W=25,H=31,g=[];
+  for(let y=0;y<H;y++){ g[y]=[];
+    for(let x=0;x<W;x++){
+      const n=vnoise(x/7,y/7,seed);
+      let cell={kind:'grass',h:1,prop:null};
+      if(n>0.72 && x<13 && y<13) cell.h=2;                      // plateau NW
+      g[y][x]=cell;
+    }
+  }
+  for(let y=13;y<=19;y++) for(let x=15;x<=21;x++){              // pond basin E-mid
+    const d=Math.hypot(x-18,y-16);
+    if(d<3.4+hash2(x,y,seed)*0.9) g[y][x]={kind:'water',h:0,prop:null};
+  }
+  for(let t=0;t<=42;t++){                                       // dirt path SW→NE
+    const x=Math.round(3+t*0.5), y=Math.round(27-t*0.58+Math.sin(t*0.35)*1.6);
+    for(const [dx,dy] of [[0,0],[1,0],[0,1]]){
+      const yy=y+dy,xx=x+dx;
+      if(g[yy]&&g[yy][xx]&&g[yy][xx].kind==='grass'&&g[yy][xx].h===1) g[yy][xx]={kind:'dirt',h:1,prop:null};
+    }
+  }
+  const rng=mulberry32(seed+9);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const c=g[y][x];
+    if(c.kind==='grass' && rng()<0.085) c.prop='tree';
+    else if(c.kind==='grass' && rng()<0.02) c.prop='glint';
+  }
+  for(const [x,y] of [[6,22],[11,15],[17,8]])                   // wayposts along path
+    if(g[y]&&g[y][x]){ g[y][x].kind='dirt'; g[y][x].h=1; g[y][x].prop='torch'; }
+  if(g[6]&&g[6][6]&&g[6][6].h===2){ g[6][6].prop='chest'; g[6][6].kind='grass'; }
+  return { g,W,H, wall:WALLG, actors:[ {x:12,y:18,kind:'hero'}, {x:13,y:19,kind:'settler'} ] };
+}
+function buildSceneB(seed){
+  const W=25,H=31,g=[];
+  for(let y=0;y<H;y++){ g[y]=[];
+    for(let x=0;x<W;x++){
+      let cell={kind:'stone',h:1,prop:null};
+      if(vnoise(x/5,y/5,seed+50)>0.78) cell.h=2;                // broken ledges
+      if(x<3||y<3||x>W-4||y>H-4){ if(vnoise(x/4,y/4,seed+80)>0.55) cell={kind:'grass',h:1,prop:null}; }
+      g[y][x]=cell;
+    }
+  }
+  for(let y=12;y<=17;y++) for(let x=9;x<=15;x++) g[y][x]={kind:'void',h:-3,prop:null};
+  const rng=mulberry32(seed+21);
+  for(const [x,y] of [[6,9],[18,9],[6,20],[18,20],[12,6]]) if(g[y][x].kind==='stone') g[y][x].prop='pillar';
+  for(const [x,y] of [[7,14],[17,15],[12,21]]) if(g[y][x].kind!=='void') g[y][x].prop='torch';
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const c=g[y][x];
+    if(!c.prop && c.kind==='stone' && rng()<0.035) c.prop='glint';
+    if(!c.prop && c.kind==='grass' && rng()<0.13) c.prop='tree';
+  }
+  g[20][10].prop='chest';
+  return { g,W,H, wall:WALLS, actors:[ {x:12,y:19,kind:'hero'}, {x:15,y:19,kind:'hooded'} ] };
+}
+
+/* ============ lighting ============ */
+function lightAt(sources,x,y,ambient){
+  let L=ambient;
+  for(const s of sources){
+    const d=Math.hypot(x-s.x,y-s.y);
+    if(d<s.r) L=Math.max(L,(1-d/s.r)*s.i);
+  }
+  return quant(L);
+}
+
+/* ============ drawers ============ */
+function inDiamond(rx,ry){ return Math.abs(rx-(TW-1)/2)/HW + Math.abs(ry-(TH-1)/2)/HH <= 1.001; }
+
+function drawFloor(c,cx,y0,cell,wx,wy,L,seed){
+  const ramp = cell.kind==='grass'?GRASS : cell.kind==='dirt'?DIRT : cell.kind==='water'?WATER : STONE;
+  const checker=(wx+wy)&1;
+  for(let ry=0;ry<TH;ry++) for(let rx=0;rx<TW;rx++){
+    if(!inDiamond(rx,ry)) continue;
+    const r=hash2(wx*TW+rx,wy*TH+ry,seed);
+    let i = r<0.12?0 : r<0.80?1 : r<0.96?2 : 3;
+    if(checker && i>0) i-=1;
+    let col=ramp[Math.min(i,ramp.length-1)];
+    if(cell.kind==='water' && r>0.985) col=WATER[0];
+    const edge = (Math.abs(rx-(TW-1)/2)/HW + Math.abs(ry-(TH-1)/2)/HH) > 0.86 && ry>=HH;
+    if(edge) col=ramp[ramp.length-1];
+    c.fillStyle=shade(col,L);
+    c.fillRect(cx-HW+rx, y0+ry, 1, 1);
+  }
+}
+function drawFaces(c,cx,y0,cell,nR,nL,wall,L,wx,wy,seed){
+  const mk=(lower,side)=>{
+    if(lower===null) return;
+    const dh=cell.h-lower;
+    if(dh<=0) return;
+    const depth=Math.min(24, dh*ZH + (lower<=-3?14:0));
+    for(let rx=0;rx<HW;rx++){
+      const xpx = side==='R'? cx+rx : cx-HW+rx;
+      const yE  = side==='R'? y0+TH-((rx+1)>>1) : y0+HH+((rx+1)>>1);
+      for(let d=0; d<depth; d++){
+        const rib=((side==='R'?rx:HW-1-rx)&3)<2?0:1;
+        const r=hash2(wx*HW+rx+(side==='R'?400:0), wy*64+d, seed+7);
+        let base=wall[rib + (r>0.9?1:0)] || wall[2];
+        const fade=Math.max(0.12, 1-d/depth*0.85);
+        const sideMul=side==='L'?0.72:1;
+        c.fillStyle=shade(base, quant(L*fade*sideMul));
+        c.fillRect(xpx, yE+d, 1, 1);
+      }
+    }
+  };
+  mk(nR,'R'); mk(nL,'L');
+}
+function drawTree(c,cx,anchorY,L,wx,wy,seed){
+  const px=(x,y,col)=>{ c.fillStyle=shade(col,L); c.fillRect(cx-8+x, anchorY-26+y, 1, 1); };
+  const h=(a,b)=>hash2(wx*31+a,wy*31+b,seed+42);
+  for(let y=17;y<=25;y++){ px(7,y,TRUNK[0]); px(8,y,TRUNK[1]); }
+  px(6,24,TRUNK[1]); px(9,24,TRUNK[1]);
+  const rows=[[6,3],[4,5],[3,7],[2,7],[2,7],[3,7],[4,6],[5,4],[7,2]];
+  rows.forEach(([x0,half],i)=>{ const y=3+i;
+    for(let x=8-half;x<=8+half;x++){ if(x<0||x>15)continue;
+      const r=h(x,y); let col=r<0.16?CANOPY[0]:r<0.7?CANOPY[1]:CANOPY[2];
+      if(y>=9) col=r<0.5?CANOPY[1]:CANOPY[2]; px(x,y,col); } });
+  if(h(3,3)<0.3) px(12,8,ACCENT2);
+}
+function drawTorch(c,cx,by){
+  const px=(x,y,col)=>{ c.fillStyle=col; c.fillRect(cx+x, by+y, 1, 1); };
+  px(0,-2,TRUNK[0]); px(0,-3,TRUNK[1]); px(0,-4,TRUNK[0]); px(0,-5,TRUNK[1]);
+  px(-1,-7,FLAME[2]); px(1,-7,FLAME[2]); px(0,-7,FLAME[1]); px(0,-8,FLAME[1]); px(0,-9,FLAME[0]);
+  const g=c.createRadialGradient(cx,by-7,1,cx,by-7,9);
+  g.addColorStop(0,'rgba(255,176,80,0.30)'); g.addColorStop(1,'rgba(255,176,80,0)');
+  c.fillStyle=g; c.beginPath(); c.arc(cx,by-7,9,0,Math.PI*2); c.fill();
+}
+function drawPillar(c,cx,by,L){
+  const px=(x,y,col)=>{ c.fillStyle=shade(col,L); c.fillRect(cx+x,by+y,1,1); };
+  for(let y=-9;y<=-1;y++){ px(-1,y,STONE[1]); px(0,y,STONE[2]); px(1,y,STONE[3]); }
+  px(-1,-10,STONE[0]); px(0,-10,STONE[1]); px(1,-10,STONE[2]);
+}
+function drawChest(c,cx,by,L){
+  const px=(x,y,col)=>{ c.fillStyle=shade(col,L); c.fillRect(cx+x,by+y,1,1); };
+  for(let x=-2;x<=2;x++){ px(x,-4,TRUNK[0]); px(x,-3,TRUNK[0]); px(x,-2,TRUNK[1]); px(x,-1,TRUNK[1]); }
+  px(0,-3,ACCENT2);
+}
+function drawGlint(c,cx,by,L,r){
+  c.fillStyle=r<0.5?'#e8e4da':ACCENT2;
+  c.fillRect(cx,by-1,1,1);
+  c.fillStyle='rgba(255,255,255,0.22)'; c.fillRect(cx-1,by-1,3,1); c.fillRect(cx,by-2,1,3);
+}
+
+/* ---- paper-doll (down, idle) @1× — full native detail, reference proportions ---- */
+function drawDoll(c,cx,anchorY,R,L,hpFrac){
+  const px=(x,y,col)=>{ c.fillStyle=shade(col,L); c.fillRect(cx-8+x, anchorY-20+y, 1, 1); };
+  const rect=(x0,y0,x1,y1,col)=>{ for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) px(x,y,col); };
+  const skin=SKINS[R.skin], hood=R.outfit==='hood';
+  const bodyC=R.c1, legC=R.c2;
+  rect(6,15,7,17,legC); rect(8,15,9,17,legC); rect(6,18,7,18,LEATHER); rect(8,18,9,18,LEATHER);
+  rect(5,9,10,14,bodyC); rect(5,13,10,13,LEATHER); rect(10,10,10,13,shadeHex(bodyC));
+  rect(4,10,4,11,bodyC); rect(11,10,11,11,bodyC); rect(4,12,4,13,skin[1]); rect(11,12,11,13,skin[1]);
+  rect(5,3,10,8,skin[1]); rect(5,8,10,8,skin[2]); rect(5,3,10,3,skin[0]);
+  px(6,6,INK); px(9,6,INK);
+  if(hood){ rect(4,0,11,2,R.hairC); rect(4,3,4,8,R.hairC); rect(11,3,11,8,shadeHex(R.hairC));
+            px(5,3,shadeHex(R.hairC)); px(10,3,shadeHex(R.hairC)); }
+  else { rect(5,1,10,2,R.hairC); px(5,3,R.hairC); px(10,3,shadeHex(R.hairC)); }
+  if(hpFrac!=null){
+    c.fillStyle='rgba(10,8,16,0.8)'; c.fillRect(cx-6, anchorY-25, 12, 3);
+    c.fillStyle='#5ad46a'; c.fillRect(cx-5, anchorY-24, Math.round(10*hpFrac), 1);
+  }
+}
+
+/* ============ minimap ============ */
+function drawMinimap(c,scene,W,H,px0){
+  const S=2, mw=W*S, mh=H*S, x0=px0-mw-8, y0=8;
+  c.fillStyle='rgba(10,8,16,0.75)'; c.fillRect(x0-3,y0-3,mw+6,mh+6);
+  c.strokeStyle='#3a3650'; c.strokeRect(x0-3.5,y0-3.5,mw+7,mh+7);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const cell=scene.g[y][x]; if(cell.kind==='void') continue;
+    c.fillStyle = cell.kind==='water'?'#1a3448' : cell.h===2?'#565064':'#3c3846';
+    if(cell.kind==='grass'||cell.kind==='dirt') c.fillStyle = cell.h===2?'#44503a':'#333d2c';
+    c.fillRect(x0+x*S, y0+y*S, S, S);
+  }
+  c.fillStyle='#6ad4e8'; c.fillRect(x0+scene.actors[0].x*S, y0+scene.actors[0].y*S, S, S);
+  c.fillStyle=ACCENT2;   c.fillRect(x0+scene.actors[1].x*S, y0+scene.actors[1].y*S, S, S);
+  c.fillStyle=ACCENT2; c.font='8px monospace'; c.textAlign='right';
+  c.fillText('⌐ MAP', x0+mw+2, y0+mh+12);
+}
+
+/* ============ scene renderer ============ */
+function renderScene(canvas, scene, seed, mood){
+  const c=canvas.getContext('2d'); c.imageSmoothingEnabled=false;
+  const W=scene.W, H=scene.H, cw=canvas.width, ch=canvas.height;
+  c.fillStyle=INK; c.fillRect(0,0,cw,ch);
+  const ox=cw/2, oy=Math.round((ch-(W+H-2)*HH-40)/2)+20;
+
+  const sources=[];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++)
+    if(scene.g[y][x].prop==='torch') sources.push({x:x+0.5,y:y+0.5,r:4.4,i:1});
+  const hero=scene.actors[0];
+  sources.push({x:hero.x+0.5,y:hero.y+0.5,r:mood.heroR,i:1});
+
+  const actorAt=(x,y)=>scene.actors.find(a=>a.x===x&&a.y===y);
+
+  for(let s=0;s<W+H-1;s++){
+    for(let x=Math.max(0,s-H+1); x<=Math.min(W-1,s); x++){
+      const y=s-x, cell=scene.g[y][x];
+      const cx=ox+(x-y)*HW, y0=oy+(x+y)*HH - Math.max(cell.h,0)*ZH;
+      const L=lightAt(sources,x+0.5,y+0.5,mood.ambient);
+      if(cell.kind!=='void'){
+        const nR = x+1<W ? (scene.g[y][x+1].kind==='void'?-3:scene.g[y][x+1].h) : cell.h;
+        const nL = y+1<H ? (scene.g[y+1][x].kind==='void'?-3:scene.g[y+1][x].h) : cell.h;
+        drawFaces(c,cx,y0,cell,nR,nL,scene.wall,L,x,y,seed);
+        drawFloor(c,cx,y0,cell,x,y,L,seed);
+      }
+      const by=y0+HH+1;                            // ground anchor near diamond center
+      if(cell.prop==='tree')   drawTree(c,cx,by,L,x,y,seed);
+      if(cell.prop==='pillar') drawPillar(c,cx,by,L);
+      if(cell.prop==='chest')  drawChest(c,cx,by,L);
+      if(cell.prop==='glint')  drawGlint(c,cx,by,L,hash2(x,y,seed+3));
+      if(cell.prop==='torch')  drawTorch(c,cx,by);
+      const a=actorAt(x,y);
+      if(a){
+        const Lp=Math.max(L,0.85);
+        const R = a.kind==='hero'
+          ? {skin:1,hairC:HAIRC[5],outfit:'hair',c1:CLOTH[6],c2:CLOTH[5]}
+          : a.kind==='settler'
+          ? {skin:3,hairC:HAIRC[1],outfit:'hair',c1:CLOTH[2],c2:CLOTH[6]}
+          : {skin:4,hairC:'#2c2436',outfit:'hood',c1:'#3a3548',c2:'#2c2838'};
+        drawDoll(c,cx,by,R,Lp, a.kind==='hero'?0.9:1);
+        if(a.kind==='settler'){ c.fillStyle=ACCENT2; c.fillRect(cx+5,by-24,1,1); }  // quest mote
+      }
+    }
+  }
+  drawMinimap(c,scene,W,H,cw);
+}
+
+/* ============ boot + controls ============ */
+let seed=774411, moodKey='dusk';
+const MOODS={ dusk:{ambient:0.14,heroR:5.6}, night:{ambient:0.045,heroR:5.0} };
+function renderAll(){
+  renderScene(document.getElementById('sceneA'), buildSceneA(seed), seed, MOODS[moodKey]);
+  renderScene(document.getElementById('sceneB'), buildSceneB(seed), seed+9999,
+              moodKey==='dusk'?{ambient:0.10,heroR:5.4}:MOODS.night);
+}
+document.getElementById('btnDusk').onclick=(e)=>{ moodKey='dusk'; setOn(e.target); renderAll(); };
+document.getElementById('btnNight').onclick=(e)=>{ moodKey='night'; setOn(e.target); renderAll(); };
+function setOn(btn){ document.getElementById('btnDusk').classList.remove('on');
+  document.getElementById('btnNight').classList.remove('on'); btn.classList.add('on'); }
+document.getElementById('btnReroll').onclick=()=>{ seed=(Math.random()*1e9)|0; renderAll(); };
+renderAll();
+</script>
+</body>
+</html>
