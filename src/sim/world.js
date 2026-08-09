@@ -45,7 +45,7 @@ export function heightAt(world, x, y) {
 export function corruptionAt(world, x, y) {
   const c = fbm(x * 0.13, y * 0.13, world.cs, 3);
   const d = Math.hypot(x - world.corrX, y - world.corrY);
-  const fall = Math.max(0, 1 - d / 44);
+  const fall = Math.max(0, 1 - d / 30);
   return c * 0.55 + fall * 0.7;
 }
 const CORRUPT_THRESHOLD = 0.72;
@@ -72,6 +72,17 @@ export function resourceAt(world, x, y) {
   return null;
 }
 
+// Static props: the eye totem sits on the corruption heart; spires and monoliths
+// scatter sparsely on dry land. Pure function of coords+seed (like resources).
+export function propAt(world, x, y) {
+  if (x === world.corrX && y === world.corrY) return 'totem';
+  if (materialAt(world, x, y) === MAT.WATER) return null;
+  const r = hash2(x, y, world.ws + 321);
+  if (r < 0.0016) return 'spire';
+  if (r > 0.9987) return 'monolith';
+  return null;
+}
+
 // Walkable if: not water, not a resource, and (when a from-height is given) the
 // target is not a higher WALL — you can step up at most one level and descend
 // any amount, so the character moves over all terrain but tall cliffs. core.js
@@ -82,6 +93,7 @@ export function isWalkable(world, x, y, fromZ) {
   if (materialAt(world, tx, ty) === MAT.WATER) return false;
   if (fromZ !== undefined && heightAt(world, tx, ty) - fromZ > MAX_CLIMB) return false;
   if (resourceAt(world, tx, ty)) return false;
+  if (propAt(world, tx, ty)) return false;
   return true;
 }
 

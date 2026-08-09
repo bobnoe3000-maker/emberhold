@@ -5,11 +5,14 @@
 // integer-scaled to the display (the crisp path). Dynamic actors, glow pulse,
 // torch, and fog composite on top each frame.
 
-import { materialAt, heightAt, resourceAt } from '../sim/world.js';
+import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
 import { DREAD, DGLOW, INK_RGB } from './palette.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
+import { buildSpire, buildMonolith, buildEyeTotem } from '../assetforge/voxprops.js';
 import { hash2, fbm } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
+
+const clampf = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 const DOLL_AX = 12, DOLL_AY = 34;
 const MARGIN = 64;                 // native-px slack before a re-bake
@@ -100,6 +103,18 @@ export function createRenderer(canvas, sim, input) {
       outlineSprite(c, w, h);
       harvestCache[kind] = { cv, ax: (w / 2) | 0, ay: h - 1 };
     }
+  })();
+
+  // ---- voxel props (spires / monolith / eye-totem) baked once per variant ----
+  const PROP_VARIANTS = 4;
+  const propCache = { spire: [], monolith: [], totem: [] };
+  (function bakeProps() {
+    const seed = sim.world.seed;
+    for (let v = 0; v < PROP_VARIANTS; v++) {
+      propCache.spire.push(buildSpire(seed * 13 + v * 97 + 1));
+      propCache.monolith.push(buildMonolith(seed * 29 + v * 131 + 7));
+    }
+    propCache.totem.push(buildEyeTotem(seed * 7 + 3));
   })();
 
   let flash = null;
@@ -206,10 +221,15 @@ export function createRenderer(canvas, sim, input) {
     }
     minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
     const draws = [];
-    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) { const kind = resourceAt(sim.world, tx, ty); if (kind) draws.push({ d: tx + ty, kind, tx, ty }); }
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
+      const rk = resourceAt(sim.world, tx, ty); if (rk) draws.push({ d: tx + ty, kind: 'harvest', rk, tx, ty });
+      const pk = propAt(sim.world, tx, ty); if (pk) draws.push({ d: tx + ty + 0.02, kind: 'prop', pk, tx, ty });
+    }
     draws.push({ d: ix + iy + 0.01, kind: 'player' });
     draws.sort((a, b) => a.d - b.d);
     const flashing = flash && now < flash.until ? flash : null;
+    const propGlow = [];
+    let totemScreen = null;
     for (const dr of draws) {
       if (dr.kind === 'player') {
         const gx = ox + P.sx, gy = oy + P.sy;
@@ -218,10 +238,20 @@ export function createRenderer(canvas, sim, input) {
         nctx.drawImage(dollFrame(p.moving ? p.frame : 0, p.mirror), Math.round(gx - DOLL_AX), Math.round(gy - DOLL_AY));
         continue;
       }
-      const z = heightAt(sim.world, dr.tx, dr.ty), spr = harvestCache[dr.kind];
+      const z = heightAt(sim.world, dr.tx, dr.ty);
       const gx = ox + (dr.tx - dr.ty) * HW, gy = oy + (dr.tx + dr.ty) * HH - z * ZH + HH;
-      const jx = flashing && flashing.tx === dr.tx && flashing.ty === dr.ty ? (hash2((now / 40) | 0, dr.tx, dr.ty) < 0.5 ? -1 : 1) : 0;
-      nctx.drawImage(spr.cv, Math.round(gx - spr.ax) + jx, Math.round(gy - spr.ay));
+      if (dr.kind === 'harvest') {
+        const spr = harvestCache[dr.rk];
+        const jx = flashing && flashing.tx === dr.tx && flashing.ty === dr.ty ? (hash2((now / 40) | 0, dr.tx, dr.ty) < 0.5 ? -1 : 1) : 0;
+        nctx.drawImage(spr.cv, Math.round(gx - spr.ax) + jx, Math.round(gy - spr.ay));
+        continue;
+      }
+      // prop (voxel bake) — deterministic variant, 2px ground sink
+      const arr = propCache[dr.pk], spr = dr.pk === 'totem' ? arr[0] : arr[(hash2(dr.tx, dr.ty, 5) * arr.length) | 0];
+      const drawX = Math.round(gx - spr.ax), drawY = Math.round(gy - spr.ay - 2);
+      nctx.drawImage(spr.cv, drawX, drawY);
+      for (const [gpx, gpy, c, ph] of spr.glow) propGlow.push([drawX + gpx, drawY + gpy, c, ph]);
+      if (dr.pk === 'totem') totemScreen = { x: gx, y: drawY + 6 };
     }
 
     ctx.imageSmoothingEnabled = false;
@@ -233,6 +263,11 @@ export function createRenderer(canvas, sim, input) {
       const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph));
       ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
       ctx.fillRect((bx + gdx) * S, (by + gdy) * S, S, S);
+    }
+    for (const [gx, gy, c, ph] of propGlow) {
+      const a = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph));
+      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+      ctx.fillRect(gx * S, gy * S, S, S);
     }
 
     // player torch — cold veil, warm hole (placeholder for a placeable light later)
@@ -250,6 +285,17 @@ export function createRenderer(canvas, sim, input) {
     const wg = ctx.createRadialGradient(lx, ly, 0, lx, ly, rad * 0.55);
     wg.addColorStop(0, 'rgba(255,150,90,0.10)'); wg.addColorStop(1, 'rgba(255,150,90,0)');
     ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(lx, ly, rad * 0.55, 0, Math.PI * 2); ctx.fill();
+
+    // eye-totem flicker light — the corruption heart's poison lantern (TDD §9)
+    if (totemScreen) {
+      const cxs = totemScreen.x * S, cys = totemScreen.y * S, rad2 = 5 * TW * S;
+      const fl = clampf(0.35 + 0.5 * fbm(tt * 6, 0, 55, 2) + 0.15 * Math.sin(tt * 11));
+      ctx.globalCompositeOperation = 'lighter';
+      const g2 = ctx.createRadialGradient(cxs, cys, 0, cxs, cys, rad2);
+      g2.addColorStop(0, `rgba(132,212,76,${0.32 * fl})`); g2.addColorStop(1, 'rgba(132,212,76,0)');
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(cxs, cys, rad2, 0, Math.PI * 2); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
 
     // rolling fog (regenerated ~8 Hz), integer-scaled with the world
     if (now - fogAt > 125) { makeFog(now / 1000); fogAt = now; }
