@@ -88,25 +88,29 @@ keeps the repo zero-build. The Phaser recommendation from the design doc stands 
 want its tilemap culling, particles, and audio: the swap is contained to `/render` because
 the sim never touches it. Capacitor wrap (Phase 5) points at this same folder.
 
-## Art direction — isometric (pivot in progress)
+## Art direction — Dreadforge (nightmare)
 
-The build now renders in a **2:1 isometric** language: fine 16×8 diamond tiles and a detailed
-24×36 character sprite (`src/render/iso.js` is the geometry source; `renderer.js` is the iso
-painter). This is **presentation only** — the headless sim, saves, determinism, and the
-paper-doll *recipe* system are unchanged. The previous flat top-down renderer is parked in
-`src/render/renderer-flat.js` for rollback (flip the import in `main.js`).
+The build renders in a **2:1 isometric** language (`src/render/iso.js` geometry, diamond tiles,
+detailed 24×36 character). The art *direction* has pivoted from the warm dusk **Emberwood** mood
+to **Dreadforge** — a game-wide procedural nightmare: ashen violet ground, spreading poison
+corruption, bone / flesh / obsidian, voxel-baked props, cellular-automata creatures, and a live
+glow + flicker + fog post stack. This is **presentation only** on the same geometry — the
+headless sim, saves, and determinism are unchanged, and the character survives as a
+palette-quantized sprite-sheet actor.
 
-**Landed (pivot step 1):** iso projection + input mapping, diamond floor tiles, detailed
-billboarded character, iso tap + fat-finger snap — at **flat** elevation.
-**Next steps** (per [`docs/emberhold-iso-pivot-tdp.md`](docs/emberhold-iso-pivot-tdp.md) §6):
-chunk-baked geometry for 60fps, then `world.js` elevation (basins/plateaus/cliff faces) +
-walk rule, quantized per-tile lighting, and the character's **iso-facing walk frames**.
-Visual spec proof: [`docs/art-style-iso.html`](docs/art-style-iso.html).
+Full spec: [`docs/dreadforge-tdd.md`](docs/dreadforge-tdd.md). Confirmed look:
+[`docs/dreadforge-mockup.html`](docs/dreadforge-mockup.html). Plan of record:
+[`docs/emberhold-status-v0.4.md`](docs/emberhold-status-v0.4.md).
 
-## Next (Phase 1a — finish the iso pivot, then the moment loop)
+**Landed:** iso projection + input, diamond tiles, detailed character, iso tap (Emberwood palette).
+**Next — the Dreadforge port** (status v0.4 §5): master palette + material classification +
+elevation/cliff faces (the game *becomes* the nightmare) → chunk-cache + post stack (60fps + mood)
+→ voxel bake + props → actor contract + the player as a `SheetActor` + CA creatures → NPC variants
+and corruption-as-progression.
 
-- Chunk-bake iso geometry (60fps) · on-device feel pass (scale, joystick, tap snap)
-- `world.js` elevation + water basins + walk rule; quantized per-tile lighting
-- Iso-facing walk frames for the 24×36 character
-- Second biome (iso palette + height-profile remap) · auto-path on tap-to-move · audio v0
-- Then Phase 1b: combat, inventory + crafting bottom sheets, tool-in-hand, height ramps
+## Next (build order)
+
+- **Step 1:** master ramp palette + `world.js` `heightAt`/corruption/classification + nightmare
+  diamond tiles + cliff faces — the biggest visual step.
+- **Step 2:** chunk-cache render path + `render/post.js` (glow / flicker / fog) — locks 60fps.
+- **Step 3+:** voxel bake + props · actor contract + hero as SheetActor + CA creatures · NPC variants.

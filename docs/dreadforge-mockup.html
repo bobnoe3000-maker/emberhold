@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dreadforge — Nightmare Biome Mockup</title>
+<style>
+  :root{
+    --bg:#08060e; --panel:#0f0c18; --panel2:#141020; --line:#241d33; --line2:#37294a;
+    --ink:#d9d2e4; --dim:#8b83a0; --poison:#84d44c; --violet:#be96ff; --ember:#ff785a;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg)}
+  body{font-family:var(--serif);color:var(--ink);line-height:1.6;padding:0 0 80px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--poison);font-weight:600}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  header.hero{padding:60px 22px 30px;border-bottom:1px solid var(--line);
+    background:radial-gradient(120% 90% at 50% -10%, rgba(132,212,76,.08), transparent 55%)}
+  .hero-inner{max-width:960px;margin:0 auto;display:flex;gap:38px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .hero-copy{flex:1 1 300px;min-width:280px}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(40px,8vw,72px);line-height:.94;letter-spacing:-.02em;margin:12px 0 0}
+  h1 em{font-style:normal;color:var(--poison)}
+  .sub{font-size:13px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em;margin-top:8px}
+  .lede{font-size:clamp(15px,2.3vw,18px);color:#c3bcd2;margin-top:18px;max-width:46ch}
+  .lede b{color:var(--ink);font-weight:600}
+  .phone{flex:0 0 auto;width:300px;max-width:80vw;border-radius:30px;padding:9px;
+    background:linear-gradient(160deg,#1b1530,#0b0814);box-shadow:0 30px 70px -20px #000, 0 0 0 1px var(--line2)}
+  .phone .screen{position:relative;border-radius:22px;overflow:hidden;background:#000;aspect-ratio:9/16}
+  .phone canvas{width:100%;height:100%;object-fit:cover}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:20px;background:#0b0814;border-radius:0 0 12px 12px;z-index:5}
+  section{padding:48px 0 6px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:4px;flex-wrap:wrap}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(24px,3.6vw,32px);margin:0}
+  .sec-sub{font-size:15px;color:var(--dim);max-width:64ch;margin:8px 0 22px}
+  .sec-sub b{color:#c3bcd2}
+  .divider{height:1px;background:linear-gradient(90deg,var(--line),transparent);margin-top:6px}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:999px;font-weight:600}
+  .tag.new{color:#08060e;background:var(--poison)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .card .frame{background:#08060e;display:flex;align-items:center;justify-content:center;padding:12px}
+  .card .frame canvas{width:100%}
+  .card .cap{padding:11px 14px;border-top:1px solid var(--line)}
+  .card .cap .t{font-family:var(--serif);font-size:15px}
+  .card .cap .d{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px;line-height:1.5}
+  .ramps{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 26px}
+  .ramp{display:flex;align-items:center;gap:12px}
+  .ramp .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--dim);width:56px;text-transform:uppercase}
+  .ramp .chips{display:flex;border-radius:5px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+  .chip{width:28px;height:26px}
+  .glowrow{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
+  .glowdot{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .glowdot i{width:14px;height:14px;border-radius:50%;display:block}
+  footer{max-width:960px;margin:52px auto 0;padding:24px 22px 0;border-top:1px solid var(--line)}
+  footer p{font-family:var(--mono);font-size:11px;color:#6f6a86;line-height:1.7;max-width:74ch}
+  footer p b{color:var(--dim)}
+  @media(max-width:660px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <div class="eyebrow">Art Direction · Dreadforge</div>
+      <h1>DREAD<em>FORGE</em></h1>
+      <div class="sub">nightmare biome · procedural · TW16 · TH8 · ZH6</div>
+      <p class="lede">A cold procedural nightmare over the locked iso grid: <b>ashen violet ground</b>, spreading <b>poison corruption</b>, bone and flesh and obsidian — voxel-baked spires and eye-totems, cellular-automata creatures, and a live glow + flicker + fog post stack. Every pixel from one seed.</p>
+    </div>
+    <div class="phone">
+      <div class="screen"><div class="notch"></div><canvas id="heroCv" width="400" height="300"></canvas></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section>
+    <div class="sec-head"><div class="eyebrow">The vista</div><h2>One seed, one nightmare</h2><span class="tag new">New direction</span></div>
+    <p class="sec-sub">Elevation with cliff faces, corruption spreading from a seeded heart to an <b>eye totem</b>, obsidian spires, bone shale on the highs, flesh growth in the hollows. Glow pulses, the totem's poison light flickers, dithered fog rolls at 8&nbsp;Hz.</p>
+    <div class="card"><div class="frame"><canvas id="vistaCv" width="400" height="300"></canvas></div>
+      <div class="cap"><div class="t">Corruption vale</div><div class="d">generated live · drag the seed and it rebuilds deterministically</div></div></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section>
+    <div class="sec-head"><div class="eyebrow">Palette</div><h2>The mood lives in the ramps</h2></div>
+    <p class="sec-sub">Desaturated cold bases, one poison accent, warm ember reserved for creature eyes. All art — terrain, voxels, creatures, future sprite sheets — resolves to this table.</p>
+    <div class="ramps" id="ramps"></div>
+    <div class="glowrow" id="glowrow"></div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section>
+    <div class="sec-head"><div class="eyebrow">Content</div><h2>Voxels &amp; creatures</h2></div>
+    <p class="sec-sub">Props are voxel volumes baked to shaded, outlined sprites (4 facings free by rotation). Creatures are mirrored cellular-automata silhouettes — the two glowing eyes are the whole "alive, not rock" signal.</p>
+    <div class="grid">
+      <div class="card"><div class="frame"><canvas id="propsCv" width="260" height="150"></canvas></div>
+        <div class="cap"><div class="t">Voxel props</div><div class="d">spire · monolith · eye totem — obsidian &amp; bone ramps, emissive rune pits</div></div></div>
+      <div class="card"><div class="frame"><canvas id="crCv" width="260" height="150"></canvas></div>
+        <div class="cap"><div class="t">CA creatures</div><div class="d">flesh on clean ground, poison on corrupted; ember vs poison eyes</div></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>What this is.</b> A from-spec implementation of the Dreadforge nightmare pipeline (the referenced <b>dreadforge.html</b> prototype wasn't in the handoff, so this is built from the TDD). Every canvas runs the real generators — value-noise fbm terrain, ramp-index tile shading, the voxel-to-sprite bake, CA creatures, and the glow/flicker/fog post stack — from a single integer seed. It targets Emberhold's locked iso grid, so the geometry is the same one already in the build; what changes is the material/palette system, the prop &amp; creature generators, and the post stack.</p>
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ================= rng + noise ================= */
+function mulberry32(a){a>>>=0;return function(){a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function hash2(x,y,s){let h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(s|0,974634679);h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296;}
+function vnoise(x,y,s){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const a=hash2(xi,yi,s),b=hash2(xi+1,yi,s),c=hash2(xi,yi+1,s),d=hash2(xi+1,yi+1,s);const u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function fbm(x,y,s,oct){let a=0,amp=0.5,f=1,tot=0;for(let o=0;o<(oct||3);o++){a+=amp*vnoise(x*f,y*f,s+o*137);tot+=amp;amp*=0.5;f*=2;}return a/tot;}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+
+/* ================= palette ramps ================= */
+const HX=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const RAMPS={
+  soil:['#120e1c','#1f1830','#2f2444','#413156','#554165'].map(HX),
+  flesh:['#260e16','#421a24','#622834','#843a44','#a2545c'].map(HX),
+  bone:['#332f28','#524c40','#756e5e','#9c9482','#c4bba6'].map(HX),
+  poison:['#0c2010','#1a3c1e','#2c6229','#4c9438','#84d44c'].map(HX),
+  water:['#060410','#0c091c','#130e2a','#1c1440'].map(HX),
+  obsid:['#0e0a16','#1c1526','#2c2138','#3e2f4e','#554270'].map(HX),
+};
+const GLOW={poison:HX('#c8ff7a'),violet:HX('#be96ff'),ember:HX('#ff785a'),water:HX('#5a46b4')};
+const OUTLINE=HX('#08050e');
+const TW=16,TH=8,ZH=6;
+const ROWW=[4,8,12,16,16,12,8,4];
+
+/* ================= terrain ================= */
+function makeWorld(seed,W,H,relief,corruption){
+  const sT=(seed*7919+3)>>>0, sC=(seed*577+41)>>>0, sSel=(seed+7)>>>0, sMat=(seed*131+9)>>>0;
+  const ex=(0.30+hash2(1,2,seed)*0.4)*W, ey=(0.28+hash2(3,4,seed)*0.4)*H, R=Math.max(W,H)*0.42;
+  const Z=[],CO=[],MAT=[];
+  const calcZ=(x,y)=>{let e=fbm(x*0.09,y*0.09,sT,4);e=(e-0.5)*relief+0.5;const ridge=Math.abs(fbm(x*0.05,y*0.05,sT+101,2)-0.5)*2;e+=0.25*ridge;return clamp(Math.round(e*7),0,7);};
+  const calcCorr=(x,y)=>{const c=fbm(x*0.13,y*0.13,sC,3);const d=Math.hypot(x-ex,y-ey);const fall=Math.max(0,1-d/R);return c*0.55+fall*0.7;};
+  const thr=1.02-corruption*0.7;
+  let best=-1,lightPos={x:(ex|0),y:(ey|0)};
+  for(let y=0;y<H;y++){Z[y]=[];CO[y]=[];MAT[y]=[];for(let x=0;x<W;x++){
+    const z=calcZ(x,y);Z[y][x]=z;const cv=calcCorr(x,y);CO[y][x]=cv;
+  }}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const z=Z[y][x], corr=CO[y][x]>thr;
+    let m;
+    if(z<=1)m='water';
+    else if(corr)m='poison';
+    else if(z>=5)m='bone';
+    else{const s=fbm(x*0.11,y*0.11,sSel,2);m=s>0.62?'flesh':'soil';}
+    MAT[y][x]=m;
+    if(z>1 && CO[y][x]>best){best=CO[y][x];lightPos={x,y};}
+  }
+  return {W,H,Z,CO,MAT,lightPos,sMat,seed,thr};
+}
+const Zof=(w,x,y)=> (x<0||y<0||x>=w.W||y>=w.H)?0:w.Z[y][x];
+
+/* ================= tile rasterizer into ImageData ================= */
+function renderWorld(w, NW, NH, OX, OY){
+  const img=new ImageData(NW,NH);const D=img.data;
+  const glow=[];
+  const put=(px,py,rgb,a)=>{px|=0;py|=0;if(px<0||py<0||px>=NW||py>=NH)return;const i=(py*NW+px)*4;if(a===undefined){D[i]=rgb[0];D[i+1]=rgb[1];D[i+2]=rgb[2];D[i+3]=255;}else{D[i]=rgb[0];D[i+1]=rgb[1];D[i+2]=rgb[2];D[i+3]=a;}};
+  const bayer=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  // painter order: s=x+y ascending
+  const tiles=[];
+  for(let y=0;y<w.H;y++)for(let x=0;x<w.W;x++)tiles.push([x,y]);
+  tiles.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  for(const [x,y] of tiles){
+    const z=w.Z[y][x], m=w.MAT[y][x], ramp=RAMPS[m];
+    const sx=OX+(x-y)*(TW/2), sy=OY+(x+y)*(TH/2)-z*ZH;
+    // ---- cliff faces (approximate): drop below lower silhouette ----
+    if(m!=='water'){
+      const dropSW=z-Zof(w,x,y+1), dropSE=z-Zof(w,x+1,y);
+      if(dropSW>0||dropSE>0){
+        for(let dx=-8;dx<8;dx++){
+          // bottom row of the diamond at this column
+          let brow=-1;for(let i=7;i>=0;i--){if(Math.abs(dx+0.5)<=ROWW[i]/2){brow=i;break;}}
+          if(brow<4)continue;
+          const se=dx>=0;const drop=se?dropSE:dropSW;if(drop<=0)continue;
+          const depth=Math.min(drop*ZH,26);
+          const fr=(se?RAMPS[m]:RAMPS[m]);
+          for(let d=1;d<=depth;d++){
+            const strat=fbm((x*8+dx)*0.5,(z*ZH+d)*0.35,w.sMat+9,2);
+            let idx=strat<0.4?0:strat<0.8?1:2; if(se)idx=Math.max(0,idx-1);
+            const dk=(d/depth); const th=bayer[(dx+64)&3][d&3]/16;
+            const col= th<dk*0.9 ? [Math.round(fr[idx][0]*0.35),Math.round(fr[idx][1]*0.35),Math.round(fr[idx][2]*0.35)] : fr[idx];
+            put(sx+dx, sy+brow+d, col);
+          }
+        }
+      }
+    }
+    // ---- top diamond ----
+    const nwLower=Zof(w,x-1,y)<z, neLower=Zof(w,x,y-1)<z, nwHigher=Zof(w,x-1,y)>z, neHigher=Zof(w,x,y-1)>z;
+    for(let i=0;i<8;i++){const wid=ROWW[i],half=wid/2;
+      for(let k=0;k<wid;k++){
+        const dx=k-half; const px=sx+dx, py=sy+i;
+        if(m==='water'){
+          const wr=RAMPS.water;let idx=1+((fbm(x*2+dx*0.1,y*2+i*0.1,w.sMat+3,2)>0.6)?1:0);
+          put(px,py,wr[Math.min(idx,wr.length-1)]);
+          if(hash2((x*16+k),(y*8+i),w.seed+900)>0.988)glow.push([px,py,GLOW.water,hash2(px,py,7)*6]);
+          continue;
+        }
+        const u=x+k/16, v=y+i/8;
+        let idx=Math.floor(fbm(u*2.3,v*2.3,w.sMat,2)*ramp.length);
+        // form shading (top-left light → SE darkens)
+        if((k/wid)+(i/8)>1.15) idx-=1;
+        // rim light / AO on upper outer edge
+        if(i<4 && (k<2||k>wid-3)){ if(nwLower||neLower)idx+=1; else if(nwHigher||neHigher)idx-=1; }
+        idx=clamp(idx,0,ramp.length-1);
+        put(px,py,ramp[idx]);
+        if(m==='poison' && hash2(x*16+k,y*8+i,w.seed+555)>0.972)glow.push([px,py,GLOW.poison,hash2(px,py,5)*6]);
+      }
+    }
+  }
+  return {img,glow};
+}
+
+/* ================= voxel bake ================= */
+function bakeVoxels(vox,SX,SY,SZ,ramp,rng,emissiveColor){
+  // screen bounds
+  const pxOf=(vx,vy)=>(vx-vy), pyOf=(vx,vy,vz)=>(((vx+vy)>>1)-vz);
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  for(let vz=0;vz<SZ;vz++)for(let vy=0;vy<SY;vy++)for(let vx=0;vx<SX;vx++){if(!vox[(vz*SY+vy)*SX+vx])continue;const p=pxOf(vx,vy),q=pyOf(vx,vy,vz);minx=Math.min(minx,p);maxx=Math.max(maxx,p+2);miny=Math.min(miny,q);maxy=Math.max(maxy,q+2);}
+  if(minx>maxx)return {cv:document.createElement('canvas'),ax:0,ay:0,glow:[]};
+  const W=maxx-minx+2,H=maxy-miny+2,offX=-minx+1,offY=-miny+1;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  const solid=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<SX&&y<SY&&z<SZ&&vox[(z*SY+y)*SX+x];
+  const glow=[];
+  const order=[];
+  for(let vz=0;vz<SZ;vz++)for(let vy=0;vy<SY;vy++)for(let vx=0;vx<SX;vx++){if(vox[(vz*SY+vy)*SX+vx])order.push([vx,vy,vz]);}
+  order.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1]));
+  for(const [vx,vy,vz] of order){
+    const val=vox[(vz*SY+vy)*SX+vx];
+    const px=pxOf(vx,vy)+offX, py=pyOf(vx,vy,vz)+offY;
+    if(val===2){ g.fillStyle=`rgb(${emissiveColor[0]},${emissiveColor[1]},${emissiveColor[2]})`;g.fillRect(px,py,2,2);glow.push([px,py,emissiveColor,rng()*6]);glow.push([px+1,py+1,emissiveColor,rng()*6]);continue; }
+    if(solid(vx,vy,vz+1)&&solid(vx+1,vy,vz)&&solid(vx,vy+1,vz))continue; // enclosed
+    let b=solid(vx,vy,vz+1)?(solid(vx,vy+1,vz)?0.5:0.72):1.0;
+    if(!solid(vx,vy,vz+1))b=1.0; else if(!solid(vx,vy+1,vz))b=0.72; else if(!solid(vx+1,vy,vz))b=0.5; else continue;
+    b*=0.8+0.2*(vz/SZ); b*=0.9+0.2*hash2(vx,vy*7+vz,3);
+    let idx=Math.floor((fbm(vx*0.4,vy*0.4+vz*0.3,7,2)*0.6+0.2+ (b-0.6))*ramp.length);
+    idx=clamp(idx,0,ramp.length-1);
+    let c=ramp[idx];
+    if(b>=1.0)c=[Math.min(255,c[0]+18),Math.min(255,c[1]+14),c[2]]; // top lit pop
+    g.fillStyle=`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;g.fillRect(px,py,2,2);
+  }
+  // outline pass
+  const id=g.getImageData(0,0,W,H),d=id.data;
+  const A=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&d[(y*W+x)*4+3]>0;
+  const marks=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(d[(y*W+x)*4+3]===0&&(A(x-1,y)||A(x+1,y)||A(x,y-1)||A(x,y+1)))marks.push([x,y]);}
+  g.fillStyle=`rgb(${OUTLINE[0]},${OUTLINE[1]},${OUTLINE[2]})`;for(const[x,y]of marks)g.fillRect(x,y,1,1);
+  return {cv,ax:offX,ay:H-1,glow};
+}
+/* prop builders */
+function buildSpire(rng){
+  const SX=13,SY=13,SZ=26,vox=new Uint8Array(SX*SY*SZ);const set=(x,y,z,v)=>{if(x>=0&&y>=0&&z>=0&&x<SX&&y<SY&&z<SZ)vox[(z*SY+y)*SX+x]=v;};
+  for(let z=0;z<SZ;z++){const t=z/SZ;const rad=(1-t)*5+1.2;const cx=6+Math.sin(z*0.5)*2.2*t, cy=6+Math.cos(z*0.42)*2.2*t;
+    for(let y=0;y<SY;y++)for(let x=0;x<SX;x++){const d=Math.hypot(x-cx,y-cy);if(d<rad-hash2(x,y+z,9)*0.9){set(x,y,z,(z>SZ-5&&rng()<0.3)?2:1);}}}
+  return bakeVoxels(vox,SX,SY,SZ,RAMPS.obsid,rng,GLOW.violet);
+}
+function buildMonolith(rng){
+  const SX=6,SY=4,SZ=21,vox=new Uint8Array(SX*SY*SZ);const set=(x,y,z,v)=>{vox[(z*SY+y)*SX+x]=v;};
+  for(let z=0;z<SZ;z++)for(let y=0;y<SY;y++)for(let x=0;x<SX;x++){
+    if(z>13 && hash2(x,y+z,4)<0.35)continue; // broken crown
+    let v=1; if(x===SX-1 && z<14 && z>2 && hash2(x*3,z,6)>0.72)v=2; // rune pits on SE face
+    set(x,y,z,v);
+  }
+  return bakeVoxels(vox,SX,SY,SZ,RAMPS.obsid,rng,GLOW.poison);
+}
+function buildEyeTotem(rng){
+  const SX=9,SY=9,SZ=17,vox=new Uint8Array(SX*SY*SZ);const set=(x,y,z,v)=>{if(x>=0&&y>=0&&z>=0&&x<SX&&y<SY&&z<SZ)vox[(z*SY+y)*SX+x]=v;};
+  for(let z=0;z<10;z++){const rad=1.4+ (z<8?(8-z)*0.18:0);for(let y=0;y<SY;y++)for(let x=0;x<SX;x++){if(Math.hypot(x-4,y-4)<rad)set(x,y,z,1);}} // pedestal
+  const cz=13,cr=3.6;for(let z=10;z<SZ;z++)for(let y=0;y<SY;y++)for(let x=0;x<SX;x++){const d=Math.hypot(x-4,y-4,(z-cz));if(d<cr){const core=Math.hypot(x-4,y-4,z-cz)<1.4;set(x,y,z,core?2:1);}}
+  return bakeVoxels(vox,SX,SY,SZ,RAMPS.flesh,rng,GLOW.poison);
+}
+/* CA creature */
+function buildCreature(rng,corrupted){
+  const HW=6,HH=11;let g=new Uint8Array(HW*HH);for(let i=0;i<HW*HH;i++)g[i]=rng()<0.50?1:0;
+  // reflect at the mirror axis (right edge) so halves stay joined; dead outside.
+  const gv=(gr,nx,ny)=>{if(ny<0||ny>=HH||nx<0)return 0;if(nx>=HW)nx=2*HW-1-nx;if(nx<0||nx>=HW)return 0;return gr[ny*HW+nx];};
+  for(let pass=0;pass<2;pass++){const n=new Uint8Array(HW*HH);for(let y=0;y<HH;y++)for(let x=0;x<HW;x++){let c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)c+=gv(g,x+dx,y+dy);n[y*HW+x]=c>=5?1:0;}g=n;}
+  const FW=HW*2,W=FW,H=HH;const cv=document.createElement('canvas');cv.width=W*2;cv.height=H*2;const c=cv.getContext('2d');
+  const ramp=corrupted?RAMPS.poison:RAMPS.flesh;
+  const alive=[];for(let y=0;y<HH;y++)for(let x=0;x<FW;x++){const hx=x<HW?x:FW-1-x;if(g[y*HW+hx])alive.push([x,y]);}
+  for(const [x,y] of alive){const grad=1-y/HH;let idx=Math.floor((grad*0.7+0.15+fbm(x*0.5,y*0.5,11,2)*0.3)*ramp.length);idx=clamp(idx,0,ramp.length-1);c.fillStyle=`rgb(${ramp[idx][0]},${ramp[idx][1]},${ramp[idx][2]})`;c.fillRect(x*2,y*2,2,2);}
+  // outline
+  const id=c.getImageData(0,0,W*2,H*2),d=id.data;const A=(x,y)=>x>=0&&y>=0&&x<W*2&&y<H*2&&d[(y*W*2+x)*4+3]>0;const marks=[];for(let y=0;y<H*2;y++)for(let x=0;x<W*2;x++){if(d[(y*W*2+x)*4+3]===0&&(A(x-1,y)||A(x+1,y)||A(x,y-1)||A(x,y+1)))marks.push([x,y]);}c.fillStyle=`rgb(${OUTLINE[0]},${OUTLINE[1]},${OUTLINE[2]})`;for(const[x,y]of marks)c.fillRect(x,y,1,1);
+  // eyes
+  const eyeC=corrupted?GLOW.poison:GLOW.ember;const ex=Math.floor(FW*0.32)*2, ey=Math.floor(HH*0.28)*2;const glow=[[ex,ey,eyeC,rng()*6],[(FW-Math.floor(FW*0.32)-1)*2,ey,eyeC,rng()*6]];
+  for(const gp of glow){c.fillStyle=`rgb(${eyeC[0]},${eyeC[1]},${eyeC[2]})`;c.fillRect(gp[0],gp[1],2,2);}
+  return {cv,ax:W,ay:H*2-1,glow};
+}
+
+/* ================= scene assembly ================= */
+function buildScene(canvas, seed, opts){
+  opts=opts||{};
+  const relief=opts.relief||1.5, corruption=opts.corruption||0.55;
+  const W=opts.W||24, H=opts.H||26;
+  const OX=H*(TW/2)+TW/2, OY=54;
+  const NW=canvas.width, NH=canvas.height;
+  const world=makeWorld(seed,W,H,relief,corruption);
+  const base=document.createElement('canvas');base.width=NW;base.height=NH;const bctx=base.getContext('2d');
+  const {img,glow}=renderWorld(world,NW,NH,OX,OY);
+  bctx.putImageData(img,0,0);
+  // ---- place props (rejection sampling) ----
+  const rng=mulberry32((seed*131+9)>>>0);
+  const actors=[];
+  const placed=[];
+  const spireBake=buildSpire(rng), monoBake=buildMonolith(rng);
+  function tryPlace(bakeFn,count){let n=0,att=0;while(n<count&&att<300){att++;const x=(rng()*W)|0,y=(rng()*H)|0;if(x<2||y<2||x>=W-2||y>=H-2)continue;if(world.Z[y][x]<=1)continue;let ok=true;for(const p of placed){if(Math.abs(p.x-x)+Math.abs(p.y-y)<5){ok=false;break;}}if(!ok)continue;placed.push({x,y});const bake=bakeFn(rng);actors.push({x,y,z:world.Z[y][x],bake});n++;}}
+  tryPlace(()=>buildSpire(rng),3);
+  tryPlace(()=>buildMonolith(rng),2);
+  // eye totem at lightPos
+  {const lp=world.lightPos;placed.push({x:lp.x,y:lp.y});actors.push({x:lp.x,y:lp.y,z:world.Z[lp.y][lp.x],bake:buildEyeTotem(rng),totem:true});}
+  // creatures near corruption
+  tryPlace(()=>buildCreature(rng, true),3);
+  tryPlace(()=>buildCreature(rng, false),2);
+  // blit actors in painter order, merge glow (into a copy so we can offset)
+  const allGlow=glow.slice();
+  actors.sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+  for(const a of actors){
+    const sx=OX+(a.x-a.y)*(TW/2), sy=OY+(a.x+a.y)*(TH/2)-a.z*ZH + TH/2 - 2;
+    const bx=Math.round(sx-a.bake.ax), by=Math.round(sy-a.bake.ay);
+    bctx.drawImage(a.bake.cv,bx,by);
+    for(const gp of a.bake.glow)allGlow.push([bx+gp[0],by+gp[1],gp[2],gp[3]]);
+  }
+  const lp=world.lightPos;
+  const lightScreen={x:OX+(lp.x-lp.y)*(TW/2), y:OY+(lp.x+lp.y)*(TH/2)-world.Z[lp.y][lp.x]*ZH - 8};
+  return {base,glow:allGlow,NW,NH,lightScreen,fog:opts.fog!==undefined?opts.fog:0.6};
+}
+
+/* ================= flicker disc + fog ================= */
+function makeFlickerDisc(rad,color){
+  const cv=document.createElement('canvas');cv.width=rad*2;cv.height=rad*2;const c=cv.getContext('2d');const id=c.createImageData(rad*2,rad*2),d=id.data;
+  const bayer=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  for(let y=0;y<rad*2;y++)for(let x=0;x<rad*2;x++){const dd=Math.hypot(x-rad,y-rad)/rad;if(dd>1)continue;const inten=(1-dd)*(1-dd);const th=bayer[x&3][y&3]/16;if(th<inten){const i=(y*rad*2+x)*4;d[i]=color[0];d[i+1]=color[1];d[i+2]=color[2];d[i+3]=Math.round(255*inten);}}
+  c.putImageData(id,0,0);return cv;
+}
+function makeFog(NW,NH,density,t,seed){
+  const cv=document.createElement('canvas');cv.width=NW;cv.height=NH;const c=cv.getContext('2d');const id=c.createImageData(NW,NH),d=id.data;
+  const bayer=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  for(let y=0;y<NH;y++)for(let x=0;x<NW;x++){
+    const top=(1-y/NH)*0.5; const band=fbm(x*0.02+t*0.15,y*0.03,seed+31,2);
+    const vig=Math.hypot((x-NW/2)/(NW/2),(y-NH/2)/(NH/2)); const vg=Math.max(0,vig-0.7)*1.4;
+    let f=density*(0.25+top*0.8)*(0.5+band*0.8)+vg;
+    f=clamp(f,0,1); const th=bayer[x&3][y&3]/16;
+    if(th<f){const i=(y*NW+x)*4;d[i]=8;d[i+1]=6;d[i+2]=16;d[i+3]=255;}
+  }
+  c.putImageData(id,0,0);return cv;
+}
+
+/* ================= animate a scene onto a display canvas ================= */
+function animate(displayCv, scene){
+  const ctx=displayCv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  displayCv.width=scene.NW;displayCv.height=scene.NH;
+  const disc=makeFlickerDisc(46,GLOW.poison);
+  let fogCv=makeFog(scene.NW,scene.NH,scene.fog,0,scene._seed||1),fogT=0,frame=0;
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function draw(t){
+    const tt=t/1000;
+    ctx.drawImage(scene.base,0,0);
+    // glow pulse
+    for(const [x,y,c,ph] of scene.glow){const a=0.35+0.65*(0.5+0.5*Math.sin(2.6*tt+ph));ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`;ctx.fillRect(x,y,1,1);}
+    // flicker light
+    const fl=0.35+0.5*vnoise(6*tt,0,5)+0.15*Math.sin(tt*11);
+    ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(fl,0,1)*0.9;
+    ctx.drawImage(disc,scene.lightScreen.x-46,scene.lightScreen.y-46);
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+    // fog @8Hz
+    if(t-fogT>125){fogCv=makeFog(scene.NW,scene.NH,scene.fog,tt,scene._seed||1);fogT=t;}
+    ctx.drawImage(fogCv,0,0);
+    frame++;
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  if(reduce){draw(600);} else requestAnimationFrame(draw);
+}
+
+/* ================= palette panel ================= */
+(function(){
+  const host=document.getElementById('ramps');
+  for(const [name,ramp] of Object.entries(RAMPS)){
+    const r=document.createElement('div');r.className='ramp';const l=document.createElement('div');l.className='lbl';l.textContent=name;const ch=document.createElement('div');ch.className='chips';
+    for(const c of ramp){const d=document.createElement('div');d.className='chip';d.style.background=`rgb(${c[0]},${c[1]},${c[2]})`;ch.appendChild(d);}
+    r.appendChild(l);r.appendChild(ch);host.appendChild(r);
+  }
+  const gh=document.getElementById('glowrow');
+  for(const [n,c] of Object.entries(GLOW)){const g=document.createElement('div');g.className='glowdot';g.innerHTML=`<i style="background:rgb(${c[0]},${c[1]},${c[2]});box-shadow:0 0 8px rgb(${c[0]},${c[1]},${c[2]})"></i>glow · ${n}`;gh.appendChild(g);}
+})();
+
+/* ================= props + creatures panels ================= */
+function blitBakesPanel(canvasId, bakes, gap){
+  const cv=document.getElementById(canvasId);const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  let x=gap;const baseY=cv.height-14;const glows=[];
+  for(const b of bakes){const bx=x, by=baseY-b.cv.height;ctx.drawImage(b.cv,bx,by);for(const gp of b.glow)glows.push([bx+gp[0],by+gp[1],gp[2],gp[3]]);x+=b.cv.width+gap;}
+  return {ctx,glows};
+}
+
+/* ================= boot ================= */
+function boot(){
+  const heroScene=buildScene(document.getElementById('heroCv'),42,{W:24,H:26,corruption:0.6,fog:0.42});
+  heroScene._seed=42; animate(document.getElementById('heroCv'),heroScene);
+  const vScene=buildScene(document.getElementById('vistaCv'),7,{W:24,H:26,corruption:0.5,fog:0.5});
+  vScene._seed=7; animate(document.getElementById('vistaCv'),vScene);
+  // props panel
+  const rng=mulberry32(99);
+  const propBakes=[buildMonolith(rng),buildSpire(rng),buildEyeTotem(rng)];
+  const pp=blitBakesPanel('propsCv',propBakes,22);
+  // creatures panel
+  const rng2=mulberry32(123);
+  const crBakes=[buildCreature(rng2,true),buildCreature(rng2,false),buildCreature(rng2,true),buildCreature(rng2,false)];
+  const cp=blitBakesPanel('crCv',crBakes,20);
+  // animate the two small panels' glow
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function pulse(t){const tt=t/1000;
+    for(const [ctx,glows,bakes,id] of [[pp.ctx,pp.glows,propBakes,'propsCv'],[cp.ctx,cp.glows,crBakes,'crCv']]){
+      // redraw base then glow
+      const cv=document.getElementById(id);ctx.clearRect(0,0,cv.width,cv.height);
+      let x= id==='propsCv'?22:20;const baseY=cv.height-14;
+      for(const b of bakes){ctx.drawImage(b.cv,x,baseY-b.cv.height);x+=b.cv.width+(id==='propsCv'?22:20);}
+      for(const [gx,gy,c,ph] of glows){const a=0.4+0.6*(0.5+0.5*Math.sin(2.6*tt+ph));ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`;ctx.fillRect(gx,gy,1,1);ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${a*0.4})`;ctx.fillRect(gx-1,gy,3,1);ctx.fillRect(gx,gy-1,1,3);}
+    }
+    if(!reduce)requestAnimationFrame(pulse);
+  }
+  if(reduce)pulse(600); else requestAnimationFrame(pulse);
+}
+boot();
+</script>
+</body>
+</html>

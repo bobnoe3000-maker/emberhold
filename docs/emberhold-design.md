@@ -4,6 +4,16 @@
 
 > Scope note: this is an original game that borrows Necesse's *genre systems and loop structure* (top-down survival sandbox + boss-gated progression + colony sim). All names, art, characters, world lore, and content are original. Game mechanics are fair game; assets and IP are not — so nothing here copies Necesse's art, names, or specific content.
 
+> **v0.4 amendment (Aug 2026) — Dreadforge is the primary art direction.** The game's visual
+> identity has pivoted from the warm dusk **Emberwood** mood to a cold procedural **nightmare**:
+> ashen violet ground, spreading poison corruption, bone / flesh / obsidian materials, voxel-baked
+> props, cellular-automata creatures, and a live glow + flicker + fog post stack — all over the
+> same isometric geometry. Wherever this doc describes the Emberwood dusk meadow, warm torchlight,
+> or its palette (§1 pillars, §6 art pipeline), read it as **retired**: the mood, materials, props,
+> and creatures are now defined by **dreadforge-tdd.md**; the current plan of record is
+> **emberhold-status-v0.4.md**. Unchanged: the headless sim, saves, determinism, iso grid, and the
+> paper-doll character (now a palette-quantized sprite-sheet actor).
+
 > **v0.3 amendment (Aug 2026) — isometric presentation.** The renderer has pivoted from flat top-down to a **2:1 dimetric isometric** language at fine **16×8** tiles: an elevation field (basins / ground / plateaus), auto-generated cliff faces, and per-tile **quantized** torch lighting. This changes *presentation only* — the headless sim, saves, and determinism are unchanged. Characters keep the same paper-doll **recipe system** but render at a larger, more detailed sprite (24×36), decoupled from tile resolution so they keep presence at the fine tile scale. Where this doc describes flat top-down terrain — **§5 Portrait-First UX** screen zones and **§6.2 Terrain** (blob-47 autotiling) — read them through the iso lens: blob-47 is parked in favor of diamond floor/face generators, and the world view is isometric. The authoritative art + render spec is **emberhold-iso-pivot-tdp.md**; the current plan of record is **emberhold-status-v0.3.md**.
 
 ---
