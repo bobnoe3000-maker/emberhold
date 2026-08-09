@@ -83,6 +83,15 @@ export function propAt(world, x, y) {
   return null;
 }
 
+// Stain creatures — sparse wanderers everywhere, denser inside the blight.
+// Visual NPCs for now (no collision/AI yet); pure function of coords+seed.
+export function creatureAt(world, x, y) {
+  if (materialAt(world, x, y) === MAT.WATER) return false;
+  const h = hash2(x, y, world.ws + 747);
+  if (h < 0.0013) return true;                          // scattered wanderers
+  return corruptionAt(world, x, y) > 0.58 && h < 0.010; // a few more haunt the blight
+}
+
 // Walkable if: not water, not a resource, and (when a from-height is given) the
 // target is not a higher WALL — you can step up at most one level and descend
 // any amount, so the character moves over all terrain but tall cliffs. core.js

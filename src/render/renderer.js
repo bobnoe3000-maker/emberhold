@@ -5,10 +5,11 @@
 // integer-scaled to the display (the crisp path). Dynamic actors, glow pulse,
 // torch, and fog composite on top each frame.
 
-import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
+import { materialAt, heightAt, resourceAt, propAt, creatureAt } from '../sim/world.js';
 import { DREAD, DGLOW, INK_RGB } from './palette.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { buildSpire, buildMonolith, buildEyeTotem } from '../assetforge/voxprops.js';
+import { STAIN } from '../assetforge/stain.js';
 import { hash2, fbm } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 
@@ -117,6 +118,11 @@ export function createRenderer(canvas, sim, input) {
     propCache.totem.push(buildEyeTotem(seed * 7 + 3));
   })();
 
+  // ---- Stain creature sprite sheet (25-frame side walk) ----
+  const stainImg = new Image(); let stainReady = false;
+  stainImg.onload = () => { stainReady = true; };
+  stainImg.src = STAIN.sheet;
+
   let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
 
@@ -184,22 +190,6 @@ export function createRenderer(canvas, sim, input) {
     terrValid = true;
   }
 
-  // ---- distance fog (dithered, ~8 Hz) ----
-  const fogCv = document.createElement('canvas');
-  let fogCtx = null, fogAt = -1e9;
-  function makeFog(t) {
-    if (fogCv.width !== nvw || fogCv.height !== nvh) { fogCv.width = nvw; fogCv.height = nvh; fogCtx = fogCv.getContext('2d'); }
-    const id = fogCtx.createImageData(nvw, nvh), d = id.data;
-    for (let y = 0; y < nvh; y++) for (let x = 0; x < nvw; x++) {
-      const top = Math.pow(Math.max(0, 1 - y / nvh), 1.7);
-      const band = 0.35 + 0.95 * fbm(x * 0.05 + t * 0.15, y * 0.07, 777, 2);
-      const vig = Math.hypot((x - nvw / 2) / (nvw * 0.5), (y - nvh / 2) / (nvh * 0.5)), vg = Math.max(0, vig - 0.86) * 0.7;
-      let f = 0.55 * top * band + vg; f = f < 0 ? 0 : f > 1 ? 1 : f;
-      if (BAYER[x & 3][y & 3] / 16 < f) { const i = (y * nvw + x) * 4; d[i] = 8; d[i + 1] = 6; d[i + 2] = 16; d[i + 3] = 255; }
-    }
-    fogCtx.putImageData(id, 0, 0);
-  }
-
   function render(alpha, now) {
     const p = sim.state.player;
     const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
@@ -224,6 +214,7 @@ export function createRenderer(canvas, sim, input) {
     for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
       const rk = resourceAt(sim.world, tx, ty); if (rk) draws.push({ d: tx + ty, kind: 'harvest', rk, tx, ty });
       const pk = propAt(sim.world, tx, ty); if (pk) draws.push({ d: tx + ty + 0.02, kind: 'prop', pk, tx, ty });
+      if (stainReady && creatureAt(sim.world, tx, ty)) draws.push({ d: tx + ty + 0.04, kind: 'creature', tx, ty });
     }
     draws.push({ d: ix + iy + 0.01, kind: 'player' });
     draws.sort((a, b) => a.d - b.d);
@@ -236,6 +227,20 @@ export function createRenderer(canvas, sim, input) {
         nctx.fillStyle = 'rgba(6,4,10,0.4)';
         for (let r = -2; r <= 2; r++) { const ww = Math.max(0, Math.round(5 * (1 - Math.abs(r) / 3))); nctx.fillRect(Math.round(gx - ww), Math.round(gy + r + 1), ww * 2, 1); }
         nctx.drawImage(dollFrame(p.moving ? p.frame : 0, p.mirror), Math.round(gx - DOLL_AX), Math.round(gy - DOLL_AY));
+        continue;
+      }
+      if (dr.kind === 'creature') {
+        // patrol wander + walk-cycle, purely visual (no sim entity yet)
+        const phase = hash2(dr.tx, dr.ty, 9), t = now / 1000;
+        const wob = Math.sin(t * 0.6 + phase * 6.283) * 1.6;
+        const cwx = dr.tx + 0.5 + wob, cwy = dr.ty + 0.5;
+        const cz = heightAt(sim.world, Math.floor(cwx), Math.floor(cwy));
+        const cp = project(cwx, cwy, cz), csx = ox + cp.sx, csy = oy + cp.sy;
+        const mirror = Math.cos(t * 0.6 + phase * 6.283) < 0;
+        const fr = Math.floor(t * STAIN.fps + phase * 25) % 25, dw = STAIN.fw, dh = STAIN.fh;
+        const dx0 = Math.round(csx - STAIN.ax), dy0 = Math.round(csy - STAIN.ay);
+        if (mirror) { nctx.save(); nctx.translate(dx0 + dw, dy0); nctx.scale(-1, 1); nctx.drawImage(stainImg, fr * dw, 0, dw, dh, 0, 0, dw, dh); nctx.restore(); }
+        else nctx.drawImage(stainImg, fr * dw, 0, dw, dh, dx0, dy0, dw, dh);
         continue;
       }
       const z = heightAt(sim.world, dr.tx, dr.ty);
@@ -270,22 +275,6 @@ export function createRenderer(canvas, sim, input) {
       ctx.fillRect(gx * S, gy * S, S, S);
     }
 
-    // player torch — cold veil, warm hole (placeholder for a placeable light later)
-    const lx = (ox + P.sx) * S, ly = (oy + P.sy - 14) * S;
-    const light = document.__ehLight || (document.__ehLight = document.createElement('canvas'));
-    if (light.width !== vw || light.height !== vh) { light.width = vw; light.height = vh; }
-    const lc = light.getContext('2d');
-    lc.globalCompositeOperation = 'source-over'; lc.fillStyle = 'rgba(6,4,12,0.32)'; lc.fillRect(0, 0, vw, vh);
-    const rad = 7 * TW * S * (1 + (hash2((now / 90) | 0, 3, 9) - 0.5) * 0.2);
-    const grad = lc.createRadialGradient(lx, ly, rad * 0.2, lx, ly, rad);
-    grad.addColorStop(0, 'rgba(0,0,0,1)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
-    lc.globalCompositeOperation = 'destination-out'; lc.fillStyle = grad;
-    lc.beginPath(); lc.arc(lx, ly, rad, 0, Math.PI * 2); lc.fill();
-    ctx.drawImage(light, 0, 0);
-    const wg = ctx.createRadialGradient(lx, ly, 0, lx, ly, rad * 0.55);
-    wg.addColorStop(0, 'rgba(255,150,90,0.10)'); wg.addColorStop(1, 'rgba(255,150,90,0)');
-    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(lx, ly, rad * 0.55, 0, Math.PI * 2); ctx.fill();
-
     // eye-totem flicker light — the corruption heart's poison lantern (TDD §9)
     if (totemScreen) {
       const cxs = totemScreen.x * S, cys = totemScreen.y * S, rad2 = 5 * TW * S;
@@ -296,11 +285,6 @@ export function createRenderer(canvas, sim, input) {
       ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(cxs, cys, rad2, 0, Math.PI * 2); ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
     }
-
-    // rolling fog (regenerated ~8 Hz), integer-scaled with the world
-    if (now - fogAt > 125) { makeFog(now / 1000); fogAt = now; }
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(fogCv, 0, 0, nvw, nvh, 0, 0, nvw * S, nvh * S);
 
     const j = input.joystick();
     if (j) {

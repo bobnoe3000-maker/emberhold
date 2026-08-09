@@ -25,7 +25,7 @@ function stubCtx(w, h) {
     get fillStyle() { return this._fs; },
     fillRect(x, y, ww, hh) { if ([x, y, ww, hh].some(Number.isNaN)) { nan++; if (nan < 8) console.log('NaN fillRect', x, y, ww, hh); } },
     drawImage(img, x, y, ww, hh) { drawImages++; if ([x, y, ww, hh].some((n) => n !== undefined && Number.isNaN(n))) { nan++; if (nan < 8) console.log('NaN drawImage', x, y, ww, hh); } },
-    clearRect() {}, strokeRect() {}, beginPath() {}, arc() {}, fill() {}, stroke() {}, moveTo() {}, lineTo() {},
+    clearRect() {}, strokeRect() {}, beginPath() {}, arc() {}, fill() {}, stroke() {}, moveTo() {}, lineTo() {}, save() {}, restore() {}, translate() {}, scale() {},
     getImageData(x, y, ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
     createImageData(ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
     putImageData() {},
@@ -36,6 +36,7 @@ function mkCanvas(w = 0, h = 0) {
   return { width: w, height: h, style: {}, getContext() { return stubCtx(this.width, this.height); }, addEventListener() {} };
 }
 global.document = { createElement: () => mkCanvas() };
+global.Image = class { constructor() { this.onload = null; } set src(v) { } };
 global.window = { devicePixelRatio: 2, innerWidth: 402, innerHeight: 874, addEventListener() {}, matchMedia: () => ({ matches: false }) };
 global.performance = { now: () => 0 };
 
