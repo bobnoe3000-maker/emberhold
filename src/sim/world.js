@@ -53,7 +53,7 @@ const cellAt = (world, x, y) => world.level.cells.get(K(x, y));
 export function heightAt(world, x, y) {
   const c = cellAt(world, Math.floor(x), Math.floor(y));
   if (!c) return 0;
-  return c.kind === 'wall' ? WALL_Z : FLOOR_Z;
+  return c.kind === 'wall' ? (c.wz ?? WALL_Z) : FLOOR_Z;
 }
 
 // Hazard field: blobby pools of the theme's hazard material across open floor.
