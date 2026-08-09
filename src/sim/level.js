@@ -77,7 +77,8 @@ export function generateLevel(seed, theme) {
   // connect rooms: a spanning chain by proximity + a couple of extra loops
   const carveH = (x0, x1, y) => { for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) for (let w = 0; w < CORRIDOR_W; w++) setFloor(x, y + w - 1, -1, true); };
   const carveV = (y0, y1, x) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) for (let w = 0; w < CORRIDOR_W; w++) setFloor(x + w - 1, y, -1, true); };
-  const connect = (a, b) => { if (rng() < 0.5) { carveH(a.cx, b.cx, a.cy); carveV(a.cy, b.cy, b.cx); } else { carveV(a.cy, b.cy, a.cx); carveH(a.cx, b.cx, b.cy); } };
+  const edges = [];   // room-id pairs joined by a corridor (drives the minimap)
+  const connect = (a, b) => { edges.push([a.id, b.id]); if (rng() < 0.5) { carveH(a.cx, b.cx, a.cy); carveV(a.cy, b.cy, b.cx); } else { carveV(a.cy, b.cy, a.cx); carveH(a.cx, b.cx, b.cy); } };
   const order = [...rooms].sort((p, q) => (p.cx + p.cy) - (q.cx + q.cy));
   for (let i = 1; i < order.length; i++) {
     // link to the nearest already-placed room (a cheap connected spanning tree)
@@ -111,5 +112,5 @@ export function generateLevel(seed, theme) {
   }
 
   const spawn = order[0] ? { x: order[0].cx + 0.5, y: order[0].cy + 0.5 } : { x: W / 2, y: H / 2 };
-  return { cells, rooms, theme, th, spawn, W, H };
+  return { cells, rooms, edges, theme, th, spawn, W, H };
 }

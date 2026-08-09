@@ -324,12 +324,16 @@ export function createRenderer(canvas, sim, input) {
   let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
 
+  const discovered = new Set();   // room ids the player has entered (minimap fog)
+
   function render(alpha, now) {
     const p = sim.state.player;
     const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
     const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
     const P = project(ix, iy, pz);
     const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
+    const pcell = sim.world.level.cells.get(Math.floor(ix) + ',' + Math.floor(iy));
+    if (pcell && pcell.room >= 0) discovered.add(pcell.room);
 
     if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeGBuffer(ox, oy);
 
@@ -402,8 +406,9 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform1i(U(postP, 'uView'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    // joystick overlay (2D, above the GL canvas)
+    // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
+    drawMinimap(ix, iy);
     const j = input.joystick();
     if (j) {
       const k = vw / window.innerWidth;
@@ -411,6 +416,44 @@ export function createRenderer(canvas, sim, input) {
       octx.beginPath(); octx.arc(j.bx, j.by, 46 * k, 0, Math.PI * 2); octx.stroke();
       octx.fillStyle = 'rgba(240,165,0,0.5)'; octx.beginPath(); octx.arc(j.kx, j.ky, 18 * k, 0, Math.PI * 2); octx.fill();
     }
+  }
+
+  // Fog-of-war minimap, top-right: discovered rooms in the theme tint, corridors
+  // that lead out of them (so unexplored exits are visible), and the hero marker.
+  function drawMinimap(ix, iy) {
+    const lvl = sim.world.level, rooms = lvl.rooms;
+    if (!rooms.length) return;
+    const k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
+    const bx = vw - MM - pad - 10 * k, by = 58 * k;         // top-right, clear of the HUD
+    // panel
+    octx.fillStyle = 'rgba(10,8,16,0.60)';
+    octx.fillRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
+    octx.strokeStyle = 'rgba(130,120,160,0.35)'; octx.lineWidth = Math.max(1, k);
+    octx.strokeRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
+    // fit all rooms into the square, centered, preserving aspect
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const r of rooms) { x0 = Math.min(x0, r.cx - r.rw); x1 = Math.max(x1, r.cx + r.rw); y0 = Math.min(y0, r.cy - r.rh); y1 = Math.max(y1, r.cy + r.rh); }
+    const span = Math.max(x1 - x0, y1 - y0) || 1, s = MM / span;
+    const mx = (tx) => bx + (tx - x0) * s + (MM - (x1 - x0) * s) / 2;
+    const my = (ty) => by + (ty - y0) * s + (MM - (y1 - y0) * s) / 2;
+    // corridors leading out of any discovered room
+    octx.strokeStyle = 'rgba(150,140,180,0.45)'; octx.lineWidth = Math.max(1, 1.5 * k);
+    for (const [a, b] of lvl.edges) {
+      if (!discovered.has(a) && !discovered.has(b)) continue;
+      octx.beginPath(); octx.moveTo(mx(rooms[a].cx), my(rooms[a].cy)); octx.lineTo(mx(rooms[b].cx), my(rooms[b].cy)); octx.stroke();
+    }
+    // discovered rooms, in the theme's floor tint
+    const rc = ELIT[lvl.th.floors[0]][3] || [90, 80, 110];
+    octx.fillStyle = `rgba(${rc[0]},${rc[1]},${rc[2]},0.9)`;
+    for (const r of rooms) {
+      if (!discovered.has(r.id)) continue;
+      const w = Math.max(3 * k, r.rw * 2 * s), h = Math.max(3 * k, r.rh * 2 * s);
+      octx.fillRect(mx(r.cx) - w / 2, my(r.cy) - h / 2, w, h);
+    }
+    // hero marker
+    octx.fillStyle = '#f0a500';
+    octx.beginPath(); octx.arc(mx(ix), my(iy), Math.max(2, 2.6 * k), 0, Math.PI * 2); octx.fill();
+    octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.lineWidth = Math.max(1, k); octx.stroke();
   }
 
   return {
