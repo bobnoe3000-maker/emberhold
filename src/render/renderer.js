@@ -1,181 +1,292 @@
-// renderer.js — Dreadforge isometric renderer (art direction v0.4). The sim
-// doesn't know this file exists. Terrain (materials + elevation + cliff faces) is
-// painted at NATIVE resolution into a MARGIN-CACHED buffer — baked once and re-
-// blitted per frame, re-baked only when the camera crosses the margin — then
-// integer-scaled to the display (the crisp path). Dynamic actors, glow pulse,
-// torch, and fog composite on top each frame.
+// renderer.js — Emberlit deferred renderer (art direction v0.5). The sim doesn't
+// know this file exists. Instead of painting final pixels, the CPU bakes a
+// G-BUFFER — albedo + normal + emissive + height — for a MARGIN-cached region of
+// the world (re-baked only when the camera crosses the margin). Each frame the
+// visible window is copied out, the moving actors are stamped into it, and two
+// WebGL2 passes relight it: Pass A adds dynamic point lights (a warm carry-light
+// on the hero + corruption flares) and HDR emissives at native resolution; Pass B
+// nearest-upscales to the display and layers trilinear-mip bloom + ACES + grade.
+//
+// Parity note (Emberlit TDD §12.1): the shaders + lighting math are the reference
+// demo's, unchanged; only the bake is driven from our infinite world.js. The old
+// Canvas2D path is parked in renderer-canvas.js.
 
 import { materialAt, heightAt, resourceAt, propAt, creatureAt } from '../sim/world.js';
-import { DREAD, DGLOW, INK_RGB } from './palette.js';
+import { ELIT, EGLOW } from './palette.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
-import { buildSpire, buildMonolith, buildEyeTotem } from '../assetforge/voxprops.js';
 import { STAIN } from '../assetforge/stain.js';
-import { hash2, fbm } from '../sim/rng.js';
+import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
+import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, spriteFromSheetFrame } from './gsprite.js';
+
+const MARGIN = 64;                 // native-px slack before a re-bake
+const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
+// Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
+// visible via a raised ambient, and lights ADD warmth rather than veil).
+const AMB = 0.42, WISP = 0.72, BLOOM = 0.55;
+// Map the warm paper-doll into the cold world: snap each pixel to an Emberlit ramp.
+const QUANT = ELIT.soil.concat(ELIT.bone, ELIT.flesh, ELIT.obsid);
 
 const clampf = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
-const DOLL_AX = 12, DOLL_AY = 34;
-const MARGIN = 64;                 // native-px slack before a re-bake
-const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
-
-// Master-ramp quantization (TDD §8.4): map the warm paper-doll into the cold
-// world by snapping every pixel to the nearest Dreadforge material color.
-const QUANT = DREAD.soil.concat(DREAD.bone, DREAD.flesh, DREAD.obsid);
-function quantizeToRamps(c, w, h) {
-  const id = c.getImageData(0, 0, w, h), d = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] === 0) continue;
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    let bj = 0, bd = 1e18;
-    for (let j = 0; j < QUANT.length; j++) { const q = QUANT[j], dd = (r - q[0]) * (r - q[0]) + (g - q[1]) * (g - q[1]) + (b - q[2]) * (b - q[2]); if (dd < bd) { bd = dd; bj = j; } }
-    d[i] = QUANT[bj][0]; d[i + 1] = QUANT[bj][1]; d[i + 2] = QUANT[bj][2];
+/* ── shaders (verbatim from the Emberlit reference demo) ─────────────────── */
+const VS = `#version 300 es
+void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);gl_Position=vec4(p*2.0-1.0,0.0,1.0);}`;
+const LIGHT_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uAlb,uNrm,uEmi;
+uniform vec2 uRes; uniform float uTime,uAmb,uWispA;
+uniform vec3 uL[3]; uniform vec3 uLC[3];
+uniform vec2 uWispPx;
+out vec4 O;
+float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+  float a=h21(i),b=h21(i+vec2(1,0)),c=h21(i+vec2(0,1)),d=h21(i+vec2(1,1));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+void main(){
+  vec2 uv=gl_FragCoord.xy/uRes;
+  vec4 A=texture(uAlb,uv);
+  vec4 N=texture(uNrm,uv);
+  vec3 E=texture(uEmi,uv).rgb*3.2;
+  vec3 n=normalize(vec3(N.xy*2.0-1.0,max(N.z,0.02)));
+  float h=N.a*64.0;
+  vec2 p=gl_FragCoord.xy;
+  vec3 amb=mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
+  vec3 col=A.rgb*amb*(0.72+0.28*n.z);
+  for(int i=0;i<3;i++){
+    vec3 lp=uL[i];
+    vec3 d=vec3(p.x-lp.x,(lp.y-p.y)*1.8,lp.z-h);
+    float dd=length(d);
+    vec3 L=d/max(dd,0.001);
+    float ndl=max(dot(n,vec3(L.x,-L.y*0.55,L.z)),0.0);
+    float att=1.0/(1.0+dd*dd*0.0016);
+    col+=A.rgb*uLC[i]*ndl*att;
+    col+=uLC[i]*att*0.05;
   }
-  c.putImageData(id, 0, 0);
-}
+  float ph=h21(floor(gl_FragCoord.xy))*6.28;
+  col+=E*(0.55+0.45*sin(uTime*2.6+ph));
+  float wd=length(gl_FragCoord.xy-uWispPx);
+  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.05)*uWispA*1.15;
+  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.006)*uWispA*0.35;
+  float fog=n2(uv*vec2(7.0,3.5)+vec2(uTime*0.05,uTime*0.02));
+  float fa=smoothstep(0.3,0.9,fog)*0.10*(1.0-uv.y*0.5);
+  col=mix(col,vec3(0.10,0.07,0.16),fa);
+  O=vec4(col,1.0);
+}`;
+const POST_FS = `#version 300 es
+precision highp float;
+uniform sampler2D uLit,uLitM,uAlbT,uNrmT,uEmiT;
+uniform vec2 uOut,uNative; uniform float uScale,uBloom,uTime;
+uniform vec2 uOff; uniform int uView;
+out vec4 O;
+float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
+vec3 aces(vec3 x){return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0);}
+void main(){
+  vec2 sp=vec2(gl_FragCoord.x,uOut.y-gl_FragCoord.y);
+  vec2 np=(sp-uOff)/uScale;
+  if(np.x<0.0||np.y<0.0||np.x>=uNative.x||np.y>=uNative.y){O=vec4(0.02,0.013,0.03,1.0);return;}
+  vec2 uv=vec2(np.x/uNative.x,np.y/uNative.y);
+  if(uView==1){O=vec4(texture(uAlbT,uv).rgb,1.0);return;}
+  if(uView==2){O=vec4(texture(uNrmT,uv).rgb,1.0);return;}
+  if(uView==3){O=vec4(texture(uEmiT,uv).rgb*3.2,1.0);return;}
+  vec3 col=texture(uLit,uv).rgb;
+  vec3 bl=vec3(0.0);
+  bl+=textureLod(uLitM,uv,2.0).rgb*0.34;
+  bl+=textureLod(uLitM,uv,3.0).rgb*0.30;
+  bl+=textureLod(uLitM,uv,4.0).rgb*0.22;
+  bl=max(bl-0.14,vec3(0.0));
+  col+=bl*uBloom*1.8;
+  col=aces(col*1.12);
+  col=pow(col,vec3(1.03,1.0,0.95));
+  col+=vec3(0.010,0.002,0.020)*(1.0-col);
+  vec2 c=gl_FragCoord.xy/uOut-0.5;
+  col*=1.0-dot(c,c)*0.85;
+  col+=(h21(gl_FragCoord.xy+fract(uTime)*100.0)-0.5)*0.02;
+  O=vec4(col,1.0);
+}`;
 
 export function createRenderer(canvas, sim, input) {
-  const ctx = canvas.getContext('2d');
-  const nativeCv = document.createElement('canvas');
-  const nctx = nativeCv.getContext('2d');
-  const terrCv = document.createElement('canvas');       // margin-cached terrain
-  const terrCtx = terrCv.getContext('2d');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: false });
+  if (!gl) throw new Error('WebGL2 not available');
+  const hasF = gl.getExtension('EXT_color_buffer_float');
+
+  const compile = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const link = (fs) => { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; };
+  const lightP = link(LIGHT_FS), postP = link(POST_FS);
+  const U = (p, n) => gl.getUniformLocation(p, n);
+
+  const mkTex = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); return t; };
+  const texAlb = mkTex(), texNrm = mkTex(), texEmi = mkTex();
+  const litTex = gl.createTexture(), litFbo = gl.createFramebuffer();
+  let useHDR = !!hasF;
+  const sampNearest = gl.createSampler(); gl.samplerParameteri(sampNearest, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.samplerParameteri(sampNearest, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  const sampMip = gl.createSampler(); gl.samplerParameteri(sampMip, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.samplerParameteri(sampMip, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  // joystick + HUD overlay (GL owns the main canvas, so the 2D stick lives above it)
+  const overlay = document.createElement('canvas');
+  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2;';
+  document.body.appendChild(overlay);
+  const octx = overlay.getContext('2d');
+
   let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
-  let terrImg = null, terrData = null;
-  let bakeOx = 0, bakeOy = 0, terrValid = false;
-  let terrGlow = [];
+  let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window)
+  let bakeOx = 0, bakeOy = 0, terrValid = false, flares = [];
+
+  function setupLit() {
+    gl.bindTexture(gl.TEXTURE_2D, litTex);
+    if (useHDR) { try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, nvw, nvh, 0, gl.RGBA, gl.HALF_FLOAT, null); } catch (e) { useHDR = false; } }
+    if (!useHDR) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, litTex, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE && useHDR) { useHDR = false; setupLit(); return; }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
 
   function resize() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     vw = Math.floor(window.innerWidth * dpr);
     vh = Math.floor(window.innerHeight * dpr);
     canvas.width = vw; canvas.height = vh;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    S = Math.max(2, Math.round(vw / (16 * TW)));   // ~16 tiles across, integer scale
+    canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
+    overlay.width = vw; overlay.height = vh;
+    overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
+    S = Math.max(2, Math.round(vw / (16 * TW)));          // ~16 tiles across, integer scale
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
-    nativeCv.width = nvw; nativeCv.height = nvh;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
-    terrCv.width = tbw; terrCv.height = tbh;
-    terrImg = terrCtx.createImageData(tbw, tbh); terrData = terrImg.data;
+    bALB = new Uint8ClampedArray(tbw * tbh * 4); bNRM = new Uint8ClampedArray(tbw * tbh * 4); bEMI = new Uint8ClampedArray(tbw * tbh * 4);
+    sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
+    for (const t of [texAlb, texNrm, texEmi]) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }
+    setupLit();
     terrValid = false;
-    ctx.imageSmoothingEnabled = false; nctx.imageSmoothingEnabled = false; terrCtx.imageSmoothingEnabled = false;
   }
   window.addEventListener('resize', resize); resize();
 
-  // ---- player doll frames (detailed 24×36, quantized to the master ramps) ----
+  /* ── load-time bakes: props, hero doll frames, stain sheet frames ───────── */
+  const props = buildProps(sim.world.seed);
+  const harvest = buildHarvest();
+
   const dollCache = new Map();
   let heroRecipe = null;
+  const qCv = document.createElement('canvas'); qCv.width = DETAIL_W; qCv.height = DETAIL_H;
+  const qCtx = qCv.getContext('2d');
   function setHero(r) { heroRecipe = r; dollCache.clear(); }
-  function dollFrame(frame, mirror) {
+  function heroSprite(frame, mirror) {
     const k = frame + '|' + mirror;
-    let cv = dollCache.get(k);
-    if (!cv) {
-      cv = document.createElement('canvas'); cv.width = DETAIL_W; cv.height = DETAIL_H;
-      const dc = cv.getContext('2d');
-      drawDollDetailed(dc, heroRecipe, frame, mirror);
-      quantizeToRamps(dc, DETAIL_W, DETAIL_H);
-      dollCache.set(k, cv);
-    }
-    return cv;
-  }
-
-  // ---- harvestable sprites (bonegrowth / obsidian shard) baked once ----
-  const harvestCache = {};
-  function outlineSprite(c, w, h) {
-    const id = c.getImageData(0, 0, w, h), d = id.data;
-    const A = (x, y) => x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 0;
-    const m = [];
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] === 0 && (A(x - 1, y) || A(x + 1, y) || A(x, y - 1) || A(x, y + 1))) m.push([x, y]);
-    c.fillStyle = 'rgb(8,5,14)'; for (const [x, y] of m) c.fillRect(x, y, 1, 1);
-  }
-  (function bakeHarvest() {
-    const rgb = (a) => `rgb(${a[0]},${a[1]},${a[2]})`;
-    for (const kind of ['tree', 'rock']) {
-      const w = 14, h = 18, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      const c = cv.getContext('2d'), ramp = kind === 'tree' ? DREAD.bone : DREAD.obsid;
-      const px = (x, y, a) => { c.fillStyle = rgb(a); c.fillRect(x, y, 1, 1); };
-      if (kind === 'tree') {
-        for (let i = 0; i < 3; i++) { const bx = 4 + i * 3, top = 4 + ((i * 7) % 5); for (let y = top; y < 16; y++) { px(bx, y, ramp[2]); px(bx + 1, y, ramp[1]); } px(bx, top - 1, ramp[4]); px(bx + 1, top, ramp[3]); }
-      } else {
-        for (let y = 8; y < 16; y++) for (let x = 4; x < 10; x++) if (Math.abs(x - 7) + Math.abs(y - 13) < 5) px(x, y, ramp[x < 7 ? 2 : 1]);
-        px(6, 6, ramp[4]); px(8, 7, ramp[3]); px(7, 5, DGLOW.violet);
+    let sp = dollCache.get(k);
+    if (!sp) {
+      qCtx.clearRect(0, 0, DETAIL_W, DETAIL_H);
+      drawDollDetailed(qCtx, heroRecipe, frame, mirror);
+      const id = qCtx.getImageData(0, 0, DETAIL_W, DETAIL_H), d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] === 0) continue;
+        let bj = 0, bd = 1e18;
+        for (let j = 0; j < QUANT.length; j++) { const q = QUANT[j], dd = (d[i] - q[0]) ** 2 + (d[i + 1] - q[1]) ** 2 + (d[i + 2] - q[2]) ** 2; if (dd < bd) { bd = dd; bj = j; } }
+        d[i] = QUANT[bj][0]; d[i + 1] = QUANT[bj][1]; d[i + 2] = QUANT[bj][2];
       }
-      outlineSprite(c, w, h);
-      harvestCache[kind] = { cv, ax: (w / 2) | 0, ay: h - 1 };
+      sp = spriteFromCanvasData(d, DETAIL_W, DETAIL_H, DOLL_AX, DOLL_AY);
+      dollCache.set(k, sp);
     }
-  })();
+    return sp;
+  }
 
-  // ---- voxel props (spires / monolith / eye-totem) baked once per variant ----
-  const PROP_VARIANTS = 4;
-  const propCache = { spire: [], monolith: [], totem: [] };
-  (function bakeProps() {
-    const seed = sim.world.seed;
-    for (let v = 0; v < PROP_VARIANTS; v++) {
-      propCache.spire.push(buildSpire(seed * 13 + v * 97 + 1));
-      propCache.monolith.push(buildMonolith(seed * 29 + v * 131 + 7));
-    }
-    propCache.totem.push(buildEyeTotem(seed * 7 + 3));
-  })();
-
-  // ---- Stain creature sprite sheet (25-frame side walk) ----
-  const stainImg = new Image(); let stainReady = false;
-  stainImg.onload = () => { stainReady = true; };
+  let stainFrames = null;
+  const stainImg = new Image();
+  stainImg.onload = () => {
+    const cv = document.createElement('canvas'); cv.width = STAIN.fw * STAIN.frames; cv.height = STAIN.fh;
+    const c = cv.getContext('2d'); c.drawImage(stainImg, 0, 0);
+    const d = c.getImageData(0, 0, cv.width, cv.height).data;
+    stainFrames = [];
+    for (let f = 0; f < STAIN.frames; f++) stainFrames.push(spriteFromSheetFrame(d, cv.width, f * STAIN.fw, STAIN.fw, STAIN.fh, STAIN.ax, STAIN.ay));
+  };
   stainImg.src = STAIN.sheet;
 
-  let flash = null;
-  sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
+  /* ── G-buffer writers ───────────────────────────────────────────────────── */
+  const putG = (px, py, alb, n, hpx, emiId) => {
+    px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
+    const i = (py * tbw + px) * 4;
+    bALB[i] = alb[0]; bALB[i + 1] = alb[1]; bALB[i + 2] = alb[2]; bALB[i + 3] = 255;
+    bNRM[i] = (n[0] * 0.5 + 0.5) * 255; bNRM[i + 1] = (n[1] * 0.5 + 0.5) * 255; bNRM[i + 2] = n[2] * 255; bNRM[i + 3] = hpx * 4;
+    if (emiId) { const g = GLOW_ID[emiId]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; }
+    else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
+    bEMI[i + 3] = 255;
+  };
 
-  // Paint one tile's cliff faces + top diamond via `put` into a target buffer.
-  function drawTile(put, ox, oy, x, y, glowOut, W, H) {
-    const world = sim.world;
-    const z = heightAt(world, x, y), m = materialAt(world, x, y);
-    const sx = ox + (x - y) * HW, sy = oy + (x + y) * HH - z * ZH;
-    if (sx < -TW || sx > W + TW || sy < -64 || sy > H + 20) return;
-    if (m === 'water') {
-      const ramp = DREAD.water;
-      for (let i = 0; i < 8; i++) { const half = ROWW[i] / 2; for (let k = 0; k < ROWW[i]; k++) { const dx = k - half, r = hash2(x * 16 + k, y * 8 + i, world.ws + 500); let c = r < 0.85 ? ramp[1] : ramp[2]; if (r > 0.984) c = ramp[3]; put(sx + dx, sy + i, c); if (r > 0.986) glowOut.push([(sx + dx) | 0, (sy + i) | 0, DGLOW.water, hash2(x * 16 + k, y * 8 + i, 3) * 6]); } }
-      return;
-    }
-    const ramp = DREAD[m];
-    const zN = heightAt(world, x, y - 1), zW = heightAt(world, x - 1, y);
-    const dropSW = z - heightAt(world, x, y + 1), dropSE = z - heightAt(world, x + 1, y);
-    if (dropSW > 0 || dropSE > 0) {
-      for (let dx = -8; dx < 8; dx++) {
-        let brow = -1; for (let i = 7; i >= 0; i--) if (Math.abs(dx + 0.5) <= ROWW[i] / 2) { brow = i; break; }
-        if (brow < 4) continue;
-        const se = dx >= 0, drop = se ? dropSE : dropSW; if (drop <= 0) continue;
-        const depth = Math.min(drop * ZH, 30);
-        for (let d = 1; d <= depth; d++) {
-          const strat = fbm((x * 8 + dx) * 0.5, (z * ZH + d) * 0.35, world.hs + 9, 2);
-          let idx = strat < 0.4 ? 0 : strat < 0.8 ? 1 : 2; if (se) idx = Math.max(0, idx - 1);
-          const dk = d / depth, th = BAYER[(dx + 64) & 3][d & 3] / 16;
-          const col = th < dk * 0.85 ? [(ramp[idx][0] * 0.4) | 0, (ramp[idx][1] * 0.4) | 0, (ramp[idx][2] * 0.4) | 0] : ramp[idx];
-          put(sx + dx, sy + brow + d, col);
-        }
-      }
-    }
-    const nwLower = zW < z, neLower = zN < z, nwHigher = zW > z, neHigher = zN > z, corr = m === 'poison';
-    for (let i = 0; i < 8; i++) {
-      const wid = ROWW[i], half = wid / 2;
-      for (let k = 0; k < wid; k++) {
-        const dx = k - half, u = x + k / 16, v = y + i / 8;
-        let idx = Math.floor((0.38 + 0.42 * fbm(u * 1.7, v * 1.7, world.ss + 3, 2)) * ramp.length);
-        if ((k / wid) + (i / 8) > 1.15) idx -= 1;
-        if (i < 4 && (k < 2 || k > wid - 3)) { if (nwLower || neLower) idx += 1; else if (nwHigher || neHigher) idx -= 1; }
-        idx = idx < 0 ? 0 : idx >= ramp.length ? ramp.length - 1 : idx;
-        put(sx + dx, sy + i, ramp[idx]);
-        if (corr && hash2(x * 16 + k, y * 8 + i, world.cs + 555) > 0.972) glowOut.push([(sx + dx) | 0, (sy + i) | 0, DGLOW.poison, hash2(x * 16 + k, y * 8 + i, 5) * 6]);
+  // Stamp a G-sprite (albedo/normal/emissive) into a target buffer at a foot point.
+  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH) {
+    const x0 = (footX | 0) - sp.ax, y0 = (footY | 0) - sp.ay;
+    for (let yy = 0; yy < sp.h; yy++) {
+      const py = y0 + yy; if (py < 0 || py >= H) continue;
+      const hpx = baseH + (sp.h - yy) * 0.55;
+      for (let xx = 0; xx < sp.w; xx++) {
+        const j = yy * sp.w + xx; if (!sp.mask[j]) continue;
+        const px = x0 + xx; if (px < 0 || px >= W) continue;
+        const i = (py * W + px) * 4;
+        ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
+        NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
+        const e = sp.emi[j];
+        if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; } else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
+        EMI[i + 3] = 255;
       }
     }
   }
 
-  // Bake the terrain (viewport + margin) into terrCv, keyed to camera (ox, oy).
-  function bakeTerrain(ox, oy) {
-    bakeOx = ox; bakeOy = oy; terrGlow = [];
-    for (let i = 0; i < terrData.length; i += 4) { terrData[i] = INK_RGB[0]; terrData[i + 1] = INK_RGB[1]; terrData[i + 2] = INK_RGB[2]; terrData[i + 3] = 255; }
-    const putT = (px, py, rgb) => { px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return; const i = (py * tbw + px) * 4; terrData[i] = rgb[0]; terrData[i + 1] = rgb[1]; terrData[i + 2] = rgb[2]; terrData[i + 3] = 255; };
-    const bx = MARGIN + ox, by = MARGIN + oy;            // bake origin (display + margin)
+  // Terrain tile → G-buffer: cliff faces (SW/SE drops) then the top diamond,
+  // with material-gradient normals + sparse emissive specks (water / poison).
+  function drawTileG(bx, by, x, y) {
+    const world = sim.world;
+    const z = heightAt(world, x, y), m = materialAt(world, x, y);
+    const sx = bx + (x - y) * HW, sy = by + (x + y) * HH - z * ZH;
+    if (sx < -TW || sx > tbw + TW || sy < -80 || sy > tbh + 20) return;
+    const water = m === 'water', corr = m === 'poison', hPix = z * ZH;
+    const ramp = ELIT[m] || ELIT.soil;
+    // cliff faces
+    if (!water) {
+      const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
+      if (dSW > 0) faceG(sx, sy, dSW, ramp, 0, hPix);
+      if (dSE > 0) faceG(sx, sy, dSE, ramp, 1, hPix);
+    }
+    const zN = heightAt(world, x, y - 1), zW = heightAt(world, x - 1, y);
+    const nwHi = zW > z, neHi = zN > z, e = 0.35;
+    for (let py = 0; py < 8; py++) {
+      const w = ROWW[py], xs = sx - w / 2;
+      for (let dx = 0; dx < w; dx++) {
+        const X = xs + dx, u = (x + dx / 16) * 2.3, v = (y + py / 8) * 2.3;
+        const n0 = fbm(u, v, world.ss + 7);
+        let idx = Math.max(0, Math.min(ramp.length - 1, Math.floor(n0 * (ramp.length + 0.2))));
+        if (water) idx = Math.min(3, idx);
+        if (nwHi && py < 3 && dx < w / 2 && idx > 0) idx--;
+        if (neHi && py < 3 && dx >= w / 2 && idx > 0) idx--;
+        const gx = (fbm(u + e, v, world.ss + 7) - fbm(u - e, v, world.ss + 7)) * (water ? 0.6 : 2.6);
+        const gy = (fbm(u, v + e, world.ss + 7) - fbm(u, v - e, world.ss + 7)) * (water ? 0.6 : 2.6);
+        let emi = 0;
+        if (water && hash2(X | 0, py + y * 8, world.cs + 901) > 0.986) emi = 4;
+        if (!water && corr && hash2((X | 0) * 3, py + y * 13, world.cs + 77) > 0.977) emi = 1;
+        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emi);
+      }
+    }
+  }
+  function faceG(sx, sy, drop, ramp, side, hTop) {
+    const world = sim.world, h = Math.min(drop * ZH, 30);
+    const n = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
+    for (let i = 0; i < 8; i++) {
+      const X = side === 0 ? sx - 8 + i : sx + i;
+      const yTop = side === 0 ? sy + 4 + ((i >> 1) + 1) : sy + 8 - (i >> 1);
+      for (let k = 0; k < h; k++) {
+        const strat = fbm(X * 0.4, (yTop + k) * 0.35, world.hs + 13);
+        const idx = Math.max(0, Math.floor(strat * 3) - (side === 1 ? 1 : 0));
+        const wob = (vnoise(X * 0.8, (yTop + k) * 0.5, world.hs + 21) - 0.5) * 0.5;
+        putG(X, yTop + k, ramp[Math.min(idx, ramp.length - 1)], norm3(n[0] + wob, n[1], n[2]), Math.max(0, hTop - k), 0);
+      }
+    }
+  }
+
+  // Bake the terrain + static props/resources for (viewport + margin), keyed to
+  // camera (ox, oy). Records up to two corruption flare anchors in the region.
+  function bakeGBuffer(ox, oy) {
+    bakeOx = ox; bakeOy = oy;
+    bALB.fill(0); bNRM.fill(0); bEMI.fill(0);
+    const bx = MARGIN + ox, by = MARGIN + oy;
     let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
     for (const cx of [-MARGIN, nvw + MARGIN]) for (const cy of [-MARGIN, nvh + MARGIN]) for (const zz of [0, 7]) {
       const w = unproject(cx - ox, cy - oy, zz);
@@ -185,10 +296,35 @@ export function createRenderer(canvas, sim, input) {
     const tiles = [];
     for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push([tx, ty]);
     tiles.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
-    for (const [tx, ty] of tiles) drawTile(putT, bx, by, tx, ty, terrGlow, tbw, tbh);
-    terrCtx.putImageData(terrImg, 0, 0);
+    const world = sim.world;
+    let f1 = null, f2 = null;
+    for (const [tx, ty] of tiles) {
+      drawTileG(bx, by, tx, ty);
+      const z = heightAt(world, tx, ty);
+      // static props / resources composite into the bake (depth order via the sort)
+      const pk = propAt(world, tx, ty);
+      if (pk) { const arr = props[pk], sp = pk === 'totem' ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0]; stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH); }
+      const rk = resourceAt(world, tx, ty);
+      if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
+      // flare anchors: strongest corruption in the region, two of them, far apart
+      if (z > 1 && m2(world, tx, ty)) {
+        const c = corr01(world, tx, ty);
+        if (!f1 || c > f1.c) f1 = { x: tx, y: ty, z, c };
+      }
+    }
+    for (const [tx, ty] of tiles) {
+      const z = heightAt(world, tx, ty);
+      if (z > 1 && m2(world, tx, ty) && f1 && Math.hypot(tx - f1.x, ty - f1.y) > 8) {
+        const c = corr01(world, tx, ty);
+        if (!f2 || c > f2.c) f2 = { x: tx, y: ty, z, c };
+      }
+    }
+    flares = [f1, f2].filter(Boolean);
     terrValid = true;
   }
+
+  let flash = null;
+  sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
 
   function render(alpha, now) {
     const p = sim.state.player;
@@ -197,101 +333,105 @@ export function createRenderer(canvas, sim, input) {
     const P = project(ix, iy, pz);
     const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
 
-    if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeTerrain(ox, oy);
+    if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeGBuffer(ox, oy);
 
-    // terrain: blit the cached buffer at the current camera offset
+    // copy the visible window out of the baked margin region (scratch x == native x)
     const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
-    nctx.drawImage(terrCv, srcX, srcY, nvw, nvh, 0, 0, nvw, nvh);
-
-    // dynamic props + player, depth-sorted by (x+y)
-    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-    for (const [cx, cy] of [[0, 0], [nvw, 0], [0, nvh], [nvw, nvh]]) for (const zz of [0, 7]) {
-      const w = unproject(cx - ox, cy - oy, zz);
-      minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
+    for (let y = 0; y < nvh; y++) {
+      const b0 = ((srcY + y) * tbw + srcX) * 4, s0 = (y * nvw) * 4, len = nvw * 4;
+      sALB.set(bALB.subarray(b0, b0 + len), s0);
+      sNRM.set(bNRM.subarray(b0, b0 + len), s0);
+      sEMI.set(bEMI.subarray(b0, b0 + len), s0);
     }
-    minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
+
+    // stamp dynamic actors (creatures behind → player), depth-sorted by (x+y)
     const draws = [];
-    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
-      const rk = resourceAt(sim.world, tx, ty); if (rk) draws.push({ d: tx + ty, kind: 'harvest', rk, tx, ty });
-      const pk = propAt(sim.world, tx, ty); if (pk) draws.push({ d: tx + ty + 0.02, kind: 'prop', pk, tx, ty });
-      if (stainReady && creatureAt(sim.world, tx, ty)) draws.push({ d: tx + ty + 0.04, kind: 'creature', tx, ty });
-    }
-    draws.push({ d: ix + iy + 0.01, kind: 'player' });
-    draws.sort((a, b) => a.d - b.d);
-    const flashing = flash && now < flash.until ? flash : null;
-    const propGlow = [];
-    let totemScreen = null;
-    for (const dr of draws) {
-      if (dr.kind === 'player') {
-        const gx = ox + P.sx, gy = oy + P.sy;
-        nctx.fillStyle = 'rgba(6,4,10,0.4)';
-        for (let r = -2; r <= 2; r++) { const ww = Math.max(0, Math.round(5 * (1 - Math.abs(r) / 3))); nctx.fillRect(Math.round(gx - ww), Math.round(gy + r + 1), ww * 2, 1); }
-        nctx.drawImage(dollFrame(p.moving ? p.frame : 0, p.mirror), Math.round(gx - DOLL_AX), Math.round(gy - DOLL_AY));
-        continue;
+    if (stainFrames) {
+      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+      for (const [cx, cy] of [[0, 0], [nvw, 0], [0, nvh], [nvw, nvh]]) for (const zz of [0, 7]) {
+        const w = unproject(cx - ox, cy - oy, zz);
+        minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
       }
-      if (dr.kind === 'creature') {
-        // patrol wander + walk-cycle, purely visual (no sim entity yet)
-        const phase = hash2(dr.tx, dr.ty, 9), t = now / 1000;
-        const wob = Math.sin(t * 0.6 + phase * 6.283) * 1.6;
-        const cwx = dr.tx + 0.5 + wob, cwy = dr.ty + 0.5;
+      minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
+      const t = now / 1000;
+      for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
+        if (!creatureAt(sim.world, tx, ty)) continue;
+        const phase = hash2(tx, ty, 9), wob = Math.sin(t * 0.6 + phase * 6.283) * 1.6;
+        const cwx = tx + 0.5 + wob, cwy = ty + 0.5;
         const cz = heightAt(sim.world, Math.floor(cwx), Math.floor(cwy));
-        const cp = project(cwx, cwy, cz), csx = ox + cp.sx, csy = oy + cp.sy;
-        const mirror = Math.cos(t * 0.6 + phase * 6.283) < 0;
-        const fr = Math.floor(t * STAIN.fps + phase * 25) % 25, dw = STAIN.fw, dh = STAIN.fh;
-        const dx0 = Math.round(csx - STAIN.ax), dy0 = Math.round(csy - STAIN.ay);
-        if (mirror) { nctx.save(); nctx.translate(dx0 + dw, dy0); nctx.scale(-1, 1); nctx.drawImage(stainImg, fr * dw, 0, dw, dh, 0, 0, dw, dh); nctx.restore(); }
-        else nctx.drawImage(stainImg, fr * dw, 0, dw, dh, dx0, dy0, dw, dh);
-        continue;
+        const cp = project(cwx, cwy, cz);
+        const fr = stainFrames[Math.floor(t * STAIN.fps + phase * 25) % STAIN.frames];
+        draws.push({ d: tx + ty, sp: fr, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH });
       }
-      const z = heightAt(sim.world, dr.tx, dr.ty);
-      const gx = ox + (dr.tx - dr.ty) * HW, gy = oy + (dr.tx + dr.ty) * HH - z * ZH + HH;
-      if (dr.kind === 'harvest') {
-        const spr = harvestCache[dr.rk];
-        const jx = flashing && flashing.tx === dr.tx && flashing.ty === dr.ty ? (hash2((now / 40) | 0, dr.tx, dr.ty) < 0.5 ? -1 : 1) : 0;
-        nctx.drawImage(spr.cv, Math.round(gx - spr.ax) + jx, Math.round(gy - spr.ay));
-        continue;
-      }
-      // prop (voxel bake) — deterministic variant, 2px ground sink
-      const arr = propCache[dr.pk], spr = dr.pk === 'totem' ? arr[0] : arr[(hash2(dr.tx, dr.ty, 5) * arr.length) | 0];
-      const drawX = Math.round(gx - spr.ax), drawY = Math.round(gy - spr.ay - 2);
-      nctx.drawImage(spr.cv, drawX, drawY);
-      for (const [gpx, gpy, c, ph] of spr.glow) propGlow.push([drawX + gpx, drawY + gpy, c, ph]);
-      if (dr.pk === 'totem') totemScreen = { x: gx, y: drawY + 6 };
     }
+    draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, hero: true });
+    draws.sort((a, b) => a.d - b.d);
+    for (const dr of draws) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h);
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(nativeCv, 0, 0, nvw, nvh, 0, 0, nvw * S, nvh * S);
+    // upload the window G-buffer
+    gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
+    gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sNRM);
+    gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sEMI);
 
-    // glow pulse (from the cached terrain glow list, transformed to current view)
-    const tt = now / 1000, gdx = -MARGIN - (bakeOx - ox), gdy = -MARGIN - (bakeOy - oy);
-    for (const [bx, by, c, ph] of terrGlow) {
-      const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph));
-      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-      ctx.fillRect((bx + gdx) * S, (by + gdy) * S, S, S);
-    }
-    for (const [gx, gy, c, ph] of propGlow) {
-      const a = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph));
-      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
-      ctx.fillRect(gx * S, gy * S, S, S);
-    }
+    const t = now / 1000;
+    // hero carry-light + corruption flares (all in native/scratch pixel space)
+    const hx = ox + P.sx, hy = oy + P.sy - 16, hz = pz * ZH + 20;
+    const L = [[hx, hy, hz], [0, 0, 0], [0, 0, 0]];
+    const LC = [[1.9 * WISP, 1.15 * WISP, 0.42 * WISP], [0, 0, 0], [0, 0, 0]];
+    flares.forEach((s, i) => {
+      if (i > 1) return;
+      const sp = project(s.x + 0.5, s.y + 0.5, s.z);
+      const fl = 0.55 + 0.45 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
+      L[i + 1] = [ox + sp.sx, oy + sp.sy, s.z * ZH + 12];
+      LC[i + 1] = [0.5 * fl, 1.5 * fl, 0.35 * fl];
+    });
 
-    // eye-totem flicker light — the corruption heart's poison lantern (TDD §9)
-    if (totemScreen) {
-      const cxs = totemScreen.x * S, cys = totemScreen.y * S, rad2 = 5 * TW * S;
-      const fl = clampf(0.35 + 0.5 * fbm(tt * 6, 0, 55, 2) + 0.15 * Math.sin(tt * 11));
-      ctx.globalCompositeOperation = 'lighter';
-      const g2 = ctx.createRadialGradient(cxs, cys, 0, cxs, cys, rad2);
-      g2.addColorStop(0, `rgba(132,212,76,${0.32 * fl})`); g2.addColorStop(1, 'rgba(132,212,76,0)');
-      ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(cxs, cys, rad2, 0, Math.PI * 2); ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-    }
+    // PASS A — lighting at native resolution
+    gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
+    gl.viewport(0, 0, nvw, nvh);
+    gl.useProgram(lightP);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.bindSampler(0, sampNearest);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.bindSampler(1, sampNearest);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.bindSampler(2, sampNearest);
+    gl.uniform1i(U(lightP, 'uAlb'), 0); gl.uniform1i(U(lightP, 'uNrm'), 1); gl.uniform1i(U(lightP, 'uEmi'), 2);
+    gl.uniform2f(U(lightP, 'uRes'), nvw, nvh);
+    gl.uniform1f(U(lightP, 'uTime'), t);
+    gl.uniform1f(U(lightP, 'uAmb'), AMB);
+    gl.uniform1f(U(lightP, 'uWispA'), WISP);
+    gl.uniform3fv(U(lightP, 'uL'), L.flat());
+    gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
+    gl.uniform2f(U(lightP, 'uWispPx'), hx, oy + P.sy - 12);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
 
+    // PASS B — crisp integer upscale + bloom + grade
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, vw, vh);
+    gl.useProgram(postP);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, litTex); gl.bindSampler(0, sampNearest);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, litTex); gl.bindSampler(1, sampMip);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.bindSampler(2, sampNearest);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.bindSampler(3, sampNearest);
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.bindSampler(4, sampNearest);
+    gl.uniform1i(U(postP, 'uLit'), 0); gl.uniform1i(U(postP, 'uLitM'), 1);
+    gl.uniform1i(U(postP, 'uAlbT'), 2); gl.uniform1i(U(postP, 'uNrmT'), 3); gl.uniform1i(U(postP, 'uEmiT'), 4);
+    gl.uniform2f(U(postP, 'uOut'), vw, vh);
+    gl.uniform2f(U(postP, 'uNative'), nvw, nvh);
+    gl.uniform1f(U(postP, 'uScale'), S);
+    gl.uniform2f(U(postP, 'uOff'), 0, 0);
+    gl.uniform1f(U(postP, 'uBloom'), BLOOM);
+    gl.uniform1f(U(postP, 'uTime'), t);
+    gl.uniform1i(U(postP, 'uView'), 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // joystick overlay (2D, above the GL canvas)
+    octx.clearRect(0, 0, vw, vh);
     const j = input.joystick();
     if (j) {
       const k = vw / window.innerWidth;
-      ctx.strokeStyle = 'rgba(200,220,180,0.25)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(j.bx, j.by, 46 * k, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = 'rgba(132,212,76,0.5)'; ctx.beginPath(); ctx.arc(j.kx, j.ky, 18 * k, 0, Math.PI * 2); ctx.fill();
+      octx.strokeStyle = 'rgba(200,220,180,0.25)'; octx.lineWidth = 2;
+      octx.beginPath(); octx.arc(j.bx, j.by, 46 * k, 0, Math.PI * 2); octx.stroke();
+      octx.fillStyle = 'rgba(240,165,0,0.5)'; octx.beginPath(); octx.arc(j.kx, j.ky, 18 * k, 0, Math.PI * 2); octx.fill();
     }
   }
 
@@ -311,4 +451,25 @@ export function createRenderer(canvas, sim, input) {
       });
     },
   };
+
+  // ---- small emissive-aware harvest sprites (bonegrowth / obsidian shard) ----
+  function buildHarvest() {
+    const mk = (w, h, ax, ay) => ({ w, h, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h), ax, ay });
+    const set = (sp, x, y, c, n, e) => { if (x < 0 || y < 0 || x >= sp.w || y >= sp.h) return; const i = y * sp.w + x; sp.mask[i] = 1; sp.alb[i * 3] = c[0]; sp.alb[i * 3 + 1] = c[1]; sp.alb[i * 3 + 2] = c[2]; sp.nrm[i * 3] = (n[0] * 0.5 + 0.5) * 254; sp.nrm[i * 3 + 1] = (n[1] * 0.5 + 0.5) * 254; sp.nrm[i * 3 + 2] = n[2] * 254; sp.emi[i] = e || 0; };
+    const out = {};
+    // bonegrowth: three pale stalks
+    const tree = mk(14, 18, 7, 17), br = ELIT.bone;
+    for (let s = 0; s < 3; s++) { const bx = 4 + s * 3, top = 4 + ((s * 7) % 5); for (let y = top; y < 16; y++) { set(tree, bx, y, br[2], norm3(-0.4, 0, 0.9), 0); set(tree, bx + 1, y, br[3], norm3(0.4, 0, 0.9), 0); } set(tree, bx, top - 1, br[4], norm3(0, -0.3, 0.9), 0); }
+    out.tree = tree;
+    // obsidian shard with a violet glint
+    const rock = mk(14, 18, 7, 17), ob = ELIT.obsid;
+    for (let y = 8; y < 16; y++) for (let x = 4; x < 10; x++) if (Math.abs(x - 7) + Math.abs(y - 13) < 5) set(rock, x, y, ob[x < 7 ? 2 : 3], norm3((x - 7) * 0.3, -0.2, 0.9), 0);
+    set(rock, 7, 6, ob[4], norm3(0, -0.4, 0.8), 2); set(rock, 7, 5, EGLOW.violet, norm3(0, -0.3, 0.9), 2);
+    out.rock = rock;
+    return out;
+  }
 }
+
+// m2 / corr01 — thin re-exports of world classification used only for flare picks.
+function m2(world, x, y) { return materialAt(world, x, y) === 'poison'; }
+function corr01(world, x, y) { const c = fbm(x * 0.13, y * 0.13, world.cs); return c; }

@@ -56,3 +56,18 @@ export const DREAD = {
   obsid:  ['#0e0a16', '#1c1526', '#2c2138', '#3e2f4e', '#554270'].map(_hx),  // spires / props
 };
 export const DGLOW = { poison: _hx('#c8ff7a'), violet: _hx('#be96ff'), ember: _hx('#ff785a'), water: _hx('#5a46b4') };
+
+// ---- Emberlit master palette (v0.5). Same materials, but the albedo ramps are
+// a touch BRIGHTER than DREAD: deferred lighting multiplies albedo by a low
+// ambient and adds dynamic light, so surfaces must carry headroom to relight.
+// These feed the WebGL2 renderer + G-sprite bakers; DREAD stays for the parked
+// Canvas2D path. Emissive colors are HDR — the lighting pass scales them ×3.2.
+export const ELIT = {
+  soil:   ['#161226', '#241c38', '#342a4c', '#463a60', '#584a70'].map(_hx),
+  flesh:  ['#2a1220', '#48202e', '#682e3c', '#88404a', '#a45a62'].map(_hx),
+  bone:   ['#38342c', '#565046', '#787064', '#a0988a', '#c8c0ac'].map(_hx),
+  poison: ['#0e2412', '#1e4222', '#30662e', '#50983c', '#88d850'].map(_hx),
+  water:  ['#080614', '#0e0a20', '#16102e', '#201646'].map(_hx),
+  obsid:  ['#100c1a', '#1e172a', '#2e233c', '#402f52', '#584474'].map(_hx),
+};
+export const EGLOW = { poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70], water: [100, 80, 200] };

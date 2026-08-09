@@ -1,67 +1,72 @@
-// render-smoke-test.mjs — headless proof the ISO renderer boots and paints
-// without throwing or emitting NaN / undefined draw values. Uses a stub canvas
-// (no real drawing) — it exercises every generator + the per-frame paint path
-// with the real sim + world. Run alongside smoke-test.mjs before every push.
+// render-smoke-test.mjs — headless proof the Emberlit BAKE side is sound without
+// a GPU. The WebGL2 renderer itself needs a real GL context (verified by the
+// SwiftShader screenshot harness), but the CPU half — the G-sprite bakers and the
+// per-pixel albedo/normal/emissive they emit — is pure typed-array math and runs
+// in node. This guards the class of bug (NaN normals, empty masks, bad ramp
+// indices) that a blank screenshot would only tell us about after the fact.
 //
-//   node render-smoke-test.mjs
-//
-// (This is the harness the TDP §7 calls for — the same class of check that
-//  caught a bad ramp/undefined-style bug during the mockup rounds.)
+//   node render-smoke-test.mjs   (run alongside smoke-test.mjs before every push)
 
 import { createSim } from './src/sim/core.js';
-import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
-import { rollRecipe } from './src/assetforge/doll.js';
+import { createWorld, materialAt, heightAt } from './src/sim/world.js';
+import { buildProps, spriteFromSheetFrame, spriteFromCanvasData, norm3 } from './src/render/gsprite.js';
 
-let bad = 0, nan = 0, styleWrites = 0, drawImages = 0;
-function badColor(v) {
-  return v == null || v === 'undefined' ||
-    (typeof v === 'string' && (v.includes('NaN') || v.includes('undefined')));
+let bad = 0;
+function checkSprite(name, sp) {
+  if (!sp || !sp.w || !sp.h) { console.log('EMPTY sprite:', name); bad++; return; }
+  let filled = 0;
+  for (let i = 0; i < sp.mask.length; i++) if (sp.mask[i]) filled++;
+  if (filled === 0) { console.log('NO PIXELS:', name); bad++; }
+  for (let i = 0; i < sp.nrm.length; i++) if (Number.isNaN(sp.nrm[i])) { console.log('NaN normal:', name); bad++; break; }
+  for (let i = 0; i < sp.alb.length; i++) if (Number.isNaN(sp.alb[i])) { console.log('NaN albedo:', name); bad++; break; }
+  console.log(`  ${name}: ${sp.w}x${sp.h}, ${filled} px, anchor(${sp.ax},${sp.ay})`);
 }
-function stubCtx(w, h) {
-  return {
-    canvas: { width: w, height: h }, imageSmoothingEnabled: false,
-    lineWidth: 0, strokeStyle: '', globalCompositeOperation: 'source-over',
-    set fillStyle(v) { styleWrites++; if (badColor(v)) { bad++; if (bad < 8) console.log('BAD STYLE:', JSON.stringify(v)); } this._fs = v; },
-    get fillStyle() { return this._fs; },
-    fillRect(x, y, ww, hh) { if ([x, y, ww, hh].some(Number.isNaN)) { nan++; if (nan < 8) console.log('NaN fillRect', x, y, ww, hh); } },
-    drawImage(img, x, y, ww, hh) { drawImages++; if ([x, y, ww, hh].some((n) => n !== undefined && Number.isNaN(n))) { nan++; if (nan < 8) console.log('NaN drawImage', x, y, ww, hh); } },
-    clearRect() {}, strokeRect() {}, beginPath() {}, arc() {}, fill() {}, stroke() {}, moveTo() {}, lineTo() {}, save() {}, restore() {}, translate() {}, scale() {},
-    getImageData(x, y, ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
-    createImageData(ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
-    putImageData() {},
-    createRadialGradient() { return { addColorStop() {} }; },
-  };
-}
-function mkCanvas(w = 0, h = 0) {
-  return { width: w, height: h, style: {}, getContext() { return stubCtx(this.width, this.height); }, addEventListener() {} };
-}
-global.document = { createElement: () => mkCanvas() };
-global.Image = class { constructor() { this.onload = null; } set src(v) { } };
-global.window = { devicePixelRatio: 2, innerWidth: 402, innerHeight: 874, addEventListener() {}, matchMedia: () => ({ matches: false }) };
-global.performance = { now: () => 0 };
 
-// import the renderer AFTER the DOM stubs exist (module top-level is DOM-free,
-// but createRenderer touches document/window at call time)
-const { createRenderer } = await import('./src/render/renderer.js');
+// norm3 must always return a unit-ish vector, never NaN
+for (const v of [[0, 0, 0], [1, 2, 3], [-5, 0, 0.001]]) {
+  const n = norm3(...v); if (n.some(Number.isNaN)) { console.log('NaN norm3', v); bad++; }
+}
 
+// prop bakers
+const props = buildProps(20260807);
+console.log('props:');
+checkSprite('spire', props.spire[0]);
+checkSprite('monolith', props.monolith[0]);
+checkSprite('totem', props.totem[0]);
+
+// creature from a synthetic RGBA sheet frame (a filled blob with a hole)
+const FW = 20, FH = 24, sheet = new Uint8Array(FW * FH * 4);
+for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) {
+  const solid = Math.hypot(x - 10, y - 12) < 8 && !(x > 8 && x < 12 && y > 4 && y < 8);
+  if (solid) { const i = (y * FW + x) * 4; sheet[i] = 90; sheet[i + 1] = 40; sheet[i + 2] = 50; sheet[i + 3] = 255; }
+}
+console.log('creature:');
+checkSprite('stain-frame', spriteFromSheetFrame(sheet, FW, 0, FW, FH, FW >> 1, FH - 1));
+
+// billboard from synthetic quantized doll data
+const DW = 24, DH = 36, doll = new Uint8Array(DW * DH * 4);
+for (let y = 6; y < 32; y++) for (let x = 8; x < 16; x++) { const i = (y * DW + x) * 4; doll[i] = 70; doll[i + 1] = 60; doll[i + 2] = 90; doll[i + 3] = 255; }
+console.log('hero:');
+checkSprite('doll', spriteFromCanvasData(doll, DW, DH, 12, 34));
+
+// world bake sanity: material mix + elevation range are non-degenerate + deterministic
 const SEED = 20260807;
+const w1 = createWorld(SEED), w2 = createWorld(SEED);
+const mats = {}; let zmin = 9, zmax = -1, mismatch = 0;
+for (let y = -20; y < 20; y++) for (let x = -20; x < 20; x++) {
+  const m = materialAt(w1, x, y), z = heightAt(w1, x, y);
+  mats[m] = (mats[m] || 0) + 1; zmin = Math.min(zmin, z); zmax = Math.max(zmax, z);
+  if (materialAt(w2, x, y) !== m || heightAt(w2, x, y) !== z) mismatch++;
+}
+console.log('world:', mats, 'z', zmin, '..', zmax, 'determinism mismatches', mismatch);
+if (Object.keys(mats).length < 2) { console.log('material mix too flat'); bad++; }
+if (zmax - zmin < 2) { console.log('elevation too flat'); bad++; }
+if (mismatch) { console.log('non-deterministic worldgen'); bad++; }
+
+// sim still boots + ticks
 const sim = createSim(SEED);
-const canvas = mkCanvas();
-const input = { joystick: () => null, vec: () => null, onTap: () => {} };
-const renderer = createRenderer(canvas, sim, input);
-renderer.setHero(rollRecipe(mulberry32(streamSeed(SEED, STREAM.RECIPE))));
-
-// drive a few ticks of movement, then paint interpolated frames + a couple taps
 for (let i = 0; i < 40; i++) { sim.commands.push({ type: 'move', x: 1, y: 0.3 }); sim.tick(); }
-for (let f = 0; f < 12; f++) renderer.render((f % 4) / 4, f * 16);
+if (!Number.isFinite(sim.state.player.x)) { console.log('player position NaN'); bad++; }
 
-const tapMid = renderer.screenToTile(200, 430, 1);
-const tapCorner = renderer.screenToTile(10, 10, 1);
-const tapsOk = Number.isFinite(tapMid.tx) && Number.isFinite(tapMid.ty) &&
-  Number.isFinite(tapCorner.tx) && Number.isFinite(tapCorner.ty);
-
-console.log('frames painted: 12 |', 'style writes:', styleWrites, '| drawImages:', drawImages);
-console.log('taps resolve to finite tiles:', tapsOk, tapMid, tapCorner);
-console.log('bad styles:', bad, '| NaN draw values:', nan);
-console.log(bad === 0 && nan === 0 && tapsOk ? 'RENDER_SMOKE_OK' : 'RENDER_SMOKE_FAIL');
-if (!(bad === 0 && nan === 0 && tapsOk)) process.exit(1);
+console.log(bad === 0 ? 'RENDER_SMOKE_OK' : 'RENDER_SMOKE_FAIL (' + bad + ')');
+if (bad !== 0) process.exit(1);
