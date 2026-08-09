@@ -73,12 +73,14 @@ export function resourceAt(world, x, y) {
 }
 
 // Walkable if: not water, not a resource, and (when a from-height is given) the
-// same elevation as the tile the mover stands on — cliffs of any drop block.
-// Ramps between levels come later; core.js threads the mover's current z in.
+// target is not a higher WALL — you can step up at most one level and descend
+// any amount, so the character moves over all terrain but tall cliffs. core.js
+// threads the mover's current tile height in.
+export const MAX_CLIMB = 1;
 export function isWalkable(world, x, y, fromZ) {
   const tx = Math.floor(x), ty = Math.floor(y);
   if (materialAt(world, tx, ty) === MAT.WATER) return false;
-  if (fromZ !== undefined && heightAt(world, tx, ty) !== fromZ) return false;
+  if (fromZ !== undefined && heightAt(world, tx, ty) - fromZ > MAX_CLIMB) return false;
   if (resourceAt(world, tx, ty)) return false;
   return true;
 }

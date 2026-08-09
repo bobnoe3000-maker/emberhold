@@ -1,8 +1,9 @@
 // renderer.js — Dreadforge isometric renderer (art direction v0.4). The sim
 // doesn't know this file exists. Terrain (materials + elevation + cliff faces) is
-// painted at NATIVE resolution into an ImageData, then integer-scaled to the
-// display — the crisp path (fractional scaling shears moiré into pixel art).
-// The glow/flicker/fog post stack + chunk cache are the next port step.
+// painted at NATIVE resolution into a MARGIN-CACHED buffer — baked once and re-
+// blitted per frame, re-baked only when the camera crosses the margin — then
+// integer-scaled to the display (the crisp path). Dynamic actors, glow pulse,
+// torch, and fog composite on top each frame.
 
 import { materialAt, heightAt, resourceAt } from '../sim/world.js';
 import { DREAD, DGLOW, INK_RGB } from './palette.js';
@@ -11,13 +12,34 @@ import { hash2, fbm } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 
 const DOLL_AX = 12, DOLL_AY = 34;
+const MARGIN = 64;                 // native-px slack before a re-bake
 const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+
+// Master-ramp quantization (TDD §8.4): map the warm paper-doll into the cold
+// world by snapping every pixel to the nearest Dreadforge material color.
+const QUANT = DREAD.soil.concat(DREAD.bone, DREAD.flesh, DREAD.obsid);
+function quantizeToRamps(c, w, h) {
+  const id = c.getImageData(0, 0, w, h), d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue;
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    let bj = 0, bd = 1e18;
+    for (let j = 0; j < QUANT.length; j++) { const q = QUANT[j], dd = (r - q[0]) * (r - q[0]) + (g - q[1]) * (g - q[1]) + (b - q[2]) * (b - q[2]); if (dd < bd) { bd = dd; bj = j; } }
+    d[i] = QUANT[bj][0]; d[i + 1] = QUANT[bj][1]; d[i + 2] = QUANT[bj][2];
+  }
+  c.putImageData(id, 0, 0);
+}
 
 export function createRenderer(canvas, sim, input) {
   const ctx = canvas.getContext('2d');
   const nativeCv = document.createElement('canvas');
   const nctx = nativeCv.getContext('2d');
-  let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, img = null, D = null;
+  const terrCv = document.createElement('canvas');       // margin-cached terrain
+  const terrCtx = terrCv.getContext('2d');
+  let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
+  let terrImg = null, terrData = null;
+  let bakeOx = 0, bakeOy = 0, terrValid = false;
+  let terrGlow = [];
 
   function resize() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -29,25 +51,28 @@ export function createRenderer(canvas, sim, input) {
     S = Math.max(2, Math.round(vw / (16 * TW)));   // ~16 tiles across, integer scale
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     nativeCv.width = nvw; nativeCv.height = nvh;
-    img = nctx.createImageData(nvw, nvh); D = img.data;
-    ctx.imageSmoothingEnabled = false; nctx.imageSmoothingEnabled = false;
+    tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
+    terrCv.width = tbw; terrCv.height = tbh;
+    terrImg = terrCtx.createImageData(tbw, tbh); terrData = terrImg.data;
+    terrValid = false;
+    ctx.imageSmoothingEnabled = false; nctx.imageSmoothingEnabled = false; terrCtx.imageSmoothingEnabled = false;
   }
   window.addEventListener('resize', resize); resize();
 
-  const put = (px, py, rgb) => {
-    px |= 0; py |= 0;
-    if (px < 0 || py < 0 || px >= nvw || py >= nvh) return;
-    const i = (py * nvw + px) * 4; D[i] = rgb[0]; D[i + 1] = rgb[1]; D[i + 2] = rgb[2]; D[i + 3] = 255;
-  };
-
-  // ---- player doll frames (detailed 24×36) ----
+  // ---- player doll frames (detailed 24×36, quantized to the master ramps) ----
   const dollCache = new Map();
   let heroRecipe = null;
   function setHero(r) { heroRecipe = r; dollCache.clear(); }
   function dollFrame(frame, mirror) {
     const k = frame + '|' + mirror;
     let cv = dollCache.get(k);
-    if (!cv) { cv = document.createElement('canvas'); cv.width = DETAIL_W; cv.height = DETAIL_H; drawDollDetailed(cv.getContext('2d'), heroRecipe, frame, mirror); dollCache.set(k, cv); }
+    if (!cv) {
+      cv = document.createElement('canvas'); cv.width = DETAIL_W; cv.height = DETAIL_H;
+      const dc = cv.getContext('2d');
+      drawDollDetailed(dc, heroRecipe, frame, mirror);
+      quantizeToRamps(dc, DETAIL_W, DETAIL_H);
+      dollCache.set(k, cv);
+    }
     return cv;
   }
 
@@ -66,9 +91,9 @@ export function createRenderer(canvas, sim, input) {
       const w = 14, h = 18, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
       const c = cv.getContext('2d'), ramp = kind === 'tree' ? DREAD.bone : DREAD.obsid;
       const px = (x, y, a) => { c.fillStyle = rgb(a); c.fillRect(x, y, 1, 1); };
-      if (kind === 'tree') {                    // bonegrowth — pale shards jutting up
+      if (kind === 'tree') {
         for (let i = 0; i < 3; i++) { const bx = 4 + i * 3, top = 4 + ((i * 7) % 5); for (let y = top; y < 16; y++) { px(bx, y, ramp[2]); px(bx + 1, y, ramp[1]); } px(bx, top - 1, ramp[4]); px(bx + 1, top, ramp[3]); }
-      } else {                                  // obsidian shard cluster (violet, lit tip)
+      } else {
         for (let y = 8; y < 16; y++) for (let x = 4; x < 10; x++) if (Math.abs(x - 7) + Math.abs(y - 13) < 5) px(x, y, ramp[x < 7 ? 2 : 1]);
         px(6, 6, ramp[4]); px(8, 7, ramp[3]); px(7, 5, DGLOW.violet);
       }
@@ -80,15 +105,15 @@ export function createRenderer(canvas, sim, input) {
   let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
 
-  // Paint one tile's cliff faces + top diamond into the native buffer. Returns glow.
-  function drawTile(ox, oy, x, y, glowOut) {
+  // Paint one tile's cliff faces + top diamond via `put` into a target buffer.
+  function drawTile(put, ox, oy, x, y, glowOut, W, H) {
     const world = sim.world;
     const z = heightAt(world, x, y), m = materialAt(world, x, y);
     const sx = ox + (x - y) * HW, sy = oy + (x + y) * HH - z * ZH;
-    if (sx < -TW || sx > nvw + TW || sy < -64 || sy > nvh + 20) return;
+    if (sx < -TW || sx > W + TW || sy < -64 || sy > H + 20) return;
     if (m === 'water') {
       const ramp = DREAD.water;
-      for (let i = 0; i < 8; i++) { const half = ROWW[i] / 2; for (let k = 0; k < ROWW[i]; k++) { const dx = k - half, r = hash2(x * 16 + k, y * 8 + i, world.ws + 500); let c = r < 0.85 ? ramp[1] : ramp[2]; if (r > 0.984) c = ramp[3]; put(sx + dx, sy + i, c); if (r > 0.986) glowOut.push([sx + dx, sy + i, DGLOW.water, hash2(sx + dx | 0, sy + i | 0, 3) * 6]); } }
+      for (let i = 0; i < 8; i++) { const half = ROWW[i] / 2; for (let k = 0; k < ROWW[i]; k++) { const dx = k - half, r = hash2(x * 16 + k, y * 8 + i, world.ws + 500); let c = r < 0.85 ? ramp[1] : ramp[2]; if (r > 0.984) c = ramp[3]; put(sx + dx, sy + i, c); if (r > 0.986) glowOut.push([(sx + dx) | 0, (sy + i) | 0, DGLOW.water, hash2(x * 16 + k, y * 8 + i, 3) * 6]); } }
       return;
     }
     const ramp = DREAD[m];
@@ -115,13 +140,49 @@ export function createRenderer(canvas, sim, input) {
       for (let k = 0; k < wid; k++) {
         const dx = k - half, u = x + k / 16, v = y + i / 8;
         let idx = Math.floor((0.38 + 0.42 * fbm(u * 1.7, v * 1.7, world.ss + 3, 2)) * ramp.length);
-        if ((k / wid) + (i / 8) > 1.15) idx -= 1;                                   // SE form falloff
-        if (i < 4 && (k < 2 || k > wid - 3)) { if (nwLower || neLower) idx += 1; else if (nwHigher || neHigher) idx -= 1; }  // rim / AO
+        if ((k / wid) + (i / 8) > 1.15) idx -= 1;
+        if (i < 4 && (k < 2 || k > wid - 3)) { if (nwLower || neLower) idx += 1; else if (nwHigher || neHigher) idx -= 1; }
         idx = idx < 0 ? 0 : idx >= ramp.length ? ramp.length - 1 : idx;
         put(sx + dx, sy + i, ramp[idx]);
-        if (corr && hash2(x * 16 + k, y * 8 + i, world.cs + 555) > 0.972) glowOut.push([sx + dx, sy + i, DGLOW.poison, hash2(sx + dx | 0, sy + i | 0, 5) * 6]);
+        if (corr && hash2(x * 16 + k, y * 8 + i, world.cs + 555) > 0.972) glowOut.push([(sx + dx) | 0, (sy + i) | 0, DGLOW.poison, hash2(x * 16 + k, y * 8 + i, 5) * 6]);
       }
     }
+  }
+
+  // Bake the terrain (viewport + margin) into terrCv, keyed to camera (ox, oy).
+  function bakeTerrain(ox, oy) {
+    bakeOx = ox; bakeOy = oy; terrGlow = [];
+    for (let i = 0; i < terrData.length; i += 4) { terrData[i] = INK_RGB[0]; terrData[i + 1] = INK_RGB[1]; terrData[i + 2] = INK_RGB[2]; terrData[i + 3] = 255; }
+    const putT = (px, py, rgb) => { px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return; const i = (py * tbw + px) * 4; terrData[i] = rgb[0]; terrData[i + 1] = rgb[1]; terrData[i + 2] = rgb[2]; terrData[i + 3] = 255; };
+    const bx = MARGIN + ox, by = MARGIN + oy;            // bake origin (display + margin)
+    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
+    for (const cx of [-MARGIN, nvw + MARGIN]) for (const cy of [-MARGIN, nvh + MARGIN]) for (const zz of [0, 7]) {
+      const w = unproject(cx - ox, cy - oy, zz);
+      minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
+    }
+    minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
+    const tiles = [];
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push([tx, ty]);
+    tiles.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
+    for (const [tx, ty] of tiles) drawTile(putT, bx, by, tx, ty, terrGlow, tbw, tbh);
+    terrCtx.putImageData(terrImg, 0, 0);
+    terrValid = true;
+  }
+
+  // ---- distance fog (dithered, ~8 Hz) ----
+  const fogCv = document.createElement('canvas');
+  let fogCtx = null, fogAt = -1e9;
+  function makeFog(t) {
+    if (fogCv.width !== nvw || fogCv.height !== nvh) { fogCv.width = nvw; fogCv.height = nvh; fogCtx = fogCv.getContext('2d'); }
+    const id = fogCtx.createImageData(nvw, nvh), d = id.data;
+    for (let y = 0; y < nvh; y++) for (let x = 0; x < nvw; x++) {
+      const top = Math.pow(Math.max(0, 1 - y / nvh), 1.7);
+      const band = 0.35 + 0.95 * fbm(x * 0.05 + t * 0.15, y * 0.07, 777, 2);
+      const vig = Math.hypot((x - nvw / 2) / (nvw * 0.5), (y - nvh / 2) / (nvh * 0.5)), vg = Math.max(0, vig - 0.86) * 0.7;
+      let f = 0.55 * top * band + vg; f = f < 0 ? 0 : f > 1 ? 1 : f;
+      if (BAYER[x & 3][y & 3] / 16 < f) { const i = (y * nvw + x) * 4; d[i] = 8; d[i + 1] = 6; d[i + 2] = 16; d[i + 3] = 255; }
+    }
+    fogCtx.putImageData(id, 0, 0);
   }
 
   function render(alpha, now) {
@@ -131,24 +192,19 @@ export function createRenderer(canvas, sim, input) {
     const P = project(ix, iy, pz);
     const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
 
-    for (let i = 0; i < D.length; i += 4) { D[i] = INK_RGB[0]; D[i + 1] = INK_RGB[1]; D[i + 2] = INK_RGB[2]; D[i + 3] = 255; }
-    const glowOut = [];
+    if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeTerrain(ox, oy);
 
+    // terrain: blit the cached buffer at the current camera offset
+    const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
+    nctx.drawImage(terrCv, srcX, srcY, nvw, nvh, 0, 0, nvw, nvh);
+
+    // dynamic props + player, depth-sorted by (x+y)
     let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
     for (const [cx, cy] of [[0, 0], [nvw, 0], [0, nvh], [nvw, nvh]]) for (const zz of [0, 7]) {
       const w = unproject(cx - ox, cy - oy, zz);
       minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
     }
     minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
-
-    const tiles = [];
-    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push([tx, ty]);
-    tiles.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
-    for (const [tx, ty] of tiles) drawTile(ox, oy, tx, ty, glowOut);
-
-    nctx.putImageData(img, 0, 0);
-
-    // props + player, depth-sorted by (x+y), drawn onto the native canvas
     const draws = [];
     for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) { const kind = resourceAt(sim.world, tx, ty); if (kind) draws.push({ d: tx + ty, kind, tx, ty }); }
     draws.push({ d: ix + iy + 0.01, kind: 'player' });
@@ -171,11 +227,15 @@ export function createRenderer(canvas, sim, input) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(nativeCv, 0, 0, nvw, nvh, 0, 0, nvw * S, nvh * S);
 
-    // glow pulse (display space)
-    const tt = now / 1000;
-    for (const [gx, gy, c, ph] of glowOut) { const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph)); ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`; ctx.fillRect(gx * S, gy * S, S, S); }
+    // glow pulse (from the cached terrain glow list, transformed to current view)
+    const tt = now / 1000, gdx = -MARGIN - (bakeOx - ox), gdy = -MARGIN - (bakeOy - oy);
+    for (const [bx, by, c, ph] of terrGlow) {
+      const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(2.6 * tt + ph));
+      ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+      ctx.fillRect((bx + gdx) * S, (by + gdy) * S, S, S);
+    }
 
-    // player torch — cold veil, warm hole (placeholder until the post stack, step 2)
+    // player torch — cold veil, warm hole (placeholder for a placeable light later)
     const lx = (ox + P.sx) * S, ly = (oy + P.sy - 14) * S;
     const light = document.__ehLight || (document.__ehLight = document.createElement('canvas'));
     if (light.width !== vw || light.height !== vh) { light.width = vw; light.height = vh; }
@@ -190,6 +250,11 @@ export function createRenderer(canvas, sim, input) {
     const wg = ctx.createRadialGradient(lx, ly, 0, lx, ly, rad * 0.55);
     wg.addColorStop(0, 'rgba(255,150,90,0.10)'); wg.addColorStop(1, 'rgba(255,150,90,0)');
     ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(lx, ly, rad * 0.55, 0, Math.PI * 2); ctx.fill();
+
+    // rolling fog (regenerated ~8 Hz), integer-scaled with the world
+    if (now - fogAt > 125) { makeFog(now / 1000); fogAt = now; }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(fogCv, 0, 0, nvw, nvh, 0, 0, nvw * S, nvh * S);
 
     const j = input.joystick();
     if (j) {
