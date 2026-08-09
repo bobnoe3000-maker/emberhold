@@ -1,6 +1,6 @@
 // Headless proof the sim core has zero DOM deps and is deterministic.
 import { createSim, TICK_DT } from './src/sim/core.js';
-import { resourceAt, tileType, isWalkable } from './src/sim/world.js';
+import { resourceAt, materialAt, heightAt, isWalkable } from './src/sim/world.js';
 import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
 
@@ -72,10 +72,18 @@ cont.bus.on('harvested', () => { destroyed = true; });
 for (let i = 0; i < 2; i++) { cont.commands.push({ type: 'harvest', tx: res2.tx, ty: res2.ty }); cont.tick(); }
 console.log('save round-trip (partial harvest resumes: 2 more hits finish it):', destroyed);
 
-// tile sanity: sample 2000 tiles, count types
-let counts = [0, 0, 0];
-for (let i = 0; i < 2000; i++) counts[tileType(sim.world, (i * 7919) % 500 - 250, (i * 104729) % 500 - 250)]++;
-console.log('tile mix (water/dirt/grass):', counts);
+// Dreadforge terrain: material mix + elevation range + determinism
+const mix = {};
+for (let i = 0; i < 3000; i++) { const m = materialAt(sim.world, (i * 7919) % 500 - 250, (i * 104729) % 500 - 250); mix[m] = (mix[m] || 0) + 1; }
+console.log('material mix:', mix);
+let zmin = 9, zmax = -1;
+for (let i = 0; i < 3000; i++) { const z = heightAt(sim.world, (i * 131) % 400 - 200, (i * 977) % 400 - 200); if (z < zmin) zmin = z; if (z > zmax) zmax = z; }
+console.log('elevation range z:', zmin, '..', zmax);
+const w2 = createSim(SEED).world;
+let detOk = true;
+for (const [x, y] of [[0, 0], [10, -7], [-30, 40], [55, 55]]) if (heightAt(w2, x, y) !== heightAt(sim.world, x, y) || materialAt(w2, x, y) !== materialAt(sim.world, x, y)) detOk = false;
+console.log('terrain determinism (height + material):', detOk);
+console.log('spawn on land (not water):', materialAt(sim.world, Math.floor(sim.state.player.x), Math.floor(sim.state.player.y)) !== 'water');
 
 // iso geometry: project → unproject round-trips exactly for all heights
 import { project, unproject, screenDirToWorld, resolveTap } from './src/render/iso.js';

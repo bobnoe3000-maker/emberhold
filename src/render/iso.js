@@ -5,6 +5,9 @@
 export const TW = 16, TH = 8;          // tile diamond footprint, native px (2:1)
 export const HW = TW / 2, HH = TH / 2; // 8, 4 — half extents
 export const ZH = 6;                   // px lifted per height level
+// The tile top diamond's per-row widths (single source of truth for masking,
+// edge detection, and cliff-face attachment — see Dreadforge TDD §3).
+export const ROWW = [4, 8, 12, 16, 16, 12, 8, 4];
 
 // World tile (x, y, h) → screen offset of the diamond's top vertex (pre-camera).
 // A tile's ground point (where props/actors stand) is project(x+0.5, y+0.5, h).

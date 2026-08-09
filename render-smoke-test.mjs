@@ -26,7 +26,9 @@ function stubCtx(w, h) {
     fillRect(x, y, ww, hh) { if ([x, y, ww, hh].some(Number.isNaN)) { nan++; if (nan < 8) console.log('NaN fillRect', x, y, ww, hh); } },
     drawImage(img, x, y, ww, hh) { drawImages++; if ([x, y, ww, hh].some((n) => n !== undefined && Number.isNaN(n))) { nan++; if (nan < 8) console.log('NaN drawImage', x, y, ww, hh); } },
     clearRect() {}, strokeRect() {}, beginPath() {}, arc() {}, fill() {}, stroke() {}, moveTo() {}, lineTo() {},
-    getImageData(x, y, ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4) }; },
+    getImageData(x, y, ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
+    createImageData(ww, hh) { return { data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh }; },
+    putImageData() {},
     createRadialGradient() { return { addColorStop() {} }; },
   };
 }

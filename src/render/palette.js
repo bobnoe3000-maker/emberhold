@@ -42,3 +42,17 @@ export const METAL = {
   T3: ['#8ce0c8', '#48ac90', '#2c7868', '#1a4c48'],   // deepsilver
   T4: ['#dcb0f0', '#9c5cd8', '#6434a0', '#3c1c68'],   // riftsteel
 };
+
+// ---- Dreadforge master palette (v0.4). Ramps as [r,g,b] for the native-buffer
+// renderer. Desaturated cold bases, one poison accent, ember reserved for eyes. ----
+const _hx = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+export const INK_RGB = [11, 9, 16];       // #0b0910 — the void ground
+export const DREAD = {
+  soil:   ['#120e1c', '#1f1830', '#2f2444', '#413156', '#554165'].map(_hx),  // ashen violet-gray
+  flesh:  ['#260e16', '#421a24', '#622834', '#843a44', '#a2545c'].map(_hx),  // organic growth
+  bone:   ['#332f28', '#524c40', '#756e5e', '#9c9482', '#c4bba6'].map(_hx),  // high shale
+  poison: ['#0c2010', '#1a3c1e', '#2c6229', '#4c9438', '#84d44c'].map(_hx),  // corruption
+  water:  ['#060410', '#0c091c', '#130e2a', '#1c1440'].map(_hx),             // void water
+  obsid:  ['#0e0a16', '#1c1526', '#2c2138', '#3e2f4e', '#554270'].map(_hx),  // spires / props
+};
+export const DGLOW = { poison: _hx('#c8ff7a'), violet: _hx('#be96ff'), ember: _hx('#ff785a'), water: _hx('#5a46b4') };

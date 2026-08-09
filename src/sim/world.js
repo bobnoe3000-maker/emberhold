@@ -1,54 +1,86 @@
-// world.js — infinite chunked world. Terrain is a pure function of (x, y, seed);
-// only player modifications (mods) are stored. Saves later = seed + mods. Headless.
+// world.js — infinite chunked world, Dreadforge classification. Terrain is a pure
+// function of (x, y, seed): elevation z∈[0,7], a corruption field, and a material
+// per tile. Only player modifications (mods) are stored — saves = seed + diffs.
+// Headless: zero DOM. All generation is deterministic and seed-partitioned.
 
 import { hash2, fbm, streamSeed, STREAM } from './rng.js';
 
 export const CHUNK = 32;           // tiles per chunk side
 export const TILE = 16;            // px per tile at native scale
 
-export const T = { WATER: 0, DIRT: 1, GRASS: 2 };
+// Materials (classification, not composition). Renderer maps each to a palette ramp.
+export const MAT = { WATER: 'water', SOIL: 'soil', FLESH: 'flesh', BONE: 'bone', POISON: 'poison' };
+
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 export function createWorld(seed) {
   return {
     seed,
-    ws: streamSeed(seed, STREAM.WORLD),
-    mods: new Map(),               // "x,y" -> { cleared: true }  (harvested resources)
-    hp: new Map(),                 // "x,y" -> remaining hits on a resource
+    ws: streamSeed(seed, STREAM.WORLD),   // resources
+    hs: streamSeed(seed, 7919),           // height field
+    cs: streamSeed(seed, 577),            // corruption field
+    ss: streamSeed(seed, 131),            // material selector
+    // corruption epicenter — a seeded heart the corruption spreads from
+    corrX: 12 + Math.floor(hash2(1, 2, seed) * 22),
+    corrY: 8 + Math.floor(hash2(3, 4, seed) * 22),
+    mods: new Map(),                      // "x,y" -> { cleared: true }
+    hp: new Map(),                        // "x,y" -> remaining hits
   };
 }
 
-export function tileType(world, x, y) {
-  const h = fbm(x / 9, y / 9, world.ws);
-  return h < 0.40 ? T.WATER : h < 0.53 ? T.DIRT : T.GRASS;
+// Elevation z ∈ [0,7]. Relief eases in with distance from origin so the spawn
+// sits on a broad flat (no cliff ring trapping the player). z ≤ 1 is void water.
+export function heightAt(world, x, y) {
+  let e = fbm(x * 0.09, y * 0.09, world.hs, 4);
+  e = (e - 0.5) * 1.5 + 0.5;
+  const ridge = Math.abs(fbm(x * 0.05, y * 0.05, world.hs + 101, 2) - 0.5) * 2;
+  e += 0.25 * ridge;
+  const z = clamp(Math.round(e * 7), 0, 7);
+  const base = 3, k = Math.min(1, Math.hypot(x, y) / 22);
+  return clamp(Math.round(base + (z - base) * k), 0, 7);
 }
 
-// Resource placement is also pure — mods overlay removals.
+// Corruption field: independent fbm + radial falloff from the seeded heart.
+// > threshold classifies as corrupted (poison). Spread grows from one heart.
+export function corruptionAt(world, x, y) {
+  const c = fbm(x * 0.13, y * 0.13, world.cs, 3);
+  const d = Math.hypot(x - world.corrX, y - world.corrY);
+  const fall = Math.max(0, 1 - d / 44);
+  return c * 0.55 + fall * 0.7;
+}
+const CORRUPT_THRESHOLD = 0.72;
+
+// Material classification: water at z≤1; corruption overrides; bone shale up high;
+// else ashen soil with flesh-growth patches where selector noise is high.
+export function materialAt(world, x, y) {
+  const z = heightAt(world, x, y);
+  if (z <= 1) return MAT.WATER;
+  if (corruptionAt(world, x, y) > CORRUPT_THRESHOLD) return MAT.POISON;
+  if (z >= 5) return MAT.BONE;
+  return fbm(x * 0.11, y * 0.11, world.ss, 2) > 0.70 ? MAT.FLESH : MAT.SOIL;   // flesh = patches, soil is the base
+}
+
+// Harvestable growths (kept from Phase 0 so the tap-loop survives the pivot):
+// 'tree' = bonegrowth, 'rock' = obsidian shard. On dry land only; mods overlay removals.
 export function resourceAt(world, x, y) {
   if (world.mods.has(x + ',' + y)) return null;
-  const t = tileType(world, x, y);
-  if (t === T.WATER) return null;
+  const m = materialAt(world, x, y);
+  if (m === MAT.WATER || m === MAT.POISON) return null;
   const r = hash2(x, y, world.ws + 888);
-  if (t === T.GRASS && r < 0.050) return 'tree';
-  if (r > 0.988) return 'rock';
+  if (r < 0.020) return 'tree';        // bonegrowth (sparser than the meadow's trees)
+  if (r > 0.992) return 'rock';        // obsidian shard
   return null;
 }
 
-export function isWalkable(world, x, y) {
+// Walkable if: not water, not a resource, and (when a from-height is given) the
+// same elevation as the tile the mover stands on — cliffs of any drop block.
+// Ramps between levels come later; core.js threads the mover's current z in.
+export function isWalkable(world, x, y, fromZ) {
   const tx = Math.floor(x), ty = Math.floor(y);
-  if (tileType(world, tx, ty) === T.WATER) return false;
+  if (materialAt(world, tx, ty) === MAT.WATER) return false;
+  if (fromZ !== undefined && heightAt(world, tx, ty) !== fromZ) return false;
   if (resourceAt(world, tx, ty)) return false;
   return true;
-}
-
-// 8-neighbor same-terrain mask for the autotiler. pred receives a tile type.
-export function neighborMask(world, x, y, pred) {
-  const at = (dx, dy) => pred(tileType(world, x + dx, y + dy));
-  let m = 0;
-  if (at(0, -1)) m |= 1;   if (at(1, -1)) m |= 2;
-  if (at(1, 0))  m |= 4;   if (at(1, 1))  m |= 8;
-  if (at(0, 1))  m |= 16;  if (at(-1, 1)) m |= 32;
-  if (at(-1, 0)) m |= 64;  if (at(-1, -1)) m |= 128;
-  return m;
 }
 
 export const chunkOf = (t) => Math.floor(t / CHUNK);

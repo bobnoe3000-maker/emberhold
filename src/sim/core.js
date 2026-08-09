@@ -1,7 +1,7 @@
 // core.js — the headless simulation. Fixed 20 Hz tick, commands in, events out.
 // Zero DOM, zero renderer imports. `node smoke-test.mjs` runs this file happily.
 
-import { createWorld, isWalkable, hitResource } from './world.js';
+import { createWorld, isWalkable, hitResource, heightAt } from './world.js';
 import { createBus, createCommandQueue } from './bus.js';
 
 export const TICK_HZ = 20;
@@ -36,12 +36,14 @@ export function createSim(seed) {
   };
 
   function tryMove(p, dx, dy) {
-    // per-axis slide with a small radius probe
+    // per-axis slide with a small radius probe. cz = the mover's current tile
+    // elevation, so the walk rule blocks stepping onto a different height (cliff).
+    const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
     const probe = (nx, ny) =>
-      isWalkable(world, nx - PLAYER_RADIUS, ny - PLAYER_RADIUS) &&
-      isWalkable(world, nx + PLAYER_RADIUS, ny - PLAYER_RADIUS) &&
-      isWalkable(world, nx - PLAYER_RADIUS, ny + PLAYER_RADIUS) &&
-      isWalkable(world, nx + PLAYER_RADIUS, ny + PLAYER_RADIUS);
+      isWalkable(world, nx - PLAYER_RADIUS, ny - PLAYER_RADIUS, cz) &&
+      isWalkable(world, nx + PLAYER_RADIUS, ny - PLAYER_RADIUS, cz) &&
+      isWalkable(world, nx - PLAYER_RADIUS, ny + PLAYER_RADIUS, cz) &&
+      isWalkable(world, nx + PLAYER_RADIUS, ny + PLAYER_RADIUS, cz);
     if (probe(p.x + dx, p.y)) p.x += dx;
     if (probe(p.x, p.y + dy)) p.y += dy;
   }
