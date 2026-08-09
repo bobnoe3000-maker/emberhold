@@ -12,7 +12,7 @@
 import { hash2, fbm, mulberry32 } from '../sim/rng.js';
 import { ELIT, EGLOW } from './palette.js';
 
-export const GLOW_ID = { 1: EGLOW.poison, 2: EGLOW.violet, 3: EGLOW.ember, 4: EGLOW.water };
+export const GLOW_ID = { 1: EGLOW.poison, 2: EGLOW.violet, 3: EGLOW.ember, 4: EGLOW.water, 5: EGLOW.lava, 6: EGLOW.soul };
 const OUTLINE_RGB = [8, 5, 14];
 const clampi = (v, a, b) => (v < a ? a : v > b ? b : v);
 export function norm3(x, y, z) { const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }

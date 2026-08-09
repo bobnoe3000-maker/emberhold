@@ -49,18 +49,19 @@ for (let y = 6; y < 32; y++) for (let x = 8; x < 16; x++) { const i = (y * DW + 
 console.log('hero:');
 checkSprite('doll', spriteFromCanvasData(doll, DW, DH, 12, 34));
 
-// world bake sanity: material mix + elevation range are non-degenerate + deterministic
+// world bake sanity: floor/wall/abyss present + elevation spans + deterministic
 const SEED = 20260807;
 const w1 = createWorld(SEED), w2 = createWorld(SEED);
+const { W, H } = w1.level;
 const mats = {}; let zmin = 9, zmax = -1, mismatch = 0;
-for (let y = -20; y < 20; y++) for (let x = -20; x < 20; x++) {
+for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
   const m = materialAt(w1, x, y), z = heightAt(w1, x, y);
   mats[m] = (mats[m] || 0) + 1; zmin = Math.min(zmin, z); zmax = Math.max(zmax, z);
   if (materialAt(w2, x, y) !== m || heightAt(w2, x, y) !== z) mismatch++;
 }
-console.log('world:', mats, 'z', zmin, '..', zmax, 'determinism mismatches', mismatch);
-if (Object.keys(mats).length < 2) { console.log('material mix too flat'); bad++; }
-if (zmax - zmin < 2) { console.log('elevation too flat'); bad++; }
+console.log('world:', w1.theme, mats, 'z', zmin, '..', zmax, 'determinism mismatches', mismatch);
+if (Object.keys(mats).length < 3) { console.log('material mix too flat'); bad++; }
+if (zmax - zmin < 5) { console.log('no high walls (elevation span)'); bad++; }
 if (mismatch) { console.log('non-deterministic worldgen'); bad++; }
 
 // sim still boots + ticks

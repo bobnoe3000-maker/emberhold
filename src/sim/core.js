@@ -11,16 +11,19 @@ const PLAYER_SPEED = 4.6;     // tiles / second
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
 const REACH = 1.6;            // harvest reach (chebyshev-ish, in tiles)
 
-export function createSim(seed) {
-  const world = createWorld(seed);
+export function createSim(seed, theme) {
+  const world = createWorld(seed, theme);
   const bus = createBus();
   const commands = createCommandQueue();
 
-  // Find a walkable spawn near origin.
-  let sx = 0, sy = 0;
-  outer: for (let r = 0; r < 64; r++) {
-    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-      if (isWalkable(world, dx + 0.5, dy + 0.5)) { sx = dx + 0.5; sy = dy + 0.5; break outer; }
+  // Spawn in the level's entrance room, snapping to the nearest walkable tile.
+  let sx = world.spawn.x, sy = world.spawn.y;
+  if (!isWalkable(world, sx, sy)) {
+    outer: for (let r = 1; r < 48; r++) {
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        const nx = Math.floor(world.spawn.x) + dx + 0.5, ny = Math.floor(world.spawn.y) + dy + 0.5;
+        if (isWalkable(world, nx, ny)) { sx = nx; sy = ny; break outer; }
+      }
     }
   }
 

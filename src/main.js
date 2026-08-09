@@ -10,9 +10,12 @@ import { loadInto, createAutosave } from './persist/save.js';
 import { screenDirToWorld } from './render/iso.js';
 
 const WORLD_SEED = 20260807;
+// Theme picks the level's terrain (dread · desert · poison · ember · lava · chasm).
+// Defaults to a seed-derived theme; ?theme= overrides for previewing a biome.
+const THEME = new URLSearchParams(location.search).get('theme') || undefined;
 
 const canvas = document.getElementById('game');
-const sim = createSim(WORLD_SEED);
+const sim = createSim(WORLD_SEED, THEME);
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 createHud(sim);   // subscribe before restore, so a loaded counters event repaints

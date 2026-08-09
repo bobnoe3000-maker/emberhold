@@ -11,19 +11,21 @@
 // demo's, unchanged; only the bake is driven from our infinite world.js. The old
 // Canvas2D path is parked in renderer-canvas.js.
 
-import { materialAt, heightAt, resourceAt, propAt, creatureAt } from '../sim/world.js';
+import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
-import { STAIN } from '../assetforge/stain.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
-import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, spriteFromSheetFrame } from './gsprite.js';
+import { GLOW_ID, norm3, buildProps, spriteFromCanvasData } from './gsprite.js';
+
+// hazard material → the point-light color it casts (lit dynamically as a flare)
+const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 
 const MARGIN = 64;                 // native-px slack before a re-bake
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
-const AMB = 0.42, WISP = 0.72, BLOOM = 0.55;
+const AMB = 0.62, WISP = 0.72, BLOOM = 0.55;
 // Map the warm paper-doll into the cold world: snap each pixel to an Emberlit ramp.
 const QUANT = ELIT.soil.concat(ELIT.bone, ELIT.flesh, ELIT.obsid);
 
@@ -190,17 +192,6 @@ export function createRenderer(canvas, sim, input) {
     return sp;
   }
 
-  let stainFrames = null;
-  const stainImg = new Image();
-  stainImg.onload = () => {
-    const cv = document.createElement('canvas'); cv.width = STAIN.fw * STAIN.frames; cv.height = STAIN.fh;
-    const c = cv.getContext('2d'); c.drawImage(stainImg, 0, 0);
-    const d = c.getImageData(0, 0, cv.width, cv.height).data;
-    stainFrames = [];
-    for (let f = 0; f < STAIN.frames; f++) stainFrames.push(spriteFromSheetFrame(d, cv.width, f * STAIN.fw, STAIN.fw, STAIN.fh, STAIN.ax, STAIN.ay));
-  };
-  stainImg.src = STAIN.sheet;
-
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   const putG = (px, py, alb, n, hpx, emiId) => {
     px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
@@ -235,13 +226,15 @@ export function createRenderer(canvas, sim, input) {
   // with material-gradient normals + sparse emissive specks (water / poison).
   function drawTileG(bx, by, x, y) {
     const world = sim.world;
-    const z = heightAt(world, x, y), m = materialAt(world, x, y);
+    const m = materialAt(world, x, y);
+    if (m === 'abyss') return;                                   // the void: draw nothing
+    const z = heightAt(world, x, y);
     const sx = bx + (x - y) * HW, sy = by + (x + y) * HH - z * ZH;
     if (sx < -TW || sx > tbw + TW || sy < -80 || sy > tbh + 20) return;
-    const water = m === 'water', corr = m === 'poison', hPix = z * ZH;
+    const liq = m === 'water' || m === 'poison' || m === 'lava', hPix = z * ZH;
     const ramp = ELIT[m] || ELIT.soil;
-    // cliff faces
-    if (!water) {
+    // cliff faces (walls tower over floors; floor lips fall into the abyss)
+    if (m !== 'water') {
       const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
       if (dSW > 0) faceG(sx, sy, dSW, ramp, 0, hPix);
       if (dSE > 0) faceG(sx, sy, dSE, ramp, 1, hPix);
@@ -254,16 +247,25 @@ export function createRenderer(canvas, sim, input) {
         const X = xs + dx, u = (x + dx / 16) * 2.3, v = (y + py / 8) * 2.3;
         const n0 = fbm(u, v, world.ss + 7);
         let idx = Math.max(0, Math.min(ramp.length - 1, Math.floor(n0 * (ramp.length + 0.2))));
-        if (water) idx = Math.min(3, idx);
+        if (m === 'water') idx = Math.min(3, idx);
         if (nwHi && py < 3 && dx < w / 2 && idx > 0) idx--;
         if (neHi && py < 3 && dx >= w / 2 && idx > 0) idx--;
-        const gx = (fbm(u + e, v, world.ss + 7) - fbm(u - e, v, world.ss + 7)) * (water ? 0.6 : 2.6);
-        const gy = (fbm(u, v + e, world.ss + 7) - fbm(u, v - e, world.ss + 7)) * (water ? 0.6 : 2.6);
-        let emi = 0;
-        if (water && hash2(X | 0, py + y * 8, world.cs + 901) > 0.986) emi = 4;
-        if (!water && corr && hash2((X | 0) * 3, py + y * 13, world.cs + 77) > 0.977) emi = 1;
-        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emi);
+        const gx = (fbm(u + e, v, world.ss + 7) - fbm(u - e, v, world.ss + 7)) * (liq ? 0.6 : 2.6);
+        const gy = (fbm(u, v + e, world.ss + 7) - fbm(u, v - e, world.ss + 7)) * (liq ? 0.6 : 2.6);
+        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emissiveFor(m, X | 0, x, y, py, u, v, world));
       }
+    }
+  }
+  // Emissive pattern per terrain: sparse specks on water/poison, glowing crack
+  // veins on lava/chasm, scattered vents on ember. Returns a GLOW_ID (0 = none).
+  function emissiveFor(m, X, tx, ty, py, u, v, world) {
+    switch (m) {
+      case 'water':  return hash2(X, py + ty * 8, world.cs + 901) > 0.986 ? 4 : 0;
+      case 'poison': return hash2(X * 3, py + ty * 13, world.cs + 77) > 0.972 ? 1 : 0;
+      case 'lava':   return Math.abs(fbm(u * 0.8 + 3, v * 0.8, world.hs + 5) - 0.5) < 0.075 ? 5 : 0;
+      case 'ember':  return hash2(X, py + ty * 8, world.cs + 31) > 0.95 ? 3 : 0;
+      case 'chasm':  return Math.abs(fbm(u * 0.7 + 7, v * 0.7, world.hs + 9) - 0.5) < 0.05 ? 6 : 0;
+      default:       return 0;
     }
   }
   function faceG(sx, sy, drop, ramp, side, hTop) {
@@ -306,18 +308,14 @@ export function createRenderer(canvas, sim, input) {
       if (pk) { const arr = props[pk], sp = pk === 'totem' ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0]; stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH); }
       const rk = resourceAt(world, tx, ty);
       if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
-      // flare anchors: strongest corruption in the region, two of them, far apart
-      if (z > 1 && m2(world, tx, ty)) {
-        const c = corr01(world, tx, ty);
-        if (!f1 || c > f1.c) f1 = { x: tx, y: ty, z, c };
-      }
+      // flare anchors: a glowing hazard pool (lava / flame / poison / soul) that
+      // will cast a themed point light — pick two, far apart, stable per region
+      const mm = materialAt(world, tx, ty);
+      if (HAZARD_LIGHT[mm]) { const s = hash2(tx, ty, 1234); if (!f1 || s > f1.s) f1 = { x: tx, y: ty, z, mat: mm, s }; }
     }
-    for (const [tx, ty] of tiles) {
-      const z = heightAt(world, tx, ty);
-      if (z > 1 && m2(world, tx, ty) && f1 && Math.hypot(tx - f1.x, ty - f1.y) > 8) {
-        const c = corr01(world, tx, ty);
-        if (!f2 || c > f2.c) f2 = { x: tx, y: ty, z, c };
-      }
+    if (f1) for (const [tx, ty] of tiles) {
+      const mm = materialAt(world, tx, ty);
+      if (HAZARD_LIGHT[mm] && Math.hypot(tx - f1.x, ty - f1.y) > 7) { const s = hash2(tx, ty, 1234); if (!f2 || s > f2.s) f2 = { x: tx, y: ty, z: heightAt(world, tx, ty), mat: mm, s }; }
     }
     flares = [f1, f2].filter(Boolean);
     terrValid = true;
@@ -344,29 +342,8 @@ export function createRenderer(canvas, sim, input) {
       sEMI.set(bEMI.subarray(b0, b0 + len), s0);
     }
 
-    // stamp dynamic actors (creatures behind → player), depth-sorted by (x+y)
-    const draws = [];
-    if (stainFrames) {
-      let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-      for (const [cx, cy] of [[0, 0], [nvw, 0], [0, nvh], [nvw, nvh]]) for (const zz of [0, 7]) {
-        const w = unproject(cx - ox, cy - oy, zz);
-        minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
-      }
-      minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
-      const t = now / 1000;
-      for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
-        if (!creatureAt(sim.world, tx, ty)) continue;
-        const phase = hash2(tx, ty, 9), wob = Math.sin(t * 0.6 + phase * 6.283) * 1.6;
-        const cwx = tx + 0.5 + wob, cwy = ty + 0.5;
-        const cz = heightAt(sim.world, Math.floor(cwx), Math.floor(cwy));
-        const cp = project(cwx, cwy, cz);
-        const fr = stainFrames[Math.floor(t * STAIN.fps + phase * 25) % STAIN.frames];
-        draws.push({ d: tx + ty, sp: fr, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH });
-      }
-    }
-    draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, hero: true });
-    draws.sort((a, b) => a.d - b.d);
-    for (const dr of draws) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h);
+    // stamp the hero into the window G-buffer (relit with everything else)
+    stamp(sALB, sNRM, sEMI, nvw, nvh, heroSprite(p.moving ? p.frame : 0, p.mirror), ox + P.sx, oy + P.sy, pz * ZH);
 
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
@@ -382,8 +359,9 @@ export function createRenderer(canvas, sim, input) {
       if (i > 1) return;
       const sp = project(s.x + 0.5, s.y + 0.5, s.z);
       const fl = 0.55 + 0.45 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
+      const base = HAZARD_LIGHT[s.mat] || [0.5, 1.5, 0.35];
       L[i + 1] = [ox + sp.sx, oy + sp.sy, s.z * ZH + 12];
-      LC[i + 1] = [0.5 * fl, 1.5 * fl, 0.35 * fl];
+      LC[i + 1] = [base[0] * fl, base[1] * fl, base[2] * fl];
     });
 
     // PASS A — lighting at native resolution
@@ -469,7 +447,3 @@ export function createRenderer(canvas, sim, input) {
     return out;
   }
 }
-
-// m2 / corr01 — thin re-exports of world classification used only for flare picks.
-function m2(world, x, y) { return materialAt(world, x, y) === 'poison'; }
-function corr01(world, x, y) { const c = fbm(x * 0.13, y * 0.13, world.cs); return c; }

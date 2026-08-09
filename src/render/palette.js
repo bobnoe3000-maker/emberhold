@@ -69,5 +69,14 @@ export const ELIT = {
   poison: ['#0e2412', '#1e4222', '#30662e', '#50983c', '#88d850'].map(_hx),
   water:  ['#080614', '#0e0a20', '#16102e', '#201646'].map(_hx),
   obsid:  ['#100c1a', '#1e172a', '#2e233c', '#402f52', '#584474'].map(_hx),
+  // dungeon-theme terrains
+  sand:   ['#241c14', '#3a2c1e', '#54402c', '#74603e', '#9a8256'].map(_hx),  // barren desert dusk
+  basalt: ['#121218', '#202028', '#2e2e3a', '#40404e', '#54545f'].map(_hx),  // cold volcanic rock
+  lava:   ['#180c0a', '#2a140e', '#3e1e14', '#54281a', '#6a3420'].map(_hx),  // dark crust (cracks glow)
+  ember:  ['#1a0e08', '#2c160c', '#402012', '#582c18', '#743a20'].map(_hx),  // scorched vent stone
+  chasm:  ['#1a1822', '#2a2834', '#3c3948', '#50505e', '#6a6878'].map(_hx),  // cracked pale stone
 };
-export const EGLOW = { poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70], water: [100, 80, 200] };
+export const EGLOW = {
+  poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70],
+  water: [100, 80, 200], lava: [255, 110, 40], soul: [150, 120, 255],
+};
