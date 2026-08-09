@@ -5,7 +5,10 @@
 // itself is a pure function of the seed (see world.js), so we never store tiles —
 // only what the player changed. Schema is versioned from day one.
 
-export const SAVE_VERSION = 1;
+// v2: the world model changed from an infinite field to generated dungeon levels,
+// so v1 saved positions no longer land on floor. Refusing them (migrate → null)
+// gives existing players a fresh spawn instead of stranding them in the abyss.
+export const SAVE_VERSION = 2;
 const KEY = 'emberhold.save';
 const AUTOSAVE_MS = 15000;
 

@@ -11,21 +11,27 @@ const PLAYER_SPEED = 4.6;     // tiles / second
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
 const REACH = 1.6;            // harvest reach (chebyshev-ish, in tiles)
 
+// The level's entrance point, snapped to the nearest walkable tile. Used both at
+// fresh spawn and as the relocation target when a restored position is off-floor
+// (e.g. a save written against an older world model — never strand the player).
+function findSpawn(world) {
+  if (isWalkable(world, world.spawn.x, world.spawn.y)) return { x: world.spawn.x, y: world.spawn.y };
+  const bx = Math.floor(world.spawn.x), by = Math.floor(world.spawn.y);
+  for (let r = 1; r < 48; r++)
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const nx = bx + dx + 0.5, ny = by + dy + 0.5;
+      if (isWalkable(world, nx, ny)) return { x: nx, y: ny };
+    }
+  return { x: world.spawn.x, y: world.spawn.y };
+}
+
 export function createSim(seed, theme) {
   const world = createWorld(seed, theme);
   const bus = createBus();
   const commands = createCommandQueue();
 
-  // Spawn in the level's entrance room, snapping to the nearest walkable tile.
-  let sx = world.spawn.x, sy = world.spawn.y;
-  if (!isWalkable(world, sx, sy)) {
-    outer: for (let r = 1; r < 48; r++) {
-      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-        const nx = Math.floor(world.spawn.x) + dx + 0.5, ny = Math.floor(world.spawn.y) + dy + 0.5;
-        if (isWalkable(world, nx, ny)) { sx = nx; sy = ny; break outer; }
-      }
-    }
-  }
+  const spawn = findSpawn(world);
+  let sx = spawn.x, sy = spawn.y;
 
   const state = {
     t: 0,
@@ -118,6 +124,7 @@ export function createSim(seed, theme) {
     const p = state.player;
     p.x = p.px = data.player.x;
     p.y = p.py = data.player.y;
+    if (!isWalkable(world, p.x, p.y)) { const s = findSpawn(world); p.x = p.px = s.x; p.y = p.py = s.y; }
     p.dir = data.player.dir ?? 'down';
     p.mirror = !!data.player.mirror;
     p.moving = false; p.frame = 0; p.frameAcc = 0;

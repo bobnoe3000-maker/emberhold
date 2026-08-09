@@ -42,7 +42,9 @@ const r1 = rollRecipe(mulberry32(streamSeed(SEED, STREAM.RECIPE)));
 const r2 = rollRecipe(mulberry32(streamSeed(SEED, STREAM.RECIPE)));
 console.log('hero recipe stable:', JSON.stringify(r1) === JSON.stringify(r2));
 
-// save/load round-trip
+// save/load round-trip — park the hero on solid floor first (restore relocates
+// an off-floor position, which is the whole point of the v2 change)
+for (const k of sim.world.level.cells.keys()) { const [tx, ty] = k.split(',').map(Number); if (isWalkable(sim.world, tx + 0.5, ty + 0.5)) { p.x = p.px = tx + 0.5; p.y = p.py = ty + 0.5; break; } }
 const snap = sim.snapshot();
 const reloaded = createSim(SEED); reloaded.restore(snap);
 const rp = reloaded.state.player;
@@ -63,6 +65,12 @@ cont.state.player.x = res2.tx + 1.5; cont.state.player.y = res2.ty + 0.5;
 let destroyed = false; cont.bus.on('harvested', () => { destroyed = true; });
 for (let i = 0; i < 2; i++) { cont.commands.push({ type: 'harvest', tx: res2.tx, ty: res2.ty }); cont.tick(); }
 console.log('save round-trip (partial harvest resumes):', destroyed);
+
+// a stale save whose position is now void (worldgen changed) relocates to spawn
+const stale = createSim(SEED);
+stale.restore({ ...sim.snapshot(), player: { x: 0.5, y: 0.5, dir: 'down', mirror: false } });
+const relocated = isWalkable(stale.world, stale.state.player.x, stale.state.player.y);
+console.log('stale off-floor save relocates to walkable ground:', relocated);
 
 // level terrain: floor/wall/abyss all present, elevation spans, deterministic
 const { W, H } = sim.world.level, mix = {};
@@ -97,6 +105,6 @@ const snapAt = project(5.9, 5.1, 0);
 const snapped = resolveTap(snapAt.sx, snapAt.sy, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
 console.log('iso fat-finger snap:', snapped.tx === 5 && snapped.ty === 5);
 
-const ok = found && res2 && destroyed && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
+const ok = found && res2 && destroyed && relocated && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);
