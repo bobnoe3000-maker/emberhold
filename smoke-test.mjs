@@ -1,7 +1,7 @@
 // Headless proof the sim core has zero DOM deps and is deterministic, now over a
 // generated dungeon level (rooms + corridors + walls + abyss).
 import { createSim, TICK_DT } from './src/sim/core.js';
-import { resourceAt, materialAt, heightAt, isWalkable } from './src/sim/world.js';
+import { resourceAt, materialAt, heightAt, isWalkable, propAt } from './src/sim/world.js';
 import { THEME_KEYS } from './src/sim/level.js';
 import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
@@ -72,6 +72,34 @@ stale.restore({ ...sim.snapshot(), player: { x: 0.5, y: 0.5, dir: 'down', mirror
 const relocated = isWalkable(stale.world, stale.state.player.x, stale.state.player.y);
 console.log('stale off-floor save relocates to walkable ground:', relocated);
 
+// descent: tapping the stairs regenerates the level one deeper + relocates the hero
+const dsim = createSim(SEED);
+const droom = dsim.world.level.descentRoom, theme0 = dsim.world.theme;
+dsim.state.player.x = droom.cx + 1.2; dsim.state.player.y = droom.cy + 0.5;
+dsim.commands.push({ type: 'harvest', tx: droom.cx, ty: droom.cy }); dsim.tick();
+const descended = dsim.state.depth === 1 && dsim.world.depth === 1 && dsim.world.level.rooms.length >= 3
+  && isWalkable(dsim.world, dsim.state.player.x, dsim.state.player.y);
+console.log('descend deepens the level:', descended, '|', theme0, '→', dsim.world.theme);
+
+// loot: tapping a chest grants resources and consumes it
+const csim = createSim(SEED);
+let chest = null;
+for (const [k, v] of csim.world.props) if (v === 'chest') { const [x, y] = k.split(',').map(Number); chest = { x, y }; break; }
+let looted = true;
+if (chest) {
+  csim.state.player.x = chest.x + 1.2; csim.state.player.y = chest.y + 0.5;
+  const w0 = csim.state.counters.wood;
+  csim.commands.push({ type: 'harvest', tx: chest.x, ty: chest.y }); csim.tick();
+  looted = csim.state.counters.wood > w0 && propAt(csim.world, chest.x, chest.y) === null;
+}
+console.log('chest loots + consumes:', chest ? looted : 'no chest (ok)');
+
+// discovery: rooms reveal as the hero moves, and it survives a save round-trip
+const discOK = sim.world.discovered.size >= 1;
+const rdisc = createSim(SEED); rdisc.restore(sim.snapshot());
+const discPersist = rdisc.world.discovered.size === sim.world.discovered.size;
+console.log('discovery tracked + persisted:', discOK, discPersist);
+
 // level terrain: floor/wall/abyss all present, elevation spans, deterministic
 const { W, H } = sim.world.level, mix = {};
 let zmin = 9, zmax = -1;
@@ -105,6 +133,7 @@ const snapAt = project(5.9, 5.1, 0);
 const snapped = resolveTap(snapAt.sx, snapAt.sy, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
 console.log('iso fat-finger snap:', snapped.tx === 5 && snapped.ty === 5);
 
-const ok = found && res2 && destroyed && relocated && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
+const ok = found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+  && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

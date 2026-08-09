@@ -99,14 +99,57 @@ export function voxEyeTotem(rng) {
   return bakeVox(vox, S, S, H, ELIT.flesh, 1);
 }
 
+// ---- functional props (interactive / light-casting) ----------------------
+// Descent gate: a standing ring with a glowing threshold — the way down.
+export function voxPortal() {
+  const S = 11, H = 16, vox = new Uint8Array(S * S * H), y = S >> 1;
+  const cx = S / 2, cz = 8.5, rx = 3.6, rz = 6.2;
+  for (let z = 0; z < H; z++) for (let x = 0; x < S; x++) {
+    const d = Math.hypot((x - cx) / rx, (z - cz) / rz);
+    if (d > 1.25) continue;
+    vox[(z * S + y) * S + x] = d > 0.78 ? 1 : 2;         // frame : glowing gate
+  }
+  return bakeVox(vox, S, S, H, ELIT.obsid, 6);
+}
+// Loot chest: a low box with a glowing latch.
+export function voxChest() {
+  const SX = 7, SY = 5, SZ = 5, vox = new Uint8Array(SX * SY * SZ);
+  for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
+    if (z === SZ - 1 && (x === 0 || x === SX - 1)) continue;   // rounded lid
+    vox[(z * SY + y) * SX + x] = (z === 2 && x === SX - 1 && y === (SY >> 1)) ? 2 : 1;
+  }
+  return bakeVox(vox, SX, SY, SZ, ELIT.bone, 3);
+}
+// Shrine: a pedestal under a floating orb.
+export function voxShrine() {
+  const S = 9, H = 16, vox = new Uint8Array(S * S * H), c = S / 2;
+  for (let z = 0; z < 9; z++) { const r = 1.4 + (z < 7 ? (7 - z) * 0.16 : 0); for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c) < r) vox[(z * S + y) * S + x] = 1; }
+  for (let z = 10; z < 15; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c, z - 12) < 2.4) vox[(z * S + y) * S + x] = 2;
+  return bakeVox(vox, S, S, H, ELIT.basalt, 4);
+}
+// Brazier: a bowl of coals on a stem — a doorway light.
+export function voxBrazier() {
+  const S = 7, H = 12, vox = new Uint8Array(S * S * H), c = S / 2;
+  for (let z = 0; z < 8; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.abs(x - c) < 1.2 && Math.abs(y - c) < 1.2) vox[(z * S + y) * S + x] = 1;
+  for (let z = 8; z < 11; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const d = Math.hypot(x - c, y - c); if (d < 2.6 && d > 1.3) vox[(z * S + y) * S + x] = 1; }
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c) < 1.8) vox[(10 * S + y) * S + x] = 2;
+  return bakeVox(vox, S, S, H, ELIT.obsid, 3);
+}
+
 // ---- deterministic prop set, keyed by world seed (same variant per tile) ----
 export function buildProps(seed) {
   return {
     spire: [0, 1, 2, 3].map((v) => voxSpire(mulberry32((seed * 13 + v * 97 + 1) >>> 0))),
     monolith: [0, 1, 2, 3].map((v) => voxMonolith(mulberry32((seed * 29 + v * 131 + 7) >>> 0))),
     totem: [voxEyeTotem(mulberry32((seed * 7 + 3) >>> 0))],
+    stairs: [voxPortal()],
+    chest: [voxChest()],
+    shrine: [voxShrine()],
+    brazier: [voxBrazier()],
   };
 }
+// Which prop kinds cast a point light, and the tint they cast.
+export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.4, 0.9, 1.6], brazier: [1.7, 0.9, 0.35] };
 
 // ---- billboard from an already-quantized character canvas (albedo) ----
 // Normal is a soft vertical cylinder: pixels bow toward their row's horizontal

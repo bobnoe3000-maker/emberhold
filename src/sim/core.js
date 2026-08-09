@@ -1,23 +1,27 @@
 // core.js — the headless simulation. Fixed 20 Hz tick, commands in, events out.
 // Zero DOM, zero renderer imports. `node smoke-test.mjs` runs this file happily.
+//
+// The world is one dungeon level; descending the stairs regenerates it deeper
+// (harder). Everything the world can't re-derive from (seed, depth) lives in the
+// snapshot: player, counters, the mods/HP overlay, and the discovered-room fog.
 
-import { createWorld, isWalkable, hitResource, heightAt } from './world.js';
+import { createWorld, isWalkable, hitResource, heightAt, propAt, CONSUMABLE_PROP } from './world.js';
 import { createBus, createCommandQueue } from './bus.js';
 
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
 
-const PLAYER_SPEED = 4.6;     // tiles / second
+const PLAYER_SPEED = 5.8;     // tiles / second
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
-const REACH = 1.6;            // harvest reach (chebyshev-ish, in tiles)
+const REACH = 1.8;            // interact reach (chebyshev-ish, in tiles)
 
-// The level's entrance point, snapped to the nearest walkable tile. Used both at
-// fresh spawn and as the relocation target when a restored position is off-floor
-// (e.g. a save written against an older world model — never strand the player).
+// The level's entrance point, snapped to the nearest walkable tile. Used at fresh
+// spawn, on descent, and as the relocation target when a restored position is
+// off-floor (a save from an older world model — never strand the player).
 function findSpawn(world) {
   if (isWalkable(world, world.spawn.x, world.spawn.y)) return { x: world.spawn.x, y: world.spawn.y };
   const bx = Math.floor(world.spawn.x), by = Math.floor(world.spawn.y);
-  for (let r = 1; r < 48; r++)
+  for (let r = 1; r < 64; r++)
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       const nx = bx + dx + 0.5, ny = by + dy + 0.5;
       if (isWalkable(world, nx, ny)) return { x: nx, y: ny };
@@ -26,27 +30,26 @@ function findSpawn(world) {
 }
 
 export function createSim(seed, theme) {
-  const world = createWorld(seed, theme);
+  const baseSeed = seed >>> 0;
+  const override = theme;                                  // fixed theme (preview) or undefined
+  const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
+  const buildWorld = (d) => createWorld(levelSeed(d), override, d);
+
+  let world = buildWorld(0);
   const bus = createBus();
   const commands = createCommandQueue();
 
   const spawn = findSpawn(world);
-  let sx = spawn.x, sy = spawn.y;
-
   const state = {
-    t: 0,
+    t: 0, depth: 0,
     player: {
-      x: sx, y: sy,          // current (tile units)
-      px: sx, py: sy,        // previous tick (for render interpolation)
-      dir: 'down', mirror: false,
-      moving: false, frame: 0, frameAcc: 0,
+      x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
+      dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
     },
     counters: { wood: 0, stone: 0 },
   };
 
   function tryMove(p, dx, dy) {
-    // per-axis slide with a small radius probe. cz = the mover's current tile
-    // elevation, so the walk rule blocks stepping onto a different height (cliff).
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
     const probe = (nx, ny) =>
       isWalkable(world, nx - PLAYER_RADIUS, ny - PLAYER_RADIUS, cz) &&
@@ -57,6 +60,22 @@ export function createSim(seed, theme) {
     if (probe(p.x, p.y + dy)) p.y += dy;
   }
 
+  function face(p, dx, dy) {
+    if (Math.abs(dx) > Math.abs(dy)) { p.dir = 'side'; p.mirror = dx < 0; }
+    else p.dir = dy < 0 ? 'up' : 'down';
+  }
+
+  // Regenerate the world one level deeper and drop the hero at the new entrance.
+  // Inventory (counters) carries; the per-level overlay + fog reset with the world.
+  function descend() {
+    state.depth += 1;
+    world = buildWorld(state.depth);
+    const s = findSpawn(world);
+    const p = state.player;
+    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme });
+  }
+
   function applyCommand(cmd) {
     const p = state.player;
     if (cmd.type === 'move') {
@@ -65,21 +84,30 @@ export function createSim(seed, theme) {
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
       p.moving = true;
-      // facing: dominant axis wins
-      if (Math.abs(cmd.x) > Math.abs(cmd.y)) { p.dir = 'side'; p.mirror = cmd.x < 0; }
-      else { p.dir = cmd.y < 0 ? 'up' : 'down'; }
+      face(p, cmd.x, cmd.y);
+      return;
     }
-    if (cmd.type === 'harvest') {
+    if (cmd.type === 'harvest') {                          // tap-to-interact
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) > REACH) {
-        bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty });
-        return;
+      const inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
+      const prop = propAt(world, cmd.tx, cmd.ty);
+      if (prop) {
+        if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
+        face(p, dx, dy);
+        if (prop === 'stairs') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }
+        if (CONSUMABLE_PROP.has(prop)) {
+          world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
+          if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
+          else { state.counters.wood += 2; state.counters.stone += 2; }
+          bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: prop });
+          bus.emit('countersChanged', { ...state.counters });
+        }
+        return;                                            // decor props: nothing to interact
       }
+      if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
       const hit = hitResource(world, cmd.tx, cmd.ty);
       if (!hit) return;
-      // face the thing you hit
-      if (Math.abs(dx) > Math.abs(dy)) { p.dir = 'side'; p.mirror = dx < 0; }
-      else p.dir = dy < 0 ? 'up' : 'down';
+      face(p, dx, dy);
       bus.emit('hit', { tx: cmd.tx, ty: cmd.ty, kind: hit.kind, destroyed: hit.destroyed });
       if (hit.destroyed) {
         if (hit.kind === 'tree') state.counters.wood += 3;
@@ -90,40 +118,47 @@ export function createSim(seed, theme) {
     }
   }
 
+  // Reveal rooms the hero has entered or drawn near (minimap fog of war).
+  function updateDiscovery() {
+    const p = state.player;
+    for (const r of world.level.rooms) {
+      if (world.discovered.has(r.id)) continue;
+      const dx = Math.max(Math.abs(p.x - r.cx) - r.rw, 0), dy = Math.max(Math.abs(p.y - r.cy) - r.rh, 0);
+      if (dx * dx + dy * dy <= 36) world.discovered.add(r.id);       // within ~6 tiles of the room
+    }
+  }
+
   function tick() {
     const p = state.player;
     p.px = p.x; p.py = p.y;
-    p.moving = false;                      // move commands re-assert each tick
+    p.moving = false;
     for (const cmd of commands.drain()) applyCommand(cmd);
-    // walk animation clock
     if (p.moving) {
       p.frameAcc += TICK_DT;
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
     } else { p.frame = 0; p.frameAcc = 0; }
+    updateDiscovery();
     state.t += TICK_DT;
   }
 
-  // ---- persistence seam ----
-  // The sim owns its serialized shape; /persist handles storage + versioning.
-  // Everything the world can't re-derive from the seed lives here: player
-  // position, counters, the sim clock, and the resource mods/HP overlay.
   function snapshot() {
     const p = state.player;
     return {
-      seed: world.seed,
-      t: state.t,
+      seed: baseSeed, depth: state.depth, t: state.t,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
-      mods: [...world.mods.keys()],      // every value is {cleared:true}; keys rebuild it
-      hp: [...world.hp.entries()],       // ["x,y", hitsLeft] — partial harvest progress
+      mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
+      hp: [...world.hp.entries()],
+      discovered: [...world.discovered],
     };
   }
 
   function restore(data) {
     state.t = data.t ?? 0;
+    state.depth = data.depth ?? 0;
+    world = buildWorld(state.depth);                       // rebuild the saved level
     const p = state.player;
-    p.x = p.px = data.player.x;
-    p.y = p.py = data.player.y;
+    p.x = p.px = data.player.x; p.y = p.py = data.player.y;
     if (!isWalkable(world, p.x, p.y)) { const s = findSpawn(world); p.x = p.px = s.x; p.y = p.py = s.y; }
     p.dir = data.player.dir ?? 'down';
     p.mirror = !!data.player.mirror;
@@ -131,11 +166,14 @@ export function createSim(seed, theme) {
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
     world.mods.clear();
-    for (const k of data.mods ?? []) world.mods.set(k, { cleared: true });
+    for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
     world.hp.clear();
     for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
-    bus.emit('countersChanged', { ...state.counters });   // resync any HUD listeners
+    world.discovered.clear();
+    for (const id of data.discovered ?? []) world.discovered.add(id);
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme });   // renderer resets caches
+    bus.emit('countersChanged', { ...state.counters });
   }
 
-  return { state, world, bus, commands, tick, snapshot, restore };
+  return { state, bus, commands, tick, snapshot, restore, seed: baseSeed, get world() { return world; } };
 }

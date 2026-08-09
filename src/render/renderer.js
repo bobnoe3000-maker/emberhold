@@ -16,10 +16,11 @@ import { ELIT, EGLOW } from './palette.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
-import { GLOW_ID, norm3, buildProps, spriteFromCanvasData } from './gsprite.js';
+import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
+const INTERACT = new Set(['chest', 'shrine', 'stairs']);   // props a tap can target
 
 const MARGIN = 64;                 // native-px slack before a re-bake
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
@@ -164,8 +165,8 @@ export function createRenderer(canvas, sim, input) {
   }
   window.addEventListener('resize', resize); resize();
 
-  /* ── load-time bakes: props, hero doll frames, stain sheet frames ───────── */
-  const props = buildProps(sim.world.seed);
+  /* ── load-time bakes: props, hero doll frames ───────────────────────────── */
+  let props = buildProps(sim.world.seed);
   const harvest = buildHarvest();
 
   const dollCache = new Map();
@@ -299,32 +300,34 @@ export function createRenderer(canvas, sim, input) {
     for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push([tx, ty]);
     tiles.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
     const world = sim.world;
-    let f1 = null, f2 = null;
+    const hazards = [], lights = [];
     for (const [tx, ty] of tiles) {
       drawTileG(bx, by, tx, ty);
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
       const pk = propAt(world, tx, ty);
-      if (pk) { const arr = props[pk], sp = pk === 'totem' ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0]; stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH); }
+      if (pk) {
+        const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
+        stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
+        if (PROP_LIGHT[pk]) lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow
+      }
       const rk = resourceAt(world, tx, ty);
       if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
-      // flare anchors: a glowing hazard pool (lava / flame / poison / soul) that
-      // will cast a themed point light — pick two, far apart, stable per region
-      const mm = materialAt(world, tx, ty);
-      if (HAZARD_LIGHT[mm]) { const s = hash2(tx, ty, 1234); if (!f1 || s > f1.s) f1 = { x: tx, y: ty, z, mat: mm, s }; }
+      const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul)
+      if (HAZARD_LIGHT[mm]) hazards.push({ x: tx, y: ty, z, color: HAZARD_LIGHT[mm], s: hash2(tx, ty, 1234) });
     }
-    if (f1) for (const [tx, ty] of tiles) {
-      const mm = materialAt(world, tx, ty);
-      if (HAZARD_LIGHT[mm] && Math.hypot(tx - f1.x, ty - f1.y) > 7) { const s = hash2(tx, ty, 1234); if (!f2 || s > f2.s) f2 = { x: tx, y: ty, z: heightAt(world, tx, ty), mat: mm, s }; }
-    }
-    flares = [f1, f2].filter(Boolean);
+    // thin the hazard pools to a few representatives spread apart, then pool all
+    // candidates; render picks the two nearest the hero each frame.
+    hazards.sort((a, b) => b.s - a.s);
+    for (const h of hazards) { if (lights.length > 40) break; if (lights.every((o) => o.color !== h.color || Math.hypot(o.x - h.x, o.y - h.y) > 7)) lights.push(h); }
+    flares = lights;
     terrValid = true;
   }
 
   let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
-
-  const discovered = new Set();   // room ids the player has entered (minimap fog)
+  // descending / restoring rebuilds the world — rebuild seed-keyed props + re-bake.
+  sim.bus.on('levelChanged', () => { props = buildProps(sim.world.seed); terrValid = false; flash = null; });
 
   function render(alpha, now) {
     const p = sim.state.player;
@@ -332,8 +335,6 @@ export function createRenderer(canvas, sim, input) {
     const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
     const P = project(ix, iy, pz);
     const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
-    const pcell = sim.world.level.cells.get(Math.floor(ix) + ',' + Math.floor(iy));
-    if (pcell && pcell.room >= 0) discovered.add(pcell.room);
 
     if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeGBuffer(ox, oy);
 
@@ -359,13 +360,13 @@ export function createRenderer(canvas, sim, input) {
     const hx = ox + P.sx, hy = oy + P.sy - 16, hz = pz * ZH + 20;
     const L = [[hx, hy, hz], [0, 0, 0], [0, 0, 0]];
     const LC = [[1.9 * WISP, 1.15 * WISP, 0.42 * WISP], [0, 0, 0], [0, 0, 0]];
-    flares.forEach((s, i) => {
-      if (i > 1) return;
+    // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
+    const near = flares.map((s) => ({ s, d: Math.hypot(s.x - ix, s.y - iy) })).sort((a, b) => a.d - b.d).slice(0, 2);
+    near.forEach(({ s }, i) => {
       const sp = project(s.x + 0.5, s.y + 0.5, s.z);
-      const fl = 0.55 + 0.45 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
-      const base = HAZARD_LIGHT[s.mat] || [0.5, 1.5, 0.35];
+      const fl = 0.6 + 0.4 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
       L[i + 1] = [ox + sp.sx, oy + sp.sy, s.z * ZH + 12];
-      LC[i + 1] = [base[0] * fl, base[1] * fl, base[2] * fl];
+      LC[i + 1] = [s.color[0] * fl, s.color[1] * fl, s.color[2] * fl];
     });
 
     // PASS A — lighting at native resolution
@@ -421,7 +422,7 @@ export function createRenderer(canvas, sim, input) {
   // Fog-of-war minimap, top-right: discovered rooms in the theme tint, corridors
   // that lead out of them (so unexplored exits are visible), and the hero marker.
   function drawMinimap(ix, iy) {
-    const lvl = sim.world.level, rooms = lvl.rooms;
+    const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;
     if (!rooms.length) return;
     const k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
     const bx = vw - MM - pad - 10 * k, by = 58 * k;         // top-right, clear of the HUD
@@ -450,6 +451,12 @@ export function createRenderer(canvas, sim, input) {
       const w = Math.max(3 * k, r.rw * 2 * s), h = Math.max(3 * k, r.rh * 2 * s);
       octx.fillRect(mx(r.cx) - w / 2, my(r.cy) - h / 2, w, h);
     }
+    // descent gate marker, once its room is known (a violet diamond → the way down)
+    const dr = lvl.descentRoom;
+    if (dr && discovered.has(dr.id)) {
+      const r = Math.max(2.5, 3 * k); octx.fillStyle = '#b48cff';
+      octx.beginPath(); octx.moveTo(mx(dr.cx), my(dr.cy) - r); octx.lineTo(mx(dr.cx) + r, my(dr.cy)); octx.lineTo(mx(dr.cx), my(dr.cy) + r); octx.lineTo(mx(dr.cx) - r, my(dr.cy)); octx.closePath(); octx.fill();
+    }
     // hero marker
     octx.fillStyle = '#f0a500';
     octx.beginPath(); octx.arc(mx(ix), my(iy), Math.max(2, 2.6 * k), 0, Math.PI * 2); octx.fill();
@@ -467,7 +474,8 @@ export function createRenderer(canvas, sim, input) {
       const dpr = vw / window.innerWidth;
       return resolveTap((sxPx * dpr) / S - ox, (syPx * dpr) / S - oy, {
         heightAt: (tx, ty) => heightAt(sim.world, tx, ty),
-        hasResource: (tx, ty) => !!resourceAt(sim.world, tx, ty),
+        // snap to harvestables AND interactable props (chest / shrine / stairs)
+        hasResource: (tx, ty) => !!resourceAt(sim.world, tx, ty) || INTERACT.has(propAt(sim.world, tx, ty)),
         heights: [7, 6, 5, 4, 3, 2, 1, 0],
       });
     },

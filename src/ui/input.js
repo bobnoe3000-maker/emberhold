@@ -3,8 +3,8 @@
 // Emits nothing itself; main.js reads state each tick and pushes commands.
 
 const TAP_MS = 220;
-const TAP_SLOP = 14;        // px of movement allowed before it's a drag
-const STICK_MAX = 46;       // knob travel in css px
+const TAP_SLOP = 11;        // px of movement allowed before it's a drag
+const STICK_MAX = 32;       // knob travel to full speed (smaller = more responsive)
 
 export function createInput(canvas) {
   let active = null;        // { id, bx, by, kx, ky, t0, moved }

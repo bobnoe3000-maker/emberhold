@@ -22,28 +22,38 @@ export const NONWALK = new Set([MAT.ABYSS, MAT.WATER, MAT.POISON, MAT.LAVA, MAT.
 const clampi = (v, a, b) => (v < a ? a : v > b ? b : v);
 const K = (x, y) => x + ',' + y;
 
-export function createWorld(seed, theme) {
+export function createWorld(seed, theme, depth = 0) {
   const th = theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th);
   const world = {
-    seed, theme: th, level,
+    seed, theme: th, depth, level,
     ss: streamSeed(seed, 131),            // floor-material selector
     hs: streamSeed(seed, 7919),           // cliff-face strata / detail
     cs: streamSeed(seed, 577),            // hazard field
     spawn: level.spawn,
-    props: new Map(),                     // "x,y" -> kind (baked once, below)
-    mods: new Map(),                      // "x,y" -> { cleared: true }
+    props: new Map(),                     // "x,y" -> kind
+    mods: new Map(),                      // "x,y" -> { cleared } | { opened }
     hp: new Map(),                        // "x,y" -> remaining hits
+    discovered: new Set(),                // room ids seen (minimap fog)
   };
-  // one decorative prop per room, offset from its center onto solid floor
+  // Populate rooms: decor, doorway braziers, and loot (chest / shrine). The
+  // descent gate goes in the farthest room. All snap onto solid, open floor.
   const prng = mulberry32(streamSeed(seed, 321));
-  const kinds = ['spire', 'monolith', 'totem'];
+  const decor = ['spire', 'monolith', 'totem'];
+  const place = (px, py, kind) => {
+    const k = K(px, py), c = level.cells.get(k);
+    if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k)) { world.props.set(k, kind); return true; }
+    return false;
+  };
+  const off = (r, f) => Math.round((prng() - 0.5) * r.rw * 2 * f);
   for (const r of level.rooms) {
-    if (prng() < 0.25) continue;
-    const ox = Math.round((prng() - 0.5) * r.rw), oy = Math.round((prng() - 0.5) * r.rh);
-    const px = r.cx + ox, py = r.cy + oy, c = level.cells.get(K(px, py));
-    if (c && c.kind === 'floor' && !c.corridor) world.props.set(K(px, py), kinds[(prng() * kinds.length) | 0]);
+    const bo = Math.max(2, Math.floor(Math.min(r.rw, r.rh) * 0.55));
+    place(r.cx - bo, r.cy, 'brazier'); place(r.cx + bo, r.cy, 'brazier');   // doorway lights
+    if (prng() < 0.7) place(r.cx + off(r, 0.4), r.cy + off(r, 0.4), decor[(prng() * decor.length) | 0]);
+    if (prng() < 0.55) place(r.cx + off(r, 0.35), r.cy + off(r, 0.35), 'chest');
+    if (prng() < 0.30) place(r.cx + off(r, 0.35), r.cy + off(r, 0.35), 'shrine');
   }
+  if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
   return world;
 }
 
@@ -57,9 +67,11 @@ export function heightAt(world, x, y) {
 }
 
 // Hazard field: blobby pools of the theme's hazard material across open floor.
+// Pools spread as you descend (lower threshold = more hazard, deeper = deadlier).
 function hazardAt(world, x, y) {
   const th = world.level.th;
-  return fbm(x * th.hazardScale, y * th.hazardScale, world.cs + 909) > th.hazardCut;
+  const cut = Math.max(0.34, th.hazardCut - world.depth * 0.045);
+  return fbm(x * th.hazardScale, y * th.hazardScale, world.cs + 909) > cut;
 }
 
 // Material: abyss off-platform, the theme's wall on the ring, else a noise-picked
@@ -78,7 +90,8 @@ export function materialAt(world, x, y) {
 // Harvestable growths — scattered on open, safe floor only (never corridors,
 // walls, hazards, or void). Mods overlay removals.
 export function resourceAt(world, x, y) {
-  if (world.mods.has(K(x, y))) return null;
+  const k = K(x, y);
+  if (world.mods.has(k) || world.props.has(k)) return null;
   const c = cellAt(world, x, y);
   if (!c || c.kind !== 'floor' || c.corridor) return null;
   const m = materialAt(world, x, y);
@@ -89,10 +102,14 @@ export function resourceAt(world, x, y) {
   return null;
 }
 
-// Static props: the per-room decor baked in createWorld.
+// Props: room decor + functional gates/loot. A looted chest / spent shrine is
+// consumed via the mods overlay (opened) and stops rendering + blocking.
 export function propAt(world, x, y) {
-  return world.props.get(K(x, y)) || null;
+  const k = K(x, y);
+  if (world.mods.get(k)?.opened) return null;
+  return world.props.get(k) || null;
 }
+export const CONSUMABLE_PROP = new Set(['chest', 'shrine']);
 
 // Walkable if on a floor cell whose material isn't a hazard, the step up is at
 // most one level (walls are far taller), and nothing occupies the tile.

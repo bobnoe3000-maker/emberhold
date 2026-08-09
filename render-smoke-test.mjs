@@ -30,9 +30,7 @@ for (const v of [[0, 0, 0], [1, 2, 3], [-5, 0, 0.001]]) {
 // prop bakers
 const props = buildProps(20260807);
 console.log('props:');
-checkSprite('spire', props.spire[0]);
-checkSprite('monolith', props.monolith[0]);
-checkSprite('totem', props.totem[0]);
+for (const kind of ['spire', 'monolith', 'totem', 'stairs', 'chest', 'shrine', 'brazier']) checkSprite(kind, props[kind][0]);
 
 // creature from a synthetic RGBA sheet frame (a filled blob with a hole)
 const FW = 20, FH = 24, sheet = new Uint8Array(FW * FH * 4);

@@ -111,6 +111,11 @@ export function generateLevel(seed, theme) {
     cells.set(nk, { kind: 'wall', room: -1, corridor: false, wz });
   }
 
-  const spawn = order[0] ? { x: order[0].cx + 0.5, y: order[0].cy + 0.5 } : { x: W / 2, y: H / 2 };
-  return { cells, rooms, edges, theme, th, spawn, W, H };
+  const entrance = order[0] || rooms[0];
+  const spawn = entrance ? { x: entrance.cx + 0.5, y: entrance.cy + 0.5 } : { x: W / 2, y: H / 2 };
+  // the descent gate sits in the room FARTHEST from the entrance — you must cross
+  // the level to find the way down.
+  let descentRoom = entrance;
+  if (entrance) { let bd = -1; for (const r of rooms) { const d = Math.hypot(r.cx - entrance.cx, r.cy - entrance.cy); if (d > bd) { bd = d; descentRoom = r; } } }
+  return { cells, rooms, edges, theme, th, spawn, entrance, descentRoom, W, H };
 }
