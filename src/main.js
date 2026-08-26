@@ -16,6 +16,7 @@ const THEME = new URLSearchParams(location.search).get('theme') || undefined;
 
 const canvas = document.getElementById('game');
 const sim = createSim(WORLD_SEED, THEME);
+if (location.search.includes('dev')) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 createHud(sim);   // subscribe before restore, so a loaded counters event repaints

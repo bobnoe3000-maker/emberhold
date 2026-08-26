@@ -21,6 +21,13 @@ import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 const INTERACT = new Set(['chest', 'shrine', 'stairs']);   // props a tap can target
+// screen-octant → sprite-row (hero + skeleton share Flare's 8-dir order). Tuned so
+// walking toward the camera shows the front. sdx/sdy are screen-space deltas.
+const SPRITE_DIR = [3, 4, 5, 6, 7, 0, 1, 2];   // calibrated in-engine: octant→sprite row
+function dir8(sdx, sdy) {
+  const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;   // 0=E,1=SE,2=S,3=SW,4=W,5=NW,6=N,7=NE
+  return SPRITE_DIR[oct];
+}
 
 const MARGIN = 64;                 // native-px slack before a re-bake
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
@@ -193,6 +200,23 @@ export function createRenderer(canvas, sim, input) {
     return sp;
   }
 
+  // ── 3D actor atlases: the isometric hero pack + the Flare skeleton, each sliced
+  // into per-(direction, frame) G-sprites (albedo + generated normal, so they
+  // relight in the deferred pass). Loaded async; until ready the hero falls back
+  // to the paper-doll and skeletons simply don't draw yet.
+  let heroAtlas = null, skelAtlas = null, heroDir = 2;
+  const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
+  async function loadActorAtlas(jsonUrl, pngUrl) {
+    const meta = await (await fetch(jsonUrl)).json();
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = pngUrl; });
+    acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0);
+    const { cw, ch, ax, ay } = meta, cols = (img.width / cw) | 0, rows = (img.height / ch) | 0, cells = [];
+    for (let r = 0; r < rows; r++) { const row = []; for (let f = 0; f < cols; f++) { const d = actx.getImageData(f * cw, r * ch, cw, ch).data; row.push(spriteFromCanvasData(d, cw, ch, ax, ay)); } cells.push(row); }
+    return { meta, cells };
+  }
+  loadActorAtlas('./assets/hero/knight.json', './assets/hero/knight.png').then((a) => { heroAtlas = a; }).catch(() => {});
+  loadActorAtlas('./assets/enemy/skeleton.json', './assets/enemy/skeleton.png').then((a) => { skelAtlas = a; }).catch(() => {});
+
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   const putG = (px, py, alb, n, hpx, emiId) => {
     px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
@@ -347,8 +371,30 @@ export function createRenderer(canvas, sim, input) {
       sEMI.set(bEMI.subarray(b0, b0 + len), s0);
     }
 
-    // stamp the hero into the window G-buffer (relit with everything else)
-    stamp(sALB, sNRM, sEMI, nvw, nvh, heroSprite(p.moving ? p.frame : 0, p.mirror), ox + P.sx, oy + P.sy, pz * ZH);
+    // stamp actors (skeletons + hero) into the window G-buffer, depth-sorted by
+    // (x+y) so nearer figures overdraw farther ones.
+    const draws = [];
+    if (heroAtlas) {
+      const vdx = p.x - p.px, vdy = p.y - p.py;
+      if (p.moving && Math.hypot(vdx, vdy) > 1e-4) heroDir = dir8(vdx - vdy, vdx + vdy);
+      const clip = p.moving ? heroAtlas.meta.clips.walk : heroAtlas.meta.clips.idle;
+      const fr = clip.start + (Math.floor((now / 1000) * clip.fps) % clip.len);
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH });
+    } else {
+      draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH });
+    }
+    if (skelAtlas) for (const e of sim.world.enemies || []) {
+      const ez = heightAt(sim.world, Math.floor(e.x), Math.floor(e.y));
+      const ep = project(e.x, e.y, ez), ex = ox + ep.sx, ey = oy + ep.sy;
+      if (ex < -40 || ex > nvw + 40 || ey < -40 || ey > nvh + 40) continue;      // offscreen
+      const fdx = p.x - e.x, fdy = p.y - e.y;                                     // face the hero
+      const ed = dir8(fdx - fdy, fdx + fdy);
+      const clip = skelAtlas.meta.clips.idle;
+      const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.x * 7) % clip.len);
+      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey, h: ez * ZH });
+    }
+    draws.sort((a, b) => a.d - b.d);
+    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h);
 
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
