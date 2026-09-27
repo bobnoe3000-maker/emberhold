@@ -1,0 +1,225 @@
+[
+ {
+  "id": "F1",
+  "cls": "Fighter",
+  "label": "Knight \u00b7 sword & board",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Round_Shield",
+   "Knight_Helmet",
+   "Knight_Cape"
+  ]
+ },
+ {
+  "id": "F2",
+  "cls": "Fighter",
+  "label": "Knight \u00b7 greatsword",
+  "model": "Knight",
+  "show": [
+   "2H_Sword",
+   "Knight_Helmet",
+   "Knight_Cape"
+  ],
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ]
+ },
+ {
+  "id": "F3",
+  "cls": "Fighter",
+  "label": "Barbarian \u00b7 axe & shield",
+  "model": "Barbarian",
+  "show": [
+   "1H_Axe",
+   "Barbarian_Round_Shield",
+   "Barbarian_Hat",
+   "Barbarian_Cape"
+  ]
+ },
+ {
+  "id": "F4",
+  "cls": "Fighter",
+  "label": "Barbarian \u00b7 greataxe",
+  "model": "Barbarian",
+  "show": [
+   "2H_Axe",
+   "Barbarian_Hat",
+   "Barbarian_Cape"
+  ],
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ]
+ },
+ {
+  "id": "R1",
+  "cls": "Rogue",
+  "label": "Rogue \u00b7 twin daggers",
+  "model": "Rogue",
+  "show": [
+   "Knife",
+   "Knife_Offhand",
+   "Rogue_Cape"
+  ]
+ },
+ {
+  "id": "R2",
+  "cls": "Rogue",
+  "label": "Hooded \u00b7 twin daggers",
+  "model": "Rogue_Hooded",
+  "show": [
+   "Knife",
+   "Knife_Offhand",
+   "Rogue_Cape"
+  ]
+ },
+ {
+  "id": "R3",
+  "cls": "Rogue",
+  "label": "Hooded \u00b7 crossbow",
+  "model": "Rogue_Hooded",
+  "show": [
+   "2H_Crossbow",
+   "Rogue_Cape"
+  ],
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "M1",
+  "cls": "Mage",
+  "label": "Mage \u00b7 staff",
+  "model": "Mage",
+  "show": [
+   "2H_Staff",
+   "Mage_Hat",
+   "Mage_Cape"
+  ]
+ },
+ {
+  "id": "M2",
+  "cls": "Mage",
+  "label": "Mage \u00b7 wand & tome",
+  "model": "Mage",
+  "show": [
+   "1H_Wand",
+   "Spellbook_open",
+   "Mage_Hat",
+   "Mage_Cape"
+  ]
+ },
+ {
+  "id": "M3",
+  "cls": "Mage",
+  "label": "Mage \u00b7 bareheaded, casting",
+  "model": "Mage",
+  "show": [
+   "2H_Staff",
+   "Mage_Cape"
+  ],
+  "pose": [
+   "Spellcasting",
+   0.3
+  ]
+ },
+ {
+  "id": "E1",
+  "cls": "Undead",
+  "label": "Skeleton Warrior",
+  "model": "Skeleton_Warrior",
+  "attach": {
+   "handslot.r": "Skeleton_Blade.gltf",
+   "handslot.l": "Skeleton_Shield_Small_A.gltf"
+  },
+  "eyes": "0xb48cff"
+ },
+ {
+  "id": "E2",
+  "cls": "Undead",
+  "label": "Skeleton Minion",
+  "model": "Skeleton_Minion",
+  "attach": {
+   "handslot.r": "Skeleton_Axe.gltf"
+  },
+  "eyes": "0x9bdc4f"
+ },
+ {
+  "id": "E3",
+  "cls": "Undead",
+  "label": "Skeleton Rogue",
+  "model": "Skeleton_Rogue",
+  "attach": {
+   "handslot.r": "Skeleton_Crossbow.gltf"
+  },
+  "eyes": "0xff7a3a",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "E4",
+  "cls": "Undead",
+  "label": "Skeleton Mage",
+  "model": "Skeleton_Mage",
+  "attach": {
+   "handslot.r": "Skeleton_Staff.gltf"
+  },
+  "eyes": "0x6ec8ff"
+ },
+ {
+  "id": "E5",
+  "cls": "Human",
+  "label": "Cultist",
+  "model": "Rogue_Hooded",
+  "show": [
+   "Knife",
+   "Rogue_Cape"
+  ],
+  "recolor": "hue-rotate(-35deg) saturate(1.3) brightness(0.82) contrast(1.15)"
+ },
+ {
+  "id": "E6",
+  "cls": "Human",
+  "label": "Necromancer",
+  "model": "Mage",
+  "show": [
+   "2H_Staff",
+   "Mage_Hat",
+   "Mage_Cape"
+  ],
+  "recolor": "hue-rotate(95deg) saturate(0.85) brightness(0.88) contrast(1.1)"
+ },
+ {
+  "id": "E7",
+  "cls": "Human",
+  "label": "Brute",
+  "model": "Barbarian",
+  "show": [
+   "2H_Axe",
+   "Barbarian_Hat"
+  ],
+  "recolor": "saturate(0.55) brightness(0.82) contrast(1.2) sepia(0.3)",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ]
+ },
+ {
+  "id": "E8",
+  "cls": "Human",
+  "label": "Revenant knight",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Spike_Shield",
+   "Knight_Helmet",
+   "Knight_Cape"
+  ],
+  "recolor": "sepia(0.5) hue-rotate(50deg) saturate(0.7) brightness(0.82) contrast(1.2)"
+ }
+]

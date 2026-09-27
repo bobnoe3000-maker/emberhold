@@ -393,6 +393,7 @@ export function createRenderer(canvas, sim, input) {
       const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.x * 7) % clip.len);
       draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey, h: ez * ZH });
     }
+    if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
     for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h);
 

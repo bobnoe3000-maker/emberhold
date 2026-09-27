@@ -2,3 +2,7 @@
 node_modules/
 dist/
 *.log
+
+# actor lab: downloaded models + render output (regenerable)
+tools/actor-lab/models/
+tools/actor-lab/out/

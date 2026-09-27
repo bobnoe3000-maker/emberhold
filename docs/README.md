@@ -6,7 +6,10 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
-| [emberhold-status-v0.4.md](./emberhold-status-v0.4.md) | Project status & plan (v0.4) — art direction pivots to Dreadforge (nightmare) | **Current** plan of record |
+| [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
+| [emberlit-tdd.md](./emberlit-tdd.md) | Technical design for the Emberlit WebGL2 deferred renderer (G-buffers, point lights, HDR bloom) | **Active** render spec (shipped) |
+| [emberlit-demo.html](./emberlit-demo.html) | The Emberlit reference demo the renderer was ported from (open in a browser) | Reference |
+| [emberhold-status-v0.4.md](./emberhold-status-v0.4.md) | Project status & plan (v0.4) — art direction pivots to Dreadforge (nightmare) | Plan of record (build has moved past it — see pointer below) |
 | [dreadforge-tdd.md](./dreadforge-tdd.md) | Technical design doc for the Dreadforge nightmare pipeline (materials, voxel bake, CA creatures, post stack, hybrid actors) | **Active** art-direction + render spec |
 | [dreadforge-mockup.html](./dreadforge-mockup.html) | Confirmed nightmare-biome look — from-spec, live generators (open in a browser) | **Current** visual reference |
 | [emberhold-iso-pivot-tdp.md](./emberhold-iso-pivot-tdp.md) | Technical design plan for the isometric fine-tile pivot | Landed (iso geometry); superseded on mood by Dreadforge |
@@ -28,8 +31,11 @@ the header of each status doc for what it replaces.
 
 ## Build progress (quick pointer)
 
-Phase 0, save/load v0, and iso pivot step 1 (isometric renderer, detailed character) are shipped
-on `main`. The art direction has since pivoted to **Dreadforge** — a game-wide procedural
-nightmare. The next build is the Dreadforge port: **step 1 = master palette + material
-classification + elevation/cliff faces**, where the game becomes the nightmare on-screen. See
-`emberhold-status-v0.4.md` §5 for the build order and `dreadforge-tdd.md` for the full spec.
+Shipped on `main`: Phase 0, save/load, the iso pivot, the Dreadforge port, and the
+**Emberlit** WebGL2 deferred renderer. On top of those: **themed dungeon levels** (rooms,
+wide corridors, weathered walls over the abyss, six emissive biomes), the **descent**
+(stairs → a deeper, harder level), room contents (chests, shrines, braziers), a fog-of-war
+**minimap**, and a 3D-sprite hero + skeleton POC. Characters are moving to
+[`character-direction.md`](./character-direction.md) (Option C): the next build bakes KayKit
+G-buffer atlases into the existing actor path, then combat. `emberhold-status-v0.4.md`
+predates all of this and needs a v0.5 re-baseline.

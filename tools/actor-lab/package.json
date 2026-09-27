@@ -1,0 +1,15 @@
+{
+  "name": "emberhold-actor-lab",
+  "private": true,
+  "description": "Render KayKit CC0 characters in Emberhold's iso camera for look-dev (stock vs heroic proportions, loadouts, enemy variants).",
+  "scripts": {
+    "fetch": "sh fetch-assets.sh",
+    "render": "node render.cjs",
+    "backdrop": "node capture-backdrop.cjs",
+    "compose": "python3 compose.py"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.62.1",
+    "three": "0.169.0"
+  }
+}
