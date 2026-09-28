@@ -84,15 +84,33 @@ A level has 6–8 rooms.
   on the minimap and over the doorway.
 
 ### 3.3 Waves and Heat (risk vs reward)
-Each wave survived in a row raises the room's **Heat** by one, up to 10. Heat adds +4 % enemy
-stats *and* +10 % gold, XP and gear-drop chance per step. Leaving the room resets Heat. The
-grind decision is *how long to stay*: the rewards climb, and so does the danger. Every fifth
-wave may include an **elite**. Bosses don't respawn with waves: a floor's boss spawns once
-per visit to the site (or once per day in the post-game Undervaults).
+A wave is **two enemies per living party member** (+1 per floor down, max 7). Every fifth
+wave an **elite** takes one slot. After each cleared wave the room's **Heat** moves by how
+the party fared during that wave, capped at 10:
+
+| Party's lowest HP during the wave | Heat change |
+|---|---|
+| never below 70 % | +1 |
+| between 50 and 70 % | holds |
+| below 50 % | −1 |
+| below 25 % | −2 |
+
+Each point of Heat adds +4 % enemy stats *and* +10 % gold, XP and gear-drop chance.
+
+- **The room settles at the Heat the party can hold.** Staying is always survivable for a
+  party at the room's level, and as it levels the Heat creeps up.
+- **The lull is 4 s,** stretched (up to 15 s) while the party is under half HP, so a bad wave
+  is followed by a breather.
+- **Fallen companions get back up at 25 % HP** when the wave is cleared.
+- **Leaving the room resets Heat.**
+- **Bosses don't respawn with waves.** A floor's boss spawns once per visit to the site (or
+  once per day in the post-game Undervaults).
 
 ### 3.4 What the player controls (one thumb)
 - **Position** (stick or tap): move the leader within the room. The party re-forms around
-  them, so you can pull enemies, dodge a hazard pool, or reach a chest.
+  them, so you can pull enemies, dodge a hazard pool, or reach a chest. Stop steering and the
+  leader **autobattles** after half a second: it chases and strikes on its own, routing
+  around pillars and pools. It never walks out of the room by itself.
 - **Leave** (walk out a doorway): the only way to end a battle alive. Getting out *is* the
   retreat, so movement matters most when things go wrong.
 - **Focus** (tap an enemy): the party prioritises that target until it dies.
@@ -380,25 +398,31 @@ Emberfall rename.
 | **M6: Heights and Throne** | Act IV, finale, post-game Undervaults | Campaign complete |
 | **M7: Multiplayer** | Async (leaderboards, hire friends' heroes), then co-op | — |
 
-**M1 status (battle core, first pass — `src/sim/battle.js`):** Stepping into any dungeon room
-other than the entrance starts a battle. Skeleton waves spawn at least 9 tiles from you:
-minions and warriors first, archers and mages from wave 5, and an elite every fifth wave.
-Wave size scales with the living party, the floor depth and Heat. Clearing a wave adds +1 Heat,
-up to 10. Each point of Heat adds +4% to enemy stats and +10% to XP and gold. The next wave
-comes after a 4 s lull.
+**M1 status (battle core, first pass — `src/sim/battle.js`):**
 
-You attack when you stand still. Companions hold formation and choose their own targets:
-the fighter protects you, the rogue hunts the weakest foe and the mage keeps its distance.
-Tapping an enemy sets a focus target. Each class has one auto-cast ability: Cleave,
-Backstab and Firebolt.
+- **Starting a battle:** stepping into any dungeon room other than the entrance starts one.
+- **Waves:** skeletons spawn on reachable tiles at least 9 tiles away. Minions and warriors
+  come first, then archers and mages from wave 5, with an elite every fifth wave. Wave size
+  and Heat follow §3.3.
+- **Your hero** strikes whatever is in reach while you steer, and autobattles when you let go.
+- **Companions** hold formation and choose their own targets: the fighter protects you, the
+  rogue hunts the weakest foe and the mage keeps its distance.
+- **Abilities:** each class has one auto-cast ability: Cleave, Backstab and Firebolt.
+- **Movement:** units path around obstacles with a flow field over the room.
+- **Focus:** tapping an enemy sets a focus target.
+- **Leaving and defeat:** enemies are leashed to their room, so walking out ends the fight.
+  A total wipe costs 25 % of your gold and sends you back to town.
 
-Enemies are leashed to their room, so walking out ends the fight. Fallen members get back up
-at 20% HP. A total wipe costs 25% of your gold and sends you back to town.
+**Exit test met (headless, 30 min holds, 4 dungeon seeds):**
 
-The party cards and the gold counter update live. A solo L1 fighter holds about three waves
-and a full party about seven.
+- A solo L1 fighter holds a depth-0 room every time.
+  - It reaches L7 and averages about 4 waves/min and 800 gold.
+  - Heat climbs from about 3 early to 10.
+  - Its HP never drops below about 43 %.
+- Every duo and trio also holds, with no wipes.
 
-Still to come: loot drops, bosses, stances, ability slots and hazard terrain.
+**Still to come:** loot drops, bosses, stances, ability slots, hazard terrain, and the
+depth 1+ tuning pass.
 
 ---
 

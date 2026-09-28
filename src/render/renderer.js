@@ -890,6 +890,7 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'xp') addFloat(c.x, c.y, '+' + c.amount + ' xp', '#c8a0ff', 10, 30);
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
+    else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
   });
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared · Heat ${w.heat}` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1800 : 1300), small: true }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });

@@ -58,7 +58,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   };
 
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
-  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town') });
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town'),
+    moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = Math.hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; face(p, dx, dy); } });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -120,7 +121,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (len < 0.12) { p.moving = false; return; }
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
-      p.moving = true; p.fx = nx; p.fy = ny;
+      p.moving = true; p.fx = nx; p.fy = ny; p.steer = 0;
       face(p, cmd.x, cmd.y);
       return;
     }
@@ -172,12 +173,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.px = p.x; p.py = p.y;
     p.moving = false;
     for (const cmd of commands.drain()) applyCommand(cmd);
+    battle.step(TICK_DT);                                   // may walk the hero (autobattle while you're not steering)
     if (p.moving) {
       p.frameAcc += TICK_DT;
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
-    battle.step(TICK_DT);
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
     else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
     state.t += TICK_DT;
