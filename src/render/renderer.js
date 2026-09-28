@@ -17,12 +17,11 @@ import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
-import { TILE_STYLES, N_UP, liquid, hazardGlow, THEME_ACCENT } from './tilestyles.js';
+import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 const INTERACT = new Set(['chest', 'shrine', 'stairs']);   // props a tap can target
-const LIQUID = new Set(['water', 'poison', 'lava', 'ember']);   // hazard pools / vents keep their own ramp
 // screen-octant → sprite-row (hero + skeleton share Flare's 8-dir order). Tuned so
 // walking toward the camera shows the front. sdx/sdy are screen-space deltas.
 const SPRITE_DIR = [3, 4, 5, 6, 7, 0, 1, 2];   // calibrated in-engine: octant→sprite row
@@ -220,8 +219,11 @@ export function createRenderer(canvas, sim, input) {
   loadActorAtlas('./assets/enemy/skeleton.json', './assets/enemy/skeleton.png').then((a) => { skelAtlas = a; }).catch(() => {});
 
   // Terrain painter: ?tiles=<style> picks a structured style from tilestyles.js;
-  // absent/unknown keeps the original per-pixel-noise look ('classic').
-  const tileStyle = TILE_STYLES[(typeof location !== 'undefined' && new URLSearchParams(location.search).get('tiles')) || ''] || null;
+  // absent/unknown keeps the original per-pixel-noise look ('classic'). ?tv=<variant>
+  // forces a material variant (plain/earth/rock/lava/poison/ice/water); otherwise
+  // each biome uses its default.
+  const qs = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+  const tileStyle = TILE_STYLES[qs.get('tiles') || ''] || null, tileVariant = qs.get('tv') || '';
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   const putG = (px, py, alb, n, hpx, emiId) => {
@@ -288,44 +290,40 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  // Structured-style tile: one floor ramp + one wall ramp per theme, painted from
-  // tile-local coordinates (no per-pixel noise). Liquids share a calm treatment;
-  // emissive glows (poison specks, lava/soul cracks, vents) are layered as before.
+  // Structured-style tile: one floor ramp + one wall ramp per variant, painted from
+  // tile-local coordinates (no per-pixel noise). The biome's hazard tiles become
+  // the variant's pools (lava, poison, ice, water, mud, pits, rubble).
   function drawTileStyled(sx, sy, x, y, z, m) {
     const world = sim.world, th = world.level.th, cell = world.level.cells.get(x + ',' + y);
     const isWall = !!cell && cell.kind === 'wall', hPix = z * ZH, seed = world.ss;
-    const fr = ELIT[th.floors[0]] || ELIT.soil, wr = ELIT[th.wall] || ELIT.obsid, accent = THEME_ACCENT[world.theme] || 2;
-    if (m !== 'water') {
-      const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
-      // wall faces sit one ramp step darker than floors/caps, so the play space reads first
-      const wd = [[wr[0][0] * 0.75, wr[0][1] * 0.75, wr[0][2] * 0.75], wr[0], wr[1], wr[2], wr[3]];
-      if (dSW > 0) faceStyled(sx, sy, dSW, 0, hPix, x, y, wd, seed, accent);
-      if (dSE > 0) faceStyled(sx, sy, dSE, 1, hPix, x, y, wd, seed, accent);
-    }
+    const V = variantFor(world.theme, tileVariant), pool = !isWall && m === th.hazard;
+    const fr = ELIT[V.floor], wr = ELIT[V.wall], accent = V.accent;
+    const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
+    // wall faces sit one ramp step darker than floors/caps, so the play space reads first
+    const wd = [[wr[0][0] * 0.75, wr[0][1] * 0.75, wr[0][2] * 0.75], wr[0], wr[1], wr[2], wr[3]];
+    if (dSW > 0) faceStyled(sx, sy, dSW, 0, hPix, x, y, wd, seed, accent, V);
+    if (dSE > 0) faceStyled(sx, sy, dSE, 1, hPix, x, y, wd, seed, accent, V);
     const nwHi = heightAt(world, x - 1, y) > z, neHi = heightAt(world, x, y - 1) > z;
-    const paint = LIQUID.has(m) ? null : isWall ? (tileStyle.cap || tileStyle.floor) : tileStyle.floor;
     for (let py = 0; py < 8; py++) {
       const w = ROWW[py], xs = sx - w / 2;
       for (let dx = 0; dx < w; dx++) {
         const X = xs + dx, a = (X + 0.5 - sx) / HW, b = (py + 0.5) / HH;
         const u = Math.min(0.999, Math.max(0, (a + b) / 2)), v = Math.min(0.999, Math.max(0, (b - a) / 2));
         const c = { gx: x + u, gy: y + v, u, v, tx: x, ty: y, fr: isWall ? wr : fr, wr, seed, accent };
-        const r = paint ? paint(c) : liquid(c, ELIT[m] || fr);
+        const r = paintFloor(tileStyle, V, c, pool, isWall);
         let col = r.c;
         if ((nwHi && py < 3 && dx < w / 2) || (neHi && py < 3 && dx >= w / 2)) col = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72];
-        const hg = hazardGlow(m, c);
-        const emi = r.e || (hg >= 0 ? hg : emissiveFor(m, X | 0, x, y, py, (x + dx / 16) * 2.3, (y + py / 8) * 2.3, world));
-        putG(X, sy + py, col, r.n || N_UP, hPix, emi);
+        putG(X, sy + py, col, r.n || N_UP, hPix, r.e || 0);
       }
     }
   }
-  function faceStyled(sx, sy, drop, side, hTop, x, y, wr, seed, accent) {
+  function faceStyled(sx, sy, drop, side, hTop, x, y, wr, seed, accent, V) {
     const h = Math.min(drop * ZH, 30), nb = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
     for (let i = 0; i < 8; i++) {
       const X = side === 0 ? sx - 8 + i : sx + i, yTop = side === 0 ? sy + 4 + ((i >> 1) + 1) : sy + 8 - (i >> 1);
       const along = side === 0 ? x + (i + 0.5) / 8 : y + 1 - (i + 0.5) / 8;     // continuous along a wall run
       for (let k = 0; k < h; k++) {
-        const r = tileStyle.wall({ along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
+        const r = paintWall(tileStyle, V, { along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
         const n = r.n ? norm3(nb[0] + r.n[0], nb[1] + r.n[1], nb[2] + r.n[2]) : nb;
         putG(X, yTop + k, r.c, n, Math.max(0, hTop - k), r.e || 0);
       }
@@ -387,8 +385,9 @@ export function createRenderer(canvas, sim, input) {
       }
       const rk = resourceAt(world, tx, ty);
       if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
-      const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul)
-      if (HAZARD_LIGHT[mm]) hazards.push({ x: tx, y: ty, z, color: HAZARD_LIGHT[mm], s: hash2(tx, ty, 1234) });
+      const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul / ice / water)
+      const hl = tileStyle ? (mm === world.level.th.hazard ? POOL_LIGHT[variantFor(world.theme, tileVariant).pool] : null) : HAZARD_LIGHT[mm];
+      if (hl) hazards.push({ x: tx, y: ty, z, color: hl, s: hash2(tx, ty, 1234) });
     }
     // thin the hazard pools to a few representatives spread apart, then pool all
     // candidates; render picks the two nearest the hero each frame.

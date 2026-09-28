@@ -75,8 +75,23 @@ export const ELIT = {
   lava:   ['#180c0a', '#2a140e', '#3e1e14', '#54281a', '#6a3420'].map(_hx),  // dark crust (cracks glow)
   ember:  ['#1a0e08', '#2c160c', '#402012', '#582c18', '#743a20'].map(_hx),  // scorched vent stone
   chasm:  ['#1a1822', '#2a2834', '#3c3948', '#50505e', '#6a6878'].map(_hx),  // cracked pale stone
+  // tile-style variants (tilestyles.js VARIANTS): floor / wall / pool ramps
+  stone:  ['#17171c', '#25252d', '#35353f', '#494954', '#5f5f6b'].map(_hx),  // plain dressed stone
+  earth:  ['#1c140e', '#2e2016', '#42301f', '#584029', '#705436'].map(_hx),  // packed earth
+  loam:   ['#170f0a', '#261a11', '#382619', '#4c3422', '#62442e'].map(_hx),  // earthen walls
+  rock:   ['#1a1813', '#2b2820', '#3e3a2e', '#555041', '#6e6855'].map(_hx),  // weathered natural rock (warm)
+  crag:   ['#131618', '#1f2427', '#2d3438', '#3e484e', '#526068'].map(_hx),  // cold crag walls
+  moss:   ['#121710', '#1d2618', '#2b3822', '#3b4c2e', '#4e623b'].map(_hx),  // blighted moss stone
+  ice:    ['#141b27', '#1f2b3c', '#2d3e54', '#40566f', '#5a7490'].map(_hx),  // packed snow-ice
+  glacier:['#0f1726', '#18263d', '#253957', '#365174', '#4c6c96'].map(_hx),  // glacier walls
+  frost:  ['#2a4056', '#3b5670', '#50728e', '#6a8ea8', '#8eb0c8'].map(_hx),  // frozen pools
+  slate:  ['#11171e', '#1b232d', '#27323f', '#364453', '#4a5a6b'].map(_hx),  // wet slate
+  tide:   ['#05111b', '#091c2c', '#0f2e44', '#17425c', '#225a76'].map(_hx),  // clear dark water
+  mud:    ['#110b07', '#1c130b', '#281b11', '#352417', '#452f1d'].map(_hx),  // mud pools
+  pit:    ['#040306', '#08070c', '#0e0c14', '#16131e', '#1f1b29'].map(_hx),  // sunken pits
 };
 export const EGLOW = {
   poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70],
   water: [100, 80, 200], lava: [255, 110, 40], soul: [150, 120, 255],
+  frost: [170, 225, 255], aqua: [80, 180, 235],
 };
