@@ -1,7 +1,8 @@
 // party.js (UI) — the party's stat cards along the bottom of the screen: you in the
 // centre, up to two hired companions either side. Each card: portrait (cut from the
 // character's own baked atlas), level badge, name, class, HP bar, ATK / DEF / CRT / DDG,
-// and level + XP bar. Empty companion slots point you at a tavern. DOM only.
+// and level + XP bar. Empty companion slots point you at a tavern. Tapping a card opens that
+// member's character sheet (sheet.js); a green badge flags an upgrade waiting in the bag. DOM only.
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 
@@ -9,7 +10,7 @@ const CSS = `
 #party { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.08fr 1fr; gap: 6px;
   padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 8px); background: linear-gradient(rgba(10,8,14,0), rgba(10,8,14,0.92) 22%);
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; color: #d8d2c6; pointer-events: none; }
-#party .card { background: rgba(14,12,20,0.94); border: 1px solid #2c2838; border-radius: 3px; padding: 6px 7px 7px; min-width: 0; }
+#party .card { position: relative; background: rgba(14,12,20,0.94); border: 1px solid #2c2838; border-radius: 3px; padding: 6px 7px 7px; min-width: 0; }
 #party .card.main { border-color: #a07a3c; box-shadow: inset 0 0 0 1px rgba(160,122,60,0.25); }
 #party .card.down { opacity: .55; filter: grayscale(.8); }
 #party .card.down .hp span { color: #ff8a7a; }
@@ -51,11 +52,12 @@ export function createPartyPanel(sim) {
   const el = document.createElement('div'); el.id = 'party'; document.body.appendChild(el);
   const hint = document.getElementById('hint'); if (hint) hint.style.display = 'none';
 
-  const card = (m) => {
+  let onCard = null, badge = () => false;                  // set by the character sheet (sheet.js)
+  const card = (m, idx) => {
     if (!m) return `<div class="card empty">empty slot<br>hire at a<br>town tavern</div>`;
     const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level), actor = m.actor || c.actor;
     const hp = Math.max(0, Math.round(m.hp));
-    return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}">
+    return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}
       <div class="top"><div class="pf"><canvas width="44" height="52" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${m.name}</div><div class="cl">${c.abbr}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
@@ -65,13 +67,23 @@ export function createPartyPanel(sim) {
   };
   function draw() {
     const [you, a, b] = sim.state.party;
-    el.innerHTML = card(a) + card(you) + card(b);
+    el.innerHTML = card(a, 1) + card(you, 0) + card(b, 2);
     for (const cv of el.querySelectorAll('canvas[data-actor]')) { const src = portrait(cv.dataset.actor); const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0); }
   }
   sim.bus.on('partyChanged', draw);
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed
   let sig = '';
-  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}`).join(','); if (n !== sig) { sig = n; draw(); } }, 180);
+  const gearSig = () => (sim.state.bag || []).length + ':' + sim.state.party.map((m) => Object.values(m.gear || {}).map((it) => (it ? it.uid : '-')).join('.')).join('/');
+  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
-  return { el, height: () => el.getBoundingClientRect().height };
+  // tap a card: that member's character sheet. The cards re-render several times a second
+  // in battle (HP ticks), so the press and the release can land on two copies of the same
+  // card — match them by index rather than relying on 'click'.
+  let press = null;
+  const idxOf = (e) => { const c = e.target.closest && e.target.closest('.card[data-idx]'); return c ? +c.dataset.idx : -1; };
+  el.addEventListener('pointerdown', (e) => { const i = idxOf(e); if (i < 0) return; e.stopPropagation(); press = { i, x: e.clientX, y: e.clientY }; });
+  el.addEventListener('pointerup', (e) => { const i = idxOf(e); if (press && i === press.i && Math.hypot(e.clientX - press.x, e.clientY - press.y) < 14 && onCard) onCard(i); press = null; });
+  for (const ev of ['touchstart', 'mousedown']) el.addEventListener(ev, (e) => { if (idxOf(e) >= 0) e.stopPropagation(); });
+  return { el, height: () => el.getBoundingClientRect().height, refresh: () => { sig = ''; draw(); },
+    onCard: (fn) => { onCard = fn; }, badge: (fn) => { badge = fn; draw(); } };
 }

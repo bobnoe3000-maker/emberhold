@@ -40,7 +40,7 @@ export function createFX() {
   let B = null;                                   // { EMI, DEP, W, H, DPX }
   let acc = null, touched = [];                   // one shape's coverage (max-blended, so overlaps don't double up)
   const ctx = { key: 0, fy: 0, h: 0 };            // depth context of the figure being drawn
-  const parts = [], flashes = [];
+  const parts = [], flashes = [], beams = [];
 
   function target(buf) {
     B = buf;
@@ -169,8 +169,23 @@ export function createFX() {
     flashes.push({ x, y, t0: now, life: heavy ? 0.18 : 0.1, r: heavy ? 5.5 : crit ? 4 : 3, col, heavy });
     if (parts.length > 240) parts.splice(0, parts.length - 240);
   }
+  // a loot drop: a column of light over where it fell and a glint on the ground, in the rarity's colour
+  function beam(x, y, col, { now = performance.now(), life = 2.6 } = {}) { beams.push({ x, y, col, t0: now, life }); if (beams.length > 8) beams.shift(); }
+
   // proj(x, y) → { sx, sy, h, key } the struck figure's foot on screen, its height and depth key
   function particles(now, proj) {
+    for (let i = beams.length - 1; i >= 0; i--) {
+      const b = beams[i], age = Math.max(0, (now - b.t0) / 1000 / b.life); if (age >= 1) { beams.splice(i, 1); continue; }
+      const P = proj(b.x, b.y), k = age < 0.1 ? age / 0.1 : 1 - Math.pow((age - 0.1) / 0.9, 2), H = 46 * (age < 0.1 ? age / 0.1 : 1);
+      depth(P.key + 0.4, P.sy, P.h);
+      for (let yy = 0; yy < H; yy++) { const f = yy / H, w = 3 * (1 - f * 0.55), a = k * 1.6 * Math.pow(1 - f, 1.3) * (0.85 + 0.15 * Math.sin(now / 90 + yy * 0.5));
+        for (let xx = -Math.ceil(w); xx <= Math.ceil(w); xx++) mark(P.sx + xx, P.sy - yy, a * Math.max(0, 1 - Math.abs(xx) / (w + 0.5))); }
+      flush(b.col);
+      depth(P.key + 0.4, P.sy, P.h);
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -7; dx <= 7; dx++) { const e = (dx * dx) / 49 + (dy * dy) / 9; if (e < 1) mark(P.sx + dx, P.sy + dy, k * 1.3 * (1 - e)); }
+      star(P.sx, P.sy - H, 4 + 2 * Math.sin(now / 140), k * 0.9);
+      flush(b.col);
+    }
     for (let i = flashes.length - 1; i >= 0; i--) {
       const f = flashes[i], age = Math.max(0, (now - f.t0) / 1000 / f.life); if (age >= 1) { flashes.splice(i, 1); continue; }
       const P = proj(f.x, f.y); depth(P.key + 0.6, P.sy, P.h);
@@ -185,5 +200,5 @@ export function createFX() {
     }
   }
 
-  return { target, weapon, impact, particles, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
+  return { target, weapon, impact, beam, particles, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
 }

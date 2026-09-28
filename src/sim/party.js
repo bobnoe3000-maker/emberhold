@@ -1,28 +1,39 @@
 // party.js — the party: you plus up to two hired companions (GDD §5–§6). Pure data
 // and formulas; core.js owns the state and the hire/dismiss commands.
 //
-// Stats follow the GDD class tables: base at level 1 + growth per level. HP and XP
-// are the only mutable numbers for now (combat will move them).
+// Stats follow the GDD class tables: base at level 1 + growth per level, plus the six
+// gear slots (items.js, GDD §8).
 
 import { mulberry32, streamSeed } from './rng.js';
+import { gearStats, starterKit } from './items.js';
 
+// Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
+// STARTER), so a fresh character in their kit has exactly the GDD numbers; beyond that,
+// power comes from levels and from gear found.
 export const CLASSES = {
-  fighter: { label: 'Fighter', abbr: 'FTR', hp: [140, 14], mp: [20, 2], atk: [12, 2.0], def: [14, 2.0], crit: 5, dodge: 5, hpr: 2.0, mpr: 0.5, actor: 'hero_barbarian' },
-  rogue:   { label: 'Rogue',   abbr: 'ROG', hp: [100, 10], mp: [30, 3], atk: [13, 2.2], def: [8, 1.2],  crit: 15, dodge: 15, hpr: 1.2, mpr: 0.8, actor: 'hero_rogue' },
-  mage:    { label: 'Mage',    abbr: 'MAG', hp: [80, 8],   mp: [80, 8], atk: [14, 2.4], def: [6, 0.8],  crit: 8, dodge: 5, hpr: 0.8, mpr: 2.0, actor: 'hero_mage' },
+  fighter: { label: 'Fighter', abbr: 'FTR', hp: [129, 14], mp: [20, 2], atk: [11, 2.0], def: [10, 2.0], crit: 4, dodge: 5, hpr: 2.0, mpr: 0.5, actor: 'hero_barbarian' },
+  rogue:   { label: 'Rogue',   abbr: 'ROG', hp: [100, 10], mp: [30, 3], atk: [11, 2.2], def: [5, 1.2],  crit: 14, dodge: 11, hpr: 1.2, mpr: 0.8, actor: 'hero_rogue' },
+  mage:    { label: 'Mage',    abbr: 'MAG', hp: [80, 8],   mp: [63, 8], atk: [12, 2.4], def: [3, 0.8],  crit: 8, dodge: 5, hpr: 0.8, mpr: 1.9, actor: 'hero_mage' },
 };
 export const MAX_COMPANIONS = 2;
 export const xpToNext = (lv) => Math.round(100 * Math.pow(lv, 1.6));
 
+// class + level, plus what the gear adds (items.js). `gear` is that share on its own (the
+// character sheet shows it in green); hpr / mpr are HP / MP per second, the class rate
+// growing with the pool (GDD §4) plus gear regen.
 export function statsFor(m) {
-  const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10;
+  const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m);
+  const baseHp = c.hp[0] + c.hp[1] * L, baseMp = c.mp[0] + c.mp[1] * L;
+  const maxHp = Math.round(baseHp + g.hp), maxMp = Math.round(baseMp + g.mp);
   return {
-    maxHp: Math.round(c.hp[0] + c.hp[1] * L), maxMp: Math.round(c.mp[0] + c.mp[1] * L),
-    atk: r1(c.atk[0] + c.atk[1] * L), def: r1(c.def[0] + c.def[1] * L), crit: c.crit, dodge: c.dodge,
+    maxHp, maxMp, atk: r1(c.atk[0] + c.atk[1] * L + g.atk), def: r1(c.def[0] + c.def[1] * L + g.def),
+    crit: Math.min(60, c.crit + g.crit), dodge: Math.max(0, Math.min(50, c.dodge + g.dodge)),
+    hpr: r1(c.hpr * (baseHp / c.hp[0]) + g.hpr), mpr: r1(c.mpr * (baseMp / c.mp[0]) + g.mpr), gear: g,
   };
 }
 export function makeMember(id, name, cls, level = 1, trait = null) {
   const m = { id, name, cls, level, xp: 0, trait, hp: 0 };
+  m.gear = starterKit(m);                                  // Common kit at their level: what the model already wears
   m.hp = statsFor(m).maxHp;
   return m;
 }

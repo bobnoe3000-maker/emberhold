@@ -36,8 +36,9 @@
 
   /* paper doll */
   .doll { display: grid; grid-template-columns: 76px 1fr 76px; gap: 6px; margin-top: 10px; align-items: center; }
-  .slots { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-  .fig { position: relative; height: 218px; border-radius: 10px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1b1624, #0e0b14 70%);
+  .slots { display: flex; flex-direction: column; gap: 17px; align-items: center; }
+  .doll .slot { width: 58px; height: 58px; } .doll .slot img { width: 48px; height: 48px; }
+  .fig { position: relative; height: 236px; border-radius: 10px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1b1624, #0e0b14 70%);
     border: 1px solid var(--line2); overflow: hidden; }
   .fig i { position: absolute; left: 50%; top: 4px; margin-left: -88px; width: 176px; height: 204px; background-repeat: no-repeat; image-rendering: pixelated; filter: brightness(2.1) saturate(1.15); }
   .fig .nm { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 10px; color: var(--gold); letter-spacing: 1.5px; }
@@ -118,7 +119,7 @@
 </style></head>
 <body>
 <h1>Gear and loot: the character sheet</h1>
-<p class="lede">Tap any party card to open that member's sheet: the gear they're wearing, their stats with the gear's share shown in green, and the party bag. Tap an item, worn or in the bag, to see its description, stats and a comparison with what's worn now. Icons are baked from the same KayKit models the figures carry (<span class="mono">tools/actor-lab/icons.cjs</span>), so a sword's icon is the sword in the hand. Slots and rarities follow GDD §8.</p>
+<p class="lede">Tap any party card to open that member's sheet: the gear they're wearing, their stats with the gear's share shown in green, and the party bag. Tap an item, worn or in the bag, to see its description, stats and a comparison with what's worn now. Icons are baked from the same KayKit models the figures carry (<span class="mono">tools/actor-lab/icons.cjs</span>), so a sword's icon is the sword in the hand. Slots and rarities follow GDD §8. <b>Implemented</b>: src/sim/items.js, src/sim/loot.js, src/ui/sheet.js.</p>
 
 <div class="row" id="phones"></div>
 
@@ -128,7 +129,7 @@
   <span><i style="border-color:var(--rare)"></i>Rare · base + 2 affixes + an ability modifier</span>
   <span><i style="border-color:var(--heirloom)"></i>Heirloom · named, a unique effect</span>
 </div>
-<p class="lede" style="margin-top:14px">Baked icon set (30): every weapon, off-hand and headgear in the hero kits, the Ashbound's weapons (dropped by skeletons), and three trinkets.</p>
+<p class="lede" style="margin-top:14px">Baked icon set (39): every weapon, off-hand and headgear in the hero kits, each class's body armour and boots (cut from the character models), the Ashbound's weapons, and three trinkets.</p>
 <div class="icons" id="iconset"></div>
 
 <script>
@@ -141,18 +142,20 @@ const fig = (actor) => `<i style="background-image:url(../assets/actors/${actor}
 const IT = {
   ashwarden: { icon: 'sword_1h', name: 'Ashwarden Sword', r: 'fine', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 4, base: [['ATK', '+6']], aff: [['CRIT', '+3%']], flav: 'Forged in Thornwick the winter the wells went black.' },
   buckler: { icon: 'shield_round', name: 'Oakheart Buckler', r: 'common', slot: 'Off-hand · shield', cls: 'Fighter', ilv: 3, base: [['DEF', '+5']], aff: [] },
-  plate: { icon: 'helm_plate', name: 'Tallowmere Plate', r: 'fine', slot: 'Armour · plate', cls: 'Fighter', ilv: 4, base: [['DEF', '+8']], aff: [['HP', '+20']] },
+  helm: { icon: 'helm_plate', name: 'Gravewatch Great Helm', r: 'fine', slot: 'Helm · plate', cls: 'Fighter', ilv: 4, base: [['DEF', '+1'], ['HP', '+8']], aff: [['HP', '+9']] },
+  plate: { icon: 'armor_plate', name: 'Tallowmere Plate Harness', r: 'fine', slot: 'Armor · plate', cls: 'Fighter', ilv: 4, base: [['DEF', '+3'], ['HP', '+15']], aff: [['DEF', '+2']] },
+  sabatons: { icon: 'boots_plate', name: 'Sabatons', r: 'common', slot: 'Boots · plate', cls: 'Fighter', ilv: 3, base: [['DEF', '+1']], aff: [] },
   emberring: { icon: 'ring', name: 'Ring of the Last Hearth', r: 'rare', slot: 'Trinket · ring', cls: 'Any class', ilv: 5, base: [['ATK', '+2']], aff: [['CRIT', '+4%'], ['HP regen', '+0.4/s']], mod: 'Cleave strikes one more foe', flav: '"Kept lit through the Long Dark." The stone is still warm.' },
   cinder: { icon: 'sword_2h', name: 'Cinderbrand Greatsword', r: 'fine', slot: 'Weapon · two-handed', cls: 'Fighter', ilv: 5, base: [['ATK', '+11']], aff: [['HP', '+15']], flav: 'Heavier than it looks. It was meant to be.', isNew: true, up: true },
   hatchet: { icon: 'axe_1h', name: 'Woodsman\'s Hatchet', r: 'common', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 2, base: [['ATK', '+4']], aff: [] },
   thorn: { icon: 'shield_spike', name: 'Thornwall', r: 'rare', slot: 'Off-hand · shield', cls: 'Fighter', ilv: 5, base: [['DEF', '+9']], aff: [['DEF', '+3'], ['DODGE', '+2%']], mod: 'Blocks reflect 10% damage', up: true },
   wand: { icon: 'wand', name: 'Wand of Embers', r: 'fine', slot: 'Weapon · wand', cls: 'Mage', ilv: 4, base: [['ATK', '+7']], aff: [['MP regen', '+0.3/s']], who: 'SIG' },
   knife: { icon: 'knife', name: 'Gutter Knife', r: 'common', slot: 'Weapon · dagger', cls: 'Rogue', ilv: 3, base: [['ATK', '+5']], aff: [], who: 'WRN' },
-  witch: { icon: 'hat_mage', name: 'Hedge-witch Hat', r: 'common', slot: 'Armour · robes', cls: 'Mage', ilv: 2, base: [['DEF', '+3'], ['MP', '+10']], aff: [], who: 'SIG' },
+  witch: { icon: 'hat_mage', name: 'Hedge-witch Hat', r: 'common', slot: 'Helm · robes', cls: 'Mage', ilv: 2, base: [['DEF', '+3'], ['MP', '+10']], aff: [], who: 'SIG' },
   pilgrim: { icon: 'amulet', name: 'Pilgrim\'s Amulet', r: 'fine', slot: 'Trinket · amulet', cls: 'Any class', ilv: 3, base: [['HP', '+12']], aff: [['DODGE', '+2%']] },
   falx: { icon: 'skel_blade', name: 'Ashbound Falx', r: 'heirloom', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 6, base: [['ATK', '+10']], aff: [['CRIT', '+5%']], mod: 'Kills raise no Ashbound for 3 s' },
   fang: { icon: 'charm', name: 'Barrow Fang', r: 'common', slot: 'Trinket · charm', cls: 'Any class', ilv: 2, base: [['CRIT', '+2%']], aff: [] },
-  cloak: { icon: 'cape_rogue', name: 'Mossweave Cloak', r: 'fine', slot: 'Armour · cloak', cls: 'Rogue', ilv: 4, base: [['DEF', '+5']], aff: [['DODGE', '+3%']], who: 'WRN' },
+  cloak: { icon: 'boots_leather', name: 'Mossweave Soft Boots', r: 'fine', slot: 'Boots · leather', cls: 'Rogue', ilv: 4, base: [['DEF', '+1'], ['DODGE', '+1%']], aff: [['DODGE', '+3%']], who: 'WRN' },
 };
 const RC = { common: 'var(--common)', fine: 'var(--fine)', rare: 'var(--rare)', heirloom: 'var(--heirloom)' };
 const slot = (k, o = {}) => { if (!k) return `<div class="slot empty">${o.lbl ? `<em>${o.lbl}</em>` : ''}</div>`; const it = IT[k];
@@ -165,9 +168,9 @@ const BAG = ['cinder', 'thorn', 'falx', 'hatchet', 'pilgrim', 'wand', 'witch', '
 const sheet = ({ sel, card, dots = [0, 1, 1] }) => `<div class="veil"></div><div class="sheet"><div class="grab"></div><div class="x">✕</div>
   <div style="margin-top:22px">${tabs(0, dots)}</div>
   <div class="doll">
-    <div class="slots">${slot('ashwarden', { lbl: 'Weapon', sel: sel === 'ashwarden' })}${slot('buckler', { lbl: 'Off-hand' })}</div>
+    <div class="slots">${slot('ashwarden', { lbl: 'Weapon', sel: sel === 'ashwarden' })}${slot('buckler', { lbl: 'Off-hand' })}${slot('emberring', { lbl: 'Trinket', sel: sel === 'emberring' })}</div>
     <div class="fig">${fig('hero_knight')}<div class="nm">ALDRIC · FIGHTER · LV 4</div><div class="xpb"><i style="width:62%"></i></div></div>
-    <div class="slots">${slot('plate', { lbl: 'Armour' })}${slot('emberring', { lbl: 'Trinket', sel: sel === 'emberring' })}</div>
+    <div class="slots">${slot('helm', { lbl: 'Helm' })}${slot('plate', { lbl: 'Armor' })}${slot('sabatons', { lbl: 'Boots' })}</div>
   </div>
   <div class="stats">
     ${[['HP', '202', '+20'], ['MP', '26', ''], ['ATK', '26', '+8'], ['DEF', '33', '+13'], ['CRIT', '12%', '+7%'], ['DODGE', '5%', ''], ['HP REGEN', '2.4/s', '+0.4'], ['MP REGEN', '0.5/s', '']]
@@ -194,7 +197,7 @@ const itemCard = (k, { cmp, btns, note }) => { const it = IT[k];
 const phones = [
   { h: '1 · Tap a party card', p: 'The party cards along the bottom are the way in. A green badge means the bag holds an upgrade for that member. The sheet opens on whoever you tap.',
     html: `<div class="cardhint"></div><div class="badge">▲ UPGRADE</div><div class="finger">👆</div>` },
-  { h: '2 · The sheet', p: 'Tabs switch between party members (a green dot means an upgrade is waiting). The four GDD slots sit around the figure. The stats show totals, with the gear\'s share in green. Below is the shared <b>party bag</b> (20 slots) and currencies. Bag items show <b>NEW</b> and <b>▲</b> when they beat what\'s worn. Off-class items are greyed and tagged with the member who can use them.',
+  { h: '2 · The sheet', p: 'Tabs switch between party members (a green dot means an upgrade is waiting). The six slots sit around the figure: weapon, off-hand and trinket on the left; helm, armor and boots on the right. The stats show totals, with the gear\'s share in green. Below is the shared <b>party bag</b> (20 slots) and currencies. Bag items show <b>NEW</b> and <b>▲</b> when they beat what\'s worn. Off-class items are greyed and tagged with the member who can use them.',
     html: sheet({}) },
   { h: '3 · Tap a bag item', p: 'A detail card rises over the sheet with the icon, rarity, slot and class, and base stats (white). Affixes are coloured by rarity, then the flavour line. The right column compares against what\'s worn. A two-handed weapon warns that it frees the off-hand. <b>Equip</b> swaps it in and sends the old item to the bag. <b>Salvage</b> turns it into Embers.',
     html: sheet({ sel: 'cinder', card: itemCard('cinder', { cmp: { ATK: ['u', '▲ +5'], HP: ['u', '▲ +15'], extra: [['CRIT', 'd', '▼ −3%'], ['DEF', 'd', '▼ −5']] }, note: '⚠ Two-handed: the Oakheart Buckler goes to the bag', btns: '<div class="btn pri">Equip</div><div class="btn">Salvage ✦2</div><div class="btn ghost">Close</div>' }) }) },
@@ -206,7 +209,7 @@ const phones = [
       <div class="btns"><div class="btn pri">Equip on Wren</div><div class="btn">Bag</div></div></div>` },
 ];
 document.getElementById('phones').innerHTML = phones.map((ph) => `<div class="cap"><div class="phone">${ph.html}</div><h2>${ph.h}</h2><p>${ph.p}</p></div>`).join('');
-const ALL = ['sword_1h', 'sword_2h', 'axe_1h', 'axe_2h', 'shield_round', 'shield_badge', 'shield_rect', 'shield_spike', 'shield_barb', 'knife', 'knife_off', 'crossbow_1h', 'crossbow_2h', 'wand', 'staff', 'tome',
+const ALL = ['armor_plate', 'armor_fur', 'armor_leather', 'armor_robe', 'boots_plate', 'boots_fur', 'boots_leather', 'boots_mage', 'hood_rogue', 'sword_1h', 'sword_2h', 'axe_1h', 'axe_2h', 'shield_round', 'shield_badge', 'shield_rect', 'shield_spike', 'shield_barb', 'knife', 'knife_off', 'crossbow_1h', 'crossbow_2h', 'wand', 'staff', 'tome',
   'helm_plate', 'hat_barb', 'hat_mage', 'cape_knight', 'cape_rogue', 'cape_mage', 'skel_blade', 'skel_axe', 'skel_staff', 'skel_crossbow', 'skel_shield', 'ring', 'amulet', 'charm'];
 document.getElementById('iconset').innerHTML = ALL.map((k) => `<div><img src="${I(k)}">${k}</div>`).join('');
 </script>

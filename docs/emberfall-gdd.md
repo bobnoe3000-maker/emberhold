@@ -249,9 +249,11 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 
 | Slot | Fighter | Rogue | Mage |
 |---|---|---|---|
-| Weapon | swords, axes, greatswords | daggers, crossbows | staves, wands |
+| Weapon | swords, axes, greatswords, great-axes | daggers, hand and heavy crossbows | wands, staves |
 | Off-hand | shields | off-hand dagger | tomes |
-| Armour | plate, mail | leather, cloaks | robes |
+| Helm | great helm, bear hood | hood | witch hat |
+| Armor | plate, fur mail | leathers | robes |
+| Boots | sabatons, fur boots | soft boots | slippers |
 | Trinket | any class: rings, amulets, charms |||
 
 | Rarity | Source | What it is |

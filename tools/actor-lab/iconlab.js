@@ -37,9 +37,25 @@ const PROC = {
 async function part(spec) {
   if (spec.proc) return PROC[spec.proc]();
   const g = (await load(`./models/${spec.file}`)).scene; g.updateMatrixWorld(true);
-  const node = spec.mesh ? g.getObjectByName(spec.mesh) : g; if (!node) throw new Error('no mesh ' + spec.mesh);
-  const inv = node.matrixWorld.clone().invert(), out = new THREE.Group();
-  node.traverse((o) => { if (!o.isMesh) return; const m = new THREE.Mesh(o.geometry, o.material); m.matrixAutoUpdate = false; m.matrix.copy(inv.clone().multiply(o.matrixWorld)); out.add(m); });
+  const names = spec.meshes || [spec.mesh], out = new THREE.Group();
+  const first = spec.mesh || spec.meshes ? g.getObjectByName(names[0]) : g; if (!first) throw new Error('no mesh ' + names[0]);
+  const inv = first.matrixWorld.clone().invert();
+  for (const nm of spec.mesh || spec.meshes ? names : [null]) {
+    const node = nm ? g.getObjectByName(nm) : g; if (!node) throw new Error('no mesh ' + nm);
+    node.traverse((o) => { if (!o.isMesh) return; const m = new THREE.Mesh(o.geometry, o.material); m.matrixAutoUpdate = false; m.matrix.copy(inv.clone().multiply(o.matrixWorld)); out.add(m); });
+  }
+  if (spec.below != null) {                       // keep only the triangles below a height fraction (legs → boots)
+    out.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(out), cut = box.min.y + (box.max.y - box.min.y) * spec.below, v = new THREE.Vector3();
+    for (const m of out.children) {
+      const src = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry, pos = src.attributes.position, keep = [];
+      for (let t = 0; t < pos.count; t += 3) { let ok = true; for (let k = 0; k < 3; k++) if (v.fromBufferAttribute(pos, t + k).applyMatrix4(m.matrix).y > cut) ok = false; if (ok) keep.push(t); }
+      const geo = new THREE.BufferGeometry();
+      for (const [name, at] of Object.entries(src.attributes)) { const arr = new at.array.constructor(keep.length * 3 * at.itemSize);
+        keep.forEach((t, i) => { for (let k = 0; k < 3 * at.itemSize; k++) arr[i * 3 * at.itemSize + k] = at.array[t * at.itemSize + k]; }); geo.setAttribute(name, new THREE.BufferAttribute(arr, at.itemSize, at.normalized)); }
+      m.geometry = geo;
+    }
+  }
   return out;
 }
 

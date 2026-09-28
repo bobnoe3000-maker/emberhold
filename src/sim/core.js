@@ -10,6 +10,8 @@ import { findPath } from './path.js';
 import { listDestinations } from './travel.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
 import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
+import { starterKit } from './items.js';
+import { createLoot } from './loot.js';
 import { createBattle } from './battle.js';
 import { createBus, createCommandQueue } from './bus.js';
 
@@ -55,13 +57,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
     },
-    counters: { wood: 0, stone: 0, gold: 0 },
+    counters: { wood: 0, stone: 0, gold: 0, embers: 0, lootN: 0, uidN: 0 },
+    bag: [],                          // the party bag (loot.js): items not worn, shared by everyone
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     party: [makeHero()],                                   // [you, …up to two hired companions]
   };
 
+  // gear drops, the bag and the equip commands (loot.js)
+  const loot = createLoot({ state, bus, seed: baseSeed });
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town'),
+    onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = Math.hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; face(p, dx, dy); } });
 
   function tryMove(p, dx, dy) {
@@ -155,6 +161,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   function applyCommand(cmd) {
     const p = state.player;
+    if (loot.command(cmd)) return;                         // equip / unequip / salvage
     if (cmd.type === 'hire') {                             // hire from this town's tavern roster (validated here)
       if (world.kind !== 'town' || state.party.length > MAX_COMPANIONS) return;
       const c = tavernRoster(baseSeed, world.region, 0, state.party[0].level)[cmd.idx];
@@ -213,6 +220,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
           else { state.counters.wood += 2; state.counters.stone += 2; }
           bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: prop });
+          if (prop === 'chest') {                          // a chest may hold gear: item level = its room's level (the hero's outdoors)
+            const c = world.level && world.level.cells.get(cmd.tx + ',' + cmd.ty), rl = c && world.roomLevels && world.roomLevels.get(c.room);
+            loot.drop('chest', { ilv: rl || Math.max(1, world.kind === 'dungeon' ? state.depth + 1 : state.party[0].level), x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
+          }
           bus.emit('countersChanged', { ...state.counters });
         }
         return;                                            // decor props: nothing to interact
@@ -274,6 +285,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       party: state.party.map((m) => ({ ...m })),
+      bag: state.bag.map((it) => ({ ...it })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
       discovered: [...world.discovered],
@@ -297,7 +309,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
     state.counters.gold = data.counters?.gold ?? 0;
+    for (const k of ['embers', 'lootN', 'uidN']) state.counters[k] = data.counters?.[k] ?? 0;
     if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
+    for (const m of state.party) if (!m.gear) m.gear = starterKit(m);       // saves from before gear: the class kit
+    state.bag = (data.bag ?? []).map((it) => ({ ...it }));
     world.mods.clear();
     for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
     world.hp.clear();

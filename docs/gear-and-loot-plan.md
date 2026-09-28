@@ -1,13 +1,33 @@
-# Gear and loot v1 — implementation plan
+# Gear and loot v1
 
 **Mockup:** `docs/gear-mockup.html`. **Rules:** GDD §8 (slots, rarities, class items),
-§4 (stats) and §10 (Embers). This plan is the smallest build that lets you find gear, equip
-it and see it change your numbers. The later sections list what is deliberately left out.
+§4 (stats) and §10 (Embers). This is the smallest build that lets you find gear, equip it
+and see it change your numbers. The later sections list what is deliberately left out.
+
+## Status: implemented
+
+The code is in `src/sim/items.js`, `src/sim/loot.js` and `src/ui/sheet.js`. It differs
+from the original plan as follows:
+
+- **Six slots, not four:** weapon, off-hand, helm, armor, boots and trinket. Each class
+  has its own bases for all six. The armor and boots icons are cut from the character
+  models' body and leg meshes.
+- **Class base stats now include the starting kit.** The level-1 values in `CLASSES` are
+  the GDD table minus the level-1 starting kit. A fresh character in their kit has exactly
+  the GDD numbers, so the room-level balance still holds:
+  - at-level rooms cost 21–31 % HP per wave;
+  - a room three levels above you defeats you.
+- **Rare ability modifiers work now,** not later. "*X* costs 3 less MP" and "*X* hits
+  15 % harder" apply in battle when the wearer's class ability matches.
+- **Full bag:** any drop is salvaged straight into Embers, with a toast. There is no
+  overflow slot.
+- **Off-hand with a two-handed weapon:** equipping an off-hand is refused while a
+  two-handed weapon is worn. The card says why.
 
 ## What the player gets
 
 - **Open the sheet:** tap a party card to open that member's sheet. It shows:
-  - four slots: weapon, off-hand, armour and trinket;
+  - six slots: weapon, off-hand and trinket on the left; helm, armor and boots on the right;
   - stats with the gear's share shown in green;
   - the shared party bag (20 slots) with gold and Embers;
   - tabs to switch member. A green dot on a tab means an upgrade is waiting.
@@ -22,7 +42,7 @@ it and see it change your numbers. The later sections list what is deliberately 
 - **Upgrade badges:** party cards and bag items flag upgrades with **▲**, and new items
   with **NEW**.
 
-## Icons (done)
+## Icons
 
 - `tools/actor-lab/icons.cjs` + `iconlab.js` bake `assets/items/<id>.png` at 96 px from
   `icons.json`:
@@ -30,10 +50,12 @@ it and see it change your numbers. The later sections list what is deliberately 
   - placed on the RPG diagonal;
   - lit with a warm key and a cool rim;
   - supersampled 4×, with an ink outline.
-- **The 30 icons:**
+- **The 39 icons:**
   - **Weapons:** 1H/2H sword, 1H/2H axe, knife, 1H/2H crossbow, wand and staff.
   - **Off-hands:** five shields, an offhand knife and a tome.
-  - **Headgear and cloaks:** plate helm, fur hood, witch hat and three cloaks.
+  - **Headgear and cloaks:** plate helm, fur hood, rogue hood, witch hat and three cloaks.
+  - **Body armour and boots:** plate, fur, leather and robes, cut from each class's body
+    and leg meshes (`meshes` + `below` in `icons.json`).
   - **Ashbound gear:** blade, axe, staff, crossbow and shield.
   - **Trinkets:** ring, amulet and charm, modelled in code.
 - A new base item that uses an existing mesh needs only a line in `icons.json`.
@@ -45,11 +67,11 @@ it and see it change your numbers. The later sections list what is deliberately 
 
 About 20 bases cover the GDD slot table:
 
-| Class | Weapons | Off-hands | Armour |
-|---|---|---|---|
-| Fighter | sword, axe, greatsword, great-axe | shields | plate, fur |
-| Rogue | dagger, hand crossbow, heavy crossbow | offhand dagger | cloak |
-| Mage | wand, staff | tome | robes (hat) |
+| Class | Weapons | Off-hands | Helm | Armor | Boots |
+|---|---|---|---|---|---|
+| Fighter | sword, axe, greatsword, great-axe, Ashbound falx / cleaver | round, kite, tower, spiked shields, targe, Ashbound buckler | great helm, bear hood | plate harness, fur mail | sabatons, fur boots |
+| Rogue | dagger, hand crossbow, heavy crossbow, Ashbound arbalest | parrying dagger | hood | leathers | soft boots |
+| Mage | wand, staff, Ashbound staff | tome | witch hat | robes | slippers |
 
 **Trinkets** (any class): ring, amulet, charm.
 
@@ -71,12 +93,12 @@ About 20 bases cover the GDD slot table:
 Every roll uses the sim RNG on its own stream (`streamSeed(seed, site / wave / chest)`), so
 a replay reproduces the same loot.
 
-**Gear on members.** Each member gets `member.gear = { weapon, off, armour, trinket }`.
-Starting kits are Common items that match the model the member already wears:
-- **Knight:** sword, round shield and plate.
-- **Barbarian:** axe and round shield.
-- **Rogue:** twin knives.
-- **Mage:** staff.
+**Gear on members.** Each member gets
+`member.gear = { weapon, off, helm, armor, boots, trinket }`. Starting kits are Common items
+at the member's level, matching the model they already wear:
+- **Fighters:** sword, round shield, great helm, plate harness and sabatons.
+- **Rogues:** dagger, parrying dagger, hood, leathers and soft boots.
+- **Mages:** staff, witch hat, robes and slippers.
 
 **`statsFor(m)`** adds the gear's stats on top of the class and level values. It returns
 the totals, a `gear` breakdown (the green numbers on the sheet), and `hpr` / `mpr` so gear
@@ -154,8 +176,8 @@ one-slot "overflow" until you make room.
 
 ## Not in v1 (next)
 
-- **Rare ability modifiers:** they are rolled and shown in v1, but applying them needs
-  hooks in ability resolution (e.g. *Cleave strikes one more foe*).
+- **More Rare modifiers:** v1 has cost and power. Behaviour changes, such as *Cleave
+  strikes one more foe*, need more hooks in ability resolution.
 - **Heirlooms:** fixed named items from bosses and hidden sites.
 - **Smith upgrades and the shop:** smith upgrades +1 to +5, and the shop selling Commons.
   Both town services already exist in the menu.

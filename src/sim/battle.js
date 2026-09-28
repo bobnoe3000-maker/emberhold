@@ -16,7 +16,8 @@
 // casts). Tap an enemy to focus the party on it.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { CLASSES, statsFor, xpToNext } from './party.js';
+import { statsFor, xpToNext } from './party.js';
+import { abilityMods } from './items.js';
 
 // class combat traits (stats are in party.js / the GDD tables)
 const CLASS_FIGHT = {
@@ -53,7 +54,7 @@ const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, 
 // when it's cleared.
 const LULL_MAX = 15, LULL_READY = 0.5, REVIVE = 0.25;
 
-export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, moveHero }) {
+export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
   let battle = null, nextId = 1, focusId = 0, pending = [];   // pending: blows and releases waiting on their wind-up
 
@@ -155,6 +156,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl);
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
+    if (e.elite) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
   }
   function defeat(w) {
     const lost = Math.floor((state.counters.gold || 0) * 0.25);
@@ -166,8 +168,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   function attack(att, tgt, isPartyAtt, w, fight) {
     let power = 1, bonus = 0, ab = null;
-    const A = isPartyAtt && fight.ability;
-    if (A && att.mp >= A.mp) { att.mp -= A.mp; power = A.power; bonus = A.crit || 0; ab = A; }
+    const A = isPartyAtt && fight.ability, am = A ? abilityMods(att, A.name) : null;       // Rare gear: the ability costs less / hits harder
+    if (A && att.mp >= A.mp - am.cost) { att.mp -= A.mp - am.cost; power = A.power * (1 + am.power); bonus = A.crit || 0; ab = A; }
     const heavy = !!ab || (!isPartyAtt && att.elite);
     att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
     att.atkKind = heavy ? 'heavy' : att.atkN % 2 ? 'a' : 'b';
@@ -361,8 +363,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const calm = !battle || battle.between || (battle.wave === 0 && !w.enemies.length);
     for (const m of state.party) {
       if (m.down) continue;
-      const c = CLASSES[m.cls], s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : 1;
-      m.hp = Math.min(s.maxHp, m.hp + c.hpr * (s.maxHp / c.hp[0]) * k * dt); m.mp = Math.min(s.maxMp, m.mp + c.mpr * (s.maxMp / c.mp[0]) * k * dt);   // regen grows with the pool
+      const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : 1;
+      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * dt); m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
     // companions out of battle: follow in formation, loosen up when the hero stands still
@@ -374,6 +376,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = LULL; battle.waited = 0;
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true });
+          onDrop('wave', battle.level, p.x, p.y);                // now and then a fallen wave leaves something behind
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
             m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));
             bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });

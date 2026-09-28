@@ -30,6 +30,15 @@
     {"id": "skel_shield", "file": "Skeleton_Shield_Small_A.gltf"},
     {"id": "ring", "proc": "ring"},
     {"id": "amulet", "proc": "amulet"},
-    {"id": "charm", "proc": "charm"}
+    {"id": "charm", "proc": "charm"},
+    {"id": "armor_plate", "file": "Knight.glb", "mesh": "Knight_Body"},
+    {"id": "armor_fur", "file": "Barbarian.glb", "mesh": "Barbarian_Body"},
+    {"id": "armor_leather", "file": "Rogue.glb", "mesh": "Rogue_Body"},
+    {"id": "armor_robe", "file": "Mage.glb", "mesh": "Mage_Body"},
+    {"id": "boots_plate", "file": "Knight.glb", "meshes": ["Knight_LegLeft", "Knight_LegRight"], "below": 0.45},
+    {"id": "boots_fur", "file": "Barbarian.glb", "meshes": ["Barbarian_LegLeft", "Barbarian_LegRight"], "below": 0.45},
+    {"id": "boots_leather", "file": "Rogue.glb", "meshes": ["Rogue_LegLeft", "Rogue_LegRight"], "below": 0.45},
+    {"id": "boots_mage", "file": "Mage.glb", "meshes": ["Mage_LegLeft", "Mage_LegRight"], "below": 0.45},
+    {"id": "hood_rogue", "file": "Rogue_Hooded.glb", "mesh": "Rogue_Head_Hooded"}
   ]
 }

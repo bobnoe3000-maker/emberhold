@@ -5,6 +5,8 @@ import { resourceAt, materialAt, heightAt, isWalkable, propAt } from './src/sim/
 import { THEME_KEYS } from './src/sim/level.js';
 import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
+import { statsFor } from './src/sim/party.js';
+import { makeItem, SLOTS } from './src/sim/items.js';
 
 const SEED = 20260807;
 const sim = createSim(SEED);
@@ -177,7 +179,31 @@ const od = cOv.destinations().map((o) => o.id);
 const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('dungeon');
 console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', od.join(','));
 
-const ok = compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+// Gear and loot (GDD §8): six slots with class kits, seeded drops, equip rules, stats, saves.
+const gs = createSim(SEED); gs.tick();
+const gh = gs.state.party[0], kitOk = SLOTS.filter((sl) => gh.gear[sl]).length === 5 && statsFor(gh).maxHp === 140 && statsFor(gh).def === 14;
+// drops are seeded by the world and a running counter: the same chest sequence twice gives the same items
+const dropRun = () => { const s = createSim(SEED); s.tick(); const got = []; s.bus.on('loot', (l) => got.push(`${l.item.name}/${l.item.r}/${l.item.ilv}`));
+  for (const [k, v] of s.world.props) if (v === 'chest') { const [tx, ty] = k.split(',').map(Number); s.state.player.x = tx + 0.5; s.state.player.y = ty + 1.5; s.commands.push({ type: 'harvest', tx, ty }); s.tick(); }
+  return { s, got }; };
+const d1 = dropRun(), d2 = dropRun(), dropsOk = d1.got.length > 0 && d1.got.join('|') === d2.got.join('|');
+// equip rules: a greatsword frees the off-hand; a shield then refuses; a mage wand is refused on the fighter
+const gb = d1.s, fh = gb.state.party[0], bag0 = gb.state.bag.length; let refused = 0; gb.bus.on('gearRefused', () => refused++);
+gb.state.bag.push(makeItem('greatsword', 3, 'fine', { uid: 't1', aff: [['crit', 3]] }), makeItem('kite', 3, 'common', { uid: 't2' }), makeItem('wand', 3, 'common', { uid: 't3' }));
+const atk0 = statsFor(fh).atk;
+gb.commands.push({ type: 'equip', member: fh.id, uid: 't1' }); gb.tick();
+const twoH = fh.gear.weapon.uid === 't1' && !fh.gear.off && statsFor(fh).atk > atk0 && gb.state.bag.some((it) => it.base === 'roundshield');
+gb.commands.push({ type: 'equip', member: fh.id, uid: 't2' }); gb.commands.push({ type: 'equip', member: fh.id, uid: 't3' }); gb.tick();
+gb.commands.push({ type: 'unequip', member: fh.id, slot: 'helm' }); gb.tick();
+const emb0 = gb.state.counters.embers; gb.commands.push({ type: 'salvage', uid: 't3' }); gb.tick();
+const rulesOk = twoH && refused === 2 && !fh.gear.helm && gb.state.counters.embers > emb0 && !gb.state.bag.some((it) => it.uid === 't3');
+// save / load keeps worn gear, the bag and Embers
+const gSnap = JSON.parse(JSON.stringify(gb.snapshot())), gr = createSim(SEED); gr.restore(gSnap);
+const saveOk = gr.state.party[0].gear.weapon.uid === 't1' && gr.state.bag.length === gb.state.bag.length && gr.state.counters.embers === gb.state.counters.embers;
+const gearOk = kitOk && dropsOk && rulesOk && saveOk;
+console.log('gear + loot (kit, seeded drops, 2H/class rules, salvage, save):', gearOk, kitOk, dropsOk, rulesOk, saveOk, `| ${d1.got.length} chest drops, e.g. ${d1.got.slice(0, 3).join(', ')}`);
+
+const ok = gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);
