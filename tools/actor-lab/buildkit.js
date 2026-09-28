@@ -9,6 +9,7 @@
 // is ~0.5 and a storey ~0.55 (grounded, not chibi). Meshes flagged userData.glow are
 // window glass (baked emissive).
 import * as THREE from 'three';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ── deterministic rng for texture + detail variation ────────────────────────
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -402,23 +403,43 @@ const TYPES = {
 const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
 const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
 const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], bark: '#3a2c22', dead: '#4a4038' };
+// Foliage (critic pass 2: faceted gem-like crowns clashed with the buildings): closed,
+// softly-shaded masses. Geometry is vertex-merged BEFORE jittering so faces never crack
+// apart, shaded smooth, and vertex-coloured from a dark self-shadowed underside to a lighter
+// crown top, with a little per-vertex variation — foliage mass, not cut stone.
+const foliageMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, roughness: 1 });
+function foliage(geo, r, amt, base, top = 1.35, bottom = 0.55) {
+  const g0 = geo.clone(); g0.deleteAttribute('normal'); g0.deleteAttribute('uv');       // weld on position alone (seams too)
+  const m = mergeVertices(g0), p = m.attributes.position;
+  let y0 = 1e9, y1 = -1e9; for (let i = 0; i < p.count; i++) { y0 = Math.min(y0, p.getY(i)); y1 = Math.max(y1, p.getY(i)); }
+  const col = new Float32Array(p.count * 3), c = new THREE.Color(base);
+  for (let i = 0; i < p.count; i++) {
+    p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt);
+    const t = (p.getY(i) - y0) / Math.max(1e-6, y1 - y0), k = (bottom + (top - bottom) * Math.pow(t, 0.8)) * (0.92 + r() * 0.16);
+    col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
+  }
+  m.setAttribute('color', new THREE.BufferAttribute(col, 3)); m.computeVertexNormals();
+  return m;
+}
 function pine(g, r, x, z, sc = 1) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.3, 5), flat(TREE_COL.bark)); trunk.position.y = 0.15; t.add(trunk);
-  const tiers = 4, col = TREE_COL.pine[(r() * 3) | 0];
-  for (let i = 0; i < tiers; i++) {
-    const rad = 0.3 * (1 - i / (tiers + 0.6)), h = 0.38 * (1 - i * 0.12);
-    const c = new THREE.Mesh(jitter(new THREE.ConeGeometry(rad, h, 7, 1), r, 0.05), flat(col)); c.position.y = 0.2 + i * 0.2 + h / 2; c.rotation.y = r() * 3; t.add(c);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.045, 0.34, 6), flat(TREE_COL.bark)); trunk.position.y = 0.17; t.add(trunk);
+  const tiers = 5, col = TREE_COL.pine[(r() * 3) | 0];
+  for (let i = 0; i < tiers; i++) {                        // drooping boughs, each a little narrower, overlapping
+    const rad = 0.29 * (1 - i / (tiers + 0.8)), h = 0.3 * (1 - i * 0.08);
+    const c = new THREE.Mesh(foliage(new THREE.ConeGeometry(rad, h, 11, 2), r, 0.035, col, 1.55, 0.62), foliageMat);
+    c.position.y = 0.2 + i * 0.16 + h / 2; c.rotation.y = r() * 3; t.add(c);
   }
 }
 function broadleaf(g, r, x, z, sc = 1, autumn = false) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.45, 6), flat(TREE_COL.bark)); trunk.position.y = 0.22; t.add(trunk);
-  const pal = autumn ? TREE_COL.autumn : TREE_COL.leaf, n = 4 + ((r() * 3) | 0);
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + r(), rr = i === 0 ? 0 : 0.14 + r() * 0.06, size = i === 0 ? 0.26 : 0.17 + r() * 0.07;
-    const b = new THREE.Mesh(jitter(new THREE.IcosahedronGeometry(size, 0), r, 0.06), flat(pal[(r() * 3) | 0]));
-    b.position.set(Math.cos(a) * rr, 0.62 + (i === 0 ? 0.08 : r() * 0.12 - 0.02), Math.sin(a) * rr); b.rotation.set(r() * 3, r() * 3, 0); t.add(b);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.064, 0.44, 7), flat(TREE_COL.bark)); trunk.position.y = 0.22; t.add(trunk);
+  for (const a of [0.6, 2.7, 4.6]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.024, 0.2, 5), flat(TREE_COL.bark)); b.position.set(Math.cos(a) * 0.05, 0.44, Math.sin(a) * 0.05); b.rotation.set(Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7); t.add(b); }
+  const pal = autumn ? TREE_COL.autumn : TREE_COL.leaf, n = 7 + ((r() * 4) | 0);
+  for (let i = 0; i < n; i++) {                            // a cloud of rounded clumps: big core, smaller lobes around and on top
+    const a = (i / n) * Math.PI * 2 + r(), rr = i === 0 ? 0 : 0.17 + r() * 0.1, size = i === 0 ? 0.3 : 0.15 + r() * 0.09;   // a broad crown, not a lollipop
+    const b = new THREE.Mesh(foliage(new THREE.IcosahedronGeometry(size, 1), r, size * 0.22, pal[(r() * 3) | 0]), foliageMat);
+    b.position.set(Math.cos(a) * rr, 0.6 + (i === 0 ? 0.1 : r() * 0.18 - 0.06), Math.sin(a) * rr); t.add(b);
   }
 }
 function deadTree(g, r, x, z, sc = 1) {
@@ -464,12 +485,13 @@ function faceted(geo, r, jit, colorFn) {
   return g;
 }
 const vmat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true });
-const ROCK = { base: C3('#66655f'), dark: C3('#484741'), light: C3('#84827a'), moss: C3('#4a5236'), grass: C3('#46502f'), snow: C3('#d4d6da'), scree: C3('#58544c') };
+// rocks: warm dark field-stone (pale neutral grey read lilac under the violet dusk), more moss on top
+const ROCK = { base: C3('#5b564b'), dark: C3('#433f37'), light: C3('#6f685a'), moss: C3('#4a5233'), grass: C3('#46502f'), snow: C3('#d4d6da'), scree: C3('#524d44') };
 const tint = (c, k) => c.clone().multiplyScalar(k);
 
 function rockMesh(r, size, flatten = 0.6) {
   const geo = faceted(new THREE.DodecahedronGeometry(size, 0), r, size * 0.35, (ny, y, q) =>
-    ny > 0.72 && q < 0.7 ? tint(ROCK.moss, 0.9 + q * 0.2) : ny > 0.3 ? tint(ROCK.light, 0.9 + q * 0.15) : tint(ROCK.base, 0.85 + q * 0.2));
+    ny > 0.6 && q < 0.8 ? tint(ROCK.moss, 0.9 + q * 0.2) : ny > 0.3 ? tint(ROCK.light, 0.9 + q * 0.15) : tint(ROCK.base, 0.85 + q * 0.2));
   const m = new THREE.Mesh(geo, vmat()); m.scale.y = flatten; m.position.y = size * flatten * 0.55; return m;
 }
 function mountainMesh(r, { h = 2.0, w = 0.9, peaks = 3, snow = true, grass = false }) {

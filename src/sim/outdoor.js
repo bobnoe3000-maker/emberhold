@@ -301,10 +301,13 @@ function buildOverland(seed) {
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
     if (Math.hypot(x - town[0] + 16, y - town[1]) < 40 || Math.hypot(x - cross[0], y - cross[1]) < 18) return null;
     for (const c of [keep, barrows, mine, camp, [60, 112]]) if (Math.hypot(x - c[0], y - c[1]) < 24) return null;
-    if (inFrontOf([keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]], x, y, 46, 32)) return null;   // sightlines to every landmark (groves are wide and tall)
-    if (f > 0.58) return rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
-    if (f > 0.45 && rng() < 0.3) return pick(rng, TREE_SINGLE);
-    return rng() < 0.05 ? pick(rng, ROCKS) : null;
+    // sightlines to every landmark: the clear wedge runs deeper for taller things (a grove's
+    // crowns reach ~30 tiles up-screen, a lone tree ~15), so nothing in front rises over the site
+    const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]];
+    const id = f > 0.58 ? (rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE)) : f > 0.45 && rng() < 0.3 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
+    if (!id) return null;
+    const reach = /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62;
+    return inFrontOf(sights, x, y, reach, 32) ? null : id;
   });
   forestRing(o, rng, 6);
 
