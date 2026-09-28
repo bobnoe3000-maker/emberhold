@@ -13,7 +13,7 @@ import { createBus, createCommandQueue } from './bus.js';
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
 
-const PLAYER_SPEED = 5.8;     // tiles / second
+const PLAYER_SPEED = 7.0;     // tiles / second (5.8 +20%)
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
 const REACH = 1.8;            // interact reach (chebyshev-ish, in tiles)
 

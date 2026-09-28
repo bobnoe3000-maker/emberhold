@@ -31,7 +31,9 @@ function dir8(sdx, sdy) {
 }
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
 
-const MARGIN = 64;                 // native-px slack before a re-bake
+const MARGIN = 96;                 // native-px slack around the view held in the bake
+const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
+const BAKE_BUDGET = 5;             // ms of background baking per frame
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
@@ -148,7 +150,8 @@ export function createRenderer(canvas, sim, input) {
   const octx = overlay.getContext('2d');
 
   let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
-  let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window)
+  let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window); b* point at the CURRENT bake target
+  let front = null, back = null, job = null;          // double-buffered bakes: render from front, bake the next region into back
   let bDEP, sDEP, bSH;                               // depth toward the camera (tiles) + shadow flags
   let bakeOx = 0, bakeOy = 0, terrValid = false, flares = [];
 
@@ -163,6 +166,7 @@ export function createRenderer(canvas, sim, input) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  function target(set) { bALB = set.ALB; bNRM = set.NRM; bEMI = set.EMI; bDEP = set.DEP; bSH = set.SH; }
   function resize() {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     vw = Math.floor(window.innerWidth * dpr);
@@ -174,9 +178,10 @@ export function createRenderer(canvas, sim, input) {
     S = Math.max(1.5, vw / (VIEW_TILES * TW));             // fractional; PASS B upscales sharp-bilinear
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
-    bALB = new Uint8ClampedArray(tbw * tbh * 4); bNRM = new Uint8ClampedArray(tbw * tbh * 4); bEMI = new Uint8ClampedArray(tbw * tbh * 4);
+    const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
+    front = mkSet(); back = mkSet(); job = null; target(front);
     sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
-    bDEP = new Float32Array(tbw * tbh); sDEP = new Float32Array(nvw * nvh); bSH = new Uint8Array(tbw * tbh);
+    sDEP = new Float32Array(nvw * nvh);
     for (const t of [texAlb, texNrm, texEmi]) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }
     setupLit();
     terrValid = false;
@@ -291,19 +296,22 @@ export function createRenderer(canvas, sim, input) {
 
   // Composite the scene's structures into the bake: first every ground shadow (only
   // onto ground-level pixels, once), then every sprite with the nearer-wins depth test.
-  function stampStructures(bx, by, lights) {
-    const world = sim.world, z = heightAt(world, 0, 0), zp = z * ZH, list = [];
-    if (!envMeta) return;
+  function structList(bx, by, lights) {
+    const world = sim.world, z = heightAt(world, 0, 0), list = [];
+    if (!envMeta) return list;
     for (const st of world.structs) {
       const sp = envSprite(st.id); if (!sp) continue;
       const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
       if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') });   // you walk ON a bridge: it never hides actors
+      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') });
       if (envMeta.sprites[st.id].glow && lights.length < 30) lights.push({ x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
     }
-    for (const { sp, x0, y0 } of list) for (let yy = 0; yy < sp.h; yy++) {
+    return list;
+  }
+  function stampShadow({ sp, x0, y0 }, by, zp, z) {
+    for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
-      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;         // depth of a ground-level pixel on this row
+      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;
       for (let xx = 0; xx < sp.w; xx++) {
         if (sp.mask[yy * sp.w + xx] !== 2) continue;
         const px = x0 + xx; if (px < 0 || px >= tbw) continue;
@@ -312,7 +320,9 @@ export function createRenderer(canvas, sim, input) {
         bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64;
       }
     }
-    for (const { sp, x0, y0, base, walkOn } of list) for (let yy = 0; yy < sp.h; yy++) {
+  }
+  function stampSprite({ sp, x0, y0, base, walkOn }, by, zp, z) {
+    for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
       for (let xx = 0; xx < sp.w; xx++) {
         const j = yy * sp.w + xx; if (sp.mask[j] !== 1) continue;
@@ -329,7 +339,6 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
   // companions (hired party members) — atlases load on first use
   const partyAtlases = {};
   const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
@@ -356,8 +365,14 @@ export function createRenderer(canvas, sim, input) {
   // point + 0.0833 per px of height (0.5 per level). Terrain paints in painter's order and
   // writes it; baked structures and actors composite against it ("nearer wins").
   const DPX = 0.0833;
+  // Terrain never changes within a level, so each tile's writes are RECORDED the first
+  // time it's painted (relative to its screen origin) and REPLAYED on later bakes.
+  let rec = null;
+  const tileCache = new Map();
   const putG = (px, py, alb, n, hpx, emiId, dep = -1e9) => {
-    px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
+    px |= 0; py |= 0;
+    if (rec) rec.push(px - rec.sx, py - rec.sy, alb[0], alb[1], alb[2], (n[0] * 0.5 + 0.5) * 255, (n[1] * 0.5 + 0.5) * 255, n[2] * 255, hpx * 4, emiId || 0, dep);
+    if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
     bDEP[py * tbw + px] = dep;
     const i = (py * tbw + px) * 4;
     bALB[i] = alb[0]; bALB[i + 1] = alb[1]; bALB[i + 2] = alb[2]; bALB[i + 3] = 255;
@@ -396,13 +411,37 @@ export function createRenderer(canvas, sim, input) {
 
   // Terrain tile → G-buffer: cliff faces (SW/SE drops) then the top diamond,
   // with material-gradient normals + sparse emissive specks (water / poison).
+  function replayTile(r, sx, sy) {
+    const P = r.p, D = r.d, n = D.length;
+    for (let k = 0; k < n; k++) {
+      const px = sx + P[k * 10], py = sy + P[k * 10 + 1]; if (px < 0 || py < 0 || px >= tbw || py >= tbh) continue;
+      const di = py * tbw + px, i = di * 4, o = k * 10;
+      bALB[i] = P[o + 2]; bALB[i + 1] = P[o + 3]; bALB[i + 2] = P[o + 4]; bALB[i + 3] = 255;
+      bNRM[i] = P[o + 5]; bNRM[i + 1] = P[o + 6]; bNRM[i + 2] = P[o + 7]; bNRM[i + 3] = P[o + 8];
+      const e = P[o + 9];
+      if (e) { const g = GLOW_ID[e]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; } else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
+      bEMI[i + 3] = 255; bDEP[di] = D[k];
+    }
+  }
   function drawTileG(bx, by, x, y) {
     const world = sim.world;
+    const sx0 = bx + (x - y) * HW;
+    if (sx0 < -TW * 2 || sx0 > tbw + TW * 2) return;
+    const key = x + ',' + y, hit = tileCache.get(key);
+    if (hit) { if (hit !== 1) replayTile(hit, sx0, by + (x + y) * HH - hit.z * ZH); return; }
     const m = materialAt(world, x, y);
-    if (m === 'abyss') return;                                   // the void: draw nothing
+    if (m === 'abyss') { tileCache.set(key, 1); return; }        // the void: draw nothing
     const z = heightAt(world, x, y);
-    const sx = bx + (x - y) * HW, sy = by + (x + y) * HH - z * ZH;
-    if (sx < -TW || sx > tbw + TW || sy < -80 || sy > tbh + 20) return;
+    const sx = sx0, sy = by + (x + y) * HH - z * ZH;
+    if (sy < -80 || sy > tbh + 20) return;
+    const raw = []; raw.sx = sx; rec = { sx, sy, push: (...v) => raw.push(...v) };
+    try { drawTileBody(sx, sy, x, y, z, m, world); } finally { rec = null; }
+    const cnt = raw.length / 11, P = new Int16Array(cnt * 10), D = new Float32Array(cnt);
+    for (let k = 0; k < cnt; k++) { for (let j = 0; j < 10; j++) P[k * 10 + j] = Math.round(raw[k * 11 + j]); D[k] = raw[k * 11 + 10]; }
+    if (tileCache.size > 60000) tileCache.clear();
+    tileCache.set(key, { p: P, d: D, z });
+  }
+  function drawTileBody(sx, sy, x, y, z, m, world) {
     if (world.kind !== 'dungeon') return drawTileOutdoor(sx, sy, x, y, z);
     if (tileStyle) return drawTileStyled(sx, sy, x, y, z, m);
     const liq = m === 'water' || m === 'poison' || m === 'lava', hPix = z * ZH;
@@ -513,8 +552,11 @@ export function createRenderer(canvas, sim, input) {
 
   // Bake the terrain + static props/resources for (viewport + margin), keyed to
   // camera (ox, oy). Records up to two corruption flare anchors in the region.
-  function bakeGBuffer(ox, oy) {
-    bakeOx = ox; bakeOy = oy;
+  // The bake runs as a JOB: begin (clear the target, list tiles), step (paint tiles, then
+  // stamp structures, then thin lights) until a time budget runs out, commit (make it
+  // current). Normally it runs in the background into the back buffers while you walk
+  // on the front ones, so crossing the margin never hitches.
+  function bakeBegin(ox, oy) {
     bALB.fill(0); bNRM.fill(0); bEMI.fill(0); bDEP.fill(-1e9); bSH.fill(0);
     const bx = MARGIN + ox, by = MARGIN + oy;
     let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
@@ -524,11 +566,15 @@ export function createRenderer(canvas, sim, input) {
     }
     minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
     const tiles = [];
-    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push([tx, ty]);
-    tiles.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]));
-    const world = sim.world;
-    const hazards = [], lights = [];
-    for (const [tx, ty] of tiles) {
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push(tx, ty);
+    const idx = Array.from({ length: tiles.length / 2 }, (_, i) => i).sort((a, b) => (tiles[a * 2] + tiles[a * 2 + 1]) - (tiles[b * 2] + tiles[b * 2 + 1]));
+    return { ox, oy, bx, by, tiles, idx, i: 0, phase: 0, hazards: [], lights: [], world: sim.world };
+  }
+  function bakeStep(j, deadline) {
+    const world = sim.world; if (j.world !== world) return false;
+    const { bx, by } = j;
+    while (j.phase === 0 && j.i < j.idx.length) {
+      const q = j.idx[j.i++], tx = j.tiles[q * 2], ty = j.tiles[q * 2 + 1];
       drawTileG(bx, by, tx, ty);
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
@@ -536,21 +582,51 @@ export function createRenderer(canvas, sim, input) {
       if (pk) {
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
-        if (PROP_LIGHT[pk]) lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow
+        if (PROP_LIGHT[pk]) j.lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow
       }
       const rk = resourceAt(world, tx, ty);
       if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
-      const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul / ice / water)
-      const hl = tileStyle ? (mm === world.level.th.hazard ? POOL_LIGHT[variantFor(world.theme, tileVariant).pool] : null) : HAZARD_LIGHT[mm];
-      if (hl) hazards.push({ x: tx, y: ty, z, color: hl, s: hash2(tx, ty, 1234) });
+      if (world.kind === 'dungeon') {
+        const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul / ice / water)
+        const hl = tileStyle ? (mm === world.level.th.hazard ? POOL_LIGHT[variantFor(world.theme, tileVariant).pool] : null) : HAZARD_LIGHT[mm];
+        if (hl) j.hazards.push({ x: tx, y: ty, z, color: hl, s: hash2(tx, ty, 1234) });
+      }
+      if ((j.i & 15) === 0 && performance.now() > deadline) return false;
     }
-    if (world.kind !== 'dungeon') stampStructures(bx, by, lights);
+    if (j.phase === 0) { j.phase = 1; if (performance.now() > deadline) return false; }
+    // structures: every ground shadow first, then every sprite (depth-tested), a few per slice
+    if (j.phase === 1) { j.list = world.kind !== 'dungeon' ? structList(bx, by, j.lights) : []; j.k = 0; j.phase = 2; }
+    const z = heightAt(world, 0, 0), zp = z * ZH;
+    while (j.phase === 2 && j.k < j.list.length) { stampShadow(j.list[j.k++], by, zp, z); if (performance.now() > deadline) return false; }
+    if (j.phase === 2) { j.phase = 3; j.k = 0; }
+    while (j.phase === 3 && j.k < j.list.length) { stampSprite(j.list[j.k++], by, zp, z); if (performance.now() > deadline) return false; }
     // thin the hazard pools to a few representatives spread apart, then pool all
     // candidates; render picks the two nearest the hero each frame.
-    hazards.sort((a, b) => b.s - a.s);
-    for (const h of hazards) { if (lights.length > 40) break; if (lights.every((o) => o.color !== h.color || Math.hypot(o.x - h.x, o.y - h.y) > 7)) lights.push(h); }
-    flares = lights;
-    terrValid = true;
+    j.hazards.sort((a, b) => b.s - a.s);
+    for (const h of j.hazards) { if (j.lights.length > 40) break; if (j.lights.every((o) => o.color !== h.color || Math.hypot(o.x - h.x, o.y - h.y) > 7)) j.lights.push(h); }
+    return true;
+  }
+  function bakeCommit(j) { bakeOx = j.ox; bakeOy = j.oy; flares = j.lights; terrValid = true; }
+  let lastOx = 0, lastOy = 0, velX = 0, velY = 0;
+  function keepBaked(ox, oy, t0) {
+    velX = velX * 0.9 + (ox - lastOx) * 0.1; velY = velY * 0.9 + (oy - lastOy) * 0.1; lastOx = ox; lastOy = oy;
+    if (!terrValid) {                                              // first frame / new level: bake now, in full
+      job = null; target(front); const j = bakeBegin(ox, oy); bakeStep(j, Infinity); bakeCommit(j);
+      if (globalThis.__rstats) globalThis.__rstats.bakes.push(performance.now() - t0);
+      return;
+    }
+    const drift = Math.max(Math.abs(bakeOx - ox), Math.abs(bakeOy - oy));
+    if (!job && drift > TRIGGER) {                                 // aim ahead of where the camera is heading
+      const lead = (v) => Math.max(-MARGIN * 0.45, Math.min(MARGIN * 0.45, v * 40));
+      target(back); job = bakeBegin(Math.round(ox + lead(velX)), Math.round(oy + lead(velY)));
+    }
+    if (job) {
+      target(back);
+      const urgent = drift > MARGIN - 10;                          // about to run off the baked area: finish now
+      const done = bakeStep(job, urgent ? Infinity : t0 + BAKE_BUDGET);
+      if (done) { const f = front; front = back; back = f; bakeCommit(job); job = null; if (globalThis.__rstats) globalThis.__rstats.swaps = (globalThis.__rstats.swaps || 0) + 1; }
+      target(front);
+    }
   }
 
   let flash = null;
@@ -560,7 +636,8 @@ export function createRenderer(canvas, sim, input) {
   props = withExit(props);
   let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
-  sim.bus.on('levelChanged', () => { trail.length = 0; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
+  sim.bus.on('levelChanged', () => { tileCache.clear(); job = null; trail.length = 0; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
@@ -588,7 +665,8 @@ export function createRenderer(canvas, sim, input) {
     const P = project(ix, iy, pz);
     const { ox, oy } = (lastCam = camera(ix, iy, pz));
 
-    if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeGBuffer(ox, oy);
+    const t0 = performance.now();
+    keepBaked(ox, oy, t0);
 
     // copy the visible window out of the baked margin region (scratch x == native x)
     const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
@@ -640,6 +718,7 @@ export function createRenderer(canvas, sim, input) {
     draws.sort((a, b) => a.d - b.d);
     for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true);
 
+    if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
     gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sNRM);
