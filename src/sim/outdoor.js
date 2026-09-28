@@ -301,7 +301,7 @@ function buildOverland(seed) {
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
     if (Math.hypot(x - town[0] + 16, y - town[1]) < 40 || Math.hypot(x - cross[0], y - cross[1]) < 18) return null;
     for (const c of [keep, barrows, mine, camp, [60, 112]]) if (Math.hypot(x - c[0], y - c[1]) < 24) return null;
-    if (inFrontOf([keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]], x, y, 36, 20)) return null;   // sightlines to every landmark
+    if (inFrontOf([keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]], x, y, 46, 32)) return null;   // sightlines to every landmark (groves are wide and tall)
     if (f > 0.58) return rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
     if (f > 0.45 && rng() < 0.3) return pick(rng, TREE_SINGLE);
     return rng() < 0.05 ? pick(rng, ROCKS) : null;
