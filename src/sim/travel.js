@@ -12,6 +12,7 @@
 
 import { findPath } from './path.js';
 import { heightAt, isWalkable } from './world.js';
+import { hypot } from './detmath.js';
 
 const MAX_TRIES = 4;                    // path at most this many candidates per row (nearest first by straight line)
 
@@ -25,7 +26,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   };
   const p = state.player, out = [];
   const px = Math.floor(p.x), py = Math.floor(p.y);
-  const straight = (t) => Math.hypot(t.tx + 0.5 - p.x, t.ty + 0.5 - p.y);
+  const straight = (t) => hypot(t.tx + 0.5 - p.x, t.ty + 0.5 - p.y);
   const pathLen = (tx, ty, near = 0) => { const path = findPath(p.x, p.y, tx, ty, standable, { near, maxNodes: 80000 }); return path ? path.length - 1 : null; };
   // nearest standable tile to (x, y), for aiming at the middle of a room or a zone
   const standOn = (x, y, r = 8) => {
@@ -112,7 +113,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   }
 
   // overland: the town, the dungeons (entered or not), landmarks
-  const labelNear = (x, y) => (world.labels || []).reduce((b, l) => { const d = Math.hypot(l.x - x, l.y - y); return d < (b ? b.d : 30) ? { l, d } : b; }, null);
+  const labelNear = (x, y) => (world.labels || []).reduce((b, l) => { const d = hypot(l.x - x, l.y - y); return d < (b ? b.d : 30) ? { l, d } : b; }, null);
   const dungeons = [];
   for (const e of world.exits) {
     const t = zone(e); if (!t) continue;

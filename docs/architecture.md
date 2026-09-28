@@ -105,7 +105,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 
 | Area | Files | Notes |
 |---|---|---|
-| Sim | `core.js` (tick, movement, commands, saves), `battle.js` (waves, AI, formation, damage), `world.js` / `level.js` / `outdoor.js`, `party.js`, `items.js`, `loot.js`, `travel.js`, `path.js`, `rng.js`, `bus.js` | Headless, 20 Hz |
+| Sim | `core.js` (tick, movement, commands, saves), `battle.js` (waves, AI, formation, damage), `world.js` / `level.js` / `outdoor.js`, `party.js`, `items.js`, `loot.js`, `travel.js`, `path.js`, `rng.js`, `bus.js`, **`detmath.js`** (engine-independent math), **`replay.js`** (session recorder, state hash, replay verifier) | Headless, 20 Hz, bit-identical across engines |
 | Render | `renderer.js` (Emberlit: CPU-baked G-buffer, WebGL2 lighting and post, sub-pixel camera), `anim.js`, `fx.js`, `gsprite.js`, `iso.js`, `outdoorpaint.js`, `tilestyles.js`, `palette.js` | `renderer-canvas.js` and `renderer-flat.js` are legacy and not imported. Delete them at M2.5. |
 | UI | `hud.js`, `party.js` (cards), `sheet.js` (character sheet), `compass.js`, `townmenu.js`, `input.js` | Vanilla DOM and template strings |
 | Persist | `persist/save.js` | localStorage, `SAVE_VERSION` 3, migrations |
@@ -121,7 +121,6 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 | `src/sim/npc/` | The NPC registry (named and townsfolk), day schedules, wander and work behaviour, and quest-giver hooks |
 | `src/sim/attributes.js` | Stat points and attribute derivation (GDD §4.1) |
 | `src/sim/rift.js` | Timed Ember Rifts: seeded weekly layout, run timer, score |
-| `src/sim/detmath.js` | Deterministic `sin`, `cos`, `atan2` and `hypot` for replay validation across engines (§7) |
 | `src/story/` | The inkjs adapter: bind sim state into Ink variables, map tags to commands, persist Ink state |
 | `src/cutscene/` | A timeline player for camera moves, letterboxing, text cards, stills and fades |
 | `src/audio/` | Howler: music beds, sound-effect sprites, mobile unlock |
@@ -162,10 +161,11 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 
 ## 5. Data and persistence
 
-- **A save slot** (one per hero):
+- **The save** (one per player profile: one main character, whose party is three hero slots
+  — the main character plus two companions):
 
   ```
-  { version, savedAt, heroId, meta: { name, cls, level, region, playtime, portrait },
+  { version, savedAt, meta: { name, cls, level, region, playtime, portrait, verifiedHash },
     data: sim.snapshot(), story: inkState, settings }
   ```
 
@@ -173,13 +173,14 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
   counters. Every schema change bumps `SAVE_VERSION` with a migration step
   (`persist/save.js`).
 - **Storage:**
-  - IndexedDB, through `idb-keyval`, holds the slots, with localStorage as a fallback.
-  - The current single-save localStorage key migrates into slot 1.
+  - IndexedDB, through `idb-keyval`, holds the save, the pending session logs and a
+    7-day previous-hero backup, with localStorage as a fallback.
+  - The current localStorage key migrates in.
 - **Cloud (M6):**
-  - A `saves` table keyed by `(user_id, hero_id)` holds the latest slot JSON, `updated_at`
-    and a device id.
-  - Sync conflicts resolve as last-writer-wins by `savedAt`. If both copies changed since the
-    last sync, the player chooses between them.
+  - A `saves` table keyed by `user_id` holds the latest **verified** snapshot, its hash and
+    `updated_at`. Only the validator writes it (§10).
+  - There are no sync conflicts to resolve: a device uploads sessions, not saves, and the
+    server's replay is the save.
 - **Content** is loaded with `fetch` at boot and hashed. Saves store content **ids**, never
   copies of content text, so a rewrite of a line doesn't break old saves. Quest ids and knot
   names are stable API.
@@ -195,13 +196,15 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
   - Sign in with Apple is mandatory on iOS whenever any third-party login is offered.
 - **Tables** (Postgres, with RLS on every table):
   - `profiles` (display name, created_at);
-  - `heroes` (slot metadata);
-  - `saves`;
+  - `saves` (verified state, validator-written);
+  - `sessions` (claims awaiting or past validation: start hash, log, ticks, end hash,
+    verdict);
   - `leaderboards` (rift times, Undervault depth), written only by the validator;
   - `hireling_snapshots` (async hire-a-friend);
   - `arena_snapshots`.
-- **Validation:** leaderboard entries arrive as a command log plus a seed. An edge function
-  or a Node worker replays the sim, and only a matching result is written (§7).
+- **Validation:** every progression session and every leaderboard entry arrives as a claim:
+  seed, start state, command log, tick count and end hash. A Node worker (or edge function)
+  replays it with `sim/replay.js`. Only a matching result is written (§7, §10).
 - **Realtime (M10+):** Colyseus rooms run `/sim` server-side, one per shared instance:
   - town presence;
   - co-op site;
@@ -227,8 +230,10 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
     across engines (V8 vs JavaScriptCore). A replay on the same engine is exact. A replay
     across engines needs `sim/detmath.js`: polynomial and table versions, used for anything
     that feeds positions or outcomes.
-  - The sim currently makes about 55 such calls. They are audited and swapped before
-    leaderboard validation ships (M7).
+  - **Done:** every such call in the sim now goes through `sim/detmath.js`, built only from
+    `+ − × ÷` and `sqrt` (accuracy ~1e-11). The XP curve is an integer table, and there is
+    no `**` in the sim. A CI job will replay recorded sessions on Chromium, WebKit and Node
+    to hold that line (M6).
   - Realtime multiplayer doesn't need cross-engine determinism, because the server is
     authoritative.
 - **What determinism buys:** saves (seed + diffs), expeditions (fast-forward), bug
@@ -376,22 +381,33 @@ Node.**
 
 ---
 
-## 10. Security and fairness
+## 10. Security and fair play
 
-- **Secrets:**
-  - The client ships only the Supabase URL and anon key. RLS protects every row.
-  - The service-role key lives only in edge functions or the server.
-- **Leaderboards:** the client never writes one. The validator replays the command log
-  first.
-- **Multiplayer:**
-  - Clients send intents (commands) only; the server validates and owns the state.
-  - Rate-limit the command volume per tick.
-- **Saves:** single-player saves are the player's own. Tampering only affects them. Cloud
-  saves are per-user under RLS.
-- **Content** comes from our own origin, with no user-generated content in v1. Dialogue
-  text is rendered as text, never as HTML.
+**The client is never trusted.** Memory, saves and the clock are all in the player's hands.
+Progress is therefore **verified by re-simulation**: the server replays each session's
+commands in the same deterministic sim and stores only that result (development plan
+§2.13).
 
----
+| Threat | Defence |
+|---|---|
+| Edited level, XP, gold or items (memory or devtools) | The replay's end-state hash doesn't match the claim → rejected; the hero rolls back to its last verified state |
+| Edited or copied save | A session must start from the hero's **verified** state hash |
+| Sped-up client ("rapid levels") | Claimed ticks × 50 ms must fit the wall-clock time since the server issued the session token (5 % slack) |
+| Forged or out-of-range commands | The sim validates every command. It clamps move vectors, checks reach, class, bag room and 2H rules, and single-use chests. Invalid commands do nothing. |
+| Loot re-rolling by reloading | Drops use the world seed plus a saved drop counter, so reloading gives the same result |
+| Dev hooks as a cheat console | `?dev` hooks exist only on localhost |
+| Multiplayer cheating | The server is authoritative; clients send only commands; per-tick command rate limits |
+| Stolen keys | The client ships only the Supabase URL and anon key; RLS on every row; the service-role key only in the validator or server |
+| Content injection | Content comes from our own origin; there's no user-generated content in v1; dialogue renders as text, never HTML |
+
+**Trust tiers:**
+- **Guest / offline:** unverified, and single-player only. You can only cheat yourself.
+- **Verified heroes** are required for leaderboards, hire-a-friend, co-op, raids and PvP.
+
+**Status:**
+- **Shipped:** `sim/replay.js` and `sim/detmath.js`, with smoke tests for replay and every
+  tamper case.
+- **M6:** the upload, validator and rollback pipeline.
 
 ## 11. Decision log
 
@@ -402,10 +418,11 @@ Node.**
 | A3 | 2026-09-28 | Preact + htm + signals for windows from M3 |
 | A4 | 2026-09-28 | Ink + inkjs for all dialogue; no runtime text generation |
 | A5 | 2026-09-28 | JSON content + JSON Schema (Ajv in CI) |
-| A6 | 2026-09-28 | IndexedDB (idb-keyval) save slots |
+| A6 | 2026-09-28 | IndexedDB (idb-keyval) saves |
 | A7 | 2026-09-28 | Supabase for accounts, cloud saves and leaderboards; guest-first |
 | A8 | 2026-09-28 | Colyseus for realtime rooms (server-authoritative); async snapshots in Supabase |
 | A9 | 2026-09-28 | Capacitor for native; PWA on the web |
 | A10 | 2026-09-28 | `node:test` + Playwright; ESLint without Prettier |
+| A11 | 2026-09-28 | Verified progression: the server replays session command logs (`sim/replay.js`) and stores only the replayed state; `detmath.js` for cross-engine determinism; dev hooks localhost-only; one save per profile (main character + two companion slots) |
 
 Changing any of these needs a new row here, plus a note in the development plan.

@@ -16,7 +16,17 @@ export const CLASSES = {
   mage:    { label: 'Mage',    abbr: 'MAG', hp: [80, 8],   mp: [63, 8], atk: [12, 2.4], def: [3, 0.8],  crit: 8, dodge: 5, hpr: 0.8, mpr: 1.9, actor: 'hero_mage' },
 };
 export const MAX_COMPANIONS = 2;
-export const xpToNext = (lv) => Math.round(100 * Math.pow(lv, 1.6));
+// XP to the next level = round(100 × L^1.6) (GDD §7), as a fixed integer table: Math.pow is
+// engine-approximated and the curve must replay bit-for-bit on the server (detmath.js).
+const XP_TABLE = [
+  100, 303, 580, 919, 1313, 1758, 2250, 2786, 3363, 3981,
+  4637, 5330, 6058, 6820, 7616, 8445, 9305, 10196, 11117, 12068,
+  13048, 14056, 15093, 16156, 17247, 18364, 19507, 20675, 21869, 23088,
+  24332, 25600, 26892, 28208, 29547, 30909, 32294, 33702, 35132, 36584,
+  38059, 39555, 41072, 42611, 44171, 45752, 47354, 48976, 50619, 52282,
+  53965, 55668, 57391, 59133, 60895, 62676, 64476, 66296, 68134, 69991,
+];
+export const xpToNext = (lv) => XP_TABLE[Math.max(1, Math.min(XP_TABLE.length, lv)) - 1];
 
 // class + level, plus what the gear adds (items.js). `gear` is that share on its own (the
 // character sheet shows it in green); hpr / mpr are HP / MP per second, the class rate

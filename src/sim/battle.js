@@ -18,6 +18,7 @@
 import { mulberry32, streamSeed } from './rng.js';
 import { statsFor, xpToNext } from './party.js';
 import { abilityMods } from './items.js';
+import { hypot, sin, cos, exp } from './detmath.js';
 
 // class combat traits (stats are in party.js / the GDD tables)
 const CLASS_FIGHT = {
@@ -47,7 +48,7 @@ const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal sp
 // badly while side-by-side ones don't. Attackers take the left/right stations first, then
 // the four diagonals; a second ring waits further out when all six are held.
 const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, -0.6]].map(([a, b]) => {
-  const wx = (a / 8 + b / 4) / 2, wy = (b / 4 - a / 8) / 2, l = Math.hypot(wx, wy); return [wx / l, wy / l];   // screen → world unit vector
+  const wx = (a / 8 + b / 4) / 2, wy = (b / 4 - a / 8) / 2, l = hypot(wx, wy); return [wx / l, wy / l];   // screen → world unit vector
 });
 // The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
 // is followed by a breather. Companions who fell during a wave get back up at 25 % HP
@@ -70,7 +71,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     state.party.forEach((m, i) => {
       if (m.mp === undefined) m.mp = statsFor(m).maxMp;
       if (i === 0) { m.x = p.x; m.y = p.y; }
-      else if (m.x === undefined || Math.hypot(m.x - p.x, m.y - p.y) > 14) { m.x = p.x - 0.8 * i; m.y = p.y + 0.8; }
+      else if (m.x === undefined || hypot(m.x - p.x, m.y - p.y) > 14) { m.x = p.x - 0.8 * i; m.y = p.y + 0.8; }
       m.cd = m.cd || 0; m.act = m.act || 0;
     });
   }
@@ -91,7 +92,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (let i = 0; i < n; i++) {
       const kind = kinds[i], E = ENEMIES[kind];
       let x = 0, y = 0;
-      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (Math.hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
+      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
       const elite = eliteWave && i === n - 1;
       const hp = Math.round(E.hp * scale * (elite ? 2.5 : 1));
       w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * (elite ? 1.3 : 1), def: E.def * scale,
@@ -179,14 +180,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!(isPartyAtt ? tgt.hp > 0 && !tgt.dead : alive(tgt))) return;
       applyHit(aStats, tgt, resolve(aStats, dStats, power, bonus), !isPartyAtt, w, heavy);
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
-      if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && Math.hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash), false, w);
+      if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash), false, w);
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
     const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
     pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
-      if (bolt) { const d = Math.hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
+      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
       else hit();
     } });
   }
@@ -198,7 +199,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const STEP_ACC = 40;
   let stepN = 0;
   function stepToward(u, tx, ty, speed, dt, w, room) {
-    const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); if (d < 0.05) { u.moving = false; u.spd = 0; return; }
+    const dx = tx - u.x, dy = ty - u.y, d = hypot(dx, dy); if (d < 0.05) { u.moving = false; u.spd = 0; return; }
     if ((u.stepAt ?? -9) < stepN - 2) u.spd = 0;
     u.stepAt = stepN; u.spd = Math.min(speed, (u.spd || 0) + STEP_ACC * dt);
     const s = Math.min(d, u.spd * dt), nx = u.x + (dx / d) * s, ny = u.y + (dy / d) * s;
@@ -227,7 +228,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     b.fields.set(key, f); return f;
   }
   const clearLine = (w, ax, ay, bx, by, room) => {
-    const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / 0.4);
+    const d = hypot(bx - ax, by - ay), n = Math.ceil(d / 0.4);
     for (let k = 1; k < n; k++) { const x = ax + ((bx - ax) * k) / n, y = ay + ((by - ay) * k) / n; if (!isWalkable(w, x, y) || roomAt(w, x, y) !== room) return false; }
     return true;
   };
@@ -252,7 +253,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1) {   // stiff < 1: a gentle nudge per tick (walking), not a shove
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
-      let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = Math.hypot(u, v);
+      let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = hypot(u, v);
       if (e >= 1) continue;
       if (e < 1e-3) { u = (a.id || i) < (b.id || j) ? -1 : 1; v = 0; e = 1; }       // coincident: part sideways
       const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5) * stiff) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
@@ -261,7 +262,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
   }
-  const nearest = (u, list, pred = () => true) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = Math.hypot(o.x - u.x, o.y - u.y); if (d < bd) { bd = d; best = o; } } return best; };
+  const nearest = (u, list, pred = () => true) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = hypot(o.x - u.x, o.y - u.y); if (d < bd) { bd = d; best = o; } } return best; };
 
   // Claim (or keep) a melee station around tgt for u this tick; returns its world point.
   let claims = new Map();
@@ -274,7 +275,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const x = tgt.x + ux * r * ring, y = tgt.y + uy * r * ring;
       if (!isWalkable(w, x, y) || roomAt(w, x, y) !== battle.room) continue;
       if (crowded(x, y, u, tgt)) continue;                                   // someone else already stands there (on screen)
-      const cost = Math.hypot(x - u.x, y - u.y) + (k % STATIONS.length < 2 ? 0 : 0.8) + (ring > 1 ? 6 : 0) - (u.slotTgt === tgt && u.slotK === k ? 1.5 : 0);
+      const cost = hypot(x - u.x, y - u.y) + (k % STATIONS.length < 2 ? 0 : 0.8) + (ring > 1 ? 6 : 0) - (u.slotTgt === tgt && u.slotK === k ? 1.5 : 0);
       if (cost < bd) { bd = cost; best = k; }
     }
     if (best < 0) return null;
@@ -284,16 +285,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   // is (x, y) inside another live unit's on-screen personal space? (u and its target excepted)
   let bodies = [];
-  const crowded = (x, y, u, tgt) => bodies.some((o) => o !== u && o !== tgt && o.src !== u && o.src !== tgt && Math.hypot(((o.x - x - (o.y - y)) * 8) / SEP_X, ((o.x - x + (o.y - y)) * 4) / SEP_Y) < 0.9);
+  const crowded = (x, y, u, tgt) => bodies.some((o) => o !== u && o !== tgt && o.src !== u && o.src !== tgt && hypot(((o.x - x - (o.y - y)) * 8) / SEP_X, ((o.x - x + (o.y - y)) * 4) / SEP_Y) < 0.9);
   const freeStations = (tgt) => STATIONS.length - ((claims.get(tgt) || { size: 0 }).size);
   // Melee: hold a station beside the target and swing when in reach; never slide mid-swing.
   function melee(u, tgt, F, dt, w, isParty, move) {
-    const d = Math.hypot(tgt.x - u.x, tgt.y - u.y), st = station(u, tgt, F.range, w);
+    const d = hypot(tgt.x - u.x, tgt.y - u.y), st = station(u, tgt, F.range, w);
     const inReach = d <= F.range + 0.25;
     if (inReach && u.cd <= 0) { u.moving = false; attack(u, tgt, isParty, w, F); return; }
     if (u.act > 0.12) { u.moving = false; return; }                     // finishing the swing
     const goal = st || tgt;
-    if (Math.hypot(goal.x - u.x, goal.y - u.y) > 0.4 && !(inReach && !st)) move(goal.x, goal.y);
+    if (hypot(goal.x - u.x, goal.y - u.y) > 0.4 && !(inReach && !st)) move(goal.x, goal.y);
     else u.moving = false;
   }
 
@@ -316,13 +317,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // the hero's breadcrumbs: a companion whose station is round a corner follows these instead
   // of pressing into the wall (and being teleported once it fell far behind)
   const trail = [];
-  const lineOpen = (w, ax, ay, bx, by) => { const n = Math.ceil(Math.hypot(bx - ax, by - ay) / 0.3);
+  const lineOpen = (w, ax, ay, bx, by) => { const n = Math.ceil(hypot(bx - ax, by - ay) / 0.3);
     for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n; if (!isWalkable(w, x - 0.25, y - 0.25) || !isWalkable(w, x + 0.25, y + 0.25) || !isWalkable(w, x - 0.25, y + 0.25) || !isWalkable(w, x + 0.25, y - 0.25)) return false; }
     return true; };
   function moveVel(u, vx, vy, dt, w) {                               // ease u's velocity toward (vx, vy), then move with wall sliding
-    const dvx = vx - (u.vx || 0), dvy = vy - (u.vy || 0), dv = Math.hypot(dvx, dvy), a = FOLLOW_ACC * dt;
+    const dvx = vx - (u.vx || 0), dvy = vy - (u.vy || 0), dv = hypot(dvx, dvy), a = FOLLOW_ACC * dt;
     if (dv <= a) { u.vx = vx; u.vy = vy; } else { u.vx = (u.vx || 0) + (dvx / dv) * a; u.vy = (u.vy || 0) + (dvy / dv) * a; }
-    const sp = Math.hypot(u.vx, u.vy); if (sp < 0.05) { u.vx = u.vy = 0; u.moving = false; return; }
+    const sp = hypot(u.vx, u.vy); if (sp < 0.05) { u.vx = u.vy = 0; u.moving = false; return; }
     const nx = u.x + u.vx * dt, ny = u.y + u.vy * dt;
     if (isWalkable(w, nx, ny)) { u.x = nx; u.y = ny; } else if (isWalkable(w, nx, u.y)) { u.x = nx; u.vy = 0; } else if (isWalkable(w, u.x, ny)) { u.y = ny; u.vx = 0; } else { u.vx = u.vy = 0; }
     u.moving = sp > 0.6; if (u.moving) { u.fx = u.vx; u.fy = u.vy; }
@@ -334,12 +335,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     clock += dt;
     heroStill = p.moving ? 0 : heroStill + dt;
     const last = trail[trail.length - 1];
-    if (!last || Math.hypot(p.x - last[0], p.y - last[1]) > 0.5) { trail.push([p.x, p.y]); if (trail.length > 60) trail.shift(); }
-    if (last && Math.hypot(p.x - last[0], p.y - last[1]) > 6) trail.length = 0;   // a jump (travel, stairs): start over
+    if (!last || hypot(p.x - last[0], p.y - last[1]) > 0.5) { trail.push([p.x, p.y]); if (trail.length > 60) trail.shift(); }
+    if (last && hypot(p.x - last[0], p.y - last[1]) > 6) trail.length = 0;   // a jump (travel, stairs): start over
     const wx0 = p.fx ?? 0.7, wy0 = p.fy ?? 0.7;                          // heading, on screen
-    let hx = (wx0 - wy0) * 8, hy = (wx0 + wy0) * 4; let hl = Math.hypot(hx, hy) || 1; hx /= hl; hy /= hl;
-    if (p.moving) { const k = 1 - Math.exp(-dt / FORM_TURN); formHead.x += (hx - formHead.x) * k; formHead.y += (hy - formHead.y) * k; }
-    hl = Math.hypot(formHead.x, formHead.y); if (hl > 0.2) { hx = formHead.x / hl; hy = formHead.y / hl; } else { formHead.x = hx; formHead.y = hy; }
+    let hx = (wx0 - wy0) * 8, hy = (wx0 + wy0) * 4; let hl = hypot(hx, hy) || 1; hx /= hl; hy /= hl;
+    if (p.moving) { const k = 1 - exp(-dt / FORM_TURN); formHead.x += (hx - formHead.x) * k; formHead.y += (hy - formHead.y) * k; }
+    hl = hypot(formHead.x, formHead.y); if (hl > 0.2) { hx = formHead.x / hl; hy = formHead.y / hl; } else { formHead.x = hx; formHead.y = hy; }
     const px_ = -hy, py_ = hx;
     state.party.forEach((m, i) => {
       if (i === 0) {                                                     // the hero: an occasional fidget or glance when idle
@@ -357,13 +358,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!open(sx, sy)) for (const t of [0.8, 0.6, 0.4, 0.2]) { const qx = p.x + ox * t, qy = p.y + oy * t; if (open(qx, qy)) { sx = qx; sy = qy; break; } }
       if (heroStill < EASE_AFTER) {                                      // on the move: keep station
         m.sitting = false; m.ease = null;
-        let ex = sx - m.x, ey = sy - m.y, d = Math.hypot(ex, ey);
+        let ex = sx - m.x, ey = sy - m.y, d = hypot(ex, ey);
         let vx = (p.vx || 0) + ex * FOLLOW_K, vy = (p.vy || 0) + ey * FOLLOW_K;
         if (d > 0.8 && !lineOpen(w, m.x, m.y, sx, sy)) {                 // station round a corner: follow the hero's trail
           let c = null; for (let t = trail.length - 1; t >= 0; t--) if (lineOpen(w, m.x, m.y, trail[t][0], trail[t][1])) { c = trail[t]; break; }
-          if (c) { ex = c[0] - m.x; ey = c[1] - m.y; const dc = Math.hypot(ex, ey) || 1, sp = Math.hypot(p.vx || 0, p.vy || 0) + 2.5; vx = (ex / dc) * sp; vy = (ey / dc) * sp; }
+          if (c) { ex = c[0] - m.x; ey = c[1] - m.y; const dc = hypot(ex, ey) || 1, sp = hypot(p.vx || 0, p.vy || 0) + 2.5; vx = (ex / dc) * sp; vy = (ey / dc) * sp; }
         }
-        const v = Math.hypot(vx, vy); if (v > FOLLOW_MAX) { vx *= FOLLOW_MAX / v; vy *= FOLLOW_MAX / v; }
+        const v = hypot(vx, vy); if (v > FOLLOW_MAX) { vx *= FOLLOW_MAX / v; vy *= FOLLOW_MAX / v; }
         if (!p.moving && d < 0.35) { vx = 0; vy = 0; }                   // settled on station
         moveVel(m, vx, vy, dt, w);
         return;
@@ -378,10 +379,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         e.next = clock + 4 + idleRng() * 6;
         const k = idleRng();
         if (k < 0.3) m.fidgetN = (m.fidgetN || 0) + 1;
-        else if (k < 0.6) { m.lookN = (m.lookN || 0) + 1; const la = idleRng() * Math.PI * 2; m.fx = Math.cos(la); m.fy = Math.sin(la); }
+        else if (k < 0.6) { m.lookN = (m.lookN || 0) + 1; const la = idleRng() * Math.PI * 2; m.fx = cos(la); m.fy = sin(la); }
         else { m.fx = p.x - m.x; m.fy = p.y - m.y; }                    // turn to the hero
       }
-      const d = Math.hypot(e.gx - m.x, e.gy - m.y);
+      const d = hypot(e.gx - m.x, e.gy - m.y);
       if (d > 0.3) stepToward(m, e.gx, e.gy, STROLL, dt, w); else m.moving = false;
       if (heroStill > SIT_AFTER + i * 2.5 && !m.moving) { m.sitting = true; m.fx = p.x - m.x; m.fy = p.y - m.y; }   // settle down, facing the hero
     });
@@ -439,7 +440,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const F = CLASS_FIGHT[m.cls];
         let tgt = focus || (m.cls === 'rogue' ? foes.reduce((a, b) => (b.hp < a.hp ? b : a)) : m.cls === 'fighter' && i > 0 ? nearest(H, foes) : nearest(m, foes));
         if (!tgt) return;
-        const d = Math.hypot(tgt.x - m.x, tgt.y - m.y);
+        const d = hypot(tgt.x - m.x, tgt.y - m.y);
         m.fx = tgt.x - m.x; m.fy = tgt.y - m.y;
         if (i === 0) {                                          // the hero: yours while you steer, autobattles when you let go
           if (p.moving) return;
@@ -451,7 +452,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           return;
         }
         const close = nearest(m, foes);
-        if (F.keepAway && close && Math.hypot(close.x - m.x, close.y - m.y) < F.keepAway * 0.7) {        // mage: back off
+        if (F.keepAway && close && hypot(close.x - m.x, close.y - m.y) < F.keepAway * 0.7) {        // mage: back off
           stepToward(m, m.x - (close.x - m.x), m.y - (close.y - m.y), F.speed, dt, w);
         } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F); } }
         else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
@@ -466,7 +467,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // melee skeletons pick the nearest party member with a free station (else the nearest)
         const t = e.bolt ? nearest(e, targets) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q) || nearest(e, targets);
         if (!t) { e.moving = false; continue; }
-        const d = Math.hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y;
+        const d = hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y;
         if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed, dt, w));
       }

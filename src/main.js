@@ -24,7 +24,11 @@ const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
 const sim = createSim(WORLD_SEED, THEME, { scene: SCENE, region: REGION });
-if (location.search.includes('dev')) globalThis.__sim = sim;   // dev inspection hook
+// Dev hooks (?dev: the live sim on globalThis, slow motion, manual clock) exist only on a local
+// server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
+// *possible*, only easy: progression is trusted only once the server replays it — replay.js.)
+const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+if (DEV) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 createHud(sim);
@@ -32,7 +36,7 @@ const partyPanel = createPartyPanel(sim);
 const townMenu = createTownMenu(sim, partyPanel);   // subscribe before restore, so a loaded counters event repaints
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
-if (location.search.includes('dev')) globalThis.__gear = gearSheet;
+if (DEV) globalThis.__gear = gearSheet;
 
 // Restore a prior session for this world (player, counters, harvested resources).
 // Must run before the first render so restored mods are reflected in chunk bakes.
@@ -64,7 +68,6 @@ let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
 // dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
-const DEV = location.search.includes('dev');
 if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));
 let vnow = performance.now(), slowed = false;
 

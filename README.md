@@ -63,7 +63,9 @@ milestone M6 ([docs/development-plan.md](docs/development-plan.md)).
   discovery.
 - **Where:** saves are versioned (`SAVE_VERSION`, with migrations) and autosave to
   localStorage every 15 s and on tab hide. Code: `src/persist/save.js`.
-- **Next:** multiple hero slots in IndexedDB, and optional cloud saves.
+- **Next:** IndexedDB, and **verified** cloud saves. The server replays each play session
+  (`src/sim/replay.js`), so edited memory, saves or clocks can't advance levels or create
+  gear.
 
 ## Credits
 

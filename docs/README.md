@@ -6,7 +6,7 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
-| [architecture.md](./architecture.md) | App design, layers, module map, determinism, online services, **evaluated tech stack** with decision log (A1–A10) | **Plan of record** for architecture (2026-09-28) |
+| [architecture.md](./architecture.md) | App design, layers, module map, determinism, online services, **evaluated tech stack** with decision log (A1–A11, incl. verified progression) | **Plan of record** for architecture (2026-09-28) |
 | [development-plan.md](./development-plan.md) | Feature plan (intro and cutscenes, accounts, hero creation and select, character windows and stat points, NPCs, quests and lore, loot, Ember Rifts, region bosses, death and resurrection, multiplayer) and milestones M2.5–M12 | **Plan of record** for build order (v0.5, 2026-09-28) |
 | [quest-lore-system.md](./quest-lore-system.md) | The Hero component: quest kinds, content data model, objective types, deterministic generator, Ink dialogue conventions, discovery, the Chronicle, the Journal | **Spec** for M4–M5 (2026-09-28) |
 | [../AGENTS.md](../AGENTS.md) | Working agreement and best practices for agents and contributors | **Current** |

@@ -30,6 +30,7 @@ combat, towns, loot and the renderer work, and it replaces the roadmap table in
 | Loot v1 | Six gear slots, 36 class bases, Common–Rare rolls, Rare ability modifiers, a 20-slot bag, Embers, drops from chests, waves and elites; the character sheet | `items.js`, `loot.js`, `ui/sheet.js` |
 | Presentation | Emberlit WebGL2 deferred renderer; 56 px KayKit actors (8 atlases) with weapon anchors; weapon effects; loot beams; sub-pixel camera; fluid movement (critic pass 3) | `render/*` |
 | Tools | Actor, icon and environment bakes; motion traces; balance harness | `tools/actor-lab`, scratch harnesses |
+| Fair play | Deterministic math (`detmath.js`) across engines; the session recorder, canonical state hash and replay verifier; dev hooks limited to localhost; smoke tests prove tampering is rejected | `sim/detmath.js`, `sim/replay.js` |
 
 **Not yet built:**
 - title screen, accounts, character creation and select;
@@ -58,12 +59,12 @@ section.
   5. Character creation.
   6. The *Arrival in Thornwick* cutscene.
   7. Play.
-- **Later launches:** Title → Continue (the last hero) or Heroes (character select).
+- **Later launches:** Title → Continue (straight back in) or Party (the three hero slots).
 
 **Title screen:**
 - A live in-engine vignette behind the logo: Thornwick square at dusk, the camera drifting,
   embers rising. It uses the real renderer, so it costs no new assets.
-- The EMBERFALL logo, and buttons for Continue / Heroes / Settings / Account.
+- The EMBERFALL logo, and buttons for Continue / Party / Settings / Account.
 - The build number, small.
 
 **Intro, "The Chronicle of the Fall":**
@@ -111,12 +112,12 @@ tap.
 **Account screen:**
 - signed-in identity;
 - display name (profanity-filtered word list; unique within a suffix);
-- cloud saves per hero, with last sync time;
+- the cloud save, with last sync time;
 - sign out;
 - **delete account**, which removes all server data (a store requirement).
 
 **Cloud saves:**
-- Each hero slot syncs to `saves (user_id, hero_id)`.
+- The save syncs to `saves (user_id)`, one row: the **server-verified** state (§2.13).
 - Conflicts resolve as last-writer-wins. If both copies changed since the last sync, the
   player chooses between them, shown with level, region and playtime.
 - The save stays small: seed + diffs, under 64 KB.
@@ -135,16 +136,25 @@ and an account window (Preact).
 - A second device pulls the saves.
 - Deleting the account wipes the rows.
 
-### 2.3 Character select and creation
+### 2.3 Hero slots, character select and creation
 
-**Character select (Heroes):**
-- Up to **4 hero slots**. Each is its own save and world seed.
-- A slot card shows the portrait (from the atlas), name, class, level, region, playtime and
-  last played.
-- Actions:
-  - **Continue**;
-  - **New Hero** (in an empty slot);
-  - **Delete**, which asks you to type the hero's name to confirm.
+**Three hero slots: your main character plus two in the party.** There is one save per player
+profile, holding one main character. The party is always three: the GDD's "you plus two
+companions" (GDD §6, §6.1).
+
+| Slot | Who | Rules |
+|---|---|---|
+| **1: Main character** | Created once, at New Game | Always in the party; can't be dismissed; controlled by the stick and taps |
+| **2–3: Companions** | Hired at a tavern, or found (Brannoc, Wren…) | Chosen on the **Party screen** from everyone you've recruited. The rest wait on the **bench** at the inn and earn 50 % XP. |
+
+**Character select** is the **Party screen**: three large slot cards, each showing the
+portrait, name, class, level, HP and gear score. You get to it from Title → Party, from the
+inn, or by long-pressing a party card.
+- **Slot 1** opens that character's window: Gear / Stats / Skills / Bag / Info (§2.4).
+- **Slots 2–3:** **Swap** chooses a companion from the bench (in any town), and **Dismiss**
+  sends them back to the bench.
+- **New Game** replaces the main character after a typed-name confirmation. The old save is
+  kept as a single "previous hero" backup for 7 days.
 
 **Character creation** is one screen with a live figure preview on top and steps in a
 bottom sheet:
@@ -174,7 +184,7 @@ bottom sheet:
 **Systems:**
 - The hero comes from `makeHero({ cls, look, origin, name })`, which replaces the fixed
   knight.
-- A per-hero seed is created at creation.
+- The world seed is created at New Game.
 - Origins are content (`content/origins.json`).
 - Looks map to atlas names.
 
@@ -480,6 +490,79 @@ Everything builds on the same deterministic sim (architecture §6–§8.8). Phas
 
 ---
 
+### 2.13 Fair play: no client-side cheating of levels or gear
+
+**The principle:** the client is never trusted. Anyone can edit memory, a save file or the
+clock on their own device, and no amount of obfuscation stops that. So the game never
+*believes* the client. It **re-simulates** the client.
+
+**How verified progression works.** Levels, XP, gold and gear exist only as the result of
+running the deterministic sim:
+1. **Session start:** a session starts from the hero's last **verified** state. The server
+   issues a session token with a timestamp.
+2. **Recording:** the client records every command the player gives, keyed by sim tick. That
+   is a few KB per hour.
+3. **Upload:** at checkpoints (autosave, returning to town, going online after offline play)
+   the client uploads the *claim*: start state, command log, tick count, and the end-state
+   hash.
+4. **Replay:** the server replays the claim in Node with the same sim (`sim/replay.js`) and
+   produces the authoritative end state: every level, XP point, coin and item roll.
+5. **Store:** only that state is stored, as the hero's verified save. The client's copy is a
+   cache.
+
+**What gets rejected:**
+
+| Cheat | Why it fails |
+|---|---|
+| Editing level, XP, gold or stats in memory | The replay's end state doesn't match the claim |
+| Spawning or editing items | Items only exist if the replayed sim rolled them. Their rolls come from the seeded loot stream and the drop counter. |
+| Editing the local save | The session's start state isn't the hero's verified state |
+| Speeding up the clock ("level up faster") | The claimed ticks exceed the wall-clock time since the session token, with 5 % slack |
+| Forged commands (equipping an item you don't own, hiring outside a town, looting out of reach) | The sim validates every command and ignores invalid ones, so they change nothing |
+| Re-rolling loot by reloading | Drops come from the world seed plus a saved drop counter, so reloading gives the same item |
+| Offline idle ("expeditions") | Computed by the server's replay, not the client |
+
+**Trust tiers:**
+- **Guest / offline play** is fully playable, but its progress is *unverified*. You can only
+  cheat yourself.
+- **To enter anything shared** (leaderboards, Rift rankings, hire-a-friend, co-op, raids,
+  PvP), the hero must be **verified**: signed in, with sessions replayed.
+- **After offline play,** the sessions verify on the next connection.
+- **A failed session** is rejected, and the hero rolls back to its last verified state. The
+  client shows *"This session couldn't be verified"*. A repeat offender's hero is flagged
+  unverified.
+- **Multiplayer** is server-authoritative anyway: clients send only commands.
+
+**Shipped now (in code, with tests):**
+- `detmath.js` makes the sim bit-identical on V8 and JavaScriptCore:
+  - `sin`, `cos`, `atan2`, `exp` and `hypot` from basic arithmetic;
+  - an integer XP table;
+  - no `**`.
+- `replay.js`: `startSession` (recording), `stateHash` (canonical 64-bit hash) and
+  `verifySession` (the start-state check, log ordering, the wall-clock limit, and replay
+  with a hash compare).
+- `smoke-test.mjs` replays a real 2.5-minute battle session exactly, and rejects:
+  - edited level and XP;
+  - a forged item;
+  - edited gold;
+  - an edited save;
+  - a 10× sped-up clock.
+- Dev hooks (`?dev`: the live sim on the page, slow motion, manual clock) work only on
+  localhost, so a deployed build has no cheat console.
+- **Fixed on the way:** saving mid-battle silently failed, because runtime links made the
+  snapshot circular. The snapshot now keeps only a member's durable fields.
+
+**Still to build (M6):**
+- `net/session.js`: upload with checkpoints and resume after offline play.
+- The validator worker (Node or edge function) that stores the verified save.
+- Session tokens.
+- A rollback UX.
+- Rate limits: sessions per hour and log size.
+- Server-side expeditions.
+
+A CI job replays recorded sessions in Chromium and WebKit (via Playwright) and in Node, to
+prove cross-engine hashes stay identical.
+
 ## 3. Milestones
 
 These re-baseline GDD §15. M1 is done; M2 is partly done.
@@ -488,11 +571,11 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 |---|---|---|---|
 | **M2** ✓ part | Party and town | Done: town hub, tavern hires, loot v1, compass, effects. Moved to later milestones: the quest board (M4) and the smith and shop menus (M3/M7). | — |
 | **M2.5** | **Foundations** | JSDoc types + `tsc --checkJs`; `node:test`; ESLint; GitHub Actions CI; `content/` + JSON Schema + Ajv; IndexedDB save slots (migrating save v3 → v4); adopt Preact + htm for new windows; delete the legacy renderers; **rename to Emberfall** (resolves GDD open question 6). | CI green on every push. The old save loads into slot 1. |
-| **M3** | **Heroes** | Title screen; character select (4 slots) and creation (class, look, origin, name); attributes and stat points; the Skills tab (ranks, auto-cast, stance); death and resurrection; the temple and inn menus | Create → play → wipe → temple → resurrect works end to end. Balance harness green. |
+| **M3** | **Heroes** | Title screen; the Party screen (three slots: main + two companions, bench swap) and creation (class, look, origin, name); attributes and stat points; the Skills tab (ranks, auto-cast, stance); death and resurrection; the temple and inn menus | Create → play → wipe → temple → resurrect works end to end. Balance harness green. |
 | **M4** | **Story engine** | inkjs adapter and dialogue window; the NPC system (named, townsfolk, schedules); quest engine, journal and compass tracking; the side-quest generator; discovery and Chronicle v1; the cutscene player and the intro | The Thornwick slice: 3 named NPCs, 6 townsfolk, 5 side-quest templates live, and 3 fragments |
 | **M5** | **The Hollow Vale** (content-complete region 1) | Overland sites (Old Barrows, Wickham Keep, Sunken Chapel, Tithe Mill); Act I chapter quests; Brannoc's companion chain; the class trials at level 6; the Redhand Captain and the Standard of the Third Legion; the Vale Chronicle set and its hidden site; loot tuned to "rare"; balance for levels 1–8 | Levels 1–8 playable start to finish in about 6–8 hours |
-| **M6** | **Accounts and ship** | Supabase guest → linked accounts; cloud saves; Vite packaging; PWA; Capacitor iOS and Android builds; Sentry; a settings screen; store assets and privacy policy | TestFlight and Play internal track. Airplane-mode play works. |
-| **M7** | **Endgame loops** | Ember Rifts and leaderboards (`detmath` + validator); expeditions (idle, GDD §12); bad-luck protection; smith upgrades, salvage and reroll; Heirlooms | A day of play plus idle feels rewarding. Leaderboard entries are validated. |
+| **M6** | **Accounts and ship** | Supabase guest → linked accounts; **verified progression** (session upload, server replay validator, rollback; §2.13); cloud saves; Vite packaging; PWA; Capacitor iOS and Android builds; Sentry; a settings screen; store assets and privacy policy | TestFlight and Play internal track. Airplane-mode play works. |
+| **M7** | **Endgame loops** | Ember Rifts and leaderboards (reusing the M6 validator); expeditions (idle, GDD §12); bad-luck protection; smith upgrades, salvage and reroll; Heirlooms | A day of play plus idle feels rewarding. Leaderboard entries are validated. |
 | **M8** | **Fens and Reach** | Acts II–III; Cult, beast and fen-ghoul art; Delve, Escort and Investigate templates; Wren's chain; the Cleric unlock | Levels 8–22 |
 | **M9** | **Heights and Throne** | Act IV; the finale; the Undervaults post-game; the Healer | Campaign complete |
 | **M10** | **Multiplayer A (async)** | Hire-a-friend, async arena, leaderboards | 1,000 simulated snapshots validated |
@@ -529,7 +612,7 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 |---|---|
 | **Content volume** (dialogue, fragments, barks) outpaces engineering | Template-driven side quests; pools shared across regions with region overrides; a writers' Ink style guide; CI catches broken ids |
 | **Art** for townsfolk, beasts and bosses | Reuse KayKit with recolours and props first; commission or bake new models only for bosses; the weapon layer avoids re-baking every loadout |
-| **Cross-engine determinism** for leaderboards | `detmath` audit at M7; server-authoritative multiplayer doesn't depend on it |
+| **Cross-engine determinism** for verified progression and leaderboards | Done: `detmath.js` replaces every engine-dependent call in the sim. CI replays recorded sessions on Chromium, WebKit and Node (M6). Server-authoritative multiplayer doesn't depend on it. |
 | **Low-end phone performance** | Budgets in architecture §9; a 30 fps saver; per-region lazy atlases; Playwright perf traces in CI |
 | **Store policy** (Apple sign-in, account deletion, privacy labels) | Designed in at M6 (§2.2) |
 | **Save migrations** across many milestones | `SAVE_VERSION` bumps with tests per step; saves hold ids, not text |

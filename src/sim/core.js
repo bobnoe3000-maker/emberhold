@@ -14,6 +14,7 @@ import { starterKit } from './items.js';
 import { createLoot } from './loot.js';
 import { createBattle } from './battle.js';
 import { createBus, createCommandQueue } from './bus.js';
+import { hypot, atan2, sin, cos } from './detmath.js';
 
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
@@ -57,7 +58,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   const spawn = findSpawn(world);
   const state = {
-    t: 0, depth: 0, get scene() { return curScene; },
+    t: 0, tick: 0, depth: 0, get scene() { return curScene; },   // tick: integer tick count (replay.js keys commands by it)
     player: {
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
@@ -73,7 +74,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
-    moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = Math.hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
+    moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -112,7 +113,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; p.dest = null; }
   function arrive() { const p = state.player, then = p.then; stopWalk(); if (then) applyCommand(then); }
   const lineClear = (ax, ay, bx, by) => {                 // can the hero walk straight from a to b?
-    const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / 0.25), cz = heightAt(world, Math.floor(ax), Math.floor(ay)), r = PLAYER_RADIUS;
+    const d = hypot(bx - ax, by - ay), n = Math.ceil(d / 0.25), cz = heightAt(world, Math.floor(ax), Math.floor(ay)), r = PLAYER_RADIUS;
     for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n;
       if (!isWalkable(world, x - r, y - r, cz) || !isWalkable(world, x + r, y - r, cz) || !isWalkable(world, x - r, y + r, cz) || !isWalkable(world, x + r, y + r, cz)) return false; }
     return true;
@@ -124,15 +125,15 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!p.path || p.want || state.party[0].down) return;
     let k = 0; for (let j = Math.min(p.path.length - 1, 10); j > 0; j--) if (lineClear(p.x, p.y, p.path[j][0], p.path[j][1])) { k = j; break; }
     if (k) p.path.splice(0, k);
-    while (p.path.length > 1 && Math.hypot(p.path[0][0] - p.x, p.path[0][1] - p.y) < LOOK * 0.5) p.path.shift();   // passed it
+    while (p.path.length > 1 && hypot(p.path[0][0] - p.x, p.path[0][1] - p.y) < LOOK * 0.5) p.path.shift();   // passed it
     const [lx, ly] = p.path[p.path.length - 1];
-    let left = 0, ax = p.x, ay = p.y; for (const [wx, wy] of p.path) { left += Math.hypot(wx - ax, wy - ay); ax = wx; ay = wy; }
-    if (left < 0.12 || (p.path.length === 1 && Math.hypot(lx - p.x, ly - p.y) < 0.12)) { p.vx *= 0.3; p.vy *= 0.3; arrive(); return; }
+    let left = 0, ax = p.x, ay = p.y; for (const [wx, wy] of p.path) { left += hypot(wx - ax, wy - ay); ax = wx; ay = wy; }
+    if (left < 0.12 || (p.path.length === 1 && hypot(lx - p.x, ly - p.y) < 0.12)) { p.vx *= 0.3; p.vy *= 0.3; arrive(); return; }
     // the carrot: LOOK tiles along the remaining path
     let cx = p.path[0][0], cy = p.path[0][1], need = LOOK; ax = p.x; ay = p.y;
-    for (const [wx, wy] of p.path) { const d = Math.hypot(wx - ax, wy - ay); if (d >= need) { cx = ax + ((wx - ax) * need) / d; cy = ay + ((wy - ay) * need) / d; break; } need -= d; ax = wx; ay = wy; cx = wx; cy = wy; }
+    for (const [wx, wy] of p.path) { const d = hypot(wx - ax, wy - ay); if (d >= need) { cx = ax + ((wx - ax) * need) / d; cy = ay + ((wy - ay) * need) / d; break; } need -= d; ax = wx; ay = wy; cx = wx; cy = wy; }
     if (!lineClear(p.x, p.y, cx, cy)) { cx = p.path[0][0]; cy = p.path[0][1]; }
-    const dx = cx - p.x, dy = cy - p.y, d = Math.hypot(dx, dy) || 1;
+    const dx = cx - p.x, dy = cy - p.y, d = hypot(dx, dy) || 1;
     const sp = Math.min(PLAYER_SPEED, Math.sqrt(2 * BRAKE * 0.7 * left) + 0.6);    // brake into the goal
     p.want = { x: (dx / d) * sp, y: (dy / d) * sp };
   }
@@ -140,8 +141,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // TURN_RATE (a hard reversal brakes first), collisions slide along walls and kill that axis
   function integrate() {
     const p = state.player, w = p.want;
-    let sp = Math.hypot(p.vx || 0, p.vy || 0), hd = sp > 0.05 ? Math.atan2(p.vy, p.vx) : null;
-    const ts = w ? Math.hypot(w.x, w.y) : 0, th = ts > 0.05 ? Math.atan2(w.y, w.x) : hd;
+    let sp = hypot(p.vx || 0, p.vy || 0), hd = sp > 0.05 ? atan2(p.vy, p.vx) : null;
+    const ts = w ? hypot(w.x, w.y) : 0, th = ts > 0.05 ? atan2(w.y, w.x) : hd;
     let target = ts;
     if (th !== null) {
       if (hd === null || sp < 1) hd = th;                                   // from a standstill: set off facing the way you want
@@ -153,10 +154,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     }
     sp += Math.max(-BRAKE * TICK_DT, Math.min(ACCEL * TICK_DT, target - sp));
     if (sp < 0.05 || hd === null) { p.vx = p.vy = 0; return; }
-    p.vx = Math.cos(hd) * sp; p.vy = Math.sin(hd) * sp;
+    p.vx = cos(hd) * sp; p.vy = sin(hd) * sp;
     const ox = p.x, oy = p.y; tryMove(p, p.vx * TICK_DT, p.vy * TICK_DT);
     if (Math.abs(p.x - ox) < 1e-6) p.vx = 0; if (Math.abs(p.y - oy) < 1e-6) p.vy = 0;   // blocked on that axis
-    const moved = Math.hypot(p.x - ox, p.y - oy) / TICK_DT;
+    const moved = hypot(p.x - ox, p.y - oy) / TICK_DT;
     if (moved > 0.6) { p.moving = true; p.fx = (p.x - ox) / (moved * TICK_DT); p.fy = (p.y - oy) / (moved * TICK_DT); face(p, p.fx, p.fy); }
     if (p.path && w) { p.pathStuck = moved < 0.2 ? (p.pathStuck || 0) + 1 : 0; if (p.pathStuck > 10) stopWalk(); }   // blocked (a unit in the way): give up rather than grind
   }
@@ -210,7 +211,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
       if (state.party[0].down) return;                         // your hero has fallen: the others fight on
-      const len = Math.hypot(cmd.x, cmd.y);
+      const len = hypot(cmd.x, cmd.y);
       if (len < 0.12) return;
       if (p.path || p.resume) { stopWalk(); p.resume = null; }  // the stick takes over from a tap / compass walk
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
@@ -291,7 +292,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     const p = state.player;
     p.px = p.x; p.py = p.y;
     p.moving = false; p.want = null;
-    for (const cmd of commands.drain()) applyCommand(cmd);
+    const cmds = commands.drain();
+    if (cmds.length) bus.emit('commands', { tick: state.tick, cmds });   // the session recorder (replay.js) logs these
+    for (const cmd of cmds) applyCommand(cmd);
     followPath();
     if (p.want || p.path) p.steer = 0;
     if (!state.party[0].down) integrate(); else p.vx = p.vy = 0;
@@ -308,17 +311,22 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
-    else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
-    state.t += TICK_DT;
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
+    state.t += TICK_DT; state.tick += 1;
   }
 
+  // a party member's durable fields; runtime ones (position, velocity, cooldowns, melee-station
+  // links to enemies — which made the snapshot circular mid-battle, so autosave silently failed)
+  // are rebuilt on load by battle.ensureRuntime
+  const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down'];
+  const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;
     return {
-      seed: baseSeed, scene: curScene, depth: state.depth, t: state.t,
+      seed: baseSeed, scene: curScene, depth: state.depth, t: state.t, tick: state.tick,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
-      party: state.party.map((m) => ({ ...m })),
+      party: state.party.map(persistMember),
       bag: state.bag.map((it) => ({ ...it })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
@@ -330,7 +338,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   function restore(data) {
     stopWalk();
-    state.t = data.t ?? 0;
+    state.t = data.t ?? 0; state.tick = data.tick ?? 0;
     state.depth = data.depth ?? 0;
     curScene = data.scene ?? 'dungeon';
     world = buildWorld(state.depth);                       // rebuild the saved level

@@ -9,7 +9,7 @@ that happens.
 
 | Order | Doc | What it is |
 |---|---|---|
-| 1 | [`docs/architecture.md`](docs/architecture.md) | Layers, module map, stack decisions (A1–A10) |
+| 1 | [`docs/architecture.md`](docs/architecture.md) | Layers, module map, stack decisions (A1–A11) |
 | 2 | [`docs/development-plan.md`](docs/development-plan.md) | What we're building, and in what order |
 | 3 | [`docs/emberfall-gdd.md`](docs/emberfall-gdd.md) | The rules and numbers |
 | 3 | [`docs/emberfall-world.md`](docs/emberfall-world.md) | Canon: names, history, factions |
@@ -45,32 +45,48 @@ content validation. Add a new command here in the same change that introduces it
      stream per purpose. Never share a stream across systems: a new draw in one system must
      not shift another system's results.
    - **Iteration order:** only `Map`/`Set` insertion order and arrays.
-   - **New math:** prefer `+ − × ÷` and `sqrt`. Engine-dependent functions (`sin`, `cos`,
-     `atan2`, `exp`, `pow`, `hypot`) are acceptable for now, but note them. They move to
-     `sim/detmath.js` before replay validation ships (architecture §7).
+   - **Math:** use `sim/detmath.js` (`hypot`, `sin`, `cos`, `atan2`, `exp`), never the
+     engine-approximated `Math.sin` / `cos` / `atan2` / `exp` / `pow` / `hypot` or `**`.
+     Tables replace curves (see `XP_TABLE`). `+ − × ÷`, `Math.sqrt`, `floor`, `round`,
+     `abs`, `min` and `max` are fine. The server replays sessions on another engine, and one
+     differing bit forks the replay.
 2. **Commands in, events out.**
    - The UI and story layers never mutate sim state. They push a command (`sim.commands.push`,
      one command per call) and the sim validates it.
    - Presentation reacts to `sim.bus` events and reads state; it never writes it.
-3. **The sim owns the save shape.** Anything that must survive a reload goes through
+3. **Fair play: the client is never trusted** (architecture §10, development plan §2.13).
+   - **Progress comes only from the sim.** Every level, XP point, coin and item comes out of
+     simulated play (commands → sim rules). Never add a command or UI path that grants
+     rewards, sets stats or creates items directly. A reward is always a sim rule the server
+     can replay.
+   - **Validate every new command** in the sim: ownership, reach, class, bag room, cooldowns,
+     location. Invalid commands must do nothing.
+   - **Dev hooks** (`?dev`, globals, cheats for testing) stay localhost-only.
+   - **Keep replays exact:** `smoke-test.mjs` must still replay a recorded session to the same
+     hash and reject every tamper case.
+4. **The sim owns the save shape.** Anything that must survive a reload goes through
    `snapshot()` / `restore()`, with a `SAVE_VERSION` bump and a migration in
    `persist/save.js` if the shape changes. Old saves must load or be refused cleanly, never
    half-read.
-4. **Content is data; text is pre-written.**
+   - The snapshot holds **durable fields only**. A party member's are listed in
+     `MEMBER_KEYS` in `core.js`. Runtime links (targets, stations, velocities) made it
+     circular before.
+   - Add a new durable member field to `MEMBER_KEYS`.
+5. **Content is data; text is pre-written.**
    - Quests, NPCs, lore and loot tables live in `content/` (JSON plus schema). Dialogue lives
      in Ink.
    - **No runtime text generation of any kind.** Every line a player reads is authored,
      reviewed and versioned.
    - Names and facts come from [`docs/emberfall-world.md`](docs/emberfall-world.md): change
      canon there first.
-5. **Balance is a contract.** The smoke test gates the design targets:
+6. **Balance is a contract.** The smoke test gates the design targets:
    - a solo fighter holds a level-1 room for 10 minutes;
    - same-level rooms cost 20–30 % HP per wave;
    - a room three levels above you defeats you.
 
    If a change moves numbers, run the room-level harness (see `docs/art-critic-pass-3.md` §
    Verification) and report before/after.
-6. **Measure, don't guess.** For feel, performance or art changes, capture before and after:
+7. **Measure, don't guess.** For feel, performance or art changes, capture before and after:
    - motion traces on the manual clock;
    - burst frames;
    - contact sheets;

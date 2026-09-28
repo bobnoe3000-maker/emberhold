@@ -9,6 +9,7 @@
 // room stays reachable) and its owning `room` id.
 
 import { mulberry32, fbm } from './rng.js';
+import { hypot } from './detmath.js';
 
 // Terrain themes. `floors` is a weighted bag sampled by noise for the base
 // ground; `hazard` is a material that pools across the floor (impassable);
@@ -35,7 +36,7 @@ const key = (x, y) => x + ',' + y;
 function inRoom(shape, dx, dy, rw, rh) {
   const ax = Math.abs(dx), ay = Math.abs(dy);
   switch (shape) {
-    case 'oval':    return (dx / (rw + 0.5)) ** 2 + (dy / (rh + 0.5)) ** 2 <= 1;
+    case 'oval':    return (dx / (rw + 0.5)) * (dx / (rw + 0.5)) + (dy / (rh + 0.5)) * (dy / (rh + 0.5)) <= 1;
     case 'diamond': return ax / (rw + 0.5) + ay / (rh + 0.5) <= 1;
     case 'plus':    return ax <= Math.max(1, rw * 0.42) || ay <= Math.max(1, rh * 0.42);
     case 'ell':     return !(dx > rw * 0.1 && dy < -rh * 0.1);   // rect minus one quadrant
@@ -84,7 +85,7 @@ export function generateLevel(seed, theme) {
   for (let i = 1; i < order.length; i++) {
     // link to the nearest already-placed room (a cheap connected spanning tree)
     let best = order[0], bd = 1e9;
-    for (let j = 0; j < i; j++) { const d = Math.hypot(order[j].cx - order[i].cx, order[j].cy - order[i].cy); if (d < bd) { bd = d; best = order[j]; } }
+    for (let j = 0; j < i; j++) { const d = hypot(order[j].cx - order[i].cx, order[j].cy - order[i].cy); if (d < bd) { bd = d; best = order[j]; } }
     connect(best, order[i]);
   }
   for (let e = 0; e < 2 && rooms.length > 2; e++) connect(rooms[(rng() * rooms.length) | 0], rooms[(rng() * rooms.length) | 0]);
@@ -117,6 +118,6 @@ export function generateLevel(seed, theme) {
   // the descent gate sits in the room FARTHEST from the entrance — you must cross
   // the level to find the way down.
   let descentRoom = entrance;
-  if (entrance) { let bd = -1; for (const r of rooms) { const d = Math.hypot(r.cx - entrance.cx, r.cy - entrance.cy); if (d > bd) { bd = d; descentRoom = r; } } }
+  if (entrance) { let bd = -1; for (const r of rooms) { const d = hypot(r.cx - entrance.cx, r.cy - entrance.cy); if (d > bd) { bd = d; descentRoom = r; } } }
   return { cells, rooms, edges, theme, th, spawn, entrance, descentRoom, W, H };
 }

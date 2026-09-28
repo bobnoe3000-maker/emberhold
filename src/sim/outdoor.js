@@ -12,6 +12,7 @@
 import { mulberry32, streamSeed, fbm, hash2 } from './rng.js';
 import { FLOOR_Z } from './level.js';
 import { ENV_FOOT } from './envfoot.js';
+import { hypot } from './detmath.js';
 
 // ground codes (pixel + tile)
 export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5 };
@@ -23,7 +24,7 @@ function segDist(px, py, s) {
   const dx = s.x2 - s.x1, dy = s.y2 - s.y1, L2 = dx * dx + dy * dy || 1e-6;
   let t = ((px - s.x1) * dx + (py - s.y1) * dy) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t;
   const qx = s.x1 + dx * t, qy = s.y1 + dy * t, ex = px - qx, ey = py - qy;
-  return { d: Math.hypot(ex, ey), t, side: dx * ey - dy * ex };
+  return { d: hypot(ex, ey), t, side: dx * ey - dy * ex };
 }
 
 function buildIndex(o) {
@@ -32,7 +33,7 @@ function buildIndex(o) {
   for (const f of [...o.rivers.map((r) => ({ ...r, type: 'river' })), ...o.roads.map((r) => ({ ...r, type: 'road' }))]) {
     let acc = 0;
     for (let i = 0; i + 1 < f.pts.length; i++) {
-      const [x1, y1] = f.pts[i], [x2, y2] = f.pts[i + 1], len = Math.hypot(x2 - x1, y2 - y1);
+      const [x1, y1] = f.pts[i], [x2, y2] = f.pts[i + 1], len = hypot(x2 - x1, y2 - y1);
       o.segs.push({ x1, y1, x2, y2, len, s0: acc, w: f.w, type: f.type, surface: f.surface || 'dirt' });
       acc += len;
     }
@@ -76,7 +77,7 @@ export function groundAt(o, gx, gy) {
   }
   if (bestRank >= 3) return out;
   for (const p of o.plazas) {                        // cobbled squares: soft superellipse
-    const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, e = Math.pow(Math.abs(u), 3) + Math.pow(Math.abs(v), 3);
+    const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
     const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 29) - 0.5) * 0.25;
     if (e < 1 + wob && bestRank < 2) { bestRank = 2; out.g = G.COBBLE; out.t = e; out.lat = 0; out.hw = 0; }
   }
@@ -251,7 +252,7 @@ function buildTown(seed, region) {
   // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
   const TOWN_SIGHTS = [[118, 60], [129, 63], [140, 60], [124, 49], [136, 49], [146, 102], [104, 76]];
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
-    const dh = Math.hypot(x - (C[0] - 16), y - (C[1] - 16));
+    const dh = hypot(x - (C[0] - 16), y - (C[1] - 16));
     if (dh < 34) return null;
     const behind = x + y < C[0] + C[1] - 30;
     if (behind) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
@@ -317,8 +318,8 @@ function buildOverland(seed) {
   });
   scatter(o, rng, -80, -80, 350, 350, 10, (x, y) => {
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
-    if (Math.hypot(x - town[0] + 16, y - town[1]) < 40 || Math.hypot(x - cross[0], y - cross[1]) < 18) return null;
-    for (const c of [keep, barrows, mine, camp, [60, 112]]) if (Math.hypot(x - c[0], y - c[1]) < 24) return null;
+    if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return null;
+    for (const c of [keep, barrows, mine, camp, [60, 112]]) if (hypot(x - c[0], y - c[1]) < 24) return null;
     // sightlines to every landmark: the clear wedge runs deeper for taller things (a grove's
     // crowns reach ~30 tiles up-screen, a lone tree ~15), so nothing in front rises over the site
     const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]];

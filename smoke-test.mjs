@@ -7,6 +7,7 @@ import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
 import { statsFor } from './src/sim/party.js';
 import { makeItem, SLOTS } from './src/sim/items.js';
+import { startSession, verifySession, stateHash } from './src/sim/replay.js';
 
 const SEED = 20260807;
 const sim = createSim(SEED);
@@ -203,7 +204,27 @@ const saveOk = gr.state.party[0].gear.weapon.uid === 't1' && gr.state.bag.length
 const gearOk = kitOk && dropsOk && rulesOk && saveOk;
 console.log('gear + loot (kit, seeded drops, 2H/class rules, salvage, save):', gearOk, kitOk, dropsOk, rulesOk, saveOk, `| ${d1.got.length} chest drops, e.g. ${d1.got.slice(0, 3).join(', ')}`);
 
-const ok = gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+// Verified progression (anti-cheat, development plan §2.13): a recorded session replays headless
+// to the identical state; edited memory, spawned items, edited saves and sped-up clocks are rejected.
+const vs = createSim(SEED, undefined, { scene: 'dungeon' });
+{ const L = vs.world.level, r = L.rooms.find((q) => vs.world.roomLevels.get(q.id) === 1), c = [...L.cells].find(([k, v]) => v.kind === 'floor' && v.room === r.id && isWalkable(vs.world, +k.split(',')[0] + 0.5, +k.split(',')[1] + 0.5));
+  const [x, y] = c[0].split(',').map(Number); vs.state.player.x = vs.state.player.px = x + 0.5; vs.state.player.y = vs.state.player.py = y + 0.5; }
+const vses = startSession(vs, { scene: 'dungeon' }), verifiedStart = vses.startHash;
+for (let t = 0; t < 20 * 150; t++) { if (t % 400 === 100) vs.commands.push({ type: 'move', x: 0.7, y: -0.4 }); vs.tick(); }
+const vclaim = vses.claim(), vh = vs.state.party[0];
+const honest = verifySession(vclaim, { verified: verifiedStart, elapsedMs: vclaim.ticks * 50 });
+const tamper = (edit) => { const t = createSim(SEED, undefined, { scene: 'dungeon' }), ss = startSession(t, { scene: 'dungeon' }); for (let i = 0; i < 300; i++) { if (i === 150) edit(t); t.tick(); } return verifySession(ss.claim(), { verified: ss.startHash, elapsedMs: 1e9 }); };
+const tLevel = tamper((t) => { t.state.party[0].level = 30; t.state.party[0].xp = 99999; });
+const tItem = tamper((t) => t.state.bag.push(makeItem('greatsword', 30, 'rare', { uid: 'forged' })));
+const tGold = tamper((t) => { t.state.counters.gold += 5000; });
+const es = createSim(SEED, undefined, { scene: 'dungeon' }), esHash = stateHash(es.snapshot()), bad = es.snapshot(); bad.party[0].level = 25; es.restore(bad);
+const tSave = verifySession(startSession(es).claim(), { verified: esHash, elapsedMs: 1e9 });
+const tSpeed = verifySession(vclaim, { verified: verifiedStart, elapsedMs: vclaim.ticks * 5 });
+const cheatOk = honest.ok && !tLevel.ok && !tItem.ok && !tGold.ok && !tSave.ok && !tSpeed.ok;
+console.log('verified progression (honest replays; level / item / gold / save / speed tampering rejected):', cheatOk, honest.ok, tLevel.ok, tItem.ok, tGold.ok, tSave.ok, tSpeed.ok,
+  `| ${vclaim.ticks} ticks, L${vh.level} ${vh.xp}xp ${vs.state.counters.gold}g, hash ${honest.hash}`);
+
+const ok = cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

@@ -8,6 +8,7 @@
 import { hash2, fbm, streamSeed, mulberry32, STREAM } from './rng.js';
 import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
+import { hypot } from './detmath.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -66,7 +67,7 @@ export function createWorld(seed, theme, depth = 0) {
       for (const s of [-1, 1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, 'brazier')) break;
     }
     // wall-side cells: open floor within 2 tiles of the room's edge, away from doorways
-    const nearDoor = (x, y) => openings.some((o) => Math.hypot(x - o.x, y - o.y) < 8);
+    const nearDoor = (x, y) => openings.some((o) => hypot(x - o.x, y - o.y) < 8);
     const edge = cells.filter(([x, y, c]) => {
       if (c.corridor || nearDoor(x, y)) return false;
       let open = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (!isFloor(x + dx, y + dy)) open++;
@@ -74,7 +75,7 @@ export function createWorld(seed, theme, depth = 0) {
     });
     const taken = [];
     const pickEdge = (minGap) => {
-      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if (taken.every(([a, b]) => Math.hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
+      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if (taken.every(([a, b]) => hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
       return null;
     };
     // room identity: every fighting room gets a layout theme, furniture kept to the thirds so

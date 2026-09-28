@@ -278,7 +278,12 @@ Both slot in with the same stat block and ability format. No system changes are 
   models, so a loot upgrade changes the silhouette.
 
 ### 6.1 Heroes: creation, origins and slots
-- **Slots:** up to **4 hero slots**. Each is its own save and world seed.
+- **Three hero slots:** your **main character** plus **two companions**. There is one save
+  (one main character) per player profile.
+  - The main character is created once, at New Game.
+  - The two companion slots are filled from everyone you've hired or found, and swapped with
+    the bench at the inn.
+- **Attribute points:** 3 per level for every member (§4.1).
 - **Creation:**
   - **class:** fighter, rogue or mage;
   - **look:** a base model per class plus accent palettes;
@@ -467,6 +472,14 @@ Shops never sell above Common, so the best gear is always found.
 **Offline-first.** The whole game runs locally with local saves (seed + diffs, as today). No
 server is needed to play.
 
+**Fair play (v1.2).** Progress that counts anywhere shared is **verified**:
+- The server replays each play session's command log in the same deterministic sim, and only
+  that result is stored.
+- Edited memory, edited saves, forged items and sped-up clocks don't survive the replay.
+- Offline play is unverified until it syncs.
+
+See [development-plan.md §2.13](./development-plan.md).
+
 **Expeditions (idle).** Leave the party, or a benched trio, farming any room it has held for
 10+ waves, for up to eight hours. The party always leaves on a wipe risk: if the sim says it
 would fall, it walks out instead and the expedition ends early. On return, the *same* battle sim fast-forwards the runs headless and pays out XP, gold,
@@ -505,8 +518,8 @@ reproduce any battle for validation.
 | **Party** | Three figures with live 3D previews, gear slots, stats and abilities; drag to reorder formation. |
 | **Overland** | A scrolling fogged map with the party token; tap a node to travel. |
 | **Chronicle** | Lore fragments by region, and set completion. |
-| **Title** (v1.2) | A live dusk vignette of Thornwick; Continue / Heroes / Settings / Account. |
-| **Heroes and Creator** (v1.2) | Four hero slots. Creation is a live preview plus steps: class, look, origin, name. |
+| **Title** (v1.2) | A live dusk vignette of Thornwick; Continue / Party / Settings / Account. |
+| **Party and Creator** (v1.2) | Three hero slots (main plus two companions), with a bench swap. Creation is a live preview plus steps: class, look, origin, name. |
 | **Character window** (v1.2) | Tap a party card. Tabs: Gear · Stats (spend points) · Skills (ranks, auto-cast, stance) · Bag · Info. |
 | **Dialogue** (v1.2) | Bottom sheet: portrait, lines, up to 4 choices, quest offer cards. |
 | **Journal** (v1.2) | Active · Available · Completed · Chronicle · Discoveries; Track pins the compass. |
