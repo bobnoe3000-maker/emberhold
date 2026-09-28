@@ -7,7 +7,7 @@
 // Scale: 1 model unit = UNIT_TILES game tiles.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { makeBuilding, makeTree } from './buildkit.js';
+import { makeBuilding, makeTree, makeNature } from './buildkit.js';
 const R = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
 R.setPixelRatio(1); document.body.appendChild(R.domElement);
 const loader = new GLTFLoader(), load = (u) => new Promise((res, rej) => loader.load(u, res, undefined, rej));
@@ -49,7 +49,7 @@ const uvMat = new THREE.ShaderMaterial({
 
 // bake one model → { w, h, ax, ay, alb, nrm, key (dataURLs), emi, foot } ; ax/ay = pixel of the model origin
 window.bakeEnv = async (name, o = {}) => {
-  const root = o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(`./models/env/${name}.gltf`)).scene;
+  const root = o.nature ? makeNature(o.nature, o.seed || 1, o.variant || 0) : o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(`./models/env/${name}.gltf`)).scene;
   if (o.rotY) root.rotation.y = o.rotY * Math.PI / 180;
   if (o.scale) root.scale.setScalar(o.scale);
   root.updateMatrixWorld(true);

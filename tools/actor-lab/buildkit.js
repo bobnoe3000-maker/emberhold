@@ -412,6 +412,91 @@ const TREES = {
 };
 export function makeTree(kind, seed = 1) { const g = new THREE.Group(); TREES[kind](g, rng(seed * 101 + kind.length)); return g; }
 
+// ── nature & civil works (our own, replacing the stock bridge / rocks / mountains) ──
+// Rocks and mountains are faceted low-poly masses with per-face colour: moss or grass on
+// up-facing faces, lighter rock on crags, scree toward the base, snow on high peaks.
+const C3 = (h) => new THREE.Color(h);
+function faceted(geo, r, jit, colorFn) {
+  const g = geo.index ? geo.toNonIndexed() : geo, p = g.attributes.position;
+  // jitter shared positions consistently (hash the rounded coordinate) so faces stay closed
+  const key = (x, y, z) => `${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)}`, moved = new Map();
+  for (let i = 0; i < p.count; i++) {
+    const k = key(p.getX(i), p.getY(i), p.getZ(i));
+    if (!moved.has(k)) moved.set(k, [(r() - 0.5) * jit, (r() - 0.5) * jit * 0.7, (r() - 0.5) * jit]);
+    const d = moved.get(k); p.setXYZ(i, p.getX(i) + d[0], p.getY(i) + d[1], p.getZ(i) + d[2]);
+  }
+  g.computeVertexNormals();
+  const col = new Float32Array(p.count * 3), n = g.attributes.normal;
+  for (let f = 0; f < p.count; f += 3) {
+    const ny = (n.getY(f) + n.getY(f + 1) + n.getY(f + 2)) / 3, y = (p.getY(f) + p.getY(f + 1) + p.getY(f + 2)) / 3;
+    const c = colorFn(ny, y, r());
+    for (let v = 0; v < 3; v++) { col[(f + v) * 3] = c.r; col[(f + v) * 3 + 1] = c.g; col[(f + v) * 3 + 2] = c.b; }
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
+}
+const vmat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true });
+const ROCK = { base: C3('#66655f'), dark: C3('#484741'), light: C3('#84827a'), moss: C3('#4a5236'), grass: C3('#46502f'), snow: C3('#d4d6da'), scree: C3('#58544c') };
+const tint = (c, k) => c.clone().multiplyScalar(k);
+
+function rockMesh(r, size, flatten = 0.6) {
+  const geo = faceted(new THREE.DodecahedronGeometry(size, 0), r, size * 0.35, (ny, y, q) =>
+    ny > 0.72 && q < 0.7 ? tint(ROCK.moss, 0.9 + q * 0.2) : ny > 0.3 ? tint(ROCK.light, 0.9 + q * 0.15) : tint(ROCK.base, 0.85 + q * 0.2));
+  const m = new THREE.Mesh(geo, vmat()); m.scale.y = flatten; m.position.y = size * flatten * 0.55; return m;
+}
+function mountainMesh(r, { h = 2.0, w = 0.9, peaks = 3, snow = true, grass = false }) {
+  const g = new THREE.Group();
+  const colorFn = (ny, y, q) => {
+    if (snow && y > h * 0.58 && ny > 0.05) return tint(ROCK.snow, 0.9 + q * 0.12);
+    if (snow && y > h * 0.5 && ny > 0.45) return tint(ROCK.snow, 0.8 + q * 0.1);
+    if (grass && y < h * 0.34 && ny > 0.4) return tint(ROCK.grass, 0.85 + q * 0.25);
+    if (y < h * 0.1) return tint(ROCK.scree, 0.85 + q * 0.2);
+    return ny > 0.35 ? tint(ROCK.light, 0.85 + q * 0.2) : tint(ROCK.base, 0.78 + q * 0.25);
+  };
+  const crag = (x, z, rad, ht, seg = 7) => {
+    const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0);
+    const m = new THREE.Mesh(faceted(geo, r, rad * 0.32, colorFn), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m);
+  };
+  // a low broad skirt, then a ring of shoulder crags around one main peak
+  crag(0, 0, w, h * 0.34, 10);
+  crag((r() - 0.5) * 0.1, (r() - 0.5) * 0.1, w * 0.62, h, 8);
+  for (let i = 0; i < peaks; i++) { const a = (i / peaks) * 6.28 + r(), d = w * (0.38 + r() * 0.2); crag(Math.cos(a) * d, Math.sin(a) * d, w * (0.42 + r() * 0.12), h * (0.5 + r() * 0.22)); }
+  for (let i = 0; i < 5; i++) { const a = r() * 6.28, rr = w * (0.8 + r() * 0.25); const k = rockMesh(r, 0.12 + r() * 0.1, 0.7); k.position.x = Math.cos(a) * rr; k.position.z = Math.sin(a) * rr; g.add(k); }
+  if (grass) for (let i = 0; i < 10; i++) { const a = r() * 6.28, rr = w * (0.62 + r() * 0.35); pine(g, r, Math.cos(a) * rr, Math.sin(a) * rr, 0.75 + r() * 0.4); }
+  return g;
+}
+// Stone bridge: one humped arch, parapets, cutwaters, spanning 1.9 units along z.
+function bridgeMesh(r) {
+  const g = new THREE.Group(), L = 0.95, W = 0.62, stone = mat(tex('ashlar', '#6a655c', 11)), deck = mat(tex('field', '#5e584f', 12));
+  stone.map = stone.map.clone(); stone.map.repeat.set(2, 2); stone.map.needsUpdate = true;
+  const prof = new THREE.Shape();                                           // side profile in (z, y), arch cut out
+  const CTRL = 0.5, top = (t) => 0.07 + 2 * t * (1 - t) * (CTRL - 0.07);   // deck hump (crown ≈ 0.285)
+  prof.moveTo(-L, 0); prof.lineTo(-L, 0.07); prof.quadraticCurveTo(0, CTRL, L, 0.07); prof.lineTo(L, 0); prof.lineTo(0.52, 0);
+  prof.absellipse(0, 0, 0.52, 0.17, 0, Math.PI, false); prof.lineTo(-L, 0);          // a flattened arch under the crown
+  const body = new THREE.Mesh(new THREE.ExtrudeGeometry(prof, { depth: W, bevelEnabled: false, curveSegments: 12 }), stone);
+  body.rotation.y = -Math.PI / 2; body.position.x = W / 2; g.add(body);
+  const para = new THREE.Shape();                                            // parapet: a band following the hump
+  const N = 16; for (let i = 0; i <= N; i++) { const z = -L + (2 * L * i) / N, y = top(i / N) - 0.01; if (i === 0) para.moveTo(z, y); else para.lineTo(z, y); }
+  for (let i = N; i >= 0; i--) para.lineTo(-L + (2 * L * i) / N, top(i / N) + 0.08);
+  for (const sx of [-1, 1]) { const pm = new THREE.Mesh(new THREE.ExtrudeGeometry(para, { depth: 0.06, bevelEnabled: false }), stone); pm.rotation.y = -Math.PI / 2; pm.position.x = sx * (W / 2 - 0.03) + 0.03; g.add(pm); }
+  for (const sz of [-1, 1]) for (const sx of [-1, 1]) box(0.08, 0.2, 0.08, stone, sx * (W / 2 + 0.01), 0, sz * (L - 0.02), g);   // end posts
+  return g;
+}
+const NATURE = {
+  bridge: (r) => bridgeMesh(r),
+  rock: (r, v) => { const g = new THREE.Group(), n = [1, 1, 2, 3, 2][v % 5], big = [0.2, 0.14, 0.24, 0.18, 0.32][v % 5];
+    for (let i = 0; i < n; i++) { const m = rockMesh(r, big * (i ? 0.55 + r() * 0.3 : 1), 0.55 + r() * 0.25); m.position.x = i ? (r() - 0.5) * big * 2.2 : 0; m.position.z = i ? (r() - 0.5) * big * 2.2 : 0; m.rotation.y = r() * 6; g.add(m); }
+    return g; },
+  mountain: (r, v) => mountainMesh(r, [
+    { h: 1.5, w: 0.95, peaks: 3, snow: false, grass: true },
+    { h: 1.9, w: 0.95, peaks: 3, snow: true, grass: true },
+    { h: 1.4, w: 1.0, peaks: 4, snow: false, grass: true },
+    { h: 1.8, w: 0.92, peaks: 3, snow: true, grass: false },
+    { h: 2.1, w: 0.95, peaks: 4, snow: true, grass: false },
+  ][v % 5]),
+};
+export function makeNature(kind, seed = 1, variant = 0) { return NATURE[kind](rng(seed * 131 + kind.length), variant); }
+
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

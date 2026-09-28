@@ -64,3 +64,17 @@ dungeon's first level has a way back up.
 - Atlases: `assets/env/env.*` (shared: trees, rocks, props, bridge) plus
   `assets/env/town-<region>.*` (that region's buildings). Only the current region's atlas loads.
   Tones are in `STYLES.{vale,fens,reach,heights}` in `tools/actor-lab/buildkit.js`.
+
+## Bridge, rocks and mountains (ours)
+
+![Stone bridges, rocks and snow-capped massifs in the Hollow Vale and Thornwick](./img/town/nature-kit.png)
+
+The KayKit bridge, rocks and mountains are replaced by `makeNature()` in
+`tools/actor-lab/buildkit.js`:
+- A humped stone bridge with a flattened arch and parapets. It has the same span and deck
+  width, so the roads and the walkable deck are unchanged.
+- Five faceted rock clusters, mossy on top.
+- Five mountain massifs: a skirt, shoulder crags and a main peak, with scree at the base,
+  snow above ~58 % of the height, and grass and pines on the lower slopes of three of them.
+
+Sprite ids are unchanged (`bridge_0/90`, `rock_A…E`, `mountain_*`), so no layout changed.
