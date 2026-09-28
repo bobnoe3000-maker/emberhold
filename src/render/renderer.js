@@ -9,7 +9,7 @@
 //
 // Parity note (Emberlit TDD §12.1): the shaders + lighting math are the reference
 // demo's, unchanged; only the bake is driven from our infinite world.js. The old
-// Canvas2D path is parked in renderer-canvas.js.
+// (The old Canvas2D and flat renderers were retired at M2.5; see git history.)
 
 import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';

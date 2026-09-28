@@ -31,6 +31,7 @@ combat, towns, loot and the renderer work, and it replaces the roadmap table in
 | Presentation | Emberlit WebGL2 deferred renderer; 56 px KayKit actors (8 atlases) with weapon anchors; weapon effects; loot beams; sub-pixel camera; fluid movement (critic pass 3) | `render/*` |
 | Tools | Actor, icon and environment bakes; motion traces; balance harness | `tools/actor-lab`, scratch harnesses |
 | Fair play | Deterministic math (`detmath.js`) across engines; the session recorder, canonical state hash and replay verifier; dev hooks limited to localhost; smoke tests prove tampering is rejected | `sim/detmath.js`, `sim/replay.js` |
+| Foundations (M2.5) | Emberfall name; three game slots (IndexedDB, save v4); Preact windows; types, lint, unit, content and browser tests; CI | `persist/`, `ui/slots.js`, `test/`, `.github/workflows/ci.yml` |
 
 **Not yet built:**
 - title screen, accounts, character creation and select;
@@ -59,7 +60,9 @@ section.
   5. Character creation.
   6. The *Arrival in Thornwick* cutscene.
   7. Play.
-- **Later launches:** Title → Continue (straight back in) or Party (the three hero slots).
+- **Later launches:** Title → Continue (the last-played game slot) or **Game slots** (up to
+  three games).
+- **Party:** the three hero slots of the current game.
 
 **Title screen:**
 - A live in-engine vignette behind the logo: Thornwick square at dusk, the camera drifting,
@@ -117,7 +120,8 @@ tap.
 - **delete account**, which removes all server data (a store requirement).
 
 **Cloud saves:**
-- The save syncs to `saves (user_id)`, one row: the **server-verified** state (§2.13).
+- Each game slot syncs to `saves (user_id, slot)`, one row per slot: the
+  **server-verified** state (§2.13).
 - Conflicts resolve as last-writer-wins. If both copies changed since the last sync, the
   player chooses between them, shown with level, region and playtime.
 - The save stays small: seed + diffs, under 64 KB.
@@ -138,9 +142,23 @@ and an account window (Preact).
 
 ### 2.3 Hero slots, character select and creation
 
-**Three hero slots: your main character plus two in the party.** There is one save per player
-profile, holding one main character. The party is always three: the GDD's "you plus two
-companions" (GDD §6, §6.1).
+**Up to three game slots**, each a whole game:
+- its own world seed;
+- its own **main character**;
+- its own party and progress.
+
+Within a game, the party has **three hero slots: your main character plus two companions**,
+the GDD's "you plus two companions" (GDD §6, §6.1).
+
+**The game slots window** (**shipped at M2.5**: ☰ in the HUD, `src/ui/slots.js`) lists
+three cards. Each shows the main character's name, class, level, party size, location,
+playtime and last played.
+- **Play** switches to that game.
+- **New game** fills an empty slot. Until M3 it starts the default knight; from M3 it opens
+  character creation.
+- **Delete** asks twice.
+
+The Title screen takes this window over in M3.
 
 | Slot | Who | Rules |
 |---|---|---|
@@ -153,8 +171,7 @@ inn, or by long-pressing a party card.
 - **Slot 1** opens that character's window: Gear / Stats / Skills / Bag / Info (§2.4).
 - **Slots 2–3:** **Swap** chooses a companion from the bench (in any town), and **Dismiss**
   sends them back to the bench.
-- **New Game** replaces the main character after a typed-name confirmation. The old save is
-  kept as a single "previous hero" backup for 7 days.
+- **A new main character** needs a free game slot, or deleting one (§2.3 above).
 
 **Character creation** is one screen with a live figure preview on top and steps in a
 bottom sheet:
@@ -570,7 +587,7 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 | # | Milestone | Scope | Exit test |
 |---|---|---|---|
 | **M2** ✓ part | Party and town | Done: town hub, tavern hires, loot v1, compass, effects. Moved to later milestones: the quest board (M4) and the smith and shop menus (M3/M7). | — |
-| **M2.5** | **Foundations** | JSDoc types + `tsc --checkJs`; `node:test`; ESLint; GitHub Actions CI; `content/` + JSON Schema + Ajv; IndexedDB save slots (migrating save v3 → v4); adopt Preact + htm for new windows; delete the legacy renderers; **rename to Emberfall** (resolves GDD open question 6). | CI green on every push. The old save loads into slot 1. |
+| **M2.5** ✓ | **Foundations** (done 2026-09-28) | Shipped: **renamed to Emberfall**; **three game slots** in IndexedDB (save v3 → v4, the old save becomes slot 1) with the Game slots window, the first Preact + htm window; JSDoc types with `tsc`; ESLint, which enforces the sim determinism rules; `node:test` (12 tests); `content/` with JSON Schema and Ajv (origins); browser tests (replay parity Chromium/WebKit vs Node; the slots flow); GitHub Actions CI; legacy renderers deleted. | Met: every check green locally; CI runs the same, plus WebKit. |
 | **M3** | **Heroes** | Title screen; the Party screen (three slots: main + two companions, bench swap) and creation (class, look, origin, name); attributes and stat points; the Skills tab (ranks, auto-cast, stance); death and resurrection; the temple and inn menus | Create → play → wipe → temple → resurrect works end to end. Balance harness green. |
 | **M4** | **Story engine** | inkjs adapter and dialogue window; the NPC system (named, townsfolk, schedules); quest engine, journal and compass tracking; the side-quest generator; discovery and Chronicle v1; the cutscene player and the intro | The Thornwick slice: 3 named NPCs, 6 townsfolk, 5 side-quest templates live, and 3 fragments |
 | **M5** | **The Hollow Vale** (content-complete region 1) | Overland sites (Old Barrows, Wickham Keep, Sunken Chapel, Tithe Mill); Act I chapter quests; Brannoc's companion chain; the class trials at level 6; the Redhand Captain and the Standard of the Third Legion; the Vale Chronicle set and its hidden site; loot tuned to "rare"; balance for levels 1–8 | Levels 1–8 playable start to finish in about 6–8 hours |

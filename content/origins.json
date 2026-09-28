@@ -1,0 +1,20 @@
+{
+  "origins": [
+    { "id": "thornwick_born", "name": "Thornwick-born", "faction": "maudry_fenn",
+      "background": "Grew up above a shop on the square. Maudry Fenn knew your mother.",
+      "edge": { "kind": "tavernHirelings", "value": 1, "text": "One extra hireling on the tavern roster" },
+      "dialogue": "Warm town greetings" },
+    { "id": "redhand_deserter", "name": "Redhand deserter", "faction": "redhand_company",
+      "background": "Walked away from the Company with a sword and a grudge.",
+      "edge": { "kind": "atk", "value": 1, "text": "+1 ATK at level 1" },
+      "dialogue": "Bandits may parley" },
+    { "id": "grey_sisters_ward", "name": "Ward of the Grey Sisters", "faction": "grey_sisters",
+      "background": "Raised among the archives at Reedholm.",
+      "edge": { "kind": "loreXp", "value": 0.2, "text": "Lore fragments grant +20 % XP" },
+      "dialogue": "Sister Ilse's early trust" },
+    { "id": "deepdelver_fostered", "name": "Deepdelver-fostered", "faction": "deepdelvers",
+      "background": "A human child raised by a Deepdelver clan in the Reach.",
+      "edge": { "kind": "smithDiscount", "value": 0.1, "text": "Smith upgrades are 10 % cheaper" },
+      "dialogue": "Dwarf-folk banter" }
+  ]
+}

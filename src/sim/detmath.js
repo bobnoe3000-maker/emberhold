@@ -1,3 +1,4 @@
+// @ts-check
 // detmath.js — deterministic math for the sim (architecture §7).
 //
 // JS engines are free to approximate Math.sin / cos / atan2 / exp / pow / hypot (and the **

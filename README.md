@@ -46,9 +46,12 @@ Useful URLs:
 ## Test
 
 ```bash
-node smoke-test.mjs          # sim: determinism, saves, battles, balance gates, gear, travel → SMOKE_OK
-node render-smoke-test.mjs   # renderer pieces + determinism → RENDER_SMOKE_OK
+npm ci                 # dev tooling only (the game itself has no build step)
+npm run check          # types, lint, content schemas, unit tests, smoke tests
+npm run test:browser   # replay parity across browser engines, game-slots flow
 ```
+
+CI runs the same on every push (`.github/workflows/ci.yml`).
 
 ## Deploy
 
@@ -61,9 +64,10 @@ milestone M6 ([docs/development-plan.md](docs/development-plan.md)).
 - **What a save holds:** the world seed plus what changed, via the sim's `snapshot()` /
   `restore()`. This covers the party, gear and bag, counters, the dungeon overlay and
   discovery.
-- **Where:** saves are versioned (`SAVE_VERSION`, with migrations) and autosave to
-  localStorage every 15 s and on tab hide. Code: `src/persist/save.js`.
-- **Next:** IndexedDB, and **verified** cloud saves. The server replays each play session
+- **Where:** up to **three game slots**, each its own world, main character and party, in
+  IndexedDB (☰ in the HUD). They autosave every 15 s and on tab hide, with a synchronous
+  backup. Saves are versioned (v4, with migrations). Code: `src/persist/save.js`.
+- **Next:** **verified** cloud saves. The server replays each play session
   (`src/sim/replay.js`), so edited memory, saves or clocks can't advance levels or create
   gear.
 

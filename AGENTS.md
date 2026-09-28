@@ -20,19 +20,23 @@ that happens.
 ## Commands
 
 ```bash
-python3 -m http.server 8080               # run: open http://localhost:8080 (ES modules need a server)
-#   ?scene=town|overland|dungeon  ?region=vale|fens|reach|heights  ?dev (exposes globalThis.__sim)
+npm ci                                    # once: dev tooling only (the game itself has no build)
+npm run serve                             # open http://localhost:8080 (ES modules need a server)
+#   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
+#   ?region=vale|fens|reach|heights  ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms))
-node smoke-test.mjs                       # sim: determinism, battles, balance gates, gear, travel — must print SMOKE_OK
-node render-smoke-test.mjs                # renderer pieces + determinism — must print RENDER_SMOKE_OK
+npm run check                             # everything CI runs except browsers:
+#   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
+#   content (JSON Schema) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game-slots flow (WebKit: CI)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
 node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors); --anchors refreshes anchors only
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks
 ```
 
-Planned (architecture §8): `npx tsc --noEmit -p .`, `npx eslint .`, `node --test`, and
-content validation. Add a new command here in the same change that introduces it.
+CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here
+in the same change that introduces it.
 
 ## Golden rules
 

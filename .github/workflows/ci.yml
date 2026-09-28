@@ -1,0 +1,33 @@
+# CI — every push and PR (docs/architecture.md A10, development plan M2.5).
+# The game ships as static files with no build; this only checks it.
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Types (JSDoc, tsc --noEmit)
+        run: npm run typecheck
+      - name: Lint (incl. sim determinism rules)
+        run: npm run lint
+      - name: Content (JSON Schema)
+        run: npm run content
+      - name: Unit tests (node:test)
+        run: npm test
+      - name: Smoke tests (sim + renderer; balance, replay, tamper)
+        run: npm run smoke
+      - name: Browsers for parity + flow tests
+        run: npx playwright install --with-deps chromium webkit
+      - name: Browser tests (replay parity Chromium/WebKit vs Node; game slots)
+        run: npm run test:browser

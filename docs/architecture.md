@@ -106,10 +106,12 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 | Area | Files | Notes |
 |---|---|---|
 | Sim | `core.js` (tick, movement, commands, saves), `battle.js` (waves, AI, formation, damage), `world.js` / `level.js` / `outdoor.js`, `party.js`, `items.js`, `loot.js`, `travel.js`, `path.js`, `rng.js`, `bus.js`, **`detmath.js`** (engine-independent math), **`replay.js`** (session recorder, state hash, replay verifier) | Headless, 20 Hz, bit-identical across engines |
-| Render | `renderer.js` (Emberlit: CPU-baked G-buffer, WebGL2 lighting and post, sub-pixel camera), `anim.js`, `fx.js`, `gsprite.js`, `iso.js`, `outdoorpaint.js`, `tilestyles.js`, `palette.js` | `renderer-canvas.js` and `renderer-flat.js` are legacy and not imported. Delete them at M2.5. |
-| UI | `hud.js`, `party.js` (cards), `sheet.js` (character sheet), `compass.js`, `townmenu.js`, `input.js` | Vanilla DOM and template strings |
-| Persist | `persist/save.js` | localStorage, `SAVE_VERSION` 3, migrations |
-| Assetforge | `assetforge/*` | Procedural art from the pre-KayKit era; mostly legacy |
+| Render | `renderer.js` (Emberlit: CPU-baked G-buffer, WebGL2 lighting and post, sub-pixel camera), `anim.js`, `fx.js`, `gsprite.js`, `iso.js`, `outdoorpaint.js`, `tilestyles.js`, `palette.js` | The legacy Canvas2D and flat renderers were deleted at M2.5 |
+| UI | `hud.js`, `party.js` (cards), `sheet.js` (character sheet), `compass.js`, `townmenu.js`, `input.js`; **`slots.js`** (Game slots, Preact + htm) | Vanilla DOM and template strings; Preact for new windows |
+| Persist | `persist/save.js` (three game slots, save v4, migrations), `persist/idb.js` | IndexedDB, with a localStorage backup on page hide |
+| Vendor | `src/vendor/` (Preact, htm) | Pinned ESM builds, mapped in `index.html` |
+| Assetforge | `assetforge/doll.js`, `palette.js` | The paper-doll fallback hero; the rest was retired with the legacy renderers at M2.5 |
+| Dev tooling | `package.json` (dev only), `tsconfig.json`, `eslint.config.js`, `test/`, `tools/content/`, `.github/workflows/ci.yml` | Types, lint (with the sim determinism rules), `node:test`, content schemas, browser tests, CI |
 | Tools | `tools/actor-lab/` | three.js 0.169 + playwright-core bakes: actor atlases with weapon anchors, item icons, environment atlas |
 
 **Planned additions** (the milestones are in [development-plan.md](./development-plan.md)):
@@ -161,24 +163,32 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 
 ## 5. Data and persistence
 
-- **The save** (one per player profile: one main character, whose party is three hero slots
-  — the main character plus two companions):
+- **Game slots** (shipped at M2.5, `persist/save.js`, save v4): up to **three**. Each slot is a
+  whole game: its own world seed, main character, party (three hero slots: the main
+  character plus two companions) and progress.
 
   ```
-  { version, savedAt, meta: { name, cls, level, region, playtime, portrait, verifiedHash },
-    data: sim.snapshot(), story: inkState, settings }
+  { version: 4, savedAt, meta: { name, cls, level, party, scene, depth, playtime, gold },
+    data: sim.snapshot() }          // M4+ adds story: inkState; M6 adds verifiedHash
   ```
+
+  The active slot index lives in localStorage. `?slot=N` picks a slot. Switching slots saves,
+  sets the active slot and reloads the page for a clean sim and renderer.
 
   The sim snapshot is small by design: the seed plus diffs plus party, bag, quest state and
   counters. Every schema change bumps `SAVE_VERSION` with a migration step
   (`persist/save.js`).
 - **Storage:**
-  - IndexedDB, through `idb-keyval`, holds the save, the pending session logs and a
-    7-day previous-hero backup, with localStorage as a fallback.
-  - The current localStorage key migrates in.
+  - IndexedDB (`persist/idb.js`, a tiny in-house wrapper) holds the slots, with
+    localStorage as a fallback.
+  - On page hide, a **synchronous localStorage backup** of the active slot is also written,
+    because a phone can kill the page before an async write lands. Reads take the newer of
+    the two.
+  - The v3 single save (`emberhold.save`) migrates into slot 1 on first boot.
+  - `?scene=` preview links never write a slot.
 - **Cloud (M6):**
-  - A `saves` table keyed by `user_id` holds the latest **verified** snapshot, its hash and
-    `updated_at`. Only the validator writes it (§10).
+  - A `saves` table keyed by `(user_id, slot)` holds each slot's latest **verified**
+    snapshot, its hash and `updated_at`. Only the validator writes it (§10).
   - There are no sync conflicts to resolve: a device uploads sessions, not saves, and the
     server's replay is the save.
 - **Content** is loaded with `fetch` at boot and hashed. Saves store content **ids**, never
@@ -281,7 +291,7 @@ Node.**
 | Option | Verdict |
 |---|---|
 | Vanilla template strings + `innerHTML` (today) | Fine for small cards, but full re-renders detach elements under the finger. This already broke taps on the party cards (fixed with a pointer-index workaround). It won't scale to inventory drag, the quest log and the creator. |
-| **Preact + htm + @preact/signals (chosen)** | About 4 KB, and `htm` gives JSX-like templates with **no build step**. Keyed diffing keeps elements stable under the finger, and signals bind sim events to views cleanly. It loads as ES modules. |
+| **Preact + htm (chosen; vendored in `src/vendor/`, pinned, via the import map)** | About 4 KB, and `htm` gives JSX-like templates with **no build step**. Keyed diffing keeps elements stable under the finger. It loads as ES modules. `@preact/signals` joins when a window needs live sim bindings. The first window, Game slots, shipped at M2.5. |
 | lit | Web components with a good template engine. Heavier mental model for app-style state; weaker component ecosystem for lists and drag. |
 | Svelte / Solid | Excellent, but they need a compile step. Conflicts with §8.1. |
 | React | Heavier than needed, and JSX needs a build. |
@@ -321,8 +331,9 @@ Node.**
 
 ### 8.6 Persistence
 
-- **IndexedDB via `idb-keyval` (about 600 B)** for save slots, with localStorage as a
-  fallback (chosen).
+- **IndexedDB through a tiny in-house wrapper (`persist/idb.js`, the idb-keyval pattern in
+  about 50 lines)** for the three game slots, with localStorage as a fallback (chosen).
+  - Writing it ourselves avoids a vendored dependency for three functions.
 - Dexie is richer than we need.
 - The Capacitor Preferences and Filesystem plugins apply only on native. IndexedDB works
   inside the Capacitor WebView too, and one code path wins.
@@ -415,14 +426,14 @@ commands in the same deterministic sim and stores only that result (development 
 |---|---|---|
 | A1 | 2026-09-28 | JS ES modules + JSDoc + `tsc --checkJs`; Vite only as the M6 packager |
 | A2 | 2026-09-28 | Keep Emberlit (custom WebGL2); three.js stays tools-only |
-| A3 | 2026-09-28 | Preact + htm + signals for windows from M3 |
+| A3 | 2026-09-28 | Preact 10.29.8 + htm 3.1.1, vendored and import-mapped; first window: Game slots (M2.5); signals when needed |
 | A4 | 2026-09-28 | Ink + inkjs for all dialogue; no runtime text generation |
 | A5 | 2026-09-28 | JSON content + JSON Schema (Ajv in CI) |
-| A6 | 2026-09-28 | IndexedDB (idb-keyval) saves |
+| A6 | 2026-09-28 | Three game slots in IndexedDB (in-house `persist/idb.js`), with a localStorage backup on page hide; save v4 |
 | A7 | 2026-09-28 | Supabase for accounts, cloud saves and leaderboards; guest-first |
 | A8 | 2026-09-28 | Colyseus for realtime rooms (server-authoritative); async snapshots in Supabase |
 | A9 | 2026-09-28 | Capacitor for native; PWA on the web |
 | A10 | 2026-09-28 | `node:test` + Playwright; ESLint without Prettier |
-| A11 | 2026-09-28 | Verified progression: the server replays session command logs (`sim/replay.js`) and stores only the replayed state; `detmath.js` for cross-engine determinism; dev hooks localhost-only; one save per profile (main character + two companion slots) |
+| A11 | 2026-09-28 | Verified progression: the server replays session command logs (`sim/replay.js`) and stores only the replayed state; `detmath.js` for cross-engine determinism; dev hooks localhost-only; server saves keyed per game slot |
 
 Changing any of these needs a new row here, plus a note in the development plan.

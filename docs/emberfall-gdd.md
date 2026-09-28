@@ -278,8 +278,10 @@ Both slot in with the same stat block and ability format. No system changes are 
   models, so a loot upgrade changes the silhouette.
 
 ### 6.1 Heroes: creation, origins and slots
-- **Three hero slots:** your **main character** plus **two companions**. There is one save
-  (one main character) per player profile.
+- **Game slots:** up to **3 game slots**. Each is its own game: its own world seed, main
+  character, party and save.
+- **Hero slots:** within a game, the party has **three**: your **main character** plus **two
+  companions**.
   - The main character is created once, at New Game.
   - The two companion slots are filled from everyone you've hired or found, and swapped with
     the bench at the inn.
@@ -519,7 +521,7 @@ reproduce any battle for validation.
 | **Overland** | A scrolling fogged map with the party token; tap a node to travel. |
 | **Chronicle** | Lore fragments by region, and set completion. |
 | **Title** (v1.2) | A live dusk vignette of Thornwick; Continue / Party / Settings / Account. |
-| **Party and Creator** (v1.2) | Three hero slots (main plus two companions), with a bench swap. Creation is a live preview plus steps: class, look, origin, name. |
+| **Game slots, Party and Creator** (v1.2) | Up to three games. Each game has three hero slots (main plus two companions), with a bench swap. Creation is a live preview plus steps: class, look, origin, name. |
 | **Character window** (v1.2) | Tap a party card. Tabs: Gear · Stats (spend points) · Skills (ranks, auto-cast, stance) · Bag · Info. |
 | **Dialogue** (v1.2) | Bottom sheet: portrait, lines, up to 4 choices, quest offer cards. |
 | **Journal** (v1.2) | Active · Available · Completed · Chronicle · Discoveries; Track pins the compass. |

@@ -53,7 +53,8 @@ shipped on `main`:
 - compass travel and tap-to-move;
 - loot v1 and the character sheet;
 - weapon effects;
-- fluid movement (critic pass 3).
+- fluid movement (critic pass 3);
+- **M2.5 Foundations** (done): the Emberfall rename, three game slots, types, lint, tests, CI.
 
-**Next: M2.5 Foundations** (types, CI, content schema, save slots, Preact windows, the
-Emberfall rename), then **M3 Heroes**.
+**Next: M3 Heroes**: the title screen, character creation with origins, the Party screen,
+attribute points, skills, and death and resurrection.

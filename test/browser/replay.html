@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>replay parity</title>
+<script type="module">
+  import { scriptedSession } from '../fixtures/session.mjs';
+  try { window.__result = scriptedSession(); } catch (e) { window.__result = { error: String(e && e.stack || e) }; }
+</script>

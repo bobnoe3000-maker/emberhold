@@ -10,10 +10,12 @@ import { createCompass } from './ui/compass.js';
 import { createGearSheet } from './ui/sheet.js';
 import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
-import { loadInto, createAutosave } from './persist/save.js';
+import { SLOTS, activeSlot, setActiveSlot, readSlot, writeSlot, migrateLegacy, createAutosave } from './persist/save.js';
+import { createSlotsWindow } from './ui/slots.js';
 import { screenDirToWorld } from './render/iso.js';
 
-const WORLD_SEED = 20260807;
+const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
+const params = new URLSearchParams(location.search);
 // Theme picks the level's terrain (dread · desert · poison · ember · lava · chasm).
 // Defaults to a seed-derived theme; ?theme= overrides for previewing a biome.
 const THEME = new URLSearchParams(location.search).get('theme') || undefined;
@@ -23,7 +25,16 @@ const canvas = document.getElementById('game');
 const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
-const sim = createSim(WORLD_SEED, THEME, { scene: SCENE, region: REGION });
+// Game slots (GDD §6.1): three games, each its own seed, main character, party and progress.
+// ?slot=N picks one (and makes it active). An explicit ?scene= link (review / preview) starts
+// fresh there and never writes a slot — before slots it silently overwrote the real save.
+const PREVIEW = params.has('scene');
+await migrateLegacy();                                            // the v3 single save → slot 1
+const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot') || 1)) : activeSlot();
+if (params.has('slot')) setActiveSlot(SLOT);
+const saved = PREVIEW ? null : await readSlot(SLOT);
+const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
+const sim = createSim(SEED, THEME, { scene: SCENE, region: REGION });
 // Dev hooks (?dev: the live sim on globalThis, slow motion, manual clock) exist only on a local
 // server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
 // *possible*, only easy: progression is trusted only once the server replays it — replay.js.)
@@ -38,14 +49,14 @@ createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // co
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;
 
-// Restore a prior session for this world (player, counters, harvested resources).
-// Must run before the first render so restored mods are reflected in chunk bakes.
-// an explicit ?scene= link (review / preview) starts fresh there instead of resuming a save
-if (!new URLSearchParams(location.search).has('scene')) loadInto(sim);
-createAutosave(sim);
+// Restore the slot's game (party, counters, the dungeon overlay, discovery). Must run before
+// the first render so restored mods are reflected in chunk bakes.
+if (saved) sim.restore(saved.data);
+if (!PREVIEW) createAutosave(sim, SLOT);
+createSlotsWindow({ active: SLOT, saveNow: () => (PREVIEW ? Promise.resolve(true) : writeSlot(SLOT, sim)) });
 
 // Hero: deterministic recipe from the world seed's recipe stream.
-const heroRng = mulberry32(streamSeed(WORLD_SEED, STREAM.RECIPE));
+const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));
 const hero = rollRecipe(heroRng);
 hero.tool = null;                 // hands free at spawn; tools come from crafting (phase 1)
 renderer.setHero(hero);

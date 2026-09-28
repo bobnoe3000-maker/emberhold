@@ -1,6 +1,13 @@
-# Emberhold — zero-build static deploy.
+# Emberfall (repo: emberhold) — zero-build static deploy.
 [build]
   publish = "."
+  # The game has no build step. The root package.json is dev tooling only (tests, lint, types);
+  # Netlify installs it anyway, so drop node_modules before the static publish.
+  command = "rm -rf node_modules"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
 
 [[headers]]
   for = "/*"

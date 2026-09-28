@@ -124,9 +124,6 @@ window.bakeEnv = async (name, o = {}) => {
       foot: [box.min.x * UNIT_TILES, box.min.z * UNIT_TILES, box.max.x * UNIT_TILES, box.max.z * UNIT_TILES].map((v) => +v.toFixed(2)),
       top: +(box.max.y * UNIT_TILES).toFixed(2) };
   }
-  if (false) return { w: W, h: H, ax, ay, emi: emiCount, A, N, K,
-    foot: [box.min.x * UNIT_TILES, box.min.z * UNIT_TILES, box.max.x * UNIT_TILES, box.max.z * UNIT_TILES].map((v) => +v.toFixed(2)),
-    top: +(box.max.y * UNIT_TILES).toFixed(2) };
   const url = (img) => { tx.putImageData(img, 0, 0); return tmp.toDataURL('image/png'); };
   return { name, w: W, h: H, ax, ay, emi: emiCount,
     foot: [box.min.x * UNIT_TILES, box.min.z * UNIT_TILES, box.max.x * UNIT_TILES, box.max.z * UNIT_TILES].map((v) => +v.toFixed(2)),
