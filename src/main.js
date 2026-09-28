@@ -41,14 +41,15 @@ const hero = rollRecipe(heroRng);
 hero.tool = null;                 // hands free at spawn; tools come from crafting (phase 1)
 renderer.setHero(hero);
 
-// tap → harvest command
+// tap: a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
+// shrine / stairs / growth when it's what you tapped)
 input.onTap((sx, sy) => {
   const sv = renderer.serviceAt(sx, sy);                 // a town's shop / tavern / inn / temple → its menu
   if (sv) { townMenu.open(sv); return; }
   const foe = renderer.enemyAt(sx, sy);                  // tap an enemy: the party focuses it
   if (foe) { sim.commands.push({ type: 'focus', id: foe.id }); return; }
   const { tx, ty } = renderer.screenToTile(sx, sy, 1);
-  sim.commands.push({ type: 'harvest', tx, ty });
+  sim.commands.push({ type: 'tap', tx, ty });
 });
 
 // ---- loop ----

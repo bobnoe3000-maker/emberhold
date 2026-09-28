@@ -153,7 +153,20 @@ const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rl
 console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));
 console.log('solo fighter holds a room 10 min:', holdOk, holds.map((h) => `${h.waves} waves L${h.level}`).join(', '));
 
-const ok = holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+// Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
+const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;
+const twRoom = tw.world.level.rooms.find((q) => tw.world.roomLevels.get(q.id) === 1);
+tw.commands.push({ type: 'tap', tx: twRoom.cx, ty: twRoom.cy });
+for (let t = 0; t < 20 * 30 && (t === 0 || twp.path); t++) tw.tick();
+const walked = !twp.path && Math.hypot(twp.x - twRoom.cx - 0.5, twp.y - twRoom.cy - 0.5) < 0.6;
+let twChest = null; for (const [k, v] of tw.world.props) if (v === 'chest') { twChest = k.split(',').map(Number); break; }
+let twLoot = false; tw.bus.on('looted', () => (twLoot = true));
+tw.commands.push({ type: 'tap', tx: twChest[0], ty: twChest[1] });
+for (let t = 0; t < 20 * 60 && !twLoot; t++) tw.tick();
+const tapOk = walked && twLoot;
+console.log('tap to move (walk a path; walk up to a chest and loot it):', walked, twLoot);
+
+const ok = tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

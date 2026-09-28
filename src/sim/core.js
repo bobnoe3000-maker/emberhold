@@ -5,7 +5,8 @@
 // (harder). Everything the world can't re-derive from (seed, depth) lives in the
 // snapshot: player, counters, the mods/HP overlay, and the discovered-room fog.
 
-import { createWorld, isWalkable, hitResource, heightAt, propAt, CONSUMABLE_PROP } from './world.js';
+import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP } from './world.js';
+import { findPath } from './path.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
 import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
 import { createBattle } from './battle.js';
@@ -72,6 +73,42 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (probe(p.x, p.y + dy)) p.y += dy;
   }
 
+  // ── tap to move (GDD §3.1): walk a path to a tapped spot; tap a chest / shrine / stairs /
+  // growth out of reach and the hero walks up to it and uses it. The stick cancels it.
+  const standable = (x, y, fx, fy) => {
+    const cz = heightAt(world, fx, fy), cx = x + 0.5, cy = y + 0.5, r = PLAYER_RADIUS * 0.9;
+    return isWalkable(world, cx, cy, cz) && isWalkable(world, cx - r, cy - r, cz) && isWalkable(world, cx + r, cy - r, cz) && isWalkable(world, cx - r, cy + r, cz) && isWalkable(world, cx + r, cy + r, cz);
+  };
+  function walkTo(tx, ty, then = null) {
+    const p = state.player, target = standable(tx, ty, tx, ty);
+    const path = findPath(p.x, p.y, tx, ty, standable, { near: target && !then ? 0 : then ? 1 : 1 });
+    if (!path) { bus.emit('noPath', { tx, ty }); return; }
+    p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0;
+    if (!p.path.length) arrive();
+  }
+  function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; }
+  function arrive() { const p = state.player, then = p.then; stopWalk(); if (then) applyCommand(then); }
+  const lineClear = (ax, ay, bx, by) => {                 // can the hero walk straight from a to b?
+    const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / 0.25), cz = heightAt(world, Math.floor(ax), Math.floor(ay)), r = PLAYER_RADIUS;
+    for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n;
+      if (!isWalkable(world, x - r, y - r, cz) || !isWalkable(world, x + r, y - r, cz) || !isWalkable(world, x - r, y + r, cz) || !isWalkable(world, x + r, y + r, cz)) return false; }
+    return true;
+  };
+  function followPath() {
+    const p = state.player;
+    if (!p.path || p.moving || state.party[0].down) return;
+    // string-pull: head for the furthest of the next few waypoints still in a straight line
+    let k = 0; for (let j = Math.min(p.path.length - 1, 10); j > 0; j--) if (lineClear(p.x, p.y, p.path[j][0], p.path[j][1])) { k = j; break; }
+    if (k) p.path.splice(0, k);
+    const [wx, wy] = p.path[0], dx = wx - p.x, dy = wy - p.y, d = Math.hypot(dx, dy);
+    if (d < 0.12) { p.path.shift(); if (!p.path.length) arrive(); return; }
+    const step = Math.min(d, PLAYER_SPEED * TICK_DT), ox = p.x, oy = p.y;
+    tryMove(p, (dx / d) * step, (dy / d) * step);
+    p.moving = true; p.fx = dx / d; p.fy = dy / d; p.steer = 0; face(p, dx, dy);
+    p.pathStuck = Math.hypot(p.x - ox, p.y - oy) < 0.01 ? (p.pathStuck || 0) + 1 : 0;
+    if (p.pathStuck > 10) stopWalk();                            // blocked (a unit in the way): give up rather than grind
+  }
+
   function face(p, dx, dy) {
     if (Math.abs(dx) > Math.abs(dy)) { p.dir = 'side'; p.mirror = dx < 0; }
     else p.dir = dy < 0 ? 'up' : 'down';
@@ -80,6 +117,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // Regenerate the world one level deeper and drop the hero at the new entrance.
   // Inventory (counters) carries; the per-level overlay + fog reset with the world.
   function descend() {
+    stopWalk();
     state.depth += 1;
     world = buildWorld(state.depth);
     const s = findSpawn(world);
@@ -91,6 +129,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   // Travel to another scene and arrive at a named spot (or its default spawn).
   function travel(to, arrive) {
+    stopWalk();
     curScene = to; state.depth = 0;
     world = buildWorld(0);
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
@@ -119,10 +158,19 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (state.party[0].down) { p.moving = false; return; }    // your hero has fallen: the others fight on
       const len = Math.hypot(cmd.x, cmd.y);
       if (len < 0.12) { p.moving = false; return; }
+      if (p.path) stopWalk();                                  // the stick takes over from a tap-walk
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
       p.moving = true; p.fx = nx; p.fy = ny; p.steer = 0;
       face(p, cmd.x, cmd.y);
+      return;
+    }
+    if (cmd.type === 'tap') {                              // tap on the ground: use what's there if in reach, else walk to it
+      if (state.party[0].down) return;
+      const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y, inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
+      const thing = propAt(world, cmd.tx, cmd.ty) || resourceAt(world, cmd.tx, cmd.ty);
+      if (thing && inReach) { stopWalk(); applyCommand({ type: 'harvest', tx: cmd.tx, ty: cmd.ty }); return; }
+      walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
     }
     if (cmd.type === 'harvest') {                          // tap-to-interact
@@ -173,6 +221,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.px = p.x; p.py = p.y;
     p.moving = false;
     for (const cmd of commands.drain()) applyCommand(cmd);
+    followPath();
     battle.step(TICK_DT);                                   // may walk the hero (autobattle while you're not steering)
     if (p.moving) {
       p.frameAcc += TICK_DT;
@@ -198,6 +247,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   }
 
   function restore(data) {
+    stopWalk();
     state.t = data.t ?? 0;
     state.depth = data.depth ?? 0;
     curScene = data.scene ?? 'dungeon';

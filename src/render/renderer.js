@@ -835,6 +835,7 @@ export function createRenderer(canvas, sim, input) {
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
     if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }   // no minimap on the town's home screen
+    drawGoal(ox, oy, now);
     drawBattle(ox, oy, ix, iy, pz, now);
     drawBanner(now);
     const j = input.joystick();
@@ -970,6 +971,22 @@ export function createRenderer(canvas, sim, input) {
     octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(banner.text, vw / 2 + 1.5 * k, y + 1.5 * k);
     octx.fillStyle = `rgba(240,200,130,${a})`; octx.fillText(banner.text, vw / 2, y);
     if (banner.sub) { octx.font = `${Math.round(12 * k)}px Georgia, serif`; octx.fillStyle = `rgba(200,190,176,${a})`; octx.fillText(banner.sub, vw / 2, y + 22 * k); }
+  }
+  // Tap-to-move destination: a small gold iso ring that pulses in, with a faint dot trail
+  // along the remaining path; gone the moment the hero arrives or the stick takes over.
+  let goalT0 = 0, lastGoal = null;
+  function drawGoal(ox, oy, now) {
+    const p = sim.state.player, g = p.goal;
+    if (!g || !p.path) { lastGoal = null; return; }
+    if (g !== lastGoal) { lastGoal = g; goalT0 = now; }
+    const k = vw / window.innerWidth, t = Math.min(1, (now - goalT0) / 220), pulse = 1 + 0.08 * Math.sin(now / 160);
+    const at = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), P = project(x, y, z); return [(ox + P.sx) * S, (oy + P.sy) * S]; };
+    octx.fillStyle = 'rgba(240,200,120,0.35)';
+    for (const [x, y] of p.path.slice(0, -1)) { const [sx, sy] = at(x, y); octx.beginPath(); octx.arc(sx, sy, 1.6 * k, 0, Math.PI * 2); octx.fill(); }
+    const [sx, sy] = at(g.x, g.y), rx = 11 * S * (1.6 - 0.6 * t) * pulse, ry = rx / 2;
+    octx.lineWidth = Math.max(1.5, 2 * k);
+    octx.strokeStyle = `rgba(20,12,6,${0.55 * t})`; octx.beginPath(); octx.ellipse(sx, sy + k, rx, ry, 0, 0, Math.PI * 2); octx.stroke();
+    octx.strokeStyle = `rgba(240,196,110,${0.9 * t})`; octx.beginPath(); octx.ellipse(sx, sy, rx, ry, 0, 0, Math.PI * 2); octx.stroke();
   }
   function drawMinimap(ix, iy) {
     const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;

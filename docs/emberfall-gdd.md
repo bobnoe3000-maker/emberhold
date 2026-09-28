@@ -423,6 +423,9 @@ Emberfall rename.
 - **Abilities:** each class has one auto-cast ability: Cleave, Backstab and Firebolt.
 - **Movement:** units path around obstacles with a flow field over the room.
 - **Focus:** tapping an enemy sets a focus target.
+- **Tap to move** (§3.1): tapping the ground walks the hero there along an A* path (the
+  route shown as a gold ring and trail). Tapping a chest, shrine, stairs or growth out of
+  reach walks up to it and uses it. The stick cancels the walk at once.
 - **Leaving and defeat:** enemies are leashed to their room, so walking out ends the fight.
   A total wipe costs 25 % of your gold and sends you back to town.
 - **Regen** grows with the pool (base rate × max ÷ level-1 max), so a lull restores the same
