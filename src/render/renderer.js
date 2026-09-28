@@ -31,7 +31,7 @@ function dir8(sdx, sdy) {
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
 
 const MARGIN = 64;                 // native-px slack before a re-bake
-const VIEW_TILES = 20;             // tiles across the screen (was ~16; zoomed out 20%)
+const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
