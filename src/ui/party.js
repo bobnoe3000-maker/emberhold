@@ -11,6 +11,8 @@ const CSS = `
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; color: #d8d2c6; pointer-events: none; }
 #party .card { background: rgba(14,12,20,0.94); border: 1px solid #2c2838; border-radius: 3px; padding: 6px 7px 7px; min-width: 0; }
 #party .card.main { border-color: #a07a3c; box-shadow: inset 0 0 0 1px rgba(160,122,60,0.25); }
+#party .card.down { opacity: .55; filter: grayscale(.8); }
+#party .card.down .hp span { color: #ff8a7a; }
 #party .card.empty { border: 1px dashed #3a3448; background: rgba(14,12,20,0.6); display: flex; align-items: center; justify-content: center;
   text-align: center; font-size: 9.5px; color: #6f6880; letter-spacing: .5px; line-height: 1.35; }
 #party .top { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
@@ -52,10 +54,11 @@ export function createPartyPanel(sim) {
   const card = (m) => {
     if (!m) return `<div class="card empty">empty slot<br>hire at a<br>town tavern</div>`;
     const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level), actor = m.actor || c.actor;
-    return `<div class="card${m.main ? ' main' : ''}">
+    const hp = Math.max(0, Math.round(m.hp));
+    return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}">
       <div class="top"><div class="pf"><canvas width="44" height="52" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${m.name}</div><div class="cl">${c.abbr}</div></div></div>
-      <div class="hp"><i style="width:${Math.round((100 * m.hp) / s.maxHp)}%"></i><span>${m.hp}/${s.maxHp}</span></div>
+      <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
         <span>CRT</span><b>${s.crit}%</b><span>DDG</span><b>${s.dodge}%</b></div>
       <div class="xp">LV ${m.level}<div><i style="width:${Math.round((100 * m.xp) / need)}%"></i></div></div></div>`;
@@ -66,6 +69,9 @@ export function createPartyPanel(sim) {
     for (const cv of el.querySelectorAll('canvas[data-actor]')) { const src = portrait(cv.dataset.actor); const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0); }
   }
   sim.bus.on('partyChanged', draw);
+  // live: HP / XP / level move in battle — redraw a few times a second when anything changed
+  let sig = '';
+  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}`).join(','); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
   return { el, height: () => el.getBoundingClientRect().height };
 }

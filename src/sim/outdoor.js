@@ -91,7 +91,7 @@ function makeWorld(seed, kind, W, H, PAD) {
     kind, theme: kind, seed, depth: 0, W, H, PAD, GW, GH,
     rivers: [], roads: [], plazas: [], fields: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
     blocked: new Uint8Array(GW * GH), occ: new Uint8Array(GW * GH), tmat: new Uint8Array(GW * GH),
-    props: new Map(), mods: new Map(), hp: new Map(), discovered: new Set(), enemies: [],
+    props: new Map(), mods: new Map(), hp: new Map(), discovered: new Set(), enemies: [], projectiles: [],
     level: { rooms: [], edges: [], cells: new Map(), th: { name: kind, wall: 'basalt', floors: ['soil'], hazard: 'water' } },
     ss: streamSeed(seed, 131), hs: streamSeed(seed, 7919), cs: streamSeed(seed, 577),
   };
@@ -298,10 +298,6 @@ function buildOverland(seed) {
   });
   forestRing(o, rng, 6);
 
-  // the dead stir near the Barrows and the Keep
-  for (const [x, y] of [[barrows[0] + 14, barrows[1] + 8], [barrows[0] - 6, barrows[1] + 14], [barrows[0] + 18, barrows[1] - 10], [keep[0] - 10, keep[1] + 36], [keep[0] + 12, keep[1] + 34]]) {
-    const i = gi(o, x, y); if (i >= 0 && !o.blocked[i]) o.enemies.push({ x: x + 0.5, y: y + 0.5, kind: 'skeleton' });
-  }
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
   o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon' });

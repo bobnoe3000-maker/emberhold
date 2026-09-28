@@ -16,11 +16,13 @@ export function createHud(sim) {
   };
   setDepth(sim.state.depth);
 
-  sim.bus.on('countersChanged', (c) => { wood.textContent = c.wood; stone.textContent = c.stone; });
+  const gold = document.getElementById('hudGold');
+  sim.bus.on('countersChanged', (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; });
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
   sim.bus.on('looted', ({ kind }) => show(kind === 'chest' ? 'chest opened' : 'a blessing'));
   sim.bus.on('levelChanged', ({ depth: d, theme }) => { setDepth(d); if (sim.world.kind === 'dungeon') show('descended · ' + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
+  sim.bus.on('defeat', () => show('defeated'));
 
   function show(msg) {
     toast.textContent = msg;

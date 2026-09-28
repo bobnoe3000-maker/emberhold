@@ -250,6 +250,7 @@ export function createRenderer(canvas, sim, input) {
     return { meta, cells };
   }
   loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; }).catch(() => {});
+  SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
 
   // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
   // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
@@ -342,18 +343,23 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
+  // bolts: tiny emissive sprites (firebolt ember, soul-bolt violet, crossbow quarrel steel)
+  const bolts = {};
+  function boltSprite(kind) {
+    if (bolts[kind]) return bolts[kind];
+    const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.9)) continue;
+      const j = y * w + x; sp.mask[j] = 1; sp.alb.set(col, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < 1.8 ? glow : 0;
+    }
+    return (bolts[kind] = sp);
+  }
   // companions (hired party members) — atlases load on first use
   const partyAtlases = {};
   const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
 
-  // Companions follow the hero along a breadcrumb trail of the hero's past positions
-  // (one crumb per ~0.3 tiles walked); companion i stands SPACING crumbs back.
-  const trail = [], SPACING = 8, fol = [];
-  function trailPush(x, y) {
-    const t = trail[0];
-    if (!t || Math.hypot(t.x - x, t.y - y) > 0.3) { trail.unshift({ x, y }); if (trail.length > SPACING * 3 + 2) trail.pop(); }
-  }
-  function trailAt(k, x, y) { return trail[Math.min(k, trail.length - 1)] || { x, y }; }
+  const fol = [];                                     // smoothed companion draw positions
 
   // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
   // from tilestyles.js, and ?tiles=classic restores the original per-pixel-noise look.
@@ -388,7 +394,8 @@ export function createRenderer(canvas, sim, input) {
   // Stamp a G-sprite (albedo/normal/emissive) into a target buffer at a foot point.
   // footKey = ground x+y under the foot; test = depth-test against DEP (actors): pixels
   // behind nearer geometry draw as a dim x-ray silhouette instead of vanishing.
-  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false) {
+  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
+    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0;
     const x0 = (footX | 0) - sp.ax, y0 = (footY | 0) - sp.ay;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= H) continue;
@@ -404,9 +411,13 @@ export function createRenderer(canvas, sim, input) {
           DEP[di] = dep;
         }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
+        if (flash) { ALB[i] += (250 - ALB[i]) * flash; ALB[i + 1] += (236 - ALB[i + 1]) * flash; ALB[i + 2] += (220 - ALB[i + 2]) * flash; }
+        if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
         NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
-        const e = sp.emi[j];
-        if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; } else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
+        const e = fade > 0.5 ? 0 : sp.emi[j];
+        if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
+        else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
+        else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
         EMI[i + 3] = 255;
       }
     }
@@ -639,7 +650,7 @@ export function createRenderer(canvas, sim, input) {
   let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
-  sim.bus.on('levelChanged', () => { tileCache.clear(); job = null; trail.length = 0; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
@@ -682,43 +693,56 @@ export function createRenderer(canvas, sim, input) {
 
     // stamp actors (skeletons + hero) into the window G-buffer, depth-sorted by
     // (x+y) so nearer figures overdraw farther ones.
-    const draws = [];
+    const draws = [], party = sim.state.party, H = party[0];
+    // lunge toward the target for a beat after swinging (act: 0.18 s)
+    const lunge = (u, sxp, syp) => { const a = u.act || 0; if (a <= 0 || u.fx === undefined) return [sxp, syp]; const k = 3.2 * (a / 0.18), d = Math.hypot(u.fx - u.fy, (u.fx + u.fy) / 2) || 1; return [sxp + ((u.fx - u.fy) / d) * k, syp + (((u.fx + u.fy) / 2) / d) * k]; };
+    const lookOf = (u) => ({ flash: u.flash > 0 ? 0.75 : 0, fade: u.down ? 0.7 : 0 });
     if (heroAtlas) {
       const vdx = p.x - p.px, vdy = p.y - p.py;
       if (p.moving && Math.hypot(vdx, vdy) > 1e-4) heroDir = dir8(vdx - vdy, vdx + vdy);
+      else if (!p.moving && H.act > 0 && H.fx !== undefined) heroDir = dir8(H.fx - H.fy, H.fx + H.fy);
       const clip = p.moving ? heroAtlas.meta.clips.walk : heroAtlas.meta.clips.idle;
-      const fr = clip.start + (Math.floor((now / 1000) * clip.fps) % clip.len);
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
+      const fr = clip.start + (H.down ? 0 : Math.floor((now / 1000) * clip.fps) % clip.len);
+      const [fx, fy] = lunge(H, ox + P.sx, oy + P.sy);
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx, fy, h: pz * ZH, k: ix + iy, look: lookOf(H) });
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
-    // companions: trail positions behind the hero, facing where they walk
-    trailPush(ix, iy);
-    sim.state.party.slice(1).forEach((m, i) => {
-      const atl = partyAtlas(m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage' })[m.cls]); if (!atl) return;
-      const q = trailAt((i + 1) * SPACING, ix, iy), f = fol[i] || (fol[i] = { x: q.x, y: q.y, dir: 2, moving: false });
-      const dx = q.x - f.x, dy = q.y - f.y, mv = Math.hypot(dx, dy) > 0.002;
-      if (mv) f.dir = dir8(dx - dy, dx + dy);
-      f.x = q.x; f.y = q.y; f.moving = mv || (f.moving && p.moving);
+    // companions: their sim positions (they follow you, or fight on their own)
+    party.slice(1).forEach((m, i) => {
+      const atl = partyAtlas(m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage' })[m.cls]); if (!atl || m.x === undefined) return;
+      const f = fol[i] || (fol[i] = { x: m.x, y: m.y, dir: 2 });
+      f.x += (m.x - f.x) * 0.5; f.y += (m.y - f.y) * 0.5;                            // smooth the 20 Hz steps
+      if (m.fx !== undefined && (m.moving || m.act > 0)) f.dir = dir8(m.fx - m.fy, m.fx + m.fy);
       const cz = heightAt(sim.world, Math.floor(f.x), Math.floor(f.y)), cp = project(f.x, f.y, cz);
-      const clip = f.moving ? atl.meta.clips.walk : atl.meta.clips.idle, fr = clip.start + (Math.floor((now / 1000) * clip.fps + i * 3) % clip.len);
-      draws.push({ d: f.x + f.y, sp: atl.cells[f.dir][fr], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: f.x + f.y });
+      const clip = m.moving ? atl.meta.clips.walk : atl.meta.clips.idle, fr = clip.start + (m.down ? 0 : Math.floor((now / 1000) * clip.fps + i * 3) % clip.len);
+      const [fx, fy] = lunge(m, ox + cp.sx, oy + cp.sy);
+      draws.push({ d: f.x + f.y, sp: atl.cells[f.dir][fr], fx, fy, h: cz * ZH, k: f.x + f.y, look: lookOf(m) });
     });
+    // the Ashbound: one atlas per archetype; spawning ones flicker in, the dead sink and fade
+    const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
     for (const e of sim.world.enemies || []) {
-      const skelAtlas = skelAtlases[(hash2(Math.floor(e.x), Math.floor(e.y), 77) * SKELETONS.length) | 0];
+      const skelAtlas = skelAtlases[SK[e.kind] ?? 1];
       if (!skelAtlas) continue;
+      if (e.spawn > 0 && Math.floor(now / 70) % 2) continue;
       const ez = heightAt(sim.world, Math.floor(e.x), Math.floor(e.y));
-      const ep = project(e.x, e.y, ez), ex = ox + ep.sx, ey = oy + ep.sy;
-      if (ex < -40 || ex > nvw + 40 || ey < -40 || ey > nvh + 40) continue;      // offscreen
-      const fdx = p.x - e.x, fdy = p.y - e.y;                                     // face the hero
-      const ed = dir8(fdx - fdy, fdx + fdy);
-      const clip = skelAtlas.meta.clips.idle;
-      const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.x * 7) % clip.len);
-      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey, h: ez * ZH, k: e.x + e.y });
+      const ep = project(e.x, e.y, ez); let ex = ox + ep.sx, ey = oy + ep.sy;
+      if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
+      const ed = e.fx !== undefined ? dir8(e.fx - e.fy, e.fx + e.fy) : 2;
+      const clip = e.moving ? skelAtlas.meta.clips.walk : skelAtlas.meta.clips.idle;
+      const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.id * 0.37) % clip.len);
+      [ex, ey] = lunge(e, ex, ey);
+      const dying = e.hp <= 0 ? Math.min(1, 1 - (e.dead || 0) / 0.6) : 0;
+      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey + dying * 8, h: ez * ZH, k: e.x + e.y, look: { flash: e.flash > 0 ? 0.8 : 0, fade: dying } });
+    }
+    // bolts in flight: small glowing sprites, a little above the ground
+    for (const b of sim.world.projectiles || []) {
+      const bz = heightAt(sim.world, Math.floor(b.x), Math.floor(b.y)), bp = project(b.x, b.y, bz);
+      draws.push({ d: b.x + b.y + 0.2, sp: boltSprite(b.kind), fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: b.x + b.y + 1.5 });
     }
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
-    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true);
+    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look);
 
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     // upload the window G-buffer
@@ -787,6 +811,7 @@ export function createRenderer(canvas, sim, input) {
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
     if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }   // no minimap on the town's home screen
+    drawBattle(ox, oy, ix, iy, pz, now);
     drawBanner(now);
     const j = input.joystick();
     if (j) {
@@ -856,12 +881,59 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
   }
+  // ── battle overlay: HP bars, floating numbers, ability callouts, the Wave · Heat pill ──
+  const floats = [];
+  const addFloat = (x, y, text, color, size = 12, rise = 22) => { floats.push({ x, y, text, color, size, rise, t0: performance.now() }); if (floats.length > 40) floats.shift(); };
+  sim.bus.on('combat', (c) => {
+    if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
+    else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
+    else if (c.t === 'xp') addFloat(c.x, c.y, '+' + c.amount + ' xp', '#c8a0ff', 10, 30);
+    else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
+    else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
+  });
+  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared · Heat ${w.heat}` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1800 : 1300), small: true }; });
+  sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
+  sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `carried back to town${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  function drawBattle(ox, oy, ix, iy, pz, now) {
+    const k = vw / window.innerWidth, w = sim.world, b = sim.battle, party = sim.state.party;
+    const scr = (x, y, lift = 0) => { const z = heightAt(w, Math.floor(x), Math.floor(y)), P = project(x, y, z); return [(ox + P.sx) * S, (oy + P.sy - lift) * S]; };
+    const bar = (x, y, frac, col, wide = 18) => {
+      const [sx, sy] = scr(x, y, 62), bw = wide * S * 0.9, bh = Math.max(3, 3.2 * k);
+      octx.fillStyle = 'rgba(8,6,12,0.8)'; octx.fillRect(sx - bw / 2 - k, sy - k, bw + 2 * k, bh + 2 * k);
+      octx.fillStyle = col; octx.fillRect(sx - bw / 2, sy, bw * Math.max(0, Math.min(1, frac)), bh);
+    };
+    if (b) {
+      for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite ? 24 : 18);
+      party.forEach((m, i) => { if (m.down) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
+      // the Wave · Heat pill under the HUD
+      const txt = `WAVE ${b.wave}  ·  HEAT ${b.heat}`;
+      octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
+      const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 40 * k;
+      octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = b.heat >= 5 ? 'rgba(255,120,60,0.8)' : 'rgba(214,170,98,0.55)'; octx.lineWidth = Math.max(1, k);
+      octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
+      octx.fillStyle = b.heat >= 5 ? '#ffb070' : '#f0c880'; octx.fillText(txt, px, py + 1 * k);
+    }
+    // floating numbers
+    const t = performance.now();
+    for (let i = floats.length - 1; i >= 0; i--) {
+      const f = floats[i], a = (t - f.t0) / 900; if (a >= 1) { floats.splice(i, 1); continue; }
+      const [sx, sy] = scr(f.x, f.y, 56 + f.rise * a);
+      octx.font = `800 ${Math.round(f.size * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
+      octx.globalAlpha = a < 0.7 ? 1 : 1 - (a - 0.7) / 0.3;
+      octx.fillStyle = 'rgba(0,0,0,0.75)'; octx.fillText(f.text, sx + k, sy + k);
+      octx.fillStyle = f.color; octx.fillText(f.text, sx, sy);
+      octx.globalAlpha = 1;
+    }
+  }
+  const maxHpOf = (m) => { const c = { fighter: [140, 14], rogue: [100, 10], mage: [80, 8] }[m.cls]; return Math.round(c[0] + c[1] * (m.level - 1)); };
   function drawBanner(now) {
     if (!banner || now > banner.until) return;
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
-    octx.font = `600 ${Math.round(20 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
-    octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(banner.text, vw / 2 + 1.5 * k, 150 * k + 1.5 * k);
-    octx.fillStyle = `rgba(240,200,130,${a})`; octx.fillText(banner.text, vw / 2, 150 * k);
+    const size = banner.small ? 16 : 20, y = banner.small ? 118 * k : 150 * k;
+    octx.font = `600 ${Math.round(size * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
+    octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(banner.text, vw / 2 + 1.5 * k, y + 1.5 * k);
+    octx.fillStyle = `rgba(240,200,130,${a})`; octx.fillText(banner.text, vw / 2, y);
+    if (banner.sub) { octx.font = `${Math.round(12 * k)}px Georgia, serif`; octx.fillStyle = `rgba(200,190,176,${a})`; octx.fillText(banner.sub, vw / 2, y + 22 * k); }
   }
   function drawMinimap(ix, iy) {
     const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;
@@ -907,6 +979,14 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, setHero, resize,
+    enemyAt(sxPx, syPx) {                                  // the enemy under (or nearest to) a tap, for focus
+      const w = sim.world; if (!w.enemies || !w.enemies.length) return null;
+      const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
+      let best = null, bd = 26;
+      for (const e of w.enemies) { if (e.hp <= 0) continue; const z = heightAt(w, Math.floor(e.x), Math.floor(e.y)), P = project(e.x, e.y, z);
+        const d = Math.hypot(lastCam.ox + P.sx - nx, lastCam.oy + P.sy - 24 - ny); if (d < bd) { bd = d; best = e; } }
+      return best;
+    },
     serviceAt(sxPx, syPx) {
       const w = sim.world; if (!w.services || !w.services.length || !envMeta) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S, z = heightAt(w, 0, 0);

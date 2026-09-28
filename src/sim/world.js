@@ -61,21 +61,8 @@ export function createWorld(seed, theme, depth = 0) {
   world.structs = [];
   if (depth === 0 && level.entrance) placeStairsUp(world, level);
 
-  // Enemies (POC: deterministic placement, view-only — no AI/combat yet). A few
-  // skeletons haunt rooms that aren't the entrance or the descent chamber; count
-  // grows with depth.
-  world.enemies = [];
-  const eprng = mulberry32(streamSeed(seed, 909));
-  for (const r of level.rooms) {
-    if (r === level.entrance || r === level.descentRoom) continue;
-    const n = eprng() < 0.6 ? 1 + Math.floor(eprng() * (1 + depth)) : 0;
-    for (let i = 0; i < n; i++) {
-      const ex = r.cx + Math.round((eprng() - 0.5) * r.rw * 1.4), ey = r.cy + Math.round((eprng() - 0.5) * r.rh * 1.4);
-      const c = level.cells.get(K(ex, ey));
-      if (c && c.kind === 'floor' && !NONWALK.has(materialAt(world, ex, ey)) && !world.props.has(K(ex, ey)))
-        world.enemies.push({ x: ex + 0.5, y: ey + 0.5, kind: 'skeleton' });
-    }
-  }
+  // Enemies arrive in waves when the party enters a room (battle.js).
+  world.enemies = []; world.projectiles = [];
   return world;
 }
 

@@ -8,6 +8,7 @@
 import { createWorld, isWalkable, hitResource, heightAt, propAt, CONSUMABLE_PROP } from './world.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
 import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
+import { createBattle } from './battle.js';
 import { createBus, createCommandQueue } from './bus.js';
 
 export const TICK_HZ = 20;
@@ -52,9 +53,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
     },
-    counters: { wood: 0, stone: 0 },
+    counters: { wood: 0, stone: 0, gold: 0 },
     party: [makeHero()],                                   // [you, …up to two hired companions]
   };
+
+  // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town') });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -80,6 +84,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     const s = findSpawn(world);
     const p = state.player;
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    battle.reset();
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme });
   }
 
@@ -91,6 +96,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     const p = state.player;
     const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    battle.reset();
     bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene });
   }
 
@@ -107,12 +113,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (i > 0) { state.party.splice(i, 1); bus.emit('partyChanged', state.party); }
       return;
     }
+    if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
+      if (state.party[0].down) { p.moving = false; return; }    // your hero has fallen: the others fight on
       const len = Math.hypot(cmd.x, cmd.y);
       if (len < 0.12) { p.moving = false; return; }
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
-      p.moving = true;
+      p.moving = true; p.fx = nx; p.fy = ny;
       face(p, cmd.x, cmd.y);
       return;
     }
@@ -169,6 +177,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
+    battle.step(TICK_DT);
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
     else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
     state.t += TICK_DT;
@@ -200,6 +209,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.moving = false; p.frame = 0; p.frameAcc = 0;
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
+    state.counters.gold = data.counters?.gold ?? 0;
     if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
     world.mods.clear();
     for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
@@ -208,9 +218,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     world.discovered.clear();
     for (const id of data.discovered ?? []) world.discovered.add(id);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
+    battle.reset();
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('partyChanged', state.party);
   }
 
-  return { state, bus, commands, tick, snapshot, restore, seed: baseSeed, get world() { return world; } };
+  return { state, bus, commands, tick, snapshot, restore, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

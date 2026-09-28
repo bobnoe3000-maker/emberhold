@@ -380,6 +380,26 @@ Emberfall rename.
 | **M6: Heights and Throne** | Act IV, finale, post-game Undervaults | Campaign complete |
 | **M7: Multiplayer** | Async (leaderboards, hire friends' heroes), then co-op | — |
 
+**M1 status (battle core, first pass — `src/sim/battle.js`):** Stepping into any dungeon room
+other than the entrance starts a battle. Skeleton waves spawn at least 9 tiles from you:
+minions and warriors first, archers and mages from wave 5, and an elite every fifth wave.
+Wave size scales with the living party, the floor depth and Heat. Clearing a wave adds +1 Heat,
+up to 10. Each point of Heat adds +4% to enemy stats and +10% to XP and gold. The next wave
+comes after a 4 s lull.
+
+You attack when you stand still. Companions hold formation and choose their own targets:
+the fighter protects you, the rogue hunts the weakest foe and the mage keeps its distance.
+Tapping an enemy sets a focus target. Each class has one auto-cast ability: Cleave,
+Backstab and Firebolt.
+
+Enemies are leashed to their room, so walking out ends the fight. Fallen members get back up
+at 20% HP. A total wipe costs 25% of your gold and sends you back to town.
+
+The party cards and the gold counter update live. A solo L1 fighter holds about three waves
+and a full party about seven.
+
+Still to come: loot drops, bosses, stances, ability slots and hazard terrain.
+
 ---
 
 ## 16. Open questions
