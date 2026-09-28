@@ -190,6 +190,7 @@ function kit(style, seed = 1) {
     wood: mat(tex('planks', s.wood, seed + 4)), beam: mat(null, s.beam), door: mat(tex('planks', s.door, seed + 5)), trim: mat(null, s.trim),
     glass: mat(null, '#e0a050'), dark: mat(null, '#1c1a22'), paper: mat(null, '#b8ad92'), banner: mat(null, s.banner), hay: mat(tex('thatch', s.hay, seed + 6)), signboard: mat(null, s.signboard),
     palisade: mat(tex('palisade', s.wood, seed + 7)),
+    ashlar: mat(tex('ashlar', s.lower[1], seed + 8)),         // dressed stone (the temple, in every region)
   };
   return { S: { ...s, m, rnd: rng(seed * 31 + 7) }, g };
 }
@@ -250,9 +251,15 @@ const TYPES = {
     const wing = new THREE.Group(); wing.position.set(-0.3, 0, -0.55); g.add(wing);
     storeyBlock(S, wing, 0.5, 0.45, 0, 0.5, S.m.lower, false); roofOver(S, wing, 0.5, 0.45, 0.5, S.roofRise, false);
     chimney(g, S, 0.34, -0.12, h1 + h2, 0.45); chimney(g, S, -0.38, 0.1, h1 + h2, 0.4);
-    sign(g, S, 0.32, 0.5, d / 2); barrel(g, S, 0.42, 0.46); barrel(g, S, 0.54, 0.44);
+    sign(g, S, 0.32, 0.5, d / 2); barrel(g, S, 0.62, 0.3); barrel(g, S, 0.62, 0.16);
+    // a covered porch over the door with trestle tables and two lanterns: the tavern spills outside
+    const po = new THREE.Group(); po.position.set(0.12, 0, d / 2 + 0.17); g.add(po);
+    for (const x of [-0.26, 0.4]) box(0.035, 0.42, 0.035, S.m.beam, x, 0, 0.14, po);
+    const pr = box(0.76, 0.03, 0.36, S.m.roof, 0.07, 0.43, 0, po); pr.rotation.x = 0.3;
+    for (const x of [-0.12, 0.26]) { box(0.16, 0.02, 0.1, S.m.wood, x, 0.1, 0.05, po); for (const lx of [-0.06, 0.06]) box(0.018, 0.1, 0.018, S.m.beam, x + lx, 0, 0.05, po); box(0.16, 0.015, 0.035, S.m.wood, x, 0.06, 0.12, po); }
+    lantern(po, S, -0.26, 0.38, 0.17); lantern(po, S, 0.4, 0.38, 0.17);
     // notice board (the Lantern Guild's quests) beside the door: posts, board, pinned notes
-    const nb = new THREE.Group(); nb.position.set(-0.3, 0, d / 2 + 0.12); g.add(nb);
+    const nb = new THREE.Group(); nb.position.set(-0.46, 0, d / 2 + 0.1); g.add(nb);
     for (const sx of [-1, 1]) box(0.025, 0.34, 0.025, S.m.beam, sx * 0.13, 0, 0, nb);
     box(0.3, 0.18, 0.025, S.m.wood, 0, 0.14, 0, nb); box(0.34, 0.03, 0.06, S.m.roof, 0, 0.33, 0, nb);
     for (const [x, y] of [[-0.08, 0.26], [0.02, 0.2], [0.09, 0.25], [-0.03, 0.16], [0.08, 0.16]]) box(0.05, 0.06, 0.03, S.m.paper, x, y, 0.004, nb);
@@ -286,26 +293,47 @@ const TYPES = {
     box(0.34, 0.12, 0.12, S.m.wood, 0.1, 0, d / 2 + 0.1, g);
     for (let i = 0; i < 4; i++) box(0.05, 0.04, 0.05, i % 2 ? S.m.hay : S.m.banner, -0.02 + i * 0.08, 0.12, d / 2 + 0.1, g);
     barrel(g, S, 0.38, 0.3); chimney(g, S, -0.2, -0.2, h1 + h2, 0.35);
+    // forge lean-to on the right: a glowing hearth under a hood and an anvil on a stump, so the
+    // smith / chandler / outfitter reads from across the square (critic pass 2: shop and tavern were twins)
+    const fg = new THREE.Group(); fg.position.set(w / 2 + 0.2, 0, 0.02); g.add(fg);
+    for (const [x, z] of [[0.17, 0.26], [0.17, -0.22]]) box(0.035, 0.38, 0.035, S.m.beam, x, 0, z, fg);
+    const lr = box(0.42, 0.03, 0.58, S.m.roof, 0, 0.38, 0, fg); lr.rotation.z = -0.3;
+    box(0.2, 0.14, 0.22, S.m.stone, -0.04, 0, -0.06, fg);
+    const coals = box(0.15, 0.02, 0.16, S.m.glass, -0.04, 0.14, -0.06, fg); coals.userData.glow = true;
+    box(0.1, 0.34, 0.1, S.m.stone, -0.1, 0.16, -0.12, fg);
+    box(0.05, 0.08, 0.05, S.m.wood, 0.08, 0, 0.14, fg); box(0.1, 0.04, 0.045, S.m.dark, 0.08, 0.08, 0.14, fg);
   },
+  // A stone church that reads as one at a glance (critic pass 2: the old box-with-a-spike read
+  // as a barn): the bell tower stands at the FRONT-left corner where the camera sees it, a tall
+  // arched door with steps under a lit rose window, lit lancets between buttresses along the
+  // side, a steep roof, and a lantern either side of the door. Dressed stone in every region.
   temple(S, g, r) {
-    const w = 0.7, d = 1.3, h = S.gothic ? 0.95 : 0.8;
-    const nave = new THREE.Group(); g.add(nave);
-    box(w, h, d, S.m.stone, 0, 0, 0, nave);
+    const w = 0.72, d = 1.25, h = S.gothic ? 0.98 : 0.86, stone = S.m.ashlar;
     const fz = { side: 'z', wallW: w, wallD: d }, fx = { side: 'x', wallW: w, wallD: d };
-    doorOn(nave, S, fz, 0, 0.24, 0.48, true);
-    windowOn(nave, S, fz, 0, h * 0.72, 0.16, 0.2, { pointed: true });           // rose/lancet over the door
-    for (let i = 0; i < 4; i++) windowOn(nave, S, fx, -d / 2 + d * (i + 0.5) / 4, h * 0.55, 0.09, 0.28, { pointed: true });
-    if (S.gothic || S.timber) for (let i = 0; i <= 4; i++) box(0.08, h * 0.8, 0.07, S.m.stone, w / 2 + 0.04, 0, -d / 2 + (d * i) / 4, nave);
-    roofOver(S, nave, w, d, h, S.roofRise * (S.gothic ? 1.1 : 1), false);
-    // bell tower at the back
-    const tw = 0.4, th = S.gothic ? 1.6 : 1.3, t = new THREE.Group(); t.position.set(0, 0, -d / 2 - 0.12); g.add(t);
-    box(tw, th, tw, S.m.stone, 0, 0, 0, t);
-    windowOn(t, S, { side: 'z', wallW: tw, wallD: tw }, 0, th - 0.2, 0.1, 0.16, { pointed: true });
-    windowOn(t, S, { side: 'x', wallW: tw, wallD: tw }, 0, th - 0.2, 0.1, 0.16, { pointed: true });
-    if (S.thatch) { box(tw + 0.04, 0.3, tw + 0.04, S.m.wood, 0, th, 0, t); pyramid(t, tw + 0.04, th + 0.3, 0.32, S.m.roof); }
-    else { pyramid(t, tw, th, S.gothic ? 0.95 : 0.55, S.m.roof, S.gothic ? 8 : 4, 0.04); }
-    const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.95 : S.thatch ? 0.62 : 0.55) + 0.02, 0); t.add(cr);
-    box(0.02, 0.14, 0.02, S.m.trim, 0, 0, 0, cr); box(0.08, 0.02, 0.02, S.m.trim, 0, 0.08, 0, cr);
+    box(w, h, d, stone, 0, 0, 0, g); box(w + 0.06, 0.06, d + 0.06, S.m.stoneDark, 0, 0, 0, g);      // nave on a plinth
+    // west front: steps, a tall arched door, the rose window, corner buttresses
+    box(0.38, 0.035, 0.14, S.m.stoneDark, 0.06, 0, d / 2 + 0.07, g); box(0.32, 0.035, 0.08, S.m.stoneDark, 0.06, 0.035, d / 2 + 0.04, g);
+    doorOn(g, S, fz, 0.06, 0.26, 0.5, true);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.02, 14), S.m.trim); rim.rotation.x = Math.PI / 2; rim.position.set(0.06, h * 0.8, d / 2 + 0.006); g.add(rim);
+    const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 14), S.m.glass); rose.userData.glow = true; rose.rotation.x = Math.PI / 2; rose.position.set(0.06, h * 0.8, d / 2 + 0.014); g.add(rose);
+    for (const k of [0, 1, 2]) { const bar = box(0.012, 0.18, 0.01, S.m.trim, 0.06, h * 0.8 - 0.09, d / 2 + 0.024, g); bar.rotation.z = (k * Math.PI) / 3; }
+    box(0.08, h * 0.85, 0.08, stone, w / 2 - 0.02, 0, d / 2 + 0.02, g);
+    // the long side: three lit lancets between four buttresses
+    for (let i = 0; i < 3; i++) windowOn(g, S, fx, -d / 2 + (d * (i + 0.5)) / 3, h * 0.5, 0.09, 0.34, { pointed: true, lit: true });
+    for (let i = 0; i <= 3; i++) box(0.09, h * 0.8, 0.08, stone, w / 2 + 0.045, 0, -d / 2 + (d * i) / 3, g);
+    const back = new THREE.Group(); back.rotation.y = Math.PI; g.add(back);
+    for (let i = 0; i < 3; i++) windowOn(back, S, fx, -d / 2 + (d * (i + 0.5)) / 3, h * 0.5, 0.09, 0.34, { pointed: true, lit: true });
+    roofOver(S, g, w, d, h, S.roofRise * 1.2, false);
+    // bell tower at the front-left: tall, a lit lancet low, an open belfry, spire and cross
+    const tw = 0.34, th = h + 0.6, t = new THREE.Group(); t.position.set(-w / 2 - tw / 2 + 0.08, 0, d / 2 - tw / 2 + 0.02); g.add(t);
+    box(tw, th, tw, stone, 0, 0, 0, t); box(tw + 0.05, 0.05, tw + 0.05, S.m.stoneDark, 0, th - 0.34, 0, t);
+    const tz = { side: 'z', wallW: tw, wallD: tw }, tx = { side: 'x', wallW: tw, wallD: tw };
+    windowOn(t, S, tz, 0, h * 0.45, 0.08, 0.2, { pointed: true, lit: true });
+    for (const f of [tz, tx]) windowOn(t, S, f, 0, th - 0.17, 0.12, 0.2, { pointed: true, lit: false });   // the open belfry
+    pyramid(t, tw + 0.02, th, S.gothic ? 0.9 : 0.66, S.m.roof, 8, 0.04);
+    const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.9 : 0.66) + 0.01, 0); t.add(cr);
+    box(0.02, 0.16, 0.02, S.m.trim, 0, 0, 0, cr); box(0.09, 0.02, 0.02, S.m.trim, 0, 0.1, 0, cr);
+    lantern(g, S, -0.16, 0.36, d / 2 + 0.05); lantern(g, S, 0.28, 0.36, d / 2 + 0.05);
   },
   keep(S, g, r) {
     if (S.thatch) {                                     // motte-and-bailey: timber tower on an earth mound inside a palisade

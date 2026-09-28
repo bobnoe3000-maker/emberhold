@@ -891,8 +891,9 @@ export function createRenderer(canvas, sim, input) {
     for (const L of sim.world.labels || []) {
       const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60) continue;
       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
-      const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy = (oy + P.sy - top - 10) * S;
-      if (sx < 0 || sx > vw || sy < 0 || sy > vh) continue;
+      const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy0 = (oy + P.sy - top - 10) * S;
+      if (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh) continue;
+      const sy = Math.max(sy0, 72 * k);                        // never under the top HUD: a tall spire's label slides down onto it
       const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
