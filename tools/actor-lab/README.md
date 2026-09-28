@@ -16,8 +16,7 @@ node render.cjs --px 56      # same at another figure height → out/px56/ (defa
 node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.png
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
-sh fetch-env.sh              # KayKit Medieval Hexagon (CC0) props / rocks / mountains → models/env/
-node bake-env.cjs            # environment atlas (env.json: our buildkit.js buildings + trees) → ../../assets/env/
+node bake-env.cjs            # environment atlases (env.json + town.json: all our own buildkit.js models) → ../../assets/env/
 ```
 
 ## Environment bake (`envlab.js`, `buildkit.js`, `bake-env.cjs`)

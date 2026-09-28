@@ -583,6 +583,95 @@ Object.assign(TYPES, {
   },
 });
 
+// ── small props (our own; the last of the stock KayKit pieces) ───────────────
+function crate(g, S, w, h, d, x = 0, z = 0, dark = false) {
+  const c = new THREE.Group(); c.position.set(x, 0, z); g.add(c);
+  box(w, h, d, dark ? S.m.door : S.m.wood, 0, 0, 0, c);
+  const e = 0.018, fr = S.m.beam;                                              // edge battens
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(e, h + 0.004, e, fr, sx * (w / 2 - e / 2 + 0.002), 0, sz * (d / 2 - e / 2 + 0.002), c);
+  for (const y of [0, h - e]) { box(w + 0.004, e, e, fr, 0, y, d / 2 - e / 2 + 0.002, c); box(e, e, d + 0.004, fr, w / 2 - e / 2 + 0.002, y, 0, c); }
+  const br = box(Math.hypot(w, h) * 0.92, e * 0.8, e * 0.6, fr, 0, h / 2 - e / 2, d / 2 + 0.004, c); br.rotation.z = Math.atan2(h, w);   // diagonal brace
+  return c;
+}
+function sackMesh(g, S, x, z, s = 1, rot = 0) {
+  const pts = [[0, 0], [0.05, 0.005], [0.062, 0.03], [0.058, 0.07], [0.04, 0.1], [0.018, 0.115], [0.022, 0.13], [0, 0.135]].map(([a, b]) => new THREE.Vector2(a * s, b * s));
+  const m = new THREE.Mesh(new THREE.LatheGeometry(pts, 8), mat(tex('plaster', '#8a7858', 21))); m.position.set(x, 0, z); m.rotation.set(0.15, rot, 0); m.scale.set(1, 1, 0.8); g.add(m);
+  box(0.03 * s, 0.01 * s, 0.03 * s, S.m.trim, x, 0.105 * s, z, g);                   // the tie
+}
+Object.assign(TYPES, {
+  barrel(S, g) {                                        // bellied staves, two iron hoops, a lid
+    const pts = [[0, 0], [0.078, 0], [0.09, 0.05], [0.094, 0.105], [0.09, 0.16], [0.078, 0.21], [0, 0.21]].map(([a, b]) => new THREE.Vector2(a, b));
+    const staves = mat(tex('planks', '#5a4430', 22)); staves.map = staves.map.clone(); staves.map.repeat.set(3, 0.5); staves.map.needsUpdate = true;
+    g.add(new THREE.Mesh(new THREE.LatheGeometry(pts, 10), staves));
+    for (const y of [0.045, 0.165]) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.093, 0.093, 0.014, 10), S.m.trim); h.position.y = y; g.add(h); }
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.076, 0.076, 0.006, 10), S.m.door); lid.position.y = 0.21; g.add(lid);
+  },
+  crate_A_big(S, g) { crate(g, S, 0.22, 0.21, 0.22); },
+  crate_A_small(S, g) { crate(g, S, 0.14, 0.14, 0.14); },
+  crate_B_big(S, g) { crate(g, S, 0.22, 0.2, 0.22, 0, 0, true); crate(g, S, 0.13, 0.12, 0.13, 0.02, 0.01).position.y = 0.2; },
+  crate_long_A(S, g) {
+    crate(g, S, 0.4, 0.14, 0.2, 0, 0, true);
+    for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 5), mat(null, '#7a7a80')); b.rotation.z = Math.PI / 2; b.position.set(0, 0.15, -0.05 + i * 0.05); g.add(b); }   // a bundle of bars on top
+  },
+  sack(S, g) { sackMesh(g, S, 0, 0, 1); sackMesh(g, S, 0.07, 0.06, 0.8, 1.2); },
+  wheelbarrow(S, g) {
+    const tray = new THREE.Group(); tray.position.set(0, 0.1, 0.02); tray.rotation.x = -0.08; g.add(tray);
+    box(0.22, 0.012, 0.3, S.m.wood, 0, 0, 0, tray);
+    for (const sx of [-1, 1]) { const w = box(0.012, 0.09, 0.32, S.m.wood, sx * 0.115, 0, 0, tray); w.rotation.z = sx * 0.25; }
+    box(0.24, 0.09, 0.012, S.m.wood, 0, 0, 0.16, tray); box(0.24, 0.09, 0.012, S.m.wood, 0, 0, -0.16, tray).rotation.x = 0.35;
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.03, 12), S.m.wood); wheel.rotation.z = Math.PI / 2; wheel.position.set(0, 0.075, 0.24); g.add(wheel);
+    const tyre = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.008, 4, 14), S.m.trim); tyre.rotation.y = Math.PI / 2; tyre.position.copy(wheel.position); g.add(tyre);
+    for (const sx of [-1, 1]) { const h = box(0.018, 0.018, 0.5, S.m.beam, sx * 0.08, 0.12, -0.02, g); h.rotation.x = -0.12; box(0.018, 0.1, 0.018, S.m.beam, sx * 0.08, 0, -0.14, g); }
+    for (let i = 0; i < 3; i++) { const k = rockMesh(rng(40 + i), 0.035, 0.7); k.position.set(-0.05 + i * 0.05, 0.1, 0.02 + (i % 2) * 0.04); g.add(k); }   // a load of stones
+  },
+  weaponrack(S, g) {
+    for (const sx of [-1, 1]) { const l = box(0.018, 0.26, 0.018, S.m.beam, sx * 0.1, 0, 0, g); l.rotation.x = 0.08; }
+    box(0.24, 0.018, 0.02, S.m.beam, 0, 0.2, 0.01, g); box(0.24, 0.018, 0.02, S.m.beam, 0, 0.05, 0.03, g);
+    const steel = mat(null, '#8c8c94');
+    for (const [x, t] of [[-0.06, 'spear'], [0, 'sword'], [0.06, 'spear']]) {
+      const shaft = box(0.01, t === 'spear' ? 0.34 : 0.24, 0.01, t === 'spear' ? S.m.wood : steel, x, 0.03, 0.035, g); shaft.rotation.x = -0.12;
+      if (t === 'spear') { const tip = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.05, 4), steel); tip.position.set(x, 0.39, 0.0); g.add(tip); }
+      else box(0.06, 0.012, 0.014, S.m.trim, x, 0.08, 0.04, g);
+    }
+    const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.015, 12), S.m.banner); sh.rotation.x = Math.PI / 2 - 0.2; sh.position.set(0.14, 0.08, 0.06); g.add(sh);
+  },
+  bucket_water(S, g) {
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.1, 10, 1, true), mat(tex('planks', '#5a4430', 23))); b.position.y = 0.05; b.material.side = THREE.DoubleSide; g.add(b);
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.005, 10), mat(null, '#23384a')); w.position.y = 0.085; g.add(w);
+    const bot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.006, 10), S.m.wood); bot.position.y = 0.003; g.add(bot);
+    const hdl = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.005, 4, 12, Math.PI), S.m.trim); hdl.position.y = 0.1; g.add(hdl);
+  },
+  resource_lumber(S, g) {                               // a stacked log pile
+    const bark = mat(null, '#4a3828'), end = mat(null, '#9a7a52');
+    for (const [row, n] of [[0, 4], [1, 3], [2, 2]]) for (let i = 0; i < n; i++) {
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.048, 0.66, 7), bark); c.rotation.z = Math.PI / 2; c.position.set(0, 0.045 + row * 0.078, (i - (n - 1) / 2) * 0.09); g.add(c);
+      for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.004, 7), end); e.rotation.z = Math.PI / 2; e.position.set(sx * 0.331, c.position.y, c.position.z); g.add(e); }
+    }
+    for (const sx of [-1, 1]) box(0.03, 0.2, 0.03, S.m.beam, sx * 0.2, 0, 0.2, g);
+  },
+  resource_stone(S, g) {                                // a pile of cut blocks
+    const st = S.m.stone;
+    for (const [x, y, z, r] of [[-0.1, 0, 0, 0], [0.08, 0, 0.02, 0.2], [0, 0, -0.12, -0.1], [-0.02, 0.09, -0.03, 0.4], [0.1, 0, -0.14, 0.1]]) box(0.14, 0.09, 0.1, st, x, y, z, g).rotation.y = r;
+  },
+  flag_red(S, g) {
+    box(0.014, 0.42, 0.014, S.m.beam, 0, 0, 0, g);
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.12, 0.18), S.m.banner); f.position.set(0, 0.35, 0.095); f.rotation.y = 0.15; g.add(f);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 4), S.m.trim); tip.position.y = 0.425; g.add(tip);
+  },
+  stump(S, g) {
+    const r = rng(77), bark = mat(null, '#3e3024');
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.1, 8), bark); st.position.y = 0.05; g.add(st);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.005, 8), mat(null, '#9a7a52')); top.position.y = 0.1; g.add(top);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.004, 3, 10), mat(null, '#7a5c3c')); ring.rotation.x = Math.PI / 2; ring.position.y = 0.103; g.add(ring);
+    for (let i = 0; i < 4; i++) { const a = (i / 4) * 6.28 + r(); const root = box(0.03, 0.03, 0.08, bark, Math.cos(a) * 0.09, 0, Math.sin(a) * 0.09, g); root.rotation.y = -a; root.rotation.x = 0.3; }
+  },
+  fence(S, g) {                                          // a waist-high rail fence run along z (1.16 long)
+    const L = 1.16, n = 5;
+    for (let i = 0; i <= n; i++) { const z = -L / 2 + (L * i) / n; box(0.035, 0.3, 0.035, S.m.beam, 0, 0, z, g); const cap = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.04, 4), S.m.beam); cap.position.set(0, 0.32, z); g.add(cap); }
+    for (const y of [0.1, 0.22]) box(0.02, 0.03, L, S.m.wood, 0.02, y, 0, g);
+  },
+});
+
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

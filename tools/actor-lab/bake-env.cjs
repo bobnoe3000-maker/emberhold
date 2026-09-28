@@ -1,13 +1,12 @@
-// bake-env.cjs — bake env.json (KayKit Medieval Hexagon, CC0) into the game's
+// bake-env.cjs — bake env.json + town.json (our own buildkit.js models) into the game's
 // environment atlases: assets/env/env.{alb,nrm,key}.png + env.json (per-sprite
 // rect, origin, footprint) + one town-<region> atlas per region (town.json), and src/sim/envfoot.js (footprints for collision —
-// the sim never reads renderer assets). Needs `npm i` + `sh fetch-env.sh`.
+// the sim never reads renderer assets). Needs `npm i` only — every model is built in code.
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
 const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 'assets', 'env');
 (async () => {
-  if (!fs.existsSync(path.join(DIR, 'models', 'env', 'building_home_A_red.gltf'))) throw new Error('models missing — run: sh fetch-env.sh');
   const list = JSON.parse(fs.readFileSync(path.join(DIR, 'env.json')));
   const srv = await serve(DIR), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROME, args: GL });

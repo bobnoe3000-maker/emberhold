@@ -92,3 +92,12 @@ Sprite ids are unchanged (`bridge_0/90`, `rock_A…E`, `mountain_*`), so no layo
   plank stacks, stumps, a cabin and a lantern.
 
 Ids are unchanged (`ruin`, `mine_0`, `lumbermill_90`). Only small KayKit props remain.
+
+## Small props (ours): the environment is now 100 % our own
+
+![Our props at 2× native: barrel, crates, sacks, wheelbarrow, weapon rack, bucket, log pile, stone blocks, banner, stump, fences](./img/town/props-kit.png)
+
+Barrel, crates, long crate, sacks, wheelbarrow, weapon rack, water bucket, lumber and stone
+piles, banner, stump and a waist-high rail fence (`fence_0/90`) are `TYPES` in `buildkit.js`,
+with the same ids as before. `env.json` no longer references any glTF, and `fetch-env.sh` is
+gone. Bridges don't occlude actors, since you walk *on* them.

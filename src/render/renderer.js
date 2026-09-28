@@ -298,7 +298,7 @@ export function createRenderer(canvas, sim, input) {
       const sp = envSprite(st.id); if (!sp) continue;
       const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
       if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5 });
+      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') });   // you walk ON a bridge: it never hides actors
       if (envMeta.sprites[st.id].glow && lights.length < 30) lights.push({ x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
     }
     for (const { sp, x0, y0 } of list) for (let yy = 0; yy < sp.h; yy++) {
@@ -312,14 +312,14 @@ export function createRenderer(canvas, sim, input) {
         bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64;
       }
     }
-    for (const { sp, x0, y0, base } of list) for (let yy = 0; yy < sp.h; yy++) {
+    for (const { sp, x0, y0, base, walkOn } of list) for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
       for (let xx = 0; xx < sp.w; xx++) {
         const j = yy * sp.w + xx; if (sp.mask[j] !== 1) continue;
         const px = x0 + xx; if (px < 0 || px >= tbw) continue;
         const di = py * tbw + px, dep = base + sp.dep[j];
         if (dep < bDEP[di] - 0.05) continue;
-        bDEP[di] = dep;
+        if (!walkOn) bDEP[di] = dep;
         const i = di * 4, hpx = Math.max(0, Math.min(63, (4 * (dep - z * 0.5) - (py - by + zp)) / 1.333));
         bALB[i] = sp.alb[j * 3]; bALB[i + 1] = sp.alb[j * 3 + 1]; bALB[i + 2] = sp.alb[j * 3 + 2]; bALB[i + 3] = 255;
         bNRM[i] = sp.nrm[j * 3]; bNRM[i + 1] = sp.nrm[j * 3 + 1]; bNRM[i + 2] = sp.nrm[j * 3 + 2]; bNRM[i + 3] = zp * 4 + hpx * 4 > 255 ? 255 : zp * 4 + hpx * 4;
