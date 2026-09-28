@@ -10,7 +10,8 @@ the header of each status doc for what it replaces.
 | [emberfall-gdd.md](./emberfall-gdd.md) | **Emberfall** game design: autobattler party RPG, classes and stats, loot, quest generation, overland, offline and multiplayer, roadmap | **Plan of record** for game design (2026-09-28) |
 | [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary | **Canon** for narrative and quest content (2026-09-28) |
 | [tile-styles.md](./tile-styles.md) | Five structured floor/wall tile styles × seven material variants (plain, earth, rock, lava, poison, ice, water), switch with `?tiles=&tv=` | **Current** — cobble is the default (2026-09-28) |
-| [art-critic-pass-1.md](./art-critic-pass-1.md) | Critic pass on characters, assets, town, overland and dungeon: before/after scores, fixes made, what still fails the 8.5 bar | **Current** (2026-09-28) |
+| [art-critic-pass-2.md](./art-critic-pass-2.md) | Critic pass 2: battle spacing, readable figures, church/forge/porch, soft foliage, dungeon room themes; scores 6.8–7.2 per track, ranked open issues | **Current** (2026-09-28) |
+| [art-critic-pass-1.md](./art-critic-pass-1.md) | Critic pass 1: animation clips, grounding, layouts; before/after scores | Superseded by pass 2 |
 | [prompts/art-eval-loop.md](./prompts/art-eval-loop.md) | The four-track art improvement + evaluation loop prompt (characters, assets, town, dungeon) | **Ready to run** |
 | [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
 | [emberlit-tdd.md](./emberlit-tdd.md) | Technical design for the Emberlit WebGL2 deferred renderer (G-buffers, point lights, HDR bloom) | **Active** render spec (shipped) |
