@@ -154,3 +154,16 @@ river.
   or a ford for small streams, would free up road layouts.
 - The river banks are a single uniform outline, with no reeds, stones or eroded patches.
 - Road ends at sites are plain dirt caps. They could fade into trampled grass.
+
+## Pass 2c — grainy characters
+
+This pass followed a player report that character and NPC art looked grainy. It had three
+causes:
+
+| Cause | Fix |
+|---|---|
+| **Texture aliasing in the bake.** Figures were rendered at 1× with no antialiasing, so each 56 px sprite pixel took one arbitrary texel of a detailed texture. That read as salt-and-pepper speckle on armour, cloth and bone. | The actor lab renders every pass at **4× and area-averages down**. Colour is averaged in ~linear light so edges don't darken, normals are averaged and renormalised, and coverage must reach 50 %. A **despeckle** pass then replaces any pixel unlike all 8 neighbours with the mean of its three closest, so detail spanning 2 px or more survives. |
+| **Blotchy shading.** The per-pixel normals were single raster samples of faceted meshes. | The supersampled normals average the surface under each pixel, giving smooth light across plates and folds. |
+| **Shimmer.** Actors' faint self-light went through the shader's per-pixel random-phase ember flicker. Animated film grain also crawled over the small figures. | Actor self-light is flagged **steady** (the EMI alpha channel). The film grain is static, at a lower amount. |
+
+All eight atlases were rebaked. The bake takes 104 s, up from 35 s.

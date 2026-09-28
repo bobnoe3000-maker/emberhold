@@ -127,7 +127,7 @@ void main(){
   col+=vec3(0.010,0.002,0.020)*(1.0-col);
   vec2 c=gl_FragCoord.xy/uOut-0.5;
   col*=1.0-dot(c,c)*0.85;
-  col+=(h21(gl_FragCoord.xy+fract(uTime)*100.0)-0.5)*0.02;
+  col+=(h21(floor(gl_FragCoord.xy*0.5))-0.5)*0.008;   // a whisper of static grain (animated per-pixel grain crawled over small figures)
   O=vec4(col,1.0);
 }`;
 
@@ -447,7 +447,7 @@ export function createRenderer(canvas, sim, input) {
         if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
         else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
         else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
-        EMI[i + 3] = 255;
+        EMI[i + 3] = test && !e ? 250 : 255;          // actors' self-light is steady (alpha < 255): the shader's per-pixel ember flicker read as grain on figures
       }
     }
   }

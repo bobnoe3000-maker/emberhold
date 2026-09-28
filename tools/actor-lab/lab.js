@@ -137,12 +137,52 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const mk = () => { const cv = document.createElement('canvas'); cv.width = W * cols; cv.height = H * rows; return cv; };
   const A = mk(), N = mk(), E = mk(), ax = A.getContext('2d'), nx = N.getContext('2d'), ex = E.getContext('2d');
   nx.fillStyle = '#000'; nx.fillRect(0, 0, N.width, N.height); ex.fillStyle = '#000'; ex.fillRect(0, 0, E.width, E.height);
-  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d', { willReadFrequently: true });
+  // SUPERSAMPLED (critic: figures looked grainy): each pass renders at SS× and is area-
+  // averaged down, so a pixel's colour is the mean of the texture under it rather than one
+  // arbitrary texel, and its normal the mean of the surface under it (smooth light, no
+  // blotches). Coverage ≥ 50 % keeps the pixel; emissive needs half the covered sub-pixels.
+  const SS = 4;
+  R.setSize(W * SS, H * SS);
+  const tmp = document.createElement('canvas'); tmp.width = W * SS; tmp.height = H * SS; const tx = tmp.getContext('2d', { willReadFrequently: true });
+  const down = (big, kind) => {
+    const out = new ImageData(W, H), o = out.data, b = big.data, BW = W * SS;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let n = 0, r = 0, g = 0, bl = 0, hot = 0;
+      for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+        const i = ((y * SS + sy) * BW + x * SS + sx) * 4; if (!b[i + 3]) continue;
+        n++;
+        if (kind === 'nrm') { r += b[i] / 127.5 - 1; g += b[i + 1] / 127.5 - 1; bl += b[i + 2] / 127.5 - 1; }
+        else if (kind === 'emi') { if (b[i] > 128) hot++; }
+        else { r += b[i] * b[i]; g += b[i + 1] * b[i + 1]; bl += b[i + 2] * b[i + 2]; }     // average in ~linear light (squares), so edges don't darken
+      }
+      const j = (y * W + x) * 4;
+      if (n < (SS * SS) / 2) continue;
+      if (kind === 'nrm') { const l = Math.hypot(r, g, bl) || 1; o[j] = (r / l * 0.5 + 0.5) * 255; o[j + 1] = (g / l * 0.5 + 0.5) * 255; o[j + 2] = (bl / l * 0.5 + 0.5) * 255; }
+      else if (kind === 'emi') { const v = hot * 2 >= n ? 255 : 0; o[j] = o[j + 1] = o[j + 2] = v; }
+      else { o[j] = Math.sqrt(r / n); o[j + 1] = Math.sqrt(g / n); o[j + 2] = Math.sqrt(bl / n); }
+      o[j + 3] = 255;
+    }
+    return out;
+  };
+  // despeckle: a pixel unlike all 8 neighbours (an isolated texel spike) takes the mean of the
+  // three neighbours closest to it — clean colour regions, detail that spans ≥ 2 px survives
+  const despeckle = (d) => {
+    const src = new Uint8ClampedArray(d), at = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] ? (y * W + x) * 4 : -1);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = at(x, y); if (i < 0) continue;
+      const ns = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const k = at(x + dx, y + dy); if (k >= 0) ns.push(k); }
+      if (ns.length < 6) continue;                                          // edges and thin parts keep their pixels
+      const dist = (k) => Math.abs(src[k] - src[i]) + Math.abs(src[k + 1] - src[i + 1]) + Math.abs(src[k + 2] - src[i + 2]);
+      ns.sort((p, q) => dist(p) - dist(q));
+      if (dist(ns[0]) < 54) continue;                                        // has a like neighbour: real detail
+      for (let c = 0; c < 3; c++) d[i + c] = (src[ns[0] + c] + src[ns[1] + c] + src[ns[2] + c]) / 3;
+    }
+  };
   const pass = (kind) => {
     if (kind === 'nrm') { scene.overrideMaterial = nrmMat; R.outputColorSpace = THREE.LinearSRGBColorSpace; }
     else { scene.overrideMaterial = null; R.outputColorSpace = THREE.SRGBColorSpace; c.root.traverse((o) => { if (o.isMesh) o.material = mats[kind].get(o); }); }
     R.toneMapping = THREE.NoToneMapping; R.setClearColor(0, 0); R.render(scene, cam);
-    tx.clearRect(0, 0, W, H); tx.drawImage(R.domElement, 0, 0); return tx.getImageData(0, 0, W, H);
+    tx.clearRect(0, 0, W * SS, H * SS); tx.drawImage(R.domElement, 0, 0); return down(tx.getImageData(0, 0, W * SS, H * SS), kind);
   };
   let hasGlow = false;
   for (let dir = 0; dir < 8; dir++) {
@@ -153,6 +193,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
+      despeckle(ad);
       grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed);
       const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
       const out = new Uint8ClampedArray(ad);
