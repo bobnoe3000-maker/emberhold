@@ -306,19 +306,38 @@ progress):
 - **Travel** between nodes takes in-game time. Roads carry a 15 % encounter chance (ambushes,
   merchants, shrines, lore) and trails 30 %, but trails are faster. You can camp to regen.
 - **Towns are hubs, one per region** (Thornwick, Saltmere, Ashgate, Frosthold). Each is the
-  same place in a different region. A short **approach road** passes houses, farms and fields,
-  then opens onto the **town square**, which works as the game's **home screen**. The camera
-  settles on a fixed framing, a bar of four services slides up, and tapping a building or
-  its button opens that service's menu. Buildings aren't enterable.
-  - **Same shapes, regional tones.** The four service buildings have identical silhouettes and
-    positions in every town, so they read like menu icons. Only materials and colour change
-    with the region: warm oak and slate; damp grey-green; soot and rust tile; pale limestone
-    and blue slate. The ground takes the region's tone too.
+  same place in a different region.
+  - **Approach road:** it passes the cosmetic buildings (houses, farms and fields), which stand
+    well away from the square, out past the stream, so the square stays clear.
+  - **The square is the home screen.** It is laid out **exactly the same in every town**, so it
+    stays familiar like a menu:
+
+    | Position | Left | Right |
+    |---|---|---|
+    | Back row | Temple | Inn |
+    | Middle row | Shop | Tavern |
+    | Front | Smithy (forge open to the square) | Well |
+
+  - **Using services:**
+    - When the hero nears the square, the camera settles on that fixed framing and a bar of the
+      five services slides up. Tapping a building or its button opens that service's menu.
+    - Away from the square, tapping a service building walks you to the square instead.
+    - Buildings aren't enterable.
+  - **Same shapes, regional tones.** The five service buildings have identical silhouettes and
+    positions in every town, so they read like menu icons. Only materials, colour and names
+    change with the region:
+    - Vale: warm oak and slate.
+    - Fens: damp grey-green.
+    - Reach: soot and rust tile.
+    - Heights: pale limestone and blue slate.
+
+    The ground takes the region's tone too.
   - **The services:**
 
     | Building | Menu |
     |---|---|
-    | **Shop** (smithy and outfitter) | Buy common gear and potions · Sell · Upgrade (+1…+5) · Salvage → Embers |
+    | **Shop** (provisioner / outfitter) | Buy potions, supplies and common gear · Sell |
+    | **Smith** (the forge) | Upgrade (+1…+5) · Reforge a trait · Salvage → Embers |
     | **Tavern** | The Lantern Guild's **quest board** (mini-quests) · Hire companions · Rumours |
     | **Inn** | Rest (restore HP/MP) · Lodge companions (the bench) · Expeditions (idle) |
     | **Temple** | Heal the Wounded · Blessings · The Chronicle (lore) |
@@ -374,7 +393,7 @@ reproduce any battle for validation.
 |---|---|
 | **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a room-level and wave banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
 | **Party cards** (always) | Bottom of every screen: **you in the centre, up to two companions either side**. Each card has a portrait, level badge, name, class, HP bar, ATK / DEF / CRT / DDG, and level with an XP bar. Empty slots say *hire at a town tavern*. |
-| **Town square** | The home screen: a fixed framing of shop, tavern, inn and temple with name plaques; a bottom bar of the four services; each opens a bottom-sheet menu. No minimap here. |
+| **Town square** | The home screen: the same fixed framing in every town (temple, inn, shop, tavern, smithy) with name plaques; a bottom bar of the five services, shown once you're near the square; each opens a bottom-sheet menu. No minimap here. |
 | **Quest board** | Cards: giver portrait, hook line, skulls, rewards. |
 | **Party** | Three figures with live 3D previews, gear slots, stats and abilities; drag to reorder formation. |
 | **Overland** | A scrolling fogged map with the party token; tap a node to travel. |

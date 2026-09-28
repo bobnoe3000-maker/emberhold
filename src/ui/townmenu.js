@@ -1,13 +1,19 @@
-// townmenu.js — the town square as a home screen. In a town's square (world.hub) a bar
-// of the four services slides up — Shop, Tavern, Inn, Temple — and tapping one (or its
-// building) opens that service's menu as a bottom sheet. The actions are the GDD's
+// townmenu.js — the town square as a home screen. The square is laid out the same in every
+// town (outdoor.js). Once the hero is near it (world.hub), a bar of the five services slides
+// up — Shop, Smith, Tavern, Inn, Temple — and tapping one (or its building) opens that
+// service's menu as a bottom sheet. Away from the square the services aren't reachable. The actions are the GDD's
 // (emberfall-gdd.md §10): they're placeholders until each system lands.
 // DOM only; reads sim state, never writes it.
 
 const SERVICES = {
   shop: {
-    label: 'Shop', blurb: 'Buy and sell gear, upgrade it at the forge, salvage what you can’t use.',
-    actions: [['Buy', 'common arms, armour and potions'], ['Sell', 'gold for what you carry'], ['Upgrade', '+1 to +5 at the forge · gold, Embers, wood, stone'], ['Salvage', 'turn off-class gear into Embers']],
+    label: 'Shop', blurb: 'Provisions for the road: potions, supplies and plain gear, and a fair price for what you carry.',
+    actions: [['Buy', 'potions, supplies, common arms and armour'], ['Sell', 'gold for what you carry']],
+    icon: '<path d="M4 9h16l-1 11H5zM8 9V7a4 4 0 0 1 8 0v2"/>',
+  },
+  smith: {
+    label: 'Smith', blurb: 'The forge: upgrade your gear, reforge its traits, and salvage what you can’t use.',
+    actions: [['Upgrade', '+1 to +5 at the forge · gold, Embers, wood, stone'], ['Reforge', 'reroll one trait on a piece of gear'], ['Salvage', 'turn off-class gear into Embers']],
     icon: '<path d="M3 9h11l3-3h4v3l-3 2v2H9l-2 3H5l1-3H3z"/>',
   },
   tavern: {
@@ -26,7 +32,7 @@ const SERVICES = {
     icon: '<path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/>',
   },
 };
-const ORDER = ['shop', 'tavern', 'inn', 'temple'];
+const ORDER = ['shop', 'smith', 'tavern', 'inn', 'temple'];
 import { tavernRoster, CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
 
 const CSS = `
@@ -34,7 +40,7 @@ const CSS = `
   display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(24px); opacity: 0; visibility: hidden; pointer-events: none;
   transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s; z-index: 5; }
 #hubBar.on { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .28s ease, opacity .2s ease; }
-#hubBar button { flex: 1; max-width: 88px; background: rgba(16,12,22,0.86); border: 1px solid rgba(214,170,98,0.45); border-radius: 10px;
+#hubBar button { flex: 1; min-width: 0; max-width: 76px; background: rgba(16,12,22,0.86); border: 1px solid rgba(214,170,98,0.45); border-radius: 10px;
   color: #eadcc0; font: 600 11px Georgia, 'Times New Roman', serif; letter-spacing: .5px; padding: 8px 4px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 #hubBar button svg { width: 22px; height: 22px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 #hubBar button:active { background: rgba(60,40,30,0.9); }
@@ -128,5 +134,5 @@ export function createTownMenu(sim, partyPanel) {
     requestAnimationFrame(watch);
   })();
 
-  return { open: (sv) => open(sv.kind || sv), close, isOpen: () => sheet.classList.contains('on') };
+  return { open: (sv) => open(sv.kind || sv), close, isOpen: () => sheet.classList.contains('on'), inSquare: () => wasIn };
 }

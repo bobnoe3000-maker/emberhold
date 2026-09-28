@@ -294,15 +294,9 @@ const TYPES = {
     box(0.34, 0.12, 0.12, S.m.wood, 0.1, 0, d / 2 + 0.1, g);
     for (let i = 0; i < 4; i++) box(0.05, 0.04, 0.05, i % 2 ? S.m.hay : S.m.banner, -0.02 + i * 0.08, 0.12, d / 2 + 0.1, g);
     barrel(g, S, 0.38, 0.3); chimney(g, S, -0.2, -0.2, h1 + h2, 0.35);
-    // forge lean-to on the right: a glowing hearth under a hood and an anvil on a stump, so the
-    // smith / chandler / outfitter reads from across the square (critic pass 2: shop and tavern were twins)
-    const fg = new THREE.Group(); fg.position.set(w / 2 + 0.2, 0, 0.02); g.add(fg);
-    for (const [x, z] of [[0.17, 0.26], [0.17, -0.22]]) box(0.035, 0.38, 0.035, S.m.beam, x, 0, z, fg);
-    const lr = box(0.42, 0.03, 0.58, S.m.roof, 0, 0.38, 0, fg); lr.rotation.z = -0.3;
-    box(0.2, 0.14, 0.22, S.m.stone, -0.04, 0, -0.06, fg);
-    const coals = box(0.15, 0.02, 0.16, S.m.glass, -0.04, 0.14, -0.06, fg); coals.userData.glow = true;
-    box(0.1, 0.34, 0.1, S.m.stone, -0.1, 0.16, -0.12, fg);
-    box(0.05, 0.08, 0.05, S.m.wood, 0.08, 0, 0.14, fg); box(0.1, 0.04, 0.045, S.m.dark, 0.08, 0.08, 0.14, fg);
+    // a general store: crates and sacks stacked by the stall, a hanging sign (the forge is the smithy's now)
+    crate(g, S, 0.12, 0.1, 0.12, w / 2 + 0.1, 0.18); crate(g, S, 0.1, 0.08, 0.1, w / 2 + 0.12, 0.05, true); sackMesh(g, S, w / 2 + 0.2, 0.3);
+    sign(g, S, -0.2, 0.46, d / 2);
   },
   // A stone church that reads as one at a glance (critic pass 2: the old box-with-a-spike read
   // as a barn): the bell tower stands at the FRONT-left corner where the camera sees it, a tall
@@ -335,6 +329,30 @@ const TYPES = {
     const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.9 : 0.66) + 0.01, 0); t.add(cr);
     box(0.02, 0.16, 0.02, S.m.trim, 0, 0, 0, cr); box(0.09, 0.02, 0.02, S.m.trim, 0, 0.1, 0, cr);
     lantern(g, S, -0.16, 0.36, d / 2 + 0.05); lantern(g, S, 0.28, 0.36, d / 2 + 0.05);
+  },
+  // The blacksmith: an open-fronted stone forge under a heavy gable — glowing hearth under a
+  // hood and a tall chimney at the back, an anvil on a stump, a quench trough, a rack of
+  // blades outside and a hanging sign — so it reads as the smith from across the square.
+  smith(S, g, r) {
+    const w = 0.78, d = 0.6, h = 0.46, stone = S.m.stone;
+    box(w, h, 0.08, stone, 0, 0, -d / 2 + 0.04, g);                         // back wall
+    box(0.08, h, d, stone, -w / 2 + 0.04, 0, 0, g);                         // left wall
+    box(0.08, h * 0.5, d * 0.55, stone, w / 2 - 0.04, 0, -d * 0.2, g);       // low right wall
+    for (const [x, z] of [[w / 2 - 0.03, d / 2 - 0.03], [-w / 2 + 0.03, d / 2 - 0.03], [w / 2 - 0.03, -0.02]]) box(0.06, h, 0.06, S.m.beam, x, 0, z, g);
+    box(w, 0.05, 0.06, S.m.beam, 0, h - 0.05, d / 2 - 0.03, g);             // lintel
+    roofOver(S, g, w + 0.12, d + 0.12, h, S.roofRise * 0.85);
+    box(0.28, 0.17, 0.26, stone, -0.2, 0, -0.06, g);                         // hearth, near the open front
+    const coals = box(0.22, 0.025, 0.2, S.m.glass, -0.2, 0.17, -0.06, g); coals.userData.glow = true;
+    const mouth = box(0.16, 0.08, 0.012, S.m.glass, -0.2, 0.04, 0.075, g); mouth.userData.glow = true;   // the fire's mouth, facing the square
+    box(0.24, 0.14, 0.16, stone, -0.2, 0.3, -0.16, g);                       // hood
+    chimney(g, S, -0.2, -0.2, h, 0.62);
+    box(0.06, 0.09, 0.06, S.m.wood, 0.12, 0, 0.1, g); box(0.14, 0.05, 0.06, S.m.dark, 0.12, 0.09, 0.1, g); box(0.05, 0.03, 0.04, S.m.dark, 0.2, 0.1, 0.1, g);   // anvil on a stump
+    box(0.22, 0.08, 0.09, S.m.wood, 0.2, 0, -0.16, g); box(0.19, 0.012, 0.06, mat(null, '#1d3040'), 0.2, 0.08, -0.16, g);                                      // quench trough
+    const rack = new THREE.Group(); rack.position.set(w / 2 + 0.12, 0, 0.12); g.add(rack);                                                                   // a rack of blades outside
+    for (const z of [-0.12, 0.12]) box(0.025, 0.3, 0.025, S.m.beam, 0, 0, z, rack);
+    box(0.025, 0.025, 0.28, S.m.beam, 0, 0.26, 0, rack);
+    for (let i = 0; i < 4; i++) box(0.012, 0.22, 0.03, S.m.trim, 0.02, 0.04, -0.09 + i * 0.06, rack);
+    sign(g, S, w / 2 - 0.05, 0.4, d / 2);
   },
   keep(S, g, r) {
     if (S.thatch) {                                     // motte-and-bailey: timber tower on an earth mound inside a palisade

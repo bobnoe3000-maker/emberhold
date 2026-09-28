@@ -44,8 +44,9 @@ renderer.setHero(hero);
 // tap: a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
 // shrine / stairs / growth when it's what you tapped)
 input.onTap((sx, sy) => {
-  const sv = renderer.serviceAt(sx, sy);                 // a town's shop / tavern / inn / temple → its menu
-  if (sv) { townMenu.open(sv); return; }
+  const sv = renderer.serviceAt(sx, sy);                 // a service building: its menu once you're in the square,
+  if (sv && townMenu.inSquare()) { townMenu.open(sv); return; }
+  if (sv) { const h = sim.world.hub; sim.commands.push({ type: 'tap', tx: Math.floor(h.x), ty: Math.floor(h.y) }); return; }   // else walk to the square
   const foe = renderer.enemyAt(sx, sy);                  // tap an enemy: the party focuses it
   if (foe) { sim.commands.push({ type: 'focus', id: foe.id }); return; }
   const { tx, ty } = renderer.screenToTile(sx, sy, 1);

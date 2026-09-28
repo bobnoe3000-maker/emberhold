@@ -196,47 +196,53 @@ function forestRing(o, rng, inset) {
 // places and the same shapes everywhere (shop, tavern, inn, temple). Only the names
 // and the region's tones change (tools/actor-lab town.json → assets/env/town-<region>).
 export const REGIONS = {
-  vale:    { name: 'Thornwick', tavern: 'The Tired Mule',       inn: 'The Crossed Keys',   shop: 'Hale & Daughter, Smiths', temple: 'Shrine of the Ember' },
-  fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',      inn: 'The Stilt House',    shop: 'Saltmere Chandlery',      temple: 'Chapel of the Grey Sisters' },
-  reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows',   inn: "Deepdelver's Rest",  shop: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
-  heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',    inn: "Pilgrims' Hall",     shop: 'Frosthold Outfitters',    temple: 'The Monastery Chapel' },
+  vale:    { name: 'Thornwick', tavern: 'The Tired Mule',     inn: 'The Crossed Keys',  shop: "Wendel's Provisions",  smith: 'Hale & Daughter, Smiths', temple: 'Shrine of the Ember' },
+  fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',    inn: 'The Stilt House',   shop: 'Saltmere Chandlery',   smith: 'The Tidewater Forge',     temple: 'Chapel of the Grey Sisters' },
+  reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows', inn: "Deepdelver's Rest", shop: 'The Ashgate Exchange', smith: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
+  heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',  inn: "Pilgrims' Hall",    shop: 'Frosthold Outfitters', smith: 'Ironpeak Smithy',         temple: 'The Monastery Chapel' },
 };
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
   o.name = info.name; o.region = R;
-  // Layout is authored in SCREEN terms for the portrait frame, relative to the plaza's
-  // centre C: back row (temple, inn), middle row (shop, tavern), open flags in front.
+  // THE SQUARE IS THE MENU: the same five services stand in the same places in every town,
+  // so it stays familiar (only names and the region's tones change). Authored in SCREEN
+  // terms for the portrait frame, relative to the plaza's centre C:
+  //   back row   — temple (left), inn (right)
+  //   middle row — shop (left), tavern (right)
+  //   front      — the smithy (left, its forge open to the square), the well (right)
+  // Houses and farms are cosmetic and stand well away, out along the approach road.
   const C = [60, 64];
   const at = (dx, dy) => [C[0] + dx, C[1] + dy];
   o.rivers.push({ w: 6, pts: [[106, -90], [100, 20], [108, 58], [101, 100], [108, 210]] });
   o.roads.push({ w: 6, surface: 'dirt', pts: [[230, 80], [132, 76], [104, 74], [84, 72], at(6, 6)] });
-  o.plazas.push({ cx: C[0] - 7, cy: C[1] - 7, rx: 17, ry: 17 });
+  o.plazas.push({ cx: C[0] - 6, cy: C[1] - 4, rx: 19, ry: 19 });
   o.fields.push({ x0: 112, y0: 26, x1: 136, y1: 44, axis: 'x' }, { x0: 70, y0: 96, x1: 96, y1: 114, axis: 'y' }, { x0: 118, y0: 90, x1: 138, y1: 112, axis: 'x' });
   finalizeGround(o);
 
   // the square: temple + inn at the back, shop + tavern in the middle row, well on the flags
   const svc = [
     ['temple', B('temple'), at(-40, -28)], ['inn', B('inn'), at(-29, -42)],
-    ['shop', B('shop'), at(-19, -3)], ['tavern', B('tavern'), at(-2, -18)],
+    ['shop', B('shop'), at(-24, -7)], ['tavern', B('tavern'), at(-6, -22)],
+    ['smith', B('smith'), at(-3, 13)],
   ];
   for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
-  put(o, B('well'), ...at(-3, -3));
-  for (const [x, y] of [at(-24, -14), at(-12, -26), at(6, -4), at(-4, 8)]) putProp(o, 'brazier', x, y);
-  for (const [id, x, y] of [['barrel', ...at(6, -10)], ['barrel', ...at(7, -8)], ['crate_A_big', ...at(-13, 3)], ['sack', ...at(-12, 4.5)], ['weaponrack', ...at(-12, -8)], ['bucket_water', ...at(-1, -1)]])
+  put(o, B('well'), ...at(-1, -6));
+  for (const [x, y] of [at(-24, -14), at(-12, -26), at(8, -4), at(6, 8)]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['barrel', ...at(6, -10)], ['barrel', ...at(7, -8)], ['crate_A_big', ...at(-15, 1)], ['sack', ...at(-14, 2.5)], ['bucket_water', ...at(2, -3)]])
     put(o, id, x, y, 'rect', 0);
   o.hub = { x: C[0] - 4, y: C[1] - 4, r: 22, focus: { x: C[0] - 9, y: C[1] - 9 } };
 
   // the approach: a stream crossing, houses along the road, farms and fields beyond
   put(o, 'bridge_90', 104, 74, 'deck');
-  [[92, 62, 'house', 1], [120, 64, 'house', 3], [132, 62, 'house', 2], [100, 94, 'housex', 1], [118, 88, 'housex', 2], [130, 86, 'house', 1]]
+  [[118, 58, 'house', 1], [128, 64, 'house', 3], [140, 57, 'house', 2], [116, 95, 'housex', 1], [127, 89, 'housex', 2], [139, 92, 'house', 1]]
     .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
   put(o, B('farm'), 124, 30); put(o, B('farmx'), 84, 106); put(o, B('farm'), 128, 102);
   for (const [x, y] of [[96, 68], [112, 70], [126, 70]]) putProp(o, 'brazier', x, y);
   for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
 
   // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
-  const TOWN_SIGHTS = [[92, 62], [120, 64], [132, 62], [100, 94], [118, 88], [130, 86], [104, 76]];
+  const TOWN_SIGHTS = [[118, 58], [128, 64], [140, 57], [116, 95], [127, 89], [139, 92], [104, 76]];
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
     const dh = Math.hypot(x - (C[0] - 16), y - (C[1] - 16));
     if (dh < 34) return null;
