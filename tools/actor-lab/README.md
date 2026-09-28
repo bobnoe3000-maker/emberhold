@@ -12,6 +12,7 @@ cd tools/actor-lab
 npm i                        # three.js + playwright-core (dev only)
 sh fetch-assets.sh           # ~40 MB of glTF → models/ (gitignored)
 node render.cjs              # 18 variants × stock/heroic × 3 facings → out/*.png
+node render.cjs --px 56      # same at another figure height → out/px56/ (default 46 → out/)
 node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.png
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 ```

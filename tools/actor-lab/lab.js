@@ -13,7 +13,9 @@
 // 'lowerleg.l' → 'lowerlegl'); findNode()/applyHeroic() match both spellings.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-const W = 72, H = 84, TARGET_PX = 46;   // cell size + figure height (native px)
+// figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
+const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
+const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
 const R = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
 R.setPixelRatio(1); R.setSize(W, H); R.outputColorSpace = THREE.SRGBColorSpace;
 R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; document.body.appendChild(R.domElement);

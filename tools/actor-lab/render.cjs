@@ -3,7 +3,8 @@
 // headless Chromium (SwiftShader WebGL). Needs `npm i` + `sh fetch-assets.sh`.
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
-const DIR = __dirname, OUT = path.join(DIR, 'out');
+const DIR = __dirname, PXI = process.argv.indexOf('--px'), PX = PXI > 0 ? +process.argv[PXI + 1] : 46;
+const OUT = path.join(DIR, 'out', PX === 46 ? '' : `px${PX}`);   // 46 stays in out/ (compose.py's default)
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.glb': 'model/gltf-binary',
   '.gltf': 'model/gltf+json', '.bin': 'application/octet-stream', '.png': 'image/png' };
 function serve(root) {
@@ -23,12 +24,12 @@ if (require.main === module) (async () => {
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await (await b.newContext({ viewport: { width: 300, height: 300 } })).newPage();
   p.on('pageerror', (e) => console.log('PAGEERR', e.message));
-  await p.goto(`http://127.0.0.1:${port}/lab.html`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
+  await p.goto(`http://127.0.0.1:${port}/lab.html?px=${PX}`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
   const vs = JSON.parse(fs.readFileSync(path.join(DIR, 'variants.json'))).map((v) => ({ ...v,
     eyes: v.eyes ? parseInt(v.eyes) : undefined, props: [false, true], dirs: [0, 1, 2] }));
   const t0 = Date.now(), all = await p.evaluate(async (vs) => await window.renderVariants(vs), vs);
   fs.mkdirSync(OUT, { recursive: true });
   for (const [k, v] of Object.entries(all)) fs.writeFileSync(path.join(OUT, k.replace(/\|/g, '__') + '.png'), Buffer.from(v.split(',')[1], 'base64'));
-  console.log(`rendered ${Object.keys(all).length} frames in ${((Date.now() - t0) / 1000).toFixed(1)}s → out/`);
+  console.log(`rendered ${Object.keys(all).length} frames in ${((Date.now() - t0) / 1000).toFixed(1)}s → ${path.relative(DIR, OUT)}/ (${PX}px)`);
   await b.close(); srv.close();
 })().catch((e) => { console.error('FAIL', e.message); process.exit(1); });
