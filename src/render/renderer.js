@@ -18,6 +18,7 @@ import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
+import { paintOutdoor } from './outdoorpaint.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
@@ -50,6 +51,7 @@ uniform sampler2D uAlb,uNrm,uEmi;
 uniform vec2 uRes; uniform float uTime,uAmb,uWispA;
 uniform vec3 uL[3]; uniform vec3 uLC[3];
 uniform vec2 uWispPx;
+uniform vec3 uSunL, uSunC, uAmbC;   // outdoor scenes: directional dusk sun + ambient colour (zero in dungeons)
 out vec4 O;
 float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
@@ -63,8 +65,9 @@ void main(){
   vec3 n=normalize(vec3(N.xy*2.0-1.0,max(N.z,0.02)));
   float h=N.a*64.0;
   vec2 p=gl_FragCoord.xy;
-  vec3 amb=mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
+  vec3 amb=dot(uAmbC,vec3(1.0))>0.0?uAmbC:mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
   vec3 col=A.rgb*amb*(0.72+0.28*n.z);
+  col+=A.rgb*uSunC*max(dot(n,uSunL),0.0);
   for(int i=0;i<3;i++){
     vec3 lp=uL[i];
     vec3 d=vec3(p.x-lp.x,(lp.y-p.y)*1.8,lp.z-h);
@@ -146,6 +149,7 @@ export function createRenderer(canvas, sim, input) {
 
   let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
   let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window)
+  let bDEP, sDEP, bSH;                               // depth toward the camera (tiles) + shadow flags
   let bakeOx = 0, bakeOy = 0, terrValid = false, flares = [];
 
   function setupLit() {
@@ -172,6 +176,7 @@ export function createRenderer(canvas, sim, input) {
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
     bALB = new Uint8ClampedArray(tbw * tbh * 4); bNRM = new Uint8ClampedArray(tbw * tbh * 4); bEMI = new Uint8ClampedArray(tbw * tbh * 4);
     sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
+    bDEP = new Float32Array(tbw * tbh); sDEP = new Float32Array(nvw * nvh); bSH = new Uint8Array(tbw * tbh);
     for (const t of [texAlb, texNrm, texEmi]) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }
     setupLit();
     terrValid = false;
@@ -240,6 +245,76 @@ export function createRenderer(canvas, sim, input) {
     return { meta, cells };
   }
   loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; }).catch(() => {});
+
+  // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
+  // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
+  // alpha), and a per-pixel depth key (+ lit-window flag). Sprites are sliced lazily,
+  // only when a scene first uses them.
+  let envMeta = null, envImgs = null;
+  const envCache = new Map();
+  Promise.all([fetch('./assets/env/env.json').then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg('./assets/env/env.' + c + '.png'))])
+    .then(([m, a, n, k]) => { envMeta = m; envImgs = { a, n, k }; terrValid = false; }).catch(() => {});
+  const ecv = document.createElement('canvas'), ectx = ecv.getContext('2d', { willReadFrequently: true });
+  function envSprite(id) {
+    if (envCache.has(id)) return envCache.get(id);
+    const m = envMeta && envMeta.sprites[id]; if (!m) return null;
+    const grab = (img) => { ecv.width = m.w; ecv.height = m.h; ectx.clearRect(0, 0, m.w, m.h); ectx.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h); return ectx.getImageData(0, 0, m.w, m.h).data; };
+    const A = grab(envImgs.a), N = grab(envImgs.n), K = grab(envImgs.k), n = m.w * m.h;
+    const sp = { w: m.w, h: m.h, ax: m.ax, ay: m.ay, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
+    for (let j = 0; j < n; j++) {
+      const i = j * 4;
+      if (A[i + 3] >= 128) {
+        sp.mask[j] = 1;
+        sp.alb[j * 3] = A[i]; sp.alb[j * 3 + 1] = A[i + 1]; sp.alb[j * 3 + 2] = A[i + 2];
+        sp.nrm[j * 3] = N[i]; sp.nrm[j * 3 + 1] = N[i + 1]; sp.nrm[j * 3 + 2] = N[i + 2];
+        sp.dep[j] = K[i] + K[i + 1] / 255 - 128;
+        sp.emi[j] = K[i + 2] > 128 ? 9 : 0;
+      } else if (N[i + 3] > 40) sp.mask[j] = 2;              // ground shadow only
+    }
+    envCache.set(id, sp);
+    return sp;
+  }
+
+  // Composite the scene's structures into the bake: first every ground shadow (only
+  // onto ground-level pixels, once), then every sprite with the nearer-wins depth test.
+  function stampStructures(bx, by, lights) {
+    const world = sim.world, z = heightAt(world, 0, 0), zp = z * ZH, list = [];
+    if (!envMeta) return;
+    for (const st of world.structs) {
+      const sp = envSprite(st.id); if (!sp) continue;
+      const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
+      if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
+      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5 });
+      if (envMeta.sprites[st.id].glow && lights.length < 30) lights.push({ x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
+    }
+    for (const { sp, x0, y0 } of list) for (let yy = 0; yy < sp.h; yy++) {
+      const py = y0 + yy; if (py < 0 || py >= tbh) continue;
+      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;         // depth of a ground-level pixel on this row
+      for (let xx = 0; xx < sp.w; xx++) {
+        if (sp.mask[yy * sp.w + xx] !== 2) continue;
+        const px = x0 + xx; if (px < 0 || px >= tbw) continue;
+        const di = py * tbw + px; if (bSH[di] || bDEP[di] > ground) continue;
+        bSH[di] = 1; const i = di * 4;
+        bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64;
+      }
+    }
+    for (const { sp, x0, y0, base } of list) for (let yy = 0; yy < sp.h; yy++) {
+      const py = y0 + yy; if (py < 0 || py >= tbh) continue;
+      for (let xx = 0; xx < sp.w; xx++) {
+        const j = yy * sp.w + xx; if (sp.mask[j] !== 1) continue;
+        const px = x0 + xx; if (px < 0 || px >= tbw) continue;
+        const di = py * tbw + px, dep = base + sp.dep[j];
+        if (dep < bDEP[di] - 0.05) continue;
+        bDEP[di] = dep;
+        const i = di * 4, hpx = Math.max(0, Math.min(63, (4 * (dep - z * 0.5) - (py - by + zp)) / 1.333));
+        bALB[i] = sp.alb[j * 3]; bALB[i + 1] = sp.alb[j * 3 + 1]; bALB[i + 2] = sp.alb[j * 3 + 2]; bALB[i + 3] = 255;
+        bNRM[i] = sp.nrm[j * 3]; bNRM[i + 1] = sp.nrm[j * 3 + 1]; bNRM[i + 2] = sp.nrm[j * 3 + 2]; bNRM[i + 3] = zp * 4 + hpx * 4 > 255 ? 255 : zp * 4 + hpx * 4;
+        const e = sp.emi[j];
+        if (e) { const g = GLOW_ID[e]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; } else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
+        bEMI[i + 3] = 255;
+      }
+    }
+  }
   SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
 
   // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
@@ -251,8 +326,13 @@ export function createRenderer(canvas, sim, input) {
   const tileStyle = tileKey === 'classic' ? null : (TILE_STYLES[tileKey] || TILE_STYLES.cobble);
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
-  const putG = (px, py, alb, n, hpx, emiId) => {
+  // DEPTH (bDEP): distance toward the camera in tile units = ground x+y of the surface
+  // point + 0.0833 per px of height (0.5 per level). Terrain paints in painter's order and
+  // writes it; baked structures and actors composite against it ("nearer wins").
+  const DPX = 0.0833;
+  const putG = (px, py, alb, n, hpx, emiId, dep = -1e9) => {
     px |= 0; py |= 0; if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
+    bDEP[py * tbw + px] = dep;
     const i = (py * tbw + px) * 4;
     bALB[i] = alb[0]; bALB[i + 1] = alb[1]; bALB[i + 2] = alb[2]; bALB[i + 3] = 255;
     bNRM[i] = (n[0] * 0.5 + 0.5) * 255; bNRM[i + 1] = (n[1] * 0.5 + 0.5) * 255; bNRM[i + 2] = n[2] * 255; bNRM[i + 3] = hpx * 4;
@@ -262,15 +342,23 @@ export function createRenderer(canvas, sim, input) {
   };
 
   // Stamp a G-sprite (albedo/normal/emissive) into a target buffer at a foot point.
-  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH) {
+  // footKey = ground x+y under the foot; test = depth-test against DEP (actors): pixels
+  // behind nearer geometry draw as a dim x-ray silhouette instead of vanishing.
+  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false) {
     const x0 = (footX | 0) - sp.ax, y0 = (footY | 0) - sp.ay;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= H) continue;
       const hpx = baseH + (sp.h - yy) * 0.55;
+      const dep = footKey + DPX * (baseH + Math.max(0, sp.ay - yy));
       for (let xx = 0; xx < sp.w; xx++) {
         const j = yy * sp.w + xx; if (!sp.mask[j]) continue;
         const px = x0 + xx; if (px < 0 || px >= W) continue;
         const i = (py * W + px) * 4;
+        if (DEP) {
+          const di = py * W + px;
+          if (test && dep < DEP[di] - 0.6) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; continue; }
+          DEP[di] = dep;
+        }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
         NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
         const e = sp.emi[j];
@@ -289,14 +377,15 @@ export function createRenderer(canvas, sim, input) {
     const z = heightAt(world, x, y);
     const sx = bx + (x - y) * HW, sy = by + (x + y) * HH - z * ZH;
     if (sx < -TW || sx > tbw + TW || sy < -80 || sy > tbh + 20) return;
+    if (world.kind !== 'dungeon') return drawTileOutdoor(sx, sy, x, y, z);
     if (tileStyle) return drawTileStyled(sx, sy, x, y, z, m);
     const liq = m === 'water' || m === 'poison' || m === 'lava', hPix = z * ZH;
     const ramp = ELIT[m] || ELIT.soil;
     // cliff faces (walls tower over floors; floor lips fall into the abyss)
     if (m !== 'water') {
       const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
-      if (dSW > 0) faceG(sx, sy, dSW, ramp, 0, hPix);
-      if (dSE > 0) faceG(sx, sy, dSE, ramp, 1, hPix);
+      if (dSW > 0) faceG(sx, sy, dSW, ramp, 0, hPix, x, y);
+      if (dSE > 0) faceG(sx, sy, dSE, ramp, 1, hPix, x, y);
     }
     const zN = heightAt(world, x, y - 1), zW = heightAt(world, x - 1, y);
     const nwHi = zW > z, neHi = zN > z, e = 0.35;
@@ -311,7 +400,20 @@ export function createRenderer(canvas, sim, input) {
         if (neHi && py < 3 && dx >= w / 2 && idx > 0) idx--;
         const gx = (fbm(u + e, v, world.ss + 7) - fbm(u - e, v, world.ss + 7)) * (liq ? 0.6 : 2.6);
         const gy = (fbm(u, v + e, world.ss + 7) - fbm(u, v - e, world.ss + 7)) * (liq ? 0.6 : 2.6);
-        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emissiveFor(m, X | 0, x, y, py, u, v, world));
+        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emissiveFor(m, X | 0, x, y, py, u, v, world), x + y + (py + 0.5) / HH + z * 0.5);
+      }
+    }
+  }
+  // Outdoor ground tile: every pixel samples the continuous ground features (outdoorpaint.js).
+  function drawTileOutdoor(sx, sy, x, y, z) {
+    const world = sim.world, hPix = z * ZH;
+    for (let py = 0; py < 8; py++) {
+      const w = ROWW[py], xs = sx - w / 2;
+      for (let dx = 0; dx < w; dx++) {
+        const X = xs + dx, a = (X + 0.5 - sx) / HW, b = (py + 0.5) / HH;
+        const u = Math.min(0.999, Math.max(0, (a + b) / 2)), v = Math.min(0.999, Math.max(0, (b - a) / 2));
+        const r = paintOutdoor(world, x + u, y + v, x, y, X + 0.5 - sx, py + 0.5);
+        putG(X, sy + py, r.c, r.n, hPix, r.e, x + y + b + z * 0.5);
       }
     }
   }
@@ -338,7 +440,7 @@ export function createRenderer(canvas, sim, input) {
         const r = paintFloor(tileStyle, V, c, pool, isWall);
         let col = r.c;
         if ((nwHi && py < 3 && dx < w / 2) || (neHi && py < 3 && dx >= w / 2)) col = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72];
-        putG(X, sy + py, col, r.n || N_UP, hPix, r.e || 0);
+        putG(X, sy + py, col, r.n || N_UP, hPix, r.e || 0, x + y + (py + 0.5) / HH + z * 0.5);
       }
     }
   }
@@ -350,7 +452,7 @@ export function createRenderer(canvas, sim, input) {
       for (let k = 0; k < h; k++) {
         const r = paintWall(tileStyle, V, { along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
         const n = r.n ? norm3(nb[0] + r.n[0], nb[1] + r.n[1], nb[2] + r.n[2]) : nb;
-        putG(X, yTop + k, r.c, n, Math.max(0, hTop - k), r.e || 0);
+        putG(X, yTop + k, r.c, n, Math.max(0, hTop - k), r.e || 0, faceKey(x, y, side, i) + DPX * (hTop - k));
       }
     }
   }
@@ -366,7 +468,9 @@ export function createRenderer(canvas, sim, input) {
       default:       return 0;
     }
   }
-  function faceG(sx, sy, drop, ramp, side, hTop) {
+  // ground x+y along a tile's front edge for face column i (SW face: left→bottom vertex; SE: bottom→right)
+  const faceKey = (x, y, side, i) => x + y + (side === 0 ? 1 + (i + 0.5) / 8 : 2 - (i + 0.5) / 8);
+  function faceG(sx, sy, drop, ramp, side, hTop, tx, ty) {
     const world = sim.world, h = Math.min(drop * ZH, 30);
     const n = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
     for (let i = 0; i < 8; i++) {
@@ -376,7 +480,7 @@ export function createRenderer(canvas, sim, input) {
         const strat = fbm(X * 0.4, (yTop + k) * 0.35, world.hs + 13);
         const idx = Math.max(0, Math.floor(strat * 3) - (side === 1 ? 1 : 0));
         const wob = (vnoise(X * 0.8, (yTop + k) * 0.5, world.hs + 21) - 0.5) * 0.5;
-        putG(X, yTop + k, ramp[Math.min(idx, ramp.length - 1)], norm3(n[0] + wob, n[1], n[2]), Math.max(0, hTop - k), 0);
+        putG(X, yTop + k, ramp[Math.min(idx, ramp.length - 1)], norm3(n[0] + wob, n[1], n[2]), Math.max(0, hTop - k), 0, faceKey(tx, ty, side, i) + DPX * (hTop - k));
       }
     }
   }
@@ -385,7 +489,7 @@ export function createRenderer(canvas, sim, input) {
   // camera (ox, oy). Records up to two corruption flare anchors in the region.
   function bakeGBuffer(ox, oy) {
     bakeOx = ox; bakeOy = oy;
-    bALB.fill(0); bNRM.fill(0); bEMI.fill(0);
+    bALB.fill(0); bNRM.fill(0); bEMI.fill(0); bDEP.fill(-1e9); bSH.fill(0);
     const bx = MARGIN + ox, by = MARGIN + oy;
     let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
     for (const cx of [-MARGIN, nvw + MARGIN]) for (const cy of [-MARGIN, nvh + MARGIN]) for (const zz of [0, 7]) {
@@ -405,15 +509,16 @@ export function createRenderer(canvas, sim, input) {
       const pk = propAt(world, tx, ty);
       if (pk) {
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
-        stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
+        stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
         if (PROP_LIGHT[pk]) lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow
       }
       const rk = resourceAt(world, tx, ty);
-      if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH);
+      if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
       const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul / ice / water)
       const hl = tileStyle ? (mm === world.level.th.hazard ? POOL_LIGHT[variantFor(world.theme, tileVariant).pool] : null) : HAZARD_LIGHT[mm];
       if (hl) hazards.push({ x: tx, y: ty, z, color: hl, s: hash2(tx, ty, 1234) });
     }
+    if (world.kind !== 'dungeon') stampStructures(bx, by, lights);
     // thin the hazard pools to a few representatives spread apart, then pool all
     // candidates; render picks the two nearest the hero each frame.
     hazards.sort((a, b) => b.s - a.s);
@@ -425,7 +530,12 @@ export function createRenderer(canvas, sim, input) {
   let flash = null;
   sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
   // descending / restoring rebuilds the world — rebuild seed-keyed props + re-bake.
-  sim.bus.on('levelChanged', () => { props = buildProps(sim.world.seed); terrValid = false; flash = null; });
+  const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
+  props = withExit(props);
+  let banner = null, outMap = null;
+  const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
+  sim.bus.on('levelChanged', () => { props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   function render(alpha, now) {
     const p = sim.state.player;
@@ -443,6 +553,7 @@ export function createRenderer(canvas, sim, input) {
       sALB.set(bALB.subarray(b0, b0 + len), s0);
       sNRM.set(bNRM.subarray(b0, b0 + len), s0);
       sEMI.set(bEMI.subarray(b0, b0 + len), s0);
+      sDEP.set(bDEP.subarray((srcY + y) * tbw + srcX, (srcY + y) * tbw + srcX + nvw), y * nvw);
     }
 
     // stamp actors (skeletons + hero) into the window G-buffer, depth-sorted by
@@ -453,9 +564,9 @@ export function createRenderer(canvas, sim, input) {
       if (p.moving && Math.hypot(vdx, vdy) > 1e-4) heroDir = dir8(vdx - vdy, vdx + vdy);
       const clip = p.moving ? heroAtlas.meta.clips.walk : heroAtlas.meta.clips.idle;
       const fr = clip.start + (Math.floor((now / 1000) * clip.fps) % clip.len);
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH });
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     } else {
-      draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH });
+      draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
     for (const e of sim.world.enemies || []) {
       const skelAtlas = skelAtlases[(hash2(Math.floor(e.x), Math.floor(e.y), 77) * SKELETONS.length) | 0];
@@ -467,11 +578,11 @@ export function createRenderer(canvas, sim, input) {
       const ed = dir8(fdx - fdy, fdx + fdy);
       const clip = skelAtlas.meta.clips.idle;
       const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.x * 7) % clip.len);
-      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey, h: ez * ZH });
+      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey, h: ez * ZH, k: e.x + e.y });
     }
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
-    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h);
+    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true);
 
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
@@ -482,7 +593,8 @@ export function createRenderer(canvas, sim, input) {
     // hero carry-light + corruption flares (all in native/scratch pixel space)
     const hx = ox + P.sx, hy = oy + P.sy - 16, hz = pz * ZH + 20;
     const L = [[hx, hy, hz], [0, 0, 0], [0, 0, 0]];
-    const LC = [[1.9 * WISP, 1.15 * WISP, 0.42 * WISP], [0, 0, 0], [0, 0, 0]];
+    const hl = sim.world.kind === 'dungeon' ? 1 : 0.42;             // at dusk outdoors the hero's ember-wisp is a glow, not a torch
+    const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
     // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
     const near = flares.map((s) => ({ s, d: Math.hypot(s.x - ix, s.y - iy) })).sort((a, b) => a.d - b.d).slice(0, 2);
     near.forEach(({ s }, i) => {
@@ -503,10 +615,14 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform2f(U(lightP, 'uRes'), nvw, nvh);
     gl.uniform1f(U(lightP, 'uTime'), t);
     gl.uniform1f(U(lightP, 'uAmb'), AMB);
-    gl.uniform1f(U(lightP, 'uWispA'), WISP);
+    gl.uniform1f(U(lightP, 'uWispA'), sim.world.kind === 'dungeon' ? WISP : WISP * 0.6);
     gl.uniform3fv(U(lightP, 'uL'), L.flat());
     gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
     // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
+    const outdoor = sim.world.kind !== 'dungeon';
+    gl.uniform3f(U(lightP, 'uSunL'), -0.72, 0.16, 0.67);                 // low sun from the upper left (matches the baked shadows)
+    gl.uniform3fv(U(lightP, 'uSunC'), outdoor ? [0.78, 0.55, 0.40] : [0, 0, 0]);   // late, low, amber
+    gl.uniform3fv(U(lightP, 'uAmbC'), outdoor ? [0.31, 0.29, 0.44] : [0, 0, 0]);   // violet dusk, like the dungeon's ambient
     gl.uniform2f(U(lightP, 'uWispPx'), hx + 17, oy + P.sy - 42 + Math.sin(t * 2.1) * 1.5);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
@@ -533,7 +649,8 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    drawMinimap(ix, iy);
+    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }
+    drawBanner(now);
     const j = input.joystick();
     if (j) {
       const k = vw / window.innerWidth;
@@ -545,6 +662,55 @@ export function createRenderer(canvas, sim, input) {
 
   // Fog-of-war minimap, top-right: discovered rooms in the theme tint, corridors
   // that lead out of them (so unexplored exits are visible), and the hero marker.
+  // Outdoor minimap: the whole map pre-rendered once per scene (ground, water, roads,
+  // structures), shown top-down like the dungeon's, with the hero dot.
+  function drawOutdoorMinimap(ix, iy) {
+    const w = sim.world, k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
+    const bx = vw - MM - pad - 10 * k, by = 58 * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
+    if (!outMap) {
+      const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N);
+      const COL = [[46, 64, 42], [96, 80, 60], [104, 98, 104], [40, 86, 118], [70, 60, 48], [128, 110, 60]];
+      for (let py = 0; py < N; py++) for (let px = 0; px < N; px++) {
+        const tx = x0 + (px + 0.5) * span / N, ty = y0 + (py + 0.5) * span / N, m = materialAt(w, tx, ty), i = (py * N + px) * 4;
+        const cc = COL[['grass', 'dirt', 'cobble', 'water', 'bank', 'field'].indexOf(m)] || COL[0];
+        img.data[i] = cc[0]; img.data[i + 1] = cc[1]; img.data[i + 2] = cc[2]; img.data[i + 3] = 235;
+      }
+      x.putImageData(img, 0, 0);
+      for (const st of w.structs) {
+        const f = envMeta && envMeta.sprites[st.id]; if (!f) continue;
+        const tree = /pine|oak|autumn|dead|grove|mountain|rock/.test(st.id), sx = (st.x - x0) * N / span, sy = (st.y - y0) * N / span;
+        x.fillStyle = /mountain/.test(st.id) ? 'rgba(120,118,128,0.9)' : tree ? 'rgba(24,44,28,0.9)' : 'rgba(170,86,70,0.95)';
+        const r = tree ? (/grove|mountain/.test(st.id) ? 3 : 1.3) : 2.2; x.fillRect(sx - r, sy - r, r * 2, r * 2);
+      }
+      outMap = c;
+    }
+    octx.fillStyle = 'rgba(10,8,16,0.60)'; octx.fillRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
+    octx.imageSmoothingEnabled = true; octx.drawImage(outMap, bx, by, MM, MM);
+    octx.strokeStyle = 'rgba(130,120,160,0.35)'; octx.lineWidth = Math.max(1, k); octx.strokeRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
+    octx.fillStyle = '#f0a500'; octx.beginPath(); octx.arc(bx + (ix - x0) / span * MM, by + (iy - y0) / span * MM, Math.max(2, 2.6 * k), 0, Math.PI * 2); octx.fill();
+    octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.stroke();
+  }
+  // Place names float over nearby landmarks (the tavern, the guild hall, the keep…).
+  function drawLabels(ox, oy, ix, iy) {
+    const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
+    octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
+    for (const L of sim.world.labels || []) {
+      const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60) continue;
+      const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
+      const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy = (oy + P.sy - top - 10) * S;
+      if (sx < 0 || sx > vw || sy < 0 || sy > vh) continue;
+      const a = Math.max(0, Math.min(1, (60 - d) / 20));
+      octx.fillStyle = `rgba(8,5,14,${0.7 * a})`; octx.fillText(L.text, sx + k, sy + k);
+      octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
+    }
+  }
+  function drawBanner(now) {
+    if (!banner || now > banner.until) return;
+    const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
+    octx.font = `600 ${Math.round(20 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
+    octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(banner.text, vw / 2 + 1.5 * k, 150 * k + 1.5 * k);
+    octx.fillStyle = `rgba(240,200,130,${a})`; octx.fillText(banner.text, vw / 2, 150 * k);
+  }
   function drawMinimap(ix, iy) {
     const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;
     if (!rooms.length) return;

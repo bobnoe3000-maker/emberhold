@@ -15,7 +15,11 @@ const WORLD_SEED = 20260807;
 const THEME = new URLSearchParams(location.search).get('theme') || undefined;
 
 const canvas = document.getElementById('game');
-const sim = createSim(WORLD_SEED, THEME);
+// ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick).
+const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
+// ?bset=A|B|C picks the building art option under review (see docs).
+const BSET = new URLSearchParams(location.search).get('bset') || 'A';
+const sim = createSim(WORLD_SEED, THEME, { scene: SCENE, bset: BSET });
 if (location.search.includes('dev')) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
@@ -23,7 +27,8 @@ createHud(sim);   // subscribe before restore, so a loaded counters event repain
 
 // Restore a prior session for this world (player, counters, harvested resources).
 // Must run before the first render so restored mods are reflected in chunk bakes.
-loadInto(sim);
+// an explicit ?scene= link (review / preview) starts fresh there instead of resuming a save
+if (!new URLSearchParams(location.search).has('scene')) loadInto(sim);
 createAutosave(sim);
 
 // Hero: deterministic recipe from the world seed's recipe stream.

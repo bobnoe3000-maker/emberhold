@@ -6,6 +6,7 @@
 // snapshot: player, counters, the mods/HP overlay, and the discovered-room fog.
 
 import { createWorld, isWalkable, hitResource, heightAt, propAt, CONSUMABLE_PROP } from './world.js';
+import { createOutdoor, oExitAt } from './outdoor.js';
 import { createBus, createCommandQueue } from './bus.js';
 
 export const TICK_HZ = 20;
@@ -29,11 +30,15 @@ function findSpawn(world) {
   return { x: world.spawn.x, y: world.spawn.y };
 }
 
-export function createSim(seed, theme) {
+// Scenes: 'town' (Thornwick), 'overland' (the Hollow Vale) and 'dungeon' (the Old
+// Barrows, depth 0…n). Walking into an exit zone or tapping the Barrows stairs /
+// the dungeon's way up travels between them.
+export function createSim(seed, theme, { scene = 'dungeon', bset = 'A' } = {}) {
   const baseSeed = seed >>> 0;
   const override = theme;                                  // fixed theme (preview) or undefined
   const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
-  const buildWorld = (d) => createWorld(levelSeed(d), override, d);
+  let curScene = scene;
+  const buildWorld = (d) => (curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, bset));
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -41,7 +46,7 @@ export function createSim(seed, theme) {
 
   const spawn = findSpawn(world);
   const state = {
-    t: 0, depth: 0,
+    t: 0, depth: 0, get scene() { return curScene; },
     player: {
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
@@ -76,6 +81,17 @@ export function createSim(seed, theme) {
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme });
   }
 
+  // Travel to another scene and arrive at a named spot (or its default spawn).
+  function travel(to, arrive) {
+    curScene = to; state.depth = 0;
+    world = buildWorld(0);
+    const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || null;
+    const p = state.player;
+    const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
+    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene });
+  }
+
   function applyCommand(cmd) {
     const p = state.player;
     if (cmd.type === 'move') {
@@ -94,6 +110,8 @@ export function createSim(seed, theme) {
       if (prop) {
         if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
         face(p, dx, dy);
+        if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon'); return; }          // into the Old Barrows
+        if (prop === 'exit') { travel('overland', 'barrows'); return; }                               // back up to the surface
         if (prop === 'stairs') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
@@ -138,13 +156,14 @@ export function createSim(seed, theme) {
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
+    if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
     state.t += TICK_DT;
   }
 
   function snapshot() {
     const p = state.player;
     return {
-      seed: baseSeed, depth: state.depth, t: state.t,
+      seed: baseSeed, scene: curScene, depth: state.depth, t: state.t,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
@@ -156,6 +175,7 @@ export function createSim(seed, theme) {
   function restore(data) {
     state.t = data.t ?? 0;
     state.depth = data.depth ?? 0;
+    curScene = data.scene ?? 'dungeon';
     world = buildWorld(state.depth);                       // rebuild the saved level
     const p = state.player;
     p.x = p.px = data.player.x; p.y = p.py = data.player.y;
@@ -171,7 +191,7 @@ export function createSim(seed, theme) {
     for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
     world.discovered.clear();
     for (const id of data.discovered ?? []) world.discovered.add(id);
-    bus.emit('levelChanged', { depth: state.depth, theme: world.theme });   // renderer resets caches
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     bus.emit('countersChanged', { ...state.counters });
   }
 

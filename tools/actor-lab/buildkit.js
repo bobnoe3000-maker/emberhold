@@ -1,0 +1,389 @@
+// buildkit.js — Emberfall's own building kit: procedural low-poly buildings authored
+// in code (no third-party models), in three art-direction options. Every building is
+// composed from a few parts — stone/plaster/plank walls with course textures, timber
+// framing, gable / hip / conical roofs in slate, thatch or lead, lit windows, doors,
+// chimneys, crenellations, buttresses, signs, banners — and baked by envlab.js
+// exactly like the KayKit models (albedo, normals, depth key, shadow, lit windows).
+//
+// Units: 1 unit = 10 game tiles; the 56 px knight stands ~0.57 units tall, so a door
+// is ~0.5 and a storey ~0.55 (grounded, not chibi). Meshes flagged userData.glow are
+// window glass (baked emissive).
+import * as THREE from 'three';
+
+// ── deterministic rng for texture + detail variation ────────────────────────
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const shade = (c, k) => c.map((v) => Math.max(0, Math.min(255, Math.round(v * k))));
+const css = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
+
+// ── procedural textures (64 px tiles, nearest-filtered; one tile ≈ TEX_UNITS units) ──
+const TEX_UNITS = 0.5;
+const texCache = new Map();
+function tex(kind, base, seed = 1, alt) {
+  const key = kind + base + seed + (alt || '');
+  if (texCache.has(key)) return texCache.get(key);
+  const S = 64, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(seed * 977 + kind.length);
+  const b = hex(base), a2 = alt ? hex(alt) : shade(b, 0.62);
+  x.fillStyle = css(b); x.fillRect(0, 0, S, S);
+  const rect = (col, X, Y, W, H) => { x.fillStyle = css(col); x.fillRect(X, Y, W, H); };
+  if (kind === 'ashlar' || kind === 'rubble' || kind === 'field') {         // stone courses
+    const ch = kind === 'ashlar' ? 11 : kind === 'rubble' ? 8 : 9;
+    for (let y = 0; y < S; y += ch) {
+      let X = -((y / ch) % 2) * (kind === 'ashlar' ? 11 : 6) - r() * 4;
+      while (X < S) {
+        const w = kind === 'ashlar' ? 22 : 8 + r() * 14, k = 0.86 + r() * 0.26;
+        rect(shade(b, k), X + 1, y + 1, w - 1, ch - 1);
+        rect(shade(b, k * 1.12), X + 1, y + 1, w - 1, 1);                // lit top edge
+        X += w;
+      }
+      rect(a2, 0, y, S, 1);
+    }
+  } else if (kind === 'plaster') {
+    for (let i = 0; i < 26; i++) { const k = 0.9 + r() * 0.16; rect(shade(b, k), r() * S, r() * S, 4 + r() * 14, 3 + r() * 8); }
+    for (let i = 0; i < 6; i++) rect(shade(b, 0.8), r() * S, S - 6 - r() * 10, 2 + r() * 6, 10);       // damp stains low down
+  } else if (kind === 'planks') {
+    for (let X = 0; X < S; X += 8) { rect(shade(b, 0.85 + r() * 0.25), X, 0, 7, S); rect(a2, X + 7, 0, 1, S); if (r() < 0.5) rect(shade(b, 0.7), X + 3, r() * S, 1, 3); }
+  } else if (kind === 'slate' || kind === 'lead') {                         // roof courses, staggered
+    const ch = kind === 'slate' ? 6 : 16;
+    for (let y = 0; y < S; y += ch) {
+      let X = ((y / ch) % 2) * 5;
+      for (; X < S + 10; X += kind === 'slate' ? 10 : 16) { rect(shade(b, 0.82 + r() * 0.28), X, y, (kind === 'slate' ? 9 : 15), ch - 1); }
+      rect(a2, 0, y + ch - 1, S, 1);
+    }
+  } else if (kind === 'thatch') {
+    for (let y = 0; y < S; y += 10) { rect(shade(b, 0.7), 0, y + 9, S, 1); }
+    for (let i = 0; i < 260; i++) { const X = r() * S, Y = r() * S; rect(shade(b, 0.78 + r() * 0.4), X, Y, 1, 3 + r() * 5); }
+  } else if (kind === 'shingle') {
+    for (let y = 0; y < S; y += 8) { let X = ((y / 8) % 2) * 4; for (; X < S; X += 8) rect(shade(b, 0.8 + r() * 0.3), X, y, 7, 7); rect(a2, 0, y + 7, S, 1); }
+  } else if (kind === 'palisade') {
+    for (let X = 0; X < S; X += 10) { rect(shade(b, 0.85 + r() * 0.2), X, 0, 9, S); rect(shade(b, 1.12), X + 1, 0, 2, S); rect(a2, X + 9, 0, 1, S); }
+  }
+  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; texCache.set(key, t);
+  return t;
+}
+const mat = (t, color) => new THREE.MeshStandardMaterial({ map: t || null, color: color ? new THREE.Color(color) : 0xffffff });
+
+// box with UVs scaled to world size so textures keep one density everywhere
+function box(w, h, d, m, x = 0, y = 0, z = 0, g) {
+  const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
+  const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, uv.getX(i) * dims[f][0] / TEX_UNITS, uv.getY(i) * dims[f][1] / TEX_UNITS); }
+  const mesh = new THREE.Mesh(geo, m); mesh.position.set(x, y + h / 2, z); if (g) g.add(mesh); return mesh;
+}
+
+// gable roof over a w (x) × d (z) rectangle, ridge along x, eaves at y0, rise `rise`
+function gable(g, w, d, y0, rise, m, wallM, over = 0.08, thick = 0.05) {
+  const W = w / 2 + over, D = d / 2 + over, pos = [], uvs = [], idx = [];
+  const slope = Math.hypot(D, rise);
+  const quad = (a, b, c, e, u1, v1) => { const n = pos.length / 3; pos.push(...a, ...b, ...c, ...e); uvs.push(0, 0, u1, 0, u1, v1, 0, v1); idx.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+  quad([-W, y0, D], [W, y0, D], [W, y0 + rise, 0], [-W, y0 + rise, 0], 2 * W / TEX_UNITS, slope / TEX_UNITS);   // front slope
+  quad([W, y0, -D], [-W, y0, -D], [-W, y0 + rise, 0], [W, y0 + rise, 0], 2 * W / TEX_UNITS, slope / TEX_UNITS);  // back slope
+  // underside thickness strip along the eaves
+  quad([-W, y0 - thick, D], [W, y0 - thick, D], [W, y0, D], [-W, y0, D], 2 * W / TEX_UNITS, 0.1);
+  quad([W, y0 - thick, -D], [-W, y0 - thick, -D], [-W, y0, -D], [W, y0, -D], 2 * W / TEX_UNITS, 0.1);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geo.setIndex(idx); geo.computeVertexNormals();
+  const roof = new THREE.Mesh(geo, m); roof.material.side = THREE.DoubleSide; g.add(roof);
+  // gable end triangles in the wall material
+  const tp = [], tu = [];
+  for (const sx of [-1, 1]) { const X = sx * (w / 2); tp.push(X, y0, -d / 2, X, y0, d / 2, X, y0 + rise * (d / 2) / D, 0); tu.push(0, 0, d / TEX_UNITS, 0, d / 2 / TEX_UNITS, rise / TEX_UNITS); }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(tp, 3)); tg.setAttribute('uv', new THREE.Float32BufferAttribute(tu, 2)); tg.computeVertexNormals();
+  const tri = new THREE.Mesh(tg, wallM.clone()); tri.material.side = THREE.DoubleSide; g.add(tri);
+  return roof;
+}
+function pyramid(g, w, y0, rise, m, sides = 4, over = 0.08) {
+  const c = new THREE.Mesh(new THREE.ConeGeometry((w / 2 + over) * (sides === 4 ? Math.SQRT2 : 1), rise, sides, 1), m);
+  c.position.y = y0 + rise / 2; if (sides === 4) c.rotation.y = Math.PI / 4; g.add(c); return c;
+}
+
+// window on a wall face: frame + glowing glass (+ optional pointed head / shutters)
+function windowOn(g, S, face, u, y, w = 0.12, h = 0.16, opt = {}) {
+  const { wallW, wallD } = face, t = 0.025;
+  const place = (mesh, off) => {
+    if (face.side === 'z') { mesh.position.set(u, y, wallD / 2 + off); }
+    else { mesh.position.set(wallW / 2 + off, y, u); mesh.rotation.y = Math.PI / 2; }
+    g.add(mesh);
+  };
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, h + 0.04, t), S.m.trim); place(frame, 0.004);
+  const lit = opt.lit ?? S.rnd() < 0.65;                 // not every window is lit
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), lit ? S.m.glass : S.m.dark); glass.userData.glow = lit; place(glass, 0.012);
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.014, h, t), S.m.trim); place(bar, 0.02);
+  if (opt.pointed) { const p = new THREE.Mesh(new THREE.ConeGeometry(w / 2 + 0.02, 0.09, 4, 1), S.m.trim); p.rotation.z = 0; p.scale.z = 0.25; place(p, 0.004); p.position.y = y + h / 2 + 0.045; p.rotation.y += Math.PI / 4; }
+  if (opt.shutters) for (const sx of [-1, 1]) { const sh = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, h + 0.02, t), S.m.wood); place(sh, 0.01); if (face.side === 'z') sh.position.x += sx * (w * 0.78); else sh.position.z += sx * (w * 0.78); }
+}
+function doorOn(g, S, face, u, w = 0.2, h = 0.42, arch = true) {
+  const t = 0.03, d = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), S.m.door), fr = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, h + 0.04, t * 0.8), S.m.trim);
+  for (const [mesh, off] of [[fr, 0.004], [d, 0.014]]) {
+    if (face.side === 'z') mesh.position.set(u, h / 2, face.wallD / 2 + off); else { mesh.position.set(face.wallW / 2 + off, h / 2, u); mesh.rotation.y = Math.PI / 2; }
+    g.add(mesh);
+  }
+  if (arch) { const a = new THREE.Mesh(new THREE.CylinderGeometry(w / 2 + 0.025, w / 2 + 0.025, t * 0.8, 10, 1, false, 0, Math.PI), S.m.trim); a.rotation.x = Math.PI / 2; a.rotation.z = Math.PI / 2;
+    if (face.side === 'z') { a.position.set(u, h, face.wallD / 2 + 0.004); a.rotation.set(Math.PI / 2, 0, Math.PI / 2); } else { a.position.set(face.wallW / 2 + 0.004, h, u); a.rotation.set(0, 0, 0); a.rotation.x = Math.PI / 2; a.rotation.y = Math.PI / 2; a.rotation.z = 0; }
+    g.add(a); }
+}
+// timber framing on a wall face between y0..y1: posts, rails, braces
+function timber(g, S, face, y0, y1, n = 3, braces = true) {
+  const t = 0.03, span = face.side === 'z' ? face.wallW : face.wallD, out = (face.side === 'z' ? face.wallD : face.wallW) / 2 + 0.012;
+  const add = (w, h, u, y, rot = 0) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), S.m.beam);
+    if (face.side === 'z') { b.position.set(u, y, out); b.rotation.z = rot; } else { b.position.set(out, y, u); b.rotation.y = Math.PI / 2; b.rotation.x = -rot; b.rotation.order = 'YXZ'; b.rotation.set(0, Math.PI / 2, 0); b.rotateZ(rot); }
+    g.add(b); };
+  for (let i = 0; i <= n; i++) add(0.04, y1 - y0, -span / 2 + (span * i) / n, (y0 + y1) / 2);
+  add(span + 0.02, 0.04, 0, y0 + 0.02); add(span + 0.02, 0.04, 0, y1 - 0.02); add(span, 0.035, 0, (y0 + y1) / 2);
+  if (braces) for (let i = 0; i < n; i += 2) { const cw = span / n, len = Math.hypot(cw, (y1 - y0) / 2); add(0.035, len, -span / 2 + cw * (i + 0.5), y0 + (y1 - y0) * 0.25, Math.atan2(cw, (y1 - y0) / 2) * (i % 4 ? 1 : -1)); }
+}
+function chimney(g, S, x, z, y0, h) { box(0.1, h, 0.1, S.m.stone, x, y0, z, g); box(0.13, 0.03, 0.13, S.m.stoneDark, x, y0 + h, z, g); }
+function crenels(g, S, w, d, y, m = S.m.stone, size = 0.07) {
+  const step = size * 2;
+  for (let x = -w / 2 + size / 2; x <= w / 2; x += step) for (const z of [-d / 2 + size / 2, d / 2 - size / 2]) box(size, size, size, m, x, y, z, g);
+  for (let z = -d / 2 + size / 2 + step; z <= d / 2 - step; z += step) for (const x of [-w / 2 + size / 2, w / 2 - size / 2]) box(size, size, size, m, x, y, z, g);
+}
+function banner(g, S, x, y, z, side = 'z', h = 0.3) {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.1, h, 0.012), S.m.banner);
+  if (side === 'z') b.position.set(x, y - h / 2, z); else { b.position.set(x, y - h / 2, z); b.rotation.y = Math.PI / 2; }
+  g.add(b); const p = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.015, 0.015), S.m.trim); p.position.set(b.position.x, y, b.position.z); p.rotation.y = b.rotation.y; g.add(p);
+}
+function sign(g, S, x, y, z) {
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.16), S.m.trim); arm.position.set(x, y, z + 0.08); g.add(arm);
+  const bd = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.12), S.m.signboard); bd.position.set(x, y - 0.07, z + 0.12); g.add(bd);
+}
+function barrel(g, S, x, z) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 8), S.m.wood); b.position.set(x, 0.06, z); g.add(b); const h = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.012, 8), S.m.trim); h.position.set(x, 0.09, z); g.add(h); }
+function hay(g, S, x, z, r = 0.09) { const h = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 1.1, r * 1.3, 8), S.m.hay); h.position.set(x, r * 0.65, z); g.add(h); const c = new THREE.Mesh(new THREE.ConeGeometry(r * 1.05, r * 0.7, 8), S.m.hay); c.position.set(x, r * 1.3 + r * 0.35, z); g.add(c); }
+function fenceRun(g, S, x0, z0, x1, z1) {
+  const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(2, Math.round(len / 0.14)), ang = Math.atan2(x1 - x0, z1 - z0);
+  for (let i = 0; i <= n; i++) { const t = i / n; box(0.025, 0.14, 0.025, S.m.wood, x0 + (x1 - x0) * t, 0, z0 + (z1 - z0) * t, g); }
+  for (const y of [0.05, 0.11]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.02, len), S.m.wood); r.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); r.rotation.y = ang; g.add(r); }
+}
+
+// ── the three art-direction options ──────────────────────────────────────────
+// A · Timber & Slate: fieldstone ground floor, limewashed plaster over dark oak
+//     framing, jettied upper storey, steep blue-grey slate. Paperback-D&D village.
+// B · Thatch & Rubble: older, earthier. Rubble stone and wattle-and-daub, rough
+//     posts, heavy thatch; timber palisades and a motte keep.
+// C · Gothic Stone: cold dark ashlar, buttresses, pointed windows, steep lead roofs,
+//     iron finials and blood-red banners. Closest to the dungeon's mood.
+export const STYLES = {
+  A: { key: 'A', name: 'Timber & Slate', lower: ['field', '#6c665c'], upper: ['plaster', '#cdbf9f'], roof: ['slate', '#434856'], roofRise: 1.05,
+    wood: '#3a2c22', beam: '#2c2019', door: '#4a3526', trim: '#2a221d', banner: '#6b2226', hay: '#8a7a4c', signboard: '#5a4432', jetty: 0.04, timber: true },
+  B: { key: 'B', name: 'Thatch & Rubble', lower: ['rubble', '#736955'], upper: ['plaster', '#a08c66'], roof: ['thatch', '#8a7446'], roofRise: 0.95,
+    wood: '#4a3a2a', beam: '#3a2d22', door: '#503c2a', trim: '#33271e', banner: '#5a3a24', hay: '#8c7a48', signboard: '#5a4432', jetty: 0, timber: false, thatch: true },
+  C: { key: 'C', name: 'Gothic Stone', lower: ['ashlar', '#4f4c58'], upper: ['ashlar', '#4f4c58'], roof: ['lead', '#2a2b33'], roofRise: 1.6,
+    wood: '#34282a', beam: '#26201f', door: '#3a2a26', trim: '#1f1b20', banner: '#6e1c22', hay: '#7c6d45', signboard: '#4a3a33', jetty: 0, timber: false, gothic: true },
+};
+function kit(style, seed = 1) {
+  const s = STYLES[style], g = new THREE.Group();
+  const m = {
+    lower: mat(tex(s.lower[0], s.lower[1], seed)), upper: mat(tex(s.upper[0], s.upper[1], seed + 1)),
+    roof: mat(tex(s.roof[0], s.roof[1], seed + 2)), stone: mat(tex(s.lower[0] === 'ashlar' ? 'ashlar' : 'field', s.lower[1], seed + 3)),
+    stoneDark: mat(null, shade(hex(s.lower[1]), 0.6).reduce((a, v) => a + v.toString(16).padStart(2, '0'), '#')),
+    wood: mat(tex('planks', s.wood, seed + 4)), beam: mat(null, s.beam), door: mat(tex('planks', s.door, seed + 5)), trim: mat(null, s.trim),
+    glass: mat(null, '#e0a050'), dark: mat(null, '#1c1a22'), banner: mat(null, s.banner), hay: mat(tex('thatch', s.hay, seed + 6)), signboard: mat(null, s.signboard),
+    palisade: mat(tex('palisade', s.wood, seed + 7)),
+  };
+  return { S: { ...s, m, rnd: rng(seed * 31 + 7) }, g };
+}
+
+// A walled storey block with windows on the two camera-facing sides (+z and +x).
+function storeyBlock(S, g, w, d, y0, h, wallM, winRow, opts = {}) {
+  const b = box(w, h, d, wallM, 0, y0, 0, g);
+  const fz = { side: 'z', wallW: w, wallD: d }, fx = { side: 'x', wallW: w, wallD: d };
+  if (winRow) {
+    const nz = Math.max(1, Math.round(w / 0.32)), nx = Math.max(1, Math.round(d / 0.32));
+    for (let i = 0; i < nz; i++) { const u = -w / 2 + (w * (i + 0.5)) / nz; if (opts.doorZ !== undefined && Math.abs(u - opts.doorZ) < 0.16) continue; windowOn(g, S, fz, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic, shutters: !S.gothic && !S.thatch && i % 2 === 0 }); }
+    for (let i = 0; i < nx; i++) { const u = -d / 2 + (d * (i + 0.5)) / nx; windowOn(g, S, fx, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic }); }
+  }
+  if (opts.timber && S.timber) { timber(g, S, fz, y0, y0 + h, Math.max(2, Math.round(w / 0.25))); timber(g, S, fx, y0, y0 + h, Math.max(2, Math.round(d / 0.25))); }
+  return b;
+}
+function roofOver(S, g, w, d, y0, rise, alongX = true) {
+  const r = new THREE.Group(); g.add(r);
+  if (!alongX) r.rotation.y = Math.PI / 2;
+  const [W, D] = alongX ? [w, d] : [d, w];
+  gable(r, W, D, y0, rise * D / 2, S.m.roof, S.m.upper, S.thatch ? 0.1 : 0.07, S.thatch ? 0.09 : 0.04);
+  if (S.thatch) { const rr = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, W + 0.2, 8), S.m.roof); rr.rotation.z = Math.PI / 2; rr.position.y = y0 + rise * D / 2 + 0.01; r.add(rr); }
+  if (S.gothic) { for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.14, 4), S.m.trim); f.position.set(sx * W / 2, y0 + rise * D / 2 + 0.06, 0); r.add(f); } }
+  return r;
+}
+function buttresses(S, g, w, d, h) {
+  for (let i = 0; i <= 2; i++) { const x = -w / 2 + (w * i) / 2; box(0.07, h * 0.75, 0.1, S.m.stone, x, 0, d / 2 + 0.04, g); }
+  for (let i = 1; i <= 1; i++) box(0.1, h * 0.75, 0.07, S.m.stone, w / 2 + 0.04, 0, -d / 2 + (d * i) / 2, g);
+}
+
+// ── building types ───────────────────────────────────────────────────────────
+const TYPES = {
+  house(S, g, r) {
+    const w = 0.72, d = 0.58, h1 = 0.5, h2 = S.thatch ? 0 : 0.42;
+    storeyBlock(S, g, w, d, 0, h1, S.m.lower, true, { doorZ: -0.12 });
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.12, 0.17, 0.36, !S.timber);
+    let top = h1;
+    if (h2) { const j = S.jetty; storeyBlock(S, g, w + j * 2, d + j * 2, h1, h2, S.m.upper, true, { timber: true }); top += h2; }
+    roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, top, S.roofRise);
+    chimney(g, S, w / 2 - 0.12, -d / 4, top, 0.32 + S.roofRise * 0.2);
+    if (S.gothic) buttresses(S, g, w, d, h1);
+  },
+  tavern(S, g, r) {
+    const w = 1.0, d = 0.7, h1 = 0.55, h2 = 0.48;
+    storeyBlock(S, g, w, d, 0, h1, S.m.lower, true, { doorZ: 0.05 });
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, 0.05, 0.22, 0.4, true);
+    const j = S.jetty; storeyBlock(S, g, w + j * 2, d + j * 2, h1, h2, S.thatch ? S.m.lower : S.m.upper, true, { timber: true });
+    roofOver(S, g, w + j * 2, d + j * 2, h1 + h2, S.roofRise);
+    // back wing, lower, at right angles
+    const wing = new THREE.Group(); wing.position.set(-0.3, 0, -0.55); g.add(wing);
+    storeyBlock(S, wing, 0.5, 0.45, 0, 0.5, S.m.lower, false); roofOver(S, wing, 0.5, 0.45, 0.5, S.roofRise, false);
+    chimney(g, S, 0.34, -0.12, h1 + h2, 0.45); chimney(g, S, -0.38, 0.1, h1 + h2, 0.4);
+    sign(g, S, 0.32, 0.5, d / 2); barrel(g, S, 0.42, 0.46); barrel(g, S, 0.54, 0.44); barrel(g, S, -0.45, 0.45);
+    if (S.gothic) buttresses(S, g, w, d, h1);
+  },
+  inn(S, g, r) {
+    const w = 1.2, d = 0.66, h = [0.52, 0.46, 0.44];
+    let y = 0; h.forEach((hh, i) => { storeyBlock(S, g, w + (i ? S.jetty * 2 : 0), d + (i ? S.jetty * 2 : 0), y, hh, i ? (S.thatch ? S.m.lower : S.m.upper) : S.m.lower, true, { doorZ: 0.3, timber: i > 0 }); y += hh; });
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, 0.3, 0.24, 0.42, true);
+    roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, y, S.roofRise);
+    // dormers on the front slope
+    for (const x of [-0.3, 0.3]) { const dm = new THREE.Group(); dm.position.set(x, y + 0.05, d / 4); g.add(dm); storeyBlock(S, dm, 0.2, 0.2, 0, 0.16, S.m.upper, false); windowOn(dm, S, { side: 'z', wallW: 0.2, wallD: 0.2 }, 0, 0.09, 0.09, 0.1); roofOver(S, dm, 0.2, 0.22, 0.16, S.roofRise, false); }
+    chimney(g, S, -0.5, 0, y, 0.42); chimney(g, S, 0.52, -0.1, y, 0.38);
+    // stable lean-to on the right
+    const st = new THREE.Group(); st.position.set(w / 2 + 0.22, 0, 0.05); g.add(st);
+    for (const [x, z] of [[-0.18, 0.28], [0.18, 0.28], [0.18, -0.25]]) box(0.04, 0.4, 0.04, S.m.beam, x, 0, z, st);
+    const lean = box(0.46, 0.04, 0.62, S.m.roof, 0, 0.42, 0, st); lean.rotation.x = 0.0; lean.rotation.z = -0.25;
+    hay(st, S, 0.05, 0.05, 0.08);
+    sign(g, S, -0.2, 0.52, d / 2);
+  },
+  shop(S, g, r) {
+    const w = 0.62, d = 0.62, h1 = 0.52, h2 = 0.44;
+    storeyBlock(S, g, w, d, 0, h1, S.m.lower, false);
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.16, 0.17, 0.36, false);
+    windowOn(g, S, { side: 'z', wallW: w, wallD: d }, 0.12, 0.26, 0.2, 0.14);
+    windowOn(g, S, { side: 'x', wallW: w, wallD: d }, 0, 0.3, 0.16, 0.14);
+    storeyBlock(S, g, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.thatch ? S.m.lower : S.m.upper, true, { timber: true });
+    roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise, false);
+    // striped awning + stall counter with goods
+    const aw = box(0.36, 0.02, 0.2, S.m.banner, 0.1, 0.44, d / 2 + 0.1, g); aw.rotation.x = 0.35;
+    box(0.34, 0.12, 0.12, S.m.wood, 0.1, 0, d / 2 + 0.1, g);
+    for (let i = 0; i < 4; i++) box(0.05, 0.04, 0.05, i % 2 ? S.m.hay : S.m.banner, -0.02 + i * 0.08, 0.12, d / 2 + 0.1, g);
+    barrel(g, S, 0.38, 0.3); chimney(g, S, -0.2, -0.2, h1 + h2, 0.35);
+  },
+  temple(S, g, r) {
+    const w = 0.7, d = 1.3, h = S.gothic ? 0.95 : 0.8;
+    const nave = new THREE.Group(); g.add(nave);
+    box(w, h, d, S.m.stone, 0, 0, 0, nave);
+    const fz = { side: 'z', wallW: w, wallD: d }, fx = { side: 'x', wallW: w, wallD: d };
+    doorOn(nave, S, fz, 0, 0.24, 0.48, true);
+    windowOn(nave, S, fz, 0, h * 0.72, 0.16, 0.2, { pointed: true });           // rose/lancet over the door
+    for (let i = 0; i < 4; i++) windowOn(nave, S, fx, -d / 2 + d * (i + 0.5) / 4, h * 0.55, 0.09, 0.28, { pointed: true });
+    if (S.gothic || S.timber) for (let i = 0; i <= 4; i++) box(0.08, h * 0.8, 0.07, S.m.stone, w / 2 + 0.04, 0, -d / 2 + (d * i) / 4, nave);
+    roofOver(S, nave, w, d, h, S.roofRise * (S.gothic ? 1.1 : 1), false);
+    // bell tower at the back
+    const tw = 0.4, th = S.gothic ? 1.6 : 1.3, t = new THREE.Group(); t.position.set(0, 0, -d / 2 - 0.12); g.add(t);
+    box(tw, th, tw, S.m.stone, 0, 0, 0, t);
+    windowOn(t, S, { side: 'z', wallW: tw, wallD: tw }, 0, th - 0.2, 0.1, 0.16, { pointed: true });
+    windowOn(t, S, { side: 'x', wallW: tw, wallD: tw }, 0, th - 0.2, 0.1, 0.16, { pointed: true });
+    if (S.thatch) { box(tw + 0.04, 0.3, tw + 0.04, S.m.wood, 0, th, 0, t); pyramid(t, tw + 0.04, th + 0.3, 0.32, S.m.roof); }
+    else { pyramid(t, tw, th, S.gothic ? 0.95 : 0.55, S.m.roof, S.gothic ? 8 : 4, 0.04); }
+    const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.95 : S.thatch ? 0.62 : 0.55) + 0.02, 0); t.add(cr);
+    box(0.02, 0.14, 0.02, S.m.trim, 0, 0, 0, cr); box(0.08, 0.02, 0.02, S.m.trim, 0, 0.08, 0, cr);
+  },
+  keep(S, g, r) {
+    if (S.thatch) {                                     // motte-and-bailey: timber tower on an earth mound inside a palisade
+      const mound = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.85, 0.3, 10), mat(tex('rubble', '#5a5040', 9))); mound.position.y = 0.15; g.add(mound);
+      const t = new THREE.Group(); t.position.y = 0.3; g.add(t);
+      box(0.6, 0.9, 0.6, S.m.palisade, 0, 0, 0, t); box(0.72, 0.2, 0.72, S.m.wood, 0, 0.9, 0, t);
+      windowOn(t, S, { side: 'z', wallW: 0.72, wallD: 0.72 }, 0, 1.0, 0.1, 0.08); windowOn(t, S, { side: 'x', wallW: 0.72, wallD: 0.72 }, 0, 1.0, 0.1, 0.08);
+      pyramid(t, 0.72, 1.1, 0.5, S.m.roof);
+      for (let a = 0; a < 18; a++) { const ang = (a / 18) * Math.PI * 2; if (a === 2) continue; box(0.07, 0.36, 0.07, S.m.palisade, Math.cos(ang) * 0.95, 0, Math.sin(ang) * 0.95, g).rotation.y = -ang; }
+      banner(g, S, 0.05, 1.95, 0.0);
+      return;
+    }
+    const w = 0.95, h = S.gothic ? 1.9 : 1.6;
+    box(w, h, w, S.m.stone, 0, 0, 0, g); box(w + 0.08, 0.06, w + 0.08, S.m.stoneDark, 0, h, 0, g);
+    crenels(g, S, w + 0.06, w + 0.06, h + 0.06, S.m.stone, 0.08);
+    const fz = { side: 'z', wallW: w, wallD: w }, fx = { side: 'x', wallW: w, wallD: w };
+    doorOn(g, S, fz, 0, 0.24, 0.44, true);
+    for (const y of [0.75, 1.2]) for (const u of [-0.25, 0.25]) { windowOn(g, S, fz, u, y, 0.07, 0.14, { pointed: S.gothic }); windowOn(g, S, fx, u, y, 0.07, 0.14, { pointed: S.gothic }); }
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {               // corner turrets
+      const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.15, h + 0.3, 10), S.m.stone); tr.position.set(x * w / 2, (h + 0.3) / 2, z * w / 2); g.add(tr);
+      pyramid(g, 0.3, h + 0.3, S.gothic ? 0.6 : 0.4, S.m.roof, 10, 0.02).position.set(x * w / 2, h + 0.3 + (S.gothic ? 0.3 : 0.2), z * w / 2);
+    }
+    banner(g, S, 0.2, h - 0.1, w / 2 + 0.02); banner(g, S, w / 2 + 0.02, h - 0.1, -0.2, 'x');
+    if (S.gothic) buttresses(S, g, w, w, h * 0.7);
+  },
+  wall(S, g, r) {                                        // a curtain-wall run with a gatehouse
+    const L = 2.2, t = 0.2, h = S.thatch ? 0.5 : 0.62;
+    if (S.thatch) {
+      for (let i = 0; i < 26; i++) { const x = -L / 2 + (L * i) / 25; if (Math.abs(x) < 0.2) continue; box(0.075, h + (i % 3) * 0.02, 0.075, S.m.palisade, x, 0, 0, g); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.08, 4), S.m.wood); tip.position.set(x, h + 0.04 + (i % 3) * 0.02, 0); g.add(tip); }
+      for (const sx of [-1, 1]) { box(0.08, 0.9, 0.08, S.m.wood, sx * 0.22, 0, 0.05, g); }
+      box(0.56, 0.08, 0.3, S.m.wood, 0, 0.82, 0.05, g); box(0.5, 0.2, 0.26, S.m.palisade, 0, 0.9, 0.05, g); pyramid(g, 0.5, 1.1, 0.22, S.m.roof);
+      return;
+    }
+    for (const sx of [-1, 1]) { box(L / 2 - 0.3, h, t, S.m.stone, sx * (L / 4 + 0.15), 0, 0, g); crenels(g, S, L / 2 - 0.3, 0.001, h, S.m.stone, 0.07); }
+    g.children.slice(-0).forEach(() => {});
+    // gatehouse: two towers and an arch
+    const gh = new THREE.Group(); g.add(gh);
+    for (const sx of [-1, 1]) { box(0.26, h + 0.35, 0.34, S.m.stone, sx * 0.26, 0, 0.02, gh); crenels(gh, S, 0.001, 0.001, 0, S.m.stone); }
+    box(0.78, 0.2, 0.34, S.m.stone, 0, h + 0.15, 0.02, gh); crenels(gh, S, 0.78, 0.34, h + 0.35, S.m.stone, 0.07);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.45, 0.04), S.m.door); door.position.set(0, 0.225, 0.19); gh.add(door);
+    if (S.gothic) for (const sx of [-1, 1]) pyramid(gh, 0.26, h + 0.35, 0.5, S.m.roof, 4, 0.03).position.set(sx * 0.26, h + 0.6, 0.02);
+    banner(gh, S, 0, h + 0.3, 0.2);
+    windowOn(gh, S, { side: 'z', wallW: 0.78, wallD: 0.34 }, -0.26, h + 0.1, 0.06, 0.1, { pointed: S.gothic }); windowOn(gh, S, { side: 'z', wallW: 0.78, wallD: 0.34 }, 0.26, h + 0.1, 0.06, 0.1, { pointed: S.gothic });
+  },
+  farm(S, g, r) {                                        // farmhouse + barn + hay + fenced yard
+    const barn = new THREE.Group(); barn.position.set(-0.25, 0, -0.2); g.add(barn);
+    box(0.95, 0.5, 0.6, S.gothic ? S.m.stone : S.m.wood, 0, 0, 0, barn); roofOver(S, barn, 0.95, 0.6, 0.5, S.roofRise * 0.9);
+    const bd = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.36, 0.03), S.m.door); bd.position.set(0.05, 0.18, 0.31); barn.add(bd);
+    const fh = new THREE.Group(); fh.position.set(0.55, 0, 0.3); g.add(fh);
+    storeyBlock(S, fh, 0.45, 0.42, 0, 0.44, S.m.lower, true, { doorZ: -0.08 }); doorOn(fh, S, { side: 'z', wallW: 0.45, wallD: 0.42 }, -0.08, 0.14, 0.3, false);
+    roofOver(S, fh, 0.45, 0.42, 0.44, S.roofRise, false); chimney(fh, S, 0.12, -0.05, 0.44, 0.3);
+    hay(g, S, -0.72, 0.35); hay(g, S, -0.5, 0.48, 0.08); hay(g, S, 0.9, -0.3, 0.07);
+    fenceRun(g, S, -0.95, 0.75, 0.25, 0.75); fenceRun(g, S, -0.95, 0.75, -0.95, -0.2);
+    barrel(g, S, 0.2, 0.55);
+  },
+};
+// ── trees (our own, to replace the stock cones): pine, broadleaf, dead, groves ──
+const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
+const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
+const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], bark: '#3a2c22', dead: '#4a4038' };
+function pine(g, r, x, z, sc = 1) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.3, 5), flat(TREE_COL.bark)); trunk.position.y = 0.15; t.add(trunk);
+  const tiers = 4, col = TREE_COL.pine[(r() * 3) | 0];
+  for (let i = 0; i < tiers; i++) {
+    const rad = 0.3 * (1 - i / (tiers + 0.6)), h = 0.38 * (1 - i * 0.12);
+    const c = new THREE.Mesh(jitter(new THREE.ConeGeometry(rad, h, 7, 1), r, 0.05), flat(col)); c.position.y = 0.2 + i * 0.2 + h / 2; c.rotation.y = r() * 3; t.add(c);
+  }
+}
+function broadleaf(g, r, x, z, sc = 1, autumn = false) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.45, 6), flat(TREE_COL.bark)); trunk.position.y = 0.22; t.add(trunk);
+  const pal = autumn ? TREE_COL.autumn : TREE_COL.leaf, n = 4 + ((r() * 3) | 0);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + r(), rr = i === 0 ? 0 : 0.14 + r() * 0.06, size = i === 0 ? 0.26 : 0.17 + r() * 0.07;
+    const b = new THREE.Mesh(jitter(new THREE.IcosahedronGeometry(size, 0), r, 0.06), flat(pal[(r() * 3) | 0]));
+    b.position.set(Math.cos(a) * rr, 0.62 + (i === 0 ? 0.08 : r() * 0.12 - 0.02), Math.sin(a) * rr); b.rotation.set(r() * 3, r() * 3, 0); t.add(b);
+  }
+}
+function deadTree(g, r, x, z, sc = 1) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const m = flat(TREE_COL.dead), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.05, 0.8, 5), m); trunk.position.y = 0.4; trunk.rotation.z = (r() - 0.5) * 0.15; t.add(trunk);
+  for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.018, 0.3, 4), m); const y = 0.35 + i * 0.09, a = r() * 6.28;
+    b.position.set(Math.cos(a) * 0.1, y + 0.1, Math.sin(a) * 0.1); b.rotation.set(Math.sin(a) * 0.9, 0, -Math.cos(a) * 0.9); t.add(b); }
+}
+const TREES = {
+  pine: (g, r) => pine(g, r, 0, 0, 1.25 + r() * 0.35),
+  oak: (g, r) => broadleaf(g, r, 0, 0, 1.15 + r() * 0.3),
+  autumn: (g, r) => broadleaf(g, r, 0, 0, 1.1 + r() * 0.3, true),
+  dead: (g, r) => deadTree(g, r, 0, 0, 1.2 + r() * 0.2),
+  grove: (g, r) => {                                  // a clump of 5–8 mixed trees
+    const n = 5 + ((r() * 4) | 0);
+    for (let i = 0; i < n; i++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.62, x = Math.cos(a) * d, z = Math.sin(a) * d, k = r();
+      if (k < 0.6) pine(g, r, x, z, 0.95 + r() * 0.45); else if (k < 0.9) broadleaf(g, r, x, z, 0.9 + r() * 0.35, r() < 0.3); else deadTree(g, r, x, z, 1); }
+  },
+};
+export function makeTree(kind, seed = 1) { const g = new THREE.Group(); TREES[kind](g, rng(seed * 101 + kind.length)); return g; }
+
+export const BUILD_TYPES = Object.keys(TYPES);
+
+export function makeBuilding(type, style, seed = 1) {
+  const { S, g } = kit(style, seed);
+  TYPES[type](S, g, rng(seed));
+  g.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; } });
+  return g;
+}

@@ -89,9 +89,15 @@ export const ELIT = {
   tide:   ['#05111b', '#091c2c', '#0f2e44', '#17425c', '#225a76'].map(_hx),  // clear dark water
   mud:    ['#110b07', '#1c130b', '#281b11', '#352417', '#452f1d'].map(_hx),  // mud pools
   pit:    ['#040306', '#08070c', '#0e0c14', '#16131e', '#1f1b29'].map(_hx),  // sunken pits
+  // surface scenes (town / overland at dusk)
+  grass:  ['#12170f', '#1c2317', '#27301f', '#343e29', '#465036'].map(_hx),  // dusk meadow, olive-grey
+  dirt:   ['#191512', '#27201b', '#352c25', '#463b32', '#5a4d42'].map(_hx),  // packed road
+  street: ['#1a1816', '#272420', '#36312b', '#46403a', '#59524a'].map(_hx),  // town cobbles, warm grey
+  river:  ['#09131b', '#0e1d28', '#142838', '#1d394a', '#385565'].map(_hx),  // cold river water
+  wheat:  ['#242011', '#353018', '#4a4222', '#61562d', '#7a6c3a'].map(_hx),  // late wheat
 };
 export const EGLOW = {
   poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70],
   water: [100, 80, 200], lava: [255, 110, 40], soul: [150, 120, 255],
-  frost: [170, 225, 255], aqua: [80, 180, 235],
+  frost: [170, 225, 255], aqua: [80, 180, 235], window: [255, 176, 92],
 };

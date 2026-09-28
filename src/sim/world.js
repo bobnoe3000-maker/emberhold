@@ -7,6 +7,7 @@
 
 import { hash2, fbm, streamSeed, mulberry32, STREAM } from './rng.js';
 import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
+import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -26,7 +27,7 @@ export function createWorld(seed, theme, depth = 0) {
   const th = theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th);
   const world = {
-    seed, theme: th, depth, level,
+    kind: 'dungeon', seed, theme: th, depth, level,
     ss: streamSeed(seed, 131),            // floor-material selector
     hs: streamSeed(seed, 7919),           // cliff-face strata / detail
     cs: streamSeed(seed, 577),            // hazard field
@@ -54,6 +55,8 @@ export function createWorld(seed, theme, depth = 0) {
     if (prng() < 0.30) place(r.cx + off(r, 0.35), r.cy + off(r, 0.35), 'shrine');
   }
   if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
+  // the first level has a way back up to the overland, beside the entrance
+  if (depth === 0) for (const [dx, dy] of [[3, 0], [0, 3], [-3, 0], [0, -3], [3, 3]]) if (place(Math.floor(level.spawn.x) + dx, Math.floor(level.spawn.y) + dy, 'exit')) break;
 
   // Enemies (POC: deterministic placement, view-only — no AI/combat yet). A few
   // skeletons haunt rooms that aren't the entrance or the descent chamber; count
@@ -77,6 +80,7 @@ const cellAt = (world, x, y) => world.level.cells.get(K(x, y));
 
 // Elevation: floor platforms sit at FLOOR_Z, walls tower at WALL_Z, the abyss is 0.
 export function heightAt(world, x, y) {
+  if (world.kind !== 'dungeon') return oHeightAt(world, x, y);
   const c = cellAt(world, Math.floor(x), Math.floor(y));
   if (!c) return 0;
   return c.kind === 'wall' ? (c.wz ?? WALL_Z) : FLOOR_Z;
@@ -93,6 +97,7 @@ function hazardAt(world, x, y) {
 // Material: abyss off-platform, the theme's wall on the ring, else a noise-picked
 // floor material with hazard pools cut into open (non-corridor) ground.
 export function materialAt(world, x, y) {
+  if (world.kind !== 'dungeon') return oMaterialAt(world, x, y);
   const tx = Math.floor(x), ty = Math.floor(y), c = cellAt(world, tx, ty);
   if (!c) return MAT.ABYSS;
   const th = world.level.th;
@@ -106,6 +111,7 @@ export function materialAt(world, x, y) {
 // Harvestable growths — scattered on open, safe floor only (never corridors,
 // walls, hazards, or void). Mods overlay removals.
 export function resourceAt(world, x, y) {
+  if (world.kind !== 'dungeon') return null;
   const k = K(x, y);
   if (world.mods.has(k) || world.props.has(k)) return null;
   const c = cellAt(world, x, y);
@@ -130,6 +136,7 @@ export const CONSUMABLE_PROP = new Set(['chest', 'shrine']);
 // most one level (walls are far taller), and nothing occupies the tile.
 export const MAX_CLIMB = 1;
 export function isWalkable(world, x, y, fromZ) {
+  if (world.kind !== 'dungeon') return oIsWalkable(world, x, y);
   const tx = Math.floor(x), ty = Math.floor(y), c = cellAt(world, tx, ty);
   if (!c || c.kind !== 'floor') return false;
   if (NONWALK.has(materialAt(world, tx, ty))) return false;
