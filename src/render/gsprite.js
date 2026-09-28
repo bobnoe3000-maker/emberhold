@@ -136,6 +136,42 @@ export function voxBrazier() {
   return bakeVox(vox, S, S, H, ELIT.obsid, 3);
 }
 
+// ---- room furniture (critic pass 2: rooms were identical cobble fields) -----
+// Dressed-stone pillar: plinth, square shaft, capital; broken ones end in a jagged stump
+// with fallen drums at the foot.
+export function voxPillar(rng, broken = false) {
+  const S = 10, H = broken ? 18 : 34, vox = new Uint8Array(S * S * H), top = broken ? 9 + ((rng() * 6) | 0) : H;
+  for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const plinth = z < 3, cap = !broken && z >= H - 3, r = plinth || cap ? 4.5 : 2.7;
+    if (Math.abs(x - 4.5) > r || Math.abs(y - 4.5) > r) continue;
+    if (broken && z >= top - 2 && hash2(x * 3 + z, y * 5, 91) < (z - top + 3) * 0.33) continue;
+    if (broken && z >= top) continue;
+    vox[(z * S + y) * S + x] = 1;
+  }
+  if (broken) for (const [bx, by] of [[1, 7], [7, 1]]) for (let z = 0; z < 2; z++) for (let y = by - 1; y <= by; y++) for (let x = bx - 1; x <= bx + 1; x++) if (x >= 0 && y >= 0 && x < S && y < S) vox[(z * S + y) * S + x] = 1;
+  return bakeVox(vox, S, S, H, ELIT.stone, 0);
+}
+// Sarcophagus: a long stone box on a step, the lid carved with a recumbent effigy.
+export function voxSarcophagus() {
+  const SX = 7, SY = 13, SZ = 7, vox = new Uint8Array(SX * SY * SZ);
+  for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
+    const step = z === 0, box = z >= 1 && z <= 4 && x >= 1 && x <= 5 && y >= 1 && y <= 11, lid = z === 5 && x >= 1 && x <= 5 && y >= 1 && y <= 11;
+    const effigy = z === 6 && x >= 2 && x <= 4 && y >= 2 && y <= 10 && !(y === 3 && x !== 3);
+    if (step || box || lid || effigy) vox[(z * SY + y) * SX + x] = 1;
+  }
+  return bakeVox(vox, SX, SY, SZ, ELIT.stone, 0);
+}
+// Bone pile: a low heap of long bones with a skull or two.
+export function voxBones(rng) {
+  const S = 10, H = 5, vox = new Uint8Array(S * S * H), c = S / 2;
+  for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const d = Math.hypot(x - c, y - c) + z * 1.2;
+    if (d < 4.2 && hash2(x * 7 + z * 13, y * 11, 17 + ((rng() * 3) | 0)) > 0.35) vox[(z * S + y) * S + x] = 1;
+  }
+  for (const [sx, sy, sz] of [[c + 1, c, 3], [c - 2, c + 1, 2]]) for (let z = sz; z < sz + 2; z++) for (let y = sy; y < sy + 2; y++) for (let x = sx; x < sx + 2; x++) vox[(z * S + y) * S + x] = 1;
+  return bakeVox(vox, S, S, H, ELIT.bone, 0);
+}
+
 // ---- deterministic prop set, keyed by world seed (same variant per tile) ----
 export function buildProps(seed) {
   return {
@@ -146,6 +182,10 @@ export function buildProps(seed) {
     chest: [voxChest()],
     shrine: [voxShrine()],
     brazier: [voxBrazier()],
+    pillar: [0, 1].map((v) => voxPillar(mulberry32((seed * 17 + v * 53 + 5) >>> 0))),
+    brokenpillar: [0, 1, 2].map((v) => voxPillar(mulberry32((seed * 19 + v * 71 + 9) >>> 0), true)),
+    sarcophagus: [voxSarcophagus()],
+    bones: [0, 1, 2].map((v) => voxBones(mulberry32((seed * 23 + v * 37 + 3) >>> 0))),
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.

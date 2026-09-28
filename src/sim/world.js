@@ -77,7 +77,31 @@ export function createWorld(seed, theme, depth = 0) {
       for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if (taken.every(([a, b]) => Math.hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
       return null;
     };
-    const nDecor = r === level.entrance ? 1 : 2 + ((prng() * 2) | 0);
+    // room identity: every fighting room gets a layout theme, furniture kept to the thirds so
+    // the middle of the arena stays open (and corridors running through stay clear):
+    //   colonnade — two rows of pillars along the long axis, a few fallen;
+    //   crypt — rows of sarcophagi down the sides, bones at the walls;
+    //   ossuary — bone heaps at the walls around broken pillars.
+    // The descent room rings its gate with four pillars; the entrance stays a bare sanctuary.
+    const along = r.rw >= r.rh, L = along ? r.rw : r.rh, Wd = along ? r.rh : r.rw;
+    const at = (u, v) => along ? [Math.round(r.cx + u), Math.round(r.cy + v)] : [Math.round(r.cx + v), Math.round(r.cy + u)];
+    const putAt = (u, v, kind) => { const [x, y] = at(u, v); if (!nearDoor(x, y)) place(x, y, kind); };
+    if (r === level.descentRoom) {
+      const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
+    } else if (r !== level.entrance) {
+      const theme = ['colonnade', 'crypt', 'ossuary'][(prng() * 3) | 0];
+      r.theme = theme;
+      if (theme === 'colonnade') {
+        for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 7) putAt(u, side * Wd * 0.55, prng() < 0.25 ? 'brokenpillar' : 'pillar');
+      } else if (theme === 'crypt') {
+        for (const side of [-1, 1]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 6) putAt(u, side * Wd * 0.5, 'sarcophagus');
+        for (let i = 0; i < 3; i++) { const q = pickEdge(6); if (q) place(q[0], q[1], 'bones'); }
+      } else {
+        for (let i = 0; i < 6; i++) { const q = pickEdge(6); if (q) place(q[0], q[1], 'bones'); }
+        for (const side of [-1, 1]) putAt(side * L * 0.35, -side * Wd * 0.45, 'brokenpillar');
+      }
+    }
+    const nDecor = r === level.entrance ? 1 : 1 + ((prng() * 2) | 0);
     for (let i = 0; i < nDecor; i++) { const q = pickEdge(12); if (q) place(q[0], q[1], decor[(prng() * decor.length) | 0]); }
     if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
     if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
