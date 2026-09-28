@@ -13,7 +13,7 @@ import { createBus, createCommandQueue } from './bus.js';
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
 
-const PLAYER_SPEED = 7.0;     // tiles / second (5.8 +20%)
+const PLAYER_SPEED = 8.0;     // tiles / second (5.8 → 7.0 → 8.0)
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
 const REACH = 1.8;            // interact reach (chebyshev-ish, in tiles)
 
@@ -170,6 +170,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
+    else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.25) travel('overland', 'barrows');   // step onto the way up
     state.t += TICK_DT;
   }
 

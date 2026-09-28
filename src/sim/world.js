@@ -56,7 +56,10 @@ export function createWorld(seed, theme, depth = 0) {
   }
   if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
   // the first level has a way back up to the overland, beside the entrance
-  if (depth === 0) for (const [dx, dy] of [[3, 0], [0, 3], [-3, 0], [0, -3], [3, 3]]) if (place(Math.floor(level.spawn.x) + dx, Math.floor(level.spawn.y) + dy, 'exit')) break;
+  if (depth === 0) for (const [dx, dy] of [[3, 0], [0, 3], [-3, 0], [0, -3], [3, 3]]) {
+    const ex = Math.floor(level.spawn.x) + dx, ey = Math.floor(level.spawn.y) + dy;
+    if (place(ex, ey, 'exit')) { world.exitAt = { x: ex + 0.5, y: ey + 0.5 }; break; }
+  }
 
   // Enemies (POC: deterministic placement, view-only — no AI/combat yet). A few
   // skeletons haunt rooms that aren't the entrance or the descent chamber; count

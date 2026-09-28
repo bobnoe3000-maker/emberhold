@@ -270,14 +270,14 @@ function buildOverland(seed) {
   put(o, B('keep'), keep[0], keep[1]);
   put(o, B('wall'), keep[0], keep[1] + 16);
   put(o, B('shop', 1), cross[0] + 12, cross[1] - 12);          // waystation at the crossroads
-  put(o, 'ruin', barrows[0], barrows[1]);
-  for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 12, barrows[1] + 10], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] + 14, barrows[1] - 6]]) put(o, id, x, y, 'rect', 0);
+  put(o, 'ruin', barrows[0], barrows[1], 'round', 0.3);          // the mound blocks; its doorway (front, +y) stays open
+  for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 18, barrows[1] + 2], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] + 14, barrows[1] - 6]]) put(o, id, x, y, 'rect', 0);
   put(o, 'mine_0', mine[0], mine[1]);
   put(o, 'lumbermill_90', camp[0], camp[1]);
   put(o, B('farm'), 64, 114); put(o, 'wheelbarrow', 57, 128, 'rect', 0);
   for (const [id, x, y] of [['resource_lumber', camp[0] + 10, camp[1] + 4], ['stump', camp[0] - 12, camp[1] + 8], ['stump', camp[0] + 4, camp[1] + 14], ['flag_red', keep[0] - 14, keep[1] + 30]])
     put(o, id, x, y, 'rect', 0);
-  putProp(o, 'stairs', barrows[0] + 4, barrows[1] + 3);
+  putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);
   o.labels.push({ x: town[0] + 4, y: town[1], id: B('wally'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows' },
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
@@ -303,7 +303,9 @@ function buildOverland(seed) {
     const i = gi(o, x, y); if (i >= 0 && !o.blocked[i]) o.enemies.push({ x: x + 0.5, y: y + 0.5, kind: 'skeleton' });
   }
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
-  o.arrivals = { default: { x: town[0] + 14.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 14.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 8.5, y: barrows[1] + 8.5 } };
+  // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
+  o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon' });
+  o.arrivals = { default: { x: town[0] + 14.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 14.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
