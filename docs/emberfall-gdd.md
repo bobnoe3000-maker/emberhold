@@ -334,6 +334,7 @@ reproduce any battle for validation.
 | Screen | Content |
 |---|---|
 | **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a wave and Heat banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
+| **Party cards** (always) | Bottom of every screen: **you in the centre, up to two companions either side**. Each card has a portrait, level badge, name, class, HP bar, ATK / DEF / CRT / DDG, and level with an XP bar. Empty slots say *hire at a town tavern*. |
 | **Town square** | The home screen: a fixed framing of shop, tavern, inn and temple with name plaques; a bottom bar of the four services; each opens a bottom-sheet menu. No minimap here. |
 | **Quest board** | Cards: giver portrait, hook line, skulls, rewards. |
 | **Party** | Three figures with live 3D previews, gear slots, stats and abilities; drag to reorder formation. |

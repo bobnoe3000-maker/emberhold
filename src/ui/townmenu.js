@@ -27,16 +27,18 @@ const SERVICES = {
   },
 };
 const ORDER = ['shop', 'tavern', 'inn', 'temple'];
+import { tavernRoster, CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
 
 const CSS = `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-  display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(140%); transition: transform .28s ease; z-index: 5; }
-#hubBar.on { transform: none; }
+  display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(24px); opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s; z-index: 5; }
+#hubBar.on { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .28s ease, opacity .2s ease; }
 #hubBar button { flex: 1; max-width: 88px; background: rgba(16,12,22,0.86); border: 1px solid rgba(214,170,98,0.45); border-radius: 10px;
   color: #eadcc0; font: 600 11px Georgia, 'Times New Roman', serif; letter-spacing: .5px; padding: 8px 4px 7px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 #hubBar button svg { width: 22px; height: 22px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 #hubBar button:active { background: rgba(60,40,30,0.9); }
-#hubSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; transform: translateY(105%); transition: transform .3s ease;
+#hubSheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; max-height: 82vh; overflow-y: auto; transform: translateY(105%); transition: transform .3s ease;
   background: linear-gradient(#1a1422, #120e18); border-top: 1px solid rgba(214,170,98,0.5); border-radius: 16px 16px 0 0;
   padding: 16px 18px calc(env(safe-area-inset-bottom, 0px) + 18px); color: #e8e0d0; font-family: Georgia, 'Times New Roman', serif; box-shadow: 0 -10px 30px rgba(0,0,0,.5); }
 #hubSheet.on { transform: none; }
@@ -48,11 +50,23 @@ const CSS = `
 #hubSheet .row b { font-size: 15px; color: #efe4cf; font-weight: 600; display: block; }
 #hubSheet .row span { font-size: 11.5px; color: #978c80; }
 #hubSheet .soon { font: 10px ui-monospace, Menlo, monospace; color: #7c6e88; border: 1px solid #4a3f58; border-radius: 6px; padding: 2px 6px; flex: none; margin-left: 10px; }
+#hubSheet .row.go { cursor: pointer; border-color: rgba(214,170,98,0.45); }
+#hubSheet .go-arrow { color: #e0a85a; font-size: 18px; margin-left: 10px; }
+#hubSheet h3 { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 14px 0 7px; }
+#hubSheet .merc { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 7px; background: rgba(255,255,255,0.035); border: 1px solid rgba(214,170,98,0.18); border-radius: 9px; }
+#hubSheet .merc .who { flex: 1; min-width: 0; }
+#hubSheet .merc .who b { font-size: 15px; color: #efe4cf; font-weight: 600; }
+#hubSheet .merc .who em { font-style: normal; font: 10.5px ui-monospace, Menlo, monospace; color: #c09a50; margin-left: 6px; }
+#hubSheet .merc .who span { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; margin-top: 3px; }
+#hubSheet .btn { flex: none; font: 600 12px Georgia, serif; color: #1a1208; background: #d8a040; border: 0; border-radius: 7px; padding: 8px 12px; }
+#hubSheet .btn.ghost { background: transparent; color: #d8a040; border: 1px solid rgba(214,170,98,0.5); }
+#hubSheet .btn:disabled { background: #3a3444; color: #7a7088; }
+#hubSheet .back { font: 12px Georgia, serif; color: #d8a040; background: none; border: 0; padding: 0; margin-bottom: 6px; }
 #hubSheet .close { position: absolute; right: 12px; top: 10px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid rgba(214,170,98,0.35);
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
 
-export function createTownMenu(sim) {
+export function createTownMenu(sim, partyPanel) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const bar = document.createElement('div'); bar.id = 'hubBar';
   const sheet = document.createElement('div'); sheet.id = 'hubSheet';
@@ -63,15 +77,44 @@ export function createTownMenu(sim) {
   const block = (e) => e.stopPropagation();
   for (const el of [bar, sheet]) for (const ev of ['pointerdown', 'touchstart', 'mousedown']) el.addEventListener(ev, block);
   bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) open(b.dataset.k); });
-  sheet.addEventListener('click', (e) => { if (e.target.closest('.close')) close(); });
+  sheet.addEventListener('click', (e) => {
+    if (e.target.closest('.close')) return close();
+    if (e.target.closest('.back')) return open(current);
+    const go = e.target.closest('[data-go]'); if (go) return go.dataset.go === 'hire' ? hire() : null;
+    const h = e.target.closest('[data-hire]'); if (h) { sim.commands.push({ type: 'hire', idx: +h.dataset.hire }); return; }
+    const d = e.target.closest('[data-dismiss]'); if (d) sim.commands.push({ type: 'dismiss', id: d.dataset.dismiss });
+  });
+  sim.bus.on('partyChanged', () => { if (sheet.classList.contains('on') && view === 'hire') hire(); });
+  let current = null, view = null;
 
+  const LIVE = { 'Hire companions': 'hire' };                // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
+    current = kind; view = kind;
     sheet.innerHTML = `<button class="close" aria-label="close">×</button>
       <div class="kind">${S.label} · ${w.name || ''}</div><h2>${sv ? sv.name : S.label}</h2><p>${S.blurb}</p>
-      ${S.actions.map(([t, d]) => `<div class="row"><div><b>${t}</b><span>${d}</span></div><div class="soon">soon</div></div>`).join('')}`;
+      ${S.actions.map(([t, d]) => LIVE[t]
+        ? `<div class="row go" data-go="${LIVE[t]}"><div><b>${t}</b><span>${d}</span></div><div class="go-arrow">›</div></div>`
+        : `<div class="row"><div><b>${t}</b><span>${d}</span></div><div class="soon">soon</div></div>`).join('')}`;
     sheet.classList.add('on');
+  }
+  // The tavern's hiring board: today's three sellswords, and who you already have.
+  function hire() {
+    view = 'hire';
+    const w = sim.world, party = sim.state.party, you = party[0], full = party.length > MAX_COMPANIONS;
+    const line = (m) => { const s = statsFor(m); return `HP ${s.maxHp} · ATK ${s.atk} · DEF ${s.def} · CRT ${s.crit}% · DDG ${s.dodge}%`; };
+    const roster = w.kind === 'town' ? tavernRoster(sim.seed, w.region, 0, you.level) : [];
+    sheet.innerHTML = `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
+      <div class="kind">Tavern · ${w.name || ''}</div><h2>Hire companions</h2>
+      <p>Up to two companions travel with you. They share your XP and fight at your side.</p>
+      <h3>Your party · ${party.length}/3</h3>
+      ${party.slice(1).map((m) => `<div class="merc"><div class="who"><b>${m.name}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${line(m)}</span></div>
+        <button class="btn ghost" data-dismiss="${m.id}">Dismiss</button></div>`).join('') || '<p style="margin:0 0 4px">No companions yet.</p>'}
+      <h3>Today's sellswords</h3>
+      ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id); return `<div class="merc"><div class="who"><b>${m.name}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>
+        <span>${m.trait ? m.trait[0] + ' · ' + m.trait[1] : ''}</span><span>${line(m)}</span></div>
+        <button class="btn" data-hire="${i}" ${have || full ? 'disabled' : ''}>${have ? 'Hired' : 'Hire'}</button></div>`; }).join('')}`;
   }
   function close() { sheet.classList.remove('on'); }
 
@@ -81,6 +124,7 @@ export function createTownMenu(sim) {
     const w = sim.world, p = sim.state.player, h = w.hub;
     const inHub = !!h && Math.hypot(p.x - h.x, p.y - h.y) < h.r - 2;
     if (inHub !== wasIn) { bar.classList.toggle('on', inHub); if (hint) hint.style.opacity = inHub ? '0' : ''; if (!inHub) close(); wasIn = inHub; }
+    if (partyPanel) bar.style.bottom = `${Math.round(partyPanel.height()) + 6}px`;     // the service bar sits above the party cards
     requestAnimationFrame(watch);
   })();
 

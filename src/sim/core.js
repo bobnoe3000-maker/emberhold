@@ -7,6 +7,7 @@
 
 import { createWorld, isWalkable, hitResource, heightAt, propAt, CONSUMABLE_PROP } from './world.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
+import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
 import { createBus, createCommandQueue } from './bus.js';
 
 export const TICK_HZ = 20;
@@ -52,6 +53,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
     },
     counters: { wood: 0, stone: 0 },
+    party: [makeHero()],                                   // [you, …up to two hired companions]
   };
 
   function tryMove(p, dx, dy) {
@@ -94,6 +96,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   function applyCommand(cmd) {
     const p = state.player;
+    if (cmd.type === 'hire') {                             // hire from this town's tavern roster (validated here)
+      if (world.kind !== 'town' || state.party.length > MAX_COMPANIONS) return;
+      const c = tavernRoster(baseSeed, world.region, 0, state.party[0].level)[cmd.idx];
+      if (!c || state.party.some((m) => m.id === c.id)) return;
+      state.party.push(c); bus.emit('partyChanged', state.party); return;
+    }
+    if (cmd.type === 'dismiss') {
+      const i = state.party.findIndex((m) => m.id === cmd.id && !m.main);
+      if (i > 0) { state.party.splice(i, 1); bus.emit('partyChanged', state.party); }
+      return;
+    }
     if (cmd.type === 'move') {
       const len = Math.hypot(cmd.x, cmd.y);
       if (len < 0.12) { p.moving = false; return; }
@@ -166,6 +179,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       seed: baseSeed, scene: curScene, depth: state.depth, t: state.t,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
+      party: state.party.map((m) => ({ ...m })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
       discovered: [...world.discovered],
@@ -185,6 +199,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.moving = false; p.frame = 0; p.frameAcc = 0;
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
+    if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
     world.mods.clear();
     for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
     world.hp.clear();
@@ -193,6 +208,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     for (const id of data.discovered ?? []) world.discovered.add(id);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     bus.emit('countersChanged', { ...state.counters });
+    bus.emit('partyChanged', state.party);
   }
 
   return { state, bus, commands, tick, snapshot, restore, seed: baseSeed, get world() { return world; } };

@@ -2,15 +2,157 @@
   "px": 56,
   "albedoGain": 0.5,
   "actors": [
-    { "out": "hero_knight",     "variant": "F1", "glow": 0,
-      "clips": [{ "key": "idle", "clip": "Idle", "frames": 6, "fps": 6 }, { "key": "walk", "clip": "Running_A", "frames": 8, "fps": 11 }] },
-    { "out": "skeleton_warrior", "variant": "E1", "glow": 2,
-      "clips": [{ "key": "idle", "clip": "Idle", "frames": 6, "fps": 6 }, { "key": "walk", "clip": "Walking_D_Skeletons", "frames": 8, "fps": 6 }] },
-    { "out": "skeleton_minion",  "variant": "E2", "glow": 1,
-      "clips": [{ "key": "idle", "clip": "Idle", "frames": 6, "fps": 6 }, { "key": "walk", "clip": "Walking_D_Skeletons", "frames": 8, "fps": 6 }] },
-    { "out": "skeleton_rogue",   "variant": "E3", "glow": 3,
-      "clips": [{ "key": "idle", "clip": "Idle", "frames": 6, "fps": 6 }, { "key": "walk", "clip": "Walking_D_Skeletons", "frames": 8, "fps": 6 }] },
-    { "out": "skeleton_mage",    "variant": "E4", "glow": 7,
-      "clips": [{ "key": "idle", "clip": "Idle", "frames": 6, "fps": 6 }, { "key": "walk", "clip": "Walking_D_Skeletons", "frames": 8, "fps": 6 }] }
+    {
+      "out": "hero_knight",
+      "variant": "F1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Running_A",
+          "frames": 8,
+          "fps": 11
+        }
+      ]
+    },
+    {
+      "out": "skeleton_warrior",
+      "variant": "E1",
+      "glow": 2,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 8,
+          "fps": 6
+        }
+      ]
+    },
+    {
+      "out": "skeleton_minion",
+      "variant": "E2",
+      "glow": 1,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 8,
+          "fps": 6
+        }
+      ]
+    },
+    {
+      "out": "skeleton_rogue",
+      "variant": "E3",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 8,
+          "fps": 6
+        }
+      ]
+    },
+    {
+      "out": "skeleton_mage",
+      "variant": "E4",
+      "glow": 7,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 8,
+          "fps": 6
+        }
+      ]
+    },
+    {
+      "out": "hero_barbarian",
+      "variant": "F3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Running_A",
+          "frames": 8,
+          "fps": 11
+        }
+      ]
+    },
+    {
+      "out": "hero_mage",
+      "variant": "M1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Running_A",
+          "frames": 8,
+          "fps": 11
+        }
+      ]
+    },
+    {
+      "out": "hero_rogue",
+      "variant": "R2",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 6,
+          "fps": 6
+        },
+        {
+          "key": "walk",
+          "clip": "Running_A",
+          "frames": 8,
+          "fps": 11
+        }
+      ]
+    }
   ]
 }

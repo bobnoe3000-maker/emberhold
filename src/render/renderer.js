@@ -330,6 +330,18 @@ export function createRenderer(canvas, sim, input) {
     }
   }
   SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
+  // companions (hired party members) — atlases load on first use
+  const partyAtlases = {};
+  const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
+
+  // Companions follow the hero along a breadcrumb trail of the hero's past positions
+  // (one crumb per ~0.3 tiles walked); companion i stands SPACING crumbs back.
+  const trail = [], SPACING = 8, fol = [];
+  function trailPush(x, y) {
+    const t = trail[0];
+    if (!t || Math.hypot(t.x - x, t.y - y) > 0.3) { trail.unshift({ x, y }); if (trail.length > SPACING * 3 + 2) trail.pop(); }
+  }
+  function trailAt(k, x, y) { return trail[Math.min(k, trail.length - 1)] || { x, y }; }
 
   // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
   // from tilestyles.js, and ?tiles=classic restores the original per-pixel-noise look.
@@ -548,7 +560,7 @@ export function createRenderer(canvas, sim, input) {
   props = withExit(props);
   let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
-  sim.bus.on('levelChanged', () => { props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { trail.length = 0; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
@@ -563,8 +575,9 @@ export function createRenderer(canvas, sim, input) {
       const t = camT * camT * (3 - 2 * camT);
       cx = ix + (hub.focus.x - ix) * t; cy = iy + (hub.focus.y - iy) * t;
     } else camT = 0;
-    const C = project(cx, cy, pz);
-    return { ox: Math.round(nvw / 2 - C.sx), oy: Math.round(nvh * 0.56 - C.sy) };
+    const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
+    const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
+    return { ox: Math.round(nvw / 2 - C.sx), oy: Math.round(nvh * anchor - C.sy) };
   }
   let lastCam = { ox: 0, oy: 0 };
 
@@ -599,6 +612,18 @@ export function createRenderer(canvas, sim, input) {
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
+    // companions: trail positions behind the hero, facing where they walk
+    trailPush(ix, iy);
+    sim.state.party.slice(1).forEach((m, i) => {
+      const atl = partyAtlas(m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage' })[m.cls]); if (!atl) return;
+      const q = trailAt((i + 1) * SPACING, ix, iy), f = fol[i] || (fol[i] = { x: q.x, y: q.y, dir: 2, moving: false });
+      const dx = q.x - f.x, dy = q.y - f.y, mv = Math.hypot(dx, dy) > 0.002;
+      if (mv) f.dir = dir8(dx - dy, dx + dy);
+      f.x = q.x; f.y = q.y; f.moving = mv || (f.moving && p.moving);
+      const cz = heightAt(sim.world, Math.floor(f.x), Math.floor(f.y)), cp = project(f.x, f.y, cz);
+      const clip = f.moving ? atl.meta.clips.walk : atl.meta.clips.idle, fr = clip.start + (Math.floor((now / 1000) * clip.fps + i * 3) % clip.len);
+      draws.push({ d: f.x + f.y, sp: atl.cells[f.dir][fr], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: f.x + f.y });
+    });
     for (const e of sim.world.enemies || []) {
       const skelAtlas = skelAtlases[(hash2(Math.floor(e.x), Math.floor(e.y), 77) * SKELETONS.length) | 0];
       if (!skelAtlas) continue;
@@ -718,6 +743,14 @@ export function createRenderer(canvas, sim, input) {
     octx.fillStyle = 'rgba(10,8,16,0.60)'; octx.fillRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
     octx.imageSmoothingEnabled = true; octx.drawImage(outMap, bx, by, MM, MM);
     octx.strokeStyle = 'rgba(130,120,160,0.35)'; octx.lineWidth = Math.max(1, k); octx.strokeRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
+    // places of note: diamonds (the Barrows violet — the way down; Thornwick gold; others pale)
+    for (const L of w.labels || []) {
+      if (L.service) continue;
+      const mx = bx + (L.x - x0) / span * MM, my = by + (L.y - y0) / span * MM, r = Math.max(2.5, 3.2 * k);
+      octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
+      octx.beginPath(); octx.moveTo(mx, my - r); octx.lineTo(mx + r, my); octx.lineTo(mx, my + r); octx.lineTo(mx - r, my); octx.closePath(); octx.fill();
+      octx.strokeStyle = 'rgba(0,0,0,0.55)'; octx.lineWidth = Math.max(1, 0.8 * k); octx.stroke();
+    }
     octx.fillStyle = '#f0a500'; octx.beginPath(); octx.arc(bx + (ix - x0) / span * MM, by + (iy - y0) / span * MM, Math.max(2, 2.6 * k), 0, Math.PI * 2); octx.fill();
     octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.stroke();
   }
