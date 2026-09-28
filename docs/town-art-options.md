@@ -78,3 +78,17 @@ The KayKit bridge, rocks and mountains are replaced by `makeNature()` in
   snow above ~58 % of the height, and grass and pines on the lower slopes of three of them.
 
 Sprite ids are unchanged (`bridge_0/90`, `rock_A…E`, `mountain_*`), so no layout changed.
+
+## Overland sites (ours)
+
+![The Old Barrows, Deepdelve Mine and the lumber camp](./img/town/sites-kit.png)
+
+- **The Old Barrows** is an earthen burial mound with a stone doorway (uprights and a lintel)
+  opening onto a dark passage, beside the stairs down into the dungeon. Leaning standing
+  stones, a tumbled wall and a dead tree surround it.
+- **Deepdelve Mine** is a broad crag outcrop with a timbered adit and a lantern, rails with
+  an ore cart, a spoil heap and a winch frame.
+- **The lumber camp** is an open saw-shed on posts with a saw bench and blade, a log pile,
+  plank stacks, stumps, a cabin and a lantern.
+
+Ids are unchanged (`ruin`, `mine_0`, `lumbermill_90`). Only small KayKit props remain.

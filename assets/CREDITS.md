@@ -15,8 +15,9 @@ The earlier POC atlases (a Flare CC BY-SA 3.0 skeleton and the `isometric_hero`
 knight) have been removed.
 
 ## Environment — `assets/env/`
-The buildings, trees, bridge, rocks and mountains are **our own**: low-poly models
-authored in code (`tools/actor-lab/buildkit.js`). The ruin, the mine, the lumber mill
-and small props (barrels, crates, sacks, fences) still come from the **KayKit Medieval
-Hexagon Pack** by Kay Lousberg (**CC0 1.0**). Everything is baked by `tools/actor-lab/bake-env.cjs`. The source
+The buildings, trees, bridge, rocks, mountains and overland sites (the Old Barrows, the
+mine, the lumber mill) are **our own**: low-poly models authored in code
+(`tools/actor-lab/buildkit.js`). Only small props (barrels, crates, sacks, fences, a
+wheelbarrow, stumps) still come from the **KayKit Medieval Hexagon Pack** by Kay Lousberg
+(**CC0 1.0**). Everything is baked by `tools/actor-lab/bake-env.cjs`. The source
 models are downloaded by `tools/actor-lab/fetch-env.sh` and never committed.

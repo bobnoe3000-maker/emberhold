@@ -497,6 +497,92 @@ const NATURE = {
 };
 export function makeNature(kind, seed = 1, variant = 0) { return NATURE[kind](rng(seed * 131 + kind.length), variant); }
 
+// ── overland sites (our own, replacing the stock ruin / mine / lumber mill) ─────
+function lantern(g, S, x, y, z) {
+  box(0.02, 0.22, 0.02, S.m.beam, x, y - 0.22, z, g);
+  const l = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.05), S.m.glass); l.userData.glow = true; l.position.set(x, y + 0.02, z); g.add(l);
+  box(0.07, 0.015, 0.07, S.m.trim, x, y + 0.05, z, g);
+}
+function standingStone(g, r, x, z, h, lean = 0) {
+  const geo = faceted(new THREE.BoxGeometry(0.1, h, 0.07, 1, 2, 1), r, 0.03, (ny, y, q) => (ny > 0.6 ? tint(ROCK.moss, 0.9 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.25)));
+  geo.translate(0, h / 2, 0);
+  const m = new THREE.Mesh(geo, vmat()); m.position.set(x, 0, z); m.rotation.set(lean, r() * 3, lean * 0.5); g.add(m); return m;
+}
+Object.assign(TYPES, {
+  // The Old Barrows: an earthen burial mound with a stone doorway, standing stones, a tumbled wall
+  barrow(S, g, r) {
+    const moundGeo = new THREE.SphereGeometry(0.62, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2); moundGeo.scale(1.15, 0.62, 1);
+    const mound = new THREE.Mesh(faceted(moundGeo, r, 0.06, (ny, y, q) => (ny > 0.35 ? tint(ROCK.grass, 0.8 + q * 0.3) : tint(C3('#4a4034'), 0.85 + q * 0.2))), vmat());
+    mound.position.set(-0.1, 0, -0.12); g.add(mound);
+    // entrance passage on the camera side: dark mouth, uprights, lintel, kerb stones
+    const dark = mat(null, '#0c0a10'); box(0.22, 0.26, 0.3, dark, 0.12, 0, 0.36, g);
+    for (const sx of [-1, 1]) box(0.09, 0.32, 0.36, S.m.stone, 0.12 + sx * 0.155, 0, 0.36, g);
+    box(0.44, 0.08, 0.42, S.m.stone, 0.12, 0.32, 0.36, g);
+    for (let i = 0; i < 6; i++) { const a = -0.6 + i * 0.28; const k = rockMesh(r, 0.07 + r() * 0.03, 0.6); k.position.set(0.12 + Math.cos(a + 1.2) * 0.62, 0, 0.3 + Math.sin(a + 1.2) * 0.24); g.add(k); }
+    // a ring of leaning stones, a tumbled wall, a dead tree
+    for (const [x, z, h, l] of [[-0.85, 0.35, 0.34, 0.12], [-0.72, 0.62, 0.26, -0.2], [0.7, -0.5, 0.38, 0.06], [0.85, 0.2, 0.22, 0.3], [-0.3, -0.85, 0.3, -0.1]]) standingStone(g, r, x, z, h, l);
+    for (let i = 0; i < 4; i++) box(0.14, 0.07 + (i % 2) * 0.05, 0.1, S.m.stone, 0.45 + i * 0.12, 0, 0.55 - i * 0.05, g).rotation.y = 0.2 * i;
+    deadTree(g, r, -0.6, -0.4, 1.0);
+  },
+  // Deepdelve Mine: a rock outcrop with a timbered adit, rails and an ore cart, spoil heap, winch frame, lanterns
+  mine(S, g, r) {
+    const out = new THREE.Group(); out.position.set(-0.2, 0, -0.25); g.add(out);
+    const oc = (ny, y, q) => (ny > 0.6 && y < 0.35 ? tint(ROCK.grass, 0.8 + q * 0.3) : ny > 0.35 ? tint(ROCK.light, 0.85 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.25));
+    const crag = (x, z, rad, ht, seg) => { const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.3, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; out.add(m); };
+    crag(0, 0, 0.85, 0.42, 10);                                                   // a broad low outcrop…
+    crag(-0.25, -0.2, 0.5, 0.78, 7); crag(0.22, -0.28, 0.42, 0.62, 7); crag(-0.05, 0.1, 0.4, 0.55, 7);   // …with a few blunt crags
+    for (let i = 0; i < 3; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.18 + r() * 0.1, 0.8); k.position.set(Math.cos(a) * 0.6 - 0.2, 0, Math.sin(a) * 0.5 - 0.25); g.add(k); }
+    // adit on the +z face: dark mouth framed with timber, a little plank roof
+    const ad = new THREE.Group(); ad.position.set(0.05, 0, 0.35); g.add(ad);
+    box(0.34, 0.36, 0.3, mat(null, '#0b0a0e'), 0, 0, -0.05, ad);
+    for (const sx of [-1, 1]) box(0.05, 0.4, 0.05, S.m.beam, sx * 0.19, 0, 0.08, ad);
+    box(0.46, 0.06, 0.07, S.m.beam, 0, 0.4, 0.08, ad);
+    const rf = box(0.52, 0.03, 0.22, S.m.wood, 0, 0.47, 0.05, ad); rf.rotation.x = 0.35;
+    lantern(ad, S, -0.24, 0.36, 0.14);
+    // rails running out of the adit with sleepers, an ore cart on them
+    for (let i = 0; i < 7; i++) box(0.22, 0.015, 0.035, S.m.wood, 0.05, 0, 0.5 + i * 0.09, g);
+    for (const sx of [-1, 1]) box(0.015, 0.02, 0.66, S.m.trim, 0.05 + sx * 0.07, 0.015, 0.78, g);
+    const cart = new THREE.Group(); cart.position.set(0.05, 0.02, 0.86); g.add(cart);
+    box(0.18, 0.1, 0.22, S.m.wood, 0, 0.03, 0, cart); for (const [x, z] of [[-0.08, -0.07], [0.08, -0.07], [-0.08, 0.07], [0.08, 0.07]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 8), S.m.trim); w.rotation.z = Math.PI / 2; w.position.set(x, 0.03, z); cart.add(w); }
+    const ore = new THREE.Mesh(faceted(new THREE.DodecahedronGeometry(0.08, 0), r, 0.03, () => tint(C3('#5c5750'), 1)), vmat()); ore.position.y = 0.14; ore.scale.y = 0.6; cart.add(ore);
+    // spoil heap and a winch frame on the outcrop's shoulder
+    const heap = new THREE.Mesh(faceted(new THREE.ConeGeometry(0.3, 0.12, 8, 2).translate(0, 0.06, 0), r, 0.04, (ny, y, q) => tint(ROCK.scree, 0.62 + q * 0.2)), vmat()); heap.position.set(0.55, 0, 0.5); g.add(heap);
+    const wf = new THREE.Group(); wf.position.set(0.5, 0, -0.1); g.add(wf);
+    for (const [x, z] of [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]]) box(0.03, 0.62, 0.03, S.m.beam, x, 0, z, wf);
+    box(0.32, 0.04, 0.28, S.m.beam, 0, 0.62, 0, wf);
+    const pul = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 10), S.m.wood); pul.rotation.x = Math.PI / 2; pul.position.set(0, 0.7, 0); wf.add(pul);
+    box(0.008, 0.45, 0.008, S.m.trim, 0.06, 0.2, 0, wf);
+    lantern(g, S, 0.32, 0.46, 0.62);
+    barrel(g, S, -0.35, 0.55); barrel(g, S, -0.45, 0.5);
+  },
+  // Lumber mill: an open saw-shed on posts, saw bench, log and plank stacks, stumps, a cabin
+  lumbermill(S, g, r) {
+    const shed = new THREE.Group(); shed.position.set(-0.05, 0, -0.1); g.add(shed);
+    for (const [x, z] of [[-0.45, -0.3], [0.45, -0.3], [-0.45, 0.3], [0.45, 0.3], [0, -0.3], [0, 0.3]]) box(0.05, 0.55, 0.05, S.m.beam, x, 0, z, shed);
+    box(0.95, 0.04, 0.05, S.m.beam, 0, 0.53, 0.3, shed); box(0.95, 0.04, 0.05, S.m.beam, 0, 0.53, -0.3, shed);
+    box(0.95, 0.5, 0.03, S.m.wood, 0, 0.05, -0.31, shed);                       // back wall of planks
+    roofOver(S, shed, 0.95, 0.62, 0.55, S.roofRise * 0.8);
+    // saw bench with a log on it and a big blade
+    box(0.55, 0.14, 0.14, S.m.wood, 0, 0, 0.02, shed);
+    const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, 0.62, 8), mat(null, '#5a4430')); lg.rotation.z = Math.PI / 2; lg.position.set(0, 0.2, 0.02); shed.add(lg);
+    const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.01, 16), mat(null, '#8a8a90')); blade.rotation.x = Math.PI / 2; blade.position.set(0.12, 0.2, 0.1); shed.add(blade);
+    // log pile (pyramid of cylinders) and plank stacks
+    const logs = new THREE.Group(); logs.position.set(0.72, 0, 0.35); g.add(logs);
+    const bark = mat(null, '#4a3828');
+    for (const [row, n] of [[0, 4], [1, 3], [2, 2]]) for (let i = 0; i < n; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.6, 8), bark); c.rotation.x = Math.PI / 2; c.position.set((i - (n - 1) / 2) * 0.11, 0.055 + row * 0.095, 0); logs.add(c);
+      const end = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.005, 8), mat(null, '#9a7a52')); end.rotation.x = Math.PI / 2; end.position.set(c.position.x, c.position.y, 0.302); logs.add(end); }
+    for (let i = 0; i < 4; i++) box(0.5, 0.025, 0.12, S.m.wood, -0.72, i * 0.027, 0.42, g);
+    for (let i = 0; i < 3; i++) box(0.5, 0.025, 0.12, S.m.wood, -0.72, i * 0.027, 0.56, g);
+    // cabin behind, stumps and an axe block in front
+    const cab = new THREE.Group(); cab.position.set(-0.75, 0, -0.45); g.add(cab);
+    storeyBlock(S, cab, 0.42, 0.38, 0, 0.4, S.m.wood, true, { doorZ: 0.1 }); doorOn(cab, S, { side: 'z', wallW: 0.42, wallD: 0.38 }, 0.1, 0.13, 0.28, false);
+    roofOver(S, cab, 0.42, 0.38, 0.4, S.roofRise); chimney(cab, S, -0.1, -0.05, 0.4, 0.28);
+    for (const [x, z] of [[0.25, 0.7], [0.5, 0.82], [-0.2, 0.78]]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.08, 8), bark); st.position.set(x, 0.04, z); g.add(st); const top = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.005, 8), mat(null, '#9a7a52')); top.position.set(x, 0.083, z); g.add(top); }
+    box(0.02, 0.16, 0.02, S.m.beam, 0.5, 0.08, 0.82, g).rotation.z = 0.5;
+    lantern(g, S, 0.5, 0.5, 0.36);
+  },
+});
+
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {
