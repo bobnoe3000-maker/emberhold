@@ -31,6 +31,7 @@ function dir8(sdx, sdy) {
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
 
 const MARGIN = 64;                 // native-px slack before a re-bake
+const VIEW_TILES = 20;             // tiles across the screen (was ~16; zoomed out 20%)
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
@@ -97,10 +98,14 @@ void main(){
   vec2 np=(sp-uOff)/uScale;
   if(np.x<0.0||np.y<0.0||np.x>=uNative.x||np.y>=uNative.y){O=vec4(0.02,0.013,0.03,1.0);return;}
   vec2 uv=vec2(np.x/uNative.x,np.y/uNative.y);
+  // sharp-bilinear: nearest inside each native pixel, a one-output-pixel blend at its
+  // edges, so a fractional scale stays crisp without uneven 2px/3px columns
+  vec2 cd=fract(np)-0.5,rr=vec2(0.5-0.5/uScale);
+  vec2 suv=(floor(np)+0.5+(cd-clamp(cd,-rr,rr))*uScale)/uNative;
   if(uView==1){O=vec4(texture(uAlbT,uv).rgb,1.0);return;}
   if(uView==2){O=vec4(texture(uNrmT,uv).rgb,1.0);return;}
   if(uView==3){O=vec4(texture(uEmiT,uv).rgb*3.2,1.0);return;}
-  vec3 col=texture(uLit,uv).rgb;
+  vec3 col=textureLod(uLitM,suv,0.0).rgb;
   vec3 bl=vec3(0.0);
   bl+=textureLod(uLitM,uv,2.0).rgb*0.34;
   bl+=textureLod(uLitM,uv,3.0).rgb*0.30;
@@ -155,14 +160,14 @@ export function createRenderer(canvas, sim, input) {
   }
 
   function resize() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     vw = Math.floor(window.innerWidth * dpr);
     vh = Math.floor(window.innerHeight * dpr);
     canvas.width = vw; canvas.height = vh;
     canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
     overlay.width = vw; overlay.height = vh;
     overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
-    S = Math.max(2, Math.round(vw / (16 * TW)));          // ~16 tiles across, integer scale
+    S = Math.max(1.5, vw / (VIEW_TILES * TW));             // fractional; PASS B upscales sharp-bilinear
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
     bALB = new Uint8ClampedArray(tbw * tbh * 4); bNRM = new Uint8ClampedArray(tbw * tbh * 4); bEMI = new Uint8ClampedArray(tbw * tbh * 4);
@@ -506,7 +511,7 @@ export function createRenderer(canvas, sim, input) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
 
-    // PASS B — crisp integer upscale + bloom + grade
+    // PASS B — crisp (sharp-bilinear) upscale + bloom + grade
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, vw, vh);
     gl.useProgram(postP);
