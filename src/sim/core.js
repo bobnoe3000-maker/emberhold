@@ -87,7 +87,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function travel(to, arrive) {
     curScene = to; state.depth = 0;
     world = buildWorld(0);
-    const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || null;
+    const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
     const p = state.player;
     const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
@@ -170,7 +170,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
-    else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.25) travel('overland', 'barrows');   // step onto the way up
+    else if (world.exitAt && Math.hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
     state.t += TICK_DT;
   }
 

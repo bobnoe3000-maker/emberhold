@@ -61,8 +61,14 @@ Every site map (the current dungeon levels) is a set of **defined rooms** linked
   the shortest path. Tapping a chest, shrine or the stairs walks there and uses it.
 
 The party follows the leader in formation. **Corridors are always safe**: nothing spawns or
-fights there. The **entrance room** is a safe sanctuary, and the **descent room** holds the
-floor's boss and the stairs down.
+fights there. The **entrance room** is a safe sanctuary. On a site's first floor, a stone
+stair against its back wall leads back up to the surface; walk up it to leave. The
+**descent room** holds the floor's boss and the stairs down.
+
+**Room size.** Rooms are arenas: 40–62 tiles across (about 1.6–2.5 screens wide at the
+current zoom), with open shapes (rect, oval, diamond, L) so a party of three can spread out,
+kite and retreat against waves. Corridors are 6 tiles wide, so the party walks abreast.
+A level has 6–8 rooms.
 
 ### 3.2 The room battle
 - **Entering a room with NPCs starts an autobattle** as soon as the party crosses the doorway.

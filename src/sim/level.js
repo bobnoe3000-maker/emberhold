@@ -25,8 +25,8 @@ export const THEME_KEYS = Object.keys(THEMES);
 
 export const FLOOR_Z = 2;          // platform elevation
 export const WALL_Z = 7;           // wall crown — well above the +1 climb rule
-const W = 200, H = 200;            // level bounds (tiles); rooms live inside a border
-const CORRIDOR_W = 4;              // corridor width (tiles)
+const W = 320, H = 320;            // level bounds (tiles); rooms live inside a border
+const CORRIDOR_W = 6;              // corridor width (tiles) — a party of three walks abreast
 
 const key = (x, y) => x + ',' + y;
 
@@ -46,17 +46,18 @@ function inRoom(shape, dx, dy, rw, rh) {
 export function generateLevel(seed, theme) {
   const th = THEMES[theme] || THEMES.dread;
   const rng = mulberry32(((seed >>> 0) ^ 0x9e3779b9) >>> 0);
-  const shapes = ['rect', 'rect', 'oval', 'diamond', 'plus', 'ell'];
+  const shapes = ['rect', 'rect', 'oval', 'oval', 'diamond', 'ell'];   // open arenas (no pinched 'plus')
   const rooms = [];
-  const want = 6 + Math.floor(rng() * 4);         // 6–9 rooms
+  const want = 6 + Math.floor(rng() * 3);         // 6–8 rooms
   let tries = 0;
-  while (rooms.length < want && tries < 1200) {
+  while (rooms.length < want && tries < 1600) {
     tries++;
-    // half-extents 12–21 (≈24–43 tiles across) — 3×+ the old minimum
-    const rw = 12 + Math.floor(rng() * 10), rh = 12 + Math.floor(rng() * 10);
+    // half-extents 20–31 (≈40–62 tiles across): arenas for room battles — a party of
+    // three against respawning waves needs space to spread, kite and retreat (GDD §3)
+    const rw = 20 + Math.floor(rng() * 12), rh = 20 + Math.floor(rng() * 12);
     const cx = rw + 4 + Math.floor(rng() * (W - 2 * rw - 8));
     const cy = rh + 4 + Math.floor(rng() * (H - 2 * rh - 8));
-    const shape = shapes[Math.floor(rng() * shapes.length)];
+    const shape = rooms.length === 0 ? 'rect' : shapes[Math.floor(rng() * shapes.length)];   // entrance: a plain hall
     // reject if the padded bbox overlaps an existing room (keeps abyss between them)
     if (rooms.some((r) => Math.abs(r.cx - cx) < r.rw + rw + 8 && Math.abs(r.cy - cy) < r.rh + rh + 8)) continue;
     rooms.push({ id: rooms.length, cx, cy, rw, rh, shape });

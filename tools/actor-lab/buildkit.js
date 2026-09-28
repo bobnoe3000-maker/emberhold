@@ -672,6 +672,35 @@ Object.assign(TYPES, {
   },
 });
 
+// ── dungeon: the way up — a stone stair built against a back wall, climbing (toward −z)
+// to an arched opening that glows with the light outside, torches either side.
+Object.assign(TYPES, {
+  stairsup(S, g) {
+    const W = 0.36, L = 0.62, N = 8, rise = 0.43, stone = mat(tex('ashlar', '#4c4852', 31)), dark = mat(null, '#221f27');
+    for (let i = 0; i < N; i++) {                          // steps: front (+z) low → back (−z) high
+      const d = L / N, h = rise * (i + 1) / N, z = L / 2 - (i + 0.5) * d;
+      box(W, h, d, stone, 0, 0, z, g);
+      box(W, 0.008, 0.012, mat(null, '#6a6570'), 0, h - 0.004, z + d / 2 - 0.006, g);      // worn nosing, lit edge
+    }
+    // side cheeks: stepped stone walls following the flight
+    for (const sx of [-1, 1]) for (let i = 0; i < N; i++) {
+      const d = L / N, h = rise * (i + 1) / N + 0.06, z = L / 2 - (i + 0.5) * d;
+      box(0.05, h, d, stone, sx * (W / 2 + 0.025), 0, z, g);
+    }
+    // arch at the top: pillars, lintel, and the bright opening beyond
+    const top = rise, zb = -L / 2 - 0.02;
+    for (const sx of [-1, 1]) box(0.07, 0.42, 0.08, stone, sx * (W / 2 + 0.01), top, zb, g);
+    box(W + 0.16, 0.08, 0.09, stone, 0, top + 0.4, zb, g);
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 0.38, 0.02), S.m.glass); glow.userData.glow = true; glow.position.set(0, top + 0.19, zb - 0.02); g.add(glow);
+    box(W + 0.16, 0.5, 0.05, dark, 0, top, zb - 0.06, g);                                      // wall face around the arch
+    for (const sx of [-1, 1]) {                                                                 // torches on the cheeks
+      const t = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, 0.03), S.m.glass); t.userData.glow = true;
+      t.position.set(sx * (W / 2 + 0.03), rise * 0.35 + 0.16, L / 2 - 0.08); g.add(t);
+      box(0.015, 0.1, 0.015, S.m.trim, sx * (W / 2 + 0.03), rise * 0.35 + 0.05, L / 2 - 0.08, g);
+    }
+  },
+});
+
 export const BUILD_TYPES = Object.keys(TYPES);
 
 export function makeBuilding(type, style, seed = 1, faceX = false) {

@@ -56,10 +56,10 @@ export function createWorld(seed, theme, depth = 0) {
   }
   if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
   // the first level has a way back up to the overland, beside the entrance
-  if (depth === 0) for (const [dx, dy] of [[3, 0], [0, 3], [-3, 0], [0, -3], [3, 3]]) {
-    const ex = Math.floor(level.spawn.x) + dx, ey = Math.floor(level.spawn.y) + dy;
-    if (place(ex, ey, 'exit')) { world.exitAt = { x: ex + 0.5, y: ey + 0.5 }; break; }
-  }
+  // The first level's way back up: a stone stair built against the entrance room's back
+  // wall (north or west, the walls you see), climbing into it. Walk up its bottom steps to leave.
+  world.structs = [];
+  if (depth === 0 && level.entrance) placeStairsUp(world, level);
 
   // Enemies (POC: deterministic placement, view-only — no AI/combat yet). A few
   // skeletons haunt rooms that aren't the entrance or the descent chamber; count
@@ -80,6 +80,33 @@ export function createWorld(seed, theme, depth = 0) {
 }
 
 const cellAt = (world, x, y) => world.level.cells.get(K(x, y));
+
+// Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
+// stair (3 wide × 7 deep of plain room floor in front of a standing wall), nearest the
+// room's middle. Places the 'stairsup' structure and the exit trigger at its foot.
+function placeStairsUp(world, level) {
+  const r = level.entrance, cells = level.cells, isFloor = (x, y) => { const c = cells.get(K(x, y)); return c && c.kind === 'floor' && !c.corridor && c.room === r.id; };
+  const isWall = (x, y) => { const c = cells.get(K(x, y)); return c && c.kind === 'wall' && (c.wz ?? WALL_Z) >= WALL_Z - 1; };
+  let best = null;
+  for (let y = r.cy - r.rh; y <= r.cy + r.rh; y++) for (let x = r.cx - r.rw; x <= r.cx + r.rw; x++) {
+    for (const side of ['n', 'w']) {
+      let ok = true;
+      for (let a = -1; a <= 1 && ok; a++) {
+        if (side === 'n') { if (!isWall(x + a, y - 1)) ok = false; for (let d = 0; d < 7 && ok; d++) if (!isFloor(x + a, y + d)) ok = false; }
+        else { if (!isWall(x - 1, y + a)) ok = false; for (let d = 0; d < 7 && ok; d++) if (!isFloor(x + d, y + a)) ok = false; }
+      }
+      if (!ok) continue;
+      const score = Math.abs(x - r.cx) + Math.abs(y - r.cy) + (side === 'n' ? 0 : 0.5);
+      if (!best || score < best.score) best = { x, y, side, score };
+    }
+  }
+  if (!best) return;
+  const { x, y, side } = best;
+  if (side === 'n') { world.structs.push({ id: 'stairsup_0', x: x + 0.5, y: y + 3.1 }); world.exitAt = { x: x + 0.5, y: y + 5.6 }; }
+  else { world.structs.push({ id: 'stairsup_90', x: x + 3.1, y: y + 0.5 }); world.exitAt = { x: x + 5.6, y: y + 0.5 }; }
+  // arrive a few steps out from the foot of the stair, facing into the room
+  world.stairArrive = side === 'n' ? { x: x + 0.5, y: y + 10.5 } : { x: x + 10.5, y: y + 0.5 };
+}
 
 // Elevation: floor platforms sit at FLOOR_Z, walls tower at WALL_Z, the abyss is 0.
 export function heightAt(world, x, y) {

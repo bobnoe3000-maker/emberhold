@@ -270,7 +270,7 @@ export function createRenderer(canvas, sim, input) {
         terrValid = false; outMap = null;
       }).catch(() => envAtlases.delete(name));
   }
-  const wantAtlases = () => { loadAtlas('env'); if (sim.world.kind !== 'dungeon') loadAtlas('town-' + (sim.world.region || 'vale')); };
+  const wantAtlases = () => { loadAtlas('env'); if (sim.world.kind !== 'dungeon') loadAtlas('town-' + (sim.world.region || 'vale')); };   // env carries the dungeon's stair too
   wantAtlases();
   const ecv = document.createElement('canvas'), ectx = ecv.getContext('2d', { willReadFrequently: true });
   function envSprite(id) {
@@ -297,18 +297,20 @@ export function createRenderer(canvas, sim, input) {
   // Composite the scene's structures into the bake: first every ground shadow (only
   // onto ground-level pixels, once), then every sprite with the nearer-wins depth test.
   function structList(bx, by, lights) {
-    const world = sim.world, z = heightAt(world, 0, 0), list = [];
-    if (!envMeta) return list;
+    const world = sim.world, list = [];
+    if (!envMeta || !world.structs) return list;
     for (const st of world.structs) {
       const sp = envSprite(st.id); if (!sp) continue;
+      const z = heightAt(world, Math.floor(st.x), Math.floor(st.y));
       const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
       if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') });
+      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup') });
       if (envMeta.sprites[st.id].glow && lights.length < 30) lights.push({ x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
     }
     return list;
   }
-  function stampShadow({ sp, x0, y0 }, by, zp, z) {
+  function stampShadow({ sp, x0, y0, z }, by) {
+    const zp = z * ZH;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
       const ground = (py - by + zp) / HH + z * 0.5 + 0.35;
@@ -321,7 +323,8 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  function stampSprite({ sp, x0, y0, base, walkOn }, by, zp, z) {
+  function stampSprite({ sp, x0, y0, base, walkOn, z }, by) {
+    const zp = z * ZH;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
       for (let xx = 0; xx < sp.w; xx++) {
@@ -595,11 +598,10 @@ export function createRenderer(canvas, sim, input) {
     }
     if (j.phase === 0) { j.phase = 1; if (performance.now() > deadline) return false; }
     // structures: every ground shadow first, then every sprite (depth-tested), a few per slice
-    if (j.phase === 1) { j.list = world.kind !== 'dungeon' ? structList(bx, by, j.lights) : []; j.k = 0; j.phase = 2; }
-    const z = heightAt(world, 0, 0), zp = z * ZH;
-    while (j.phase === 2 && j.k < j.list.length) { stampShadow(j.list[j.k++], by, zp, z); if (performance.now() > deadline) return false; }
+    if (j.phase === 1) { j.list = structList(bx, by, j.lights); j.k = 0; j.phase = 2; }
+    while (j.phase === 2 && j.k < j.list.length) { stampShadow(j.list[j.k++], by); if (performance.now() > deadline) return false; }
     if (j.phase === 2) { j.phase = 3; j.k = 0; }
-    while (j.phase === 3 && j.k < j.list.length) { stampSprite(j.list[j.k++], by, zp, z); if (performance.now() > deadline) return false; }
+    while (j.phase === 3 && j.k < j.list.length) { stampSprite(j.list[j.k++], by); if (performance.now() > deadline) return false; }
     // thin the hazard pools to a few representatives spread apart, then pool all
     // candidates; render picks the two nearest the hero each frame.
     j.hazards.sort((a, b) => b.s - a.s);
