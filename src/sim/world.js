@@ -113,7 +113,6 @@ export function resourceAt(world, x, y) {
   const m = materialAt(world, x, y);
   if (NONWALK.has(m)) return null;
   const r = hash2(x, y, streamSeed(world.seed, STREAM.WORLD) + 888);
-  if (r < 0.028) return 'tree';
   if (r > 0.990) return 'rock';
   return null;
 }

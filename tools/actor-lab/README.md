@@ -15,7 +15,28 @@ node render.cjs              # 18 variants × stock/heroic × 3 facings → out/
 node render.cjs --px 56      # same at another figure height → out/px56/ (default 46 → out/)
 node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.png
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
+node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
 ```
+
+## Game atlases (`bake.cjs` + `bake.json`)
+
+`bake.json` lists what ships: the hero (`F1`, Knight · sword & board) and the four
+skeletons (`E1`–`E4`). Each has idle + walk clips. For every one of the **8 screen
+directions** (row 0 = E, 1 = SE, 2 = S toward the camera, … clockwise) × every clip frame,
+`window.bakeAtlas` in `lab.js` renders the figure three times at 56 px, heroic:
+
+- **albedo** — unlit palette colour, then the grim pass, a value gain (`albedoGain`, 0.5,
+  into the terrain's albedo range since the deferred pass relights it) and a 1 px ink
+  outline. Alpha is the mask.
+- **normal** — view-space normals remapped to the renderer's screen convention (camera-facing
+  ≈ (0, −0.28, 0.96), up-facing ≈ (0, 0.3, 0.95)), so the torch and braziers wrap the figure.
+- **emissive** — the glowing-eye mesh only; written only if something glows. The glow
+  colour is the `glow` GLOW_ID in `bake.json`.
+
+Scale and camera are fixed from the idle pose so the figure never pulses between frames,
+and the rest pose is restored before each sample so the heroic pass never compounds.
+Outputs are `<name>.json` (cell size, foot anchor, clips, glow) plus `.alb/.nrm/.emi.png`,
+loaded by `loadActorAtlas()` in `src/render/renderer.js`.
 
 `render.cjs` serves this folder itself and drives headless Chromium with SwiftShader
 WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` path.
@@ -28,6 +49,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 |---|---|
 | `lab.js` / `lab.html` | three.js harness: loadouts, weapon attachment, recolor, glowing eyes, heroic pass, render |
 | `variants.json` | the roster: 10 hero loadouts (fighter/rogue/mage) + 8 enemy NPCs |
+| `bake.cjs` / `bake.json` | bake the shipped actor atlases into `assets/actors/` |
 | `render.cjs` | static server + headless render of every variant; exports `serve`, `CHROME`, `GL` |
 | `capture-backdrop.cjs` | screenshot a furnished room with actors hidden (dpr 2 ⇒ 1 screenshot px = 1 canvas px, 3 per native px) |
 | `compose.py` | the 'grim' pass + the three boards |

@@ -36,7 +36,6 @@ Shipped on `main`: Phase 0, save/load, the iso pivot, the Dreadforge port, and t
 **Emberlit** WebGL2 deferred renderer. On top of those: **themed dungeon levels** (rooms,
 wide corridors, weathered walls over the abyss, six emissive biomes), the **descent**
 (stairs → a deeper, harder level), room contents (chests, shrines, braziers), a fog-of-war
-**minimap**, and a 3D-sprite hero + skeleton POC. Characters are moving to
-[`character-direction.md`](./character-direction.md) (Option C): the next build bakes KayKit
-G-buffer atlases into the existing actor path, then combat. `emberhold-status-v0.4.md`
+**minimap**, and baked **KayKit** actors ([`character-direction.md`](./character-direction.md), Option C:
+a 56 px knight hero and four skeleton types with real normals). Next up: combat. `emberhold-status-v0.4.md`
 predates all of this and needs a v0.5 re-baseline.

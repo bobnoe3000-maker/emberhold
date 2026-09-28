@@ -4,7 +4,7 @@ Mobile-first, portrait-mode sandbox survival RPG. Dark dusk mood, torchlight, pr
 Zero build step: plain ES modules, deploys as static files.
 
 **Phase 0 exit criteria (met):** character walks an infinite chunked world on-device, portrait, one thumb.
-Bonus: tap-to-harvest trees/rocks with counters, torch lighting, hit-flash feedback.
+Bonus: tap-to-harvest rocks with counters, torch lighting, hit-flash feedback.
 
 ## Run locally
 
@@ -31,7 +31,7 @@ folder onto Netlify also works for one-off deploys.)
 ## Controls
 
 - **Drag anywhere** — floating joystick, analog speed
-- **Tap a tree or rock** — harvest (3 hits); "too far" toast outside reach
+- **Tap a rock** — harvest (3 hits); "too far" toast outside reach
 
 ## Saves
 

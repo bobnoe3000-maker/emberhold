@@ -22,13 +22,13 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 const INTERACT = new Set(['chest', 'shrine', 'stairs']);   // props a tap can target
-// screen-octant → sprite-row (hero + skeleton share Flare's 8-dir order). Tuned so
-// walking toward the camera shows the front. sdx/sdy are screen-space deltas.
-const SPRITE_DIR = [3, 4, 5, 6, 7, 0, 1, 2];   // calibrated in-engine: octant→sprite row
+// Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
+// 0=E, 1=SE, 2=S (toward the camera), 3=SW, 4=W, 5=NW, 6=N, 7=NE. sdx/sdy are
+// screen-space deltas.
 function dir8(sdx, sdy) {
-  const oct = ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;   // 0=E,1=SE,2=S,3=SW,4=W,5=NW,6=N,7=NE
-  return SPRITE_DIR[oct];
+  return ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;
 }
+const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
 
 const MARGIN = 64;                 // native-px slack before a re-bake
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
@@ -201,22 +201,41 @@ export function createRenderer(canvas, sim, input) {
     return sp;
   }
 
-  // ── 3D actor atlases: the isometric hero pack + the Flare skeleton, each sliced
-  // into per-(direction, frame) G-sprites (albedo + generated normal, so they
-  // relight in the deferred pass). Loaded async; until ready the hero falls back
-  // to the paper-doll and skeletons simply don't draw yet.
-  let heroAtlas = null, skelAtlas = null, heroDir = 2;
+  // ── Actor atlases: KayKit CC0 figures baked at 56 px (heroic + grim) by
+  // tools/actor-lab/bake.cjs into albedo / normal / emissive sheets, sliced here
+  // into per-(direction, frame) G-sprites with real 3D normals, so they relight in
+  // the deferred pass. Loaded async; until ready the hero falls back to the
+  // paper-doll and skeletons simply don't draw yet.
+  let heroAtlas = null, heroDir = 2;
+  const skelAtlases = [];
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
-  async function loadActorAtlas(jsonUrl, pngUrl) {
-    const meta = await (await fetch(jsonUrl)).json();
-    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = pngUrl; });
-    acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0);
-    const { cw, ch, ax, ay } = meta, cols = (img.width / cw) | 0, rows = (img.height / ch) | 0, cells = [];
-    for (let r = 0; r < rows; r++) { const row = []; for (let f = 0; f < cols; f++) { const d = actx.getImageData(f * cw, r * ch, cw, ch).data; row.push(spriteFromCanvasData(d, cw, ch, ax, ay)); } cells.push(row); }
+  const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
+  async function loadActorAtlas(name) {
+    const base = './assets/actors/' + name, meta = await (await fetch(base + '.json')).json();
+    const alb = pixels(await loadImg(base + '.alb.png')), iw = acv.width;
+    const nrm = pixels(await loadImg(base + '.nrm.png')), emi = meta.glow ? pixels(await loadImg(base + '.emi.png')) : null;
+    const { cw, ch, ax, ay } = meta, cells = [];
+    for (let r = 0; r < meta.dirs; r++) {
+      const row = [];
+      for (let f = 0; f < meta.frames; f++) {
+        const sp = { w: cw, h: ch, ax, ay, mask: new Uint8Array(cw * ch), alb: new Uint8Array(cw * ch * 3), nrm: new Uint8Array(cw * ch * 3), emi: new Uint8Array(cw * ch) };
+        for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+          const i = ((r * ch + y) * iw + f * cw + x) * 4, j = y * cw + x;
+          if (alb[i + 3] < 128) continue;
+          sp.mask[j] = 1;
+          sp.alb[j * 3] = alb[i]; sp.alb[j * 3 + 1] = alb[i + 1]; sp.alb[j * 3 + 2] = alb[i + 2];
+          sp.nrm[j * 3] = nrm[i]; sp.nrm[j * 3 + 1] = nrm[i + 1]; sp.nrm[j * 3 + 2] = nrm[i + 2];
+          if (emi && emi[i] > 128) sp.emi[j] = meta.glow;
+        }
+        row.push(sp);
+      }
+      cells.push(row);
+    }
     return { meta, cells };
   }
-  loadActorAtlas('./assets/hero/knight.json', './assets/hero/knight.png').then((a) => { heroAtlas = a; }).catch(() => {});
-  loadActorAtlas('./assets/enemy/skeleton.json', './assets/enemy/skeleton.png').then((a) => { skelAtlas = a; }).catch(() => {});
+  loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; }).catch(() => {});
+  SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
 
   // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
   // from tilestyles.js, and ?tiles=classic restores the original per-pixel-noise look.
@@ -433,7 +452,9 @@ export function createRenderer(canvas, sim, input) {
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH });
     }
-    if (skelAtlas) for (const e of sim.world.enemies || []) {
+    for (const e of sim.world.enemies || []) {
+      const skelAtlas = skelAtlases[(hash2(Math.floor(e.x), Math.floor(e.y), 77) * SKELETONS.length) | 0];
+      if (!skelAtlas) continue;
       const ez = heightAt(sim.world, Math.floor(e.x), Math.floor(e.y));
       const ep = project(e.x, e.y, ez), ex = ox + ep.sx, ey = oy + ep.sy;
       if (ex < -40 || ex > nvw + 40 || ey < -40 || ey > nvh + 40) continue;      // offscreen
@@ -480,7 +501,8 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform1f(U(lightP, 'uWispA'), WISP);
     gl.uniform3fv(U(lightP, 'uL'), L.flat());
     gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
-    gl.uniform2f(U(lightP, 'uWispPx'), hx, oy + P.sy - 12);
+    // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
+    gl.uniform2f(U(lightP, 'uWispPx'), hx + 17, oy + P.sy - 42 + Math.sin(t * 2.1) * 1.5);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
 

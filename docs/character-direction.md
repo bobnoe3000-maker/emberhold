@@ -53,16 +53,19 @@ values were tuned by eye; they live in `HEROIC` in `tools/actor-lab/lab.js`.
 **Grim pass:** 42 % desaturation, cool tint (×0.92 / 0.87 / 1.0), 1 px outline in
 `#08050e`. Pixels brighter than 225 (eyes, orbs) stay hot.
 
-## Integration plan (next)
+## Integration (shipped 2026-09-28)
 
-1. **Bake, don't render live (yet).** Extend the lab to write G-buffer atlases — albedo,
-   **normal**, emissive — per direction × frame. These drop straight into the existing
-   `stamp()` actor path in `renderer.js` (the path the hero POC uses), so actors get
-   real normals with almost no engine change.
-2. Replace the Flare skeleton and the `isometric_hero` knight. That retires the
-   CC BY-SA and unconfirmed-license assets from `assets/`.
-3. Later, optionally: render skinned meshes live into the G-buffer for smooth rotation
-   and animation blending.
+1. **Baked, not rendered live.** `tools/actor-lab/bake.cjs` writes G-buffer atlases —
+   albedo, **real normals**, emissive eyes — for 8 directions × idle (6) + walk (8)
+   frames at 56 px into `assets/actors/`. They drop into the existing `stamp()` actor path.
+2. **In game:** the hero is the Knight · sword & board (running clip while moving), and
+   each enemy is one of the four skeletons (warrior, minion, rogue, mage), picked per enemy.
+   The Flare skeleton and the `isometric_hero` knight are gone, which retires the
+   CC BY-SA and unconfirmed-license assets.
+3. The hero's torch-wisp now floats beside the shoulder rather than over the torso.
+4. Later, optionally: render skinned meshes live into the G-buffer for smooth rotation
+   and animation blending. The skeleton mage's eyes are hidden by its hood, so it has
+   no glow yet.
 
 ## Actor size — 56 px (decided 2026-09-28)
 

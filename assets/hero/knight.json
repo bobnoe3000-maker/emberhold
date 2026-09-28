@@ -1,1 +1,0 @@
-{"cw": 120, "ch": 93, "dirs": 8, "frames": 16, "ax": 60, "ay": 90, "clips": {"idle": {"start": 0, "len": 4, "fps": 6}, "walk": {"start": 4, "len": 8, "fps": 12}, "attack": {"start": 12, "len": 4, "fps": 14}}}

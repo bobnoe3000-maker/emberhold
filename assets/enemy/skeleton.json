@@ -1,1 +1,0 @@
-{"cw": 80, "ch": 66, "dirs": 8, "frames": 8, "ax": 40, "ay": 63, "cliporder": ["idle", "walk"], "clips": {"idle": {"start": 0, "len": 4, "fps": 8}, "walk": {"start": 0, "len": 8, "fps": 15}}}

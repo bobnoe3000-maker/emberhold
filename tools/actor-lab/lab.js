@@ -93,4 +93,80 @@ window.renderVariants = async (vs) => {
   }
   return out;
 };
+// ─── Game atlas bake (bake.cjs). One build per character; every (direction, clip
+// frame) is rendered three times — ALBEDO (unlit palette colour → grim pass +
+// 1px ink outline; `gain` scales value into the terrain's albedo range, since the
+// deferred pass relights it), NORMAL (view-space → Emberhold's screen-normal convention) and
+// EMISSIVE (eyes only) — and packed into rows = 8 screen octants (0=E, 1=SE,
+// 2=S toward the camera, … clockwise), columns = clip frames. Scale and camera are
+// fixed from the idle pose so the figure never pulses between frames.
+const INK = [8, 5, 14];
+function grimPass(d, gain = 1) {                         // 42% desat, cool tint, value gain; hot pixels (eyes) stay hot
+  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;
+    const r = d[i], g = d[i + 1], b = d[i + 2]; if (Math.max(r, g, b) > 225) continue;
+    const L = 0.3 * r + 0.59 * g + 0.11 * b, k = 0.42;
+    d[i] = (r + (L - r) * k) * 0.92 * gain; d[i + 1] = (g + (L - g) * k) * 0.87 * gain; d[i + 2] = (b + (L - b) * k) * gain; }
+}
+window.bakeAtlas = async (v, clips, gain = 1) => {
+  const c = await build(v), bones = [];
+  c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+  const sample = (name, t) => {                          // restore rest pose first so the heroic pass never compounds
+    for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
+    pose(c, name, t, true);
+  };
+  sample('Idle', 0);
+  const box = new THREE.Box3().setFromObject(c.root), ppu = TARGET_PX / (box.max.y - box.min.y);
+  const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
+  const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
+  cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt);
+  const scene = new THREE.Scene(); scene.add(c.root);
+  const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
+    mats.alb.set(o, eyes ? new THREE.MeshBasicMaterial({ color: v.eyes || 0xffffff }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
+    mats.emi.set(o, eyes ? white : black); });
+  const nrmMat = new THREE.MeshNormalMaterial();
+  const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
+  const mk = () => { const cv = document.createElement('canvas'); cv.width = W * cols; cv.height = H * rows; return cv; };
+  const A = mk(), N = mk(), E = mk(), ax = A.getContext('2d'), nx = N.getContext('2d'), ex = E.getContext('2d');
+  nx.fillStyle = '#000'; nx.fillRect(0, 0, N.width, N.height); ex.fillStyle = '#000'; ex.fillRect(0, 0, E.width, E.height);
+  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d', { willReadFrequently: true });
+  const pass = (kind) => {
+    if (kind === 'nrm') { scene.overrideMaterial = nrmMat; R.outputColorSpace = THREE.LinearSRGBColorSpace; }
+    else { scene.overrideMaterial = null; R.outputColorSpace = THREE.SRGBColorSpace; c.root.traverse((o) => { if (o.isMesh) o.material = mats[kind].get(o); }); }
+    R.toneMapping = THREE.NoToneMapping; R.setClearColor(0, 0); R.render(scene, cam);
+    tx.clearRect(0, 0, W, H); tx.drawImage(R.domElement, 0, 0); return tx.getImageData(0, 0, W, H);
+  };
+  let hasGlow = false;
+  for (let dir = 0; dir < 8; dir++) {
+    c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir);
+    let col = 0;
+    for (const k of clips) for (let f = 0; f < k.frames; f++, col++) {
+      sample(k.clip, f / k.frames); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
+      const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
+      grimPass(ad, gain);
+      const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
+      const out = new Uint8ClampedArray(ad);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        if (ad[i + 3]) {
+          ad[i + 3] = 255;
+          // view normal (x right, y up, z to camera) → screen convention: floors ≈ (0, .3, .95), camera-facing ≈ (0, -.28, .96)
+          let vx = nd[i] / 127.5 - 1, vy = nd[i + 1] / 127.5 - 1, vz = Math.max(0.05, nd[i + 2] / 127.5 - 1);
+          vy = vy * 0.6 - 0.25; const l = Math.hypot(vx, vy, vz); vx /= l; vy /= l; vz /= l;
+          nd[i] = (vx * 0.5 + 0.5) * 255; nd[i + 1] = (vy * 0.5 + 0.5) * 255; nd[i + 2] = vz * 255; nd[i + 3] = 255;
+          const g = ed[i] > 128 ? 255 : 0; ed[i] = ed[i + 1] = ed[i + 2] = g; ed[i + 3] = 255; if (g) hasGlow = true;
+        } else if (solid(x + 1, y) || solid(x - 1, y) || solid(x, y + 1) || solid(x, y - 1)) {
+          out[i] = INK[0]; out[i + 1] = INK[1]; out[i + 2] = INK[2]; out[i + 3] = 255;             // outline
+          nd[i] = 127; nd[i + 1] = 91; nd[i + 2] = 245; nd[i + 3] = 255; ed[i] = ed[i + 1] = ed[i + 2] = 0; ed[i + 3] = 255;
+        } else { nd[i] = nd[i + 1] = nd[i + 2] = 0; nd[i + 3] = 255; ed[i] = ed[i + 1] = ed[i + 2] = 0; ed[i + 3] = 255; }
+        if (ad[i + 3]) { out[i] = ad[i]; out[i + 1] = ad[i + 1]; out[i + 2] = ad[i + 2]; out[i + 3] = 255; }
+      }
+      ax.putImageData(new ImageData(out, W, H), col * W, dir * H);
+      nx.putImageData(n, col * W, dir * H); ex.putImageData(e, col * W, dir * H);
+    }
+  }
+  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', clips: {} };
+  for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps }; start += k.frames; }
+  return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null };
+};
 window.ready = true;
