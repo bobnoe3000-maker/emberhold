@@ -169,6 +169,18 @@ export const STYLES = {
   C: { key: 'C', name: 'Gothic Stone', lower: ['ashlar', '#4f4c58'], upper: ['ashlar', '#4f4c58'], roof: ['lead', '#2a2b33'], roofRise: 1.6,
     wood: '#34282a', beam: '#26201f', door: '#3a2a26', trim: '#1f1b20', banner: '#6e1c22', hay: '#7c6d45', signboard: '#4a3a33', jetty: 0, timber: false, gothic: true },
 };
+// Regional tones: every region's town keeps option A's SHAPES (so the shop, tavern,
+// inn and temple read the same everywhere) and changes only materials and colour.
+const A_SHAPE = { roofRise: 1.05, jetty: 0.04, timber: true };
+Object.assign(STYLES, {
+  vale:    { ...STYLES.A, key: 'vale' },                                                          // Hollow Vale: warm oak, limewash, slate
+  fens:    { ...A_SHAPE, key: 'fens', lower: ['rubble', '#5b5f57'], upper: ['plaster', '#98a089'], roof: ['slate', '#363d36'],
+             wood: '#35302a', beam: '#26231f', door: '#3d3a30', trim: '#1f201c', banner: '#3b5a4a', hay: '#6f6a46', signboard: '#4a463a' },  // damp, mossy, grey-green
+  reach:   { ...A_SHAPE, key: 'reach', lower: ['field', '#4c4542'], upper: ['plaster', '#8c7d70'], roof: ['slate', '#5e3024'],
+             wood: '#2a211d', beam: '#1b1613', door: '#3a2820', trim: '#191412', banner: '#7c2c18', hay: '#7a6a44', signboard: '#4a3226' },  // soot, ash, rust-red tile
+  heights: { ...A_SHAPE, key: 'heights', lower: ['ashlar', '#8a8984'], upper: ['plaster', '#c9c7bf'], roof: ['slate', '#48536a'],
+             wood: '#4a4038', beam: '#38312c', door: '#4a3e34', trim: '#28282c', banner: '#2c4a70', hay: '#8a8060', signboard: '#4a4a52' },  // pale limestone, cold blue slate
+});
 function kit(style, seed = 1) {
   const s = STYLES[style], g = new THREE.Group();
   const m = {
@@ -176,7 +188,7 @@ function kit(style, seed = 1) {
     roof: mat(tex(s.roof[0], s.roof[1], seed + 2)), stone: mat(tex(s.lower[0] === 'ashlar' ? 'ashlar' : 'field', s.lower[1], seed + 3)),
     stoneDark: mat(null, shade(hex(s.lower[1]), 0.6).reduce((a, v) => a + v.toString(16).padStart(2, '0'), '#')),
     wood: mat(tex('planks', s.wood, seed + 4)), beam: mat(null, s.beam), door: mat(tex('planks', s.door, seed + 5)), trim: mat(null, s.trim),
-    glass: mat(null, '#e0a050'), dark: mat(null, '#1c1a22'), banner: mat(null, s.banner), hay: mat(tex('thatch', s.hay, seed + 6)), signboard: mat(null, s.signboard),
+    glass: mat(null, '#e0a050'), dark: mat(null, '#1c1a22'), paper: mat(null, '#b8ad92'), banner: mat(null, s.banner), hay: mat(tex('thatch', s.hay, seed + 6)), signboard: mat(null, s.signboard),
     palisade: mat(tex('palisade', s.wood, seed + 7)),
   };
   return { S: { ...s, m, rnd: rng(seed * 31 + 7) }, g };
@@ -190,8 +202,16 @@ function storeyBlock(S, g, w, d, y0, h, wallM, winRow, opts = {}) {
     const nz = Math.max(1, Math.round(w / 0.32)), nx = Math.max(1, Math.round(d / 0.32));
     for (let i = 0; i < nz; i++) { const u = -w / 2 + (w * (i + 0.5)) / nz; if (opts.doorZ !== undefined && Math.abs(u - opts.doorZ) < 0.16) continue; windowOn(g, S, fz, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic, shutters: !S.gothic && !S.thatch && i % 2 === 0 }); }
     for (let i = 0; i < nx; i++) { const u = -d / 2 + (d * (i + 0.5)) / nx; windowOn(g, S, fx, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic }); }
+    // the two far faces too (mirrored groups), so a 90°-turned building still shows windows
+    const back = new THREE.Group(); back.rotation.y = Math.PI; g.add(back);
+    for (let i = 0; i < nz; i++) windowOn(back, S, fz, -w / 2 + (w * (i + 0.5)) / nz, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic });
+    for (let i = 0; i < nx; i++) windowOn(back, S, fx, -d / 2 + (d * (i + 0.5)) / nx, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic });
   }
-  if (opts.timber && S.timber) { timber(g, S, fz, y0, y0 + h, Math.max(2, Math.round(w / 0.25))); timber(g, S, fx, y0, y0 + h, Math.max(2, Math.round(d / 0.25))); }
+  if (opts.timber && S.timber) {
+    timber(g, S, fz, y0, y0 + h, Math.max(2, Math.round(w / 0.25))); timber(g, S, fx, y0, y0 + h, Math.max(2, Math.round(d / 0.25)));
+    const back = new THREE.Group(); back.rotation.y = Math.PI; g.add(back);
+    timber(back, S, fz, y0, y0 + h, Math.max(2, Math.round(w / 0.25))); timber(back, S, fx, y0, y0 + h, Math.max(2, Math.round(d / 0.25)));
+  }
   return b;
 }
 function roofOver(S, g, w, d, y0, rise, alongX = true) {
@@ -230,7 +250,12 @@ const TYPES = {
     const wing = new THREE.Group(); wing.position.set(-0.3, 0, -0.55); g.add(wing);
     storeyBlock(S, wing, 0.5, 0.45, 0, 0.5, S.m.lower, false); roofOver(S, wing, 0.5, 0.45, 0.5, S.roofRise, false);
     chimney(g, S, 0.34, -0.12, h1 + h2, 0.45); chimney(g, S, -0.38, 0.1, h1 + h2, 0.4);
-    sign(g, S, 0.32, 0.5, d / 2); barrel(g, S, 0.42, 0.46); barrel(g, S, 0.54, 0.44); barrel(g, S, -0.45, 0.45);
+    sign(g, S, 0.32, 0.5, d / 2); barrel(g, S, 0.42, 0.46); barrel(g, S, 0.54, 0.44);
+    // notice board (the Lantern Guild's quests) beside the door: posts, board, pinned notes
+    const nb = new THREE.Group(); nb.position.set(-0.3, 0, d / 2 + 0.12); g.add(nb);
+    for (const sx of [-1, 1]) box(0.025, 0.34, 0.025, S.m.beam, sx * 0.13, 0, 0, nb);
+    box(0.3, 0.18, 0.025, S.m.wood, 0, 0.14, 0, nb); box(0.34, 0.03, 0.06, S.m.roof, 0, 0.33, 0, nb);
+    for (const [x, y] of [[-0.08, 0.26], [0.02, 0.2], [0.09, 0.25], [-0.03, 0.16], [0.08, 0.16]]) box(0.05, 0.06, 0.03, S.m.paper, x, y, 0.004, nb);
     if (S.gothic) buttresses(S, g, w, d, h1);
   },
   inn(S, g, r) {
@@ -325,6 +350,14 @@ const TYPES = {
     banner(gh, S, 0, h + 0.3, 0.2);
     windowOn(gh, S, { side: 'z', wallW: 0.78, wallD: 0.34 }, -0.26, h + 0.1, 0.06, 0.1, { pointed: S.gothic }); windowOn(gh, S, { side: 'z', wallW: 0.78, wallD: 0.34 }, 0.26, h + 0.1, 0.06, 0.1, { pointed: S.gothic });
   },
+  well(S, g, r) {                                        // the square's well: stone ring, posts, little roof, bucket
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.16, 10), S.m.stone); ring.position.y = 0.08; g.add(ring);
+    const water = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.01, 10), mat(null, '#1d3040')); water.position.y = 0.155; g.add(water);
+    for (const sx of [-1, 1]) box(0.03, 0.36, 0.03, S.m.beam, sx * 0.15, 0.1, 0, g);
+    box(0.34, 0.025, 0.025, S.m.beam, 0, 0.42, 0, g);
+    const rf = new THREE.Group(); rf.position.y = 0.46; g.add(rf); gable(rf, 0.36, 0.3, 0, 0.12, S.m.roof, S.m.wood, 0.03, 0.02);
+    box(0.06, 0.06, 0.06, S.m.wood, 0.05, 0.25, 0, g);
+  },
   farm(S, g, r) {                                        // farmhouse + barn + hay + fenced yard
     const barn = new THREE.Group(); barn.position.set(-0.25, 0, -0.2); g.add(barn);
     box(0.95, 0.5, 0.6, S.gothic ? S.m.stone : S.m.wood, 0, 0, 0, barn); roofOver(S, barn, 0.95, 0.6, 0.5, S.roofRise * 0.9);
@@ -381,9 +414,10 @@ export function makeTree(kind, seed = 1) { const g = new THREE.Group(); TREES[ki
 
 export const BUILD_TYPES = Object.keys(TYPES);
 
-export function makeBuilding(type, style, seed = 1) {
+export function makeBuilding(type, style, seed = 1, faceX = false) {
   const { S, g } = kit(style, seed);
   TYPES[type](S, g, rng(seed));
+  if (faceX) g.rotation.y = Math.PI / 2;          // door on +x (screen down-right) instead of +z (down-left)
   g.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; } });
   return g;
 }

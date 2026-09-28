@@ -6,7 +6,7 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
-| [town-art-options.md](./town-art-options.md) | Town + overland prototype; three art options for our own buildings (Timber & Slate · Thatch & Rubble · Gothic Stone), live via `?scene=town&bset=A` | **Options** — pick pending (2026-09-28) |
+| [town-art-options.md](./town-art-options.md) | Town + overland prototype with our own buildings; hub towns (one per region, same shapes, regional tones), live via `?scene=town&region=vale` | **Decided** — Option A shapes, regional tones (2026-09-28) |
 | [emberfall-gdd.md](./emberfall-gdd.md) | **Emberfall** game design: autobattler party RPG, classes and stats, loot, quest generation, overland, offline and multiplayer, roadmap | **Plan of record** for game design (2026-09-28) |
 | [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary | **Canon** for narrative and quest content (2026-09-28) |
 | [tile-styles.md](./tile-styles.md) | Five structured floor/wall tile styles × seven material variants (plain, earth, rock, lava, poison, ice, water), switch with `?tiles=&tv=` | **Current** — cobble is the default (2026-09-28) |

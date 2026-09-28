@@ -49,7 +49,7 @@ const uvMat = new THREE.ShaderMaterial({
 
 // bake one model → { w, h, ax, ay, alb, nrm, key (dataURLs), emi, foot } ; ax/ay = pixel of the model origin
 window.bakeEnv = async (name, o = {}) => {
-  const root = o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1) : (await load(`./models/env/${name}.gltf`)).scene;
+  const root = o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(`./models/env/${name}.gltf`)).scene;
   if (o.rotY) root.rotation.y = o.rotY * Math.PI / 180;
   if (o.scale) root.scale.setScalar(o.scale);
   root.updateMatrixWorld(true);

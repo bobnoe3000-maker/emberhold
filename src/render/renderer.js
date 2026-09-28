@@ -216,7 +216,7 @@ export function createRenderer(canvas, sim, input) {
   // into per-(direction, frame) G-sprites with real 3D normals, so they relight in
   // the deferred pass. Loaded async; until ready the hero falls back to the
   // paper-doll and skeletons simply don't draw yet.
-  let heroAtlas = null, heroDir = 2;
+  let heroAtlas = null, heroDir = 2, outMap = null;
   const skelAtlases = [];
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
@@ -250,14 +250,28 @@ export function createRenderer(canvas, sim, input) {
   // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
   // alpha), and a per-pixel depth key (+ lit-window flag). Sprites are sliced lazily,
   // only when a scene first uses them.
-  let envMeta = null, envImgs = null;
-  const envCache = new Map();
-  Promise.all([fetch('./assets/env/env.json').then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg('./assets/env/env.' + c + '.png'))])
-    .then(([m, a, n, k]) => { envMeta = m; envImgs = { a, n, k }; terrValid = false; }).catch(() => {});
+  // Two atlases are live at a time: the shared base ('env': trees, rocks, props) and the
+  // current region's town buildings ('town-<region>': same shapes, the region's tones).
+  let envMeta = null;                                  // { sprites: id → meta (+ .atlas) } merged across loaded atlases
+  const envAtlases = new Map(), envCache = new Map();
+  function loadAtlas(name) {
+    if (envAtlases.has(name)) return;
+    envAtlases.set(name, null);
+    Promise.all([fetch(`./assets/env/${name}.json`).then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png`))])
+      .then(([m, a, n, k]) => {
+        envAtlases.set(name, { a, n, k });
+        envMeta = envMeta || { sprites: {} };
+        for (const [id, sm] of Object.entries(m.sprites)) envMeta.sprites[id] = { ...sm, atlas: name };
+        terrValid = false; outMap = null;
+      }).catch(() => envAtlases.delete(name));
+  }
+  const wantAtlases = () => { loadAtlas('env'); if (sim.world.kind !== 'dungeon') loadAtlas('town-' + (sim.world.region || 'vale')); };
+  wantAtlases();
   const ecv = document.createElement('canvas'), ectx = ecv.getContext('2d', { willReadFrequently: true });
   function envSprite(id) {
     if (envCache.has(id)) return envCache.get(id);
     const m = envMeta && envMeta.sprites[id]; if (!m) return null;
+    const envImgs = envAtlases.get(m.atlas); if (!envImgs) return null;
     const grab = (img) => { ecv.width = m.w; ecv.height = m.h; ectx.clearRect(0, 0, m.w, m.h); ectx.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h); return ectx.getImageData(0, 0, m.w, m.h).data; };
     const A = grab(envImgs.a), N = grab(envImgs.n), K = grab(envImgs.k), n = m.w * m.h;
     const sp = { w: m.w, h: m.h, ax: m.ax, ay: m.ay, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
@@ -532,17 +546,34 @@ export function createRenderer(canvas, sim, input) {
   // descending / restoring rebuilds the world — rebuild seed-keyed props + re-bake.
   const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
   props = withExit(props);
-  let banner = null, outMap = null;
+  let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
-  sim.bus.on('levelChanged', () => { props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
+
+  // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
+  // fixed framing, so the square sits still like a home screen while the hero moves in it.
+  let camT = 0;
+  function camera(ix, iy, pz) {
+    const hub = sim.world.hub;
+    let cx = ix, cy = iy;
+    if (hub) {
+      const d = Math.hypot(ix - hub.x, iy - hub.y), want = d < hub.r - 6 ? 1 : d > hub.r ? 0 : (hub.r - d) / 6;
+      camT += (want - camT) * 0.08;
+      const t = camT * camT * (3 - 2 * camT);
+      cx = ix + (hub.focus.x - ix) * t; cy = iy + (hub.focus.y - iy) * t;
+    } else camT = 0;
+    const C = project(cx, cy, pz);
+    return { ox: Math.round(nvw / 2 - C.sx), oy: Math.round(nvh * 0.56 - C.sy) };
+  }
+  let lastCam = { ox: 0, oy: 0 };
 
   function render(alpha, now) {
     const p = sim.state.player;
     const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
     const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
     const P = project(ix, iy, pz);
-    const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
+    const { ox, oy } = (lastCam = camera(ix, iy, pz));
 
     if (!terrValid || Math.abs(bakeOx - ox) > MARGIN - 8 || Math.abs(bakeOy - oy) > MARGIN - 8) bakeGBuffer(ox, oy);
 
@@ -649,7 +680,7 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }
+    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }   // no minimap on the town's home screen
     drawBanner(now);
     const j = input.joystick();
     if (j) {
@@ -699,7 +730,14 @@ export function createRenderer(canvas, sim, input) {
       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
       const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy = (oy + P.sy - top - 10) * S;
       if (sx < 0 || sx > vw || sy < 0 || sy > vh) continue;
-      const a = Math.max(0, Math.min(1, (60 - d) / 20));
+      const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
+      if (L.service) {                                              // service plaques: tappable-looking signs
+        const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
+        octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
+        octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
+        octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
+        continue;
+      }
       octx.fillStyle = `rgba(8,5,14,${0.7 * a})`; octx.fillText(L.text, sx + k, sy + k);
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
@@ -755,12 +793,22 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, setHero, resize,
+    serviceAt(sxPx, syPx) {
+      const w = sim.world; if (!w.services || !w.services.length || !envMeta) return null;
+      const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S, z = heightAt(w, 0, 0);
+      let best = null;
+      for (const sv of w.services) {
+        const m = envMeta.sprites[sv.id]; if (!m) continue;
+        const P = project(sv.x, sv.y, z), x0 = lastCam.ox + P.sx - m.ax, y0 = lastCam.oy + P.sy - m.ay;
+        if (nx >= x0 && nx < x0 + m.w && ny >= y0 && ny < y0 + m.h * 0.85 && (!best || sv.x + sv.y > best.x + best.y)) best = sv;
+      }
+      return best;
+    },
     screenToTile(sxPx, syPx, alpha) {
       const p = sim.state.player;
       const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
       const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
-      const P = project(ix, iy, pz);
-      const ox = Math.round(nvw / 2 - P.sx), oy = Math.round(nvh * 0.56 - P.sy);
+      const { ox, oy } = lastCam;
       const dpr = vw / window.innerWidth;
       return resolveTap((sxPx * dpr) / S - ox, (syPx * dpr) / S - oy, {
         heightAt: (tx, ty) => heightAt(sim.world, tx, ty),

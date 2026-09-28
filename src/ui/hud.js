@@ -7,13 +7,19 @@ export function createHud(sim) {
   const toast = document.getElementById('hudToast');
   let toastTimer = null;
 
-  const setDepth = (d) => { if (depth) depth.textContent = d + 1; };   // depth 0 → "1"
+  // dungeon: "depth N"; town / overland: the place's name
+  const setDepth = (d) => {
+    if (!depth) return;
+    const out = sim.world.kind !== 'dungeon';
+    depth.parentElement.firstChild.textContent = out ? '' : 'depth ';
+    depth.textContent = out ? sim.world.name : d + 1;
+  };
   setDepth(sim.state.depth);
 
   sim.bus.on('countersChanged', (c) => { wood.textContent = c.wood; stone.textContent = c.stone; });
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
   sim.bus.on('looted', ({ kind }) => show(kind === 'chest' ? 'chest opened' : 'a blessing'));
-  sim.bus.on('levelChanged', ({ depth: d, theme }) => { setDepth(d); show('descended · ' + (sim.world.level.th.name || theme)); });
+  sim.bus.on('levelChanged', ({ depth: d, theme }) => { setDepth(d); if (sim.world.kind === 'dungeon') show('descended · ' + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
 
   function show(msg) {

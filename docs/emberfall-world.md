@@ -50,14 +50,15 @@ record is scattered in fragments that the Cinder Cult has spent 300 years trying
 ## 3. The land: four regions and a throne
 
 Each region is a difficulty tier, a set of tile variants and biomes (the engine's
-`?tiles=&tv=` language), an enemy mix and a chapter of the main arc. Towns are small: a
-tavern, a smith, a shrine and the Lantern Guild's quest board.
+`?tiles=&tv=` language), an enemy mix and a chapter of the main arc. **Each region has one
+town, its hub**, with the same four services in the same buildings, toned for the region (GDD §10).
 
 ### 3.1 The Hollow Vale: levels 1–8 · Act I
 Rolling farmland, hedgerows and the barrows of the old legions. It's the safest region, and
 it's where everyone starts.
-- **Towns:** **Thornwick** (start village, crossroads inn *The Tired Mule*) and **Greyholt**
-  (walled market town, seat of the useless Lord Pellam).
+- **Town:** **Thornwick**: tavern *The Tired Mule*, inn *The Crossed Keys*, *Hale & Daughter,
+  Smiths*, the *Shrine of the Ember*. **Greyholt** (walled market town, seat of the useless Lord
+  Pellam) is an overland landmark, not a hub.
 - **Sites:** the Old Barrows (crypts), **Wickham Keep** (a ruin the Redhand bandits hold), the
   Sunken Chapel and the Tithe Mill.
 - **Look:** `plain` and `earth` variants; flagstone keeps and cobble barrows. Biome: *Dreadforge*.
@@ -66,8 +67,9 @@ it's where everyone starts.
 ### 3.2 The Greywater Fens: levels 8–15 · Act II
 Reed-choked marsh around a drowned imperial canal. There's fog every morning, and the lanterns
 on the stilt-houses never go out.
-- **Towns:** **Saltmere** (stilt town of eel-fishers and smugglers) and **Reedholm** (a
-  hermitage of the Grey Sisters).
+- **Town:** **Saltmere**, the stilt town of eel-fishers and smugglers: *The Drowned Eel*, *The Stilt
+  House*, *Saltmere Chandlery*, the *Chapel of the Grey Sisters*. **Reedholm** (the Sisters'
+  hermitage) is an overland landmark.
 - **Sites:** the **Drowned Abbey**, the **Sickpools** (imperial alchemy vats, still leaking),
   Toadking's Mound and the Canal Locks.
 - **Look:** `water` and `poison` variants; temple-checker abbeys and cavern pools. Biome: *Sickpools*.
@@ -75,8 +77,9 @@ on the stilt-houses never go out.
 
 ### 3.3 The Cinder Reach: levels 15–22 · Act III
 Black hills of slag and the imperial foundries. Someone has lit the furnaces again.
-- **Towns:** **Ashgate** (a hard mining town under the Deepdelvers' charter) and **Kell's Rest**
-  (a waystation in a dead volcano's shadow).
+- **Town:** **Ashgate**, a hard mining town under the Deepdelvers' charter: *The Slag & Bellows*,
+  *Deepdelver's Rest*, *The Ashgate Forge*, the *Shrine of the Last Flame*. **Kell's Rest** (a
+  waystation in a dead volcano's shadow) is an overland landmark.
 - **Sites:** the **Cinderworks**, the **Magma Vault**, the Forgehall of Oruth and the Slag Tunnels.
 - **Look:** `lava` and `rock` variants; rune plates in the forges and cavern tunnels. Biomes:
   *Cinderworks*, *Magma Vault*, *Barren Waste*.
@@ -84,7 +87,8 @@ Black hills of slag and the imperial foundries. Someone has lit the furnaces aga
 
 ### 3.4 The Pale Heights: levels 22–30 · Act IV
 Frozen passes above the crater where the Ember was found. The air hums.
-- **Towns:** **Frosthold** (last outpost, a monastery turned fortress).
+- **Town:** **Frosthold**, the last outpost, a monastery turned fortress: *The Frozen Flagon*,
+  *Pilgrims' Hall*, *Frosthold Outfitters*, *The Monastery Chapel*.
 - **Sites:** the **Glass Keep**, the **Soulcracks** (a canyon split by the Fall), and the
   pilgrims' stair.
 - **Look:** `ice` and `rock` variants; cavern and flagstone. Biome: *Soulcracks*.

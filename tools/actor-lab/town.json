@@ -1,0 +1,838 @@
+{
+"vale": [
+{
+"id": "vale_tavern_1",
+"model": "tavern",
+"build": "tavern",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_inn_1",
+"model": "inn",
+"build": "inn",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_shop_1",
+"model": "shop",
+"build": "shop",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"faceX": true
+},
+{
+"id": "vale_temple_1",
+"model": "temple",
+"build": "temple",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"faceX": true
+},
+{
+"id": "vale_well_1",
+"model": "well",
+"build": "well",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_house_1",
+"model": "house",
+"build": "house",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 1
+},
+{
+"id": "vale_house_2",
+"model": "house",
+"build": "house",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 2
+},
+{
+"id": "vale_house_3",
+"model": "house",
+"build": "house",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 3
+},
+{
+"id": "vale_housex_1",
+"model": "house",
+"build": "house",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 4,
+"faceX": true
+},
+{
+"id": "vale_housex_2",
+"model": "house",
+"build": "house",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 5,
+"faceX": true
+},
+{
+"id": "vale_farm_1",
+"model": "farm",
+"build": "farm",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_farmx_1",
+"model": "farm",
+"build": "farm",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"seed": 2,
+"faceX": true
+},
+{
+"id": "vale_keep_1",
+"model": "keep",
+"build": "keep",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_wall_1",
+"model": "wall",
+"build": "wall",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+]
+},
+{
+"id": "vale_wally_1",
+"model": "wall",
+"build": "wall",
+"style": "vale",
+"gain": 0.7,
+"desat": 0.12,
+"tint": [
+1.0,
+0.96,
+0.9
+],
+"rotY": 90
+}
+],
+"fens": [
+{
+"id": "fens_tavern_1",
+"model": "tavern",
+"build": "tavern",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_inn_1",
+"model": "inn",
+"build": "inn",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_shop_1",
+"model": "shop",
+"build": "shop",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"faceX": true
+},
+{
+"id": "fens_temple_1",
+"model": "temple",
+"build": "temple",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"faceX": true
+},
+{
+"id": "fens_well_1",
+"model": "well",
+"build": "well",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_house_1",
+"model": "house",
+"build": "house",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 1
+},
+{
+"id": "fens_house_2",
+"model": "house",
+"build": "house",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 2
+},
+{
+"id": "fens_house_3",
+"model": "house",
+"build": "house",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 3
+},
+{
+"id": "fens_housex_1",
+"model": "house",
+"build": "house",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 4,
+"faceX": true
+},
+{
+"id": "fens_housex_2",
+"model": "house",
+"build": "house",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 5,
+"faceX": true
+},
+{
+"id": "fens_farm_1",
+"model": "farm",
+"build": "farm",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_farmx_1",
+"model": "farm",
+"build": "farm",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"seed": 2,
+"faceX": true
+},
+{
+"id": "fens_keep_1",
+"model": "keep",
+"build": "keep",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_wall_1",
+"model": "wall",
+"build": "wall",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+]
+},
+{
+"id": "fens_wally_1",
+"model": "wall",
+"build": "wall",
+"style": "fens",
+"gain": 0.66,
+"desat": 0.2,
+"tint": [
+0.94,
+0.98,
+0.95
+],
+"rotY": 90
+}
+],
+"reach": [
+{
+"id": "reach_tavern_1",
+"model": "tavern",
+"build": "tavern",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_inn_1",
+"model": "inn",
+"build": "inn",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_shop_1",
+"model": "shop",
+"build": "shop",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"faceX": true
+},
+{
+"id": "reach_temple_1",
+"model": "temple",
+"build": "temple",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"faceX": true
+},
+{
+"id": "reach_well_1",
+"model": "well",
+"build": "well",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_house_1",
+"model": "house",
+"build": "house",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 1
+},
+{
+"id": "reach_house_2",
+"model": "house",
+"build": "house",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 2
+},
+{
+"id": "reach_house_3",
+"model": "house",
+"build": "house",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 3
+},
+{
+"id": "reach_housex_1",
+"model": "house",
+"build": "house",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 4,
+"faceX": true
+},
+{
+"id": "reach_housex_2",
+"model": "house",
+"build": "house",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 5,
+"faceX": true
+},
+{
+"id": "reach_farm_1",
+"model": "farm",
+"build": "farm",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_farmx_1",
+"model": "farm",
+"build": "farm",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"seed": 2,
+"faceX": true
+},
+{
+"id": "reach_keep_1",
+"model": "keep",
+"build": "keep",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_wall_1",
+"model": "wall",
+"build": "wall",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+]
+},
+{
+"id": "reach_wally_1",
+"model": "wall",
+"build": "wall",
+"style": "reach",
+"gain": 0.66,
+"desat": 0.15,
+"tint": [
+1.0,
+0.93,
+0.88
+],
+"rotY": 90
+}
+],
+"heights": [
+{
+"id": "heights_tavern_1",
+"model": "tavern",
+"build": "tavern",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_inn_1",
+"model": "inn",
+"build": "inn",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_shop_1",
+"model": "shop",
+"build": "shop",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"faceX": true
+},
+{
+"id": "heights_temple_1",
+"model": "temple",
+"build": "temple",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"faceX": true
+},
+{
+"id": "heights_well_1",
+"model": "well",
+"build": "well",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_house_1",
+"model": "house",
+"build": "house",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 1
+},
+{
+"id": "heights_house_2",
+"model": "house",
+"build": "house",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 2
+},
+{
+"id": "heights_house_3",
+"model": "house",
+"build": "house",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 3
+},
+{
+"id": "heights_housex_1",
+"model": "house",
+"build": "house",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 4,
+"faceX": true
+},
+{
+"id": "heights_housex_2",
+"model": "house",
+"build": "house",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 5,
+"faceX": true
+},
+{
+"id": "heights_farm_1",
+"model": "farm",
+"build": "farm",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_farmx_1",
+"model": "farm",
+"build": "farm",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"seed": 2,
+"faceX": true
+},
+{
+"id": "heights_keep_1",
+"model": "keep",
+"build": "keep",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_wall_1",
+"model": "wall",
+"build": "wall",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+]
+},
+{
+"id": "heights_wally_1",
+"model": "wall",
+"build": "wall",
+"style": "heights",
+"gain": 0.66,
+"desat": 0.18,
+"tint": [
+0.94,
+0.96,
+1.0
+],
+"rotY": 90
+}
+]
+}

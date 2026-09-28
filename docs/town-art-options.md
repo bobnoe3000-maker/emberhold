@@ -1,6 +1,9 @@
 # Town & overland art — three options
 
-**Status: options (2026-09-28), awaiting a pick.** The first town/overland prototype used
+**Status: decided (2026-09-28). Option A's shapes, toned per region.** Towns are hubs
+(one per region). The four service buildings keep A's silhouettes everywhere, and each region
+changes only tones and materials. See *Hub towns* below. The three original options are kept
+for the record. The first town/overland prototype used
 the KayKit Medieval Hexagon buildings as-is. Their bright, toy-like style didn't fit the
 dungeon or an older, grim D&D feel. So the buildings (and trees) are now **our own
 assets**: low-poly models authored in code (`tools/actor-lab/buildkit.js`), in three
@@ -48,3 +51,16 @@ dungeon's first level has a way back up.
 - The renderer has a depth buffer, so actors walk behind buildings, trees and walls. Anything
   hidden shows as a dim X-ray silhouette. This also fixes actors drawing over walls in the
   dungeon.
+
+## Hub towns: same shapes, regional tones (decided)
+
+![Thornwick, Saltmere, Ashgate, Frosthold: the same square in four tones, and the tavern's menu](./img/town/hub-regions.png)
+
+- `?scene=town&region=vale|fens|reach|heights` previews each region's hub.
+- The square is authored in screen terms for the portrait frame: temple and inn at the back,
+  shop and tavern in the middle row, and the well on open flags in front. The camera eases
+  onto a fixed framing inside the square (`world.hub`). The service bar and bottom-sheet
+  menus live in `src/ui/townmenu.js`.
+- Atlases: `assets/env/env.*` (shared: trees, rocks, props, bridge) plus
+  `assets/env/town-<region>.*` (that region's buildings). Only the current region's atlas loads.
+  Tones are in `STYLES.{vale,fens,reach,heights}` in `tools/actor-lab/buildkit.js`.

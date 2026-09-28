@@ -266,9 +266,23 @@ progress):
   sites and landmarks are procedural from the seed.
 - **Travel** between nodes takes in-game time. Roads carry a 15 % encounter chance (ambushes,
   merchants, shrines, lore) and trails 30 %, but trails are faster. You can camp to regen.
-- **Towns** are single-screen iso hubs with four buildings: **tavern** (hire, rumours),
-  **smith** (sell, upgrade, salvage), **shrine** (heal, cure Wounded, bless) and the
-  **Lantern Guild board** (quests).
+- **Towns are hubs, one per region** (Thornwick, Saltmere, Ashgate, Frosthold). Each is the
+  same place in a different region. A short **approach road** passes houses, farms and fields,
+  then opens onto the **town square**, which works as the game's **home screen**. The camera
+  settles on a fixed framing, a bar of four services slides up, and tapping a building or
+  its button opens that service's menu. Buildings aren't enterable.
+  - **Same shapes, regional tones.** The four service buildings have identical silhouettes and
+    positions in every town, so they read like menu icons. Only materials and colour change
+    with the region: warm oak and slate; damp grey-green; soot and rust tile; pale limestone
+    and blue slate. The ground takes the region's tone too.
+  - **The services:**
+
+    | Building | Menu |
+    |---|---|
+    | **Shop** (smithy and outfitter) | Buy common gear and potions · Sell · Upgrade (+1…+5) · Salvage → Embers |
+    | **Tavern** | The Lantern Guild's **quest board** (mini-quests) · Hire companions · Rumours |
+    | **Inn** | Rest (restore HP/MP) · Lodge companions (the bench) · Expeditions (idle) |
+    | **Temple** | Heal the Wounded · Blessings · The Chronicle (lore) |
 - **Sites** are the current dungeon levels. Each site has 1–5 floors, a theme and tile variant
   from its region. Each room has a spawn table and a level; corridors and the entrance room
   are safe, and the floor's boss waits in the descent room. Kinds:
@@ -320,7 +334,7 @@ reproduce any battle for validation.
 | Screen | Content |
 |---|---|
 | **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a wave and Heat banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
-| **Town** | An iso hub; tap a building. |
+| **Town square** | The home screen: a fixed framing of shop, tavern, inn and temple with name plaques; a bottom bar of the four services; each opens a bottom-sheet menu. No minimap here. |
 | **Quest board** | Cards: giver portrait, hook line, skulls, rewards. |
 | **Party** | Three figures with live 3D previews, gear slots, stats and abilities; drag to reorder formation. |
 | **Overland** | A scrolling fogged map with the party token; tap a node to travel. |

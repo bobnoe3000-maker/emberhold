@@ -4,6 +4,7 @@ import { createSim, TICK_DT } from './sim/core.js';
 import { createRenderer } from './render/renderer.js';
 import { createInput } from './ui/input.js';
 import { createHud } from './ui/hud.js';
+import { createTownMenu } from './ui/townmenu.js';
 import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
 import { loadInto, createAutosave } from './persist/save.js';
@@ -17,13 +18,14 @@ const THEME = new URLSearchParams(location.search).get('theme') || undefined;
 const canvas = document.getElementById('game');
 // ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick).
 const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
-// ?bset=A|B|C picks the building art option under review (see docs).
-const BSET = new URLSearchParams(location.search).get('bset') || 'A';
-const sim = createSim(WORLD_SEED, THEME, { scene: SCENE, bset: BSET });
+// ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
+const REGION = new URLSearchParams(location.search).get('region') || 'vale';
+const sim = createSim(WORLD_SEED, THEME, { scene: SCENE, region: REGION });
 if (location.search.includes('dev')) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
-createHud(sim);   // subscribe before restore, so a loaded counters event repaints
+createHud(sim);
+const townMenu = createTownMenu(sim);   // subscribe before restore, so a loaded counters event repaints
 
 // Restore a prior session for this world (player, counters, harvested resources).
 // Must run before the first render so restored mods are reflected in chunk bakes.
@@ -39,6 +41,8 @@ renderer.setHero(hero);
 
 // tap → harvest command
 input.onTap((sx, sy) => {
+  const sv = renderer.serviceAt(sx, sy);                 // a town's shop / tavern / inn / temple → its menu
+  if (sv) { townMenu.open(sv); return; }
   const { tx, ty } = renderer.screenToTile(sx, sy, 1);
   sim.commands.push({ type: 'harvest', tx, ty });
 });

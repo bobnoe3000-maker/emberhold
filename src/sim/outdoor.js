@@ -89,7 +89,7 @@ function makeWorld(seed, kind, W, H, PAD) {
   const GW = W + 2 * PAD, GH = H + 2 * PAD;
   return {
     kind, theme: kind, seed, depth: 0, W, H, PAD, GW, GH,
-    rivers: [], roads: [], plazas: [], fields: [], structs: [], exits: [], arrivals: {}, labels: [],
+    rivers: [], roads: [], plazas: [], fields: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
     blocked: new Uint8Array(GW * GH), occ: new Uint8Array(GW * GH), tmat: new Uint8Array(GW * GH),
     props: new Map(), mods: new Map(), hp: new Map(), discovered: new Set(), enemies: [],
     level: { rooms: [], edges: [], cells: new Map(), th: { name: kind, wall: 'basalt', floors: ['soil'], hazard: 'water' } },
@@ -183,57 +183,70 @@ function forestRing(o, rng, inset) {
   }
 }
 
-// ── THORNWICK — the starting town ────────────────────────────────────────────
-function buildTown(seed, S) {
-  const o = makeWorld(seed, 'town', 120, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${S}_${t}_${n}`;
-  o.name = 'Thornwick';
-  o.rivers.push({ w: 8, pts: [[-90, 22], [0, 26], [18, 34], [25, 48], [28, 64], [24, 82], [30, 100], [40, 130], [52, 210]] });
-  o.roads.push({ w: 6, surface: 'dirt', pts: [[-90, 66], [8, 65], [38, 64]] });
-  o.roads.push({ w: 6, surface: 'cobble', pts: [[38, 64], [98, 63]] });
-  o.roads.push({ w: 6, surface: 'dirt', pts: [[98, 63], [210, 60]] });
-  o.roads.push({ w: 5, surface: 'cobble', pts: [[64, 50], [64, 24]] });
-  o.roads.push({ w: 5, surface: 'dirt', pts: [[64, 24], [63, 4], [60, -90]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[64, 68], [66, 96], [72, 130], [80, 210]] });
-  o.plazas.push({ cx: 64, cy: 58, rx: 13, ry: 11 });
-  o.fields.push({ x0: 88, y0: 110, x1: 124, y1: 124, axis: 'x' }, { x0: 2, y0: 0, x1: 22, y1: 12, axis: 'y' });
+// ── TOWNS — one hub per region ───────────────────────────────────────────────
+// Every region's town is the same hub: a short approach road past houses and farms,
+// then the TOWN SQUARE, framed like a home screen, with the four services in the same
+// places and the same shapes everywhere (shop, tavern, inn, temple). Only the names
+// and the region's tones change (tools/actor-lab town.json → assets/env/town-<region>).
+export const REGIONS = {
+  vale:    { name: 'Thornwick', tavern: 'The Tired Mule',       inn: 'The Crossed Keys',   shop: 'Hale & Daughter, Smiths', temple: 'Shrine of the Ember' },
+  fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',      inn: 'The Stilt House',    shop: 'Saltmere Chandlery',      temple: 'Chapel of the Grey Sisters' },
+  reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows',   inn: "Deepdelver's Rest",  shop: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
+  heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',    inn: "Pilgrims' Hall",     shop: 'Frosthold Outfitters',    temple: 'The Monastery Chapel' },
+};
+function buildTown(seed, region) {
+  const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
+  const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
+  o.name = info.name; o.region = R;
+  // Layout is authored in SCREEN terms for the portrait frame, relative to the plaza's
+  // centre C: back row (temple, inn), middle row (shop, tavern), open flags in front.
+  const C = [60, 64];
+  const at = (dx, dy) => [C[0] + dx, C[1] + dy];
+  o.rivers.push({ w: 6, pts: [[106, -90], [100, 20], [108, 58], [101, 100], [108, 210]] });
+  o.roads.push({ w: 6, surface: 'dirt', pts: [[230, 80], [132, 76], [104, 74], [84, 72], at(6, 6)] });
+  o.plazas.push({ cx: C[0] - 7, cy: C[1] - 7, rx: 17, ry: 17 });
+  o.fields.push({ x0: 112, y0: 26, x1: 136, y1: 44, axis: 'x' }, { x0: 70, y0: 96, x1: 96, y1: 114, axis: 'y' }, { x0: 118, y0: 90, x1: 138, y1: 112, axis: 'x' });
   finalizeGround(o);
 
-  put(o, 'bridge_90', 28, 64, 'deck');
-  put(o, B('tavern'), 85, 50);                   // The Tired Mule
-  put(o, B('inn'), 44, 49);                      // The Crossed Keys
-  put(o, B('temple'), 80, 30);                   // Shrine of the Ember
-  put(o, B('shop', 1), 84, 76);                  // smithy
-  put(o, B('shop', 2), 46, 77);                  // general store
-  put(o, B('keep'), 106, 24);                    // Thornwick Keep, on the rise
-  putGate(o, B('wally'), 124, 62);               // town wall + gatehouse over the east road
-  put(o, B('farm'), 106, 100); put(o, B('farm'), 30, 14);
-  [[101, 50], [112, 51], [100, 77], [113, 77], [52, 22], [70, 14], [8, 50], [10, 80], [82, 96], [50, 100], [92, 88], [30, 96]]
-    .forEach(([x, y], i) => put(o, B('house', 1 + (i % 3)), x, y));
-  for (const [id, x, y] of [['barrel', 93, 70], ['barrel', 94, 72], ['crate_A_big', 92, 72.5], ['weaponrack', 76, 71], ['barrel', 94, 46], ['crate_B_big', 95, 47.5],
-    ['crate_A_small', 36, 57], ['sack', 38, 58], ['crate_long_A', 55, 70], ['wheelbarrow', 98, 108], ['resource_lumber', 20, 112], ['bucket_water', 60, 55]])
+  // the square: temple + inn at the back, shop + tavern in the middle row, well on the flags
+  const svc = [
+    ['temple', B('temple'), at(-40, -28)], ['inn', B('inn'), at(-29, -42)],
+    ['shop', B('shop'), at(-19, -3)], ['tavern', B('tavern'), at(-2, -18)],
+  ];
+  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
+  put(o, B('well'), ...at(-3, -3));
+  for (const [x, y] of [at(-24, -14), at(-12, -26), at(6, -4), at(-4, 8)]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['barrel', ...at(6, -10)], ['barrel', ...at(7, -8)], ['crate_A_big', ...at(-13, 3)], ['sack', ...at(-12, 4.5)], ['weaponrack', ...at(-12, -8)], ['bucket_water', ...at(-1, -1)]])
     put(o, id, x, y, 'rect', 0);
-  for (const [x, y] of [[40, 60], [58, 69], [72, 69], [92, 60], [106, 68], [61, 32], [67, 44], [118, 58], [118, 67]]) putProp(o, 'brazier', x, y);
-  o.labels.push({ x: 85, y: 50, id: B('tavern'), text: 'The Tired Mule' }, { x: 44, y: 49, id: B('inn'), text: 'The Crossed Keys' }, { x: 84, y: 76, id: B('shop', 1), text: 'Smithy' },
-    { x: 46, y: 77, id: B('shop', 2), text: 'General Store' }, { x: 80, y: 30, id: B('temple'), text: 'Shrine of the Ember' }, { x: 106, y: 24, id: B('keep'), text: 'Thornwick Keep' });
+  o.hub = { x: C[0] - 4, y: C[1] - 4, r: 22, focus: { x: C[0] - 9, y: C[1] - 9 } };
 
-  // trees: gardens and outskirts (not in the square), then the forest ring
-  scatter(o, rng, -10, -10, 132, 132, 9, (x, y) => {
-    const d = Math.hypot(x - 64, y - 60); if (d < 30) return null;
+  // the approach: a stream crossing, houses along the road, farms and fields beyond
+  put(o, 'bridge_90', 104, 74, 'deck');
+  [[92, 62, 'house', 1], [120, 64, 'house', 3], [132, 62, 'house', 2], [100, 94, 'housex', 1], [118, 88, 'housex', 2], [130, 86, 'house', 1]]
+    .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
+  put(o, B('farm'), 124, 30); put(o, B('farmx'), 84, 106); put(o, B('farm'), 128, 102);
+  for (const [x, y] of [[96, 68], [112, 70], [126, 70]]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
+
+  // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
+  scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
+    const dh = Math.hypot(x - (C[0] - 16), y - (C[1] - 16));
+    if (dh < 34) return null;
+    const behind = x + y < C[0] + C[1] - 30;
+    if (behind) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
     const n = fbm(x * 0.05, y * 0.05, o.seed + 3);
-    return n > 0.5 && rng() < 0.55 ? pick(rng, TREE_SINGLE) : rng() < 0.08 ? pick(rng, ROCKS) : null;
+    return n > 0.52 && rng() < 0.5 ? pick(rng, TREE_SINGLE) : rng() < 0.06 ? pick(rng, ROCKS) : null;
   });
   forestRing(o, rng, 10);
-  o.exits.push({ x0: 126, y0: 50, x1: 140, y1: 76, to: 'overland', arrive: 'thornwick' },
-    { x0: 52, y0: -24, x1: 76, y1: -12, to: 'overland', arrive: 'thornwick' },
-    { x0: -24, y0: 56, x1: -12, y1: 76, to: 'overland', arrive: 'thornwick' });
-  o.arrivals = { default: { x: 112.5, y: 63.5 }, overland: { x: 118.5, y: 62.5 } };
+  o.exits.push({ x0: 146, y0: 64, x1: 160, y1: 90, to: 'overland', arrive: 'thornwick' });
+  o.arrivals = { default: { x: C[0] + 0.5, y: C[1] + 2.5 }, overland: { x: 140.5, y: 76.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
 
 // ── THE HOLLOW VALE — the overland around Thornwick ──────────────────────────
-function buildOverland(seed, S) {
-  const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4402)), B = (t, n = 1) => `${S}_${t}_${n}`;
+function buildOverland(seed) {
+  const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4402)), B = (t, n = 1) => `vale_${t}_${n}`;
   o.name = 'The Hollow Vale';
   o.rivers.push({ w: 9, pts: [[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]] });
   const town = [52, 150], cross = [150, 132], keep = [168, 44], barrows = [66, 228], mine = [226, 70], camp = [196, 214];
@@ -252,7 +265,7 @@ function buildOverland(seed, S) {
   put(o, 'bridge_0', 116, 199, 'deck');
   // Thornwick from outside: walls + gate with a few roofs and the windmill behind
   putGate(o, B('wally'), town[0] + 4, town[1]);
-  for (const [id, x, y] of [[B('temple'), 36, 134], [B('house', 1), 38, 164], [B('house', 2), 24, 146], [B('inn'), 20, 166], [B('keep'), 18, 124], [B('farm'), 44, 110]]) put(o, id, x, y);
+  for (const [id, x, y] of [[B('temple'), 36, 134], [B('house', 1), 38, 164], [B('housex', 1), 24, 146], [B('house', 2), 20, 166], [B('keep'), 18, 124], [B('farm'), 44, 110]]) put(o, id, x, y);
   // Wickham Keep, the watchtower at the crossroads, the Old Barrows, the mine, the lumber camp, a farm
   put(o, B('keep'), keep[0], keep[1]);
   put(o, B('wall'), keep[0], keep[1] + 16);
@@ -295,8 +308,8 @@ function buildOverland(seed, S) {
   return o;
 }
 
-// bset picks the building art option (A timber & slate · B thatch & rubble · C gothic stone)
-export function createOutdoor(seed, kind, bset = 'A') { return kind === 'town' ? buildTown(seed, bset) : buildOverland(seed, bset); }
+// region picks the town (one hub per region: vale · fens · reach · heights); the overland is the Hollow Vale's
+export function createOutdoor(seed, kind, region = 'vale') { return kind === 'town' ? buildTown(seed, region) : buildOverland(seed); }
 
 // ── world API (dispatched from world.js) ─────────────────────────────────────
 export const oHeightAt = () => FLOOR_Z;

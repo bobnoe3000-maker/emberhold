@@ -91,6 +91,9 @@ export const ELIT = {
   pit:    ['#040306', '#08070c', '#0e0c14', '#16131e', '#1f1b29'].map(_hx),  // sunken pits
   // surface scenes (town / overland at dusk)
   grass:  ['#12170f', '#1c2317', '#27301f', '#343e29', '#465036'].map(_hx),  // dusk meadow, olive-grey
+  grass_fens:    ['#0f150f', '#161f18', '#1e2a20', '#28362a', '#374636'].map(_hx),  // sodden fen grass
+  grass_reach:   ['#131110', '#1d1a17', '#27231f', '#332e28', '#433c34'].map(_hx),  // ash-dusted scrub
+  grass_heights: ['#191c1d', '#242929', '#303736', '#414946', '#58605b'].map(_hx),  // frost-bitten turf
   dirt:   ['#191512', '#27201b', '#352c25', '#463b32', '#5a4d42'].map(_hx),  // packed road
   street: ['#1a1816', '#272420', '#36312b', '#46403a', '#59524a'].map(_hx),  // town cobbles, warm grey
   river:  ['#09131b', '#0e1d28', '#142838', '#1d394a', '#385565'].map(_hx),  // cold river water

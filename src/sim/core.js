@@ -33,12 +33,12 @@ function findSpawn(world) {
 // Scenes: 'town' (Thornwick), 'overland' (the Hollow Vale) and 'dungeon' (the Old
 // Barrows, depth 0…n). Walking into an exit zone or tapping the Barrows stairs /
 // the dungeon's way up travels between them.
-export function createSim(seed, theme, { scene = 'dungeon', bset = 'A' } = {}) {
+export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = {}) {
   const baseSeed = seed >>> 0;
   const override = theme;                                  // fixed theme (preview) or undefined
   const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene;
-  const buildWorld = (d) => (curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, bset));
+  const buildWorld = (d) => (curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region));
 
   let world = buildWorld(0);
   const bus = createBus();

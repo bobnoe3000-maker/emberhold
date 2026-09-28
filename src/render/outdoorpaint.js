@@ -24,21 +24,22 @@ const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OU
 // Grass: three broad tones from low-frequency noise, per-tile tufts (a little
 // 3-blade 'W'), rare flowers. rx/ry = pixel offset from the tile's top vertex.
 function grass(o, gx, gy, tx, ty, rx, ry, dark = 0) {
+  const Rg = (o.region && ELIT['grass_' + o.region]) || R.g;
   const n = fbm(gx * 0.06, gy * 0.06, o.seed + 41) + dark;
-  let c = n < 0.40 ? R.g[1] : n < 0.58 ? R.g[2] : R.g[3];
+  let c = n < 0.40 ? Rg[1] : n < 0.58 ? Rg[2] : Rg[3];
   const h = H(tx, ty, o.seed + 5);
   if (h > 0.5) {                                          // tuft centre in screen px within the diamond
     const tu = 0.3 + 0.4 * H(tx, ty, o.seed + 6), tv = 0.3 + 0.4 * H(ty, tx, o.seed + 7);
     const cx = (tu - tv) * 8, cy = (tu + tv) * 4, dx = Math.round(rx - cx), dy = Math.round(ry - cy);
-    if ((dx === -2 || dx === 2) && dy >= -1 && dy <= 0) return ret(dy === -1 ? R.g[4] : R.g[3], N_TUFT);
-    if (dx === 0 && dy >= -2 && dy <= 0) return ret(dy === -2 ? R.g[4] : R.g[3], N_TUFT);
-    if (dy === 1 && Math.abs(dx) <= 2) return ret(R.g[0]);                     // the tuft's own little shadow
+    if ((dx === -2 || dx === 2) && dy >= -1 && dy <= 0) return ret(dy === -1 ? Rg[4] : Rg[3], N_TUFT);
+    if (dx === 0 && dy >= -2 && dy <= 0) return ret(dy === -2 ? Rg[4] : Rg[3], N_TUFT);
+    if (dy === 1 && Math.abs(dx) <= 2) return ret(Rg[0]);                     // the tuft's own little shadow
   }
   if (h < 0.06) {                                         // a flower
     const fu = 0.3 + 0.4 * H(tx, ty, o.seed + 8), fv = 0.3 + 0.4 * H(ty, tx, o.seed + 9);
     const dx = Math.round(rx - (fu - fv) * 8), dy = Math.round(ry - (fu + fv) * 4);
     if (dx === 0 && dy === 0) return ret(FLOWERS[(h * 1000 | 0) % FLOWERS.length], N_TUFT);
-    if (dx === 0 && dy === 1) return ret(R.g[1]);
+    if (dx === 0 && dy === 1) return ret(Rg[1]);
   }
   return ret(c);
 }
