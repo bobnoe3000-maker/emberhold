@@ -35,7 +35,7 @@ Emberfall will tell stories about you, even if the rest of the world never hears
 | Age | When | What happened |
 |---|---|---|
 | **The Kindling** | ~1,000 years ago | Pilgrims find the **Ember**, a flame that burns without fuel, in a crater in the Pale Heights. Whoever tends it can bind the dead to labour. |
-| **The Solmere Empire** | ~900–300 years ago | The **Ember Throne** is built around the flame. Its **Ashbound**, legions of bound dead, dig the Undervaults, stoke the forges and never tire. Emberfall is the empire's mines and granaries. |
+| **The Solmere Empire** | ~900–300 years ago | The **Ember Throne** is built around the flame. Its **Ashbound**, legions of bound dead, dig the Undervaults, stoke the forges and never tire. This province is the empire's mines and granaries. |
 | **The Fall** | ~300 years ago | In one night the Ember goes out. The Ashbound drop where they stand, the forges go cold and the empire tears itself apart within a generation. The event gives the land its name. |
 | **The Long Dim** | 300 years → now | Emberfall becomes a backwater with petty lords, a trade road and nothing more. The ruins are "haunted", which is to say *quiet*. |
 | **Now** | Year 301 of the Dim | Smoke rises from the old forges. Barrows are opening. The dead are standing up again, and nobody important is coming to help. |
