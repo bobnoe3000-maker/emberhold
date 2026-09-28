@@ -51,9 +51,9 @@ function buildIndex(o) {
 //   offset in tiles, along: distance along the feature, hw: half width }.
 const OUT = { g: 0, t: 0, lat: 0, along: 0, hw: 0, fx: 0 };
 export function groundAt(o, gx, gy) {
-  const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0;
+  const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0; out.cap = false;
   const cell = o.grid.get(Math.floor(gx / CELL) + ',' + Math.floor(gy / CELL));
-  let best = 0, bestRank = 0;                       // rank: water 4 > bank 3 > cobble 2 > dirt 1
+  let best = 0, bestRank = 0, roadD = Infinity;      // rank: water 4 > bank 3 > cobble 2 > dirt 1
   if (cell) {
     for (const i of cell) {
       const s = o.segs[i], q = segDist(gx, gy, s);
@@ -64,7 +64,13 @@ export function groundAt(o, gx, gy) {
       } else {
         const rank = s.surface === 'cobble' ? 2 : 1;
         const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 23) - 0.5) * (rank === 2 ? 0.4 : 1.4), hw = s.w / 2 + wob;
-        if (q.d < hw && bestRank < rank) { bestRank = rank; out.g = rank === 2 ? G.COBBLE : G.DIRT; out.t = q.d / hw; out.lat = Math.sign(q.side) * q.d; out.along = s.s0 + q.t * s.len; out.hw = hw; }
+        // the NEAREST road segment paints the pixel (not the first found); where that nearest point is a
+        // segment end (bends, joins, road ends) the lateral offset is radial, so the painter drops the
+        // wheel ruts there (cap) — they used to curl into rings at every bend
+        if (q.d < hw && (bestRank < rank || (bestRank === rank && q.d < roadD))) {
+          bestRank = rank; roadD = q.d; out.g = rank === 2 ? G.COBBLE : G.DIRT; out.t = q.d / hw; out.lat = Math.sign(q.side) * q.d; out.along = s.s0 + q.t * s.len; out.hw = hw;
+          out.cap = (q.t <= 0.001 || q.t >= 0.999) && q.d > 0.6;
+        }
       }
     }
   }
@@ -235,14 +241,15 @@ function buildTown(seed, region) {
 
   // the approach: a stream crossing, houses along the road, farms and fields beyond
   put(o, 'bridge_90', 104, 74, 'deck');
-  [[118, 58, 'house', 1], [128, 64, 'house', 3], [140, 57, 'house', 2], [116, 95, 'housex', 1], [127, 89, 'housex', 2], [139, 92, 'house', 1]]
+  // (south of the road a house stands in front of the bridge on screen, so they're all north of it, bar one far out)
+  [[118, 60, 'house', 1], [129, 63, 'house', 3], [140, 60, 'house', 2], [124, 49, 'housex', 1], [136, 49, 'housex', 2], [146, 102, 'house', 1]]
     .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
   put(o, B('farm'), 124, 30); put(o, B('farmx'), 84, 106); put(o, B('farm'), 128, 102);
   for (const [x, y] of [[96, 68], [112, 70], [126, 70]]) putProp(o, 'brazier', x, y);
   for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
 
   // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
-  const TOWN_SIGHTS = [[118, 58], [128, 64], [140, 57], [116, 95], [127, 89], [139, 92], [104, 76]];
+  const TOWN_SIGHTS = [[118, 60], [129, 63], [140, 60], [124, 49], [136, 49], [146, 102], [104, 76]];
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
     const dh = Math.hypot(x - (C[0] - 16), y - (C[1] - 16));
     if (dh < 34) return null;
@@ -265,19 +272,24 @@ function buildOverland(seed) {
   o.name = 'The Hollow Vale';
   o.rivers.push({ w: 9, pts: [[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]] });
   const town = [52, 150], cross = [150, 132], keep = [168, 44], barrows = [66, 228], mine = [226, 70], camp = [196, 214];
-  o.roads.push({ w: 6, surface: 'dirt', pts: [town, [86, 148], [119, 142], cross] });
+  // Bridges are axis-aligned (bridge_90 spans x, bridge_0 spans y), so every road crosses
+  // its bridge on a straight run along that axis, long enough to reach past both ramps, and
+  // each crossing sits where the river runs across the bridge (here the river flows ~+y, so
+  // both bridges span x). Critic pass (roads): the south bridge used to lie along the river
+  // and the north road met its bridge at an angle.
+  o.roads.push({ w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] });
   o.roads.push({ w: 5, surface: 'dirt', pts: [cross, [158, 100], [164, 70], [keep[0], keep[1] + 14]] });
-  o.roads.push({ w: 5, surface: 'dirt', pts: [cross, [132, 170], [116, 198], [92, 214], [barrows[0] + 8, barrows[1] - 4]] });
+  o.roads.push({ w: 5, surface: 'dirt', pts: [cross, [132, 170], [132, 186], [129, 199], [100, 199], [88, 212], [barrows[0] + 8, barrows[1] - 4]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 170], [168, 196], [camp[0] - 8, camp[1] - 6]] });
+  o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] });
   o.roads.push({ w: 5, surface: 'dirt', pts: [town, [30, 152], [-90, 160]] });
   o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
   finalizeGround(o);
 
   // bridges where roads cross the river
   put(o, 'bridge_90', 120, 142, 'deck');
-  put(o, 'bridge_0', 116, 199, 'deck');
+  put(o, 'bridge_90', 115, 199, 'deck');
   // Thornwick from outside: walls + gate with a few roofs and the windmill behind
   putGate(o, B('wally'), town[0] + 4, town[1]);
   for (const [id, x, y] of [[B('temple'), 36, 134], [B('house', 1), 38, 164], [B('housex', 1), 24, 146], [B('house', 2), 20, 166], [B('keep'), 18, 124], [B('farm'), 44, 110]]) put(o, id, x, y);

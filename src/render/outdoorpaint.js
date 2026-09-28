@@ -50,7 +50,8 @@ function dirt(o, q, gx, gy, tx, ty, rx, ry) {
   let c = n < 0.5 ? R.d[2] : R.d[3];
   const al = Math.abs(q.lat), rut = Math.abs(al - q.hw * 0.42);
   if (q.t > 0.88) return ret(mix(c, R.g[1], 0.55));                          // verge
-  if (rut < 0.2) c = R.d[1];
+  if (q.cap) { /* bends / joins / road ends: packed dirt, no ruts or crown (radial ruts drew rings) */ }
+  else if (rut < 0.2) c = R.d[1];
   else if (rut < 0.34) c = mix(c, R.d[1], 0.4);
   else if (o.kind === 'overland' && al < 0.45 && q.hw > 2.2) return grass(o, gx, gy, tx, ty, rx, ry, -0.12);   // crown
   const pc = Math.floor(gx * 2.2), pr = Math.floor(gy * 2.2);

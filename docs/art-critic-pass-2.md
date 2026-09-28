@@ -131,3 +131,26 @@ the footprint change.
 - **Balance:** re-checked after the spacing and obstacle changes. At-level rooms hold at a
   20–30 % HP cost per wave, and three levels under falls.
 - **Captures:** no page errors.
+
+## Pass 2b — roads, bridges and streams
+
+This pass started from a player screenshot of the Barrows road, where the bridge lay in the
+river.
+
+| Found | Fix |
+|---|---|
+| The **south bridge** (Barrows road) used the `bridge_0` sprite, which spans y, where the river also runs ~+y, so it lay *along* the river. The road met it at an angle and ran into the water. | Bridges are axis-aligned, so each road now crosses its bridge on a **straight run along the bridge axis**, reaching past both ramps. Both overland bridges are `bridge_90` (spanning x), placed where the river runs ~+y, across them. |
+| The **north bridge** spanned the river but the road met both ends at an angle. | The road runs straight through it: town → (104,142) → (136,142) → the crossroads. |
+| The **town bridge** was hidden behind the houses south of the road, which stood in front of it on screen. | All houses stand north of the road (behind it on screen), bar one far to the south-east. |
+| **Wheel ruts curled into rings** at every bend, join and road end: the first road segment found painted the pixel, and near a segment's end the lateral offset is radial. | The **nearest** segment paints the pixel. Where its nearest point is a segment end, the road is packed dirt with no ruts. |
+
+**Checks:**
+- Every point where a road passes over water now lies on a bridge deck (18 of 18 samples).
+- Headless walks cross both overland bridges.
+- The smoke tests pass.
+
+**Open issues:**
+- Bridges only come in two orientations, so roads must bend to meet them. A diagonal bridge,
+  or a ford for small streams, would free up road layouts.
+- The river banks are a single uniform outline, with no reeds, stones or eroded patches.
+- Road ends at sites are plain dirt caps. They could fade into trampled grass.
