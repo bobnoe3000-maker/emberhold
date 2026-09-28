@@ -218,12 +218,13 @@ export function createRenderer(canvas, sim, input) {
   loadActorAtlas('./assets/hero/knight.json', './assets/hero/knight.png').then((a) => { heroAtlas = a; }).catch(() => {});
   loadActorAtlas('./assets/enemy/skeleton.json', './assets/enemy/skeleton.png').then((a) => { skelAtlas = a; }).catch(() => {});
 
-  // Terrain painter: ?tiles=<style> picks a structured style from tilestyles.js;
-  // absent/unknown keeps the original per-pixel-noise look ('classic'). ?tv=<variant>
-  // forces a material variant (plain/earth/rock/lava/poison/ice/water); otherwise
-  // each biome uses its default.
+  // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
+  // from tilestyles.js, and ?tiles=classic restores the original per-pixel-noise look.
+  // ?tv=<variant> forces a material variant (plain/earth/rock/lava/poison/ice/water);
+  // otherwise each biome uses its default.
   const qs = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-  const tileStyle = TILE_STYLES[qs.get('tiles') || ''] || null, tileVariant = qs.get('tv') || '';
+  const tileKey = qs.get('tiles') || 'cobble', tileVariant = qs.get('tv') || '';
+  const tileStyle = tileKey === 'classic' ? null : (TILE_STYLES[tileKey] || TILE_STYLES.cobble);
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   const putG = (px, py, alb, n, hpx, emiId) => {

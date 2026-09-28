@@ -1,16 +1,17 @@
 # Dungeon tile styles — 5 styles × 7 variants
 
-**Status: options (2026-09-28).** Goal: less colour and pixel noise, with cleaner floor
-and wall tiles. Five structured styles are implemented in the real renderer
+**Status: `cobble` is the default (2026-09-28).** Goal: less colour and pixel noise, with
+cleaner floor and wall tiles. Five structured styles are implemented in the real renderer
 (`src/render/tilestyles.js`); each comes in seven material **variants**. Low-poly was
-dropped. Without `?tiles=` the game keeps today's look (`classic`) until one is chosen.
+dropped. The game now renders **cobble** unless `?tiles=` picks another style;
+`?tiles=classic` brings back the original per-pixel-noise look.
 
 ![5 styles × 7 variants in the same room with the 56 px cast](./img/tiles/tile-variants.png)
 
 ## Preview
 
 ```
-index.html?tiles=flagstone&tv=ice      # style: flagstone | temple | cobble | runeplate | cavern
+index.html?tiles=flagstone&tv=ice      # style: cobble (default) | flagstone | temple | runeplate | cavern | classic
                                        # tv:    plain | earth | rock | lava | poison | ice | water
                                        # add &theme=dread|desert|poison|ember|lava|chasm for a different level
 ```
@@ -24,7 +25,7 @@ poison → poison, ember → lava, lava → lava, chasm → rock.
 |---|---|---|---|
 | `flagstone` | cut slabs in a running bond, 1 px grout, bevelled edges | ashlar blocks, one course per elevation level | built keep; the most "dungeon" |
 | `temple` | 2×2 polished checker, fine joints | pilasters every 2 tiles, trim band, dark plinth | crypt or temple; very readable |
-| `cobble` | irregular Voronoi stones, dark gaps, dome-lit | rough stone courses of varied width | catacomb; most texture |
+| **`cobble`** (default) | irregular Voronoi stones, dark gaps, dome-lit | rough stone courses of varied width | catacomb; most texture |
 | `runeplate` | engraved 2×2 plates, rare glowing sigils | panels whose seams sometimes glow | arcane forge; uses Emberlit emissives |
 | `cavern` | broad natural tone regions, crevices between them, soft relief | striated rock faces, darker at the base | natural cave |
 
@@ -76,7 +77,7 @@ reference: [six styles](./img/tiles/tile-styles-six.png) ·
 
 ## Open
 
-- Pick a default style, or assign one per biome. Styles and variants are per-tile
-  lookups, so mixing costs nothing.
+- Optionally assign other styles per biome on top of the cobble default. Styles and
+  variants are per-tile lookups, so mixing costs nothing.
 - Decide whether variants should become real level themes. Today a variant is visual
   only: an ice pool is still just impassable, not slippery.
