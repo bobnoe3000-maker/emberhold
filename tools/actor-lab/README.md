@@ -17,6 +17,7 @@ node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.pn
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
 node bake.cjs --anchors      # refresh only the weapon anchors in those atlases' JSON (seconds, no raster)
+node icons.cjs               # item icons (icons.json) → ../../assets/items/<id>.png
 node bake-env.cjs            # environment atlases (env.json + town.json: all our own buildkit.js models) → ../../assets/env/
 ```
 
@@ -70,6 +71,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 | `lab.js` / `lab.html` | three.js harness: loadouts, weapon attachment, recolor, glowing eyes, heroic pass, render |
 | `variants.json` | the roster: 10 hero loadouts (fighter/rogue/mage) + 8 enemy NPCs |
 | `bake.cjs` / `bake.json` | bake the shipped actor atlases into `assets/actors/` |
+| `icons.cjs` / `iconlab.js` / `icons.json` | bake the item icons into `assets/items/` (one kit mesh or code-built trinket per icon, 96 px) |
 | `render.cjs` | static server + headless render of every variant; exports `serve`, `CHROME`, `GL` |
 | `capture-backdrop.cjs` | screenshot a furnished room with actors hidden (dpr 2 ⇒ 1 screenshot px = 1 canvas px, 3 per native px) |
 | `compose.py` | the 'grim' pass + the three boards |

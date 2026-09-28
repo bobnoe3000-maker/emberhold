@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gear and Loot Mockup</title>
+<style>
+  :root { --bg: #0b0910; --panel: rgba(16,12,22,0.97); --gold: #f0c880; --gold2: #d8a040; --line: rgba(214,170,98,0.45); --line2: #2c2838; --dim: #978c80; --text: #efe4cf; --ink: #1a1208;
+    --common: #b9b2a4; --fine: #72d06c; --rare: #5aa8ff; --heirloom: #f2a33c; --up: #8fe07a; --down: #ff7a66; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: Georgia, serif; padding: 28px 24px 40px; }
+  h1 { font-size: 22px; color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+  .lede { color: #b8aca0; font-size: 14px; max-width: 1000px; line-height: 1.45; margin-bottom: 22px; }
+  .row { display: flex; gap: 26px; flex-wrap: wrap; }
+  .cap { width: 390px; }
+  .cap h2 { font: 12px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 12px 0 4px; }
+  .cap p { font-size: 13px; color: #b8aca0; line-height: 1.4; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 34px; overflow: hidden; box-shadow: 0 0 0 8px #1c1824, 0 18px 50px rgba(0,0,0,.6);
+    background: #0b0910 url(img/compass/dungeon.jpg) center / cover; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+  .phone .veil { position: absolute; inset: 0; background: rgba(6,4,10,.62); }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+
+  /* the character sheet: a bottom sheet over the game */
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; top: 64px; background: var(--panel); border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px rgba(0,0,0,.6); padding: 0 12px 14px; }
+  .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3346; margin: 7px auto 4px; }
+  .tabs { display: flex; gap: 6px; align-items: stretch; }
+  .tab { flex: 1; display: flex; gap: 7px; align-items: center; padding: 6px 7px; border: 1px solid var(--line2); border-radius: 6px; background: rgba(255,255,255,.02); min-width: 0; }
+  .tab.on { border-color: var(--gold2); background: rgba(216,160,64,.10); box-shadow: inset 0 -2px 0 var(--gold2); }
+  .tab .pf { flex: none; }
+  .tab b { display: block; font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tab span { display: block; white-space: nowrap; font-size: 9px; color: var(--dim); letter-spacing: 1px; margin-top: 1px; }
+  .tab .dot { width: 7px; height: 7px; border-radius: 4px; background: var(--up); box-shadow: 0 0 6px var(--up); flex: none; margin-left: auto; align-self: flex-start; }
+  .x { position: absolute; right: 12px; top: 10px; width: 26px; height: 26px; border-radius: 13px; border: 1px solid var(--line); color: var(--gold2); display: grid; place-items: center; font-size: 13px; background: var(--panel); }
+
+  /* portrait crops out of the baked atlas: facing-camera idle, row 2 frame 0 */
+  .pf { position: relative; overflow: hidden; background: #0c0a12; border: 1px solid var(--line2); image-rendering: pixelated; }
+  .pf i { position: absolute; background-repeat: no-repeat; image-rendering: pixelated; filter: brightness(1.9) saturate(1.1); }
+
+  /* paper doll */
+  .doll { display: grid; grid-template-columns: 76px 1fr 76px; gap: 6px; margin-top: 10px; align-items: center; }
+  .slots { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .fig { position: relative; height: 218px; border-radius: 10px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1b1624, #0e0b14 70%);
+    border: 1px solid var(--line2); overflow: hidden; }
+  .fig i { position: absolute; left: 50%; top: 4px; margin-left: -88px; width: 176px; height: 204px; background-repeat: no-repeat; image-rendering: pixelated; filter: brightness(2.1) saturate(1.15); }
+  .fig .nm { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font-size: 10px; color: var(--gold); letter-spacing: 1.5px; }
+  .fig .xpb { position: absolute; left: 22px; right: 22px; bottom: 4px; height: 2px; background: #26222e; }
+  .fig .xpb i { all: unset; position: absolute; left: 0; top: 0; bottom: 0; background: var(--gold2); }
+
+  .slot { position: relative; width: 62px; height: 62px; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border: 1.5px solid var(--line2); display: grid; place-items: center; }
+  .slot img { width: 52px; height: 52px; }
+  .slot.common { border-color: #5a5448; } .slot.fine { border-color: var(--fine); box-shadow: inset 0 0 12px rgba(114,208,108,.22); }
+  .slot.rare { border-color: var(--rare); box-shadow: inset 0 0 14px rgba(90,168,255,.28); } .slot.heirloom { border-color: var(--heirloom); box-shadow: inset 0 0 16px rgba(242,163,60,.32), 0 0 8px rgba(242,163,60,.25); }
+  .slot.sel { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .slot.empty { border-style: dashed; }
+  .slot.empty em { font-style: normal; font-size: 8.5px; color: #5d566a; letter-spacing: 1px; text-transform: uppercase; }
+  .slot .lbl { position: absolute; bottom: -12px; left: -8px; right: -8px; text-align: center; font-size: 8px; letter-spacing: 1.2px; color: #7c748a; text-transform: uppercase; }
+  .slot .new { position: absolute; top: -4px; right: -4px; font-size: 7.5px; font-weight: 700; color: #10200c; background: var(--up); border-radius: 3px; padding: 1px 3px; letter-spacing: .5px; }
+  .slot .up { position: absolute; bottom: 2px; right: 3px; color: var(--up); font-size: 11px; font-weight: 700; text-shadow: 0 1px 0 #000; }
+  .slot.off img { filter: grayscale(.85) brightness(.6); }
+  .slot .cls { position: absolute; top: 2px; left: 3px; font-size: 7.5px; letter-spacing: .5px; color: #9a92aa; background: rgba(0,0,0,.55); border-radius: 2px; padding: 0 2px; }
+
+  /* stats */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 16px; margin-top: 20px; padding: 9px 10px; border: 1px solid var(--line2); border-radius: 8px; background: rgba(255,255,255,.015); }
+  .stat { display: flex; align-items: baseline; font-size: 10.5px; color: #8a8498; letter-spacing: 1px; }
+  .stat b { margin-left: auto; color: var(--text); font-weight: 600; }
+  .stat u { text-decoration: none; color: var(--up); font-size: 9.5px; width: 34px; text-align: right; }
+  .stat u.z { color: #4a4458; }
+
+  /* bag */
+  .bagh { display: flex; align-items: baseline; margin: 12px 2px 8px; font-size: 10px; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; }
+  .bagh .cur { margin-left: auto; letter-spacing: 1px; text-transform: none; color: var(--gold); font-size: 10.5px; }
+  .bagh .cur i { font-style: normal; color: #ff9a50; margin-left: 10px; }
+  .bag { display: grid; grid-template-columns: repeat(5, 62px); gap: 10px 11px; justify-content: space-between; }
+
+  /* item card */
+  .card { position: absolute; left: 10px; right: 10px; bottom: 12px; background: rgba(20,15,26,.99); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: 0 -8px 40px rgba(0,0,0,.75); }
+  .card .hd { display: flex; gap: 12px; align-items: center; }
+  .card .big { width: 76px; height: 76px; border-radius: 10px; flex: none; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #2a2234, #120e18); border: 1.5px solid; }
+  .card .big img { width: 68px; height: 68px; }
+  .card h3 { font-family: Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.15; }
+  .card .meta { font-size: 10px; color: var(--dim); letter-spacing: 1px; margin-top: 4px; line-height: 1.5; }
+  .card .meta em { font-style: normal; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .card .lines { margin-top: 10px; border-top: 1px solid var(--line2); padding-top: 8px; }
+  .card .ln { display: flex; font-size: 11.5px; padding: 2px 0; color: var(--text); }
+  .card .ln.base b { color: var(--text); } .card .ln .k { color: #8a8498; letter-spacing: 1px; width: 70px; }
+  .card .ln.affix { color: var(--fine); } .card .ln.mod { color: var(--rare); } .card .ln.uniq { color: var(--heirloom); }
+  .card .ln .cmp { margin-left: auto; font-size: 10.5px; }
+  .card .ln .cmp.u { color: var(--up); } .card .ln .cmp.d { color: var(--down); }
+  .card .note { font-size: 10px; color: #c89a60; margin-top: 6px; letter-spacing: .5px; }
+  .card .flav { font-family: Georgia, serif; font-style: italic; font-size: 12.5px; color: #9f9484; margin-top: 8px; line-height: 1.35; }
+  .card .btns { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { flex: 1; text-align: center; padding: 10px 6px; border-radius: 8px; font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid var(--line); color: var(--gold); }
+  .btn.pri { background: linear-gradient(#e0a84a, #b67c2a); color: var(--ink); font-weight: 700; border-color: #f0c880; }
+  .btn.ghost { flex: .7; color: var(--dim); border-color: var(--line2); }
+  .cmphd { display: flex; font-size: 9px; letter-spacing: 1.5px; color: #7c748a; text-transform: uppercase; margin-top: 10px; }
+  .cmphd span:last-child { margin-left: auto; }
+
+  /* loot toast in the field */
+  .toast { position: absolute; left: 16px; right: 16px; top: 250px; background: rgba(18,14,24,.97); border: 1px solid var(--fine); border-radius: 12px; padding: 10px; box-shadow: 0 0 0 3px rgba(114,208,108,.12), 0 10px 30px rgba(0,0,0,.7); }
+  .toast .t { font-size: 9.5px; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin-bottom: 7px; }
+  .toast .hd { display: flex; gap: 10px; align-items: center; }
+  .toast .big { width: 58px; height: 58px; border-radius: 9px; border: 1.5px solid var(--fine); display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #243020, #10140e); flex: none; }
+  .toast .big img { width: 52px; height: 52px; }
+  .toast h3 { font-family: Georgia, serif; font-size: 16px; color: var(--fine); font-weight: 600; }
+  .toast .s { font-size: 10px; color: var(--dim); margin-top: 3px; }
+  .toast .s b { color: var(--up); font-weight: 600; }
+  .toast .btns { display: flex; gap: 8px; margin-top: 10px; }
+  .beam { position: absolute; width: 18px; height: 120px; left: 238px; top: 402px; background: linear-gradient(rgba(114,208,108,0), rgba(114,208,108,.55)); filter: blur(3px); border-radius: 9px; }
+  .glint { position: absolute; left: 232px; top: 512px; width: 30px; height: 14px; border-radius: 50%; background: radial-gradient(rgba(170,255,160,.9), rgba(114,208,108,0) 70%); }
+  .cardhint { position: absolute; left: 131px; bottom: 6px; width: 128px; height: 117px; border: 2px solid var(--gold); border-radius: 6px; box-shadow: 0 0 0 4px rgba(240,200,128,.18), 0 0 26px rgba(240,200,128,.35); }
+  .badge { position: absolute; left: 204px; bottom: 114px; background: var(--up); color: #10200c; font-size: 9px; font-weight: 700; border-radius: 8px; padding: 2px 6px; letter-spacing: 1px; box-shadow: 0 0 10px rgba(143,224,122,.6); }
+  .finger { position: absolute; left: 214px; bottom: 30px; font-size: 34px; transform: rotate(-12deg); filter: drop-shadow(0 3px 4px rgba(0,0,0,.6)); }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 26px 0 8px; font: 12px ui-monospace, Menlo, monospace; }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; display: inline-block; }
+  .icons { display: grid; grid-template-columns: repeat(auto-fill, 86px); gap: 10px; max-width: 1650px; margin-top: 10px; }
+  .icons div { text-align: center; font: 9.5px ui-monospace, Menlo, monospace; color: var(--dim); }
+  .icons img { width: 72px; height: 72px; display: block; margin: 0 auto 3px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border-radius: 8px; border: 1px solid var(--line2); }
+</style></head>
+<body>
+<h1>Gear and loot: the character sheet</h1>
+<p class="lede">Tap any party card to open that member's sheet: the gear they're wearing, their stats with the gear's share shown in green, and the party bag. Tap an item, worn or in the bag, to see its description, stats and a comparison with what's worn now. Icons are baked from the same KayKit models the figures carry (<span class="mono">tools/actor-lab/icons.cjs</span>), so a sword's icon is the sword in the hand. Slots and rarities follow GDD §8.</p>
+
+<div class="row" id="phones"></div>
+
+<div class="legend">
+  <span><i style="border-color:var(--common)"></i>Common · shops</span>
+  <span><i style="border-color:var(--fine)"></i>Fine · base + 1 affix</span>
+  <span><i style="border-color:var(--rare)"></i>Rare · base + 2 affixes + an ability modifier</span>
+  <span><i style="border-color:var(--heirloom)"></i>Heirloom · named, a unique effect</span>
+</div>
+<p class="lede" style="margin-top:14px">Baked icon set (30): every weapon, off-hand and headgear in the hero kits, the Ashbound's weapons (dropped by skeletons), and three trinkets.</p>
+<div class="icons" id="iconset"></div>
+
+<script>
+const I = (id) => `../assets/items/${id}.png`;
+// portrait: the baked atlas cell (88×102), facing camera (row 2), idle frame 0
+const pf = (actor, w, h, s, ox = 0, oy = 0) => `<div class="pf" style="width:${w}px;height:${h}px"><i style="width:${6952 * s}px;height:${816 * s}px;background-image:url(../assets/actors/${actor}.alb.png);background-size:${6952 * s}px ${816 * s}px;left:${-ox * s}px;top:${-(204 + oy) * s}px"></i></div>`;
+const fig = (actor) => `<i style="background-image:url(../assets/actors/${actor}.alb.png);background-size:${6952 * 2}px ${816 * 2}px;background-position:0 -408px"></i>`;
+
+// items (all rolled by the sim from a seed; these are examples)
+const IT = {
+  ashwarden: { icon: 'sword_1h', name: 'Ashwarden Sword', r: 'fine', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 4, base: [['ATK', '+6']], aff: [['CRIT', '+3%']], flav: 'Forged in Thornwick the winter the wells went black.' },
+  buckler: { icon: 'shield_round', name: 'Oakheart Buckler', r: 'common', slot: 'Off-hand · shield', cls: 'Fighter', ilv: 3, base: [['DEF', '+5']], aff: [] },
+  plate: { icon: 'helm_plate', name: 'Tallowmere Plate', r: 'fine', slot: 'Armour · plate', cls: 'Fighter', ilv: 4, base: [['DEF', '+8']], aff: [['HP', '+20']] },
+  emberring: { icon: 'ring', name: 'Ring of the Last Hearth', r: 'rare', slot: 'Trinket · ring', cls: 'Any class', ilv: 5, base: [['ATK', '+2']], aff: [['CRIT', '+4%'], ['HP regen', '+0.4/s']], mod: 'Cleave strikes one more foe', flav: '"Kept lit through the Long Dark." The stone is still warm.' },
+  cinder: { icon: 'sword_2h', name: 'Cinderbrand Greatsword', r: 'fine', slot: 'Weapon · two-handed', cls: 'Fighter', ilv: 5, base: [['ATK', '+11']], aff: [['HP', '+15']], flav: 'Heavier than it looks. It was meant to be.', isNew: true, up: true },
+  hatchet: { icon: 'axe_1h', name: 'Woodsman\'s Hatchet', r: 'common', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 2, base: [['ATK', '+4']], aff: [] },
+  thorn: { icon: 'shield_spike', name: 'Thornwall', r: 'rare', slot: 'Off-hand · shield', cls: 'Fighter', ilv: 5, base: [['DEF', '+9']], aff: [['DEF', '+3'], ['DODGE', '+2%']], mod: 'Blocks reflect 10% damage', up: true },
+  wand: { icon: 'wand', name: 'Wand of Embers', r: 'fine', slot: 'Weapon · wand', cls: 'Mage', ilv: 4, base: [['ATK', '+7']], aff: [['MP regen', '+0.3/s']], who: 'SIG' },
+  knife: { icon: 'knife', name: 'Gutter Knife', r: 'common', slot: 'Weapon · dagger', cls: 'Rogue', ilv: 3, base: [['ATK', '+5']], aff: [], who: 'WRN' },
+  witch: { icon: 'hat_mage', name: 'Hedge-witch Hat', r: 'common', slot: 'Armour · robes', cls: 'Mage', ilv: 2, base: [['DEF', '+3'], ['MP', '+10']], aff: [], who: 'SIG' },
+  pilgrim: { icon: 'amulet', name: 'Pilgrim\'s Amulet', r: 'fine', slot: 'Trinket · amulet', cls: 'Any class', ilv: 3, base: [['HP', '+12']], aff: [['DODGE', '+2%']] },
+  falx: { icon: 'skel_blade', name: 'Ashbound Falx', r: 'heirloom', slot: 'Weapon · one-handed', cls: 'Fighter', ilv: 6, base: [['ATK', '+10']], aff: [['CRIT', '+5%']], mod: 'Kills raise no Ashbound for 3 s' },
+  fang: { icon: 'charm', name: 'Barrow Fang', r: 'common', slot: 'Trinket · charm', cls: 'Any class', ilv: 2, base: [['CRIT', '+2%']], aff: [] },
+  cloak: { icon: 'cape_rogue', name: 'Mossweave Cloak', r: 'fine', slot: 'Armour · cloak', cls: 'Rogue', ilv: 4, base: [['DEF', '+5']], aff: [['DODGE', '+3%']], who: 'WRN' },
+};
+const RC = { common: 'var(--common)', fine: 'var(--fine)', rare: 'var(--rare)', heirloom: 'var(--heirloom)' };
+const slot = (k, o = {}) => { if (!k) return `<div class="slot empty">${o.lbl ? `<em>${o.lbl}</em>` : ''}</div>`; const it = IT[k];
+  return `<div class="slot ${it.r}${o.sel ? ' sel' : ''}${it.who ? ' off' : ''}"><img src="${I(it.icon)}" alt="">${it.who ? `<span class="cls">${it.who}</span>` : ''}${it.isNew ? '<span class="new">NEW</span>' : ''}${it.up && !it.who ? '<span class="up">▲</span>' : ''}${o.lbl ? `<span class="lbl">${o.lbl}</span>` : ''}</div>`; };
+
+const PARTY = [{ n: 'Aldric', c: 'FTR · L4', a: 'hero_knight' }, { n: 'Wren', c: 'ROG · L4', a: 'hero_rogue' }, { n: 'Sigrun', c: 'MAG · L3', a: 'hero_mage' }];
+const tabs = (on, dots = []) => `<div class="tabs">${PARTY.map((p, i) => `<div class="tab${i === on ? ' on' : ''}">${pf(p.a, 34, 40, 0.77, 22, 26)}<div style="min-width:0"><b>${p.n}</b><span>${p.c}</span></div>${dots[i] ? '<span class="dot"></span>' : ''}</div>`).join('')}</div>`;
+
+const BAG = ['cinder', 'thorn', 'falx', 'hatchet', 'pilgrim', 'wand', 'witch', 'knife', 'cloak', 'fang'];
+const sheet = ({ sel, card, dots = [0, 1, 1] }) => `<div class="veil"></div><div class="sheet"><div class="grab"></div><div class="x">✕</div>
+  <div style="margin-top:22px">${tabs(0, dots)}</div>
+  <div class="doll">
+    <div class="slots">${slot('ashwarden', { lbl: 'Weapon', sel: sel === 'ashwarden' })}${slot('buckler', { lbl: 'Off-hand' })}</div>
+    <div class="fig">${fig('hero_knight')}<div class="nm">ALDRIC · FIGHTER · LV 4</div><div class="xpb"><i style="width:62%"></i></div></div>
+    <div class="slots">${slot('plate', { lbl: 'Armour' })}${slot('emberring', { lbl: 'Trinket', sel: sel === 'emberring' })}</div>
+  </div>
+  <div class="stats">
+    ${[['HP', '202', '+20'], ['MP', '26', ''], ['ATK', '26', '+8'], ['DEF', '33', '+13'], ['CRIT', '12%', '+7%'], ['DODGE', '5%', ''], ['HP REGEN', '2.4/s', '+0.4'], ['MP REGEN', '0.5/s', '']]
+      .map(([k, v, g]) => `<div class="stat">${k}<b>${v}</b><u class="${g ? '' : 'z'}">${g || '—'}</u></div>`).join('')}
+  </div>
+  <div class="bagh">Party bag · ${BAG.length}/20<span class="cur">312 gold<i>✦ 4 embers</i></span></div>
+  <div class="bag">${BAG.map((k) => slot(k, { sel: sel === k })).join('')}${Array.from({ length: 20 - BAG.length }, () => slot(null)).join('')}</div>
+</div>${card || ''}`;
+
+const itemCard = (k, { cmp, btns, note }) => { const it = IT[k];
+  return `<div class="card"><div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${I(it.icon)}"></div>
+    <div><h3 style="color:${RC[it.r]}">${it.name}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${it.slot} · ${it.cls}</div></div></div>
+    ${cmp ? `<div class="cmphd"><span>this item</span><span>vs worn</span></div>` : ''}
+    <div class="lines" ${cmp ? 'style="margin-top:3px"' : ''}>
+      ${it.base.map(([s, v], i) => `<div class="ln base"><span class="k">${s}</span><b>${v}</b>${cmp && cmp[s] ? `<span class="cmp ${cmp[s][0]}">${cmp[s][1]}</span>` : ''}</div>`).join('')}
+      ${it.aff.map(([s, v]) => `<div class="ln affix"><span class="k" style="color:inherit">${s}</span><b>${v}</b>${cmp && cmp[s] ? `<span class="cmp ${cmp[s][0]}">${cmp[s][1]}</span>` : ''}</div>`).join('')}
+      ${cmp && cmp.extra ? cmp.extra.map(([s, c, v]) => `<div class="ln"><span class="k">${s}</span><b style="color:#5d566a">—</b><span class="cmp ${c}">${v}</span></div>`).join('') : ''}
+      ${it.mod ? `<div class="ln ${it.r === 'heirloom' ? 'uniq' : 'mod'}">◆ ${it.mod}</div>` : ''}
+    </div>
+    ${note ? `<div class="note">${note}</div>` : ''}
+    ${it.flav ? `<div class="flav">${it.flav}</div>` : ''}
+    <div class="btns">${btns}</div></div>`; };
+
+const phones = [
+  { h: '1 · Tap a party card', p: 'The party cards along the bottom are the way in. A green badge means the bag holds an upgrade for that member. The sheet opens on whoever you tap.',
+    html: `<div class="cardhint"></div><div class="badge">▲ UPGRADE</div><div class="finger">👆</div>` },
+  { h: '2 · The sheet', p: 'Tabs switch between party members (a green dot means an upgrade is waiting). The four GDD slots sit around the figure. The stats show totals, with the gear\'s share in green. Below is the shared <b>party bag</b> (20 slots) and currencies. Bag items show <b>NEW</b> and <b>▲</b> when they beat what\'s worn. Off-class items are greyed and tagged with the member who can use them.',
+    html: sheet({}) },
+  { h: '3 · Tap a bag item', p: 'A detail card rises over the sheet with the icon, rarity, slot and class, and base stats (white). Affixes are coloured by rarity, then the flavour line. The right column compares against what\'s worn. A two-handed weapon warns that it frees the off-hand. <b>Equip</b> swaps it in and sends the old item to the bag. <b>Salvage</b> turns it into Embers.',
+    html: sheet({ sel: 'cinder', card: itemCard('cinder', { cmp: { ATK: ['u', '▲ +5'], HP: ['u', '▲ +15'], extra: [['CRIT', 'd', '▼ −3%'], ['DEF', 'd', '▼ −5']] }, note: '⚠ Two-handed: the Oakheart Buckler goes to the bag', btns: '<div class="btn pri">Equip</div><div class="btn">Salvage ✦2</div><div class="btn ghost">Close</div>' }) }) },
+  { h: '4 · Tap a worn item', p: 'The same card for worn gear, without the comparison. Rare items add an ability modifier in blue, and Heirlooms a unique effect in amber. <b>Unequip</b> sends it to the bag. Off-class bag items instead offer <i>Give to Sigrun</i>, which equips them on the member who can use them.',
+    html: sheet({ sel: 'emberring', card: itemCard('emberring', { btns: '<div class="btn">Unequip</div><div class="btn ghost">Close</div>' }) }) },
+  { h: '5 · Finding loot', p: 'Gear drops are events (GDD §8): a beam over the drop, and a toast naming the item with its best quick action. <b>Equip</b> puts it on the member it upgrades, and <b>Bag</b> keeps it. Drops come from chests (10% Fine) and waves (1% Fine), more in deeper rooms, and roll 80% toward the party\'s classes.',
+    html: `<div class="beam"></div><div class="glint"></div><div class="toast"><div class="t">✦ Found in a chest</div><div class="hd"><div class="big"><img src="${I('crossbow_1h')}"></div>
+      <div><h3>Barrow-hunter's Crossbow</h3><div class="s">Fine · Weapon · Rogue · ilv 5</div><div class="s">Upgrade for <span style="color:#efe4cf">Wren</span>: <b>▲ ATK +4 · ▲ CRIT +3%</b></div></div></div>
+      <div class="btns"><div class="btn pri">Equip on Wren</div><div class="btn">Bag</div></div></div>` },
+];
+document.getElementById('phones').innerHTML = phones.map((ph) => `<div class="cap"><div class="phone">${ph.html}</div><h2>${ph.h}</h2><p>${ph.p}</p></div>`).join('');
+const ALL = ['sword_1h', 'sword_2h', 'axe_1h', 'axe_2h', 'shield_round', 'shield_badge', 'shield_rect', 'shield_spike', 'shield_barb', 'knife', 'knife_off', 'crossbow_1h', 'crossbow_2h', 'wand', 'staff', 'tome',
+  'helm_plate', 'hat_barb', 'hat_mage', 'cape_knight', 'cape_rogue', 'cape_mage', 'skel_blade', 'skel_axe', 'skel_staff', 'skel_crossbow', 'skel_shield', 'ring', 'amulet', 'charm'];
+document.getElementById('iconset').innerHTML = ALL.map((k) => `<div><img src="${I(k)}">${k}</div>`).join('');
+</script>
+</body></html>
