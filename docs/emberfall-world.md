@@ -9,14 +9,14 @@ names and facts here are **canon for content**. Change them here first.
 
 ## 1. The pitch
 
-> The heroes of this age are off saving kingdoms. You got the Marches.
+> The heroes of this age are off saving kingdoms. You got Emberfall.
 
 **Emberfall** is the forgotten backwater of a fallen empire. It's a second-rate province of
 mud roads, tired militias, half-flooded abbeys and ruins nobody famous bothers to loot. The
 tone is the **classic D&D paperback**: sellswords in a tavern, a quest board and a rumour
 about a barrow. There's a map with blank corners and a dungeon under the keep. It's earnest,
-a little grim, occasionally wry, and never epic at the start. You are nobody. By the end the
-Marches will tell stories about you, even if the rest of the world never hears of them.
+a little grim, occasionally wry, and never epic at the start. You are nobody. By the end
+Emberfall will tell stories about you, even if the rest of the world never hears of them.
 
 **Tone rules**
 - **Small stakes that grow.** The first quest is rats and bandits. The last one is the fate of
@@ -35,15 +35,15 @@ Marches will tell stories about you, even if the rest of the world never hears o
 | Age | When | What happened |
 |---|---|---|
 | **The Kindling** | ~1,000 years ago | Pilgrims find the **Ember**, a flame that burns without fuel, in a crater in the Pale Heights. Whoever tends it can bind the dead to labour. |
-| **The Solmere Empire** | ~900–300 years ago | The **Ember Throne** is built around the flame. Its **Ashbound**, legions of bound dead, dig the Undervaults, stoke the forges and never tire. The Marches are the empire's mines and granaries. |
+| **The Solmere Empire** | ~900–300 years ago | The **Ember Throne** is built around the flame. Its **Ashbound**, legions of bound dead, dig the Undervaults, stoke the forges and never tire. Emberfall is the empire's mines and granaries. |
 | **The Fall** | ~300 years ago | In one night the Ember goes out. The Ashbound drop where they stand, the forges go cold and the empire tears itself apart within a generation. The event gives the land its name. |
-| **The Long Dim** | 300 years → now | The Marches become a backwater with petty lords, a trade road and nothing more. The ruins are "haunted", which is to say *quiet*. |
+| **The Long Dim** | 300 years → now | Emberfall becomes a backwater with petty lords, a trade road and nothing more. The ruins are "haunted", which is to say *quiet*. |
 | **Now** | Year 301 of the Dim | Smoke rises from the old forges. Barrows are opening. The dead are standing up again, and nobody important is coming to help. |
 
 **The secret (Act IV reveal).** The Ember did not fail. **Empress Aurelle Solmere put it out
 herself.** She learned that the flame didn't just bind the dead; it *burned the living's
 souls as fuel*. The Fall was a sacrifice, and the empire's collapse was the price. The only
-record is scattered in fragments that the Cinder Choir has spent 300 years trying to destroy.
+record is scattered in fragments that the Cinder Cult has spent 300 years trying to destroy.
 
 ---
 
@@ -53,7 +53,7 @@ Each region is a difficulty tier, a set of tile variants and biomes (the engine'
 `?tiles=&tv=` language), an enemy mix and a chapter of the main arc. Towns are small: a
 tavern, a smith, a shrine and the Lantern Guild's quest board.
 
-### 3.1 The Hollow Marches: levels 1–8 · Act I
+### 3.1 The Hollow Vale: levels 1–8 · Act I
 Rolling farmland, hedgerows and the barrows of the old legions. It's the safest region, and
 it's where everyone starts.
 - **Towns:** **Thornwick** (start village, crossroads inn *The Tired Mule*) and **Greyholt**
@@ -71,7 +71,7 @@ on the stilt-houses never go out.
 - **Sites:** the **Drowned Abbey**, the **Sickpools** (imperial alchemy vats, still leaking),
   Toadking's Mound and the Canal Locks.
 - **Look:** `water` and `poison` variants; temple-checker abbeys and cavern pools. Biome: *Sickpools*.
-- **Enemies:** Cinder Choir acolytes, fen ghouls, Ashbound rogues, bog-witches.
+- **Enemies:** Cinder Cult acolytes, fen ghouls, Ashbound rogues, bog-witches.
 
 ### 3.3 The Cinder Reach: levels 15–22 · Act III
 Black hills of slag and the imperial foundries. Someone has lit the furnaces again.
@@ -80,7 +80,7 @@ Black hills of slag and the imperial foundries. Someone has lit the furnaces aga
 - **Sites:** the **Cinderworks**, the **Magma Vault**, the Forgehall of Oruth and the Slag Tunnels.
 - **Look:** `lava` and `rock` variants; rune plates in the forges and cavern tunnels. Biomes:
   *Cinderworks*, *Magma Vault*, *Barren Waste*.
-- **Enemies:** Ashbound warriors, forge-wights, Choir furnace-priests, cinder hounds.
+- **Enemies:** Ashbound warriors, forge-wights, Cult furnace-priests, cinder hounds.
 
 ### 3.4 The Pale Heights: levels 22–30 · Act IV
 Frozen passes above the crater where the Ember was found. The air hums.
@@ -88,7 +88,7 @@ Frozen passes above the crater where the Ember was found. The air hums.
 - **Sites:** the **Glass Keep**, the **Soulcracks** (a canyon split by the Fall), and the
   pilgrims' stair.
 - **Look:** `ice` and `rock` variants; cavern and flagstone. Biome: *Soulcracks*.
-- **Enemies:** Ashbound mages and elite legions, frost revenants, the Choir's inner circle.
+- **Enemies:** Ashbound mages and elite legions, frost revenants, the Cult's inner circle.
 
 ### 3.5 The Ember Throne: finale, level 30+
 The imperial palace, half-swallowed by the crater, with rune plates everywhere and the dark
@@ -106,8 +106,8 @@ revealed, the same model as the dungeon minimap.
 | Faction | Who | Wants | Role |
 |---|---|---|---|
 | **The Lantern Guild** | A shabby adventurers' guild with a board in every town | Coin, and renown for its members | **Quest giver.** Its quest board is the mini-quest generator. Guild rank gates regions. |
-| **The Cinder Choir** | A cult that believes the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
-| **The Ashbound** | The empire's bound dead, waking as the Choir stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
+| **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
+| **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
 | **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. The future **Cleric and Healer** class source. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
@@ -125,10 +125,10 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
 - **Warden-Captain Osric Hale**, Greyholt's watch. He's honest and tired, and posts the bounties.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
   Wickham Keep.
-- **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Choir money.
+- **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money.
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7) and is the future
   **Cleric** unlock.
-- **The Kindler** (Master Corvane Vell), voice of the Cinder Choir. He's charismatic, sincere,
+- **The Kindler** (Master Corvane Vell), voice of the Cinder Cult. He's charismatic, sincere,
   and wrong. He appears through the arc and is the final boss at the Ember Throne.
 - **Empress Aurelle Solmere**, dead 300 years. She is heard only through fragments, and is the
   heart of the secret.
@@ -140,13 +140,13 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
 The main arc is a light **chapter spine**. Each act unlocks when the region's renown threshold
 is met (see the GDD). Mini-quests fill the space between chapter beats and drip-feed the story.
 
-1. **Act I — Smoke on the Marches.** Bandits are raiding the Tithe Mill. Chasing them into
+1. **Act I — Smoke over the Vale.** Bandits are raiding the Tithe Mill. Chasing them into
    Wickham Keep reveals they're paid by robed strangers to *dig*. The Old Barrows open, the
-   Ashbound walk, and a Choir acolyte dies with a strange ember-shard in his fist.
-2. **Act II — The Drowned Choir.** The shard leads to the fens. The Choir is draining the
+   Ashbound walk, and a Cult acolyte dies with a strange ember-shard in his fist.
+2. **Act II — The Drowned Abbey.** The shard leads to the fens. The Cult is draining the
    Sickpools and "harvesting" drowned souls at the Drowned Abbey. The Grey Sisters hold records
-   the Choir wants burned. You save some of them.
-3. **Act III — Relighting the Forges.** The Choir has lit the Cinderworks to forge a vessel
+   the Cult wants burned. You save some of them.
+3. **Act III — Relighting the Forges.** The Cult has lit the Cinderworks to forge a vessel
    for a new flame. As the forges roar, the Ashbound across the province grow stronger and
    organize. You break the Forgehall of Oruth, but the vessel is already gone, north.
 4. **Act IV — The Throne of Embers.** At the Glass Keep, the final fragments reveal the secret:
@@ -186,8 +186,8 @@ Sample fragments:
 | Family | Region | Archetypes (current art) | Notes |
 |---|---|---|---|
 | **Ashbound** | all | Minion, Warrior, Rogue, Mage (the KayKit skeletons) | Eye glow reads their rank. Weak to Cleric *Turn Undead*. |
-| **Redhand** | Marches | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. |
-| **Cinder Choir** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. |
+| **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. |
+| **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
 | **Bosses** | per site | Redhand Captain, the Abbess Below, Oruth the Forgemaster, the Kindler | One per major site, each with one signature mechanic. |
 

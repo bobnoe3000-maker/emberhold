@@ -70,7 +70,7 @@ when one side falls or the party retreats.
 **AI.** Each unit picks a target by role (front line → nearest threat, rogue → lowest HP or
 back line, mage → clusters) and casts abilities when MP and conditions allow (§5). Attack
 intervals are class-fixed: fighter 1.3 s, rogue 0.9 s, mage 1.6 s. Enemies use archetype AI.
-Ashbound mages raise and buff; Choir necromancers resurrect.
+Ashbound mages raise and buff; Cult necromancers resurrect.
 
 **Formation.** Front (fighter), mid (rogue) and back (mage) are auto-assigned by class and can
 be reordered in the party screen.
@@ -317,9 +317,9 @@ Emberfall rename.
 |---|---|---|
 | **M1: Battle core** | Stats and formulas, three classes, autobattle against the Ashbound in existing rooms, abilities, defeat, XP and levels | A solo fighter clears a floor at the tuning target (60–70 % HP left) |
 | **M2: Party and town** | Two companions, Thornwick hub, tavern, smith, shrine, quest board (Clear/Bounty/Rescue/Retrieve), loot v1 | A 15-minute session loop feels complete |
-| **M3: The Hollow Marches** | Overland region 1, four sites, Act I, Chronicle v1, balance pass | Levels 1–8 playable end to end |
+| **M3: The Hollow Vale** | Overland region 1, four sites, Act I, Chronicle v1, balance pass | Levels 1–8 playable end to end |
 | **M4: Idle and depth** | Expeditions, upgrades, salvage, Rare/Heirloom, bad-luck protection | A day of play-plus-idle feels rewarding |
-| **M5: Fens and Reach** | Acts II–III, new enemies (Choir, beasts), Delve/Escort/Investigate | Levels 8–22 |
+| **M5: Fens and Reach** | Acts II–III, new enemies (Cult, beasts), Delve/Escort/Investigate | Levels 8–22 |
 | **M6: Heights and Throne** | Act IV, finale, post-game Undervaults | Campaign complete |
 | **M7: Multiplayer** | Async (leaderboards, hire friends' heroes), then co-op | — |
 
