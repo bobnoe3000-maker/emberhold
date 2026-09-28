@@ -2,6 +2,11 @@
 ### A mobile-first, portrait-mode sandbox survival RPG inspired by Necesse
 **Game Design + Architecture + Implementation Plan — v0.1**
 
+> **2026-09-28 — game design superseded.** The game is now **Emberfall**, a D&D-flavoured
+> autobattler party RPG: see **emberfall-gdd.md** and **emberfall-world.md**. The survival,
+> colony and crafting design below is retired. The technical architecture (§7: layering,
+> headless deterministic sim, saves) still stands.
+
 > Scope note: this is an original game that borrows Necesse's *genre systems and loop structure* (top-down survival sandbox + boss-gated progression + colony sim). All names, art, characters, world lore, and content are original. Game mechanics are fair game; assets and IP are not — so nothing here copies Necesse's art, names, or specific content.
 
 > **v0.4 amendment (Aug 2026) — Dreadforge is the primary art direction.** The game's visual

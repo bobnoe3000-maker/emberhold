@@ -6,6 +6,8 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
+| [emberfall-gdd.md](./emberfall-gdd.md) | **Emberfall** game design: autobattler party RPG, classes and stats, loot, quest generation, overland, offline and multiplayer, roadmap | **Plan of record** for game design (2026-09-28) |
+| [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary | **Canon** for narrative and quest content (2026-09-28) |
 | [tile-styles.md](./tile-styles.md) | Five structured floor/wall tile styles × seven material variants (plain, earth, rock, lava, poison, ice, water), switch with `?tiles=&tv=` | **Current** — cobble is the default (2026-09-28) |
 | [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
 | [emberlit-tdd.md](./emberlit-tdd.md) | Technical design for the Emberlit WebGL2 deferred renderer (G-buffers, point lights, HDR bloom) | **Active** render spec (shipped) |
@@ -15,7 +17,7 @@ the header of each status doc for what it replaces.
 | [dreadforge-mockup.html](./dreadforge-mockup.html) | Confirmed nightmare-biome look — from-spec, live generators (open in a browser) | **Current** visual reference |
 | [emberhold-iso-pivot-tdp.md](./emberhold-iso-pivot-tdp.md) | Technical design plan for the isometric fine-tile pivot | Landed (iso geometry); superseded on mood by Dreadforge |
 | [emberhold-status-v0.3.md](./emberhold-status-v0.3.md) | Project status & plan (v0.3) — save/load + iso pivot | Superseded by v0.4 |
-| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Foundational; presentation amended to iso, roadmap superseded by the status doc |
+| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Architecture still foundational; **game design superseded** by emberfall-gdd.md |
 | [art-style-iso.html](./art-style-iso.html) | Iso field guide — terrain, cliffs, props, detailed 24×36 characters | Geometry/proportion reference; **Emberwood mood retired** by Dreadforge |
 | [iso-mockup-fine.html](./iso-mockup-fine.html) | The original iso visual-spec proof — 16×8 diamonds, elevation, quantized lighting | Reference the pivot spec was locked from (pre-detailed-doll) |
 | [assetforge-v0.html](./assetforge-v0.html) | Original procedural art-pipeline proof (palettes, blob-47, paper-doll) | Historical — flat top-down; blob-47 now parked |
