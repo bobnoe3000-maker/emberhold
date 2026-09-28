@@ -133,10 +133,11 @@ const snapAt = project(5.9, 5.1, 0);
 const snapped = resolveTap(snapAt.sx, snapAt.sy, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
 console.log('iso fat-finger snap:', snapped.tx === 5 && snapped.ty === 5);
 
-// Room battle: a solo L1 fighter left alone in a depth-0 room holds it (GDD §15 M1 exit test).
+// Room battle: a solo L1 fighter left alone in a level-1 room holds it (GDD §15 M1 exit test),
+// and rooms deepen: levels rise with walking distance from the entrance and per floor.
 function soloHold(seed, secs) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
-  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player;
+  const L = sim.world.level, r = L.rooms.find((q) => sim.world.roomLevels.get(q.id) === 1), p = sim.state.player;
   let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5;
@@ -147,9 +148,12 @@ function soloHold(seed, secs) {
 }
 const holds = [20260807, 777].map((sd) => soloHold(sd, 600));
 const holdOk = holds.every((h) => h.held && h.waves >= 25);
+const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
+const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && rl.roomLevels.get(rl.level.descentRoom.id) === Math.max(...rlv);
+console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));
 console.log('solo fighter holds a room 10 min:', holdOk, holds.map((h) => `${h.waves} waves L${h.level}`).join(', '));
 
-const ok = holdOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+const ok = holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

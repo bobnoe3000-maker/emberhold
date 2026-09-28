@@ -61,9 +61,37 @@ export function createWorld(seed, theme, depth = 0) {
   world.structs = [];
   if (depth === 0 && level.entrance) placeStairsUp(world, level);
 
-  // Enemies arrive in waves when the party enters a room (battle.js).
+  // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
+  // fixed level: the further you walk from the entrance, the harder it is.
+  world.roomLevels = rankRooms(level, depth);
   world.enemies = []; world.projectiles = [];
   return world;
+}
+
+// Room difficulty (GDD §3.3). Rooms are ranked by walking distance from the entrance
+// (BFS over the floor); the descent room always ranks last. Every two rooms deeper is
+// one level harder, and each floor down starts where the one above left off:
+// room level = 1 + ROOM_LEVELS_PER_FLOOR × depth + ⌊rank ÷ 2⌋. The entrance is safe (0).
+export const ROOM_LEVELS_PER_FLOOR = 3;
+function rankRooms(level, depth) {
+  const { cells, rooms, entrance } = level, out = new Map();
+  if (!entrance) return out;
+  const dist = new Map(), best = new Map(), q = [];
+  const start = K(Math.floor(level.spawn.x), Math.floor(level.spawn.y));
+  dist.set(start, 0); q.push(start);
+  for (let h = 0; h < q.length; h++) {
+    const k = q[h], d = dist.get(k), c = cells.get(k), [x, y] = k.split(',').map(Number);
+    if (c.room >= 0 && !(best.get(c.room) <= d)) best.set(c.room, d);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nk = K(x + dx, y + dy), n = cells.get(nk);
+      if (n && n.kind === 'floor' && !dist.has(nk)) { dist.set(nk, d + 1); q.push(nk); }
+    }
+  }
+  const ranked = rooms.filter((r) => r !== entrance)
+    .sort((a, b) => (a === level.descentRoom) - (b === level.descentRoom) || (best.get(a.id) ?? 1e9) - (best.get(b.id) ?? 1e9) || a.id - b.id);
+  out.set(entrance.id, 0);
+  ranked.forEach((r, i) => out.set(r.id, 1 + ROOM_LEVELS_PER_FLOOR * depth + Math.floor(i / 2)));
+  return out;
 }
 
 const cellAt = (world, x, y) => world.level.cells.get(K(x, y));

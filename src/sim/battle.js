@@ -2,20 +2,18 @@
 // stepped by core.js at 20 Hz.
 //
 // Enter any dungeon room but the entrance (a sanctuary) and its battle starts: a wave
-// spawns away from the party, the party fights on its own, a 4 s lull follows each
-// cleared wave, and every wave survived in a row raises the room's Heat (+4 % enemy
-// stats, +10 % rewards, up to 10). Enemies are leashed to their room. Walk out of the
-// room to end it (the room resets). If the whole party falls, you're carried to town.
+// spawns away from the party, the party fights on its own, a lull follows each cleared
+// wave, then the next wave comes — for as long as you stay. Every room has a fixed
+// level (world.roomLevels: deeper from the entrance and deeper floors are harder), and
+// its waves never escalate: wave 40 is as hard as wave 1. Enemies are leashed to their
+// room. Walk out of the room to end it (the room resets). If the whole party falls,
+// you're carried to town.
 //
 // Control (GDD §3.4): steer the hero and it goes where you say, striking whatever is
 // in reach when you stop; let go of the stick for a moment and it fights on its own
 // (chasing within the room — it never walks out by itself). Companions always act on
 // their own (fighter guards you, rogue hunts the weakest, mage keeps distance and
 // casts). Tap an enemy to focus the party on it.
-//
-// Heat reads the party: a wave cleared without the party's HP dipping under 70 % raises
-// it, one that took it under 50 % lowers it (under 25 %, by two), so a room settles at the Heat the party can hold and
-// staying is always survivable for a party at the room's level (GDD §7 grind gate).
 
 import { mulberry32, streamSeed } from './rng.js';
 import { CLASSES, statsFor, xpToNext } from './party.js';
@@ -26,20 +24,19 @@ const CLASS_FIGHT = {
   rogue:   { interval: 0.9, range: 1.35, speed: 6.8, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
   mage:    { interval: 1.6, range: 7.0,  speed: 5.8, ability: { name: 'Firebolt', mp: 12, power: 1.8 }, bolt: 'fire', keepAway: 3.2 },
 };
-// Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); Heat and elites on top)
+// Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
-  minion:  { hp: 32, atk: 6,  def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 1.35, speed: 3.3, xp: 10, gold: 1 },
-  warrior: { hp: 48, atk: 8,  def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 1.45, speed: 2.9, xp: 14, gold: 2 },
-  rogue:   { hp: 32, atk: 7,  def: 3, crit: 10, dodge: 10, interval: 1.6, range: 6.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
-  mage:    { hp: 30, atk: 9,  def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
+  minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 1.35, speed: 3.3, xp: 10, gold: 1 },
+  warrior: { hp: 54, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 1.45, speed: 2.9, xp: 14, gold: 2 },
+  rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 6.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
+  mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 };
 export const ENEMY_KINDS = Object.keys(ENEMIES);
-const HEAT_MAX = 10, LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
-// Heat after a cleared wave, from the party's lowest HP during it: never under 70 % → +1,
-// dipped under 50 % → −1, under 25 % → −2, between → hold. The lull is 4 s, stretched (up
-// to 15 s) while the party is under half HP, so a bad wave is followed by a breather.
-// Companions who fell during a wave get back up at 25 % HP when it's cleared.
-const HEAT_UP = 0.7, HEAT_DOWN = 0.5, HEAT_DROP = 0.25, LULL_MAX = 15, LULL_READY = 0.5, REVIVE = 0.25;
+const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
+// The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
+// is followed by a breather. Companions who fell during a wave get back up at 25 % HP
+// when it's cleared.
+const LULL_MAX = 15, LULL_READY = 0.5, REVIVE = 0.25;
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -65,14 +62,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
 
   // ── spawning ────────────────────────────────────────────────────────────────
   function spawnWave(w) {
-    const b = battle, lvl = 1 + (w.depth || 0), scale = (1 + 0.14 * (lvl - 1)) * (1 + 0.04 * b.heat);
-    // two per living member (+1 per floor down); Heat (+4 % stats per step) is the
-    // escalation. Ranged skeletons join from wave 5, at most a third of a wave
+    const b = battle, lvl = b.level, scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1);
+    // 2 for a lone hero, 5 for two, 7 for three (companions pull their weight); the room's level sets stats and the mix (archers and mages
+    // from level 2, at most a third of a wave). Every fifth wave an elite takes one slot.
     const party = state.party.filter(alive).length;
-    const eliteWave = (b.wave + 1) % 5 === 0;               // every fifth wave an elite takes one slot's place
-    const n = Math.max(1, Math.min(7, 2 * party + (w.depth || 0)) - (eliteWave ? 1 : 0));
-    const ranged = b.wave >= 4 ? Math.floor(n / 3) : 0;
-    const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : b.wave < 2 || rng() < 0.55 ? 'minion' : 'warrior');
+    const eliteWave = (b.wave + 1) % 5 === 0;
+    const n = Math.max(1, Math.min(7, 3 * party - 1) - (eliteWave ? 1 : 0));
+    const ranged = lvl >= 2 ? Math.floor(n / 3) : 0;
+    const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : rng() < 0.55 ? 'minion' : 'warrior');
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring
     for (let i = 0; i < n; i++) {
@@ -81,12 +78,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (Math.hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
       const elite = eliteWave && i === n - 1;
       const hp = Math.round(E.hp * scale * (elite ? 2.5 : 1));
-      w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * scale * (elite ? 1.3 : 1), def: E.def * scale,
+      w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * (elite ? 1.3 : 1), def: E.def * scale,
         crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: E.speed, bolt: E.bolt,
         xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
     }
-    b.wave += 1; b.low = 1;
-    bus.emit('wave', { wave: b.wave, heat: b.heat });
+    b.wave += 1;
+    bus.emit('wave', { wave: b.wave, level: lvl });
   }
 
   function startBattle(w, room) {
@@ -97,10 +94,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const [x, y] of cells) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     const gw = x1 - x0 + 1, gh = y1 - y0 + 1, walk = new Uint8Array(gw * gh);
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
-    battle = { room, wave: 0, heat: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map() };
+    battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map() };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
-    bus.emit('battle', { on: true, room });
+    bus.emit('battle', { on: true, room, level: battle.level });
   }
   function endBattle(w, why) {
     battle = null; focusId = 0;
@@ -129,8 +126,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     else { tgt.dead = 0.6; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
   function reward(e) {
-    const heatK = 1 + 0.1 * (battle ? battle.heat : 0), living = state.party.filter(alive);
-    const xp = Math.round(e.xp * e.lvl * heatK), share = Math.max(1, Math.round(xp / Math.max(1, living.length)));
+    const living = state.party.filter(alive);
+    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp / Math.max(1, living.length)));
     for (const m of living) {
       m.xp += share;
       while (m.xp >= xpToNext(m.level)) {
@@ -138,7 +135,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         m.hp += statsFor(m).maxHp - before; bus.emit('levelUp', { name: m.name, level: m.level });
       }
     }
-    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * heatK);
+    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl);
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
   }
@@ -241,7 +238,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) {
       if (m.down) continue;
       const c = CLASSES[m.cls], s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : 1;
-      m.hp = Math.min(s.maxHp, m.hp + c.hpr * k * dt); m.mp = Math.min(s.maxMp, m.mp + c.mpr * k * dt);
+      m.hp = Math.min(s.maxHp, m.hp + c.hpr * (s.maxHp / c.hp[0]) * k * dt); m.mp = Math.min(s.maxMp, m.mp + c.mpr * (s.maxMp / c.mp[0]) * k * dt);   // regen grows with the pool
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
     // companions: follow (formation behind the hero) out of battle
@@ -256,10 +253,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle) {
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
-        if (battle.wave > 0 && !battle.between) {               // a wave just fell: settle Heat, start the lull
+        if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = LULL; battle.waited = 0;
-          battle.heat = battle.low >= HEAT_UP ? Math.min(HEAT_MAX, battle.heat + 1) : Math.max(0, battle.heat - (battle.low < HEAT_DROP ? 2 : battle.low < HEAT_DOWN ? 1 : 0));
-          bus.emit('wave', { wave: battle.wave, heat: battle.heat, cleared: true });
+          bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true });
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
             m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));
             bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });
@@ -269,7 +265,6 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // the next wave comes when the lull is over and the party has caught its breath (or waited long enough)
         if (battle.lull <= 0 && (battle.wave === 0 || partyHp() >= LULL_READY || battle.waited >= LULL_MAX)) { battle.between = false; spawnWave(w); }
       }
-      if (foes.length) battle.low = Math.min(battle.low ?? 1, partyHp());
       const focus = focusId && foes.find((e) => e.id === focusId);
       // party AI
       state.party.forEach((m, i) => {

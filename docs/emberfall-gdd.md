@@ -44,7 +44,7 @@ progression. Sessions of 3–15 minutes: one quest, a town visit, or a single du
 
 | Loop | Length | Beats |
 |---|---|---|
-| **Room** | 30 s – many min | Enter a room with NPCs → autobattle → wave cleared → lull → next wave (Heat rises) → stay and farm, or walk out to end it (§3). |
+| **Room** | 30 s – many min | Enter a room with NPCs → autobattle → wave cleared → lull → next wave (same difficulty) → stay and farm, or walk out to end it (§3). |
 | **Quest** | 3–15 min | Town board → pick a mini-quest → travel overland → site (1–5 floors) → objective → return and turn in. |
 | **Growth** | days–weeks | Level up, upgrade gear at the smith, hire or find better companions, raise regional renown → unlock the next act and region → harder enemies → grind again. |
 | **Offline** | hours | Leave the party farming a room you've held; results are computed on return (§12). |
@@ -83,28 +83,43 @@ A level has 6–8 rooms.
 - **Rooms show their threat** before you commit: level, enemy family and a skull rating appear
   on the minimap and over the doorway.
 
-### 3.3 Waves and Heat (risk vs reward)
-A wave is **two enemies per living party member** (+1 per floor down, max 7). Every fifth
-wave an **elite** takes one slot. After each cleared wave the room's **Heat** moves by how
-the party fared during that wave, capped at 10:
+### 3.3 Room levels and waves (risk vs reward)
+**Every room has a fixed level, and it never changes while you stay.** Wave 40 is as hard as
+wave 1. Difficulty rises only as you **advance deeper**:
 
-| Party's lowest HP during the wave | Heat change |
-|---|---|
-| never below 70 % | +1 |
-| between 50 and 70 % | holds |
-| below 50 % | −1 |
-| below 25 % | −2 |
+- **Deeper rooms are harder.** Rooms are ranked by walking distance from the entrance, and
+  every two rooms further in is one level harder. The descent room is always the hardest on
+  its floor.
+- **Deeper floors are harder.** Each floor down starts where the one above left off:
 
-Each point of Heat adds +4 % enemy stats *and* +10 % gold, XP and gear-drop chance.
+  room level = 1 + 3 × floor + ⌊rank ÷ 2⌋
 
-- **The room settles at the Heat the party can hold.** Staying is always survivable for a
-  party at the room's level, and as it levels the Heat creeps up.
+  So floor 1 runs from level 1 to 4, floor 2 from 4 to 7, and so on. The entrance room is a
+  safe sanctuary (level 0).
+- **Enemy stats** = archetype base × (1 + 0.14 × (level − 1)) for HP and DEF, and
+  × (1 + 0.12 × (level − 1)) for ATK. XP and gold per kill scale with the room's level, so
+  deeper rooms pay more.
+- **Wave size depends on the living party:** 2 for a lone hero, 5 for two, 7 for three.
+  Archers and skeleton mages join in rooms of level 2 and up, at most a third of a wave.
+  Every fifth wave an **elite** takes one slot.
 - **The lull is 4 s,** stretched (up to 15 s) while the party is under half HP, so a bad wave
-  is followed by a breather.
-- **Fallen companions get back up at 25 % HP** when the wave is cleared.
-- **Leaving the room resets Heat.**
+  is followed by a breather. Fallen companions get back up at 25 % HP when a wave is cleared.
+- **Rooms show their threat** before you commit. Each discovered room's level is on the
+  minimap, coloured against your level:
+
+  | Room vs your level | Colour | Reads as |
+  |---|---|---|
+  | at or below | gold | even match |
+  | +1 | amber | a step up |
+  | +2 | orange | dangerous |
+  | +3 or more | red | deadly |
+
+  Entering a room shows its level.
 - **Bosses don't respawn with waves.** A floor's boss spawns once per visit to the site (or
   once per day in the post-game Undervaults).
+
+The grind decision is **how deep to push**. Farm a room at your level safely and
+indefinitely, or step into a deeper room for better XP and gold at real risk.
 
 ### 3.4 What the player controls (one thumb)
 - **Position** (stick or tap): move the leader within the room. The party re-forms around
@@ -136,7 +151,7 @@ is an open question.
 ### 3.7 Readability
 At the current zoom (25 tiles across) figures are about 54 pt tall. Each unit shows HP/MP pips
 overhead, floating damage numbers, a crit flash and a dodge "miss". A small room banner shows
-the wave number and Heat. Hazard pools (lava, poison, ice, water) are impassable, so terrain
+the room's level and the wave number. Hazard pools (lava, poison, ice, water) are impassable, so terrain
 shapes the fight.
 
 ---
@@ -151,7 +166,7 @@ shapes the fight.
 | **DEF** | Defence | Mitigation = DEF ÷ (DEF + 25 + 5 × attacker level). About 30 % at even gear; better armour pushes it up. |
 | **CRIT** | Critical-hit chance % | A crit deals ×1.75 damage. Cap 60 %. |
 | **DODGE** | Dodge chance % | Avoids a hit entirely. Rolled before crit. Cap 50 %. |
-| **HP regen** | HP per second | In battle as listed; **×5 out of battle**; full heal at shrines and inns. |
+| **HP regen** | HP per second | As listed at level 1, growing in step with max HP. **×5 out of battle** (and in lulls); full heal at shrines and inns. |
 | **MP regen** | MP per second | Same rules as HP regen. |
 
 Damage per hit = max(1, ATK × power × (1 − mitigation)) × (crit ? 1.75 : 1), unless dodged.
@@ -211,12 +226,12 @@ Both slot in with the same stat block and ability format. No system changes are 
 
 - **Levels 1–30** at launch. XP to next level = 100 × L^1.6 (L1→2: 100; L10→11: ~4,000;
   L29→30: ~22,000). Stats grow per the class tables.
-- **Enemy scaling.** Enemy level = region base + site tier (+0 to +3) + ⌊floor ÷ 2⌋. Enemy
-  stats = archetype base × (1 + 0.14 × (level − 1)). *Elite*: ×2.5 HP, ×1.3 ATK. *Boss*:
-  ×8 HP plus a signature mechanic.
+- **Enemy scaling.** Enemy level = the room's level (§3.3), offset by the region base and the
+  site tier (+0 to +3). Stats = archetype base × (1 + 0.14 × (level − 1)) (ATK 0.12).
+  *Elite*: ×2.5 HP, ×1.3 ATK. *Boss*: ×8 HP plus a signature mechanic.
 - **The grind gate.** Tuning target: a party at the region's level holds a normal room at
-  Heat 0 indefinitely, with each wave costing about 30–40 % HP that the lull partly restores.
-  Holding Heat 5+ needs gear or levels above the region. At three levels under, it's a coin-flip. The **renown** needed to
+  its own level indefinitely, with each wave costing about 20–30 % HP that the lull restores.
+  One level under is tough but holds; two under is a gamble; three under falls in minutes. The **renown** needed to
   unlock the next act roughly matches reaching that region's level cap, so progress means
   grinding plus gear, not just story.
 - **Renown** per region is earned from quests and bosses, and unlocks chapter quests, the next
@@ -230,7 +245,7 @@ Both slot in with the same stat block and ability format. No system changes are 
 ## 8. Loot
 
 **Rare but valuable.** Every kill drops a little gold, XP and sometimes materials. Gear
-drops are events. Room Heat raises the gear-drop chance (§3.3).
+drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 
 | Slot | Fighter | Rogue | Mage |
 |---|---|---|---|
@@ -357,7 +372,7 @@ reproduce any battle for validation.
 
 | Screen | Content |
 |---|---|
-| **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a wave and Heat banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
+| **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a room-level and wave banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
 | **Party cards** (always) | Bottom of every screen: **you in the centre, up to two companions either side**. Each card has a portrait, level badge, name, class, HP bar, ATK / DEF / CRT / DDG, and level with an XP bar. Empty slots say *hire at a town tavern*. |
 | **Town square** | The home screen: a fixed framing of shop, tavern, inn and temple with name plaques; a bottom bar of the four services; each opens a bottom-sheet menu. No minimap here. |
 | **Quest board** | Cards: giver portrait, hook line, skulls, rewards. |
@@ -390,7 +405,7 @@ Emberfall rename.
 
 | Milestone | Scope | Exit test |
 |---|---|---|
-| **M1: Battle core** | Stats and formulas, three classes, room battles with respawning waves and Heat, leashing, tap-to-move, abilities, defeat, XP and levels | A solo fighter holds a Heat-0 room indefinitely and can walk out of a bad one |
+| **M1: Battle core** | Stats and formulas, three classes, room battles with respawning waves at fixed room levels, leashing, tap-to-move, abilities, defeat, XP and levels | A solo fighter holds a room of their level indefinitely and can walk out of a bad one |
 | **M2: Party and town** | Two companions, Thornwick hub, tavern, smith, shrine, quest board (Hold/Bounty/Rescue/Retrieve), loot v1 | A 15-minute session loop feels complete |
 | **M3: The Hollow Vale** | Overland region 1, four sites, Act I, Chronicle v1, balance pass | Levels 1–8 playable end to end |
 | **M4: Idle and depth** | Expeditions, upgrades, salvage, Rare/Heirloom, bad-luck protection | A day of play-plus-idle feels rewarding |
@@ -398,12 +413,10 @@ Emberfall rename.
 | **M6: Heights and Throne** | Act IV, finale, post-game Undervaults | Campaign complete |
 | **M7: Multiplayer** | Async (leaderboards, hire friends' heroes), then co-op | — |
 
-**M1 status (battle core, first pass — `src/sim/battle.js`):**
+**M1 status (battle core, first pass — `src/sim/battle.js`, room levels in `world.js`):**
 
 - **Starting a battle:** stepping into any dungeon room other than the entrance starts one.
-- **Waves:** skeletons spawn on reachable tiles at least 9 tiles away. Minions and warriors
-  come first, then archers and mages from wave 5, with an elite every fifth wave. Wave size
-  and Heat follow §3.3.
+- **Waves:** they spawn on reachable tiles at least 9 tiles away and follow §3.3.
 - **Your hero** strikes whatever is in reach while you steer, and autobattles when you let go.
 - **Companions** hold formation and choose their own targets: the fighter protects you, the
   rogue hunts the weakest foe and the mage keeps its distance.
@@ -412,17 +425,24 @@ Emberfall rename.
 - **Focus:** tapping an enemy sets a focus target.
 - **Leaving and defeat:** enemies are leashed to their room, so walking out ends the fight.
   A total wipe costs 25 % of your gold and sends you back to town.
+- **Regen** grows with the pool (base rate × max ÷ level-1 max), so a lull restores the same
+  share of HP at every level.
 
-**Exit test met (headless, 30 min holds, 4 dungeon seeds):**
+**Balance (headless, 5-minute holds, 3–4 dungeon seeds, the hero's level fixed at the start):**
 
-- A solo L1 fighter holds a depth-0 room every time.
-  - It reaches L7 and averages about 4 waves/min and 800 gold.
-  - Heat climbs from about 3 early to 10.
-  - Its HP never drops below about 43 %.
-- Every duo and trio also holds, with no wipes.
+| Matchup | Solo fighter | Party of three |
+|---|---|---|
+| Room at your level | Holds at levels 1–8, 20–30 % HP per wave | Holds, 6–24 % HP per wave |
+| 1 level under | Holds, dips low | — |
+| 2 levels under | Holds, dips low | Holds |
+| 3 levels under | Falls in 1–2 minutes | A coin-flip |
 
-**Still to come:** loot drops, bosses, stances, ability slots, hazard terrain, and the
-depth 1+ tuning pass.
+- **Solo, 2 under:** holds on these seeds, but HP dips to 10–20 % and a dip below that ends
+  the run.
+- **Party of three:** at 2 levels under, some runs dip to about 27 %.
+- **Smoke test:** a solo L1 fighter must hold a level-1 room for 10 minutes on two seeds.
+
+**Still to come:** loot drops, bosses, stances, ability slots and hazard terrain.
 
 ---
 
@@ -437,5 +457,5 @@ depth 1+ tuning pass.
 4. **Hardcore mode** with permadeath, as an opt-in?
 5. **Monetization** (if any): cosmetics and expedition slots only. Never sell power or loot.
 6. **Rename timing:** switch the build from EMBERHOLD to EMBERFALL now, or at M2?
-7. **Heat tuning.** Is +4 % enemy stats and +10 % rewards per wave the right curve, and should
-   Heat cap at 10?
+7. **Room-level pacing.** Is +1 level every two rooms and +3 per floor the right slope, and
+   should a floor's rooms hold a fixed range regardless of layout?

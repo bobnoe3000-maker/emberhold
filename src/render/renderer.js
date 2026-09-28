@@ -881,7 +881,7 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
   }
-  // ── battle overlay: HP bars, floating numbers, ability callouts, the Wave · Heat pill ──
+  // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
   const floats = [];
   const addFloat = (x, y, text, color, size = 12, rise = 22) => { floats.push({ x, y, text, color, size, rise, t0: performance.now() }); if (floats.length > 40) floats.shift(); };
   sim.bus.on('combat', (c) => {
@@ -892,9 +892,14 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
   });
-  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared · Heat ${w.heat}` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1800 : 1300), small: true }; });
+  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
+  sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
   sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `carried back to town${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
+  const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
+  const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
+  const dangerColor = (lv) => dangerOf(lv)[0], dangerWord = (lv) => dangerOf(lv)[1];
   function drawBattle(ox, oy, ix, iy, pz, now) {
     const k = vw / window.innerWidth, w = sim.world, b = sim.battle, party = sim.state.party;
     const scr = (x, y, lift = 0) => { const z = heightAt(w, Math.floor(x), Math.floor(y)), P = project(x, y, z); return [(ox + P.sx) * S, (oy + P.sy - lift) * S]; };
@@ -906,13 +911,13 @@ export function createRenderer(canvas, sim, input) {
     if (b) {
       for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite ? 24 : 18);
       party.forEach((m, i) => { if (m.down) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
-      // the Wave · Heat pill under the HUD
-      const txt = `WAVE ${b.wave}  ·  HEAT ${b.heat}`;
+      // the room-level · wave pill under the HUD, tinted by how far the room is above you
+      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 40 * k;
-      octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = b.heat >= 5 ? 'rgba(255,120,60,0.8)' : 'rgba(214,170,98,0.55)'; octx.lineWidth = Math.max(1, k);
+      octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
-      octx.fillStyle = b.heat >= 5 ? '#ffb070' : '#f0c880'; octx.fillText(txt, px, py + 1 * k);
+      octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
     }
     // floating numbers
     const t = performance.now();
@@ -965,6 +970,17 @@ export function createRenderer(canvas, sim, input) {
       if (!discovered.has(r.id)) continue;
       const w = Math.max(3 * k, r.rw * 2 * s), h = Math.max(3 * k, r.rh * 2 * s);
       octx.fillRect(mx(r.cx) - w / 2, my(r.cy) - h / 2, w, h);
+    }
+    // each discovered room's level (GDD §3.2: rooms show their threat before you commit)
+    const levels = sim.world.roomLevels;
+    if (levels) {
+      octx.font = `700 ${Math.round(8 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+      for (const r of rooms) {
+        const lv = levels.get(r.id); if (!lv || !discovered.has(r.id) || r === lvl.descentRoom) continue;
+        octx.fillStyle = 'rgba(0,0,0,0.7)'; octx.fillText(String(lv), mx(r.cx) + k, my(r.cy) + k);
+        octx.fillStyle = dangerColor(lv); octx.fillText(String(lv), mx(r.cx), my(r.cy));
+      }
+      octx.textBaseline = 'alphabetic';
     }
     // descent gate marker, once its room is known (a violet diamond → the way down)
     const dr = lvl.descentRoom;
