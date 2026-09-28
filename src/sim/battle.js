@@ -37,7 +37,7 @@ const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
 export const WINDUP = 0.18, DEATH_T = 1.1;
-const SEP_X = 32, SEP_Y = 16;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
+const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
 // Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
 // far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
 // badly while side-by-side ones don't. Attackers take the left/right stations first, then
@@ -233,7 +233,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // Personal space, measured ON SCREEN: an ellipse SEP_X px wide × SEP_Y px deep (half
   // extents). World-round spacing leaves figures stacked on the screen's vertical (a tile
   // front-to-back is only 4 px), so the push runs in screen space and maps back to the world.
-  function separate(units, w) {
+  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB) {
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
       let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = Math.hypot(u, v);
@@ -281,6 +281,61 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     else u.moving = false;
   }
 
+  // ── companions at ease (critic: they huddled on the hero) ────────────────────
+  // Formation: a station behind the hero on each side — FORM_BACK tiles back along its heading,
+  // FORM_SIDE out to the side, plus a personal offset so the two never mirror each other.
+  // Once the hero has stood still a moment they loosen up: each strolls to a spot of its own
+  // near its station every few seconds, glances about or fidgets (clips the renderer plays
+  // from lookN / fidgetN), and after a longer wait sits down; the hero moving brings them up.
+  // The hero fidgets too. Screen-space personal space keeps everyone apart throughout.
+  // Stations are laid out in SCREEN pixels (behind the hero's on-screen heading, one to each
+  // side) and mapped back to the world: world-space stations put one companion straight
+  // above the hero on screen whenever it walked along a world axis.
+  const FORM_BACK = 26, FORM_SIDE = 38, EASE_AFTER = 1.5, SIT_AFTER = 15, STROLL = 1.9;
+  const scr2w = (sx, sy) => [(sx / 8 + sy / 4) / 2, (sy / 4 - sx / 8) / 2];      // screen px → world tiles
+  const idleRng = mulberry32(streamSeed(seed, 0x1d1e));
+  let heroStill = 0, clock = 0;
+  function atEase(dt, w, p, H) {
+    clock += dt;
+    heroStill = p.moving ? 0 : heroStill + dt;
+    const wx0 = p.fx ?? 0.7, wy0 = p.fy ?? 0.7;                          // heading, on screen
+    let hx = (wx0 - wy0) * 8, hy = (wx0 + wy0) * 4; const hl = Math.hypot(hx, hy) || 1; hx /= hl; hy /= hl;
+    const px_ = -hy, py_ = hx;
+    state.party.forEach((m, i) => {
+      if (i === 0) {                                                     // the hero: an occasional fidget or glance when idle
+        if (heroStill > 4 && clock >= (H.nextFidget ?? 0)) { H.nextFidget = clock + 7 + idleRng() * 8; if (heroStill > 5) (idleRng() < 0.5 ? (H.fidgetN = (H.fidgetN || 0) + 1) : (H.lookN = (H.lookN || 0) + 1)); }
+        if (p.moving) H.nextFidget = clock + 5;
+        return;
+      }
+      if (m.down) return;
+      const side = i === 1 ? -1 : 1, j = ((m.id || '').length * 7 + i * 13) % 10 / 10 - 0.5;   // a personal offset, stable per companion
+      const [ox, oy] = scr2w(-hx * (FORM_BACK + j * 8) + px_ * side * (FORM_SIDE + j * 6), -hy * (FORM_BACK + j * 8) + py_ * side * (FORM_SIDE + j * 6));
+      const sx = p.x + ox, sy = p.y + oy;
+      if (heroStill < EASE_AFTER) {                                      // on the move: keep station
+        m.sitting = false; m.ease = null;
+        const d = Math.hypot(sx - m.x, sy - m.y);
+        if (d > 0.8) stepToward(m, sx, sy, d > 6 ? 10 : 8.4, dt, w); else m.moving = false;
+        return;
+      }
+      if (m.sitting) { m.moving = false; return; }
+      const e = m.ease || (m.ease = { next: clock + idleRng() * 2, gx: m.x, gy: m.y });
+      if (clock >= e.next) {                                             // a new spot, and maybe a gesture
+        const [dx, dy] = scr2w((idleRng() - 0.5) * 30, (idleRng() - 0.5) * 16);   // a spot near the station, mostly sideways on screen
+        const gx = sx + dx, gy = sy + dy;
+        if (isWalkable(w, gx, gy)) { e.gx = gx; e.gy = gy; }
+        e.next = clock + 4 + idleRng() * 6;
+        const k = idleRng();
+        if (k < 0.3) m.fidgetN = (m.fidgetN || 0) + 1;
+        else if (k < 0.6) { m.lookN = (m.lookN || 0) + 1; const la = idleRng() * Math.PI * 2; m.fx = Math.cos(la); m.fy = Math.sin(la); }
+        else { m.fx = p.x - m.x; m.fy = p.y - m.y; }                    // turn to the hero
+      }
+      const d = Math.hypot(e.gx - m.x, e.gy - m.y);
+      if (d > 0.3) stepToward(m, e.gx, e.gy, STROLL, dt, w); else m.moving = false;
+      if (heroStill > SIT_AFTER + i * 2.5 && !m.moving) { m.sitting = true; m.fx = p.x - m.x; m.fy = p.y - m.y; }   // settle down, facing the hero
+    });
+    separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24);   // roomier than in a melee
+  }
+
   // ── the step ────────────────────────────────────────────────────────────────
   function step(dt) {
     const w = getWorld(), p = state.player, H = hero();
@@ -303,15 +358,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       m.hp = Math.min(s.maxHp, m.hp + c.hpr * (s.maxHp / c.hp[0]) * k * dt); m.mp = Math.min(s.maxMp, m.mp + c.mpr * (s.maxMp / c.mp[0]) * k * dt);   // regen grows with the pool
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
-    // companions: follow (formation behind the hero) out of battle
+    // companions out of battle: follow in formation, loosen up when the hero stands still
     const foes = battle ? w.enemies.filter((e) => !e.dead && e.hp > 0 && e.spawn <= 0) : [];
-    state.party.forEach((m, i) => {
-      if (i === 0 || m.down) return;
-      if (!foes.length) {
-        const fx = p.x - (p.fx || 0) * 1.4 + (i === 1 ? -1 : 1) * 1.0, fy = p.y - (p.fy || 1) * 1.4 + 0.4;
-        if (Math.hypot(fx - m.x, fy - m.y) > 1.2) stepToward(m, fx, fy, 8.4, dt, w); else m.moving = false;
-      }
-    });
+    if (!foes.length) atEase(dt, w, p, H);
     if (battle) {
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {

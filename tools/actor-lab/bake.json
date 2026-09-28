@@ -41,6 +41,34 @@
           "frames": 8,
           "fps": 12,
           "once": true
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        },
+        {
+          "key": "sitdown",
+          "clip": "Sit_Floor_Down",
+          "frames": 6,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "sit",
+          "clip": "Sit_Floor_Idle",
+          "frames": 6,
+          "fps": 5
         }
       ]
     },
@@ -299,6 +327,34 @@
           "frames": 8,
           "fps": 12,
           "once": true
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        },
+        {
+          "key": "sitdown",
+          "clip": "Sit_Floor_Down",
+          "frames": 6,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "sit",
+          "clip": "Sit_Floor_Idle",
+          "frames": 6,
+          "fps": 5
         }
       ]
     },
@@ -341,6 +397,34 @@
           "frames": 8,
           "fps": 12,
           "once": true
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        },
+        {
+          "key": "sitdown",
+          "clip": "Sit_Floor_Down",
+          "frames": 6,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "sit",
+          "clip": "Sit_Floor_Idle",
+          "frames": 6,
+          "fps": 5
         }
       ]
     },
@@ -383,6 +467,34 @@
           "frames": 8,
           "fps": 12,
           "once": true
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        },
+        {
+          "key": "sitdown",
+          "clip": "Sit_Floor_Down",
+          "frames": 6,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "sit",
+          "clip": "Sit_Floor_Idle",
+          "frames": 6,
+          "fps": 5
         }
       ]
     }

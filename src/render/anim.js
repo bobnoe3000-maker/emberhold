@@ -20,10 +20,14 @@ export function createAnimator() {
   return function pick(u, atlas, o) {
     const C = atlas.meta.clips, now = o.now;
     let s = st.get(u);
-    if (!s) { s = { dir: o.dir0 ?? 2, turnAt: 0, phase: (o.seed || 0) % 1, lx: o.x, ly: o.y, atkN: u.atkN || 0, atkT0: -1e9, hitN: u.hitN || 0, hitT0: -1e9, downT0: 0 }; st.set(u, s); }
+    if (!s) { s = { dir: o.dir0 ?? 2, turnAt: 0, phase: (o.seed || 0) % 1, lx: o.x, ly: o.y, atkN: u.atkN || 0, atkT0: -1e9, hitN: u.hitN || 0, hitT0: -1e9, downT0: 0, fidN: u.fidgetN || 0, lookN: u.lookN || 0, gestT0: -1e9, gest: null, sitT0: 0, sat: false }; st.set(u, s); }
     const dx = o.x - s.lx, dy = o.y - s.ly, dist = Math.hypot(dx, dy); s.lx = o.x; s.ly = o.y;
     if ((u.atkN || 0) !== s.atkN) { s.atkN = u.atkN || 0; s.atkT0 = now; }
     if ((u.hitN || 0) !== s.hitN) { s.hitN = u.hitN || 0; s.hitT0 = now; }
+    if ((u.fidgetN || 0) !== s.fidN) { s.fidN = u.fidgetN || 0; s.gestT0 = now; s.gest = 'fidget'; }   // idle gestures (companions at ease, the hero idling)
+    if ((u.lookN || 0) !== s.lookN) { s.lookN = u.lookN || 0; s.gestT0 = now; s.gest = 'look'; }
+    if (o.sit && !s.sat) s.sitT0 = now;
+    s.sat = !!o.sit;
     if (o.dead && !s.dead) s.downT0 = now;
     s.dead = !!o.dead;
     const deadT = o.deadT ?? (now - s.downT0) / 1000;           // enemies pass sim time; fallen party members count here
@@ -45,9 +49,12 @@ export function createAnimator() {
     else if (o.spawnP !== undefined && C.spawn) frame = C.spawn.start + Math.min(C.spawn.len - 1, Math.floor(o.spawnP * C.spawn.len));
     else if (C.attack && now - s.atkT0 < dur(C.attack)) frame = clipAt(C.attack, (now - s.atkT0) / 1000);
     else if (C.hit && now - s.hitT0 < dur(C.hit)) frame = clipAt(C.hit, (now - s.hitT0) / 1000);
+    else if (o.sit && C.sit) frame = C.sitdown && now - s.sitT0 < dur(C.sitdown) ? clipAt(C.sitdown, (now - s.sitT0) / 1000) : C.sit.start + Math.floor((now / 1000) * C.sit.fps + (o.seed || 0) * C.sit.len) % C.sit.len;
     else if (o.moving) {
       s.phase += dist / o.stride;
       const c = C.walk; frame = c.start + (Math.floor(s.phase * c.len) % c.len + c.len) % c.len;
+    } else if (s.gest && C[s.gest] && now - s.gestT0 < dur(C[s.gest])) {
+      frame = clipAt(C[s.gest], (now - s.gestT0) / 1000);
     } else {
       const c = C.idle; frame = c.start + Math.floor((now / 1000) * c.fps + (o.seed || 0) * c.len) % c.len;
     }
