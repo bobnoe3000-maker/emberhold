@@ -1,6 +1,6 @@
 {
   "px": 56,
-  "albedoGain": 0.5,
+  "albedoGain": 0.56,
   "actors": [
     {
       "out": "hero_knight",
@@ -91,7 +91,12 @@
           "fps": 14,
           "once": true
         }
-      ]
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      }
     },
     {
       "out": "skeleton_minion",
@@ -140,7 +145,12 @@
           "fps": 14,
           "once": true
         }
-      ]
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      }
     },
     {
       "out": "skeleton_rogue",
@@ -189,7 +199,12 @@
           "fps": 14,
           "once": true
         }
-      ]
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      }
     },
     {
       "out": "skeleton_mage",
@@ -238,7 +253,12 @@
           "fps": 14,
           "once": true
         }
-      ]
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      }
     },
     {
       "out": "hero_barbarian",

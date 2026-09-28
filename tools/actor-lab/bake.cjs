@@ -19,7 +19,7 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   for (const a of spec.actors) {
     const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
-    const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [v, a.clips, spec.albedoGain || 1]);
+    const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
     const meta = { ...r.meta, glow: r.emi ? a.glow : 0, source: `KayKit CC0 · ${v.label} · heroic + grim · ${spec.px}px` };
     fs.writeFileSync(path.join(OUT, `${a.out}.json`), JSON.stringify(meta) + '\n');
     png(`${a.out}.alb.png`, r.alb); png(`${a.out}.nrm.png`, r.nrm);

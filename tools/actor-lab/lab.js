@@ -101,11 +101,16 @@ window.renderVariants = async (vs) => {
 // 2=S toward the camera, … clockwise), columns = clip frames. Scale and camera are
 // fixed from the idle pose so the figure never pulses between frames.
 const INK = [8, 5, 14];
-function grimPass(d, gain = 1) {                         // 42% desat, cool tint, value gain; hot pixels (eyes) stay hot
+// grim pass: partial desat, a cool (not magenta) tint, value gain, and a gentle contrast
+// S-curve around mid-grey so armour plates, cloth and skin separate at 56 px. Hot pixels
+// (the emissive eye mask) stay hot — bright texture (fur trim, bone) is graded like the rest. Earlier tint (0.92, 0.87, 1.0) cut green hardest → a magenta
+// cast that dusk light turned pink.
+function grimPass(d, gain = 1, desat = 0.34, contrast = 1.18, glow = null) {
   for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;
-    const r = d[i], g = d[i + 1], b = d[i + 2]; if (Math.max(r, g, b) > 225) continue;
-    const L = 0.3 * r + 0.59 * g + 0.11 * b, k = 0.42;
-    d[i] = (r + (L - r) * k) * 0.92 * gain; d[i + 1] = (g + (L - g) * k) * 0.87 * gain; d[i + 2] = (b + (L - b) * k) * gain; }
+    const r = d[i], g = d[i + 1], b = d[i + 2]; if (glow && glow[i] > 128) continue;   // only the glowing eyes stay hot
+    const L = 0.3 * r + 0.59 * g + 0.11 * b;
+    const c = (v) => Math.max(0, Math.min(255, 128 + (v - 128) * contrast));
+    d[i] = c(r + (L - r) * desat) * 0.9 * gain; d[i + 1] = c(g + (L - g) * desat) * 0.91 * gain; d[i + 2] = c(b + (L - b) * desat) * 0.98 * gain; }
 }
 window.bakeAtlas = async (v, clips, gain = 1) => {
   const c = await build(v), bones = [];
@@ -122,8 +127,11 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const scene = new THREE.Scene(); scene.add(c.root);
   const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
-    mats.alb.set(o, eyes ? new THREE.MeshBasicMaterial({ color: v.eyes || 0xffffff }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
-    mats.emi.set(o, eyes ? white : black); });
+    // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
+    // a flat white eye mesh read as a white "grin" through the knight's visor
+    const glow = eyes && v.eyes;
+    mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
+    mats.emi.set(o, glow ? white : black); });
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
   const mk = () => { const cv = document.createElement('canvas'); cv.width = W * cols; cv.height = H * rows; return cv; };
@@ -145,7 +153,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
-      grimPass(ad, gain);
+      grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed);
       const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
       const out = new Uint8ClampedArray(ad);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
