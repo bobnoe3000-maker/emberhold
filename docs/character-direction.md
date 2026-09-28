@@ -64,10 +64,28 @@ values were tuned by eye; they live in `HEROIC` in `tools/actor-lab/lab.js`.
 3. Later, optionally: render skinned meshes live into the G-buffer for smooth rotation
    and animation blending.
 
+## Actor size — 56 px (decided 2026-09-28)
+
+Characters bake at **56 px** tall (was 46 in the POC). The camera and collision don't
+change: about 17 tiles across at every size, and a 0.32-tile hitbox. What changes is how
+much floor each figure covers and how readable it is on a phone:
+
+| | 46 px | **56 px** | 64 px |
+|---|---|---|---|
+| Tiles of floor hidden per actor | ~11 | **~16** | ~21 |
+| Height on a typical phone | ~11 mm | **~14 mm** | ~16 mm |
+| Torso width (tap target, 44pt min) | 45 css px ✓ | 54 ✓ | 62 ✓ |
+
+In portrait, isometric view is limited by width, so screen space isn't the scarce resource;
+readability at arm's length is. At 56 px, faces, shield rims and wand vs staff read. 64 px
+crowds a room once a fight gets busy. If occlusion bites in play, fade or outline
+whatever is behind a character rather than shrinking it.
+
+![46 / 56 / 64 px on the full phone screen](./img/characters/actor-size-phone.png)
+![Detail per size at the same zoom](./img/characters/actor-size-detail.png)
+
 ## Open decisions
 
-- **Actor size.** 46 px matches the POC; loadout details (wand vs staff) read better at
-  **56–64 px**. It's a scale constant.
 - **Starting loadouts** for fighter / rogue / mage.
 - **Recolors** are CSS-filter look-dev; ship them as exact palette-swatch remaps.
 - The heroic values may want per-class tweaks (e.g. Barbarian bulkier, Rogue lankier).

@@ -6,6 +6,7 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
+| [tile-styles.md](./tile-styles.md) | Six structured floor/wall tile styles (clean, low-noise), live via `?tiles=` | **Proposal** — pick pending (2026-09-28) |
 | [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
 | [emberlit-tdd.md](./emberlit-tdd.md) | Technical design for the Emberlit WebGL2 deferred renderer (G-buffers, point lights, HDR bloom) | **Active** render spec (shipped) |
 | [emberlit-demo.html](./emberlit-demo.html) | The Emberlit reference demo the renderer was ported from (open in a browser) | Reference |
