@@ -442,6 +442,19 @@ Emberfall rename.
 - **Abilities:** each class has one auto-cast ability: Cleave, Backstab and Firebolt.
 - **Movement:** units path around obstacles with a flow field over the room.
 - **Focus:** tapping an enemy sets a focus target.
+- **Compass travel** (`docs/compass-mockup.html`): a compass under the minimap lists places
+  that depend on where you are. Picking one makes the party walk there on its own, along
+  corridors where it can. A chip above the party cards shows the destination and steps left;
+  it cancels the walk, and so does the stick.
+
+  | Where | Destinations |
+  |---|---|
+  | Dungeon | Next unexplored room, room at your level, nearest unopened chest or shrine, stairs down (greyed until found), exit |
+  | Overland | Town, nearest dungeon, nearest unexplored dungeon, landmarks |
+  | Town | Square, road out |
+
+  A walk that runs into a fight stops so the party can fight. Unless that room is the
+  destination, the chip's Resume carries on through it.
 - **Tap to move** (§3.1): tapping the ground walks the hero there along an A* path (the
   route shown as a gold ring and trail). Tapping a chest, shrine, stairs or growth out of
   reach walks up to it and uses it. The stick cancels the walk at once.

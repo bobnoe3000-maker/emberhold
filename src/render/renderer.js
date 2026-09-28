@@ -975,6 +975,7 @@ export function createRenderer(canvas, sim, input) {
   // Tap-to-move destination: a small gold iso ring that pulses in, with a faint dot trail
   // along the remaining path; gone the moment the hero arrives or the stick takes over.
   let goalT0 = 0, lastGoal = null;
+  const partyH = () => { const el = document.getElementById('party'); return el ? el.getBoundingClientRect().height : 0; };
   function drawGoal(ox, oy, now) {
     const p = sim.state.player, g = p.goal;
     if (!g || !p.path) { lastGoal = null; return; }
@@ -984,6 +985,19 @@ export function createRenderer(canvas, sim, input) {
     octx.fillStyle = 'rgba(240,200,120,0.35)';
     for (const [x, y] of p.path.slice(0, -1)) { const [sx, sy] = at(x, y); octx.beginPath(); octx.arc(sx, sy, 1.6 * k, 0, Math.PI * 2); octx.fill(); }
     const [sx, sy] = at(g.x, g.y), rx = 11 * S * (1.6 - 0.6 * t) * pulse, ry = rx / 2;
+    // off-screen destination: the trail ends in a chevron at the screen edge, pointing at it
+    const m = 26 * k, top = 70 * k, bottom = vh - (partyH ? partyH() * k : 0) - 16 * k;
+    if (sx < m || sx > vw - m || sy < top || sy > bottom) {
+      const cx = vw / 2, cy = (top + bottom) / 2, dx = sx - cx, dy = sy - cy;
+      const s2 = Math.min((vw / 2 - m) / Math.max(1e-6, Math.abs(dx)), ((bottom - top) / 2) / Math.max(1e-6, Math.abs(dy)));
+      const ex = cx + dx * s2, ey = cy + dy * s2, a = Math.atan2(dy, dx), L = 11 * k;
+      octx.save(); octx.translate(ex, ey); octx.rotate(a);
+      octx.lineWidth = Math.max(2, 2.6 * k); octx.lineJoin = 'round';
+      octx.strokeStyle = 'rgba(20,12,6,0.6)'; octx.beginPath(); octx.moveTo(-L, -L + k); octx.lineTo(k, k); octx.lineTo(-L, L + k); octx.stroke();
+      octx.strokeStyle = `rgba(240,196,110,${0.6 + 0.3 * Math.sin(now / 200)})`; octx.beginPath(); octx.moveTo(-L, -L); octx.lineTo(0, 0); octx.lineTo(-L, L); octx.stroke();
+      octx.restore();
+      return;
+    }
     octx.lineWidth = Math.max(1.5, 2 * k);
     octx.strokeStyle = `rgba(20,12,6,${0.55 * t})`; octx.beginPath(); octx.ellipse(sx, sy + k, rx, ry, 0, 0, Math.PI * 2); octx.stroke();
     octx.strokeStyle = `rgba(240,196,110,${0.9 * t})`; octx.beginPath(); octx.ellipse(sx, sy, rx, ry, 0, 0, Math.PI * 2); octx.stroke();

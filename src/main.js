@@ -6,6 +6,7 @@ import { createInput } from './ui/input.js';
 import { createHud } from './ui/hud.js';
 import { createTownMenu } from './ui/townmenu.js';
 import { createPartyPanel } from './ui/party.js';
+import { createCompass } from './ui/compass.js';
 import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
 import { loadInto, createAutosave } from './persist/save.js';
@@ -28,6 +29,7 @@ const renderer = createRenderer(canvas, sim, input);
 createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const townMenu = createTownMenu(sim, partyPanel);   // subscribe before restore, so a loaded counters event repaints
+createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // compass travel (docs/compass-mockup.html)
 
 // Restore a prior session for this world (player, counters, harvested resources).
 // Must run before the first render so restored mods are reflected in chunk bakes.

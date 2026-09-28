@@ -5,11 +5,12 @@
 // stall a tick. `passable(x, y, fromX, fromY)` is the caller's walk test (it knows about
 // climb limits and actor radius). If the goal tile itself can't be stood on (a wall, a
 // chest, a tree), the path ends at the nearest reachable tile within `near` of it.
+// `weight(x, y)` adds cost per tile entered (the compass uses it to keep to corridors).
 
 const SQ2 = Math.SQRT2, OFF = 4096;
 const key = (x, y) => (x + OFF) * 8192 + (y + OFF);
 
-export function findPath(sx, sy, gx, gy, passable, { near = 0, maxNodes = 60000 } = {}) {
+export function findPath(sx, sy, gx, gy, passable, { near = 0, maxNodes = 60000, weight = null } = {}) {
   sx = Math.floor(sx); sy = Math.floor(sy); gx = Math.floor(gx); gy = Math.floor(gy);
   const h = (x, y) => { const dx = Math.abs(x - gx), dy = Math.abs(y - gy); return Math.max(dx, dy) + (SQ2 - 1) * Math.min(dx, dy); };
   const done = (x, y) => (near > 0 ? Math.max(Math.abs(x - gx), Math.abs(y - gy)) <= near : x === gx && y === gy);
@@ -42,7 +43,7 @@ export function findPath(sx, sy, gx, gy, passable, { near = 0, maxNodes = 60000 
       const nx = x + dx, ny = y + dy;
       if (!passable(nx, ny, x, y)) continue;
       if (dx && dy && (!passable(x + dx, y, x, y) || !passable(x, y + dy, x, y))) continue;
-      const ng = cg + (dx && dy ? SQ2 : 1), nk = key(nx, ny);
+      const ng = cg + (dx && dy ? SQ2 : 1) + (weight ? weight(nx, ny) : 0), nk = key(nx, ny);   // weight: optional extra cost (e.g. avoid rooms)
       if (ng >= (g.get(nk) ?? Infinity)) continue;
       g.set(nk, ng); from.set(nk, k); push([ng + h(nx, ny), ng, nx, ny]);
     }

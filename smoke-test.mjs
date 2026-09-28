@@ -166,7 +166,18 @@ for (let t = 0; t < 20 * 60 && !twLoot; t++) tw.tick();
 const tapOk = walked && twLoot;
 console.log('tap to move (walk a path; walk up to a chest and loot it):', walked, twLoot);
 
-const ok = tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+// Compass travel: context-sensitive destinations, and a pick auto-walks the party there.
+const cDun = createSim(20260807, undefined, { scene: 'dungeon' }); cDun.tick();
+const dd = cDun.destinations(), ids = dd.map((o) => o.id);
+const nextRoom = dd.find((o) => o.id === 'next-room');
+cDun.commands.push({ type: 'goto', ...nextRoom });
+let reachedRoom = false; for (let t = 0; t < 20 * 40 && !reachedRoom; t++) { cDun.tick(); reachedRoom = !!cDun.battle || !cDun.state.player.path; }
+const cOv = createSim(20260807, undefined, { scene: 'overland' }); cOv.tick();
+const od = cOv.destinations().map((o) => o.id);
+const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('dungeon');
+console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', od.join(','));
+
+const ok = compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

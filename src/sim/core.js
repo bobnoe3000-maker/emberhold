@@ -7,6 +7,7 @@
 
 import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP } from './world.js';
 import { findPath } from './path.js';
+import { listDestinations } from './travel.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
 import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
 import { createBattle } from './battle.js';
@@ -55,6 +56,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
     },
     counters: { wood: 0, stone: 0, gold: 0 },
+    sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     party: [makeHero()],                                   // [you, …up to two hired companions]
   };
 
@@ -79,14 +81,24 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     const cz = heightAt(world, fx, fy), cx = x + 0.5, cy = y + 0.5, r = PLAYER_RADIUS * 0.9;
     return isWalkable(world, cx, cy, cz) && isWalkable(world, cx - r, cy - r, cz) && isWalkable(world, cx + r, cy - r, cz) && isWalkable(world, cx - r, cy + r, cz) && isWalkable(world, cx + r, cy + r, cz);
   };
-  function walkTo(tx, ty, then = null) {
+  // opts.label (compass): names the destination for the walking chip; opts.corridors keeps a
+  // dungeon walk to corridors, crossing other rooms only when there's no other way.
+  function walkTo(tx, ty, then = null, opts = {}) {
     const p = state.player, target = standable(tx, ty, tx, ty);
-    const path = findPath(p.x, p.y, tx, ty, standable, { near: target && !then ? 0 : then ? 1 : 1 });
-    if (!path) { bus.emit('noPath', { tx, ty }); return; }
+    const near = opts.near ?? (target && !then ? 0 : 1);
+    let weight = null;
+    if (opts.corridors && world.kind === 'dungeon') {
+      const cells = world.level.cells, c0 = cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)), r0 = c0 ? c0.room : -1, cg = cells.get(tx + ',' + ty), rg = cg ? cg.room : -1;
+      weight = (x, y) => { const c = cells.get(x + ',' + y); return c && c.room >= 0 && !c.corridor && c.room !== r0 && c.room !== rg ? 3 : 0; };
+    }
+    const path = findPath(p.x, p.y, tx, ty, standable, { near, weight });
+    if (!path) { bus.emit('noPath', { tx, ty }); return false; }
     p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0;
+    p.dest = opts.label ? { label: opts.label, tx, ty, then, near, room: opts.room ?? -1, fromRoom: battle.battle ? battle.battle.room : -1 } : null;   // fromRoom: a fight you're walking out of doesn't stop you
     if (!p.path.length) arrive();
+    return true;
   }
-  function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; }
+  function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; p.dest = null; }
   function arrive() { const p = state.player, then = p.then; stopWalk(); if (then) applyCommand(then); }
   const lineClear = (ax, ay, bx, by) => {                 // can the hero walk straight from a to b?
     const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / 0.25), cz = heightAt(world, Math.floor(ax), Math.floor(ay)), r = PLAYER_RADIUS;
@@ -117,7 +129,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // Regenerate the world one level deeper and drop the hero at the new entrance.
   // Inventory (counters) carries; the per-level overlay + fog reset with the world.
   function descend() {
-    stopWalk();
+    stopWalk(); state.player.resume = null;
     state.depth += 1;
     world = buildWorld(state.depth);
     const s = findSpawn(world);
@@ -129,7 +141,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   // Travel to another scene and arrive at a named spot (or its default spawn).
   function travel(to, arrive) {
-    stopWalk();
+    stopWalk(); state.player.resume = null;
+    if (to === 'dungeon') state.sitesEntered.add('barrows');
     curScene = to; state.depth = 0;
     world = buildWorld(0);
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
@@ -158,13 +171,25 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (state.party[0].down) { p.moving = false; return; }    // your hero has fallen: the others fight on
       const len = Math.hypot(cmd.x, cmd.y);
       if (len < 0.12) { p.moving = false; return; }
-      if (p.path) stopWalk();                                  // the stick takes over from a tap-walk
+      if (p.path || p.resume) { stopWalk(); p.resume = null; }  // the stick takes over from a tap / compass walk
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
       p.moving = true; p.fx = nx; p.fy = ny; p.steer = 0;
       face(p, cmd.x, cmd.y);
       return;
     }
+    if (cmd.type === 'goto') {                             // compass: auto-walk to a picked destination
+      if (state.party[0].down) return;
+      p.resume = null;
+      walkTo(cmd.tx, cmd.ty, cmd.then || null, { near: cmd.near, label: cmd.label, corridors: true, room: cmd.room });
+      return;
+    }
+    if (cmd.type === 'resume') {                           // continue a compass walk a fight interrupted
+      const r = p.resume; p.resume = null;
+      if (r && !state.party[0].down) walkTo(r.tx, r.ty, r.then, { near: r.near, label: r.label, corridors: true, room: r.room });
+      return;
+    }
+    if (cmd.type === 'cancelWalk') { stopWalk(); p.resume = null; return; }
     if (cmd.type === 'tap') {                              // tap on the ground: use what's there if in reach, else walk to it
       if (state.party[0].down) return;
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y, inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
@@ -209,6 +234,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // Reveal rooms the hero has entered or drawn near (minimap fog of war).
   function updateDiscovery() {
     const p = state.player;
+    if (!world.visited) world.visited = new Set();
+    const hc = world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y));
+    if (hc && hc.kind === 'floor' && hc.room >= 0 && !hc.corridor) world.visited.add(hc.room);   // stood inside it (compass: "unexplored")
     for (const r of world.level.rooms) {
       if (world.discovered.has(r.id)) continue;
       const dx = Math.max(Math.abs(p.x - r.cx) - r.rw, 0), dy = Math.max(Math.abs(p.y - r.cy) - r.rh, 0);
@@ -222,7 +250,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.moving = false;
     for (const cmd of commands.drain()) applyCommand(cmd);
     followPath();
-    battle.step(TICK_DT);                                   // may walk the hero (autobattle while you're not steering)
+    battle.step(TICK_DT);
+    // a compass walk that runs into a fight stops there; unless the fight IS the destination
+    // room, the chip can resume it (the resumed walk won't stop for that room again)
+    if (p.path && p.dest && battle.battle && battle.battle.room !== p.dest.fromRoom) {
+      const d = p.dest; stopWalk();
+      if (d.room !== battle.battle.room) p.resume = d;
+    }                                   // may walk the hero (autobattle while you're not steering)
     if (p.moving) {
       p.frameAcc += TICK_DT;
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
@@ -243,6 +277,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
       discovered: [...world.discovered],
+      visited: [...(world.visited || [])],
+      sitesEntered: [...state.sitesEntered],
     };
   }
 
@@ -268,11 +304,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
     world.discovered.clear();
     for (const id of data.discovered ?? []) world.discovered.add(id);
+    world.visited = new Set(data.visited ?? []);
+    state.sitesEntered = new Set(data.sitesEntered ?? []);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     battle.reset();
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('partyChanged', state.party);
   }
 
-  return { state, bus, commands, tick, snapshot, restore, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  // compass destinations for where you are now (read-only; see travel.js)
+  function destinations({ inSquare = false } = {}) {
+    return listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare });
+  }
+  return { state, bus, commands, tick, snapshot, restore, destinations, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

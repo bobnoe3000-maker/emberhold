@@ -11,7 +11,7 @@ the header of each status doc for what it replaces.
 | [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary | **Canon** for narrative and quest content (2026-09-28) |
 | [tile-styles.md](./tile-styles.md) | Five structured floor/wall tile styles × seven material variants (plain, earth, rock, lava, poison, ice, water), switch with `?tiles=&tv=` | **Current** — cobble is the default (2026-09-28) |
 | [art-critic-pass-2.md](./art-critic-pass-2.md) | Critic pass 2: battle spacing, readable figures, church/forge/porch, soft foliage, dungeon room themes; scores 6.8–7.2 per track, ranked open issues | **Current** (2026-09-28) |
-| [compass-mockup.html](./compass-mockup.html) | Compass travel mockup: context-sensitive destinations (dungeon / overland / town) the party auto-walks to | **Proposal** — awaiting review |
+| [compass-mockup.html](./compass-mockup.html) | Compass travel mockup: context-sensitive destinations (dungeon / overland / town) the party auto-walks to | **Implemented** (src/ui/compass.js, src/sim/travel.js) |
 | [art-critic-pass-1.md](./art-critic-pass-1.md) | Critic pass 1: animation clips, grounding, layouts; before/after scores | Superseded by pass 2 |
 | [prompts/art-eval-loop.md](./prompts/art-eval-loop.md) | The four-track art improvement + evaluation loop prompt (characters, assets, town, dungeon) | **Ready to run** |
 | [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
