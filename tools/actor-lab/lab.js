@@ -141,7 +141,9 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir);
     let col = 0;
     for (const k of clips) for (let f = 0; f < k.frames; f++, col++) {
-      sample(k.clip, f / k.frames); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
+      // loops sample f/N (the cycle wraps); one-shots (k.once) span [from, to] inclusive so the last frame is the end pose
+      const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
+      sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
       grimPass(ad, gain);
       const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
@@ -166,7 +168,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     }
   }
   let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', clips: {} };
-  for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps }; start += k.frames; }
+  for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps, ...(k.once ? { once: true } : {}), ...(k.impact != null ? { impact: k.impact } : {}) }; start += k.frames; }
   return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null };
 };
 window.ready = true;

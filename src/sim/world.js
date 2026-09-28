@@ -37,22 +37,50 @@ export function createWorld(seed, theme, depth = 0) {
     hp: new Map(),                        // "x,y" -> remaining hits
     discovered: new Set(),                // room ids seen (minimap fog)
   };
-  // Populate rooms: decor, doorway braziers, and loot (chest / shrine). The
-  // descent gate goes in the farthest room. All snap onto solid, open floor.
+  // Populate rooms (GDD §3: rooms are battle arenas, so the middle stays open):
+  //   • braziers flank each real doorway (where a corridor enters), one step inside;
+  //   • decor (spires / monoliths / totems) stands against the walls, spaced out;
+  //   • a chest and sometimes a shrine sit against a wall, away from the doorways.
+  // All snap onto solid, open floor; the descent gate goes in the farthest room.
   const prng = mulberry32(streamSeed(seed, 321));
   const decor = ['spire', 'monolith', 'totem'];
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
-    if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k)) { world.props.set(k, kind); return true; }
+    if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }
     return false;
   };
-  const off = (r, f) => Math.round((prng() - 0.5) * r.rw * 2 * f);
+  const isFloor = (x, y) => { const c = level.cells.get(K(x, y)); return c && c.kind === 'floor'; };
   for (const r of level.rooms) {
-    const bo = Math.max(2, Math.floor(Math.min(r.rw, r.rh) * 0.55));
-    place(r.cx - bo, r.cy, 'brazier'); place(r.cx + bo, r.cy, 'brazier');   // doorway lights
-    if (prng() < 0.7) place(r.cx + off(r, 0.4), r.cy + off(r, 0.4), decor[(prng() * decor.length) | 0]);
-    if (prng() < 0.55) place(r.cx + off(r, 0.35), r.cy + off(r, 0.35), 'chest');
-    if (prng() < 0.30) place(r.cx + off(r, 0.35), r.cy + off(r, 0.35), 'shrine');
+    const cells = [], doors = [];
+    for (const [k, c] of level.cells) if (c.kind === 'floor' && c.room === r.id) { const [x, y] = k.split(',').map(Number); cells.push([x, y, c]); }
+    // doorway cells: room floor touching corridor floor that lies outside the room
+    for (const [x, y] of cells) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const n = level.cells.get(K(x + dx, y + dy));
+      if (n && n.kind === 'floor' && n.room < 0) { doors.push([x, y, dx, dy]); break; }
+    }
+    // group doorway cells into openings (a 6-wide corridor mouth) and flank each with braziers
+    const openings = [];
+    for (const d of doors) { const g = openings.find((o) => Math.abs(o.x - d[0]) + Math.abs(o.y - d[1]) < 9 && o.dx === d[2] && o.dy === d[3]); if (g) { g.pts.push(d); g.x = (g.x * (g.pts.length - 1) + d[0]) / g.pts.length; g.y = (g.y * (g.pts.length - 1) + d[1]) / g.pts.length; } else openings.push({ x: d[0], y: d[1], dx: d[2], dy: d[3], pts: [d] }); }
+    for (const o of openings) {
+      const ix = Math.round(o.x) - o.dx * 2, iy = Math.round(o.y) - o.dy * 2, px = o.dy, py = o.dx;   // two steps inside, perpendicular to the corridor
+      for (const s of [-1, 1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, 'brazier')) break;
+    }
+    // wall-side cells: open floor within 2 tiles of the room's edge, away from doorways
+    const nearDoor = (x, y) => openings.some((o) => Math.hypot(x - o.x, y - o.y) < 8);
+    const edge = cells.filter(([x, y, c]) => {
+      if (c.corridor || nearDoor(x, y)) return false;
+      let open = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (!isFloor(x + dx, y + dy)) open++;
+      return open > 0 && isFloor(x + 1, y) && isFloor(x - 1, y) && isFloor(x, y + 1) && isFloor(x, y - 1);
+    });
+    const taken = [];
+    const pickEdge = (minGap) => {
+      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if (taken.every(([a, b]) => Math.hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
+      return null;
+    };
+    const nDecor = r === level.entrance ? 1 : 2 + ((prng() * 2) | 0);
+    for (let i = 0; i < nDecor; i++) { const q = pickEdge(12); if (q) place(q[0], q[1], decor[(prng() * decor.length) | 0]); }
+    if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
+    if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
   }
   if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
   // the first level has a way back up to the overland, beside the entrance
@@ -95,6 +123,7 @@ function rankRooms(level, depth) {
 }
 
 const cellAt = (world, x, y) => world.level.cells.get(K(x, y));
+function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
 
 // Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
 // stair (3 wide × 7 deep of plain room floor in front of a standing wall), nearest the
@@ -153,8 +182,8 @@ export function materialAt(world, x, y) {
   return bag[i];
 }
 
-// Harvestable growths — scattered on open, safe floor only (never corridors,
-// walls, hazards, or void). Mods overlay removals.
+// Harvestable growths — obsidian shards along the wall bases of rooms (never corridors,
+// open floor, hazards, or void). Mods overlay removals.
 export function resourceAt(world, x, y) {
   if (world.kind !== 'dungeon') return null;
   const k = K(x, y);
@@ -163,8 +192,14 @@ export function resourceAt(world, x, y) {
   if (!c || c.kind !== 'floor' || c.corridor) return null;
   const m = materialAt(world, x, y);
   if (NONWALK.has(m)) return null;
+  // shards grow at the foot of walls (within 2 tiles of the room's edge), never out in
+  // the open floor where they'd litter the battle arena
   const r = hash2(x, y, streamSeed(world.seed, STREAM.WORLD) + 888);
-  if (r > 0.990) return 'rock';
+  if (r <= 0.955) return null;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+    const n = cellAt(world, x + dx, y + dy);
+    if (!n || n.kind !== 'floor') return 'rock';
+  }
   return null;
 }
 

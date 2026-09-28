@@ -19,6 +19,8 @@ import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.
 import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
+import { createAnimator } from './anim.js';
+import { DEATH_T } from '../sim/battle.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
@@ -30,6 +32,9 @@ function dir8(sdx, sdy) {
   return ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;
 }
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
+// walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
+// distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
+const STRIDE = { hero: 4.5, skel: 3.2 };        // measured from the baked feet: ~50 px / ~36 px of screen travel per cycle
 
 const MARGIN = 96;                 // native-px slack around the view held in the bake
 const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
@@ -63,7 +68,7 @@ void main(){
   vec2 uv=gl_FragCoord.xy/uRes;
   vec4 A=texture(uAlb,uv);
   vec4 N=texture(uNrm,uv);
-  vec3 E=texture(uEmi,uv).rgb*3.2;
+  vec4 Et=texture(uEmi,uv); vec3 E=Et.rgb*3.2;
   vec3 n=normalize(vec3(N.xy*2.0-1.0,max(N.z,0.02)));
   float h=N.a*64.0;
   vec2 p=gl_FragCoord.xy;
@@ -81,10 +86,10 @@ void main(){
     col+=uLC[i]*att*0.05;
   }
   float ph=h21(floor(gl_FragCoord.xy))*6.28;
-  col+=E*(0.55+0.45*sin(uTime*2.6+ph));
+  col+=E*(Et.a<0.99?1.0:0.55+0.45*sin(uTime*2.6+ph));   // EMI alpha < 1 marks steady (UI-like) glow: team rings
   float wd=length(gl_FragCoord.xy-uWispPx);
-  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.05)*uWispA*1.15;
-  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.006)*uWispA*0.35;
+  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.16)*uWispA*0.85;      // a small ember mote, not a disc over the figure
+  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.02)*uWispA*0.16;
   float fog=n2(uv*vec2(7.0,3.5)+vec2(uTime*0.05,uTime*0.02));
   float fa=smoothstep(0.3,0.9,fog)*0.10*(1.0-uv.y*0.5);
   col=mix(col,vec3(0.10,0.07,0.16),fa);
@@ -221,7 +226,8 @@ export function createRenderer(canvas, sim, input) {
   // into per-(direction, frame) G-sprites with real 3D normals, so they relight in
   // the deferred pass. Loaded async; until ready the hero falls back to the
   // paper-doll and skeletons simply don't draw yet.
-  let heroAtlas = null, heroDir = 2, outMap = null;
+  let heroAtlas = null, outMap = null;
+  const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
   const skelAtlases = [];
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
@@ -394,8 +400,30 @@ export function createRenderer(canvas, sim, input) {
   // Stamp a G-sprite (albedo/normal/emissive) into a target buffer at a foot point.
   // footKey = ground x+y under the foot; test = depth-test against DEP (actors): pixels
   // behind nearer geometry draw as a dim x-ray silhouette instead of vanishing.
+  // Contact shadow + team ring at a foot point, painted into the window G-buffer before the
+  // figures: an iso ellipse (2:1) that darkens the ground (only ground at or behind the
+  // foot, never a wall in front), and for team > 0 a thin tinted rim — party gold, the
+  // Ashbound red, elites ember-orange — so friend and foe read apart in a melee.
+  const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];
+  function footMark(fx, fy, h, team, fade) {
+    const gh = Math.min(255, h * 4), rx = 13, ry = 6.5, col = TEAM_RGB[team], keep = 1 - fade;
+    for (let dy = -8; dy <= 8; dy++) {
+      const py = fy + dy; if (py < 0 || py >= nvh) continue;
+      for (let dx = -15; dx <= 15; dx++) {
+        const px = fx + dx; if (px < 0 || px >= nvw) continue;
+        const di = py * nvw + px, i4 = di * 4; if (sNRM[i4 + 3] > gh + 8) continue;   // only ground at the foot's height, never a wall or prop face
+        const e = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry), i = i4;
+        if (e < 1) { const m = 1 - 0.5 * Math.pow(1 - e, 0.6) * keep; sALB[i] *= m; sALB[i + 1] *= m; sALB[i + 2] *= m; }
+        if (col && e > 0.72 && e < 1.2 && dy >= -2) {                  // the ring's near arc (the far arc hides behind the figure)
+          const a = 0.46 * keep; sALB[i] += (col[0] - sALB[i]) * a; sALB[i + 1] += (col[1] - sALB[i + 1]) * a; sALB[i + 2] += (col[2] - sALB[i + 2]) * a;
+          sEMI[i] = col[0] * 0.09; sEMI[i + 1] = col[1] * 0.09; sEMI[i + 2] = col[2] * 0.09; sEMI[i + 3] = 250;   // steady glow
+        }
+      }
+    }
+  }
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
-    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0;
+    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0;
     const x0 = (footX | 0) - sp.ax, y0 = (footY | 0) - sp.ay;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= H) continue;
@@ -404,6 +432,7 @@ export function createRenderer(canvas, sim, input) {
       for (let xx = 0; xx < sp.w; xx++) {
         const j = yy * sp.w + xx; if (!sp.mask[j]) continue;
         const px = x0 + xx; if (px < 0 || px >= W) continue;
+        if (dis && BAYER[(py & 3) * 4 + (px & 3)] < dis) continue;          // ordered-dither dissolve (the slain crumble away)
         const i = (py * W + px) * 4;
         if (DEP) {
           const di = py * W + px;
@@ -411,7 +440,7 @@ export function createRenderer(canvas, sim, input) {
           DEP[di] = dep;
         }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
-        if (flash) { ALB[i] += (250 - ALB[i]) * flash; ALB[i + 1] += (236 - ALB[i + 1]) * flash; ALB[i + 2] += (220 - ALB[i + 2]) * flash; }
+        if (flash) { ALB[i] += (236 - ALB[i]) * flash; ALB[i + 1] += (150 - ALB[i + 1]) * flash; ALB[i + 2] += (120 - ALB[i + 2]) * flash; }   // a warm struck tint, not a white ghost
         if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
         NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
         const e = fade > 0.5 ? 0 : sp.emi[j];
@@ -694,54 +723,49 @@ export function createRenderer(canvas, sim, input) {
     // stamp actors (skeletons + hero) into the window G-buffer, depth-sorted by
     // (x+y) so nearer figures overdraw farther ones.
     const draws = [], party = sim.state.party, H = party[0];
-    // lunge toward the target for a beat after swinging (act: 0.18 s)
-    const lunge = (u, sxp, syp) => { const a = u.act || 0; if (a <= 0 || u.fx === undefined) return [sxp, syp]; const k = 3.2 * (a / 0.18), d = Math.hypot(u.fx - u.fy, (u.fx + u.fy) / 2) || 1; return [sxp + ((u.fx - u.fy) / d) * k, syp + (((u.fx + u.fy) / 2) / d) * k]; };
-    const lookOf = (u) => ({ flash: u.flash > 0 ? 0.75 : 0, fade: u.down ? 0.7 : 0 });
+    const lerp = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alpha);   // between 20 Hz steps
+    const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
+    // the hero
     if (heroAtlas) {
-      const vdx = p.x - p.px, vdy = p.y - p.py;
-      if (p.moving && Math.hypot(vdx, vdy) > 1e-4) heroDir = dir8(vdx - vdy, vdx + vdy);
-      else if (!p.moving && H.act > 0 && H.fx !== undefined) heroDir = dir8(H.fx - H.fy, H.fx + H.fy);
-      const clip = p.moving ? heroAtlas.meta.clips.walk : heroAtlas.meta.clips.idle;
-      const fr = clip.start + (H.down ? 0 : Math.floor((now / 1000) * clip.fps) % clip.len);
-      const [fx, fy] = lunge(H, ox + P.sx, oy + P.sy);
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[heroDir][fr], fx, fy, h: pz * ZH, k: ix + iy, look: lookOf(H) });
+      const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: H.fx, faceY: H.fy, facing: H.act > 0, dead: H.down, stride: STRIDE.hero });
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1 });
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
       const atl = partyAtlas(m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage' })[m.cls]); if (!atl || m.x === undefined) return;
-      const f = fol[i] || (fol[i] = { x: m.x, y: m.y, dir: 2 });
-      f.x += (m.x - f.x) * 0.5; f.y += (m.y - f.y) * 0.5;                            // smooth the 20 Hz steps
-      if (m.fx !== undefined && (m.moving || m.act > 0)) f.dir = dir8(m.fx - m.fy, m.fx + m.fy);
-      const cz = heightAt(sim.world, Math.floor(f.x), Math.floor(f.y)), cp = project(f.x, f.y, cz);
-      const clip = m.moving ? atl.meta.clips.walk : atl.meta.clips.idle, fr = clip.start + (m.down ? 0 : Math.floor((now / 1000) * clip.fps + i * 3) % clip.len);
-      const [fx, fy] = lunge(m, ox + cp.sx, oy + cp.sy);
-      draws.push({ d: f.x + f.y, sp: atl.cells[f.dir][fr], fx, fy, h: cz * ZH, k: f.x + f.y, look: lookOf(m) });
+      const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
+      const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
+      const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
+      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: lookOf(m, m.down ? 0.35 : 0), team: 1 });
     });
-    // the Ashbound: one atlas per archetype; spawning ones flicker in, the dead sink and fade
+    // the Ashbound: one atlas per archetype; they rise from the ground, and the slain collapse, lie, then fade
     const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
     for (const e of sim.world.enemies || []) {
       const skelAtlas = skelAtlases[SK[e.kind] ?? 1];
       if (!skelAtlas) continue;
-      if (e.spawn > 0 && Math.floor(now / 70) % 2) continue;
-      const ez = heightAt(sim.world, Math.floor(e.x), Math.floor(e.y));
-      const ep = project(e.x, e.y, ez); let ex = ox + ep.sx, ey = oy + ep.sy;
+      const exi = lerp(e, 'x'), eyi = lerp(e, 'y');
+      const ez = heightAt(sim.world, Math.floor(exi), Math.floor(eyi));
+      const ep = project(exi, eyi, ez), ex = ox + ep.sx, ey = oy + ep.sy;
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
-      const ed = e.fx !== undefined ? dir8(e.fx - e.fy, e.fx + e.fy) : 2;
-      const clip = e.moving ? skelAtlas.meta.clips.walk : skelAtlas.meta.clips.idle;
-      const fr = clip.start + (Math.floor((now / 1000) * clip.fps + e.id * 0.37) % clip.len);
-      [ex, ey] = lunge(e, ex, ey);
-      const dying = e.hp <= 0 ? Math.min(1, 1 - (e.dead || 0) / 0.6) : 0;
-      draws.push({ d: e.x + e.y, sp: skelAtlas.cells[ed][fr], fx: ex, fy: ey + dying * 8, h: ez * ZH, k: e.x + e.y, look: { flash: e.flash > 0 ? 0.8 : 0, fade: dying } });
+      const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
+      const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
+        spawnP: e.spawn > 0 ? 1 - e.spawn / 0.5 : undefined, stride: STRIDE.skel, seed: (e.id * 0.37) % 1 });
+      const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
+      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: fade }, team: dead ? 0 : e.elite ? 3 : 2 });
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
-      const bz = heightAt(sim.world, Math.floor(b.x), Math.floor(b.y)), bp = project(b.x, b.y, bz);
-      draws.push({ d: b.x + b.y + 0.2, sp: boltSprite(b.kind), fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: b.x + b.y + 1.5 });
+      if (!b.kind) continue;
+      const bx = lerp(b, 'x'), by = lerp(b, 'y'), bz = heightAt(sim.world, Math.floor(bx), Math.floor(by)), bp = project(bx, by, bz);
+      draws.push({ d: bx + by + 0.2, sp: boltSprite(b.kind), fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
     }
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
+    // ground the figures: a soft contact shadow under each, and in battle a faint team ring
+    const rings = !!sim.battle;
+    for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(dr.fx | 0, dr.fy | 0, dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look);
 
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
@@ -784,7 +808,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform3f(U(lightP, 'uSunL'), -0.72, 0.16, 0.67);                 // low sun from the upper left (matches the baked shadows)
     gl.uniform3fv(U(lightP, 'uSunC'), outdoor ? [0.78, 0.55, 0.40] : [0, 0, 0]);   // late, low, amber
     gl.uniform3fv(U(lightP, 'uAmbC'), outdoor ? [0.31, 0.29, 0.44] : [0, 0, 0]);   // violet dusk, like the dungeon's ambient
-    gl.uniform2f(U(lightP, 'uWispPx'), hx + 17, oy + P.sy - 42 + Math.sin(t * 2.1) * 1.5);
+    gl.uniform2f(U(lightP, 'uWispPx'), hx + 19, oy + P.sy - 50 + Math.sin(t * 2.1) * 1.5);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
 
@@ -883,7 +907,12 @@ export function createRenderer(canvas, sim, input) {
   }
   // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
   const floats = [];
-  const addFloat = (x, y, text, color, size = 12, rise = 22) => { floats.push({ x, y, text, color, size, rise, t0: performance.now() }); if (floats.length > 40) floats.shift(); };
+  // numbers fan out: each new float near a recent one steps sideways/up so a melee doesn't stack them into mush
+  const addFloat = (x, y, text, color, size = 12, rise = 22) => {
+    const t0 = performance.now(), busy = floats.filter((f) => t0 - f.t0 < 450 && Math.hypot(f.x - x, f.y - y) < 1.5).length;
+    floats.push({ x, y, text, color, size, rise, t0, jx: ((busy % 3) - 1) * 11 + (busy ? 0 : 0), jy: Math.floor(busy / 3) * 9 + (busy % 2) * 4 });
+    if (floats.length > 40) floats.shift();
+  };
   sim.bus.on('combat', (c) => {
     if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
@@ -923,7 +952,7 @@ export function createRenderer(canvas, sim, input) {
     const t = performance.now();
     for (let i = floats.length - 1; i >= 0; i--) {
       const f = floats[i], a = (t - f.t0) / 900; if (a >= 1) { floats.splice(i, 1); continue; }
-      const [sx, sy] = scr(f.x, f.y, 56 + f.rise * a);
+      const [sx0, sy0] = scr(f.x, f.y, 56 + (f.jy || 0) + f.rise * a), sx = sx0 + (f.jx || 0) * S, sy = sy0;
       octx.font = `800 ${Math.round(f.size * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       octx.globalAlpha = a < 0.7 ? 1 : 1 - (a - 0.7) / 0.3;
       octx.fillStyle = 'rgba(0,0,0,0.75)'; octx.fillText(f.text, sx + k, sy + k);

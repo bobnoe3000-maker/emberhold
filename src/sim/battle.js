@@ -33,6 +33,11 @@ const ENEMIES = {
 };
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
+// Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
+// comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
+// skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
+export const WINDUP = 0.18, DEATH_T = 1.1;
+const SEP = 1.15;   // units keep this far apart (tiles): a 56 px figure's feet span ~1.3 tiles on screen
 // The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
 // is followed by a breather. Companions who fell during a wave get back up at 25 % HP
 // when it's cleared.
@@ -40,7 +45,7 @@ const LULL_MAX = 15, LULL_READY = 0.5, REVIVE = 0.25;
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
-  let battle = null, nextId = 1, focusId = 0;
+  let battle = null, nextId = 1, focusId = 0, pending = [];   // pending: blows and releases waiting on their wind-up
 
   // a room tile keeps its room id even where a corridor was carved through it
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
@@ -94,13 +99,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const [x, y] of cells) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     const gw = x1 - x0 + 1, gh = y1 - y0 + 1, walk = new Uint8Array(gw * gh);
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
+    pending = [];
     battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map() };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
     bus.emit('battle', { on: true, room, level: battle.level });
   }
   function endBattle(w, why) {
-    battle = null; focusId = 0;
+    battle = null; focusId = 0; pending = [];
     if (w) { w.enemies = []; w.projectiles = []; }
     for (const m of state.party) if (m.down) { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
     bus.emit('battle', { on: false, why });
@@ -119,11 +125,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   function applyHit(att, tgt, r, isParty, w) {
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
-    tgt.hp = Math.max(0, tgt.hp - r.dmg); tgt.flash = 0.12;
+    tgt.hp = Math.max(0, tgt.hp - r.dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: r.dmg, crit: r.crit, party: isParty });
     if (tgt.hp > 0) return;
     if (isParty) { tgt.down = true; bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name }); if (!state.party.some(alive)) defeat(w); }
-    else { tgt.dead = 0.6; reward(tgt); if (focusId === tgt.id) focusId = 0; }
+    else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
   function reward(e) {
     const living = state.party.filter(alive);
@@ -151,7 +157,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     let power = 1, bonus = 0, ab = null;
     const A = isPartyAtt && fight.ability;
     if (A && att.mp >= A.mp) { att.mp -= A.mp; power = A.power; bonus = A.crit || 0; ab = A; }
-    att.act = 0.18; att.cd = fight.interval;
+    att.act = 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
     const aStats = isPartyAtt ? { ...statsFor(att), lvl: att.level } : att;
     const dStats = isPartyAtt ? tgt : statsFor(tgt);
     const hit = () => {
@@ -161,8 +167,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
-    if (bolt) { const d = Math.hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
-    else hit();
+    const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
+    pending.push({ t: WINDUP, fn: () => {
+      if (!standing()) return;                               // cut down mid-swing
+      if (bolt) { const d = Math.hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
+      else hit();
+    } });
   }
 
   // ── movement ────────────────────────────────────────────────────────────────
@@ -216,7 +226,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function separate(units, w) {
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
-      if (d < 0.75) { const push = (0.75 - d) * 0.5, px = (dx / d) * push, py = (dy / d) * push;
+      if (d < SEP) { const push = (SEP - d) * 0.5, px = (dx / d) * push, py = (dy / d) * push;
         if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
         if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; } }
     }
@@ -228,6 +238,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const w = getWorld(), p = state.player, H = hero();
     p.steer = (p.steer ?? 1e9) + dt;
     ensureRuntime();
+    // last tick's positions, so the renderer can interpolate every unit between 20 Hz steps
+    for (const m of state.party) { m.px = m.x; m.py = m.y; }
+    for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
+    for (const b of w.projectiles || []) { b.px = b.x; b.py = b.y; }
     const inDungeon = w.kind === 'dungeon';
     const room = inDungeon ? roomAt(w, p.x, p.y) : -1;
     if (battle && room !== battle.room) endBattle(w, 'left');
@@ -303,6 +317,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       }
       separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);
     }
+    // wind-ups: blows land and bolts leave on the attack clip's impact frame
+    if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }
     // projectiles
     if (w.projectiles) for (const b of w.projectiles) { b.t += dt; const k = Math.min(1, b.t / b.dur); b.x = b.sx + (b.tgt.x - b.sx) * k; b.y = b.sy + (b.tgt.y - b.sy) * k; if (k >= 1 && !b.done) { b.done = true; b.hit(); } }
     if (w.projectiles) w.projectiles = w.projectiles.filter((b) => !b.done);
@@ -315,7 +331,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
-    reset() { battle = null; focusId = 0; placeCompanions(); },
+    reset() { battle = null; focusId = 0; pending = []; placeCompanions(); },
     placeCompanions,
   };
 }

@@ -158,14 +158,21 @@ const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'gr
 const ROCKS = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E'];
 const pick = (rng, a) => a[(rng() * a.length) | 0];
 
-// scatter trees / rocks in a region with a density mask; never on roads, water or buildings
+// scatter trees / rocks in a region with a density mask; never on roads, water or buildings,
+// and never overlapping one another (trees keep a tile of verge from roads; mountains may crowd)
 function scatter(o, rng, x0, y0, x1, y1, step, fn) {
   for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
     const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, id = fn(jx, jy);
     if (!id) continue;
-    const round = /pine|oak|autumn|dead|grove|mountain/.test(id);
-    if (fits(o, id, jx, jy, round ? -1 : 0.5)) put(o, id, jx, jy, round ? 'round' : 'rect', round ? 0.35 : 0.1);
+    const mount = /mountain/.test(id), round = mount || /pine|oak|autumn|dead|grove/.test(id);
+    if (fits(o, id, jx, jy, mount ? -1 : round ? 0.6 : 0.5)) put(o, id, jx, jy, round ? 'round' : 'rect', round ? 0.35 : 0.1);
   }
+}
+// Keep the view of a landmark clear: the camera looks from +x+y, so anything tall in the wedge
+// in front of (and a little around) a site hides it. True if (x, y) is in that wedge.
+function inFrontOf(sites, x, y, depth = 30, half = 18) {
+  for (const [cx, cy] of sites) { const a = (x - cx) + (y - cy), b = (x - cx) - (y - cy); if (a > -8 && a < depth && Math.abs(b) < half) return true; }
+  return false;
 }
 
 // forest ring around the playable area (hides the world's edge, bounds the camera)
@@ -229,11 +236,13 @@ function buildTown(seed, region) {
   for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
 
   // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
+  const TOWN_SIGHTS = [[92, 62], [120, 64], [132, 62], [100, 94], [118, 88], [130, 86], [104, 76]];
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
     const dh = Math.hypot(x - (C[0] - 16), y - (C[1] - 16));
     if (dh < 34) return null;
     const behind = x + y < C[0] + C[1] - 30;
     if (behind) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
+    if (inFrontOf(TOWN_SIGHTS, x, y, 22, 12)) return null;                         // don't hide houses or the bridge behind a trunk
     const n = fbm(x * 0.05, y * 0.05, o.seed + 3);
     return n > 0.52 && rng() < 0.5 ? pick(rng, TREE_SINGLE) : rng() < 0.06 ? pick(rng, ROCKS) : null;
   });
@@ -292,6 +301,7 @@ function buildOverland(seed) {
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
     if (Math.hypot(x - town[0] + 16, y - town[1]) < 40 || Math.hypot(x - cross[0], y - cross[1]) < 18) return null;
     for (const c of [keep, barrows, mine, camp, [60, 112]]) if (Math.hypot(x - c[0], y - c[1]) < 24) return null;
+    if (inFrontOf([keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]], x, y, 36, 20)) return null;   // sightlines to every landmark
     if (f > 0.58) return rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
     if (f > 0.45 && rng() < 0.3) return pick(rng, TREE_SINGLE);
     return rng() < 0.05 ? pick(rng, ROCKS) : null;
