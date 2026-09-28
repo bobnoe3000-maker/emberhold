@@ -1,4 +1,7 @@
 # EMBERHOLD — Project Status & Plan v0.4
+
+> **Superseded (2026-09-28)** by [development-plan.md](./development-plan.md) (v0.5) for build order and [architecture.md](./architecture.md) for the stack. Kept for history.
+
 **August 2026 · supersedes emberhold-status-v0.3.md**
 
 The art direction pivots again — this time all the way. **Dreadforge is now the primary

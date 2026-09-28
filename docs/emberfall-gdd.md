@@ -1,6 +1,17 @@
 # Emberfall — Game Design Document
 
-**v1.1 · 2026-09-28 · Plan of record for game design.** v1.1: room-based battles with respawning waves (§3). This supersedes the *game design*
+**v1.2 · 2026-09-28 · Plan of record for game design.** v1.2 adds:
+- attributes and stat points (§4.1);
+- skills and stances (§5.1);
+- character creation and origins (§6.1);
+- death and resurrection (§3.6);
+- special loot sources (§8);
+- hero quests, discovery and the Journal (§9);
+- the multiplayer phases (§12).
+
+The build order moved to [development-plan.md](./development-plan.md) and the tech stack to
+[architecture.md](./architecture.md). All narrative text is pre-written: there is no
+runtime text generation. v1.1 added room-based battles with respawning waves (§3). This supersedes the *game design*
 sections of [emberhold-design.md](./emberhold-design.md) (the Necesse-style survival/colony
 sandbox is retired). It does **not** supersede the technical architecture (headless
 deterministic sim, seed-plus-diff saves, iso renderer), which this design is built on. The
@@ -142,11 +153,26 @@ front (fighter), mid (rogue) and back (mage), auto-assigned and reorderable in t
 The lull between waves counts as *out of battle* for regen (§4), so sustain decides how long a
 party can hold a room.
 
-### 3.6 Defeat
-If the whole party falls, it is carried back to the last town. You keep XP and gear, lose
-**25 % of carried gold** (gold banks when you visit a town), and fallen companions are
-**Wounded** until a shrine heals them (gold or time). There's no permadeath. A *Hardcore* mode
-is an open question.
+### 3.6 Death, resurrection and defeat
+**States:** Healthy → **Downed** (0 HP in battle) → **Fallen** (dead) → resurrected.
+
+- **Downed:** if the wave is cleared, Downed members rise in the lull at 20 % HP.
+- **Downed → Fallen** happens when a member is downed a **second time in the same room
+  visit**, or when the party **leaves the room** with them still Downed.
+- **Fallen:**
+  - the member follows as a ghost: no fighting, no XP;
+  - they can be resurrected at a **Temple** (25 gold × level; free once a day for heroes at
+    level 5 or lower), at a site **Shrine** (one use each), by the Cleric's *Lifeline*, or
+    with a rare **Phoenix Ember**.
+- **The hero** stays Downed, never Fallen, while any companion stands.
+- **Wipe:** if everyone is down, the party wakes at the region town's **Temple**:
+  - everyone is restored to 30 % HP and Fallen status is cleared;
+  - you lose **25 % of carried gold** (gold banks when you visit a town);
+  - everyone is **Weakened** (−10 % stats) until they rest at the inn or 10 minutes pass;
+  - you keep your XP and gear.
+- There is no permadeath; *Hardcore* is an opt-in at creation (later).
+
+Details are in [development-plan.md §2.10](./development-plan.md).
 
 ### 3.7 Readability
 At the current zoom (25 tiles across) figures are about 54 pt tall. Each unit shows HP/MP pips
@@ -172,6 +198,25 @@ shapes the fight.
 Damage per hit = max(1, ATK × power × (1 − mitigation)) × (crit ? 1.75 : 1), unless dodged.
 Everything rolls from the seeded sim RNG, so a battle is reproducible from its inputs (this
 enables offline results, replays and multiplayer validation).
+
+### 4.1 Attributes and stat points
+Four attributes feed the derived stats above:
+
+| Attribute | Feeds | Per point (starting values, tuned by the balance harness) |
+|---|---|---|
+| **Might** | ATK | +0.4 ATK |
+| **Grit** | HP, DEF | +3.5 HP, +0.3 DEF |
+| **Finesse** | CRIT, DODGE | +0.25 % CRIT, +0.2 % DODGE |
+| **Focus** | MP, MP regen, ability power | +2.5 MP, +0.03 MP/s, +0.5 % ability power |
+
+- **Points:** each level-up grants **3 points**. Class growth per level stays automatic at
+  70 % of the class-table growth.
+- **Recommended build:** each class has one, and it reproduces the class-table curve within
+  ±3 %. Choice adds variety, not power creep.
+- **Companions** auto-allocate by class template, or you manage them yourself.
+- **Respec** at the temple: the first is free, then 20 gold × level.
+- **Gear** adds on top (§8). A fresh character in the class kit has exactly the class-table
+  numbers.
 
 ---
 
@@ -204,6 +249,18 @@ Three launch classes. Each has **base stats at level 1**, **growth per level**, 
 
 Both slot in with the same stat block and ability format. No system changes are needed.
 
+### 5.1 Skills, ranks and stances
+- **Unlocks:**
+  - the level-1 ability comes at creation;
+  - the level-6 and level-12 abilities unlock through **class trials**, short quests (§9);
+  - the passive comes at level 20.
+- **Skill points:** 1 at every even level. Ranks 1–5; each rank adds +10 % power, and ranks
+  3 and 5 also cost 1 MP less.
+- **Auto-cast:** each ability has an auto-cast toggle and a priority order, set in the
+  **Skills** tab of the character window.
+- **Stance** per member (§3.4) is set in the same tab: Aggressive, Balanced or Defensive.
+- **Rare gear modifiers** (§8) stack with ranks.
+
 ---
 
 ## 6. The party
@@ -219,6 +276,25 @@ Both slot in with the same stat block and ability format. No system changes are 
   Active members share XP equally; the bench earns 50 %.
 - **Visible gear.** Weapons, shields, helmets and capes are toggleable meshes on the KayKit
   models, so a loot upgrade changes the silhouette.
+
+### 6.1 Heroes: creation, origins and slots
+- **Slots:** up to **4 hero slots**. Each is its own save and world seed.
+- **Creation:**
+  - **class:** fighter, rogue or mage;
+  - **look:** a base model per class plus accent palettes;
+  - **origin;**
+  - **name:** with naming-guide suggestions.
+- **Origins** tie the hero to a faction (world doc §4) and change dialogue:
+
+  | Origin | Faction | Edge |
+  |---|---|---|
+  | *Thornwick-born* | Maudry Fenn | +1 tavern hireling option |
+  | *Redhand deserter* | The Redhand Company | +1 ATK at level 1; bandits may parley |
+  | *Ward of the Grey Sisters* | The Grey Sisters | +20 % XP from lore |
+  | *Deepdelver-fostered* | The Deepdelvers | −10 % smith upgrade cost |
+
+- The first new game plays the intro, *The Chronicle of the Fall*.
+- Details are in [development-plan.md §2.1–§2.3](./development-plan.md).
 
 ---
 
@@ -269,6 +345,17 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 - **Smith upgrades** go from +1 to +5. Each step gives +8 % base stats and costs gold, Embers
   and, from +3, wood and stone (the existing counters).
 - **Salvage** off-class or outgrown items into **Embers** (the upgrade currency).
+- **Special sources** (v1.2):
+  - **Ember Rifts** (timed weekly dungeons) drop *Kindled* items: Fine or better with a
+    Rift-only affix.
+  - **Region bosses** (weekly lockout) have heirloom tables and give a guaranteed Rare on
+    the first kill each week.
+  - **Hidden sites**, revealed by completing a Chronicle set, give a guaranteed Heirloom.
+  - **Chapter quests** give a guaranteed Fine.
+- **Drop rates:** loot v1 ships generous drop rates so the loop is felt early
+  (`gear-and-loot-plan.md`). M5 tunes toward the targets above with a headless farm run:
+  about 3 Common, about 1 Fine, and about 1 Rare per 5 hours of active play. Rare and above
+  always fits the party's classes.
 
 ---
 
@@ -297,6 +384,15 @@ progress):
   talk about the forges.
 - **Difficulty** is shown as 1–3 skulls relative to the party's level.
 - **Rewards:** gold, XP, renown, and sometimes a guaranteed Fine item or a companion.
+- **Beyond the board** (v1.2), the Hero component:
+  - **Hero quests:** chapters (the main arc), companion chains and class trials.
+  - **NPC errands:** random side quests offered by quest-giver NPCs, from the same templates
+    and pre-written hook pools.
+  - **Bounties:** from the watch.
+  - **Discovery:** places, NPCs met, bosses beaten and **lore fragments** into the Chronicle.
+  - **Gating:** by region, town, level window, renown, act, class, origin and flags.
+  - **The Journal** (quest log) tracks everything. The tracked quest drives the compass.
+  - Full spec: [quest-lore-system.md](./quest-lore-system.md).
 
 ---
 
@@ -384,6 +480,15 @@ source of loot. Deterministic replay means an expedition's result is exact and c
    deterministic sim with the host authoritative.
 3. **Arena.** Async party-vs-party autobattles against snapshots.
 
+**Expanded in v1.2:**
+- **Shared instances:** town presence and co-op sites.
+- **Group raids:** 4–6 players against *Heroic* region bosses.
+- **Live PvP arena:** 1v1 and 3v3 party autobattles with seasons.
+
+The servers are authoritative and run the same sim. There's no player trading at first.
+Phases and tech are in [development-plan.md §2.12](./development-plan.md) and
+[architecture.md §6](./architecture.md).
+
 The fixed-tick, seeded, command-driven sim is exactly what 1–3 need. Command logs plus a seed
 reproduce any battle for validation.
 
@@ -400,6 +505,11 @@ reproduce any battle for validation.
 | **Party** | Three figures with live 3D previews, gear slots, stats and abilities; drag to reorder formation. |
 | **Overland** | A scrolling fogged map with the party token; tap a node to travel. |
 | **Chronicle** | Lore fragments by region, and set completion. |
+| **Title** (v1.2) | A live dusk vignette of Thornwick; Continue / Heroes / Settings / Account. |
+| **Heroes and Creator** (v1.2) | Four hero slots. Creation is a live preview plus steps: class, look, origin, name. |
+| **Character window** (v1.2) | Tap a party card. Tabs: Gear · Stats (spend points) · Skills (ranks, auto-cast, stance) · Bag · Info. |
+| **Dialogue** (v1.2) | Bottom sheet: portrait, lines, up to 4 choices, quest offer cards. |
+| **Journal** (v1.2) | Active · Available · Completed · Chronicle · Discoveries; Track pins the compass. |
 
 Everything that matters sits in the lower two-thirds of the screen, within thumb reach.
 
@@ -423,6 +533,12 @@ Emberfall rename.
 ---
 
 ## 15. Roadmap
+
+> **v1.2:** the build order is now kept in
+> [development-plan.md §3](./development-plan.md). It adds M2.5 Foundations, M3 Heroes,
+> M4 Story engine, M5 The Hollow Vale, M6 Accounts and ship, M7 Endgame loops, M8–M9 the
+> remaining regions, and M10–M12 multiplayer. The table below is the original v1.1 plan,
+> kept for history.
 
 | Milestone | Scope | Exit test |
 |---|---|---|
@@ -484,6 +600,12 @@ Emberfall rename.
 ---
 
 ## 16. Open questions
+
+> **v1.2 decisions** ([development-plan.md §6](./development-plan.md)):
+> - **#2 Defeat cost:** revised in §3.6.
+> - **#3 Quest refresh:** in-game dawn, plus an optional real-time daily bonus.
+> - **#4 Hardcore:** opt-in, later.
+> - **#6 Rename:** at M2.5.
 
 1. **Manual moment?** Keep battles fully auto, or add one "rally" button per room visit (a charged
    party ability) for a small skill expression?

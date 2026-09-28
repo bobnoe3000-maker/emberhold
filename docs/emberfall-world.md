@@ -1,6 +1,14 @@
 # Emberfall — World Summary
 
-**v1.0 · 2026-09-28 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** This is the
+**v1.1 · 2026-09-28 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.1 adds:
+- the Heights story boss (§8);
+- Ember Rifts and region bosses (§10);
+- origins and a dialogue voice guide for writers (§11).
+
+All player-facing text is pre-written and branching, authored in Ink and JSON
+([quest-lore-system.md](./quest-lore-system.md)). This is the
 narrative spine: the history, places, factions and main arc that quests, dungeons, enemies and
 loot all hang from. The quest generator reads its tables (regions, sites, factions, hooks), so
 names and facts here are **canon for content**. Change them here first.
@@ -193,7 +201,7 @@ Sample fragments:
 | **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. |
 | **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
-| **Bosses** | per site | Redhand Captain, the Abbess Below, Oruth the Forgemaster, the Kindler | One per major site, each with one signature mechanic. |
+| **Bosses** | per site | Redhand Captain, the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
 
 ---
 
@@ -207,3 +215,56 @@ Sample fragments:
   *Hale's Last Watch — "The Captain's grandfather held Greyholt's gate with this for a night
   and a day."*
 - **Avoid** chosen ones, prophecies, dark lords and anything with an apostrophe in the middle.
+
+---
+
+## 10. Ember Rifts and region bosses (v1.1)
+
+### 10.1 Ember Rifts
+- **What they are:** when the Cinder Cult stokes the old forges, echoes of the Ember flare
+  inside sealed imperial vaults. For a few days a **Rift** burns open with the old light:
+  - the Ashbound inside stand straighter;
+  - the vault's hoard is *kindled*;
+  - then the flare gutters and the vault seals again.
+- **Who knows:** the Deepdelvers call them "flare-seams". The Grey Sisters record each one.
+- **The secret they hint at:** the Ember was never truly gone (§2).
+- **Loot names:**
+  - Kindled items carry the prefix *Kindled*, or a vault name: *of the Ninth Vault*.
+  - Affixes speak of warmth, hunger and the dead: *"Warm to the touch, and hungry."*
+
+### 10.2 Region bosses
+Optional, repeatable foes, each drawn from a fragment of the Chronicle (§7):
+
+| Region | Boss | From the history | Heirloom line (example) |
+|---|---|---|---|
+| Hollow Vale | **The Standard of the Third Legion** | *Standing order 14*: the legion still holds the Wickham road until relieved | *The Relief — "Somebody finally came."* |
+| Greywater Fens | **The Drowned Choir** | The Abbey's sisters, drowned at their office, still singing under the water | *Vespers — "Sung in water, heard in bone."* |
+| Cinder Reach | **Furnace Nine** | *"Furnace nine requires eleven more souls per week to meet quota."* It learned to feed itself. | *Quota — "It always asked for more."* |
+| Pale Heights | **The First Pilgrim** | The pilgrim who found the Ember in the crater, bound in ice at its lip | *First Light — "It was beautiful. That was the trouble."* |
+
+---
+
+## 11. Origins and dialogue voice (v1.1)
+
+**Origins** (chosen at creation; GDD §6.1):
+
+| Origin | Background |
+|---|---|
+| *Thornwick-born* | Grew up above a shop on the square. Maudry Fenn knew your mother. |
+| *Redhand deserter* | Walked away from the Company with a sword and a grudge. |
+| *Ward of the Grey Sisters* | Raised among the archives at Reedholm. |
+| *Deepdelver-fostered* | A human child raised by a Deepdelver clan in the Reach. |
+
+**Dialogue voice for writers:**
+- **Plain words:** short sentences, and characters complain about practical things (tax,
+  weather, the price of lamp oil) while the dead walk.
+- **Nobles overreach:** Lord Pellam uses three words where one would do.
+- **Point, don't explain:** nobody explains the past. They mention it sideways, and the
+  Chronicle holds the pieces.
+- **The dead as trouble:** the Ashbound are ordinary trouble, *"the walking kind"*, never
+  cosmic horror.
+- **Reactivity:** every named NPC has at least one line for your origin, one for a Fallen
+  companion, and one for each region fragment set.
+- **Banned:** no prophecies, no chosen ones, no winks at the player, and no apostrophes in the
+  middle of names.
+

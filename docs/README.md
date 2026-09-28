@@ -1,4 +1,4 @@
-# Emberhold — Design Docs
+# Emberfall (Emberhold) — Design Docs
 
 Reference artifacts for the game. Living documents: update them here as decisions
 change, and add new ones alongside. Newest planning always supersedes older — see
@@ -6,9 +6,13 @@ the header of each status doc for what it replaces.
 
 | Document | What it is | Status |
 |---|---|---|
+| [architecture.md](./architecture.md) | App design, layers, module map, determinism, online services, **evaluated tech stack** with decision log (A1–A10) | **Plan of record** for architecture (2026-09-28) |
+| [development-plan.md](./development-plan.md) | Feature plan (intro and cutscenes, accounts, hero creation and select, character windows and stat points, NPCs, quests and lore, loot, Ember Rifts, region bosses, death and resurrection, multiplayer) and milestones M2.5–M12 | **Plan of record** for build order (v0.5, 2026-09-28) |
+| [quest-lore-system.md](./quest-lore-system.md) | The Hero component: quest kinds, content data model, objective types, deterministic generator, Ink dialogue conventions, discovery, the Chronicle, the Journal | **Spec** for M4–M5 (2026-09-28) |
+| [../AGENTS.md](../AGENTS.md) | Working agreement and best practices for agents and contributors | **Current** |
 | [town-art-options.md](./town-art-options.md) | Town + overland prototype with our own buildings; hub towns (one per region, same shapes, regional tones), live via `?scene=town&region=vale` | **Decided** — Option A shapes, regional tones (2026-09-28) |
-| [emberfall-gdd.md](./emberfall-gdd.md) | **Emberfall** game design: autobattler party RPG, classes and stats, loot, quest generation, overland, offline and multiplayer, roadmap | **Plan of record** for game design (2026-09-28) |
-| [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary | **Canon** for narrative and quest content (2026-09-28) |
+| [emberfall-gdd.md](./emberfall-gdd.md) | **Emberfall** game design: autobattler party RPG, classes, stats and attributes, skills, creation and origins, death and resurrection, loot, quests and the Journal, overland, offline and multiplayer | **Plan of record** for game design (v1.2, 2026-09-28) |
+| [emberfall-world.md](./emberfall-world.md) | Emberfall world summary: history, regions, factions, characters, four-act arc, discoverable lore, bestiary, Ember Rifts and region bosses, origins and dialogue voice | **Canon** for narrative and quest content (v1.1, 2026-09-28) |
 | [tile-styles.md](./tile-styles.md) | Five structured floor/wall tile styles × seven material variants (plain, earth, rock, lava, poison, ice, water), switch with `?tiles=&tv=` | **Current** — cobble is the default (2026-09-28) |
 | [art-critic-pass-2.md](./art-critic-pass-2.md) | Critic pass 2: battle spacing, readable figures, church/forge/porch, soft foliage, dungeon room themes; scores 6.8–7.2 per track, ranked open issues | Superseded by pass 3 |
 | [art-critic-pass-3.md](./art-critic-pass-3.md) | Critic pass 3: fluid movement (velocity, pure-pursuit paths, companion pursuit, sub-pixel camera, stride settle), +10 % walk speed, knight lighting, hit rim; measured before/after | **Current** (2026-09-28) |
@@ -20,12 +24,12 @@ the header of each status doc for what it replaces.
 | [character-direction.md](./character-direction.md) | Character art decision — KayKit CC0 3D, heroic proportions, 'grim' pass; roster + integration plan | **Current** character direction (2026-09-27) |
 | [emberlit-tdd.md](./emberlit-tdd.md) | Technical design for the Emberlit WebGL2 deferred renderer (G-buffers, point lights, HDR bloom) | **Active** render spec (shipped) |
 | [emberlit-demo.html](./emberlit-demo.html) | The Emberlit reference demo the renderer was ported from (open in a browser) | Reference |
-| [emberhold-status-v0.4.md](./emberhold-status-v0.4.md) | Project status & plan (v0.4) — art direction pivots to Dreadforge (nightmare) | Plan of record (build has moved past it — see pointer below) |
+| [emberhold-status-v0.4.md](./emberhold-status-v0.4.md) | Project status & plan (v0.4) — art direction pivots to Dreadforge (nightmare) | Superseded by [development-plan.md](./development-plan.md) (v0.5) |
 | [dreadforge-tdd.md](./dreadforge-tdd.md) | Technical design doc for the Dreadforge nightmare pipeline (materials, voxel bake, CA creatures, post stack, hybrid actors) | **Active** art-direction + render spec |
 | [dreadforge-mockup.html](./dreadforge-mockup.html) | Confirmed nightmare-biome look — from-spec, live generators (open in a browser) | **Current** visual reference |
 | [emberhold-iso-pivot-tdp.md](./emberhold-iso-pivot-tdp.md) | Technical design plan for the isometric fine-tile pivot | Landed (iso geometry); superseded on mood by Dreadforge |
 | [emberhold-status-v0.3.md](./emberhold-status-v0.3.md) | Project status & plan (v0.3) — save/load + iso pivot | Superseded by v0.4 |
-| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Architecture still foundational; **game design superseded** by emberfall-gdd.md |
+| [emberhold-design.md](./emberhold-design.md) | Full game design + architecture + roadmap (v0.1, v0.3-amended) | Layering rules restated in architecture.md; **stack choice superseded** by architecture.md; **game design superseded** by emberfall-gdd.md |
 | [art-style-iso.html](./art-style-iso.html) | Iso field guide — terrain, cliffs, props, detailed 24×36 characters | Geometry/proportion reference; **Emberwood mood retired** by Dreadforge |
 | [iso-mockup-fine.html](./iso-mockup-fine.html) | The original iso visual-spec proof — 16×8 diamonds, elevation, quantized lighting | Reference the pivot spec was locked from (pre-detailed-doll) |
 | [assetforge-v0.html](./assetforge-v0.html) | Original procedural art-pipeline proof (palettes, blob-47, paper-doll) | Historical — flat top-down; blob-47 now parked |
@@ -42,10 +46,14 @@ the header of each status doc for what it replaces.
 
 ## Build progress (quick pointer)
 
-Shipped on `main`: Phase 0, save/load, the iso pivot, the Dreadforge port, and the
-**Emberlit** WebGL2 deferred renderer. On top of those: **themed dungeon levels** (rooms,
-wide corridors, weathered walls over the abyss, six emissive biomes), the **descent**
-(stairs → a deeper, harder level), room contents (chests, shrines, braziers), a fog-of-war
-**minimap**, and baked **KayKit** actors ([`character-direction.md`](./character-direction.md), Option C:
-a 56 px knight hero and four skeleton types with real normals). Next up: combat. `emberhold-status-v0.4.md`
-predates all of this and needs a v0.5 re-baseline.
+Status as of v0.5 (2026-09-28): [development-plan.md §1](./development-plan.md) lists what's
+shipped on `main`:
+- M1 battle core;
+- the Thornwick hub and overland;
+- compass travel and tap-to-move;
+- loot v1 and the character sheet;
+- weapon effects;
+- fluid movement (critic pass 3).
+
+**Next: M2.5 Foundations** (types, CI, content schema, save slots, Preact windows, the
+Emberfall rename), then **M3 Heroes**.
