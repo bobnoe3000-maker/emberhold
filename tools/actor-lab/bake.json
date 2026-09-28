@@ -28,6 +28,23 @@
           "impact": 3
         },
         {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Horizontal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
           "key": "hit",
           "clip": "Hit_A",
           "frames": 4,
@@ -98,6 +115,22 @@
           "impact": 3
         },
         {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Slice_Diagonal",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "1H_Melee_Attack_Jump_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
           "key": "hit",
           "clip": "Hit_A",
           "frames": 4,
@@ -150,6 +183,23 @@
           "fps": 16,
           "once": true,
           "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
         },
         {
           "key": "hit",
@@ -206,6 +256,22 @@
           "impact": 2
         },
         {
+          "key": "attack2",
+          "clip": "2H_Ranged_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Ranged_Shoot",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
           "key": "hit",
           "clip": "Hit_A",
           "frames": 4,
@@ -260,6 +326,24 @@
           "impact": 3
         },
         {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Summon",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.5
+        },
+        {
           "key": "hit",
           "clip": "Hit_A",
           "frames": 4,
@@ -312,6 +396,23 @@
           "fps": 16,
           "once": true,
           "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Spin",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.85
         },
         {
           "key": "hit",
@@ -384,6 +485,24 @@
           "impact": 3
         },
         {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Long",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
           "key": "hit",
           "clip": "Hit_A",
           "frames": 4,
@@ -452,6 +571,22 @@
           "fps": 16,
           "once": true,
           "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Dualwield_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Dualwield_Melee_Attack_Chop",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
         },
         {
           "key": "hit",

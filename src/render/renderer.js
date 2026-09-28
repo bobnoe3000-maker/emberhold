@@ -684,7 +684,7 @@ export function createRenderer(canvas, sim, input) {
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
   // fixed framing, so the square sits still like a home screen while the hero moves in it.
-  let camT = 0;
+  let camT = 0, shake = null;                        // shake: a heavy blow's short camera jolt
   function camera(ix, iy, pz) {
     const hub = sim.world.hub;
     let cx = ix, cy = iy;
@@ -696,7 +696,9 @@ export function createRenderer(canvas, sim, input) {
     } else camT = 0;
     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
     const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
-    return { ox: Math.round(nvw / 2 - C.sx), oy: Math.round(nvh * anchor - C.sy) };
+    let jx = 0, jy = 0;
+    if (shake) { const a = (performance.now() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
+    return { ox: Math.round(nvw / 2 - C.sx) + jx, oy: Math.round(nvh * anchor - C.sy) + jy };
   }
   let lastCam = { ox: 0, oy: 0 };
 
@@ -922,6 +924,7 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
+    else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: performance.now(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });

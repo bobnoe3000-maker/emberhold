@@ -36,7 +36,10 @@ const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
-export const WINDUP = 0.18, DEATH_T = 1.1;
+export const WINDUP = 0.18, WINDUP_HEAVY = 0.38, DEATH_T = 1.1;
+// Swings: light attacks alternate two baked clips (A / B); abilities (Cleave, Backstab,
+// Firebolt) and every elite blow are HEAVY — a bigger clip whose impact frame comes later,
+// so the blow lands WINDUP_HEAVY into it. atkKind tells the renderer which clip to play.
 const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
 // Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
 // far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
@@ -164,18 +167,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     let power = 1, bonus = 0, ab = null;
     const A = isPartyAtt && fight.ability;
     if (A && att.mp >= A.mp) { att.mp -= A.mp; power = A.power; bonus = A.crit || 0; ab = A; }
-    att.act = 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
+    const heavy = !!ab || (!isPartyAtt && att.elite);
+    att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
+    att.atkKind = heavy ? 'heavy' : att.atkN % 2 ? 'a' : 'b';
     const aStats = isPartyAtt ? { ...statsFor(att), lvl: att.level } : att;
     const dStats = isPartyAtt ? tgt : statsFor(tgt);
     const hit = () => {
       if (!(isPartyAtt ? tgt.hp > 0 && !tgt.dead : alive(tgt))) return;
       applyHit(aStats, tgt, resolve(aStats, dStats, power, bonus), !isPartyAtt, w);
+      if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
       if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && Math.hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash), false, w);
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
     const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
-    pending.push({ t: WINDUP, fn: () => {
+    pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
       if (bolt) { const d = Math.hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
       else hit();
