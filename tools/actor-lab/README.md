@@ -16,6 +16,7 @@ node render.cjs --px 56      # same at another figure height → out/px56/ (defa
 node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.png
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
+node bake.cjs --anchors      # refresh only the weapon anchors in those atlases' JSON (seconds, no raster)
 node bake-env.cjs            # environment atlases (env.json + town.json: all our own buildkit.js models) → ../../assets/env/
 ```
 
@@ -46,6 +47,16 @@ Scale and camera are fixed from the idle pose so the figure never pulses between
 and the rest pose is restored before each sample so the heroic pass never compounds.
 Outputs are `<name>.json` (cell size, foot anchor, clips, glow) plus `.alb/.nrm/.emi.png`,
 loaded by `loadActorAtlas()` in `src/render/renderer.js`.
+
+**Weapon anchors.** Every held weapon is a rigid mesh under a hand slot (`handslotr` /
+`handslotl`; shields are skipped). `weaponRig()` finds its tip once, in slot space: the end
+of the weapon's long axis farthest from the grip. That is the sword point, axe head, staff
+crown or crossbow nose. `anchorAt()` projects the tip and the grip into every baked cell.
+The JSON gets `anchors: { r: [...], l: [...] }`, with 5 ints per cell
+(`tipX, tipY, gripX, gripY, z`), where cell = `dir × frames + frame` and z is the px the tip
+sits toward the camera. `src/render/fx.js` draws the weapon trails, glints and cast shimmer
+from these. A variant can override the tip with `tipAxis: {r: 'x'|'y'|'z'}` or
+`tipFlip: {r: true}`.
 
 `render.cjs` serves this folder itself and drives headless Chromium with SwiftShader
 WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` path.

@@ -17,7 +17,16 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   await p.goto(`http://127.0.0.1:${port}/lab.html?px=${spec.px}`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
+  const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
   for (const a of spec.actors) {
+    if (only) {
+      const v = vars[a.variant], f = path.join(OUT, `${a.out}.json`), meta = JSON.parse(fs.readFileSync(f));
+      const r = await p.evaluate(async ([v, clips]) => await window.bakeAnchors(v, clips), [v, a.clips]);
+      if (r.frames !== meta.frames) throw new Error(`${a.out}: clips changed since the last full bake`);
+      delete meta.anchors; if (Object.keys(r.anchors).length) meta.anchors = r.anchors;
+      const { source, ...rest } = meta; fs.writeFileSync(f, JSON.stringify({ ...rest, source }) + '\n');
+      console.log(`${a.out}: anchors ${Object.keys(r.anchors).join('+') || 'none'} ${JSON.stringify(r.info)}`); continue;
+    }
     const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
     const meta = { ...r.meta, glow: r.emi ? a.glow : 0, source: `KayKit CC0 · ${v.label} · heroic + grim · ${spec.px}px` };

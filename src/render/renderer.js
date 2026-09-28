@@ -20,6 +20,7 @@ import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
+import { createFX, styleOfSrc } from './fx.js';
 import { DEATH_T } from '../sim/battle.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
@@ -228,6 +229,7 @@ export function createRenderer(canvas, sim, input) {
   // paper-doll and skeletons simply don't draw yet.
   let heroAtlas = null, outMap = null;
   const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
+  const fx = createFX();                               // weapon trails / glints / cast shimmer + hit sparks (fx.js)
   const skelAtlases = [];
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
@@ -253,7 +255,7 @@ export function createRenderer(canvas, sim, input) {
       }
       cells.push(row);
     }
-    return { meta, cells };
+    return { name, meta, cells };
   }
   loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; }).catch(() => {});
   SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
@@ -702,7 +704,9 @@ export function createRenderer(canvas, sim, input) {
   }
   let lastCam = { ox: 0, oy: 0 };
 
+  let clockNow = 0;                                   // the render clock (dev slow motion runs it slow)
   function render(alpha, now) {
+    clockNow = now;
     const p = sim.state.player;
     const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
     const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
@@ -730,7 +734,7 @@ export function createRenderer(canvas, sim, input) {
     // the hero
     if (heroAtlas) {
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: H.fx, faceY: H.fy, facing: H.act > 0, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1 });
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a });
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
@@ -740,7 +744,7 @@ export function createRenderer(canvas, sim, input) {
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
-      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: lookOf(m, m.down ? 0.35 : 0), team: 1 });
+      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: lookOf(m, m.down ? 0.35 : 0), team: 1, atl, a });
     });
     // the Ashbound: one atlas per archetype; they rise from the ground, and the slain collapse, lie, then fade
     const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
@@ -755,7 +759,7 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 ? 1 - e.spawn / 0.5 : undefined, stride: STRIDE.skel, seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: fade }, team: dead ? 0 : e.elite ? 3 : 2 });
+      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: fade }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a });
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -769,6 +773,10 @@ export function createRenderer(canvas, sim, input) {
     const rings = !!sim.battle;
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(dr.fx | 0, dr.fy | 0, dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look);
+    // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
+    fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
+    for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
+    fx.particles(now, (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; });
 
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     // upload the window G-buffer
@@ -918,6 +926,11 @@ export function createRenderer(canvas, sim, input) {
     if (floats.length > 40) floats.shift();
   };
   sim.bus.on('combat', (c) => {
+    if (c.t === 'hit') {                                                          // sparks fly off the struck, away from the striker
+      const st = styleOfSrc(c.src, c.party), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);
+      let dx = b.sx - a.sx, dy = b.sy - a.sy; const l = Math.hypot(dx, dy); if (l > 1e-3) { dx /= l; dy /= l; } else { dx = 0; dy = -1; }
+      fx.impact(c.x, c.y, dx, dy, (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200], { heavy: c.heavy, crit: c.crit, now: clockNow || performance.now() });
+    }
     if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
     else if (c.t === 'xp') addFloat(c.x, c.y, '+' + c.amount + ' xp', '#c8a0ff', 10, 30);

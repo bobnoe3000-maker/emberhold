@@ -133,10 +133,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (crit) dmg *= 1.75;
     return { dmg: Math.round(dmg), crit };
   }
-  function applyHit(att, tgt, r, isParty, w) {
+  function applyHit(att, tgt, r, isParty, w, heavy = false) {
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
     tgt.hp = Math.max(0, tgt.hp - r.dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
-    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: r.dmg, crit: r.crit, party: isParty });
+    const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
+    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: r.dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy });
     if (tgt.hp > 0) return;
     if (isParty) { tgt.down = true; bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name }); if (!state.party.some(alive)) defeat(w); }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
@@ -170,11 +171,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const heavy = !!ab || (!isPartyAtt && att.elite);
     att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
     att.atkKind = heavy ? 'heavy' : att.atkN % 2 ? 'a' : 'b';
-    const aStats = isPartyAtt ? { ...statsFor(att), lvl: att.level } : att;
+    const aStats = isPartyAtt ? { ...statsFor(att), lvl: att.level, src: att } : att;
     const dStats = isPartyAtt ? tgt : statsFor(tgt);
     const hit = () => {
       if (!(isPartyAtt ? tgt.hp > 0 && !tgt.dead : alive(tgt))) return;
-      applyHit(aStats, tgt, resolve(aStats, dStats, power, bonus), !isPartyAtt, w);
+      applyHit(aStats, tgt, resolve(aStats, dStats, power, bonus), !isPartyAtt, w, heavy);
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
       if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && Math.hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash), false, w);
     };

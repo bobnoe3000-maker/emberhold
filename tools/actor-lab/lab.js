@@ -112,6 +112,39 @@ function grimPass(d, gain = 1, desat = 0.34, contrast = 1.18, glow = null) {
     const c = (v) => Math.max(0, Math.min(255, 128 + (v - 128) * contrast));
     d[i] = c(r + (L - r) * desat) * 0.9 * gain; d[i + 1] = c(g + (L - g) * desat) * 0.91 * gain; d[i + 2] = c(b + (L - b) * desat) * 0.98 * gain; }
 }
+// WEAPON ANCHORS (src/render/fx.js draws trails / glints / cast shimmer from these): each
+// held weapon is a rigid mesh under a hand slot, so its tip is fixed in slot space. Found
+// once — the extreme of the weapon's long axis farthest from the grip (sword point, axe
+// head, staff crown, crossbow nose) — then projected every baked frame to cell pixels:
+// [tipX, tipY, gripX, gripY, z], z = px the tip sits toward the camera from the figure's
+// centre line (negative = behind the body, so the FX can tuck under the figure).
+function weaponRig(c, v) {
+  const rig = {};
+  for (const [sl, bone] of [['r', 'handslot.r'], ['l', 'handslot.l']]) {
+    const slot = findNode(c.root, bone); if (!slot) continue;
+    c.root.updateMatrixWorld(true);
+    const inv = slot.matrixWorld.clone().invert(), pts = [], p = new THREE.Vector3();
+    slot.traverse((o) => { if (!o.isMesh || !o.visible || /Shield/i.test(o.name)) return;
+      const pos = o.geometry.attributes.position, m = inv.clone().multiply(o.matrixWorld);
+      for (let i = 0; i < pos.count; i++) pts.push(p.fromBufferAttribute(pos, i).applyMatrix4(m).clone()); });
+    if (pts.length < 8) continue;
+    const box = new THREE.Box3().setFromPoints(pts), size = box.getSize(new THREE.Vector3());
+    const ax = (v.tipAxis && v.tipAxis[sl]) || (size.x >= size.y && size.x >= size.z ? 'x' : size.y >= size.z ? 'y' : 'z');
+    let lo = pts[0], hi = pts[0]; for (const q of pts) { if (q[ax] < lo[ax]) lo = q; if (q[ax] > hi[ax]) hi = q; }
+    const flip = v.tipFlip && v.tipFlip[sl], far = Math.abs(hi[ax]) >= Math.abs(lo[ax]);
+    rig[sl] = { slot, tip: (far !== !!flip ? hi : lo).clone(), len: size[ax] };
+  }
+  return rig;
+}
+function anchorAt(w, root, cam, ppu) {
+  const pr = (q) => { const n = q.clone().project(cam); return [(n.x + 1) / 2 * W, (1 - n.y) / 2 * H]; };
+  const tipW = w.slot.localToWorld(w.tip.clone()), gripW = w.slot.getWorldPosition(new THREE.Vector3());
+  const ctr = root.getWorldPosition(new THREE.Vector3()), fwd = cam.getWorldDirection(new THREE.Vector3());
+  const z = -tipW.clone().sub(ctr).dot(fwd) * ppu;                                         // toward the camera = +
+  return [...pr(tipW), ...pr(gripW), z].map((n) => Math.round(n));
+}
+// flatten per-cell anchors into one int array per slot: 5 per cell, cell = dir * frames + frame
+const packAnchors = (a) => Object.fromEntries(Object.entries(a).map(([k, v]) => [k, v.flat()]));
 window.bakeAtlas = async (v, clips, gain = 1) => {
   const c = await build(v), bones = [];
   c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
@@ -125,6 +158,8 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt);
   const scene = new THREE.Scene(); scene.add(c.root);
+  const wr = weaponRig(c, v), anchors = {};
+  for (const k of Object.keys(wr)) anchors[k] = [];
   const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
     // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
@@ -192,6 +227,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       // loops sample f/N (the cycle wraps); one-shots (k.once) span [from, to] inclusive so the last frame is the end pose
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
+      for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
       const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
       despeckle(ad);
       grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed);
@@ -216,8 +252,37 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       nx.putImageData(n, col * W, dir * H); ex.putImageData(e, col * W, dir * H);
     }
   }
-  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', clips: {} };
+  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
   for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps, ...(k.once ? { once: true } : {}), ...(k.impact != null ? { impact: k.impact } : {}) }; start += k.frames; }
   return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null };
+};
+// anchors only (bake.cjs --anchors): same pose sampling and camera as bakeAtlas, no raster —
+// refreshes the weapon anchors in an existing atlas's JSON in seconds
+window.bakeAnchors = async (v, clips) => {
+  const c = await build(v), bones = [];
+  c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+  const sample = (name, t) => { for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); } pose(c, name, t, true); };
+  sample('Idle', 0);
+  const box = new THREE.Box3().setFromObject(c.root), ppu = TARGET_PX / (box.max.y - box.min.y);
+  const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
+  const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
+  cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt); cam.updateMatrixWorld(true);
+  const wr = weaponRig(c, v), anchors = {}, frames = clips.reduce((n, k) => n + k.frames, 0);
+  for (const k of Object.keys(wr)) anchors[k] = [];
+  for (let dir = 0; dir < 8; dir++) {
+    let col = 0;
+    for (const k of clips) for (let f = 0; f < k.frames; f++, col++) {
+      const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
+      sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
+      for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
+    }
+  }
+  return { frames, anchors: packAnchors(anchors), info: Object.fromEntries(Object.entries(wr).map(([k, w]) => [k, { tip: w.tip.toArray().map((n) => +n.toFixed(3)), len: +w.len.toFixed(3) }])) };
+};
+// dev probe: where the weapon meshes hang in each rig (tools/actor-lab weapon anchors)
+window.probeWeapons = async (v) => {
+  const c = await build(v), out = [];
+  c.root.traverse((o) => { if (o.isMesh && o.visible) { const chain = []; let q = o.parent; while (q && chain.length < 4) { chain.push(q.name); q = q.parent; } out.push(`${o.name}${o.isSkinnedMesh ? ' [skinned]' : ''} <- ${chain.join(' <- ')}`); } });
+  return out;
 };
 window.ready = true;

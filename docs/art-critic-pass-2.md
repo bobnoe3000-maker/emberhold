@@ -167,3 +167,52 @@ causes:
 | **Shimmer.** Actors' faint self-light went through the shader's per-pixel random-phase ember flicker. Animated film grain also crawled over the small figures. | Actor self-light is flagged **steady** (the EMI alpha channel). The film grain is static, at a lower amount. |
 
 All eight atlases were rebaked. The bake takes 104 s, up from 35 s.
+
+## Pass 2d — weapon effects
+
+This pass followed a request for streaks on slices and a shimmer on casts. The effects are
+**separate from the sprites**, so skills and spells can reuse the same pieces.
+
+**How it works:**
+- **Bake:** the actor lab records where each weapon's tip and grip sit in every baked
+  cell (`meta.anchors`; see the actor-lab README). `node bake.cjs --anchors` refreshes
+  them in seconds.
+- **Runtime:** `src/render/fx.js` draws light into the emissive plane after the figures,
+  so the effects bloom but light nothing else.
+  - The animator reports the swing in progress (clip plus seconds in).
+  - The trail follows the tip through the baked frames on a Catmull-Rom curve.
+  - Each mark is depth-tested against the figure it belongs to. A blade swung behind the
+    body tucks under it, and anyone standing nearer covers it.
+- **Hit events:** `combat` hit events now carry the striker (`src`, `ax`, `ay`) and a
+  `heavy` flag. The sim's state and outcomes are unchanged.
+
+| Figure | Light A | Light B | Heavy | Colour |
+|---|---|---|---|---|
+| Knight | chop trail | slice trail | wide chop trail + impact star | steel |
+| Barbarian (fighter) | diagonal trail | chop trail | wide spin trail (Cleave) + impact star | ember amber |
+| Rogue | glint on both knife points | twin slice trails | twin chop trails + impact star | green |
+| Mage | shimmer at the staff crown, then a release flash | same | same, larger (Firebolt) | arcane blue; Firebolt fire orange |
+| Skeleton warrior | chop trail | diagonal trail | jump-chop trail + impact star (elites) | soul green |
+| Skeleton minion | slice trail | chop trail | wide chop + impact star | bile green |
+| Skeleton rogue | muzzle flash at the crossbow nose | same | same | powder gold |
+| Skeleton mage | shimmer at the staff crown, then a release flash | same | same | soul green |
+
+**Hit sparks.** Every hit sprays sparks off the struck figure, away from the striker, in the
+striker's spark colour:
+- light hit: 5 sparks;
+- crit: 8 sparks;
+- heavy blow: 11 sparks with a star flash.
+
+**Tuning:**
+- The colours are saturated on purpose, because bloom and the tonemap push light toward
+  white.
+- Impact flashes are kept small. Larger ones bloomed into a pink haze over the melee.
+
+**Dev tool.** `?dev&slow=10`, or `globalThis.__slow = 10` at runtime, runs the sim and the
+render clock 10× slower, so swings can be captured frame by frame.
+
+**Open issues:**
+- The pale pink flash on struck skeletons (the stamp's hit tint) still reads as a haze on
+  bone. A short white rim would read better.
+- Abilities have no effects of their own yet. They borrow the heavy clip's trail. Cleave,
+  Backstab and Firebolt should each get one, built from the same primitives.

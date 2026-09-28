@@ -59,10 +59,17 @@ input.onTap((sx, sy) => {
 let last = performance.now();
 let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
+// dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
+// clock run 8× slower — for inspecting animation and weapon effects frame by frame
+const DEV = location.search.includes('dev');
+if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));
+let vnow = performance.now(), slowed = false;
 
 function frame(now) {
-  let dt = (now - last) / 1000;
+  const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1;
+  let dt = (now - last) / 1000 / SLOW;
   last = now;
+  if (SLOW !== 1 || slowed) { vnow += Math.min(dt, MAX_FRAME) * 1000; now = vnow; slowed = true; } else vnow = now;
   if (dt > MAX_FRAME) dt = MAX_FRAME;
   acc += dt;
 
