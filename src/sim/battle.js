@@ -20,14 +20,14 @@ import { CLASSES, statsFor, xpToNext } from './party.js';
 
 // class combat traits (stats are in party.js / the GDD tables)
 const CLASS_FIGHT = {
-  fighter: { interval: 1.3, range: 1.45, speed: 6.2, ability: { name: 'Cleave', mp: 10, power: 1.3, splash: 0.65 } },
-  rogue:   { interval: 0.9, range: 1.35, speed: 6.8, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
+  fighter: { interval: 1.3, range: 3.0, speed: 6.2, ability: { name: 'Cleave', mp: 10, power: 1.3, splash: 0.65 } },
+  rogue:   { interval: 0.9, range: 2.8, speed: 6.8, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
   mage:    { interval: 1.6, range: 7.0,  speed: 5.8, ability: { name: 'Firebolt', mp: 12, power: 1.8 }, bolt: 'fire', keepAway: 3.2 },
 };
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
-  minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 1.35, speed: 3.3, xp: 10, gold: 1 },
-  warrior: { hp: 54, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 1.45, speed: 2.9, xp: 14, gold: 2 },
+  minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
+  warrior: { hp: 54, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 3.0, speed: 2.9, xp: 14, gold: 2 },
   rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 6.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
   mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 };
@@ -37,7 +37,14 @@ const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
 export const WINDUP = 0.18, DEATH_T = 1.1;
-const SEP = 1.15;   // units keep this far apart (tiles): a 56 px figure's feet span ~1.3 tiles on screen
+const SEP_X = 32, SEP_Y = 16;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
+// Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
+// far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
+// badly while side-by-side ones don't. Attackers take the left/right stations first, then
+// the four diagonals; a second ring waits further out when all six are held.
+const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, -0.6]].map(([a, b]) => {
+  const wx = (a / 8 + b / 4) / 2, wy = (b / 4 - a / 8) / 2, l = Math.hypot(wx, wy); return [wx / l, wy / l];   // screen → world unit vector
+});
 // The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
 // is followed by a breather. Companions who fell during a wave get back up at 25 % HP
 // when it's cleared.
@@ -223,15 +230,56 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (best < 0) return stepToward(u, tx, ty, speed, dt, w, room);
     stepToward(u, g.x0 + (best % g.gw) + 0.5, g.y0 + ((best / g.gw) | 0) + 0.5, speed, dt, w, room);
   }
+  // Personal space, measured ON SCREEN: an ellipse SEP_X px wide × SEP_Y px deep (half
+  // extents). World-round spacing leaves figures stacked on the screen's vertical (a tile
+  // front-to-back is only 4 px), so the push runs in screen space and maps back to the world.
   function separate(units, w) {
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
-      const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
-      if (d < SEP) { const push = (SEP - d) * 0.5, px = (dx / d) * push, py = (dy / d) * push;
-        if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
-        if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; } }
+      const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
+      let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = Math.hypot(u, v);
+      if (e >= 1) continue;
+      if (e < 1e-3) { u = (a.id || i) < (b.id || j) ? -1 : 1; v = 0; e = 1; }       // coincident: part sideways
+      const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5)) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
+      const px = (pu / 8 + pv / 4) / 2, py = (pv / 4 - pu / 8) / 2;                   // screen px → world tiles
+      if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
+      if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
   }
   const nearest = (u, list, pred = () => true) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = Math.hypot(o.x - u.x, o.y - u.y); if (d < bd) { bd = d; best = o; } } return best; };
+
+  // Claim (or keep) a melee station around tgt for u this tick; returns its world point.
+  let claims = new Map();
+  function station(u, tgt, range, w) {
+    const r = range - 0.25, taken = claims.get(tgt) || claims.set(tgt, new Set()).get(tgt);
+    let best = -1, bd = 1e9;
+    for (let k = 0; k < STATIONS.length * 2; k++) {
+      if (taken.has(k)) continue;
+      const ring = k < STATIONS.length ? 1 : 1.75, [ux, uy] = STATIONS[k % STATIONS.length];
+      const x = tgt.x + ux * r * ring, y = tgt.y + uy * r * ring;
+      if (!isWalkable(w, x, y) || roomAt(w, x, y) !== battle.room) continue;
+      if (crowded(x, y, u, tgt)) continue;                                   // someone else already stands there (on screen)
+      const cost = Math.hypot(x - u.x, y - u.y) + (k % STATIONS.length < 2 ? 0 : 0.8) + (ring > 1 ? 6 : 0) - (u.slotTgt === tgt && u.slotK === k ? 1.5 : 0);
+      if (cost < bd) { bd = cost; best = k; }
+    }
+    if (best < 0) return null;
+    taken.add(best); u.slotTgt = tgt; u.slotK = best;
+    const ring = best < STATIONS.length ? 1 : 1.75, [ux, uy] = STATIONS[best % STATIONS.length];
+    return { x: tgt.x + ux * r * ring, y: tgt.y + uy * r * ring, inner: ring === 1 };
+  }
+  // is (x, y) inside another live unit's on-screen personal space? (u and its target excepted)
+  let bodies = [];
+  const crowded = (x, y, u, tgt) => bodies.some((o) => o !== u && o !== tgt && o.src !== u && o.src !== tgt && Math.hypot(((o.x - x - (o.y - y)) * 8) / SEP_X, ((o.x - x + (o.y - y)) * 4) / SEP_Y) < 0.9);
+  const freeStations = (tgt) => STATIONS.length - ((claims.get(tgt) || { size: 0 }).size);
+  // Melee: hold a station beside the target and swing when in reach; never slide mid-swing.
+  function melee(u, tgt, F, dt, w, isParty, move) {
+    const d = Math.hypot(tgt.x - u.x, tgt.y - u.y), st = station(u, tgt, F.range, w);
+    const inReach = d <= F.range + 0.25;
+    if (inReach && u.cd <= 0) { u.moving = false; attack(u, tgt, isParty, w, F); return; }
+    if (u.act > 0.12) { u.moving = false; return; }                     // finishing the swing
+    const goal = st || tgt;
+    if (Math.hypot(goal.x - u.x, goal.y - u.y) > 0.4 && !(inReach && !st)) move(goal.x, goal.y);
+    else u.moving = false;
+  }
 
   // ── the step ────────────────────────────────────────────────────────────────
   function step(dt) {
@@ -279,6 +327,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // the next wave comes when the lull is over and the party has caught its breath (or waited long enough)
         if (battle.lull <= 0 && (battle.wave === 0 || partyHp() >= LULL_READY || battle.waited >= LULL_MAX)) { battle.between = false; spawnWave(w); }
       }
+      claims = new Map();
+      bodies = [{ x: p.x, y: p.y, src: H }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];
       const focus = focusId && foes.find((e) => e.id === focusId);
       // party AI
       state.party.forEach((m, i) => {
@@ -290,18 +340,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         m.fx = tgt.x - m.x; m.fy = tgt.y - m.y;
         if (i === 0) {                                          // the hero: yours while you steer, autobattles when you let go
           if (p.moving) return;
-          if (d <= F.range + 0.2) { if (m.cd <= 0) attack(m, tgt, true, w, F); return; }
-          if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) return;
-          const q = { x: p.x, y: p.y };                         // step toward the target, leashed to the room
-          chase(q, tgt.x, tgt.y, F.speed, dt, w);
-          if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
+          if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F); return; }
+          melee(m, tgt, F, dt, w, true, (gx, gy) => {               // autobattle: take a station, leashed to the room
+            const q = { x: p.x, y: p.y }; chase(q, gx, gy, F.speed, dt, w);
+            if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
+          });
           return;
         }
         const close = nearest(m, foes);
         if (F.keepAway && close && Math.hypot(close.x - m.x, close.y - m.y) < F.keepAway * 0.7) {        // mage: back off
           stepToward(m, m.x - (close.x - m.x), m.y - (close.y - m.y), F.speed, dt, w);
-        } else if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w);
-        else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F); }
+        } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F); } }
+        else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
       });
       // enemy AI (leashed to the room)
       const targets = state.party.filter(alive);
@@ -310,10 +360,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (e.spawn > 0) { e.spawn -= dt; continue; }
         if (e.dead > 0 || e.hp <= 0) { e.moving = false; continue; }
         e.cd = Math.max(0, e.cd - dt);
-        const t = nearest(e, targets); if (!t) { e.moving = false; continue; }
+        // melee skeletons pick the nearest party member with a free station (else the nearest)
+        const t = e.bolt ? nearest(e, targets) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q) || nearest(e, targets);
+        if (!t) { e.moving = false; continue; }
         const d = Math.hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y;
-        if (d > e.range) chase(e, t.x, t.y, e.speed, dt, w);
-        else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); }
+        if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
+        else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed, dt, w));
       }
       separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);
     }
