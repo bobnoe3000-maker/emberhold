@@ -87,7 +87,12 @@
           "frames": 6,
           "fps": 5
         }
-      ]
+      ],
+      "gain": 0.47,
+      "grade": {
+        "contrast": 1.3,
+        "desat": 0.3
+      }
     },
     {
       "out": "skeleton_warrior",

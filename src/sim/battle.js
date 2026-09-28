@@ -21,9 +21,9 @@ import { abilityMods } from './items.js';
 
 // class combat traits (stats are in party.js / the GDD tables)
 const CLASS_FIGHT = {
-  fighter: { interval: 1.3, range: 3.0, speed: 6.2, ability: { name: 'Cleave', mp: 10, power: 1.3, splash: 0.65 } },
-  rogue:   { interval: 0.9, range: 2.8, speed: 6.8, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
-  mage:    { interval: 1.6, range: 7.0,  speed: 5.8, ability: { name: 'Firebolt', mp: 12, power: 1.8 }, bolt: 'fire', keepAway: 3.2 },
+  fighter: { interval: 1.3, range: 3.0, speed: 6.8, ability: { name: 'Cleave', mp: 10, power: 1.3, splash: 0.65 } },
+  rogue:   { interval: 0.9, range: 2.8, speed: 7.5, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
+  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, ability: { name: 'Firebolt', mp: 12, power: 1.8 }, bolt: 'fire', keepAway: 3.2 },
 };
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
@@ -192,9 +192,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
 
   // ── movement ────────────────────────────────────────────────────────────────
+  // Units ease into and out of their stride (critic pass 3: instant starts and stops): the
+  // speed along the step ramps at STEP_ACC; a unit that hasn't stepped for a couple of ticks
+  // starts again from rest.
+  const STEP_ACC = 40;
+  let stepN = 0;
   function stepToward(u, tx, ty, speed, dt, w, room) {
-    const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); if (d < 0.05) { u.moving = false; return; }
-    const s = Math.min(d, speed * dt), nx = u.x + (dx / d) * s, ny = u.y + (dy / d) * s;
+    const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); if (d < 0.05) { u.moving = false; u.spd = 0; return; }
+    if ((u.stepAt ?? -9) < stepN - 2) u.spd = 0;
+    u.stepAt = stepN; u.spd = Math.min(speed, (u.spd || 0) + STEP_ACC * dt);
+    const s = Math.min(d, u.spd * dt), nx = u.x + (dx / d) * s, ny = u.y + (dy / d) * s;
     const ok = (x, y) => isWalkable(w, x, y) && (room === undefined || roomAt(w, x, y) === room);
     if (ok(nx, ny)) { u.x = nx; u.y = ny; } else if (ok(nx, u.y)) u.x = nx; else if (ok(u.x, ny)) u.y = ny;
     u.moving = true; u.fx = dx; u.fy = dy;
@@ -242,13 +249,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // Personal space, measured ON SCREEN: an ellipse SEP_X px wide × SEP_Y px deep (half
   // extents). World-round spacing leaves figures stacked on the screen's vertical (a tile
   // front-to-back is only 4 px), so the push runs in screen space and maps back to the world.
-  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB) {
+  function separate(units, w, SEP_X = SEP_XB, SEP_Y = SEP_YB, stiff = 1) {   // stiff < 1: a gentle nudge per tick (walking), not a shove
     for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
       const a = units[i], b = units[j], dx = b.x - a.x, dy = b.y - a.y;
       let u = ((dx - dy) * 8) / SEP_X, v = ((dx + dy) * 4) / SEP_Y, e = Math.hypot(u, v);
       if (e >= 1) continue;
       if (e < 1e-3) { u = (a.id || i) < (b.id || j) ? -1 : 1; v = 0; e = 1; }       // coincident: part sideways
-      const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5)) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
+      const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5) * stiff) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
       const px = (pu / 8 + pv / 4) / 2, py = (pv / 4 - pu / 8) / 2;                   // screen px → world tiles
       if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
       if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
@@ -300,15 +307,39 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // Stations are laid out in SCREEN pixels (behind the hero's on-screen heading, one to each
   // side) and mapped back to the world: world-space stations put one companion straight
   // above the hero on screen whenever it walked along a world axis.
-  const FORM_BACK = 26, FORM_SIDE = 38, EASE_AFTER = 1.5, SIT_AFTER = 15, STROLL = 1.9;
+  const FORM_BACK = 26, FORM_SIDE = 38, EASE_AFTER = 1.5, SIT_AFTER = 15, STROLL = 2.1;
+  // on the move (critic pass 3: they stopped and started, and swung across at every turn): each
+  // companion matches the hero's velocity plus a spring toward its station (FOLLOW_K per second),
+  // eased by FOLLOW_ACC, capped at FOLLOW_MAX; the formation's heading turns over ~FORM_TURN s
+  const FOLLOW_K = 2.4, FOLLOW_ACC = 45, FOLLOW_MAX = 12, FORM_TURN = 0.35;
+  const formHead = { x: 0.6, y: 0.8 };
+  // the hero's breadcrumbs: a companion whose station is round a corner follows these instead
+  // of pressing into the wall (and being teleported once it fell far behind)
+  const trail = [];
+  const lineOpen = (w, ax, ay, bx, by) => { const n = Math.ceil(Math.hypot(bx - ax, by - ay) / 0.3);
+    for (let i = 1; i <= n; i++) { const x = ax + ((bx - ax) * i) / n, y = ay + ((by - ay) * i) / n; if (!isWalkable(w, x - 0.25, y - 0.25) || !isWalkable(w, x + 0.25, y + 0.25) || !isWalkable(w, x - 0.25, y + 0.25) || !isWalkable(w, x + 0.25, y - 0.25)) return false; }
+    return true; };
+  function moveVel(u, vx, vy, dt, w) {                               // ease u's velocity toward (vx, vy), then move with wall sliding
+    const dvx = vx - (u.vx || 0), dvy = vy - (u.vy || 0), dv = Math.hypot(dvx, dvy), a = FOLLOW_ACC * dt;
+    if (dv <= a) { u.vx = vx; u.vy = vy; } else { u.vx = (u.vx || 0) + (dvx / dv) * a; u.vy = (u.vy || 0) + (dvy / dv) * a; }
+    const sp = Math.hypot(u.vx, u.vy); if (sp < 0.05) { u.vx = u.vy = 0; u.moving = false; return; }
+    const nx = u.x + u.vx * dt, ny = u.y + u.vy * dt;
+    if (isWalkable(w, nx, ny)) { u.x = nx; u.y = ny; } else if (isWalkable(w, nx, u.y)) { u.x = nx; u.vy = 0; } else if (isWalkable(w, u.x, ny)) { u.y = ny; u.vx = 0; } else { u.vx = u.vy = 0; }
+    u.moving = sp > 0.6; if (u.moving) { u.fx = u.vx; u.fy = u.vy; }
+  }
   const scr2w = (sx, sy) => [(sx / 8 + sy / 4) / 2, (sy / 4 - sx / 8) / 2];      // screen px → world tiles
   const idleRng = mulberry32(streamSeed(seed, 0x1d1e));
   let heroStill = 0, clock = 0;
   function atEase(dt, w, p, H) {
     clock += dt;
     heroStill = p.moving ? 0 : heroStill + dt;
+    const last = trail[trail.length - 1];
+    if (!last || Math.hypot(p.x - last[0], p.y - last[1]) > 0.5) { trail.push([p.x, p.y]); if (trail.length > 60) trail.shift(); }
+    if (last && Math.hypot(p.x - last[0], p.y - last[1]) > 6) trail.length = 0;   // a jump (travel, stairs): start over
     const wx0 = p.fx ?? 0.7, wy0 = p.fy ?? 0.7;                          // heading, on screen
-    let hx = (wx0 - wy0) * 8, hy = (wx0 + wy0) * 4; const hl = Math.hypot(hx, hy) || 1; hx /= hl; hy /= hl;
+    let hx = (wx0 - wy0) * 8, hy = (wx0 + wy0) * 4; let hl = Math.hypot(hx, hy) || 1; hx /= hl; hy /= hl;
+    if (p.moving) { const k = 1 - Math.exp(-dt / FORM_TURN); formHead.x += (hx - formHead.x) * k; formHead.y += (hy - formHead.y) * k; }
+    hl = Math.hypot(formHead.x, formHead.y); if (hl > 0.2) { hx = formHead.x / hl; hy = formHead.y / hl; } else { formHead.x = hx; formHead.y = hy; }
     const px_ = -hy, py_ = hx;
     state.party.forEach((m, i) => {
       if (i === 0) {                                                     // the hero: an occasional fidget or glance when idle
@@ -319,13 +350,25 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (m.down) return;
       const side = i === 1 ? -1 : 1, j = ((m.id || '').length * 7 + i * 13) % 10 / 10 - 0.5;   // a personal offset, stable per companion
       const [ox, oy] = scr2w(-hx * (FORM_BACK + j * 8) + px_ * side * (FORM_SIDE + j * 6), -hy * (FORM_BACK + j * 8) + py_ * side * (FORM_SIDE + j * 6));
-      const sx = p.x + ox, sy = p.y + oy;
+      let sx = p.x + ox, sy = p.y + oy;
+      // a station inside a wall (a corridor): pull it in toward the hero until it's open floor, so
+      // they fall in behind rather than scraping along the wall
+      const open = (x, y) => isWalkable(w, x, y) && isWalkable(w, x - 0.3, y - 0.3) && isWalkable(w, x + 0.3, y + 0.3) && isWalkable(w, x - 0.3, y + 0.3) && isWalkable(w, x + 0.3, y - 0.3);
+      if (!open(sx, sy)) for (const t of [0.8, 0.6, 0.4, 0.2]) { const qx = p.x + ox * t, qy = p.y + oy * t; if (open(qx, qy)) { sx = qx; sy = qy; break; } }
       if (heroStill < EASE_AFTER) {                                      // on the move: keep station
         m.sitting = false; m.ease = null;
-        const d = Math.hypot(sx - m.x, sy - m.y);
-        if (d > 0.8) stepToward(m, sx, sy, d > 6 ? 10 : 8.4, dt, w); else m.moving = false;
+        let ex = sx - m.x, ey = sy - m.y, d = Math.hypot(ex, ey);
+        let vx = (p.vx || 0) + ex * FOLLOW_K, vy = (p.vy || 0) + ey * FOLLOW_K;
+        if (d > 0.8 && !lineOpen(w, m.x, m.y, sx, sy)) {                 // station round a corner: follow the hero's trail
+          let c = null; for (let t = trail.length - 1; t >= 0; t--) if (lineOpen(w, m.x, m.y, trail[t][0], trail[t][1])) { c = trail[t]; break; }
+          if (c) { ex = c[0] - m.x; ey = c[1] - m.y; const dc = Math.hypot(ex, ey) || 1, sp = Math.hypot(p.vx || 0, p.vy || 0) + 2.5; vx = (ex / dc) * sp; vy = (ey / dc) * sp; }
+        }
+        const v = Math.hypot(vx, vy); if (v > FOLLOW_MAX) { vx *= FOLLOW_MAX / v; vy *= FOLLOW_MAX / v; }
+        if (!p.moving && d < 0.35) { vx = 0; vy = 0; }                   // settled on station
+        moveVel(m, vx, vy, dt, w);
         return;
       }
+      m.vx = m.vy = 0;
       if (m.sitting) { m.moving = false; return; }
       const e = m.ease || (m.ease = { next: clock + idleRng() * 2, gx: m.x, gy: m.y });
       if (clock >= e.next) {                                             // a new spot, and maybe a gesture
@@ -342,11 +385,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (d > 0.3) stepToward(m, e.gx, e.gy, STROLL, dt, w); else m.moving = false;
       if (heroStill > SIT_AFTER + i * 2.5 && !m.moving) { m.sitting = true; m.fx = p.x - m.x; m.fy = p.y - m.y; }   // settle down, facing the hero
     });
-    separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24);   // roomier than in a melee
+    separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24, heroStill < EASE_AFTER ? 0.3 : 1);   // roomier than in a melee
   }
 
   // ── the step ────────────────────────────────────────────────────────────────
   function step(dt) {
+    stepN++;
     const w = getWorld(), p = state.player, H = hero();
     p.steer = (p.steer ?? 1e9) + dt;
     ensureRuntime();

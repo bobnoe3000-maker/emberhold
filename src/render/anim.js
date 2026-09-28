@@ -15,6 +15,11 @@
 //     swing in progress is returned too (clip key + seconds in), for the weapon effects.
 
 const TURN_MS = 55, EDGE = 0.62;                  // octant units: 0.5 = the edge, +0.12 hysteresis
+// Stride ends (critic pass 3: stopping popped from mid-stride straight to idle, and a walk
+// started wherever the last one left off). The baked cycles pass the legs under the body at
+// 20 % and 70 % of the cycle — the frames closest to standing — so a stop plays on (faster) to
+// the next of those, for at most SETTLE_MS, and a walk from a standstill starts on one.
+const PASS = [0.2, 0.7], SETTLE_MS = 180, SETTLE_RATE = 2.2;
 
 export function createAnimator() {
   const st = new WeakMap();
@@ -24,6 +29,7 @@ export function createAnimator() {
     let s = st.get(u);
     if (!s) { s = { dir: o.dir0 ?? 2, turnAt: 0, phase: (o.seed || 0) % 1, lx: o.x, ly: o.y, atkN: u.atkN || 0, atkT0: -1e9, hitN: u.hitN || 0, hitT0: -1e9, downT0: 0, fidN: u.fidgetN || 0, lookN: u.lookN || 0, gestT0: -1e9, gest: null, sitT0: 0, sat: false }; st.set(u, s); }
     const dx = o.x - s.lx, dy = o.y - s.ly, dist = Math.hypot(dx, dy); s.lx = o.x; s.ly = o.y;
+    o.dt = Math.min(50, now - (s.lastNow ?? now)); s.lastNow = now;
     if ((u.atkN || 0) !== s.atkN) {                              // a swing: light A / light B alternate, heavy for abilities and elites
       s.atkN = u.atkN || 0; s.atkT0 = now;
       s.atkKey = (u.atkKind === 'heavy' && C.heavy && 'heavy') || (u.atkKind === 'b' && C.attack2 && 'attack2') || 'attack'; s.atkClip = C[s.atkKey];
@@ -48,6 +54,7 @@ export function createAnimator() {
     }
 
     const clipAt = (c, t) => c.start + Math.min(c.len - 1, Math.max(0, Math.floor(t * c.fps)));
+    const idleFrame = () => { const c = C.idle; return c.start + Math.floor((now / 1000) * c.fps + (o.seed || 0) * c.len) % c.len; };
     const dur = (c) => (c ? (c.len / c.fps) * 1000 : 0);
     let frame, atk = null;
     if (o.dead && C.death) frame = clipAt(C.death, deadT);                                    // plays once, holds
@@ -56,13 +63,17 @@ export function createAnimator() {
     else if (C.hit && now - s.hitT0 < dur(C.hit)) frame = clipAt(C.hit, (now - s.hitT0) / 1000);
     else if (o.sit && C.sit) frame = C.sitdown && now - s.sitT0 < dur(C.sitdown) ? clipAt(C.sitdown, (now - s.sitT0) / 1000) : C.sit.start + Math.floor((now / 1000) * C.sit.fps + (o.seed || 0) * C.sit.len) % C.sit.len;
     else if (o.moving) {
-      s.phase += dist / o.stride;
+      if (!s.walking) { s.walking = true; if (now - (s.stopT || 0) > 150) s.phase = PASS[(s.leg = (s.leg || 0) ^ 1)]; }   // set off on a passing pose
+      s.phase += dist / o.stride; s.lastStep = now;
       const c = C.walk; frame = c.start + (Math.floor(s.phase * c.len) % c.len + c.len) % c.len;
+    } else if (s.walking && C.walk && now - (s.lastStep || 0) < SETTLE_MS) {            // just stopped: finish the stride
+      const c = C.walk, cyc = ((s.phase % 1) + 1) % 1, next = PASS.map((q) => (q - cyc + 1) % 1).reduce((a, b) => Math.min(a, b));
+      if (next < 0.06) { s.walking = false; s.stopT = now; frame = idleFrame(); }
+      else { s.phase += Math.min(next, (SETTLE_RATE * (c.fps / c.len) * (o.dt || 16)) / 1000); frame = c.start + (Math.floor(s.phase * c.len) % c.len + c.len) % c.len; }
     } else if (s.gest && C[s.gest] && now - s.gestT0 < dur(C[s.gest])) {
       frame = clipAt(C[s.gest], (now - s.gestT0) / 1000);
-    } else {
-      const c = C.idle; frame = c.start + Math.floor((now / 1000) * c.fps + (o.seed || 0) * c.len) % c.len;
-    }
+    } else frame = idleFrame();
+    if (!o.moving && frame !== undefined && !(s.walking && now - (s.lastStep || 0) < SETTLE_MS)) { if (s.walking) s.stopT = now; s.walking = false; }
     return { dir: s.dir, frame, atk };                         // atk: the swing in progress (fx.js draws its trail / glint / cast)
   };
 }

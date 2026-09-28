@@ -18,7 +18,9 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
+  const pick = process.argv.slice(2).filter((x) => !x.startsWith('--'));   // node bake.cjs hero_knight … bakes just those
   for (const a of spec.actors) {
+    if (pick.length && !pick.includes(a.out)) continue;
     if (only) {
       const v = vars[a.variant], f = path.join(OUT, `${a.out}.json`), meta = JSON.parse(fs.readFileSync(f));
       const r = await p.evaluate(async ([v, clips]) => await window.bakeAnchors(v, clips), [v, a.clips]);

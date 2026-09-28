@@ -83,8 +83,11 @@ void main(){
     vec3 L=d/max(dd,0.001);
     float ndl=max(dot(n,vec3(L.x,-L.y*0.55,L.z)),0.0);
     float att=1.0/(1.0+dd*dd*0.0016);
-    col+=A.rgb*uLC[i]*ndl*att;
-    col+=uLC[i]*att*0.05;
+    // figures (actor pixels carry EMI alpha 250) take the hero's own carry light at 55 %: at arm's
+    // length it flattened the knight's steel to a pink-white ghost; the floor keeps the full pool
+    float fig=(i==0&&Et.a>0.97&&Et.a<0.99)?0.55:1.0;
+    col+=A.rgb*uLC[i]*ndl*att*fig;
+    col+=uLC[i]*att*0.05*fig;
   }
   float ph=h21(floor(gl_FragCoord.xy))*6.28;
   col+=E*(Et.a<0.99?1.0:0.55+0.45*sin(uTime*2.6+ph));   // EMI alpha < 1 marks steady (UI-like) glow: team rings
@@ -426,7 +429,8 @@ export function createRenderer(canvas, sim, input) {
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
     const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0;
-    const x0 = (footX | 0) - sp.ax, y0 = (footY | 0) - sp.ay;
+    const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
+    let flashEdge = false;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= H) continue;
       const hpx = baseH + (sp.h - yy) * 0.55;
@@ -442,11 +446,17 @@ export function createRenderer(canvas, sim, input) {
           DEP[di] = dep;
         }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
-        if (flash) { ALB[i] += (236 - ALB[i]) * flash; ALB[i + 1] += (150 - ALB[i + 1]) * flash; ALB[i + 2] += (120 - ALB[i + 2]) * flash; }   // a warm struck tint, not a white ghost
+        if (flash) {                                    // struck: a hot rim on the silhouette, a light warm tint inside (a full tint read as a pink haze on bone)
+          const edge = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
+          const k = edge ? Math.min(1, flash * 2.4) : flash * 0.35;
+          ALB[i] += (255 - ALB[i]) * k; ALB[i + 1] += (205 - ALB[i + 1]) * k; ALB[i + 2] += (160 - ALB[i + 2]) * k;
+          if (edge) { EMI[i] = 90 * k; EMI[i + 1] = 60 * k; EMI[i + 2] = 36 * k; EMI[i + 3] = 250; flashEdge = true; }
+        }
         if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
         NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
         const e = fade > 0.5 ? 0 : sp.emi[j];
-        if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
+        if (flashEdge) flashEdge = false;
+        else if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
         else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
         else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
         EMI[i + 3] = test && !e ? 250 : 255;          // actors' self-light is steady (alpha < 255): the shader's per-pixel ember flicker read as grain on figures
@@ -700,9 +710,14 @@ export function createRenderer(canvas, sim, input) {
     const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
     let jx = 0, jy = 0;
     if (shake) { const a = (performance.now() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
-    return { ox: Math.round(nvw / 2 - C.sx) + jx, oy: Math.round(nvh * anchor - C.sy) + jy };
+    // SUB-PIXEL SCROLL (critic pass 3: the world stepped in whole native pixels — 3 CSS px — in
+    // an uneven 1-1-2 cadence, a judder over the whole screen). The window is rendered at the
+    // camera rounded UP (ox, oy) and PASS B shifts the upscaled image back by the fraction
+    // (rx − ox, a value in (−1, 0]), so the world glides; figures land on the nearest pixel.
+    const rx = nvw / 2 - C.sx + jx, ry = nvh * anchor - C.sy + jy;
+    return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
-  let lastCam = { ox: 0, oy: 0 };
+  let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 };
 
   let clockNow = 0;                                   // the render clock (dev slow motion runs it slow)
   function render(alpha, now) {
@@ -767,11 +782,13 @@ export function createRenderer(canvas, sim, input) {
       const bx = lerp(b, 'x'), by = lerp(b, 'y'), bz = heightAt(sim.world, Math.floor(bx), Math.floor(by)), bp = project(bx, by, bz);
       draws.push({ d: bx + by + 0.2, sp: boltSprite(b.kind), fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
     }
+    if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
+      party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]) });
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const rings = !!sim.battle;
-    for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(dr.fx | 0, dr.fy | 0, dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
+    for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look);
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
     fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
@@ -786,8 +803,10 @@ export function createRenderer(canvas, sim, input) {
 
     const t = now / 1000;
     // hero carry-light + corruption flares (all in native/scratch pixel space)
-    const hx = ox + P.sx, hy = oy + P.sy - 16, hz = pz * ZH + 20;
-    const L = [[hx, hy, hz], [0, 0, 0], [0, 0, 0]];
+    // the carry light rides with the ember wisp above the shoulder (critic pass 3: at chest height it
+    // sat inside the figure and blew the knight's armour out to a white ghost)
+    const hx = ox + P.sx, hy = oy + P.sy - 30, hz = pz * ZH + 46;
+    const L = [[hx + 8, hy, hz], [0, 0, 0], [0, 0, 0]];
     const hl = sim.world.kind === 'dungeon' ? 1 : 0.42;             // at dusk outdoors the hero's ember-wisp is a glow, not a torch
     const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
     // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
@@ -836,7 +855,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform2f(U(postP, 'uOut'), vw, vh);
     gl.uniform2f(U(postP, 'uNative'), nvw, nvh);
     gl.uniform1f(U(postP, 'uScale'), S);
-    gl.uniform2f(U(postP, 'uOff'), 0, 0);
+    gl.uniform2f(U(postP, 'uOff'), (lastCam.rx - ox) * S, (lastCam.ry - oy) * S);   // the sub-pixel part of the camera
     gl.uniform1f(U(postP, 'uBloom'), BLOOM);
     gl.uniform1f(U(postP, 'uTime'), t);
     gl.uniform1i(U(postP, 'uView'), 0);
@@ -844,9 +863,9 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(ox, oy, ix, iy); }   // no minimap on the town's home screen
-    drawGoal(ox, oy, now);
-    drawBattle(ox, oy, ix, iy, pz, now);
+    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
+    drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
+    drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     drawBanner(now);
     const j = input.joystick();
     if (j) {
@@ -1080,7 +1099,7 @@ export function createRenderer(canvas, sim, input) {
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
       let best = null, bd = 26;
       for (const e of w.enemies) { if (e.hp <= 0) continue; const z = heightAt(w, Math.floor(e.x), Math.floor(e.y)), P = project(e.x, e.y, z);
-        const d = Math.hypot(lastCam.ox + P.sx - nx, lastCam.oy + P.sy - 24 - ny); if (d < bd) { bd = d; best = e; } }
+        const d = Math.hypot(lastCam.rx + P.sx - nx, lastCam.ry + P.sy - 24 - ny); if (d < bd) { bd = d; best = e; } }
       return best;
     },
     serviceAt(sxPx, syPx) {
@@ -1089,7 +1108,7 @@ export function createRenderer(canvas, sim, input) {
       let best = null;
       for (const sv of w.services) {
         const m = envMeta.sprites[sv.id]; if (!m) continue;
-        const P = project(sv.x, sv.y, z), x0 = lastCam.ox + P.sx - m.ax, y0 = lastCam.oy + P.sy - m.ay;
+        const P = project(sv.x, sv.y, z), x0 = lastCam.rx + P.sx - m.ax, y0 = lastCam.ry + P.sy - m.ay;
         if (nx >= x0 && nx < x0 + m.w && ny >= y0 && ny < y0 + m.h * 0.85 && (!best || sv.x + sv.y > best.x + best.y)) best = sv;
       }
       return best;
@@ -1098,7 +1117,7 @@ export function createRenderer(canvas, sim, input) {
       const p = sim.state.player;
       const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
       const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
-      const { ox, oy } = lastCam;
+      const { rx: ox, ry: oy } = lastCam;
       const dpr = vw / window.innerWidth;
       return resolveTap((sxPx * dpr) / S - ox, (syPx * dpr) / S - oy, {
         heightAt: (tx, ty) => heightAt(sim.world, tx, ty),

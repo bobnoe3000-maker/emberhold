@@ -18,7 +18,12 @@ import { createBus, createCommandQueue } from './bus.js';
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
 
-const PLAYER_SPEED = 8.0;     // tiles / second (5.8 → 7.0 → 8.0)
+export const PLAYER_SPEED = 8.8;   // tiles / second (5.8 → 7.0 → 8.0 → 8.8)
+// Movement has a VELOCITY (critic pass 3: instant starts, stops and pivots read as stiff):
+// speed eases up and down (ACCEL / BRAKE) and the heading turns at TURN_RATE, so a stick
+// flick or a path corner becomes a short curve. Tap / compass walks steer at a point LOOK
+// tiles ahead along the path (pure pursuit) and brake into the goal instead of stopping dead.
+const ACCEL = 60, BRAKE = 85, TURN_RATE = 14, LOOK = 1.1;
 const PLAYER_RADIUS = 0.32;   // collision radius in tiles
 const REACH = 1.8;            // interact reach (chebyshev-ish, in tiles)
 
@@ -68,7 +73,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
-    moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = Math.hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; face(p, dx, dy); } });
+    moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = Math.hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -112,19 +117,48 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (!isWalkable(world, x - r, y - r, cz) || !isWalkable(world, x + r, y - r, cz) || !isWalkable(world, x - r, y + r, cz) || !isWalkable(world, x + r, y + r, cz)) return false; }
     return true;
   };
+  // tap / compass walks: string-pull the path, then steer at a point LOOK tiles ahead along it
+  // (a corner becomes an arc), slowing only to brake into the goal
   function followPath() {
     const p = state.player;
-    if (!p.path || p.moving || state.party[0].down) return;
-    // string-pull: head for the furthest of the next few waypoints still in a straight line
+    if (!p.path || p.want || state.party[0].down) return;
     let k = 0; for (let j = Math.min(p.path.length - 1, 10); j > 0; j--) if (lineClear(p.x, p.y, p.path[j][0], p.path[j][1])) { k = j; break; }
     if (k) p.path.splice(0, k);
-    const [wx, wy] = p.path[0], dx = wx - p.x, dy = wy - p.y, d = Math.hypot(dx, dy);
-    if (d < 0.12) { p.path.shift(); if (!p.path.length) arrive(); return; }
-    const step = Math.min(d, PLAYER_SPEED * TICK_DT), ox = p.x, oy = p.y;
-    tryMove(p, (dx / d) * step, (dy / d) * step);
-    p.moving = true; p.fx = dx / d; p.fy = dy / d; p.steer = 0; face(p, dx, dy);
-    p.pathStuck = Math.hypot(p.x - ox, p.y - oy) < 0.01 ? (p.pathStuck || 0) + 1 : 0;
-    if (p.pathStuck > 10) stopWalk();                            // blocked (a unit in the way): give up rather than grind
+    while (p.path.length > 1 && Math.hypot(p.path[0][0] - p.x, p.path[0][1] - p.y) < LOOK * 0.5) p.path.shift();   // passed it
+    const [lx, ly] = p.path[p.path.length - 1];
+    let left = 0, ax = p.x, ay = p.y; for (const [wx, wy] of p.path) { left += Math.hypot(wx - ax, wy - ay); ax = wx; ay = wy; }
+    if (left < 0.12 || (p.path.length === 1 && Math.hypot(lx - p.x, ly - p.y) < 0.12)) { p.vx *= 0.3; p.vy *= 0.3; arrive(); return; }
+    // the carrot: LOOK tiles along the remaining path
+    let cx = p.path[0][0], cy = p.path[0][1], need = LOOK; ax = p.x; ay = p.y;
+    for (const [wx, wy] of p.path) { const d = Math.hypot(wx - ax, wy - ay); if (d >= need) { cx = ax + ((wx - ax) * need) / d; cy = ay + ((wy - ay) * need) / d; break; } need -= d; ax = wx; ay = wy; cx = wx; cy = wy; }
+    if (!lineClear(p.x, p.y, cx, cy)) { cx = p.path[0][0]; cy = p.path[0][1]; }
+    const dx = cx - p.x, dy = cy - p.y, d = Math.hypot(dx, dy) || 1;
+    const sp = Math.min(PLAYER_SPEED, Math.sqrt(2 * BRAKE * 0.7 * left) + 0.6);    // brake into the goal
+    p.want = { x: (dx / d) * sp, y: (dy / d) * sp };
+  }
+  // integrate the hero's velocity toward p.want (null = stop): speed eases, the heading turns at
+  // TURN_RATE (a hard reversal brakes first), collisions slide along walls and kill that axis
+  function integrate() {
+    const p = state.player, w = p.want;
+    let sp = Math.hypot(p.vx || 0, p.vy || 0), hd = sp > 0.05 ? Math.atan2(p.vy, p.vx) : null;
+    const ts = w ? Math.hypot(w.x, w.y) : 0, th = ts > 0.05 ? Math.atan2(w.y, w.x) : hd;
+    let target = ts;
+    if (th !== null) {
+      if (hd === null || sp < 1) hd = th;                                   // from a standstill: set off facing the way you want
+      else {
+        let da = th - hd; da -= 2 * Math.PI * Math.round(da / (2 * Math.PI));
+        const turn = TURN_RATE * TICK_DT; hd += Math.max(-turn, Math.min(turn, da));
+        if (Math.abs(da) > 2.1) target = Math.min(target, sp * 0.4);        // a hard reversal: brake through it
+      }
+    }
+    sp += Math.max(-BRAKE * TICK_DT, Math.min(ACCEL * TICK_DT, target - sp));
+    if (sp < 0.05 || hd === null) { p.vx = p.vy = 0; return; }
+    p.vx = Math.cos(hd) * sp; p.vy = Math.sin(hd) * sp;
+    const ox = p.x, oy = p.y; tryMove(p, p.vx * TICK_DT, p.vy * TICK_DT);
+    if (Math.abs(p.x - ox) < 1e-6) p.vx = 0; if (Math.abs(p.y - oy) < 1e-6) p.vy = 0;   // blocked on that axis
+    const moved = Math.hypot(p.x - ox, p.y - oy) / TICK_DT;
+    if (moved > 0.6) { p.moving = true; p.fx = (p.x - ox) / (moved * TICK_DT); p.fy = (p.y - oy) / (moved * TICK_DT); face(p, p.fx, p.fy); }
+    if (p.path && w) { p.pathStuck = moved < 0.2 ? (p.pathStuck || 0) + 1 : 0; if (p.pathStuck > 10) stopWalk(); }   // blocked (a unit in the way): give up rather than grind
   }
 
   function face(p, dx, dy) {
@@ -140,7 +174,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     world = buildWorld(state.depth);
     const s = findSpawn(world);
     const p = state.player;
-    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     battle.reset();
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme });
   }
@@ -154,7 +188,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
     const p = state.player;
     const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
-    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.frame = 0; p.frameAcc = 0;
+    p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     battle.reset();
     bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene });
   }
@@ -175,14 +209,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     }
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
-      if (state.party[0].down) { p.moving = false; return; }    // your hero has fallen: the others fight on
+      if (state.party[0].down) return;                         // your hero has fallen: the others fight on
       const len = Math.hypot(cmd.x, cmd.y);
-      if (len < 0.12) { p.moving = false; return; }
+      if (len < 0.12) return;
       if (p.path || p.resume) { stopWalk(); p.resume = null; }  // the stick takes over from a tap / compass walk
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
-      tryMove(p, nx * PLAYER_SPEED * TICK_DT, ny * PLAYER_SPEED * TICK_DT);
-      p.moving = true; p.fx = nx; p.fy = ny; p.steer = 0;
-      face(p, cmd.x, cmd.y);
+      p.want = { x: nx * PLAYER_SPEED, y: ny * PLAYER_SPEED }; p.steer = 0;
       return;
     }
     if (cmd.type === 'goto') {                             // compass: auto-walk to a picked destination
@@ -258,9 +290,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function tick() {
     const p = state.player;
     p.px = p.x; p.py = p.y;
-    p.moving = false;
+    p.moving = false; p.want = null;
     for (const cmd of commands.drain()) applyCommand(cmd);
     followPath();
+    if (p.want || p.path) p.steer = 0;
+    if (!state.party[0].down) integrate(); else p.vx = p.vy = 0;
     battle.step(TICK_DT);
     // a compass walk that runs into a fight stops there; unless the fight IS the destination
     // room, the chip can resume it (the resumed walk won't stop for that room again)
@@ -305,7 +339,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!isWalkable(world, p.x, p.y)) { const s = findSpawn(world); p.x = p.px = s.x; p.y = p.py = s.y; }
     p.dir = data.player.dir ?? 'down';
     p.mirror = !!data.player.mirror;
-    p.moving = false; p.frame = 0; p.frameAcc = 0;
+    p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
     state.counters.gold = data.counters?.gold ?? 0;

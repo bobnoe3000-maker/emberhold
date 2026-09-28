@@ -89,9 +89,13 @@ function frame(now) {
   }
 
   renderer.render(acc / TICK_DT, now);
-  requestAnimationFrame(frame);
+  if (!MANUAL) requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+// dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls
+// globalThis.__frame(ms) at exact intervals, so motion traces don't depend on the machine's speed
+const MANUAL = DEV && location.search.includes('manual');
+if (MANUAL) { let mt = performance.now(); last = mt; globalThis.__frame = (ms = 1000 / 60) => { mt += ms; frame(mt); }; }
+else requestAnimationFrame(frame);
 
 // pause the clock when backgrounded (offline math covers gaps later)
 document.addEventListener('visibilitychange', () => {
