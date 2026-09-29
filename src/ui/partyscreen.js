@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { CLASSES, statsFor } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
-import { drawPortrait, swallow } from './actorart.js';
+import { drawPortrait, swallow, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 
 const CSS = `
 #pscrWrap { position: fixed; inset: 0; z-index: 10; background: rgba(6,4,10,.62); display: none; }
@@ -27,7 +27,7 @@ const CSS = `
 .pslot { display: flex; gap: 11px; align-items: center; padding: 10px; margin-bottom: 9px; border: 1px solid #2c2838; border-radius: 10px; background: rgba(255,255,255,.02); min-height: 72px; }
 .pslot.main { border-color: rgba(214,170,98,.6); }
 .pslot.fallen { background: rgba(120,140,170,.06); border-color: #4a5468; }
-.pslot canvas { width: 44px; height: 52px; flex: none; image-rendering: pixelated; background: #0c0a12; border: 1px solid #2c2838; }
+.pslot canvas { width: 44px; height: 52px; flex: none; background: #0c0a12; border: 1px solid #2c2838; }
 .pslot.fallen canvas { filter: grayscale(1) brightness(.8); opacity: .7; }
 .pslot .n { width: 22px; flex: none; text-align: center; font-size: 11px; color: #978c80; }
 .pslot .tx { flex: 1; min-width: 0; }
@@ -46,7 +46,7 @@ const CSS = `
 function Portrait({ actor }) {
   const cv = useRef(/** @type {HTMLCanvasElement|null} */ (null));
   useEffect(() => { if (cv.current) drawPortrait(cv.current, actor); }, [actor]);
-  return html`<canvas ref=${cv} width="44" height="52"></canvas>`;
+  return html`<canvas ref=${cv} width=${PORTRAIT_W} height=${PORTRAIT_H}></canvas>`;
 }
 const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
 function line(m) {

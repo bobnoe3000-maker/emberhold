@@ -11,7 +11,7 @@
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { createStoryBook } from '../story/adapter.js';
-import { drawPortrait, swallow } from './actorart.js';
+import { drawPortrait, swallow, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 
 const CSS = `
 #talkWrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; display: none; pointer-events: none; }
@@ -20,7 +20,7 @@ const CSS = `
   border-radius: 16px 16px 0 0; padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); color: #efe4cf; font-family: Georgia, 'Times New Roman', serif;
   box-shadow: 0 -10px 30px rgba(0,0,0,.45); -webkit-tap-highlight-color: transparent; user-select: none; }
 #talk .who { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-#talk canvas { width: 48px; height: 57px; border-radius: 8px; border: 1px solid rgba(214,170,98,0.4); background: radial-gradient(#3a2c22, #17111c); image-rendering: pixelated; flex: none; }
+#talk canvas { width: 48px; height: 57px; border-radius: 8px; border: 1px solid rgba(214,170,98,0.4); background: radial-gradient(#3a2c22, #17111c); flex: none; }
 #talk .nm b { display: block; font-size: 17px; color: #f0c880; font-weight: 600; }
 #talk .nm span { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; letter-spacing: .5px; margin-top: 2px; }
 #talk .x { position: absolute; right: 10px; top: 10px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.45); color: #d8a040; background: none; font-size: 15px; }
@@ -36,7 +36,7 @@ const CSS = `
 function Portrait({ look }) {
   const ref = useRef(/** @type {HTMLCanvasElement|null} */ (null));
   useEffect(() => { if (ref.current && look) drawPortrait(ref.current, look); }, [look]);
-  return html`<canvas ref=${ref} width="44" height="52"></canvas>`;
+  return html`<canvas ref=${ref} width=${PORTRAIT_W} height=${PORTRAIT_H}></canvas>`;
 }
 
 /** @param {{ def: any, place: string, beat: any, onChoose: (i: number) => void, onClose: () => void }} p */

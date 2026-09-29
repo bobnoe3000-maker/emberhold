@@ -9,7 +9,7 @@
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
-import { esc } from './actorart.js';
+import { esc, drawPortrait, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 
 const CSS = `
 #party { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.08fr 1fr; gap: 6px;
@@ -27,7 +27,7 @@ const CSS = `
   text-align: center; font-size: 9.5px; color: #6f6880; letter-spacing: .5px; line-height: 1.35; }
 #party .top { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
 #party .pf { position: relative; width: 34px; height: 40px; flex: none; background: #0c0a12; border: 1px solid #2c2838; }
-#party .pf canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+#party .pf canvas { width: 100%; height: 100%; }
 #party .lv { position: absolute; left: -1px; bottom: -1px; background: #b8862e; color: #1a1208; font-size: 8px; font-weight: 700; padding: 0 2px; }
 #party .nm { font-size: 11px; letter-spacing: 1.5px; font-weight: 700; color: #ece6da; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #party .cl { font-size: 9px; letter-spacing: 1px; color: #8a8498; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -42,16 +42,13 @@ const CSS = `
 #party .xp div i { position: absolute; left: 0; top: 0; bottom: 0; background: #d8a040; }
 `;
 
+// one painted portrait per actor (actorart.js), copied into every card that shows it: cards re-render
+// often, and a copy is instant where a fresh paint would flash
 const portraitCache = new Map();
 function portrait(actor) {
   if (portraitCache.has(actor)) return portraitCache.get(actor);
-  const c = document.createElement('canvas'); c.width = 44; c.height = 52;
-  const img = new Image(); img.src = `./assets/actors/${actor}.alb.png`;
-  img.onload = () => {                                       // facing-camera idle frame (row 2, frame 0), head + torso
-    const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.filter = 'brightness(1.9) saturate(1.1)';
-    x.drawImage(img, 22, 2 * 102 + 26, 44, 52, 0, 0, 44, 52);
-    for (const el of document.querySelectorAll(`canvas[data-actor="${actor}"]`)) { const y = el.getContext('2d'); y.imageSmoothingEnabled = false; y.clearRect(0, 0, 44, 52); y.drawImage(c, 0, 0); }
-  };
+  const c = document.createElement('canvas'); c.width = PORTRAIT_W; c.height = PORTRAIT_H;
+  drawPortrait(c, actor, () => { for (const el of document.querySelectorAll(`canvas[data-actor="${actor}"]`)) { const y = el.getContext('2d'); y.clearRect(0, 0, el.width, el.height); y.drawImage(c, 0, 0); } });
   portraitCache.set(actor, c);
   return c;
 }
@@ -68,7 +65,7 @@ export function createPartyPanel(sim) {
     const hp = Math.max(0, Math.round(m.hp));
     const pts = pendingPoints(m) + pendingSkillPoints(m);
     return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}${m.fallen ? ' fallen' : ''}${m.weakUntil > 0 ? ' weak' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}${pts ? `<span class="ptb">+${pts}</span>` : ''}
-      <div class="top"><div class="pf"><canvas width="44" height="52" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
+      <div class="top"><div class="pf"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.label.toUpperCase()}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'FALLEN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
@@ -78,7 +75,7 @@ export function createPartyPanel(sim) {
   function draw() {
     const [you, a, b] = sim.state.party;
     el.innerHTML = card(a, 1) + card(you, 0) + card(b, 2);
-    for (const cv of el.querySelectorAll('canvas[data-actor]')) { const src = portrait(cv.dataset.actor); const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(src, 0, 0); }
+    for (const cv of el.querySelectorAll('canvas[data-actor]')) { const src = portrait(cv.dataset.actor); const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(src, 0, 0); }
   }
   sim.bus.on('partyChanged', draw);
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed

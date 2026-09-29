@@ -12,7 +12,7 @@
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
-import { esc } from './actorart.js';
+import { esc, drawPortrait, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon } from './classicons.js';
@@ -28,7 +28,7 @@ const CSS = `
 #gearSheet .tabs { display: flex; gap: 6px; margin-top: 26px; }
 #gearSheet .tab { flex: 1; display: flex; gap: 7px; align-items: center; padding: 5px 7px; border: 1px solid #2c2838; border-radius: 6px; background: rgba(255,255,255,.02); min-width: 0; cursor: pointer; }
 #gearSheet .tab.on { border-color: #d8a040; background: rgba(216,160,64,.10); box-shadow: inset 0 -2px 0 #d8a040; }
-#gearSheet .tab canvas { width: 30px; height: 35px; flex: none; image-rendering: pixelated; background: #0c0a12; border: 1px solid #2c2838; }
+#gearSheet .tab canvas { width: 30px; height: 35px; flex: none; background: #0c0a12; border: 1px solid #2c2838; }
 #gearSheet .tab b { display: block; font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #gearSheet .tab span { display: block; font-size: 9px; color: #978c80; letter-spacing: 1px; margin-top: 1px; white-space: nowrap; }
 #gearSheet .tab .dot { width: 7px; height: 7px; border-radius: 4px; background: #8fe07a; box-shadow: 0 0 6px #8fe07a; flex: none; margin-left: auto; align-self: flex-start; }
@@ -132,7 +132,7 @@ const CSS = `
 #party .card .upb { position: absolute; top: -7px; right: -4px; background: #8fe07a; color: #10200c; font-size: 8px; font-weight: 700; border-radius: 7px; padding: 1px 5px; letter-spacing: .5px; box-shadow: 0 0 8px rgba(143,224,122,.6); }
 `;
 
-// portrait / figure canvases cut from the baked atlas (facing camera, idle frame 0)
+// the figure canvas, cut from the baked atlas (facing camera, idle frame 0); portraits: actorart.js
 const atlasImgs = new Map();
 function drawActor(cv, actor, sx, sy, sw, sh, bright = 1.9) {
   let img = atlasImgs.get(actor);
@@ -180,7 +180,7 @@ export function createGearSheet(sim, { partyPanel }) {
   function render() {
     if (!open) return;
     const m = member(), s = statsFor(m), g = m.gear || {}, c = CLASSES[m.cls];
-    const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="44" height="52" data-actor="${actorOf(p)}"></canvas>`
+    const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${actorOf(p)}"></canvas>`
       + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · FALLEN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
@@ -202,7 +202,7 @@ export function createGearSheet(sim, { partyPanel }) {
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawActor(fc, fc.dataset.fig, 0, 0, 88, 102, 2.1);
     renderCard();
   }
-  function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawActor(cv, cv.dataset.actor, 22, 26, 44, 52); }
+  function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawPortrait(cv, cv.dataset.actor); }
 
   // ── the Stats tab: attributes and points (GDD §4.1) ─────────────────────────
   function statsView(m, s) {

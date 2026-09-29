@@ -1,7 +1,10 @@
 // @ts-check
-// actorart.js — figures and portraits for the windows, cut from a character's own baked atlas
-// (assets/actors/<actor>.alb.png: 102 px rows per facing, the camera-facing idle frame is row
-// 2, frame 0). Shared by the character sheet, the party screen, the title and creation.
+// actorart.js — figures and portraits for the windows. Portraits are the baked head-and-shoulders
+// <actor>.face.png (96 × 112, lit, tools/actor-lab renderPortrait — art critic pass 4); an actor
+// without one falls back to a crop of its atlas (assets/actors/<actor>.alb.png: 102 px rows per
+// facing, the camera-facing idle frame is row 2, frame 0). Portrait canvases are 96 × 112 in any
+// CSS size, drawn smooth. Shared by the party cards, the sheet, the party screen, the dialogue
+// window, the title and creation.
 
 /** @type {Map<string, HTMLImageElement>} */
 const imgs = new Map();
@@ -20,8 +23,24 @@ export function drawActor(cv, actor, sx, sy, sw, sh, bright = 1.9) {
   };
   if (im.complete && im.naturalWidth) paint(); else im.addEventListener('load', paint, { once: true });
 }
-/** head and shoulders @param {HTMLCanvasElement} cv @param {string} actor */
-export const drawPortrait = (cv, actor) => drawActor(cv, actor, 22, 26, 44, 52);
+/** @type {Map<string, Promise<HTMLImageElement|null>>} */
+const faces = new Map();
+const faceOf = (/** @type {string} */ actor) => {
+  let f = faces.get(actor);
+  if (!f) { f = new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = `./assets/actors/${actor}.face.png`; }); faces.set(actor, f); }
+  return f;
+};
+export const PORTRAIT_W = 96, PORTRAIT_H = 112;
+/** head and shoulders: the baked portrait, else a crop of the atlas; `done` runs once it's painted
+ * @param {HTMLCanvasElement} cv @param {string} actor @param {() => void} [done] */
+export function drawPortrait(cv, actor, done) {
+  faceOf(actor).then((img) => {
+    if (!img) { drawActor(cv, actor, 22, 26, 44, 52); if (done) setTimeout(done, 60); return; }
+    const x = cv.getContext('2d'); if (!x) return;
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.filter = 'none';
+    x.clearRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height); if (done) done();
+  });
+}
 /** the whole figure @param {HTMLCanvasElement} cv @param {string} actor */
 export const drawFigure = (cv, actor) => drawActor(cv, actor, 0, 0, 88, 102, 2.1);
 
