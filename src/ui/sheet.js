@@ -82,6 +82,7 @@ const CSS = `
 .gbtn { flex: 1; text-align: center; padding: 10px 6px; border-radius: 8px; font: 11.5px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid rgba(214,170,98,0.45); color: #f0c880; background: none; }
 .gbtn.pri { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; font-weight: 700; border-color: #f0c880; }
 .gbtn.ghost { flex: .7; color: #978c80; border-color: #2c2838; }
+.gbtn.arm { background: #5a1c16; color: #ffd0c8; border-color: rgba(255,122,102,.6); }
 #lootToast { position: fixed; left: 50%; top: 96px; width: min(380px, calc(100vw - 32px)); transform: translate(-50%, -12px); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 7;
   background: rgba(18,14,24,.97); border: 1px solid; border-radius: 12px; padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.7); font-family: ui-monospace, Menlo, monospace; color: #efe4cf; }
 #lootToast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
@@ -150,6 +151,7 @@ export function createGearSheet(sim, { partyPanel }) {
   let pendingSel = null;                                     // an equip in flight: follow the item to its new slot
   const fresh = new Set();                                   // uids dropped since you last looked
   let note = null;                                           // { text, bad } under the card
+  let armSalvage = null, armTimer = 0;                       // uid of a Fine+ item whose Salvage was tapped once
 
   const member = () => S.party[Math.min(who, S.party.length - 1)];
   const isUp = (m, it) => upgradeScore(m, it) > 0.05;
@@ -257,7 +259,8 @@ export function createGearSheet(sim, { partyPanel }) {
     if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
     else {
       const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${esc(wearer.name)}`}</button>` : '';
-      btns = `${eq}<button class="gbtn" data-act="salvage">Salvage ✦${SALVAGE[it.r]}</button><button class="gbtn ghost" data-act="close">Close</button>`;
+      const armed = armSalvage === it.uid;
+      btns = `${eq}<button class="gbtn${armed ? ' arm' : ''}" data-act="salvage">${armed ? `Sure? ✦${SALVAGE[it.r]}` : `Salvage ✦${SALVAGE[it.r]}`}</button><button class="gbtn ghost" data-act="close">Close</button>`;
     }
     card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt=""></div>
       <div><h3 style="color:${RC[it.r]}">${it.name}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
@@ -294,7 +297,14 @@ export function createGearSheet(sim, { partyPanel }) {
     if (act === 'close' || !it) { sel = null; render(); return; }
     if (act === 'equip') { sim.commands.push({ type: 'equip', member: b.dataset.to, uid: it.uid }); pendingSel = { uid: it.uid, to: b.dataset.to }; }
     if (act === 'unequip') sim.commands.push({ type: 'unequip', member: m.id, slot: sel.worn });
-    if (act === 'salvage') { sim.commands.push({ type: 'salvage', uid: it.uid }); sel = null; }
+    if (act === 'salvage') {
+      // Fine and better ask twice (salvage can't be undone); the second tap within 3 s confirms
+      if (it.r !== 'common' && armSalvage !== it.uid) {
+        armSalvage = it.uid; clearTimeout(armTimer); armTimer = setTimeout(() => { armSalvage = null; if (open) renderCard(); }, 3000);
+        renderCard(); return;
+      }
+      armSalvage = null; clearTimeout(armTimer); sim.commands.push({ type: 'salvage', uid: it.uid }); sel = null;
+    }
   });
   // after an equip lands the item card closes, on the tab of whoever now wears it; a refusal
   // (bag full, two hands…) keeps the card open with the reason
