@@ -121,14 +121,19 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       let m = memo.get(hz); if (!m) memo.set(hz, (m = new Map()));
       let v = m.get(k); if (v === undefined) { v = standable(x, y, fx, fy); m.set(k, v); } return v;
     };
-    const path = findPath(p.x, p.y, tx, ty, stand, { near, weight });
+    // outdoors, a walk keeps out of every exit zone but the one it's heading for: leaving the
+    // barrows for town, the straight line north ran back through the barrows' mouth. (A walk that
+    // can only be made through one still goes, and followPath's exit check below lets it pass.)
+    const goalZone = world.kind !== 'dungeon' ? oExitAt(world, tx + 0.5, ty + 0.5) : null;
+    const clear = (x, y, fx, fy) => { const e = oExitAt(world, x + 0.5, y + 0.5); return (!e || e === goalZone) && stand(x, y, fx, fy); };
+    const path = (world.kind !== 'dungeon' && world.exits.length && findPath(p.x, p.y, tx, ty, clear, { near, weight })) || findPath(p.x, p.y, tx, ty, stand, { near, weight });
     if (!path) { bus.emit('noPath', { tx, ty }); return false; }
-    p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0;
+    p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0; p.goalZone = goalZone;
     p.dest = opts.label ? { label: opts.label, tx, ty, then, near, room: opts.room ?? -1, fromRoom: battle.battle ? battle.battle.room : -1 } : null;   // fromRoom: a fight you're walking out of doesn't stop you
     if (!p.path.length) arrive();
     return true;
   }
-  function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; p.dest = null; }
+  function stopWalk() { const p = state.player; p.path = null; p.goal = null; p.then = null; p.dest = null; p.goalZone = null; }
   function arrive() { const p = state.player, then = p.then; stopWalk(); if (then) applyCommand(then); }
   const lineClear = (ax, ay, bx, by) => {                 // can the hero walk straight from a to b?
     const d = hypot(bx - ax, by - ay), n = Math.ceil(d / 0.25), cz = heightAt(world, Math.floor(ax), Math.floor(ay)), r = PLAYER_RADIUS;
@@ -330,7 +335,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     heroes.tick();
-    if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
+    // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
+    // on the way past); the stick, or a walk that ends in it, goes through
+    if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
     else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
     state.t += TICK_DT; state.tick += 1;
   }
