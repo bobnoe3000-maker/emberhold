@@ -19,6 +19,12 @@ Maudry Fenn (`npc_maudry`, the Tired Mule's keeper) is the KayKit Rogue with its
 collar swatches repainted mustard-brown, holding a pewter ale mug that is **our own**, built in
 code (`tools/actor-lab/props.js`, variant `N1`).
 
+**Faces** (art critic pass 4). The human heads are rebuilt by our face kit
+(`tools/actor-lab/faces.js`): a bald skull stitched from the KayKit Knight's and Barbarian's head
+meshes, KayKit's own hair and beard meshes where a face uses them, and eyes, brows, noses, mouths,
+hair shells and marks that are **our own**, built in code. The window portraits
+(`<actor>.face.png`) are lit renders of the same figures.
+
 The earlier POC atlases (a Flare CC BY-SA 3.0 skeleton and the `isometric_hero`
 knight) have been removed.
 
