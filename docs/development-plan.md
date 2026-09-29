@@ -52,8 +52,8 @@ section.
 ### 2.1 Intro, title and cutscenes
 
 **Implemented (2026-09-29): the boot, the title and the intro**, as approved in
-[intro-mockup.html](./intro-mockup.html) (direction C, revision 4, with the last line changed to
-*"Looks like it is up to you."*):
+[intro-mockup.html](./intro-mockup.html) (direction C, revision 4, with the closing lines changed to
+*"The heroes of this age are not available… Looks like it is up to you."*):
 - `src/cutscene/player.js`: the studio splash (*No Game Studios*), the loading screen (lore tips
   from `content/tips.json`; the bar waits on `renderer.ready`), "Tap to begin", and the card
   player.
@@ -96,7 +96,7 @@ section.
   3. The Fall: in one night the Ember goes out, and the Ashbound drop where they stand.
   4. The Long Dim: ruins, mud roads.
   5. Now: smoke over the old forges, a barrow opening.
-  6. Thornwick: *"The heroes of this age are off saving kingdoms. Looks like it is up to you."*
+  6. Thornwick: *"The heroes of this age are not available… Looks like it is up to you."*
 
 **In-game cutscenes** are short (5–30 s) and played by the timeline player:
 - camera pans, letterbox bars, scripted walks (sim commands), Ink lines with portraits,

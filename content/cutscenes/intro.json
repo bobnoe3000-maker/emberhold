@@ -41,7 +41,7 @@
       "id": "thornwick", "scene": "thornwick", "music": "thornwick",
       "when": "The Hollow Vale", "age": "Thornwick",
       "hook": "Thornwick did what small towns do.",
-      "body": ["It sent to Greyholt for soldiers.", "Lord Pellam sent a long letter of regret.", "The heroes of this age are off saving kingdoms."],
+      "body": ["It sent to Greyholt for soldiers.", "Lord Pellam sent a long letter of regret.", "The heroes of this age are not available\u2026"],
       "lead": "Looks like it is up to you."
     }
   ]

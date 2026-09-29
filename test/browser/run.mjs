@@ -179,7 +179,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForTimeout(600);
     check('boot: the loading screen shows a tip, and the sim waits', tip.length > 0 && (await C(() => globalThis.__sim.state.tick)) === t0, tip);
     await p.tap('#cine'); await p.waitForSelector('#titleWrap.on');
-    check("boot: tap to begin → the title, Thornwick's music under it", (await C(() => globalThis.__ui.cinema.music)) === 'thornwick' && (await p.locator('#title .tag').textContent()).includes('Looks like it is up to you.'));
+    check("boot: tap to begin → the title, Thornwick's music under it", (await C(() => globalThis.__ui.cinema.music)) === 'thornwick' && (await p.locator('#title .tag').textContent()).includes('The heroes of this age are not available… Looks like it is up to you.'));
     await p.locator('#title button.pri', { hasText: 'Begin' }).tap();
     const seen = [];
     for (let k = 0; k < 6; k++) {

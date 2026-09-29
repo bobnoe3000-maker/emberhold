@@ -46,7 +46,7 @@ export function createTitle({ sim, slot, setPaused, openSlots, openParty, openCr
     const where = sim.world.kind === 'dungeon' ? `the Old Barrows · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     return html`<div id="title">
       <div class="mark">EMBER<em>FALL</em></div>
-      <div class="tag">The heroes of this age are off saving kingdoms. Looks like it is up to you.</div>
+      <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>
       <div class="who">${made
         ? html`Slot ${slot} · <b>${h.name}</b><br />${(CLASSES[h.cls] || CLASSES.fighter).label} · level ${h.level} · ${where}`
         : html`Slot ${slot} · <b>no hero yet</b><br />a new party, a fresh Emberfall`}</div>

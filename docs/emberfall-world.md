@@ -2,7 +2,8 @@
 
 **v1.2 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
 
-v1.2 changes the pitch's last line to *"Looks like it is up to you."* (the intro's closing card)
+v1.2 changes the pitch to *"The heroes of this age are not available… Looks like it is up to you."*
+(the intro's closing card)
 and adds the old roads (§3.6) and the loading tips (§7).
 
 v1.1 adds:
@@ -20,7 +21,7 @@ names and facts here are **canon for content**. Change them here first.
 
 ## 1. The pitch
 
-> The heroes of this age are off saving kingdoms. Looks like it is up to you.
+> The heroes of this age are not available… Looks like it is up to you.
 
 **Emberfall** is the forgotten backwater of a fallen empire. It's a second-rate province of
 mud roads, tired militias, half-flooded abbeys and ruins nobody famous bothers to loot. The

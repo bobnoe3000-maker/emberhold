@@ -25,11 +25,12 @@ test('the intro: six cards, a scene and a cue each, every chime on a real card',
   assert.ok(!CHIMES.fall, 'the Fall has no chime: the gong is its transition');
 });
 
-test("the Fall's music carries through the Long Dim and Year 301; Thornwick closes on the new line", () => {
+test("the Fall's music carries through the Long Dim and Year 301; Thornwick closes on the new lines", () => {
   assert.deepEqual(intro.cards.map((c) => c.music), ['kindling', 'empire', 'fall', 'fall', 'fall', 'thornwick']);
   const last = intro.cards.at(-1);
+  assert.equal(last.body.at(-1), 'The heroes of this age are not available…');
   assert.equal(last.lead, 'Looks like it is up to you.');
-  assert.ok(!JSON.stringify(intro).includes('You got Emberfall'));
+  assert.ok(!/You got Emberfall|off saving kingdoms/.test(JSON.stringify(intro)));
 });
 
 test('loading tips: lore lines carry a source, one-liners do not claim one', () => {
