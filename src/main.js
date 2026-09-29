@@ -121,7 +121,7 @@ function frame(now) {
   acc += dt;
 
   while (acc >= TICK_DT) {
-    if (paused) { acc -= TICK_DT; continue; }
+    if (paused || renderer.transiting) { acc -= TICK_DT; continue; }   // (a scene change baking: hold still, or a stick still held could walk you back out)
     const v = input.vec();
     if (v) {                                   // screen drag → iso world direction
       const w = screenDirToWorld(v.x, v.y);

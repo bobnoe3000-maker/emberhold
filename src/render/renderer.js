@@ -41,6 +41,10 @@ const STRIDE = { hero: 4.5, skel: 3.2 };        // measured from the baked feet:
 const MARGIN = 96;                 // native-px slack around the view held in the bake
 const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
 const BAKE_BUDGET = 5;             // ms of background baking per frame
+// A scene change (town ↔ overland, stairs, a load): black while the new scene bakes in slices of
+// TRANSIT_BUDGET ms, then a fade in. Baking it in one frame stalled 0.4 s on a laptop and 1–2 s on a
+// phone, then cut hard to the new place: it read as a stutter and a jump.
+const TRANSIT_BUDGET = 24, TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
@@ -673,9 +677,17 @@ export function createRenderer(canvas, sim, input) {
   }
   function bakeCommit(j) { bakeOx = j.ox; bakeOy = j.oy; flares = j.lights; terrValid = true; }
   let lastOx = 0, lastOy = 0, velX = 0, velY = 0;
+  let transit = null;                                  // { job, fadeFrom }: see TRANSIT_BUDGET
   function keepBaked(ox, oy, t0) {
     velX = velX * 0.9 + (ox - lastOx) * 0.1; velY = velY * 0.9 + (oy - lastOy) * 0.1; lastOx = ox; lastOy = oy;
-    if (!terrValid) {                                              // first frame / new level: bake now, in full
+    if (!terrValid && transit) {                                   // a scene change: bake in slices behind black
+      if (!transit.job || transit.job.world !== sim.world) { target(back); transit.job = bakeBegin(ox, oy); }
+      target(back);
+      if (bakeStep(transit.job, t0 + TRANSIT_BUDGET)) { const f = front; front = back; back = f; bakeCommit(transit.job); transit.job = null; transit.fadeFrom = t0; }
+      target(front);
+      return;
+    }
+    if (!terrValid) {                                              // first frame: bake now, in full
       job = null; target(front); const j = bakeBegin(ox, oy); bakeStep(j, Infinity); bakeCommit(j);
       if (globalThis.__rstats) globalThis.__rstats.bakes.push(performance.now() - t0);
       return;
@@ -702,7 +714,7 @@ export function createRenderer(canvas, sim, input) {
   let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
-  sim.bus.on('levelChanged', () => { tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
@@ -741,6 +753,11 @@ export function createRenderer(canvas, sim, input) {
 
     const t0 = performance.now();
     keepBaked(ox, oy, t0);
+    if (transit && !terrValid) {                                   // the new scene is still baking: black, and the scene's name
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, vw, vh); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      octx.clearRect(0, 0, vw, vh); drawBanner(now);
+      return;
+    }
 
     // copy the visible window out of the baked margin region (scratch x == native x)
     const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
@@ -880,6 +897,10 @@ export function createRenderer(canvas, sim, input) {
     if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
+    if (transit) {                                                 // fading in from the scene change
+      const a = 1 - (t0 - transit.fadeFrom) / TRANSIT_FADE;
+      if (a <= 0) transit = null; else { octx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`; octx.fillRect(0, 0, vw, vh); }
+    }
     drawBanner(now);
     const j = input.joystick();
     if (j) {
@@ -1116,6 +1137,8 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, setHero, resize,
+    /** true while a scene change is still baking behind black (main.js holds the sim still meanwhile) */
+    get transiting() { return !!transit && !terrValid; },
     /** settles once the first actor and environment atlases have loaded (or failed): the loading screen's cue */
     ready: Promise.allSettled(firstLoads.filter(Boolean)),
     enemyAt(sxPx, syPx) {                                  // the enemy under (or nearest to) a tap, for focus
