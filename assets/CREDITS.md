@@ -15,6 +15,10 @@ The cleric (`hero_cleric`) is the KayKit Mage with its robe, trim, stole and boo
 repainted (off-white vestments) and a flanged mace that is **our own**, built in code
 (`tools/actor-lab/props.js`); the same mace is the item icon `assets/items/mace.png`.
 
+Maudry Fenn (`npc_maudry`, the Tired Mule's keeper) is the KayKit Rogue with its dress and
+collar swatches repainted mustard-brown, holding a pewter ale mug that is **our own**, built in
+code (`tools/actor-lab/props.js`, variant `N1`).
+
 The earlier POC atlases (a Flare CC BY-SA 3.0 skeleton and the `isometric_hero`
 knight) have been removed.
 

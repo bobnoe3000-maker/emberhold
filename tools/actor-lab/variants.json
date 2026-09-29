@@ -192,6 +192,38 @@
   ]
  },
  {
+  "id": "N1",
+  "cls": "NPC",
+  "label": "Maudry Fenn \u00b7 innkeeper, the Tired Mule",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "mug"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#c8964a",
+     "#5a3814"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#b88640",
+     "#4e3010"
+    ]
+   }
+  ]
+ },
+ {
   "id": "E1",
   "cls": "Undead",
   "label": "Skeleton Warrior",

@@ -729,6 +729,40 @@
         "contrast": 1.3,
         "desat": 0.3
       }
+    },
+    {
+      "out": "npc_maudry",
+      "variant": "N1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        }
+      ]
     }
   ]
 }

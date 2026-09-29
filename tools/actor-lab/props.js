@@ -32,6 +32,17 @@ export const PROPS = {
     add(new THREE.SphereGeometry(0.065, 10, 8), brass, 1.28, 'Mace_Knop');
     return g;
   },
+  // a pewter ale mug, held by its handle (Maudry Fenn's, the Tired Mule): body along +y above the grip
+  mug: () => {
+    const g = new THREE.Group(); g.name = 'Mug';
+    const pewter = mat(0x9a9c9e, 0.7, 0.45), ale = mat(0xc8902a, 0.1, 0.35), foam = mat(0xf2ead8, 0, 0.9);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.18, 0.4, 14, 1, true), pewter); body.position.set(0.22, 0.22, 0); body.name = 'Mug_Body'; g.add(body);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.04, 14), pewter); base.position.set(0.22, 0.03, 0); base.name = 'Mug_Base'; g.add(base);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.02, 14), ale); top.position.set(0.22, 0.38, 0); top.name = 'Mug_Ale'; g.add(top);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), foam); head.scale.y = 0.4; head.position.set(0.22, 0.4, 0); head.name = 'Mug_Foam'; g.add(head);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.035, 8, 16, Math.PI), pewter); handle.rotation.z = Math.PI / 2; handle.position.set(0.02, 0.22, 0); handle.name = 'Mug_Handle'; g.add(handle);
+    return g;
+  },
 };
 
 // KayKit textures are an 8 × 4 grid of gradient swatches; a mesh's colour is the swatch its UVs
