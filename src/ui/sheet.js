@@ -12,10 +12,10 @@
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
-import { esc, drawPortrait, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
-import { classIcon } from './classicons.js';
+import { classIcon, classColor } from './classicons.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
 const CSS = `
@@ -34,9 +34,14 @@ const CSS = `
 #gearSheet .tab .dot { width: 7px; height: 7px; border-radius: 4px; background: #8fe07a; box-shadow: 0 0 6px #8fe07a; flex: none; margin-left: auto; align-self: flex-start; }
 #gearSheet .doll { display: grid; grid-template-columns: 70px 1fr 70px; gap: 6px; margin-top: 10px; align-items: center; }
 #gearSheet .col { display: flex; flex-direction: column; gap: 17px; align-items: center; }
-#gearSheet .fig { position: relative; height: 236px; border-radius: 10px; border: 1px solid #2c2838; overflow: hidden;
-  background: radial-gradient(ellipse at 50% 86%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1b1624, #0e0b14 70%); }
-#gearSheet .fig canvas { position: absolute; left: 50%; top: 8px; width: 176px; height: 204px; margin-left: -88px; image-rendering: pixelated; }
+/* the figure on a small stage: a warm spotlight from above, the class's colour glowing behind, a
+   pool of light on the floor, a contact shadow under the feet and a vignette at the edges */
+#gearSheet .fig { position: relative; height: 236px; border-radius: 10px; border: 1px solid #2c2838; overflow: hidden; box-shadow: inset 0 0 34px rgba(0,0,0,.7);
+  background: radial-gradient(ellipse 58% 62% at 50% -4%, rgba(255,214,150,.16), rgba(0,0,0,0) 72%),
+    radial-gradient(circle at 50% 46%, var(--glow, rgba(201,210,224,.14)), rgba(0,0,0,0) 44%),
+    radial-gradient(ellipse 52% 16% at 50% 84%, rgba(216,160,64,.26), rgba(0,0,0,0) 100%), radial-gradient(ellipse at 50% 40%, #1b1624, #0c0a12 72%); }
+#gearSheet .fig .gnd { position: absolute; left: 50%; top: 188px; width: 108px; height: 20px; margin-left: -54px; border-radius: 50%; background: radial-gradient(closest-side, rgba(4,2,8,.72), rgba(4,2,8,0)); }
+#gearSheet .fig canvas { position: absolute; left: 50%; top: 8px; width: 176px; height: 204px; margin-left: -88px; }
 #gearSheet .fig .nm { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 10px; color: #f0c880; letter-spacing: 1.5px; }
 #gearSheet .fig .xpb { position: absolute; left: 22px; right: 22px; bottom: 5px; height: 2px; background: #26222e; }
 #gearSheet .fig .xpb i { position: absolute; left: 0; top: 0; bottom: 0; background: #d8a040; }
@@ -132,14 +137,6 @@ const CSS = `
 #party .card .upb { position: absolute; top: -7px; right: -4px; background: #8fe07a; color: #10200c; font-size: 8px; font-weight: 700; border-radius: 7px; padding: 1px 5px; letter-spacing: .5px; box-shadow: 0 0 8px rgba(143,224,122,.6); }
 `;
 
-// the figure canvas, cut from the baked atlas (facing camera, idle frame 0); portraits: actorart.js
-const atlasImgs = new Map();
-function drawActor(cv, actor, sx, sy, sw, sh, bright = 1.9) {
-  let img = atlasImgs.get(actor);
-  if (!img) { img = new Image(); img.src = `./assets/actors/${actor}.alb.png`; atlasImgs.set(actor, img); }
-  const paint = () => { const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height); x.filter = `brightness(${bright}) saturate(1.12)`; x.drawImage(img, sx, 2 * 102 + sy, sw, sh, 0, 0, cv.width, cv.height); };
-  if (img.complete && img.naturalWidth) paint(); else img.addEventListener('load', paint, { once: true });
-}
 const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
 const icon = (it) => `./assets/items/${BASES[it.base].icon}.png`;
 const fmt = (k, v) => (k === 'crit' || k === 'dodge' ? `${v > 0 ? '+' : ''}${v}%` : k === 'hpr' || k === 'mpr' ? `${v > 0 ? '+' : ''}${v}/s` : `${v > 0 ? '+' : ''}${v}`);
@@ -193,13 +190,13 @@ export function createGearSheet(sim, { partyPanel }) {
     if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
-        <div class="fig"><canvas width="88" height="102" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
+        <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div><canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} embers</i></span></div>
       <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
     paintTabs();
-    const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawActor(fc, fc.dataset.fig, 0, 0, 88, 102, 2.1);
+    const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawCharacter(fc, fc.dataset.fig);
     renderCard();
   }
   function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawPortrait(cv, cv.dataset.actor); }

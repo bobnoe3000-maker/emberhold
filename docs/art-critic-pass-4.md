@@ -166,3 +166,45 @@ Scores are one critic's judgement from captures; no blind comparison has been ru
 - **Captures:** the images above; the phone captures had no page errors.
 - **Weapon anchors:** unchanged apart from ±1 px rounding. The mug anchors were re-baked
   with the atlases.
+
+## Follow-up: the character window
+
+The character window (the gear sheet) still showed the 56 px sprite, scaled 2× with hard pixel
+edges, facing the camera, brightened, with the faces two dark dots. Two changes:
+
+1. **A lit, posed figure** (`renderFigure` in `lab.js`, `<actor>.fig.png`).
+   - **The render:** the whole figure at 352 × 408, drawn at 176 × 204 CSS (2×, crisp on
+     phones). It uses the portraits' lighting, grade and outline, and the full faces.
+   - **Pose:** each actor has one, set in `bake.json`:
+
+     | Actor | Pose |
+     |---|---|
+     | Knight, barbarian | shield guard (`Blocking`) |
+     | Rogue | blade ready (`2H_Melee_Idle`) |
+     | Mage | staff raised, turned −30° so the staff stays clear of her face (`Spellcast_Raise`) |
+     | Cleric | mace up, book open (`Spellcasting`) |
+     | Maudry | lifting her mug (`Use_Item`) |
+
+   - **Framing:** from the rest pose, so a raised staff doesn't shrink the figure and every
+     figure's feet stand on the same line.
+   - **Size:** six figures, 436 KB in total, loaded only when the window opens. An actor
+     without one falls back to the old sprite (`drawCharacter` in `actorart.js`).
+2. **Staging** (CSS in `sheet.js`). The figure stands on a small stage:
+   - a warm spotlight from above;
+   - the class's colour glowing softly behind (`classColor`, the class-icon colours);
+   - a pool of light on the floor;
+   - a contact shadow under the feet;
+   - an inset vignette.
+
+![Before and after: the character window (fighter, mage, cleric)](img/faces/character-window-before-after.png)
+
+| Measure | Before | After |
+|---|---|---|
+| The figure's source | a 56 px sprite frame, 2× nearest-neighbour | a 352 × 408 lit render |
+| Faces in the window | 2 dark pixels | full kit faces (eyes, brows, mouth) |
+| Pose | standing idle, facing the camera | per class, three-quarter view |
+| Staging | flat gradient | spotlight, class glow, floor light, ground shadow, vignette |
+
+**Score (the character window):** 5.0 → **8.0** (one critic, from captures). Still to do:
+- the figure doesn't show equipped gear; it needs layered weapons, or live 3D;
+- the knight's helmet still hides most of his face.

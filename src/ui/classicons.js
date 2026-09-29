@@ -11,6 +11,12 @@ const ICONS = {
   healer: { c: '#b6e3c8', label: 'Healer', path: '<path d="M11.2 22v-9.5c0-2 .3-3.8 1-5.6l1.6.5c-.6 1.7-.9 3.3-.9 5.1V22z"/><path d="M12.2 7.6C11.3 4.5 12.6 2.2 16 1.6c.7 3.3-.8 5.6-3.8 6z"/><path d="M11.8 12.2c-2.8.4-5.1-1-5.8-4.2 3.4-.5 5.5.9 5.8 4.2z"/><path d="M12.6 15.6c.5-3 2.8-4.7 6-4.2-.4 3.3-2.7 4.9-6 4.2z"/>' },
 };
 
+/** a class's colour as `rgba(r,g,b,a)` (the character window's glow) @param {string} cls @param {number} a */
+export function classColor(cls, a = 1) {
+  const c = (ICONS[cls] || ICONS.fighter).c, n = (i) => parseInt(c.slice(i, i + 2), 16);
+  return `rgba(${n(1)},${n(3)},${n(5)},${a})`;
+}
+
 /** an inline SVG for a class ('' for an unknown one) @param {string} cls */
 export function classIcon(cls) {
   const I = ICONS[cls]; if (!I) return '';

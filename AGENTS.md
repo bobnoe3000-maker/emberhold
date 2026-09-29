@@ -33,7 +33,7 @@ npm run test:browser                      # replay parity Chromium/WebKit vs Nod
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir]   # balance: secs roomLv heroLv hires; --src = a before checkout
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
-node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, + <actor>.face.png portraits); --anchors / --portraits refresh only those
+node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, + <actor>.face.png portraits and .fig.png character-window figures); --anchors / --portraits refresh only those
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks

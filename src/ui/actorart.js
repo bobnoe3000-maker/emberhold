@@ -3,8 +3,9 @@
 // <actor>.face.png (96 × 112, lit, tools/actor-lab renderPortrait — art critic pass 4); an actor
 // without one falls back to a crop of its atlas (assets/actors/<actor>.alb.png: 102 px rows per
 // facing, the camera-facing idle frame is row 2, frame 0). Portrait canvases are 96 × 112 in any
-// CSS size, drawn smooth. Shared by the party cards, the sheet, the party screen, the dialogue
-// window, the title and creation.
+// CSS size, drawn smooth. The character window's figure is the baked, lit and posed
+// <actor>.fig.png (drawCharacter). Shared by the party cards, the sheet, the party screen, the
+// dialogue window, the title and creation.
 
 /** @type {Map<string, HTMLImageElement>} */
 const imgs = new Map();
@@ -43,6 +44,22 @@ export function drawPortrait(cv, actor, done) {
 }
 /** the whole figure @param {HTMLCanvasElement} cv @param {string} actor */
 export const drawFigure = (cv, actor) => drawActor(cv, actor, 0, 0, 88, 102, 2.1);
+
+/** @type {Map<string, Promise<HTMLImageElement|null>>} */
+const figs = new Map();
+export const FIGURE_W = 352, FIGURE_H = 408;
+/** the whole character, lit and posed (<actor>.fig.png, 352 × 408: the character window); an actor
+ * without one falls back to its atlas frame @param {HTMLCanvasElement} cv @param {string} actor */
+export function drawCharacter(cv, actor) {
+  let f = figs.get(actor);
+  if (!f) { f = new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = `./assets/actors/${actor}.fig.png`; }); figs.set(actor, f); }
+  f.then((img) => {
+    if (!img) return drawFigure(cv, actor);
+    const x = cv.getContext('2d'); if (!x) return;
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.filter = 'none';
+    x.clearRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height);
+  });
+}
 
 /** escape text for innerHTML templates (names are sanitized by the sim; this is the second lock)
  * @param {any} s */
