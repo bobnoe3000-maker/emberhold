@@ -260,8 +260,9 @@ export function createRenderer(canvas, sim, input) {
     }
     return { name, meta, cells };
   }
-  loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {});   // the default look; a created hero's own look loads via partyAtlas
-  SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
+  const firstLoads = [];                               // what the boot's loading screen waits for (`ready`)
+  firstLoads.push(loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {}));   // the default look; a created hero's own look loads via partyAtlas
+  SKELETONS.forEach((n, i) => firstLoads.push(loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {})));
 
   // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
   // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
@@ -272,9 +273,9 @@ export function createRenderer(canvas, sim, input) {
   let envMeta = null;                                  // { sprites: id → meta (+ .atlas) } merged across loaded atlases
   const envAtlases = new Map(), envCache = new Map();
   function loadAtlas(name) {
-    if (envAtlases.has(name)) return;
+    if (envAtlases.has(name)) return null;
     envAtlases.set(name, null);
-    Promise.all([fetch(`./assets/env/${name}.json`).then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png`))])
+    return Promise.all([fetch(`./assets/env/${name}.json`).then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png`))])
       .then(([m, a, n, k]) => {
         envAtlases.set(name, { a, n, k });
         envMeta = envMeta || { sprites: {} };
@@ -282,8 +283,8 @@ export function createRenderer(canvas, sim, input) {
         terrValid = false; outMap = null;
       }).catch(() => envAtlases.delete(name));
   }
-  const wantAtlases = () => { loadAtlas('env'); if (sim.world.kind !== 'dungeon') loadAtlas('town-' + (sim.world.region || 'vale')); };   // env carries the dungeon's stair too
-  wantAtlases();
+  const wantAtlases = () => [loadAtlas('env'), sim.world.kind !== 'dungeon' ? loadAtlas('town-' + (sim.world.region || 'vale')) : null];   // env carries the dungeon's stair too
+  firstLoads.push(...wantAtlases());
   const ecv = document.createElement('canvas'), ectx = ecv.getContext('2d', { willReadFrequently: true });
   function envSprite(id) {
     if (envCache.has(id)) return envCache.get(id);
@@ -1112,6 +1113,8 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, setHero, resize,
+    /** settles once the first actor and environment atlases have loaded (or failed): the loading screen's cue */
+    ready: Promise.allSettled(firstLoads.filter(Boolean)),
     enemyAt(sxPx, syPx) {                                  // the enemy under (or nearest to) a tap, for focus
       const w = sim.world; if (!w.enemies || !w.enemies.length) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;

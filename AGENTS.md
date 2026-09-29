@@ -23,7 +23,7 @@ that happens.
 npm ci                                    # once: dev tooling only (the game itself has no build)
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
-#   ?notitle (skip the title / pause menu and play at once; tests and captures)
+#   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms))
 npm run check                             # everything CI runs except browsers:

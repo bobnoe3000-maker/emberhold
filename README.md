@@ -37,8 +37,10 @@ Useful URLs:
 - `?dev&manual` gives step-by-step frames.
 
 **Controls:**
-- the title screen starts or continues the slot's game; ☰ brings it back as a pause menu
-  (game slots, the Party screen);
+- launch: the studio splash and the loading screen, then tap to begin;
+- the title screen starts or continues the slot's game (Begin plays the intro, *The Chronicle
+  of the Fall*, then character creation; The Chronicle replays it); ☰ brings it back as a pause
+  menu (game slots, the Party screen);
 - drag anywhere for a floating joystick;
 - tap to walk or use things;
 - tap an enemy to focus it;

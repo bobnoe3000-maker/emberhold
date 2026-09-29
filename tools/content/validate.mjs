@@ -1,4 +1,5 @@
 // validate.mjs — `npm run content`: every content/<name>.json against content/schema/<name>.schema.json,
+// and every file in a folder, content/<dir>/<name>.json, against content/schema/<dir>.schema.json;
 // plus id uniqueness in every array of objects with an `id`. Exit 1 on any problem.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -15,9 +16,12 @@ const dupes = (v, path, out) => {
     v.forEach((x, i) => dupes(x, `${path}[${i}]`, out));
   } else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) dupes(x, `${path}.${k}`, out);
 };
-for (const f of readdirSync(ROOT).filter((f) => f.endsWith('.json'))) {
+const files = readdirSync(ROOT, { withFileTypes: true }).flatMap((d) => d.isDirectory()
+  ? (d.name === 'schema' ? [] : readdirSync(join(ROOT, d.name)).filter((f) => f.endsWith('.json')).map((f) => [`${d.name}/${f}`, d.name]))
+  : d.name.endsWith('.json') ? [[d.name, d.name.replace(/\.json$/, '')]] : []);
+for (const [f, name] of files) {
   n++;
-  const name = f.replace(/\.json$/, ''), schemaPath = join(ROOT, 'schema', `${name}.schema.json`);
+  const schemaPath = join(ROOT, 'schema', `${name}.schema.json`);
   let data;
   try { data = JSON.parse(readFileSync(join(ROOT, f), 'utf8')); } catch (e) { console.log(`✗ ${f}: invalid JSON — ${e.message}`); bad++; continue; }
   if (!existsSync(schemaPath)) { console.log(`✗ ${f}: no schema at content/schema/${name}.schema.json`); bad++; continue; }

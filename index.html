@@ -47,6 +47,10 @@
     pointer-events: none; text-shadow: 0 1px 0 #0d0913;
   }
   #hudToast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* the studio splash, up before any script runs; the boot (src/cutscene/player.js) takes over */
+  #bootSplash { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: #050407; color: #d9cdb8; font: 600 12px ui-monospace, Menlo, monospace; letter-spacing: .4em; text-transform: uppercase; }
+  #bootSplash .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff8a3a; box-shadow: 0 0 14px #ff8a3a; }
   #hint {
     position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     left: 0; right: 0; text-align: center;
@@ -67,6 +71,7 @@
     <div class="stat" style="display:none">stone <b id="hudStone">0</b></div>
   </div>
   <div id="hudToast"></div>
+  <div id="bootSplash"><div class="dot"></div><div>No Game Studios</div></div>
   <div id="hint">drag to move · tap to walk, open &amp; descend</div>
   <!-- vendored, pinned ES modules (src/vendor/README.md); no bundler -->
   <script type="importmap">

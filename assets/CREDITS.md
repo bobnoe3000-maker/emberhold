@@ -20,3 +20,9 @@ overland sites and all small props are low-poly models authored in code
 (`tools/actor-lab/buildkit.js`) and baked by `tools/actor-lab/bake-env.cjs`. No third-party
 environment assets remain. (Earlier prototypes used the CC0 KayKit Medieval Hexagon Pack;
 it has been fully replaced.)
+
+## Fonts — `assets/fonts/`
+**IM Fell English** (roman and italic) and **IM Fell English SC** by Igino Marini
+(https://iginomarini.com) — **SIL Open Font License 1.1** (`assets/fonts/OFL.txt`). The Latin
+subsets, as woff2, are vendored so the game loads no fonts from a CDN (architecture A12). Used by
+the loading screen, the intro and the title.

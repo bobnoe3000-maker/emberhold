@@ -51,11 +51,25 @@ section.
 
 ### 2.1 Intro, title and cutscenes
 
+**Implemented (2026-09-29): the boot, the title and the intro**, as approved in
+[intro-mockup.html](./intro-mockup.html) (direction C, revision 4, with the last line changed to
+*"Looks like it is up to you."*):
+- `src/cutscene/player.js`: the studio splash (*No Game Studios*), the loading screen (lore tips
+  from `content/tips.json`; the bar waits on `renderer.ready`), "Tap to begin", and the card
+  player.
+- `src/cutscene/scenes.js`: the six painted scenes.
+- `src/cutscene/score.js`: the live-synthesised score (four cues, voice-led transitions).
+- `content/cutscenes/intro.json`: the cards (scene, cue, lines).
+- Begin on an empty slot plays the intro, then creation. **The Chronicle** on the title replays
+  it. The score plays under the title and creation and fades out into play.
+- Still to come: the timeline steps for in-game cutscenes, *Arrival in Thornwick*,
+  `seenCutscenes`, and rewatching from Settings.
+
 **Player flow:**
 - **First launch:**
-  1. Studio splash (1.5 s, tap to skip).
+  1. Studio splash (1.5 s, tap to skip), then the loading screen (tap to begin).
   2. **Title.**
-  3. New Game.
+  3. New Game (Begin).
   4. **Intro cutscene.**
   5. Character creation.
   6. The *Arrival in Thornwick* cutscene.
@@ -74,16 +88,15 @@ section.
 - 60–90 s, 6 cards, tap to advance, skippable. It can be rewatched from Settings and the
   Chronicle.
 - No narration: the card text is read, not voiced (decided 2026-09-29). The lines come
-  straight from world doc §2 (the current script, awaiting sign-off, is in
-  `docs/intro-mockup.html`). The score has four cues, and the Fall's plays unbroken through
-  cards 3–5. Each card is a still baked from our own assets (actor-lab dioramas with the grim
+  straight from world doc §2; the approved script is `content/cutscenes/intro.json`. The score
+  has four cues, and the Fall's plays unbroken through cards 3–5. Each card is a still baked from our own assets (actor-lab dioramas with the grim
   pass) under a text card:
   1. The Kindling: pilgrims at the crater.
   2. The Solmere Empire: the Ember Throne, the Ashbound at the forges.
   3. The Fall: in one night the Ember goes out, and the Ashbound drop where they stand.
   4. The Long Dim: ruins, mud roads.
   5. Now: smoke over the old forges, a barrow opening.
-  6. The pitch: *"The heroes of this age are off saving kingdoms. You got Emberfall."*
+  6. Thornwick: *"The heroes of this age are off saving kingdoms. Looks like it is up to you."*
 
 **In-game cutscenes** are short (5–30 s) and played by the timeline player:
 - camera pans, letterbox bars, scripted walks (sim commands), Ink lines with portraits,

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A card cutscene (content/cutscenes/*.json; development plan §2.1): cards, each a painted scene, a music cue and its lines",
+  "type": "object",
+  "required": ["id", "name", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "name": { "type": "string" },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "scene", "music", "when", "age", "hook", "body", "lead"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "scene": { "enum": ["kindling", "empire", "fall", "long_dim", "year301", "thornwick"], "description": "a painted scene in src/cutscene/scenes.js" },
+          "music": { "enum": ["kindling", "empire", "fall", "thornwick"], "description": "a cue in src/cutscene/score.js; the same cue on consecutive cards plays on unbroken" },
+          "when": { "type": "string", "minLength": 1 },
+          "age": { "type": "string", "minLength": 1 },
+          "hook": { "type": "string", "minLength": 1, "description": "the first line: answers the card before" },
+          "body": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "maxItems": 4 },
+          "lead": { "type": "string", "minLength": 1, "description": "the last line: hands the reader to the next card" }
+        }
+      }
+    }
+  }
+}

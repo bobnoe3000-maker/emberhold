@@ -1,6 +1,9 @@
 # Emberfall — World Summary
 
-**v1.1 · 2026-09-28 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.2 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.2 changes the pitch's last line to *"Looks like it is up to you."* (the intro's closing card)
+and adds the old roads (§3.6) and the loading tips (§7).
 
 v1.1 adds:
 - the Heights story boss (§8);
@@ -17,7 +20,7 @@ names and facts here are **canon for content**. Change them here first.
 
 ## 1. The pitch
 
-> The heroes of this age are off saving kingdoms. You got Emberfall.
+> The heroes of this age are off saving kingdoms. Looks like it is up to you.
 
 **Emberfall** is the forgotten backwater of a fallen empire. It's a second-rate province of
 mud roads, tired militias, half-flooded abbeys and ruins nobody famous bothers to loot. The
@@ -109,7 +112,8 @@ pit where the Ember burned. Look: `runeplate`, with lava and soul glows.
 ### 3.6 The overland
 Regions link by roads (safe-ish, with random encounters), trails (faster but more dangerous)
 and a few hidden paths unlocked by lore (§7). The map starts fogged, and discovered places stay
-revealed, the same model as the dungeon minimap.
+revealed, the same model as the dungeon minimap. The main roads are Solmere work, laid for
+marching dead: they run straight through anything in the way, hill, bog or village.
 
 ---
 
@@ -190,6 +194,10 @@ Sample fragments:
   the Ember Throne, Year 612."* (Found in the Old Barrows. They are still holding it.)
 - *"Furnace nine requires eleven more souls per week to meet quota."* (A Cinderworks ledger.)
 - *"Forgive me. They will call it the Fall. Let them. — A."* (Glass Keep, last of the set.)
+
+**Loading tips** (`content/tips.json`) alternate a line of lore with a one-liner. The lore lines
+state only facts from this doc (the standing order above, the flare-seams in §10.1, the roads
+in §3.6, Maudry in §5); the one-liners are the wry voice (§1) and state nothing new.
 
 ---
 

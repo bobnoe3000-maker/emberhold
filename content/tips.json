@@ -1,0 +1,12 @@
+{
+  "tips": [
+    { "id": "standing_order", "text": "“Standing order 14: the Third Legion holds the Wickham road until relieved.”", "source": "Found in the Old Barrows · they are still holding it" },
+    { "id": "counting", "text": "Counting the Ashbound…" },
+    { "id": "flare_seams", "text": "The Grey Sisters record every flare-seam in the Reach. Nobody has asked them why.", "source": "Lore · the Cinder Reach" },
+    { "id": "pellam_letter", "text": "Reading Lord Pellam’s letter. All of it…" },
+    { "id": "solmere_roads", "text": "Solmere roads were laid for marching dead. They still run straight through anything in the way.", "source": "Lore · the Hollow Vale" },
+    { "id": "airing_barrows", "text": "Airing out the barrows…" },
+    { "id": "maudry", "text": "Maudry Fenn will tell you more than she should. Buy something first.", "source": "Lore · the Tired Mule, Thornwick" },
+    { "id": "stand_down", "text": "Telling the Third Legion it can stand down…" }
+  ]
+}

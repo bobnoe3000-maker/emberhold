@@ -15,6 +15,7 @@ import { createSlotsWindow } from './ui/slots.js';
 import { createTitle } from './ui/title.js';
 import { createCreation } from './ui/create.js';
 import { createPartyScreen } from './ui/partyscreen.js';
+import { createCinema } from './cutscene/player.js';
 import { screenDirToWorld } from './render/iso.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
@@ -63,16 +64,23 @@ if (sim.state.created) startAutosave();
 sim.bus.on('heroCreated', startAutosave);
 const slots = createSlotsWindow({ active: SLOT, saveNow: () => (PREVIEW || !sim.state.created ? Promise.resolve(true) : writeSlot(SLOT, sim)) });
 
-// Title / pause menu (title.js) and character creation (create.js). The sim doesn't tick while
-// the title is up; creation runs it, since Begin is a command the sim has to take.
-// ?notitle (tests, captures) skips the title and plays straight away.
-let paused = false;
-const creation = createCreation({ sim, onDone: () => { paused = false; } });
+// Boot, title and creation (development plan §2.1): the studio splash and the loading screen
+// (cutscene/player.js, waiting on the renderer's first atlases) → the title / pause menu
+// (title.js) → Begin plays the intro, "The Chronicle of the Fall", then character creation
+// (create.js). The sim doesn't tick through any of it, except creation, since Begin is a command
+// the sim has to take. The intro's music plays on under the title and creation, and fades out
+// into play. ?notitle (tests, captures) and previews skip all of it and play straight away.
+const BOOT = !PREVIEW && !params.has('notitle');
+let paused = BOOT;
+const cinema = createCinema();
+const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
 const title = createTitle({ sim, slot: SLOT, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
-  openParty: () => partyScreen.open(), openCreate: () => { paused = false; creation.open(); },
+  openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
+  openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => cinema.stopMusic(),
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
-if (!PREVIEW && !params.has('notitle')) title.open('title');
-if (DEV) globalThis.__ui = { title, creation, partyScreen, slots };
+if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
+else document.getElementById('bootSplash')?.remove();
+if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema };
 
 // Hero: deterministic recipe from the world seed's recipe stream.
 const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));
@@ -122,7 +130,7 @@ function frame(now) {
     acc -= TICK_DT;
   }
 
-  renderer.render(acc / TICK_DT, now);
+  if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath
   if (!MANUAL) requestAnimationFrame(frame);
 }
 // dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls

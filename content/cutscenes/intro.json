@@ -1,0 +1,48 @@
+{
+  "id": "intro",
+  "name": "The Chronicle of the Fall",
+  "cards": [
+    {
+      "id": "kindling", "scene": "kindling", "music": "kindling",
+      "when": "A thousand years ago", "age": "The Kindling",
+      "hook": "It began with a fire that should not have burned.",
+      "body": ["High in the Pale Heights, pilgrims found it in a crater, burning on nothing at all.", "Whoever kept the Ember, they learned, could make the dead rise and obey."],
+      "lead": "Empires have been built on less."
+    },
+    {
+      "id": "empire", "scene": "empire", "music": "empire",
+      "when": "Six hundred years", "age": "The Solmere Empire",
+      "hook": "This one was built on the dead.",
+      "body": ["Around the flame rose the Ember Throne, and beneath it the Ashbound, legions of the bound dead, dug the mines and fed the forges and never slept.", "For six hundred years the fire burned."],
+      "lead": "No one asked what it was burning."
+    },
+    {
+      "id": "fall", "scene": "fall", "music": "fall",
+      "when": "One night, three hundred years ago", "age": "The Fall",
+      "hook": "Then, one night, the Ember went out.",
+      "body": ["Every Ashbound in the empire fell where it stood: in the mines, at the forges, on the march.", "By morning the Solmere Empire was a graveyard with a crown on it."],
+      "lead": "And the dead, for once, stayed dead."
+    },
+    {
+      "id": "long_dim", "scene": "long_dim", "music": "fall",
+      "when": "The years since", "age": "The Long Dim",
+      "hook": "For three hundred years, they stayed down.",
+      "body": ["The province kept its name, Emberfall, and little else: mud roads, petty lords, ruins the old folk called haunted, meaning quiet.", "Under the Wickham road, the Third Legion lay at its post, waiting for orders."],
+      "lead": "Until this spring."
+    },
+    {
+      "id": "year301", "scene": "year301", "music": "fall",
+      "when": "This spring", "age": "Year 301 of the Dim",
+      "hook": "Someone started digging.",
+      "body": ["Smoke rose from forges cold for three hundred years.", "The barrows cracked open.", "And under the Wickham road, the Third Legion got its orders at last."],
+      "lead": "It stood up, and turned toward Thornwick."
+    },
+    {
+      "id": "thornwick", "scene": "thornwick", "music": "thornwick",
+      "when": "The Hollow Vale", "age": "Thornwick",
+      "hook": "Thornwick did what small towns do.",
+      "body": ["It sent to Greyholt for soldiers.", "Lord Pellam sent a long letter of regret.", "The heroes of this age are off saving kingdoms."],
+      "lead": "Looks like it is up to you."
+    }
+  ]
+}

@@ -5,6 +5,8 @@
 //      persistence, switching back, deleting
 //   3. M3 exit test (Chromium): create → play → a Fallen companion → temple → resurrect →
 //      wipe → wake at the temple, Weakened → inn rest → reload keeps the hero
+//   4. boot and intro (Chromium): splash → loading → tap to begin → title → Begin → the six
+//      cards in order, with their music → creation; The Chronicle replays it from the title
 // Local runs skip an engine that isn't installed; CI (CI=true) requires both.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -32,6 +34,15 @@ async function launch(type, name) {
   }
 }
 const results = [];
+// a game page is up: the sim exists and, unless it's a preview, the boot (splash → loading) has
+// been tapped through to the title
+async function booted(p) {
+  await p.waitForFunction(() => !!globalThis.__sim && !window.__old, null, { timeout: 60000 });
+  if (await p.locator('#cine.on, #bootSplash').count()) {
+    await p.waitForSelector('#cine .begin:not([hidden])', { timeout: 60000 }); await p.tap('#cine'); await p.waitForSelector('#titleWrap.on', { timeout: 10000 });
+  }
+  await p.waitForTimeout(500);
+}
 const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ' · ' + detail : ''}`); };
 
 // 1. replay parity
@@ -53,7 +64,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     const game = `${base}/index.html`;
-    const ready = async () => { await p.waitForFunction(() => !!globalThis.__sim && !window.__old, null, { timeout: 60000 }); await p.waitForTimeout(500); };
+    const ready = () => booted(p);
     const reloadVia = async (fn) => { await p.evaluate(() => (window.__old = 1)); await fn(); await ready(); };
     const menu = async () => { if (!(await p.locator('#titleWrap.on').count())) { await p.tap('#menuBtn'); await p.waitForTimeout(300); } await p.locator('#title button', { hasText: 'Game slots' }).tap(); await p.waitForTimeout(300); };
     await p.goto(game + '?scene=town&dev'); await ready();            // a preview page never autosaves: seed a v3 player's save
@@ -90,12 +101,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     const game = `${base}/index.html`;
-    const ready = async () => { await p.waitForFunction(() => !!globalThis.__sim && !window.__old, null, { timeout: 60000 }); await p.waitForTimeout(500); };
+    const ready = () => booted(p);
     const S = (fn, arg) => p.evaluate(fn, arg);
     await p.goto(game + '?dev&slot=1'); await S(() => { localStorage.clear(); indexedDB.deleteDatabase('emberfall'); });
     await p.goto(game + '?dev&slot=1'); await ready();
     // create, through the screens
-    await p.locator('#title button.pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(400);
+    await p.locator('#title button.pri', { hasText: 'Begin' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
+    await p.tap('#cine .skip'); await p.waitForSelector('#createWrap.on'); await p.waitForTimeout(300);   // the intro (section 4 plays it through)
     await p.locator('#create .opt', { hasText: 'Fighter' }).tap(); await p.locator('#create .nav .pri').tap();
     await p.locator('#create .opt', { hasText: 'Barbarian' }).tap(); await p.locator('#create .nav .pri').tap();
     await p.locator('#create .opt', { hasText: 'Redhand deserter' }).tap(); await p.locator('#create .nav .pri').tap();
@@ -147,6 +159,50 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const r = await S(() => { const s = globalThis.__sim.state; return { name: s.party[0].name, actor: s.party[0].actor, n: s.party.length, created: s.created }; });
     check('m3: the hero and party survive a reload; the title offers Continue', r.created && r.name === 'Brannscript' && r.actor === 'hero_barbarian' && r.n === 2 && await p.locator('#title button.pri', { hasText: 'Continue' }).isVisible(), JSON.stringify(r));
     check('m3: no page errors', errs.length === 0, errs.join(' | '));
+    await b.close();
+  }
+}
+// 4. boot and intro: splash → loading → tap to begin → title → Begin → six cards → creation
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    const game = `${base}/index.html?dev&slot=1`, C = (fn) => p.evaluate(fn);
+    await p.goto(game); await C(() => { localStorage.clear(); indexedDB.deleteDatabase('emberfall'); });
+    await p.goto(game);
+    check('boot: the studio splash is up before any script', (await p.locator('#bootSplash, #cine .splash:not([hidden])').first().textContent()).includes('No Game Studios'));
+    await p.waitForSelector('#cine .load:not([hidden])', { timeout: 60000 });
+    const tip = await p.locator('#cine .tip').textContent();
+    await p.waitForSelector('#cine .begin:not([hidden])', { timeout: 60000 });
+    const t0 = await C(() => globalThis.__sim.state.tick);
+    await p.waitForTimeout(600);
+    check('boot: the loading screen shows a tip, and the sim waits', tip.length > 0 && (await C(() => globalThis.__sim.state.tick)) === t0, tip);
+    await p.tap('#cine'); await p.waitForSelector('#titleWrap.on');
+    check("boot: tap to begin → the title, Thornwick's music under it", (await C(() => globalThis.__ui.cinema.music)) === 'thornwick' && (await p.locator('#title .tag').textContent()).includes('Looks like it is up to you.'));
+    await p.locator('#title button.pri', { hasText: 'Begin' }).tap();
+    const seen = [];
+    for (let k = 0; k < 6; k++) {
+      await p.waitForFunction((k) => globalThis.__ui.cinema.card === k, k, { timeout: 10000 }); await p.waitForTimeout(500);
+      seen.push([await p.locator('#cine .age').textContent(), await C(() => globalThis.__ui.cinema.music)]);
+      await p.tap('#cine'); await p.waitForTimeout(300);                                // every line at once
+      if (k === 5) seen.push(await p.locator('#cine .say span.last').textContent());
+      await p.tap('#cine');                                                             // the next card
+    }
+    await p.waitForSelector('#createWrap.on', { timeout: 10000 });
+    check('intro: six cards in order, the Fall\'s music unbroken through cards 3–5', JSON.stringify(seen.slice(0, 6)) === JSON.stringify([['The Kindling', 'kindling'], ['The Solmere Empire', 'empire'], ['The Fall', 'fall'], ['The Long Dim', 'fall'], ['Year 301 of the Dim', 'fall'], ['Thornwick', 'thornwick']]), JSON.stringify(seen));
+    check('intro: it closes on "Looks like it is up to you." and hands over to creation', seen[6].trim() === 'Looks like it is up to you.' && (await C(() => globalThis.__ui.cinema.playing)) === false);
+    await p.locator('#create .opt', { hasText: 'Rogue' }).first().tap(); await p.locator('#create .nav .pri').tap();
+    await p.locator('#create .nav .pri').tap();                                                                       // the look
+    await p.locator('#create .opt', { hasText: 'Thornwick' }).first().tap(); await p.locator('#create .nav .pri').tap();
+    await p.fill('#create input', 'Wick'); await p.locator('#create .nav .pri').tap();
+    await p.locator('#create .nav .pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(3000);
+    check('intro: the music fades out into play', (await C(() => globalThis.__sim.state.created)) && (await C(() => globalThis.__ui.cinema.music)) === null);
+    await p.tap('#menuBtn'); await p.locator('#title button', { hasText: 'The Chronicle' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
+    const replay = await C(() => globalThis.__ui.cinema.card);
+    await p.tap('#cine .skip'); await p.waitForSelector('#titleWrap.on');
+    check('the Chronicle replays the intro from the title, and Skip returns to it', replay === 0 && (await p.locator('#title button.pri', { hasText: 'Resume' }).count()) === 1);
+    check('intro: no page errors', errs.length === 0, errs.join(' | '));
     await b.close();
   }
 }

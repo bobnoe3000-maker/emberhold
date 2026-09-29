@@ -123,7 +123,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 | `src/sim/npc/` | The NPC registry (named and townsfolk), day schedules, wander and work behaviour, and quest-giver hooks |
 | `src/sim/rift.js` | Timed Ember Rifts: seeded weekly layout, run timer, score |
 | `src/story/` | The inkjs adapter: bind sim state into Ink variables, map tags to commands, persist Ink state |
-| `src/cutscene/` | A timeline player for camera moves, letterboxing, text cards, stills and fades |
+| `src/cutscene/` | The boot screens and the intro (implemented: `player.js`, `scenes.js`, `score.js`); later, a timeline player for camera moves, letterboxing, text cards, stills and fades |
 | `src/audio/` | Howler: music beds, sound-effect sprites, mobile unlock |
 | `src/net/` | The Supabase client (auth, profile, saves, leaderboards) and the Colyseus client |
 | `content/` | JSON content, compiled Ink and schemas |
@@ -142,7 +142,8 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
   - The dev hooks `?dev&slow=N` and `?dev&manual` slow or step the clock for captures (see
     AGENTS.md).
 - **Screens** (planned `app/`):
-  - First launch: `Title → Intro cutscene → Character Create → Game`.
+  - First launch: `Splash → Loading → Title → Intro cutscene → Character Create → Game`
+    (implemented in `main.js` with `cutscene/player.js`; the `app/` state machine comes later).
   - Later launches: `Title → Character Select → Game`.
   - The account screen is reachable from Title and Settings, never forced.
   - Each hero is a save slot: seed, sim snapshot, Ink state, settings.
@@ -434,5 +435,6 @@ commands in the same deterministic sim and stores only that result (development 
 | A9 | 2026-09-28 | Capacitor for native; PWA on the web |
 | A10 | 2026-09-28 | `node:test` + Playwright; ESLint without Prettier |
 | A11 | 2026-09-28 | Verified progression: the server replays session command logs (`sim/replay.js`) and stores only the replayed state; `detmath.js` for cross-engine determinism; dev hooks localhost-only; server saves keyed per game slot |
+| A12 | 2026-09-29 | The intro's score is live WebAudio synthesis (`cutscene/score.js`): no audio files, and Howler isn't needed for it. The intro and title use IM Fell English (Igino Marini, OFL 1.1), vendored as woff2 in `assets/fonts/` rather than loaded from a CDN |
 
 Changing any of these needs a new row here, plus a note in the development plan.
