@@ -46,6 +46,10 @@ const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
 const WIND = 1;
+// foes of a full party (three standing) have this much more HP: with the hero moving at its real
+// battle speed (it had been stuck at 2 tiles/s) parties cleared same-level waves for ~17 % HP.
+// Tougher, not harder-hitting: harder hits turned into burst downs and Fallen companions.
+const FULL_PARTY_HP = 1.25;
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
   minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
@@ -62,6 +66,7 @@ export const WINDUP = 0.18, WINDUP_HEAVY = 0.38, DEATH_T = 1.1;
 // Swings: light attacks alternate two baked clips (A / B); abilities (Cleave, Backstab,
 // Firebolt) and every elite blow are HEAVY — a bigger clip whose impact frame comes later,
 // so the blow lands WINDUP_HEAVY into it. atkKind tells the renderer which clip to play.
+const MAX_SHOVE = 0.3;   // tiles per tick a personal-space push may move a unit
 const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal space on screen (px): a 56 px figure with shield and blade spans ~32 px
 // Melee stations around a target, as SCREEN directions (x right, y down): a 56 px figure is
 // far taller than a tile is deep, so fighters stacked along the screen's vertical overlap
@@ -93,7 +98,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     state.party.forEach((m, i) => {
       if (m.mp === undefined) m.mp = statsFor(m).maxMp;
       if (i === 0) { m.x = p.x; m.y = p.y; }
-      else if (m.x === undefined || hypot(m.x - p.x, m.y - p.y) > 14) { m.x = p.x - 0.8 * i; m.y = p.y + 0.8; }
+      // catch up after a jump (travel, stairs, a load) — never mid-fight: a companion chasing
+      // across a big room popped back to the hero in one tick (~14 tiles)
+      else if (m.x === undefined || (!battle && hypot(m.x - p.x, m.y - p.y) > 14)) { m.x = p.x - 0.8 * i; m.y = p.y + 0.8; }
       m.cd = m.cd || 0; m.act = m.act || 0;
     });
   }
@@ -107,6 +114,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const party = state.party.filter(alive).length;
     const eliteWave = (b.wave + 1) % 5 === 0;
     const n = Math.max(1, Math.min(7, 3 * party - 1) - (eliteWave ? 1 : 0));
+    const tough = party >= 3 ? FULL_PARTY_HP : 1;        // a full party of three fights as one: its foes take longer to fall
     const ranged = lvl >= 2 ? Math.floor(n / 3) : 0;
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : rng() < 0.55 ? 'minion' : 'warrior');
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
@@ -116,7 +124,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       let x = 0, y = 0;
       for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
       const elite = eliteWave && i === n - 1;
-      const hp = Math.round(E.hp * scale * (elite ? 2.5 : 1));
+      const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1));
       w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * (elite ? 1.3 : 1), def: E.def * scale,
         crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: E.speed, bolt: E.bolt,
         xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
@@ -376,7 +384,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (e >= 1) continue;
       if (e < 1e-3) { u = (a.id || i) < (b.id || j) ? -1 : 1; v = 0; e = 1; }       // coincident: part sideways
       const k = ((1 - Math.min(1, e)) * (a.isHero || b.isHero ? 1 : 0.5) * stiff) / e, pu = u * k * SEP_X, pv = v * k * SEP_Y;   // half the gap each, in px
-      const px = (pu / 8 + pv / 4) / 2, py = (pv / 4 - pu / 8) / 2;                   // screen px → world tiles
+      let px = (pu / 8 + pv / 4) / 2, py = (pv / 4 - pu / 8) / 2;                     // screen px → world tiles
+      // ease it: a screen px of height is a quarter tile of depth, so a small overlap on screen
+      // shoved a unit ~1.2 tiles in one tick (a visible pop); overlaps now part over a few ticks
+      const pl = hypot(px, py); if (pl > MAX_SHOVE) { px *= MAX_SHOVE / pl; py *= MAX_SHOVE / pl; }
       if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
       if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
@@ -566,8 +577,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // Defensive companions fight only what comes near the leader, and fall back to it otherwise
         const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - p.x, e.y - p.y) < DEF_LEASH) : foes;
         if (!near.length) { if (hypot(p.x - m.x, p.y - m.y) > 2.5) chase(m, p.x, p.y, F.speed, dt, w); else m.moving = false; return; }
-        let tgt = (focus && near.includes(focus) ? focus : null) || (m.cls === 'rogue' ? near.reduce((a, b) => (b.hp < a.hp ? b : a)) : m.cls === 'fighter' && i > 0 && stance !== 'aggressive' ? nearest(H, near) : nearest(m, near));
+        // a fighter guards the leader — while it stands: guarding a Downed hero, one stood idle 45 s
+        // on a far station beside two foes hitting it
+        const guard = m.cls === 'fighter' && i > 0 && stance !== 'aggressive' && alive(H);
+        let tgt = (focus && near.includes(focus) ? focus : null) || (m.cls === 'rogue' ? near.reduce((a, b) => (b.hp < a.hp ? b : a)) : guard ? nearest(H, near) : nearest(m, near));
         if (!tgt) return;
+
         const d = hypot(tgt.x - m.x, tgt.y - m.y);
         m.fx = tgt.x - m.x; m.fy = tgt.y - m.y;
         if (i === 0 && p.moving) return;                        // the hero is yours while you steer
@@ -575,13 +590,17 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (i === 0) {                                          // …and autobattles when you let go
           if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); return; }
           melee(m, tgt, F, dt, w, true, (gx, gy) => {               // autobattle: take a station, leashed to the room
-            const q = { x: p.x, y: p.y }; chase(q, gx, gy, F.speed, dt, w);
+            // a probe steps first (the hero's collision decides the real move); it carries the stride
+            // ramp (spd, stepAt) across ticks — a fresh probe restarted it every tick, pinning the
+            // hero at the first step: 2 tiles/s instead of the fighter's 6.8
+            const q = { x: p.x, y: p.y, spd: m.spd, stepAt: m.stepAt }; chase(q, gx, gy, F.speed, dt, w);
+            m.spd = q.spd; m.stepAt = q.stepAt;
             if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
           });
           return;
         }
         const close = nearest(m, foes);
-        if (F.keepAway && close && hypot(close.x - m.x, close.y - m.y) < F.keepAway * 0.7) {        // mage: back off
+        if (F.keepAway && close && hypot(close.x - m.x, close.y - m.y) < F.keepAway) {        // mage: back off (the whole keep-away: melee foes reach 2.8–3 tiles)
           stepToward(m, m.x - (close.x - m.x), m.y - (close.y - m.y), F.speed, dt, w);
         } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); } }
         else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));

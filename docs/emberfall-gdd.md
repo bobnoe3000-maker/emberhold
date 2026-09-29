@@ -150,7 +150,9 @@ lowest HP or the back line, and the mage clusters. Abilities cast when MP and co
 (§5). Attack intervals are class-fixed: fighter 1.3 s, rogue 0.9 s, mage 1.6 s. Enemies use
 archetype AI: Ashbound mages raise and buff, and Cult necromancers resurrect. Formation is
 front (fighter), mid (rogue) and back (mage): foes reach for the front line first, counting
-the rogue 1 tile and the mage 2.5 tiles further away than they are (shipped at M3).
+the rogue 1 tile and the mage 2.5 tiles further away than they are (shipped at M3). The mage
+backs off from anything within 3.2 tiles (melee foes reach 2.8–3). A full party of three
+faces waves of 7 whose foes have +25 % HP, so a party's waves cost about what a solo hero's do.
 The lull between waves counts as *out of battle* for regen (§4), so sustain decides how long a
 party can hold a room.
 

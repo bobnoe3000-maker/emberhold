@@ -493,6 +493,16 @@ downs per stay from about 5–10 to 0–2; 45 same-level 100 s visits: no Fallen
 hold 5 of 9 +3 rooms at about 40 % HP per wave (before, they wiped in the first wave) —
 an open tuning item for M4.
 
+**Fix (2026-09-29): the hero autobattled at 2 tiles/s.** Its autobattle step ran on a fresh
+probe each tick, restarting the stride ramp, so the fighter crawled while companions moved at
+full speed. With the hero at its real 6.8 tiles/s, parties got stronger (17 % HP per wave), so
+full-party foes gained +25 % HP (not ATK: harder hits became burst downs and Fallen mages) and
+the mage now keeps its whole 3.2-tile distance. Also fixed: companions teleporting back to
+the hero mid-fight (the >14-tile catch-up is now out of battle only); personal-space shoves of
+~1.2 tiles in one tick (capped at 0.3 per tick); a fighter guarding a Downed hero stood idle.
+After: solo 25.4 % per wave, party 22.2 %; 45 visits and 18 five-minute stays with no Fallen;
+solo +3 rooms: 11 of 12 defeats (the one hold ends at 4 % HP after a level-up mid-run).
+
 A Fallen member is a ghost: the actor stamp with an ordered-dither see-through, a cold grey
 and a steady pale rim (`render/renderer.js`, look `ghost`). Weakened lasts 10 minutes of
 play; an in-game day (the temple's free raise) is 24 minutes (`DAY_S`).
