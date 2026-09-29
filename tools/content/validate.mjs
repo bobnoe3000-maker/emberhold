@@ -17,7 +17,7 @@ const dupes = (v, path, out) => {
   } else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) dupes(x, `${path}.${k}`, out);
 };
 const files = readdirSync(ROOT, { withFileTypes: true }).flatMap((d) => d.isDirectory()
-  ? (d.name === 'schema' ? [] : readdirSync(join(ROOT, d.name)).filter((f) => f.endsWith('.json')).map((f) => [`${d.name}/${f}`, d.name]))
+  ? (d.name === 'schema' || d.name === 'dialogue' ? [] : readdirSync(join(ROOT, d.name)).filter((f) => f.endsWith('.json')).map((f) => [`${d.name}/${f}`, d.name]))   // dialogue/*.json is compiled Ink: checked by ink.mjs
   : d.name.endsWith('.json') ? [[d.name, d.name.replace(/\.json$/, '')]] : []);
 for (const [f, name] of files) {
   n++;
