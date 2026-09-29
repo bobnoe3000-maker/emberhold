@@ -147,7 +147,24 @@ function rankRooms(level, depth) {
   return out;
 }
 
-const cellAt = (world, x, y) => world.level.cells.get(K(x, y));
+// Dense per-level lookups. level.cells is a string-keyed Map that generateLevel fills once and
+// nothing changes after (loot and growths live in mods / props), and a dungeon tile's material
+// is a pure function of the level. Both were recomputed on every call — a string key, fbm noise
+// — and were most of the sim's time in fights and path searches (a long walk's search ran for
+// seconds on a phone). The same answers from arrays, rebuilt if the level or its seeds change.
+function dense(world) {
+  const L = world.level; let g = L._dense;
+  if (g && g.n === L.cells.size && g.depth === world.depth && g.ss === world.ss && g.cs === world.cs) return g;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const at = [];
+  for (const [k, c] of L.cells) { const i = k.indexOf(','), x = +k.slice(0, i), y = +k.slice(i + 1); at.push(x, y, c);
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  const w = at.length ? x1 - x0 + 1 : 0, h = at.length ? y1 - y0 + 1 : 0, cells = new Array(w * h);
+  for (let i = 0; i < at.length; i += 3) cells[(at[i + 1] - y0) * w + (at[i] - x0)] = at[i + 2];
+  g = { n: L.cells.size, depth: world.depth, ss: world.ss, cs: world.cs, x0, y0, w, h, cells, mat: new Array(w * h) };
+  Object.defineProperty(L, '_dense', { value: g, writable: true, configurable: true, enumerable: false });   // never in a snapshot or a hash
+  return g;
+}
+const cellAt = (world, x, y) => { const g = dense(world), i = x - g.x0, j = y - g.y0; return i >= 0 && j >= 0 && i < g.w && j < g.h ? g.cells[j * g.w + i] : undefined; };
 function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
 
 // Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
@@ -199,12 +216,14 @@ export function materialAt(world, x, y) {
   if (world.kind !== 'dungeon') return oMaterialAt(world, x, y);
   const tx = Math.floor(x), ty = Math.floor(y), c = cellAt(world, tx, ty);
   if (!c) return MAT.ABYSS;
+  const g = world.level._dense, idx = (ty - g.y0) * g.w + (tx - g.x0), known = g.mat[idx];   // (cellAt built g)
+  if (known !== undefined) return known;
   const th = world.level.th;
-  if (c.kind === 'wall') return th.wall;
-  if (!c.corridor && hazardAt(world, tx, ty)) return th.hazard;
-  const bag = th.floors;
-  const i = clampi(Math.floor(fbm(tx * 0.11, ty * 0.11, world.ss) * bag.length), 0, bag.length - 1);
-  return bag[i];
+  let m;
+  if (c.kind === 'wall') m = th.wall;
+  else if (!c.corridor && hazardAt(world, tx, ty)) m = th.hazard;
+  else { const bag = th.floors; m = bag[clampi(Math.floor(fbm(tx * 0.11, ty * 0.11, world.ss) * bag.length), 0, bag.length - 1)]; }
+  g.mat[idx] = m; return m;
 }
 
 // Harvestable growths — obsidian shards along the wall bases of rooms (never corridors,

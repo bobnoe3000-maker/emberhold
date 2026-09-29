@@ -108,9 +108,20 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     let weight = null;
     if (opts.corridors && world.kind === 'dungeon') {
       const cells = world.level.cells, c0 = cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)), r0 = c0 ? c0.room : -1, cg = cells.get(tx + ',' + ty), rg = cg ? cg.room : -1;
-      weight = (x, y) => { const c = cells.get(x + ',' + y); return c && c.room >= 0 && !c.corridor && c.room !== r0 && c.room !== rg ? 3 : 0; };
+      const wm = new Map();                                   // per walk, like stand() below: a string-keyed cell lookup per tile searched was most of a long compass walk's cost
+      weight = (x, y) => { const k = (x + 4096) * 8192 + (y + 4096); let v = wm.get(k);
+        if (v === undefined) { const c = cells.get(x + ',' + y); v = c && c.room >= 0 && !c.corridor && c.room !== r0 && c.room !== rg ? 3 : 0; wm.set(k, v); } return v; };
     }
-    const path = findPath(p.x, p.y, tx, ty, standable, { near, weight });
+    // standable() probes five points (walls, hazard, props, climb) and the search asks it up to 24
+    // times a node; memoised for this walk — by tile and the height stepped up from, the only
+    // thing (fx, fy) changes — a long or unreachable tap no longer stalls the tick (0.2–0.6 s
+    // on a laptop, seconds on a phone). The answers, and so the path, are unchanged.
+    const memo = new Map(), stand = (x, y, fx, fy) => {
+      const hz = heightAt(world, fx, fy), k = (x + 4096) * 8192 + (y + 4096);
+      let m = memo.get(hz); if (!m) memo.set(hz, (m = new Map()));
+      let v = m.get(k); if (v === undefined) { v = standable(x, y, fx, fy); m.set(k, v); } return v;
+    };
+    const path = findPath(p.x, p.y, tx, ty, stand, { near, weight });
     if (!path) { bus.emit('noPath', { tx, ty }); return false; }
     p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0;
     p.dest = opts.label ? { label: opts.label, tx, ty, then, near, room: opts.room ?? -1, fromRoom: battle.battle ? battle.battle.room : -1 } : null;   // fromRoom: a fight you're walking out of doesn't stop you
