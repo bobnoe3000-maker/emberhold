@@ -1,0 +1,17 @@
+{
+  "classes": [
+    { "id": "fighter", "role": "Front line. Holds the door so the others can work.", "difficulty": "Forgiving" },
+    { "id": "rogue", "role": "Quick and sharp. Picks off the weak and slips the blows.", "difficulty": "Steady hands" },
+    { "id": "mage", "role": "Fire at a distance. Frail up close, fearsome from the back.", "difficulty": "Keep them safe" }
+  ],
+  "locked": [
+    { "id": "cleric", "name": "Cleric", "hint": "Found in the fens" },
+    { "id": "healer", "name": "Healer", "hint": "Found in the fens" }
+  ],
+  "names": {
+    "thornwick_born": ["Tam", "Hester", "Col", "Ada", "Pell", "Mabry", "Dunstan", "Nell"],
+    "redhand_deserter": ["Rook", "Garrow", "Hask", "Bryn", "Stell", "Corran", "Madoc", "Jory"],
+    "grey_sisters_ward": ["Agnet", "Lisbet", "Anselm", "Merla", "Tobin", "Clary", "Wystan", "Petra"],
+    "deepdelver_fostered": ["Durn", "Holt", "Bram", "Greta", "Orm", "Tilde", "Hob", "Sten"]
+  }
+}

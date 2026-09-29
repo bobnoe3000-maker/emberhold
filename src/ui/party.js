@@ -2,9 +2,14 @@
 // centre, up to two hired companions either side. Each card: portrait (cut from the
 // character's own baked atlas), level badge, name, class, HP bar, ATK / DEF / CRT / DDG,
 // and level + XP bar. Empty companion slots point you at a tavern. Tapping a card opens that
-// member's character sheet (sheet.js); a green badge flags an upgrade waiting in the bag. DOM only.
+// member's character sheet (sheet.js); a green badge flags an upgrade waiting in the bag, a
+// "+N" one points to spend. A Fallen member's card greys out and says so; Weakened shows in
+// amber. DOM only.
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
+import { pendingPoints } from '../sim/attributes.js';
+import { pendingSkillPoints } from '../sim/skills.js';
+import { esc } from './actorart.js';
 
 const CSS = `
 #party { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.08fr 1fr; gap: 6px;
@@ -14,6 +19,10 @@ const CSS = `
 #party .card.main { border-color: #a07a3c; box-shadow: inset 0 0 0 1px rgba(160,122,60,0.25); }
 #party .card.down { opacity: .55; filter: grayscale(.8); }
 #party .card.down .hp span { color: #ff8a7a; }
+#party .card.fallen { opacity: .6; filter: grayscale(1); border-color: #4a5468; }
+#party .card.fallen .hp span { color: #c8d4e8; }
+#party .card.weak .hp i { background: #b08040; }
+#party .card .ptb { position: absolute; top: -7px; left: -4px; background: #8fe07a; color: #10200c; font-size: 8px; font-weight: 700; border-radius: 7px; padding: 1px 5px; }
 #party .card.empty { border: 1px dashed #3a3448; background: rgba(14,12,20,0.6); display: flex; align-items: center; justify-content: center;
   text-align: center; font-size: 9.5px; color: #6f6880; letter-spacing: .5px; line-height: 1.35; }
 #party .top { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
@@ -57,10 +66,11 @@ export function createPartyPanel(sim) {
     if (!m) return `<div class="card empty">empty slot<br>hire at a<br>town tavern</div>`;
     const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level), actor = m.actor || c.actor;
     const hp = Math.max(0, Math.round(m.hp));
-    return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}
+    const pts = pendingPoints(m) + pendingSkillPoints(m);
+    return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}${m.fallen ? ' fallen' : ''}${m.weakUntil > 0 ? ' weak' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}${pts ? `<span class="ptb">+${pts}</span>` : ''}
       <div class="top"><div class="pf"><canvas width="44" height="52" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
-        <div style="min-width:0"><div class="nm">${m.name}</div><div class="cl">${c.abbr}</div></div></div>
-      <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
+        <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.abbr}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
+      <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'FALLEN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
         <span>CRT</span><b>${s.crit}%</b><span>DDG</span><b>${s.dodge}%</b></div>
       <div class="xp">LV ${m.level}<div><i style="width:${Math.round((100 * m.xp) / need)}%"></i></div></div></div>`;
@@ -74,7 +84,7 @@ export function createPartyPanel(sim) {
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed
   let sig = '';
   const gearSig = () => (sim.state.bag || []).length + ':' + sim.state.party.map((m) => Object.values(m.gear || {}).map((it) => (it ? it.uid : '-')).join('.')).join('/');
-  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
+  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${m.actor}|${m.name}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
   // tap a card: that member's character sheet. The cards re-render several times a second
   // in battle (HP ticks), so the press and the release can land on two copies of the same

@@ -54,7 +54,9 @@ shipped on `main`:
 - loot v1 and the character sheet;
 - weapon effects;
 - fluid movement (critic pass 3);
-- **M2.5 Foundations** (done): the Emberfall rename, three game slots, types, lint, tests, CI.
+- **M2.5 Foundations** (done): the Emberfall rename, three game slots, types, lint, tests, CI;
+- **M3 Heroes** (done): the title and pause menu, character creation with origins, the Party
+  screen and bench, attributes and skills, stances, and death and resurrection (Fallen,
+  temple, shrine, inn, Weakened).
 
-**Next: M3 Heroes**: the title screen, character creation with origins, the Party screen,
-attribute points, skills, and death and resurrection.
+**Next: M4** in [development-plan.md](./development-plan.md) §3.

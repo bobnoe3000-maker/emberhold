@@ -1,8 +1,8 @@
 // @ts-check
 // slots.js — the Game Slots window: up to three games, each its own main character, party
 // and world (GDD §6.1). The first Preact + htm window (architecture A3): keyed components,
-// so nothing is rebuilt under the player's finger. Opened from the ☰ button in the HUD
-// (the Title screen takes over this role in M3).
+// so nothing is rebuilt under the player's finger. Opened from the Title / pause menu
+// (title.js, ☰ in the HUD).
 //
 // Switching or starting a slot saves the current one, sets the active slot and reloads —
 // a whole-page reset is the simplest way to guarantee a clean sim, renderer and world.
@@ -75,7 +75,5 @@ export function createSlotsWindow({ active, saveNow }) {
   const play = async (/** @type {number} */ i) => { await saveNow(); setActiveSlot(i); location.replace(location.pathname + (location.search.includes('dev') ? '?dev' : '')); };
   const open = () => { wrap.classList.add('on'); render(html`<${SlotsWindow} active=${active} onClose=${close} onPlay=${play} />`, wrap); };
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
-  const btn = document.getElementById('menuBtn');
-  if (btn) { btn.addEventListener('click', open); for (const ev of ['pointerdown', 'touchstart', 'mousedown']) btn.addEventListener(ev, (e) => e.stopPropagation()); }
   return { open, close };
 }

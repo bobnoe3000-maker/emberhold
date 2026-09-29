@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Character creation text (development plan §2.3): class blurbs, locked classes, name suggestions per origin",
+  "type": "object",
+  "required": ["classes", "locked", "names"],
+  "additionalProperties": false,
+  "properties": {
+    "classes": {
+      "type": "array", "minItems": 3,
+      "items": { "type": "object", "required": ["id", "role", "difficulty"], "additionalProperties": false,
+        "properties": { "id": { "enum": ["fighter", "rogue", "mage"] }, "role": { "type": "string" }, "difficulty": { "type": "string" } } }
+    },
+    "locked": {
+      "type": "array",
+      "items": { "type": "object", "required": ["id", "name", "hint"], "additionalProperties": false,
+        "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "hint": { "type": "string" } } }
+    },
+    "names": {
+      "type": "object", "additionalProperties": false,
+      "required": ["thornwick_born", "redhand_deserter", "grey_sisters_ward", "deepdelver_fostered"],
+      "patternProperties": { "^[a-z_]+$": { "type": "array", "minItems": 4, "items": { "type": "string", "pattern": "^[A-Z][a-z]{1,15}$" } } }
+    }
+  }
+}

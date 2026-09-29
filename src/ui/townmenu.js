@@ -2,8 +2,9 @@
 // town (outdoor.js). Once the hero is near it (world.hub), a bar of the five services slides
 // up — Shop, Smith, Tavern, Inn, Temple — and tapping one (or its building) opens that
 // service's menu as a bottom sheet. Away from the square the services aren't reachable. The actions are the GDD's
-// (emberfall-gdd.md §10): they're placeholders until each system lands.
-// DOM only; reads sim state, never writes it.
+// (emberfall-gdd.md §10); the live ones today: the tavern's hiring board, the temple (raise the
+// Fallen, respec) and the inn (rest, the party and bench). The rest are placeholders until
+// each system lands. DOM only; reads sim state and sends commands, never writes state.
 
 const SERVICES = {
   shop: {
@@ -23,17 +24,20 @@ const SERVICES = {
   },
   inn: {
     label: 'Inn', blurb: 'Rest, lodge the companions you’re not taking, and send parties out while you’re away.',
-    actions: [['Rest', 'restore HP and MP · heal the tired'], ['Lodge companions', 'your bench of recruited companions'], ['Expeditions', 'send a party to farm a room while you’re offline']],
+    actions: [['Rest', 'restore HP and MP · lifts Weakened'], ['Party & bench', 'your three hero slots and the companions who wait here'], ['Expeditions', 'send a party to farm a room while you’re offline']],
     icon: '<path d="M3 18V7M3 13h18v5M21 18v-3M6 13v-2a2 2 0 0 1 2-2h3v4M12 9h6a3 3 0 0 1 3 3v1"/>',
   },
   temple: {
-    label: 'Temple', blurb: 'Heal the Wounded, take a blessing before the road, and read the Chronicle of the Fall.',
-    actions: [['Heal the Wounded', 'companions who fell, back on their feet'], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
+    label: 'Temple', blurb: 'Raise the Fallen, set a body and mind back to how they began, take a blessing before the road, and read the Chronicle of the Fall.',
+    actions: [['Raise the Fallen', 'companions who fell, back on their feet'], ['Respec', 'unlearn your attribute points and spend them again'], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
     icon: '<path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/>',
   },
 };
 const ORDER = ['shop', 'smith', 'tavern', 'inn', 'temple'];
-import { tavernRoster, CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
+import { CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
+import { BENCH_MAX, FREE_RES_LEVEL } from '../sim/heroes.js';
+import { pointsSpent } from '../sim/attributes.js';
+import { esc } from './actorart.js';
 
 const CSS = `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
@@ -68,11 +72,13 @@ const CSS = `
 #hubSheet .btn.ghost { background: transparent; color: #d8a040; border: 1px solid rgba(214,170,98,0.5); }
 #hubSheet .btn:disabled { background: #3a3444; color: #7a7088; }
 #hubSheet .back { font: 12px Georgia, serif; color: #d8a040; background: none; border: 0; padding: 0; margin-bottom: 6px; }
+#hubSheet .note { font-size: 12px; color: #ff8a7a; margin: -4px 0 10px; min-height: 0; }
+#hubSheet .merc.fallen .who b { color: #b8c4d8; }
 #hubSheet .close { position: absolute; right: 12px; top: 10px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid rgba(214,170,98,0.35);
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
 
-export function createTownMenu(sim, partyPanel) {
+export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const bar = document.createElement('div'); bar.id = 'hubBar';
   const sheet = document.createElement('div'); sheet.id = 'hubSheet';
@@ -86,18 +92,26 @@ export function createTownMenu(sim, partyPanel) {
   sheet.addEventListener('click', (e) => {
     if (e.target.closest('.close')) return close();
     if (e.target.closest('.back')) return open(current);
-    const go = e.target.closest('[data-go]'); if (go) return go.dataset.go === 'hire' ? hire() : null;
-    const h = e.target.closest('[data-hire]'); if (h) { sim.commands.push({ type: 'hire', idx: +h.dataset.hire }); return; }
-    const d = e.target.closest('[data-dismiss]'); if (d) sim.commands.push({ type: 'dismiss', id: d.dataset.dismiss });
+    const go = e.target.closest('[data-go]');
+    if (go) { const v = go.dataset.go; note = ''; if (v === 'party') { close(); openParty(); return; } return VIEWS[v](); }
+    const send = (cmd) => { note = ''; sim.commands.push(cmd); };
+    const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
+    const d = e.target.closest('[data-dismiss]'); if (d) return send({ type: 'dismiss', id: d.dataset.dismiss });
+    const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
+    const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
+    if (e.target.closest('[data-rest]')) send({ type: 'rest' });
   });
-  sim.bus.on('partyChanged', () => { if (sheet.classList.contains('on') && view === 'hire') hire(); });
-  let current = null, view = null;
+  const redraw = () => { if (sheet.classList.contains('on') && VIEWS[view]) VIEWS[view](); };
+  sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
+  sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
+  sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
+  let current = null, view = null, note = '', restDone = false;
 
-  const LIVE = { 'Hire companions': 'hire' };                // actions that work today
+  const LIVE = { 'Hire companions': 'hire', 'Raise the Fallen': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
-    current = kind; view = kind;
+    current = kind; view = kind; note = '';
     sheet.innerHTML = `<button class="close" aria-label="close">×</button>
       <div class="kind">${S.label} · ${w.name || ''}</div><h2>${sv ? sv.name : S.label}</h2><p>${S.blurb}</p>
       ${S.actions.map(([t, d]) => LIVE[t]
@@ -105,23 +119,52 @@ export function createTownMenu(sim, partyPanel) {
         : `<div class="row"><div><b>${t}</b><span>${d}</span></div><div class="soon">soon</div></div>`).join('')}`;
     sheet.classList.add('on');
   }
-  // The tavern's hiring board: today's three sellswords, and who you already have.
+  const line = (m) => { const s = statsFor(m); return `HP ${s.maxHp} · ATK ${s.atk} · DEF ${s.def} · CRT ${s.crit}% · DDG ${s.dodge}%`; };
+  const head = (kind, title, blurb) => `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
+      <div class="kind">${kind} · ${esc(sim.world.name || '')}</div><h2>${title}</h2><p>${blurb}</p>${note ? `<div class="note">${esc(note)}</div>` : ''}`;
+  const gold = () => sim.state.counters.gold || 0;
+  // The tavern's hiring board: today's sellswords, and who you already have. Hires beyond the
+  // party of three wait on the bench at the inn.
   function hire() {
     view = 'hire';
-    const w = sim.world, party = sim.state.party, you = party[0], full = party.length > MAX_COMPANIONS;
-    const line = (m) => { const s = statsFor(m); return `HP ${s.maxHp} · ATK ${s.atk} · DEF ${s.def} · CRT ${s.crit}% · DDG ${s.dodge}%`; };
-    const roster = w.kind === 'town' ? tavernRoster(sim.seed, w.region, 0, you.level) : [];
-    sheet.innerHTML = `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
-      <div class="kind">Tavern · ${w.name || ''}</div><h2>Hire companions</h2>
-      <p>Up to two companions travel with you. They share your XP and fight at your side.</p>
-      <h3>Your party · ${party.length}/3</h3>
-      ${party.slice(1).map((m) => `<div class="merc"><div class="who"><b>${m.name}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${line(m)}</span></div>
-        <button class="btn ghost" data-dismiss="${m.id}">Dismiss</button></div>`).join('') || '<p style="margin:0 0 4px">No companions yet.</p>'}
+    const w = sim.world, S = sim.state, party = S.party, full = party.length > MAX_COMPANIONS, benchFull = S.bench.length >= BENCH_MAX;
+    const roster = w.kind === 'town' ? sim.heroes.roster() : [];
+    sheet.innerHTML = `${head('Tavern', 'Hire companions', 'Two companions travel with you; everyone else you recruit waits on the bench at the inn and earns half XP.')}
+      <h3>Your party · ${party.length}/3 · bench ${S.bench.length}/${BENCH_MAX}</h3>
+      ${party.slice(1).map((m) => `<div class="merc"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${line(m)}</span></div>
+        <button class="btn ghost" data-dismiss="${m.id}">To bench</button></div>`).join('') || '<p style="margin:0 0 4px">No companions yet.</p>'}
       <h3>Today's sellswords</h3>
-      ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id); return `<div class="merc"><div class="who"><b>${m.name}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>
+      ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id) || S.bench.some((p) => p.id === m.id); return `<div class="merc"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>
         <span>${m.trait ? m.trait[0] + ' · ' + m.trait[1] : ''}</span><span>${line(m)}</span></div>
-        <button class="btn" data-hire="${i}" ${have || full ? 'disabled' : ''}>${have ? 'Hired' : 'Hire'}</button></div>`; }).join('')}`;
+        <button class="btn" data-hire="${i}" ${have || (full && benchFull) ? 'disabled' : ''}>${have ? 'Hired' : full ? 'To bench' : 'Hire'}</button></div>`; }).join('')}`;
   }
+  // The temple: raise the Fallen (GDD §3.6) — free once a day while your hero is level 5 or
+  // lower, else 25 gold × their level.
+  function raise() {
+    view = 'raise';
+    const S = sim.state, fallen = [...S.party, ...S.bench].filter((m) => m.fallen);
+    sheet.innerHTML = `${head('Temple', 'Raise the Fallen', `The sisters ask 25 gold a level, and raise one a day for nothing while you are level ${FREE_RES_LEVEL} or under. You have ${gold()} gold.`)}
+      ${fallen.map((m) => { const c = sim.heroes.resurrectCost(m); return `<div class="merc fallen"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>Fallen · ${S.party.includes(m) ? 'with you, a ghost' : 'on the bench'}</span></div>
+        <button class="btn" data-raise="${m.id}" ${c > gold() ? 'disabled' : ''}>${c ? c + ' gold' : 'Free'}</button></div>`; }).join('') || '<p>Nobody in your company is Fallen.</p>'}`;
+  }
+  // The temple: respec (GDD §4.1) — the first for each member is free, then 20 gold × level.
+  function respec() {
+    view = 'respec';
+    const S = sim.state, all = [...S.party, ...S.bench];
+    sheet.innerHTML = `${head('Temple', 'Respec', 'Unlearn a member’s attribute points to spend them again. The first time is free; after that, 20 gold × level.')}
+      ${all.map((m) => { const c = sim.heroes.respecCost(m), n = pointsSpent(m); return `<div class="merc"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${n} points spent${m.autoAttrs ? ' · on Auto' : ''}</span></div>
+        <button class="btn${c ? '' : ' ghost'}" data-respec="${m.id}" ${!n || c > gold() ? 'disabled' : ''}>${c ? c + ' gold' : 'Free'}</button></div>`; }).join('')}`;
+  }
+  // The inn: rest — full HP and MP, and Weakened lifted (5 gold × your level)
+  function rest() {
+    view = 'rest';
+    const S = sim.state, c = sim.heroes.restCost(), weak = S.party.some((m) => m.weakUntil > 0);
+    sheet.innerHTML = `${head('Inn', 'Rest', `A bed, a meal and a night’s sleep: everyone standing wakes at full HP and MP${weak ? ', and no longer Weakened' : ''}. The Fallen need the temple.`)}
+      ${S.party.map((m) => { const s = statsFor(m); return `<div class="merc${m.fallen ? ' fallen' : ''}"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${m.fallen ? 'Fallen' : `HP ${Math.round(m.hp)}/${s.maxHp}`}${m.weakUntil > 0 ? ' · Weakened' : ''}</span></div></div>`; }).join('')}
+      <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
+    restDone = false;
+  }
+  const VIEWS = { hire, raise, respec, rest };
   function close() { sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square

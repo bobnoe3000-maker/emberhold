@@ -12,6 +12,9 @@ import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
 import { rollRecipe } from './assetforge/doll.js';
 import { SLOTS, activeSlot, setActiveSlot, readSlot, writeSlot, migrateLegacy, createAutosave } from './persist/save.js';
 import { createSlotsWindow } from './ui/slots.js';
+import { createTitle } from './ui/title.js';
+import { createCreation } from './ui/create.js';
+import { createPartyScreen } from './ui/partyscreen.js';
 import { screenDirToWorld } from './render/iso.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
@@ -44,7 +47,8 @@ const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 createHud(sim);
 const partyPanel = createPartyPanel(sim);
-const townMenu = createTownMenu(sim, partyPanel);   // subscribe before restore, so a loaded counters event repaints
+const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
+const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open() });   // subscribe before restore, so a loaded counters event repaints
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;
@@ -52,8 +56,23 @@ if (DEV) globalThis.__gear = gearSheet;
 // Restore the slot's game (party, counters, the dungeon overlay, discovery). Must run before
 // the first render so restored mods are reflected in chunk bakes.
 if (saved) sim.restore(saved.data);
-if (!PREVIEW) createAutosave(sim, SLOT);
-createSlotsWindow({ active: SLOT, saveNow: () => (PREVIEW ? Promise.resolve(true) : writeSlot(SLOT, sim)) });
+// Autosave only a game that has its hero: a slot stays empty until creation's Begin.
+let autosave = null;
+const startAutosave = () => { if (PREVIEW || autosave) return; autosave = createAutosave(sim, SLOT); autosave.save(); };
+if (sim.state.created) startAutosave();
+sim.bus.on('heroCreated', startAutosave);
+const slots = createSlotsWindow({ active: SLOT, saveNow: () => (PREVIEW || !sim.state.created ? Promise.resolve(true) : writeSlot(SLOT, sim)) });
+
+// Title / pause menu (title.js) and character creation (create.js). The sim doesn't tick while
+// the title is up; creation runs it, since Begin is a command the sim has to take.
+// ?notitle (tests, captures) skips the title and plays straight away.
+let paused = false;
+const creation = createCreation({ sim, onDone: () => { paused = false; } });
+const title = createTitle({ sim, slot: SLOT, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
+  openParty: () => partyScreen.open(), openCreate: () => { paused = false; creation.open(); },
+  onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
+if (!PREVIEW && !params.has('notitle')) title.open('title');
+if (DEV) globalThis.__ui = { title, creation, partyScreen, slots };
 
 // Hero: deterministic recipe from the world seed's recipe stream.
 const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));
@@ -91,6 +110,7 @@ function frame(now) {
   acc += dt;
 
   while (acc >= TICK_DT) {
+    if (paused) { acc -= TICK_DT; continue; }
     const v = input.vec();
     if (v) {                                   // screen drag → iso world direction
       const w = screenDirToWorld(v.x, v.y);

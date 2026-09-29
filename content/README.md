@@ -7,7 +7,8 @@ comes from `docs/emberfall-world.md` — change it there first.
 
 | File | What | Consumed by |
 |---|---|---|
-| `origins.json` | The four hero origins (GDD §6.1) | Character creation (M3) |
+| `origins.json` | The four hero origins (GDD §6.1) | Character creation (M3); the sim's rule edges in `src/sim/party.js` are tested against it |
+| `creation.json` | Class blurbs, locked classes and name suggestions per origin | Character creation (`src/ui/create.js`) |
 
 Coming (docs/development-plan.md): `quests/`, `npcs/`, `lore/`, `dialogue/*.ink` (compiled
 by the same step), `bosses/`, `rifts.json`, `cutscenes/`.

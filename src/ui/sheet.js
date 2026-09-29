@@ -1,11 +1,18 @@
-// sheet.js — the character sheet (docs/gear-mockup.html). Tap a party card: that member's
-// six gear slots around their figure, their stats with the gear's share in green, and the
-// shared party bag. Tap an item — worn or in the bag — for its card: stats, affixes, a
+// sheet.js — the character window (docs/gear-mockup.html; development plan §2.4). Tap a party
+// card: that member's window, in three tabs.
+//   Gear   — six gear slots around their figure, their stats with the gear's share in green,
+//            and the shared party bag.
+//   Stats  — the four attributes with the point-spend buttons and Auto; derived stats.
+//   Skills — the class abilities in priority order: ranks, auto-cast, the passive, the stance.
+// On the Gear tab: Tap an item — worn or in the bag — for its card: stats, affixes, a
 // Rare's ability modifier, flavour, a comparison with what's worn, and Equip / Give /
 // Unequip / Salvage. Drops raise a loot toast with a one-tap "Equip on …". DOM only; talks
 // to the sim through commands (loot.js) and reads its state.
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
+import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
+import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
+import { esc } from './actorart.js';
 import { BASES, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE } from '../sim/loot.js';
 
@@ -88,6 +95,31 @@ const CSS = `
 #lootToast .gbtns { margin-top: 9px; } #lootToast .gbtn { padding: 8px 6px; }
 #party .card { pointer-events: auto; cursor: pointer; }
 #party .card.empty { pointer-events: none; }
+#gearSheet .views { display: flex; gap: 6px; margin-top: 8px; }
+#gearSheet .views button { flex: 1; position: relative; min-height: 40px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; text-transform: uppercase; }
+#gearSheet .views button.on { color: #1a1208; background: #d8a040; border-color: #f0c880; font-weight: 700; }
+#gearSheet .views button i { position: absolute; top: -6px; right: -4px; font-style: normal; font-size: 9px; font-weight: 700; color: #10200c; background: #8fe07a; border-radius: 7px; padding: 1px 5px; letter-spacing: 0; }
+#gearSheet .ptsh { display: flex; align-items: center; gap: 8px; margin: 12px 2px 8px; font-size: 11px; color: #c8bca8; letter-spacing: 1px; }
+#gearSheet .ptsh b { color: #8fe07a; font-size: 14px; } #gearSheet .ptsh .sp { margin-left: auto; }
+#gearSheet .tog { min-height: 36px; min-width: 76px; border-radius: 18px; border: 1px solid #3a3346; background: none; color: #978c80; font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1px; }
+#gearSheet .tog.on { color: #10200c; background: #8fe07a; border-color: #8fe07a; font-weight: 700; }
+#gearSheet .arow { display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin-bottom: 7px; border: 1px solid #2c2838; border-radius: 9px; background: rgba(255,255,255,.02); min-height: 56px; }
+#gearSheet .arow .nm2 { flex: 1; min-width: 0; } #gearSheet .arow .nm2 b { font: 600 15px Georgia, serif; color: #efe4cf; }
+#gearSheet .arow .nm2 span { display: block; font-size: 10px; color: #978c80; margin-top: 3px; line-height: 1.4; }
+#gearSheet .arow .val { font-size: 18px; font-weight: 700; color: #f0c880; min-width: 26px; text-align: right; }
+#gearSheet .plus { width: 46px; height: 46px; border-radius: 10px; border: 1px solid #8fe07a; background: rgba(143,224,122,.12); color: #8fe07a; font-size: 22px; flex: none; }
+#gearSheet .plus:disabled { border-color: #2c2838; color: #3a3346; background: none; }
+#gearSheet .arow.locked { opacity: .5; }
+#gearSheet .pips { letter-spacing: 2px; color: #d8a040; font-size: 11px; }
+#gearSheet .pips s { text-decoration: none; color: #3a3346; }
+#gearSheet .sbtns { display: flex; flex-direction: column; gap: 5px; flex: none; }
+#gearSheet .sbtns button { min-width: 64px; min-height: 34px; border-radius: 7px; border: 1px solid rgba(214,170,98,.45); background: none; color: #f0c880; font: 10px ui-monospace, Menlo, monospace; letter-spacing: 1px; }
+#gearSheet .sbtns button:disabled { border-color: #2c2838; color: #3a3346; }
+#gearSheet .stance { display: flex; gap: 6px; margin: 4px 0 6px; }
+#gearSheet .stance button { flex: 1; min-height: 44px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 600 13px Georgia, serif; }
+#gearSheet .stance button.on { border-color: #d8a040; color: #f0c880; background: rgba(216,160,64,.12); }
+#gearSheet .hint { font-size: 10.5px; color: #978c80; line-height: 1.45; margin: 4px 2px 10px; }
+#gearSheet .hint.warn { color: #e0a060; }
 #party .card .upb { position: absolute; top: -7px; right: -4px; background: #8fe07a; color: #10200c; font-size: 8px; font-weight: 700; border-radius: 7px; padding: 1px 5px; letter-spacing: .5px; box-shadow: 0 0 8px rgba(143,224,122,.6); }
 `;
 
@@ -114,7 +146,7 @@ export function createGearSheet(sim, { partyPanel }) {
   for (const el of [sheet, card, toast]) for (const ev of ['pointerdown', 'touchstart', 'mousedown']) el.addEventListener(ev, stop);
 
   const S = sim.state;
-  let open = false, who = 0, sel = null;                     // sel: { uid, worn: slot | null }
+  let open = false, who = 0, sel = null, view = 'gear';      // sel: { uid, worn: slot | null }; view: gear | stats | skills
   let pendingSel = null;                                     // an equip in flight: follow the item to its new slot
   const fresh = new Set();                                   // uids dropped since you last looked
   let note = null;                                           // { text, bad } under the card
@@ -136,20 +168,64 @@ export function createGearSheet(sim, { partyPanel }) {
     if (!open) return;
     const m = member(), s = statsFor(m), g = m.gear || {}, c = CLASSES[m.cls];
     const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="44" height="52" data-actor="${actorOf(p)}"></canvas>`
-      + `<div style="min-width:0"><b>${p.name}</b><span>${CLS_ABBR[p.cls]} · L${p.level}</span></div>${hasUpgrade(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
+      + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${CLS_ABBR[p.cls]} · L${p.level}${p.fallen ? ' · FALLEN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
-    const need = xpToNext(m.level);
-    sheet.innerHTML = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>
+    const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m);
+    const views = `<div class="views">${[['gear', 'Gear', 0], ['stats', 'Stats', pa], ['skills', 'Skills', ps]].map(([k, l, n]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${n ? `<i>+${n}</i>` : ''}</button>`).join('')}</div>`;
+    const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}`;
+    if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
+    if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
+    sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
-        <div class="fig"><canvas width="88" height="102" data-fig="${actorOf(m)}"></canvas><div class="nm">${m.name.toUpperCase()} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
+        <div class="fig"><canvas width="88" height="102" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="bagh">Party bag · ${S.bag.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} embers</i></span></div>
       <div class="bag">${S.bag.map((it) => slotHtml(it, { m })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - S.bag.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
-    for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawActor(cv, cv.dataset.actor, 22, 26, 44, 52);
+    paintTabs();
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawActor(fc, fc.dataset.fig, 0, 0, 88, 102, 2.1);
     renderCard();
+  }
+  function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawActor(cv, cv.dataset.actor, 22, 26, 44, 52); }
+
+  // ── the Stats tab: attributes and points (GDD §4.1) ─────────────────────────
+  function statsView(m, s) {
+    const a = attrsOf(m), n = pendingPoints(m), auto = !!m.autoAttrs, A = s.attr;
+    const rows = ATTRS.map((k) => `<div class="arow"><div class="nm2"><b>${ATTR_LABEL[k]}</b><span>${ATTR_TEXT[k]} a point</span></div>
+      <div class="val">${a[k]}</div><button class="plus" data-attr="${k}" aria-label="add a point to ${ATTR_LABEL[k]}" ${n && !auto ? '' : 'disabled'}>+</button></div>`).join('');
+    const share = [['hp', A.hp, ''], ['mp', A.mp, ''], ['atk', A.atk, ''], ['def', A.def, ''], ['crit', A.crit, '%'], ['dodge', A.dodge, '%']]
+      .filter(([, v]) => v).map(([k, v, u]) => `${STAT_LABEL[k]} +${Math.round(v * 10) / 10}${u}`).join(' · ');
+    const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
+    const weak = m.weakUntil > 0 ? `<div class="hint warn">Weakened: −10 % HP, MP, ATK and DEF for ${Math.max(1, Math.ceil((m.weakUntil - S.t) / 60))} more min, or until a rest at an inn.</div>` : '';
+    return `<div class="ptsh">Points to spend <b>${n}</b><span class="sp"></span><button class="tog${auto ? ' on' : ''}" data-auto>${auto ? 'Auto · on' : 'Auto · off'}</button></div>
+      <div class="hint">${auto ? `Auto spends each level’s 3 points on the ${CLASSES[m.cls].label.toLowerCase()} build. Turn it off to choose.` : 'Each level brings 3 points. Respec at a town temple: the first is free, then 20 gold × level.'}</div>
+      ${weak}${rows}
+      <div class="hint">From attributes: ${share || 'nothing yet'}${s.power ? ` · ability power +${Math.round(s.power * 1000) / 10}%` : ''}</div>
+      <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
+      <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${m.trait ? `${esc(m.trait[0])}: ${esc(m.trait[1])} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;
+  }
+  const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
+
+  // ── the Skills tab: ranks, auto-cast, priority, the passive, the stance (GDD §5.1) ──
+  function skillsView(m) {
+    const n = pendingSkillPoints(m), order = priorityOf(m), P = PASSIVES[m.cls], st = stanceOf(m);
+    const rows = order.map((A, i) => {
+      const r = rankOf(m, A.id), open = unlocked(m, A), on = autocastOn(m, A.id);
+      const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
+      return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
+          <span>${open ? `${rankCost(A, r)} MP · ${A.text}${r > 1 ? ` · +${(r - 1) * 10}% power` : ''}` : `unlocks at level ${A.lv}`}</span></div>
+        <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
+          <button class="${on ? '' : 'off'}" data-cast="${A.id}" ${open ? '' : 'disabled'}>${on ? 'Auto ✓' : 'Auto ✗'}</button></div>
+        <div class="sbtns"><button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;
+    }).join('');
+    return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
+      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier; Auto ✗ keeps it unused.</div>
+      ${rows}
+      <div class="arow${hasPassive(m) ? '' : ' locked'}"><div class="nm2"><b>${P.name}</b> <span class="pips">passive</span><span>${hasPassive(m) ? P.text : `level ${P.lv}: ${P.text}`}</span></div></div>
+      <div class="bagh" style="margin-top:14px">Stance</div>
+      <div class="stance">${STANCES.map((k) => `<button data-stance="${k}" class="${k === st ? 'on' : ''}">${STANCE_LABEL[k]}</button>`).join('')}</div>
+      <div class="hint">${STANCE_TEXT[st]}</div>`;
   }
 
   // ── the item card ─────────────────────────────────────────────────────────
@@ -180,12 +256,12 @@ export function createGearSheet(sim, { partyPanel }) {
     let btns;
     if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
     else {
-      const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${wearer.name}`}</button>` : '';
+      const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${esc(wearer.name)}`}</button>` : '';
       btns = `${eq}<button class="gbtn" data-act="salvage">Salvage ✦${SALVAGE[it.r]}</button><button class="gbtn ghost" data-act="close">Close</button>`;
     }
     card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt=""></div>
       <div><h3 style="color:${RC[it.r]}">${it.name}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
-      ${cmp ? `<div class="cmphd"><span>this item</span><span>vs ${wearer === m ? 'worn' : wearer.name + "'s"}</span></div>` : ''}
+      ${cmp ? `<div class="cmphd"><span>this item</span><span>vs ${wearer === m ? 'worn' : esc(wearer.name) + "'s"}</span></div>` : ''}
       <div class="lines">${lines.join('')}</div>
       ${warn ? `<div class="note">${warn}</div>` : ''}${note ? `<div class="note${note.bad ? ' bad' : ''}">${note.text}</div>` : ''}
       ${it.flav ? `<div class="flav">${it.flav}</div>` : ''}<div class="gbtns">${btns}</div>`;
@@ -195,6 +271,19 @@ export function createGearSheet(sim, { partyPanel }) {
   // ── input ──────────────────────────────────────────────────────────────────
   sheet.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) { close(); return; }
+    const v = e.target.closest('[data-view]'); if (v) { view = v.dataset.view; sel = null; note = null; render(); return; }
+    const m = member(), q = (sel2) => e.target.closest(sel2);
+    let t;
+    if ((t = q('[data-attr]'))) { sim.commands.push({ type: 'spendPoint', id: m.id, attr: t.dataset.attr }); return; }
+    if (q('[data-auto]')) { sim.commands.push({ type: 'setAutoAttrs', id: m.id, on: !m.autoAttrs }); return; }
+    if ((t = q('[data-rank]'))) { sim.commands.push({ type: 'rankSkill', id: m.id, skill: t.dataset.rank }); return; }
+    if ((t = q('[data-cast]'))) { sim.commands.push({ type: 'setAutocast', id: m.id, skill: t.dataset.cast, on: !autocastOn(m, t.dataset.cast) }); return; }
+    if ((t = q('[data-stance]'))) { sim.commands.push({ type: 'setStance', id: m.id, stance: t.dataset.stance }); return; }
+    if ((t = q('[data-up]'))) {
+      const ids = priorityOf(m).map((A) => A.id), i = ids.indexOf(t.dataset.up);
+      if (i > 0) { [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; sim.commands.push({ type: 'setPriority', id: m.id, order: ids }); }
+      return;
+    }
     const tab = e.target.closest('.tab'); if (tab) { who = +tab.dataset.who; sel = null; note = null; render(); return; }
     const b = e.target.closest('.gslot[data-uid]'); if (!b) return;
     sel = { uid: b.dataset.uid, worn: b.dataset.slot || null }; fresh.delete(b.dataset.uid); note = null; render();
@@ -218,7 +307,7 @@ export function createGearSheet(sim, { partyPanel }) {
   sim.bus.on('partyChanged', () => { if (who >= S.party.length) who = 0; render(); });
   sim.bus.on('levelUp', render);
 
-  function openSheet(i = 0) { who = i; sel = null; note = null; open = true; sheet.classList.add('on'); hideToast(); render(); }
+  function openSheet(i = 0, v = 'gear') { who = i; view = v; sel = null; note = null; open = true; sheet.classList.add('on'); hideToast(); render(); }
   function close() { open = false; sel = null; note = null; sheet.classList.remove('on'); card.classList.remove('on'); fresh.clear(); partyPanel.refresh && partyPanel.refresh(); }
 
   // ── loot toast ─────────────────────────────────────────────────────────────
@@ -237,14 +326,14 @@ export function createGearSheet(sim, { partyPanel }) {
     if (m) {
       const cur = m.gear[B.slot] ? itemStats(m.gear[B.slot]) : {}, st = itemStats(item), off = isTwoHanded(item) && m.gear.off ? itemStats(m.gear.off) : {};
       const d = Object.keys({ ...st, ...cur }).map((k) => [k, Math.round(((st[k] || 0) - (cur[k] || 0) - (off[k] || 0)) * 10) / 10]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 2);
-      up = `<div class="s">Upgrade for <span style="color:#efe4cf">${m.name}</span>${d.length ? ': <b>' + d.map(([k, v]) => `▲ ${STAT_LABEL[k]} ${fmt(k, v)}`).join(' · ') + '</b>' : ''}</div>`;
+      up = `<div class="s">Upgrade for <span style="color:#efe4cf">${esc(m.name)}</span>${d.length ? ': <b>' + d.map(([k, v]) => `▲ ${STAT_LABEL[k]} ${fmt(k, v)}`).join(' · ') + '</b>' : ''}</div>`;
     }
     toastItem = item;
     toast.style.borderColor = RC[item.r];
     toast.innerHTML = `<div class="t">✦ Found ${src === 'chest' ? 'in a chest' : src === 'elite' ? 'on an elite' : 'after the wave'}</div>
       <div class="hd"><div class="big" style="border-color:${RC[item.r]}"><img src="${icon(item)}" alt=""></div><div style="min-width:0"><h3 style="color:${RC[item.r]}">${item.name}</h3>
       <div class="s">${item.r[0].toUpperCase() + item.r.slice(1)} · ${SLOT_LABEL[B.slot]} · ${B.cls === 'any' ? 'any class' : CLASSES[B.cls].label} · ilv ${item.ilv}</div>${up}</div></div>
-      <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${m.name}</button>` : `<button class="gbtn pri" data-look>Look</button>`}<button class="gbtn" data-bag>Bag</button></div>`;
+      <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${esc(m.name)}</button>` : `<button class="gbtn pri" data-look>Look</button>`}<button class="gbtn" data-bag>Bag</button></div>`;
     toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 6000);
   });
   toast.addEventListener('click', (e) => {

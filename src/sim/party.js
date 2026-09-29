@@ -74,11 +74,11 @@ export const ORIGIN_EDGE = {
   deepdelver_fostered: { kind: 'smithDiscount', value: 0.1 },
 };
 export const NAME_MAX = 16;
-// A typed name, made safe: Latin letters (with accents), apostrophe, hyphen and single spaces,
-// 1–16 characters. Explicit ranges, not \p{L}: Unicode tables differ between engines, and the
+// A typed name, made safe: Latin letters (with accents), hyphen and single spaces, 1–16
+// characters. No apostrophes (world doc §11: none in the middle of names). Explicit ranges, not \p{L}: Unicode tables differ between engines, and the
 // replay must not.
 export function cleanName(name) {
-  return String(name ?? '').replace(/[^A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F' -]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
+  return String(name ?? '').replace(/[^A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F -]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
 }
 // The main character. The defaults are the pre-creation knight (previews and old saves).
 /** @param {{ cls?: string, look?: string, origin?: string|null, name?: string }} [o] */

@@ -149,7 +149,8 @@ Each unit picks a target by role: the front line takes the nearest threat, the r
 lowest HP or the back line, and the mage clusters. Abilities cast when MP and conditions allow
 (§5). Attack intervals are class-fixed: fighter 1.3 s, rogue 0.9 s, mage 1.6 s. Enemies use
 archetype AI: Ashbound mages raise and buff, and Cult necromancers resurrect. Formation is
-front (fighter), mid (rogue) and back (mage), auto-assigned and reorderable in the party screen.
+front (fighter), mid (rogue) and back (mage): foes reach for the front line first, counting
+the rogue 1 tile and the mage 2.5 tiles further away than they are (shipped at M3).
 The lull between waves counts as *out of battle* for regen (§4), so sustain decides how long a
 party can hold a room.
 
@@ -158,13 +159,20 @@ party can hold a room.
 
 - **Downed:** if the wave is cleared, Downed members rise in the lull at 20 % HP.
 - **Downed → Fallen** happens when a member is downed a **second time in the same room
-  visit**, or when the party **leaves the room** with them still Downed.
+  visit** — counted in waves back to back: standing through one cleared wave forgets the
+  earlier down, since a room holds for as long as you stay — or when the party **leaves the
+  room** with them still Downed.
 - **Fallen:**
   - the member follows as a ghost: no fighting, no XP;
   - they can be resurrected at a **Temple** (25 gold × level; free once a day for heroes at
     level 5 or lower), at a site **Shrine** (one use each), by the Cleric's *Lifeline*, or
     with a rare **Phoenix Ember**.
 - **The hero** stays Downed, never Fallen, while any companion stands.
+- **The lull** waits until the party is at half HP *and* everyone standing is at 60 % (or
+  15 s pass), so a risen member doesn't walk into the next wave nearly dead.
+- **Temple:** an in-game day is 24 minutes of play. **Shrine:** with nobody Fallen it
+  restores the party instead. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
+  Weakened.
 - **Wipe:** if everyone is down, the party wakes at the region town's **Temple**:
   - everyone is restored to 30 % HP and Fallen status is cleared;
   - you lose **25 % of carried gold** (gold banks when you visit a town);
@@ -209,10 +217,13 @@ Four attributes feed the derived stats above:
 | **Finesse** | CRIT, DODGE | +0.25 % CRIT, +0.2 % DODGE |
 | **Focus** | MP, MP regen, ability power | +2.5 MP, +0.03 MP/s, +0.5 % ability power |
 
-- **Points:** each level-up grants **3 points**. Class growth per level stays automatic at
-  70 % of the class-table growth.
-- **Recommended build:** each class has one, and it reproduces the class-table curve within
-  ±3 %. Choice adds variety, not power creep.
+- **Points:** each level-up grants **3 points**. Class growth per level stays automatic: the
+  class-table growth minus what the recommended build adds (fighter 7 HP, 2 MP, 1.6 ATK,
+  1.4 DEF; rogue 6.5 / 3 / 1.8 / 0.9; mage 8 / 3 / 2.0 / 0.8).
+- **Recommended build** (one level's points): fighter Grit, Might, Grit; rogue Might,
+  Finesse, Grit; mage Focus, Might, Focus. It reproduces the class-table HP, MP, ATK and DEF
+  exactly; its CRIT, DODGE, MP regen and ability power are the build's own edge. Choice adds
+  variety, not power creep. Unspent points aren't stored: they follow from your level.
 - **Companions** auto-allocate by class template, or you manage them yourself.
 - **Respec** at the temple: the first is free, then 20 gold × level.
 - **Gear** adds on top (§8). A fresh character in the class kit has exactly the class-table
@@ -258,7 +269,17 @@ Both slot in with the same stat block and ability format. No system changes are 
   3 and 5 also cost 1 MP less.
 - **Auto-cast:** each ability has an auto-cast toggle and a priority order, set in the
   **Skills** tab of the character window.
-- **Stance** per member (§3.4) is set in the same tab: Aggressive, Balanced or Defensive.
+- **Stance** per member (§3.4) is set in the same tab:
+  - *Aggressive*: +10 % ATK, −10 % DEF; spends MP freely, heals and guards only below 30 %
+    HP, and a fighter companion picks its own targets.
+  - *Balanced*: no modifiers; strikes freely, and holds back MP for a guard or heal once
+    anyone is below half HP.
+  - *Defensive*: −10 % ATK, +15 % DEF; keeps half its MP for guards and heals (below 65 %
+    HP), and melee companions fight only what comes within 5 tiles of the leader.
+- **Casting order:** on its turn a member casts the first ability, top down in its priority
+  order, that is unlocked, on auto-cast, affordable and worth it (a guard when threatened, a
+  heal when hurt, a ward on the most hurt ally, a nova on two or more foes close by);
+  otherwise a strike replaces the basic attack.
 - **Rare gear modifiers** (§8) stack with ranks.
 
 ---
@@ -273,7 +294,8 @@ Both slot in with the same stat block and ability format. No system changes are 
 - **Find** story companions in dungeons: rescued captives and quest rewards such as Brannoc
   (fighter) and Wren (rogue). They are free and have a unique trait and a personal quest.
 - **Bench.** Recruited companions wait at the Thornwick inn and can be swapped in any town.
-  Active members share XP equally; the bench earns 50 %.
+  Active members share XP equally; the bench earns 50 %. The bench holds six; a hire with the
+  party full goes straight to it.
 - **Visible gear.** Weapons, shields, helmets and capes are toggleable meshes on the KayKit
   models, so a loot upgrade changes the silhouette.
 

@@ -46,8 +46,8 @@ test('createHero makes the main character once, validated', () => {
   run(sim, [{ type: 'createHero', cls: 'rogue', look: 'hero_rogue', origin: 'redhand_deserter', name: 'Again' }]);
   assert.equal(sim.state.party[0].cls, 'mage');                 // once per game
 });
-test('names: Latin letters, apostrophe, hyphen, 16 characters', () => {
-  assert.equal(cleanName("  Maëlle  d'Arc-Venn  "), "Maëlle d'Arc-Ven");
+test('names: Latin letters, hyphen, 16 characters, no apostrophes', () => {
+  assert.equal(cleanName("  Maëlle  d'Arc-Venn  "), 'Maëlle dArc-Venn');
   assert.equal(cleanName('𝔄𝔩𝔡'), '');
   assert.equal(cleanName(null), '');
 });

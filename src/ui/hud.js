@@ -23,11 +23,20 @@ export function createHud(sim) {
   sim.bus.on('levelChanged', ({ depth: d, theme }) => { setDepth(d); if (sim.world.kind === 'dungeon') show('descended · ' + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('defeat', () => show('defeated'));
+  sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
+  sim.bus.on('fallen', (f) => show(`${f.name} is Fallen · raise them at a temple or shrine`, 2600));
+  sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
 
-  function show(msg) {
+  // Weakened (after a wipe): an amber chip in the HUD while it lasts
+  const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
+  if (depth) depth.parentElement.parentElement.appendChild(weak);
+  const paintWeak = () => { weak.style.display = sim.state.party.some((m) => m.weakUntil > 0) ? '' : 'none'; };
+  sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); paintWeak();
+
+  function show(msg, ms = 1000) {
     toast.textContent = msg;
     toast.classList.add('on');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('on'), 1000);
+    toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
   }
 }

@@ -105,14 +105,14 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 
 | Area | Files | Notes |
 |---|---|---|
-| Sim | `core.js` (tick, movement, commands, saves), `battle.js` (waves, AI, formation, damage), `world.js` / `level.js` / `outdoor.js`, `party.js`, `items.js`, `loot.js`, `travel.js`, `path.js`, `rng.js`, `bus.js`, **`detmath.js`** (engine-independent math), **`replay.js`** (session recorder, state hash, replay verifier) | Headless, 20 Hz, bit-identical across engines |
+| Sim | `core.js` (tick, movement, commands, saves), `battle.js` (waves, AI, formation, abilities, Downed / Fallen, damage), `world.js` / `level.js` / `outdoor.js`, `party.js` (stats, creation), **`heroes.js`** (hero, party, bench, temple and inn commands), **`attributes.js`**, **`skills.js`**, `items.js`, `loot.js`, `travel.js`, `path.js`, `rng.js`, `bus.js`, **`detmath.js`** (engine-independent math), **`replay.js`** (session recorder, state hash, replay verifier) | Headless, 20 Hz, bit-identical across engines |
 | Render | `renderer.js` (Emberlit: CPU-baked G-buffer, WebGL2 lighting and post, sub-pixel camera), `anim.js`, `fx.js`, `gsprite.js`, `iso.js`, `outdoorpaint.js`, `tilestyles.js`, `palette.js` | The legacy Canvas2D and flat renderers were deleted at M2.5 |
-| UI | `hud.js`, `party.js` (cards), `sheet.js` (character sheet), `compass.js`, `townmenu.js`, `input.js`; **`slots.js`** (Game slots, Preact + htm) | Vanilla DOM and template strings; Preact for new windows |
-| Persist | `persist/save.js` (three game slots, save v4, migrations), `persist/idb.js` | IndexedDB, with a localStorage backup on page hide |
+| UI | `hud.js`, `party.js` (cards), `sheet.js` (character window: Gear / Stats / Skills), `compass.js`, `townmenu.js` (temple, inn, tavern), `input.js`, `actorart.js` (portraits, escaping); Preact + htm: **`slots.js`** (Game slots), **`title.js`** (Title / pause menu), **`create.js`** (character creation), **`partyscreen.js`** (Party screen and bench) | Vanilla DOM and template strings for the older windows; Preact for new ones |
+| Persist | `persist/save.js` (three game slots, save v5, migrations), `persist/idb.js` | IndexedDB, with a localStorage backup on page hide |
 | Vendor | `src/vendor/` (Preact, htm) | Pinned ESM builds, mapped in `index.html` |
 | Assetforge | `assetforge/doll.js`, `palette.js` | The paper-doll fallback hero; the rest was retired with the legacy renderers at M2.5 |
 | Dev tooling | `package.json` (dev only), `tsconfig.json`, `eslint.config.js`, `test/`, `tools/content/`, `.github/workflows/ci.yml` | Types, lint (with the sim determinism rules), `node:test`, content schemas, browser tests, CI |
-| Tools | `tools/actor-lab/` | three.js 0.169 + playwright-core bakes: actor atlases with weapon anchors, item icons, environment atlas |
+| Tools | `tools/actor-lab/`, `tools/balance/roomlv.mjs` | three.js 0.169 + playwright-core bakes: actor atlases with weapon anchors, item icons, environment atlas; the room-level balance harness (with `--src` for before/after runs) |
 
 **Planned additions** (the milestones are in [development-plan.md](./development-plan.md)):
 
@@ -121,7 +121,6 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 | `src/app/` | The screen state machine: Boot → Title → Intro → Account → Select → Create → Game. It owns lifecycle (pause/resume → autosave). |
 | `src/sim/quest/` | Quest engine (state machines driven by sim events), the side-quest generator, discovery triggers and the Chronicle |
 | `src/sim/npc/` | The NPC registry (named and townsfolk), day schedules, wander and work behaviour, and quest-giver hooks |
-| `src/sim/attributes.js` | Stat points and attribute derivation (GDD §4.1) |
 | `src/sim/rift.js` | Timed Ember Rifts: seeded weekly layout, run timer, score |
 | `src/story/` | The inkjs adapter: bind sim state into Ink variables, map tags to commands, persist Ink state |
 | `src/cutscene/` | A timeline player for camera moves, letterboxing, text cards, stills and fades |
@@ -163,7 +162,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 
 ## 5. Data and persistence
 
-- **Game slots** (shipped at M2.5, `persist/save.js`, save v4): up to **three**. Each slot is a
+- **Game slots** (shipped at M2.5, `persist/save.js`, save v5 since M3): up to **three**. Each slot is a
   whole game: its own world seed, main character, party (three hero slots: the main
   character plus two companions) and progress.
 

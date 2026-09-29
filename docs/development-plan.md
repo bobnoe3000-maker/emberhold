@@ -32,10 +32,10 @@ combat, towns, loot and the renderer work, and it replaces the roadmap table in
 | Tools | Actor, icon and environment bakes; motion traces; balance harness | `tools/actor-lab`, scratch harnesses |
 | Fair play | Deterministic math (`detmath.js`) across engines; the session recorder, canonical state hash and replay verifier; dev hooks limited to localhost; smoke tests prove tampering is rejected | `sim/detmath.js`, `sim/replay.js` |
 | Foundations (M2.5) | Emberfall name; three game slots (IndexedDB, save v4); Preact windows; types, lint, unit, content and browser tests; CI | `persist/`, `ui/slots.js`, `test/`, `.github/workflows/ci.yml` |
+| Heroes (M3) | Title / pause menu; character creation (class, look, origin, name); the Party screen with the bench; attributes and points; the Skills tab (ranks, auto-cast, priority, stance) with 9 abilities and 3 passives; Downed / Fallen / ghosts, the temple, shrines, the inn, Weakened; save v5 | `sim/heroes.js`, `sim/attributes.js`, `sim/skills.js`, `ui/title.js`, `ui/create.js`, `ui/partyscreen.js`, `ui/sheet.js`, `tools/balance/roomlv.mjs` |
 
 **Not yet built:**
-- title screen, accounts, character creation and select;
-- attributes, skills UI, death and resurrection;
+- accounts, the intro;
 - NPCs, dialogue, quests, lore and the journal;
 - the other three regions;
 - bosses, rifts, expeditions;
@@ -154,11 +154,12 @@ the GDD's "you plus two companions" (GDD §6, §6.1).
 three cards. Each shows the main character's name, class, level, party size, location,
 playtime and last played.
 - **Play** switches to that game.
-- **New game** fills an empty slot. Until M3 it starts the default knight; from M3 it opens
-  character creation.
+- **New game** fills an empty slot and opens the Title with *Begin*, which leads to
+  character creation (**shipped at M3**). A slot stays empty until creation's Begin.
 - **Delete** asks twice.
 
-The Title screen takes this window over in M3.
+The Title screen (**shipped at M3**, `src/ui/title.js`) is also the pause menu (☰): Continue /
+Resume, Game slots, Party, and Account (M6). The sim doesn't tick while it is up.
 
 | Slot | Who | Rules |
 |---|---|---|
@@ -243,11 +244,17 @@ bag). It grows into **tabs**:
 - **Unlocks:** abilities unlock at levels 1, 6 and 12 via **class quests** (§2.6), and the
   passive at level 20.
 
-**Systems:**
-- `sim/attributes.js`, used by `statsFor`.
-- Commands: `spendPoint`, `respec`, `rankSkill`, `setAutocast`, `setStance`.
-- Save fields per member: `attrs`, `pts`, `skills`, `stance`.
-- Windows move to Preact (architecture A3).
+**Systems** (**shipped at M3**):
+- `sim/attributes.js`, used by `statsFor`. Class growth is the class table minus what the
+  recommended build adds, so the recommended build reproduces the table exactly (tested at
+  every level to 19; the passives add on top from 20).
+- `sim/skills.js`: abilities, ranks, stances; `battle.js` casts them.
+- Commands (`sim/heroes.js`): `spendPoint`, `setAutoAttrs`, `respec`, `rankSkill`,
+  `setAutocast`, `setPriority`, `setStance`.
+- Save fields per member: `attrs`, `autoAttrs`, `skills`, `off`, `prio`, `stance`, `respecs`.
+  Unspent attribute and skill points are derived from level, never stored.
+- The Stats and Skills tabs are in `ui/sheet.js` (template strings, like the Gear tab); the
+  new M3 windows (title, creation, Party screen) are Preact.
 
 **Exit test:**
 - Spending and respeccing work, and the numbers match between the sim and the window.
@@ -469,6 +476,27 @@ are lost unless raised before leaving the site.
 **Exit test:** every transition is covered by smoke tests. Balance: a same-level room
 never produces a Fallen member in the smoke seeds.
 
+**Shipped at M3** (`sim/battle.js`, `sim/heroes.js`, `ui/townmenu.js`), with three amendments
+the balance harness asked for (`tools/balance/roomlv.mjs`):
+- **"Twice in one room visit" means twice in waves back to back.** A room holds for as long
+  as you stay, and before M3 a mage went down 5–10 times in a 5-minute stay (the lull hid
+  it). Standing through one cleared wave forgets the earlier down.
+- **The lull waits for everyone.** The next wave comes when the party is at 50 % *and*
+  everyone standing is at 60 % (or 15 s pass), so nobody walks into a wave nearly dead.
+- **Formation** (GDD §3.5): foes count the back line as further away (rogue +1 tile, mage
+  +2.5), so the front line takes the blows.
+
+Measured (300 s, seeds 20260807 / 777 / 4242, levels 3 / 6 / 9, recommended builds):
+solo 26.4 % → 26.7 % HP per wave (L3 and L9 identical); party 24.0 % → 21.7 %; companion
+downs per stay from about 5–10 to 0–2; 45 same-level 100 s visits: no Fallen, no defeats;
+36 five-minute stays: 1 Fallen, no defeats. Solo +3 rooms still defeat you; parties now
+hold 5 of 9 +3 rooms at about 40 % HP per wave (before, they wiped in the first wave) —
+an open tuning item for M4.
+
+A Fallen member is a ghost: the actor stamp with an ordered-dither see-through, a cold grey
+and a steady pale rim (`render/renderer.js`, look `ghost`). Weakened lasts 10 minutes of
+play; an in-game day (the temple's free raise) is 24 minutes (`DAY_S`).
+
 ### 2.11 Drawing on world history
 
 Every system pulls from [emberfall-world.md](./emberfall-world.md), and **canon changes
@@ -588,7 +616,7 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 |---|---|---|---|
 | **M2** ✓ part | Party and town | Done: town hub, tavern hires, loot v1, compass, effects. Moved to later milestones: the quest board (M4) and the smith and shop menus (M3/M7). | — |
 | **M2.5** ✓ | **Foundations** (done 2026-09-28) | Shipped: **renamed to Emberfall**; **three game slots** in IndexedDB (save v3 → v4, the old save becomes slot 1) with the Game slots window, the first Preact + htm window; JSDoc types with `tsc`; ESLint, which enforces the sim determinism rules; `node:test` (12 tests); `content/` with JSON Schema and Ajv (origins); browser tests (replay parity Chromium/WebKit vs Node; the slots flow); GitHub Actions CI; legacy renderers deleted. | Met: every check green locally; CI runs the same, plus WebKit. |
-| **M3** | **Heroes** | Title screen; the Party screen (three slots: main + two companions, bench swap) and creation (class, look, origin, name); attributes and stat points; the Skills tab (ranks, auto-cast, stance); death and resurrection; the temple and inn menus | Create → play → wipe → temple → resurrect works end to end. Balance harness green. |
+| **M3** ✓ | **Heroes** (done 2026-09-29) | Shipped: the Title / pause menu; character creation (class, look, origin, name; `content/creation.json`); the Party screen (main + two companions, bench of 6, swap / dismiss / release in towns, bench earns 50 % XP); attributes (3 points a level, Auto, temple respec); the Stats and Skills tabs (ranks 1–5, auto-cast, priority, stance); 6 new abilities and 3 passives; Downed → Fallen → ghost, temple and shrine resurrection, the wipe → temple → Weakened, inn rest; save v5. Deviations: abilities unlock by level until class trials (M4); accent palettes wait for the recolour mask; hiring stays free until the M7 economy. | Met: create → play → Fallen → temple → resurrect → wipe → temple → inn → reload passes in Chromium (`npm run test:browser`); 34 unit tests; smoke gates 18 same-level party visits with no Fallen; balance within 20–30 % per wave (details in §2.10). Open: parties now survive some +3 rooms (5 of 9 runs, about 40 % HP per wave). |
 | **M4** | **Story engine** | inkjs adapter and dialogue window; the NPC system (named, townsfolk, schedules); quest engine, journal and compass tracking; the side-quest generator; discovery and Chronicle v1; the cutscene player and the intro | The Thornwick slice: 3 named NPCs, 6 townsfolk, 5 side-quest templates live, and 3 fragments |
 | **M5** | **The Hollow Vale** (content-complete region 1) | Overland sites (Old Barrows, Wickham Keep, Sunken Chapel, Tithe Mill); Act I chapter quests; Brannoc's companion chain; the class trials at level 6; the Redhand Captain and the Standard of the Third Legion; the Vale Chronicle set and its hidden site; loot tuned to "rare"; balance for levels 1–8 | Levels 1–8 playable start to finish in about 6–8 hours |
 | **M6** | **Accounts and ship** | Supabase guest → linked accounts; **verified progression** (session upload, server replay validator, rollback; §2.13); cloud saves; Vite packaging; PWA; Capacitor iOS and Android builds; Sentry; a settings screen; store assets and privacy policy | TestFlight and Play internal track. Airplane-mode play works. |

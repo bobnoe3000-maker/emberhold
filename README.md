@@ -37,10 +37,14 @@ Useful URLs:
 - `?dev&manual` gives step-by-step frames.
 
 **Controls:**
+- the title screen starts or continues the slot's game; ☰ brings it back as a pause menu
+  (game slots, the Party screen);
 - drag anywhere for a floating joystick;
 - tap to walk or use things;
 - tap an enemy to focus it;
-- tap a party card for the character sheet;
+- tap a party card for the character window (Gear, Stats, Skills);
+- in a town square, the service bar opens the tavern, the inn (rest, the party and bench)
+  and the temple (raise the Fallen, respec);
 - the compass (under the minimap) offers auto-travel.
 
 ## Test
@@ -66,7 +70,7 @@ milestone M6 ([docs/development-plan.md](docs/development-plan.md)).
   discovery.
 - **Where:** up to **three game slots**, each its own world, main character and party, in
   IndexedDB (☰ in the HUD). They autosave every 15 s and on tab hide, with a synchronous
-  backup. Saves are versioned (v4, with migrations). Code: `src/persist/save.js`.
+  backup. Saves are versioned (v5, with migrations). Code: `src/persist/save.js`.
 - **Next:** **verified** cloud saves. The server replays each play session
   (`src/sim/replay.js`), so edited memory, saves or clocks can't advance levels or create
   gear.

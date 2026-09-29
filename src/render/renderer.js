@@ -260,7 +260,7 @@ export function createRenderer(canvas, sim, input) {
     }
     return { name, meta, cells };
   }
-  loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; }).catch(() => {});
+  loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {});   // the default look; a created hero's own look loads via partyAtlas
   SKELETONS.forEach((n, i) => loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {}));
 
   // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
@@ -428,7 +428,7 @@ export function createRenderer(canvas, sim, input) {
   }
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
-    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0;
+    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
     const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
     let flashEdge = false;
     for (let yy = 0; yy < sp.h; yy++) {
@@ -439,6 +439,7 @@ export function createRenderer(canvas, sim, input) {
         const j = yy * sp.w + xx; if (!sp.mask[j]) continue;
         const px = x0 + xx; if (px < 0 || px >= W) continue;
         if (dis && BAYER[(py & 3) * 4 + (px & 3)] < dis) continue;          // ordered-dither dissolve (the slain crumble away)
+        if (ghost && BAYER[(py & 3) * 4 + (px & 3)] < 0.4) continue;         // the Fallen: see-through (the floor shows between)
         const i = (py * W + px) * 4;
         if (DEP) {
           const di = py * W + px;
@@ -453,9 +454,17 @@ export function createRenderer(canvas, sim, input) {
           if (edge) { EMI[i] = 90 * k; EMI[i + 1] = 60 * k; EMI[i + 2] = 36 * k; EMI[i + 3] = 250; flashEdge = true; }
         }
         if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
+        let rim = false;
+        if (ghost) {                                    // a Fallen member's ghost: cold grey, with a steady pale rim
+          const l = ALB[i] * 0.3 + ALB[i + 1] * 0.59 + ALB[i + 2] * 0.11;
+          ALB[i] = l * 0.62 + 34; ALB[i + 1] = l * 0.7 + 42; ALB[i + 2] = l * 0.82 + 60;
+          rim = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
+        }
         NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
         const e = fade > 0.5 ? 0 : sp.emi[j];
         if (flashEdge) flashEdge = false;
+        else if (rim) { EMI[i] = 34; EMI[i + 1] = 48; EMI[i + 2] = 66; }
+        else if (ghost) { EMI[i] = ALB[i] * 0.06; EMI[i + 1] = ALB[i + 1] * 0.06; EMI[i + 2] = ALB[i + 2] * 0.08; }
         else if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
         else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
         else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
@@ -746,8 +755,11 @@ export function createRenderer(canvas, sim, input) {
     const draws = [], party = sim.state.party, H = party[0];
     const lerp = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alpha);   // between 20 Hz steps
     const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
+    const GHOST = { ghost: 1 };
     // the hero
-    if (heroAtlas) {
+    const hAtl = H.actor && H.actor !== 'hero_knight' ? partyAtlas(H.actor) : heroAtlas;
+    if (hAtl) {
+      const heroAtlas = hAtl;
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: H.fx, faceY: H.fy, facing: H.act > 0, dead: H.down, stride: STRIDE.hero });
       draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a });
     } else {
@@ -759,7 +771,7 @@ export function createRenderer(canvas, sim, input) {
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
-      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: lookOf(m, m.down ? 0.35 : 0), team: 1, atl, a });
+      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: m.fallen ? GHOST : lookOf(m, m.down ? 0.35 : 0), team: m.fallen ? undefined : 1, atl, a });
     });
     // the Ashbound: one atlas per archetype; they rise from the ground, and the slain collapse, lie, then fade
     const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
@@ -956,6 +968,10 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
+    else if (c.t === 'fallen') addFloat(c.x, c.y, c.name + ' is Fallen', '#b8c4d8', 12, 30);
+    else if (c.t === 'heal') addFloat(c.x, c.y, '+' + c.amount, '#8fe07a', 12, 20);
+    else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
+    else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
     else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: performance.now(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
@@ -963,7 +979,8 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
-  sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `carried back to town${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} rises`, sub: r.how === 'shrine' ? 'the shrine’s light fades' : 'the temple’s grace', until: performance.now() + 2600, small: true }; });
   // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
   const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
@@ -978,7 +995,7 @@ export function createRenderer(canvas, sim, input) {
     };
     if (b) {
       for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite ? 24 : 18);
-      party.forEach((m, i) => { if (m.down) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
+      party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';

@@ -23,12 +23,14 @@ that happens.
 npm ci                                    # once: dev tooling only (the game itself has no build)
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
+#   ?notitle (skip the title / pause menu and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms))
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game-slots flow (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe (WebKit: CI)
+node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir]   # balance: secs roomLv heroLv hires; --src = a before checkout
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
 node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors); --anchors refreshes anchors only
 node tools/actor-lab/icons.cjs [ids]      # item icons
@@ -86,10 +88,11 @@ in the same change that introduces it.
 6. **Balance is a contract.** The smoke test gates the design targets:
    - a solo fighter holds a level-1 room for 10 minutes;
    - same-level rooms cost 20–30 % HP per wave;
-   - a room three levels above you defeats you.
+   - a room three levels above you defeats you (solo);
+   - a same-level party visit leaves nobody Fallen.
 
-   If a change moves numbers, run the room-level harness (see `docs/art-critic-pass-3.md` §
-   Verification) and report before/after.
+   If a change moves numbers, run the room-level harness (`tools/balance/roomlv.mjs`, with
+   `--src` pointing at a checkout of the previous commit) and report before/after.
 7. **Measure, don't guess.** For feel, performance or art changes, capture before and after:
    - motion traces on the manual clock;
    - burst frames;
