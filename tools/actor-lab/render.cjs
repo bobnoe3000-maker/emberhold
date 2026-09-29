@@ -5,7 +5,7 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const DIR = __dirname, PXI = process.argv.indexOf('--px'), PX = PXI > 0 ? +process.argv[PXI + 1] : 46;
 const OUT = path.join(DIR, 'out', PX === 46 ? '' : `px${PX}`);   // 46 stays in out/ (compose.py's default)
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.glb': 'model/gltf-binary',
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.glb': 'model/gltf-binary',
   '.gltf': 'model/gltf+json', '.bin': 'application/octet-stream', '.png': 'image/png' };
 function serve(root) {
   const srv = http.createServer((req, res) => {

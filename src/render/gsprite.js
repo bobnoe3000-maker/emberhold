@@ -36,8 +36,8 @@ export function spOutline(sp) {
   for (const [x, y] of add) spSet(sp, x, y, OUTLINE_RGB, [0, 0, 0.25], 0);
 }
 
-// ---- voxel bake with per-face normals (vox: 0 empty · 1 solid · 2 emissive) ----
-function bakeVox(vox, SX, SY, SZ, ramp, emiId) {
+// ---- voxel bake with per-face normals (vox: 0 empty · 1 solid · 2 emissive · 3 trim, in ramp2) ----
+function bakeVox(vox, SX, SY, SZ, ramp, emiId, ramp2 = ramp) {
   const V = (x, y, z) => (x < 0 || y < 0 || z < 0 || x >= SX || y >= SY || z >= SZ) ? 0 : vox[(z * SY + y) * SX + x];
   const w = SX + SY + 4, h = ((SX + SY) >> 1) + SZ + 4;
   const sp = newSprite(w, h), offX = SY + 1, offY = SZ + 1;
@@ -50,9 +50,9 @@ function bakeVox(vox, SX, SY, SZ, ramp, emiId) {
       if (!topE && !leftE && !rightE) continue;                 // enclosed
       const n = topE ? NT : leftE ? NL : NR;
       const nz = fbm(x * 0.5 + z * 0.3, y * 0.5, 4242);
-      const idx = clampi(Math.floor(nz * 3 + (topE ? 2.2 : leftE ? 1.4 : 0.8)) - 1, 0, ramp.length - 1);
+      const r = m === 3 ? ramp2 : ramp, idx = clampi(Math.floor(nz * 3 + (topE ? 2.2 : leftE ? 1.4 : 0.8)) - 1, 0, r.length - 1);
       const X = (x - y) + offX, Y = ((x + y) >> 1) - z + offY;
-      for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) spSet(sp, X + a, Y + b, ramp[idx], n, m === 2 ? emiId : 0);
+      for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) spSet(sp, X + a, Y + b, r[idx], n, m === 2 ? emiId : 0);
     }
   }
   spOutline(sp);
@@ -111,14 +111,19 @@ export function voxPortal() {
   }
   return bakeVox(vox, S, S, H, ELIT.obsid, 6);
 }
-// Loot chest: a low box with a glowing latch.
+// Loot chest: an oak box under a barrel lid, two iron bands, and a glowing lock on the long side
+// that faces the camera (+y). Sized to read at a glance beside a hero: the old 7×5×5 bone box sat
+// at ankle height and passed for a rock.
 export function voxChest() {
-  const SX = 7, SY = 5, SZ = 5, vox = new Uint8Array(SX * SY * SZ);
+  const SX = 13, SY = 9, SZ = 10, vox = new Uint8Array(SX * SY * SZ), BODY = 6, cy = (SY - 1) / 2;
   for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
-    if (z === SZ - 1 && (x === 0 || x === SX - 1)) continue;   // rounded lid
-    vox[(z * SY + y) * SX + x] = (z === 2 && x === SX - 1 && y === (SY >> 1)) ? 2 : 1;
+    const lid = z >= BODY, off = Math.abs(y - cy);
+    if (lid && off > (SZ - 1 - z) * 1.6 + 1.2) continue;              // the barrel lid's curve
+    const band = x === 2 || x === SX - 3 || z === BODY - 1 || (!lid && z === 0);   // iron straps, lid rim, foot
+    const lock = y === SY - 1 && x >= 5 && x <= 7 && z >= BODY - 3 && z <= BODY - 1;   // the hasp, across the rim
+    vox[(z * SY + y) * SX + x] = lock ? 2 : band ? 3 : 1;
   }
-  return bakeVox(vox, SX, SY, SZ, ELIT.bone, 3);
+  return bakeVox(vox, SX, SY, SZ, ELIT.wood, 3, ELIT.stone);
 }
 // Shrine: a pedestal under a floating orb.
 export function voxShrine() {

@@ -69,6 +69,7 @@ export const ELIT = {
   poison: ['#0e2412', '#1e4222', '#30662e', '#50983c', '#88d850'].map(_hx),
   water:  ['#080614', '#0e0a20', '#16102e', '#201646'].map(_hx),
   obsid:  ['#100c1a', '#1e172a', '#2e233c', '#402f52', '#584474'].map(_hx),
+  wood:   ['#2a170c', '#472813', '#65391c', '#864d27', '#a86634'].map(_hx),  // chests: oak, warmer than the floor
   // dungeon-theme terrains
   sand:   ['#241c14', '#3a2c1e', '#54402c', '#74603e', '#9a8256'].map(_hx),  // barren desert dusk
   basalt: ['#121218', '#202028', '#2e2e3a', '#40404e', '#54545f'].map(_hx),  // cold volcanic rock

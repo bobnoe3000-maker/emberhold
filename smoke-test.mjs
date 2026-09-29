@@ -136,6 +136,9 @@ console.log('iso drag mapping:', dr.x > 0 && dr.y > 0 && up.x < 0 && up.y < 0);
 const snapAt = project(5.9, 5.1, 0);
 const snapped = resolveTap(snapAt.sx, snapAt.sy, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
 console.log('iso fat-finger snap:', snapped.tx === 5 && snapped.ty === 5);
+const lidAt = project(5.5, 5.5, 0), lid = resolveTap(lidAt.sx, lidAt.sy - 10, { heightAt: () => 0, hasResource: (x, y) => x === 5 && y === 5 });
+console.log('iso tap on a chest lid:', lid.tx === 5 && lid.ty === 5);
+if (snapped.tx !== 5 || snapped.ty !== 5 || lid.tx !== 5 || lid.ty !== 5) isoOk = false;
 
 // Room battle: a solo L1 fighter left alone in a level-1 room holds it (GDD §15 M1 exit test),
 // and rooms deepen: levels rise with walking distance from the entrance and per floor.

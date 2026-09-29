@@ -32,16 +32,22 @@ export function screenDirToWorld(sx, sy) {
 // Resolve a screen-offset tap to a tile: try heights high→low, first whose
 // landed tile actually sits at that height wins; then snap to a nearby resource
 // (fat-finger help — diamonds are small under a thumb). Callbacks injected so
-// this stays pure. heightAt(tx,ty)→int, hasResource(tx,ty)→bool.
-export function resolveTap(sx, sy, { heightAt, hasResource, heights = [2, 1, 0], snap = 0.75 }) {
-  let landed = null;
+// this stays pure. heightAt(tx,ty)→int, hasResource(tx,ty)→bool. A tap on the upper body of
+// something standing in FRONT of the landed tile (a chest's lid, a tree's crown) lands on the floor
+// behind it; `reach` levels of lift find it (the tile the point would hit at that height).
+export function resolveTap(sx, sy, { heightAt, hasResource, heights = [2, 1, 0], snap = 0.75, reach = 2 }) {
+  let landed = null, lh = 0;
   for (const h of heights) {
     const w = unproject(sx, sy, h);
     const tx = Math.floor(w.x), ty = Math.floor(w.y);
-    if (!landed) landed = { tx, ty, wx: w.x, wy: w.y };
-    if (heightAt(tx, ty) === h) { landed = { tx, ty, wx: w.x, wy: w.y }; break; }
+    if (!landed) { landed = { tx, ty, wx: w.x, wy: w.y }; lh = h; }
+    if (heightAt(tx, ty) === h) { landed = { tx, ty, wx: w.x, wy: w.y }; lh = h; break; }
   }
   if (hasResource(landed.tx, landed.ty)) return { tx: landed.tx, ty: landed.ty };
+  for (let up = 1; up <= reach; up++) {
+    const w = unproject(sx, sy, lh + up), tx = Math.floor(w.x), ty = Math.floor(w.y);
+    if (heightAt(tx, ty) === lh && hasResource(tx, ty)) return { tx, ty };
+  }
   let best = null, bd = snap * snap;
   for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
     const nx = landed.tx + ox, ny = landed.ty + oy;
