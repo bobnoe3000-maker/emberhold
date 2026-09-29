@@ -53,7 +53,7 @@ const CSS = `
 #cine .pips i.on { background: #ff8a3a; }
 @media (prefers-reduced-motion: reduce) { #cine .begin { animation: none; } #cine .say span, #cine .veil { transition: none; } }
 `;
-const LINE_MS = 1500, FADE_MS = 450, SPLASH_MS = 1500, MIN_LOAD_MS = 2400, MAX_LOAD_MS = 12000, TIP_MS = 2600;
+const LINE_MS = 1500, FADE_MS = 450, SPLASH_MS = 1500, MIN_LOAD_MS = 2400, MAX_LOAD_MS = 12000, TIP_MS = 7800;   // a tip holds 7.8 s (2.6 s cycled too fast to read)
 const MUSIC_KEY = 'emberfall.music';
 
 export function createCinema() {

@@ -16,8 +16,9 @@ export function createHud(sim) {
   };
   setDepth(sim.state.depth);
 
-  const gold = document.getElementById('hudGold');
-  sim.bus.on('countersChanged', (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; });
+  const gold = document.getElementById('hudGold'), embers = document.getElementById('hudEmbers');
+  const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
+  sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
   sim.bus.on('looted', ({ kind }) => show(kind === 'chest' ? 'chest opened' : 'a blessing'));
   sim.bus.on('levelChanged', ({ depth: d, theme }) => { setDepth(d); if (sim.world.kind === 'dungeon') show('descended · ' + (sim.world.level.th.name || theme)); });

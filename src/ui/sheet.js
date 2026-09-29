@@ -14,7 +14,7 @@ import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/att
 import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
 import { esc } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
-import { BAG_SIZE } from '../sim/loot.js';
+import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
 const CSS = `
@@ -99,7 +99,9 @@ const CSS = `
 #gearSheet .views { display: flex; gap: 6px; margin-top: 8px; }
 #gearSheet .views button { flex: 1; position: relative; min-height: 40px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; text-transform: uppercase; }
 #gearSheet .views button.on { color: #1a1208; background: #d8a040; border-color: #f0c880; font-weight: 700; }
-#gearSheet .views button i { position: absolute; top: -6px; right: -4px; font-style: normal; font-size: 9px; font-weight: 700; color: #10200c; background: #8fe07a; border-radius: 7px; padding: 1px 5px; letter-spacing: 0; }
+#gearSheet .views button .dot { position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 4px; background: #8fe07a; box-shadow: 0 0 6px #8fe07a; }
+.gslot .qty { position: absolute; bottom: 1px; left: 3px; font-size: 9px; font-weight: 700; color: #f2ece0; text-shadow: 0 1px 0 #000, 0 0 3px #000; }
+#gearCard h3 small { font-size: 12px; color: #b8aca0; font-weight: 600; }
 #gearSheet .ptsh { display: flex; align-items: center; gap: 8px; margin: 12px 2px 8px; font-size: 11px; color: #c8bca8; letter-spacing: 1px; }
 #gearSheet .ptsh b { color: #8fe07a; font-size: 14px; } #gearSheet .ptsh .sp { margin-left: auto; }
 #gearSheet .tog { min-height: 36px; min-width: 76px; border-radius: 18px; border: 1px solid #3a3346; background: none; color: #978c80; font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1px; }
@@ -116,6 +118,10 @@ const CSS = `
 #gearSheet .sbtns { display: flex; flex-direction: column; gap: 5px; flex: none; }
 #gearSheet .sbtns button { min-width: 64px; min-height: 34px; border-radius: 7px; border: 1px solid rgba(214,170,98,.45); background: none; color: #f0c880; font: 10px ui-monospace, Menlo, monospace; letter-spacing: 1px; }
 #gearSheet .sbtns button:disabled { border-color: #2c2838; color: #3a3346; }
+#gearSheet .sbtns button.auto { font: 700 12px ui-monospace, Menlo, monospace; letter-spacing: 1px; line-height: 1.15; border-color: rgba(143,224,122,.55); color: #8fe07a; text-transform: uppercase; }
+#gearSheet .sbtns button.auto small { display: block; font-size: 8px; font-weight: 400; letter-spacing: .5px; color: #978c80; text-transform: none; }
+#gearSheet .sbtns button.auto.off { border-color: #3a3346; color: #8a8498; }
+#gearSheet .sbtns button.auto:disabled { border-color: #2c2838; color: #3a3346; }
 #gearSheet .stance { display: flex; gap: 6px; margin: 4px 0 6px; }
 #gearSheet .stance button { flex: 1; min-height: 44px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 600 13px Georgia, serif; }
 #gearSheet .stance button.on { border-color: #d8a040; color: #f0c880; background: rgba(216,160,64,.12); }
@@ -159,12 +165,12 @@ export function createGearSheet(sim, { partyPanel }) {
   const hasUpgrade = (m) => S.bag.some((it) => isUp(m, it));
 
   // ── the sheet ──────────────────────────────────────────────────────────────
-  const slotHtml = (it, { slot, lbl, m }) => {
+  const slotHtml = (it, { slot, lbl, m, n = 1, isNew = fresh.has(it && it.uid) }) => {
     if (!it) return `<div class="gslot empty">${lbl ? `<span class="lbl">${lbl}</span>` : ''}</div>`;
     const wear = !m || canWear(m, it), sl = sel && sel.uid === it.uid;
     const tag = !wear ? S.party.find((q) => canWear(q, it)) : null;
     return `<button class="gslot ${it.r}${sl ? ' sel' : ''}${wear ? '' : ' off'}" data-uid="${it.uid}" ${slot ? `data-slot="${slot}"` : ''}><img src="${icon(it)}" alt="">`
-      + `${!wear ? `<span class="cls">${tag ? tag.name.slice(0, 3).toUpperCase() : CLS_ABBR[BASES[it.base].cls] || ''}</span>` : ''}${fresh.has(it.uid) ? '<span class="new">NEW</span>' : ''}`
+      + `${!wear ? `<span class="cls">${tag ? tag.name.slice(0, 3).toUpperCase() : CLS_ABBR[BASES[it.base].cls] || ''}</span>` : ''}${isNew ? '<span class="new">NEW</span>' : ''}${n > 1 ? `<span class="qty">×${n}</span>` : ''}`
       + `${!slot && m && isUp(m, it) ? '<span class="up">▲</span>' : ''}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</button>`;
   };
   function render() {
@@ -174,8 +180,10 @@ export function createGearSheet(sim, { partyPanel }) {
       + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · FALLEN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
-    const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m);
-    const views = `<div class="views">${[['gear', 'Gear', 0], ['stats', 'Stats', pa], ['skills', 'Skills', ps]].map(([k, l, n]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${n ? `<i>+${n}</i>` : ''}</button>`).join('')}</div>`;
+    const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m), stacks = bagStacks(S.bag);
+    // the same green dot as the character tab, on whichever sub-tab needs you: an upgrade in the
+    // bag (Gear), attribute points (Stats), skill points (Skills); it goes when that's resolved
+    const views = `<div class="views">${[['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0]].map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
     const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}`;
     if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
     if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
@@ -184,8 +192,8 @@ export function createGearSheet(sim, { partyPanel }) {
         <div class="fig"><canvas width="88" height="102" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
-      <div class="bagh">Party bag · ${S.bag.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} embers</i></span></div>
-      <div class="bag">${S.bag.map((it) => slotHtml(it, { m })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - S.bag.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
+      <div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} embers</i></span></div>
+      <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
     paintTabs();
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawActor(fc, fc.dataset.fig, 0, 0, 88, 102, 2.1);
     renderCard();
@@ -219,11 +227,11 @@ export function createGearSheet(sim, { partyPanel }) {
       return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
           <span>${open ? `${rankCost(A, r)} MP · ${A.text}${r > 1 ? ` · +${(r - 1) * 10}% power` : ''}` : `unlocks at level ${A.lv}`}</span></div>
         <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
-          <button class="${on ? '' : 'off'}" data-cast="${A.id}" ${open ? '' : 'disabled'}>${on ? 'Auto ✓' : 'Auto ✗'}</button></div>
+          <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>
         <div class="sbtns"><button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;
     }).join('');
     return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
-      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier; Auto ✗ keeps it unused.</div>
+      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use On: the hero casts it in combat by themselves; Off: never.</div>
       ${rows}
       <div class="arow${hasPassive(m) ? '' : ' locked'}"><div class="nm2"><b>${P.name}</b> <span class="pips">passive</span><span>${hasPassive(m) ? P.text : `level ${P.lv}: ${P.text}`}</span></div></div>
       <div class="bagh" style="margin-top:14px">Stance</div>
@@ -240,6 +248,7 @@ export function createGearSheet(sim, { partyPanel }) {
   function renderCard() {
     const it = findSel(); if (!it) { card.classList.remove('on'); sel = null; return; }
     const m = member(), B = BASES[it.base], worn = !!sel.worn, st = itemStats(it);
+    const stackN = worn ? 1 : (bagStacks(S.bag).find((q) => q.includes(it)) || [it]).length;
     const wearer = canWear(m, it) ? m : S.party.find((q) => canWear(q, it));
     // comparison with what the member who'd wear it has on (bag items only)
     let cmp = null;
@@ -264,8 +273,8 @@ export function createGearSheet(sim, { partyPanel }) {
       btns = `${eq}<button class="gbtn${armed ? ' arm' : ''}" data-act="salvage">${armed ? `Sure? ✦${SALVAGE[it.r]}` : `Salvage ✦${SALVAGE[it.r]}`}</button><button class="gbtn ghost" data-act="close">Close</button>`;
     }
     card.innerHTML = `<div class="hd"><div class="big" style="border-color:${RC[it.r]}"><img src="${icon(it)}" alt=""></div>
-      <div><h3 style="color:${RC[it.r]}">${it.name}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
-      ${cmp ? `<div class="cmphd"><span>this item</span><span>vs ${wearer === m ? 'worn' : esc(wearer.name) + "'s"}</span></div>` : ''}
+      <div><h3 style="color:${RC[it.r]}">${it.name}${stackN > 1 ? ` <small>×${stackN}</small>` : ''}</h3><div class="meta"><em style="color:${RC[it.r]}">${it.r}</em> · item level ${it.ilv}<br>${SLOT_LABEL[B.slot]} · ${B.hands === 2 ? 'two-handed ' : ''}${B.kind} · ${clsName}</div></div></div>
+      ${cmp ? `<div class="cmphd"><span>this item</span><span>vs ${wearer === m ? 'equipped' : esc(wearer.name) + "'s"}</span></div>` : ''}
       <div class="lines">${lines.join('')}</div>
       ${warn ? `<div class="note">${warn}</div>` : ''}${note ? `<div class="note${note.bad ? ' bad' : ''}">${note.text}</div>` : ''}
       ${it.flav ? `<div class="flav">${it.flav}</div>` : ''}<div class="gbtns">${btns}</div>`;
@@ -304,7 +313,8 @@ export function createGearSheet(sim, { partyPanel }) {
         armSalvage = it.uid; clearTimeout(armTimer); armTimer = setTimeout(() => { armSalvage = null; if (open) renderCard(); }, 3000);
         renderCard(); return;
       }
-      armSalvage = null; clearTimeout(armTimer); sim.commands.push({ type: 'salvage', uid: it.uid }); sel = null;
+      const rest = (bagStacks(S.bag).find((q) => q.includes(it)) || []).filter((x) => x !== it);   // a stack: the next one stays selected
+      armSalvage = null; clearTimeout(armTimer); sim.commands.push({ type: 'salvage', uid: it.uid }); sel = rest.length ? { uid: rest[0].uid, worn: null } : null;
     }
   });
   // after an equip lands the item card closes, on the tab of whoever now wears it; a refusal
