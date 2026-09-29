@@ -30,7 +30,7 @@ const CSS = `
 #party .pf canvas { width: 100%; height: 100%; image-rendering: pixelated; }
 #party .lv { position: absolute; left: -1px; bottom: -1px; background: #b8862e; color: #1a1208; font-size: 8px; font-weight: 700; padding: 0 2px; }
 #party .nm { font-size: 11px; letter-spacing: 1.5px; font-weight: 700; color: #ece6da; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#party .cl { font-size: 9px; letter-spacing: 1.5px; color: #8a8498; margin-top: 2px; }
+#party .cl { font-size: 9px; letter-spacing: 1px; color: #8a8498; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #party .hp { position: relative; height: 11px; background: #1c1a22; border: 1px solid #2c2838; margin-bottom: 5px; }
 #party .hp i { position: absolute; left: 0; top: 0; bottom: 0; background: #5aa35c; }
 #party .hp span { position: absolute; right: 3px; top: -1px; font-size: 8.5px; color: #f2f0ea; text-shadow: 0 1px 0 #000; }
@@ -69,7 +69,7 @@ export function createPartyPanel(sim) {
     const pts = pendingPoints(m) + pendingSkillPoints(m);
     return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}${m.fallen ? ' fallen' : ''}${m.weakUntil > 0 ? ' weak' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}${pts ? `<span class="ptb">+${pts}</span>` : ''}
       <div class="top"><div class="pf"><canvas width="44" height="52" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
-        <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.abbr}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
+        <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.label.toUpperCase()}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'FALLEN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
         <span>CRT</span><b>${s.crit}%</b><span>DDG</span><b>${s.dodge}%</b></div>

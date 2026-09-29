@@ -2,9 +2,9 @@
 // minimap opens a context-sensitive pick list (sim.destinations(): dungeon / overland /
 // town). Picking a row makes the party auto-walk there; a chip above the party cards
 // names the destination with the steps left and cancels it (so does the stick). A walk a
-// fight interrupts can be resumed from the chip — straight on through the room, or once it's quiet. Hidden in a town
-// square, where the service bar is already the menu. DOM only; talks to the sim through
-// commands.
+// fight interrupts can be resumed from the chip — straight on through the room, or once it's quiet. It stays up in
+// a town square too, beside the service bar: the road out is one tap away. DOM only; talks to
+// the sim through commands.
 
 const ICONS = {
   next: '<path d="M4 12h12M12 6l6 6-6 6"/>',
@@ -22,13 +22,14 @@ const ICONS = {
 const NEEDLE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#e0a85a" stroke-width="1.5"/><path d="M12 4.5l2.6 7.5L12 19.5 9.4 12z" fill="#f0c880" stroke="#1a1208" stroke-width=".6"/><path d="M12 12L14.6 12 12 19.5 9.4 12z" fill="#6b4a24"/><circle cx="12" cy="12" r="1.2" fill="#1a1208"/></svg>';
 
 const CSS = `
-#compassBtn { position: fixed; right: 12px; top: 170px; z-index: 7; width: 44px; height: 44px; border-radius: 22px; padding: 0;
+/* z 5: over the party cards (4), under the town menu (6) and the character sheet (8) — it stays up in
+   the town square now, and at 7 it sat over the town menu's close button */
+#compassBtn { position: fixed; right: 12px; top: 170px; z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
   background: rgba(16,12,22,0.92); border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5);
   transition: opacity .2s ease; }
 #compassBtn svg { width: 26px; height: 26px; }
 #compassBtn.on { background: rgba(60,40,24,0.95); border-color: #d8a040; box-shadow: 0 0 0 3px rgba(216,160,64,.25), 0 2px 10px rgba(0,0,0,.5); }
-#compassBtn.hide { opacity: 0; pointer-events: none; }
-#compassMenu { position: fixed; right: 12px; top: 222px; z-index: 7; width: 292px; max-width: calc(100vw - 24px); background: rgba(16,12,22,0.96);
+#compassMenu { position: fixed; right: 12px; top: 222px; z-index: 5; width: 292px; max-width: calc(100vw - 24px); background: rgba(16,12,22,0.96);
   border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6); font-family: Georgia, serif; display: none; }
 #compassMenu.on { display: block; }
 #compassMenu:before { content: ''; position: absolute; right: 16px; top: -7px; width: 12px; height: 12px; background: rgba(16,12,22,0.96);
@@ -102,9 +103,7 @@ export function createCompass(sim, { partyPanel, inSquare }) {
   // keep the button, list and chip in step with the world
   let last = '';
   (function watch() {
-    const p = sim.state.player, sq = inSquare();
-    btn.classList.toggle('hide', sq);
-    if (sq && menu.classList.contains('on')) closeMenu();
+    const p = sim.state.player;                                   // (it stays in the town square too: the quickest way back out)
     if (!p.path && p.moving && menu.classList.contains('on')) closeMenu();                    // the stick took over
     let html = '', mode = '';
     if (p.path && p.dest) {

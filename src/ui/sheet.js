@@ -171,7 +171,7 @@ export function createGearSheet(sim, { partyPanel }) {
     if (!open) return;
     const m = member(), s = statsFor(m), g = m.gear || {}, c = CLASSES[m.cls];
     const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="44" height="52" data-actor="${actorOf(p)}"></canvas>`
-      + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${CLS_ABBR[p.cls]} · L${p.level}${p.fallen ? ' · FALLEN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
+      + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · FALLEN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
     const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m);
