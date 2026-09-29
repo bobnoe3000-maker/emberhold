@@ -15,6 +15,7 @@ import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unl
 import { esc } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
+import { classIcon } from './classicons.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
 const CSS = `
@@ -49,7 +50,8 @@ const CSS = `
 .gslot .new { position: absolute; top: -4px; right: -4px; font-size: 7.5px; font-weight: 700; color: #10200c; background: #8fe07a; border-radius: 3px; padding: 1px 3px; }
 .gslot .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font-size: 11px; font-weight: 700; text-shadow: 0 1px 0 #000; }
 .gslot.off img { filter: grayscale(.85) brightness(.6); }
-.gslot .cls { position: absolute; top: 2px; left: 3px; font-size: 8px; letter-spacing: .3px; color: #b8aec4; background: rgba(0,0,0,.6); border-radius: 2px; padding: 0 2px; max-width: calc(100% - 6px); overflow: hidden; white-space: nowrap; }
+.gslot .who { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 4px; background: rgba(0,0,0,.72); display: grid; place-items: center; }
+.gslot .who svg { width: 12px; height: 12px; display: block; }
 #gearSheet .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 16px; margin-top: 14px; padding: 8px 10px; border: 1px solid #2c2838; border-radius: 8px; background: rgba(255,255,255,.015); }
 #gearSheet .stat { display: flex; align-items: baseline; font-size: 10.5px; color: #8a8498; letter-spacing: 1px; }
 #gearSheet .stat b { margin-left: auto; color: #efe4cf; font-weight: 600; }
@@ -167,11 +169,12 @@ export function createGearSheet(sim, { partyPanel }) {
   const slotHtml = (it, { slot, lbl, m, n = 1, isNew = fresh.has(it && it.uid) }) => {
     if (!it) return `<div class="gslot empty">${lbl ? `<span class="lbl">${lbl}</span>` : ''}</div>`;
     const wear = !m || canWear(m, it), sl = sel && sel.uid === it.uid;
-    // not for this character: the tag names the class it's for (the class of whoever in the party
-    // can wear it, else the item's own; it used to be the first three letters of a name — "WRE", "SIG")
-    const who = !wear ? S.party.find((q) => canWear(q, it)) : null, tag = !wear ? (CLASSES[who ? who.cls : BASES[it.base].cls] || { label: '' }).label.toUpperCase() : '';
+    // not for this character: a small icon of the class it's for (the class of whoever in the party
+    // can wear it, else the item's own). It was the first three letters of a name ("WRE", "SIG"),
+    // which read as a code or as "equipped"; the icons are in classicons.js.
+    const who = !wear ? S.party.find((q) => canWear(q, it)) : null, tag = !wear ? classIcon(who ? who.cls : BASES[it.base].cls) : '';
     return `<button class="gslot ${it.r}${sl ? ' sel' : ''}${wear ? '' : ' off'}" data-uid="${it.uid}" ${slot ? `data-slot="${slot}"` : ''}><img src="${icon(it)}" alt="">`
-      + `${tag ? `<span class="cls">${tag}</span>` : ''}${isNew ? '<span class="new">NEW</span>' : ''}${n > 1 ? `<span class="qty">×${n}</span>` : ''}`
+      + `${tag ? `<span class="who">${tag}</span>` : ''}${isNew ? '<span class="new">NEW</span>' : ''}${n > 1 ? `<span class="qty">×${n}</span>` : ''}`
       + `${!slot && m && isUp(m, it) ? '<span class="up">▲</span>' : ''}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</button>`;
   };
   function render() {
