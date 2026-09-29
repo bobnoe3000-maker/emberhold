@@ -999,7 +999,7 @@ export function createRenderer(canvas, sim, input) {
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
-      const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 40 * k;
+      const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 46 * k;   // 46: clear of an iPhone's camera island (40 clipped ~4 px)
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
       octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);

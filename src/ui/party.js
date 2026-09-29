@@ -13,7 +13,7 @@ import { esc } from './actorart.js';
 
 const CSS = `
 #party { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.08fr 1fr; gap: 6px;
-  padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 8px); background: linear-gradient(rgba(10,8,14,0), rgba(10,8,14,0.92) 22%);
+  padding: 6px 8px max(calc(env(safe-area-inset-bottom, 0px) - 4px), 8px);   /* was inset + 8px: 12 px lower on a notched phone, still above the home bar */ background: linear-gradient(rgba(10,8,14,0), rgba(10,8,14,0.92) 22%);
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; color: #d8d2c6; pointer-events: none; }
 #party .card { position: relative; background: rgba(14,12,20,0.94); border: 1px solid #2c2838; border-radius: 3px; padding: 6px 7px 7px; min-width: 0; }
 #party .card.main { border-color: #a07a3c; box-shadow: inset 0 0 0 1px rgba(160,122,60,0.25); }
