@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
-import { CLASSES, ORIGINS, ORIGIN_EDGE, statsFor, makeMember, cleanName, xpToNext } from '../src/sim/party.js';
+import { CLASSES, SHIELD_DEF, ORIGINS, ORIGIN_EDGE, statsFor, makeMember, cleanName, xpToNext } from '../src/sim/party.js';
 import { pendingPoints, autoAllocate, POINTS_PER_LEVEL } from '../src/sim/attributes.js';
 import { pendingSkillPoints, rankOf, rankCost, skillsOf } from '../src/sim/skills.js';
 import { DAY_S, WEAK_S, BENCH_MAX } from '../src/sim/heroes.js';
@@ -61,7 +61,7 @@ test('origin edges: Redhand +1 ATK, Thornwick-born one more hireling', () => {
   run(a, [{ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'redhand_deserter', name: 'A' }]);
   run(b, [{ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'B' }]);
   assert.equal(statsFor(a.state.party[0]).atk, statsFor(b.state.party[0]).atk + 1);
-  assert.equal(a.heroes.roster().length, 3); assert.equal(b.heroes.roster().length, 4);
+  assert.equal(a.heroes.roster().length, 4); assert.equal(b.heroes.roster().length, 5);   // one per class; Thornwick-born +1
   run(b, [{ type: 'hire', idx: 3 }]);
   assert.equal(b.state.party.length, 2);
 });
@@ -74,7 +74,7 @@ test('the recommended build reproduces the class table (HP / MP / ATK / DEF) at 
     assert.equal(s.maxHp, Math.round(c.hp[0] + c.hp[1] * L + g.hp), `${cls} L${lv} hp`);
     assert.equal(s.maxMp, Math.round(c.mp[0] + c.mp[1] * L + g.mp), `${cls} L${lv} mp`);
     assert.ok(Math.abs(s.atk - (c.atk[0] + c.atk[1] * L + g.atk)) < 0.051, `${cls} L${lv} atk`);
-    assert.ok(Math.abs(s.def - (c.def[0] + c.def[1] * L + g.def)) < 0.051, `${cls} L${lv} def`);
+    assert.ok(Math.abs(s.def - (c.def[0] + c.def[1] * L + g.def) * (cls === 'fighter' ? SHIELD_DEF : 1)) < 0.051, `${cls} L${lv} def`);   // (+ the fighter's shield bonus)
   }
 });
 test('3 points a level; spend, Auto, and no points from nowhere', () => {

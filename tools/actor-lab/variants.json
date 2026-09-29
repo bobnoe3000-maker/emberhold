@@ -127,6 +127,18 @@
   ]
  },
  {
+  "id": "C1",
+  "cls": "Cleric",
+  "label": "Cleric \u00b7 sword & badge shield, bareheaded (Grey Sisters)",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Badge_Shield",
+   "Knight_Cape"
+  ],
+  "recolor": "sepia(0.4) saturate(1.6) hue-rotate(-10deg) brightness(0.92)"
+ },
+ {
   "id": "E1",
   "cls": "Undead",
   "label": "Skeleton Warrior",

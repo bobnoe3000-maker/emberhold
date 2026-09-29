@@ -6,9 +6,9 @@
   "additionalProperties": false,
   "properties": {
     "classes": {
-      "type": "array", "minItems": 3,
+      "type": "array", "minItems": 4,
       "items": { "type": "object", "required": ["id", "role", "difficulty"], "additionalProperties": false,
-        "properties": { "id": { "enum": ["fighter", "rogue", "mage"] }, "role": { "type": "string" }, "difficulty": { "type": "string" } } }
+        "properties": { "id": { "enum": ["fighter", "rogue", "mage", "cleric"] }, "role": { "type": "string" }, "difficulty": { "type": "string" } } }
     },
     "locked": {
       "type": "array",

@@ -6,7 +6,7 @@
 // the stance, the level-20 passive and Weakened (after a wipe) on top.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { gearStats, starterKit } from './items.js';
+import { gearStats, starterKit, BASES } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate } from './attributes.js';
 import { STANCE_MOD, stanceOf, hasPassive } from './skills.js';
 
@@ -17,7 +17,13 @@ export const CLASSES = {
   fighter: { label: 'Fighter', abbr: 'FTR', hp: [129, 14], mp: [20, 2], atk: [11, 2.0], def: [10, 2.0], crit: 4, dodge: 5, hpr: 2.0, mpr: 0.5, actor: 'hero_barbarian' },
   rogue:   { label: 'Rogue',   abbr: 'ROG', hp: [100, 10], mp: [30, 3], atk: [11, 2.2], def: [5, 1.2],  crit: 14, dodge: 11, hpr: 1.2, mpr: 0.8, actor: 'hero_rogue' },
   mage:    { label: 'Mage',    abbr: 'MAG', hp: [80, 8],   mp: [63, 8], atk: [12, 2.4], def: [3, 0.8],  crit: 8, dodge: 5, hpr: 0.8, mpr: 1.9, actor: 'hero_mage' },
+  cleric:  { label: 'Cleric',  abbr: 'CLR', hp: [118, 12], mp: [47, 5], atk: [10, 1.8], def: [8, 1.8],  crit: 5, dodge: 5, hpr: 1.6, mpr: 1.5, actor: 'hero_cleric' },
 };
+// Class bonuses (GDD §5), on top of the class table: the fighter's shield (+10 % DEF while one
+// is carried) is here; the rogue's backstab crits, the mage's clusters and the cleric's
+// stronger heals are battle rules (battle.js).
+export const SHIELD_DEF = 1.1;
+const hasShield = (m) => { const off = m.gear && m.gear.off; return !!off && BASES[off.base] && BASES[off.base].kind === 'shield'; };
 export const MAX_COMPANIONS = 2;
 // XP to the next level = round(100 × L^1.6) (GDD §7), as a fixed integer table: Math.pow is
 // engine-approximated and the curve must replay bit-for-bit on the server (detmath.js).
@@ -44,7 +50,8 @@ export function statsFor(m) {
   const st = STANCE_MOD[stanceOf(m)], weak = m.weakUntil > 0 ? WEAK : 1, passive = hasPassive(m);
   const edge = m.origin === 'redhand_deserter' ? 1 : 0;                       // origins.js: +1 ATK
   const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak;
-  const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (passive && m.cls === 'fighter' ? 1.1 : 1);   // Iron Hide
+  const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (passive && m.cls === 'fighter' ? 1.1 : 1)   // Iron Hide
+    * (m.cls === 'fighter' && hasShield(m) ? SHIELD_DEF : 1);                                                                     // the fighter's shield
   const mpr = (c.mpr * (baseMp / c.mp[0]) + a.mpr + g.mpr) * (passive && m.cls === 'mage' ? 1.25 : 1);                              // Kindled Mind
   return {
     maxHp: Math.round((baseHp + g.hp) * weak), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
@@ -62,8 +69,8 @@ export function makeMember(id, name, cls, level = 1, trait = null) {
 
 // ── the main character (GDD §6.1, development plan §2.3) ────────────────────
 // Looks are baked atlases (assets/actors); the first is the class default.
-export const LOOKS = { fighter: ['hero_knight', 'hero_barbarian'], rogue: ['hero_rogue'], mage: ['hero_mage'] };
-export const LOOK_LABEL = { hero_knight: 'Knight', hero_barbarian: 'Barbarian', hero_rogue: 'Rogue', hero_mage: 'Mage' };
+export const LOOKS = { fighter: ['hero_knight', 'hero_barbarian'], rogue: ['hero_rogue'], mage: ['hero_mage'], cleric: ['hero_cleric'] };
+export const LOOK_LABEL = { hero_knight: 'Knight', hero_barbarian: 'Barbarian', hero_rogue: 'Rogue', hero_mage: 'Mage', hero_cleric: 'Grey Sister’s cleric' };
 // Origins: content/origins.json holds the text; the ids and their rule edges live here, and a
 // test keeps the two in step (the sim can't read JSON files, and must not trust the client's).
 export const ORIGINS = ['thornwick_born', 'redhand_deserter', 'grey_sisters_ward', 'deepdelver_fostered'];
@@ -92,16 +99,19 @@ const NAMES = {
   fighter: ['Garruk', 'Brannoc', 'Hild', 'Torvald', 'Maera', 'Osric'],
   rogue: ['Wren', 'Osk', 'Tamsin', 'Lark', 'Vesna', 'Quill'],
   mage: ['Sigrun', 'Ilsabet', 'Corwin', 'Aveline', 'Merrow', 'Thane'],
+  cleric: ['Maren', 'Aldous', 'Wenna', 'Cuthbert', 'Edda', 'Rowan'],
 };
 const TRAITS = [['Stubborn', '+10% DEF'], ['Keen-eyed', '+3% CRIT'], ['Light-footed', '+3% DDG'], ['Hardy', '+10% HP'], ['Greedy', '+5% gold, costs more'], ['Devout', 'heals a little more']];
 
-// Today's sellswords at a town's tavern: three candidates, one per class, deterministic
-// per (world seed, town, day), within ±1 of your level. A Thornwick-born hero sees one more
-// (drawn after the three, so theirs don't change).
+// Today's sellswords at a town's tavern: one candidate per class, deterministic per (world
+// seed, town, day), within ±1 of your level. A Thornwick-born hero sees one more. The order
+// keeps older rosters stable: fighter, rogue, mage, then that extra hireling, then the
+// cleric (a Grey Sister's cleric, new with the class), each drawn after the ones before.
 export function tavernRoster(seed, region, day, heroLevel, extra = 0) {
   const rng = mulberry32(streamSeed(seed ^ (day * 7919), 6100 + region.length * 13 + region.charCodeAt(0)));
   const classes = ['fighter', 'rogue', 'mage'];
   for (let i = 0; i < extra; i++) classes.push(['fighter', 'rogue', 'mage'][i % 3]);
+  classes.push('cleric');
   return classes.map((cls, i) => {
     const name = NAMES[cls][(rng() * NAMES[cls].length) | 0], t = TRAITS[(rng() * TRAITS.length) | 0];
     const lv = Math.max(1, heroLevel + ((rng() * 3) | 0) - 1);

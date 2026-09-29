@@ -202,7 +202,7 @@ console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', 
 
 // Gear and loot (GDD §8): six slots with class kits, seeded drops, equip rules, stats, saves.
 const gs = createSim(SEED); gs.tick();
-const gh = gs.state.party[0], kitOk = SLOTS.filter((sl) => gh.gear[sl]).length === 5 && statsFor(gh).maxHp === 140 && statsFor(gh).def === 14;
+const gh = gs.state.party[0], kitOk = SLOTS.filter((sl) => gh.gear[sl]).length === 5 && statsFor(gh).maxHp === 140 && statsFor(gh).def === 15.4;   // 14 + the fighter's shield (+10 %)
 // drops are seeded by the world and a running counter: the same chest sequence twice gives the same items
 const dropRun = () => { const s = createSim(SEED); s.tick(); const got = []; s.bus.on('loot', (l) => got.push(`${l.item.name}/${l.item.r}/${l.item.ilv}`));
   for (const [k, v] of s.world.props) if (v === 'chest') { const [tx, ty] = k.split(',').map(Number); s.state.player.x = tx + 0.5; s.state.player.y = ty + 1.5; s.commands.push({ type: 'harvest', tx, ty }); s.tick(); }

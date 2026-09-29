@@ -7,6 +7,8 @@
 // st = the base's stats at that item level and rarity; aff = rolled affixes (Fine 1,
 // Rare 2); mod = a Rare's ability modifier ({ ab, k: 'cost' | 'power', v }).
 // Stat keys: hp, mp, atk, def, crit, dodge (%), hpr, mpr (per second).
+// A base belongs to one class (cls), or 'any'; `also` lists other classes that can wear it
+// (the cleric shares the fighter's shields, plate and sword).
 
 export const SLOTS = ['weapon', 'off', 'helm', 'armor', 'boots', 'trinket'];
 export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', armor: 'Armor', boots: 'Boots', trinket: 'Trinket' };
@@ -19,23 +21,23 @@ export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // 
 // kind: the line in the item card ("Weapon · two-handed", "Armor · plate")
 export const BASES = {
   // ── fighter
-  sword:       { name: 'Sword', slot: 'weapon', cls: 'fighter', hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [1, 0.35], crit: [1, 0.03] }, metal: true },
+  sword:       { name: 'Sword', slot: 'weapon', cls: 'fighter', also: ['cleric'], hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [1, 0.35], crit: [1, 0.03] }, metal: true },
   axe:         { name: 'Axe', slot: 'weapon', cls: 'fighter', hands: 1, icon: 'axe_1h', kind: 'axe', st: { atk: [1.2, 0.4] }, metal: true },
   greatsword:  { name: 'Greatsword', slot: 'weapon', cls: 'fighter', hands: 2, icon: 'sword_2h', kind: 'greatsword', st: { atk: [1.8, 0.6], crit: [1, 0.05] }, metal: true },
   greataxe:    { name: 'Great-axe', slot: 'weapon', cls: 'fighter', hands: 2, icon: 'axe_2h', kind: 'great-axe', st: { atk: [2, 0.65] }, metal: true },
   falx:        { name: 'Ashbound Falx', slot: 'weapon', cls: 'fighter', hands: 1, icon: 'skel_blade', kind: 'sword', st: { atk: [1, 0.35], crit: [2, 0.06] } },
   cleaver:     { name: 'Ashbound Cleaver', slot: 'weapon', cls: 'fighter', hands: 2, icon: 'skel_axe', kind: 'great-axe', st: { atk: [2.1, 0.7] } },
-  roundshield: { name: 'Round Shield', slot: 'off', cls: 'fighter', icon: 'shield_round', kind: 'shield', st: { def: [1, 0.3] } },
-  kite:        { name: 'Kite Shield', slot: 'off', cls: 'fighter', icon: 'shield_badge', kind: 'shield', st: { def: [1.2, 0.32] }, metal: true },
-  tower:       { name: 'Tower Shield', slot: 'off', cls: 'fighter', icon: 'shield_rect', kind: 'shield', st: { def: [1.5, 0.4], dodge: [-1, 0] }, metal: true },
+  roundshield: { name: 'Round Shield', slot: 'off', cls: 'fighter', also: ['cleric'], icon: 'shield_round', kind: 'shield', st: { def: [1, 0.3] } },
+  kite:        { name: 'Kite Shield', slot: 'off', cls: 'fighter', also: ['cleric'], icon: 'shield_badge', kind: 'shield', st: { def: [1.2, 0.32] }, metal: true },
+  tower:       { name: 'Tower Shield', slot: 'off', cls: 'fighter', also: ['cleric'], icon: 'shield_rect', kind: 'shield', st: { def: [1.5, 0.4], dodge: [-1, 0] }, metal: true },
   spiked:      { name: 'Spiked Shield', slot: 'off', cls: 'fighter', icon: 'shield_spike', kind: 'shield', st: { def: [0.8, 0.25], atk: [0.5, 0.12] }, metal: true },
   targe:       { name: 'Targe', slot: 'off', cls: 'fighter', icon: 'shield_barb', kind: 'shield', st: { def: [0.9, 0.28], dodge: [1, 0.03] } },
   bonebuckler: { name: 'Ashbound Buckler', slot: 'off', cls: 'fighter', icon: 'skel_shield', kind: 'shield', st: { def: [1, 0.3], hp: [3, 0.8] } },
-  greathelm:   { name: 'Great Helm', slot: 'helm', cls: 'fighter', icon: 'helm_plate', kind: 'plate', st: { def: [0.5, 0.15], hp: [3, 1.2] }, metal: true },
+  greathelm:   { name: 'Great Helm', slot: 'helm', cls: 'fighter', also: ['cleric'], icon: 'helm_plate', kind: 'plate', st: { def: [0.5, 0.15], hp: [3, 1.2] }, metal: true },
   furhood:     { name: 'Bear Hood', slot: 'helm', cls: 'fighter', icon: 'hat_barb', kind: 'fur', st: { def: [0.4, 0.12], hp: [4, 1.5] } },
-  plate:       { name: 'Plate Harness', slot: 'armor', cls: 'fighter', icon: 'armor_plate', kind: 'plate', st: { def: [1, 0.35], hp: [5, 2] }, metal: true },
+  plate:       { name: 'Plate Harness', slot: 'armor', cls: 'fighter', also: ['cleric'], icon: 'armor_plate', kind: 'plate', st: { def: [1, 0.35], hp: [5, 2] }, metal: true },
   furmail:     { name: 'Fur Mail', slot: 'armor', cls: 'fighter', icon: 'armor_fur', kind: 'fur', st: { def: [0.8, 0.3], hp: [6, 2.4] } },
-  sabatons:    { name: 'Sabatons', slot: 'boots', cls: 'fighter', icon: 'boots_plate', kind: 'plate', st: { def: [0.5, 0.15] }, metal: true },
+  sabatons:    { name: 'Sabatons', slot: 'boots', cls: 'fighter', also: ['cleric'], icon: 'boots_plate', kind: 'plate', st: { def: [0.5, 0.15] }, metal: true },
   furboots:    { name: 'Fur Boots', slot: 'boots', cls: 'fighter', icon: 'boots_fur', kind: 'fur', st: { def: [0.4, 0.1], hp: [2, 0.8] } },
   // ── rogue
   dagger:      { name: 'Dagger', slot: 'weapon', cls: 'rogue', hands: 1, icon: 'knife', kind: 'dagger', st: { atk: [0.9, 0.32], crit: [1, 0.05] }, metal: true },
@@ -54,6 +56,9 @@ export const BASES = {
   witchhat:    { name: 'Witch Hat', slot: 'helm', cls: 'mage', icon: 'hat_mage', kind: 'robes', st: { def: [0.3, 0.08], mp: [3, 1.1] } },
   robes:       { name: 'Robes', slot: 'armor', cls: 'mage', icon: 'armor_robe', kind: 'robes', st: { def: [0.5, 0.18], mp: [4, 1.6] } },
   slippers:    { name: 'Slippers', slot: 'boots', cls: 'mage', icon: 'boots_mage', kind: 'robes', st: { def: [0.2, 0.06], mpr: [0.1, 0.02] } },
+  // ── cleric (plus the fighter's sword, shields, great helm, plate and sabatons)
+  chapelsword: { name: 'Chapel Sword', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
+  hours:       { name: 'Book of Hours', slot: 'off', cls: 'cleric', icon: 'tome', kind: 'prayer book', st: { mp: [4, 1.4], def: [0.3, 0.1] } },
   // ── trinkets (any class)
   ring:        { name: 'Ring', slot: 'trinket', cls: 'any', icon: 'ring', kind: 'ring', st: { atk: [0.5, 0.15] } },
   amulet:      { name: 'Amulet', slot: 'trinket', cls: 'any', icon: 'amulet', kind: 'amulet', st: { hp: [3, 1.5] } },
@@ -64,10 +69,14 @@ export const STARTER = {
   fighter: { weapon: 'sword', off: 'roundshield', helm: 'greathelm', armor: 'plate', boots: 'sabatons' },
   rogue: { weapon: 'dagger', off: 'offdagger', helm: 'hood', armor: 'leathers', boots: 'softboots' },
   mage: { weapon: 'staff', helm: 'witchhat', armor: 'robes', boots: 'slippers' },
+  cleric: { weapon: 'chapelsword', off: 'kite', armor: 'plate', boots: 'sabatons' },   // bareheaded, the Sisters' badge on the shield
 };
+export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
+/** the classes that can wear a base ([] = any) @param {any} B */
+export const classesOf = (B) => (B.cls === 'any' ? [] : [B.cls, ...(B.also || [])]);
 const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
 // Rare ability modifiers: each class's ability costs less or hits harder (battle.js applies them)
-export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt' };
+export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt', cleric: 'Mend' };
 const FINE_WORDS = ['Tempered', 'Ashwarden', 'Emberforged', 'Grim', 'Barrow-hewn', 'Oakheart', 'Tallowmere', 'Cinderbrand', 'Hollow', 'Gravewatch', 'Black-iron', 'Moss-bound', 'Wickham', 'Pilgrim\'s', 'Lantern-lit'];
 const RARE_WORDS = ['the Last Hearth', 'Embers', 'the Barrows', 'Ash', 'the Long Dark', 'Saint Ilse', 'the Drowned Bell', 'Cinders', 'the Hollow King', 'Thornwick', 'Kindling', 'the Pale Road'];
 const FLAVOUR = [
@@ -92,8 +101,8 @@ export function makeItem(base, ilv, r = 'common', { uid, aff = [], mod = null, n
 // roll a drop: classes = the party's classes (80 % of drops are for one of them)
 export function rollItem(rng, { ilv, rarity, classes, uid }) {
   const slot = pick(rng, SLOTS);
-  const cls = slot === 'trinket' ? 'any' : rng() < 0.8 && classes.length ? pick(rng, classes) : pick(rng, ['fighter', 'rogue', 'mage']);
-  const pool = Object.keys(BASES).filter((k) => BASES[k].slot === slot && BASES[k].cls === cls);
+  const cls = slot === 'trinket' ? 'any' : rng() < 0.8 && classes.length ? pick(rng, classes) : pick(rng, CLASS_IDS);
+  const pool = Object.keys(BASES).filter((k) => BASES[k].slot === slot && (BASES[k].cls === cls || (BASES[k].also || []).includes(cls)));
   const base = pick(rng, pool.length ? pool : Object.keys(BASES).filter((k) => BASES[k].slot === slot));
   const n = rarity === 'rare' ? 2 : rarity === 'fine' ? 1 : 0, aff = [], keys = Object.keys(AFFIX);
   for (let i = 0; i < n; i++) {
@@ -102,7 +111,7 @@ export function rollItem(rng, { ilv, rarity, classes, uid }) {
   }
   let mod = null;
   if (rarity === 'rare') {
-    const c = cls === 'any' ? pick(rng, ['fighter', 'rogue', 'mage']) : cls;
+    const c = cls === 'any' ? pick(rng, CLASS_IDS) : cls;
     mod = rng() < 0.5 ? { ab: ABILITY_OF[c], k: 'cost', v: 3 } : { ab: ABILITY_OF[c], k: 'power', v: 0.15 };
   }
   const B = BASES[base];
@@ -119,7 +128,7 @@ export function itemStats(it) {
   for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + v) * 10) / 10;
   return s;
 }
-export const canWear = (m, it) => { const B = BASES[it.base]; return B.cls === 'any' || B.cls === m.cls; };
+export const canWear = (m, it) => { const B = BASES[it.base]; return B.cls === 'any' || B.cls === m.cls || (B.also || []).includes(m.cls); };
 export const isTwoHanded = (it) => !!it && BASES[it.base].hands === 2;
 
 // what the member's gear adds, summed
@@ -147,6 +156,7 @@ const WEIGHT = {
   fighter: { atk: 1, def: 0.8, hp: 0.08, mp: 0.02, crit: 0.45, dodge: 0.4, hpr: 1.2, mpr: 0.3 },
   rogue: { atk: 1, def: 0.55, hp: 0.07, mp: 0.02, crit: 0.6, dodge: 0.6, hpr: 1, mpr: 0.3 },
   mage: { atk: 1.1, def: 0.45, hp: 0.06, mp: 0.08, crit: 0.4, dodge: 0.35, hpr: 0.8, mpr: 2 },
+  cleric: { atk: 0.8, def: 0.9, hp: 0.08, mp: 0.06, crit: 0.3, dodge: 0.3, hpr: 1.2, mpr: 1.6 },
 };
 const score = (cls, it) => { if (!it) return 0; const w = WEIGHT[cls], s = itemStats(it); let v = 0; for (const k in s) v += (w[k] || 0) * s[k]; return v + (it.mod && it.mod.ab === ABILITY_OF[cls] ? 1.5 : 0); };
 export function upgradeScore(m, it) {

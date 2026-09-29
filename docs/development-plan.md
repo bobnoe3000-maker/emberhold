@@ -176,11 +176,12 @@ inn, or by long-pressing a party card.
 
 **Character creation** is one screen with a live figure preview on top and steps in a
 bottom sheet:
-1. **Class:** Fighter, Rogue or Mage. Each card shows the role line, a stat radar, three
-   ability icons with unlock levels, and a difficulty hint. Cleric and Healer show as
+1. **Class:** Fighter, Rogue, Mage or Cleric. Each card shows the role line, a stat radar, three
+   ability icons with unlock levels, and a difficulty hint. The Healer shows as
    locked: *"Found in the fens"* (world doc §4).
 2. **Look:**
-   - the base model per class: Knight or Barbarian (fighter), Rogue or Hooded Rogue, Mage;
+   - the base model per class: Knight or Barbarian (fighter), Rogue or Hooded Rogue, Mage,
+     the bareheaded Grey Sister's cleric;
    - five accent palettes (cloth, trim), baked as recolour variants.
 
    v1 ships the existing baked looks. A later runtime recolour mask means a new palette
@@ -450,7 +451,7 @@ Healthy → Downed (0 HP in battle) → Fallen (dead) → Resurrected
 - the **Temple** service in any town: 25 gold × level. It's free once a day while the hero
   is level 5 or lower (new-player grace);
 - a **Shrine** in a site: one use per shrine, raises one Fallen member at 50 % HP;
-- the **Cleric** (future class): *Lifeline*;
+- (the **Cleric**'s *Lifeline*, level 20, instead keeps one ally a room visit from going down);
 - a rare consumable, the **Phoenix Ember**.
 
 **The hero is never Fallen while a companion stands:**
@@ -631,7 +632,7 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 | **M5** | **The Hollow Vale** (content-complete region 1) | Overland sites (Old Barrows, Wickham Keep, Sunken Chapel, Tithe Mill); Act I chapter quests; Brannoc's companion chain; the class trials at level 6; the Redhand Captain and the Standard of the Third Legion; the Vale Chronicle set and its hidden site; loot tuned to "rare"; balance for levels 1–8 | Levels 1–8 playable start to finish in about 6–8 hours |
 | **M6** | **Accounts and ship** | Supabase guest → linked accounts; **verified progression** (session upload, server replay validator, rollback; §2.13); cloud saves; Vite packaging; PWA; Capacitor iOS and Android builds; Sentry; a settings screen; store assets and privacy policy | TestFlight and Play internal track. Airplane-mode play works. |
 | **M7** | **Endgame loops** | Ember Rifts and leaderboards (reusing the M6 validator); expeditions (idle, GDD §12); bad-luck protection; smith upgrades, salvage and reroll; Heirlooms | A day of play plus idle feels rewarding. Leaderboard entries are validated. |
-| **M8** | **Fens and Reach** | Acts II–III; Cult, beast and fen-ghoul art; Delve, Escort and Investigate templates; Wren's chain; the Cleric unlock | Levels 8–22 |
+| **M8** | **Fens and Reach** | Acts II–III; Cult, beast and fen-ghoul art; Delve, Escort and Investigate templates; Wren's chain; the Healer unlock | Levels 8–22 |
 | **M9** | **Heights and Throne** | Act IV; the finale; the Undervaults post-game; the Healer | Campaign complete |
 | **M10** | **Multiplayer A (async)** | Hire-a-friend, async arena, leaderboards | 1,000 simulated snapshots validated |
 | **M11** | **Multiplayer B (shared instances, co-op)** | Colyseus town presence and co-op sites | A 3-player co-op site at 20 Hz on mobile networks |

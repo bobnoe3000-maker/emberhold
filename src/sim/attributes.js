@@ -29,6 +29,7 @@ export const BUILD = {
   fighter: ['grit', 'might', 'grit'],
   rogue: ['might', 'finesse', 'grit'],
   mage: ['focus', 'might', 'focus'],
+  cleric: ['grit', 'focus', 'grit'],
 };
 
 /** @param {any} m @returns {Record<string, number>} */

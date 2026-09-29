@@ -121,7 +121,7 @@ revealed, the same model as the dungeon minimap.
 | **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
 | **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
-| **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. The future **Cleric and Healer** class source. |
+| **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads, and some take coin at a tavern) and, later, the **Healer**. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
 | **Lord Pellam's Watch** | Greyholt's underpaid militia | Order, cheaply | Bounties; comic relief; occasionally brave. |
 
@@ -139,7 +139,7 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   Wickham Keep.
 - **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money.
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7) and is the future
-  **Cleric** unlock.
+  **Healer** unlock.
 - **The Kindler** (Master Corvane Vell), voice of the Cinder Cult. He's charismatic, sincere,
   and wrong. He appears through the arc and is the final boss at the Ember Throne.
 - **Empress Aurelle Solmere**, dead 300 years. She is heard only through fragments, and is the

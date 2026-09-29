@@ -13,7 +13,7 @@ import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
 import { esc } from './actorart.js';
-import { BASES, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
+import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE } from '../sim/loot.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
@@ -135,7 +135,8 @@ function drawActor(cv, actor, sx, sy, sw, sh, bright = 1.9) {
 const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
 const icon = (it) => `./assets/items/${BASES[it.base].icon}.png`;
 const fmt = (k, v) => (k === 'crit' || k === 'dodge' ? `${v > 0 ? '+' : ''}${v}%` : k === 'hpr' || k === 'mpr' ? `${v > 0 ? '+' : ''}${v}/s` : `${v > 0 ? '+' : ''}${v}`);
-const CLS_ABBR = { fighter: 'FTR', rogue: 'ROG', mage: 'MAG' };
+const CLS_ABBR = { fighter: 'FTR', rogue: 'ROG', mage: 'MAG', cleric: 'CLR' };
+const classNames = (B, lower) => { const l = classesOf(B).map((c) => CLASSES[c].label).join(' / ') || 'Any class'; return lower ? l.replace('Any class', 'any class') : l; };
 
 export function createGearSheet(sim, { partyPanel }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
@@ -251,7 +252,7 @@ export function createGearSheet(sim, { partyPanel }) {
       ...(it.aff || []).map(([k, v]) => `<div class="ln aff"><span class="k">${STAT_LABEL[k]}</span><b>${fmt(k, v)}</b>${cmp && !(k in it.st) ? cmpCell(k) : ''}</div>`)];
     if (cmp) for (const k of Object.keys(cmp)) if (!(k in it.st) && !(it.aff || []).some((a) => a[0] === k) && cmp[k]) lines.push(`<div class="ln"><span class="k">${STAT_LABEL[k]}</span><b style="color:#5d566a">—</b>${cmpCell(k)}</div>`);
     if (it.mod) { const mine = wearer && it.mod.ab === ABILITY_OF[wearer.cls]; lines.push(`<div class="ln mod${mine ? '' : ' dim'}">◆ ${modText(it.mod)}${mine ? '' : ' (not this class)'}</div>`); }
-    const clsName = B.cls === 'any' ? 'Any class' : CLASSES[B.cls].label;
+    const clsName = classNames(B);
     let warn = '';
     if (!worn && wearer && isTwoHanded(it) && wearer.gear.off) warn = `⚠ Two-handed: ${wearer.gear.off.name} goes to the bag`;
     if (!worn && wearer && B.slot === 'off' && isTwoHanded(wearer.gear.weapon)) warn = `⚠ ${wearer.gear.weapon.name} needs both hands`;
@@ -343,7 +344,7 @@ export function createGearSheet(sim, { partyPanel }) {
     toast.style.borderColor = RC[item.r];
     toast.innerHTML = `<div class="t">✦ Found ${src === 'chest' ? 'in a chest' : src === 'elite' ? 'on an elite' : 'after the wave'}</div>
       <div class="hd"><div class="big" style="border-color:${RC[item.r]}"><img src="${icon(item)}" alt=""></div><div style="min-width:0"><h3 style="color:${RC[item.r]}">${item.name}</h3>
-      <div class="s">${item.r[0].toUpperCase() + item.r.slice(1)} · ${SLOT_LABEL[B.slot]} · ${B.cls === 'any' ? 'any class' : CLASSES[B.cls].label} · ilv ${item.ilv}</div>${up}</div></div>
+      <div class="s">${item.r[0].toUpperCase() + item.r.slice(1)} · ${SLOT_LABEL[B.slot]} · ${classNames(B, true)} · ilv ${item.ilv}</div>${up}</div></div>
       <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${esc(m.name)}</button>` : `<button class="gbtn pri" data-look>Look</button>`}<button class="gbtn" data-bag>Bag</button></div>`;
     toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 6000);
   });
