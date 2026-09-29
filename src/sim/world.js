@@ -108,11 +108,22 @@ export function createWorld(seed, theme, depth = 0) {
     if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
   }
   if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
-  // the first level has a way back up to the overland, beside the entrance
-  // The first level's way back up: a stone stair built against the entrance room's back
-  // wall (north or west, the walls you see), climbing into it. Walk up its bottom steps to leave.
+  // Every floor's way back up, one floor at a time: a stone stair built against the entrance
+  // room's back wall (north or west, the walls you see), climbing into it. Walk up its bottom
+  // steps: on the first floor it leads out to the surface, deeper to the floor above (core.js).
   world.structs = [];
-  if (depth === 0 && level.entrance) placeStairsUp(world, level);
+  if (level.entrance) placeStairsUp(world, level);
+  // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
+  // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
+  if (level.descentRoom) {
+    const d = level.descentRoom; let best = null, bd = Infinity;
+    for (const [k, c] of level.cells) {
+      if (c.kind !== 'floor' || !c.corridor || c.room >= 0) continue;   // (a room keeps its tiles where a corridor cuts in: those start its fight)
+      const [x, y] = k.split(',').map(Number), dd = (x - d.cx) * (x - d.cx) + (y - d.cy) * (y - d.cy);
+      if (dd < bd && isWalkable(world, x + 0.5, y + 0.5)) { bd = dd; best = { x: x + 0.5, y: y + 0.5 }; }
+    }
+    world.stairsDownArrive = best;
+  }
 
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.

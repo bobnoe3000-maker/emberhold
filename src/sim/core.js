@@ -197,22 +197,40 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     else p.dir = dy < 0 ? 'up' : 'down';
   }
 
-  // Regenerate the world one level deeper and drop the hero at the new entrance.
-  // Inventory (counters) carries; the per-level overlay + fog reset with the world.
-  function descend() {
+  // Floors, one at a time (GDD §3.1): the stairs down go one floor deeper, arriving at the foot of
+  // that floor's stair up; the stair up climbs one floor, arriving in the corridor by that floor's
+  // stairs down (the first floor's leads out to the surface instead). A site remembers each floor
+  // you've been on for the visit — chests opened, growths cut, the fog lifted — so going up and
+  // down can't refill them; leaving the site forgets them, as re-entering always has.
+  /** @type {Map<number, { mods: any[], hp: any[], discovered: any[], visited: any[] }>} */
+  let floors = new Map();
+  const overlayOf = (w) => ({ mods: [...w.mods.entries()], hp: [...w.hp.entries()], discovered: [...w.discovered], visited: [...(w.visited || [])] });
+  function applyOverlay(w, o) {
+    w.mods.clear(); for (const e of o.mods ?? []) Array.isArray(e) ? w.mods.set(e[0], e[1]) : w.mods.set(e, { cleared: true });
+    w.hp.clear(); for (const [k, n] of o.hp ?? []) w.hp.set(k, n);
+    w.discovered.clear(); for (const id of o.discovered ?? []) w.discovered.add(id);
+    w.visited = new Set(o.visited ?? []);
+  }
+  function changeFloor(d, arrive) {
     stopWalk(); state.player.resume = null;
-    state.depth += 1;
-    world = buildWorld(state.depth);
-    const s = findSpawn(world);
+    floors.set(state.depth, overlayOf(world));
+    const up = d < state.depth;
+    state.depth = d;
+    world = buildWorld(d);
+    if (floors.has(d)) applyOverlay(world, floors.get(d));
+    const a = arrive(world), s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
     const p = state.player;
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     battle.reset();
-    bus.emit('levelChanged', { depth: state.depth, theme: world.theme });
+    bus.emit('levelChanged', { depth: state.depth, theme: world.theme, ...(up ? { up: true } : {}) });
   }
+  const descend = () => changeFloor(state.depth + 1, (w) => w.stairArrive);
+  const ascend = () => changeFloor(state.depth - 1, (w) => w.stairsDownArrive);
 
   // Travel to another scene and arrive at a named spot (or its default spawn).
   function travel(to, arrive) {
     stopWalk(); state.player.resume = null;
+    floors = new Map();                                    // a new visit: the site's floors are fresh
     if (to === 'dungeon') state.sitesEntered.add('barrows');
     curScene = to; state.depth = 0;
     world = buildWorld(0);
@@ -348,7 +366,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', 'barrows'); }   // walk up the stair: a floor up, or out
     state.t += TICK_DT; state.tick += 1;
   }
 
@@ -376,6 +394,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       visited: [...(world.visited || [])],
       sitesEntered: [...state.sitesEntered],
       flags: { ...state.flags },
+      floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
     };
   }
@@ -415,6 +434,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.sitesEntered = new Set(data.sitesEntered ?? []);
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     quests.restore(data);                                  // v6 and older: none yet
+    floors = new Map();                                    // v7 and older: none (only the floor you're on)
+    for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     bus.emit('questChanged', { id: null });                // the journal repaints
     battle.reset();

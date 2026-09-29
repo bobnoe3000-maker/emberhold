@@ -4,7 +4,7 @@
 // can't be reached are left out, and ones not found yet come back greyed (`off`).
 //
 //   dungeon  — next unexplored room · room at your level · unopened chest / shrine ·
-//              stairs down (greyed until found) · exit to the surface
+//              stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
 //   overland — the region's town · nearest dungeon · nearest unexplored dungeon · landmarks
 //   town     — town square (not while you're in it) · road out
 //
@@ -99,7 +99,8 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
 
     if (world.exitAt) {
       const t = standOn(world.exitAt.x, world.exitAt.y, 3), steps = t && pathLenD(t.tx, t.ty);
-      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: 'Exit to the Hollow Vale', sub: `stair up · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
+      const top = !world.depth;                             // the first floor's stair leads out; deeper ones climb one floor
+      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: top ? 'Exit to the Hollow Vale' : 'Stairs up', sub: top ? `stair up · ${steps} steps` : `to depth ${world.depth} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
     }
     return out;
   }

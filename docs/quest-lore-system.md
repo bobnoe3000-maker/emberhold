@@ -204,8 +204,8 @@ fragment. Two players find the same truth in different places (world doc §7).
 - Ink reads `q_<id>` for the quests an NPC gives.
 - The compass's first row is the tracked quest's next place (`quests.compass`). There's none
   while you're in the fight it wants.
-- **No "reach a floor" objectives yet.** Only a site's first floor has a stair back up (GDD
-  §3.1), so a quest mustn't send you below it until deeper floors have a way home.
+- **"Reach a floor" objectives** can come now: every floor has a stair back up, one floor at a
+  time (GDD §3.1). The first errand predates that and asks for a chest instead.
 - The first quest is Maudry's errand, *The Long Way Round*: hold 4 waves and open a chest in
   the Old Barrows. The Act I chapter (*Smoke over the Vale*, the Tithe Mill) waits for its
   site and the Redhand enemies.

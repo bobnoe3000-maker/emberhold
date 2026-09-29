@@ -1,6 +1,9 @@
 # Emberfall — Game Design Document
 
-**v1.2 · 2026-09-28 · Plan of record for game design.** v1.2 adds:
+**v1.3 · 2026-09-29 · Plan of record for game design.** v1.3 gives every dungeon floor a stair up,
+one floor at a time, and a site remembers its floors for the visit (§3.1).
+
+v1.2 adds:
 - attributes and stat points (§4.1);
 - skills and stances (§5.1);
 - character creation and origins (§6.1);
@@ -72,9 +75,13 @@ Every site map (the current dungeon levels) is a set of **defined rooms** linked
   the shortest path. Tapping a chest, shrine or the stairs walks there and uses it.
 
 The party follows the leader in formation. **Corridors are always safe**: nothing spawns or
-fights there. The **entrance room** is a safe sanctuary. On a site's first floor, a stone
-stair against its back wall leads back up to the surface; walk up it to leave. The
-**descent room** holds the floor's boss and the stairs down.
+fights there. The **entrance room** is a safe sanctuary. On **every floor**, a stone stair
+against its back wall leads back up, one floor at a time: on a site's first floor it leads out
+to the surface; deeper, it climbs to the floor above, arriving in the corridor just outside that
+floor's descent room (never inside it). The **descent room** holds the floor's boss and the
+stairs down, which go one floor deeper, arriving at the foot of that floor's stair up. No stair
+skips a floor. A site remembers every floor you've been on for the visit (chests opened, growths
+cut, the map uncovered), so going up and down can't refill them; leaving the site ends the visit.
 
 **Room size.** Rooms are arenas: 40–62 tiles across (about 1.6–2.5 screens wide at the
 current zoom), with open shapes (rect, oval, diamond, L) so a party of three can spread out,

@@ -14,8 +14,8 @@
 // Commands: track { id | null } · questAbandon { id } (not chapters).
 // Events: 'questChanged' { id, state, step, progress } · 'questReward' { id, xp, gold } · 'questTracked' { id }.
 // Objective types today: `waves` (waves cleared in a site's rooms) and `loot` (chests opened in a
-// site). More come with more sites (quest-lore-system §4.3). (No `reach` a floor yet: only a site's
-// first floor has a stair back up, GDD §3.1, so an errand mustn't send you below it.)
+// site). More come with more sites (quest-lore-system §4.3). (`reach` a floor can come now that every
+// floor has a stair back up, GDD §3.1.)
 
 import { gainXp } from './party.js';
 

@@ -23,10 +23,12 @@
 //       v3–v5 data loads as is with no flags.
 //   v7: M4 quests — quests { [id]: [state, step, ...counters] } and tracked (sim/quests.js). Only
 //       grew: older data loads with no quests.
+//   v8: stairs up on every floor — floors [[depth, { mods, hp, discovered, visited }]], the other
+//       floors of the current dungeon visit (core.js). Only grew: older data loads with none.
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
