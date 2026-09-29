@@ -1,6 +1,8 @@
 # Emberfall — World Summary
 
-**v1.2 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.3 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.3 adds what Maudry Fenn lets slip in her first conversation (§5).
 
 v1.2 dresses the Grey Sisters' clerics (§4: off-white vestments, a mace and a chained psalter),
 changes the pitch to *"The heroes of this age are not available… Looks like it is up to you."*
@@ -139,7 +141,11 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
 ## 5. Key characters
 
 - **Maudry Fenn**, keeper of *The Tired Mule* in Thornwick. She's the player's first contact,
-  knows everyone's business, and tells you more than she should.
+  knows everyone's business, and tells you more than she should. She keeps a pewter mug in her
+  hand and a dress the colour of old mustard. What she lets slip (v1.3): Lord Pellam answered
+  Thornwick's plea for help with a three-page letter nobody can read as a yes; the Watch posts
+  bounties only when it has coin; a Grey Sister usually sits in the Mule's corner, for hire;
+  at Hale & Daughter "it's the daughter you want"; Wendel's lamp oil keeps going up.
 - **Warden-Captain Osric Hale**, Greyholt's watch. He's honest and tired, and posts the bounties.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
   Wickham Keep.

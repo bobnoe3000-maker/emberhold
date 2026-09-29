@@ -1,0 +1,12 @@
+{
+  "id": "maudry_fenn",
+  "name": "Maudry Fenn",
+  "role": ["innkeeper"],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_maudry",
+  "portrait": "npc_maudry",
+  "dialogue": "maudry",
+  "knot": "maudry_hub",
+  "note": "Keeper of the Tired Mule (world doc §5). Stands outside her door, mug in hand."
+}

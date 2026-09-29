@@ -320,6 +320,11 @@ Node.**
   commands.
 - Localization later: one Ink project per locale, or string ids with a lookup (decide at
   M5).
+- **Implemented (M4 slice 1, A13):** `tools/content/ink.mjs` compiles; `src/story/adapter.js`
+  runs a story (binds the sim's variables, turns tags into `dialogueEffect` commands, hands
+  window tags back); `src/ui/dialogue.js` is the window; `src/sim/npcs.js` owns who stands
+  where, the `talk` command and which flags each NPC may set. What a conversation must remember
+  lives in sim flags, not in saved Ink state.
 
 ### 8.5 Content data
 
@@ -436,5 +441,7 @@ commands in the same deterministic sim and stores only that result (development 
 | A10 | 2026-09-28 | `node:test` + Playwright; ESLint without Prettier |
 | A11 | 2026-09-28 | Verified progression: the server replays session command logs (`sim/replay.js`) and stores only the replayed state; `detmath.js` for cross-engine determinism; dev hooks localhost-only; server saves keyed per game slot |
 | A12 | 2026-09-29 | The intro's score is live WebAudio synthesis (`cutscene/score.js`): no audio files, and Howler isn't needed for it. The intro and title use IM Fell English (Igino Marini, OFL 1.1), vendored as woff2 in `assets/fonts/` rather than loaded from a CDN |
+
+| A13 | 2026-09-29 | inkjs 2.4.0: the runtime (`ink.mjs`) vendored and import-mapped as `inkjs`; the compiler only in `tools/content/ink.mjs` (devDependency, same version), and the compiled `content/dialogue/*.json` committed and checked stale-free in CI. Durable conversation state is **sim flags** (`state.flags`, set only by validated `dialogueEffect` commands, save v6), not the Ink story state: Ink state is per session (its cycles move on between visits) and never saved |
 
 Changing any of these needs a new row here, plus a note in the development plan.

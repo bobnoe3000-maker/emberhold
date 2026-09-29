@@ -16,6 +16,8 @@ import { createTitle } from './ui/title.js';
 import { createCreation } from './ui/create.js';
 import { createPartyScreen } from './ui/partyscreen.js';
 import { createCinema } from './cutscene/player.js';
+import { createDialogue } from './ui/dialogue.js';
+import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
@@ -46,6 +48,7 @@ const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\]
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
+if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
@@ -53,6 +56,11 @@ const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;
+// named NPCs (M4): their look, name and Ink file from content/npcs/; tap one to talk (dialogue.js)
+const cast = {};
+Promise.all(Object.keys(NPCS).map((id) => fetch(`./content/npcs/${id}.json`).then((r) => r.json()).then((d) => { cast[id] = d; }).catch(() => {})))
+  .then(() => renderer.setCast(cast));
+const dialogue = createDialogue({ sim, cast: () => cast, openService: (kind) => townMenu.open(kind) });
 
 // Restore the slot's game (party, counters, the dungeon overlay, discovery). Must run before
 // the first render so restored mods are reflected in chunk bakes.
@@ -80,7 +88,7 @@ const title = createTitle({ sim, slot: SLOT, setPaused: (on) => { paused = on; }
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
-if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema };
+if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue };
 
 // Hero: deterministic recipe from the world seed's recipe stream.
 const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));
@@ -88,9 +96,11 @@ const hero = rollRecipe(heroRng);
 hero.tool = null;                 // hands free at spawn; tools come from crafting (phase 1)
 renderer.setHero(hero);
 
-// tap: a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
+// tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
 // shrine / stairs / growth when it's what you tapped)
 input.onTap((sx, sy) => {
+  const npc = renderer.npcAt(sx, sy);                    // a named person: walk over and talk (the sim checks reach)
+  if (npc) { sim.commands.push({ type: 'talk', npc: npc.id }); return; }
   const sv = renderer.serviceAt(sx, sy);                 // a service building: its menu once you're in the square,
   if (sv && townMenu.inSquare()) { townMenu.open(sv); return; }
   if (sv) { const h = sim.world.hub; sim.commands.push({ type: 'tap', tx: Math.floor(h.x), ty: Math.floor(h.y) }); return; }   // else walk to the square

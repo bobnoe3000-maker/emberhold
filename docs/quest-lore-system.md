@@ -239,6 +239,21 @@ It is pure:
 
 ## 6. Dialogue: Ink conventions
 
+**Implemented (M4 slice 1: Maudry Fenn, 2026-09-29):**
+- `content/npcs/maudry_fenn.json` (schema `content/schema/npcs.schema.json`) and
+  `content/dialogue/maudry.ink` (compiled by `node tools/content/ink.mjs`, CI `--check`).
+- `src/sim/npcs.js`: `NPCS` (where each stands; which flags its talk may set), the `talk`,
+  `dialogueEffect` and `endTalk` commands, events `dialogue`, `flagChanged`, `talkEnded`.
+  Tapping someone out of reach walks you up beside them first; walking off ends the talk.
+- Bound today: `hero_name`, `hero_class`, `hero_origin`, `hero_level`, `party_size`,
+  `fallen_name` and the NPC's own `flag_<name>`s. The rest of the list below comes with quests.
+- Tags live today: `flag` (sim), `service` (opens that town window after the talk),
+  `portrait` / `sfx` (ignored). `quest`, `give`, `reveal` reach the sim and are ignored until
+  the quest engine validates them.
+- `src/story/adapter.js` runs the story; `src/ui/dialogue.js` is the window (one line per tap,
+  then choices; narration in italics, speech in quotes).
+- Tests: `test/npcs.test.mjs`; browser section 6 in `test/browser/run.mjs`.
+
 **Files and knots:**
 - One `.ink` file per named NPC (`content/dialogue/maudry.ink`) and one per quest chain.
 - Knots are named `npc_topic_beat`, for example `maudry_ch1_offer` and
@@ -361,6 +376,10 @@ flags: { [name]: number },
 discovered: [...ids], fragments: [...ids], tracked: id | null, day: number
 // the Ink story state is stored beside the snapshot (slot.story), not inside the sim
 ```
+
+**Implemented so far (save v6, M4 slice 1):** `flags` only. The Ink story state is *not* saved
+(architecture A13): anything a conversation must remember is a flag, set through a validated
+`dialogueEffect`, so the server can replay it. `slot.story` above is dropped from the plan.
 
 ---
 

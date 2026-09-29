@@ -13,5 +13,7 @@ comes from `docs/emberfall-world.md` — change it there first.
 | `tips.json` | Loading tips: lore lines (with a source) and one-liners (world doc §7) | The loading screen (`src/cutscene/player.js`) |
 | `cutscenes/intro.json` | The intro, *The Chronicle of the Fall*: six cards, each a scene, a music cue and its lines (checked against `schema/cutscenes.schema.json`) | The intro (`src/cutscene/player.js`); `test/cutscene.test.mjs` keeps it in step with the scenes and the score |
 
-Coming (docs/development-plan.md): `quests/`, `npcs/`, `lore/`, `dialogue/*.ink` (compiled
-by the same step), `bosses/`, `rifts.json`, more `cutscenes/`.
+| `npcs/<id>.json` | A named NPC: name, role, town, look (atlas), portrait, Ink file and entry knot (quest-lore-system §4.4) | The renderer (look, name tag), the dialogue window; `test/npcs.test.mjs` keeps it in step with the sim's table (`src/sim/npcs.js`: where they stand, which flags they may set) |
+| `dialogue/<name>.ink` | Conversations in Ink (quest-lore-system §6), compiled to `dialogue/<name>.json` by `node tools/content/ink.mjs` (commit both; `npm run content` fails on a stale or broken one) | `src/story/adapter.js` → `src/ui/dialogue.js` |
+
+Coming (docs/development-plan.md): `quests/`, `lore/`, `bosses/`, `rifts.json`, more `cutscenes/`.

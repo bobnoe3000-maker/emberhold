@@ -19,10 +19,12 @@
 //   v5: M3 heroes — created, bench, temple; per member attrs, autoAttrs, origin, skills, off,
 //       prio, stance, fallen, weakUntil, respecs. The shape only grew: v4 data loads as is and
 //       the sim's restore() fills the rest (the class build for attributes, created = true).
+//   v6: M4 story flags — flags { [name]: number } set by conversations (sim/npcs.js). Only grew:
+//       v3–v5 data loads as is with no flags.
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -39,11 +41,11 @@ export function metaOf(data) {
   };
 }
 
-/** @param {any} raw @returns {any|null} a v4 slot, or null if unusable */
+/** @param {any} raw @returns {any|null} a current-version slot, or null if unusable */
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version === 3 || raw.version === 4) return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(raw.data), data: raw.data };
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(raw.data), data: raw.data };
   return null;                       // unknown / newer / un-migratable
 }
 

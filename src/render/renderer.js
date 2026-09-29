@@ -374,6 +374,8 @@ export function createRenderer(canvas, sim, input) {
   }
   // companions (hired party members) — atlases load on first use
   const partyAtlases = {};
+  let cast = {};                                      // content/npcs/*.json by id (setCast): each NPC's look and name
+  const npcPres = new Map();                          // NPC id → its animation state (never on the sim's objects)
   const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
 
   const fol = [];                                     // smoothed companion draw positions
@@ -792,6 +794,20 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: m.fallen ? GHOST : lookOf(m, m.down ? 0.35 : 0), team: m.fallen ? undefined : 1, atl, a });
     });
+    // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
+    // gesture now and then. Their playback state is presentation-only, kept here by NPC id.
+    for (const n of sim.world.npcs || []) {
+      const def = cast[n.id], atl = def && partyAtlas(def.look); if (!atl) continue;
+      const nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), np = project(n.x, n.y, nz), nx = ox + np.sx, ny = oy + np.sy;
+      if (nx < -60 || nx > nvw + 60 || ny < -40 || ny > nvh + 120) continue;
+      let u = npcPres.get(n.id); if (!u) npcPres.set(n.id, (u = { fidgetN: 0, lookN: 0, next: now + 4000, near: false }));
+      const near = Math.hypot(ix - n.x, iy - n.y) < 7;
+      if (near && !u.near) u.lookN++;                                   // she looks up as you come over
+      else if (now > u.next) { u.fidgetN++; u.next = now + 7000 + ((u.fidgetN * 2654435761) >>> 0) % 5000; }
+      u.near = near;
+      const a = pickAnim(u, atl, { now, x: n.x, y: n.y, moving: false, faceX: near ? ix - n.x : -1, faceY: near ? iy - n.y : 1, facing: true, dir0: 2, stride: STRIDE.hero, seed: 0.61 });
+      draws.push({ d: n.x + n.y, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: n.x + n.y, look: lookOf(n), team: 0, atl, a });
+    }
     // the Ashbound: one atlas per archetype; they rise from the ground, and the slain collapse, lie, then fade
     const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
     for (const e of sim.world.enemies || []) {
@@ -970,6 +986,14 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(8,5,14,${0.7 * a})`; octx.fillText(L.text, sx + k, sy + k);
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
+    // named people: their name over their head as you come near (tap them to talk)
+    for (const n of sim.world.npcs || []) {
+      const d = Math.hypot(n.x - ix, n.y - iy), def = cast[n.id]; if (d > 12 || !def) continue;
+      const a = Math.max(0, Math.min(1, (12 - d) / 4)), nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, nz);
+      const sx = (ox + P.sx) * S, sy = (oy + P.sy - 62) * S;
+      octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(def.name, sx + k, sy + k);
+      octx.fillStyle = `rgba(255,226,160,${a})`; octx.fillText(def.name, sx, sy);
+    }
   }
   // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
   const floats = [];
@@ -1147,6 +1171,16 @@ export function createRenderer(canvas, sim, input) {
       let best = null, bd = 26;
       for (const e of w.enemies) { if (e.hp <= 0) continue; const z = heightAt(w, Math.floor(e.x), Math.floor(e.y)), P = project(e.x, e.y, z);
         const d = Math.hypot(lastCam.rx + P.sx - nx, lastCam.ry + P.sy - 24 - ny); if (d < bd) { bd = d; best = e; } }
+      return best;
+    },
+    /** the named NPCs' content defs (content/npcs/*.json), by id: until they load, nobody stands there */
+    setCast(c) { cast = c || {}; },
+    npcAt(sxPx, syPx) {                                    // the named person under a tap (their body, a little generous for a thumb)
+      const w = sim.world; if (!w.npcs || !w.npcs.length) return null;
+      const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
+      let best = null, bd = 20;
+      for (const n of w.npcs) { if (!cast[n.id]) continue; const z = heightAt(w, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, z);
+        const d = Math.hypot((lastCam.rx + P.sx - nx) * 1.4, lastCam.ry + P.sy - 24 - ny); if (d < bd) { bd = d; best = n; } }
       return best;
     },
     serviceAt(sxPx, syPx) {

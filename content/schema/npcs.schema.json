@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A named NPC (quest-lore-system §4.4): who they are, how they look and which Ink file they speak from. Where they stand and what their conversations may change live in the sim's own table (src/sim/npcs.js NPCS); a test keeps the two in step.",
+  "type": "object",
+  "required": ["id", "name", "role", "town", "region", "look", "dialogue", "knot"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "role": { "type": "array", "minItems": 1, "items": { "enum": ["innkeeper", "giver", "smith", "merchant", "priest", "warden", "townsfolk"] } },
+    "town": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "region": { "enum": ["vale", "fens", "reach", "heights"] },
+    "look": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "baked actor atlas in assets/actors/" },
+    "portrait": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "atlas whose front idle frame is the dialogue portrait (defaults to look)" },
+    "dialogue": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "content/dialogue/<dialogue>.ink" },
+    "knot": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "the entry knot, <npc>_hub" },
+    "note": { "type": "string" }
+  }
+}

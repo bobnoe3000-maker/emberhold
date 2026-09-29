@@ -8,13 +8,14 @@
 import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP } from './world.js';
 import { findPath } from './path.js';
 import { listDestinations } from './travel.js';
-import { createOutdoor, oExitAt } from './outdoor.js';
+import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
 import { makeHero, statsFor } from './party.js';
 import { starterKit } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle } from './battle.js';
+import { placeNpcs, createTalk } from './npcs.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -52,7 +53,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   const override = theme;                                  // fixed theme (preview) or undefined
   const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene;
-  const buildWorld = (d) => (curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region));
+  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock);
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -72,6 +73,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     bench: [],                        // recruited companions waiting at the inn (heroes.js)
     created: false,                   // has this game's main character been made? (createHero, once)
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
+    flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
   };
 
   // gear drops, the bag and the equip commands (loot.js)
@@ -82,6 +84,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
+
+  // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y) });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -222,6 +227,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
+    if (talk.command(cmd)) return;                         // talk / dialogueEffect / endTalk
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
       if (state.party[0].down) return;                         // your hero has fallen: the others fight on
@@ -335,6 +341,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     heroes.tick();
+    talk.tick();
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
@@ -365,6 +372,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       discovered: [...world.discovered],
       visited: [...(world.visited || [])],
       sitesEntered: [...state.sitesEntered],
+      flags: { ...state.flags },
     };
   }
 
@@ -401,6 +409,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     for (const id of data.discovered ?? []) world.discovered.add(id);
     world.visited = new Set(data.visited ?? []);
     state.sitesEntered = new Set(data.sitesEntered ?? []);
+    state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     battle.reset();
     bus.emit('countersChanged', { ...state.counters });

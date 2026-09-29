@@ -10,6 +10,9 @@
 //   5. every class in a fight (Chromium): a party of each class walks into a room; the fight
 //      runs (the sim keeps ticking) with no page errors — a renderer table without the cleric
 //      once threw at the first HP bar and froze the game
+//   6. talk to Maudry (Chromium, manual clock): tap her across the square → the hero walks over →
+//      the dialogue window → lines → choices → her flag set in the sim → Show me the board opens
+//      the tavern's hiring board
 // Local runs skip an engine that isn't installed; CI (CI=true) requires both.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -228,6 +231,39 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       await ctx.close();
     }
     await b.close();
+  }
+}
+// 6. talk to Maudry: tap → walk over → dialogue → choices → flag → the hiring board
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    // the manual clock: a busy software-GL frame can outlast a tap's 220 ms window
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    let at = null;
+    for (let k = 0; k < 20 && !at; k++) {                                 // until her atlas and the cast have loaded and she's drawn
+      await p.waitForTimeout(300); await run(3);
+      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y)) return { x, y }; return null; });
+    }
+    check('talk: Maudry stands in Thornwick', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
+    if (at) {
+      await p.touchscreen.tap(at.x, at.y); await run(150);
+      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).then(() => true, () => false);
+      const first = open ? await p.textContent('#talk .line') : '';
+      check('talk: tap her → the hero walks over → the dialogue window', open && /Mule/.test(first), first.slice(0, 60));
+      for (let i = 0; i < 6 && (await p.locator('#talk .more').count()); i++) await p.locator('#talk .more').tap();
+      await run(3);                                                        // (the effect is a command: it lands on the next tick)
+      const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
+      check('talk: her lines, then choices; meeting her set met_maudry (a command the sim checked)', choices.length === 5 && flags.met_maudry === 1, `${choices.length} choices · flags ${JSON.stringify(flags)}`);
+      await p.locator('#talk .ch', { hasText: 'hire' }).tap();
+      for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
+      await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);
+      const board = await p.evaluate(() => [...document.querySelectorAll('.on h2, .on h3')].map((e) => e.textContent).join(' | '));
+      check('talk: "Show me the board" closes the talk and opens the Tired Mule', !(await p.locator('#talkWrap.on').count()) && /Tired Mule/.test(board) && errs.length === 0, board + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    }
+    await ctx.close(); await b.close();
   }
 }
 srv.close();
