@@ -6,6 +6,7 @@ import { THEME_KEYS } from './src/sim/level.js';
 import { mulberry32, streamSeed, STREAM } from './src/sim/rng.js';
 import { rollRecipe } from './src/assetforge/doll.js';
 import { statsFor } from './src/sim/party.js';
+import { autoAllocate } from './src/sim/attributes.js';
 import { makeItem, SLOTS } from './src/sim/items.js';
 import { startSession, verifySession, stateHash } from './src/sim/replay.js';
 
@@ -156,6 +157,25 @@ const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rl
 console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));
 console.log('solo fighter holds a room 10 min:', holdOk, holds.map((h) => `${h.waves} waves L${h.level}`).join(', '));
 
+// M3 (death and resurrection): a same-level room visit (~5 waves) with a party of three never
+// leaves anyone Fallen (development plan §2.10 exit test), on the recommended builds
+function partyVisit(seed, lv, hires) {
+  const t = createSim(seed, undefined, { scene: 'town' }); for (const i of hires) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
+  const sim = createSim(seed, undefined, { scene: 'dungeon' }); sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
+  for (const m of sim.state.party) { m.level = lv; m.attrs = null; autoAllocate(m); m.hp = statsFor(m).maxHp; m.mp = undefined; }
+  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, lv);
+  let best = null, bd = 1e9;
+  for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
+  p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5;
+  let fallen = 0, defeated = false; sim.bus.on('fallen', () => fallen++); sim.bus.on('defeat', () => (defeated = true));
+  for (let i = 0; i < 20 * 100 && !defeated; i++) sim.tick();
+  return fallen || defeated ? 1 : 0;
+}
+const visits = [];
+for (const sd of [20260807, 777, 4242]) for (const lv of [3, 6, 9]) for (const h of [[0, 2], [1, 2]]) visits.push(partyVisit(sd, lv, h));
+const visitsOk = visits.every((v) => v === 0);
+console.log('same-level party visits leave nobody Fallen:', visitsOk, `${visits.length - visits.reduce((a, b) => a + b, 0)}/${visits.length}`);
+
 // Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
 const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;
 const twRoom = tw.world.level.rooms.find((q) => tw.world.roomLevels.get(q.id) === 1);
@@ -224,7 +244,7 @@ const cheatOk = honest.ok && !tLevel.ok && !tItem.ok && !tGold.ok && !tSave.ok &
 console.log('verified progression (honest replays; level / item / gold / save / speed tampering rejected):', cheatOk, honest.ok, tLevel.ok, tItem.ok, tGold.ok, tSave.ok, tSpeed.ok,
   `| ${vclaim.ticks} ticks, L${vh.level} ${vh.xp}xp ${vs.state.counters.gold}g, hash ${honest.hash}`);
 
-const ok = cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+const ok = visitsOk && cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

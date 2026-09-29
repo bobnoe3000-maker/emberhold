@@ -16,10 +16,13 @@
 //   v3: town + overland + party; one save in localStorage under 'emberhold.save'
 //   v4: three game slots in IndexedDB, each { version, savedAt, meta, data }; the v3 save
 //       migrates into slot 1
+//   v5: M3 heroes — created, bench, temple; per member attrs, autoAttrs, origin, skills, off,
+//       prio, stance, fallen, weakUntil, respecs. The shape only grew: v4 data loads as is and
+//       the sim's restore() fills the rest (the class build for attributes, created = true).
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -30,7 +33,7 @@ const slotKey = (/** @type {number} */ i) => `slot${i}`;
 export function metaOf(data) {
   const h = (data.party && data.party[0]) || {};
   return {
-    name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null,
+    name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null, origin: h.origin || null,
     party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0,
     playtime: Math.round(data.t || 0), gold: (data.counters && data.counters.gold) || 0,
   };
@@ -40,7 +43,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version === 3) return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(raw.data), data: raw.data };
+  if (raw.version === 3 || raw.version === 4) return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(raw.data), data: raw.data };
   return null;                       // unknown / newer / un-migratable
 }
 

@@ -14,18 +14,38 @@
 // (chasing within the room — it never walks out by itself). Companions always act on
 // their own (fighter guards you, rogue hunts the weakest, mage keeps distance and
 // casts). Tap an enemy to focus the party on it.
+//
+// Abilities (skills.js): on its turn a member casts the first ability in its priority order
+// that is unlocked, on auto-cast, affordable and worth it under its stance — a guard, heal,
+// ward or nova first, else a strike in place of the basic attack. Stances also move the AI:
+// Defensive keeps companions near the leader and half the MP in reserve for guards and
+// heals; Aggressive lets them chase anything and heals late.
+//
+// Death (GDD §3.6): 0 HP is Downed; the Downed rise in the lull when the wave is cleared.
+// Downed a second time in one room visit, or still Downed when the party walks out, a
+// companion is Fallen: a ghost that follows, doesn't fight and earns nothing until a temple
+// or a shrine raises it (heroes.js, core.js). The main character is never Fallen. If nobody stands, it's a wipe: the party wakes at the town temple at 30 % HP,
+// Fallen cleared, a quarter of the gold gone, and everyone Weakened for 10 minutes.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { statsFor, xpToNext } from './party.js';
+import { statsFor, gainXp } from './party.js';
 import { abilityMods } from './items.js';
+import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
+import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 
-// class combat traits (stats are in party.js / the GDD tables)
+// class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
-  fighter: { interval: 1.3, range: 3.0, speed: 6.8, ability: { name: 'Cleave', mp: 10, power: 1.3, splash: 0.65 } },
-  rogue:   { interval: 0.9, range: 2.8, speed: 7.5, ability: { name: 'Backstab', mp: 10, power: 1.6, crit: 25 } },
-  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, ability: { name: 'Firebolt', mp: 12, power: 1.8 }, bolt: 'fire', keepAway: 3.2 },
+  fighter: { interval: 1.3, range: 3.0, speed: 6.8 },
+  rogue:   { interval: 0.9, range: 2.8, speed: 7.5 },
+  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire', keepAway: 3.2 },
 };
+// stance: the HP fraction under which heals / guards go up, and whether MP is held back for them
+const STANCE_AI = { aggressive: { low: 0.3, reserve: 0 }, balanced: { low: 0.5, reserve: 0 }, defensive: { low: 0.65, reserve: 0.5 } };
+const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5;
+// a room holds for as long as you stay, so "downed twice in one visit" is measured over a
+// stretch: stand through WIND waves in a row and a member's downs are forgotten
+const WIND = 1;
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
   minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
@@ -53,7 +73,7 @@ const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, 
 // The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
 // is followed by a breather. Companions who fell during a wave get back up at 25 % HP
 // when it's cleared.
-const LULL_MAX = 15, LULL_READY = 0.5, REVIVE = 0.25;
+const LULL_MAX = 15, LULL_READY = 0.5, LULL_EACH = 0.6, REVIVE = 0.25;   // LULL_EACH: nobody walks into a wave nearly dead
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -62,8 +82,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // a room tile keeps its room id even where a corridor was carved through it
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
   const hero = () => state.party[0];
-  const alive = (u) => u && !u.down && u.hp > 0;
-  const partyHp = () => state.party.reduce((a, m) => a + (m.down ? 0 : m.hp), 0) / state.party.reduce((a, m) => a + statsFor(m).maxHp, 0);
+  const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
+  const partyHp = () => { const q = state.party.filter((m) => !m.fallen); return q.reduce((a, m) => a + (m.down ? 0 : m.hp), 0) / Math.max(1, q.reduce((a, m) => a + statsFor(m).maxHp, 0)); };
+  // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
+  const combatStats = (m) => { const s = statsFor(m), b = m.buff; if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; } return s; };
 
   // runtime fields on party members (positions for companions; the hero is the player)
   function ensureRuntime() {
@@ -112,6 +134,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const gw = x1 - x0 + 1, gh = y1 - y0 + 1, walk = new Uint8Array(gw * gh);
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
     pending = [];
+    for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map() };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
@@ -120,9 +143,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function endBattle(w, why) {
     battle = null; focusId = 0; pending = [];
     if (w) { w.enemies = []; w.projectiles = []; }
-    for (const m of state.party) if (m.down) { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
+    downedOut(why === 'left');
     bus.emit('battle', { on: false, why });
     bus.emit('partyChanged', state.party);
+  }
+  // the fight is over with members still Downed: walked out on, a companion is Fallen (the
+  // main character gets up); otherwise they rise at 20 %
+  function downedOut(leftThem) {
+    for (const m of state.party) {
+      m.buff = null; m.ward = 0;
+      if (!m.down) continue;
+      if (leftThem && !m.main) fall(m);
+      else { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.2)); }
+    }
+  }
+  function fall(m) {
+    m.down = false; m.fallen = true; m.hp = 0; m.buff = null; m.ward = 0; m.moving = false;
+    bus.emit('combat', { t: 'fallen', x: m.x, y: m.y, name: m.name });
+    bus.emit('fallen', { id: m.id, name: m.name });
   }
 
   // ── combat ──────────────────────────────────────────────────────────────────
@@ -137,50 +175,131 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   function applyHit(att, tgt, r, isParty, w, heavy = false) {
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
-    tgt.hp = Math.max(0, tgt.hp - r.dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
+    let dmg = r.dmg;
+    if (isParty && tgt.ward > 0) { const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a; if (!dmg) { bus.emit('combat', { t: 'warded', x: tgt.x, y: tgt.y }); return; } }   // Arcane Ward soaks it first
+    tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
-    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: r.dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy });
+    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy });
     if (tgt.hp > 0) return;
-    if (isParty) { tgt.down = true; bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name }); if (!state.party.some(alive)) defeat(w); }
+    if (isParty) {
+      tgt.down = true; tgt.downs = (tgt.downs || 0) + 1; tgt.stood = 0; tgt.buff = null; tgt.ward = 0;
+      bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name });
+      if (tgt.downs >= 2 && !tgt.main) fall(tgt);               // twice in one room visit (the main character stays Downed)
+      if (!state.party.some(alive)) defeat(w);
+    }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
   function reward(e) {
     const living = state.party.filter(alive);
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp / Math.max(1, living.length)));
-    for (const m of living) {
-      m.xp += share;
-      while (m.xp >= xpToNext(m.level)) {
-        m.xp -= xpToNext(m.level); const before = statsFor(m).maxHp; m.level += 1;
-        m.hp += statsFor(m).maxHp - before; bus.emit('levelUp', { name: m.name, level: m.level });
-      }
-    }
+    const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
+    for (const m of living) gainXp(m, share, lv);
+    for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
     state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl);
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.elite) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
   }
+  // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone
   function defeat(w) {
     const lost = Math.floor((state.counters.gold || 0) * 0.25);
     state.counters.gold = (state.counters.gold || 0) - lost;
     endBattle(w, 'defeat');
-    for (const m of state.party) { m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * 0.3)); }
+    for (const m of state.party) {
+      m.down = false; m.fallen = false; m.weakUntil = state.t + WEAK_S;
+      const s = statsFor(m); m.hp = Math.max(1, Math.round(s.maxHp * WIPE_HP)); m.mp = Math.min(m.mp ?? s.maxMp, s.maxMp);
+    }
     bus.emit('defeat', { lost });
+    bus.emit('weakened', { on: true, until: state.t + WEAK_S });
     onDefeat();
   }
-  function attack(att, tgt, isPartyAtt, w, fight) {
-    let power = 1, bonus = 0, ab = null;
-    const A = isPartyAtt && fight.ability, am = A ? abilityMods(att, A.name) : null;       // Rare gear: the ability costs less / hits harder
-    if (A && att.mp >= A.mp - am.cost) { att.mp -= A.mp - am.cost; power = A.power * (1 + am.power); bonus = A.crit || 0; ab = A; }
+  // ── abilities ───────────────────────────────────────────────────────────────
+  // an ability's cast: its rank, the Rare gear on the caster and Focus set cost and strength
+  function cast(m, A) {
+    const r = rankOf(m, A.id), am = abilityMods(m, A.name);
+    return { A, cost: Math.max(0, rankCost(A, r) - am.cost), mult: rankPower(r) * (1 + am.power) * (1 + (statsFor(m).power || 0)) };
+  }
+  // MP a member holds back for its guards, heals, wards and novas (only if it has any):
+  // Aggressive nothing; Balanced strikes freely until someone is badly hurt, then keeps enough
+  // for the cheapest; Defensive always keeps half the pool
+  function reserve(m, s) {
+    const stance = stanceOf(m); if (stance === 'aggressive') return 0;
+    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && unlocked(m, A) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
+    if (low === 1e9) return 0;
+    if (stance === 'balanced') return state.party.some((q) => alive(q) && q.hp < statsFor(q).maxHp * STANCE_AI.balanced.low) ? low : 0;
+    return Math.max(low, s.maxMp * STANCE_AI[stance].reserve);
+  }
+  // the strike to swing with (paid for here), or null for a basic attack
+  function pickStrike(m, tgt) {
+    const s = statsFor(m), keep = reserve(m, s);
+    for (const A of priorityOf(m)) {
+      if (A.kind !== 'strike' || !unlocked(m, A) || !autocastOn(m, A.id)) continue;
+      if (A.poison && tgt.poison && tgt.poison.t > 1) continue;                    // Venom: already poisoned
+      const c = cast(m, A); if (m.mp < c.cost + keep) continue;
+      m.mp -= c.cost; return c;
+    }
+    return null;
+  }
+  // a guard, heal, ward or nova worth casting now (it takes the member's turn)
+  function tryUtility(m, i, foes, w, F) {
+    const s = statsFor(m), ai = STANCE_AI[stanceOf(m)], hpf = m.hp / s.maxHp;
+    for (const A of priorityOf(m)) {
+      if (A.kind === 'strike' || !unlocked(m, A) || !autocastOn(m, A.id)) continue;
+      const c = cast(m, A); if (m.mp < c.cost) continue;
+      let target = m;
+      if (A.kind === 'guard') {
+        const b = m.buff || {}; if ((A.taunt ? b.wall : b.smoke) > 0) continue;
+        const near = foes.filter((e) => hypot(e.x - m.x, e.y - m.y) < 3.2).length;
+        const guards = A.taunt && state.party.some((q) => q !== m && alive(q));        // taunting only helps with someone to shield
+        if (!(hpf < ai.low || (guards && near >= (stanceOf(m) === 'aggressive' ? 3 : 2)))) continue;
+      } else if (A.kind === 'heal') { if (hpf >= ai.low) continue; }
+      else if (A.kind === 'ward') {
+        target = null; let lo = ai.low + 0.1;
+        for (const q of state.party) if (alive(q) && !(q.ward > 0)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; target = q; } }
+        if (!target) continue;
+      } else if (A.kind === 'nova') { if (foes.filter((e) => hypot(e.x - m.x, e.y - m.y) < A.radius).length < 2) continue; }
+      m.mp -= c.cost; m.act = 0.55; m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
+      bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
+      const tg = target;
+      pending.push({ t: WINDUP_HEAVY, fn: () => { if (alive(m)) utility(m, c, tg, w); } });
+      return true;
+    }
+    return false;
+  }
+  function utility(m, { A, mult }, tgt, w) {
+    if (A.kind === 'guard') {
+      const b = m.buff || (m.buff = {});
+      if (A.taunt) { b.wall = A.dur; b.wallK = A.def * mult; } else { b.smoke = A.dur; b.smokeK = A.dodge * mult; }
+      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
+    } else if (A.kind === 'heal') {
+      const s = statsFor(m), n = Math.round(s.maxHp * A.heal * mult); m.hp = Math.min(s.maxHp, m.hp + n);
+      bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n });
+    } else if (A.kind === 'ward') {
+      if (!alive(tgt)) return;
+      tgt.ward = Math.round(statsFor(tgt).maxHp * A.ward * mult);
+      bus.emit('combat', { t: 'ward', x: tgt.x, y: tgt.y, amount: tgt.ward });
+    } else if (A.kind === 'nova') {
+      const aS = { ...statsFor(m), lvl: m.level, src: m };
+      for (const o of w.enemies) if (!o.dead && o.hp > 0 && !(o.spawn > 0) && hypot(o.x - m.x, o.y - m.y) < A.radius) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
+      bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
+    }
+  }
+  function attack(att, tgt, isPartyAtt, w, fight, c = null) {
+    let power = 1, bonus = 0;
+    const ab = c ? c.A : null;
+    if (c) { power = ab.power * c.mult; bonus = ab.crit || 0; }
     const heavy = !!ab || (!isPartyAtt && att.elite);
     att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
     att.atkKind = heavy ? 'heavy' : att.atkN % 2 ? 'a' : 'b';
     const aStats = isPartyAtt ? { ...statsFor(att), lvl: att.level, src: att } : att;
-    const dStats = isPartyAtt ? tgt : statsFor(tgt);
     const hit = () => {
       if (!(isPartyAtt ? tgt.hp > 0 && !tgt.dead : alive(tgt))) return;
-      applyHit(aStats, tgt, resolve(aStats, dStats, power, bonus), !isPartyAtt, w, heavy);
+      const r = resolve(aStats, isPartyAtt ? tgt : combatStats(tgt), power, bonus);   // the defender's guards count when the blow lands
+      applyHit(aStats, tgt, r, !isPartyAtt, w, heavy);
+      if (r.crit && isPartyAtt && att.cls === 'rogue' && hasPassive(att)) att.mp = Math.min(statsFor(att).maxMp, att.mp + 5);   // Opportunist
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
-      if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash), false, w);
+      if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash * c.mult), false, w);
+      if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur, dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
@@ -262,7 +381,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
   }
-  const nearest = (u, list, pred = () => true) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = hypot(o.x - u.x, o.y - u.y); if (d < bd) { bd = d; best = o; } } return best; };
+  const nearest = (u, list, pred = () => true, bias = null) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = hypot(o.x - u.x, o.y - u.y) + (bias ? bias(o) : 0); if (d < bd) { bd = d; best = o; } } return best; };
+  // formation (GDD §3.5: front fighter, mid rogue, back mage): foes reach for the front line
+  // first — the back line counts as this many tiles further away
+  const BACKLINE = { fighter: 0, rogue: 1, mage: 2.5 }, reach = (q) => BACKLINE[q.cls] || 0;
 
   // Claim (or keep) a melee station around tgt for u this tick; returns its world point.
   let claims = new Map();
@@ -291,7 +413,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function melee(u, tgt, F, dt, w, isParty, move) {
     const d = hypot(tgt.x - u.x, tgt.y - u.y), st = station(u, tgt, F.range, w);
     const inReach = d <= F.range + 0.25;
-    if (inReach && u.cd <= 0) { u.moving = false; attack(u, tgt, isParty, w, F); return; }
+    if (inReach && u.cd <= 0) { u.moving = false; attack(u, tgt, isParty, w, F, isParty ? pickStrike(u, tgt) : null); return; }
     if (u.act > 0.12) { u.moving = false; return; }                     // finishing the swing
     const goal = st || tgt;
     if (hypot(goal.x - u.x, goal.y - u.y) > 0.4 && !(inReach && !st)) move(goal.x, goal.y);
@@ -407,9 +529,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // regen (×5 out of battle and during lulls)
     const calm = !battle || battle.between || (battle.wave === 0 && !w.enemies.length);
     for (const m of state.party) {
-      if (m.down) continue;
+      if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : 1;
-      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * dt); m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
+      const iron = m.cls === 'fighter' && m.hp < s.maxHp * 0.3 && hasPassive(m) ? 2 : 1;             // Iron Hide
+      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * dt); m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
+      if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); }
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
     // companions out of battle: follow in formation, loosen up when the hero stands still
@@ -422,6 +546,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           battle.between = true; battle.lull = LULL; battle.waited = 0;
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true });
           onDrop('wave', battle.level, p.x, p.y);                // now and then a fallen wave leaves something behind
+          for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
             m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));
             bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });
@@ -429,7 +554,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         }
         battle.lull -= dt; battle.waited = (battle.waited || 0) + dt;
         // the next wave comes when the lull is over and the party has caught its breath (or waited long enough)
-        if (battle.lull <= 0 && (battle.wave === 0 || partyHp() >= LULL_READY || battle.waited >= LULL_MAX)) { battle.between = false; spawnWave(w); }
+        if (battle.lull <= 0 && (battle.wave === 0 || (partyHp() >= LULL_READY && state.party.every((m) => !alive(m) || m.hp >= statsFor(m).maxHp * LULL_EACH)) || battle.waited >= LULL_MAX)) { battle.between = false; spawnWave(w); }
       }
       claims = new Map();
       bodies = [{ x: p.x, y: p.y, src: H }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];
@@ -437,14 +562,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // party AI
       state.party.forEach((m, i) => {
         if (!alive(m) || !foes.length) return;
-        const F = CLASS_FIGHT[m.cls];
-        let tgt = focus || (m.cls === 'rogue' ? foes.reduce((a, b) => (b.hp < a.hp ? b : a)) : m.cls === 'fighter' && i > 0 ? nearest(H, foes) : nearest(m, foes));
+        const F = CLASS_FIGHT[m.cls], stance = stanceOf(m);
+        // Defensive companions fight only what comes near the leader, and fall back to it otherwise
+        const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - p.x, e.y - p.y) < DEF_LEASH) : foes;
+        if (!near.length) { if (hypot(p.x - m.x, p.y - m.y) > 2.5) chase(m, p.x, p.y, F.speed, dt, w); else m.moving = false; return; }
+        let tgt = (focus && near.includes(focus) ? focus : null) || (m.cls === 'rogue' ? near.reduce((a, b) => (b.hp < a.hp ? b : a)) : m.cls === 'fighter' && i > 0 && stance !== 'aggressive' ? nearest(H, near) : nearest(m, near));
         if (!tgt) return;
         const d = hypot(tgt.x - m.x, tgt.y - m.y);
         m.fx = tgt.x - m.x; m.fy = tgt.y - m.y;
-        if (i === 0) {                                          // the hero: yours while you steer, autobattles when you let go
-          if (p.moving) return;
-          if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F); return; }
+        if (i === 0 && p.moving) return;                        // the hero is yours while you steer
+        if (m.cd <= 0 && m.act <= 0.12 && tryUtility(m, i, foes, w, F)) return;
+        if (i === 0) {                                          // …and autobattles when you let go
+          if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); return; }
           melee(m, tgt, F, dt, w, true, (gx, gy) => {               // autobattle: take a station, leashed to the room
             const q = { x: p.x, y: p.y }; chase(q, gx, gy, F.speed, dt, w);
             if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
@@ -454,22 +583,32 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const close = nearest(m, foes);
         if (F.keepAway && close && hypot(close.x - m.x, close.y - m.y) < F.keepAway * 0.7) {        // mage: back off
           stepToward(m, m.x - (close.x - m.x), m.y - (close.y - m.y), F.speed, dt, w);
-        } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F); } }
+        } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); } }
         else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
       });
       // enemy AI (leashed to the room)
-      const targets = state.party.filter(alive);
+      const living = state.party.filter(alive);
+      const hidden = living.filter((q) => !(q.buff && q.buff.smoke > 0)), targets = hidden.length ? hidden : living;   // Smoke Step: foes lose you
+      const taunts = targets.filter((q) => q.buff && q.buff.wall > 0);                                                // Shield Wall: foes turn on you
       for (const e of w.enemies) {
         e.act = Math.max(0, e.act - dt); e.flash = Math.max(0, e.flash - dt);
         if (e.spawn > 0) { e.spawn -= dt; continue; }
         if (e.dead > 0 || e.hp <= 0) { e.moving = false; continue; }
-        e.cd = Math.max(0, e.cd - dt);
+        if (e.poison) {                                                     // Venom ticks once a second
+          e.poison.t -= dt; e.poison.acc += dt;
+          while (e.poison && e.poison.acc >= 1 && e.hp > 0) { e.poison.acc -= 1; applyHit(e.poison.by, e, { dmg: Math.max(1, Math.round(e.poison.dps)), crit: false }, false, w); }
+          if (e.poison && e.poison.t <= 0) e.poison = null;
+          if (e.hp <= 0) continue;
+        }
+        const slow = e.slow > 0 ? 0.5 : 1; if (e.slow > 0) e.slow -= dt;     // Frost Nova
+        e.cd = Math.max(0, e.cd - dt * slow);
+        const taunt = nearest(e, taunts, (q) => hypot(q.x - e.x, q.y - e.y) < 7);
         // melee skeletons pick the nearest party member with a free station (else the nearest)
-        const t = e.bolt ? nearest(e, targets) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q) || nearest(e, targets);
+        const t = taunt || (e.bolt ? nearest(e, targets, undefined, reach) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q, reach) || nearest(e, targets, undefined, reach));
         if (!t) { e.moving = false; continue; }
         const d = hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y;
-        if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
-        else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed, dt, w));
+        if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
+        else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
       }
       separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);
     }
@@ -487,7 +626,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
-    reset() { battle = null; focusId = 0; pending = []; placeCompanions(); },
+    reset() { const was = !!battle; battle = null; focusId = 0; pending = []; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
   };
 }

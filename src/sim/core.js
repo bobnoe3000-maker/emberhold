@@ -9,9 +9,11 @@ import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CON
 import { findPath } from './path.js';
 import { listDestinations } from './travel.js';
 import { createOutdoor, oExitAt } from './outdoor.js';
-import { makeHero, tavernRoster, MAX_COMPANIONS } from './party.js';
+import { makeHero, statsFor } from './party.js';
 import { starterKit } from './items.js';
+import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
+import { createHeroes } from './heroes.js';
 import { createBattle } from './battle.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
@@ -66,13 +68,18 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     counters: { wood: 0, stone: 0, gold: 0, embers: 0, lootN: 0, uidN: 0 },
     bag: [],                          // the party bag (loot.js): items not worn, shared by everyone
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
-    party: [makeHero()],                                   // [you, …up to two hired companions]
+    party: [makeHero()],                                   // [your main character, …up to two companions]
+    bench: [],                        // recruited companions waiting at the inn (heroes.js)
+    created: false,                   // has this game's main character been made? (createHero, once)
+    temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
   };
 
   // gear drops, the bag and the equip commands (loot.js)
   const loot = createLoot({ state, bus, seed: baseSeed });
+  // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
+  const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
-  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town'),
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
@@ -196,18 +203,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   function applyCommand(cmd) {
     const p = state.player;
+    if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
-    if (cmd.type === 'hire') {                             // hire from this town's tavern roster (validated here)
-      if (world.kind !== 'town' || state.party.length > MAX_COMPANIONS) return;
-      const c = tavernRoster(baseSeed, world.region, 0, state.party[0].level)[cmd.idx];
-      if (!c || state.party.some((m) => m.id === c.id)) return;
-      state.party.push(c); bus.emit('partyChanged', state.party); return;
-    }
-    if (cmd.type === 'dismiss') {
-      const i = state.party.findIndex((m) => m.id === cmd.id && !m.main);
-      if (i > 0) { state.party.splice(i, 1); bus.emit('partyChanged', state.party); }
-      return;
-    }
+    if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
       if (state.party[0].down) return;                         // your hero has fallen: the others fight on
@@ -251,6 +249,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
+          else if (prop === 'shrine') shrine();
           else { state.counters.wood += 2; state.counters.stone += 2; }
           bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: prop });
           if (prop === 'chest') {                          // a chest may hold gear: item level = its room's level (the hero's outdoors)
@@ -273,6 +272,15 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
         bus.emit('countersChanged', { ...state.counters });
       }
     }
+  }
+
+  // A site shrine (one use each, GDD §3.6): raises the first Fallen member at 50 % HP; with
+  // nobody Fallen it restores the party instead.
+  function shrine() {
+    const f = state.party.find((m) => m.fallen);
+    if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); }
+    else for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; }
+    bus.emit('partyChanged', state.party);
   }
 
   // Reveal rooms the hero has entered or drawn near (minimap fog of war).
@@ -310,6 +318,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (p.frameAcc >= 1 / 8) { p.frameAcc -= 1 / 8; p.frame = (p.frame + 1) % 4; }
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
+    heroes.tick();
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex) travel(ex.to, ex.arrive); }
     else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) travel('overland', 'barrows');   // walk up the stair to leave
     state.t += TICK_DT; state.tick += 1;
@@ -318,7 +327,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // a party member's durable fields; runtime ones (position, velocity, cooldowns, melee-station
   // links to enemies — which made the snapshot circular mid-battle, so autosave silently failed)
   // are rebuilt on load by battle.ensureRuntime
-  const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down'];
+  // (M3: attributes, auto, origin, skill ranks, auto-cast off-list, priority, stance, Fallen,
+  // Weakened-until and respec count)
+  const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
+    'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs'];
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;
@@ -327,6 +339,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       party: state.party.map(persistMember),
+      bench: state.bench.map(persistMember),
+      created: state.created, temple: { ...state.temple },
       bag: state.bag.map((it) => ({ ...it })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
@@ -353,7 +367,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.counters.gold = data.counters?.gold ?? 0;
     for (const k of ['embers', 'lootN', 'uidN']) state.counters[k] = data.counters?.[k] ?? 0;
     if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
-    for (const m of state.party) if (!m.gear) m.gear = starterKit(m);       // saves from before gear: the class kit
+    state.bench = (data.bench ?? []).map((m) => ({ ...m }));
+    state.created = data.created ?? true;                   // saves from before creation already had their hero
+    state.temple = { freeDay: data.temple?.freeDay ?? -1 };
+    for (const m of [...state.party, ...state.bench]) {
+      if (!m.gear) m.gear = starterKit(m);                  // saves from before gear: the class kit
+      if (!m.attrs) { m.autoAttrs = !m.main; autoAllocate(m); }   // saves from before attributes: the class build (same stats as then)
+    }
     state.bag = (data.bag ?? []).map((it) => ({ ...it }));
     world.mods.clear();
     for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
@@ -373,5 +393,5 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function destinations({ inSquare = false } = {}) {
     return listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare });
   }
-  return { state, bus, commands, tick, snapshot, restore, destinations, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

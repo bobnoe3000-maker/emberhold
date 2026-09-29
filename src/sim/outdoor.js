@@ -262,7 +262,7 @@ function buildTown(seed, region) {
   });
   forestRing(o, rng, 10);
   o.exits.push({ x0: 146, y0: 64, x1: 160, y1: 90, to: 'overland', arrive: 'thornwick' });
-  o.arrivals = { default: { x: C[0] + 0.5, y: C[1] + 2.5 }, overland: { x: 140.5, y: 76.5 } };
+  o.arrivals = { default: { x: C[0] + 0.5, y: C[1] + 2.5 }, overland: { x: 140.5, y: 76.5 }, temple: { x: C[0] - 13.5, y: C[1] - 11.5 } };   // temple: where a wiped party wakes, in the square before the temple
   o.spawn = o.arrivals.default;
   return o;
 }
