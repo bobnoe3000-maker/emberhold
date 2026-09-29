@@ -112,9 +112,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Emberfall · direction C, revision 3 · load screen and intro</div>
+    <div class="eyebrow">Emberfall · direction C, revision 4 · load screen and intro</div>
     <h1>The Chronicle of the Fall</h1>
-    <p class="lead">Every card now opens on a hook and closes on a leader that hands you to the next. The score is new: slow, haunting synth, one evolving cue per card. The art has a finishing pass so it reads as painted, not programmed. Press <b>Play</b> and tap the phone to move on. Sound is live synthesis, so turn it up (headphones help).</p>
+    <p class="lead">Every card opens on a hook and closes on a leader that hands you to the next. The score is slow, haunting synth. The Fall's music now carries unbroken through the three hundred years after it and only resolves when Thornwick arrives, and every change of card is voice-led on shared notes. There is no narration: the words are read, not heard. Press <b>Play</b> and tap the phone to move on. Sound is live synthesis, so turn it up (headphones help).</p>
   </header>
 
   <section class="board" aria-label="Player">
@@ -146,13 +146,13 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
       </div>
     </div>
     <div>
-      <h3>What changed since revision 2</h3>
+      <h3>What changed since revision 3</h3>
       <ul class="changes">
-        <li><b>Hook, body, leader</b><span>Each card opens on a hook in italics that answers the last card, and closes on a leader in ember that asks for the next. The lines arrive one at a time.</span></li>
-        <li><b>A new score</b><span>Slow, haunting synth in D minor: pads, a far choir, glass bells and a long echo. Each cue plays for as long as its card is up and keeps moving, and the cues crossfade. The Fall is the one hard cut.</span></li>
-        <li><b>Painted, not drawn</b><span>Shaded forms, lit clouds, soft smoke, a living fire, a colour grade and paper texture on every frame. No more grids, discs or props that read as shapes.</span></li>
-        <li><b>The Long Dim, rebuilt</b><span>A real broken arch, a mule and a cart with a turning wheel, a far watchtower, and a wet, rutted road that fades before the text.</span></li>
-        <li><b>No Game Studios</b><span>On the splash.</span></li>
+        <li><b>The Fall carries on</b><span>Its music starts with the gong and plays unbroken through the Long Dim and Year 301: three cards, three hundred years, one held breath. Thornwick's music is unchanged.</span></li>
+        <li><b>Transitions on the right notes</b><span>Each change rings a short chime on the notes the two keys share. The old chord slides each voice to the nearest note of the new one as it fades. Into Thornwick, the Fall's E♭ falls to D, then F♯ and A open into D major.</span></li>
+        <li><b>Even crossfades</b><span>Equal-power fades replace exponential ones, which had left a 5–6 dB hole at every change.</span></li>
+        <li><b>A quieter fire</b><span>The Kindling's crackle popped louder than the music. It is now half as loud and softer.</span></li>
+        <li><b>No narration</b><span>Decided: text only.</span></li>
       </ul>
     </div>
   </section>
@@ -195,12 +195,12 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
             <li>Thornwick: D, G, B minor, A.</li>
           </ul></li>
         <li><b>It was dry.</b> There was a short room and no tails. Now there is a 6 s dark hall and a dotted echo that dulls on every repeat, which is where "haunting" lives.</li>
-        <li><b>The cards cut hard.</b> The cues now crossfade over 1.8 s. The Fall is the one hard cut: silence, a gong, a sub dropping away, then a cold D and E♭ cluster in the wind.</li>
-        <li><b>There was no arc.</b> Now the score builds and releases:
+        <li><b>The cards cut hard.</b> Now each change of card is voice-led. A short chime plays the notes both keys share, and the old chord slides each voice to the nearest note of the new chord while an equal-power crossfade (1.8–2.4 s) holds the level. The Fall is the one hard cut: silence, a gong, a sub dropping away, then a cold D and E♭ cluster in the wind.</li>
+        <li><b>There was no arc.</b> Now the score builds, holds and releases:
           <ul>
-            <li>The Empire has a heartbeat at 75 bpm.</li>
-            <li>Year 301 quickens it to 97 bpm, opens the filter and climbs on a riser for 8 s.</li>
-            <li>Thornwick resolves to D major, warm, and the title screen keeps it.</li>
+            <li>The Kindling is awe, and the Empire adds a heartbeat at 75 bpm.</li>
+            <li>The Fall cuts it dead, then holds one cold cue through the Long Dim and Year 301, three hundred years without a resolution.</li>
+            <li>Thornwick resolves it: E♭ falls to D (a Phrygian close), and the music opens into D major. The title screen keeps it.</li>
           </ul></li>
         <li><b>It wasn't built for phones.</b> Phone speakers drop the low end, so the heartbeat carries overtones, the pads sit in the mids, and a compressor keeps the levels even.</li>
       </ol>
@@ -227,15 +227,22 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
       </ol>
     </div>
     <div>
-      <h2>The six cues</h2>
+      <h2>The cues</h2>
       <ol class="crit">
         <li><b>Loading:</b> a low open fifth on D in the wind, and a far bell every few seconds.</li>
         <li><b>The Kindling:</b> awe. A D minor pad, a distant "oo" choir, a slow glass figure through the echo, a bell, the fire crackling.</li>
         <li><b>The Empire:</b> majesty with menace. B♭ major, an "ah" choir, a heartbeat for the legion's step, a quicker arpeggio.</li>
-        <li><b>The Fall:</b> the cut. A gong and a falling sub, then a cold cluster, wind, and a lonely glass note every three seconds.</li>
-        <li><b>The Long Dim:</b> a thin, wavering A minor, rain, a sparse hollow bell.</li>
-        <li><b>Year 301:</b> dread. Phrygian D, the choir a half-step apart, the heartbeat faster, the filter opening, a riser.</li>
+        <li><b>The Fall, the Long Dim and Year 301:</b> one cue. A gong and a falling sub, then a cold D, E♭ and A cluster, wind, and a lonely glass note every three seconds, for as long as the three cards take.</li>
         <li><b>Thornwick and the title:</b> release. D major, warm, the glass figure turned major, bells.</li>
+      </ol>
+      <h2 style="margin-top:22px">The transitions</h2>
+      <ol class="crit">
+        <li><b>Into the Kindling:</b> a bell on D, then D an octave up. The loading drone's D and A carry into the new pad.</li>
+        <li><b>Into the Empire:</b> F then D (both in D minor and B♭), then a bell on B♭ to name the new key. The pad's voices slide to B♭, D and F.</li>
+        <li><b>Into the Fall:</b> no chime. The gong is the transition.</li>
+        <li><b>Into the Long Dim:</b> D falling to A, inside the Fall's cluster. The music doesn't change.</li>
+        <li><b>Into Year 301:</b> A rising to E♭, a tritone. Something is wrong, and the music still doesn't change.</li>
+        <li><b>Into Thornwick:</b> E♭ falls to D, short and dry so it resolves rather than rings. Then a bell on F♯ and glass on A: D major. The Fall's E♭ slides down to D under it.</li>
       </ol>
     </div>
   </section>
@@ -252,9 +259,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
         <li><b>The script:</b> does the hook-and-leader flow work? Any line you'd change?</li>
         <li><b>The score:</b> is this the right sound? For the real build, the cues can stay live synthesis (tiny, and they adapt) or be recorded as loops.</li>
         <li><b>The art:</b> is this finish enough to build from, or push further (closer camera, more figures, a moving title logo)?</li>
-        <li><b>Voice:</b> text only, or should the lines be read aloud later (a recorded narrator)?</li>
       </ol>
-      <p class="note" style="margin-top:12px">After you sign off: the scenes become a module the game draws the same way (<code>src/cutscene/</code>), timelines go into <code>content/cutscenes/intro.json</code>, and the score becomes a small module that plays each cue by name.</p>
+      <p class="note" style="margin-top:12px">Decided: no narration. The lines are text only. After you sign off: the scenes become a module the game draws the same way (<code>src/cutscene/</code>), timelines go into <code>content/cutscenes/intro.json</code>, and the score becomes a small module that plays each cue by name.</p>
     </div>
   </section>
 </div>
@@ -640,13 +646,17 @@ function paint(cv, i, t, text = true) {
   c.setTransform(1, 0, 0, 1, 0, 0); const ox = (Math.random() * 160) | 0, oy = (Math.random() * 160) | 0; c.fillStyle = c.createPattern(grain, 'repeat'); c.save(); c.translate(-ox, -oy); c.fillRect(ox, oy, cv.width, cv.height); c.restore();
 }
 
-// ── the score: haunting synth in D minor, one evolving cue per card (music critique) ──
+// ── the score: haunting synth in D minor (music critique) ──────────────────────
 // All live WebAudio: detuned-saw pads through a breathing low-pass, a formant choir, FM bells, a glass
-// arpeggio through a dark echo, a heartbeat, wind and rain, a riser and a gong, into a 6 s hall. Each
-// cue sustains and moves (chords change, figures repeat) for as long as its card is up; cues crossfade
-// over 1.8 s, except the Fall, which cuts. init(ctx) and pump(h) let a test render cues offline.
+// arpeggio through a dark echo, a heartbeat, wind, and a gong, into a 6 s hall. Four cues cover the
+// six cards: the Kindling, the Empire, the Fall (which plays on, unbroken, through the Long Dim and
+// Year 301) and Thornwick (which the title keeps). Each sustains and moves for as long as it plays.
+// Transitions are voice-led: a short chime on the notes the two keys share, while the outgoing chord
+// slides each voice to the nearest note of the incoming one as it fades (the Fall's E♭ falls to D as
+// Thornwick arrives). The Fall itself is the one hard cut. init(ctx) and pump(h) let a test render
+// the score offline.
 const Sound = (() => {
-  let ac = null, out, verbIn, echoIn, noise, on = true, cur = null, cueId = null;
+  let ac = null, out, verbIn, echoIn, noise, fx, on = true, cur = null, cueId = null;
   const mid = (m) => 440 * Math.pow(2, (m - 69) / 12), now = () => ac.currentTime;
   function init(ctx) {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
@@ -661,17 +671,24 @@ const Sound = (() => {
     const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter(); d.delayTime.value = 0.48; fb.gain.value = 0.45; lp.type = 'lowpass'; lp.frequency.value = 2000;
     echoIn = ac.createGain(); echoIn.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(out); lp.connect(verbIn);
     noise = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate); const nx = noise.getChannelData(0); for (let i = 0; i < nx.length; i++) nx[i] = Math.random() * 2 - 1;
+    fx = { buses: [out, verbIn, echoIn], srcs: [] };                  // chimes: straight to the mix, outside any scene's fade
     if (!ctx) setInterval(() => pump(0.3), 60);
   }
   // a scene: three buses (dry, hall, echo) that fade in and out together
+  // equal-power fades: sine in, cosine out, so a crossfade holds its loudness (exponential ramps left a 5-6 dB hole)
+  function fade(p, from, to, t, dur) { const n = 64, c = new Float32Array(n); for (let k = 0; k < n; k++) { const u = k / (n - 1); c[k] = to > from ? from + (to - from) * Math.sin(u * Math.PI / 2) : to + (from - to) * Math.cos(u * Math.PI / 2); } p.cancelScheduledValues(t); p.setValueCurveAtTime(c, t, dur); }
   function scene(fadeIn) {
-    const t = now(), s = { t0: t, srcs: [], seqs: [], buses: [], alive: true };
-    for (const dest of [out, verbIn, echoIn]) { const b = ac.createGain(); b.gain.setValueAtTime(0.0001, t); b.gain.exponentialRampToValueAtTime(1, t + fadeIn); b.connect(dest); s.buses.push(b); }
+    const t = now(), s = { t0: t, srcs: [], seqs: [], buses: [], voices: [], chord0: null, alive: true };
+    for (const dest of [out, verbIn, echoIn]) { const b = ac.createGain(); b.gain.value = 0; fade(b.gain, 0, 1, t, fadeIn); b.connect(dest); s.buses.push(b); }
     return s;
   }
-  function end(s, tt) {
+  // the nearest pitch to `m` that is a note of `chord` (in any octave); a tie resolves downward
+  function nearest(m, chord) { const pcs = chord.map((n) => ((n % 12) + 12) % 12); for (let d = 0; d <= 6; d++) for (const x of [m - d, m + d]) if (pcs.includes(((x % 12) + 12) % 12)) return x; return m; }
+  function end(s, tt, into = null) {
     if (!s) return; s.alive = false; const t = now();
-    for (const b of s.buses) { if (b.gain.cancelAndHoldAtTime) b.gain.cancelAndHoldAtTime(t); else { b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(Math.max(0.0001, b.gain.value), t); } b.gain.exponentialRampToValueAtTime(0.0001, t + tt); }
+    for (const b of s.buses) fade(b.gain, b.gain.value, 0, t, tt);
+    if (into) for (const v of s.voices) { const m = nearest(v.m, into); if (m === v.m) continue;          // voice-lead the fade into the new chord
+      for (const x of v.oscs) { const f = x.frequency; if (f.cancelAndHoldAtTime) f.cancelAndHoldAtTime(t); else { f.cancelScheduledValues(t); f.setValueAtTime(f.value, t); } f.setTargetAtTime(mid(m), t + 0.15, tt * 0.22); } }
     s.srcs.forEach((o) => o.stop(t + tt + 0.2));
   }
   function route(s, node, dry, hall, echo = 0) { [dry, hall, echo].forEach((a, k) => { if (!a) return; const g = ac.createGain(); g.gain.value = a; node.connect(g); g.connect(s.buses[k]); }); }
@@ -688,8 +705,9 @@ const Sound = (() => {
     if (o.sweep) { f.frequency.setValueAtTime(o.cut, t); f.frequency.exponentialRampToValueAtTime(o.sweep, t + o.sweepT); }
     const lfo = osc(s, 'sine', o.lfo ?? 0.07, t), lg = ac.createGain(); lg.gain.value = o.cut * (o.depth ?? 0.4); lfo.connect(lg); lg.connect(f.frequency);
     const n = chords[0].length * 3, g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(o.level / Math.sqrt(n), t + (o.attack ?? 2.5)); f.connect(g); route(s, g, 1, o.hall ?? 0.7);
-    const vs = chords[0].map((m) => [-1, 0, 1].map((k) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = k * (o.detune ?? 8); x.connect(f); return x; }));
-    if (chords.length > 1) every(s, (o.delay || 0) + o.period, o.period, (tt, i) => { const ch = chords[(i + 1) % chords.length]; vs.forEach((v, j) => v.forEach((x) => x.frequency.setTargetAtTime(mid(ch[j]), tt, 0.4))); });
+    const vo = chords[0].map((m) => ({ m, oscs: [-1, 0, 1].map((k) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = k * (o.detune ?? 8); x.connect(f); return x; }) }));
+    s.voices.push(...vo); s.chord0 = s.chord0 || chords[0];
+    if (chords.length > 1) every(s, (o.delay || 0) + o.period, o.period, (tt, i) => { const ch = chords[(i + 1) % chords.length]; vo.forEach((v, j) => { v.m = ch[j]; v.oscs.forEach((x) => x.frequency.setTargetAtTime(mid(ch[j]), tt, 0.4)); }); });
   }
   function sub(s, m, level) { const t = s.t0, g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + 3); osc(s, 'sine', mid(m), t).connect(g); route(s, g, 1, 0); }
   // choir: saws through vowel formants, with vibrato and a slow breath
@@ -699,7 +717,7 @@ const Sound = (() => {
     const br = osc(s, 'sine', 0.11, t), bg = ac.createGain(); bg.gain.value = level * 0.45; br.connect(bg); bg.connect(g.gain);
     const forms = VOWEL[vowel].map(([fr, a]) => { const bp = filt('bandpass', fr, 8), ga = ac.createGain(); ga.gain.value = a * 4; bp.connect(ga); ga.connect(g); return bp; });
     notes.forEach((m, i) => { const vib = osc(s, 'sine', 4.4 + i * 0.6, t), vg = ac.createGain(); vg.gain.value = 10; vib.connect(vg);
-      [-7, 7].forEach((det) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = det; vg.connect(x.detune); forms.forEach((bp) => x.connect(bp)); }); });
+      s.voices.push({ m, oscs: [-7, 7].map((det) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = det; vg.connect(x.detune); forms.forEach((bp) => x.connect(bp)); return x; }) }); });
   }
   // bell: two-operator FM, bright at the strike and dulling as it rings
   function bell(s, m, t, level, dur = 5, ratio = 3.5) {
@@ -708,7 +726,7 @@ const Sound = (() => {
     const g = env(t, level, 0.004, dur); car.connect(g); route(s, g, 0.6, 1, 0.3);
   }
   // glass: a sine and a quiet octave, short, fed hard into the echo
-  function glass(s, m, t, level) { const g = env(t, level, 0.008, 2.4); osc(s, 'sine', mid(m), t, t + 2.5).connect(g); const g2 = env(t, level * 0.3, 0.004, 0.9); osc(s, 'triangle', mid(m + 12), t, t + 1).connect(g2); g2.connect(g); route(s, g, 0.5, 0.9, 0.7); }
+  function glass(s, m, t, level, echo = 0.7, dur = 2.4) { const g = env(t, level, 0.008, dur); osc(s, 'sine', mid(m), t, t + dur + 0.1).connect(g); const g2 = env(t, level * 0.3, 0.004, 0.9); osc(s, 'triangle', mid(m + 12), t, t + 1).connect(g2); g2.connect(g); route(s, g, 0.5, 0.9, echo); }
   const arp = (s, notes, step, level, start = 1) => every(s, start, step, (tt, i) => glass(s, notes[i % notes.length], tt, level * (i % notes.length ? 1 : 1.3)));
   // heartbeat: lub-dub, a pitch-dropping thump with enough overtone to be felt on a phone
   function thump(s, t, level) { const o = osc(s, 'triangle', 90, t, t + 0.5); o.frequency.exponentialRampToValueAtTime(42, t + 0.3); const g = env(t, level, 0.005, 0.45); o.connect(g); route(s, g, 1, 0.25); }
@@ -719,14 +737,7 @@ const Sound = (() => {
     const w = osc(s, 'sine', rate, t), wg = ac.createGain(); wg.gain.value = centre * 0.45; w.connect(wg); wg.connect(bp.frequency);
     hiss(s, t).connect(bp); bp.connect(g); route(s, g, 1, 0.5);
   }
-  function crackle(s, level) { every(s, 0.3, 0.2, (tt) => { if (Math.random() < 0.45) return; const b = hiss(s, tt, tt + 0.03), hp = filt('highpass', 1600 + Math.random() * 2000), g = env(tt, level * (0.4 + Math.random()), 0.002, 0.025); b.connect(hp); hp.connect(g); route(s, g, 1, 0.3); }); }
-  // riser: noise and a gliding tone climbing together for `dur` seconds
-  function riser(s, start, dur, level) {
-    const t = s.t0 + start, bp = filt('bandpass', 250, 3), g = ac.createGain(); bp.frequency.exponentialRampToValueAtTime(3500, t + dur);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.4);
-    hiss(s, t, t + dur + 0.5).connect(bp); const o = osc(s, 'sawtooth', mid(38), t, t + dur + 0.5); o.frequency.exponentialRampToValueAtTime(mid(62), t + dur); const og = ac.createGain(); og.gain.value = 0.25; o.connect(og); og.connect(bp);
-    bp.connect(g); route(s, g, 0.8, 0.9);
-  }
+  function crackle(s, level) { every(s, 0.3, 0.2, (tt) => { if (Math.random() < 0.45) return; const b = hiss(s, tt, tt + 0.03), bp = filt('bandpass', 1800 + Math.random() * 2400, 1.2), g = env(tt, level * (0.4 + Math.random()), 0.003, 0.025); b.connect(bp); bp.connect(g); route(s, g, 1, 0.3); }); }
   // gong: inharmonic FM on a low A, a sub that drops away under it, and a thud of noise
   function gong(s, t, level) {
     const car = osc(s, 'sine', 55, t, t + 10), mod = osc(s, 'sine', 55 * 1.41, t, t + 10), mg = ac.createGain(); mg.gain.setValueAtTime(260, t); mg.gain.exponentialRampToValueAtTime(8, t + 7); mod.connect(mg); mg.connect(car.frequency);
@@ -741,31 +752,36 @@ const Sound = (() => {
     load: (s) => { pad(s, [[38, 45, 50]], { cut: 480, level: 0.16, attack: 3 }); wind(s, 0.05, 350); bells(s, 3, 7.5, [62, 57], 0.03, 2.76); },
     // the Kindling: awe. D minor walking down to Bb and G minor; a slow glass figure, a bell, the fire
     0: (s) => { pad(s, [[38, 45, 53, 57, 62], [34, 46, 53, 58, 62], [31, 43, 50, 58, 62], [38, 45, 53, 57, 62]], { cut: 900, level: 0.2, period: 5.5 });
-      sub(s, 26, 0.07); choir(s, [62, 69], 'oo', 0.05, 4); arp(s, [74, 77, 81, 76, 74, 72], 0.85, 0.05, 1.2); bells(s, 0.4, 6.8, [62, 69], 0.05); crackle(s, 0.07); },
+      sub(s, 26, 0.07); choir(s, [62, 69], 'oo', 0.05, 4); arp(s, [74, 77, 81, 76, 74, 72], 0.85, 0.05, 1.2); bells(s, 0.4, 6.8, [62, 69], 0.05); crackle(s, 0.035); },
     // the Empire: majesty with a pulse under it. Bb, G minor, Eb; the heartbeat is the legion's step
     1: (s) => { pad(s, [[34, 46, 53, 58, 62], [31, 43, 50, 58, 62], [39, 46, 51, 55, 63], [34, 46, 53, 58, 62]], { cut: 1200, level: 0.22, period: 4.8 });
       sub(s, 34, 0.07); choir(s, [58, 65], 'ah', 0.055, 3); pulse(s, 0.8, 0.3); arp(s, [70, 74, 77, 82, 77, 74], 0.42, 0.03, 1.6); },
-    // the Fall: the cut. A gong and a sub dropping out, then a cold D / Eb cluster, wind, lonely glass
+    // the Fall, and the three hundred years after it (cards 3 to 5): a gong and a sub dropping out, then a cold D / E♭ cluster, wind, lonely glass
     2: (s) => { gong(s, s.t0 + 0.05, 0.5); pad(s, [[50, 51, 57]], { cut: 450, depth: 0.3, level: 0.14, attack: 4, delay: 2.5, detune: 5 });
       wind(s, 0.06, 500, 1.5, 0.06); every(s, 4, 2.9, (tt, i) => glass(s, [74, 75, 69, 74, 63][i % 5], tt, 0.04)); },
-    // the Long Dim: a thin A minor that wavers, rain, a sparse hollow bell
-    3: (s) => { pad(s, [[45, 57, 60, 64], [41, 57, 60, 64], [45, 57, 62, 65], [40, 55, 59, 64]], { cut: 650, level: 0.16, period: 7, detune: 13, lfo: 0.05 });
-      wind(s, 0.035, 5200, 0.6, 0.04); wind(s, 0.04, 380, 1.2, 0.07); bells(s, 1, 3.2, [69, 72, 76, 64, 67], 0.04, 2.76); },
-    // Now: dread building. Phrygian D to Eb, the filter opening, the pulse quicker, a half-step figure, a riser
-    4: (s) => { pad(s, [[38, 45, 48, 51], [39, 46, 51, 55]], { cut: 350, sweep: 2600, sweepT: 10, level: 0.22, period: 4 });
-      sub(s, 26, 0.08); choir(s, [62, 63], 'ah', 0.05, 3); pulse(s, 0.62, 0.34, 0.3); arp(s, [74, 75, 74, 69, 70, 69], 0.31, 0.028, 2); riser(s, 1, 8.5, 0.15); },
     // Thornwick: the release. D major, warm, G and B minor and A, the glass figure turned major, bells
     5: (s) => { pad(s, [[38, 45, 54, 57, 62], [38, 47, 55, 59, 62], [35, 47, 54, 59, 62], [33, 45, 52, 57, 61]], { cut: 1300, level: 0.2, period: 5 });
       choir(s, [66, 69], 'ah', 0.045, 3); arp(s, [74, 78, 81, 86, 81, 78], 0.6, 0.035, 1.5); bells(s, 0.3, 5, [74, 81], 0.05); },
   };
   function pump(h) { if (!cur || !cur.alive) return; const lim = now() + h; for (const q of cur.seqs) while (q.at < lim) { q.fn(q.at, q.n++); q.at += q.step; } }
-  function play(id, fade) { if (!ac || id === cueId) return; end(cur, fade); cur = scene(fade); cueId = id; CUES[id](cur); pump(0.3); }
-  function tap() { if (!ac) return; const t = now(), b = ac.createBufferSource(); b.buffer = noise; const bp = filt('bandpass', 900, 2); bp.frequency.exponentialRampToValueAtTime(180, t + 0.7); const g = env(t, 0.05, 0.08, 0.8); b.connect(bp); bp.connect(g); g.connect(out); g.connect(verbIn); b.start(t, Math.random() * 3); b.stop(t + 0.9); }
+  // cards → cues: the Fall's cue carries on through the Long Dim and Year 301
+  const CUE_OF = [0, 1, 2, 2, 2, 5];
+  // the chime into each card: [note, delay s, bell | glass, level], on the notes the two keys share
+  const CHIME = {
+    0: [[62, 0, 'bell', 0.06], [74, 0.6, 'glass', 0.05]],                                            // out of the loading drone: D, then D an octave up
+    1: [[77, 0, 'glass', 0.055], [74, 0.45, 'glass', 0.055], [58, 0.9, 'bell', 0.06]],                   // D minor to B♭: F and D are in both, then B♭ names the new key
+    3: [[74, 0, 'glass', 0.045], [69, 0.6, 'glass', 0.04]],                                           // inside the Fall: D falling to A, both in its cluster
+    4: [[69, 0, 'glass', 0.045], [75, 0.55, 'glass', 0.045]],                                         // A rising to E♭, the tritone: something is wrong
+    5: [[75, 0, 'glass', 0.05], [74, 0.5, 'glass', 0.055], [78, 1.1, 'bell', 0.06], [81, 1.6, 'glass', 0.045]],   // E♭ falls to D (the Phrygian close), then F♯ and A: D major
+  };
+  // (the E♭ into Thornwick is a passing note: short and nearly dry, so it resolves rather than rings)
+  function chime(i) { const t = now() + 0.05; for (const [m, d, kind, lv] of CHIME[i] || []) if (kind === 'bell') bell(fx, m, t + d, lv, 5.5); else if (i === 5 && m === 75) glass(fx, m, t + d, lv, 0.05, 0.8); else glass(fx, m, t + d, lv, 0.35); }
+  function play(id, fade) { if (!ac || id === cueId) return; const old = cur; cur = scene(fade); cueId = id; CUES[id](cur); end(old, fade, id === 2 ? null : cur.chord0); pump(0.3); }
+  function cue(i) { if (!ac) return; const id = CUE_OF[i]; chime(i); play(id, id === 2 ? 0.35 : id === 5 ? 2.4 : 1.8); }
   return {
-    init, pump, tap,
-    cue: (i) => play(i, i === 2 ? 0.35 : 1.8),
+    init, pump, cue,
     loading: () => play('load', 1.2),
-    title: () => play(5, 1.8),                     // the title keeps Thornwick's cue (or picks it up after a skip)
+    title: () => { if (ac && cueId !== 5) cue(5); },   // the title keeps Thornwick's cue (or picks it up after a skip)
     toggle() { on = !on; if (ac) out.gain.setTargetAtTime(on ? 0.9 : 0, now(), 0.15); return on; },
   };
 })();
@@ -802,7 +818,7 @@ function next() {
   if (state === 'loaded') { startIntro(); return; }
   if (state === 'card') {
     if (!revealed) { for (const s of $('cardSay').children) s.classList.add('in'); revealed = true; return; }
-    Sound.tap(); if (card < CARDS.length - 1) fadeTo(() => showCard(card + 1)); else fadeTo(showTitle);
+    if (card < CARDS.length - 1) fadeTo(() => showCard(card + 1)); else fadeTo(showTitle);
   }
 }
 screen.addEventListener('click', (e) => { if (e.target.closest('.skip,.mute')) return; next(); });

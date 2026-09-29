@@ -73,7 +73,9 @@ section.
 **Intro, "The Chronicle of the Fall":**
 - 60–90 s, 6 cards, tap to advance, skippable. It can be rewatched from Settings and the
   Chronicle.
-- Narration lines come straight from world doc §2. Each card is a still baked from our own
+- No narration: the card text is read, not voiced (decided 2026-09-29). The lines come
+  straight from world doc §2 (the approved script is in `docs/intro-mockup.html`). The score
+  has four cues, and the Fall's plays unbroken through cards 3–5. Each card is a still baked from our own
   assets (actor-lab dioramas with the grim pass) under a text card:
   1. The Kindling: pilgrims at the crater.
   2. The Solmere Empire: the Ember Throne, the Ashbound at the forges.
