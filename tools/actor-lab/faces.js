@@ -62,7 +62,7 @@ export async function kkHead(load, model) {
 // ── triangle soup helpers (the extracted geometries are non-indexed: 3 vertices per triangle) ──
 /** keep the triangles whose centroid passes `keep`; `move` maps each kept vertex (a continuous
  * function of position, so shared edges stay shared and a shell stays watertight) */
-function filterTris(geo, keep, move = null) {
+function filterTris(geo, keep, move = null, renormal = true) {
   const pos = geo.attributes.position, nrm = geo.attributes.normal, uv = geo.attributes.uv, P = [], N = [], U = [];
   const a = new THREE.Vector3(), c = new THREE.Vector3(), fn = new THREE.Vector3(), e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
   for (let t = 0; t < pos.count; t += 3) {
@@ -73,7 +73,7 @@ function filterTris(geo, keep, move = null) {
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
   if (uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-  if (move) g.computeVertexNormals();
+  if (move && renormal) g.computeVertexNormals();
   return g;
 }
 /** one triangle soup from several */
@@ -106,6 +106,20 @@ const isBrow = (c) => c.z > 0.3 && c.y > 0.4 && c.y < 0.62 && Math.abs(c.x) < 0.
 const isEar = (c) => Math.abs(c.x) > 0.46 && c.y > 0.12 && c.y < 0.52 && c.z > -0.2 && c.z < 0.2;
 const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const lerp = (a, b, t) => a + (b - a) * t;
+
+// ── face shapes: the skull deformed as a whole, and every part placed on (or grown off) the
+// deformed skull, or mapped through the same function, so hair, beards, noses and headgear fit ──
+const bell = (y, c, w) => Math.exp(-((y - c) / w) * ((y - c) / w));
+export const SHAPES = {
+  normal: null,
+  thin:   (v) => { v.x *= 0.86; v.z = -0.02 + (v.z + 0.02) * 0.97; },
+  thick:  (v) => { v.x *= 1.15; v.z = -0.02 + (v.z + 0.02) * 1.05; },
+  round:  (v) => { v.x *= 1.08 * (1 + 0.07 * bell(v.y, 0.25, 0.22)); v.y = 0.5 + (v.y - 0.5) * 0.92; },
+  oblong: (v) => { v.y *= 1.13; v.x *= 0.92; },
+  pear:   (v) => { v.x *= lerp(1.17, 0.85, smooth(0.02, 0.95, v.y)); },
+};
+/** a grown shell of the (shaped) skull where `keep` holds: helmets, hoods and coifs fit any head */
+export const shellOf = (skull, keep, amount) => filterTris(skull, keep, grow(amount));
 
 // ── the surface: a ray from the front (or any direction) onto the skull ──
 function surface(skull) {
@@ -247,31 +261,32 @@ const HAIRS = {
   braid:    { line: hairline(0.7, 0.42, 0.08), grow: 0.04, braid: true },
   long:     { kk: 'Rogue' }, ponytail: { kk: 'Mage', tie: true }, swept: { kk: 'Knight' },
 };
-async function hair(load, skull, f, M) {
+async function hair(load, skull, f, M, S = null) {
+  const at = (a) => { const v = new THREE.Vector3(...a); if (S) S(v); return v; };
   const g = new THREE.Group(), st = HAIRS[f.hair ?? 'crop']; if (!st) return g;
   if (st.kk) {
     const h = await kkHead(load, st.kk);
-    g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), grow(0.05)), M.hair));   // grown to clear the skull's crown (it sits higher than theirs)
-    if (st.tie && h.parts['1,1']) g.add(new THREE.Mesh(h.parts['1,1'], M.tie));
+    g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.05)(v); }), M.hair));   // grown to clear the skull's crown (it sits higher than theirs)
+    if (st.tie && h.parts['1,1']) g.add(new THREE.Mesh(S ? filterTris(h.parts['1,1'], () => true, S) : h.parts['1,1'], M.tie));
     return g;
   }
   g.add(new THREE.Mesh(filterTris(skull, st.line, grow(st.grow)), M.hair));
-  if (st.knot) { const k = new THREE.Mesh(new THREE.IcosahedronGeometry(st.knot.r, 1), M.hair); k.position.set(...st.knot.at); g.add(k);
-    const band = new THREE.Mesh(new THREE.TorusGeometry(st.knot.r * 0.62, 0.025, 4, 10), M.tie); band.position.set(...st.knot.at); band.position.z += st.knot.at[2] < -0.2 ? st.knot.r * 0.55 : 0; band.position.y -= st.knot.at[2] < -0.2 ? 0 : st.knot.r * 0.6; if (st.knot.at[2] >= -0.2) band.rotation.x = Math.PI / 2; g.add(k, band); }
+  if (st.knot) { const k = new THREE.Mesh(new THREE.IcosahedronGeometry(st.knot.r, 1), M.hair); k.position.copy(at(st.knot.at)); g.add(k);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(st.knot.r * 0.62, 0.025, 4, 10), M.tie); band.position.copy(at(st.knot.at)); band.position.z += st.knot.at[2] < -0.2 ? st.knot.r * 0.55 : 0; band.position.y -= st.knot.at[2] < -0.2 ? 0 : st.knot.r * 0.6; if (st.knot.at[2] >= -0.2) band.rotation.x = Math.PI / 2; g.add(k, band); }
   if (st.braid) {                                                  // over the right shoulder, towards the front
     const P = [[0.4, 0.42, -0.18], [0.44, 0.18, -0.02], [0.42, -0.08, 0.1], [0.38, -0.34, 0.18], [0.35, -0.56, 0.2]];
-    P.forEach((q, i) => { const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1 - i * 0.008, 0), M.hair); s.position.set(...q); s.rotation.set(i, i * 0.7, 0); g.add(s); });
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.022, 4, 8), M.tie); band.position.set(0.35, -0.62, 0.2); band.rotation.x = Math.PI / 2; g.add(band);
+    P.forEach((q, i) => { const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1 - i * 0.008, 0), M.hair); s.position.copy(at(q)); s.rotation.set(i, i * 0.7, 0); g.add(s); });
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.022, 4, 8), M.tie); band.position.copy(at([0.35, -0.62, 0.2])); band.rotation.x = Math.PI / 2; g.add(band);
   }
   return g;
 }
 // facial hair: stubble and short beards are shells off the jaw; 'full' is the Barbarian's beard
 const jaw = (c) => c.y < 0.3 && c.z > -0.22 && !isEar(c) && !(Math.abs(c.x) < 0.14 && c.y > 0.1 && c.y < 0.26 && c.z > 0.3);
-async function beard(load, skull, on, f, M) {
+async function beard(load, skull, on, f, M, S = null) {
   const g = new THREE.Group(), kind = f.beard; if (!kind) return g;
   if (kind === 'stubble') g.add(new THREE.Mesh(filterTris(skull, jaw, grow(0.008)), M.stubble));
   if (kind === 'short' || kind === 'goatee') g.add(new THREE.Mesh(filterTris(skull, kind === 'goatee' ? (c) => jaw(c) && Math.abs(c.x) < 0.16 && c.y < 0.14 && c.z > 0.2 : jaw, grow((v) => 0.04 + 0.05 * smooth(0.2, -0.05, v.y))), M.beard));
-  if (kind === 'full') { const h = await kkHead(load, 'Barbarian'); g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), grow(0.01)), M.beard)); }
+  if (kind === 'full') { const h = await kkHead(load, 'Barbarian'); g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.01)(v); }), M.beard)); }
   if (kind === 'short' || kind === 'goatee' || kind === 'mustache') g.add(strokeOn(on, across(0.13, 0.225, (u) => -0.035 * u * u + (kind === 'mustache' ? -0.02 * u * u * u * u : 0), 7), 0.028, M.beard, 0.02));
   return g;
 }
@@ -302,7 +317,7 @@ function marks(on, f, M) {
 export const OPTIONS = {
   hair: Object.keys(HAIRS), eyes: Object.keys(EYES), brows: Object.keys(BROWS), mouth: Object.keys(MOUTHS),
   nose: ['kk', ...Object.keys(NOSES)], beard: [null, 'stubble', 'short', 'goatee', 'mustache', 'full'],
-  marks: ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], skin: Object.keys(SKIN), iris: Object.keys(IRIS),
+  marks: ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], skin: Object.keys(SKIN), iris: Object.keys(IRIS), shape: Object.keys(SHAPES),
 };
 
 // ── a face ────────────────────────────────────────────────────────────────────
@@ -324,18 +339,21 @@ export async function buildFace(load, model, f, { far = false } = {}) {
   };
   const head = new THREE.Group(); head.name = 'Face';
   // the skull: skin in the chosen tone; an own head keeps its other kept tiles (a hood) textured
-  const B = own ? null : await bald(load), skull = own ? base.parts['0,0'] : B.whole;
-  const ownNose = own || !NOSES[f.nose], patch = ownNose ? null : nosePatch(surface(skull));
+  const S = SHAPES[f.shape], sh = (g) => (S && g ? filterTris(g, () => true, S, false) : g);   // (smooth normals kept: the deformations are gentle)
+  const B0 = own ? null : await bald(load), B = B0 && { skin: sh(B0.skin), wedge: sh(B0.wedge), whole: sh(B0.whole), noNose: sh(B0.noNose) };
+  const skull = own ? sh(base.parts['0,0']) : B.whole;
+  const ownNose = own || !NOSES[f.nose], patch = ownNose ? null : sh(nosePatch(surface(B0.whole)));
   head.add(new THREE.Mesh(own ? skull : ownNose ? B.skin : B.noNose, M.skin));
   if (patch) head.add(new THREE.Mesh(patch, M.skin));
   if (B) head.add(new THREE.Mesh(B.wedge, far ? M.skin : M.lip));
-  if (own) for (const t of f.keep || ['1,1']) if (base.parts[t]) head.add(new THREE.Mesh(base.parts[t], base.material));
-  const on = surface(ownNose ? skull : merge(B.noNose, B.wedge, patch));
+  if (own) for (const t of f.keep || ['1,1']) if (base.parts[t]) head.add(new THREE.Mesh(sh(base.parts[t]), base.material));
+  const onShaped = surface(ownNose ? skull : merge(B.noNose, B.wedge, patch));
+  const on = S ? (x, y, dir) => { const q = new THREE.Vector3(x, y, 0.45); S(q); return onShaped(q.x, q.y, dir); } : onShaped;   // parts are authored on the normal head
   // the atlas (far) keeps what reads at 56 px — skin, hair, beard, brows, dot eyes, a mouth — and
   // drops the marks, which only turned into smudges there
-  head.add(eyes(on, f, M, far), brows(on, f, M), mouth(on, f, M, far), nose(on, f, M), await beard(load, skull, on, f, M));
+  head.add(eyes(on, f, M, far), brows(on, f, M), mouth(on, f, M, far), nose(on, f, M), await beard(load, skull, on, f, M, S));
   if (!far) head.add(marks(on, f, M));
-  if (!own) head.add(await hair(load, skull, f, M));
+  if (!own) head.add(await hair(load, skull, f, M, S));
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
-  return { head, replaces: [mine.headName] };
+  return { head, replaces: [mine.headName], skull, on };
 }

@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PROPS, repaint } from './props.js';
 import { buildFace } from './faces.js';
+import { buildBody } from './body.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
 const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
@@ -63,7 +64,11 @@ async function build(v, { far = false } = {}) {
   const g = await load(`./models/${v.model}.glb`), root = g.scene;
   const acc = ACC[v.model] || [];
   root.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; if (acc.includes(o.name) && !(v.show || []).includes(o.name)) o.visible = false; } });
-  if (v.face) {                                          // a modular face replaces the KayKit head (faces.js)
+  if (v.body) {                                          // mock-up: our own body, clothes and head on the KayKit rig (body.js)
+    const b = { ...v.body, face: await facePreset(v.body.face) };
+    if (v.body.shape) b.face = { ...b.face, shape: v.body.shape };
+    await buildBody(load, root, b, { far, findNode });
+  } else if (v.face) {                                   // a modular face replaces the KayKit head (faces.js)
     const { head, replaces } = await buildFace(load, v.model, await facePreset(v.face), { far });
     root.traverse((o) => { if (o.isMesh && replaces.includes(o.name)) o.visible = false; });
     findNode(root, 'head').add(head);
