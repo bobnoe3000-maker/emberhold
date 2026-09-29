@@ -9,7 +9,8 @@
    "Round_Shield",
    "Knight_Helmet",
    "Knight_Cape"
-  ]
+  ],
+  "face": "sellsword"
  },
  {
   "id": "F2",
@@ -36,7 +37,8 @@
    "Barbarian_Round_Shield",
    "Barbarian_Hat",
    "Barbarian_Cape"
-  ]
+  ],
+  "face": "bearclan"
  },
  {
   "id": "F4",
@@ -73,7 +75,8 @@
    "Knife",
    "Knife_Offhand",
    "Rogue_Cape"
-  ]
+  ],
+  "face": "hooded"
  },
  {
   "id": "R3",
@@ -98,7 +101,8 @@
    "2H_Staff",
    "Mage_Hat",
    "Mage_Cape"
-  ]
+  ],
+  "face": "hedge_mage"
  },
  {
   "id": "M2",
@@ -189,7 +193,8 @@
      "#3a2016"
     ]
    }
-  ]
+  ],
+  "face": "grey_sister"
  },
  {
   "id": "N1",
@@ -221,7 +226,8 @@
      "#4e3010"
     ]
    }
-  ]
+  ],
+  "face": "maudry"
  },
  {
   "id": "E1",

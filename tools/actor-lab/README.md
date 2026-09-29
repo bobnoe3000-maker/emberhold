@@ -17,6 +17,8 @@ node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.pn
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
 node bake.cjs --anchors      # refresh only the weapon anchors in those atlases' JSON (seconds, no raster)
+node bake.cjs --portraits    # only the <actor>.face.png window portraits (actors with portrait: true)
+node faces.cjs               # the face board: every faces.json preset, then every face part → out/faces_board.png
 node icons.cjs               # item icons (icons.json) → ../../assets/items/<id>.png
 node bake-env.cjs            # environment atlases (env.json + town.json: all our own buildkit.js models) → ../../assets/env/
 ```
@@ -69,6 +71,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 | file | role |
 |---|---|
 | `lab.js` / `lab.html` | three.js harness: loadouts, weapon attachment, recolor, glowing eyes, heroic pass, render |
+| `faces.js` / `faces.json` / `faces.cjs` | the modular face kit (critic pass 4): KayKit heads split by swatch, a stitched bald skull, and eyes, brows, noses, mouths, hair, facial hair and marks placed on it; presets; the face board |
 | `props.js` | what the kits lack, shared by figures and icons: code-built props (the cleric's mace, Maudry's mug) and the swatch repaint |
 | `variants.json` | the roster: 10 hero loadouts (fighter/rogue/mage) + 8 enemy NPCs |
 | `bake.cjs` / `bake.json` | bake the shipped actor atlases into `assets/actors/` |
@@ -87,6 +90,11 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `hold` — `{ bone: prop }` puts one of our own code-built props (`PROPS` in `props.js`) in a hand
   slot, along +y like the kits' one-handed weapons. It gets weapon anchors like any held weapon.
   `C1`, the cleric, holds `"mace"`; `N1`, Maudry Fenn (actor `npc_maudry`), holds `"mug"`.
+- `face` — a preset name from `faces.json` (or an inline face) replaces the KayKit head with the
+  face kit's (`faces.js`): `skin`, `hair` + `hairColor`, `eyes` + `iris`, `brows`, `nose`, `mouth`,
+  `beard`, `marks: [...]`, and `skull: "own"` to keep a hooded model's face and hood. `OPTIONS`
+  in `faces.js` lists every choice; `node faces.cjs` draws them. The atlas bakes a simplified
+  face (dot eyes, no marks: what reads at 56 px); the portrait the full one.
 - `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
   8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
   the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe
@@ -96,6 +104,14 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.
 - `pose` — `[clipName, t01]`; default `["Idle", 0.5]`. Every model shares one rig with 76–95 clips
   (attacks, Hit, Block, Dodge, Death, Spellcast; skeletons add Awaken/Spawn/Resurrect).
+
+## Portraits (`renderPortrait` in `lab.js`)
+
+Actors with `portrait: true` in `bake.json` also get `<out>.face.png`: head and shoulders,
+96 × 112, **lit** (the windows have no deferred light): a warm key, a cool fill and a violet
+rim, the figure turned 22° and the camera 8° above eye level, the head 60 % of the frame,
+supersampled 4×, a light grade and the atlas's 1 px ink outline. The windows draw it through
+`src/ui/actorart.js` `drawPortrait` (an actor without one falls back to a crop of its atlas).
 
 ## Heroic proportions (`HEROIC` in `lab.js`)
 

@@ -3,7 +3,7 @@
   "albedoGain": 0.56,
   "actors": [
     {
-      "out": "hero_knight",
+      "out": "hero_knight", "portrait": true,
       "variant": "F1",
       "glow": 0,
       "clips": [
@@ -378,7 +378,7 @@
       }
     },
     {
-      "out": "hero_barbarian",
+      "out": "hero_barbarian", "portrait": true,
       "variant": "F3",
       "glow": 0,
       "clips": [
@@ -465,7 +465,7 @@
       ]
     },
     {
-      "out": "hero_mage",
+      "out": "hero_mage", "portrait": true,
       "variant": "M1",
       "glow": 0,
       "clips": [
@@ -553,7 +553,7 @@
       ]
     },
     {
-      "out": "hero_rogue",
+      "out": "hero_rogue", "portrait": true,
       "variant": "R2",
       "glow": 0,
       "clips": [
@@ -639,7 +639,7 @@
       ]
     },
     {
-      "out": "hero_cleric",
+      "out": "hero_cleric", "portrait": true,
       "variant": "C1",
       "glow": 0,
       "clips": [
@@ -731,7 +731,7 @@
       }
     },
     {
-      "out": "npc_maudry",
+      "out": "npc_maudry", "portrait": true,
       "variant": "N1",
       "glow": 0,
       "clips": [

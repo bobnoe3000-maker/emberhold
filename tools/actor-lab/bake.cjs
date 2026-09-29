@@ -1,7 +1,9 @@
 // bake.cjs — bake the game's actor atlases from bake.json into assets/actors/:
 // <out>.json (cell size, foot anchor, clips, glow id) + <out>.alb.png (grim albedo,
 // alpha = mask) + <out>.nrm.png (screen-space normals) + <out>.emi.png (glow mask,
-// only when the figure has glowing parts). Needs `npm i` + `sh fetch-assets.sh`.
+// only when the figure has glowing parts), and for actors with `portrait: true` a lit head-and-
+// shoulders <out>.face.png (96 × 112) for the windows. Needs `npm i` + `sh fetch-assets.sh`.
+//   node bake.cjs [actor…] [--anchors | --portraits]
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
@@ -18,9 +20,16 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
+  const portraitsOnly = process.argv.includes('--portraits');   // bake only the <out>.face.png portraits (seconds)
   const pick = process.argv.slice(2).filter((x) => !x.startsWith('--'));   // node bake.cjs hero_knight … bakes just those
   for (const a of spec.actors) {
     if (pick.length && !pick.includes(a.out)) continue;
+    if (a.portrait) {                                      // head-and-shoulders portrait for the windows (lab.js renderPortrait)
+      const v = vars[a.variant];
+      png(`${a.out}.face.png`, await p.evaluate(async (v) => await window.renderPortrait(v), v));
+      console.log(`${a.out}: portrait ${a.out}.face.png`);
+    }
+    if (portraitsOnly) continue;
     if (only) {
       const v = vars[a.variant], f = path.join(OUT, `${a.out}.json`), meta = JSON.parse(fs.readFileSync(f));
       const r = await p.evaluate(async ([v, clips]) => await window.bakeAnchors(v, clips), [v, a.clips]);

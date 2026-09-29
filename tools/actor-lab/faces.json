@@ -1,0 +1,16 @@
+{
+  "maudry": { "skin": "rose", "hair": "bun", "hairColor": "auburn", "brows": "arched", "eyes": "narrow", "iris": "hazel", "mouth": "smirk", "marks": ["freckles", "wrinkles", "blush"] },
+  "sellsword": { "skin": "olive", "hair": "crop", "hairColor": "soot", "brows": "heavy", "eyes": "narrow", "iris": "grey", "mouth": "grim", "beard": "stubble", "marks": ["scar"] },
+  "bearclan": { "skin": "fair", "hair": "crop", "hairColor": "copper", "brows": "heavy", "eyes": "round", "iris": "blue", "mouth": "line", "nose": "broad", "beard": "full" },
+  "hooded": { "skull": "own", "skin": "tan", "brows": "angry", "eyes": "sharp", "iris": "green", "mouth": "smirk", "marks": ["scar_cheek"] },
+  "hedge_mage": { "skin": "porcelain", "hair": "ponytail", "hairColor": "black", "brows": "arched", "eyes": "wide", "iris": "blue", "mouth": "line" },
+  "grey_sister": { "skin": "umber", "hair": "bun", "hairColor": "grey", "tieColor": "#d8d0c0", "brows": "straight", "eyes": "tired", "iris": "brown", "mouth": "smile", "marks": ["wrinkles"] },
+
+  "osric_hale": { "skin": "fair", "hair": "receding", "hairColor": "grey", "brows": "heavy", "eyes": "tired", "iris": "grey", "mouth": "frown", "nose": "hook", "beard": "mustache", "marks": ["wrinkles"] },
+  "sister_ilse": { "skin": "porcelain", "hair": "braid", "hairColor": "flax", "brows": "worried", "eyes": "round", "iris": "blue", "mouth": "line", "marks": ["freckles"] },
+  "brannoc": { "skin": "tan", "hair": "crest", "hairColor": "black", "brows": "angry", "eyes": "narrow", "iris": "brown", "mouth": "grim", "nose": "broad", "beard": "short", "marks": ["scar_cheek"] },
+  "wren": { "skin": "olive", "hair": "braid", "hairColor": "black", "brows": "arched", "eyes": "sharp", "iris": "amber", "mouth": "smirk", "marks": ["earring"] },
+  "farmhand": { "skin": "rose", "hair": "short", "hairColor": "straw", "brows": "straight", "eyes": "round", "iris": "hazel", "mouth": "grin", "marks": ["freckles", "blush"] },
+  "watchman": { "skin": "deep", "hair": "crop", "hairColor": "black", "brows": "straight", "eyes": "round", "iris": "brown", "mouth": "line", "beard": "goatee" },
+  "old_tom": { "skin": "tan", "hair": "bald", "brows": "thin", "browColor": "white", "eyes": "tired", "iris": "grey", "mouth": "open", "nose": "long", "beard": "short", "beardColor": "white", "marks": ["wrinkles", "eyepatch"] }
+}

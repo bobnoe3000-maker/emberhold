@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PROPS, repaint } from './props.js';
+import { buildFace } from './faces.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
 const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
@@ -55,10 +56,18 @@ function recolor(root, filter) {
       m = o.material.clone(); m.map = t; done.set(o.material, m); }
     o.material = m; });
 }
-async function build(v) {
+// faces.json presets (faces.js): a variant's `face` is a preset name or an inline face
+let FACES = null;
+const facePreset = async (f) => { if (typeof f !== 'string') return f; FACES ||= await (await fetch('./faces.json')).json(); if (!FACES[f]) throw new Error(`no face preset "${f}"`); return FACES[f]; };
+async function build(v, { far = false } = {}) {
   const g = await load(`./models/${v.model}.glb`), root = g.scene;
   const acc = ACC[v.model] || [];
   root.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; if (acc.includes(o.name) && !(v.show || []).includes(o.name)) o.visible = false; } });
+  if (v.face) {                                          // a modular face replaces the KayKit head (faces.js)
+    const { head, replaces } = await buildFace(load, v.model, await facePreset(v.face), { far });
+    root.traverse((o) => { if (o.isMesh && replaces.includes(o.name)) o.visible = false; });
+    findNode(root, 'head').add(head);
+  }
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
   for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
   if (v.swatches) repaint(root, v.swatches);
@@ -150,7 +159,7 @@ function anchorAt(w, root, cam, ppu) {
 // flatten per-cell anchors into one int array per slot: 5 per cell, cell = dir * frames + frame
 const packAnchors = (a) => Object.fromEntries(Object.entries(a).map(([k, v]) => [k, v.flat()]));
 window.bakeAtlas = async (v, clips, gain = 1) => {
-  const c = await build(v), bones = [];
+  const c = await build(v, { far: true }), bones = [];
   c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   const sample = (name, t) => {                          // restore rest pose first so the heroic pass never compounds
     for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
@@ -287,6 +296,85 @@ window.bakeAnchors = async (v, clips) => {
 window.probeWeapons = async (v) => {
   const c = await build(v), out = [];
   c.root.traverse((o) => { if (o.isMesh && o.visible) { const chain = []; let q = o.parent; while (q && chain.length < 4) { chain.push(q.name); q = q.parent; } out.push(`${o.name}${o.isSkinnedMesh ? ' [skinned]' : ''} <- ${chain.join(' <- ')}`); } });
+  return out;
+};
+// ─── PORTRAITS (bake.cjs → <actor>.face.png): head and shoulders for the windows (party cards,
+// the sheet, dialogue), rendered LIT — the UI has no deferred light — from the same build as the
+// atlas, so it is the same person. The figure turns PYAW toward the camera (a three-quarter
+// view), the camera sits a little above eye level, and the frame is fixed to the head bone: the
+// head fills the top ~55 %, the shoulders the rest. Supersampled SS× and area-averaged in ~linear
+// light, a light grade (less desaturation than the world pass: faces need their warmth), then the
+// same 1 px ink outline as the atlas.
+const PW = 96, PH = 112, PSS = 4;
+function portraitLights(s) {
+  s.add(new THREE.HemisphereLight(0xb8a8d8, 0x2a2030, 1.25));
+  const key = new THREE.DirectionalLight(0xffd4a8, 2.3); key.position.set(-1.6, 1.8, 2.4); s.add(key);        // warm key, front-left, above
+  const fill = new THREE.DirectionalLight(0x8fa4ff, 0.55); fill.position.set(2.2, 0.4, 1.2); s.add(fill);       // cool fill, right
+  const rim = new THREE.DirectionalLight(0xc0a0ff, 1.6); rim.position.set(1.5, 2.2, -2.6); s.add(rim);          // rim from behind
+}
+window.renderPortrait = async (v, o = {}) => {
+  const c = await build(v), pw = o.w || PW, ph = o.h || PH, ss = o.ss || PSS;
+  pose(c, 'Idle', o.t ?? 0, o.heroic ?? true);
+  c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 22); c.root.updateMatrixWorld(true);
+  const head = findNode(c.root, 'head');
+  const top = head.localToWorld(new THREE.Vector3(0, 1.08, 0)), chin = head.localToWorld(new THREE.Vector3(0, 0, 0.1));
+  const hh = top.y - chin.y, span = hh / (o.head ?? 0.6);                           // the head is ~60 % of the frame's height
+  const cy = top.y + hh * (o.over ?? 0.1) - span / 2, cx = (top.x + chin.x) / 2;
+  const cam = new THREE.OrthographicCamera(-span * pw / ph / 2, span * pw / ph / 2, span / 2, -span / 2, 0.1, 100);
+  const pitch = THREE.MathUtils.degToRad(o.pitch ?? 8);
+  cam.position.set(cx, cy + 20 * Math.sin(pitch), 20 * Math.cos(pitch)); cam.lookAt(cx, cy, 0);
+  const s = new THREE.Scene(); s.add(c.root); portraitLights(s);
+  R.setSize(pw * ss, ph * ss); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = o.exposure ?? 1.0; R.outputColorSpace = THREE.SRGBColorSpace;
+  R.setClearColor(0, 0); R.render(s, cam);
+  const big = document.createElement('canvas'); big.width = pw * ss; big.height = ph * ss; const bx = big.getContext('2d', { willReadFrequently: true }); bx.drawImage(R.domElement, 0, 0);
+  const b = bx.getImageData(0, 0, pw * ss, ph * ss).data, out = new ImageData(pw, ph), d = out.data, BW = pw * ss;
+  for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) {
+    let n = 0, r = 0, g = 0, bl = 0;
+    for (let sy = 0; sy < ss; sy++) for (let sx = 0; sx < ss; sx++) { const i = ((y * ss + sy) * BW + x * ss + sx) * 4; if (b[i + 3] < 128) continue; n++; r += b[i] * b[i]; g += b[i + 1] * b[i + 1]; bl += b[i + 2] * b[i + 2]; }
+    if (n * 2 < ss * ss) continue;
+    const j = (y * pw + x) * 4; d[j] = Math.sqrt(r / n); d[j + 1] = Math.sqrt(g / n); d[j + 2] = Math.sqrt(bl / n); d[j + 3] = 255;
+  }
+  grimPass(d, o.gain ?? 1, o.desat ?? 0.14, o.contrast ?? 1.08);
+  const ink = new Uint8ClampedArray(d), solid = (x, y) => x >= 0 && y >= 0 && x < pw && y < ph && d[(y * pw + x) * 4 + 3] > 0;
+  for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) { const i = (y * pw + x) * 4;
+    if (!d[i + 3] && (solid(x + 1, y) || solid(x - 1, y) || solid(x, y + 1) || solid(x, y - 1)) && y < ph - 1) { ink[i] = INK[0]; ink[i + 1] = INK[1]; ink[i + 2] = INK[2]; ink[i + 3] = 255; } }
+  const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; cv.getContext('2d').putImageData(new ImageData(ink, pw, ph), 0, 0);
+  R.setSize(W, H); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+  return cv.toDataURL('image/png');
+};
+// the face board (faces.cjs): every preset, then each part's options on one plain figure, labelled
+window.renderFaceBoard = async (o = {}) => {
+  const FACES_ = await (await fetch('./faces.json')).json(), K = await import('./faces.js');
+  const body = { id: 'board', model: 'Rogue', show: [] }, base = { skin: 'fair', hair: 'crop', hairColor: 'brown', brows: 'straight', eyes: 'round', iris: 'brown', mouth: 'line' };
+  const rows = [['presets', Object.entries(FACES_).map(([k, f]) => [k, f, /Hooded|own/.test(f.skull || '') ? 'Rogue_Hooded' : null])]];
+  for (const [knob, opts] of Object.entries(K.OPTIONS)) rows.push([knob, opts.map((x) => [String(x ?? 'none'), knob === 'marks' ? { ...base, marks: [x] } : { ...base, [knob]: x }, null])]);
+  const cw = o.cw || 96, ch = o.ch || 112, sc = o.scale || 2, pad = 6, lab = 16, head = 22, cols = Math.max(...rows.map((r) => r[1].length));
+  const board = document.createElement('canvas'); board.width = pad + cols * (cw * sc + pad); board.height = rows.reduce((n, r) => n + head + ch * sc + lab + pad, pad);
+  const x = board.getContext('2d'); x.fillStyle = '#17131e'; x.fillRect(0, 0, board.width, board.height); x.imageSmoothingEnabled = false;
+  let y = pad;
+  for (const [name, cells] of rows) {
+    x.fillStyle = '#f0c880'; x.font = '600 15px Georgia, serif'; x.fillText(name, pad, y + 16); y += head;
+    for (let i = 0; i < cells.length; i++) {
+      const [label, f, model] = cells[i], img = new Image();
+      img.src = await window.renderPortrait({ ...body, model: model || (f.skull === 'own' ? 'Rogue_Hooded' : 'Rogue'), face: f }, { w: cw, h: ch, ss: 3 });
+      await img.decode(); const cx = pad + i * (cw * sc + pad);
+      x.fillStyle = '#221c2c'; x.fillRect(cx, y, cw * sc, ch * sc); x.drawImage(img, cx, y, cw * sc, ch * sc);
+      x.fillStyle = '#c8bca8'; x.font = '12px ui-monospace, Menlo, monospace'; x.fillText(label, cx + 2, y + ch * sc + 12);
+    }
+    y += ch * sc + lab + pad;
+  }
+  return board.toDataURL('image/png');
+};
+// dev probe: the head mesh and the head-bone accessories, as boxes in head-bone space (bind pose)
+window.probeHead = async (model) => {
+  const g = await load(`./models/${model}.glb`), root = g.scene; root.updateMatrixWorld(true);
+  const head = findNode(root, 'head'), inv = head.matrixWorld.clone().invert(), out = { headBoneWorld: head.getWorldPosition(new THREE.Vector3()).toArray().map((n) => +n.toFixed(3)) };
+  root.traverse((o) => { if (!o.isMesh) return;
+    if (!(o.isSkinnedMesh ? /Head/.test(o.name) : o.parent === head)) return;
+    const pos = o.geometry.attributes.position, p = new THREE.Vector3(), box = new THREE.Box3();
+    const m = o.isSkinnedMesh ? inv.clone().multiply(o.matrixWorld) : inv.clone().multiply(o.matrixWorld);
+    for (let i = 0; i < pos.count; i++) box.expandByPoint(p.fromBufferAttribute(pos, i).applyMatrix4(m));
+    out[o.name] = [box.min.toArray().map((n) => +n.toFixed(3)), box.max.toArray().map((n) => +n.toFixed(3))]; });
   return out;
 };
 window.ready = true;
