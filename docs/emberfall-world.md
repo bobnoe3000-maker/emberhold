@@ -1,6 +1,8 @@
 # Emberfall — World Summary
 
-**v1.3 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.4 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.4 gives Maudry an errand (§5): the carters won't take the barrows road.
 
 v1.3 adds what Maudry Fenn lets slip in her first conversation (§5).
 
@@ -145,7 +147,10 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   hand and a dress the colour of old mustard. What she lets slip (v1.3): Lord Pellam answered
   Thornwick's plea for help with a three-page letter nobody can read as a yes; the Watch posts
   bounties only when it has coin; a Grey Sister usually sits in the Mule's corner, for hire;
-  at Hale & Daughter "it's the daughter you want"; Wendel's lamp oil keeps going up.
+  at Hale & Daughter "it's the daughter you want"; Wendel's lamp oil keeps going up. Her
+  errand (v1.4): since the barrows opened, the carters won't take the barrows road and go the
+  long way round, a day out of their way, and the price of everything she pours goes up with
+  it. She pays to have the walking kind knocked back (*The Long Way Round*).
 - **Warden-Captain Osric Hale**, Greyholt's watch. He's honest and tired, and posts the bounties.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
   Wickham Keep.

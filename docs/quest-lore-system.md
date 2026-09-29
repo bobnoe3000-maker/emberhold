@@ -187,6 +187,29 @@ fragment. Two players find the same truth in different places (world doc §7).
 
 ## 5. Runtime (sim)
 
+**Implemented (M4 slice 2, 2026-09-29):**
+- `src/sim/quests.js` is one module rather than the `src/sim/quest/` folder below:
+  - it holds `QUESTS` (what counts and what pays), mirrored by `content/quests/*.json` (the
+    words), with `test/quests.test.mjs` keeping the two in step;
+  - states are 0 available, 1 active, 2 ready, 3 done, and −1 locked when the level window
+    fails;
+  - objectives are counted from the sim's own events: `waves` from `wave { cleared }` in a
+    site's rooms, and `loot` from `looted { kind: 'chest' }`.
+- Accepting and turning in come only from the giver's conversation: the Ink tags
+  `# quest: accept <id>` and `# quest: turnin <id>`, checked against the talking NPC and the
+  quest's state. Rewards (XP to the party, half to the bench, and gold) are paid once, through
+  `gainXp` and the counters.
+- Commands: `track`, `questAbandon` (not chapters). Events: `questChanged`, `questReward`,
+  `questTracked`.
+- Ink reads `q_<id>` for the quests an NPC gives.
+- The compass's first row is the tracked quest's next place (`quests.compass`). There's none
+  while you're in the fight it wants.
+- **No "reach a floor" objectives yet.** Only a site's first floor has a stair back up (GDD
+  §3.1), so a quest mustn't send you below it until deeper floors have a way home.
+- The first quest is Maudry's errand, *The Long Way Round*: hold 4 waves and open a chest in
+  the Old Barrows. The Act I chapter (*Smoke over the Vale*, the Tithe Mill) waits for its
+  site and the Redhand enemies.
+
 **Module:** `src/sim/quest/`:
 - `engine.js`: instance state machine, objectives, rewards;
 - `generate.js`: board and NPC offers;
@@ -331,6 +354,18 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
 
 ## 8. The Journal (player log window)
 
+**Implemented (M4 slice 2):**
+- `src/ui/journal.js` is the window, opened from the book button under the compass or by
+  tapping the tracker. It has two tabs:
+  - **Active:** the kind badge, title, giver and level window, the current step text (or
+    "go back to …"), each objective with a bar and a count, the reward, **Track** and
+    **Abandon**;
+  - **Completed:** the title, a closing line and what it earned.
+- The tracker line under the top HUD shows the tracked quest's title and its counts.
+- Toasts: *Quest accepted*, each objective step (*Waves held … 2/4*), *Quest complete · go
+  back to …*, and the reward.
+- The Available, Chronicle and Discoveries tabs come with their systems.
+
 A bottom sheet with tabs, opened from a book icon under the minimap and from the party
 card's menu:
 
@@ -377,7 +412,9 @@ discovered: [...ids], fragments: [...ids], tracked: id | null, day: number
 // the Ink story state is stored beside the snapshot (slot.story), not inside the sim
 ```
 
-**Implemented so far (save v6, M4 slice 1):** `flags` only. The Ink story state is *not* saved
+**Implemented so far:** `flags` (save v6); `quests` as `{ [id]: [state, step, ...counters] }` and
+`tracked` (save v7). A restore keeps only known quests, real states and steps, and counters
+within bounds. The Ink story state is *not* saved
 (architecture A13): anything a conversation must remember is a flag, set through a validated
 `dialogueEffect`, so the server can replay it. `slot.story` above is dropped from the plan.
 

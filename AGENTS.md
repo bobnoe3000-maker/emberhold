@@ -29,7 +29,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir]   # balance: secs roomLv heroLv hires; --src = a before checkout
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes

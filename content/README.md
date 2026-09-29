@@ -16,4 +16,6 @@ comes from `docs/emberfall-world.md` — change it there first.
 | `npcs/<id>.json` | A named NPC: name, role, town, look (atlas), portrait, Ink file and entry knot (quest-lore-system §4.4) | The renderer (look, name tag), the dialogue window; `test/npcs.test.mjs` keeps it in step with the sim's table (`src/sim/npcs.js`: where they stand, which flags they may set) |
 | `dialogue/<name>.ink` | Conversations in Ink (quest-lore-system §6), compiled to `dialogue/<name>.json` by `node tools/content/ink.mjs` (commit both; `npm run content` fails on a stale or broken one) | `src/story/adapter.js` → `src/ui/dialogue.js` |
 
-Coming (docs/development-plan.md): `quests/`, `lore/`, `bosses/`, `rifts.json`, more `cutscenes/`.
+| `quests/<id>.json` | A quest's words (title, summary, step text, objective labels, the ready and done lines) and its shape (kind, giver, level window, steps, objectives, rewards) (quest-lore-system §4.1) | The Journal, tracker, toasts and compass (`src/ui/journal.js`); `test/quests.test.mjs` keeps the shape in step with the sim's table (`src/sim/quests.js`) and checks the giver's Ink has the accept and turn-in tags |
+
+Coming (docs/development-plan.md): `lore/`, `bosses/`, `rifts.json`, more `cutscenes/`.
