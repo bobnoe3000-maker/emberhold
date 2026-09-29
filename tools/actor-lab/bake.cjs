@@ -2,7 +2,8 @@
 // <out>.json (cell size, foot anchor, clips, glow id) + <out>.alb.png (grim albedo,
 // alpha = mask) + <out>.nrm.png (screen-space normals) + <out>.emi.png (glow mask,
 // only when the figure has glowing parts), and for actors with `portrait: true` a lit head-and-
-// shoulders <out>.face.png (96 × 112) for the windows. Needs `npm i` + `sh fetch-assets.sh`.
+// shoulders <out>.face.png (96 × 112) for the windows; with `figure: { pose }` the whole lit figure
+// <out>.fig.png (352 × 408) for the character window. Needs `npm i` + `sh fetch-assets.sh`.
 //   node bake.cjs [actor…] [--anchors | --portraits]
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
@@ -20,7 +21,7 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
-  const portraitsOnly = process.argv.includes('--portraits');   // bake only the <out>.face.png portraits (seconds)
+  const portraitsOnly = process.argv.includes('--portraits');   // bake only the portraits and figures (seconds)
   const pick = process.argv.slice(2).filter((x) => !x.startsWith('--'));   // node bake.cjs hero_knight … bakes just those
   for (const a of spec.actors) {
     if (pick.length && !pick.includes(a.out)) continue;
@@ -28,6 +29,10 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
       const v = vars[a.variant];
       png(`${a.out}.face.png`, await p.evaluate(async (v) => await window.renderPortrait(v), v));
       console.log(`${a.out}: portrait ${a.out}.face.png`);
+    }
+    if (a.figure) {                                        // the whole figure for the character window (lab.js renderFigure)
+      png(`${a.out}.fig.png`, await p.evaluate(async ([v, o]) => await window.renderFigure(v, o), [vars[a.variant], a.figure]));
+      console.log(`${a.out}: figure ${a.out}.fig.png (${a.figure.pose.join(' ')})`);
     }
     if (portraitsOnly) continue;
     if (only) {

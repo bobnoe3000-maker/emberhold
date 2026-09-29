@@ -312,17 +312,8 @@ function portraitLights(s) {
   const fill = new THREE.DirectionalLight(0x8fa4ff, 0.55); fill.position.set(2.2, 0.4, 1.2); s.add(fill);       // cool fill, right
   const rim = new THREE.DirectionalLight(0xc0a0ff, 1.6); rim.position.set(1.5, 2.2, -2.6); s.add(rim);          // rim from behind
 }
-window.renderPortrait = async (v, o = {}) => {
-  const c = await build(v), pw = o.w || PW, ph = o.h || PH, ss = o.ss || PSS;
-  pose(c, 'Idle', o.t ?? 0, o.heroic ?? true);
-  c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 22); c.root.updateMatrixWorld(true);
-  const head = findNode(c.root, 'head');
-  const top = head.localToWorld(new THREE.Vector3(0, 1.08, 0)), chin = head.localToWorld(new THREE.Vector3(0, 0, 0.1));
-  const hh = top.y - chin.y, span = hh / (o.head ?? 0.6);                           // the head is ~60 % of the frame's height
-  const cy = top.y + hh * (o.over ?? 0.1) - span / 2, cx = (top.x + chin.x) / 2;
-  const cam = new THREE.OrthographicCamera(-span * pw / ph / 2, span * pw / ph / 2, span / 2, -span / 2, 0.1, 100);
-  const pitch = THREE.MathUtils.degToRad(o.pitch ?? 8);
-  cam.position.set(cx, cy + 20 * Math.sin(pitch), 20 * Math.cos(pitch)); cam.lookAt(cx, cy, 0);
+// one lit shot of a posed build through `cam` at pw × ph: supersampled ss×, graded, outlined → PNG data URL
+function litShot(c, cam, pw, ph, ss, o) {
   const s = new THREE.Scene(); s.add(c.root); portraitLights(s);
   R.setSize(pw * ss, ph * ss); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = o.exposure ?? 1.0; R.outputColorSpace = THREE.SRGBColorSpace;
   R.setClearColor(0, 0); R.render(s, cam);
@@ -337,10 +328,43 @@ window.renderPortrait = async (v, o = {}) => {
   grimPass(d, o.gain ?? 1, o.desat ?? 0.14, o.contrast ?? 1.08);
   const ink = new Uint8ClampedArray(d), solid = (x, y) => x >= 0 && y >= 0 && x < pw && y < ph && d[(y * pw + x) * 4 + 3] > 0;
   for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) { const i = (y * pw + x) * 4;
-    if (!d[i + 3] && (solid(x + 1, y) || solid(x - 1, y) || solid(x, y + 1) || solid(x, y - 1)) && y < ph - 1) { ink[i] = INK[0]; ink[i + 1] = INK[1]; ink[i + 2] = INK[2]; ink[i + 3] = 255; } }
+    if (!d[i + 3] && (solid(x + 1, y) || solid(x - 1, y) || solid(x, y + 1) || solid(x, y - 1)) && (o.inkBottom || y < ph - 1)) { ink[i] = INK[0]; ink[i + 1] = INK[1]; ink[i + 2] = INK[2]; ink[i + 3] = 255; } }
   const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; cv.getContext('2d').putImageData(new ImageData(ink, pw, ph), 0, 0);
   R.setSize(W, H); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
   return cv.toDataURL('image/png');
+}
+const orthoAt = (cx, cy, spanW, spanH, pitchDeg) => {
+  const cam = new THREE.OrthographicCamera(-spanW / 2, spanW / 2, spanH / 2, -spanH / 2, 0.1, 100), pitch = THREE.MathUtils.degToRad(pitchDeg);
+  cam.position.set(cx, cy + 20 * Math.sin(pitch), 20 * Math.cos(pitch)); cam.lookAt(cx, cy, 0); cam.updateMatrixWorld(true); return cam;
+};
+window.renderPortrait = async (v, o = {}) => {
+  const c = await build(v), pw = o.w || PW, ph = o.h || PH, ss = o.ss || PSS;
+  pose(c, 'Idle', o.t ?? 0, o.heroic ?? true);
+  c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 22); c.root.updateMatrixWorld(true);
+  const head = findNode(c.root, 'head');
+  const top = head.localToWorld(new THREE.Vector3(0, 1.08, 0)), chin = head.localToWorld(new THREE.Vector3(0, 0, 0.1));
+  const hh = top.y - chin.y, span = hh / (o.head ?? 0.6);                           // the head is ~60 % of the frame's height
+  const cy = top.y + hh * (o.over ?? 0.1) - span / 2, cx = (top.x + chin.x) / 2;
+  return litShot(c, orthoAt(cx, cy, span * pw / ph, span, o.pitch ?? 8), pw, ph, ss, o);
+};
+// ─── FIGURES (bake.cjs → <actor>.fig.png): the whole figure for the character window, lit like
+// the portraits, in the actor's own pose (bake.json `figure.pose`: a guard, a raised staff…),
+// turned `yaw` toward the camera. Framed on the rest pose's bounds (the figure fills 80 % of the
+// height, feet 7 % above the bottom in every figure, where the window's ground shadow sits). FW × FH at `scale` (2 = crisp on
+// phones), supersampled 3×.
+const FW = 176, FH = 204;
+window.renderFigure = async (v, o = {}) => {
+  const c = await build(v), k = o.scale || 2, pw = FW * k, ph = FH * k, ss = o.ss || 3;
+  // the frame is fixed from the rest pose (so a raised staff doesn't shrink the figure), feet at
+  // the same line in every figure; then the pose
+  const bones = []; c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+  pose(c, 'Idle', 0, true); c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 24); c.root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(c.root), spanH = (box.max.y - box.min.y) / 0.8, spanW = spanH * pw / ph;
+  const cy = box.min.y - spanH * 0.07 + spanH / 2, cx = (box.min.x + box.max.x) / 2;
+  for (const [b, p, q, sc] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(sc); }
+  const [clip, t] = o.pose || ['Idle', 0];
+  pose(c, clip, t, true); c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 24); c.root.updateMatrixWorld(true);
+  return litShot(c, orthoAt(cx, cy, spanW, spanH, o.pitch ?? 10), pw, ph, ss, { ...o, inkBottom: true });
 };
 // the face board (faces.cjs): every preset, then each part's options on one plain figure, labelled
 window.renderFaceBoard = async (o = {}) => {

@@ -3,7 +3,7 @@
   "albedoGain": 0.56,
   "actors": [
     {
-      "out": "hero_knight", "portrait": true,
+      "out": "hero_knight", "portrait": true, "figure": { "pose": ["Blocking", 0.5] },
       "variant": "F1",
       "glow": 0,
       "clips": [
@@ -378,7 +378,7 @@
       }
     },
     {
-      "out": "hero_barbarian", "portrait": true,
+      "out": "hero_barbarian", "portrait": true, "figure": { "pose": ["Blocking", 0.5] },
       "variant": "F3",
       "glow": 0,
       "clips": [
@@ -465,7 +465,7 @@
       ]
     },
     {
-      "out": "hero_mage", "portrait": true,
+      "out": "hero_mage", "portrait": true, "figure": { "pose": ["Spellcast_Raise", 0.45], "yaw": -30 },
       "variant": "M1",
       "glow": 0,
       "clips": [
@@ -553,7 +553,7 @@
       ]
     },
     {
-      "out": "hero_rogue", "portrait": true,
+      "out": "hero_rogue", "portrait": true, "figure": { "pose": ["2H_Melee_Idle", 0.3] },
       "variant": "R2",
       "glow": 0,
       "clips": [
@@ -639,7 +639,7 @@
       ]
     },
     {
-      "out": "hero_cleric", "portrait": true,
+      "out": "hero_cleric", "portrait": true, "figure": { "pose": ["Spellcasting", 0.3] },
       "variant": "C1",
       "glow": 0,
       "clips": [
@@ -731,7 +731,7 @@
       }
     },
     {
-      "out": "npc_maudry", "portrait": true,
+      "out": "npc_maudry", "portrait": true, "figure": { "pose": ["Use_Item", 0.45] },
       "variant": "N1",
       "glow": 0,
       "clips": [

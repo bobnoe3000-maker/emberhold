@@ -17,7 +17,7 @@ node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.pn
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
 node bake.cjs --anchors      # refresh only the weapon anchors in those atlases' JSON (seconds, no raster)
-node bake.cjs --portraits    # only the <actor>.face.png window portraits (actors with portrait: true)
+node bake.cjs --portraits    # only the window portraits and figures (<actor>.face.png, <actor>.fig.png)
 node faces.cjs               # the face board: every faces.json preset, then every face part → out/faces_board.png
 node icons.cjs               # item icons (icons.json) → ../../assets/items/<id>.png
 node bake-env.cjs            # environment atlases (env.json + town.json: all our own buildkit.js models) → ../../assets/env/
@@ -112,6 +112,12 @@ Actors with `portrait: true` in `bake.json` also get `<out>.face.png`: head and 
 rim, the figure turned 22° and the camera 8° above eye level, the head 60 % of the frame,
 supersampled 4×, a light grade and the atlas's 1 px ink outline. The windows draw it through
 `src/ui/actorart.js` `drawPortrait` (an actor without one falls back to a crop of its atlas).
+
+Actors with `figure: { pose: [clip, t], yaw? }` also get `<out>.fig.png` (`renderFigure`): the whole
+figure for the character window, 352 × 408 (176 × 204 CSS at 2×), lit the same way, in the actor's
+own pose — a guard, a raised staff, a lifted mug — turned `yaw` degrees (default 24; the mage turns
+−30 so the staff stays off her face). The frame comes from the rest pose, so every figure's feet
+sit on the same line, over the window's ground shadow. `drawCharacter` draws it.
 
 ## Heroic proportions (`HEROIC` in `lab.js`)
 
