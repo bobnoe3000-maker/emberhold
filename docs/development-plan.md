@@ -76,7 +76,8 @@ section.
 - No narration: the card text is read, not voiced (decided 2026-09-29). The lines come
   straight from world doc §2 (the current script, awaiting sign-off, is in
   `docs/intro-mockup.html`). The score has four cues, and the Fall's plays unbroken through
-  cards 3–5. Each card is a still baked from our own assets (actor-lab dioramas with the grim pass) under a text card:
+  cards 3–5. Each card is a still baked from our own assets (actor-lab dioramas with the grim
+  pass) under a text card:
   1. The Kindling: pilgrims at the crater.
   2. The Solmere Empire: the Ember Throne, the Ashbound at the forges.
   3. The Fall: in one night the Ember goes out, and the Ashbound drop where they stand.
