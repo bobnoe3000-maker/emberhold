@@ -40,4 +40,5 @@ export function createHud(sim) {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
   }
+  return { show };
 }

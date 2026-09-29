@@ -17,6 +17,7 @@ import { createCreation } from './ui/create.js';
 import { createPartyScreen } from './ui/partyscreen.js';
 import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
+import { createJournal } from './ui/journal.js';
 import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 
@@ -49,11 +50,12 @@ if (DEV) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
-createHud(sim);
+const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open() });   // subscribe before restore, so a loaded counters event repaints
-createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare() });   // compass travel (docs/compass-mockup.html)
+const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms) });   // quests (M4): the Journal, tracker and toasts
+createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;
 // named NPCs (M4): their look, name and Ink file from content/npcs/; tap one to talk (dialogue.js)
@@ -88,7 +90,7 @@ const title = createTitle({ sim, slot: SLOT, setPaused: (on) => { paused = on; }
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
-if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue };
+if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal };
 
 // Hero: deterministic recipe from the world seed's recipe stream.
 const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));

@@ -6,6 +6,8 @@
 // a town square too, beside the service bar: the road out is one tap away. DOM only; talks to
 // the sim through commands.
 
+import { esc } from './actorart.js';
+
 const ICONS = {
   next: '<path d="M4 12h12M12 6l6 6-6 6"/>',
   farm: '<path d="M5 19V9l7-5 7 5v10zM9 19v-6h6v6"/>',
@@ -18,6 +20,7 @@ const ICONS = {
   unexplored: '<circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16h.01"/>',
   landmark: '<path d="M6 20V8h12v12M6 8l2-4h8l2 4M10 20v-5h4v5"/>',
   square: '<path d="M4 20h16M6 20v-8l6-5 6 5v8M10 20v-4h4v4"/>',
+  quest: '<path d="M12 3l7 9-7 9-7-9z"/><path d="M12 8v5M12 16h.01"/>',
 };
 const NEEDLE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#e0a85a" stroke-width="1.5"/><path d="M12 4.5l2.6 7.5L12 19.5 9.4 12z" fill="#f0c880" stroke="#1a1208" stroke-width=".6"/><path d="M12 12L14.6 12 12 19.5 9.4 12z" fill="#6b4a24"/><circle cx="12" cy="12" r="1.2" fill="#1a1208"/></svg>';
 
@@ -57,7 +60,7 @@ const CSS = `
 #walkChip .x { width: 24px; height: 24px; border-radius: 12px; border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; color: #d8a040; font-size: 13px; flex: none; }
 `;
 
-export function createCompass(sim, { partyPanel, inSquare }) {
+export function createCompass(sim, { partyPanel, inSquare, questTitle = () => '' }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('button'); btn.id = 'compassBtn'; btn.setAttribute('aria-label', 'Travel'); btn.innerHTML = NEEDLE;
   const menu = document.createElement('div'); menu.id = 'compassMenu';
@@ -75,7 +78,8 @@ export function createCompass(sim, { partyPanel, inSquare }) {
   };
   let rows = [];
   function openMenu() {
-    rows = sim.destinations({ inSquare: inSquare() });
+    rows = sim.destinations({ inSquare: inSquare() })     // the tracked quest's row (quests.js) is named by its title
+      .map((o) => (o.id === 'quest' ? { ...o, label: esc(questTitle(o.quest) || 'Quest'), sub: `quest · ${o.sub || 'next step'}` } : o));
     menu.innerHTML = `<div class="hd">${place()}</div>` + (rows.length ? rows.map((o, i) => `${o.sep ? '<div class="sep"></div>' : ''}
       <div class="opt${o.off ? ' off' : ''}" data-i="${i}"><div class="ic"><svg viewBox="0 0 24 24">${ICONS[o.icon] || ICONS.next}</svg></div>
         <div class="tx"><b>${o.label}</b><span>${o.sub}</span></div>

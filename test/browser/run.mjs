@@ -13,6 +13,8 @@
 //   6. talk to Maudry (Chromium, manual clock): tap her across the square → the hero walks over →
 //      the dialogue window → lines → choices → her flag set in the sim → Show me the board opens
 //      the tavern's hiring board
+//   7. Maudry's errand (Chromium, manual clock): "Anything I can do?" → accept → the toast, the
+//      tracker line, the Journal card with its counters, Track / untrack, the compass's quest row
 // Local runs skip an engine that isn't installed; CI (CI=true) requires both.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -245,7 +247,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     let at = null;
     for (let k = 0; k < 20 && !at; k++) {                                 // until her atlas and the cast have loaded and she's drawn
       await p.waitForTimeout(300); await run(3);
-      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y)) return { x, y }; return null; });
+      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y) && document.elementFromPoint(x, y)?.id === 'game') return { x, y }; return null; });   // (on her, and not under a button)
     }
     check('talk: Maudry stands in Thornwick', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
     if (at) {
@@ -256,13 +258,47 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()); i++) await p.locator('#talk .more').tap();
       await run(3);                                                        // (the effect is a command: it lands on the next tick)
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
-      check('talk: her lines, then choices; meeting her set met_maudry (a command the sim checked)', choices.length === 5 && flags.met_maudry === 1, `${choices.length} choices · flags ${JSON.stringify(flags)}`);
+      check('talk: her lines, then choices; meeting her set met_maudry (a command the sim checked)', choices.length === 6 && choices.includes('Anything I can do?') && flags.met_maudry === 1, `${choices.length} choices · flags ${JSON.stringify(flags)}`);
       await p.locator('#talk .ch', { hasText: 'hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
       await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);
       const board = await p.evaluate(() => [...document.querySelectorAll('.on h2, .on h3')].map((e) => e.textContent).join(' | '));
       check('talk: "Show me the board" closes the talk and opens the Tired Mule', !(await p.locator('#talkWrap.on').count()) && /Tired Mule/.test(board) && errs.length === 0, board + (errs.length ? ' · ' + errs.join(' | ') : ''));
     }
+    await ctx.close(); await b.close();
+  }
+}
+// 7. Maudry's errand: accept in conversation → tracker, Journal, compass
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(() => { const s = globalThis.__sim, n = s.world.npcs[0], q = s.state.player; q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: n.id }); });
+    await run(3);
+    const talking = await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).then(() => true, () => false);
+    const more = async () => { for (let i = 0; i < 8 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap(); };
+    await more(); await p.locator('#talk .ch', { hasText: 'Anything I can do' }).tap(); await more();
+    await p.locator('#talk .ch', { hasText: "I'll see to it" }).tap(); await run(3);
+    const st = await p.evaluate(() => ({ q: globalThis.__sim.state.quests.vale_long_way_round, tracked: globalThis.__sim.state.tracked }));
+    check('quest: "Anything I can do?" → accepted in conversation, and tracked', talking && st.q && st.q.st === 1 && st.tracked === 'vale_long_way_round', JSON.stringify(st));
+    if (await p.locator('#talk .x').count()) await p.locator('#talk .x').tap();
+    await run(3);
+    const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');
+    check('quest: the tracker line names it, with its counts', /The Long Way Round/.test(tracker) && /Waves 0\/4/.test(tracker), tracker.replace(/\n/g, ' · '));
+    await p.locator('#journalBtn').tap();
+    const card = await p.locator('#journal .q').first().innerText().catch(() => '');
+    check('quest: the Journal shows it (step text, both objectives, the reward)', /Win four fights/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /150 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
+    await p.locator('#journal .acts button', { hasText: 'Tracked' }).tap(); await run(2);
+    const untracked = await p.evaluate(() => globalThis.__sim.state.tracked);
+    await p.locator('#journal .acts button', { hasText: 'Track' }).first().tap(); await run(2);
+    check('quest: Track / untrack are commands the sim takes', untracked === null && (await p.evaluate(() => globalThis.__sim.state.tracked)) === 'vale_long_way_round');
+    await p.locator('#journal .x').tap(); await p.locator('#compassBtn').tap();
+    const rows = await p.locator('#compassMenu .opt b').allTextContents();
+    check('quest: the compass leads with it, and no page errors', rows[0] === 'The Long Way Round' && errs.length === 0, rows.join(' | ') + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
