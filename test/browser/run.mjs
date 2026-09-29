@@ -7,6 +7,9 @@
 //      wipe → wake at the temple, Weakened → inn rest → reload keeps the hero
 //   4. boot and intro (Chromium): splash → loading → tap to begin → title → Begin → the six
 //      cards in order, with their music → creation; The Chronicle replays it from the title
+//   5. every class in a fight (Chromium): a party of each class walks into a room; the fight
+//      runs (the sim keeps ticking) with no page errors — a renderer table without the cleric
+//      once threw at the first HP bar and froze the game
 // Local runs skip an engine that isn't installed; CI (CI=true) requires both.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -203,6 +206,27 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.tap('#cine .skip'); await p.waitForSelector('#titleWrap.on');
     check('the Chronicle replays the intro from the title, and Skip returns to it', replay === 0 && (await p.locator('#title button.pri', { hasText: 'Resume' }).count()) === 1);
     check('intro: no page errors', errs.length === 0, errs.join(' | '));
+    await b.close();
+  }
+}
+// 5. every class in a fight: the room's battle overlay and effects draw for each class
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    for (const cls of ['fighter', 'rogue', 'mage', 'cleric']) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 }); await p.waitForTimeout(1500);
+      await p.evaluate(async (cls) => {                                   // (a preview scene: set the party up directly, dev only)
+        const s = globalThis.__sim, { makeHero, makeMember } = await import('/src/sim/party.js');
+        s.state.party[0] = makeHero({ cls, name: 'Test' }); s.state.party.push(makeMember('t1', 'Maren', cls === 'cleric' ? 'fighter' : 'cleric', 1));
+        const r = s.destinations().find((o) => o.id === 'next-room'); s.commands.push({ type: 'goto', tx: r.tx, ty: r.ty, near: r.near, label: r.label, room: r.room });
+      }, cls);
+      const fought = await p.waitForFunction(() => !!globalThis.__sim.battle && globalThis.__sim.world.enemies.length > 0, null, { timeout: 60000 }).then(() => true, () => false);   // a frozen loop never gets here
+      const t0 = await p.evaluate(() => globalThis.__sim.state.tick); await p.waitForTimeout(3000); const t1 = fought ? await p.evaluate(() => globalThis.__sim.state.tick) : t0;
+      check(`fight: a ${cls} and a ${cls === 'cleric' ? 'fighter' : 'cleric'} fight a room, the game keeps running`, t1 - t0 > 40 && errs.length === 0, `${t1 - t0} ticks in 3 s${errs.length ? ' · ' + [...new Set(errs)].join(' | ') : ''}`);
+      await ctx.close();
+    }
     await b.close();
   }
 }

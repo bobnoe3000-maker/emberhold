@@ -19,13 +19,14 @@
 
 // saturated on purpose: bloom and the tonemap wash light toward white, so the hue has to be strong to survive
 const STEEL = [185, 210, 255], WARM = [255, 170, 90], VERDANT = [120, 255, 170], ARCANE = [110, 140, 255], FIRE = [255, 120, 30];
-const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], SOULCAST = [80, 255, 130];
+const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], SOULCAST = [80, 255, 130], HOLY = [255, 214, 120];
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
   hero_knight:      { col: STEEL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 238, 205] },
   hero_barbarian:   { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 196, 120], wide: 1.25 },
   hero_rogue:       { col: VERDANT, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [215, 255, 225], thin: true },
+  hero_cleric:      { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 236, 180], wide: 1.15 },   // the mace: short, heavy, warm gold
   hero_mage:        { col: ARCANE, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [175, 195, 255], heavySpark: [255, 170, 80] },
   skeleton_warrior: { col: SOUL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [200, 255, 210] },
   skeleton_minion:  { col: BILE, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [225, 240, 190] },
@@ -33,7 +34,7 @@ export const FX_STYLES = {
   skeleton_mage:    { col: SOULCAST, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [150, 255, 180] },
 };
 // combat events name the striker by its actor / class (party) or kind (the Ashbound)
-const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage' };
+const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' };
 export const styleOfSrc = (src, foe) => FX_STYLES[foe ? 'skeleton_' + src : CLASS_ACTOR[src] || src] || null;
 
 export function createFX() {

@@ -22,6 +22,7 @@ import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
 import { DEATH_T } from '../sim/battle.js';
+import { statsFor } from '../sim/party.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
@@ -1018,7 +1019,9 @@ export function createRenderer(canvas, sim, input) {
       octx.globalAlpha = 1;
     }
   }
-  const maxHpOf = (m) => { const c = { fighter: [140, 14], rogue: [100, 10], mage: [80, 8] }[m.cls]; return Math.round(c[0] + c[1] * (m.level - 1)); };
+  // the sim's own max HP (class, level, attributes, gear, Weakened). A separate class table here
+  // had no cleric: the first HP bar drawn in a fight threw, and the frame loop stopped (a freeze).
+  const maxHpOf = (m) => statsFor(m).maxHp;
   function drawBanner(now) {
     if (!banner || now > banner.until) return;
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);

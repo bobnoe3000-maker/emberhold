@@ -110,6 +110,9 @@ if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).
 let vnow = performance.now(), slowed = false;
 
 function frame(now) {
+  // the next frame first: an error while drawing (a renderer bug) must not stop the loop — it
+  // did once, and a missing class in a lookup froze the whole game at the first fight
+  if (!MANUAL) requestAnimationFrame(frame);
   const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1;
   let dt = (now - last) / 1000 / SLOW;
   last = now;
@@ -131,7 +134,6 @@ function frame(now) {
   }
 
   if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath
-  if (!MANUAL) requestAnimationFrame(frame);
 }
 // dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls
 // globalThis.__frame(ms) at exact intervals, so motion traces don't depend on the machine's speed
