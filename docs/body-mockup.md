@@ -1,6 +1,8 @@
 # Body mock-up — our own characters on KayKit's skeleton
 
-**Mock-up, 2026-09-29. Not shipped:** no game atlas uses it yet.
+**Mock-up, 2026-09-29. Not shipped:** no game atlas uses it yet. It's the evidence for the
+parked [character customisation proposal](./character-customization-proposal.md), which has
+the options, the recommendation and what to decide.
 
 This mock-up answers one question: what would the main classes look like if we kept only
 KayKit's skeleton and animation clips, and built everything visible ourselves? And can body

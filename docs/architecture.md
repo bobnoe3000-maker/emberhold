@@ -445,3 +445,9 @@ commands in the same deterministic sim and stores only that result (development 
 | A13 | 2026-09-29 | inkjs 2.4.0: the runtime (`ink.mjs`) vendored and import-mapped as `inkjs`; the compiler only in `tools/content/ink.mjs` (devDependency, same version), and the compiled `content/dialogue/*.json` committed and checked stale-free in CI. Durable conversation state is **sim flags** (`state.flags`, set only by validated `dialogueEffect` commands, save v6), not the Ink story state: Ink state is per session (its cycles move on between visits) and never saved |
 
 Changing any of these needs a new row here, plus a note in the development plan.
+
+**Proposed, not decided:** A14 — three.js (lazy-loaded) for the windows only, to assemble
+characters live from appearance and gear, while Emberlit keeps the world. This would reverse
+A2 for windows. See
+[character-customization-proposal.md](./character-customization-proposal.md); parked
+2026-09-29.

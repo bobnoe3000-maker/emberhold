@@ -239,6 +239,11 @@ bag). It grows into **tabs**:
 | **Bag** | The shared inventory, with sort (slot / rarity / level), filter (usable by this member), a consumables row (potions later) and a capacity upgrade (20 → 30, a quest reward) |
 | **Info** | Origin, trait, a short bio (companions), kills, deaths, time in party |
 
+**Proposed, parked:** gear shown on the window's figure, body builds and face shapes, and our
+own character look on KayKit's skeleton. See
+[character-customization-proposal.md](./character-customization-proposal.md) (to revisit; not
+scheduled).
+
 **Attributes and stat points** (GDD §4.1, new):
 - **Four attributes:**
   - **Might:** ATK;
