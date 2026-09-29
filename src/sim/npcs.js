@@ -8,7 +8,8 @@
 // Commands:
 //   talk { npc }                in reach → a 'dialogue' event; out of reach → walk over, then talk
 //   dialogueEffect { tag, args } an Ink tag from the open conversation; applied only if that NPC is
-//                                allowed it (flags it may set). Anything else does nothing.
+//                                allowed it (flags it may set; `quest` tags go to quests.js, which
+//                                takes only the talking NPC's own quests). Anything else does nothing.
 //   endTalk {}                   the window closed
 // Events: 'dialogue' { npc, knot, vars } · 'flagChanged' { name, value } · 'talkEnded' { npc }
 // Save: state.flags { [name]: number } (core.js snapshot / restore). A conversation itself is not
@@ -44,8 +45,9 @@ export function placeNpcs(world, isWalkable, block) {
   return world;
 }
 
-/** @param {{ state: any, bus: any, getWorld: () => any, walkTo: (tx: number, ty: number, then: any, opts?: any) => boolean, canStand: (tx: number, ty: number) => boolean }} o */
-export function createTalk({ state, bus, getWorld, walkTo, canStand }) {
+/** @param {{ state: any, bus: any, getWorld: () => any, walkTo: (tx: number, ty: number, then: any, opts?: any) => boolean, canStand: (tx: number, ty: number) => boolean,
+ *   moreVars?: (npc: string) => Record<string, number>, effect?: (npc: string, args: any) => void }} o moreVars: what else Ink may read (quests.js); effect: the `quest` tag */
+export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = () => ({}), effect = () => {} }) {
   if (!state.flags) state.flags = {};
   let talking = null;                             // the NPC id of the open conversation (runtime only)
   const npcHere = (id) => (getWorld().npcs || []).find((n) => n.id === id) || null;
@@ -58,7 +60,7 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand }) {
     const v = { hero_name: h.name, hero_class: h.cls, hero_origin: h.origin || '', hero_level: h.level,
       party_size: state.party.filter((m) => !m.fallen).length, fallen_name: fallen ? fallen.name : '' };
     for (const f of NPCS[id].flags) v['flag_' + f] = state.flags[f] || 0;
-    return v;
+    return { ...v, ...moreVars(id) };
   }
 
   function command(cmd) {
@@ -81,6 +83,7 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand }) {
     }
     if (cmd.type === 'dialogueEffect') {
       if (!talking || !Array.isArray(cmd.args)) return true;
+      if (cmd.tag === 'quest') { effect(talking, cmd.args); return true; }   // quests.js checks it's this NPC's quest, in the right state
       const def = NPCS[talking], [verb, name, amt] = cmd.args;
       if (cmd.tag === 'flag' && def.flags.includes(name)) {
         const before = state.flags[name] || 0;

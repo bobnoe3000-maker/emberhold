@@ -1,0 +1,23 @@
+{
+  "id": "vale_long_way_round",
+  "kind": "errand",
+  "title": "The Long Way Round",
+  "giver": "maudry_fenn",
+  "region": "vale",
+  "level": [1, 8],
+  "summary": "The carters won't take the barrows road any more, and Maudry Fenn pays for it in the price of everything she pours. She wants the walking kind knocked back.",
+  "steps": [
+    {
+      "id": "barrows",
+      "journal": "Go down into the Old Barrows. Win four fights, and open one of their chests.",
+      "objectives": [
+        { "type": "waves", "site": "barrows", "count": 4, "label": "Waves held in the Old Barrows" },
+        { "type": "loot", "site": "barrows", "count": 1, "label": "Chests opened in the Old Barrows" }
+      ]
+    }
+  ],
+  "ready": "Go back to Maudry Fenn at the Tired Mule.",
+  "done": "The carters complain about something else now.",
+  "rewards": { "xp": 150, "gold": 40 },
+  "dialogue": { "file": "maudry", "offer": "maudry_longway_offer", "turnin": "maudry_longway_turnin" }
+}

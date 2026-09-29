@@ -1,15 +1,15 @@
-// saves: v3 single saves and v4 slots migrate to v6; unknown versions are refused, never half-read
+// saves: v3 single saves and v4 slots migrate to v7; unknown versions are refused, never half-read
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v6', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 6); });
+test('three game slots, save v7', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 7); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
-  assert.equal(m.version, 6); assert.equal(migrate({ version: 4, savedAt: 6, data }).version, 6); assert.equal(migrate({ version: 5, savedAt: 7, data }).version, 6);
-  assert.equal(m.version, 6); assert.equal(m.savedAt, 5); assert.deepEqual(m.meta, metaOf(data));
+  assert.equal(m.version, 7); for (const v of [4, 5, 6]) assert.equal(migrate({ version: v, savedAt: 6, data }).version, 7);
+  assert.equal(m.version, 7); assert.equal(m.savedAt, 5); assert.deepEqual(m.meta, metaOf(data));
   assert.equal(migrate({ version: 1, data }), null);
   assert.equal(migrate({ version: 99, data }), null);
   assert.equal(migrate(null), null);

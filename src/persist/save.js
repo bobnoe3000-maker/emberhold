@@ -21,10 +21,12 @@
 //       the sim's restore() fills the rest (the class build for attributes, created = true).
 //   v6: M4 story flags — flags { [name]: number } set by conversations (sim/npcs.js). Only grew:
 //       v3–v5 data loads as is with no flags.
+//   v7: M4 quests — quests { [id]: [state, step, ...counters] } and tracked (sim/quests.js). Only
+//       grew: older data loads with no quests.
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

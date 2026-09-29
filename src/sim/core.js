@@ -16,6 +16,7 @@ import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle } from './battle.js';
 import { placeNpcs, createTalk } from './npcs.js';
+import { createQuests } from './quests.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -86,7 +87,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
-  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y) });
+  const quests = createQuests({ state, bus, getWorld: () => world });   // quests (quests.js): counted from this sim's events
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => quests.varsFor(id), effect: (id, args) => quests.effect(id, args) });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -227,6 +229,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
+    if (quests.command(cmd)) return;                       // track / questAbandon
     if (talk.command(cmd)) return;                         // talk / dialogueEffect / endTalk
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
     if (cmd.type === 'move') {
@@ -373,6 +376,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       visited: [...(world.visited || [])],
       sitesEntered: [...state.sitesEntered],
       flags: { ...state.flags },
+      ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
     };
   }
 
@@ -410,7 +414,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     world.visited = new Set(data.visited ?? []);
     state.sitesEntered = new Set(data.sitesEntered ?? []);
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
+    quests.restore(data);                                  // v6 and older: none yet
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
+    bus.emit('questChanged', { id: null });                // the journal repaints
     battle.reset();
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('partyChanged', state.party);
@@ -418,7 +424,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   // compass destinations for where you are now (read-only; see travel.js)
   function destinations({ inSquare = false } = {}) {
-    return listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare });
+    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare }), world, !!battle.battle);   // the tracked quest's next place first
   }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

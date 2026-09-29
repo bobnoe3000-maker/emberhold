@@ -2,7 +2,8 @@
 // contact: she knows everyone's business and tells you more than she should.
 // Entry: maudry_hub (the sim's 'dialogue' event names it). Bound in by src/story/adapter.js from
 // the sim (sim/npcs.js varsFor); Ink only reads them. Effects go out as tags and the sim checks
-// each one (flags: met_maudry). `# service: tavern` opens the hiring board.
+// each one (flags: met_maudry; her errand, vale_long_way_round: q_ = −1 locked · 0 available ·
+// 1 active · 2 ready · 3 done). `# service: tavern` opens the hiring board.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -11,6 +12,7 @@ VAR hero_level = 1
 VAR party_size = 1
 VAR fallen_name = ""
 VAR flag_met_maudry = 0
+VAR q_vale_long_way_round = -1
 
 == maudry_hub ==
 { flag_met_maudry == 0: -> maudry_first_meet }
@@ -36,7 +38,8 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 
 == maudry_greet_back ==
 {&Maudry looks up from the tap. "Back again, {hero_name}."|"Still in one piece, I see. The Vale's getting careless."|Maudry slides a mug your way without asking. "On the house. Don't tell anyone."}
-{ hero_level >= 5: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
+{ q_vale_long_way_round == 2: "You've the look of someone with news. Go on, then." }
+{ q_vale_long_way_round == 3: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
 -> maudry_topics
 
 == maudry_greet_fallen ==
@@ -45,6 +48,9 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 -> maudry_topics
 
 == maudry_topics ==
++ { q_vale_long_way_round == 2 } [The barrows road is clearer.] -> maudry_longway_turnin
++ { q_vale_long_way_round == 0 } [Anything I can do?] -> maudry_longway_offer
++ { q_vale_long_way_round == 1 } [About the barrows road…] -> maudry_longway_active
 + [What's the news?] -> maudry_news
 + [Anyone for hire?] -> maudry_hire
 + [Tell me about the barrows.] -> maudry_barrows
@@ -76,6 +82,27 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 "The Crossed Keys, if you want a bed and don't mind the stairs. Hale & Daughter for anything that needs mending. It's the daughter you want."
 "Wendel's for rope and bread. His lamp oil's gone up a copper again. He blames the roads. I blame Wendel."
 "And the Shrine of the Ember. They raise the ones who fell. You'll get to know them, I expect. Everyone does."
+-> maudry_topics
+
+// ── her errand: The Long Way Round (content/quests/vale_long_way_round.json) ──
+== maudry_longway_offer ==
+"Since you ask. The carters won't take the barrows road any more. They go the long way round, a day out of their way, and they put it on the price of everything I pour."
+"Go down into the Old Barrows. Knock the walking kind back. Four good fights, and open one of their chests, so I know you went further than the door."
+"Come back and tell me. I'll make it worth the boots."
++ [I'll see to it.]
+    "Good. Mind the ones with crossbows." # quest: accept vale_long_way_round
+    -> maudry_topics
++ [Not today.]
+    "Suit yourself. The long way round's still there. So are the prices."
+    -> maudry_topics
+
+== maudry_longway_active ==
+"The walking kind still walking, are they? Four fights, and a chest opened. I'm not asking you to empty the place. Just to make the road less interesting."
+-> maudry_topics
+
+== maudry_longway_turnin ==
+"Well. The carters came in this morning complaining about something else entirely. That's how I know it worked."
+"Anything with writing on it in that chest? No? Pity. Here. It's not much, but it's more than Lord Pellam would have sent." # quest: turnin vale_long_way_round
 -> maudry_topics
 
 == maudry_bye ==
