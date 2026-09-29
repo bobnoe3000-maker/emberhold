@@ -296,10 +296,11 @@ export function createGearSheet(sim, { partyPanel }) {
     if (act === 'unequip') sim.commands.push({ type: 'unequip', member: m.id, slot: sel.worn });
     if (act === 'salvage') { sim.commands.push({ type: 'salvage', uid: it.uid }); sel = null; }
   });
-  // after an equip lands, keep showing the item where it went (the worn slot); refusals show on the card
+  // after an equip lands the item card closes, on the tab of whoever now wears it; a refusal
+  // (bag full, two hands…) keeps the card open with the reason
   sim.bus.on('gearChanged', () => {
     if (pendingSel) { const i = S.party.findIndex((q) => q.id === pendingSel.to); const w = S.party[i]; const slot = w && Object.keys(w.gear).find((k) => w.gear[k] && w.gear[k].uid === pendingSel.uid);
-      if (slot) { who = i; sel = { uid: pendingSel.uid, worn: slot }; } pendingSel = null; }
+      if (slot) { who = i; sel = null; } pendingSel = null; }
     else if (sel && sel.worn) sel = null;
     render(); partyPanel.refresh && partyPanel.refresh();
   });
