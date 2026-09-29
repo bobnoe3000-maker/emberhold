@@ -95,10 +95,11 @@ const FLAVOUR = [
 const round = (k, v) => (k === 'hpr' || k === 'mpr' ? Math.max(0.1, Math.round(v * 10) / 10) : v < 0 ? Math.round(v) : Math.max(1, Math.round(v)));
 const pick = (rng, a) => a[Math.floor(rng() * a.length)];
 
+// (Low-level common metal was "Worn …", which read as "the one you're wearing" in the bag.)
 export function makeItem(base, ilv, r = 'common', { uid, aff = [], mod = null, name, flav } = {}) {
   const B = BASES[base], st = {};
   for (const [k, [a, b]] of Object.entries(B.st)) st[k] = round(k, (a + b * ilv) * (a < 0 ? 1 : RMULT[r]));
-  const it = { uid, base, r, ilv, name: name || (r === 'common' && B.metal && ilv <= 2 ? 'Worn ' + B.name : B.name), st, aff };
+  const it = { uid, base, r, ilv, name: name || (r === 'common' && B.metal && ilv <= 2 ? 'Battered ' + B.name : B.name), st, aff };
   if (mod) it.mod = mod;
   if (flav) it.flav = flav;
   return it;

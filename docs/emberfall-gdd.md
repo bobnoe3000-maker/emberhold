@@ -381,7 +381,12 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 - **Bad-luck protection.** Each boss kill without a Rare adds +3 % to the next roll.
 - **Smith upgrades** go from +1 to +5. Each step gives +8 % base stats and costs gold, Embers
   and, from +3, wood and stone (the existing counters).
-- **Salvage** off-class or outgrown items into **Embers** (the upgrade currency).
+- **Salvage** off-class or outgrown items into **Embers** (the upgrade currency). The Ember
+  count sits in the top bar, next to gold.
+- **The party bag** has 20 slots. Identical plain items stack in one slot, up to 10: the same
+  base, rarity, item level and name, and no affixes, Rare modifier or flavour. A full bag still
+  takes an item that fits an existing stack; anything else that drops is salvaged at once.
+  Low-level Common metal is *Battered* (it was *Worn*, which read as "equipped").
 - **Special sources** (v1.2):
   - **Ember Rifts** (timed weekly dungeons) drop *Kindled* items: Fine or better with a
     Rift-only affix.

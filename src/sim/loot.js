@@ -13,7 +13,22 @@ import { mulberry32, streamSeed } from './rng.js';
 import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore } from './items.js';
 import { statsFor } from './party.js';
 
-export const BAG_SIZE = 20;
+export const BAG_SIZE = 20;                  // slots; a slot holds one item or a stack
+// Identical plain items (no affixes, Rare modifier or flavour: the same base, rarity, item level
+// and name, so the same stats) stack in one slot, up to STACK_MAX. Each keeps its own uid in
+// state.bag (the save's shape is unchanged); stacking is how the slots are counted and shown.
+export const STACK_MAX = 10;
+/** @param {any} it */
+export const stackKey = (it) => ((it.aff && it.aff.length) || it.mod || it.flav ? null : `${it.base}|${it.r}|${it.ilv}|${it.name}`);
+/** the bag as slots, in bag order: each an array of the items stacked there @param {any[]} bag */
+export function bagStacks(bag) {
+  const out = [], open = new Map();
+  for (const it of bag) {
+    const k = stackKey(it), st = k && open.get(k);
+    if (st && st.length < STACK_MAX) st.push(it); else { const n = [it]; out.push(n); if (k) open.set(k, n); }
+  }
+  return out;
+}
 // drop odds: chance of any item, then the rarity split (the rest is Common). Generous for
 // v1 so the loop is felt early; deeper rooms add +5 % per room level to the chance.
 export const DROP = {
@@ -26,7 +41,8 @@ export function createLoot({ state, bus, seed }) {
   if (!state.bag) state.bag = [];
   const C = state.counters;
   const member = (id) => state.party.find((m) => m.id === id);
-  const room = () => BAG_SIZE - state.bag.length;
+  // would the bag still fit its slots with these items added and those taken out?
+  const fits = (add, remove = []) => bagStacks(state.bag.filter((it) => !remove.includes(it)).concat(add)).length <= BAG_SIZE;
   const toBag = (it) => { if (it) state.bag.push(it); };
   const fromBag = (uid) => { const i = state.bag.findIndex((it) => it.uid === uid); return i < 0 ? null : state.bag.splice(i, 1)[0]; };
 
@@ -47,7 +63,7 @@ export function createLoot({ state, bus, seed }) {
     const classes = [...new Set(state.party.map((m) => m.cls))];
     const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN });
     let salvaged = 0;
-    if (room() > 0) toBag(item);
+    if (fits([item])) toBag(item);
     else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }            // bag full: straight to Embers
     bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged });
     bus.emit('countersChanged', { ...C });
@@ -70,14 +86,14 @@ export function createLoot({ state, bus, seed }) {
       const slot = BASES[it.base].slot, g = m.gear || (m.gear = {});
       if (slot === 'off' && isTwoHanded(g.weapon)) return refuse(`${g.weapon.name} needs both hands`);
       const out = [g[slot], isTwoHanded(it) ? g.off : null].filter(Boolean);
-      if (out.length - 1 > room()) return refuse('The bag is full');
+      if (!fits(out, [it])) return refuse('The bag is full');
       fromBag(it.uid); g[slot] = it; if (isTwoHanded(it)) g.off = null;
       out.forEach(toBag); changed(m); return true;
     }
     if (cmd.type === 'unequip') {
       const m = member(cmd.member), it = m && m.gear && m.gear[cmd.slot];
       if (!it) return true;
-      if (!room()) return refuse('The bag is full');
+      if (!fits([it])) return refuse('The bag is full');
       m.gear[cmd.slot] = null; toBag(it); changed(m); return true;
     }
     if (cmd.type === 'salvage') {
