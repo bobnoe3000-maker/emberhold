@@ -253,11 +253,13 @@ from the Grey Sisters, world doc §4): playable at creation and hireable at ever
 | Class bonus | +10 % DEF while carrying a shield | Crits from behind the target deal +25 % | Spells deal +20 % to a foe with two or more others within 2 tiles | Heals are +20 % stronger |
 | Abilities | **Cleave** (10 MP: 1.3× to target and adjacent) · **Shield Wall** (20 MP: +50 % DEF for 6 s, taunt) · **Second Wind** (25 MP: heal 25 % HP) | **Backstab** (10 MP: 1.6×, +25 % crit) · **Smoke Step** (15 MP: +30 % dodge for 5 s, drop aggro) · **Venom** (20 MP: poison over time) | **Firebolt** (12 MP: 1.8×) · **Frost Nova** (30 MP: 0.8× area, slow) · **Arcane Ward** (25 MP: shield an ally for 30 % of their max HP) | **Mend** (12 MP: heal the most hurt ally 22 % of max HP) · **Bless** (25 MP: the party +15 % ATK and DEF for 8 s) · **Turn Undead** (30 MP: 1.6× to every Ashbound within 3 tiles) |
 | Passive (20) | *Iron Hide*: +10 % DEF, double HP regen below 30 % HP | *Opportunist*: crits restore 5 MP | *Kindled Mind*: +25 % MP regen | *Lifeline*: once a room visit, an ally who would be Downed holds on at 1 HP |
-| Model (KayKit) | Knight / Barbarian | Rogue / Rogue Hooded | Mage | Knight, bareheaded, with the Sisters' badge shield, in warm grey |
+| Model (KayKit) | Knight / Barbarian | Rogue / Rogue Hooded | Mage | Mage, bareheaded, in off-white vestments with a grey stole, a flanged mace (our own model) and a chained psalter |
 
 The class bonuses sit on top of the class table: a fighter in the class kit (with its round
-shield) has 15.4 DEF. The kit is sword, kite shield, plate and sabatons for the cleric, which
-shares the fighter's sword, shields, great helm, plate and sabatons and has two items of its
+shield) has 15.4 DEF. The cleric's kit is a mace, a chained psalter, vestments and pilgrim boots.
+It carries the same stats as the fighter-style kit it replaced (sword, kite shield, plate and
+sabatons), so the class's numbers are unchanged; only its look is different. The cleric can also
+wear the fighter's sword, shields, great helm, plate and sabatons, and has two more items of its
 own (Chapel Sword, Book of Hours). Recommended build: Grit, Focus, Grit.
 
 **Future class** (sourced from the Grey Sisters in the world doc):

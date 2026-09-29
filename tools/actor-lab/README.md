@@ -69,6 +69,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 | file | role |
 |---|---|
 | `lab.js` / `lab.html` | three.js harness: loadouts, weapon attachment, recolor, glowing eyes, heroic pass, render |
+| `props.js` | what the kits lack, shared by figures and icons: code-built props (the cleric's mace) and the swatch repaint |
 | `variants.json` | the roster: 10 hero loadouts (fighter/rogue/mage) + 8 enemy NPCs |
 | `bake.cjs` / `bake.json` | bake the shipped actor atlases into `assets/actors/` |
 | `icons.cjs` / `iconlab.js` / `icons.json` | bake the item icons into `assets/items/` (one kit mesh or code-built trinket per icon, 96 px) |
@@ -83,6 +84,13 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `show` — accessory meshes to keep (every other accessory of that model is hidden), e.g.
   `["1H_Sword","Round_Shield","Knight_Helmet","Knight_Cape"]`. The full lists are in `ACC` in `lab.js`.
 - `attach` — `{ bone: file }` parents a weapon glTF onto `handslot.r` / `handslot.l` (skeleton weapons ship separately).
+- `hold` — `{ bone: prop }` puts one of our own code-built props (`PROPS` in `props.js`) in a hand
+  slot, along +y like the kits' one-handed weapons. It gets weapon anchors like any held weapon.
+  `C1`, the cleric, holds `"mace"`.
+- `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
+  8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
+  the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe
+  swatch `[0, 1]`. Icons can reuse a variant's swatches (`"swatches": "C1"` in `icons.json`).
 - `recolor` — a CSS filter applied to the model's colour texture; how human enemy NPCs reuse hero models.
   (Look-dev only: the shipping version should remap swatches in the small palette texture exactly.)
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.

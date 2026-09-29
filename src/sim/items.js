@@ -8,7 +8,7 @@
 // Rare 2); mod = a Rare's ability modifier ({ ab, k: 'cost' | 'power', v }).
 // Stat keys: hp, mp, atk, def, crit, dodge (%), hpr, mpr (per second).
 // A base belongs to one class (cls), or 'any'; `also` lists other classes that can wear it
-// (the cleric shares the fighter's shields, plate and sword).
+// (the cleric can also wear the fighter's shields, plate and sword).
 
 export const SLOTS = ['weapon', 'off', 'helm', 'armor', 'boots', 'trinket'];
 export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', armor: 'Armor', boots: 'Boots', trinket: 'Trinket' };
@@ -56,7 +56,13 @@ export const BASES = {
   witchhat:    { name: 'Witch Hat', slot: 'helm', cls: 'mage', icon: 'hat_mage', kind: 'robes', st: { def: [0.3, 0.08], mp: [3, 1.1] } },
   robes:       { name: 'Robes', slot: 'armor', cls: 'mage', icon: 'armor_robe', kind: 'robes', st: { def: [0.5, 0.18], mp: [4, 1.6] } },
   slippers:    { name: 'Slippers', slot: 'boots', cls: 'mage', icon: 'boots_mage', kind: 'robes', st: { def: [0.2, 0.06], mpr: [0.1, 0.02] } },
-  // ── cleric (plus the fighter's sword, shields, great helm, plate and sabatons)
+  // ── cleric (plus the fighter's sword, shields, great helm, plate and sabatons). The kit the
+  // model wears (mace, psalter, vestments, pilgrim boots) carries the same stats the old
+  // sword-and-plate kit did, so the class's numbers didn't move when its look changed.
+  mace:        { name: 'Mace', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'mace', kind: 'mace', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
+  psalter:     { name: 'Chained Psalter', slot: 'off', cls: 'cleric', icon: 'psalter', kind: 'prayer book', st: { def: [1.2, 0.32] } },
+  vestments:   { name: 'Vestments', slot: 'armor', cls: 'cleric', icon: 'armor_vestments', kind: 'robes', st: { def: [1, 0.35], hp: [5, 2] } },
+  pilgrimboots: { name: 'Pilgrim Boots', slot: 'boots', cls: 'cleric', icon: 'boots_mage', kind: 'leather', st: { def: [0.5, 0.15] } },
   chapelsword: { name: 'Chapel Sword', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
   hours:       { name: 'Book of Hours', slot: 'off', cls: 'cleric', icon: 'tome', kind: 'prayer book', st: { mp: [4, 1.4], def: [0.3, 0.1] } },
   // ── trinkets (any class)
@@ -69,7 +75,7 @@ export const STARTER = {
   fighter: { weapon: 'sword', off: 'roundshield', helm: 'greathelm', armor: 'plate', boots: 'sabatons' },
   rogue: { weapon: 'dagger', off: 'offdagger', helm: 'hood', armor: 'leathers', boots: 'softboots' },
   mage: { weapon: 'staff', helm: 'witchhat', armor: 'robes', boots: 'slippers' },
-  cleric: { weapon: 'chapelsword', off: 'kite', armor: 'plate', boots: 'sabatons' },   // bareheaded, the Sisters' badge on the shield
+  cleric: { weapon: 'mace', off: 'psalter', armor: 'vestments', boots: 'pilgrimboots' },   // bareheaded, off-white vestments (a Grey Sister's cleric)
 };
 export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
 /** the classes that can wear a base ([] = any) @param {any} B */

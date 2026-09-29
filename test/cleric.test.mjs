@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
 import { makeMember, statsFor } from '../src/sim/party.js';
+import { makeItem, itemStats } from '../src/sim/items.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 import { behind, clustered } from '../src/sim/battle.js';
 
@@ -25,6 +26,14 @@ test('the fighter: +10 % DEF while carrying a shield', () => {
   const without = statsFor(f).def, shieldDef = off.st.def;
   assert.ok(Math.abs(with_ - (without + shieldDef) * 1.1) < 0.051, `${with_} vs ${(without + shieldDef) * 1.1}`);
   assert.equal(statsFor(makeMember('c', 'C', 'cleric', 5)).def, statsFor({ ...makeMember('c', 'C', 'cleric', 5) }).def);   // a cleric's shield is just its DEF
+});
+test("the cleric's kit is a mace, psalter, vestments and pilgrim boots, with the old sword-and-plate kit's stats", () => {
+  const was = { weapon: 'chapelsword', off: 'kite', armor: 'plate', boots: 'sabatons' };
+  for (const lv of [1, 2, 5, 9, 14, 20, 30]) {
+    const c = makeMember('c', 'C', 'cleric', lv);
+    assert.deepEqual(Object.fromEntries(Object.entries(c.gear).filter(([, it]) => it).map(([s, it]) => [s, it.base])), { weapon: 'mace', off: 'psalter', armor: 'vestments', boots: 'pilgrimboots' });
+    for (const [slot, base] of Object.entries(was)) assert.deepEqual(itemStats(c.gear[slot]), itemStats(makeItem(base, lv)), `${slot} at level ${lv}`);
+  }
 });
 test('the rogue strikes from behind; the mage finds clusters', () => {
   const foe = { x: 0, y: 0, fx: 1, fy: 0 };                                  // facing +x

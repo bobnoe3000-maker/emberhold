@@ -3,7 +3,7 @@
     { "id": "fighter", "role": "Front line. Holds the door so the others can work.", "difficulty": "Forgiving" },
     { "id": "rogue", "role": "Quick and sharp. Picks off the weak and slips the blows.", "difficulty": "Steady hands" },
     { "id": "mage", "role": "Fire at a distance. Frail up close, fearsome from the back.", "difficulty": "Keep them safe" },
-    { "id": "cleric", "role": "Shield, sword and a Grey Sister's prayers. Mends the others and turns the dead.", "difficulty": "Patient" }
+    { "id": "cleric", "role": "Mace, psalter and a Grey Sister's prayers. Mends the others and turns the dead.", "difficulty": "Patient" }
   ],
   "locked": [
     { "id": "healer", "name": "Healer", "hint": "Found in the fens" }

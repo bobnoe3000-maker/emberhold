@@ -3,8 +3,9 @@
 // figure is TARGET_PX tall at native resolution, no AA. Driven by render.cjs.
 //
 // Variant knobs (see variants.json): which accessory meshes to show (loadout),
-// weapons to parent onto hand bones, a CSS-filter texture recolor (enemy NPCs
-// reuse hero models), glowing-eye color, pose clip, and stock vs HEROIC
+// weapons to parent onto hand bones, code-built props for a hand slot and swatch
+// repaints (props.js: the cleric's mace and vestments), a CSS-filter texture recolor
+// (enemy NPCs reuse hero models), glowing-eye color, pose clip, and stock vs HEROIC
 // proportions. Heroic = smaller head + joints pushed outward to lengthen legs,
 // arms and torso without thickening them; applied AFTER each pose is sampled,
 // because the clips key scale + translation on every bone.
@@ -13,6 +14,7 @@
 // 'lowerleg.l' → 'lowerlegl'); findNode()/applyHeroic() match both spellings.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PROPS, repaint } from './props.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
 const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
@@ -58,6 +60,8 @@ async function build(v) {
   const acc = ACC[v.model] || [];
   root.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; if (acc.includes(o.name) && !(v.show || []).includes(o.name)) o.visible = false; } });
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
+  for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
+  if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((o) => { if (o.isMesh && /Eyes/.test(o.name)) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(v.eyes); o.material.emissiveIntensity = 3; } });
   return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations };

@@ -2,7 +2,8 @@
 
 **v1.2 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
 
-v1.2 changes the pitch to *"The heroes of this age are not available… Looks like it is up to you."*
+v1.2 dresses the Grey Sisters' clerics (§4: off-white vestments, a mace and a chained psalter),
+changes the pitch to *"The heroes of this age are not available… Looks like it is up to you."*
 (the intro's closing card)
 and adds the old roads (§3.6) and the loading tips (§7).
 
@@ -126,7 +127,7 @@ marching dead: they run straight through anything in the way, hill, bog or villa
 | **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
 | **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
-| **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads, and some take coin at a tavern) and, later, the **Healer**. |
+| **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads in off-white vestments with a flanged mace and a chained psalter, and some take coin at a tavern) and, later, the **Healer**. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
 | **Lord Pellam's Watch** | Greyholt's underpaid militia | Order, cheaply | Bounties; comic relief; occasionally brave. |
 

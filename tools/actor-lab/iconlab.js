@@ -2,9 +2,12 @@
 // and the weapon in the figure's hand are one object. Each icon isolates one accessory mesh
 // (or a small procedural trinket), turns it to the classic RPG diagonal (grip bottom-left,
 // point top-right) with a 3/4 tilt, lights it warm key + cool rim, renders at 4× and
-// area-averages down, then adds a 1 px ink outline. Driven by icons.cjs (icons.json).
+// area-averages down, then adds a 1 px ink outline. Driven by icons.cjs (icons.json). A spec's
+// `swatches` repaints the kit texture the way the figure's variant does (props.js), and the
+// cleric's mace is the same code-built prop the figure holds.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PROPS, repaint } from './props.js';
 
 const SS = 4, INK = [10, 7, 16];
 const R = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
@@ -16,6 +19,7 @@ const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, metalness
 
 // small trinkets the kits don't have
 const PROC = {
+  mace: () => { const g = new THREE.Group(), m = PROPS.mace(); m.rotation.z = -Math.PI / 4; m.rotation.y = 0.26; g.add(m); g.rotation.x = 0.3; return g; },   // grip bottom-left, head top-right
   ring: () => { const g = new THREE.Group(), gold = std(0xd9a441, { metalness: 0.95, roughness: 0.28 });
     g.add(new THREE.Mesh(new THREE.TorusGeometry(1, 0.2, 18, 56), gold));
     const set = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.22, 16), gold); set.position.y = 1.12; g.add(set);
@@ -36,6 +40,9 @@ const PROC = {
 // the accessory as a standalone group (its meshes re-expressed relative to the node)
 async function part(spec) {
   if (spec.proc) return PROC[spec.proc]();
+  const out = await kitPart(spec); if (spec.swatches) repaint(out, spec.swatches); return out;
+}
+async function kitPart(spec) {
   const g = (await load(`./models/${spec.file}`)).scene; g.updateMatrixWorld(true);
   const names = spec.meshes || [spec.mesh], out = new THREE.Group();
   const first = spec.mesh || spec.meshes ? g.getObjectByName(names[0]) : g; if (!first) throw new Error('no mesh ' + names[0]);

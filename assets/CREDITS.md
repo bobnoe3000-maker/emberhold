@@ -11,6 +11,10 @@ pass and the "grim" colour pass, then packed into albedo / normal / emissive atl
 source models are downloaded by `tools/actor-lab/fetch-assets.sh` and are never
 committed.
 
+The cleric (`hero_cleric`) is the KayKit Mage with its robe, trim, stole and book swatches
+repainted (off-white vestments) and a flanged mace that is **our own**, built in code
+(`tools/actor-lab/props.js`); the same mace is the item icon `assets/items/mace.png`.
+
 The earlier POC atlases (a Flare CC BY-SA 3.0 skeleton and the `isometric_hero`
 knight) have been removed.
 

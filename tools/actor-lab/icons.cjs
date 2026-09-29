@@ -11,9 +11,11 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'items');
   p.on('pageerror', (e) => console.log('PAGEERR', e.message));
   await p.goto(`http://127.0.0.1:${port}/iconlab.html`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
   fs.mkdirSync(OUT, { recursive: true });
+  const variants = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(DIR, 'variants.json'))).map((v) => [v.id, v]));
   for (const ic of spec.icons) {
     if (only && !only.includes(ic.id)) continue;
-    const url = await p.evaluate(async ([s, n]) => await window.bakeIcon(s, n), [ic, spec.size]);
+    const s = typeof ic.swatches === 'string' ? { ...ic, swatches: variants[ic.swatches].swatches } : ic;   // "swatches": "C1" = that variant's repaint
+    const url = await p.evaluate(async ([s, n]) => await window.bakeIcon(s, n), [s, spec.size]);
     fs.writeFileSync(path.join(OUT, `${ic.id}.png`), Buffer.from(url.split(',')[1], 'base64')); console.log(ic.id);
   }
   await b.close(); srv.close();

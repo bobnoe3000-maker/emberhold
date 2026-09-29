@@ -129,14 +129,67 @@
  {
   "id": "C1",
   "cls": "Cleric",
-  "label": "Cleric \u00b7 sword & badge shield, bareheaded (Grey Sisters)",
-  "model": "Knight",
+  "label": "Cleric \u00b7 mace & psalter, off-white vestments (Grey Sisters)",
+  "model": "Mage",
   "show": [
-   "1H_Sword",
-   "Badge_Shield",
-   "Knight_Cape"
+   "Spellbook",
+   "Mage_Cape"
   ],
-  "recolor": "sepia(0.4) saturate(1.6) hue-rotate(-10deg) brightness(0.92)"
+  "hold": {
+   "handslot.r": "mace"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#f2ecdd",
+     "#a39883"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#cfa65c",
+     "#6a5022"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#b6bec9",
+     "#5c6474"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#ecd07a",
+     "#8a6424"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#8a5a3a",
+     "#3a2016"
+    ]
+   }
+  ]
  },
  {
   "id": "E1",
