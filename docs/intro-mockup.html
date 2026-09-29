@@ -59,10 +59,11 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 .card .txt { padding: 0 24px 44px; display: grid; gap: 6px; }
 .card .when { font: 600 10.5px/1.2 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: #ff9a4d; }
 .card .age { font: 400 31px/1.05 var(--display); letter-spacing: .02em; text-wrap: balance; }
-.card .say { font: 17px/1.5 var(--fell); margin-top: 4px; }
+.card .say { font: 16px/1.5 var(--fell); margin-top: 4px; }
 .card .say span { opacity: 0; transition: opacity .6s ease; }
 .card .say span.in { opacity: 1; }
-.card .say span.last { color: #ffd9a6; }
+.card .say span.hook { display: block; font: italic 19px/1.35 var(--fell); color: #fff3df; margin-bottom: 6px; }
+.card .say span.last { display: block; margin-top: 6px; color: #ffcf8f; font-style: italic; }
 .splash { align-items: center; justify-content: center; gap: 10px; background: #050407; font: 600 12px var(--mono); letter-spacing: .4em; text-transform: uppercase; color: #d9cdb8; }
 .splash .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 14px var(--ember); }
 .load, .title { justify-content: flex-end; }
@@ -96,6 +97,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 .crit li { list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 12px 50px; position: relative; }
 .crit li::before { counter-increment: c; content: counter(c); position: absolute; left: 16px; top: 8px; font: 400 24px var(--display); color: var(--ember); }
 .crit li b { font-weight: 600; }
+.crit li ul { margin: 6px 0 0; padding: 0 0 0 16px; }
+.crit li ul li { list-style: disc; background: none; border: 0; border-radius: 0; padding: 2px 0; }
+.crit li ul li::before { content: none; counter-increment: none; }
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
 @media (max-width: 780px) { .two { grid-template-columns: minmax(0, 1fr); } }
 .tips { display: grid; gap: 8px; padding: 0; margin: 0; }
@@ -108,16 +112,16 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Emberfall · direction C, revision 2 · load screen and intro</div>
+    <div class="eyebrow">Emberfall · direction C, revision 3 · load screen and intro</div>
     <h1>The Chronicle of the Fall</h1>
-    <p class="lead">Ash and flame, rebuilt. The script is rewritten around one thread from the canon, the Third Legion on the Wickham road, and the art is repainted from the silhouettes up. Press <b>Play</b> and tap the phone to move on. Sound is live synthesis, so turn it up.</p>
+    <p class="lead">Every card now opens on a hook and closes on a leader that hands you to the next. The score is new: slow, haunting synth, one evolving cue per card. The art has a finishing pass so it reads as painted, not programmed. Press <b>Play</b> and tap the phone to move on. Sound is live synthesis, so turn it up (headphones help).</p>
   </header>
 
   <section class="board" aria-label="Player">
     <div>
       <div class="phone"><div class="screen" id="screen" tabindex="0" aria-label="Intro preview: tap to continue">
         <canvas class="stage" id="stage"></canvas>
-        <div class="layer splash" id="Lsplash" hidden><div class="dot"></div><div>Emberhold</div></div>
+        <div class="layer splash" id="Lsplash" hidden><div class="dot"></div><div>No Game Studios</div></div>
         <div class="layer load" id="Lload" hidden><div class="bottom">
           <div class="logo">EMBER<em>FALL</em></div>
           <div class="bar"><i id="loadBar"></i></div>
@@ -142,14 +146,13 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
       </div>
     </div>
     <div>
-      <h3>What changed since revision 1</h3>
+      <h3>What changed since revision 2</h3>
       <ul class="changes">
-        <li><b>One thread through six cards</b><span>The Third Legion marches in card 2, falls in 3, lies at its post in 4 and stands up in 5. Card 6 lands the joke in Thornwick.</span></li>
-        <li><b>Shorter, harder lines</b><span>About 35 words a card, short sentences, and a strong last line, lit in ember.</span></li>
-        <li><b>Silhouettes that read</b><span>Hoods, ragged hems and staffs; skeletons with rib cages and lit eye sockets; a stepped throne with buttresses and a flame crown; ruins, a fallen statue, a cart on the road.</span></li>
-        <li><b>Depth and light</b><span>Four or five layers fading into the sky, fog between them, rim light on edges facing the fire, glows that bloom, grain and a vignette.</span></li>
-        <li><b>Full-bleed frames</b><span>The text sits on the black foreground of each scene. Cards fade through black.</span></li>
-        <li><b>The Fall mirrors the Empire</b><span>Same frame, the lights out, the legion down, one spear still standing.</span></li>
+        <li><b>Hook, body, leader</b><span>Each card opens on a hook in italics that answers the last card, and closes on a leader in ember that asks for the next. The lines arrive one at a time.</span></li>
+        <li><b>A new score</b><span>Slow, haunting synth in D minor: pads, a far choir, glass bells and a long echo. Each cue plays for as long as its card is up and keeps moving, and the cues crossfade. The Fall is the one hard cut.</span></li>
+        <li><b>Painted, not drawn</b><span>Shaded forms, lit clouds, soft smoke, a living fire, a colour grade and paper texture on every frame. No more grids, discs or props that read as shapes.</span></li>
+        <li><b>The Long Dim, rebuilt</b><span>A real broken arch, a mule and a cart with a turning wheel, a far watchtower, and a wet, rutted road that fades before the text.</span></li>
+        <li><b>No Game Studios</b><span>On the splash.</span></li>
       </ul>
     </div>
   </section>
@@ -162,7 +165,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 
   <section>
     <h2>The script, before and after</h2>
-    <p class="lead">Critiqued the way a fantasy paperback editor would read a prologue: does each card give one picture, does the voice earn its jokes, does anything make you want to turn the page?</p>
+    <p class="lead">Revision 2 against revision 3. Read the last line of each card, then the first line of the next: they should sound like one thought.</p>
     <div class="script" id="script"></div>
   </section>
 
@@ -170,27 +173,69 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
     <div>
       <h2>Script critique</h2>
       <ol class="crit">
-        <li><b>It read like an encyclopedia.</b> Dates as captions and summary verbs ("rose", "tore itself apart") told the history. A prologue gives each age one picture: pilgrims kneeling, a legion marching, a legion falling.</li>
-        <li><b>The jokes came too early.</b> "Never once asked to be paid" deflated the empire before it felt vast or terrible. Dread first; the wry voice belongs at the end, in Thornwick, where the stakes are small.</li>
-        <li><b>The big beat was buried.</b> "The Ember went out" sat mid-paragraph. Now it is the whole first sentence of its card.</li>
-        <li><b>There was no thread.</b> Six separate facts. The Third Legion of standing order 14 now runs through four cards and pays off with "the Third Legion stood up".</li>
-        <li><b>There was no mystery.</b> The old copy explained everything. The new one leaves two questions on the table: why did the fire die, and who started digging? Both are the real plot (Act I, Act IV), and neither is answered.</li>
-        <li><b>Canon was wasted.</b> Standing order 14, the Wickham road, Greyholt and Lord Pellam are real names from the world doc. Real names make a place feel lived in.</li>
-        <li><b>The cards were too long for a phone.</b> 40 to 55 words, clauses chained with commas. Now about 35, short sentences, one strong last line each.</li>
-        <li><b>The last line had no setup.</b> "You got Emberfall" lands harder after someone important declines to come. Lord Pellam's letter of regret does that.</li>
+        <li><b>Each card was a closed room.</b> Revision 2 landed a punch at the end of each card, then the next one started cold. Now every leader asks something the next hook answers: "Empires have been built on less." "This one was built on the dead."</li>
+        <li><b>The payoffs chain.</b> "Stayed dead" (3) becomes "they stayed down" (4). "Waiting for orders" (4) becomes "got its orders at last" (5). "Until this spring" (4) hands straight to the card dated <i>This spring</i>.</li>
+        <li><b>Every card had the same rhythm.</b> Short sentence after short sentence reads like a telegram. Now each card has a shape: a one-line hook, a body with one long sentence against short ones, and a leader.</li>
+        <li><b>The eye didn't know where to go.</b> The hook and leader are now set apart (italic, and ember for the leader), and the lines arrive one at a time, 1.5 s apart. The reader gets the hook alone first.</li>
+        <li><b>The narrator explained the mystery.</b> "No one has ever said why the fire died" told you there was a secret. Cut. The question now lives in a line the reader can feel: "No one asked what it was burning."</li>
+        <li><b>The ending needed a run-up.</b> "Thornwick did what small towns do" sets up the list of small, reasonable failures, so "You got Emberfall" lands as the punchline and the tagline at once.</li>
       </ol>
     </div>
     <div>
+      <h2>Music critique</h2>
+      <ol class="crit">
+        <li><b>They were gestures, not tracks.</b> Revision 2 played 1 to 3 seconds of sound, then dead air. Every cue now sustains and evolves for as long as its card is up. Rendered offline, each holds a steady level (within 2 dB) for 14 s and keeps going.</li>
+        <li><b>It sounded like a renaissance fair.</b> A hurdy-gurdy and plucked strings read as cheerful and medieval. They are gone. In their place: detuned synth pads through a slowly breathing filter, a wordless formant choir, FM bells, and a glass arpeggio.</li>
+        <li><b>Nothing moved harmonically.</b> One drone per card. Now the chords turn every 4 to 7 s:
+          <ul>
+            <li>Kindling: D minor, B♭, G minor.</li>
+            <li>Empire: B♭, G minor, E♭.</li>
+            <li>Long Dim: A minor, F, D minor, E minor.</li>
+            <li>Now: Phrygian D pulling to E♭.</li>
+            <li>Thornwick: D, G, B minor, A.</li>
+          </ul></li>
+        <li><b>It was dry.</b> There was a short room and no tails. Now there is a 6 s dark hall and a dotted echo that dulls on every repeat, which is where "haunting" lives.</li>
+        <li><b>The cards cut hard.</b> The cues now crossfade over 1.8 s. The Fall is the one hard cut: silence, a gong, a sub dropping away, then a cold D and E♭ cluster in the wind.</li>
+        <li><b>There was no arc.</b> Now the score builds and releases:
+          <ul>
+            <li>The Empire has a heartbeat at 75 bpm.</li>
+            <li>Year 301 quickens it to 97 bpm, opens the filter and climbs on a riser for 8 s.</li>
+            <li>Thornwick resolves to D major, warm, and the title screen keeps it.</li>
+          </ul></li>
+        <li><b>It wasn't built for phones.</b> Phone speakers drop the low end, so the heartbeat carries overtones, the pads sit in the mids, and a compressor keeps the levels even.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="two">
+    <div>
       <h2>Art critique</h2>
       <ol class="crit">
-        <li><b>Shapes didn't read.</b> Pilgrims were triangles, the dead were stick marks, the throne was stacked boxes. Silhouette art lives on the outline: a hood, a cloak hem, a spear, a rib cage, a skull with lit eyes.</li>
-        <li><b>Depth was flat.</b> Two layers and black. Now four or five, each farther layer paler and closer to the sky, with fog between.</li>
-        <li><b>Nothing was lit.</b> Now edges facing the fire carry a rim of light, the fire blooms, and the Ashbound's eyes glow (canon: eye glow reads their rank).</li>
-        <li><b>The Fall didn't mirror the Empire.</b> Now it is the same frame after: lights out, bodies down, a banner on one spear still standing, ash falling.</li>
-        <li><b>The text box fought the picture.</b> Frames are now full-bleed, composed so the bottom third is black ground for the words.</li>
-        <li><b>It was low resolution.</b> Scenes now render at the screen's pixel density.</li>
-        <li><b>Motion was aimless.</b> Now each layer drifts at its own rate, the camera leans in, smoke curls, the legion marches in step, rain and ash fall.</li>
-        <li><b>There was no finish.</b> Film grain and a vignette tie the frames together, and cards fade through black.</li>
+        <li><b>Flat fills looked like vector icons.</b> The throne is now lit from one side, with light along each ledge. A per-scene colour grade and a soft paper texture tie every frame together.</li>
+        <li><b>Grids gave away the code.</b> The throne's windows were a spreadsheet. Now they are irregular, differ in size and warmth, some are dark, and they flicker.</li>
+        <li><b>Circles gave it away too.</b> Smoke puffs and embers showed as discs and rings. Now smoke is soft, stretched plumes lit from below, and embers are hot points with a halo.</li>
+        <li><b>The fire was a logo.</b> Three nested flat tongues. Now there are a dozen, blended additively and fading at their tips, around a white-hot core with rays.</li>
+        <li><b>The props didn't read.</b>
+          <ul>
+            <li>The arch read as a bent pipe. It is now built of stones and breaks off before its keystone, with ivy hanging from it.</li>
+            <li>The mule read as a fish. It now has ears, a gait and a tail, and pulls a cart with a turning, spoked wheel.</li>
+            <li>A block floating in the sky is now a ruined watchtower behind the ridge.</li>
+          </ul></li>
+        <li><b>The road cut into the text.</b> A flat grey sheet ran to the bottom of the screen. It is now wet and rutted, its puddles hold the sky and ring with rain, and it fades out before the words.</li>
+        <li><b>The moon was two discs.</b> The crescent was made by erasing the sky. It is now clipped properly, with faint earthshine on the dark side.</li>
+        <li><b>Clouds were blobs.</b> They are now painted banks, lit from above and drifting at their own depth.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>The six cues</h2>
+      <ol class="crit">
+        <li><b>Loading:</b> a low open fifth on D in the wind, and a far bell every few seconds.</li>
+        <li><b>The Kindling:</b> awe. A D minor pad, a distant "oo" choir, a slow glass figure through the echo, a bell, the fire crackling.</li>
+        <li><b>The Empire:</b> majesty with menace. B♭ major, an "ah" choir, a heartbeat for the legion's step, a quicker arpeggio.</li>
+        <li><b>The Fall:</b> the cut. A gong and a falling sub, then a cold cluster, wind, and a lonely glass note every three seconds.</li>
+        <li><b>The Long Dim:</b> a thin, wavering A minor, rain, a sparse hollow bell.</li>
+        <li><b>Year 301:</b> dread. Phrygian D, the choir a half-step apart, the heartbeat faster, the filter opening, a riser.</li>
+        <li><b>Thornwick and the title:</b> release. D major, warm, the glass figure turned major, bells.</li>
       </ol>
     </div>
   </section>
@@ -204,12 +249,12 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
     <div>
       <h2>Still to decide</h2>
       <ol class="crit">
-        <li><b>The script:</b> does the rewrite work for you? Any line you'd change?</li>
-        <li><b>The art:</b> is this the level of detail you want, or push further (more figures, closer camera, a moving title logo)?</li>
-        <li><b>The splash:</b> "Emberhold" is a placeholder studio name. What should it say?</li>
+        <li><b>The script:</b> does the hook-and-leader flow work? Any line you'd change?</li>
+        <li><b>The score:</b> is this the right sound? For the real build, the cues can stay live synthesis (tiny, and they adapt) or be recorded as loops.</li>
+        <li><b>The art:</b> is this finish enough to build from, or push further (closer camera, more figures, a moving title logo)?</li>
         <li><b>Voice:</b> text only, or should the lines be read aloud later (a recorded narrator)?</li>
       </ol>
-      <p class="note" style="margin-top:12px">After you sign off: the scenes become a module the game draws the same way (<code>src/cutscene/</code>), timelines go into <code>content/cutscenes/intro.json</code>, and the score is recorded as short loops.</p>
+      <p class="note" style="margin-top:12px">After you sign off: the scenes become a module the game draws the same way (<code>src/cutscene/</code>), timelines go into <code>content/cutscenes/intro.json</code>, and the score becomes a small module that plays each cue by name.</p>
     </div>
   </section>
 </div>
@@ -219,29 +264,41 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--ember-
 // ── the script (world doc §2, §5, §6, §7; tone per §1 and §11) ────────────────
 const CARDS = [
   { age: 'The Kindling', when: 'A thousand years ago',
-    say: ['High in the Pale Heights, pilgrims found a fire burning in a crater, on nothing at all.', 'They knelt to it.', 'Then they learned what it was for.', 'Whoever kept the Ember could make the dead rise, and obey.'],
-    old: 'Pilgrims crossing the Pale Heights found a fire burning at the bottom of a crater, with nothing in it to burn. They called it the Ember. They learned, soon enough, that whoever tended it could make the dead get up and work.',
-    why: 'One image (pilgrims kneeling) and one turn (what it was for). "Get up and work" was a joke too soon; "rise, and obey" is the threat the whole story rests on.' },
+    hook: 'It began with a fire that should not have burned.',
+    body: ['High in the Pale Heights, pilgrims found it in a crater, burning on nothing at all.', 'Whoever kept the Ember, they learned, could make the dead rise and obey.'],
+    lead: 'Empires have been built on less.',
+    old: 'High in the Pale Heights, pilgrims found a fire burning in a crater, on nothing at all. They knelt to it. Then they learned what it was for. Whoever kept the Ember could make the dead rise, and obey.',
+    why: 'Opens on a hook with a question in it (why should it not burn?). The leader hands straight to the next card: an empire.' },
   { age: 'The Solmere Empire', when: 'Six hundred years',
-    say: ['They built a throne around the flame, and an empire around the throne.', 'Its dead dug the mines and fed the forges.', 'They marched in legions that never slept and never broke.', 'The empire called them the Ashbound.', 'No one ever asked the Ashbound.'],
-    old: 'Around the flame rose the Ember Throne, and an empire under it. Its Ashbound, the bound dead, dug the mines and stoked the forges of this province, and never once asked to be paid.',
-    why: 'The empire has to feel vast before it falls. The last line trades the joke for unease, and quietly points at the Act IV secret without saying it.' },
+    hook: 'This one was built on the dead.',
+    body: ['Around the flame rose the Ember Throne, and beneath it the Ashbound, legions of the bound dead, dug the mines and fed the forges and never slept.', 'For six hundred years the fire burned.'],
+    lead: 'No one asked what it was burning.',
+    old: 'They built a throne around the flame, and an empire around the throne. Its dead dug the mines and fed the forges. They marched in legions that never slept and never broke. The empire called them the Ashbound. No one ever asked the Ashbound.',
+    why: 'The hook answers the last card\'s leader. Five short sentences become one long, marching one, then a turn. The leader plants the Act IV secret as a question.' },
   { age: 'The Fall', when: 'One night, three hundred years ago',
-    say: ['The Ember went out.', 'Every Ashbound in the empire fell where it stood: in the mines, at the forges, on the march.', 'By morning the Solmere Empire was a graveyard with a crown on it.', 'No one has ever said why the fire died.'],
-    old: 'Then, in a single night, the Ember went out. Every Ashbound dropped where it stood. The forges went cold. Within a generation the empire had torn itself apart, and this province took its name from that night.',
-    why: 'The beat is now the first four words. "A graveyard with a crown on it" gives the image; the last line opens the mystery that Act IV answers.' },
+    hook: 'Then, one night, the Ember went out.',
+    body: ['Every Ashbound in the empire fell where it stood: in the mines, at the forges, on the march.', 'By morning the Solmere Empire was a graveyard with a crown on it.'],
+    lead: 'And the dead, for once, stayed dead.',
+    old: 'The Ember went out. Every Ashbound in the empire fell where it stood: in the mines, at the forges, on the march. By morning the Solmere Empire was a graveyard with a crown on it. No one has ever said why the fire died.',
+    why: '"Then, one night" carries the reader in from the question before. The leader ends on a promise that will be broken.' },
   { age: 'The Long Dim', when: 'The years since',
-    say: ['The province kept the name, Emberfall, and little else.', 'Mud roads. Petty lords.', 'Ruins the old folk call haunted, meaning quiet.', 'Under the Wickham road, the Third Legion still lies at its post.', 'No one ever came to relieve it.'],
-    old: 'Three hundred years of petty lords, mud roads and one trade route. The ruins were said to be haunted, which is to say, quiet.',
-    why: 'Keeps the best wry line, then plants the thread: standing order 14 (canon) and a legion never relieved.' },
+    hook: 'For three hundred years, they stayed down.',
+    body: ['The province kept its name, Emberfall, and little else: mud roads, petty lords, ruins the old folk called haunted, meaning quiet.', 'Under the Wickham road, the Third Legion lay at its post, waiting for orders.'],
+    lead: 'Until this spring.',
+    old: 'The province kept the name, Emberfall, and little else. Mud roads. Petty lords. Ruins the old folk call haunted, meaning quiet. Under the Wickham road, the Third Legion still lies at its post. No one ever came to relieve it.',
+    why: 'The choppy fragments ("Mud roads. Petty lords.") are now one breath. "Waiting for orders" sets up the next card, and three words pull you into it.' },
   { age: 'Year 301 of the Dim', when: 'This spring',
-    say: ['Then someone started digging.', 'Smoke rose from forges cold for three hundred years.', 'The barrows cracked open.', 'And under the Wickham road, the Third Legion stood up.'],
-    old: 'Smoke rises from forges nobody has lit. The barrows are opening. The dead are standing up again, and nobody important is coming to help.',
-    why: 'The payoff of the thread. "Someone started digging" is Act I (the robed strangers) without naming them.' },
+    hook: 'Someone started digging.',
+    body: ['Smoke rose from forges cold for three hundred years.', 'The barrows cracked open.', 'And under the Wickham road, the Third Legion got its orders at last.'],
+    lead: 'It stood up, and turned toward Thornwick.',
+    old: 'Then someone started digging. Smoke rose from forges cold for three hundred years. The barrows cracked open. And under the Wickham road, the Third Legion stood up.',
+    why: 'The orders pay off the last card. The leader names the next card\'s town, so the camera has somewhere to go.' },
   { age: 'Thornwick', when: 'The Hollow Vale',
-    say: ['Thornwick sent to Greyholt for soldiers.', 'Lord Pellam sent a long letter of regret.', 'The heroes of this age are off saving kingdoms.', 'You got Emberfall.'],
-    old: 'The heroes of this age are off saving kingdoms. You got Emberfall.',
-    why: 'Lord Pellam (canon: three words where one would do) sets up the tagline. Small stakes, wry, and it hands the story to you.' },
+    hook: 'Thornwick did what small towns do.',
+    body: ['It sent to Greyholt for soldiers.', 'Lord Pellam sent a long letter of regret.', 'The heroes of this age are off saving kingdoms.'],
+    lead: 'You got Emberfall.',
+    old: 'Thornwick sent to Greyholt for soldiers. Lord Pellam sent a long letter of regret. The heroes of this age are off saving kingdoms. You got Emberfall.',
+    why: 'A wry hook eases the dread before the joke. The leader is the tagline, and it leads into the game.' },
 ];
 const TIPS = [
   ['"Standing order 14: the Third Legion holds the Wickham road until relieved."', 'Found in the Old Barrows · they are still holding it'],
@@ -255,7 +312,8 @@ const TIPS = [
 ];
 
 // ── the kit: silhouettes on a 120 × 246 portrait stage ─────────────────────────
-const W = 120, H = 246, GROUND = 160, LIFT = 18;
+const W = 120, H = 246, GROUND = 160, LIFT = 24;
+let T = 0;                                                  // the frame's clock, for layers that drift on their own
 const BLACK = '#070508';
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const hex = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
@@ -269,31 +327,71 @@ function ridge(seed, y0, amp, rough = 0.55, n = 64, lo = -10, hi = 130) {   // m
   const out = pts.map((v, i) => [lo + ((hi - lo) * i) / n, y0 + v]); ridgeCache.set(key, out); return out;
 }
 function fillRidge(c, pts, color, bottom = H) { c.fillStyle = color; c.beginPath(); c.moveTo(pts[0][0], bottom); for (const [x, y] of pts) c.lineTo(x, y); c.lineTo(pts[pts.length - 1][0], bottom); c.closePath(); c.fill(); }
-function fog(c, y, h, color, a) { const g = c.createLinearGradient(0, y - h, 0, y + h); g.addColorStop(0, rgba(color, 0)); g.addColorStop(0.5, rgba(color, a)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.fillRect(-20, y - h, W + 40, h * 2); }
+function fog(c, y, h, color, a) {                            // a mist band: a soft gradient plus drifting wisps
+  const r = rng(Math.round(y * 13 + h));
+  for (let i = 0; i < 7; i++) { const cx = ((r() * 170 + T * (0.6 + r())) % 170) - 25, cy = y + (r() - 0.5) * h, rx = 14 + r() * 26, ry = 1.2 + r() * h * 0.35;
+    c.save(); c.translate(cx, cy); c.scale(1, ry / rx); const g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, rgba(color, a * 0.7)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, 7); c.fill(); c.restore(); }
+  fogBand(c, y, h, color, a); }
+function fogBand(c, y, h, color, a) { const g = c.createLinearGradient(0, y - h, 0, y + h); g.addColorStop(0, rgba(color, 0)); g.addColorStop(0.5, rgba(color, a)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.fillRect(-20, y - h, W + 40, h * 2); }
 function glow(c, x, y, r, color, a = 0.7) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(color, a)); g.addColorStop(0.35, rgba(color, a * 0.35)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); c.restore(); }
 function sky(c, stops) { const g = c.createLinearGradient(0, 0, 0, GROUND + 10); for (const [p, col] of stops) g.addColorStop(p, col); c.fillStyle = g; c.fillRect(-20, -20, W + 40, H + 40); }
-function stars(c, seed, n, ymax, t) { const r = rng(seed); for (let i = 0; i < n; i++) { const x = r() * W, y = r() * ymax, s = r(), tw = 0.55 + 0.45 * Math.sin(t * (1 + s * 2) + i); c.fillStyle = `rgba(255,244,225,${(0.25 + s * 0.6) * tw})`; c.fillRect(x, y, s > 0.9 ? 0.7 : 0.4, s > 0.9 ? 0.7 : 0.4); } }
-function moon(c, x, y, r, color, crescent = 0) { glow(c, x, y, r * 4, color, 0.18); c.fillStyle = color; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); if (crescent) { c.save(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(x - crescent, y - crescent * 0.4, r * 0.92, 0, Math.PI * 2); c.fill(); c.restore(); } }
-function clouds(c, seed, y, n, color, a, t, drift = 0.6) { const r = rng(seed); c.fillStyle = rgba(color, a); for (let i = 0; i < n; i++) { const cx = ((r() * 160 + t * drift * (0.5 + r())) % 170) - 25, cy = y + r() * 14, w = 12 + r() * 22; for (let k = 0; k < 4; k++) { c.beginPath(); c.ellipse(cx + (k - 1.5) * w * 0.3, cy - Math.sin(k) * 2, w * 0.4, 2.2 + r() * 2, 0, 0, Math.PI * 2); c.fill(); } } }
+function stars(c, seed, n, ymax, t) { const r = rng(seed);
+  for (let i = 0; i < n; i++) { const x = r() * W, y = r() * ymax * (0.4 + 0.6 * r()), s = r(), tw = 0.55 + 0.45 * Math.sin(t * (1 + s * 2) + i), a = (0.2 + s * 0.6) * tw * (1 - y / (ymax * 1.3));
+    c.fillStyle = `rgba(255,244,225,${a})`; const z = s > 0.93 ? 0.7 : 0.35; c.fillRect(x, y, z, z);
+    if (s > 0.965) { c.fillStyle = `rgba(255,236,210,${a * 0.5})`; c.fillRect(x - 1.4, y + 0.3, 3.5, 0.12); c.fillRect(x + 0.3, y - 1.4, 0.12, 3.5); glow(c, x + 0.35, y + 0.35, 2.2, '#fff0d8', a * 0.4); } } }
+function moon(c, x, y, r, color, crescent = 0) {
+  const lx = x + crescent * 0.4; glow(c, lx, y, r * 5, color, crescent ? 0.09 : 0.16); glow(c, lx, y, r * 1.8, color, crescent ? 0.14 : 0.25);
+  c.save(); c.beginPath(); c.arc(x, y, r, 0, 7); c.clip();
+  if (crescent) { c.fillStyle = rgba(color, 0.08); c.fillRect(x - r, y - r, r * 2, r * 2); c.beginPath(); c.rect(x - r - 1, y - r - 1, r * 2 + 2, r * 2 + 2); c.arc(x - crescent, y - crescent * 0.4, r * 0.92, 0, 7); c.clip('evenodd'); }   // earthshine, then only the lit sliver
+  c.fillStyle = color; c.fillRect(x - r, y - r, r * 2, r * 2);
+  const mr = rng(77); for (let i = 0; i < 9; i++) { c.fillStyle = 'rgba(80,70,90,0.12)'; c.beginPath(); c.arc(x + (mr() - 0.5) * r * 1.6, y + (mr() - 0.5) * r * 1.6, r * (0.1 + mr() * 0.25), 0, 7); c.fill(); }
+  const sh = c.createLinearGradient(x - r, y - r, x + r, y + r); sh.addColorStop(0, 'rgba(255,255,255,0.12)'); sh.addColorStop(1, 'rgba(40,30,60,0.25)'); c.fillStyle = sh; c.fillRect(x - r, y - r, r * 2, r * 2); c.restore();
+}
+function clouds(c, seed, y, n, color, a, t, drift = 0.6, light = null) {   // painted cloud banks: soft puffs, lit from above
+  const r = rng(seed), lit = light || mix(color, '#ffffff', 0.22);
+  for (let i = 0; i < n; i++) {
+    const cx = ((r() * 160 + t * drift * (0.5 + r())) % 180) - 30, cy = y + r() * 16, w = 16 + r() * 30, puffs = [];
+    for (let k = 0; k < 9; k++) puffs.push([cx + (r() - 0.5) * w, cy - Math.abs(r() - 0.5) * w * 0.22, w * (0.14 + r() * 0.14)]);
+    for (const [px, py, pr] of puffs) { const g = c.createRadialGradient(px, py - pr * 0.35, 0, px, py - pr * 0.35, pr); g.addColorStop(0, rgba(lit, a * 0.55)); g.addColorStop(1, rgba(lit, 0)); c.fillStyle = g; c.fillRect(px - pr, py - pr * 1.35, pr * 2, pr * 2); }
+    for (const [px, py, pr] of puffs) { const g = c.createRadialGradient(px, py + pr * 0.15, 0, px, py + pr * 0.15, pr * 1.05); g.addColorStop(0, rgba(color, a)); g.addColorStop(0.6, rgba(color, a * 0.6)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g; c.fillRect(px - pr * 1.1, py - pr, pr * 2.2, pr * 2.3); }
+  }
+}
+function rays(c, x, y, len, spread, n, color, a, t, dir = -Math.PI / 2) {   // god rays: soft wedges that breathe
+  c.save(); c.globalCompositeOperation = 'lighter'; const r = rng(Math.round(x * 7 + y));
+  for (let i = 0; i < n; i++) { const ang = dir + (i / (n - 1) - 0.5) * spread + Math.sin(t * 0.3 + i) * 0.02, w = 0.03 + r() * 0.05, L = len * (0.6 + r() * 0.4), aa = a * (0.4 + 0.6 * Math.abs(Math.sin(t * 0.5 + i * 1.7)));
+    const ex = x + Math.cos(ang) * L, ey = y + Math.sin(ang) * L, g = c.createLinearGradient(x, y, ex, ey); g.addColorStop(0, rgba(color, aa)); g.addColorStop(1, rgba(color, 0)); c.fillStyle = g;
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(ang - w) * L, y + Math.sin(ang - w) * L); c.lineTo(x + Math.cos(ang + w) * L, y + Math.sin(ang + w) * L); c.closePath(); c.fill(); }
+  c.restore();
+}
+function tufts(c, pts, seed, col, h = 1.8) {                  // grass, weeds and stones along a silhouette's edge
+  const r = rng(seed); c.fillStyle = col;
+  for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    for (let k = 0; k < 5; k++) { const u = r(), x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u + 0.3;
+      if (r() < 0.12) { c.beginPath(); c.ellipse(x, y, 0.8 + r() * 1.4, 0.5 + r() * 0.7, 0, Math.PI, 0); c.fill(); continue; }
+      const bh = h * (0.4 + r()), lean = (r() - 0.5) * 1.2 + Math.sin(T * 1.2 + x * 0.3) * 0.25; c.beginPath(); c.moveTo(x - 0.22, y); c.quadraticCurveTo(x + lean * 0.4, y - bh * 0.6, x + lean, y - bh); c.lineTo(x + 0.22, y); c.fill(); } }
+}
 function smoke(c, x, y, t, color, under = null, n = 9, lean = 0.5, size = 1) {
-  for (let i = 0; i < n; i++) { const k = (((t * 0.07 + i / n) % 1) + 1) % 1, px = x + Math.sin(k * 5 + i) * 2 * size + k * 22 * lean, py = y - k * 60 * size, rr = (2 + k * 9) * size;
-    const pg = c.createRadialGradient(px, py, 0, px, py, rr); pg.addColorStop(0, rgba(color, 0.5 * (1 - k))); pg.addColorStop(0.6, rgba(color, 0.32 * (1 - k))); pg.addColorStop(1, rgba(color, 0));
-    c.fillStyle = pg; c.beginPath(); c.arc(px, py, rr, 0, Math.PI * 2); c.fill();
-    if (under && k < 0.5) { c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = rgba(under, 0.18 * (1 - k * 2)); c.beginPath(); c.arc(px, py + rr * 0.4, rr * 0.8, 0, Math.PI * 2); c.fill(); c.restore(); } }
+  for (let i = 0; i < n; i++) { const k = (((t * 0.07 + i / n) % 1) + 1) % 1, px = x + Math.sin(k * 5 + i) * 2 * size + k * 22 * lean, py = y - k * 60 * size, rr = (2.5 + k * 11) * size, a = Math.min(1, k * 6) * (1 - k);
+    c.save(); c.translate(px, py); c.scale(1.35, 1); const pg = c.createRadialGradient(0, 0, 0, 0, 0, rr); pg.addColorStop(0, rgba(color, 0.3 * a)); pg.addColorStop(0.5, rgba(color, 0.17 * a)); pg.addColorStop(1, rgba(color, 0));
+    c.fillStyle = pg; c.fillRect(-rr, -rr, rr * 2, rr * 2); c.restore();
+    if (under && k < 0.5) glow(c, px, py + rr * 0.4, rr, under, 0.22 * (1 - k * 2)); }
 }
 function embers(c, seed, n, x0, x1, yb, t, rise = 70, color = '#ffb050', dir = -1) {
   const r = rng(seed); c.save(); c.globalCompositeOperation = 'lighter';
   for (let i = 0; i < n; i++) { const sp = 5 + r() * 9, ph = r() * rise, k = ((t * sp + ph) % rise) / rise, x = x0 + r() * (x1 - x0) + Math.sin(t * 1.3 + i) * 3 + k * 8, y = yb + dir * k * rise;
-    const a = (1 - k) * (0.5 + r() * 0.5); c.fillStyle = rgba(color, a); c.fillRect(x, y, 0.55, 0.55); c.fillStyle = rgba(color, a * 0.25); c.beginPath(); c.arc(x + 0.3, y + 0.3, 1.4, 0, 7); c.fill(); }
+    const a = (1 - k) * (0.5 + r() * 0.5); const hg = c.createRadialGradient(x + 0.25, y + 0.25, 0, x + 0.25, y + 0.25, 1.3); hg.addColorStop(0, rgba(color, a * 0.35)); hg.addColorStop(1, rgba(color, 0)); c.fillStyle = hg; c.fillRect(x - 1.1, y - 1.1, 2.7, 2.7); c.fillStyle = rgba('#fff0d0', a * 0.9); c.fillRect(x, y, 0.5, 0.5); }
   c.restore();
 }
 function flame(c, x, y, s, t) {
-  const f = (k) => 1 + 0.14 * Math.sin(t * 9 + k) + 0.07 * Math.sin(t * 23 + k * 2);
   glow(c, x, y - 4 * s, 55 * s, '#ff7a2a', 0.5); glow(c, x, y - 3 * s, 16 * s, '#ffd08a', 0.6);
-  const tongue = (w, h, col, k) => { c.fillStyle = col; c.beginPath(); c.moveTo(x - w * s, y); c.bezierCurveTo(x - w * s, y - h * 0.5 * s * f(k), x - w * 0.2 * s + Math.sin(t * 5 + k) * s, y - h * 0.8 * s * f(k), x + Math.sin(t * 7 + k) * s * 0.8, y - h * s * f(k)); c.bezierCurveTo(x + w * 0.3 * s, y - h * 0.7 * s * f(k + 1), x + w * s, y - h * 0.45 * s, x + w * s, y); c.closePath(); c.fill(); };
-  tongue(3.2, 11, '#ff7a2a', 0); tongue(2.2, 8.5, '#ffb24a', 1); tongue(1.2, 5.5, '#fff1c8', 2);
+  const tongue = (dx, w, h, col, k, a) => { const fl = 1 + 0.18 * Math.sin(t * (7 + k) + k * 3) + 0.08 * Math.sin(t * 19 + k * 5), hh = h * s * fl, bx = x + dx * s, sway = Math.sin(t * 4 + k * 2) * s * 0.9;
+    const g = c.createLinearGradient(0, y, 0, y - hh); g.addColorStop(0, rgba(col, a)); g.addColorStop(0.55, rgba(col, a * 0.75)); g.addColorStop(1, rgba(col, 0)); c.fillStyle = g;
+    c.beginPath(); c.moveTo(bx - w * s, y); c.bezierCurveTo(bx - w * s, y - hh * 0.45, bx - w * 0.3 * s + sway * 0.5, y - hh * 0.75, bx + sway, y - hh); c.bezierCurveTo(bx + w * 0.3 * s + sway * 0.5, y - hh * 0.7, bx + w * s, y - hh * 0.4, bx + w * s, y); c.closePath(); c.fill(); };
+  c.save(); c.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) tongue((i - 3) * 0.75, 1.5 + (i % 3) * 0.5, 7 + ((i * 5) % 7), '#ff5a14', i, 0.5);
+  for (let i = 0; i < 5; i++) tongue((i - 2) * 0.55, 1.2 + (i % 2) * 0.4, 6 + ((i * 3) % 4), '#ffa040', i + 9, 0.55);
+  c.restore(); tongue(0, 1.1, 5.5, '#fff1c8', 20, 0.95); tongue(0.3, 0.6, 3.5, '#ffffff', 21, 0.8);
 }
-// figures: base at (x, y), height s, facing +1 right / −1 left
 function hooded(c, x, y, s, t, o = {}) {
   const d = o.face || 1, k = 1, wind = Math.sin(t * 1.7 + x) * 0.04 * s;
   c.save(); c.translate(x, y); c.scale(d, 1);
@@ -354,12 +452,24 @@ function hero(c, kind, x, y, s, t, rim) {           // the three who got Emberfa
   if (kind === 'mage') { glow(c, x + 0.3 * s, y - 1.12 * s, 0.35 * s, '#9ab8ff', 0.8); c.fillStyle = '#dfe8ff'; c.fillRect(x + 0.29 * s, y - 1.13 * s, 0.03 * s, 0.03 * s); }
 }
 function throne(c, cx, base, col, lit, t) {             // the Ember Throne: stepped, buttressed, a brazier crown
-  const tiers = [[34, 26], [25, 20], [17, 20], [11, 20], [5, 20]]; let y = base;
+  const tiers = [[34, 22], [25, 17], [17, 16], [11, 15], [5, 14]], wr = rng(91); let y = base;
   c.fillStyle = col;
   for (const [hw, h] of tiers) { c.beginPath(); c.moveTo(cx - hw - 3, y); c.lineTo(cx - hw, y - h); c.lineTo(cx + hw, y - h); c.lineTo(cx + hw + 3, y); c.closePath(); c.fill();
     for (const sx of [-1, 1]) { c.beginPath(); c.moveTo(cx + sx * (hw + 3), y); c.lineTo(cx + sx * (hw + 7), y); c.lineTo(cx + sx * hw, y - h * 0.8); c.closePath(); c.fill(); }
-    if (lit !== null) for (let wx = -hw + 4; wx <= hw - 4; wx += 6) { c.fillStyle = lit ? '#ff9a3a' : rgba('#000000', 0.35); c.beginPath(); c.moveTo(cx + wx - 0.8, y - h * 0.3); c.lineTo(cx + wx - 0.8, y - h * 0.62); c.arc(cx + wx, y - h * 0.62, 0.8, Math.PI, 0); c.lineTo(cx + wx + 0.8, y - h * 0.3); c.fill(); if (lit) glow(c, cx + wx, y - h * 0.5, 3, '#ff8a3a', 0.35); c.fillStyle = col; }
-    y -= h; }
+    c.fillStyle = 'rgba(0,0,0,0.22)'; c.beginPath(); c.moveTo(cx + hw * 0.15, y - h); c.lineTo(cx + hw, y - h); c.lineTo(cx + hw + 3, y); c.lineTo(cx + hw * 0.2, y); c.fill();   // the shadowed side
+    c.fillStyle = lit ? 'rgba(255,150,70,0.45)' : 'rgba(150,170,200,0.3)'; c.fillRect(cx - hw, y - h, hw * 1.2, 0.5);                                // light along each ledge
+    if (lit !== null) for (let wx = -hw + 3 + wr() * 3; wx <= hw - 3; wx += 3.5 + wr() * 5) { if (wr() < 0.25) continue; const tall = wr() < 0.7, wh = tall ? h * (0.28 + wr() * 0.1) : 1.4, wy = y - h * 0.3;
+      const wc = ['#ff9a3a', '#ffb050', '#ff7a2a', '#ffc870', '#e0602a'][(wr() * 5) | 0], dim = wr() < 0.3 ? 0.45 : 1, fl = 0.8 + 0.2 * Math.sin(t * (2 + wx * 0.3) + wx);
+      c.fillStyle = lit ? rgba(wc, dim * fl) : rgba('#000000', 0.35); c.beginPath(); c.moveTo(cx + wx - 0.7, wy); c.lineTo(cx + wx - 0.7, wy - wh); c.arc(cx + wx, wy - wh, 0.7, Math.PI, 0); c.lineTo(cx + wx + 0.7, wy); c.fill(); if (lit && dim === 1) glow(c, cx + wx, wy - wh * 0.5, 3.2, wc, 0.3 * fl); c.fillStyle = col; }
+    c.fillStyle = col; y -= h; }
+  c.fillStyle = col; for (const sx of [-1, 1]) {                                                         // statues at the foot, arms raised to the flame
+    const bx = cx + sx * 30; c.fillRect(bx - 2.5, base - 4, 5, 4); c.beginPath(); c.moveTo(bx - 1.6, base - 4); c.lineTo(bx - 1.2, base - 13); c.lineTo(bx + 1.2, base - 13); c.lineTo(bx + 1.6, base - 4); c.fill();
+    c.beginPath(); c.arc(bx, base - 14.2, 1.3, 0, 7); c.fill(); c.lineWidth = 0.7; c.strokeStyle = col; c.beginPath(); c.moveTo(bx - 1, base - 12); c.lineTo(bx - 2.6 * sx - 0.6, base - 17); c.moveTo(bx + 1, base - 12); c.lineTo(bx + 1.6 - sx, base - 17.5); c.stroke(); }
+  for (const [tx, ty, h] of [[-14, base - 38, 11], [14, base - 38, 11], [-8, base - 54, 8], [8, base - 54, 8]]) {   // banners down the tiers
+    c.fillStyle = lit ? '#6a1a10' : '#1c222c'; c.beginPath(); c.moveTo(cx + tx - 1.6, ty); c.lineTo(cx + tx + 1.6, ty); c.lineTo(cx + tx + 1.6, ty + h); c.lineTo(cx + tx, ty + h - 1.6); c.lineTo(cx + tx - 1.6, ty + h); c.fill();
+    if (lit) { c.fillStyle = '#d88a3a'; c.fillRect(cx + tx - 0.5, ty + 2, 1, 1); } }
+  if (lit) for (const sx of [-1, 1]) { const bx = cx + sx * 37; c.fillStyle = col; c.fillRect(bx - 0.6, base - 10, 1.2, 10); c.fillRect(bx - 1.6, base - 11, 3.2, 1.2); flame(c, bx, base - 11, 0.35, T + sx); }
+  c.fillStyle = col;
   c.beginPath(); c.moveTo(cx - 3, y); c.lineTo(cx, y - 14); c.lineTo(cx + 3, y); c.fill();             // spire
   c.beginPath(); c.moveTo(cx - 7, y - 12); c.quadraticCurveTo(cx, y - 7, cx + 7, y - 12); c.lineTo(cx + 5, y - 15); c.lineTo(cx - 5, y - 15); c.closePath(); c.fill();   // brazier bowl
   return y - 15;
@@ -371,7 +481,7 @@ function house(c, x, base, w, h, col, lit, t, o = {}) {
   if (o.chimney) { c.fillRect(x + w * 0.7, base - h - w * 0.5, 2.4, w * 0.35); smoke(c, x + w * 0.7 + 1.2, base - h - w * 0.5, t + x, '#3a2a30', null, 6, 0.4, 0.5); }
   if (lit) for (const [wx, wy] of o.windows || [[0.25, 0.4], [0.62, 0.4]]) { const px = x + w * wx, py = base - h + h * wy; c.fillStyle = '#ffc36a'; c.fillRect(px, py, 2.6, 3.2); glow(c, px + 1.3, py + 1.6, 7, '#ffb050', 0.35); c.fillStyle = col; c.fillRect(px + 1.15, py, 0.3, 3.2); c.fillRect(px, py + 1.45, 2.6, 0.3); }
 }
-function ground(c, seed, y, amp = 3) { fillRidge(c, ridge(seed, y, amp, 0.5, 40), BLACK); }
+function ground(c, seed, y, amp = 3) { const pts = ridge(seed, y, amp, 0.55, 64); fillRidge(c, pts, BLACK); tufts(c, pts, seed + 1, BLACK, 2.2); }
 
 // scenes: draw(c, t, pan) — pan shifts each layer by its depth
 const L = (c, pan, depth, fn) => { c.save(); c.translate(pan * depth, 0); fn(); c.restore(); };
@@ -380,13 +490,12 @@ const SCENES = [
   (c, t, pan) => {
     const HZ = '#6a3450';
     sky(c, [[0, '#07061a'], [0.45, '#1c1840'], [0.78, '#4a2848'], [1, HZ]]); stars(c, 11, 170, 120, t);
-    L(c, pan, 0.05, () => { moon(c, 92, 34, 5, '#f4ead4', 3.5); clouds(c, 3, 70, 5, '#1c1638', 0.6, t, 0.3); });
+    L(c, pan, 0.05, () => { moon(c, 80, 44, 5, '#f4ead4', 3.5); clouds(c, 3, 70, 5, '#1c1638', 0.6, t, 0.3); });
     L(c, pan, 0.15, () => { fillRidge(c, ridge(2, 118, 34, 0.58), mix(HZ, BLACK, 0.45)); fog(c, 124, 10, '#6a3a5a', 0.35); });
     L(c, pan, 0.3, () => { fillRidge(c, ridge(5, 134, 18, 0.55), mix(HZ, BLACK, 0.72)); fog(c, 140, 7, '#8a4a4a', 0.3); });
     L(c, pan, 0.5, () => {
-      glow(c, 60, 150, 80, '#ff6a20', 0.5); c.save(); c.globalCompositeOperation = 'lighter';
-      for (const [w, a] of [[5, 0.16], [9, 0.09], [14, 0.05]]) { const beam = c.createLinearGradient(0, 150, 0, 30); beam.addColorStop(0, `rgba(255,150,70,${a})`); beam.addColorStop(1, 'rgba(255,150,70,0)'); c.fillStyle = beam; c.beginPath(); c.moveTo(60 - w * 0.5, 150); c.lineTo(60 + w * 0.5, 150); c.lineTo(60 + w, 30); c.lineTo(60 - w, 30); c.fill(); }
-      c.restore(); flame(c, 60, 151, 1.9, t); embers(c, 3, 48, 48, 72, 146, t, 120);
+      glow(c, 60, 150, 90, '#ff6a20', 0.5); rays(c, 60, 148, 120, 0.9, 9, '#ffa860', 0.16, t);
+      flame(c, 60, 151, 1.9, t); embers(c, 3, 56, 44, 76, 146, t, 130);
       const lip = [[-10, 156], [10, 152], [30, 148], [44, 147], [52, 151], [60, 153], [68, 151], [76, 147], [90, 148], [110, 152], [130, 156]];
       c.save(); c.fillStyle = '#ffb060'; c.beginPath(); c.moveTo(-10, H); for (const [x, y] of lip) c.lineTo(x, y - 1.1 * Math.max(0, 1 - Math.abs(x - 60) / 34)); c.lineTo(130, H); c.fill(); c.restore();
       c.fillStyle = BLACK; c.beginPath(); c.moveTo(-10, H); for (const [x, y] of lip) c.lineTo(x, y); c.lineTo(130, H); c.fill(); });
@@ -403,16 +512,21 @@ const SCENES = [
     sky(c, [[0, '#1a1e22'], [0.5, '#3a4444'], [0.85, '#76827a'], [1, '#98a092']]);
     L(c, pan, 0.05, () => { clouds(c, 12, 30, 8, '#20262a', 0.7, t, 0.5); clouds(c, 13, 58, 7, '#2a3232', 0.5, t, 0.8); });
     L(c, pan, 0.15, () => { fillRidge(c, ridge(14, 128, 10, 0.5), '#5a6660'); fog(c, 132, 8, '#8a9690', 0.4); });
+    L(c, pan, 0.25, () => { c.fillStyle = '#4a5452'; c.beginPath(); c.moveTo(64, 142); c.lineTo(65, 110); c.lineTo(66.5, 106); c.lineTo(68, 108.5); c.lineTo(69.5, 104.5); c.lineTo(71, 107.5); c.lineTo(72, 142); c.fill();   // a watchtower, its top gone
+      c.fillStyle = '#66706c'; c.fillRect(67.3, 116, 1.3, 2.6); c.fillRect(67.3, 126, 1.3, 2.2); fog(c, 128, 6, '#8a9690', 0.3); });
     L(c, pan, 0.35, () => { fillRidge(c, ridge(15, 140, 8, 0.5), '#3a4440'); fog(c, 146, 6, '#7a8680', 0.35);
       const tree = (x, y, len, a, d) => { if (d === 0) return; const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len; c.lineWidth = d * 0.35; c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke(); tree(x2, y2, len * 0.72, a - 0.45, d - 1); tree(x2, y2, len * 0.68, a + 0.38, d - 1); };
       c.strokeStyle = '#242a28'; c.lineCap = 'round'; tree(104, 150, 11, -Math.PI / 2 - 0.1, 6); });
-    L(c, pan, 0.25, () => { c.fillStyle = '#4a5452'; c.fillRect(66, 108, 5, 24); c.beginPath(); c.moveTo(65, 108); c.lineTo(68, 103); c.lineTo(69, 106); c.lineTo(72, 104); c.lineTo(72, 108); c.fill(); fog(c, 126, 6, '#8a9690', 0.3); });
     L(c, pan, 0.08, () => { c.strokeStyle = '#1a1e20'; c.lineWidth = 0.5; c.lineCap = 'round'; for (let i = 0; i < 5; i++) { const x = ((t * 3 + i * 23) % 150) - 15, y = 44 + i * 5 + Math.sin(t + i) * 2, f = Math.sin(t * 6 + i) * 0.8; c.beginPath(); c.moveTo(x - 2, y - f); c.quadraticCurveTo(x - 1, y - 1, x, y); c.quadraticCurveTo(x + 1, y - 1, x + 2, y - f); c.stroke(); } });
     L(c, pan, 0.6, () => { const col = '#161a1a'; c.fillStyle = col;
-      c.fillRect(2, 82, 9, 74); c.fillRect(0, 80, 13, 3.5); c.fillRect(30, 96, 9, 60); c.fillRect(28, 94, 12, 3);                       // two pillars of a Solmere gate
-      c.beginPath(); c.moveTo(0, 83); c.quadraticCurveTo(12, 62, 30, 74); c.lineTo(29, 78); c.quadraticCurveTo(14, 70, 11, 86); c.fill();   // the broken arch
-      for (const [x, y] of [[4, 79.5], [8, 79], [33, 93.5]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 0.7, y - 1.4); c.lineTo(x + 1.6, y - 0.9); c.lineTo(x + 1.3, y); c.fill(); }   // crows at rest
-      c.beginPath(); c.ellipse(46, 154, 8, 3.4, 0.2, 0, 7); c.fill(); c.beginPath(); c.ellipse(20, 156, 6, 2.6, -0.2, 0, 7); c.fill();       // fallen drums
+      c.fillRect(2, 84, 9, 72); c.fillRect(0.5, 81, 12, 3.5); c.fillRect(1, 151, 11, 5);                                                  // a Solmere gate: the left pillar whole
+      c.beginPath(); c.moveTo(31, 156); c.lineTo(31, 100); c.lineTo(32.5, 97); c.lineTo(34, 99); c.lineTo(36, 95.5); c.lineTo(38, 98.5); c.lineTo(40, 96.8); c.lineTo(40, 156); c.fill(); c.fillRect(30, 151, 11, 5);   // the right, snapped
+      const ax = 21, ay = 81, R = 19, r0 = 10, a0 = Math.PI, a1 = Math.PI * 1.43;                                                       // the arch, broken before its keystone
+      c.beginPath(); c.arc(ax, ay, R, a0, a1); c.lineTo(ax + Math.cos(a1 - 0.05) * (r0 + 6), ay + Math.sin(a1 - 0.05) * (r0 + 6)); c.lineTo(ax + Math.cos(a1 + 0.03) * (r0 + 3), ay + Math.sin(a1 + 0.03) * (r0 + 3)); c.arc(ax, ay, r0, a1 - 0.09, a0, true); c.closePath(); c.fill();
+      c.strokeStyle = '#262c2c'; c.lineWidth = 0.3; for (let k = 1; k < 5; k++) { const a = a0 + k * 0.1 * Math.PI; c.beginPath(); c.moveTo(ax + Math.cos(a) * r0, ay + Math.sin(a) * r0); c.lineTo(ax + Math.cos(a) * R, ay + Math.sin(a) * R); c.stroke(); }
+      c.strokeStyle = col; c.lineWidth = 0.35; for (const [vx, vl] of [[7, 9], [12.5, 14], [16, 6]]) { const vy = ay - Math.sqrt(Math.max(0, r0 * r0 - (vx - ax) * (vx - ax))) + 0.5, sw = Math.sin(t * 0.9 + vx) * 0.8; c.beginPath(); c.moveTo(vx, vy); c.quadraticCurveTo(vx + sw * 0.4, vy + vl * 0.5, vx + sw, vy + vl); c.stroke(); }   // ivy hanging from the soffit
+      for (const [x, y] of [[4, 80.5], [8, 80], [34.6, 95.1]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x + 0.7, y - 1.4); c.lineTo(x + 1.6, y - 0.9); c.lineTo(x + 1.3, y); c.fill(); }   // crows at rest
+      for (const [x, y, w, h, a] of [[45, 154, 6, 3.6, 0.25], [52, 155.5, 4, 2.6, -0.4], [17, 154.5, 5, 3, -0.15]]) { c.save(); c.translate(x, y); c.rotate(a); c.fillRect(-w / 2, -h / 2, w, h); c.restore(); }   // fallen voussoirs
       c.save(); c.translate(98, 156); c.fillStyle = col;                                                   // a Solmere emperor, headless, his sword broken, on a cracked plinth
       c.fillRect(-7, -5, 14, 5); c.fillRect(-5.5, -8, 11, 3);                                              // the plinth
       c.beginPath(); c.moveTo(-3.6, -8); c.lineTo(-3, -22); c.lineTo(-4.6, -30); c.lineTo(-2, -33); c.lineTo(2, -33); c.lineTo(4.4, -30); c.lineTo(3, -22); c.lineTo(3.6, -8); c.closePath(); c.fill();   // robed body
@@ -421,11 +535,23 @@ const SCENES = [
       c.beginPath(); c.arc(-12, -2.4, 2.6, 0, Math.PI * 2); c.fill(); c.beginPath(); c.moveTo(-14.6, -2.6); c.lineTo(-15.8, -1.8); c.lineTo(-14.4, -1.4); c.fill();   // his head, in the grass
       c.strokeStyle = '#5a6660'; c.lineWidth = 0.3; c.beginPath(); c.moveTo(-1, -26); c.lineTo(0.6, -20); c.lineTo(-0.4, -14); c.stroke(); c.restore(); });
     L(c, pan, 1, () => { ground(c, 16, GROUND - 4, 3);
-      c.fillStyle = '#1f2222'; c.beginPath(); c.moveTo(55, GROUND - 5); c.lineTo(63, GROUND - 5); c.quadraticCurveTo(90, 200, 70, H); c.lineTo(20, H); c.quadraticCurveTo(52, 200, 55, GROUND - 5); c.fill();
-      c.save(); const cx = 50 + ((t * 0.5) % 5); c.translate(cx, GROUND - 7); c.scale(1.9, 1.9); c.fillStyle = '#0c0b0c';            // the cart on the Wickham road
-      c.fillRect(-3, -3.4, 7, 3); c.beginPath(); c.arc(-1, 0, 1.7, 0, 7); c.fill(); c.fillStyle = '#2a2e2e'; c.beginPath(); c.arc(-1, 0, 0.6, 0, 7); c.fill(); c.fillStyle = '#0c0b0c';
-      c.beginPath(); c.ellipse(7, -3, 2.6, 1.3, 0, 0, 7); c.fill(); c.fillRect(5, -2.5, 0.5, 3); c.fillRect(8.5, -2.5, 0.5, 3); c.beginPath(); c.moveTo(9, -3.6); c.lineTo(11, -5.6); c.lineTo(10.4, -3.1); c.fill(); c.fillRect(4, -2.4, 2, 0.4);
-      hooded(c, 0, -3.3, 5, t, { color: '#0c0b0c' }); c.restore();
+      const rg = c.createLinearGradient(0, GROUND - 5, 0, 212); rg.addColorStop(0, '#4a5450'); rg.addColorStop(0.35, '#262c2a'); rg.addColorStop(1, rgba(BLACK, 0));   // the Wickham road, wet, running into the dark
+      c.fillStyle = rg; c.beginPath(); c.moveTo(56, GROUND - 5); c.lineTo(62, GROUND - 5); c.quadraticCurveTo(84, 188, 78, 212); c.lineTo(22, 212); c.quadraticCurveTo(48, 188, 56, GROUND - 5); c.fill();
+      c.strokeStyle = 'rgba(7,5,8,0.45)'; c.lineWidth = 0.7; c.beginPath(); c.moveTo(58, GROUND - 5); c.quadraticCurveTo(54, 186, 40, 210); c.moveTo(60, GROUND - 5); c.quadraticCurveTo(68, 186, 62, 210); c.stroke();   // ruts
+      for (const [px, py, pr, i] of [[58, 172, 3.5, 0], [51, 186, 5.5, 1], [64, 194, 4.5, 2]]) { const fade = 1 - (py - 160) / 50, pg = c.createRadialGradient(px, py, 0, px, py, pr);   // puddles holding the sky
+        pg.addColorStop(0, rgba('#9aa69e', 0.35 * fade)); pg.addColorStop(1, rgba('#9aa69e', 0)); c.save(); c.translate(0, py); c.scale(1, 0.3); c.translate(0, -py); c.fillStyle = pg; c.beginPath(); c.arc(px, py, pr, 0, 7); c.fill();
+        const k = (t * 0.9 + i * 0.37) % 1; c.strokeStyle = rgba('#c8d2cc', 0.35 * (1 - k) * fade); c.lineWidth = 0.5; c.beginPath(); c.arc(px + (i - 1) * 1.2, py, pr * 0.7 * k, 0, 7); c.stroke(); c.restore(); }
+      c.save(); const cx = 42 + Math.min(t, 40) * 0.35, k = '#0c0b0c', gait = t * 5; c.translate(cx, GROUND - 7); c.scale(1.9, 1.9);   // a carter and his mule, going nowhere quickly
+      c.fillStyle = k; c.strokeStyle = k; c.lineCap = 'round'; c.lineJoin = 'round';
+      c.fillRect(-4, -3.6, 8, 2.2); c.beginPath(); c.moveTo(-3.6, -3.6); c.quadraticCurveTo(-1, -6.4, 2.8, -3.6); c.fill();                      // the cart, its load under a sheet
+      c.lineWidth = 0.35; c.beginPath(); c.moveTo(3.5, -2.2); c.lineTo(7, -2); c.stroke();                                                         // the shafts
+      c.beginPath(); c.arc(-0.8, -0.2, 1.8, 0, 7); c.stroke(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 - t * 1.2; c.beginPath(); c.moveTo(-0.8, -0.2); c.lineTo(-0.8 + Math.cos(a) * 1.8, -0.2 + Math.sin(a) * 1.8); c.stroke(); }   // a spoked wheel, turning
+      c.lineWidth = 0.45; for (const [lx, ph] of [[6.9, 0], [7.5, Math.PI], [10, Math.PI], [10.6, 0]]) { const sw = Math.sin(gait + ph) * 0.5; c.beginPath(); c.moveTo(lx, -1.8); c.lineTo(lx + sw * 0.5, -0.1); c.lineTo(lx + sw, 1.6); c.stroke(); }
+      c.beginPath(); c.ellipse(8.7, -2.3, 2.5, 1.2, 0, 0, 7); c.fill();                                                                           // the mule: barrel, neck, long head, ears, tail
+      c.beginPath(); c.moveTo(10.2, -3.2); c.lineTo(11.5, -5); c.lineTo(13.5, -3.6); c.lineTo(13.2, -3); c.lineTo(11.9, -3.5); c.lineTo(11, -1.8); c.fill();
+      c.beginPath(); c.moveTo(11.3, -4.8); c.lineTo(10.9, -6.5); c.lineTo(11.8, -5); c.moveTo(11.8, -4.8); c.lineTo(11.9, -6.4); c.lineTo(12.3, -4.7); c.fill();
+      c.lineWidth = 0.3; c.beginPath(); c.moveTo(6.3, -2.7); c.quadraticCurveTo(5.6, -1.7, 5.9, -0.3); c.stroke();
+      hooded(c, -1.4, -3.6, 4.8, t, { color: k }); c.restore();
       c.strokeStyle = 'rgba(200,210,215,0.28)'; c.lineWidth = 0.25; const r = rng(4); for (let i = 0; i < 70; i++) { const x = r() * 140 - 10, y = ((t * 90 + r() * 260) % 260) - 10; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 1.2, y + 5); c.stroke(); } });
   },
   // 5 · Year 301: forges smoking again, a barrow cracked open, the Third Legion standing up
@@ -438,7 +564,7 @@ const SCENES = [
     L(c, pan, 1, () => {
       c.fillStyle = BLACK; c.beginPath(); c.moveTo(-10, H); c.lineTo(-10, 136); c.quadraticCurveTo(24, 118, 58, 150); c.lineTo(130, 156); c.lineTo(130, H); c.fill();
       c.fillRect(20, 128, 3, 16); c.fillRect(33, 128, 3, 16); c.fillRect(18, 125, 20, 3.5);
-      glow(c, 28, 138, 30, '#ff6a20', 0.55); c.fillStyle = '#ff8a3a'; c.fillRect(23, 128.5, 10, 15.5); c.fillStyle = '#ffd08a'; c.fillRect(25, 133, 6, 11);
+      glow(c, 28, 138, 34, '#ff6a20', 0.55); rays(c, 28, 136, 60, 1.1, 7, '#ff9a4a', 0.12, t, -Math.PI / 2 - 0.2); c.fillStyle = '#ff8a3a'; c.fillRect(23, 128.5, 10, 15.5); c.fillStyle = '#ffd08a'; c.fillRect(25, 133, 6, 11);
       skeleton(c, 28, 144, 12, t, { eyes: '#ffb050', color: BLACK });
       ground(c, 24, GROUND, 3);
       c.fillStyle = BLACK; c.beginPath(); c.moveTo(100, GROUND); c.lineTo(100, GROUND - 8); c.quadraticCurveTo(103, GROUND - 11, 106, GROUND - 8); c.lineTo(106, GROUND); c.fill();
@@ -460,7 +586,7 @@ const SCENES = [
       c.fillStyle = col; c.fillRect(94, 118, 6, 1); c.fillRect(94, 118, 0.6, 3); c.fillRect(89, 121, 9, 6); c.fillStyle = '#3a2a24'; c.fillRect(90, 122, 7, 4); c.fillStyle = col; c.beginPath(); c.ellipse(93.5, 124, 2, 1, 0, 0, 7); c.fill(); });
     L(c, pan, 1, () => { ground(c, 41, GROUND, 2);
       c.fillStyle = BLACK; c.beginPath(); c.ellipse(60, GROUND - 3, 7, 2.5, 0, 0, 7); c.fill(); c.fillRect(53, GROUND - 7, 14, 5); c.fillRect(54, GROUND - 19, 1.2, 13); c.fillRect(65, GROUND - 19, 1.2, 13); c.beginPath(); c.moveTo(51, GROUND - 18); c.lineTo(60, GROUND - 24); c.lineTo(69, GROUND - 18); c.fill();
-      c.fillRect(22, GROUND - 26, 1, 26); c.fillRect(22, GROUND - 26, 4, 0.8); c.fillStyle = '#ffd08a'; c.fillRect(24.6, GROUND - 25, 1.6, 2.2); glow(c, 25.4, GROUND - 24, 22, '#ffb050', 0.5);
+      c.fillRect(22, GROUND - 26, 1, 26); c.fillRect(22, GROUND - 26, 4, 0.8); c.fillStyle = '#ffd08a'; c.fillRect(24.6, GROUND - 25, 1.6, 2.2); glow(c, 25.4, GROUND - 24, 26, '#ffb050', 0.5); rays(c, 25.4, GROUND - 24, 30, 1.6, 6, '#ffc070', 0.08, t, Math.PI / 2);
       hero(c, 'rogue', 36, GROUND + 1, 21, t, '#ffb060'); hero(c, 'knight', 84, GROUND + 1, 23, t, '#ffb060'); hero(c, 'mage', 99, GROUND + 1, 22, t, '#ffb060');
       embers(c, 44, 10, 0, 120, GROUND - 10, t, 50, '#ffd08a'); });
   },
@@ -474,7 +600,7 @@ function empire(c, t, pan, alive) {
   L(c, pan, 0.35, () => {
     const col = alive ? '#240806' : '#141a22'; c.fillStyle = col; c.fillRect(-20, 146, W + 40, 30); for (let x = -18; x < W + 20; x += 4) c.fillRect(x, 144, 2, 2);   // the city wall
     const top = throne(c, 60, 150, col, alive ? true : false, t);
-    if (alive) { flame(c, 60, top + 3, 1.25, t); embers(c, 5, 22, 48, 72, top, t, 60, '#ffb050', 1); }
+    if (alive) { rays(c, 60, top + 1, 90, 2.4, 12, '#ffb060', 0.12, t, -Math.PI / 2); flame(c, 60, top + 3, 1.25, t); embers(c, 5, 22, 48, 72, top, t, 60, '#ffb050', 1); }
     else { smoke(c, 60, top + 2, t * 0.5, '#8a96a4', null, 6, 0.3, 0.6); }
     for (const [x, h] of [[12, 38], [22, 30], [98, 34], [108, 40]]) { chimney(c, x, 152, h, 2.6, col);
       if (alive) { smoke(c, x, 152 - h, t + x, '#1a0806', '#ff6a20', 10, 0.5, 1.1); glow(c, x, 152 - h + 2, 6, '#ff7a2a', 0.5); } }
@@ -492,10 +618,15 @@ function empire(c, t, pan, alive) {
 }
 
 // ── finishing: grain and vignette over every frame ────────────────────────────
+const tex = document.createElement('canvas'); tex.width = tex.height = 256;       // a painted surface: low, soft mottling
+{ const small = document.createElement('canvas'); small.width = small.height = 24; const g = small.getContext('2d'), d = g.createImageData(24, 24), r = rng(99);
+  for (let i = 0; i < d.data.length; i += 4) { const v = 96 + r() * 64; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0);
+  const tg = tex.getContext('2d'); tg.imageSmoothingEnabled = true; tg.drawImage(small, 0, 0, 256, 256); }
+const GRADE = [['#ffcf9a', '#3a4a7a'], ['#ffb070', '#2a0a14'], ['#b8c8ff', '#0a1020'], ['#c8d8c0', '#1a2226'], ['#ff9a70', '#1a0a24'], ['#ffc890', '#1a1440']];
 const grain = document.createElement('canvas'); grain.width = grain.height = 160;
 { const g = grain.getContext('2d'), d = g.createImageData(160, 160); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 22; } g.putImageData(d, 0, 0); }
 function paint(cv, i, t, text = true) {
-  const c = cv.getContext('2d'), k = cv.width / W;
+  const c = cv.getContext('2d'), k = cv.width / W; T = t;
   c.setTransform(k, 0, 0, k, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
   const push = 1 + Math.min(1, t / 14) * 0.045, pan = (Math.min(1, t / 14) - 0.5) * 5;
   c.fillStyle = BLACK; c.fillRect(0, 0, W, H);
@@ -503,43 +634,140 @@ function paint(cv, i, t, text = true) {
   SCENES[i](c, t, pan); c.restore();
   c.fillStyle = BLACK; c.fillRect(0, H - LIFT - 8, W, LIFT + 8);                    // the lifted scene's lower edge: solid ground
   if (text) { const g = c.createLinearGradient(0, GROUND - LIFT - 4, 0, H); g.addColorStop(0, 'rgba(7,5,8,0)'); g.addColorStop(0.25, 'rgba(7,5,8,0.7)'); g.addColorStop(1, 'rgba(7,5,8,0.95)'); c.fillStyle = g; c.fillRect(0, GROUND - LIFT - 4, W, H); }
+  c.save(); c.globalCompositeOperation = 'soft-light'; const [gt, gb] = GRADE[i] || GRADE[5], gg = c.createLinearGradient(0, 0, 0, H); gg.addColorStop(0, rgba(gt, 0.45)); gg.addColorStop(0.7, rgba(gb, 0.4)); gg.addColorStop(1, rgba(gb, 0)); c.fillStyle = gg; c.fillRect(0, 0, W, H);
+  c.globalAlpha = 0.5; c.drawImage(tex, 0, 0, W, H); c.restore();
   const v = c.createRadialGradient(W / 2, H * 0.45, H * 0.25, W / 2, H * 0.5, H * 0.75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)'); c.fillStyle = v; c.fillRect(0, 0, W, H);
   c.setTransform(1, 0, 0, 1, 0, 0); const ox = (Math.random() * 160) | 0, oy = (Math.random() * 160) | 0; c.fillStyle = c.createPattern(grain, 'repeat'); c.save(); c.translate(-ox, -oy); c.fillRect(ox, oy, cv.width, cv.height); c.restore();
 }
 
-// ── the score: hurdy-gurdy drone and a plucked tune (Karplus-Strong), per card ──
+// ── the score: haunting synth in D minor, one evolving cue per card (music critique) ──
+// All live WebAudio: detuned-saw pads through a breathing low-pass, a formant choir, FM bells, a glass
+// arpeggio through a dark echo, a heartbeat, wind and rain, a riser and a gong, into a 6 s hall. Each
+// cue sustains and moves (chords change, figures repeat) for as long as its card is up; cues crossfade
+// over 1.8 s, except the Fall, which cuts. init(ctx) and pump(h) let a test render cues offline.
 const Sound = (() => {
-  let ac = null, bus, bed = [], on = true;
-  const now = () => ac.currentTime;
-  function init() { if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)(); const master = ac.createGain(); master.gain.value = 0.6; master.connect(ac.destination);
-    const verb = ac.createConvolver(), len = ac.sampleRate * 3.2, ir = ac.createBuffer(2, len, ac.sampleRate);
-    for (let ch = 0; ch < 2; ch++) { const x = ir.getChannelData(ch); for (let i = 0; i < len; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
-    verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.5; verb.connect(wet); wet.connect(master); bus = ac.createGain(); bus.connect(master); bus.connect(verb); }
-  function drone(voices, cutoff, level, fade = 3) {
-    const g = ac.createGain(); g.gain.setValueAtTime(0, now()); g.gain.linearRampToValueAtTime(level, now() + fade);
-    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = cutoff; f.Q.value = 1.3; f.connect(g); g.connect(bus);
-    const vib = ac.createOscillator(), vg = ac.createGain(); vib.frequency.value = 5.2; vg.gain.value = 6; vib.connect(vg); vib.start();
-    const os = voices.map(([fr, det = 0]) => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr; o.detune.value = det; vg.connect(o.detune); o.connect(f); o.start(); return o; }); os.push(vib);
-    const h = { stop(tt = 2) { g.gain.cancelScheduledValues(now()); g.gain.setValueAtTime(g.gain.value, now()); g.gain.linearRampToValueAtTime(0.0001, now() + tt); os.forEach((o) => o.stop(now() + tt + 0.1)); } }; bed.push(h); return h;
+  let ac = null, out, verbIn, echoIn, noise, on = true, cur = null, cueId = null;
+  const mid = (m) => 440 * Math.pow(2, (m - 69) / 12), now = () => ac.currentTime;
+  function init(ctx) {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    ac = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3; comp.attack.value = 0.03; comp.release.value = 0.5; comp.connect(ac.destination);
+    out = ac.createGain(); out.gain.value = on ? 0.9 : 0; out.connect(comp);
+    // a long, dark hall: decaying noise that loses its top end as it tails off
+    const len = ac.sampleRate * 6, ir = ac.createBuffer(2, len, ac.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const x = ir.getChannelData(ch); let y = 0; for (let i = 0; i < len; i++) { const k = i / len; y += (0.12 + 0.8 * (1 - k)) * (Math.random() * 2 - 1 - y); x[i] = y * Math.pow(1 - k, 2.4); } }
+    const verb = ac.createConvolver(); verb.buffer = ir; const wet = ac.createGain(); wet.gain.value = 0.6; verb.connect(wet); wet.connect(out); verbIn = ac.createGain(); verbIn.connect(verb);
+    // a dotted echo, each repeat duller than the last
+    const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter(); d.delayTime.value = 0.48; fb.gain.value = 0.45; lp.type = 'lowpass'; lp.frequency.value = 2000;
+    echoIn = ac.createGain(); echoIn.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(out); lp.connect(verbIn);
+    noise = ac.createBuffer(1, ac.sampleRate * 4, ac.sampleRate); const nx = noise.getChannelData(0); for (let i = 0; i < nx.length; i++) nx[i] = Math.random() * 2 - 1;
+    if (!ctx) setInterval(() => pump(0.3), 60);
   }
-  function pluck(f, t0 = now(), level = 0.34) { const sr = ac.sampleRate, n = Math.round(sr / f), len = Math.round(sr * 2.4), b = ac.createBuffer(1, len, sr), x = b.getChannelData(0);
-    for (let i = 0; i < n; i++) x[i] = Math.random() * 2 - 1; for (let i = n; i < len; i++) x[i] = 0.497 * (x[i - n] + x[i - n + 1]);
-    const s = ac.createBufferSource(); s.buffer = b; const g = ac.createGain(); g.gain.value = level; s.connect(g); g.connect(bus); s.start(t0); }
-  function drum(t0 = now(), level = 0.4) { const g = ac.createGain(); g.gain.setValueAtTime(level, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7); g.connect(bus); const o = ac.createOscillator(); o.frequency.setValueAtTime(110, t0); o.frequency.exponentialRampToValueAtTime(52, t0 + 0.5); o.connect(g); o.start(t0); o.stop(t0 + 0.8); }
-  const clear = (tt = 2) => { bed.forEach((h) => h.stop(tt)); bed = []; };
-  const D3 = 146.83, hz = (s) => D3 * Math.pow(2, s / 12);
-  const TUNE = { 0: [0, 3, 5, 7, 5, 3], 1: [7, 5, 7, 10, 12, 10, 7], 2: [-12], 3: [0, -2, 0], 4: [3, 1, 0, -2, 0, 1, 3], 5: [0, 4, 7, 12, 11, 12] };
-  function cue(i) { if (!ac || !on) return;
-    if (i === 0) { clear(0.5); drone([[D3 / 2], [D3 * 0.75, 4]], 700, 0.07, 3); }
-    if (i === 1) { drone([[D3], [D3 * 1.5, -3]], 800, 0.04, 2); [0, 1.2, 2.4, 3.6].forEach((d) => drum(now() + d, 0.25)); }
-    if (i === 2) { clear(1.2); drum(now() + 0.6, 0.6); pluck(hz(-12), now() + 1.2, 0.55); return; }
-    if (i === 3) { drone([[D3 / 2]], 600, 0.05, 4); }
-    if (i === 4) { drone([[D3 / 2], [D3 * 0.75, 4]], 650, 0.07, 2); [0, 0.9, 1.8, 2.7, 3.6].forEach((d) => drum(now() + d, 0.3)); }
-    if (i === 5) { clear(2); drone([[D3 / 2], [D3 * 0.75], [hz(4) / 2]], 900, 0.06, 2); }
-    (TUNE[i] || []).forEach((s, k) => pluck(hz(s), now() + 0.3 + k * 0.5)); }
-  function loading() { if (!ac || !on) return; clear(0.3); drone([[D3 / 2]], 550, 0.04, 2); }
-  function tap() { if (!ac || !on) return; drum(now(), 0.18); }
-  return { init, cue, loading, tap, toggle() { on = !on; if (!on && ac) clear(0.4); return on; } };
+  // a scene: three buses (dry, hall, echo) that fade in and out together
+  function scene(fadeIn) {
+    const t = now(), s = { t0: t, srcs: [], seqs: [], buses: [], alive: true };
+    for (const dest of [out, verbIn, echoIn]) { const b = ac.createGain(); b.gain.setValueAtTime(0.0001, t); b.gain.exponentialRampToValueAtTime(1, t + fadeIn); b.connect(dest); s.buses.push(b); }
+    return s;
+  }
+  function end(s, tt) {
+    if (!s) return; s.alive = false; const t = now();
+    for (const b of s.buses) { if (b.gain.cancelAndHoldAtTime) b.gain.cancelAndHoldAtTime(t); else { b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(Math.max(0.0001, b.gain.value), t); } b.gain.exponentialRampToValueAtTime(0.0001, t + tt); }
+    s.srcs.forEach((o) => o.stop(t + tt + 0.2));
+  }
+  function route(s, node, dry, hall, echo = 0) { [dry, hall, echo].forEach((a, k) => { if (!a) return; const g = ac.createGain(); g.gain.value = a; node.connect(g); g.connect(s.buses[k]); }); }
+  // sustained sources are tracked on the scene and stopped with it; one-shots stop themselves
+  function osc(s, type, f, t, stopAt) { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.start(t); if (stopAt) o.stop(stopAt); else s.srcs.push(o); return o; }
+  function hiss(s, t, stopAt) { const b = ac.createBufferSource(); b.buffer = noise; b.loop = true; b.start(t, Math.random() * 3); if (stopAt) b.stop(stopAt); else s.srcs.push(b); return b; }
+  function env(t, level, atk, dur) { const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + atk); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); return g; }
+  function filt(type, f, q = 0.8) { const x = ac.createBiquadFilter(); x.type = type; x.frequency.value = f; x.Q.value = q; return x; }
+  const every = (s, start, step, fn) => s.seqs.push({ at: s.t0 + start, n: 0, step, fn });
+
+  // pad: three detuned saws a note through a low-pass that breathes; glides chord to chord
+  function pad(s, chords, o) {
+    const t = s.t0 + (o.delay || 0), f = filt('lowpass', o.cut, o.q ?? 0.9);
+    if (o.sweep) { f.frequency.setValueAtTime(o.cut, t); f.frequency.exponentialRampToValueAtTime(o.sweep, t + o.sweepT); }
+    const lfo = osc(s, 'sine', o.lfo ?? 0.07, t), lg = ac.createGain(); lg.gain.value = o.cut * (o.depth ?? 0.4); lfo.connect(lg); lg.connect(f.frequency);
+    const n = chords[0].length * 3, g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(o.level / Math.sqrt(n), t + (o.attack ?? 2.5)); f.connect(g); route(s, g, 1, o.hall ?? 0.7);
+    const vs = chords[0].map((m) => [-1, 0, 1].map((k) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = k * (o.detune ?? 8); x.connect(f); return x; }));
+    if (chords.length > 1) every(s, (o.delay || 0) + o.period, o.period, (tt, i) => { const ch = chords[(i + 1) % chords.length]; vs.forEach((v, j) => v.forEach((x) => x.frequency.setTargetAtTime(mid(ch[j]), tt, 0.4))); });
+  }
+  function sub(s, m, level) { const t = s.t0, g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + 3); osc(s, 'sine', mid(m), t).connect(g); route(s, g, 1, 0); }
+  // choir: saws through vowel formants, with vibrato and a slow breath
+  const VOWEL = { ah: [[730, 1], [1090, 0.5], [2440, 0.2]], oo: [[300, 1], [870, 0.35], [2240, 0.1]] };
+  function choir(s, notes, vowel, level, attack = 3.5) {
+    const t = s.t0, g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + attack); route(s, g, 0.45, 1.3);
+    const br = osc(s, 'sine', 0.11, t), bg = ac.createGain(); bg.gain.value = level * 0.45; br.connect(bg); bg.connect(g.gain);
+    const forms = VOWEL[vowel].map(([fr, a]) => { const bp = filt('bandpass', fr, 8), ga = ac.createGain(); ga.gain.value = a * 4; bp.connect(ga); ga.connect(g); return bp; });
+    notes.forEach((m, i) => { const vib = osc(s, 'sine', 4.4 + i * 0.6, t), vg = ac.createGain(); vg.gain.value = 10; vib.connect(vg);
+      [-7, 7].forEach((det) => { const x = osc(s, 'sawtooth', mid(m), t); x.detune.value = det; vg.connect(x.detune); forms.forEach((bp) => x.connect(bp)); }); });
+  }
+  // bell: two-operator FM, bright at the strike and dulling as it rings
+  function bell(s, m, t, level, dur = 5, ratio = 3.5) {
+    const f = mid(m), car = osc(s, 'sine', f, t, t + dur), mod = osc(s, 'sine', f * ratio, t, t + dur), mg = ac.createGain();
+    mg.gain.setValueAtTime(f * 2.4, t); mg.gain.exponentialRampToValueAtTime(f * 0.04, t + dur * 0.7); mod.connect(mg); mg.connect(car.frequency);
+    const g = env(t, level, 0.004, dur); car.connect(g); route(s, g, 0.6, 1, 0.3);
+  }
+  // glass: a sine and a quiet octave, short, fed hard into the echo
+  function glass(s, m, t, level) { const g = env(t, level, 0.008, 2.4); osc(s, 'sine', mid(m), t, t + 2.5).connect(g); const g2 = env(t, level * 0.3, 0.004, 0.9); osc(s, 'triangle', mid(m + 12), t, t + 1).connect(g2); g2.connect(g); route(s, g, 0.5, 0.9, 0.7); }
+  const arp = (s, notes, step, level, start = 1) => every(s, start, step, (tt, i) => glass(s, notes[i % notes.length], tt, level * (i % notes.length ? 1 : 1.3)));
+  // heartbeat: lub-dub, a pitch-dropping thump with enough overtone to be felt on a phone
+  function thump(s, t, level) { const o = osc(s, 'triangle', 90, t, t + 0.5); o.frequency.exponentialRampToValueAtTime(42, t + 0.3); const g = env(t, level, 0.005, 0.45); o.connect(g); route(s, g, 1, 0.25); }
+  const pulse = (s, step, level, start = 0.5) => every(s, start, step, (tt) => { thump(s, tt, level); thump(s, tt + 0.21, level * 0.55); });
+  // wind (or rain, high and steady): looped noise through a band-pass that wanders
+  function wind(s, level, centre, q = 1.2, rate = 0.09) {
+    const t = s.t0, bp = filt('bandpass', centre, q), g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + 3);
+    const w = osc(s, 'sine', rate, t), wg = ac.createGain(); wg.gain.value = centre * 0.45; w.connect(wg); wg.connect(bp.frequency);
+    hiss(s, t).connect(bp); bp.connect(g); route(s, g, 1, 0.5);
+  }
+  function crackle(s, level) { every(s, 0.3, 0.2, (tt) => { if (Math.random() < 0.45) return; const b = hiss(s, tt, tt + 0.03), hp = filt('highpass', 1600 + Math.random() * 2000), g = env(tt, level * (0.4 + Math.random()), 0.002, 0.025); b.connect(hp); hp.connect(g); route(s, g, 1, 0.3); }); }
+  // riser: noise and a gliding tone climbing together for `dur` seconds
+  function riser(s, start, dur, level) {
+    const t = s.t0 + start, bp = filt('bandpass', 250, 3), g = ac.createGain(); bp.frequency.exponentialRampToValueAtTime(3500, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + dur); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.4);
+    hiss(s, t, t + dur + 0.5).connect(bp); const o = osc(s, 'sawtooth', mid(38), t, t + dur + 0.5); o.frequency.exponentialRampToValueAtTime(mid(62), t + dur); const og = ac.createGain(); og.gain.value = 0.25; o.connect(og); og.connect(bp);
+    bp.connect(g); route(s, g, 0.8, 0.9);
+  }
+  // gong: inharmonic FM on a low A, a sub that drops away under it, and a thud of noise
+  function gong(s, t, level) {
+    const car = osc(s, 'sine', 55, t, t + 10), mod = osc(s, 'sine', 55 * 1.41, t, t + 10), mg = ac.createGain(); mg.gain.setValueAtTime(260, t); mg.gain.exponentialRampToValueAtTime(8, t + 7); mod.connect(mg); mg.connect(car.frequency);
+    const g = env(t, level, 0.01, 9.5); car.connect(g); route(s, g, 0.9, 1.1);
+    const sb = osc(s, 'sine', 90, t, t + 3), sg = env(t, level * 0.9, 0.01, 2.8); sb.frequency.exponentialRampToValueAtTime(26, t + 2.5); sb.connect(sg); route(s, sg, 1, 0.2);
+    const nb = hiss(s, t, t + 0.6), lp = filt('lowpass', 400), ng = env(t, level * 0.5, 0.003, 0.5); nb.connect(lp); lp.connect(ng); route(s, ng, 1, 0.8);
+  }
+  const bells = (s, start, step, notes, level, ratio) => every(s, start, step, (tt, i) => bell(s, notes[i % notes.length], tt, level, 5.5, ratio));
+
+  const CUES = {
+    // loading: a low D and an open fifth in the wind, a far bell now and then
+    load: (s) => { pad(s, [[38, 45, 50]], { cut: 480, level: 0.16, attack: 3 }); wind(s, 0.05, 350); bells(s, 3, 7.5, [62, 57], 0.03, 2.76); },
+    // the Kindling: awe. D minor walking down to Bb and G minor; a slow glass figure, a bell, the fire
+    0: (s) => { pad(s, [[38, 45, 53, 57, 62], [34, 46, 53, 58, 62], [31, 43, 50, 58, 62], [38, 45, 53, 57, 62]], { cut: 900, level: 0.2, period: 5.5 });
+      sub(s, 26, 0.07); choir(s, [62, 69], 'oo', 0.05, 4); arp(s, [74, 77, 81, 76, 74, 72], 0.85, 0.05, 1.2); bells(s, 0.4, 6.8, [62, 69], 0.05); crackle(s, 0.07); },
+    // the Empire: majesty with a pulse under it. Bb, G minor, Eb; the heartbeat is the legion's step
+    1: (s) => { pad(s, [[34, 46, 53, 58, 62], [31, 43, 50, 58, 62], [39, 46, 51, 55, 63], [34, 46, 53, 58, 62]], { cut: 1200, level: 0.22, period: 4.8 });
+      sub(s, 34, 0.07); choir(s, [58, 65], 'ah', 0.055, 3); pulse(s, 0.8, 0.3); arp(s, [70, 74, 77, 82, 77, 74], 0.42, 0.03, 1.6); },
+    // the Fall: the cut. A gong and a sub dropping out, then a cold D / Eb cluster, wind, lonely glass
+    2: (s) => { gong(s, s.t0 + 0.05, 0.5); pad(s, [[50, 51, 57]], { cut: 450, depth: 0.3, level: 0.14, attack: 4, delay: 2.5, detune: 5 });
+      wind(s, 0.06, 500, 1.5, 0.06); every(s, 4, 2.9, (tt, i) => glass(s, [74, 75, 69, 74, 63][i % 5], tt, 0.04)); },
+    // the Long Dim: a thin A minor that wavers, rain, a sparse hollow bell
+    3: (s) => { pad(s, [[45, 57, 60, 64], [41, 57, 60, 64], [45, 57, 62, 65], [40, 55, 59, 64]], { cut: 650, level: 0.16, period: 7, detune: 13, lfo: 0.05 });
+      wind(s, 0.035, 5200, 0.6, 0.04); wind(s, 0.04, 380, 1.2, 0.07); bells(s, 1, 3.2, [69, 72, 76, 64, 67], 0.04, 2.76); },
+    // Now: dread building. Phrygian D to Eb, the filter opening, the pulse quicker, a half-step figure, a riser
+    4: (s) => { pad(s, [[38, 45, 48, 51], [39, 46, 51, 55]], { cut: 350, sweep: 2600, sweepT: 10, level: 0.22, period: 4 });
+      sub(s, 26, 0.08); choir(s, [62, 63], 'ah', 0.05, 3); pulse(s, 0.62, 0.34, 0.3); arp(s, [74, 75, 74, 69, 70, 69], 0.31, 0.028, 2); riser(s, 1, 8.5, 0.15); },
+    // Thornwick: the release. D major, warm, G and B minor and A, the glass figure turned major, bells
+    5: (s) => { pad(s, [[38, 45, 54, 57, 62], [38, 47, 55, 59, 62], [35, 47, 54, 59, 62], [33, 45, 52, 57, 61]], { cut: 1300, level: 0.2, period: 5 });
+      choir(s, [66, 69], 'ah', 0.045, 3); arp(s, [74, 78, 81, 86, 81, 78], 0.6, 0.035, 1.5); bells(s, 0.3, 5, [74, 81], 0.05); },
+  };
+  function pump(h) { if (!cur || !cur.alive) return; const lim = now() + h; for (const q of cur.seqs) while (q.at < lim) { q.fn(q.at, q.n++); q.at += q.step; } }
+  function play(id, fade) { if (!ac || id === cueId) return; end(cur, fade); cur = scene(fade); cueId = id; CUES[id](cur); pump(0.3); }
+  function tap() { if (!ac) return; const t = now(), b = ac.createBufferSource(); b.buffer = noise; const bp = filt('bandpass', 900, 2); bp.frequency.exponentialRampToValueAtTime(180, t + 0.7); const g = env(t, 0.05, 0.08, 0.8); b.connect(bp); bp.connect(g); g.connect(out); g.connect(verbIn); b.start(t, Math.random() * 3); b.stop(t + 0.9); }
+  return {
+    init, pump, tap,
+    cue: (i) => play(i, i === 2 ? 0.35 : 1.8),
+    loading: () => play('load', 1.2),
+    title: () => play(5, 1.8),                     // the title keeps Thornwick's cue (or picks it up after a skip)
+    toggle() { on = !on; if (ac) out.gain.setTargetAtTime(on ? 0.9 : 0, now(), 0.15); return on; },
+  };
 })();
 
 // ── the player ───────────────────────────────────────────────────────────────
@@ -562,12 +790,13 @@ function showCard(i) {
   state = 'card'; card = i; sceneIx = i; t0 = performance.now(); showText = true; show('card'); revealed = false;
   $('cardAge').textContent = CARDS[i].age; $('cardWhen').textContent = CARDS[i].when;
   const say = $('cardSay'); say.textContent = '';
-  CARDS[i].say.forEach((line, k) => { const s = document.createElement('span'); s.textContent = line + ' '; if (k === CARDS[i].say.length - 1) s.className = 'last'; say.append(s); setTimeout(() => s.classList.add('in'), 500 + k * 1300); });
-  setTimeout(() => { if (card === i) revealed = true; }, 500 + CARDS[i].say.length * 1300);
+  const lines = [[CARDS[i].hook, 'hook'], ...CARDS[i].body.map((b) => [b, '']), [CARDS[i].lead, 'last']];
+  lines.forEach(([line, cls], k) => { const sp = document.createElement('span'); sp.textContent = line + ' '; if (cls) sp.className = cls; say.append(sp); setTimeout(() => sp.classList.add('in'), 500 + k * 1500); });
+  setTimeout(() => { if (card === i) revealed = true; }, 500 + lines.length * 1500);
   $('pips').innerHTML = CARDS.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('');
   Sound.cue(i);
 }
-function showTitle() { state = 'title'; sceneIx = 5; t0 = performance.now() - 7000; show('title'); }
+function showTitle() { state = 'title'; sceneIx = 5; t0 = performance.now() - 7000; show('title'); Sound.title(); }
 function next() {
   if (state === 'splash') { loading(); return; }
   if (state === 'loaded') { startIntro(); return; }
@@ -591,8 +820,8 @@ for (const cv of document.querySelectorAll('#frames canvas')) { cv.width = 360; 
 $('script').innerHTML = '';
 CARDS.forEach((c, i) => { const row = document.createElement('div'); row.className = 'row';
   const h = document.createElement('h4'); h.textContent = c.age; const sm = document.createElement('small'); sm.textContent = c.when; h.append(sm);
-  const old = document.createElement('div'); old.className = 'old'; const l1 = document.createElement('span'); l1.className = 'lbl'; l1.textContent = 'Revision 1'; old.append(l1, c.old);
-  const nw = document.createElement('div'); nw.className = 'new'; const l2 = document.createElement('span'); l2.className = 'lbl'; l2.textContent = 'Revision 2'; nw.append(l2, c.say.join(' '));
+  const old = document.createElement('div'); old.className = 'old'; const l1 = document.createElement('span'); l1.className = 'lbl'; l1.textContent = 'Revision 2'; old.append(l1, c.old);
+  const nw = document.createElement('div'); nw.className = 'new'; const l2 = document.createElement('span'); l2.className = 'lbl'; l2.textContent = 'Revision 3'; nw.append(l2, [c.hook, ...c.body, c.lead].join(' '));
   const why = document.createElement('div'); why.className = 'why'; why.textContent = c.why; row.append(h, old, nw, why); $('script').append(row); });
 for (const [a, b] of TIPS) { const li = document.createElement('li'); li.textContent = a; if (b) { const s = document.createElement('small'); s.textContent = b; li.append(s); } else { const s = document.createElement('small'); s.textContent = 'One-liner'; li.append(s); } $('tips').append(li); }
 sizeStage(); show('title'); state = 'idle'; t0 = performance.now() - 7000; requestAnimationFrame(frame);
