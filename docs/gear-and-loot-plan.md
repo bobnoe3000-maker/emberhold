@@ -17,6 +17,8 @@ from the original plan as follows:
   the GDD numbers, so the room-level balance still holds:
   - at-level rooms cost 21–31 % HP per wave;
   - a room three levels above you defeats you.
+  (2026-09-30: gear now grows twice as fast with item level and the classes that much slower, so
+  gear at your level matters; GDD §7.1.)
 - **Rare ability modifiers work now,** not later. "*X* costs 3 less MP" and "*X* hits
   15 % harder" apply in battle when the wearer's class ability matches.
 - **Full bag:** any drop is salvaged straight into Embers, with a toast. There is no

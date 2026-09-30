@@ -281,6 +281,8 @@ scheduled).
 **Exit test:**
 - Spending and respeccing work, and the numbers match between the sim and the window.
 - The balance harness holds (20–30 % HP per wave at level) with the recommended builds.
+  (Superseded 2026-09-30 by the difficulty contract, GDD §7.1: rooms are no longer held
+  forever. See [difficulty-pass-1.md](./difficulty-pass-1.md).)
 - Stance changes battle behaviour, measurably.
 
 ### 2.5 NPCs: behaviour, random quests and world history
@@ -509,6 +511,8 @@ the balance harness asked for (`tools/balance/roomlv.mjs`):
   it). Standing through one cleared wave forgets the earlier down.
 - **The lull waits for everyone.** The next wave comes when the party is at 50 % *and*
   everyone standing is at 60 % (or 15 s pass), so nobody walks into a wave nearly dead.
+  (Superseded 2026-09-30, GDD §7.1: the lull is a 4 s breath at 1.5× regen and waves rise with
+  a tide. Waiting for everyone made every wave start fresh, so any room could be held forever.)
 - **Formation** (GDD §3.5): foes count the back line as further away (rogue +1 tile, mage
   +2.5), so the front line takes the blows.
 

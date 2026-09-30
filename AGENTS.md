@@ -87,11 +87,16 @@ in the same change that introduces it.
      reviewed and versioned.
    - Names and facts come from [`docs/emberfall-world.md`](docs/emberfall-world.md): change
      canon there first.
-6. **Balance is a contract.** The smoke test gates the design targets:
-   - a solo fighter holds a level-1 room for 10 minutes;
-   - same-level rooms cost 20–30 % HP per wave;
-   - a room three levels above you defeats you (solo);
-   - a same-level party visit leaves nobody Fallen.
+6. **Balance is a contract.** The smoke test gates the design targets (GDD §7.1), for a visit
+   you never walk out of:
+   - a lone level-1 hero beats level-1 foes (3+ waves) but can't farm them (down by wave 12);
+   - from level 4 a same-level room wants company (a lone level-6 hero is down within 2 waves);
+   - the right party (fighter, rogue, cleric) in gear at level holds a same-level room 10+
+     waves at levels 3, 6 and 9, with nobody Fallen in the first five;
+   - a party with no healer is worn down at level 6;
+   - a room three levels up defeats even the right party;
+   - companions add strength: the same wave as a lone hero, and 80 %+ of its XP a minute;
+   - gear matters: gear at level holds a room two up longer than a level-1 kit.
 
    If a change moves numbers, run the room-level harness (`tools/balance/roomlv.mjs`, with
    `--src` pointing at a checkout of the previous commit) and report before/after.

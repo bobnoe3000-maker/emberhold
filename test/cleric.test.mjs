@@ -66,7 +66,7 @@ test('Bless raises the party\'s ATK and DEF for 8 s (level 6)', () => {
   assert.ok(h.buff && h.buff.bless > 7 && Math.abs(h.buff.blessK - 0.15 * (1 + statsFor(c).power)) < 1e-9, JSON.stringify(h.buff));
 });
 test('Turn Undead strikes every Ashbound close by (level 12)', () => {
-  const h = hero(12), c = cleric(12); c.off = ['mend', 'bless']; const sim = inRoom([h, c], 12); const casts = events(sim, 'ability');
+  const h = hero(12), c = cleric(12); c.off = ['mend', 'bless']; const sim = inRoom([h, c], 8); const casts = events(sim, 'ability');   // (a room a pair of 12s outlasts)
   for (let i = 0; i < 20 * 60 && !casts.some((a) => a.name === 'Turn Undead'); i++) sim.tick();
   assert.ok(casts.some((a) => a.name === 'Turn Undead'));
 });

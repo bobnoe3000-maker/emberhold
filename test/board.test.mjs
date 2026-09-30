@@ -139,9 +139,13 @@ test('content/board has the words for every template the sim makes, with canon p
   }
 });
 
-// solo, on the compass alone, no health top-ups: every kind of job, there and back
-for (const [tpl, lv] of [['hold', 1], ['retrieve', 6], ['bounty', 2], ['delve', 8], ['warden', 3]]) test(`the golden path (${tpl}, level ${lv}): take it at the board, the compass leads, back to town, hand it in`, () => {
+// on the compass alone, no health top-ups: every kind of job, there and back. Solo where a lone hero
+// is meant to manage (GDD §7.1); a stairs-down hall two levels up takes company (the tavern's rogue
+// and cleric, hired at the hero's level)
+for (const [tpl, lv, hires] of [['hold', 1, []], ['retrieve', 6, []], ['bounty', 2, []], ['delve', 8, []], ['warden', 3, [1, 3]]]) test(`the golden path (${tpl}, level ${lv}${hires.length ? ', a party of three' : ', solo'}): take it at the board, the compass leads, back to town, hand it in`, () => {
   const j = findJob(lv, tpl), sim = town(lv), ev = events(sim, ['questReward', 'defeat']);
+  for (const idx of hires) push(sim, { type: 'hire', idx });
+  assert.equal(sim.state.party.length, 1 + hires.length);
   sim.state.t = j.day * DAY_S; sim.tick();
   push(sim, { type: 'boardAccept', id: j.id }); assert.equal(sim.state.tracked, j.id);
   let went = 0;

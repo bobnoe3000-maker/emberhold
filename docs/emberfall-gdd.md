@@ -1,6 +1,11 @@
 # Emberfall — Game Design Document
 
-**v1.4 · 2026-09-30 · Plan of record for game design.** v1.4 puts the Lantern Guild's board up
+**v1.5 · 2026-09-30 · Plan of record for game design.** v1.5 rebalances fights (§7.1): the room sets
+the wave, not the party; waves rise with a tide; lulls are a breath, not a full recovery; gear
+carries a real share of your power; companions share XP. A lone hero beats level-1 foes but can't
+farm them, and same-level rooms from level 4 want the right party in gear at your level.
+
+v1.4 puts the Lantern Guild's board up
 (§9): five templates, a new board each in-game day, three jobs held at once.
 
 v1.3 gives every dungeon floor a stair up, one floor at a time, and a site remembers its floors
@@ -61,7 +66,7 @@ progression. Sessions of 3–15 minutes: one quest, a town visit, or a single du
 
 | Loop | Length | Beats |
 |---|---|---|
-| **Room** | 30 s – many min | Enter a room with NPCs → autobattle → wave cleared → lull → next wave (same difficulty) → stay and farm, or walk out to end it (§3). |
+| **Room** | 30 s – many min | Enter a room with NPCs → autobattle → wave cleared → a breath → the next wave, a little tougher (the tide) → walk out to recover, or the room wins (§3, §7.1). |
 | **Quest** | 3–15 min | Town board → pick a mini-quest → travel overland → site (1–5 floors) → objective → return and turn in. |
 | **Growth** | days–weeks | Level up, upgrade gear at the smith, hire or find better companions, raise regional renown → unlock the next act and region → harder enemies → grind again. |
 | **Offline** | hours | Leave the party farming a room you've held; results are computed on return (§12). |
@@ -98,15 +103,17 @@ A level has 6–8 rooms.
   wave spawns at the room's spawn points, away from the party. Waves come from the room's spawn
   table (enemy family, level and size).
 - **The battle continues until the party leaves the room or dies.** There's no victory
-  screen: staying is farming. To stop, walk out through any doorway into a corridor.
+  screen. Each wave of a visit rises with the tide (§3.3), so a visit ends when you walk out
+  through a doorway (corridors restore you) or when the room wins. Farming is going back in.
 - **Enemies are leashed to their room.** They never follow into corridors. When the party
   leaves, the room's survivors fade out and the room resets. It repopulates next time you enter.
 - **Rooms show their threat** before you commit: level, enemy family and a skull rating appear
   on the minimap and over the doorway.
 
 ### 3.3 Room levels and waves (risk vs reward)
-**Every room has a fixed level, and it never changes while you stay.** Wave 40 is as hard as
-wave 1. Difficulty rises only as you **advance deeper**:
+**Every room has a fixed level.** Within one visit the waves rise with the **tide**: each wave is
+6 % tougher (HP and ATK) than the one before, so no room can be held forever (v1.5). Levels rise
+as you **advance deeper**:
 
 - **Deeper rooms are harder.** Rooms are ranked by walking distance from the entrance, and
   every two rooms further in is one level harder. The descent room is always the hardest on
@@ -118,13 +125,15 @@ wave 1. Difficulty rises only as you **advance deeper**:
   So floor 1 runs from level 1 to 4, floor 2 from 4 to 7, and so on. The entrance room is a
   safe sanctuary (level 0).
 - **Enemy stats** = archetype base × (1 + 0.14 × (level − 1)) for HP and DEF, and
-  × (1 + 0.12 × (level − 1)) for ATK. XP and gold per kill scale with the room's level, so
-  deeper rooms pay more.
-- **Wave size depends on the living party:** 2 for a lone hero, 5 for two, 7 for three.
-  Archers and skeleton mages join in rooms of level 2 and up, at most a third of a wave.
-  Every fifth wave an **elite** takes one slot.
-- **The lull is 4 s,** stretched (up to 15 s) while the party is under half HP, so a bad wave
-  is followed by a breather. Fallen companions get back up at 25 % HP when a wave is cleared.
+  × (1 + 0.12 × (level − 1)) for ATK; above level 3, × (1 + 0.05 × (level − 3)) more (the
+  premium for the party and gear a same-level room expects, §7.1); × the tide. XP and gold per
+  kill scale with the room's level, so deeper rooms pay more.
+- **The room sets the wave size, not the party (v1.5):** 2 foes to room level 3, then
+  1 + ⌊level ÷ 2⌋ (3 at 4–5, 4 at 6–7, 5 at 8–9 …), up to 7. Archers and skeleton mages
+  make up to a third of a wave, and at least one in every second wave. Every fifth wave an
+  **elite** takes one slot.
+- **The lull is 4 s,** a breath: regen runs at 1.5× (5× in corridors and towns). Downed
+  companions get back up at 25 % HP when a wave is cleared.
 - **Rooms show their threat** before you commit. Each discovered room's level is on the
   minimap, coloured against your level:
 
@@ -162,9 +171,8 @@ archetype AI: Ashbound mages raise and buff, and Cult necromancers resurrect. Fo
 front (fighter), mid (rogue) and back (mage): foes reach for the front line first, counting
 the rogue 1 tile and the mage 2.5 tiles further away than they are (shipped at M3). The mage
 backs off from anything within 3.2 tiles (melee foes reach 2.8–3). A full party of three
-faces waves of 7 whose foes have +25 % HP, so a party's waves cost about what a solo hero's do.
-The lull between waves counts as *out of battle* for regen (§4), so sustain decides how long a
-party can hold a room.
+faces the same wave a lone hero would (v1.5): companions are added strength. The lull is only a
+breath (§3.3), so healing and sustain decide how long a party can stay.
 
 ### 3.6 Death, resurrection and defeat
 **States:** Healthy → **Downed** (0 HP in battle) → **Fallen** (dead) → resurrected.
@@ -172,7 +180,7 @@ party can hold a room.
 - **Downed:** if the wave is cleared, Downed members rise in the lull at 20 % HP.
 - **Downed → Fallen** happens when a member is downed a **second time in the same room
   visit** — counted in waves back to back: standing through one cleared wave forgets the
-  earlier down, since a room holds for as long as you stay — or when the party **leaves the
+  earlier down — or when the party **leaves the
   room** with them still Downed.
 - **Fallen:**
   - the member follows as a ghost: no fighting, no XP;
@@ -180,8 +188,8 @@ party can hold a room.
     level 5 or lower), at a site **Shrine** (one use each), or with a rare **Phoenix Ember**.
     A level-20 Cleric's *Lifeline* keeps one ally a room visit from going down at all.
 - **The hero** stays Downed, never Fallen, while any companion stands.
-- **The lull** waits until the party is at half HP *and* everyone standing is at 60 % (or
-  15 s pass), so a risen member doesn't walk into the next wave nearly dead.
+- **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
+  everyone was back over 60 %, which let a room be held forever).
 - **Temple:** an in-game day is 24 minutes of play. **Shrine:** with nobody Fallen it
   restores the party instead. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
   Weakened.
@@ -212,7 +220,7 @@ shapes the fight.
 | **DEF** | Defence | Mitigation = DEF ÷ (DEF + 25 + 5 × attacker level). About 30 % at even gear; better armour pushes it up. |
 | **CRIT** | Critical-hit chance % | A crit deals ×1.75 damage. Cap 60 %. |
 | **DODGE** | Dodge chance % | Avoids a hit entirely. Rolled before crit. Cap 50 %. |
-| **HP regen** | HP per second | As listed at level 1, growing in step with max HP. **×5 out of battle** (and in lulls); full heal at shrines and inns. |
+| **HP regen** | HP per second | As listed at level 1, growing in step with max HP. **×5 out of battle** (corridors, the overland, towns), ×1.5 in a room's lulls; full heal at shrines and inns. |
 | **MP regen** | MP per second | Same rules as HP regen. |
 
 Damage per hit = max(1, ATK × power × (1 − mitigation)) × (crit ? 1.75 : 1), unless dodged.
@@ -352,11 +360,42 @@ Both slot in with the same stat block and ability format. No system changes are 
 - **Enemy scaling.** Enemy level = the room's level (§3.3), offset by the region base and the
   site tier (+0 to +3). Stats = archetype base × (1 + 0.14 × (level − 1)) (ATK 0.12).
   *Elite*: ×2.5 HP, ×1.3 ATK. *Boss*: ×8 HP plus a signature mechanic.
-- **The grind gate.** Tuning target: a party at the region's level holds a normal room at
-  its own level indefinitely, with each wave costing about 20–30 % HP that the lull restores.
-  One level under is tough but holds; two under is a gamble; three under falls in minutes. The **renown** needed to
-  unlock the next act roughly matches reaching that region's level cap, so progress means
-  grinding plus gear, not just story.
+- **The grind gate.** Progress needs levels, gear and the right party (§7.1). The **renown**
+  needed to unlock the next act roughly matches reaching that region's level cap, so progress
+  means grinding plus gear, not just story.
+### 7.1 Difficulty: levels, gear and the right party (v1.5)
+
+**The contract** (gated by `smoke-test.mjs`; measurements in
+[difficulty-pass-1.md](./difficulty-pass-1.md)). Every visit here is one you never walk out of:
+
+| Who | Same-level room | Notes |
+|---|---|---|
+| A lone hero, levels 1–3, kit at level | Wins the first 3+ waves, goes down by wave 12 | You beat level-1 foes alone but can't farm them. Walk out to recover and go back in. |
+| A lone hero, level 4+ | Down within 2 waves | Same-level rooms want company. Rooms well below you are for solo. |
+| The right party (tank, damage, healer) in gear at level | Holds 10+ waves, nobody Fallen in the first five | The tide ends the visit eventually. |
+| A party with no healer, level 6+ | Worn down within 5 minutes | Composition matters. |
+| Any party, a room 3 levels up | Defeated | |
+
+**Why companions help:**
+- The wave is the room's, the same for a lone hero and a party of three (it had grown with the
+  party, so each member faced more foes).
+- A kill's XP goes to each living member at 100 % alone, 65 % each for two, 50 % each for three.
+  A party clears faster, so each member earns 80 %+ of a lone hero's XP a minute in the same
+  room, and can take rooms a lone hero can't.
+
+**Why gear matters:**
+- Items grow twice as fast with item level: a + b × ilv + b × (ilv − 1).
+- The classes grow that much less per level themselves. A hero in the class kit at their level
+  has the stats they had before, and one in gear five levels old is visibly behind.
+- An item's stats are re-derived from (base, ilv, rarity) on load, so old loot follows the formula.
+- Measured: the right party at level 6 holds a room two up for 9 waves in Fine gear at level,
+  6 in its level-1 kit.
+
+**Class notes:**
+- A lone mage lasts longest of the damage classes (8–15 waves at level 1): it kites.
+- A lone cleric outlasts everyone (13–21 waves) but earns the least XP a minute.
+- Neither farms forever.
+
 - **Renown** per region is earned from quests and bosses, and unlocks chapter quests, the next
   region's road, better tavern hirelings and the smith's upgrade tiers.
 - **Endless depth.** Post-game, the Undervaults below the Ember Throne keep descending: +1
@@ -662,19 +701,10 @@ Emberfall rename.
 - **Regen** grows with the pool (base rate × max ÷ level-1 max), so a lull restores the same
   share of HP at every level.
 
-**Balance (headless, 5-minute holds, 3–4 dungeon seeds, the hero's level fixed at the start):**
-
-| Matchup | Solo fighter | Party of three |
-|---|---|---|
-| Room at your level | Holds at levels 1–8, 20–30 % HP per wave | Holds, 6–24 % HP per wave |
-| 1 level under | Holds, dips low | — |
-| 2 levels under | Holds, dips low | Holds |
-| 3 levels under | Falls in 1–2 minutes | A coin-flip |
-
-- **Solo, 2 under:** holds on these seeds, but HP dips to 10–20 % and a dip below that ends
-  the run.
-- **Party of three:** at 2 levels under, some runs dip to about 27 %.
-- **Smoke test:** a solo L1 fighter must hold a level-1 room for 10 minutes on two seeds.
+**Balance:** superseded by the difficulty contract in §7.1 (v1.5, 2026-09-30). The old contract
+was "a solo L1 fighter holds a level-1 room for 10 minutes": every room could be farmed forever,
+alone, at any level. The before and after numbers are in
+[difficulty-pass-1.md](./difficulty-pass-1.md).
 
 **Still to come:** loot drops, bosses, stances, ability slots and hazard terrain.
 

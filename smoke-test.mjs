@@ -140,44 +140,62 @@ const lidAt = project(5.5, 5.5, 0), lid = resolveTap(lidAt.sx, lidAt.sy - 10, { 
 console.log('iso tap on a chest lid:', lid.tx === 5 && lid.ty === 5);
 if (snapped.tx !== 5 || snapped.ty !== 5 || lid.tx !== 5 || lid.ty !== 5) isoOk = false;
 
-// Room battle: a solo L1 fighter left alone in a level-1 room holds it (GDD §15 M1 exit test),
-// and rooms deepen: levels rise with walking distance from the entrance and per floor.
-function soloHold(seed, secs) {
+// Room battles: the difficulty contract (GDD §7.1, AGENTS.md rule 6; 2026-09-30). One helper puts a
+// party (recommended builds, class kit at a chosen item level) in a room of a chosen level and lets it
+// autobattle without ever walking out; rooms deepen with distance from the entrance and per floor.
+import { STARTER } from './src/sim/items.js';
+import { makeHero, makeMember } from './src/sim/party.js';
+function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, gear = lv, rarity = 'common', secs = 300 }) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
-  const L = sim.world.level, r = L.rooms.find((q) => sim.world.roomLevels.get(q.id) === 1), p = sim.state.player;
+  sim.state.party = classes.map((c, i) => {
+    const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m);
+    for (const sl of Object.keys(m.gear)) if (STARTER[c][sl]) m.gear[sl] = makeItem(STARTER[c][sl], gear, rarity, { uid: `${i}${sl}` });
+    m.hp = statsFor(m).maxHp; m.mp = undefined; return m;
+  });
+  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom), p = sim.state.player; sim.world.roomLevels.set(r.id, rl);
   let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5;
-  let waves = 0, defeated = false;
-  sim.bus.on('wave', (d) => { if (d.cleared) waves++; }); sim.bus.on('defeat', () => (defeated = true));
+  let waves = 0, defeated = false, fallenEarly = 0, firstWave = 0, xp = 0;
+  sim.bus.on('wave', (d) => { if (d.cleared) waves++; else if (d.wave === 1) firstWave = sim.world.enemies.length; });
+  sim.bus.on('defeat', () => (defeated = true)); sim.bus.on('fallen', () => { if (waves < 5) fallenEarly++; });
+  sim.bus.on('combat', (c) => { if (c.t === 'xp') xp += c.amount; });
   for (let t = 0; t < secs / TICK_DT && !defeated; t++) sim.tick();
-  return { held: !defeated, waves, level: sim.state.party[0].level };
+  return { waves, defeated, fallenEarly, firstWave, xpMin: xp / (sim.state.t / 60), t: Math.round(sim.state.t) };
 }
-const holds = [20260807, 777].map((sd) => soloHold(sd, 600));
-const holdOk = holds.every((h) => h.held && h.waves >= 25);
+const FRC = ['fighter', 'rogue', 'cleric'], show = (v) => `${v.waves}w${v.defeated ? ` down@${v.t}s` : ''}`;
+// 1. a lone level-1 hero beats level-1 foes (3+ waves), but can't farm them: a visit it never leaves ends by wave 12
+const solo1 = [20260807, 777, 4242].map((seed) => roomVisit({ seed, lv: 1, secs: 600 }));
+const solo1Ok = solo1.every((v) => v.waves >= 3 && v.defeated && v.waves <= 12);
+console.log('a lone L1 hero beats L1 foes, and can\'t farm them:', solo1Ok, solo1.map(show).join(', '));
+// 2. from level 4 a same-level room wants company: a lone level-6 hero falls within two waves
+const solo6 = [20260807, 777].map((seed) => roomVisit({ seed, lv: 6, secs: 120 }));
+const solo6Ok = solo6.every((v) => v.defeated && v.waves <= 2);
+console.log('a lone L6 hero needs company at L6:', solo6Ok, solo6.map(show).join(', '));
+// 3. the right party (fighter, rogue, cleric) in gear at level holds a same-level room 10+ waves, nobody Fallen in the first five
+const right = []; for (const seed of [20260807, 777]) for (const lv of [3, 6, 9]) right.push(roomVisit({ seed, classes: FRC, lv }));
+const rightOk = right.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L3/6/9):', rightOk, right.map(show).join(', '));
+// 4. the wrong party (no healer) at level 6 is worn down within five minutes
+const noHeal = [20260807, 777].map((seed) => roomVisit({ seed, classes: ['fighter', 'rogue', 'mage'], lv: 6 }));
+const noHealOk = noHeal.every((v) => v.defeated);
+console.log('a party with no healer is worn down at L6:', noHealOk, noHeal.map(show).join(', '));
+// 5. a room three levels up defeats even the right party
+const up3 = [roomVisit({ classes: FRC, lv: 6, rl: 9 }), roomVisit({ classes: FRC, lv: 9, rl: 12 })];
+const up3Ok = up3.every((v) => v.defeated);
+console.log('a room three levels up defeats the right party:', up3Ok, up3.map(show).join(', '));
+// 6. companions never make a room harder (the wave is the room's) and a party member earns 80 %+ of a lone hero's XP a minute (a room two below, where solo is short-lived too)
+const soloLow = roomVisit({ lv: 6, rl: 4 }), trioLow = roomVisit({ classes: FRC, lv: 6, rl: 4 });
+const compOk = soloLow.firstWave === trioLow.firstWave && trioLow.xpMin >= 0.8 * soloLow.xpMin;
+console.log('companions add strength (same wave, 80 %+ of the XP a minute):', compOk, `wave ${soloLow.firstWave}/${trioLow.firstWave}, xp/min ${Math.round(soloLow.xpMin)} vs ${Math.round(trioLow.xpMin)}`);
+// 7. gear matters: the right party at level 6 in Fine gear at its level holds a room two up longer than in its level-1 kit
+const oldKit = roomVisit({ classes: FRC, lv: 6, rl: 8, gear: 1 }), fine = roomVisit({ classes: FRC, lv: 6, rl: 8, rarity: 'fine' });
+const gearOk2 = fine.waves > oldKit.waves;
+console.log('gear at level holds a room two up longer than a level-1 kit:', gearOk2, `${show(fine)} vs ${show(oldKit)}`);
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && rl.roomLevels.get(rl.level.descentRoom.id) === Math.max(...rlv);
 console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));
-console.log('solo fighter holds a room 10 min:', holdOk, holds.map((h) => `${h.waves} waves L${h.level}`).join(', '));
-
-// M3 (death and resurrection): a same-level room visit (~5 waves) with a party of three never
-// leaves anyone Fallen (development plan §2.10 exit test), on the recommended builds
-function partyVisit(seed, lv, hires) {
-  const t = createSim(seed, undefined, { scene: 'town' }); for (const i of hires) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
-  const sim = createSim(seed, undefined, { scene: 'dungeon' }); sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
-  for (const m of sim.state.party) { m.level = lv; m.attrs = null; autoAllocate(m); m.hp = statsFor(m).maxHp; m.mp = undefined; }
-  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, lv);
-  let best = null, bd = 1e9;
-  for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
-  p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5;
-  let fallen = 0, defeated = false; sim.bus.on('fallen', () => fallen++); sim.bus.on('defeat', () => (defeated = true));
-  for (let i = 0; i < 20 * 100 && !defeated; i++) sim.tick();
-  return fallen || defeated ? 1 : 0;
-}
-const visits = [];
-for (const sd of [20260807, 777, 4242]) for (const lv of [3, 6, 9]) for (const h of [[0, 2], [1, 2]]) visits.push(partyVisit(sd, lv, h));
-const visitsOk = visits.every((v) => v === 0);
-console.log('same-level party visits leave nobody Fallen:', visitsOk, `${visits.length - visits.reduce((a, b) => a + b, 0)}/${visits.length}`);
 
 // Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
 const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;
@@ -247,7 +265,7 @@ const cheatOk = honest.ok && !tLevel.ok && !tItem.ok && !tGold.ok && !tSave.ok &
 console.log('verified progression (honest replays; level / item / gold / save / speed tampering rejected):', cheatOk, honest.ok, tLevel.ok, tItem.ok, tGold.ok, tSave.ok, tSpeed.ok,
   `| ${vclaim.ticks} ticks, L${vh.level} ${vh.xp}xp ${vs.state.counters.gold}g, hash ${honest.hash}`);
 
-const ok = visitsOk && cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
+const ok = cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist
   && detOk && themesOk && isoOk && zmax - zmin >= 5 && Object.keys(mix).length >= 3;
 console.log(ok ? 'SMOKE_OK' : 'SMOKE_FAIL');
 if (!ok) process.exit(1);

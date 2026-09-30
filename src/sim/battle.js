@@ -55,10 +55,19 @@ const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
 const WIND = 1;
-// foes of a full party (three standing) have this much more HP: with the hero moving at its real
-// battle speed (it had been stuck at 2 tiles/s) parties cleared same-level waves for ~17 % HP.
-// Tougher, not harder-hitting: harder hits turned into burst downs and Fallen companions.
-const FULL_PARTY_HP = 1.25;
+// Difficulty (GDD §7.1, 2026-09-30). The ROOM sets the wave, not the party: 2 foes to room level 3,
+// then 1 + level / 2 (3 at 4–5, 4 at 6–7, 5 at 8–9 …), up to 7. (Waves had grown with the party,
+// 2 / 5 / 7 for one / two / three: each member faced more foes the more companions they had, and
+// companions added nothing.) So a lone hero beats level-1 foes, and from level 4 a same-level room
+// wants company. Nothing is free inside a room: every wave of one visit comes TIDE stronger than
+// the last and the lull between them is a short breath, not a full recovery, so a visit ends when
+// you choose to walk out (corridors and towns restore you) or when the room wins. Above level 3
+// foes carry PREMIUM a level more, for the party and the gear a same-level room now expects.
+export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(7, 1 + Math.floor(lvl / 2)));
+export const TIDE = 0.06, PREMIUM = 0.05;
+// a kill's XP to each living member: whole alone, 65 % each for two, 50 % each for three (a party
+// clears faster, so each member earns about what they would alone, and the room they can take is higher)
+const XP_SHARE = [1, 1, 0.65, 0.5];
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
 const ENEMIES = {
   minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
@@ -67,7 +76,7 @@ const ENEMIES = {
   mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 };
 export const ENEMY_KINDS = Object.keys(ENEMIES);
-const LULL = 4, OUT_OF_BATTLE_REGEN = 5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
+const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
@@ -84,10 +93,10 @@ const SEP_XB = 32, SEP_YB = 16, SEP_X = SEP_XB, SEP_Y = SEP_YB;   // personal sp
 const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, -0.6]].map(([a, b]) => {
   const wx = (a / 8 + b / 4) / 2, wy = (b / 4 - a / 8) / 2, l = hypot(wx, wy); return [wx / l, wy / l];   // screen → world unit vector
 });
-// The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
-// is followed by a breather. Companions who fell during a wave get back up at 25 % HP
-// when it's cleared.
-const LULL_MAX = 15, LULL_READY = 0.5, LULL_EACH = 0.6, REVIVE = 0.25, HERO_R = 0.32;   // HERO_R: the hero's collision radius (core.js PLAYER_RADIUS)   // LULL_EACH: nobody walks into a wave nearly dead
+// The lull is 4 s at 1.5× regen, a breath (it had waited, at 5× regen, until everyone was back over
+// 60 %: every wave started fresh and a room could be held forever). Companions who fell during a
+// wave get back up at 25 % HP when it's cleared.
+const REVIVE = 0.25, HERO_R = 0.32;   // HERO_R: the hero's collision radius (core.js PLAYER_RADIUS)
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -97,7 +106,6 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
   const hero = () => state.party[0];
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
-  const partyHp = () => { const q = state.party.filter((m) => !m.fallen); return q.reduce((a, m) => a + (m.down ? 0 : m.hp), 0) / Math.max(1, q.reduce((a, m) => a + statsFor(m).maxHp, 0)); };
   // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
   const combatStats = (m) => {
     const s = statsFor(m), b = m.buff;
@@ -122,13 +130,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // ── spawning ────────────────────────────────────────────────────────────────
   function spawnWave(w) {
     const b = battle, lvl = b.level, scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1);
-    // 2 for a lone hero, 5 for two, 7 for three (companions pull their weight); the room's level sets stats and the mix (archers and mages
-    // from level 2, at most a third of a wave). Every fifth wave an elite takes one slot.
-    const party = state.party.filter(alive).length;
+    // the room's level sets the size, stats and mix (at most a third archers and mages); every fifth
+    // wave an elite takes one slot; each wave of the visit rises with the tide
     const eliteWave = (b.wave + 1) % 5 === 0;
-    const n = Math.max(1, Math.min(7, 3 * party - 1) - (eliteWave ? 1 : 0));
-    const tough = party >= 3 ? FULL_PARTY_HP : 1;        // a full party of three fights as one: its foes take longer to fall
-    const ranged = lvl >= 2 ? Math.floor(n / 3) : 0;
+    const n = Math.max(1, waveSize(lvl) - (eliteWave ? 1 : 0));
+    const tough = (1 + TIDE * b.wave) * (1 + PREMIUM * Math.max(0, lvl - 3));
+    const ranged = Math.max(b.wave % 2, Math.floor(n / 3));   // one in every second wave at least: two melee foes alone never touched a kiting mage
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : rng() < 0.55 ? 'minion' : 'warrior');
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring
@@ -138,7 +145,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
       const elite = eliteWave && i === n - 1;
       const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1));
-      w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * (elite ? 1.3 : 1), def: E.def * scale,
+      w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * tough * (elite ? 1.3 : 1), def: E.def * scale,
         crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: E.speed, bolt: E.bolt,
         xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
     }
@@ -216,7 +223,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   function reward(e) {
     const living = state.party.filter(alive);
-    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp / Math.max(1, living.length)));
+    const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     for (const m of living) gainXp(m, share, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
@@ -574,11 +581,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && room !== battle.room) endBattle(w, 'left');
     if (!battle && inDungeon && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H)) startBattle(w, room);
 
-    // regen (×5 out of battle and during lulls)
-    const calm = !battle || battle.between || (battle.wave === 0 && !w.enemies.length);
+    // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
+    const calm = !battle, lull = !!battle && battle.between;
     for (const m of state.party) {
       if (m.down || m.fallen) continue;
-      const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : 1;
+      const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
       const iron = m.cls === 'fighter' && m.hp < s.maxHp * 0.3 && hasPassive(m) ? 2 : 1;             // Iron Hide
       m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * dt); m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); }
@@ -591,7 +598,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
-          battle.between = true; battle.lull = LULL; battle.waited = 0;
+          battle.between = true; battle.lull = LULL;
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room });
           onDrop('wave', battle.level, p.x, p.y);                // now and then a fallen wave leaves something behind
           for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
@@ -600,9 +607,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
             bus.emit('combat', { t: 'rise', x: m.x, y: m.y, name: m.name });
           }
         }
-        battle.lull -= dt; battle.waited = (battle.waited || 0) + dt;
-        // the next wave comes when the lull is over and the party has caught its breath (or waited long enough)
-        if (battle.lull <= 0 && (battle.wave === 0 || (partyHp() >= LULL_READY && state.party.every((m) => !alive(m) || m.hp >= statsFor(m).maxHp * LULL_EACH)) || battle.waited >= LULL_MAX)) { battle.between = false; spawnWave(w); }
+        battle.lull -= dt;
+        if (battle.lull <= 0) { battle.between = false; spawnWave(w); }   // the room doesn't wait for you
       }
       claims = new Map();
       bodies = [{ x: p.x, y: p.y, src: H }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];
