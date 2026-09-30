@@ -103,7 +103,8 @@ test('3 points a level; spend, Auto, and no points from nowhere', () => {
 test('companions level up onto their build; the main character banks points', () => {
   const sim = inRoom([hero({ autoAttrs: false }), makeMember('c1', 'Wren', 'rogue', 1)]);
   let ups = 0; sim.bus.on('levelUp', () => ups++);
-  ticks(sim, 20 * 240, () => sim.state.party[1].level >= 2 && sim.state.party[0].level >= 2);
+  // (kept on their feet: a level takes 300 XP since the curve tripled, GDD §7 v1.7, more than a level-1 pair lives to earn)
+  for (let i = 0; i < 20 * 900 && !(sim.state.party[1].level >= 2 && sim.state.party[0].level >= 2); i++) { for (const m of sim.state.party) { m.down = false; m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.6); } sim.tick(); }
   assert.ok(ups >= 2);
   assert.equal(pendingPoints(sim.state.party[1]), 0);
   assert.equal(pendingPoints(sim.state.party[0]), 3 * (sim.state.party[0].level - 1));
@@ -301,5 +302,5 @@ test('hero commands replay exactly; forged ones change nothing', () => {
   const claim = s.claim(), v = verifySession(claim, { verified: s.startHash, elapsedMs: claim.ticks * 50 });
   assert.equal(v.ok, true, v.reason);
   assert.equal(sim.state.party[0].cls, 'fighter'); assert.equal(pendingPoints(sim.state.party[0]), 0);
-  assert.equal(xpToNext(1), 100);
+  assert.equal(xpToNext(1), 300);
 });

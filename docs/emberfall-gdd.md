@@ -1,6 +1,9 @@
 # Emberfall — Game Design Document
 
-**v1.6 · 2026-09-30 · Plan of record for game design.** v1.6 caps the tide (§3.3): waves climb to a
+**v1.7 · 2026-09-30 · Plan of record for game design.** v1.7 triples the XP a level takes (§7):
+300 × L^1.6, so each level is three times the play.
+
+v1.6 caps the tide (§3.3): waves climb to a
 top, then fall back and climb again, so a party strong enough for the top can farm a room as long
 as it likes.
 
@@ -400,8 +403,9 @@ Both slot in with the same stat block and ability format. No system changes are 
 
 ## 7. Progression and the grind
 
-- **Levels 1–30** at launch. XP to next level = 100 × L^1.6 (L1→2: 100; L10→11: ~4,000;
-  L29→30: ~22,000). Stats grow per the class tables.
+- **Levels 1–30** at launch. XP to next level = 300 × L^1.6 (L1→2: 300; L10→11: ~12,000;
+  L29→30: ~66,000). (v1.7: tripled from 100 × L^1.6, so each level takes three times the play.)
+  Stats grow per the class tables.
 - **Enemy scaling.** Enemy level = the room's level (§3.3), offset by the region base and the
   site tier (+0 to +3). Stats = archetype base × (1 + 0.14 × (level − 1)) (ATK 0.12).
   *Elite*: ×2.5 HP, ×1.3 ATK. *Boss*: ×8 HP plus a signature mechanic.

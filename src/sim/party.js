@@ -25,7 +25,7 @@ export const CLASSES = {
 export const SHIELD_DEF = 1.1;
 const hasShield = (m) => { const off = m.gear && m.gear.off; return !!off && BASES[off.base] && BASES[off.base].kind === 'shield'; };
 export const MAX_COMPANIONS = 2;
-// XP to the next level = round(100 × L^1.6) (GDD §7), as a fixed integer table: Math.pow is
+// XP to the next level = 3 × round(100 × L^1.6) (GDD §7), from a fixed integer table: Math.pow is
 // engine-approximated and the curve must replay bit-for-bit on the server (detmath.js).
 const XP_TABLE = [
   100, 303, 580, 919, 1313, 1758, 2250, 2786, 3363, 3981,
@@ -35,7 +35,9 @@ const XP_TABLE = [
   38059, 39555, 41072, 42611, 44171, 45752, 47354, 48976, 50619, 52282,
   53965, 55668, 57391, 59133, 60895, 62676, 64476, 66296, 68134, 69991,
 ];
-export const xpToNext = (lv) => XP_TABLE[Math.max(1, Math.min(XP_TABLE.length, lv)) - 1];
+// (GDD §7 v1.7: tripled, 300 × L^1.6; the table stays the base curve, times XP_MULT)
+export const XP_MULT = 3;
+export const xpToNext = (lv) => XP_MULT * XP_TABLE[Math.max(1, Math.min(XP_TABLE.length, lv)) - 1];
 
 // Weakened (a wipe, GDD §3.6): −10 % to max HP / MP, ATK and DEF until an inn rest or 10 minutes
 export const WEAK = 0.9;

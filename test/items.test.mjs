@@ -20,7 +20,7 @@ test('item rolls are a pure function of the stream', () => {
   assert.equal(a.aff.length, 2); assert.ok(a.mod);
 });
 test('XP table matches round(100 × L^1.6)', () => {
-  for (let L = 1; L <= 60; L++) assert.equal(xpToNext(L), Math.round(100 * Math.pow(L, 1.6)));
+  for (let L = 1; L <= 60; L++) assert.equal(xpToNext(L), 3 * Math.round(100 * Math.pow(L, 1.6)));
 });
 
 // Difficulty (GDD §7.1, 2026-09-30): gear grows twice as fast with item level, so old gear falls
