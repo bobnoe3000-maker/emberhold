@@ -113,6 +113,15 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 48
+                    },
+                    "hall": {
+                      "type": "boolean",
+                      "description": "only in a floor's stairs-down hall"
+                    },
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "on this floor or deeper"
                     }
                   }
                 },
@@ -288,6 +297,11 @@
         "gold": {
           "type": "integer",
           "minimum": 0
+        },
+        "item": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "an heirloom (src/sim/items.js HEIRLOOMS), paid into the bag"
         }
       }
     },
@@ -331,6 +345,11 @@
         "pattern": "^[a-z][a-z0-9_]*$"
       },
       "description": "hidden sites its hand-in reveals (sim/sites.js)"
+    },
+    "companion": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "a found companion's chain: offered only while he's with you (party or bench)"
     }
   }
 }

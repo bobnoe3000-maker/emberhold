@@ -1,0 +1,38 @@
+{
+  "id": "brannoc_old_debts",
+  "kind": "companion",
+  "title": "Old Debts",
+  "giver": "brannoc",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "companion": "brannoc",
+  "summary": "Brannoc owes the Redhand's sergeants nothing, and they think he owes them a great deal. He'd like that settled before it follows him out of the Keep.",
+  "steps": [
+    {
+      "id": "keep",
+      "journal": "Put down three Redhand sergeants in Wickham Keep. They lead every fifth wave; Brannoc knows them by their shouting.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "wickham_keep",
+          "count": 3,
+          "label": "Redhand sergeants"
+        }
+      ]
+    }
+  ],
+  "ready": "Talk to Brannoc (tap his card, then Talk).",
+  "done": "Three sergeants who kept his chain oiled. He didn't say anything when they fell. He did stand up straighter.",
+  "rewards": {
+    "xp": 700,
+    "gold": 90
+  },
+  "dialogue": {
+    "file": "brannoc",
+    "offer": "brannoc_debts_offer",
+    "turnin": "brannoc_debts_turnin"
+  }
+}

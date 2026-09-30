@@ -18,7 +18,7 @@ const talkNow = (sim) => { const n = sim.world.npcs[0]; next(sim, n.x + 1, n.y -
 test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round, townsfolk you pass; nowhere else', () => {
   const sim = town(), [m] = sim.world.npcs;
   assert.equal(m.id, 'maudry_fenn');
-  assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'vale').sort(), 'all nine');
+  assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'vale' && !NPCS[k].found).sort(), 'all nine (a found companion waits in his dungeon)');
   for (const n of sim.world.npcs) assert.equal(isWalkable(sim.world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   const again = town().world.npcs; assert.deepEqual(again.map((n) => [n.id, n.x, n.y]), sim.world.npcs.map((n) => [n.id, n.x, n.y]));   // the same spots every time
   for (const region of ['fens', 'reach', 'heights']) assert.equal(town(region).world.npcs.length, 0);

@@ -1,6 +1,9 @@
 # Emberfall — World Summary
 
-**v1.7 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.8 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.8 fills in Brannoc's chain (§5): who he owes, where the paymaster kept the robes' coin, and what
+the wax on the purses looks like.
 
 v1.7 fills in the Hollow Vale for M5 ([m5-plan.md](./m5-plan.md)). It adds the Vale's sites (§3.1),
 Captain Garrow and the Robed Stranger (§8) and the trial-givers (§5), and gives Brannoc a story
@@ -181,6 +184,12 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   legion in the barrows that never deserted anything.
   His chain, *Chains of the Redhand*, ends with the heirloom *The Broken Chain* — *"He kept one
   link."*
+  (v1.8) Its three parts: *Old Debts*, Garrow's sergeants, who kept his chain oiled and say he still
+  owes them; *The Paymaster's Box*, the Company paymaster's two chests in the Tithe Mill (he trusted
+  nobody, himself included), where every purse of the robes' coin is sealed in coal-red wax with no
+  crest in it, only a thumbprint; and *Standing Down*, where he stands five waves in the Old Barrows
+  beside the legion that never deserted anything. He found the key to his chain on Garrow and
+  hadn't used it when you came in. He joins your company there.
 - **Captain Garrow** (v1.7), captain of the Redhand Company. He collects: tolls, tithes, debts,
   and men who owe him. The robed strangers' coin made him careless.
 - **The Robed Stranger** (v1.7), a Cinder Cult acolyte who pays for the digging at the Sunken

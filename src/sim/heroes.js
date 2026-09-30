@@ -13,16 +13,23 @@
 //   hire        { idx }           town        a tavern sellsword → the party, or the bench when full
 //   dismiss     { id }            town        a companion → the bench
 //   swap        { slot, id }      town        a bench member into companion slot 1 or 2
-//   release     { id }            town        a bench member leaves for good
+//   release     { id }            town        a bench member leaves for good (not a found companion)
+// Found companions (FOUND: Brannoc, M5) join in conversation, not at the tavern: the Ink tag
+// `# companion: join` from his own talk (npcs.js), once the boss who held him has fallen. He goes to
+// the party, or the bench when it's full; he can be benched, never released.
 //
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
-import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, cleanName, statsFor, tavernRoster } from './party.js';
+import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
 
 export const BENCH_MAX = 6;
+// the found companions (world doc §5): who they are, and whose fall frees them
+export const FOUND = {
+  brannoc: { name: 'Brannoc', cls: 'fighter', actor: 'hero_brannoc', trait: ['Redhand deserter', 'found in Wickham Keep'], freedBy: 'redhand_captain' },
+};
 export const DAY_S = 1440;              // an in-game day: 24 minutes of play (1 min = 1 h)
 export const WEAK_S = 600;              // Weakened lasts 10 minutes of play
 export const RES_COST = 25, RESPEC_COST = 20, REST_COST = 5, FREE_RES_LEVEL = 5;
@@ -170,11 +177,25 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'release': {
         const j = state.bench.findIndex((m) => m.id === cmd.id);
         if (j < 0) return true;
+        if (FOUND[cmd.id]) return refuse(`${state.bench[j].name} isn't going anywhere`);
         if (!inTown()) return refuse('Only at a town inn');
         state.bench.splice(j, 1); changed(); return true;
       }
     }
     return false;
   }
-  return { command, tick, resurrectCost, respecCost, restCost, roster, raise };
+  /** a found companion joins (npcs.js calls this for `# companion: join` from his own talk): once,
+   * after the boss who held him fell; the party if there's room, else the bench @param {string} id */
+  function join(id) {
+    const F = Object.prototype.hasOwnProperty.call(FOUND, id) ? FOUND[id] : null;
+    if (!F || find(id) || !(state.bosses || {})[F.freedBy]) return;
+    const m = { ...makeMember(id, F.name, F.cls, Math.max(1, state.party[0].level), F.trait), actor: F.actor };
+    if (state.party.length <= MAX_COMPANIONS) state.party.push(m);
+    else if (state.bench.length < BENCH_MAX) { state.bench.push(m); bus.emit('benched', { id: m.id, name: m.name }); }
+    else { refuse('The party and the bench are full'); return; }
+    bus.emit('companionJoined', { id, name: m.name }); changed();
+  }
+  /** is this found companion with you (party or bench)? @param {string} id */
+  const joined = (id) => !!find(id);
+  return { command, tick, resurrectCost, respecCost, restCost, roster, raise, join, joined };
 }

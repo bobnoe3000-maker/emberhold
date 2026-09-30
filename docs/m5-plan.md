@@ -76,6 +76,14 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    2. *The Paymaster's Box* — two chests in the Tithe Mill.
    3. *Standing Down* — hold the Old Barrows' second-floor hall for 5 waves. Reward: the
       heirloom trinket *The Broken Chain*.
+
+   **Done** (2026-09-30): `heroes.js` FOUND and `join` (the Ink tag `# companion: join`, only in his
+   own talk, only once Garrow has fallen; the bench when the party is full; never released);
+   `npcs.js` placeFound (the back of the hall; the hall stays quiet while he waits there, and for the
+   rest of that visit once he's walked out with you); talking from his card (the character sheet's
+   *Talk to Brannoc*); quests with `companion` (his while he's with you) and `rewards.item` (an
+   heirloom into the bag); `content/dialogue/brannoc.ink`; `test/brannoc.test.mjs`. The tavern no
+   longer draws "Brannoc" as a hireling's name. Capture: `docs/brannoc-joins.png`.
 6. **Class trials at level 6.** A trial is offered when anyone in your company of that class is
    level 6+. Done, it teaches the level-6 ability to every member of that class. The level-12
    abilities stay unlocked by level until the M8 trials.

@@ -1,0 +1,41 @@
+{
+  "id": "brannoc_paymasters_box",
+  "kind": "companion",
+  "title": "The Paymaster's Box",
+  "giver": "brannoc",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "companion": "brannoc",
+  "after": [
+    "brannoc_old_debts"
+  ],
+  "summary": "The Company's paymaster kept the robed strangers' coin in the Tithe Mill, in two boxes, because he trusted nobody, including himself. Brannoc wants to see whose seal is on it.",
+  "steps": [
+    {
+      "id": "mill",
+      "journal": "Open two chests in the Tithe Mill.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "tithe_mill",
+          "count": 2,
+          "label": "The paymaster's chests"
+        }
+      ]
+    }
+  ],
+  "ready": "Talk to Brannoc (tap his card, then Talk).",
+  "done": "Coal-red wax on every purse, and no crest in it. Brannoc kept one seal. He turns it over when nobody looks.",
+  "rewards": {
+    "xp": 500,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "brannoc",
+    "offer": "brannoc_box_offer",
+    "turnin": "brannoc_box_turnin"
+  }
+}

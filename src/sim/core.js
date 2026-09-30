@@ -15,7 +15,7 @@ import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle, BOSSES } from './battle.js';
-import { placeNpcs, createTalk, stepFolk, partOf } from './npcs.js';
+import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests } from './quests.js';
 import { createBoard } from './board.js';
 import { createLore } from './lore.js';
@@ -59,7 +59,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const levelSeed = (d) => (baseSeed ^ Math.imul(siteOf(curSite).mix, 0x9e3779b1) ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene, curSite = SITES[site] ? site : 'barrows';
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
-  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0);
+  const buildWorld = (d) => placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
+    isWalkable, (id) => !!clock && ![...clock.party, ...clock.bench].some((m) => m.id === id));   // a found companion waits in his hall until he joins
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -100,10 +101,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
   // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids
   /** @type {any} */ let board = null;
-  const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null), reveal: (id) => reveal(id) });
+  const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null), reveal: (id) => reveal(id),
+    grant: (item) => loot.grant(item, { ilv: state.party[0].level, x: state.player.x, y: state.player.y, src: 'quest' }) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
   const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });   // the Chronicle's fragments (lore.js)
-  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor() }), effect: (id, args) => quests.effect(id, args) });
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
+  function bossVars() { /** @type {Record<string, number>} */ const v = {}; for (const k of Object.keys(BOSSES)) v['boss_' + k] = state.bosses[k] ? 1 : 0; return v; }   // Ink: has he fallen?
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));

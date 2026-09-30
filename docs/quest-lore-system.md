@@ -274,6 +274,12 @@ fragment. Two players find the same truth in different places (world doc §7).
   *The Diggers* (Osric; reach the Keep's second floor, put down Captain Garrow), *An Ember in
   the Fist* (Osric → Sister Ilse; put down the Robed Stranger in the Sunken Chapel).
   `test/act1.test.mjs` plays them in order.
+- **A found companion** (M5.5: Brannoc) is an NPC with `found: { site, depth, boss }` (npcs.js): he
+  waits at the back of that floor's hall until the Ink tag `# companion: join` in his own talk
+  brings him to the party (heroes.js checks his captor has fallen). After that you talk to him from
+  his card, wherever you are, while he's in the party and up. His chain's quests carry
+  `companion` (offered only while he's with you) and his last pays an heirloom (`rewards.item`).
+  Ink reads `joined`, `in_party` and `boss_<id>`.
 
 **Module:** `src/sim/quest/`:
 - `engine.js`: instance state machine, objectives, rewards;

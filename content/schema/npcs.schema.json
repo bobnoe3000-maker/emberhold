@@ -7,7 +7,7 @@
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "name": { "type": "string", "minLength": 1, "maxLength": 32 },
-    "role": { "type": "array", "minItems": 1, "items": { "enum": ["innkeeper", "giver", "smith", "merchant", "priest", "warden", "townsfolk"] } },
+    "role": { "type": "array", "minItems": 1, "items": { "enum": ["innkeeper", "giver", "smith", "merchant", "priest", "warden", "townsfolk", "companion"] } },
     "town": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "region": { "enum": ["vale", "fens", "reach", "heights"] },
     "look": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "baked actor atlas in assets/actors/" },

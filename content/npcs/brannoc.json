@@ -1,0 +1,15 @@
+{
+  "id": "brannoc",
+  "name": "Brannoc",
+  "role": [
+    "companion",
+    "giver"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "hero_brannoc",
+  "portrait": "hero_brannoc",
+  "dialogue": "brannoc",
+  "knot": "brannoc_hub",
+  "note": "A Redhand deserter (world doc §5, v1.7), found chained in Wickham Keep's second-floor hall. Joins once Captain Garrow falls; talk to him from his party card after."
+}

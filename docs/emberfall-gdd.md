@@ -357,6 +357,8 @@ Both slot in with the same stat block and ability format. No system changes are 
   *Greedy*: +5 % gold found, costs more). Price is 50 gold × level, one-time.
 - **Find** story companions in dungeons: rescued captives and quest rewards such as Brannoc
   (fighter) and Wren (rogue). They are free and have a unique trait and a personal quest.
+  (M5) Brannoc waits chained in Wickham Keep's second-floor hall and joins once Captain Garrow has
+  fallen. You talk to a found companion from their party card; they can be benched, never released.
 - **Bench.** Recruited companions wait at the Thornwick inn and can be swapped in any town.
   Active members share XP equally; the bench earns 50 %. The bench holds six; a hire with the
   party full goes straight to it.

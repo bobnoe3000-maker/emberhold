@@ -240,6 +240,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     return u;
   }
 
+  const hallHere = (w, room) => !!w.level.descentRoom && w.level.descentRoom.id === room;
   function startBattle(w, room) {
     const cells = [];
     for (const [k, c] of w.level.cells) if (c.kind === 'floor' && c.room === room) { const [x, y] = k.split(',').map(Number); cells.push([x, y]); }
@@ -692,7 +693,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const inDungeon = w.kind === 'dungeon';
     const room = inDungeon ? roomAt(w, p.x, p.y) : -1;
     if (battle && room !== battle.room) endBattle(w, 'left');
-    if (!battle && inDungeon && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H)) startBattle(w, room);
+    // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
+    // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
+    const waiting = hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]));
+    if (!battle && inDungeon && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);
 
     // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
     const calm = !battle, lull = !!battle && battle.between;

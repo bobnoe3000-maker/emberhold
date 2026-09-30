@@ -22,6 +22,11 @@
 // changes they walk there along a path, and between times they stroll about their spot (walkers,
 // not walls: you pass through them). A town built mid-day places them where the hour has them; their
 // positions are runtime, never saved. Everyone keeps apart on screen, so a tap picks one person.
+//
+// Found companions (`found`: Brannoc, M5) stand in a dungeon until they join: at the back of their
+// site's floor's hall (placeFound), a walker like townsfolk (the hall is a fight room). Once one has
+// joined (heroes.js FOUND), `talk` reaches him wherever you are, from his party card, while he's in the
+// party and up; `# companion: join` in his own talk is the only way in.
 
 import { hypot } from './detmath.js';
 import { DAY_S } from './heroes.js';
@@ -40,6 +45,7 @@ export const NPCS = {
   jory: { region: 'vale', folk: true, spots: [['hub', [-2, -7]], ['temple', [6, 4]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
   nell_tolley: { region: 'vale', folk: true, spots: [['inn', [3, 6]], ['hub', [-7, -5]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
   hedda: { region: 'vale', folk: true, spots: [['hub', [-8, 4]], ['shop', [-2, 7]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
+  brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -82,13 +88,13 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
   if (world.kind !== 'town') return world;
   const taken = [];
   for (const [id, n] of Object.entries(NPCS)) {                  // (the named first: their tiles go solid before townsfolk look for theirs)
-    if (n.region !== world.region || n.folk) continue;
+    if (n.region !== world.region || n.folk || n.found) continue;
     const spot = spotTile(world, n.spots[0], isWalkable, taken);
     if (spot) { world.npcs.push({ id, x: spot.x, y: spot.y, px: spot.x, py: spot.y }); block(world, spot.x, spot.y); taken.push(spot); }
   }
   const folk = [];
   for (const [id, n] of Object.entries(NPCS)) {
-    if (n.region !== world.region || !n.folk) continue;
+    if (n.region !== world.region || !n.folk || n.found) continue;
     const spots = [];
     for (const sp of n.spots) { const q = spotTile(world, sp, isWalkable, taken); if (!q) break; spots.push(q); taken.push(q); }
     if (spots.length === n.spots.length) folk.push({ id, spots });
@@ -110,6 +116,25 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
       rest: 0, rng: mulberry32(streamSeed(hashId(id) ^ (world.seed >>> 0), STREAM.FOLK)) });
   }
   for (const n of world.npcs) if (n.folk) n.rest = 2 + n.rng() * 6;
+  return world;
+}
+/** a found companion still waiting (sites.js hall of his floor): at the back of the hall (the
+ * walkable tile furthest up the screen, least x + y), chained to the wall. world.npcs gets him.
+ * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
+export function placeFound(world, isWalkable, waiting) {
+  if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
+  const r = world.level.descentRoom;
+  for (const [id, n] of Object.entries(NPCS)) {
+    if (!n.found || n.found.site !== (world.site || 'barrows') || n.found.depth !== (world.depth || 0) || !waiting(id)) continue;
+    let best = null;
+    for (const [k, c] of world.level.cells) {
+      if (c.room !== r.id || c.kind !== 'floor') continue;
+      const [x, y] = k.split(',').map(Number), q = { x: x + 0.5, y: y + 0.5 };
+      const open = [[0, 0], [1, 0], [0, 1], [1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // room to walk up beside him
+      if (open && (!best || x + y < best.k || (x + y === best.k && x < best.x - 0.5))) best = { ...q, k: x + y };
+    }
+    if (best) world.npcs.push({ id, found: true, boss: n.found.boss, x: best.x, y: best.y, px: best.x, py: best.y });
+  }
   return world;
 }
 const pathTo = (world, n, g, isWalkable) => { const path = findPath(n.x, n.y, g.x, g.y, (x, y) => isWalkable(world, x + 0.5, y + 0.5), { maxNodes: 20000 }); return path ? path.slice(1).map(([x, y]) => ({ x, y })) : null; };
@@ -147,11 +172,15 @@ export function stepFolk(world, t, isWalkable, talking, dt, hero) {
 }
 
 /** @param {{ state: any, bus: any, getWorld: () => any, walkTo: (tx: number, ty: number, then: any, opts?: any) => boolean, canStand: (tx: number, ty: number) => boolean,
- *   moreVars?: (npc: string) => Record<string, number>, effect?: (npc: string, args: any) => void }} o moreVars: what else Ink may read (quests.js); effect: the `quest` tag */
-export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = () => ({}), effect = () => {} }) {
+ *   moreVars?: (npc: string) => Record<string, number>, effect?: (npc: string, args: any) => void, join?: (npc: string) => void }} o
+ *   moreVars: what else Ink may read (quests.js); effect: the `quest` tag; join: the `companion` tag (heroes.js) */
+export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = () => ({}), effect = () => {}, join = () => {} }) {
   if (!state.flags) state.flags = {};
   let talking = null;                             // the NPC id of the open conversation (runtime only)
   const npcHere = (id) => (getWorld().npcs || []).find((n) => n.id === id) || null;
+  // a found companion in the party, up: you talk to him from his card, wherever you are
+  const withYou = (id) => !!NPCS[id] && !!NPCS[id].found && state.party.some((m) => m.id === id && !m.down && !m.fallen);
+  const withParty = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
   const dist = (n) => { const p = state.player; return hypot(n.x - p.x, n.y - p.y); };
 
   // what Ink may read: the hero, the party, and this NPC's own flags (quest-lore-system §6)
@@ -161,11 +190,13 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
     const v = { hero_name: h.name, hero_class: h.cls, hero_origin: h.origin || '', hero_level: h.level,
       party_size: state.party.filter((m) => !m.fallen).length, fallen_name: fallen ? fallen.name : '', day_part: partOf(state.t) };
     for (const f of NPCS[id].flags) v['flag_' + f] = state.flags[f] || 0;
+    if (NPCS[id].found) { v.joined = withParty(id) ? 1 : 0; v.in_party = state.party.some((m) => m.id === id) ? 1 : 0; }
     return { ...v, ...moreVars(id) };
   }
 
   function command(cmd) {
     if (cmd.type === 'talk') {
+      if (withYou(cmd.npc) && !state.party[0].down) { talking = cmd.npc; bus.emit('dialogue', { npc: cmd.npc, knot: NPCS[cmd.npc].knot, vars: varsFor(cmd.npc) }); return true; }
       const n = NPCS[cmd.npc] ? npcHere(cmd.npc) : null;
       if (!n || state.party[0].down) return true;
       if (dist(n) > TALK_REACH) {
@@ -185,6 +216,9 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
     if (cmd.type === 'dialogueEffect') {
       if (!talking || !Array.isArray(cmd.args)) return true;
       if (cmd.tag === 'quest') effect(talking, cmd.args);   // quests.js checks it's this NPC's quest, in the right state
+      if (cmd.tag === 'companion' && cmd.args[0] === 'join' && NPCS[talking].found && npcHere(talking)) {   // heroes.js checks he's free to go
+        join(talking);                                    // (he stays where he stood until the talk ends: tick)
+      }
       const def = NPCS[talking], [verb, name, amt] = cmd.args;
       if (cmd.tag === 'flag' && def.flags.includes(name)) {
         const before = state.flags[name] || 0;
@@ -200,6 +234,13 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
     return false;
   }
   // walking off ends the conversation (a stale one can't be used to set flags later)
-  function tick() { if (talking) { const n = npcHere(talking); if (!n || dist(n) > TALK_REACH * 3) { bus.emit('talkEnded', { npc: talking }); talking = null; } } }
+  function tick() {
+    const w = getWorld();
+    if (!talking && w.npcs && w.npcs.some((n) => n.found && withParty(n.id))) {   // a found companion who joined leaves the hall with you; it stays quiet for the visit (battle.js)
+      w.npcs = w.npcs.filter((n) => !(n.found && withParty(n.id)));
+      if (w.level && w.level.descentRoom) w.freedHall = w.level.descentRoom.id;
+    }
+    if (talking && !withYou(talking)) { const n = npcHere(talking); if (!n || dist(n) > TALK_REACH * 3) { bus.emit('talkEnded', { npc: talking }); talking = null; } }
+  }
   return { command, tick, get talking() { return talking; } };
 }

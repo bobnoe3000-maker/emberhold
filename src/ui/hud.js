@@ -27,6 +27,7 @@ export function createHud(sim) {
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
   sim.bus.on('fallen', (f) => show(`${f.name} is Fallen · raise them at a temple or shrine`, 2600));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
+  sim.bus.on('companionJoined', (b) => show(`${b.name} joins your company · tap his card to talk`, 2800));
 
   // Weakened (after a wipe): an amber chip in the HUD while it lasts
   const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';

@@ -24,13 +24,15 @@
 //   fragment  Chronicle fragments found (lore.js 'fragmentFound')
 //   boss      a named boss put down in its site (battle.js 'bossDown'); one who already fell counts on accept
 // Chapters and chains (M5): `after` names the quests that must be done first; `turnin` names who takes
-// it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js).
+// it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js). A found
+// companion's chain (Brannoc's) is given and taken in by him (`companion`: only while he's with you, in
+// the party or on the bench); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
 
 import { gainXp } from './party.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 /** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
-/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number }, turnin?: string, after?: string[], reveal?: string[] }} QuestDef */
+/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
   vale_long_way_round: {
@@ -67,18 +69,36 @@ export const QUESTS = {
     steps: [{ id: 'chapel', objectives: [{ type: 'boss', site: 'sunken_chapel', boss: 'robed_stranger', count: 1 }] }],
     rewards: { xp: 1200, gold: 200 },
   },
+  // Brannoc's chain, Chains of the Redhand (world doc §5, v1.7; docs/m5-plan.md §5): the debts he owes the
+  // Company, the Paymaster's box, and a last stand with the legion that never deserted anything
+  brannoc_old_debts: {
+    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30],
+    steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
+    rewards: { xp: 700, gold: 90 },
+  },
+  brannoc_paymasters_box: {
+    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
+    steps: [{ id: 'mill', objectives: [{ type: 'loot', site: 'tithe_mill', count: 2 }] }],
+    rewards: { xp: 500, gold: 120 },
+  },
+  brannoc_standing_down: {
+    kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
+    steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
+    rewards: { xp: 1100, gold: 100, item: 'broken_chain' },
+  },
 };
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;
 
-/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void }} o */
-export function createQuests({ state, bus, getWorld, extraDef = () => null, reveal = () => {} }) {
+/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void, grant?: (item: string) => void }} o */
+export function createQuests({ state, bus, getWorld, extraDef = () => null, reveal = () => {}, grant = () => {} }) {
   if (!state.quests) state.quests = {};
   if (state.tracked === undefined) state.tracked = null;
   /** @param {string} id @returns {QuestDef | null} */
   const defOf = (id) => (Object.prototype.hasOwnProperty.call(QUESTS, id) ? QUESTS[id] : extraDef(id));
   const inst = (id) => state.quests[id] || null;
-  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE); };
+  const withUs = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
+  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)); };
   const takerOf = (d) => d.turnin || d.giver;         // who hands out the reward
   /** @param {string} id */
   const status = (id) => (inst(id) ? inst(id).st : gates(id) ? QS.AVAILABLE : QS.LOCKED);
@@ -114,7 +134,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     for (const m of state.party) if (!m.fallen) gainXp(m, r.xp, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(r.xp * BENCH_XP), lv);
     state.counters.gold = (state.counters.gold || 0) + r.gold;
-    bus.emit('questReward', { id, xp: r.xp, gold: r.gold });
+    if (r.item) grant(r.item);
+    bus.emit('questReward', { id, xp: r.xp, gold: r.gold, ...(r.item ? { item: r.item } : {}) });
     bus.emit('countersChanged', { ...state.counters }); bus.emit('partyChanged', state.party);
   }
   const nextTracked = () => Object.keys(state.quests).find((k) => state.quests[k].st === QS.ACTIVE || state.quests[k].st === QS.READY) || null;
@@ -185,6 +206,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     const pick = (...ids) => ids.map((k) => rows.find((r) => r.id === k && !r.off)).find(Boolean);
     let base = null;
     if (q.st === QS.READY) {
+      if (d.companion && withUs(d.companion)) return rows;           // he's with you: hand it in from his card
       if (world.kind === 'town') {
         if (d.kind === 'board') base = pick('square');                 // the board is in the tavern, off the square (none once you're there)
         else { const n = (world.npcs || []).find((x) => x.id === takerOf(d)); if (n) base = { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: 'in town', steps: 0 }; }

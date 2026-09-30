@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { CLASSES, statsFor } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
+import { FOUND } from '../sim/heroes.js';
 import { drawPortrait, swallow, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
 
 const CSS = `
@@ -68,7 +69,7 @@ function Member({ m, i, slot, bench, onSheet, send }) {
       ${!bench ? html`<button class="pri" onClick=${() => onSheet(i)}>Details</button>` : ''}
       ${!bench && !m.main ? html`<button onClick=${() => send({ type: 'dismiss', id: m.id })}>To bench</button>` : ''}
       ${bench ? bench.map((t) => html`<button key=${t.slot} class="pri" onClick=${() => send({ type: 'swap', slot: t.slot, id: m.id })}>${t.label}</button>`) : ''}
-      ${bench ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? send({ type: 'release', id: m.id }) : setArm(true))}>${arm ? 'Sure?' : 'Release'}</button>` : ''}
+      ${bench && !FOUND[m.id] ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? send({ type: 'release', id: m.id }) : setArm(true))}>${arm ? 'Sure?' : 'Release'}</button>` : ''}
     </div></div>`;
 }
 

@@ -16,6 +16,7 @@ import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIG
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
+import { NPCS } from '../sim/npcs.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
 const CSS = `
@@ -104,6 +105,7 @@ const CSS = `
 #party .card { pointer-events: auto; cursor: pointer; }
 #party .card.empty { pointer-events: none; }
 #gearSheet .views { display: flex; gap: 6px; margin-top: 8px; }
+#gearSheet .talkb { display: block; width: 100%; min-height: 44px; margin-top: 8px; border-radius: 8px; border: 1px solid rgba(214,170,98,.55); background: rgba(216,160,64,.1); color: #f0c880; font: 600 14px Georgia, serif; }
 #gearSheet .views button { flex: 1; position: relative; min-height: 40px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; text-transform: uppercase; }
 #gearSheet .views button.on { color: #1a1208; background: #d8a040; border-color: #f0c880; font-weight: 700; }
 #gearSheet .views button .dot { position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 4px; background: #8fe07a; box-shadow: 0 0 6px #8fe07a; }
@@ -185,7 +187,9 @@ export function createGearSheet(sim, { partyPanel }) {
     // the same green dot as the character tab, on whichever sub-tab needs you: an upgrade in the
     // bag (Gear), attribute points (Stats), skill points (Skills); it goes when that's resolved
     const views = `<div class="views">${[['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0]].map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
-    const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}`;
+    // a found companion (Brannoc) has more to say than a hire: talk to him from here (npcs.js)
+    const talk = NPCS[m.id] && NPCS[m.id].found && !m.main ? `<button class="talkb" data-talk="${esc(m.id)}"${m.down || m.fallen ? ' disabled' : ''}>Talk to ${esc(m.name)}</button>` : '';
+    const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}${talk}`;
     if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
     if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
@@ -285,6 +289,7 @@ export function createGearSheet(sim, { partyPanel }) {
   // ── input ──────────────────────────────────────────────────────────────────
   sheet.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) { close(); return; }
+    const tk = e.target.closest('[data-talk]'); if (tk) { close(); sim.commands.push({ type: 'talk', npc: tk.dataset.talk }); return; }
     const v = e.target.closest('[data-view]'); if (v) { view = v.dataset.view; sel = null; note = null; render(); return; }
     const m = member(), q = (sel2) => e.target.closest(sel2);
     let t;
