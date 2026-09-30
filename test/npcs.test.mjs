@@ -166,3 +166,28 @@ test('a townsperson you\'re talking to waits; Osric and Ilse answer where they s
   assert.deepEqual([h.x, h.y], at, 'she waits while you talk');
   sim.commands.push({ type: 'endTalk' }); run(sim, 40); assert.notDeepEqual([h.x, h.y], at, 'then goes');
 });
+
+// ── room to be told apart, and strolls (a tap picks one person; the square has life in it) ──
+import { apart } from '../src/sim/npcs.js';
+const townAt = (part, seed = 20260807) => { const t = createSim(seed, undefined, { scene: 'overland' }); t.state.t = part * PART_S; const d = JSON.parse(JSON.stringify(t.snapshot())); const c = createSim(seed, undefined, { scene: 'town' }); c.restore({ ...d, scene: 'town', player: { x: 0, y: 0 } }); return c; };
+test('everyone keeps apart on screen, at every part of the day, strolls included (Col and Jory stood by Maudry\'s door)', () => {
+  for (const seed of [20260807, 7, 99991]) for (let part = 0; part < 4; part++) {
+    const n = townAt(part, seed).world.npcs;
+    for (let i = 0; i < n.length; i++) for (let j = i + 1; j < n.length; j++) {
+      const A = n[i].folk ? n[i].roam.flat() : [n[i]], B = n[j].folk ? n[j].roam.flat() : [n[j]];
+      assert.ok(A.every((a) => B.every((b) => apart(a, b))), `seed ${seed} part ${part}: ${n[i].id} and ${n[j].id} can overlap`);
+    }
+  }
+});
+test('townsfolk stroll about their spot between the day\'s changes, and keep still while you stand beside them', () => {
+  const sim = town(), folk = sim.world.npcs.filter((n) => n.folk), start = new Map(folk.map((n) => [n.id, [n.x, n.y]])), walked = new Set();
+  const p = sim.state.player; p.x = p.px = 0; p.y = p.py = 0;
+  for (let i = 0; i < 20 * 30; i++) { sim.tick(); for (const n of folk) if (n.moving) walked.add(n.id); }
+  assert.equal(walked.size, folk.length, `in 30 s of one part of the day, walked: ${[...walked].join(', ')}`);
+  for (const n of folk) { const home = n.spots[n.at]; assert.ok(Math.abs(n.x - home.x) <= 3.5 && Math.abs(n.y - home.y) <= 3.5, `${n.id} stays near its spot`); }
+  const h = folk.find((n) => n.id === 'hedda'); for (let i = 0; i < 20 * 20 && h.path; i++) sim.tick();
+  p.x = p.px = h.x + 1; p.y = p.py = h.y; const at = [h.x, h.y];
+  for (let i = 0; i < 20 * 30; i++) { p.x = p.px = h.x + 1; sim.tick(); }
+  assert.deepEqual([h.x, h.y], at, 'she keeps still beside you');
+  assert.ok(start.size);
+});

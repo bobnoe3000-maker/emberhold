@@ -40,5 +40,6 @@ export const STREAM = {
   LOOT: 9090,     // (phase 1) drop rolls
   BOARD: 0xb0a2d, // the Lantern Guild's jobs (board.js), mixed with the in-game day
   LORE: 0x10e3,   // where the Chronicle's fragments lie (lore.js), mixed with each fragment's id
+  FOLK: 0xf01c,   // townsfolk strolls (npcs.js), mixed with each person's id
 };
 export const streamSeed = (worldSeed, stream) => (worldSeed ^ Math.imul(stream, 2654435761)) >>> 0;

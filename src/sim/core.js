@@ -375,7 +375,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     heroes.tick();
     board.tick();                                          // a new day's board goes up in town
     talk.tick();
-    stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT);   // townsfolk keep their routine
+    stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT, state.player);   // townsfolk keep their routine
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
