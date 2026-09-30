@@ -92,7 +92,8 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
   menu.addEventListener('click', (e) => {
     const el = e.target.closest('.opt'); if (!el || el.classList.contains('off')) return;
     const o = rows[+el.dataset.i]; if (!o) return;
-    sim.commands.push({ type: 'goto', tx: o.tx, ty: o.ty, near: o.near, then: o.then || null, label: o.id === 'next-room' || o.id === 'farm-room' ? `${o.label} (LV ${o.level})` : o.label.startsWith('Nearest') ? o.sub.split(' · ')[0] : o.label, room: o.room });
+    const label = o.chip || (o.id === 'next-room' || o.id === 'farm-room' ? `${o.label} (LV ${o.level})` : o.id === 'quest' ? questTitle(o.quest) || 'Quest' : o.label.startsWith('Nearest') ? o.sub.split(' · ')[0] : o.label);
+    sim.commands.push({ type: 'goto', tx: o.tx, ty: o.ty, near: o.near, then: o.then || null, label, room: o.room, journey: o.journey || null });   // a journey walks on through scene changes (sim/core.js)
     closeMenu();
   });
   chip.addEventListener('click', (e) => {
@@ -112,11 +113,11 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
     let html = '', mode = '';
     if (p.path && p.dest) {
       let d = 0, x = p.x, y = p.y; for (const [wx, wy] of p.path) { d += Math.hypot(wx - x, wy - y); x = wx; y = wy; }   // distance left along the path
-      html = `<span class="lbl">→ ${p.dest.label} · ${Math.round(d)} steps</span><span class="x">✕</span>`; mode = 'walk';
+      html = `<span class="lbl">→ ${esc(p.dest.label)} · ${Math.round(d)} steps</span><span class="x">✕</span>`; mode = 'walk';
     }
     else if (p.resume) {
-      if (sim.battle) { html = `<span class="lbl">⚔ Resume → ${p.resume.label}</span><span class="x">✕</span>`; mode = 'paused'; }
-      else { html = `<span class="lbl">Resume → ${p.resume.label}</span><span class="x">✕</span>`; mode = 'resume'; }
+      if (sim.battle) { html = `<span class="lbl">⚔ Resume → ${esc(p.resume.label)}</span><span class="x">✕</span>`; mode = 'paused'; }
+      else { html = `<span class="lbl">Resume → ${esc(p.resume.label)}</span><span class="x">✕</span>`; mode = 'resume'; }
     }
     if (html !== last) { chip.innerHTML = html; last = html; }
     chip.classList.toggle('on', !!html); chip.classList.toggle('paused', mode === 'paused');

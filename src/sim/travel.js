@@ -6,8 +6,11 @@
 //   dungeon  — (in a fight) step out · next unexplored room · room at your level · unopened chest /
 //              shrine · stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
 //   overland — the region's town · nearest dungeon · nearest unexplored dungeon · landmarks
-//   town     — town square (not while you're in it) · road out
+//   town     — town square (not while you're in it) · nearest dungeon (by the road out) · road out
 //
+// A row with `journey` walks on past the scene change it ends in (core.js): the nearest dungeon
+// ('delve') and the stairs down go on to the next unexplored room; the tracked quest's row
+// ('quest', quests.js) follows the quest.
 // Pure: it reads the world and state, never writes them. core.js turns a pick into a walk.
 
 import { findPath } from './path.js';
@@ -107,7 +110,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     const dr = L.descentRoom, dlv = dr && lv.get(dr.id);
     if (dr && world.discovered.has(dr.id)) {
       const sx = dr.cx, sy = dr.cy, steps = pathLenD(sx, sy, 1);
-      if (steps !== null) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: sx, ty: sy, near: 1, then: { type: 'harvest', tx: sx, ty: sy }, steps });
+      if (steps !== null) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: sx, ty: sy, near: 1, then: { type: 'harvest', tx: sx, ty: sy }, steps, journey: 'delve' });
     } else if (dr) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true });
 
     if (world.exitAt) {
@@ -122,7 +125,11 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   if (world.kind === 'town') {
     const h = world.hub;
     if (h && !inSquare) { const t = standOn(h.x, h.y, 6), steps = t && pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'square', icon: 'square', label: 'Town square', sub: `the five services · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
-    for (const e of world.exits) { const t = zone(e), steps = t && pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'road-out', icon: 'next', label: 'Road out', sub: `to the Hollow Vale · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
+    for (const e of world.exits) {
+      const t = zone(e), steps = t && pathLen(t.tx, t.ty); if (steps == null) continue;
+      out.push({ id: 'to-dungeon', icon: 'dungeon', label: 'Nearest dungeon', sub: `by the road out · ${steps}+ steps`, chip: 'Nearest dungeon', tx: t.tx, ty: t.ty, near: 0, steps, journey: 'delve' });
+      out.push({ id: 'road-out', icon: 'next', label: 'Road out', sub: `to the Hollow Vale · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps });
+    }
     return out;
   }
 
@@ -136,9 +143,9 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     else if (e.to === 'dungeon') dungeons.push({ ...t, name, site: e.site || 'barrows' });
   }
   const dn = nearestByPath(dungeons);
-  if (dn) out.push({ id: 'dungeon', icon: 'dungeon', label: 'Nearest dungeon', sub: `${dn.name} · ${dn.steps} steps`, levelRange: '1–4', tx: dn.tx, ty: dn.ty, near: 0, steps: dn.steps });
+  if (dn) out.push({ id: 'dungeon', icon: 'dungeon', label: 'Nearest dungeon', sub: `${dn.name} · ${dn.steps} steps`, levelRange: '1–4', tx: dn.tx, ty: dn.ty, near: 0, steps: dn.steps, journey: 'delve' });
   const fresh = nearestByPath(dungeons.filter((d) => !sitesEntered.has(d.site)));
-  if (fresh) out.push({ id: 'unexplored', icon: 'unexplored', label: 'Nearest unexplored', sub: `${fresh.name} · never entered`, levelRange: '1–4', tx: fresh.tx, ty: fresh.ty, near: 0, steps: fresh.steps });
+  if (fresh) out.push({ id: 'unexplored', icon: 'unexplored', label: 'Nearest unexplored', sub: `${fresh.name} · never entered`, levelRange: '1–4', tx: fresh.tx, ty: fresh.ty, near: 0, steps: fresh.steps, journey: 'delve' });
   else if (dungeons.length) out.push({ id: 'unexplored', icon: 'unexplored', label: 'Nearest unexplored', sub: 'none left in this region', off: true });
   const used = new Set(out.map((o) => o.label).concat(dungeons.map((d) => d.name)));
   const marks = (world.labels || []).filter((l) => !used.has(l.text) && !l.service).map((l) => ({ ...(standOn(l.x, l.y + 8, 10) || {}), name: l.text, near: 3 })).filter((m) => m.tx !== undefined);

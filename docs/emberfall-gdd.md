@@ -720,10 +720,17 @@ Emberfall rename.
   |---|---|
   | Dungeon | Next unexplored room, room at your level, nearest unopened chest or shrine, stairs down (greyed until found), exit |
   | Overland | Town, nearest dungeon, nearest unexplored dungeon, landmarks |
-  | Town | Square, road out |
+  | Town | Square, nearest dungeon (by the road out), road out |
 
   A walk that runs into a fight stops so the party can fight. Unless that room is the
   destination, the chip's Resume carries on through it.
+
+  **Journeys** (2026-09-30): a walk only stops for a fight or where it was going, never at a
+  scene change. The tracked quest's row, *Nearest dungeon* (in town or on the Vale) and the
+  stairs down walk on after each scene change: out of town, across the Vale, into the barrows
+  or a floor down, and on to the next unexplored room (or the quest's next place). The road
+  out, the town and the exit still end where they say. The stick, a tap and ✕ end a journey
+  (`sim/core.js`, `test/journey.test.mjs`).
 - **Tap to move** (§3.1): tapping the ground walks the hero there along an A* path (the
   route shown as a gold ring and trail). Tapping a chest, shrine, stairs or growth out of
   reach walks up to it and uses it. The stick cancels the walk at once.

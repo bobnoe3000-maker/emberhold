@@ -169,7 +169,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
       }
     }
     if (!base) return rows;
-    return [{ ...base, id: 'quest', icon: 'quest', quest: id, label: base.label || '', off: false }, ...rows];
+    return [{ ...base, id: 'quest', icon: 'quest', quest: id, label: base.label || '', off: false, journey: 'quest' }, ...rows];   // it walks on through each scene change (core.js)
   }
   /** @returns {{ quests: Record<string, number[]>, tracked: string|null }} */
   function snapshot() {

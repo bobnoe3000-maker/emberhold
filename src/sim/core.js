@@ -231,6 +231,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     battle.reset();
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, ...(up ? { up: true } : {}) });
+    journeyOn();
   }
   const descend = () => changeFloor(state.depth + 1, (w) => w.stairArrive);
   const ascend = () => changeFloor(state.depth - 1, (w) => w.stairsDownArrive);
@@ -248,6 +249,24 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     p.x = p.px = s.x; p.y = p.py = s.y; p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     battle.reset();
     bus.emit('levelChanged', { depth: 0, theme: world.theme, scene: curScene });
+    journeyOn();
+  }
+
+  // A journey (a compass pick whose row carries `journey`) outlasts the scene change it walks
+  // into: out of town, into the barrows, down a floor, it picks its next leg where it arrives and
+  // walks on. 'quest' follows the tracked quest's row; 'delve' makes for the nearest dungeon, then
+  // its next unexplored room (or the room at your level). It ends where a leg ends in the same
+  // scene, in a fight (resumable, as any compass walk), on the stick, or on ✕. Runtime only; the
+  // legs are picked from state, so a replay walks the same way.
+  const JOURNEYS = new Set(['quest', 'delve']), MAX_LEGS = 8;
+  function journeyOn() {
+    const p = state.player, j = p.journey; if (!j) return;
+    if (++j.legs > MAX_LEGS || state.party[0].down) { p.journey = null; return; }
+    const rows = destinations(), pick = (...ids) => ids.map((k) => rows.find((r) => r.id === k && !r.off)).find(Boolean);
+    const r = j.kind === 'quest' ? (state.tracked === j.quest ? pick('quest') : null)
+      : world.kind === 'dungeon' ? pick('next-room', 'farm-room') : world.kind === 'town' ? pick('road-out') : pick('dungeon');
+    const label = j.kind === 'quest' || !r || !(r.id === 'next-room' || r.id === 'farm-room') ? j.label : `${r.label} (LV ${r.level})`;
+    if (!r || !walkTo(r.tx, r.ty, r.then || null, { near: r.near, label, corridors: true, room: r.room })) p.journey = null;
   }
 
   function applyCommand(cmd) {
@@ -264,14 +283,16 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       const len = hypot(cmd.x, cmd.y);
       if (len < 0.12) return;
       if (p.path || p.resume) { stopWalk(); p.resume = null; }  // the stick takes over from a tap / compass walk
+      p.journey = null;
       const nx = cmd.x / Math.max(1, len), ny = cmd.y / Math.max(1, len);
       p.want = { x: nx * PLAYER_SPEED, y: ny * PLAYER_SPEED }; p.steer = 0;
       return;
     }
     if (cmd.type === 'goto') {                             // compass: auto-walk to a picked destination
       if (state.party[0].down) return;
-      p.resume = null;
-      walkTo(cmd.tx, cmd.ty, cmd.then || null, { near: cmd.near, label: cmd.label, corridors: true, room: cmd.room });
+      p.resume = null; p.journey = null;
+      if (walkTo(cmd.tx, cmd.ty, cmd.then || null, { near: cmd.near, label: cmd.label, corridors: true, room: cmd.room }) && JOURNEYS.has(cmd.journey) && p.path)
+        p.journey = { kind: cmd.journey, quest: state.tracked, label: String(cmd.label || ''), legs: 0 };
       return;
     }
     if (cmd.type === 'resume') {                           // continue a compass walk a fight interrupted
@@ -279,11 +300,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (r && !state.party[0].down) walkTo(r.tx, r.ty, r.then, { near: r.near, label: r.label, corridors: true, room: r.room });
       return;
     }
-    if (cmd.type === 'cancelWalk') { stopWalk(); p.resume = null; return; }
+    if (cmd.type === 'cancelWalk') { stopWalk(); p.resume = null; p.journey = null; return; }
     if (cmd.type === 'tap') {                              // tap on the ground: use what's there if in reach, else walk to it
       if (state.party[0].down) return;
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y, inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
       const thing = propAt(world, cmd.tx, cmd.ty) || resourceAt(world, cmd.tx, cmd.ty);
+      p.journey = null;                                    // a tap on the way is a new plan
       if (thing && inReach) { stopWalk(); applyCommand({ type: 'harvest', tx: cmd.tx, ty: cmd.ty }); return; }
       walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
@@ -380,6 +402,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     // on the way past); the stick, or a walk that ends in it, goes through
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
     else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', 'barrows'); }   // walk up the stair: a floor up, or out
+    if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
   }
 

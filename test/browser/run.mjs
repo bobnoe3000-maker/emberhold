@@ -303,6 +303,12 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#journal .x').tap(); await p.locator('#compassBtn').tap();
     const rows = await p.locator('#compassMenu .opt b').allTextContents();
     check('quest: the compass leads with it, and no page errors', rows[0] === 'The Long Way Round' && errs.length === 0, rows.join(' | ') + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // pick it: the walk leaves town and carries on across the Vale without another tap (a journey, sim/core.js)
+    await p.locator('#compassMenu .opt').first().tap();
+    const walked = await p.evaluate(() => { const s = globalThis.__sim; for (let i = 0; i < 1500 && s.world.kind === 'town'; i++) globalThis.__frame(100); for (let i = 0; i < 20; i++) globalThis.__frame(100); return { kind: s.world.kind, path: !!s.state.player.path, journey: s.state.player.journey && s.state.player.journey.kind }; });
+    await run(2);
+    const chip = await p.locator('#walkChip.on').innerText().catch(() => '');
+    check('journey: the quest\'s row walks out of town and on across the Vale, the chip still naming it', walked.kind === 'overland' && walked.path && walked.journey === 'quest' && /The Long Way Round/.test(chip), JSON.stringify(walked) + ' · ' + chip);
     await ctx.close(); await b.close();
   }
 }
