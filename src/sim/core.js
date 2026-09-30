@@ -332,6 +332,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!world.visited) world.visited = new Set();
     const hc = world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y));
     if (hc && hc.kind === 'floor' && hc.room >= 0 && !hc.corridor) world.visited.add(hc.room);   // stood inside it (compass: "unexplored")
+    if (battle.battle) world.visited.add(battle.battle.room);   // or fought it: a walk stops at the doorway when the fight starts, and the
+                                                                // compass would send you back to that doorway as "unexplored" forever
     for (const r of world.level.rooms) {
       if (world.discovered.has(r.id)) continue;
       const dx = Math.max(Math.abs(p.x - r.cx) - r.rw, 0), dy = Math.max(Math.abs(p.y - r.cy) - r.rh, 0);
