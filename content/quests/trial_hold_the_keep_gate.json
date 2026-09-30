@@ -1,0 +1,38 @@
+{
+  "id": "trial_hold_the_keep_gate",
+  "kind": "trial",
+  "trial": "fighter",
+  "title": "Hold the Keep Gate",
+  "giver": "osric_hale",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Osric Hale held a gate once, for longer than anyone asked him to. He'd like to see a fighter of yours do the same, in Wickham Keep, and then he'll show them how to stand behind a shield.",
+  "steps": [
+    {
+      "id": "keep",
+      "journal": "Hold eight waves in Wickham Keep. Any rooms; stand your ground in them.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "wickham_keep",
+          "count": 8,
+          "label": "Waves held in Wickham Keep"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Osric Hale in Thornwick.",
+  "done": "Osric showed your fighters Shield Wall: plant your feet, lift the shield, and let them come to you.",
+  "rewards": {
+    "xp": 600,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "osric",
+    "offer": "osric_trial_offer",
+    "turnin": "osric_trial_turnin"
+  }
+}

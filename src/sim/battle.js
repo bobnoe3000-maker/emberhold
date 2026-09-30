@@ -352,7 +352,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // for the cheapest; Defensive always keeps half the pool
   function reserve(m, s) {
     const stance = stanceOf(m); if (stance === 'aggressive') return 0;
-    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && unlocked(m, A) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
+    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && unlocked(m, A, state.trials) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
     if (low === 1e9) return 0;
     if (stance === 'balanced') return state.party.some((q) => alive(q) && q.hp < statsFor(q).maxHp * STANCE_AI.balanced.low) ? low : 0;
     return Math.max(low, s.maxMp * STANCE_AI[stance].reserve);
@@ -361,7 +361,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function pickStrike(m, tgt) {
     const s = statsFor(m), keep = reserve(m, s);
     for (const A of priorityOf(m)) {
-      if (A.kind !== 'strike' || !unlocked(m, A) || !autocastOn(m, A.id)) continue;
+      if (A.kind !== 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       if (A.poison && tgt.poison && tgt.poison.t > 1) continue;                    // Venom: already poisoned
       const c = cast(m, A); if (m.mp < c.cost + keep) continue;
       m.mp -= c.cost; return c;
@@ -372,7 +372,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function tryUtility(m, i, foes, w, F) {
     const s = statsFor(m), ai = STANCE_AI[stanceOf(m)], hpf = m.hp / s.maxHp;
     for (const A of priorityOf(m)) {
-      if (A.kind === 'strike' || !unlocked(m, A) || !autocastOn(m, A.id)) continue;
+      if (A.kind === 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       const c = cast(m, A); if (m.mp < c.cost) continue;
       let target = m;
       if (A.kind === 'guard') {

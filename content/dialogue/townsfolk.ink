@@ -16,6 +16,8 @@ VAR flag_met_col = 0
 VAR flag_met_jory = 0
 VAR flag_met_nell = 0
 VAR flag_met_hedda = 0
+VAR q_trial_quiet_feet = -1
+VAR q_trial_cold_weather = -1
 
 == wendel_hub ==
 { flag_met_wendel == 0:
@@ -71,7 +73,35 @@ VAR flag_met_hedda = 0
         {&"Rest's five coppers a level. Don't ask what a level is. It's what the ledger says."|"You look like the stairs will be a trial. They'll still cost you."|"Maudry pours, I put people to bed. Between us, Thornwick gets by."}
     }
 }
+{ q_trial_quiet_feet >= 0 && q_trial_quiet_feet <= 2: -> nell_topics }
 -> END
+
+// ── the rogue's trial (content/quests/trial_quiet_feet.json) ──
+== nell_topics ==
++ { q_trial_quiet_feet == 2 } [Three sergeants, and they never heard us. #mark: quest ready] -> nell_trial_turnin
++ { q_trial_quiet_feet == 0 } [You walk very quietly for an innkeeper. #mark: quest] -> nell_trial_offer
++ { q_trial_quiet_feet == 1 } [About the sergeants… #mark: quest] -> nell_trial_active
++ [Goodnight, Nell.] -> END
+
+== nell_trial_offer ==
+Nell looks at your rogue for a long moment, the way she looks at a guest she suspects will leave by the window.
+"I kept an inn before this. And before that, something else. Never mind what."
+"There's sergeants in Wickham Keep who think they're hard to get behind. Put three of them down, and I'll teach your rogue what I used to do on stairs."
++ [Done. #mark: quest]
+    "Don't tell Maudry. She'll want to charge for it." # quest: accept trial_quiet_feet
+    -> nell_topics
++ [Not yet.]
+    "Suit yourself. The stairs'll still creak for you."
+    -> nell_topics
+
+== nell_trial_active ==
+"Three Redhand sergeants in the Keep. They shout. People who shout never listen for anyone behind them."
+-> nell_topics
+
+== nell_trial_turnin ==
+Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, and the stairs don't make a sound either time.
+"Weight on the edge, not the middle. Breathe out when they breathe in. And when they turn round, be somewhere else. There. That's worth more than the room." # quest: turnin trial_quiet_feet
+-> nell_topics
 
 == hedda_hub ==
 { flag_met_hedda == 0:
@@ -86,4 +116,32 @@ VAR flag_met_hedda = 0
         {&"The hens stopped laying the week the barrows opened. They've started again. Hens don't hold grudges."|"Folk say the dead walk in step. So do the geese. Nobody writes to Greyholt about the geese."|"Two for a copper, and I'll not tell anyone you bought eggs before going to fight the dead."}
     }
 }
+{ q_trial_cold_weather >= 0 && q_trial_cold_weather <= 2: -> hedda_topics }
 -> END
+
+// ── the mage's trial (content/quests/trial_cold_weather.json) ──
+== hedda_topics ==
++ { q_trial_cold_weather == 2 } [It listened. #mark: quest ready] -> hedda_trial_turnin
++ { q_trial_cold_weather == 0 } [Does the weather really listen to you? #mark: quest] -> hedda_trial_offer
++ { q_trial_cold_weather == 1 } [About the chapel… #mark: quest] -> hedda_trial_active
++ [Two eggs, then.] -> END
+
+== hedda_trial_offer ==
+"It does. Not always. Nobody listens always."
+Hedda looks at your mage the way she looks at the sky before she says whether it'll rain.
+"You've the hands for it. Go and stand in the Sunken Chapel, where it's damp and cold and full of things that don't like either. Six waves. See if the cold comes when you call it."
++ [We'll go. #mark: quest]
+    "Wrap up. I'm not joking. That's half of it." # quest: accept trial_cold_weather
+    -> hedda_topics
++ [Not yet.]
+    "No hurry. Weather's patient. It's the only thing that is."
+    -> hedda_topics
+
+== hedda_trial_active ==
+"The Sunken Chapel. Six waves. When it's coldest, don't fight it. Ask it."
+-> hedda_topics
+
+== hedda_trial_turnin ==
+Hedda holds out her hand, palm down, over the eggs, and for a moment there's frost on the shells.
+"There. That's all it is. A hard frost, early, and you decide where it lands. Don't tell anyone I can do that. They'll want it for the milk." # quest: turnin trial_cold_weather
+-> hedda_topics

@@ -94,6 +94,16 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    | Rogue | *Quiet Feet* | Nell Tolley | 3 elites in Wickham Keep |
    | Mage | *Cold Weather* | Hedda | hold 6 waves in the Sunken Chapel |
    | Cleric | *Last Rites* | Sister Ilse | hold the Old Barrows' second-floor hall for 5 waves |
+
+   **Done** (2026-09-30): `skills.js` marks the level-6 abilities `trial`; `unlocked(m, s, trials)`
+   reads `state.trials` (save v13; older saves count every class the company had at level 6, so
+   nobody loses an ability). Quests carry `trial: <class>` (offered while someone of that class in
+   the party or on the bench is level 6+); handing one in teaches the class (`trialDone`, a toast).
+   Osric and Ilse offer theirs in their topics; Nell and Hedda gain topics only while theirs is open.
+   The Skills tab says who teaches a locked one. The smoke gates, `roomlv.mjs` and `boss.mjs`
+   assume trials done; `roomlv.mjs --no-trials` measures without. At L6 in a same-level room
+   (hero + 2 hires, seeds 1/2): 14 / 16 waves with the trials, 17 / 11 without (seed noise; a
+   lone L6 hero is down in 1 wave either way). `test/trials.test.mjs`.
 7. **The Vale Chronicle, whole.** Seven more fragments (world doc §7): one in the Tithe Mill, two
    in Wickham Keep, three in the Sunken Chapel, one carried by the Standard. The last one
    found reveals the Ninth Milestone; its vault holds the heirloom *The Last Order*.

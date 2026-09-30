@@ -350,6 +350,15 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*$",
       "description": "a found companion's chain: offered only while he's with you (party or bench)"
+    },
+    "trial": {
+      "enum": [
+        "fighter",
+        "rogue",
+        "mage",
+        "cleric"
+      ],
+      "description": "a class trial: offered while someone of this class in the company is level 6+; done, it teaches the class its level-6 ability"
     }
   }
 }

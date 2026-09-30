@@ -27,12 +27,15 @@
 // it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js). A found
 // companion's chain (Brannoc's) is given and taken in by him (`companion`: only while he's with you, in
 // the party or on the bench); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
+// A class trial (`trial`: the class) is offered while someone of that class in the company (party or
+// bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
+// level-6 ability (state.trials, skills.js), every member of the class, for good.
 
 import { gainXp } from './party.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 /** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
-/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string }} QuestDef */
+/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
   vale_long_way_round: {
@@ -86,7 +89,29 @@ export const QUESTS = {
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
     rewards: { xp: 1100, gold: 100, item: 'broken_chain' },
   },
+  // the class trials (world doc §5 v1.7; docs/m5-plan.md §6): at level 6, from Thornwick's people
+  trial_hold_the_keep_gate: {
+    kind: 'trial', giver: 'osric_hale', trial: 'fighter', region: 'vale', level: [1, 30],
+    steps: [{ id: 'keep', objectives: [{ type: 'waves', site: 'wickham_keep', count: 8 }] }],
+    rewards: { xp: 600, gold: 60 },
+  },
+  trial_quiet_feet: {
+    kind: 'trial', giver: 'nell_tolley', trial: 'rogue', region: 'vale', level: [1, 30],
+    steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
+    rewards: { xp: 600, gold: 60 },
+  },
+  trial_cold_weather: {
+    kind: 'trial', giver: 'hedda', trial: 'mage', region: 'vale', level: [1, 30],
+    steps: [{ id: 'chapel', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 6 }] }],
+    rewards: { xp: 600, gold: 60 },
+  },
+  trial_last_rites: {
+    kind: 'trial', giver: 'sister_ilse', trial: 'cleric', region: 'vale', level: [1, 30],
+    steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
+    rewards: { xp: 600, gold: 60 },
+  },
 };
+export const TRIAL_LEVEL = 6;
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;
 
@@ -98,7 +123,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   const defOf = (id) => (Object.prototype.hasOwnProperty.call(QUESTS, id) ? QUESTS[id] : extraDef(id));
   const inst = (id) => state.quests[id] || null;
   const withUs = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
-  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)); };
+  const trialOpen = (cls) => !(state.trials || {})[cls] && [...state.party, ...(state.bench || [])].some((m) => m.cls === cls && m.level >= TRIAL_LEVEL);
+  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)) && (!d.trial || trialOpen(d.trial)); };
   const takerOf = (d) => d.turnin || d.giver;         // who hands out the reward
   /** @param {string} id */
   const status = (id) => (inst(id) ? inst(id).st : gates(id) ? QS.AVAILABLE : QS.LOCKED);
@@ -164,6 +190,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     state.quests[id].st = QS.DONE;
     pay(id);
     for (const s of /** @type {QuestDef} */ (defOf(id)).reveal || []) reveal(s);
+    const cls = /** @type {QuestDef} */ (defOf(id)).trial;
+    if (cls && !(state.trials ||= {})[cls]) { state.trials[cls] = 1; bus.emit('trialDone', { cls, id }); bus.emit('partyChanged', state.party); }
     if (state.tracked === id) state.tracked = nextTracked();
     changed(id);
   }

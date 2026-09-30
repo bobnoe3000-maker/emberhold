@@ -327,7 +327,12 @@ Both slot in with the same stat block and ability format. No system changes are 
 ### 5.1 Skills, ranks and stances
 - **Unlocks:**
   - the level-1 ability comes at creation;
-  - the level-6 and level-12 abilities unlock through **class trials**, short quests (§9);
+  - the level-6 and level-12 abilities unlock through **class trials**, short quests (§9).
+    (M5) The level-6 trials are the company's, not the hero's: a trial is offered when anyone of
+    that class in the party or on the bench is level 6+, and once done every member of the class
+    knows the ability, companions hired later included. Teachers: Osric (fighter), Nell Tolley
+    (rogue), Hedda (mage), Sister Ilse (cleric). The level-12 abilities unlock by level until the
+    M8 trials;
   - the passive comes at level 20.
 - **Skill points:** 1 at every even level. Ranks 1–5; each rank adds +10 % power, and ranks
   3 and 5 also cost 1 MP less.

@@ -1,0 +1,38 @@
+{
+  "id": "trial_cold_weather",
+  "kind": "trial",
+  "trial": "mage",
+  "title": "Cold Weather",
+  "giver": "hedda",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Hedda sells eggs by the well and knows the weather. She says the weather listens to her. She'd like a mage of yours to find out if it listens to them, somewhere damp.",
+  "steps": [
+    {
+      "id": "chapel",
+      "journal": "Hold six waves in the Sunken Chapel.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "sunken_chapel",
+          "count": 6,
+          "label": "Waves held in the Sunken Chapel"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Hedda in Thornwick.",
+  "done": "Hedda taught your mages Frost Nova, and said it was only a hard frost, early. She said it about eggs, too.",
+  "rewards": {
+    "xp": 600,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "hedda_trial_offer",
+    "turnin": "hedda_trial_turnin"
+  }
+}

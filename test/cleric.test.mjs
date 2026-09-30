@@ -58,8 +58,11 @@ test('Mend heals the most hurt ally, 20 % stronger for a cleric', () => {
   assert.ok(heals.length, 'a Mend was cast');
   assert.equal(heals[0].amount, Math.round(statsFor(h).maxHp * 0.22 * 1.2 * (1 + statsFor(c).power)));   // (Focus adds ability power)
 });
-test('Bless raises the party\'s ATK and DEF for 8 s (level 6)', () => {
+test('Bless raises the party\'s ATK and DEF for 8 s (level 6, with the cleric\'s trial done)', () => {
   const h = hero(6), c = cleric(6), sim = inRoom([h, c]); const guards = events(sim, 'guard');
+  for (let i = 0; i < 20 * 10; i++) sim.tick();
+  assert.ok(!guards.some((g) => g.name === 'Bless'), 'not before Last Rites');
+  sim.state.trials.cleric = 1;
   for (let i = 0; i < 20 * 30 && !guards.some((g) => g.name === 'Bless'); i++) sim.tick();
   assert.ok(guards.some((g) => g.name === 'Bless'));
   sim.tick(); sim.tick(); sim.tick(); sim.tick(); sim.tick(); sim.tick(); sim.tick(); sim.tick();

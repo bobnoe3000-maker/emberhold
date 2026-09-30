@@ -221,16 +221,18 @@ export function createGearSheet(sim, { partyPanel }) {
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${m.trait ? `${esc(m.trait[0])}: ${esc(m.trait[1])} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;
   }
-  const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
+  // who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
+const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse' };
+const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
 
   // ── the Skills tab: ranks, auto-cast, priority, the passive, the stance (GDD §5.1) ──
   function skillsView(m) {
-    const n = pendingSkillPoints(m), order = priorityOf(m), P = PASSIVES[m.cls], st = stanceOf(m);
+    const c = CLASSES[m.cls], n = pendingSkillPoints(m), order = priorityOf(m), P = PASSIVES[m.cls], st = stanceOf(m);
     const rows = order.map((A, i) => {
-      const r = rankOf(m, A.id), open = unlocked(m, A), on = autocastOn(m, A.id);
+      const r = rankOf(m, A.id), open = unlocked(m, A, S.trials), on = autocastOn(m, A.id);
       const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
       return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
-          <span>${open ? `${rankCost(A, r)} MP · ${A.text}${r > 1 ? ` · +${(r - 1) * 10}% power` : ''}` : `unlocks at level ${A.lv}`}</span></div>
+          <span>${open ? `${rankCost(A, r)} MP · ${A.text}${r > 1 ? ` · +${(r - 1) * 10}% power` : ''}` : m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s trial` : ''}` : `the ${c.label.toLowerCase()}'s trial teaches it: ask ${TRIAL_GIVER[m.cls]} in Thornwick`}</span></div>
         <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
           <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>
         <div class="sbtns"><button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;

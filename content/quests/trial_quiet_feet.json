@@ -1,0 +1,38 @@
+{
+  "id": "trial_quiet_feet",
+  "kind": "trial",
+  "trial": "rogue",
+  "title": "Quiet Feet",
+  "giver": "nell_tolley",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Nell Tolley was something else before she kept an inn, and won't say what. She will say that a rogue who can't get behind three Redhand sergeants isn't one.",
+  "steps": [
+    {
+      "id": "keep",
+      "journal": "Put down three Redhand sergeants in Wickham Keep. They lead every fifth wave or so.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "wickham_keep",
+          "count": 3,
+          "label": "Redhand sergeants"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Nell Tolley in Thornwick.",
+  "done": "Nell taught your rogues Smoke Step, on the Crossed Keys' stairs, without once making them creak.",
+  "rewards": {
+    "xp": 600,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "nell_trial_offer",
+    "turnin": "nell_trial_turnin"
+  }
+}

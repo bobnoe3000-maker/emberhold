@@ -1,5 +1,8 @@
 // hud.js — DOM overlay. Reads sim events, never sim internals.
 
+import { SKILLS } from '../sim/skills.js';
+import { CLASSES } from '../sim/party.js';
+
 export function createHud(sim) {
   const wood = document.getElementById('hudWood');
   const stone = document.getElementById('hudStone');
@@ -27,6 +30,7 @@ export function createHud(sim) {
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
   sim.bus.on('fallen', (f) => show(`${f.name} is Fallen · raise them at a temple or shrine`, 2600));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
+  sim.bus.on('trialDone', (e) => { const A = (SKILLS[e.cls] || []).find((q) => q.trial), l = (CLASSES[e.cls] || { label: e.cls }).label.toLowerCase(); if (A) show(`The ${l}'s trial is done · every ${l} in your company knows ${A.name}`, 3200); });
   sim.bus.on('companionJoined', (b) => show(`${b.name} joins your company · tap his card to talk`, 2800));
 
   // Weakened (after a wipe): an amber chip in the HUD while it lasts

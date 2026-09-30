@@ -2,8 +2,10 @@
 // skills.js — class abilities, ranks, auto-cast and stances (GDD §5, §5.1). Pure data and
 // formulas; battle.js casts them, heroes.js owns the commands.
 //
-// Each class has three abilities (levels 1, 6, 12) and a passive (level 20). Until class
-// trials exist (M4/M5 quests) an ability unlocks when its level is reached.
+// Each class has three abilities (levels 1, 6, 12) and a passive (level 20). An ability unlocks when
+// its level is reached; the level-6 ones (`trial`) also want that class's trial done by the company
+// (state.trials, quests.js; M5, docs/m5-plan.md §6): done once, every member of the class knows it.
+// The level-12 ones stay unlocked by level until the M8 trials.
 // Skill points: one at every even level, derived (never stored), like attribute points.
 // Ranks 1–5: +10 % power per rank; ranks 3 and 5 each take 1 MP off the cost.
 //
@@ -19,22 +21,22 @@
 export const SKILLS = {
   fighter: [
     { id: 'cleave', name: 'Cleave', lv: 1, mp: 10, kind: 'strike', power: 1.3, splash: 0.65, text: '1.3× to the target and those beside it' },
-    { id: 'shield_wall', name: 'Shield Wall', lv: 6, mp: 20, kind: 'guard', dur: 6, def: 0.5, taunt: true, text: '+50 % DEF for 6 s; foes turn on you' },
+    { id: 'shield_wall', name: 'Shield Wall', lv: 6, trial: true, mp: 20, kind: 'guard', dur: 6, def: 0.5, taunt: true, text: '+50 % DEF for 6 s; foes turn on you' },
     { id: 'second_wind', name: 'Second Wind', lv: 12, mp: 25, kind: 'heal', heal: 0.25, text: 'heal 25 % of max HP' },
   ],
   rogue: [
     { id: 'backstab', name: 'Backstab', lv: 1, mp: 10, kind: 'strike', power: 1.6, crit: 25, text: '1.6×, +25 % crit chance' },
-    { id: 'smoke_step', name: 'Smoke Step', lv: 6, mp: 15, kind: 'guard', dur: 5, dodge: 30, text: '+30 % DODGE for 5 s; foes lose you' },
+    { id: 'smoke_step', name: 'Smoke Step', lv: 6, trial: true, mp: 15, kind: 'guard', dur: 5, dodge: 30, text: '+30 % DODGE for 5 s; foes lose you' },
     { id: 'venom', name: 'Venom', lv: 12, mp: 20, kind: 'strike', power: 0.8, poison: 0.35, pdur: 6, text: '0.8×, then poison: 0.35× ATK a second for 6 s' },
   ],
   mage: [
     { id: 'firebolt', name: 'Firebolt', lv: 1, mp: 12, kind: 'strike', power: 1.8, text: '1.8× at range' },
-    { id: 'frost_nova', name: 'Frost Nova', lv: 6, mp: 30, kind: 'nova', power: 0.8, radius: 2.8, slow: 3, text: '0.8× to every foe close by; slows them for 3 s' },
+    { id: 'frost_nova', name: 'Frost Nova', lv: 6, trial: true, mp: 30, kind: 'nova', power: 0.8, radius: 2.8, slow: 3, text: '0.8× to every foe close by; slows them for 3 s' },
     { id: 'arcane_ward', name: 'Arcane Ward', lv: 12, mp: 25, kind: 'ward', ward: 0.3, text: 'shield the most hurt ally for 30 % of their max HP' },
   ],
   cleric: [
     { id: 'mend', name: 'Mend', lv: 1, mp: 12, kind: 'mend', heal: 0.22, text: 'heal the most hurt ally for 22 % of their max HP' },
-    { id: 'bless', name: 'Bless', lv: 6, mp: 25, kind: 'bless', buff: 0.15, dur: 8, text: 'the whole party: +15 % ATK and DEF for 8 s' },
+    { id: 'bless', name: 'Bless', lv: 6, trial: true, mp: 25, kind: 'bless', buff: 0.15, dur: 8, text: 'the whole party: +15 % ATK and DEF for 8 s' },
     { id: 'turn_undead', name: 'Turn Undead', lv: 12, mp: 30, kind: 'nova', power: 1.6, radius: 3, slow: 0, undead: true, text: '1.6× to every Ashbound within 3 tiles (not the living)' },
   ],
 };
@@ -59,8 +61,11 @@ export const STANCE_MOD = { aggressive: { atk: 1.1, def: 0.9 }, balanced: { atk:
 export const skillsOf = (cls) => SKILLS[cls] || [];
 /** @param {string} cls @param {string} id */
 export const skillDef = (cls, id) => skillsOf(cls).find((s) => s.id === id) || null;
-/** @param {any} m @param {{lv:number}} s */
-export const unlocked = (m, s) => (m.level || 1) >= s.lv;
+/** can m use s? its level, and for a trial ability, the class's trial done (state.trials)
+ * @param {any} m @param {{lv:number, trial?: boolean}} s @param {Record<string, number> | null | undefined} trials */
+export const unlocked = (m, s, trials) => (m.level || 1) >= s.lv && (!s.trial || !!(trials && trials[m.cls]));
+/** the classes that have trials (one level-6 ability each) */
+export const TRIAL_CLASSES = Object.keys(SKILLS).filter((c) => SKILLS[c].some((s) => s.trial));
 /** @param {any} m @param {string} id */
 export const rankOf = (m, id) => Math.max(1, Math.min(MAX_RANK, (m.skills && m.skills[id]) || 1));
 /** @param {any} m */

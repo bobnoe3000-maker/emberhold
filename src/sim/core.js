@@ -16,7 +16,8 @@ import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle, BOSSES } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
-import { createQuests } from './quests.js';
+import { createQuests, TRIAL_LEVEL } from './quests.js';
+import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
 import { createLore } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
@@ -83,6 +84,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
     flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
     bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
+    trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
 
@@ -449,6 +451,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       revealed: [...state.revealed],
       flags: { ...state.flags },
       bosses: { ...state.bosses },
+      trials: Object.keys(state.trials),
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
       ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
@@ -494,6 +497,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
+    // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
+    state.trials = {};
+    const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);
+    for (const c of tr) if (TRIAL_CLASSES.includes(c)) state.trials[c] = 1;
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet

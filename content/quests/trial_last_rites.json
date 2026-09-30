@@ -1,0 +1,40 @@
+{
+  "id": "trial_last_rites",
+  "kind": "trial",
+  "trial": "cleric",
+  "title": "Last Rites",
+  "giver": "sister_ilse",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Sister Ilse says nobody said the rites for the legion in the barrows. She'd like a cleric of yours to stand where they fell and say them properly, for as long as it takes.",
+  "steps": [
+    {
+      "id": "barrows",
+      "journal": "Hold five waves in a stairs-down hall of the Old Barrows, the second floor or deeper.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "barrows",
+          "count": 5,
+          "hall": true,
+          "floor": 2,
+          "label": "Waves held in a hall, floor 2 or deeper"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Sister Ilse in Thornwick.",
+  "done": "Ilse taught your clerics Bless: the rites said forward, for the living, which she says is the only direction that helps.",
+  "rewards": {
+    "xp": 600,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_trial_offer",
+    "turnin": "ilse_trial_turnin"
+  }
+}

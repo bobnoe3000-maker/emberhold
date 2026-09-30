@@ -109,7 +109,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'rankSkill': {
         const m = find(cmd.id), s = m && skillDef(m.cls, cmd.skill);
         if (!m || !s) return true;
-        if (!unlocked(m, s)) return refuse(`${s.name} unlocks at level ${s.lv}`);
+        if (!unlocked(m, s, state.trials)) return refuse(m.level < s.lv ? `${s.name} unlocks at level ${s.lv}` : `${s.name} comes with the ${CLASSES[m.cls].label.toLowerCase()}'s trial`);
         if (rankOf(m, s.id) >= MAX_RANK) return refuse(`${s.name} is at its highest rank`);
         if (pendingSkillPoints(m) < 1) return refuse('No skill points to spend');
         m.skills = { ...(m.skills || {}), [s.id]: rankOf(m, s.id) + 1 };

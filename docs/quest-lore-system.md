@@ -280,6 +280,10 @@ fragment. Two players find the same truth in different places (world doc §7).
   his card, wherever you are, while he's in the party and up. His chain's quests carry
   `companion` (offered only while he's with you) and his last pays an heirloom (`rewards.item`).
   Ink reads `joined`, `in_party` and `boss_<id>`.
+- **Class trials** (M5.6) are quests with `trial: <class>`: offered while anyone of that class in the
+  company is level 6+ and it isn't done; handing one in sets `state.trials[cls]` (save v13) and every
+  member of the class can use its level-6 ability (skills.js `unlocked`). Nell and Hedda, who had
+  no topics, get a short topic list only while their trial is open.
 
 **Module:** `src/sim/quest/`:
 - `engine.js`: instance state machine, objectives, rewards;
