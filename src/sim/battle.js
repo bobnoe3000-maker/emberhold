@@ -208,11 +208,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1]);
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring
-    const spot = () => { let x = 0, y = 0; for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; } return [x, y]; };
+    // a spawn point 9+ tiles off that the party can reach. The draws are as they always were; when none of
+    // the 60 fits, the first reachable miss, else the first reachable cell. (It used to keep the
+    // last draw, which could be a pool: a foe stood in it for good and the wave never ended; the M5 farm.)
+    const spot = () => {
+      let fall = null;
+      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0], x = c[0] + 0.5, y = c[1] + 0.5; if (!reachable(c)) continue; if (hypot(x - p.x, y - p.y) > 9) return [x, y]; if (!fall) fall = [x, y]; }
+      if (fall) return fall;
+      const c = cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
+    };
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
       foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
-      B.escort.forEach((k, i) => foe(w, k, lvl, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, 1 + PREMIUM * Math.max(0, lvl - 3), false, F));
+      B.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); foe(w, k, lvl, ex, ey, 1 + PREMIUM * Math.max(0, lvl - 3), false, F); });
       b.bossUp = true; b.wave += 1;
       bus.emit('bossWave', { id: b.boss, name: B.name });
       bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
@@ -667,11 +675,22 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
 
   // a boss's signature mechanic, each tick it stands
+  /** a spot beside someone, on the floor: (x, y) if it's walkable, else the nearest walkable tile within 3,
+   * else where they stand (an escort put at a fixed offset could land in a pool, or a wall) */
+  function onFloor(w, x, y, fx, fy) {
+    if (isWalkable(w, x, y)) return [x, y];
+    const tx = Math.floor(x), ty = Math.floor(y);
+    for (let d = 1; d <= 3; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+      if (isWalkable(w, tx + dx + 0.5, ty + dy + 0.5)) return [tx + dx + 0.5, ty + dy + 0.5];
+    }
+    return [fx, fy];
+  }
   function bossMech(e, w, dt) {
     const B = BOSSES[e.boss], F = familyOf(w), tough = 1 + PREMIUM * Math.max(0, e.lvl - 3);
     if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
       e.called++;
-      e.guards = B.escort.map((k, i) => foe(w, k, e.lvl, e.x + (i ? 1.3 : -1.3), e.y + 0.8, tough, false, F).id);
+      e.guards = B.escort.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F).id; });
       bus.emit('bossCall', { id: e.boss, x: e.x, y: e.y });
     } else if (B.mech === 'kindle' && (e.kindleT += dt) >= KINDLE_S) {
       e.kindleT = 0;

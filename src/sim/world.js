@@ -130,6 +130,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   if (level.entrance) placeStairsUp(world, level);
   if (level.descentRoom && hasFloorBelow(site, depth)) placeStairsDown(world, level);   // (a site's last floor ends in its hall)
   if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
+  pruneUnreachable(world, level);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
   if (level.descentRoom) {
@@ -195,6 +196,26 @@ function dense(world) {
 }
 const cellAt = (world, x, y) => { const g = dense(world), i = x - g.x0, j = y - g.y0; return i >= 0 && j >= 0 && i < g.w && j < g.h ? g.cells[j * g.w + i] : undefined; };
 function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
+
+// A chest or shrine is only worth placing where you can walk up to it. Decor, pools and walls can close off
+// a pocket of a room (a chest you could see and never open: Barrows floor 2, seed 20260807, found by the
+// M5 loot farm); one no walkable tile reaches from the way in is taken out again.
+function pruneUnreachable(world, level) {
+  const s = level.spawn, q = [[Math.floor(s.x), Math.floor(s.y)]], seen = new Set([K(q[0][0], q[0][1])]);
+  for (let h = 0; h < q.length; h++) {
+    const [x, y] = q[h], z = heightAt(world, x, y);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, nk = K(nx, ny);
+      if (!seen.has(nk) && isWalkable(world, nx + 0.5, ny + 0.5, z)) { seen.add(nk); q.push([nx, ny]); }
+    }
+  }
+  for (const [k, kind] of [...world.props]) {
+    if (kind !== 'chest' && kind !== 'shrine') continue;
+    const [x, y] = k.split(',').map(Number); let near = false;
+    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) if ((dx || dy) && seen.has(K(x + dx, y + dy))) near = true;
+    if (!near) world.props.delete(k);
+  }
+}
 
 // A vault site's last hall keeps its heirloom in a chest (sites.js `vault`): on the open tile nearest the
 // hall's middle, where the stairs down would be. world.vault = { key, heirloom }.
