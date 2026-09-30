@@ -321,7 +321,7 @@ It is pure:
 - `content/npcs/maudry_fenn.json` (schema `content/schema/npcs.schema.json`) and
   `content/dialogue/maudry.ink` (compiled by `node tools/content/ink.mjs`, CI `--check`).
 - `src/sim/npcs.js`: `NPCS` (where each stands; which flags its talk may set), the `talk`,
-  `dialogueEffect` and `endTalk` commands, events `dialogue`, `flagChanged`, `talkEnded`.
+  `dialogueEffect` and `endTalk` commands, events `dialogue`, `talkVars`, `flagChanged`, `talkEnded`.
   Tapping someone out of reach walks you up beside them first; walking off ends the talk.
 - Bound today: `hero_name`, `hero_class`, `hero_origin`, `hero_level`, `party_size`,
   `fallen_name` and the NPC's own `flag_<name>`s. The rest of the list below comes with quests.
@@ -349,7 +349,15 @@ It is pure:
 - `frag_<id>` (known or not), `time_of_day`.
 
 **Effects** go out only as tags. The adapter turns them into `dialogueEffect` commands, and
-the sim validates each one against the quest defs:
+the sim validates each one against the quest defs.
+
+The variables are copied in when a talk opens, and a line with effects makes them stale. So the
+story waits after that line: the sim answers each `dialogueEffect` with `talkVars { npc, vars }`
+(the variables as they now stand), and the adapter rewinds to before the line, binds them and
+plays it again silently. Ink's lookahead had already built the next choices, and the replay
+rebuilds them. So a topic list the story comes back to no longer offers a quest just taken or
+handed in (fixed 2026-09-30: Osric's *Hand in* stayed until you walked off;
+`test/dialogue-vars.test.mjs`).
 
 | Tag | Effect |
 |---|---|

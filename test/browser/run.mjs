@@ -255,8 +255,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).then(() => true, () => false);
       const first = open ? await p.textContent('#talk .line') : '';
       check('talk: tap her → the hero walks over → the dialogue window', open && /Mule/.test(first), first.slice(0, 60));
-      for (let i = 0; i < 6 && (await p.locator('#talk .more').count()); i++) await p.locator('#talk .more').tap();
-      await run(3);                                                        // (the effect is a command: it lands on the next tick)
+      // (meeting her is an effect: a command that lands on the next tick, and the talk waits for it before going on)
+      for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); }
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
       const quest = await p.locator('#talk .ch.quest').allTextContents();       // her errand's choice is marked: a diamond, a QUEST label, its own colour
       check('talk: her lines, then choices, the quest one marked; meeting her set met_maudry (a command the sim checked)', choices.length === 6 && quest.length === 1 && /^Anything I can do\?\s*Quest$/.test(quest[0]) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
@@ -281,11 +281,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(() => { const s = globalThis.__sim, n = s.world.npcs[0], q = s.state.player; q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: n.id }); });
     await run(3);
     const talking = await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).then(() => true, () => false);
-    const more = async () => { for (let i = 0; i < 8 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap(); };
+    const more = async () => { for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); } };   // (a line with effects waits a tick for the sim)
     await more(); await p.locator('#talk .ch', { hasText: 'Anything I can do' }).tap(); await more();
-    await p.locator('#talk .ch', { hasText: "I'll see to it" }).tap(); await run(3);
+    await p.locator('#talk .ch', { hasText: "I'll see to it" }).tap(); await run(3); await more();
     const st = await p.evaluate(() => ({ q: globalThis.__sim.state.quests.vale_long_way_round, tracked: globalThis.__sim.state.tracked }));
     check('quest: "Anything I can do?" → accepted in conversation, and tracked', talking && st.q && st.q.st === 1 && st.tracked === 'vale_long_way_round', JSON.stringify(st));
+    // the topics the talk comes back to read the quest as the sim now has it (it had offered it again until you walked off)
+    const after = await p.locator('#talk .ch').allTextContents();
+    check('quest: back at her topics, the offer is gone and she asks after it', after.length > 0 && !after.some((t) => /Anything I can do/.test(t)) && after.some((t) => /Quest$/.test(t)), JSON.stringify(after));
     if (await p.locator('#talk .x').count()) await p.locator('#talk .x').tap();
     await run(3);
     const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');

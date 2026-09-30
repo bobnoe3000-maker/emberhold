@@ -11,7 +11,8 @@
 //                                allowed it (flags it may set; `quest` tags go to quests.js, which
 //                                takes only the talking NPC's own quests). Anything else does nothing.
 //   endTalk {}                   the window closed
-// Events: 'dialogue' { npc, knot, vars } · 'flagChanged' { name, value } · 'talkEnded' { npc }
+// Events: 'dialogue' { npc, knot, vars } · 'talkVars' { npc, vars } (after each dialogueEffect) ·
+//         'flagChanged' { name, value } · 'talkEnded' { npc }
 // Save: state.flags { [name]: number } (core.js snapshot / restore). A conversation itself is not
 // saved: it ends on a reload, and anything it changed went through a command.
 //
@@ -183,14 +184,17 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
     }
     if (cmd.type === 'dialogueEffect') {
       if (!talking || !Array.isArray(cmd.args)) return true;
-      if (cmd.tag === 'quest') { effect(talking, cmd.args); return true; }   // quests.js checks it's this NPC's quest, in the right state
+      if (cmd.tag === 'quest') effect(talking, cmd.args);   // quests.js checks it's this NPC's quest, in the right state
       const def = NPCS[talking], [verb, name, amt] = cmd.args;
       if (cmd.tag === 'flag' && def.flags.includes(name)) {
         const before = state.flags[name] || 0;
         const value = verb === 'set' ? 1 : verb === 'add' ? Math.min(FLAG_MAX, before + Math.max(0, Math.min(FLAG_MAX, Math.floor(+amt) || 0))) : before;
         if (value !== before) { state.flags[name] = value; bus.emit('flagChanged', { name, value }); }
       }
-      return true;                                // unknown tags and names: ignored, never an error
+      // unknown tags and names are ignored, never an error; either way the story gets the variables
+      // as they now stand, so a topic list it comes back to reads the quest it just handed in
+      bus.emit('talkVars', { npc: talking, vars: varsFor(talking) });
+      return true;
     }
     if (cmd.type === 'endTalk') { if (talking) bus.emit('talkEnded', { npc: talking }); talking = null; return true; }
     return false;

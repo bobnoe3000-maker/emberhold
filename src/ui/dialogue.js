@@ -3,7 +3,10 @@
 // sheet with the speaker's portrait and name, one line at a time (tap to go on), then the choices.
 // Opens on the sim's 'dialogue' event (you tapped someone and were in reach); the words come from
 // Ink through story/adapter.js, and anything a line changes goes back to the sim as a command.
-// Closing sends `endTalk`; walking off ends it from the sim's side ('talkEnded').
+// Closing sends `endTalk`; walking off ends it from the sim's side ('talkEnded'). A line with
+// effects (taking or handing in a quest) holds the beat until the sim has applied them and sent
+// its variables back ('talkVars', a tick later), so the choices after it read the quest as it now
+// stands.
 //
 // Lines render as text, never HTML. A line in quotes is speech; anything else is narration, set
 // in italics. Choices are full-width buttons (≥ 44 px) in the lower third, under the thumb; quest
@@ -73,15 +76,18 @@ export function createDialogue({ sim, cast, openService }) {
   const book = createStoryBook((file) => fetch(`./content/dialogue/${file}.json`).then((r) => r.json()));
   const push = (cmd) => sim.commands.push(cmd);
   let convo = null, def = null, pending = [], open = false, beatN = 0;
+  let held = null, waitN = 0;                                 // a beat waiting on the sim's variables, and for how many effects
 
   const place = (d) => { const sv = (sim.world.services || []).find((s) => s.kind === 'tavern'); return d.role && d.role.includes('innkeeper') && sv ? sv.name : sim.world.name || ''; };
-  const show = (beat) => {
+  // `fresh`: a new beat starts at its first line; a resumed one keeps the line you're on
+  const show = (beat, fresh = true) => {
     pending.push(...beat.windows);
-    render(html`<${Talk} key=${++beatN} def=${def} place=${place(def)} beat=${beat} onChoose=${(i) => show(convo.choose(i))} onClose=${close} />`, wrap);
+    held = beat.waiting ? beat : null; waitN = beat.waiting || 0;
+    render(html`<${Talk} key=${fresh ? ++beatN : beatN} def=${def} place=${place(def)} beat=${beat} onChoose=${(i) => show(convo.choose(i))} onClose=${close} />`, wrap);
   };
   function close() {
     if (!open) return;
-    open = false; wrap.classList.remove('on'); render(null, wrap); push({ type: 'endTalk' });
+    open = false; held = null; wrap.classList.remove('on'); render(null, wrap); push({ type: 'endTalk' });
     const w = pending; pending = []; convo = null;
     for (const t of w) if (t.tag === 'service' && t.args[0]) openService(t.args[0]);   // the window a line asked for, once the talk is done
   }
@@ -92,7 +98,12 @@ export function createDialogue({ sim, cast, openService }) {
       def = d; convo = c; pending = []; open = true; wrap.classList.add('on'); show(c.first);
     } catch (e) { console.warn('dialogue', npc, e); push({ type: 'endTalk' }); }
   });
-  sim.bus.on('talkEnded', () => { if (open) { open = false; wrap.classList.remove('on'); render(null, wrap); pending = []; convo = null; } });
+  sim.bus.on('talkVars', ({ vars }) => {
+    if (!open || !held || --waitN > 0) return;
+    const b = held, next = convo.resume(vars);
+    show({ ...next, lines: b.lines.concat(next.lines) }, false);
+  });
+  sim.bus.on('talkEnded', () => { if (open) { open = false; held = null; wrap.classList.remove('on'); render(null, wrap); pending = []; convo = null; } });
   sim.bus.on('levelChanged', () => { if (open) close(); });
   return { get open() { return open; }, close };
 }

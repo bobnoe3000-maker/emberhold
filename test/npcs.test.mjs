@@ -105,6 +105,9 @@ test('every Ink file opens at its entry knot, and every flag it sets is one the 
   }
 });
 
+// a beat that waits after a line with effects carries on with the sim's variables (here: the same ones), as the window does
+const settle = (c, b, vars) => { const lines = [...b.lines]; while (b.waiting) { b = c.resume(vars); lines.push(...b.lines); } return { ...b, lines }; };
+
 test('the story adapter: tags become commands, windows come back, presentation is dropped', async () => {
   assert.deepEqual(parseTag('flag: set met_maudry'), { tag: 'flag', args: ['set', 'met_maudry'] });
   assert.deepEqual(parseTag(' service:tavern'), { tag: 'service', args: ['tavern'] });
@@ -113,15 +116,17 @@ test('the story adapter: tags become commands, windows come back, presentation i
   const pushed = [];
   const origins = {};
   for (const origin of ['thornwick_born', 'redhand_deserter', 'grey_sisters_ward', 'deepdelver_fostered', '']) {
-    const c = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', hero_origin: origin, flag_met_maudry: 0 }, (cmd) => pushed.push(cmd));
-    origins[origin] = c.first.lines.at(-1);
+    const vars = { hero_name: 'Tam', hero_origin: origin, flag_met_maudry: 0 };
+    const c = await book.open('maudry', 'maudry_hub', vars, (cmd) => pushed.push(cmd));
+    assert.ok(c.first.waiting, 'meeting her is an effect: the beat waits for the sim');
+    origins[origin] = settle(c, c.first, vars).lines.at(-1);
     assert.deepEqual(pushed.at(-1), { type: 'dialogueEffect', tag: 'flag', args: ['set', 'met_maudry'] });
   }
   assert.equal(new Set(Object.values(origins)).size, 5, 'a line per origin');
   assert.match(origins.thornwick_born, /knew your mother/);
   // returning with a Fallen companion: she notices; the hiring board is a window, not a command
   const c = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, fallen_name: 'Brin' }, (cmd) => pushed.push(cmd));
-  assert.match(c.first.lines.join(' '), /No Brin today/);
+  assert.match(c.first.lines.join(' '), /No Brin today/); assert.equal(c.first.waiting, 0);
   const n = pushed.length, hire = c.choose(c.first.choices.findIndex((ch) => /hire/i.test(ch.text)));
   const board = c.choose(hire.choices.findIndex((ch) => /board/i.test(ch.text)));
   assert.deepEqual(board.windows, [{ tag: 'service', args: ['tavern'] }]); assert.equal(board.ended, true); assert.equal(pushed.length, n);
