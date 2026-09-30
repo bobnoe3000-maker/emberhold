@@ -86,6 +86,7 @@ const CSS = `
 #hubSheet .job .jt b { flex: 1; min-width: 0; font-size: 16px; color: #f0c880; font-weight: 600; }
 #hubSheet .job .sk { flex: none; font: 700 10.5px ui-monospace, Menlo, monospace; font-style: normal; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; }
 #hubSheet .job .sk.s1 { background: #26351f; color: #b8e0a0; } #hubSheet .job .sk.s2 { background: #3f2a10; color: #ffc060; } #hubSheet .job .sk.s3 { background: #481512; color: #ff8a7a; }
+#hubSheet .job .co { font: 700 10.5px ui-monospace, Menlo, monospace; color: #ffc060; margin-top: 3px; }
 #hubSheet .job .by { font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; margin: 2px 0 6px; }
 #hubSheet .job .hook { font-size: 14px; line-height: 1.4; color: #d8ccb8; font-style: italic; }
 #hubSheet .job .brief { font-size: 13.5px; color: #efe4cf; margin-top: 8px; }
@@ -161,6 +162,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
         : `<button class="btn" data-take="${job.id}" ${open >= MAX_JOBS ? 'disabled' : ''}>Take the job</button>`;
       return `<div class="job${st === QS.READY ? ' ready' : st === QS.ACTIVE || st === QS.DONE ? ' taken' : ''}">
         <div class="jt"><b>${esc(d.title)}</b><em class="sk s${d.skulls}">${'☠'.repeat(d.skulls)} ${SKULLS[d.skulls]}</em></div>
+        ${d.company ? '<div class="co">⚑ Bring company: a lone hero won’t hold this room</div>' : ''}
         <div class="by">Posted · ${esc(d.giverName)}</div><div class="hook">${esc(d.hook)}</div>
         <div class="brief">${esc(d.brief)}</div><div class="rw">Pays ${d.rewards.xp} XP · ${d.rewards.gold} gold</div>${btn}</div>`;
     };

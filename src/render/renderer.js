@@ -21,7 +21,7 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
-import { DEATH_T } from '../sim/battle.js';
+import { DEATH_T, TIDE } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
@@ -1045,7 +1045,8 @@ export function createRenderer(canvas, sim, input) {
       for (const e of w.enemies || []) if (e.hp > 0 && !(e.spawn > 0)) bar(e.x, e.y, e.hp / e.maxHp, e.elite ? '#ff9a3a' : '#d24a3c', e.elite ? 24 : 18);
       party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
-      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}`, dc = dangerColor(b.level);
+      // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
+      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.wave > 1 ? `  ·  FOES +${Math.round(TIDE * (b.wave - 1) * 100)}%` : ''}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 50 * k;   // clear of an iPhone's camera island (40 clipped ~4 px); the HUD row below moved down with it
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);

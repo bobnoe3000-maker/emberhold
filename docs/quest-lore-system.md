@@ -109,6 +109,8 @@ and deliberately so:
   `src/ui/boardwords.js`), so a job always reads the same.
 - **Commands:** `boardAccept { id }` and `boardTurnIn { id }`, town only, at most 3 open. The
   Journal keeps the last 12 finished jobs.
+- **Company:** since 2026-09-30 a job carries `company`, true for a Warden or Delve room of level
+  4+ near or above your level. The card and the Journal say *bring company* (GDD §7.1).
 - **New objective types** (§4.3):
   - `elites` counts the `slain { elite }` event (battle.js);
   - `reach` counts floors reached going down (`levelChanged` without a scene);

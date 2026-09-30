@@ -64,6 +64,10 @@ export const BOARD = {
   },
 };
 export const TEMPLATES = Object.keys(BOARD);
+/** a job that sends you into a room a lone hero can't hold (GDD §7.1: from room level 4 a room at
+ * your level or near it wants company; well below you, you're fine alone): a Warden's hall or a Delve
+ * floor of level 4+ that's no more than a level under yours */
+export const companyFor = (tpl, target, lv) => (tpl === 'warden' || tpl === 'delve') && target >= 4 && target >= lv - 1;
 /** 1 easy · 2 fair · 3 hard: the job's own level against the hero's (GDD §9) */
 export const skullsFor = (target, lv) => (target - lv <= 0 ? 1 : target - lv <= 2 ? 2 : 3);
 const round5 = (v) => Math.max(5, Math.round(v / 5) * 5);
@@ -76,7 +80,7 @@ export const rewardFor = (effort, lv, skulls) => {
   return { xp: round5(12 * lv * effort * k), gold: round5(effort * (3 + 2 * lv) * k) };
 };
 
-/** @typedef {{ id: string, tpl: string, day: number, lv: number, slot: number, n: number, floor: number, skulls: number, pick: [number, number], kind: 'board', giver: string, region: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
+/** @typedef {{ id: string, tpl: string, day: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
 const cache = new Map();
 /** The day's jobs. @param {number} seed @param {number} day @param {number} lv @returns {Job[]} */
 export function boardOffers(seed, day, lv) {
@@ -85,9 +89,9 @@ export function boardOffers(seed, day, lv) {
   const pool = TEMPLATES.filter((t) => BOARD[t].min(lv));
   for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const jobs = pool.slice(0, lv >= 4 ? 4 : 3).map((tpl, slot) => {
-    const T = BOARD[tpl], s = T.size(rng, lv), skulls = skullsFor(T.target(s, lv), lv);
+    const T = BOARD[tpl], s = T.size(rng, lv), target = T.target(s, lv), skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv);
     /** @type {[number, number]} */ const pick = [rng(), rng()];              // the words: a title / hook and a poster (content/board)
-    return { id: `board_${day}_${lv}_${slot}`, tpl, day, lv, slot, n: s.n, floor: s.floor, skulls, pick,
+    return { id: `board_${day}_${lv}_${slot}`, tpl, day, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
       kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region: 'vale', level: /** @type {[number, number]} */ ([lv, lv]),
       steps: [{ id: 'job', objectives: [T.objective(s)] }], rewards: rewardFor(T.effort(s), lv, skulls) };
   });

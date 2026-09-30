@@ -21,7 +21,7 @@ const CSS = `
 #journalBtn .dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 5px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }
 #journalBtn.due .dot { display: block; }
 /* just above the party cards (and the town's service bar), clear of the minimap; placed by place() */
-#questTrack { position: fixed; left: 12px; bottom: 140px; z-index: 5; max-width: calc(100vw - 24px); display: none;
+#questTrack { position: fixed; left: 12px; bottom: 140px; z-index: 5; max-width: calc(100vw - 150px);   /* (the Step-out button shares the row in a fight) */ display: none;
   padding: 5px 10px; border-radius: 12px; background: rgba(16,12,22,0.94); border: 1px solid rgba(214,170,98,0.35);
   font: 11.5px ui-monospace, Menlo, monospace; color: #e8dcc4; }
 #questTrack.on { display: block; }
@@ -77,7 +77,7 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
   return html`<div class=${'q' + (tracked ? ' tracked' : '')}>
     <span class="kind">${KIND[def.kind] || def.kind}</span>
     <h3>${def.title}</h3>
-    <div class="giver">${def.giverName || npcName(def.giver)} · level ${def.level[0]}${def.level[1] !== def.level[0] ? '–' + def.level[1] : ''}${def.skulls ? ' · ' + '☠'.repeat(def.skulls) + ' ' + SKULLS[def.skulls] : ''}</div>
+    <div class="giver">${def.giverName || npcName(def.giver)} · level ${def.level[0]}${def.level[1] !== def.level[0] ? '–' + def.level[1] : ''}${def.skulls ? ' · ' + '☠'.repeat(def.skulls) + ' ' + SKULLS[def.skulls] : ''}${def.company ? ' · bring company' : ''}</div>
     <div class=${'step' + (now.ready ? ' ready' : '')}>${now.text}</div>
     ${now.objectives.map((o) => html`<div key=${o.label} class=${'obj' + (o.n >= o.of ? ' done' : '')}><span>${o.label}</span><span class="bar"><i style=${`width:${Math.round((100 * o.n) / o.of)}%`}></i></span><span class="n">${o.n}/${o.of}</span></div>`)}
     <div class="rew">Reward · ${def.rewards.xp} XP · ${def.rewards.gold} gold</div>

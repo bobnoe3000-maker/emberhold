@@ -3,8 +3,8 @@
 // carries its path length in steps (from the same pathfinder as tap-to-move); places that
 // can't be reached are left out, and ones not found yet come back greyed (`off`).
 //
-//   dungeon  — next unexplored room · room at your level · unopened chest / shrine ·
-//              stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
+//   dungeon  — (in a fight) step out · next unexplored room · room at your level · unopened chest /
+//              shrine · stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
 //   overland — the region's town · nearest dungeon · nearest unexplored dungeon · landmarks
 //   town     — town square (not while you're in it) · road out
 //
@@ -16,7 +16,7 @@ import { hypot } from './detmath.js';
 
 const MAX_TRIES = 4;                    // path at most this many candidates per row (nearest first by straight line)
 
-export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare }) {
+export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
   // standable() probes five points with climb checks; every row prices many tiles, so cache by
   // (tile, height stepped up from)
   const memo = new Map(), raw = standable;
@@ -71,6 +71,19 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     const here = cellAt(px, py), hereRoom = here && here.kind === 'floor' ? here.room : -1;
     const roomTarget = (r) => { const t = standOn(r.cx, r.cy, 10); return t && { ...t, room: r }; };
     const fighting = L.rooms.filter((r) => r !== L.entrance && r.id !== hereRoom);
+
+    // in a fight: the nearest way out, a corridor tile just past one of its doorways (the fight ends
+    // there and corridors restore you at 5×; GDD §7.1: a visit ends when you walk out or the room wins)
+    if (battleRoom >= 0) {
+      const doors = [];
+      for (const [k, c] of L.cells) {
+        if (c.kind !== 'floor' || c.room >= 0) continue;
+        const [x, y] = k.split(',').map(Number);
+        if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => { const n = cellAt(x + dx, y + dy); return n && n.kind === 'floor' && n.room === battleRoom; })) doors.push({ tx: x, ty: y });
+      }
+      const exit = nearestD(doors);
+      if (exit) out.push({ id: 'step-out', icon: 'exit', label: 'Step out', sub: `to the corridor · ${exit.steps} steps`, tx: exit.tx, ty: exit.ty, near: 0, steps: exit.steps });
+    }
 
     const next = nearestD(fighting.filter((r) => !visited.has(r.id)).map(roomTarget).filter(Boolean));
     if (next) out.push({ id: 'next-room', icon: 'next', label: 'Next room', sub: `unexplored · ${next.steps} steps`, level: lv.get(next.room.id), tx: next.tx, ty: next.ty, near: 1, room: next.room.id, steps: next.steps });

@@ -334,6 +334,33 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 9. The way out of a fight: the room pill shows the tide, "Step out" pulses when low, a tap walks out
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(() => { const s = globalThis.__sim, L = s.world.level, r = L.rooms.find((q) => s.world.roomLevels.get(q.id) === 1), pl = s.state.player; pl.x = pl.px = r.cx + 0.5; pl.y = pl.py = r.cy + 0.5; });
+    await run(90);
+    await p.waitForSelector('#stepOut.on', { timeout: 5000 }).catch(() => null);
+    const inFight = await p.evaluate(() => !!globalThis.__sim.battle);
+    const shown = await p.locator('#stepOut.on').count();
+    await p.evaluate(() => { const h = globalThis.__sim.state.party[0]; h.hp = Math.max(1, h.hp * 0.3); });
+    await run(3);
+    await p.waitForSelector('#stepOut.on.low', { timeout: 5000 }).catch(() => null);   // (the button follows on animation frames: slow in headless)
+    const low = await p.locator('#stepOut.on.low').count(), label = await p.locator('#stepOut').innerText().catch(() => '');
+    check('step out: in a fight the button shows, and pulses with a word when the party is low', inFight && shown === 1 && low === 1 && /Step out/.test(label) && /low/.test(label), label.replace(/\n/g, ' · '));
+    await p.locator('#stepOut').tap();
+    for (let i = 0; i < 20 && (await p.evaluate(() => !!globalThis.__sim.battle)); i++) await run(15);
+    const after = await p.evaluate(() => ({ battle: !!globalThis.__sim.battle, room: (() => { const s = globalThis.__sim, pl = s.state.player, c = s.world.level.cells.get(Math.floor(pl.x) + ',' + Math.floor(pl.y)); return c ? c.room : null; })() }));
+    await p.waitForSelector('#stepOut.on', { state: 'hidden', timeout: 5000 }).catch(() => null);
+    check('step out: a tap walks the hero out; the fight ends; no page errors', !after.battle && after.room < 0 && (await p.locator('#stepOut.on').count()) === 0 && errs.length === 0, JSON.stringify(after) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

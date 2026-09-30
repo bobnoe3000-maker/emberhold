@@ -456,7 +456,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   // compass destinations for where you are now (read-only; see travel.js)
   function destinations({ inSquare = false } = {}) {
-    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare }), world, battle.battle);   // the tracked quest's next place first
+    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
   }
   return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

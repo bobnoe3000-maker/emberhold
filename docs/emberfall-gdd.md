@@ -391,6 +391,20 @@ Both slot in with the same stat block and ability format. No system changes are 
 - Measured: the right party at level 6 holds a room two up for 9 waves in Fine gear at level,
   6 in its level-1 kit.
 
+**Leaving is the way to farm** (implemented 2026-09-30):
+- In a fight the room pill reads *ROOM LV 4 · WAVE 6 · FOES +30%*: the tide, in the open.
+- A **Step out** button sits above the party cards on the right (`src/ui/stepout.js`). It walks
+  the hero to the nearest corridor tile past a doorway (the compass row `step-out`,
+  `sim/travel.js`), where the fight ends and the corridor restores the party at 5×.
+- The button pulses under 45 % party HP ("the party is low"). If a companion is Downed, it warns
+  that leaving makes them Fallen.
+- Going back in is a fresh visit, with the tide back at the start. Measured: a lone level-1 hero
+  who steps out when low clears more waves over four visits than one stubborn visit, and never
+  wipes (`test/stepout.test.mjs`).
+- **The board says when a job wants company:** a Warden's hall or a Delve floor of room level 4+
+  that's no more than a level under yours (`companyFor`, `sim/board.js`). The card shows
+  *⚑ Bring company*, and the Journal says *bring company*.
+
 **Class notes:**
 - A lone mage lasts longest of the damage classes (8–15 waves at level 1): it kites.
 - A lone cleric outlasts everyone (13–21 waves) but earns the least XP a minute.
