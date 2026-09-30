@@ -24,9 +24,12 @@ window.measure = async (names) => {
 // DEPTH KEY = distance toward the camera in tile units: ground x+y plus 0.816 × height
 // (the 30° camera: a point one tile-unit higher sits 0.816 tiles nearer). The renderer
 // composes structures and actors with a "nearer wins" test on this key.
+// (uFloor: the lowest height baked, in model units — just under the ground, or a stairwell's
+// bottom for a bake with o.below)
 const keyMat = new THREE.ShaderMaterial({
+  uniforms: { uFloor: { value: -0.02 } },
   vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
-  fragmentShader: `varying vec3 vW; void main(){ if (vW.y < -0.02) discard; float k = (vW.x + vW.z + 0.816 * vW.y) * ${UNIT_TILES.toFixed(1)} + 128.0;
+  fragmentShader: `uniform float uFloor; varying vec3 vW; void main(){ if (vW.y < uFloor) discard; float k = (vW.x + vW.z + 0.816 * vW.y) * ${UNIT_TILES.toFixed(1)} + 128.0;
     gl_FragColor = vec4(floor(k) / 255.0, fract(k), 0.0, 1.0); }`,
 });
 // planar shadow: every vertex slid along the sun direction onto the ground plane
@@ -36,15 +39,16 @@ const shadowMat = new THREE.ShaderMaterial({
   vertexShader: `uniform vec3 uSun; void main(){ vec4 w = modelMatrix * vec4(position,1.0); w.y = max(w.y, 0.0); w.xyz -= uSun * (w.y / uSun.y); w.y = 0.001; gl_Position = projectionMatrix * viewMatrix * w; }`,
   fragmentShader: `void main(){ gl_FragColor = vec4(1.0); }`,
 });
-const CLIP = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.02)];   // nothing below the ground plane
+const CLIP = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.02)];   // nothing below the ground plane (but o.below: a stairwell's depth)
 R.localClippingEnabled = true;
 const nrmMat = new THREE.MeshNormalMaterial({ clippingPlanes: CLIP, side: THREE.DoubleSide });
 keyMat.side = THREE.DoubleSide; shadowMat.side = THREE.DoubleSide;
 const glowOn = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, clippingPlanes: CLIP }), glowOff = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, clippingPlanes: CLIP });
 // atlas swatch id (8 × 4 gradient swatches): R = column/8, G = row/4 — used to find windows
 const uvMat = new THREE.ShaderMaterial({
+  uniforms: { uFloor: keyMat.uniforms.uFloor },
   vertexShader: `varying vec2 vUv; varying float vY; void main(){ vUv = uv; vY = (modelMatrix * vec4(position,1.0)).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-  fragmentShader: `varying vec2 vUv; varying float vY; void main(){ if (vY < -0.02) discard; vec2 u = fract(vUv); gl_FragColor = vec4((floor(u.x * 8.0) + 0.5) / 8.0, (floor(u.y * 4.0) + 0.5) / 4.0, fract(u.y * 4.0), 1.0); }`,
+  fragmentShader: `uniform float uFloor; varying vec2 vUv; varying float vY; void main(){ if (vY < uFloor) discard; vec2 u = fract(vUv); gl_FragColor = vec4((floor(u.x * 8.0) + 0.5) / 8.0, (floor(u.y * 4.0) + 0.5) / 4.0, fract(u.y * 4.0), 1.0); }`,
 });
 
 // bake one model → { w, h, ax, ay, alb, nrm, key (dataURLs), emi, foot } ; ax/ay = pixel of the model origin
@@ -53,14 +57,19 @@ window.bakeEnv = async (name, o = {}) => {
   if (o.rotY) root.rotation.y = o.rotY * Math.PI / 180;
   if (o.scale) root.scale.setScalar(o.scale);
   root.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(root);
+  // o.below (model units): keep geometry down to that depth under the ground — a stairwell. Its
+  // keys come out further than the ground's (they are); the renderer lets such a sprite through
+  // the floor only inside its opening (renderer.js, `hole`).
+  const below = o.below || 0; CLIP[0].constant = 0.02 + below; keyMat.uniforms.uFloor.value = -0.02 - below;
+  // (a `mask` mesh — a stairwell's floor — writes depth only: it hides, and is never drawn or framed)
+  const box = new THREE.Box3(); root.traverse((m) => { if (m.isMesh && !m.userData.mask) box.expandByObject(m); });
   // frame: project the 8 bbox corners with the game camera to size the canvas
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
   cam.position.set(50 * Math.cos(pr) * Math.sin(yw), 50 * Math.sin(pr), 50 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(0, 0, 0); cam.updateMatrixWorld(true);
   const right = new THREE.Vector3(1, 0, 0).applyQuaternion(cam.quaternion), up = new THREE.Vector3(0, 1, 0).applyQuaternion(cam.quaternion);
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-  const minY = Math.max(0, box.min.y);
+  const minY = Math.max(-below, box.min.y);
   for (const X of [box.min.x, box.max.x]) for (const Y of [minY, box.max.y]) for (const Z of [box.min.z, box.max.z]) {
     const vs = [new THREE.Vector3(X, Y, Z)];
     if (o.shadow !== false) vs.push(new THREE.Vector3(X, 0, Z).addScaledVector(SUN, -Y / SUN.y));
@@ -72,7 +81,8 @@ window.bakeEnv = async (name, o = {}) => {
   R.setSize(W, H);
   const scene = new THREE.Scene(); scene.add(root);
   const albMats = new Map();
-  root.traverse((m) => { if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
+  const maskMat = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
+  root.traverse((m) => { if (m.isMesh && m.userData.mask) albMats.set(m, maskMat); else if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
   const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d', { willReadFrequently: true });
   const pass = (kind) => {
     if (kind === 'alb') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = albMats.get(m); }); R.outputColorSpace = THREE.SRGBColorSpace; }
@@ -143,7 +153,7 @@ window.bakeAll = async (list, width = 2048) => {
   const meta = {};
   items.forEach(({ e, r }, i) => { const [px, py] = pos[i];
     xa.putImageData(r.A, px, py); xn.putImageData(r.N, px, py); xk.putImageData(r.K, px, py);
-    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.emi ? 9 : 0 }; });
+    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.emi ? (e.glowId || 9) : 0 }; });   // glow: its GLOW_ID (9 lit windows; 2 violet)
   return { meta, width, height: H, alb: ca.toDataURL('image/png'), nrm: cn.toDataURL('image/png'), key: ck.toDataURL('image/png') };
 };
 window.ready = true;

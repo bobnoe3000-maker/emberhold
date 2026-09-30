@@ -767,6 +767,49 @@ Object.assign(TYPES, {
       box(0.015, 0.1, 0.015, S.m.trim, sx * (W / 2 + 0.03), rise * 0.35 + 0.05, L / 2 - 0.08, g);
     }
   },
+  // A floor's way down (the dungeon's stairs down): a stairwell cut into the floor, 6 tiles by 6.
+  // The flight starts at the opening's front edge (+z, toward the camera) and goes down away from
+  // you to a landing at the back, where an arch leads on under the floor, lit violet (the way
+  // down). A low kerb rims the other three sides. Shallow on purpose: the 30° camera sees about
+  // 1.2× a stairwell's depth in from its mouth, so a deep one showed nothing but its near wall.
+  // Everything but the kerb is below the ground: bake with `below` (envlab.js). Origin: the
+  // opening's middle, at ground level.
+  stairsdown(S, g) {
+    const HX = 0.3, HZ = 0.3, D = 0.22, T = 0.026, N = 12, run = 0.44;
+    const wall = mat(tex('ashlar', '#3a3642', 37)), dark = mat(null, '#0a080e'), lip = mat(null, '#9a94a2'), kerb = mat(tex('ashlar', '#58525e', 33));
+    const wy = -D - 0.03, wh = D + 0.03;                                        // walls from under the landing up to the ground
+    const deep = mat(tex('ashlar', '#26232c', 38));                              // the walls darken toward the bottom
+    for (const sx of [-1, 1]) { box(T, wh * 0.55, 2 * HZ, deep, sx * (HX - T / 2), wy, 0, g); box(T, wh * 0.45, 2 * HZ, wall, sx * (HX - T / 2), wy + wh * 0.55, 0, g); }   // side walls, inside the opening
+    // back wall with the arch: two jambs and a lintel, and the dark way on behind
+    const aw = 0.15, ah = 0.15;
+    for (const sx of [-1, 1]) box(HX - aw / 2, wh, T, wall, sx * (aw / 2 + (HX - aw / 2) / 2), wy, -HZ + T / 2, g);
+    box(aw, wh - ah - 0.03, T, wall, 0, -D + ah, -HZ + T / 2, g);
+    box(aw + 0.03, 0.014, T + 0.008, lip, 0, -D + ah, -HZ + T / 2 + 0.004, g);   // the arch's lintel stone, lit edge
+    box(aw, ah, 0.06, dark, 0, -D, -HZ - 0.05, g);                               // the passage on
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(aw - 0.024, ah - 0.02, 0.006), S.m.glass); glow.userData.glow = true;
+    glow.position.set(0, -D + (ah - 0.02) / 2, -HZ - 0.012); g.add(glow);          // (violet in the game: env.json glowId)
+    // the flight: N steps from just under the front edge down to the landing
+    const w = 2 * (HX - T), d = run / N;
+    const shade = (f) => { const c = new THREE.Color('#7c7686').lerp(new THREE.Color('#34303c'), f); return mat(tex('ashlar', '#' + c.getHexString(), 31)); };
+    for (let i = 0; i < N; i++) {                                                // each tread a little darker going down
+      const top = -D * (i + 1) / (N + 1), z = HZ - (i + 0.5) * d;
+      box(w, top - wy, d, shade(i / N), 0, wy, z, g);
+      box(w, 0.006, 0.012, lip, 0, top - 0.003, z + d / 2 - 0.006, g);           // worn nosing, lit edge
+    }
+    box(w, -D - wy, 2 * HZ - run, shade(1), 0, wy, -HZ + (2 * HZ - run) / 2, g);  // the landing
+    // the kerb: a low stone rim on the sides and back (the front is where you step down)
+    const kh = 0.024, kt = 0.03;
+    for (const sx of [-1, 1]) box(kt, kh, 2 * HZ + kt, kerb, sx * (HX + kt / 2), 0, -kt / 2, g);
+    box(2 * HX + 2 * kt, kh, kt, kerb, 0, 0, -HZ - kt / 2, g);
+    for (const sx of [-1, 1]) box(0.045, 0.05, 0.045, kerb, sx * (HX + kt / 2), 0, HZ - 0.022, g);   // newel stones at the top step
+    // the floor around the opening, depth only (envlab.js `mask`): it hides what the ground would —
+    // the walls' and steps' outsides — so the bake sees into the stairwell only through its mouth.
+    // Wide on the camera's sides (+x, +z): a view ray from the landing surfaces ~0.3 further on.
+    const E = 0.34, e = 0.04, slab = (sw, sd, x, z) => { box(sw, 0.002, sd, dark, x, -0.002, z, g).userData.mask = true; };
+    slab(E + e + 2 * HX, E, (E - e) / 2, HZ + E / 2);                              // in front
+    slab(e, 2 * HZ + e, -HX - e / 2, -e / 2); slab(E, 2 * HZ + e, HX + E / 2, -e / 2);   // the sides
+    slab(E + e + 2 * HX, e, (E - e) / 2, -HZ - e / 2);                             // behind
+  },
 });
 
 export const BUILD_TYPES = Object.keys(TYPES);

@@ -84,3 +84,29 @@ test('the compass: the first floor\'s stair is the way out; deeper it is "Stairs
   const up = sim.destinations().find((r) => r.id === 'exit');
   assert.equal(up.label, 'Stairs up'); assert.match(up.sub, /^to depth 1 /);
 });
+
+// The stairs down are a stairwell you can see (a 6×6 hole in the descent room, 'stairsdown_0'):
+// nothing walks over it, any of its tiles takes you down from its rim, a tap in its middle walks
+// you to its top step, and the compass finds a way to its rim on every floor.
+test('the stairs down are a stairwell: solid to walk on, used from any side, found by the compass', () => {
+  for (const seed of [20260807, 777, 4242, 6]) {
+    const sim = dungeon(seed);
+    for (let d = 0; d < 3; d++) {
+      const w = sim.world, S = w.stairwell;
+      assert.ok(S && S.x1 - S.x0 === 6 && S.y1 - S.y0 === 6, `a stairwell (seed ${seed}, floor ${d + 1})`);
+      assert.ok(w.structs.some((s) => s.id === 'stairsdown_0' && s.hole), 'drawn by its structure');
+      for (let y = S.y0; y < S.y1; y++) for (let x = S.x0; x < S.x1; x++) assert.ok(!isWalkable(w, x + 0.5, y + 0.5), `no walking over the hole at ${x},${y}`);
+      assert.equal(w.props.get(w.stairsAt.x + ',' + w.stairsAt.y), 'stairs', 'its top step');
+      w.discovered.add(w.level.descentRoom.id);
+      const row = sim.destinations().find((r) => r.id === 'stairs-down' && !r.off);
+      assert.ok(row, `the compass reaches its rim (seed ${seed}, floor ${d + 1})`);
+      if (d === 0) {                                                  // down from the far side (the back rim), by a tile that isn't the top step
+        at(sim, { x: S.x0 + 2.5, y: S.y0 - 0.5 }); sim.commands.push({ type: 'harvest', tx: S.x0 + 2, ty: S.y0 }); sim.tick();
+      } else if (d === 1) {                                           // a tap in the middle walks to the top step, and down
+        at(sim, { x: w.stairsAt.x + 0.5, y: w.stairsAt.y + 4.5 }); sim.commands.push({ type: 'tap', tx: S.x0 + 2, ty: S.y0 + 2 });
+        for (let i = 0; i < 200 && sim.state.depth === d; i++) sim.tick();
+      } else goDown(sim);
+      assert.equal(sim.state.depth, d + 1, `down a floor (seed ${seed}, from floor ${d + 1})`);
+    }
+  }
+});

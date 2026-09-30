@@ -31,6 +31,15 @@ node bake-env.cjs            # environment atlases (env.json + town.json: all ou
 alpha, and a per-pixel depth key (ground x+y + 0.816 × height) with the lit-window flag.
 Everything is shelf-packed into one atlas set.
 
+Per-sprite knobs in `env.json` beyond the grade:
+- `glowId` — the GLOW_ID its glowing meshes light up in the game (default 9, lit windows; the
+  stairwell's arch uses 2, violet).
+- `below` — keep geometry down to this depth under the ground (model units); the bake clips at the
+  ground otherwise. For a hole (`stairsdown`): its model also carries a depth-only floor around
+  the opening (meshes with `userData.mask`), so the bake sees into it only through its mouth,
+  and the renderer draws it over the floor (`hole` structures, `renderer.js`).
+- `shadow: false` — no planar ground shadow.
+
 ## Game atlases (`bake.cjs` + `bake.json`)
 
 `bake.json` lists what ships: the hero (`F1`, Knight · sword & board) and the four

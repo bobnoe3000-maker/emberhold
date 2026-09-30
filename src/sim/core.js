@@ -306,6 +306,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y, inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
       const thing = propAt(world, cmd.tx, cmd.ty) || resourceAt(world, cmd.tx, cmd.ty);
       p.journey = null;                                    // a tap on the way is a new plan
+      if (thing === 'stairwell' && !inReach && world.stairsAt) { applyCommand({ ...cmd, tx: world.stairsAt.x, ty: world.stairsAt.y }); return; }   // the middle of the hole: walk to its top step
       if (thing && inReach) { stopWalk(); applyCommand({ type: 'harvest', tx: cmd.tx, ty: cmd.ty }); return; }
       walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
@@ -319,7 +320,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
         face(p, dx, dy);
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon'); return; }          // into the Old Barrows
         if (prop === 'exit') { travel('overland', 'barrows'); return; }                               // back up to the surface
-        if (prop === 'stairs') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }
+        if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }

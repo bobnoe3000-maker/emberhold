@@ -91,7 +91,11 @@ fights there. The **entrance room** is a safe sanctuary. On **every floor**, a s
 against its back wall leads back up, one floor at a time: on a site's first floor it leads out
 to the surface; deeper, it climbs to the floor above, arriving in the corridor just outside that
 floor's descent room (never inside it). The **descent room** holds the floor's boss and the
-stairs down, which go one floor deeper, arriving at the foot of that floor's stair up. No stair
+stairs down, which go one floor deeper, arriving at the foot of that floor's stair up. The stairs
+down are a stone stairwell 6 tiles by 6 cut into the descent room's floor, a brazier either side
+of its top step, the flight going down to an arch lit violet (2026-09-30; before, a small marker
+on one tile: `docs/stairs-down-before-after.png`). Nothing walks over it; any tile of it takes
+you down from its rim. No stair
 skips a floor. A site remembers every floor you've been on for the visit (chests opened, growths
 cut, the map uncovered), so going up and down can't refill them; leaving the site ends the visit.
 

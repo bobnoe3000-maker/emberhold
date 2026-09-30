@@ -107,12 +107,12 @@ export function createWorld(seed, theme, depth = 0) {
     if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
     if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
   }
-  if (level.descentRoom) world.props.set(K(level.descentRoom.cx, level.descentRoom.cy), 'stairs');
   // Every floor's way back up, one floor at a time: a stone stair built against the entrance
   // room's back wall (north or west, the walls you see), climbing into it. Walk up its bottom
   // steps: on the first floor it leads out to the surface, deeper to the floor above (core.js).
   world.structs = [];
   if (level.entrance) placeStairsUp(world, level);
+  if (level.descentRoom) placeStairsDown(world, level);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
   if (level.descentRoom) {
@@ -177,6 +177,34 @@ function dense(world) {
 }
 const cellAt = (world, x, y) => { const g = dense(world), i = x - g.x0, j = y - g.y0; return i >= 0 && j >= 0 && i < g.w && j < g.h ? g.cells[j * g.w + i] : undefined; };
 function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
+
+// Every floor's way down: a stairwell 6 tiles by 6 in the descent room (the 'stairsdown_0'
+// structure), going down toward −y from its open +y edge, with a brazier either side of the top.
+// Its tiles are props, so nothing walks over the hole: 'stairs' is the top step (the one to use;
+// world.stairsAt) and the rest 'stairwell' (tapping any of them uses the stairs too, core.js). It
+// sits as near the room's middle as fits (an L-shaped room's middle can be its notch), with the
+// row in front cleared of decor so you can walk up to it. No room for it: the single 'stairs' tile.
+const WELL = 6;
+function placeStairsDown(world, level) {
+  const r = level.descentRoom, fits = (x, y) => { const c = level.cells.get(K(x, y)); return c && c.kind === 'floor' && c.room === r.id; };
+  const clear = (ax, ay) => {
+    for (let y = ay; y <= ay + WELL; y++) for (let x = ax - 1; x <= ax + WELL; x++) if (!fits(x, y)) return false;
+    for (let x = ax; x < ax + WELL; x++) if (NONWALK.has(materialAt(world, x, ay + WELL))) return false;   // a pool across the way in
+    return true;
+  };
+  let at = null;
+  for (let d = 0; d <= 8 && !at; d++) for (let dy = -d; dy <= d && !at; dy++) for (let dx = -d; dx <= d && !at; dx++)
+    if (Math.max(Math.abs(dx), Math.abs(dy)) === d && clear(r.cx - WELL / 2 + dx, r.cy - WELL / 2 + dy)) at = [r.cx - WELL / 2 + dx, r.cy - WELL / 2 + dy];
+  if (!at) { world.props.set(K(r.cx, r.cy), 'stairs'); world.stairsAt = { x: r.cx, y: r.cy }; return; }
+  const [x0, y0] = at, x1 = x0 + WELL, y1 = y0 + WELL;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) world.props.set(K(x, y), 'stairwell');
+  for (let x = x0; x < x1; x++) world.props.delete(K(x, y1));
+  world.props.set(K(x0 - 1, y1 - 1), 'brazier'); world.props.set(K(x1, y1 - 1), 'brazier');
+  world.stairsAt = { x: x0 + WELL / 2, y: y1 - 1 };
+  world.props.set(K(world.stairsAt.x, world.stairsAt.y), 'stairs');
+  world.stairwell = { x0, y0, x1, y1 };                                  // the opening, in tiles
+  world.structs.push({ id: 'stairsdown_0', x: x0 + WELL / 2, y: y0 + WELL / 2, hole: true });
+}
 
 // Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
 // stair (3 wide × 7 deep of plain room floor in front of a standing wall), nearest the

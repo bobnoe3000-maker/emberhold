@@ -26,7 +26,7 @@ import { statsFor } from '../sim/party.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
-const INTERACT = new Set(['chest', 'shrine', 'stairs']);   // props a tap can target
+const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
 // 0=E, 1=SE, 2=S (toward the camera), 3=SW, 4=W, 5=NW, 6=N, 7=NE. sdx/sdy are
 // screen-space deltas.
@@ -305,7 +305,7 @@ export function createRenderer(canvas, sim, input) {
         sp.alb[j * 3] = A[i]; sp.alb[j * 3 + 1] = A[i + 1]; sp.alb[j * 3 + 2] = A[i + 2];
         sp.nrm[j * 3] = N[i]; sp.nrm[j * 3 + 1] = N[i + 1]; sp.nrm[j * 3 + 2] = N[i + 2];
         sp.dep[j] = K[i] + K[i + 1] / 255 - 128;
-        sp.emi[j] = K[i + 2] > 128 ? 9 : 0;
+        sp.emi[j] = K[i + 2] > 128 ? m.glow || 9 : 0;   // its GLOW_ID: lit windows, or the stairwell's violet
       } else if (N[i + 3] > 40) sp.mask[j] = 2;              // ground shadow only
     }
     envCache.set(id, sp);
@@ -322,8 +322,9 @@ export function createRenderer(canvas, sim, input) {
       const z = heightAt(world, Math.floor(st.x), Math.floor(st.y));
       const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
       if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup') });
-      if (envMeta.sprites[st.id].glow && lights.length < 30) lights.push({ x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
+      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup'), hole: !!st.hole });
+      const gl = envMeta.sprites[st.id].glow;
+      if (gl && lights.length < 30) lights.push(gl === 2 ? { x: st.x, y: st.y - 2.5, z: z - 1, color: PROP_LIGHT.stairs } : { x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
     }
     return list;
   }
@@ -341,15 +342,19 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  function stampSprite({ sp, x0, y0, base, walkOn, z }, by) {
+  // A `hole` (the stairwell) is below the floor, so its keys are further than the floor's: it
+  // replaces floor pixels (the bake shows it through its mouth only) and gives way to anything
+  // standing nearer than the floor there (a pillar, a wall), the same test as a ground shadow.
+  function stampSprite({ sp, x0, y0, base, walkOn, hole, z }, by) {
     const zp = z * ZH;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= tbh) continue;
+      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;
       for (let xx = 0; xx < sp.w; xx++) {
         const j = yy * sp.w + xx; if (sp.mask[j] !== 1) continue;
         const px = x0 + xx; if (px < 0 || px >= tbw) continue;
         const di = py * tbw + px, dep = base + sp.dep[j];
-        if (dep < bDEP[di] - 0.05) continue;
+        if (hole ? bDEP[di] > ground + 0.1 : dep < bDEP[di] - 0.05) continue;
         if (!walkOn) bDEP[di] = dep;
         const i = di * 4, hpx = Math.max(0, Math.min(63, (4 * (dep - z * 0.5) - (py - by + zp)) / 1.333));
         bALB[i] = sp.alb[j * 3]; bALB[i + 1] = sp.alb[j * 3 + 1]; bALB[i + 2] = sp.alb[j * 3 + 2]; bALB[i + 3] = 255;
@@ -651,7 +656,7 @@ export function createRenderer(canvas, sim, input) {
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
       const pk = propAt(world, tx, ty);
-      if (pk) {
+      if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
         if (PROP_LIGHT[pk]) j.lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow

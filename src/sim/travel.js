@@ -109,8 +109,15 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
 
     const dr = L.descentRoom, dlv = dr && lv.get(dr.id);
     if (dr && world.discovered.has(dr.id)) {
-      const sx = dr.cx, sy = dr.cy, steps = pathLenD(sx, sy, 1);
-      if (steps !== null) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: sx, ty: sy, near: 1, then: { type: 'harvest', tx: sx, ty: sy }, steps, journey: 'delve' });
+      // the nearest tile beside the stairwell (any side: it's used from anywhere on its rim), then use it
+      const at = world.stairsAt || { x: dr.cx, y: dr.cy }, S = world.stairwell, rim = [];
+      if (S) for (let y = S.y0 - 1; y <= S.y1; y++) for (let x = S.x0 - 1; x <= S.x1; x++) {
+        if (x >= S.x0 && x < S.x1 && y >= S.y0 && y < S.y1) continue;
+        rim.push({ tx: x, ty: y, near: 0, use: [Math.max(S.x0, Math.min(S.x1 - 1, x)), Math.max(S.y0, Math.min(S.y1 - 1, y))] });
+      }
+      const best = S ? nearestD(rim) : null, steps = S ? best && best.steps : pathLenD(at.x, at.y, 1);
+      const [ux, uy] = best ? best.use : [at.x, at.y];
+      if (steps !== null && steps !== undefined) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: best ? best.tx : at.x, ty: best ? best.ty : at.y, near: best ? 0 : 1, then: { type: 'harvest', tx: ux, ty: uy }, steps, journey: 'delve' });
     } else if (dr) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true });
 
     if (world.exitAt) {
