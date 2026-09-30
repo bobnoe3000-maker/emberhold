@@ -1,6 +1,8 @@
 # Emberfall — World Summary
 
-**v1.4 · 2026-09-29 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.5 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.5 hangs the Lantern Guild's board in Thornwick (§4) and says who pins jobs to it.
 
 v1.4 gives Maudry an errand (§5): the carters won't take the barrows road.
 
@@ -127,7 +129,7 @@ marching dead: they run straight through anything in the way, hill, bog or villa
 
 | Faction | Who | Wants | Role |
 |---|---|---|---|
-| **The Lantern Guild** | A shabby adventurers' guild with a board in every town | Coin, and renown for its members | **Quest giver.** Its quest board is the mini-quest generator. Guild rank gates regions. |
+| **The Lantern Guild** | A shabby adventurers' guild with a board in every town | Coin, and renown for its members | **Quest giver.** Its quest board is the mini-quest generator. Guild rank gates regions. In Thornwick the board hangs inside the Tired Mule, by the door (v1.5). Anyone can pin a job to it and the Guild takes a cut of the pay; Maudry reads every one. The jobs pinned there come from people already in canon: Maudry Fenn, the carters, Wendel of the provisions shop, the daughter at Hale & Daughter, the Shrine of the Ember, and Osric Hale for the Watch, when the Watch has the coin. Nobody new is named on it. |
 | **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
 | **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
