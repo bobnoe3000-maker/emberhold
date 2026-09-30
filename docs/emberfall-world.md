@@ -1,6 +1,10 @@
 # Emberfall — World Summary
 
-**v1.5 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.6 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.6 brings Thornwick's people into the town (§5): Osric's Watch post by the well, Sister Ilse at
+the Shrine, and six townsfolk. It also sets down the first three fragments of the Vale's Chronicle
+set (§7).
 
 v1.5 hangs the Lantern Guild's board in Thornwick (§4) and says who pins jobs to it.
 
@@ -154,15 +158,31 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   long way round, a day out of their way, and the price of everything she pours goes up with
   it. She pays to have the walking kind knocked back (*The Long Way Round*).
 - **Warden-Captain Osric Hale**, Greyholt's watch. He's honest and tired, and posts the bounties.
+  (v1.6) Since the barrows opened he keeps a Watch post in Thornwick: a table by the square's
+  well, a ledger and Jory. When Pellam's coin is late, which is always, he pays the bounty on the
+  bright-eyed ones out of his own purse and writes it down.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
   Wickham Keep.
 - **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money.
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7) and is the future
-  **Healer** unlock.
+  **Healer** unlock. (v1.6) Reedholm sent her up to the Shrine of the Ember in Thornwick to copy
+  whatever comes up out of the barrows. She pays in blessings, trusts nothing she hasn't read
+  twice, and hates guesswork more than the dead.
 - **The Kindler** (Master Corvane Vell), voice of the Cinder Cult. He's charismatic, sincere,
   and wrong. He appears through the arc and is the final boss at the Ember Throne.
 - **Empress Aurelle Solmere**, dead 300 years. She is heard only through fragments, and is the
   heart of the secret.
+
+**Thornwick's townsfolk (v1.6).** Short, earthy names (§9). Each keeps to their own business
+around the square by day and somewhere else by night:
+- **Wendel**, of Wendel's Provisions: rope, bread and lamp oil. He blames the roads for his
+  prices, and the roads blame him.
+- **Bess Hale**, the daughter at Hale & Daughter, Smiths, who does the work. She is no relation
+  to the Captain, as both of them will tell you at once.
+- **Col**, a carter. He took the long way round the barrows for a month and wants it known.
+- **Jory**, the Watch's only man in Thornwick: young, earnest, and Osric's runner.
+- **Nell Tolley**, keeper of the Crossed Keys. She charges for the stairs, not the bed.
+- **Hedda**, who sells eggs by the well and knows the weather, and says she knows nothing else.
 
 ---
 
@@ -207,6 +227,17 @@ Lore is **lite and optional**, but it pays off.
 Sample fragments:
 - *"Standing order 14: the Third Legion holds the Wickham road until relieved. — Stamped by
   the Ember Throne, Year 612."* (Found in the Old Barrows. They are still holding it.)
+
+**The Vale set, the first three (v1.6).** All three are found in the Old Barrows:
+1. **Standing Order 14** (the line above), in one of the barrows' chests on the first floor.
+2. *"Muster roll, Third Legion, second cohort, at the Wickham road: two hundred and forty bound,
+   two hundred and forty present. There are never absences."* At a shrine on the second floor.
+3. *"The bound dropped where they stood at the second watch. The living asked me what now. I told
+   them: hold the road until relieved. — a centurion's tablet"* In the stairs-down hall of the
+   second floor, for whoever holds that hall long enough to look.
+
+Together they say that the dead in the barrows are a legion still following its last order.
+Nobody ever came to relieve them. Sister Ilse reads them in that order.
 - *"Furnace nine requires eleven more souls per week to meet quota."* (A Cinderworks ledger.)
 - *"Forgive me. They will call it the Fall. Let them. — A."* (Glass Keep, last of the set.)
 
