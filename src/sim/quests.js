@@ -22,12 +22,15 @@
 //   elites  elites slain
 //   reach   the deepest floor reached (count = the floor, 1 = the first), going down after taking it
 //   fragment  Chronicle fragments found (lore.js 'fragmentFound')
+//   boss      a named boss put down in its site (battle.js 'bossDown'); one who already fell counts on accept
+// Chapters and chains (M5): `after` names the quests that must be done first; `turnin` names who takes
+// it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js).
 
 import { gainXp } from './party.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
-/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment', site: string, count: number, hall?: boolean, floor?: number }} Objective */
-/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number } }} QuestDef */
+/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
+/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number }, turnin?: string, after?: string[], reveal?: string[] }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
   vale_long_way_round: {
@@ -45,18 +48,38 @@ export const QUESTS = {
     steps: [{ id: 'barrows', objectives: [{ type: 'fragment', site: 'barrows', count: 1 }] }],
     rewards: { xp: 120, gold: 25 },
   },
+  // Act I, Smoke over the Vale (world doc §6, v1.7; docs/m5-plan.md §4): the Tithe Mill for Maudry, then
+  // Wickham Keep and Captain Garrow for Osric, then the Sunken Chapel, where the Robed Stranger dies
+  // with an ember-shard in his fist, which goes to Sister Ilse.
+  ch1_smoke_over_the_vale: {
+    kind: 'chapter', giver: 'maudry_fenn', turnin: 'osric_hale', region: 'vale', level: [1, 30],
+    steps: [{ id: 'mill', objectives: [{ type: 'waves', site: 'tithe_mill', count: 4 }] }],
+    rewards: { xp: 300, gold: 60 }, reveal: ['wickham_keep'],
+  },
+  ch1_the_diggers: {
+    kind: 'chapter', giver: 'osric_hale', region: 'vale', level: [3, 30], after: ['ch1_smoke_over_the_vale'],
+    steps: [{ id: 'keep', objectives: [{ type: 'reach', site: 'wickham_keep', count: 2 }] },
+      { id: 'captain', objectives: [{ type: 'boss', site: 'wickham_keep', boss: 'redhand_captain', count: 1 }] }],
+    rewards: { xp: 700, gold: 150 },
+  },
+  ch1_ember_in_the_fist: {
+    kind: 'chapter', giver: 'osric_hale', turnin: 'sister_ilse', region: 'vale', level: [5, 30], after: ['ch1_the_diggers'],
+    steps: [{ id: 'chapel', objectives: [{ type: 'boss', site: 'sunken_chapel', boss: 'robed_stranger', count: 1 }] }],
+    rewards: { xp: 1200, gold: 200 },
+  },
 };
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;
 
-/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null }} o */
-export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
+/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void }} o */
+export function createQuests({ state, bus, getWorld, extraDef = () => null, reveal = () => {} }) {
   if (!state.quests) state.quests = {};
   if (state.tracked === undefined) state.tracked = null;
   /** @param {string} id @returns {QuestDef | null} */
   const defOf = (id) => (Object.prototype.hasOwnProperty.call(QUESTS, id) ? QUESTS[id] : extraDef(id));
   const inst = (id) => state.quests[id] || null;
-  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1]; };
+  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE); };
+  const takerOf = (d) => d.turnin || d.giver;         // who hands out the reward
   /** @param {string} id */
   const status = (id) => (inst(id) ? inst(id).st : gates(id) ? QS.AVAILABLE : QS.LOCKED);
   const changed = (id) => { const q = inst(id); bus.emit('questChanged', { id, state: q ? q.st : status(id), step: q ? q.step : 0, progress: q ? q.n.slice() : [] }); };
@@ -72,7 +95,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
       objs.forEach((o, i) => { const v = Math.min(target(o), fn(o, q.n[i])); if (v !== q.n[i]) { q.n[i] = v; moved = true; } });
       if (!moved) continue;
       if (objs.every((o, i) => q.n[i] >= target(o))) {
-        if (q.step + 1 < d.steps.length) { q.step += 1; q.n = d.steps[q.step].objectives.map(() => 0); }
+        if (q.step + 1 < d.steps.length) { q.step += 1; q.n = d.steps[q.step].objectives.map(() => 0); settle(id); }
         else q.st = QS.READY;
       }
       changed(id);
@@ -82,6 +105,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
   bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) ? n + 1 : n)); });
   bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) ? n + 1 : n)); });
   bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? n + 1 : n)));
+  bus.on('bossDown', (e) => count((o, n) => (o.type === 'boss' && o.boss === e.id && siteHere(o.site) ? n + 1 : n)));
   // a floor change inside a site (arriving from the overland or loading a save carry a scene, and don't count)
   bus.on('levelChanged', (e) => { if (!('scene' in e)) count((o, n) => (o.type === 'reach' && siteHere(o.site) ? Math.max(n, floorHere()) : n)); });
 
@@ -100,22 +124,34 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
     const d = defOf(id); if (!d || inst(id)) return;
     state.quests[id] = { st: QS.ACTIVE, step: 0, n: d.steps[0].objectives.map(() => 0) };
     if (!state.tracked) state.tracked = id;
+    settle(id);
     changed(id);
+  }
+  // a story boss who already fell (before the quest was taken) counts: he won't come back to be counted
+  function settle(id) {
+    const q = state.quests[id], d = defOf(id); if (!q || !d) return;
+    for (;;) {
+      const objs = d.steps[q.step].objectives;
+      objs.forEach((o, i) => { if (o.type === 'boss' && (state.bosses || {})[o.boss]) q.n[i] = target(o); });
+      if (!objs.every((o, i) => q.n[i] >= target(o))) return;
+      if (q.step + 1 < d.steps.length) { q.step += 1; q.n = d.steps[q.step].objectives.map(() => 0); } else { q.st = QS.READY; return; }
+    }
   }
   /** hand one in: done, paid once @param {string} id */
   function finish(id) {
     if (status(id) !== QS.READY) return;
     state.quests[id].st = QS.DONE;
     pay(id);
+    for (const s of /** @type {QuestDef} */ (defOf(id)).reveal || []) reveal(s);
     if (state.tracked === id) state.tracked = nextTracked();
     changed(id);
   }
   /** an Ink `# quest: <verb> <id>` tag, from a conversation with `talking` (null: none open) */
   function effect(talking, args) {
     const [verb, id] = Array.isArray(args) ? args : [], d = QUESTS[id];
-    if (!talking || !d || d.giver !== talking) return;                  // only its giver, in conversation
-    if (verb === 'accept' && status(id) === QS.AVAILABLE) begin(id);
-    else if (verb === 'turnin') finish(id);
+    if (!talking || !d) return;
+    if (verb === 'accept' && d.giver === talking && status(id) === QS.AVAILABLE) begin(id);      // only its giver, in conversation
+    else if (verb === 'turnin' && takerOf(d) === talking) finish(id);                             // only whoever takes it in
   }
   function command(cmd) {
     if (cmd.type === 'track') {
@@ -136,7 +172,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
   function varsFor(npc) {
     /** @type {Record<string, number>} */
     const v = {};
-    for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc) v['q_' + id] = status(id);
+    for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc || takerOf(d) === npc) v['q_' + id] = status(id);
     return v;
   }
   /** the tracked quest's next place, as a compass row made from one of the rows already listed
@@ -151,7 +187,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
     if (q.st === QS.READY) {
       if (world.kind === 'town') {
         if (d.kind === 'board') base = pick('square');                 // the board is in the tavern, off the square (none once you're there)
-        else { const n = (world.npcs || []).find((x) => x.id === d.giver); if (n) base = { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: 'in town', steps: 0 }; }
+        else { const n = (world.npcs || []).find((x) => x.id === takerOf(d)); if (n) base = { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: 'in town', steps: 0 }; }
       } else base = world.kind === 'dungeon' ? pick('exit') : pick('town');
     } else {
       const objs = d.steps[q.step].objectives, owe = objs.filter((o, i) => q.n[i] < o.count);

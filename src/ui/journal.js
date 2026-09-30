@@ -11,6 +11,7 @@
 import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
 import { QUESTS, QS } from '../sim/quests.js';
+import { SITE_IDS } from '../sim/sites.js';
 import { swallow } from './actorart.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { FRAGMENTS, SETS } from '../sim/lore.js';
@@ -200,9 +201,13 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   // (a fragment comes out of a chest or a hall's last wave: the HUD's "chest opened" says so first, then this)
   sim.bus.on('fragmentFound', (f) => { const w = lore[f.id]; setTimeout(() => toast(`Fragment found · ${w ? w.title : 'the Chronicle'} (${f.found} of ${f.of}) · +${f.xp} XP`, 3000), 1400); btn.classList.add('due'); paint(); });
   sim.bus.on('setComplete', (e) => toast(`${SET_NAME[e.set] || e.set}: the set is whole. Sister Ilse will want to read it.`, 3200));
+  // sites (sim/sites.js): a hidden one found, or its way in still shut (its words: content/sites)
+  const sites = {};
+  sim.bus.on('siteRevealed', (e) => toast(`${(sites[e.site] || e).name} is open to you. It's on the compass now.`, 3200));
+  sim.bus.on('siteShut', (e) => { const w = sites[e.site]; if (w && w.shut) toast(w.shut, 2800); });
 
   // the words: one file per quest the sim knows, and the board's templates
-  const ready = Promise.all([boardReady, ...Object.keys(FRAGMENTS).map((id) => fetch(`./content/lore/${id}.json`).then((r) => r.json()).then((d) => { lore[id] = d; }).catch(() => {})), ...Object.keys(QUESTS).map((id) => fetch(`./content/quests/${id}.json`).then((r) => r.json()).then((d) => { defs[id] = d; }).catch(() => {}))])
+  const ready = Promise.all([boardReady, ...SITE_IDS.map((id) => fetch(`./content/sites/${id}.json`).then((r) => r.json()).then((d) => { sites[id] = d; }).catch(() => {})), ...Object.keys(FRAGMENTS).map((id) => fetch(`./content/lore/${id}.json`).then((r) => r.json()).then((d) => { lore[id] = d; }).catch(() => {})), ...Object.keys(QUESTS).map((id) => fetch(`./content/quests/${id}.json`).then((r) => r.json()).then((d) => { defs[id] = d; }).catch(() => {}))])
     .then(() => { for (const [id, q] of Object.entries(sim.state.quests || {})) seen.set(id, { st: q.st, step: q.step, n: q.n.slice() }); paintTracker(); });
   return { open: show, close, ready, def: defOf, title: (/** @type {string} */ id) => (defOf(id) ? defOf(id).title : ''), get isOpen() { return open; } };
 }

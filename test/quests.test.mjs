@@ -86,12 +86,15 @@ test('content/quests matches the sim table; the giver says the right tags', () =
   assert.deepEqual(defs.map((d) => d.id).sort(), Object.keys(QUESTS).sort());
   for (const d of defs) {
     const q = QUESTS[d.id];
-    assert.deepEqual({ kind: d.kind, giver: d.giver, region: d.region, level: d.level, rewards: d.rewards }, { kind: q.kind, giver: q.giver, region: q.region, level: q.level, rewards: q.rewards }, d.id);
+    assert.deepEqual({ kind: d.kind, giver: d.giver, region: d.region, level: d.level, rewards: d.rewards, turnin: d.turnin, after: d.after, reveal: d.reveal },
+      { kind: q.kind, giver: q.giver, region: q.region, level: q.level, rewards: q.rewards, turnin: q.turnin, after: q.after, reveal: q.reveal }, d.id);
     assert.deepEqual(d.steps.map((s) => ({ id: s.id, objectives: s.objectives.map(({ label, ...o }) => o) })), q.steps, d.id);
-    const ink = readFileSync(`content/dialogue/${d.dialogue.file}.ink`, 'utf8');
-    for (const verb of ['accept', 'turnin']) assert.match(ink, new RegExp(`# quest: ${verb} ${d.id}\\b`), `${d.id}: no ${verb} tag`);
-    for (const k of [d.dialogue.offer, d.dialogue.turnin]) assert.match(ink, new RegExp(`== ${k} ==`), `${d.id}: no knot ${k}`);
-    assert.match(ink, new RegExp(`VAR q_${d.id} =`));
+    // offered in its giver's conversation, handed in in its taker's (a chapter can go to someone else)
+    const inkOf = (npc) => readFileSync(`content/dialogue/${JSON.parse(readFileSync(`content/npcs/${npc}.json`, 'utf8')).dialogue}.ink`, 'utf8');
+    const give = inkOf(d.giver), take = inkOf(d.turnin || d.giver);
+    assert.match(give, new RegExp(`# quest: accept ${d.id}\\b`), `${d.id}: no accept tag`); assert.match(give, new RegExp(`== ${d.dialogue.offer} ==`), `${d.id}: no knot ${d.dialogue.offer}`);
+    assert.match(take, new RegExp(`# quest: turnin ${d.id}\\b`), `${d.id}: no turnin tag`); assert.match(take, new RegExp(`== ${d.dialogue.turnin} ==`), `${d.id}: no knot ${d.dialogue.turnin}`);
+    for (const ink of [give, take]) assert.match(ink, new RegExp(`VAR q_${d.id} =`));
   }
 });
 

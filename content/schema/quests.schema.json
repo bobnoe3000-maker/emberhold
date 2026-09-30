@@ -196,6 +196,66 @@
                       "maxLength": 48
                     }
                   }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label",
+                    "boss"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "boss"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "boss": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "reach"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "the floor to reach (1 = the first)"
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
                 }
               ]
             }
@@ -250,6 +310,27 @@
           "type": "string"
         }
       }
+    },
+    "turnin": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "who takes it in, if not its giver"
+    },
+    "after": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "quests that must be done first"
+    },
+    "reveal": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "description": "hidden sites its hand-in reveals (sim/sites.js)"
     }
   }
 }

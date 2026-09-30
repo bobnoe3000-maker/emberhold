@@ -1,0 +1,41 @@
+{
+  "id": "ch1_smoke_over_the_vale",
+  "kind": "chapter",
+  "title": "Smoke over the Vale",
+  "giver": "maudry_fenn",
+  "turnin": "osric_hale",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "The Redhand Company are squatting in the Tithe Mill again, burning the miller's carts for warmth. Maudry Fenn wants them gone before the tithe grain goes with them.",
+  "steps": [
+    {
+      "id": "mill",
+      "journal": "Drive the Redhand out of the Tithe Mill, up the river from Thornwick. Win four fights there.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "tithe_mill",
+          "count": 4,
+          "label": "Fights won in the Tithe Mill"
+        }
+      ]
+    }
+  ],
+  "ready": "Tell Osric Hale at the Watch post by the well. The Watch will want to know where they went.",
+  "done": "The Redhand left the mill for Wickham Keep. Osric Hale has opened his ledger to a clean page.",
+  "rewards": {
+    "xp": 300,
+    "gold": 60
+  },
+  "reveal": [
+    "wickham_keep"
+  ],
+  "dialogue": {
+    "file": "maudry",
+    "offer": "maudry_ch1_offer",
+    "turnin": "osric_ch1_report"
+  }
+}

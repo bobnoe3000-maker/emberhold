@@ -14,6 +14,7 @@ VAR party_size = 1
 VAR fallen_name = ""
 VAR flag_met_maudry = 0
 VAR q_vale_long_way_round = -1
+VAR q_ch1_smoke_over_the_vale = -1
 VAR frag_vale_count = 0
 
 == maudry_hub ==
@@ -42,6 +43,8 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 {&Maudry looks up from the tap. "Back again, {hero_name}."|"Still in one piece, I see. The Vale's getting careless."|Maudry slides a mug your way without asking. "On the house. Don't tell anyone."}
 { q_vale_long_way_round == 2: "You've the look of someone with news. Go on, then." }
 { q_vale_long_way_round == 3: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
+{ q_ch1_smoke_over_the_vale == 0: "There's smoke up the river again. You'll have seen it. Everyone's seen it and nobody's doing anything about it." }
+{ q_ch1_smoke_over_the_vale == 3: "Osric's been writing in that ledger of his like it owes him money. Whatever you told him, he took it serious." }
 { frag_vale_count == 3: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }
 -> maudry_topics
 
@@ -51,6 +54,9 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 -> maudry_topics
 
 == maudry_topics ==
++ { q_ch1_smoke_over_the_vale == 0 } [You said something about smoke? #mark: quest] -> maudry_ch1_offer
++ { q_ch1_smoke_over_the_vale == 1 } [About the Tithe Mill… #mark: quest] -> maudry_ch1_active
++ { q_ch1_smoke_over_the_vale == 2 } [The mill's clear. #mark: quest] -> maudry_ch1_ready
 + { q_vale_long_way_round == 2 } [The barrows road is clearer. #mark: quest ready] -> maudry_longway_turnin
 + { q_vale_long_way_round == 0 } [Anything I can do? #mark: quest] -> maudry_longway_offer
 + { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest] -> maudry_longway_active
@@ -106,6 +112,27 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 == maudry_longway_turnin ==
 "Well. The carters came in this morning complaining about something else entirely. That's how I know it worked."
 "Anything with writing on it in that chest? No? Pity. Here. It's not much, but it's more than Lord Pellam would have sent." # quest: turnin vale_long_way_round
+-> maudry_topics
+
+// ── Act I, chapter 1: Smoke over the Vale (content/quests/ch1_smoke_over_the_vale.json) ──
+== maudry_ch1_offer ==
+"The Redhand Company. Deserters, when they're being polite about it. They're squatting in the Tithe Mill again, up the river."
+"Burned the miller's cart for warmth. It's summer. That's not warmth, that's spite."
+"The tithe grain goes through that mill. Lord Pellam's grain, strictly, but it's our bread before it's his. Somebody has to shift them, and it's never going to be the Watch."
++ [I'll shift them. #mark: quest]
+    "Good. Four fights ought to make the point. When they've gone, tell Osric Hale at the well. He'll want to write down where they went." # quest: accept ch1_smoke_over_the_vale
+    -> maudry_topics
++ [Not yet.]
+    "The smoke'll keep. So will the Redhand. Unfortunately."
+    -> maudry_topics
+
+== maudry_ch1_active ==
+"Up the river, the stone place with the wheel. You'll smell it before you see it."
+"Four fights, and they'll get the message. The Redhand are thick, but they can count to four."
+-> maudry_topics
+
+== maudry_ch1_ready ==
+"Don't tell me, tell Osric. He keeps the book. I only keep the mugs."
 -> maudry_topics
 
 == maudry_bye ==

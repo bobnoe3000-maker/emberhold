@@ -1,0 +1,53 @@
+{
+  "id": "ch1_the_diggers",
+  "kind": "chapter",
+  "title": "The Diggers",
+  "giver": "osric_hale",
+  "region": "vale",
+  "level": [
+    3,
+    30
+  ],
+  "after": [
+    "ch1_smoke_over_the_vale"
+  ],
+  "summary": "The Redhand who left the mill went to Wickham Keep, and Osric Hale has heard they are digging in its cellars. Bandits don't dig. Somebody must be paying them to.",
+  "steps": [
+    {
+      "id": "keep",
+      "journal": "Go into Wickham Keep, on the Wickham road north of the crossroads, and down to its second floor.",
+      "objectives": [
+        {
+          "type": "reach",
+          "site": "wickham_keep",
+          "count": 2,
+          "label": "Down to the Keep's second floor"
+        }
+      ]
+    },
+    {
+      "id": "captain",
+      "journal": "Find Captain Garrow in the hall of the Keep's second floor and put him down.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "wickham_keep",
+          "boss": "redhand_captain",
+          "count": 1,
+          "label": "Captain Garrow"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Osric Hale in Thornwick.",
+  "done": "Garrow is done collecting. The robed strangers who paid him to dig are not done digging.",
+  "rewards": {
+    "xp": 700,
+    "gold": 150
+  },
+  "dialogue": {
+    "file": "osric",
+    "offer": "osric_ch2_offer",
+    "turnin": "osric_ch2_turnin"
+  }
+}

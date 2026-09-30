@@ -14,6 +14,7 @@ VAR fallen_name = ""
 VAR day_part = 0
 VAR flag_met_ilse = 0
 VAR q_vale_first_page = -1
+VAR q_ch1_ember_in_the_fist = -1
 VAR frag_vale_count = 0
 VAR frag_vale_standing_order = 0
 VAR frag_vale_muster_roll = 0
@@ -44,6 +45,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 == ilse_greet_back ==
 {&Ilse looks up from the board and holds up a finger until she finishes the word.|"{hero_name}. Anything with writing on it today?"|"The Shrine's quiet. The quiet is the nice part."}
 { q_vale_first_page == 2: "You've found something. I can tell by the way you're holding your hands. Give it here." }
+{ q_ch1_ember_in_the_fist == 3: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
 { frag_vale_count == 3: "The Vale's set is whole, as far as the barrows go. I've read it four times. It doesn't get kinder." }
 -> ilse_topics
 
@@ -52,6 +54,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 -> ilse_topics
 
 == ilse_topics ==
++ { q_ch1_ember_in_the_fist == 2 } [He died holding this. #mark: quest ready] -> ilse_ch3_turnin
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
 + { q_vale_first_page == 1 } [About the first page… #mark: quest] -> ilse_page_active
@@ -113,3 +116,11 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
 == ilse_bye ==
 {&"Go carefully. Come back literate."|"Mind your feet on the stairs down there. They're older than they look."|Ilse has already bent back over the tablet.}
 -> END
+
+// ── Act I, chapter 3: An Ember in the Fist (content/quests/ch1_ember_in_the_fist.json) ──
+== ilse_ch3_turnin ==
+Ilse takes the shard in a cloth, not her hand. It glows faintly through the cloth, the colour of a coal just before it goes out.
+"Warm. Three hundred years in the dark and it's warm." She turns it over. "There's a mark on the back. An imperial foundry mark. Fens work. Saltmere, or near it."
+"The robed men weren't digging for gold. They were digging for this. Somebody wants the old fire back." She wraps it twice more. "I'm going to need to write to Reedholm. You're going to need to go south." # quest: turnin ch1_ember_in_the_fist
+-> ilse_topics
+

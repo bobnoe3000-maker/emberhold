@@ -100,7 +100,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
   // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids
   /** @type {any} */ let board = null;
-  const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null) });
+  const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null), reveal: (id) => reveal(id) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
   const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });   // the Chronicle's fragments (lore.js)
   const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor() }), effect: (id, args) => quests.effect(id, args) });

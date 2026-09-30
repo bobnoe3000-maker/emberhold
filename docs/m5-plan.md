@@ -65,6 +65,10 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    3. *An Ember in the Fist* — Osric: find where the strangers dig, in the Sunken Chapel, and
       put down the Robed Stranger. He dies with an ember-shard in his fist. Hand in to Sister
       Ilse. Act I ends.
+
+   **Done** (2026-09-30): quests gain `turnin`, `after`, `reveal` and a `boss` objective
+   (quest-lore-system §implementation notes); Maudry, Osric and Ilse carry the beats in Ink;
+   `test/act1.test.mjs` plays the three chapters in order, headless and through the Ink.
 5. **Brannoc.** Chained in the Keep's second-floor hall; once the Captain falls, talk to him and
    he joins you (the bench if the party is full). Talk to him from his party card. His chain,
    *Chains of the Redhand*:

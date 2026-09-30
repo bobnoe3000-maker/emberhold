@@ -1,0 +1,42 @@
+{
+  "id": "ch1_ember_in_the_fist",
+  "kind": "chapter",
+  "title": "An Ember in the Fist",
+  "giver": "osric_hale",
+  "turnin": "sister_ilse",
+  "region": "vale",
+  "level": [
+    5,
+    30
+  ],
+  "after": [
+    "ch1_the_diggers"
+  ],
+  "summary": "Garrow's ledger says the robed strangers paid for digging at the Sunken Chapel. Osric Hale wants to know what anyone could want from a chapel the river has half eaten.",
+  "steps": [
+    {
+      "id": "chapel",
+      "journal": "Go down into the Sunken Chapel, in the marsh south of Thornwick, and find the one who pays for the digging.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "sunken_chapel",
+          "boss": "robed_stranger",
+          "count": 1,
+          "label": "The Robed Stranger"
+        }
+      ]
+    }
+  ],
+  "ready": "The stranger died holding something warm. Take it to Sister Ilse at the Shrine of the Ember.",
+  "done": "Sister Ilse has the ember-shard, and has stopped sleeping. Act I is done; the shard points to the fens.",
+  "rewards": {
+    "xp": 1200,
+    "gold": 200
+  },
+  "dialogue": {
+    "file": "osric",
+    "offer": "osric_ch3_offer",
+    "turnin": "ilse_ch3_turnin"
+  }
+}

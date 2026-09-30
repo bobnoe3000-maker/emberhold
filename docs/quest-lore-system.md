@@ -262,8 +262,18 @@ fragment. Two players find the same truth in different places (world doc §7).
   time (GDD §3.1). The first errand predates that and asks for a chest instead. The board's Delve
   jobs use them (`reach`, §4.2).
 - The first quest is Maudry's errand, *The Long Way Round*: hold 4 waves and open a chest in
-  the Old Barrows. The Act I chapter (*Smoke over the Vale*, the Tithe Mill) waits for its
-  site and the Redhand enemies.
+  the Old Barrows.
+- **Act I** (M5, `docs/m5-plan.md` slice 4) adds three chapter quests with four extra fields:
+  - `turnin`: the NPC who takes it in, when it isn't the giver (Ink reads `q_<id>` there too);
+  - `after`: the quest that must be done before this one is offered;
+  - `reveal`: the sites its reward opens (`state.revealed`, toast "… is on the map");
+  - the `boss` objective counts a boss's fall (`bossDown`). A boss who already fell before the
+    step began counts at once (`settle`), so a player who got ahead of the story isn't stuck.
+
+  *Smoke over the Vale* (Maudry → Osric; 4 waves in the Tithe Mill; reveals Wickham Keep),
+  *The Diggers* (Osric; reach the Keep's second floor, put down Captain Garrow), *An Ember in
+  the Fist* (Osric → Sister Ilse; put down the Robed Stranger in the Sunken Chapel).
+  `test/act1.test.mjs` plays them in order.
 
 **Module:** `src/sim/quest/`:
 - `engine.js`: instance state machine, objectives, rewards;
