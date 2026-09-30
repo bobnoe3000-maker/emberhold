@@ -151,8 +151,10 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
      the mill → Osric → the Keep revealed.
    - **Chapters pay a Fine or better** (GDD §8, DROP.chapter). A chance of 1 now means certain:
      the roll's 95 % cap had also made a boss's first drop miss 1 time in 20.
-   - **Left for later:** bad-luck protection (dev plan §2.7); the 6–8 hour pacing needs a
-     playtest.
+   - **Pacing** (owner's playtest, 2026-09-30): levels 1–8 took 30–60 minutes, far under the
+     6–8 hour goal. The XP a level takes was tripled (GDD §7 v1.7), which should bring it to
+     roughly 1.5–3 hours; re-time it before tuning further.
+   - **Left for later:** bad-luck protection (dev plan §2.7).
 
 ## Decisions
 
