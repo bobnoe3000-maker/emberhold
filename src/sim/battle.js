@@ -87,7 +87,7 @@ const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, 
 // The lull is 4 s, stretched (up to 15 s) while the party is under half HP, so a bad wave
 // is followed by a breather. Companions who fell during a wave get back up at 25 % HP
 // when it's cleared.
-const LULL_MAX = 15, LULL_READY = 0.5, LULL_EACH = 0.6, REVIVE = 0.25;   // LULL_EACH: nobody walks into a wave nearly dead
+const LULL_MAX = 15, LULL_READY = 0.5, LULL_EACH = 0.6, REVIVE = 0.25, HERO_R = 0.32;   // HERO_R: the hero's collision radius (core.js PLAYER_RADIUS)   // LULL_EACH: nobody walks into a wave nearly dead
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -364,7 +364,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if ((u.stepAt ?? -9) < stepN - 2) u.spd = 0;
     u.stepAt = stepN; u.spd = Math.min(speed, (u.spd || 0) + STEP_ACC * dt);
     const s = Math.min(d, u.spd * dt), nx = u.x + (dx / d) * s, ny = u.y + (dy / d) * s;
-    const ok = (x, y) => isWalkable(w, x, y) && (room === undefined || roomAt(w, x, y) === room);
+    const r = u.rad || 0, ok = (x, y) => fits(w, x, y, r) && (room === undefined || roomAt(w, x, y) === room);
     if (ok(nx, ny)) { u.x = nx; u.y = ny; } else if (ok(nx, u.y)) u.x = nx; else if (ok(u.x, ny)) u.y = ny;
     u.moving = true; u.fx = dx; u.fy = dy;
   }
@@ -388,16 +388,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     b.fields.set(key, f); return f;
   }
-  const clearLine = (w, ax, ay, bx, by, room) => {
+  // a body of radius r fits at (x, y): its four corners stand on walkable ground (the hero's
+  // collision in core.js; other units are points, r = 0)
+  const fits = (w, x, y, r) => (r ? isWalkable(w, x - r, y - r) && isWalkable(w, x + r, y - r) && isWalkable(w, x - r, y + r) && isWalkable(w, x + r, y + r) : isWalkable(w, x, y));
+  const clearLine = (w, ax, ay, bx, by, room, r = 0) => {
     const d = hypot(bx - ax, by - ay), n = Math.ceil(d / 0.4);
-    for (let k = 1; k < n; k++) { const x = ax + ((bx - ax) * k) / n, y = ay + ((by - ay) * k) / n; if (!isWalkable(w, x, y) || roomAt(w, x, y) !== room) return false; }
+    for (let k = 1; k < n; k++) { const x = ax + ((bx - ax) * k) / n, y = ay + ((by - ay) * k) / n; if (!fits(w, x, y, r) || roomAt(w, x, y) !== room) return false; }
     return true;
   };
   // Move toward (tx, ty) inside the battle room: straight when the way is clear, else down the flow field.
   function chase(u, tx, ty, speed, dt, w) {
     const b = battle, room = b.room;
     if (roomAt(w, u.x, u.y) !== room) return stepToward(u, tx, ty, speed, dt, w);   // still in the doorway: walk in
-    if (clearLine(w, u.x, u.y, tx, ty, room)) return stepToward(u, tx, ty, speed, dt, w, room);
+    if (clearLine(w, u.x, u.y, tx, ty, room, u.rad || 0)) return stepToward(u, tx, ty, speed, dt, w, room);
     const g = b.grid, f = field(tx, ty), cx = Math.floor(u.x) - g.x0, cy = Math.floor(u.y) - g.y0;
     let best = -1, bd = cx >= 0 && cy >= 0 && cx < g.gw && cy < g.gh ? f[cy * g.gw + cx] : 65535;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -627,7 +630,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
             // a probe steps first (the hero's collision decides the real move); it carries the stride
             // ramp (spd, stepAt) across ticks — a fresh probe restarted it every tick, pinning the
             // hero at the first step: 2 tiles/s instead of the fighter's 6.8
-            const q = { x: p.x, y: p.y, spd: m.spd, stepAt: m.stepAt }; chase(q, gx, gy, F.speed, dt, w);
+            // (with the hero's body: a point probe cut a pillar's corner the real hero couldn't, and the
+            // hero stood pressed against it for good while a mage behind it shot it down, seed 4242)
+            const q = { x: p.x, y: p.y, spd: m.spd, stepAt: m.stepAt, rad: HERO_R }; chase(q, gx, gy, F.speed, dt, w);
             m.spd = q.spd; m.stepAt = q.stepAt;
             if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
           });
