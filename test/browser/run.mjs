@@ -247,7 +247,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     let at = null;
     for (let k = 0; k < 20 && !at; k++) {                                 // until her atlas and the cast have loaded and she's drawn
       await p.waitForTimeout(300); await run(3);
-      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y) && document.elementFromPoint(x, y)?.id === 'game') return { x, y }; return null; });   // (on her, and not under a button)
+      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y)?.id === 'maudry_fenn' && document.elementFromPoint(x, y)?.id === 'game') return { x, y }; return null; });   // (on her, not on another of the town's people, and not under a button)
     }
     check('talk: Maudry stands in Thornwick', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
     if (at) {
