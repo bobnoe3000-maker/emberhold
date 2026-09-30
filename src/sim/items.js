@@ -1,11 +1,17 @@
 // items.js — gear (GDD §8): six slots, class items, rarities, seeded rolls. Pure data and
 // formulas; loot.js owns the bag, the drops and the equip commands.
 //
-// An item is plain JSON, rolled once and stored whole (so a save carries it as-is and a
-// later formula change never rewrites old loot):
+// An item is plain JSON, rolled once and stored whole:
 //   { uid, base, r, ilv, name, st: { atk: 4, … }, aff: [['crit', 2]], mod?, flav? }
-// st = the base's stats at that item level and rarity; aff = rolled affixes (Fine 1,
-// Rare 2); mod = a Rare's ability modifier ({ ab, k: 'cost' | 'power', v }).
+// st = the base's stats at that item level and rarity, a pure function of (base, ilv, r): a load
+// re-derives it (refreshItem), so a formula change reaches old loot the same as new. What was
+// rolled (aff, mod, name, flav) is kept as it fell. aff = rolled affixes (Fine 1, Rare 2);
+// mod = a Rare's ability modifier ({ ab, k: 'cost' | 'power', v }).
+//
+// Gear carries a real share of a hero's power (GDD §7.1, 2026-09-30): an item's stats grow
+// GEAR_GROWTH × its base's per-level rate, and the classes grow that much less per level
+// themselves (kitGrowth), so a hero in gear at their level has the stats they had before, and
+// one in gear five levels old is visibly behind.
 // Stat keys: hp, mp, atk, def, crit, dodge (%), hpr, mpr (per second).
 // A base belongs to one class (cls), or 'any'; `also` lists other classes that can wear it
 // (the cleric can also wear the fighter's shields, plate and sword).
@@ -17,7 +23,9 @@ export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
 export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // Embers
 
-// stat value at item level: a + b × ilv (× rarity)
+// stat value at item level: a + b × ilv + (GEAR_GROWTH − 1) × b × (ilv − 1), × rarity (item level 1
+// is as it was: a fresh character in their kit has exactly the GDD numbers)
+export const GEAR_GROWTH = 2;
 // kind: the line in the item card ("Weapon · two-handed", "Armor · plate")
 export const BASES = {
   // ── fighter
@@ -98,7 +106,7 @@ const pick = (rng, a) => a[Math.floor(rng() * a.length)];
 // (Low-level common metal was "Worn …", which read as "the one you're wearing" in the bag.)
 export function makeItem(base, ilv, r = 'common', { uid, aff = [], mod = null, name, flav } = {}) {
   const B = BASES[base], st = {};
-  for (const [k, [a, b]] of Object.entries(B.st)) st[k] = round(k, (a + b * ilv) * (a < 0 ? 1 : RMULT[r]));
+  for (const [k, [a, b]] of Object.entries(B.st)) st[k] = round(k, (a + b * ilv + (GEAR_GROWTH - 1) * b * Math.max(0, ilv - 1)) * (a < 0 ? 1 : RMULT[r]));
   const it = { uid, base, r, ilv, name: name || (r === 'common' && B.metal && ilv <= 2 ? 'Battered ' + B.name : B.name), st, aff };
   if (mod) it.mod = mod;
   if (flav) it.flav = flav;
@@ -152,6 +160,15 @@ export function abilityMods(m, ab) {
   return out;
 }
 
+/** an item's st re-derived from what it is (a load: saves before a formula change) @param {any} it */
+export function refreshItem(it) { if (it && BASES[it.base] && Number.isFinite(it.ilv)) it.st = makeItem(it.base, it.ilv, it.r in RMULT ? it.r : 'common').st; return it; }
+/** per level, what the class's starting kit adds beyond the one-× rate (the class grows that much
+ * less itself: statsFor) @param {string} cls @returns {{ hp: number, mp: number, atk: number, def: number }} */
+export function kitGrowth(cls) {
+  const g = { hp: 0, mp: 0, atk: 0, def: 0 };
+  for (const base of Object.values(STARTER[cls] || {})) for (const [k, [a, b]] of Object.entries(BASES[base].st)) if (k in g && a >= 0) g[k] += (GEAR_GROWTH - 1) * b;
+  return g;
+}
 export function starterKit(m) {
   const g = {}, kit = STARTER[m.cls] || {};
   for (const s of SLOTS) g[s] = kit[s] ? makeItem(kit[s], Math.max(1, m.level), 'common', { uid: `${m.id}:${s}` }) : null;

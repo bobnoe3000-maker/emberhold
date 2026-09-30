@@ -6,7 +6,7 @@
 // the stance, the level-20 passive and Weakened (after a wipe) on top.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { gearStats, starterKit, BASES } from './items.js';
+import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate } from './attributes.js';
 import { STANCE_MOD, stanceOf, hasPassive } from './skills.js';
 
@@ -45,7 +45,8 @@ export const WEAK = 0.9;
 // MP per second, the class rate growing with the pool (GDD §4) plus gear regen. `power` is the
 // ability-power bonus (Focus).
 export function statsFor(m) {
-  const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m), a = attrStats(m), rg = recommendedGrowth(m.cls);
+  const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m), a = attrStats(m), kg = kitGrowth(m.cls);
+  const rg0 = recommendedGrowth(m.cls), rg = { hp: rg0.hp + kg.hp, mp: rg0.mp + kg.mp, atk: rg0.atk + kg.atk, def: rg0.def + kg.def };   // attributes and the kit's extra growth carry the rest
   const baseHp = c.hp[0] + (c.hp[1] - rg.hp) * L + a.hp, baseMp = c.mp[0] + (c.mp[1] - rg.mp) * L + a.mp;
   const st = STANCE_MOD[stanceOf(m)], weak = m.weakUntil > 0 ? WEAK : 1, passive = hasPassive(m);
   const edge = m.origin === 'redhand_deserter' ? 1 : 0;                       // origins.js: +1 ATK

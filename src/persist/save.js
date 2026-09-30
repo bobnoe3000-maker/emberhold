@@ -25,6 +25,8 @@
 //       grew: older data loads with no quests.
 //   v8: stairs up on every floor — floors [[depth, { mods, hp, discovered, visited }]], the other
 //       floors of the current dungeon visit (core.js). Only grew: older data loads with none.
+//   (2026-09-30, no version bump: the shape is the same) an item's st is re-derived from (base, ilv,
+//       rarity) on load (sim/items.js refreshItem), so old loot follows the doubled gear growth.
 //   v9: the Lantern Guild's board — board { day, lv } (sim/board.js); board jobs sit in quests under
 //       ids board_<day>_<lv>_<slot>. Only grew: older data loads with no board (it goes up in town).
 

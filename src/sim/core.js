@@ -10,7 +10,7 @@ import { findPath } from './path.js';
 import { listDestinations } from './travel.js';
 import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
 import { makeHero, statsFor } from './party.js';
-import { starterKit } from './items.js';
+import { starterKit, refreshItem } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
@@ -432,7 +432,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (!m.gear) m.gear = starterKit(m);                  // saves from before gear: the class kit
       if (!m.attrs) { m.autoAttrs = !m.main; autoAllocate(m); }   // saves from before attributes: the class build (same stats as then)
     }
-    state.bag = (data.bag ?? []).map((it) => ({ ...it }));
+    state.bag = (data.bag ?? []).map((it) => refreshItem({ ...it }));
+    for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     world.mods.clear();
     for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
     world.hp.clear();

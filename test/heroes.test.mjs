@@ -10,6 +10,7 @@ import { pendingPoints, autoAllocate, POINTS_PER_LEVEL } from '../src/sim/attrib
 import { pendingSkillPoints, rankOf, rankCost, skillsOf } from '../src/sim/skills.js';
 import { DAY_S, WEAK_S, BENCH_MAX } from '../src/sim/heroes.js';
 import { startSession, verifySession } from '../src/sim/replay.js';
+import { kitGrowth, STARTER, BASES } from '../src/sim/items.js';
 
 const SEED = 20260807;
 const run = (sim, cmds) => { for (const c of cmds) { sim.commands.push(c); sim.tick(); } };
@@ -67,14 +68,21 @@ test('origin edges: Redhand +1 ATK, Thornwick-born one more hireling', () => {
 });
 
 // ── attributes ──────────────────────────────────────────────────────────────
+// (gear carries part of the growth since 2026-09-30: the class grows the kit's extra less a level,
+// so a member in their kit at their level lands on the old class curve, give or take item rounding)
 test('the recommended build reproduces the class table (HP / MP / ATK / DEF) at every level', () => {
   for (const cls of Object.keys(CLASSES)) for (let lv = 1; lv < 20; lv++) {            // (20+: the passives add on top)
-    const m = makeMember('t', 'T', cls, lv), c = CLASSES[cls], L = lv - 1, s = statsFor(m), g = s.gear;
+    const m = makeMember('t', 'T', cls, lv), c = CLASSES[cls], L = lv - 1, s = statsFor(m), g = s.gear, kg = kitGrowth(cls);
     assert.equal(pendingPoints(m), 0);
-    assert.equal(s.maxHp, Math.round(c.hp[0] + c.hp[1] * L + g.hp), `${cls} L${lv} hp`);
-    assert.equal(s.maxMp, Math.round(c.mp[0] + c.mp[1] * L + g.mp), `${cls} L${lv} mp`);
-    assert.ok(Math.abs(s.atk - (c.atk[0] + c.atk[1] * L + g.atk)) < 0.051, `${cls} L${lv} atk`);
-    assert.ok(Math.abs(s.def - (c.def[0] + c.def[1] * L + g.def) * (cls === 'fighter' ? SHIELD_DEF : 1)) < 0.051, `${cls} L${lv} def`);   // (+ the fighter's shield bonus)
+    assert.equal(s.maxHp, Math.round(c.hp[0] + (c.hp[1] - kg.hp) * L + g.hp), `${cls} L${lv} hp`);
+    assert.equal(s.maxMp, Math.round(c.mp[0] + (c.mp[1] - kg.mp) * L + g.mp), `${cls} L${lv} mp`);
+    assert.ok(Math.abs(s.atk - (c.atk[0] + (c.atk[1] - kg.atk) * L + g.atk)) < 0.051, `${cls} L${lv} atk`);
+    assert.ok(Math.abs(s.def - (c.def[0] + (c.def[1] - kg.def) * L + g.def) * (cls === 'fighter' ? SHIELD_DEF : 1)) < 0.051, `${cls} L${lv} def`);   // (+ the fighter's shield bonus)
+    // in the kit at level: the old curve (class table + the kit at the one-× rate), within rounding
+    const old = { hp: 0, mp: 0, atk: 0, def: 0 };
+    for (const base of Object.values(STARTER[cls])) for (const [k, [a, b]] of Object.entries(BASES[base].st)) if (k in old) old[k] += a + b * lv;
+    assert.ok(Math.abs(s.maxHp - (c.hp[0] + c.hp[1] * L + old.hp)) <= 3, `${cls} L${lv} hp on the old curve`);
+    assert.ok(Math.abs(s.atk - (c.atk[0] + c.atk[1] * L + old.atk)) <= 1.5, `${cls} L${lv} atk on the old curve`);
   }
 });
 test('3 points a level; spend, Auto, and no points from nowhere', () => {
@@ -160,7 +168,8 @@ test('an auto-cast toggle keeps an ability out of battle', () => {
 const downOnce = (sim, m) => { for (let i = 0; i < 20 * 60 && !m.down && !m.fallen; i++) { m.hp = Math.min(m.hp, 1); sim.tick(); } };   // one blow will do
 test('Downed twice in waves back to back → Fallen: a ghost that neither fights nor earns', () => {
   const c = makeMember('c1', 'Maera', 'fighter', 5), h = hero({ level: 5 }); autoAllocate(h);
-  const sim = inRoom([h, c], 1);
+  const sim = inRoom([h, c], 8);                                 // (waves big enough to land a blow on them before they fall;
+  sim.bus.on('combat', () => { if (!h.down) h.hp = statsFor(h).maxHp; });   //  the hero kept standing so the visit goes on)
   downOnce(sim, c); assert.equal(c.down, true); assert.equal(c.fallen, undefined);
   ticks(sim, 20 * 60, () => !c.down);                           // the wave falls: they rise in the lull
   assert.equal(c.down, false); assert.ok(c.hp > 0);
