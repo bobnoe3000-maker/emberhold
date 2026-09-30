@@ -59,12 +59,24 @@ const WIND = 1;
 // then 1 + level / 2 (3 at 4–5, 4 at 6–7, 5 at 8–9 …), up to 7. (Waves had grown with the party,
 // 2 / 5 / 7 for one / two / three: each member faced more foes the more companions they had, and
 // companions added nothing.) So a lone hero beats level-1 foes, and from level 4 a same-level room
-// wants company. Nothing is free inside a room: every wave of one visit comes TIDE stronger than
-// the last and the lull between them is a short breath, not a full recovery, so a visit ends when
-// you choose to walk out (corridors and towns restore you) or when the room wins. Above level 3
-// foes carry PREMIUM a level more, for the party and the gear a same-level room now expects.
+// wants company. Nothing is free inside a room: the waves of one visit rise with a TIDE and the lull
+// between them is a short breath, not a full recovery, so a visit ends when you choose to walk out
+// (corridors and towns restore you) or when the room wins. Above level 3 foes carry PREMIUM a level
+// more, for the party and the gear a same-level room now expects.
 export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(7, 1 + Math.floor(lvl / 2)));
-export const TIDE = 0.06, PREMIUM = 0.05;
+export const PREMIUM = 0.05;
+// The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
+// top (`cap`: +100 % in an ordinary room). A wave at the top is followed by one back at the start,
+// and the climb begins again: a room cycles, so a party strong enough for its top can farm it for as
+// long as it likes, and one that isn't is worn down by the first climb. Special rooms keep their own
+// profile: a floor's stairs-down hall (its boss room) climbs higher.
+/** @type {Record<string, { step: number, cap: number }>} */
+export const TIDES = {
+  room: { step: 0.06, cap: 1.0 },
+  hall: { step: 0.06, cap: 1.5 },
+};
+/** which tide a room keeps: a room may name its own profile (room.tide), a floor's stairs-down hall is a hall @param {any} w @param {number} room */
+export const tideOf = (w, room) => { const L = w.level, r = L && L.rooms.find((q) => q.id === room); return TIDES[(r && r.tide) || (L && L.descentRoom && L.descentRoom.id === room ? 'hall' : 'room')] || TIDES.room; };
 // a kill's XP to each living member: whole alone, 65 % each for two, 50 % each for three (a party
 // clears faster, so each member earns about what they would alone, and the room they can take is higher)
 const XP_SHARE = [1, 1, 0.65, 0.5];
@@ -134,7 +146,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // wave an elite takes one slot; each wave of the visit rises with the tide
     const eliteWave = (b.wave + 1) % 5 === 0;
     const n = Math.max(1, waveSize(lvl) - (eliteWave ? 1 : 0));
-    const tough = (1 + TIDE * b.wave) * (1 + PREMIUM * Math.max(0, lvl - 3));
+    // the tide: a step up from the last wave, to the top; after the top, back to the start
+    if (b.wave > 0) {
+      const T = tideOf(w, b.room);
+      if (b.tide >= T.cap - 1e-9) { b.tide = 0; bus.emit('tideTurned', { room: b.room }); }
+      else b.tide = Math.min(T.cap, b.tide + T.step);
+    }
+    const tough = (1 + b.tide) * (1 + PREMIUM * Math.max(0, lvl - 3));
     const ranged = Math.max(b.wave % 2, Math.floor(n / 3));   // one in every second wave at least: two melee foes alone never touched a kiting mage
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : rng() < 0.55 ? 'minion' : 'warrior');
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
@@ -150,7 +168,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
     }
     b.wave += 1;
-    bus.emit('wave', { wave: b.wave, level: lvl });
+    bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
   }
 
   function startBattle(w, room) {
@@ -163,7 +181,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
     pending = [];
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
-    battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map() };
+    battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
+      tide: 0 };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
     bus.emit('battle', { on: true, room, level: battle.level });

@@ -3,7 +3,7 @@
 **2026-09-30 · Implemented.** The measurements behind GDD v1.5 §7.1 and AGENTS.md rule 6.
 
 **Code:**
-- `src/sim/battle.js`: `waveSize`, `TIDE`, `PREMIUM`, `XP_SHARE`, `LULL_REGEN`, and the hero's
+- `src/sim/battle.js`: `waveSize`, `TIDES` / `tideOf` (the cap, pass 1b), `PREMIUM`, `XP_SHARE`, `LULL_REGEN`, and the hero's
   pathing probe with `HERO_R`.
 - `src/sim/items.js`: `GEAR_GROWTH`, `kitGrowth`, `refreshItem`.
 - `src/sim/party.js`: `statsFor`.
@@ -46,7 +46,7 @@ lost per wave, averaged over the first 10 waves. The script is
 - **The room sets the wave.** 2 foes to room level 3, then 1 + ⌊level ÷ 2⌋, up to 7. It's the
   same for a lone hero and a party. Archers and mages are up to a third of a wave, and at least
   one in every second wave: two melee foes alone never touched a kiting mage.
-- **The tide:** each wave of one visit is +6 % HP and ATK.
+- **The tide:** each wave of one visit is +6 % HP and ATK (capped in pass 1b, below).
 - **The premium:** foes above level 3 are +5 % a level (HP, ATK, and DEF via HP scaling).
 - **The lull is a 4 s breath** at 1.5× regen, and the room doesn't wait. Corridors and towns
   still restore you at 5×.
@@ -98,6 +98,33 @@ level; before = `--src` of the previous commit):
 Gold in 5 minutes for the party fell from 516 / 1,170 / 1,791 to 285 / 780 / 1,197, since there
 are fewer foes a wave. XP ended at the same levels (4 / 7 / 10). Gold is an open item for the M5
 economy pass.
+
+## Pass 1b: the tide's cap (2026-09-30)
+
+**The ask:** "there should be a cap/top and cycle back through again … except for special rooms
+(configurable). That way a player can farm for a long time in a room." Fixed steps, not random.
+
+**Change:** the tide climbs +6 % a wave to a cap (+100 % in an ordinary room, +150 % in a floor's
+stairs-down hall), then the next wave is back at +0 % and it climbs again. `TIDES` in
+`sim/battle.js` holds the profiles; `room.tide` can name one. The sim emits `tideTurned`, and the
+renderer shows *The room falls back*. `test/tide.test.mjs` pins the cycle: waves 17–20 read +96,
++100, +0, +6 %, and the tide turns on waves 19 and 37.
+
+**Farming, 900 s visits never walked out of** (seed 20260807, heroes in their class kit at level, common):
+
+| Party | Room | Uncapped tide | Capped |
+|---|---|---|---|
+| Fighter + rogue + cleric, L6 | 4 | held, 53 waves | held, 69 waves |
+| Fighter + rogue + cleric, L6 | 6 (same level) | defeated at 407 s | held, 55 waves |
+| Fighter + rogue + cleric, L9 | 7 | defeated at 647 s | held, 56 waves |
+| Fighter + cleric, L6 | 4 | defeated at 784 s | held, 57 waves |
+| Lone L6 hero | 3 | defeated | defeated |
+| Lone L1 hero | 1 | defeated | defeated |
+
+A lone hero still can't farm a same-level room, and the right party now can: the point of the ask.
+
+**Smoke gates after the cap** (all pass): 6/5/4 waves; 1, 1; 24/18/14 and 24/16/13; 222 s and
+214 s; 5 waves and 1 wave; 396 vs 358 XP a minute (90 %); 9 waves vs 6.
 
 ## The contract (smoke gates)
 

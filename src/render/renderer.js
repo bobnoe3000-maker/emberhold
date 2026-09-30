@@ -21,7 +21,7 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
-import { DEATH_T, TIDE } from '../sim/battle.js';
+import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
@@ -1028,6 +1028,7 @@ export function createRenderer(canvas, sim, input) {
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
+  sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
   sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
@@ -1049,7 +1050,7 @@ export function createRenderer(canvas, sim, input) {
       party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
-      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.wave > 1 ? `  ·  FOES +${Math.round(TIDE * (b.wave - 1) * 100)}%` : ''}`, dc = dangerColor(b.level);
+      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 50 * k;   // clear of an iPhone's camera island (40 clipped ~4 px); the HUD row below moved down with it
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);

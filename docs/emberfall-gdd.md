@@ -1,6 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.5 · 2026-09-30 · Plan of record for game design.** v1.5 rebalances fights (§7.1): the room sets
+**v1.6 · 2026-09-30 · Plan of record for game design.** v1.6 caps the tide (§3.3): waves climb to a
+top, then fall back and climb again, so a party strong enough for the top can farm a room as long
+as it likes.
+
+v1.5 rebalances fights (§7.1): the room sets
 the wave, not the party; waves rise with a tide; lulls are a breath, not a full recovery; gear
 carries a real share of your power; companions share XP. A lone hero beats level-1 foes but can't
 farm them, and same-level rooms from level 4 want the right party in gear at your level.
@@ -103,8 +107,9 @@ A level has 6–8 rooms.
   wave spawns at the room's spawn points, away from the party. Waves come from the room's spawn
   table (enemy family, level and size).
 - **The battle continues until the party leaves the room or dies.** There's no victory
-  screen. Each wave of a visit rises with the tide (§3.3), so a visit ends when you walk out
-  through a doorway (corridors restore you) or when the room wins. Farming is going back in.
+  screen. Each wave of a visit rises with the tide (§3.3) up to a cap, then falls back and climbs
+  again. A visit ends when you walk out through a doorway (corridors restore you) or when the
+  room wins. A party that can hold the top can farm a room for as long as it likes.
 - **Enemies are leashed to their room.** They never follow into corridors. When the party
   leaves, the room's survivors fade out and the room resets. It repopulates next time you enter.
 - **Rooms show their threat** before you commit: level, enemy family and a skull rating appear
@@ -112,8 +117,19 @@ A level has 6–8 rooms.
 
 ### 3.3 Room levels and waves (risk vs reward)
 **Every room has a fixed level.** Within one visit the waves rise with the **tide**: each wave is
-6 % tougher (HP and ATK) than the one before, so no room can be held forever (v1.5). Levels rise
-as you **advance deeper**:
+6 % tougher (HP and ATK) than the one before, up to a **cap** (v1.6). The wave after the top is
+back at the start ("the room falls back"), and the climb begins again. So the top is what a party
+must hold to farm a room indefinitely; anything weaker is worn down on the climb.
+
+| Room | Step | Cap | Waves to the top |
+|---|---|---|---|
+| Ordinary room | +6 % a wave | +100 % | 18 (wave 18 at +100 %, wave 19 back at +0 %) |
+| Special: a floor's stairs-down hall | +6 % a wave | +150 % | 26 |
+
+The profiles are data (`TIDES` in `sim/battle.js`); a room can name one with `tide`, and the
+stairs-down hall uses `hall` by default. The steps are fixed, not rolled.
+
+Levels rise as you **advance deeper**:
 
 - **Deeper rooms are harder.** Rooms are ranked by walking distance from the entrance, and
   every two rooms further in is one level harder. The descent room is always the hardest on
@@ -372,7 +388,7 @@ Both slot in with the same stat block and ability format. No system changes are 
 |---|---|---|
 | A lone hero, levels 1–3, kit at level | Wins the first 3+ waves, goes down by wave 12 | You beat level-1 foes alone but can't farm them. Walk out to recover and go back in. |
 | A lone hero, level 4+ | Down within 2 waves | Same-level rooms want company. Rooms well below you are for solo. |
-| The right party (tank, damage, healer) in gear at level | Holds 10+ waves, nobody Fallen in the first five | The tide ends the visit eventually. |
+| The right party (tank, damage, healer) in gear at level | Holds 10+ waves, nobody Fallen in the first five | The tide climbs to +100 %, then falls back. Holding the top means farming as long as you like. |
 | A party with no healer, level 6+ | Worn down within 5 minutes | Composition matters. |
 | Any party, a room 3 levels up | Defeated | |
 
@@ -392,7 +408,8 @@ Both slot in with the same stat block and ability format. No system changes are 
   6 in its level-1 kit.
 
 **Leaving is the way to farm** (implemented 2026-09-30):
-- In a fight the room pill reads *ROOM LV 4 · WAVE 6 · FOES +30%*: the tide, in the open.
+- In a fight the room pill reads *ROOM LV 4 · WAVE 6 · FOES +30%*: the tide, in the open. When it
+  falls back from the top, a banner says *The room falls back*.
 - A **Step out** button sits above the party cards on the right (`src/ui/stepout.js`). It walks
   the hero to the nearest corridor tile past a doorway (the compass row `step-out`,
   `sim/travel.js`), where the fight ends and the corridor restores the party at 5×.
