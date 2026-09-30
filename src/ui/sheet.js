@@ -221,7 +221,9 @@ export function createGearSheet(sim, { partyPanel }) {
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${m.trait ? `${esc(m.trait[0])}: ${esc(m.trait[1])} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;
   }
-  // who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
+  // where a drop came from (loot.js sources; quests.js / core.js heirlooms)
+const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault' };
+// who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
 const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse' };
 const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
 
@@ -360,7 +362,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     }
     toastItem = item;
     toast.style.borderColor = RC[item.r];
-    toast.innerHTML = `<div class="t">✦ Found ${src === 'chest' ? 'in a chest' : src === 'elite' ? 'on an elite' : 'after the wave'}</div>
+    toast.innerHTML = `<div class="t">✦ Found ${FOUND_AT[src] || 'after the wave'}</div>
       <div class="hd"><div class="big" style="border-color:${RC[item.r]}"><img src="${icon(item)}" alt=""></div><div style="min-width:0"><h3 style="color:${RC[item.r]}">${item.name}</h3>
       <div class="s">${item.r[0].toUpperCase() + item.r.slice(1)} · ${SLOT_LABEL[B.slot]} · ${classNames(B, true)} · ilv ${item.ilv}</div>${up}</div></div>
       <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${esc(m.name)}</button>` : `<button class="gbtn pri" data-look>Compare gear</button>`}<button class="gbtn" data-bag>Keep in bag</button></div>`;

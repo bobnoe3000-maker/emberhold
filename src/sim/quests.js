@@ -115,8 +115,9 @@ export const TRIAL_LEVEL = 6;
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;
 
-/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void, grant?: (item: string) => void }} o */
-export function createQuests({ state, bus, getWorld, extraDef = () => null, reveal = () => {}, grant = () => {} }) {
+/** @param {{ state: any, bus: any, getWorld: () => any, extraDef?: (id: string) => QuestDef | null, reveal?: (site: string) => void, grant?: (item: string) => void, drop?: (src: string) => void }} o
+ * grant: an heirloom reward; drop: a chapter's guaranteed Fine (loot.js DROP.chapter) */
+export function createQuests({ state, bus, getWorld, extraDef = () => null, reveal = () => {}, grant = () => {}, drop = () => {} }) {
   if (!state.quests) state.quests = {};
   if (state.tracked === undefined) state.tracked = null;
   /** @param {string} id @returns {QuestDef | null} */
@@ -161,6 +162,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     for (const m of state.bench || []) gainXp(m, Math.round(r.xp * BENCH_XP), lv);
     state.counters.gold = (state.counters.gold || 0) + r.gold;
     if (r.item) grant(r.item);
+    if (/** @type {QuestDef} */ (defOf(id)).kind === 'chapter') drop('chapter');                 // (GDD §8: a chapter pays a Fine too)
     bus.emit('questReward', { id, xp: r.xp, gold: r.gold, ...(r.item ? { item: r.item } : {}) });
     bus.emit('countersChanged', { ...state.counters }); bus.emit('partyChanged', state.party);
   }

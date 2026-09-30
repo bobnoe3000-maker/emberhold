@@ -507,6 +507,9 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
   (`gear-and-loot-plan.md`). M5 tunes toward the targets above with a headless farm run:
   about 3 Common, about 1 Fine, and about 1 Rare per 5 hours of active play. Rare and above
   always fits the party's classes.
+  (M5, done) Measured with `tools/balance/loot.mjs` over 27 h at levels 3 / 6 / 9: 3.4 Common,
+  0.92 Fine and 0.17 Rare an hour. A boss's first fall always drops Fine or better; later falls roll
+  for it (15 %), so a repeatable boss like the Standard can't be farmed for Rares.
 
 ---
 

@@ -226,8 +226,12 @@ console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', 
 const gs = createSim(SEED); gs.tick();
 const gh = gs.state.party[0], kitOk = SLOTS.filter((sl) => gh.gear[sl]).length === 5 && statsFor(gh).maxHp === 140 && statsFor(gh).def === 15.4;   // 14 + the fighter's shield (+10 %)
 // drops are seeded by the world and a running counter: the same chest sequence twice gives the same items
+// (chests are rare-ish since the M5 tune, loot.js DROP: fresh visits of the floor until three have dropped)
 const dropRun = () => { const s = createSim(SEED); s.tick(); const got = []; s.bus.on('loot', (l) => got.push(`${l.item.name}/${l.item.r}/${l.item.ilv}`));
-  for (const [k, v] of s.world.props) if (v === 'chest') { const [tx, ty] = k.split(',').map(Number); s.state.player.x = tx + 0.5; s.state.player.y = ty + 1.5; s.commands.push({ type: 'harvest', tx, ty }); s.tick(); }
+  for (let v = 0; v < 40 && got.length < 3; v++) {
+    if (v) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), mods: [], floors: [] });
+    for (const [k, kind] of s.world.props) if (kind === 'chest') { const [tx, ty] = k.split(',').map(Number); s.state.player.x = tx + 0.5; s.state.player.y = ty + 1.5; s.commands.push({ type: 'harvest', tx, ty }); s.tick(); }
+  }
   return { s, got }; };
 const d1 = dropRun(), d2 = dropRun(), dropsOk = d1.got.length > 0 && d1.got.join('|') === d2.got.join('|');
 // equip rules: a greatsword frees the off-hand; a shield then refuses; a mage wand is refused on the fighter

@@ -29,13 +29,18 @@ export function bagStacks(bag) {
   }
   return out;
 }
-// drop odds: chance of any item, then the rarity split (the rest is Common). Generous for
-// v1 so the loop is felt early; deeper rooms add +5 % per room level to the chance.
+// drop odds: chance of any item, then the rarity split (the rest is Common); deeper rooms add +5 % per
+// room level to the chance. Tuned in M5 (development plan §2.7: "rare but valuable") with the headless
+// farm (tools/balance/loot.mjs, levels 3 / 6 / 9, 3 seeds an hour each) toward, per hour of active play,
+// about 3 Common, 1 Fine and a Rare every 5 h. v1's generous odds found ~23 / 7 / 0.8 an hour; these
+// find 3.4 / 0.92 / 0.17 (a Rare every 6 h) over 27 h of farm (9 runs of 3 h), within the plan's ±25 %.
 export const DROP = {
-  chest: { chance: 0.6, fine: 0.25, rare: 0.04 },
-  boss: { chance: 1, fine: 0.55, rare: 0.3 },            // a boss always leaves something, never less than Fine (below)
-  wave: { chance: 0.08, fine: 0.2, rare: 0.02 },
-  elite: { chance: 0.3, fine: 0.35, rare: 0.06 },
+  chest: { chance: 0.085, fine: 0.2, rare: 0.07 },
+  boss: { chance: 1, fine: 0.7, rare: 0.3, min: 'fine' },             // a boss's first fall always leaves something, never less than Fine
+  bossAgain: { chance: 0.15, fine: 0.9, rare: 0.1, min: 'fine' },     // later falls roll for it (the Standard can be farmed: Rares stay rare)
+  chapter: { chance: 1, fine: 0.9, rare: 0.1, min: 'fine' },          // a chapter quest's hand-in: a guaranteed Fine (GDD §8), in the bag
+  wave: { chance: 0.0095, fine: 0.17, rare: 0.05 },
+  elite: { chance: 0.05, fine: 0.35, rare: 0.1 },
 };
 
 export function createLoot({ state, bus, seed }) {
@@ -58,8 +63,8 @@ export function createLoot({ state, bus, seed }) {
     const odds = DROP[src]; if (!odds) return null;
     C.lootN = (C.lootN || 0) + 1;
     const rng = mulberry32(streamSeed(seed, 91000 + C.lootN));
-    if (rng() >= Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1)))) return null;
-    const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine || src === 'boss' ? 'fine' : 'common';
+    if (rng() >= (odds.chance >= 1 ? 1 : Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1))))) return null;   // (a chance of 1 is a promise: the cap was eating 5 % of them)
+    const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine || odds.min === 'fine' ? 'fine' : 'common';
     C.uidN = (C.uidN || 0) + 1;
     const classes = [...new Set(state.party.map((m) => m.cls))];
     const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN });

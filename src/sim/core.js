@@ -105,14 +105,15 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.flags[flag] = 1; loot.grant(v.heirloom, { ilv: Math.max(state.party[0].level, siteOf(curSite).base), x: e.tx + 0.5, y: e.ty + 0.5, src: 'vault' });
     bus.emit('vaultOpened', { site: curSite, heirloom: v.heirloom });
   });
-  // a boss down: its heirloom the first time (items.js HEIRLOOMS), and always a Fine-or-better drop
-  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop('boss', { ilv: e.lvl, x: e.x, y: e.y }); });
+  // a boss down: its heirloom and a Fine-or-better drop the first time (items.js HEIRLOOMS); later falls roll for one (loot.js DROP)
+  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
 
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
   // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids
   /** @type {any} */ let board = null;
   const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null), reveal: (id) => reveal(id),
-    grant: (item) => loot.grant(item, { ilv: state.party[0].level, x: state.player.x, y: state.player.y, src: 'quest' }) });
+    grant: (item) => loot.grant(item, { ilv: state.party[0].level, x: state.player.x, y: state.player.y, src: 'quest' }),
+    drop: (src) => loot.drop(src, { ilv: state.party[0].level, x: state.player.x, y: state.player.y }) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
   const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });   // the Chronicle's fragments (lore.js)
   const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });

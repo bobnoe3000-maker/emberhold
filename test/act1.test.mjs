@@ -38,6 +38,7 @@ test('Act I from start to finish: the mill, the Keep, the chapel, in order, each
   const t = createSim(SEED, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   const paid = []; sim.bus.on('questReward', (r) => paid.push(r.id));
+  const fines = []; sim.bus.on('loot', (l) => { if (l.src === 'chapter') fines.push(l.item.r); });
   const revealed = []; sim.bus.on('siteRevealed', (e) => revealed.push(e.site));
 
   // 1. Smoke over the Vale: from Maudry only; the others can't start before it's done
@@ -70,6 +71,7 @@ test('Act I from start to finish: the mill, the Keep, the chapel, in order, each
   talk(sim, 'sister_ilse'); say(sim, 'turnin', 'ch1_ember_in_the_fist'); assert.equal(st(sim, 'ch1_ember_in_the_fist'), QS.DONE);
   say(sim, 'turnin', 'ch1_ember_in_the_fist');
   assert.deepEqual(paid, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist'], 'each paid once, in order');
+  assert.equal(fines.length, 3, 'each chapter pays a Fine or better too (GDD §8)'); assert.ok(fines.every((r) => r === 'fine' || r === 'rare'));
 });
 
 test('a boss who fell before his chapter was taken still counts; Ink reads a chapter at its taker too', () => {
