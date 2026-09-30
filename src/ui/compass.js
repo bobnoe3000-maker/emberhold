@@ -73,7 +73,7 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
   const lvClass = (lv) => { const d = lv - heroLv(); return d <= 0 ? 'g' : d === 1 ? 'a' : d === 2 ? 'o' : 'r'; };
   const place = () => {
     const w = sim.world;
-    if (w.kind === 'dungeon') return `${w.level && w.level.th ? 'Old Barrows' : 'Dungeon'} · depth ${(w.depth || 0) + 1}`;
+    if (w.kind === 'dungeon') return `${w.siteName || 'Dungeon'} · depth ${(w.depth || 0) + 1}`;
     return w.name || '';
   };
   let rows = [];
@@ -93,7 +93,7 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
     const el = e.target.closest('.opt'); if (!el || el.classList.contains('off')) return;
     const o = rows[+el.dataset.i]; if (!o) return;
     const label = o.chip || (o.id === 'next-room' || o.id === 'farm-room' ? `${o.label} (LV ${o.level})` : o.id === 'quest' ? questTitle(o.quest) || 'Quest' : o.label.startsWith('Nearest') ? o.sub.split(' · ')[0] : o.label);
-    sim.commands.push({ type: 'goto', tx: o.tx, ty: o.ty, near: o.near, then: o.then || null, label, room: o.room, journey: o.journey || null });   // a journey walks on through scene changes (sim/core.js)
+    sim.commands.push({ type: 'goto', tx: o.tx, ty: o.ty, near: o.near, then: o.then || null, label, room: o.room, journey: o.journey || null, site: o.site || null });   // a journey walks on through scene changes (sim/core.js)
     closeMenu();
   });
   chip.addEventListener('click', (e) => {

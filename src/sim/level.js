@@ -44,12 +44,14 @@ function inRoom(shape, dx, dy, rw, rh) {
   }
 }
 
-export function generateLevel(seed, theme) {
+// opts.rooms: [min, max] rooms for a floor (a site's own, sites.js); the Old Barrows keep 6–8. Either
+// way it's one draw, so a Barrows floor comes out as it always has.
+export function generateLevel(seed, theme, opts = {}) {
   const th = THEMES[theme] || THEMES.dread;
   const rng = mulberry32(((seed >>> 0) ^ 0x9e3779b9) >>> 0);
   const shapes = ['rect', 'rect', 'oval', 'oval', 'diamond', 'ell'];   // open arenas (no pinched 'plus')
   const rooms = [];
-  const want = 6 + Math.floor(rng() * 3);         // 6–8 rooms
+  const want = opts.rooms ? opts.rooms[0] + Math.floor(rng() * (opts.rooms[1] - opts.rooms[0] + 1)) : 6 + Math.floor(rng() * 3);   // 6–8 rooms
   let tries = 0;
   while (rooms.length < want && tries < 1600) {
     tries++;

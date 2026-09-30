@@ -43,7 +43,7 @@ export function createTitle({ sim, slot, setPaused, openSlots, openParty, openCr
 
   function Title() {
     const S = sim.state, h = S.party[0], made = S.created;
-    const where = sim.world.kind === 'dungeon' ? `the Old Barrows · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
+    const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     return html`<div id="title">
       <div class="mark">EMBER<em>FALL</em></div>
       <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>

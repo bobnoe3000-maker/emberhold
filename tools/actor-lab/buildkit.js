@@ -623,6 +623,77 @@ Object.assign(TYPES, {
     lantern(g, S, 0.32, 0.46, 0.62);
     barrel(g, S, -0.35, 0.55); barrel(g, S, -0.45, 0.5);
   },
+  // The Tithe Mill (M5): Lord Pellam's watermill. A stone ground storey, a timbered loft under a
+  // steep roof, a big undershot wheel on the +x side (the river's), a sluice and a mill-race, sacks
+  // of the tithe grain by the door, and the Redhand's mark: a red rag on a pole, a burned cart.
+  watermill(S, g, r) {
+    const w = 0.62, d = 0.5, h1 = 0.36, h2 = 0.3;
+    storeyBlock(S, g, w, d, 0, h1, S.m.stone, true, { doorZ: -0.1 });
+    storeyBlock(S, g, w, d, h1, h2, S.m.upper, true, { timber: true });
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.1, 0.16, 0.3, true);
+    roofOver(S, g, w, d, h1 + h2, S.roofRise * 1.25, true); chimney(g, S, -0.18, -0.1, h1 + h2, 0.34);
+    // the wheel: a rim of paddles on a hub, half in the race, turning out of the +x wall
+    const wh = new THREE.Group(); wh.position.set(w / 2 + 0.09, 0.2, 0.02); g.add(wh);
+    const R = 0.24, wood = S.m.wood;
+    for (const zz of [-0.07, 0.07]) { const rim = new THREE.Mesh(new THREE.TorusGeometry(R, 0.018, 5, 18), S.m.beam); rim.rotation.y = Math.PI / 2; rim.position.x = zz * 0; rim.position.z = zz; rim.rotation.set(0, 0, 0); rim.position.set(0, 0, zz); wh.add(rim); }
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, pad = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.09, 0.16), wood); pad.position.set(0, Math.sin(a) * R, 0); pad.position.x = Math.cos(a) * R; pad.rotation.z = a; wh.add(pad); }
+    wh.rotation.y = Math.PI / 2;
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.22, 8), S.m.trim); hub.rotation.x = Math.PI / 2; hub.position.set(w / 2 + 0.09, 0.2, 0.02); hub.rotation.set(0, 0, Math.PI / 2); g.add(hub);
+    // the race: a stone channel of water under the wheel, and the sluice gate upstream
+    const water = mat(null, '#2e5a78');
+    box(0.2, 0.01, 0.9, water, w / 2 + 0.09, 0, 0.02, g);
+    for (const sx of [-1, 1]) box(0.03, 0.06, 0.9, S.m.stoneDark, w / 2 + 0.09 + sx * 0.115, 0, 0.02, g);
+    box(0.24, 0.16, 0.03, S.m.wood, w / 2 + 0.09, 0, -0.4, g);
+    // the tithe: sacks by the door, a burned-out cart, a Redhand rag on a pole
+    for (const [x, z, k] of [[0.08, 0.34, 1], [0.16, 0.36, 0.85], [0.12, 0.44, 0.9], [-0.28, 0.36, 1]]) sackMesh(g, S, x, z, k * 1.2, k * 2);
+    const cart = new THREE.Group(); cart.position.set(-0.46, 0, 0.3); cart.rotation.y = 0.5; g.add(cart);
+    const char = mat(null, '#221a16');
+    box(0.26, 0.05, 0.16, char, 0, 0.06, 0, cart); for (const sz of [-1, 1]) { const wl = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 4, 10), char); wl.position.set(0.02, 0.06, sz * 0.09); cart.add(wl); }
+    box(0.012, 0.44, 0.012, S.m.beam, 0.3, 0, 0.34, g);
+    box(0.1, 0.06, 0.006, mat(null, '#8a2a20'), 0.35, 0.36, 0.34, g);
+    lantern(g, S, -0.24, 0.3, d / 2 + 0.05);
+  },
+  // The Sunken Chapel (M5): an imperial chapel half-swallowed by the marsh. The nave leans and sinks
+  // (its floor is under the ground plane: the bake keeps only what's above), the bell tower is a
+  // broken stump, the roof has fallen in at the back, and still water and reeds lie around it.
+  chapelruin(S, g, r) {
+    const nave = new THREE.Group(); nave.position.set(0, -0.12, 0); nave.rotation.set(0.05, 0.1, -0.07); g.add(nave);
+    const w = 0.58, d = 1.0, h = 0.7, stone = S.m.ashlar;
+    box(w, h, d, stone, 0, 0, 0, nave);
+    doorOn(nave, S, { side: 'z', wallW: w, wallD: d }, 0.04, 0.24, 0.46, true);
+    for (let i = 0; i < 3; i++) windowOn(nave, S, { side: 'x', wallW: w, wallD: d }, -d / 2 + (d * (i + 0.5)) / 3, h * 0.55, 0.08, 0.28, { pointed: true, lit: false });
+    for (let i = 0; i <= 3; i++) box(0.08, h * 0.7, 0.07, stone, w / 2 + 0.04, 0, -d / 2 + (d * i) / 3, nave);
+    // what's left of the roof: the front half, the back fallen in (a few rafters against the sky)
+    const roof = new THREE.Group(); roof.position.z = d / 4; nave.add(roof); gable(roof, w, d / 2, h, S.roofRise * w / 2 * 1.2, S.m.roof, S.m.upper, 0.07, 0.04);
+    for (let i = 0; i < 4; i++) { const rf = box(0.025, 0.02, w * 0.62, S.m.beam, 0, h + 0.1, -0.06 - i * 0.1, nave); rf.rotation.set(0, Math.PI / 2, 0.55 * (i % 2 ? 1 : -1)); }
+    // the bell tower: a broken stump at the front-left, jagged at the top
+    const t = new THREE.Group(); t.position.set(-w / 2 - 0.1, -0.1, d / 2 - 0.14); t.rotation.z = 0.08; g.add(t);
+    box(0.28, 0.72, 0.28, stone, 0, 0, 0, t);
+    for (const [x, z, hh] of [[-0.09, -0.09, 0.16], [0.08, -0.09, 0.08], [-0.09, 0.08, 0.1]]) box(0.1, hh, 0.1, stone, x, 0.72, z, t);
+    windowOn(t, S, { side: 'z', wallW: 0.28, wallD: 0.28 }, 0, 0.5, 0.07, 0.16, { pointed: true, lit: false });
+    // the marsh: still pools, reeds, a fallen block, a lantern someone left by the door
+    const pool = mat(null, '#3c5c66');
+    for (const [x, z, sx, sz] of [[0.5, 0.28, 0.36, 0.5], [0.12, 0.7, 0.52, 0.24], [-0.52, 0.1, 0.22, 0.42]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.003, 16), pool); p.scale.set(sx, 1, sz); p.position.set(x, 0.0015, z); g.add(p); }
+    // reeds in clumps at the pools' edges (a fan of short blades, not single stalks)
+    const reed = mat(null, '#6a7a44');
+    for (const [cx, cz] of [[0.72, 0.1], [0.66, 0.52], [-0.14, 0.78], [0.4, 0.84], [-0.62, 0.3]]) for (let i = 0; i < 6; i++) {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.009, 0.09 + r() * 0.06, 3), reed); b.position.set(cx + (r() - 0.5) * 0.06, 0.05, cz + (r() - 0.5) * 0.06); b.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); g.add(b); }
+    box(0.18, 0.08, 0.12, stone, 0.34, 0, 0.62, g).rotation.y = 0.6;
+    lantern(g, S, 0.2, 0.22, 0.62);
+  },
+  // The ninth milestone on the Wickham road: a squat imperial mile-stone with its numeral, a worn
+  // plinth, and a slab at its foot that doesn't quite sit flat.
+  milestone(S, g, r) {
+    const stone = mat(tex('ashlar', '#6a6458', 41)), cut = mat(null, '#2a2620');
+    box(0.2, 0.05, 0.2, stone, 0, 0, 0, g);
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.34, 10), stone); col.position.set(0, 0.22, 0); col.rotation.z = 0.04; g.add(col);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), stone); cap.position.set(0.006, 0.39, 0); g.add(cap);
+    // IX, cut into the face toward the camera
+    box(0.008, 0.08, 0.004, cut, -0.03, 0.2, 0.072, g);
+    for (const k of [-1, 1]) { const b = box(0.008, 0.1, 0.004, cut, 0.02, 0.19, 0.072, g); b.rotation.z = k * 0.55; }
+    const slab = box(0.22, 0.02, 0.18, stone, 0.04, 0, 0.2, g); slab.rotation.set(0.06, 0.2, 0.03);
+    for (let i = 0; i < 3; i++) { const k = rockMesh(r, 0.03 + r() * 0.02, 0.6); k.position.set(-0.14 + i * 0.12, 0, -0.14 + r() * 0.05); g.add(k); }
+  },
   // Lumber mill: an open saw-shed on posts, saw bench, log and plank stacks, stumps, a cabin
   lumbermill(S, g, r) {
     const shed = new THREE.Group(); shed.position.set(-0.05, 0, -0.1); g.add(shed);

@@ -33,6 +33,8 @@ const canvas = document.getElementById('game');
 const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
+// ?scene=dungeon&site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone previews another dungeon site (sim/sites.js).
+const SITE = new URLSearchParams(location.search).get('site') || 'barrows';
 // Game slots (GDD §6.1): three games, each its own seed, main character, party and progress.
 // ?slot=N picks one (and makes it active). An explicit ?scene= link (review / preview) starts
 // fresh there and never writes a slot — before slots it silently overwrote the real save.
@@ -42,7 +44,7 @@ const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot'
 if (params.has('slot')) setActiveSlot(SLOT);
 const saved = PREVIEW ? null : await readSlot(SLOT);
 const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
-const sim = createSim(SEED, THEME, { scene: SCENE, region: REGION });
+const sim = createSim(SEED, THEME, { scene: SCENE, region: REGION, site: SITE });
 // Dev hooks (?dev: the live sim on globalThis, slow motion, manual clock) exist only on a local
 // server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
 // *possible*, only easy: progression is trusted only once the server replays it — replay.js.)

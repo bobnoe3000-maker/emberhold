@@ -19,7 +19,9 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
 
 ## Slices
 
-1. **Sites as data** (`src/sim/sites.js`, `content/sites/`). A site is a name, a look (dungeon
+1. **Sites as data** (`src/sim/sites.js`, `content/sites/`). **Done** (2026-09-30): the four new sites
+   on the Vale with their own baked landmarks (`watermill_0`, `chapelruin_0`, `milestone_0`), a
+   compass row per site, `?site=` previews, `test/sites.test.mjs`. A site is a name, a look (dungeon
    theme), a level band (base level, levels per floor), how many floors, its enemy family, its
    rooms (how many), and on which floor its boss waits. The overland gets an entrance for each
    site. Some start hidden (`state.revealed`): Wickham Keep until the Tithe Mill is cleared, the

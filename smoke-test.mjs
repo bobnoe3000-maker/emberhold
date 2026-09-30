@@ -218,7 +218,7 @@ cDun.commands.push({ type: 'goto', ...nextRoom });
 let reachedRoom = false; for (let t = 0; t < 20 * 40 && !reachedRoom; t++) { cDun.tick(); reachedRoom = !!cDun.battle || !cDun.state.player.path; }
 const cOv = createSim(20260807, undefined, { scene: 'overland' }); cOv.tick();
 const od = cOv.destinations().map((o) => o.id);
-const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('dungeon');
+const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('site:barrows') && od.includes('site:tithe_mill') && !od.includes('site:wickham_keep');
 console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', od.join(','));
 
 // Gear and loot (GDD §8): six slots with class kits, seeded drops, equip rules, stats, saves.

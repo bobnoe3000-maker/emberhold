@@ -31,10 +31,12 @@
 //       loads with none found.
 //   v9: the Lantern Guild's board — board { day, lv } (sim/board.js); board jobs sit in quests under
 //       ids board_<day>_<lv>_<slot>. Only grew: older data loads with no board (it goes up in town).
+//   v11: M5 sites (sim/sites.js) — site (the dungeon you're in, or last were) and revealed [site ids]
+//       (hidden sites found). Only grew: older data loads in the Old Barrows with nothing revealed.
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -46,7 +48,7 @@ export function metaOf(data) {
   const h = (data.party && data.party[0]) || {};
   return {
     name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null, origin: h.origin || null,
-    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0,
+    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows',
     playtime: Math.round(data.t || 0), gold: (data.counters && data.counters.gold) || 0,
   };
 }

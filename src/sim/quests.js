@@ -157,10 +157,12 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
       const objs = d.steps[q.step].objectives, owe = objs.filter((o, i) => q.n[i] < o.count);
       const inSite = owe.some((o) => siteHere(o.site));
       if (battle && inSite && owe.some((o) => (o.type === 'waves' && (!o.hall || hallHere(battle.room)) && (!o.floor || floorHere() >= o.floor)) || o.type === 'elites')) return rows;
+      const there = owe.find((o) => siteHere(o.site)) || owe[0], site = there ? there.site : null;
       if (world.kind === 'town') base = pick('road-out');
-      else if (world.kind !== 'dungeon') base = pick('dungeon', 'unexplored');
+      else if (world.kind !== 'dungeon') base = site ? pick('site:' + site) : null;           // the site it wants (sites.js)
+      else if (!inSite) base = pick('exit');                                                  // the wrong dungeon: out first
       else {
-        const o = owe[0], down = pick('stairs-down');
+        const o = there, down = pick('stairs-down');
         if (!o) base = null;
         else if (o.type === 'reach' || (o.floor && floorHere() < o.floor)) base = down || pick('next-room');
         else if (o.hall) base = down ? { ...down, then: null, label: 'The stairs-down hall', sub: down.sub.replace(/^to depth \d+ · /, '') } : pick('next-room');

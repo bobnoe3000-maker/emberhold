@@ -4,12 +4,12 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v10', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 10); });
+test('three game slots, save v11', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 11); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
-  assert.equal(m.version, 10); for (const v of [4, 5, 6, 7, 8, 9]) assert.equal(migrate({ version: v, savedAt: 6, data }).version, 10);
-  assert.equal(m.version, 10); assert.equal(m.savedAt, 5); assert.deepEqual(m.meta, metaOf(data));
+  assert.equal(m.version, SAVE_VERSION); for (const v of [4, 5, 6, 7, 8, 9, 10]) assert.equal(migrate({ version: v, savedAt: 6, data }).version, SAVE_VERSION);
+  assert.equal(m.version, SAVE_VERSION); assert.equal(m.savedAt, 5); assert.deepEqual(m.meta, metaOf(data));
   assert.equal(migrate({ version: 1, data }), null);
   assert.equal(migrate({ version: 99, data }), null);
   assert.equal(migrate(null), null);

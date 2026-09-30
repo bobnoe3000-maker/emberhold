@@ -54,7 +54,7 @@ export function startSession(sim, meta = {}) {
 // Re-run a claimed session headless. Returns the authoritative end snapshot and its hash.
 /** @param {Claim} claim */
 export function replaySession({ seed, meta = {}, start, log, ticks }) {
-  const sim = createSim(seed, meta.theme, { scene: start.scene || meta.scene || 'dungeon', region: meta.region || 'vale' });
+  const sim = createSim(seed, meta.theme, { scene: start.scene || meta.scene || 'dungeon', region: meta.region || 'vale', site: start.site || 'barrows' });
   sim.restore(clone(start));
   let li = 0;
   for (let i = 0; i < ticks; i++) {

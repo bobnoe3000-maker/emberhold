@@ -24,7 +24,8 @@ npm ci                                    # once: dev tooling only (the game its
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
-#   ?region=vale|fens|reach|heights  ?dev (localhost only: globalThis.__sim)
+#   ?region=vale|fens|reach|heights  ?site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone (with ?scene=dungeon)
+#   ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms))
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)

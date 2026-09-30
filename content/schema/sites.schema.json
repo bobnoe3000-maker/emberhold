@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A dungeon site's words (world doc §3.1, docs/m5-plan.md). Its shape (look, levels, floors, family, boss) is the sim's (src/sim/sites.js SITES); a test keeps the two in step. Names are canon: they come from the world doc.",
+  "type": "object",
+  "required": ["id", "region", "name", "levels", "floors", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "region": { "enum": ["vale", "fens", "reach", "heights"] },
+    "name": { "type": "string", "minLength": 1, "maxLength": 32 },
+    "levels": { "type": "string", "pattern": "^[0-9]+(–[0-9]+)?$", "description": "as the compass shows it (sites.js levelBand)" },
+    "floors": { "type": "integer", "minimum": 0, "description": "0: no bottom" },
+    "hidden": { "type": "boolean" },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "shut": { "type": "string", "minLength": 1, "maxLength": 120, "description": "said at its way in while it's hidden" }
+  }
+}

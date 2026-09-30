@@ -273,6 +273,7 @@ function buildOverland(seed) {
   o.name = 'The Hollow Vale';
   o.rivers.push({ w: 9, pts: [[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]] });
   const town = [52, 150], cross = [150, 132], keep = [168, 44], barrows = [66, 228], mine = [226, 70], camp = [196, 214];
+  const mill = [92, 106], chapel = [92, 174], stone = [168, 86];   // the Tithe Mill, the Sunken Chapel, the ninth milestone (M5)
   // Bridges are axis-aligned (bridge_90 spans x, bridge_0 spans y), so every road crosses
   // its bridge on a straight run along that axis, long enough to reach past both ramps, and
   // each crossing sits where the river runs across the bridge (here the river flows ~+y, so
@@ -285,6 +286,8 @@ function buildOverland(seed) {
   o.roads.push({ w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] });
   o.roads.push({ w: 5, surface: 'dirt', pts: [town, [30, 152], [-90, 160]] });
+  o.roads.push({ w: 4, surface: 'dirt', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] });                // up to the mill
+  o.roads.push({ w: 4, surface: 'dirt', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] });          // the causeway to the chapel
   o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
   finalizeGround(o);
 
@@ -302,12 +305,17 @@ function buildOverland(seed) {
   for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 18, barrows[1] + 2], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] + 14, barrows[1] - 6]]) put(o, id, x, y, 'rect', 0);
   put(o, 'mine_0', mine[0], mine[1]);
   put(o, 'lumbermill_90', camp[0], camp[1]);
+  put(o, 'watermill_0', mill[0], mill[1]);
+  put(o, 'chapelruin_0', chapel[0], chapel[1]);
+  put(o, 'milestone_0', stone[0], stone[1], 'rect', 0.2);
   put(o, B('farm'), 64, 114); put(o, 'wheelbarrow', 57, 128, 'rect', 0);
   for (const [id, x, y] of [['resource_lumber', camp[0] + 10, camp[1] + 4], ['stump', camp[0] - 12, camp[1] + 8], ['stump', camp[0] + 4, camp[1] + 14], ['flag_red', keep[0] - 14, keep[1] + 30]])
     put(o, id, x, y, 'rect', 0);
   putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);
-  o.labels.push({ x: town[0] + 4, y: town[1], id: B('wally'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows' },
+  o.labels.push({ x: town[0] + 4, y: town[1], id: B('wally'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
+    { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill', site: 'tithe_mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },
+    { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
 
   // mountains along the north and east, forests where the forest mask is high, meadow trees and rocks
@@ -319,10 +327,10 @@ function buildOverland(seed) {
   scatter(o, rng, -80, -80, 350, 350, 10, (x, y) => {
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
     if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return null;
-    for (const c of [keep, barrows, mine, camp, [60, 112]]) if (hypot(x - c[0], y - c[1]) < 24) return null;
+    for (const c of [keep, barrows, mine, camp, [60, 112], mill, chapel, stone]) if (hypot(x - c[0], y - c[1]) < 24) return null;
     // sightlines to every landmark: the clear wedge runs deeper for taller things (a grove's
     // crowns reach ~30 tiles up-screen, a lone tree ~15), so nothing in front rises over the site
-    const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]]];
+    const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone];
     const id = f > 0.58 ? (rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE)) : f > 0.45 && rng() < 0.3 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
     if (!id) return null;
     const reach = /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62;
@@ -332,8 +340,15 @@ function buildOverland(seed) {
 
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
-  o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon' });
-  o.arrivals = { default: { x: town[0] + 14.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 14.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 } };
+  o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon', site: 'barrows' });
+  // the other sites' ways in (M5, sites.js): the mill's door, the keep's gatehouse, the chapel's door
+  // across the pools, a slab at the milestone's foot. A hidden site's stays shut until it's revealed (core.js).
+  o.exits.push({ x0: mill[0] - 4, y0: mill[1] + 7, x1: mill[0] + 2, y1: mill[1] + 10, to: 'dungeon', site: 'tithe_mill' });
+  o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 19, x1: keep[0] + 3, y1: keep[1] + 22, to: 'dungeon', site: 'wickham_keep' });
+  o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
+  o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
+  o.arrivals = { default: { x: town[0] + 14.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 14.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
+    tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

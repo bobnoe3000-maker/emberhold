@@ -5,7 +5,8 @@
 //
 //   dungeon  — (in a fight) step out · next unexplored room · room at your level · unopened chest /
 //              shrine · stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
-//   overland — the region's town · nearest dungeon · nearest unexplored dungeon · landmarks
+//   overland — the region's town · every site you can go into (site:<id>, nearest first; a hidden one only
+//              once revealed) · landmarks
 //   town     — town square (not while you're in it) · nearest dungeon (by the road out) · road out
 //
 // A row with `journey` walks on past the scene change it ends in (core.js): the nearest dungeon
@@ -16,8 +17,8 @@
 import { findPath } from './path.js';
 import { heightAt, isWalkable } from './world.js';
 import { hypot } from './detmath.js';
+import { SITES, siteOpen, levelBand } from './sites.js';
 
-const MAX_TRIES = 4;                    // path at most this many candidates per row (nearest first by straight line)
 
 export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
   // standable() probes five points with climb checks; every row prices many tiles, so cache by
@@ -37,15 +38,6 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     for (let d = 0; d <= r; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++)
       if (Math.max(Math.abs(dx), Math.abs(dy)) === d && standable(x + dx, y + dy, x + dx, y + dy)) return { tx: x + dx, ty: y + dy };
     return null;
-  };
-  // the best of several candidates by true path length
-  const nearestByPath = (cands, near = 0) => {
-    let best = null;
-    for (const c of cands.sort((a, b) => straight(a) - straight(b)).slice(0, MAX_TRIES)) {
-      const steps = pathLen(c.tx, c.ty, c.near ?? near);
-      if (steps !== null && (!best || steps < best.steps)) best = { ...c, steps };
-    }
-    return best;
   };
 
   if (world.kind === 'dungeon') {
@@ -140,21 +132,19 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     return out;
   }
 
-  // overland: the town, the dungeons (entered or not), landmarks
+  // overland: the town, every site you can go into (nearest first), landmarks
   const labelNear = (x, y) => (world.labels || []).reduce((b, l) => { const d = hypot(l.x - x, l.y - y); return d < (b ? b.d : 30) ? { l, d } : b; }, null);
-  const dungeons = [];
+  const sites = [];
   for (const e of world.exits) {
     const t = zone(e); if (!t) continue;
-    const lab = labelNear((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2), name = lab ? lab.l.text : e.to;
-    if (e.to === 'town') { const steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'town', icon: 'town', label: name, sub: `town · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
-    else if (e.to === 'dungeon') dungeons.push({ ...t, name, site: e.site || 'barrows' });
+    if (e.to === 'town') { const lab = labelNear((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2), steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'town', icon: 'town', label: lab ? lab.l.text : 'Town', sub: `town · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
+    else if (e.to === 'dungeon' && SITES[e.site] && siteOpen(e.site, state.revealed || [])) { const steps = pathLen(t.tx, t.ty); if (steps != null) sites.push({ ...t, site: e.site, steps }); }
   }
-  const dn = nearestByPath(dungeons);
-  if (dn) out.push({ id: 'dungeon', icon: 'dungeon', label: 'Nearest dungeon', sub: `${dn.name} · ${dn.steps} steps`, levelRange: '1–4', tx: dn.tx, ty: dn.ty, near: 0, steps: dn.steps, journey: 'delve' });
-  const fresh = nearestByPath(dungeons.filter((d) => !sitesEntered.has(d.site)));
-  if (fresh) out.push({ id: 'unexplored', icon: 'unexplored', label: 'Nearest unexplored', sub: `${fresh.name} · never entered`, levelRange: '1–4', tx: fresh.tx, ty: fresh.ty, near: 0, steps: fresh.steps, journey: 'delve' });
-  else if (dungeons.length) out.push({ id: 'unexplored', icon: 'unexplored', label: 'Nearest unexplored', sub: 'none left in this region', off: true });
-  const used = new Set(out.map((o) => o.label).concat(dungeons.map((d) => d.name)));
+  for (const d of sites.sort((a, b) => a.steps - b.steps)) {
+    const fresh = !sitesEntered.has(d.site);
+    out.push({ id: 'site:' + d.site, site: d.site, icon: fresh ? 'unexplored' : 'dungeon', label: SITES[d.site].name, sub: `${fresh ? 'never entered' : 'dungeon'} · ${d.steps} steps`, levelRange: levelBand(d.site), tx: d.tx, ty: d.ty, near: 0, steps: d.steps, journey: 'delve' });
+  }
+  const used = new Set(out.map((o) => o.label).concat(Object.values(SITES).map((q) => q.name)));
   const marks = (world.labels || []).filter((l) => !used.has(l.text) && !l.service).map((l) => ({ ...(standOn(l.x, l.y + 8, 10) || {}), name: l.text, near: 3 })).filter((m) => m.tx !== undefined);
   for (const m of marks.sort((a, b) => straight(a) - straight(b)).slice(0, 3)) {
     const steps = pathLen(m.tx, m.ty, 3); if (steps != null) out.push({ id: 'mark:' + m.name, icon: 'landmark', label: m.name, sub: `landmark · ${steps} steps`, tx: m.tx, ty: m.ty, near: 3, steps });

@@ -21,6 +21,7 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
+import { siteOpen } from '../sim/sites.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 
@@ -719,7 +720,8 @@ export function createRenderer(canvas, sim, input) {
   const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
   props = withExit(props);
   let banner = null;
-  const sceneTitle = () => (sim.world.kind === 'dungeon' ? `The Old Barrows · depth ${sim.state.depth + 1}` : sim.world.name);
+  const sceneTitle = () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'The Old Barrows'} · depth ${sim.state.depth + 1}` : sim.world.name);
+  const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
   sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
@@ -964,7 +966,7 @@ export function createRenderer(canvas, sim, input) {
     octx.strokeStyle = 'rgba(130,120,160,0.35)'; octx.lineWidth = Math.max(1, k); octx.strokeRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);
     // places of note: diamonds (the Barrows violet — the way down; Thornwick gold; others pale)
     for (const L of w.labels || []) {
-      if (L.service) continue;
+      if (L.service || hiddenHere(L)) continue;
       const mx = bx + (L.x - x0) / span * MM, my = by + (L.y - y0) / span * MM, r = Math.max(2.5, 3.2 * k);
       octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
       octx.beginPath(); octx.moveTo(mx, my - r); octx.lineTo(mx + r, my); octx.lineTo(mx, my + r); octx.lineTo(mx - r, my); octx.closePath(); octx.fill();
@@ -978,7 +980,7 @@ export function createRenderer(canvas, sim, input) {
     const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
     octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     for (const L of sim.world.labels || []) {
-      const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60) continue;
+      const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60 || hiddenHere(L)) continue;
       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
       const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy0 = (oy + P.sy - top - 10) * S;
       if (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh) continue;

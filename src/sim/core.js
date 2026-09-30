@@ -19,6 +19,7 @@ import { placeNpcs, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests } from './quests.js';
 import { createBoard } from './board.js';
 import { createLore } from './lore.js';
+import { siteOf, siteOpen, SITES } from './sites.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -48,16 +49,17 @@ function findSpawn(world) {
   return { x: world.spawn.x, y: world.spawn.y };
 }
 
-// Scenes: 'town' (Thornwick), 'overland' (the Hollow Vale) and 'dungeon' (the Old
-// Barrows, depth 0…n). Walking into an exit zone or tapping the Barrows stairs /
+// Scenes: 'town' (Thornwick), 'overland' (the Hollow Vale) and 'dungeon' (a site: sites.js — the Old
+// Barrows, the Tithe Mill, …; depth 0…n). Walking into an exit zone or tapping the Barrows stairs /
 // the dungeon's way up travels between them.
-export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = {}) {
+export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', site = 'barrows' } = {}) {
   const baseSeed = seed >>> 0;
   const override = theme;                                  // fixed theme (preview) or undefined
-  const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
-  let curScene = scene;
+  // a floor's seed: the world's, the site's own mix (the Old Barrows' is 0: its floors are as they were) and the depth
+  const levelSeed = (d) => (baseSeed ^ Math.imul(siteOf(curSite).mix, 0x9e3779b1) ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
+  let curScene = scene, curSite = SITES[site] ? site : 'barrows';
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
-  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0);
+  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0);
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -65,7 +67,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   const spawn = findSpawn(world);
   const state = {
-    t: 0, tick: 0, depth: 0, get scene() { return curScene; },   // tick: integer tick count (replay.js keys commands by it)
+    t: 0, tick: 0, depth: 0, get scene() { return curScene; }, get site() { return curSite; },   // tick: integer tick count (replay.js keys commands by it); site: the dungeon you're in (or last were)
     player: {
       x: spawn.x, y: spawn.y, px: spawn.x, py: spawn.y,
       dir: 'down', mirror: false, moving: false, frame: 0, frameAcc: 0,
@@ -73,6 +75,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     counters: { wood: 0, stone: 0, gold: 0, embers: 0, lootN: 0, uidN: 0 },
     bag: [],                          // the party bag (loot.js): items not worn, shared by everyone
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
+    revealed: new Set(),              // hidden sites found (sites.js): a chapter's reward, or the Chronicle's
     party: [makeHero()],                                   // [your main character, …up to two companions]
     bench: [],                        // recruited companions waiting at the inn (heroes.js)
     created: false,                   // has this game's main character been made? (createHero, once)
@@ -212,6 +215,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   // down can't refill them; leaving the site forgets them, as re-entering always has.
   /** @type {Map<number, { mods: any[], hp: any[], discovered: any[], visited: any[] }>} */
   let floors = new Map();
+  /** @type {any} */ let shut = null;                          // the shut way in you're standing at (runtime: 'siteShut' once per arrival)
   const overlayOf = (w) => ({ mods: [...w.mods.entries()], hp: [...w.hp.entries()], discovered: [...w.discovered], visited: [...(w.visited || [])] });
   function applyOverlay(w, o) {
     w.mods.clear(); for (const e of o.mods ?? []) Array.isArray(e) ? w.mods.set(e[0], e[1]) : w.mods.set(e, { cleared: true });
@@ -236,11 +240,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   const descend = () => changeFloor(state.depth + 1, (w) => w.stairArrive);
   const ascend = () => changeFloor(state.depth - 1, (w) => w.stairsDownArrive);
 
-  // Travel to another scene and arrive at a named spot (or its default spawn).
-  function travel(to, arrive) {
+  // Travel to another scene and arrive at a named spot (or its default spawn). Into a dungeon: which site.
+  function travel(to, arrive, site = 'barrows') {
     stopWalk(); state.player.resume = null;
     floors = new Map();                                    // a new visit: the site's floors are fresh
-    if (to === 'dungeon') state.sitesEntered.add('barrows');
+    if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; state.sitesEntered.add(curSite); }
     curScene = to; state.depth = 0;
     world = buildWorld(0);
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
@@ -264,7 +268,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (++j.legs > MAX_LEGS || state.party[0].down) { p.journey = null; return; }
     const rows = destinations(), pick = (...ids) => ids.map((k) => rows.find((r) => r.id === k && !r.off)).find(Boolean);
     const r = j.kind === 'quest' ? (state.tracked === j.quest ? pick('quest') : null)
-      : world.kind === 'dungeon' ? pick('next-room', 'farm-room') : world.kind === 'town' ? pick('road-out') : pick('dungeon');
+      : world.kind === 'dungeon' ? pick('next-room', 'farm-room') : world.kind === 'town' ? pick('road-out') : (j.site ? pick('site:' + j.site) : rows.find((r) => r.id.startsWith('site:')));
     const label = j.kind === 'quest' || !r || !(r.id === 'next-room' || r.id === 'farm-room') ? j.label : `${r.label} (LV ${r.level})`;
     if (!r || !walkTo(r.tx, r.ty, r.then || null, { near: r.near, label, corridors: true, room: r.room })) p.journey = null;
   }
@@ -292,7 +296,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (state.party[0].down) return;
       p.resume = null; p.journey = null;
       if (walkTo(cmd.tx, cmd.ty, cmd.then || null, { near: cmd.near, label: cmd.label, corridors: true, room: cmd.room }) && JOURNEYS.has(cmd.journey) && p.path)
-        p.journey = { kind: cmd.journey, quest: state.tracked, label: String(cmd.label || ''), legs: 0 };
+        p.journey = { kind: cmd.journey, quest: state.tracked, label: String(cmd.label || ''), legs: 0, site: SITES[cmd.site] ? cmd.site : null };   // site: a picked site's row keeps to that site
       return;
     }
     if (cmd.type === 'resume') {                           // continue a compass walk a fight interrupted
@@ -318,8 +322,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       if (prop) {
         if (!inReach) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
         face(p, dx, dy);
-        if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon'); return; }          // into the Old Barrows
-        if (prop === 'exit') { travel('overland', 'barrows'); return; }                               // back up to the surface
+        if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
+        if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
@@ -401,8 +405,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT, state.player);   // townsfolk keep their routine
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
-    if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }
-    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', 'barrows'); }   // walk up the stair: a floor up, or out
+    if (world.kind !== 'dungeon') {
+      const ex = oExitAt(world, p.x, p.y);
+      if (ex && ex.to === 'dungeon' && !siteOpen(ex.site, state.revealed)) { if (shut !== ex) { shut = ex; bus.emit('siteShut', { site: ex.site }); } }   // not found yet: its way in stays shut
+      else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site);
+      if (!ex) shut = null;
+    }
+    else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', curSite); }   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
   }
@@ -418,7 +427,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function snapshot() {
     const p = state.player;
     return {
-      seed: baseSeed, scene: curScene, depth: state.depth, t: state.t, tick: state.tick,
+      seed: baseSeed, scene: curScene, site: curSite, depth: state.depth, t: state.t, tick: state.tick,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       party: state.party.map(persistMember),
@@ -430,6 +439,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       discovered: [...world.discovered],
       visited: [...(world.visited || [])],
       sitesEntered: [...state.sitesEntered],
+      revealed: [...state.revealed],
       flags: { ...state.flags },
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
@@ -443,6 +453,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.t = data.t ?? 0; state.tick = data.tick ?? 0;
     state.depth = data.depth ?? 0;
     curScene = data.scene ?? 'dungeon';
+    curSite = SITES[data.site] ? data.site : 'barrows';     // v10 and older: the Old Barrows were the only site
     world = buildWorld(state.depth);                       // rebuild the saved level
     const p = state.player;
     p.x = p.px = data.player.x; p.y = p.py = data.player.y;
@@ -471,7 +482,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     world.discovered.clear();
     for (const id of data.discovered ?? []) world.discovered.add(id);
     world.visited = new Set(data.visited ?? []);
-    state.sitesEntered = new Set(data.sitesEntered ?? []);
+    state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
+    state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
@@ -489,5 +501,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function destinations({ inSquare = false } = {}) {
     return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
   }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
+  function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, reveal, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

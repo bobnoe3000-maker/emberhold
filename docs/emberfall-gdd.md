@@ -144,6 +144,10 @@ Levels rise as you **advance deeper**:
 
   So floor 1 runs from level 1 to 4, floor 2 from 4 to 7, and so on. The entrance room is a
   safe sanctuary (level 0).
+- **Every site has its own band (M5, `src/sim/sites.js`):** room level = the site's base + its
+  levels a floor × floor + ⌊rank ÷ 2⌋. The Tithe Mill runs 1–3 on one floor, Wickham Keep 3–6 on
+  two, the Sunken Chapel 5–8 on two, the Ninth Milestone is 8 throughout; the Old Barrows keep
+  the formula above and go on down. A site's last floor ends in its hall, with no stairs down.
 - **Enemy stats** = archetype base × (1 + 0.14 × (level − 1)) for HP and DEF, and
   × (1 + 0.12 × (level − 1)) for ATK; above level 3, × (1 + 0.05 × (level − 3)) more (the
   premium for the party and gear a same-level room expects, §7.1); × the tide. XP and gold per
