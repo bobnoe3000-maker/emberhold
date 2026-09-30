@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.6 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.7 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.7 fills in the Hollow Vale for M5 ([m5-plan.md](./m5-plan.md)). It adds the Vale's sites (§3.1),
+Captain Garrow and the Robed Stranger (§8) and the trial-givers (§5), and gives Brannoc a story
+(§5). The Chronicle's Vale set is now complete at ten fragments, with its hidden site (§7). Act I's
+shard now turns up in the Sunken Chapel; the barrows were already open when the game begins (§6).
 
 v1.6 brings Thornwick's people into the town (§5): Osric's Watch post by the well, Sister Ilse at
 the Shrine, and six townsfolk. It also sets down the first three fragments of the Vale's Chronicle
@@ -83,7 +88,15 @@ it's where everyone starts.
   Smiths*, the *Shrine of the Ember*. **Greyholt** (walled market town, seat of the useless Lord
   Pellam) is an overland landmark, not a hub.
 - **Sites:** the Old Barrows (crypts), **Wickham Keep** (a ruin the Redhand bandits hold), the
-  Sunken Chapel and the Tithe Mill.
+  Sunken Chapel and the Tithe Mill. (v1.7:)
+  - **The Tithe Mill:** Lord Pellam's mill on the river, where the Vale's tithe grain is ground.
+    The Redhand squat in it and burn the miller's carts for warmth. Levels 1–3.
+  - **Wickham Keep:** an imperial keep on the Wickham road, now the Redhand's hold, with cellars
+    that go down into older stone. Levels 3–6.
+  - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh, where the
+    legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
+  - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
+    Wickham road. Nobody knows it's there until the Chronicle says so.
 - **Look:** `plain` and `earth` variants; flagstone keeps and cobble barrows. Biome: *Dreadforge*.
 - **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats.
 
@@ -162,7 +175,16 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   well, a ledger and Jory. When Pellam's coin is late, which is always, he pays the bounty on the
   bright-eyed ones out of his own purse and writes it down.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
-  Wickham Keep.
+  Wickham Keep. (v1.7) He tried to leave the Company twice. Captain Garrow kept him chained in
+  the Keep's hall as an example to the others, and fed him when he remembered to. Big, slow to
+  talk and quick to apologise, he wants to find out who paid the Company to dig, then to see the
+  legion in the barrows that never deserted anything.
+  His chain, *Chains of the Redhand*, ends with the heirloom *The Broken Chain* — *"He kept one
+  link."*
+- **Captain Garrow** (v1.7), captain of the Redhand Company. He collects: tolls, tithes, debts,
+  and men who owe him. The robed strangers' coin made him careless.
+- **The Robed Stranger** (v1.7), a Cinder Cult acolyte who pays for the digging at the Sunken
+  Chapel. He never gives a name, and dies with an ember-shard in his fist.
 - **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money.
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7) and is the future
   **Healer** unlock. (v1.6) Reedholm sent her up to the Shrine of the Ember in Thornwick to copy
@@ -184,6 +206,11 @@ around the square by day and somewhere else by night:
 - **Nell Tolley**, keeper of the Crossed Keys. She charges for the stairs, not the bed.
 - **Hedda**, who sells eggs by the well and knows the weather, and says she knows nothing else.
 
+**Who teaches the trials (v1.7).** At level 6 each class has a trial in Thornwick: **Osric Hale**
+for fighters (*Hold the Keep Gate*), **Nell Tolley** for rogues (*Quiet Feet*; she was something
+else before she kept an inn, and won't say what), **Hedda** for mages (*Cold Weather*; the weather
+listens to her) and **Sister Ilse** for clerics (*Last Rites*).
+
 ---
 
 ## 6. The main arc (four acts)
@@ -193,7 +220,10 @@ is met (see the GDD). Mini-quests fill the space between chapter beats and drip-
 
 1. **Act I — Smoke over the Vale.** Bandits are raiding the Tithe Mill. Chasing them into
    Wickham Keep reveals they're paid by robed strangers to *dig*. The Old Barrows open, the
-   Ashbound walk, and a Cult acolyte dies with a strange ember-shard in his fist.
+   Ashbound walk, and a Cult acolyte dies with a strange ember-shard in his fist. (v1.7: the
+   barrows opened before the game begins. The chapters run: the Tithe Mill for Maudry; Wickham
+   Keep and Captain Garrow for Osric; then the Sunken Chapel, where the Robed Stranger dies with
+   the shard, which goes to Sister Ilse.)
 2. **Act II — The Drowned Abbey.** The shard leads to the fens. The Cult is draining the
    Sickpools and "harvesting" drowned souls at the Drowned Abbey. The Grey Sisters hold records
    the Cult wants burned. You save some of them.
@@ -238,6 +268,25 @@ Sample fragments:
 
 Together they say that the dead in the barrows are a legion still following its last order.
 Nobody ever came to relieve them. Sister Ilse reads them in that order.
+
+**The rest of the Vale set (v1.7).** Ten in all. The last one found reveals the Ninth Milestone.
+4. **The Tithe Ledger**, in a chest in the Tithe Mill: *"Tithe of the Vale, Year 612: grain, four
+   hundred measures. Souls, two hundred and forty. Paid in full to the Ember Throne."*
+5. **A Gate-Warden's Note**, at a shrine in Wickham Keep: *"Relief column expected by the harvest
+   moon. Keep the road open. Keep the lamps lit."*
+6. **The Last Dispatch**, in Wickham Keep's second-floor hall: *"To the Third Legion at the
+   Wickham road: the Throne is dark. No relief will come. Stand down."* Sealed, and never sent.
+7. **A Chaplain's Prayer**, in a chest in the Sunken Chapel: *"Bind them gently. Most of them
+   volunteered."*
+8. **The Binding Rite**, at a shrine on the Chapel's second floor: *"Speak the order last. The
+   bound keep the last thing they hear."*
+9. **The Chaplain's Last Page**, in the Chapel's second-floor hall: *"The Throne went dark
+   tonight. I cannot bind a second order over the first. Forgive me."*
+10. **The Standard's Ribbon**, taken from the Standard of the Third Legion when it falls:
+   *"Third Legion. Wickham road. Until relieved."*
+
+The **Ninth Milestone's** vault holds the heirloom *The Last Order* — *"It says: hold. It doesn't
+say for how long."*
 - *"Furnace nine requires eleven more souls per week to meet quota."* (A Cinderworks ledger.)
 - *"Forgive me. They will call it the Fall. Let them. — A."* (Glass Keep, last of the set.)
 
@@ -252,10 +301,10 @@ in §3.6, Maudry in §5); the one-liners are the wry voice (§1) and state nothi
 | Family | Region | Archetypes (current art) | Notes |
 |---|---|---|---|
 | **Ashbound** | all | Minion, Warrior, Rogue, Mage (the KayKit skeletons) | Eye glow reads their rank. Weak to Cleric *Turn Undead*. |
-| **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. |
+| **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. Their elites are Sergeants (v1.7). |
 | **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
-| **Bosses** | per site | Redhand Captain, the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
+| **Bosses** | per site | Redhand Captain (Captain Garrow, Wickham Keep; heirloom *Garrow's Due* — "He collected. Everyone paid."), the Robed Stranger (the Sunken Chapel, v1.7), the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
 
 ---
 
