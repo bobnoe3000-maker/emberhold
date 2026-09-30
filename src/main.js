@@ -54,7 +54,7 @@ const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open() });   // subscribe before restore, so a loaded counters event repaints
-const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms) });   // quests (M4): the Journal, tracker and toasts
+const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms), partyPanel });   // quests (M4): the Journal, tracker and toasts
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;

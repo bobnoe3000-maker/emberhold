@@ -122,7 +122,8 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
     chip.classList.toggle('on', !!html); chip.classList.toggle('paused', mode === 'paused');
     const bar = document.getElementById('hubBar');
     const barH = bar && bar.classList.contains('on') ? bar.getBoundingClientRect().height + 8 : 0;
-    chip.style.bottom = `${Math.round((partyPanel ? partyPanel.height() : 0) + barH + 12)}px`;
+    const qt = document.getElementById('questTrack'), qtH = qt && qt.classList.contains('on') ? qt.getBoundingClientRect().height + 8 : 0;   // over the quest tracker (journal.js)
+    chip.style.bottom = `${Math.round((partyPanel ? partyPanel.height() : 0) + barH + qtH + 12)}px`;
     requestAnimationFrame(watch);
   })();
   return { open: openMenu, close: closeMenu };

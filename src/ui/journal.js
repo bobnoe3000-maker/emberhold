@@ -1,6 +1,6 @@
 // @ts-check
 // journal.js — the Journal (quest-lore-system §8): a bottom sheet with the quests you're on
-// (Active) and the ones you've finished (Completed), a tracked-quest line under the top HUD, and
+// (Active) and the ones you've finished (Completed), a tracked-quest line above the party cards, and
 // the quest toasts. The words (titles, step text, objective labels) come from content/quests/;
 // the state from the sim (state.quests, state.tracked), which it only reads. Track and Abandon
 // are commands the sim checks. Opened from the book button under the compass, or by tapping the
@@ -17,7 +17,8 @@ const CSS = `
 #journalBtn svg { width: 22px; height: 22px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 #journalBtn .dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 5px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }
 #journalBtn.due .dot { display: block; }
-#questTrack { position: fixed; left: 14px; top: calc(env(safe-area-inset-top, 0px) + 42px); z-index: 4; max-width: calc(100vw - 90px); display: none;
+/* just above the party cards (and the town's service bar), clear of the minimap; placed by place() */
+#questTrack { position: fixed; left: 12px; bottom: 140px; z-index: 5; max-width: calc(100vw - 24px); display: none;
   padding: 5px 10px; border-radius: 12px; background: rgba(16,12,22,0.94); border: 1px solid rgba(214,170,98,0.35);
   font: 11.5px ui-monospace, Menlo, monospace; color: #e8dcc4; }
 #questTrack.on { display: block; }
@@ -29,8 +30,9 @@ const CSS = `
 #journalWrap.on { display: block; }
 #journal { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; max-height: 78vh; overflow-y: auto; margin: 0 auto; background: #100c16;
   border-top: 1px solid rgba(214,170,98,0.45); border-radius: 16px 16px 0 0; padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); color: #efe4cf; font-family: ui-monospace, Menlo, monospace; }
-#journal h2 { font: 600 19px Georgia, serif; color: #f0c880; margin: 2px 0 10px; }
-#journal .x { position: absolute; right: 12px; top: 10px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.45); color: #d8a040; background: none; font-size: 15px; }
+#journal .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+#journal h2 { font: 600 19px Georgia, serif; color: #f0c880; margin: 0; }
+#journal .x { flex: none; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.45); color: #d8a040; background: none; font-size: 15px; }
 #journal .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
 #journal .tabs button { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid #2c2838; background: none; color: #978c80; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; }
 #journal .tabs button.on { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; font-weight: 700; border-color: #f0c880; }
@@ -89,8 +91,7 @@ function Journal({ sim, defs, npcName, onClose }) {
   const all = Object.entries(sim.state.quests || {}).filter(([id]) => defs[id]);
   const active = all.filter(([, q]) => q.st === QS.ACTIVE || q.st === QS.READY), done = all.filter(([, q]) => q.st === QS.DONE);
   return html`<div id="journal">
-    <button class="x" aria-label="Close" onClick=${onClose}>✕</button>
-    <h2>Journal</h2>
+    <div class="top"><h2>Journal</h2><button class="x" aria-label="Close" onClick=${onClose}>✕</button></div>
     <div class="tabs">
       <button class=${tab === 'active' ? 'on' : ''} onClick=${() => setTab('active')}>Active · ${active.length}</button>
       <button class=${tab === 'done' ? 'on' : ''} onClick=${() => setTab('done')}>Completed · ${done.length}</button>
@@ -105,8 +106,8 @@ function Journal({ sim, defs, npcName, onClose }) {
   </div>`;
 }
 
-/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number) => void }} o */
-export function createJournal({ sim, npcName, toast }) {
+/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number) => void, partyPanel?: { height: () => number } }} o */
+export function createJournal({ sim, npcName, toast, partyPanel }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('button'); btn.id = 'journalBtn'; btn.setAttribute('aria-label', 'Journal'); btn.innerHTML = BOOK;
   const track = document.createElement('div'); track.id = 'questTrack'; track.setAttribute('role', 'button');
@@ -122,7 +123,17 @@ export function createJournal({ sim, npcName, toast }) {
   btn.addEventListener('click', show); track.addEventListener('click', show);
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
 
-  // the tracked quest, under the top HUD: its title and where it stands
+  // the tracked quest, just above the party cards: its title and where it stands. It sat under the
+  // top HUD and covered the minimap; down here it's in thumb reach too (the compass's walk chip
+  // stacks above it, compass.js).
+  (function place() {
+    if (track.classList.contains('on')) {
+      const bar = document.getElementById('hubBar'), barH = bar && bar.classList.contains('on') ? bar.getBoundingClientRect().height + 8 : 0;
+      const b = `${Math.round((partyPanel ? partyPanel.height() : 0) + barH + 8)}px`;
+      if (track.style.bottom !== b) track.style.bottom = b;
+    }
+    requestAnimationFrame(place);
+  })();
   function paintTracker() {
     const id = sim.state.tracked, q = id && sim.state.quests[id], def = id && defs[id];
     if (!q || !def || q.st === QS.DONE) { track.classList.remove('on'); return; }
