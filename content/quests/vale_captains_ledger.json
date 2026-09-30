@@ -1,0 +1,22 @@
+{
+  "id": "vale_captains_ledger",
+  "kind": "bounty",
+  "title": "The Captain's Ledger",
+  "giver": "osric_hale",
+  "region": "vale",
+  "level": [2, 8],
+  "summary": "Osric Hale pays for the bright-eyed ones out of his own purse when Lord Pellam's coin is late, and writes every one down. He has a page with room for three more.",
+  "steps": [
+    {
+      "id": "barrows",
+      "journal": "Put down three of the bright-eyed ones in the Old Barrows. They come to lead every fifth wave.",
+      "objectives": [
+        { "type": "elites", "site": "barrows", "count": 3, "label": "Elites slain in the Old Barrows" }
+      ]
+    }
+  ],
+  "ready": "Go back to Osric Hale at the Watch post by the well.",
+  "done": "Three more lines in the Captain's ledger, all of them paid.",
+  "rewards": { "xp": 260, "gold": 60 },
+  "dialogue": { "file": "osric", "offer": "osric_ledger_offer", "turnin": "osric_ledger_turnin" }
+}

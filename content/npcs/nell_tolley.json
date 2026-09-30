@@ -1,0 +1,15 @@
+{
+  "id": "nell_tolley",
+  "name": "Nell Tolley",
+  "role": [
+    "innkeeper",
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_nell",
+  "portrait": "npc_nell",
+  "dialogue": "townsfolk",
+  "knot": "nell_hub",
+  "note": "Keeper of the Crossed Keys; charges for the stairs, not the bed (world doc \u00a75, v1.6)."
+}

@@ -1,42 +1,255 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "A quest (quest-lore-system §4.1): its words, and the shape the sim counts and pays. The sim keeps its own table of the shape (src/sim/quests.js QUESTS); a test keeps the two in step.",
+  "title": "A quest (quest-lore-system \u00a74.1): its words, and the shape the sim counts and pays. The sim keeps its own table of the shape (src/sim/quests.js QUESTS); a test keeps the two in step.",
   "type": "object",
-  "required": ["id", "kind", "title", "giver", "region", "level", "summary", "steps", "ready", "done", "rewards", "dialogue"],
+  "required": [
+    "id",
+    "kind",
+    "title",
+    "giver",
+    "region",
+    "level",
+    "summary",
+    "steps",
+    "ready",
+    "done",
+    "rewards",
+    "dialogue"
+  ],
   "additionalProperties": false,
   "properties": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-    "kind": { "enum": ["chapter", "companion", "trial", "board", "errand", "bounty"] },
-    "title": { "type": "string", "minLength": 1, "maxLength": 40 },
-    "giver": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-    "region": { "enum": ["vale", "fens", "reach", "heights"] },
-    "level": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 2, "maxItems": 2 },
-    "summary": { "type": "string", "minLength": 1, "maxLength": 240 },
-    "steps": {
-      "type": "array", "minItems": 1,
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "kind": {
+      "enum": [
+        "chapter",
+        "companion",
+        "trial",
+        "board",
+        "errand",
+        "bounty"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+    },
+    "giver": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "region": {
+      "enum": [
+        "vale",
+        "fens",
+        "reach",
+        "heights"
+      ]
+    },
+    "level": {
+      "type": "array",
       "items": {
-        "type": "object", "required": ["id", "journal", "objectives"], "additionalProperties": false,
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "journal",
+          "objectives"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "journal": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "journal": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
           "objectives": {
-            "type": "array", "minItems": 1,
+            "type": "array",
+            "minItems": 1,
             "items": {
               "oneOf": [
-                { "type": "object", "required": ["type", "site", "count", "label"], "additionalProperties": false,
-                  "properties": { "type": { "const": "waves" }, "site": { "type": "string" }, "count": { "type": "integer", "minimum": 1 }, "label": { "type": "string", "minLength": 1, "maxLength": 48 } } },
-                { "type": "object", "required": ["type", "site", "count", "label"], "additionalProperties": false,
-                  "properties": { "type": { "const": "loot" }, "site": { "type": "string" }, "count": { "type": "integer", "minimum": 1 }, "label": { "type": "string", "minLength": 1, "maxLength": 48 } } }
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "waves"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "loot"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "elites"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "fragment"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                }
               ]
             }
           }
         }
       }
     },
-    "ready": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "done": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "rewards": { "type": "object", "required": ["xp", "gold"], "additionalProperties": false, "properties": { "xp": { "type": "integer", "minimum": 0 }, "gold": { "type": "integer", "minimum": 0 } } },
-    "dialogue": { "type": "object", "required": ["file", "offer", "turnin"], "additionalProperties": false,
-      "properties": { "file": { "type": "string" }, "offer": { "type": "string" }, "turnin": { "type": "string" } } }
+    "ready": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "done": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "rewards": {
+      "type": "object",
+      "required": [
+        "xp",
+        "gold"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "xp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "gold": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dialogue": {
+      "type": "object",
+      "required": [
+        "file",
+        "offer",
+        "turnin"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "offer": {
+          "type": "string"
+        },
+        "turnin": {
+          "type": "string"
+        }
+      }
+    }
   }
 }

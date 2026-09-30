@@ -1,0 +1,15 @@
+{
+  "id": "sister_ilse",
+  "name": "Sister Ilse",
+  "role": [
+    "priest",
+    "giver"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_ilse",
+  "portrait": "npc_ilse",
+  "dialogue": "ilse",
+  "knot": "ilse_hub",
+  "note": "A Grey Sister archivist sent up from Reedholm to the Shrine of the Ember. Keeps the Chronicle (world doc \u00a75, \u00a77)."
+}

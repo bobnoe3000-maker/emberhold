@@ -1,0 +1,15 @@
+{
+  "id": "jory",
+  "name": "Jory",
+  "role": [
+    "warden",
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_jory",
+  "portrait": "npc_jory",
+  "dialogue": "townsfolk",
+  "knot": "jory_hub",
+  "note": "The Watch's only man in Thornwick: young, earnest, Osric's runner (world doc \u00a75, v1.6)."
+}

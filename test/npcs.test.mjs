@@ -15,11 +15,12 @@ const run = (sim, ticks, until = () => false) => { for (let i = 0; i < ticks && 
 const next = (sim, x, y) => { const p = sim.state.player; p.x = p.px = x; p.y = p.py = y; };
 const talkNow = (sim) => { const n = sim.world.npcs[0]; next(sim, n.x + 1, n.y - 1); sim.commands.push({ type: 'talk', npc: n.id }); sim.tick(); };
 
-test('Maudry stands in Thornwick, on a tile you walk round; nowhere else', () => {
+test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round, townsfolk you pass; nowhere else', () => {
   const sim = town(), [m] = sim.world.npcs;
-  assert.equal(sim.world.npcs.length, 1); assert.equal(m.id, 'maudry_fenn');
-  assert.equal(isWalkable(sim.world, m.x, m.y), false);
-  const again = town().world.npcs[0]; assert.deepEqual([again.x, again.y], [m.x, m.y]);   // the same spot every time
+  assert.equal(m.id, 'maudry_fenn');
+  assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'vale').sort(), 'all nine');
+  for (const n of sim.world.npcs) assert.equal(isWalkable(sim.world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
+  const again = town().world.npcs; assert.deepEqual(again.map((n) => [n.id, n.x, n.y]), sim.world.npcs.map((n) => [n.id, n.x, n.y]));   // the same spots every time
   for (const region of ['fens', 'reach', 'heights']) assert.equal(town(region).world.npcs.length, 0);
   assert.equal(createSim(1, undefined, { scene: 'overland' }).world.npcs.length, 0);
   assert.equal(createSim(1, undefined, { scene: 'dungeon' }).world.npcs.length, 0);
@@ -95,7 +96,8 @@ test('content/npcs matches the sim table (ids, region, town, entry knot); looks 
 test('every Ink file opens at its entry knot, and every flag it sets is one the sim allows', async () => {
   for (const d of defs) {
     const ink = readFileSync(`content/dialogue/${d.dialogue}.ink`, 'utf8');
-    for (const [, name] of ink.matchAll(/#\s*flag:\s*\w+\s+(\w+)/g)) assert.ok(NPCS[d.id].flags.includes(name), `${d.dialogue}.ink sets flag ${name}, which ${d.id} may not`);
+    const speakers = defs.filter((q) => q.dialogue === d.dialogue).flatMap((q) => NPCS[q.id].flags);   // (townsfolk share one file)
+    for (const [, name] of ink.matchAll(/#\s*flag:\s*\w+\s+(\w+)/g)) assert.ok(speakers.includes(name), `${d.dialogue}.ink sets flag ${name}, which nobody speaking from it may set`);
     for (const f of NPCS[d.id].flags) assert.match(ink, new RegExp(`VAR flag_${f} =`), `${d.dialogue}.ink doesn't declare flag_${f}`);
     const book = createStoryBook(async (f) => readFileSync(`content/dialogue/${f}.json`, 'utf8'));
     const c = await book.open(d.dialogue, d.knot, {}, () => {});
@@ -136,4 +138,31 @@ test('quest choices are marked for the window, and the mark never reaches the si
   const ready = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, q_vale_long_way_round: 2 }, (cmd) => pushed.push(cmd));
   assert.deepEqual(marks(ready.first).filter(Boolean), ['quest ready']);
   assert.ok(pushed.every((c) => c.tag !== 'mark'));
+});
+
+// ── townsfolk keep a routine (world doc §5, v1.6) ────────────────────────────
+import { partOf, PART_S } from '../src/sim/npcs.js';
+test('townsfolk keep a routine: at each part of the day they walk to that part\'s spot; a town built later has them there already', () => {
+  const sim = town(), w = () => sim.world.npcs.find((n) => n.id === 'wendel');
+  assert.equal(partOf(sim.state.t), 0); assert.equal(w().at, 0);
+  const home = { x: w().x, y: w().y };
+  sim.state.t = 3 * PART_S;                                      // night: Wendel's at the Mule
+  let moved = 0; for (let i = 0; i < 20 * 90 && (w().path || moved === 0); i++) { sim.tick(); if (w().moving) moved++; }
+  assert.equal(w().at, 1); assert.ok(moved > 20, 'he walked'); assert.equal(w().path, null);
+  const there = w().spots[1]; assert.ok(Math.hypot(w().x - there.x, w().y - there.y) < 0.01, 'and got there');
+  assert.ok(Math.hypot(home.x - there.x, home.y - there.y) > 3);
+  const later = createSim(20260807, undefined, { scene: 'overland' }); later.state.t = 3 * PART_S;
+  const data = JSON.parse(JSON.stringify(later.snapshot())), c = town(); c.restore({ ...data, scene: 'town', player: { x: 0, y: 0 } });
+  const w2 = c.world.npcs.find((n) => n.id === 'wendel'); assert.equal(w2.at, 1); assert.ok(Math.hypot(w2.x - there.x, w2.y - there.y) < 0.01, 'built at night: already at the Mule');
+});
+test('a townsperson you\'re talking to waits; Osric and Ilse answer where they stand', () => {
+  const sim = town(), ev = events(sim, ['dialogue']);
+  for (const id of ['osric_hale', 'sister_ilse', 'hedda']) {
+    sim.commands.push({ type: 'endTalk' }); sim.tick();
+    sim.commands.push({ type: 'talk', npc: id }); run(sim, 20 * 30, () => ev.some((e) => e.npc === id));
+    assert.ok(ev.some((e) => e.npc === id && e.knot === NPCS[id].knot), `${id} answers`);
+  }
+  const h = sim.world.npcs.find((n) => n.id === 'hedda'), at = [h.x, h.y]; sim.state.t = 2 * PART_S; run(sim, 40);
+  assert.deepEqual([h.x, h.y], at, 'she waits while you talk');
+  sim.commands.push({ type: 'endTalk' }); run(sim, 40); assert.notDeepEqual([h.x, h.y], at, 'then goes');
 });

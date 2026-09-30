@@ -34,6 +34,11 @@ export const QUESTS = {
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 4 }, { type: 'loot', site: 'barrows', count: 1 }] }],
     rewards: { xp: 150, gold: 40 },
   },
+  vale_captains_ledger: {                            // Osric's bounty (world doc §5, v1.6): the bright-eyed ones lead every fifth wave
+    kind: 'bounty', giver: 'osric_hale', region: 'vale', level: [2, 8],
+    steps: [{ id: 'barrows', objectives: [{ type: 'elites', site: 'barrows', count: 3 }] }],
+    rewards: { xp: 260, gold: 60 },
+  },
 };
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
 const target = (o) => o.count;

@@ -14,35 +14,90 @@
 // Events: 'dialogue' { npc, knot, vars } · 'flagChanged' { name, value } · 'talkEnded' { npc }
 // Save: state.flags { [name]: number } (core.js snapshot / restore). A conversation itself is not
 // saved: it ends on a reload, and anything it changed went through a command.
+//
+// Named people (Maudry, Osric, Ilse) keep one spot and are solid: you walk round them. Townsfolk
+// (`folk`) keep a routine (world doc §5, v1.6): the in-game day (DAY_S) has four parts, dawn · day ·
+// dusk · night, and each townsperson stands at one of two spots in each part (`day`). When the part
+// changes they walk there along a path (walkers, not walls: you pass through them). A town built
+// mid-day places them where the hour has them; their positions are runtime, never saved.
 
 import { hypot } from './detmath.js';
+import { DAY_S } from './heroes.js';
+import { findPath } from './path.js';
 
-// Where each stands: beside a service building of its region's town (off = tiles from the
-// building's anchor toward the square), and what it may change.
+// Where each stands: beside a service building of its region's town (or the square's well, `hub`;
+// off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]].
 export const NPCS = {
-  maudry_fenn: { region: 'vale', near: 'tavern', off: [4, 7], knot: 'maudry_hub', flags: ['met_maudry'] },
+  maudry_fenn: { region: 'vale', spots: [['tavern', [4, 7]]], knot: 'maudry_hub', flags: ['met_maudry'] },
+  osric_hale: { region: 'vale', spots: [['hub', [3, -2]]], knot: 'osric_hub', flags: ['met_osric'] },
+  sister_ilse: { region: 'vale', spots: [['temple', [3, 6]]], knot: 'ilse_hub', flags: ['met_ilse'] },
+  wendel: { region: 'vale', folk: true, spots: [['shop', [3, 6]], ['tavern', [7, 8]]], day: [0, 0, 0, 1], knot: 'wendel_hub', flags: ['met_wendel'] },
+  bess_hale: { region: 'vale', folk: true, spots: [['smith', [3, 6]], ['tavern', [2, 9]]], day: [0, 0, 0, 1], knot: 'bess_hub', flags: ['met_bess'] },
+  col: { region: 'vale', folk: true, spots: [['hub', [9, 7]], ['tavern', [6, 10]]], day: [0, 0, 1, 1], knot: 'col_hub', flags: ['met_col'] },
+  jory: { region: 'vale', folk: true, spots: [['hub', [-2, -7]], ['temple', [6, 4]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
+  nell_tolley: { region: 'vale', folk: true, spots: [['inn', [3, 6]], ['hub', [-7, -5]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
+  hedda: { region: 'vale', folk: true, spots: [['hub', [-8, 4]], ['shop', [-2, 7]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
 };
+export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
+/** the part of the in-game day at time t (s of play) @param {number} t */
+export const partOf = (t) => Math.floor((t % DAY_S) / PART_S);
+const FOLK_SPEED = 1.6;                                          // tiles a second: an amble
 export const TALK_REACH = 2.2;                    // tiles, centre to centre
 const BESIDE = [[1, -1], [-1, 1], [2, 0], [0, 2]];   // (x+1, y−1) and (x−1, y+1) stand level with them on screen
 const FLAG_MAX = 99;
 
-/** stand each of this town's NPCs on the nearest open tile to its spot, and make that tile solid
- * (you walk round people, not through them); world.npcs = [{ id, x, y }]
+/** the open tile nearest a spot of this town, or null @param {any} world @param {any[]} spot [anchor, [dx, dy]] @param {(w: any, x: number, y: number) => boolean} isWalkable */
+function spotTile(world, [anchor, off], isWalkable) {
+  const a = anchor === 'hub' ? world.hub : (world.services || []).find((s) => s.kind === anchor); if (!a) return null;
+  const tx = Math.floor(a.x + off[0]), ty = Math.floor(a.y + off[1]);
+  for (let d = 0; d <= 6; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++)
+    if (Math.max(Math.abs(dx), Math.abs(dy)) === d && isWalkable(world, tx + dx + 0.5, ty + dy + 0.5)) return { x: tx + dx + 0.5, y: ty + dy + 0.5 };
+  return null;
+}
+/** stand each of this town's NPCs where the hour has them: the named on their spot, made solid (you
+ * walk round people, not through them), and townsfolk at the spot of this part of the day;
+ * world.npcs = [{ id, x, y, folk?, spots, at, path, moving, fx, fy }]
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable
- * @param {(w: any, x: number, y: number) => void} block */
-export function placeNpcs(world, isWalkable, block) {
+ * @param {(w: any, x: number, y: number) => void} block @param {number} part the part of the day (partOf) */
+export function placeNpcs(world, isWalkable, block, part = 0) {
   world.npcs = [];
   if (world.kind !== 'town') return world;
+  for (const [id, n] of Object.entries(NPCS)) {                  // (the named first: their tiles go solid before townsfolk look for theirs)
+    if (n.region !== world.region || n.folk) continue;
+    const spot = spotTile(world, n.spots[0], isWalkable);
+    if (spot) { world.npcs.push({ id, x: spot.x, y: spot.y, px: spot.x, py: spot.y }); block(world, spot.x, spot.y); }
+  }
   for (const [id, n] of Object.entries(NPCS)) {
-    if (n.region !== world.region) continue;
-    const sv = (world.services || []).find((s) => s.kind === n.near); if (!sv) continue;
-    const tx = Math.floor(sv.x + n.off[0]), ty = Math.floor(sv.y + n.off[1]);
-    let spot = null;
-    for (let d = 0; d <= 6 && !spot; d++) for (let dy = -d; dy <= d && !spot; dy++) for (let dx = -d; dx <= d && !spot; dx++)
-      if (Math.max(Math.abs(dx), Math.abs(dy)) === d && isWalkable(world, tx + dx + 0.5, ty + dy + 0.5)) spot = { x: tx + dx + 0.5, y: ty + dy + 0.5 };
-    if (spot) { world.npcs.push({ id, x: spot.x, y: spot.y }); block(world, spot.x, spot.y); }
+    if (n.region !== world.region || !n.folk) continue;
+    const spots = n.spots.map((s) => spotTile(world, s, isWalkable)); if (spots.some((q) => !q)) continue;
+    const at = n.day[part] || 0, q = spots[at];
+    world.npcs.push({ id, folk: true, x: q.x, y: q.y, px: q.x, py: q.y, spots, at, path: null, moving: false, fx: 0, fy: 1 });
   }
   return world;
+}
+/** townsfolk keep their routine: when the part of the day changes, each walks to that part's spot
+ * (stopping while you talk to them). Deterministic: paths from the world's own walkability.
+ * @param {any} world @param {number} t state.t @param {(w: any, x: number, y: number) => boolean} isWalkable @param {string|null} talking @param {number} dt */
+export function stepFolk(world, t, isWalkable, talking, dt) {
+  if (world.kind !== 'town') return;
+  const part = partOf(t);
+  for (const n of world.npcs || []) {
+    if (!n.folk) continue;
+    n.px = n.x; n.py = n.y; n.moving = false;
+    if (talking === n.id) continue;
+    const want = NPCS[n.id].day[part] || 0;
+    if (want !== n.at && !n.path) {
+      const g = n.spots[want], path = findPath(n.x, n.y, g.x, g.y, (x, y) => isWalkable(world, x + 0.5, y + 0.5), { maxNodes: 20000 });
+      n.at = want; n.path = path ? path.slice(1).map(([x, y]) => ({ x, y })) : [];
+      if (!path) { n.x = n.px = g.x; n.y = n.py = g.y; }          // (no way there: they're simply there, off in the next street)
+    }
+    if (n.path && n.path.length) {
+      const q = n.path[0], dx = q.x - n.x, dy = q.y - n.y, d = hypot(dx, dy), s = FOLK_SPEED * dt;
+      if (d <= s) { n.x = q.x; n.y = q.y; n.path.shift(); } else { n.x += (dx / d) * s; n.y += (dy / d) * s; }
+      n.moving = true; n.fx = dx; n.fy = dy;
+      if (!n.path.length) n.path = null;
+    }
+  }
 }
 
 /** @param {{ state: any, bus: any, getWorld: () => any, walkTo: (tx: number, ty: number, then: any, opts?: any) => boolean, canStand: (tx: number, ty: number) => boolean,
@@ -58,7 +113,7 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
     const h = state.party[0], fallen = state.party.slice(1).find((m) => m.fallen);
     /** @type {Record<string, string|number>} */
     const v = { hero_name: h.name, hero_class: h.cls, hero_origin: h.origin || '', hero_level: h.level,
-      party_size: state.party.filter((m) => !m.fallen).length, fallen_name: fallen ? fallen.name : '' };
+      party_size: state.party.filter((m) => !m.fallen).length, fallen_name: fallen ? fallen.name : '', day_part: partOf(state.t) };
     for (const f of NPCS[id].flags) v['flag_' + f] = state.flags[f] || 0;
     return { ...v, ...moreVars(id) };
   }

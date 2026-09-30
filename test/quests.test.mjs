@@ -94,3 +94,16 @@ test('content/quests matches the sim table; the giver says the right tags', () =
     assert.match(ink, new RegExp(`VAR q_${d.id} =`));
   }
 });
+
+// Osric's bounty (world doc §5, v1.6): the Captain's Ledger, three bright-eyed ones, from level 2
+test('Osric\'s ledger: locked at level 1, taken only in his conversation, counted from elites slain in the Barrows, paid once', () => {
+  const Q = 'vale_captains_ledger', sim = town(), h = sim.state.party[0], talk = (id) => { const n = sim.world.npcs.find((q) => q.id === id), p = sim.state.player; p.x = p.px = n.x + 1; p.y = p.py = n.y - 1; sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.commands.push({ type: 'talk', npc: id }); sim.tick(); };
+  const tag = (verb) => { sim.commands.push({ type: 'dialogueEffect', tag: 'quest', args: [verb, Q] }); sim.tick(); };
+  talk('osric_hale'); tag('accept'); assert.equal(sim.quests.status(Q), QS.LOCKED, 'level 1');
+  h.level = 3; autoAllocate(h);
+  talk('maudry_fenn'); tag('accept'); assert.equal(sim.quests.status(Q), QS.AVAILABLE, 'not Maudry\'s to give');
+  talk('osric_hale'); tag('accept'); assert.equal(sim.quests.status(Q), QS.ACTIVE);
+  sim.state.quests[Q].st = QS.READY;                                             // (elites counted: test/board.test.mjs walks it)
+  const ev = events(sim, ['questReward']); tag('turnin'); tag('turnin');
+  assert.equal(sim.quests.status(Q), QS.DONE); assert.deepEqual(ev.map((e) => [e.xp, e.gold]), [[260, 60]]);
+});

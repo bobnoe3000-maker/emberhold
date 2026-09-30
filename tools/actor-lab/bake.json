@@ -3,7 +3,14 @@
   "albedoGain": 0.56,
   "actors": [
     {
-      "out": "hero_knight", "portrait": true, "figure": { "pose": ["Blocking", 0.5] },
+      "out": "hero_knight",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Blocking",
+          0.5
+        ]
+      },
       "variant": "F1",
       "glow": 0,
       "clips": [
@@ -378,7 +385,14 @@
       }
     },
     {
-      "out": "hero_barbarian", "portrait": true, "figure": { "pose": ["Blocking", 0.5] },
+      "out": "hero_barbarian",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Blocking",
+          0.5
+        ]
+      },
       "variant": "F3",
       "glow": 0,
       "clips": [
@@ -465,7 +479,15 @@
       ]
     },
     {
-      "out": "hero_mage", "portrait": true, "figure": { "pose": ["Spellcast_Raise", 0.45], "yaw": -30 },
+      "out": "hero_mage",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Spellcast_Raise",
+          0.45
+        ],
+        "yaw": -30
+      },
       "variant": "M1",
       "glow": 0,
       "clips": [
@@ -553,7 +575,14 @@
       ]
     },
     {
-      "out": "hero_rogue", "portrait": true, "figure": { "pose": ["2H_Melee_Idle", 0.3] },
+      "out": "hero_rogue",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "2H_Melee_Idle",
+          0.3
+        ]
+      },
       "variant": "R2",
       "glow": 0,
       "clips": [
@@ -639,7 +668,14 @@
       ]
     },
     {
-      "out": "hero_cleric", "portrait": true, "figure": { "pose": ["Spellcasting", 0.3] },
+      "out": "hero_cleric",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Spellcasting",
+          0.3
+        ]
+      },
       "variant": "C1",
       "glow": 0,
       "clips": [
@@ -731,7 +767,14 @@
       }
     },
     {
-      "out": "npc_maudry", "portrait": true, "figure": { "pose": ["Use_Item", 0.45] },
+      "out": "npc_maudry",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
       "variant": "N1",
       "glow": 0,
       "clips": [
@@ -761,6 +804,244 @@
           "fps": 8,
           "once": true,
           "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_osric",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N2",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_ilse",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 7,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 6,
+          "fps": 8,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_wendel",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N4",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_bess",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N5",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_col",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N6",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_jory",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N7",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_nell",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N8",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_hedda",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Idle",
+          0.3
+        ]
+      },
+      "variant": "N9",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
         }
       ]
     }

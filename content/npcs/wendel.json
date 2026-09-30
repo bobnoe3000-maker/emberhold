@@ -1,0 +1,15 @@
+{
+  "id": "wendel",
+  "name": "Wendel",
+  "role": [
+    "merchant",
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_wendel",
+  "portrait": "npc_wendel",
+  "dialogue": "townsfolk",
+  "knot": "wendel_hub",
+  "note": "Wendel's Provisions: rope, bread and lamp oil (world doc \u00a75, v1.6)."
+}

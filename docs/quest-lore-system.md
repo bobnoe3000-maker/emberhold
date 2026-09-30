@@ -167,6 +167,26 @@ Objectives can be ordered (step by step) or unordered (`"any": true` within a st
 
 ### 4.4 NPC def
 
+**Implemented for Thornwick (M4 slice 4, 2026-09-30; world doc §5, v1.6):**
+- **Named people**, each with an Ink hub and origin and Fallen lines:
+  - Maudry Fenn at the Tired Mule;
+  - Warden-Captain Osric Hale at the Watch post by the well (`osric.ink`), who gives the bounty
+    *The Captain's Ledger* (three elites in the Old Barrows, from level 2);
+  - Sister Ilse on the Shrine's step (`ilse.ink`).
+
+  Each stands on one spot and is solid: you walk round them.
+- **Six townsfolk**, sharing `townsfolk.ink` (a hub knot each, a first word and lines that change
+  with the time of day, `day_part`): Wendel, Bess Hale, Col, Jory, Nell Tolley and Hedda.
+- **The townsfolk's routine:** `src/sim/npcs.js` NPCS gives each two spots (beside a service, or
+  by the well, `hub`) and a spot per part of the day. The day has four parts (dawn, day, dusk,
+  night; DAY_S ÷ 4). When the part changes they walk to their spot along a path (`stepFolk`).
+  They wait while you talk to them, and a town built mid-day has them where the hour does. They
+  are walkers, not walls, and their positions are never saved.
+- **Looks** are baked by `tools/actor-lab` (variants N2–N9, `faces.json`). Townsfolk bake idle
+  and walk only (18 frames × 8 directions against 31 for the named): about 0.6 MB each, against
+  1.1 MB.
+
+
 ```json
 {
   "id": "maudry_fenn",

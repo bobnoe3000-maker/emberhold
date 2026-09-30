@@ -1,0 +1,15 @@
+{
+  "id": "osric_hale",
+  "name": "Osric Hale",
+  "role": [
+    "warden",
+    "giver"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_osric",
+  "portrait": "npc_osric",
+  "dialogue": "osric",
+  "knot": "osric_hub",
+  "note": "Warden-Captain of Greyholt's watch (world doc \u00a75). Keeps a Watch post by Thornwick's well: a table, a ledger and Jory."
+}

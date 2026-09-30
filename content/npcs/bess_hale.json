@@ -1,0 +1,15 @@
+{
+  "id": "bess_hale",
+  "name": "Bess Hale",
+  "role": [
+    "smith",
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_bess",
+  "portrait": "npc_bess",
+  "dialogue": "townsfolk",
+  "knot": "bess_hub",
+  "note": "The daughter at Hale & Daughter, Smiths, who does the work. No relation to the Captain (world doc \u00a75, v1.6)."
+}

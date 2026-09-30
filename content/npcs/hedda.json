@@ -1,0 +1,15 @@
+{
+  "id": "hedda",
+  "name": "Hedda",
+  "role": [
+    "merchant",
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_hedda",
+  "portrait": "npc_hedda",
+  "dialogue": "townsfolk",
+  "knot": "hedda_hub",
+  "note": "Sells eggs by the well and knows the weather (world doc \u00a75, v1.6)."
+}

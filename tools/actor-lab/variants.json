@@ -230,6 +230,285 @@
   "face": "maudry"
  },
  {
+  "id": "N2",
+  "cls": "NPC",
+  "label": "Osric Hale \u00b7 Warden-Captain, the Watch post",
+  "model": "Knight",
+  "show": [
+   "Knight_Cape"
+  ],
+  "hold": {
+   "handslot.r": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a6470",
+     "#262c34"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a3a2a",
+     "#3a1810"
+    ]
+   }
+  ],
+  "face": "osric_hale"
+ },
+ {
+  "id": "N3",
+  "cls": "NPC",
+  "label": "Sister Ilse \u00b7 Grey Sister archivist, the Shrine",
+  "model": "Mage",
+  "show": [
+   "Spellbook_open",
+   "Mage_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#ece6d6",
+     "#9c9480"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#8a94a4",
+     "#3c4454"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#c4c8d0",
+     "#5c6474"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#6a4a34",
+     "#2a1a10"
+    ]
+   }
+  ],
+  "face": "sister_ilse"
+ },
+ {
+  "id": "N4",
+  "cls": "NPC",
+  "label": "Wendel \u00b7 provisioner",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "mug"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a7a5a",
+     "#3a3020"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4a3a",
+     "#241a10"
+    ]
+   }
+  ],
+  "face": "wendel"
+ },
+ {
+  "id": "N5",
+  "cls": "NPC",
+  "label": "Bess Hale \u00b7 the daughter at Hale & Daughter",
+  "model": "Barbarian",
+  "show": [
+   "1H_Axe"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a4a30",
+     "#2a1a0e"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a4a50",
+     "#1c1c22"
+    ]
+   }
+  ],
+  "face": "bess_hale"
+ },
+ {
+  "id": "N6",
+  "cls": "NPC",
+  "label": "Col \u00b7 a carter",
+  "model": "Rogue_Hooded",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a5a3a",
+     "#2a2012"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a28",
+     "#1c140a"
+    ]
+   }
+  ],
+  "face": "col"
+ },
+ {
+  "id": "N7",
+  "cls": "NPC",
+  "label": "Jory \u00b7 the Watch's man in Thornwick",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Round_Shield"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a6470",
+     "#262c34"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a3a2a",
+     "#3a1810"
+    ]
+   }
+  ],
+  "face": "jory"
+ },
+ {
+  "id": "N8",
+  "cls": "NPC",
+  "label": "Nell Tolley \u00b7 the Crossed Keys",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4a6a4a",
+     "#1c2a1c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a5a40",
+     "#2a2014"
+    ]
+   }
+  ],
+  "face": "nell_tolley"
+ },
+ {
+  "id": "N9",
+  "cls": "NPC",
+  "label": "Hedda \u00b7 eggs by the well",
+  "model": "Rogue",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#a86a5a",
+     "#4a2a20"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#d8c8a0",
+     "#7a6a4a"
+    ]
+   }
+  ],
+  "face": "hedda"
+ },
+ {
   "id": "E1",
   "cls": "Undead",
   "label": "Skeleton Warrior",

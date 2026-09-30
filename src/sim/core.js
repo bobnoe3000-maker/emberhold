@@ -15,7 +15,7 @@ import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle } from './battle.js';
-import { placeNpcs, createTalk } from './npcs.js';
+import { placeNpcs, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests } from './quests.js';
 import { createBoard } from './board.js';
 import { createBus, createCommandQueue } from './bus.js';
@@ -55,7 +55,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   const override = theme;                                  // fixed theme (preview) or undefined
   const levelSeed = (d) => (baseSeed ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene;
-  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock);
+  /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
+  const buildWorld = (d) => placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0);
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -77,6 +78,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
     flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
   };
+  clock = state;
 
   // gear drops, the bag and the equip commands (loot.js)
   const loot = createLoot({ state, bus, seed: baseSeed });
@@ -371,6 +373,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     heroes.tick();
     board.tick();                                          // a new day's board goes up in town
     talk.tick();
+    stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT);   // townsfolk keep their routine
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
     if (world.kind !== 'dungeon') { const ex = oExitAt(world, p.x, p.y); if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive); }

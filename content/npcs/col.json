@@ -1,0 +1,14 @@
+{
+  "id": "col",
+  "name": "Col",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_col",
+  "portrait": "npc_col",
+  "dialogue": "townsfolk",
+  "knot": "col_hub",
+  "note": "A carter who took the long way round the barrows for a month (world doc \u00a75, v1.6)."
+}
