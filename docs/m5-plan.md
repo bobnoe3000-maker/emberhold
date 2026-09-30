@@ -1,6 +1,6 @@
 # M5 — The Hollow Vale: plan
 
-**2026-09-30 · Plan of record for M5** (development plan §3). The goal: levels 1–8 playable from start
+**2026-09-30 · Implemented** (all eight slices; was the plan of record for M5) (development plan §3). The goal: levels 1–8 playable from start
 to finish in about 6–8 hours. The canon these slices use is in the world doc (v1.7). Each slice
 lands as its own commit, with tests, balance runs where numbers move, and doc updates.
 
@@ -55,7 +55,9 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    `test/bosses.test.mjs`, `tools/balance/boss.mjs`. Measured (fighter + rogue + cleric in kit at
    level, 3 seeds): Garrow's hall (L6) falls to a level-5 party every time and beats a level-4 one;
    the Stranger's (L8) falls to level 8, to level 7 two times in three, beats level 6; the
-   Standard's (L10) falls to level 10, to level 9 once in three, beats level 8.
+   Standard's (L10) falls to level 10, to level 9 once in three, beats level 8. (Since escorts
+   and waves spawn on the floor, slice 8: Garrow falls to level 5 two times in three, the
+   Stranger to level 7 once; every boss still falls 3 of 3 to a party at its hall's level.)
 4. **Act I, *Smoke over the Vale*** (chapter quests: no abandon; a quest can be handed in to
    someone other than its giver).
    1. *Smoke over the Vale* — Maudry: drive the Redhand out of the Tithe Mill (hold 4 waves
@@ -118,6 +120,39 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    tuned toward the development plan's §2.7 targets. The room-level harness runs each site's
    band. A headless golden path plays Act I start to finish; the browser test walks its first
    chapter.
+
+   **Done** (2026-09-30):
+   - **The farm:** `tools/balance/loot.mjs`, a fighter + rogue + cleric working a Barrows floor
+     of their level.
+   - **v1's odds:** about 23 Common, 7 Fine and 0.8 Rare an hour.
+   - **The new odds:** `loot.js` DROP cuts waves, chests and elites about 7×. A boss's first fall
+     always drops Fine or better; later falls (the Standard is farmable) roll 15 %.
+   - **Measured:** over 27 h (levels 3 / 6 / 9 × 3 seeds × 3 h), 3.4 Common, 0.92 Fine and 0.17
+     Rare an hour: +13 %, −8 % and −15 % against 3 / 1 / 0.2. That's within the plan's ±25 %.
+   - **Two real bugs the farm found:**
+     - A wave's spawn point could land in a pool when 60 draws missed. The foe stood there and
+       the wave never ended (battle.js `spot`).
+     - A chest or shrine could sit in a pocket nothing reaches: 7 of 116 across 8 seeds × 3
+       floors. Those are now taken out (world.js `pruneUnreachable`).
+   - **Balance, each site's band** (hero + 2 hires, and solo; `roomlv.mjs --site`; unchanged
+     before and after this slice):
+
+     | Site, level | Hero + 2 hires | Solo |
+     |---|---|---|
+     | Tithe Mill L2 | 22 waves held | down at wave 4 |
+     | Wickham Keep L5 | 15 waves | 1 wave |
+     | Sunken Chapel L7 | 9 waves | 1 wave |
+     | Old Barrows L8 | 7 waves | 1 wave |
+
+     The smoke gates are unchanged.
+   - **Tests:** `test/m5-golden.test.mjs` plays the Vale headless in one game: Act I, Brannoc and
+     his chain, the fighter's trial, the Chronicle's last fragment off the Standard, the vault,
+     and a save round trip. The browser test walks Act I's first chapter: Maudry → the compass →
+     the mill → Osric → the Keep revealed.
+   - **Chapters pay a Fine or better** (GDD §8, DROP.chapter). A chance of 1 now means certain:
+     the roll's 95 % cap had also made a boss's first drop miss 1 time in 20.
+   - **Left for later:** bad-luck protection (dev plan §2.7); the 6–8 hour pacing needs a
+     playtest.
 
 ## Decisions
 

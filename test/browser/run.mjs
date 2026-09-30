@@ -312,6 +312,53 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 7b. Act I, chapter 1 (M5): Maudry's smoke → the compass leads to the Tithe Mill → four waves there →
+// handed in to Osric → Wickham Keep is on the map. (The fight runs on the sim's own tick: the chapter is
+// the test, not the frames.)
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    const more = async () => { for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); } };
+    const talkTo = async (id) => { await p.evaluate((id) => { const s = globalThis.__sim, n = s.world.npcs.find((q) => q.id === id), q = s.state.player; s.commands.push({ type: 'endTalk' }); q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: id }); }, id); await run(3); await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).catch(() => null); await more(); };
+    await p.waitForTimeout(800); await run(5);
+    await talkTo('maudry_fenn');
+    await p.locator('#talk .ch', { hasText: 'You said something about smoke' }).tap(); await more();
+    await p.locator('#talk .ch', { hasText: "I'll shift them" }).tap(); await run(3); await more();
+    if (await p.locator('#talk .x').count()) await p.locator('#talk .x').tap();
+    await run(3);
+    const st = await p.evaluate(() => ({ q: globalThis.__sim.state.quests.ch1_smoke_over_the_vale, tracked: globalThis.__sim.state.tracked }));
+    const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');
+    check('act I: Maudry gives Smoke over the Vale in conversation; the tracker names it', st.q && st.q.st === 1 && st.tracked === 'ch1_smoke_over_the_vale' && /Smoke over the Vale/.test(tracker), tracker.replace(/\n/g, ' · '));
+    const row = await p.evaluate(() => { const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'overland', depth: 0 }); const r = s.destinations()[0]; return { id: r.id, site: r.id === 'quest' ? r.journey : null }; });
+    const site = await p.evaluate(() => { const s = globalThis.__sim, r = s.destinations()[0]; return s.destinations().find((q) => q.id === 'site:tithe_mill' && q.tx === r.tx && q.ty === r.ty) ? 'tithe_mill' : ''; });
+    check('act I: on the Vale, the compass leads with it, to the Tithe Mill', row.id === 'quest' && site === 'tithe_mill', JSON.stringify({ ...row, site }));
+    // the mill: a strong company holds a room four waves (sim ticks, not frames)
+    const held = await p.evaluate(() => {
+      const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'dungeon', site: 'tithe_mill', depth: 0 });
+      for (const m of s.state.party) { m.level = 12; m.hp = 9999; }
+      const L = s.world.level, r = L.rooms.find((q) => q !== L.entrance), pl = s.state.player; let best = null, bd = 1e9;
+      for (const [k, c] of L.cells) { if (c.room !== r.id || c.kind !== 'floor') continue; const [x, y] = k.split(',').map(Number), d = Math.hypot(x - r.cx, y - r.cy); if (d < bd) { bd = d; best = [x, y]; } }
+      pl.x = pl.px = best[0] + 0.5; pl.y = pl.py = best[1] + 0.5;
+      for (let i = 0; i < 20 * 400 && s.state.quests.ch1_smoke_over_the_vale.st !== 2; i++) { for (const m of s.state.party) m.hp = Math.max(m.hp, 400); s.tick(); }
+      return s.state.quests.ch1_smoke_over_the_vale;
+    });
+    await run(5);
+    check('act I: four waves held in the Tithe Mill: ready', held.st === 2, JSON.stringify(held));
+    await p.evaluate(() => { const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'town', depth: 0, player: { x: 0, y: 0 } }); });
+    await p.waitForTimeout(300); await run(5);
+    await talkTo('osric_hale');
+    await p.locator('#talk .ch', { hasText: 'The Redhand are out of the mill' }).tap(); await run(3); await more();
+    await run(10);
+    const done = await p.evaluate(() => ({ st: globalThis.__sim.state.quests.ch1_smoke_over_the_vale.st, keep: globalThis.__sim.state.revealed.has('wickham_keep') }));
+    const offers = await p.locator('#talk .ch').allTextContents();
+    check('act I: handed in to Osric; Wickham Keep is revealed, and he offers the next chapter; no page errors', done.st === 3 && done.keep && offers.some((t) => /Where did the Redhand go/.test(t)) && errs.length === 0, JSON.stringify(done) + ' · ' + JSON.stringify(offers) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 8. The Lantern Guild's board: Tavern → Quest board → take a job → the Journal; hand it in when done
 {
   const b = await launch(chromium, 'chromium');
