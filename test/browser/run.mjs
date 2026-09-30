@@ -258,7 +258,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()); i++) await p.locator('#talk .more').tap();
       await run(3);                                                        // (the effect is a command: it lands on the next tick)
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
-      check('talk: her lines, then choices; meeting her set met_maudry (a command the sim checked)', choices.length === 6 && choices.includes('Anything I can do?') && flags.met_maudry === 1, `${choices.length} choices · flags ${JSON.stringify(flags)}`);
+      const quest = await p.locator('#talk .ch.quest').allTextContents();       // her errand's choice is marked: a diamond, a QUEST label, its own colour
+      check('talk: her lines, then choices, the quest one marked; meeting her set met_maudry (a command the sim checked)', choices.length === 6 && quest.length === 1 && /^Anything I can do\?\s*Quest$/.test(quest[0]) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
       await p.locator('#talk .ch', { hasText: 'hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
       await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);

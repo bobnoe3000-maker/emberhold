@@ -6,7 +6,8 @@
 // Closing sends `endTalk`; walking off ends it from the sim's side ('talkEnded').
 //
 // Lines render as text, never HTML. A line in quotes is speech; anything else is narration, set
-// in italics. Choices are full-width buttons (≥ 44 px) in the lower third, under the thumb.
+// in italics. Choices are full-width buttons (≥ 44 px) in the lower third, under the thumb; quest
+// ones (Ink `#mark: quest`) are set apart with a diamond, a label and their own colour.
 
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -31,6 +32,15 @@ const CSS = `
   background: rgba(255,255,255,.03); color: #efe4cf; font: 15px Georgia, serif; }
 #talk .ch:active { background: rgba(216,160,64,.16); }
 #talk .ch::before { content: '›'; color: #d8a040; margin-right: 8px; }
+/* quest choices (Ink: #mark: quest): taking, asking after and handing in a quest. Set apart by a
+   diamond and a QUEST label as well as the colour; handing in (ready) is green, as in the Journal */
+#talk .ch.quest { display: flex; align-items: center; gap: 8px; border-color: #e0a84a; background: rgba(216,160,64,.13); color: #f7d890; box-shadow: inset 3px 0 0 #e0a84a; }
+#talk .ch.quest::before { content: '◆'; margin-right: 0; color: #f0c060; }
+#talk .ch.quest .t { flex: 1; min-width: 0; }
+#talk .ch.quest em { flex: none; font: 700 9.5px ui-monospace, Menlo, monospace; font-style: normal; letter-spacing: 1.5px; color: #1a1208; background: #e0a84a; border-radius: 4px; padding: 2px 6px; }
+#talk .ch.quest.ready { border-color: #8fe07a; background: rgba(143,224,122,.11); color: #c8f4b8; box-shadow: inset 3px 0 0 #8fe07a; }
+#talk .ch.quest.ready::before { color: #8fe07a; }
+#talk .ch.quest.ready em { background: #8fe07a; }
 `;
 
 function Portrait({ look }) {
@@ -50,7 +60,9 @@ function Talk({ def, place, beat, onChoose, onClose }) {
     <div class=${'line' + (/^["“]/.test(line) ? '' : ' nar')}>${line}</div>
     ${!last ? html`<button class="more" onClick=${next}>Go on ▸</button>`
       : beat.ended ? html`<button class="more" onClick=${onClose}>Leave ▸</button>`
-      : beat.choices.map((c) => html`<button class="ch" key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}>${c.text}</button>`)}
+      : beat.choices.map((c) => (c.mark && c.mark[0] === 'quest'
+        ? html`<button class=${'ch quest' + (c.mark[1] === 'ready' ? ' ready' : '')} key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}><span class="t">${c.text}</span><em>${c.mark[1] === 'ready' ? 'Hand in' : 'Quest'}</em></button>`
+        : html`<button class="ch" key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}>${c.text}</button>`))}
   </div>`;
 }
 

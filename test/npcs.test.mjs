@@ -124,3 +124,16 @@ test('the story adapter: tags become commands, windows come back, presentation i
   const board = c.choose(hire.choices.findIndex((ch) => /board/i.test(ch.text)));
   assert.deepEqual(board.windows, [{ tag: 'service', args: ['tavern'] }]); assert.equal(board.ended, true); assert.equal(pushed.length, n);
 });
+
+test('quest choices are marked for the window, and the mark never reaches the sim', async () => {
+  const book = createStoryBook(async (f) => readFileSync(`content/dialogue/${f}.json`, 'utf8'));
+  const pushed = [], marks = (b) => b.choices.map((ch) => ch.mark.join(' '));
+  const offer = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, q_vale_long_way_round: 0 }, (cmd) => pushed.push(cmd));
+  assert.deepEqual(marks(offer.first).filter(Boolean), ['quest'], 'the offer, and nothing else');
+  assert.ok(offer.first.choices.every((ch) => !ch.mark.length || !/#/.test(ch.text)), 'the tag is not in the text');
+  const ask = offer.choose(offer.first.choices.findIndex((ch) => ch.mark[0] === 'quest'));
+  assert.deepEqual(marks(ask), ['quest', ''], "I'll see to it / Not today");
+  const ready = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, q_vale_long_way_round: 2 }, (cmd) => pushed.push(cmd));
+  assert.deepEqual(marks(ready.first).filter(Boolean), ['quest ready']);
+  assert.ok(pushed.every((c) => c.tag !== 'mark'));
+});

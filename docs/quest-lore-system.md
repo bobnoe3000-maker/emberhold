@@ -275,6 +275,10 @@ It is pure:
   the quest engine validates them.
 - `src/story/adapter.js` runs the story; `src/ui/dialogue.js` is the window (one line per tap,
   then choices; narration in italics, speech in quotes).
+- **Quest choices are marked.** A tag inside a choice's brackets belongs to the choice and never
+  reaches the sim: `+ [Anything I can do? #mark: quest]`. The window sets these apart with a ◆, a
+  **Quest** label and the gold accent; `#mark: quest ready` (handing one in) uses **Hand in** and
+  the Journal's green. Mark offers, accepts, turn-ins and "about that job" asks; not refusals.
 - Tests: `test/npcs.test.mjs`; browser section 6 in `test/browser/run.mjs`.
 
 **Files and knots:**
@@ -361,7 +365,9 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
     "go back to …"), each objective with a bar and a count, the reward, **Track** and
     **Abandon**;
   - **Completed:** the title, a closing line and what it earned.
-- The tracker line under the top HUD shows the tracked quest's title and its counts.
+- The tracker line sits just above the party cards (and above the town's service bar) and shows
+  the tracked quest's title and its counts. It used to sit under the top HUD, where it covered the
+  minimap; the compass's walk chip stacks above it.
 - Toasts: *Quest accepted*, each objective step (*Waves held … 2/4*), *Quest complete · go
   back to …*, and the reward.
 - The Available, Chronicle and Discoveries tabs come with their systems.

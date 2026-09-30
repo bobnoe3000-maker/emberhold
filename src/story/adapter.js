@@ -5,13 +5,15 @@
 // effect tags it meets into `dialogueEffect` commands. It never touches sim state: the sim checks
 // every effect against the talking NPC's allowances and ignores the rest.
 //
-// Tags (`# name: args…`): presentation ones (portrait, sfx) are dropped; window ones (service,
-// shop) go back to the caller to open that window; everything else is a dialogueEffect.
+// Tags (`# name: args…`): presentation ones (portrait, sfx, mark) are dropped; window ones (service,
+// shop) go back to the caller to open that window; everything else is a dialogueEffect. A tag
+// inside a choice's brackets belongs to the choice (`+ [I'll see to it. #mark: quest]`) and never
+// reaches the sim: `mark: quest [ready]` sets that choice apart as a quest one in the window.
 // One Story per file is kept for the session, so Ink's cycles ({&a|b}) move on between visits.
 
 import { Story } from 'inkjs';
 
-const PRESENTATION = new Set(['portrait', 'sfx']), WINDOW = new Set(['service', 'shop']);
+const PRESENTATION = new Set(['portrait', 'sfx', 'mark']), WINDOW = new Set(['service', 'shop']);
 
 /** '# flag: set met_maudry' → { tag: 'flag', args: ['set', 'met_maudry'] } (null if not name: args)
  * @param {string} raw */
@@ -20,7 +22,7 @@ export function parseTag(raw) {
   return { tag: m[1].toLowerCase(), args: m[2].trim().split(/\s+/).filter(Boolean) };
 }
 
-/** @typedef {{ lines: string[], choices: { index: number, text: string }[], windows: { tag: string, args: string[] }[], ended: boolean }} Beat */
+/** @typedef {{ lines: string[], choices: { index: number, text: string, mark: string[] }[], windows: { tag: string, args: string[] }[], ended: boolean }} Beat */
 
 /** @param {(file: string) => Promise<any>} loadJson compiled Ink by file name */
 export function createStoryBook(loadJson) {
@@ -45,7 +47,7 @@ export function createStoryBook(loadJson) {
         }
         if (text) lines.push(text);
       }
-      const choices = story.currentChoices.map((c) => ({ index: c.index, text: c.text }));
+      const choices = story.currentChoices.map((c) => ({ index: c.index, text: c.text, mark: (c.tags || []).map(parseTag).find((t) => t && t.tag === 'mark')?.args || [] }));
       return { lines, choices, windows, ended: !choices.length };
     }
     return { first: step(), /** @param {number} i */ choose: (i) => { story.ChooseChoiceIndex(i); return step(); } };

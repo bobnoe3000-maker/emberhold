@@ -3,7 +3,8 @@
 // Entry: maudry_hub (the sim's 'dialogue' event names it). Bound in by src/story/adapter.js from
 // the sim (sim/npcs.js varsFor); Ink only reads them. Effects go out as tags and the sim checks
 // each one (flags: met_maudry; her errand, vale_long_way_round: q_ = −1 locked · 0 available ·
-// 1 active · 2 ready · 3 done). `# service: tavern` opens the hiring board.
+// 1 active · 2 ready · 3 done). `# service: tavern` opens the hiring board. A choice tagged
+// `#mark: quest` (inside its brackets) shows as a quest one; `#mark: quest ready` hands one in.
 
 VAR hero_name = ""
 VAR hero_class = ""
@@ -48,9 +49,9 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 -> maudry_topics
 
 == maudry_topics ==
-+ { q_vale_long_way_round == 2 } [The barrows road is clearer.] -> maudry_longway_turnin
-+ { q_vale_long_way_round == 0 } [Anything I can do?] -> maudry_longway_offer
-+ { q_vale_long_way_round == 1 } [About the barrows road…] -> maudry_longway_active
++ { q_vale_long_way_round == 2 } [The barrows road is clearer. #mark: quest ready] -> maudry_longway_turnin
++ { q_vale_long_way_round == 0 } [Anything I can do? #mark: quest] -> maudry_longway_offer
++ { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest] -> maudry_longway_active
 + [What's the news?] -> maudry_news
 + [Anyone for hire?] -> maudry_hire
 + [Tell me about the barrows.] -> maudry_barrows
@@ -89,7 +90,7 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 "Since you ask. The carters won't take the barrows road any more. They go the long way round, a day out of their way, and they put it on the price of everything I pour."
 "Go down into the Old Barrows. Knock the walking kind back. Four good fights, and open one of their chests, so I know you went further than the door."
 "Come back and tell me. I'll make it worth the boots."
-+ [I'll see to it.]
++ [I'll see to it. #mark: quest]
     "Good. Mind the ones with crossbows." # quest: accept vale_long_way_round
     -> maudry_topics
 + [Not today.]
