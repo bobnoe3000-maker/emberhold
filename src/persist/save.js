@@ -33,10 +33,12 @@
 //       ids board_<day>_<lv>_<slot>. Only grew: older data loads with no board (it goes up in town).
 //   v11: M5 sites (sim/sites.js) — site (the dungeon you're in, or last were) and revealed [site ids]
 //       (hidden sites found). Only grew: older data loads in the Old Barrows with nothing revealed.
+//   v12: M5 bosses — bosses { [id]: times put down } (sim/battle.js BOSSES; a story boss falls once).
+//       Only grew: older data loads with none down.
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

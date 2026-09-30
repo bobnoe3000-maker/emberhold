@@ -22,7 +22,7 @@ import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
-import { familyOf } from '../sim/battle.js';
+import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 
@@ -249,7 +249,7 @@ export function createRenderer(canvas, sim, input) {
   const skelAtlases = [], enemyAtlases = new Map();   // actor name → atlas, or a promise while it loads
   const enemyAtlas = (kind) => {
     const name = ENEMY_ACTOR[kind] || 'skeleton_minion', a = enemyAtlases.get(name);
-    if (a === undefined) enemyAtlases.set(name, loadActorAtlas(name).then((x) => { enemyAtlases.set(name, x); return x; }).catch(() => { enemyAtlases.set(name, null); }));
+    if (a === undefined) enemyAtlases.set(name, loadActorAtlas(name, name.startsWith('boss_') ? 1.3 : 1).then((x) => { enemyAtlases.set(name, x); return x; }).catch(() => { enemyAtlases.set(name, null); }));
     return a && a.cells ? a : null;
   };
   // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
@@ -257,7 +257,8 @@ export function createRenderer(canvas, sim, input) {
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
-  async function loadActorAtlas(name) {
+  // scale: a boss stands taller than its men (nearest-neighbour, once, at load: 1.3× for the bosses)
+  async function loadActorAtlas(name, scale = 1) {
     const base = './assets/actors/' + name, meta = await (await fetch(base + '.json')).json();
     const alb = pixels(await loadImg(base + '.alb.png')), iw = acv.width;
     const nrm = pixels(await loadImg(base + '.nrm.png')), emi = meta.glow ? pixels(await loadImg(base + '.emi.png')) : null;
@@ -278,7 +279,18 @@ export function createRenderer(canvas, sim, input) {
       }
       cells.push(row);
     }
+    if (scale !== 1) for (const row of cells) for (let f = 0; f < row.length; f++) row[f] = upscale(row[f], scale);
     return { name, meta, cells };
+  }
+  function upscale(sp, k) {
+    const w = Math.round(sp.w * k), h = Math.round(sp.h * k), o = { w, h, ax: Math.round(sp.ax * k), ay: Math.round(sp.ay * k), mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const j = Math.min(sp.h - 1, (y / k) | 0) * sp.w + Math.min(sp.w - 1, (x / k) | 0), i = y * w + x;
+      if (!sp.mask[j]) continue;
+      o.mask[i] = 1; o.emi[i] = sp.emi[j];
+      for (let c = 0; c < 3; c++) { o.alb[i * 3 + c] = sp.alb[j * 3 + c]; o.nrm[i * 3 + c] = sp.nrm[j * 3 + c]; }
+    }
+    return o;
   }
   const firstLoads = [];                               // what the boot's loading screen waits for (`ready`)
   firstLoads.push(loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {}));   // the default look; a created hero's own look loads via partyAtlas
@@ -1050,6 +1062,12 @@ export function createRenderer(canvas, sim, input) {
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
+  // bosses (battle.js): who stands in the hall, what it does, and its fall
+  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the fallen', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'] };
+  sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
+  sim.bus.on('bossCall', () => { banner = { text: 'Garrow calls his men', sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
+  sim.bus.on('bossKindle', () => { banner = { text: 'The Stranger kindles the fallen', sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossDown', ({ name, first }) => { banner = { text: `${name} falls`, sub: first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
@@ -1078,6 +1096,17 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
       octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
+      // a boss's bar under the pill: its name, its health, and a shield while it's guarded (battle.js BOSSES)
+      const boss = (w.enemies || []).find((e) => e.boss && e.hp > 0 && !e.dead);
+      if (boss) {
+        const bw = Math.min(vw * 0.38, 150 * k), bh = 7 * k, bx0 = px - bw / 2, by0 = py + 22 * k, f = boss.hp / boss.maxHp;   // (narrow: clear of the minimap on the right)
+        const guarded = halved(boss, w.enemies || []);
+        octx.font = `600 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`; octx.fillStyle = 'rgba(0,0,0,0.7)'; octx.fillText(BOSSES[boss.boss].name, px + k, by0 - 3 * k + k);
+        octx.fillStyle = '#f0c880'; octx.fillText(BOSSES[boss.boss].name + (guarded ? '  ⛨' : ''), px, by0 - 3 * k);
+        octx.fillStyle = 'rgba(14,10,18,0.85)'; octx.fillRect(bx0 - k, by0 + 2 * k, bw + 2 * k, bh + 2 * k);
+        octx.fillStyle = guarded ? '#8a93a8' : '#c8402c'; octx.fillRect(bx0, by0 + 3 * k, bw * f, bh);
+        octx.strokeStyle = 'rgba(240,200,128,0.6)'; octx.lineWidth = Math.max(1, k); octx.strokeRect(bx0 - k, by0 + 2 * k, bw + 2 * k, bh + 2 * k);
+      }
     }
     // floating numbers
     const t = performance.now();

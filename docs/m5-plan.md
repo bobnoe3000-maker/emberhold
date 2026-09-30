@@ -51,6 +51,11 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
    - *The Standard of the Third Legion* — **Hold the Line**: Ashbound within 4 tiles of the
      Standard take half damage. Knock the Standard down first (tap to focus).
    A boss's first kill drops its heirloom; later kills roll boss loot (a Fine or better item).
+   **Done** (2026-09-30): `battle.js` BOSSES, `items.js` HEIRLOOMS, the boss bar and banners,
+   `test/bosses.test.mjs`, `tools/balance/boss.mjs`. Measured (fighter + rogue + cleric in kit at
+   level, 3 seeds): Garrow's hall (L6) falls to a level-5 party every time and beats a level-4 one;
+   the Stranger's (L8) falls to level 8, to level 7 two times in three, beats level 6; the
+   Standard's (L10) falls to level 10, to level 9 once in three, beats level 8.
 4. **Act I, *Smoke over the Vale*** (chapter quests: no abandon; a quest can be handed in to
    someone other than its giver).
    1. *Smoke over the Vale* — Maudry: drive the Redhand out of the Tithe Mill (hold 4 waves

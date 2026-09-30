@@ -135,6 +135,22 @@ export function rollItem(rng, { ilv, rarity, classes, uid }) {
   return makeItem(base, ilv, rarity, { uid, aff, mod, name, flav });
 }
 
+// Heirlooms (world doc §9–10): named, with a line of history, found once — a boss's first fall, a
+// companion's chain, a hidden vault. Fixed affixes (a Rare's two and one more), rolled at their item
+// level like any affix (no dice: an heirloom is the same for everyone).
+/** @type {Record<string, { base: string, name: string, flav: string, aff: string[] }>} */
+export const HEIRLOOMS = {
+  garrows_due: { base: 'ring', name: "Garrow's Due", flav: 'He collected. Everyone paid.', aff: ['crit', 'atk', 'hp'] },
+  the_relief: { base: 'amulet', name: 'The Relief', flav: 'Somebody finally came.', aff: ['def', 'hpr', 'hp'] },
+  broken_chain: { base: 'charm', name: 'The Broken Chain', flav: 'He kept one link.', aff: ['def', 'hp', 'atk'] },
+  last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
+};
+/** an heirloom at an item level @param {string} id @param {number} ilv @param {string} uid */
+export function makeHeirloom(id, ilv, uid) {
+  const H = HEIRLOOMS[id];
+  return makeItem(H.base, ilv, 'heirloom', { uid, name: H.name, flav: H.flav, aff: H.aff.map((k) => { const [a, b] = AFFIX[k]; return [k, round(k, (a + b * ilv) * 1.1)]; }) });
+}
+
 export const modText = (m) => (m.k === 'cost' ? `${m.ab} costs ${m.v} less MP` : `${m.ab} hits ${Math.round(m.v * 100)}% harder`);
 
 // an item's stats, base + affixes

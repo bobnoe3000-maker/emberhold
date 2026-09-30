@@ -14,7 +14,7 @@ import { starterKit, refreshItem } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
-import { createBattle } from './battle.js';
+import { createBattle, BOSSES } from './battle.js';
 import { placeNpcs, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests } from './quests.js';
 import { createBoard } from './board.js';
@@ -81,6 +81,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     created: false,                   // has this game's main character been made? (createHero, once)
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
     flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
+    bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
   };
   clock = state;
 
@@ -92,6 +93,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
+
+  // a boss down: its heirloom the first time (items.js HEIRLOOMS), and always a Fine-or-better drop
+  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop('boss', { ilv: e.lvl, x: e.x, y: e.y }); });
 
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
   // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids
@@ -441,6 +445,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       sitesEntered: [...state.sitesEntered],
       revealed: [...state.revealed],
       flags: { ...state.flags },
+      bosses: { ...state.bosses },
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
       ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
@@ -485,6 +490,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
+    state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet

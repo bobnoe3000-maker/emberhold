@@ -10,7 +10,7 @@
 //         'gearRefused' { reason } — an equip the rules don't allow.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore } from './items.js';
+import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom } from './items.js';
 import { statsFor } from './party.js';
 
 export const BAG_SIZE = 20;                  // slots; a slot holds one item or a stack
@@ -33,6 +33,7 @@ export function bagStacks(bag) {
 // v1 so the loop is felt early; deeper rooms add +5 % per room level to the chance.
 export const DROP = {
   chest: { chance: 0.6, fine: 0.25, rare: 0.04 },
+  boss: { chance: 1, fine: 0.55, rare: 0.3 },            // a boss always leaves something, never less than Fine (below)
   wave: { chance: 0.08, fine: 0.2, rare: 0.02 },
   elite: { chance: 0.3, fine: 0.35, rare: 0.06 },
 };
@@ -58,7 +59,7 @@ export function createLoot({ state, bus, seed }) {
     C.lootN = (C.lootN || 0) + 1;
     const rng = mulberry32(streamSeed(seed, 91000 + C.lootN));
     if (rng() >= Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1)))) return null;
-    const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine ? 'fine' : 'common';
+    const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine || src === 'boss' ? 'fine' : 'common';
     C.uidN = (C.uidN || 0) + 1;
     const classes = [...new Set(state.party.map((m) => m.cls))];
     const item = rollItem(rng, { ilv: Math.max(1, ilv), rarity, classes, uid: 'i' + C.uidN });
@@ -66,6 +67,17 @@ export function createLoot({ state, bus, seed }) {
     if (fits([item])) toBag(item);
     else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }            // bag full: straight to Embers
     bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged });
+    bus.emit('countersChanged', { ...C });
+    return item;
+  }
+
+  // an heirloom (items.js HEIRLOOMS): once, from its boss's first fall, a companion's chain or a vault
+  function grant(id, { ilv, x, y, src }) {
+    C.uidN = (C.uidN || 0) + 1;
+    const item = makeHeirloom(id, Math.max(1, ilv), 'i' + C.uidN);
+    let salvaged = 0;
+    if (fits([item])) toBag(item); else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }
+    bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged, heirloom: id });
     bus.emit('countersChanged', { ...C });
     return item;
   }
@@ -103,5 +115,5 @@ export function createLoot({ state, bus, seed }) {
     }
     return false;
   }
-  return { drop, command, bestFor };
+  return { drop, grant, command, bestFor };
 }

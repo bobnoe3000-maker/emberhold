@@ -33,7 +33,7 @@ import { abilityMods } from './items.js';
 import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
-import { siteOf } from './sites.js';
+import { siteOf, bossAt } from './sites.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
@@ -110,6 +110,29 @@ export const FAMILIES = {
   diggers: { melee: ['cutthroat', 'minion'], ranged: ['crossbow', 'rogue'], elite: 'brute', undead: (k) => k === 'minion' || k === 'rogue' },
   chapel: { melee: ['minion', 'warrior'], ranged: ['rogue', 'acolyte'], elite: 'warrior', undead: (k) => k !== 'acolyte' },
 };
+// Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
+// an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
+// stats × its own (HP, ATK, DEF) at the hall's level, and has one signature mechanic:
+//   call   (Captain Garrow) at 2/3 and 1/3 HP two of his men join him, and he takes half damage while they stand
+//   kindle (the Robed Stranger) every KINDLE_S s the last foe slain rises again as an Ashbound minion
+//   line   (the Standard of the Third Legion) Ashbound within LINE_R of it take half damage
+// `once`: a story boss falls for good (state.bosses counts kills; his hall then fights as any other).
+// Events: 'bossWave' { id, name } · 'bossCall' { id } · 'bossKindle' { id, x, y } · 'bossDown' { id, name, first, x, y, lvl }.
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+export const BOSSES = {
+  redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
+  robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
+  standard: { name: 'The Standard of the Third Legion', like: 'warrior', hp: 34, atk: 2.2, def: 1.8, speed: 2.3, xp: 14, gold: 30, mech: 'line', escort: ['warrior', 'minion', 'rogue'], undead: true, heirloom: 'the_relief' },
+};
+export const KINDLE_S = 12, LINE_R = 4;
+/** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
+ * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
+export function halved(tgt, foes) {
+  const up = (o) => o.hp > 0 && !o.dead;
+  if (tgt.boss && tgt.guards && tgt.guards.length && foes.some((o) => tgt.guards.includes(o.id) && up(o))) return true;
+  if (tgt.undead && !tgt.boss) return foes.some((o) => o.boss === 'standard' && up(o) && hypot(o.x - tgt.x, o.y - tgt.y) < LINE_R);
+  return false;
+}
 /** the foes a nova reaches from `m`: within its radius, standing (not rising), and Ashbound only for
  * Turn Undead (`undead`) @param {any} A @param {any[]} foes @param {any} m */
 export const novaTargets = (A, foes, m) => foes.filter((o) => !o.dead && o.hp > 0 && !(o.spawn > 0) && (!A.undead || o.undead) && hypot(o.x - m.x, o.y - m.y) < A.radius);
@@ -168,7 +191,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
 
   // ── spawning ────────────────────────────────────────────────────────────────
   function spawnWave(w) {
-    const b = battle, lvl = b.level, scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1);
+    const b = battle, lvl = b.level;
     // the room's level sets the size, stats and mix (at most a third archers and mages); every fifth
     // wave an elite takes one slot; each wave of the visit rises with the tide
     const eliteWave = (b.wave + 1) % 5 === 0;
@@ -185,19 +208,36 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1]);
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring
+    const spot = () => { let x = 0, y = 0; for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; } return [x, y]; };
+    if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
+      const B = BOSSES[b.boss], [bx, by] = spot();
+      foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
+      B.escort.forEach((k, i) => foe(w, k, lvl, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, 1 + PREMIUM * Math.max(0, lvl - 3), false, F));
+      b.bossUp = true; b.wave += 1;
+      bus.emit('bossWave', { id: b.boss, name: B.name });
+      bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
+      return;
+    }
     for (let i = 0; i < n; i++) {
-      const kind = kinds[i], E = ENEMIES[kind];
-      let x = 0, y = 0;
-      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
-      const elite = eliteWave && i === n - 1;
-      const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1));
-      const k = elite ? F.elite : kind;
-      w.enemies.push({ id: nextId++, kind: k, undead: F.undead(k), elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * tough * (elite ? 1.3 : 1), def: E.def * scale,
-        crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: E.speed, bolt: E.bolt,
-        xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
+      const [x, y] = spot(), elite = eliteWave && i === n - 1;
+      foe(w, elite ? F.elite : kinds[i], lvl, x, y, tough, elite, F);
     }
     b.wave += 1;
     bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
+  }
+  /** one foe into the fight: a kind's stats at the room's level × tough (tide and premium); an elite is
+   * ×2.5 HP, ×1.3 ATK; a boss (B) its own multiples @param {any} w @param {string} k @param {number} lvl
+   * @param {number} x @param {number} y @param {number} tough @param {boolean} elite @param {any} F @param {any} [B] */
+  function foe(w, k, lvl, x, y, tough, elite, F, B = null) {
+    const scale = 1 + 0.14 * (lvl - 1), atkScale = 1 + 0.12 * (lvl - 1), E = ENEMIES[B ? B.like : k];
+    const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1) * (B ? B.hp : 1));
+    const u = { id: nextId++, kind: k, undead: B ? !!B.undead : F.undead(k), elite: elite || !!B, lvl, x, y, hp, maxHp: hp,
+      atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
+      crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
+      xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; }
+    w.enemies.push(u);
+    return u;
   }
 
   function startBattle(w, room) {
@@ -210,8 +250,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
     pending = [];
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
+    const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0 };
+      tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
     bus.emit('battle', { on: true, room, level: battle.level });
@@ -252,6 +293,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function applyHit(att, tgt, r, isParty, w, heavy = false) {
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
     let dmg = r.dmg;
+    if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
     if (isParty && tgt.ward > 0) { const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a; if (!dmg) { bus.emit('combat', { t: 'warded', x: tgt.x, y: tgt.y }); return; } }   // Arcane Ward soaks it first
     tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
@@ -269,6 +311,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     else { tgt.dead = DEATH_T; reward(tgt); if (focusId === tgt.id) focusId = 0; }
   }
+  const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
   function reward(e) {
     const living = state.party.filter(alive);
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
@@ -278,7 +321,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl);
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
-    if (e.elite) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
+    if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
+      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
+    else if (battle) battle.lastSlain = { x: e.x, y: e.y };
+    if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
   }
   // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone
@@ -494,8 +540,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function station(u, tgt, range, w) {
     const r = range - 0.25, taken = claims.get(tgt) || claims.set(tgt, new Set()).get(tgt);
     let best = -1, bd = 1e9;
+    // the outer ring is a queue for when all six inner stations are HELD (claimed by attackers); an inner
+    // one that's only crowded (someone standing by) sends the unit straight at its target instead. (Both
+    // sides had waited on outer rings, out of reach of each other, for good: Garrow and a companion, the
+    // hero Downed between them, 2026-09-30.)
+    const innerHeld = taken.size >= STATIONS.length;
     for (let k = 0; k < STATIONS.length * 2; k++) {
-      if (taken.has(k)) continue;
+      if (taken.has(k) || (k >= STATIONS.length && !innerHeld)) continue;
       const ring = k < STATIONS.length ? 1 : 1.75, [ux, uy] = STATIONS[k % STATIONS.length];
       const x = tgt.x + ux * r * ring, y = tgt.y + uy * r * ring;
       if (!isWalkable(w, x, y) || roomAt(w, x, y) !== battle.room) continue;
@@ -614,6 +665,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter((m) => !m.down)], w, 36, 24, heroStill < EASE_AFTER ? 0.3 : 1);   // roomier than in a melee
   }
 
+  // a boss's signature mechanic, each tick it stands
+  function bossMech(e, w, dt) {
+    const B = BOSSES[e.boss], F = familyOf(w), tough = 1 + PREMIUM * Math.max(0, e.lvl - 3);
+    if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
+      e.called++;
+      e.guards = B.escort.map((k, i) => foe(w, k, e.lvl, e.x + (i ? 1.3 : -1.3), e.y + 0.8, tough, false, F).id);
+      bus.emit('bossCall', { id: e.boss, x: e.x, y: e.y });
+    } else if (B.mech === 'kindle' && (e.kindleT += dt) >= KINDLE_S) {
+      e.kindleT = 0;
+      const at = battle && battle.lastSlain;
+      if (at) { const u = foe(w, 'minion', e.lvl, at.x, at.y, tough, false, FAMILIES.ashbound); u.undead = true; battle.lastSlain = null; bus.emit('bossKindle', { id: e.boss, x: at.x, y: at.y }); }
+    }
+  }
+
   // ── the step ────────────────────────────────────────────────────────────────
   function step(dt) {
     stepN++;
@@ -656,10 +721,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           }
         }
         battle.lull -= dt;
-        if (battle.lull <= 0) { battle.between = false; spawnWave(w); }   // the room doesn't wait for you
+        if (battle.lull <= 0 && !battle.quiet) { battle.between = false; spawnWave(w); }   // the room doesn't wait for you (but a hall whose boss fell is quiet)
       }
       claims = new Map();
-      bodies = [{ x: p.x, y: p.y, src: H }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];
+      bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
       const focus = focusId && foes.find((e) => e.id === focusId);
       // party AI
       state.party.forEach((m, i) => {
@@ -702,10 +767,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const living = state.party.filter(alive);
       const hidden = living.filter((q) => !(q.buff && q.buff.smoke > 0)), targets = hidden.length ? hidden : living;   // Smoke Step: foes lose you
       const taunts = targets.filter((q) => q.buff && q.buff.wall > 0);                                                // Shield Wall: foes turn on you
-      for (const e of w.enemies) {
+      for (const e of [...w.enemies]) {
         e.act = Math.max(0, e.act - dt); e.flash = Math.max(0, e.flash - dt);
         if (e.spawn > 0) { e.spawn -= dt; continue; }
         if (e.dead > 0 || e.hp <= 0) { e.moving = false; continue; }
+        if (e.boss) bossMech(e, w, dt);
         if (e.poison) {                                                     // Venom ticks once a second
           e.poison.t -= dt; e.poison.acc += dt;
           while (e.poison && e.poison.acc >= 1 && e.hp > 0) { e.poison.acc -= 1; applyHit(e.poison.by, e, { dmg: Math.max(1, Math.round(e.poison.dps)), crit: false }, false, w); }
@@ -722,7 +788,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
       }
-      separate([{ ...H, x: p.x, y: p.y, isHero: true }, ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);
+      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good)
     }
     // wind-ups: blows land and bolts leave on the attack clip's impact frame
     if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }
