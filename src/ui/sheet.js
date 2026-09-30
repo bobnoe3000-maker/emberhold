@@ -356,7 +356,7 @@ export function createGearSheet(sim, { partyPanel }) {
     toast.innerHTML = `<div class="t">✦ Found ${src === 'chest' ? 'in a chest' : src === 'elite' ? 'on an elite' : 'after the wave'}</div>
       <div class="hd"><div class="big" style="border-color:${RC[item.r]}"><img src="${icon(item)}" alt=""></div><div style="min-width:0"><h3 style="color:${RC[item.r]}">${item.name}</h3>
       <div class="s">${item.r[0].toUpperCase() + item.r.slice(1)} · ${SLOT_LABEL[B.slot]} · ${classNames(B, true)} · ilv ${item.ilv}</div>${up}</div></div>
-      <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${esc(m.name)}</button>` : `<button class="gbtn pri" data-look>Look</button>`}<button class="gbtn" data-bag>Bag</button></div>`;
+      <div class="gbtns">${m ? `<button class="gbtn pri" data-to="${m.id}">Equip on ${esc(m.name)}</button>` : `<button class="gbtn pri" data-look>Compare gear</button>`}<button class="gbtn" data-bag>Keep in bag</button></div>`;
     toast.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 6000);
   });
   toast.addEventListener('click', (e) => {
