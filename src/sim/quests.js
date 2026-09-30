@@ -21,11 +21,12 @@
 //   loot    chests opened
 //   elites  elites slain
 //   reach   the deepest floor reached (count = the floor, 1 = the first), going down after taking it
+//   fragment  Chronicle fragments found (lore.js 'fragmentFound')
 
 import { gainXp } from './party.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
-/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach', site: string, count: number, hall?: boolean, floor?: number }} Objective */
+/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment', site: string, count: number, hall?: boolean, floor?: number }} Objective */
 /** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number } }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
@@ -38,6 +39,11 @@ export const QUESTS = {
     kind: 'bounty', giver: 'osric_hale', region: 'vale', level: [2, 8],
     steps: [{ id: 'barrows', objectives: [{ type: 'elites', site: 'barrows', count: 3 }] }],
     rewards: { xp: 260, gold: 60 },
+  },
+  vale_first_page: {                                 // Sister Ilse's errand (world doc §7, v1.6): bring her the first line of the Vale's Chronicle
+    kind: 'errand', giver: 'sister_ilse', region: 'vale', level: [1, 8],
+    steps: [{ id: 'barrows', objectives: [{ type: 'fragment', site: 'barrows', count: 1 }] }],
+    rewards: { xp: 120, gold: 25 },
   },
 };
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
@@ -75,6 +81,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
   bus.on('wave', (e) => { if (e.cleared) count((o, n) => (o.type === 'waves' && siteHere(o.site) && (!o.hall || hallHere(e.room)) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) ? n + 1 : n)); });
   bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) ? n + 1 : n)); });
+  bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? n + 1 : n)));
   // a floor change inside a site (arriving from the overland or loading a save carry a scene, and don't count)
   bus.on('levelChanged', (e) => { if (!('scene' in e)) count((o, n) => (o.type === 'reach' && siteHere(o.site) ? Math.max(n, floorHere()) : n)); });
 
@@ -157,7 +164,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null }) {
         if (!o) base = null;
         else if (o.type === 'reach' || (o.floor && floorHere() < o.floor)) base = down || pick('next-room');
         else if (o.hall) base = down ? { ...down, then: null, label: 'The stairs-down hall', sub: down.sub.replace(/^to depth \d+ · /, '') } : pick('next-room');
-        else if (o.type === 'loot') base = pick('loot', 'next-room', 'farm-room');
+        else if (o.type === 'loot' || o.type === 'fragment') base = pick('loot', 'next-room', 'farm-room');
         else base = pick('next-room', 'farm-room', 'loot');
       }
     }

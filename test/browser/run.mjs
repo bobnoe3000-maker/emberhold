@@ -361,6 +361,24 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 10. The Chronicle: open the chest that holds Standing Order 14 → it's in the Journal's Chronicle tab
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(() => { const s = globalThis.__sim, h = s.lore.holder('frag_vale_standing_order'), [x, y] = h.key.split(',').map(Number), pl = s.state.player; pl.x = pl.px = x + 1.5; pl.y = pl.py = y + 0.5; s.commands.push({ type: 'harvest', tx: x, ty: y }); });
+    await run(5);
+    const frags = await p.evaluate(() => globalThis.__sim.state.fragments);
+    await p.locator('#journalBtn').tap(); await p.locator('#journal .tabs button', { hasText: 'Chronicle' }).tap();
+    const text = await p.locator('#journal .frag').first().innerText().catch(() => ''), missing = await p.locator('#journal .frag.missing').count();
+    check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and two missing), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 2 && errs.length === 0, text.split('\n')[0] + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

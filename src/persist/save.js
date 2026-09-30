@@ -27,12 +27,14 @@
 //       floors of the current dungeon visit (core.js). Only grew: older data loads with none.
 //   (2026-09-30, no version bump: the shape is the same) an item's st is re-derived from (base, ilv,
 //       rarity) on load (sim/items.js refreshItem), so old loot follows the doubled gear growth.
+//   v10: the Chronicle — fragments [ids] in the order found (sim/lore.js). Only grew: older data
+//       loads with none found.
 //   v9: the Lantern Guild's board — board { day, lv } (sim/board.js); board jobs sit in quests under
 //       ids board_<day>_<lv>_<slot>. Only grew: older data loads with no board (it goes up in town).
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

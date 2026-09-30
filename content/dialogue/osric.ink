@@ -14,6 +14,7 @@ VAR fallen_name = ""
 VAR day_part = 0
 VAR flag_met_osric = 0
 VAR q_vale_captains_ledger = -1
+VAR frag_vale_count = 0
 
 == osric_hub ==
 { flag_met_osric == 0: -> osric_first_meet }
@@ -41,6 +42,7 @@ A grey man at a folding table by the well turns a page in a ledger and doesn't l
 {&Osric marks something in the ledger and nods at the stool. "Sit if you like. It's the Watch's stool. Nobody else wants it."|"{hero_name}. Still standing. Good."|"The well's been quiet today. The well's always quiet. It's the barrows that aren't."}
 { q_vale_captains_ledger == 2: "You've the look of three lines in my book. Let's have them." }
 { q_vale_captains_ledger == 3: "Three paid, three written. The Watch doesn't forget a debt, even when Greyholt does." }
+{ frag_vale_count == 3: "Sister Ilse read me your tablets. A legion holding a road until relieved." He looks at the ledger for a long moment. "I know how that goes." }
 -> osric_topics
 
 == osric_greet_fallen ==

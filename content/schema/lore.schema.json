@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A Chronicle fragment's words (world doc §7, quest-lore-system §4.5). Where it lies and what it pays are the sim's (src/sim/lore.js FRAGMENTS); a test keeps the two in step. Text is canon: it comes from the world doc.",
+  "type": "object",
+  "required": ["id", "region", "set", "order", "title", "text", "note", "where"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^frag_[a-z0-9_]+$" },
+    "region": { "enum": ["vale", "fens", "reach", "heights"] },
+    "set": { "type": "string", "pattern": "^[a-z]+$" },
+    "order": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "text": { "type": "string", "minLength": 1, "maxLength": 260 },
+    "note": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "where": { "type": "string", "minLength": 1, "maxLength": 80, "description": "shown while it's missing: a place, never the answer" }
+  }
+}

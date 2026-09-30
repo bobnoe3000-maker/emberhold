@@ -18,6 +18,7 @@ import { createBattle } from './battle.js';
 import { placeNpcs, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests } from './quests.js';
 import { createBoard } from './board.js';
+import { createLore } from './lore.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -94,7 +95,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   /** @type {any} */ let board = null;
   const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
-  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => quests.varsFor(id), effect: (id, args) => quests.effect(id, args) });
+  const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });   // the Chronicle's fragments (lore.js)
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor() }), effect: (id, args) => quests.effect(id, args) });
 
   function tryMove(p, dx, dy) {
     const cz = heightAt(world, Math.floor(p.x), Math.floor(p.y));
@@ -408,6 +410,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
       ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
+      ...lore.snapshot(),                // fragments: [ids] in the order found
     };
   }
 
@@ -448,6 +451,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
+    lore.restore(data);                                    // v9 and older: none yet
     floors = new Map();                                    // v7 and older: none (only the floor you're on)
     for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
@@ -461,5 +465,5 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
   function destinations({ inSquare = false } = {}) {
     return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
   }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

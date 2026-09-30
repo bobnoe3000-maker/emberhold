@@ -386,6 +386,29 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
 
 ## 7. Discovery and the Chronicle
 
+**Implemented: the Vale set's first three fragments (M4 slice 5, 2026-09-30; world doc §7, v1.6).**
+- **Where and what:** `src/sim/lore.js` holds FRAGMENTS (site, floor, holder) and SETS (reading
+  order). The words are in `content/lore/<id>.json`, and `test/lore.test.mjs` checks every text
+  against the world doc.
+- **Placement** comes from the world seed on the LORE stream, mixed with the fragment's id:
+  - one of that floor's chests (Standing Order 14, first floor);
+  - a shrine (the muster roll, second floor);
+  - the stairs-down hall, held 3 waves in one visit (the centurion's tablet, second floor).
+
+  A floor with no such chest or shrine keeps the fragment in its hall.
+- **Finding one** pays 20 XP × the hero's level (+20 % for a ward of the Grey Sisters, the
+  origin's `loreXp` edge). It emits `fragmentFound { id, set, order, found, of, xp }`, and the
+  last of a set emits `setComplete`. Found fragments are saved (save v10).
+- **Ink** reads `frag_<id>` and `frag_<set>_count`. Sister Ilse reads each fragment in order and
+  closes the set. Maudry and Osric each have a line for the finished Vale set, per the voice
+  rule (world doc §11). Ilse's errand *The First Page* asks for one fragment (objective
+  `fragment`).
+- **The Journal's Chronicle tab** shows each set in reading order: found fragments in full,
+  missing ones only as a place. There's a toast on finding one.
+- **Still to come:** the Vale's other seven fragments, the region's hidden site on completing the
+  set, and the Discoveries tab.
+
+
 - **Discoveries:**
   - site entered, landmark approached, NPC met, boss beaten, hidden path found;
   - each is recorded once;
@@ -417,7 +440,8 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
   minimap; the compass's walk chip stacks above it.
 - Toasts: *Quest accepted*, each objective step (*Waves held … 2/4*), *Quest complete · go
   back to …*, and the reward.
-- The Available, Chronicle and Discoveries tabs come with their systems.
+- The Chronicle tab shipped with the fragments (§7). The Available and Discoveries tabs come with
+  their systems. (Completed is labelled *Done* so three tabs fit on a phone.)
 
 A bottom sheet with tabs, opened from a book icon under the minimap and from the party
 card's menu:

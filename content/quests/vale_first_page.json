@@ -1,0 +1,22 @@
+{
+  "id": "vale_first_page",
+  "kind": "errand",
+  "title": "The First Page",
+  "giver": "sister_ilse",
+  "region": "vale",
+  "level": [1, 8],
+  "summary": "Sister Ilse was sent up from Reedholm to write down whatever comes out of the barrows. So far nothing has, except the dead, and they don't hold still to be read.",
+  "steps": [
+    {
+      "id": "barrows",
+      "journal": "Bring Sister Ilse anything with the old stamp on it from the Old Barrows. The chests on the first floor are a start.",
+      "objectives": [
+        { "type": "fragment", "site": "barrows", "count": 1, "label": "Fragments found in the Old Barrows" }
+      ]
+    }
+  ],
+  "ready": "Go back to Sister Ilse on the Shrine's step.",
+  "done": "The Chronicle of the Vale has a first page.",
+  "rewards": { "xp": 120, "gold": 25 },
+  "dialogue": { "file": "ilse", "offer": "ilse_page_offer", "turnin": "ilse_page_turnin" }
+}

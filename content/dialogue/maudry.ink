@@ -14,6 +14,7 @@ VAR party_size = 1
 VAR fallen_name = ""
 VAR flag_met_maudry = 0
 VAR q_vale_long_way_round = -1
+VAR frag_vale_count = 0
 
 == maudry_hub ==
 { flag_met_maudry == 0: -> maudry_first_meet }
@@ -41,6 +42,7 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 {&Maudry looks up from the tap. "Back again, {hero_name}."|"Still in one piece, I see. The Vale's getting careless."|Maudry slides a mug your way without asking. "On the house. Don't tell anyone."}
 { q_vale_long_way_round == 2: "You've the look of someone with news. Go on, then." }
 { q_vale_long_way_round == 3: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
+{ frag_vale_count == 3: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }
 -> maudry_topics
 
 == maudry_greet_fallen ==
