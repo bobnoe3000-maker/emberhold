@@ -182,6 +182,14 @@ Objectives can be ordered (step by step) or unordered (`"any": true` within a st
   night; DAY_S ÷ 4). When the part changes they walk to their spot along a path (`stepFolk`).
   They wait while you talk to them, and a town built mid-day has them where the hour does. They
   are walkers, not walls, and their positions are never saved.
+- **Strolls and spacing** (2026-09-30, after play: Col and Jory stood by Maudry's door, and
+  nobody seemed to move):
+  - Between the day's changes, townsfolk stroll every 4–12 s to a tile within 3 of their spot,
+    on their own seeded stream (`STREAM.FOLK`). They keep still while you stand beside them.
+  - Every spot and every stroll tile keeps apart on screen from everyone else's, so a tap picks
+    one person (`apart`: 6 tiles of (x − y), or 14 of (x + y)).
+  - Tested at every part of the day on three seeds. In the game all six were seen walking within
+    12 s.
 - **Looks** are baked by `tools/actor-lab` (variants N2–N9, `faces.json`). Townsfolk bake idle
   and walk only (18 frames × 8 directions against 31 for the named): about 0.6 MB each, against
   1.1 MB.
