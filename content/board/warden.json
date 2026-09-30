@@ -1,0 +1,18 @@
+{
+  "id": "warden",
+  "titles": ["The Hall Below", "At the Foot of the Stairs", "Break the Guard", "The Stairhead"],
+  "hooks": [
+    { "by": "The Lantern Guild", "text": "\"Every floor down there ends in a hall at the head of the next stair, and every hall has a guard. Break one.\"" },
+    { "by": "Osric Hale, for the Watch", "text": "\"They hold the stairheads like a garrison. Of course they do. They were one. O. Hale.\"" },
+    { "by": "Maudry Fenn", "text": "\"Somebody down there is still guarding the way down. Three hundred years on one door. I know the feeling.\"" },
+    { "by": "The Shrine of the Ember", "text": "\"The halls by the stairs burn brightest. Stand in one long enough for the fire to notice you, and live.\"" },
+    { "by": "Hale & Daughter", "text": "\"The old manuals say the legions put their best at the stairhead. We'd like to know if the manuals were right. The daughter.\"" },
+    { "by": "The carters", "text": "\"Whatever keeps the rest of them in step is down at the foot of each stair. Break its rhythm.\"" }
+  ],
+  "brief": { "one": "Hold a wave in a stairs-down hall, {floor} floor or deeper", "many": "Hold {n} waves in a stairs-down hall, {floor} floor or deeper" },
+  "label": "Waves held in a stairs-down hall",
+  "journal": "Go down to the {floor} floor of the Old Barrows or deeper, find the hall with the stairs down, and hold it.",
+  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "done": "The stair was held for three hundred years. Not any more.",
+  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+}

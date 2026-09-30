@@ -2,8 +2,9 @@
 // town (outdoor.js). Once the hero is near it (world.hub), a bar of the five services slides
 // up — Shop, Smith, Tavern, Inn, Temple — and tapping one (or its building) opens that
 // service's menu as a bottom sheet. Away from the square the services aren't reachable. The actions are the GDD's
-// (emberfall-gdd.md §10); the live ones today: the tavern's hiring board, the temple (raise the
-// Fallen, respec) and the inn (rest, the party and bench). The rest are placeholders until
+// (emberfall-gdd.md §10); the live ones today: the tavern's quest board (the Lantern Guild's
+// jobs, sim/board.js) and hiring board, the temple (raise the Fallen, respec) and the inn (rest,
+// the party and bench). The rest are placeholders until
 // each system lands. DOM only; reads sim state and sends commands, never writes state.
 
 const SERVICES = {
@@ -38,6 +39,9 @@ import { CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
 import { BENCH_MAX, FREE_RES_LEVEL } from '../sim/heroes.js';
 import { pointsSpent } from '../sim/attributes.js';
 import { esc } from './actorart.js';
+import { MAX_JOBS } from '../sim/board.js';
+import { QS } from '../sim/quests.js';
+import { boardWords, boardReady, SKULLS } from './boardwords.js';
 
 const CSS = `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
@@ -73,6 +77,22 @@ const CSS = `
 #hubSheet .btn:disabled { background: #3a3444; color: #7a7088; }
 #hubSheet .back { font: 12px Georgia, serif; color: #d8a040; background: none; border: 0; padding: 0; margin-bottom: 6px; }
 #hubSheet .note { font-size: 12px; color: #ff8a7a; margin: -4px 0 10px; min-height: 0; }
+/* the Lantern Guild's board: one card per job, pinned paper on the tavern wall */
+#hubSheet .jobs-top { font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; letter-spacing: .5px; margin: -4px 0 8px; }
+#hubSheet .job { padding: 11px 12px 12px; margin-bottom: 9px; border-radius: 10px; background: rgba(240,224,190,0.05); border: 1px solid rgba(214,170,98,0.28); }
+#hubSheet .job.ready { border-color: #8fe07a; background: rgba(143,224,122,.07); }
+#hubSheet .job.taken { opacity: .72; }
+#hubSheet .job .jt { display: flex; align-items: baseline; gap: 8px; }
+#hubSheet .job .jt b { flex: 1; min-width: 0; font-size: 16px; color: #f0c880; font-weight: 600; }
+#hubSheet .job .sk { flex: none; font: 700 10.5px ui-monospace, Menlo, monospace; font-style: normal; letter-spacing: .5px; padding: 2px 6px; border-radius: 4px; }
+#hubSheet .job .sk.s1 { background: #26351f; color: #b8e0a0; } #hubSheet .job .sk.s2 { background: #3f2a10; color: #ffc060; } #hubSheet .job .sk.s3 { background: #481512; color: #ff8a7a; }
+#hubSheet .job .by { font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; margin: 2px 0 6px; }
+#hubSheet .job .hook { font-size: 14px; line-height: 1.4; color: #d8ccb8; font-style: italic; }
+#hubSheet .job .brief { font-size: 13.5px; color: #efe4cf; margin-top: 8px; }
+#hubSheet .job .brief:before { content: '◆ '; color: #e0a84a; }
+#hubSheet .job .rw { font: 11px ui-monospace, Menlo, monospace; color: #c09a50; margin-top: 4px; }
+#hubSheet .job .btn { display: block; width: 100%; min-height: 44px; margin-top: 10px; font-size: 14px; }
+#hubSheet .job .btn.in { background: #8fe07a; }
 #hubSheet .merc.fallen .who b { color: #b8c4d8; }
 #hubSheet .close { position: absolute; right: 12px; top: 10px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid rgba(214,170,98,0.35);
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
@@ -99,15 +119,18 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
     const d = e.target.closest('[data-dismiss]'); if (d) return send({ type: 'dismiss', id: d.dataset.dismiss });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
+    const tk = e.target.closest('[data-take]'); if (tk) return send({ type: 'boardAccept', id: tk.dataset.take });
+    const hi = e.target.closest('[data-handin]'); if (hi) return send({ type: 'boardTurnIn', id: hi.dataset.handin });
     if (e.target.closest('[data-rest]')) send({ type: 'rest' });
   });
   const redraw = () => { if (sheet.classList.contains('on') && VIEWS[view]) VIEWS[view](); };
   sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
+  sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw);
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
   let current = null, view = null, note = '', restDone = false;
 
-  const LIVE = { 'Hire companions': 'hire', 'Raise the Fallen': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
+  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the Fallen': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
@@ -123,6 +146,31 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
   const head = (kind, title, blurb) => `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
       <div class="kind">${kind} · ${esc(sim.world.name || '')}</div><h2>${title}</h2><p>${blurb}</p>${note ? `<div class="note">${esc(note)}</div>` : ''}`;
   const gold = () => sim.state.counters.gold || 0;
+  // The Lantern Guild's board (GDD §9): today's jobs, each with who pinned it, its hook, what it asks,
+  // how hard (skulls, with the word) and what it pays; and every finished job you're holding, from
+  // any day, to hand in. Up to MAX_JOBS open at once; the sim checks every take and hand-in.
+  function board() {
+    view = 'board';
+    const S = sim.state, offers = sim.world.kind === 'town' ? sim.board.offers() : [], open = sim.board.open();
+    const mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60));
+    const card = (job, st) => {
+      const d = boardWords(job); if (!d) return '';
+      const btn = st === QS.READY ? `<button class="btn in" data-handin="${job.id}">Hand in · ${d.rewards.xp} XP · ${d.rewards.gold} gold</button>`
+        : st === QS.ACTIVE ? '<button class="btn" disabled>Taken · in your Journal</button>'
+        : st === QS.DONE ? '<button class="btn" disabled>Done</button>'
+        : `<button class="btn" data-take="${job.id}" ${open >= MAX_JOBS ? 'disabled' : ''}>Take the job</button>`;
+      return `<div class="job${st === QS.READY ? ' ready' : st === QS.ACTIVE || st === QS.DONE ? ' taken' : ''}">
+        <div class="jt"><b>${esc(d.title)}</b><em class="sk s${d.skulls}">${'☠'.repeat(d.skulls)} ${SKULLS[d.skulls]}</em></div>
+        <div class="by">Posted · ${esc(d.giverName)}</div><div class="hook">${esc(d.hook)}</div>
+        <div class="brief">${esc(d.brief)}</div><div class="rw">Pays ${d.rewards.xp} XP · ${d.rewards.gold} gold</div>${btn}</div>`;
+    };
+    const today = new Set(offers.map((j) => j.id));
+    const readyOld = Object.keys(S.quests).filter((id) => !today.has(id) && S.quests[id].st === QS.READY && sim.quests.def(id)?.kind === 'board').map((id) => sim.quests.def(id));
+    sheet.innerHTML = `${head('Tavern', 'The Lantern Guild board', 'Jobs pinned up by the door. Anyone can post one; the Guild takes a cut. Hand them in here when they’re done.')}
+      <div class="jobs-top">Jobs held ${open}/${MAX_JOBS} · new jobs at dawn, in ${mins} min</div>
+      ${readyOld.length ? `<h3>Done · hand in</h3>${readyOld.map((j) => card(j, QS.READY)).join('')}` : ''}
+      <h3>Today’s jobs</h3>${offers.map((j) => card(j, j.status)).join('') || '<p>The board is bare. Come back at dawn.</p>'}`;
+  }
   // The tavern's hiring board: today's sellswords, and who you already have. Hires beyond the
   // party of three wait on the bench at the inn.
   function hire() {
@@ -164,7 +212,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
       <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
     restDone = false;
   }
-  const VIEWS = { hire, raise, respec, rest };
+  const VIEWS = { board, hire, raise, respec, rest };
   function close() { sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square

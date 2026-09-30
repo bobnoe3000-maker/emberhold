@@ -303,6 +303,37 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 8. The Lantern Guild's board: Tavern → Quest board → take a job → the Journal; hand it in when done
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="board"]').tap();
+    await p.waitForSelector('#hubSheet .job', { timeout: 10000 }).catch(() => null);
+    const jobs = await p.locator('#hubSheet .job').count(), first = await p.locator('#hubSheet .job').first().innerText().catch(() => '');
+    check('board: the Tavern\'s quest board shows today\'s jobs (title, poster, hook, what it asks, skulls with a word, pay)', jobs === 3 && /Posted · /.test(first) && /Easy|Fair|Hard/.test(first) && /Pays \d+ XP · \d+ gold/.test(first), `${jobs} jobs · ${first.split('\n').slice(0, 2).join(' · ')}`);
+    await p.locator('#hubSheet [data-take]').first().tap(); await run(2);
+    const st = await p.evaluate(() => ({ q: globalThis.__sim.state.quests, tracked: globalThis.__sim.state.tracked }));
+    const id = Object.keys(st.q)[0];
+    check('board: "Take the job" is a command the sim takes; the job is tracked', !!id && /^board_0_1_0$/.test(id) && st.tracked === id && (await p.locator('#hubSheet .job.taken').count()) === 1, JSON.stringify(st));
+    await p.locator('#hubSheet .close').tap(); await run(2);
+    await p.locator('#journalBtn').tap();
+    const card = await p.locator('#journal .q').first().innerText().catch(() => '');
+    check('board: the Journal shows the job (Board, its poster and skulls, the objective)', /BOARD|Board/.test(card) && /Easy|Fair|Hard/.test(card) && /0\/\d/.test(card), card.split('\n').slice(0, 3).join(' · '));
+    await p.locator('#journal .x').tap();
+    await p.evaluate((id) => { globalThis.__sim.state.quests[id].st = 2; }, id);     // (done: the sim tests walk it for real)
+    await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="board"]').tap();
+    const gold = await p.evaluate(() => globalThis.__sim.state.counters.gold);
+    await p.locator('#hubSheet [data-handin]').first().tap(); await run(2);
+    const after = await p.evaluate((id) => ({ st: globalThis.__sim.state.quests[id].st, gold: globalThis.__sim.state.counters.gold }), id);
+    check('board: "Hand in" pays once, and no page errors', after.st === 3 && after.gold > gold && errs.length === 0, JSON.stringify(after) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

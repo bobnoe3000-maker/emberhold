@@ -1,0 +1,17 @@
+{
+  "id": "hold",
+  "titles": ["Knock Them Back", "Thin the Barrows", "Hold the Line Below", "A Quieter Road", "Keep Them Down"],
+  "hooks": [
+    { "by": "Maudry Fenn", "text": "\"Every night they come a little further up the road. Go down and make them start from the bottom again.\"" },
+    { "by": "The carters", "text": "\"Three of us saw them marching in step past the mounds. Somebody go and break step for them. We'll stand you a drink. One drink.\"" },
+    { "by": "Wendel, provisions", "text": "\"Nobody buys lamp oil to go down there any more. Make the Barrows safe enough to be merely dangerous again.\"" },
+    { "by": "Osric Hale, for the Watch", "text": "\"The Watch can't spare the men. The Watch can spare the coin, this once. Hold them in the Barrows. O. Hale.\"" },
+    { "by": "The Shrine of the Ember", "text": "\"The dead we raise stay raised because someone keeps the others down. This week, let it be you.\"" },
+    { "by": "The Lantern Guild", "text": "\"Standing job. Go down, stand your ground, come back up. The Guild pays by the fight, less the Guild's cut.\"" }
+  ],
+  "brief": { "one": "Hold a wave in the Old Barrows", "many": "Hold {n} waves in the Old Barrows" },
+  "label": "Waves held in the Old Barrows",
+  "journal": "Go down into the Old Barrows and hold a room against the walking kind.",
+  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "done": "The barrows road was quiet for a night or two."
+}

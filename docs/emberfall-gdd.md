@@ -1,7 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.3 · 2026-09-29 · Plan of record for game design.** v1.3 gives every dungeon floor a stair up,
-one floor at a time, and a site remembers its floors for the visit (§3.1).
+**v1.4 · 2026-09-30 · Plan of record for game design.** v1.4 puts the Lantern Guild's board up
+(§9): five templates, a new board each in-game day, three jobs held at once.
+
+v1.3 gives every dungeon floor a stair up, one floor at a time, and a site remembers its floors
+for the visit (§3.1).
 
 v1.2 adds:
 - attributes and stat points (§4.1);
@@ -412,6 +415,27 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 
 **The quest board** in each town offers 3–5 mini-quests, refreshed at dawn (real time) or when
 three are completed. **Chapter quests** (the main arc) are pinned on top and gated by renown.
+
+**Implemented (v1.4, M4 slice 3).** Thornwick's board hangs in the Tired Mule (Tavern → Quest
+board); `src/sim/board.js`, words in `content/board/`.
+- **When it refreshes:** at in-game dawn, every 24 minutes of play, the first time you're in town
+  that day. Not "when three are completed" yet.
+- **How many jobs:** 3 jobs, or 4 from level 4. The jobs are fixed for the day at the level you
+  had when the board went up.
+- **Holding jobs:** at most **3** open at once. They're taken and handed in only at the board.
+- **Templates:**
+  - **Hold** N waves (3–6);
+  - **Retrieve**: open N chests (1–3);
+  - **Bounty**: slay N elites (1–2);
+  - **Delve**: reach floor F;
+  - **Warden**: hold N waves (2–3) in the stairs-down hall of floor F or deeper.
+
+  All five are in the Old Barrows until M5 adds sites. Rescue, Escort and Investigate wait for
+  captives, escorts and fragments.
+- **No job asks for a place more than two levels above you:** three above defeats you (§ balance).
+- **Skulls:** 1 when the place is at or below your level, 2 at one to two levels above.
+- **Pay** is on top of the fighting: about half its XP again (12 × level per wave of work) and
+  a little more than its gold ((3 + 2 × level) per wave of work), +25 % per skull above one.
 
 A mini-quest is assembled deterministically from (world seed, region, day, guild rank, act
 progress):

@@ -17,6 +17,7 @@ import { createHeroes } from './heroes.js';
 import { createBattle } from './battle.js';
 import { placeNpcs, createTalk } from './npcs.js';
 import { createQuests } from './quests.js';
+import { createBoard } from './board.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -87,7 +88,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
-  const quests = createQuests({ state, bus, getWorld: () => world });   // quests (quests.js): counted from this sim's events
+  // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids
+  /** @type {any} */ let board = null;
+  const quests = createQuests({ state, bus, getWorld: () => world, extraDef: (id) => (board ? board.def(id) : null) });
+  board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
   const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => quests.varsFor(id), effect: (id, args) => quests.effect(id, args) });
 
   function tryMove(p, dx, dy) {
@@ -247,6 +251,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
+    if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon
     if (talk.command(cmd)) return;                         // talk / dialogueEffect / endTalk
     if (cmd.type === 'focus') { battle.focus(cmd.id); return; }
@@ -364,6 +369,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     heroes.tick();
+    board.tick();                                          // a new day's board goes up in town
     talk.tick();
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
@@ -398,6 +404,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
       flags: { ...state.flags },
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
+      ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
     };
   }
 
@@ -436,6 +443,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
     state.sitesEntered = new Set(data.sitesEntered ?? []);
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     quests.restore(data);                                  // v6 and older: none yet
+    board.restore(data);                                   // v8 and older: none yet
     floors = new Map();                                    // v7 and older: none (only the floor you're on)
     for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
@@ -447,7 +455,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale' } = 
 
   // compass destinations for where you are now (read-only; see travel.js)
   function destinations({ inSquare = false } = {}) {
-    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare }), world, !!battle.battle);   // the tracked quest's next place first
+    return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare }), world, battle.battle);   // the tracked quest's next place first
   }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }

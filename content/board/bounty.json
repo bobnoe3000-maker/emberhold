@@ -1,0 +1,17 @@
+{
+  "id": "bounty",
+  "titles": ["Bright Eyes", "The Ones in Front", "Officers of Nothing", "Break the Sergeants"],
+  "hooks": [
+    { "by": "Osric Hale, for the Watch", "text": "\"Some of them have eyes like forge coals and the rest follow them. Put the bright ones down. The Watch pays by the head, when it pays.\"" },
+    { "by": "Maudry Fenn", "text": "\"There's always one out in front, shouting orders nobody's given for three hundred years. Shut it up for me.\"" },
+    { "by": "The Lantern Guild", "text": "\"Bounty, posted and paid: the big ones that lead the walking dead. Proof is you coming back.\"" },
+    { "by": "The Shrine of the Ember", "text": "\"The ones that burn brightest carry the most of the Ember. Put them out gently, if you can. You can't.\"" },
+    { "by": "The carters", "text": "\"A big one stood in the road at dusk and saluted the cart. The horse hasn't been right since.\"" },
+    { "by": "Hale & Daughter", "text": "\"The big ones wear real legion steel, and we'd like to know it can be cut. Find out. The daughter.\"" }
+  ],
+  "brief": { "one": "Slay an elite in the Old Barrows", "many": "Slay {n} elites in the Old Barrows" },
+  "label": "Elites slain in the Old Barrows",
+  "journal": "Hold a room in the Old Barrows until the bright-eyed ones come to lead the rest, then put them down.",
+  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "done": "Fewer of them march in step."
+}

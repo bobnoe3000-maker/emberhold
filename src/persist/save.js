@@ -25,10 +25,12 @@
 //       grew: older data loads with no quests.
 //   v8: stairs up on every floor — floors [[depth, { mods, hp, discovered, visited }]], the other
 //       floors of the current dungeon visit (core.js). Only grew: older data loads with none.
+//   v9: the Lantern Guild's board — board { day, lv } (sim/board.js); board jobs sit in quests under
+//       ids board_<day>_<lv>_<slot>. Only grew: older data loads with no board (it goes up in town).
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

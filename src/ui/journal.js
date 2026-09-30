@@ -2,7 +2,9 @@
 // journal.js — the Journal (quest-lore-system §8): a bottom sheet with the quests you're on
 // (Active) and the ones you've finished (Completed), a tracked-quest line above the party cards, and
 // the quest toasts. The words (titles, step text, objective labels) come from content/quests/;
-// the state from the sim (state.quests, state.tracked), which it only reads. Track and Abandon
+// the state from the sim (state.quests, state.tracked), which it only reads. Board jobs (the
+// Lantern Guild's, sim/board.js) are built by the sim from their ids; their words come from
+// content/board/ through boardwords.js. Track and Abandon
 // are commands the sim checks. Opened from the book button under the compass, or by tapping the
 // tracker line. Text renders as text.
 
@@ -10,6 +12,7 @@ import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
 import { QUESTS, QS } from '../sim/quests.js';
 import { swallow } from './actorart.js';
+import { boardWords, boardReady, SKULLS } from './boardwords.js';
 
 const CSS = `
 #journalBtn { position: fixed; right: 12px; top: 222px; z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
@@ -74,7 +77,7 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
   return html`<div class=${'q' + (tracked ? ' tracked' : '')}>
     <span class="kind">${KIND[def.kind] || def.kind}</span>
     <h3>${def.title}</h3>
-    <div class="giver">${npcName(def.giver)} · level ${def.level[0]}–${def.level[1]}</div>
+    <div class="giver">${def.giverName || npcName(def.giver)} · level ${def.level[0]}${def.level[1] !== def.level[0] ? '–' + def.level[1] : ''}${def.skulls ? ' · ' + '☠'.repeat(def.skulls) + ' ' + SKULLS[def.skulls] : ''}</div>
     <div class=${'step' + (now.ready ? ' ready' : '')}>${now.text}</div>
     ${now.objectives.map((o) => html`<div key=${o.label} class=${'obj' + (o.n >= o.of ? ' done' : '')}><span>${o.label}</span><span class="bar"><i style=${`width:${Math.round((100 * o.n) / o.of)}%`}></i></span><span class="n">${o.n}/${o.of}</span></div>`)}
     <div class="rew">Reward · ${def.rewards.xp} XP · ${def.rewards.gold} gold</div>
@@ -85,10 +88,10 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
   </div>`;
 }
 
-function Journal({ sim, defs, npcName, onClose }) {
+function Journal({ sim, defOf, npcName, onClose }) {
   const [tab, setTab] = useState('active');
   const push = (cmd) => sim.commands.push(cmd);
-  const all = Object.entries(sim.state.quests || {}).filter(([id]) => defs[id]);
+  const all = Object.entries(sim.state.quests || {}).filter(([id]) => defOf(id));
   const active = all.filter(([, q]) => q.st === QS.ACTIVE || q.st === QS.READY), done = all.filter(([, q]) => q.st === QS.DONE);
   return html`<div id="journal">
     <div class="top"><h2>Journal</h2><button class="x" aria-label="Close" onClick=${onClose}>✕</button></div>
@@ -97,11 +100,11 @@ function Journal({ sim, defs, npcName, onClose }) {
       <button class=${tab === 'done' ? 'on' : ''} onClick=${() => setTab('done')}>Completed · ${done.length}</button>
     </div>
     ${tab === 'active'
-      ? (active.length ? active.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defs[id]} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
+      ? (active.length ? active.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
           onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)
-        : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something.</div>`)
-      : (done.length ? done.map(([id]) => html`<div key=${id} class="q"><span class="kind">${KIND[defs[id].kind]}</span><h3>${defs[id].title}</h3>
-          <div class="summary">${defs[id].done}</div><div class="rew">Earned · ${defs[id].rewards.xp} XP · ${defs[id].rewards.gold} gold</div></div>`)
+        : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something, and the Lantern Guild's board by her door always does.</div>`)
+      : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class="q"><span class="kind">${KIND[d.kind]}</span><h3>${d.title}</h3>
+          <div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
         : html`<div class="empty">Nothing finished yet.</div>`)}
   </div>`;
 }
@@ -116,8 +119,18 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   for (const el of [btn, track, wrap]) swallow(el);
   /** @type {Record<string, any>} */
   const defs = {};
+  /** @type {Map<string, any>} */
+  const jobs = new Map();                       // board jobs' words, once per id
+  /** a quest's words: written (content/quests) or a board job's (content/board) @param {string} id */
+  const defOf = (id) => {
+    if (defs[id]) return defs[id];
+    if (jobs.has(id)) return jobs.get(id);
+    const j = sim.quests.def(id), d = j && j.kind === 'board' ? boardWords(j) : null;
+    if (d) jobs.set(id, d);
+    return d;
+  };
   let open = false;
-  const paint = () => { if (open) render(html`<${Journal} sim=${sim} defs=${defs} npcName=${npcName} onClose=${close} />`, wrap); };
+  const paint = () => { if (open) render(html`<${Journal} sim=${sim} defOf=${defOf} npcName=${npcName} onClose=${close} />`, wrap); };
   function close() { open = false; wrap.classList.remove('on'); render(null, wrap); }
   function show() { open = true; wrap.classList.add('on'); btn.classList.remove('due'); paint(); }
   btn.addEventListener('click', show); track.addEventListener('click', show);
@@ -135,7 +148,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
     requestAnimationFrame(place);
   })();
   function paintTracker() {
-    const id = sim.state.tracked, q = id && sim.state.quests[id], def = id && defs[id];
+    const id = sim.state.tracked, q = id && sim.state.quests[id], def = id && defOf(id);
     if (!q || !def || q.st === QS.DONE) { track.classList.remove('on'); return; }
     const now = questNow(def, q);
     track.textContent = '';
@@ -149,7 +162,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   /** @type {Map<string, { st: number, step: number, n: number[] }>} */
   const seen = new Map();                       // id → the state and counts last seen (so a repaint never repeats a toast)
   sim.bus.on('questChanged', (e) => {
-    const def = e.id && defs[e.id], was = e.id && seen.get(e.id), n = e.progress || [];
+    const def = e.id && defOf(e.id), was = e.id && seen.get(e.id), n = e.progress || [];
     if (def && e.state === QS.ACTIVE && !was) { toast(`Quest accepted · ${def.title}`, 2200); btn.classList.add('due'); }
     else if (def && e.state === QS.ACTIVE && was && was.step === e.step) {
       const i = n.findIndex((v, k) => v > (was.n[k] || 0)), o = i >= 0 && def.steps[e.step].objectives[i];
@@ -158,11 +171,11 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
     if (e.id) seen.set(e.id, { st: e.state, step: e.step, n: n.slice() });
     paintTracker(); paint();
   });
-  sim.bus.on('questReward', (r) => { if (defs[r.id]) toast(`${defs[r.id].title} · +${r.xp} XP · +${r.gold} gold`, 2600); });
+  sim.bus.on('questReward', (r) => { const d = defOf(r.id); if (d) toast(`${d.title} · +${r.xp} XP · +${r.gold} gold`, 2600); });
   sim.bus.on('questTracked', () => { paintTracker(); paint(); });
 
-  // the words: one file per quest the sim knows
-  const ready = Promise.all(Object.keys(QUESTS).map((id) => fetch(`./content/quests/${id}.json`).then((r) => r.json()).then((d) => { defs[id] = d; }).catch(() => {})))
+  // the words: one file per quest the sim knows, and the board's templates
+  const ready = Promise.all([boardReady, ...Object.keys(QUESTS).map((id) => fetch(`./content/quests/${id}.json`).then((r) => r.json()).then((d) => { defs[id] = d; }).catch(() => {}))])
     .then(() => { for (const [id, q] of Object.entries(sim.state.quests || {})) seen.set(id, { st: q.st, step: q.step, n: q.n.slice() }); paintTracker(); });
-  return { open: show, close, ready, title: (/** @type {string} */ id) => (defs[id] ? defs[id].title : ''), get isOpen() { return open; } };
+  return { open: show, close, ready, def: defOf, title: (/** @type {string} */ id) => (defOf(id) ? defOf(id).title : ''), get isOpen() { return open; } };
 }

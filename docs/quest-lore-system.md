@@ -93,6 +93,30 @@ examples are abridged.
 
 ### 4.2 Side-quest template (board / NPC)
 
+**Implemented for the board (M4 slice 3, 2026-09-30).** It's simpler than the sketch below,
+and deliberately so:
+- **What the sim owns:** each template's shape, in `src/sim/board.js` `BOARD`. That covers which
+  objective it sets, how its sizes are drawn, how much work it is and how deep it may send you.
+- **What the content owns:** the words, one file per template in `content/board/<template>.json`
+  (schema `board.schema.json`): 4+ titles, 6+ hooks each signed by a canon poster (world doc §4),
+  the brief, the objective label, and the journal, ready and done lines.
+- **Slots:** only `{n}` (a number) and `{floor}` (a word from the file's `ordinals`), so every
+  line stays grammatical.
+- **Ids:** a job is a pure function of (world seed, in-game day, the hero's level when the board
+  went up, slot). Its id `board_<day>_<lv>_<slot>` rebuilds it, so the save keeps only ids and
+  counters. `restore` drops an id from a day to come or above the hero's level.
+- **Words:** the UI picks the title and hook from the job's own draws (`job.pick`, in
+  `src/ui/boardwords.js`), so a job always reads the same.
+- **Commands:** `boardAccept { id }` and `boardTurnIn { id }`, town only, at most 3 open. The
+  Journal keeps the last 12 finished jobs.
+- **New objective types** (§4.3):
+  - `elites` counts the `slain { elite }` event (battle.js);
+  - `reach` counts floors reached going down (`levelChanged` without a scene);
+  - `waves` gains `hall` (only in the floor's stairs-down room) and `floor` (that floor or deeper),
+    and `wave { cleared }` now carries its `room`.
+- **Tests:** `test/board.test.mjs` walks every template solo on the compass alone; browser
+  section 8.
+
 ```json
 {
   "id": "tpl_bounty",
@@ -205,7 +229,8 @@ fragment. Two players find the same truth in different places (world doc §7).
 - The compass's first row is the tracked quest's next place (`quests.compass`). There's none
   while you're in the fight it wants.
 - **"Reach a floor" objectives** can come now: every floor has a stair back up, one floor at a
-  time (GDD §3.1). The first errand predates that and asks for a chest instead.
+  time (GDD §3.1). The first errand predates that and asks for a chest instead. The board's Delve
+  jobs use them (`reach`, §4.2).
 - The first quest is Maudry's errand, *The Long Way Round*: hold 4 waves and open a chest in
   the Old Barrows. The Act I chapter (*Smoke over the Vale*, the Tithe Mill) waits for its
   site and the Redhand enemies.

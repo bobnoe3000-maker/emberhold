@@ -1,0 +1,17 @@
+{
+  "id": "retrieve",
+  "titles": ["Grave Goods", "Legion Stores", "Lids Off", "Whatever's in the Boxes"],
+  "hooks": [
+    { "by": "Maudry Fenn", "text": "\"They buried the legions with their pay chests. The legions aren't spending it.\"" },
+    { "by": "Hale & Daughter", "text": "\"Old legion iron is better than anything we can buy. Bring up what's in their chests and we'll make something of it. The daughter.\"" },
+    { "by": "The Lantern Guild", "text": "\"A collector in Greyholt pays for anything with the old stamp on it. Don't ask which collector.\"" },
+    { "by": "Wendel, provisions", "text": "\"If there's rope down there, it's older than my rope, and I want to know how it held up.\"" },
+    { "by": "The Shrine of the Ember", "text": "\"The dead were buried with things for the road. They have finished with the road.\"" },
+    { "by": "The carters", "text": "\"One of us dropped a strongbox down a barrow hole last week. Something has since carried it further in.\"" }
+  ],
+  "brief": { "one": "Open a chest in the Old Barrows", "many": "Open {n} chests in the Old Barrows" },
+  "label": "Chests opened in the Old Barrows",
+  "journal": "Go down into the Old Barrows and open their chests.",
+  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "done": "Whatever was in the boxes is somebody else's problem now."
+}

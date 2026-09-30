@@ -1,0 +1,18 @@
+{
+  "id": "delve",
+  "titles": ["Further Down", "Mind the Stairs", "How Deep It Goes", "Below the Below"],
+  "hooks": [
+    { "by": "The Lantern Guild", "text": "\"The Guild wants to know how deep the Barrows go. Walk down until you'd rather not, then go one more.\"" },
+    { "by": "Maudry Fenn", "text": "\"My regulars argue every night about how deep it goes. Settle it, so I can stop hearing about it.\"" },
+    { "by": "Osric Hale, for the Watch", "text": "\"Before the Watch sends anyone down, it wants to know what it would be sending them into. So, you first.\"" },
+    { "by": "The Shrine of the Ember", "text": "\"They say the Ember's light is stronger the deeper you go. Go and see whether they are right, and come back to tell us.\"" },
+    { "by": "Wendel, provisions", "text": "\"I'll sell rope by the yard to whoever goes next. Tell me how many yards.\"" },
+    { "by": "The carters", "text": "\"Something down there hums. You can feel it through the axle. Find where it's coming from.\"" }
+  ],
+  "brief": { "one": "Reach the {floor} floor of the Old Barrows", "many": "Reach the {floor} floor of the Old Barrows" },
+  "label": "Floor reached in the Old Barrows",
+  "journal": "Take the stairs down in the Old Barrows, floor by floor, to the {floor} floor.",
+  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "done": "You know how deep it goes. Deeper than that, probably.",
+  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+}

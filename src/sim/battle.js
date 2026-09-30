@@ -224,6 +224,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.elite) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
+    bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
   }
   // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone
   function defeat(w) {
@@ -588,7 +589,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = LULL; battle.waited = 0;
-          bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true });
+          bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room });
           onDrop('wave', battle.level, p.x, p.y);                // now and then a fallen wave leaves something behind
           for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
