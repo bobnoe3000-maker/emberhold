@@ -21,7 +21,8 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc } from './fx.js';
-import { siteOpen } from '../sim/sites.js';
+import { siteOpen, bossAt } from '../sim/sites.js';
+import { familyOf } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 
@@ -35,6 +36,12 @@ function dir8(sdx, sdy) {
   return ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;
 }
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
+// every enemy kind's baked look (battle.js ENEMIES and the bosses): the Ashbound, the Redhand Company, the
+// Cinder Cult. The Ashbound load with the game; the others when a floor that has them loads.
+const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', rogue: 'skeleton_rogue', mage: 'skeleton_mage',
+  cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
+  redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard' };
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2 };        // measured from the baked feet: ~50 px / ~36 px of screen travel per cycle
@@ -239,7 +246,14 @@ export function createRenderer(canvas, sim, input) {
   let heroAtlas = null, outMap = null;
   const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
   const fx = createFX();                               // weapon trails / glints / cast shimmer + hit sparks (fx.js)
-  const skelAtlases = [];
+  const skelAtlases = [], enemyAtlases = new Map();   // actor name → atlas, or a promise while it loads
+  const enemyAtlas = (kind) => {
+    const name = ENEMY_ACTOR[kind] || 'skeleton_minion', a = enemyAtlases.get(name);
+    if (a === undefined) enemyAtlases.set(name, loadActorAtlas(name).then((x) => { enemyAtlases.set(name, x); return x; }).catch(() => { enemyAtlases.set(name, null); }));
+    return a && a.cells ? a : null;
+  };
+  // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
+  const preloadFamily = () => { const w = sim.world; if (w.kind !== 'dungeon') return; const F = familyOf(w); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
@@ -268,7 +282,7 @@ export function createRenderer(canvas, sim, input) {
   }
   const firstLoads = [];                               // what the boot's loading screen waits for (`ready`)
   firstLoads.push(loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {}));   // the default look; a created hero's own look loads via partyAtlas
-  SKELETONS.forEach((n, i) => firstLoads.push(loadActorAtlas(n).then((a) => { skelAtlases[i] = a; }).catch(() => {})));
+  SKELETONS.forEach((n, i) => firstLoads.push(loadActorAtlas(n).then((a) => { skelAtlases[i] = a; enemyAtlases.set(n, a); }).catch(() => {})));
 
   // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
   // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
@@ -723,7 +737,8 @@ export function createRenderer(canvas, sim, input) {
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'The Old Barrows'} · depth ${sim.state.depth + 1}` : sim.world.name);
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
-  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  preloadFamily();
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
@@ -818,20 +833,20 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near ? ix - qx : -1, faceY: walking ? n.fy : near ? iy - qy : 1, facing: true, dir0: 2, stride: STRIDE.hero, seed: 0.61 });
       draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a });
     }
-    // the Ashbound: one atlas per archetype; they rise from the ground, and the slain collapse, lie, then fade
-    const SK = { warrior: 0, minion: 1, rogue: 2, mage: 3 };
+    // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {
-      const skelAtlas = skelAtlases[SK[e.kind] ?? 1];
+      const skelAtlas = enemyAtlas(e.kind);
       if (!skelAtlas) continue;
+      const undead = UNDEAD_LOOK.has(skelAtlas.name);
       const exi = lerp(e, 'x'), eyi = lerp(e, 'y');
       const ez = heightAt(sim.world, Math.floor(exi), Math.floor(eyi));
       const ep = project(exi, eyi, ez), ex = ox + ep.sx, ey = oy + ep.sy;
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
       const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
-        spawnP: e.spawn > 0 ? 1 - e.spawn / 0.5 : undefined, stride: STRIDE.skel, seed: (e.id * 0.37) % 1 });
+        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : STRIDE.hero, seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: fade }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a });
+      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {

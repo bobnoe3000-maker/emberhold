@@ -39,7 +39,9 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
 2. **The Redhand Company.** Three archetypes baked from recoloured hero models (swatches, not CSS
    filters): cutthroat (twin knives), brute (great-axe), crossbowman. Their elite is a
    Sergeant. Stats mirror the Ashbound roles so the difficulty contract holds. The renderer maps
-   enemy kinds to actor atlases through one table.
+   enemy kinds to actor atlases through one table. **Done** (2026-09-30): also baked the Cinder
+   acolyte, the three bosses and Brannoc; per-family furniture (storehouses, camps, a nave of pews);
+   `test/redhand.test.mjs`; `roomlv.mjs --site`.
 3. **Bosses.** A boss hall spawns its boss with an escort and holds no further waves once the
    boss falls. Each boss has one signature mechanic:
    - *Redhand Captain* — **Call to Arms**: at 2/3 and 1/3 HP he calls two Redhand to his side and

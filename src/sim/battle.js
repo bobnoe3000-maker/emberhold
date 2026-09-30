@@ -33,6 +33,7 @@ import { abilityMods } from './items.js';
 import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
+import { siteOf } from './sites.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
@@ -87,7 +88,33 @@ const ENEMIES = {
   rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 6.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
   mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 };
+// The Redhand Company (world doc §8, M5): deserters turned bandits, baked from recoloured hero models.
+// Each mirrors an Ashbound role's strength (the difficulty contract holds whoever fills the wave):
+// the cutthroat a minion's, quicker and lighter; the brute a warrior's (and their elite, a Sergeant);
+// the crossbowman a rogue's. The Cinder Cult's acolyte stands in for the mage in the Sunken Chapel.
+Object.assign(ENEMIES, {
+  cutthroat: { hp: 33, atk: 7.5, def: 3, crit: 9, dodge: 8, interval: 1.1, range: 2.8, speed: 3.6, xp: 10, gold: 2 },
+  brute:     { hp: 58, atk: 9.5, def: 5, crit: 5, dodge: 2,  interval: 1.5, range: 3.0, speed: 2.8, xp: 14, gold: 3 },
+  crossbow:  { hp: 36, atk: 9.3, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 6.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  acolyte:   { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 7.0, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
+// Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
+// (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
+// and whether they're Ashbound (Turn Undead reaches only those). Wickham Keep's second floor is the
+// diggers': Redhand and the Ashbound they dug up. `families`: per floor, where a site's differ.
+/** @type {Record<string, { melee: [string, string], ranged: [string, string], elite: string, undead: (k: string) => boolean }>} */
+export const FAMILIES = {
+  ashbound: { melee: ['minion', 'warrior'], ranged: ['rogue', 'mage'], elite: 'warrior', undead: () => true },
+  redhand: { melee: ['cutthroat', 'brute'], ranged: ['crossbow', 'crossbow'], elite: 'brute', undead: () => false },
+  diggers: { melee: ['cutthroat', 'minion'], ranged: ['crossbow', 'rogue'], elite: 'brute', undead: (k) => k === 'minion' || k === 'rogue' },
+  chapel: { melee: ['minion', 'warrior'], ranged: ['rogue', 'acolyte'], elite: 'warrior', undead: (k) => k !== 'acolyte' },
+};
+/** the foes a nova reaches from `m`: within its radius, standing (not rising), and Ashbound only for
+ * Turn Undead (`undead`) @param {any} A @param {any[]} foes @param {any} m */
+export const novaTargets = (A, foes, m) => foes.filter((o) => !o.dead && o.hp > 0 && !(o.spawn > 0) && (!A.undead || o.undead) && hypot(o.x - m.x, o.y - m.y) < A.radius);
+/** the family filling this floor's waves @param {any} w */
+export const familyOf = (w) => { const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound; };
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
@@ -154,7 +181,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     const tough = (1 + b.tide) * (1 + PREMIUM * Math.max(0, lvl - 3));
     const ranged = Math.max(b.wave % 2, Math.floor(n / 3));   // one in every second wave at least: two melee foes alone never touched a kiting mage
-    const kinds = Array.from({ length: n }, (_, i) => i < ranged ? (rng() < 0.5 ? 'rogue' : 'mage') : rng() < 0.55 ? 'minion' : 'warrior');
+    const F = familyOf(w);
+    const kinds = Array.from({ length: n }, (_, i) => i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1]);
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring
     for (let i = 0; i < n; i++) {
@@ -163,7 +191,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0]; x = c[0] + 0.5; y = c[1] + 0.5; if (hypot(x - p.x, y - p.y) > 9 && reachable(c)) break; }
       const elite = eliteWave && i === n - 1;
       const hp = Math.round(E.hp * scale * tough * (elite ? 2.5 : 1));
-      w.enemies.push({ id: nextId++, kind: elite ? 'warrior' : kind, elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * tough * (elite ? 1.3 : 1), def: E.def * scale,
+      const k = elite ? F.elite : kind;
+      w.enemies.push({ id: nextId++, kind: k, undead: F.undead(k), elite, lvl, x, y, hp, maxHp: hp, atk: E.atk * atkScale * tough * (elite ? 1.3 : 1), def: E.def * scale,
         crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: E.speed, bolt: E.bolt,
         xp: E.xp * (elite ? 3 : 1), gold: E.gold * (elite ? 4 : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 });
     }
@@ -315,7 +344,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (!target) continue;
       } else if (A.kind === 'bless') {
         if (foes.length < 2 || state.party.some((q) => q.buff && q.buff.bless > 0)) continue;
-      } else if (A.kind === 'nova') { if (foes.filter((e) => hypot(e.x - m.x, e.y - m.y) < A.radius).length < 2) continue; }
+      } else if (A.kind === 'nova') { if (novaTargets(A, foes, m).length < 2) continue; }
       m.mp -= c.cost; m.act = 0.55; m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
       bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
       const tg = target;
@@ -345,7 +374,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'ward', x: tgt.x, y: tgt.y, amount: tgt.ward });
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
-      for (const o of w.enemies) if (!o.dead && o.hp > 0 && !(o.spawn > 0) && hypot(o.x - m.x, o.y - m.y) < A.radius) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
+      for (const o of novaTargets(A, w.enemies, m)) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
       bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
     }
   }

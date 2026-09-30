@@ -177,6 +177,51 @@ export function voxBones(rng) {
   return bakeVox(vox, S, S, H, ELIT.bone, 0);
 }
 
+// ---- the living's furniture (M5: the Redhand's mill and keep, the Sunken Chapel) ----
+// Crate stack: one or two plank crates with dark edge battens (trim), sometimes a smaller one on top.
+export function voxCrates(rng) {
+  const S = 11, H = 12, vox = new Uint8Array(S * S * H), two = rng() < 0.6;
+  const box = (x0, y0, z0, n) => { for (let z = z0; z < z0 + n; z++) for (let y = y0; y < y0 + n; y++) for (let x = x0; x < x0 + n; x++) {
+    const ex = (x === x0 || x === x0 + n - 1) + (y === y0 || y === y0 + n - 1) + (z === z0 || z === z0 + n - 1);
+    vox[(z * S + y) * S + x] = ex >= 2 ? 3 : 1; } };
+  box(1, 1, 0, 7); if (two) box(3, 3, 7, 5);
+  return bakeVox(vox, S, S, H, ELIT.wood, 0, ELIT.obsid);
+}
+// Barrels: two or three bellied staves-and-hoops barrels, standing together.
+export function voxBarrels(rng) {
+  const S = 12, H = 9, vox = new Uint8Array(S * S * H), n = 2 + (rng() < 0.5 ? 1 : 0);
+  for (const [cx, cy] of [[3.5, 3.5], [8, 4], [5, 8.5]].slice(0, n)) for (let z = 0; z < 8; z++) {
+    const r = 2.4 + Math.sin((z / 7) * Math.PI) * 0.6, hoop = z === 1 || z === 6;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - cx, y - cy) < r) vox[(z * S + y) * S + x] = hoop ? 3 : 1;
+  }
+  return bakeVox(vox, S, S, H, ELIT.wood, 0, ELIT.obsid);
+}
+// Grain sacks: a slumped heap of tied sacks (the tithe).
+export function voxSacks(rng) {
+  const S = 12, H = 7, vox = new Uint8Array(S * S * H);
+  for (const [cx, cy, cz] of [[4, 4, 0], [8, 5, 0], [5, 8, 0], [6, 5.5, 3]]) for (let z = cz; z < cz + 4; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    if (Math.hypot((x - cx) * 0.9, (y - cy) * 1.1, (z - cz - 1.5) * 1.3) < 2.6 + (rng() - 0.5) * 0.3) vox[(z * S + y) * S + x] = 1;
+  }
+  return bakeVox(vox, S, S, H, ELIT.sand, 0);
+}
+// A bedroll by the wall: a flat rolled blanket and a pack.
+export function voxBedroll() {
+  const SX = 6, SY = 12, H = 4, vox = new Uint8Array(SX * SY * H);
+  for (let y = 1; y < 11; y++) for (let x = 1; x < 5; x++) vox[y * SX + x] = 1;
+  for (let z = 1; z < 3; z++) for (let y = 1; y < 3; y++) for (let x = 1; x < 5; x++) vox[(z * SY + y) * SX + x] = 3;   // the rolled end
+  for (let z = 1; z < 4; z++) for (let y = 8; y < 11; y++) for (let x = 2; x < 5; x++) vox[(z * SY + y) * SX + x] = 1;   // the pack
+  return bakeVox(vox, SX, SY, H, ELIT.flesh, 0, ELIT.wood);
+}
+// A chapel pew: a long bench with a back, dark with damp.
+export function voxPew() {
+  const SX = 5, SY = 14, H = 8, vox = new Uint8Array(SX * SY * H);
+  for (let z = 0; z < H; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
+    const leg = z < 3 && (y === 1 || y === SY - 2) && x >= 1 && x <= 3, seat = z === 3 && x >= 1 && x <= 3 && y >= 1 && y <= SY - 2, back = z >= 3 && x === 4 && y >= 1 && y <= SY - 2;
+    if (leg || seat || back) vox[(z * SY + y) * SX + x] = back && z === H - 1 ? 3 : 1;
+  }
+  return bakeVox(vox, SX, SY, H, ELIT.wood, 0, ELIT.obsid);
+}
+
 // ---- deterministic prop set, keyed by world seed (same variant per tile) ----
 export function buildProps(seed) {
   return {
@@ -191,6 +236,11 @@ export function buildProps(seed) {
     brokenpillar: [0, 1, 2].map((v) => voxPillar(mulberry32((seed * 19 + v * 71 + 9) >>> 0), true)),
     sarcophagus: [voxSarcophagus()],
     bones: [0, 1, 2].map((v) => voxBones(mulberry32((seed * 23 + v * 37 + 3) >>> 0))),
+    crates: [0, 1, 2].map((v) => voxCrates(mulberry32((seed * 31 + v * 41 + 11) >>> 0))),
+    barrels: [0, 1].map((v) => voxBarrels(mulberry32((seed * 37 + v * 43 + 13) >>> 0))),
+    sacks: [0, 1].map((v) => voxSacks(mulberry32((seed * 41 + v * 47 + 17) >>> 0))),
+    bedroll: [voxBedroll()],
+    pew: [voxPew()],
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.

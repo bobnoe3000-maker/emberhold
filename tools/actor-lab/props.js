@@ -76,6 +76,21 @@ export const PROPS = {
     const c = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.08, 0.08), brass); c.position.set(0, 0.27, 0.2); g.add(c);
     return g;
   },
+  // the Standard of the Third Legion (world doc §10.2): a tall pole, a crossbar, a legion-red banner
+  // gone to tatters and an ember-gold boss at its heart, a bronze finial on top. Held like a spear.
+  standard: () => {
+    const g = new THREE.Group(); g.name = 'Standard';
+    const wood = mat(0x3a2a1c, 0, 0.9), bronze = mat(0xa8803a, 0.8, 0.4), cloth = mat(0x7a2418, 0, 0.95), ember = new THREE.MeshStandardMaterial({ color: 0xf0b050, emissive: 0xa05010, emissiveIntensity: 1.0, roughness: 0.4 });
+    // (it runs along −y from the grip: a hand at rest points its weapon down, and a standard is carried
+    // upright, so its banner goes on the grip's other side)
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 3.0, 8), wood); pole.position.y = -0.9; g.add(pole);
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.9, 8), bronze); bar.rotation.z = Math.PI / 2; bar.position.y = -2.2; g.add(bar);
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.34, 6), bronze); fin.rotation.z = Math.PI; fin.position.y = -2.56; g.add(fin);
+    // the banner hangs from the bar (toward the grip) in three tattered tongues
+    for (const [x, len] of [[-0.28, 1.0], [0, 1.2], [0.28, 0.9]]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.28, len, 0.02), cloth); t.position.set(x, -2.2 + len / 2, 0.04); g.add(t); }
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.03, 14), ember); disc.rotation.x = Math.PI / 2; disc.position.set(0, -1.78, 0.07); g.add(disc);
+    return g;
+  },
   // a pewter ale mug, held by its handle (Maudry Fenn's, the Tired Mule): body along +y above the grip
   mug: () => {
     const g = new THREE.Group(); g.name = 'Mug';

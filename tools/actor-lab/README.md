@@ -81,7 +81,7 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 |---|---|
 | `lab.js` / `lab.html` | three.js harness: loadouts, weapon attachment, recolor, glowing eyes, heroic pass, render |
 | `faces.js` / `faces.json` / `faces.cjs` | the modular face kit (critic pass 4): KayKit heads split by swatch, a stitched bald skull, and eyes, brows, noses, mouths, hair, facial hair and marks placed on it; presets; the face board |
-| `props.js` | what the kits lack, shared by figures and icons: code-built props (the cleric's mace, Maudry's mug) and the swatch repaint |
+| `props.js` | what the kits lack, shared by figures and icons: code-built props (the cleric's mace, Maudry's mug, the Standard of the Third Legion) and the swatch repaint |
 | `variants.json` | the roster: 10 hero loadouts (fighter/rogue/mage) + 8 enemy NPCs |
 | `bake.cjs` / `bake.json` | bake the shipped actor atlases into `assets/actors/` |
 | `icons.cjs` / `iconlab.js` / `icons.json` | bake the item icons into `assets/items/` (one kit mesh or code-built trinket per icon, 96 px) |

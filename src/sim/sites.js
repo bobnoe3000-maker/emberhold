@@ -11,12 +11,12 @@
 // `hidden` sites can't be entered, and don't show on the Vale, until revealed (state.revealed:
 // a chapter's reward, or the Chronicle).
 
-/** @typedef {{ name: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, bosses?: Record<number, string>, mix: number }} SiteDef */
+/** @typedef {{ name: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, bosses?: Record<number, string>, families?: string[], mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   barrows: { name: 'The Old Barrows', theme: null, base: 1, perFloor: 3, floors: 0, family: 'ashbound', rooms: null, bosses: { 3: 'standard' }, mix: 0 },
   tithe_mill: { name: 'The Tithe Mill', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], mix: 0x3117 },
-  wickham_keep: { name: 'Wickham Keep', theme: 'dread', base: 3, perFloor: 1, floors: 2, family: 'redhand', rooms: [6, 6], hidden: true, bosses: { 2: 'redhand_captain' }, mix: 0x7e40 },
+  wickham_keep: { name: 'Wickham Keep', theme: 'dread', base: 3, perFloor: 1, floors: 2, family: 'redhand', families: ['redhand', 'diggers'], rooms: [6, 6], hidden: true, bosses: { 2: 'redhand_captain' }, mix: 0x7e40 },
   sunken_chapel: { name: 'The Sunken Chapel', theme: 'poison', base: 5, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], bosses: { 2: 'robed_stranger' }, mix: 0xc4a9 },
   ninth_milestone: { name: 'The Ninth Milestone', theme: 'chasm', base: 8, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, mix: 0x9e11 },
 };

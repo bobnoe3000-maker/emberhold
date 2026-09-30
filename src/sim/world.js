@@ -28,7 +28,7 @@ const K = (x, y) => x + ',' + y;
 // site (sites.js): which dungeon this is — its look, its rooms, its levels and whether a floor
 // goes on down. The Old Barrows' look is still picked from the seed.
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
-  const S = siteOf(site);
+  const S = siteOf(site);   // (its furniture below: `human`, `themes`)
   const th = theme || S.theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th, { rooms: S.rooms });
   const world = {
@@ -48,7 +48,11 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   //   • a chest and sometimes a shrine sit against a wall, away from the doorways.
   // All snap onto solid, open floor; the descent gate goes in the farthest room.
   const prng = mulberry32(streamSeed(seed, 321));
-  const decor = ['spire', 'monolith', 'totem'];
+  // a site's furniture (M5): the living keep stores and camps where the dead keep crypts. The same
+  // draws either way, so an Old Barrows floor is dressed as it always was.
+  const human = S.family === 'redhand';
+  const decor = human ? ['crates', 'barrels', 'sacks'] : ['spire', 'monolith', 'totem'];
+  const themes = human ? ['storehouse', 'camp', 'colonnade'] : S.family === 'chapel' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
     if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }
@@ -94,9 +98,17 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     if (r === level.descentRoom) {
       const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
     } else if (r !== level.entrance) {
-      const theme = ['colonnade', 'crypt', 'ossuary'][(prng() * 3) | 0];
+      const theme = themes[(prng() * 3) | 0];
       r.theme = theme;
-      if (theme === 'colonnade') {
+      if (theme === 'storehouse') {                              // stacks of crates, barrels and the tithe's sacks down both long walls
+        for (const side of [-1, 1]) for (let u = -L * 0.55; u <= L * 0.55 + 0.01; u += 6) putAt(u, side * Wd * 0.55, ['crates', 'barrels', 'sacks'][(prng() * 3) | 0]);
+      } else if (theme === 'camp') {                             // bedrolls by the walls, a fire either end, the loot piled up
+        for (let i = 0; i < 6; i++) { const q = pickEdge(6); if (q) place(q[0], q[1], 'bedroll'); }
+        for (const side of [-1, 1]) putAt(side * L * 0.4, 0, 'brazier');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(8); if (q) place(q[0], q[1], 'crates'); }
+      } else if (theme === 'nave') {                             // two ranks of pews either side of an aisle
+        for (const side of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, side * Wd * v, 'pew');
+      } else if (theme === 'colonnade') {
         for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 7) putAt(u, side * Wd * 0.55, prng() < 0.25 ? 'brokenpillar' : 'pillar');
       } else if (theme === 'crypt') {
         for (const side of [-1, 1]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 6) putAt(u, side * Wd * 0.5, 'sarcophagus');

@@ -603,5 +603,280 @@
    "Knight_Cape"
   ],
   "recolor": "sepia(0.5) hue-rotate(50deg) saturate(0.7) brightness(0.82) contrast(1.2)"
+ },
+ {
+  "id": "RH1",
+  "cls": "Redhand",
+  "label": "Redhand cutthroat \u00b7 twin knives",
+  "model": "Rogue",
+  "show": [
+   "Knife",
+   "Knife_Offhand"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a2a20",
+     "#3a100c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#241a10"
+    ]
+   }
+  ],
+  "face": "sellsword"
+ },
+ {
+  "id": "RH2",
+  "cls": "Redhand",
+  "label": "Redhand brute \u00b7 great-axe",
+  "model": "Barbarian",
+  "show": [
+   "2H_Axe",
+   "Barbarian_Hat"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#241a10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#8a2a20",
+     "#3a100c"
+    ]
+   }
+  ],
+  "face": "bearclan",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ]
+ },
+ {
+  "id": "RH3",
+  "cls": "Redhand",
+  "label": "Redhand crossbowman \u00b7 heavy crossbow",
+  "model": "Rogue_Hooded",
+  "show": [
+   "2H_Crossbow"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a2a20",
+     "#3a100c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#241a10"
+    ]
+   }
+  ],
+  "face": "hooded",
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "CA1",
+  "cls": "Cult",
+  "label": "Cinder acolyte \u00b7 staff, charcoal robes with ember trim",
+  "model": "Mage",
+  "show": [
+   "2H_Staff",
+   "Mage_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3034",
+     "#141012"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#c8642a",
+     "#5a200a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   }
+  ],
+  "face": "hedge_mage"
+ },
+ {
+  "id": "B1",
+  "cls": "Boss",
+  "label": "Captain Garrow \u00b7 the Redhand Company",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Spike_Shield",
+   "Knight_Helmet",
+   "Knight_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#9a5444",
+     "#2e120c"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b0301e",
+     "#420e08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     1
+    ],
+    "to": [
+     "#6a4a34",
+     "#2a1a10"
+    ]
+   }
+  ],
+  "face": "watchman"
+ },
+ {
+  "id": "B2",
+  "cls": "Boss",
+  "label": "The Robed Stranger \u00b7 Cinder Cult",
+  "model": "Rogue_Hooded",
+  "show": [
+   "Rogue_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e2428",
+     "#0c0808"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a2a1a",
+     "#1a0a06"
+    ]
+   }
+  ],
+  "face": "hooded",
+  "hold": {
+   "handslot.r": "staff"
+  }
+ },
+ {
+  "id": "B3",
+  "cls": "Boss",
+  "label": "The Standard of the Third Legion",
+  "model": "Skeleton_Warrior",
+  "attach": {
+   "handslot.l": "Skeleton_Shield_Small_A.gltf"
+  },
+  "hold": {
+   "handslot.r": "standard"
+  },
+  "eyes": "0xf0c060"
+ },
+ {
+  "id": "CP1",
+  "cls": "Companion",
+  "label": "Brannoc \u00b7 Redhand deserter, axe & shield",
+  "model": "Barbarian",
+  "show": [
+   "1H_Axe",
+   "Barbarian_Round_Shield"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a4a34",
+     "#2a1a10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a4a3a",
+     "#321a12"
+    ]
+   }
+  ],
+  "face": "brannoc"
  }
 ]

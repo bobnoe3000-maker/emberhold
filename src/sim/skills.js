@@ -35,7 +35,7 @@ export const SKILLS = {
   cleric: [
     { id: 'mend', name: 'Mend', lv: 1, mp: 12, kind: 'mend', heal: 0.22, text: 'heal the most hurt ally for 22 % of their max HP' },
     { id: 'bless', name: 'Bless', lv: 6, mp: 25, kind: 'bless', buff: 0.15, dur: 8, text: 'the whole party: +15 % ATK and DEF for 8 s' },
-    { id: 'turn_undead', name: 'Turn Undead', lv: 12, mp: 30, kind: 'nova', power: 1.6, radius: 3, slow: 0, text: '1.6× to every Ashbound within 3 tiles' },
+    { id: 'turn_undead', name: 'Turn Undead', lv: 12, mp: 30, kind: 'nova', power: 1.6, radius: 3, slow: 0, undead: true, text: '1.6× to every Ashbound within 3 tiles (not the living)' },
   ],
 };
 export const PASSIVES = {

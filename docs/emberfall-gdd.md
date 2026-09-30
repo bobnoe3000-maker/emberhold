@@ -148,6 +148,12 @@ Levels rise as you **advance deeper**:
   levels a floor × floor + ⌊rank ÷ 2⌋. The Tithe Mill runs 1–3 on one floor, Wickham Keep 3–6 on
   two, the Sunken Chapel 5–8 on two, the Ninth Milestone is 8 throughout; the Old Barrows keep
   the formula above and go on down. A site's last floor ends in its hall, with no stairs down.
+- **Who fights** is the site's family (M5, `battle.js` FAMILIES): the Ashbound in the barrows; the
+  Redhand Company (cutthroat, brute, crossbowman; their elite a Sergeant) in the Tithe Mill and
+  Wickham Keep, with the Ashbound they dug up on the Keep's second floor; the Ashbound and Cinder
+  acolytes in the Sunken Chapel. Each Redhand archetype mirrors an Ashbound role's strength, so a
+  room's difficulty is its level whoever fills it; bandits carry more coin. Turn Undead reaches only
+  the Ashbound.
 - **Enemy stats** = archetype base × (1 + 0.14 × (level − 1)) for HP and DEF, and
   × (1 + 0.12 × (level − 1)) for ATK; above level 3, × (1 + 0.05 × (level − 3)) more (the
   premium for the party and gear a same-level room expects, §7.1); × the tide. XP and gold per
