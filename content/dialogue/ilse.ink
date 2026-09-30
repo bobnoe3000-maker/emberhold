@@ -20,6 +20,13 @@ VAR frag_vale_count = 0
 VAR frag_vale_standing_order = 0
 VAR frag_vale_muster_roll = 0
 VAR frag_vale_centurion_tablet = 0
+VAR frag_vale_tithe_ledger = 0
+VAR frag_vale_gate_warden_note = 0
+VAR frag_vale_last_dispatch = 0
+VAR frag_vale_chaplains_prayer = 0
+VAR frag_vale_binding_rite = 0
+VAR frag_vale_chaplains_last_page = 0
+VAR frag_vale_standards_ribbon = 0
 
 == ilse_hub ==
 { flag_met_ilse == 0: -> ilse_first_meet }
@@ -47,7 +54,8 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 {&Ilse looks up from the board and holds up a finger until she finishes the word.|"{hero_name}. Anything with writing on it today?"|"The Shrine's quiet. The quiet is the nice part."}
 { q_vale_first_page == 2: "You've found something. I can tell by the way you're holding your hands. Give it here." }
 { q_ch1_ember_in_the_fist == 3: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
-{ frag_vale_count == 3: "The Vale's set is whole, as far as the barrows go. I've read it four times. It doesn't get kinder." }
+{ frag_vale_count >= 3 && frag_vale_count < 10: "The Vale's set has more gaps than words. I've read what we have four times. It doesn't get kinder." }
+{ frag_vale_count == 10: "The Vale's set is whole. All ten. I've copied it for Reedholm and kept the copy I made first, because I'm not a fool." }
 -> ilse_topics
 
 == ilse_greet_fallen ==
@@ -128,12 +136,46 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
 { frag_vale_centurion_tablet == 1:
     "The centurion's tablet. The bound dropped where they stood at the second watch. The living asked him what now. He told them to hold the road until relieved."
 }
-{ frag_vale_count == 3:
-    Ilse puts the three side by side on the step, in order, and is quiet for a while.
+{ frag_vale_count >= 3 && frag_vale_standing_order + frag_vale_muster_roll + frag_vale_centurion_tablet == 3:
+    Ilse puts the three from the barrows side by side on the step, in order, and is quiet for a while.
     "They're not rising. They're still standing. The same order, the same road, three hundred years. Nobody ever came to relieve them."
-    "I'll write it down. Then somebody ought to decide what relief would look like."
-- else:
+}
+{ frag_vale_tithe_ledger == 1:
+    "The mill's tithe ledger. Grain, four hundred measures. Souls, two hundred and forty. Paid in full."
+    "Two hundred and forty. The same as the muster roll. The Vale didn't send a legion. It paid one."
+}
+{ frag_vale_gate_warden_note == 1:
+    "A gate-warden at the Keep: relief expected by the harvest moon. Keep the road open, keep the lamps lit."
+    "So somebody was coming. Or somebody believed it, which at the Keep amounted to the same thing."
+}
+{ frag_vale_last_dispatch == 1:
+    "The last dispatch. The Throne is dark. No relief will come. Stand down." She turns it over twice. "Sealed. Never sent."
+    "They were told to stop, and the letter sat in a drawer. Garrow kept it with his ledgers. He kept everything."
+}
+{ frag_vale_chaplains_prayer == 1:
+    "A chaplain's prayer from the chapel. Bind them gently. Most of them volunteered."
+    "Most."
+}
+{ frag_vale_binding_rite == 1:
+    "The binding rite. Speak the order last: the bound keep the last thing they hear."
+    "That's how it held. Not magic, or not only. The last thing anybody said to them."
+}
+{ frag_vale_chaplains_last_page == 1:
+    "The chaplain's last page. The Throne went dark. He couldn't bind a second order over the first. Forgive me."
+    "He tried. The order to stand down came, and there was no way left to tell them."
+}
+{ frag_vale_standards_ribbon == 1:
+    "The ribbon off their standard. Third Legion. Wickham road. Until relieved."
+}
+{
+- frag_vale_count == 10:
+    Ilse lays all ten out in a line along the Shrine's step, and reads them once more, aloud, to nobody in particular.
+    "A tithe of souls. A legion bound to an order. The order to stand down, written and sealed and never sent, and no way left to give it."
+    "A legion keeps a strongroom on its road. Theirs would be under the ninth milestone of the Wickham road, where the relief would have come in. If anything was left for them, it's there." She writes it down. "It's on your map now. I think somebody should go."
+- frag_vale_count < 3:
     "There's more of it down there. There always is. The Vale's set will have gaps until someone goes deeper."
+- else:
+    "There are gaps still. The mill, the Keep, the chapel. The old empire kept its papers where it kept its sins."
 }
 -> ilse_topics
 

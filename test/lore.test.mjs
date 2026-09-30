@@ -1,4 +1,4 @@
-// The Chronicle of the Fall (world doc §7, v1.6): the Vale set's first three fragments, placed from
+// The Chronicle of the Fall (world doc §7, v1.6–v1.8): the Vale set's ten fragments, placed from
 // the world seed, found by opening their chest or shrine or holding their hall; paid once; in the
 // save; read by Ink (Sister Ilse, her errand); the words in content/lore/ match the sim and canon.
 import { test } from 'node:test';
@@ -32,7 +32,7 @@ test('opening its chest finds Standing Order 14: once, paid a little XP; another
   const xp0 = sim.state.party[0].xp, lv0 = sim.state.party[0].level;
   open(sim, h.key); open(sim, h.key);
   assert.deepEqual(sim.state.fragments, ['frag_vale_standing_order']);
-  assert.equal(ev.length, 1); assert.deepEqual([ev[0].found, ev[0].of, ev[0].xp], [1, 3, 20]);
+  assert.equal(ev.length, 1); assert.deepEqual([ev[0].found, ev[0].of, ev[0].xp], [1, 10, 20]);
   assert.ok(sim.state.party[0].xp > xp0 || sim.state.party[0].level > lv0);
 });
 
@@ -52,11 +52,11 @@ test('the centurion\'s tablet: hold the second floor\'s stairs-down hall three w
 
 test('the whole set: setComplete; the save keeps them; unknown ids are dropped; older saves have none', () => {
   const sim = dungeon(), ev = events(sim, ['setComplete']);
-  sim.state.fragments = ['frag_vale_standing_order', 'frag_vale_muster_roll'];
+  sim.state.fragments = SETS.vale.filter((id) => id !== 'frag_vale_centurion_tablet');
   goDown(sim); const hall = sim.world.level.descentRoom.id; sim.bus.emit('battle', { on: true, room: hall });
   for (let i = 0; i < HALL_WAVES; i++) sim.bus.emit('wave', { cleared: true, room: hall });
   assert.deepEqual(ev.map((e) => e.set), ['vale']);
-  const data = JSON.parse(JSON.stringify(sim.snapshot())); assert.equal(data.fragments.length, 3);
+  const data = JSON.parse(JSON.stringify(sim.snapshot())); assert.equal(data.fragments.length, 10);
   const b = dungeon(); b.restore({ ...data, fragments: ['frag_vale_muster_roll', 'frag_nope', 'frag_vale_muster_roll', 7] }); assert.deepEqual(b.state.fragments, ['frag_vale_muster_roll']);
   const old = { ...data }; delete old.fragments; b.restore(old); assert.deepEqual(b.state.fragments, []);
 });
@@ -92,5 +92,7 @@ test('content/lore matches the sim table, in reading order, and every text is ca
     const core = d.text.replace(/^Standing order 14: /, '').split(' — ')[0].replace(/\s+/g, ' ');
     assert.ok(world.includes(core), `${d.id}: "${core}" isn't in the world doc`);
   }
-  for (const ink of ['ilse', 'maudry', 'osric']) assert.match(readFileSync(`content/dialogue/${ink}.ink`, 'utf8'), /frag_vale_count == 3/, `${ink}: a line for the Vale set`);
+  for (const ink of ['ilse', 'maudry', 'osric']) assert.match(readFileSync(`content/dialogue/${ink}.ink`, 'utf8'), /frag_vale_count == 10/, `${ink}: a line for the whole Vale set`);
+  const ilse = readFileSync('content/dialogue/ilse.ink', 'utf8');
+  for (const id of Object.keys(FRAGMENTS)) assert.match(ilse, new RegExp(`\\{ ${id} == 1:`), `Ilse reads ${id}`);
 });

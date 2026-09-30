@@ -1,0 +1,10 @@
+{
+  "id": "frag_vale_binding_rite",
+  "region": "vale",
+  "set": "vale",
+  "order": 8,
+  "title": "The Binding Rite",
+  "text": "Speak the order last. The bound keep the last thing they hear.",
+  "note": "From a shrine on the Sunken Chapel's second floor.",
+  "where": "Somewhere in the Sunken Chapel, second floor"
+}

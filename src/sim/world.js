@@ -129,6 +129,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   world.structs = [];
   if (level.entrance) placeStairsUp(world, level);
   if (level.descentRoom && hasFloorBelow(site, depth)) placeStairsDown(world, level);   // (a site's last floor ends in its hall)
+  if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
   if (level.descentRoom) {
@@ -194,6 +195,19 @@ function dense(world) {
 }
 const cellAt = (world, x, y) => { const g = dense(world), i = x - g.x0, j = y - g.y0; return i >= 0 && j >= 0 && i < g.w && j < g.h ? g.cells[j * g.w + i] : undefined; };
 function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
+
+// A vault site's last hall keeps its heirloom in a chest (sites.js `vault`): on the open tile nearest the
+// hall's middle, where the stairs down would be. world.vault = { key, heirloom }.
+function placeVault(world, level, heirloom) {
+  const r = level.descentRoom; let best = null, bd = Infinity;
+  for (const [k, c] of level.cells) {
+    if (c.kind !== 'floor' || c.room !== r.id || world.props.has(k)) continue;
+    const [x, y] = k.split(',').map(Number), d = (x - r.cx) * (x - r.cx) + (y - r.cy) * (y - r.cy);
+    if (d < bd && !NONWALK.has(materialAt(world, x, y)) && !NONWALK.has(materialAt(world, x, y + 1))) { bd = d; best = k; }
+  }
+  if (!best) return;
+  world.props.set(best, 'chest'); world.vault = { key: best, heirloom };
+}
 
 // Every floor's way down: a stairwell 6 tiles by 6 in the descent room (the 'stairsdown_0'
 // structure), going down toward −y from its open +y edge, with a brazier either side of the top.

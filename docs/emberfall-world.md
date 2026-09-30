@@ -3,7 +3,8 @@
 **v1.8 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
 
 v1.8 fills in Brannoc's chain (§5): who he owes, where the paymaster kept the robes' coin, and what
-the wax on the purses looks like.
+the wax on the purses looks like. It also says who holds the Vale set's hall fragments (§7): Garrow
+kept the Last Dispatch, and the Chaplain's Last Page lies where the Stranger was digging.
 
 v1.7 fills in the Hollow Vale for M5 ([m5-plan.md](./m5-plan.md)). It adds the Vale's sites (§3.1),
 Captain Garrow and the Robed Stranger (§8) and the trial-givers (§5), and gives Brannoc a story
@@ -293,6 +294,10 @@ Nobody ever came to relieve them. Sister Ilse reads them in that order.
    tonight. I cannot bind a second order over the first. Forgive me."*
 10. **The Standard's Ribbon**, taken from the Standard of the Third Legion when it falls:
    *"Third Legion. Wickham road. Until relieved."*
+
+(v1.8) **Who holds them.** Captain Garrow kept the Last Dispatch with his ledgers, its seal
+unbroken; it's found when he falls. The Chaplain's Last Page lies in the chapel hall where the Robed
+Stranger was digging, and is found when he falls. The Standard's Ribbon is on the Standard.
 
 The **Ninth Milestone's** vault holds the heirloom *The Last Order* — *"It says: hold. It doesn't
 say for how long."*

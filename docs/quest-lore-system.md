@@ -284,6 +284,9 @@ fragment. Two players find the same truth in different places (world doc §7).
   company is level 6+ and it isn't done; handing one in sets `state.trials[cls]` (save v13) and every
   member of the class can use its level-6 ability (skills.js `unlocked`). Nell and Hedda, who had
   no topics, get a short topic list only while their trial is open.
+- **The Chronicle's holders** (M5.7): a fragment lies in a chest, on a shrine, in a hall (hold it
+  3 waves) or on a boss (`via: 'boss'`: found when the floor's boss falls). A whole set reveals its
+  hidden site (lore.js SET_REVEALS); a vault site's last hall keeps a chest with its heirloom, once.
 
 **Module:** `src/sim/quest/`:
 - `engine.js`: instance state machine, objectives, rewards;

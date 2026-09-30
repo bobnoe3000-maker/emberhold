@@ -47,7 +47,8 @@ A grey man at a folding table by the well turns a page in a ledger and doesn't l
 { q_vale_captains_ledger == 2: "You've the look of three lines in my book. Let's have them." }
 { q_vale_captains_ledger == 3: "Three paid, three written. The Watch doesn't forget a debt, even when Greyholt does." }
 { q_ch1_ember_in_the_fist == 3: "Sister Ilse sent me a note. It says 'the fens.' Two words. She's never used two words for anything." }
-{ frag_vale_count == 3: "Sister Ilse read me your tablets. A legion holding a road until relieved." He looks at the ledger for a long moment. "I know how that goes." }
+{ frag_vale_count >= 3 && frag_vale_count < 10: "Sister Ilse read me your tablets. A legion holding a road until relieved." He looks at the ledger for a long moment. "I know how that goes." }
+{ frag_vale_count == 10: "Ilse says the order to stand down was written and never sent." He closes the ledger, which he never does. "Somebody should have sent it. That's all a Watch is, in the end. Somebody who sends the letter."}
 -> osric_topics
 
 == osric_greet_fallen ==

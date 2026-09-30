@@ -9,19 +9,34 @@
 //   chest · shrine   one of that floor's chests or shrines, drawn on the LORE stream; opening it finds
 //                    the fragment. A floor with none of that kind keeps the fragment in its hall.
 //   hall             the floor's stairs-down hall: hold it HALL_WAVES waves in one visit and it's found
+//   boss             carried by the floor's boss (sites.js bossAt): found when he falls. A story boss who
+//                    fell before this fragment existed (an older save) left it in his hall instead.
 // Finding one pays a little XP (LORE_XP × the hero's level, +20 % for a ward of the Grey Sisters,
 // ORIGIN_EDGE loreXp) and emits 'fragmentFound' { id, set, order, found, of }; the last of a set
-// emits 'setComplete' { set }. state.fragments = [ids] in the order found (save v10).
+// emits 'setComplete' { set }; a whole set reveals its hidden site (SET_REVEALS, core.js). state.fragments =
+// [ids] in the order found (save v10).
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { gainXp, ORIGIN_EDGE } from './party.js';
+import { bossAt } from './sites.js';
+import { BOSSES } from './battle.js';
 
-/** @type {Record<string, { set: string, order: number, site: string, floor: number, via: 'chest' | 'shrine' | 'hall' }>} */
+/** @type {Record<string, { set: string, order: number, site: string, floor: number, via: 'chest' | 'shrine' | 'hall' | 'boss' }>} */
 export const FRAGMENTS = {
   frag_vale_standing_order: { set: 'vale', order: 1, site: 'barrows', floor: 1, via: 'chest' },
   frag_vale_muster_roll: { set: 'vale', order: 2, site: 'barrows', floor: 2, via: 'shrine' },
   frag_vale_centurion_tablet: { set: 'vale', order: 3, site: 'barrows', floor: 2, via: 'hall' },
+  // the rest of the Vale set (world doc §7, v1.7)
+  frag_vale_tithe_ledger: { set: 'vale', order: 4, site: 'tithe_mill', floor: 1, via: 'chest' },
+  frag_vale_gate_warden_note: { set: 'vale', order: 5, site: 'wickham_keep', floor: 1, via: 'shrine' },
+  frag_vale_last_dispatch: { set: 'vale', order: 6, site: 'wickham_keep', floor: 2, via: 'boss' },        // Garrow had it, sealed
+  frag_vale_chaplains_prayer: { set: 'vale', order: 7, site: 'sunken_chapel', floor: 1, via: 'chest' },
+  frag_vale_binding_rite: { set: 'vale', order: 8, site: 'sunken_chapel', floor: 2, via: 'shrine' },
+  frag_vale_chaplains_last_page: { set: 'vale', order: 9, site: 'sunken_chapel', floor: 2, via: 'boss' },  // under the Stranger's feet
+  frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'barrows', floor: 3, via: 'boss' },         // taken from the Standard
 };
+/** a whole set reveals its hidden site (sites.js; world doc §7) */
+export const SET_REVEALS = { vale: 'ninth_milestone' };
 /** the fragments of each set, in reading order */
 export const SETS = /** @type {Record<string, string[]>} */ ({});
 for (const [id, f] of Object.entries(FRAGMENTS)) (SETS[f.set] ||= []).push(id);
@@ -29,12 +44,14 @@ for (const k of Object.keys(SETS)) SETS[k].sort((a, b) => FRAGMENTS[a].order - F
 export const HALL_WAVES = 3, LORE_XP = 20;
 const hashId = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
 
-/** where a fragment lies on this world, if this is its floor: { via, key? } (key = 'x,y' of its chest
- * or shrine) or null @param {number} seed @param {string} id @param {any} world */
-export function holderOf(seed, id, world) {
+/** where a fragment lies on this world, if this is its floor: { via, key?, boss? } (key = 'x,y' of its
+ * chest or shrine) or null @param {number} seed @param {string} id @param {any} world
+ * @param {Record<string, number>} [bosses] state.bosses: a story boss who already fell left his in the hall */
+export function holderOf(seed, id, world, bosses = {}) {
   const f = FRAGMENTS[id];
   if (!f || world.kind !== 'dungeon' || (world.site || 'barrows') !== f.site || (world.depth || 0) + 1 !== f.floor) return null;
   if (f.via === 'hall') return { via: 'hall' };
+  if (f.via === 'boss') { const b = bossAt(f.site, f.floor - 1); return b && !(BOSSES[b].once && bosses[b]) ? { via: 'boss', boss: b } : { via: 'hall' }; }
   const keys = [...world.props].filter(([, v]) => v === f.via).map(([k]) => k).sort();
   if (!keys.length) return { via: 'hall' };                        // (no such holder on this floor: it waits in the hall)
   const rng = mulberry32(streamSeed(seed ^ hashId(id), STREAM.LORE));
@@ -60,14 +77,19 @@ export function createLore({ state, bus, getWorld, seed }) {
   const unfound = () => Object.keys(FRAGMENTS).filter((id) => !has(id));
   bus.on('looted', (e) => {
     const w = getWorld(), key = `${e.tx},${e.ty}`;
-    for (const id of unfound()) { const h = holderOf(seed, id, w); if (h && h.key === key && h.via === e.kind) found(id); }
+    for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.key === key && h.via === e.kind) found(id); }
   });
   bus.on('battle', (e) => { if (e.on) hallWaves = 0; });
   bus.on('wave', (e) => {
     if (!e.cleared) return;
     const w = getWorld(), L = w.level; if (!L || !L.descentRoom || e.room !== L.descentRoom.id) return;
     hallWaves++;
-    for (const id of unfound()) { const h = holderOf(seed, id, w); if (h && h.via === 'hall' && hallWaves >= HALL_WAVES) found(id); }
+    for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.via === 'hall' && hallWaves >= HALL_WAVES) found(id); }
+  });
+  // a boss down on his floor: what he carried (his count is already up, so this asks the table, not holderOf)
+  bus.on('bossDown', (e) => {
+    const w = getWorld();
+    for (const id of unfound()) { const f = FRAGMENTS[id]; if (f.via === 'boss' && (w.site || 'barrows') === f.site && (w.depth || 0) + 1 === f.floor && bossAt(f.site, f.floor - 1) === e.id) found(id); }
   });
   /** what Ink may read: frag_<id> (0 / 1) and frag_<set>_count */
   function varsFor() {
@@ -82,5 +104,5 @@ export function createLore({ state, bus, getWorld, seed }) {
     state.fragments = [];                                            // v9 and older: none yet
     for (const id of Array.isArray(data?.fragments) ? data.fragments : []) if (FRAGMENTS[id] && !has(id)) state.fragments.push(id);
   }
-  return { varsFor, snapshot, restore, has, holder: (/** @type {string} */ id) => holderOf(seed, id, getWorld()) };
+  return { varsFor, snapshot, restore, has, holder: (/** @type {string} */ id) => holderOf(seed, id, getWorld(), state.bosses) };
 }

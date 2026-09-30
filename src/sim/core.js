@@ -19,7 +19,7 @@ import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
 import { createQuests, TRIAL_LEVEL } from './quests.js';
 import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
-import { createLore } from './lore.js';
+import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
@@ -97,6 +97,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
+  // the Chronicle: a whole set reveals its hidden site (lore.js SET_REVEALS); a vault's chest holds its heirloom, once (sites.js `vault`)
+  bus.on('setComplete', (e) => { if (SET_REVEALS[e.set]) reveal(SET_REVEALS[e.set]); });
+  bus.on('looted', (e) => {
+    const v = world.vault, flag = 'vault_' + curSite;
+    if (e.kind !== 'chest' || !v || v.key !== `${e.tx},${e.ty}` || state.flags[flag]) return;
+    state.flags[flag] = 1; loot.grant(v.heirloom, { ilv: Math.max(state.party[0].level, siteOf(curSite).base), x: e.tx + 0.5, y: e.ty + 0.5, src: 'vault' });
+    bus.emit('vaultOpened', { site: curSite, heirloom: v.heirloom });
+  });
   // a boss down: its heirloom the first time (items.js HEIRLOOMS), and always a Fine-or-better drop
   bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop('boss', { ilv: e.lvl, x: e.x, y: e.y }); });
 

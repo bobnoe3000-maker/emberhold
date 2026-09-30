@@ -1,0 +1,10 @@
+{
+  "id": "frag_vale_tithe_ledger",
+  "region": "vale",
+  "set": "vale",
+  "order": 4,
+  "title": "The Tithe Ledger",
+  "text": "Tithe of the Vale, Year 612: grain, four hundred measures. Souls, two hundred and forty. Paid in full to the Ember Throne.",
+  "note": "From a chest in the Tithe Mill. Two hundred and forty: the muster roll's number.",
+  "where": "Somewhere in the Tithe Mill"
+}

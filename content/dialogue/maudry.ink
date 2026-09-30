@@ -45,7 +45,8 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 { q_vale_long_way_round == 3: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
 { q_ch1_smoke_over_the_vale == 0: "There's smoke up the river again. You'll have seen it. Everyone's seen it and nobody's doing anything about it." }
 { q_ch1_smoke_over_the_vale == 3: "Osric's been writing in that ledger of his like it owes him money. Whatever you told him, he took it serious." }
-{ frag_vale_count == 3: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }
+{ frag_vale_count >= 3 && frag_vale_count < 10: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }
+{ frag_vale_count == 10: "Sister Ilse bought a round last night. Sister Ilse. She said it was for a legion. I didn't ask which. I poured." }
 -> maudry_topics
 
 == maudry_greet_fallen ==

@@ -107,6 +107,13 @@ lands as its own commit, with tests, balance runs where numbers move, and doc up
 7. **The Vale Chronicle, whole.** Seven more fragments (world doc §7): one in the Tithe Mill, two
    in Wickham Keep, three in the Sunken Chapel, one carried by the Standard. The last one
    found reveals the Ninth Milestone; its vault holds the heirloom *The Last Order*.
+   **Done** (2026-09-30): `lore.js` FRAGMENTS 4–10 (world doc §7). The chest and shrine ones lie as
+   the first three did; the Last Dispatch, the Chaplain's Last Page and the Standard's Ribbon come
+   with their floor's boss (`via: 'boss'`; a story boss who fell in an older save left his in the
+   hall: hold it 3 waves). SET_REVEALS reveals the Ninth Milestone. Its last hall keeps a vault chest
+   (sites.js `vault`, world.js placeVault) with *The Last Order*, once (`state.flags.vault_<site>`,
+   so no save bump). Ilse reads all ten; Osric and Maudry notice the set whole.
+   `test/chronicle.test.mjs`.
 8. **Loot and balance.** Drop rates measured with the headless farm at levels 3 / 6 / 9 and
    tuned toward the development plan's §2.7 targets. The room-level harness runs each site's
    band. A headless golden path plays Act I start to finish; the browser test walks its first
