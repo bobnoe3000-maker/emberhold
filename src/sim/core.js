@@ -348,10 +348,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
         if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
+        if (prop === 'shrine') bus.emit('shrineTouched', { tx: cmd.tx, ty: cmd.ty });   // what's written on it is read either way (lore.js)
+        if (prop === 'shrine' && !shrineNeeded()) { bus.emit('shrine', { tx: cmd.tx, ty: cmd.ty, did: 'none' }); return; }   // kept for later
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
-          else if (prop === 'shrine') shrine();
+          else if (prop === 'shrine') shrine(cmd.tx, cmd.ty);
           else { state.counters.wood += 2; state.counters.stone += 2; }
           bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: prop });
           if (prop === 'chest') {                          // gold, always, and maybe gear: item level = its room's level (the hero's outdoors)
@@ -381,11 +383,16 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   }
 
   // A site shrine (one use each, GDD §3.6): raises the first Fallen member at 50 % HP; with
-  // nobody Fallen it restores the party instead.
-  function shrine() {
+  // nobody Fallen it restores the party instead. It is only used when it would do something: with
+  // nobody Fallen and everyone standing whole, a touch leaves it lit for later (2026-10-01: a tap at
+  // full health spent it for nothing, and nothing said so). Events: 'shrine' { tx, ty, did: 'raised' |
+  // 'mended' | 'none', name? }.
+  const hurt = (m) => { if (m.down || m.fallen) return false; const s = statsFor(m); return m.hp < s.maxHp || (m.mp ?? s.maxMp) < s.maxMp; };
+  const shrineNeeded = () => state.party.some((m) => m.fallen || hurt(m));
+  function shrine(tx, ty) {
     const f = state.party.find((m) => m.fallen);
-    if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); }
-    else for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; }
+    if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); bus.emit('shrine', { tx, ty, did: 'raised', name: f.name }); }
+    else { for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; } bus.emit('shrine', { tx, ty, did: 'mended' }); }
     bus.emit('partyChanged', state.party);
   }
 

@@ -117,6 +117,8 @@ input.onTap((sx, sy) => {
   if (sv) { const h = sim.world.hub; sim.commands.push({ type: 'tap', tx: Math.floor(h.x), ty: Math.floor(h.y) }); return; }   // else walk to the square
   const foe = renderer.enemyAt(sx, sy);                  // tap an enemy: the party focuses it
   if (foe) { sim.commands.push({ type: 'focus', id: foe.id }); return; }
+  const pr = renderer.propAt(sx, sy);                    // a chest / shrine / stairs, anywhere on it: walk over and use it
+  if (pr) { sim.commands.push({ type: 'tap', tx: pr.tx, ty: pr.ty }); return; }
   const { tx, ty } = renderer.screenToTile(sx, sy, 1);
   sim.commands.push({ type: 'tap', tx, ty });
 });

@@ -727,7 +727,8 @@ export function createRenderer(canvas, sim, input) {
       drawTileG(bx, by, tx, ty);
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
-      const pk = propAt(world, tx, ty) || (world.props && world.props.get(tx + ',' + ty) === 'chest' ? 'chestOpen' : null);   // (an opened chest stays, lid back)
+      const was = !propAt(world, tx, ty) && world.props && world.props.get(tx + ',' + ty);
+      const pk = propAt(world, tx, ty) || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : null);   // (an opened chest stays, lid back; a used shrine, its orb dark)
       if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
@@ -1008,7 +1009,7 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    if (sim.world.kind === 'dungeon') drawMinimap(ix, iy); else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (transit) {                                                 // fading in from the scene change
@@ -1107,6 +1108,51 @@ export function createRenderer(canvas, sim, input) {
       octx.font = `800 ${Math.round(17 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
       octx.fillStyle = col; octx.fillText(m === 'ready' ? '?' : '!', sx, sy + 0.5 * k);
       octx.textBaseline = 'alphabetic';
+    }
+  }
+  // The props a tap can use (a chest, a shrine, the stairs gate), each matched against its sprite as drawn
+  // rather than the floor tile under the finger: a chest stands twice its old height and a shrine three
+  // times, so a tap on the lid or the orb landed on the tile behind and only walked there (2026-10-01).
+  // Within 3 native px of a drawn pixel counts; the nearest the camera wins. (nx, ny) are native px from
+  // the camera origin.
+  const USABLE = new Set(['chest', 'shrine', 'stairs']);
+  function propUnder(nx, ny) {
+    const w = sim.world; if (!w.props) return null;
+    let best = null;
+    for (const [key, kind] of w.props) {
+      if (!USABLE.has(kind) || (kind === 'stairs' && w.stairwell)) continue;
+      const c = key.indexOf(','), tx = +key.slice(0, c), ty = +key.slice(c + 1);
+      if (propAt(w, tx, ty) !== kind || (best && tx + ty <= best.tx + best.ty)) continue;
+      const sp = props[kind] && props[kind][0]; if (!sp) continue;
+      const P = project(tx + 0.5, ty + 0.5, heightAt(w, tx, ty)), lx = Math.floor(nx - (P.sx - sp.ax)), ly = Math.floor(ny - (P.sy - sp.ay));
+      if (lx < -3 || ly < -3 || lx >= sp.w + 3 || ly >= sp.h + 3) continue;
+      let hit = false;
+      for (let dy = -3; dy <= 3 && !hit; dy++) for (let dx = -3; dx <= 3; dx++) { const X = lx + dx, Y = ly + dy; if (X >= 0 && Y >= 0 && X < sp.w && Y < sp.h && sp.mask[Y * sp.w + X]) { hit = true; break; } }
+      if (hit) best = { tx, ty, kind };
+    }
+    return best;
+  }
+  // An unused shrine says what it is from across the room, and what it does as you come near (GDD §3.6):
+  // its orb's aqua, never the colour alone. A used one goes dark and unlabelled.
+  function drawShrines(ox, oy, ix, iy) {
+    const w = sim.world, sp = props.shrine && props.shrine[0]; if (!w.props || !sp) return;
+    const k = vw / window.innerWidth;
+    for (const [key, kind] of w.props) {
+      if (kind !== 'shrine') continue;
+      const c = key.indexOf(','), tx = +key.slice(0, c), ty = +key.slice(c + 1), d = Math.hypot(tx + 0.5 - ix, ty + 0.5 - iy);
+      if (d > 14 || propAt(w, tx, ty) !== 'shrine') continue;
+      const P = project(tx + 0.5, ty + 0.5, heightAt(w, tx, ty)), sx = (ox + P.sx) * S, sy = (oy + P.sy - sp.ay - 4) * S;
+      if (sx < -60 * k || sx > vw + 60 * k || sy < (hudB + 14) * k || sy > vh) continue;
+      const a = Math.max(0, Math.min(1, (14 - d) / 4));
+      octx.textAlign = 'center'; octx.font = `700 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`;
+      octx.fillStyle = `rgba(6,10,14,${0.8 * a})`; octx.fillText('Shrine', sx + k, sy + k);
+      octx.fillStyle = `rgba(150,232,244,${a})`; octx.fillText('Shrine', sx, sy);
+      if (d <= 6) {
+        const b = Math.max(0, Math.min(1, (6 - d) / 2)), t2 = 'mends everyone, or raises one Fallen · once';
+        octx.font = `${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`;
+        octx.fillStyle = `rgba(6,10,14,${0.8 * b})`; octx.fillText(t2, sx + k, sy + 14 * k + k);
+        octx.fillStyle = `rgba(200,236,240,${b})`; octx.fillText(t2, sx, sy + 14 * k);
+      }
     }
   }
   // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
@@ -1337,6 +1383,8 @@ export function createRenderer(canvas, sim, input) {
       }
       return best;
     },
+    /** the chest, shrine or stairs drawn under a tap (its whole sprite, not its floor tile), or null */
+    propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
     screenToTile(sxPx, syPx, alpha) {
       const p = sim.state.player;
       const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;

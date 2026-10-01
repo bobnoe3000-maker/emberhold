@@ -6,8 +6,8 @@
 //
 // Placement is deterministic from the world seed (world doc §7: two players find the same truth in
 // different places). A fragment names a site, a floor and a kind of holder:
-//   chest · shrine   one of that floor's chests or shrines, drawn on the LORE stream; opening it finds
-//                    the fragment. A floor with none of that kind keeps the fragment in its hall.
+//   chest · shrine   one of that floor's chests or shrines, drawn on the LORE stream; opening the chest
+//                    finds the fragment, and so does touching the shrine (used, or kept for later). A floor with none of that kind keeps the fragment in its hall.
 //   hall             the floor's stairs-down hall: hold it HALL_WAVES waves in one visit and it's found
 //   boss             carried by the floor's boss (sites.js bossAt): found when he falls. A story boss who
 //                    fell before this fragment existed (an older save) left it in his hall instead.
@@ -75,10 +75,12 @@ export function createLore({ state, bus, getWorld, seed }) {
     if (got === SETS[f.set].length) bus.emit('setComplete', { set: f.set });
   }
   const unfound = () => Object.keys(FRAGMENTS).filter((id) => !has(id));
-  bus.on('looted', (e) => {
+  const read = (kind) => (e) => {
     const w = getWorld(), key = `${e.tx},${e.ty}`;
-    for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.key === key && h.via === e.kind) found(id); }
-  });
+    for (const id of unfound()) { const h = holderOf(seed, id, w, state.bosses); if (h && h.key === key && h.via === kind) found(id); }
+  };
+  bus.on('looted', (e) => { if (e.kind === 'chest') read('chest')(e); });
+  bus.on('shrineTouched', read('shrine'));             // a shrine's words are read at a touch, used or kept for later (core.js)
   bus.on('battle', (e) => { if (e.on) hallWaves = 0; });
   bus.on('wave', (e) => {
     if (!e.cleared) return;

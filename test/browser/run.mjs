@@ -540,6 +540,31 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
   }
 }
+// 13. Tap a chest anywhere on it to open it (2026-10-01): the lid of a chest drawn at twice its old size stands
+// up the screen from its floor tile, and a tap there resolved to the tile behind — the hero walked, and the
+// chest stayed shut. The tap is matched against the chest as drawn (renderer.propAt), lid and all.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=tithe_mill`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    const key = await p.evaluate(() => { const s = globalThis.__sim, k = [...s.world.props].find(([, v]) => v === 'chest')[0], [x, y] = k.split(',').map(Number), pl = s.state.player; pl.x = pl.px = x + 1.5; pl.y = pl.py = y + 0.5; return k; });
+    await run(40);
+    // the highest point on screen that is this chest (its lid), and where a floor-tile tap there used to go
+    const top = await p.evaluate((key) => {
+      const R = globalThis.__renderer;
+      for (let y = 80; y < innerHeight - 200; y += 2) for (let x = 0; x < innerWidth; x += 2) { const h = R.propAt(x, y); if (h && `${h.tx},${h.ty}` === key) { const t = R.screenToTile(x, y + 3, 1); return { x, y: y + 3, floor: `${t.tx},${t.ty}` }; } }
+      return null;
+    }, key);
+    if (top) { await p.touchscreen.tap(top.x, top.y); await run(40); }
+    const opened = await p.evaluate((key) => !!(globalThis.__sim.world.mods.get(key) || {}).opened, key);
+    check('chest: a tap on its lid opens it (the floor tile there was another, and only walked)', !!top && top.floor !== key && opened && errs.length === 0, JSON.stringify({ key, top, opened }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

@@ -99,7 +99,8 @@ Every site map (the current dungeon levels) is a set of **defined rooms** linked
 **corridors**. You move in two ways:
 - **Virtual stick:** touch anywhere and drag (the floating joystick in the build today).
 - **Tap to move:** tap a spot, a doorway or a room on the minimap, and the party walks there by
-  the shortest path. Tapping a chest, shrine or the stairs walks there and uses it.
+  the shortest path. Tapping a chest, shrine or the stairs (anywhere on it as drawn, lid and orb included: the
+  tap is matched against its sprite, not the floor tile under the finger) walks there and uses it.
 
 The party follows the leader in formation. **Corridors are always safe**: nothing spawns or
 fights there. The **entrance room** is a safe sanctuary. On **every floor**, a stone stair
@@ -244,7 +245,13 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
 - **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
   everyone was back over 60 %, which let a room be held forever).
 - **Temple:** an in-game day is an hour of play (§10.1). **Shrine:** with nobody Fallen it
-  restores the party instead. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
+  restores the party instead (HP and MP, everyone standing). It is only spent when it does
+  something: with nobody Fallen and everyone whole, a touch leaves it lit for later and says so
+  (v1.10). It always says what it did. A fragment written on it is read at the first touch either
+  way. On screen (`src/render/gsprite.js` voxShrine), a shrine stands as tall as a hero: a stepped
+  plinth, a pillar and a big aqua orb, against a far wall so no wall hides it. An unused one carries
+  the word *Shrine*, with what it does underneath as you come near. A spent one stays, its orb dark
+  stone. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
   Weakened.
 - **Wipe:** if everyone is down, the party wakes at the region town's **Temple**:
   - everyone is restored to 30 % HP and Fallen status is cleared;

@@ -143,13 +143,26 @@ function chestVox(open) {
 }
 export const voxChest = () => chestVox(false);
 export const voxChestOpen = () => chestVox(true);
-// Shrine: a pedestal under a floating orb.
-export function voxShrine() {
-  const S = 9, H = 16, vox = new Uint8Array(S * S * H), c = S / 2;
-  for (let z = 0; z < 9; z++) { const r = 1.4 + (z < 7 ? (7 - z) * 0.16 : 0); for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c) < r) vox[(z * S + y) * S + x] = 1; }
-  for (let z = 10; z < 15; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c, z - 12) < 2.4) vox[(z * S + y) * S + x] = 2;
-  return bakeVox(vox, S, S, H, ELIT.basalt, 4);
+// Shrine (GDD §3.6): a stepped plinth, a pillar and a cradle holding a big aqua orb, the light that mends
+// the company once. The old 9×9×16 basalt pedestal stood at ankle height against the dark floor and read
+// as a speck of violet (2026-10-01); at 19×19×36, banded in bone, it stands as tall as a hero.
+// A used shrine stays where it was, its orb gone to dark stone (voxShrineSpent), so you can see it's spent.
+function shrineVox(spent) {
+  const S = 19, H = 36, vox = new Uint8Array(S * S * H), c = (S - 1) / 2;
+  const put = (x, y, z, m) => { if (x >= 0 && y >= 0 && z >= 0 && x < S && y < S && z < H) vox[(z * S + y) * S + x] = m; };
+  for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const ax = Math.abs(x - c), ay = Math.abs(y - c), r = Math.hypot(x - c, y - c);
+    if (z < 2 && ax <= 9 && ay <= 9) put(x, y, z, z === 1 && (ax === 9 || ay === 9) ? 3 : 1);          // the broad step
+    else if (z >= 2 && z < 5 && ax <= 6 && ay <= 6) put(x, y, z, z === 4 && (ax === 6 || ay === 6) ? 3 : 1);   // the second step
+    else if (z >= 5 && z < 18 && ax <= 2 && ay <= 2) put(x, y, z, z === 5 || z === 17 || z === 11 ? 3 : 1);   // the pillar, banded
+    else if (z >= 18 && z < 21 && r <= 4.6 && (z === 18 || r >= 3.2)) put(x, y, z, 3);                 // the cradle's rim
+  }
+  for (let z = 19; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++)
+    if (Math.hypot(x - c, y - c, (z - 27) * 1.05) < 5.6) put(x, y, z, spent ? 1 : 2);                 // the orb
+  return bakeVox(vox, S, S, H, ELIT.stone, 8, ELIT.bone);
 }
+export const voxShrine = () => shrineVox(false);
+export const voxShrineSpent = () => shrineVox(true);
 // Brazier: a bowl of coals on a stem — a doorway light.
 export function voxBrazier() {
   const S = 7, H = 12, vox = new Uint8Array(S * S * H), c = S / 2;
@@ -250,6 +263,7 @@ export function buildProps(seed) {
     chest: [voxChest()],
     chestOpen: [voxChestOpen()],
     shrine: [voxShrine()],
+    shrineSpent: [voxShrineSpent()],
     brazier: [voxBrazier()],
     pillar: [0, 1].map((v) => voxPillar(mulberry32((seed * 17 + v * 53 + 5) >>> 0))),
     brokenpillar: [0, 1, 2].map((v) => voxPillar(mulberry32((seed * 19 + v * 71 + 9) >>> 0), true)),
@@ -263,7 +277,7 @@ export function buildProps(seed) {
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.
-export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.4, 0.9, 1.6], brazier: [1.7, 0.9, 0.35] };
+export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35] };
 
 // ---- billboard from an already-quantized character canvas (albedo) ----
 // Normal is a soft vertical cylinder: pixels bow toward their row's horizontal

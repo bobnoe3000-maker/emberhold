@@ -83,8 +83,8 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       return open > 0 && isFloor(x + 1, y) && isFloor(x - 1, y) && isFloor(x, y + 1) && isFloor(x, y - 1);
     });
     const taken = [];
-    const pickEdge = (minGap) => {
-      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if (taken.every(([a, b]) => hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
+    const pickEdge = (minGap, ok = null) => {
+      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if ((!ok || ok(x, y)) && taken.every(([a, b]) => hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
       return null;
     };
     // room identity: every fighting room gets a layout theme, furniture kept to the thirds so
@@ -122,7 +122,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     const nDecor = r === level.entrance ? 1 : 1 + ((prng() * 2) | 0);
     for (let i = 0; i < nDecor; i++) { const q = pickEdge(12); if (q) place(q[0], q[1], decor[(prng() * decor.length) | 0]); }
     if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
-    if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
+    // a shrine stands against a far wall, like an altar: against a near one (+x, +y: toward the camera) the
+    // wall hid all of it but the orb (2026-10-01)
+    if (prng() < 0.30) { const q = pickEdge(8, (x, y) => isFloor(x + 2, y) && isFloor(x, y + 2) && isFloor(x + 2, y + 2)); if (q) place(q[0], q[1], 'shrine'); }
   }
   // Chests are a find, not furniture (2026-10-01, GDD §8): the dressing above drew one in 55 % of rooms,
   // about three a floor. Each is kept at CHEST_KEEP, on its own stream, so every other piece of a floor's

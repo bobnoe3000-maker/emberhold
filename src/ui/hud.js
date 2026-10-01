@@ -33,7 +33,10 @@ export function createHud(sim) {
   const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
   sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
-  sim.bus.on('looted', ({ kind }) => { if (kind !== 'chest') show('a blessing'); });
+  // a shrine says what it did (GDD §3.6): raised one of the Fallen, mended everyone, or kept its light
+  sim.bus.on('shrine', (e) => show(e.did === 'raised' ? `Shrine · ${e.name} rises, at half health · its light is spent`
+    : e.did === 'mended' ? 'Shrine · everyone standing is mended, HP and MP · its light is spent'
+      : 'Shrine · nobody needs mending · it keeps its light for when someone is hurt or Fallen', e.did === 'none' ? 3200 : 2800));
   // a chest says what it held, every time, and says so when that was no gear (GDD §8, 2026-10-01); the
   // item's own card (sheet.js) follows a find
   const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };

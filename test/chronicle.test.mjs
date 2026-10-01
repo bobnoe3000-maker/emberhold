@@ -44,7 +44,9 @@ test('the bosses carry theirs: found when they fall on their floor; one who fell
   assert.deepEqual(old.lore.holder('frag_vale_chaplains_last_page'), { via: 'hall' });
   const hall = old.world.level.descentRoom.id; old.bus.emit('battle', { on: true, room: hall });
   for (let i = 0; i < HALL_WAVES; i++) old.bus.emit('wave', { cleared: true, room: hall });
-  assert.deepEqual(oev.map((e) => e.id), ['frag_vale_chaplains_last_page']);
+  // his page, and whatever else this floor keeps in its hall (a shrine's fragment, on a floor drawn without a shrine)
+  assert.ok(oev.some((e) => e.id === 'frag_vale_chaplains_last_page'));
+  for (const e of oev) assert.deepEqual(old.lore.holder(e.id), { via: 'hall' }, e.id);
 });
 
 test('the last one found reveals the Ninth Milestone', () => {
