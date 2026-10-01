@@ -1,6 +1,9 @@
 # Emberfall — World Summary
 
-**v1.10 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.11 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.11 says how the Lantern Guild hires out its sellswords (§4, *Sellswords and the Guild's
+ranks*): the four ranks, the dawn wage, and what a sellsword does when it isn't paid.
 
 v1.10 says where the Vale's bows come from (§3.1, *Bows and crossbows*): yew from the old
 hedgerows, poachers' hunting bows and the Greyholt fletchers' longbows. It also says why the
@@ -199,6 +202,24 @@ marching dead: they run straight through anything in the way, hill, bog or villa
 | **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads in off-white vestments with a flanged mace and a chained psalter, and some take coin at a tavern) and, later, the **Healer**. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
 | **Lord Pellam's Watch** | Greyholt's underpaid militia | Order, cheaply | Bounties; comic relief; occasionally brave. |
+
+**Sellswords and the Guild's ranks (v1.11).** The sellswords at a tavern table are the Lantern
+Guild's members, and the Guild hires them out. They change every day: some move on and new ones
+walk in off the road. Hiring one means paying the Guild a signing fee up front, then the
+sellsword's wage every morning. The Guild ranks its members by a lamp they can carry:
+- **Wick:** new, never been lit. Cheap, and mostly what they say they are.
+- **Lamp:** a few seasons on the road and still alive, which says something.
+- **Lantern:** known in more than one town. They've learned a trick or two they don't mention
+  until they trust you.
+- **Beacon:** a name people in the Vale would recognise. Rare, dear, and worth it.
+
+Wages are paid at dawn, wherever the company is. A sellsword who isn't paid still fights: the
+Guild's rules say so, and it's bad for business otherwise. But they do the job and nothing past
+it, and whatever they're good at for, they keep to themselves until they're paid. A sellsword
+who stays with a company long enough, paid and kept alive, may come to stay for the company and
+not the coin. The Guild calls them **Sworn** and takes a smaller cut.
+
+Found companions (Brannoc, §5) aren't Guild members and take no wage.
 
 **Peoples:** mostly humans, plus stout **Deepdelver** dwarf-folk in the hills, a few **fen-folk**
 halflings in the marsh, and rare, aloof elves passing through. Standard fantasy, lightly used.
