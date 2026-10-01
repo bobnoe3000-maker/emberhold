@@ -59,7 +59,7 @@ function line(m) {
 }
 function Tags({ m }) {
   const pts = pendingPoints(m) + pendingSkillPoints(m);
-  return html`${m.fallen ? html`<em class="tag f">FALLEN</em>` : ''}${m.weakUntil > 0 ? html`<em class="tag w">WEAKENED</em>` : ''}${pts ? html`<em class="tag p">+${pts}</em>` : ''}`;
+  return html`${m.fallen ? html`<em class="tag f">SLAIN</em>` : ''}${m.weakUntil > 0 ? html`<em class="tag w">WEAKENED</em>` : ''}${pts ? html`<em class="tag p">+${pts}</em>` : ''}`;
 }
 
 // a companion's perks (names; the tavern has their lines), loyalty, wage and what it's owed (GDD §6.2)
