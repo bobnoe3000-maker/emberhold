@@ -102,7 +102,35 @@ export const PROPS = {
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.035, 8, 16, Math.PI), pewter); handle.rotation.z = Math.PI / 2; handle.position.set(0.02, 0.22, 0); handle.name = 'Mug_Handle'; g.add(handle);
     return g;
   },
+  // the Vale's bows (world doc §3.1 v1.10), held the way the kit holds its crossbows: gripped in
+  // the right hand slot, shooting along +x, the limbs up and down (±y) bending back toward the
+  // archer, the string behind (−x). The hunting bow is short and dark with a recurve at the tips;
+  // the yew longbow is taller and pale, with horn nocks.
+  huntbow: () => bow({ name: 'Hunting_Bow', half: 0.7, draw: 0.2, curl: 0.08, wood: 0x8a5a32, nock: 0x2e1f18, r: 0.045 }),
+  longbow: () => bow({ name: 'Yew_Longbow', half: 1.0, draw: 0.24, curl: 0, wood: 0xb07a40, nock: 0xe8dcc0, r: 0.042 }),
 };
+
+function bow({ name, half, draw, curl, wood, nock, r }) {
+  const g = new THREE.Group(); g.name = name;
+  const W = mat(wood, 0, 0.75), N = mat(nock, 0.1, 0.5), leather = mat(0x2e1f18, 0, 0.9), string = mat(0xe6dcc8, 0, 0.8);
+  // one limb, grip to tip, as a tapering tube: back toward the archer as it goes out, the tip flicked forward by `curl`
+  const limb = (s) => {
+    const pts = [0, 0.25, 0.5, 0.75, 1].map((t) => new THREE.Vector3(-draw * t * t + curl * Math.max(0, t - 0.75) * 4, s * half * t, 0));
+    const tube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, r, 6, false), pos = tube.attributes.position;
+    for (let i = 0; i < pos.count; i++) {                       // taper: full at the grip, 45 % at the tip
+      const y = pos.getY(i), t = Math.min(1, Math.abs(y) / half), k = 1 - 0.55 * t, c = pts[Math.round(t * 4)];
+      pos.setX(i, c.x + (pos.getX(i) - c.x) * k); pos.setZ(i, pos.getZ(i) * k);
+    }
+    const m = new THREE.Mesh(tube, W); m.name = name + '_Limb'; g.add(m);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(r * 0.9, 8, 6), N); tip.position.copy(pts[4]); tip.name = name + '_Nock'; g.add(tip);
+    return pts[4];
+  };
+  const top = limb(1), bot = limb(-1);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.5, r * 1.5, 0.24, 8), leather); grip.name = name + '_Grip'; g.add(grip);
+  const s = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, top.distanceTo(bot), 4), string);
+  s.position.set((top.x + bot.x) / 2, 0, 0); s.name = name + '_String'; g.add(s);
+  return g;
+}
 
 // KayKit textures are an 8 × 4 grid of gradient swatches; a mesh's colour is the swatch its UVs
 // sit in. swatches(image, [{ tile: [col, row], to: [light, dark] }]) repaints each listed swatch

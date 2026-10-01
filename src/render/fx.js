@@ -26,6 +26,10 @@ export const FX_STYLES = {
   hero_knight:      { col: STEEL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 238, 205] },
   hero_barbarian:   { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 196, 120], wide: 1.25 },
   hero_rogue:       { col: VERDANT, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [215, 255, 225], thin: true },
+  hero_rogue_bow:     { col: VERDANT, spark: [215, 255, 225] },   // a bow: no flash, the arrow is the effect
+  hero_rogue_longbow: { col: VERDANT, spark: [215, 255, 225] },
+  hero_rogue_xbow:    { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [215, 255, 225] },
+  hero_rogue_hxbow:   { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [215, 255, 225] },
   hero_cleric:      { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 236, 180], wide: 1.15 },   // the mace: short, heavy, warm gold
   hero_mage:        { col: ARCANE, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [175, 195, 255], heavySpark: [255, 170, 80] },
   skeleton_warrior: { col: SOUL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [200, 255, 210] },

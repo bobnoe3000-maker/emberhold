@@ -1,7 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.7 · 2026-09-30 · Plan of record for game design.** v1.7 triples the XP a level takes (§7):
-300 × L^1.6, so each level is three times the play.
+**v1.8 · 2026-10-01 · Plan of record for game design.** v1.8 gives the rogue bows and lets its
+bows and crossbows shoot (§5, *Bows and crossbows*; §8): a rogue holding one fights from range
+instead of closing in.
+
+v1.7 triples the XP a level takes (§7): 300 × L^1.6, so each level is three times the play.
 
 v1.6 caps the tide (§3.3): waves climb to a
 top, then fall back and climb again, so a party strong enough for the top can farm a room as long
@@ -324,6 +327,34 @@ sabatons), so the class's numbers are unchanged; only its look is different. The
 wear the fighter's sword, shields, great helm, plate and sabatons, and has two more items of its
 own (Chapel Sword, Book of Hours). Recommended build: Grit, Focus, Grit.
 
+**Bows and crossbows (v1.8).** A rogue fights with what they hold. Daggers close in, as
+before. A rogue holding a bow or crossbow shoots from range. Like the mage, they back off from
+whatever comes at them and fight at the mage's run speed (6.4). Backstab, Venom and the
+crits-from-behind bonus all still apply, as shots.
+
+| Weapon | Hands | Shot every | Reach | ATK (base + per level) | Notes |
+|---|---|---|---|---|---|
+| Dagger (+ parrying dagger) | 1 (+1) | 0.9 s | melee | 0.9 + 0.32 (+0.5 + 0.15) | the class kit |
+| Hunting Bow | 2 | 0.95 s | 5 tiles | 1.4 + 0.5, CRIT | quick and light (a poacher's bow) |
+| Yew Longbow | 2 | 1.1 s | 6.5 tiles | 1.8 + 0.6, CRIT | Greyholt work |
+| Hand Crossbow | 1 | 1.05 s | 5 tiles | 1.1 + 0.36 | keeps the parrying dagger |
+| Heavy Crossbow, Ashbound Arbalest | 2 | 1.35 s | 6 tiles | 1.8 + 0.62 / 1.7 + 0.6 | hits hardest, slowest |
+
+The trade is reach for the front line. Measured with `roomlv.mjs --rogue <weapon>` (4 seeds,
+5 minutes, fighter + rogue + cleric in the class kit at the room's level):
+- **Waves held:**
+  - level 3: every weapon 22–23 waves;
+  - level 6: 15.5–16 waves (dagger 15.8);
+  - level 9: 12.2–13.5 waves (dagger 13.5).
+- **Party defeats:** at level 9 one run in four is a defeat with each bow or crossbow; with the
+  dagger, none.
+- **Damage:** the bow rogue deals as much as the dagger rogue (level 9: 6,522 against 5,927).
+  But the melee foes it no longer stands among go for the cleric, who takes twice the hits.
+- **Alone, the ranged rogue is about level with the mage** (§7.1 class notes):
+  - level 1: bows last 13–17 waves (the mage 14), crossbows 4–13;
+  - level 6: 1–3 waves in all but one run (one hunting-bow run lasted 6; the mage 2–4).
+  - Neither farms forever.
+
 **Future class** (sourced from the Grey Sisters in the world doc):
 - **Healer**: pure support. *Renew* (heal over time), *Purge* (cleanse poison and slow), and
   *Sanctuary* (a party-wide heal). *Lifeline* became the Cleric's passive.
@@ -459,7 +490,8 @@ Both slot in with the same stat block and ability format. No system changes are 
   *⚑ Bring company*, and the Journal says *bring company*.
 
 **Class notes:**
-- A lone mage lasts longest of the damage classes (8–15 waves at level 1): it kites.
+- A lone mage lasts longest of the damage classes (8–15 waves at level 1): it kites. So does a
+  rogue with a bow (13–17 waves; with a crossbow 4–13; §5 v1.8).
 - A lone cleric outlasts everyone (13–21 waves) but earns the least XP a minute.
 - Neither farms forever.
 
@@ -478,7 +510,7 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 
 | Slot | Fighter | Rogue | Mage |
 |---|---|---|---|
-| Weapon | swords, axes, greatswords, great-axes | daggers, hand and heavy crossbows | wands, staves |
+| Weapon | swords, axes, greatswords, great-axes | daggers; hunting bows and yew longbows; hand and heavy crossbows (bows and crossbows shoot, §5) | wands, staves |
 | Off-hand | shields | off-hand dagger | tomes |
 | Helm | great helm, bear hood | hood | witch hat |
 | Armor | plate, fur mail | leathers | robes |

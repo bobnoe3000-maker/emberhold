@@ -12,6 +12,8 @@
     {"id": "shield_barb", "file": "Barbarian.glb", "mesh": "Barbarian_Round_Shield"},
     {"id": "knife", "file": "Rogue.glb", "mesh": "Knife"},
     {"id": "knife_off", "file": "Rogue.glb", "mesh": "Knife_Offhand"},
+    {"id": "bow_hunting", "proc": "huntbow"},
+    {"id": "bow_long", "proc": "longbow"},
     {"id": "crossbow_1h", "file": "Rogue.glb", "mesh": "1H_Crossbow", "rot": [-70, 0, 45], "spin": -45},
     {"id": "crossbow_2h", "file": "Rogue.glb", "mesh": "2H_Crossbow", "rot": [-70, 0, 45], "spin": -45},
     {"id": "wand", "file": "Mage.glb", "mesh": "1H_Wand"},

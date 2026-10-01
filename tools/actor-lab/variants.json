@@ -90,6 +90,57 @@
   "pose": [
    "2H_Ranged_Aiming",
    0.5
+  ],
+  "face": "hooded"
+ },
+ {
+  "id": "R4",
+  "cls": "Rogue",
+  "label": "Hooded \u00b7 hunting bow",
+  "model": "Rogue_Hooded",
+  "show": [
+   "Rogue_Cape"
+  ],
+  "hold": {
+   "handslot.r": "huntbow"
+  },
+  "face": "hooded",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "R5",
+  "cls": "Rogue",
+  "label": "Hooded \u00b7 yew longbow",
+  "model": "Rogue_Hooded",
+  "show": [
+   "Rogue_Cape"
+  ],
+  "hold": {
+   "handslot.r": "longbow"
+  },
+  "face": "hooded",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "R6",
+  "cls": "Rogue",
+  "label": "Hooded \u00b7 hand crossbow & knife",
+  "model": "Rogue_Hooded",
+  "show": [
+   "1H_Crossbow",
+   "Knife_Offhand",
+   "Rogue_Cape"
+  ],
+  "face": "hooded",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
   ]
  },
  {

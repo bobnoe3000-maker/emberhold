@@ -19,6 +19,9 @@ const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, metalness
 
 // small trinkets the kits don't have
 const PROC = {
+  // bows: limbs on the diagonal (top-right to bottom-left), the string toward the viewer's lower right
+  huntbow: () => { const g = new THREE.Group(), b = PROPS.huntbow(); b.rotation.z = Math.PI / 4; b.rotation.y = Math.PI; g.add(b); g.rotation.x = 0.2; return g; },
+  longbow: () => { const g = new THREE.Group(), b = PROPS.longbow(); b.rotation.z = Math.PI / 4; b.rotation.y = Math.PI; g.add(b); g.rotation.x = 0.2; return g; },
   mace: () => { const g = new THREE.Group(), m = PROPS.mace(); m.rotation.z = -Math.PI / 4; m.rotation.y = 0.26; g.add(m); g.rotation.x = 0.3; return g; },   // grip bottom-left, head top-right
   ring: () => { const g = new THREE.Group(), gold = std(0xd9a441, { metalness: 0.95, roughness: 0.28 });
     g.add(new THREE.Mesh(new THREE.TorusGeometry(1, 0.2, 18, 56), gold));

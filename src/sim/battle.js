@@ -29,7 +29,7 @@
 
 import { mulberry32, streamSeed } from './rng.js';
 import { statsFor, gainXp } from './party.js';
-import { abilityMods } from './items.js';
+import { abilityMods, shotOf } from './items.js';
 import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
@@ -42,6 +42,17 @@ const CLASS_FIGHT = {
   mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire', keepAway: 3.2 },
   cleric:  { interval: 1.3, range: 3.0, speed: 6.6 },
 };
+// A rogue with a bow or crossbow (items.js `shot`) shoots instead of closing in, and backs off what
+// comes at them as the mage does. Bows are quick, crossbows hit hard and slow; the longer the reach,
+// the slower the shot. Their ATK is the weapon's, so the trade is the reach and the off-hand.
+const SHOT = {
+  bow:      { interval: 0.95, range: 5.0, bolt: 'arrow', keepAway: 3.0, speed: 6.4 },
+  longbow:  { interval: 1.1,  range: 6.5, bolt: 'arrow', keepAway: 3.2, speed: 6.4 },
+  crossbow: { interval: 1.05, range: 5.0, bolt: 'bolt',  keepAway: 2.8, speed: 6.4 },   // the hand crossbow: one hand, the parrying dagger stays
+  heavy:    { interval: 1.35, range: 6.0, bolt: 'bolt',  keepAway: 3.2, speed: 6.4 },
+};
+/** how a party member fights: its class's traits, or its bow's @param {any} m */
+export const fightOf = (m) => { const F = CLASS_FIGHT[m.cls], k = m.cls === 'rogue' && shotOf(m); return k ? { ...F, ...SHOT[k] } : F; };
 // class bonuses fought out here (GDD §5; the fighter's shield DEF is in party.js):
 // the rogue's crits from behind hit BACKSTAB_CRIT harder; the mage's spells deal CLUSTER_ATK
 // more to a foe with two or more others within CLUSTER_R; the cleric's heals are HEAL_BONUS stronger
@@ -465,7 +476,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
     pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
-      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab ? 'fire' : bolt, hit }); }
+      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, hit }); }
       else hit();
     } });
   }
@@ -759,7 +770,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // party AI
       state.party.forEach((m, i) => {
         if (!alive(m) || !foes.length) return;
-        const F = CLASS_FIGHT[m.cls], stance = stanceOf(m);
+        const F = fightOf(m), stance = stanceOf(m);
         // Defensive companions fight only what comes near the leader, and fall back to it otherwise
         const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - p.x, e.y - p.y) < DEF_LEASH) : foes;
         if (!near.length) { if (hypot(p.x - m.x, p.y - m.y) > 2.5) chase(m, p.x, p.y, F.speed, dt, w); else m.moving = false; return; }

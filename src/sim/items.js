@@ -49,9 +49,12 @@ export const BASES = {
   furboots:    { name: 'Fur Boots', slot: 'boots', cls: 'fighter', icon: 'boots_fur', kind: 'fur', st: { def: [0.4, 0.1], hp: [2, 0.8] } },
   // ── rogue
   dagger:      { name: 'Dagger', slot: 'weapon', cls: 'rogue', hands: 1, icon: 'knife', kind: 'dagger', st: { atk: [0.9, 0.32], crit: [1, 0.05] }, metal: true },
-  handbow:     { name: 'Hand Crossbow', slot: 'weapon', cls: 'rogue', hands: 1, icon: 'crossbow_1h', kind: 'crossbow', st: { atk: [1.1, 0.36] } },
-  heavybow:    { name: 'Heavy Crossbow', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'crossbow_2h', kind: 'heavy crossbow', st: { atk: [1.8, 0.62], crit: [1, 0.04] } },
-  bonebow:     { name: 'Ashbound Arbalest', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'skel_crossbow', kind: 'heavy crossbow', st: { atk: [1.7, 0.6], crit: [2, 0.06] } },
+  // the rogue's bows and crossbows shoot (battle.js SHOT: their range and pace by `shot`)
+  handbow:     { name: 'Hand Crossbow', slot: 'weapon', cls: 'rogue', hands: 1, icon: 'crossbow_1h', kind: 'crossbow', shot: 'crossbow', st: { atk: [1.1, 0.36] } },
+  heavybow:    { name: 'Heavy Crossbow', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'crossbow_2h', kind: 'heavy crossbow', shot: 'heavy', st: { atk: [1.8, 0.62], crit: [1, 0.04] } },
+  bonebow:     { name: 'Ashbound Arbalest', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'skel_crossbow', kind: 'heavy crossbow', shot: 'heavy', st: { atk: [1.7, 0.6], crit: [2, 0.06] } },
+  huntbow:     { name: 'Hunting Bow', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'bow_hunting', kind: 'bow', shot: 'bow', st: { atk: [1.4, 0.5], crit: [1, 0.04] } },
+  longbow:     { name: 'Yew Longbow', slot: 'weapon', cls: 'rogue', hands: 2, icon: 'bow_long', kind: 'longbow', shot: 'longbow', st: { atk: [1.8, 0.6], crit: [1, 0.05] } },
   offdagger:   { name: 'Parrying Dagger', slot: 'off', cls: 'rogue', icon: 'knife_off', kind: 'off-hand dagger', st: { atk: [0.5, 0.15], dodge: [1, 0.04] }, metal: true },
   hood:        { name: 'Hood', slot: 'helm', cls: 'rogue', icon: 'hood_rogue', kind: 'leather', st: { def: [0.3, 0.1], dodge: [1, 0.04] } },
   leathers:    { name: 'Leathers', slot: 'armor', cls: 'rogue', icon: 'armor_leather', kind: 'leather', st: { def: [0.6, 0.22], dodge: [1, 0.05] } },
@@ -161,6 +164,8 @@ export function itemStats(it) {
 }
 export const canWear = (m, it) => { const B = BASES[it.base]; return B.cls === 'any' || B.cls === m.cls || (B.also || []).includes(m.cls); };
 export const isTwoHanded = (it) => !!it && BASES[it.base].hands === 2;
+/** how the member's weapon shoots ('bow', 'longbow', 'crossbow', 'heavy'), or null for one that doesn't @param {any} m */
+export const shotOf = (m) => { const w = m && m.gear && m.gear.weapon; return (w && BASES[w.base] && BASES[w.base].shot) || null; };
 
 // what the member's gear adds, summed
 export function gearStats(m) {

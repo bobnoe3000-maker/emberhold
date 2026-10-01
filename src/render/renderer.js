@@ -25,6 +25,7 @@ import { siteOpen, bossAt } from '../sim/sites.js';
 import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
+import { shotOf } from '../sim/items.js';
 
 // hazard material → the point-light color it casts (lit dynamically as a flare)
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
@@ -420,10 +421,27 @@ export function createRenderer(canvas, sim, input) {
     }
     return (bolts[kind] = sp);
   }
+  // an arrow: a short line along its flight on screen (q of 16 headings), steel head forward, pale
+  // fletching behind, both glinting; baked once per heading
+  function arrowSprite(q) {
+    const key = 'arrow' + q; if (bolts[key]) return bolts[key];
+    const w = 15, h = 15, sp = { w, h, ax: 7, ay: 7, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
+    const a = (q / 16) * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a);
+    for (let t = -6; t <= 6; t++) {
+      const x = Math.round(7 + dx * t), y = Math.round(7 + dy * t), j = y * w + x;
+      sp.mask[j] = 1; sp.alb.set(t >= 5 ? [215, 220, 230] : t <= -5 ? [240, 232, 214] : [196, 146, 90], j * 3); sp.nrm.set([127, 160, 250], j * 3);
+      if (t >= 5 || t <= -5) sp.emi[j] = 7;               // a frost glint at the head and the fletching: it reads in the dark
+    }
+    return (bolts[key] = sp);
+  }
   // companions (hired party members) — atlases load on first use
   const partyAtlases = {};
   let cast = {};                                      // content/npcs/*.json by id (setCast): each NPC's look and name
   const npcPres = new Map();                          // NPC id → its animation state (never on the sim's objects)
+  // a rogue is drawn with what they shoot with (sim items.js `shot`; the atlases: actor-lab bake.json),
+  // in their dagger look until that atlas has loaded
+  const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
+  const memberAtlas = (m, base) => { const k = base === 'hero_rogue' && shotOf(m); return (k && partyAtlas(base + RANGED_LOOK[k])) || partyAtlas(base); };
   const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
 
   const fol = [];                                     // smoothed companion draw positions
@@ -828,7 +846,7 @@ export function createRenderer(canvas, sim, input) {
     const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
     const GHOST = { ghost: 1 };
     // the hero
-    const hAtl = H.actor && H.actor !== 'hero_knight' ? partyAtlas(H.actor) : heroAtlas;
+    const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
     if (hAtl) {
       const heroAtlas = hAtl;
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: H.fx, faceY: H.fy, facing: H.act > 0, dead: H.down, stride: STRIDE.hero });
@@ -838,7 +856,7 @@ export function createRenderer(canvas, sim, input) {
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
-      const atl = partyAtlas(m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' })[m.cls]); if (!atl || m.x === undefined) return;
+      const atl = memberAtlas(m, m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' })[m.cls]); if (!atl || m.x === undefined) return;
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
@@ -889,7 +907,10 @@ export function createRenderer(canvas, sim, input) {
     for (const b of sim.world.projectiles || []) {
       if (!b.kind) continue;
       const bx = lerp(b, 'x'), by = lerp(b, 'y'), bz = heightAt(sim.world, Math.floor(bx), Math.floor(by)), bp = project(bx, by, bz);
-      draws.push({ d: bx + by + 0.2, sp: boltSprite(b.kind), fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
+      let sp;
+      if (b.kind === 'arrow') { const vx = b.tgt.x - b.sx, vy = b.tgt.y - b.sy, a = Math.atan2((vx + vy) * HH, (vx - vy) * HW); sp = arrowSprite(((Math.round(a / (Math.PI / 8)) % 16) + 16) % 16); }
+      else sp = boltSprite(b.kind);
+      draws.push({ d: bx + by + 0.2, sp, fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
     }
     if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
       party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]) });
