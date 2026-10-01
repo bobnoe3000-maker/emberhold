@@ -13,7 +13,8 @@ import { makeHero, statsFor } from './party.js';
 import { starterKit, refreshItem } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
-import { createHeroes } from './heroes.js';
+import { createHeroes, DAY_S } from './heroes.js';
+import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
 import { placeRoad, createRoad } from './road.js';
@@ -442,9 +443,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // links to enemies — which made the snapshot circular mid-battle, so autosave silently failed)
   // are rebuilt on load by battle.ensureRuntime
   // (M3: attributes, auto, origin, skill ranks, auto-cast off-list, priority, stance, Fallen,
-  // Weakened-until and respec count)
+  // Weakened-until and respec count; v14: a sellsword's rank, perks, hidden perk, loyalty bond,
+  // wages owed and retrains, companions.js)
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
-    'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs'];
+    'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
+    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains'];
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;
@@ -455,6 +458,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       party: state.party.map(persistMember),
       bench: state.bench.map(persistMember),
       created: state.created, temple: { ...state.temple },
+      tavern: { ...state.tavern }, wageDay: state.wageDay, innDay: state.innDay,   // asked around (and when), the last dawn paid, the last inn night
       bag: state.bag.map((it) => ({ ...it })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
       hp: [...world.hp.entries()],
@@ -472,6 +476,18 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     };
   }
 
+  // a companion as v14 keeps it (companions.js): v13 and older, a tavern hire is a Wick whose old
+  // trait is now the perk it always claimed to be (grandfathered: no fee, the wage from the next dawn);
+  // a found one has its own perks. Anything unknown is dropped, never half-read.
+  function sellsword(m) {
+    if (FOUND_PERKS[m.id]) { m.rank = 'found'; m.perks = [...FOUND_PERKS[m.id]]; }
+    else if (!Object.prototype.hasOwnProperty.call(RANKS, m.rank)) { m.rank = 'wick'; const t = Array.isArray(m.trait) ? TRAIT_PERK[m.trait[0]] : null; m.perks = t ? [t] : []; delete m.trait; }
+    m.perks = (Array.isArray(m.perks) ? m.perks : []).filter((id) => Object.prototype.hasOwnProperty.call(PERKS, id));
+    m.hidden = typeof m.hidden === 'string' && Object.prototype.hasOwnProperty.call(PERKS, m.hidden) ? m.hidden : null;
+    m.bond = Number.isInteger(m.bond) && m.bond > 0 ? m.bond : 0;
+    m.owed = Number.isFinite(m.owed) && m.owed > 0 ? Math.round(m.owed) : 0;
+    m.retrains = Number.isInteger(m.retrains) && m.retrains > 0 ? m.retrains : 0;
+  }
   function restore(data) {
     stopWalk();
     state.t = data.t ?? 0; state.tick = data.tick ?? 0;
@@ -489,7 +505,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     for (const m of [...state.party, ...state.bench]) {
       if (!m.gear) m.gear = starterKit(m);                  // saves from before gear: the class kit
       if (!m.attrs) { m.autoAttrs = !m.main; autoAllocate(m); }   // saves from before attributes: the class build (same stats as then)
+      if (!m.main) sellsword(m);
     }
+    state.tavern = { day: data.tavern?.day ?? 0, ask: data.tavern?.ask ?? 0 };
+    const today = Math.floor(state.t / DAY_S);
+    state.wageDay = Number.isInteger(data.wageDay) ? data.wageDay : today;     // v13 and older: wages start at the next dawn
+    state.innDay = Number.isFinite(data.innDay) ? data.innDay : -1e9;
     state.bag = (data.bag ?? []).map((it) => refreshItem({ ...it }));
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));

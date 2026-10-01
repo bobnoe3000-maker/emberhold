@@ -12,6 +12,7 @@ import { isWalkable } from '../src/sim/world.js';
 import { createStoryBook } from '../src/story/adapter.js';
 import { NPCS } from '../src/sim/npcs.js';
 import { FOUND } from '../src/sim/heroes.js';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
@@ -80,7 +81,7 @@ test('while he waits, his captor fallen, the hall is quiet: you can walk up and 
 
 test('a full party puts him on the bench; he can be benched and swapped, never released; he round-trips a save', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  for (const i of [0, 1]) { sim.commands.push({ type: 'hire', idx: i }); sim.tick(); }
+  hire(sim, [0, 1]);
   assert.equal(sim.state.party.length, 3);
   const ev = events(sim, ['benched', 'refused']);
   sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
@@ -148,7 +149,7 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
 
 test('his quests can\'t be taken from anyone else, or from him while he\'s on the bench', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  for (const i of [0, 1]) { sim.commands.push({ type: 'hire', idx: i }); sim.tick(); }
+  hire(sim, [0, 1]);
   sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
   sim.commands.push({ type: 'endTalk' }); sim.tick(); goTo(sim, 'town');
   assert.equal(sim.state.bench.at(-1).id, 'brannoc');

@@ -12,6 +12,7 @@ import { boardOffers, jobOf, BOARD, TEMPLATES, MAX_JOBS, KEEP_DONE } from '../sr
 import { QS } from '../src/sim/quests.js';
 import { DAY_S } from '../src/sim/heroes.js';
 import { autoAllocate } from '../src/sim/attributes.js';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 const setLv = (sim, lv) => { const h = sim.state.party[0]; h.level = lv; h.xp = 0; autoAllocate(h); };
@@ -144,7 +145,7 @@ test('content/board has the words for every template the sim makes, with canon p
 // and cleric, hired at the hero's level)
 for (const [tpl, lv, hires] of [['hold', 1, []], ['retrieve', 6, []], ['bounty', 2, []], ['delve', 8, []], ['warden', 3, [1, 3]]]) test(`the golden path (${tpl}, level ${lv}${hires.length ? ', a party of three' : ', solo'}): take it at the board, the compass leads, back to town, hand it in`, () => {
   const j = findJob(lv, tpl), sim = town(lv), ev = events(sim, ['questReward', 'defeat']);
-  for (const idx of hires) push(sim, { type: 'hire', idx });
+  hire(sim, hires);
   assert.equal(sim.state.party.length, 1 + hires.length);
   sim.state.t = j.day * DAY_S; sim.tick();
   push(sim, { type: 'boardAccept', id: j.id }); assert.equal(sim.state.tracked, j.id);

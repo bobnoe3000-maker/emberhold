@@ -1,7 +1,7 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
@@ -13,6 +13,10 @@
 // weapon base instead of the dagger (huntbow, longbow, handbow, heavybow: a two-handed one frees the off-hand).
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+// --perks keep: the hires keep the perks the tavern rolled them; --perks a,b/c,d: the first hire fights
+// with a and b, the second with c and d (companions.js ids). Without it, no perks: the contract's runs.
+const pki = process.argv.indexOf('--perks'), PERKS = pki >= 0 ? process.argv.splice(pki, 2)[1] : null;
+const GIVE = PERKS && PERKS !== 'keep' ? PERKS.split('/').map((s) => s.split(',').filter(Boolean)) : null;
 
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
@@ -26,7 +30,7 @@ const attrs = await load('sim/attributes.js').catch(() => null);
 const items = await load('sim/items.js').catch(() => null);
 
 const [secs, RL, HL] = args.slice(0, 3).map(Number), hire = (args[3] || '').split(',').filter(Boolean).map(Number), seed = +(args[4] || 20260807);
-const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.commands.push({ type: 'hire', idx: i }); s.tick(); }
+const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } s.state.counters.gold = 0; s.state.party.slice(1).forEach((m, i) => { if (PERKS !== 'keep') { m.perks = GIVE ? GIVE[i] || [] : []; m.hidden = null; } });   // (the contract: hires without perks)
 const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }); sim.state.trials = TRIALS;   // (older checkouts ignore it)
 sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
 if (HERO) sim.state.party[0].cls = HERO;
@@ -46,5 +50,5 @@ sim.bus.on('defeat', () => (def = true));
 const dealt = {}, taken = {}; if (process.env.DMG) sim.bus.on('combat', (c) => { if (c.t !== 'hit') return; if (c.party) { const m = sim.state.party.find((q) => Math.abs(q.x - c.x) < 0.01 && Math.abs(q.y - c.y) < 0.01); if (m) taken[m.cls] = (taken[m.cls] || 0) + c.amount; } else dealt[c.src] = (dealt[c.src] || 0) + c.amount; }); sim.bus.on('fallen', () => fallen++);
 for (let t = 0; t < 20 * secs && !def; t++) { sim.tick(); if (sim.world.enemies.length) low = Math.min(low, frac()); }
 const avg = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
-console.log(`${SITE === 'barrows' ? '' : SITE + ' '}${HERO || ROGUE ? `[${sim.state.party.map((m) => m.cls + (m.cls === 'rogue' ? ':' + m.gear.weapon.base : '')).join(' ')}] ` : ''}room L${RL} hero L${HL}${hire.length ? ' +' + hire.length : ''}: ${def ? 'DEFEAT' : 'held'} ${sim.state.t.toFixed(0)}s · ${costs.length} waves · end lv ${sim.state.party.map((m) => m.level).join('/')} · cost/wave first10 ${Math.round(100 * avg(costs.slice(0, 10)))}% · lowest ${Math.round(100 * Math.min(1, ...lows))}% · downs ${downs} · fallen ${fallen} · gold ${sim.state.counters.gold}`);
+console.log(`${SITE === 'barrows' ? '' : SITE + ' '}${GIVE ? `{${GIVE.map((g) => g.join('+') || '-').join(' / ')}} ` : ''}${HERO || ROGUE ? `[${sim.state.party.map((m) => m.cls + (m.cls === 'rogue' ? ':' + m.gear.weapon.base : '')).join(' ')}] ` : ''}room L${RL} hero L${HL}${hire.length ? ' +' + hire.length : ''}: ${def ? 'DEFEAT' : 'held'} ${sim.state.t.toFixed(0)}s · ${costs.length} waves · end lv ${sim.state.party.map((m) => m.level).join('/')} · cost/wave first10 ${Math.round(100 * avg(costs.slice(0, 10)))}% · lowest ${Math.round(100 * Math.min(1, ...lows))}% · downs ${downs} · fallen ${fallen} · gold ${sim.state.counters.gold}`);
 if (process.env.DMG) console.log('  dealt', JSON.stringify(dealt), '· taken', JSON.stringify(taken));

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "The Lantern Guild's sellswords for the player's eyes: rank names and lines, perk family labels, perk names and lines (ids are the sim's, src/sim/companions.js).",
+  "type": "object",
+  "required": [
+    "ranks",
+    "families",
+    "perks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "ranks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "line"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        }
+      }
+    },
+    "families": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 20
+      }
+    },
+    "perks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        }
+      }
+    }
+  }
+}

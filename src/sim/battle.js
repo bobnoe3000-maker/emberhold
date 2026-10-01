@@ -30,6 +30,8 @@
 import { mulberry32, streamSeed } from './rng.js';
 import { statsFor, gainXp } from './party.js';
 import { abilityMods, shotOf } from './items.js';
+import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
+import { DAY_S } from './heroes.js';
 import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
@@ -180,8 +182,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hero = () => state.party[0];
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
   // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
+  // the company a member keeps (companions.js: auras, bonds, a Drinker's dry spell), in a fight
+  const company = (m) => companyMods(m, state.party, { depth: state.depth, innDay: state.innDay, day: Math.floor(state.t / DAY_S) });
   const combatStats = (m) => {
-    const s = statsFor(m), b = m.buff;
+    const s = statsFor(m), b = m.buff, k = company(m);
+    s.atk *= k.atk; s.def *= k.def;
     if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } }
     return s;
   };
@@ -315,12 +320,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     let dmg = r.dmg;
     if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
     if (isParty && tgt.ward > 0) { const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a; if (!dmg) { bus.emit('combat', { t: 'warded', x: tgt.x, y: tgt.y }); return; } }   // Arcane Ward soaks it first
+    if (isParty && tgt.main && dmg > 1) {                       // a Bodyguard close by takes a share of what's aimed at the hero
+      const g = state.party.find((q) => q !== tgt && alive(q) && has(q, 'bodyguard') && hypot(q.x - tgt.x, q.y - tgt.y) <= FIGHT.bodyguardR);
+      if (g) { const share = Math.max(1, Math.round(dmg * FIGHT.bodyguard)); dmg -= share; g.hp = Math.max(1, g.hp - share); g.flash = 0.12; }
+    }
     tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
     bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy });
     if (tgt.hp <= 0 && isParty && battle && !battle.lifeline && state.party.some((q) => q.cls === 'cleric' && alive(q) && hasPassive(q))) {
       tgt.hp = 1; battle.lifeline = true;                       // Lifeline: once a room visit, the blow that would down an ally doesn't
       bus.emit('combat', { t: 'lifeline', x: tgt.x, y: tgt.y, name: tgt.name });
+    }
+    if (tgt.hp <= 0 && isParty && battle && sworn(tgt) && !(battle.sworn || []).includes(tgt.id)) {
+      tgt.hp = Math.max(1, Math.round(statsFor(tgt).maxHp * SWORN_RISE)); (battle.sworn ||= []).push(tgt.id);   // Sworn: once a room visit, gets up from it
+      bus.emit('combat', { t: 'rise', x: tgt.x, y: tgt.y, name: tgt.name });
     }
     if (tgt.hp > 0) return;
     if (isParty) {
@@ -339,7 +352,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     for (const m of living) gainXp(m, share, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
-    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl);
+    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party));   // (a Scavenger's or a Greedy sellsword's eye)
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
@@ -429,14 +442,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function utility(m, { A, mult }, tgt, w) {
     if (A.kind === 'guard') {
       const b = m.buff || (m.buff = {});
-      if (A.taunt) { b.wall = A.dur; b.wallK = A.def * mult; } else { b.smoke = A.dur; b.smokeK = A.dodge * mult; }
+      if (A.taunt) { b.wall = A.dur + (has(m, 'long_watch') ? FIGHT.wall : 0); b.wallK = A.def * mult; } else { b.smoke = A.dur + (has(m, 'smoke_artist') ? FIGHT.smoke : 0); b.smokeK = A.dodge * mult; }
       bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
     } else if (A.kind === 'heal') {
-      const s = statsFor(m), n = Math.round(s.maxHp * A.heal * mult); m.hp = Math.min(s.maxHp, m.hp + n);
+      const s = statsFor(m), n = Math.round(s.maxHp * A.heal * mult * healMod(m, state.party)); m.hp = Math.min(s.maxHp, m.hp + n);
       bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n });
     } else if (A.kind === 'mend') {
       if (!alive(tgt)) return;
-      const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1)); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
+      const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, state.party)); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
       bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n });
     } else if (A.kind === 'bless') {
       for (const q of state.party) if (alive(q)) { const b = q.buff || (q.buff = {}); b.bless = A.dur; b.blessK = A.buff * mult; }
@@ -456,7 +469,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const ab = c ? c.A : null;
     if (c) { power = ab.power * c.mult; bonus = ab.crit || 0; }
     const heavy = !!ab || (!isPartyAtt && att.elite);
-    att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval; att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip
+    att.act = heavy ? 0.55 : 0.35; att.cd = fight.interval * (isPartyAtt ? company(att).pace : 1); att.atkN = (att.atkN || 0) + 1;   // atkN: the renderer starts the attack clip (a Drillmaster's pace)
     att.atkKind = heavy ? 'heavy' : att.atkN % 2 ? 'a' : 'b';
     const aStats = isPartyAtt ? { ...combatStats(att), lvl: att.level, src: att } : att;   // Bless counts on the swing
     const hit = () => {
@@ -464,12 +477,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       let pw = power, critMul = 1;
       if (isPartyAtt && att.cls === 'mage' && clustered(tgt, w.enemies)) pw *= CLUSTER_ATK;
       if (isPartyAtt && att.cls === 'rogue' && behind(att, tgt)) critMul = BACKSTAB_CRIT;
+      if (isPartyAtt) {                                           // a sellsword's way of fighting (companions.js)
+        if (has(att, 'skirmisher') && tgt.aim !== att) pw *= FIGHT.skirmisher;
+        if (has(att, 'finisher') && tgt.hp < tgt.maxHp / 2) pw *= FIGHT.finisher;
+        if (has(att, 'last_stand') && att.hp < statsFor(att).maxHp / 4) pw *= FIGHT.last_stand;
+        const dead = familyOf(w).undead(tgt.kind);
+        if ((has(att, 'grave_warden') && dead) || (has(att, 'redhand_breaker') && !dead)) pw *= FIGHT.warden;
+      }
       const r = resolve(aStats, isPartyAtt ? tgt : combatStats(tgt), pw, bonus, critMul);   // the defender's guards count when the blow lands
       applyHit(aStats, tgt, r, !isPartyAtt, w, heavy);
       if (r.crit && isPartyAtt && att.cls === 'rogue' && hasPassive(att)) att.mp = Math.min(statsFor(att).maxMp, att.mp + 5);   // Opportunist
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
-      if (ab && ab.splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, ab.splash * c.mult), false, w);
-      if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur, dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
+      const splash = ab ? ab.splash || (ab.id === 'firebolt' && has(att, 'kindler') ? FIGHT.kindle : 0) : 0;   // (a Kindler's Firebolt splashes)
+      if (splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, splash * c.mult), false, w);
+      if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur + (has(att, 'venomous') ? FIGHT.venom : 0), dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
@@ -741,7 +762,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
       const iron = m.cls === 'fighter' && m.hp < s.maxHp * 0.3 && hasPassive(m) ? 2 : 1;             // Iron Hide
-      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * dt); m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
+      m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * (battle ? company(m).hpr : 1) * dt);       // (an Old Campaigner's regen, in a fight)
+      if (battle && has(m, 'field_medic') && (m.medicT = (m.medicT || 0) + dt) >= FIGHT.medicEvery) {   // a Field Medic sees to the most hurt
+        m.medicT = 0; let low = null, lo = 1;
+        for (const q of state.party) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
+        if (low) { const qs = statsFor(low), n = Math.round(qs.maxHp * FIGHT.medicHeal); low.hp = Math.min(qs.maxHp, low.hp + n); bus.emit('combat', { t: 'heal', x: low.x, y: low.y, amount: n }); }
+      } m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); }
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
@@ -825,7 +851,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // melee skeletons pick the nearest party member with a free station (else the nearest)
         const t = taunt || (e.bolt ? nearest(e, targets, undefined, reach) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q, reach) || nearest(e, targets, undefined, reach));
         if (!t) { e.moving = false; continue; }
-        const d = hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y;
+        const d = hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y; e.aim = t;   // (who it's fighting: a Skirmisher's opening)
         if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
       }

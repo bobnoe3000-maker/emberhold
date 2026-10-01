@@ -11,6 +11,7 @@ import { SETS } from '../src/sim/lore.js';
 import { isWalkable } from '../src/sim/world.js';
 import { statsFor } from '../src/sim/party.js';
 import { unlocked, SKILLS } from '../src/sim/skills.js';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
@@ -40,7 +41,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   const paid = [], ev = []; sim.bus.on('questReward', (r) => paid.push(r.id));
   for (const n of ['siteRevealed', 'companionJoined', 'trialDone', 'setComplete', 'vaultOpened']) sim.bus.on(n, (e) => ev.push(n + ':' + (e.site || e.id || e.cls || e.set)));
-  for (const i of [0, 3]) { sim.commands.push({ type: 'hire', idx: i }); sim.tick(); }   // a fighter and a cleric (the tavern's order)
+  hire(sim, [0, 3]);   // a fighter and a cleric (the tavern's order)
   assert.deepEqual(sim.state.party.map((m) => m.cls), ['fighter', 'fighter', 'cleric']);
 
   // Act I, 1: the Tithe Mill for Maudry, handed in to Osric; the Keep is revealed

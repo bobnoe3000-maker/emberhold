@@ -7,6 +7,7 @@ import { makeMember, statsFor } from '../src/sim/party.js';
 import { makeItem, itemStats } from '../src/sim/items.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 import { behind, clustered } from '../src/sim/battle.js';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 function inRoom(party, lv = 1) {
@@ -48,7 +49,7 @@ test('a cleric can be created, and hired at the tavern', () => {
   s.commands.push({ type: 'createHero', cls: 'cleric', look: 'hero_cleric', origin: 'grey_sisters_ward', name: 'Edda' }); s.tick();
   assert.deepEqual([s.state.party[0].cls, s.state.party[0].actor], ['cleric', 'hero_cleric']);
   const roster = s.heroes.roster(), i = roster.findIndex((m) => m.cls === 'cleric');
-  assert.ok(i >= 0); s.commands.push({ type: 'hire', idx: i }); s.tick();
+  assert.ok(i >= 0); hire(s, [i]);
   assert.equal(s.state.party[1].cls, 'cleric');
 });
 test('Mend heals the most hurt ally, 20 % stronger for a cleric', () => {

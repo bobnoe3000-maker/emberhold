@@ -10,6 +10,7 @@
 // Floors: level 1–4 the first, 5–7 the second, 8+ the third (room levels base 1 + 3 a floor).
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
 
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
@@ -18,7 +19,7 @@ const { createSim } = await load('sim/core.js'), { statsFor } = await load('sim/
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
 const HL = +args[0], HOURS = +(args[1] || 1), seed = +(args[2] || 20260807), DEPTH = HL <= 4 ? 0 : HL <= 7 ? 1 : 2;
 
-const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
+const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
 const sim = createSim(seed, undefined, { scene: 'dungeon' });
 sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1 };
 sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));

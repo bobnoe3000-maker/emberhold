@@ -10,7 +10,10 @@
 //   respec      { id }            town        attributes back to points (first free, then 20 g × level)
 //   resurrect   { id }            town        the temple (25 g × level; free once a day to level 5)
 //   rest        {}                town        the inn: full HP / MP, Weakened lifted (5 g × hero level)
-//   hire        { idx }           town        a tavern sellsword → the party, or the bench when full
+//   hire        { idx }           town        a tavern sellsword → the party, or the bench when full; pays the Guild's fee
+//   askAround   {}                town        today's roster again, new faces (10 g × level, doubling each time that day)
+//   retrain     { id, idx }       town        one of a sellsword's perks for another of its family (60 g × level × (retrains + 1))
+//   payWages    {}                town        settle what the sellswords are owed (their perks come back)
 //   dismiss     { id }            town        a companion → the bench
 //   swap        { slot, id }      town        a bench member into companion slot 1 or 2
 //   release     { id }            town        a bench member leaves for good (not a found companion)
@@ -18,12 +21,19 @@
 // `# companion: join` from his own talk (npcs.js), once the boss who held him has fallen. He goes to
 // the party, or the bench when it's full; he can be benched, never released.
 //
+// The Lantern Guild's sellswords (GDD §6.2, companions.js) are paid at dawn, wherever the company is:
+// party first, then the bench at half, each paid in full or not at all. One who isn't paid is owed
+// (its perks go dark until it is); paid in the party it grows loyal, and loyalty shows a Lantern's or
+// Beacon's hidden perk (3) and makes it Sworn (5). Events: 'wages' { day, paid, total, unpaid: [names] },
+// 'perkRevealed' { id, name, perk }, 'sworn' { id, name }.
+//
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
 import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
+import { hired, feeOf, wageOf, loyaltyOf, retrainPerk, priceMod, PERKS, REVEAL_AT, SWORN_AT, ASK_COST, RETRAIN_COST, FOUND_PERKS } from './companions.js';
 
 export const BENCH_MAX = 6;
 // the found companions (world doc §5): who they are, and whose fall frees them
@@ -38,6 +48,9 @@ export const RES_COST = 25, RESPEC_COST = 20, REST_COST = 5, FREE_RES_LEVEL = 5;
 export function createHeroes({ state, bus, getWorld, seed }) {
   if (!state.bench) state.bench = [];
   if (!state.temple) state.temple = { freeDay: -1 };
+  if (!state.tavern) state.tavern = { day: 0, ask: 0 };     // how often you asked around, and on which day
+  if (state.wageDay === undefined) state.wageDay = 0;       // the last dawn the wages were settled
+  if (state.innDay === undefined) state.innDay = -1e9;      // the last day the company slept at an inn (a Drinker's)
   const C = state.counters;
   const inTown = () => getWorld().kind === 'town';
   const find = (id) => state.party.find((m) => m.id === id) || state.bench.find((m) => m.id === id) || null;
@@ -50,13 +63,41 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   /** what the temple asks to raise m right now @param {any} m */
   function resurrectCost(m) {
     const free = state.party[0].level <= FREE_RES_LEVEL && state.temple.freeDay !== day();
-    return free ? 0 : RES_COST * m.level;
+    return free ? 0 : Math.round(RES_COST * m.level * priceMod(state.party));
   }
   /** @param {any} m */
   const respecCost = (m) => ((m.respecs || 0) === 0 ? 0 : RESPEC_COST * m.level);
-  const restCost = () => REST_COST * state.party[0].level;
+  const restCost = () => Math.round(REST_COST * state.party[0].level * priceMod(state.party));
   const extraHirelings = () => (ORIGIN_EDGE[state.party[0].origin]?.kind === 'tavernHirelings' ? ORIGIN_EDGE[state.party[0].origin].value : 0);
-  const roster = () => tavernRoster(seed, getWorld().region, 0, state.party[0].level, extraHirelings());
+  const asked = () => (state.tavern.day === day() ? state.tavern.ask : 0);
+  const roster = () => tavernRoster(seed, getWorld().region, day(), state.party[0].level, extraHirelings(), asked());
+  /** asking around again today @returns {number} */
+  const askCost = () => { let c = ASK_COST * state.party[0].level; for (let i = 0; i < asked(); i++) c *= 2; return c; };
+  /** @param {any} m */
+  const retrainCost = (m) => RETRAIN_COST * m.level * ((m.retrains || 0) + 1);
+  /** what the company owes, all told */
+  const owed = () => [...state.party, ...state.bench].reduce((n, m) => n + (m.owed || 0), 0);
+
+  // loyalty: a hidden perk shows at REVEAL_AT, and SWORN_AT is Sworn (told once each)
+  function bonded(m, n) {
+    const before = loyaltyOf(m); m.bond = Math.max(0, (m.bond || 0) + n);
+    const now = loyaltyOf(m);
+    if (now >= REVEAL_AT && m.hidden) { const perk = m.hidden; m.perks = [...m.perks, perk]; m.hidden = null; bus.emit('perkRevealed', { id: m.id, name: m.name, perk }); }
+    if (now >= SWORN_AT && before < SWORN_AT) bus.emit('sworn', { id: m.id, name: m.name });
+  }
+  // the dawn wage: the party first, then the bench at half; each paid in full or owed
+  function payDawn(d) {
+    const C2 = state.counters; let paid = 0, total = 0; const unpaid = [];
+    for (const [list, benched] of [[state.party, false], [state.bench, true]]) for (const m of list) {
+      if (!hired(m)) continue;
+      const w = wageOf(m, benched), due = w + (m.owed || 0); total += due;
+      if ((C2.gold || 0) >= due) { C2.gold -= due; paid += due; m.owed = 0; if (!benched && !m.fallen) bonded(m, 1); }
+      else { m.owed = (m.owed || 0) + w; unpaid.push(m.name); bonded(m, -2); }
+    }
+    if (total) { bus.emit('wages', { day: d, paid, total, unpaid }); bus.emit('countersChanged', { ...C2 }); changed(); }
+  }
+  // a boss the party put down together: loyalty for every sellsword who stood there
+  bus.on('bossDown', () => { for (const m of state.party) if (hired(m) && !m.fallen && !m.down) bonded(m, 1); });
 
   function raise(m, frac) {
     m.fallen = false; m.down = false;
@@ -65,6 +106,8 @@ export function createHeroes({ state, bus, getWorld, seed }) {
 
   // Weakened wears off after WEAK_S of play (core ticks this)
   function tick() {
+    for (let d = state.wageDay + 1; d <= day(); d++) payDawn(d);
+    state.wageDay = Math.max(state.wageDay, day());
     let any = false;
     for (const m of state.party) if (m.weakUntil > 0 && state.t >= m.weakUntil) { m.weakUntil = 0; clampPools(m); any = true; }
     if (any) { bus.emit('weakened', { on: false }); changed(); }
@@ -145,16 +188,42 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (!inTown()) return refuse('Rest at a town inn');
         if (!pay(restCost())) return refuse('Not enough gold');
         for (const m of state.party) if (!m.fallen) { m.weakUntil = 0; m.down = false; const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; }
+        state.innDay = day();
         bus.emit('rested', {}); changed(); return true;
       }
       case 'hire': {                                      // today's roster at this town's tavern
         if (!inTown()) return true;
         const c = roster()[cmd.idx];
         if (!c || find(c.id)) return true;
+        if (state.party.length > MAX_COMPANIONS && state.bench.length >= BENCH_MAX) return refuse('The party and the bench are full');
+        if (!pay(feeOf(c))) return refuse(`The Guild wants ${feeOf(c)} gold for ${c.name}`);
         if (state.party.length <= MAX_COMPANIONS) state.party.push(c);
-        else if (state.bench.length < BENCH_MAX) { state.bench.push(c); bus.emit('benched', { id: c.id, name: c.name }); }
-        else return refuse('The party and the bench are full');
+        else { state.bench.push(c); bus.emit('benched', { id: c.id, name: c.name }); }
+        bus.emit('hired', { id: c.id, name: c.name, rank: c.rank, fee: feeOf(c) });
         changed(); return true;
+      }
+      case 'askAround': {                                 // new faces at the tavern, for a price that doubles each time today
+        if (!inTown()) return true;
+        if (!pay(askCost())) return refuse('Not enough gold');
+        state.tavern = { day: day(), ask: asked() + 1 };
+        bus.emit('rosterChanged', { ask: state.tavern.ask }); return true;
+      }
+      case 'retrain': {                                   // one perk for another of its family
+        const m = find(cmd.id); if (!m || !hired(m) || !Array.isArray(m.perks) || !Number.isInteger(cmd.idx) || cmd.idx < 0 || cmd.idx >= m.perks.length) return true;
+        if (!inTown()) return refuse('Retrain in a town');
+        if (PERKS[m.perks[cmd.idx]]?.fam === 'quirk') return refuse(`${m.name} won't be trained out of that`);
+        const next = retrainPerk(seed, m, cmd.idx);
+        if (!next) return refuse('There is nothing else of that kind to learn');
+        if (!pay(retrainCost(m))) return refuse('Not enough gold');
+        const was = m.perks[cmd.idx]; m.perks = m.perks.map((p, i) => (i === cmd.idx ? next : p)); m.retrains = (m.retrains || 0) + 1;
+        bus.emit('retrained', { id: m.id, name: m.name, was, perk: next }); changed(); return true;
+      }
+      case 'payWages': {                                  // settle what the sellswords are owed, each in full
+        if (!inTown()) return refuse('Settle wages at a town tavern');
+        let any = false;
+        for (const m of [...state.party, ...state.bench]) if (m.owed > 0 && pay(m.owed)) { m.owed = 0; any = true; }
+        if (!any) return refuse(owed() ? 'Not enough gold' : 'Nobody is owed anything');
+        bus.emit('wagesSettled', {}); changed(); return true;
       }
       case 'dismiss': {                                   // a companion goes to the bench at the inn
         const i = state.party.findIndex((m) => m.id === cmd.id && !m.main);
@@ -189,7 +258,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   function join(id) {
     const F = Object.prototype.hasOwnProperty.call(FOUND, id) ? FOUND[id] : null;
     if (!F || find(id) || !(state.bosses || {})[F.freedBy]) return;
-    const m = { ...makeMember(id, F.name, F.cls, Math.max(1, state.party[0].level), F.trait), actor: F.actor };
+    const m = { ...makeMember(id, F.name, F.cls, Math.max(1, state.party[0].level), F.trait), actor: F.actor, rank: 'found', perks: [...(FOUND_PERKS[id] || [])], hidden: null, bond: 0, owed: 0 };
     if (state.party.length <= MAX_COMPANIONS) state.party.push(m);
     else if (state.bench.length < BENCH_MAX) { state.bench.push(m); bus.emit('benched', { id: m.id, name: m.name }); }
     else { refuse('The party and the bench are full'); return; }
@@ -197,5 +266,5 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   }
   /** is this found companion with you (party or bench)? @param {string} id */
   const joined = (id) => !!find(id);
-  return { command, tick, resurrectCost, respecCost, restCost, roster, raise, join, joined };
+  return { command, tick, resurrectCost, respecCost, restCost, roster, raise, join, joined, askCost, retrainCost, owed };
 }

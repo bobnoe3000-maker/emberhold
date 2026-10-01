@@ -1,0 +1,53 @@
+{
+  "$comment": "The Lantern Guild's sellswords (world doc §4 v1.11, GDD §6.2): what the player reads about ranks and perks. The ids are the sim's (src/sim/companions.js) and test/companions.test.mjs keeps them in step; the numbers in a line are the sim's numbers.",
+  "ranks": {
+    "wick": { "name": "Wick", "line": "New to the Guild. Cheap, and mostly what they say they are." },
+    "lamp": { "name": "Lamp", "line": "A few seasons on the road and still alive, which says something." },
+    "lantern": { "name": "Lantern", "line": "Known in more than one town. Keeps one trick back until they trust you." },
+    "beacon": { "name": "Beacon", "line": "A name the Vale would know. Rare, dear, and worth it." },
+    "found": { "name": "Companion", "line": "Not the Guild's. Takes no wage." }
+  },
+  "families": {
+    "stat": "Self",
+    "fight": "Fighting",
+    "skill": "Ability",
+    "aura": "Party aura",
+    "bond": "Bond",
+    "gold": "Gold",
+    "quirk": "Quirk"
+  },
+  "perks": {
+    "stubborn": { "name": "Stubborn", "text": "+10 % DEF." },
+    "hardy": { "name": "Hardy", "text": "+10 % max HP." },
+    "keen_eyed": { "name": "Keen-eyed", "text": "+3 % CRIT." },
+    "light_footed": { "name": "Light-footed", "text": "+3 % DODGE." },
+    "iron_lunged": { "name": "Iron-lunged", "text": "+25 % HP regen." },
+    "devout": { "name": "Devout", "text": "Their heals are 10 % stronger." },
+    "bodyguard": { "name": "Bodyguard", "text": "Within 3 tiles of you, takes a fifth of every blow aimed at you." },
+    "skirmisher": { "name": "Skirmisher", "text": "+20 % damage to a foe that's fighting someone else." },
+    "finisher": { "name": "Finisher", "text": "+15 % damage to a foe under half its health." },
+    "last_stand": { "name": "Last Stand", "text": "+20 % damage while under a quarter of their health." },
+    "field_medic": { "name": "Field Medic", "text": "Every 12 s in a fight, patches up the most hurt of you for 5 % of their max HP." },
+    "grave_warden": { "name": "Grave-warden", "text": "+15 % damage to the Ashbound." },
+    "redhand_breaker": { "name": "Redhand-breaker", "text": "+15 % damage to the living." },
+    "venomous": { "name": "Venomous", "text": "Venom lasts 2 s longer." },
+    "smoke_artist": { "name": "Smoke Artist", "text": "Smoke Step lasts 2 s longer." },
+    "long_watch": { "name": "Long Watch", "text": "Shield Wall lasts 2 s longer." },
+    "kindler": { "name": "Kindler", "text": "Firebolt also burns those beside its target, for 0.3×." },
+    "steady_hands": { "name": "Steady Hands", "text": "Mend heals 15 % more." },
+    "drillmaster": { "name": "Drillmaster", "text": "Party aura: everyone attacks 5 % faster." },
+    "banner_man": { "name": "Banner-man", "text": "Party aura: everyone +5 % DEF." },
+    "old_campaigner": { "name": "Old Campaigner", "text": "Party aura: everyone regains HP 10 % faster in a fight." },
+    "hometown": { "name": "Hometown", "text": "+8 % DEF if you're Thornwick-born." },
+    "deserters_bond": { "name": "Deserter's Bond", "text": "+10 % ATK if you left the Redhand too." },
+    "sisters_ward": { "name": "Sister's Ward", "text": "Their heals are 15 % stronger if you were a Grey Sisters' ward." },
+    "delvers_eyes": { "name": "Delver's Eyes", "text": "+10 % ATK on a site's second floor and deeper, if you were Deepdelver-fostered." },
+    "shield_brother": { "name": "Shield-brother", "text": "+10 % DEF while another fighter is in the party." },
+    "thrifty": { "name": "Thrifty", "text": "Their wage is 30 % lower." },
+    "haggler": { "name": "Haggler", "text": "The inn and the temple cost you 15 % less." },
+    "scavenger": { "name": "Scavenger", "text": "Foes drop 10 % more gold." },
+    "greedy": { "name": "Greedy", "text": "Wants half again the wage. Foes drop 5 % more gold." },
+    "reckless": { "name": "Reckless", "text": "+10 % ATK, −10 % DEF." },
+    "drinker": { "name": "Drinker", "text": "−5 % ATK unless you've slept at an inn in the last two days." }
+  }
+}

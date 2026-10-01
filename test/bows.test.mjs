@@ -8,11 +8,12 @@ import { isWalkable } from '../src/sim/world.js';
 import { makeItem, BASES, shotOf } from '../src/sim/items.js';
 import { fightOf } from '../src/sim/battle.js';
 import { existsSync } from 'node:fs';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 // the right party (fighter, rogue, cleric) in a level-1 room
 function party() {
-  const t = createSim(SEED, undefined, { scene: 'town' }); for (const i of [1, 3]) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
+  const t = createSim(SEED, undefined, { scene: 'town' }); hire(t, [1, 3]);
   const sim = createSim(SEED, undefined, { scene: 'dungeon' }); sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m, gear: JSON.parse(JSON.stringify(m.gear)) })));
   const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, 1);
   let best = null, bd = 1e9;

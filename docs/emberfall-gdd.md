@@ -1,6 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.8 · 2026-10-01 · Plan of record for game design.** v1.8 gives the rogue bows and lets its
+**v1.9 · 2026-10-01 · Plan of record for game design.** v1.9 makes companions a choice and a gold
+sink (§6.2): Lantern Guild ranks, a signing fee and a dawn wage, rolled perks for theorycrafting,
+loyalty, and the tavern's Ask around and Retrain. It also makes the old tavern traits real.
+
+v1.8 gives the rogue bows and lets its
 bows and crossbows shoot (§5, *Bows and crossbows*; §8): a rogue holding one fights from range
 instead of closing in.
 
@@ -394,9 +398,9 @@ Both slot in with the same stat block and ability format. No system changes are 
 
 - **You plus two companions.** The main character is chosen at the start (fighter, rogue or
   mage) and can't be dismissed.
-- **Hire** at a town tavern. The roster shows 2–3 hirelings, refreshed daily. Each is within
-  ±2 of your level, of an unlocked class, and has one **trait** (e.g. *Stubborn*: +10 % DEF;
-  *Greedy*: +5 % gold found, costs more). Price is 50 gold × level, one-time.
+- **Hire** at a town tavern: one sellsword per class (one more if you're Thornwick-born), within
+  ±1 of your level, new every in-game day. Each has a Lantern Guild rank and perks (§6.2), a
+  signing fee and a dawn wage.
 - **Find** story companions in dungeons: rescued captives and quest rewards such as Brannoc
   (fighter) and Wren (rogue). They are free and have a unique trait and a personal quest.
   (M5) Brannoc waits chained in Wickham Keep's second-floor hall and joins once Captain Garrow has
@@ -432,6 +436,93 @@ Both slot in with the same stat block and ability format. No system changes are 
 
 - The first new game plays the intro, *The Chronicle of the Fall*.
 - Details are in [development-plan.md §2.1–§2.3](./development-plan.md).
+
+### 6.2 Sellswords: ranks, wages and perks (v1.9)
+
+Companions are a choice and a gold sink. What you pay for is a way to play: perks to build a
+company around. Canon: world doc §4, *Sellswords and the Guild's ranks*. Code: `sim/companions.js`
+(rules), `sim/heroes.js` (commands, the dawn wage), `content/companions.json` (names and lines).
+
+**Ranks.** Every tavern sellsword rolls a Lantern Guild rank. Fee and wage are × its level.
+
+| Rank | Perks | Of the tavern | Fee | Wage a dawn | Point budget |
+|---|---|---|---|---|---|
+| Wick | 1 | 55 % | 30 × level | 5 × level | 1 |
+| Lamp | 2 | 30 % | 90 × level | 12 × level | 3 |
+| Lantern | 2 + 1 hidden | 12 % | 250 × level | 25 × level | 4 |
+| Beacon | 3 + 1 hidden (one a party aura) | 3 % | 600 × level | 45 × level | 6 |
+
+The UI always shows the rank as a colour and the word.
+
+**Wages.** A wage is paid at every in-game dawn (24 minutes of play), wherever the company is.
+- **Order:** the party is paid first, then the bench at half wage. Each sellsword is paid in full
+  or not at all.
+- **Unpaid:** the wage is owed, and the sellsword's perks go dark (they still fight) until it's
+  paid. Pay what's owed at a tavern (*Settle wages*), or at the next dawn you can afford it.
+- **Sizing:** two Lanterns at level 6 cost 300 gold a day, about 750 an hour. A fighting party
+  earns about 9,000 an hour at level 6 (`roomlv.mjs`), so that's 8–15 % of income, depending on
+  time in town.
+
+**Perks.** There are 32 perks in seven families. Each costs points against the rank's budget; a
+quirk costs −1, so it buys one more point. One roll in five carries a quirk. The numbers are in
+`sim/companions.js` and the lines in `content/companions.json`.
+- **Self (1):** Stubborn +10 % DEF, Hardy +10 % HP, Keen-eyed +3 % CRIT, Light-footed +3 % DODGE,
+  Iron-lunged +25 % HP regen, Devout heals +10 %.
+- **Fighting (2):**
+  - Bodyguard (fighter): takes 20 % of the blows aimed at the hero, within 3 tiles.
+  - Skirmisher: +20 % to a foe fighting someone else.
+  - Finisher: +15 % to a foe under half health.
+  - Last Stand: +20 % under a quarter health.
+  - Field Medic: every 12 s, the most hurt ally +5 % max HP.
+  - Grave-warden: +15 % to the Ashbound. Redhand-breaker: +15 % to the living. These two make a
+    company depend on the site.
+- **Ability (2), per class:** Venomous (+2 s), Smoke Artist (+2 s), Long Watch (+2 s), Kindler
+  (Firebolt splash 0.3×), Steady Hands (Mend +15 %).
+- **Party aura (3):** Drillmaster (everyone attacks 5 % faster), Banner-man (+5 % DEF), Old
+  Campaigner (+10 % HP regen in a fight). Only the strongest of a kind counts.
+- **Bond (2):** these depend on the hero's origin or the company.
+  - Hometown: +8 % DEF if the hero is Thornwick-born.
+  - Deserter's Bond: +10 % ATK if the hero is a Redhand deserter.
+  - Sister's Ward: heals +15 % if the hero is a Grey Sisters' ward.
+  - Delver's Eyes: +10 % ATK from a site's second floor down, if the hero was Deepdelver-fostered.
+  - Shield-brother: +10 % DEF beside another fighter.
+- **Gold:** Thrifty (1) wage −30 %, Haggler (1) inn and temple −15 %, Scavenger (2) foes drop +10 %
+  gold. No perk touches drop rates or XP.
+- **Quirk (−1):** Greedy (wage × 1.5, foes +5 % gold), Reckless (+10 % ATK, −10 % DEF), Drinker
+  (−5 % ATK unless the company slept at an inn in the last two days).
+
+**Loyalty (0–5).** Bond points rise by 1 for each dawn a sellsword is paid while in the party, and
+by 1 for each boss it helps put down. They fall by 2 for each dawn it isn't paid. Loyalty needs
+1, 3, 5, 8 and 12 points.
+- **Loyalty 3:** reveals a Lantern's or Beacon's hidden perk.
+- **Loyalty 5, Sworn:** the wage drops a quarter, and once per room visit the sellsword gets up
+  at 30 % from the blow that would have Downed it.
+
+**At the tavern:**
+- **Ask around:** a new roster for 10 × level gold, doubling each time the same day.
+- **Retrain:** a perk for another of its family that costs no more, for 60 × level × (retrains +
+  1). Quirks can't be retrained.
+- **Found companions:** Brannoc has no rank, fee or wage; he has his own perks (Bodyguard, Hardy).
+
+**Old saves (v13):** each tavern hire becomes a Wick, and its old trait becomes the perk it always
+claimed to be (the traits did nothing before). They're kept for free, with wages from the next
+dawn.
+
+**Balance.** The contract (§7.1) is measured with perk-less hires, as before. Perks were measured
+with `roomlv.mjs --perks` on 4 seeds, 300 s, fighter + rogue + cleric in the class kit:
+
+| Perks (rogue / cleric) | L3 same | L6 same | L9 same | L3 +3 | L6 +3 | L9 +3 |
+|---|---|---|---|---|---|---|
+| none | 22.5 | 15.8 | 13.5 | 9.0, lost 4/4 | 6.8, 4/4 | 1.2, 4/4 |
+| Lamp: Finisher, Keen-eyed / Steady Hands, Stubborn | 22.5 | 15.8 | 12.0 | 11.5, 3/4 | 6.2, 4/4 | 2.2, 4/4 |
+| Lantern: + Grave-warden / + Hardy | 23.0 | 16.5 | 14.2 | 12.2, 1/4 | 7.2, 4/4 | 3.5, 4/4 |
+| Beacon: Drillmaster, Finisher, Grave-warden, Skirmisher / Banner-man, Steady Hands, Field Medic, Hardy | 23.8 | 17.2 | 14.5 | 13.0, 2/4 | 9.5, 3/4 | 3.8, 4/4 |
+
+(Waves held; for the +3 rooms, how many of the 4 runs were lost.)
+- **Same level:** a Beacon pair holds about 7–9 % more waves.
+- **Three levels up:** from level 6 such a room still beats even a Beacon company.
+- **Level 3:** paid perks do make a +3 room winnable, which is what the gold buys.
+- **Gate:** `test/companions.test.mjs` keeps the level-9 +3 room a defeat for that Beacon company.
 
 ---
 
@@ -672,7 +763,7 @@ progress):
 
 | Currency | From | For |
 |---|---|---|
-| **Gold** | Quests, bounties, selling, chests | Hiring, healing, shop gear, upgrades |
+| **Gold** | Quests, bounties, selling, chests, foes | Hiring (fee and dawn wages, §6.2), Ask around, Retrain, healing, the inn, shop gear, upgrades |
 | **Embers** | Salvage, bosses | Smith upgrades, rerolling an affix |
 | **Wood / Stone** | Chests, rocks (existing counters) | High-tier upgrades; future camp or town improvements |
 | **Renown** (per region) | Quests, bosses | Unlocks; not spendable |

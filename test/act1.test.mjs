@@ -35,7 +35,7 @@ const down = (sim) => { const t = sim.world.stairsAt, p = sim.state.player; p.x 
 
 test('Act I from start to finish: the mill, the Keep, the chapel, in order, each paid once', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  const t = createSim(SEED, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
+  const t = createSim(SEED, undefined, { scene: 'town' }); hire(t, [0, 2]);
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   const paid = []; sim.bus.on('questReward', (r) => paid.push(r.id));
   const fines = []; sim.bus.on('loot', (l) => { if (l.src === 'chapter') fines.push(l.item.r); });
@@ -91,6 +91,7 @@ test('a boss who fell before his chapter was taken still counts; Ink reads a cha
 // the words: each chapter is offered and handed in in its people's own conversations (story adapter)
 import { readFileSync } from 'node:fs';
 import { createStoryBook } from '../src/story/adapter.js';
+import { hire } from './fixtures/hire.mjs';
 const book = () => createStoryBook(async (f) => JSON.parse(readFileSync(`content/dialogue/${f}.json`, 'utf8')));
 async function play(file, knot, vars, picks) {
   const sent = [], c = await book().open(file, knot, vars, (cmd) => sent.push(cmd));

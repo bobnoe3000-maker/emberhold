@@ -7,6 +7,7 @@ import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
 import { statsFor } from '../src/sim/party.js';
 import { BOSSES, halved } from '../src/sim/battle.js';
+import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
 const down = (sim) => { const t = sim.world.stairsAt, p = sim.state.player; p.x = p.px = t.x + 0.5; p.y = p.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); };
@@ -17,7 +18,7 @@ const intoHall = (sim) => {
 };
 // a strong party (so the fight ends), kept on its feet: this measures the rules, not the balance
 function party(sim, lv = 12) {
-  const t = createSim(SEED, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.commands.push({ type: 'hire', idx: i }); t.tick(); }
+  const t = createSim(SEED, undefined, { scene: 'town' }); hire(t, [0, 2]);
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   for (const m of sim.state.party) { m.level = lv; m.hp = statsFor(m).maxHp; }
 }

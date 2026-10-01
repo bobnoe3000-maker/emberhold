@@ -38,10 +38,14 @@
 //   v13: M5 class trials — trials [classes] (sim/quests.js; a level-6 ability wants its class's trial).
 //       Older data: every class someone in the company had at level 6 counts as done (sim restore), so
 //       nobody loses an ability they had.
+//   v14: the Lantern Guild's sellswords (sim/companions.js) — per member rank, perks, hidden, bond, owed,
+//       retrains; tavern { day, ask }, wageDay, innDay. Older data: a tavern hire is a Wick and its old
+//       trait becomes the matching perk, kept for free with wages from the next dawn; Brannoc gets his
+//       own perks (sim restore).
 
 import * as idb from './idb.js';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

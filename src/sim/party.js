@@ -9,6 +9,7 @@ import { mulberry32, streamSeed } from './rng.js';
 import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate } from './attributes.js';
 import { STANCE_MOD, stanceOf, hasPassive } from './skills.js';
+import { has, STAT, rollSellsword } from './companions.js';
 
 // Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
 // STARTER), so a fresh character in their kit has exactly the GDD numbers; beyond that,
@@ -52,14 +53,16 @@ export function statsFor(m) {
   const baseHp = c.hp[0] + (c.hp[1] - rg.hp) * L + a.hp, baseMp = c.mp[0] + (c.mp[1] - rg.mp) * L + a.mp;
   const st = STANCE_MOD[stanceOf(m)], weak = m.weakUntil > 0 ? WEAK : 1, passive = hasPassive(m);
   const edge = m.origin === 'redhand_deserter' ? 1 : 0;                       // origins.js: +1 ATK
-  const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak;
+  // a sellsword's own perks (companions.js; dark while it's owed wages); the company's are fought out in battle.js
+  const reck = has(m, 'reckless'), pk = (id, v) => (has(m, id) ? v : 1);
+  const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak * (reck ? STAT.reckless[0] : 1);
   const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (passive && m.cls === 'fighter' ? 1.1 : 1)   // Iron Hide
-    * (m.cls === 'fighter' && hasShield(m) ? SHIELD_DEF : 1);                                                                     // the fighter's shield
+    * (m.cls === 'fighter' && hasShield(m) ? SHIELD_DEF : 1) * pk('stubborn', STAT.stubborn) * (reck ? STAT.reckless[1] : 1);     // the fighter's shield
   const mpr = (c.mpr * (baseMp / c.mp[0]) + a.mpr + g.mpr) * (passive && m.cls === 'mage' ? 1.25 : 1);                              // Kindled Mind
   return {
-    maxHp: Math.round((baseHp + g.hp) * weak), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
-    crit: Math.min(60, r1(c.crit + a.crit + g.crit)), dodge: Math.max(0, Math.min(50, r1(c.dodge + a.dodge + g.dodge))),
-    hpr: r1(c.hpr * (baseHp / c.hp[0]) + g.hpr), mpr: r1(mpr), power: a.power, gear: g, attr: a,
+    maxHp: Math.round((baseHp + g.hp) * weak * pk('hardy', STAT.hardy)), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
+    crit: Math.min(60, r1(c.crit + a.crit + g.crit + (has(m, 'keen_eyed') ? STAT.keen_eyed : 0))), dodge: Math.max(0, Math.min(50, r1(c.dodge + a.dodge + g.dodge + (has(m, 'light_footed') ? STAT.light_footed : 0)))),
+    hpr: r1((c.hpr * (baseHp / c.hp[0]) + g.hpr) * pk('iron_lunged', STAT.iron_lunged)), mpr: r1(mpr), power: a.power, gear: g, attr: a,
   };
 }
 export function makeMember(id, name, cls, level = 1, trait = null) {
@@ -105,21 +108,25 @@ const NAMES = {
   mage: ['Sigrun', 'Ilsabet', 'Corwin', 'Aveline', 'Merrow', 'Thane'],
   cleric: ['Maren', 'Aldous', 'Wenna', 'Cuthbert', 'Edda', 'Rowan'],
 };
-const TRAITS = [['Stubborn', '+10% DEF'], ['Keen-eyed', '+3% CRIT'], ['Light-footed', '+3% DDG'], ['Hardy', '+10% HP'], ['Greedy', '+5% gold, costs more'], ['Devout', 'heals a little more']];
-
-// Today's sellswords at a town's tavern: one candidate per class, deterministic per (world
-// seed, town, day), within ±1 of your level. A Thornwick-born hero sees one more. The order
-// keeps older rosters stable: fighter, rogue, mage, then that extra hireling, then the
-// cleric (a Grey Sister's cleric, new with the class), each drawn after the ones before.
-export function tavernRoster(seed, region, day, heroLevel, extra = 0) {
-  const rng = mulberry32(streamSeed(seed ^ (day * 7919), 6100 + region.length * 13 + region.charCodeAt(0)));
+// Today's sellswords at a town's tavern (GDD §6.2): one candidate per class, deterministic per
+// (world seed, town, day, times you asked around), within ±1 of your level. A Thornwick-born hero
+// sees one more. The order: fighter, rogue, mage, then that extra hireling, then the cleric. Each
+// has a Lantern Guild rank and perks (companions.js), drawn on their own stream. (The tavern drew a
+// trait here before the perks were real: the draw stays, so the names and levels are as they were.)
+export function tavernRoster(seed, region, day, heroLevel, extra = 0, ask = 0) {
+  const rng = mulberry32(streamSeed(seed ^ (day * 7919) ^ Math.imul(ask, 104729), 6100 + region.length * 13 + region.charCodeAt(0)));
   const classes = ['fighter', 'rogue', 'mage'];
   for (let i = 0; i < extra; i++) classes.push(['fighter', 'rogue', 'mage'][i % 3]);
   classes.push('cleric');
   return classes.map((cls, i) => {
-    const name = NAMES[cls][(rng() * NAMES[cls].length) | 0], t = TRAITS[(rng() * TRAITS.length) | 0];
-    const lv = Math.max(1, heroLevel + ((rng() * 3) | 0) - 1);
-    return makeMember(`${region}-${day}-${i}`, name, cls, lv, t);
+    const name = NAMES[cls][(rng() * NAMES[cls].length) | 0]; rng();
+    // (the id as it always was for a day's first roster: same draw, same sellsword; battle.js also
+    // reads it for a companion's place in the formation)
+    const lv = Math.max(1, heroLevel + ((rng() * 3) | 0) - 1), id = ask ? `${region}-${day}.${ask}-${i}` : `${region}-${day}-${i}`;
+    const m = makeMember(id, name, cls, lv);
+    const { rank, perks, hidden } = rollSellsword(seed, id, cls);
+    Object.assign(m, { rank, perks, hidden, bond: 0, owed: 0 }); m.hp = statsFor(m).maxHp;
+    return m;
   });
 }
 

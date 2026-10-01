@@ -31,7 +31,7 @@ npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
 npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal (WebKit: CI)
-node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --rogue huntbow = the rogue's weapon; DMG=1: damage by member
+node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); DMG=1: damage by member
 node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir]             # a boss hall vs fighter + rogue + cleric at a level (TRACE=1: a timeline)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level (dev plan §2.7 targets)
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
