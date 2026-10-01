@@ -128,7 +128,7 @@ test('the story adapter: tags become commands, windows come back, presentation i
   const c = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, fallen_name: 'Brin' }, (cmd) => pushed.push(cmd));
   assert.match(c.first.lines.join(' '), /No Brin today/); assert.equal(c.first.waiting, 0);
   const n = pushed.length, hire = c.choose(c.first.choices.findIndex((ch) => /hire/i.test(ch.text)));
-  const board = c.choose(hire.choices.findIndex((ch) => /board/i.test(ch.text)));
+  const board = c.choose(hire.choices.findIndex((ch) => /who's looking/i.test(ch.text)));
   assert.deepEqual(board.windows, [{ tag: 'service', args: ['tavern'] }]); assert.equal(board.ended, true); assert.equal(pushed.length, n);
 });
 

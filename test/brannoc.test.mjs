@@ -178,11 +178,11 @@ test('the Ink: chained and short while Garrow lives; asks to come once he\'s fal
   assert.deepEqual((await play('brannoc_hub', { ...base, boss_redhand_captain: 1, flag_met_brannoc: 1 }, ['Not yet.'])).sent, []);
   const w = { ...base, flag_met_brannoc: 1, joined: 1, in_party: 1, boss_redhand_captain: 1 };
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 0 }, ['Is there anything you need to settle?', "We'll settle it."])).sent, ['quest accept brannoc_old_debts']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 2 }, ["That's three sergeants."])).sent, ['quest turnin brannoc_old_debts']);
+  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 2 }, ["That's Garrow's three sergeants down."])).sent, ['quest turnin brannoc_old_debts']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 0 }, ["Where did the robes' coin go?", "We'll find the boxes."])).sent, ['quest accept brannoc_paymasters_box']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 2 }, ["The paymaster's boxes."])).sent, ['quest turnin brannoc_paymasters_box']);
+  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 2 }, ["We found the paymaster's boxes at the mill."])).sent, ['quest turnin brannoc_paymasters_box']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 3, q_brannoc_standing_down: 0 }, ['What do you want now?', "We'll stand with them."])).sent, ['quest accept brannoc_standing_down']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_standing_down: 2 }, ['We held the hall.'])).sent, ['quest turnin brannoc_standing_down']);
+  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_standing_down: 2 }, ['We stood with the legion. Five waves.'])).sent, ['quest turnin brannoc_standing_down']);
   const topics = (await play('brannoc_hub', { ...w, q_brannoc_old_debts: -1 }, [])).choices;
   assert.ok(!topics.some((t) => /settle/.test(t)), 'nothing offered that the sim would refuse');
 });

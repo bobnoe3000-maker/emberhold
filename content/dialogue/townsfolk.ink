@@ -127,7 +127,7 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
 
 // ── the mage's trial (content/quests/trial_cold_weather.json) ──
 == hedda_topics ==
-+ { q_trial_cold_weather == 2 } [It listened. #mark: quest ready] -> hedda_trial_turnin
++ { q_trial_cold_weather == 2 } [It listened. Six waves in the chapel. #mark: quest ready] -> hedda_trial_turnin
 + { q_trial_cold_weather == 0 } [Does the weather really listen to you? #mark: quest] -> hedda_trial_offer
 + { q_trial_cold_weather == 1 } [About the chapel… #mark: quest active] -> hedda_trial_active
 + [Two eggs, then.] -> END

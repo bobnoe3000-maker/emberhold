@@ -11,8 +11,8 @@
   ],
   "brief": { "one": "Reach the {floor} floor of the Old Barrows", "many": "Reach the {floor} floor of the Old Barrows" },
   "label": "Floor reached in the Old Barrows",
-  "journal": "Take the stairs down in the Old Barrows, floor by floor, to the {floor} floor.",
-  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "journal": "Go down into the Old Barrows and take the stairs down, floor by floor, until you reach the {floor} floor.",
+  "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "You know how deep it goes. Deeper than that, probably.",
   "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
 }

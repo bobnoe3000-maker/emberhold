@@ -9,11 +9,11 @@
     1,
     30
   ],
-  "summary": "Osric Hale held a gate once, for longer than anyone asked him to. He'd like to see a fighter of yours do the same, in Wickham Keep, and then he'll show them how to stand behind a shield.",
+  "summary": "Osric Hale, Warden-Captain at Thornwick's well, once held a gate at Greyholt for nine days. If your company can hold Wickham Keep, he'll teach your fighters to stand behind a shield (the fighter's level-6 skill).",
   "steps": [
     {
       "id": "keep",
-      "journal": "Hold eight waves in Wickham Keep. Any rooms; stand your ground in them.",
+      "journal": "Hold eight waves in Wickham Keep, north of the crossroads. Any rooms will do.",
       "objectives": [
         {
           "type": "waves",
@@ -24,8 +24,8 @@
       ]
     }
   ],
-  "ready": "Go back to Osric Hale in Thornwick.",
-  "done": "Osric showed your fighters Shield Wall: plant your feet, lift the shield, and let them come to you.",
+  "ready": "Go back to Osric Hale at the Watch post by Thornwick's well.",
+  "done": "Osric taught your fighters Shield Wall: plant your feet, lift the shield, and let them come to you.",
   "rewards": {
     "xp": 600,
     "gold": 60

@@ -11,7 +11,7 @@
   ],
   "brief": { "one": "Hold a wave in the Old Barrows", "many": "Hold {n} waves in the Old Barrows" },
   "label": "Waves held in the Old Barrows",
-  "journal": "Go down into the Old Barrows and hold a room against the walking kind.",
-  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "journal": "Go down into the Old Barrows and hold {n} waves against the dead there, in any rooms.",
+  "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "The barrows road was quiet for a night or two."
 }

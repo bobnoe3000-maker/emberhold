@@ -63,9 +63,9 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 -> ilse_topics
 
 == ilse_topics ==
-+ { q_ch1_ember_in_the_fist == 2 } [He died holding this. #mark: quest ready] -> ilse_ch3_turnin
++ { q_ch1_ember_in_the_fist == 2 } [The robed stranger in the chapel died holding this. #mark: quest ready] -> ilse_ch3_turnin
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
-+ { q_trial_last_rites == 2 } [The rites are said. #mark: quest ready] -> ilse_trial_turnin
++ { q_trial_last_rites == 2 } [The rites are said, in the barrows. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
 + { q_trial_last_rites == 1 } [About the rites… #mark: quest active] -> ilse_trial_active
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
@@ -78,7 +78,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 // ── the cleric's trial (content/quests/trial_last_rites.json) ──
 == ilse_trial_offer ==
 "Nobody said the rites for the legion in the barrows. They were waiting to be relieved. You don't bury people who are waiting."
-"I'd like a cleric of yours to go down to a hall on the second floor or below, and stand, and say them. The dead will object. Say them anyway, five waves long."
+"I'd like a cleric of yours to go down into the Old Barrows, to the hall by the stairs down on the second floor or below, and stand, and say them. The dead will object. Say them anyway, five waves long."
 + [We'll say them. #mark: quest]
     "Properly. Every word. I'll know if you skip one, and so will they." # quest: accept trial_last_rites
     -> ilse_topics
@@ -87,7 +87,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
     -> ilse_topics
 
 == ilse_trial_active ==
-"A hall in the Old Barrows, the second floor or deeper. Five waves. The rites don't need to be loud. They need to be finished."
+"The hall by the stairs down, in the Old Barrows, the second floor or deeper. Five waves. The rites don't need to be loud. They need to be finished."
 -> ilse_topics
 
 == ilse_trial_turnin ==
@@ -101,7 +101,7 @@ Ilse writes a line, reads it twice, and puts the pen down.
 -> ilse_topics
 
 == ilse_look ==
-"Anything with a stamp or a name. The barrows' chests, the old shrines down there, and the halls at the foot of each stair. The dead kept their best things where they kept their best men."
+"Anything with a stamp or a name. The barrows' chests, the old shrines down there, and the halls by the stairs down. The dead kept their best things where they kept their best men."
 "Don't guess what it says. Bring it to me. I'll guess properly."
 -> ilse_topics
 
@@ -116,7 +116,7 @@ Ilse writes a line, reads it twice, and puts the pen down.
     -> ilse_topics
 
 == ilse_page_active ==
-"Anything with a stamp. The chests on the first floor, the shrines deeper down, the hall at the foot of each stair. Bring the first thing you find."
+"Anything with a stamp. The chests on the first floor, the shrines deeper down, the hall by each stair down. Bring the first thing you find."
 -> ilse_topics
 
 == ilse_page_turnin ==

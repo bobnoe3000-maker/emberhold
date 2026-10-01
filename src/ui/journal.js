@@ -68,6 +68,8 @@ const CSS = `
 #journal .frag.missing { border-left-color: #3a3444; background: none; }
 #journal .frag.missing h3 { color: #7c748a; }
 #journal .summary { font: 13px/1.45 Georgia, serif; color: #b8ac98; margin-top: 4px; }
+#journal .summary.why { margin: 0 0 8px; font-style: italic; }
+#journal .step .now { font: 700 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; color: #d8a040; }
 `;
 const BOOK = '<svg viewBox="0 0 24 24"><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><i class="dot"></i>';
 const KIND = { chapter: 'Chapter', companion: 'Companion', trial: 'Trial', board: 'Board', errand: 'Errand', bounty: 'Bounty' };
@@ -87,7 +89,8 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
     <span class="kind">${KIND[def.kind] || def.kind}</span>
     <h3>${def.title}</h3>
     <div class="giver">${def.giverName || npcName(def.giver)} · level ${def.level[0]}${def.level[1] !== def.level[0] ? '–' + def.level[1] : ''}${def.skulls ? ' · ' + '☠'.repeat(def.skulls) + ' ' + SKULLS[def.skulls] : ''}${def.company ? ' · bring company' : ''}</div>
-    <div class=${'step' + (now.ready ? ' ready' : '')}>${now.text}</div>
+    <div class="summary why">${def.summary}</div>
+    <div class=${'step' + (now.ready ? ' ready' : '')}>${now.ready ? '' : html`<b class="now">Now: </b>`}${now.text}</div>
     ${now.objectives.map((o) => html`<div key=${o.label} class=${'obj' + (o.n >= o.of ? ' done' : '')}><span>${o.label}</span><span class="bar"><i style=${`width:${Math.round((100 * o.n) / o.of)}%`}></i></span><span class="n">${o.n}/${o.of}</span></div>`)}
     <div class="rew">Reward · ${def.rewards.xp} XP · ${def.rewards.gold} gold</div>
     <div class="acts">
@@ -127,7 +130,7 @@ function Journal({ sim, defOf, npcName, onClose, lore }) {
           onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)
         : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something, and the Lantern Guild's board by her door always does.</div>`)
       : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class="q"><span class="kind">${KIND[d.kind]}</span><h3>${d.title}</h3>
-          <div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
+          <div class="giver">${d.giverName || npcName(d.giver)}</div><div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
         : html`<div class="empty">Nothing finished yet.</div>`)}
   </div>`;
 }

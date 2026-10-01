@@ -9,9 +9,9 @@
     { "by": "The carters", "text": "\"A big one stood in the road at dusk and saluted the cart. The horse hasn't been right since.\"" },
     { "by": "Hale & Daughter", "text": "\"The big ones wear real legion steel, and we'd like to know it can be cut. Find out. The daughter.\"" }
   ],
-  "brief": { "one": "Slay an elite in the Old Barrows", "many": "Slay {n} elites in the Old Barrows" },
-  "label": "Elites slain in the Old Barrows",
-  "journal": "Hold a room in the Old Barrows until the bright-eyed ones come to lead the rest, then put them down.",
-  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
-  "done": "Fewer of them march in step."
+  "brief": { "one": "Defeat an elite (a bright-eyed one) in the Old Barrows", "many": "Defeat {n} elites (bright-eyed ones) in the Old Barrows" },
+  "label": "Elites defeated in the Old Barrows",
+  "journal": "Defeat {n} of the bright-eyed ones in the Old Barrows. Hold a room until one comes to lead the rest (about every fifth wave).",
+  "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
+  "done": "Fewer of the dead in the barrows march in step."
 }

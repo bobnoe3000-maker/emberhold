@@ -104,10 +104,10 @@ async function play(file, knot, vars, picks) {
 }
 const met = { hero_name: 'Tam', hero_level: 6, fallen_name: '', day_part: 1, flag_met_osric: 1, flag_met_ilse: 1, flag_met_nell: 1, flag_met_hedda: 1 };
 test('the Ink: Osric, Nell, Hedda and Ilse each offer their trial and take it in; Nell and Hedda are brief without one', async () => {
-  const cases = [['osric', 'osric_hub', 'trial_hold_the_keep_gate', ['Can you teach a fighter anything?', "We'll hold it."], ['We held the Keep.']],
+  const cases = [['osric', 'osric_hub', 'trial_hold_the_keep_gate', ['Can you teach a fighter anything?', "We'll hold it."], ['We held Wickham Keep, eight waves.']],
     ['townsfolk', 'nell_hub', 'trial_quiet_feet', ['You walk very quietly for an innkeeper.', 'Done.'], ['Three sergeants, and they never heard us.']],
-    ['townsfolk', 'hedda_hub', 'trial_cold_weather', ['Does the weather really listen to you?', "We'll go."], ['It listened.']],
-    ['ilse', 'ilse_hub', 'trial_last_rites', ["Is there anything you'd teach a cleric?", "We'll say them."], ['The rites are said.']]];
+    ['townsfolk', 'hedda_hub', 'trial_cold_weather', ['Does the weather really listen to you?', "We'll go."], ['It listened. Six waves in the chapel.']],
+    ['ilse', 'ilse_hub', 'trial_last_rites', ["Is there anything you'd teach a cleric?", "We'll say them."], ['The rites are said, in the barrows.']]];
   for (const [file, knot, id, offer, turnin] of cases) {
     assert.deepEqual((await play(file, knot, { ...met, ['q_' + id]: 0 }, offer)).quest, [`accept ${id}`], id);
     assert.deepEqual((await play(file, knot, { ...met, ['q_' + id]: 2 }, turnin)).quest, [`turnin ${id}`], id);

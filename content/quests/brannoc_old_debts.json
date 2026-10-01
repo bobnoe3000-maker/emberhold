@@ -9,11 +9,11 @@
     30
   ],
   "companion": "brannoc",
-  "summary": "Brannoc owes the Redhand's sergeants nothing, and they think he owes them a great deal. He'd like that settled before it follows him out of the Keep.",
+  "summary": "Brannoc, the Redhand deserter you freed in Wickham Keep, says Garrow's sergeants think he owes them. He owes them nothing, and he'd like that settled before it follows him out of the Keep.",
   "steps": [
     {
       "id": "keep",
-      "journal": "Put down three Redhand sergeants in Wickham Keep. They lead every fifth wave; Brannoc knows them by their shouting.",
+      "journal": "Defeat three Redhand sergeants in Wickham Keep. They are the Redhand's elites and lead every fifth wave; Brannoc knows them by their shouting.",
       "objectives": [
         {
           "type": "elites",
@@ -24,8 +24,8 @@
       ]
     }
   ],
-  "ready": "Talk to Brannoc (tap his card, then Talk).",
-  "done": "Three sergeants who kept his chain oiled. He didn't say anything when they fell. He did stand up straighter.",
+  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "done": "You defeated the three sergeants who kept Brannoc's chain oiled. He said nothing, and stood up straighter.",
   "rewards": {
     "xp": 700,
     "gold": 90

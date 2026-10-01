@@ -55,20 +55,20 @@ A grey man at a folding table by the well turns a page in a ledger and doesn't l
 
 == osric_greet_fallen ==
 Osric looks at the space beside you where {fallen_name} should be, and writes something down.
-"I keep a page for the ones who don't come back up. Take {fallen_name} to the Shrine before I need it."
+"I keep a page for the ones who don't come back up. Take {fallen_name} to the Shrine of the Ember, the temple on the square, before I need it."
 -> osric_topics
 
 == osric_topics ==
 + { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the mill. #mark: quest ready] -> osric_ch1_report
 + { q_ch1_the_diggers == 0 } [Where did the Redhand go? #mark: quest] -> osric_ch2_offer
 + { q_ch1_the_diggers == 1 } [About Wickham Keep… #mark: quest active] -> osric_ch2_active
-+ { q_ch1_the_diggers == 2 } [Garrow's done collecting. #mark: quest ready] -> osric_ch2_turnin
++ { q_ch1_the_diggers == 2 } [Captain Garrow is down. I have his ledger. #mark: quest ready] -> osric_ch2_turnin
 + { q_ch1_ember_in_the_fist == 0 } [Who paid for the digging? #mark: quest] -> osric_ch3_offer
 + { q_ch1_ember_in_the_fist == 1 } [About the chapel… #mark: quest active] -> osric_ch3_active
-+ { q_trial_hold_the_keep_gate == 2 } [We held the Keep. #mark: quest ready] -> osric_trial_turnin
++ { q_trial_hold_the_keep_gate == 2 } [We held Wickham Keep, eight waves. #mark: quest ready] -> osric_trial_turnin
 + { q_trial_hold_the_keep_gate == 0 } [Can you teach a fighter anything? #mark: quest] -> osric_trial_offer
 + { q_trial_hold_the_keep_gate == 1 } [About holding the gate… #mark: quest active] -> osric_trial_active
-+ { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones. #mark: quest ready] -> osric_ledger_turnin
++ { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones are down. #mark: quest ready] -> osric_ledger_turnin
 + { q_vale_captains_ledger == 0 } [Any bounties posted? #mark: quest] -> osric_ledger_offer
 + { q_vale_captains_ledger == 1 } [About the bounty… #mark: quest active] -> osric_ledger_active
 + { q_vale_captains_ledger == -1 } [Any bounties posted?] -> osric_ledger_early
@@ -78,7 +78,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 
 == osric_ledger_early ==
 "For you? Not yet. The ones worth a bounty lead the walking kind, and they'd have you for breakfast."
-"Win a few rooms in the barrows first. Come back when your boots have seen the second floor."
+"Win a few fights in the Old Barrows first, and come back when you've learned something from them."
 -> osric_topics
 
 == osric_ledger_offer ==
@@ -111,7 +111,7 @@ Osric opens the ledger to a fresh page, which for him is a ceremony.
 
 == osric_ch2_offer ==
 "The Redhand at Wickham Keep answer to a Captain Garrow. He collects. Tolls, tithes, debts, men who owe him."
-"Here's what I don't like. The carters say there's digging in the Keep's cellars. Bandits don't dig. Bandits take what somebody else dug up."
+"Here's what I don't like. The carters say there's digging in the cellars of Wickham Keep. Bandits don't dig. Bandits take what somebody else dug up."
 "Somebody's paying them. I'd like to know who, and I'd like Garrow to stop collecting."
 + [I'll go to the Keep. #mark: quest]
     "Down to the second floor. That's where he'll be, counting. Take company, {hero_name}. Garrow doesn't fight alone. He never has." # quest: accept ch1_the_diggers
@@ -150,7 +150,7 @@ Osric reads the page you give him twice, then a third time, which is once more t
 // ── the fighter's trial (content/quests/trial_hold_the_keep_gate.json) ──
 == osric_trial_offer ==
 "I held a gate at Greyholt once. Nine days. They sent relief on the tenth, and apologised for the delay, which is more than most get."
-"Your fighter swings well enough. Swinging isn't the trick. Staying is. Go to Wickham Keep and hold, room after room, eight times, and don't give ground you don't have to."
+"Your fighter swings well enough. Swinging isn't the trick. Staying is. Go to Wickham Keep and hold eight waves, in any rooms you like, and don't give ground you don't have to."
 + [We'll hold it. #mark: quest]
     "Eight waves. Then come back, and I'll show your fighters the one thing I know." # quest: accept trial_hold_the_keep_gate
     -> osric_topics

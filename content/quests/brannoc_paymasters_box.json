@@ -12,11 +12,11 @@
   "after": [
     "brannoc_old_debts"
   ],
-  "summary": "The Company's paymaster kept the robed strangers' coin in the Tithe Mill, in two boxes, because he trusted nobody, including himself. Brannoc wants to see whose seal is on it.",
+  "summary": "Brannoc says the Redhand's paymaster kept the robed strangers' coin at the Tithe Mill, in two boxes, because he trusted nobody, himself included. Brannoc wants to see whose seal is on the purses.",
   "steps": [
     {
       "id": "mill",
-      "journal": "Open two chests in the Tithe Mill.",
+      "journal": "Open two chests in the Tithe Mill, up the river from Thornwick.",
       "objectives": [
         {
           "type": "loot",
@@ -27,8 +27,8 @@
       ]
     }
   ],
-  "ready": "Talk to Brannoc (tap his card, then Talk).",
-  "done": "Coal-red wax on every purse, and no crest in it. Brannoc kept one seal. He turns it over when nobody looks.",
+  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "done": "The paymaster's boxes at the Tithe Mill: coal-red wax on every purse, no crest. Brannoc kept one seal.",
   "rewards": {
     "xp": 500,
     "gold": 120

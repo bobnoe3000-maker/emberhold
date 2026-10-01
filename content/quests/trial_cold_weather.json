@@ -9,11 +9,11 @@
     1,
     30
   ],
-  "summary": "Hedda sells eggs by the well and knows the weather. She says the weather listens to her. She'd like a mage of yours to find out if it listens to them, somewhere damp.",
+  "summary": "Hedda sells eggs by Thornwick's well and says the weather listens to her. If your company holds out somewhere damp and cold, she'll teach your mages to call the frost (the mage's level-6 skill).",
   "steps": [
     {
       "id": "chapel",
-      "journal": "Hold six waves in the Sunken Chapel.",
+      "journal": "Hold six waves in the Sunken Chapel, in the marsh south of Thornwick.",
       "objectives": [
         {
           "type": "waves",
@@ -24,7 +24,7 @@
       ]
     }
   ],
-  "ready": "Go back to Hedda in Thornwick.",
+  "ready": "Go back to Hedda, by the well in Thornwick.",
   "done": "Hedda taught your mages Frost Nova, and said it was only a hard frost, early. She said it about eggs, too.",
   "rewards": {
     "xp": 600,

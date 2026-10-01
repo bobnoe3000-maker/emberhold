@@ -12,11 +12,11 @@
   "after": [
     "ch1_the_diggers"
   ],
-  "summary": "Garrow's ledger says the robed strangers paid for digging at the Sunken Chapel. Osric Hale wants to know what anyone could want from a chapel the river has half eaten.",
+  "summary": "Captain Garrow's ledger says robed strangers paid him forty crowns to dig at the Sunken Chapel. Osric Hale wants to know who is paying, and what anyone could want from a chapel the river has half eaten.",
   "steps": [
     {
       "id": "chapel",
-      "journal": "Go down into the Sunken Chapel, in the marsh south of Thornwick, and find the one who pays for the digging.",
+      "journal": "Go to the Sunken Chapel, in the marsh south of Thornwick, and down to its second floor. Find the robed stranger who pays for the digging, and stop him.",
       "objectives": [
         {
           "type": "boss",
@@ -28,8 +28,8 @@
       ]
     }
   ],
-  "ready": "The stranger died holding something warm. Take it to Sister Ilse at the Shrine of the Ember.",
-  "done": "Sister Ilse has the ember-shard, and has stopped sleeping. Act I is done; the shard points to the fens.",
+  "ready": "The robed stranger died holding something warm. Take it to Sister Ilse at the Shrine of the Ember in Thornwick.",
+  "done": "Sister Ilse has the warm shard from the Sunken Chapel: an ember-shard made in the fens. Act I is done.",
   "rewards": {
     "xp": 1200,
     "gold": 200

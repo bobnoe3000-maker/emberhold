@@ -9,11 +9,11 @@
     1,
     30
   ],
-  "summary": "Sister Ilse says nobody said the rites for the legion in the barrows. She'd like a cleric of yours to stand where they fell and say them properly, for as long as it takes.",
+  "summary": "Sister Ilse at the Shrine of the Ember says nobody said the last rites for the dead legion in the Old Barrows. Hold where they fell while they're said, and she'll teach your clerics a blessing (the cleric's level-6 skill).",
   "steps": [
     {
       "id": "barrows",
-      "journal": "Hold five waves in a stairs-down hall of the Old Barrows, the second floor or deeper.",
+      "journal": "Go down to the Old Barrows' second floor or deeper, and hold a stair hall (the room with the stairs down) for five waves.",
       "objectives": [
         {
           "type": "waves",
@@ -21,12 +21,12 @@
           "count": 5,
           "hall": true,
           "floor": 2,
-          "label": "Waves held in a hall, floor 2 or deeper"
+          "label": "Waves held in a stair hall, floor 2 or deeper"
         }
       ]
     }
   ],
-  "ready": "Go back to Sister Ilse in Thornwick.",
+  "ready": "Go back to Sister Ilse at the Shrine of the Ember in Thornwick.",
   "done": "Ilse taught your clerics Bless: the rites said forward, for the living, which she says is the only direction that helps.",
   "rewards": {
     "xp": 600,

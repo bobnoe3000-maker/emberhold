@@ -12,11 +12,11 @@
   "after": [
     "brannoc_paymasters_box"
   ],
-  "summary": "Brannoc wants to see the legion in the barrows that never deserted anything, and stand with it once, the way he never stood with anyone.",
+  "summary": "Brannoc has heard of the legion in the Old Barrows that held its road for three hundred years because nobody told it to stop. He'd like to stand with it once, the way he never stood with anyone.",
   "steps": [
     {
       "id": "barrows",
-      "journal": "Hold the stairs-down hall of the Old Barrows' second floor (or deeper) for five waves.",
+      "journal": "Go down to the Old Barrows' second floor or deeper, and hold a stair hall (the room with the stairs down) for five waves.",
       "objectives": [
         {
           "type": "waves",
@@ -24,13 +24,13 @@
           "count": 5,
           "hall": true,
           "floor": 2,
-          "label": "Waves held in a hall, floor 2 or deeper"
+          "label": "Waves held in a stair hall, floor 2 or deeper"
         }
       ]
     }
   ],
-  "ready": "Talk to Brannoc (tap his card, then Talk).",
-  "done": "He stood. They stood. Afterwards he broke the last link off his old chain and gave you the rest.",
+  "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
+  "done": "You held the barrows' stair hall with Brannoc. He stood; they stood. He gave you his old chain, less one link.",
   "rewards": {
     "xp": 1100,
     "gold": 100,

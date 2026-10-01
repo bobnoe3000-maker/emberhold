@@ -9,23 +9,23 @@
     1,
     30
   ],
-  "summary": "The Redhand Company are squatting in the Tithe Mill again, burning the miller's carts for warmth. Maudry Fenn wants them gone before the tithe grain goes with them.",
+  "summary": "Maudry Fenn at the Tired Mule says the Redhand Company, deserters turned bandits, are squatting in the Tithe Mill again and burning the miller's carts. The Vale's tithe grain goes through that mill, and she wants them gone.",
   "steps": [
     {
       "id": "mill",
-      "journal": "Drive the Redhand out of the Tithe Mill, up the river from Thornwick. Win four fights there.",
+      "journal": "Go to the Tithe Mill, up the river from Thornwick, and drive the Redhand out: hold four waves there.",
       "objectives": [
         {
           "type": "waves",
           "site": "tithe_mill",
           "count": 4,
-          "label": "Fights won in the Tithe Mill"
+          "label": "Waves held in the Tithe Mill"
         }
       ]
     }
   ],
-  "ready": "Tell Osric Hale at the Watch post by the well. The Watch will want to know where they went.",
-  "done": "The Redhand left the mill for Wickham Keep. Osric Hale has opened his ledger to a clean page.",
+  "ready": "Tell Osric Hale, at the Watch post by Thornwick's well, that the mill is clear. He'll ask where they went.",
+  "done": "You drove the Redhand out of the Tithe Mill. They went to Wickham Keep; Osric Hale wrote it down.",
   "rewards": {
     "xp": 300,
     "gold": 60

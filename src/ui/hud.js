@@ -44,7 +44,7 @@ export function createHud(sim) {
   sim.bus.on('levelChanged', ({ depth: d, theme, up }) => { setDepth(d); if (sim.world.kind === 'dungeon') show((up ? 'climbed · depth ' + (d + 1) + ' · ' : 'descended · ') + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
-  sim.bus.on('fallen', (f) => show(`${f.name} is Fallen · raise them at a temple or shrine`, 2600));
+  sim.bus.on('fallen', (f) => show(`${f.name} is Fallen: out of the fight until raised · at the temple in town, or a shrine below`, 3200));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
   // the dead on the barrows road (sim road.js): a line as you come near, and when a rank goes (content/road/)
   let road = null; fetch('./content/road/vale.json').then((r) => r.json()).then((d) => { road = d; }).catch(() => {});

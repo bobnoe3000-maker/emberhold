@@ -27,9 +27,9 @@ async function talk(file, knot, vars, picks, varsAfter) {
 
 test('after handing in the ledger, Osric no longer offers the hand-in', async () => {
   const base = { hero_name: 'Wren', hero_level: 6, party_size: 3, fallen_name: '', q_vale_captains_ledger: 2, frag_vale_count: 0, flag_met_osric: 1 };
-  const { sent, seen } = await talk('osric', 'osric_greet_back', base, ['Three of the bright-eyed ones.'], () => ({ q_vale_captains_ledger: 3 }));
+  const { sent, seen } = await talk('osric', 'osric_greet_back', base, ['Three of the bright-eyed ones are down.'], () => ({ q_vale_captains_ledger: 3 }));
   assert.deepEqual(sent.find((c) => c.tag === 'quest'), { type: 'dialogueEffect', tag: 'quest', args: ['turnin', 'vale_captains_ledger'] });
-  assert.ok(!seen[0].some((t) => t.startsWith('Three of the bright-eyed ones.')), `still offered: ${seen[0]}`);
+  assert.ok(!seen[0].some((t) => t.startsWith('Three of the bright-eyed ones are down.')), `still offered: ${seen[0]}`);
 });
 
 test('after taking the ledger, Osric asks after it instead of offering it again', async () => {

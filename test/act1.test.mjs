@@ -104,7 +104,7 @@ test('the Ink: Maudry offers the mill, Osric takes it in and offers the Keep and
   assert.deepEqual(await play('maudry', 'maudry_hub', { ...base, q_ch1_smoke_over_the_vale: 0 }, ['You said something about smoke?', "I'll shift them."]), ['accept ch1_smoke_over_the_vale']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_smoke_over_the_vale: 2 }, ['The Redhand are out of the mill.']), ['turnin ch1_smoke_over_the_vale']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_smoke_over_the_vale: 3, q_ch1_the_diggers: 0 }, ['Where did the Redhand go?', "I'll go to the Keep."]), ['accept ch1_the_diggers']);
-  assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_the_diggers: 2 }, ["Garrow's done collecting."]), ['turnin ch1_the_diggers']);
+  assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_the_diggers: 2 }, ['Captain Garrow is down. I have his ledger.']), ['turnin ch1_the_diggers']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_the_diggers: 3, q_ch1_ember_in_the_fist: 0 }, ['Who paid for the digging?', "I'll go down into the chapel."]), ['accept ch1_ember_in_the_fist']);
-  assert.deepEqual(await play('ilse', 'ilse_hub', { ...base, q_ch1_ember_in_the_fist: 2 }, ['He died holding this.']), ['turnin ch1_ember_in_the_fist']);
+  assert.deepEqual(await play('ilse', 'ilse_hub', { ...base, q_ch1_ember_in_the_fist: 2 }, ['The robed stranger in the chapel died holding this.']), ['turnin ch1_ember_in_the_fist']);
 });

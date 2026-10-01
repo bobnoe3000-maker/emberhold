@@ -11,7 +11,7 @@
 //      runs (the sim keeps ticking) with no page errors — a renderer table without the cleric
 //      once threw at the first HP bar and froze the game
 //   6. talk to Maudry (Chromium, manual clock): tap her across the square → the hero walks over →
-//      the dialogue window → lines → choices → her flag set in the sim → Show me the board opens
+//      the dialogue window → lines → choices → her flag set in the sim → Show me who's looking opens
 //      the tavern's hiring board
 //   7. Maudry's errand (Chromium, manual clock): "Anything I can do?" → accept → the toast, the
 //      tracker line, the Journal card with its counters, Track / untrack, the compass's quest row
@@ -181,7 +181,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const recap = await p.locator('#defeat').innerText().catch(() => '');
     check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party has fallen/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
     await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
-    check('m3: "Wake at the Shrine" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
+    check('m3: "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
     // the inn lifts Weakened
     await p.waitForTimeout(600);
     await p.locator('#hubBar button[data-k=inn]').tap(); await p.waitForTimeout(400);
@@ -287,9 +287,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 8 && quest.length === 2 && choices.some((c) => /How does the Guild hire/.test(c)) && quest.some((q) => /^Anything I can do\?\s*New$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*New$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
       await p.locator('#talk .ch', { hasText: 'Anyone for hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
-      await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);
+      await p.locator('#talk .ch', { hasText: "Show me who's looking" }).tap(); await p.locator('#talk .more').tap(); await run(5);
       const board = await p.evaluate(() => [...document.querySelectorAll('.on h2, .on h3')].map((e) => e.textContent).join(' | '));
-      check('talk: "Show me the board" closes the talk and opens the Tired Mule', !(await p.locator('#talkWrap.on').count()) && /Tired Mule/.test(board) && errs.length === 0, board + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      check('talk: "Show me who\'s looking" closes the talk and opens the Tired Mule', !(await p.locator('#talkWrap.on').count()) && /Tired Mule/.test(board) && errs.length === 0, board + (errs.length ? ' · ' + errs.join(' | ') : ''));
     }
     await ctx.close(); await b.close();
   }
@@ -321,7 +321,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('quest: the tracker line names it, with its counts', /The Long Way Round/.test(tracker) && /Waves 0\/4/.test(tracker), tracker.replace(/\n/g, ' · '));
     await p.locator('#journalBtn').tap();
     const card = await p.locator('#journal .q').first().innerText().catch(() => '');
-    check('quest: the Journal shows it (step text, both objectives, the reward)', /Win four fights/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /150 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
+    check('quest: the Journal shows it (who wants it and why, the step, both objectives, the reward)', /Hold four waves there/.test(card) && /Maudry Fenn keeps the Tired Mule/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /150 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
     await p.locator('#journal .acts button', { hasText: 'Tracked' }).tap(); await run(2);
     const untracked = await p.evaluate(() => globalThis.__sim.state.tracked);
     await p.locator('#journal .acts button', { hasText: 'Track' }).first().tap(); await run(2);

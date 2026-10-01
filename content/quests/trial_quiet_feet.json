@@ -9,11 +9,11 @@
     1,
     30
   ],
-  "summary": "Nell Tolley was something else before she kept an inn, and won't say what. She will say that a rogue who can't get behind three Redhand sergeants isn't one.",
+  "summary": "Nell Tolley keeps the Crossed Keys inn in Thornwick, and was something else before that. If your company can get behind three Redhand sergeants, she'll teach your rogues to slip out of sight (the rogue's level-6 skill).",
   "steps": [
     {
       "id": "keep",
-      "journal": "Put down three Redhand sergeants in Wickham Keep. They lead every fifth wave or so.",
+      "journal": "Defeat three Redhand sergeants in Wickham Keep, north of the crossroads. They are the Redhand's elites and lead every fifth wave or so.",
       "objectives": [
         {
           "type": "elites",
@@ -24,7 +24,7 @@
       ]
     }
   ],
-  "ready": "Go back to Nell Tolley in Thornwick.",
+  "ready": "Go back to Nell Tolley at the Crossed Keys in Thornwick.",
   "done": "Nell taught your rogues Smoke Step, on the Crossed Keys' stairs, without once making them creak.",
   "rewards": {
     "xp": 600,

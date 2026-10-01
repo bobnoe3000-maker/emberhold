@@ -11,7 +11,7 @@
   ],
   "brief": { "one": "Open a chest in the Old Barrows", "many": "Open {n} chests in the Old Barrows" },
   "label": "Chests opened in the Old Barrows",
-  "journal": "Go down into the Old Barrows and open their chests.",
-  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "journal": "Go down into the Old Barrows and open {n} of the chests there.",
+  "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "Whatever was in the boxes is somebody else's problem now."
 }

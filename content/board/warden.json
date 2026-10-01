@@ -7,12 +7,12 @@
     { "by": "Maudry Fenn", "text": "\"Somebody down there is still guarding the way down. Three hundred years on one door. I know the feeling.\"" },
     { "by": "The Shrine of the Ember", "text": "\"The halls by the stairs burn brightest. Stand in one long enough for the fire to notice you, and live.\"" },
     { "by": "Hale & Daughter", "text": "\"The old manuals say the legions put their best at the stairhead. We'd like to know if the manuals were right. The daughter.\"" },
-    { "by": "The carters", "text": "\"Whatever keeps the rest of them in step is down at the foot of each stair. Break its rhythm.\"" }
+    { "by": "The carters", "text": "\"Whatever keeps the rest of them in step waits by the stairs down, on every floor. Break its rhythm.\"" }
   ],
-  "brief": { "one": "Hold a wave in a stairs-down hall, {floor} floor or deeper", "many": "Hold {n} waves in a stairs-down hall, {floor} floor or deeper" },
-  "label": "Waves held in a stairs-down hall",
-  "journal": "Go down to the {floor} floor of the Old Barrows or deeper, find the hall with the stairs down, and hold it.",
-  "ready": "Hand it in at the Lantern Guild's board in the Tired Mule.",
+  "brief": { "one": "Hold a wave in a stair hall, {floor} floor or deeper", "many": "Hold {n} waves in a stair hall, {floor} floor or deeper" },
+  "label": "Waves held in a stair hall",
+  "journal": "Go down to the {floor} floor of the Old Barrows or deeper, find its stair hall (the room with the stairs down), and hold {n} waves there.",
+  "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "The stair was held for three hundred years. Not any more.",
   "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
 }

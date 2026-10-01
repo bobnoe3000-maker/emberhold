@@ -58,14 +58,14 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 
 == maudry_greet_fallen ==
 Maudry looks past you at the door, then back. "No {fallen_name} today?"
-"Take them to the Shrine of the Ember. They raise the ones who fell down there. Cheaper than a funeral, and they complain less after."
+"Take them to the Shrine of the Ember, the temple on the square. The Sisters there raise the Fallen, for a fee. Cheaper than a funeral, and they complain less after."
 -> maudry_topics
 
 == maudry_topics ==
 + { q_ch1_smoke_over_the_vale == 0 } [You said something about smoke? #mark: quest] -> maudry_ch1_offer
 + { q_ch1_smoke_over_the_vale == 1 } [About the Tithe Mill… #mark: quest active] -> maudry_ch1_active
-+ { q_ch1_smoke_over_the_vale == 2 } [The mill's clear. #mark: quest active] -> maudry_ch1_ready
-+ { q_vale_long_way_round == 2 } [The barrows road is clearer. #mark: quest ready] -> maudry_longway_turnin
++ { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the Tithe Mill. #mark: quest active] -> maudry_ch1_ready
++ { q_vale_long_way_round == 2 } [I knocked the barrows back, like you asked. #mark: quest ready] -> maudry_longway_turnin
 + { q_vale_long_way_round == 0 } [Anything I can do? #mark: quest] -> maudry_longway_offer
 + { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest active] -> maudry_longway_active
 + [What's the news?] -> maudry_news
@@ -82,10 +82,10 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 -> maudry_topics
 
 == maudry_hire ==
-"Sellswords drink here. Some of them even pay. The board by the door says who's looking for work and what they cost."
+"Sellswords drink here. Some of them even pay. The Lantern Guild keeps a list at the bar of who's looking for work and what they cost."
 { party_size >= 3: "You've company enough already, mind. I'll not have a crowd blocking my door." }
 "There's usually a Grey Sister in the corner, too. Takes coin for the road like anyone else. Don't let the vestments fool you. She swings that mace like she means it."
-+ [Show me the board.]
++ [Show me who's looking.]
     "Go on, then." # service: tavern
     -> END
 + [How does the Guild hire?] -> maudry_guild
@@ -143,13 +143,13 @@ She sets the mug down.
 == maudry_town ==
 "The Crossed Keys, if you want a bed and don't mind the stairs. Hale & Daughter for anything that needs mending. It's the daughter you want."
 "Wendel's for rope and bread. His lamp oil's gone up a copper again. He blames the roads. I blame Wendel."
-"And the Shrine of the Ember. They raise the ones who fell. You'll get to know them, I expect. Everyone does."
+"And the Shrine of the Ember. That's our temple: the Sisters raise the Fallen there, the ones who went down and stayed down. You'll get to know them, I expect. Everyone does."
 -> maudry_topics
 
 // ── her errand: The Long Way Round (content/quests/vale_long_way_round.json) ──
 == maudry_longway_offer ==
 "Since you ask. The carters won't take the barrows road any more. They go the long way round, a day out of their way, and they put it on the price of everything I pour."
-"Go down into the Old Barrows. Knock the walking kind back. Four good fights, and open one of their chests, so I know you went further than the door."
+"Go down into the Old Barrows, out past the fields. Knock the walking kind back. Four waves of them, four good fights, and open one of their chests, so I know you went further than the door."
 "Come back and tell me. I'll make it worth the boots."
 + [I'll see to it. #mark: quest]
     "Good. Mind the ones with crossbows." # quest: accept vale_long_way_round
@@ -159,7 +159,7 @@ She sets the mug down.
     -> maudry_topics
 
 == maudry_longway_active ==
-"The walking kind still walking, are they? Four fights, and a chest opened. I'm not asking you to empty the place. Just to make the road less interesting."
+"The walking kind still walking, are they? Four waves held in the Old Barrows, and one of their chests opened. I'm not asking you to empty the place. Just to make the road less interesting."
 -> maudry_topics
 
 == maudry_longway_turnin ==
@@ -173,7 +173,7 @@ She sets the mug down.
 "Burned the miller's cart for warmth. It's summer. That's not warmth, that's spite."
 "The tithe grain goes through that mill. Lord Pellam's grain, strictly, but it's our bread before it's his. Somebody has to shift them, and it's never going to be the Watch."
 + [I'll shift them. #mark: quest]
-    "Good. Four fights ought to make the point. When they've gone, tell Osric Hale at the well. He'll want to write down where they went." # quest: accept ch1_smoke_over_the_vale
+    "Good. Four waves of them ought to make the point. When they've gone, tell Osric Hale at the Watch post by the well. He'll want to write down where they went." # quest: accept ch1_smoke_over_the_vale
     -> maudry_topics
 + [Not yet.]
     "The smoke'll keep. So will the Redhand. Unfortunately."
@@ -181,7 +181,7 @@ She sets the mug down.
 
 == maudry_ch1_active ==
 "Up the river, the stone place with the wheel. You'll smell it before you see it."
-"Four fights, and they'll get the message. The Redhand are thick, but they can count to four."
+"Hold four waves of them, and they'll get the message. The Redhand are thick, but they can count to four."
 -> maudry_topics
 
 == maudry_ch1_ready ==
