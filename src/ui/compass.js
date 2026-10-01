@@ -27,12 +27,12 @@ const NEEDLE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="n
 const CSS = `
 /* z 5: over the party cards (4), under the town menu (6) and the character sheet (8) — it stays up in
    the town square now, and at 7 it sat over the town menu's close button */
-#compassBtn { position: fixed; right: 12px; top: 170px; z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
+#compassBtn { position: fixed; right: 12px; top: calc(var(--hud-b, 50px) + 120px); z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
   background: rgba(16,12,22,0.92); border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5);
   transition: opacity .2s ease; }
 #compassBtn svg { width: 26px; height: 26px; }
 #compassBtn.on { background: rgba(60,40,24,0.95); border-color: #d8a040; box-shadow: 0 0 0 3px rgba(216,160,64,.25), 0 2px 10px rgba(0,0,0,.5); }
-#compassMenu { position: fixed; right: 12px; top: 222px; z-index: 5; width: 292px; max-width: calc(100vw - 24px); background: rgba(16,12,22,0.96);
+#compassMenu { position: fixed; right: 12px; top: calc(var(--hud-b, 50px) + 172px); z-index: 5; width: 292px; max-width: calc(100vw - 24px); background: rgba(16,12,22,0.96);
   border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6); font-family: Georgia, serif; display: none; }
 #compassMenu.on { display: block; }
 #compassMenu:before { content: ''; position: absolute; right: 16px; top: -7px; width: 12px; height: 12px; background: rgba(16,12,22,0.96);

@@ -209,6 +209,14 @@ export function createRenderer(canvas, sim, input) {
     terrValid = false;
   }
   window.addEventListener('resize', resize); resize();
+  // The HUD row's bottom edge, in CSS px: it sits under the phone's safe area (an iPhone's camera island
+  // pushes it ~60 px down), so everything drawn along the top (minimap, room pill, boss bar, labels)
+  // keys off it rather than a fixed height that fit a desktop and overlapped on a phone.
+  let hudB = 50;
+  const measureHud = () => { const h = typeof document !== 'undefined' && document.getElementById('hud'); if (h) hudB = Math.max(40, h.getBoundingClientRect().bottom); };
+  measureHud(); window.addEventListener('resize', measureHud); setInterval(measureHud, 1000);
+  const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px)
+  const mmTop = () => hudB + 10;                                 // the minimap's top edge (CSS px)
 
   /* ── load-time bakes: props, hero doll frames ───────────────────────────── */
   let props = buildProps(sim.world.seed);
@@ -979,7 +987,7 @@ export function createRenderer(canvas, sim, input) {
   // structures), shown top-down like the dungeon's, with the hero dot.
   function drawOutdoorMinimap(ix, iy) {
     const w = sim.world, k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
-    const bx = vw - MM - pad - 10 * k, by = 58 * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
+    const bx = vw - MM - pad - 10 * k, by = mmTop() * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
     if (!outMap) {
       const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N);
       const COL = [[46, 64, 42], [96, 80, 60], [104, 98, 104], [40, 86, 118], [70, 60, 48], [128, 110, 60]];
@@ -1020,7 +1028,7 @@ export function createRenderer(canvas, sim, input) {
       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
       const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy0 = (oy + P.sy - top - 10) * S;
       if (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh) continue;
-      const sy = Math.max(sy0, 72 * k);                        // never under the top HUD: a tall spire's label slides down onto it
+      const sy = Math.max(sy0, (hudB + 22) * k);               // never under the top HUD: a tall spire's label slides down below it
       const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
@@ -1101,14 +1109,16 @@ export function createRenderer(canvas, sim, input) {
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
       const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
-      const tw = octx.measureText(txt).width + 18 * k, px = vw / 2, py = 50 * k;   // clear of an iPhone's camera island (40 clipped ~4 px); the HUD row below moved down with it
+      // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
+      const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + 8) * k;
+      const px = Math.max(tw / 2 + 10 * k, Math.min(vw / 2, mmL - tw / 2)), py = (hudB + 16) * k;
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
       octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
       // a boss's bar under the pill: its name, its health, and a shield while it's guarded (battle.js BOSSES)
       const boss = (w.enemies || []).find((e) => e.boss && e.hp > 0 && !e.dead);
       if (boss) {
-        const bw = Math.min(vw * 0.38, 150 * k), bh = 7 * k, bx0 = px - bw / 2, by0 = py + 22 * k, f = boss.hp / boss.maxHp;   // (narrow: clear of the minimap on the right)
+        const bw = Math.min(vw * 0.38, 150 * k, 2 * (mmL - px)), bh = 7 * k, bx0 = px - bw / 2, by0 = py + 24 * k, f = boss.hp / boss.maxHp;   // (clear of the minimap on the right)
         const guarded = halved(boss, w.enemies || []);
         octx.font = `600 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`; octx.fillStyle = 'rgba(0,0,0,0.7)'; octx.fillText(BOSSES[boss.boss].name, px + k, by0 - 3 * k + k);
         octx.fillStyle = '#f0c880'; octx.fillText(BOSSES[boss.boss].name + (guarded ? '  ⛨' : ''), px, by0 - 3 * k);
@@ -1135,7 +1145,7 @@ export function createRenderer(canvas, sim, input) {
   function drawBanner(now) {
     if (!banner || now > banner.until) return;
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
-    const size = banner.small ? 16 : 20, y = banner.small ? 118 * k : 150 * k;
+    const size = banner.small ? 16 : 20, y = (hudB + (banner.small ? 68 : 100)) * k;   // (under the room pill and a boss's bar)
     octx.font = `600 ${Math.round(size * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(banner.text, vw / 2 + 1.5 * k, y + 1.5 * k);
     octx.fillStyle = `rgba(240,200,130,${a})`; octx.fillText(banner.text, vw / 2, y);
@@ -1175,7 +1185,7 @@ export function createRenderer(canvas, sim, input) {
     const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;
     if (!rooms.length) return;
     const k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
-    const bx = vw - MM - pad - 10 * k, by = 58 * k;         // top-right, clear of the HUD
+    const bx = vw - MM - pad - 10 * k, by = mmTop() * k;     // top-right, under the HUD
     // panel
     octx.fillStyle = 'rgba(10,8,16,0.60)';
     octx.fillRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);

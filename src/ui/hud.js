@@ -4,6 +4,11 @@ import { SKILLS } from '../sim/skills.js';
 import { CLASSES } from '../sim/party.js';
 
 export function createHud(sim) {
+  // the HUD row's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it: the
+  // compass and Journal buttons follow the minimap down (the renderer measures the same edge)
+  const hudEl = document.getElementById('hud');
+  const syncTop = () => { if (hudEl) document.documentElement.style.setProperty('--hud-b', `${Math.round(Math.max(40, hudEl.getBoundingClientRect().bottom))}px`); };
+  syncTop(); window.addEventListener('resize', syncTop); setInterval(syncTop, 1000);
   const wood = document.getElementById('hudWood');
   const stone = document.getElementById('hudStone');
   const depth = document.getElementById('hudDepth');
