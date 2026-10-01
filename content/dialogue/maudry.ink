@@ -70,6 +70,7 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 + { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest active] -> maudry_longway_active
 + [What's the news?] -> maudry_news
 + [Anyone for hire?] -> maudry_hire
++ [How does the Guild hire?] -> maudry_guild
 + [Tell me about the barrows.] -> maudry_barrows
 + [What's in Thornwick?] -> maudry_town
 + [I'll be going.] -> maudry_bye
@@ -87,7 +88,45 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 + [Show me the board.]
     "Go on, then." # service: tavern
     -> END
++ [How does the Guild hire?] -> maudry_guild
 + [Later.] -> maudry_topics
+
+// the Lantern Guild's terms, in her words (world doc §4 v1.11, GDD §6.2); the tavern pins the same
+// terms up by the board for anyone who'd rather read them
+== maudry_guild ==
+"The Lantern Guild hires out its own. You pay the Guild to sign one on, then you pay the sellsword every morning after. Miss a morning and you'll hear about it."
+-> maudry_guild_more
+
+== maudry_guild_more ==
++ [What do the ranks mean?] -> maudry_guild_ranks
++ [Every morning?] -> maudry_guild_wages
++ [And if I can't pay?] -> maudry_guild_unpaid
++ [Do any of them ever stay?] -> maudry_guild_sworn
++ [Show me who's looking.]
+    "Terms are pinned by the board, small print and all." # service: tavern
+    -> END
++ [That'll do.] -> maudry_topics
+
+== maudry_guild_ranks ==
+"A Wick's new. Never been lit, they say. Cheap, and mostly what they claim to be. A Lamp's lasted a few seasons, which counts for something round here."
+"A Lantern's known in two towns, and keeps one trick up a sleeve until they decide they like you."
+She sets the mug down.
+"A Beacon you'll know when you see one. Everybody does. Bring your purse, and a second purse."
+-> maudry_guild_more
+
+== maudry_guild_wages ==
+"Dawn, wherever you are. Down a barrow, up a tree, the Guild doesn't care. The two who walk with you get paid in full. The ones you leave on my bench get half, for sitting on my bench."
+-> maudry_guild_more
+
+== maudry_guild_unpaid ==
+"Then they're owed. They'll still swing. Guild rules, and it's bad for business otherwise. But whatever they're good at, that's paid work, and they keep it to themselves till you settle up."
+"Settle up here. I'll hold the coin. I'm very honest."
+-> maudry_guild_more
+
+== maudry_guild_sworn ==
+"Pay them, keep them breathing, take them somewhere worth going. Stay together long enough and some stop counting the coin. The Guild calls them Sworn, and takes a smaller cut."
+"Doesn't happen often. Mostly because people don't pay."
+-> maudry_guild_more
 
 == maudry_barrows ==
 "Old mounds, out past the fields. From when there was an empire to bury people in."

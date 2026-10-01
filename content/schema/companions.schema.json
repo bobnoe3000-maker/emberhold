@@ -5,7 +5,8 @@
   "required": [
     "ranks",
     "families",
-    "perks"
+    "perks",
+    "terms"
   ],
   "additionalProperties": false,
   "properties": {
@@ -63,6 +64,66 @@
             "minLength": 1,
             "maxLength": 120
           }
+        }
+      }
+    },
+    "terms": {
+      "type": "object",
+      "required": [
+        "title",
+        "intro",
+        "sections",
+        "families",
+        "found"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "intro": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "head",
+              "text"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "head": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400
+              }
+            }
+          }
+        },
+        "families": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "found": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
         }
       }
     }

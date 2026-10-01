@@ -49,5 +49,27 @@
     "greedy": { "name": "Greedy", "text": "Wants half again the wage. Foes drop 5 % more gold." },
     "reckless": { "name": "Reckless", "text": "+10 % ATK, −10 % DEF." },
     "drinker": { "name": "Drinker", "text": "−5 % ATK unless you've slept at an inn in the last two days." }
+  },
+  "terms": {
+    "title": "The Guild's terms",
+    "intro": "Pinned by the board in a careful hand. The Lantern Guild hires out its own: a fee to sign one on, then a wage at every dawn.",
+    "sections": [
+      { "head": "Ranks", "text": "Every sellsword carries a Guild rank. The higher the rank, the more they're good at and the more they cost. Fee and wage are times their level." },
+      { "head": "Wages", "text": "Paid at every dawn, wherever you are: the two with you in full, the bench at half. Each one is paid in full or not at all, the party first." },
+      { "head": "Owed", "text": "A sellsword you can't pay is owed. They still fight, but their perks go dark until you settle up at a tavern, or until a dawn you can pay it all. Each unpaid dawn costs you their loyalty." },
+      { "head": "Loyalty", "text": "Loyalty grows a step for every dawn they're paid in your party, and for every boss you put down together. At loyalty 3 a Lantern or Beacon shows the perk they kept back. At loyalty 5 they're Sworn: a quarter off their wage, and once a room they get up from the blow that would have Downed them." },
+      { "head": "Ask around", "text": "New faces at the tavern, for 10 gold a level. It doubles each time you ask on the same day. A new day brings new faces anyway." },
+      { "head": "Retrain", "text": "A Guild drillmaster swaps one perk for another of its kind that costs no more, for 60 gold a level, more each time. A quirk is who they are: no training takes it out." }
+    ],
+    "families": {
+      "stat": "Their own stats.",
+      "fight": "How they fight, and who against.",
+      "skill": "A tweak to one of their class's abilities.",
+      "aura": "The whole party. Only the strongest of a kind counts.",
+      "bond": "Stronger alongside the right hero or company.",
+      "gold": "Wages, prices, and what foes drop.",
+      "quirk": "A cost, for one more perk point."
+    },
+    "found": "Companions you find, like Brannoc, aren't the Guild's. They take no fee and no wage, and come with perks of their own."
   }
 }
