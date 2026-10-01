@@ -15,6 +15,7 @@ import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
 import { FOUND } from '../sim/heroes.js';
 import { drawPortrait, swallow, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { RANK_COL, rankName, perkWord, loyaltyWord, wageLine } from './sellswords.js';
 
 const CSS = `
 #pscrWrap { position: fixed; inset: 0; z-index: 10; background: rgba(6,4,10,.62); display: none; }
@@ -40,6 +41,8 @@ const CSS = `
 .pslot button { min-width: 84px; min-height: 40px; border-radius: 8px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(214,170,98,.45); color: #f0c880; background: none; }
 .pslot button.pri { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; font-weight: 700; border-color: #f0c880; }
 .pslot button.del { color: #ff8a7a; border-color: rgba(255,122,102,.4); } .pslot button.del.arm { background: #5a1c16; color: #ffd0c8; }
+.pslot .rk { display: inline-block; font-size: 9px; letter-spacing: .5px; border: 1px solid; border-radius: 3px; padding: 0 4px; margin-left: 6px; vertical-align: 2px; font-weight: 700; }
+.pslot .owed { color: #ff9a8a; font-weight: 700; }
 .pslot.empty { border-style: dashed; color: #6f6880; font-size: 11px; justify-content: center; }
 #pscr .note { font-size: 11px; color: #ff8a7a; margin: 4px 2px 8px; min-height: 14px; }
 `;
@@ -59,12 +62,18 @@ function Tags({ m }) {
   return html`${m.fallen ? html`<em class="tag f">FALLEN</em>` : ''}${m.weakUntil > 0 ? html`<em class="tag w">WEAKENED</em>` : ''}${pts ? html`<em class="tag p">+${pts}</em>` : ''}`;
 }
 
+// a companion's perks (names; the tavern has their lines), loyalty, wage and what it's owed (GDD §6.2)
+function Sellsword(m, benched) {
+  if (m.main || !Array.isArray(m.perks)) return '';
+  const names = m.perks.map((id) => perkWord(id).name).join(', ') + (m.hidden ? ', one kept back' : '');
+  return html`<br />${names || 'no perks'}${m.rank && m.rank !== 'found' ? html`<br />${loyaltyWord(m)} · ${wageLine(m, benched)}` : ''}${m.owed > 0 ? html`<br /><span class="owed">Owed ${m.owed} gold · perks dark until paid at a tavern</span>` : ''}`;
+}
 function Member({ m, i, slot, bench, onSheet, send }) {
   const [arm, setArm] = useState(false);
   useEffect(() => { if (!arm) return; const t = setTimeout(() => setArm(false), 3000); return () => clearTimeout(t); }, [arm]);
   const cls = 'pslot' + (m.main ? ' main' : '') + (m.fallen ? ' fallen' : '');
   return html`<div class=${cls}>${slot ? html`<div class="n">${slot}</div>` : ''}<${Portrait} actor=${actorOf(m)} />
-    <div class="tx"><b>${m.name}<${Tags} m=${m} /></b><span>${line(m)}${m.trait ? html`<br />${m.trait[0]} · ${m.trait[1]}` : ''}</span></div>
+    <div class="tx"><b>${m.name}${m.rank ? html`<em class="rk" style=${`color:${RANK_COL[m.rank]};border-color:${RANK_COL[m.rank]}`}>◆ ${rankName(m.rank)}</em>` : ''}<${Tags} m=${m} /></b><span>${line(m)}${Sellsword(m, !!bench)}</span></div>
     <div class="acts">
       ${!bench ? html`<button class="pri" onClick=${() => onSheet(i)}>Details</button>` : ''}
       ${!bench && !m.main ? html`<button onClick=${() => send({ type: 'dismiss', id: m.id })}>To bench</button>` : ''}

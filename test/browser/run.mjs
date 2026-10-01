@@ -124,11 +124,16 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created }; });
     check('m3: created through the screens (name cleaned)', h.created && h.name === 'Brannscript' && h.cls === 'fighter' && h.actor === 'hero_barbarian' && h.origin === 'redhand_deserter', JSON.stringify(h));
     // hire at the tavern (the square's service bar)
-    await S(() => { globalThis.__sim.state.counters.gold = 200; });
+    // (the Lantern Guild's sellswords, GDD §6.2: each card shows its rank word, perks and fee; hiring pays it)
+    await S(() => { globalThis.__sim.state.counters.gold = 2000; });
     await p.locator('#hubBar button[data-k=tavern]').tap(); await p.waitForTimeout(400);
     await p.locator('#hubSheet [data-go=hire]').tap(); await p.waitForTimeout(300);
+    const card = await p.locator('#hubSheet .merc.sw').filter({ has: p.locator('[data-hire="1"]') }).innerText();
+    const want = await S(() => { const c = globalThis.__sim.heroes.roster()[1]; return { rank: c.rank, n: c.perks.length, fee: c.rank === 'wick' ? 30 * c.level : c.rank === 'lamp' ? 90 * c.level : c.rank === 'lantern' ? 250 * c.level : 600 * c.level }; });
     await p.locator('#hubSheet [data-hire="1"]').tap(); await p.waitForTimeout(300); await p.locator('#hubSheet .close').tap();
-    check('m3: hired a companion at the tavern', (await S(() => globalThis.__sim.state.party.length)) === 2);
+    const paid = 2000 - (await S(() => globalThis.__sim.state.counters.gold));
+    check('m3: hired a companion at the tavern: its card showed rank, perks and fee, and the Guild took the fee', (await S(() => globalThis.__sim.state.party.length)) === 2
+      && new RegExp(want.rank, 'i').test(card) && new RegExp(`Fee ${want.fee} gold`).test(card) && paid === want.fee, `${want.rank} · fee ${want.fee} · paid ${paid}`);
     // play: into a dungeon room; the companion is Downed and left behind → Fallen (a ghost)
     const room = async (hp) => S(async (hp) => {
       const s = globalThis.__sim, { isWalkable } = await import('/src/sim/world.js'), snap = s.snapshot(); snap.scene = 'dungeon'; snap.depth = 0; s.restore(snap);

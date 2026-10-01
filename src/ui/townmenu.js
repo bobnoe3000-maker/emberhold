@@ -42,8 +42,10 @@ import { esc } from './actorart.js';
 import { MAX_JOBS } from '../sim/board.js';
 import { QS } from '../sim/quests.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
+import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
+import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
 
-const CSS = `
+const CSS = SW_CSS + `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(24px); opacity: 0; visibility: hidden; pointer-events: none;
   transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s; z-index: 5; }
@@ -95,6 +97,15 @@ const CSS = `
 #hubSheet .job .btn { display: block; width: 100%; min-height: 44px; margin-top: 10px; font-size: 14px; }
 #hubSheet .job .btn.in { background: #8fe07a; }
 #hubSheet .merc.fallen .who b { color: #b8c4d8; }
+#hubSheet .merc .btn { min-height: 44px; }
+#hubSheet .merc.sw { align-items: flex-start; }
+#hubSheet .merc .who .sub { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #c0b090; margin-top: 6px; }
+#hubSheet .merc .who .owed { display: block; font: 700 11px ui-monospace, Menlo, monospace; color: #ff9a8a; margin-top: 5px; }
+#hubSheet .merc .who .rl { display: block; font: italic 11.5px Georgia, serif; color: #a8a090; margin-top: 3px; }
+#hubSheet .purse { font: 11.5px ui-monospace, Menlo, monospace; color: #c8bca8; margin: -4px 0 10px; line-height: 1.5; }
+#hubSheet .purse b { color: #ffd890; }
+#hubSheet .row.warn { border-color: rgba(255,138,122,.6); background: rgba(255,120,100,.07); }
+#hubSheet .row.warn b { color: #ffb0a0; }
 #hubSheet .close { position: absolute; right: 12px; top: 10px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid rgba(214,170,98,0.35);
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
@@ -112,11 +123,15 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
   bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) open(b.dataset.k); });
   sheet.addEventListener('click', (e) => {
     if (e.target.closest('.close')) return close();
-    if (e.target.closest('.back')) return open(current);
+    if (e.target.closest('.back')) { note = ''; return view === 'retrain' ? hire() : open(current); }
     const go = e.target.closest('[data-go]');
     if (go) { const v = go.dataset.go; note = ''; if (v === 'party') { close(); openParty(); return; } return VIEWS[v](); }
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
     const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
+    if (e.target.closest('[data-ask]')) return send({ type: 'askAround' });
+    if (e.target.closest('[data-settle]')) return send({ type: 'payWages' });
+    const rt = e.target.closest('[data-retrainview]'); if (rt) { note = ''; retrainId = rt.dataset.retrainview; return retrain(); }
+    const rp = e.target.closest('[data-retrain]'); if (rp) return send({ type: 'retrain', id: retrainId, idx: +rp.dataset.retrain });
     const d = e.target.closest('[data-dismiss]'); if (d) return send({ type: 'dismiss', id: d.dataset.dismiss });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
@@ -126,10 +141,11 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
   });
   const redraw = () => { if (sheet.classList.contains('on') && VIEWS[view]) VIEWS[view](); };
   sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
-  sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw);
+  sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw); wordsReady.then(redraw);
+  for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed']) sim.bus.on(ev, redraw);
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
-  let current = null, view = null, note = '', restDone = false;
+  let current = null, view = null, note = '', restDone = false, retrainId = null;
 
   const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the Fallen': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
   function open(kind) {
@@ -173,20 +189,42 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
       ${readyOld.length ? `<h3>Done · hand in</h3>${readyOld.map((j) => card(j, QS.READY)).join('')}` : ''}
       <h3>Today’s jobs</h3>${offers.map((j) => card(j, j.status)).join('') || '<p>The board is bare. Come back at dawn.</p>'}`;
   }
-  // The tavern's hiring board: today's sellswords, and who you already have. Hires beyond the
-  // party of three wait on the bench at the inn.
+  // The tavern's hiring board (GDD §6.2): today's Lantern Guild sellswords, each with its rank (the
+  // word and its colour), perks, fee and dawn wage; your company with what it's owed, its loyalty and a
+  // way to Retrain; Ask around for new faces. Hires beyond the party of three wait on the bench.
+  const owedLine = (m) => (m.owed > 0 ? `<span class="owed">Owed ${m.owed} gold · its perks are dark until paid</span>` : '');
   function hire() {
     view = 'hire';
     const w = sim.world, S = sim.state, party = S.party, full = party.length > MAX_COMPANIONS, benchFull = S.bench.length >= BENCH_MAX;
-    const roster = w.kind === 'town' ? sim.heroes.roster() : [];
-    sheet.innerHTML = `${head('Tavern', 'Hire companions', 'Two companions travel with you; everyone else you recruit waits on the bench at the inn and earns half XP.')}
-      <h3>Your party · ${party.length}/3 · bench ${S.bench.length}/${BENCH_MAX}</h3>
-      ${party.slice(1).map((m) => `<div class="merc"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${line(m)}</span></div>
-        <button class="btn ghost" data-dismiss="${m.id}">To bench</button></div>`).join('') || '<p style="margin:0 0 4px">No companions yet.</p>'}
+    const roster = w.kind === 'town' ? sim.heroes.roster() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60));
+    const wages = party.reduce((n, m) => n + wageOf(m, false), 0) + S.bench.reduce((n, m) => n + wageOf(m, true), 0), owed = sim.heroes.owed();
+    const mine = [...party.slice(1).map((m) => [m, false]), ...S.bench.map((m) => [m, true])];
+    sheet.innerHTML = `${head('Tavern', 'Hire companions', 'The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half.')}
+      <div class="purse">You have <b>${gold()}</b> gold · wages at dawn (in ${mins} min): <b>${wages}</b> gold</div>
+      ${owed ? `<div class="row go warn" data-settle><div><b>Settle wages · ${owed} gold</b><span>What the company is owed. Their perks come back when they're paid.</span></div><div class="go-arrow">›</div></div>` : ''}
+      <h3>Your company · party ${party.length}/3 · bench ${S.bench.length}/${BENCH_MAX}</h3>
+      ${mine.map(([m, benched]) => `<div class="merc sw"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>${rankMark(m)}
+        <span class="sub">${benched ? 'On the bench · ' : ''}${esc(loyaltyWord(m) || 'Your companion')} · ${esc(wageLine(m, benched))}</span>${owedLine(m)}
+        ${perkLines(m)}<span>${line(m)}</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">${benched ? '' : `<button class="btn ghost" data-dismiss="${m.id}">To bench</button>`}
+        ${hired(m) && m.perks.some((id) => PERKS[id].fam !== 'quirk') ? `<button class="btn ghost" data-retrainview="${m.id}">Retrain</button>` : ''}</div></div>`).join('') || '<p style="margin:0 0 4px">No companions yet.</p>'}
       <h3>Today's sellswords</h3>
-      ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id) || S.bench.some((p) => p.id === m.id); return `<div class="merc"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>
-        <span>${m.trait ? m.trait[0] + ' · ' + m.trait[1] : ''}</span><span>${line(m)}</span></div>
-        <button class="btn" data-hire="${i}" ${have || (full && benchFull) ? 'disabled' : ''}>${have ? 'Hired' : full ? 'To bench' : 'Hire'}</button></div>`; }).join('')}`;
+      <div class="row go" data-ask><div><b>Ask around · ${sim.heroes.askCost()} gold</b><span>New faces at the tavern today. Dearer each time you ask the same day.</span></div><div class="go-arrow">›</div></div>
+      ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id) || S.bench.some((p) => p.id === m.id), fee = feeOf(m);
+        return `<div class="merc sw"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>${rankMark(m)}
+        <span class="rl">${esc(rankLine(m.rank))}</span>${perkLines(m)}<span>${line(m)}</span>
+        <span class="sub">Fee ${fee} gold · then ${wageOf(m, false)} gold a dawn</span></div>
+        <button class="btn" data-hire="${i}" ${have || (full && benchFull) || fee > gold() ? 'disabled' : ''}>${have ? 'Hired' : `${full ? 'To bench' : 'Hire'} · ${fee}`}</button></div>`; }).join('')}`;
+  }
+  // Retrain (GDD §6.2): one of a sellsword's perks for another of its family, dearer each time
+  function retrain() {
+    view = 'retrain';
+    const S = sim.state, m = [...S.party, ...S.bench].find((q) => q.id === retrainId);
+    if (!m) return hire();
+    const c = sim.heroes.retrainCost(m);
+    sheet.innerHTML = `${head('Tavern', `Retrain ${esc(m.name)}`, `A Guild drillmaster swaps one perk for another of its kind, for ${c} gold (each retrain costs more). A quirk is who they are: no training takes it out.`)}
+      ${m.perks.map((id, i) => { const w = perkWord(id), q = PERKS[id].fam === 'quirk'; return `<div class="merc sw"><div class="who">${perkLines({ perks: [id], owed: 0 })}</div>
+        <button class="btn${q ? ' ghost' : ''}" data-retrain="${i}" ${q || c > gold() ? 'disabled' : ''} aria-label="Retrain ${esc(w.name)}">${q ? 'Quirk' : `Retrain · ${c}`}</button></div>`; }).join('')}`;
   }
   // The temple: raise the Fallen (GDD §3.6) — free once a day while your hero is level 5 or
   // lower, else 25 gold × their level.
@@ -214,7 +252,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
       <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
     restDone = false;
   }
-  const VIEWS = { board, hire, raise, respec, rest };
+  const VIEWS = { board, hire, raise, respec, rest, retrain };
   function close() { sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square

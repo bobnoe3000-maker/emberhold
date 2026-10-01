@@ -2,6 +2,7 @@
 
 import { SKILLS } from '../sim/skills.js';
 import { CLASSES } from '../sim/party.js';
+import { perkWord } from './sellswords.js';
 
 export function createHud(sim) {
   // the HUD row's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it: the
@@ -40,6 +41,13 @@ export function createHud(sim) {
   sim.bus.on('roadThinned', (e) => { const t = road && road.thinned[String(e.ranks)]; if (t) show(t, 4200); });
   sim.bus.on('trialDone', (e) => { const A = (SKILLS[e.cls] || []).find((q) => q.trial), l = (CLASSES[e.cls] || { label: e.cls }).label.toLowerCase(); if (A) show(`The ${l}'s trial is done · every ${l} in your company knows ${A.name}`, 3200); });
   sim.bus.on('companionJoined', (b) => show(`${b.name} joins your company · tap his card to talk`, 2800));
+  // the Lantern Guild's sellswords (GDD §6.2)
+  sim.bus.on('hired', (h) => show(`${h.name} signs on · ${h.fee} gold to the Guild`, 2200));
+  sim.bus.on('wages', (w) => show(w.unpaid.length ? `Dawn · couldn't pay ${w.unpaid.join(', ')} · their perks are dark until you settle up at a tavern` : `Dawn · wages paid, ${w.paid} gold`, w.unpaid.length ? 4200 : 2400));
+  sim.bus.on('wagesSettled', () => show('Wages settled · everyone is square with you', 2200));
+  sim.bus.on('perkRevealed', (e) => show(`${e.name} trusts you now · ${perkWord(e.perk).name}: ${perkWord(e.perk).text}`, 4200));
+  sim.bus.on('sworn', (e) => show(`${e.name} is Sworn to your company · a quarter off the wage, and they get up once a room`, 4200));
+  sim.bus.on('retrained', (e) => show(`${e.name} learns ${perkWord(e.perk).name} · forgets ${perkWord(e.was).name}`, 2600));
 
   // Weakened (after a wipe): an amber chip in the HUD while it lasts
   const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
