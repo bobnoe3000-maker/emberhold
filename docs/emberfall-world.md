@@ -1,6 +1,10 @@
 # Emberfall — World Summary
 
-**v1.9 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.10 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.10 says where the Vale's bows come from (§3.1, *Bows and crossbows*): yew from the old
+hedgerows, poachers' hunting bows and the Greyholt fletchers' longbows. It also says why the
+Redhand carry crossbows instead.
 
 v1.9 says why the Vale fights its dead (§3.1, *The road*). The barrows legion stands on the barrows
 road in ranks, facing north, waiting for the relief that never came, and nothing gets past it. It
@@ -131,6 +135,14 @@ it's where everyone starts.
     the player learns this: Standing Order 14, the muster roll, the dispatch that was never sent.
     Thornwick's people say it plainly, without knowing why it's so: *"They just stand there. Facing
     north. Like they're waiting for somebody."*
+- **Bows and crossbows (v1.10).** The Vale's hedgerows are old yew, planted by the legions to
+  keep cattle off the road. Everyone in the Vale has strung a bow from them at some point, mostly
+  for Lord Pellam's deer, which is why it's illegal.
+  - The **hunting bow** is the poacher's: short, quick and quiet, and it fits under a coat.
+  - The **yew longbow** is Greyholt work. The fletchers there cut a stave for a year before they
+    string it, and charge like it.
+  - **Crossbows** are the Redhand's. A crossbow can be taught in an afternoon; a bow takes years,
+    and the Company doesn't keep anyone that long. A good rogue uses whichever one they've got.
 - **Look:** `plain` and `earth` variants; flagstone keeps and cobble barrows. Biome: *Dreadforge*.
 - **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats.
 
