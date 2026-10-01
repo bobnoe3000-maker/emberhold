@@ -535,7 +535,8 @@ solo +3 rooms: 11 of 12 defeats (the one hold ends at 4 % HP after a level-up mi
 
 A Fallen member is a ghost: the actor stamp with an ordered-dither see-through, a cold grey
 and a steady pale rim (`render/renderer.js`, look `ghost`). Weakened lasts 10 minutes of
-play; an in-game day (the temple's free raise) is 24 minutes (`DAY_S`).
+play; an in-game day (the temple's free raise, the wage, the board) is an hour of play (`DAY_S`; 24
+minutes before save v15, GDD §10.1).
 
 ### 2.11 Drawing on world history
 

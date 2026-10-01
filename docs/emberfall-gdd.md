@@ -1,6 +1,11 @@
 # Emberfall — Game Design Document
 
-**v1.9 · 2026-10-01 · Plan of record for game design.** v1.9 makes companions a choice and a gold
+**v1.10 · 2026-10-01 · Plan of record for game design.** v1.10 makes an in-game day an hour of play
+(it was 24 minutes) and shows it (§10.1): dawn, day, dusk and night light the town and the overland
+differently, and a small sky dial under the embers tells you which it is. The wage is still paid once
+a dawn, the same amount; so are the board, the tavern's roster and the temple's free raise.
+
+v1.9 makes companions a choice and a gold
 sink (§6.2): Lantern Guild ranks, a signing fee and a dawn wage, rolled perks for theorycrafting,
 loyalty, and the tavern's Ask around and Retrain. It also makes the old tavern traits real.
 
@@ -238,7 +243,7 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
 - **The hero** stays Downed, never Fallen, while any companion stands.
 - **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
   everyone was back over 60 %, which let a room be held forever).
-- **Temple:** an in-game day is 24 minutes of play. **Shrine:** with nobody Fallen it
+- **Temple:** an in-game day is an hour of play (§10.1). **Shrine:** with nobody Fallen it
   restores the party instead. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
   Weakened.
 - **Wipe:** if everyone is down, the party wakes at the region town's **Temple**:
@@ -454,7 +459,8 @@ company around. Canon: world doc §4, *Sellswords and the Guild's ranks*. Code: 
 
 The UI always shows the rank as a colour and the word.
 
-**Wages.** A wage is paid at every in-game dawn (24 minutes of play), wherever the company is.
+**Wages.** A wage is paid at every in-game dawn (once an hour of play, §10.1; it was every 24 minutes
+before v1.10, the same amount), wherever the company is.
 - **Order:** the party is paid first, then the bench at half wage. Each sellsword is paid in full
   or not at all.
 - **Unpaid:** the wage is owed, and the sellsword's perks go dark (they still fight) until it's
@@ -696,7 +702,7 @@ three are completed. **Chapter quests** (the main arc) are pinned on top and gat
 
 **Implemented (v1.4, M4 slice 3).** Thornwick's board hangs in the Tired Mule (Tavern → Quest
 board); `src/sim/board.js`, words in `content/board/`.
-- **When it refreshes:** at in-game dawn, every 24 minutes of play, the first time you're in town
+- **When it refreshes:** at in-game dawn, every hour of play (24 minutes before v1.10), the first time you're in town
   that day. Not "when three are completed" yet.
 - **How many jobs:** 3 jobs, or 4 from level 4. The jobs are fixed for the day at the level you
   had when the board went up.
@@ -802,6 +808,21 @@ progress):
   - *Crypts / barrows*: cobble, Ashbound.
   - *Caves*: cavern style.
   - *Imperial works*: rune plates.
+
+### 10.1 Time of day (v1.10)
+
+- **The day.** An in-game day is **an hour of play** (`DAY_S` = 3600 s in `src/sim/heroes.js`; it was
+  24 minutes). It has four parts of 15 minutes each, in order: **dawn, day, dusk, night**
+  (`partOf` in `src/sim/npcs.js`). The clock is the sim's, so it is deterministic and replays.
+- **What runs on it:**
+  - Dawn pays the Lantern Guild's wages (§6.2), the same amount a dawn as before, and puts up a
+    new board (§9) and a new tavern roster.
+  - The temple's free raise is once a day.
+  - The townsfolk walk their routines by the part of the day, and Ink reads it as `day_part`.
+- **Old saves.** A save from the 24-minute day loads on the same day number at the same time of that
+  day (save v15), so nothing kept by the day is lost or paid twice.
+- **Night changes nothing in play.** No more foes, no other spawns, no change to any number. Only
+  the light and the dial change (below).
 
 ---
 

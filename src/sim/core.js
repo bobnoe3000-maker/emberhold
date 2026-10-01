@@ -459,7 +459,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function snapshot() {
     const p = state.player;
     return {
-      seed: baseSeed, scene: curScene, site: curSite, depth: state.depth, t: state.t, tick: state.tick,
+      seed: baseSeed, scene: curScene, site: curSite, depth: state.depth, t: state.t, tick: state.tick, dayS: DAY_S,
       player: { x: p.x, y: p.y, dir: p.dir, mirror: p.mirror },
       counters: { ...state.counters },
       party: state.party.map(persistMember),
@@ -495,8 +495,19 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     m.owed = Number.isFinite(m.owed) && m.owed > 0 ? Math.round(m.owed) : 0;
     m.retrains = Number.isInteger(m.retrains) && m.retrains > 0 ? m.retrains : 0;
   }
-  function restore(data) {
+  // a save kept on a day of another length (v14 and older: 24 minutes) is retimed onto this one: the same
+  // day number and the same time of that day, so every stored day (wages, the board and its job ids,
+  // the tavern, the temple, the inn) still reads as it did; what was counting down (Weakened) keeps the
+  // seconds it had left
+  function retime(data) {
+    const was = Number.isFinite(data.dayS) && data.dayS > 0 ? data.dayS : 1440, t = Number.isFinite(data.t) ? data.t : 0;
+    if (was === DAY_S) return data;
+    const t2 = Math.floor(t / was) * DAY_S + (t % was) * (DAY_S / was), shift = (/** @type {any} */ m) => (m.weakUntil > 0 ? { ...m, weakUntil: m.weakUntil - t + t2 } : m);
+    return { ...data, t: t2, dayS: DAY_S, party: Array.isArray(data.party) ? data.party.map(shift) : data.party, bench: Array.isArray(data.bench) ? data.bench.map(shift) : data.bench };
+  }
+  function restore(raw) {
     stopWalk();
+    const data = retime(raw);
     state.t = data.t ?? 0; state.tick = data.tick ?? 0;
     state.depth = data.depth ?? 0;
     curScene = data.scene ?? 'dungeon';

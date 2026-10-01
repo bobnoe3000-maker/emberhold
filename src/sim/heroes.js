@@ -40,7 +40,7 @@ export const BENCH_MAX = 6;
 export const FOUND = {
   brannoc: { name: 'Brannoc', cls: 'fighter', actor: 'hero_brannoc', trait: ['Redhand deserter', 'found in Wickham Keep'], freedBy: 'redhand_captain' },
 };
-export const DAY_S = 1440;              // an in-game day: 24 minutes of play (1 min = 1 h)
+export const DAY_S = 3600;              // an in-game day: an hour of play (2.5 min = 1 h); 1440 (24 min) before save v15
 export const WEAK_S = 600;              // Weakened lasts 10 minutes of play
 export const RES_COST = 25, RESPEC_COST = 20, REST_COST = 5, FREE_RES_LEVEL = 5;
 

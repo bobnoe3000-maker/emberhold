@@ -42,10 +42,15 @@
 //       retrains; tavern { day, ask }, wageDay, innDay. Older data: a tavern hire is a Wick and its old
 //       trait becomes the matching perk, kept for free with wages from the next dawn; Brannoc gets his
 //       own perks (sim restore).
+//   v15: the hour-long day (sim/heroes.js DAY_S 1440 → 3600 s) — the snapshot says its dayS. Older data
+//       (no dayS: a 24-minute day) is retimed by the sim's restore onto the same day number and the same
+//       time of that day, so stored days (wages, board jobs, tavern, temple, inn) read as they did; a
+//       slot's playtime now counts ticks, which retiming doesn't touch.
 
 import * as idb from './idb.js';
+import { TICK_HZ } from '../sim/core.js';
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -58,7 +63,7 @@ export function metaOf(data) {
   return {
     name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null, origin: h.origin || null,
     party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows',
-    playtime: Math.round(data.t || 0), gold: (data.counters && data.counters.gold) || 0,
+    playtime: Math.round(Number.isFinite(data.tick) && data.tick > 0 ? data.tick / TICK_HZ : data.t || 0),   // seconds played (t is game time, retimed when the day changed length) gold: (data.counters && data.counters.gold) || 0,
   };
 }
 
