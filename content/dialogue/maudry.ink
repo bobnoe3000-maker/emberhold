@@ -16,6 +16,7 @@ VAR flag_met_maudry = 0
 VAR q_vale_long_way_round = -1
 VAR q_ch1_smoke_over_the_vale = -1
 VAR frag_vale_count = 0
+VAR road_ranks = 3
 
 == maudry_hub ==
 { flag_met_maudry == 0: -> maudry_first_meet }
@@ -37,12 +38,18 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 - else:
     "{hero_name}, is it. I'll remember. I remember everyone. It's the job."
 }
+{ road_ranks > 0:
+    "If you came by the crossroads you'll have seen them. The dead, standing across the barrows road in rows, facing north like they're waiting for somebody."
+    "They don't come here. They don't need to. Nothing gets down that road, and everything I pour comes up it."
+}
 -> maudry_topics
 
 == maudry_greet_back ==
 {&Maudry looks up from the tap. "Back again, {hero_name}."|"Still in one piece, I see. The Vale's getting careless."|Maudry slides a mug your way without asking. "On the house. Don't tell anyone."}
 { q_vale_long_way_round == 2: "You've the look of someone with news. Go on, then." }
-{ q_vale_long_way_round == 3: "The carters have stopped taking the long way round the barrows since you started going down. That's worth a mug." }
+{ q_vale_long_way_round == 3 && road_ranks > 0: "The front rank's gone off the barrows road since you started going down. A carter tried it yesterday and got as far as the next. That's progress, and it's worth a mug." }
+{ road_ranks == 3 && q_vale_long_way_round != 3: "Still standing out there on the barrows road, the dead. Facing north. Nobody's told them nobody's coming." }
+{ road_ranks == 0: "Col took the barrows road this morning and came back with all four wheels. First time since spring. I've dropped the price of ale. Don't tell anyone." }
 { q_ch1_smoke_over_the_vale == 0: "There's smoke up the river again. You'll have seen it. Everyone's seen it and nobody's doing anything about it." }
 { q_ch1_smoke_over_the_vale == 3: "Osric's been writing in that ledger of his like it owes him money. Whatever you told him, he took it serious." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }

@@ -582,6 +582,11 @@ progress):
   sites and landmarks are procedural from the seed.
 - **Travel** between nodes takes in-game time. Roads carry a 15 % encounter chance (ambushes,
   merchants, shrines, lore) and trails 30 %, but trails are faster. You can camp to regen.
+- **The region's trouble, on the map** (v1.7; world doc §3.1 *The road*). Each region shows its
+  threat where you travel, not only in its dungeons. In the Vale the dead stand in three ranks across
+  the barrows road beside a stopped wagon: walkers get through, wagons don't. Each rank goes when its
+  part of the legion is put down (Maudry's errand, Osric's bounty, the Standard), with a HUD line
+  when it does; with the last one the road opens, the wagon's gone, and the town says so.
 - **Towns are hubs, one per region** (Thornwick, Saltmere, Ashgate, Frosthold). Each is the
   same place in a different region.
   - **Approach road:** it passes the cosmetic buildings (houses, farms and fields), which stand

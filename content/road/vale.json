@@ -1,0 +1,15 @@
+{
+  "id": "vale",
+  "region": "vale",
+  "road": "The barrows road",
+  "near": {
+    "3": "The dead stand across the barrows road in ranks, facing north. They look straight past you. They're waiting for someone else.",
+    "2": "Fewer of the dead on the barrows road now. The ones left still face north, still waiting.",
+    "1": "One rank left on the barrows road, close round an empty place where their standard stood. Still facing north."
+  },
+  "thinned": {
+    "2": "Word from the barrows road: the front rank is gone. Where they stood there's only the road.",
+    "1": "The bright-eyed ones are gone from the barrows road. The last rank stands closer together.",
+    "0": "The barrows road is open. The last of the dead lay down where they stood, facing north. Col is already hitching his horse."
+  }
+}

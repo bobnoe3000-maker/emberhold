@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A region's held road (world doc \u00a73.1 v1.9, *The road*): what the HUD says when you come near the dead standing on it, and as its ranks go. Where they stand and what relieves each rank are the sim's (src/sim/road.js RANKS); a test keeps the two in step.",
+  "type": "object",
+  "required": [
+    "id",
+    "region",
+    "road",
+    "near",
+    "thinned"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "region": {
+      "enum": [
+        "vale",
+        "fens",
+        "reach",
+        "heights"
+      ]
+    },
+    "road": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+    },
+    "near": {
+      "type": "object",
+      "description": "by ranks still standing (1\u2026n): the line as you come near it",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[1-9]$": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    },
+    "thinned": {
+      "type": "object",
+      "description": "by ranks left (0\u2026n\u22121) when one goes; 0: the road is open",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[0-9]$": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    }
+  }
+}

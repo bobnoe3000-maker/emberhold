@@ -17,6 +17,7 @@ VAR flag_met_jory = 0
 VAR flag_met_nell = 0
 VAR flag_met_hedda = 0
 VAR q_trial_quiet_feet = -1
+VAR road_ranks = 3
 VAR q_trial_cold_weather = -1
 
 == wendel_hub ==
@@ -44,10 +45,15 @@ VAR q_trial_cold_weather = -1
 -> END
 
 == col_hub ==
-{ flag_met_col == 0:
+{
+- flag_met_col == 0:
     "Col. I drive the Greyholt cart. Drove it the long way round the barrows a whole month, a day out each way. Just so you know." # flag: set met_col
+- road_ranks == 0:
+    {&"Barrows road's open. Half a day to Greyholt. Half a day! I'll not know what to do with the other half."|"I went past where they stood. Nothing there now but the road, and my old wagon in the ditch. I'll have that back, thank you."}
+- road_ranks < 3:
+    "There's fewer of them on the barrows road. I counted. Didn't stop to count properly, mind."
 - else:
-    {&"The horse still shies at the mounds. So do I. Neither of us will say so."|"A day out of the way, both ways, for a month. Somebody ought to pay me for that day. Nobody will."|"Saw one standing in the road at dusk last week. It saluted. I didn't."}
+    {&"The horse still shies at the mounds. So do I. Neither of us will say so."|"A day out of the way, both ways, for a month. Somebody ought to pay me for that day. Nobody will."|"Saw one standing in the road at dusk last week. It saluted. I didn't."|"That's my wagon on its side by the barrows road. They didn't hurt me. They just stood in front of the horse till it went over. Then they went back to facing north."}
 }
 -> END
 

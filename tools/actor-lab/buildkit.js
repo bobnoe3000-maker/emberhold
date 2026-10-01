@@ -681,6 +681,35 @@ Object.assign(TYPES, {
     box(0.18, 0.08, 0.12, stone, 0.34, 0, 0.62, g).rotation.y = 0.6;
     lantern(g, S, 0.2, 0.22, 0.62);
   },
+  // A carter's wagon the dead stopped on the barrows road (world doc §3.1 v1.9, *The road*): tipped on
+  // its side across the verge, one wheel off and lying flat, the shafts snapped, the load spilled:
+  // barrels, a split sack, a crate. Nobody has come back for it.
+  wagon(S, g, r) {
+    const wood = S.m.wood, dark = mat(null, '#3e2e22'), iron = S.m.trim;
+    const bed = new THREE.Group(); bed.position.set(0, 0.09, 0); bed.rotation.set(0, 0.35, 1.32); g.add(bed);   // on its side
+    box(0.4, 0.025, 0.2, wood, 0, -0.012, 0, bed);                                                              // the floor boards
+    for (const sz of [-1, 1]) box(0.4, 0.07, 0.015, wood, 0, 0.01, sz * 0.095, bed);                            // the side boards
+    box(0.015, 0.07, 0.2, wood, -0.195, 0.01, 0, bed);
+    for (let i = 0; i < 4; i++) box(0.012, 0.075, 0.205, dark, -0.15 + i * 0.1, 0.008, 0, bed);                 // the ribs
+    const wheel = (parent, x, y, z, rx, ry) => {
+      const wg = new THREE.Group(); wg.position.set(x, y, z); wg.rotation.set(rx, ry, 0); parent.add(wg);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.01, 5, 14), dark); wg.add(rim);
+      for (let k = 0; k < 6; k++) { const sp = box(0.006, 0.13, 0.006, wood, 0, -0.065, 0, wg); sp.rotation.z = (k / 6) * Math.PI; sp.position.set(0, 0, 0); }
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.03, 8), iron); hub.rotation.x = Math.PI / 2; wg.add(hub);
+    };
+    wheel(bed, -0.12, -0.06, 0.11, 0, 0); wheel(bed, 0.13, -0.06, 0.11, 0, 0); wheel(bed, -0.12, -0.06, -0.11, 0, 0);
+    wheel(g, 0.3, 0.012, 0.18, Math.PI / 2, 0);                                                                 // the fourth, off and flat
+    const shaft = box(0.32, 0.016, 0.016, dark, -0.34, 0.01, 0.12, g); shaft.rotation.y = -0.4;                 // the shafts, one snapped short
+    const stub = box(0.12, 0.016, 0.016, dark, -0.26, 0.01, -0.02, g); stub.rotation.set(0, 0.2, 0.25);
+    // the load: barrels, one on its side and stove in, a split sack, a crate
+    for (const [x, z, lie] of [[0.16, 0.24, 0], [0.26, 0.04, 1], [0.05, 0.3, 1]]) {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.1, 10), wood); b.position.set(x, lie ? 0.045 : 0.05, z); if (lie) b.rotation.set(Math.PI / 2, 0, r() * 2); g.add(b);
+      for (const yy of [-0.03, 0.03]) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.044, 0.004, 3, 12), iron); h.rotation.x = Math.PI / 2; h.position.y = yy; b.add(h); }
+    }
+    sackMesh(g, S, -0.06, 0.26, 1.1, 1.3); sackMesh(g, S, 0.34, 0.22, 0.9, 0.4);
+    const cr = box(0.09, 0.07, 0.09, wood, -0.2, 0, 0.24, g); cr.rotation.y = 0.5;
+    for (let i = 0; i < 4; i++) { const k = rockMesh(r, 0.015 + r() * 0.01, 0.5); k.position.set(-0.3 + r() * 0.7, 0, -0.2 + r() * 0.5); g.add(k); }
+  },
   // The ninth milestone on the Wickham road: a squat imperial mile-stone with its numeral, a worn
   // plinth, and a slab at its foot that doesn't quite sit flat.
   milestone(S, g, r) {

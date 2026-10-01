@@ -358,6 +358,8 @@ export function createOutdoor(seed, kind, region = 'vale') { return kind === 'to
 
 // ── world API (dispatched from world.js) ─────────────────────────────────────
 export const oHeightAt = () => FLOOR_Z;
+/** place a baked structure after the layout (road.js: the stopped wagon) @param {any} o @param {string} id @param {number} x @param {number} y @param {string} [shape] @param {number} [shrink] */
+export function oPut(o, id, x, y, shape = 'rect', shrink = 0.12) { put(o, id, x, y, shape, shrink); }
 /** make a tile solid (a person standing there: sim/npcs.js) @param {any} o @param {number} x @param {number} y */
 export function oBlock(o, x, y) { const i = gi(o, x, y); if (i >= 0) o.blocked[i] = 1; }
 export function oMaterialAt(o, x, y) { const i = gi(o, x, y); return i < 0 ? 'grass' : G_MAT[o.tmat[i]]; }

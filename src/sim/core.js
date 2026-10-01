@@ -16,6 +16,7 @@ import { createLoot } from './loot.js';
 import { createHeroes } from './heroes.js';
 import { createBattle, BOSSES } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
+import { placeRoad, createRoad } from './road.js';
 import { createQuests, TRIAL_LEVEL } from './quests.js';
 import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
@@ -60,8 +61,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const levelSeed = (d) => (baseSeed ^ Math.imul(siteOf(curSite).mix, 0x9e3779b1) ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene, curSite = SITES[site] ? site : 'barrows';
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
-  const buildWorld = (d) => placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
-    isWalkable, (id) => !!clock && ![...clock.party, ...clock.bench].some((m) => m.id === id));   // a found companion waits in his hall until he joins
+  const buildWorld = (d) => placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, region), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
+    isWalkable, (id) => !!clock && ![...clock.party, ...clock.bench].some((m) => m.id === id)), clock);   // a found companion waits in his hall until he joins; the dead hold the barrows road (road.js)
 
   let world = buildWorld(0);
   const bus = createBus();
@@ -87,6 +88,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
+  if (curScene === 'overland') placeRoad(world, state);   // (the first build ran before the state existed)
 
   // gear drops, the bag and the equip commands (loot.js)
   const loot = createLoot({ state, bus, seed: baseSeed });
@@ -115,8 +117,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     grant: (item) => loot.grant(item, { ilv: state.party[0].level, x: state.player.x, y: state.player.y, src: 'quest' }),
     drop: (src) => loot.drop(src, { ilv: state.party[0].level, x: state.player.x, y: state.player.y }) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
-  const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });   // the Chronicle's fragments (lore.js)
-  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
+  const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });
+  const road = createRoad({ state, bus, getWorld: () => world });              // the dead on the barrows road (road.js)   // the Chronicle's fragments (lore.js)
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars(), road_ranks: road.held() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
   function bossVars() { /** @type {Record<string, number>} */ const v = {}; for (const k of Object.keys(BOSSES)) v['boss_' + k] = state.bosses[k] ? 1 : 0; return v; }   // Ink: has he fallen?
 
   function tryMove(p, dx, dy) {
@@ -420,6 +423,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     heroes.tick();
     board.tick();                                          // a new day's board goes up in town
     talk.tick();
+    road.tick();
     stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT, state.player);   // townsfolk keep their routine
     // an exit zone takes you through unless you're walking a path to somewhere else (a corner cut
     // on the way past); the stick, or a walk that ends in it, goes through
@@ -474,13 +478,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.depth = data.depth ?? 0;
     curScene = data.scene ?? 'dungeon';
     curSite = SITES[data.site] ? data.site : 'barrows';     // v10 and older: the Old Barrows were the only site
-    world = buildWorld(state.depth);                       // rebuild the saved level
-    const p = state.player;
-    p.x = p.px = data.player.x; p.y = p.py = data.player.y;
-    if (!isWalkable(world, p.x, p.y)) { const s = findSpawn(world); p.x = p.px = s.x; p.y = p.py = s.y; }
-    p.dir = data.player.dir ?? 'down';
-    p.mirror = !!data.player.mirror;
-    p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
     state.counters.wood = data.counters?.wood ?? 0;
     state.counters.stone = data.counters?.stone ?? 0;
     state.counters.gold = data.counters?.gold ?? 0;
@@ -495,13 +492,6 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
     state.bag = (data.bag ?? []).map((it) => refreshItem({ ...it }));
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
-    world.mods.clear();
-    for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
-    world.hp.clear();
-    for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
-    world.discovered.clear();
-    for (const id of data.discovered ?? []) world.discovered.add(id);
-    world.visited = new Set(data.visited ?? []);
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
@@ -515,6 +505,22 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     lore.restore(data);                                    // v9 and older: none yet
     floors = new Map();                                    // v7 and older: none (only the floor you're on)
     for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);
+    // the level, last: what's built on it can depend on the state just read back (who waits in a hall,
+    // which ranks of the dead still hold the barrows road)
+    world = buildWorld(state.depth);                       // rebuild the saved level
+    const p = state.player;
+    p.x = p.px = data.player.x; p.y = p.py = data.player.y;
+    if (!isWalkable(world, p.x, p.y)) { const s = findSpawn(world); p.x = p.px = s.x; p.y = p.py = s.y; }
+    p.dir = data.player.dir ?? 'down';
+    p.mirror = !!data.player.mirror;
+    p.moving = false; p.vx = p.vy = 0; p.frame = 0; p.frameAcc = 0;
+    world.mods.clear();
+    for (const e of data.mods ?? []) Array.isArray(e) ? world.mods.set(e[0], e[1]) : world.mods.set(e, { cleared: true });
+    world.hp.clear();
+    for (const [k, n] of data.hp ?? []) world.hp.set(k, n);
+    world.discovered.clear();
+    for (const id of data.discovered ?? []) world.discovered.add(id);
+    world.visited = new Set(data.visited ?? []);
     bus.emit('levelChanged', { depth: state.depth, theme: world.theme, scene: curScene });   // renderer resets caches
     bus.emit('questChanged', { id: null });                // the journal repaints
     battle.reset();

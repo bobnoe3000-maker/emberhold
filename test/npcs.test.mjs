@@ -116,7 +116,7 @@ test('the story adapter: tags become commands, windows come back, presentation i
   const pushed = [];
   const origins = {};
   for (const origin of ['thornwick_born', 'redhand_deserter', 'grey_sisters_ward', 'deepdelver_fostered', '']) {
-    const vars = { hero_name: 'Tam', hero_origin: origin, flag_met_maudry: 0 };
+    const vars = { hero_name: 'Tam', hero_origin: origin, flag_met_maudry: 0, road_ranks: 0 };   // (with the road held she goes on about it after: road.test.mjs)
     const c = await book.open('maudry', 'maudry_hub', vars, (cmd) => pushed.push(cmd));
     assert.ok(c.first.waiting, 'meeting her is an effect: the beat waits for the sim');
     origins[origin] = settle(c, c.first, vars).lines.at(-1);

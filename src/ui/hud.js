@@ -30,6 +30,10 @@ export function createHud(sim) {
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
   sim.bus.on('fallen', (f) => show(`${f.name} is Fallen · raise them at a temple or shrine`, 2600));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
+  // the dead on the barrows road (sim road.js): a line as you come near, and when a rank goes (content/road/)
+  let road = null; fetch('./content/road/vale.json').then((r) => r.json()).then((d) => { road = d; }).catch(() => {});
+  sim.bus.on('roadNear', (e) => { const t = road && road.near[String(e.ranks)]; if (t) show(t, 4200); });
+  sim.bus.on('roadThinned', (e) => { const t = road && road.thinned[String(e.ranks)]; if (t) show(t, 4200); });
   sim.bus.on('trialDone', (e) => { const A = (SKILLS[e.cls] || []).find((q) => q.trial), l = (CLASSES[e.cls] || { label: e.cls }).label.toLowerCase(); if (A) show(`The ${l}'s trial is done · every ${l} in your company knows ${A.name}`, 3200); });
   sim.bus.on('companionJoined', (b) => show(`${b.name} joins your company · tap his card to talk`, 2800));
 

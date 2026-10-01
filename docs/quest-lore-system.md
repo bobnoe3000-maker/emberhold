@@ -280,6 +280,11 @@ fragment. Two players find the same truth in different places (world doc §7).
   his card, wherever you are, while he's in the party and up. His chain's quests carry
   `companion` (offered only while he's with you) and his last pays an heirloom (`rewards.item`).
   Ink reads `joined`, `in_party` and `boss_<id>`.
+- **The barrows road** (world doc §3.1 v1.9): `sim/road.js` RANKS name what relieves each rank of
+  the dead on the road (a quest done, a boss down). The ranks are derived from the save, never
+  stored. Ink reads `road_ranks` (3 → 0), and `content/road/vale.json` holds the HUD lines
+  (`roadNear` once a visit, `roadThinned` as a rank goes). Maudry names the road at first meeting,
+  Col's wagon is the one on its side, and Osric's bounty says which rank it thins.
 - **Class trials** (M5.6) are quests with `trial: <class>`: offered while anyone of that class in the
   company is level 6+ and it isn't done; handing one in sets `state.trials[cls]` (save v13) and every
   member of the class can use its level-6 ability (skills.js `unlocked`). Nell and Hedda, who had

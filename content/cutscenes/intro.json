@@ -34,14 +34,14 @@
       "id": "year301", "scene": "year301", "music": "fall",
       "when": "This spring", "age": "Year 301 of the Dim",
       "hook": "Someone started digging.",
-      "body": ["Smoke rose from forges cold for three hundred years.", "The barrows cracked open.", "And under the Wickham road, the Third Legion got its orders at last."],
-      "lead": "It stood up, and turned toward Thornwick."
+      "body": ["Smoke rose from forges cold for three hundred years.", "The barrows cracked open.", "And under the Wickham road, the Third Legion remembered its last order."],
+      "lead": "It stood up, and went back to its post on the road."
     },
     {
       "id": "thornwick", "scene": "thornwick", "music": "thornwick",
       "when": "The Hollow Vale", "age": "Thornwick",
       "hook": "Thornwick did what small towns do.",
-      "body": ["It sent to Greyholt for soldiers.", "Lord Pellam sent a long letter of regret.", "The heroes of this age are not available\u2026"],
+      "body": ["The carts stopped coming.", "It sent to Greyholt for soldiers.", "Lord Pellam sent a long letter of regret.", "The heroes of this age are not available\u2026"],
       "lead": "Looks like it is up to you."
     }
   ]

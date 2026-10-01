@@ -253,7 +253,7 @@ export function createRenderer(canvas, sim, input) {
     return a && a.cells ? a : null;
   };
   // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
-  const preloadFamily = () => { const w = sim.world; if (w.kind !== 'dungeon') return; const F = familyOf(w); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };
+  const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; const F = familyOf(w); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
@@ -844,6 +844,15 @@ export function createRenderer(canvas, sim, input) {
       const walking = !!n.moving;
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near ? ix - qx : -1, faceY: walking ? n.fy : near ? iy - qy : 1, facing: true, dir0: 2, stride: STRIDE.hero, seed: 0.61 });
       draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a });
+    }
+    // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
+    // up the road for the relief that never came. No ring, no bar: they aren't in a fight with you.
+    for (const q of sim.world.pickets || []) {
+      const atl = enemyAtlas(q.kind); if (!atl) continue;
+      const qz = heightAt(sim.world, Math.floor(q.x), Math.floor(q.y)), qp = project(q.x, q.y, qz), qx = ox + qp.sx, qy = oy + qp.sy;
+      if (qx < -60 || qx > nvw + 60 || qy < -40 || qy > nvh + 120) continue;
+      const a = pickAnim(q, atl, { now, x: q.x, y: q.y, moving: false, faceX: -0.25, faceY: -1, facing: true, dir0: 2, stride: STRIDE.skel, seed: (q.x * 0.37 + q.y * 0.11) % 1 });
+      draws.push({ d: q.x + q.y, sp: atl.cells[a.dir][a.frame], fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a });
     }
     // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {

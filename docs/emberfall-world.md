@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.8 · 2026-09-30 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.9 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.9 says why the Vale fights its dead (§3.1, *The road*). The barrows legion stands on the barrows
+road in ranks, facing north, waiting for the relief that never came, and nothing gets past it. It
+also says how they're relieved: the line thins as the barrows are fought, and breaks when its
+Standard falls. The intro's last beat now points at the road, not the town.
 
 v1.8 fills in Brannoc's chain (§5): who he owes, where the paymaster kept the robes' coin, and what
 the wax on the purses looks like. It also says who holds the Vale set's hall fragments (§7): Garrow
@@ -101,6 +106,31 @@ it's where everyone starts.
     legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
     Wickham road. Nobody knows it's there until the Chronicle says so.
+- **The road (v1.9): why the Vale fights its dead.** The barrows lie under the old Wickham road.
+  Its stretch past them, which Thornwick calls the *barrows road*, is the short way out of the
+  Vale for the Greyholt cart and everyone else. When the digging woke the Third Legion this spring,
+  it did what its last order said: it went back to its post. The dead stand across the barrows road
+  in ranks, facing north, the way the relief column would have come.
+  - **They don't march on Thornwick.** They don't want anything. They stop whatever comes down the
+    road, because nothing that comes down it is the relief. The first wagons that tried are still
+    standing where they were stopped, one of them overturned.
+  - **That is the harm.** The carters go the long way round, a day out each way. Lamp oil, ale
+    and iron cost more every week. Lord Pellam sends letters. It's a slow strangling, not a siege.
+  - **Walkers get through.** The dead turn their heads to anyone on foot and let them pass: one
+    traveller isn't an army. Wagons, carts and columns they stop.
+  - **How the line thins.** The ranks on the road are drawn from the legion below. Each one goes
+    when its part of the legion is put down:
+    - the front rank, when the walking kind near the surface are knocked back (Maudry's errand,
+      *The Long Way Round*);
+    - the officers' rank, when the bright-eyed ones who lead them fall (Osric's bounty, *The
+      Captain's Ledger*);
+    - the last rank, around the Standard, when the Standard of the Third Legion falls in the
+      barrows' third-floor hall.
+    With the Standard down the line breaks, the road opens, and the carts run again.
+  - **Putting them down is the only relief anyone has brought them.** The Chronicle (§7) is how
+    the player learns this: Standing Order 14, the muster roll, the dispatch that was never sent.
+    Thornwick's people say it plainly, without knowing why it's so: *"They just stand there. Facing
+    north. Like they're waiting for somebody."*
 - **Look:** `plain` and `earth` variants; flagstone keeps and cobble barrows. Biome: *Dreadforge*.
 - **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats.
 
@@ -152,7 +182,7 @@ marching dead: they run straight through anything in the way, hill, bog or villa
 |---|---|---|---|
 | **The Lantern Guild** | A shabby adventurers' guild with a board in every town | Coin, and renown for its members | **Quest giver.** Its quest board is the mini-quest generator. Guild rank gates regions. In Thornwick the board hangs inside the Tired Mule, by the door (v1.5). Anyone can pin a job to it and the Guild takes a cut of the pay; Maudry reads every one. The jobs pinned there come from people already in canon: Maudry Fenn, the carters, Wendel of the provisions shop, the daughter at Hale & Daughter, the Shrine of the Ember, and Osric Hale for the Watch, when the Watch has the coin. Nobody new is named on it. |
 | **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
-| **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders. | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
+| **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders (the Vale's: hold the Wickham road until relieved, §3.1 *The road*). | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
 | **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads in off-white vestments with a flanged mace and a chained psalter, and some take coin at a tavern) and, later, the **Healer**. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
