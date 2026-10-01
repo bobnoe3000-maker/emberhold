@@ -30,7 +30,7 @@
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
-import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster } from './party.js';
+import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
 import { hired, feeOf, wageOf, loyaltyOf, retrainPerk, priceMod, PERKS, REVEAL_AT, SWORN_AT, ASK_COST, RETRAIN_COST, FOUND_PERKS } from './companions.js';
@@ -258,7 +258,8 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   function join(id) {
     const F = Object.prototype.hasOwnProperty.call(FOUND, id) ? FOUND[id] : null;
     if (!F || find(id) || !(state.bosses || {})[F.freedBy]) return;
-    const m = { ...makeMember(id, F.name, F.cls, Math.max(1, state.party[0].level), F.trait), actor: F.actor, rank: 'found', perks: [...(FOUND_PERKS[id] || [])], hidden: null, bond: 0, owed: 0 };
+    const m = { ...makeMember(id, F.name, F.cls, hireLevel(state.party[0].level), F.trait),   // months on a chain: half as seasoned as you (world doc §5 v1.12)
+      actor: F.actor, rank: 'found', perks: [...(FOUND_PERKS[id] || [])], hidden: null, bond: 0, owed: 0 };
     if (state.party.length <= MAX_COMPANIONS) state.party.push(m);
     else if (state.bench.length < BENCH_MAX) { state.bench.push(m); bus.emit('benched', { id: m.id, name: m.name }); }
     else { refuse('The party and the bench are full'); return; }

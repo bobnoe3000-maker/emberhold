@@ -6,6 +6,7 @@
 // text. DOM only; reads, never writes.
 
 import { RANKS, RANK_IDS } from '../sim/companions.js';
+import { hireLevel } from '../sim/party.js';
 import { RANK_COL, rankName, rankLine, wordsReady, companionWords as words } from './sellswords.js';
 import { esc, swallow } from './actorart.js';
 
@@ -42,10 +43,10 @@ export function createGuildTerms({ sim }) {
   function draw() {
     const T = (words() || {}).terms, F = (words() || {}).families || {};
     if (!T) { wrap.innerHTML = '<div class="pane"><button class="x" aria-label="Close">✕</button><p>…</p></div>'; return; }
-    const lv = Math.max(1, sim.state.party[0].level);
+    const lv = hireLevel(Math.max(1, sim.state.party[0].level));   // what a new hire's level is today (half yours)
     const rows = RANK_IDS.map((r) => { const R = RANKS[r];
       return `<tr><td><span class="rk" style="color:${RANK_COL[r]}">◆ ${esc(rankName(r))}</span><i>${esc(rankLine(r))}</i></td>
-        <td>${R.perks}${R.hidden ? ' + 1 kept back' : ''}</td><td>${R.fee} × lv<br><small>(${R.fee * lv} now)</small></td><td>${R.wage} × lv<br><small>(${R.wage * lv} now)</small></td></tr>`; }).join('');
+        <td>${R.perks}${R.hidden ? ' + 1 kept back' : ''}</td><td>${R.fee} × lv<br><small>(${R.fee * lv} at L${lv})</small></td><td>${R.wage} × lv<br><small>(${R.wage * lv} at L${lv})</small></td></tr>`; }).join('');
     const sec = (s) => `<h3>${esc(s.head)}</h3><p>${esc(s.text)}</p>${s.head === 'Ranks' ? `<table><tr><th>Rank</th><th>Perks</th><th>Fee</th><th>Wage a dawn</th></tr>${rows}</table>` : ''}`;
     wrap.innerHTML = `<div class="pane"><button class="x" aria-label="Close">✕</button>
       <div class="kind">Lantern Guild · the Tired Mule</div><h2>${esc(T.title)}</h2><div class="intro">${esc(T.intro)}</div>

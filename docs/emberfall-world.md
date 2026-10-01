@@ -1,6 +1,10 @@
 # Emberfall — World Summary
 
-**v1.11 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.12 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.12 says why a new companion is greener than you (§4, *Sellswords and the Guild's ranks*; §5,
+Brannoc): the Guild keeps its seasoned members for companies it knows, and Brannoc comes out of a
+cell. Either way they learn the rest at your side.
 
 v1.11 says how the Lantern Guild hires out its sellswords (§4, *Sellswords and the Guild's
 ranks*): the four ranks, the dawn wage, and what a sellsword does when it isn't paid.
@@ -221,6 +225,11 @@ not the coin. The Guild calls them **Sworn** and takes a smaller cut.
 
 Found companions (Brannoc, §5) aren't Guild members and take no wage.
 
+The Guild doesn't send its seasoned members out with strangers. Whoever you sign on has about
+half your seasons on the road, whatever their rank says about what they can do, and they learn
+the rest at your side (v1.12). Maudry's way of putting it: *"The good ones are spoken for. The
+ones I've got will be good. Give them a month."*
+
 **Peoples:** mostly humans, plus stout **Deepdelver** dwarf-folk in the hills, a few **fen-folk**
 halflings in the marsh, and rare, aloof elves passing through. Standard fantasy, lightly used.
 
@@ -243,7 +252,9 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   bright-eyed ones out of his own purse and writes it down.
 - **Brannoc**, a Redhand deserter and the first **found companion** (fighter), met chained in
   Wickham Keep. (v1.7) He tried to leave the Company twice. Captain Garrow kept him chained in
-  the Keep's hall as an example to the others, and fed him when he remembered to. Big, slow to
+  the Keep's hall as an example to the others, and fed him when he remembered to. (v1.12) Months
+  on a chain took the edge off him: he joins about half as seasoned as you, and gets it back fast.
+  Big, slow to
   talk and quick to apologise, he wants to find out who paid the Company to dig, then to see the
   legion in the barrows that never deserted anything.
   His chain, *Chains of the Redhand*, ends with the heirloom *The Broken Chain* — *"He kept one

@@ -1,6 +1,10 @@
 # Emberfall — Game Design Document
 
-**v1.10 · 2026-10-01 · Plan of record for game design.** v1.10 makes an in-game day an hour of play
+**v1.11 · 2026-10-01 · Plan of record for game design.** v1.11 makes a new companion a time
+investment as well as a gold one (§6): a tavern hire, or Brannoc, joins at **half your level, rounded
+up**, and learns the rest at your side. Changing companions now costs levels, so you think about it.
+
+v1.10 makes an in-game day an hour of play
 (it was 24 minutes) and shows it (§10.1): dawn, day, dusk and night light the town and the overland
 differently, and a small sky dial under the embers tells you which it is. The wage is still paid once
 a dawn, the same amount; so are the board, the tavern's roster and the temple's free raise.
@@ -410,13 +414,29 @@ Both slot in with the same stat block and ability format. No system changes are 
 
 - **You plus two companions.** The main character is chosen at the start (fighter, rogue or
   mage) and can't be dismissed.
-- **Hire** at a town tavern: one sellsword per class (one more if you're Thornwick-born), within
-  ±1 of your level, new every in-game day. Each has a Lantern Guild rank and perks (§6.2), a
+- **Hire** at a town tavern: one sellsword per class (one more if you're Thornwick-born), at
+  **half your level, rounded up** (v1.11; it was ±1 of your level), new every in-game day. Each has a Lantern Guild rank and perks (§6.2), a
   signing fee and a dawn wage.
 - **Find** story companions in dungeons: rescued captives and quest rewards such as Brannoc
   (fighter) and Wren (rogue). They are free and have a unique trait and a personal quest.
   (M5) Brannoc waits chained in Wickham Keep's second-floor hall and joins once Captain Garrow has
   fallen. You talk to a found companion from their party card; they can be benched, never released.
+  Brannoc joins at half your level too: months on a chain (world doc §5 v1.12).
+- **Half your level (v1.11).** `hireLevel` in `src/sim/party.js`: max(1, ⌈hero level ÷ 2⌉), so L1–2 → 1,
+  L6 → 3, L9 → 5. XP is shared equally, and a lower level needs far less XP to rise, so a new hire
+  catches up. A fee and a wage are times the companion's own level, so a fresh hire costs half what
+  one at your level would, and costs more as they rise. Measured (`roomlv.mjs --fresh`, fighter hero
+  with a rogue and a cleric, no perks):
+
+  | Hero | Fresh hires | Same-level room | Two levels down |
+  |---|---|---|---|
+  | L3 | L2 | holds (47 waves in 10 min; 48 at level), they reach L3 | — |
+  | L6 | L3 | down in 264 s, 13 waves (at level: 34 waves) | holds (41 waves), they reach L4 |
+  | L9 | L5 | down in 220 s, 9 waves (at level: 17) | holds (32 waves), they reach L6 |
+
+  At L6, in rooms one level down, fresh hires reach L7 in 40 minutes of play (the hero, L8). From
+  level 4 a new companion means a few rooms below your level first. The balance contract (§7.1)
+  still measures a party levelled to yours.
 - **Bench.** Recruited companions wait at the Thornwick inn and can be swapped in any town.
   Active members share XP equally; the bench earns 50 %. The bench holds six; a hire with the
   party full goes straight to it.
@@ -536,7 +556,7 @@ by 1 for each boss it helps put down. They fall by 2 for each dawn it isn't paid
   - retrains and the next retrain's price.
 - **The Guild's terms** (`ui/guildterms.js`, text in `content/companions.json` `terms`): the
   reference card. It opens from the top of the tavern's Hire view and from a Contract tab.
-  - **Ranks table:** read from the sim's numbers, with the prices at your level.
+  - **Ranks table:** read from the sim's numbers, with the prices at a new hire's level (half yours).
   - **Sections:** wages, owed, loyalty, Ask around, Retrain, the perk families, found companions.
   - **Before any hire:** its link in the Hire view says wages are paid every dawn.
 - **Maudry Fenn:** *"How does the Guild hire?"* in her hub and her hiring talk. It covers the

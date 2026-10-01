@@ -102,6 +102,7 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 + [Every morning?] -> maudry_guild_wages
 + [And if I can't pay?] -> maudry_guild_unpaid
 + [Do any of them ever stay?] -> maudry_guild_sworn
++ [They look green.] -> maudry_guild_green
 + [Show me who's looking.]
     "Terms are pinned by the board, small print and all." # service: tavern
     -> END
@@ -112,6 +113,11 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 "A Lantern's known in two towns, and keeps one trick up a sleeve until they decide they like you."
 She sets the mug down.
 "A Beacon you'll know when you see one. Everybody does. Bring your purse, and a second purse."
+-> maudry_guild_more
+
+== maudry_guild_green ==
+"They are. The Guild keeps its seasoned ones for companies it knows, and it doesn't know you yet."
+"The good ones are spoken for. The ones I've got will be good. Give them a month. They'll learn at your side, and they'll cost you more when they have."
 -> maudry_guild_more
 
 == maudry_guild_wages ==

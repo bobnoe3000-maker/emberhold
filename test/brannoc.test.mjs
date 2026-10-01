@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { QS } from '../src/sim/quests.js';
-import { statsFor } from '../src/sim/party.js';
+import { statsFor, hireLevel } from '../src/sim/party.js';
 import { isWalkable } from '../src/sim/world.js';
 import { createStoryBook } from '../src/story/adapter.js';
 import { NPCS } from '../src/sim/npcs.js';
@@ -47,11 +47,11 @@ test('he joins only once Garrow has fallen; then he leaves the hall with you, an
   goTo(sim, 'dungeon', 'wickham_keep', 1);
   talkInHall(sim); assert.equal(ev.at(-1).n, 'dialogue'); assert.equal(ev.at(-1).knot, 'brannoc_hub'); assert.equal(ev.at(-1).vars.boss_redhand_captain, 0); assert.equal(ev.at(-1).vars.joined, 0);
   effect(sim, 'companion', 'join'); assert.equal(withUs(sim).length, 0, 'Garrow still has the key');
-  sim.state.bosses.redhand_captain = 1;
+  sim.state.bosses.redhand_captain = 1; sim.state.party[0].level = 7;   // (he joins at half the hero's level, rounded up: world doc §5 v1.12)
   talkInHall(sim); assert.equal(ev.filter((e) => e.n === 'dialogue').at(-1).vars.boss_redhand_captain, 1);
   effect(sim, 'companion', 'join');
   const [m] = withUs(sim); assert.ok(m && sim.state.party.includes(m), 'into the party (it had room)');
-  assert.deepEqual([m.name, m.cls, m.actor, m.level], ['Brannoc', 'fighter', 'hero_brannoc', sim.state.party[0].level]);
+  assert.deepEqual([m.name, m.cls, m.actor, m.level], ['Brannoc', 'fighter', 'hero_brannoc', 4]); assert.equal(hireLevel(7), 4);
   assert.equal(ev.filter((e) => e.n === 'companionJoined').length, 1);
   assert.ok(him(sim), 'he stands there while the talk is open');
   effect(sim, 'companion', 'join'); assert.equal(withUs(sim).length, 1, 'once');

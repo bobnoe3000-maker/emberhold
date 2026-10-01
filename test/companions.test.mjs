@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createSim } from '../src/sim/core.js';
-import { statsFor, tavernRoster } from '../src/sim/party.js';
+import { statsFor, tavernRoster, hireLevel } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
 import { RANKS, RANK_IDS, PERKS, PERK_IDS, LOYALTY, rollPerks, wageOf, loyaltyOf, has, FOUND_PERKS, REVEAL_AT, SWORN_AT, SWORN_WAGE, BENCH_WAGE, ASK_COST, RETRAIN_COST } from '../src/sim/companions.js';
 import { mulberry32 } from '../src/sim/rng.js';
@@ -193,4 +193,11 @@ test('gate: a Beacon company (two auras, the best fighting perks) still falls in
     const out = execFileSync('node', ['tools/balance/roomlv.mjs', '300', '12', '9', '1,3', seed, '--perks', 'drillmaster,finisher,grave_warden,skirmisher/banner_man,steady_hands,field_medic,hardy'], { encoding: 'utf8' });
     assert.match(out, /DEFEAT/, out);
   }
+});
+
+test('a new companion comes at half the hero\'s level, rounded up (GDD §6.2 v1.11), and is priced at it', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 9, 10, 20].map(hireLevel), [1, 1, 2, 2, 3, 3, 5, 5, 10]);
+  for (const lv of [1, 3, 6, 9]) for (const m of tavernRoster(SEED, 'vale', 4, lv)) assert.equal(m.level, hireLevel(lv), `${m.id} at hero L${lv}`);
+  const sim = town(1e7, 8), m = sim.heroes.roster()[0], g = sim.state.counters.gold; run(sim, { type: 'hire', idx: 0 });
+  assert.equal(sim.state.party[1].level, 4); assert.equal(g - sim.state.counters.gold, RANKS[m.rank].fee * 4, 'the fee is at their level');
 });

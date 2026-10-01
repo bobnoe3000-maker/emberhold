@@ -113,6 +113,10 @@ const NAMES = {
 // sees one more. The order: fighter, rogue, mage, then that extra hireling, then the cleric. Each
 // has a Lantern Guild rank and perks (companions.js), drawn on their own stream. (The tavern drew a
 // trait here before the perks were real: the draw stays, so the names and levels are as they were.)
+/** A new companion's level (GDD §6.2 v1.11, world doc §4 v1.12): half the hero's, rounded up. The Guild
+ * keeps its seasoned members for companies it knows, so whoever you sign on learns the rest at your
+ * side: a change of companion costs time as well as gold. @param {number} heroLevel */
+export const hireLevel = (heroLevel) => Math.max(1, Math.ceil(heroLevel / 2));
 export function tavernRoster(seed, region, day, heroLevel, extra = 0, ask = 0) {
   const rng = mulberry32(streamSeed(seed ^ (day * 7919) ^ Math.imul(ask, 104729), 6100 + region.length * 13 + region.charCodeAt(0)));
   const classes = ['fighter', 'rogue', 'mage'];
@@ -122,7 +126,8 @@ export function tavernRoster(seed, region, day, heroLevel, extra = 0, ask = 0) {
     const name = NAMES[cls][(rng() * NAMES[cls].length) | 0]; rng();
     // (the id as it always was for a day's first roster: same draw, same sellsword; battle.js also
     // reads it for a companion's place in the formation)
-    const lv = Math.max(1, heroLevel + ((rng() * 3) | 0) - 1), id = ask ? `${region}-${day}.${ask}-${i}` : `${region}-${day}-${i}`;
+    rng();                                                  // (the old ±1 level's draw, kept: the same perks and names follow)
+    const lv = hireLevel(heroLevel), id = ask ? `${region}-${day}.${ask}-${i}` : `${region}-${day}-${i}`;
     const m = makeMember(id, name, cls, lv);
     const { rank, perks, hidden } = rollSellsword(seed, id, cls);
     Object.assign(m, { rank, perks, hidden, bond: 0, owed: 0 }); m.hp = statsFor(m).maxHp;

@@ -35,7 +35,7 @@ const SERVICES = {
   },
 };
 const ORDER = ['shop', 'smith', 'tavern', 'inn', 'temple'];
-import { CLASSES, statsFor, MAX_COMPANIONS } from '../sim/party.js';
+import { CLASSES, statsFor, MAX_COMPANIONS, hireLevel } from '../sim/party.js';
 import { BENCH_MAX, FREE_RES_LEVEL } from '../sim/heroes.js';
 import { pointsSpent } from '../sim/attributes.js';
 import { esc } from './actorart.js';
@@ -201,7 +201,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const wages = party.reduce((n, m) => n + wageOf(m, false), 0) + S.bench.reduce((n, m) => n + wageOf(m, true), 0), owed = sim.heroes.owed();
     const mine = [...party.slice(1).map((m) => [m, false]), ...S.bench.map((m) => [m, true])];
     const first = ![...party, ...S.bench].some(hired);       // nobody of the Guild's yet: say how it works, once it matters
-    sheet.innerHTML = `${head('Tavern', 'Hire companions', 'The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half.')}
+    sheet.innerHTML = `${head('Tavern', 'Hire companions', `The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half. A new hire comes at half your level (L${hireLevel(S.party[0].level)} today) and learns the rest at your side.`)}
       <div class="row go" data-terms><div><b>The Guild’s terms</b><span>${first ? 'Wages are paid every dawn, wherever you are. Read this before you sign anyone on.' : 'Ranks, wages, loyalty, Ask around and Retrain'}</span></div><div class="go-arrow">›</div></div>
       <div class="purse">You have <b>${gold()}</b> gold · wages at dawn (in ${mins} min): <b>${wages}</b> gold</div>
       ${owed ? `<div class="row go warn" data-settle><div><b>Settle wages · ${owed} gold</b><span>What the company is owed. Their perks come back when they're paid.</span></div><div class="go-arrow">›</div></div>` : ''}
