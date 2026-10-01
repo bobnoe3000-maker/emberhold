@@ -264,12 +264,19 @@ export function createRenderer(canvas, sim, input) {
   const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; const F = familyOf(w); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  // An atlas is a JSON of rects plus PNGs, and a re-bake moves the rects. A browser (or host) that
+  // cached one half and not the other slices from the wrong place: a stairwell drawn blank. So the
+  // small JSON is always revalidated, and the PNGs are asked for at a version hashed from it.
+  const atlasMeta = (url) => fetch(url, { cache: 'no-cache' }).then((r) => r.text()).then((t) => {
+    let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193);
+    return { meta: JSON.parse(t), v: (h >>> 0).toString(36) };
+  });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
   // scale: a boss stands taller than its men (nearest-neighbour, once, at load: 1.3× for the bosses)
   async function loadActorAtlas(name, scale = 1) {
-    const base = './assets/actors/' + name, meta = await (await fetch(base + '.json')).json();
-    const alb = pixels(await loadImg(base + '.alb.png')), iw = acv.width;
-    const nrm = pixels(await loadImg(base + '.nrm.png')), emi = meta.glow ? pixels(await loadImg(base + '.emi.png')) : null;
+    const base = './assets/actors/' + name, { meta, v } = await atlasMeta(base + '.json');
+    const alb = pixels(await loadImg(`${base}.alb.png?v=${v}`)), iw = acv.width;
+    const nrm = pixels(await loadImg(`${base}.nrm.png?v=${v}`)), emi = meta.glow ? pixels(await loadImg(`${base}.emi.png?v=${v}`)) : null;
     const { cw, ch, ax, ay } = meta, cells = [];
     for (let r = 0; r < meta.dirs; r++) {
       const row = [];
@@ -315,7 +322,8 @@ export function createRenderer(canvas, sim, input) {
   function loadAtlas(name) {
     if (envAtlases.has(name)) return null;
     envAtlases.set(name, null);
-    return Promise.all([fetch(`./assets/env/${name}.json`).then((r) => r.json()), ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png`))])
+    return atlasMeta(`./assets/env/${name}.json`)
+      .then(({ meta, v }) => Promise.all([meta, ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png?v=${v}`))]))
       .then(([m, a, n, k]) => {
         envAtlases.set(name, { a, n, k });
         envMeta = envMeta || { sprites: {} };

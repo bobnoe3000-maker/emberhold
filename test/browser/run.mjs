@@ -18,7 +18,7 @@
 // Local runs skip an engine that isn't installed; CI (CI=true) requires both.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
@@ -447,6 +447,20 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#journalBtn').tap(); await p.locator('#journal .tabs button', { hasText: 'Chronicle' }).tap();
     const text = await p.locator('#journal .frag').first().innerText().catch(() => ''), missing = await p.locator('#journal .frag.missing').count();
     check('chronicle: its chest gives Standing Order 14, and the Chronicle shows it (and the nine still missing), no page errors', frags.length === 1 && /Standing Order 14/.test(text) && /Third Legion/.test(text) && missing === 9 && errs.length === 0, text.split('\n')[0] + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
+// 11. Atlas versions: every atlas image is asked for at the version of its rects (renderer.js atlasMeta).
+// A re-bake moved the stairwell's rect (3494747) and a browser holding the old PNG drew it blank.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const pngs = []; p.on('request', (r) => { const m = /\/assets\/(env|actors)\/([^/.]+)\.(alb|nrm|key|emi)\.png(\?v=(\w+))?$/.exec(r.url()); if (m) pngs.push({ dir: m[1], name: m[2], v: m[5] }); });
+    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 }); await p.waitForTimeout(1500);
+    const fnv = (t) => { let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193); return (h >>> 0).toString(36); };
+    const bad = pngs.filter((q) => q.v !== fnv(readFileSync(`assets/${q.dir}/${q.name}.json`, 'utf8')));
+    check('atlases: every atlas image is fetched at its JSON\'s version', pngs.some((q) => q.name === 'env') && bad.length === 0, `${pngs.length} images` + (bad.length ? ' · stale: ' + bad.map((q) => q.name).join(', ') : ''));
     await ctx.close(); await b.close();
   }
 }
