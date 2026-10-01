@@ -11,14 +11,14 @@
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
-import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive } from '../sim/skills.js';
+import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive, skillMult, HEAL_BONUS } from '../sim/skills.js';
 import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
-import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF } from '../sim/items.js';
+import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
 import { NPCS } from '../sim/npcs.js';
 import { perkWord, rankMark, rankLine, perkLines, loyaltyWord, SW_CSS } from './sellswords.js';
-import { hired, wageOf, loyaltyOf, sworn, LOYALTY, REVEAL_AT, SWORN_AT, RETRAIN_COST } from '../sim/companions.js';
+import { hired, wageOf, loyaltyOf, sworn, LOYALTY, REVEAL_AT, SWORN_AT, RETRAIN_COST, healMod } from '../sim/companions.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
 const CSS = SW_CSS + `
@@ -131,7 +131,9 @@ const CSS = SW_CSS + `
 #gearSheet .tog.on { color: #10200c; background: #8fe07a; border-color: #8fe07a; font-weight: 700; }
 #gearSheet .arow { display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin-bottom: 7px; border: 1px solid #2c2838; border-radius: 9px; background: rgba(255,255,255,.02); min-height: 56px; }
 #gearSheet .arow .nm2 { flex: 1; min-width: 0; } #gearSheet .arow .nm2 b { font: 600 15px Georgia, serif; color: #efe4cf; }
-#gearSheet .arow .nm2 span { display: block; font-size: 10px; color: #978c80; margin-top: 3px; line-height: 1.4; }
+#gearSheet .arow .nm2 span { display: block; font-size: 11px; color: #978c80; margin-top: 3px; line-height: 1.4; }
+#gearSheet .arow .nm2 span.eff { color: #c8bca8; }
+#gearSheet .arow .nm2 span.nx { color: #8fb8e0; margin-top: 2px; }
 #gearSheet .arow .val { font-size: 18px; font-weight: 700; color: #f0c880; min-width: 26px; text-align: right; }
 #gearSheet .plus { width: 46px; height: 46px; border-radius: 10px; border: 1px solid #8fe07a; background: rgba(143,224,122,.12); color: #8fe07a; font-size: 22px; flex: none; }
 #gearSheet .plus:disabled { border-color: #2c2838; color: #3a3346; background: none; }
@@ -260,6 +262,30 @@ const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the w
 const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse' };
 const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
 
+  // What an ability does at a rank, in this member's own numbers (GDD §5.1): the multiplier battle.js
+  // casts with (skills.js skillMult: rank, Rare gear, the power stat) applied to the ability's base, and
+  // for damage the ATK it comes to, before the foe's armour. The MP is the rank's, less any gear.
+  const X = (v) => `${Math.round(v * 100) / 100}×`, pct = (v) => `${Math.round(v * 1000) / 10} %`;
+  function effectAt(m, A, rank) {
+    const s = statsFor(m), am = abilityMods(m, A.name), k = skillMult(rank, am.power, s.power || 0), dmg = (v) => `${X(v)} ATK (${Math.round(s.atk * v)})`;
+    const mp = Math.max(0, rankCost(A, rank) - am.cost);
+    // e: the whole effect; v: only what a rank changes (for the next-rank line)
+    let e, v;
+    if (A.kind === 'strike') {
+      v = dmg(A.power * k); e = v + (m.cls === 'mage' ? ' at range' : '');
+      if (A.splash) { e += ` to the target, ${dmg(A.splash * k)} to those beside it`; v += `, ${dmg(A.splash * k)} beside`; }
+      if (A.crit) e += `, +${A.crit} % crit chance`;
+      if (A.poison) { e += `, then poison: ${dmg(A.poison * k)} a second for ${A.pdur} s`; v += `, poison ${dmg(A.poison * k)} a second`; }
+    } else if (A.kind === 'guard') { v = A.taunt ? `+${pct(A.def * k)} DEF` : `+${Math.round(A.dodge * k * 10) / 10} % DODGE`; e = `${v} for ${A.dur} s; ${A.taunt ? 'foes turn on you' : 'foes lose you'}`; }
+    else if (A.kind === 'heal') { const h = A.heal * k * healMod(m, S.party); v = `heal ${pct(h)} of max HP (${Math.round(s.maxHp * h)} HP)`; e = v; }
+    else if (A.kind === 'mend') { v = `heal ${pct(A.heal * k * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, S.party))} of their max HP`; e = `the most hurt ally: ${v}`; }
+    else if (A.kind === 'ward') { v = `shield ${pct(A.ward * k)} of their max HP`; e = `the most hurt ally: ${v}`; }
+    else if (A.kind === 'nova') { v = dmg(A.power * k); e = `${v} to every ${A.undead ? 'Ashbound' : 'foe'} within ${A.radius} tiles${A.undead ? ' (not the living)' : ''}${A.slow ? `; slows them for ${A.slow} s` : ''}`; }
+    else if (A.kind === 'bless') { v = `+${pct(A.buff * k)} ATK and DEF`; e = `the whole party: ${v} for ${A.dur} s`; }
+    else { e = A.text; v = ''; }
+    return { mp, e, v };
+  }
+
   // ── the Skills tab: ranks, auto-cast, priority, the passive, the stance (GDD §5.1) ──
   function skillsView(m) {
     const c = CLASSES[m.cls], n = pendingSkillPoints(m), order = priorityOf(m), P = PASSIVES[m.cls], st = stanceOf(m);
@@ -267,13 +293,15 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       const r = rankOf(m, A.id), open = unlocked(m, A, S.trials), on = autocastOn(m, A.id);
       const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
       return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
-          <span>${open ? `${rankCost(A, r)} MP · ${A.text}${r > 1 ? ` · +${(r - 1) * 10}% power` : ''}` : m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s trial` : ''}` : `the ${c.label.toLowerCase()}'s trial teaches it: ask ${TRIAL_GIVER[m.cls]} in Thornwick`}</span></div>
+          ${(() => { const now = effectAt(m, A, r), nx = open && r < MAX_RANK ? effectAt(m, A, r + 1) : null;
+            const lock = open ? '' : `<span>${m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s trial` : ''}` : `the ${c.label.toLowerCase()}'s trial teaches it: ask ${TRIAL_GIVER[m.cls]} in Thornwick`}</span>`;
+            return `${lock}<span class="eff">Rank ${r}: ${now.mp} MP · ${now.e}</span>${nx ? `<span class="nx">Rank ${r + 1} → ${nx.mp !== now.mp ? `${nx.mp} MP · ` : ''}${nx.v}</span>` : open ? '<span class="nx">Top rank</span>' : ''}`; })()}</div>
         <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
           <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>
         <div class="sbtns"><button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;
     }).join('');
     return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
-      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use On: the hero casts it in combat by themselves; Off: never.</div>
+      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use On: the hero casts it in combat by themselves; Off: never. Each rank adds 10 % to an ability's strength; damage is shown before the foe's armour.</div>
       ${rows}
       <div class="arow${hasPassive(m) ? '' : ' locked'}"><div class="nm2"><b>${P.name}</b> <span class="pips">passive</span><span>${hasPassive(m) ? P.text : `level ${P.lv}: ${P.text}`}</span></div></div>
       <div class="bagh" style="margin-top:14px">Stance</div>

@@ -32,7 +32,7 @@ import { statsFor, gainXp } from './party.js';
 import { abilityMods, shotOf } from './items.js';
 import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
 import { DAY_S } from './heroes.js';
-import { priorityOf, unlocked, autocastOn, rankOf, rankPower, rankCost, stanceOf, hasPassive } from './skills.js';
+import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, hasPassive, HEAL_BONUS } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
@@ -58,7 +58,7 @@ export const fightOf = (m) => { const F = CLASS_FIGHT[m.cls], k = m.cls === 'rog
 // class bonuses fought out here (GDD §5; the fighter's shield DEF is in party.js):
 // the rogue's crits from behind hit BACKSTAB_CRIT harder; the mage's spells deal CLUSTER_ATK
 // more to a foe with two or more others within CLUSTER_R; the cleric's heals are HEAL_BONUS stronger
-const BACKSTAB_CRIT = 1.25, CLUSTER_ATK = 1.2, CLUSTER_R = 2, HEAL_BONUS = 1.2;
+const BACKSTAB_CRIT = 1.25, CLUSTER_ATK = 1.2, CLUSTER_R = 2;
 /** is the attacker in the target's rear half? (a foe faces whoever it's fighting) */
 export const behind = (att, tgt) => ((tgt.fx || 0) * (att.x - tgt.x) + (tgt.fy || 0) * (att.y - tgt.y)) < 0;
 /** does the target stand in a cluster: two or more other live foes within CLUSTER_R? */
@@ -384,7 +384,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // an ability's cast: its rank, the Rare gear on the caster and Focus set cost and strength
   function cast(m, A) {
     const r = rankOf(m, A.id), am = abilityMods(m, A.name);
-    return { A, cost: Math.max(0, rankCost(A, r) - am.cost), mult: rankPower(r) * (1 + am.power) * (1 + (statsFor(m).power || 0)) };
+    return { A, cost: Math.max(0, rankCost(A, r) - am.cost), mult: skillMult(r, am.power, statsFor(m).power || 0) };
   }
   // MP a member holds back for its guards, heals, wards and novas (only if it has any):
   // Aggressive nothing; Balanced strikes freely until someone is badly hurt, then keeps enough

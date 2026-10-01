@@ -78,6 +78,12 @@ export const skillPointsSpent = (m) => skillsOf(m.cls).reduce((a, s) => a + rank
 export const pendingSkillPoints = (m) => Math.max(0, skillPointsEarned(m) - skillPointsSpent(m));
 /** power multiplier at a rank @param {number} rank */
 export const rankPower = (rank) => 1 + 0.1 * (rank - 1);
+/** an ability's strength at a rank: the rank's power × the Rare gear's power mod for it × the member's
+ * `power` stat. battle.js casts with it and the Skills tab shows it, so the two can't disagree.
+ * @param {number} rank @param {number} [gearPower] @param {number} [statPower] */
+export const skillMult = (rank, gearPower = 0, statPower = 0) => rankPower(rank) * (1 + gearPower) * (1 + statPower);
+/** the cleric's heals are this much stronger */
+export const HEAL_BONUS = 1.2;
 /** MP cost at a rank @param {{mp:number}} s @param {number} rank */
 export const rankCost = (s, rank) => s.mp - (rank >= 3 ? 1 : 0) - (rank >= 5 ? 1 : 0);
 /** @param {any} m */

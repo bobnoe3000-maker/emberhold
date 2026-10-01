@@ -400,6 +400,13 @@ Both slot in with the same stat block and ability format. No system changes are 
   - the passive comes at level 20.
 - **Skill points:** 1 at every even level. Ranks 1–5; each rank adds +10 % power, and ranks
   3 and 5 also cost 1 MP less.
+  - **Power** multiplies the number that matters: damage for a strike or nova, the bonus for a
+    guard or Bless, the amount for a heal or ward. Durations stay the same.
+  - **The Skills tab says it in numbers** (`src/ui/sheet.js`, with `skillMult` in
+    `src/sim/skills.js`, the same multiplier battle.js casts with, Rare gear and the power stat
+    included). It shows the member's own effect at their rank, e.g. *Rank 2: 12 MP · 1.98× ATK (56)
+    at range*, with the ATK it comes to before the foe's armour. Under it, what the next rank
+    changes: *Rank 3 → 11 MP · 2.16× ATK (61)*.
 - **Auto-cast:** each ability has an auto-cast toggle and a priority order, set in the
   **Skills** tab of the character window.
 - **Stance** per member (§3.4) is set in the same tab:
