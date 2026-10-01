@@ -31,7 +31,11 @@ export function createHud(sim) {
   const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
   sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
-  sim.bus.on('looted', ({ kind }) => show(kind === 'chest' ? 'chest opened' : 'a blessing'));
+  sim.bus.on('looted', ({ kind }) => { if (kind !== 'chest') show('a blessing'); });
+  // a chest says what it held, every time, and says so when that was no gear (GDD §8, 2026-10-01); the
+  // item's own card (sheet.js) follows a find
+  const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
+  sim.bus.on('chestOpened', (c) => show(c.item ? `Chest · ${c.gold} gold · and ${c.item.name} (${RW[c.item.r] || c.item.r})!` : `Chest · ${c.gold} gold · no gear this time`, c.item ? 3200 : 2600));
   sim.bus.on('levelChanged', ({ depth: d, theme, up }) => { setDepth(d); if (sim.world.kind === 'dungeon') show((up ? 'climbed · depth ' + (d + 1) + ' · ' : 'descended · ') + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)

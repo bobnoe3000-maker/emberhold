@@ -72,8 +72,10 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   card(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
   go(sim, 'dungeon', 'wickham_keep', 0); assert.ok(fightIn(sim, () => st(sim, 'brannoc_old_debts') === QS.READY, firstRoom, 900), 'three sergeants');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
+  // (chests are rarer since 2026-10-01, about one a floor: the mill's second chest is a second visit, and a visit
+  // starts from town, its chests full again)
   for (let v = 0; v < 6 && st(sim, 'brannoc_paymasters_box') !== QS.READY; v++) {
-    go(sim, 'dungeon', 'tithe_mill', 0);
+    sim.restore({ ...snap(sim), scene: 'dungeon', site: 'tithe_mill', depth: 0, floors: [], mods: [], hp: [] });   // a fresh visit, as travel() makes one
     for (const [k, kind] of [...sim.world.props]) if (kind === 'chest' && st(sim, 'brannoc_paymasters_box') !== QS.READY) openAt(sim, k);
   }
   assert.equal(st(sim, 'brannoc_paymasters_box'), QS.READY, 'two chests in the mill');

@@ -113,18 +113,36 @@ export function voxPortal() {
 }
 // Loot chest: an oak box under a barrel lid, two iron bands, and a glowing lock on the long side
 // that faces the camera (+y). Sized to read at a glance beside a hero: the old 7×5×5 bone box sat
-// at ankle height and passed for a rock.
-export function voxChest() {
-  const SX = 13, SY = 9, SZ = 10, vox = new Uint8Array(SX * SY * SZ), BODY = 6, cy = (SY - 1) / 2;
+// at ankle height and passed for a rock; at 13×9×10 it still read as small furniture, so it's drawn
+// at CHEST_K× (2026-10-01: a find should look like one). Once opened it stays where it was, lid thrown
+// back, hollow and dark (voxChestOpen): you can see a room's chest has been had.
+const CHEST_K = 2;
+function chestVox(open) {
+  const SX = 13, SY = 9, SZ = open ? 14 : 10, vox = new Uint8Array(SX * SY * SZ), BODY = 6, cy = (SY - 1) / 2;
   for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
-    const lid = z >= BODY, off = Math.abs(y - cy);
-    if (lid && off > (SZ - 1 - z) * 1.6 + 1.2) continue;              // the barrel lid's curve
-    const band = x === 2 || x === SX - 3 || z === BODY - 1 || (!lid && z === 0);   // iron straps, lid rim, foot
-    const lock = y === SY - 1 && x >= 5 && x <= 7 && z >= BODY - 3 && z <= BODY - 1;   // the hasp, across the rim
-    vox[(z * SY + y) * SX + x] = lock ? 2 : band ? 3 : 1;
+    let m = 0;
+    if (!open) {
+      const lid = z >= BODY, off = Math.abs(y - cy);
+      if (lid && off > (SZ - 1 - z) * 1.6 + 1.2) continue;              // the barrel lid's curve
+      const band = x === 2 || x === SX - 3 || z === BODY - 1 || (!lid && z === 0);   // iron straps, lid rim, foot
+      const lock = y === SY - 1 && x >= 5 && x <= 7 && z >= BODY - 3 && z <= BODY - 1;   // the hasp, across the rim
+      m = lock ? 2 : band ? 3 : 1;
+    } else if (z < BODY) {                                              // the box: walls and a floor, nothing in it
+      const wall = x === 0 || x === SX - 1 || y === 0 || y === SY - 1 || z === 0;
+      if (!wall) continue;
+      m = x === 2 || x === SX - 3 || z === BODY - 1 || z === 0 ? 3 : 1;
+    } else if (y <= 1 && z < BODY + 8) {                                // the lid, thrown back against the far side
+      m = x === 2 || x === SX - 3 || z === BODY + 7 ? 3 : 1;
+    }
+    if (m) vox[(z * SY + y) * SX + x] = m;
   }
-  return bakeVox(vox, SX, SY, SZ, ELIT.wood, 3, ELIT.stone);
+  // up to CHEST_K×: each voxel a K×K×K block, the same chest twice the size
+  const K = CHEST_K, X = SX * K, Y = SY * K, Z = SZ * K, big = new Uint8Array(X * Y * Z);
+  for (let z = 0; z < Z; z++) for (let y = 0; y < Y; y++) for (let x = 0; x < X; x++) big[(z * Y + y) * X + x] = vox[(((z / K) | 0) * SY + ((y / K) | 0)) * SX + ((x / K) | 0)];
+  return bakeVox(big, X, Y, Z, ELIT.wood, 3, ELIT.stone);
 }
+export const voxChest = () => chestVox(false);
+export const voxChestOpen = () => chestVox(true);
 // Shrine: a pedestal under a floating orb.
 export function voxShrine() {
   const S = 9, H = 16, vox = new Uint8Array(S * S * H), c = S / 2;
@@ -230,6 +248,7 @@ export function buildProps(seed) {
     totem: [voxEyeTotem(mulberry32((seed * 7 + 3) >>> 0))],
     stairs: [voxPortal()],
     chest: [voxChest()],
+    chestOpen: [voxChestOpen()],
     shrine: [voxShrine()],
     brazier: [voxBrazier()],
     pillar: [0, 1].map((v) => voxPillar(mulberry32((seed * 17 + v * 53 + 5) >>> 0))),

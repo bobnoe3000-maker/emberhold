@@ -716,7 +716,7 @@ export function createRenderer(canvas, sim, input) {
       drawTileG(bx, by, tx, ty);
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
-      const pk = propAt(world, tx, ty);
+      const pk = propAt(world, tx, ty) || (world.props && world.props.get(tx + ',' + ty) === 'chest' ? 'chestOpen' : null);   // (an opened chest stays, lid back)
       if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
@@ -1086,6 +1086,8 @@ export function createRenderer(canvas, sim, input) {
     floats.push({ x, y, text, color, size, rise, t0, jx: ((busy % 3) - 1) * 11 + (busy ? 0 : 0), jy: Math.floor(busy / 3) * 9 + (busy % 2) * 4 });
     if (floats.length > 40) floats.shift();
   };
+  // a chest's gold rises off it, gilt; gear follows as its own beam and card (sheet.js)
+  sim.bus.on('chestOpened', (c) => addFloat(c.x, c.y, '+' + c.gold + ' gold', '#ffd070', 11, 32));
   sim.bus.on('combat', (c) => {
     if (c.t === 'hit') {                                                          // sparks fly off the struck, away from the striker
       const st = styleOfSrc(c.src, c.party), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);

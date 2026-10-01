@@ -27,6 +27,7 @@ const K = (x, y) => x + ',' + y;
 
 // site (sites.js): which dungeon this is — its look, its rooms, its levels and whether a floor
 // goes on down. The Old Barrows' look is still picked from the seed.
+export const CHEST_KEEP = 0.35;
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site);   // (its furniture below: `human`, `themes`)
   const th = theme || S.theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
@@ -123,6 +124,15 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
     if (prng() < 0.30) { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
   }
+  // Chests are a find, not furniture (2026-10-01, GDD §8): the dressing above drew one in 55 % of rooms,
+  // about three a floor. Each is kept at CHEST_KEEP, on its own stream, so every other piece of a floor's
+  // dressing stands where it always did. Never none: a floor keeps one at least (the Tithe Mill is a
+  // single floor, the same every visit, and Brannoc's paymaster hid his coin in its chests): about one
+  // a floor, now and then two or three.
+  const keep = mulberry32(streamSeed(seed, 323)), chests = [...world.props].filter(([, kind]) => kind === 'chest').map(([k]) => k);
+  const kept = chests.filter(() => keep() < CHEST_KEEP);
+  if (!kept.length && chests.length) kept.push(chests[Math.floor(keep() * chests.length)]);
+  for (const k of chests) if (!kept.includes(k)) world.props.delete(k);
   // Every floor's way back up, one floor at a time: a stone stair built against the entrance
   // room's back wall (north or west, the walls you see), climbing into it. Walk up its bottom
   // steps: on the first floor it leads out to the surface, deeper to the floor above (core.js).

@@ -35,7 +35,7 @@ export function bagStacks(bag) {
 // about 3 Common, 1 Fine and a Rare every 5 h. v1's generous odds found ~23 / 7 / 0.8 an hour; these
 // find 3.4 / 0.92 / 0.17 (a Rare every 6 h) over 27 h of farm (9 runs of 3 h), within the plan's ±25 %.
 export const DROP = {
-  chest: { chance: 0.085, fine: 0.2, rare: 0.07 },
+  chest: { chance: 0.15, fine: 0.2, rare: 0.07 },                  // (2026-10-01: chests are rarer, 3.8 opened an hour on the farm, not 6.6; each holds gear more often, so the gear an hour holds)
   boss: { chance: 1, fine: 0.7, rare: 0.3, min: 'fine' },             // a boss's first fall always leaves something, never less than Fine
   bossAgain: { chance: 0.15, fine: 0.9, rare: 0.1, min: 'fine' },     // later falls roll for it (the Standard can be farmed: Rares stay rare)
   chapter: { chance: 1, fine: 0.9, rare: 0.1, min: 'fine' },          // a chapter quest's hand-in: a guaranteed Fine (GDD §8), in the bag

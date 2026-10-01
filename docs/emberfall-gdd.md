@@ -637,10 +637,30 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 | Rarity | Source | What it is |
 |---|---|---|
 | **Common** | shops only | Base stats. |
-| **Fine** | 1 % per wave · 10 % per chest | Base + 1 random stat affix (from the eight stats). |
-| **Rare** | 0.2 % per wave · 2 % per chest · 15 % per boss | Base + 2 affixes + one ability modifier (e.g. *Firebolt pierces*). |
+| **Fine** | 1 % per wave · 3 % per chest (chests are rarer: about one a floor) | Base + 1 random stat affix (from the eight stats). |
+| **Rare** | 0.2 % per wave · 1 % per chest · 15 % per boss | Base + 2 affixes + one ability modifier (e.g. *Firebolt pierces*). |
 | **Heirloom** | 1 % per boss · guaranteed from hidden sites | Named, fixed stats and a unique effect, plus a line of history (world doc §9). |
 
+- **Chests are a find** (2026-10-01).
+  - **How common:** about one a floor, and never none on a floor that drew any. Each chest the
+    rooms' dressing places is kept at 35 %, on its own stream (`world.js` CHEST_KEEP), so the
+    rest of a floor stands as it was. Measured over game floors, per floor:
+    - the Old Barrows 1.2, the Tithe Mill 1.4 (at least 1), Wickham Keep 1.2;
+    - the Sunken Chapel 0.6, where pools crowd some out;
+    - it had been about 3.
+  - **What's in one:** every chest gives (10 + 5 × room level) × 0.8–1.2 gold, plus wood and
+    stone. Its gear chance is 15 % (+5 % a room level; 20 % of that Fine, 7 % Rare); it was
+    8.5 %.
+  - **Gear an hour holds:** the farm (`loot.mjs`, levels 3 / 6 / 9 × 3 seeds × 3 h) opens 3.8
+    chests an hour, not 6.6, and finds 3.72 / 0.97 / 0.13 Common / Fine / Rare an hour, against
+    3.40 / 0.92 / 0.17 before.
+  - **What it says:** opening one always says what it held. A toast reads *Chest · 32 gold · and
+    the Tempered Sword (Fine)!* or *Chest · 32 gold · no gear this time*, and "+32 gold" rises
+    off it.
+  - **How it looks:** a chest is drawn twice its old size, and an opened one stays where it
+    was, lid thrown back, hollow and dark. You can see a room's chest has been had.
+  - **Board jobs:** a Retrieve job (open N chests) for 2–3 now takes more than one floor or
+    visit.
 - **Class-based.** Every item except trinkets has a class. Drops roll 80 % towards classes in
   the active party.
 - **Bad-luck protection.** Each boss kill without a Rare adds +3 % to the next roll.
