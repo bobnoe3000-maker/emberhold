@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tavern Hire Tabs</title>
+<!-- Mockup (proposal, 2026-10-01): the tavern's Hire companions view split into two sub-tabs under the
+     Guild's terms and the purse line. Left: "Your company" (party + bench). Right: "Hire" (today's
+     sellswords), with the party full, so a hire reads "Add to roster". Styles copy src/ui/townmenu.js. -->
+<style>
+  :root { --gold: #d8a040; --ink: #efe4cf; --dim: #978c80; --line: rgba(214,170,98,0.18); }
+  body { margin: 0; background: #0b0910; font-family: Georgia, 'Times New Roman', serif; color: var(--ink); display: flex; gap: 28px; padding: 24px; justify-content: center; flex-wrap: wrap; }
+  .phone { width: 390px; background: linear-gradient(#17121e, #120e18); border: 1px solid rgba(214,170,98,.45); border-radius: 18px 18px 0 0; padding: 14px 16px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .cap { width: 390px; text-align: center; font: 12px ui-monospace, Menlo, monospace; color: #c8a870; letter-spacing: 1px; margin-bottom: 8px; }
+  .col { display: flex; flex-direction: column; }
+  .back { font: 12px Georgia, serif; color: var(--gold); }
+  .kind { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin-top: 6px; }
+  h2 { font-size: 21px; color: #f0c880; margin: 2px 0 6px; font-weight: 600; }
+  p.blurb { font-size: 13px; color: #b8aca0; line-height: 1.35; margin: 0 0 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px; margin-bottom: 7px; border: 1px solid rgba(214,170,98,0.45); border-radius: 9px; background: rgba(255,255,255,.03); }
+  .row b { font-size: 15px; color: var(--ink); font-weight: 600; display: block; } .row span { font-size: 11.5px; color: var(--dim); }
+  .arrow { color: #e0a85a; font-size: 18px; margin-left: 10px; }
+  .purse { font: 11.5px ui-monospace, Menlo, monospace; color: #b8aca0; margin: 2px 0 12px; } .purse b { color: #f0c880; }
+  /* the new part: sub-tabs */
+  .tabs { display: flex; gap: 6px; margin: 4px 0 12px; position: sticky; top: 0; }
+  .tabs button { flex: 1; min-height: 44px; border-radius: 10px; border: 1px solid rgba(214,170,98,.4); background: rgba(255,255,255,.03); color: #c8b896; font: 600 13px Georgia, serif; }
+  .tabs button.on { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; border-color: #f0c880; }
+  .tabs small { display: block; font: 10.5px ui-monospace, Menlo, monospace; font-weight: 400; opacity: .85; margin-top: 1px; }
+  h3 { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 14px 0 7px; }
+  .merc { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 7px; background: rgba(255,255,255,0.035); border: 1px solid var(--line); border-radius: 9px; }
+  .merc.bench { border-style: dashed; }
+  .who { flex: 1; min-width: 0; } .who b { font-size: 15px; color: var(--ink); font-weight: 600; }
+  .who em { font: normal 10.5px ui-monospace, Menlo, monospace; color: #c09a50; margin-left: 6px; }
+  .who .sub { display: block; font: 11px ui-monospace, Menlo, monospace; color: var(--dim); margin-top: 3px; }
+  .rk { display: inline-block; font: 700 10.5px ui-monospace, Menlo, monospace; border: 1px solid; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+  .pk { font: 12px/1.35 Georgia, serif; color: #d8ccb8; margin-top: 5px; padding-left: 9px; border-left: 2px solid rgba(214,170,98,.35); }
+  .pk b { color: #f0dcb0; font-weight: 600; } .pk small { font: 10px ui-monospace, Menlo, monospace; color: #a8987e; text-transform: uppercase; }
+  .btns { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+  .btn { min-height: 40px; font: 600 12px Georgia, serif; color: #1a1208; background: var(--gold); border: 0; border-radius: 7px; padding: 8px 12px; white-space: nowrap; }
+  .btn.ghost { background: transparent; color: var(--gold); border: 1px solid rgba(214,170,98,0.5); }
+  .btn small { display: block; font: 10px ui-monospace, Menlo, monospace; font-weight: 400; }
+  .full { font: 11px ui-monospace, Menlo, monospace; color: #e0c080; background: rgba(216,160,64,.1); border: 1px solid rgba(216,160,64,.35); border-radius: 8px; padding: 7px 10px; margin: 0 0 9px; }
+  .new { outline: 2px dashed #8fe07a; outline-offset: 3px; border-radius: 10px; }
+  .callout { font: 11px ui-monospace, Menlo, monospace; color: #8fe07a; margin: 4px 0 0; }
+</style></head><body>
+
+<div class="col"><div class="cap">TAB 1 · YOUR COMPANY</div><div class="phone">
+  <div class="back">‹ back</div>
+  <div class="kind">Tavern · Thornwick</div><h2>Hire companions</h2>
+  <p class="blurb">The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half. A new hire comes at half your level (L4 today) and learns the rest at your side.</p>
+  <div class="row"><div><b>The Guild’s terms</b><span>Ranks, wages, loyalty, Ask around and Retrain</span></div><div class="arrow">›</div></div>
+  <div class="purse">You have <b>412</b> gold · wages at dawn (in 23 min): <b>90</b> gold</div>
+  <div class="tabs new"><button class="on">Your company<small>party 3/3 · bench 1/6</small></button><button>Hire<small>4 today</small></button></div>
+  <div class="callout">↑ new: the two sub-tabs, under the terms and the purse</div>
+  <h3>In the party · with you</h3>
+  <div class="merc"><div class="who"><b>Tam</b><em>L5 Rogue</em><i class="rk" style="color:#9ad87e;border-color:#9ad87e">◆ Lamp</i>
+    <span class="sub">Loyalty 2/5 · 60 gold a dawn</span>
+    <div class="pk"><b>Skirmisher</b> <small>Fighting</small><br>+20 % damage to a foe that's fighting someone else.</div>
+    <div class="pk"><b>Light-footed</b> <small>Self</small><br>+3 % DODGE.</div></div>
+    <div class="btns"><button class="btn ghost">To bench</button><button class="btn ghost">Retrain</button></div></div>
+  <div class="merc"><div class="who"><b>Brin</b><em>L4 Cleric</em><i class="rk" style="color:#c8bcae;border-color:#c8bcae">◆ Wick</i>
+    <span class="sub">Loyalty 1/5 · 20 gold a dawn</span>
+    <div class="pk"><b>Devout</b> <small>Self</small><br>Their heals are 10 % stronger.</div></div>
+    <div class="btns"><button class="btn ghost">To bench</button></div></div>
+  <h3>On the bench · at the Crossed Keys</h3>
+  <div class="merc bench"><div class="who"><b>Osk</b><em>L4 Fighter</em><i class="rk" style="color:#c8bcae;border-color:#c8bcae">◆ Wick</i>
+    <span class="sub">On the bench · 10 gold a dawn (half)</span>
+    <div class="pk"><b>Hardy</b> <small>Self</small><br>+10 % max HP.</div></div>
+    <div class="btns"><button class="btn new">Into the party<small>swaps with…</small></button></div></div>
+  <div class="callout">↑ new: swap a bench member in from here (today: the Party screen only)</div>
+</div></div>
+
+<div class="col"><div class="cap">TAB 2 · HIRE (PARTY FULL)</div><div class="phone">
+  <div class="back">‹ back</div>
+  <div class="kind">Tavern · Thornwick</div><h2>Hire companions</h2>
+  <p class="blurb">The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half. A new hire comes at half your level (L4 today) and learns the rest at your side.</p>
+  <div class="row"><div><b>The Guild’s terms</b><span>Ranks, wages, loyalty, Ask around and Retrain</span></div><div class="arrow">›</div></div>
+  <div class="purse">You have <b>412</b> gold · wages at dawn (in 23 min): <b>90</b> gold</div>
+  <div class="tabs"><button>Your company<small>party 3/3 · bench 1/6</small></button><button class="on">Hire<small>4 today</small></button></div>
+  <div class="row"><div><b>Ask around · 80 gold</b><span>New faces at the tavern today. Dearer each time you ask the same day.</span></div><div class="arrow">›</div></div>
+  <div class="full new">Your party is full. A new hire joins your roster on the bench at the inn; swap them in from Your company.</div>
+  <h3>Today’s sellswords · new faces at dawn</h3>
+  <div class="merc"><div class="who"><b>Hal</b><em>L4 Fighter</em><i class="rk" style="color:#86c0ff;border-color:#86c0ff">◆ Lantern</i>
+    <span class="sub">Fee 1000 gold · then 100 gold a dawn</span>
+    <div class="pk"><b>Bodyguard</b> <small>Fighting</small><br>Within 3 tiles of you, takes a fifth of every blow aimed at you.</div>
+    <div class="pk"><b>Long Watch</b> <small>Ability</small><br>Shield Wall lasts 2 s longer.</div>
+    <div class="pk" style="border-left-style:dashed;color:#a8a0b8"><b>One more, kept back</b><br>Shows at loyalty 3</div></div>
+    <div class="btns"><button class="btn" disabled style="background:#3a3444;color:#7a7088">Add to roster · 1000<small>not enough gold</small></button></div></div>
+  <div class="merc"><div class="who"><b>Wynne</b><em>L4 Mage</em><i class="rk" style="color:#c8bcae;border-color:#c8bcae">◆ Wick</i>
+    <span class="sub">Fee 120 gold · then 20 gold a dawn</span>
+    <div class="pk"><b>Keen-eyed</b> <small>Self</small><br>+3 % CRIT.</div></div>
+    <div class="btns"><button class="btn new">Add to roster · 120</button></div></div>
+  <div class="merc"><div class="who"><b>Ede</b><em>L4 Cleric</em><i class="rk" style="color:#9ad87e;border-color:#9ad87e">◆ Lamp</i>
+    <span class="sub">Fee 360 gold · then 48 gold a dawn</span>
+    <div class="pk"><b>Field Medic</b> <small>Fighting</small><br>Every 12 s in a fight, patches up the most hurt of you for 5 % of their max HP.</div>
+    <div class="pk"><b>Steady Hands</b> <small>Ability</small><br>Mend heals 15 % more.</div></div>
+    <div class="btns"><button class="btn">Add to roster · 360</button></div></div>
+  <div class="callout">↑ "Add to roster · fee" when the party is full; "Hire · fee" when there's room</div>
+</div></div>
+
+</body></html>
