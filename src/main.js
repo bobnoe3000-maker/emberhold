@@ -19,6 +19,7 @@ import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
 import { createJournal } from './ui/journal.js';
 import { createStepOut } from './ui/stepout.js';
+import { createDefeat } from './ui/defeat.js';
 import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 
@@ -59,6 +60,7 @@ const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i)
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open() });   // subscribe before restore, so a loaded counters event repaints
 const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms), partyPanel });   // quests (M4): the Journal, tracker and toasts
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
+createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 if (DEV) globalThis.__gear = gearSheet;

@@ -157,6 +157,12 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForFunction(() => globalThis.__sim.state.scene === 'town', null, { timeout: 60000 });
     const w = await S(() => { const s = globalThis.__sim, a = s.world.arrivals.temple, p = s.state.player; return { near: Math.hypot(p.x - a.x, p.y - a.y) < 1.5, weak: s.state.party.every((m) => m.weakUntil > 0), fallen: s.state.party.some((m) => m.fallen), gold: s.state.counters.gold, lost: window.__lost }; });
     check('m3: a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
+    // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
+    await p.waitForSelector('#defeat.on', { timeout: 5000 }).catch(() => null);
+    const recap = await p.locator('#defeat').innerText().catch(() => '');
+    check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party has fallen/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
+    await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
+    check('m3: "Wake at the Shrine" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
     // the inn lifts Weakened
     await p.waitForTimeout(600);
     await p.locator('#hubBar button[data-k=inn]').tap(); await p.waitForTimeout(400);

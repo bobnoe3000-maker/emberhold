@@ -1,0 +1,31 @@
+{
+  "$comment": "What the defeat screen calls each foe (world doc §8 bestiary). The kinds are the sim's (src/sim/battle.js ENEMY_KINDS); a test keeps the two in step. Bosses use their own names (battle.js BOSSES).",
+  "foes": {
+    "minion": {
+      "a": "an Ashbound minion"
+    },
+    "warrior": {
+      "a": "an Ashbound warrior",
+      "elite": "one of the bright-eyed Ashbound"
+    },
+    "rogue": {
+      "a": "an Ashbound rogue"
+    },
+    "mage": {
+      "a": "an Ashbound mage"
+    },
+    "cutthroat": {
+      "a": "a Redhand cutthroat"
+    },
+    "brute": {
+      "a": "a Redhand brute",
+      "elite": "a Redhand sergeant"
+    },
+    "crossbow": {
+      "a": "a Redhand crossbowman"
+    },
+    "acolyte": {
+      "a": "a Cinder Cult acolyte"
+    }
+  }
+}

@@ -238,7 +238,10 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
   - everyone is restored to 30 % HP and Fallen status is cleared;
   - you lose **25 % of carried gold** (gold banks when you visit a town);
   - everyone is **Weakened** (−10 % stats) until they rest at the inn or 10 minutes pass;
-  - you keep your XP and gear.
+  - you keep your XP and gear;
+  - (v1.7) before the town, a **defeat screen** says where the party fell (site, floor, room level,
+    wave), who struck the last blow, how long it held and what was left standing, and what the wipe
+    costs. *Wake at the Shrine* goes on to the Temple (`src/ui/defeat.js`).
 - There is no permadeath; *Hardcore* is an opt-in at creation (later).
 
 Details are in [development-plan.md §2.10](./development-plan.md).

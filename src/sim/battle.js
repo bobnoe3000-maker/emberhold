@@ -260,7 +260,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     pending = [];
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
-    battle = { room, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
+    battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
       tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null };
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
@@ -313,6 +313,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     if (tgt.hp > 0) return;
     if (isParty) {
+      if (battle) battle.lastBlow = { kind: by.kind || '', elite: !!by.elite, boss: by.boss || '', on: tgt.name || '' };   // (the defeat recap: who brought them down)
       tgt.down = true; tgt.downs = (tgt.downs || 0) + 1; tgt.stood = 0; tgt.buff = null; tgt.ward = 0;
       bus.emit('combat', { t: 'down', x: tgt.x, y: tgt.y, name: tgt.name });
       if (tgt.downs >= 2 && !tgt.main) fall(tgt);               // twice in one room visit (the main character stays Downed)
@@ -336,8 +337,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
   }
-  // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone
+  // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone. The
+  // 'defeat' event carries a recap for the defeat screen (ui/defeat.js): where, how far in, who struck
+  // the last blow, what's left standing. Presentation reads it; nothing in it feeds back into the sim.
   function defeat(w) {
+    const b = battle, recap = b ? { site: w.site || 'barrows', siteName: siteOf(w.site).name, floor: (w.depth || 0) + 1, level: b.level, wave: b.wave,
+      secs: Math.round(state.t - (b.t0 ?? state.t)), foesLeft: w.enemies.filter((e) => !e.dead && e.hp > 0).length,
+      killer: b.lastBlow ? { ...b.lastBlow, bossName: b.lastBlow.boss && BOSSES[b.lastBlow.boss] ? BOSSES[b.lastBlow.boss].name : '' } : null,
+      party: state.party.map((m) => m.name) } : null;
     const lost = Math.floor((state.counters.gold || 0) * 0.25);
     state.counters.gold = (state.counters.gold || 0) - lost;
     endBattle(w, 'defeat');
@@ -345,7 +352,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       m.down = false; m.fallen = false; m.weakUntil = state.t + WEAK_S;
       const s = statsFor(m); m.hp = Math.max(1, Math.round(s.maxHp * WIPE_HP)); m.mp = Math.min(m.mp ?? s.maxMp, s.maxMp);
     }
-    bus.emit('defeat', { lost });
+    bus.emit('defeat', { lost, weakS: WEAK_S, recap });
     bus.emit('weakened', { on: true, until: state.t + WEAK_S });
     onDefeat();
   }

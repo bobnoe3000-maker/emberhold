@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Foe names for the player's eyes (the defeat recap): each enemy kind's name with its article, and its elite's if it has one.",
+  "type": "object",
+  "required": [
+    "foes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "foes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "a"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "elite": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        }
+      }
+    }
+  }
+}
