@@ -66,6 +66,13 @@ export function generateLevel(seed, theme, opts = {}) {
     rooms.push({ id: rooms.length, cx, cy, rw, rh, shape });
   }
 
+  // the entrance is the room nearest the top-left (below), not the first one placed, so the 'rect' above
+  // doesn't always land on it. A diamond has no straight north or west wall for the stair up
+  // (world.js placeStairsUp), and the floor had no way out: built as a rectangle instead. It holds the
+  // diamond, so only floor is added; the draws are the same, and every other room as it was.
+  const order = [...rooms].sort((p, q) => (p.cx + p.cy) - (q.cx + q.cy));
+  if (order[0] && order[0].shape === 'diamond') order[0].shape = 'rect';
+
   const cells = new Map();
   const setFloor = (x, y, room, corridor) => {
     if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return;
@@ -83,7 +90,6 @@ export function generateLevel(seed, theme, opts = {}) {
   const carveV = (y0, y1, x) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) for (let w = 0; w < CORRIDOR_W; w++) setFloor(x + w - 1, y, -1, true); };
   const edges = [];   // room-id pairs joined by a corridor (drives the minimap)
   const connect = (a, b) => { edges.push([a.id, b.id]); if (rng() < 0.5) { carveH(a.cx, b.cx, a.cy); carveV(a.cy, b.cy, b.cx); } else { carveV(a.cy, b.cy, a.cx); carveH(a.cx, b.cx, b.cy); } };
-  const order = [...rooms].sort((p, q) => (p.cx + p.cy) - (q.cx + q.cy));
   for (let i = 1; i < order.length; i++) {
     // link to the nearest already-placed room (a cheap connected spanning tree)
     let best = order[0], bd = 1e9;

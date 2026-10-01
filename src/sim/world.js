@@ -130,7 +130,6 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   if (level.entrance) placeStairsUp(world, level);
   if (level.descentRoom && hasFloorBelow(site, depth)) placeStairsDown(world, level);   // (a site's last floor ends in its hall)
   if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
-  pruneUnreachable(world, level);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
   if (level.descentRoom) {
@@ -142,6 +141,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     }
     world.stairsDownArrive = best;
   }
+  pruneUnreachable(world, keepTheWaysOpen(world, level));
 
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.
@@ -199,22 +199,88 @@ function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y));
 
 // A chest or shrine is only worth placing where you can walk up to it. Decor, pools and walls can close off
 // a pocket of a room (a chest you could see and never open: Barrows floor 2, seed 20260807, found by the
-// M5 loot farm); one no walkable tile reaches from the way in is taken out again.
-function pruneUnreachable(world, level) {
-  const s = level.spawn, q = [[Math.floor(s.x), Math.floor(s.y)]], seen = new Set([K(q[0][0], q[0][1])]);
-  for (let h = 0; h < q.length; h++) {
-    const [x, y] = q[h], z = heightAt(world, x, y);
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy, nk = K(nx, ny);
-      if (!seen.has(nk) && isWalkable(world, nx + 0.5, ny + 0.5, z)) { seen.add(nk); q.push([nx, ny]); }
-    }
-  }
+// M5 loot farm); one no walkable tile reaches from the way in is taken out again. reach: keepTheWaysOpen's.
+function pruneUnreachable(world, reach) {
   for (const [k, kind] of [...world.props]) {
     if (kind !== 'chest' && kind !== 'shrine') continue;
     const [x, y] = k.split(',').map(Number); let near = false;
-    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) if ((dx || dy) && seen.has(K(x + dx, y + dy))) near = true;
+    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) if ((dx || dy) && reach(x + dx, y + dy)) near = true;
     if (!near) world.props.delete(k);
   }
+}
+
+// The ways a floor must keep open, from the way in: the stairs down (from anywhere on the
+// stairwell's rim) or a last hall's vault chest, the stair up, and where you arrive coming back up.
+// Corridors are kept dry, but a room's pools aren't: a sweep of 200 floors as the game builds them
+// found the stair up standing behind a pool on 26, so once down there was no walking out (Sunken
+// Chapel floor 2, game seed 23757). Any way that's shut gets the fewest tiles of pool between it and the
+// rest drained (world.dry: plain floor there, 3 wide, so a party walks it), and decor in the way is
+// taken out. Floors that were already open are as they were.
+// Returns what's open from the way in, for pruneUnreachable: (x, y) → true.
+function keepTheWaysOpen(world, level) {
+  const sx = Math.floor(level.spawn.x), sy = Math.floor(level.spawn.y);
+  const ends = [];   // each way: the tiles you'd stand on to use it
+  const around = (x, y) => { const o = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) o.push([x + dx, y + dy]); return o; };
+  const S = world.stairwell;   // the stairs are used from anywhere on the stairwell's rim (core.js REACH)
+  if (S) { const rim = []; for (let y = S.y0 - 1; y <= S.y1; y++) for (let x = S.x0 - 1; x <= S.x1; x++) if (x < S.x0 || x >= S.x1 || y < S.y0 || y >= S.y1) rim.push([x, y]); ends.push(rim); }
+  else if (world.stairsAt) ends.push(around(world.stairsAt.x, world.stairsAt.y));
+  if (world.vault) { const [x, y] = world.vault.key.split(',').map(Number); ends.push(around(x, y)); }
+  for (const a of [world.exitAt, world.stairArrive, world.stairsDownArrive]) if (a) { const x = Math.floor(a.x), y = Math.floor(a.y); ends.push([[x, y], ...around(x, y)]); }   // (within reach is enough: core.js)
+  const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew']);
+  const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
+  // a tile's cost to open: 0 walkable, 1 a pool or decor to clear, Infinity never (walls, the well, chests)
+  const cost = (x, y) => {
+    if (isWalkable(world, x + 0.5, y + 0.5)) return 0;
+    if (!floorAt(x, y) || resourceAt(world, x, y)) return Infinity;
+    const p = world.props.get(K(x, y));
+    if (p) return DECOR.has(p) ? 1 : Infinity;
+    return NONWALK.has(materialAt(world, x, y)) ? 1 : Infinity;
+  };
+  const N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  // what's open from the arrival, on the level's dense grid (a string-keyed flood cost every floor 40 ms)
+  const g = dense(world), at = (x, y) => (x < g.x0 || y < g.y0 || x >= g.x0 + g.w || y >= g.y0 + g.h ? -1 : (y - g.y0) * g.w + (x - g.x0));
+  const flood = () => {
+    const seen = new Uint8Array(g.w * g.h), q = new Int32Array(g.w * g.h); let n = 0;
+    const s0 = at(sx, sy); if (s0 < 0) return seen; seen[s0] = 1; q[n++] = s0;
+    for (let h = 0; h < n; h++) {
+      const i = q[h], x = g.x0 + (i % g.w), y = g.y0 + ((i / g.w) | 0);
+      for (const [dx, dy] of N4) { const j = at(x + dx, y + dy); if (j >= 0 && !seen[j] && g.cells[j] && g.cells[j].kind === 'floor' && isWalkable(world, x + dx + 0.5, y + dy + 0.5)) { seen[j] = 1; q[n++] = j; } }
+    }
+    return seen;
+  };
+  let open = flood();
+  for (const end of ends) {
+    if (end.some(([x, y]) => open[at(x, y)] === 1)) continue;   // (nearly every floor: nothing to do)
+    // 0-1 search from the arrival (a deque as two stacks): the cheapest way to any tile of this end
+    const goal = new Set(end.map(([x, y]) => K(x, y))), dist = new Map([[K(sx, sy), 0]]), prev = new Map();
+    let front = [[sx, sy]], back = [], hit = null;
+    for (;;) {
+      if (!front.length) { if (!back.length) break; front = back.reverse(); back = []; }
+      const [x, y] = front.pop(), k = K(x, y), d = dist.get(k);
+      if (goal.has(k) && cost(x, y) === 0) { hit = k; break; }
+      for (const [dx, dy] of N4) {
+        const nx = x + dx, ny = y + dy, nk = K(nx, ny), c = cost(nx, ny);
+        if (c === Infinity || dist.has(nk) && dist.get(nk) <= d + c) continue;
+        dist.set(nk, d + c); prev.set(nk, k);
+        (c === 0 ? front : back).push([nx, ny]);
+      }
+    }
+    if (!hit) { for (const k of goal) if (dist.has(k) && floorAt(...k.split(',').map(Number)) && !world.props.has(k)) { hit = k; break; } }
+    if (!hit || dist.get(hit) === 0) continue;
+    // open the way: every costly tile on it, and its floor neighbours (3 wide)
+    world.dry = world.dry || new Set();
+    for (let k = hit; k; k = prev.get(k)) {
+      const [x, y] = k.split(',').map(Number); if (cost(x, y) === 0) continue;
+      for (const [ax, ay] of [[x, y], [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        const ak = K(ax, ay); if (!floorAt(ax, ay)) continue;
+        if (DECOR.has(world.props.get(ak) || '')) world.props.delete(ak);
+        world.dry.add(ak);
+      }
+    }
+    level._dense.mat = new Array(level._dense.w * level._dense.h);   // materials are cached: drop them
+    open = flood();
+  }
+  return (x, y) => open[at(x, y)] === 1;
 }
 
 // A vault site's last hall keeps its heirloom in a chest (sites.js `vault`): on the open tile nearest the
@@ -312,7 +378,7 @@ export function materialAt(world, x, y) {
   const th = world.level.th;
   let m;
   if (c.kind === 'wall') m = th.wall;
-  else if (!c.corridor && hazardAt(world, tx, ty)) m = th.hazard;
+  else if (!c.corridor && !(world.dry && world.dry.has(K(tx, ty))) && hazardAt(world, tx, ty)) m = th.hazard;
   else { const bag = th.floors; m = bag[clampi(Math.floor(fbm(tx * 0.11, ty * 0.11, world.ss) * bag.length), 0, bag.length - 1)]; }
   g.mat[idx] = m; return m;
 }
