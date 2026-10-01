@@ -125,6 +125,7 @@ input.onTap((sx, sy) => {
 let last = performance.now();
 let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
+const TOD = DEV ? params.get('tod') : null;              // ?dev&tod=dawn|day|dusk|night|0..1: hold the light (look-dev; the sim's clock runs on)
 // dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
 if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));
@@ -154,6 +155,7 @@ function frame(now) {
     acc -= TICK_DT;
   }
 
+  renderer.holdSky(title.isOpen ? 'dusk' : TOD);              // the title is always at dusk; play follows the clock
   if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath
 }
 // dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls

@@ -26,7 +26,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone (with ?scene=dungeon)
 #   ?dev (localhost only: globalThis.__sim)
-#   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms))
+#   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)

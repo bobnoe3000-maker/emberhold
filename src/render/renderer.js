@@ -13,6 +13,7 @@
 
 import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';
+import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
@@ -73,7 +74,8 @@ uniform sampler2D uAlb,uNrm,uEmi;
 uniform vec2 uRes; uniform float uTime,uAmb,uWispA;
 uniform vec3 uL[3]; uniform vec3 uLC[3];
 uniform vec2 uWispPx;
-uniform vec3 uSunL, uSunC, uAmbC;   // outdoor scenes: directional dusk sun + ambient colour (zero in dungeons)
+uniform vec3 uSunL, uSunC, uAmbC;   // outdoor scenes: directional sun + ambient colour by the time of day (zero in dungeons)
+uniform float uWin, uLift;          // lit windows' glow ×; how far baked ground shadows lift (daylight.js)
 out vec4 O;
 float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
@@ -82,8 +84,13 @@ float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
 void main(){
   vec2 uv=gl_FragCoord.xy/uRes;
   vec4 A=texture(uAlb,uv);
+  // a baked ground shadow (ALB alpha 254, stampShadow) lifts toward the unshadowed ground by day
+  if(A.a>0.99&&A.a<0.998)A.rgb=mix(A.rgb,min(A.rgb/vec3(0.52,0.54,0.64),vec3(1.0)),uLift);
   vec4 N=texture(uNrm,uv);
   vec4 Et=texture(uEmi,uv); vec3 E=Et.rgb*3.2;
+  // a lit window (EMI alpha 254): by day its glow goes out and the glass reads dark (its baked albedo is
+  // the warm lamplight behind it); at dusk (uWin 1) it is as baked; by night it burns brighter
+  if(Et.a>0.993&&Et.a<0.998){E*=uWin;A.rgb*=mix(0.32,1.0,min(uWin,1.0));}
   vec3 n=normalize(vec3(N.xy*2.0-1.0,max(N.z,0.02)));
   float h=N.a*64.0;
   vec2 p=gl_FragCoord.xy;
@@ -173,6 +180,10 @@ export function createRenderer(canvas, sim, input) {
   const octx = overlay.getContext('2d');
 
   let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
+  // the time of day outdoors (daylight.js): the sim's clock, or a held look (the title's dusk, ?dev&tod=);
+  // a change of hold eases over SKY_EASE ms instead of cutting
+  const sky = makeSky(), skyNow = makeSky(), skyFrom = makeSky(), SKY_EASE = 1500;
+  let skyHoldT = /** @type {number|null} */ (null), skyEase0 = -1e9, lastNow = 0;
   let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window); b* point at the CURRENT bake target
   let front = null, back = null, job = null;          // double-buffered bakes: render from front, bake the next region into back
   let bDEP, sDEP, bSH;                               // depth toward the camera (tiles) + shadow flags
@@ -382,7 +393,7 @@ export function createRenderer(canvas, sim, input) {
         const px = x0 + xx; if (px < 0 || px >= tbw) continue;
         const di = py * tbw + px; if (bSH[di] || bDEP[di] > ground) continue;
         bSH[di] = 1; const i = di * 4;
-        bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64;
+        bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64; bALB[i + 3] = 254;   // marked, for the daylight lift
       }
     }
   }
@@ -405,7 +416,7 @@ export function createRenderer(canvas, sim, input) {
         bNRM[i] = sp.nrm[j * 3]; bNRM[i + 1] = sp.nrm[j * 3 + 1]; bNRM[i + 2] = sp.nrm[j * 3 + 2]; bNRM[i + 3] = zp * 4 + hpx * 4 > 255 ? 255 : zp * 4 + hpx * 4;
         const e = sp.emi[j];
         if (e) { const g = GLOW_ID[e]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; } else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
-        bEMI[i + 3] = 255;
+        bEMI[i + 3] = e === 9 ? 254 : 255;                // a lit window (flickers, and the time of day dims it)
       }
     }
   }
@@ -937,7 +948,10 @@ export function createRenderer(canvas, sim, input) {
     // sat inside the figure and blew the knight's armour out to a white ghost)
     const hx = ox + P.sx, hy = oy + P.sy - 30, hz = pz * ZH + 46;
     const L = [[hx + 8, hy, hz], [0, 0, 0], [0, 0, 0]];
-    const hl = sim.world.kind === 'dungeon' ? 1 : 0.42;             // at dusk outdoors the hero's ember-wisp is a glow, not a torch
+    const outdoor = sim.world.kind !== 'dungeon';
+    skyAt(skyHoldT ?? sim.state.t, skyNow); lastNow = now;
+    const ease = Math.min(1, (now - skyEase0) / SKY_EASE); mixSky(sky, skyFrom, skyNow, ease * ease * (3 - 2 * ease));
+    const hl = outdoor ? 0.42 * sky.wisp : 1;                       // outdoors the hero's ember-wisp is a glow at dusk, a torch at night
     const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
     // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
     const near = flares.map((s) => ({ s, d: Math.hypot(s.x - ix, s.y - iy) })).sort((a, b) => a.d - b.d).slice(0, 2);
@@ -945,7 +959,8 @@ export function createRenderer(canvas, sim, input) {
       const sp = project(s.x + 0.5, s.y + 0.5, s.z);
       const fl = 0.6 + 0.4 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
       L[i + 1] = [ox + sp.sx, oy + sp.sy, s.z * ZH + 12];
-      LC[i + 1] = [s.color[0] * fl, s.color[1] * fl, s.color[2] * fl];
+      const g = outdoor ? fl * sky.lamp : fl;                       // lamps and windows cast less by day
+      LC[i + 1] = [s.color[0] * g, s.color[1] * g, s.color[2] * g];
     });
 
     // PASS A — lighting at native resolution
@@ -959,14 +974,14 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform2f(U(lightP, 'uRes'), nvw, nvh);
     gl.uniform1f(U(lightP, 'uTime'), t);
     gl.uniform1f(U(lightP, 'uAmb'), AMB);
-    gl.uniform1f(U(lightP, 'uWispA'), sim.world.kind === 'dungeon' ? WISP : WISP * 0.6);
+    gl.uniform1f(U(lightP, 'uWispA'), outdoor ? WISP * 0.6 * Math.min(1, sky.wisp) : WISP);
     gl.uniform3fv(U(lightP, 'uL'), L.flat());
     gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
     // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
-    const outdoor = sim.world.kind !== 'dungeon';
     gl.uniform3f(U(lightP, 'uSunL'), -0.72, 0.16, 0.67);                 // low sun from the upper left (matches the baked shadows)
-    gl.uniform3fv(U(lightP, 'uSunC'), outdoor ? [0.78, 0.55, 0.40] : [0, 0, 0]);   // late, low, amber
-    gl.uniform3fv(U(lightP, 'uAmbC'), outdoor ? [0.31, 0.29, 0.44] : [0, 0, 0]);   // violet dusk, like the dungeon's ambient
+    if (outdoor) { gl.uniform3fv(U(lightP, 'uSunC'), sky.sun); gl.uniform3fv(U(lightP, 'uAmbC'), sky.amb); } else { gl.uniform3f(U(lightP, 'uSunC'), 0, 0, 0); gl.uniform3f(U(lightP, 'uAmbC'), 0, 0, 0); }
+    gl.uniform1f(U(lightP, 'uWin'), outdoor ? sky.win : 1);
+    gl.uniform1f(U(lightP, 'uLift'), outdoor ? sky.lift : 0);
     gl.uniform2f(U(lightP, 'uWispPx'), hx + 19, oy + P.sy - 50 + Math.sin(t * 2.1) * 1.5);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
@@ -986,7 +1001,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform2f(U(postP, 'uNative'), nvw, nvh);
     gl.uniform1f(U(postP, 'uScale'), S);
     gl.uniform2f(U(postP, 'uOff'), (lastCam.rx - ox) * S, (lastCam.ry - oy) * S);   // the sub-pixel part of the camera
-    gl.uniform1f(U(postP, 'uBloom'), BLOOM);
+    gl.uniform1f(U(postP, 'uBloom'), outdoor ? BLOOM * sky.bloom : BLOOM);
     gl.uniform1f(U(postP, 'uTime'), t);
     gl.uniform1i(U(postP, 'uView'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1283,6 +1298,12 @@ export function createRenderer(canvas, sim, input) {
 
   return {
     render, setHero, resize,
+    /** hold the outdoor light at a look (a part's name or a fraction of the day, daylight.js holdT), or
+     * null to follow the sim's clock; a change eases in. The title holds dusk; ?dev&tod= holds any. */
+    holdSky(v) {
+      const t = holdT(v); if (t === skyHoldT) return;
+      mixSky(skyFrom, sky, sky, 0); skyEase0 = lastNow; skyHoldT = t;
+    },
     /** true while a scene change is still baking behind black (main.js holds the sim still meanwhile) */
     get transiting() { return !!transit && !terrValid; },
     /** settles once the first actor and environment atlases have loaded (or failed): the loading screen's cue */

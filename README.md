@@ -34,7 +34,8 @@ Useful URLs:
 - `?region=vale|fens|reach|heights` picks the region;
 - `?dev` exposes `globalThis.__sim`;
 - `?dev&slow=8` runs in slow motion;
-- `?dev&manual` gives step-by-step frames.
+- `?dev&manual` gives step-by-step frames;
+- `?dev&tod=night` (or `dawn`, `day`, `dusk`, a fraction of the day) holds the outdoor light for look-dev.
 
 **Controls:**
 - launch: the studio splash and the loading screen, then tap to begin;
