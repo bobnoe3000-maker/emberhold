@@ -134,6 +134,19 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const paid = 2000 - (await S(() => globalThis.__sim.state.counters.gold));
     check('m3: hired a companion at the tavern: its card showed rank, perks and fee, and the Guild took the fee', (await S(() => globalThis.__sim.state.party.length)) === 2
       && new RegExp(want.rank, 'i').test(card) && new RegExp(`Fee ${want.fee} gold`).test(card) && paid === want.fee, `${want.rank} · fee ${want.fee} · paid ${paid}`);
+    // wages on screen (GDD §6.2): the line under the gold, the card's tag, the Contract tab, and the Guild's terms
+    await p.waitForTimeout(1200);
+    const wageLine = await p.locator('#hudWage').innerText().catch(() => ''), tag = await p.locator('#party .card[data-idx="1"] .wg').innerText().catch(() => '');
+    await p.locator('#hubBar button[data-k=tavern]').tap(); await p.waitForTimeout(300); await p.locator('#hubSheet [data-go=hire]').tap(); await p.waitForTimeout(300);
+    await p.locator('#hubSheet [data-terms]').tap(); await p.waitForTimeout(300);
+    const terms = await p.locator('#gterms.on').innerText().catch(() => ''), rows = await p.locator('#gterms tr').count();
+    await p.locator('#gterms .x').tap(); await p.locator('#hubSheet .close').tap(); await p.waitForTimeout(200);
+    await p.locator('#party .card[data-idx="1"]').tap(); await p.waitForTimeout(400);
+    await p.locator('#gearSheet [data-view=contract]').tap(); await p.waitForTimeout(300);
+    const contract = await p.locator('#gearSheet .ct').innerText().catch(() => '');
+    await p.locator('#gearSheet [data-close]').tap(); await p.waitForTimeout(300);
+    check('m3: wages on screen: the gold line, the card tag, the Contract tab, the Guild\'s terms', /−\d+ · dawn \d+m/.test(wageLine) && /◆ \d+\/D/i.test(tag)
+      && /The Guild.s terms/i.test(terms) && rows === 5 && /Loyalty/i.test(contract) && /gold a dawn/i.test(contract), `${wageLine} | ${tag} | rows ${rows} | ${contract.split('\n').slice(0, 3).join(' / ')}`);
     // play: into a dungeon room; the companion is Downed and left behind → Fallen (a ghost)
     const room = async (hp) => S(async (hp) => {
       const s = globalThis.__sim, { isWalkable } = await import('/src/sim/world.js'), snap = s.snapshot(); snap.scene = 'dungeon'; snap.depth = 0; s.restore(snap);
@@ -271,8 +284,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); }
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
       const quest = await p.locator('#talk .ch.quest').allTextContents();       // her errand's choice is marked: a diamond, a QUEST label, its own colour
-      check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 7 && quest.length === 2 && quest.some((q) => /^Anything I can do\?\s*New$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*New$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
-      await p.locator('#talk .ch', { hasText: 'hire' }).tap();
+      check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 8 && quest.length === 2 && choices.some((c) => /How does the Guild hire/.test(c)) && quest.some((q) => /^Anything I can do\?\s*New$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*New$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
+      await p.locator('#talk .ch', { hasText: 'Anyone for hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
       await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);
       const board = await p.evaluate(() => [...document.querySelectorAll('.on h2, .on h3')].map((e) => e.textContent).join(' | '));

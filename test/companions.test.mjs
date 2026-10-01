@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { createSim } from '../src/sim/core.js';
 import { statsFor, tavernRoster } from '../src/sim/party.js';
 import { DAY_S } from '../src/sim/heroes.js';
-import { RANKS, RANK_IDS, PERKS, PERK_IDS, LOYALTY, rollPerks, wageOf, loyaltyOf, has, FOUND_PERKS } from '../src/sim/companions.js';
+import { RANKS, RANK_IDS, PERKS, PERK_IDS, LOYALTY, rollPerks, wageOf, loyaltyOf, has, FOUND_PERKS, REVEAL_AT, SWORN_AT, SWORN_WAGE, BENCH_WAGE, ASK_COST, RETRAIN_COST } from '../src/sim/companions.js';
 import { mulberry32 } from '../src/sim/rng.js';
 import { isWalkable } from '../src/sim/world.js';
 
@@ -134,6 +134,13 @@ test('content/companions.json names every rank and perk the sim has', () => {
   assert.deepEqual(Object.keys(C.perks).sort(), [...PERK_IDS].sort());
   for (const r of [...RANK_IDS, 'found']) assert.ok(C.ranks[r], r);
   for (const id of PERK_IDS) assert.ok(C.families[PERKS[id].fam], PERKS[id].fam);
+});
+
+test('the Guild\'s terms (content) say what the sim does: loyalty 3 and 5, a quarter off, the bench at half, Ask around and Retrain prices', () => {
+  const T = JSON.parse(readFileSync('content/companions.json', 'utf8')).terms, all = T.sections.map((x) => x.text).join(' ');
+  assert.equal(REVEAL_AT, 3); assert.equal(SWORN_AT, 5); assert.equal(SWORN_WAGE, 0.75); assert.equal(BENCH_WAGE, 0.5);
+  for (const want of [`loyalty ${REVEAL_AT}`, `loyalty ${SWORN_AT}`, 'a quarter off', 'the bench at half', `${ASK_COST} gold a level`, `${RETRAIN_COST} gold a level`, 'doubles']) assert.ok(all.includes(want), want);
+  assert.deepEqual(Object.keys(T.families).sort(), [...new Set(PERK_IDS.map((id) => PERKS[id].fam))].sort());
 });
 
 test('rolls never repeat a perk and stay in the class', () => {

@@ -504,6 +504,32 @@ by 1 for each boss it helps put down. They fall by 2 for each dawn it isn't paid
   1). Quirks can't be retrained.
 - **Found companions:** Brannoc has no rank, fee or wage; he has his own perks (Bodyguard, Hardy).
 
+**On screen and where it's explained** (2026-10-01):
+- **Top bar:** a line under the gold gives the next dawn's wage bill and the time to it,
+  `−300 · dawn 14m`.
+  - **Short:** amber with ⚠ when the gold won't cover it.
+  - **Owed:** red, `owed N ⚠`, when anyone is owed.
+  - **Tap it:** in town it opens the tavern's Hire view; out of town it shows who costs what.
+  - **Warning:** two minutes before a dawn you can't pay, one toast.
+- **Companion cards:** a tag on the XP line, `◆ 72/d` (the rank's colour), `◆ OWED` or
+  `◆ free` (found).
+- **Character window:** a **Contract** tab for every companion. It shows:
+  - the rank and its line;
+  - the wage in the party and on the bench, with its modifiers;
+  - what's owed, and the perks (dark while owed);
+  - the hidden perk's slot;
+  - the loyalty track (3 reveals, 5 Sworn), what's left to the next step, and what earns and
+    loses bond;
+  - retrains and the next retrain's price.
+- **The Guild's terms** (`ui/guildterms.js`, text in `content/companions.json` `terms`): the
+  reference card. It opens from the top of the tavern's Hire view and from a Contract tab.
+  - **Ranks table:** read from the sim's numbers, with the prices at your level.
+  - **Sections:** wages, owed, loyalty, Ask around, Retrain, the perk families, found companions.
+  - **Before any hire:** its link in the Hire view says wages are paid every dawn.
+- **Maudry Fenn:** *"How does the Guild hire?"* in her hub and her hiring talk. It covers the
+  ranks, the dawn wage, the unpaid and the Sworn, in her voice (`maudry.ink`).
+- **Loading tips:** three, on the dawn wage, the unpaid and the Sworn.
+
 **Old saves (v13):** each tavern hire becomes a Wick, and its old trait becomes the perk it always
 claimed to be (the traits did nothing before). They're kept for free, with wages from the next
 dawn.

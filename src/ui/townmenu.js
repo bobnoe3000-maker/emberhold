@@ -110,7 +110,7 @@ const CSS = SW_CSS + `
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
 
-export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
+export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerms = () => {} } = {}) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const bar = document.createElement('div'); bar.id = 'hubBar';
   const sheet = document.createElement('div'); sheet.id = 'hubSheet';
@@ -129,6 +129,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
     const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
     if (e.target.closest('[data-ask]')) return send({ type: 'askAround' });
+    if (e.target.closest('[data-terms]')) return openTerms();
     if (e.target.closest('[data-settle]')) return send({ type: 'payWages' });
     const rt = e.target.closest('[data-retrainview]'); if (rt) { note = ''; retrainId = rt.dataset.retrainview; return retrain(); }
     const rp = e.target.closest('[data-retrain]'); if (rp) return send({ type: 'retrain', id: retrainId, idx: +rp.dataset.retrain });
@@ -199,7 +200,9 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
     const roster = w.kind === 'town' ? sim.heroes.roster() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60));
     const wages = party.reduce((n, m) => n + wageOf(m, false), 0) + S.bench.reduce((n, m) => n + wageOf(m, true), 0), owed = sim.heroes.owed();
     const mine = [...party.slice(1).map((m) => [m, false]), ...S.bench.map((m) => [m, true])];
+    const first = ![...party, ...S.bench].some(hired);       // nobody of the Guild's yet: say how it works, once it matters
     sheet.innerHTML = `${head('Tavern', 'Hire companions', 'The Lantern Guild hires out its own. A fee to sign, then a wage every dawn: the party in full, the bench at the inn on half.')}
+      <div class="row go" data-terms><div><b>The Guild’s terms</b><span>${first ? 'Wages are paid every dawn, wherever you are. Read this before you sign anyone on.' : 'Ranks, wages, loyalty, Ask around and Retrain'}</span></div><div class="go-arrow">›</div></div>
       <div class="purse">You have <b>${gold()}</b> gold · wages at dawn (in ${mins} min): <b>${wages}</b> gold</div>
       ${owed ? `<div class="row go warn" data-settle><div><b>Settle wages · ${owed} gold</b><span>What the company is owed. Their perks come back when they're paid.</span></div><div class="go-arrow">›</div></div>` : ''}
       <h3>Your company · party ${party.length}/3 · bench ${S.bench.length}/${BENCH_MAX}</h3>
@@ -265,5 +268,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {} } = {}) {
     requestAnimationFrame(watch);
   })();
 
-  return { open: (sv) => open(sv.kind || sv), close, isOpen: () => sheet.classList.contains('on'), inSquare: () => wasIn };
+  /** straight to the Hire view (the HUD's wage line, in town) */
+  function openHire() { open('tavern'); hire(); }
+  return { open: (sv) => open(sv.kind || sv), openHire, close, isOpen: () => sheet.classList.contains('on'), inSquare: () => wasIn };
 }

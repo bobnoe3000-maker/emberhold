@@ -10,6 +10,8 @@ import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
 import { esc, drawPortrait, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { wageOf, hired } from '../sim/companions.js';
+import { RANK_COL } from './sellswords.js';
 
 const CSS = `
 #party { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; display: grid; grid-template-columns: 1fr 1.08fr 1fr; gap: 6px;
@@ -37,6 +39,8 @@ const CSS = `
 #party .st { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 4px; font-size: 9px; color: #8a8498; letter-spacing: 1px; }
 #party .st b { color: #e8e2d4; font-weight: 600; text-align: right; }
 #party .st b.hi { color: #8fd0ff; }
+#party .wg { flex: none; border: 1px solid; border-radius: 6px; font-size: 9px; font-weight: 700; letter-spacing: .2px; padding: 0 4px; line-height: 12px; }
+#party .wg.owed { background: #4a1612; color: #ffb0a0 !important; border-color: #ff8a7a !important; }
 #party .xp { display: flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 9px; color: #c09a50; letter-spacing: 1px; }
 #party .xp div { flex: 1; height: 3px; background: #26222e; position: relative; }
 #party .xp div i { position: absolute; left: 0; top: 0; bottom: 0; background: #d8a040; }
@@ -64,13 +68,16 @@ export function createPartyPanel(sim) {
     const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level), actor = m.actor || c.actor;
     const hp = Math.max(0, Math.round(m.hp));
     const pts = pendingPoints(m) + pendingSkillPoints(m);
+    // a companion's rank and wage (GDD §6.2): ◆ 72/d, ◆ OWED, or ◆ free for a found one; the word, not just the colour
+    const col = RANK_COL[m.rank] || '#c8bcae', wg = m.main || !m.rank ? '' : m.owed > 0 ? '<span class="wg owed">◆ OWED</span>'
+      : `<span class="wg" style="color:${col};border-color:${col}">◆ ${hired(m) ? `${wageOf(m, false)}/d` : 'free'}</span>`;
     return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}${m.fallen ? ' fallen' : ''}${m.weakUntil > 0 ? ' weak' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}${pts ? `<span class="ptb">+${pts}</span>` : ''}
       <div class="top"><div class="pf"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.label.toUpperCase()}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'FALLEN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
         <span>CRT</span><b>${s.crit}%</b><span>DDG</span><b>${s.dodge}%</b></div>
-      <div class="xp">LV ${m.level}<div><i style="width:${Math.round((100 * m.xp) / need)}%"></i></div></div></div>`;
+      <div class="xp">LV ${m.level}<div><i style="width:${Math.round((100 * m.xp) / need)}%"></i></div>${wg}</div></div>`;
   };
   function draw() {
     const [you, a, b] = sim.state.party;
@@ -81,7 +88,7 @@ export function createPartyPanel(sim) {
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed
   let sig = '';
   const gearSig = () => (sim.state.bag || []).length + ':' + sim.state.party.map((m) => Object.values(m.gear || {}).map((it) => (it ? it.uid : '-')).join('.')).join('/');
-  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${m.actor}|${m.name}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
+  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${m.actor}|${m.name}|${m.rank || ''}|${m.owed || 0}|${hired(m) ? wageOf(m, false) : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
   // tap a card: that member's character sheet. The cards re-render several times a second
   // in battle (HP ticks), so the press and the release can land on two copies of the same

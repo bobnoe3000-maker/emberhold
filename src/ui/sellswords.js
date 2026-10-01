@@ -10,6 +10,8 @@ export const RANK_COL = { wick: '#c8bcae', lamp: '#9ad87e', lantern: '#86c0ff', 
 /** @type {any} */
 let words = null;
 export const wordsReady = fetch('./content/companions.json').then((r) => r.json()).then((d) => { words = d; }).catch(() => {});
+/** the whole of content/companions.json, once loaded (else null) */
+export const companionWords = () => words;
 export const rankName = (/** @type {string} */ r) => (words && words.ranks[r] && words.ranks[r].name) || r;
 export const rankLine = (/** @type {string} */ r) => (words && words.ranks[r] && words.ranks[r].line) || '';
 export const perkWord = (/** @type {string} */ id) => (words && words.perks[id]) || { name: id, text: '' };

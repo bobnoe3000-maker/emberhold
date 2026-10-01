@@ -17,10 +17,23 @@ import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, 
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
 import { NPCS } from '../sim/npcs.js';
-import { perkWord } from './sellswords.js';
+import { perkWord, rankMark, rankLine, perkLines, loyaltyWord, SW_CSS } from './sellswords.js';
+import { hired, wageOf, loyaltyOf, sworn, LOYALTY, REVEAL_AT, SWORN_AT, RETRAIN_COST } from '../sim/companions.js';
 
 const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
-const CSS = `
+const CSS = SW_CSS + `
+/* the Contract tab (GDD §6.2): a companion's terms with the Guild */
+#gearSheet .ct { margin-top: 10px; font-family: Georgia, serif; }
+#gearSheet .ct .rl { font: italic 12.5px Georgia, serif; color: #a8a090; margin: 4px 0 10px; }
+#gearSheet .ct h4 { font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 14px 0 5px; font-weight: 400; }
+#gearSheet .ct .ln { font: 12.5px/1.45 Georgia, serif; color: #d8ccb8; }
+#gearSheet .ct .ln small { font: 11px ui-monospace, Menlo, monospace; color: #a8987e; }
+#gearSheet .ct .owed { font: 700 12px ui-monospace, Menlo, monospace; color: #ff9a8a; margin-top: 6px; }
+#gearSheet .ct .track { display: flex; gap: 4px; margin: 6px 0 4px; }
+#gearSheet .ct .track span { flex: 1; text-align: center; font: 10px ui-monospace, Menlo, monospace; color: #6f6880; border: 1px solid #3a3346; border-radius: 4px; padding: 3px 0; }
+#gearSheet .ct .track span.on { color: #1a1208; background: #d8a040; border-color: #f0c880; font-weight: 700; }
+#gearSheet .ct .track span.mark { border-color: rgba(214,170,98,.7); }
+#gearSheet .ct .terms { display: block; width: 100%; min-height: 44px; margin-top: 16px; border-radius: 9px; border: 1px solid rgba(214,170,98,.5); background: none; color: #f0c880; font: 600 14px Georgia, serif; }
 #gearSheet { position: fixed; left: 0; right: 0; bottom: 0; top: 56px; z-index: 8; max-width: 480px; margin: 0 auto; transform: translateY(105%); transition: transform .28s ease;
   background: rgba(16,12,22,0.97); border-top: 1px solid rgba(214,170,98,0.45); border-radius: 16px 16px 0 0; box-shadow: 0 -12px 40px rgba(0,0,0,.6);
   padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 12px); font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #efe4cf; overflow-y: auto; }
@@ -145,7 +158,7 @@ const icon = (it) => `./assets/items/${BASES[it.base].icon}.png`;
 const fmt = (k, v) => (k === 'crit' || k === 'dodge' ? `${v > 0 ? '+' : ''}${v}%` : k === 'hpr' || k === 'mpr' ? `${v > 0 ? '+' : ''}${v}/s` : `${v > 0 ? '+' : ''}${v}`);
 const classNames = (B, lower) => { const l = classesOf(B).map((c) => CLASSES[c].label).join(' / ') || 'Any class'; return lower ? l.replace('Any class', 'any class') : l; };
 
-export function createGearSheet(sim, { partyPanel }) {
+export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const sheet = document.createElement('div'); sheet.id = 'gearSheet';
   const card = document.createElement('div'); card.id = 'gearCard';
@@ -187,12 +200,14 @@ export function createGearSheet(sim, { partyPanel }) {
     const need = xpToNext(m.level), pa = pendingPoints(m), ps = pendingSkillPoints(m), stacks = bagStacks(S.bag);
     // the same green dot as the character tab, on whichever sub-tab needs you: an upgrade in the
     // bag (Gear), attribute points (Stats), skill points (Skills); it goes when that's resolved
-    const views = `<div class="views">${[['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0]].map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
+    if (view === 'contract' && m.main) view = 'gear';
+    const views = `<div class="views">${[['gear', 'Gear', hasUpgrade(m)], ['stats', 'Stats', pa > 0], ['skills', 'Skills', ps > 0], ...(m.main ? [] : [['contract', 'Contract', m.owed > 0]])].map(([k, l, due]) => `<button data-view="${k}" class="${view === k ? 'on' : ''}">${l}${due ? '<span class="dot"></span>' : ''}</button>`).join('')}</div>`;
     // a found companion (Brannoc) has more to say than a hire: talk to him from here (npcs.js)
     const talk = NPCS[m.id] && NPCS[m.id].found && !m.main ? `<button class="talkb" data-talk="${esc(m.id)}"${m.down || m.fallen ? ' disabled' : ''}>Talk to ${esc(m.name)}</button>` : '';
     const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}${talk}`;
     if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
     if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
+    if (view === 'contract') { sheet.innerHTML = head + contractView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
         <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div><canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
@@ -221,6 +236,23 @@ export function createGearSheet(sim, { partyPanel }) {
       <div class="hint">From attributes: ${share || 'nothing yet'}${s.power ? ` · ability power +${Math.round(s.power * 1000) / 10}%` : ''}</div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${Array.isArray(m.perks) && m.perks.length ? `${esc(m.perks.map((id) => perkWord(id).name).join(', '))} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;
+  }
+  // ── the Contract tab: a companion's terms with the Lantern Guild (GDD §6.2) ────
+  function contractView(m) {
+    const terms = '<button class="terms" data-terms>How the Guild’s terms work ›</button>';
+    if (!hired(m)) return `<div class="ct"><div>${rankMark(m)}</div><div class="rl">${esc(rankLine(m.rank || 'found'))}</div><h4>Perks</h4>${perkLines(m)}${terms}</div>`;
+    const benched = !S.party.includes(m), w = wageOf(m, false), mods = [];
+    if (m.perks.includes('thrifty')) mods.push('Thrifty −30 %'); if (m.perks.includes('greedy')) mods.push('Greedy ×1.5'); if (sworn(m)) mods.push('Sworn −25 %');
+    const L = loyaltyOf(m), next = L < SWORN_AT ? LOYALTY[L + 1] - (m.bond || 0) : 0;
+    const track = Array.from({ length: SWORN_AT }, (_, i) => `<span class="${i < L ? 'on' : ''}${i + 1 === REVEAL_AT || i + 1 === SWORN_AT ? ' mark' : ''}">${i + 1 === REVEAL_AT ? '3 · reveal' : i + 1 === SWORN_AT ? '5 · Sworn' : i + 1}</span>`).join('');
+    return `<div class="ct"><div>${rankMark(m)}</div><div class="rl">${esc(rankLine(m.rank))}</div>
+      <h4>Wage</h4><div class="ln">${w} gold a dawn in the party, ${wageOf(m, true)} on the bench${benched ? ' (where they are now)' : ''}${mods.length ? `<br><small>${esc(mods.join(' · '))}</small>` : ''}</div>
+      ${m.owed > 0 ? `<div class="owed">Owed ${m.owed} gold · their perks are dark until you settle up at a tavern</div>` : ''}
+      <h4>Perks</h4>${perkLines(m)}
+      <h4>Loyalty · ${esc(loyaltyWord(m))}</h4><div class="track">${track}</div>
+      <div class="ln"><small>${L >= SWORN_AT ? 'Sworn: a quarter off the wage, and once a room they get up from a blow that would have Downed them.' : `${next} more to loyalty ${L + 1}${L + 1 === REVEAL_AT && m.hidden ? ' (shows the perk they kept back)' : L + 1 === SWORN_AT ? ' (Sworn)' : ''}. +1 for every dawn they’re paid in your party, +1 for every boss you put down together, −2 for every dawn they’re not paid.`}</small></div>
+      <h4>Retrain</h4><div class="ln"><small>${m.retrains ? `Retrained ${m.retrains} time${m.retrains > 1 ? 's' : ''}. ` : ''}The next one costs ${RETRAIN_COST * m.level * ((m.retrains || 0) + 1)} gold at a tavern.</small></div>
+      ${terms}</div>`;
   }
   // where a drop came from (loot.js sources; quests.js / core.js heirlooms)
 const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault' };
@@ -296,6 +328,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     if (e.target.closest('[data-close]')) { close(); return; }
     const tk = e.target.closest('[data-talk]'); if (tk) { close(); sim.commands.push({ type: 'talk', npc: tk.dataset.talk }); return; }
     const v = e.target.closest('[data-view]'); if (v) { view = v.dataset.view; sel = null; note = null; render(); return; }
+    if (e.target.closest('[data-terms]')) { openTerms(); return; }
     const m = member(), q = (sel2) => e.target.closest(sel2);
     let t;
     if ((t = q('[data-attr]'))) { sim.commands.push({ type: 'spendPoint', id: m.id, attr: t.dataset.attr }); return; }

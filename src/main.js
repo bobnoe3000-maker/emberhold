@@ -20,6 +20,7 @@ import { createDialogue } from './ui/dialogue.js';
 import { createJournal } from './ui/journal.js';
 import { createStepOut } from './ui/stepout.js';
 import { createDefeat } from './ui/defeat.js';
+import { createGuildTerms } from './ui/guildterms.js';
 import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 
@@ -57,12 +58,14 @@ if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and 
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
-const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open() });   // subscribe before restore, so a loaded counters event repaints
+const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for its sellswords (GDD §6.2): from the tavern and a Contract tab
+const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open() });   // subscribe before restore, so a loaded counters event repaints
 const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms), partyPanel });   // quests (M4): the Journal, tracker and toasts
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
-const gearSheet = createGearSheet(sim, { partyPanel });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
+const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open() });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
+hud.onWage(() => { if (sim.world.kind !== 'town') return false; townMenu.openHire(); return true; });   // the wage line under the gold
 if (DEV) globalThis.__gear = gearSheet;
 // named NPCs (M4): their look, name and Ink file from content/npcs/; tap one to talk (dialogue.js)
 const cast = {};

@@ -3,6 +3,8 @@
 import { SKILLS } from '../sim/skills.js';
 import { CLASSES } from '../sim/party.js';
 import { perkWord } from './sellswords.js';
+import { wageOf } from '../sim/companions.js';
+import { DAY_S } from '../sim/heroes.js';
 
 export function createHud(sim) {
   // the HUD row's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it: the
@@ -49,6 +51,37 @@ export function createHud(sim) {
   sim.bus.on('sworn', (e) => show(`${e.name} is Sworn to your company · a quarter off the wage, and they get up once a room`, 4200));
   sim.bus.on('retrained', (e) => show(`${e.name} learns ${perkWord(e.perk).name} · forgets ${perkWord(e.was).name}`, 2600));
 
+  // the company's wages (GDD §6.2), on a line under the gold: what's due at the next dawn and when, amber
+  // with ⚠ when the gold won't cover it, red with "owed" when anyone already is (never colour alone).
+  // Tap it: the tavern's Hire view in town (main.js), else a one-line summary. Two minutes before a dawn
+  // you can't pay, one warning.
+  const wageEl = document.createElement('span'); wageEl.id = 'hudWage'; wageEl.setAttribute('role', 'button');
+  if (gold) gold.parentElement.appendChild(wageEl);
+  const css = document.createElement('style');
+  css.textContent = `#hud .stat #hudWage { display: none; font: 11px ui-monospace, Menlo, monospace; color: #b8ac98; letter-spacing: .3px; margin-top: 1px; pointer-events: auto; padding: 4px 0 12px; margin-bottom: -12px; cursor: pointer; }
+    #hud .stat #hudWage.on { display: block; } #hud .stat #hudWage.short { color: #ffc060; } #hud .stat #hudWage.owed { color: #ff8a7a; font-weight: 700; }`;
+  document.head.appendChild(css);
+  const bill = () => sim.state.party.reduce((n, m) => n + wageOf(m, false), 0) + sim.state.bench.reduce((n, m) => n + wageOf(m, true), 0);
+  const owedAll = () => [...sim.state.party, ...sim.state.bench].reduce((n, m) => n + (m.owed || 0), 0);
+  const toDawn = () => DAY_S - (sim.state.t % DAY_S);
+  let onWage = null, warnedDay = -1, wageText = '';
+  function paintWage() {
+    const b = bill(), o = owedAll(), g = sim.state.counters.gold || 0;
+    const t = !b && !o ? '' : o ? `owed ${o} ⚠` : `−${b} · dawn ${Math.max(1, Math.ceil(toDawn() / 60))}m${g < b ? ' ⚠' : ''}`;
+    if (t !== wageText) { wageText = t; wageEl.textContent = t; wageEl.className = t ? `on${o ? ' owed' : g < b ? ' short' : ''}` : ''; wageEl.setAttribute('aria-label', o ? `Your company is owed ${o} gold` : `Wages of ${b} gold due at dawn`); }
+    const day = Math.floor(sim.state.t / DAY_S);
+    if (b > g && toDawn() <= 120 && warnedDay !== day) { warnedDay = day; show(`Dawn in ${Math.max(1, Math.ceil(toDawn() / 60))} min · wages ${b} gold · you have ${g}`, 4200); }
+  }
+  /** a line of who costs what, for a tap away from a tavern */
+  const wageSummary = () => {
+    const S = sim.state, who = [...S.party.map((m) => [m, false]), ...S.bench.map((m) => [m, true])].filter(([m]) => wageOf(m, false) > 0);
+    return `Wages at dawn: ${who.map(([m, b]) => `${m.name} ${wageOf(m, b)}${b ? ' (bench)' : ''}${m.owed > 0 ? `, owed ${m.owed}` : ''}`).join(' · ')} · you have ${S.counters.gold || 0}`;
+  };
+  wageEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+  wageEl.addEventListener('click', (e) => { e.stopPropagation(); if (!(onWage && onWage())) show(wageSummary(), 4200); });
+  for (const ev of ['partyChanged', 'countersChanged', 'wages', 'wagesSettled', 'hired']) sim.bus.on(ev, paintWage);
+  setInterval(paintWage, 1000); paintWage();
+
   // Weakened (after a wipe): an amber chip in the HUD while it lasts
   const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
   if (depth) depth.parentElement.parentElement.appendChild(weak);
@@ -61,5 +94,6 @@ export function createHud(sim) {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
   }
-  return { show };
+  /** fn() → true if it handled a tap on the wage line (main.js: the tavern, in town) */
+  return { show, onWage: (fn) => { onWage = fn; } };
 }
