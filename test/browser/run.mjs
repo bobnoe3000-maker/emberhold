@@ -482,6 +482,64 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 12. The sky dial (GDD §10.1): under the embers, it overlaps nothing on screen — not the HUD row's wage line
+// or Weakened chip, not a toast (its own included), the quest tracker, the compass, the Journal, the minimap,
+// the room pill or anything else — at phone and tablet widths, in town, on the Vale and in a fight, with a
+// wage owed soon, big numbers and a tracked quest; the canvas-drawn pieces are laid out under the HUD row,
+// so the dial must end inside it. A tap says when the next part comes.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const bad = [], seen = [];
+    for (const W of [360, 390, 430, 768]) for (const scene of ['town', 'overland', 'dungeon']) {
+      const ctx = await b.newContext({ viewport: { width: W, height: W > 500 ? 1024 : 800 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=${scene}`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+      await p.waitForTimeout(600); await run(5);
+      await p.evaluate((fight) => {
+        const s = globalThis.__sim, C = s.state.counters;
+        s.state.party.push({ ...s.state.party[0], id: 'sky1', name: 'Tam', main: false, rank: 'lantern', perks: [], level: 9 });   // a wage due (more than the purse)
+        C.gold = 12; C.embers = 99999; s.bus.emit('countersChanged', { ...C }); s.bus.emit('partyChanged', s.state.party);
+        s.state.party[0].weakUntil = s.state.t + 600; s.bus.emit('weakened', { on: true });                                       // the Weakened chip in the row
+        s.quests.begin('vale_long_way_round');                                                                                     // the tracker line
+        s.state.t = 4 * 900 - 100;                                                                                                 // night, dawn (and its wages) close
+        if (fight) { const L = s.world.level, r = L.rooms.find((q) => s.world.roomLevels.get(q.id) === 1), pl = s.state.player; pl.x = pl.px = r.cx + 0.5; pl.y = pl.py = r.cy + 0.5; }
+      }, scene === 'dungeon');
+      await run(60); await p.waitForTimeout(1300); await run(3);
+      await p.locator('#hudSky').tap(); await run(2); await p.waitForTimeout(250);
+      const r = await p.evaluate(() => {
+        const sky = document.getElementById('hudSky'), parts = [sky.querySelector('svg'), sky.querySelector('span')].map((e) => e.getBoundingClientRect());
+        const box = { l: Math.min(...parts.map((q) => q.left)), t: Math.min(...parts.map((q) => q.top)), r: Math.max(...parts.map((q) => q.right)), b: Math.max(...parts.map((q) => q.bottom)) };
+        const vw = innerWidth, vh = innerHeight, hits = [];
+        for (const e of document.querySelectorAll('body *')) {
+          if (e === sky || sky.contains(e) || e.contains(sky) || e.tagName === 'CANVAS' || e.closest('svg') && !sky.contains(e)) continue;
+          const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+          let hidden = false; for (let a = e.parentElement; a; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || +c.opacity === 0) { hidden = true; break; } } if (hidden) continue;
+          const q = e.getBoundingClientRect(); if (q.width < 1 || q.height < 1 || q.width * q.height > 0.5 * vw * vh) continue;   // (full-screen layers: the vignette, a window's backdrop)
+          if (!(e.textContent || '').trim() && !['BUTTON', 'IMG'].includes(e.tagName) && cs.backgroundColor === 'rgba(0, 0, 0, 0)' && cs.borderStyle === 'none') continue;   // an empty box draws nothing
+          const ix = Math.min(box.r, q.right) - Math.max(box.l, q.left), iy = Math.min(box.b, q.bottom) - Math.max(box.t, q.top);
+          if (ix > 0.5 && iy > 0.5) hits.push(`${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${typeof e.className === 'string' && e.className ? '.' + e.className.split(' ').join('.') : ''} "${(e.textContent || '').trim().slice(0, 24)}"`);
+        }
+        const hud = document.getElementById('hud').getBoundingClientRect(), tap = sky.getBoundingClientRect(), toast = document.getElementById('hudToast');
+        return { box, hits, hudB: hud.bottom, vw, tapH: tap.height, tapW: tap.width, word: sky.querySelector('span').textContent, toast: toast.classList.contains('on') ? toast.textContent : '', battle: !!globalThis.__sim.battle, tracker: !!document.querySelector('#questTrack') && getComputedStyle(document.querySelector('#questTrack')).display !== 'none', menuW: document.getElementById('menuBtn').getBoundingClientRect().width };
+      });
+      const where = `${W}px ${scene}`, probs = [];
+      if (r.hits.length) probs.push('overlaps ' + r.hits.join(', '));
+      if (r.box.b > r.hudB + 0.5) probs.push(`ends at ${r.box.b.toFixed(0)} under the HUD row (${r.hudB.toFixed(0)}): the minimap and room pill sit there`);
+      if (r.box.l < 0 || r.box.r > r.vw) probs.push('off screen');
+      if (r.tapH < 44 || r.tapW < 44) probs.push(`tap area ${r.tapW.toFixed(0)}×${r.tapH.toFixed(0)}`);
+      if (r.menuW < 34) probs.push(`the menu button squeezed to ${r.menuW.toFixed(0)} px`);
+      if (r.word !== 'Night' || !/^Night · dawn in \d+ min · wages \d+ gold at dawn$/.test(r.toast)) probs.push(`says ${r.word} / "${r.toast}"`);
+      if (scene === 'dungeon' && !r.battle) probs.push('no fight to check against');
+      if (errs.length) probs.push(errs.join(' | '));
+      if (probs.length) bad.push(`${where}: ${probs.join('; ')}`); else seen.push(where);
+      await ctx.close();
+    }
+    check('sky dial: overlaps nothing (wage line, Weakened, toasts, tracker, compass, Journal, minimap, room pill) at 360/390/430/768 px in town, on the Vale and in a fight; a tap tells the time', bad.length === 0, bad.length ? bad.join(' · ') : `${seen.length} layouts`);
+    await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

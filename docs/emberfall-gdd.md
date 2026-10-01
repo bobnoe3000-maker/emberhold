@@ -823,6 +823,27 @@ progress):
   day (save v15), so nothing kept by the day is lost or paid twice.
 - **Night changes nothing in play.** No more foes, no other spawns, no change to any number. Only
   the light and the dial change (below).
+- **The light** (`src/render/daylight.js`; measured in `art-critic-pass-5.md`). Town and overland
+  are lit by the part of the day; dungeons keep their own light. The sun can't move (the shadows are
+  baked at one low angle), so each part changes the light's colour and strength instead:
+  - **Dawn:** a rose-gold sun, the windows fading.
+  - **Day:** a warm white sun, a neutral sky, dark window glass, lamps low, the baked shadows lifted
+    to soft shade.
+  - **Dusk:** the game's old look, unchanged.
+  - **Night:** cold moonlight at about 45 % of day's brightness, the windows and lamps brighter, and
+    the hero's carry light bigger. Moody, but you can still read the ground and the foes.
+
+  Each part blends into the next over two minutes of play, centred on the boundary. The title screen
+  is always at dusk.
+- **The sky dial.** It sits under the embers in the HUD row. A half arc carries the sun from dawn to
+  the end of dusk and a crescent moon through the night, and the part's name is always written next to
+  it, never colour alone.
+  - **Tap it** (44 px or more) for one line: when the next part comes, when dawn comes and the wages
+    then.
+  - **Room for it:** on a phone the EMBERFALL wordmark leaves the in-game HUD, so the row fits one
+    line: place, gold and wage, embers and dial. Only the place name can shorten, with an ellipsis.
+  - **No overlaps:** a browser test checks the dial against everything on screen at four widths, in
+    town, on the Vale and in a fight.
 
 ---
 

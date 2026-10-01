@@ -5,6 +5,8 @@ import { CLASSES } from '../sim/party.js';
 import { perkWord } from './sellswords.js';
 import { wageOf } from '../sim/companions.js';
 import { DAY_S } from '../sim/heroes.js';
+import { PART_S, partOf } from '../sim/npcs.js';
+import { PART_NAMES } from '../render/daylight.js';
 
 export function createHud(sim) {
   // the HUD row's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it: the
@@ -85,6 +87,39 @@ export function createHud(sim) {
   wageEl.addEventListener('click', (e) => { e.stopPropagation(); if (!(onWage && onWage())) show(wageSummary(), 4200); });
   for (const ev of ['partyChanged', 'countersChanged', 'wages', 'wagesSettled', 'hired']) sim.bus.on(ev, paintWage);
   setInterval(paintWage, 1000); paintWage();
+
+  // The time of day (GDD §10.1): a small sky dial under the embers. A half arc with the sun on it from dawn
+  // to the end of dusk, the moon on it through the night, and always the part's word (never the colour
+  // alone). It reads the sim's own parts (npcs.js partOf), so it turns with the townsfolk and the light.
+  // Tap it: when the next part comes, and the dawn and its wages. It sits in the HUD row, so everything
+  // laid out under the row (minimap, compass, Journal, room pill) moves down with it.
+  const skyEl = document.createElement('span'); skyEl.id = 'hudSky'; skyEl.setAttribute('role', 'button');
+  if (embers) embers.parentElement.appendChild(skyEl);
+  const SKY_COL = ['#f4b0a0', '#f0d478', '#ffa060', '#a8c0ff'];
+  css.textContent += `#hud .stat #hudSky { display: flex; align-items: center; gap: 4px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: .3px; margin: -11px -10px -19px; padding: 12px 10px 19px; pointer-events: auto; cursor: pointer; white-space: nowrap; }
+    #hud .stat #hudSky svg { flex: none; overflow: visible; }`;
+  let skyKey = '';
+  function paintSky() {
+    const t = sim.state.t, part = partOf(t), f = (((t % DAY_S) + DAY_S) % DAY_S) / DAY_S;
+    const up = part < 3, k = up ? f / 0.75 : (f - 0.75) / 0.25, a = Math.PI * (1 - k);   // left to right along the arc
+    const x = 11 + 9 * Math.cos(a), y = 11 - 9 * Math.sin(a), key = `${part}${Math.round(x * 2)}${Math.round(y * 2)}`;
+    if (key === skyKey) return; skyKey = key;
+    const col = SKY_COL[part], next = (part + 1) % 4, mins = Math.max(1, Math.ceil((PART_S - (t % PART_S)) / 60));
+    skyEl.innerHTML = `<svg width="22" height="13" viewBox="0 0 22 13" aria-hidden="true"><path d="M2 11.5 A9 9 0 0 1 20 11.5" fill="none" stroke="rgba(214,190,150,.45)" stroke-width="1.2"/>`
+      + `<line x1="0" y1="11.8" x2="22" y2="11.8" stroke="rgba(214,190,150,.6)" stroke-width="1"/>`
+      + (up ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="${col}"/>` : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="${col}"/><circle cx="${(x + 1.3).toFixed(1)}" cy="${(y - 0.9).toFixed(1)}" r="2.3" fill="#141020"/>`)
+      + `</svg><span style="color:${col}">${PART_NAMES[part]}</span>`;
+    skyEl.setAttribute('aria-label', `Time of day: ${PART_NAMES[part]}. ${PART_NAMES[next]} in ${mins} minutes.`);
+  }
+  const skyLine = () => {
+    const t = sim.state.t, part = partOf(t), next = (part + 1) % 4, b = bill(), dawn = Math.max(1, Math.ceil(toDawn() / 60));
+    const mins = Math.max(1, Math.ceil((PART_S - (t % PART_S)) / 60));
+    return `${PART_NAMES[part]} · ${PART_NAMES[next].toLowerCase()} in ${mins} min` + (next === 0 ? '' : ` · dawn in ${dawn} min`) + (b ? ` · wages ${b} gold at dawn` : '');
+  };
+  skyEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+  skyEl.addEventListener('click', (e) => { e.stopPropagation(); show(skyLine(), 3600); });
+  setInterval(paintSky, 1000); paintSky(); sim.bus.on('levelChanged', paintSky);
+  syncTop();
 
   // Weakened (after a wipe): an amber chip in the HUD while it lasts
   const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
