@@ -282,5 +282,18 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     }
     const tr = data?.tracked; if (tr && state.quests[tr] && state.quests[tr].st !== QS.DONE) state.tracked = tr;
   }
-  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, status, def: defOf };
+  /** who has something for you, by NPC id (the marker over their head, renderer.js): 'ready' for a quest to
+   * hand in to them, else 'new' for one they'd give you now. The same gates as their conversation's choices
+   * (status: level, the quests before it, a companion with you, a trial still to do); board jobs are the
+   * board's. @returns {Record<string, 'new'|'ready'>} */
+  function marks() {
+    const out = {};
+    for (const id of Object.keys(QUESTS)) {
+      const d = QUESTS[id], st = status(id);
+      if (st === QS.READY) out[takerOf(d)] = 'ready';
+      else if (st === QS.AVAILABLE && !out[d.giver]) out[d.giver] = 'new';
+    }
+    return out;
+  }
+  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, status, marks, def: defOf };
 }

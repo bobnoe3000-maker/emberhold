@@ -365,6 +365,17 @@ It is pure:
   - `#mark: quest active` is one you've taken, asked after ("About the barrows road…"): a hollow
     ◇, **Taken**, quieter;
   - `#mark: quest ready` is one to hand in here: **Hand in** and the Journal's green.
+- **In the world, over their head** (2026-10-01): anyone with a quest for you carries a marker
+  you can see from across the square (40 tiles).
+  - **A gold ◆ with "!":** one you can take now.
+  - **A green ◆ with "?":** one to hand in, on whoever takes it in, which isn't always who gave
+    it. A hand-in wins over a new one.
+  - **Same rules as the conversation:** the sim's `quests.marks()` uses the gates that decide
+    the conversation's choices (level, the quests before it, a companion with you, a trial still
+    to do), so the marker and the choice always agree.
+  - **Board jobs** stay on the board.
+  - **Where:** drawn by `renderer.js` over the name, and bobbing. The symbol says which, not
+    just the colour.
 
   Mark offers, accepts, turn-ins and "about that job" asks; not refusals. Every `q_… == 1` (or
   `== 2` handed in elsewhere) topic is `active` (tested). Taking a quest puts *Quest taken: title

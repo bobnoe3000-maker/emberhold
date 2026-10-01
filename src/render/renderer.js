@@ -1077,6 +1077,22 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(def.name, sx + k, sy + k);
       octx.fillStyle = `rgba(255,226,160,${a})`; octx.fillText(def.name, sx, sy);
     }
+    // who has a quest for you (sim quests.js marks): a gold "!" for one to take, a green "?" for one to hand
+    // in, bobbing over their head and seen from across the square. The symbol says which, not just the colour.
+    const QM = sim.quests && sim.quests.marks ? sim.quests.marks() : {}, bob = Math.sin(performance.now() / 380) * 2;
+    for (const n of sim.world.npcs || []) {
+      const m = QM[n.id], d = Math.hypot(n.x - ix, n.y - iy); if (!m || d > 40 || !cast[n.id]) continue;
+      const nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, nz);
+      const sx = (ox + P.sx) * S, sy = (oy + P.sy - (d <= 12 ? 80 : 68) + bob) * S, r = 12 * k;   // (over the name when it shows)
+      if (sx < -20 * k || sx > vw + 20 * k || sy < (hudB + 14) * k || sy > vh) continue;
+      const col = m === 'ready' ? '#8fe07a' : '#ffc840';
+      octx.beginPath(); octx.moveTo(sx, sy - r * 1.25); octx.lineTo(sx + r, sy); octx.lineTo(sx, sy + r * 1.25); octx.lineTo(sx - r, sy); octx.closePath();
+      octx.shadowColor = col; octx.shadowBlur = 8 * k; octx.fillStyle = 'rgba(16,12,22,0.9)'; octx.fill(); octx.shadowBlur = 0;
+      octx.lineWidth = Math.max(2, 2 * k); octx.strokeStyle = col; octx.stroke();
+      octx.font = `800 ${Math.round(17 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+      octx.fillStyle = col; octx.fillText(m === 'ready' ? '?' : '!', sx, sy + 0.5 * k);
+      octx.textBaseline = 'alphabetic';
+    }
   }
   // ── battle overlay: HP bars, floating numbers, ability callouts, the room-level · wave pill ──
   const floats = [];
