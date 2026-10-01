@@ -68,7 +68,7 @@ if (DEV) globalThis.__gear = gearSheet;
 const cast = {};
 Promise.all(Object.keys(NPCS).map((id) => fetch(`./content/npcs/${id}.json`).then((r) => r.json()).then((d) => { cast[id] = d; }).catch(() => {})))
   .then(() => renderer.setCast(cast));
-const dialogue = createDialogue({ sim, cast: () => cast, openService: (kind) => townMenu.open(kind) });
+const dialogue = createDialogue({ sim, cast: () => cast, openService: (kind) => townMenu.open(kind), questTitle: (id) => journal.title(id) });
 
 // Restore the slot's game (party, counters, the dungeon overlay, discovery). Must run before
 // the first render so restored mods are reflected in chunk bakes.

@@ -154,7 +154,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // a wipe: everyone at 1 HP in a room → wake at the temple, Weakened, a quarter of the gold gone
     await S(() => globalThis.__sim.bus.on('defeat', (d) => (window.__lost = d.lost)));
     await room([1, 1]);
-    await p.waitForFunction(() => globalThis.__sim.state.scene === 'town', null, { timeout: 60000 });
+    // (held at 1 HP while we wait: on a slow real-time clock the lull's regen could outlast the timeout)
+    await p.waitForFunction(() => { const s = globalThis.__sim; if (s.state.scene === 'town') return true; for (const m of s.state.party) if (!m.down) m.hp = Math.min(m.hp, 1); return false; }, null, { timeout: 60000, polling: 50 });
     const w = await S(() => { const s = globalThis.__sim, a = s.world.arrivals.temple, p = s.state.player; return { near: Math.hypot(p.x - a.x, p.y - a.y) < 1.5, weak: s.state.party.every((m) => m.weakUntil > 0), fallen: s.state.party.some((m) => m.fallen), gold: s.state.counters.gold, lost: window.__lost }; });
     check('m3: a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
     // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
@@ -265,7 +266,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); }
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
       const quest = await p.locator('#talk .ch.quest').allTextContents();       // her errand's choice is marked: a diamond, a QUEST label, its own colour
-      check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 7 && quest.length === 2 && quest.some((q) => /^Anything I can do\?\s*Quest$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*Quest$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
+      check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 7 && quest.length === 2 && quest.some((q) => /^Anything I can do\?\s*New$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*New$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
       await p.locator('#talk .ch', { hasText: 'hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
       await p.locator('#talk .ch', { hasText: 'board' }).tap(); await p.locator('#talk .more').tap(); await run(5);
@@ -294,7 +295,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('quest: "Anything I can do?" → accepted in conversation, and tracked', talking && st.q && st.q.st === 1 && st.tracked === 'vale_long_way_round', JSON.stringify(st));
     // the topics the talk comes back to read the quest as the sim now has it (it had offered it again until you walked off)
     const after = await p.locator('#talk .ch').allTextContents();
-    check('quest: back at her topics, the offer is gone and she asks after it', after.length > 0 && !after.some((t) => /Anything I can do/.test(t)) && after.some((t) => /Quest$/.test(t)), JSON.stringify(after));
+    const note = await p.locator('#talk .note').innerText().catch(() => '');
+    check('quest: the window says it\'s taken (title, the Journal), and her topic about it reads Taken, not New', after.length > 0 && !after.some((t) => /Anything I can do/.test(t)) && after.some((t) => /^About the barrows road…\s*Taken$/.test(t)) && /Quest taken: The Long Way Round/.test(note) && /Journal/.test(note), JSON.stringify(after) + ' · ' + note);
     if (await p.locator('#talk .x').count()) await p.locator('#talk .x').tap();
     await run(3);
     const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');

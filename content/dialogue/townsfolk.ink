@@ -86,7 +86,7 @@ VAR q_trial_cold_weather = -1
 == nell_topics ==
 + { q_trial_quiet_feet == 2 } [Three sergeants, and they never heard us. #mark: quest ready] -> nell_trial_turnin
 + { q_trial_quiet_feet == 0 } [You walk very quietly for an innkeeper. #mark: quest] -> nell_trial_offer
-+ { q_trial_quiet_feet == 1 } [About the sergeants… #mark: quest] -> nell_trial_active
++ { q_trial_quiet_feet == 1 } [About the sergeants… #mark: quest active] -> nell_trial_active
 + [Goodnight, Nell.] -> END
 
 == nell_trial_offer ==
@@ -129,7 +129,7 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
 == hedda_topics ==
 + { q_trial_cold_weather == 2 } [It listened. #mark: quest ready] -> hedda_trial_turnin
 + { q_trial_cold_weather == 0 } [Does the weather really listen to you? #mark: quest] -> hedda_trial_offer
-+ { q_trial_cold_weather == 1 } [About the chapel… #mark: quest] -> hedda_trial_active
++ { q_trial_cold_weather == 1 } [About the chapel… #mark: quest active] -> hedda_trial_active
 + [Two eggs, then.] -> END
 
 == hedda_trial_offer ==

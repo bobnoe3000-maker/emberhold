@@ -142,6 +142,9 @@ test('quest choices are marked for the window, and the mark never reaches the si
   assert.deepEqual(marks(ask), ['quest', ''], "I'll see to it / Not today");
   const ready = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, q_vale_long_way_round: 2 }, (cmd) => pushed.push(cmd));
   assert.deepEqual(marks(ready.first).filter(Boolean), ['quest ready']);
+  const taken = await book.open('maudry', 'maudry_hub', { hero_name: 'Tam', flag_met_maudry: 1, q_vale_long_way_round: 1 }, (cmd) => pushed.push(cmd));
+  assert.deepEqual(marks(taken.first).filter(Boolean), ['quest active'], 'asking after one you have: Taken, not an offer');
+  for (const f of ['maudry', 'osric', 'ilse', 'townsfolk', 'brannoc']) for (const [, l] of readFileSync(`content/dialogue/${f}.ink`, 'utf8').matchAll(/^(\+ \{ q_\w+ == [12] \} .*)$/gm)) assert.match(l, /#mark: quest (active|ready)\]/, `${f}: ${l}`);
   assert.ok(pushed.every((c) => c.tag !== 'mark'));
 });
 

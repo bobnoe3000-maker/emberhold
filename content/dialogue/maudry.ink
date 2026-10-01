@@ -63,11 +63,11 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 
 == maudry_topics ==
 + { q_ch1_smoke_over_the_vale == 0 } [You said something about smoke? #mark: quest] -> maudry_ch1_offer
-+ { q_ch1_smoke_over_the_vale == 1 } [About the Tithe Mill… #mark: quest] -> maudry_ch1_active
-+ { q_ch1_smoke_over_the_vale == 2 } [The mill's clear. #mark: quest] -> maudry_ch1_ready
++ { q_ch1_smoke_over_the_vale == 1 } [About the Tithe Mill… #mark: quest active] -> maudry_ch1_active
++ { q_ch1_smoke_over_the_vale == 2 } [The mill's clear. #mark: quest active] -> maudry_ch1_ready
 + { q_vale_long_way_round == 2 } [The barrows road is clearer. #mark: quest ready] -> maudry_longway_turnin
 + { q_vale_long_way_round == 0 } [Anything I can do? #mark: quest] -> maudry_longway_offer
-+ { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest] -> maudry_longway_active
++ { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest active] -> maudry_longway_active
 + [What's the news?] -> maudry_news
 + [Anyone for hire?] -> maudry_hire
 + [Tell me about the barrows.] -> maudry_barrows

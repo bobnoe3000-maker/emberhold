@@ -73,11 +73,11 @@ Brannoc looks back the way you came, where {fallen_name} should be.
 + { q_brannoc_paymasters_box == 2 } [The paymaster's boxes. #mark: quest ready] -> brannoc_box_turnin
 + { q_brannoc_standing_down == 2 } [We held the hall. #mark: quest ready] -> brannoc_standing_turnin
 + { q_brannoc_old_debts == 0 } [Is there anything you need to settle? #mark: quest] -> brannoc_debts_offer
-+ { q_brannoc_old_debts == 1 } [About the sergeants… #mark: quest] -> brannoc_debts_active
++ { q_brannoc_old_debts == 1 } [About the sergeants… #mark: quest active] -> brannoc_debts_active
 + { q_brannoc_paymasters_box == 0 } [Where did the robes' coin go? #mark: quest] -> brannoc_box_offer
-+ { q_brannoc_paymasters_box == 1 } [About the paymaster… #mark: quest] -> brannoc_box_active
++ { q_brannoc_paymasters_box == 1 } [About the paymaster… #mark: quest active] -> brannoc_box_active
 + { q_brannoc_standing_down == 0 } [What do you want now? #mark: quest] -> brannoc_standing_offer
-+ { q_brannoc_standing_down == 1 } [About the legion… #mark: quest] -> brannoc_standing_active
++ { q_brannoc_standing_down == 1 } [About the legion… #mark: quest active] -> brannoc_standing_active
 + [Why did the Company dig?] -> brannoc_digging
 + [Tell me about Garrow.] -> brannoc_garrow
 + [That's all.] -> brannoc_bye

@@ -61,16 +61,16 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 == osric_topics ==
 + { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the mill. #mark: quest ready] -> osric_ch1_report
 + { q_ch1_the_diggers == 0 } [Where did the Redhand go? #mark: quest] -> osric_ch2_offer
-+ { q_ch1_the_diggers == 1 } [About Wickham Keep… #mark: quest] -> osric_ch2_active
++ { q_ch1_the_diggers == 1 } [About Wickham Keep… #mark: quest active] -> osric_ch2_active
 + { q_ch1_the_diggers == 2 } [Garrow's done collecting. #mark: quest ready] -> osric_ch2_turnin
 + { q_ch1_ember_in_the_fist == 0 } [Who paid for the digging? #mark: quest] -> osric_ch3_offer
-+ { q_ch1_ember_in_the_fist == 1 } [About the chapel… #mark: quest] -> osric_ch3_active
++ { q_ch1_ember_in_the_fist == 1 } [About the chapel… #mark: quest active] -> osric_ch3_active
 + { q_trial_hold_the_keep_gate == 2 } [We held the Keep. #mark: quest ready] -> osric_trial_turnin
 + { q_trial_hold_the_keep_gate == 0 } [Can you teach a fighter anything? #mark: quest] -> osric_trial_offer
-+ { q_trial_hold_the_keep_gate == 1 } [About holding the gate… #mark: quest] -> osric_trial_active
++ { q_trial_hold_the_keep_gate == 1 } [About holding the gate… #mark: quest active] -> osric_trial_active
 + { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones. #mark: quest ready] -> osric_ledger_turnin
 + { q_vale_captains_ledger == 0 } [Any bounties posted? #mark: quest] -> osric_ledger_offer
-+ { q_vale_captains_ledger == 1 } [About the bounty… #mark: quest] -> osric_ledger_active
++ { q_vale_captains_ledger == 1 } [About the bounty… #mark: quest active] -> osric_ledger_active
 + { q_vale_captains_ledger == -1 } [Any bounties posted?] -> osric_ledger_early
 + [What does the Watch do here?] -> osric_watch
 + [Tell me about Lord Pellam.] -> osric_pellam

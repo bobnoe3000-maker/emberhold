@@ -10,7 +10,10 @@
 //
 // Lines render as text, never HTML. A line in quotes is speech; anything else is narration, set
 // in italics. Choices are full-width buttons (≥ 44 px) in the lower third, under the thumb; quest
-// ones (Ink `#mark: quest`) are set apart with a diamond, a label and their own colour.
+// ones (Ink `#mark: quest`) are set apart with a diamond, a label and their own colour, by the
+// quest's state: `quest` an offer (New), `quest active` one you've taken (Taken, quieter, a hollow
+// diamond), `quest ready` one to hand in here (Hand in, green). Taking or handing in a quest puts a
+// note at the top of the window ('questAccepted' / 'questReward'), with its title, until your next pick.
 
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -41,6 +44,16 @@ const CSS = `
 #talk .ch.quest::before { content: '◆'; margin-right: 0; color: #f0c060; }
 #talk .ch.quest .t { flex: 1; min-width: 0; }
 #talk .ch.quest em { flex: none; font: 700 9.5px ui-monospace, Menlo, monospace; font-style: normal; letter-spacing: 1.5px; color: #1a1208; background: #e0a84a; border-radius: 4px; padding: 2px 6px; }
+/* taken: the quest is yours already; asking after it is quieter than an offer */
+#talk .ch.quest.active { border-color: rgba(224,168,74,.55); background: rgba(216,160,64,.05); color: #e8d6b0; box-shadow: inset 3px 0 0 rgba(224,168,74,.55); }
+#talk .ch.quest.active::before { content: '◇'; color: #e0a84a; }
+#talk .ch.quest.active em { background: none; color: #e0b860; border: 1px solid rgba(224,184,96,.7); }
+#talk .note { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid #e0a84a; background: rgba(216,160,64,.14);
+  font: 12px/1.35 ui-monospace, Menlo, monospace; color: #f7d890; }
+#talk .note::before { content: '◆'; color: #f0c060; font-size: 13px; }
+#talk .note.done { border-color: #8fe07a; background: rgba(143,224,122,.1); color: #c8f4b8; }
+#talk .note.done::before { color: #8fe07a; }
+#talk .note b { font-weight: 700; }
 #talk .ch.quest.ready { border-color: #8fe07a; background: rgba(143,224,122,.11); color: #c8f4b8; box-shadow: inset 3px 0 0 #8fe07a; }
 #talk .ch.quest.ready::before { color: #8fe07a; }
 #talk .ch.quest.ready em { background: #8fe07a; }
@@ -52,39 +65,46 @@ function Portrait({ look }) {
   return html`<canvas ref=${ref} width=${PORTRAIT_W} height=${PORTRAIT_H}></canvas>`;
 }
 
-/** @param {{ def: any, place: string, beat: any, onChoose: (i: number) => void, onClose: () => void }} p */
-function Talk({ def, place, beat, onChoose, onClose }) {
+const CHIP = { ready: 'Hand in', active: 'Taken' };
+/** @param {{ def: any, place: string, beat: any, note: { kind: string, title: string, sub: string } | null, onChoose: (i: number) => void, onClose: () => void }} p */
+function Talk({ def, place, beat, note, onChoose, onClose }) {
   const [at, setAt] = useState(0);                            // (keyed per beat: a new beat starts at its first line)
   const lines = beat.lines, line = lines[Math.min(at, lines.length - 1)] || '', last = at >= lines.length - 1;
   const next = () => { if (!last) setAt(at + 1); else if (beat.ended) onClose(); };
   return html`<div id="talk" onClick=${(e) => { if (!e.target.closest('button')) next(); }}>
     <button class="x" aria-label="Leave" onClick=${onClose}>✕</button>
     <div class="who"><${Portrait} look=${def.portrait || def.look} /><div class="nm"><b>${def.name}</b><span>${place}</span></div></div>
+    ${note ? html`<div class=${'note' + (note.kind === 'done' ? ' done' : '')} role="status"><span>${note.kind === 'done' ? 'Handed in: ' : 'Quest taken: '}<b>${note.title}</b>${note.sub ? ' · ' + note.sub : ''}</span></div>` : null}
     <div class=${'line' + (/^["“]/.test(line) ? '' : ' nar')}>${line}</div>
     ${!last ? html`<button class="more" onClick=${next}>Go on ▸</button>`
       : beat.ended ? html`<button class="more" onClick=${onClose}>Leave ▸</button>`
       : beat.choices.map((c) => (c.mark && c.mark[0] === 'quest'
-        ? html`<button class=${'ch quest' + (c.mark[1] === 'ready' ? ' ready' : '')} key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}><span class="t">${c.text}</span><em>${c.mark[1] === 'ready' ? 'Hand in' : 'Quest'}</em></button>`
+        ? html`<button class=${'ch quest' + (CHIP[c.mark[1]] ? ' ' + c.mark[1] : '')} key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}><span class="t">${c.text}</span><em>${CHIP[c.mark[1]] || 'New'}</em></button>`
         : html`<button class="ch" key=${c.index + ':' + c.text} onClick=${() => onChoose(c.index)}>${c.text}</button>`))}
   </div>`;
 }
 
-/** @param {{ sim: any, cast: () => Record<string, any>, openService: (kind: string) => void }} o */
-export function createDialogue({ sim, cast, openService }) {
+/** @param {{ sim: any, cast: () => Record<string, any>, openService: (kind: string) => void, questTitle?: (id: string) => string }} o */
+export function createDialogue({ sim, cast, openService, questTitle = (id) => id }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'talkWrap'; document.body.appendChild(wrap); swallow(wrap);
   const book = createStoryBook((file) => fetch(`./content/dialogue/${file}.json`).then((r) => r.json()));
   const push = (cmd) => sim.commands.push(cmd);
   let convo = null, def = null, pending = [], open = false, beatN = 0;
   let held = null, waitN = 0;                                 // a beat waiting on the sim's variables, and for how many effects
+  let shown = null, note = null;                              // the beat on screen; the quest just taken or handed in (until your next pick)
 
   const place = (d) => { const sv = (sim.world.services || []).find((s) => s.kind === 'tavern'); return d.role && d.role.includes('innkeeper') && sv ? sv.name : sim.world.name || ''; };
   // `fresh`: a new beat starts at its first line; a resumed one keeps the line you're on
   const show = (beat, fresh = true) => {
     pending.push(...beat.windows);
     held = beat.waiting ? beat : null; waitN = beat.waiting || 0;
-    render(html`<${Talk} key=${fresh ? ++beatN : beatN} def=${def} place=${place(def)} beat=${beat} onChoose=${(i) => show(convo.choose(i))} onClose=${close} />`, wrap);
+    shown = beat;
+    render(html`<${Talk} key=${fresh ? ++beatN : beatN} def=${def} place=${place(def)} beat=${beat} note=${note} onChoose=${(i) => { note = null; show(convo.choose(i)); }} onClose=${close} />`, wrap);
   };
+  const tell = (n) => { if (!open || !shown) return; note = n; show(shown, false); };
+  sim.bus.on('questAccepted', ({ id }) => tell({ kind: 'taken', title: questTitle(id) || 'a new quest', sub: "it's in your Journal" }));
+  sim.bus.on('questReward', ({ id, xp, gold }) => tell({ kind: 'done', title: questTitle(id) || 'the quest', sub: [xp ? `+${xp} XP` : '', gold ? `+${gold} gold` : ''].filter(Boolean).join(' · ') }));
   function close() {
     if (!open) return;
     open = false; held = null; wrap.classList.remove('on'); render(null, wrap); push({ type: 'endTalk' });
@@ -95,7 +115,7 @@ export function createDialogue({ sim, cast, openService }) {
     const d = cast()[npc]; if (!d) { push({ type: 'endTalk' }); return; }
     try {
       const c = await book.open(d.dialogue, knot, vars, push);
-      def = d; convo = c; pending = []; open = true; wrap.classList.add('on'); show(c.first);
+      def = d; convo = c; pending = []; note = null; open = true; wrap.classList.add('on'); show(c.first);
     } catch (e) { console.warn('dialogue', npc, e); push({ type: 'endTalk' }); }
   });
   sim.bus.on('talkVars', ({ vars }) => {

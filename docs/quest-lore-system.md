@@ -359,9 +359,17 @@ It is pure:
 - `src/story/adapter.js` runs the story; `src/ui/dialogue.js` is the window (one line per tap,
   then choices; narration in italics, speech in quotes).
 - **Quest choices are marked.** A tag inside a choice's brackets belongs to the choice and never
-  reaches the sim: `+ [Anything I can do? #mark: quest]`. The window sets these apart with a ◆, a
-  **Quest** label and the gold accent; `#mark: quest ready` (handing one in) uses **Hand in** and
-  the Journal's green. Mark offers, accepts, turn-ins and "about that job" asks; not refusals.
+  reaches the sim: `+ [Anything I can do? #mark: quest]`. The window sets these apart by the
+  quest's state:
+  - `#mark: quest` is an offer: a ◆, **New** and the gold accent;
+  - `#mark: quest active` is one you've taken, asked after ("About the barrows road…"): a hollow
+    ◇, **Taken**, quieter;
+  - `#mark: quest ready` is one to hand in here: **Hand in** and the Journal's green.
+
+  Mark offers, accepts, turn-ins and "about that job" asks; not refusals. Every `q_… == 1` (or
+  `== 2` handed in elsewhere) topic is `active` (tested). Taking a quest puts *Quest taken: title
+  · it's in your Journal* at the top of the window ('questAccepted'), and handing one in
+  *Handed in: title · +XP · +gold*, until your next pick.
 - Tests: `test/npcs.test.mjs`; browser section 6 in `test/browser/run.mjs`.
 
 **Files and knots:**

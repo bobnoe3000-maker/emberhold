@@ -67,9 +67,9 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
 + { q_trial_last_rites == 2 } [The rites are said. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
-+ { q_trial_last_rites == 1 } [About the rites… #mark: quest] -> ilse_trial_active
++ { q_trial_last_rites == 1 } [About the rites… #mark: quest active] -> ilse_trial_active
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
-+ { q_vale_first_page == 1 } [About the first page… #mark: quest] -> ilse_page_active
++ { q_vale_first_page == 1 } [About the first page… #mark: quest active] -> ilse_page_active
 + { frag_vale_count > 0 } [Read me the Chronicle.] -> ilse_read
 + [What are you writing?] -> ilse_writing
 + [What should I look for?] -> ilse_look

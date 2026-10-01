@@ -15,7 +15,7 @@
 // quest's giver, and only from the right state. Board jobs are taken and handed in at the board
 // (board.js). Nothing else grants a quest's rewards: begin() and finish() are the only ways in.
 // Commands: track { id | null } · questAbandon { id } (not chapters).
-// Events: 'questChanged' { id, state, step, progress } · 'questReward' { id, xp, gold } · 'questTracked' { id }.
+// Events: 'questChanged' { id, state, step, progress } · 'questAccepted' { id } · 'questReward' { id, xp, gold } · 'questTracked' { id }.
 // Objective types (quest-lore-system §4.3), each counted in its site:
 //   waves   waves cleared (hall: only in a floor's stairs-down hall; floor: on that floor or deeper)
 //   loot    chests opened
@@ -175,6 +175,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     if (!state.tracked) state.tracked = id;
     settle(id);
     changed(id);
+    bus.emit('questAccepted', { id });                  // (the dialogue window says so where you took it)
   }
   // a story boss who already fell (before the quest was taken) counts: he won't come back to be counted
   function settle(id) {
