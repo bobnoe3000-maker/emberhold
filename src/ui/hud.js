@@ -33,10 +33,10 @@ export function createHud(sim) {
   const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
   sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
-  // a shrine says what it did (GDD §3.6): raised one of the Fallen, mended everyone, or kept its light
+  // a shrine says what it did (GDD §3.6): raised one of the slain, mended everyone, or kept its light
   sim.bus.on('shrine', (e) => show(e.did === 'raised' ? `Shrine · ${e.name} rises, at half health · its light is spent`
     : e.did === 'mended' ? 'Shrine · everyone standing is mended, HP and MP · its light is spent'
-      : 'Shrine · nobody needs mending · it keeps its light for when someone is hurt or Fallen', e.did === 'none' ? 3200 : 2800));
+      : 'Shrine · nobody needs mending · it keeps its light for when someone is hurt or slain', e.did === 'none' ? 3200 : 2800));
   // a chest says what it held, every time, and says so when that was no gear (GDD §8, 2026-10-01); the
   // item's own card (sheet.js) follows a find
   const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
@@ -44,7 +44,7 @@ export function createHud(sim) {
   sim.bus.on('levelChanged', ({ depth: d, theme, up }) => { setDepth(d); if (sim.world.kind === 'dungeon') show((up ? 'climbed · depth ' + (d + 1) + ' · ' : 'descended · ') + (sim.world.level.th.name || theme)); });
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
-  sim.bus.on('fallen', (f) => show(`${f.name} is Fallen: out of the fight until raised · at the temple in town, or a shrine below`, 3200));
+  sim.bus.on('fallen', (f) => show(`${f.name} is slain: out of the fight until raised · at the temple in town, or a shrine below`, 3200));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
   // the dead on the barrows road (sim road.js): a line as you come near, and when a rank goes (content/road/)
   let road = null; fetch('./content/road/vale.json').then((r) => r.json()).then((d) => { road = d; }).catch(() => {});
@@ -125,10 +125,17 @@ export function createHud(sim) {
   syncTop();
 
   // Weakened (after a wipe): an amber chip in the HUD while it lasts
+  // with the minutes it has left (it wears off after 10 minutes of play, or at the inn)
   const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
   if (depth) depth.parentElement.parentElement.appendChild(weak);
-  const paintWeak = () => { weak.style.display = sim.state.party.some((m) => m.weakUntil > 0) ? '' : 'none'; };
-  sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); paintWeak();
+  let weakText = '';
+  const paintWeak = () => {
+    const left = Math.max(0, ...sim.state.party.map((m) => (m.weakUntil > 0 ? m.weakUntil - sim.state.t : 0)));
+    const t = left > 0 ? `weakened · ${Math.max(1, Math.ceil(left / 60))} min` : '';
+    if (t === weakText) return; weakText = t;
+    weak.textContent = t; weak.style.display = t ? '' : 'none'; weak.setAttribute('aria-label', t ? `Weakened for ${Math.ceil(left / 60)} more minutes` : '');
+  };
+  sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); setInterval(paintWeak, 1000); paintWeak();
 
   function show(msg, ms = 1000) {
     toast.textContent = msg;

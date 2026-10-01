@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.12 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.13 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.13 fixes two words (dialogue critic pass 1). A companion who goes down and stays down until the
+temple raises them is **slain**, not "Fallen": the Fall is the empire's, and the word stays with
+it. The salvage currency is **cinders**, not "embers": the Ember is the empire's flame, and the
+word stays with that too. A party that loses a room is **beaten**.
 
 v1.12 says why a new companion is greener than you (§4, *Sellswords and the Guild's ranks*; §5,
 Brannoc): the Guild keeps its seasoned members for companies it knows, and Brannoc comes out of a
@@ -454,7 +459,7 @@ Optional, repeatable foes, each drawn from a fragment of the Chronicle (§7):
   Chronicle holds the pieces.
 - **The dead as trouble:** the Ashbound are ordinary trouble, *"the walking kind"*, never
   cosmic horror.
-- **Reactivity:** every named NPC has at least one line for your origin, one for a Fallen
+- **Reactivity:** every named NPC has at least one line for your origin, one for a slain
   companion, and one for each region fragment set.
 - **Banned:** no prophecies, no chosen ones, no winks at the player, and no apostrophes in the
   middle of names.

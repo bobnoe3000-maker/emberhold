@@ -10,7 +10,7 @@
     { "id": "stand_down", "text": "Telling the Third Legion it can stand down…" },
     { "id": "guild_dawn", "text": "The Lantern Guild's sellswords are paid at dawn, wherever you are. The bench draws half.", "source": "The Guild's terms · the Tired Mule" },
     { "id": "guild_owed", "text": "An unpaid sellsword still swings. Whatever they're good at, though, they keep to themselves till you settle.", "source": "Maudry Fenn · the Tired Mule" },
-    { "id": "shrine_light", "text": "A shrine's light mends everyone standing, or raises one of the Fallen. Once. It waits if nobody needs it.", "source": "Sister Ilse · the Shrine of the Ember" },
+    { "id": "shrine_light", "text": "A shrine's light mends everyone standing, or raises one of the slain. Once. It waits if nobody needs it.", "source": "Sister Ilse · the Shrine of the Ember" },
     { "id": "guild_sworn", "text": "Pay them, keep them breathing, and some stop counting the coin. The Guild calls them Sworn.", "source": "The Guild's terms · the Tired Mule" }
   ]
 }

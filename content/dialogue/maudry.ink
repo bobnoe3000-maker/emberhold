@@ -58,7 +58,7 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 
 == maudry_greet_fallen ==
 Maudry looks past you at the door, then back. "No {fallen_name} today?"
-"Take them to the Shrine of the Ember, the temple on the square. The Sisters there raise the Fallen, for a fee. Cheaper than a funeral, and they complain less after."
+"Take them to the Shrine of the Ember, the temple on the square. The Sisters there raise the slain, for a fee. Cheaper than a funeral, and they complain less after."
 -> maudry_topics
 
 == maudry_topics ==
@@ -143,7 +143,7 @@ She sets the mug down.
 == maudry_town ==
 "The Crossed Keys, if you want a bed and don't mind the stairs. Hale & Daughter for anything that needs mending. It's the daughter you want."
 "Wendel's for rope and bread. His lamp oil's gone up a copper again. He blames the roads. I blame Wendel."
-"And the Shrine of the Ember. That's our temple: the Sisters raise the Fallen there, the ones who went down and stayed down. You'll get to know them, I expect. Everyone does."
+"And the Shrine of the Ember. That's our temple: the Sisters raise the slain there, the ones who went down and stayed down. You'll get to know them, I expect. Everyone does."
 -> maudry_topics
 
 // ── her errand: The Long Way Round (content/quests/vale_long_way_round.json) ──

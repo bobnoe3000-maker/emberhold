@@ -1148,7 +1148,7 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(6,10,14,${0.8 * a})`; octx.fillText('Shrine', sx + k, sy + k);
       octx.fillStyle = `rgba(150,232,244,${a})`; octx.fillText('Shrine', sx, sy);
       if (d <= 6) {
-        const b = Math.max(0, Math.min(1, (6 - d) / 2)), t2 = 'mends everyone, or raises one Fallen · once';
+        const b = Math.max(0, Math.min(1, (6 - d) / 2)), t2 = 'mends everyone, or raises one of the slain · once';
         octx.font = `${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`;
         octx.fillStyle = `rgba(6,10,14,${0.8 * b})`; octx.fillText(t2, sx + k, sy + 14 * k + k);
         octx.fillStyle = `rgba(200,236,240,${b})`; octx.fillText(t2, sx, sy + 14 * k);
@@ -1177,7 +1177,7 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
-    else if (c.t === 'fallen') addFloat(c.x, c.y, c.name + ' is Fallen', '#b8c4d8', 12, 30);
+    else if (c.t === 'fallen') addFloat(c.x, c.y, c.name + ' is slain', '#b8c4d8', 12, 30);
     else if (c.t === 'heal') addFloat(c.x, c.y, '+' + c.amount, '#8fe07a', 12, 20);
     else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
     else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
@@ -1188,15 +1188,15 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
-  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the fallen', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'] };
+  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'] };
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
   sim.bus.on('bossCall', () => { banner = { text: 'Garrow calls his men', sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
-  sim.bus.on('bossKindle', () => { banner = { text: 'The Stranger kindles the fallen', sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossKindle', () => { banner = { text: 'The Stranger kindles the dead', sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
   sim.bus.on('bossDown', ({ name, first }) => { banner = { text: `${name} falls`, sub: first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
-  sim.bus.on('defeat', (d) => { banner = { text: 'Your party has fallen', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
   sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} rises`, sub: r.how === 'shrine' ? 'the shrine’s light fades' : 'the temple’s grace', until: performance.now() + 2600, small: true }; });
   // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];

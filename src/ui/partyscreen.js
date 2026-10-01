@@ -55,7 +55,7 @@ function Portrait({ actor }) {
 const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
 function line(m) {
   const s = statsFor(m), C = CLASSES[m.cls] || CLASSES.fighter;
-  return `${C.label} · level ${m.level} · ${m.fallen ? 'Fallen' : `HP ${Math.max(0, Math.round(m.hp))}/${s.maxHp}`} · ATK ${s.atk} · DEF ${s.def}`;
+  return `${C.label} · level ${m.level} · ${m.fallen ? 'Slain' : `HP ${Math.max(0, Math.round(m.hp))}/${s.maxHp}`} · ATK ${s.atk} · DEF ${s.def}`;
 }
 function Tags({ m }) {
   const pts = pendingPoints(m) + pendingSkillPoints(m);

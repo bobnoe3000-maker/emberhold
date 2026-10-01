@@ -4,7 +4,7 @@
 // room wins. During a fight this button, above the party cards on the right, walks the hero to the
 // nearest corridor past a doorway (the sim's 'step-out' destination, travel.js), where the fight
 // ends and the party recovers at 5×. It pulses when the party is low, and says so when leaving would
-// make a Downed companion Fallen (you don't walk out on someone lying on the floor lightly).
+// make a Downed companion slain (you don't walk out on someone lying on the floor lightly).
 // DOM only: reads sim state, sends a `goto` command.
 
 import { statsFor } from '../sim/party.js';
@@ -43,7 +43,7 @@ export function createStepOut({ sim, partyPanel }) {
       const up = S.party.filter((/** @type {any} */ m) => !m.fallen), frac = up.reduce((a, /** @type {any} */ m) => a + (m.down ? 0 : m.hp), 0) / Math.max(1, up.reduce((a, /** @type {any} */ m) => a + statsFor(m).maxHp, 0));
       const downed = S.party.slice(1).find((/** @type {any} */ m) => m.down && !m.fallen);
       low = frac < LOW;
-      html = `${ICON}<div><span>Step out</span>${downed ? `<small>${downed.name.replace(/[<>&"]/g, '')} is Downed: leaving makes them Fallen</small>` : low ? '<small>the party is low</small>' : ''}</div>`;
+      html = `${ICON}<div><span>Step out</span>${downed ? `<small>${downed.name.replace(/[<>&"]/g, '')} is Downed: walk out now and they're slain</small>` : low ? '<small>the party is low</small>' : ''}</div>`;
     }
     if (html !== last) { btn.innerHTML = html; last = html; }
     btn.classList.toggle('on', !!html); btn.classList.toggle('low', low);

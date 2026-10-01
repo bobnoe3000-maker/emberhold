@@ -1,12 +1,17 @@
 # Emberfall — Game Design Document
 
-**v1.11 · 2026-10-01 · Plan of record for game design.** v1.11 makes a new companion a time
+**v1.12 · 2026-10-01 · Plan of record for game design.** v1.12 settles the words (dialogue critic
+pass 1, world doc v1.13): a companion dead until raised is **Slain** (it was Fallen; the code keeps
+`fallen`), a lost room's party is **beaten**, the ✦ salvage currency is **cinders** (it was
+Embers), and the HUD's Weakened tag shows the minutes left.
+
+v1.11 makes a new companion a time
 investment as well as a gold one (§6): a tavern hire, or Brannoc, joins at **half your level, rounded
 up**, and learns the rest at your side. Changing companions now costs levels, so you think about it.
 
 v1.10 makes an in-game day an hour of play
 (it was 24 minutes) and shows it (§10.1): dawn, day, dusk and night light the town and the overland
-differently, and a small sky dial under the embers tells you which it is. The wage is still paid once
+differently, and a small sky dial under the cinders tells you which it is. The wage is still paid once
 a dawn, the same amount; so are the board, the tavern's roster and the temple's free raise.
 
 v1.9 makes companions a choice and a gold
@@ -233,24 +238,24 @@ faces the same wave a lone hero would (v1.5): companions are added strength. The
 breath (§3.3), so healing and sustain decide how long a party can stay.
 
 ### 3.6 Death, resurrection and defeat
-**States:** Healthy → **Downed** (0 HP in battle) → **Fallen** (dead) → resurrected.
+**States:** Healthy → **Downed** (0 HP in battle) → **Slain** (dead) → resurrected.
 
 - **Downed:** if the wave is cleared, Downed members rise in the lull at 20 % HP.
-- **Downed → Fallen** happens when a member is downed a **second time in the same room
+- **Downed → Slain** happens when a member is downed a **second time in the same room
   visit** — counted in waves back to back: standing through one cleared wave forgets the
   earlier down — or when the party **leaves the
   room** with them still Downed.
-- **Fallen:**
+- **Slain:**
   - the member follows as a ghost: no fighting, no XP;
   - they can be resurrected at a **Temple** (25 gold × level; free once a day for heroes at
     level 5 or lower), at a site **Shrine** (one use each), or with a rare **Phoenix Ember**.
     A level-20 Cleric's *Lifeline* keeps one ally a room visit from going down at all.
-- **The hero** stays Downed, never Fallen, while any companion stands.
+- **The hero** stays Downed, never Slain, while any companion stands.
 - **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
   everyone was back over 60 %, which let a room be held forever).
-- **Temple:** an in-game day is an hour of play (§10.1). **Shrine:** with nobody Fallen it
+- **Temple:** an in-game day is an hour of play (§10.1). **Shrine:** with nobody Slain it
   restores the party instead (HP and MP, everyone standing). It is only spent when it does
-  something: with nobody Fallen and everyone whole, a touch leaves it lit for later and says so
+  something: with nobody Slain and everyone whole, a touch leaves it lit for later and says so
   (v1.10). It always says what it did. A fragment written on it is read at the first touch either
   way. On screen (`src/render/gsprite.js` voxShrine), a shrine stands as tall as a hero: a stepped
   plinth, a pillar and a big aqua orb, against a far wall so no wall hides it. An unused one carries
@@ -258,7 +263,7 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
   stone. **Inn rest:** 5 gold × your level; full HP and MP, and lifts
   Weakened.
 - **Wipe:** if everyone is down, the party wakes at the region town's **Temple**:
-  - everyone is restored to 30 % HP and Fallen status is cleared;
+  - everyone is restored to 30 % HP and Slain status is cleared;
   - you lose **25 % of carried gold** (gold banks when you visit a town);
   - everyone is **Weakened** (−10 % stats) until they rest at the inn or 10 minutes pass;
   - you keep your XP and gear;
@@ -607,7 +612,7 @@ with `roomlv.mjs --perks` on 4 seeds, 300 s, fighter + rogue + cleric in the cla
 |---|---|---|
 | A lone hero, levels 1–3, kit at level | Wins the first 3+ waves, goes down by wave 12 | You beat level-1 foes alone but can't farm them. Walk out to recover and go back in. |
 | A lone hero, level 4+ | Down within 2 waves | Same-level rooms want company. Rooms well below you are for solo. |
-| The right party (tank, damage, healer) in gear at level | Holds 10+ waves, nobody Fallen in the first five | The tide climbs to +100 %, then falls back. Holding the top means farming as long as you like. |
+| The right party (tank, damage, healer) in gear at level | Holds 10+ waves, nobody Slain in the first five | The tide climbs to +100 %, then falls back. Holding the top means farming as long as you like. |
 | A party with no healer, level 6+ | Worn down within 5 minutes | Composition matters. |
 | Any party, a room 3 levels up | Defeated | |
 
@@ -633,7 +638,7 @@ with `roomlv.mjs --perks` on 4 seeds, 300 s, fighter + rogue + cleric in the cla
   the hero to the nearest corridor tile past a doorway (the compass row `step-out`,
   `sim/travel.js`), where the fight ends and the corridor restores the party at 5×.
 - The button pulses under 45 % party HP ("the party is low"). If a companion is Downed, it warns
-  that leaving makes them Fallen.
+  that leaving makes them Slain.
 - Going back in is a fresh visit, with the tide back at the start. Measured: a lone level-1 hero
   who steps out when low clears more waves over four visits than one stubborn visit, and never
   wipes (`test/stepout.test.mjs`).
@@ -699,10 +704,10 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 - **Class-based.** Every item except trinkets has a class. Drops roll 80 % towards classes in
   the active party.
 - **Bad-luck protection.** Each boss kill without a Rare adds +3 % to the next roll.
-- **Smith upgrades** go from +1 to +5. Each step gives +8 % base stats and costs gold, Embers
+- **Smith upgrades** go from +1 to +5. Each step gives +8 % base stats and costs gold, cinders
   and, from +3, wood and stone (the existing counters).
-- **Salvage** off-class or outgrown items into **Embers** (the upgrade currency). The Ember
-  count sits in the top bar, next to gold.
+- **Salvage** off-class or outgrown items into **cinders** (the upgrade currency, ✦). The
+  cinder count sits in the top bar, next to gold.
 - **The party bag** has 20 slots. Identical plain items stack in one slot, up to 10: the same
   base, rarity, item level and name, and no affixes, Rare modifier or flavour. A full bag still
   takes an item that fits an existing stack; anything else that drops is salvaged at once.
@@ -826,7 +831,7 @@ progress):
     | Building | Menu |
     |---|---|
     | **Shop** (provisioner / outfitter) | Buy potions, supplies and common gear · Sell |
-    | **Smith** (the forge) | Upgrade (+1…+5) · Reforge a trait · Salvage → Embers |
+    | **Smith** (the forge) | Upgrade (+1…+5) · Reforge a trait · Salvage → cinders |
     | **Tavern** | The Lantern Guild's **quest board** (mini-quests) · Hire companions · Rumours |
     | **Inn** | Rest (restore HP/MP) · Lodge companions (the bench) · Expeditions (idle) |
     | **Temple** | Heal the Wounded · Blessings · The Chronicle (lore) |
@@ -864,13 +869,13 @@ progress):
 
   Each part blends into the next over two minutes of play, centred on the boundary. The title screen
   is always at dusk.
-- **The sky dial.** It sits under the embers in the HUD row. A half arc carries the sun from dawn to
+- **The sky dial.** It sits under the cinders in the HUD row. A half arc carries the sun from dawn to
   the end of dusk and a crescent moon through the night, and the part's name is always written next to
   it, never colour alone.
   - **Tap it** (44 px or more) for one line: when the next part comes, when dawn comes and the wages
     then.
   - **Room for it:** on a phone the EMBERFALL wordmark leaves the in-game HUD, so the row fits one
-    line: place, gold and wage, embers and dial. Only the place name can shorten, with an ellipsis.
+    line: place, gold and wage, cinders and dial. Only the place name can shorten, with an ellipsis.
   - **No overlaps:** a browser test checks the dial against everything on screen at four widths, in
     town, on the Vale and in a fight.
 
@@ -881,7 +886,7 @@ progress):
 | Currency | From | For |
 |---|---|---|
 | **Gold** | Quests, bounties, selling, chests, foes | Hiring (fee and dawn wages, §6.2), Ask around, Retrain, healing, the inn, shop gear, upgrades |
-| **Embers** | Salvage, bosses | Smith upgrades, rerolling an affix |
+| **Cinders** (✦) | Salvage, bosses | Smith upgrades, rerolling an affix |
 | **Wood / Stone** | Chests, rocks (existing counters) | High-tier upgrades; future camp or town improvements |
 | **Renown** (per region) | Quests, bosses | Unlocks; not spendable |
 
@@ -905,7 +910,7 @@ See [development-plan.md §2.13](./development-plan.md).
 **Expeditions (idle).** Leave the party, or a benched trio, farming any room it has held for
 10+ waves, for up to eight hours. The party always leaves on a wipe risk: if the sim says it
 would fall, it walks out instead and the expedition ends early. On return, the *same* battle sim fast-forwards the runs headless and pays out XP, gold,
-materials and Embers. Gear-drop rates are halved on expeditions so active play stays the best
+materials and cinders. Gear-drop rates are halved on expeditions so active play stays the best
 source of loot. Deterministic replay means an expedition's result is exact and cheat-checkable.
 
 **Multiplayer (future), in order:**

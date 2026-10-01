@@ -167,7 +167,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const g0 = await S(() => globalThis.__sim.state.counters.gold);
     await p.locator('#hubSheet [data-raise]').tap(); await p.waitForTimeout(400);
     const raised = await S(() => { const c = globalThis.__sim.state.party[1]; return !c.fallen && c.hp > 0; });
-    check('m3: the temple raises the Fallen (free: hero level 5 or lower, once a day)', raised && (await S(() => globalThis.__sim.state.counters.gold)) === g0);
+    check('m3: the temple raises the slain (free: hero level 5 or lower, once a day)', raised && (await S(() => globalThis.__sim.state.counters.gold)) === g0);
     await p.locator('#hubSheet .close').tap();
     // a wipe: everyone at 1 HP in a room → wake at the temple, Weakened, a quarter of the gold gone
     await S(() => globalThis.__sim.bus.on('defeat', (d) => (window.__lost = d.lost)));
@@ -179,9 +179,12 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
     await p.waitForSelector('#defeat.on', { timeout: 5000 }).catch(() => null);
     const recap = await p.locator('#defeat').innerText().catch(() => '');
-    check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party has fallen/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
+    check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party is beaten/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
     await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
     check('m3: "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
+    await p.waitForTimeout(1100);
+    const chip = await p.locator('#hud .stat', { hasText: 'weakened' }).innerText().catch(() => '');
+    check('m3: the HUD says Weakened, with the minutes it has left', /^weakened · (10|9) min$/.test(chip.trim()), chip);
     // the inn lifts Weakened
     await p.waitForTimeout(600);
     await p.locator('#hubBar button[data-k=inn]').tap(); await p.waitForTimeout(400);

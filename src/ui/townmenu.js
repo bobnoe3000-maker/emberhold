@@ -3,7 +3,7 @@
 // up — Shop, Smith, Tavern, Inn, Temple — and tapping one (or its building) opens that
 // service's menu as a bottom sheet. Away from the square the services aren't reachable. The actions are the GDD's
 // (emberfall-gdd.md §10); the live ones today: the tavern's quest board (the Lantern Guild's
-// jobs, sim/board.js) and hiring board, the temple (raise the Fallen, respec) and the inn (rest,
+// jobs, sim/board.js) and hiring board, the temple (raise the slain, respec) and the inn (rest,
 // the party and bench). The rest are placeholders until
 // each system lands. DOM only; reads sim state and sends commands, never writes state.
 
@@ -15,7 +15,7 @@ const SERVICES = {
   },
   smith: {
     label: 'Smith', blurb: 'The forge: upgrade your gear, reforge its traits, and salvage what you can’t use.',
-    actions: [['Upgrade', '+1 to +5 at the forge · gold, Embers, wood, stone'], ['Reforge', 'reroll one trait on a piece of gear'], ['Salvage', 'turn off-class gear into Embers']],
+    actions: [['Upgrade', '+1 to +5 at the forge · gold, cinders, wood, stone'], ['Reforge', 'reroll one trait on a piece of gear'], ['Salvage', 'turn off-class gear into cinders']],
     icon: '<path d="M3 9h11l3-3h4v3l-3 2v2H9l-2 3H5l1-3H3z"/>',
   },
   tavern: {
@@ -29,8 +29,8 @@ const SERVICES = {
     icon: '<path d="M3 18V7M3 13h18v5M21 18v-3M6 13v-2a2 2 0 0 1 2-2h3v4M12 9h6a3 3 0 0 1 3 3v1"/>',
   },
   temple: {
-    label: 'Temple', blurb: 'Raise the Fallen, set a body and mind back to how they began, take a blessing before the road, and read the Chronicle of the Fall.',
-    actions: [['Raise the Fallen', 'companions who fell, back on their feet'], ['Respec', 'unlearn your attribute points and spend them again'], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
+    label: 'Temple', blurb: 'Raise the slain, set a body and mind back to how they began, take a blessing before the road, and read the Chronicle of the Fall.',
+    actions: [['Raise the slain', 'companions who were slain, back on their feet'], ['Respec', 'unlearn your attribute points and spend them again'], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
     icon: '<path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/>',
   },
 };
@@ -148,7 +148,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
   let current = null, view = null, note = '', restDone = false, retrainId = null;
 
-  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the Fallen': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
+  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
@@ -229,14 +229,14 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       ${m.perks.map((id, i) => { const w = perkWord(id), q = PERKS[id].fam === 'quirk'; return `<div class="merc sw"><div class="who">${perkLines({ perks: [id], owed: 0 })}</div>
         <button class="btn${q ? ' ghost' : ''}" data-retrain="${i}" ${q || c > gold() ? 'disabled' : ''} aria-label="Retrain ${esc(w.name)}">${q ? 'Quirk' : `Retrain · ${c}`}</button></div>`; }).join('')}`;
   }
-  // The temple: raise the Fallen (GDD §3.6) — free once a day while your hero is level 5 or
+  // The temple: raise the slain (GDD §3.6) — free once a day while your hero is level 5 or
   // lower, else 25 gold × their level.
   function raise() {
     view = 'raise';
     const S = sim.state, fallen = [...S.party, ...S.bench].filter((m) => m.fallen);
-    sheet.innerHTML = `${head('Temple', 'Raise the Fallen', `The sisters ask 25 gold a level, and raise one a day for nothing while you are level ${FREE_RES_LEVEL} or under. You have ${gold()} gold.`)}
-      ${fallen.map((m) => { const c = sim.heroes.resurrectCost(m); return `<div class="merc fallen"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>Fallen · ${S.party.includes(m) ? 'with you, a ghost' : 'on the bench'}</span></div>
-        <button class="btn" data-raise="${m.id}" ${c > gold() ? 'disabled' : ''}>${c ? c + ' gold' : 'Free'}</button></div>`; }).join('') || '<p>Nobody in your company is Fallen.</p>'}`;
+    sheet.innerHTML = `${head('Temple', 'Raise the slain', `The sisters ask 25 gold a level, and raise one a day for nothing while you are level ${FREE_RES_LEVEL} or under. You have ${gold()} gold.`)}
+      ${fallen.map((m) => { const c = sim.heroes.resurrectCost(m); return `<div class="merc fallen"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>Slain · ${S.party.includes(m) ? 'with you, a ghost' : 'on the bench'}</span></div>
+        <button class="btn" data-raise="${m.id}" ${c > gold() ? 'disabled' : ''}>${c ? c + ' gold' : 'Free'}</button></div>`; }).join('') || '<p>Nobody in your company is slain.</p>'}`;
   }
   // The temple: respec (GDD §4.1) — the first for each member is free, then 20 gold × level.
   function respec() {
@@ -250,8 +250,8 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   function rest() {
     view = 'rest';
     const S = sim.state, c = sim.heroes.restCost(), weak = S.party.some((m) => m.weakUntil > 0);
-    sheet.innerHTML = `${head('Inn', 'Rest', `A bed, a meal and a night’s sleep: everyone standing wakes at full HP and MP${weak ? ', and no longer Weakened' : ''}. The Fallen need the temple.`)}
-      ${S.party.map((m) => { const s = statsFor(m); return `<div class="merc${m.fallen ? ' fallen' : ''}"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${m.fallen ? 'Fallen' : `HP ${Math.round(m.hp)}/${s.maxHp}`}${m.weakUntil > 0 ? ' · Weakened' : ''}</span></div></div>`; }).join('')}
+    sheet.innerHTML = `${head('Inn', 'Rest', `A bed, a meal and a night’s sleep: everyone standing wakes at full HP and MP${weak ? ', and no longer Weakened' : ''}. The slain need the temple.`)}
+      ${S.party.map((m) => { const s = statsFor(m); return `<div class="merc${m.fallen ? ' fallen' : ''}"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em><span>${m.fallen ? 'Slain' : `HP ${Math.round(m.hp)}/${s.maxHp}`}${m.weakUntil > 0 ? ' · Weakened' : ''}</span></div></div>`; }).join('')}
       <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
     restDone = false;
   }

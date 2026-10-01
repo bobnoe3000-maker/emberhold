@@ -157,12 +157,19 @@ renamed.
 | **Room level / LV** | A room's foes' level. | Room pill, compass | Clear. | Keep. |
 | **Step out** | Walk out of a room's fight. | Button | Clear. | Keep. |
 
-### For the owner
-1. **Fallen:** keep and define (recommended), or rename to *Slain*.
-2. **The defeat headline:** "The party is beaten" instead of "The party has fallen".
-3. **The ✦ currency:** rename to *cinders*, or label it.
-4. **Dungeon shrines:** keep the name (recommended), or call them altars.
-5. **Weakened:** show the minutes left on the HUD chip.
+### Decided (2026-10-01) and done
+1. **Fallen → slain.** Every word a player reads says *slain* / *Slain*: party cards, the
+   temple ("Raise the slain"), the inn, the HUD, the step-out warning, the shrine label, Maudry,
+   the tip. The save and code keep `fallen` (a boolean), and Ink keeps `fallen_name` (a bound
+   variable).
+2. **The defeat headline** reads *The party is beaten*; the battle banner reads *Your party is
+   beaten*. The Robed Stranger *kindles the dead*.
+3. **The ✦ currency** is **cinders** (top bar, bag, smith). The save keeps `counters.embers`.
+   The Ember and the ember-shard keep their names.
+4. **Dungeon shrines** keep their name.
+5. **Weakened** shows the minutes left: *weakened · 7 min*.
+
+Canon: world doc v1.13. Rules: GDD v1.12.
 
 Each is a small change once decided: the word lives in a handful of UI strings and docs. A rename
 of *Fallen* in saves isn't needed (the save stores a boolean).

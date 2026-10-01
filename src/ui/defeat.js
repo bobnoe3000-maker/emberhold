@@ -2,7 +2,7 @@
 // defeat.js — the defeat screen. A wipe used to cut straight to the temple in town; now the sim's
 // 'defeat' event (battle.js: the party wakes at the Shrine, Weakened, a quarter of the gold gone) opens
 // this screen first, over everything: where the party fell, how far it got, who struck the last blow,
-// what it costs. "Wake at the temple" closes it, and you're in Thornwick at the temple. A Fallen
+// what it costs. "Wake at the temple" closes it, and you're in Thornwick at the temple. A slain
 // companion is raised by the wipe itself.
 // DOM only: it reads the event's recap and never touches sim state. Foe names come from
 // content/foes.json; a boss is named by the sim (battle.js BOSSES).
@@ -50,7 +50,7 @@ export function createDefeat({ sim }) {
     const r = e.recap, k = r && r.killer;
     el.textContent = '';
     const box = document.createElement('div'); box.className = 'box';
-    const h = document.createElement('h2'); h.textContent = 'The party has fallen';
+    const h = document.createElement('h2'); h.textContent = 'The party is beaten';
     const where = document.createElement('div'); where.className = 'where';
     where.textContent = r ? `${r.siteName} · floor ${r.floor} · a level ${r.level} room · wave ${r.wave}` : '';
     const how = document.createElement('p'); how.className = 'how';

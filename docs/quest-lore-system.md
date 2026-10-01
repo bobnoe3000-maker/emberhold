@@ -168,7 +168,7 @@ Objectives can be ordered (step by step) or unordered (`"any": true` within a st
 ### 4.4 NPC def
 
 **Implemented for Thornwick (M4 slice 4, 2026-09-30; world doc §5, v1.6):**
-- **Named people**, each with an Ink hub and origin and Fallen lines:
+- **Named people**, each with an Ink hub and origin and slain lines:
   - Maudry Fenn at the Tired Mule;
   - Warden-Captain Osric Hale at the Watch post by the well (`osric.ink`), who gives the bounty
     *The Captain's Ledger* (three elites in the Old Barrows, from level 2);
