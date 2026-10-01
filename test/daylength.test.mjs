@@ -44,7 +44,7 @@ test('a v14 save (a 24-minute day) keeps its day number, its time of day, a boar
   assert.equal(r.state.t, 3 * DAY_S + 700 * 2.5);
   assert.equal(Math.floor(r.state.t / DAY_S), 3); assert.equal(partOf(r.state.t), 1);
   assert.equal(r.state.party[0].weakUntil - r.state.t, 300, 'Weakened keeps its 300 s');
-  assert.deepEqual(r.state.board, { day: 3, lv: 4 }); assert.ok(r.board.def(job.id), 'the board job still stands');
+  assert.deepEqual(r.state.board, { day: 3, lv: 4, half: 0 }); assert.ok(r.board.def(job.id), 'the board job still stands');
   assert.equal(r.state.wageDay, 3);
   const ev = []; r.bus.on('wages', (w) => ev.push(w)); r.tick();
   assert.equal(ev.length, 0, 'no wage twice for a dawn already paid');

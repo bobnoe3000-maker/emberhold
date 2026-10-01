@@ -40,14 +40,23 @@ test('a day\'s jobs are pure, differ by day, and never ask for a place more than
   assert.equal(jobOf(SEED, 'board_x'), null); assert.equal(jobOf(SEED, 'board_0_1_7'), null);
 });
 
-test('the board goes up in town on a new day, at the level you had then', () => {
+test('the board goes up in town at dawn and again at dusk (half an hour of play apart), at the level you had then', () => {
   const dun = createSim(SEED, undefined, { scene: 'dungeon' }); for (let i = 0; i < 5; i++) dun.tick();
   assert.equal(dun.state.board.day, -1, 'not in a dungeon');
   const sim = town(3), ev = events(sim, ['boardChanged']);
-  assert.deepEqual(sim.state.board, { day: 0, lv: 3 });
-  setLv(sim, 5); sim.tick(); assert.deepEqual(sim.state.board, { day: 0, lv: 3 }, 'the same board all day');
-  sim.state.t = DAY_S + 1; sim.tick(); assert.deepEqual(sim.state.board, { day: 1, lv: 5 }); assert.equal(ev.length, 1);
+  assert.deepEqual(sim.state.board, { day: 0, lv: 3, half: 0 });
+  assert.deepEqual(sim.board.nextPosting(), { at: 'dusk', secs: DAY_S / 2 - sim.state.t });
+  setLv(sim, 5); sim.tick(); assert.deepEqual(sim.state.board, { day: 0, lv: 3, half: 0 }, 'the same board until dusk');
+  const dawnIds = sim.board.offers().map((j) => j.id);
+  sim.state.t = DAY_S / 2 + 1; sim.tick(); assert.deepEqual(sim.state.board, { day: 0, lv: 5, half: 1 }); assert.equal(ev.length, 1);
+  const duskIds = sim.board.offers().map((j) => j.id);
+  assert.ok(duskIds.every((id) => /^board_0d_5_\d$/.test(id)) && dawnIds.every((id) => /^board_0_3_\d$/.test(id)), `${dawnIds} / ${duskIds}`);
+  assert.equal(sim.board.nextPosting().at, 'dawn');
+  sim.state.t = DAY_S + 1; sim.tick(); assert.deepEqual(sim.state.board, { day: 1, lv: 5, half: 0 }); assert.equal(ev.length, 2);
   assert.equal(sim.board.offers().length, 4);
+  // a dawn posting draws as the one-a-day board always did: jobs held in older saves rebuild unchanged
+  assert.deepEqual(boardOffers(SEED, 7, 4, 0).map((j) => [j.tpl, j.n, j.floor]), boardOffers(SEED, 7, 4).map((j) => [j.tpl, j.n, j.floor]));
+  assert.ok(jobOf(SEED, 'board_7d_4_0') && jobOf(SEED, 'board_7d_4_0').half === 1);
 });
 
 test('jobs are taken at the board, in town, once each, three at a time', () => {
@@ -116,12 +125,13 @@ test('the save keeps the board and its jobs by id; it refuses what it couldn\'t 
   const sim = town(4), j = sim.board.offers()[1];
   push(sim, { type: 'boardAccept', id: j.id }); sim.state.quests[j.id].n = [1];
   const data = JSON.parse(JSON.stringify(sim.snapshot()));
-  assert.deepEqual(data.board, { day: 0, lv: 4 }); assert.deepEqual(data.quests[j.id], [QS.ACTIVE, 0, 1]);
-  const b = town(1); b.restore(data); assert.deepEqual(b.state.board, { day: 0, lv: 4 }); assert.deepEqual(b.state.quests[j.id], { st: QS.ACTIVE, step: 0, n: [1] });
+  assert.deepEqual(data.board, { day: 0, lv: 4, half: 0 }); assert.deepEqual(data.quests[j.id], [QS.ACTIVE, 0, 1]);
+  const b = town(1); b.restore(data); assert.deepEqual(b.state.board, { day: 0, lv: 4, half: 0 }); assert.deepEqual(b.state.quests[j.id], { st: QS.ACTIVE, step: 0, n: [1] });
   assert.equal(b.board.offers()[1].status, QS.ACTIVE);
-  b.restore({ ...data, quests: { ...data.quests, board_0_60_0: [1, 0, 0], board_9_4_0: [1, 0, 0] }, board: { day: 0, lv: 60 } });
-  assert.deepEqual(Object.keys(b.state.quests), [j.id], 'a level above the hero, a day to come: dropped'); assert.deepEqual(b.state.board, { day: -1, lv: 1 });
-  const old = { ...data }; delete old.board; b.restore(old); assert.equal(b.state.board.day, -1); b.tick(); assert.deepEqual(b.state.board, { day: 0, lv: 4 }, 'v8: it goes up in town');
+  b.restore({ ...data, quests: { ...data.quests, board_0_60_0: [1, 0, 0], board_9_4_0: [1, 0, 0], board_0d_4_0: [1, 0, 0] }, board: { day: 0, lv: 60 } });
+  assert.deepEqual(Object.keys(b.state.quests), [j.id], 'a level above the hero, a day to come, a dusk not yet come: dropped'); assert.deepEqual(b.state.board, { day: -1, lv: 1, half: 0 });
+  b.restore({ ...data, board: { day: 0, lv: 4 } }); assert.deepEqual(b.state.board, { day: 0, lv: 4, half: 0 }, 'v15: no half is dawn');
+  const old = { ...data }; delete old.board; b.restore(old); assert.equal(b.state.board.day, -1); b.tick(); assert.deepEqual(b.state.board, { day: 0, lv: 4, half: 0 }, 'v8: it goes up in town');
 });
 
 // ── the words ─────────────────────────────────────────────────────────────────

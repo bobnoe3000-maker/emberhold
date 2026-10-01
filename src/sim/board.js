@@ -4,13 +4,16 @@
 // what it pays; the words (titles, hooks, who posted it, journal lines) live in
 // content/board/<template>.json, and a test keeps the two in step.
 //
-// Pure offers: a day's jobs are a function of (world seed, in-game day, the hero's level when the
-// board went up), so a job's id, board_<day>_<lv>_<slot>, is enough to rebuild it. The save keeps
+// Two postings a day (2026-10-01, GDD §9 v1.12): at dawn and at dusk, half an hour of play apart, since
+// the day became an hour (it had been one a day, every 24 minutes). Pure offers: a posting's jobs are a
+// function of (world seed, in-game day, dawn or dusk, the hero's level when it went up), so a job's id,
+// board_<day>_<lv>_<slot> at dawn or board_<day>d_<lv>_<slot> at dusk, is enough to rebuild it (a dawn
+// posting draws exactly as the one-a-day board did, so jobs held in older saves rebuild unchanged). The save keeps
 // the id and the counters (quests.js), never a job's shape or rewards, and an id the save couldn't
 // have earned (a later day, a level above the hero's) rebuilds to nothing.
 //
-// The board goes up when you're in a town on a new in-game day (DAY_S of play): state.board =
-// { day, lv }. Taking and handing in happen at the board, in town:
+// A posting goes up when you're in a town after it's due: state.board = { day, lv, half } (half 1 =
+// dusk; older saves have no half: dawn). Taking and handing in happen at the board, in town:
 //   boardAccept { id }   one of today's jobs, not already taken, at most MAX_JOBS open at once
 //   boardTurnIn { id }   a job whose objectives are done: paid once (quests.js)
 // Events: 'boardChanged' { day, lv }; 'refused' { reason } for the window; quest events from quests.js.
@@ -80,18 +83,18 @@ export const rewardFor = (effort, lv, skulls) => {
   return { xp: round5(12 * lv * effort * k), gold: round5(effort * (3 + 2 * lv) * k) };
 };
 
-/** @typedef {{ id: string, tpl: string, day: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
+/** @typedef {{ id: string, tpl: string, day: number, half: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
 const cache = new Map();
-/** The day's jobs. @param {number} seed @param {number} day @param {number} lv @returns {Job[]} */
-export function boardOffers(seed, day, lv) {
-  const key = `${seed}_${day}_${lv}`; if (cache.has(key)) return cache.get(key);
-  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1), STREAM.BOARD));
+/** A posting's jobs. @param {number} seed @param {number} day @param {number} lv @param {number} [half] 0 dawn · 1 dusk @returns {Job[]} */
+export function boardOffers(seed, day, lv, half = 0) {
+  const key = `${seed}_${day}_${lv}_${half}`; if (cache.has(key)) return cache.get(key);
+  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0), STREAM.BOARD));
   const pool = TEMPLATES.filter((t) => BOARD[t].min(lv));
   for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const jobs = pool.slice(0, lv >= 4 ? 4 : 3).map((tpl, slot) => {
     const T = BOARD[tpl], s = T.size(rng, lv), target = T.target(s, lv), skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv);
     /** @type {[number, number]} */ const pick = [rng(), rng()];              // the words: a title / hook and a poster (content/board)
-    return { id: `board_${day}_${lv}_${slot}`, tpl, day, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
+    return { id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
       kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region: 'vale', level: /** @type {[number, number]} */ ([lv, lv]),
       steps: [{ id: 'job', objectives: [T.objective(s)] }], rewards: rewardFor(T.effort(s), lv, skulls) };
   });
@@ -99,28 +102,29 @@ export function boardOffers(seed, day, lv) {
   cache.set(key, jobs);
   return jobs;
 }
-const ID = /^board_(\d+)_(\d+)_(\d)$/;
+const ID = /^board_(\d+)(d?)_(\d+)_(\d)$/;
 /** a job from its id alone (null if it isn't one) @param {number} seed @param {string} id */
 export function jobOf(seed, id) {
   const m = ID.exec(String(id)); if (!m) return null;
-  return boardOffers(seed, +m[1], +m[2])[+m[3]] || null;
+  return boardOffers(seed, +m[1], +m[3], m[2] ? 1 : 0)[+m[4]] || null;
 }
 
 /** @param {{ state: any, bus: any, getWorld: () => any, seed: number, quests: any }} o */
 export function createBoard({ state, bus, getWorld, seed, quests }) {
-  if (!state.board) state.board = { day: -1, lv: 1 };
+  if (!state.board) state.board = { day: -1, lv: 1, half: 0 };
   const day = () => Math.floor(state.t / DAY_S);
+  const half = () => ((state.t % DAY_S) >= DAY_S / 2 ? 1 : 0);                 // dusk starts the day's second half
   const inTown = () => getWorld().kind === 'town';
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
-  const today = () => (state.board.day >= 0 ? boardOffers(seed, state.board.day, state.board.lv) : []);
+  const today = () => (state.board.day >= 0 ? boardOffers(seed, state.board.day, state.board.lv, state.board.half || 0) : []);
   const open = () => Object.keys(state.quests).filter((k) => ID.test(k) && (state.quests[k].st === QS.ACTIVE || state.quests[k].st === QS.READY)).length;
-  /** a job the save could have earned: not from a day to come, not above the hero's level @param {string} id */
-  const def = (id) => { const j = jobOf(seed, id); return j && j.day <= day() && j.lv <= state.party[0].level ? j : null; };
+  /** a job the save could have earned: not from a posting to come, not above the hero's level @param {string} id */
+  const def = (id) => { const j = jobOf(seed, id); return j && (j.day < day() || (j.day === day() && j.half <= half())) && j.lv <= state.party[0].level ? j : null; };
 
-  // a new day's board goes up the first time you're in a town that day
+  // a new posting goes up the first time you're in a town after it's due (dawn and dusk)
   function tick() {
-    if (state.board.day === day() || !inTown()) return;
-    state.board = { day: day(), lv: state.party[0].level };
+    if ((state.board.day === day() && (state.board.half || 0) === half()) || !inTown()) return;
+    state.board = { day: day(), lv: state.party[0].level, half: half() };
     bus.emit('boardChanged', { ...state.board });
   }
   function command(cmd) {
@@ -146,9 +150,12 @@ export function createBoard({ state, bus, getWorld, seed, quests }) {
   const offers = () => today().map((j) => ({ ...j, status: state.quests[j.id] ? state.quests[j.id].st : QS.AVAILABLE }));
   const snapshot = () => ({ board: { ...state.board } });
   function restore(data) {
-    const b = data?.board, d = b && Number.isInteger(b.day) ? b.day : -1, lv = b && Number.isInteger(b.lv) ? b.lv : 1;
-    state.board = d >= 0 && d <= day() && lv >= 1 && lv <= state.party[0].level ? { day: d, lv } : { day: -1, lv: 1 };   // v8 and older: none yet
+    const b = data?.board, d = b && Number.isInteger(b.day) ? b.day : -1, lv = b && Number.isInteger(b.lv) ? b.lv : 1, h = b && b.half === 1 ? 1 : 0;   // v15 and older: no half (dawn)
+    const due = d >= 0 && (d < day() || (d === day() && h <= half()));
+    state.board = due && lv >= 1 && lv <= state.party[0].level ? { day: d, lv, half: h } : { day: -1, lv: 1, half: 0 };   // v8 and older: none yet
   }
-  const nextDawn = () => DAY_S - (state.t % DAY_S);                          // seconds of play until the next board
-  return { tick, command, offers, def, open, snapshot, restore, nextDawn };
+  const nextDawn = () => DAY_S - (state.t % DAY_S);                          // seconds of play until the next dawn (the wage)
+  /** the next posting: 'dawn' or 'dusk', and the seconds of play until it */
+  const nextPosting = () => { const s = state.t % DAY_S; return s < DAY_S / 2 ? { at: 'dusk', secs: DAY_S / 2 - s } : { at: 'dawn', secs: DAY_S - s }; };
+  return { tick, command, offers, def, open, snapshot, restore, nextDawn, nextPosting };
 }

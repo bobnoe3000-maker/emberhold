@@ -46,11 +46,14 @@
 //       (no dayS: a 24-minute day) is retimed by the sim's restore onto the same day number and the same
 //       time of that day, so stored days (wages, board jobs, tavern, temple, inn) read as they did; a
 //       slot's playtime now counts ticks, which retiming doesn't touch.
+//   v16: the board posts at dawn and at dusk — board { day, lv, half } (sim/board.js), and dusk jobs'
+//       ids read board_<day>d_<lv>_<slot>. Only grew: older data has no half (a dawn board), and its
+//       board jobs rebuild exactly as before.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

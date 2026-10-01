@@ -743,9 +743,13 @@ three are completed. **Chapter quests** (the main arc) are pinned on top and gat
 
 **Implemented (v1.4, M4 slice 3).** Thornwick's board hangs in the Tired Mule (Tavern → Quest
 board); `src/sim/board.js`, words in `content/board/`.
-- **When it refreshes:** at in-game dawn, every hour of play (24 minutes before v1.10), the first time you're in town
-  that day. Not "when three are completed" yet.
-- **How many jobs:** 3 jobs, or 4 from level 4. The jobs are fixed for the day at the level you
+- **When it refreshes:** twice an in-game day, at **dawn and at dusk**, half an hour of play apart
+  (v1.12; it was once a day: every 24 minutes before v1.10, every hour in v1.10–1.11), the first time
+  you're in town after it's due. The board says which comes next and when ("new jobs at dusk, in
+  12 min · posted at dawn and dusk"), and its list is headed *Posted at dawn* or *Posted at dusk*.
+  A dusk posting is new jobs (ids `board_<day>d_…`); a dawn one draws exactly as the one-a-day board
+  did.
+- **How many jobs:** 3 jobs, or 4 from level 4. The jobs are fixed for the posting at the level you
   had when the board went up.
 - **Holding jobs:** at most **3** open at once. They're taken and handed in only at the board.
 - **Templates:**

@@ -170,7 +170,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   function board() {
     view = 'board';
     const S = sim.state, offers = sim.world.kind === 'town' ? sim.board.offers() : [], open = sim.board.open();
-    const mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60));
+    const nx = sim.board.nextPosting(), mins = Math.max(1, Math.ceil(nx.secs / 60));
     const card = (job, st) => {
       const d = boardWords(job); if (!d) return '';
       const btn = st === QS.READY ? `<button class="btn in" data-handin="${job.id}">Hand in · ${d.rewards.xp} XP · ${d.rewards.gold} gold</button>`
@@ -186,9 +186,9 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const today = new Set(offers.map((j) => j.id));
     const readyOld = Object.keys(S.quests).filter((id) => !today.has(id) && S.quests[id].st === QS.READY && sim.quests.def(id)?.kind === 'board').map((id) => sim.quests.def(id));
     sheet.innerHTML = `${head('Tavern', 'The Lantern Guild board', 'Jobs pinned up by the door. Anyone can post one; the Guild takes a cut. Hand them in here when they’re done.')}
-      <div class="jobs-top">Jobs held ${open}/${MAX_JOBS} · new jobs at dawn, in ${mins} min</div>
+      <div class="jobs-top">Jobs held ${open}/${MAX_JOBS} · new jobs at ${nx.at}, in ${mins} min · posted at dawn and dusk</div>
       ${readyOld.length ? `<h3>Done · hand in</h3>${readyOld.map((j) => card(j, QS.READY)).join('')}` : ''}
-      <h3>Today’s jobs</h3>${offers.map((j) => card(j, j.status)).join('') || '<p>The board is bare. Come back at dawn.</p>'}`;
+      <h3>${S.board && S.board.half ? 'Posted at dusk' : 'Posted at dawn'}</h3>${offers.map((j) => card(j, j.status)).join('') || `<p>The board is bare. New jobs go up at ${nx.at}, in ${mins} min.</p>`}`;
   }
   // The tavern's hiring board (GDD §6.2): today's Lantern Guild sellswords, each with its rank (the
   // word and its colour), perks, fee and dawn wage; your company with what it's owed, its loyalty and a
