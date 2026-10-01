@@ -412,6 +412,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForSelector('#stepOut.on', { timeout: 5000 }).catch(() => null);
     const inFight = await p.evaluate(() => !!globalThis.__sim.battle);
     const shown = await p.locator('#stepOut.on').count();
+    // the compass list stays open through the fight (the battle walking the hero isn't the stick); the stick closes it
+    await p.locator('#compassBtn').tap(); await run(2);
+    let movedInFight = 0; for (let i = 0; i < 16; i++) { await run(10); if (await p.evaluate(() => globalThis.__sim.state.player.moving)) movedInFight++; }
+    const stillOpen = await p.locator('#compassMenu.on').count();
+    await p.evaluate(() => { for (let i = 0; i < 3; i++) { globalThis.__sim.commands.push({ type: 'move', x: 1, y: 0 }); globalThis.__frame(1000 / 30); } });
+    await p.waitForSelector('#compassMenu.on', { state: 'hidden', timeout: 3000 }).catch(() => null);
+    check('compass: the list stays open while the fight walks the hero, and the stick still closes it', stillOpen === 1 && (await p.locator('#compassMenu.on').count()) === 0, `open through ${movedInFight}/16 moving samples: ${stillOpen} · after the stick: ${await p.locator('#compassMenu.on').count()}`);
     await p.evaluate(() => { const h = globalThis.__sim.state.party[0]; h.hp = Math.max(1, h.hp * 0.3); });
     await run(3);
     await p.waitForSelector('#stepOut.on.low', { timeout: 5000 }).catch(() => null);   // (the button follows on animation frames: slow in headless)

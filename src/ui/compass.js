@@ -109,7 +109,9 @@ export function createCompass(sim, { partyPanel, inSquare, questTitle = () => ''
   let last = '';
   (function watch() {
     const p = sim.state.player;                                   // (it stays in the town square too: the quickest way back out)
-    if (!p.path && p.moving && menu.classList.contains('on')) closeMenu();                    // the stick took over
+    // the stick took over (a move command sets p.want for its tick). Not p.moving: in a fight the battle walks
+    // the hero itself, and that closed the list as soon as combat started
+    if (!p.path && p.want && menu.classList.contains('on')) closeMenu();
     let html = '', mode = '';
     if (p.path && p.dest) {
       let d = 0, x = p.x, y = p.y; for (const [wx, wy] of p.path) { d += Math.hypot(wx - x, wy - y); x = wx; y = wy; }   // distance left along the path
