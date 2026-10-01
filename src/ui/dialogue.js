@@ -14,11 +14,16 @@
 // quest's state: `quest` an offer (New), `quest active` one you've taken (Taken, quieter, a hollow
 // diamond), `quest ready` one to hand in here (Hand in, green). Taking or handing in a quest puts a
 // note at the top of the window ('questAccepted' / 'questReward'), with its title, until your next pick.
+// A skill learned from the one you're talking to (a class trial handed in: 'trialDone') adds its own
+// row under it, the way the quest's reward does: the skill's name, who in the company knows it now,
+// and what it does.
 
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { createStoryBook } from '../story/adapter.js';
 import { drawPortrait, swallow, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { SKILLS } from '../sim/skills.js';
+import { CLASSES } from '../sim/party.js';
 
 const CSS = `
 #talkWrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; display: none; pointer-events: none; }
@@ -54,6 +59,10 @@ const CSS = `
 #talk .note.done { border-color: #8fe07a; background: rgba(143,224,122,.1); color: #c8f4b8; }
 #talk .note.done::before { color: #8fe07a; }
 #talk .note b { font-weight: 700; }
+#talk .note.skill { border-color: #b8a0ff; background: rgba(184,160,255,.12); color: #e0d6ff; flex-direction: column; align-items: flex-start; gap: 2px; }
+#talk .note.skill::before { content: none; }
+#talk .note.skill .h::before { content: '✦ '; color: #c8b4ff; }
+#talk .note.skill small { font-size: 12.5px; color: #c8bfe8; }
 #talk .ch.quest.ready { border-color: #8fe07a; background: rgba(143,224,122,.11); color: #c8f4b8; box-shadow: inset 3px 0 0 #8fe07a; }
 #talk .ch.quest.ready::before { color: #8fe07a; }
 #talk .ch.quest.ready em { background: #8fe07a; }
@@ -66,7 +75,7 @@ function Portrait({ look }) {
 }
 
 const CHIP = { ready: 'Hand in', active: 'Taken' };
-/** @param {{ def: any, place: string, beat: any, note: { kind: string, title: string, sub: string } | null, onChoose: (i: number) => void, onClose: () => void }} p */
+/** @param {{ def: any, place: string, beat: any, note: { kind: string, title: string, sub: string, skill?: { name: string, who: string, text: string } } | null, onChoose: (i: number) => void, onClose: () => void }} p */
 function Talk({ def, place, beat, note, onChoose, onClose }) {
   const [at, setAt] = useState(0);                            // (keyed per beat: a new beat starts at its first line)
   const lines = beat.lines, line = lines[Math.min(at, lines.length - 1)] || '', last = at >= lines.length - 1;
@@ -75,6 +84,7 @@ function Talk({ def, place, beat, note, onChoose, onClose }) {
     <button class="x" aria-label="Leave" onClick=${onClose}>✕</button>
     <div class="who"><${Portrait} look=${def.portrait || def.look} /><div class="nm"><b>${def.name}</b><span>${place}</span></div></div>
     ${note ? html`<div class=${'note' + (note.kind === 'done' ? ' done' : '')} role="status"><span>${note.kind === 'done' ? 'Handed in: ' : 'Quest taken: '}<b>${note.title}</b>${note.sub ? ' · ' + note.sub : ''}</span></div>` : null}
+    ${note && note.skill ? html`<div class="note skill" role="status"><span class="h">New skill learned: <b>${note.skill.name}</b> · ${note.skill.who}</span><small>${note.skill.text}</small></div>` : null}
     <div class=${'line' + (/^["“]/.test(line) ? '' : ' nar')}>${line}</div>
     ${!last ? html`<button class="more" onClick=${next}>Go on ▸</button>`
       : beat.ended ? html`<button class="more" onClick=${onClose}>Leave ▸</button>`
@@ -105,6 +115,12 @@ export function createDialogue({ sim, cast, openService, questTitle = (id) => id
   const tell = (n) => { if (!open || !shown) return; note = n; show(shown, false); };
   sim.bus.on('questAccepted', ({ id }) => tell({ kind: 'taken', title: questTitle(id) || 'a new quest', sub: "it's in your Journal" }));
   sim.bus.on('questReward', ({ id, xp, gold }) => tell({ kind: 'done', title: questTitle(id) || 'the quest', sub: [xp ? `+${xp} XP` : '', gold ? `+${gold} gold` : ''].filter(Boolean).join(' · ') }));
+  // (the sim hands the trial in first, then says the skill is learned: the row joins the quest's note)
+  sim.bus.on('trialDone', ({ cls, id }) => {
+    const A = (SKILLS[cls] || []).find((q) => q.trial); if (!A) return;
+    const l = (CLASSES[cls] || { label: cls }).label.toLowerCase();
+    tell({ ...(note || { kind: 'done', title: questTitle(id) || 'the trial', sub: '' }), skill: { name: A.name, who: `every ${l} in your company knows it`, text: A.text } });
+  });
   function close() {
     if (!open) return;
     open = false; held = null; wrap.classList.remove('on'); render(null, wrap); push({ type: 'endTalk' });

@@ -565,6 +565,29 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 14. A skill learned from someone you talk to says so, the way a quest's reward does: hand Nell her trial
+// and the conversation window shows "New skill learned: Smoke Step", who knows it now and what it does.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    const more = async () => { for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); } };
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(() => {
+      const s = globalThis.__sim, h = s.state.party[0]; h.cls = 'rogue'; h.level = 6; s.state.trials = {};
+      s.quests.begin('trial_quiet_feet'); s.state.quests.trial_quiet_feet.st = 2;                // three sergeants down: ready to hand in
+      const n = s.world.npcs.find((q) => q.id === 'nell_tolley'), q = s.state.player; q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: 'nell_tolley' });
+    });
+    await run(3); await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).catch(() => null); await more();
+    await p.locator('#talk .ch', { hasText: 'Three sergeants' }).tap().catch(() => null); await run(4); await more();
+    const done = await p.locator('#talk .note.done').first().innerText().catch(() => ''), skill = await p.locator('#talk .note.skill').innerText().catch(() => '');
+    check('skill: handing in a trial says a new skill is learned (name, who knows it, what it does), under the quest\'s own note', /Handed in/.test(done) && /New skill learned: Smoke Step/.test(skill) && /every rogue in your company knows it/.test(skill) && /DODGE/.test(skill) && errs.length === 0, `${done} || ${skill.replace(/\n/g, ' · ')}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

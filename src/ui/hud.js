@@ -50,7 +50,7 @@ export function createHud(sim) {
   let road = null; fetch('./content/road/vale.json').then((r) => r.json()).then((d) => { road = d; }).catch(() => {});
   sim.bus.on('roadNear', (e) => { const t = road && road.near[String(e.ranks)]; if (t) show(t, 4200); });
   sim.bus.on('roadThinned', (e) => { const t = road && road.thinned[String(e.ranks)]; if (t) show(t, 4200); });
-  sim.bus.on('trialDone', (e) => { const A = (SKILLS[e.cls] || []).find((q) => q.trial), l = (CLASSES[e.cls] || { label: e.cls }).label.toLowerCase(); if (A) show(`The ${l}'s trial is done · every ${l} in your company knows ${A.name}`, 3200); });
+  sim.bus.on('trialDone', (e) => { const A = (SKILLS[e.cls] || []).find((q) => q.trial), l = (CLASSES[e.cls] || { label: e.cls }).label.toLowerCase(); if (A) show(`New skill learned · ${A.name} · every ${l} in your company knows it`, 3600); });
   sim.bus.on('companionJoined', (b) => show(`${b.name} joins your company · tap his card to talk`, 2800));
   // the Lantern Guild's sellswords (GDD §6.2)
   sim.bus.on('hired', (h) => show(`${h.name} signs on · ${h.fee} gold to the Guild`, 2200));
