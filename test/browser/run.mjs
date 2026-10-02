@@ -10,7 +10,7 @@
 //   5. every class in a fight (Chromium): a party of each class walks into a room; the fight
 //      runs (the sim keeps ticking) with no page errors — a renderer table without the cleric
 //      once threw at the first HP bar and froze the game
-//   6. talk to Maudry (Chromium, manual clock): tap her across the square → the hero walks over →
+//   6. talk to Maudry (Chromium, manual clock): tap her across the square → the hero walks over (and turns to her) →
 //      the dialogue window → lines → choices → her flag set in the sim → Show me who's looking opens
 //      the tavern's hiring board
 //   7. Maudry's errand (Chromium, manual clock): "Anything I can do?" → accept → the toast, the
@@ -288,6 +288,34 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       const choices = await p.locator('#talk .ch').allTextContents(), flags = await p.evaluate(() => globalThis.__sim.state.flags);
       const quest = await p.locator('#talk .ch.quest').allTextContents();       // her errand's choice is marked: a diamond, a QUEST label, its own colour
       check('talk: her lines, then choices, the quest ones marked (her errand, Act I); meeting her set met_maudry (a command the sim checked)', choices.length === 8 && quest.length === 2 && choices.some((c) => /How does the Guild hire/.test(c)) && quest.some((q) => /^Anything I can do\?\s*New$/.test(q)) && quest.some((q) => /^You said something about smoke\?\s*New$/.test(q)) && flags.met_maudry === 1, `${choices.length} choices · quest ${JSON.stringify(quest)} · flags ${JSON.stringify(flags)}`);
+      // (art pass 6) in a conversation the hero turns to face her: the drawn octant is the one toward her
+      const face = await p.evaluate(() => {
+        globalThis.__trace = []; for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 30);
+        const t = globalThis.__trace.at(-1), s = globalThis.__sim, h = s.state.player, n = s.world.npcs.find((q) => q.id === 'maudry_fenn'); globalThis.__trace = null;
+        const hx = n.x - h.x, hy = n.y - h.y, a = Math.atan2(hx + hy, hx - hy) / (Math.PI / 4), dir = t.party[0][3];
+        let d = a - dir; d -= 8 * Math.round(d / 8); return { dir, want: +a.toFixed(2), off: +Math.abs(d).toFixed(2) };
+      });
+      check('talk: the hero turns to face her while they talk', face.off <= 0.62, JSON.stringify(face));
+      // …and when the talk starts with no walk (he's already beside her, facing away), he still turns to her
+      await p.locator('#talk .x, #talk .close').first().tap().catch(() => null);
+      await p.evaluate(() => { const s = globalThis.__sim; s.commands.push({ type: 'endTalk' }); s.tick(); });
+      const turn = await p.evaluate(() => {
+        const s = globalThis.__sim, h = s.state.player, n = s.world.npcs.find((q) => q.id === 'maudry_fenn');
+        h.x = h.px = n.x + 1.0; h.y = h.py = n.y + 0.4;                                    // beside her (a walk away from her first, so he faces off)
+        for (let i = 0; i < 12; i++) { s.commands.push({ type: 'move', x: 1, y: 1 }); globalThis.__frame(1000 / 30); }
+        for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 30);
+        h.x = h.px = n.x + 1.0; h.y = h.py = n.y + 0.4;
+        globalThis.__trace = []; globalThis.__frame(1000 / 30); const before = globalThis.__trace.at(-1).party[0][3];
+        s.commands.push({ type: 'talk', npc: 'maudry_fenn' });
+        for (let i = 0; i < 30; i++) globalThis.__frame(1000 / 30);
+        const t = globalThis.__trace.at(-1); globalThis.__trace = null;
+        const hx = n.x - h.x, hy = n.y - h.y, a = Math.atan2(hx + hy, hx - hy) / (Math.PI / 4);
+        let d = a - t.party[0][3]; d -= 8 * Math.round(d / 8);
+        return { before, dir: t.party[0][3], want: +a.toFixed(2), off: +Math.abs(d).toFixed(2), talking: s.talk ? s.talk.talking : '?' };
+      });
+      check('talk: already beside her and facing away, the hero turns to her as the talk opens', turn.before !== turn.dir && turn.off <= 0.62, JSON.stringify(turn));
+      await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).catch(() => null);
+      for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); }
       await p.locator('#talk .ch', { hasText: 'Anyone for hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
       await p.locator('#talk .ch', { hasText: "Show me who's looking" }).tap(); await p.locator('#talk .more').tap(); await run(5);

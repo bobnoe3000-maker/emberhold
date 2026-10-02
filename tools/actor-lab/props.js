@@ -94,12 +94,82 @@ export const PROPS = {
   // a pewter ale mug, held by its handle (Maudry Fenn's, the Tired Mule): body along +y above the grip
   mug: () => {
     const g = new THREE.Group(); g.name = 'Mug';
-    const pewter = mat(0x9a9c9e, 0.7, 0.45), ale = mat(0xc8902a, 0.1, 0.35), foam = mat(0xf2ead8, 0, 0.9);
+    const pewter = mat(0x6c7074, 0.75, 0.45), ale = mat(0xc8902a, 0.1, 0.35), foam = mat(0xd8d0bc, 0, 0.9);   // (pass 6: darker pewter, less foam; it read as a white blob)
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.18, 0.4, 14, 1, true), pewter); body.position.set(0.22, 0.22, 0); body.name = 'Mug_Body'; g.add(body);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.04, 14), pewter); base.position.set(0.22, 0.03, 0); base.name = 'Mug_Base'; g.add(base);
     const top = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.02, 14), ale); top.position.set(0.22, 0.38, 0); top.name = 'Mug_Ale'; g.add(top);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), foam); head.scale.y = 0.4; head.position.set(0.22, 0.4, 0); head.name = 'Mug_Foam'; g.add(head);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), foam); head.scale.set(0.8, 0.3, 0.8); head.position.set(0.22, 0.4, 0); head.name = 'Mug_Foam'; g.add(head);
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.035, 8, 16, Math.PI), pewter); handle.rotation.z = Math.PI / 2; handle.position.set(0.02, 0.22, 0); handle.name = 'Mug_Handle'; g.add(handle);
+    return g;
+  },
+  // (art pass 6) what Thornwick's townsfolk carry, from the world doc §5: they hang from the hand at rest
+  // (+y runs down the arm there), so a carried thing's body sits along +y below the grip.
+  // Wendel's lamp oil: a hooded iron lantern on a bail, its glass lit (userData.glow: the bake writes the
+  // glass to the emissive plane, so it glows at dusk and night like the square's lamps)
+  lantern: () => {
+    const g = new THREE.Group(); g.name = 'Lantern'; g.userData.hang = true;
+    const iron = mat(0x3a3634, 0.7, 0.5), brass = mat(0x9a7a3a, 0.8, 0.4), glass = new THREE.MeshStandardMaterial({ color: 0xffc070, emissive: 0xc06010, emissiveIntensity: 1.2, roughness: 0.3 });
+    const bail = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14, Math.PI), iron); bail.rotation.z = Math.PI; bail.position.y = 0.14; g.add(bail);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.14, 8), iron); cap.rotation.z = Math.PI; cap.position.y = 0.3; g.add(cap);
+    const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.3, 8), glass); lamp.position.y = 0.5; lamp.name = 'Lantern_Glass'; lamp.userData.glow = 0xffb050; g.add(lamp);
+    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4, bar = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.32, 0.03), iron); bar.position.set(Math.cos(a) * 0.135, 0.5, Math.sin(a) * 0.135); g.add(bar); }
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.07, 8), brass); base.position.y = 0.68; g.add(base);
+    return g;
+  },
+  // Bess Hale's cross-peen hammer: an ash haft and a dark iron head, heavy enough to read at 56 px
+  hammer: () => {
+    const g = new THREE.Group(); g.name = 'Smith_Hammer'; g.userData.hang = true;
+    const wood = mat(0x6a4a2a, 0, 0.8), iron = mat(0x55585e, 0.85, 0.4), leather = mat(0x2e1f18, 0, 0.9);
+    const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.62, 8), wood); haft.position.y = 0.2; g.add(haft);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.26, 8), leather); grip.position.y = -0.02; g.add(grip);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.17, 0.17), iron); head.position.y = 0.52; head.name = 'Hammer_Head'; g.add(head);
+    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 10), iron); face.rotation.z = Math.PI / 2; face.position.set(0.24, 0.52, 0); g.add(face);
+    const peen = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.15), iron); peen.position.set(-0.25, 0.52, 0); g.add(peen);
+    return g;
+  },
+  // Hedda's eggs: a willow basket on her arm with a cloth half over a clutch of eggs
+  basket: () => {
+    const g = new THREE.Group(); g.name = 'Egg_Basket'; g.userData.hang = true;
+    const willow = mat(0xa07a44, 0, 0.9), cloth = mat(0xd8d2c0, 0, 0.95), egg = mat(0xf2ead8, 0, 0.6);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.025, 6, 14, Math.PI), willow); handle.rotation.z = Math.PI; handle.position.y = 0.2; g.add(handle);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.19, 0.24, 10), willow); body.position.y = 0.36; g.add(body);
+    for (const [x, z] of [[-0.08, 0.05], [0.07, -0.06], [0.0, 0.1], [0.1, 0.08]]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), egg); e.scale.y = 1.25; e.position.set(x, 0.23, z); g.add(e); }
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.22), cloth); c.position.set(-0.08, 0.25, -0.06); c.rotation.y = 0.5; g.add(c);
+    return g;
+  },
+  // Nell Tolley's keys (the Crossed Keys): a big iron ring of long keys, so they read as keys, not a dot
+  keys: () => {
+    const g = new THREE.Group(); g.name = 'Key_Ring'; g.userData.hang = true;
+    const iron = mat(0x6a6460, 0.85, 0.4), brass = mat(0xb08a40, 0.8, 0.4);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 16), iron); ring.position.y = 0.14; g.add(ring);
+    for (const [a, m, len] of [[-0.35, brass, 0.42], [0.05, iron, 0.5], [0.4, brass, 0.38]]) {
+      const k = new THREE.Group(); k.position.y = 0.24; k.rotation.z = a;
+      const shank = new THREE.Mesh(new THREE.BoxGeometry(0.035, len, 0.035), m); shank.position.y = len / 2; k.add(shank);
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.018, 5, 10), m); bow.position.y = 0.02; k.add(bow);
+      const bit = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.03), m); bit.position.set(0.05, len - 0.04, 0); k.add(bit);
+      g.add(k);
+    }
+    return g;
+  },
+  // Col's carter's whip: a long ash stock carried upright (it runs along −y from the grip, like the
+  // Standard, so hanging it plumb stands it up) with the lash looped back over the top
+  whip: () => {
+    const g = new THREE.Group(); g.name = 'Carter_Whip'; g.userData.hang = true;
+    const wood = mat(0x5a3a22, 0, 0.85), lash = mat(0x2a1a10, 0, 0.9);
+    const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.04, 1.6, 6), wood); stock.position.y = -0.62; g.add(stock);
+    const pts = [[0, -1.42], [0.1, -1.55], [0.28, -1.5], [0.36, -1.3], [0.38, -1.05], [0.42, -0.85]].map(([x, y]) => new THREE.Vector3(x, y, 0));
+    const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.018, 5, false), lash); g.add(t);
+    return g;
+  },
+  // a smith's leather apron, worn on the hips (`wear` in variants.json): bib up the chest, skirt to the
+  // knee, split so the legs can stride
+  apron: () => {
+    const g = new THREE.Group(); g.name = 'Apron';
+    const leather = mat(0x6a4428, 0, 0.85), strap = mat(0x2e1f18, 0, 0.9);
+    // (hips bone space: y up from the hips at 0.39, z forward; the barbarian's front is ~0.3 out)
+    const bib = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.4, 0.04), leather); bib.position.set(0, 0.32, 0.33); bib.rotation.x = -0.08; bib.name = 'Apron_Bib'; g.add(bib);
+    for (const x of [-0.1, 0.1]) { const sk = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.3, 0.04), leather); sk.position.set(x, -0.08, 0.3); sk.rotation.x = 0.12; sk.name = 'Apron_Skirt'; g.add(sk); }
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), strap); belt.position.set(0, 0.11, 0.32); g.add(belt);
     return g;
   },
   // the Vale's bows (world doc §3.1 v1.10), held the way the kit holds its crossbows: gripped in

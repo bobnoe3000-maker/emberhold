@@ -16,7 +16,7 @@ node render.cjs --px 56      # same at another figure height → out/px56/ (defa
 node capture-backdrop.cjs    # real game room, actors hidden → out/backdrop.png
 python3 compose.py           # out/board_{heroes,enemies,inworld}.png   (needs Pillow)
 node bake.cjs                # the GAME atlases (bake.json) → ../../assets/actors/
-node bake.cjs --anchors      # refresh only the weapon anchors in those atlases' JSON (seconds, no raster)
+node bake.cjs --anchors      # refresh only the weapon anchors and walk stride in those atlases' JSON (seconds, no raster)
 node bake.cjs --portraits    # only the window portraits and figures (<actor>.face.png, <actor>.fig.png)
 node faces.cjs               # the face board: every faces.json preset, then every face part → out/faces_board.png
 node icons.cjs               # item icons (icons.json) → ../../assets/items/<id>.png
@@ -104,6 +104,13 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
   `beard`, `marks: [...]`, and `skull: "own"` to keep a hooded model's face and hood. `OPTIONS`
   in `faces.js` lists every choice; `node faces.cjs` draws them. The atlas bakes a simplified
   face (dot eyes, no marks: what reads at 56 px); the portrait the full one.
+- `wear` — `{ bone: prop }` puts a code-built prop on a body bone instead of a hand (`N5`, Bess Hale:
+  `{"hips": "apron"}`, her leather apron).
+- Carried props with `userData.hang` (the lantern, hammer, egg basket, key ring and carter's whip in
+  `props.js`) **hang plumb**: every sampled pose turns them so they point straight down from the grip
+  (a prop built along −y, the whip, stands up), keeping the figure's yaw. A rigid prop stuck out like a
+  pole in the Idle hand. A prop part with `userData.glow` (the lantern's glass) is written to the
+  emissive plane like the skeletons' eyes; give the actor a `glow` id in `bake.json` (Wendel: 3, ember).
 - `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
   8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
   the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe
@@ -113,6 +120,18 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.
 - `pose` — `[clipName, t01]`; default `["Idle", 0.5]`. Every model shares one rig with 76–95 clips
   (attacks, Hit, Block, Dodge, Death, Spellcast; skeletons add Awaken/Spawn/Resurrect).
+
+## Walk stride (`strideOf` in `lab.js`, art pass 6)
+
+An atlas whose `walk` is a `Walking_*` clip gets `stride` in its JSON: the tiles the figure travels in
+one cycle, measured from its own feet. The clips walk in place, so a planted foot slides back at the
+body's speed. The contact is the lowest skinned vertex of each leg (the ankle bone lifts while the sole
+is down). Each stretch where it stays within 5 cm of the floor gets a least-squares slope, and the
+stride is their length-weighted mean, converted at the camera's scale (8√2 px a tile along screen x).
+The renderer steps walk frames by distance ÷ stride, so matching feet don't skate. It's null when the
+segments disagree by more than 30 % (the Ashbound's shuffle, the Knight model's walk); the renderer
+keeps a constant then. `node bake.cjs --anchors` refreshes it in seconds. The party's run (`Running_A`)
+is left out: it has a flight phase and no clean plant, and the fit swings 3.3–4.9 with the band.
 
 ## Portraits (`renderPortrait` in `lab.js`)
 

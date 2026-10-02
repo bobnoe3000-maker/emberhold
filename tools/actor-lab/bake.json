@@ -69,15 +69,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -451,15 +451,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -547,15 +547,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -640,15 +640,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -726,15 +726,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -812,15 +812,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -898,15 +898,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -984,15 +984,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -1078,15 +1078,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },
@@ -1137,15 +1137,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         }
@@ -1178,15 +1178,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         }
@@ -1219,15 +1219,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         }
@@ -1243,7 +1243,7 @@
         ]
       },
       "variant": "N4",
-      "glow": 0,
+      "glow": 3,
       "clips": [
         {
           "key": "idle",
@@ -1256,6 +1256,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1282,6 +1297,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "1H_Melee_Attack_Chop",
+          "frames": 8,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1308,6 +1338,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1334,6 +1379,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1360,6 +1420,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1386,6 +1461,21 @@
           "clip": "Walking_A",
           "frames": 10,
           "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "PickUp",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
         }
       ]
     },
@@ -1905,15 +1995,15 @@
         {
           "key": "fidget",
           "clip": "Interact",
-          "frames": 7,
-          "fps": 9,
+          "frames": 10,
+          "fps": 8,
           "once": true
         },
         {
           "key": "look",
           "clip": "Use_Item",
-          "frames": 6,
-          "fps": 8,
+          "frames": 8,
+          "fps": 7,
           "once": true,
           "to": 0.7
         },

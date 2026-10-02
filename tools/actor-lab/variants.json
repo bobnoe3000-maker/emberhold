@@ -76,7 +76,59 @@
    "Knife_Offhand",
    "Rogue_Cape"
   ],
-  "face": "hooded"
+  "face": "hooded",
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a5046",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#6a4a32",
+     "#22160e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#7a5a3e",
+     "#2a1c12"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   }
+  ]
  },
  {
   "id": "R3",
@@ -91,7 +143,59 @@
    "2H_Ranged_Aiming",
    0.5
   ],
-  "face": "hooded"
+  "face": "hooded",
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a5046",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#6a4a32",
+     "#22160e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#7a5a3e",
+     "#2a1c12"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   }
+  ]
  },
  {
   "id": "R4",
@@ -108,6 +212,58 @@
   "pose": [
    "1H_Ranged_Aiming",
    0.5
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a5046",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#6a4a32",
+     "#22160e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#7a5a3e",
+     "#2a1c12"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   }
   ]
  },
  {
@@ -125,6 +281,58 @@
   "pose": [
    "1H_Ranged_Aiming",
    0.5
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a5046",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#6a4a32",
+     "#22160e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#7a5a3e",
+     "#2a1c12"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   }
   ]
  },
  {
@@ -141,6 +349,58 @@
   "pose": [
    "1H_Ranged_Aiming",
    0.5
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a5046",
+     "#1e1a16"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#6a4a32",
+     "#22160e"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#7a5a3e",
+     "#2a1c12"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   }
   ]
  },
  {
@@ -250,7 +510,7 @@
  {
   "id": "N1",
   "cls": "NPC",
-  "label": "Maudry Fenn \u00b7 innkeeper, the Tired Mule",
+  "label": "Maudry Fenn \u00b7 innkeeper, the Tired Mule (mustard dress, pewter mug)",
   "model": "Rogue",
   "show": [],
   "hold": {
@@ -275,6 +535,56 @@
     "to": [
      "#b88640",
      "#4e3010"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#b88640",
+     "#4e3010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a3426",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#dca088",
+     "#8a5444"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
     ]
    }
   ],
@@ -371,11 +681,11 @@
  {
   "id": "N4",
   "cls": "NPC",
-  "label": "Wendel \u00b7 provisioner",
+  "label": "Wendel \u00b7 provisioner (rope, bread and lamp oil: a lit lantern)",
   "model": "Rogue",
   "show": [],
   "hold": {
-   "handslot.r": "mug"
+   "handslot.r": "lantern"
   },
   "swatches": [
    {
@@ -397,6 +707,56 @@
      "#5a4a3a",
      "#241a10"
     ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a4440",
+     "#1a1816"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#e8b896",
+     "#946a50"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
    }
   ],
   "face": "wendel"
@@ -404,11 +764,9 @@
  {
   "id": "N5",
   "cls": "NPC",
-  "label": "Bess Hale \u00b7 the daughter at Hale & Daughter",
+  "label": "Bess Hale \u00b7 the daughter at Hale & Daughter (hammer and leather apron)",
   "model": "Barbarian",
-  "show": [
-   "1H_Axe"
-  ],
+  "show": [],
   "swatches": [
    {
     "tile": [
@@ -431,12 +789,18 @@
     ]
    }
   ],
-  "face": "bess_hale"
+  "face": "bess_hale",
+  "hold": {
+   "handslot.r": "hammer"
+  },
+  "wear": {
+   "hips": "apron"
+  }
  },
  {
   "id": "N6",
   "cls": "NPC",
-  "label": "Col \u00b7 a carter",
+  "label": "Col \u00b7 a carter (a carter\u2019s whip)",
   "model": "Rogue_Hooded",
   "show": [],
   "swatches": [
@@ -459,9 +823,62 @@
      "#4a3a28",
      "#1c140a"
     ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#6a5034",
+     "#241a10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
    }
   ],
-  "face": "col"
+  "face": "col",
+  "hold": {
+   "handslot.r": "whip"
+  }
  },
  {
   "id": "N7",
@@ -499,11 +916,11 @@
  {
   "id": "N8",
   "cls": "NPC",
-  "label": "Nell Tolley \u00b7 the Crossed Keys",
+  "label": "Nell Tolley \u00b7 the Crossed Keys (a ring of keys)",
   "model": "Rogue",
   "show": [],
   "hold": {
-   "handslot.r": "book"
+   "handslot.r": "keys"
   },
   "swatches": [
    {
@@ -525,6 +942,56 @@
      "#6a5a40",
      "#2a2014"
     ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a44",
+     "#141218"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a3428",
+     "#18100a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#c89a6c",
+     "#6e4e34"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
    }
   ],
   "face": "nell_tolley"
@@ -532,7 +999,7 @@
  {
   "id": "N9",
   "cls": "NPC",
-  "label": "Hedda \u00b7 eggs by the well",
+  "label": "Hedda \u00b7 eggs by the well (a basket of eggs)",
   "model": "Rogue",
   "show": [],
   "swatches": [
@@ -555,9 +1022,62 @@
      "#d8c8a0",
      "#7a6a4a"
     ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a3426",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#f2d2bc",
+     "#a07a66"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#7a5236",
+     "#2a180e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a4630",
+     "#24140c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#6e3e34",
+     "#2c1612"
+    ]
    }
   ],
-  "face": "hedda"
+  "face": "hedda",
+  "hold": {
+   "handslot.r": "basket"
+  }
  },
  {
   "id": "E1",

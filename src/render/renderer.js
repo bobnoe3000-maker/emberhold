@@ -46,7 +46,10 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
-const STRIDE = { hero: 4.5, skel: 3.2 };        // measured from the baked feet: ~50 px / ~36 px of screen travel per cycle
+const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
+// a Walking_A figure (townsfolk, the Redhand, the robes) carries its own measured `stride` in its atlas JSON (actor-lab
+// lab.js strideOf, art pass 6: 1.97–2.33), 2.2 when it has none. They had the run's 4.5, so their feet skated 2×.
+const strideOf = (atl, fallback) => (atl && atl.meta.stride) || fallback;
 
 const MARGIN = 96;                 // native-px slack around the view held in the bake
 const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
@@ -449,6 +452,14 @@ export function createRenderer(canvas, sim, input) {
   const partyAtlases = {};
   let cast = {};                                      // content/npcs/*.json by id (setCast): each NPC's look and name
   const npcPres = new Map();                          // NPC id → its animation state (never on the sim's objects)
+  // the person you're talking to (sim 'dialogue' … 'talkEnded'): they turn to you, greet you and talk with their
+  // hands; you turn to them (art pass 6: both stood as they were, often back to back)
+  let talkingTo = null, greet = null;
+  sim.bus.on('dialogue', ({ npc }) => { talkingTo = greet = npc; });
+  sim.bus.on('talkEnded', () => { talkingTo = greet = null; });
+  // each townsperson's own beat: an idle phase and a gesture rhythm from their id, so the square doesn't
+  // breathe and wave in unison (it did: every NPC had seed 0.61 and the same fidget schedule)
+  const idHash = (id) => { let h = 0x811c9dc5; for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 0x01000193); return h >>> 0; };
   // a rogue is drawn with what they shoot with (sim items.js `shot`; the atlases: actor-lab bake.json),
   // in their dagger look until that atlas has loaded
   const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
@@ -861,7 +872,8 @@ export function createRenderer(canvas, sim, input) {
     const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
     if (hAtl) {
       const heroAtlas = hAtl;
-      const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: H.fx, faceY: H.fy, facing: H.act > 0, dead: H.down, stride: STRIDE.hero });
+      const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
+      const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
       draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a });
     } else {
       draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
@@ -882,13 +894,19 @@ export function createRenderer(canvas, sim, input) {
       const qx = n.folk ? lerp(n, 'x') : n.x, qy = n.folk ? lerp(n, 'y') : n.y;
       const nz = heightAt(sim.world, Math.floor(qx), Math.floor(qy)), np = project(qx, qy, nz), nx = ox + np.sx, ny = oy + np.sy;
       if (nx < -60 || nx > nvw + 60 || ny < -40 || ny > nvh + 120) continue;
-      let u = npcPres.get(n.id); if (!u) npcPres.set(n.id, (u = { fidgetN: 0, lookN: 0, next: now + 4000, near: false }));
-      const near = Math.hypot(ix - n.x, iy - n.y) < 7;
-      if (near && !u.near) u.lookN++;                                   // she looks up as you come over
-      else if (now > u.next) { u.fidgetN++; u.next = now + 7000 + ((u.fidgetN * 2654435761) >>> 0) % 5000; }
+      let u = npcPres.get(n.id);
+      if (!u) { const h = idHash(n.id); npcPres.set(n.id, (u = { fidgetN: 0, lookN: 0, h, seed: (h % 997) / 997, next: now + 2500 + (h % 6000), near: false })); }
+      const near = Math.hypot(ix - n.x, iy - n.y) < 7, talking = talkingTo === n.id;
+      if (greet === n.id) { greet = null; u.fidgetN++; u.next = now + 2600; }   // a greeting as the conversation opens
+      else if (near && !u.near && !talking) u.lookN++;                  // she looks up as you come over
+      else if (now > u.next) {                                         // a gesture: often in a conversation, now and then otherwise
+        if (talking && u.fidgetN % 2) u.lookN++; else u.fidgetN++;
+        const r = Math.imul(u.fidgetN + u.lookN + 1, 2654435761) ^ u.h;
+        u.next = now + (talking ? 2800 + (r >>> 0) % 2400 : 7000 + (r >>> 0) % 6000);
+      }
       u.near = near;
       const walking = !!n.moving;
-      const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near ? ix - qx : -1, faceY: walking ? n.fy : near ? iy - qy : 1, facing: true, dir0: 2, stride: STRIDE.hero, seed: 0.61 });
+      const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
       draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a });
     }
     // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
@@ -911,7 +929,7 @@ export function createRenderer(canvas, sim, input) {
       if (ex < -60 || ex > nvw + 60 || ey < -40 || ey > nvh + 120) continue;      // offscreen
       const dead = e.hp <= 0, deadT = dead ? DEATH_T - Math.max(0, e.dead || 0) : 0;
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
-        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : STRIDE.hero, seed: (e.id * 0.37) % 1 });
+        spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
       draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a });   // (the living walk in out of the dark: a fade, not a rise)
     }

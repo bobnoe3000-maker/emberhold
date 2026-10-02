@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.13 · 2026-10-01 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.14 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.14 says what Thornwick's people carry about the square (§5; art critic pass 6). Each one's trade
+is in their hands: Wendel a lit lantern (the lamp oil he sells), Bess Hale a smith's hammer and a
+leather apron, Col a carter's whip, Nell Tolley the Crossed Keys' ring of keys, Hedda a basket of
+eggs, Maudry her pewter mug and the mustard dress down to her boots. Nothing new about who they are.
 
 v1.13 fixes two words (dialogue critic pass 1). A companion who goes down and stays down until the
 temple raises them is **slain**, not "Fallen": the Fall is the empire's, and the word stays with
@@ -294,6 +299,10 @@ around the square by day and somewhere else by night:
 - **Jory**, the Watch's only man in Thornwick: young, earnest, and Osric's runner.
 - **Nell Tolley**, keeper of the Crossed Keys. She charges for the stairs, not the bed.
 - **Hedda**, who sells eggs by the well and knows the weather, and says she knows nothing else.
+
+(v1.14) **What they carry.** Wendel walks the square with a lit lantern; Bess wears her leather apron and
+keeps her hammer in hand; Col has his carter's whip; Nell Tolley carries the Crossed Keys' keys on an iron
+ring; Hedda carries her eggs in a basket; Maudry has her pewter mug.
 
 **Who teaches the trials (v1.7).** At level 6 each class has a trial in Thornwick: **Osric Hale**
 for fighters (*Hold the Keep Gate*), **Nell Tolley** for rogues (*Quiet Feet*; she was something

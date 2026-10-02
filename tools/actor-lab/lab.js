@@ -75,6 +75,7 @@ async function build(v, { far = false } = {}) {
   }
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
   for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
+  for (const [bone, name] of Object.entries(v.wear || {})) findNode(root, bone)?.add(PROPS[name]());   // worn on a body bone (the smith's apron)
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((o) => { if (o.isMesh && /Eyes/.test(o.name)) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(v.eyes); o.material.emissiveIntensity = 3; } });
@@ -86,7 +87,30 @@ function pose(c, clipName, t, heroic) {
   c.mixer.clipAction(clip).play(); c.mixer.setTime(t * clip.duration);
   if (heroic) applyHeroic(c.root);                       // after sampling: clips key scale+translation
   c.root.updateMatrixWorld(true);
+  plumb(c.root);
 }
+// carried things hang plumb (art pass 6): a lantern, a basket or a hammer held at the side hangs from
+// the grip whatever the hand's angle, where a rigid prop stuck out like a pole. A prop with
+// userData.hang turns, every sampled pose, so its +y points straight down (a prop built along −y, the
+// whip, stands upright); it keeps the figure's yaw so it faces the way they do.
+const _q = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _down = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
+function plumb(root) {
+  const hung = []; root.traverse((o) => { if (o.userData.hang) hung.push(o); });
+  if (!hung.length) return;
+  const yaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), root.rotation.y);
+  for (const o of hung) {
+    o.parent.getWorldQuaternion(_qp);
+    _q.copy(yaw).multiply(_down);
+    o.quaternion.copy(_qp.invert().multiply(_q));
+  }
+  root.updateMatrixWorld(true);
+}
+// dev probe: a bone's world position and axes in a pose (placing worn props)
+window.probeBone = async (v, bone, clip = 'Idle', t = 0) => {
+  const c = await build(v); pose(c, clip, t, true); const b = findNode(c.root, bone), q = b.getWorldQuaternion(new THREE.Quaternion()), s = b.getWorldScale(new THREE.Vector3());
+  const ax = (x, y, z) => new THREE.Vector3(x, y, z).applyQuaternion(q).toArray().map((n) => +n.toFixed(2));
+  return { pos: b.getWorldPosition(new THREE.Vector3()).toArray().map((n) => +n.toFixed(3)), x: ax(1, 0, 0), y: ax(0, 1, 0), z: ax(0, 0, 1), scale: s.toArray().map((n) => +n.toFixed(3)) };
+};
 function lights(s, side) {
   s.add(new THREE.HemisphereLight(0x9a8cc0, 0x1a1428, 1.5));
   const pl = new THREE.PointLight(0xffb070, 16, 0, 1.4); pl.position.set(side * 1.6, 1.9, 1.4); s.add(pl);
@@ -163,6 +187,41 @@ function anchorAt(w, root, cam, ppu) {
 }
 // flatten per-cell anchors into one int array per slot: 5 per cell, cell = dir * frames + frame
 const packAnchors = (a) => Object.fromEntries(Object.entries(a).map(([k, v]) => [k, v.flat()]));
+// STRIDE (art pass 6): how far the figure travels in one walk cycle, in game tiles, measured from its
+// own feet. The clips walk in place, so a planted foot slides back at the body's speed. The contact is the
+// lowest SKINNED vertex of each leg (heel, then toe as the foot rolls; the ankle bone lifts while the sole
+// is down), and KayKit's plants aren't clean, so: each stretch where a leg's contact stays within 5 cm of
+// the floor gets a least-squares slope, and the stride is their mean (weighted by length) × one cycle.
+// Converted at the camera's scale (ppu px a unit; 8√2 px a tile along the screen's x). The renderer steps
+// walk frames by distance ÷ stride, so feet that match it don't skate. Null when the fit disagrees with
+// itself (the Ashbound's shuffle drags its feet): the renderer keeps its constant then.
+function strideOf(c, clipName, ppu, sample) {
+  const legs = []; c.root.traverse((o) => { if (o.isSkinnedMesh && o.visible && /Leg(Left|Right)|_Leg/.test(o.name)) legs.push(o); });
+  if (legs.length < 2) return null;
+  const N = 72, P = [], v = new THREE.Vector3();
+  for (let i = 0; i < N; i++) {
+    sample(clipName, i / N); c.root.rotation.y = 0; c.root.updateMatrixWorld(true);
+    P.push(legs.map((m) => { const pos = m.geometry.attributes.position; let lo = null;
+      for (let k = 0; k < pos.count; k++) { m.getVertexPosition(k, v); v.applyMatrix4(m.matrixWorld); if (!lo || v.y < lo[0]) lo = [v.y, v.z]; }
+      return lo; }));
+  }
+  const floor = Math.min(...P.flat().map((q) => q[0])), segs = [];
+  for (let k = 0; k < legs.length; k++) for (let i = 0; i < N;) {
+    if (P[i][k][0] - floor >= 0.05) { i++; continue; }
+    let j = i; while (j < N && P[j][k][0] - floor < 0.05) j++;
+    if (j - i >= 3) {                                     // slope of z over t (cycles) by least squares
+      let st = 0, sz = 0, stt = 0, stz = 0; const n = j - i;
+      for (let q = i; q < j; q++) { const t = q / N, z = P[q][k][1]; st += t; sz += z; stt += t * t; stz += t * z; }
+      const slope = (n * stz - st * sz) / (n * stt - st * st);
+      if (slope < 0) segs.push([-slope, n]);
+    }
+    i = j;
+  }
+  if (segs.length < 2) return null;
+  const tot = segs.reduce((a, [, n]) => a + n, 0), mean = segs.reduce((a, [s, n]) => a + s * n, 0) / tot;
+  if (segs.some(([s]) => Math.abs(s - mean) > 0.3 * mean)) return null;
+  return Math.round((mean * ppu / (8 * Math.SQRT2)) * 100) / 100;
+}
 window.bakeAtlas = async (v, clips, gain = 1) => {
   const c = await build(v, { far: true }), bones = [];
   c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
@@ -178,12 +237,14 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const scene = new THREE.Scene(); scene.add(c.root);
   const wr = weaponRig(c, v), anchors = {};
   for (const k of Object.keys(wr)) anchors[k] = [];
+  const walkClip = clips.find((k) => k.key === 'walk' && /^Walking_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (the party's run has flight and no clean plant: the renderer keeps its 4.5)
   const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
     // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
     // a flat white eye mesh read as a white "grin" through the knight's visor
-    const glow = eyes && v.eyes;
-    mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
+    // (a prop part with userData.glow, Wendel's lantern glass, glows too: art pass 6)
+    const lit = !eyes && o.userData.glow, glow = (eyes && v.eyes) || lit;
+    mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
     mats.emi.set(o, glow ? white : black); });
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
@@ -270,7 +331,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       nx.putImageData(n, col * W, dir * H); ex.putImageData(e, col * W, dir * H);
     }
   }
-  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
+  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', ...(stride ? { stride } : {}), clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
   for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps, ...(k.once ? { once: true } : {}), ...(k.impact != null ? { impact: k.impact } : {}) }; start += k.frames; }
   return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null };
 };
@@ -285,6 +346,7 @@ window.bakeAnchors = async (v, clips) => {
   const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt); cam.updateMatrixWorld(true);
+  const walkClip = clips.find((k) => k.key === 'walk' && /^Walking_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (the party's run has flight and no clean plant: the renderer keeps its 4.5)
   const wr = weaponRig(c, v), anchors = {}, frames = clips.reduce((n, k) => n + k.frames, 0);
   for (const k of Object.keys(wr)) anchors[k] = [];
   for (let dir = 0; dir < 8; dir++) {
@@ -295,7 +357,7 @@ window.bakeAnchors = async (v, clips) => {
       for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
     }
   }
-  return { frames, anchors: packAnchors(anchors), info: Object.fromEntries(Object.entries(wr).map(([k, w]) => [k, { tip: w.tip.toArray().map((n) => +n.toFixed(3)), len: +w.len.toFixed(3) }])) };
+  return { frames, stride, anchors: packAnchors(anchors), info: Object.fromEntries(Object.entries(wr).map(([k, w]) => [k, { tip: w.tip.toArray().map((n) => +n.toFixed(3)), len: +w.len.toFixed(3) }])) };
 };
 // dev probe: where the weapon meshes hang in each rig (tools/actor-lab weapon anchors)
 window.probeWeapons = async (v) => {

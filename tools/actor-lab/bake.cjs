@@ -4,7 +4,7 @@
 // only when the figure has glowing parts), and for actors with `portrait: true` a lit head-and-
 // shoulders <out>.face.png (96 × 112) for the windows; with `figure: { pose }` the whole lit figure
 // <out>.fig.png (352 × 408) for the character window. Needs `npm i` + `sh fetch-assets.sh`.
-//   node bake.cjs [actor…] [--anchors | --portraits]
+//   node bake.cjs [actor…] [--anchors | --portraits]   (--anchors also refreshes each atlas's measured walk `stride`)
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
@@ -40,8 +40,9 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
       const r = await p.evaluate(async ([v, clips]) => await window.bakeAnchors(v, clips), [v, a.clips]);
       if (r.frames !== meta.frames) throw new Error(`${a.out}: clips changed since the last full bake`);
       delete meta.anchors; if (Object.keys(r.anchors).length) meta.anchors = r.anchors;
-      const { source, ...rest } = meta; fs.writeFileSync(f, JSON.stringify({ ...rest, source }) + '\n');
-      console.log(`${a.out}: anchors ${Object.keys(r.anchors).join('+') || 'none'} ${JSON.stringify(r.info)}`); continue;
+      delete meta.stride; const { source, clips, ...rest } = meta;
+      fs.writeFileSync(f, JSON.stringify({ ...rest, ...(r.stride ? { stride: r.stride } : {}), clips, source }) + '\n');
+      console.log(`${a.out}: anchors ${Object.keys(r.anchors).join('+') || 'none'}, stride ${r.stride} ${JSON.stringify(r.info)}`); continue;
     }
     const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
