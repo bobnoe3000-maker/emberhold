@@ -1130,7 +1130,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1171,7 +1171,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1212,7 +1212,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1253,7 +1253,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1294,7 +1294,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1335,7 +1335,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1417,7 +1417,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },
@@ -1458,7 +1458,7 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Walking_B",
           "frames": 10,
           "fps": 10
         },

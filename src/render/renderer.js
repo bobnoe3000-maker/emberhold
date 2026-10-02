@@ -527,7 +527,7 @@ export function createRenderer(canvas, sim, input) {
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
     const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
     const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
-    let flashEdge = false;
+    let flashEdge = false, hid = 0, shown = 0;
     for (let yy = 0; yy < sp.h; yy++) {
       const py = y0 + yy; if (py < 0 || py >= H) continue;
       const hpx = baseH + (sp.h - yy) * 0.55;
@@ -540,7 +540,7 @@ export function createRenderer(canvas, sim, input) {
         const i = (py * W + px) * 4;
         if (DEP) {
           const di = py * W + px;
-          if (test && dep < DEP[di] - 0.6) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; continue; }
+          if (test && dep < DEP[di] - 0.6) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; hid++; continue; }
           DEP[di] = dep;
         }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
@@ -566,8 +566,10 @@ export function createRenderer(canvas, sim, input) {
         else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
         else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
         EMI[i + 3] = test && !e ? 250 : 255;          // actors' self-light is steady (alpha < 255): the shader's per-pixel ember flicker read as grain on figures
+        shown++;
       }
     }
+    return hid / Math.max(1, hid + shown);              // the share drawn as x-ray (behind nearer geometry)
   }
 
   // Terrain tile → G-buffer: cliff faces (SW/SE drops) then the top diamond,
@@ -937,7 +939,7 @@ export function createRenderer(canvas, sim, input) {
       u.near = near;
       const walking = !!n.moving;
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
-      draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a });
+      draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id });
     }
     // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
     // up the road for the relief that never came. No ring, no bar: they aren't in a fight with you.
@@ -980,7 +982,7 @@ export function createRenderer(canvas, sim, input) {
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const rings = !!sim.battle;
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
-    for (const dr of draws) if (dr.sp) stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look);
+    for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
     fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);

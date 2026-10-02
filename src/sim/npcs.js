@@ -35,15 +35,18 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 
 // Where each stands: beside a service building of its region's town (or the square's well, `hub`;
 // off = tiles from that anchor), and what it may change. A spot is [anchor, [dx, dy]].
+// Every spot is in view: no building, roof or the well in front of it on screen (art critic pass 8 measured
+// them with the renderer's x-ray share; browser test 15d holds them under 5 %). Osric stands in front of the
+// well, not in it; Ilse and Jory by the shrine's door, clear of Wendel's roof; Nell clear of the Mule's.
 export const NPCS = {
   maudry_fenn: { region: 'vale', spots: [['tavern', [4, 7]]], knot: 'maudry_hub', flags: ['met_maudry'] },
-  osric_hale: { region: 'vale', spots: [['hub', [3, -2]]], knot: 'osric_hub', flags: ['met_osric'] },
-  sister_ilse: { region: 'vale', spots: [['temple', [3, 6]]], knot: 'ilse_hub', flags: ['met_ilse'] },
+  osric_hale: { region: 'vale', spots: [['hub', [6, -1]]], knot: 'osric_hub', flags: ['met_osric'] },
+  sister_ilse: { region: 'vale', spots: [['temple', [8, 2]]], knot: 'ilse_hub', flags: ['met_ilse'] },
   wendel: { region: 'vale', folk: true, spots: [['shop', [3, 6]], ['tavern', [7, 8]]], day: [0, 0, 0, 1], knot: 'wendel_hub', flags: ['met_wendel'] },
-  bess_hale: { region: 'vale', folk: true, spots: [['smith', [3, 6]], ['tavern', [2, 9]]], day: [0, 0, 0, 1], knot: 'bess_hub', flags: ['met_bess'] },
+  bess_hale: { region: 'vale', folk: true, spots: [['smith', [3, 6]], ['tavern', [-2, 8]]], day: [0, 0, 0, 1], knot: 'bess_hub', flags: ['met_bess'] },
   col: { region: 'vale', folk: true, spots: [['hub', [9, 7]], ['tavern', [6, 10]]], day: [0, 0, 1, 1], knot: 'col_hub', flags: ['met_col'] },
-  jory: { region: 'vale', folk: true, spots: [['hub', [-2, -7]], ['temple', [6, 4]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
-  nell_tolley: { region: 'vale', folk: true, spots: [['inn', [3, 6]], ['hub', [-7, -5]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
+  jory: { region: 'vale', folk: true, spots: [['hub', [-1, 2]], ['temple', [8, -4]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
+  nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [-14, -4]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
   hedda: { region: 'vale', folk: true, spots: [['hub', [-8, 4]], ['shop', [-2, 7]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
   brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
 };
@@ -86,7 +89,7 @@ const hashId = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h
 export function placeNpcs(world, isWalkable, block, part = 0) {
   world.npcs = [];
   if (world.kind !== 'town') return world;
-  const taken = [];
+  const taken = Object.values(world.arrivals || {}).map((q) => ({ x: q.x, y: q.y }));   // (nobody stands where you arrive: the hero came in on top of Col)
   for (const [id, n] of Object.entries(NPCS)) {                  // (the named first: their tiles go solid before townsfolk look for theirs)
     if (n.region !== world.region || n.folk || n.found) continue;
     const spot = spotTile(world, n.spots[0], isWalkable, taken);

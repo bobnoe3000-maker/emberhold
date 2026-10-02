@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.14 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.15 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.15 says how Thornwick's people look beside each other (§5; art critic pass 8). The Watch can't
+afford plate that shines: Osric's is dull iron, and Jory's is boiled leather. They aren't one size:
+Jory is the tallest in the square, Hedda and Nell Tolley the smallest, and Brannoc is bigger than any of
+them. Nothing new about who they are.
 
 v1.14 says what Thornwick's people carry about the square (§5; art critic pass 6). Each one's trade
 is in their hands: Wendel a lit lantern (the lamp oil he sells), Bess Hale a smith's hammer and a
@@ -303,6 +308,11 @@ around the square by day and somewhere else by night:
 (v1.14) **What they carry.** Wendel walks the square with a lit lantern; Bess wears her leather apron and
 keeps her hammer in hand; Col has his carter's whip; Nell Tolley carries the Crossed Keys' keys on an iron
 ring; Hedda carries her eggs in a basket; Maudry has her pewter mug.
+
+(v1.15) **How they look.** Lord Pellam's Watch dresses cheaply: Osric wears dull iron that was never
+polished for anyone, and Jory, who is young, wears boiled leather and carries the Watch's one good sword.
+They aren't one size. Jory is the tallest in the square, Bess Hale is nearly as tall, and Hedda and Nell
+Tolley are the smallest; Brannoc stands taller than any of them.
 
 **Who teaches the trials (v1.7).** At level 6 each class has a trial in Thornwick: **Osric Hale**
 for fighters (*Hold the Keep Gate*), **Nell Tolley** for rogues (*Quiet Feet*; she was something

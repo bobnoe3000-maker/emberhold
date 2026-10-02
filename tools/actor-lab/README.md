@@ -118,6 +118,9 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `recolor` — a CSS filter applied to the model's colour texture; how human enemy NPCs reuse hero models.
   (Look-dev only: the shipping version should remap swatches in the small palette texture exactly.)
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.
+- `height` — (art pass 8) fit the figure by its body alone, held things left out, to `px` × `height`
+  (the townsfolk: 0.85 for Nell to 1.02 for Jory, Brannoc 1.06). Without it the whole figure, props and
+  all, fills `px`, as for the heroes and foes; a book or whip held high shrank the person under it.
 - `pose` — `[clipName, t01]`; default `["Idle", 0.5]`. Every model shares one rig with 76–95 clips
   (attacks, Hit, Block, Dodge, Death, Spellcast; skeletons add Awaken/Spawn/Resurrect).
 

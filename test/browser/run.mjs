@@ -705,6 +705,40 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15d. Thornwick's people stand in view (art critic pass 8): at each part of the day, with everyone on that
+// part's spot and the hero aside, no named person is drawn more than 5 % behind a building, the well or a roof
+// (the renderer's x-ray share, dev __xray). Nell stood 44 % behind the Mule, Jory 38 % and Ilse 26 % behind
+// Wendel's roof, and the well's roof cut across Osric's face.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&tod=day`);
+    await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    for (let i = 0; i < 40; i++) { await p.waitForTimeout(100); await p.evaluate(() => globalThis.__frame(16)); }   // (atlases load in real time)
+    const hidden = await p.evaluate(async () => {
+      const s = globalThis.__sim, w = s.world, { NPCS, PART_S } = await import('/src/sim/npcs.js'), out = {};
+      for (let part = 0; part < 4; part++) {
+        s.state.t = part * PART_S + 5;
+        for (const n of w.npcs) if (n.folk) { const k = NPCS[n.id].day[part] || 0, g = n.spots[k]; n.at = k; n.path = null; n.x = n.px = g.x; n.y = n.py = g.y; n.rest = 1e9; }
+        for (const n of w.npcs) {
+          const q = s.state.player; q.x = q.px = n.x + 4; q.y = q.py = n.y - 4;                  // aside: level with them on screen, to the right
+          for (const m of s.state.party.slice(1)) { m.x = m.px = q.x; m.y = m.py = q.y; }
+          for (let i = 0; i < 40; i++) globalThis.__frame(16);
+          globalThis.__xray = {}; globalThis.__frame(16);
+          const v = globalThis.__xray[n.id]; out[n.id] = Math.max(out[n.id] || 0, v == null ? 1 : v);
+        }
+      }
+      globalThis.__xray = null; return out;
+    });
+    const worst = Object.entries(hidden).filter(([, v]) => v > 0.05);
+    check('town: nobody stands behind a building, the well or a roof at any part of the day (≤ 5 % of their figure drawn as x-ray)',
+      Object.keys(hidden).length === 9 && worst.length === 0 && errs.length === 0,
+      JSON.stringify(Object.fromEntries(Object.entries(hidden).map(([k, v]) => [k, Math.round(v * 100)]))) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
 // and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {

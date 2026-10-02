@@ -47,6 +47,16 @@ function applyHeroic(root) {
     if (HEROIC.scale[base]) b.scale.multiplyScalar(HEROIC.scale[base]);
     if (HEROIC.reach[base]) b.position.multiplyScalar(HEROIC.reach[base]); });
 }
+// pixels per world unit: the figure, props and all, fills TARGET_PX. A variant with `height` (art pass 8: the
+// townsfolk, so they aren't all one size) is fitted by its body alone, held things left out (a sword or a book
+// raised overhead shrank the person under it), to TARGET_PX × height.
+const HELD = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
+function fitPpu(root, v) {
+  if (!v.height) { const box = new THREE.Box3().setFromObject(root); return { box, ppu: TARGET_PX / (box.max.y - box.min.y) }; }
+  const box = new THREE.Box3(), held = (o) => { for (let q = o; q; q = q.parent) if (q.userData.held || (q !== o && HELD.test(q.name)) || HELD.test(o.name)) return true; return false; };
+  root.updateMatrixWorld(true); root.traverse((o) => { if (o.isMesh && o.visible && !held(o)) box.expandByObject(o); });
+  return { box, ppu: TARGET_PX * v.height / (box.max.y - box.min.y) };
+}
 // GLTFLoader strips '.' from node names; match either spelling
 const findNode = (root, n) => root.getObjectByName(n) || root.getObjectByName(n.replace(/\./g, ''));
 function recolor(root, filter) {
@@ -77,7 +87,7 @@ async function build(v, { far = false } = {}) {
     findNode(root, 'head').add(head);
   }
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
-  for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
+  for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; p.userData.held = true; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
   for (const [bone, name] of Object.entries(v.wear || {})) findNode(root, bone)?.add(PROPS[name]());   // worn on a body bone (the smith's apron)
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
@@ -125,7 +135,7 @@ window.renderVariants = async (vs) => {
     const c = await build(v);
     const [clip, t] = v.pose || ['Idle', 0.5];
     pose(c, clip, t, heroic);
-    const box = new THREE.Box3().setFromObject(c.root), h = box.max.y - box.min.y, ppu = TARGET_PX / h;
+    const { box, ppu } = fitPpu(c.root, v);
     const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
     const p = THREE.MathUtils.degToRad(30), y = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
     cam.position.set(20 * Math.cos(p) * Math.sin(y), tgt.y + 20 * Math.sin(p), 20 * Math.cos(p) * Math.cos(y)); cam.lookAt(tgt);
@@ -249,7 +259,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     pose(c, name, t, true);
   };
   sample('Idle', 0);
-  const box = new THREE.Box3().setFromObject(c.root), ppu = TARGET_PX / (box.max.y - box.min.y);
+  const { box, ppu } = fitPpu(c.root, v);
   const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt);
@@ -467,7 +477,7 @@ window.bakeAnchors = async (v, clips) => {
   c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   const sample = (name, t) => { for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); } pose(c, name, t, true); };
   sample('Idle', 0);
-  const box = new THREE.Box3().setFromObject(c.root), ppu = TARGET_PX / (box.max.y - box.min.y);
+  const { box, ppu } = fitPpu(c.root, v);
   const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt); cam.updateMatrixWorld(true);
