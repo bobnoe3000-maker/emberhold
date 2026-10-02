@@ -125,11 +125,14 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 
 Off unless set; a default bake is byte-identical without them.
 - `BAKE_OUT=dir`: write the atlases into a scratch tree instead of `assets/actors`.
-- `BAKE_PROTO=features,grade,stats`:
+- `BAKE_PROTO=features,grade,eyes1,eyes2,stats`:
   - `features`: eyes, brows and mouths that cover 3 of 16 sub-samples keep their own colour;
   - `grade`: a softer grade on skin, hair and features, and a hairline;
+  - `eyes1` / `eyes2`: A2's pixel-art face, 1 px iris-tinted eyes, brows and mouth by rule; `eyes2` adds the whites (art pass 7);
   - `stats`: prints the front idle cell's head box and feature pixel counts.
 - `BAKE_HEAD=0.74`: the head bone's scale (heroic default 0.62).
+- `BAKE_PX=72`: the figure height (default 56, from `bake.json`). At 90 px or more the atlas keeps the
+  portrait's face. The Stage's `space=` spreads bigger figures apart.
 
 They need the face part tags (`userData.part`) that `faces.js` puts on every face mesh.
 

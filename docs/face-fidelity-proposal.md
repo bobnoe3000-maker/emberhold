@@ -1,6 +1,8 @@
 # Faces and heads in the world — options (art critic pass 7, proposal)
 
-**Proposal, 2026-10-02. Not built:** the shipped atlases are unchanged. This pass used the Stage
+**Proposal, 2026-10-02. Not built:** the shipped atlases are unchanged. **Follow-up:**
+[`art-critic-pass-7.md`](./art-critic-pass-7.md) critiques A's eyes, builds A2 (a pixel-art eye: A2a and
+A2b), prototypes D (72 px figures, and a simulated 112 px layer), and now recommends **A2b + B**. This pass used the Stage
 (`?dev&scene=stage`, zoom 3) to look at every human head at in-game pixels. It found why faces
 read blank, and prototyped three fixes on twelve actors. The bake knobs that made the prototypes
 stay in the lab, off by default (see *Prototypes* below). A default bake is byte-identical to
@@ -43,10 +45,10 @@ Rows: current · A: features + grade · B: heads ×0.74 · A + B.*
 | | Option | What it changes | Measured (front idle cell, 12 faces) | Cost | Risk |
 |---|---|---|---|---|---|
 | **A** | **Keep the features whole** (bake) | A pixel where an eye, brow or mouth covers ≥ 3 of its 16 sub-samples takes the feature's own colour instead of the average, and despeckle leaves it alone. | Feature pixels kept: median **18** a face, from about 7 (range 15–27 against 4–16). | Bake only. Same atlas sizes, no runtime cost. | Eyes become small dark blocks: at 2 × 2 px they read as doll-like. A2 tunes that. |
-| **A2** | **A pixel-art eye** (bake, follows A) | The atlas eye becomes two tones: a dark iris and a light pixel beside or above it (white, or a catchlight). The mouth gets a stroke thick enough to keep one pixel. | Not yet prototyped. It needs the iris to win over the white when they share a pixel. | Bake only | Busy at the smallest heads; may want per-face tuning |
+| **A2** | **A pixel-art eye** (bake; replaces A) | Each eye exactly 1 px wide, 2 tall only when both eyes earn it, iris-tinted dark. Brows a single row with skin between. A mouth of at most 2 px. A2b adds a white beside each eye. | Prototyped (pass 7): 9 of 12 faces 1 × 1 eyes, 3 faces 1 × 2; atlases +1 % | Bake only | Saturated brows can read as marks; tone them |
 | **B** | **A face grade, and a hairline** (bake) | Skin, hair and features get a gentler grade (desaturation 0.12 rather than 0.34, contrast 1.1). Where hair meets skin, the hair's edge pixel darkens a step. A feature stays at least 35 % darker than the skin beside it. | Ilse, Osric, Nell and Hedda read hair, then face (see images) | Bake only | Faces slightly warmer than the rest of the figure (intended) |
 | **C** | **Bigger heads** (proportions) | Head bone 0.62 → 0.74. | Head box +2 px each way: 16–22 px wide and 12–25 tall. Feature pixels kept with A: median **23** a face (+25 %). | One constant and a rebake of every human actor; portraits and figures change too. | Less heroic, more chibi. Changes every silhouette, and helmets and hats grow with it. |
-| **D** | **More pixels per figure** | Figures 56 → 64–72 px (bigger in the world), or a separate higher-resolution actor layer in the renderer. | Not prototyped | Atlases +30–65 % (or 4× for a 2× layer); renderer work for the layer | Changes the game's scale against buildings, or its pixel-art consistency |
+| **D** | **More pixels per figure** | D1: figures 56 → 72 px (bigger in the world). D2: a twice-resolution figure layer (112 px drawn at today's size). | Prototyped (pass 7): D1 atlases +47 %; D2 about 3.2× atlases, portrait-quality faces, a style change | Atlases +30–65 % (or 4× for a 2× layer); renderer work for the layer | Changes the game's scale against buildings, or its pixel-art consistency |
 | **E** | **A closer look when it matters** (renderer) | The camera eases to 2× zoom while you talk to someone, using the Stage's integer zoom, so their face fills four times the pixels for the conversation. | Not prototyped | Small: the camera only | A zoom pop at every talk; needs easing and a setting |
 
 ![Heads three-quarter, at zoom 3: current, A, B, A+B](img/faces7/heads-three-quarter.jpg)

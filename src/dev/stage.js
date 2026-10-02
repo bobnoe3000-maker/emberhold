@@ -17,7 +17,7 @@
 //   cmp    a path prefix serving another checkout, e.g. /before/: each figure gets a twin from
 //          that checkout's atlases on its left (before · after)
 //   speed  tiles a second for walk (the figure's own game speed by default)
-//   labels 0 to hide the names · panel 0 to hide the panel (captures)
+//   space  spacing × (for a prototype bake of bigger figures) · labels 0 to hide the names · panel 0 to hide the panel (captures)
 // Nothing here touches the sim: the Stage only reads the stage world to place figures, and keeps each
 // figure's playback state on its own objects.
 
@@ -57,10 +57,11 @@ export function createStage({ renderer, sim, params }) {
 
   // ── layout, in native screen px from the camera's point, then onto the floor (iso unproject) ──
   const view = renderer.view, W = view.w - 8, anchorY = 0.47;                    // (camera(): the point sits 47 % down)
-  const cell = (c) => (dirP === 'all' ? 50 : 66) * (c[0] === 'bosses' ? 1.3 : 1);
+  const space = Math.max(0.5, Math.min(4, +P('space', '1') || 1));   // (bigger figures than the game's 56 px: a prototype bake)
+  const cell = (c) => (dirP === 'all' ? 50 : 66) * (c[0] === 'bosses' ? 1.3 : 1) * space;
   const rows = [], heads = [];
   let y = 0, row = null, x = 0, lastGroup = null;
-  const ROW_H = (c) => (c[0] === 'bosses' ? 124 : 100);
+  const ROW_H = (c) => (c[0] === 'bosses' ? 124 : 100) * space;
   const newRow = (c) => { if (row) y += ROW_H(row.items[0].c); row = { y, items: [] }; rows.push(row); x = 0; };
   for (const c of picked) {
     if (c[0] !== lastGroup && g === 'all') { newRow(c); heads.push({ text: GROUP_NAME[c[0]], y }); lastGroup = c[0]; }
@@ -79,7 +80,7 @@ export function createStage({ renderer, sim, params }) {
   for (const r of rows) {
     const rw = r.items.length ? r.items[r.items.length - 1].x + cell(r.items[0].c) / 2 : 0;
     for (const it of r.items) {
-      const sx = it.x - rw / 2, sy = top + r.y + ROW_H(it.c) - 26, w = unproject(sx, sy);
+      const sx = it.x - rw / 2, sy = top + r.y + ROW_H(it.c) - 26 * space, w = unproject(sx, sy);
       const kind = kindOf(it.c[0], it.c[1]);
       const label = it.d !== null ? (it.d === 0 ? `${it.c[2]} 0` : String(it.d)) : roots.length > 1 && it.root ? '' : it.c[2];
       actors.push({ atlas: it.c[1], label, tag: roots.length > 1 ? (it.root ? 'before' : 'after') : '', kind,

@@ -161,7 +161,8 @@ function eyes(on, f, M, far) {
     const { p, n } = on(side * EYE.x, EYE.y), e = orient(new THREE.Group(), n); e.position.copy(p);
     e.rotation.z += side * st.tilt;
     if (far) {                                                     // atlas: a dark dot (what survives at 56 px), tilted like the style
-      const a = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 6), M.lash); a.scale.set(1.15 * st.w, 1.1 * Math.min(1, st.h + 0.1), 0.4); e.add(a); g.add(e); continue;
+      const a = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 6), M.lash); a.scale.set(1.15 * st.w, 1.1 * Math.min(1, st.h + 0.1), 0.4); e.add(a);
+      a.userData.part = side < 0 ? 'eyeA' : 'eyeB'; g.add(e); continue;
     } else {
       const white = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 8), M.white); white.scale.set(st.w, 0.66 * st.h, 0.32); e.add(white);
       const iris = new THREE.Mesh(new THREE.CircleGeometry(r * 0.56, 14), M.iris); iris.position.z = r * 0.33; iris.position.y = -r * 0.04; e.add(iris);
@@ -176,6 +177,7 @@ function eyes(on, f, M, far) {
     const lash = new THREE.Mesh(new THREE.TorusGeometry(r * st.w, r * 0.17 * (st.lash ?? 1), 4, 12, Math.PI * 0.9), M.lash);
     lash.rotation.z = Math.PI * 0.05; lash.scale.set(1, 0.66 * st.h, 1); lash.position.z = r * 0.24; e.add(lash);
     if (st.lower && !far) { const lo = new THREE.Mesh(new THREE.TorusGeometry(r * st.w * 0.86, r * 0.06, 3, 10, Math.PI * 0.6), M.crease); lo.rotation.z = Math.PI * 1.2; lo.scale.set(1, 0.42 * st.h, 1); lo.position.set(0, -r * 0.08, r * 0.2); e.add(lo); }
+    e.traverse((o) => { if (o.isMesh) o.userData.part = side < 0 ? 'eyeA' : 'eyeB'; });   // (pass 7: which eye, for the atlas's pixel eye)
     g.add(e);
   }
   return g;
@@ -345,7 +347,7 @@ export async function buildFace(load, model, f, { far = false } = {}) {
   const ownNose = own || !NOSES[f.nose], patch = ownNose ? null : sh(nosePatch(surface(B0.whole)));
   // (art pass 7) every part says what it is (userData.part: skin · hair · eye · brow · mouth), so the atlas
   // bake can keep the features whole and grade a face apart from its clothes (lab.js)
-  const tag = (g, part) => { g.traverse((o) => { if (o.isMesh) o.userData.part = part; }); return g; };
+  const tag = (g, part) => { g.traverse((o) => { if (o.isMesh && !o.userData.part) o.userData.part = part; }); return g; };   // (an eye already knows which it is)
   head.add(tag(new THREE.Mesh(own ? skull : ownNose ? B.skin : B.noNose, M.skin), 'skin'));
   if (patch) head.add(tag(new THREE.Mesh(patch, M.skin), 'skin'));
   if (B) head.add(tag(new THREE.Mesh(B.wedge, far ? M.skin : M.lip), 'skin'));

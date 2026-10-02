@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PROPS, repaint } from './props.js';
-import { buildFace } from './faces.js';
+import { buildFace, IRIS } from './faces.js';
 import { buildBody } from './body.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
@@ -163,7 +163,7 @@ function grimPass(d, gain = 1, desat = 0.34, contrast = 1.18, glow = null, cls =
 function faceLines(d, cls) {
   const W2 = W, H2 = H, L = (i) => 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2], src = new Uint8ClampedArray(d);
   for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) {
-    const k = y * W2 + x, c = cls[k]; if (c !== 2 && c !== 3) continue;
+    const k = y * W2 + x, c = cls[k]; if (c !== 2 && c !== 3) continue;   // (4, an eye's white, is meant to be light)
     let skin = -1; for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W2 && yy < H2 && cls[yy * W2 + xx] === 1) { skin = (yy * W2 + xx) * 4; break; } }
     if (skin < 0) continue;
     const i = k * 4, ls = 0.3 * src[skin] + 0.59 * src[skin + 1] + 0.11 * src[skin + 2], lp = L(i);
@@ -240,7 +240,8 @@ function strideOf(c, clipName, ppu, sample) {
   return Math.round((mean * ppu / (8 * Math.SQRT2)) * 100) / 100;
 }
 window.bakeAtlas = async (v, clips, gain = 1) => {
-  const c = await build(v, { far: true }), bones = [];
+  const c = await build(v, { far: TARGET_PX < 90 }), bones = [];   // (a figure baked at 90 px or more keeps the portrait's face: D)
+  const face = v.face ? await facePreset(v.face) : null, irisC = new THREE.Color((face && IRIS[face.iris]) || IRIS.brown);
   c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   const sample = (name, t) => {                          // restore rest pose first so the heroic pass never compounds
     for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
@@ -264,7 +265,8 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
     mats.emi.set(o, glow ? white : black); });
   // (pass 7) what each pixel is: face features (eye, brow, mouth) red, skin green, hair and beard blue
-  const PART = { eye: 0xff0000, brow: 0xff0000, mouth: 0xff0000, skin: 0x00ff00, hair: 0x0000ff };
+  // (A2 tells the features apart by red: the two eyes, the brows, the mouth)
+  const PART = { eye: 0xfa0000, eyeA: 0xfa0000, eyeB: 0xd20000, brow: 0xaa0000, mouth: 0x820000, skin: 0x00ff00, hair: 0x0000ff };
   mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[o.userData.part] ?? 0 })); });
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
@@ -300,10 +302,66 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   };
   // despeckle: a pixel unlike all 8 neighbours (an isolated texel spike) takes the mean of the
   // three neighbours closest to it — clean colour regions, detail that spans ≥ 2 px survives
+  // (A2) a pixel-art face, placed from the geometry: each eye exactly one pixel wide (two tall where the
+  // eye covers two rows well), dark and tinted by the iris, not black; 'eyes2' adds the white beside it on
+  // the outer side when the face is wide enough to hold it. Brows a single row, never touching the eye (a row
+  // of skin between); the mouth at most two pixels, only when both eyes show. Everything else averages as before.
+  const pixelFace = (big, pb, out, cls, measure) => {
+    const o = out.data, BW = W * SS, N = W * H, cov = { A: new Uint8Array(N), B: new Uint8Array(N), brow: new Uint8Array(N), mouth: new Uint8Array(N) };
+    const sum = { brow: new Float64Array(N * 3), mouth: new Float64Array(N * 3) };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let n = 0, r = 0, g = 0, bl = 0, sk = 0, hr = 0; const k = y * W + x;
+      for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+        const i = ((y * SS + sy) * BW + x * SS + sx) * 4; if (!big[i + 3]) continue;
+        n++; r += big[i] * big[i]; g += big[i + 1] * big[i + 1]; bl += big[i + 2] * big[i + 2];
+        const R = pb[i];
+        if (R > 230) cov.A[k]++; else if (R > 190) cov.B[k]++;
+        else if (R > 150) { cov.brow[k]++; sum.brow[k * 3] += big[i]; sum.brow[k * 3 + 1] += big[i + 1]; sum.brow[k * 3 + 2] += big[i + 2]; }
+        else if (R > 100) { cov.mouth[k]++; sum.mouth[k * 3] += big[i]; sum.mouth[k * 3 + 1] += big[i + 1]; sum.mouth[k * 3 + 2] += big[i + 2]; }
+        if (R > 100 || pb[i + 1] > 128) sk++; else if (pb[i + 2] > 128) hr++;   // (a feature's sub-samples count as face)
+      }
+      if (n < (SS * SS) / 2) continue;
+      const j = k * 4; o[j] = Math.sqrt(r / n); o[j + 1] = Math.sqrt(g / n); o[j + 2] = Math.sqrt(bl / n); o[j + 3] = 255;
+      cls[k] = sk >= hr && sk * 3 >= n ? 1 : hr * 3 >= n ? 2 : 0;
+    }
+    const set = (k, rgb, c) => { const j = k * 4; if (!o[j + 3]) return false; o[j] = rgb[0]; o[j + 1] = rgb[1]; o[j + 2] = rgb[2]; cls[k] = c; return true; };
+    const skinNear = (k) => { const j = k * 4; return [o[j], o[j + 1], o[j + 2]]; };
+    const eyeRGB = (k) => { const s = skinNear(k), d = irisC.clone().lerp(new THREE.Color('#120a08'), 0.55); return [d.r * 255 * 0.85 + s[0] * 0.15 * 0.3, d.g * 255 * 0.85 + s[1] * 0.15 * 0.3, d.b * 255 * 0.85 + s[2] * 0.15 * 0.3]; };
+    const eyesAt = [];
+    for (const id of ['A', 'B']) {
+      const c = cov[id]; let best = -1, bc = 1;
+      for (let k = 0; k < N; k++) if (c[k] > bc) { bc = c[k]; best = k; }
+      if (best < 0 || bc < 2) continue;
+      const up = best - W, dn = best + W, cu = up >= 0 ? c[up] : 0, cd = dn < N ? c[dn] : 0, alt = cu >= cd ? up : dn;
+      eyesAt.push({ x: best % W, k: best, alt, tall: Math.max(cu, cd) >= Math.max(3, bc * 0.55) });
+    }
+    const tall = eyesAt.length && eyesAt.every((e) => e.tall);                // a pair matches: two tall only when both are
+    for (const e of eyesAt) { const px = tall ? [e.k, e.alt] : [e.k], rgb = eyeRGB(e.k); for (const k of px) set(k, rgb, 3); e.ys = px.map((k) => Math.floor(k / W)); }
+    const eyeSet = new Set(eyesAt.flatMap((e) => e.ys.map((y) => y * W + e.x)));
+    if (PROTO.has('eyes2') && eyesAt.length === 2) {                         // the whites, outer side, a face wide enough
+      const [L, Rr] = eyesAt[0].x < eyesAt[1].x ? eyesAt : [eyesAt[1], eyesAt[0]];
+      if (Rr.x - L.x >= 3) for (const [e, dx] of [[L, -1], [Rr, 1]]) for (const y of e.ys.slice(0, 1)) {
+        const k = y * W + e.x + dx; if (cls[k] !== 1) continue; const s = skinNear(k);
+        set(k, [s[0] + (236 - s[0]) * 0.75, s[1] + (228 - s[1]) * 0.75, s[2] + (216 - s[2]) * 0.75], 4);
+      }
+    }
+    for (let x = 0; x < W; x++) {                                            // brows: the topmost covered pixel of each column
+      for (let y = 0; y < H; y++) { const k = y * W + x; if (cov.brow[k] < 3 || cls[k] === 3) continue;
+        if (eyeSet.has(k + W)) break;                                        // (a row of skin between brow and eye)
+        const n = cov.brow[k]; set(k, [sum.brow[k * 3] / n, sum.brow[k * 3 + 1] / n, sum.brow[k * 3 + 2] / n], 3); break; }
+    }
+    if (eyesAt.length === 2) {                                              // the mouth: its two best pixels
+      const m = []; for (let k = 0; k < N; k++) if (cov.mouth[k] >= 3 && cls[k] === 1) m.push(k);
+      m.sort((a, b) => cov.mouth[b] - cov.mouth[a]);
+      for (const k of m.slice(0, 2)) { const n = cov.mouth[k]; set(k, [sum.mouth[k * 3] / n * 0.85, sum.mouth[k * 3 + 1] / n * 0.85, sum.mouth[k * 3 + 2] / n * 0.85], 3); }
+    }
+    if (measure) { measure.eyes = eyesAt.map((e) => e.ys.length); }
+    return { img: out, cls };
+  };
   const despeckle = (d, cls = null) => {
     const src = new Uint8ClampedArray(d), at = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] ? (y * W + x) * 4 : -1);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = at(x, y); if (i < 0 || (cls && cls[i >> 2] === 3)) continue;   // (a face feature is meant to stand alone)
+      const i = at(x, y); if (i < 0 || (cls && cls[i >> 2] >= 3)) continue;   // (a face feature is meant to stand alone)
       const ns = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const k = at(x + dx, y + dy); if (k >= 0) ns.push(k); }
       if (ns.length < 6) continue;                                          // edges and thin parts keep their pixels
       const dist = (k) => Math.abs(src[k] - src[i]) + Math.abs(src[k + 1] - src[i + 1]) + Math.abs(src[k + 2] - src[i + 2]);
@@ -323,8 +381,10 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   // covers 3 of the 16 sub-samples takes the feature's own colour, where plain averaging washed a 1 px eye
   // into the skin. Also returns each pixel's class (0 other · 1 skin · 2 hair · 3 feature) for the grade.
   const faceStats = PROTO.has('stats') ? { feat3: 0, feat8: 0, headW: 0, headH: 0 } : null;   // (measured on the front idle cell)
+  const A2 = PROTO.has('eyes1') || PROTO.has('eyes2');
   const albParts = (measure) => {
     const big = passBig('alb').data, pb = passBig('part').data, out = new ImageData(W, H), o = out.data, cls = new Uint8Array(W * H), BW = W * SS;
+    if (A2) return pixelFace(big, pb, out, cls, measure);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let n = 0, r = 0, g = 0, bl = 0, fn = 0, fr = 0, fg = 0, fb = 0, sk = 0, hr = 0;
       for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
@@ -376,7 +436,8 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       nx.putImageData(n, col * W, dir * H); ex.putImageData(e, col * W, dir * H);
     }
   }
-  let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', ...(stride ? { stride } : {}), clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
+  let start = 0; const meta = { cw: W, ch: H, ax: Math.floor(W / 2), ay: H - 6,   // (a whole pixel: an odd cell at another px made it 56.5, and the renderer's buffer index fractional)
+    dirs: 8, frames, dirOrder: 'screen', ...(stride ? { stride } : {}), clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
   for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps, ...(k.once ? { once: true } : {}), ...(k.impact != null ? { impact: k.impact } : {}) }; start += k.frames; }
   return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null, faceStats };
 };

@@ -39,7 +39,7 @@ node tools/capture/stage.mjs [--group g] [--clip c] [--dir d] [--tod t] [--zoom 
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
 node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, + <actor>.face.png portraits and .fig.png character-window figures); --anchors (+ walk stride) / --portraits refresh only those
-BAKE_OUT=dir BAKE_PROTO=features,grade[,stats] BAKE_HEAD=0.74 node tools/actor-lab/bake.cjs [actor…]   # prototype bakes into a scratch tree (docs/face-fidelity-proposal.md); off by default
+BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats] BAKE_HEAD=0.74 BAKE_PX=72 node tools/actor-lab/bake.cjs [actor…]   # prototype bakes into a scratch tree (docs/face-fidelity-proposal.md, art-critic-pass-7.md); off by default
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks
