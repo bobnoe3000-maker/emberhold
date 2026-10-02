@@ -1,12 +1,15 @@
 # Faces and heads in the world — options (art critic pass 7, proposal)
 
-**Proposal, 2026-10-02. Not built:** the shipped atlases are unchanged. **Follow-up:**
-[`art-critic-pass-7.md`](./art-critic-pass-7.md) critiques A's eyes, builds A2 (a pixel-art eye: A2a and
-A2b), prototypes D (72 px figures, and a simulated 112 px layer), and now recommends **A2b + B**. This pass used the Stage
-(`?dev&scene=stage`, zoom 3) to look at every human head at in-game pixels. It found why faces
-read blank, and prototyped three fixes on twelve actors. The bake knobs that made the prototypes
-stay in the lab, off by default (see *Prototypes* below). A default bake is byte-identical to
-the shipped atlases.
+**Implemented, 2026-10-02: A2b + B shipped** (the default bake, `eyes2,grade`; see *Shipped* in
+[`art-critic-pass-7.md`](./art-critic-pass-7.md)). A2b replaced A, after pass 7 found A's eyes read as
+goggles. C, D and E were not built. This pass used the Stage (`?dev&scene=stage`, zoom 3) to look at
+every human head at in-game pixels. It found why faces read blank, and prototyped three fixes on
+twelve actors. Pass 7 then critiqued A's eyes, built A2 (a pixel-art eye: A2a and A2b), and
+prototyped D (72 px figures, and a simulated 112 px layer).
+
+- **Code:** `tools/actor-lab/lab.js` (`pixelFace`, `faceLines`, `grimPass`'s class map) and
+  `faces.js` (the part tags).
+- **Atlases:** every actor with a face preset, rebaked into `assets/actors`.
 
 It covers the people with faces: the hero looks (the knight's visor and the hoods aside),
 Brannoc and Thornwick's nine. It follows `art-critic-pass-6.md`; the window portraits (pass 4)
@@ -60,7 +63,7 @@ Rows: current · A: features + grade · B: heads ×0.74 · A + B.*
 *At true in-game size (DPR 2). Left: current, mostly blank faces. Right: with A and B, every
 face has two eyes, and pale hair separates from skin.*
 
-## Recommendation
+## Recommendation (at the time; see Decisions)
 
 1. **Ship A + B now.**
    - They fix the actual fault (the bake throwing the faces away), not the head size.
@@ -76,7 +79,8 @@ face has two eyes, and pale hair separates from skin.*
 
 ## Prototypes (how to reproduce)
 
-The knobs live in the actor lab (`tools/actor-lab/lab.js`, `bake.cjs`). They're off unless set:
+The knobs live in the actor lab (`tools/actor-lab/lab.js`, `bake.cjs`). The shipped set is
+`eyes2,grade`; `BAKE_PROTO` replaces it (`off` bakes faces as before this pass):
 
 ```bash
 # A + B into a scratch tree (any folder), then look at it on the Stage
@@ -94,9 +98,9 @@ BAKE_PROTO=features,grade,stats …        # + the front idle cell's head box an
 - **Viewing:** serve the scratch tree in place of `assets/actors` (the captures here did that),
   or give it the shape of a checkout and use the Stage's `cmp`.
 
-## Decision needed
+## Decisions
 
-- **A + B:** ship? (Recommended.)
-- **A2:** go ahead, judged on the Stage?
-- **C (bigger heads):** decide after A2, or now?
-- **E (talk close-up):** want it?
+- **A + B:** B shipped; A was replaced by A2b (pass 7).
+- **A2:** built and shipped as A2b, with whites in both views.
+- **C (bigger heads):** not built. Decide on the Stage if the faces still feel too small in play.
+- **E (talk close-up):** not built.

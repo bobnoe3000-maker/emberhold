@@ -7,8 +7,8 @@ in A didn't look good. It:
 - prototypes **D**, more pixels per figure, both ways: bigger figures (D1) and a twice-resolution
   figure layer (D2).
 
-Everything was judged on the Stage (`?dev&scene=stage`). The shipped atlases are unchanged; the
-prototypes are lab knobs, off by default (a default bake is byte-identical).
+Everything was judged on the Stage (`?dev&scene=stage`). **A2b + B shipped the same day**, with
+whites in both views and the brows toned and capped: see *Shipped* at the end. D stays a lab knob.
 
 ## How it was measured
 
@@ -147,3 +147,53 @@ Scores are one critic's judgement from captures; no blind comparison has been ru
    fix.
 3. **D2 is a direction, not a tweak.** Worth a separate look only if the whole game moves to finer
    pixels.
+
+## Shipped: A2b + B (2026-10-02)
+
+The default bake is now `eyes2,grade` (`tools/actor-lab/lab.js`); `BAKE_PROTO=off` bakes faces as
+before. Every actor with a face preset was rebaked: the 9 hero atlases (the 5 rogue weapons
+included), Brannoc, Thornwick's 9, the Redhand 3, the acolyte, Garrow and the Stranger. That's 25 albedo
+atlases.
+
+**What changed from the A2b prototype:**
+
+| | Prototype (pass 7) | Shipped |
+|---|---|---|
+| **Whites** | Only when both eyes showed, at least 3 px apart. The side was assumed: left eye left, right eye right. | **Both views.** Each eye's outer side comes from the geometry: away from the other eye and a little back along the face, projected to the screen. So a lone three-quarter eye gets its white on the ear side. Still only on a skin pixel. |
+| **Brows** | Every column the brow covered, in its own colour | **Only over an eye:** with two eyes, the eye's column and one either side; with one eye, its column and the outer one (2 px). With no eye, no brow. **Toned:** 35 % toward a darkened skin (skin × 0.6). Maudry's auburn now reads as a brow, not a red slash. |
+| **Actors without a face** | Rendered the part pass anyway | Skip it. The skeletons and the Standard are untouched, not rebaked. |
+
+![Front: before (HEAD) and shipped](img/faces7/shipped-front.jpg)
+
+*Front (dir 2), idle, by day, zoom 3. Top: before. Bottom: shipped.*
+
+![Three-quarter: before (HEAD) and shipped](img/faces7/shipped-three-quarter.jpg)
+
+*Three-quarter (dir 1): one eye carries the face, and it now has its white.*
+
+![Foes and hooded heroes: before and shipped](img/faces7/shipped-foes.jpg)
+
+*The Redhand, the acolyte, the bosses, and the knight, mage and rogue. Faces in a hood's shadow now have
+eyes. The knight's visor and Garrow's helm hide theirs, as before.*
+
+![Thornwick at in-game size: before and after](img/faces7/shipped-ingame.jpg)
+
+*At true in-game size (zoom 1, DPR 2), from `tools/capture/stage.mjs --group town --cmp <HEAD
+worktree>`.*
+
+**Measured** (idle cell, the twelve faces, `BAKE_PROTO=eyes2,grade,stats`):
+
+| | Front (dir 2) | Three-quarter (dir 1) |
+|---|---|---|
+| Eyes | 12 of 12 faces two eyes: 9 are 1 × 1, 3 are 1 × 2 (Osric, Col, Jory) | 12 of 12 two eyes (the far one is a pixel at the nose). Hedda's are 1 × 2. |
+| Whites | 2 on every face | 1 on every face (the near eye; the far eye's outer pixel isn't skin) |
+| Feature pixels (eyes, brows, mouth) | 5–10, median 8.5 | 5–9, median 7 |
+
+- **Atlas sizes:** the 25 albedo PNGs went from 24.75 MB to 24.81 MB (+0.26 %).
+  - Normals, glow masks, portraits and figures are byte-identical.
+  - So is every JSON, except Bess's (below).
+- **Runtime:** no change. The faces are in the atlas.
+
+**Found on the way (not fixed here):** Bess's weapon anchors differ between a full bake and
+`bake.cjs --anchors`. HEAD's lab does the same, so this commit didn't cause it. The committed anchors
+came from `--anchors` and are kept. Bess doesn't fight, so nothing draws from them yet.

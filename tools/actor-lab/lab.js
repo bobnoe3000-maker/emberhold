@@ -36,8 +36,9 @@ const ACC = {
 };
 // "heroic" proportions: shrink the head, push joints outward to lengthen limbs/torso
 // (moving a child joint along its parent lengthens the segment without thickening it)
-// (art pass 7 prototypes, bake.cjs env BAKE_PROTO / BAKE_HEAD → ?proto=features,grade&head=0.72)
-const QS = new URLSearchParams(location.search), PROTO = new Set((QS.get('proto') || '').split(',').filter(Boolean));
+// (art pass 7: the face knobs, bake.cjs env BAKE_PROTO / BAKE_HEAD → ?proto=features,grade&head=0.72. The
+// shipped bake is 'eyes2,grade', A2b + B; ?proto= replaces the set, and proto=off bakes faces as before pass 7)
+const QS = new URLSearchParams(location.search), PROTO = new Set((QS.get('proto') ?? 'eyes2,grade').split(',').filter((s) => s && s !== 'off'));
 const HEROIC = { scale: { head: +(QS.get('head') || 0.62) }, reach: { spine: 1.2, chest: 1.18, head: 1.1,
   lowerleg: 1.5, foot: 1.45, lowerarm: 1.3, wrist: 1.3 } };
 function applyHeroic(root) {
@@ -268,6 +269,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   // (A2 tells the features apart by red: the two eyes, the brows, the mouth)
   const PART = { eye: 0xfa0000, eyeA: 0xfa0000, eyeB: 0xd20000, brow: 0xaa0000, mouth: 0x820000, skin: 0x00ff00, hair: 0x0000ff };
   mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[o.userData.part] ?? 0 })); });
+  let hasFace = false; c.root.traverse((o) => { if (o.isMesh && o.userData.part) hasFace = true; });   // (no face, no part pass: skeletons bake as before)
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
   const mk = () => { const cv = document.createElement('canvas'); cv.width = W * cols; cv.height = H * rows; return cv; };
@@ -306,7 +308,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   // eye covers two rows well), dark and tinted by the iris, not black; 'eyes2' adds the white beside it on
   // the outer side when the face is wide enough to hold it. Brows a single row, never touching the eye (a row
   // of skin between); the mouth at most two pixels, only when both eyes show. Everything else averages as before.
-  const pixelFace = (big, pb, out, cls, measure) => {
+  const pixelFace = (big, pb, out, cls, measure, outer) => {
     const o = out.data, BW = W * SS, N = W * H, cov = { A: new Uint8Array(N), B: new Uint8Array(N), brow: new Uint8Array(N), mouth: new Uint8Array(N) };
     const sum = { brow: new Float64Array(N * 3), mouth: new Float64Array(N * 3) };
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -333,30 +335,47 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       for (let k = 0; k < N; k++) if (c[k] > bc) { bc = c[k]; best = k; }
       if (best < 0 || bc < 2) continue;
       const up = best - W, dn = best + W, cu = up >= 0 ? c[up] : 0, cd = dn < N ? c[dn] : 0, alt = cu >= cd ? up : dn;
-      eyesAt.push({ x: best % W, k: best, alt, tall: Math.max(cu, cd) >= Math.max(3, bc * 0.55) });
+      eyesAt.push({ id, x: best % W, k: best, alt, tall: Math.max(cu, cd) >= Math.max(3, bc * 0.55) });
     }
     const tall = eyesAt.length && eyesAt.every((e) => e.tall);                // a pair matches: two tall only when both are
     for (const e of eyesAt) { const px = tall ? [e.k, e.alt] : [e.k], rgb = eyeRGB(e.k); for (const k of px) set(k, rgb, 3); e.ys = px.map((k) => Math.floor(k / W)); }
     const eyeSet = new Set(eyesAt.flatMap((e) => e.ys.map((y) => y * W + e.x)));
-    if (PROTO.has('eyes2') && eyesAt.length === 2) {                         // the whites, outer side, a face wide enough
-      const [L, Rr] = eyesAt[0].x < eyesAt[1].x ? eyesAt : [eyesAt[1], eyesAt[0]];
-      if (Rr.x - L.x >= 3) for (const [e, dx] of [[L, -1], [Rr, 1]]) for (const y of e.ys.slice(0, 1)) {
-        const k = y * W + e.x + dx; if (cls[k] !== 1) continue; const s = skinNear(k);
+    const pair = eyesAt.length === 2 && Math.abs(eyesAt[0].x - eyesAt[1].x) >= 3;   // (two eyes: a face wide enough for whites)
+    if (PROTO.has('eyes2') && (pair || eyesAt.length === 1)) {              // the whites, on each eye's outer side (from the geometry,
+      for (const e of eyesAt) { const dx = outer && outer[e.id]; if (!dx) continue;   //  so a lone three-quarter eye gets one too)
+        const k = e.ys[0] * W + e.x + dx; if (cls[k] !== 1) continue; const s = skinNear(k);
         set(k, [s[0] + (236 - s[0]) * 0.75, s[1] + (228 - s[1]) * 0.75, s[2] + (216 - s[2]) * 0.75], 4);
       }
     }
-    for (let x = 0; x < W; x++) {                                            // brows: the topmost covered pixel of each column
+    // brows: the topmost covered pixel of each column, only over an eye (its column and either side; a lone
+    // three-quarter eye's, its column and the outer one), and toned a step toward the skin so a saturated brow
+    // (Maudry's auburn) doesn't read as a mark
+    const browCols = new Set(); for (const e of eyesAt) for (const dx of eyesAt.length === 2 ? [-1, 0, 1] : [0, (outer && outer[e.id]) || 0]) browCols.add(e.x + dx);
+    for (const x of browCols) {
       for (let y = 0; y < H; y++) { const k = y * W + x; if (cov.brow[k] < 3 || cls[k] === 3) continue;
         if (eyeSet.has(k + W)) break;                                        // (a row of skin between brow and eye)
-        const n = cov.brow[k]; set(k, [sum.brow[k * 3] / n, sum.brow[k * 3 + 1] / n, sum.brow[k * 3 + 2] / n], 3); break; }
+        const n = cov.brow[k], s = skinNear(k); set(k, [0, 1, 2].map((c) => sum.brow[k * 3 + c] / n * 0.65 + s[c] * 0.6 * 0.35), 3); break; }
     }
     if (eyesAt.length === 2) {                                              // the mouth: its two best pixels
       const m = []; for (let k = 0; k < N; k++) if (cov.mouth[k] >= 3 && cls[k] === 1) m.push(k);
       m.sort((a, b) => cov.mouth[b] - cov.mouth[a]);
       for (const k of m.slice(0, 2)) { const n = cov.mouth[k]; set(k, [sum.mouth[k * 3] / n * 0.85, sum.mouth[k * 3 + 1] / n * 0.85, sum.mouth[k * 3 + 2] / n * 0.85], 3); }
     }
-    if (measure) { measure.eyes = eyesAt.map((e) => e.ys.length); }
+    if (measure) { measure.eyes = eyesAt.map((e) => e.ys.length); for (const [c, key] of [[3, 'feat'], [4, 'whites']]) measure[key] = cls.reduce((n, v) => n + (v === c), 0); }
     return { img: out, cls };
+  };
+  // which way each eye's outer corner lies on screen this frame (+1 right, −1 left, 0 can't tell): away from the
+  // other eye and a little back along the face, so a lone three-quarter eye knows its side too
+  const eyeMesh = {}; c.root.traverse((o) => { const p = o.isMesh && o.userData.part; if ((p === 'eyeA' || p === 'eyeB') && !eyeMesh[p[3]]) eyeMesh[p[3]] = o; });
+  const outerOf = () => {
+    if (!eyeMesh.A || !eyeMesh.B) return null;
+    const P = { A: eyeMesh.A.getWorldPosition(new THREE.Vector3()), B: eyeMesh.B.getWorldPosition(new THREE.Vector3()) }, res = {};
+    for (const [id, other] of [['A', 'B'], ['B', 'A']]) {
+      const nrm = new THREE.Vector3(0, 0, 1).applyQuaternion(eyeMesh[id].parent.getWorldQuaternion(new THREE.Quaternion()));
+      const d = P[id].clone().sub(P[other]).normalize().addScaledVector(nrm, -0.6), x0 = P[id].clone().project(cam).x, x1 = P[id].clone().addScaledVector(d, 0.05).project(cam).x;
+      res[id] = Math.abs(x1 - x0) * W / 2 < 0.05 ? 0 : Math.sign(x1 - x0);
+    }
+    return res;
   };
   const despeckle = (d, cls = null) => {
     const src = new Uint8ClampedArray(d), at = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] ? (y * W + x) * 4 : -1);
@@ -380,11 +399,11 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   // (pass 7 'features') the albedo with its face features kept whole: a pixel where an eye, brow or mouth
   // covers 3 of the 16 sub-samples takes the feature's own colour, where plain averaging washed a 1 px eye
   // into the skin. Also returns each pixel's class (0 other · 1 skin · 2 hair · 3 feature) for the grade.
-  const faceStats = PROTO.has('stats') ? { feat3: 0, feat8: 0, headW: 0, headH: 0 } : null;   // (measured on the front idle cell)
+  const faceStats = PROTO.has('stats') ? { 2: { feat3: 0, feat8: 0, headW: 0, headH: 0 }, 1: { feat3: 0, feat8: 0, headW: 0, headH: 0 } } : null;   // (measured on the idle cell, front and three-quarter)
   const A2 = PROTO.has('eyes1') || PROTO.has('eyes2');
   const albParts = (measure) => {
     const big = passBig('alb').data, pb = passBig('part').data, out = new ImageData(W, H), o = out.data, cls = new Uint8Array(W * H), BW = W * SS;
-    if (A2) return pixelFace(big, pb, out, cls, measure);
+    if (A2) return pixelFace(big, pb, out, cls, measure, outerOf());
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       let n = 0, r = 0, g = 0, bl = 0, fn = 0, fr = 0, fg = 0, fb = 0, sk = 0, hr = 0;
       for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
@@ -411,7 +430,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
-      const AP = PROTO.size ? albParts(faceStats && dir === 2 && col === 0 ? faceStats : null) : null, a = AP ? AP.img : pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data, cls = AP && AP.cls;
+      const AP = PROTO.size && hasFace ? albParts(faceStats && col === 0 ? faceStats[dir] : null) : null, a = AP ? AP.img : pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data, cls = AP && AP.cls;
       despeckle(ad, cls);
       grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed, PROTO.has('grade') ? cls : null);
       if (cls && PROTO.has('grade')) faceLines(ad, cls);

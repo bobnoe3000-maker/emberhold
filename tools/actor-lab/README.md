@@ -121,15 +121,21 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `pose` — `[clipName, t01]`; default `["Idle", 0.5]`. Every model shares one rig with 76–95 clips
   (attacks, Hit, Block, Dodge, Death, Spellcast; skeletons add Awaken/Spawn/Resurrect).
 
-## Prototype knobs (art pass 7, `docs/face-fidelity-proposal.md`)
+## Face knobs (art pass 7, `docs/face-fidelity-proposal.md`)
 
-Off unless set; a default bake is byte-identical without them.
+The shipped bake is `eyes2,grade` (A2b + B, `art-critic-pass-7.md` *Shipped*): every actor with a face
+preset gets a part pass beside the albedo, and its features are placed by `pixelFace`. Actors without
+face parts (the skeletons, the Standard) skip the part pass and bake as before.
 - `BAKE_OUT=dir`: write the atlases into a scratch tree instead of `assets/actors`.
-- `BAKE_PROTO=features,grade,eyes1,eyes2,stats`:
-  - `features`: eyes, brows and mouths that cover 3 of 16 sub-samples keep their own colour;
-  - `grade`: a softer grade on skin, hair and features, and a hairline;
-  - `eyes1` / `eyes2`: A2's pixel-art face, 1 px iris-tinted eyes, brows and mouth by rule; `eyes2` adds the whites (art pass 7);
-  - `stats`: prints the front idle cell's head box and feature pixel counts.
+- `BAKE_PROTO=…` replaces the shipped set (`off` = faces as before pass 7, plain averaging and the
+  world grade):
+  - `features`: A, eyes, brows and mouths that cover 3 of 16 sub-samples keep their own colour;
+  - `grade`: B, a softer grade on skin, hair and features, and a hairline;
+  - `eyes1` / `eyes2`: A2's pixel-art face: 1 px iris-tinted eyes; brows a row over each eye (a lone
+    three-quarter eye's: 2 px), toned toward the skin; a mouth of at most 2 px. `eyes2` adds a white
+    on each eye's outer side, which comes from the geometry, so a lone three-quarter eye gets one;
+  - `stats`: prints the idle cell's head box and feature counts, front (2) and three-quarter (1).
+    Add it to the shipped set: `BAKE_PROTO=eyes2,grade,stats`.
 - `BAKE_HEAD=0.74`: the head bone's scale (heroic default 0.62).
 - `BAKE_PX=72`: the figure height (default 56, from `bake.json`). At 90 px or more the atlas keeps the
   portrait's face. The Stage's `space=` spreads bigger figures apart.
