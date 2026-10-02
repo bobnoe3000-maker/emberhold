@@ -288,12 +288,15 @@ export function createRenderer(canvas, sim, input) {
     return { meta: JSON.parse(t), v: (h >>> 0).toString(36) };
   });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
-  // scale: a boss stands taller than its men (nearest-neighbour, once, at load: 1.3× for the bosses)
+  // scale: how tall against a man (a boss 1.3×). The bake makes the bosses tall (73 px; art pass 9), so their atlas
+  // loads as it is; an atlas baked smaller (88-px cells at 56 px, e.g. an older checkout's twin on the Stage) is
+  // nearest-upscaled the rest of the way, its foot point and weapon anchors with it (they were left at 1×).
   async function loadActorAtlas(name, scale = 1, root = './assets/actors/') {   // root: the dev Stage's before/after twin loads another checkout's
-    const base = root + name, { meta, v } = await atlasMeta(base + '.json');
+    const base = root + name, { meta: m0, v } = await atlasMeta(base + '.json'), k = scale * 88 / m0.cw;
+    const up = Math.abs(k - 1) > 0.04, meta = up ? scaledMeta(m0, k) : m0;
     const alb = pixels(await loadImg(`${base}.alb.png?v=${v}`)), iw = acv.width;
     const nrm = pixels(await loadImg(`${base}.nrm.png?v=${v}`)), emi = meta.glow ? pixels(await loadImg(`${base}.emi.png?v=${v}`)) : null;
-    const { cw, ch, ax, ay } = meta, cells = [];
+    const { cw, ch, ax, ay } = m0, cells = [];
     for (let r = 0; r < meta.dirs; r++) {
       const row = [];
       for (let f = 0; f < meta.frames; f++) {
@@ -310,9 +313,11 @@ export function createRenderer(canvas, sim, input) {
       }
       cells.push(row);
     }
-    if (scale !== 1) for (const row of cells) for (let f = 0; f < row.length; f++) row[f] = upscale(row[f], scale);
+    if (up) for (const row of cells) for (let f = 0; f < row.length; f++) row[f] = upscale(row[f], k);
     return { name, meta, cells };
   }
+  const scaledMeta = (m, k) => ({ ...m, cw: Math.round(m.cw * k), ch: Math.round(m.ch * k), ax: Math.round(m.ax * k), ay: Math.round(m.ay * k),
+    ...(m.anchors ? { anchors: Object.fromEntries(Object.entries(m.anchors).map(([sl, A]) => [sl, A.map((n) => Math.round(n * k))])) } : {}) });
   function upscale(sp, k) {
     const w = Math.round(sp.w * k), h = Math.round(sp.h * k), o = { w, h, ax: Math.round(sp.ax * k), ay: Math.round(sp.ay * k), mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -1219,7 +1224,7 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('chestOpened', (c) => addFloat(c.x, c.y, '+' + c.gold + ' gold', '#ffd070', 11, 32));
   sim.bus.on('combat', (c) => {
     if (c.t === 'hit') {                                                          // sparks fly off the struck, away from the striker
-      const st = styleOfSrc(c.src, c.party), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);
+      const st = styleOfSrc(c.src, c.party, ENEMY_ACTOR), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);
       let dx = b.sx - a.sx, dy = b.sy - a.sy; const l = Math.hypot(dx, dy); if (l > 1e-3) { dx /= l; dy /= l; } else { dx = 0; dy = -1; }
       fx.impact(c.x, c.y, dx, dy, (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200], { heavy: c.heavy, crit: c.crit, now: clockNow || performance.now() });
     }

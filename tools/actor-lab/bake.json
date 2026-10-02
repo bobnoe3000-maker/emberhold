@@ -1672,7 +1672,7 @@
     {
       "out": "cinder_acolyte",
       "variant": "CA1",
-      "glow": 0,
+      "glow": 3,
       "clips": [
         {
           "key": "idle",
@@ -1736,6 +1736,7 @@
       "out": "boss_garrow",
       "variant": "B1",
       "glow": 0,
+      "px": 73,
       "clips": [
         {
           "key": "idle",
@@ -1798,7 +1799,8 @@
     {
       "out": "boss_stranger",
       "variant": "B2",
-      "glow": 0,
+      "glow": 3,
+      "px": 73,
       "clips": [
         {
           "key": "idle",
@@ -1862,6 +1864,7 @@
       "out": "boss_standard",
       "variant": "B3",
       "glow": 3,
+      "px": 73,
       "clips": [
         {
           "key": "idle",

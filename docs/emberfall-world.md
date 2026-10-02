@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.15 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.16 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.16 says how the Vale's enemies look (§5, §8; art critic pass 9). Captain Garrow fights bareheaded:
+dark hair going back, a goatee, and a gold ring in one ear. The Robed Stranger wears the Cult's charcoal and ember and
+carries the ember-shard he dies holding. The Cult's acolytes shave their heads. Nothing new about who
+they are.
 
 v1.15 says how Thornwick's people look beside each other (§5; art critic pass 8). The Watch can't
 afford plate that shines: Osric's is dull iron, and Jory's is boiled leather. They aren't one size:
@@ -282,8 +287,12 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   hadn't used it when you came in. He joins your company there.
 - **Captain Garrow** (v1.7), captain of the Redhand Company. He collects: tolls, tithes, debts,
   and men who owe him. The robed strangers' coin made him careless.
+  (v1.16) He wears no helmet: he wants to be recognised when he collects. Dark hair going back, a goatee,
+  a scar, and a gold ring in one ear that was someone else's.
 - **The Robed Stranger** (v1.7), a Cinder Cult acolyte who pays for the digging at the Sunken
   Chapel. He never gives a name, and dies with an ember-shard in his fist.
+  (v1.16) He wears the Cult's charcoal robe with its ember trim, and carries the ember-shard openly, lit,
+  in his free hand: the one he dies holding.
 - **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money.
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7) and is the future
   **Healer** unlock. (v1.6) Reedholm sent her up to the Shrine of the Ember in Thornwick to copy
@@ -414,7 +423,7 @@ in §3.6, Maudry in §5); the one-liners are the wry voice (§1) and state nothi
 |---|---|---|---|
 | **Ashbound** | all | Minion, Warrior, Rogue, Mage (the KayKit skeletons) | Eye glow reads their rank. Weak to Cleric *Turn Undead*. |
 | **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. Their elites are Sergeants (v1.7). |
-| **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. |
+| **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. (v1.16) Acolytes shave their heads and wear charcoal with ember trim. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
 | **Bosses** | per site | Redhand Captain (Captain Garrow, Wickham Keep; heirloom *Garrow's Due* — "He collected. Everyone paid."), the Robed Stranger (the Sunken Chapel, v1.7), the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
 

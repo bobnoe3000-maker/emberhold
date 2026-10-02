@@ -105,7 +105,8 @@ function pose(c, clipName, t, heroic) {
 // carried things hang plumb (art pass 6): a lantern, a basket or a hammer held at the side hangs from
 // the grip whatever the hand's angle, where a rigid prop stuck out like a pole. A prop with
 // userData.hang turns, every sampled pose, so its +y points straight down (a prop built along −y, the
-// whip, stands upright); it keeps the figure's yaw so it faces the way they do.
+// whip, stands upright); it keeps the figure's yaw so it faces the way they do. hang: 'up' (art pass 9) stands it
+// on end instead: a staff carried upright, its head above the hand, where the rest pose held it head-down.
 const _q = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _down = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
 function plumb(root) {
   const hung = []; root.traverse((o) => { if (o.userData.hang) hung.push(o); });
@@ -113,7 +114,7 @@ function plumb(root) {
   const yaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), root.rotation.y);
   for (const o of hung) {
     o.parent.getWorldQuaternion(_qp);
-    _q.copy(yaw).multiply(_down);
+    _q.copy(yaw); if (o.userData.hang !== 'up') _q.multiply(_down);
     o.quaternion.copy(_qp.invert().multiply(_q));
   }
   root.updateMatrixWorld(true);

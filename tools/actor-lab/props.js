@@ -52,12 +52,12 @@ export const PROPS = {
     return g;
   },
   staff: () => {
-    const g = new THREE.Group(); g.name = 'Staff';
-    const wood = mat(0x5a3a22, 0, 0.85), brass = mat(0xb8903c, 0.8, 0.35), orb = new THREE.MeshStandardMaterial({ color: 0x7ad0ff, emissive: 0x2a7ab0, emissiveIntensity: 1.2, roughness: 0.2 });
+    const g = new THREE.Group(); g.name = 'Staff'; g.userData.hang = 'up';   // (carried upright: plumb)
+    const wood = mat(0x5a3a22, 0, 0.85), brass = mat(0xb8903c, 0.8, 0.35), orb = new THREE.MeshStandardMaterial({ color: 0xffa040, emissive: 0xc04010, emissiveIntensity: 1.2, roughness: 0.2 });   // (art pass 9) the Cult's ember, not a cold blue: only the Robed Stranger carries it
     const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.1, 8), wood); shaft.position.y = 0.2; g.add(shaft);
     for (const y of [1.18, -0.8]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.07, 10), brass); b.position.y = y; g.add(b); }
     const claw = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 6, 12), brass); claw.position.y = 1.36; g.add(claw);
-    const o = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), orb); o.position.y = 1.36; g.add(o);
+    const o = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), orb); o.position.y = 1.36; o.userData.glow = 0xff8030; g.add(o);
     return g;
   },
   shield: () => {
@@ -89,6 +89,17 @@ export const PROPS = {
     // the banner hangs from the bar (toward the grip) in three tattered tongues
     for (const [x, len] of [[-0.28, 1.0], [0, 1.2], [0.28, 0.9]]) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.28, len, 0.02), cloth); t.position.set(x, -2.2 + len / 2, 0.04); g.add(t); }
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.03, 14), ember); disc.rotation.x = Math.PI / 2; disc.position.set(0, -1.78, 0.07); g.add(disc);
+    return g;
+  },
+  // the Robed Stranger's ember-shard (world doc §5, v1.16): a jagged splinter of the Ember held point-up in his
+  // free hand, lit (userData.glow: the bake writes it to the emissive plane), so the Cult's man carries its light
+  shard: () => {
+    const g = new THREE.Group(); g.name = 'Ember_Shard';
+    const ember = new THREE.MeshStandardMaterial({ color: 0xffa040, emissive: 0xc04010, emissiveIntensity: 1.4, roughness: 0.3 });
+    for (const [x, h, r, tilt] of [[0, 0.42, 0.07, 0], [0.06, 0.28, 0.05, -0.35], [-0.06, 0.24, 0.045, 0.4]]) {
+      const c = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), ember); c.scale.set(r, h / 2, r); c.position.set(x, 0.1 + h / 2, 0); c.rotation.z = tilt;
+      c.name = 'Ember_Shard'; c.userData.glow = 0xff8030; g.add(c);
+    }
     return g;
   },
   // a pewter ale mug, held by its handle (Maudry Fenn's, the Tired Mule): body along +y above the grip

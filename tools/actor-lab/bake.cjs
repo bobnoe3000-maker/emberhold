@@ -17,8 +17,15 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await (await b.newContext({ viewport: { width: 300, height: 300 } })).newPage();
   p.on('pageerror', (e) => console.log('PAGEERR', e.message));
-  await p.goto(`http://127.0.0.1:${port}/lab.html?px=${process.env.BAKE_PX || spec.px}${process.env.BAKE_PROTO ? '&proto=' + process.env.BAKE_PROTO : ''}${process.env.BAKE_HEAD ? '&head=' + process.env.BAKE_HEAD : ''}`);
-  await p.waitForFunction(() => window.ready === true, { timeout: 60000 });   // (BAKE_PROTO / BAKE_HEAD / BAKE_PX: art pass 7 prototypes)
+  // the lab bakes at one figure height a page: an actor with its own `px` (art pass 9: the bosses, 73 = 56 × 1.3,
+  // baked tall rather than nearest-upscaled at load) reopens it at that height; BAKE_PX scales everyone alike
+  let open = 0;
+  const pxOf = (a) => Math.round((a.px || spec.px) * (process.env.BAKE_PX ? +process.env.BAKE_PX / spec.px : 1));
+  const lab = async (px) => {
+    if (open === px) return; open = px;
+    await p.goto(`http://127.0.0.1:${port}/lab.html?px=${px}${process.env.BAKE_PROTO ? '&proto=' + process.env.BAKE_PROTO : ''}${process.env.BAKE_HEAD ? '&head=' + process.env.BAKE_HEAD : ''}`);
+    await p.waitForFunction(() => window.ready === true, { timeout: 60000 });   // (BAKE_PROTO / BAKE_HEAD / BAKE_PX: art pass 7 prototypes)
+  };
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
@@ -26,6 +33,7 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
   const pick = process.argv.slice(2).filter((x) => !x.startsWith('--'));   // node bake.cjs hero_knight … bakes just those
   for (const a of spec.actors) {
     if (pick.length && !pick.includes(a.out)) continue;
+    await lab(pxOf(a));
     if (a.portrait) {                                      // head-and-shoulders portrait for the windows (lab.js renderPortrait)
       const v = vars[a.variant];
       png(`${a.out}.face.png`, await p.evaluate(async (v) => await window.renderPortrait(v), v));
@@ -47,7 +55,7 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
     }
     const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
-    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, source: `KayKit CC0 · ${v.label} · heroic + grim · ${process.env.BAKE_PX || spec.px}px` };
+    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, source: `KayKit CC0 · ${v.label} · heroic + grim · ${pxOf(a)}px` };
     fs.writeFileSync(path.join(OUT, `${a.out}.json`), JSON.stringify(meta) + '\n');
     png(`${a.out}.alb.png`, r.alb); png(`${a.out}.nrm.png`, r.nrm);
     const emi = path.join(OUT, `${a.out}.emi.png`); if (r.emi) png(`${a.out}.emi.png`, r.emi); else if (fs.existsSync(emi)) fs.unlinkSync(emi);

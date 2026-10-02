@@ -111,6 +111,11 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
   (a prop built along −y, the whip, stands up), keeping the figure's yaw. A rigid prop stuck out like a
   pole in the Idle hand. A prop part with `userData.glow` (the lantern's glass) is written to the
   emissive plane like the skeletons' eyes; give the actor a `glow` id in `bake.json` (Wendel: 3, ember).
+  `hang: 'up'` (art pass 9) stands a prop on end instead, its head above the hand: the staff the Robed
+  Stranger and the Cinder acolyte carry, which the rest pose held orb-down.
+- `px` in a `bake.json` actor (art pass 9) bakes that actor at its own figure height: the bosses at 73
+  (56 × 1.3, 114 × 133 cells), so the renderer draws them 1:1 rather than nearest-upscaling a 56 px atlas.
+  `bake.cjs` reopens the lab at that height; `BAKE_PX` scales everyone alike.
 - `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
   8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
   the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe

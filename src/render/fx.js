@@ -20,6 +20,7 @@
 // saturated on purpose: bloom and the tonemap wash light toward white, so the hue has to be strong to survive
 const STEEL = [185, 210, 255], WARM = [255, 170, 90], VERDANT = [120, 255, 170], ARCANE = [110, 140, 255], FIRE = [255, 120, 30];
 const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], SOULCAST = [80, 255, 130], HOLY = [255, 214, 120];
+const REDHAND = [255, 92, 70], EMBER = [255, 140, 40];   // (art pass 9) the Company's red; the Cult's ember
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
@@ -36,10 +37,19 @@ export const FX_STYLES = {
   skeleton_minion:  { col: BILE, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [225, 240, 190] },
   skeleton_rogue:   { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
   skeleton_mage:    { col: SOULCAST, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [150, 255, 180] },
+  // (art pass 9) the human foes and the bosses swung and cast with nothing drawn: the same primitives, in their colours
+  redhand_cutthroat: { col: REDHAND, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [255, 205, 180], thin: true },
+  redhand_brute:     { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 190, 150], wide: 1.25 },
+  redhand_crossbow:  { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
+  cinder_acolyte:    { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [255, 170, 80] },
+  boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
+  boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },
+  boss_standard:     { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 226, 160], wide: 1.2 },
 };
 // combat events name the striker by its actor / class (party) or kind (the Ashbound)
 const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' };
-export const styleOfSrc = (src, foe) => FX_STYLES[foe ? 'skeleton_' + src : CLASS_ACTOR[src] || src] || null;
+/** @param {Record<string, string>} [foeActor] a foe kind's atlas (the renderer's ENEMY_ACTOR): the Redhand's and the bosses' sparks too */
+export const styleOfSrc = (src, foe, foeActor = {}) => FX_STYLES[foe ? foeActor[src] || 'skeleton_' + src : CLASS_ACTOR[src] || src] || null;
 
 export function createFX() {
   let B = null;                                   // { EMI, DEP, W, H, DPX }

@@ -243,5 +243,85 @@
    "freckles"
   ],
   "shape": "round"
+ },
+ "cutthroat": {
+  "skin": "tan",
+  "hair": "crest",
+  "hairColor": "auburn",
+  "brows": "angry",
+  "eyes": "narrow",
+  "iris": "amber",
+  "mouth": "grin",
+  "nose": "hook",
+  "beard": "mustache",
+  "marks": [
+   "scar_cheek",
+   "earring"
+  ]
+ },
+ "brute": {
+  "skin": "rose",
+  "hair": "crop",
+  "hairColor": "soot",
+  "brows": "angry",
+  "eyes": "tired",
+  "iris": "brown",
+  "mouth": "frown",
+  "nose": "broad",
+  "beard": "full",
+  "marks": [
+   "scar"
+  ],
+  "shape": "thick"
+ },
+ "crossbowman": {
+  "skull": "own",
+  "skin": "fair",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "line",
+  "beard": "stubble",
+  "marks": [
+   "wrinkles"
+  ]
+ },
+ "acolyte": {
+  "skin": "porcelain",
+  "hair": "bald",
+  "brows": "thin",
+  "eyes": "wide",
+  "iris": "amber",
+  "mouth": "line",
+  "nose": "long",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "thin"
+ },
+ "garrow": {
+  "skin": "umber",
+  "hair": "receding",
+  "hairColor": "soot",
+  "brows": "heavy",
+  "eyes": "sharp",
+  "iris": "amber",
+  "mouth": "smirk",
+  "nose": "hook",
+  "beard": "goatee",
+  "marks": [
+   "scar",
+   "earring"
+  ]
+ },
+ "stranger": {
+  "skull": "own",
+  "skin": "porcelain",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "amber",
+  "mouth": "line",
+  "nose": "long",
+  "shape": "thin"
  }
 }
