@@ -183,6 +183,19 @@ export const PROPS = {
     const belt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), strap); belt.position.set(0, 0.11, 0.32); g.add(belt);
     return g;
   },
+  // the Redhand brute's kettle hat (worn on the head bone): a deserter's issue iron, a low dome on a wide sloping brim,
+  // with a band of the Company's red. He wore the barbarian hero's own hat, and only the shirt told them apart.
+  // (head bone space, before its 0.62 scale: the head spans x ±0.54, y −0.11 … 0.95)
+  kettle: () => {
+    const g = new THREE.Group(); g.name = 'Kettle_Hat';
+    const iron = mat(0x77736e, 0.6, 0.55), rim = mat(0x56524e, 0.6, 0.6), red = mat(0x9a2a1e, 0, 0.9);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), iron); dome.scale.set(1, 0.72, 1); dome.position.set(0, 0.6, 0.02); g.add(dome);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.9, 0.12, 16, 1, true), rim); brim.position.set(0, 0.56, 0.02); g.add(brim);
+    const under = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.9, 0.12, 16, 1, true), rim); under.material = rim.clone(); under.material.side = THREE.BackSide; under.position.copy(brim.position); g.add(under);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.615, 0.615, 0.12, 16), red); band.position.set(0, 0.68, 0.02); g.add(band);
+    g.traverse((o) => { if (o.isMesh) o.name = 'Kettle_Hat'; });
+    return g;
+  },
   // the Ashbound minion's rag (skeleton-skull proposal, shipped): what's left of a cloak, worn low on the
   // shoulders so the jaw and the ribcage show. KayKit's cloak rode up over the jaw, and the skull read as an egg.
   // (chest bone space: y up from the chest at 1.07 m, z forward; the jaw starts about 0.22 up, the shoulders at 0.13)

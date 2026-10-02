@@ -52,3 +52,11 @@ test('the Ashbound bake a pixel skull, and the minion wears its rag low, the clo
   assert.deepEqual(minion.hide, ['Skeleton_Minion_Cloak']); assert.equal(minion.wear && minion.wear.chest, 'rag');
   assert.match(readFileSync('tools/actor-lab/props.js', 'utf8'), /\brag: \(\) =>/);
 });
+
+test("the brute's hat isn't the barbarian hero's", () => {
+  const vars = Object.fromEntries(lab('variants.json').map((v) => [v.id, v])), bake = lab('bake.json').actors;
+  const of = (out) => vars[bake.find((x) => x.out === out).variant], hats = (v) => [...(v.show || []).filter((n) => /Hat|Helmet|Hood/.test(n)), ...Object.values(v.wear || {})];
+  const brute = hats(of('redhand_brute')), hero = hats(of('hero_barbarian'));
+  assert.ok(brute.length, 'the brute is bareheaded');
+  assert.ok(!brute.some((h) => hero.includes(h)), `the brute wears the hero's ${brute}`);
+});

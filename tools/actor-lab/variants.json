@@ -1323,8 +1323,7 @@
   "label": "Redhand brute \u00b7 great-axe",
   "model": "Barbarian",
   "show": [
-   "2H_Axe",
-   "Barbarian_Hat"
+   "2H_Axe"
   ],
   "swatches": [
    {
@@ -1352,7 +1351,10 @@
   "pose": [
    "2H_Melee_Idle",
    0.5
-  ]
+  ],
+  "wear": {
+   "head": "kettle"
+  }
  },
  {
   "id": "RH3",

@@ -422,7 +422,7 @@ in §3.6, Maudry in §5); the one-liners are the wry voice (§1) and state nothi
 | Family | Region | Archetypes (current art) | Notes |
 |---|---|---|---|
 | **Ashbound** | all | Minion, Warrior, Rogue, Mage (the KayKit skeletons) | Eye glow reads their rank. Weak to Cleric *Turn Undead*. |
-| **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. Their elites are Sergeants (v1.7). |
+| **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. Their elites are Sergeants (v1.7). (v1.16) The brutes still wear the iron kettle hats they deserted in, with a band of the Company's red. |
 | **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. (v1.16) Acolytes shave their heads and wear charcoal with ember trim. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
 | **Bosses** | per site | Redhand Captain (Captain Garrow, Wickham Keep; heirloom *Garrow's Due* — "He collected. Everyone paid."), the Robed Stranger (the Sunken Chapel, v1.7), the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |

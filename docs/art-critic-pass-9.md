@@ -195,9 +195,10 @@ Scores are one critic's judgement from captures; no blind comparison has been ru
 
 ## Still wrong (ranked)
 
-1. **The brute still shares the barbarian hero's hat and body.** His face and beard differ now, but
-   at in-game size the silhouette is the hero's in a red shirt. A different hat or a hood (a kit
-   swap) would settle it.
+1. ~~**The brute still shares the barbarian hero's hat and body.**~~ Fixed: he wears an iron kettle hat with a
+   band of the Company's red (`props.js` `kettle`), a wide-brimmed silhouette unlike the hero's bear-fur hood.
+
+   ![The barbarian hero and the brute, before and after](img/art9/brute-hat.jpg)
 2. **The Redhand have no mark of the Company.** They wear red, but there's no red hand anywhere: a
    painted palm on a shield or a tabard would carry the name.
 3. ~~**The Ashbound minion's skull** reads as a large white ball from the front.~~ Fixed: a pixel skull
