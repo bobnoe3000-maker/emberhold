@@ -239,7 +239,7 @@ test('a shrine raises one Fallen member at half HP, once', () => {
   let at = null; for (const [k, v] of sim.world.props) if (v === 'shrine') { at = k.split(',').map(Number); break; }
   if (!at) return;                                              // (this seed's first level has no shrine)
   const p = sim.state.player; p.x = at[0] + 1.5; p.y = at[1] + 0.5;
-  run(sim, [{ type: 'harvest', tx: at[0], ty: at[1] }]);
+  run(sim, [{ type: 'harvest', tx: at[0], ty: at[1] }, { type: 'useShrine', tx: at[0], ty: at[1] }]);   // touch, then the popup's Use
   assert.equal(c.fallen, false); assert.ok(Math.abs(c.hp - statsFor(c).maxHp * 0.5) <= 1);
 });
 

@@ -39,6 +39,7 @@ sim.bus.on('wave', (w) => { if (w.cleared) { waves++; here++; } });
 sim.bus.on('battle', (e) => { if (e.on) here = 0; });
 sim.bus.on('looted', (e) => { if (e.kind === 'chest') chests++; });
 sim.bus.on('defeat', () => { wipes++; });
+sim.bus.on('shrineOffer', (o) => { if (o.will !== 'none') sim.commands.push({ type: 'useShrine', tx: o.tx, ty: o.ty }); });   // the popup's Use, when it would help (GDD §3.6 v1.14)
 const END = HOURS * 3600;
 let idle = 0;
 while (sim.state.t < END) {

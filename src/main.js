@@ -19,6 +19,7 @@ import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
 import { createJournal } from './ui/journal.js';
 import { createStepOut } from './ui/stepout.js';
+import { createShrineCard } from './ui/shrine.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
 import { NPCS } from './sim/npcs.js';
@@ -62,6 +63,7 @@ const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open() });   // subscribe before restore, so a loaded counters event repaints
 const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms) => hud.show(m, ms), partyPanel });   // quests (M4): the Journal, tracker and toasts
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
+createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
 const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open() });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)

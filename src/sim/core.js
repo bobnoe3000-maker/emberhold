@@ -341,6 +341,18 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
     }
+    if (cmd.type === 'useShrine') {                        // the shrine popup's Use (ui/shrine.js): unspent, in reach, and needed
+      const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
+      if (propAt(world, cmd.tx, cmd.ty) !== 'shrine') return;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > REACH) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
+      if (!shrineNeeded()) { bus.emit('shrine', { tx: cmd.tx, ty: cmd.ty, did: 'none' }); return; }   // kept for later
+      face(p, dx, dy);
+      world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
+      shrine(cmd.tx, cmd.ty);
+      bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: 'shrine' });
+      bus.emit('countersChanged', { ...state.counters });
+      return;
+    }
     if (cmd.type === 'harvest') {                          // tap-to-interact
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
       const inReach = Math.max(Math.abs(dx), Math.abs(dy)) <= REACH;
@@ -351,12 +363,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         if (prop === 'stairs' && world.kind === 'overland') { travel('dungeon', undefined, 'barrows'); return; }   // into the Old Barrows
         if (prop === 'exit') { travel('overland', curSite); return; }                                  // back up to the surface
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
-        if (prop === 'shrine') bus.emit('shrineTouched', { tx: cmd.tx, ty: cmd.ty });   // what's written on it is read either way (lore.js)
-        if (prop === 'shrine' && !shrineNeeded()) { bus.emit('shrine', { tx: cmd.tx, ty: cmd.ty, did: 'none' }); return; }   // kept for later
+        if (prop === 'shrine') {                           // a touch reads it and offers its blessing; using it is its own command (useShrine)
+          bus.emit('shrineTouched', { tx: cmd.tx, ty: cmd.ty });   // what's written on it is read either way (lore.js)
+          bus.emit('shrineOffer', { tx: cmd.tx, ty: cmd.ty, ...shrineWould() });
+          return;
+        }
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
-          else if (prop === 'shrine') shrine(cmd.tx, cmd.ty);
           else { state.counters.wood += 2; state.counters.stone += 2; }
           bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: prop });
           if (prop === 'chest') {                          // gold, always, and maybe gear: item level = its room's level (the hero's outdoors)
@@ -386,12 +400,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   }
 
   // A site shrine (one use each, GDD §3.6): raises the first Fallen member at 50 % HP; with
-  // nobody Fallen it restores the party instead. It is only used when it would do something: with
-  // nobody Fallen and everyone standing whole, a touch leaves it lit for later (2026-10-01: a tap at
-  // full health spent it for nothing, and nothing said so). Events: 'shrine' { tx, ty, did: 'raised' |
-  // 'mended' | 'none', name? }.
+  // nobody Fallen it restores the party instead. A touch (harvest) only offers it: 'shrineOffer'
+  // { tx, ty, will: 'raise' | 'mend' | 'none', name? } and the popup (ui/shrine.js) shows the blessing
+  // with Use or Close (v1.14; it was used on the touch). `useShrine { tx, ty }` uses it, and only when it
+  // would do something: with nobody Fallen and everyone standing whole it stays lit for later. Events:
+  // 'shrine' { tx, ty, did: 'raised' | 'mended' | 'none', name? }.
   const hurt = (m) => { if (m.down || m.fallen) return false; const s = statsFor(m); return m.hp < s.maxHp || (m.mp ?? s.maxMp) < s.maxMp; };
   const shrineNeeded = () => state.party.some((m) => m.fallen || hurt(m));
+  const shrineWould = () => { const f = state.party.find((m) => m.fallen); return f ? { will: 'raise', name: f.name } : { will: shrineNeeded() ? 'mend' : 'none' }; };
   function shrine(tx, ty) {
     const f = state.party.find((m) => m.fallen);
     if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); bus.emit('shrine', { tx, ty, did: 'raised', name: f.name }); }

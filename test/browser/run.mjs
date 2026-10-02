@@ -649,6 +649,38 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15b. A dungeon shrine offers its blessing (GDD §3.6 v1.14): a touch opens the card, Close keeps its light,
+// Use spends it and mends the party.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    const at = await p.evaluate(() => {
+      const s = globalThis.__sim, find = () => [...s.world.props].find(([, v]) => v === 'shrine');
+      for (let d = 1; d < 4 && !find(); d++) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth: d, floors: [] });   // (a floor with a shrine)
+      const k = find(); if (!k) return null; const [x, y] = k[0].split(',').map(Number), q = s.state.player;
+      q.x = q.px = x + 1.5; q.y = q.py = y + 0.5; s.state.party[0].hp = 5;
+      s.commands.push({ type: 'harvest', tx: x, ty: y }); return { x, y };
+    });
+    await run(4);
+    const on1 = await p.locator('#shrineCard.on').count(), text = await p.locator('#shrineCard').innerText().catch(() => ''), useOn = await p.locator('#shrineCard .use:not([disabled])').count();
+    await p.locator('#shrineCard .close').tap(); await run(3);
+    const kept = await p.evaluate((a) => { const s = globalThis.__sim; return !s.world.mods.get(a.x + ',' + a.y) && s.state.party[0].hp < 20; }, at);
+    const on2 = await p.locator('#shrineCard.on').count();
+    await p.evaluate((a) => globalThis.__sim.commands.push({ type: 'harvest', tx: a.x, ty: a.y }), at); await run(4);
+    await p.locator('#shrineCard .use').tap(); await run(4);
+    const used = await p.evaluate((a) => { const s = globalThis.__sim; return { spent: !!s.world.mods.get(a.x + ',' + a.y), hp: Math.round(s.state.party[0].hp) }; }, at);
+    const on3 = await p.locator('#shrineCard.on').count();
+    check('shrine: a touch opens its card (what it does, Use · Close); Close keeps its light; Use spends it and mends',
+      !!at && on1 === 1 && /mends everyone standing/.test(text) && /One use/.test(text) && useOn === 1 && kept && on2 === 0 && used.spent && used.hp > 20 && on3 === 0 && errs.length === 0,
+      JSON.stringify({ at, on1, useOn, kept, on2, used, on3, text: text.split('\n').slice(0, 3).join(' · ') }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
 // and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {

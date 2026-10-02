@@ -1,6 +1,9 @@
 # Emberfall — Game Design Document
 
-**v1.13 · 2026-10-02 · Plan of record for game design.** v1.13 opens the forge and the shop (§8, §11):
+**v1.14 · 2026-10-02 · Plan of record for game design.** v1.14 asks before a shrine is used (§3.6):
+touching one opens a card that says what its blessing would do, with Use or Close.
+
+v1.13 opens the forge and the shop (§8, §11):
 smith upgrades +1…+5, reforging a trait and salvage at Hale & Daughter's; Wendel's sells the day's
 plain gear at your level, buys what you won't use and lets you buy it back. **No draughts**: what keeps
 a party standing is who's in it. Elites now drop 1 cinder and bosses 5, so the forge has a second
@@ -261,9 +264,13 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
 - **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
   everyone was back over 60 %, which let a room be held forever).
 - **Temple:** an in-game day is an hour of play (§10.1). **Shrine:** with nobody Slain it
-  restores the party instead (HP and MP, everyone standing). It is only spent when it does
-  something: with nobody Slain and everyone whole, a touch leaves it lit for later and says so
-  (v1.10). It always says what it did. A fragment written on it is read at the first touch either
+  restores the party instead (HP and MP, everyone standing). **A touch asks first (v1.14):** a card
+  says what its blessing would do now: it raises the first of the slain (by name) at half health,
+  or mends everyone standing, with each one's HP and MP. It notes it's one use, and offers **Use**
+  or **Close**. Close leaves it lit for later; so does a touch with nobody Slain and everyone whole,
+  where Use is off and says why. A fight's chase doesn't close the card: Use walks back to the
+  shrine and uses it there. The sim checks the use (`useShrine`): unspent, in reach, needed
+  (`src/ui/shrine.js`, `src/sim/core.js`). It always says what it did. A fragment written on it is read at the first touch either
   way. On screen (`src/render/gsprite.js` voxShrine), a shrine stands as tall as a hero: a stepped
   plinth, a pillar and a big aqua orb, against a far wall so no wall hides it. An unused one carries
   the word *Shrine*, with what it does underneath as you come near. A spent one stays, its orb dark
