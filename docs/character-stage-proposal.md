@@ -1,13 +1,25 @@
 # The Stage — a lineup page for clean character captures (proposal)
 
-**Proposal, 2026-10-02. Not built.** This answers: is there a better way to get clean in-game shots
-of the players and NPCs? It proposes a separate page that draws them in lines, animated in place,
-none overlapping, through the real renderer.
+**Implemented, 2026-10-02** (proposed the same day). This answers: is there a better way to get
+clean in-game shots of the players and NPCs? It's a separate page that draws them in lines,
+animated in place, none overlapping, through the real renderer.
+
+- **Code:**
+  - `src/dev/stage.js`: the lineup, the playback and the panel;
+  - `src/render/renderer.js`: `setStage`, `stageDraws`, `setZoom`, `stageBounds`;
+  - `src/sim/outdoor.js`: `buildStage`, the flat field;
+  - `src/main.js`: `scene=stage`, localhost and `?dev` only.
+- **Tools:** `tools/capture/stage.mjs`.
+- **Test:** browser §15c. The whole cast at 390 × 844 loads, nothing overlaps or falls off
+  screen, and figures walk in place.
+- **Use it:** see *As built* below.
 
 ![Layout mock: the party, Thornwick and the foes in rows, walking in place](img/character-stage-mock.png)
 
-*A layout mock only, built from unlit atlas cells. The real page draws through Emberlit: lit,
-outlined and upscaled exactly as in play.*
+*The proposal's layout mock (unlit atlas cells). As built, the page draws through Emberlit: see
+the captures in `art-critic-pass-6.md` and below.*
+
+![The Stage as built: the whole cast at dusk, and the townsfolk walking in place at zoom 2](img/character-stage-built.jpg)
 
 ## Why
 
@@ -96,8 +108,51 @@ The same stage could become a player-facing **"Faces of the Vale"** page in the 
 Content and rules for that (who appears when) belong in the GDD and the world doc first.
 The dev page is the first step either way.
 
-## Decision needed
+## As built (differences from the proposal)
 
-1. **Build the dev Stage as above?** (Recommended.) It turns the art critic captures into one
-   command, with the true in-game look and a before/after twin.
-2. **Also plan the player-facing gallery?** It would need a GDD entry; not proposed for now.
+- **Use it:**
+  - **Live:** `npm run serve`, then open
+    `http://localhost:8080/?dev&scene=stage&group=town&clip=walk&dir=1`. The panel at the top
+    changes any parameter (it reloads the page).
+  - **Captures:**
+
+    ```bash
+    node tools/capture/stage.mjs --group town --clip fidget --zoom 2 --size 900x1400
+    ```
+
+    It writes `frame-NN.png` (cropped to the lineup), `sheet.png` and `loop.html` (a flipbook)
+    into `tools/capture/out/` (gitignored).
+  - **Before and after:**
+
+    ```bash
+    git worktree add ../before HEAD~1
+    node tools/capture/stage.mjs --group town --clip walk --cmp ../before
+    ```
+
+    Each figure gets a twin from the older checkout's atlases, labelled *before* and *after*.
+- **How many fit.**
+  - The game draws 25 tiles across (400 native px) at every width. A laptop window is wider in CSS
+    px but not in game pixels, and a landscape window is *shorter* in them.
+  - A phone at DPR 2 (390 × 844) fits the whole cast of 30 at zoom 1, 6 to a row. The proposal's
+    "12 on a laptop" was wrong.
+  - At DPR 1 the renderer's minimum scale (1.5) leaves only 262 × 565 native px.
+  - Use a tall `--size`, or a group, for zoom 2–3. The page and the tool both say when figures
+    don't fit; they never cut them off quietly.
+- **The floor.** It's a field on the outdoor path (`floor=grass` or `cobble`) under the time of
+  day (`tod`). There's no torchlit dungeon option yet: a dungeon floor needs a room big enough for
+  the lineup. The hero's light and wisp are off on the Stage, so every figure gets the same light.
+- **Walk speeds.** Each figure walks at its own game speed, unless `speed=` sets one:
+  - the party 8.8 tiles/s;
+  - the townsfolk 1.6;
+  - the Redhand 3.2;
+  - the Ashbound 3.0.
+
+  Strides are the renderer's own, so a walk in place steps exactly as it does in the world.
+- **Loops.** No GIF or WebP encoder (that would be a new dependency). `loop.html` plays the
+  captured frames instead.
+- **Timing.** One-shots (attacks, hits, gestures) repeat with 0.7 s between, and death with 1.5 s.
+  Every figure plays in step, which makes them easy to compare.
+
+## Still open
+
+- **The player-facing gallery** ("Faces of the Vale") would need a GDD entry first. Not planned.

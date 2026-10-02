@@ -32,8 +32,14 @@ const params = new URLSearchParams(location.search);
 const THEME = new URLSearchParams(location.search).get('theme') || undefined;
 
 const canvas = document.getElementById('game');
-// ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick).
-const SCENE = new URLSearchParams(location.search).get('scene') || 'town';
+// Dev hooks (?dev: the live sim on globalThis, slow motion, manual clock, the Stage) exist only on a local
+// server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
+// *possible*, only easy: progression is trusted only once the server replays it — replay.js.)
+const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+// ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick); ?dev&scene=stage is the
+// dev Stage (src/dev/stage.js: the cast in a lineup, for captures), refused off localhost.
+const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAGE = SCENE0 === 'stage' && DEV;
+const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : SCENE0;
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
 // ?scene=dungeon&site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone previews another dungeon site (sim/sites.js).
@@ -47,15 +53,12 @@ const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot'
 if (params.has('slot')) setActiveSlot(SLOT);
 const saved = PREVIEW ? null : await readSlot(SLOT);
 const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
-const sim = createSim(SEED, THEME, { scene: SCENE, region: REGION, site: SITE });
-// Dev hooks (?dev: the live sim on globalThis, slow motion, manual clock) exist only on a local
-// server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
-// *possible*, only easy: progression is trusted only once the server replays it — replay.js.)
-const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const sim = createSim(SEED, THEME, { scene: SCENE, region: STAGE ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
 const renderer = createRenderer(canvas, sim, input);
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
+if (STAGE) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
@@ -112,6 +115,7 @@ renderer.setHero(hero);
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
 // shrine / stairs / growth when it's what you tapped)
 input.onTap((sx, sy) => {
+  if (STAGE) return;                                     // the Stage: nothing in the world to tap
   const npc = renderer.npcAt(sx, sy);                    // a named person: walk over and talk (the sim checks reach)
   if (npc) { sim.commands.push({ type: 'talk', npc: npc.id }); return; }
   const sv = renderer.serviceAt(sx, sy);                 // a service building: its menu once you're in the square,
@@ -148,7 +152,7 @@ function frame(now) {
 
   while (acc >= TICK_DT) {
     if (paused || renderer.transiting) { acc -= TICK_DT; continue; }   // (a scene change baking: hold still, or a stick still held could walk you back out)
-    const v = input.vec();
+    const v = STAGE ? null : input.vec();
     if (v) {                                   // screen drag → iso world direction
       const w = screenDirToWorld(v.x, v.y);
       const len = Math.hypot(w.x, w.y) || 1;
@@ -159,7 +163,7 @@ function frame(now) {
     acc -= TICK_DT;
   }
 
-  renderer.holdSky(title.isOpen ? 'dusk' : TOD);              // the title is always at dusk; play follows the clock
+  renderer.holdSky(title.isOpen ? 'dusk' : STAGE ? TOD || 'dusk' : TOD);              // the title is always at dusk; play follows the clock
   if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath
 }
 // dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls

@@ -59,6 +59,7 @@ const BAKE_BUDGET = 5;             // ms of background baking per frame
 // phone, then cut hard to the new place: it read as a stutter and a jump.
 const TRANSIT_BUDGET = 24, TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
+let viewTiles = VIEW_TILES;        // (the dev Stage zooms in: VIEW_TILES ÷ its integer zoom)
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
@@ -212,7 +213,7 @@ export function createRenderer(canvas, sim, input) {
     canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
     overlay.width = vw; overlay.height = vh;
     overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
-    S = Math.max(1.5, vw / (VIEW_TILES * TW));             // fractional; PASS B upscales sharp-bilinear
+    S = Math.max(1.5, vw / (viewTiles * TW));              // fractional; PASS B upscales sharp-bilinear
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
     const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
@@ -288,8 +289,8 @@ export function createRenderer(canvas, sim, input) {
   });
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
   // scale: a boss stands taller than its men (nearest-neighbour, once, at load: 1.3× for the bosses)
-  async function loadActorAtlas(name, scale = 1) {
-    const base = './assets/actors/' + name, { meta, v } = await atlasMeta(base + '.json');
+  async function loadActorAtlas(name, scale = 1, root = './assets/actors/') {   // root: the dev Stage's before/after twin loads another checkout's
+    const base = root + name, { meta, v } = await atlasMeta(base + '.json');
     const alb = pixels(await loadImg(`${base}.alb.png?v=${v}`)), iw = acv.width;
     const nrm = pixels(await loadImg(`${base}.nrm.png?v=${v}`)), emi = meta.glow ? pixels(await loadImg(`${base}.emi.png?v=${v}`)) : null;
     const { cw, ch, ax, ay } = meta, cells = [];
@@ -810,6 +811,34 @@ export function createRenderer(canvas, sim, input) {
   preloadFamily();
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
 
+  // ── The Stage (dev only: src/dev/stage.js, docs/character-stage-proposal.md) ──────────────────────
+  // A lineup of figures on the stage world, each standing on its spot and playing the clip the Stage
+  // asks for, drawn by the same stamping, light and upscale as play. The Stage owns the layout, the
+  // camera and each figure's playback inputs; the strides are the renderer's own, so a walk in place
+  // steps exactly as it does in the world.
+  let stage = null;
+  const stageAtlases = new Map();
+  const stageAtlas = (a) => {
+    const key = `${a.root || ''}|${a.atlas}|${a.scale || 1}`;
+    if (!stageAtlases.has(key)) { stageAtlases.set(key, null); loadActorAtlas(a.atlas, a.scale || 1, a.root || undefined).then((x) => stageAtlases.set(key, x)).catch(() => stageAtlases.set(key, false)); }
+    return stageAtlases.get(key);
+  };
+  function stageDraws(st, draws, ox, oy, now) {
+    for (const a of st.actors) {
+      const atl = stageAtlas(a); if (!atl) continue; a.meta = atl.meta;   // (the capture tool reads clip lengths)
+      const stride = a.kind === 'party' ? STRIDE.hero : a.kind === 'undead' ? STRIDE.skel : strideOf(atl, STRIDE.walk);
+      const o = st.anim(a, atl, now), an = pickAnim(a.unit, atl, { ...o, now, stride });
+      const z = heightAt(sim.world, Math.floor(a.x), Math.floor(a.y)), q = project(a.x, a.y, z);
+      const sp = atl.cells[an.dir][an.frame], fx = ox + q.sx, fy = oy + q.sy, bb = spriteBox(sp);
+      a.box = [Math.round(fx) - sp.ax + bb[0], Math.round(fy) - sp.ay + bb[1], Math.round(fx) - sp.ax + bb[2], Math.round(fy) - sp.ay + bb[3]];   // drawn bounds, native px (the overlap test)
+      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: 0, atl, a: an });
+    }
+  }
+  const boxes = new WeakMap();
+  const spriteBox = (sp) => { let b = boxes.get(sp); if (b) return b; let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
+    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.mask[y * sp.w + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    boxes.set(sp, (b = [x0, y0, x1 + 1, y1 + 1])); return b; };
+
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
   // fixed framing, so the square sits still like a home screen while the hero moves in it.
   let camT = 0, shake = null;                        // shake: a heavy blow's short camera jolt
@@ -838,9 +867,9 @@ export function createRenderer(canvas, sim, input) {
   let clockNow = 0;                                   // the render clock (dev slow motion runs it slow)
   function render(alpha, now) {
     clockNow = now;
-    const p = sim.state.player;
-    const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
-    const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
+    const p = sim.state.player, st = stage && sim.world.kind === 'stage' ? stage : null;
+    const ix = st ? st.cam.x : p.px + (p.x - p.px) * alpha, iy = st ? st.cam.y : p.py + (p.y - p.py) * alpha;   // the Stage frames its lineup, not the hero
+    const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
     const { ox, oy } = (lastCam = camera(ix, iy, pz));
 
@@ -868,6 +897,7 @@ export function createRenderer(canvas, sim, input) {
     const lerp = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alpha);   // between 20 Hz steps
     const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
     const GHOST = { ghost: 1 };
+    if (st) stageDraws(st, draws, ox, oy, now); else {               // the dev Stage: its lineup instead of the world's people
     // the hero
     const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
     if (hAtl) {
@@ -942,6 +972,7 @@ export function createRenderer(canvas, sim, input) {
       else sp = boltSprite(b.kind);
       draws.push({ d: bx + by + 0.2, sp, fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
     }
+    }
     if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
       party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]) });
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
@@ -970,7 +1001,7 @@ export function createRenderer(canvas, sim, input) {
     const outdoor = sim.world.kind !== 'dungeon';
     skyAt(skyHoldT ?? sim.state.t, skyNow); lastNow = now;
     const ease = Math.min(1, (now - skyEase0) / SKY_EASE); mixSky(sky, skyFrom, skyNow, ease * ease * (3 - 2 * ease));
-    const hl = outdoor ? 0.42 * sky.wisp : 1;                       // outdoors the hero's ember-wisp is a glow at dusk, a torch at night
+    const hl = st ? 0 : outdoor ? 0.42 * sky.wisp : 1;              // outdoors the hero's ember-wisp is a glow at dusk, a torch at night (none on the Stage: even light)
     const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
     // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
     const near = flares.map((s) => ({ s, d: Math.hypot(s.x - ix, s.y - iy) })).sort((a, b) => a.d - b.d).slice(0, 2);
@@ -993,7 +1024,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform2f(U(lightP, 'uRes'), nvw, nvh);
     gl.uniform1f(U(lightP, 'uTime'), t);
     gl.uniform1f(U(lightP, 'uAmb'), AMB);
-    gl.uniform1f(U(lightP, 'uWispA'), outdoor ? WISP * 0.6 * Math.min(1, sky.wisp) : WISP);
+    gl.uniform1f(U(lightP, 'uWispA'), st ? 0 : outdoor ? WISP * 0.6 * Math.min(1, sky.wisp) : WISP);
     gl.uniform3fv(U(lightP, 'uL'), L.flat());
     gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
     // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
@@ -1027,7 +1058,8 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
+    if (st) st.overlay(octx, (x, y) => { const q = project(x, y, pz); return [(lastCam.rx + q.sx) * S, (lastCam.ry + q.sy) * S]; }, S);   // the Stage's names and headings
+    else if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (transit) {                                                 // fading in from the scene change
@@ -1270,7 +1302,7 @@ export function createRenderer(canvas, sim, input) {
   // had no cleric: the first HP bar drawn in a fight threw, and the frame loop stopped (a freeze).
   const maxHpOf = (m) => statsFor(m).maxHp;
   function drawBanner(now) {
-    if (!banner || now > banner.until) return;
+    if (!banner || now > banner.until || stage) return;           // (the Stage has no scene title over its lineup)
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
     const size = banner.small ? 16 : 20, y = (hudB + (banner.small ? 68 : 100)) * k;   // (under the room pill and a boss's bar)
     octx.font = `600 ${Math.round(size * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
@@ -1404,6 +1436,22 @@ export function createRenderer(canvas, sim, input) {
     },
     /** the chest, shrine or stairs drawn under a tap (its whole sprite, not its floor tile), or null */
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
+    /** dev: the Stage (src/dev/stage.js) — its lineup, camera and overlay; null to leave it */
+    setStage(s) { stage = s; },
+    /** dev: the Stage's zoom (integer): fewer tiles across the screen, the same native-pixel look */
+    setZoom(z) { viewTiles = VIEW_TILES / Math.max(1, Math.round(z) || 1); resize(); },
+    /** dev: the native view size (px) and whether every stage atlas has loaded (or failed) */
+    get view() { return { w: nvw, h: nvh, S }; },
+    /** dev: the lineup's bounds in CSS px (every figure's drawn box, and room under the feet for its name) */
+    stageBounds(pad = 8) {
+      if (!stage) return null; const dpr = vw / window.innerWidth, fx = lastCam.rx - lastCam.ox, fy = lastCam.ry - lastCam.oy;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const a of stage.actors) if (a.box) { x0 = Math.min(x0, a.box[0]); y0 = Math.min(y0, a.box[1]); x1 = Math.max(x1, a.box[2]); y1 = Math.max(y1, a.box[3]); }
+      if (!isFinite(x0)) return null;
+      const c = (v, f) => ((v + f) * S) / dpr, below = 36;   // (the name and a before / after tag)
+      return { x: Math.max(0, c(x0, fx) - pad), y: Math.max(0, c(y0, fy) - pad), x1: Math.min(window.innerWidth, c(x1, fx) + pad), y1: Math.min(window.innerHeight, c(y1, fy) + below + pad) };
+    },
+    get stageReady() { return !!stage && stage.actors.every((a) => stageAtlases.get(`${a.root || ''}|${a.atlas}|${a.scale || 1}`) !== null && stageAtlases.has(`${a.root || ''}|${a.atlas}|${a.scale || 1}`)); },
     screenToTile(sxPx, syPx, alpha) {
       const p = sim.state.player;
       const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;

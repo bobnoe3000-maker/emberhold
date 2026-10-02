@@ -21,6 +21,7 @@ import { SITES, siteOpen, levelBand } from './sites.js';
 
 
 export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
+  if (world.kind === 'stage') return [];                   // the dev Stage (outdoor.js buildStage): nowhere to go
   // standable() probes five points with climb checks; every row prices many tiles, so cache by
   // (tile, height stepped up from)
   const memo = new Map(), raw = standable;

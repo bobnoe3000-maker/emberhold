@@ -353,8 +353,22 @@ function buildOverland(seed) {
   return o;
 }
 
-// region picks the town (one hub per region: vale · fens · reach · heights); the overland is the Hollow Vale's
-export function createOutdoor(seed, kind, region = 'vale') { return kind === 'town' ? buildTown(seed, region) : buildOverland(seed); }
+// The Stage (docs/character-stage-proposal.md; src/dev/stage.js): a dev-only preview scene, a flat field
+// with nothing on it, where figures are lined up and drawn through the real renderer for captures. Grass
+// by default; `cobble` lays one wide cobbled square under it. No structures, people, foes or ways out.
+export const STAGE_W = 160;
+function buildStage(seed, floor) {
+  const o = makeWorld(seed, 'stage', STAGE_W, STAGE_W, 8), c = STAGE_W / 2;
+  o.name = 'The Stage';
+  if (floor === 'cobble') o.plazas.push({ cx: c, cy: c, rx: c - 6, ry: c - 6 });
+  finalizeGround(o);
+  o.arrivals = { default: { x: c + 0.5, y: c + 0.5 } }; o.spawn = o.arrivals.default;
+  return o;
+}
+
+// region picks the town (one hub per region: vale · fens · reach · heights); the overland is the Hollow Vale's;
+// 'stage' takes its floor in `region`'s place (grass · cobble)
+export function createOutdoor(seed, kind, region = 'vale') { return kind === 'town' ? buildTown(seed, region) : kind === 'stage' ? buildStage(seed, region) : buildOverland(seed); }
 
 // ── world API (dispatched from world.js) ─────────────────────────────────────
 export const oHeightAt = () => FLOOR_Z;

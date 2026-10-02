@@ -6,3 +6,4 @@ dist/
 # actor lab: downloaded models + render output (regenerable)
 tools/actor-lab/models/
 tools/actor-lab/out/
+tools/capture/out/

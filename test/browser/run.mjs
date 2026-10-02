@@ -681,6 +681,30 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup on a phone (390 × 844), every
+// atlas loaded, no two figures overlapping and none off the screen; walking in place, their frames change and
+// their spots don't.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale)
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&scene=stage&group=all&clip=walk&dir=1`);
+    await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
+    for (let i = 0; i < 80 && !(await p.evaluate(() => globalThis.__renderer.stageReady)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
+    const snap = () => p.evaluate(() => { for (let i = 0; i < 10; i++) globalThis.__frame(1000 / 60); return globalThis.__stage.actors.map((a) => ({ id: a.atlas, box: a.box, x: a.x, y: a.y })); });
+    const s1 = await snap(), s2 = await snap(), v = await p.evaluate(() => globalThis.__renderer.view);
+    const meet = (a, c) => a[0] < c[2] && c[0] < a[2] && a[1] < c[3] && c[1] < a[3];
+    const overlaps = []; for (let i = 0; i < s1.length; i++) for (let j = i + 1; j < s1.length; j++) if (s1[i].box && s1[j].box && meet(s1[i].box, s1[j].box)) overlaps.push(`${s1[i].id}×${s1[j].id}`);
+    const off = s1.filter((a) => !a.box || a.box[0] < 0 || a.box[1] < 0 || a.box[2] > v.w || a.box[3] > v.h).map((a) => a.id);
+    const moved = s1.filter((a, i) => a.x !== s2[i].x || a.y !== s2[i].y).length, animating = s1.filter((a, i) => JSON.stringify(a.box) !== JSON.stringify(s2[i].box)).length;
+    const hud = await p.evaluate(() => [...document.body.children].filter((e) => e.tagName !== 'CANVAS' && e.id !== 'stagePanel' && e.tagName !== 'SCRIPT' && getComputedStyle(e).display !== 'none').map((e) => e.id || e.tagName));
+    check('stage: the whole cast lined up (30), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
+      s1.length === 30 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
+      JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
 // and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {
