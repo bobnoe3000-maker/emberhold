@@ -1,14 +1,26 @@
 # The town: layout, walls and gates — review and replan (proposal)
 
-**Proposal, 2026-10-02. Nothing is shipped.** This review looks at the town scene and at Thornwick on the
-overland the way an art critic would: the square, the way in, and the town's edge. It proposes a replan
-that keeps the square as the menu and gives it more room.
+**Proposal, 2026-10-02 (revision 2). Nothing is shipped.** This review looks at the town scene and at
+Thornwick on the overland the way an art critic would: the square, the way in, and the town's edge. It
+proposes a replan that keeps the square as the menu and gives it more room.
+
+**Revision 2** takes in your first decisions:
+- **Thornwick's wall is timber.** It's a beginning town. The stone set waits for a later region's town.
+- **The temple turns 90° clockwise,** and **every entrance faces the centre of the square.**
+- **The camera leads toward the gate** on the approach.
+- **The overland road west through Thornwick is dropped.**
 
 Everything marked *blockout* was built and captured in the real renderer, in a scratch checkout:
 - `buildTown` and the overland's Thornwick re-laid;
-- three rough wall pieces made in the buildkit (a curtain run, a drum tower, a gatehouse) and baked.
+- rough wall pieces made in the buildkit and baked: a log palisade, a timber watchtower, a timber
+  gatehouse, and the earlier stone set;
+- two small renderer changes: the camera lead, and service plaques that stay on screen.
 
 The pieces are stand-ins for the art, not the art. The layout's numbers are the part to judge.
+
+The blockout's code is kept as [`town-layout-blockout.patch`](./town-layout-blockout.patch). It's a
+starting point, not shippable: it touches `outdoor.js`, `renderer.js`, `buildkit.js` and `town.json`.
+To try it, apply it to `11d08c4` and run `node tools/actor-lab/bake-env.cjs`.
 
 ## How it was measured
 
@@ -74,55 +86,108 @@ Grey: wall pieces and rocks. Yellow dots: arrivals. Orange box: the way out to t
    the farms and fields outside the wall.
 4. **One axis:** bridge → gate → high street → market → temple.
 
+### Every entrance faces the square
+
+![Every entrance facing the well](img/town/entrances.jpg)
+
+*The square at in-game size, the HUD off. Every door is on the face toward the well:*
+- *the temple's under its rose window, at the top of its steps;*
+- *the shop's under its red awning, where Wendel stands;*
+- *the inn's on its near face, at the bottom right;*
+- *the tavern's under its porch, where Maudry stands;*
+- *the smithy's open forge, toward the well.*
+
+**The camera sees only two faces of a building:** the one toward screen bottom-left (+y) and the one
+toward screen bottom-right (+x). So a door can face the square only if the building stands *up-screen*
+of the square: north or west of the well. A service standing below the well would show the square its
+back.
+
+That rules out the first blockout's arrangement, where the shop and the smithy stood at the square's
+foot. It also makes the square hard to fit on a phone:
+- each service is about half the portrait frame wide;
+- all five have to stand in an arc above the well;
+- each must sit far enough to one side that the building in front doesn't hide its door.
+
+**How the places were found.** I placed the five by a search, not by hand. Each candidate layout had
+to pass every rule:
+- the door faces the well (within 55°);
+- the door isn't behind another service's sprite;
+- the door is inside the hub frame;
+- the services stand 7+ tiles apart (8.8 in the end);
+- the square stays open for 10 tiles round the well.
+
+**What it found:**
+- Four services fit easily.
+- The fifth fits only if service plaques may slide to stay on screen. The temple, tall and at the
+  head, would otherwise put its plaque above the frame.
+- So the blockout keeps service plaques on screen (a renderer change). This is the arrangement that
+  matched the baked turns:
+
+| | Left (door +x) | Centre | Right (door +y) |
+|---|---|---|---|
+| Head | | Temple (door +y: turned 90° clockwise) | |
+| Upper | Tavern | Shop | |
+| Front | Smithy | Well (the Watch) | Inn, by the high street |
+
+The services keep the GDD's rule: **the same five buildings in the same places in every town**. Their
+places change once, here.
+
 ### The plan (blockout)
 
 | What | Where (tiles) | Note |
 |---|---|---|
-| **Wall circuit** | x 10–112, y 8–108 | 8 drum towers (the corners and mid-runs), curtain between, one gatehouse. 28 pieces |
-| **Gate** | east wall, y 75 | Faces the road. The moat-stream runs under the east wall, and the bridge lands straight at the gate |
-| **High street** | cobbled, x 112 → 80 along y 75 | One house on its north side. The shop stands at its head, on the market's corner |
-| **Market** | centre (65, 64), 30 × 42 cobbled | The well and the Watch table in the middle |
-| **Temple** | (35, 35), the head of the market | A small forecourt, open to the market; the churchyard's trees behind it |
-| **Tavern / Inn** | (48, 64) left / (58, 42) right | The upper pair |
-| **Smithy / Shop** | (70, 86) left / (81, 65) right | The lower pair, at the foot where the high street comes in |
+| **Wall circuit** | x 10–112, y 8–108 | Timber for Thornwick: a log palisade on an earth bank, 8 watchtowers (the corners and mid-runs), one gatehouse. 28 pieces |
+| **Gate** | east wall, y 80 | Faces the road. The moat-stream runs under the east wall, and the bridge lands straight at the gate |
+| **High street** | cobbled, x 112 → 84 along y 80 | One house on its north side. The inn stands at its head, on the square's corner |
+| **Square** | the well at (66, 71); 48 × 44 cobbled | Open toward the camera and the high street |
+| **Temple** | (34, 24), the head of the square | Its forecourt open to the square; the churchyard's trees behind it |
+| **Tavern / Shop** | (29, 48) / (50, 41) | The upper pair |
+| **Smithy / Inn** | (51, 67) / (73, 55) | The front pair |
 | **Houses** | the north-east and west quarters, against the back walls | Backdrop, out of the services' way |
 | **Outside** | farms, fields and the stream east of the wall | The country |
-
-The services keep the GDD's rule: **the same five buildings in the same places in every town**. Their
-places change once, here:
-
-| | Left | Centre | Right |
-|---|---|---|---|
-| Head | | Temple | |
-| Upper | Tavern | | Inn |
-| Middle | | Well (the Watch) | |
-| Foot | Smithy | (the high street comes in) | Shop |
 
 ### The way in (blockout)
 
 From the overland you arrive east of the stream.
-1. **The arrival.** The wall and its towers fill the top of the frame. The gate is at the left edge, and
-   one step brings it in.
-2. **The bridge.** It lands at the gate, between two drum towers with their lanterns lit.
-3. **The gate.** You pass under the arch.
-4. **Inside.** The high street runs up to the market, with the shop's red awning at its head.
-5. **The market.** The camera settles on the square, and the temple closes the view.
+1. **The arrival.** On the approach road the camera **leads toward the gate**, half the way from you to
+   it. So the gate is in the frame from the moment you arrive. Before, it sat off the left edge until
+   you'd walked a few steps.
+   - The lead eases in and out like the square's framing, inside a zone along the road (`world.lead`).
+2. **The bridge.** It lands at the gate, between two timber towers with their lanterns lit.
+3. **The gate.** You pass between the open leaves, under the roofed fighting bridge.
+4. **Inside.** The high street runs up to the square, with the inn at its head.
+5. **The square.** The camera settles on the square, and the temple closes the view.
 
 That's 30 tiles from the arrival to the gate and 32 tiles of street, where there were 86 tiles of open
 road.
 
-![The gate by day and by night (blockout pieces)](img/town/gate.jpg)
+![The timber gate by day and by night (blockout pieces)](img/town/gate.jpg)
 
-*The prototype gatehouse at in-game size: two drum towers on the outer face, an arched way through with
-the portcullis up, a lantern each side, the town's banner. The curtain wall runs off either side.*
+*The timber gatehouse at in-game size:*
+- *two log-skirted towers with plank fighting boxes and slate caps;*
+- *a roofed bridge over the way;*
+- *the plank leaves standing open;*
+- *a lantern each side, the town's banner.*
+
+*The palisade runs off either side: logs of uneven height on an earth bank, with rails and raking props
+on the town side.*
+
+![The stone gate, kept for a later region's town](img/town/gate-stone.jpg)
+
+*The stone set from the first blockout (curtain, drum tower, gatehouse), kept for a later region's
+town.*
 
 ### The square at the menu (blockout)
 
 ![The square at the menu: now, the blockout, the blockout at night](img/town/square.jpg)
 
-The square at the menu now has room: a cobbled market, the well in the middle, and every service
-standing at its edge with clear ground between them. The temple stands where the eye ends, at the head
-of the market, in its churchyard trees. The south wall sits under the menu bar.
+The square at the menu now has room. Every service stands round the well with clear ground between,
+all five doors toward it. The temple stands where the eye ends, at the head of the square, in its
+churchyard trees. The south wall sits under the menu bar.
+
+Two services are cut by the frame's edges: about a third of the tavern (left) and of the inn (right).
+Their doors and plaques stay in view. The plaques slide to stay on screen: the tavern's and inn's from
+the side edges, the temple's from under the top HUD.
 
 ### Thornwick on the overland (blockout)
 
@@ -130,62 +195,74 @@ of the market, in its churchyard trees. The south wall sits under the menu bar.
 
 ![Thornwick on the overland, plans](img/town/overland-plan.jpg)
 
-The same pieces make the same town in miniature: a box of curtain and drum towers (38 × 44 tiles), the
-gatehouse on the east wall facing its road, the temple's spire and four roofs inside. It stands where
-the old gate stood, so the road, the exit and the arrival don't move.
+The same pieces make the same town in miniature: a box of palisade and watchtowers (38 × 44 tiles),
+the gatehouse on the east wall facing its road, the temple's spire and four roofs inside. It stands
+where the old gate stood, so the road, the exit and the arrival don't move.
 - **The tall keep tower is gone.** It wasn't Thornwick's: Wickham Keep is its own site.
-- **The road west through the town is gone.** It led off the map. If it should stay, it can skirt the
-  south wall instead.
+- **The road west through the town is gone** (decided). It led off the map.
 
 ### All four towns
 
 Every region's town is built by the same `buildTown`, so Saltmere, Ashgate and Frosthold get the same
-circuit and square. The wall pieces are baked in each region's tones, like every other town building.
-Stone walls in every region are the simplest choice. A timber palisade for Saltmere (the buildkit
-already has a palisade look) is a possible variant.
+circuit and square.
+- **Thornwick's pieces are timber.** The palisade, watchtower and gate are new build types in the
+  buildkit, given to the vale's entries in `town.json`.
+- **The other regions keep the stone set** in their own tones, for when their towns are built.
+- The ids stay the same everywhere (`<region>_curtain_1` and so on), so `buildTown` doesn't care which
+  set it gets.
 
 ## Before → after
 
-| Measure | Now | Blockout |
+| Measure | Now | Blockout (revision 2) |
 |---|---|---|
-| Nearest gap between two services | 4.4 tiles (temple–inn) | 8.1 (temple–inn) |
+| Entrances pointing at the square's centre (within 55°) | 4 of 5: the smithy's forge faces away (172°) | 5 of 5 (22–40°), and none behind another service |
+| Nearest gap between two services | 4.4 tiles (temple–inn) | 8.8 (temple–shop) |
 | Pairs of services closer than 8 tiles | 2 | 0 |
-| Open paving in the hub frame | 939 tiles | 1050 (+12 %) |
+| Open paving in the hub frame | 939 tiles | 1385 (+47 %) |
 | Paving under buildings | 19 % | 18 % |
-| Inn: distance from the well to its nearest edge | 35.5 tiles (off the square) | 16.9 (on it) |
-| Temple: distance from the well to its nearest edge | 34.7 (behind the shop) | 31.4 (at the head of the market, its forecourt joined) |
-| Service plaques inside the hub frame | 5 of 5 | 5 of 5 |
+| Inn: distance from the well to its nearest edge | 35.5 tiles (off the square) | 10.9 |
+| Temple: distance from the well to its nearest edge | 34.7 (behind the shop) | 47.9 (at the head of the square, its forecourt joined) |
+| Service plaques in the hub frame | 5 of 5 | 5 of 5 (three slid in from an edge) |
 | Wall, tower and gate pieces in the town scene | 0 | 28 |
-| Open road between the arrival and the town | 86 tiles, no edge | 30 tiles to the gate, then 32 of street |
-| Thornwick on the overland | a gatehouse in a field | a closed circuit, the gate on its road |
+| Open road between the arrival and the town | 86 tiles, no edge | 30 tiles to the gate (in view on arrival), then 28 of street |
+| Thornwick on the overland | a gatehouse in a field | a closed timber circuit, the gate on its road |
+| Town atlas, vale | 0.69 MB | 0.96 MB (+0.27 MB) |
+
+*Entrances now: the temple's and the inn's point toward the square, but from 35 tiles off it, behind
+the shop and the tavern. In the first blockout, the temple's door was on the face the inn hid.*
 
 ## Still wrong in the blockout
 
-1. **The inn's plaque sits under the compass and journal buttons.** They stand on the right edge, at the
-   plaque's height.
-   - **Options:** clamp plaques clear of the HUD's buttons, or swap the upper pair (inn left, tavern
-     right): the left edge has no buttons there.
-2. **The smithy's plaque lies on Hedda's name.** The townsfolk's spots move with the services, but they
-   need re-authoring against browser test 15d (≤ 5 % hidden).
-3. **At the arrival, the gate is at the frame's left edge.** One step brings it in. A camera lead while
-   on the approach road would frame the gate on arrival, the way the hub's focus eases onto the square.
+1. **The temple is far from the well:** 48 tiles, at the head of the square. That's the price of all
+   five doors facing the well in a portrait frame. It reads as the square's end, with its forecourt
+   joined, but a party walking to it from the well has a way to go.
+2. **The tavern and the inn are cut by the frame's edges** (about a third each). Their doors and plaques
+   show.
+3. **The townsfolk's spots need re-authoring.** They moved with the services; two stand on a service's
+   step. Browser test 15d (≤ 5 % hidden) will need to pass again.
 4. **The pieces are stand-ins.** The final pieces need work:
-   - the curtain is long and plain (it wants buttresses, a weathered course, a patch or two);
-   - the arch is small and dark;
-   - the gatehouse's inner face is bare.
+   - the palisade wants a gap patched with planks, and a walkway visible behind the logs on the town side;
+   - the gate's leaves are plain;
+   - the watchtowers want a ladder.
 5. **The high street's south side is empty grass and garden.** That's on purpose: anything tall there
    would stand in front of the street. But it wants low dressing (a fence, a cart, a stall).
 
 ## What it would take
 
-1. **Canon (the world doc first):** whether Thornwick is walled. Today canon only calls **Greyholt** "the
-   walled market town" (§3.1); Thornwick isn't described either way. See the decisions below.
+1. **Canon (the world doc first):** one line that Thornwick keeps a timber palisade with a gate on the
+   road. That fits a farming town on the barrows road. Greyholt stays the Vale's *walled* (stone)
+   market town.
 2. **Art (buildkit + `town.json`):**
-   - **New pieces:** curtain, curtain turned (y), drum tower, gatehouse, gatehouse turned (y), for four
-     regions: 20 sprites.
+   - **Timber pieces for the vale:** palisade, palisade turned (y), watchtower, timber gate, timber
+     gate turned (y). They're new build types (`palisade`, `watchtower`, `timbergate`).
+   - **Their roofs carry the quarter-turn in the geometry.** A rotated mesh's box (which the bake
+     measures for the footprint) came out √2 too wide.
+   - **The stone set** stays for the other regions' towns.
+   - **Turns:** the temple loses `faceX` (door on +y, 90° clockwise on screen). The tavern and the
+     smithy gain it (door +x). The shop loses it (door +y).
    - **Bake:** `node tools/actor-lab/bake-env.cjs` regenerates the atlases and `src/sim/envfoot.js`.
-   - **Measured cost:** each region's town atlases grow from 0.68 to 0.91 MB (+34 %), +0.92 MB for all
-     four. The old `wally` piece can go once the overland stops using it.
+   - **Measured cost:** the vale's town atlas grows from 0.69 to 0.96 MB. The old `wally` piece can go
+     once the overland stops using it.
 3. **Sim (`src/sim/outdoor.js`):**
    - `buildTown`: positions, the circuit, the cobbled high street, the market;
    - `o.hub`, `o.arrivals`, `o.exits`;
@@ -196,13 +273,16 @@ already has a palisade look) is a possible variant.
      (`core.js:581`), and anywhere else outside the walls is simply outside them.
 4. **People (`src/sim/npcs.js`):** re-author the spots, then run test 15d and the town tests (`act1`,
    `bag`, `battle`, `npcs`, `travel`).
-5. **Camera and UI:**
+5. **Camera and UI (`src/render/renderer.js`):**
    - the hub focus;
-   - plaques kept clear of the HUD buttons;
-   - optionally, the approach lead.
+   - **the approach lead:** `world.lead` = a zone along the road, the gate, and how far to lead (0.5).
+     It eases in and out like the hub's framing;
+   - **service plaques stay on screen** on the home screen: they slide in from the side edges and
+     below the top HUD, and they show however far off they are.
 6. **Tests (new):**
-   - the circuit is closed: a flood fill from the market reaches the way out only through the gate;
-   - every service's plaque sits inside the hub frame;
+   - the circuit is closed: a flood fill from the square reaches the way out only through the gate;
+   - every service's door is on a face the camera sees, toward the well;
+   - every service's door is inside the hub frame;
    - no two services are closer than 8 tiles.
 7. **Docs:**
    - the GDD's town section (§10): the square's new table, and the approach (houses inside the walls,
@@ -210,19 +290,22 @@ already has a palisade look) is a possible variant.
    - an art critic pass with the shipped before and after;
    - this proposal marked Implemented.
 
-## Decisions for you
+## Decisions
 
-1. **The layout:** the walled circuit, the bridge into the gate, the high street, the market with the
-   temple at its head. **Recommended.**
-2. **Thornwick's wall in canon:**
-   - **(a) A stone circuit, as blocked out.** *Recommended*, with one line in the world doc that the
-     wall is older than the town: an imperial waystation's wall that Thornwick grew inside and patches
-     when it can. That's "history found, not told", and it fits the Vale's legion ruins. Greyholt stays
-     the *market* town with the lord in it.
-   - **(b) A lesser edge:** a ditch and a timber palisade, with only the gatehouse in stone. It keeps
-     stone walls for Greyholt, but it reads less as "town" from the overland.
-3. **Every region the same, or a Saltmere palisade.** Stone everywhere is simpler.
-4. **The upper pair's sides:** keep the tavern left and the inn right (and clamp the plaques), or swap
-   them (no clamp needed).
-5. **The camera lead on the approach:** yes or no.
-6. **The overland road west through Thornwick:** drop it (the blockout), or route it round the south wall.
+**Decided (2026-10-02):**
+- **Thornwick's wall:** timber; the stone set for a later town.
+- **The temple:** turned 90° clockwise.
+- **Entrances:** every one faces the square.
+- **The camera:** leads toward the gate on the approach.
+- **The overland road west through Thornwick:** dropped.
+
+**Still open:**
+1. **The layout as revised:**
+   - the timber circuit;
+   - the bridge into the gate;
+   - the high street;
+   - the five services round the well, all doors toward it.
+2. **The temple's distance** (48 tiles from the well, at the head of the square). Alternatives:
+   - keep it, the price of every door facing the well;
+   - or let the temple's door face the square's axis rather than the well itself, which brings it
+     about 10 tiles closer but turns its door partly away.

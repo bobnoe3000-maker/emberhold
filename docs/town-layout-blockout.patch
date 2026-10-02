@@ -1,0 +1,633 @@
+diff --git a/src/render/renderer.js b/src/render/renderer.js
+index ae5b1ae..4d835b1 100644
+--- a/src/render/renderer.js
++++ b/src/render/renderer.js
+@@ -848,7 +848,7 @@ export function createRenderer(canvas, sim, input) {
+ 
+   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
+   // fixed framing, so the square sits still like a home screen while the hero moves in it.
+-  let camT = 0, shake = null;                        // shake: a heavy blow's short camera jolt
++  let camT = 0, leadT = 0, shake = null;                        // shake: a heavy blow's short camera jolt
+   function camera(ix, iy, pz) {
+     const hub = sim.world.hub;
+     let cx = ix, cy = iy;
+@@ -858,6 +858,15 @@ export function createRenderer(canvas, sim, input) {
+       const t = camT * camT * (3 - 2 * camT);
+       cx = ix + (hub.focus.x - ix) * t; cy = iy + (hub.focus.y - iy) * t;
+     } else camT = 0;
++    // PROTOTYPE (town-layout proposal): on the approach road the camera leads toward the gate, so the gate is in
++    // the frame from the arrival on (world.lead: a zone, the point to lead toward, and how far: 0..1)
++    const lead = sim.world.lead;
++    if (lead) {
++      const inZone = ix > lead.x0 && ix < lead.x1 && iy > lead.y0 && iy < lead.y1;
++      leadT += ((inZone ? 1 : 0) - leadT) * 0.05;
++      const e = leadT * leadT * (3 - 2 * leadT) * lead.k;
++      cx += (lead.x - ix) * e; cy += (lead.y - iy) * e;
++    } else leadT = 0;
+     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
+     const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
+     let jx = 0, jy = 0;
+@@ -1126,14 +1135,15 @@ export function createRenderer(canvas, sim, input) {
+     const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
+     octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
+     for (const L of sim.world.labels || []) {
+-      const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60 || hiddenHere(L)) continue;
++      const d = Math.hypot(L.x - ix, L.y - iy); if (d > (L.service && camT > 0.5 ? 90 : 60) || hiddenHere(L)) continue;   // (PROTOTYPE: on the home screen every service's plaque, however far)
+       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
+-      const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy0 = (oy + P.sy - top - 10) * S;
+-      if (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh) continue;
++      const P = project(L.x, L.y, z), sy0 = (oy + P.sy - top - 10) * S; let sx = (ox + P.sx) * S;
++      if (L.service ? (sx < -vw * 0.3 || sx > vw * 1.3 || sy0 < -vh * 0.4 || sy0 > vh) : (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh)) continue;
+       const sy = Math.max(sy0, (hudB + 22) * k);               // never under the top HUD: a tall spire's label slides down below it
+       const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
+       if (L.service) {                                              // service plaques: tappable-looking signs
+         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
++        sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // PROTOTYPE: a service at the frame's edge keeps its plaque on screen
+         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
+         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
+         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
+diff --git a/src/sim/outdoor.js b/src/sim/outdoor.js
+index e869e97..1db0695 100644
+--- a/src/sim/outdoor.js
++++ b/src/sim/outdoor.js
+@@ -212,57 +212,67 @@ function buildTown(seed, region) {
+   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
+   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
+   o.name = info.name; o.region = R;
+-  // THE SQUARE IS THE MENU: the same five services stand in the same places in every town,
+-  // so it stays familiar (only names and the region's tones change). Authored in SCREEN
+-  // terms for the portrait frame, relative to the plaza's centre C:
+-  //   back row   — temple (left), inn (right)
+-  //   middle row — shop (left), tavern (right)
+-  //   front      — the smithy (left, its forge open to the square), the well (right)
+-  // Houses and farms are cosmetic and stand well away, out along the approach road.
+-  const C = [60, 64];
+-  const at = (dx, dy) => [C[0] + dx, C[1] + dy];
+-  o.rivers.push({ w: 6, pts: [[106, -90], [100, 20], [108, 58], [101, 100], [108, 210]] });
+-  o.roads.push({ w: 6, surface: 'dirt', pts: [[230, 80], [132, 76], [104, 74], [84, 72], at(6, 6)] });
+-  o.plazas.push({ cx: C[0] - 6, cy: C[1] - 4, rx: 19, ry: 19 });
+-  o.fields.push({ x0: 112, y0: 26, x1: 136, y1: 44, axis: 'x' }, { x0: 70, y0: 96, x1: 96, y1: 114, axis: 'y' }, { x0: 118, y0: 90, x1: 138, y1: 112, axis: 'x' });
++  // PROTOTYPE (docs/town-layout-proposal.md): a walled town (Thornwick's circuit is timber: a palisade, watchtowers,
++  // a timber gate). The circuit is a box: the back walls (north, west) show their inner faces behind the town; the
++  // front ones (east, south) stand low in front of gardens. The road crosses the moat-stream on the bridge straight
++  // into the east gate and runs up the cobbled high street to the square.
++  // EVERY ENTRANCE FACES THE WELL. The camera sees only a building's +x and +y faces, so every service stands up-screen
++  // of the well (north or west of it) with its door on the face toward it: tavern and smithy +x, temple, shop and inn
++  // +y. Placed by a search (no door hidden behind another service, 7+ tiles apart, every door in the hub frame).
++  const WX0 = 10, WX1 = 112, WY0 = 8, WY1 = 108, GY = 80;
++  const M = [66, 71];                                    // the square's centre: the well
++  o.rivers.push({ w: 6, pts: [[124, -90], [122, 20], [126, 60], [125, 100], [130, 210]] });
++  o.roads.push({ w: 6, surface: 'dirt', pts: [[230, GY], [112, GY]] });
++  o.roads.push({ w: 6, surface: 'cobble', pts: [[114, GY], [84, GY], [76, 76]] });
++  o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22 }, { cx: 36, cy: 40, rx: 8, ry: 7 });      // the square, and the temple's forecourt open to it
++  o.fields.push({ x0: 128, y0: 18, x1: 150, y1: 50, axis: 'x' }, { x0: 132, y0: 92, x1: 152, y1: 114, axis: 'y' }, { x0: 20, y0: 110, x1: 60, y1: 122, axis: 'x' });
+   finalizeGround(o);
+ 
+-  // the square: temple + inn at the back, shop + tavern in the middle row, well on the flags
++  // the market: temple at the head (top of the frame), inn + tavern either side, shop + smithy at the foot
+   const svc = [
+-    ['temple', B('temple'), at(-40, -28)], ['inn', B('inn'), at(-29, -42)],
+-    ['shop', B('shop'), at(-24, -7)], ['tavern', B('tavern'), at(-6, -22)],
+-    ['smith', B('smith'), at(-3, 13)],
++    ['temple', B('temple'), [34, 24]], ['tavern', B('tavern'), [29, 48]], ['shop', B('shop'), [50, 41]],
++    ['smith', B('smith'), [51, 67]], ['inn', B('inn'), [73, 55]],
+   ];
+-  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
+-  put(o, B('well'), ...at(-1, -6));
+-  for (const [x, y] of [at(-24, -14), at(-12, -26), at(8, -4), at(6, 8)]) putProp(o, 'brazier', x, y);
+-  for (const [id, x, y] of [['barrel', ...at(6, -10)], ['barrel', ...at(7, -8)], ['crate_A_big', ...at(-15, 1)], ['sack', ...at(-14, 2.5)], ['bucket_water', ...at(2, -3)]])
+-    put(o, id, x, y, 'rect', 0);
+-  o.hub = { x: C[0] - 4, y: C[1] - 4, r: 22, focus: { x: C[0] - 9, y: C[1] - 9 } };
++  const PLAQUE = { shop: [4, -1] };                       // the shop's plaque a step right, off the temple's door behind it
++  for (const [kind, id, [x, y]] of svc) { const [px, py] = PLAQUE[kind] || [0, 0]; put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x: x + px, y: y + py, id, text: info[kind], service: kind }); }
++  put(o, B('well'), M[0], M[1]);
++  for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
++  for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77], ['bucket_water', M[0] + 4, M[1] + 2]]) put(o, id, x, y, 'rect', 0);
++  o.hub = { x: 63, y: 66, r: 26, focus: { x: 60, y: 60 } };
++  o.lead = { x0: 113, y0: GY - 12, x1: 160, y1: GY + 12, x: WX1, y: GY, k: 0.5 };   // the approach: the camera leads toward the gate
++
++  // the circuit: drum towers at the corners and mid-runs, curtain between, the gatehouse over the high street
++  const towers = [[WX0, WY0], [61, WY0], [WX1, WY0], [WX0, 58], [WX1, 40], [WX0, WY1], [61, WY1], [WX1, WY1]];
++  const curtainX = (y, x0, x1) => { for (let x = x0 + 10; x < x1 - 4; x += 20) putRun(o, B('curtain'), Math.min(x, x1 - 10), y); };
++  const curtainY = (x, y0, y1) => { for (let y = y0 + 10; y < y1 - 4; y += 20) putRun(o, B('curtainy'), x, Math.min(y, y1 - 10)); };
++  curtainX(WY0, WX0, WX1); curtainX(WY1, WX0, WX1); curtainY(WX0, WY0, WY1);
++  curtainY(WX1, WY0, GY - 7); curtainY(WX1, GY + 7, WY1);
++  for (const [x, y] of towers) put(o, B('tower'), x, y, 'round', 0.1);
++  putGate(o, B('gatehousey'), WX1, GY);
++  put(o, 'bridge_90', 125.5, GY, 'deck');
+ 
+-  // the approach: a stream crossing, houses along the road, farms and fields beyond
+-  put(o, 'bridge_90', 104, 74, 'deck');
+-  // (south of the road a house stands in front of the bridge on screen, so they're all north of it, bar one far out)
+-  [[118, 60, 'house', 1], [129, 63, 'house', 3], [140, 60, 'house', 2], [124, 49, 'housex', 1], [136, 49, 'housex', 2], [146, 102, 'house', 1]]
++  // houses: a row along the high street's north side, the quarters at the back (north and west), low gardens in front
++  [[100, 68, 'house', 1], [76, 19, 'house', 2], [88, 19, 'house', 1], [100, 19, 'house', 3], [101, 31, 'housex', 2], [89, 33, 'housex', 1],
++   [24, 70, 'housex', 2], [24, 82, 'house', 1], [40, 97, 'house', 3], [24, 96, 'housex', 1]]
+     .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
+-  put(o, B('farm'), 124, 30); put(o, B('farmx'), 84, 106); put(o, B('farm'), 128, 102);
+-  for (const [x, y] of [[96, 68], [112, 70], [126, 70]]) putProp(o, 'brazier', x, y);
+-  for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
++  for (const [x, y] of [[97, 75], [107, 75], [87, 75]]) putProp(o, 'brazier', x, y);
++  for (const [id, x, y] of [['wheelbarrow', 96, 90], ['resource_lumber', 88, 96], ['barrel', 106, 70], ['crate_A_big', 92, 84]]) put(o, id, x, y, 'rect', 0);
++  for (const [id, x, y] of [['oak_2', 20, 18], ['oak_3', 46, 16], ['autumn_3', 19, 36]]) put(o, id, x, y, 'round', 0.35);   // the churchyard's trees, behind the temple
++  // outside: farms on the fields, the stream under the east wall
++  put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104);
+ 
+-  // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
+-  const TOWN_SIGHTS = [[118, 60], [129, 63], [140, 60], [124, 49], [136, 49], [146, 102], [104, 76]];
++  // trees: orchards and gardens in the walls' front corners, woods beyond the back walls, the ring
++  const inside = (x, y) => x > WX0 + 4 && x < WX1 - 4 && y > WY0 + 4 && y < WY1 - 4;
+   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
+-    const dh = hypot(x - (C[0] - 16), y - (C[1] - 16));
+-    if (dh < 34) return null;
+-    const behind = x + y < C[0] + C[1] - 30;
+-    if (behind) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
+-    if (inFrontOf(TOWN_SIGHTS, x, y, 22, 12)) return null;                         // don't hide houses or the bridge behind a trunk
++    if (inside(x, y)) return y > 84 && x > 84 && rng() < 0.5 ? pick(rng, ['oak_2', 'autumn_3', 'oak_1']) : null;   // the gardens behind the south wall
++    if (x > WX0 - 8 && x < WX1 + 22 && y > WY0 - 8 && y < WY1 + 8) return null;   // the walls' verge and the moat
++    if (x + y < 60 || x < 0) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
+     const n = fbm(x * 0.05, y * 0.05, o.seed + 3);
+-    return n > 0.52 && rng() < 0.5 ? pick(rng, TREE_SINGLE) : rng() < 0.06 ? pick(rng, ROCKS) : null;
++    return n > 0.55 && rng() < 0.4 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
+   });
+   forestRing(o, rng, 10);
+-  o.exits.push({ x0: 146, y0: 64, x1: 160, y1: 90, to: 'overland', arrive: 'thornwick' });
+-  o.arrivals = { default: { x: C[0] + 0.5, y: C[1] + 2.5 }, overland: { x: 140.5, y: 76.5 }, temple: { x: C[0] - 13.5, y: C[1] - 11.5 } };   // temple: where a wiped party wakes, in the square before the temple
++  o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: 'thornwick' });
++  o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 141.5, y: GY + 0.5 }, temple: { x: 33.5, y: 36.5 } };
+   o.spawn = o.arrivals.default;
+   return o;
+ }
+@@ -285,7 +295,6 @@ function buildOverland(seed) {
+   o.roads.push({ w: 4, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] });
+   o.roads.push({ w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] });
+   o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] });
+-  o.roads.push({ w: 5, surface: 'dirt', pts: [town, [30, 152], [-90, 160]] });
+   o.roads.push({ w: 4, surface: 'dirt', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] });                // up to the mill
+   o.roads.push({ w: 4, surface: 'dirt', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] });          // the causeway to the chapel
+   o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
+@@ -295,8 +304,15 @@ function buildOverland(seed) {
+   put(o, 'bridge_90', 120, 142, 'deck');
+   put(o, 'bridge_90', 115, 199, 'deck');
+   // Thornwick from outside: walls + gate with a few roofs and the windmill behind
+-  putGate(o, B('wally'), town[0] + 4, town[1]);
+-  for (const [id, x, y] of [[B('temple'), 36, 134], [B('house', 1), 38, 164], [B('housex', 1), 24, 146], [B('house', 2), 20, 166], [B('keep'), 18, 124], [B('farm'), 44, 110]]) put(o, id, x, y);
++  // PROTOTYPE (town-layout proposal): Thornwick as a walled town — the same circuit pieces as the town scene,
++  // a box of curtain and drum towers, the gate facing its road, the temple's spire and a few roofs inside
++  { const X0 = 18, X1 = town[0] + 4, Y0 = 128, Y1 = 172, GY = town[1];
++    for (const [id, x, y] of [[B('temple'), 32, 140], [B('house', 1), 44, 138], [B('housex', 1), 28, 156], [B('house', 2), 44, 162], [B('house', 3), 30, 166], [B('farm'), 44, 110]]) put(o, id, x, y);
++    for (let x = X0 + 10; x < X1 - 4; x += 20) for (const y of [Y0, Y1]) putRun(o, B('curtain'), Math.min(x, X1 - 10), y);
++    for (let y = Y0 + 10; y < Y1 - 4; y += 20) putRun(o, B('curtainy'), X0, Math.min(y, Y1 - 10));
++    for (const [a, b] of [[Y0, GY - 7], [GY + 7, Y1]]) for (let y = a + 10; y < b + 6; y += 20) putRun(o, B('curtainy'), X1, Math.min(y, b - 10));
++    for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, GY]]) put(o, B('tower'), x, y, 'round', 0.1);
++    putGate(o, B('gatehousey'), X1, GY); }
+   // Wickham Keep, the watchtower at the crossroads, the Old Barrows, the mine, the lumber camp, a farm
+   put(o, B('keep'), keep[0], keep[1]);
+   put(o, B('wall'), keep[0], keep[1] + 16);
+@@ -313,7 +329,7 @@ function buildOverland(seed) {
+     put(o, id, x, y, 'rect', 0);
+   putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
+   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);
+-  o.labels.push({ x: town[0] + 4, y: town[1], id: B('wally'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
++  o.labels.push({ x: town[0] + 4, y: town[1], id: B('gatehousey'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
+     { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill', site: 'tithe_mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },
+     { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },
+     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
+diff --git a/tools/actor-lab/buildkit.js b/tools/actor-lab/buildkit.js
+index 2628438..e5b355f 100644
+--- a/tools/actor-lab/buildkit.js
++++ b/tools/actor-lab/buildkit.js
+@@ -378,6 +378,87 @@ const TYPES = {
+     banner(g, S, 0.2, h - 0.1, w / 2 + 0.02); banner(g, S, w / 2 + 0.02, h - 0.1, -0.2, 'x');
+     if (S.gothic) buttresses(S, g, w, w, h * 0.7);
+   },
++  // PROTOTYPE (town-layout proposal): a town's circuit — a plain curtain run, a corner tower, a gatehouse
++  curtain(S, g, r) {                                     // 2.0 long (x), crenellated both sides, a dark plinth, slits
++    const L = 2.0, t = 0.26, h = 0.74;
++    box(L, 0.08, t + 0.06, S.m.stoneDark, 0, 0, 0, g);
++    box(L, h, t, S.m.stone, 0, 0, 0, g);
++    box(L, 0.03, t + 0.04, S.m.stoneDark, 0, h - 0.03, 0, g);
++    crenels(g, S, L, t + 0.02, h, S.m.stone, 0.07);
++    for (const x of [-0.7, 0, 0.7]) for (const z of [-1, 1]) box(0.025, 0.12, 0.01, S.m.dark, x, 0.42, z * (t / 2 + 0.004), g);
++  },
++  tower(S, g, r) {                                       // a drum tower on the corners of the circuit
++    const rad = 0.32, h = 1.08;
++    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.04, rad + 0.06, 0.1, 14), S.m.stoneDark); plinth.position.y = 0.05; g.add(plinth);
++    const drum = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad + 0.02, h, 14), S.m.stone); drum.position.y = h / 2; g.add(drum);
++    const band = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.03, rad + 0.03, 0.04, 14), S.m.stoneDark); band.position.y = 0.76; g.add(band);
++    const eave = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.05, rad + 0.04, 0.06, 14), S.m.stoneDark); eave.position.y = h; g.add(eave);
++    pyramid(g, rad * 2, h + 0.03, 0.5, S.m.roof, 14, 0.06);
++    for (const a of [0.5, 1.1]) { const s = box(0.03, 0.13, 0.02, S.m.dark, Math.sin(a) * (rad + 0.005), 0.46, Math.cos(a) * (rad + 0.005), g); s.rotation.y = a; }
++    banner(g, S, 0, h + 0.02, rad + 0.02, 'z', 0.24);
++  },
++  gatehouse(S, g, r) {                                   // the town gate: an arched way through (z), drum towers on the outer face (+z)
++    const W = 1.0, D = 0.56, H = 1.1, pw = 0.56, ph = 0.5;
++    for (const sx of [-1, 1]) box((W - pw) / 2, H, D, S.m.stone, sx * (pw / 2 + (W - pw) / 4), 0, 0, g);   // the two piers
++    box(pw, H - ph - 0.1, D, S.m.stone, 0, ph + 0.1, 0, g);                                                     // over the passage
++    for (const z of [-1, 1]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(pw / 2, pw / 2, 0.02, 12, 1, false, 0, Math.PI), S.m.stoneDark); a.rotation.set(Math.PI / 2, 0, Math.PI / 2); a.position.set(0, ph - 0.12, z * (D / 2 + 0.01)); a.scale.set(1, 1, 0.45); g.add(a); }
++    box(pw, 0.12, 0.03, S.m.dark, 0, ph - 0.02, D / 2 - 0.06, g);                                                // the raised portcullis
++    for (let i = 0; i < 6; i++) box(0.012, 0.16, 0.012, S.m.dark, -pw / 2 + 0.05 + i * (pw - 0.1) / 5, ph - 0.12, D / 2 - 0.06, g);
++    box(W + 0.04, 0.04, D + 0.04, S.m.stoneDark, 0, H - 0.04, 0, g);
++    crenels(g, S, W, D, H, S.m.stone, 0.07);
++    for (const sx of [-1, 1]) {                                                                                   // flanking drums, a little taller
++      const t = new THREE.Group(); t.position.set(sx * (W / 2 - 0.06), 0, D / 2 - 0.02); g.add(t);
++      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, H + 0.16, 12), S.m.stone); drum.position.y = (H + 0.16) / 2; t.add(drum);
++      pyramid(t, 0.42, H + 0.16, 0.38, S.m.roof, 12, 0.05);
++      box(0.025, 0.11, 0.02, S.m.dark, 0, 0.55, 0.205, t);
++      lantern(g, S, sx * (pw / 2 + 0.03), 0.42, D / 2 + 0.04);
++    }
++    banner(g, S, 0, H - 0.06, D / 2 + 0.02, 'z', 0.3);
++  },
++  // (a hipped roof with its quarter-turn in the geometry: a rotated mesh's box — the bake's footprint — would be √2 too wide)
++  _pyr(g, w, y0, rise, m, over = 0.06) { const geo = new THREE.ConeGeometry((w / 2 + over) * Math.SQRT2, rise, 4, 1); geo.rotateY(Math.PI / 4); const c = new THREE.Mesh(geo, m); c.position.y = y0 + rise / 2; g.add(c); return c; },
++  // PROTOTYPE (town-layout proposal): a beginning town's circuit in timber — a log palisade on an earth bank,
++  // a watchtower, a timber gatehouse. The stone set above waits for a later region's town.
++  palisade(S, g, r) {                                    // 2.0 long (x): pointed logs of uneven height, two rails (+z), a bank
++    const L = 2.0, logs = mat(tex('palisade', '#6e5a44', 41)), bank = mat(tex('rubble', '#5d5442', 43));
++    box(L, 0.07, 0.4, bank, 0, 0, 0, g);
++    for (let i = 0, n = 27; i < n; i++) {
++      const x = -L / 2 + (L * (i + 0.5)) / n, h = 0.66 + r() * 0.1, lr = 0.036 + r() * 0.008;
++      const log = new THREE.Mesh(new THREE.CylinderGeometry(lr, lr + 0.004, h, 7), logs); log.position.set(x, h / 2, (r() - 0.5) * 0.012); log.rotation.z = (r() - 0.5) * 0.04; g.add(log);
++      const tip = new THREE.Mesh(new THREE.ConeGeometry(lr, 0.09, 7), logs); tip.position.set(x, h + 0.045, log.position.z); g.add(tip);
++    }
++    for (const y of [0.22, 0.52]) box(L, 0.04, 0.03, S.m.beam, 0, y, 0.055, g);
++    for (const x of [-0.66, 0, 0.66]) { const s = box(0.03, 0.42, 0.03, S.m.beam, x, 0, 0.09, g); s.rotation.x = -0.35; }   // raking props on the town side
++  },
++  watchtower(S, g, r) {                                  // four posts, a log skirt, a plank fighting box under a slate roof
++    const w = 0.56, H = 1.12, logs = mat(tex('palisade', '#6e5a44', 47));
++    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(0.08, H, 0.08, S.m.beam, x * w / 2, 0, z * w / 2, g);
++    for (let i = 0; i < 4; i++) for (let k = 0; k < 8; k++) {                                   // the skirt: logs round the foot
++      const u = -w / 2 + (w * (k + 0.5)) / 8, h = 0.6 + r() * 0.06, [x, z] = [[u, w / 2], [w / 2, u], [u, -w / 2], [-w / 2, u]][i];
++      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(x, h / 2, z); g.add(log);
++    }
++    const bw = w + 0.14; box(bw, 0.04, bw, S.m.beam, 0, 0.8, 0, g); box(bw, 0.3, bw, S.m.wood, 0, 0.84, 0, g);
++    for (const u of [-0.15, 0.15]) { box(0.03, 0.1, 0.01, S.m.dark, u, 0.95, bw / 2 + 0.003, g); box(0.01, 0.1, 0.03, S.m.dark, bw / 2 + 0.003, 0.95, u, g); }
++    TYPES._pyr(g, bw, 1.14, 0.36, S.m.roof);
++    banner(g, S, 0, 1.12, bw / 2 + 0.02, 'z', 0.24);
++  },
++  timbergate(S, g, r) {                                  // two timber towers, a roofed fighting bridge over the way, the leaves open (outer face +z)
++    const pw = 0.6, tw = 0.34, D = 0.42, H = 1.18, logs = mat(tex('palisade', '#6e5a44', 53));
++    for (const sx of [-1, 1]) {
++      const t = new THREE.Group(); t.position.x = sx * (pw / 2 + tw / 2); g.add(t);
++      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(0.08, H, 0.08, S.m.beam, x * tw / 2, 0, z * D / 2, t);
++      for (let k = 0; k < 6; k++) for (const z of [-D / 2, D / 2]) { const h = 0.64 + r() * 0.05, log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(-tw / 2 + (tw * (k + 0.5)) / 6, h / 2, z); t.add(log); }
++      for (let k = 0; k < 7; k++) for (const x of [-tw / 2, tw / 2]) { const h = 0.64 + r() * 0.05, log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(x, h / 2, -D / 2 + (D * (k + 0.5)) / 7); t.add(log); }
++      box(tw + 0.12, 0.3, D + 0.12, S.m.wood, 0, 0.84, 0, t); box(tw + 0.12, 0.04, D + 0.12, S.m.beam, 0, 0.8, 0, t);
++      box(0.03, 0.1, 0.01, S.m.dark, 0, 0.95, (D + 0.12) / 2 + 0.003, t);
++      TYPES._pyr(t, tw + 0.12, 1.14, 0.34, S.m.roof, 0.05);
++      lantern(g, S, sx * (pw / 2 - 0.02), 0.44, D / 2 + 0.05);
++    }
++    box(pw, 0.05, D, S.m.beam, 0, 0.66, 0, g); box(pw, 0.22, 0.04, S.m.wood, 0, 0.7, D / 2 - 0.02, g); box(pw, 0.22, 0.04, S.m.wood, 0, 0.7, -D / 2 + 0.02, g);   // the bridge over the way
++    const rf = new THREE.Group(); rf.position.y = 0.92; g.add(rf); gable(rf, pw + 0.06, D + 0.1, 0, 0.16, S.m.roof, S.m.wood, 0.04, 0.03);
++    for (const sx of [-1, 1]) { const leaf = box(pw / 2 - 0.02, 0.56, 0.04, S.m.door, 0, 0, 0, g); leaf.geometry.translate(sx * (pw / 4 - 0.01), 0, 0); leaf.position.set(sx * (pw / 2 - 0.01), 0.28, D / 2 - 0.02); leaf.rotation.y = sx * 1.35; }
++    banner(g, S, 0, 0.9, D / 2 + 0.01, 'z', 0.22);
++  },
+   wall(S, g, r) {                                        // a curtain-wall run with a gatehouse
+     const L = 2.2, t = 0.2, h = S.thatch ? 0.5 : 0.62;
+     if (S.thatch) {
+@@ -912,7 +993,7 @@ Object.assign(TYPES, {
+   },
+ });
+ 
+-export const BUILD_TYPES = Object.keys(TYPES);
++export const BUILD_TYPES = Object.keys(TYPES).filter((k) => !k.startsWith('_'));
+ 
+ export function makeBuilding(type, style, seed = 1, faceX = false) {
+   const { S, g } = kit(style, seed);
+diff --git a/tools/actor-lab/town.json b/tools/actor-lab/town.json
+index ce74967..3ba7d8a 100644
+--- a/tools/actor-lab/town.json
++++ b/tools/actor-lab/town.json
+@@ -11,7 +11,8 @@
+         1.0,
+         0.96,
+         0.9
+-      ]
++      ],
++      "faceX": true
+     },
+     {
+       "id": "vale_inn_1",
+@@ -37,8 +38,7 @@
+         1.0,
+         0.96,
+         0.9
+-      ],
+-      "faceX": true
++      ]
+     },
+     {
+       "id": "vale_temple_1",
+@@ -51,8 +51,7 @@
+         1.0,
+         0.96,
+         0.9
+-      ],
+-      "faceX": true
++      ]
+     },
+     {
+       "id": "vale_well_1",
+@@ -214,11 +213,79 @@
+       "style": "vale",
+       "gain": 0.7,
+       "desat": 0.12,
++      "tint": [
++        1.0,
++        0.96,
++        0.9
++      ],
++      "faceX": true
++    },
++    {
++      "id": "vale_curtain_1",
++      "model": "palisade",
++      "build": "palisade",
++      "style": "vale",
++      "gain": 0.7,
++      "desat": 0.12,
+       "tint": [
+         1.0,
+         0.96,
+         0.9
+       ]
++    },
++    {
++      "id": "vale_curtainy_1",
++      "model": "palisade",
++      "build": "palisade",
++      "style": "vale",
++      "gain": 0.7,
++      "desat": 0.12,
++      "tint": [
++        1.0,
++        0.96,
++        0.9
++      ],
++      "rotY": 90
++    },
++    {
++      "id": "vale_tower_1",
++      "model": "watchtower",
++      "build": "watchtower",
++      "style": "vale",
++      "gain": 0.7,
++      "desat": 0.12,
++      "tint": [
++        1.0,
++        0.96,
++        0.9
++      ]
++    },
++    {
++      "id": "vale_gatehouse_1",
++      "model": "timbergate",
++      "build": "timbergate",
++      "style": "vale",
++      "gain": 0.7,
++      "desat": 0.12,
++      "tint": [
++        1.0,
++        0.96,
++        0.9
++      ]
++    },
++    {
++      "id": "vale_gatehousey_1",
++      "model": "timbergate",
++      "build": "timbergate",
++      "style": "vale",
++      "gain": 0.7,
++      "desat": 0.12,
++      "tint": [
++        1.0,
++        0.96,
++        0.9
++      ],
++      "rotY": 90
+     }
+   ],
+   "fens": [
+@@ -441,6 +508,73 @@
+         0.98,
+         0.95
+       ]
++    },
++    {
++      "id": "fens_curtain_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "fens",
++      "gain": 0.66,
++      "desat": 0.2,
++      "tint": [
++        0.94,
++        0.98,
++        0.95
++      ]
++    },
++    {
++      "id": "fens_curtainy_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "fens",
++      "gain": 0.66,
++      "desat": 0.2,
++      "tint": [
++        0.94,
++        0.98,
++        0.95
++      ],
++      "rotY": 90
++    },
++    {
++      "id": "fens_tower_1",
++      "model": "tower",
++      "build": "tower",
++      "style": "fens",
++      "gain": 0.66,
++      "desat": 0.2,
++      "tint": [
++        0.94,
++        0.98,
++        0.95
++      ]
++    },
++    {
++      "id": "fens_gatehouse_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "fens",
++      "gain": 0.66,
++      "desat": 0.2,
++      "tint": [
++        0.94,
++        0.98,
++        0.95
++      ]
++    },
++    {
++      "id": "fens_gatehousey_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "fens",
++      "gain": 0.66,
++      "desat": 0.2,
++      "tint": [
++        0.94,
++        0.98,
++        0.95
++      ],
++      "rotY": 90
+     }
+   ],
+   "reach": [
+@@ -663,6 +797,73 @@
+         0.93,
+         0.88
+       ]
++    },
++    {
++      "id": "reach_curtain_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "reach",
++      "gain": 0.66,
++      "desat": 0.15,
++      "tint": [
++        1.0,
++        0.93,
++        0.88
++      ]
++    },
++    {
++      "id": "reach_curtainy_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "reach",
++      "gain": 0.66,
++      "desat": 0.15,
++      "tint": [
++        1.0,
++        0.93,
++        0.88
++      ],
++      "rotY": 90
++    },
++    {
++      "id": "reach_tower_1",
++      "model": "tower",
++      "build": "tower",
++      "style": "reach",
++      "gain": 0.66,
++      "desat": 0.15,
++      "tint": [
++        1.0,
++        0.93,
++        0.88
++      ]
++    },
++    {
++      "id": "reach_gatehouse_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "reach",
++      "gain": 0.66,
++      "desat": 0.15,
++      "tint": [
++        1.0,
++        0.93,
++        0.88
++      ]
++    },
++    {
++      "id": "reach_gatehousey_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "reach",
++      "gain": 0.66,
++      "desat": 0.15,
++      "tint": [
++        1.0,
++        0.93,
++        0.88
++      ],
++      "rotY": 90
+     }
+   ],
+   "heights": [
+@@ -885,6 +1086,73 @@
+         0.96,
+         1.0
+       ]
++    },
++    {
++      "id": "heights_curtain_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "heights",
++      "gain": 0.66,
++      "desat": 0.18,
++      "tint": [
++        0.94,
++        0.96,
++        1.0
++      ]
++    },
++    {
++      "id": "heights_curtainy_1",
++      "model": "curtain",
++      "build": "curtain",
++      "style": "heights",
++      "gain": 0.66,
++      "desat": 0.18,
++      "tint": [
++        0.94,
++        0.96,
++        1.0
++      ],
++      "rotY": 90
++    },
++    {
++      "id": "heights_tower_1",
++      "model": "tower",
++      "build": "tower",
++      "style": "heights",
++      "gain": 0.66,
++      "desat": 0.18,
++      "tint": [
++        0.94,
++        0.96,
++        1.0
++      ]
++    },
++    {
++      "id": "heights_gatehouse_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "heights",
++      "gain": 0.66,
++      "desat": 0.18,
++      "tint": [
++        0.94,
++        0.96,
++        1.0
++      ]
++    },
++    {
++      "id": "heights_gatehousey_1",
++      "model": "gatehouse",
++      "build": "gatehouse",
++      "style": "heights",
++      "gain": 0.66,
++      "desat": 0.18,
++      "tint": [
++        0.94,
++        0.96,
++        1.0
++      ],
++      "rotY": 90
+     }
+   ]
+ }
+\ No newline at end of file
