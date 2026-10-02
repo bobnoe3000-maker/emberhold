@@ -1187,7 +1187,8 @@
    "handslot.r": "Skeleton_Blade.gltf",
    "handslot.l": "Skeleton_Shield_Small_A.gltf"
   },
-  "eyes": "0xb48cff"
+  "eyes": "0xb48cff",
+  "skull": true
  },
  {
   "id": "E2",
@@ -1197,7 +1198,14 @@
   "attach": {
    "handslot.r": "Skeleton_Axe.gltf"
   },
-  "eyes": "0x9bdc4f"
+  "eyes": "0x9bdc4f",
+  "hide": [
+   "Skeleton_Minion_Cloak"
+  ],
+  "wear": {
+   "chest": "rag"
+  },
+  "skull": true
  },
  {
   "id": "E3",
@@ -1211,7 +1219,8 @@
   "pose": [
    "1H_Ranged_Aiming",
    0.5
-  ]
+  ],
+  "skull": true
  },
  {
   "id": "E4",
@@ -1221,7 +1230,8 @@
   "attach": {
    "handslot.r": "Skeleton_Staff.gltf"
   },
-  "eyes": "0x6ec8ff"
+  "eyes": "0x6ec8ff",
+  "skull": true
  },
  {
   "id": "E5",
@@ -1590,7 +1600,8 @@
    "handslot.r": "standard"
   },
   "eyes": "0xf0c060",
-  "height": 1
+  "height": 1,
+  "skull": true
  },
  {
   "id": "CP1",

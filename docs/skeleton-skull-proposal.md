@@ -1,8 +1,12 @@
 # The Ashbound minion's skull — evaluation and options (proposal)
 
-**Proposal, 2026-10-02. Not built.** The shipped atlases are unchanged. This answers pass 9's still-wrong
-item 3: the minion's skull "reads as a large white ball". The fix should keep it a **skull**, not
-borrow the human face kit.
+**Implemented, 2026-10-02:** P1b for all five skeleton figures, and the minion's cloak replaced by a lower
+ragged cloth that shows the jaw. See *Shipped* at the end. This answers pass 9's still-wrong item 3:
+the minion's skull "reads as a large white ball". The fix keeps it a **skull**, not the human face kit.
+
+- **Code:** `tools/actor-lab/lab.js` (`skull` tags, `albSkull`, `hide`) and `props.js` (`rag`).
+- **Atlases:** `assets/actors/skeleton_*` and `boss_standard`.
+- **Test:** `test/foes.test.mjs`.
 
 ## What's wrong
 
@@ -89,7 +93,63 @@ in-game size, by night (the barrows are dark).
 - **Test:** the front idle cell of each skull-bearing skeleton has dark socket pixels around its glow.
 - **Docs:** an art critic pass entry with before and after on the Stage and in the barrows.
 
-## Decision needed
+## Decisions
 
-- **P1b sockets for the skeletons:** ship? (Recommended.)
-- **The minion's cloak:** off (P2), keep it, or a lower rag (a new prop)?
+- **P1b sockets for the skeletons:** shipped.
+- **The minion's cloak:** replaced by a lower ragged cloth, a new prop (`rag`).
+
+## Shipped
+
+**The pixel skull (P1b).**
+- **Who:** `skull: true` on the warrior, the minion, the archer, the mage and the Standard (`variants.json`).
+- **How the bake draws it** (`albSkull` in `lab.js`):
+  - the eyes, cranium and jaw are tagged in the part pass by mesh name (`*_Eyes`, `*_Head`, `*_Jaw`);
+  - each glowing eye's skull neighbours beside and below it go dark, with the bone brow and the bone
+    between two sockets kept;
+  - a nasal notch goes two rows under two eyes;
+  - the top row of the jaw alternates dark and bone.
+- **The mage** has no separate head mesh (his hat carries the skull), so his atlas is byte-identical.
+
+**The rag.**
+- **What:** the minion's KayKit cloak is left off (`hide`), and a code-built rag is worn on the chest
+  bone (`props.js` `rag`).
+- **Its shape:**
+  - a mantle over the shoulders;
+  - a broad back panel torn into strips of uneven length;
+  - in front, only a torn fringe at the collarbones, so the jaw, sternum and ribs show.
+- **Rejected on the way:** longer front lapels read as red stripes down the ribs, and were cut back.
+
+![The rag, three-quarter and front](img/skull/rag.jpg)
+
+*The minion at zoom 3, night. Left: with the rag. Right: KayKit's cloak (the Stage labels the prototype
+"before").*
+
+![Skeleton heads from the front, before and after](img/skull/shipped-front.jpg)
+
+*Front, zoom 3, night. Top: before. Bottom: after. The warrior, the archer and the Standard now show dark
+sockets and teeth under their helmets and hood; the minion shows a skull with a jaw. The mage is
+unchanged.*
+
+![Skeleton heads in three-quarter view, before and after](img/skull/shipped-three-quarter.jpg)
+
+*Three-quarter view.*
+
+![The foes at in-game size](img/skull/shipped-ingame.jpg)
+
+*In-game size, night, each before beside its after.*
+
+**Measured** (socket-dark pixels, luminance 14–45, in the top third of the front / three-quarter idle
+cell; the hooded and hatted figures' counts include their dark hoods):
+
+| | Before | After |
+|---|---|---|
+| Minion | 0 / 0 | 17 / 15 |
+| Warrior | 15 / 4 | 25 / 6 |
+| Archer | 190 / 223 | 206 / 227 |
+| Mage | 150 / 206 | 150 / 206 (unchanged) |
+| The Standard | 54 / 54 | 58 / 54 |
+
+**Cost:**
+- Same cells; four albedo atlases and the minion's normals rebaked.
+- The JSONs are unchanged (weapon anchors and strides identical).
+- No runtime change.

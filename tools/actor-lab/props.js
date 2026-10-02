@@ -183,6 +183,24 @@ export const PROPS = {
     const belt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.06, 0.06), strap); belt.position.set(0, 0.11, 0.32); g.add(belt);
     return g;
   },
+  // the Ashbound minion's rag (skeleton-skull proposal, shipped): what's left of a cloak, worn low on the
+  // shoulders so the jaw and the ribcage show. KayKit's cloak rode up over the jaw, and the skull read as an egg.
+  // (chest bone space: y up from the chest at 1.07 m, z forward; the jaw starts about 0.22 up, the shoulders at 0.13)
+  rag: () => {
+    const g = new THREE.Group(); g.name = 'Rag';
+    const cloth = mat(0xc06a48, 0, 0.95), dark = mat(0x84402a, 0, 0.95);   // (the minion's bake gain is 0.62: lighter than it reads)
+    const tongues = (x0, w, z, top, lens, tilt = 0) => lens.forEach((len, k) => {   // a hem torn into strips of uneven length
+      const t = new THREE.Mesh(new THREE.BoxGeometry(w / lens.length, len, 0.03), k % 3 === 1 ? dark : cloth);
+      t.position.set(x0 + (k + 0.5) * (w / lens.length) - w / 2, top - len / 2, z); t.rotation.x = tilt; t.name = 'Rag_Cloth'; g.add(t);
+    });
+    // over the shoulders, a mantle joining back to front
+    for (const sx of [-1, 1]) { const cap = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.025, 0.5), cloth); cap.position.set(sx * 0.21, 0.15, 0); cap.rotation.z = sx * -0.5; cap.name = 'Rag_Cloth'; g.add(cap); }
+    // the back: a broad panel from the shoulders down past the shoulder blades
+    tongues(0, 0.62, -0.25, 0.17, [0.36, 0.46, 0.32, 0.5, 0.4, 0.3, 0.44], -0.1);
+    // in front, only a torn fringe at the collarbones: long lapels read as stripes down the ribs
+    for (const sx of [-1, 1]) tongues(sx * 0.19, 0.2, 0.24, 0.17, sx < 0 ? [0.11, 0.06, 0.09] : [0.08, 0.12, 0.05], 0.12);
+    return g;
+  },
   // the Vale's bows (world doc §3.1 v1.10), held the way the kit holds its crossbows: gripped in
   // the right hand slot, shooting along +x, the limbs up and down (±y) bending back toward the
   // archer, the string behind (−x). The hunting bow is short and dark with a recurve at the tips;

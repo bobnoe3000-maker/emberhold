@@ -42,3 +42,13 @@ test('the bosses are baked tall (73 px, 114 × 133 cells), so they load without 
     assert.ok(Math.abs(1.3 * 88 / m.cw - 1) <= 0.04, `${a.out}: would still be upscaled at load`);
   }
 });
+
+test('the Ashbound bake a pixel skull, and the minion wears its rag low, the cloak left off (skeleton-skull proposal)', () => {
+  const vars = Object.fromEntries(lab('variants.json').map((v) => [v.id, v])), bake = lab('bake.json').actors;
+  for (const out of ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage', 'boss_standard']) {
+    const a = bake.find((x) => x.out === out); assert.ok(a, out); assert.equal(vars[a.variant].skull, true, `${out}: no pixel skull`);
+  }
+  const minion = vars[bake.find((x) => x.out === 'skeleton_minion').variant];
+  assert.deepEqual(minion.hide, ['Skeleton_Minion_Cloak']); assert.equal(minion.wear && minion.wear.chest, 'rag');
+  assert.match(readFileSync('tools/actor-lab/props.js', 'utf8'), /\brag: \(\) =>/);
+});

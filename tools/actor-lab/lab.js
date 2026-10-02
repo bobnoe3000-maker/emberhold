@@ -89,6 +89,10 @@ async function build(v, { far = false } = {}) {
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
   for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; p.userData.held = true; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
   for (const [bone, name] of Object.entries(v.wear || {})) findNode(root, bone)?.add(PROPS[name]());   // worn on a body bone (the smith's apron)
+  for (const n of v.hide || []) root.traverse((o) => { if (o.name === n) o.visible = false; });   // a kit mesh left off (the minion's cloak: skeleton-skull proposal)
+  // a skeleton's skull (skeleton-skull proposal): its eyes, cranium and jaw tagged for the part pass, so albSkull can
+  // draw the sockets the 4 × 4 average washed into the bone (the face kit's tags: eye red, skull as skin, jaw as hair)
+  if (v.skull) root.traverse((o) => { if (!o.isMesh) return; if (/_Eyes$/.test(o.name)) o.userData.part = 'eye'; else if (/_Head$/.test(o.name)) o.userData.part = 'skin'; else if (/_Jaw$/.test(o.name)) o.userData.part = 'hair'; });
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((o) => { if (o.isMesh && /Eyes/.test(o.name)) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(v.eyes); o.material.emissiveIntensity = 3; } });
@@ -388,6 +392,41 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     }
     return res;
   };
+  // (skeletons, `skull`; skeleton-skull proposal) a pixel skull, from the geometry. Averaged, the sockets were a faint tint
+  // of the bone: 0 pixels of the minion's skull were darker than 45 % of it, and the glowing eyes sat on bare bone. Here
+  // each eye's skull neighbours beside and below it go dark (a socket, with a bone brow ridge kept above and a bone
+  // bridge between two), a nasal notch goes two rows under two eyes' midpoint, and the jaw's top row alternates dark
+  // and bone (teeth) where the skull sits on it. Not the face kit: a skull has sockets, not eyes and brows.
+  const SOCKET = [34, 20, 16];
+  const albSkull = () => {
+    const big = passBig('alb').data, pb = passBig('part').data, out = new ImageData(W, H), o = out.data, N = W * H, BW = W * SS;
+    const cls = new Uint8Array(N), eye = new Uint8Array(N);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let n = 0, r = 0, g = 0, bl = 0, ec = 0, sk = 0, jw = 0; const k = y * W + x;
+      for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+        const i = ((y * SS + sy) * BW + x * SS + sx) * 4; if (!big[i + 3]) continue;
+        n++; r += big[i] * big[i]; g += big[i + 1] * big[i + 1]; bl += big[i + 2] * big[i + 2];
+        if (pb[i] > 200) ec++; else if (pb[i + 1] > 128) sk++; else if (pb[i + 2] > 128) jw++;
+      }
+      if (n < (SS * SS) / 2) continue;
+      const j = k * 4; o[j] = Math.sqrt(r / n); o[j + 1] = Math.sqrt(g / n); o[j + 2] = Math.sqrt(bl / n); o[j + 3] = 255;
+      eye[k] = ec >= 2 ? 1 : 0; cls[k] = sk * 3 >= n ? 1 : jw * 3 >= n ? 2 : 0;
+    }
+    const dark = (k, t = 0.82) => { const j = k * 4; for (let c = 0; c < 3; c++) o[j + c] += (SOCKET[c] - o[j + c]) * t; cls[k] = 3; };
+    const eyes = []; for (let k = 0; k < N; k++) if (eye[k]) eyes.push(k);
+    const sock = new Set();
+    for (const k of eyes) for (const d of [-1, 1, W, W - 1, W + 1]) { const q = k + d; if (q >= 0 && q < N && !eye[q] && cls[q] === 1) sock.add(q); }
+    for (const q of [...sock]) if ((eye[q - 1] || eye[q - 2]) && (eye[q + 1] || eye[q + 2])) sock.delete(q);   // (the bone between two sockets)
+    for (const q of sock) dark(q);
+    const xs = eyes.map((k) => k % W), ys = eyes.map((k) => Math.floor(k / W));
+    if (eyes.length && Math.max(...xs) - Math.min(...xs) >= 3) {                 // two eyes showing: the nasal notch
+      const k = (Math.max(...ys) + 2) * W + Math.round((Math.max(...xs) + Math.min(...xs)) / 2); if (cls[k] === 1) dark(k, 0.7);
+    }
+    for (let x = 0; x < W; x++) for (let y = 1; y < H; y++) {                    // teeth: the top row of the jaw, under the skull
+      const k = y * W + x; if (cls[k] !== 2) continue; if ((cls[k - W] === 1 || cls[k - W] === 3) && x % 2) dark(k, 0.65); break;
+    }
+    return { img: out, cls };
+  };
   const despeckle = (d, cls = null) => {
     const src = new Uint8ClampedArray(d), at = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] ? (y * W + x) * 4 : -1);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -441,10 +480,10 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
-      const AP = PROTO.size && hasFace ? albParts(faceStats && col === 0 ? faceStats[dir] : null) : null, a = AP ? AP.img : pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data, cls = AP && AP.cls;
+      const AP = v.skull ? albSkull() : PROTO.size && hasFace ? albParts(faceStats && col === 0 ? faceStats[dir] : null) : null, a = AP ? AP.img : pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data, cls = AP && AP.cls;
       despeckle(ad, cls);
-      grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed, PROTO.has('grade') ? cls : null);
-      if (cls && PROTO.has('grade')) faceLines(ad, cls);
+      grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed, PROTO.has('grade') && !v.skull ? cls : null);   // (a skull's bone takes the world grade)
+      if (cls && PROTO.has('grade') && !v.skull) faceLines(ad, cls);
       const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
       const out = new Uint8ClampedArray(ad);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {

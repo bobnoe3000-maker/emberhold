@@ -200,8 +200,8 @@ Scores are one critic's judgement from captures; no blind comparison has been ru
    swap) would settle it.
 2. **The Redhand have no mark of the Company.** They wear red, but there's no red hand anywhere: a
    painted palm on a shield or a tabard would carry the name.
-3. **The Ashbound minion's skull** reads as a large white ball from the front. It's KayKit's
-   proportions, and the heroic head scale isn't applied to skeletons.
+3. ~~**The Ashbound minion's skull** reads as a large white ball from the front.~~ Fixed: a pixel skull
+   and a low rag (`skeleton-skull-proposal.md`).
 4. **The Stranger** is still the darkest figure in the game. He reads by his light (the orb and the
    shard), which works in the chapel's dark. In a lit room he'd be a silhouette with two embers.
 

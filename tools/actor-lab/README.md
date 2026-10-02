@@ -123,6 +123,11 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `recolor` — a CSS filter applied to the model's colour texture; how human enemy NPCs reuse hero models.
   (Look-dev only: the shipping version should remap swatches in the small palette texture exactly.)
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.
+- `skull` — (skeleton-skull proposal) the skeletons: their `*_Eyes`, `*_Head` and `*_Jaw` meshes are tagged in
+  the part pass, and `albSkull` draws dark sockets (open below, a bone brow ridge kept), a nasal notch and teeth
+  where the 4 × 4 average washed them into the bone. Not the face kit: a skull has sockets, not eyes and brows.
+- `hide` — kit meshes left off (`E2`, the minion: `["Skeleton_Minion_Cloak"]`, its collar hid the jaw; it wears
+  the `rag` prop on the chest bone instead).
 - `height` — (art pass 8) fit the figure by its body alone, held things left out, to `px` × `height`
   (the townsfolk: 0.85 for Nell to 1.02 for Jory, Brannoc 1.06). Without it the whole figure, props and
   all, fills `px`, as for the heroes and foes; a book or whip held high shrank the person under it.
