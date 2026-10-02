@@ -1174,6 +1174,7 @@ export function createRenderer(canvas, sim, input) {
     if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
     else if (c.t === 'xp') addFloat(c.x, c.y, '+' + c.amount + ' xp', '#c8a0ff', 10, 30);
+    else if (c.t === 'cinders') addFloat(c.x, c.y, '+' + c.amount + ' ✦', '#ff9440', 11, 36);   // an elite's or a boss's cinders, for the smith
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
     else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);

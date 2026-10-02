@@ -39,7 +39,7 @@ VAR q_trial_cold_weather = -1
     { day_part == 3:
         "Forge is banked for the night. Buy me a drink and I'll tell you what's wrong with your sword."
     - else:
-        {&"The forge isn't taking custom yet. When it is, bring me old legion iron. It's better than anything we can buy."|"That edge has seen bone. Bone's hard on an edge. So are skeletons."|"Father says hello. Father says it from a chair."}
+        {&"The forge is open. Bring me what you wear and I'll make it better. Bring me what you won't, and I'll make it cinders."|"That edge has seen bone. Bone's hard on an edge. So are skeletons."|"Father says hello. Father says it from a chair."}
     }
 }
 -> END

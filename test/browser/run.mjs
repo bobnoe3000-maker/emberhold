@@ -621,6 +621,45 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
+// and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(async () => {
+      const s = globalThis.__sim, { makeItem } = await import('/src/sim/items.js');
+      s.state.party[0].level = 6; Object.assign(s.state.counters, { gold: 5000, embers: 10, wood: 0, stone: 0 });
+      s.state.bag.push(makeItem('kite', 6, 'common', { uid: 'k6' }));
+      s.bus.emit('countersChanged', { ...s.state.counters });
+    });
+    await run(5); await p.waitForTimeout(600);
+    await p.locator('button', { hasText: 'Smith' }).first().tap(); await run(2);
+    await p.locator('#hubSheet [data-go="smith:upgrade"]').tap(); await run(2);
+    const small = await p.locator('#hubSheet .merc', { hasText: 'Round Shield' }).innerText().catch(() => '');
+    await p.locator('#hubSheet [data-upgrade="k6"]').tap(); await run(3);
+    const up = await p.evaluate(() => { const s = globalThis.__sim, it = s.state.bag.find((q) => q.uid === 'k6'); return { up: it.up, gold: s.state.counters.gold, cinders: s.state.counters.embers }; });
+    const next = await p.locator('#hubSheet [data-upgrade="k6"]').innerText().catch(() => '');
+    await p.locator('#hubSheet .close').tap(); await run(2);
+    await p.locator('button', { hasText: 'Shop' }).first().tap(); await run(2);
+    await p.locator('#hubSheet [data-go="shop:buy"]').tap(); await run(2);
+    const buys = await p.locator('#hubSheet [data-buy]').allInnerTexts();
+    await p.locator('#hubSheet [data-buy]').first().tap(); await run(3);
+    await p.locator('#hubSheet [data-ptab="sell"]').tap(); await run(2);
+    await p.locator('#hubSheet [data-sell="k6"]').tap(); await run(3);
+    const shop = await p.evaluate(() => { const s = globalThis.__sim; return { bag: s.state.bag.map((q) => q.uid), buyback: s.state.buyback.map((q) => q.uid), gold: s.state.counters.gold }; });
+    const back = await p.locator('#hubSheet [data-buyback="k6"]').innerText().catch(() => '');
+    check('forge and shop: an upgrade takes 180 gold and ✦ 1 and offers the next; a too-small piece says No gain; buy from the day\'s four, sell the +1 piece, and it waits to be bought back',
+      up.up === 1 && up.gold === 5000 - 180 && up.cinders === 9 && /Upgrade to \+2/.test(next) && /No gain/.test(small)
+      && buys.length === 4 && buys.every((t) => /^Buy · \d+/.test(t)) && shop.bag.length === 1 && !shop.bag.includes('k6') && shop.buyback[0] === 'k6' && /\d/.test(back) && errs.length === 0,
+      JSON.stringify({ up, next, small: small.slice(-40), buys: buys.slice(0, 1), shop, back }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

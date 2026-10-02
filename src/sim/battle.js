@@ -59,6 +59,7 @@ export const fightOf = (m) => { const F = CLASS_FIGHT[m.cls], k = m.cls === 'rog
 // the rogue's crits from behind hit BACKSTAB_CRIT harder; the mage's spells deal CLUSTER_ATK
 // more to a foe with two or more others within CLUSTER_R; the cleric's heals are HEAL_BONUS stronger
 const BACKSTAB_CRIT = 1.25, CLUSTER_ATK = 1.2, CLUSTER_R = 2;
+export const ELITE_CINDERS = 1, BOSS_CINDERS = 5;
 /** is the attacker in the target's rear half? (a foe faces whoever it's fighting) */
 export const behind = (att, tgt) => ((tgt.fx || 0) * (att.x - tgt.x) + (tgt.fy || 0) * (att.y - tgt.y)) < 0;
 /** does the target stand in a cluster: two or more other live foes within CLUSTER_R? */
@@ -353,6 +354,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of living) gainXp(m, share, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
     state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party));   // (a Scavenger's or a Greedy sellsword's eye)
+    // cinders (✦) from the strong (GDD §8 v1.13): an elite gives ELITE_CINDERS, a boss BOSS_CINDERS, for the smith
+    const ci = e.boss ? BOSS_CINDERS : e.elite ? ELITE_CINDERS : 0;
+    if (ci) { state.counters.embers = (state.counters.embers || 0) + ci; bus.emit('combat', { t: 'cinders', x: e.x, y: e.y, amount: ci }); }
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;

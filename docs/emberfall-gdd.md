@@ -1,6 +1,12 @@
 # Emberfall — Game Design Document
 
-**v1.12 · 2026-10-01 · Plan of record for game design.** v1.12 settles the words (dialogue critic
+**v1.13 · 2026-10-02 · Plan of record for game design.** v1.13 opens the forge and the shop (§8, §11):
+smith upgrades +1…+5, reforging a trait and salvage at Hale & Daughter's; Wendel's sells the day's
+plain gear at your level, buys what you won't use and lets you buy it back. **No draughts**: what keeps
+a party standing is who's in it. Elites now drop 1 cinder and bosses 5, so the forge has a second
+source besides salvage.
+
+v1.12 settles the words (dialogue critic
 pass 1, world doc v1.13): a companion dead until raised is **Slain** (it was Fallen; the code keeps
 `fallen`), a lost room's party is **beaten**, the ✦ salvage currency is **cinders** (it was
 Embers), and the HUD's Weakened tag shows the minutes left.
@@ -224,7 +230,8 @@ indefinitely, or step into a deeper room for better XP and gold at real risk.
 - **Focus** (tap an enemy): the party prioritises that target until it dies.
 - **Stance** (toggle): *Aggressive* (chase, spend MP freely), *Balanced*, or *Defensive*
   (hold formation, save MP for heals and shields).
-- **Potions** (auto toggle): drink at < 30 % HP.
+- **No potions** (v1.13; once planned as an auto toggle): the shop sells no draughts. Healing
+  in a fight is the cleric's, so the party's make-up matters.
 
 ### 3.5 AI and formation
 Each unit picks a target by role: the front line takes the nearest threat, the rogue the
@@ -715,10 +722,50 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 - **Class-based.** Every item except trinkets has a class. Drops roll 80 % towards classes in
   the active party.
 - **Bad-luck protection.** Each boss kill without a Rare adds +3 % to the next roll.
-- **Smith upgrades** go from +1 to +5. Each step gives +8 % base stats and costs gold, cinders
-  and, from +3, wood and stone (the existing counters).
-- **Salvage** off-class or outgrown items into **cinders** (the upgrade currency, ✦). The
-  cinder count sits in the top bar, next to gold.
+- **The forge** (v1.13, `src/sim/smith.js`; Hale & Daughter's in Thornwick, every town's smith).
+  Everything is done in town; an invalid command does nothing, or says why.
+  - **Upgrade** +1 to +5, on anything worn by the party or in the bag. Each step adds 8 % to
+    the item's **base stats** (not its traits), rounded; the item reads *Tower Shield +2*.
+
+    | Step | to +1 | to +2 | to +3 | to +4 | to +5 | All five |
+    |---|---|---|---|---|---|---|
+    | Gold (× item level) | 30 | 60 | 120 | 240 | 480 | 930 |
+    | Cinders ✦ | 1 | 2 | 4 | 6 | 10 | 23 |
+    | Wood and stone, each | — | — | 8 | 12 | 16 | 36 |
+
+    A Deepdelver-fostered hero pays 10 % less gold (§6.1). On a small piece a step's gain can
+    round away; the forge says when the next gain shows, and offers no upgrade to a piece that
+    gains nothing even at +5 (a level-1 sword's ATK +1). Rounding up instead was measured and
+    dropped: a +5 kit at level 3 then held a room three levels up for 300 s (14 waves), against
+    §7.1.
+  - **Reforge** one trait (affix) of a Fine or better piece into a different kind, rolled fresh
+    at the item's level. The roll comes from the item and how often it has been reforged, so it
+    is the same for everyone and can't be fished by reloading. The first reforge costs 50 gold ×
+    item level and ✦ 3; each later one of the same piece costs double the gold.
+  - **Salvage** off-class or outgrown bag items into **cinders** (the upgrade currency, ✦; the
+    count sits in the top bar, next to gold): Common 1, Fine 2, Rare 5, Heirloom 12, plus half of the cinders
+    any upgrades on it took. *Salvage every plain Common* clears the bag's un-upgraded Commons in
+    one tap; a Fine or better piece asks *Sure?* first. Worn gear stays worn.
+  - **Cinders also drop** (v1.13): 1 from each elite, 5 from each boss ("+5 ✦" rises off it).
+  - **What upgrades are worth** (measured, `roomlv.mjs --up N`: fighter, rogue and cleric in
+    gear at level, 300 s). A +5 kit is about one level of power: at level 6 the fighter goes
+    HP 226 → 243, ATK 24.3 → 26.3, DEF 31.1 → 37.7. Waves held, plain / +2 / +5:
+
+    | Room | Level 3 | Level 6 | Level 9 |
+    |---|---|---|---|
+    | Same level | 24 / 24 / 24 held | 17 / 17 / 18 held | 15 held / 14 (beaten at 297 s) / 14 held |
+    | Two up | 17 held / — / 18 held | beaten after 9 / — / beaten after 7 | beaten after 5 / — / beaten after 10 |
+    | Three up | beaten after 9 / 8 / 9 | beaten after 5 / 6 / 6 | beaten after 2 / 3 / 3 |
+
+    The balance gates (§7.1) hold with any upgrades: a room three levels up still beats the
+    right party.
+- **The shop** (v1.13; Wendel's Provisions in Thornwick, every town's shop). In town only.
+  - **Buy:** four plain Commons a day for the party's classes, at the hero's level the first
+    time you're in town that day, 40 gold × item level each. What you buy is gone until dawn.
+  - **Sell** a bag item for 6 / 15 / 40 gold × item level (Common / Fine / Rare), +25 % a
+    smith's step on it. Heirlooms aren't sold.
+  - **Buy back:** the last five things you sold wait, at what they fetched.
+  - **No draughts.** The shop sells gear only (§3.4).
 - **The party bag** has 20 slots. Identical plain items stack in one slot, up to 10: the same
   base, rarity, item level and name, and no affixes, Rare modifier or flavour. A full bag still
   takes an item that fits an existing stack; anything else that drops is salvaged at once.
@@ -845,7 +892,7 @@ progress):
 
     | Building | Menu |
     |---|---|
-    | **Shop** (provisioner / outfitter) | Buy potions, supplies and common gear · Sell |
+    | **Shop** (provisioner / outfitter) | Buy the day's common gear · Sell · Buy back (no draughts, v1.13) |
     | **Smith** (the forge) | Upgrade (+1…+5) · Reforge a trait · Salvage → cinders |
     | **Tavern** | The Lantern Guild's **quest board** (mini-quests) · Hire companions · Rumours |
     | **Inn** | Rest (restore HP/MP) · Lodge companions (the bench) · Expeditions (idle) |
@@ -901,7 +948,7 @@ progress):
 | Currency | From | For |
 |---|---|---|
 | **Gold** | Quests, bounties, selling, chests, foes | Hiring (fee and dawn wages, §6.2), Ask around, Retrain, healing, the inn, shop gear, upgrades |
-| **Cinders** (✦) | Salvage, bosses | Smith upgrades, rerolling an affix |
+| **Cinders** (✦) | Salvage, elites (1), bosses (5) | Smith upgrades, reforging a trait |
 | **Wood / Stone** | Chests, rocks (existing counters) | High-tier upgrades; future camp or town improvements |
 | **Renown** (per region) | Quests, bosses | Unlocks; not spendable |
 
@@ -953,7 +1000,7 @@ reproduce any battle for validation.
 
 | Screen | Content |
 |---|---|
-| **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a room-level and wave banner, stance toggle and potion toggle (bottom). Doorways glow as exits. |
+| **Site (iso)** | The current view: virtual stick or tap to move, tap to interact, minimap with room threat. In a room battle: overhead pips, a room-level and wave banner, stance toggle (bottom; no potions, v1.13). Doorways glow as exits. |
 | **Party cards** (always) | Bottom of every screen: **you in the centre, up to two companions either side**. Each card has a portrait, level badge, name, class, HP bar, ATK / DEF / CRT / DDG, and level with an XP bar. Empty slots say *hire at a town tavern*. |
 | **Town square** | The home screen: the same fixed framing in every town (temple, inn, shop, tavern, smithy) with name plaques; a bottom bar of the five services, shown once you're near the square; each opens a bottom-sheet menu. No minimap here. |
 | **Quest board** | Cards: giver portrait, hook line, skulls, rewards. |

@@ -2,7 +2,9 @@
 // formulas; loot.js owns the bag, the drops and the equip commands.
 //
 // An item is plain JSON, rolled once and stored whole:
-//   { uid, base, r, ilv, name, st: { atk: 4, … }, aff: [['crit', 2]], mod?, flav? }
+//   { uid, base, r, ilv, name, st: { atk: 4, … }, aff: [['crit', 2]], mod?, flav?, up?, rf? }
+// up = the smith's upgrade, +1 to +5 (smith.js): each step is UP_STEP more on the base stats (st),
+// not on the affixes; rf = how many times the smith has reforged it (the next costs double).
 // st = the base's stats at that item level and rarity, a pure function of (base, ilv, r): a load
 // re-derives it (refreshItem), so a formula change reaches old loot the same as new. What was
 // rolled (aff, mod, name, flav) is kept as it fell. aff = rolled affixes (Fine 1, Rare 2);
@@ -21,7 +23,14 @@ export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', arm
 export const STAT_LABEL = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', crit: 'CRIT', dodge: 'DODGE', hpr: 'HP regen', mpr: 'MP regen' };
 export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
-export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // Embers
+export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // cinders (✦; counters.embers in the save)
+export const UP_MAX = 5, UP_STEP = 0.08;                                     // the smith's +1…+5: +8 % base stats a step (GDD §8)
+// what each step costs at the smith (smith.js): gold × item level, cinders, and from +3 wood and stone each
+export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [1, 2, 4, 6, 10], UP_MATS = [0, 0, 8, 12, 16];
+/** the cinders an item's upgrades took @param {any} it */
+export const cindersIn = (it) => UP_CINDERS.slice(0, Math.max(0, Math.min(UP_MAX, it.up || 0))).reduce((x, y) => x + y, 0);
+/** what salvaging it gives: its rarity's cinders and half of what its upgrades took @param {any} it */
+export const salvageOf = (it) => SALVAGE[it.r] + Math.floor(cindersIn(it) / 2);
 
 // stat value at item level: a + b × ilv + (GEAR_GROWTH − 1) × b × (ilv − 1), × rarity (item level 1
 // is as it was: a fresh character in their kit has exactly the GDD numbers)
@@ -91,7 +100,7 @@ export const STARTER = {
 export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
 /** the classes that can wear a base ([] = any) @param {any} B */
 export const classesOf = (B) => (B.cls === 'any' ? [] : [B.cls, ...(B.also || [])]);
-const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
+export const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
 // Rare ability modifiers: each class's ability costs less or hits harder (battle.js applies them)
 export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt', cleric: 'Mend' };
 const FINE_WORDS = ['Tempered', 'Ashwarden', 'Emberforged', 'Grim', 'Barrow-hewn', 'Oakheart', 'Tallowmere', 'Cinderbrand', 'Hollow', 'Gravewatch', 'Black-iron', 'Moss-bound', 'Wickham', 'Pilgrim\'s', 'Lantern-lit'];
@@ -156,9 +165,19 @@ export function makeHeirloom(id, ilv, uid) {
 
 export const modText = (m) => (m.k === 'cost' ? `${m.ab} costs ${m.v} less MP` : `${m.ab} hits ${Math.round(m.v * 100)}% harder`);
 
-// an item's stats, base + affixes
+/** a fresh roll of one affix at an item level, not one of `taken` (the smith's reforge: smith.js)
+ * @param {() => number} rng @param {number} ilv @param {string[]} taken @returns {[string, number]} */
+export function rollAffix(rng, ilv, taken) {
+  const keys = Object.keys(AFFIX).filter((k) => !taken.includes(k)), k = pick(rng, keys), [a, b] = AFFIX[k];
+  return [k, round(k, (a + b * ilv) * (0.8 + rng() * 0.4))];
+}
+
+// an item's stats: base (+ the smith's upgrade on it) + affixes
 export function itemStats(it) {
-  const s = { ...it.st };
+  const up = Math.max(0, Math.min(UP_MAX, it.up || 0)), s = { ...it.st };
+  // (rounded: on a small piece a step's gain can round away. Rounding up instead let a +5 level-3 kit hold
+  // a room three levels up for 300 s, against the balance contract; the forge says when a gain won't show)
+  if (up) for (const k of Object.keys(s)) if (s[k] > 0) s[k] = round(k, s[k] * (1 + UP_STEP * up));
   for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + v) * 10) / 10;
   return s;
 }

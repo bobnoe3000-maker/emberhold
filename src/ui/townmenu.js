@@ -9,13 +9,13 @@
 
 const SERVICES = {
   shop: {
-    label: 'Shop', blurb: 'Provisions for the road: potions, supplies and plain gear, and a fair price for what you carry.',
-    actions: [['Buy', 'potions, supplies, common arms and armour'], ['Sell', 'gold for what you carry']],
+    label: 'Shop', blurb: 'Wendel’s: plain arms and armour at your level, new each dawn, and a fair price for what you carry.',
+    actions: [['Buy', 'plain arms and armour for your company, new each dawn'], ['Sell', 'gold for what you carry · buy back what you sold']],
     icon: '<path d="M4 9h16l-1 11H5zM8 9V7a4 4 0 0 1 8 0v2"/>',
   },
   smith: {
     label: 'Smith', blurb: 'The forge: upgrade your gear, reforge its traits, and salvage what you can’t use.',
-    actions: [['Upgrade', '+1 to +5 at the forge · gold, cinders, wood, stone'], ['Reforge', 'reroll one trait on a piece of gear'], ['Salvage', 'turn off-class gear into cinders']],
+    actions: [['Upgrade', '+1 to +5 at the forge · gold, cinders, wood, stone'], ['Reforge', 'reroll one trait on a Fine or better piece'], ['Salvage', 'turn gear you won’t use into cinders']],
     icon: '<path d="M3 9h11l3-3h4v3l-3 2v2H9l-2 3H5l1-3H3z"/>',
   },
   tavern: {
@@ -44,6 +44,8 @@ import { QS } from '../sim/quests.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
+import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
+import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice } from '../sim/smith.js';
 
 const CSS = SW_CSS + `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
@@ -113,6 +115,11 @@ const CSS = SW_CSS + `
 #hubSheet .full { font: 11px ui-monospace, Menlo, monospace; color: #e0c080; background: rgba(216,160,64,.1); border: 1px solid rgba(216,160,64,.35); border-radius: 8px; padding: 7px 10px; margin: 0 0 9px; line-height: 1.45; }
 #hubSheet .merc.bench { border-style: dashed; }
 #hubSheet .btn small { display: block; font: 10px ui-monospace, Menlo, monospace; font-weight: 400; }
+#hubSheet .btn.warnb { background: #c0584a; color: #fff; }
+#hubSheet .hint2 { font-size: 12px; color: #a89c88; margin: -2px 0 10px; }
+#hubSheet .merc .who .nx { display: block; font: 11px ui-monospace, Menlo, monospace; color: #8fb8e0; margin-top: 3px; }
+#hubSheet .aff { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font: 12px ui-monospace, Menlo, monospace; color: #d8ccb8; }
+#hubSheet .aff .btn { min-height: 36px; }
 #hubSheet .close { position: absolute; right: 12px; top: 10px; width: 34px; height: 34px; border-radius: 17px; border: 1px solid rgba(214,170,98,0.35);
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
@@ -132,7 +139,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     if (e.target.closest('.close')) return close();
     if (e.target.closest('.back')) { note = ''; return view === 'retrain' ? hire() : open(current); }
     const go = e.target.closest('[data-go]');
-    if (go) { const v = go.dataset.go; note = ''; if (v === 'party') { close(); openParty(); return; } return VIEWS[v](); }
+    if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } return VIEWS[v](t); }
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
     const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
     if (e.target.closest('[data-ask]')) return send({ type: 'askAround' });
@@ -143,6 +150,16 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const d = e.target.closest('[data-dismiss]'); if (d) return send({ type: 'dismiss', id: d.dataset.dismiss });
     const sw = e.target.closest('[data-swap]'); if (sw) return send({ type: 'swap', slot: +sw.dataset.swap, id: sw.dataset.who });
     const ht = e.target.closest('[data-htab]'); if (ht) { note = ''; return hire(ht.dataset.htab); }
+    const ft = e.target.closest('[data-ftab]'); if (ft) { note = ''; armUid = null; return smith(ft.dataset.ftab); }
+    const pt = e.target.closest('[data-ptab]'); if (pt) { note = ''; return shop(pt.dataset.ptab); }
+    const up = e.target.closest('[data-upgrade]'); if (up) return send({ type: 'upgrade', uid: up.dataset.upgrade });
+    const rf = e.target.closest('[data-reforge]'); if (rf) return send({ type: 'reforge', uid: rf.dataset.reforge, aff: +rf.dataset.aff });
+    const sv = e.target.closest('[data-salvage]'); if (sv) { const it = sim.state.bag.find((q) => q.uid === sv.dataset.salvage);   // a Fine or better: tap twice
+      if (it && it.r !== 'common' && armUid !== it.uid) { armUid = it.uid; return smith(); } armUid = null; return send({ type: 'salvage', uid: sv.dataset.salvage }); }
+    if (e.target.closest('[data-salvagecommons]')) return send({ type: 'salvageCommons' });
+    const by = e.target.closest('[data-buy]'); if (by) return send({ type: 'buy', idx: +by.dataset.buy });
+    const sl = e.target.closest('[data-sell]'); if (sl) return send({ type: 'sell', uid: sl.dataset.sell });
+    const bb = e.target.closest('[data-buyback]'); if (bb) return send({ type: 'buyBack', uid: bb.dataset.buyback });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
     const tk = e.target.closest('[data-take]'); if (tk) return send({ type: 'boardAccept', id: tk.dataset.take });
@@ -152,12 +169,13 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const redraw = () => { if (sheet.classList.contains('on') && VIEWS[view]) VIEWS[view](); };
   sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
   sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw); wordsReady.then(redraw);
-  for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed']) sim.bus.on(ev, redraw);
+  for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed', 'forged', 'traded', 'gearChanged']) sim.bus.on(ev, redraw);
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
-  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null;
+  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null;
 
-  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party' };   // actions that work today
+  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
+    Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
@@ -241,6 +259,68 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       <div class="subtabs" role="tablist"><button role="tab" aria-selected="${comp}" data-htab="company" class="${comp ? 'on' : ''}">Your company<small>party ${party.length}/3 · bench ${S.bench.length}/${BENCH_MAX}</small></button><button role="tab" aria-selected="${!comp}" data-htab="hire" class="${comp ? '' : 'on'}">Hire<small>${roster.length} today</small></button></div>
       ${comp ? company : hiring}`;
   }
+  // ── the forge and the shop (GDD §8 v1.13; sim/smith.js) ──
+  const RC = { common: '#b9b2a4', fine: '#72d06c', rare: '#5aa8ff', heirloom: '#f2a33c' };
+  const RW = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
+  const statLine = (it) => Object.entries(itemStats(it)).map(([k, v]) => `${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}`).join(' · ');
+  const upName = (it) => `${esc(it.name)}${it.up ? ` +${it.up}` : ''}`;
+  // name (in its rarity's colour, with the word), slot, who wears it or that it's in the bag
+  const itemHead = (it, where) => `<b style="color:${RC[it.r]}">${upName(it)}</b><em>${RW[it.r]} · ${SLOT_LABEL[BASES[it.base].slot]} · item level ${it.ilv}</em><span class="sub">${where}</span>`;
+  const purse = () => { const C = sim.state.counters; return `<div class="purse">You have <b>${C.gold || 0}</b> gold · <b>✦ ${C.embers || 0}</b> cinders · <b>${C.wood || 0}</b> wood · <b>${C.stone || 0}</b> stone</div>`; };
+  const costWords = (c) => [`${c.gold} gold`, c.cinders ? `✦ ${c.cinders}` : '', c.wood ? `${c.wood} wood` : '', c.stone ? `${c.stone} stone` : ''].filter(Boolean).join(' · ');
+  const affords = (c) => { const C = sim.state.counters; return (C.gold || 0) >= c.gold && (C.embers || 0) >= (c.cinders || 0) && (C.wood || 0) >= (c.wood || 0) && (C.stone || 0) >= (c.stone || 0); };
+  const tabs = (attr, cur, list) => `<div class="subtabs" role="tablist">${list.map(([k, l, n]) => `<button role="tab" aria-selected="${cur === k}" data-${attr}="${k}" class="${cur === k ? 'on' : ''}">${l}${n !== undefined ? `<small>${n}</small>` : ''}</button>`).join('')}</div>`;
+  // what the next step does; a small piece's gain can round away for a step, so say when it next shows
+  const gainsAt = (it) => { const now = statLine(it); let m = (it.up || 0) + 1; while (m <= UP_MAX && statLine({ ...it, up: m }) === now) m++; return m; };
+  const nextStep = (it) => { const n = (it.up || 0) + 1, m = gainsAt(it);
+    return m === n ? `+${n} → ${statLine({ ...it, up: n })}` : `+${n} → no change yet on a piece this small (the gain shows at +${m})`; };
+  /** everything the company holds: worn by the party, then the bag */
+  const holdings = () => { const out = [];
+    for (const m of sim.state.party) for (const k of Object.keys(m.gear || {})) { const it = m.gear[k]; if (it) out.push([it, `worn by ${esc(m.name)}`]); }
+    for (const it of sim.state.bag) out.push([it, 'in the bag']); return out; };
+
+  // Hale & Daughter's forge: Upgrade (+1…+5), Reforge (one affix of a Fine or better), Salvage (the bag)
+  function smith(tab) {
+    view = 'smith'; if (tab) forgeTab = tab;
+    const H = holdings(), sv = (sim.world.services || []).find((q) => q.kind === 'smith');
+    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 8 % to an item's base stats (not its traits). From +3 it takes wood and stone too.</p>
+      ${H.map(([it, where]) => { const c = upgradeCost(it, sim.state.party[0].origin);
+        if (!c) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span></div><button class="btn" disabled>+${UP_MAX} · done</button></div>`;
+        if (gainsAt(it) > UP_MAX) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="sub">Too small a piece to gain from the forge: 8 % of its stats rounds away even at +${UP_MAX}.</span></div><button class="btn" disabled>No gain</button></div>`;
+        const ok = affords(c); return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="nx">${nextStep(it)}</span><span class="sub">${costWords(c)}</span></div>
+        <button class="btn" data-upgrade="${it.uid}" ${ok ? '' : 'disabled'}>Upgrade to +${(it.up || 0) + 1}${ok ? '' : '<small>not enough</small>'}</button></div>`; }).join('') || '<p>Nothing to upgrade.</p>'}`
+      : forgeTab === 'reforge' ? `<p class="hint2">Bess rerolls one trait into a different one, at the item's level. Each reforge of the same piece costs double.</p>
+      ${H.filter(([it]) => it.aff && it.aff.length).map(([it, where]) => { const c = reforgeCost(it), ok = affords(c);
+        return `<div class="merc sw"><div class="who">${itemHead(it, where)}<span class="sub">${costWords(c)} a reroll</span>
+          ${it.aff.map(([k, v], i) => `<div class="aff"><span>${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}</span><button class="btn ghost" data-reforge="${it.uid}" data-aff="${i}" ${ok ? '' : 'disabled'}>Reroll</button></div>`).join('')}</div></div>`; }).join('') || '<p>Only Fine, Rare and heirloom pieces have traits to reforge.</p>'}`
+      : (() => { const commons = sim.state.bag.filter((it) => it.r === 'common' && !(it.up > 0));
+        return `<p class="hint2">Gear in the bag becomes cinders for the forge: more for finer pieces, and half of what any upgrades took. Worn gear stays worn.</p>
+        ${commons.length ? `<div class="row go" data-salvagecommons><div><b>Salvage every plain Common · ✦ ${commons.length}</b><span>${commons.length} in the bag (upgraded pieces are kept)</span></div><div class="go-arrow">›</div></div>` : ''}
+        ${sim.state.bag.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
+          <button class="btn${armUid === it.uid ? ' warnb' : ' ghost'}" data-salvage="${it.uid}">${armUid === it.uid ? `Sure? ✦ ${salvageOf(it)}` : `Salvage · ✦ ${salvageOf(it)}`}</button></div>`).join('') || '<p>The bag is empty.</p>'}`; })();
+    sheet.innerHTML = `${head('Smith', sv ? esc(sv.name) : 'The forge', 'Bess Hale’s forge. Upgrade what you wear and carry, reforge a trait, or melt down what you won’t use into cinders.')}
+      ${purse()}${tabs('ftab', forgeTab, [['upgrade', 'Upgrade'], ['reforge', 'Reforge'], ['salvage', 'Salvage', `${sim.state.bag.length} in the bag`]])}${body}`;
+  }
+
+  // Wendel's: Buy (the day's plain gear at your level) · Sell (and buy back what you sold)
+  function shop(tab) {
+    view = 'shop'; if (tab) shopTab = tab;
+    const S = sim.state, st = sim.world.kind === 'town' ? sim.smith.stock() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60)), sv = (sim.world.services || []).find((q) => q.kind === 'shop');
+    const who = (it) => { const c = classesOf(BASES[it.base]); return c.length ? c.map((k) => CLASSES[k].label).join(', ') : 'anyone'; };
+    const body = shopTab === 'buy' ? `<h3>Today's stock · new at dawn, in ${mins} min</h3>
+      ${st.map((it, i) => { const done = S.shop.bought.includes(i), p = buyPrice(it), poor = p > gold();
+        return `<div class="merc"><div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
+        <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || '<p>Wendel’s shelves go up at dawn.</p>'}`
+      : `${S.bag.map((it) => { const p = sellPrice(it);
+        return `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
+        <button class="btn${p === null ? '' : ' ghost'}" data-sell="${it.uid}" ${p === null ? 'disabled' : ''}>${p === null ? 'Not for sale' : `Sell · ${p}`}</button></div>`; }).join('') || '<p>The bag is empty.</p>'}
+      ${S.buyback.length ? `<h3>Sold here · buy back</h3>${S.buyback.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'sold')}<span>${statLine(it)}</span></div>
+        <button class="btn" data-buyback="${it.uid}" ${it.sold > gold() ? 'disabled' : ''}>Buy back · ${it.sold}</button></div>`).join('')}` : ''}`;
+    sheet.innerHTML = `${head('Shop', sv ? esc(sv.name) : 'The shop', 'Plain arms and armour for your company, new each dawn, and a fair price for what you carry. Wendel won’t take heirlooms.')}
+      <div class="purse">You have <b>${gold()}</b> gold · the bag ${S.bag.length} items</div>
+      ${tabs('ptab', shopTab, [['buy', 'Buy', `${st.length - S.shop.bought.length} today`], ['sell', 'Sell', `${S.bag.length} in the bag`]])}${body}`;
+  }
+
   // Retrain (GDD §6.2): one of a sellsword's perks for another of its family, dearer each time
   function retrain() {
     view = 'retrain';
@@ -277,7 +357,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
     restDone = false;
   }
-  const VIEWS = { board, hire, raise, respec, rest, retrain };
+  const VIEWS = { board, hire, raise, respec, rest, retrain, smith, shop };
   function close() { sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square

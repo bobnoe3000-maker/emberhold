@@ -10,7 +10,7 @@
 //         'gearRefused' { reason } — an equip the rules don't allow.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom } from './items.js';
+import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf } from './items.js';
 import { statsFor } from './party.js';
 
 export const BAG_SIZE = 20;                  // slots; a slot holds one item or a stack
@@ -19,7 +19,7 @@ export const BAG_SIZE = 20;                  // slots; a slot holds one item or 
 // state.bag (the save's shape is unchanged); stacking is how the slots are counted and shown.
 export const STACK_MAX = 10;
 /** @param {any} it */
-export const stackKey = (it) => ((it.aff && it.aff.length) || it.mod || it.flav ? null : `${it.base}|${it.r}|${it.ilv}|${it.name}`);
+export const stackKey = (it) => ((it.aff && it.aff.length) || it.mod || it.flav ? null : `${it.base}|${it.r}|${it.ilv}|${it.name}|${it.up || 0}`);
 /** the bag as slots, in bag order: each an array of the items stacked there @param {any[]} bag */
 export function bagStacks(bag) {
   const out = [], open = new Map();
@@ -115,7 +115,7 @@ export function createLoot({ state, bus, seed }) {
     }
     if (cmd.type === 'salvage') {
       const it = fromBag(cmd.uid); if (!it) return true;
-      C.embers = (C.embers || 0) + SALVAGE[it.r];
+      C.embers = (C.embers || 0) + salvageOf(it);                 // its rarity's cinders, and half of what the smith's upgrades took
       bus.emit('countersChanged', { ...C }); bus.emit('gearChanged', { member: null }); return true;
     }
     return false;

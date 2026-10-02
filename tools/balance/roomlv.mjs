@@ -1,7 +1,7 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
@@ -13,7 +13,7 @@
 // weapon base instead of the dagger (huntbow, longbow, handbow, heavybow: a two-handed one frees the off-hand).
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-// --fresh: hires at their hire level (half the hero's), not the hero's.
+// --fresh: hires at their hire level (half the hero's), not the hero's. --up N: everyone's kit at the smith's +N.
 // --perks keep: the hires keep the perks the tavern rolled them; --perks a,b/c,d: the first hire fights
 // with a and b, the second with c and d (companions.js ids). Without it, no perks: the contract's runs.
 const pki = process.argv.indexOf('--perks'), PERKS = pki >= 0 ? process.argv.splice(pki, 2)[1] : null;
@@ -28,6 +28,8 @@ const ri = args.indexOf('--rogue'), ROGUE = ri >= 0 ? args.splice(ri, 2)[1] : nu
 // --fresh: the hires fight at the level they're hired at (half the hero's, rounded up: GDD §6.2 v1.11), not
 // levelled up to the hero's as the contract measures them; with their kit at that level
 const fi = args.indexOf('--fresh'), FRESH = fi >= 0 ? (args.splice(fi, 1), true) : false;
+// --up N: every member's kit at the smith's +N (items.js UP_STEP a step on the base stats)
+const ui = args.indexOf('--up'), UP = ui >= 0 ? +args.splice(ui, 2)[1] : 0;
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js').catch(() => null);
@@ -39,7 +41,7 @@ const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }); sim.st
 sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
 if (HERO) sim.state.party[0].cls = HERO;
 for (const m of sim.state.party) {
-  m.level = FRESH && !m.main ? Math.max(1, Math.ceil(HL / 2)) : HL; if (attrs) { m.attrs = null; attrs.autoAllocate(m); } if (items && items.starterKit) m.gear = items.starterKit(m);
+  m.level = FRESH && !m.main ? Math.max(1, Math.ceil(HL / 2)) : HL; if (attrs) { m.attrs = null; attrs.autoAllocate(m); } if (items && items.starterKit) m.gear = items.starterKit(m); if (UP) for (const it of Object.values(m.gear || {})) if (it) it.up = UP;
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }
   m.hp = statsFor(m).maxHp; m.mp = undefined;
 }

@@ -49,11 +49,14 @@
 //   v16: the board posts at dawn and at dusk — board { day, lv, half } (sim/board.js), and dusk jobs'
 //       ids read board_<day>d_<lv>_<slot>. Only grew: older data has no half (a dawn board), and its
 //       board jobs rebuild exactly as before.
+//   v17: the forge and the shop (sim/smith.js) — items gain up (the smith's +1…+5) and rf (reforges);
+//       shop { day, lv, bought } and buyback [items sold, each with what it fetched]. Only grew: older
+//       items have no upgrade, and there's no shop until you're next in town.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
 
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

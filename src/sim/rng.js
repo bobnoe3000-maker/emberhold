@@ -41,5 +41,7 @@ export const STREAM = {
   BOARD: 0xb0a2d, // the Lantern Guild's jobs (board.js), mixed with the in-game day
   LORE: 0x10e3,   // where the Chronicle's fragments lie (lore.js), mixed with each fragment's id
   FOLK: 0xf01c,   // townsfolk strolls (npcs.js), mixed with each person's id
+  SHOP: 0x5a0b,   // Wendel's stock (smith.js), mixed with the day
+  REFORGE: 0xf09e, // the smith's reforges (smith.js), mixed with the item and how often it's been reforged
 };
 export const streamSeed = (worldSeed, stream) => (worldSeed ^ Math.imul(stream, 2654435761)) >>> 0;

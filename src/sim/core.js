@@ -13,6 +13,7 @@ import { makeHero, statsFor } from './party.js';
 import { starterKit, refreshItem } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
+import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
 import { hash2 } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
@@ -120,6 +121,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     drop: (src) => loot.drop(src, { ilv: state.party[0].level, x: state.player.x, y: state.player.y }) });
   board = createBoard({ state, bus, getWorld: () => world, seed: baseSeed, quests });
   const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });
+  const smith = createSmith({ state, bus, getWorld: () => world, seed: baseSeed });   // the forge and the shop (in town)
   const road = createRoad({ state, bus, getWorld: () => world });              // the dead on the barrows road (road.js)   // the Chronicle's fragments (lore.js)
   const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars(), road_ranks: road.held() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
   function bossVars() { /** @type {Record<string, number>} */ const v = {}; for (const k of Object.keys(BOSSES)) v['boss_' + k] = state.bosses[k] ? 1 : 0; return v; }   // Ink: has he fallen?
@@ -300,6 +302,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     const p = state.player;
     if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
+    if (smith.command(cmd)) return;                        // upgrade / reforge / salvageCommons / buy / sell / buyBack
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
     if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon
@@ -435,6 +438,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     updateDiscovery();
     heroes.tick();
     board.tick();                                          // a new day's board goes up in town
+    smith.tick();                                          // and the shop's stock
     talk.tick();
     road.tick();
     stepFolk(world, state.t, isWalkable, talk.talking, TICK_DT, state.player);   // townsfolk keep their routine
@@ -487,6 +491,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
       ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
       ...lore.snapshot(),                // fragments: [ids] in the order found
+      ...smith.snapshot(),               // shop: { day, lv, bought }, buyback: [items sold, newest first]
     };
   }
 
@@ -549,6 +554,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet
+    smith.restore(data);                                   // v16 and older: none yet
     floors = new Map();                                    // v7 and older: none (only the floor you're on)
     for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);
     // the level, last: what's built on it can depend on the state just read back (who waits in a hall,
@@ -580,5 +586,5 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   }
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, reveal, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, smith, reveal, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
 }
