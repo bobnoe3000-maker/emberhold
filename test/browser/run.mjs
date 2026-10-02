@@ -591,6 +591,36 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15. The tavern's Hire view in two sub-tabs (docs/tavern-hire-mockup.html): opened from the wage line it
+// shows Your company; the Hire tab's buttons read "Add to roster · fee" with the party full, and a hire
+// goes to the bench; a bench member swaps into the party from Your company.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(5);
+    await p.evaluate(() => { const s = globalThis.__sim; s.state.party[0].level = 8; s.state.counters.gold = 100000; for (const idx of [0, 1]) { s.commands.push({ type: 'hire', idx }); s.tick(); } s.bus.emit('countersChanged', { ...s.state.counters }); });
+    await run(5); await p.waitForTimeout(1200);
+    await p.locator('#hudWage').tap(); await run(3);
+    const tabs = await p.locator('#hubSheet .subtabs button').allInnerTexts(), on1 = await p.locator('#hubSheet .subtabs button.on').innerText();
+    await p.locator('#hubSheet [data-htab="hire"]').tap(); await run(2);
+    const labels = await p.locator('#hubSheet [data-hire]').allInnerTexts(), fullNote = await p.locator('#hubSheet .full').innerText().catch(() => '');
+    const free = p.locator('#hubSheet [data-hire]:not([disabled])').first(); await free.tap(); await run(3);
+    const after = await p.evaluate(() => ({ party: globalThis.__sim.state.party.length, bench: globalThis.__sim.state.bench.map((m) => m.id) }));
+    await p.locator('#hubSheet [data-htab="company"]').tap(); await run(2);
+    const swaps = await p.locator('#hubSheet [data-swap]').allInnerTexts();
+    await p.locator('#hubSheet [data-swap]').first().tap(); await run(3);
+    const swapped = await p.evaluate((id) => globalThis.__sim.state.party.some((m) => m.id === id), after.bench[0]);
+    check('tavern: the Hire view has Your company and Hire tabs; with the party full a hire reads "Add to roster" and goes to the bench; a bench member swaps in',
+      /Your company/.test(tabs[0]) && /party 3\/3/.test(tabs[0]) && /Hire/.test(tabs[1]) && /Your company/.test(on1) && labels.some((t) => /^Add to roster · \d+/.test(t)) && /party is full/.test(fullNote)
+      && after.party === 3 && after.bench.length === 1 && swaps.length === 2 && swaps.every((t) => /^Swap for /.test(t)) && swapped && errs.length === 0,
+      JSON.stringify({ tabs, on1, labels: labels.slice(0, 2), after, swaps, swapped }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

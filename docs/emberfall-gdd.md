@@ -431,6 +431,10 @@ Both slot in with the same stat block and ability format. No system changes are 
 - **Hire** at a town tavern: one sellsword per class (one more if you're Thornwick-born), at
   **half your level, rounded up** (v1.11; it was ±1 of your level), new every in-game day. Each has a Lantern Guild rank and perks (§6.2), a
   signing fee and a dawn wage.
+  The tavern's Hire view has two sub-tabs under the Guild's terms and the purse (v1.12,
+  docs/tavern-hire-mockup.html): **Your company** (the party with To bench and Retrain, the bench
+  with *Into the party*, or *Swap for …* when the party is full) and **Hire** (Ask around, today's
+  sellswords). With the party full a hire reads **Add to roster · fee** and joins the bench.
 - **Find** story companions in dungeons: rescued captives and quest rewards such as Brannoc
   (fighter) and Wren (rogue). They are free and have a unique trait and a personal quest.
   (M5) Brannoc waits chained in Wickham Keep's second-floor hall and joins once Captain Garrow has
