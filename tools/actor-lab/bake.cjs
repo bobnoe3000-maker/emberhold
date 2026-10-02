@@ -8,7 +8,7 @@
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
-const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
+const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 'assets', 'actors');   // BAKE_OUT: a scratch tree (prototypes; the Stage's cmp shows them)
 (async () => {
   if (!fs.existsSync(path.join(DIR, 'models', 'Knight.glb'))) throw new Error('models missing — run: sh fetch-assets.sh');
   const spec = JSON.parse(fs.readFileSync(path.join(DIR, 'bake.json')));
@@ -17,7 +17,8 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await (await b.newContext({ viewport: { width: 300, height: 300 } })).newPage();
   p.on('pageerror', (e) => console.log('PAGEERR', e.message));
-  await p.goto(`http://127.0.0.1:${port}/lab.html?px=${spec.px}`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
+  await p.goto(`http://127.0.0.1:${port}/lab.html?px=${spec.px}${process.env.BAKE_PROTO ? '&proto=' + process.env.BAKE_PROTO : ''}${process.env.BAKE_HEAD ? '&head=' + process.env.BAKE_HEAD : ''}`);
+  await p.waitForFunction(() => window.ready === true, { timeout: 60000 });   // (BAKE_PROTO / BAKE_HEAD: art pass 7 prototypes)
   fs.mkdirSync(OUT, { recursive: true });
   const png = (f, url) => fs.writeFileSync(path.join(OUT, f), Buffer.from(url.split(',')[1], 'base64'));
   const only = process.argv.includes('--anchors');       // refresh the weapon anchors in the JSON only (fast, no raster)
@@ -51,6 +52,7 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'actors');
     png(`${a.out}.alb.png`, r.alb); png(`${a.out}.nrm.png`, r.nrm);
     const emi = path.join(OUT, `${a.out}.emi.png`); if (r.emi) png(`${a.out}.emi.png`, r.emi); else if (fs.existsSync(emi)) fs.unlinkSync(emi);
     console.log(`${a.out}: ${meta.frames} frames × 8 dirs, ${meta.cw}×${meta.ch} cells, glow ${meta.glow} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+    if (r.faceStats) console.log(`${a.out}: face ${JSON.stringify(r.faceStats)}`);   // (BAKE_PROTO=…,stats: the front idle cell's head box and feature pixels)
   }
   await b.close(); srv.close();
 })().catch((e) => { console.error('FAIL', e.message); process.exit(1); });

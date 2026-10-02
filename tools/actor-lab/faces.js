@@ -343,17 +343,20 @@ export async function buildFace(load, model, f, { far = false } = {}) {
   const B0 = own ? null : await bald(load), B = B0 && { skin: sh(B0.skin), wedge: sh(B0.wedge), whole: sh(B0.whole), noNose: sh(B0.noNose) };
   const skull = own ? sh(base.parts['0,0']) : B.whole;
   const ownNose = own || !NOSES[f.nose], patch = ownNose ? null : sh(nosePatch(surface(B0.whole)));
-  head.add(new THREE.Mesh(own ? skull : ownNose ? B.skin : B.noNose, M.skin));
-  if (patch) head.add(new THREE.Mesh(patch, M.skin));
-  if (B) head.add(new THREE.Mesh(B.wedge, far ? M.skin : M.lip));
+  // (art pass 7) every part says what it is (userData.part: skin · hair · eye · brow · mouth), so the atlas
+  // bake can keep the features whole and grade a face apart from its clothes (lab.js)
+  const tag = (g, part) => { g.traverse((o) => { if (o.isMesh) o.userData.part = part; }); return g; };
+  head.add(tag(new THREE.Mesh(own ? skull : ownNose ? B.skin : B.noNose, M.skin), 'skin'));
+  if (patch) head.add(tag(new THREE.Mesh(patch, M.skin), 'skin'));
+  if (B) head.add(tag(new THREE.Mesh(B.wedge, far ? M.skin : M.lip), 'skin'));
   if (own) for (const t of f.keep || ['1,1']) if (base.parts[t]) head.add(new THREE.Mesh(sh(base.parts[t]), base.material));
   const onShaped = surface(ownNose ? skull : merge(B.noNose, B.wedge, patch));
   const on = S ? (x, y, dir) => { const q = new THREE.Vector3(x, y, 0.45); S(q); return onShaped(q.x, q.y, dir); } : onShaped;   // parts are authored on the normal head
   // the atlas (far) keeps what reads at 56 px — skin, hair, beard, brows, dot eyes, a mouth — and
   // drops the marks, which only turned into smudges there
-  head.add(eyes(on, f, M, far), brows(on, f, M), mouth(on, f, M, far), nose(on, f, M), await beard(load, skull, on, f, M, S));
+  head.add(tag(eyes(on, f, M, far), 'eye'), tag(brows(on, f, M), 'brow'), tag(mouth(on, f, M, far), 'mouth'), tag(nose(on, f, M), 'skin'), tag(await beard(load, skull, on, f, M, S), 'hair'));
   if (!far) head.add(marks(on, f, M));
-  if (!own) head.add(await hair(load, skull, f, M, S));
+  if (!own) head.add(tag(await hair(load, skull, f, M, S), 'hair'));
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
   return { head, replaces: [mine.headName], skull, on };
 }

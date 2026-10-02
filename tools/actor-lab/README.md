@@ -121,6 +121,18 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `pose` — `[clipName, t01]`; default `["Idle", 0.5]`. Every model shares one rig with 76–95 clips
   (attacks, Hit, Block, Dodge, Death, Spellcast; skeletons add Awaken/Spawn/Resurrect).
 
+## Prototype knobs (art pass 7, `docs/face-fidelity-proposal.md`)
+
+Off unless set; a default bake is byte-identical without them.
+- `BAKE_OUT=dir`: write the atlases into a scratch tree instead of `assets/actors`.
+- `BAKE_PROTO=features,grade,stats`:
+  - `features`: eyes, brows and mouths that cover 3 of 16 sub-samples keep their own colour;
+  - `grade`: a softer grade on skin, hair and features, and a hairline;
+  - `stats`: prints the front idle cell's head box and feature pixel counts.
+- `BAKE_HEAD=0.74`: the head bone's scale (heroic default 0.62).
+
+They need the face part tags (`userData.part`) that `faces.js` puts on every face mesh.
+
 ## Walk stride (`strideOf` in `lab.js`, art pass 6)
 
 An atlas whose `walk` is a `Walking_*` clip gets `stride` in its JSON: the tiles the figure travels in

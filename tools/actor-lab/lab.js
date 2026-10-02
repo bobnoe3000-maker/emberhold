@@ -36,7 +36,9 @@ const ACC = {
 };
 // "heroic" proportions: shrink the head, push joints outward to lengthen limbs/torso
 // (moving a child joint along its parent lengthens the segment without thickening it)
-const HEROIC = { scale: { head: 0.62 }, reach: { spine: 1.2, chest: 1.18, head: 1.1,
+// (art pass 7 prototypes, bake.cjs env BAKE_PROTO / BAKE_HEAD → ?proto=features,grade&head=0.72)
+const QS = new URLSearchParams(location.search), PROTO = new Set((QS.get('proto') || '').split(',').filter(Boolean));
+const HEROIC = { scale: { head: +(QS.get('head') || 0.62) }, reach: { spine: 1.2, chest: 1.18, head: 1.1,
   lowerleg: 1.5, foot: 1.45, lowerarm: 1.3, wrist: 1.3 } };
 function applyHeroic(root) {
   root.traverse((b) => { if (!b.isBone) return;
@@ -147,12 +149,27 @@ const INK = [8, 5, 14];
 // S-curve around mid-grey so armour plates, cloth and skin separate at 56 px. Hot pixels
 // (the emissive eye mask) stay hot — bright texture (fur trim, bone) is graded like the rest. Earlier tint (0.92, 0.87, 1.0) cut green hardest → a magenta
 // cast that dusk light turned pink.
-function grimPass(d, gain = 1, desat = 0.34, contrast = 1.18, glow = null) {
+function grimPass(d, gain = 1, desat = 0.34, contrast = 1.18, glow = null, cls = null) {
   for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;
     const r = d[i], g = d[i + 1], b = d[i + 2]; if (glow && glow[i] > 128) continue;   // only the glowing eyes stay hot
-    const L = 0.3 * r + 0.59 * g + 0.11 * b;
-    const c = (v) => Math.max(0, Math.min(255, 128 + (v - 128) * contrast));
-    d[i] = c(r + (L - r) * desat) * 0.9 * gain; d[i + 1] = c(g + (L - g) * desat) * 0.91 * gain; d[i + 2] = c(b + (L - b) * desat) * 0.98 * gain; }
+    const L = 0.3 * r + 0.59 * g + 0.11 * b, soft = cls && cls[i >> 2];          // (pass 7 'grade': a face keeps its warmth)
+    const ds = soft ? 0.12 : desat, ct = soft ? 1.1 : contrast;
+    const c = (v) => Math.max(0, Math.min(255, 128 + (v - 128) * ct));
+    d[i] = c(r + (L - r) * ds) * 0.9 * gain; d[i + 1] = c(g + (L - g) * ds) * 0.91 * gain; d[i + 2] = c(b + (L - b) * ds) * 0.98 * gain; }
+}
+// (pass 7 'grade') where hair meets skin, the hair's edge pixel darkens a step, an inner line, so light
+// hair on light skin (Ilse, Osric, Nell) reads as hair; a face feature is kept at least 35 % darker than the
+// skin beside it, or a pale brow or mouth vanishes again after the grade
+function faceLines(d, cls) {
+  const W2 = W, H2 = H, L = (i) => 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2], src = new Uint8ClampedArray(d);
+  for (let y = 0; y < H2; y++) for (let x = 0; x < W2; x++) {
+    const k = y * W2 + x, c = cls[k]; if (c !== 2 && c !== 3) continue;
+    let skin = -1; for (const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W2 && yy < H2 && cls[yy * W2 + xx] === 1) { skin = (yy * W2 + xx) * 4; break; } }
+    if (skin < 0) continue;
+    const i = k * 4, ls = 0.3 * src[skin] + 0.59 * src[skin + 1] + 0.11 * src[skin + 2], lp = L(i);
+    const want = c === 3 ? ls * 0.65 : Math.abs(lp - ls) < 40 ? lp * 0.72 : lp * 0.86, kf = lp > 0 ? Math.min(1, want / lp) : 1;
+    d[i] *= kf; d[i + 1] *= kf; d[i + 2] *= kf;
+  }
 }
 // WEAPON ANCHORS (src/render/fx.js draws trails / glints / cast shimmer from these): each
 // held weapon is a rigid mesh under a hand slot, so its tip is fixed in slot space. Found
@@ -246,6 +263,9 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     const lit = !eyes && o.userData.glow, glow = (eyes && v.eyes) || lit;
     mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
     mats.emi.set(o, glow ? white : black); });
+  // (pass 7) what each pixel is: face features (eye, brow, mouth) red, skin green, hair and beard blue
+  const PART = { eye: 0xff0000, brow: 0xff0000, mouth: 0xff0000, skin: 0x00ff00, hair: 0x0000ff };
+  mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[o.userData.part] ?? 0 })); });
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
   const mk = () => { const cv = document.createElement('canvas'); cv.width = W * cols; cv.height = H * rows; return cv; };
@@ -280,10 +300,10 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   };
   // despeckle: a pixel unlike all 8 neighbours (an isolated texel spike) takes the mean of the
   // three neighbours closest to it — clean colour regions, detail that spans ≥ 2 px survives
-  const despeckle = (d) => {
+  const despeckle = (d, cls = null) => {
     const src = new Uint8ClampedArray(d), at = (x, y) => (x >= 0 && y >= 0 && x < W && y < H && src[(y * W + x) * 4 + 3] ? (y * W + x) * 4 : -1);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = at(x, y); if (i < 0) continue;
+      const i = at(x, y); if (i < 0 || (cls && cls[i >> 2] === 3)) continue;   // (a face feature is meant to stand alone)
       const ns = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const k = at(x + dx, y + dy); if (k >= 0) ns.push(k); }
       if (ns.length < 6) continue;                                          // edges and thin parts keep their pixels
       const dist = (k) => Math.abs(src[k] - src[i]) + Math.abs(src[k + 1] - src[i + 1]) + Math.abs(src[k + 2] - src[i + 2]);
@@ -292,11 +312,35 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       for (let c = 0; c < 3; c++) d[i + c] = (src[ns[0] + c] + src[ns[1] + c] + src[ns[2] + c]) / 3;
     }
   };
-  const pass = (kind) => {
+  const passBig = (kind) => {
     if (kind === 'nrm') { scene.overrideMaterial = nrmMat; R.outputColorSpace = THREE.LinearSRGBColorSpace; }
     else { scene.overrideMaterial = null; R.outputColorSpace = THREE.SRGBColorSpace; c.root.traverse((o) => { if (o.isMesh) o.material = mats[kind].get(o); }); }
     R.toneMapping = THREE.NoToneMapping; R.setClearColor(0, 0); R.render(scene, cam);
-    tx.clearRect(0, 0, W * SS, H * SS); tx.drawImage(R.domElement, 0, 0); return down(tx.getImageData(0, 0, W * SS, H * SS), kind);
+    tx.clearRect(0, 0, W * SS, H * SS); tx.drawImage(R.domElement, 0, 0); return tx.getImageData(0, 0, W * SS, H * SS);
+  };
+  const pass = (kind) => down(passBig(kind), kind);
+  // (pass 7 'features') the albedo with its face features kept whole: a pixel where an eye, brow or mouth
+  // covers 3 of the 16 sub-samples takes the feature's own colour, where plain averaging washed a 1 px eye
+  // into the skin. Also returns each pixel's class (0 other · 1 skin · 2 hair · 3 feature) for the grade.
+  const faceStats = PROTO.has('stats') ? { feat3: 0, feat8: 0, headW: 0, headH: 0 } : null;   // (measured on the front idle cell)
+  const albParts = (measure) => {
+    const big = passBig('alb').data, pb = passBig('part').data, out = new ImageData(W, H), o = out.data, cls = new Uint8Array(W * H), BW = W * SS;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let n = 0, r = 0, g = 0, bl = 0, fn = 0, fr = 0, fg = 0, fb = 0, sk = 0, hr = 0;
+      for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+        const i = ((y * SS + sy) * BW + x * SS + sx) * 4; if (!big[i + 3]) continue;
+        n++; r += big[i] * big[i]; g += big[i + 1] * big[i + 1]; bl += big[i + 2] * big[i + 2];
+        if (pb[i] > 128) { fn++; fr += big[i] * big[i]; fg += big[i + 1] * big[i + 1]; fb += big[i + 2] * big[i + 2]; } else if (pb[i + 1] > 128) sk++; else if (pb[i + 2] > 128) hr++;
+      }
+      if (n < (SS * SS) / 2) continue;
+      const j = (y * W + x) * 4, f = PROTO.has('features') && fn >= 3;
+      if (f) { o[j] = Math.sqrt(fr / fn); o[j + 1] = Math.sqrt(fg / fn); o[j + 2] = Math.sqrt(fb / fn); cls[y * W + x] = 3; }
+      else { o[j] = Math.sqrt(r / n); o[j + 1] = Math.sqrt(g / n); o[j + 2] = Math.sqrt(bl / n); cls[y * W + x] = fn * 2 >= n ? 3 : sk >= hr && sk * 3 >= n ? 1 : hr * 3 >= n ? 2 : 0; }
+      o[j + 3] = 255;
+      if (measure) { if (fn >= 3) measure.feat3++; if (fn >= 8) measure.feat8++; }
+    }
+    if (measure) { let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (cls[y * W + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } measure.headW = x1 - x0 + 1; measure.headH = y1 - y0 + 1; }
+    return { img: out, cls };
   };
   let hasGlow = false;
   for (let dir = 0; dir < 8; dir++) {
@@ -307,9 +351,10 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
       const a0 = k.from ?? 0, a1 = k.to ?? 1, u = k.once ? a0 + (a1 - a0) * (f / Math.max(1, k.frames - 1)) : a0 + (a1 - a0) * (f / k.frames);
       sample(k.clip, Math.min(0.999, u)); c.root.rotation.y = THREE.MathUtils.degToRad(135 - 45 * dir); c.root.updateMatrixWorld(true);
       for (const [sl, w] of Object.entries(wr)) anchors[sl][dir * frames + col] = anchorAt(w, c.root, cam, ppu);
-      const a = pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data;
-      despeckle(ad);
-      grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed);
+      const AP = PROTO.size ? albParts(faceStats && dir === 2 && col === 0 ? faceStats : null) : null, a = AP ? AP.img : pass('alb'), n = pass('nrm'), e = pass('emi'), ad = a.data, nd = n.data, ed = e.data, cls = AP && AP.cls;
+      despeckle(ad, cls);
+      grimPass(ad, gain, v.desat ?? 0.34, v.contrast ?? 1.18, ed, PROTO.has('grade') ? cls : null);
+      if (cls && PROTO.has('grade')) faceLines(ad, cls);
       const solid = (x, y) => x >= 0 && y >= 0 && x < W && y < H && a.data[(y * W + x) * 4 + 3] > 0;
       const out = new Uint8ClampedArray(ad);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -333,7 +378,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   }
   let start = 0; const meta = { cw: W, ch: H, ax: W / 2, ay: H - 6, dirs: 8, frames, dirOrder: 'screen', ...(stride ? { stride } : {}), clips: {}, ...(Object.keys(anchors).length ? { anchors: packAnchors(anchors) } : {}) };
   for (const k of clips) { meta.clips[k.key] = { start, len: k.frames, fps: k.fps, ...(k.once ? { once: true } : {}), ...(k.impact != null ? { impact: k.impact } : {}) }; start += k.frames; }
-  return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null };
+  return { meta, alb: A.toDataURL('image/png'), nrm: N.toDataURL('image/png'), emi: hasGlow ? E.toDataURL('image/png') : null, faceStats };
 };
 // anchors only (bake.cjs --anchors): same pose sampling and camera as bakeAtlas, no raster —
 // refreshes the weapon anchors in an existing atlas's JSON in seconds
