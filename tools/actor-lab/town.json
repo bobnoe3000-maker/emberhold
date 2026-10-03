@@ -11,7 +11,8 @@
         1.0,
         0.96,
         0.9
-      ]
+      ],
+      "faceX": true
     },
     {
       "id": "vale_inn_1",
@@ -37,8 +38,7 @@
         1.0,
         0.96,
         0.9
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "vale_temple_1",
@@ -51,8 +51,7 @@
         1.0,
         0.96,
         0.9
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "vale_well_1",
@@ -194,9 +193,36 @@
       ]
     },
     {
-      "id": "vale_wally_1",
-      "model": "wall",
-      "build": "wall",
+      "id": "vale_smith_1",
+      "model": "smith",
+      "build": "smith",
+      "style": "vale",
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ],
+      "faceX": true
+    },
+    {
+      "id": "vale_curtain_1",
+      "model": "palisade",
+      "build": "palisade",
+      "style": "vale",
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_curtainy_1",
+      "model": "palisade",
+      "build": "palisade",
       "style": "vale",
       "gain": 0.7,
       "desat": 0.12,
@@ -208,9 +234,9 @@
       "rotY": 90
     },
     {
-      "id": "vale_smith_1",
-      "model": "smith",
-      "build": "smith",
+      "id": "vale_tower_1",
+      "model": "watchtower",
+      "build": "watchtower",
       "style": "vale",
       "gain": 0.7,
       "desat": 0.12,
@@ -219,6 +245,20 @@
         0.96,
         0.9
       ]
+    },
+    {
+      "id": "vale_gatehousey_1",
+      "model": "timbergate",
+      "build": "timbergate",
+      "style": "vale",
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ],
+      "rotY": 90
     }
   ],
   "fens": [
@@ -233,7 +273,8 @@
         0.94,
         0.98,
         0.95
-      ]
+      ],
+      "faceX": true
     },
     {
       "id": "fens_inn_1",
@@ -259,8 +300,7 @@
         0.94,
         0.98,
         0.95
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "fens_temple_1",
@@ -273,8 +313,7 @@
         0.94,
         0.98,
         0.95
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "fens_well_1",
@@ -416,9 +455,36 @@
       ]
     },
     {
-      "id": "fens_wally_1",
-      "model": "wall",
-      "build": "wall",
+      "id": "fens_smith_1",
+      "model": "smith",
+      "build": "smith",
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "faceX": true
+    },
+    {
+      "id": "fens_curtain_1",
+      "model": "curtain",
+      "build": "curtain",
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_curtainy_1",
+      "model": "curtain",
+      "build": "curtain",
       "style": "fens",
       "gain": 0.66,
       "desat": 0.2,
@@ -430,9 +496,9 @@
       "rotY": 90
     },
     {
-      "id": "fens_smith_1",
-      "model": "smith",
-      "build": "smith",
+      "id": "fens_tower_1",
+      "model": "tower",
+      "build": "tower",
       "style": "fens",
       "gain": 0.66,
       "desat": 0.2,
@@ -441,6 +507,20 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_gatehousey_1",
+      "model": "gatehouse",
+      "build": "gatehouse",
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "rotY": 90
     }
   ],
   "reach": [
@@ -455,7 +535,8 @@
         1.0,
         0.93,
         0.88
-      ]
+      ],
+      "faceX": true
     },
     {
       "id": "reach_inn_1",
@@ -481,8 +562,7 @@
         1.0,
         0.93,
         0.88
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "reach_temple_1",
@@ -495,8 +575,7 @@
         1.0,
         0.93,
         0.88
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "reach_well_1",
@@ -638,9 +717,36 @@
       ]
     },
     {
-      "id": "reach_wally_1",
-      "model": "wall",
-      "build": "wall",
+      "id": "reach_smith_1",
+      "model": "smith",
+      "build": "smith",
+      "style": "reach",
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "faceX": true
+    },
+    {
+      "id": "reach_curtain_1",
+      "model": "curtain",
+      "build": "curtain",
+      "style": "reach",
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_curtainy_1",
+      "model": "curtain",
+      "build": "curtain",
       "style": "reach",
       "gain": 0.66,
       "desat": 0.15,
@@ -652,9 +758,9 @@
       "rotY": 90
     },
     {
-      "id": "reach_smith_1",
-      "model": "smith",
-      "build": "smith",
+      "id": "reach_tower_1",
+      "model": "tower",
+      "build": "tower",
       "style": "reach",
       "gain": 0.66,
       "desat": 0.15,
@@ -663,6 +769,20 @@
         0.93,
         0.88
       ]
+    },
+    {
+      "id": "reach_gatehousey_1",
+      "model": "gatehouse",
+      "build": "gatehouse",
+      "style": "reach",
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "rotY": 90
     }
   ],
   "heights": [
@@ -677,7 +797,8 @@
         0.94,
         0.96,
         1.0
-      ]
+      ],
+      "faceX": true
     },
     {
       "id": "heights_inn_1",
@@ -703,8 +824,7 @@
         0.94,
         0.96,
         1.0
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "heights_temple_1",
@@ -717,8 +837,7 @@
         0.94,
         0.96,
         1.0
-      ],
-      "faceX": true
+      ]
     },
     {
       "id": "heights_well_1",
@@ -860,9 +979,36 @@
       ]
     },
     {
-      "id": "heights_wally_1",
-      "model": "wall",
-      "build": "wall",
+      "id": "heights_smith_1",
+      "model": "smith",
+      "build": "smith",
+      "style": "heights",
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ],
+      "faceX": true
+    },
+    {
+      "id": "heights_curtain_1",
+      "model": "curtain",
+      "build": "curtain",
+      "style": "heights",
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_curtainy_1",
+      "model": "curtain",
+      "build": "curtain",
       "style": "heights",
       "gain": 0.66,
       "desat": 0.18,
@@ -874,9 +1020,9 @@
       "rotY": 90
     },
     {
-      "id": "heights_smith_1",
-      "model": "smith",
-      "build": "smith",
+      "id": "heights_tower_1",
+      "model": "tower",
+      "build": "tower",
       "style": "heights",
       "gain": 0.66,
       "desat": 0.18,
@@ -885,6 +1031,20 @@
         0.96,
         1.0
       ]
+    },
+    {
+      "id": "heights_gatehousey_1",
+      "model": "gatehouse",
+      "build": "gatehouse",
+      "style": "heights",
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ],
+      "rotY": 90
     }
   ]
 }

@@ -848,7 +848,7 @@ export function createRenderer(canvas, sim, input) {
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
   // fixed framing, so the square sits still like a home screen while the hero moves in it.
-  let camT = 0, shake = null;                        // shake: a heavy blow's short camera jolt
+  let camT = 0, leadT = 0, shake = null;             // shake: a heavy blow's short camera jolt
   function camera(ix, iy, pz) {
     const hub = sim.world.hub;
     let cx = ix, cy = iy;
@@ -858,6 +858,15 @@ export function createRenderer(canvas, sim, input) {
       const t = camT * camT * (3 - 2 * camT);
       cx = ix + (hub.focus.x - ix) * t; cy = iy + (hub.focus.y - iy) * t;
     } else camT = 0;
+    // On a town's approach road the camera leads toward the gate, so the gate is in the frame from the arrival on
+    // (world.lead: the road's zone, the point to lead toward, and how far, 0..1; docs/town-layout-proposal.md)
+    const lead = sim.world.lead;
+    if (lead) {
+      const inZone = ix > lead.x0 && ix < lead.x1 && iy > lead.y0 && iy < lead.y1;
+      leadT += ((inZone ? 1 : 0) - leadT) * 0.05;
+      const e = leadT * leadT * (3 - 2 * leadT) * lead.k;
+      cx += (lead.x - ix) * e; cy += (lead.y - iy) * e;
+    } else leadT = 0;
     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
     const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
     let jx = 0, jy = 0;
@@ -1126,14 +1135,16 @@ export function createRenderer(canvas, sim, input) {
     const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
     octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     for (const L of sim.world.labels || []) {
-      const d = Math.hypot(L.x - ix, L.y - iy); if (d > 60 || hiddenHere(L)) continue;
+      const d = Math.hypot(L.x - ix, L.y - iy); if (d > (L.service && camT > 0.5 ? 90 : 60) || hiddenHere(L)) continue;   // (on the home screen every service's plaque, however far: the temple heads the square)
       const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
-      const P = project(L.x, L.y, z), sx = (ox + P.sx) * S, sy0 = (oy + P.sy - top - 10) * S;
-      if (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh) continue;
+      const P = project(L.x, L.y, z), sy0 = (oy + P.sy - top - 10) * S; let sx = (ox + P.sx) * S;
+      if (L.service ? (sx < -vw * 0.3 || sx > vw * 1.3 || sy0 < -vh * 0.4 || sy0 > vh) : (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh)) continue;
       const sy = Math.max(sy0, (hudB + 22) * k);               // never under the top HUD: a tall spire's label slides down below it
       const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
+        sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // a service at the frame's edge keeps its plaque on screen
+        if (sy > (hudB + 112) * k && sy - th < (hudB + 222) * k) sx = Math.min(sx, vw - tw / 2 - 62 * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 120 to 216 under the HUD)
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);

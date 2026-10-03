@@ -39,15 +39,15 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 // them with the renderer's x-ray share; browser test 15d holds them under 5 %). Osric stands in front of the
 // well, not in it; Ilse and Jory by the shrine's door, clear of Wendel's roof; Nell clear of the Mule's.
 export const NPCS = {
-  maudry_fenn: { region: 'vale', spots: [['tavern', [4, 7]]], knot: 'maudry_hub', flags: ['met_maudry'] },
-  osric_hale: { region: 'vale', spots: [['hub', [6, -1]]], knot: 'osric_hub', flags: ['met_osric'] },
-  sister_ilse: { region: 'vale', spots: [['temple', [8, 2]]], knot: 'ilse_hub', flags: ['met_ilse'] },
-  wendel: { region: 'vale', folk: true, spots: [['shop', [3, 6]], ['tavern', [7, 8]]], day: [0, 0, 0, 1], knot: 'wendel_hub', flags: ['met_wendel'] },
-  bess_hale: { region: 'vale', folk: true, spots: [['smith', [3, 6]], ['tavern', [-2, 8]]], day: [0, 0, 0, 1], knot: 'bess_hub', flags: ['met_bess'] },
-  col: { region: 'vale', folk: true, spots: [['hub', [9, 7]], ['tavern', [6, 10]]], day: [0, 0, 1, 1], knot: 'col_hub', flags: ['met_col'] },
-  jory: { region: 'vale', folk: true, spots: [['hub', [-1, 2]], ['temple', [8, -4]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
-  nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [-14, -4]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
-  hedda: { region: 'vale', folk: true, spots: [['hub', [-8, 4]], ['shop', [-2, 7]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
+  maudry_fenn: { region: 'vale', spots: [['tavern', [10, 1]]], knot: 'maudry_hub', flags: ['met_maudry'] },
+  osric_hale: { region: 'vale', spots: [['hub', [11, 7]]], knot: 'osric_hub', flags: ['met_osric'] },
+  sister_ilse: { region: 'vale', spots: [['temple', [-2, 10]]], knot: 'ilse_hub', flags: ['met_ilse'] },
+  wendel: { region: 'vale', folk: true, spots: [['shop', [2, 9]], ['tavern', [10, 7]]], day: [0, 0, 0, 1], knot: 'wendel_hub', flags: ['met_wendel'] },
+  bess_hale: { region: 'vale', folk: true, spots: [['smith', [7, 2]], ['tavern', [12, 16]]], day: [0, 0, 0, 1], knot: 'bess_hub', flags: ['met_bess'] },
+  col: { region: 'vale', folk: true, spots: [['hub', [14, 15]], ['tavern', [6, 10]]], day: [0, 0, 1, 1], knot: 'col_hub', flags: ['met_col'] },
+  jory: { region: 'vale', folk: true, spots: [['hub', [8, 17]], ['inn', [10, 9]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
+  nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [1, 22]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
+  hedda: { region: 'vale', folk: true, spots: [['hub', [21, 14]], ['shop', [1, 14]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
   brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night

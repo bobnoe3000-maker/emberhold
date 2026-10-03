@@ -225,6 +225,12 @@ function roofOver(S, g, w, d, y0, rise, alongX = true) {
   if (S.gothic) { for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.14, 4), S.m.trim); f.position.set(sx * W / 2, y0 + rise * D / 2 + 0.06, 0); r.add(f); } }
   return r;
 }
+// a hipped roof over a w-square, its quarter-turn in the geometry: the bake measures a footprint from each
+// mesh's box, and a rotated mesh's box (pyramid()) comes out √2 too wide
+function hipRoof(g, w, y0, rise, m, over = 0.06) {
+  const geo = new THREE.ConeGeometry((w / 2 + over) * Math.SQRT2, rise, 4, 1); geo.rotateY(Math.PI / 4);
+  const c = new THREE.Mesh(geo, m); c.position.y = y0 + rise / 2; g.add(c); return c;
+}
 function buttresses(S, g, w, d, h) {
   for (let i = 0; i <= 2; i++) { const x = -w / 2 + (w * i) / 2; box(0.07, h * 0.75, 0.1, S.m.stone, x, 0, d / 2 + 0.04, g); }
   for (let i = 1; i <= 1; i++) box(0.1, h * 0.75, 0.07, S.m.stone, w / 2 + 0.04, 0, -d / 2 + (d * i) / 2, g);
@@ -377,6 +383,87 @@ const TYPES = {
     }
     banner(g, S, 0.2, h - 0.1, w / 2 + 0.02); banner(g, S, w / 2 + 0.02, h - 0.1, -0.2, 'x');
     if (S.gothic) buttresses(S, g, w, w, h * 0.7);
+  },
+  // A town's circuit in stone (docs/town-layout-proposal.md): a curtain run, a drum tower, a gatehouse. The
+  // later regions' towns; Thornwick, a beginning town, has the timber set below.
+  curtain(S, g, r) {                                     // 2.0 long (x), crenellated both sides, a dark plinth, slits
+    const L = 2.0, t = 0.26, h = 0.74;
+    box(L, 0.08, t + 0.06, S.m.stoneDark, 0, 0, 0, g);
+    box(L, h, t, S.m.stone, 0, 0, 0, g);
+    box(L, 0.03, t + 0.04, S.m.stoneDark, 0, h - 0.03, 0, g);
+    crenels(g, S, L, t + 0.02, h, S.m.stone, 0.07);
+    for (const x of [-0.7, 0, 0.7]) for (const z of [-1, 1]) box(0.025, 0.12, 0.01, S.m.dark, x, 0.42, z * (t / 2 + 0.004), g);
+  },
+  tower(S, g, r) {                                       // a drum tower on the corners of the circuit
+    const rad = 0.32, h = 1.08;
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.04, rad + 0.06, 0.1, 14), S.m.stoneDark); plinth.position.y = 0.05; g.add(plinth);
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad + 0.02, h, 14), S.m.stone); drum.position.y = h / 2; g.add(drum);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.03, rad + 0.03, 0.04, 14), S.m.stoneDark); band.position.y = 0.76; g.add(band);
+    const eave = new THREE.Mesh(new THREE.CylinderGeometry(rad + 0.05, rad + 0.04, 0.06, 14), S.m.stoneDark); eave.position.y = h; g.add(eave);
+    pyramid(g, rad * 2, h + 0.03, 0.5, S.m.roof, 14, 0.06);
+    for (const a of [0.5, 1.1]) { const s = box(0.03, 0.13, 0.02, S.m.dark, Math.sin(a) * (rad + 0.005), 0.46, Math.cos(a) * (rad + 0.005), g); s.rotation.y = a; }
+    banner(g, S, 0, h + 0.02, rad + 0.02, 'z', 0.24);
+  },
+  gatehouse(S, g, r) {                                   // the town gate: an arched way through (z), drum towers on the outer face (+z)
+    const W = 1.0, D = 0.56, H = 1.1, pw = 0.56, ph = 0.5;
+    for (const sx of [-1, 1]) box((W - pw) / 2, H, D, S.m.stone, sx * (pw / 2 + (W - pw) / 4), 0, 0, g);   // the two piers
+    box(pw, H - ph - 0.1, D, S.m.stone, 0, ph + 0.1, 0, g);                                                     // over the passage
+    for (const z of [-1, 1]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(pw / 2, pw / 2, 0.02, 12, 1, false, 0, Math.PI), S.m.stoneDark); a.rotation.set(Math.PI / 2, 0, Math.PI / 2); a.position.set(0, ph - 0.12, z * (D / 2 + 0.01)); a.scale.set(1, 1, 0.45); g.add(a); }
+    box(pw, 0.12, 0.03, S.m.dark, 0, ph - 0.02, D / 2 - 0.06, g);                                                // the raised portcullis
+    for (let i = 0; i < 6; i++) box(0.012, 0.16, 0.012, S.m.dark, -pw / 2 + 0.05 + i * (pw - 0.1) / 5, ph - 0.12, D / 2 - 0.06, g);
+    box(W + 0.04, 0.04, D + 0.04, S.m.stoneDark, 0, H - 0.04, 0, g);
+    crenels(g, S, W, D, H, S.m.stone, 0.07);
+    for (const sx of [-1, 1]) {                                                                                   // flanking drums, a little taller
+      const t = new THREE.Group(); t.position.set(sx * (W / 2 - 0.06), 0, D / 2 - 0.02); g.add(t);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, H + 0.16, 12), S.m.stone); drum.position.y = (H + 0.16) / 2; t.add(drum);
+      pyramid(t, 0.42, H + 0.16, 0.38, S.m.roof, 12, 0.05);
+      box(0.025, 0.11, 0.02, S.m.dark, 0, 0.55, 0.205, t);
+      lantern(g, S, sx * (pw / 2 + 0.03), 0.42, D / 2 + 0.04);
+    }
+    banner(g, S, 0, H - 0.06, D / 2 + 0.02, 'z', 0.3);
+  },
+  // A beginning town's circuit in timber: a log palisade on an earth bank, a watchtower, a timber gatehouse.
+  palisade(S, g, r) {                                    // 2.0 long (x): pointed logs of uneven height, two rails (+z), a bank
+    const L = 2.0, logs = mat(tex('palisade', '#6e5a44', 41)), bank = mat(tex('rubble', '#5d5442', 43));
+    box(L, 0.07, 0.4, bank, 0, 0, 0, g);
+    for (let i = 0, n = 27; i < n; i++) {
+      const x = -L / 2 + (L * (i + 0.5)) / n, h = 0.66 + r() * 0.1, lr = 0.036 + r() * 0.008;
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(lr, lr + 0.004, h, 7), logs); log.position.set(x, h / 2, (r() - 0.5) * 0.012); log.rotation.z = (r() - 0.5) * 0.04; g.add(log);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(lr, 0.09, 7), logs); tip.position.set(x, h + 0.045, log.position.z); g.add(tip);
+    }
+    for (const y of [0.22, 0.52]) box(L, 0.04, 0.03, S.m.beam, 0, y, 0.055, g);
+    for (const x of [-0.66, 0, 0.66]) { const s = box(0.03, 0.42, 0.03, S.m.beam, x, 0, 0.09, g); s.rotation.x = -0.35; }   // raking props on the town side
+  },
+  watchtower(S, g, r) {                                  // four posts, a log skirt, a plank fighting box under a slate roof
+    const w = 0.56, H = 1.12, logs = mat(tex('palisade', '#6e5a44', 47));
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(0.08, H, 0.08, S.m.beam, x * w / 2, 0, z * w / 2, g);
+    for (let i = 0; i < 4; i++) for (let k = 0; k < 8; k++) {                                   // the skirt: logs round the foot
+      const u = -w / 2 + (w * (k + 0.5)) / 8, h = 0.6 + r() * 0.06, [x, z] = [[u, w / 2], [w / 2, u], [u, -w / 2], [-w / 2, u]][i];
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(x, h / 2, z); g.add(log);
+    }
+    const bw = w + 0.14; box(bw, 0.04, bw, S.m.beam, 0, 0.8, 0, g); box(bw, 0.3, bw, S.m.wood, 0, 0.84, 0, g);
+    for (const sx of [-1, 1]) box(0.025, 0.82, 0.025, S.m.beam, 0.12 + sx * 0.06, 0, w / 2 + 0.06, g);          // a ladder up to the box
+    for (let y = 0.1; y < 0.8; y += 0.11) box(0.12, 0.018, 0.018, S.m.beam, 0.12, y, w / 2 + 0.06, g);
+    for (const u of [-0.15, 0.15]) { box(0.03, 0.1, 0.01, S.m.dark, u, 0.95, bw / 2 + 0.003, g); box(0.01, 0.1, 0.03, S.m.dark, bw / 2 + 0.003, 0.95, u, g); }
+    hipRoof(g, bw, 1.14, 0.36, S.m.roof);
+    banner(g, S, 0, 1.12, bw / 2 + 0.02, 'z', 0.24);
+  },
+  timbergate(S, g, r) {                                  // two timber towers, a roofed fighting bridge over the way, the leaves open (outer face +z)
+    const pw = 0.6, tw = 0.34, D = 0.42, H = 1.18, logs = mat(tex('palisade', '#6e5a44', 53));
+    for (const sx of [-1, 1]) {
+      const t = new THREE.Group(); t.position.x = sx * (pw / 2 + tw / 2); g.add(t);
+      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) box(0.08, H, 0.08, S.m.beam, x * tw / 2, 0, z * D / 2, t);
+      for (let k = 0; k < 6; k++) for (const z of [-D / 2, D / 2]) { const h = 0.64 + r() * 0.05, log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(-tw / 2 + (tw * (k + 0.5)) / 6, h / 2, z); t.add(log); }
+      for (let k = 0; k < 7; k++) for (const x of [-tw / 2, tw / 2]) { const h = 0.64 + r() * 0.05, log = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.036, h, 7), logs); log.position.set(x, h / 2, -D / 2 + (D * (k + 0.5)) / 7); t.add(log); }
+      box(tw + 0.12, 0.3, D + 0.12, S.m.wood, 0, 0.84, 0, t); box(tw + 0.12, 0.04, D + 0.12, S.m.beam, 0, 0.8, 0, t);
+      box(0.03, 0.1, 0.01, S.m.dark, 0, 0.95, (D + 0.12) / 2 + 0.003, t);
+      hipRoof(t, tw + 0.12, 1.14, 0.34, S.m.roof, 0.05);
+      lantern(g, S, sx * (pw / 2 - 0.02), 0.44, D / 2 + 0.05);
+    }
+    box(pw, 0.05, D, S.m.beam, 0, 0.66, 0, g); box(pw, 0.22, 0.04, S.m.wood, 0, 0.7, D / 2 - 0.02, g); box(pw, 0.22, 0.04, S.m.wood, 0, 0.7, -D / 2 + 0.02, g);   // the bridge over the way
+    const rf = new THREE.Group(); rf.position.y = 0.92; g.add(rf); gable(rf, pw + 0.06, D + 0.1, 0, 0.16, S.m.roof, S.m.wood, 0.04, 0.03);
+    for (const sx of [-1, 1]) { const leaf = box(pw / 2 - 0.02, 0.56, 0.04, S.m.door, 0, 0, 0, g); leaf.geometry.translate(sx * (pw / 4 - 0.01), 0, 0); leaf.position.set(sx * (pw / 2 - 0.01), 0.28, D / 2 - 0.02); leaf.rotation.y = sx * 1.35; }
+    banner(g, S, 0, 0.9, D / 2 + 0.01, 'z', 0.22);
   },
   wall(S, g, r) {                                        // a curtain-wall run with a gatehouse
     const L = 2.2, t = 0.2, h = S.thatch ? 0.5 : 0.62;

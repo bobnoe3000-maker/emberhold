@@ -149,14 +149,19 @@ function putRun(o, id, x, y) {
   if (x1 - x0 > y1 - y0) { for (let tx = Math.floor(x0 + 0.5); tx < x1 - 0.5; tx++) { const i = gi(o, tx, cy); if (i >= 0) o.blocked[i] = 1; } }
   else for (let ty = Math.floor(y0 + 0.5); ty < y1 - 0.5; ty++) { const i = gi(o, cx, ty); if (i >= 0) o.blocked[i] = 1; }
 }
-// a wall gate across a road: block the wall, leave the opening (±4 tiles) clear
+// a gate across a road: block the wall, leave the gatehouse's way through (±3 tiles) clear
 function putGate(o, id, x, y) {
   put(o, id, x, y, 'none');
   const [x0, y0, x1, y1] = footRect(id, x, y), alongX = x1 - x0 > y1 - y0;
   for (let t = Math.floor(alongX ? x0 : y0); t <= (alongX ? x1 : y1); t++) {
-    if (Math.abs(t + 0.5 - (alongX ? x : y)) < 3.5) continue;
+    if (Math.abs(t + 0.5 - (alongX ? x : y)) < 3) continue;
     for (let d = -1; d <= 1; d++) { const i = alongX ? gi(o, t, y + d) : gi(o, x + d, t); if (i >= 0) o.blocked[i] = 1; }
   }
+}
+// a straight wall from a to b (x along y = at, or y along x = at): 20-tile runs end to end, the last pulled back to
+// end at b, so a wall closes on its towers and gate with no gap
+function putWall(o, id, alongX, at, a, b) {
+  for (let c = a + 10; ; c += 20) { const m = Math.min(c, b - 10); putRun(o, id, alongX ? m : at, alongX ? at : m); if (m >= b - 10) break; }
 }
 function putProp(o, kind, x, y) { o.props.set(Math.floor(x) + ',' + Math.floor(y), kind); const i = gi(o, x, y); if (i >= 0) o.occ[i] = 1; }
 
@@ -198,10 +203,10 @@ function forestRing(o, rng, inset) {
 }
 
 // ── TOWNS — one hub per region ───────────────────────────────────────────────
-// Every region's town is the same hub: a short approach road past houses and farms,
-// then the TOWN SQUARE, framed like a home screen, with the four services in the same
-// places and the same shapes everywhere (shop, tavern, inn, temple). Only the names
-// and the region's tones change (tools/actor-lab town.json → assets/env/town-<region>).
+// Every region's town is the same hub (docs/town-layout-proposal.md): a walled circuit, the road over a stream
+// straight into the east gate, a cobbled high street, then the TOWN SQUARE, framed like a home screen, with the
+// five services in the same places and the same shapes everywhere. Only the names, the region's tones and the
+// circuit's material change (tools/actor-lab town.json → assets/env/town-<region>: Thornwick's is timber).
 export const REGIONS = {
   vale:    { name: 'Thornwick', tavern: 'The Tired Mule',     inn: 'The Crossed Keys',  shop: "Wendel's Provisions",  smith: 'Hale & Daughter, Smiths', temple: 'Shrine of the Ember' },
   fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',    inn: 'The Stilt House',   shop: 'Saltmere Chandlery',   smith: 'The Tidewater Forge',     temple: 'Chapel of the Grey Sisters' },
@@ -212,57 +217,64 @@ function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
   o.name = info.name; o.region = R;
-  // THE SQUARE IS THE MENU: the same five services stand in the same places in every town,
-  // so it stays familiar (only names and the region's tones change). Authored in SCREEN
-  // terms for the portrait frame, relative to the plaza's centre C:
-  //   back row   — temple (left), inn (right)
-  //   middle row — shop (left), tavern (right)
-  //   front      — the smithy (left, its forge open to the square), the well (right)
-  // Houses and farms are cosmetic and stand well away, out along the approach road.
-  const C = [60, 64];
-  const at = (dx, dy) => [C[0] + dx, C[1] + dy];
-  o.rivers.push({ w: 6, pts: [[106, -90], [100, 20], [108, 58], [101, 100], [108, 210]] });
-  o.roads.push({ w: 6, surface: 'dirt', pts: [[230, 80], [132, 76], [104, 74], [84, 72], at(6, 6)] });
-  o.plazas.push({ cx: C[0] - 6, cy: C[1] - 4, rx: 19, ry: 19 });
-  o.fields.push({ x0: 112, y0: 26, x1: 136, y1: 44, axis: 'x' }, { x0: 70, y0: 96, x1: 96, y1: 114, axis: 'y' }, { x0: 118, y0: 90, x1: 138, y1: 112, axis: 'x' });
+  // The circuit is a box. The camera looks from +x+y, so the back walls (north, west) show their inner faces behind
+  // the town, and the front ones (east, south) stand low in front of gardens, under the menu bar at the square.
+  // EVERY ENTRANCE FACES THE WELL. The camera sees only a building's +x and +y faces, so every service stands
+  // up-screen of the well (north or west of it) with its door on the face toward it: the tavern and the smithy +x
+  // (faceX in town.json), the temple, the shop and the inn +y. The places came from a search: no door behind another
+  // service, every door in the hub frame, 8+ tiles between services (test/town.test.mjs holds them to it).
+  const WX0 = 10, WX1 = 112, WY0 = 8, WY1 = 108, GY = 80;
+  const M = [66, 71];                                    // the square's centre: the well
+  o.rivers.push({ w: 6, pts: [[124, -90], [122, 20], [126, 60], [125, 100], [130, 210]] });
+  o.roads.push({ w: 6, surface: 'dirt', pts: [[230, GY], [112, GY]] });
+  o.roads.push({ w: 6, surface: 'cobble', pts: [[114, GY], [84, GY], [76, 76]] });
+  o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22 }, { cx: 36, cy: 40, rx: 8, ry: 7 });      // the square, and the temple's forecourt open to it
+  o.fields.push({ x0: 128, y0: 18, x1: 150, y1: 50, axis: 'x' }, { x0: 132, y0: 92, x1: 152, y1: 114, axis: 'y' }, { x0: 20, y0: 110, x1: 60, y1: 122, axis: 'x' });
   finalizeGround(o);
 
-  // the square: temple + inn at the back, shop + tavern in the middle row, well on the flags
+  // the square: the temple at its head (the top of the frame), the tavern and the shop, then the smithy and the inn
   const svc = [
-    ['temple', B('temple'), at(-40, -28)], ['inn', B('inn'), at(-29, -42)],
-    ['shop', B('shop'), at(-24, -7)], ['tavern', B('tavern'), at(-6, -22)],
-    ['smith', B('smith'), at(-3, 13)],
+    ['temple', B('temple'), [34, 24]], ['tavern', B('tavern'), [29, 48]], ['shop', B('shop'), [50, 41]],
+    ['smith', B('smith'), [51, 67]], ['inn', B('inn'), [73, 55]],
   ];
-  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
-  put(o, B('well'), ...at(-1, -6));
-  for (const [x, y] of [at(-24, -14), at(-12, -26), at(8, -4), at(6, 8)]) putProp(o, 'brazier', x, y);
-  for (const [id, x, y] of [['barrel', ...at(6, -10)], ['barrel', ...at(7, -8)], ['crate_A_big', ...at(-15, 1)], ['sack', ...at(-14, 2.5)], ['bucket_water', ...at(2, -3)]])
-    put(o, id, x, y, 'rect', 0);
-  o.hub = { x: C[0] - 4, y: C[1] - 4, r: 22, focus: { x: C[0] - 9, y: C[1] - 9 } };
+  const PLAQUE = { shop: [8, 5] };                         // the shop's plaque down on its own roof: off the temple's door behind it and the HUD's buttons
+  for (const [kind, id, [x, y]] of svc) { const [px, py] = PLAQUE[kind] || [0, 0]; put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x: x + px, y: y + py, id, text: info[kind], service: kind }); }
+  put(o, B('well'), M[0], M[1]);
+  for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77], ['bucket_water', M[0] + 4, M[1] + 2]]) put(o, id, x, y, 'rect', 0);
+  o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };   // the square from the temple's forecourt to the high street's mouth
+  o.lead = { x0: 113, y0: GY - 12, x1: 160, y1: GY + 12, x: WX1, y: GY, k: 0.5 };   // on the approach road the camera leads halfway to the gate (renderer.js)
 
-  // the approach: a stream crossing, houses along the road, farms and fields beyond
-  put(o, 'bridge_90', 104, 74, 'deck');
-  // (south of the road a house stands in front of the bridge on screen, so they're all north of it, bar one far out)
-  [[118, 60, 'house', 1], [129, 63, 'house', 3], [140, 60, 'house', 2], [124, 49, 'housex', 1], [136, 49, 'housex', 2], [146, 102, 'house', 1]]
+  // the circuit: towers at the corners and mid-runs, the curtain (a palisade in Thornwick) between, the gate over the high street
+  const towers = [[WX0, WY0], [61, WY0], [WX1, WY0], [WX0, 58], [WX1, 40], [WX0, WY1], [61, WY1], [WX1, WY1]];
+  putWall(o, B('curtain'), true, WY0, WX0, WX1); putWall(o, B('curtain'), true, WY1, WX0, WX1); putWall(o, B('curtainy'), false, WX0, WY0, WY1);
+  putWall(o, B('curtainy'), false, WX1, WY0, GY - 7); putWall(o, B('curtainy'), false, WX1, GY + 7, WY1);
+  for (const [x, y] of towers) put(o, B('tower'), x, y, 'round', 0.1);
+  putGate(o, B('gatehousey'), WX1, GY);
+  put(o, 'bridge_90', 125.5, GY, 'deck');
+
+  // houses: a row along the high street's north side, the quarters at the back (north and west), low gardens in front
+  [[100, 68, 'house', 1], [76, 19, 'house', 2], [88, 19, 'house', 1], [100, 19, 'house', 3], [101, 31, 'housex', 2], [89, 33, 'housex', 1],
+   [24, 70, 'housex', 2], [24, 82, 'house', 1], [40, 97, 'house', 3], [24, 96, 'housex', 1]]
     .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
-  put(o, B('farm'), 124, 30); put(o, B('farmx'), 84, 106); put(o, B('farm'), 128, 102);
-  for (const [x, y] of [[96, 68], [112, 70], [126, 70]]) putProp(o, 'brazier', x, y);
-  for (const [id, x, y] of [['wheelbarrow', 110, 40], ['resource_lumber', 94, 94], ['barrel', 136, 72]]) put(o, id, x, y, 'rect', 0);
+  for (const [x, y] of [[97, 75], [107, 75], [87, 75]]) putProp(o, 'brazier', x, y);
+  for (const [id, x, y] of [['wheelbarrow', 96, 90], ['resource_lumber', 88, 96], ['barrel', 106, 70], ['crate_A_big', 92, 84]]) put(o, id, x, y, 'rect', 0);
+  for (const [id, x, y] of [['oak_2', 20, 18], ['oak_3', 46, 16], ['autumn_3', 19, 36]]) put(o, id, x, y, 'round', 0.35);   // the churchyard's trees, behind the temple
+  // outside: farms on the fields, the stream under the east wall
+  put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104);
 
-  // trees: close behind the square (it should feel enclosed), scattered along the approach, then the ring
-  const TOWN_SIGHTS = [[118, 60], [129, 63], [140, 60], [124, 49], [136, 49], [146, 102], [104, 76]];
+  // trees: orchards and gardens in the walls' front corners, woods beyond the back walls, the ring
+  const inside = (x, y) => x > WX0 + 4 && x < WX1 - 4 && y > WY0 + 4 && y < WY1 - 4;
   scatter(o, rng, -20, -20, 160, 140, 9, (x, y) => {
-    const dh = hypot(x - (C[0] - 16), y - (C[1] - 16));
-    if (dh < 34) return null;
-    const behind = x + y < C[0] + C[1] - 30;
-    if (behind) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
-    if (inFrontOf(TOWN_SIGHTS, x, y, 22, 12)) return null;                         // don't hide houses or the bridge behind a trunk
+    if (inside(x, y)) return y > 84 && x > 84 && rng() < 0.5 ? pick(rng, ['oak_2', 'autumn_3', 'oak_1']) : null;   // the gardens behind the south wall
+    if (x > WX0 - 8 && x < WX1 + 22 && y > WY0 - 8 && y < WY1 + 8) return null;   // the walls' verge and the moat
+    if (x + y < 60 || x < 0) return rng() < 0.7 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
     const n = fbm(x * 0.05, y * 0.05, o.seed + 3);
-    return n > 0.52 && rng() < 0.5 ? pick(rng, TREE_SINGLE) : rng() < 0.06 ? pick(rng, ROCKS) : null;
+    return n > 0.55 && rng() < 0.4 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
   });
   forestRing(o, rng, 10);
-  o.exits.push({ x0: 146, y0: 64, x1: 160, y1: 90, to: 'overland', arrive: 'thornwick' });
-  o.arrivals = { default: { x: C[0] + 0.5, y: C[1] + 2.5 }, overland: { x: 140.5, y: 76.5 }, temple: { x: C[0] - 13.5, y: C[1] - 11.5 } };   // temple: where a wiped party wakes, in the square before the temple
+  o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: 'thornwick' });
+  o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 141.5, y: GY + 0.5 }, temple: { x: 38.5, y: 42.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
@@ -285,7 +297,6 @@ function buildOverland(seed) {
   o.roads.push({ w: 4, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] });
-  o.roads.push({ w: 5, surface: 'dirt', pts: [town, [30, 152], [-90, 160]] });
   o.roads.push({ w: 4, surface: 'dirt', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] });                // up to the mill
   o.roads.push({ w: 4, surface: 'dirt', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] });          // the causeway to the chapel
   o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
@@ -294,9 +305,14 @@ function buildOverland(seed) {
   // bridges where roads cross the river
   put(o, 'bridge_90', 120, 142, 'deck');
   put(o, 'bridge_90', 115, 199, 'deck');
-  // Thornwick from outside: walls + gate with a few roofs and the windmill behind
-  putGate(o, B('wally'), town[0] + 4, town[1]);
-  for (const [id, x, y] of [[B('temple'), 36, 134], [B('house', 1), 38, 164], [B('housex', 1), 24, 146], [B('house', 2), 20, 166], [B('keep'), 18, 124], [B('farm'), 44, 110]]) put(o, id, x, y);
+  // Thornwick from outside: the town scene's circuit in small (its timber palisade and watchtowers), the gate on
+  // its road, the temple's spire and a few roofs inside
+  { const X0 = 18, X1 = town[0] + 4, Y0 = 128, Y1 = 172, GY = town[1];
+    for (const [id, x, y] of [[B('temple'), 32, 140], [B('house', 1), 44, 138], [B('housex', 1), 28, 156], [B('house', 2), 44, 162], [B('house', 3), 30, 166], [B('farm'), 44, 110]]) put(o, id, x, y);
+    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X0, Y0, Y1);
+    putWall(o, B('curtainy'), false, X1, Y0, GY - 7); putWall(o, B('curtainy'), false, X1, GY + 7, Y1);
+    for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, GY]]) put(o, B('tower'), x, y, 'round', 0.1);
+    putGate(o, B('gatehousey'), X1, GY); }
   // Wickham Keep, the watchtower at the crossroads, the Old Barrows, the mine, the lumber camp, a farm
   put(o, B('keep'), keep[0], keep[1]);
   put(o, B('wall'), keep[0], keep[1] + 16);
@@ -313,7 +329,7 @@ function buildOverland(seed) {
     put(o, id, x, y, 'rect', 0);
   putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);
-  o.labels.push({ x: town[0] + 4, y: town[1], id: B('wally'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
+  o.labels.push({ x: town[0] + 4, y: town[1], id: B('gatehousey'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
     { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill', site: 'tithe_mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },
     { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
