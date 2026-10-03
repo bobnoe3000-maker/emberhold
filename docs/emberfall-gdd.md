@@ -403,8 +403,10 @@ wear the fighter's sword, shields, great helm, plate and sabatons, and has two m
 own (Chapel Sword, Book of Hours). Recommended build: Grit, Focus, Grit.
 
 **The Shaman (v1.19).** The kit is a Spirit Staff, Hide Robes and Wrapped Boots, with an Antler Rod, a Bone Fetish
-and a Hide Cowl to find. Recommended build: Focus, Grit, Might. Their gear drops for a party with a shaman in it and
-in the shop; drops "for any class" still roll among the first four, so no other party's loot moved. A shaman
+and a Hide Cowl to find. Recommended build: Focus, Grit, Might. Their gear drops the way all gear does (the owner,
+2026-10-03): 80 % of drops are for the party's classes, the rest for any of the five. A fighter + rogue
++ cleric party now sees 3.3 % shaman pieces and can wear 93.3 % of what drops (95.9 % with four classes);
+a party with a shaman sees 25.3 % (21.9 % before). How much drops is unchanged. A shaman
 sellsword sits last at every tavern's table and can carry *Devout*, *Field Medic* or their own *Deep Drinker*
 (Spirit Drain lasts 2 s longer).
 - **What they're for.** A party's healer and a boss's undoing. The drain is slow to build and mends as it goes,

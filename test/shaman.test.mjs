@@ -8,7 +8,8 @@ import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { CLASSES, makeMember, statsFor } from '../src/sim/party.js';
 import { SKILLS, PASSIVES, TRIAL_CLASSES, OLD_WAYS_STACKS } from '../src/sim/skills.js';
-import { STARTER, CLASS_IDS, ALL_CLASSES, BASES, classesOf } from '../src/sim/items.js';
+import { STARTER, CLASS_IDS, BASES, classesOf, rollItem } from '../src/sim/items.js';
+import { mulberry32 } from '../src/sim/rng.js';
 import { BUILD } from '../src/sim/attributes.js';
 import { QUESTS } from '../src/sim/quests.js';
 import { isWalkable } from '../src/sim/world.js';
@@ -19,8 +20,7 @@ test('the shaman is a class like the others: table, kit, build, three abilities 
   assert.ok(CLASSES.shaman && STARTER.shaman && BUILD.shaman && PASSIVES.shaman);
   assert.deepEqual(SKILLS.shaman.map((s) => [s.lv, s.kind]), [[1, 'strike'], [6, 'breath'], [12, 'hex']]);
   assert.ok(TRIAL_CLASSES.includes('shaman')); assert.equal(QUESTS.trial_old_roads.giver, 'col');
-  assert.deepEqual(CLASS_IDS, ['fighter', 'rogue', 'mage', 'cleric'], 'the "any class" loot pool is unchanged (no draw moves)');
-  assert.ok(ALL_CLASSES.includes('shaman'));
+  assert.deepEqual(CLASS_IDS, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const slot of Object.values(STARTER.shaman)) assert.ok(classesOf(BASES[slot]).includes('shaman'), slot);
   const C = JSON.parse(readFileSync(new URL('../content/creation.json', import.meta.url), 'utf8'));
   assert.ok(C.classes.some((c) => c.id === 'shaman'));
@@ -44,6 +44,13 @@ function fight(level = 12, passive = false, site = 'tithe_mill') {
   sim.tick = () => { tick(); for (const e of sim.world.enemies || []) if (!e.tough) { e.tough = 1; e.maxHp *= 100; e.hp = e.maxHp; } };
   return sim;
 }
+
+test('shaman gear drops the way all gear does: for a party without a shaman too, and Rares can carry Spirit Drain', () => {
+  const rng = mulberry32(7), drops = Array.from({ length: 4000 }, (_, i) => rollItem(rng, { ilv: 5, rarity: 'rare', classes: ['fighter', 'rogue', 'cleric'], uid: 'x' + i }));
+  const sh = drops.filter((it) => BASES[it.base].cls === 'shaman');
+  assert.ok(sh.length > 4000 * 0.02, `${sh.length} shaman pieces in 4000 drops`);   // ~20 % off-party × a fifth, less trinkets
+  assert.ok(drops.some((it) => it.mod && it.mod.ab === 'Spirit Drain'));
+});
 
 test('Spirit Drain stacks on a foe (to 5; Old Ways to 8), ticks, and mends the most hurt ally as it does', () => {
   for (const passive of [false, true]) {

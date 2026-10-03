@@ -113,10 +113,9 @@ export const STARTER = {
   cleric: { weapon: 'mace', off: 'psalter', armor: 'vestments', boots: 'pilgrimboots' },   // bareheaded, off-white vestments (a Grey Sister's cleric)
   shaman: { weapon: 'spiritstaff', armor: 'hiderobes', boots: 'wrapboots' },                    // bareheaded, undyed wool and hide (a hedge-caller)
 };
-// The classes a drop for "any class" rolls between. The shaman (v1.19) isn't here: adding a class would move every
-// party's loot draws. Shaman gear drops for a party with a shaman in it (rollItem's 80 %), and in the shop.
-export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
-export const ALL_CLASSES = [...CLASS_IDS, 'shaman'];
+// Every class: a drop that isn't for the party (rollItem's other 20 %) rolls between them, the shaman's gear the
+// same as anyone's (the owner, 2026-10-03).
+export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric', 'shaman'];
 /** the classes that can wear a base ([] = any) @param {any} B */
 export const classesOf = (B) => (B.cls === 'any' || B.cls === 'none' ? [] : [B.cls, ...(B.also || [])]);   // ('none': a scroll, anyone reads it)
 export const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
