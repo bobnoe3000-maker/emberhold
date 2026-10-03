@@ -804,7 +804,18 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       out[`${W}x${H}${scene}`].errs = errs;
       await ctx.close();
     }
-    const L = out['844x390town'], P = out['390x844town'], V = out['844x390overland'], col = L.cards, probs = [];
+    // a notch on the right, as iOS reports it sideways (47 px) once ui/safearea.js has read the rotation: the
+    // cards hug the left edge, and the minimap, compass, Journal and Step-out keep clear of the notch
+    {
+      const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      await p.evaluate(() => { const r = document.documentElement; r.style.setProperty('--safe-l', '0px'); r.style.setProperty('--safe-r', '47px'); });
+      await p.waitForTimeout(1300); await p.evaluate(() => { for (let i = 0; i < 30; i++) globalThis.__frame(1000 / 30); });
+      out.notch = await p.evaluate(() => { const R = (s) => document.querySelector(s).getBoundingClientRect(); return { card: R('#party .card').left, compass: R('#compassBtn').right, journal: R('#journalBtn').right, vw: innerWidth }; });
+      await ctx.close();
+    }
+    const L = out['844x390town'], P = out['390x844town'], V = out['844x390overland'], N = out.notch, col = L.cards, probs = [];
+    if (!(N.card <= 20 && N.compass <= N.vw - 47 && N.journal <= N.vw - 47)) probs.push(`with a notch on the right: ${JSON.stringify(N)}`);
     const lx = Math.max(...col.map((c) => c.r));
     if (!(col.length === 3 && col.every((c) => c.l === col[0].l) && col[0].main && col.every((c, i) => !i || c.t >= col[i - 1].b))) probs.push('landscape: not a column with you on top');
     if (lx > 230 || col[0].t < L.hud.b - 0.5 || Math.max(...col.map((c) => c.b)) > L.vh) probs.push(`landscape: column ${JSON.stringify(col.map((c) => [c.l, c.t, c.r, c.b].map(Math.round)))}`);
@@ -813,7 +824,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     if (!(V.off < 3)) probs.push(`on the Vale the hero is ${V.off.toFixed(1)} tiles off the open screen's middle`);   // (the square frames itself)
     if (!(P.cards.length === 3 && P.cards.every((c) => Math.abs(c.t - P.cards[0].t) < 1) && P.side === '0px')) probs.push('upright: not a row along the bottom');
     if (L.errs.length || P.errs.length || V.errs.length) probs.push([...L.errs, ...P.errs, ...V.errs].join(' | '));
-    check('landscape: the party cards stack on the left, you on top; the service bar, tracker and hero stay right of them; upright is a row as before', probs.length === 0, probs.length ? probs.join(' · ') : `column to ${Math.round(lx)} px, --party-side ${L.side}, hero ${V.off.toFixed(1)} tiles from the open middle`);
+    check('landscape: the party cards stack on the left, you on top; the service bar, tracker and hero stay right of them; a notch on the right moves the right-hand buttons off it and the cards to the edge; upright is a row as before', probs.length === 0, probs.length ? probs.join(' · ') : `column to ${Math.round(lx)} px, --party-side ${L.side}, hero ${V.off.toFixed(1)} tiles from the open middle`);
     await b.close();
   }
 }

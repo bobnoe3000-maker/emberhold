@@ -49,7 +49,7 @@ import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice } from '../sim
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 
 const CSS = SW_CSS + `
-#hubBar { position: fixed; left: var(--party-side, 0px); right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+#hubBar { position: fixed; left: var(--party-side, 0px); right: var(--safe-r, 0px); bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(24px); opacity: 0; visibility: hidden; pointer-events: none;
   transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s; z-index: 5; }
 #hubBar.on { transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: transform .28s ease, opacity .2s ease; }

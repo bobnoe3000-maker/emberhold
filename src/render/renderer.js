@@ -242,13 +242,17 @@ export function createRenderer(canvas, sim, input) {
   let hudB = 50;
   // ...and the party's column down the left on a phone held sideways (ui/party.js sets --party-side, CSS px; 0 when
   // the cards sit along the bottom): the camera centres the hero in the rest of the screen
-  let sideL = 0;
+  // and the notch's inset on the right, if it's there (ui/safearea.js's probe): the minimap and the room pill keep clear of it
+  let sideL = 0, safeR = 0;
   const measureHud = () => {
     const h = typeof document !== 'undefined' && document.getElementById('hud'); if (h) hudB = Math.max(40, h.getBoundingClientRect().bottom);
-    if (typeof document !== 'undefined') sideL = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--party-side')) || 0;
+    if (typeof document !== 'undefined') {
+      sideL = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--party-side')) || 0;
+      const pr = document.getElementById('safeProbe'); safeR = pr ? parseFloat(getComputedStyle(pr).paddingRight) || 0 : 0;
+    }
   };
   measureHud(); window.addEventListener('resize', () => { measureHud(); requestAnimationFrame(measureHud); }); setInterval(measureHud, 1000);
-  const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px)
+  const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px; + the notch's inset, safeR)
   const mmTop = () => hudB + 10;                                 // the minimap's top edge (CSS px)
 
   /* ── load-time bakes: props, hero doll frames ───────────────────────────── */
@@ -956,7 +960,7 @@ export function createRenderer(canvas, sim, input) {
     // an uneven 1-1-2 cadence, a judder over the whole screen). The window is rendered at the
     // camera rounded UP (ox, oy) and PASS B shifts the upscaled image back by the fraction
     // (rx − ox, a value in (−1, 0]), so the world glides; figures land on the nearest pixel.
-    const rx = nvw / 2 + (sideL * vw) / (2 * window.innerWidth * S) - C.sx + jx, ry = nvh * anchor - C.sy + jy;
+    const rx = nvw / 2 + ((sideL - safeR) * vw) / (2 * window.innerWidth * S) - C.sx + jx, ry = nvh * anchor - C.sy + jy;
     return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 };
@@ -1191,7 +1195,7 @@ export function createRenderer(canvas, sim, input) {
   // structures), shown top-down like the dungeon's, with the hero dot.
   function drawOutdoorMinimap(ix, iy) {
     const w = sim.world, k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
-    const bx = vw - MM - pad - 10 * k, by = mmTop() * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
+    const bx = vw - MM - pad - (MM_RIGHT + safeR) * k, by = mmTop() * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
     if (!outMap) {
       const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N);
       const COL = [[46, 64, 42], [96, 80, 60], [104, 98, 104], [40, 86, 118], [70, 60, 48], [128, 110, 60]];
@@ -1238,7 +1242,7 @@ export function createRenderer(canvas, sim, input) {
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
         sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // a service at the frame's edge keeps its plaque on screen
-        if (sy > (hudB + 112) * k && sy - th < (hudB + 222) * k) sx = Math.min(sx, vw - tw / 2 - 62 * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 120 to 216 under the HUD)
+        if (sy > (hudB + 112) * k && sy - th < (hudB + 222) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 120 to 216 under the HUD)
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
@@ -1383,7 +1387,7 @@ export function createRenderer(canvas, sim, input) {
       const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}`, dc = dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
-      const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + 8) * k;
+      const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;
       const px = Math.max(tw / 2 + 10 * k, Math.min(vw / 2, mmL - tw / 2)), py = (hudB + 16) * k;
       octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
       octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
@@ -1458,7 +1462,7 @@ export function createRenderer(canvas, sim, input) {
     const lvl = sim.world.level, rooms = lvl.rooms, discovered = sim.world.discovered;
     if (!rooms.length) return;
     const k = vw / window.innerWidth, MM = 96 * k, pad = 6 * k;
-    const bx = vw - MM - pad - 10 * k, by = mmTop() * k;     // top-right, under the HUD
+    const bx = vw - MM - pad - (MM_RIGHT + safeR) * k, by = mmTop() * k;     // top-right, under the HUD
     // panel
     octx.fillStyle = 'rgba(10,8,16,0.60)';
     octx.fillRect(bx - pad, by - pad, MM + 2 * pad, MM + 2 * pad);

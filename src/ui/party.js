@@ -48,9 +48,11 @@ const CSS = `
    rest of the screen keeps its portrait places. You on top, compact: a smaller portrait, the four stats in one row.
    --party-side (set below) tells the bars, the tracker, the walk chip and the camera how wide the column is. */
 @media (orientation: landscape) and (max-height: 540px) {
-  #party { right: auto; top: calc(env(safe-area-inset-top, 0px) + 54px); width: calc(198px + env(safe-area-inset-left, 0px)); box-sizing: border-box;
+  /* --pl: the notch's inset when it's on this side (ui/safearea.js), else 16 px, clear of the screen's rounded corner */
+  #party { --pl: max(16px, calc(var(--safe-l, env(safe-area-inset-left, 0px)) + 6px));
+    right: auto; top: calc(env(safe-area-inset-top, 0px) + 54px); width: calc(214px + var(--pl)); box-sizing: border-box;
     grid-template-columns: 1fr; grid-auto-rows: min-content; align-content: end; gap: 5px;
-    padding: 0 8px max(calc(env(safe-area-inset-bottom, 0px) - 14px), 8px) calc(env(safe-area-inset-left, 0px) + 8px);
+    padding: 0 8px max(calc(env(safe-area-inset-bottom, 0px) - 14px), 12px) var(--pl);
     background: none; }   /* the cards are opaque; a shade behind the column read as a dark box round the HUD corner */
   #party .card { padding: 5px 7px 6px; }
   #party .card.main { order: -1; }
@@ -59,7 +61,13 @@ const CSS = `
   #party .top { margin-bottom: 4px; }
   #party .pf { width: 28px; height: 33px; }
   #party .hp { margin-bottom: 4px; }
-  #party .st { grid-template-columns: auto 1fr auto 1fr auto 1fr auto 1fr; gap: 2px 3px; letter-spacing: .3px; }
+  /* one row: each label beside its value, the four pairs spread across (DDG 18.6% had run out of the card, and in
+     eight even columns a value sat nearer the next label than its own) */
+  #party .st { grid-template-columns: max-content max-content 1fr max-content max-content 1fr max-content max-content 1fr max-content max-content; gap: 2px 0; letter-spacing: 0; font-size: 8.5px; }
+  #party .st b { padding-left: 3px; }
+  #party .st > :nth-child(3) { grid-column: 4; } #party .st > :nth-child(4) { grid-column: 5; }
+  #party .st > :nth-child(5) { grid-column: 7; } #party .st > :nth-child(6) { grid-column: 8; }
+  #party .st > :nth-child(7) { grid-column: 10; } #party .st > :nth-child(8) { grid-column: 11; }
   #party .xp { margin-top: 4px; }
 }
 `;

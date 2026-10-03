@@ -1158,6 +1158,13 @@ Everything that matters sits in the lower two-thirds of the screen, within thumb
   along the top, the compass and Journal buttons and minimap on the right, the town's service bar and the quest
   tracker along the bottom (right of the column), and the camera centres the hero in the open part of the screen.
   ![Landscape before/after](img/landscape-phone.jpg) (`src/ui/party.js`, `--party-side`; browser test 17)
+  - **The notch (2026-10-03, the owner's screenshot).** Sideways, iOS reports the same 47 px inset on both sides,
+    though the notch is on one. The page reads which way the phone turned (`src/ui/safearea.js`): the notch's
+    side keeps the inset, the other side a plain 16 px, clear of the rounded corner. So with the notch on the
+    right, the cards sit 16 px from the left edge, not 55, and the minimap, compass, Journal and Step-out stand
+    47 px further in, off the notch. With it on the left, the cards clear it and the right-hand side hugs the edge.
+    The card's stats are one row of label-and-value pairs (DDG 18.6 % had run out of the card).
+    ![Notch on the right, then on the left (drawn in black)](img/landscape-notch.jpg)
 
 ---
 

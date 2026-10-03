@@ -11,7 +11,7 @@ import { statsFor } from '../sim/party.js';
 import { swallow } from './actorart.js';
 
 const CSS = `
-#stepOut { position: fixed; right: 12px; bottom: 140px; z-index: 5; display: none; min-height: 44px; min-width: 112px; max-width: 46vw; padding: 6px 12px 6px 10px;
+#stepOut { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); bottom: 140px; z-index: 5; display: none; min-height: 44px; min-width: 112px; max-width: 46vw; padding: 6px 12px 6px 10px;
   border-radius: 22px; border: 1px solid rgba(214,170,98,0.55); background: rgba(16,12,22,0.94); color: #f0c880; box-shadow: 0 2px 10px rgba(0,0,0,.5);
   font: 600 13px Georgia, serif; text-align: left; align-items: center; gap: 8px; }
 #stepOut.on { display: flex; }
@@ -25,7 +25,7 @@ const CSS = `
 const ICON = '<svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>';
 export const LOW = 0.45;                 // the party's share of HP under which the button pulses
 
-/** @param {{ sim: any, partyPanel?: { height: () => number } }} o */
+/** @param {{ sim: any, partyPanel?: { height: () => number, side?: () => number } }} o */
 export function createStepOut({ sim, partyPanel }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('button'); btn.id = 'stepOut'; btn.setAttribute('aria-label', 'Step out of the fight');
@@ -47,7 +47,7 @@ export function createStepOut({ sim, partyPanel }) {
     }
     if (html !== last) { btn.innerHTML = html; last = html; }
     btn.classList.toggle('on', !!html); btn.classList.toggle('low', low);
-    if (html) { const b2 = `${Math.round((partyPanel ? partyPanel.height() : 0) + 8)}px`; if (btn.style.bottom !== b2) btn.style.bottom = b2; }
+    if (html) { const b2 = `${Math.round((partyPanel ? partyPanel.height() : 0) + (partyPanel && partyPanel.side && partyPanel.side() ? 14 : 8))}px`; if (btn.style.bottom !== b2) btn.style.bottom = b2; }   // (sideways: 14, clear of the rounded corner)
     requestAnimationFrame(watch);
   })();
   return { el: btn };

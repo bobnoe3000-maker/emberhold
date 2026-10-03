@@ -2,6 +2,7 @@
 
 import { createSim, TICK_DT } from './sim/core.js';
 import { createRenderer } from './render/renderer.js';
+import { watchSafeArea } from './ui/safearea.js';
 import { createInput } from './ui/input.js';
 import { createHud } from './ui/hud.js';
 import { createTownMenu } from './ui/townmenu.js';
@@ -56,6 +57,7 @@ const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.ge
 const sim = createSim(SEED, THEME, { scene: SCENE, region: STAGE ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 const input = createInput(canvas);
+watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const renderer = createRenderer(canvas, sim, input);
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 if (STAGE) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
