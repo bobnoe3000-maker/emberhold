@@ -238,6 +238,17 @@ function roofOver(S, g, w, d, y0, rise, alongX = true) {
   if (S.gothic) { for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.14, 4), S.m.trim); f.position.set(sx * W / 2, y0 + rise * D / 2 + 0.06, 0); r.add(f); } }
   return r;
 }
+// A dormer on a gable's front slope (critic pass 11c/g: the reference's roofs are broken by dormers and turrets;
+// ours were plain planes): a small timbered box with its own little gable and a window, at x, halfway up the slope
+// of a roof over depth D from eaves y0 rising rise × D/2.
+function dormer(S, g, x, D, y0, rise) {
+  const dg = new THREE.Group(), half = D / 2, rh = rise * half, z = half * 0.5, y = y0 + rh * 0.5 - 0.06;
+  dg.position.set(x, 0, 0); g.add(dg);
+  box(0.17, 0.16, half * 0.75, S.m.upper, 0, y, z - half * 0.2, dg);
+  const gr = new THREE.Group(); gr.position.set(0, 0, z - half * 0.2); gr.rotation.y = Math.PI / 2; dg.add(gr);
+  gable(gr, half * 0.75, 0.17, y + 0.16, 0.08, S.m.roof, S.m.upper, 0.03, 0.02);
+  windowOn(dg, S, { side: 'z', wallW: 0.17, wallD: (z - half * 0.2) * 2 + half * 0.75 }, 0, y + 0.08, 0.08, 0.09, { lit: S.rnd() < 0.5 });
+}
 // a hipped roof over a w-square, its quarter-turn in the geometry: the bake measures a footprint from each
 // mesh's box, and a rotated mesh's box (pyramid()) comes out √2 too wide
 function hipRoof(g, w, y0, rise, m, over = 0.06) {
@@ -259,6 +270,7 @@ const TYPES = {
     if (h2) { const j = S.jetty; storeyBlock(S, g, w + j * 2, d + j * 2, h1, h2, S.m.upper, true, { timber: true }); top += h2; }
     roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, top, S.roofRise);
     chimney(g, S, w / 2 - 0.12, -d / 4, top, 0.32 + S.roofRise * 0.2);
+    if (h2 && !S.gothic) dormer(S, g, -0.1, d + S.jetty * 2, top, S.roofRise);
     if (S.gothic) buttresses(S, g, w, d, h1);
   },
   tavern(S, g, r) {
@@ -339,13 +351,19 @@ const TYPES = {
     for (let i = 0; i < 3; i++) windowOn(back, S, fx, -d / 2 + (d * (i + 0.5)) / 3, h * 0.5, 0.09, 0.34, { pointed: true, lit: true });
     roofOver(S, g, w, d, h, S.roofRise * 1.2, false);
     // bell tower at the front-left: tall, a lit lancet low, an open belfry, spire and cross
+    // (critic pass 11g: round, the reference's stone drum under a conical tile roof, in place of a square shaft)
     const tw = 0.34, th = h + 0.6, t = new THREE.Group(); t.position.set(-w / 2 - tw / 2 + 0.08, 0, d / 2 - tw / 2 + 0.02); g.add(t);
-    box(tw, th, tw, stone, 0, 0, 0, t); box(tw + 0.05, 0.05, tw + 0.05, S.m.stoneDark, 0, th - 0.34, 0, t);
+    const drum = new THREE.CylinderGeometry(tw * 0.56, tw * 0.6, th, 16, 1), du = drum.attributes.uv;
+    for (let i = 0; i < du.count; i++) du.setXY(i, du.getX(i) * (Math.PI * tw * 1.16) / TEX_UNITS, du.getY(i) * th / TEX_UNITS);
+    const dm = new THREE.Mesh(drum, stone); dm.position.y = th / 2; t.add(dm);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(tw * 0.62, tw * 0.62, 0.05, 16), S.m.stoneDark); band.position.y = th - 0.31; t.add(band);
     const tz = { side: 'z', wallW: tw, wallD: tw }, tx = { side: 'x', wallW: tw, wallD: tw };
     windowOn(t, S, tz, 0, h * 0.45, 0.08, 0.2, { pointed: true, lit: true });
     for (const f of [tz, tx]) windowOn(t, S, f, 0, th - 0.17, 0.12, 0.2, { pointed: true, lit: false });   // the open belfry
-    pyramid(t, tw + 0.02, th, S.gothic ? 0.9 : 0.66, S.m.roof, 8, 0.04);
-    const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.9 : 0.66) + 0.01, 0); t.add(cr);
+    { const cone = new THREE.ConeGeometry(tw * 0.68, S.gothic ? 0.9 : 0.72, 16, 1, true), cu = cone.attributes.uv;
+      for (let i = 0; i < cu.count; i++) cu.setXY(i, cu.getX(i) * (Math.PI * tw * 1.3) / TEX_UNITS, cu.getY(i) * 0.9 / TEX_UNITS);
+      const roofM = S.m.roof.clone(); roofM.side = THREE.DoubleSide; const cm = new THREE.Mesh(cone, roofM); cm.position.y = th + (S.gothic ? 0.45 : 0.36); t.add(cm); }
+    const cr = new THREE.Group(); cr.position.set(0, th + (S.gothic ? 0.9 : 0.72) + 0.01, 0); t.add(cr);
     box(0.02, 0.16, 0.02, S.m.trim, 0, 0, 0, cr); box(0.09, 0.02, 0.02, S.m.trim, 0, 0.1, 0, cr);
     lantern(g, S, -0.16, 0.36, d / 2 + 0.05); lantern(g, S, 0.28, 0.36, d / 2 + 0.05);
   },
