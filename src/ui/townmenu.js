@@ -149,6 +149,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const rt = e.target.closest('[data-retrainview]'); if (rt) { note = ''; retrainId = rt.dataset.retrainview; return retrain(); }
     const rp = e.target.closest('[data-retrain]'); if (rp) return send({ type: 'retrain', id: retrainId, idx: +rp.dataset.retrain });
     const d = e.target.closest('[data-dismiss]'); if (d) return send({ type: 'dismiss', id: d.dataset.dismiss });
+    const rl = e.target.closest('[data-release]'); if (rl) { if (armRel !== rl.dataset.release) { armRel = rl.dataset.release; return hire(); } armRel = null; return send({ type: 'release', id: rl.dataset.release }); }   // tap twice
     const sw = e.target.closest('[data-swap]'); if (sw) return send({ type: 'swap', slot: +sw.dataset.swap, id: sw.dataset.who });
     const ht = e.target.closest('[data-htab]'); if (ht) { note = ''; return hire(ht.dataset.htab); }
     const ft = e.target.closest('[data-ftab]'); if (ft) { note = ''; armUid = null; return smith(ft.dataset.ftab); }
@@ -174,7 +175,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed', 'forged', 'traded', 'gearChanged']) sim.bus.on(ev, redraw);
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
-  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null;
+  let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;   // (armRel: a bench member's Dismiss for good, tapped once)
 
   const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
     Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
@@ -245,9 +246,10 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const company = `<h3>In the party · with you</h3>
       ${mates.map((m) => card(m, false, `<button class="btn ghost" data-dismiss="${m.id}">To bench</button>${retrainBtn(m)}`)).join('') || '<p style="margin:0 0 4px">No companions with you yet. Hire one on the Hire tab.</p>'}
       <h3>On the bench · at the inn · ${S.bench.length}/${BENCH_MAX}</h3>
-      ${S.bench.map((m) => card(m, true, `${intoParty(m)}${retrainBtn(m)}`)).join('') || '<p style="margin:0 0 4px">Nobody on the bench.</p>'}`;
+      ${S.bench.map((m) => card(m, true, `${intoParty(m)}${retrainBtn(m)}${m.rank === 'found' ? '' : `<button class="btn ghost" data-release="${m.id}">${armRel === m.id ? 'Sure? For good' : 'Dismiss for good'}</button>`}`)).join('') || '<p style="margin:0 0 4px">Nobody on the bench.</p>'}
+      ${S.bench.some((m) => m.rank !== 'found') ? '<p class="sub" style="margin:4px 0">Dismissed for good, a sellsword\'s wage stops and what they\'re owed is written off; their Fine and better gear goes into the bag.</p>' : ''}`;
     const hiring = `<div class="row go" data-ask><div><b>Ask around · ${sim.heroes.askCost()} gold</b><span>New faces at the tavern today. Dearer each time you ask the same day.</span></div><div class="go-arrow">›</div></div>
-      ${full ? `<div class="full">${benchFull ? 'Your party and the bench are both full. Release someone from the bench at the inn first.' : 'Your party is full. A new hire joins your roster on the bench at the inn; swap them in from Your company.'}</div>` : ''}
+      ${full ? `<div class="full">${benchFull ? 'Your party and the bench are both full. Dismiss someone on the bench for good first (Your company).' : 'Your party is full. A new hire joins your roster on the bench at the inn; swap them in from Your company.'}</div>` : ''}
       <h3>Today's sellswords · new faces at dawn</h3>
       ${roster.map((m, i) => { const have = party.some((p) => p.id === m.id) || S.bench.some((p) => p.id === m.id), fee = feeOf(m), poor = fee > gold();
         return `<div class="merc sw"><div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>${rankMark(m)}

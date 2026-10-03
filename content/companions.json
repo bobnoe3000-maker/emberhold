@@ -57,7 +57,7 @@
     "sections": [
       { "head": "Ranks", "text": "Every sellsword carries a Guild rank. The higher the rank, the more they're good at and the more they cost. Fee and wage are times their level." },
       { "head": "Seasons", "text": "The Guild keeps its seasoned members for companies it knows. Whoever you sign on comes at half your level, rounded up, and learns the rest at your side. Their wage grows with them." },
-      { "head": "Wages", "text": "Paid at every dawn, wherever you are: the two with you in full, the bench at half. Each one is paid in full or not at all, the party first." },
+      { "head": "Wages", "text": "Paid at every dawn, wherever you are: the two with you in full, the bench at half. Each one is paid in full or not at all, the party first. Dismiss one for good from the bench at the inn and the wage stops, with whatever's owed written off." },
       { "head": "Owed", "text": "A sellsword you can't pay is owed. They still fight, but their perks go dark until you settle up at a tavern, or until a dawn you can pay it all. Each unpaid dawn costs you their loyalty." },
       { "head": "Loyalty", "text": "Loyalty grows a step for every dawn they're paid in your party, and for every boss you put down together. At loyalty 3 a Lantern or Beacon shows the perk they kept back. At loyalty 5 they're Sworn: a quarter off their wage, and once a room they get up from the blow that would have Downed them." },
       { "head": "Ask around", "text": "New faces at the tavern, for 10 gold a level. It doubles each time you ask on the same day. A new day brings new faces anyway." },

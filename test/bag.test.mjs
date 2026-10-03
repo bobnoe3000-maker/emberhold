@@ -1,4 +1,4 @@
-// The party bag: identical plain items stack in one slot (up to STACK_MAX), so the bag's 20 slots
+// The party bag: identical plain items stack in one slot (up to STACK_MAX), so the bag's 50 slots
 // hold more; items with affixes, a Rare modifier or flavour never stack. The save keeps every item.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

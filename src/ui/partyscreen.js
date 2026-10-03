@@ -78,7 +78,7 @@ function Member({ m, i, slot, bench, onSheet, send }) {
       ${!bench ? html`<button class="pri" onClick=${() => onSheet(i)}>Details</button>` : ''}
       ${!bench && !m.main ? html`<button onClick=${() => send({ type: 'dismiss', id: m.id })}>To bench</button>` : ''}
       ${bench ? bench.map((t) => html`<button key=${t.slot} class="pri" onClick=${() => send({ type: 'swap', slot: t.slot, id: m.id })}>${t.label}</button>`) : ''}
-      ${bench && !FOUND[m.id] ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? send({ type: 'release', id: m.id }) : setArm(true))}>${arm ? 'Sure?' : 'Release'}</button>` : ''}
+      ${bench && !FOUND[m.id] ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? send({ type: 'release', id: m.id }) : setArm(true))}>${arm ? 'Sure? For good' : 'Dismiss for good'}</button>` : ''}
     </div></div>`;
 }
 
@@ -96,6 +96,7 @@ function PartyScreen({ sim, onClose, onSheet, note, send }) {
     ${a ? html`<${Member} key=${a.id} m=${a} i=${1} slot=${2} onSheet=${onSheet} send=${send} />` : html`<div class="pslot empty">slot 2 · hire at a tavern, or bring someone from the bench</div>`}
     ${b ? html`<${Member} key=${b.id} m=${b} i=${2} slot=${3} onSheet=${onSheet} send=${send} />` : html`<div class="pslot empty">slot 3 · hire at a tavern, or bring someone from the bench</div>`}
     <h3>The bench · ${S.bench.length}</h3>
+    ${S.bench.some((m) => !FOUND[m.id]) ? html`<div class="sub">The bench draws half wages. Dismiss a sellsword for good and their wage stops (what they're owed is written off); their Fine and better gear goes into the bag.</div>` : ''}
     ${S.bench.length ? S.bench.map((m) => html`<${Member} key=${m.id} m=${m} bench=${bench} onSheet=${onSheet} send=${send} />`)
       : html`<div class="sub">Nobody yet. Hire when your party is full and they wait here.</div>`}
   </div>`;

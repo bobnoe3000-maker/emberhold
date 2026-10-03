@@ -547,6 +547,11 @@ Both slot in with the same stat block and ability format. No system changes are 
 - **Bench.** Recruited companions wait at the Thornwick inn and can be swapped in any town.
   Active members share XP equally; the bench earns 50 %. The bench holds six; a hire with the
   party full goes straight to it.
+  - **Dismiss for good** (2026-10-03, the owner): a sellsword on the bench can be let go at a town
+    inn (the party screen). Their wage stops (the bench draws half, every dawn), what they're owed is
+    written off, and the gear they wore above Common (Fine, Rare, heirloom) goes into the party bag;
+    Commons go with them. If the bag can't take it, nothing happens and it says so. A found
+    companion (Brannoc) can't be dismissed (`heroes.js` `release`).
 - **Visible gear.** Weapons, shields, helmets and capes are toggleable meshes on the KayKit
   models, so a loot upgrade changes the silhouette.
 
@@ -871,7 +876,7 @@ over 300 s with the right party in a same-level room: 312 → 212 gold at level 
     15 % from a boss's first fall and 5 % from its later ones, on a stream of its own so the gear rolls don't move.
     It sells back for 75, is never worn, upgraded or reforged, and *Salvage every plain Common* leaves it.
     Scrolls stack in the bag like plain gear.
-- **The party bag** has 20 slots. Identical plain items stack in one slot, up to 10: the same
+- **The party bag** has 50 slots (20 until 2026-10-03, the owner). Identical plain items stack in one slot, up to 10: the same
   base, rarity, item level and name, and no affixes, Rare modifier or flavour. A full bag still
   takes an item that fits an existing stack; anything else that drops is salvaged at once.
   Low-level Common metal is *Battered* (it was *Worn*, which read as "equipped").

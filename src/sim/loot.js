@@ -13,7 +13,7 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf, makeItem, SCROLL_DROP } from './items.js';
 import { statsFor } from './party.js';
 
-export const BAG_SIZE = 20;                  // slots; a slot holds one item or a stack
+export const BAG_SIZE = 50;                  // slots; a slot holds one item or a stack (20 until 2026-10-03, the owner)
 // Identical plain items (no affixes, Rare modifier or flavour: the same base, rarity, item level
 // and name, so the same stats) stack in one slot, up to STACK_MAX. Each keeps its own uid in
 // state.bag (the save's shape is unchanged); stacking is how the slots are counted and shown.

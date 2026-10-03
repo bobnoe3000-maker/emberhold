@@ -16,7 +16,9 @@
 //   payWages    {}                town        settle what the sellswords are owed (their perks come back)
 //   dismiss     { id }            town        a companion → the bench
 //   swap        { slot, id }      town        a bench member into companion slot 1 or 2
-//   release     { id }            town        a bench member leaves for good (not a found companion)
+//   release     { id }            town        a bench member leaves for good (not a found companion): "Dismiss for good".
+//                                             No more wage, and what's owed is written off; their gear above Common
+//                                             (Fine, Rare, heirloom) goes into the bag, and it's refused if it won't fit
 // Found companions (FOUND: Brannoc, M5) join in conversation, not at the tavern: the Ink tag
 // `# companion: join` from his own talk (npcs.js), once the boss who held him has fallen. He goes to
 // the party, or the bench when it's full; he can be benched, never released.
@@ -33,6 +35,7 @@
 import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
+import { bagStacks, BAG_SIZE } from './loot.js';
 import { hired, feeOf, wageOf, loyaltyOf, retrainPerk, priceMod, PERKS, REVEAL_AT, SWORN_AT, ASK_COST, RETRAIN_COST, FOUND_PERKS } from './companions.js';
 
 export const BENCH_MAX = 6;
@@ -248,7 +251,13 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (j < 0) return true;
         if (FOUND[cmd.id]) return refuse(`${state.bench[j].name} isn't going anywhere`);
         if (!inTown()) return refuse('Only at a town inn');
-        state.bench.splice(j, 1); changed(); return true;
+        const m = state.bench[j], keep = Object.values(m.gear || {}).filter((it) => it && it.r !== 'common');
+        if (bagStacks(state.bag.concat(keep)).length > BAG_SIZE) return refuse(`No room in the bag for ${m.name}'s gear (${keep.length})`);
+        state.bench.splice(j, 1); m.gear = {}; m.owed = 0;
+        for (const it of keep) state.bag.push(it);
+        bus.emit('released', { id: m.id, name: m.name, items: keep.map((it) => it.uid) });
+        if (keep.length) bus.emit('gearChanged', { member: null });
+        changed(); return true;
       }
     }
     return false;
