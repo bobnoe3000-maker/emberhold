@@ -41,15 +41,15 @@ import { siteOf, bossAt } from './sites.js';
 const CLASS_FIGHT = {
   fighter: { interval: 1.3, range: 3.0, speed: 6.8 },
   rogue:   { interval: 0.9, range: 2.8, speed: 7.5 },
-  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire', keepAway: 3.2 },
+  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire' },
   cleric:  { interval: 1.3, range: 3.0, speed: 6.6 },
 };
 // A rogue with a bow or crossbow (items.js `shot`) shoots instead of closing in, and backs off what
 // comes at them as the mage does. Bows are quick, crossbows hit hard and slow; the longer the reach,
 // the slower the shot. Their ATK is the weapon's, so the trade is the reach and the off-hand.
 const SHOT = {
-  bow:      { interval: 0.95, range: 5.0, bolt: 'arrow', keepAway: 3.0, speed: 6.4 },
-  longbow:  { interval: 1.1,  range: 6.5, bolt: 'arrow', keepAway: 3.2, speed: 6.4 },
+  bow:      { interval: 0.95, range: 5.0, bolt: 'arrow', speed: 6.4 },
+  longbow:  { interval: 1.1,  range: 6.5, bolt: 'arrow', speed: 6.4 },
   crossbow: { interval: 1.05, range: 5.0, bolt: 'bolt',  keepAway: 2.8, speed: 6.4 },   // the hand crossbow: one hand, the parrying dagger stays
   heavy:    { interval: 1.35, range: 6.0, bolt: 'bolt',  keepAway: 3.2, speed: 6.4 },
 };
@@ -629,6 +629,30 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     else u.moving = false;
   }
 
+  // Ranged: hold a stand-off (2026-10-03: a bow rogue spent 26–29 % of a level-6 fight within 3.5 tiles of a foe, a
+  // mage companion 18 %; they backed off only once a foe was within keepAway, 3.0–3.2, and melee reaches 2.8–3).
+  // Keep min(KEEP_CLEAR, range − 0.5) tiles from EVERY foe: inside it, step away from the press (each foe pushing by
+  // its nearness), round a wall if one's behind; shoot when ready unless a foe is nearly on you, and from wherever you
+  // stand when there's nowhere left to go. Otherwise close to the range and shoot.
+  const KEEP_CLEAR = 5, FLEE_TURNS = [0, 0.7, -0.7, 1.4, -1.4];
+  function ranged(u, tgt, F, foes, w, isParty, move, flee) {
+    const d = hypot(tgt.x - u.x, tgt.y - u.y), keep = Math.min(KEEP_CLEAR, F.range - 0.5);
+    let px = 0, py = 0, near = Infinity;
+    for (const e of foes) { const ex = u.x - e.x, ey = u.y - e.y, de = hypot(ex, ey) || 0.01; near = Math.min(near, de); if (de < keep) { const k = (keep - de) / keep; px += (ex / de) * k; py += (ey / de) * k; } }
+    if (u.act > 0.12) { u.moving = false; return; }                     // finishing the shot
+    const shoot = () => { u.moving = false; if (u.cd <= 0) attack(u, tgt, isParty, w, F, isParty ? pickStrike(u, tgt) : null); };
+    if (near < keep) {
+      if (d <= F.range && u.cd <= 0 && near > 3.4) { shoot(); return; }   // a shot first, while nothing's in reach of you
+      const L = hypot(px, py) || 1, ux = px / L, uy = py / L;
+      for (const a of FLEE_TURNS) {                                      // away, or round the wall that's behind you
+        const c = cos(a), sn = sin(a), gx = u.x + (ux * c - uy * sn) * 2.5, gy = u.y + (ux * sn + uy * c) * 2.5;
+        if (isWalkable(w, gx, gy) && roomAt(w, gx, gy) === battle.room) { const x0 = u.x, y0 = u.y; flee(gx, gy); if (u.x !== x0 || u.y !== y0) return; }
+      }
+      if (d <= F.range) { shoot(); return; }                             // cornered: stand and shoot
+    }
+    if (d > F.range) move(tgt.x, tgt.y); else shoot();
+  }
+
   // ── companions at ease (critic: they huddled on the hero) ────────────────────
   // Formation: a station behind the hero on each side — FORM_BACK tiles back along its heading,
   // FORM_SIDE out to the side, plus a personal offset so the two never mirror each other.
@@ -819,22 +843,23 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (m.cd <= 0 && m.act <= 0.12 && tryUtility(m, i, foes, w, F)) return;
         if (i === 0) {                                          // …and autobattles when you let go
           if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); return; }
-          melee(m, tgt, F, dt, w, true, (gx, gy) => {               // autobattle: take a station, leashed to the room
-            // a probe steps first (the hero's collision decides the real move); it carries the stride
-            // ramp (spd, stepAt) across ticks — a fresh probe restarted it every tick, pinning the
-            // hero at the first step: 2 tiles/s instead of the fighter's 6.8
-            // (with the hero's body: a point probe cut a pillar's corner the real hero couldn't, and the
-            // hero stood pressed against it for good while a mage behind it shot it down, seed 4242)
-            const q = { x: p.x, y: p.y, spd: m.spd, stepAt: m.stepAt, rad: HERO_R }; chase(q, gx, gy, F.speed, dt, w);
+          // autobattle: take a station, leashed to the room (a ranged hero holds its stand-off instead)
+          // a probe steps first (the hero's collision decides the real move); it carries the stride
+          // ramp (spd, stepAt) across ticks — a fresh probe restarted it every tick, pinning the
+          // hero at the first step: 2 tiles/s instead of the fighter's 6.8
+          // (with the hero's body: a point probe cut a pillar's corner the real hero couldn't, and the
+          // hero stood pressed against it for good while a mage behind it shot it down, seed 4242)
+          const heroMove = (step) => (gx, gy) => {
+            const q = { x: p.x, y: p.y, spd: m.spd, stepAt: m.stepAt, rad: HERO_R }; step(q, gx, gy);
             m.spd = q.spd; m.stepAt = q.stepAt;
             if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
-          });
+          };
+          const go = heroMove((q, gx, gy) => chase(q, gx, gy, F.speed, dt, w));
+          if (F.bolt) ranged(m, tgt, F, foes, w, true, go, heroMove((q, gx, gy) => stepToward(q, gx, gy, F.speed, dt, w, battle.room)));
+          else melee(m, tgt, F, dt, w, true, go);
           return;
         }
-        const close = nearest(m, foes);
-        if (F.keepAway && close && hypot(close.x - m.x, close.y - m.y) < F.keepAway) {        // mage: back off (the whole keep-away: melee foes reach 2.8–3 tiles)
-          stepToward(m, m.x - (close.x - m.x), m.y - (close.y - m.y), F.speed, dt, w);
-        } else if (F.bolt) { if (d > F.range) chase(m, tgt.x, tgt.y, F.speed, dt, w); else { m.moving = false; if (m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); } }
+        if (F.bolt) ranged(m, tgt, F, foes, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w), (gx, gy) => stepToward(m, gx, gy, F.speed, dt, w, battle.room));
         else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
       });
       // enemy AI (leashed to the room)

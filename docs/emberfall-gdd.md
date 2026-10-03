@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.16 · 2026-10-03 · Plan of record for game design.** v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8); quest and board rewards are unchanged. v1.15 lays out the towns (§10;
+**v1.16 · 2026-10-03 · Plan of record for game design.** v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -376,6 +376,20 @@ own (Chapel Sword, Book of Hours). Recommended build: Grit, Focus, Grit.
 before. A rogue holding a bow or crossbow shoots from range. Like the mage, they back off from
 whatever comes at them and fight at the mage's run speed (6.4). Backstab, Venom and the
 crits-from-behind bonus all still apply, as shots.
+
+**The stand-off (2026-10-03).** Everyone who shoots (a mage, a rogue with a bow or crossbow,
+and the hero in autobattle when it's one of those) keeps min(5, its range − 0.5) tiles from
+every foe.
+- Inside that, it steps away from the press, each foe pushing by how near it is, and round a
+  wall if one's behind.
+- It still takes a ready shot while nothing is within 3.4 tiles.
+- Cornered, it stands and shoots.
+- Outside the stand-off, it closes to its range and shoots.
+
+Before this, they backed off only once a foe was within 3.0–3.2 tiles, and melee reaches
+2.8–3. At level 6 a bow rogue spent 26–29 % of a fight within 3.5 tiles of a foe, and a mage
+companion 18 %. Now they spend 2–4 % and 1 % (`roomlv`-style runs, fighter + bow rogue +
+cleric or mage). Their reach is unchanged.
 
 | Weapon | Hands | Shot every | Reach | ATK (base + per level) | Notes |
 |---|---|---|---|---|---|
