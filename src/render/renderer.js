@@ -965,6 +965,8 @@ export function createRenderer(canvas, sim, input) {
     return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 };
+  /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
+  let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
   let clockNow = 0;                                   // the render clock (dev slow motion runs it slow)
   function render(alpha, now) {
@@ -1087,6 +1089,7 @@ export function createRenderer(canvas, sim, input) {
     if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
       party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]),
       foes: draws.filter((d) => d.team >= 2 && d.a && d.atl).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir, d.atl.name, d.uid]) });
+    if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
@@ -1555,6 +1558,8 @@ export function createRenderer(canvas, sim, input) {
       return best;
     },
     /** the chest, shrine or stairs drawn under a tap (its whole sprite, not its floor tile), or null */
+    /** the sound's listener: called each frame with the figures drawn (audio/listen.js) @param {any} fn */
+    onFrame(fn) { heard = fn; },
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
     /** dev: the Stage (src/dev/stage.js) — its lineup, camera and overlay; null to leave it */
     setStage(s) { stage = s; },

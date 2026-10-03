@@ -1,15 +1,28 @@
 # Sound plan: effects, ambience and the sound critic passes
 
-**Proposal · 2026-10-03.** The owner asked for sound, beginning with: footsteps, attacks, a screech or a "hah!" when
-foes appear, water dripping, and the creek flowing. The game has no sound outside the intro today. This plan
-covers:
+**Phases S0–S3 implemented · 2026-10-03.** S4 (UI sounds beyond loot and level-up, haptics) is still to do; see §9
+for what shipped. The owner asked for sound, beginning with: footsteps, attacks, a screech or a "hah!" when foes
+appear, water dripping, and the creek flowing.
+
+The owner's answers to §8 (2026-10-03):
+
+- **Voices:** start with free packs for the foes' voices.
+- **Music:** ambient sound only in the Vale and the dungeons, no music beds.
+- **Default:** sound starts at a moderate level, with a game menu to switch off:
+  - ambient sound;
+  - attack and spell effects;
+  - foes' arrival and death sounds.
+
+  Footsteps got a switch of their own too.
+
+This plan covers:
 
 - what we play and when;
 - where each sound comes from;
 - how it is built without touching the sim;
 - the **sound critic passes**: a measured review after each phase, like the art critic passes.
 
-It needs an architecture decision (A15, below) before work starts.
+Decision A15 (architecture.md) is now made.
 
 ## 1. Where we are
 
@@ -55,7 +68,7 @@ It needs an architecture decision (A15, below) before work starts.
 6. **Catch-up is silent.** When the sim runs many ticks in one frame (a resume, offline progress), the listener
    drops what it missed rather than playing a pile-up.
 
-## 3. Architecture (proposed decision A15)
+## 3. Architecture (decision A15, made 2026-10-03)
 
 **A15 (proposed):** `src/audio/` on raw WebAudio, sharing the score's context. This replaces Howler in §8.9.
 
@@ -300,11 +313,52 @@ Golden-rule upkeep in every phase:
   - a §8.9 note;
   - CREDITS for every sample.
 
-## 8. Open questions for the owner
+## 8. Questions for the owner (answered 2026-10-03)
 
-1. **Barks.** Record our own goblin screeches and "hah!"s (best fit, a small session), or start with CC0 packs and
-   replace them later?
-2. **Music in play.** The intro's score exists. Should the Vale and the dungeons get quiet ambient music beds
-   (synthesised, like the intro), or ambience only for now?
-3. **Default level.** Start with sound on at a moderate level after the first tap, or off until switched on in
-   the menu? Phones in public argue for moderate, with the mute one tap away.
+1. **Barks:** free packs first.
+   - The foes' voices are Flare's (CC-BY-SA 3.0), pitched per kind: the skirmisher high, the bruiser's "hah!"
+     lower, Skarn lowest.
+   - Our own recordings can replace them later. A cue is a list of files in `tools/audio/sounds.json`.
+2. **Music in play:** none for now. The Vale and the dungeons have ambience only.
+3. **Default level:** sound starts moderate (volume 0.6 ≈ −4.5 dB under full) after the first tap. The menu's
+   Sound panel holds the volume and four switches: ambient, attacks and spells, footsteps, foes arriving and
+   falling.
+
+## 9. What shipped (sound critic pass 1: [sound-critic-pass-1.md](./sound-critic-pass-1.md))
+
+**Where it differs from the plan above:**
+- **Samples:** Flare's sounds (`flareteam/flare-game`, CC-BY-SA 3.0, credited in `assets/CREDITS.md`). Kenney,
+  freesound and OpenGameArt couldn't be reached from the build environment; GitHub could.
+- **Format:** one MP3 per variant, not a sprite. Every browser decodes MP3, Safari included, so no AAC twin is
+  needed. Loops crossfade their own seam to hide MP3's padding.
+- **Size:** about 690 KB in all. One-shots are decoded on the first tap; loops only in the place that has them.
+  The budget in the test is 750 KB.
+- **Mix data:** the cue table is code (`src/audio/cues.js`, pure and tested), not `content/sounds.json`. The
+  sources are data (`tools/audio/sounds.json`).
+- **Synthesis:** the blows (filtered noise, with a crack on a crit). Footsteps, water and wind are samples, which
+  sounded better than a first synthesis would.
+
+**Files:**
+
+| File | What it does |
+|---|---|
+| `src/audio/context.js` | The one AudioContext, shared with the intro's score |
+| `src/audio/settings.js` | Volume plus four switches, per device |
+| `src/audio/engine.js` | Buses, the limiter, voice caps, retrigger gaps, variant choice, pan, crossfaded loops, synthesised blows, a dev meter |
+| `src/audio/cues.js` | Voices by kind, swings by atlas, steps by ground and weight, events, ambience by place and time |
+| `src/audio/listen.js` | The listener on `sim.bus` and `renderer.onFrame` |
+| `render/anim.js` | Flags `step` (a foot down at the contacts, 0.45 and 0.95 of the cycle) and `swing` |
+| `ui/title.js` | The Sound panel in the menu |
+| `tools/audio/prep.mjs` + `sounds.json` | Builds `assets/audio` |
+
+**Tests:**
+- `test/audio.test.mjs`:
+  - the settings;
+  - every cue present;
+  - pitch order by size;
+  - the creek's fall-off;
+  - day and night;
+  - the budget;
+  - footfalls on frames 4 and 9, 20 in 10 cycles;
+  - a swing flagged once.
+- Browser test 18: the first tap starts sound; the panel's switches; ambient off survives a reload.

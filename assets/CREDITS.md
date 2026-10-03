@@ -46,3 +46,25 @@ and colour-graded in the bake (`tools/actor-lab/env.json`).
 (https://iginomarini.com) — **SIL Open Font License 1.1** (`assets/fonts/OFL.txt`). The Latin
 subsets, as woff2, are vendored so the game loads no fonts from a CDN (architecture A12). Used by
 the loading screen, the intro and the title.
+
+## Sound — `assets/audio/`
+The game's sound effects and ambient loops come from **Flare** (https://flarerpg.org,
+https://github.com/flareteam/flare-game, `mods/fantasycore/soundfx`), by the Flare team: Clint Bellanger,
+Justin Jacobs, Stefan Beller and the contributors in Flare's `CREDITS.txt`, with sounds drawn from OpenGameArt
+artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are licensed **CC-BY-SA 3.0**
+(https://creativecommons.org/licenses/by-sa/3.0/).
+- **What's used:**
+  - goblin, skeleton, zombie, minotaur, wyvern and antlion cries;
+  - male and female hurt and death sounds;
+  - melee swings;
+  - the shoot, fireball, freeze, shock, heal, shield, block, warcry and quake powers;
+  - footsteps (cloth, leather, metal, echo);
+  - level up, flying loot, coins, the wood door, stairs;
+  - the river, cave droplets, cave wind, bird, owl and open-fire loops.
+- **Changes:**
+  - trimmed, folded to mono and level-normalised;
+  - the cave wind cut to 10 s;
+  - re-encoded as MP3 by `tools/audio/prep.mjs` (sources listed in `tools/audio/sounds.json`).
+- **Licence of the copies:** the adapted files in `assets/audio/` are shared under the same licence, CC-BY-SA 3.0.
+  The share-alike covers the sound files, not the game's code.
+- **Synthesised in code** (`src/audio/engine.js`): the blows (filtered noise) and the crit's crack. These are ours.

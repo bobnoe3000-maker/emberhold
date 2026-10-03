@@ -828,6 +828,31 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
   }
 }
+// 18. Sound (docs/sound-plan.md; the owner, 2026-10-03: "sound should start moderate, with a game menu of settings to
+// turn on and off ambient sounds and attack/spell fx, and NPCs spawn and death sounds"): the first tap starts it at the
+// moderate default with everything on; the menu's Sound panel has the volume and four switches (each row a thumb's
+// height); switching the ambience off takes at once and survives a reload; nothing errors
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon&site=scrag_warren`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__audio, null, { timeout: 60000 });
+    await p.mouse.click(200, 300);
+    const started = await p.waitForFunction(() => globalThis.__audio.running && globalThis.__audio.ready, null, { timeout: 15000 }).then(() => true, () => false);
+    await p.click('#menuBtn'); await p.click('#title button:has-text("Sound")');
+    const panel = await p.evaluate(() => ({ boxes: [...document.querySelectorAll('#title .snd input[type=checkbox]')].map((i) => i.checked), vol: +document.querySelector('#title .snd input[type=range]').value,
+      rowH: Math.min(...[...document.querySelectorAll('#title .snd label')].map((l) => l.getBoundingClientRect().height)) }));
+    await p.click('#title .snd input[aria-label="Ambient sound"]');
+    const after = await p.evaluate(() => globalThis.__audio.settings);
+    await p.reload(); await p.waitForFunction(() => !!globalThis.__audio, null, { timeout: 60000 });
+    const kept = await p.evaluate(() => globalThis.__audio.settings);
+    check('sound: the first tap starts it, moderate, everything on; Sound in the menu switches the ambience off at once, and it stays off after a reload; no page errors',
+      started && panel.boxes.length === 4 && panel.boxes.every(Boolean) && panel.vol === 60 && panel.rowH >= 44 && after.ambient === false && kept.ambient === false && kept.combat && kept.voices && kept.steps && errs.length === 0,
+      JSON.stringify({ started, panel, after, kept, errs }));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

@@ -13,6 +13,8 @@
 
 /** the nearest pitch to MIDI note `m` that is a note of `chord` (any octave); a tie resolves downward
  * @param {number} m @param {number[]} chord */
+import { audioContext } from '../audio/context.js';
+
 export function nearest(m, chord) { const pcs = chord.map((n) => ((n % 12) + 12) % 12); for (let d = 0; d <= 6; d++) for (const x of [m - d, m + d]) if (pcs.includes(((x % 12) + 12) % 12)) return x; return m; }
 
 // the chime into each card: [note, delay s, bell | glass, level], on the notes the two keys share
@@ -33,7 +35,7 @@ export function createScore() {
   const mid = (m) => 440 * Math.pow(2, (m - 69) / 12), now = () => ac.currentTime;
   function init(ctx) {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
-    ac = ctx || new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();
+    ac = ctx || audioContext() || new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();   // (the game's one context: audio/context.js)
     const comp = ac.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3; comp.attack.value = 0.03; comp.release.value = 0.5; comp.connect(ac.destination);
     out = ac.createGain(); out.gain.value = muted ? 0 : 0.9; out.connect(comp);
     // a long, dark hall: decaying noise that loses its top end as it tails off

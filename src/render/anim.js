@@ -13,7 +13,8 @@
 //     a hit flinch when hitN changes, death plays once and holds its last frame; a unit
 //     that moves on cuts a landed swing or a flinch short for the walk (no sliding in a pose).
 //   • swings: light A and light B alternate; atkKind 'heavy' plays the heavy clip. The
-//     swing in progress is returned too (clip key + seconds in), for the weapon effects.
+//     swing in progress is returned too (clip key + seconds in), for the weapon effects;
+//     and the frame a swing begins or a foot comes down is flagged, for the sound.
 
 const TURN_MS = 55, EDGE = 0.62;                  // octant units: 0.5 = the edge, +0.12 hysteresis
 // Stride ends (critic pass 3: stopping popped from mid-stride straight to idle, and a walk
@@ -21,6 +22,9 @@ const TURN_MS = 55, EDGE = 0.62;                  // octant units: 0.5 = the edg
 // 20 % and 70 % of the cycle — the frames closest to standing — so a stop plays on (faster) to
 // the next of those, for at most SETTLE_MS, and a walk from a standstill starts on one.
 const PASS = [0.2, 0.7], SETTLE_MS = 180, SETTLE_RATE = 2.2;
+// a foot comes down midway between the passes (the cycle's contacts at 0.45 and 0.95): a footstep's sound lands there.
+// The walk is stride-synced, so a step sounds on the foot whatever the speed (docs/sound-plan.md §4.1).
+const CONTACT = 0.45;
 
 export function createAnimator() {
   const st = new WeakMap();
@@ -31,8 +35,9 @@ export function createAnimator() {
     if (!s) { s = { dir: o.dir0 ?? 2, turnAt: 0, phase: (o.seed || 0) % 1, lx: o.x, ly: o.y, atkN: u.atkN || 0, atkT0: -1e9, hitN: u.hitN || 0, hitT0: -1e9, downT0: 0, fidN: u.fidgetN || 0, lookN: u.lookN || 0, gestT0: -1e9, gest: null, sitT0: 0, sat: false }; st.set(u, s); }
     const dx = o.x - s.lx, dy = o.y - s.ly, dist = Math.hypot(dx, dy); s.lx = o.x; s.ly = o.y;
     o.dt = Math.min(50, now - (s.lastNow ?? now)); s.lastNow = now;
+    let swing = false, step = false;
     if ((u.atkN || 0) !== s.atkN) {                              // a swing: light A / light B alternate, heavy for abilities and elites
-      s.atkN = u.atkN || 0; s.atkT0 = now;
+      s.atkN = u.atkN || 0; s.atkT0 = now; swing = true;
       s.atkKey = (u.atkKind === 'heavy' && C.heavy && 'heavy') || (u.atkKind === 'b' && C.attack2 && 'attack2') || 'attack'; s.atkClip = C[s.atkKey];
     }
     if ((u.hitN || 0) !== s.hitN) { s.hitN = u.hitN || 0; s.hitT0 = now; }
@@ -71,7 +76,8 @@ export function createAnimator() {
     else if (o.sit && C.sit) frame = C.sitdown && now - s.sitT0 < dur(C.sitdown) ? clipAt(C.sitdown, (now - s.sitT0) / 1000) : C.sit.start + Math.floor((now / 1000) * C.sit.fps + (o.seed || 0) * C.sit.len) % C.sit.len;
     else if (o.moving) {
       if (!s.walking) { s.walking = true; if (now - (s.stopT || 0) > 150) s.phase = PASS[(s.leg = (s.leg || 0) ^ 1)]; }   // set off on a passing pose
-      s.phase += dist / o.stride; s.lastStep = now;
+      const ph0 = s.phase; s.phase += dist / o.stride; s.lastStep = now;
+      step = Math.floor((s.phase - CONTACT) * 2) > Math.floor((ph0 - CONTACT) * 2);   // a foot came down (audio/listen.js)
       const c = C.walk; frame = c.start + (Math.floor(s.phase * c.len) % c.len + c.len) % c.len;
     } else if (s.walking && C.walk && now - (s.lastStep || 0) < SETTLE_MS) {            // just stopped: finish the stride
       const c = C.walk, cyc = ((s.phase % 1) + 1) % 1, next = PASS.map((q) => (q - cyc + 1) % 1).reduce((a, b) => Math.min(a, b));
@@ -81,6 +87,6 @@ export function createAnimator() {
       frame = clipAt(C[s.gest], (now - s.gestT0) / 1000);
     } else frame = idleFrame();
     if (!o.moving && frame !== undefined && !(s.walking && now - (s.lastStep || 0) < SETTLE_MS)) { if (s.walking) s.stopT = now; s.walking = false; }
-    return { dir: s.dir, frame, atk };                         // atk: the swing in progress (fx.js draws its trail / glint / cast)
+    return { dir: s.dir, frame, atk, step, swing, x: o.x, y: o.y };   // atk: the swing in progress (fx.js draws its trail / glint / cast); step / swing: this frame a foot came down / a swing began (the sound's cues)
   };
 }

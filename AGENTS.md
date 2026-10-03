@@ -37,6 +37,7 @@ node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman]
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level (dev plan §2.7 targets)
 node tools/capture/stage.mjs [--group g] [--clip c] [--dir d] [--tod t] [--zoom z] [--size 390x844] [--cmp <checkout>] [--frames N] [--fps 12]   # Stage captures: frames cropped to the lineup, sheet.png, loop.html (tools/capture/out/); --cmp: before/after twins
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
+FFMPEG=… FLARE=… node tools/audio/prep.mjs   # sound: tools/audio/sounds.json → assets/audio/*.mp3 + bank.json (ffmpeg with libmp3lame, e.g. pip imageio-ffmpeg; FLARE = a flare-game checkout)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
 node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, + <actor>.face.png portraits and .fig.png character-window figures); --anchors (+ walk stride) / --portraits refresh only those
 BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BAKE_PX=72 node tools/actor-lab/bake.cjs [actor…]   # face knobs and prototype bakes into a scratch tree (docs/face-fidelity-proposal.md, art-critic-pass-7.md); the shipped faces are eyes2,grade

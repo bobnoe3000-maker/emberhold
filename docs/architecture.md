@@ -61,7 +61,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 │ PRESENTATION              │ NARRATIVE RUNTIME            │ SERVICES (online) │
 │ render/  Emberlit WebGL2  │ story/  Ink runtime adapter: │ net/  Supabase    │
 │ ui/      DOM windows      │ dialogue text + choices;     │   (auth, profile, │
-│ audio/   Howler           │ effects become sim commands  │   cloud saves,    │
+│ audio/   WebAudio (A15)   │ effects become sim commands  │   cloud saves,    │
 │ cutscene/ timelines       │                              │   leaderboards)   │
 │                           │                              │ Colyseus (rooms)  │
 ├───────────────────────────┴──────────────────────────────┴───────────────────┤
@@ -124,7 +124,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 | `src/sim/rift.js` | Timed Ember Rifts: seeded weekly layout, run timer, score |
 | `src/story/` | The inkjs adapter: bind sim state into Ink variables, map tags to commands, persist Ink state |
 | `src/cutscene/` | The boot screens and the intro (implemented: `player.js`, `scenes.js`, `score.js`); later, a timeline player for camera moves, letterboxing, text cards, stills and fades |
-| `src/audio/` | Howler: music beds, sound-effect sprites, mobile unlock |
+| `src/audio/` | Raw WebAudio (A15): the shared context, the engine (buses, settings, voice caps, loops), the cue mapping, the listener on the sim and renderer |
 | `src/net/` | The Supabase client (auth, profile, saves, leaderboards) and the Colyseus client |
 | `content/` | JSON content, compiled Ink and schemas |
 | `server/` | Colyseus rooms and the replay validator (Node) |
@@ -374,7 +374,7 @@ Node.**
 |---|---|---|
 | Web | **PWA**: web app manifest plus a Workbox service worker (via `vite-plugin-pwa` at M6), on Netlify static hosting (today) | — |
 | Native | **Capacitor** (iOS / Android WebView shells; plugins for Apple sign-in, haptics, status bar, app lifecycle) | Cordova (legacy), Tauri Mobile (young), React Native (a different UI stack) |
-| Audio | **Howler.js** (mobile unlock, audio sprites, HTML5 fallback) | Raw WebAudio (reinvents unlock and pooling) |
+| Audio | **Raw WebAudio** (A15, 2026-10-03: one shared context, our own unlock, voice caps and loop crossfades; Howler was the plan here and never used) | Howler.js (unlock and sprites: the score already did the unlock, and a sprite is a slice) |
 | Sim / unit tests | **`node:test` + `node:assert`**, keeping `smoke-test.mjs` and the balance harness | Vitest or Jest: nicer output, but a dependency and config for little gain in a zero-build repo |
 | Browser / e2e / visual | **Playwright** (already used): manual-clock captures, flow tests, screenshot diffs | Cypress (heavier, weaker WebGL) |
 | Types | **TypeScript `tsc --noEmit --checkJs`** | — |
@@ -443,10 +443,9 @@ commands in the same deterministic sim and stores only that result (development 
 | A12 | 2026-09-29 | The intro's score is live WebAudio synthesis (`cutscene/score.js`): no audio files, and Howler isn't needed for it. The intro and title use IM Fell English (Igino Marini, OFL 1.1), vendored as woff2 in `assets/fonts/` rather than loaded from a CDN |
 
 | A13 | 2026-09-29 | inkjs 2.4.0: the runtime (`ink.mjs`) vendored and import-mapped as `inkjs`; the compiler only in `tools/content/ink.mjs` (devDependency, same version), and the compiled `content/dialogue/*.json` committed and checked stale-free in CI. Durable conversation state is **sim flags** (`state.flags`, set only by validated `dialogueEffect` commands, save v6), not the Ink story state: Ink state is per session (its cycles move on between visits) and never saved |
+| A15 | 2026-10-03 | Sound: `src/audio/` on raw WebAudio, no library (Howler, §8.9, was never used). One AudioContext (`audio/context.js`), shared with the intro's score. Effects and ambient loops are free CC-BY-SA 3.0 samples from Flare, prepared by `tools/audio/prep.mjs` into `assets/audio/` as MP3 (every browser decodes it; loops crossfade their own seam), ≈ 690 KB, fetched after the first tap. Blows are synthesised. Presentation only: it listens to `sim.bus` and the renderer (`onFrame`) and writes nothing. Per-device settings (volume; ambient, attacks and spells, footsteps, foes' cries), never in the save. [sound-plan.md](./sound-plan.md) |
 
 Changing any of these needs a new row here, plus a note in the development plan.
-
-**Proposed, not decided:** A15 — `src/audio/` on raw WebAudio, sharing the intro score's context: synthesised effects plus one CC0 sample sprite, instead of Howler (§8.9). See [sound-plan.md](./sound-plan.md) §3.
 
 **Proposed, not decided:** A14 — three.js (lazy-loaded) for the windows only, to assemble
 characters live from appearance and gear, while Emberlit keeps the world. This would reverse

@@ -25,6 +25,8 @@ import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
 import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
+import { createAudio } from './audio/engine.js';
+import { createListener } from './audio/listen.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -60,6 +62,12 @@ const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const renderer = createRenderer(canvas, sim, input);
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
+// sound (docs/sound-plan.md): presentation only, listening to the sim and the renderer. Browsers let it start only after
+// a gesture, so the first tap or key starts it; the player's settings (the menu's Sound) are kept per device.
+const audio = createAudio();
+createListener({ sim, audio, renderer });
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => audio.start(), { capture: true });
+if (DEV) globalThis.__audio = audio;
 if (STAGE) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
@@ -100,7 +108,7 @@ const BOOT = !PREVIEW && !params.has('notitle');
 let paused = BOOT;
 const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
-const title = createTitle({ sim, slot: SLOT, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
+const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => cinema.stopMusic(),
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen

@@ -1,0 +1,296 @@
+{
+ "shots": {
+  "gob_cry": [
+   {
+    "f": "gob_cry_1.mp3",
+    "d": 1.15
+   },
+   {
+    "f": "gob_cry_2.mp3",
+    "d": 0.44
+   }
+  ],
+  "gob_hurt": [
+   {
+    "f": "gob_hurt_1.mp3",
+    "d": 0.21
+   }
+  ],
+  "gob_die": [
+   {
+    "f": "gob_die_1.mp3",
+    "d": 0.97
+   }
+  ],
+  "bone_rise": [
+   {
+    "f": "bone_rise_1.mp3",
+    "d": 2.27
+   },
+   {
+    "f": "bone_rise_2.mp3",
+    "d": 0.86
+   }
+  ],
+  "bone_hurt": [
+   {
+    "f": "bone_hurt_1.mp3",
+    "d": 0.47
+   },
+   {
+    "f": "bone_hurt_2.mp3",
+    "d": 0.52
+   }
+  ],
+  "bone_die": [
+   {
+    "f": "bone_die_1.mp3",
+    "d": 0.84
+   },
+   {
+    "f": "bone_die_2.mp3",
+    "d": 0.78
+   }
+  ],
+  "man_cry": [
+   {
+    "f": "man_cry_1.mp3",
+    "d": 0.42
+   },
+   {
+    "f": "man_cry_2.mp3",
+    "d": 0.52
+   }
+  ],
+  "man_hurt": [
+   {
+    "f": "man_hurt_1.mp3",
+    "d": 0.42
+   }
+  ],
+  "man_die": [
+   {
+    "f": "man_die_1.mp3",
+    "d": 1.46
+   }
+  ],
+  "woman_hurt": [
+   {
+    "f": "woman_hurt_1.mp3",
+    "d": 0.31
+   }
+  ],
+  "woman_die": [
+   {
+    "f": "woman_die_1.mp3",
+    "d": 1.44
+   }
+  ],
+  "cult_cry": [
+   {
+    "f": "cult_cry_1.mp3",
+    "d": 0.99
+   },
+   {
+    "f": "cult_cry_2.mp3",
+    "d": 0.57
+   }
+  ],
+  "swing": [
+   {
+    "f": "swing_1.mp3",
+    "d": 0.29
+   },
+   {
+    "f": "swing_2.mp3",
+    "d": 0.31
+   },
+   {
+    "f": "swing_3.mp3",
+    "d": 0.26
+   }
+  ],
+  "bow": [
+   {
+    "f": "bow_1.mp3",
+    "d": 0.31
+   }
+  ],
+  "fire": [
+   {
+    "f": "fire_1.mp3",
+    "d": 0.65
+   }
+  ],
+  "spirit": [
+   {
+    "f": "spirit_1.mp3",
+    "d": 0.57
+   }
+  ],
+  "hex": [
+   {
+    "f": "hex_1.mp3",
+    "d": 0.63
+   }
+  ],
+  "heal": [
+   {
+    "f": "heal_1.mp3",
+    "d": 1.15
+   }
+  ],
+  "ward": [
+   {
+    "f": "ward_1.mp3",
+    "d": 0.39
+   }
+  ],
+  "guard": [
+   {
+    "f": "guard_1.mp3",
+    "d": 0.42
+   }
+  ],
+  "warcry": [
+   {
+    "f": "warcry_1.mp3",
+    "d": 2.04
+   }
+  ],
+  "quake": [
+   {
+    "f": "quake_1.mp3",
+    "d": 1.25
+   }
+  ],
+  "levelup": [
+   {
+    "f": "levelup_1.mp3",
+    "d": 1.62
+   }
+  ],
+  "loot": [
+   {
+    "f": "loot_1.mp3",
+    "d": 0.55
+   }
+  ],
+  "coins": [
+   {
+    "f": "coins_1.mp3",
+    "d": 0.42
+   }
+  ],
+  "chest": [
+   {
+    "f": "chest_1.mp3",
+    "d": 0.94
+   }
+  ],
+  "stairs": [
+   {
+    "f": "stairs_1.mp3",
+    "d": 2.17
+   }
+  ],
+  "step_cloth": [
+   {
+    "f": "step_cloth_1.mp3",
+    "d": 0.1
+   },
+   {
+    "f": "step_cloth_2.mp3",
+    "d": 0.1
+   },
+   {
+    "f": "step_cloth_3.mp3",
+    "d": 0.05
+   },
+   {
+    "f": "step_cloth_4.mp3",
+    "d": 0.05
+   }
+  ],
+  "step_leather": [
+   {
+    "f": "step_leather_1.mp3",
+    "d": 0.13
+   },
+   {
+    "f": "step_leather_2.mp3",
+    "d": 0.16
+   },
+   {
+    "f": "step_leather_3.mp3",
+    "d": 0.16
+   },
+   {
+    "f": "step_leather_4.mp3",
+    "d": 0.1
+   }
+  ],
+  "step_metal": [
+   {
+    "f": "step_metal_1.mp3",
+    "d": 0.13
+   },
+   {
+    "f": "step_metal_2.mp3",
+    "d": 0.21
+   },
+   {
+    "f": "step_metal_3.mp3",
+    "d": 0.1
+   },
+   {
+    "f": "step_metal_4.mp3",
+    "d": 0.21
+   }
+  ],
+  "step_echo": [
+   {
+    "f": "step_echo_1.mp3",
+    "d": 0.05
+   },
+   {
+    "f": "step_echo_2.mp3",
+    "d": 0.05
+   },
+   {
+    "f": "step_echo_3.mp3",
+    "d": 0.08
+   },
+   {
+    "f": "step_echo_4.mp3",
+    "d": 0.08
+   }
+  ]
+ },
+ "loops": {
+  "amb_river": {
+   "f": "amb_river.mp3",
+   "d": 4.62
+  },
+  "amb_drips": {
+   "f": "amb_drips.mp3",
+   "d": 10.19
+  },
+  "amb_cave": {
+   "f": "amb_cave.mp3",
+   "d": 10.03
+  },
+  "amb_birds": {
+   "f": "amb_birds.mp3",
+   "d": 9.4
+  },
+  "amb_owl": {
+   "f": "amb_owl.mp3",
+   "d": 11.36
+  },
+  "amb_fire": {
+   "f": "amb_fire.mp3",
+   "d": 2.8
+  }
+ }
+}
