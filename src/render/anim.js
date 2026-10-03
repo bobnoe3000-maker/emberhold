@@ -10,7 +10,8 @@
 //     changes once the heading clears the octant edge by a margin, so it doesn't flicker
 //     on diagonals;
 //   • attack starts when atkN changes (its impact frame lines up with the sim's wind-up),
-//     a hit flinch when hitN changes, death plays once and holds its last frame.
+//     a hit flinch when hitN changes, death plays once and holds its last frame; a unit
+//     that moves on cuts a landed swing or a flinch short for the walk (no sliding in a pose).
 //   • swings: light A and light B alternate; atkKind 'heavy' plays the heavy clip. The
 //     swing in progress is returned too (clip key + seconds in), for the weapon effects.
 
@@ -57,6 +58,12 @@ export function createAnimator() {
     const idleFrame = () => { const c = C.idle; return c.start + Math.floor((now / 1000) * c.fps + (o.seed || 0) * c.len) % c.len; };
     const dur = (c) => (c ? (c.len / c.fps) * 1000 : 0);
     let frame, atk = null;
+    // a swing or a flinch the sim has already walked on from yields to the walk: the swing once it has landed (its impact
+    // frame), the flinch at once (2026-10-03, the owner: goblins "skating". 12 % of a skirmisher's travel was in a swing's
+    // follow-through or a flinch: the sim's swing ends 0.21 s before the clip does, and a blow lands on whoever's moving)
+    const going = o.moving && dist > 1e-4, landed = (c, t) => going && t * c.fps >= (c.impact ?? c.len - 1) + 1;
+    if (s.atkClip && now - s.atkT0 < dur(s.atkClip) && landed(s.atkClip, (now - s.atkT0) / 1000)) s.atkT0 = -1e9;
+    if (going && C.hit && now - s.hitT0 < dur(C.hit)) s.hitT0 = -1e9;
     if (o.dead && C.death) frame = clipAt(C.death, deadT);                                    // plays once, holds
     else if (o.spawnP !== undefined && C.spawn) frame = C.spawn.start + Math.min(C.spawn.len - 1, Math.floor(o.spawnP * C.spawn.len));
     else if (s.atkClip && now - s.atkT0 < dur(s.atkClip)) { const t = (now - s.atkT0) / 1000; frame = clipAt(s.atkClip, t); atk = { key: s.atkKey, clip: s.atkClip, t, now }; }

@@ -55,7 +55,10 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
     }
     const v = { ...vars[a.variant], eyes: vars[a.variant].eyes ? parseInt(vars[a.variant].eyes) : undefined };
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
-    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, source: `KayKit CC0 · ${v.label} · heroic + grim · ${pxOf(a)}px` };
+    // img: the images' own hash. The game fetches them at a version of this JSON's text (renderer atlasMeta), and a
+    // re-bake that changes only pixels (2026-10-03: Old Skarn's ears) left the JSON, and so the cached images, as they were
+    const img = require('crypto').createHash('sha1').update(r.alb).update(r.nrm).update(r.emi || '').digest('hex').slice(0, 10);
+    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, img, source: `KayKit CC0 · ${v.label} · heroic + grim · ${pxOf(a)}px` };
     fs.writeFileSync(path.join(OUT, `${a.out}.json`), JSON.stringify(meta) + '\n');
     png(`${a.out}.alb.png`, r.alb); png(`${a.out}.nrm.png`, r.nrm);
     const emi = path.join(OUT, `${a.out}.emi.png`); if (r.emi) png(`${a.out}.emi.png`, r.emi); else if (fs.existsSync(emi)) fs.unlinkSync(emi);

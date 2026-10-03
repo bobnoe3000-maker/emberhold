@@ -315,11 +315,29 @@ function marks(on, f, M) {
   return g;
 }
 
+// ears: KayKit's are a human's, small nubs at the skull's sides. `pointed` (goblins, the owner 2026-10-03: "bigger
+// pointy ears") grows a long flat leaf from each, out, up and a little back, with a darker hollow on its front face so
+// the shape reads at 56 px; `earSize` scales it (default 1.2: 0.74 head units long, over two-thirds of the head's width; swept back so it shows side-on too).
+function ears(f, M, S) {
+  const g = new THREE.Group(); if (f.ears !== 'pointed') return g;
+  const k = f.earSize || 1.2, L = 0.62 * k, R = 0.15 * k;
+  for (const sd of [-1, 1]) {
+    const base = new THREE.Vector3(sd * 0.5, 0.33, -0.04); if (S) S(base);
+    const d = new THREE.Vector3(sd, 0.5, -0.6).normalize(), up = new THREE.Vector3(0, 0.35, 1);
+    const n = up.addScaledVector(d, -up.dot(d)).normalize(), x = new THREE.Vector3().crossVectors(d, n);
+    const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, n));
+    const leaf = (r, len, mat, lift) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, len, 8), mat); m.quaternion.copy(q); m.scale.set(1, 1, 0.32);
+      m.position.copy(base).addScaledVector(d, len / 2 - 0.06 * k).addScaledVector(n, lift); return m; };
+    g.add(leaf(R, L, M.skin, 0), leaf(R * 0.55, L * 0.72, M.earIn, R * 0.2));
+  }
+  return g;
+}
+
 // every option of every part, for the face board (faces.cjs) and faces.json authors
 export const OPTIONS = {
   hair: Object.keys(HAIRS), eyes: Object.keys(EYES), brows: Object.keys(BROWS), mouth: Object.keys(MOUTHS),
   nose: ['kk', ...Object.keys(NOSES)], beard: [null, 'stubble', 'short', 'goatee', 'mustache', 'full'],
-  marks: ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], skin: Object.keys(SKIN), iris: Object.keys(IRIS), shape: Object.keys(SHAPES),
+  marks: ['scar', 'scar_cheek', 'freckles', 'blush', 'wrinkles', 'eyepatch', 'earring'], ears: [null, 'pointed'], skin: Object.keys(SKIN), iris: Object.keys(IRIS), shape: Object.keys(SHAPES),
 };
 
 // ── a face ────────────────────────────────────────────────────────────────────
@@ -338,6 +356,7 @@ export async function buildFace(load, model, f, { far = false } = {}) {
     mouth: std(skin.clone().lerp(new THREE.Color('#3a1210'), 0.7), 0.95), lip: std(skin.clone().multiplyScalar(0.86).lerp(new THREE.Color('#a04a40'), 0.22), 0.95),
     scar: std(skin.clone().multiplyScalar(0.72).lerp(new THREE.Color('#a04a44'), 0.35), 0.9), freckle: std(skin.clone().lerp(new THREE.Color('#6a2a10'), 0.5), 0.9),
     blush: std(skin.clone().lerp(new THREE.Color('#e05a58'), 0.4), 0.8), patch: std('#1a1414', 0.7), gold: std('#d8a848', 0.3, 0.8), tie: std(col(HAIR, f.tieColor, '#6a3a22'), 0.8),
+    earIn: std(skin.clone().multiplyScalar(0.62).lerp(new THREE.Color('#7a3a34'), 0.25), 0.9),
   };
   const head = new THREE.Group(); head.name = 'Face';
   // the skull: skin in the chosen tone; an own head keeps its other kept tiles (a hood) textured
@@ -357,6 +376,7 @@ export async function buildFace(load, model, f, { far = false } = {}) {
   // the atlas (far) keeps what reads at 56 px — skin, hair, beard, brows, dot eyes, a mouth — and
   // drops the marks, which only turned into smudges there
   head.add(tag(eyes(on, f, M, far), 'eye'), tag(brows(on, f, M), 'brow'), tag(mouth(on, f, M, far), 'mouth'), tag(nose(on, f, M), 'skin'), tag(await beard(load, skull, on, f, M, S), 'hair'));
+  head.add(tag(ears(f, M, S), 'skin'));
   if (!far) head.add(marks(on, f, M));
   if (!own) head.add(tag(await hair(load, skull, f, M, S), 'hair'));
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });

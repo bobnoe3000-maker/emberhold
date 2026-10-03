@@ -2114,9 +2114,9 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Running_B",
           "frames": 10,
-          "fps": 10
+          "fps": 12
         },
         {
           "key": "attack",
@@ -2177,9 +2177,9 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Running_A",
           "frames": 10,
-          "fps": 10
+          "fps": 12
         },
         {
           "key": "attack",
@@ -2240,9 +2240,9 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Running_B",
           "frames": 10,
-          "fps": 10
+          "fps": 12
         },
         {
           "key": "attack",
@@ -2303,9 +2303,9 @@
         },
         {
           "key": "walk",
-          "clip": "Walking_A",
+          "clip": "Running_A",
           "frames": 10,
-          "fps": 10
+          "fps": 12
         },
         {
           "key": "attack",

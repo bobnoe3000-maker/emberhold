@@ -325,6 +325,7 @@
   "shape": "thin"
  },
  "goblin": {
+  "ears": "pointed",
   "skin": "#8a9a58",
   "hair": "bald",
   "brows": "angry",
@@ -335,6 +336,7 @@
   "shape": "pear"
  },
  "goblin_brute": {
+  "ears": "pointed",
   "skin": "#7e8e50",
   "hair": "bald",
   "brows": "heavy",
@@ -348,6 +350,7 @@
   ]
  },
  "goblin_hex": {
+  "ears": "pointed",
   "skin": "#8a9a58",
   "hair": "long",
   "hairColor": "ash",
@@ -362,6 +365,7 @@
   ]
  },
  "skarn": {
+  "ears": "pointed",
   "skin": "#7c8460",
   "hair": "bald",
   "brows": "heavy",

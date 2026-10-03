@@ -271,7 +271,7 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
   const scene = new THREE.Scene(); scene.add(c.root);
   const wr = weaponRig(c, v), anchors = {};
   for (const k of Object.keys(wr)) anchors[k] = [];
-  const walkClip = clips.find((k) => k.key === 'walk' && /^Walking_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (the party's run has flight and no clean plant: the renderer keeps its 4.5)
+  const walkClip = clips.find((k) => k.key === 'walk' && /^(Walking|Running)_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
   const mats = { alb: new Map(), emi: new Map() }, black = new THREE.MeshBasicMaterial({ color: 0 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
   c.root.traverse((o) => { if (!o.isMesh) return; const eyes = /Eyes/.test(o.name), m = o.material;
     // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
@@ -521,7 +521,7 @@ window.bakeAnchors = async (v, clips) => {
   const cam = new THREE.OrthographicCamera(-W / 2 / ppu, W / 2 / ppu, H / 2 / ppu, -H / 2 / ppu, 0.1, 100);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45), tgt = new THREE.Vector3(0, box.min.y + (H * 0.5 - 6) / ppu, 0);
   cam.position.set(20 * Math.cos(pr) * Math.sin(yw), tgt.y + 20 * Math.sin(pr), 20 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(tgt); cam.updateMatrixWorld(true);
-  const walkClip = clips.find((k) => k.key === 'walk' && /^Walking_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (the party's run has flight and no clean plant: the renderer keeps its 4.5)
+  const walkClip = clips.find((k) => k.key === 'walk' && /^(Walking|Running)_/.test(k.clip)), stride = walkClip ? strideOf(c, walkClip.clip, ppu, sample) : null;   // (a run is measured too, for the goblins; the party's renderer keeps its 4.5 regardless)
   const wr = weaponRig(c, v), anchors = {}, frames = clips.reduce((n, k) => n + k.frames, 0);
   for (const k of Object.keys(wr)) anchors[k] = [];
   for (let dir = 0; dir < 8; dir++) {
