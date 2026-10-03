@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "chapel",
-      "journal": "Go to the Sunken Chapel, in the marsh where the river leaves the Vale, out past the lumber camp, and down to its second floor. Find the robed stranger who pays for the digging, and stop him.",
+      "journal": "Go down to the second floor of the Sunken Chapel, in the marsh past the lumber camp. Find the robed stranger who pays for the digging, and stop him.",
       "objectives": [
         {
           "type": "boss",
