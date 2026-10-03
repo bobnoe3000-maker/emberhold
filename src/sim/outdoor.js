@@ -128,6 +128,16 @@ function finalizeGround(o) {
 // Footprint of a baked sprite placed with its origin at (x, y).
 function footRect(id, x, y) { const f = ENV_FOOT[id]; return f ? [x + f[0], y + f[1], x + f[2], y + f[3]] : [x - 0.5, y - 0.5, x + 0.5, y + 0.5]; }
 
+// no road or plaza under a crown (the ellipse in its footprint): the owner, 2026-10-03, no tree on a road. (A crown
+// may still lean over the river, as trees do.)
+function offRoad(o, id, x, y) {
+  const [x0, y0, x1, y1] = footRect(id, x, y), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2, ry = (y1 - y0) / 2;
+  for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
+    const u = (tx + 0.5 - cx) / rx, v = (ty + 0.5 - cy) / ry; if (u * u + v * v > 1) continue;
+    const i = gi(o, tx, ty); if (i >= 0 && (o.tmat[i] === G.DIRT || o.tmat[i] === G.COBBLE)) return false;
+  }
+  return true;
+}
 function fits(o, id, x, y, margin = 1, allowRoad = false) {
   const [x0, y0, x1, y1] = footRect(id, x, y);
   for (let ty = Math.floor(y0 - margin); ty <= Math.floor(y1 + margin); ty++)
@@ -444,6 +454,11 @@ function buildOverland(seed) {
   // the Tithe Mill's race: a narrow channel off the river, under the wheel on the mill's +x side, and back (pass 10:
   // the wheel turned 10 tiles from water)
   o.rivers.push({ w: 2.6, pts: chaikin([[102, 88], [99.5, 95], [98.8, 101], [98.8, 110], [100.5, 116], [106, 120], [112, 121]], 2) });
+  // Thornwick's brook (2026-10-03: the town scene has a stream 12 tiles past its east gate, under the bridge the road
+  // comes in on; the Vale showed the gate on open meadow). The same brook here, at the same place: it leaves the river
+  // above the mill, runs down past the farm, under Thornwick's road 13.5 tiles from the gate (on the run along y the
+  // bridge needs), then east above the Sunken Chapel back into the river.
+  o.rivers.push({ w: 6, pts: chaikin([[88, 62], [82, 84], [80, 108], [79, 128], [70.5, 140], [69.5, 150], [70.5, 158], [80, 162], [98, 160], [116, 161]], 2) });
   // The roads, filleted (no elbows), the spurs to the mill, the chapel and the camp narrow tracks without ruts.
   const ROADS = [
     { w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] },
@@ -471,6 +486,7 @@ function buildOverland(seed) {
   // bridges where roads cross the river
   put(o, 'bridge_90', 120, 142, 'deck');
   put(o, 'bridge_90', 115, 199, 'deck');
+  put(o, 'bridge_90', town[0] + 17.5, town[1], 'deck');      // over the brook, as the town scene's bridge (13.5 from the gate)
   // Thornwick from outside: the town scene's circuit in small (its timber palisade and watchtowers), the gate on
   // its road, the temple's spire and a few roofs inside
   { const X0 = 18, X1 = town[0] + 4, Y0 = 128, Y1 = 172, GY = town[1];
@@ -542,7 +558,13 @@ function buildOverland(seed) {
     let wood = 0; for (const w of WOODS) wood = Math.max(wood, 1 - hypot(jx - w.x, jy - w.y) / w.r);
     const f = fbm(jx * 0.022, jy * 0.022, o.seed + 7), core = wood > 0.4 || f > 0.6;
     const id = core ? (trng() < 0.7 ? pick(trng, TREE_CLUSTER) : pick(trng, TREE_SINGLE)) : (wood > 0 || f > 0.52) && trng() < 0.45 ? pick(trng, TREE_SINGLE) : null;
-    if (id && clear(jx, jy, id) && fits(o, id, jx, jy, core && /grove/.test(id) ? -5 : 0.6)) put(o, id, jx, jy, 'round', 0.35);
+    if (!id) continue;
+    // crowns may close over each other, never over a road: one that would steps 4 tiles aside (fixed steps, no draws)
+    for (const [dx, dy] of [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]]) {
+      const tx = jx + dx, ty = jy + dy;
+      if (clear(tx, ty, id) && fits(o, id, tx, ty, core && /grove/.test(id) ? -5 : 0.6) && offRoad(o, id, tx, ty)) { put(o, id, tx, ty, 'round', 0.35); break; }
+      if (offRoad(o, id, tx, ty)) break;                                  // it failed for something else: no step
+    }
   }
   for (let y = 4; y < 256; y += 16) for (let x = 4; x < 256; x += 16) {     // meadow clumps
     if (trng() > 0.32) continue;
@@ -578,7 +600,7 @@ function buildOverland(seed) {
   o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 19, x1: keep[0] + 3, y1: keep[1] + 22, to: 'dungeon', site: 'wickham_keep' });
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
-  o.arrivals = { default: { x: town[0] + 14.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 14.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
+  o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 } };
   o.spawn = o.arrivals.default;
   return o;

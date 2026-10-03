@@ -493,6 +493,29 @@ The tone is back where it was, a shade darker for the contact shade and cast sha
 street's edge density 3.78 → 3.91. On the square the dark slate roofs hide some of the tiles' contrast that the
 terracotta showed.
 
+## Iteration 11n: Thornwick's brook on the Vale; no tree on a road (shipped 2026-10-03)
+
+![Inside Thornwick's east gate (the town scene), and the Vale's gate now: the same brook under the same bridge](img/art11/n-brook.jpg)
+
+The owner, from a phone at dusk: approaching Thornwick and then entering it, the river and bridge don't agree.
+- **Before:** the town scene has a 6-tile stream 12 tiles past its east gate, under an arched bridge 13.5 tiles
+  out. The Vale showed the same gate on open meadow.
+- **Now** (`outdoor.js` `buildOverland`):
+  - The Vale has **Thornwick's brook** at the same place, under the same bridge (`bridge_90`, 13.5 tiles from the
+    gate).
+  - It leaves the river above the Tithe Mill, runs down past the farm and under the road, then east above the
+    Sunken Chapel and back into the river.
+  - You arrive on the Vale past the bridge, as you do in the town.
+
+**No tree on a road** (the owner).
+- **Before:** inside a wood's core, groves were allowed to overlap by 5 tiles so their crowns close up. That let a
+  grove's crown spread over a road edge in a few seeds (3 in 6 seeds).
+- **Now** (`offRoad`):
+  - No crown (the ellipse in its footprint) may cover road or plaza. A crown may still lean over the river.
+  - A grove that would cover a road steps 4 tiles aside (fixed steps, no draws) rather than vanish: 41 groves on
+    the map against 42.
+- **Test:** `test/overland.test.mjs` checks every tree's crown, in six seeds, on the Vale and in Thornwick.
+
 ## Where it stands, and what's next
 
 Scored on detail only (the owner's direction); light and colour are the game's own and no longer measured against

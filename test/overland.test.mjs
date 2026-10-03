@@ -76,3 +76,16 @@ test('the fields are walled and fenced on their back edges, never across a road 
   }
   assert.ok(o.structs.some((s) => s.id.startsWith('drywall_')), 'a dry-stone wall in the Vale');
 });
+
+test('no tree on a road: no crown over a road or plaza, in any seed (the owner, 2026-10-03)', () => {
+  const TREE = /^(pine|oak|autumn|birch|dead|grove)_/, ROAD = new Set([G.DIRT, G.COBBLE]);
+  for (const seed of [20260807, 1, 42, 777, 31337, 191056]) for (const [kind, region] of [['overland', 'vale'], ['town', 'vale']]) {
+    const w = createOutdoor(seed, kind, region);
+    for (const s of w.structs) if (TREE.test(s.id) && s.x > -20 && s.y > -20) {
+      const f = ENV_FOOT[s.id];
+      const cx = s.x + (f[0] + f[2]) / 2, cy = s.y + (f[1] + f[3]) / 2, rx = (f[2] - f[0]) / 2, ry = (f[3] - f[1]) / 2;   // the crown: the ellipse in the footprint
+      for (let y = Math.floor(s.y + f[1]); y <= Math.floor(s.y + f[3]); y++) for (let x = Math.floor(s.x + f[0]); x <= Math.floor(s.x + f[2]); x++) if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1)
+        assert.ok(!ROAD.has(groundAt(w, x + 0.5, y + 0.5).g), `${kind} seed ${seed}: ${s.id} at ${s.x.toFixed(0)},${s.y.toFixed(0)} over ${x},${y}`);
+    }
+  }
+});
