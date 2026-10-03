@@ -121,7 +121,34 @@ function windowOn(g, S, face, u, y, w = 0.12, h = 0.16, opt = {}) {
   const glass = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), lit ? S.m.glass : S.m.dark); glass.userData.glow = lit; place(glass, 0.012);
   const bar = new THREE.Mesh(new THREE.BoxGeometry(0.014, h, t), S.m.trim); place(bar, 0.02);
   if (opt.pointed) { const p = new THREE.Mesh(new THREE.ConeGeometry(w / 2 + 0.02, 0.09, 4, 1), S.m.trim); p.rotation.z = 0; p.scale.z = 0.25; place(p, 0.004); p.position.y = y + h / 2 + 0.045; p.rotation.y += Math.PI / 4; }
+  if (opt.flowers) flowerBox(g, S, place, face, u, y - h / 2 - 0.03, w);
   if (opt.shutters) for (const sx of [-1, 1]) { const sh = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, h + 0.02, t), S.m.shutter); place(sh, 0.01); if (face.side === 'z') sh.position.x += sx * (w * 0.78); else sh.position.z += sx * (w * 0.78); }
+}
+// Thornwick's dressing (critic pass 11j, scored against the owner's reference: its walls carry flower boxes and ivy,
+// ours were bare). On its own stream (S.frnd), so no window's light changes; tagged `dress`, so no footprint grows.
+const FLOWER = ['#d8305a', '#f0e8f4', '#f0b828', '#a050d8', '#f05a28'], LEAF = ['#36561e', '#456a24', '#5a802c'];
+const dressMats = new Map(), dressMat = (c) => { if (!dressMats.has(c)) dressMats.set(c, flat(c)); return dressMats.get(c); };
+function dress(mesh) { mesh.userData.dress = true; return mesh; }
+function flowerBox(g, S, place, face, u, y, w) {
+  const r = S.frnd, along = (mesh, du) => { if (face.side === 'z') mesh.position.x += du; else mesh.position.z += du; };
+  const trough = dress(new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.035, 0.045), S.m.wood)); place(trough, 0.03); trough.position.y = y;
+  const pal = FLOWER[(r() * FLOWER.length) | 0];
+  for (let i = 0; i < 7; i++) {
+    const du = -w / 2 - 0.01 + ((w + 0.02) * (i + 0.5)) / 7;
+    const l = dress(new THREE.Mesh(new THREE.IcosahedronGeometry(0.026 + r() * 0.01, 0), dressMat(LEAF[(r() * 3) | 0]))); place(l, 0.04 + r() * 0.012); l.position.y = y + 0.026; along(l, du);
+    if (r() < 0.5) { const t = dress(new THREE.Mesh(new THREE.IcosahedronGeometry(0.02, 0), dressMat(LEAF[(r() * 3) | 0]))); place(t, 0.055); t.position.y = y - 0.03 - r() * 0.03; along(t, du); }   // trailing over the front
+    const f = dress(new THREE.Mesh(new THREE.IcosahedronGeometry(0.019 + r() * 0.007, 0), dressMat(r() < 0.7 ? pal : FLOWER[(r() * FLOWER.length) | 0]))); place(f, 0.05 + r() * 0.015); f.position.y = y + 0.045 + r() * 0.02; along(f, du + (r() - 0.5) * 0.02);
+  }
+}
+// ivy up a wall from the ground near a corner: leaf clumps hugging the face, thinning as they climb
+function ivy(g, S, face, u, top) {
+  const r = S.frnd, out = (face.side === 'z' ? face.wallD : face.wallW) / 2;
+  for (let i = 0, n = 26 + ((r() * 10) | 0); i < n; i++) {
+    const t = i / n, y = t * top, spread = 0.12 * (1 - t * 0.6), du = u + (r() - 0.5) * spread * 2;
+    const l = dress(new THREE.Mesh(new THREE.IcosahedronGeometry(0.045 * (1 - t * 0.4) + r() * 0.012, 0), dressMat(LEAF[(r() * 3) | 0])));
+    if (face.side === 'z') l.position.set(du, y + 0.02, out + 0.012); else l.position.set(out + 0.012, y + 0.02, du);
+    l.scale.set(face.side === 'z' ? 1 : 0.45, 1, face.side === 'z' ? 0.45 : 1); g.add(l);
+  }
 }
 function doorOn(g, S, face, u, w = 0.2, h = 0.42, arch = true) {
   const t = 0.03, d = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), S.m.door), fr = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, h + 0.04, t * 0.8), S.m.trim);
@@ -187,7 +214,7 @@ const A_SHAPE = { roofRise: 1.05, jetty: 0.04, timber: true };
 Object.assign(STYLES, {
   // Hollow Vale: warm oak, cream limewash, terracotta tile, blue shutters (critic pass 11c, scored against the
   // owner's reference: blue-grey slate and grey limewash read cold beside its warm village)
-  vale:    { ...STYLES.A, key: 'vale', lower: ['field', '#8a7e6a'], upper: ['plaster', '#d9c9a6'], roof: ['tile', '#8a4130'], shutter: '#3b679c' },
+  vale:    { ...STYLES.A, key: 'vale', lower: ['field', '#8a7e6a'], upper: ['plaster', '#d9c9a6'], roof: ['tile', '#8a4130'], shutter: '#3b679c', dress: true },
   fens:    { ...A_SHAPE, key: 'fens', lower: ['rubble', '#5b5f57'], upper: ['plaster', '#98a089'], roof: ['slate', '#363d36'],
              wood: '#35302a', beam: '#26231f', door: '#3d3a30', trim: '#1f201c', banner: '#3b5a4a', hay: '#6f6a46', signboard: '#4a463a' },  // damp, mossy, grey-green
   reach:   { ...A_SHAPE, key: 'reach', lower: ['field', '#4c4542'], upper: ['plaster', '#8c7d70'], roof: ['slate', '#5e3024'],
@@ -206,7 +233,7 @@ function kit(style, seed = 1) {
     palisade: mat(tex('palisade', s.wood, seed + 7)), shutter: mat(tex('planks', s.shutter || s.wood, seed + 9)),
     ashlar: mat(tex('ashlar', s.lower[1], seed + 8)),         // dressed stone (the temple, in every region)
   };
-  return { S: { ...s, m, rnd: rng(seed * 31 + 7) }, g };
+  return { S: { ...s, m, rnd: rng(seed * 31 + 7), frnd: rng(seed * 57 + 3) }, g };
 }
 
 // A walled storey block with windows on the two camera-facing sides (+z and +x).
@@ -215,13 +242,14 @@ function storeyBlock(S, g, w, d, y0, h, wallM, winRow, opts = {}) {
   const fz = { side: 'z', wallW: w, wallD: d }, fx = { side: 'x', wallW: w, wallD: d };
   if (winRow) {
     const nz = Math.max(1, Math.round(w / 0.32)), nx = Math.max(1, Math.round(d / 0.32));
-    for (let i = 0; i < nz; i++) { const u = -w / 2 + (w * (i + 0.5)) / nz; if (opts.doorZ !== undefined && Math.abs(u - opts.doorZ) < 0.16) continue; windowOn(g, S, fz, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic, shutters: !S.gothic && !S.thatch && i % 2 === 0 }); }
-    for (let i = 0; i < nx; i++) { const u = -d / 2 + (d * (i + 0.5)) / nx; windowOn(g, S, fx, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic }); }
+    for (let i = 0; i < nz; i++) { const u = -w / 2 + (w * (i + 0.5)) / nz; if (opts.doorZ !== undefined && Math.abs(u - opts.doorZ) < 0.16) continue; windowOn(g, S, fz, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic, shutters: !S.gothic && !S.thatch && i % 2 === 0, flowers: S.dress && S.frnd() < 0.45 }); }
+    for (let i = 0; i < nx; i++) { const u = -d / 2 + (d * (i + 0.5)) / nx; windowOn(g, S, fx, u, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic, flowers: S.dress && S.frnd() < 0.45 }); }
     // the two far faces too (mirrored groups), so a 90°-turned building still shows windows
     const back = new THREE.Group(); back.rotation.y = Math.PI; g.add(back);
     for (let i = 0; i < nz; i++) windowOn(back, S, fz, -w / 2 + (w * (i + 0.5)) / nz, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic });
     for (let i = 0; i < nx; i++) windowOn(back, S, fx, -d / 2 + (d * (i + 0.5)) / nx, y0 + h * 0.55, 0.11, 0.15, { pointed: S.gothic });
   }
+  if (S.dress && y0 < 0.01) for (const [f, span] of [[fz, w], [fx, d]]) if (S.frnd() < 0.5) ivy(g, S, f, (S.frnd() < 0.5 ? -1 : 1) * (span / 2 - 0.07), h * (0.6 + S.frnd() * 0.5));
   if (opts.timber && S.timber) {
     timber(g, S, fz, y0, y0 + h, Math.max(2, Math.round(w / 0.25))); timber(g, S, fx, y0, y0 + h, Math.max(2, Math.round(d / 0.25)));
     const back = new THREE.Group(); back.rotation.y = Math.PI; g.add(back);

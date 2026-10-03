@@ -331,18 +331,59 @@ reference's strongest silhouette; the larger houses gained tiled dormers on the 
   The reference's soft shade under eaves and awnings is still richer than ours.
 - **Overall, 6.8 → 6.9.**
 
+## Iteration 11i: figures skip the lit-top lift (shipped 2026-10-03)
+
+**What changed:** 11b's lift on faces squarely to the sun also hit the figures, whose baked normals face it. Actor
+pixels now take the plain sun term.
+
+**Measured:**
+- The steel knight's p95 luminance 199 → 189.
+- A red villager's tunic renders (143, 61, 36), a saturated red.
+
+So exposure was not why the cast reads pale. That comes from the white-clad townsfolk and pale skin: a matter of
+the cast's palette, not the light. No score change.
+
+## Iteration 11j: Thornwick greens (shipped 2026-10-03)
+
+![11j, before and after: the high street, and a meadow by the crossroads](img/art11/j-green.jpg)
+
+The reference packs flowers and ivy against its walls and dots its meadows with blooms. The square stays clear,
+as the nature-pack decision has it: nothing is placed on it.
+
+**What changed:**
+- **Flower boxes and ivy, baked into Thornwick's buildings** (`buildkit.js` `flowerBox`, `ivy`; the Vale style's
+  `dress`):
+  - about half the camera-facing windows carry a box of leaves and blooms, mostly one colour, trailing over the
+    front;
+  - half the ground storeys' camera-facing faces have ivy climbing from a corner, thinning as it rises.
+  - They're on their own stream (`frnd`), so no window's light changes.
+  - They're tagged `dress`, so no footprint grows: `envfoot.js` is unchanged and nothing in the sim moves.
+  - The other regions' towns are untouched.
+- **Meadow flowers** (`outdoorpaint.js` `grass`):
+  - dense in patches (a low-frequency field, half the tiles there) and sparse elsewhere (5 %);
+  - up to two a tile, each a lit centre between two darker petals;
+  - in brighter yellow, white, pink and violet. They had been four muted single pixels on 6 % of tiles.
+
+**Measured** (edge density, reference 4.6): the square 5.77 → 5.83, the high street 4.48 → 4.59, the crossroads
+3.02 → 3.20, the woods 4.08 → 4.14. Luminance, saturation and warmth move by less than 0.01.
+
+**Score:**
+- Buildings, 7.5 → **8**: flower boxes and ivy break the walls up, as the reference's do.
+- Ground, 6.5 → **7**: the meadows flower.
+- **Overall, 6.9 → 7.1.**
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
 |---|---|---|---|
 | Light and colour | 9 | 3 | 8 |
 | Shadow and depth | 9 | 4 | 7 |
-| Buildings | 9 | 5.5 | 7.5 |
+| Buildings | 9 | 5.5 | 8 |
 | Trees and plants | 9 | 4.5 | 7 |
-| Ground | 8 | 5 | 6.5 |
+| Ground | 8 | 5 | 7 |
 | Characters | 8 | 5 | 6 |
 | Life and density | 9 | 4 | 6.5 |
-| **Overall** | **8.7** | **4.4** | **6.9** |
+| **Overall** | **8.7** | **4.4** | **7.1** |
 
 To reach 7.5 with nothing under 6:
 - **11g, the rest:** low dry-stone walls and fences between the fields, and an overhanging storey on the

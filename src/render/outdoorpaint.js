@@ -17,7 +17,9 @@ const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[
 const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 const frac = (v) => v - Math.floor(v);
 const N_TUFT = norm3(0, 0.55, 0.83), N_WATER = norm3(0, 0.36, 0.93);
-const FLOWERS = [[168, 150, 80], [160, 150, 178], [150, 70, 66], [176, 170, 150]];
+// brighter than they were (critic pass 11j: the reference's meadows are dotted yellow, white, pink and violet; ours
+// were four muted single pixels on 6 % of tiles)
+const FLOWERS = [[232, 200, 84], [226, 216, 240], [214, 92, 116], [244, 238, 224], [164, 116, 214]];
 const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat };
 const OUT = { c: null, n: N_UP, e: 0 };
 const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OUT; };
@@ -39,10 +41,15 @@ function grass(o, gx, gy, tx, ty, rx, ry, dark = 0) {
     if (dx === 0 && dy >= -2 && dy <= 0) return ret(dy === -2 ? Rg[4] : Rg[3], N_TUFT);
     if (dy === 1 && Math.abs(dx) <= 2) return ret(Rg[0]);                     // the tuft's own little shadow
   }
-  if (h < 0.06) {                                         // a flower
-    const fu = 0.3 + 0.4 * H(tx, ty, o.seed + 8), fv = 0.3 + 0.4 * H(ty, tx, o.seed + 9);
-    const dx = Math.round(rx - (fu - fv) * 8), dy = Math.round(ry - (fu + fv) * 4);
-    if (dx === 0 && dy === 0) return ret(FLOWERS[(h * 1000 | 0) % FLOWERS.length], N_TUFT);
+  // flowers: sparse anywhere, dense in meadow patches (a low-frequency field), up to two a tile, each a bloom of a
+  // lit centre over a darker petal pixel and a stem's shadow
+  const patch = fbm(gx * 0.035, gy * 0.035, o.seed + 77) > 0.6 ? 0.5 : 0.05;
+  for (let j = 0; j < 2; j++) {
+    const hf = H(tx * 3 + j, ty * 5 - j, o.seed + 12); if (hf >= patch) continue;
+    const fu = 0.2 + 0.6 * H(tx + j * 17, ty, o.seed + 8), fv = 0.2 + 0.6 * H(ty, tx + j * 17, o.seed + 9);
+    const dx = Math.round(rx - (fu - fv) * 8), dy = Math.round(ry - (fu + fv) * 4), fc = FLOWERS[(H(tx, ty + j * 31, o.seed + 13) * FLOWERS.length) | 0];
+    if (dx === 0 && dy === 0) return ret(fc, N_TUFT);
+    if (Math.abs(dx) === 1 && dy === 0) return ret(mul(fc, 0.78), N_TUFT);
     if (dx === 0 && dy === 1) return ret(Rg[1]);
   }
   return ret(c);

@@ -89,7 +89,7 @@ window.bakeEnv = async (name, o = {}) => {
   // the floor only inside its opening (renderer.js, `hole`).
   const below = o.below || 0; CLIP[0].constant = 0.02 + below; keyMat.uniforms.uFloor.value = -0.02 - below;
   // (a `mask` mesh — a stairwell's floor — writes depth only: it hides, and is never drawn or framed)
-  const box = new THREE.Box3(); root.traverse((m) => { if (m.isMesh && !m.userData.mask) box.expandByObject(m); });
+  const box = new THREE.Box3(); root.traverse((m) => { if (m.isMesh && !m.userData.mask && !m.userData.dress) box.expandByObject(m); });   // dress (flower boxes, ivy) never widens a footprint
   // frame: project the 8 bbox corners with the game camera to size the canvas
   // o.up: bake at 1/o.up of the pixels and let the renderer scale it back ×up (nearest) when it slices the sprite —
   // for the mountain massifs, the largest sprites, seen from afar (critic pass 10). The depth key stays in tiles.
