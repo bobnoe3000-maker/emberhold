@@ -54,6 +54,17 @@ function tex(kind, base, seed = 1, alt) {
   } else if (kind === 'thatch') {
     for (let y = 0; y < S; y += 10) { rect(shade(b, 0.7), 0, y + 9, S, 1); }
     for (let i = 0; i < 260; i++) { const X = r() * S, Y = r() * S; rect(shade(b, 0.78 + r() * 0.4), X, Y, 1, 3 + r() * 5); }
+  } else if (kind === 'tile') {                                              // clay tiles (critic pass 11c): rounded, each its own tone
+    for (let y = 0; y < S; y += 8) {
+      let X = ((y / 8) % 2) * 5 - 2;
+      for (; X < S + 10; X += 10) {
+        const k = 0.66 + r() * 0.56;
+        rect(shade(b, k), X, y, 9, 7);
+        rect(shade(b, k * 1.22), X + 1, y + 5, 7, 2);                       // the lit lip of the tile
+        rect(shade(b, k * 0.8), X, y, 1, 7);                                 // its shaded flank
+      }
+      rect(a2, 0, y + 7, S, 1);                                              // the course's shadow line
+    }
   } else if (kind === 'shingle') {
     for (let y = 0; y < S; y += 8) { let X = ((y / 8) % 2) * 4; for (; X < S; X += 8) rect(shade(b, 0.8 + r() * 0.3), X, y, 7, 7); rect(a2, 0, y + 7, S, 1); }
   } else if (kind === 'palisade') {
@@ -110,7 +121,7 @@ function windowOn(g, S, face, u, y, w = 0.12, h = 0.16, opt = {}) {
   const glass = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), lit ? S.m.glass : S.m.dark); glass.userData.glow = lit; place(glass, 0.012);
   const bar = new THREE.Mesh(new THREE.BoxGeometry(0.014, h, t), S.m.trim); place(bar, 0.02);
   if (opt.pointed) { const p = new THREE.Mesh(new THREE.ConeGeometry(w / 2 + 0.02, 0.09, 4, 1), S.m.trim); p.rotation.z = 0; p.scale.z = 0.25; place(p, 0.004); p.position.y = y + h / 2 + 0.045; p.rotation.y += Math.PI / 4; }
-  if (opt.shutters) for (const sx of [-1, 1]) { const sh = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, h + 0.02, t), S.m.wood); place(sh, 0.01); if (face.side === 'z') sh.position.x += sx * (w * 0.78); else sh.position.z += sx * (w * 0.78); }
+  if (opt.shutters) for (const sx of [-1, 1]) { const sh = new THREE.Mesh(new THREE.BoxGeometry(w * 0.5, h + 0.02, t), S.m.shutter); place(sh, 0.01); if (face.side === 'z') sh.position.x += sx * (w * 0.78); else sh.position.z += sx * (w * 0.78); }
 }
 function doorOn(g, S, face, u, w = 0.2, h = 0.42, arch = true) {
   const t = 0.03, d = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), S.m.door), fr = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, h + 0.04, t * 0.8), S.m.trim);
@@ -174,7 +185,9 @@ export const STYLES = {
 // inn and temple read the same everywhere) and changes only materials and colour.
 const A_SHAPE = { roofRise: 1.05, jetty: 0.04, timber: true };
 Object.assign(STYLES, {
-  vale:    { ...STYLES.A, key: 'vale' },                                                          // Hollow Vale: warm oak, limewash, slate
+  // Hollow Vale: warm oak, cream limewash, terracotta tile, blue shutters (critic pass 11c, scored against the
+  // owner's reference: blue-grey slate and grey limewash read cold beside its warm village)
+  vale:    { ...STYLES.A, key: 'vale', lower: ['field', '#8a7e6a'], upper: ['plaster', '#d9c9a6'], roof: ['tile', '#8a4130'], shutter: '#3b679c' },
   fens:    { ...A_SHAPE, key: 'fens', lower: ['rubble', '#5b5f57'], upper: ['plaster', '#98a089'], roof: ['slate', '#363d36'],
              wood: '#35302a', beam: '#26231f', door: '#3d3a30', trim: '#1f201c', banner: '#3b5a4a', hay: '#6f6a46', signboard: '#4a463a' },  // damp, mossy, grey-green
   reach:   { ...A_SHAPE, key: 'reach', lower: ['field', '#4c4542'], upper: ['plaster', '#8c7d70'], roof: ['slate', '#5e3024'],
@@ -190,7 +203,7 @@ function kit(style, seed = 1) {
     stoneDark: mat(null, shade(hex(s.lower[1]), 0.6).reduce((a, v) => a + v.toString(16).padStart(2, '0'), '#')),
     wood: mat(tex('planks', s.wood, seed + 4)), beam: mat(null, s.beam), door: mat(tex('planks', s.door, seed + 5)), trim: mat(null, s.trim),
     glass: mat(null, '#e0a050'), dark: mat(null, '#1c1a22'), paper: mat(null, '#b8ad92'), banner: mat(null, s.banner), hay: mat(tex('thatch', s.hay, seed + 6)), signboard: mat(null, s.signboard),
-    palisade: mat(tex('palisade', s.wood, seed + 7)),
+    palisade: mat(tex('palisade', s.wood, seed + 7)), shutter: mat(tex('planks', s.shutter || s.wood, seed + 9)),
     ashlar: mat(tex('ashlar', s.lower[1], seed + 8)),         // dressed stone (the temple, in every region)
   };
   return { S: { ...s, m, rnd: rng(seed * 31 + 7) }, g };

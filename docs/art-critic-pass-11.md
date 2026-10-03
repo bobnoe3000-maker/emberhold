@@ -175,3 +175,31 @@ re-scored, and a before/after sheet added below.
 - **Overall, 5.1 → 5.4.**
 
 **Next:** 11c, buildings.
+
+## Iteration 11c: buildings (shipped 2026-10-03)
+
+![11c, before and after: the square and the high street](img/art11/c-buildings.jpg)
+
+**What changed** (`tools/actor-lab/buildkit.js`, `town.json`; re-baked):
+- **Clay-tile roofs:** a new `tile` texture. Rounded tiles in staggered courses, each its own tone (0.66–1.22),
+  with a lit lip, a shaded flank and a shadow line under each course.
+- **Thornwick's palette:**
+  - terracotta tile (#8a4130) in place of blue-grey slate;
+  - cream limewash (#d9c9a6);
+  - warmer field stone;
+  - **blue shutters** (#3b679c), the reference's accent against the warm mass. Every style can set `shutter`
+    now; the other towns keep their wood.
+- **Thornwick's bake:** gain 0.7 → 0.78, desaturation 0.12 → 0.02, a near-neutral tint. The palisade's
+  watchtowers and gate take the tile too.
+
+**Measured** (the town's three frames, 11b → 11c): colourfulness 0.19–0.25 → **0.25–0.30** (reference 0.23),
+warmth 0.20–0.22 → **0.22–0.27** (0.25), highlights 0.69–0.73 → 0.70–0.79 (0.72), luminance 0.42–0.44 →
+0.42–0.45.
+
+**Score:**
+- Buildings, 5.5 → **7**: warm tiled roofs, cream walls and blue shutters read as a lived-in village. Still
+  short of the reference: round towers under conical roofs, dormers, and dressed bases (11e).
+- Light and colour, 7.5 → **8**.
+- **Overall, 5.4 → 5.7.**
+
+**Next:** 11d, trees, plants and ground.
