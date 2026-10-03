@@ -117,11 +117,28 @@ export function createAudio({ base = './assets/audio/' } = {}) {
     return true;
   }
 
+  // loops made here rather than downloaded (the weather's rain: a soft hiss of filtered noise with sparse drops in it)
+  const SYNTH = { syn_rain: { d: 4 } };
+  /** @param {string} name @returns {AudioBuffer | null} */
+  function synthLoop(name) {
+    if (buffers.has(name)) return buffers.get(name);
+    if (!ctx) return null;
+    const sr = ctx.sampleRate, n = Math.floor(sr * SYNTH[name].d), buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+    let lp = 0, lp2 = 0;
+    for (let i = 0; i < n; i++) { const w = rand() * 2 - 1; lp += (w - lp) * 0.12; lp2 += (lp - lp2) * 0.35; d[i] = (lp - lp2 * 0.6) * 0.9 + w * 0.06; }   // a hiss without its top or its bottom
+    for (let j = 0, drops = Math.floor(SYNTH[name].d * 28); j < drops; j++) {                               // drops on leaves and stone
+      const at = Math.floor(rand() * (n - sr * 0.02)), f = 1800 + rand() * 3200, a = 0.08 + rand() * 0.22, len = Math.floor(sr * (0.004 + rand() * 0.01));
+      for (let i = 0; i < len; i++) d[at + i] += a * Math.sin((2 * Math.PI * f * i) / sr) * Math.exp((-6 * i) / len);
+    }
+    let peak = 0; for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(d[i])); for (let i = 0; i < n; i++) d[i] *= 0.7 / (peak || 1);
+    buffers.set(name, buf); return buf;
+  }
+
   /** hold an ambient loop at a level (0 lets it fade out and stop); call every so often with the place's levels
    * @param {string} name @param {number} level */
   function loop(name, level) {
     if (!ctx || !master || !bank) return;
-    const spec = bank.loops[name]; if (!spec) return;
+    if (!bank.loops[name] && !SYNTH[name]) return;
     let L = loops.get(name);
     if (!L) { if (level <= 0) return; const g = ctx.createGain(); g.gain.value = 0; g.connect(buses.ambient); L = { g, cur: null, next: 0, level: 0 }; loops.set(name, L); }
     L.level = level;
@@ -135,7 +152,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
     for (const [name, L] of loops) {
       if (L.level <= 0.001 && L.g.gain.value < 0.002) { if (L.cur) { try { L.cur.stop(); } catch {} L.cur = null; } continue; }
       if (L.cur && t < L.next) continue;
-      const spec = bank.loops[name], buf = buffer(spec.f); if (!buf) continue;
+      const buf = SYNTH[name] ? synthLoop(name) : buffer(bank.loops[name].f); if (!buf) continue;
       const src = ctx.createBufferSource(); src.buffer = buf;
       const fade = ctx.createGain(), d = buf.duration, x = Math.min(XFADE, d / 4);
       src.connect(fade); fade.connect(L.g);

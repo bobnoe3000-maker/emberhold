@@ -14,6 +14,7 @@
 import { materialAt, heightAt, resourceAt, propAt, isWalkable } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
+import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
@@ -52,6 +53,7 @@ const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the
 // lab.js strideOf, art pass 6: 1.97–2.33), 2.2 when it has none. They had the run's 4.5, so their feet skated 2×. The
 // goblins run (Running_A/B, measured the same way: 3.0–3.2): their short legs barely parted in a walk, and read as skating.
 const strideOf = (atl, fallback) => (atl && atl.meta.stride) || fallback;
+const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
 
 const MARGIN = 96;                 // native-px slack around the view held in the bake
 const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
@@ -1117,6 +1119,7 @@ export function createRenderer(canvas, sim, input) {
     const outdoor = sim.world.kind !== 'dungeon';
     skyAt(skyHoldT ?? sim.state.t, skyNow); lastNow = now;
     const ease = Math.min(1, (now - skyEase0) / SKY_EASE); mixSky(sky, skyFrom, skyNow, ease * ease * (3 - 2 * ease));
+    const wx = outdoor && !st ? weatherNow(sim) : NO_WEATHER, wLight = lightOf(sky); weatherLight(sky, wx);   // rain, fog, snow: mostly in the light (weatherfx.js)
     const hl = st ? 0 : outdoor ? 0.42 * sky.wisp : 1;              // outdoors the hero's ember-wisp is a glow at dusk, a torch at night (none on the Stage: even light)
     const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
     // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
@@ -1176,6 +1179,7 @@ export function createRenderer(canvas, sim, input) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
+    if (wx.k) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });   // under the minimap and labels
     if (st) st.overlay(octx, (x, y) => { const q = project(x, y, pz); return [(lastCam.rx + q.sx) * S, (lastCam.ry + q.sy) * S]; }, S);   // the Stage's names and headings
     else if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world

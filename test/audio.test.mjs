@@ -53,7 +53,11 @@ test('ambience: the creek louder the nearer it runs, silent out of reach; birds 
   assert.ok(at(Infinity, 1).amb_birds > 0 && at(Infinity, 1).amb_owl === 0); assert.ok(at(Infinity, 3).amb_owl > 0 && at(Infinity, 3).amb_birds === 0);
   const warren = ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity }), mill = ambienceFor({ kind: 'dungeon', theme: 'desert', part: 1, waterD: Infinity });
   assert.ok(warren.amb_drips > mill.amb_drips && warren.amb_fire > 0 && warren.amb_birds === 0 && warren.amb_river === 0);
-  for (const k of Object.keys(warren)) assert.ok(bank.loops[k], k);
+  for (const k of Object.keys(warren)) assert.ok(bank.loops[k] || k.startsWith('syn_'), k);   // (syn_: made by the engine)
+  const rain = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }), dry = at(Infinity, 1);
+  assert.ok(rain.syn_rain > 0 && rain.amb_birds < dry.amb_birds * 0.3, 'rain hisses and the birds go quiet');
+  assert.ok(ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'snow', k: 1 } }).amb_cave > 0, 'a soft wind over the snow');
+  assert.equal(ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }).syn_rain, 0, 'no rain underground');
 });
 
 test('the sound fits its budget: every file in the bank is there, ≤ 750 KB in all', () => {

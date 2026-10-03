@@ -3,8 +3,8 @@
 //   sim.bus     the sim's events: blows, heals, wards, level-ups, loot, chests, stairs (cues.js eventCue)
 //   each frame  the figures the renderer drew (renderer.onFrame): a foot coming down, a swing beginning; and the
 //               foes in the world: one arriving (its cry), one falling (its death)
-// and keeps the place's ambience: the creek by its distance, birds and owls by the time of day, the dungeon's drips,
-// its draught and the goblins' fires.
+// and keeps the place's ambience: the creek by its distance, birds and owls by the time of day, rain or a wind by the
+// weather, the dungeon's drips, its draught and the goblins' fires.
 //
 // Positions: a sound pans by where its figure stands on the screen, and fades with its distance from the view's centre
 // (silent beyond HEAR tiles). The party is heard at full level, foes a little under, townsfolk quietly.
@@ -13,6 +13,7 @@
 import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, RIVER_REACH } from './cues.js';
 import { materialAt } from '../sim/world.js';
 import { partOf } from '../sim/npcs.js';
+import { weatherNow } from '../render/weatherfx.js';
 
 const HEAR = 22;                                    // tiles: beyond this a figure is silent
 const TEAM_GAIN = { 0: 0.45, 1: 0.9, 2: 0.7, 3: 0.75 };
@@ -92,7 +93,7 @@ export function createListener({ sim, audio, renderer }) {
         const m = materialAt(world, view.ix + dx, view.iy + dy); if (m === 'water' || m === 'bank') waterD = d;
       }
     }
-    const levels = ambienceFor({ kind, theme: world.theme ?? null, part: partOf(sim.state.t || 0), waterD });
+    const levels = ambienceFor({ kind, theme: world.theme ?? null, part: partOf(sim.state.t || 0), waterD, weather: weatherNow(sim) });
     for (const [name, lv] of Object.entries(levels)) audio.loop(name, lv);
   }
 }

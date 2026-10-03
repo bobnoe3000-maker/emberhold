@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.19 · 2026-10-03 · Plan of record for game design.** v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.20 · 2026-10-03 · Plan of record for game design.** v1.20 adds **weather** (§10.1): rain, fog and snow in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -1078,6 +1078,37 @@ progress):
     line: place, gold and wage, cinders and dial. Only the place name can shorten, with an ellipsis.
   - **No overlaps:** a browser test checks the dial against everything on screen at four widths, in
     town, on the Vale and in a fight.
+- **Weather** (v1.20; the owner, 2026-10-03: "weather cycles … not overly visually intrusive — rain, fog,
+  snow … on longer cycles").
+  - **The schedule** (`src/sim/weather.js`) is a pure function of the world's seed, the clock and the
+    region, so the same moment always has the same sky. Nothing is saved, nothing draws on a stream, and
+    nothing in play reads it.
+    - The clock is cut into **spells of 20 minutes** (a third of a day). Each spell is clear, fog, rain or
+      snow.
+    - In the Vale, about 45 % of spells are clear, 26 % rain, 18 % fog and 10 % snow. The fens are wetter
+      and mistier; the heights snowier. Fog is likelier in a spell that starts at night or dawn.
+    - A spell builds over 3 minutes and fades over 3. Where the next spell is the same weather it runs on,
+      so a weather lasts 20, 40 or 60 minutes.
+  - **Strength:** 0.55–1 at its height. Outdoors only: the dungeons are underground.
+  - **The look** (`src/render/weatherfx.js`): mostly in the light, a little on the screen.
+    - **Rain:** the sun dims by up to a third, colour and shadow soften, and sparse fine streaks fall.
+    - **Fog:** a veil, thickest toward the top of the screen (the distance) and thin over the party,
+      with soft banks drifting through. At night it's a darkening, not a grey wash.
+    - **Snow:** a cold, even light and a few slow drifting flakes.
+
+    Measured at full strength against clear, the change in mean luma and contrast:
+
+    | Weather | Day: luma, contrast | Night: luma, contrast |
+    |---|---|---|
+    | Rain | −24 %, −21 % | −20 %, −12 % |
+    | Fog | +8 %, −29 % | −14 %, −18 % |
+    | Snow | −8 %, −9 % | −5 %, −5 % |
+
+    ![The Vale clear, in rain, fog and snow, by day and at night](img/weather/vale-weathers.jpg)
+  - **The sound:** rain hisses (synthesised: `audio/engine.js`) and quiets the birds; snow brings a soft
+    wind and a hush; fog only hushes. It's all on the ambient switch.
+  - **The dial** names it: "Day · rain". Tap it to learn when it clears, lifts or eases.
+  - **Dev:** `?dev&weather=rain|fog|snow|clear[:0..1]` holds a weather for captures.
 
 ---
 

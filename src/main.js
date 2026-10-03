@@ -27,6 +27,7 @@ import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 import { createAudio } from './audio/engine.js';
 import { createListener } from './audio/listen.js';
+import { holdWeather } from './render/weatherfx.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -144,6 +145,7 @@ let last = performance.now();
 let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
 const TOD = DEV ? params.get('tod') : null;              // ?dev&tod=dawn|day|dusk|night|0..1: hold the light (look-dev; the sim's clock runs on)
+if (DEV && params.get('weather')) holdWeather(params.get('weather'));   // ?dev&weather=rain|fog|snow|clear[:0..1]: hold the weather (render/weatherfx.js)
 // dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
 if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));

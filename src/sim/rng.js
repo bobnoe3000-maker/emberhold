@@ -44,5 +44,6 @@ export const STREAM = {
   SHOP: 0x5a0b,   // Wendel's stock (smith.js), mixed with the day
   REFORGE: 0xf09e, // the smith's reforges (smith.js), mixed with the item and how often it's been reforged
   SCROLL: 0x5c20,  // a Homeward Scroll beside a drop (loot.js), mixed with the drop counter: gear rolls don't move
+  WEATHER: 0x3ea7, // the weather's spells (weather.js), hashed with the spell's number: no stream is drawn
 };
 export const streamSeed = (worldSeed, stream) => (worldSeed ^ Math.imul(stream, 2654435761)) >>> 0;
