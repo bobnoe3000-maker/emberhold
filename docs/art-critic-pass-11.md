@@ -516,6 +516,37 @@ The owner, from a phone at dusk: approaching Thornwick and then entering it, the
     the map against 42.
 - **Test:** `test/overland.test.mjs` checks every tree's crown, in six seeds, on the Vale and in Thornwick.
 
+## Iteration 11o: the beasts, critic pass (shipped 2026-10-03)
+
+![The cows, sheep and hens baked before and after (×4), and Thornwick's east farm in the game](img/art11/o-beasts.jpg)
+
+The owner: the animals are too blocky.
+
+**The critique** (the bake at ×5, and in the game at day and dusk):
+- **The cows were bricks:** a box body with square patches stuck on proud of the hide, a cube head straight on the
+  body with no neck, and posts for legs. Head-on, a cow was a block.
+- **The sheep's fleece read well, but not the rest:** a black cube of a head and posts for legs.
+- **The hens were a few facets each,** too small to read as birds.
+
+**What changed** (`buildkit.js`; re-baked):
+- **Cows:**
+  - a barrel of a body (a capsule, a little deeper than wide) with hips and an udder, and a neck to a tapered head;
+  - a pink muzzle, ears out to the side, small curved horns, and on some a dark head with a white blaze;
+  - tapered legs on dark hooves, and a tail hanging to a tassel.
+  - **The patches are painted into the hide:** a texture of blobs, each a few overlapping ellipses so its edge is
+    irregular. Three sit along the spine, which the camera sees most, and four round the flanks. Colouring
+    vertices or faces smeared the patches, or striped them along the capsule's long faces.
+- **Sheep:** a finer fleece of curls, a larger dark wedge of a face with ears and a woolly topknot, thin legs, and
+  a tail.
+- **Hens:** teardrop bodies with a cocked tail, a head with comb, beak and wattle, and legs; some pecking; a
+  quarter larger.
+- **Herds that never placed:**
+  - Thornwick's sheep pasture lay in the forest ring, so no sheep ever stood there. They now graze between the
+    north field and the road: 5 sheep.
+  - The Vale's cow pasture never placed a cow, and the new brook runs through it. The cows now graze on open grass
+    between the mill track and the river: 4 cows.
+  - The fields' walls are now placed before the herds, which graze round them.
+
 ## Where it stands, and what's next
 
 Scored on detail only (the owner's direction); light and colour are the game's own and no longer measured against

@@ -767,39 +767,83 @@ function wheatMesh(r, v) {
 // Farmyard life (critic pass 11e: the reference's village is busy with cows, hay, pumpkins and flowers; ours
 // stood bare). Low-poly, built in code like the rest; animals stand still, grazing or looking about.
 function lump(geo, r, amt) { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) * (1 + (r() - 0.5) * amt), p.getY(i) * (1 + (r() - 0.5) * amt), p.getZ(i) * (1 + (r() - 0.5) * amt)); geo.computeVertexNormals(); return geo; }
-function cowMesh(r, v) {
-  const g = new THREE.Group(), white = flat('#d6cfc0'), black = flat('#262020'), pink = flat('#d08a7c'), horn = flat('#d8cfb4');
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.17, 0.19), white); body.position.y = 0.2; g.add(body);
-  for (const [px, py] of [[-0.11, 0.23], [0.07, 0.18]]) {           // two patches, proud of the hide on every side, one over the back
-    const w = 0.07 + r() * 0.03, h = 0.07 + r() * 0.03, pt = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), black);
-    pt.position.set(px + (r() - 0.5) * 0.03, py, 0); g.add(pt);
+// The farmyard (critic pass 11e, re-made 2026-10-03: the owner found the beasts too blocky: a brick of a cow with
+// square patches stuck on, a cube for a head, no neck; posts for a sheep's legs; hens of a few facets). Now rounded:
+// a barrel of a body with patches painted into the hide, a neck, a tapered head and muzzle, ears, curved horns,
+// tapered legs, an udder and a tasselled tail; a fleece over a dark wedge face; hens as teardrops with a cocked tail.
+const smooth = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.9 });
+// a piebald hide, painted: dark blobs (each a few overlapping ellipses, so its edge is irregular) on a pale coat,
+// wrapped round the body by its UVs (vertex or face colours smeared, or striped along the capsule's long faces)
+function hideTex(r, base, dark) {
+  const S = 64, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
+  x.fillStyle = base; x.fillRect(0, 0, S, S); x.fillStyle = dark;
+  // three over the back, along the spine (a quarter of the way round the capsule, u 0.25: what the camera sees most),
+  // larger, then four round the barrel for the flanks
+  for (let i = 0; i < 7; i++) {
+    const back = i < 3, cx = back ? S * 0.25 + (r() - 0.5) * 8 : (i - 3 + 0.2 + r() * 0.6) * S / 4, cy = back ? 10 + i * 22 + (r() - 0.5) * 6 : 8 + r() * (S - 16), k0 = back ? 1.5 : 1;
+    for (let k = 0; k < 3; k++) for (const ox of [-S, 0, S]) { x.beginPath(); x.ellipse(cx + ox + (r() - 0.5) * 9, cy + (r() - 0.5) * 7, (4 + r() * 5) * k0, (3 + r() * 4) * k0, r() * 3, 0, 6.29); x.fill(); }
   }
-  const top = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.09), black); top.position.set(-0.02, 0.29, 0.02); g.add(top);
-  const graze = v % 2 === 0, head = new THREE.Group(); head.position.set(0.22, graze ? 0.1 : 0.27, 0); head.rotation.z = graze ? -0.6 : 0.1; g.add(head);
-  const hd = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.1), white); head.add(hd);
-  const hp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.104, 0.104), black); hp.position.x = -0.03; head.add(hp);
-  const muz = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.09), pink); muz.position.set(0.07, -0.02, 0); head.add(muz);
-  for (const sz of [-1, 1]) { const h = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.05, 4), horn); h.position.set(-0.01, 0.07, sz * 0.045); h.rotation.x = sz * 0.6; head.add(h); const e = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.025, 0.04), black); e.position.set(-0.02, 0.03, sz * 0.065); head.add(e); }
-  for (const [x, z] of [[0.15, 0.06], [0.15, -0.06], [-0.15, 0.06], [-0.15, -0.06]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.12, 5), white); l.position.set(x, 0.06, z); g.add(l); const hf = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.03), black); hf.position.set(x, 0.01, z); g.add(hf); }
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.14, 4), white); tail.position.set(-0.21, 0.17, 0); tail.rotation.z = 0.2; g.add(tail);
+  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const ellipsoid = (r, sx, sy, sz, m, x, y, z, parent, seg = 10) => { const e = new THREE.Mesh(new THREE.SphereGeometry(r, seg, Math.max(6, seg - 2)), m); e.scale.set(sx, sy, sz); e.position.set(x, y, z); parent.add(e); return e; };
+function limb(parent, m, x0, y0, z0, x1, y1, z1, r0, r1) {      // a tapered cylinder from one point to another
+  const a = new THREE.Vector3(x0, y0, z0), b = new THREE.Vector3(x1, y1, z1), len = a.distanceTo(b);
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, len, 7), m); c.position.copy(a).add(b).multiplyScalar(0.5);
+  c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); parent.add(c); return c;
+}
+function cowMesh(r, v) {
+  const g = new THREE.Group(), W = '#d6cfc0', K = '#262020', white = smooth(W), black = smooth(K), pink = smooth('#c08478'), horn = smooth('#d8cfb4');
+  // the barrel: a capsule along x, a little deeper than wide, in a painted piebald hide
+  const geo = new THREE.CapsuleGeometry(0.085, 0.2, 8, 20); geo.rotateZ(Math.PI / 2); geo.scale(1, 1.05, 0.9);
+  const body = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: hideTex(r, W, K), roughness: 0.9 })); body.position.y = 0.215; g.add(body);
+  ellipsoid(0.05, 1.2, 0.8, 1.3, white, -0.13, 0.25, 0, g);                   // the hips
+  ellipsoid(0.03, 1.2, 0.8, 1, pink, -0.07, 0.13, 0, g);                      // the udder
+  // legs, tapered, a dark hoof at each foot
+  for (const [x, z] of [[0.12, 0.05], [0.12, -0.05], [-0.13, 0.05], [-0.13, -0.05]]) {
+    limb(g, white, x, 0.18, z, x + (r() - 0.5) * 0.02, 0.025, z, 0.024, 0.016);
+    const hf = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.019, 0.025, 7), black); hf.position.set(x, 0.012, z); g.add(hf);
+  }
+  // the neck and head: grazing (head down to the grass) or looking up
+  const graze = v % 2 === 0, hx = graze ? 0.26 : 0.27, hy = graze ? 0.07 : 0.29, darkHead = v % 3 === 1, hm = darkHead ? black : white;
+  limb(g, white, 0.15, 0.24, 0, hx - 0.03, hy + 0.02, 0, 0.055, 0.04);
+  const head = new THREE.Group(); head.position.set(hx, hy, 0); head.rotation.z = graze ? -1.0 : -0.25; g.add(head);
+  ellipsoid(0.045, 1.35, 0.95, 0.9, hm, 0.01, 0, 0, head);                     // the skull, longer than deep
+  ellipsoid(0.034, 1, 0.85, 1.05, pink, 0.065, -0.012, 0, head);              // the muzzle
+  if (darkHead) ellipsoid(0.02, 1.6, 0.5, 0.6, white, 0.02, 0.03, 0, head);   // a white blaze
+  for (const sz of [-1, 1]) {
+    const e = ellipsoid(0.022, 0.5, 0.35, 1, hm, -0.015, 0.025, sz * 0.05, head); e.rotation.x = sz * 0.5;   // ears, out to the side
+    const h = new THREE.Mesh(new THREE.ConeGeometry(0.009, 0.04, 6), horn); h.position.set(-0.005, 0.045, sz * 0.03); h.rotation.x = sz * -0.9; h.rotation.z = 0.3; head.add(h);
+  }
+  // the tail: hanging from the rump to a dark tassel
+  limb(g, white, -0.2, 0.25, 0, -0.215, 0.11, 0.01, 0.007, 0.006);
+  ellipsoid(0.014, 0.8, 1.6, 0.8, black, -0.215, 0.1, 0.01, g, 6);
   g.rotation.y = r() * 0.6 - 0.3; return g;
 }
 function sheepMesh(r, v) {
-  const g = new THREE.Group(), wool = flat('#ece6d6'), face = flat('#2b2622');
-  const body = new THREE.Mesh(lump(new THREE.IcosahedronGeometry(0.11, 1), r, 0.18), wool); body.scale.set(1.35, 0.9, 1); body.position.y = 0.15; g.add(body);
-  for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.IcosahedronGeometry(0.05, 0), wool); t.position.set((r() - 0.5) * 0.22, 0.2 + r() * 0.05, (r() - 0.5) * 0.14); g.add(t); }   // the fleece's tufts
-  const graze = v % 2 === 1, hd = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.06), face); hd.position.set(0.15, graze ? 0.07 : 0.18, 0); g.add(hd);
-  for (const [x, z] of [[0.07, 0.05], [0.07, -0.05], [-0.07, 0.05], [-0.07, -0.05]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 4), face); l.position.set(x, 0.045, z); g.add(l); }
+  const g = new THREE.Group(), wool = flat('#ece6d6'), face = smooth('#2b2622');
+  const body = new THREE.Mesh(lump(new THREE.IcosahedronGeometry(0.11, 2), r, 0.12), wool); body.scale.set(1.35, 0.9, 1); body.position.y = 0.155; g.add(body);
+  for (let i = 0; i < 12; i++) { const t = new THREE.Mesh(new THREE.IcosahedronGeometry(0.035 + r() * 0.02, 1), wool); const a = r() * 6.28; t.position.set(Math.cos(a) * 0.12, 0.17 + r() * 0.07, Math.sin(a) * 0.08); g.add(t); }   // the fleece's curls
+  const graze = v % 2 === 1, head = new THREE.Group(); head.position.set(0.18, graze ? 0.07 : 0.2, 0); head.rotation.z = graze ? -0.9 : -0.2; g.add(head);
+  ellipsoid(0.045, 1.4, 0.95, 0.85, face, 0.015, 0, 0, head);                 // a dark wedge of a face
+  const cap = new THREE.Mesh(new THREE.IcosahedronGeometry(0.036, 1), wool); cap.position.set(-0.025, 0.03, 0); head.add(cap);   // the topknot
+  for (const sz of [-1, 1]) { const e = ellipsoid(0.024, 1.2, 0.4, 0.6, face, -0.005, 0.008, sz * 0.05, head); e.rotation.y = sz * 0.6; }   // ears
+  for (const [x, z] of [[0.07, 0.045], [0.07, -0.045], [-0.07, 0.045], [-0.07, -0.045]]) limb(g, face, x, 0.1, z, x, 0.0, z, 0.011, 0.008);
+  const tail = new THREE.Mesh(new THREE.IcosahedronGeometry(0.025, 1), wool); tail.position.set(-0.16, 0.17, 0); g.add(tail);
   g.rotation.y = r() * 6.28; return g;
 }
 function hensMesh(r) {
-  const g = new THREE.Group(), feather = [flat('#efe8da'), flat('#a5652e'), flat('#efe8da')], comb = flat('#c8322a'), beak = flat('#d8a23a');
+  const g = new THREE.Group(), feather = [smooth('#efe8da'), smooth('#a5652e'), smooth('#efe8da'), smooth('#5a3a22')], comb = smooth('#c8322a'), beak = smooth('#d8a23a');
   for (let i = 0; i < 4; i++) {
-    const h = new THREE.Group(); h.position.set((r() - 0.5) * 0.3, 0, (r() - 0.5) * 0.3); h.rotation.y = r() * 6.28; g.add(h);
-    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.035, 0), feather[i % 3]); b.scale.set(1.3, 1, 1); b.position.y = 0.05; h.add(b);
-    const hd = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.028, 0.022), feather[i % 3]); hd.position.set(0.04, 0.08, 0); h.add(hd);
-    const c = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.012, 0.006), comb); c.position.set(0.04, 0.1, 0); h.add(c);
-    const k = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.008, 0.008), beak); k.position.set(0.058, 0.078, 0); h.add(k);
+    const h = new THREE.Group(), peck = r() < 0.4; h.position.set((r() - 0.5) * 0.3, 0, (r() - 0.5) * 0.3); h.rotation.y = r() * 6.28; h.scale.setScalar(1.25); g.add(h);
+    const f = feather[i % 4], body = new THREE.Group(); body.position.y = 0.055; body.rotation.z = peck ? -0.5 : 0; h.add(body);
+    ellipsoid(0.034, 1.35, 1, 0.9, f, 0, 0, 0, body);                         // a teardrop body
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.05, 7), f); tail.position.set(-0.04, 0.025, 0); tail.rotation.z = 0.7; body.add(tail);   // cocked up behind
+    ellipsoid(0.019, 1, 1, 0.95, f, 0.04, 0.035, 0, body);                     // the head
+    ellipsoid(0.01, 1.3, 0.8, 0.4, comb, 0.04, 0.056, 0, body, 6);            // comb
+    ellipsoid(0.006, 0.8, 1.3, 0.6, comb, 0.056, 0.022, 0, body, 6);          // wattle
+    const k = new THREE.Mesh(new THREE.ConeGeometry(0.006, 0.016, 5), beak); k.position.set(0.064, 0.034, 0); k.rotation.z = -Math.PI / 2; body.add(k);
+    for (const sz of [-1, 1]) limb(h, beak, 0, 0.035, sz * 0.012, 0.005, 0, sz * 0.014, 0.004, 0.003);
   }
   return g;
 }
