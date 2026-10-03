@@ -1,6 +1,7 @@
 # Art critic pass 11 — toward the reference: plan and scores
 
-**Status: Plan (2026-10-03), iterating.** Each iteration below adds its numbers here when it ships.
+**Status: Implemented (2026-10-03), 11a–11l: overall 4.4 → 7.3, no area under 6.5.** Each iteration below has its
+numbers, captures and score; what's left is at the end.
 
 The owner gave a reference to score against: a frame of a commercial mobile builder's art, a hand-finished 3D
 village in autumn. It's another studio's work, so it stays out of the repo: it's kept in the scratch tree, used
@@ -452,8 +453,11 @@ clearing, with its trees outside the walls.
 | Life and density | 9 | 4 | 7 |
 | **Overall** | **8.7** | **4.4** | **7.3** |
 
-To reach 7.5 with nothing under 6, the cast is now the weakest area (6):
-- **Characters:** the reference's people are rounder and more saturated, and they work. Ours are pale where they
-  wear white and they stroll. Next: the cast's palette (fewer white garments, warmer skin, darker hair), and
-  passers-by carrying things.
-- **Trees and plants (7):** taller, layered tree masses at the town's edges, as the reference frames its village.
+Every area is now 6.5 or better, and the overall is 7.3 against the 7.5 target. What's left, by what it would
+buy:
+- **Characters (6.5 → 7.5): work in place.** The reference's villagers hoe, hammer and carry; ours walk and wait
+  with their tools in hand. Short work loops (hoe, hammer, sweep, carry) mean new clips in the actor bake for the
+  KayKit bodies. It's the largest remaining gain, and a bake and animation change, so it's the owner's call.
+- **Shadow (7 → 7.5): shade under eaves and awnings.** The reference's roofs throw a soft band of shade down the
+  wall below them; ours light walls evenly to the eaves. It's a bake-side occlusion term in `envlab.js`.
+- **Ground (7):** worn earth round doors and the well, where feet go.
