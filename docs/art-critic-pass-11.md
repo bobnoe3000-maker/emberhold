@@ -305,21 +305,46 @@ reference's strongest silhouette; the larger houses gained tiled dormers on the 
   cast's figures are still smaller and less crisp than the reference's.
 - **Overall, 6.7 → 6.8.**
 
+## Iteration 11h: figures cast shadows (shipped 2026-10-03)
+
+![11h, before and after: the high street, and the Vale's crossroads](img/art11/h-shadow.jpg)
+
+**What changed** (`renderer.js` `castShadow`):
+- **Every figure casts its silhouette on the ground**: party, townsfolk, passers-by and foes, outdoors (no sun
+  underground).
+  - It falls along the baked sun's line, as the trees' and buildings' shadows do: 0.55 px right and 0.08 px up
+    for each pixel of height. The trees' run to 0.80; cut short, it stays by its figure.
+  - It's thickened two pixels each way for the body's depth. A flat silhouette laid down was a one-pixel sliver.
+- **Marked as a baked shadow** (ALB alpha 254), so the time of day lifts it the same way, and a figure standing in
+  a tree's shadow never darkens twice.
+  - It's deeper than the bake's (× 0.36–0.48 against 0.52). At 0.52 it came out only 15–23 % darker after the
+    light pass, a smudge on the cobbles.
+- The Fallen and the dissolving cast none.
+
+**Measured:**
+- The knight's shadow at the crossroads: luminance 84 → **38**. The bush beside him reads 57, its contact shade
+  stacked on the cast.
+- Frame metrics move by less than 0.005 (luminance 0.452 → 0.448 on the square).
+
+**Score:**
+- Shadow and depth, 6 → **7**: figures stand on the ground in the same light as the trees, as the reference's do.
+  The reference's soft shade under eaves and awnings is still richer than ours.
+- **Overall, 6.8 → 6.9.**
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
 |---|---|---|---|
 | Light and colour | 9 | 3 | 8 |
-| Shadow and depth | 9 | 4 | 6 |
+| Shadow and depth | 9 | 4 | 7 |
 | Buildings | 9 | 5.5 | 7.5 |
 | Trees and plants | 9 | 4.5 | 7 |
 | Ground | 8 | 5 | 6.5 |
 | Characters | 8 | 5 | 6 |
 | Life and density | 9 | 4 | 6.5 |
-| **Overall** | **8.7** | **4.4** | **6.8** |
+| **Overall** | **8.7** | **4.4** | **6.9** |
 
 To reach 7.5 with nothing under 6:
 - **11g, the rest:** low dry-stone walls and fences between the fields, and an overhanging storey on the
   larger houses.
-- **11h, shadow:** crisp cast shadows under figures and props, as the reference has them.
 - **Then characters again:** passers-by at work (carrying, hoeing), and a crisper cast.

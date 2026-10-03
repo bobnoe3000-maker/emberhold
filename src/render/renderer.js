@@ -568,6 +568,29 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
+  // A figure's cast shadow (critic pass 11h: the reference puts a crisp shadow under every figure). Its silhouette
+  // laid on the ground along the baked sun's line (envlab.js SUN: the trees' shadows fall 0.80 px right and 0.11 px
+  // up a pixel of height; a figure's is cut to 0.55, so it stays under the figure), thickened two pixels each way
+  // for the body's depth (a flat silhouette laid down is a sliver). It's marked as a baked shadow (ALB alpha 254) but deeper (× 0.36–0.48:
+  // at the bake's 0.52 it read 15–23 % darker after the light pass, a smudge), so the day lifts it as it lifts theirs and a figure in a tree's shadow never darkens twice. Ground at the foot's
+  // height only, as footMark.
+  const CAST_X = 0.55, CAST_Y = -0.08, CAST_T = 2;
+  function castShadow(sp, footX, footY, h) {
+    const gh = Math.min(255, h * 4), x0 = Math.round(footX) - sp.ax, fy = Math.round(footY);
+    for (let yy = 0; yy < sp.h; yy++) {
+      const hgt = sp.ay - yy; if (hgt < 0) continue;
+      const sx = Math.round(hgt * CAST_X), sy = fy + Math.round(hgt * CAST_Y);
+      for (let xx = 0; xx < sp.w; xx++) {
+        if (!sp.mask[yy * sp.w + xx]) continue;
+        const px = x0 + xx + sx; if (px < 0 || px >= nvw) continue;
+        for (let py = sy - CAST_T; py <= sy + CAST_T; py++) {
+          if (py < 0 || py >= nvh) continue;
+          const i = (py * nvw + px) * 4; if (sALB[i + 3] === 254 || sNRM[i + 3] > gh + 8) continue;
+          sALB[i] *= 0.36; sALB[i + 1] *= 0.38; sALB[i + 2] *= 0.48; sALB[i + 3] = 254;
+        }
+      }
+    }
+  }
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
     const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
@@ -1044,6 +1067,7 @@ export function createRenderer(canvas, sim, input) {
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const rings = !!sim.battle;
+    if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
