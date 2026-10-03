@@ -2,6 +2,10 @@
 
 **v1.19 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
 
+v1.19a: the Scrag Warren's door is an **old adit** (§3.1), a lead level somebody drove into the range, worked out and
+boarded up long before the Vale's memory. The goblins took it and dug on. Its goblins have ears longer than their
+faces (§8).
+
 v1.19 brings the **hill goblins** into the Vale (§3.1, §4 *Peoples*, §8). They were under the north range before
 the empire came and never noticed it leave. Their warren, **the Scrag Warren**, opens at the foot of the range
 north of the mill, and its chief is **Old Skarn**. They took no interest in the Vale until this spring, when the
@@ -162,9 +166,12 @@ it's where everyone starts.
   - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh where the river
     leaves the Vale, out past the lumber camp (v1.18), where the legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
   - **The Scrag Warren** (v1.19): the hill goblins' burrow at the foot of the north range, north of
-    the mill, where the long way round runs under the scree. Two floors of tunnels dug into a scar
-    in the hillside, full of whatever has fallen off a cart this spring. Levels 2–5. Its chief, Old
-    Skarn, beats a drum in the deepest hall, and goblins come out of the walls when he does.
+    the mill, where the long way round runs under the scree. Its door is an old adit (v1.19a): somebody
+    drove a level into the range for lead long before anyone in the Vale remembers, timbered it, worked
+    it out and boarded it up. Nobody knows whose it was; the rails have rusted through and the spoil heap
+    has grassed over. The goblins tore the boards down, hung a horse skull on the cap and dug on past the
+    old workings: two floors of tunnels, full of whatever has fallen off a cart this spring. Levels 2–5.
+    Its chief, Old Skarn, beats a drum in the deepest hall, and goblins come out of the walls when he does.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
     Wickham road, out where the old road runs on north-east past the Deepdelve mine (v1.18). Nobody knows it's there until the Chronicle says so.
 - **The road (v1.9): why the Vale fights its dead.** The barrows lie under the old Wickham road.

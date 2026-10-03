@@ -669,11 +669,15 @@ const C3 = (h) => new THREE.Color(h);
 function faceted(geo, r, jit, colorFn) {
   const g = geo.index ? geo.toNonIndexed() : geo, p = g.attributes.position;
   // jitter shared positions consistently (hash the rounded coordinate) so faces stay closed
-  const key = (x, y, z) => `${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)}`, moved = new Map();
+  // (warren pass: toFixed keyed a seam vertex at -0.000 apart from its twin at 0.000, so the two moved apart and the
+  // crags and mountains showed the sky through cracks. The draws keep their order, so no shape changes, but every
+  // vertex at one place now takes the first offset drawn there: the seams close.)
+  const key = (x, y, z) => `${x.toFixed(3)},${y.toFixed(3)},${z.toFixed(3)}`, weld = (x, y, z) => `${Math.round(x * 1000)},${Math.round(y * 1000)},${Math.round(z * 1000)}`, moved = new Map(), at = new Map();
   for (let i = 0; i < p.count; i++) {
-    const k = key(p.getX(i), p.getY(i), p.getZ(i));
+    const k = key(p.getX(i), p.getY(i), p.getZ(i)), w = weld(p.getX(i), p.getY(i), p.getZ(i));
     if (!moved.has(k)) moved.set(k, [(r() - 0.5) * jit, (r() - 0.5) * jit * 0.7, (r() - 0.5) * jit]);
-    const d = moved.get(k); p.setXYZ(i, p.getX(i) + d[0], p.getY(i) + d[1], p.getZ(i) + d[2]);
+    if (!at.has(w)) at.set(w, moved.get(k));
+    const d = at.get(w); p.setXYZ(i, p.getX(i) + d[0], p.getY(i) + d[1], p.getZ(i) + d[2]);
   }
   g.computeVertexNormals();
   const col = new Float32Array(p.count * 3), n = g.attributes.normal;
@@ -686,6 +690,10 @@ function faceted(geo, r, jit, colorFn) {
   return g;
 }
 const vmat = () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true });
+// a cone that's closed: three r169's CylinderGeometry drops one triangle of every side quad when the top radius is 0
+// (it tests radiusTop for every row, not just the top one), so a ConeGeometry of 2+ height segments was half holes,
+// the sky showing through the crags (warren pass). A pin-point top keeps both.
+const solidCone = (rad, ht, seg, hs = 1) => new THREE.CylinderGeometry(1e-4, rad, ht, seg, hs);
 // rocks: warm dark field-stone (pale neutral grey read lilac under the violet dusk), more moss on top
 const ROCK = { base: C3('#5b564b'), dark: C3('#433f37'), light: C3('#6f685a'), moss: C3('#4a5233'), grass: C3('#46502f'), snow: C3('#d4d6da'), scree: C3('#524d44') };
 const tint = (c, k) => c.clone().multiplyScalar(k);
@@ -922,7 +930,7 @@ Object.assign(TYPES, {
   mine(S, g, r) {
     const out = new THREE.Group(); out.position.set(-0.2, 0, -0.25); g.add(out);
     const oc = (ny, y, q) => (ny > 0.6 && y < 0.35 ? tint(ROCK.grass, 0.8 + q * 0.3) : ny > 0.35 ? tint(ROCK.light, 0.85 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.25));
-    const crag = (x, z, rad, ht, seg) => { const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.3, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; out.add(m); };
+    const crag = (x, z, rad, ht, seg) => { const geo = solidCone(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.3, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; out.add(m); };
     crag(0, 0, 0.85, 0.42, 10);                                                   // a broad low outcrop…
     crag(-0.25, -0.2, 0.5, 0.78, 7); crag(0.22, -0.28, 0.42, 0.62, 7); crag(-0.05, 0.1, 0.4, 0.55, 7);   // …with a few blunt crags
     for (let i = 0; i < 3; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.18 + r() * 0.1, 0.8); k.position.set(Math.cos(a) * 0.6 - 0.2, 0, Math.sin(a) * 0.5 - 0.25); g.add(k); }
@@ -940,7 +948,7 @@ Object.assign(TYPES, {
     box(0.18, 0.1, 0.22, S.m.wood, 0, 0.03, 0, cart); for (const [x, z] of [[-0.08, -0.07], [0.08, -0.07], [-0.08, 0.07], [0.08, 0.07]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 8), S.m.trim); w.rotation.z = Math.PI / 2; w.position.set(x, 0.03, z); cart.add(w); }
     const ore = new THREE.Mesh(faceted(new THREE.DodecahedronGeometry(0.08, 0), r, 0.03, () => tint(C3('#5c5750'), 1)), vmat()); ore.position.y = 0.14; ore.scale.y = 0.6; cart.add(ore);
     // spoil heap and a winch frame on the outcrop's shoulder
-    const heap = new THREE.Mesh(faceted(new THREE.ConeGeometry(0.3, 0.12, 8, 2).translate(0, 0.06, 0), r, 0.04, (ny, y, q) => tint(ROCK.scree, 0.62 + q * 0.2)), vmat()); heap.position.set(0.55, 0, 0.5); g.add(heap);
+    const heap = new THREE.Mesh(faceted(solidCone(0.3, 0.12, 8, 2).translate(0, 0.06, 0), r, 0.04, (ny, y, q) => tint(ROCK.scree, 0.62 + q * 0.2)), vmat()); heap.position.set(0.55, 0, 0.5); g.add(heap);
     const wf = new THREE.Group(); wf.position.set(0.5, 0, -0.1); g.add(wf);
     for (const [x, z] of [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]]) box(0.03, 0.62, 0.03, S.m.beam, x, 0, z, wf);
     box(0.32, 0.04, 0.28, S.m.beam, 0, 0.62, 0, wf);
@@ -1036,41 +1044,97 @@ Object.assign(TYPES, {
     const cr = box(0.09, 0.07, 0.09, wood, -0.2, 0, 0.24, g); cr.rotation.y = 0.5;
     for (let i = 0; i < 4; i++) { const k = rockMesh(r, 0.015 + r() * 0.01, 0.5); k.position.set(-0.3 + r() * 0.7, 0, -0.2 + r() * 0.5); g.add(k); }
   },
-  // The Scrag Warren (world doc v1.19): the hill goblins' burrow, a hole dug into a scar of rock at the foot of the
-  // north range. A low ridge of grey crags with grass on top; on the camera side a ragged dark mouth propped on two
-  // crooked posts and a cart-shaft lintel, a hide hung half across it; sharpened stakes either side; a totem with a
-  // horse skull and a green rag; a fire pit; and what fell off the carts this spring: a barrel, sacks, a wheel.
+  // The Scrag Warren (world doc v1.19; the owner, 2026-10-03: "should look like an old mine entrance"): an adit
+  // somebody drove into the foot of the north range long before the Vale's memory, worked out, and the hill goblins
+  // took and dug on. Art pass (docs/art-critic-warren.md): it was a heap of cones with a black box beside it, side-on
+  // to the track, shorter than the people walking up to it. Now, turned to face the track (A):
+  //   the hill   a turfed shoulder of the range behind (a dome, not a peak), and a face cut square into it, in courses
+  //   the adit   a portal a head taller than a man: a timber set (two battered posts, a sagging cap, lagging over it),
+  //              a tunnel going back in two more sets into the dark, a goblin fire deep inside; the old boarding
+  //              torn down, two boards still hanging
+  //   the works  rusted rails out of it on rotten sleepers, broken off; the ore tub on its side and its ore spilled;
+  //              the spoil heap, grassed over; a stack of old pit props
+  //   goblins    a horse skull on the cap, a totem with a green rag, stakes along the track, a fire pit, bones
   warren(S, g, r) {
-    const ridge = new THREE.Group(); ridge.position.set(0, 0, -0.3); g.add(ridge);
-    const oc = (ny, y, q) => (ny > 0.55 && y > 0.18 ? tint(ROCK.grass, 0.75 + q * 0.3) : ny > 0.3 ? tint(ROCK.light, 0.8 + q * 0.2) : tint(ROCK.base, 0.75 + q * 0.25));
-    const crag = (x, z, rad, ht, seg) => { const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.32, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; ridge.add(m); };
-    crag(0, 0, 0.95, 0.5, 11);                                                     // a long low scar…
-    crag(-0.5, -0.1, 0.55, 0.72, 7); crag(0.45, -0.15, 0.5, 0.64, 7); crag(-0.05, -0.3, 0.5, 0.84, 7); crag(0.85, 0.05, 0.36, 0.42, 6); crag(-0.88, 0.1, 0.34, 0.38, 6);
-    for (let i = 0; i < 5; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.1 + r() * 0.08, 0.7); k.position.set(Math.cos(a) * 0.8, 0, Math.sin(a) * 0.45 - 0.1); g.add(k); }
-    // the mouth: a dark hole into the scar, two crooked posts and a cart-shaft across, a hide half across it
-    const m = new THREE.Group(); m.position.set(0.02, 0, 0.32); g.add(m);
-    box(0.36, 0.3, 0.34, mat(null, '#0a090c'), 0, 0, -0.1, m);
-    const post = (x, lean) => { const b = box(0.045, 0.36, 0.045, S.m.beam, x, 0, 0.06, m); b.rotation.z = lean; };
-    post(-0.2, 0.08); post(0.19, -0.1);
-    const lin = box(0.5, 0.045, 0.05, mat(null, '#3e2e22'), 0, 0.34, 0.06, m); lin.rotation.z = 0.06;
-    const hide = box(0.15, 0.22, 0.012, mat(null, '#6a5a3e'), -0.1, 0.1, 0.09, m); hide.rotation.z = 0.05;
-    // sharpened stakes in a ragged arc either side of the mouth
-    const stake = mat(null, '#5a4430');
-    for (const [x, z, h, lean] of [[-0.42, 0.42, 0.24, 0.25], [-0.52, 0.34, 0.28, 0.2], [-0.62, 0.24, 0.22, 0.3], [0.42, 0.44, 0.26, -0.25], [0.53, 0.36, 0.22, -0.2], [0.63, 0.26, 0.27, -0.3]]) {
-      const st = new THREE.Mesh(new THREE.ConeGeometry(0.022, h, 5), stake); st.position.set(x, h / 2, z); st.rotation.set(0.25, 0, lean); g.add(st); }
-    // the totem: a pole, a horse skull on it, a green rag tied under
-    box(0.035, 0.62, 0.035, S.m.beam, 0.34, 0, 0.62, g);
-    const bone = mat(null, '#d8ccb0'), skull = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.13), bone); skull.position.set(0.34, 0.64, 0.64); skull.rotation.x = -0.4; g.add(skull);
-    for (const sx of [-1, 1]) { const ey = box(0.014, 0.014, 0.01, mat(null, '#140c08'), 0.34 + sx * 0.02, 0.66, 0.705, g); ey.rotation.x = -0.4; }
-    const rag = box(0.11, 0.14, 0.006, mat(null, '#4e6a2e'), 0.39, 0.42, 0.63, g); rag.rotation.z = -0.15;
-    // the fire pit: a ring of stones and a low glow
-    for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, k = rockMesh(r, 0.028, 0.6); k.position.set(-0.3 + Math.cos(a) * 0.08, 0, 0.66 + Math.sin(a) * 0.06); g.add(k); }
-    const fire = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.05), S.m.glass); fire.userData.glow = true; fire.position.set(-0.3, 0.015, 0.66); g.add(fire);
-    // what fell off the carts: a barrel on its side, sacks, a wheel against the rock, bones
-    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.1, 10), S.m.wood); b.position.set(0.58, 0.045, 0.56); b.rotation.set(Math.PI / 2, 0, 0.7); g.add(b);
-    sackMesh(g, S, -0.56, 0.5, 1.0, 1.1); sackMesh(g, S, -0.48, 0.58, 0.8, 0.3);
-    const wl = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 4, 12), mat(null, '#3e2e22')); wl.position.set(0.3, 0.08, 0.36); wl.rotation.set(0.2, 0.4, 0); g.add(wl);
-    for (let i = 0; i < 5; i++) { const bn = box(0.05, 0.01, 0.012, bone, -0.1 + r() * 0.5, 0, 0.52 + r() * 0.25, g); bn.rotation.y = r() * 3; }
+    const A = 0.45, F = new THREE.Group(); F.rotation.y = A; g.add(F);     // local +z: down the track (outdoor.js), a little short of facing the camera
+    const rockC = (ny, y, q) => (ny > 0.62 ? tint(ROCK.grass, 0.78 + q * 0.22) : ny > 0.3 ? tint(ROCK.light, 0.82 + q * 0.14) : tint(ROCK.base, 0.78 + q * 0.16));
+    const slab = (w, h, d, x, y, z, jit, col = rockC, par = F) => { const geo = faceted(new THREE.BoxGeometry(w, h, d, 2, 2, 1), r, jit, col); const m = new THREE.Mesh(geo, vmat()); m.position.set(x, y + h / 2, z); par.add(m); return m; };
+    // the hill: the range's shoulder behind, turf on top
+    const hill = (x, z, rad, ht, seg, sx = 1.25) => { const geo = solidCone(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.14, (ny, y, q) => (ny > 0.8 || (ny > 0.7 && q > 0.4) ? tint(ROCK.grass, 0.82 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.16))), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; m.scale.set(sx, 1, 1); F.add(m); };   // a shoulder: broad, its steep faces rock and its gentle ones turf
+    // the shoulder over the adit: a low dome, not a peak (a cone's apex over the portal read as a tent's ridge)
+    { const geo = new THREE.SphereGeometry(1, 10, 4, 0, Math.PI * 2, 0, Math.PI / 2); geo.scale(1.15, 0.84, 0.9);
+      const m = new THREE.Mesh(faceted(geo, r, 0.1, (ny, y, q) => (ny > 0.78 || (ny > 0.66 && q > 0.45) ? tint(ROCK.grass, 0.82 + q * 0.2) : tint(ROCK.base, 0.8 + q * 0.16))), vmat()); m.position.set(0, 0, -1.22); F.add(m); }
+    hill(-0.74, -0.86, 0.6, 0.56, 8, 1.1); hill(0.76, -0.9, 0.62, 0.6, 8, 1.1);   // (behind the cut and the tunnel: nothing pokes through)
+    // the cut face: courses of squared rock either side of the portal and over it; the wings lower and set back
+    const PW = 0.46, PH = 0.62;                                             // the portal's opening: a head taller than a man (0.5)
+    // (each course a shade apart, a hair's gap between them, rough-hewn: the cut reads as worked rock, not one more crag
+    // and not a wall)
+    let cn = 0;
+    const course = (x0, x1, y, h, z, lean = 0) => { const k = [0.86, 0.74, 0.92, 0.8][cn++ % 4]; const m = slab(x1 - x0, h - 0.012, 0.3 + r() * 0.08, (x0 + x1) / 2, y, z - 0.17, 0.034, (ny, yy, q) => (ny > 0.62 ? tint(ROCK.grass, 0.82 + q * 0.2) : tint(ROCK.base, k + q * 0.12))); m.rotation.z = lean; };
+    for (const [x0, x1, z] of [[-0.62, -PW / 2 - 0.02, 0.02], [PW / 2 + 0.02, 0.6, 0.02]]) {
+      course(x0, x1, 0, 0.26, z); course(x0 + 0.03, x1 - 0.02, 0.26, 0.22, z - 0.03); course(x0 + 0.08, x1 - 0.05, 0.48, 0.2, z - 0.07); course(x0 + 0.14, x1 - 0.1, 0.68, 0.14, z - 0.12);
+    }
+    course(-PW / 2 - 0.04, PW / 2 + 0.04, PH + 0.02, 0.2, -0.04); course(-0.32, 0.3, PH + 0.22, 0.14, -0.12);
+    for (const [x, z, w, h] of [[-0.86, -0.2, 0.36, 0.34], [0.84, -0.24, 0.34, 0.4]]) slab(w, h, 0.3, x, 0, z, 0.05);   // the wings, set back
+    // turf over the cut, hanging a little over its lip
+    for (const [x, w] of [[-0.42, 0.42], [0.42, 0.4], [0, 0.6]]) { const t = box(w, 0.035, 0.2, mat(null, '#3e4a2a'), x, x === 0 ? PH + 0.36 : 0.82, x === 0 ? -0.1 : -0.12, F); t.rotation.x = 0.12; }
+    for (let i = 0; i < 9; i++) { const x = -0.6 + i * 0.15 + (r() - 0.5) * 0.05, hang = box(0.025, 0.05 + r() * 0.07, 0.012, mat(null, '#3a4426'), x, (Math.abs(x) < 0.32 ? PH + 0.3 : 0.76) - r() * 0.03, 0.0, F); hang.rotation.z = (r() - 0.5) * 0.5; }
+    // the tunnel: dark rock going back, two more timber sets fading into it, a black end, a goblin fire deep inside
+    const tun = mat(null, '#1c1a1c');
+    box(0.04, PH, 0.32, tun, -PW / 2 + 0.02, 0, -0.16, F); box(0.04, PH, 0.32, tun, PW / 2 - 0.02, 0, -0.16, F);
+    box(PW, 0.04, 0.32, tun, 0, PH - 0.04, -0.16, F); box(PW, 0.01, 0.32, mat(null, '#2a2622'), 0, 0, -0.16, F);
+    box(PW, PH, 0.02, mat(null, '#060506'), 0, 0, -0.32, F);
+    const set = (z, k, sag = 0, broken = false) => {                    // a timber set: posts battered in, a cap across
+      const wood = mat(null, '#' + new THREE.Color('#5a4632').multiplyScalar(k).getHexString());
+      for (const sx of [-1, 1]) { const p = box(0.065, PH - 0.02, 0.065, wood, sx * (PW / 2 - 0.035), 0, z, F); p.rotation.z = sx * 0.05 + (sx < 0 ? sag : 0); }
+      const cap = box(PW + 0.12, 0.07, 0.08, wood, 0, PH - 0.07, z, F); cap.rotation.z = sag * 0.8;
+      if (broken) { const b = box(0.07, 0.05, 0.3, wood, -0.12, 0, z - 0.1, F); b.rotation.set(0.1, 0.4, 0.05); }
+      return wood;
+    };
+    set(-0.12, 0.45); set(-0.24, 0.26, 0, true);
+    const fire = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.035, 0.05), S.m.glass); fire.userData.glow = true; fire.position.set(0.05, 0.02, -0.28); F.add(fire);
+    // the portal set: heavy, weathered, the left post sagging under its cap; lagging boards over the cap
+    const oak = set(0.02, 1, -0.06);
+    for (let i = 0; i < 4; i++) { const lb = box(PW + 0.08 - i * 0.04, 0.035, 0.03, oak, (r() - 0.5) * 0.03, PH + 0.005 + i * 0.04, -0.01 - i * 0.02, F); lb.rotation.z = -0.04 + (r() - 0.5) * 0.04; }
+    // the old boarding, torn down: two boards still hang across a corner, the rest lie in front
+    const board = mat(null, '#6a5640');
+    const hb = box(0.32, 0.04, 0.018, board, -0.07, 0.18, 0.07, F); hb.rotation.z = 0.5;
+    const hb2 = box(0.26, 0.04, 0.018, board, 0.1, 0.06, 0.075, F); hb2.rotation.z = -0.28;
+    for (const [x, z, ry] of [[-0.3, 0.3, 0.3], [-0.2, 0.38, 1.2], [0.36, 0.26, -0.5]]) { const b = box(0.3, 0.012, 0.045, board, x, 0, z, F); b.rotation.y = ry; }
+    // a horse skull nailed to the cap, its jaw gone
+    const bone = mat(null, '#d8ccb0'), sk = box(0.075, 0.055, 0.12, bone, 0.03, PH - 0.05, 0.1, F); sk.rotation.x = -0.6;
+    for (const sx of [-1, 1]) box(0.016, 0.014, 0.01, mat(null, '#140c08'), 0.03 + sx * 0.022, PH - 0.0, 0.155, F);
+    // rails out of the adit on rotten sleepers, a few gone; the right rail bent up where it broke off
+    const rust = mat(null, '#5a3a28'), sleeper = mat(null, '#3e3226');
+    for (let i = 0; i < 7; i++) { if (i === 3 || i === 5) continue; const sl = box(0.3, 0.018, 0.045, sleeper, (r() - 0.5) * 0.02, 0, -0.26 + i * 0.12, F); sl.rotation.y = (r() - 0.5) * 0.18; }
+    box(0.018, 0.022, 0.86, rust, -0.09, 0.018, 0.12, F);
+    box(0.018, 0.022, 0.56, rust, 0.09, 0.018, -0.02, F);
+    const bent = box(0.018, 0.022, 0.24, rust, 0.1, 0.03, 0.24, F); bent.rotation.set(-0.35, 0.12, 0);
+    // the ore tub, on its side off the rails, its ore spilled
+    const tub = new THREE.Group(); tub.position.set(0.42, 0.11, 0.42); tub.rotation.set(0, -0.5, Math.PI / 2 - 0.15); F.add(tub);
+    const tw = mat(null, '#4a3a2c');
+    box(0.2, 0.012, 0.26, tw, 0, -0.08, 0, tub); for (const sx of [-1, 1]) box(0.012, 0.15, 0.26, tw, sx * 0.1, -0.08, 0, tub); for (const sz of [-1, 1]) box(0.2, 0.15, 0.012, tw, 0, -0.08, sz * 0.13, tub);
+    for (const [x, z] of [[-0.07, -0.09], [0.07, -0.09], [-0.07, 0.09], [0.07, 0.09]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.02, 8), rust); w.rotation.z = Math.PI / 2; w.position.set(x * 1.6, -0.11, z); tub.add(w); }
+    for (let i = 0; i < 6; i++) { const k = rockMesh(r, 0.025 + r() * 0.015, 0.6); k.position.set(0.28 + r() * 0.16, 0, 0.5 + r() * 0.16); F.add(k); }
+    // the spoil heap: tailings tipped off the right, long grassed over at its top
+    const spoil = new THREE.Mesh(faceted(solidCone(0.42, 0.24, 9, 2).translate(0, 0.12, 0), r, 0.05, (ny, y, q) => (y > 0.16 && ny > 0.6 ? tint(ROCK.grass, 0.8 + q * 0.2) : tint(ROCK.scree, 0.7 + q * 0.18))), vmat());
+    spoil.position.set(0.86, 0, 0.22); spoil.scale.set(1, 1, 0.75); F.add(spoil);
+    // pit props nobody came back for: a stack of grey old logs against the cut, one rolled off
+    const props = new THREE.Group(); props.position.set(-0.6, 0, 0.2); props.rotation.y = 0.25; F.add(props);
+    const grey = mat(null, '#5e5446'), endC = mat(null, '#8a7a60');
+    for (const [row, n] of [[0, 3], [1, 2]]) for (let i = 0; i < n; i++) {
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.042, 0.42, 7), grey); c.rotation.z = Math.PI / 2; c.position.set(0, 0.04 + row * 0.072, (i - (n - 1) / 2) * 0.085); props.add(c);
+      const e = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.004, 7), endC); e.rotation.z = Math.PI / 2; e.position.set(0.212, c.position.y, c.position.z); props.add(e); }
+    const rl = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.042, 0.4, 7), grey); rl.rotation.set(0, 0.8, Math.PI / 2); rl.position.set(0.08, 0.04, 0.24); props.add(rl);
+    // goblins: a totem with a green rag, stakes along the track's edge, a fire pit, bones
+    box(0.035, 0.66, 0.035, S.m.beam, -0.4, 0, 0.3, F);
+    const sk2 = box(0.07, 0.06, 0.13, bone, -0.4, 0.62, 0.33, F); sk2.rotation.x = -0.4;
+    const rag = box(0.11, 0.16, 0.006, mat(null, '#4e6a2e'), -0.36, 0.4, 0.32, F); rag.rotation.z = -0.15;
+    for (const [x, z, h, lean] of [[-0.5, 0.56, 0.24, 0.3], [-0.58, 0.46, 0.28, 0.25], [0.58, 0.62, 0.22, -0.3]]) { const st = new THREE.Mesh(new THREE.ConeGeometry(0.022, h, 5), mat(null, '#5a4430')); st.position.set(x, h / 2, z); st.rotation.set(0.3, 0, lean); F.add(st); }
+    for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, k = rockMesh(r, 0.026, 0.6); k.position.set(-0.32 + Math.cos(a) * 0.08, 0, 0.66 + Math.sin(a) * 0.06); F.add(k); }
+    const pit = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.05), S.m.glass); pit.userData.glow = true; pit.position.set(-0.32, 0.015, 0.66); F.add(pit);
+    for (let i = 0; i < 5; i++) { const bn = box(0.05, 0.01, 0.012, bone, -0.15 + r() * 0.4, 0, 0.5 + r() * 0.3, F); bn.rotation.y = r() * 3; }
+    for (let i = 0; i < 5; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.07 + r() * 0.06, 0.7); k.position.set(Math.cos(a) * 0.95, 0, -0.2 + Math.sin(a) * 0.35); F.add(k); }
   },
   // The ninth milestone on the Wickham road: a squat imperial mile-stone with its numeral, a worn
   // plinth, and a slab at its foot that doesn't quite sit flat.

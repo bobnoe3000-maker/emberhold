@@ -476,7 +476,7 @@ function buildOverland(seed) {
     { w: 3, surface: 'track', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] },
     { w: 3, surface: 'track', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] },                // up to the mill
     { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
-    { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 0.5, warren[1] + 8]] },      // up under the range to the warren's door
+    { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   // a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
   for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
@@ -558,7 +558,7 @@ function buildOverland(seed) {
   const clear = (x, y, id) => {
     if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return false;
     for (const c of sites) if (hypot(x - c[0], y - c[1]) < (c === camp || c === warren ? 16 : 24)) return false;
-    return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32) && !inFrontOf([warren], x, y, 36, 22);
+    return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32) && !inFrontOf([warren], x, y, 40, 26);   // (the adit's spoil and its wreckage reach wider than the old hole did)
   };
   const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 236, y: 182, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
   // a wood's crowns close over each other (groves overlap there, as the range's massifs do); its edge thins to singles
@@ -610,10 +610,10 @@ function buildOverland(seed) {
   o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 6.5, x1: keep[0] + 3, y1: keep[1] + 9.5, to: 'dungeon', site: 'wickham_keep' });   // the keep's own door (the owner removed its curtain wall)
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
-  o.exits.push({ x0: warren[0] - 2.5, y0: warren[1] + 5, x1: warren[0] + 3.5, y1: warren[1] + 8, to: 'dungeon', site: 'scrag_warren' });   // the hole in the scar
+  o.exits.push({ x0: warren[0] - 1, y0: warren[1] + 4.5, x1: warren[0] + 5.5, y1: warren[1] + 8, to: 'dungeon', site: 'scrag_warren' });   // the old adit's mouth
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 0.5, y: warren[1] + 14.5 } };
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }
