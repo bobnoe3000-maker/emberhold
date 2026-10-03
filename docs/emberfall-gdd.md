@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.15 · 2026-10-03 · Plan of record for game design.** v1.15 lays out the towns (§10;
+**v1.16 · 2026-10-03 · Plan of record for game design.** v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8); quest and board rewards are unchanged. v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -531,8 +531,8 @@ before v1.10, the same amount), wherever the company is.
 - **Unpaid:** the wage is owed, and the sellsword's perks go dark (they still fight) until it's
   paid. Pay what's owed at a tavern (*Settle wages*), or at the next dawn you can afford it.
 - **Sizing:** two Lanterns at level 6 cost 300 gold a day, about 750 an hour. A fighting party
-  earns about 9,000 an hour at level 6 (`roomlv.mjs`), so that's 8–15 % of income, depending on
-  time in town.
+  earns about 6,200 an hour at level 6 (`roomlv.mjs`; 9,000 before dropped gold was cut to 70 %,
+  2026-10-03), so that's 12–22 % of income, depending on time in town.
 
 **Perks.** There are 32 perks in seven families. Each costs points against the rank's budget; a
 quirk costs −1, so it buys one more point. One roll in five carries a quirk. The numbers are in
@@ -696,6 +696,11 @@ with `roomlv.mjs --perks` on 4 seeds, 300 s, fighter + rogue + cleric in the cla
 **Rare but valuable.** Every kill drops a little gold, XP and sometimes materials. Gear
 drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 
+**Dropped gold is 70 %** (2026-10-03): a kill's gold (its kind's gold × its level) and a chest's
+are cut to 70 % (`battle.js` GOLD_DROP). Quest and board rewards, which are paid, are not. Measured
+over 300 s with the right party in a same-level room: 312 → 212 gold at level 3, 756 → 517 at 6,
+1,224 → 856 at 9; the fight itself is unchanged.
+
 | Slot | Fighter | Rogue | Mage |
 |---|---|---|---|
 | Weapon | swords, axes, greatswords, great-axes | daggers; hunting bows and yew longbows; hand and heavy crossbows (bows and crossbows shoot, §5) | wands, staves |
@@ -722,7 +727,7 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
     - the Old Barrows 1.2, the Tithe Mill 1.4 (at least 1), Wickham Keep 1.2;
     - the Sunken Chapel 0.6, where pools crowd some out;
     - it had been about 3.
-  - **What's in one:** every chest gives (10 + 5 × room level) × 0.8–1.2 gold, plus wood and
+  - **What's in one:** every chest gives (10 + 5 × room level) × 0.8–1.2 × 0.7 gold, plus wood and
     stone. Its gear chance is 15 % (+5 % a room level; 20 % of that Fine, 7 % Rare); it was
     8.5 %.
   - **Gear an hour holds:** the farm (`loot.mjs`, levels 3 / 6 / 9 × 3 seeds × 3 h) opens 3.8

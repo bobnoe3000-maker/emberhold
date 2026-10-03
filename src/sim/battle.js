@@ -132,6 +132,9 @@ export const FAMILIES = {
 //   line   (the Standard of the Third Legion) Ashbound within LINE_R of it take half damage
 // `once`: a story boss falls for good (state.bosses counts kills; his hall then fights as any other).
 // Events: 'bossWave' { id, name } · 'bossCall' { id } · 'bossKindle' { id, x, y } · 'bossDown' { id, name, first, x, y, lvl }.
+// Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
+// which are paid, are not.
+export const GOLD_DROP = 0.7;
 /** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
@@ -353,7 +356,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
     for (const m of living) gainXp(m, share, lv);
     for (const m of state.bench || []) gainXp(m, Math.round(share * BENCH_XP), lv);   // the bench earns half
-    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party));   // (a Scavenger's or a Greedy sellsword's eye)
+    state.counters.gold = (state.counters.gold || 0) + Math.round(e.gold * e.lvl * goldMod(state.party) * GOLD_DROP);   // (a Scavenger's or a Greedy sellsword's eye)
     // cinders (✦) from the strong (GDD §8 v1.13): an elite gives ELITE_CINDERS, a boss BOSS_CINDERS, for the smith
     const ci = e.boss ? BOSS_CINDERS : e.elite ? ELITE_CINDERS : 0;
     if (ci) { state.counters.embers = (state.counters.embers || 0) + ci; bus.emit('combat', { t: 'cinders', x: e.x, y: e.y, amount: ci }); }

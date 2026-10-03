@@ -17,7 +17,7 @@ import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
 import { hash2 } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
-import { createBattle, BOSSES } from './battle.js';
+import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
 import { placeRoad, createRoad } from './road.js';
 import { createQuests, TRIAL_LEVEL } from './quests.js';
@@ -376,7 +376,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
           if (prop === 'chest') {                          // gold, always, and maybe gear: item level = its room's level (the hero's outdoors)
             const c = world.level && world.level.cells.get(cmd.tx + ',' + cmd.ty), rl = c && world.roomLevels && world.roomLevels.get(c.room);
             const ilv = rl || Math.max(1, world.kind === 'dungeon' ? state.depth + 1 : state.party[0].level);
-            const gold = Math.round((CHEST_GOLD[0] + CHEST_GOLD[1] * ilv) * (0.8 + 0.4 * hash2(cmd.tx, cmd.ty, world.seed + 77)));
+            const gold = Math.round((CHEST_GOLD[0] + CHEST_GOLD[1] * ilv) * (0.8 + 0.4 * hash2(cmd.tx, cmd.ty, world.seed + 77)) * GOLD_DROP);
             state.counters.gold = (state.counters.gold || 0) + gold;
             const item = loot.drop('chest', { ilv, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
             bus.emit('chestOpened', { tx: cmd.tx, ty: cmd.ty, x: cmd.tx + 0.5, y: cmd.ty + 0.5, gold, item: item ? { name: item.name, r: item.r } : null });   // what it held (or that it held no gear): ui/hud.js
@@ -477,7 +477,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // (M3: attributes, auto, origin, skill ranks, auto-cast off-list, priority, stance, Fallen,
   // Weakened-until and respec count; v14: a sellsword's rank, perks, hidden perk, loyalty bond,
   // wages owed and retrains, companions.js)
-  // a chest's gold: (a + b × its room level) × 0.8–1.2 by where it stands (GDD §8, 2026-10-01)
+  // a chest's gold: (a + b × its room level) × 0.8–1.2 by where it stands (GDD §8, 2026-10-01), × GOLD_DROP (0.7, 2026-10-03)
   const CHEST_GOLD = [10, 5];
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
