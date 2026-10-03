@@ -151,3 +151,27 @@ re-scored, and a before/after sheet added below.
 - **Overall, 4.4 → 5.1.**
 
 **Next:** 11b, shadow and depth.
+
+## Iteration 11b: shadow and depth (shipped 2026-10-03)
+
+![11b, before and after: the north-west, the square, the crossroads, the high street](img/art11/b-shadow.jpg)
+
+**What changed:**
+- **Contact shade** (`outdoorpaint.js` `aoField`): a field at half a tile, from every placed thing's footprint.
+  - Under a crown (an ellipse) and round a building, rock or bush (its footprint), the ground darkens: by up to
+    42 % under trees, 55 % at a building's base and 25 % at small things.
+  - The shade is gone 2.2 tiles out.
+  - It's built once a scene and kept off the sim's world (a `WeakMap`).
+- **A lift on faces squarely to the sun** (the light pass: + 0.55 × (N·L)⁴), so lit tops go toward white-gold.
+- **Cast shadows** lift less by day (0.3 → 0.18).
+
+**Measured** (11a → 11b): highlights 0.62–0.69 → **0.65–0.73** (reference 0.72); contrast 0.14–0.19 →
+**0.16–0.21** (0.18); luminance 0.37–0.44 → 0.37–0.45. Saturation, colourfulness and warmth are unchanged.
+
+**Score:**
+- Shadow and depth, 4.5 → **6**: things sit on the ground now. The reference's crisp cast shadows under every
+  figure and prop are still finer than ours.
+- Light and colour, 7 → **7.5**.
+- **Overall, 5.1 → 5.4.**
+
+**Next:** 11c, buildings.

@@ -6,6 +6,7 @@
 // material, flat or low-frequency normals, noise only at low frequency or per cell.
 
 import { groundAt, G } from '../sim/outdoor.js';
+import { ENV_FOOT } from '../sim/envfoot.js';
 import { hash2, fbm } from '../sim/rng.js';
 import { ELIT } from './palette.js';
 import { norm3 } from './gsprite.js';
@@ -105,15 +106,50 @@ function field(o, q, gx, gy, tx, ty, rx, ry) {
   return ret(n > 0.5 ? R.f[2] : R.f[3]);
 }
 
+// Contact shade (critic pass 11b: nothing sat on the ground; the reference darkens every base): a field at half a
+// tile over the scene, from every placed thing's footprint. Under a tree's crown and round a building's walls the
+// ground darkens, most at the base, gone 2.2 tiles out. Built once a scene (structures placed later, the road's
+// wagon, are small). Presentation only: kept off the sim's world object.
+const AO = new WeakMap(), AO_R = 2.2;
+function aoField(o) {
+  let f = AO.get(o); if (f) return f;
+  const S = 2, X0 = -o.PAD, Y0 = -o.PAD, W = o.GW * S, Hh = o.GH * S, g = new Float32Array(W * Hh);
+  for (const st of o.structs) {
+    const ft = ENV_FOOT[st.id]; if (!ft) continue;
+    const tree = /pine|oak|autumn|grove|dead/.test(st.id), small = /^ug_|^rock|stump|flag|wheelbarrow|resource/.test(st.id);
+    if (st.id.startsWith('bridge') || /mountain/.test(st.id)) continue;
+    const k = tree ? 0.42 : small ? 0.25 : 0.55, x0 = st.x + ft[0], y0 = st.y + ft[1], x1 = st.x + ft[2], y1 = st.y + ft[3];
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2 * (tree ? 0.75 : 1), ry = (y1 - y0) / 2 * (tree ? 0.75 : 1);
+    for (let j = Math.max(0, Math.floor((cy - ry - AO_R - Y0) * S)); j <= Math.min(Hh - 1, Math.ceil((cy + ry + AO_R - Y0) * S)); j++)
+      for (let i = Math.max(0, Math.floor((cx - rx - AO_R - X0) * S)); i <= Math.min(W - 1, Math.ceil((cx + rx + AO_R - X0) * S)); i++) {
+        const px = i / S + X0 + 0.25, py = j / S + Y0 + 0.25;
+        // the distance outside the footprint: an ellipse for a crown, the rectangle for anything else
+        const d = tree ? Math.max(0, (Math.hypot((px - cx) / rx, (py - cy) / ry) - 1) * Math.min(rx, ry))
+          : Math.hypot(Math.max(x0 - px, 0, px - x1), Math.max(y0 - py, 0, py - y1));
+        const a = k * Math.max(0, 1 - d / AO_R); if (a > g[j * W + i]) g[j * W + i] = a;
+      }
+  }
+  f = { g, W, Hh, S, X0, Y0 }; AO.set(o, f); return f;
+}
+function aoAt(o, gx, gy) {
+  const f = aoField(o), i = Math.floor((gx - f.X0) * f.S), j = Math.floor((gy - f.Y0) * f.S);
+  return i < 0 || j < 0 || i >= f.W || j >= f.Hh ? 0 : f.g[j * f.W + i];
+}
+const SHADED = [0, 0, 0];
+
 // Paint one G-buffer pixel of outdoor ground. Returns a shared { c, n, e }.
 export function paintOutdoor(o, gx, gy, tx, ty, rx, ry) {
   const q = groundAt(o, gx, gy);
+  let r;
   switch (q.g) {
     case G.WATER: return water(o, q, gx, gy);
-    case G.BANK: return bank(o, q, gx, gy, tx, ty, rx, ry);
-    case G.DIRT: return dirt(o, q, gx, gy, tx, ty, rx, ry);
-    case G.COBBLE: return cobble(o, q, gx, gy);
-    case G.FIELD: return field(o, q, gx, gy, tx, ty, rx, ry);
-    default: return grass(o, gx, gy, tx, ty, rx, ry);
+    case G.BANK: r = bank(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.DIRT: r = dirt(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.COBBLE: r = cobble(o, q, gx, gy); break;
+    case G.FIELD: r = field(o, q, gx, gy, tx, ty, rx, ry); break;
+    default: r = grass(o, gx, gy, tx, ty, rx, ry);
   }
+  const a = aoAt(o, gx, gy);
+  if (a > 0) { const k = 1 - a; SHADED[0] = r.c[0] * k; SHADED[1] = r.c[1] * k; SHADED[2] = r.c[2] * k * 1.04; r.c = SHADED; }
+  return r;
 }

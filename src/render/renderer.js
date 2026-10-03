@@ -100,7 +100,8 @@ void main(){
   vec2 p=gl_FragCoord.xy;
   vec3 amb=dot(uAmbC,vec3(1.0))>0.0?uAmbC:mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
   vec3 col=A.rgb*amb*(0.72+0.28*n.z);
-  col+=A.rgb*uSunC*max(dot(n,uSunL),0.0);
+  float sd=max(dot(n,uSunL),0.0);
+  col+=A.rgb*uSunC*(sd+0.55*sd*sd*sd*sd);   // + a lift on faces squarely to the sun: the reference's lit tops go near white-gold (pass 11b)
   for(int i=0;i<3;i++){
     vec3 lp=uL[i];
     vec3 d=vec3(p.x-lp.x,(lp.y-p.y)*1.8,lp.z-h);

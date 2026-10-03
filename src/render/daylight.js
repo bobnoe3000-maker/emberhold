@@ -32,7 +32,7 @@ export const BLEND_S = 120;                       // two minutes of play from on
 // night keeps its dark.
 export const LOOKS = {
   dawn: { sun: [1.25, 0.88, 0.66], amb: [0.42, 0.40, 0.46], win: 0.45, lamp: 0.65, wisp: 0.8, bloom: 0.9, lift: 0.2, vig: 0.5, haze: 0.5, sat: 1.12 },
-  day: { sun: [1.62, 1.38, 1.02], amb: [0.62, 0.57, 0.50], win: 0.12, lamp: 0.3, wisp: 0.55, bloom: 0.75, lift: 0.3, vig: 0.32, haze: 0, sat: 1.28 },
+  day: { sun: [1.62, 1.38, 1.02], amb: [0.62, 0.57, 0.50], win: 0.12, lamp: 0.3, wisp: 0.55, bloom: 0.75, lift: 0.18, vig: 0.32, haze: 0, sat: 1.28 },
   dusk: { sun: [0.78, 0.55, 0.40], amb: [0.31, 0.29, 0.44], win: 1, lamp: 1, wisp: 1, bloom: 1, lift: 0, vig: 0.6, haze: 0.6, sat: 1.1 },
   night: { sun: [0.30, 0.37, 0.58], amb: [0.23, 0.24, 0.38], win: 1.3, lamp: 1.4, wisp: 1.45, bloom: 1.2, lift: 0.15, vig: 0.85, haze: 1, sat: 1 },
 };
