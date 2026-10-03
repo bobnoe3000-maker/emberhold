@@ -44,6 +44,33 @@ R.localClippingEnabled = true;
 const nrmMat = new THREE.MeshNormalMaterial({ clippingPlanes: CLIP, side: THREE.DoubleSide });
 keyMat.side = THREE.DoubleSide; shadowMat.side = THREE.DoubleSide;
 const glowOn = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, clippingPlanes: CLIP }), glowOff = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, clippingPlanes: CLIP });
+// CUT-OUT materials (a glTF alphaMode MASK: leaf cards, petals, grass blades): the passes above are one
+// material for every mesh, so a leaf card would bake as a solid quad into the normals, the depth key and the
+// shadow. A cut-out mesh gets its own copy of each pass that drops the texels under its alpha cutoff.
+const cutCache = new WeakMap();
+function cutPass(src, kind) {
+  let c = cutCache.get(src); if (!c) cutCache.set(src, (c = {}));
+  if (c[kind]) return c[kind];
+  const U = { uMap: { value: src.map }, uCut: { value: src.alphaTest }, uFloor: keyMat.uniforms.uFloor, uSun: { value: SUN } };
+  const drop = 'if (texture2D(uMap, vUv).a < uCut) discard;';
+  const VS = {
+    key: 'varying vec3 vW; varying vec2 vUv; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    sh: 'uniform vec3 uSun; varying vec2 vUv; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position,1.0); w.y = max(w.y, 0.0); w.xyz -= uSun * (w.y / uSun.y); w.y = 0.001; gl_Position = projectionMatrix * viewMatrix * w; }',
+    nrm: 'varying vec3 vN; varying vec2 vUv; varying float vY; void main(){ vUv = uv; vN = normalize(normalMatrix * normal); vY = (modelMatrix * vec4(position,1.0)).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    uv: 'varying vec2 vUv; varying float vY; void main(){ vUv = uv; vY = (modelMatrix * vec4(position,1.0)).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    emi: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  };
+  const FS = {
+    key: `uniform sampler2D uMap; uniform float uCut, uFloor; varying vec3 vW; varying vec2 vUv; void main(){ ${drop} if (vW.y < uFloor) discard; float k = (vW.x + vW.z + 0.816 * vW.y) * ${UNIT_TILES.toFixed(1)} + 128.0; gl_FragColor = vec4(floor(k) / 255.0, fract(k), 0.0, 1.0); }`,
+    sh: `uniform sampler2D uMap; uniform float uCut; varying vec2 vUv; void main(){ ${drop} gl_FragColor = vec4(1.0); }`,
+    // (as MeshNormalMaterial: the view-space normal, turned to face the camera on a back face, packed 0..1)
+    nrm: `uniform sampler2D uMap; uniform float uCut, uFloor; varying vec3 vN; varying vec2 vUv; varying float vY; void main(){ ${drop} if (vY < uFloor) discard; vec3 n = normalize(vN) * (gl_FrontFacing ? 1.0 : -1.0); gl_FragColor = vec4(n * 0.5 + 0.5, 1.0); }`,
+    uv: `uniform sampler2D uMap; uniform float uCut, uFloor; varying vec2 vUv; varying float vY; void main(){ ${drop} if (vY < uFloor) discard; vec2 u = fract(vUv); gl_FragColor = vec4((floor(u.x * 8.0) + 0.5) / 8.0, (floor(u.y * 4.0) + 0.5) / 4.0, fract(u.y * 4.0), 1.0); }`,
+    emi: `uniform sampler2D uMap; uniform float uCut; varying vec2 vUv; void main(){ ${drop} gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }`,
+  };
+  return (c[kind] = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS[kind], fragmentShader: FS[kind], side: THREE.DoubleSide }));
+}
+
 // atlas swatch id (8 × 4 gradient swatches): R = column/8, G = row/4 — used to find windows
 const uvMat = new THREE.ShaderMaterial({
   uniforms: { uFloor: keyMat.uniforms.uFloor },
@@ -53,7 +80,7 @@ const uvMat = new THREE.ShaderMaterial({
 
 // bake one model → { w, h, ax, ay, alb, nrm, key (dataURLs), emi, foot } ; ax/ay = pixel of the model origin
 window.bakeEnv = async (name, o = {}) => {
-  const root = o.nature ? makeNature(o.nature, o.seed || 1, o.variant || 0) : o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(`./models/env/${name}.gltf`)).scene;
+  const root = o.nature ? makeNature(o.nature, o.seed || 1, o.variant || 0) : o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(o.gltf ? `./models/${o.gltf}.gltf` : `./models/env/${name}.gltf`)).scene;   // o.gltf: a path under models/ (models/nature: the Stylized Nature MegaKit)
   if (o.rotY) root.rotation.y = o.rotY * Math.PI / 180;
   if (o.scale) root.scale.setScalar(o.scale);
   root.updateMatrixWorld(true);
@@ -82,11 +109,17 @@ window.bakeEnv = async (name, o = {}) => {
   const scene = new THREE.Scene(); scene.add(root);
   const albMats = new Map();
   const maskMat = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
-  root.traverse((m) => { if (m.isMesh && m.userData.mask) albMats.set(m, maskMat); else if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
+  const cut = new Map();                                    // a cut-out mesh → its source material (alphaTest, map)
+  root.traverse((m) => { if (m.isMesh && !m.userData.mask && m.material.alphaTest > 0 && m.material.map) cut.set(m, m.material); });
+  root.traverse((m) => { if (m.isMesh && m.userData.mask) albMats.set(m, maskMat); else if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, alphaTest: m.material.alphaTest || 0, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
   const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d', { willReadFrequently: true });
   const pass = (kind) => {
     if (kind === 'alb') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = albMats.get(m); }); R.outputColorSpace = THREE.SRGBColorSpace; }
-    else if (kind === 'emi') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = m.userData.glow ? glowOn : glowOff; }); R.outputColorSpace = THREE.SRGBColorSpace; }
+    else if (kind === 'emi') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = m.userData.glow ? glowOn : cut.has(m) ? cutPass(cut.get(m), 'emi') : glowOff; }); R.outputColorSpace = THREE.SRGBColorSpace; }
+    else if (cut.size) {                                    // per mesh: a cut-out mesh drops its cut texels in every pass
+      const base = kind === 'nrm' ? nrmMat : kind === 'uv' ? uvMat : kind === 'sh' ? shadowMat : keyMat;
+      scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = cut.has(m) ? cutPass(cut.get(m), kind) : base; }); R.outputColorSpace = THREE.LinearSRGBColorSpace;
+    }
     else { scene.overrideMaterial = kind === 'nrm' ? nrmMat : kind === 'uv' ? uvMat : kind === 'sh' ? shadowMat : keyMat; R.outputColorSpace = THREE.LinearSRGBColorSpace; }
     R.toneMapping = THREE.NoToneMapping; R.setClearColor(0, 0); R.render(scene, cam);
     tx.clearRect(0, 0, W, H); tx.drawImage(R.domElement, 0, 0); return tx.getImageData(0, 0, W, H);
