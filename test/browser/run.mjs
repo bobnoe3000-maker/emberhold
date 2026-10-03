@@ -351,7 +351,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');
     check('quest: the tracker line names it, with its counts', /The Long Way Round/.test(tracker) && /Waves 0\/4/.test(tracker), tracker.replace(/\n/g, ' · '));
     await p.locator('#journalBtn').tap();
-    const card = await p.locator('#journal .q').first().innerText().catch(() => '');
+    const card = await p.locator('#journal .q:not(.story)').first().innerText().catch(() => '');
     check('quest: the Journal shows it (who wants it and why, the step, both objectives, the reward)', /Hold four waves there/.test(card) && /Maudry Fenn keeps the Tired Mule/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /150 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
     await p.locator('#journal .acts button', { hasText: 'Tracked' }).tap(); await run(2);
     const untracked = await p.evaluate(() => globalThis.__sim.state.tracked);
@@ -435,7 +435,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('board: "Take the job" is a command the sim takes; the job is tracked', !!id && /^board_0_1_0$/.test(id) && st.tracked === id && (await p.locator('#hubSheet .job.taken').count()) === 1, JSON.stringify(st));
     await p.locator('#hubSheet .close').tap(); await run(2);
     await p.locator('#journalBtn').tap();
-    const card = await p.locator('#journal .q').first().innerText().catch(() => '');
+    const card = await p.locator('#journal .q:not(.story)').first().innerText().catch(() => '');
     check('board: the Journal shows the job (Board, its poster and skulls, the objective)', /BOARD|Board/.test(card) && /Easy|Fair|Hard/.test(card) && /0\/\d/.test(card), card.split('\n').slice(0, 3).join(' · '));
     await p.locator('#journal .x').tap();
     await p.evaluate((id) => { globalThis.__sim.state.quests[id].st = 2; }, id);     // (done: the sim tests walk it for real)

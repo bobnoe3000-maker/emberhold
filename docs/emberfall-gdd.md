@@ -909,6 +909,14 @@ three are completed. **Chapter quests** (the main arc) are pinned on top and gat
   They're tagged **Side quest · Errand** (or Bounty, and so on) in a muted colour, listed after,
   and marked ◆ on the tracker.
 - In code: `src/ui/journal.js` `isMain`.
+- **Where the story stands (2026-10-03, the owner: "not clear where I find the next step").** With no chapter in
+  hand, the Journal's Main story section still says something: the next chapter and who gives it (*Next: The
+  Diggers. Talk to Osric Hale in Thornwick*), the level it waits for, or that the act is done (*Act I is done*:
+  Act II, the Greywater Fens, opens in a later update). While the story waits, a **Still in the Vale** list names
+  what's open: Brannoc in Wickham Keep, the Standard, the Scrag Warren, the Chronicle's missing pages, the Ninth
+  Milestone once found, a class trial waiting, the board. Words in `content/story.json`; which apply,
+  `src/ui/storystatus.js`. Hedda's *Hens Under the Hill* is open to level 30 (it capped at 8, so a hero past
+  Act I never saw it).
 
 **Implemented (v1.4, M4 slice 3).** Thornwick's board hangs in the Tired Mule (Tavern → Quest
 board); `src/sim/board.js`, words in `content/board/`.

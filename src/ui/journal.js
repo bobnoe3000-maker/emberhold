@@ -15,6 +15,8 @@ import { SITE_IDS } from '../sim/sites.js';
 import { swallow } from './actorart.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { FRAGMENTS, SETS } from '../sim/lore.js';
+import { CLASSES } from '../sim/party.js';
+import { storyStatus, openLeads } from './storystatus.js';
 
 const CSS = `
 #journalBtn { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); top: calc(var(--hud-b, 50px) + 172px); z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
@@ -73,6 +75,10 @@ const CSS = `
 #journal .frag.missing h3 { color: #7c748a; }
 #journal .summary { font: 13px/1.45 Georgia, serif; color: #b8ac98; margin-top: 4px; }
 #journal .summary.why { margin: 0 0 8px; font-style: italic; }
+#journal .q.story h3 { margin-top: 4px; }
+#journal .leads { margin: 0 0 14px; padding: 0; list-style: none; }
+#journal .leads li { font: 13.5px/1.45 Georgia, serif; color: #cfc2ac; padding: 7px 0 7px 18px; border-bottom: 1px solid rgba(214,170,98,0.12); position: relative; }
+#journal .leads li::before { content: '◆'; position: absolute; left: 2px; top: 7px; font-size: 10px; color: #a08a6a; }
 #journal .step .now { font: 700 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; color: #d8a040; }
 `;
 const BOOK = '<svg viewBox="0 0 24 24"><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><i class="dot"></i>';
@@ -108,6 +114,22 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
   </div>`;
 }
 
+// the words in content/story.json with the sim's own values in their {slots}
+const fill = (t, v) => String(t || '').replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? ''));
+/** where the main story stands when no chapter is in hand, and what's still open (storystatus.js; content/story.json) */
+function StoryStatus({ sim, story, defOf, npcName }) {
+  if (!story) return null;
+  const st = storyStatus(sim.state, (id) => sim.quests.status(id)); if (!st) return null;
+  const end = st.kind === 'end' ? story.end[(sim.world && sim.world.region) || 'vale'] || story.end.vale : null, d = st.id ? defOf(st.id) : null;
+  const leads = st.kind === 'next' ? [] : openLeads(sim.state, (id) => sim.quests.status(id));
+  const vars = (l) => ({ ...l, cls: l.cls ? `${CLASSES[l.cls].label.toLowerCase()}s` : '', giver: l.giver ? npcName(l.giver) : '' });
+  return html`<div class="grp main">Main story</div>
+    <div class="q main story"><span class="kind main">★ Main story${end ? '' : ' · next chapter'}</span>
+      <h3>${end ? end.title : d ? d.title : ''}</h3>
+      <div class="summary">${end ? end.text : fill(story[st.kind], { title: d ? d.title : '', giver: st.giver ? npcName(st.giver) : '', level: st.level })}</div></div>
+    ${leads.length ? html`<div class="grp side">${story.leadsTitle} · ${leads.length}</div><ul class="leads">${leads.map((l) => html`<li key=${l.id + (l.cls || '')}>${fill(story.leads[l.id], vars(l))}</li>`)}</ul>` : ''}`;
+}
+
 const SET_NAME = { vale: 'The Hollow Vale' };
 /** the Chronicle (world doc §7): each set in reading order; found fragments in full, missing ones as a place */
 function Chronicle({ sim, lore }) {
@@ -121,7 +143,7 @@ function Chronicle({ sim, lore }) {
   </div>`)}`;
 }
 
-function Journal({ sim, defOf, npcName, onClose, lore }) {
+function Journal({ sim, defOf, npcName, onClose, lore, story }) {
   const [tab, setTab] = useState('active');
   const push = (cmd) => sim.commands.push(cmd);
   const all = Object.entries(sim.state.quests || {}).filter(([id]) => defOf(id));
@@ -137,8 +159,8 @@ function Journal({ sim, defOf, npcName, onClose, lore }) {
       <button class=${tab === 'chron' ? 'on' : ''} onClick=${() => setTab('chron')}>Chronicle · ${(sim.state.fragments || []).length}</button>
     </div>
     ${tab === 'chron' ? html`<${Chronicle} sim=${sim} lore=${lore} />` : tab === 'active'
-      ? (active.length ? groups.map(([k, label, list]) => html`<div key=${k}><div class=${'grp ' + k}>${label} · ${list.length}</div>${list.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
-          onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)}</div>`)
+      ? (active.length || story ? html`${groups.some(([k]) => k === 'main') ? '' : html`<${StoryStatus} sim=${sim} story=${story} defOf=${defOf} npcName=${npcName} />`}${groups.map(([k, label, list]) => html`<div key=${k}><div class=${'grp ' + k}>${label} · ${list.length}</div>${list.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
+          onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)}</div>`)}`
         : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something, and the Lantern Guild's board by her door always does.</div>`)
       : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class=${'q' + (isMain(d) ? ' main' : '')}>${kindTag(d)}<h3>${d.title}</h3>
           <div class="giver">${d.giverName || npcName(d.giver)}</div><div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
@@ -156,6 +178,8 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   for (const el of [btn, track, wrap]) swallow(el);
   /** @type {Record<string, any>} */
   const defs = {};
+  let story = null;                             // content/story.json: where the main story stands (storystatus.js)
+  fetch('./content/story.json').then((r) => r.json()).then((d) => { story = d; }).catch(() => {});
   /** @type {Map<string, any>} */
   const jobs = new Map();                       // board jobs' words, once per id
   /** a quest's words: written (content/quests) or a board job's (content/board) @param {string} id */
@@ -169,7 +193,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   let open = false;
   /** @type {Record<string, any>} */
   const lore = {};                              // content/lore/<id>.json: the fragments' words
-  const paint = () => { if (open) render(html`<${Journal} sim=${sim} defOf=${defOf} npcName=${npcName} onClose=${close} lore=${lore} />`, wrap); };
+  const paint = () => { if (open) render(html`<${Journal} sim=${sim} defOf=${defOf} npcName=${npcName} onClose=${close} lore=${lore} story=${story} />`, wrap); };
   function close() { open = false; wrap.classList.remove('on'); render(null, wrap); }
   function show() { open = true; wrap.classList.add('on'); btn.classList.remove('due'); paint(); }
   btn.addEventListener('click', show); track.addEventListener('click', show);

@@ -1,0 +1,21 @@
+{
+  "$comment": "Where the main story stands, and what's still open in a region: the Journal's Main story section when no chapter is in hand (src/ui/storystatus.js picks which apply; the owner, 2026-10-03). {title}, {giver}, {level}, {n}, {of}, {cls} are filled from the sim and the quest words.",
+  "next": "Next: {title}. Talk to {giver} in Thornwick.",
+  "level": "Next: {title}, once your hero reaches level {level}.",
+  "end": {
+    "vale": {
+      "title": "Act I is done",
+      "text": "Sister Ilse has the shard, and has written to Reedholm in the fens about it, twice. The road south to the Greywater Fens, and Act II, opens in a later update. Until then, the Vale still has work in it."
+    }
+  },
+  "leadsTitle": "Still in the Vale",
+  "leads": {
+    "brannoc": "Wickham Keep: someone is still chained in the second-floor hall where Captain Garrow kept him. Go down and see.",
+    "standard": "The Old Barrows: the Standard of the Third Legion still holds the third-floor hall, and the barrows road with it.",
+    "warren": "The Scrag Warren, under the north range past the mill: Hedda, by the well, has lost hens to the goblins.",
+    "chronicle": "The Vale's Chronicle: {n} of {of} pages found. The Chronicle tab says where the rest were lost, and together they say where something was buried.",
+    "milestone": "The Ninth Milestone is open: the legion's strongroom, out where the old road runs on past the Deepdelve mine.",
+    "trial": "A trial for your {cls}: {giver} in Thornwick teaches it.",
+    "board": "The Lantern Guild's board, inside the Tired Mule, has new jobs every day."
+  }
+}

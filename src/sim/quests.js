@@ -55,7 +55,7 @@ export const QUESTS = {
     rewards: { xp: 120, gold: 25 },
   },
   vale_hens_under_the_hill: {                        // Hedda's errand (world doc §5, v1.19): the goblins have her hens; tell their chief
-    kind: 'errand', giver: 'hedda', region: 'vale', level: [2, 8],
+    kind: 'errand', giver: 'hedda', region: 'vale', level: [2, 30],   // (open past 8: a Vale hero who finished Act I still finds it)
     steps: [{ id: 'warren', objectives: [{ type: 'boss', site: 'scrag_warren', boss: 'goblin_chief', count: 1 }] }],
     rewards: { xp: 420, gold: 70 },
   },
