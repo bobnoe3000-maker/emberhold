@@ -60,6 +60,7 @@ const BAKE_BUDGET = 5;             // ms of background baking per frame
 const TRANSIT_BUDGET = 24, TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 let viewTiles = VIEW_TILES;        // (the dev Stage zooms in: VIEW_TILES ÷ its integer zoom)
+const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per native px (≈ 0.98), the size of things elsewhere
 const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
@@ -214,7 +215,15 @@ export function createRenderer(canvas, sim, input) {
     canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
     overlay.width = vw; overlay.height = vh;
     overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
-    S = Math.max(1.5, vw / (viewTiles * TW));              // fractional; PASS B upscales sharp-bilinear
+    // CSS px per native px. A phone held upright fits VIEW_TILES across (the owner: on an iPhone 13 it's right). Any
+    // other screen keeps things about that size and shows more world, instead of blowing the same 25 tiles up to fill
+    // a desktop window (the owner, 2026-10-03: "too zoomed in" there): the phone's own size on a touch screen (so
+    // turning a phone sideways keeps the figures' size), a quarter larger with a mouse (a desk is viewed from further).
+    // The dev Stage's zoom (viewTiles < VIEW_TILES) scales either rule.
+    const cw = window.innerWidth, zk = VIEW_TILES / viewTiles, fit = cw / (viewTiles * TW);
+    const touch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches), upright = touch && cw <= 500;
+    const css = upright ? fit : Math.min(fit, PHONE_CSS * (touch ? 1 : 1.25) * zk);
+    S = Math.max(1.5, css * dpr);                          // fractional; PASS B upscales sharp-bilinear
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
     const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
