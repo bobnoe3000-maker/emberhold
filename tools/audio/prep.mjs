@@ -24,9 +24,11 @@ const VOICE = /^(gob|bone|man|woman|cult)_/;
 const TRIM = 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.005,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02,areverse';
 for (const [cue, list] of Object.entries(spec.shots)) {
   bank.shots[cue] = [];
-  list.forEach((src, i) => {
-    const inF = join(SRC, src), tmp = join(OUT, `_${cue}_${i}.wav`), out = join(OUT, `${cue}_${i + 1}.mp3`);
-    ff(['-i', inF, '-af', `aformat=channel_layouts=mono,${TRIM}`, '-ar', '44100', tmp]);
+  list.forEach((v, i) => {
+    // a variant: a file, or a cut from one ({ src, at, len }: a single drop out of a loop), faded out at its end
+    const cut = typeof v === 'object', inF = join(SRC, cut ? v.src : v), tmp = join(OUT, `_${cue}_${i}.wav`), out = join(OUT, `${cue}_${i + 1}.mp3`);
+    const span = cut ? ['-ss', String(v.at), '-t', String(v.len)] : [], fade = cut ? `,afade=t=out:st=${Math.max(0, v.len - 0.12)}:d=0.12` : '';
+    ff([...span, '-i', inF, '-af', `aformat=channel_layouts=mono${cut ? '' : ',' + TRIM}${fade}`, '-ar', '44100', tmp]);
     const vd = measure(tmp, 'volumedetect'), peak = +(/max_volume: (-?[\d.]+) dB/.exec(vd) || [0, 0])[1], mean = +(/mean_volume: (-?[\d.]+) dB/.exec(vd) || [0, 0])[1];
     // voices (sound critic pass 1): levelled by their mean, not their peak (a cue's variants sat 12.6 dB apart),
     // limited to −1 dBFS, and 3 dB off at 3.5 kHz, where a goblin's screech had nearly all its energy

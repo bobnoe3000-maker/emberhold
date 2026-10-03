@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, RIVER_REACH } from '../src/audio/cues.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, DRIP_MIN, RIVER_REACH } from '../src/audio/cues.js';
 import { cleanSettings, loadSettings, saveSettings, DEFAULTS, SOUND_KEY } from '../src/audio/settings.js';
 import { masterGain } from '../src/audio/engine.js';
 import { createAnimator } from '../src/render/anim.js';
@@ -52,7 +52,11 @@ test('ambience: the creek louder the nearer it runs, silent out of reach; birds 
   assert.equal(at(RIVER_REACH).amb_river, 0); assert.equal(at(Infinity).amb_river, 0);
   assert.ok(at(Infinity, 1).amb_birds > 0 && at(Infinity, 1).amb_owl === 0); assert.ok(at(Infinity, 3).amb_owl > 0 && at(Infinity, 3).amb_birds === 0);
   const warren = ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity }), mill = ambienceFor({ kind: 'dungeon', theme: 'desert', part: 1, waterD: Infinity });
-  assert.ok(warren.amb_drips > mill.amb_drips && warren.amb_fire > 0 && warren.amb_birds === 0 && warren.amb_river === 0);
+  assert.ok(warren.amb_cave > mill.amb_cave && warren.amb_fire > 0 && warren.amb_birds === 0 && warren.amb_river === 0);
+  // the drips: single drops, never closer than 10 s (the owner), wetter places nearer the minimum, the mill seldom
+  for (const th of [null, 'warren', 'poison', 'desert', 'dread', 'chasm']) for (let r = 0; r <= 1; r += 0.05) assert.ok(dripGap(th, r) >= DRIP_MIN && DRIP_MIN >= 10, `${th} ${r}`);
+  assert.ok(dripGap('desert', 0) > dripGap('warren', 1) - 1 && dripGap('warren', 0.5) < dripGap(null, 0.5));
+  assert.ok(has(dripOf(0.3)) && dripOf(0.3).bus === 'ambient');
   for (const k of Object.keys(warren)) assert.ok(bank.loops[k] || k.startsWith('syn_'), k);   // (syn_: made by the engine)
   const rain = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }), dry = at(Infinity, 1);
   assert.ok(rain.syn_rain > 0 && rain.amb_birds < dry.amb_birds * 0.3, 'rain hisses and the birds go quiet');

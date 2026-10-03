@@ -331,8 +331,13 @@ Golden-rule upkeep in every phase:
   freesound and OpenGameArt couldn't be reached from the build environment; GitHub could.
 - **Format:** one MP3 per variant, not a sprite. Every browser decodes MP3, Safari included, so no AAC twin is
   needed. Loops crossfade their own seam to hide MP3's padding.
-- **Size:** about 755 KB in all, with the wind loop (63 KB) for the weather. One-shots are decoded on the first
+- **Size:** about 702 KB in all, with the wind loop (63 KB) for the weather. One-shots are decoded on the first
   tap; loops only in the place that has them. The budget in the test is 800 KB.
+- **Drips (the owner, 2026-10-03: "at least 10 sec between each drop"):** no loop and no emitters. Single drops
+  (three cuts from Flare's cave-droplets loop, which dripped 12 times in 10 s) fall at random, never closer than
+  10 s: 10–16 s in the warren and the chapel's pools, 10–22 s elsewhere, 16–36 s in the mill's dry cellars
+  (`dripGap` in `src/audio/cues.js`). Each varies in pitch, level and pan. The timing is the listener's own chance,
+  new each session, so no rhythm forms. Measured over 80 s in the warren: gaps of 10.8–15.1 s.
 - **Mix data:** the cue table is code (`src/audio/cues.js`, pure and tested), not `content/sounds.json`. The
   sources are data (`tools/audio/sounds.json`).
 - **Synthesis:** the blows (filtered noise, with a crack on a crit). Footsteps, water and wind are samples, which

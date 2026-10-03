@@ -194,6 +194,20 @@
     "d": 2.17
    }
   ],
+  "drip": [
+   {
+    "f": "drip_1.mp3",
+    "d": 0.99
+   },
+   {
+    "f": "drip_2.mp3",
+    "d": 0.63
+   },
+   {
+    "f": "drip_3.mp3",
+    "d": 1.04
+   }
+  ],
   "step_cloth": [
    {
     "f": "step_cloth_1.mp3",
@@ -271,10 +285,6 @@
   "amb_river": {
    "f": "amb_river.mp3",
    "d": 4.62
-  },
-  "amb_drips": {
-   "f": "amb_drips.mp3",
-   "d": 10.19
   },
   "amb_cave": {
    "f": "amb_cave.mp3",

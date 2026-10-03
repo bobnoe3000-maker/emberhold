@@ -1,5 +1,5 @@
 {
- "_": "Sources for assets/audio (tools/audio/prep.mjs). Flare (flare-game, mods/fantasycore/soundfx, CC-BY-SA 3.0): one-shots are trimmed and peak-normalised, loops loudness-normalised. A cue lists its variants; the engine picks one, never the same twice running.",
+ "_": "Sources for assets/audio (tools/audio/prep.mjs). Flare (flare-game, mods/fantasycore/soundfx, CC-BY-SA 3.0): one-shots are trimmed and peak-normalised, loops loudness-normalised. A cue lists its variants; the engine picks one, never the same twice running. A variant may be a cut from a longer file: { src, at, len } (seconds; the drips are single drops cut from the cave-droplets loop, which dripped 12 times in 10 s).",
  "shots": {
   "gob_cry": ["enemies/goblin_ment.ogg", "enemies/goblin_phys.ogg"],
   "gob_hurt": ["enemies/goblin_hit.ogg"],
@@ -28,6 +28,7 @@
   "coins": ["inventory/inventory_coins.ogg"],
   "chest": ["wood_open.ogg"],
   "stairs": ["environment/stairs.ogg"],
+  "drip": [{ "src": "environment/cave_droplets_loop.ogg", "at": 3.33, "len": 0.95 }, { "src": "environment/cave_droplets_loop.ogg", "at": 8.85, "len": 0.6 }, { "src": "environment/cave_droplets_loop.ogg", "at": 5.84, "len": 1.0 }],
   "step_cloth": ["steps/step_cloth1.ogg", "steps/step_cloth2.ogg", "steps/step_cloth3.ogg", "steps/step_cloth4.ogg"],
   "step_leather": ["steps/step_leather1.ogg", "steps/step_leather2.ogg", "steps/step_leather3.ogg", "steps/step_leather4.ogg"],
   "step_metal": ["steps/step_metal1.ogg", "steps/step_metal2.ogg", "steps/step_metal3.ogg", "steps/step_metal4.ogg"],
@@ -35,7 +36,6 @@
  },
  "loops": {
   "amb_river": { "src": "environment/river_loop.ogg" },
-  "amb_drips": { "src": "environment/cave_droplets_loop.ogg" },
   "amb_cave": { "src": "environment/cave_wind_loop.ogg", "take": 10 },
   "amb_birds": { "src": "environment/bird_twitter_loop.ogg" },
   "amb_owl": { "src": "environment/forest_owl_loop.ogg" },

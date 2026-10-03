@@ -79,7 +79,10 @@ It also covers the settings menu the owner asked for. The owner's direction (202
   loudest second to about −17 dBFS, near the plan's −16 LUFS for phone speakers. The limiter never touched a peak
   (all are below −6 dBFS).
 - **Loops** (ebur128): the river −20.2, birds −22.6, owl −20.6, cave −19.3, fire −24.7 and drips −26.2 LUFS. The
-  drips sit quiet because their true peak capped the normalisation. They play at 0.7–0.95 in the dungeons.
+  drips sat quiet because their true peak capped the normalisation.
+  - **Since (the owner):** the drip loop dripped 12 times in 10 s, which is too busy. It's gone. Single cut drops now
+    fall at random, at least 10 s apart (measured in the warren over 80 s: 10.8–15.1 s; the chapel about 14 s; the
+    mill about 30 s). The size is now 702 KB.
 - **Sync:** 20 footfalls in 10 cycles, every one on frame 4 or 9 (the contacts); a swing is flagged once, on its
   first frame.
 - **Size:** 692 KB (51 one-shot files for 31 cues, plus 6 loops). One-shots load after the first tap; loops only

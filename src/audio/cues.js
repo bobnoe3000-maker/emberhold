@@ -83,6 +83,18 @@ export function eventCue(name, ev) {
   return null;
 }
 
+// ── drips: single drops in the dungeons, never closer than DRIP_MIN s (the owner, 2026-10-03: "at least 10 sec between
+// each drop"; the cave-droplets loop they replace dripped 12 times in 10 s). Wetter places drip nearer the minimum, the
+// mill's dry cellars seldom. r: 0..1, the listener's own chance.
+export const DRIP_MIN = 10;
+/** seconds until the next drop @param {string | null} theme @param {number} r */
+export function dripGap(theme, r) {
+  const span = theme === 'desert' ? 20 : theme === 'poison' || theme === 'warren' ? 6 : 12;   // the mill · the chapel's pools, the old mine · the rest
+  return DRIP_MIN + (theme === 'desert' ? 6 : 0) + Math.max(0, Math.min(1, r)) * span;
+}
+/** a drop: one of the cut drips, now nearer, now farther off in the dark @param {number} r @returns {Cue} */
+export const dripOf = (r) => ({ cue: 'drip', bus: 'ambient', rate: 0.9 + 0.2 * r, gain: 0.45 + 0.4 * r });
+
 // ── ambience: the level each loop should sit at, here and now ───────────────────────────────────────────────────────
 // waterD: tiles from the view's centre to the nearest river or mill-race tile (Infinity: none near). part: the time of
 // day (npcs.js partOf: 0 dawn · 1 day · 2 dusk · 3 night). theme: the dungeon's (sites.js), null for the barrows.
@@ -91,10 +103,9 @@ export const RIVER_REACH = 14;
 // a soft wind and a hush; fog only hushes.
 /** @param {{ kind: string, theme?: string | null, part: number, waterD: number, weather?: { kind: string, k: number } }} w @returns {Record<string, number>} */
 export function ambienceFor({ kind, theme = null, part, waterD, weather = { kind: 'clear', k: 0 } }) {
-  const out = { amb_river: 0, amb_birds: 0, amb_owl: 0, amb_drips: 0, amb_cave: 0, amb_fire: 0, amb_wind: 0, syn_rain: 0 };
+  const out = { amb_river: 0, amb_birds: 0, amb_owl: 0, amb_cave: 0, amb_fire: 0, amb_wind: 0, syn_rain: 0 };
   if (kind === 'dungeon') {
     out.amb_cave = theme === 'desert' ? 0.3 : 0.5;                                                  // the mill's cellars are dry
-    out.amb_drips = theme === 'desert' ? 0.25 : theme === 'poison' ? 0.95 : theme === 'warren' ? 0.85 : 0.7;   // the chapel's pools, the old mine
     if (theme === 'warren') out.amb_fire = 0.3;                                                     // goblin fires down the tunnels
     return out;
   }

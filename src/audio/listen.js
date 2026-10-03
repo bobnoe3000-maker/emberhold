@@ -4,13 +4,13 @@
 //   each frame  the figures the renderer drew (renderer.onFrame): a foot coming down, a swing beginning; and the
 //               foes in the world: one arriving (its cry), one falling (its death)
 // and keeps the place's ambience: the creek by its distance, birds and owls by the time of day, rain or a wind by the
-// weather, the dungeon's drips, its draught and the goblins' fires.
+// weather, the dungeon's drips (single drops, ten seconds or more apart), its draught and the goblins' fires.
 //
 // Positions: a sound pans by where its figure stands on the screen, and fades with its distance from the view's centre
 // (silent beyond HEAR tiles). The party is heard at full level, foes a little under, townsfolk quietly.
 // Catch-up is silent: a frame that ran many ticks (a resume) plays nothing it missed, and a world change starts clean.
 
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, RIVER_REACH } from './cues.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, RIVER_REACH } from './cues.js';
 import { materialAt } from '../sim/world.js';
 import { partOf } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
@@ -24,7 +24,9 @@ const AMB_EVERY = 400;                              // ms between ambience updat
 export function createListener({ sim, audio, renderer }) {
   /** @type {Map<number, { dead: boolean, cried: boolean }>} */ let foes = new Map();
   const cried = new Map();
-  let world = sim.world, ambAt = -1e9, view = { hx: 0, hy: 0, nvw: 360, ix: 0, iy: 0 };
+  let world = sim.world, ambAt = -1e9, dripAt = -1, view = { hx: 0, hy: 0, nvw: 360, ix: 0, iy: 0 };
+  let seed = (Math.random() * 4294967296) >>> 0;   // presentation's own chance (never the sim's), new each session: the drips keep no rhythm
+  const rand = () => { seed = (Math.imul(seed ^ (seed >>> 13), 0x5bd1e995) + 0x6d2b79f5) >>> 0; return seed / 4294967296; };
 
   const fall = (dx, dy) => { const d = Math.hypot(dx, dy); return d > HEAR ? 0 : 1 / (1 + (d / 9) * (d / 9)); };
   const panOf = (sx) => Math.max(-0.85, Math.min(0.85, (sx - view.hx) / (view.nvw * 0.5)));
@@ -50,7 +52,7 @@ export function createListener({ sim, audio, renderer }) {
       if (best) audio.play(voiceOf(best.kind, 'hurt'), { pan, gain: g });
     }
   }
-  sim.bus.on('levelChanged', () => { foes = new Map(); cried.clear(); world = sim.world; ambAt = -1e9; });
+  sim.bus.on('levelChanged', () => { foes = new Map(); cried.clear(); world = sim.world; ambAt = -1e9; dripAt = -1; });
 
   // each frame: steps and swings from the figures drawn, arrivals and deaths from the foes
   renderer.onFrame((draws, v) => {
@@ -80,6 +82,10 @@ export function createListener({ sim, audio, renderer }) {
       }
     }
     if (now - ambAt > AMB_EVERY) { ambAt = now; ambience(); }
+    if (world.kind === 'dungeon') {                   // a single drop now and then, somewhere off in the dark (≥ DRIP_MIN s apart)
+      if (dripAt < 0) dripAt = now + (3 + dripGap(world.theme ?? null, rand()) * rand()) * 1000;   // (the first comes sooner, but not at once)
+      else if (now >= dripAt) { const r = rand(); audio.play(dripOf(r), { pan: (rand() - 0.5) * 1.4 }); dripAt = now + dripGap(world.theme ?? null, rand()) * 1000; }
+    }
     audio.tick();
   });
 
