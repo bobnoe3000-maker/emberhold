@@ -547,6 +547,14 @@ The owner: the animals are too blocky.
     between the mill track and the river: 4 cows.
   - The fields' walls are now placed before the herds, which graze round them.
 
+## Wickham Keep's curtain wall removed (2026-10-03)
+
+The owner: remove the wall at Wickham Keep.
+- The free-standing stretch of curtain wall and its gate 16 tiles before the keep is gone.
+- The way into the keep's dungeon was that gate. It's now the keep's own door, on its camera-facing face, and the
+  road runs up to it.
+- The site's arrival point (outside, 27 tiles south) is unchanged.
+
 ## Where it stands, and what's next
 
 Scored on detail only (the owner's direction); light and colour are the game's own and no longer measured against

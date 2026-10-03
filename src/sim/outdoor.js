@@ -463,7 +463,7 @@ function buildOverland(seed) {
   // The roads, filleted (no elbows), the spurs to the mill, the chapel and the camp narrow tracks without ruts.
   const ROADS = [
     { w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] },
-    { w: 5, surface: 'dirt', pts: [cross, [158, 100], [164, 70], [keep[0], keep[1] + 14]] },
+    { w: 5, surface: 'dirt', pts: [cross, [158, 100], [164, 70], [keep[0], keep[1] + 7.5]] },   // up to the keep's door (its curtain wall removed, 2026-10-03)
     { w: 5, surface: 'dirt', pts: [cross, [132, 170], [132, 186], [129, 199], [100, 199], [88, 212], [barrows[0] + 8, barrows[1] - 4]] },
     { w: 5, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] },
     { w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] },
@@ -498,7 +498,6 @@ function buildOverland(seed) {
     putGate(o, B('gatehousey'), X1, GY); }
   // Wickham Keep, the watchtower at the crossroads, the Old Barrows, the mine, the lumber camp, a farm
   put(o, B('keep'), keep[0], keep[1]);
-  put(o, B('wall'), keep[0], keep[1] + 16);
   put(o, B('shop', 1), cross[0] + 12, cross[1] - 12);          // waystation at the crossroads
   put(o, 'ruin', barrows[0], barrows[1], 'round', 0.3);          // the mound blocks; its doorway (front, +y) stays open
   for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 18, barrows[1] + 2], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] + 14, barrows[1] - 6]]) put(o, id, x, y, 'rect', 0);
@@ -596,10 +595,10 @@ function buildOverland(seed) {
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
   o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon', site: 'barrows' });
-  // the other sites' ways in (M5, sites.js): the mill's door, the keep's gatehouse, the chapel's door
+  // the other sites' ways in (M5, sites.js): the mill's door, the keep's door, the chapel's door
   // across the pools, a slab at the milestone's foot. A hidden site's stays shut until it's revealed (core.js).
   o.exits.push({ x0: mill[0] - 4, y0: mill[1] + 7, x1: mill[0] + 2, y1: mill[1] + 10, to: 'dungeon', site: 'tithe_mill' });
-  o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 19, x1: keep[0] + 3, y1: keep[1] + 22, to: 'dungeon', site: 'wickham_keep' });
+  o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 6.5, x1: keep[0] + 3, y1: keep[1] + 9.5, to: 'dungeon', site: 'wickham_keep' });   // the keep's own door (the owner removed its curtain wall)
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
