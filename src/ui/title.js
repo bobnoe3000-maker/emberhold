@@ -4,7 +4,8 @@
 // world: the wordmark, this slot's hero, and Continue — or Begin, for a slot with no hero yet,
 // which plays the intro and then opens character creation. ☰ in the HUD brings it back
 // mid-game as a pause menu (Resume). From here: Game slots, Party, The Chronicle (the intro
-// again) and Account (cloud saves arrive at M6).
+// again), Account (cloud saves arrive at M6) and Copy debug report (debugreport.js: the game's
+// state as text on the clipboard, to paste into a bug report; read only).
 //
 // The sim doesn't tick while the title is up (main.js pauses the loop), so a battle behind
 // it waits. Preact + htm, like every M3 window.
@@ -12,6 +13,7 @@
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
 import { swallow } from './actorart.js';
+import { debugReport } from './debugreport.js';
 
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
@@ -61,9 +63,22 @@ export function createTitle({ sim, slot, setPaused, openSlots, openParty, openCr
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
+      <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
     </div>`;
   }
   const draw = () => render(html`<${Title} />`, wrap);
+  // the report to the clipboard; the label says how it went (a HUD toast would sit under this menu)
+  let copied = '';
+  async function copyReport() {
+    const text = debugReport(sim, { slot, when: new Date().toISOString(), ua: navigator.userAgent, view: `${innerWidth}×${innerHeight} @${devicePixelRatio}x` });
+    let ok;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta); ta.select(); try { ok = document.execCommand('copy'); } catch { ok = false; } ta.remove();
+    }
+    copied = ok ? `Copied ✓ (${Math.round(text.length / 1024)} KB)` : 'Copy failed: no clipboard here'; draw();
+    setTimeout(() => { copied = ''; if (wrap.classList.contains('on')) draw(); }, 2500);
+  }
   function open(m = 'title') { mode = m; onOpen(); wrap.classList.add('on'); setPaused(true); draw(); }
   function hide() { wrap.classList.remove('on'); render(null, wrap); }
   function close() { hide(); setPaused(false); onPlay(); }
