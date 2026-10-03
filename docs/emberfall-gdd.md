@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.17 · 2026-10-03 · Plan of record for game design.** v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.18 · 2026-10-03 · Plan of record for game design.** v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -99,6 +99,31 @@ the quests, the party, the gear and the tactics.
    is discovered in fragments, never lectured.
 6. **Plays anywhere.** One thumb, portrait, fully offline. The party keeps adventuring while
    you're away. Multiplayer comes later, on the same deterministic sim.
+
+**Key pillars (the owner, v1.18).** What every feature is checked against:
+1. **Skills are earned.** Each skill unlocks at a level and is learned from a quest (the class trials,
+   §5.1), never bought. Level gates when; the quest is how.
+2. **Companions help; they aren't required.** A lone hero can play the whole game. Each companion
+   adds roughly **5 % to 25 %** to the party's combat strength: a green Hand at the bottom, a
+   **Beacon** at full loyalty at the top (§6.2). The contract tests hold this band.
+3. **Waves that pay for their danger.** A dungeon room's foes come in waves, each a little harder
+   than the last (the tide, §3.3), and each pays a little more. Staying is a wager; walking out is
+   always allowed.
+4. **Grind online and offline, on the same rules.** Offline is the same sim: the same XP, loot and
+   wages, and the same risk. A party can be beaten offline, so don't leave it in a room it can't
+   hold (§12).
+5. **The main story stands apart from side quests.** Chapter quests are the main story: they read
+   as such everywhere (★, gold, listed first). Errands, bounties, trials, companions' chains and
+   board jobs are side quests (§9).
+6. **Many ways to play, from the party.** Who you bring is the strategy: a healer or none, bows or
+   blades, two front-liners or one (§5, §7.1).
+7. **Single player now; shared places later.** Every region plays alone. Later, a large city where
+   players gather: an Arena, social maps and raid dungeons, a party-up system, and global, guild and
+   local chat (§12).
+8. **Premium is time and room, never power.**
+   - Longer **offline windows**: 4 hours free, then 8, 24 or 36 hours.
+   - Up to **two extra main-character slots** (§6.1).
+   - Nothing that changes a fight.
 
 **Audience and session:** mobile players who like D&D flavour, autobattlers and idle
 progression. Sessions of 3–15 minutes: one quest, a town visit, or a single dungeon floor.
@@ -496,7 +521,7 @@ Both slot in with the same stat block and ability format. No system changes are 
   models, so a loot upgrade changes the silhouette.
 
 ### 6.1 Heroes: creation, origins and slots
-- **Game slots:** up to **3 game slots**. Each is its own game: its own world seed, main
+- **Game slots:** up to **3 game slots** (premium: up to **two more** main-character slots, v1.18, §1). Each is its own game: its own world seed, main
   character, party and save.
 - **Hero slots:** within a game, the party has **three**: your **main character** plus **two
   companions**.
@@ -522,6 +547,15 @@ Both slot in with the same stat block and ability format. No system changes are 
 - Details are in [development-plan.md §2.1–§2.3](./development-plan.md).
 
 ### 6.2 Sellswords: ranks, wages and perks (v1.9)
+**The band (v1.18, the owner's pillar, §1).** A companion's rank, perks and loyalty are worth roughly
+**5 % to 25 %** of combat strength:
+- a green Hand at about 5 %;
+- a Beacon at full loyalty at about 25 %;
+- measured as waves held by the same party with that sellsword against a plain Hand of its class
+  (`tools/balance/roomlv.mjs --perks`).
+
+Companions are never required: the solo contract (§7.1) holds without them.
+
 
 Companions are a choice and a gold sink. What you pay for is a way to play: perks to build a
 company around. Canon: world doc §4, *Sellswords and the Guild's ranks*. Code: `sim/companions.js`
@@ -833,6 +867,14 @@ over 300 s with the right party in a same-level room: 312 → 212 gold at level 
 **The quest board** in each town offers 3–5 mini-quests, refreshed at dawn (real time) or when
 three are completed. **Chapter quests** (the main arc) are pinned on top and gated by renown.
 
+**Main story and side quests (v1.18).** The two read apart everywhere:
+- **Main story:** the chapter quests. In the journal they carry a gold **★ Main story** tag and a gold
+  edge and are listed first. The tracker marks them ★. They can't be abandoned.
+- **Side quests:** everything else (errands, bounties, trials, companions' chains, board jobs).
+  They're tagged **Side quest · Errand** (or Bounty, and so on) in a muted colour, listed after,
+  and marked ◆ on the tracker.
+- In code: `src/ui/journal.js` `isMain`.
+
 **Implemented (v1.4, M4 slice 3).** Thornwick's board hangs in the Tired Mule (Tavern → Quest
 board); `src/sim/board.js`, words in `content/board/`.
 - **When it refreshes:** twice an in-game day, at **dawn and at dusk**, half an hour of play apart
@@ -1022,11 +1064,21 @@ server is needed to play.
 
 See [development-plan.md §2.13](./development-plan.md).
 
-**Expeditions (idle).** Leave the party, or a benched trio, farming any room it has held for
-10+ waves, for up to eight hours. The party always leaves on a wipe risk: if the sim says it
-would fall, it walks out instead and the expedition ends early. On return, the *same* battle sim fast-forwards the runs headless and pays out XP, gold,
-materials and cinders. Gear-drop rates are halved on expeditions so active play stays the best
-source of loot. Deterministic replay means an expedition's result is exact and cheat-checkable.
+**Offline grinding (v1.18, the owner's pillars, §1).** Close the game and the party carries on
+where you left it, on exactly the online rules. On return, the *same* battle sim fast-forwards
+the time away, headless and deterministic, so the result is exact and cheat-checkable.
+- **Same as online:**
+  - XP, gold, materials, cinders and gear drops at the online rates;
+  - wages due at dawn as usual.
+- **Defeat is possible.** If the room would beat the party, it does, just as it would online: the
+  hero goes to the temple and downed companions are slain. Don't leave a party grinding somewhere
+  it can't hold.
+- **In town, companions are on retainer.** A party left in town (not grinding) pays its companions
+  the bench rate, half wage, for the time away, as a retainer rather than a day's hire (§6.2).
+- **Windows:**
+  - free: up to **4 hours** of offline time counted;
+  - premium: **8, 24 or 36 hours**.
+  - Time beyond the window isn't counted.
 
 **Multiplayer (future), in order:**
 1. **Async.** Undervault depth leaderboards. **Hire a friend's hero:** your main can be posted

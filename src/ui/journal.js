@@ -43,7 +43,11 @@ const CSS = `
 #journal .tabs button.on { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; font-weight: 700; border-color: #f0c880; }
 #journal .q { border: 1px solid #2c2838; border-radius: 12px; padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,.02); }
 #journal .q.tracked { border-color: #d8a040; background: rgba(216,160,64,.07); }
-#journal .kind { display: inline-block; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #1a1208; background: #b8a080; border-radius: 3px; padding: 1px 6px; }
+#journal .kind { display: inline-block; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #d8ccb8; background: #3a3446; border-radius: 3px; padding: 1px 6px; }
+#journal .kind.main { color: #1a1208; background: linear-gradient(#f0c060, #c8902e); font-weight: 700; }
+#journal .q.main { border-left: 3px solid #e0a84a; }
+#journal .grp { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; text-transform: uppercase; color: #978c80; margin: 4px 0 8px; }
+#journal .grp.main { color: #f0c880; }
 #journal .q h3 { font: 600 16px Georgia, serif; color: #efe4cf; margin: 6px 0 2px; }
 #journal .giver { font-size: 10.5px; color: #978c80; margin-bottom: 8px; }
 #journal .step { font: 14px/1.45 Georgia, serif; color: #d8ccb8; margin: 6px 0 8px; }
@@ -73,6 +77,10 @@ const CSS = `
 `;
 const BOOK = '<svg viewBox="0 0 24 24"><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><i class="dot"></i>';
 const KIND = { chapter: 'Chapter', companion: 'Companion', trial: 'Trial', board: 'Board', errand: 'Errand', bounty: 'Bounty' };
+// main story or side quest (the owner, 2026-10-03: the two must read apart at a glance): chapter quests are the main
+// story; everything else (errands, bounties, trials, companions' chains, board jobs) is a side quest
+export const isMain = (def) => !!def && def.kind === 'chapter';
+const kindTag = (def) => (isMain(def) ? html`<span class="kind main">★ Main story · ${KIND.chapter}</span>` : html`<span class="kind">Side quest · ${KIND[def.kind] || def.kind}</span>`);
 
 /** the lines a quest shows now: its step text (or its "go back" text) and its objectives with counts
  * @param {any} def content/quests/<id>.json @param {{ st: number, step: number, n: number[] }} q */
@@ -85,8 +93,8 @@ export function questNow(def, q) {
 function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
   const [arm, setArm] = useState(false);
   const now = questNow(def, q);
-  return html`<div class=${'q' + (tracked ? ' tracked' : '')}>
-    <span class="kind">${KIND[def.kind] || def.kind}</span>
+  return html`<div class=${'q' + (tracked ? ' tracked' : '') + (isMain(def) ? ' main' : '')}>
+    ${kindTag(def)}
     <h3>${def.title}</h3>
     <div class="giver">${def.giverName || npcName(def.giver)} · level ${def.level[0]}${def.level[1] !== def.level[0] ? '–' + def.level[1] : ''}${def.skulls ? ' · ' + '☠'.repeat(def.skulls) + ' ' + SKULLS[def.skulls] : ''}${def.company ? ' · bring company' : ''}</div>
     <div class="summary why">${def.summary}</div>
@@ -118,6 +126,9 @@ function Journal({ sim, defOf, npcName, onClose, lore }) {
   const push = (cmd) => sim.commands.push(cmd);
   const all = Object.entries(sim.state.quests || {}).filter(([id]) => defOf(id));
   const active = all.filter(([, q]) => q.st === QS.ACTIVE || q.st === QS.READY), done = all.filter(([, q]) => q.st === QS.DONE);
+  /** @type {[string, string, [string, any][]][]} the active ones: the main story first, then the side quests */
+  const groups = [['main', 'Main story', active.filter(([id]) => isMain(defOf(id)))], ['side', 'Side quests', active.filter(([id]) => !isMain(defOf(id)))]];
+  for (let i = groups.length - 1; i >= 0; i--) if (!groups[i][2].length) groups.splice(i, 1);
   return html`<div id="journal">
     <div class="top"><h2>Journal</h2><button class="x" aria-label="Close" onClick=${onClose}>✕</button></div>
     <div class="tabs">
@@ -126,10 +137,10 @@ function Journal({ sim, defOf, npcName, onClose, lore }) {
       <button class=${tab === 'chron' ? 'on' : ''} onClick=${() => setTab('chron')}>Chronicle · ${(sim.state.fragments || []).length}</button>
     </div>
     ${tab === 'chron' ? html`<${Chronicle} sim=${sim} lore=${lore} />` : tab === 'active'
-      ? (active.length ? active.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
-          onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)
+      ? (active.length ? groups.map(([k, label, list]) => html`<div key=${k}><div class=${'grp ' + k}>${label} · ${list.length}</div>${list.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
+          onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)}</div>`)
         : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something, and the Lantern Guild's board by her door always does.</div>`)
-      : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class="q"><span class="kind">${KIND[d.kind]}</span><h3>${d.title}</h3>
+      : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class=${'q' + (isMain(d) ? ' main' : '')}>${kindTag(d)}<h3>${d.title}</h3>
           <div class="giver">${d.giverName || npcName(d.giver)}</div><div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
         : html`<div class="empty">Nothing finished yet.</div>`)}
   </div>`;
@@ -181,7 +192,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
     const now = questNow(def, q);
     track.textContent = '';
     const b = document.createElement('b'), line = document.createElement('span');
-    b.textContent = '◆ ' + def.title;
+    b.textContent = (isMain(def) ? '★ ' : '◆ ') + def.title;          // ★ the main story, ◆ a side quest
     line.textContent = now.ready ? def.ready : now.objectives.map((o) => `${o.label.split(' ')[0]} ${o.n}/${o.of}`).join(' · ');
     track.append(b, line);
     track.classList.toggle('ready', now.ready); track.classList.add('on');
