@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
+import { createWorld } from '../src/sim/world.js';
 import { FRAGMENTS, SETS, HALL_WAVES, holderOf } from '../src/sim/lore.js';
 import { QS } from '../src/sim/quests.js';
 
@@ -22,6 +23,20 @@ test('placement is the world seed\'s: the same chest every time, a different one
   const kinds = new Set(); for (const seed of [1, 2, 3, 7, 99991, 12345, 555]) { const s = dungeon(seed), q = s.lore.holder(id); kinds.add(q.via === 'chest' ? `${seed}:${q.key}` : `${seed}:hall`); }
   assert.ok(kinds.size >= 5, 'seeds differ');
   assert.equal(holderOf(1, id, createSim(1, undefined, { scene: 'town' }).world), null);
+});
+
+// Ilse's errand says the first floor's chests are a start: a floor whose dressing drew no chest, or whose last one the
+// stairs or the pruning took, hid Standing Order 14 in the hall instead (8 Barrows first floors in 200; a
+// third floor in 6, a quarter to half of the Sunken Chapel's). Every floor now keeps a chest you can walk to.
+test('every floor keeps a chest, so the Barrows\' first floor always holds Standing Order 14 in one', () => {
+  const at = (s) => s * 7919 + 13;   // (the seeds the count above was made on: the listed ones had no chest before)
+  for (const [site, d, bad] of [['barrows', 0, [11, 17, 45, 71, 81, 107, 129, 173]], ['barrows', 2, [5, 17, 45]], ['sunken_chapel', 0, [4, 7, 9]], ['sunken_chapel', 1, [1, 2, 4]], ['tithe_mill', 0, [48, 99, 109]]]) {
+    for (const s of [...bad, 1, 3, 6, 10, 12]) {
+      const w = createWorld(at(s), undefined, d, site);
+      assert.ok([...w.props.values()].includes('chest'), `${site} floor ${d + 1}, seed ${at(s)}: no chest`);
+      if (site === 'barrows' && d === 0) assert.equal(holderOf(at(s), 'frag_vale_standing_order', w).via, 'chest', `seed ${at(s)}`);
+    }
+  }
 });
 
 test('opening its chest finds Standing Order 14: once, paid a little XP; another chest finds nothing', () => {
@@ -74,9 +89,15 @@ test('Ink reads the fragments; Sister Ilse\'s errand counts one found in the Bar
   town.state.fragments = ['frag_vale_muster_roll'];
   talk(town, 'sister_ilse'); const v = ev.at(-1).vars;
   assert.deepEqual([v.frag_vale_muster_roll, v.frag_vale_standing_order, v.frag_vale_count, v.q_vale_first_page], [1, 0, 1, QS.AVAILABLE]);
-  town.commands.push({ type: 'dialogueEffect', tag: 'quest', args: ['accept', 'vale_first_page'] }); town.tick();
-  assert.equal(town.quests.status('vale_first_page'), QS.ACTIVE);
-  const data = JSON.parse(JSON.stringify(town.snapshot())), d = dungeon(); d.restore({ ...data, scene: 'dungeon', depth: 0, player: { x: 0, y: 0 } });
+  const accept = (sim) => { sim.commands.push({ type: 'dialogueEffect', tag: 'quest', args: ['accept', 'vale_first_page'] }); sim.tick(); };
+  accept(town);
+  assert.equal(town.quests.status('vale_first_page'), QS.READY, 'a Barrows fragment found before the errand counts: it can\'t be found twice');
+  const fresh = createSim(20260807, undefined, { scene: 'town' }); fresh.state.fragments = ['frag_vale_tithe_ledger']; talk(fresh, 'sister_ilse'); accept(fresh);
+  assert.equal(fresh.quests.status('vale_first_page'), QS.ACTIVE, 'the Tithe Mill\'s ledger isn\'t from the barrows');
+  const data = JSON.parse(JSON.stringify(fresh.snapshot())), d = dungeon(); d.restore({ ...data, scene: 'dungeon', depth: 0, player: { x: 0, y: 0 } });
+  // a save from before the fix: the errand taken after the first floor's chest was opened, stuck at 0 of 1
+  const stuck = dungeon(); stuck.restore({ ...data, fragments: ['frag_vale_tithe_ledger', 'frag_vale_standing_order'] });
+  assert.equal(stuck.quests.status('vale_first_page'), QS.READY, 'an old save with the fragment already held loads ready');
   d.state.fragments = []; goDown(d); const hall = d.world.level.descentRoom.id; d.bus.emit('battle', { on: true, room: hall });
   for (let i = 0; i < HALL_WAVES; i++) d.bus.emit('wave', { cleared: true, room: hall });
   assert.equal(d.quests.status('vale_first_page'), QS.READY);

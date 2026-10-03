@@ -269,6 +269,9 @@ fragment. Two players find the same truth in different places (world doc §7).
   - `reveal`: the sites its reward opens (`state.revealed`, toast "… is on the map");
   - the `boss` objective counts a boss's fall (`bossDown`). A boss who already fell before the
     step began counts at once (`settle`), so a player who got ahead of the story isn't stuck.
+    The `fragment` objective does the same for fragments already held from its site (2026-10-03:
+    *The First Page* taken after the first floor's chest was opened had none left to find); a save
+    stuck that way is settled on load (`quests.settleAll`, after `lore.restore`).
 
   *Smoke over the Vale* (Maudry → Osric; 4 waves in the Tithe Mill; reveals Wickham Keep),
   *The Diggers* (Osric; reach the Keep's second floor, put down Captain Garrow), *An Ember in
@@ -458,7 +461,8 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
   - a shrine (the muster roll, second floor);
   - the stairs-down hall, held 3 waves in one visit (the centurion's tablet, second floor).
 
-  A floor with no such chest or shrine keeps the fragment in its hall.
+  A floor with no such shrine keeps the fragment in its hall. Every floor keeps a chest (2026-10-03,
+  `world.js` placeOneChest), so a chest's fragment is always in a chest, as Ilse's errand says.
 - **Finding one** pays 20 XP × the hero's level (+20 % for a ward of the Grey Sisters, the
   origin's `loreXp` edge). It emits `fragmentFound { id, set, order, found, of, xp }`, and the
   last of a set emits `setComplete`. Found fragments are saved (save v10).

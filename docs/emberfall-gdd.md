@@ -713,9 +713,12 @@ drops are events. Deeper rooms raise the gear-drop chance (§3.3).
 | **Heirloom** | 1 % per boss · guaranteed from hidden sites | Named, fixed stats and a unique effect, plus a line of history (world doc §9). |
 
 - **Chests are a find** (2026-10-01).
-  - **How common:** about one a floor, and never none on a floor that drew any. Each chest the
-    rooms' dressing places is kept at 35 %, on its own stream (`world.js` CHEST_KEEP), so the
-    rest of a floor stands as it was. Measured over game floors, per floor:
+  - **How common:** about one a floor, and never none. Each chest the rooms' dressing places is
+    kept at 35 %, on its own stream (`world.js` CHEST_KEEP), so the rest of a floor stands as it
+    was. A floor left with none (none drawn, or the stairs or pruning took the last) gets one
+    against a wall of a fighting room you can walk to (2026-10-03, `placeOneChest`: before, 8 in
+    200 Barrows first floors, a quarter of the Sunken Chapel's had none). Measured over game
+    floors, per floor (before that fix):
     - the Old Barrows 1.2, the Tithe Mill 1.4 (at least 1), Wickham Keep 1.2;
     - the Sunken Chapel 0.6, where pools crowd some out;
     - it had been about 3.

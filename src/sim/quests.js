@@ -32,6 +32,7 @@
 // level-6 ability (state.trials, skills.js), every member of the class, for good.
 
 import { gainXp } from './party.js';
+import { FRAGMENTS } from './lore.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 /** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
@@ -151,7 +152,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   bus.on('wave', (e) => { if (e.cleared) count((o, n) => (o.type === 'waves' && siteHere(o.site) && (!o.hall || hallHere(e.room)) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) ? n + 1 : n)); });
   bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) ? n + 1 : n)); });
-  bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? n + 1 : n)));
+  bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? Math.max(n + 1, heldAt(o.site)) : n)));
   bus.on('bossDown', (e) => count((o, n) => (o.type === 'boss' && o.boss === e.id && siteHere(o.site) ? n + 1 : n)));
   // a floor change inside a site (arriving from the overland or loading a save carry a scene, and don't count)
   bus.on('levelChanged', (e) => { if (!('scene' in e)) count((o, n) => (o.type === 'reach' && siteHere(o.site) ? Math.max(n, floorHere()) : n)); });
@@ -177,12 +178,18 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     changed(id);
     bus.emit('questAccepted', { id });                  // (the dialogue window says so where you took it)
   }
-  // a story boss who already fell (before the quest was taken) counts: he won't come back to be counted
+  // what was done before the quest was taken counts, where it can't be done again: a story boss who already fell
+  // (he won't come back to be counted), and a Chronicle fragment already found at the site (it's found once; Ilse's
+  // errand asked for one from the barrows, and a hero who'd opened the first floor's chest first had none left to find)
+  const heldAt = (site) => (state.fragments || []).filter((f) => FRAGMENTS[f] && FRAGMENTS[f].site === site).length;
   function settle(id) {
     const q = state.quests[id], d = defOf(id); if (!q || !d) return;
     for (;;) {
       const objs = d.steps[q.step].objectives;
-      objs.forEach((o, i) => { if (o.type === 'boss' && (state.bosses || {})[o.boss]) q.n[i] = target(o); });
+      objs.forEach((o, i) => {
+        if (o.type === 'boss' && (state.bosses || {})[o.boss]) q.n[i] = target(o);
+        if (o.type === 'fragment') q.n[i] = Math.max(q.n[i], Math.min(target(o), heldAt(o.site)));
+      });
       if (!objs.every((o, i) => q.n[i] >= target(o))) return;
       if (q.step + 1 < d.steps.length) { q.step += 1; q.n = d.steps[q.step].objectives.map(() => 0); } else { q.st = QS.READY; return; }
     }
@@ -295,5 +302,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     }
     return out;
   }
-  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, status, marks, def: defOf };
+  /** after a load (lore restored after quests: core.js): settle every active quest against what's held now */
+  function settleAll() { for (const id of Object.keys(state.quests)) if (state.quests[id].st === QS.ACTIVE) { settle(id); changed(id); } }
+  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, settleAll, status, marks, def: defOf };
 }

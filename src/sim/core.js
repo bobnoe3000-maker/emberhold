@@ -570,6 +570,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet
+    quests.settleAll();                                    // a quest taken after its fragment was found (quests.js settle)
     smith.restore(data);                                   // v16 and older: none yet
     floors = new Map();                                    // v7 and older: none (only the floor you're on)
     for (const e of Array.isArray(data.floors) ? data.floors : []) if (Array.isArray(e) && Number.isInteger(e[0]) && e[0] >= 0 && e[0] !== state.depth && e[1] && typeof e[1] === 'object') floors.set(e[0], e[1]);

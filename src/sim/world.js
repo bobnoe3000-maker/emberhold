@@ -153,7 +153,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     }
     world.stairsDownArrive = best;
   }
-  pruneUnreachable(world, keepTheWaysOpen(world, level));
+  const reach = keepTheWaysOpen(world, level);
+  pruneUnreachable(world, reach);
+  if (![...world.props.values()].includes('chest')) placeOneChest(world, level, keep, reach);
 
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.
@@ -208,6 +210,32 @@ function dense(world) {
 }
 const cellAt = (world, x, y) => { const g = dense(world), i = x - g.x0, j = y - g.y0; return i >= 0 && j >= 0 && i < g.w && j < g.h ? g.cells[j * g.w + i] : undefined; };
 function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y)); }
+
+// ...and never none even when the dressing drew none, or the stairs or the pruning took the last (2026-10-03: one
+// Barrows first floor in 25, one third floor in 6, a quarter to half of the Sunken Chapel's; the Barrows' first floor then hid its
+// Chronicle fragment in the hall while Ilse's errand said "the chests on the first floor"). One goes against a wall
+// of a fighting room you can walk to, clear of the doorways and the furniture, drawn on the keep stream: every
+// floor that kept a chest is the same as before.
+function placeOneChest(world, level, keep, reach) {
+  const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
+  const spots = [], loose = [], ent = level.entrance ? level.entrance.id : -1;
+  for (const [k, c] of level.cells) {
+    if (c.kind !== 'floor' || c.corridor || c.room < 0 || c.room === ent || world.props.has(k)) continue;
+    const [x, y] = k.split(',').map(Number);
+    if (!reach(x, y) || !NONWALK_OK(world, x, y) || resourceAt(world, x, y)) continue;
+    let wall = false, door = false, crowd = false;
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+      const n = level.cells.get(K(x + dx, y + dy)), d = Math.max(Math.abs(dx), Math.abs(dy));
+      if (d <= 2 && !(n && n.kind === 'floor')) wall = true;
+      if (n && n.kind === 'floor' && n.room < 0) door = true;
+      if (d <= 2 && world.props.has(K(x + dx, y + dy))) crowd = true;
+    }
+    if (crowd) continue;
+    if (wall && !door && floorAt(x + 1, y) && floorAt(x - 1, y) && floorAt(x, y + 1) && floorAt(x, y - 1)) spots.push(k); else loose.push(k);
+  }
+  const from = spots.length ? spots : loose;
+  if (from.length) world.props.set(from[Math.floor(keep() * from.length)], 'chest');
+}
 
 // A chest or shrine is only worth placing where you can walk up to it. Decor, pools and walls can close off
 // a pocket of a room (a chest you could see and never open: Barrows floor 2, seed 20260807, found by the
