@@ -778,6 +778,45 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 17. A phone on its side (the owner, 2026-10-03): the party cards stack in a column on the left, you on top, under
+// the HUD row; the town's service bar and the tracker sit right of it, nothing of theirs under a card, and the camera
+// keeps the hero in the open part of the screen. Upright, the cards are a row along the bottom as before.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const out = {};
+    for (const [W, H, scene] of [[844, 390, 'town'], [390, 844, 'town'], [844, 390, 'overland']]) {
+      const ctx = await b.newContext({ viewport: { width: W, height: H }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=${scene}`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+      await p.evaluate(() => globalThis.__sim.quests.begin('vale_long_way_round'));
+      await p.waitForTimeout(1300); await run(60);
+      out[`${W}x${H}${scene}`] = await p.evaluate(() => {
+        const R = (id) => { const e = document.getElementById(id); if (!e) return null; const q = e.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top, b: q.bottom }; };
+        const cards = [...document.querySelectorAll('#party .card')].map((e) => { const q = e.getBoundingClientRect(); return { main: e.classList.contains('main'), l: q.left, r: q.right, t: q.top, b: q.bottom }; })
+          .sort((a, b) => a.t - b.t || a.l - b.l);   // as laid out (CSS order moves you up the column)
+        // the tile under the middle of the open part of the screen, against where the hero stands
+        const pl = globalThis.__sim.state.player, lx = Math.max(0, ...cards.map((c) => (cards[0].l === c.l && cards.length > 1 && cards[1].l === c.l ? c.r : 0)));
+        const t = globalThis.__renderer.screenToTile((lx + innerWidth) / 2, innerHeight / 2, 0);
+        return { cards, hud: R('hud'), bar: R('hubBar'), track: R('questTrack'), side: getComputedStyle(document.documentElement).getPropertyValue('--party-side').trim(), off: Math.hypot(t.tx + 0.5 - pl.x, t.ty + 0.5 - pl.y), vw: innerWidth, vh: innerHeight };
+      });
+      out[`${W}x${H}${scene}`].errs = errs;
+      await ctx.close();
+    }
+    const L = out['844x390town'], P = out['390x844town'], V = out['844x390overland'], col = L.cards, probs = [];
+    const lx = Math.max(...col.map((c) => c.r));
+    if (!(col.length === 3 && col.every((c) => c.l === col[0].l) && col[0].main && col.every((c, i) => !i || c.t >= col[i - 1].b))) probs.push('landscape: not a column with you on top');
+    if (lx > 230 || col[0].t < L.hud.b - 0.5 || Math.max(...col.map((c) => c.b)) > L.vh) probs.push(`landscape: column ${JSON.stringify(col.map((c) => [c.l, c.t, c.r, c.b].map(Math.round)))}`);
+    if (L.bar && L.bar.l < lx - 0.5) probs.push('the service bar runs under the cards');
+    if (L.track && L.track.l < lx) probs.push('the tracker sits under the cards');
+    if (!(V.off < 3)) probs.push(`on the Vale the hero is ${V.off.toFixed(1)} tiles off the open screen's middle`);   // (the square frames itself)
+    if (!(P.cards.length === 3 && P.cards.every((c) => Math.abs(c.t - P.cards[0].t) < 1) && P.side === '0px')) probs.push('upright: not a row along the bottom');
+    if (L.errs.length || P.errs.length || V.errs.length) probs.push([...L.errs, ...P.errs, ...V.errs].join(' | '));
+    check('landscape: the party cards stack on the left, you on top; the service bar, tracker and hero stay right of them; upright is a row as before', probs.length === 0, probs.length ? probs.join(' · ') : `column to ${Math.round(lx)} px, --party-side ${L.side}, hero ${V.off.toFixed(1)} tiles from the open middle`);
+    await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

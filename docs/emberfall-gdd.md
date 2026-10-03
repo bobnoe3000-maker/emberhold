@@ -1120,6 +1120,15 @@ reproduce any battle for validation.
 
 Everything that matters sits in the lower two-thirds of the screen, within thumb reach.
 
+**Other screens (v1.18, the owner).** Portrait on a phone is the design; the rest adapt rather than stretch:
+- **Desktop and tablets** keep things about the phone's size and show more world, instead of blowing 25 tiles up to
+  fill the window (a mouse gets a quarter more size, since a desk is viewed from further).
+- **A phone on its side** (landscape, under 540 CSS px tall) moves the **party cards into a column on the left**,
+  you on top and companions below, compact (one row of stats). Everything else keeps its portrait place: the HUD row
+  along the top, the compass and Journal buttons and minimap on the right, the town's service bar and the quest
+  tracker along the bottom (right of the column), and the camera centres the hero in the open part of the screen.
+  ![Landscape before/after](img/landscape-phone.jpg) (`src/ui/party.js`, `--party-side`; browser test 17)
+
 ---
 
 ## 14. What the prototype already provides

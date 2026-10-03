@@ -239,8 +239,14 @@ export function createRenderer(canvas, sim, input) {
   // pushes it ~60 px down), so everything drawn along the top (minimap, room pill, boss bar, labels)
   // keys off it rather than a fixed height that fit a desktop and overlapped on a phone.
   let hudB = 50;
-  const measureHud = () => { const h = typeof document !== 'undefined' && document.getElementById('hud'); if (h) hudB = Math.max(40, h.getBoundingClientRect().bottom); };
-  measureHud(); window.addEventListener('resize', measureHud); setInterval(measureHud, 1000);
+  // ...and the party's column down the left on a phone held sideways (ui/party.js sets --party-side, CSS px; 0 when
+  // the cards sit along the bottom): the camera centres the hero in the rest of the screen
+  let sideL = 0;
+  const measureHud = () => {
+    const h = typeof document !== 'undefined' && document.getElementById('hud'); if (h) hudB = Math.max(40, h.getBoundingClientRect().bottom);
+    if (typeof document !== 'undefined') sideL = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--party-side')) || 0;
+  };
+  measureHud(); window.addEventListener('resize', () => { measureHud(); requestAnimationFrame(measureHud); }); setInterval(measureHud, 1000);
   const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px)
   const mmTop = () => hudB + 10;                                 // the minimap's top edge (CSS px)
 
@@ -939,14 +945,14 @@ export function createRenderer(canvas, sim, input) {
       cx += (lead.x - ix) * e; cy += (lead.y - iy) * e;
     } else leadT = 0;
     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
-    const anchor = 0.47 + (0.56 - 0.47) * t;               // hero sits higher (party cards below); the square keeps its framing
+    const anchor = (sideL ? 0.52 : 0.47) + (0.56 - 0.47) * t;   // hero sits higher (party cards below; level with no cards there); the square keeps its framing
     let jx = 0, jy = 0;
     if (shake) { const a = (performance.now() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
     // SUB-PIXEL SCROLL (critic pass 3: the world stepped in whole native pixels — 3 CSS px — in
     // an uneven 1-1-2 cadence, a judder over the whole screen). The window is rendered at the
     // camera rounded UP (ox, oy) and PASS B shifts the upscaled image back by the fraction
     // (rx − ox, a value in (−1, 0]), so the world glides; figures land on the nearest pixel.
-    const rx = nvw / 2 - C.sx + jx, ry = nvh * anchor - C.sy + jy;
+    const rx = nvw / 2 + (sideL * vw) / (2 * window.innerWidth * S) - C.sx + jx, ry = nvh * anchor - C.sy + jy;
     return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 };

@@ -23,7 +23,7 @@ const CSS = `
 #journalBtn .dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 5px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }
 #journalBtn.due .dot { display: block; }
 /* just above the party cards (and the town's service bar), clear of the minimap; placed by place() */
-#questTrack { position: fixed; left: 12px; bottom: 140px; z-index: 5; max-width: calc(100vw - 150px);   /* (the Step-out button shares the row in a fight) */ display: none;
+#questTrack { position: fixed; left: calc(var(--party-side, 0px) + 12px); bottom: 140px; z-index: 5; max-width: calc(100vw - var(--party-side, 0px) - 150px);   /* (the Step-out button shares the row in a fight) */ display: none;
   padding: 5px 10px; border-radius: 12px; background: rgba(16,12,22,0.94); border: 1px solid rgba(214,170,98,0.35);
   font: 11.5px ui-monospace, Menlo, monospace; color: #e8dcc4; }
 #questTrack.on { display: block; }

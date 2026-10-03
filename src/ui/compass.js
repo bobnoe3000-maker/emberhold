@@ -32,7 +32,7 @@ const CSS = `
   transition: opacity .2s ease; }
 #compassBtn svg { width: 26px; height: 26px; }
 #compassBtn.on { background: rgba(60,40,24,0.95); border-color: #d8a040; box-shadow: 0 0 0 3px rgba(216,160,64,.25), 0 2px 10px rgba(0,0,0,.5); }
-#compassMenu { position: fixed; right: 12px; top: calc(var(--hud-b, 50px) + 172px); z-index: 5; width: 292px; max-width: calc(100vw - 24px); background: rgba(16,12,22,0.96);
+#compassMenu { position: fixed; right: 12px; top: calc(var(--hud-b, 50px) + 172px); z-index: 5; width: 292px; max-width: calc(100vw - var(--party-side, 0px) - 24px); background: rgba(16,12,22,0.96);
   border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6); font-family: Georgia, serif; display: none; }
 #compassMenu.on { display: block; }
 #compassMenu:before { content: ''; position: absolute; right: 16px; top: -7px; width: 12px; height: 12px; background: rgba(16,12,22,0.96);
@@ -52,7 +52,7 @@ const CSS = `
 #compassMenu .go { color: #d8a040; font-size: 16px; flex: none; }
 #compassMenu .sep { height: 1px; background: rgba(214,170,98,0.18); margin: 6px 4px; }
 #compassMenu .empty { font: 11px ui-monospace, Menlo, monospace; color: #978c80; padding: 6px 8px 8px; }
-#walkChip { position: fixed; left: 50%; transform: translateX(-50%); z-index: 6; display: none; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; max-width: calc(100vw - 24px);
+#walkChip { position: fixed; left: calc(50% + var(--party-side, 0px) / 2); transform: translateX(-50%); z-index: 6; display: none; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; max-width: calc(100vw - 24px);
   background: rgba(16,12,22,0.95); border: 1px solid #d8a040; border-radius: 18px; font: 12px ui-monospace, Menlo, monospace; color: #f0c880; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
 #walkChip.on { display: flex; }
 #walkChip .lbl { overflow: hidden; text-overflow: ellipsis; }
