@@ -165,6 +165,7 @@ export const HEIRLOOMS = {
   the_relief: { base: 'amulet', name: 'The Relief', flav: 'Somebody finally came.', aff: ['def', 'hpr', 'hp'] },
   broken_chain: { base: 'charm', name: 'The Broken Chain', flav: 'He kept one link.', aff: ['def', 'hp', 'atk'] },
   last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
+  skarns_drum: { base: 'charm', name: "Skarn's Drum", flav: 'It still keeps time. Nobody comes out any more.', aff: ['atk', 'hp', 'crit'] },
 };
 /** an heirloom at an item level @param {string} id @param {number} ilv @param {string} uid */
 export function makeHeirloom(id, ilv, uid) {

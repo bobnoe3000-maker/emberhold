@@ -1036,6 +1036,42 @@ Object.assign(TYPES, {
     const cr = box(0.09, 0.07, 0.09, wood, -0.2, 0, 0.24, g); cr.rotation.y = 0.5;
     for (let i = 0; i < 4; i++) { const k = rockMesh(r, 0.015 + r() * 0.01, 0.5); k.position.set(-0.3 + r() * 0.7, 0, -0.2 + r() * 0.5); g.add(k); }
   },
+  // The Scrag Warren (world doc v1.19): the hill goblins' burrow, a hole dug into a scar of rock at the foot of the
+  // north range. A low ridge of grey crags with grass on top; on the camera side a ragged dark mouth propped on two
+  // crooked posts and a cart-shaft lintel, a hide hung half across it; sharpened stakes either side; a totem with a
+  // horse skull and a green rag; a fire pit; and what fell off the carts this spring: a barrel, sacks, a wheel.
+  warren(S, g, r) {
+    const ridge = new THREE.Group(); ridge.position.set(0, 0, -0.3); g.add(ridge);
+    const oc = (ny, y, q) => (ny > 0.55 && y > 0.18 ? tint(ROCK.grass, 0.75 + q * 0.3) : ny > 0.3 ? tint(ROCK.light, 0.8 + q * 0.2) : tint(ROCK.base, 0.75 + q * 0.25));
+    const crag = (x, z, rad, ht, seg) => { const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0); const m = new THREE.Mesh(faceted(geo, r, rad * 0.32, oc), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; ridge.add(m); };
+    crag(0, 0, 0.95, 0.5, 11);                                                     // a long low scar…
+    crag(-0.5, -0.1, 0.55, 0.72, 7); crag(0.45, -0.15, 0.5, 0.64, 7); crag(-0.05, -0.3, 0.5, 0.84, 7); crag(0.85, 0.05, 0.36, 0.42, 6); crag(-0.88, 0.1, 0.34, 0.38, 6);
+    for (let i = 0; i < 5; i++) { const a = r() * 6.28; const k = rockMesh(r, 0.1 + r() * 0.08, 0.7); k.position.set(Math.cos(a) * 0.8, 0, Math.sin(a) * 0.45 - 0.1); g.add(k); }
+    // the mouth: a dark hole into the scar, two crooked posts and a cart-shaft across, a hide half across it
+    const m = new THREE.Group(); m.position.set(0.02, 0, 0.32); g.add(m);
+    box(0.36, 0.3, 0.34, mat(null, '#0a090c'), 0, 0, -0.1, m);
+    const post = (x, lean) => { const b = box(0.045, 0.36, 0.045, S.m.beam, x, 0, 0.06, m); b.rotation.z = lean; };
+    post(-0.2, 0.08); post(0.19, -0.1);
+    const lin = box(0.5, 0.045, 0.05, mat(null, '#3e2e22'), 0, 0.34, 0.06, m); lin.rotation.z = 0.06;
+    const hide = box(0.15, 0.22, 0.012, mat(null, '#6a5a3e'), -0.1, 0.1, 0.09, m); hide.rotation.z = 0.05;
+    // sharpened stakes in a ragged arc either side of the mouth
+    const stake = mat(null, '#5a4430');
+    for (const [x, z, h, lean] of [[-0.42, 0.42, 0.24, 0.25], [-0.52, 0.34, 0.28, 0.2], [-0.62, 0.24, 0.22, 0.3], [0.42, 0.44, 0.26, -0.25], [0.53, 0.36, 0.22, -0.2], [0.63, 0.26, 0.27, -0.3]]) {
+      const st = new THREE.Mesh(new THREE.ConeGeometry(0.022, h, 5), stake); st.position.set(x, h / 2, z); st.rotation.set(0.25, 0, lean); g.add(st); }
+    // the totem: a pole, a horse skull on it, a green rag tied under
+    box(0.035, 0.62, 0.035, S.m.beam, 0.34, 0, 0.62, g);
+    const bone = mat(null, '#d8ccb0'), skull = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.13), bone); skull.position.set(0.34, 0.64, 0.64); skull.rotation.x = -0.4; g.add(skull);
+    for (const sx of [-1, 1]) { const ey = box(0.014, 0.014, 0.01, mat(null, '#140c08'), 0.34 + sx * 0.02, 0.66, 0.705, g); ey.rotation.x = -0.4; }
+    const rag = box(0.11, 0.14, 0.006, mat(null, '#4e6a2e'), 0.39, 0.42, 0.63, g); rag.rotation.z = -0.15;
+    // the fire pit: a ring of stones and a low glow
+    for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, k = rockMesh(r, 0.028, 0.6); k.position.set(-0.3 + Math.cos(a) * 0.08, 0, 0.66 + Math.sin(a) * 0.06); g.add(k); }
+    const fire = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.03, 0.05), S.m.glass); fire.userData.glow = true; fire.position.set(-0.3, 0.015, 0.66); g.add(fire);
+    // what fell off the carts: a barrel on its side, sacks, a wheel against the rock, bones
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.1, 10), S.m.wood); b.position.set(0.58, 0.045, 0.56); b.rotation.set(Math.PI / 2, 0, 0.7); g.add(b);
+    sackMesh(g, S, -0.56, 0.5, 1.0, 1.1); sackMesh(g, S, -0.48, 0.58, 0.8, 0.3);
+    const wl = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.012, 4, 12), mat(null, '#3e2e22')); wl.position.set(0.3, 0.08, 0.36); wl.rotation.set(0.2, 0.4, 0); g.add(wl);
+    for (let i = 0; i < 5; i++) { const bn = box(0.05, 0.01, 0.012, bone, -0.1 + r() * 0.5, 0, 0.52 + r() * 0.25, g); bn.rotation.y = r() * 3; }
+  },
   // The ninth milestone on the Wickham road: a squat imperial mile-stone with its numeral, a worn
   // plinth, and a slab at its foot that doesn't quite sit flat.
   milestone(S, g, r) {

@@ -26,6 +26,19 @@
     },
     "acolyte": {
       "a": "a Cinder Cult acolyte"
+    },
+    "goblin": {
+      "a": "a goblin skirmisher"
+    },
+    "bruiser": {
+      "a": "a goblin bruiser",
+      "elite": "a goblin bruiser with a carter's hat"
+    },
+    "archer": {
+      "a": "a goblin archer"
+    },
+    "hexer": {
+      "a": "a goblin hexer"
     }
   }
 }

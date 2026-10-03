@@ -2014,5 +2014,312 @@
   "hold": {
    "handslot.r": "flour"
   }
+ },
+ {
+  "id": "GB1",
+  "cls": "Goblin",
+  "label": "Goblin skirmisher \u00b7 a knife (sacking, harness leather)",
+  "model": "Rogue",
+  "show": [
+   "Knife"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#7a6a4a",
+     "#2a2216"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#221810"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#221810"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   }
+  ],
+  "face": "goblin",
+  "height": 0.72
+ },
+ {
+  "id": "GB2",
+  "cls": "Goblin",
+  "label": "Goblin bruiser \u00b7 axe and a cart-wheel shield",
+  "model": "Barbarian",
+  "show": [
+   "1H_Axe",
+   "Barbarian_Round_Shield"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a4028",
+     "#221810"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a5a3e",
+     "#241c10"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a4028",
+     "#221810"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   }
+  ],
+  "face": "goblin_brute",
+  "height": 0.8
+ },
+ {
+  "id": "GB3",
+  "cls": "Goblin",
+  "label": "Goblin archer \u00b7 a poacher's hunting bow",
+  "model": "Rogue_Hooded",
+  "show": [],
+  "hold": {
+   "handslot.r": "huntbow"
+  },
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a5a3e",
+     "#241c10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a6a4a",
+     "#2a2216"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4e5a34",
+     "#1a1e10"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   }
+  ],
+  "face": "goblin",
+  "height": 0.72
+ },
+ {
+  "id": "GB4",
+  "cls": "Goblin",
+  "label": "Goblin hexer \u00b7 a staff, rags and bones",
+  "model": "Mage",
+  "show": [],
+  "hold": {
+   "handslot.r": "staff"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4e5a34",
+     "#1a1e10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4e5a34",
+     "#1a1e10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#cfc3a4",
+     "#5a5040"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     2
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     3
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     3
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#8a9a58",
+     "#2e3a18"
+    ]
+   }
+  ],
+  "face": "goblin_hex",
+  "height": 0.74
+ },
+ {
+  "id": "BS1",
+  "cls": "Boss",
+  "label": "Old Skarn \u00b7 the Scrag Warren's chief (grey at the ears, a carter's cape, a great-axe)",
+  "model": "Barbarian",
+  "show": [
+   "2H_Axe",
+   "Barbarian_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a5a3e",
+     "#241c10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a3a24",
+     "#24120a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a4028",
+     "#221810"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#7c8460",
+     "#2a3018"
+    ]
+   }
+  ],
+  "face": "skarn",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 0.86
  }
 ]

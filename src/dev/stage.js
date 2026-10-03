@@ -32,7 +32,8 @@ const CAST = [
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
   ['foes', 'skeleton_warrior', 'Warrior'], ['foes', 'skeleton_minion', 'Minion'], ['foes', 'skeleton_rogue', 'Archer'], ['foes', 'skeleton_mage', 'Mage'],
   ['foes', 'redhand_cutthroat', 'Cutthroat'], ['foes', 'redhand_brute', 'Brute'], ['foes', 'redhand_crossbow', 'Crossbow'], ['foes', 'cinder_acolyte', 'Acolyte'],
-  ['bosses', 'boss_garrow', 'Garrow'], ['bosses', 'boss_stranger', 'Stranger'], ['bosses', 'boss_standard', 'Standard'],
+  ['foes', 'goblin_skirmisher', 'Goblin'], ['foes', 'goblin_bruiser', 'Bruiser'], ['foes', 'goblin_archer', 'Gob. archer'], ['foes', 'goblin_hexer', 'Hexer'],
+  ['bosses', 'boss_garrow', 'Garrow'], ['bosses', 'boss_stranger', 'Stranger'], ['bosses', 'boss_standard', 'Standard'], ['bosses', 'boss_skarn', 'Skarn'],
 ];
 const GROUP_NAME = { party: 'The party', town: 'Thornwick', foes: 'Foes', bosses: 'Bosses' };
 const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
@@ -74,13 +75,16 @@ export function createStage({ renderer, sim, params }) {
   }
   if (row) y += ROW_H(row.items[0].c);
   const showPanel = P('panel', '1') !== '0', reserve = showPanel ? Math.round(92 * view.w / window.innerWidth) : 10;   // (the panel's height, in native px)
+  // a cast taller than the screen packs its rows closer (to 78 %: a 56 px figure and its label still clear the next)
+  const squeeze = Math.max(0.78, Math.min(1, (view.h - reserve) / y));
+  if (squeeze < 1) { for (const r of rows) r.y *= squeeze; for (const h of heads) h.y *= squeeze; y *= squeeze; }
   const totalH = y, room = view.h - reserve, top = totalH < room ? reserve - view.h * anchorY + (room - totalH) / 2 : reserve - view.h * anchorY;   // centred below the panel; from the top when it's taller
   const C0 = sim.world.spawn, cam = { x: C0.x, y: C0.y };
   const actors = [];
   for (const r of rows) {
     const rw = r.items.length ? r.items[r.items.length - 1].x + cell(r.items[0].c) / 2 : 0;
     for (const it of r.items) {
-      const sx = it.x - rw / 2, sy = top + r.y + ROW_H(it.c) - 26 * space, w = unproject(sx, sy);
+      const sx = it.x - rw / 2, sy = top + r.y + ROW_H(it.c) * squeeze - 26 * space, w = unproject(sx, sy);
       const kind = kindOf(it.c[0], it.c[1]);
       const label = it.d !== null ? (it.d === 0 ? `${it.c[2]} 0` : String(it.d)) : roots.length > 1 && it.root ? '' : it.c[2];
       actors.push({ atlas: it.c[1], label, tag: roots.length > 1 ? (it.root ? 'before' : 'after') : '', kind,

@@ -21,8 +21,10 @@ export const THEMES = {
   ember:  { name: 'Cinderworks',  wall: 'obsid',  floors: ['basalt', 'basalt', 'soil'],      hazard: 'ember',  hazardScale: 0.24, hazardCut: 0.66 },
   lava:   { name: 'Magma Vault',  wall: 'obsid',  floors: ['basalt', 'basalt'],              hazard: 'lava',   hazardScale: 0.17, hazardCut: 0.58 },
   chasm:  { name: 'Soulcracks',   wall: 'basalt', floors: ['chasm', 'chasm', 'basalt'],      hazard: 'abyss',  hazardScale: 0.20, hazardCut: 0.72 },
+  // a site's own look, never drawn for the Old Barrows (THEME_KEYS is what their seed picks from)
+  warren: { name: 'Goblin Warren', wall: 'basalt', floors: ['soil', 'soil', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.18, hazardCut: 0.76 },
 };
-export const THEME_KEYS = Object.keys(THEMES);
+export const THEME_KEYS = ['dread', 'desert', 'poison', 'ember', 'lava', 'chasm'];
 
 export const FLOOR_Z = 2;          // platform elevation
 export const WALL_Z = 7;           // wall crown — well above the +1 climb rule

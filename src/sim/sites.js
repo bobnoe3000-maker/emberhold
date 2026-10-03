@@ -19,6 +19,7 @@ export const SITES = {
   tithe_mill: { name: 'The Tithe Mill', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], mix: 0x3117 },
   wickham_keep: { name: 'Wickham Keep', theme: 'dread', base: 3, perFloor: 1, floors: 2, family: 'redhand', families: ['redhand', 'diggers'], rooms: [6, 6], hidden: true, bosses: { 2: 'redhand_captain' }, mix: 0x7e40 },
   sunken_chapel: { name: 'The Sunken Chapel', theme: 'poison', base: 5, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], bosses: { 2: 'robed_stranger' }, mix: 0xc4a9 },
+  scrag_warren: { name: 'The Scrag Warren', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], bosses: { 2: 'goblin_chief' }, mix: 0x6b1d },
   ninth_milestone: { name: 'The Ninth Milestone', theme: 'chasm', base: 8, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, vault: 'last_order', mix: 0x9e11 },
 };
 export const SITE_IDS = Object.keys(SITES);

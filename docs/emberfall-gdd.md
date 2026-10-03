@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.18 · 2026-10-03 · Plan of record for game design.** v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.19 · 2026-10-03 · Plan of record for game design.** v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -211,20 +211,24 @@ Levels rise as you **advance deeper**:
   safe sanctuary (level 0).
 - **Every site has its own band (M5, `src/sim/sites.js`):** room level = the site's base + its
   levels a floor × floor + ⌊rank ÷ 2⌋. The Tithe Mill runs 1–3 on one floor, Wickham Keep 3–6 on
-  two, the Sunken Chapel 5–8 on two, the Ninth Milestone is 8 throughout; the Old Barrows keep
+  two, the Scrag Warren 2–5 on two (v1.19), the Sunken Chapel 5–8 on two, the Ninth Milestone is 8 throughout; the Old Barrows keep
   the formula above and go on down. A site's last floor ends in its hall, with no stairs down.
 - **Bosses (M5):** a floor's stairs-down hall can hold its site's boss (`sites.js`), who opens
   the fight with an escort; once it falls, the hall goes quiet for the visit. Each has one
   signature mechanic: Captain Garrow (Wickham Keep) calls two of his men at 2/3 and 1/3 HP and takes
   half damage while they stand; the Robed Stranger (the Sunken Chapel) raises the last foe slain
   every 12 s; the Standard of the Third Legion (the Old Barrows' third floor, optional and
-  repeatable) halves the damage taken by the Ashbound within 4 tiles of it. A story boss falls
+  repeatable) halves the damage taken by the Ashbound within 4 tiles of it; Old Skarn (the Scrag Warren's
+  second floor, repeatable, v1.19) drums while he stands, and every 10 s two goblins (a skirmisher and an archer)
+  come out at the hall's far side, never more than four of his up at once: the fight is a race to him.
+  ![The Scrag Warren: the goblins, Old Skarn, the warren's door on the Vale, a room fight](img/scrag-warren.jpg) A story boss falls
   once; a boss's first fall leaves its heirloom, and every fall a Fine or better item. The HUD shows
   a boss's name and health under the room pill, with a shield while it's guarded.
 - **Who fights** is the site's family (M5, `battle.js` FAMILIES): the Ashbound in the barrows; the
   Redhand Company (cutthroat, brute, crossbowman; their elite a Sergeant) in the Tithe Mill and
   Wickham Keep, with the Ashbound they dug up on the Keep's second floor; the Ashbound and Cinder
-  acolytes in the Sunken Chapel. Each Redhand archetype mirrors an Ashbound role's strength, so a
+  acolytes in the Sunken Chapel; the hill goblins in the Scrag Warren (v1.19: skirmisher, bruiser,
+  archer, hexer; their elite a bruiser). Each Redhand or goblin archetype mirrors an Ashbound role's strength, so a
   room's difficulty is its level whoever fills it; bandits carry more coin. Turn Undead reaches only
   the Ashbound.
 - **Enemy stats** = archetype base × (1 + 0.14 × (level − 1)) for HP and DEF, and

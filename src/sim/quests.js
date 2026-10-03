@@ -54,6 +54,11 @@ export const QUESTS = {
     steps: [{ id: 'barrows', objectives: [{ type: 'fragment', site: 'barrows', count: 1 }] }],
     rewards: { xp: 120, gold: 25 },
   },
+  vale_hens_under_the_hill: {                        // Hedda's errand (world doc §5, v1.19): the goblins have her hens; tell their chief
+    kind: 'errand', giver: 'hedda', region: 'vale', level: [2, 8],
+    steps: [{ id: 'warren', objectives: [{ type: 'boss', site: 'scrag_warren', boss: 'goblin_chief', count: 1 }] }],
+    rewards: { xp: 420, gold: 70 },
+  },
   // Act I, Smoke over the Vale (world doc §6, v1.7; docs/m5-plan.md §4): the Tithe Mill for Maudry, then
   // Wickham Keep and Captain Garrow for Osric, then the Sunken Chapel, where the Robed Stranger dies
   // with an ember-shard in his fist, which goes to Sister Ilse.

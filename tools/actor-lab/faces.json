@@ -323,5 +323,58 @@
   "mouth": "line",
   "nose": "long",
   "shape": "thin"
+ },
+ "goblin": {
+  "skin": "#8a9a58",
+  "hair": "bald",
+  "brows": "angry",
+  "eyes": "narrow",
+  "iris": "amber",
+  "mouth": "grin",
+  "nose": "hook",
+  "shape": "pear"
+ },
+ "goblin_brute": {
+  "skin": "#7e8e50",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "amber",
+  "mouth": "frown",
+  "nose": "broad",
+  "shape": "thick",
+  "marks": [
+   "scar"
+  ]
+ },
+ "goblin_hex": {
+  "skin": "#8a9a58",
+  "hair": "long",
+  "hairColor": "ash",
+  "brows": "worried",
+  "eyes": "round",
+  "iris": "green",
+  "mouth": "open",
+  "nose": "long",
+  "shape": "thin",
+  "marks": [
+   "wrinkles"
+  ]
+ },
+ "skarn": {
+  "skin": "#7c8460",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "sharp",
+  "iris": "amber",
+  "mouth": "grim",
+  "nose": "hook",
+  "beard": "stubble",
+  "shape": "oblong",
+  "marks": [
+   "scar",
+   "earring",
+   "wrinkles"
+  ]
  }
 }

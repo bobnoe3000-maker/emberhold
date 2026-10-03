@@ -181,7 +181,7 @@ export const VARIANTS = {
 };
 export const VARIANT_KEYS = Object.keys(VARIANTS);
 // Default variant per biome when none is forced with ?tv=.
-export const THEME_VARIANT = { dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock' };
+export const THEME_VARIANT = { dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock', warren: 'rock' };
 // Point-light colour for glowing pools (the renderer thins these to a few lamps).
 export const POOL_LIGHT = { lava: [1.7, 0.8, 0.25], poison: [0.5, 1.5, 0.35], ice: [0.4, 0.7, 1.2], water: [0.3, 0.8, 1.6] };
 

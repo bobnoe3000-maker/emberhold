@@ -19,6 +19,7 @@ VAR flag_met_hedda = 0
 VAR q_trial_quiet_feet = -1
 VAR road_ranks = 3
 VAR q_trial_cold_weather = -1
+VAR q_vale_hens_under_the_hill = -1
 
 == wendel_hub ==
 { flag_met_wendel == 0:
@@ -122,15 +123,39 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
         {&"The hens stopped laying the week the barrows opened. They've started again. Hens don't hold grudges."|"Folk say the dead walk in step. So do the geese. Nobody writes to Greyholt about the geese."|"Two for a copper, and I'll not tell anyone you bought eggs before going to fight the dead."}
     }
 }
-{ q_trial_cold_weather >= 0 && q_trial_cold_weather <= 2: -> hedda_topics }
+{ (q_trial_cold_weather >= 0 && q_trial_cold_weather <= 2) || (q_vale_hens_under_the_hill >= 0 && q_vale_hens_under_the_hill <= 2): -> hedda_topics }
 -> END
 
 // ── the mage's trial (content/quests/trial_cold_weather.json) ──
 == hedda_topics ==
++ { q_vale_hens_under_the_hill == 2 } [Old Skarn's been told. #mark: quest ready] -> hedda_hens_turnin
++ { q_vale_hens_under_the_hill == 0 } [You're short of hens. #mark: quest] -> hedda_hens_offer
++ { q_vale_hens_under_the_hill == 1 } [About your hens… #mark: quest active] -> hedda_hens_active
 + { q_trial_cold_weather == 2 } [It listened. Six waves in the chapel. #mark: quest ready] -> hedda_trial_turnin
 + { q_trial_cold_weather == 0 } [Does the weather really listen to you? #mark: quest] -> hedda_trial_offer
 + { q_trial_cold_weather == 1 } [About the chapel… #mark: quest active] -> hedda_trial_active
 + [Two eggs, then.] -> END
+
+// ── her hens (content/quests/vale_hens_under_the_hill.json; world doc v1.19) ──
+== hedda_hens_offer ==
+"Four. Four hens since the thaw, and a green hand through the slats where the fox used to come. It isn't a fox."
+"The carters go the long way round now, under the range, and the goblins up there have found out what falls off a cart. Hens don't fall off carts. They came down for them."
+"There's a hole in the scar at the foot of the range, north of the mill. The one with the drum is their chief. Old Skarn, the carters call him. Go and tell him about my hens."
++ [We'll tell him. #mark: quest]
+    "Tell him loudly. I'll know if you whisper." # quest: accept vale_hens_under_the_hill
+    -> hedda_topics
++ [Not now.]
+    "They'll be back for the geese. Then you'll hear about it."
+    -> hedda_topics
+
+== hedda_hens_active ==
+"The Scrag, at the foot of the range, north of the mill. Down two floors, where the drum is. Put the drummer down and the rest stop coming."
+-> hedda_topics
+
+== hedda_hens_turnin ==
+"No drum last night. First quiet night since the thaw." She counts the hens in her head, and doesn't say the number.
+"I'll not get the four back. But nobody else will lose theirs, and that's the same as winning in this town. Here. And take a dozen eggs. Don't argue." # quest: turnin vale_hens_under_the_hill
+-> hedda_topics
 
 == hedda_trial_offer ==
 "It does. Not always. Nobody listens always."

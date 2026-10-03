@@ -17,7 +17,7 @@ test('the roads have no elbows: every turn under 25°, and each join has its apr
     assert.ok(deg < 25, `a ${Math.round(deg)}° turn at ${b.map((q) => q.toFixed(1))}`);
   }
   assert.ok(o.aprons.length >= 5, `${o.aprons.length} aprons`);   // the crossroads (four roads), the mine, camp, mill and chapel forks
-  assert.equal(o.roads.filter((r) => r.surface === 'track').length, 3, 'the mill, chapel and camp spurs are tracks');
+  assert.equal(o.roads.filter((r) => r.surface === 'track').length, 4, 'the mill, chapel, camp and warren spurs are tracks');
 });
 
 test('no mountain on the walked map; the north range stands twice the keep', () => {

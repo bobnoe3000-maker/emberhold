@@ -42,7 +42,8 @@ const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'ske
 // Cinder Cult. The Ashbound load with the game; the others when a floor that has them loads.
 const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', rogue: 'skeleton_rogue', mage: 'skeleton_mage',
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
-  redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard' };
+  goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
+  redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn' };
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
@@ -446,12 +447,12 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
-  // bolts: tiny emissive sprites (firebolt ember, soul-bolt violet, crossbow quarrel steel)
+  // bolts: tiny emissive sprites (firebolt ember, soul-bolt violet, a goblin's hex green, crossbow quarrel steel)
   const bolts = {};
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.9)) continue;
       const j = y * w + x; sp.mask[j] = 1; sp.alb.set(col, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < 1.8 ? glow : 0;
@@ -535,6 +536,8 @@ export function createRenderer(canvas, sim, input) {
   const qs = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
   const tileKey = qs.get('tiles') || 'cobble', tileVariant = qs.get('tv') || '';
   const tileStyle = tileKey === 'classic' ? null : (TILE_STYLES[tileKey] || TILE_STYLES.cobble);
+  // a site may keep its own style (the goblins' warren is dug, not laid: cavern), unless ?tiles= says otherwise
+  const THEME_STYLE = { warren: 'cavern' }, styleOf = (w) => (!qs.has('tiles') && THEME_STYLE[w.theme] ? TILE_STYLES[THEME_STYLE[w.theme]] : tileStyle);
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   // DEPTH (bDEP): distance toward the camera in tile units = ground x+y of the surface
@@ -733,7 +736,7 @@ export function createRenderer(canvas, sim, input) {
   function drawTileStyled(sx, sy, x, y, z, m) {
     const world = sim.world, th = world.level.th, cell = world.level.cells.get(x + ',' + y);
     const isWall = !!cell && cell.kind === 'wall', hPix = z * ZH, seed = world.ss;
-    const V = variantFor(world.theme, tileVariant), pool = !isWall && m === th.hazard;
+    const V = variantFor(world.theme, tileVariant), pool = !isWall && m === th.hazard, ST = styleOf(world);
     const fr = ELIT[V.floor], wr = ELIT[V.wall], accent = V.accent;
     const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
     // wall faces sit one ramp step darker than floors/caps, so the play space reads first
@@ -747,7 +750,7 @@ export function createRenderer(canvas, sim, input) {
         const X = xs + dx, a = (X + 0.5 - sx) / HW, b = (py + 0.5) / HH;
         const u = Math.min(0.999, Math.max(0, (a + b) / 2)), v = Math.min(0.999, Math.max(0, (b - a) / 2));
         const c = { gx: x + u, gy: y + v, u, v, tx: x, ty: y, fr: isWall ? wr : fr, wr, seed, accent };
-        const r = paintFloor(tileStyle, V, c, pool, isWall);
+        const r = paintFloor(ST, V, c, pool, isWall);
         let col = r.c;
         if ((nwHi && py < 3 && dx < w / 2) || (neHi && py < 3 && dx >= w / 2)) col = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72];
         putG(X, sy + py, col, r.n || N_UP, hPix, r.e || 0, x + y + (py + 0.5) / HH + z * 0.5);
@@ -755,12 +758,13 @@ export function createRenderer(canvas, sim, input) {
     }
   }
   function faceStyled(sx, sy, drop, side, hTop, x, y, wr, seed, accent, V) {
+    const WS = styleOf(sim.world);
     const h = Math.min(drop * ZH, 30), nb = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
     for (let i = 0; i < 8; i++) {
       const X = side === 0 ? sx - 8 + i : sx + i, yTop = side === 0 ? sy + 4 + ((i >> 1) + 1) : sy + 8 - (i >> 1);
       const along = side === 0 ? x + (i + 0.5) / 8 : y + 1 - (i + 0.5) / 8;     // continuous along a wall run
       for (let k = 0; k < h; k++) {
-        const r = paintWall(tileStyle, V, { along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
+        const r = paintWall(WS, V, { along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
         const n = r.n ? norm3(nb[0] + r.n[0], nb[1] + r.n[1], nb[2] + r.n[2]) : nb;
         putG(X, yTop + k, r.c, n, Math.max(0, hTop - k), r.e || 0, faceKey(x, y, side, i) + DPX * (hTop - k));
       }
@@ -1347,9 +1351,10 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
-  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'] };
+  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'] };
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
   sim.bus.on('bossCall', () => { banner = { text: 'Garrow calls his men', sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
+  sim.bus.on('bossSwarm', () => { banner = { text: 'Skarn drums: goblins pour out', sub: bossLine.swarm[1], until: performance.now() + 2000, small: true }; });
   sim.bus.on('bossKindle', () => { banner = { text: 'The Stranger kindles the dead', sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
   sim.bus.on('bossDown', ({ name, first }) => { banner = { text: `${name} falls`, sub: first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });

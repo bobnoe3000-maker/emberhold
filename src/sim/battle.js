@@ -112,6 +112,15 @@ Object.assign(ENEMIES, {
   crossbow:  { hp: 36, atk: 9.3, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 6.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
   acolyte:   { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 7.0, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
 });
+// The hill goblins of the Scrag Warren (world doc §8, v1.19): small, quick and many. The same mirror: the skirmisher
+// a minion's strength (lighter, quicker, more dodge), the bruiser a warrior's (their elite), the archer a rogue's
+// with a poacher's bow, the hexer a mage's, casting a green hex.
+Object.assign(ENEMIES, {
+  goblin:  { hp: 31, atk: 7.2, def: 3, crit: 8, dodge: 12, interval: 1.0, range: 2.6, speed: 3.9, xp: 10, gold: 2 },
+  bruiser: { hp: 56, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.5, range: 3.0, speed: 2.9, xp: 14, gold: 3 },
+  archer:  { hp: 34, atk: 8.2, def: 3, crit: 10, dodge: 11, interval: 1.6, range: 6.5, speed: 3.6, xp: 12, gold: 2, bolt: 'arrow' },
+  hexer:   { hp: 32, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 7.0, speed: 2.8, xp: 14, gold: 3, bolt: 'hex' },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -123,6 +132,7 @@ export const FAMILIES = {
   redhand: { melee: ['cutthroat', 'brute'], ranged: ['crossbow', 'crossbow'], elite: 'brute', undead: () => false },
   diggers: { melee: ['cutthroat', 'minion'], ranged: ['crossbow', 'rogue'], elite: 'brute', undead: (k) => k === 'minion' || k === 'rogue' },
   chapel: { melee: ['minion', 'warrior'], ranged: ['rogue', 'acolyte'], elite: 'warrior', undead: (k) => k !== 'acolyte' },
+  goblin: { melee: ['goblin', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'bruiser', undead: () => false },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's
@@ -130,18 +140,21 @@ export const FAMILIES = {
 //   call   (Captain Garrow) at 2/3 and 1/3 HP two of his men join him, and he takes half damage while they stand
 //   kindle (the Robed Stranger) every KINDLE_S s the last foe slain rises again as an Ashbound minion
 //   line   (the Standard of the Third Legion) Ashbound within LINE_R of it take half damage
+//   swarm  (Old Skarn, the Scrag Warren) while he stands he drums, and every SWARM_S s two goblins come out of the
+//          tunnels at the hall's far side, while fewer than SWARM_MAX of them are up: put him down and the drum stops
 // `once`: a story boss falls for good (state.bosses counts kills; his hall then fights as any other).
-// Events: 'bossWave' { id, name } · 'bossCall' { id } · 'bossKindle' { id, x, y } · 'bossDown' { id, name, first, x, y, lvl }.
+// Events: 'bossWave' { id, name } · 'bossCall' { id } · 'bossKindle' { id, x, y } · 'bossSwarm' { id, x, y, n } · 'bossDown' { id, name, first, x, y, lvl }.
 // Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
 // which are paid, are not.
 export const GOLD_DROP = 0.7;
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
+  goblin_chief: { name: 'Old Skarn', like: 'bruiser', hp: 26, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'swarm', escort: ['goblin', 'archer'], heirloom: 'skarns_drum' },
   standard: { name: 'The Standard of the Third Legion', like: 'warrior', hp: 34, atk: 2.2, def: 1.8, speed: 2.3, xp: 14, gold: 30, mech: 'line', escort: ['warrior', 'minion', 'rogue'], undead: true, heirloom: 'the_relief' },
 };
-export const KINDLE_S = 12, LINE_R = 4;
+export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
 export function halved(tgt, foes) {
@@ -263,7 +276,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -766,6 +779,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       e.kindleT = 0;
       const at = battle && battle.lastSlain;
       if (at) { const u = foe(w, 'minion', e.lvl, at.x, at.y, tough, false, FAMILIES.ashbound); u.undead = true; battle.lastSlain = null; bus.emit('bossKindle', { id: e.boss, x: at.x, y: at.y }); }
+    } else if (B.mech === 'swarm' && (e.swarmT += dt) >= SWARM_S) {
+      // out of the tunnels: two of the escort's kinds at the hall cells furthest from him among four draws (the
+      // battle's own stream; only this hall draws it), never more than SWARM_MAX of his up at once
+      e.swarmT = 0;
+      const up = (w.enemies || []).filter((o) => o.swarm === e.id && o.hp > 0 && !o.dead).length, n = Math.min(2, SWARM_MAX - up), cells = battle ? battle.cells : [];
+      for (let i = 0; i < n && cells.length; i++) {
+        let best = null, bd = -1;
+        for (let t = 0; t < 4; t++) { const c = cells[(rng() * cells.length) | 0], d = hypot(c[0] + 0.5 - e.x, c[1] + 0.5 - e.y); if (d > bd && isWalkable(w, c[0] + 0.5, c[1] + 0.5)) { bd = d; best = c; } }
+        if (!best) continue;
+        const u = foe(w, B.escort[i % B.escort.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id;
+      }
+      if (n > 0) bus.emit('bossSwarm', { id: e.boss, x: e.x, y: e.y, n });
     }
   }
 

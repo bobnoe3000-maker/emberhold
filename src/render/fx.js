@@ -42,6 +42,12 @@ export const FX_STYLES = {
   redhand_brute:     { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 190, 150], wide: 1.25 },
   redhand_crossbow:  { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
   cinder_acolyte:    { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [255, 170, 80] },
+  // (v1.19) the hill goblins: a skirmisher's knife, a bruiser's axe, a poacher's bow, a hexer's green
+  goblin_skirmisher: { col: VERDANT, attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [215, 240, 170], thin: true },
+  goblin_bruiser:    { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 210, 150], wide: 1.1 },
+  goblin_archer:     { col: VERDANT, spark: [215, 240, 170] },
+  goblin_hexer:      { col: BILE, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [170, 255, 120] },
+  boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
   boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },
   boss_standard:     { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 226, 160], wide: 1.2 },

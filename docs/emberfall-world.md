@@ -1,6 +1,12 @@
 # Emberfall — World Summary
 
-**v1.18 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.19 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.19 brings the **hill goblins** into the Vale (§3.1, §4 *Peoples*, §8). They were under the north range before
+the empire came and never noticed it leave. Their warren, **the Scrag Warren**, opens at the foot of the range
+north of the mill, and its chief is **Old Skarn**. They took no interest in the Vale until this spring, when the
+dead closed the barrows road and the carters started going the long way round, under the range, past the
+Scrag's front door. Now there are goblins in Hedda's hen-house. Nothing new about the Ember or the Cult.
 
 v1.18 also brings the **Homeward Scroll**: a road-prayer the Grey Sisters write on a strip of vellum. Read aloud,
 it sets the reader down on the square of the nearest town, once. Wendel stocks them at 300 gold and calls it
@@ -150,6 +156,10 @@ it's where everyone starts.
     that go down into older stone. Levels 3–6.
   - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh where the river
     leaves the Vale, out past the lumber camp (v1.18), where the legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
+  - **The Scrag Warren** (v1.19): the hill goblins' burrow at the foot of the north range, north of
+    the mill, where the long way round runs under the scree. Two floors of tunnels dug into a scar
+    in the hillside, full of whatever has fallen off a cart this spring. Levels 2–5. Its chief, Old
+    Skarn, beats a drum in the deepest hall, and goblins come out of the walls when he does.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
     Wickham road, out where the old road runs on north-east past the Deepdelve mine (v1.18). Nobody knows it's there until the Chronicle says so.
 - **The road (v1.9): why the Vale fights its dead.** The barrows lie under the old Wickham road.
@@ -186,7 +196,8 @@ it's where everyone starts.
   - **Crossbows** are the Redhand's. A crossbow can be taught in an afternoon; a bow takes years,
     and the Company doesn't keep anyone that long. A good rogue uses whichever one they've got.
 - **Look:** `plain` and `earth` variants; flagstone keeps and cobble barrows. Biome: *Dreadforge*.
-- **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats.
+- **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats, and (v1.19) the hill
+  goblins of the Scrag Warren.
 
 ### 3.2 The Greywater Fens: levels 8–15 · Act II
 Reed-choked marsh around a drowned imperial canal. There's fog every morning, and the lanterns
@@ -265,7 +276,9 @@ half your seasons on the road, whatever their rank says about what they can do, 
 the rest at your side (v1.12). Maudry's way of putting it: *"The good ones are spoken for. The
 ones I've got will be good. Give them a month."*
 
-**Peoples:** mostly humans, plus stout **Deepdelver** dwarf-folk in the hills, a few **fen-folk**
+**Peoples:** mostly humans, plus stout **Deepdelver** dwarf-folk in the hills, small grey-green
+**hill goblins** under the Vale's north range (v1.19: they don't trade, don't parley and don't
+count past the fingers of one hand, but they know a loose hen when they see one), a few **fen-folk**
 halflings in the marsh, and rare, aloof elves passing through. Standard fantasy, lightly used.
 
 ---
@@ -328,6 +341,8 @@ around the square by day and somewhere else by night:
 - **Jory**, the Watch's only man in Thornwick: young, earnest, and Osric's runner.
 - **Nell Tolley**, keeper of the Crossed Keys. She charges for the stairs, not the bed.
 - **Hedda**, who sells eggs by the well and knows the weather, and says she knows nothing else.
+  (v1.19) She has lost four hens to the hill goblins this spring and wants their chief told so, by
+  someone with a weapon: *Hens Under the Hill*.
 
 (v1.14) **What they carry.** Wendel walks the square with a lit lantern; Bess wears her leather apron and
 keeps her hammer in hand; Col has his carter's whip; Nell Tolley carries the Crossed Keys' keys on an iron
@@ -439,8 +454,9 @@ in §3.6, Maudry in §5); the one-liners are the wry voice (§1) and state nothi
 | **Ashbound** | all | Minion, Warrior, Rogue, Mage (the KayKit skeletons) | Eye glow reads their rank. Weak to Cleric *Turn Undead*. |
 | **Redhand** | Hollow Vale | Cutthroat, Brute, Crossbowman (recoloured hero models) | Human bandits; can surrender. Their elites are Sergeants (v1.7). (v1.16) The brutes still wear the iron kettle hats they deserted in, with a band of the Company's red. |
 | **Cinder Cult** | Fens → Throne | Acolyte (cultist), Necromancer, Furnace-priest | Raise and buff Ashbound; priority targets. (v1.16) Acolytes shave their heads and wear charcoal with ember trim. |
+| **Hill goblins** (v1.19) | Hollow Vale | Skirmisher (knife), Bruiser (axe and a cart-wheel shield), Archer (a poacher's hunting bow), Hexer (a bone rattle and a staff) (recoloured hero models, small) | Grey-green, knee-high to a carter's horse, and many. Not undead: Turn Undead does nothing to them. Their elites are Bruisers. They wear what they've stolen this spring: sacking, harness leather, a carter's hat. |
 | **Beasts** | varies | Grave rats, fen ghouls, cinder hounds, frost revenants | New art needed later. |
-| **Bosses** | per site | Redhand Captain (Captain Garrow, Wickham Keep; heirloom *Garrow's Due* — "He collected. Everyone paid."), the Robed Stranger (the Sunken Chapel, v1.7), the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
+| **Bosses** | per site | Redhand Captain (Captain Garrow, Wickham Keep; heirloom *Garrow's Due* — "He collected. Everyone paid."), the Robed Stranger (the Sunken Chapel, v1.7), **Old Skarn** (the Scrag Warren, v1.19: the goblins' chief, bald and grey at the ears, in a carter's stolen cape, with an axe nearly as big as he is; while he stands he drums, and two more goblins come out of the tunnels every few breaths), the Abbess Below, Oruth the Forgemaster, **the Glass Legate** (v1.1), the Kindler | One per major site, each with one signature mechanic. **The Glass Legate** is the Ashbound officer Aurelle left to guard her last letter in the Glass Keep. It still obeys an order nobody alive remembers giving. |
 
 ---
 

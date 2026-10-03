@@ -1,0 +1,38 @@
+{
+  "id": "vale_hens_under_the_hill",
+  "kind": "errand",
+  "title": "Hens Under the Hill",
+  "giver": "hedda",
+  "region": "vale",
+  "level": [
+    2,
+    8
+  ],
+  "summary": "Hedda has lost four hens since the thaw, and it wasn't a fox. The hill goblins under the north range have found the carters going the long way round, and come down for whatever else they can carry. She wants their chief told.",
+  "steps": [
+    {
+      "id": "warren",
+      "journal": "Go down two floors into the Scrag Warren, at the foot of the north range past the mill, and put down Old Skarn, the goblin chief who drums.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "scrag_warren",
+          "boss": "goblin_chief",
+          "count": 1,
+          "label": "Old Skarn put down"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Hedda, by the well in Thornwick.",
+  "done": "Old Skarn's drum is quiet. Hedda won't get her four hens back, but nobody else will lose theirs.",
+  "rewards": {
+    "xp": 420,
+    "gold": 70
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "hedda_hens_offer",
+    "turnin": "hedda_hens_turnin"
+  }
+}
