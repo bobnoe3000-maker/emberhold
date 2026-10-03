@@ -42,7 +42,7 @@ node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, +
 BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BAKE_PX=72 node tools/actor-lab/bake.cjs [actor…]   # face knobs and prototype bakes into a scratch tree (docs/face-fidelity-proposal.md, art-critic-pass-7.md); the shipped faces are eyes2,grade
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
-node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks
+node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here

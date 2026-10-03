@@ -1,6 +1,7 @@
 # The Stylized Nature MegaKit as landscaping (proposal)
 
-**Proposal, 2026-10-03.** Should we use Quaternius' *Stylized Nature MegaKit* (CC0) to improve the town's and
+**Implemented, 2026-10-03 (the recommendations: undergrowth and rocks, our trees kept).** See *Shipped* at the end.
+Proposed the same day. Should we use Quaternius' *Stylized Nature MegaKit* (CC0) to improve the town's and
 the Vale's landscaping? Everything below was baked through our own environment lab and captured in the real
 renderer, in a scratch checkout. Nothing in the game has changed yet.
 
@@ -136,3 +137,47 @@ Two things about the delivered colours:
    - (b) its pines and dead trees as extra variety;
    - (c) the full swap.
 3. **The red maples:** leave them out (*recommended*), or a rare autumn accent?
+
+## Decided
+
+The recommendations, 2026-10-03:
+- **Undergrowth and rocks:** yes.
+- **Trees:** none of the kit's.
+- **Red maples:** left out.
+
+## Shipped
+
+**What shipped:**
+- **The bake:**
+  - 9 undergrowth sprites (`ug_*`): the flowering bush, a fern, a plant, two flower groups (a third smaller
+    than the prototype's), two grasses (graded lighter: gain 0.72), clover and the shelf fungus;
+  - the kit's 3 rocks (`rock_F`, `rock_G`, `rock_H`);
+  - entries in `tools/actor-lab/env.json` (`gltf: 'nature/…'`, scale and grade).
+  - `bake-env.cjs` stops with a clear message if `models/nature/` is missing.
+- **The scatter** (`src/sim/outdoor.js`):
+  - The rocks replace ours (`ROCKS`). Our `rock_A`..`E` stay as the barrows' stones.
+  - `undergrowth()` dresses the town (the palisade's verges, the stream's banks, the gardens, flower patches,
+    never the square) and the overland (forest edges, meadow patches, clear of every site and its way in).
+  - It gathers at the front of trees' feet; the shelf fungus grows only there.
+  - It's placed **last**, on its own stream, so nothing else moves. Flowers, grass, ferns, clover and the plant
+    are walked through; the bush and the rocks are solid.
+- **The minimap** leaves the undergrowth off.
+- **Credits:** `assets/CREDITS.md`. **Getting the pack:** the actor-lab README, *The nature pack*.
+
+![Before and after: arriving at Thornwick, the gate, a meadow, a forest's edge, Thornwick from the Vale](img/nature/shipped.jpg)
+
+**Measured:**
+
+| | Before | Shipped |
+|---|---|---|
+| Undergrowth in the town / the overland | 0 / 0 | 77 / 281 pieces |
+| The kit's rocks in the town / the overland | 0 / 0 | 9 / 75 (ours before) |
+| Environment atlas | 2048 × 825, 2.03 MB | 2048 × 825 (the 12 sprites fit the shelves' spare room), 2.10 MB (+3.4 %) |
+| Named townsfolk hidden at any part of the day (test 15d) | 0 % | 0 % |
+
+**Tests:** `test/town.test.mjs`:
+- undergrowth grows in the town (two regions) and the overland;
+- it's placed after everything else;
+- nothing of it stands in the square or within 6 tiles of a site's way in.
+
+`npm run check`: 255 pass, SMOKE_OK, RENDER_SMOKE_OK. `npm run test:browser`: BROWSER_OK.

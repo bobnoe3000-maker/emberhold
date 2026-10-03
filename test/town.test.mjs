@@ -82,3 +82,16 @@ test('Thornwick on the overland is walled, its gate on its road, the road west t
   const label = o.labels.find((l) => l.text === 'Thornwick'), into = o.exits.find((e) => e.to === 'town');
   assert.ok(Math.abs(label.x - (into.x0 + into.x1) / 2) < 8 && label.y > into.y0 && label.y < into.y1, 'the way into Thornwick is at its gate');
 });
+
+// the nature pack (docs/nature-pack-proposal.md): undergrowth dresses the town and the Vale, but never the square or a
+// site's way in, and it's placed last, on its own stream, so it can't move a tree, a rock or a house
+for (const [kind, region] of [['town', 'vale'], ['town', 'fens'], ['overland', 'vale']]) test(`${kind} (${region}): undergrowth grows, placed last, off the square and the sites`, () => {
+  const o = createOutdoor(1, kind, region), ug = (s) => s.id.startsWith('ug_'), first = o.structs.findIndex(ug);
+  assert.ok(o.structs.filter(ug).length >= 30, 'too little undergrowth');
+  assert.ok(o.structs.slice(first).every((s) => ug(s) || /^rock_[FGH]$/.test(s.id)), 'something was placed after the undergrowth');
+  if (o.hub) for (const s of o.structs.filter(ug)) assert.ok(Math.hypot(s.x - o.hub.x, s.y - o.hub.y) >= o.hub.r + 4, `${s.id} in the square at ${s.x.toFixed(1)},${s.y.toFixed(1)}`);
+  for (const e of o.exits.filter((x) => x.to === 'dungeon' || x.to === 'town')) {
+    const cx = (e.x0 + e.x1) / 2, cy = (e.y0 + e.y1) / 2;
+    for (const s of o.structs.filter(ug)) assert.ok(Math.hypot(s.x - cx, s.y - cy) >= 6, `${s.id} at a way in (${e.site || e.to})`);
+  }
+});

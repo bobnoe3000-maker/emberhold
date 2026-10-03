@@ -12,7 +12,7 @@
 import { mulberry32, streamSeed, fbm, hash2 } from './rng.js';
 import { FLOOR_Z } from './level.js';
 import { ENV_FOOT } from './envfoot.js';
-import { hypot } from './detmath.js';
+import { hypot, sin, cos } from './detmath.js';
 
 // ground codes (pixel + tile)
 export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5 };
@@ -167,7 +167,12 @@ function putProp(o, kind, x, y) { o.props.set(Math.floor(x) + ',' + Math.floor(y
 
 const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6', 'oak_1', 'oak_2', 'oak_3', 'oak_4', 'autumn_1', 'autumn_2', 'autumn_3', 'dead_1', 'dead_2'];
 const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'];
-const ROCKS = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E'];
+const ROCKS = ['rock_F', 'rock_G', 'rock_H'];        // the nature pack's (docs/nature-pack-proposal.md); rock_A..E stay at the barrows
+// The undergrowth (Quaternius' Stylized Nature MegaKit, CC0): LOW is walked through (flowers, grass, ferns, clover,
+// a plant), SOLID isn't (a flowering bush, the rocks); FOOT grows at a tree's foot (and the shelf fungus only there).
+const LOW = ['ug_flowers_1', 'ug_flowers_2', 'ug_grass_1', 'ug_grass_2', 'ug_grass_1', 'ug_fern', 'ug_clover', 'ug_plant'];
+const FOOT = [...LOW, 'ug_mushroom', 'ug_mushroom'];
+const SOLID = ['ug_bush', 'ug_bush', 'rock_F', 'rock_G', 'rock_H'];
 const pick = (rng, a) => a[(rng() * a.length) | 0];
 
 // scatter trees / rocks in a region with a density mask; never on roads, water or buildings,
@@ -180,6 +185,27 @@ function scatter(o, rng, x0, y0, x1, y1, step, fn) {
     if (fits(o, id, jx, jy, mount ? -1 : round ? 0.6 : 0.5)) put(o, id, jx, jy, round ? 'round' : 'rect', round ? 0.35 : 0.1);
   }
 }
+// Dress the grass with undergrowth: density(x, y) → 0..1, where it may grow; then a few low plants at the front of
+// some trees' feet (the side the camera sees). Placed LAST, on its own stream: nothing it adds can move a tree,
+// rock or house (test/town.test.mjs checks the order).
+function undergrowth(o, x0, y0, x1, y1, step, density) {
+  const rng = mulberry32(streamSeed(o.seed, 4409));
+  for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
+    const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, d = density(jx, jy), r = rng();
+    if (!(d > 0) || r > d) continue;
+    const solid = rng() < 0.3, id = pick(rng, solid ? SOLID : LOW);
+    if (fits(o, id, jx, jy, solid ? 0.4 : 0.1)) put(o, id, jx, jy, solid ? 'round' : 'none', 0.35);
+  }
+  for (const t of o.structs.slice()) {
+    if (!/pine|oak|autumn|grove/.test(t.id) || rng() < 0.35) continue;
+    const f = ENV_FOOT[t.id], rad = f ? Math.max(f[2] - f[0], f[3] - f[1]) / 2 : 4;
+    for (let k = 0, n = 1 + Math.floor(rng() * 3); k < n; k++) {
+      const a = (rng() - 0.5) * 2.2 + Math.PI / 4, dist = rad * (0.7 + rng() * 0.5), x = t.x + cos(a) * dist, y = t.y + sin(a) * dist, id = pick(rng, FOOT);
+      if (density(x, y) >= 0 && fits(o, id, x, y, 0.1)) put(o, id, x, y, 'none', 0.35);
+    }
+  }
+}
+
 // Keep the view of a landmark clear: the camera looks from +x+y, so anything tall in the wedge
 // in front of (and a little around) a site hides it. True if (x, y) is in that wedge.
 function inFrontOf(sites, x, y, depth = 30, half = 18) {
@@ -273,6 +299,14 @@ function buildTown(seed, region) {
     return n > 0.55 && rng() < 0.4 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
   });
   forestRing(o, rng, 10);
+  // the undergrowth: the walls' verges (in and out), the stream's banks, the gardens, flower patches; never the square
+  undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
+    if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
+    const wall = Math.min(Math.abs(x - WX0), Math.abs(x - WX1), Math.abs(y - WY0), Math.abs(y - WY1));
+    const inBox = x > WX0 - 9 && x < WX1 + 9 && y > WY0 - 9 && y < WY1 + 9;
+    return Math.max(inBox && wall < 5 ? 0.5 : 0, Math.abs(x - 125) < 9 ? 0.5 : 0, x > 84 && y > 84 && x < WX1 && y < WY1 ? 0.5 : 0,
+      fbm(x * 0.09, y * 0.09, o.seed + 9) > 0.66 ? 0.45 : 0);
+  });
   o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: 'thornwick' });
   o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 141.5, y: GY + 0.5 }, temple: { x: 38.5, y: 42.5 } };
   o.spawn = o.arrivals.default;
@@ -353,6 +387,12 @@ function buildOverland(seed) {
     return inFrontOf(sights, x, y, reach, 32) ? null : id;
   });
   forestRing(o, rng, 6);
+  // the undergrowth: thick at the forests' edges, in patches in the meadows; clear of every site and its way in
+  undergrowth(o, -40, -40, 300, 300, 4, (x, y) => {
+    for (const c of [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone]) if (hypot(x - c[0], y - c[1]) < 14) return -1;
+    const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
+    return f > 0.5 && f < 0.6 ? 0.4 : fbm(x * 0.08, y * 0.08, o.seed + 13) > 0.68 ? 0.45 : 0;
+  });
 
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon

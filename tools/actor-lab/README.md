@@ -39,6 +39,17 @@ Per-sprite knobs in `env.json` beyond the grade:
   the opening (meshes with `userData.mask`), so the bake sees into it only through its mouth,
   and the renderer draws it over the floor (`hole` structures, `renderer.js`).
 - `shadow: false` — no planar ground shadow.
+- `gltf` — load a glTF from any path under `models/` (`'nature/Fern_1'`), with `scale` to bring it to our size.
+  Cut-out materials (glTF `alphaMode: MASK`: leaf cards, petals, grass blades) bake as cut-outs in every
+  pass: albedo, normals, depth key, shadow, glow.
+
+### The nature pack
+
+The undergrowth (`ug_*`) and the scatter's rocks (`rock_F`, `rock_G`, `rock_H`) are Quaternius' **Stylized
+Nature MegaKit** (CC0), graded in the bake to the Vale's trees (`docs/nature-pack-proposal.md`).
+- **Getting it:** download its glTF folder (from quaternius.com or itch.io) and unzip it into
+  `models/nature/`. Like `models/`, it isn't committed.
+- **Without it:** `bake-env.cjs` stops and says so.
 
 ## Game atlases (`bake.cjs` + `bake.json`)
 

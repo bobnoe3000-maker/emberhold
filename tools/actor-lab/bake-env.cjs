@@ -8,6 +8,9 @@ const { serve, CHROME, GL } = require('./render.cjs');
 const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 'assets', 'env');
 (async () => {
   const list = JSON.parse(fs.readFileSync(path.join(DIR, 'env.json')));
+  // the undergrowth and rocks are Quaternius' Stylized Nature MegaKit (CC0): its glTF folder unzipped into models/nature/
+  const missing = list.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf'))).map((e) => e.gltf);
+  if (missing.length) { console.error(`FAIL missing ${missing.join(', ')}: unzip the Stylized Nature MegaKit's glTF folder into tools/actor-lab/models/nature/ (README, "The nature pack")`); process.exit(1); }
   const srv = await serve(DIR), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await b.newPage(); p.on('pageerror', (e) => console.log('PAGEERR', e.message));
