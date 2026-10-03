@@ -663,8 +663,8 @@
      1
     ],
     "to": [
-     "#ece6d6",
-     "#9c9480"
+     "#d6c9a8",
+     "#8a7e64"
     ]
    },
    {
@@ -673,8 +673,8 @@
      1
     ],
     "to": [
-     "#8a94a4",
-     "#3c4454"
+     "#4e5c78",
+     "#1e2434"
     ]
    },
    {
@@ -683,8 +683,8 @@
      1
     ],
     "to": [
-     "#c4c8d0",
-     "#5c6474"
+     "#6a7894",
+     "#2a3244"
     ]
    },
    {
@@ -1642,7 +1642,7 @@
  {
   "id": "VL1",
   "cls": "NPC",
-  "label": "Villager \u00b7 a farmhand in blue (critic pass 11f: the crowd)",
+  "label": "Villager \u00b7 a farmhand in blue with a hoe (critic pass 11f/11k: the crowd)",
   "model": "Rogue",
   "show": [],
   "swatches": [
@@ -1728,7 +1728,10 @@
    }
   ],
   "face": "farmhand",
-  "height": 0.93
+  "height": 0.93,
+  "hold": {
+   "handslot.r": "hoe"
+  }
  },
  {
   "id": "VL2",
@@ -1827,7 +1830,7 @@
  {
   "id": "VL3",
   "cls": "NPC",
-  "label": "Villager \u00b7 a drover in green",
+  "label": "Villager \u00b7 a drover in green with a pail",
   "model": "Rogue_Hooded",
   "show": [],
   "swatches": [
@@ -1913,12 +1916,15 @@
    }
   ],
   "face": "watchman",
-  "height": 0.91
+  "height": 0.91,
+  "hold": {
+   "handslot.r": "pail"
+  }
  },
  {
   "id": "VL4",
   "cls": "NPC",
-  "label": "Villager \u00b7 a miller in cream and blue",
+  "label": "Villager \u00b7 a miller in cream and blue with a sack of flour",
   "model": "Rogue",
   "show": [],
   "swatches": [
@@ -2004,6 +2010,9 @@
    }
   ],
   "face": "sellsword",
-  "height": 0.9400000000000001
+  "height": 0.9400000000000001,
+  "hold": {
+   "handslot.r": "flour"
+  }
  }
 ]

@@ -172,6 +172,35 @@ export const PROPS = {
     const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.018, 5, false), lash); g.add(t);
     return g;
   },
+  // the passers-by's work in hand (critic pass 11k, scored against the owner's reference: its villagers carry
+  // their trade; ours strolled empty-handed). A farmhand's hoe, carried upright like Col's whip (along −y from the
+  // grip, so hanging it plumb stands it up), its iron blade over the shoulder
+  hoe: () => {
+    const g = new THREE.Group(); g.name = 'Hoe'; g.userData.hang = true;
+    const wood = mat(0x8a6238, 0, 0.85), iron = mat(0x5a5c60, 0.8, 0.45);
+    const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.036, 1.5, 6), wood); stock.position.y = -0.6; g.add(stock);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.2), iron); blade.position.set(0.1, -1.36, 0); blade.rotation.z = 0.25; g.add(blade);
+    return g;
+  },
+  // a drover's wooden pail with an iron bail, hanging at the side
+  pail: () => {
+    const g = new THREE.Group(); g.name = 'Pail'; g.userData.hang = true;
+    const wood = mat(0x8a5e34, 0, 0.85), iron = mat(0x3e3a38, 0.7, 0.5), milk = mat(0xf0ead8, 0, 0.5);
+    const bail = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.018, 6, 14, Math.PI), iron); bail.rotation.z = Math.PI; bail.position.y = 0.16; g.add(bail);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.3, 10), wood); body.position.y = 0.36; g.add(body);
+    for (const y of [0.26, 0.46]) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.014, 4, 14), iron); h.rotation.x = Math.PI / 2; h.position.y = y; g.add(h); }
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.02, 10), milk); top.position.y = 0.23; g.add(top);
+    return g;
+  },
+  // a miller's sack of flour, its neck gathered in the fist, the body slumped below
+  flour: () => {
+    const g = new THREE.Group(); g.name = 'Flour_Sack'; g.userData.hang = true;
+    const hemp = mat(0xd8ccae, 0, 0.95), cord = mat(0x6a4a2a, 0, 0.9);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.16, 8), hemp); neck.position.y = 0.12; g.add(neck);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.016, 4, 10), cord); tie.rotation.x = Math.PI / 2; tie.position.y = 0.1; g.add(tie);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), hemp); body.scale.set(1, 1.25, 0.85); body.position.y = 0.44; g.add(body);
+    return g;
+  },
   // a smith's leather apron, worn on the hips (`wear` in variants.json): bib up the chest, skirt to the
   // knee, split so the legs can stride
   apron: () => {

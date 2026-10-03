@@ -396,6 +396,28 @@ as the nature-pack decision has it: nothing is placed on it.
 - Life and density, 6.5 → **7**: the farms read as worked land, fenced, with herds and hay.
 - **Overall, 7.1 → 7.1** (7.14).
 
+## Iteration 11k: the cast (shipped 2026-10-03)
+
+![11k: the townsfolk before and after; the high street; the four passers-by, each in four facings](img/art11/k-cast.jpg)
+
+**What changed** (`tools/actor-lab/props.js`, `variants.json`, `faces.json`; re-baked):
+- **The passers-by carry their work**, as the reference's villagers do:
+  - the farmhand a hoe over his shoulder;
+  - the drover a pail;
+  - the miller a sack of flour;
+  - the market wife her basket, as before.
+  - The three new props are built in code like the rest, and carried as Col's whip and Hedda's basket are.
+- **Sister Ilse no longer reads as a ghost.** She was chalk white from hair to hem. Canon gives the Grey Sisters
+  off-white vestments (world doc §4), so she keeps them, but:
+  - in unbleached linen (#d6c9a8) rather than chalk;
+  - with a slate-blue hood and cape;
+  - with auburn hair in place of flax (her hair isn't canon).
+
+**Score:**
+- Characters, 6 → **6.5**: everyone in the square has a trade in hand. Our figures are still smaller and softer
+  than the reference's, and they don't work in place (hoe, hammer, carry); that needs new clips.
+- **Overall, 7.1 → 7.2** (7.21).
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
@@ -405,9 +427,9 @@ as the nature-pack decision has it: nothing is placed on it.
 | Buildings | 9 | 5.5 | 8 |
 | Trees and plants | 9 | 4.5 | 7 |
 | Ground | 8 | 5 | 7 |
-| Characters | 8 | 5 | 6 |
+| Characters | 8 | 5 | 6.5 |
 | Life and density | 9 | 4 | 7 |
-| **Overall** | **8.7** | **4.4** | **7.1** |
+| **Overall** | **8.7** | **4.4** | **7.2** |
 
 To reach 7.5 with nothing under 6, the cast is now the weakest area (6):
 - **Characters:** the reference's people are rounder and more saturated, and they work. Ours are pale where they
