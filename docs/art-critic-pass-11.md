@@ -418,6 +418,27 @@ as the nature-pack decision has it: nothing is placed on it.
   than the reference's, and they don't work in place (hoe, hammer, carry); that needs new clips.
 - **Overall, 7.1 → 7.2** (7.21).
 
+## Iteration 11l: trees among the houses (shipped 2026-10-03)
+
+![11l, before and after: the north quarter, behind the inn and the shop](img/art11/l-trees.jpg)
+
+**What changed** (`outdoor.js` `buildTown`): the reference's village stands among its trees; ours stood in a
+clearing, with its trees outside the walls.
+- Five trees grow among the houses of the back quarters: three birches and two autumn broadleaves, north of the
+  temple, between the north houses, and in the west quarter.
+- They stand up-screen of the square and never on it, so they frame the services and hide nobody. South of the
+  square was left bare: a crown there would cover people in the hub.
+- A spot is left bare if anything is there. All five stand in every region's town.
+
+**Tests:**
+- the town tests (25), unchanged;
+- the browser suite's x-ray check: no named person is drawn behind anything at any part of the day (all 0 %).
+
+**Score:**
+- Trees and plants, 7 → **7.5**: walking the quarters, the houses stand among gold and white trees. The square's
+  own frame changes little.
+- **Overall, 7.2 → 7.3** (7.29).
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
@@ -425,11 +446,11 @@ as the nature-pack decision has it: nothing is placed on it.
 | Light and colour | 9 | 3 | 8 |
 | Shadow and depth | 9 | 4 | 7 |
 | Buildings | 9 | 5.5 | 8 |
-| Trees and plants | 9 | 4.5 | 7 |
+| Trees and plants | 9 | 4.5 | 7.5 |
 | Ground | 8 | 5 | 7 |
 | Characters | 8 | 5 | 6.5 |
 | Life and density | 9 | 4 | 7 |
-| **Overall** | **8.7** | **4.4** | **7.2** |
+| **Overall** | **8.7** | **4.4** | **7.3** |
 
 To reach 7.5 with nothing under 6, the cast is now the weakest area (6):
 - **Characters:** the reference's people are rounder and more saturated, and they work. Ours are pale where they

@@ -346,6 +346,11 @@ function buildTown(seed, region) {
   for (const [x, y] of [[97, 75], [107, 75], [87, 75]]) putProp(o, 'brazier', x, y);
   for (const [id, x, y] of [['wheelbarrow', 96, 90], ['resource_lumber', 88, 96], ['barrel', 106, 70], ['crate_A_big', 92, 84]]) put(o, id, x, y, 'rect', 0);
   for (const [id, x, y] of [['oak_2', 20, 18], ['oak_3', 46, 16], ['autumn_3', 19, 36]]) put(o, id, x, y, 'round', 0.35);   // the churchyard's trees, behind the temple
+  // trees among the houses of the back quarters (critic pass 11l: the reference's village stands among its trees;
+  // ours stood in a clearing, its trees outside the walls). Up-screen of the square and never on it, so they frame
+  // the services and hide nobody; a spot is left bare if anything is there.
+  for (const [id, x, y] of [['birch_1', 60, 20], ['birch_1', 80, 30], ['autumn_2', 96, 44], ['birch_1', 22, 60], ['autumn_2', 36, 86]])
+    if (fits(o, id, x, y, 0)) put(o, id, x, y, 'round', 0.35);
   // outside: farms on the fields, the stream under the east wall
   put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104);
 
