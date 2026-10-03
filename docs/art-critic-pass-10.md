@@ -1,6 +1,6 @@
 # Art critic pass 10 — the Vale: trees, mountains, roads and the river
 
-**Status: critique and proposals (2026-10-03). Nothing in the game has changed yet.** The decisions are at the end.
+**Status: Implemented (2026-10-03): both phases, as recommended.** See *Decided* and *Shipped* at the end; the critique below is as written before the change.
 
 This pass reviews the overland of the Hollow Vale as you walk it:
 - **The trees:** our code-built pines, oaks, autumn trees, dead trees and groves (`tools/actor-lab/buildkit.js`),
@@ -240,3 +240,107 @@ the sites, the town and the undergrowth don't move.
 3. **The mill:** a mill-race (*recommended*), or move the mill onto the bank?
 4. **Tracks:** make the mill, chapel and camp spurs narrow tracks without ruts (*recommended*), or keep every
    road the same?
+
+## Decided
+
+The recommendations, 2026-10-03:
+1. **Both phases.**
+2. **Half-resolution massifs,** drawn ×2.
+3. **A mill-race.**
+4. **Tracks** for the mill, chapel and camp spurs.
+
+## Shipped
+
+![The Vale from above, after](img/art10/map-after.jpg)
+
+![Before and after: the north edge, the crossroads, the Tithe Mill, the north-west](img/art10/shipped-1.jpg)
+
+*Each pair: before on the left, after on the right, the same spot at the same light. More pairs follow when the
+rest of the after frames are in.*
+
+### What was found on the way
+
+**The pines' black was a bug, not a grade.**
+- `foliage()` (`tools/actor-lab/buildkit.js`) shades each vertex by its height in the crown. It jittered the
+  vertices *after* measuring the crown's lowest point, so a vertex jittered below it gave `pow(negative, 0.8)`,
+  which is NaN, and that vertex baked black.
+- In a pine's drooping tiers that was every tier's lower ring. In the groves it was the pines inside them.
+- With `t` clamped, the same colours come out green.
+
+### What changed
+
+- **Trees** (`buildkit.js`, re-baked):
+  - The NaN fix above.
+  - Grove trees keep their crowns' room (no tree inside another), with the pines toward the back.
+- **Mountains** (`buildkit.js`, `env.json`):
+  - **Crags:** an icosahedron stretched up and tapered to a point, sunk into the ground (not a cone), jittered
+    a tenth of its radius (not a third), tinted a few per cent per face (not ±10–25 %).
+  - **Snow:** a ragged snowline that follows the facets.
+  - **Massifs:** three, `mountain_massif_A`–`C`, each a great peak among smaller ones, with pines on the low
+    slopes.
+  - **Half resolution:** baked with `up: 2` (`envlab.js` renders them at half the pixels per unit). The
+    renderer scales them ×2 when it slices them (`envSprite`); the depth key stays in tiles.
+- **The layout** (`src/sim/outdoor.js`), each part on its own stream:
+  - **The north range:** massifs on a spine past the map's edge, overlapping, with shoulders before them and a
+    gorge where the river comes out.
+  - **The east:** lower mountains further out. An east range twice the keep's height would stand between the
+    camera and the Vale.
+  - **Foothills:** a belt of the barrows' grey rocks, pines, groves and dead trees.
+  - **Woods:**
+    - six of them: the north-west, the slopes below the range in two places, round the lumber camp, the
+      barrows' far side, and below the mine;
+    - groves overlap in a wood's core, and singles thin out at its edge;
+    - the old forest mask on top;
+    - meadow trees in clumps of 2–4;
+    - rocks on the meadow at 1 %.
+  - **Undergrowth** now also grows along the river's banks.
+  - **Roads:**
+    - filleted (`fillet`: an arc at every corner, radius at least twice the width);
+    - a road that leaves another starts on it as smoothed, with an apron at the join (`o.aprons`);
+    - the three spurs are 3-wide `track`s;
+    - the edge wobble is scaled to the width.
+  - **The river:**
+    - a spline through the old course (`chaikin`), with a 52-tile meander of ±4 and a width breathing from 6
+      to 12 (`meander`);
+    - both held where they were within 12–36 tiles of the bridges and the mill;
+    - every point carries its width;
+    - the nearest segment paints a pixel (with 3-tile segments, the first one in reach drew arcs);
+    - banks from 0.5 to 2.5 tiles wide.
+  - **The mill-race:** a 2.6-wide channel off the river, under the wheel on the mill's +x side, and back.
+  - **The barrows road's ranks** stand on the road as it's drawn (`road.js` `xAt`).
+- **The painter** (`src/render/outdoorpaint.js`):
+  - **Roads:** one soft groove per wheel; a half-tile verge of worn grass dithered into the meadow; a track is
+    one worn band; aprons and bends are packed earth.
+  - **The river:** depth by distance from the bank with slow noise, no fixed bands; thin broken dashes along the
+    current; lighter shallows at the edge, with no foam line.
+
+### Measured
+
+| | Before | After |
+|---|---|---|
+| Pine sprites: mean albedo luminance (pine_1 / pine_3) | 11.4 / 7.2 | 24.6 / 32.6 |
+| Pine sprites: pixels baked black | 55 % / 77 % | 0 % / 0 % |
+| Groves: pixels baked black (grove_1 / grove_2) | 19 % / 22 % | 0 % / 0 % |
+| Tallest mountain, drawn height (Wickham Keep: 310 px) | 257 px | 630 px |
+| Mountains touching the walked map | 11 | 0 |
+| Trees on the walked map / groves among them | 42 / 17 | 112 / 49 |
+| Walked map within 8 tiles of a tree | 13 % | 30.6 % |
+| The kit's rocks on the walked map | 40 | 22 |
+| Sharpest road turn at a vertex | 77° | 15° |
+| The Tithe Mill's wheel to water | 10 tiles | 0.2 |
+| River width, measured across | 8–13 tiles | 6–19 tiles (12 at most along its normal; the rest is the angle of the run) |
+| Environment atlas | 2048 × 825, 2.10 MB | 2048 × 1035, 2.50 MB (+19 %; the massifs at half resolution) |
+
+The town atlases came out of the re-bake byte-identical.
+
+**Not done:** gravel bars on the inside of the river's bends, and stones in the water (W3). The varied banks and
+the bank undergrowth carry most of it; both can come later.
+
+**Tests:** `test/overland.test.mjs`:
+- every road turn under 25°, the joins' aprons, the three tracks;
+- no mountain on the walked map, and a great massif in the range;
+- tree cover 25–35 % with 40+ groves, and few rocks on the meadow;
+- both bridges over water with their ramps on land, and the mill wheel within a tile of water;
+- no road under the river except at a bridge, and every arrival reachable from the gate.
+
+The road, travel, sites and town tests pass unchanged.
