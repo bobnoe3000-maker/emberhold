@@ -446,6 +446,8 @@ commands in the same deterministic sim and stores only that result (development 
 
 Changing any of these needs a new row here, plus a note in the development plan.
 
+**Proposed, not decided:** A15 — `src/audio/` on raw WebAudio, sharing the intro score's context: synthesised effects plus one CC0 sample sprite, instead of Howler (§8.9). See [sound-plan.md](./sound-plan.md) §3.
+
 **Proposed, not decided:** A14 — three.js (lazy-loaded) for the windows only, to assemble
 characters live from appearance and gear, while Emberlit keeps the world. This would reverse
 A2 for windows. See
