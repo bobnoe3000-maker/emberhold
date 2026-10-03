@@ -267,24 +267,59 @@ warmth 0.20–0.22 → **0.22–0.27** (0.25), highlights 0.69–0.73 → 0.70�
 - Characters, 5 → **5.5**: the warm light lifts the cast; nothing else changed.
 - **Overall, 6.2 → 6.6.**
 
+## Iteration 11g, part one: a round tower and dormers (shipped 2026-10-03)
+
+**What changed** (`buildkit.js`, re-baked): the temple gained a round bell tower under a conical tile roof, the
+reference's strongest silhouette; the larger houses gained tiled dormers on the camera-facing roof.
+
+**Score:** Buildings, 7 → **7.5**. **Overall, 6.6 → 6.7.**
+
+## Iteration 11f: the crowd (shipped 2026-10-03)
+
+![11f, before and after: the square and the high street](img/art11/f-crowd.jpg)
+
+**What changed:**
+- **Four villagers** (`variants.json` VL1–VL4, `bake.json` `npc_villager_1`–`4`), recoloured from the KayKit
+  bodies with the face kit's presets:
+  - a farmhand in blue;
+  - a market wife in red with a basket;
+  - a drover in green, hooded;
+  - a miller in cream and blue.
+- **The crowd** (`renderer.js` `crowdOf`, `stepCrowd`): eight of them stroll between open spots on the square
+  and the high street, wait a while and go on. Each walk is checked clear first.
+  - It's presentation only. The sim knows nothing of them; they're never tapped, saved or replayed.
+  - Their walk is the renderer's own seeded generator, so the sim's streams are untouched.
+- **They hide behind walls.** A named person shows through a wall as a violet x-ray, so you can find them. A
+  passer-by doesn't: the first captures showed violet ghosts in every alley. `stamp` now takes an occlude-only
+  test (2) for them.
+
+**Measured** (the square and the high street, before → after):
+- people in town: the nine named townsfolk, plus **eight** passers-by;
+- luminance, saturation, colourfulness and warmth move by less than 0.01;
+- edge density 5.71 → 5.77 and 4.44 → 4.48.
+
+**Score:**
+- Life and density, 6 → **6.5**: the square is busy, as the reference's is. Our crowd walks and waits, though;
+  the reference's people work (carry, hammer, tend).
+- Characters, 5.5 → **6**: the villagers' plain blue, red, green and cream sit well against the warm town. The
+  cast's figures are still smaller and less crisp than the reference's.
+- **Overall, 6.7 → 6.8.**
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
 |---|---|---|---|
 | Light and colour | 9 | 3 | 8 |
 | Shadow and depth | 9 | 4 | 6 |
-| Buildings | 9 | 5.5 | 7 |
+| Buildings | 9 | 5.5 | 7.5 |
 | Trees and plants | 9 | 4.5 | 7 |
 | Ground | 8 | 5 | 6.5 |
-| Characters | 8 | 5 | 5.5 |
-| Life and density | 9 | 4 | 6 |
-| **Overall** | **8.7** | **4.4** | **6.6** |
+| Characters | 8 | 5 | 6 |
+| Life and density | 9 | 4 | 6.5 |
+| **Overall** | **8.7** | **4.4** | **6.8** |
 
 To reach 7.5 with nothing under 6:
-- **11f, characters and crowd:** unnamed villagers (new baked actors from the KayKit bodies) at work in the town
-  and on the Vale's roads; the cast's colours checked against the warm light.
-- **11g, silhouettes:**
-  - a round stone tower under a conical tile roof (the temple, the keep);
-  - dormers and an overhanging storey on the larger houses;
-  - low dry-stone walls and fences between the fields.
+- **11g, the rest:** low dry-stone walls and fences between the fields, and an overhanging storey on the
+  larger houses.
 - **11h, shadow:** crisp cast shadows under figures and props, as the reference has them.
+- **Then characters again:** passers-by at work (carrying, hoeing), and a crisper cast.

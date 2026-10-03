@@ -2024,6 +2024,82 @@
           "fps": 5
         }
       ]
+    },
+    {
+      "out": "npc_villager_1",
+      "variant": "VL1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_villager_2",
+      "variant": "VL2",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_villager_3",
+      "variant": "VL3",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
+    },
+    {
+      "out": "npc_villager_4",
+      "variant": "VL4",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        }
+      ]
     }
   ]
 }

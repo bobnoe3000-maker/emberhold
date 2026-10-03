@@ -11,7 +11,7 @@
 // demo's, unchanged; only the bake is driven from our infinite world.js. The old
 // (The old Canvas2D and flat renderers were retired at M2.5; see git history.)
 
-import { materialAt, heightAt, resourceAt, propAt } from '../sim/world.js';
+import { materialAt, heightAt, resourceAt, propAt, isWalkable } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
@@ -461,6 +461,43 @@ export function createRenderer(canvas, sim, input) {
   const partyAtlases = {};
   let cast = {};                                      // content/npcs/*.json by id (setCast): each NPC's look and name
   const npcPres = new Map();                          // NPC id → its animation state (never on the sim's objects)
+  // The crowd (critic pass 11f, scored against the owner's reference: its village is busy with people at work,
+  // ten or more a frame; ours had its nine named townsfolk). Unnamed villagers (npc_villager_1–4) stroll from one
+  // open spot of the square or the high street to another, wait a while, and go on. Presentation only: the sim
+  // knows nothing of them, they're never tapped or saved, and their walk is the renderer's own (a seeded LCG).
+  const CROWD_N = 8, CROWD_SPEED = 1.3, crowds = new WeakMap(), CROWD_LOOK = { flash: 0, dissolve: 0 };   // passers-by never x-ray through a wall: a hidden one is just out of sight
+  function crowdOf(world) {
+    let c = crowds.get(world); if (c) return c;
+    c = [];
+    if (world.kind === 'town' && world.hub) {
+      let s = (world.seed ^ 0x9e3779b9) >>> 0; const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+      const H = world.hub, spots = [];
+      for (let t = 0; t < 400 && spots.length < 48; t++) {          // open spots: the square, and the high street to the gate
+        const onStreet = rnd() < 0.3, x = onStreet ? 84 + rnd() * 24 : H.x + (rnd() - 0.5) * H.r * 1.6, y = onStreet ? 77 + rnd() * 6 : H.y + (rnd() - 0.5) * H.r * 1.6;
+        if (!onStreet && Math.hypot(x - H.x, y - H.y) > H.r - 3) continue;
+        if (isWalkable(world, x, y) && isWalkable(world, x + 0.6, y) && isWalkable(world, x, y + 0.6)) spots.push([x, y]);
+      }
+      for (let i = 0; i < CROWD_N && spots.length > 2; i++) { const [x, y] = spots[(rnd() * spots.length) | 0];
+        c.push({ x, y, tx: x, ty: y, wait: rnd() * 4000, look: 'npc_villager_' + (1 + (i % 4)), fx: 0, fy: 1, moving: false, u: { fidgetN: 0, lookN: 0, h: i * 977, seed: rnd(), next: 1e15, near: false } }); }
+      c.spots = spots; c.rnd = rnd; c.last = 0;
+    }
+    crowds.set(world, c); return c;
+  }
+  const clearWalk = (world, ax, ay, bx, by) => { const n = Math.ceil(Math.hypot(bx - ax, by - ay) / 0.5); for (let k = 1; k <= n; k++) if (!isWalkable(world, ax + (bx - ax) * k / n, ay + (by - ay) * k / n)) return false; return true; };
+  function stepCrowd(world, c, now) {
+    const dt = Math.min(0.1, c.last ? (now - c.last) / 1000 : 0); c.last = now;
+    for (const v of c) {
+      const dx = v.tx - v.x, dy = v.ty - v.y, d = Math.hypot(dx, dy);
+      if (d > 0.05) { const st = Math.min(d, CROWD_SPEED * dt); v.x += dx / d * st; v.y += dy / d * st; v.fx = dx; v.fy = dy; v.moving = true; continue; }
+      v.moving = false; v.wait -= dt * 1000;
+      if (v.wait > 0) continue;
+      for (let t = 0; t < 8; t++) {                                   // the next spot: near enough, and a clear walk to it
+        const [x, y] = c.spots[(c.rnd() * c.spots.length) | 0];
+        if (Math.hypot(x - v.x, y - v.y) < 18 && clearWalk(world, v.x, v.y, x, y)) { v.tx = x; v.ty = y; break; }
+      }
+      v.wait = 1500 + c.rnd() * 5000;
+    }
+  }
   // the person you're talking to (sim 'dialogue' … 'talkEnded'): they turn to you, greet you and talk with their
   // hands; you turn to them (art pass 6: both stood as they were, often back to back)
   let talkingTo = null, greet = null;
@@ -548,7 +585,7 @@ export function createRenderer(canvas, sim, input) {
         const i = (py * W + px) * 4;
         if (DEP) {
           const di = py * W + px;
-          if (test && dep < DEP[di] - 0.6) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; hid++; continue; }
+          if (test && dep < DEP[di] - 0.6) { if (test !== 2) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; } hid++; continue; }   // test 2: occluded, no x-ray
           DEP[di] = dep;
         }
         ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
@@ -958,6 +995,15 @@ export function createRenderer(canvas, sim, input) {
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
       draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id });
     }
+    // the crowd (pass 11f): no id, so a tap never picks one
+    { const crowd = crowdOf(sim.world); if (crowd.length) stepCrowd(sim.world, crowd, now);
+      for (const v of crowd) {
+        const atl = partyAtlas(v.look); if (!atl) continue;
+        const vz = heightAt(sim.world, Math.floor(v.x), Math.floor(v.y)), vp = project(v.x, v.y, vz), vx = ox + vp.sx, vy = oy + vp.sy;
+        if (vx < -60 || vx > nvw + 60 || vy < -40 || vy > nvh + 120) continue;
+        const a = pickAnim(v.u, atl, { now, x: v.x, y: v.y, moving: v.moving, faceX: v.fx, faceY: v.fy, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: v.u.seed });
+        draws.push({ d: v.x + v.y, sp: atl.cells[a.dir][a.frame], fx: vx, fy: vy, h: vz * ZH, k: v.x + v.y, look: CROWD_LOOK, team: 0, atl, a, noXray: true });
+      } }
     // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
     // up the road for the relief that never came. No ring, no bar: they aren't in a fight with you.
     for (const q of sim.world.pickets || []) {
@@ -999,7 +1045,7 @@ export function createRenderer(canvas, sim, input) {
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const rings = !!sim.battle;
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
-    for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
+    for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
     fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
