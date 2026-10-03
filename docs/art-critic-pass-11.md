@@ -240,3 +240,51 @@ warmth 0.20–0.22 → **0.22–0.27** (0.25), highlights 0.69–0.73 → 0.70�
 - **Overall, 5.7 → 6.2.**
 
 **Next:** 11e, life: dressed bases, people at work, and animals (a CC0 animal pack, which the owner fetches).
+
+## Iteration 11e: life (shipped 2026-10-03)
+
+![11e: Thornwick's east farm, the high street's doorsteps, the Vale's farm by Thornwick](img/art11/e-life.jpg)
+
+**What changed:**
+- **The farmyard**, built in code (`buildkit.js`) and baked:
+  - grazing and watchful **cows** (`cow_1`–`3`, black patches over the back);
+  - fleecy **sheep** (`sheep_1`–`2`);
+  - a few **hens** (`hens_1`);
+  - **pumpkins**, round **hay bales** and a thatched **stack** (`pumpkins_1`, `hay_1`–`2`);
+  - a flowering **planter** (`planter_1`).
+- **Placing them** (`outdoor.js` `herd`, `dress`, on stream 4417, before the wheat and the undergrowth, so
+  nothing earlier moves):
+  - herds by Thornwick's farms and the Vale's;
+  - hay at the mill;
+  - a thing or two at the foot of every house's camera-facing walls: barrels, crates, sacks, planters,
+    pumpkins, hay, a bucket. Never in the square.
+- **The animals stand still:** they graze or look about. Animated herds would need a CC0 animal pack, a later
+  decision.
+
+**Score:**
+- Life and density, 4 → **6**: farms with herds and hay, doorsteps with barrels and flowers. The reference's
+  crowd at work (ten or more people a frame) is still ours to add: unnamed villagers need new baked actors.
+- Characters, 5 → **5.5**: the warm light lifts the cast; nothing else changed.
+- **Overall, 6.2 → 6.6.**
+
+## Where it stands, and what's next
+
+| Area | Reference | Start | Now |
+|---|---|---|---|
+| Light and colour | 9 | 3 | 8 |
+| Shadow and depth | 9 | 4 | 6 |
+| Buildings | 9 | 5.5 | 7 |
+| Trees and plants | 9 | 4.5 | 7 |
+| Ground | 8 | 5 | 6.5 |
+| Characters | 8 | 5 | 5.5 |
+| Life and density | 9 | 4 | 6 |
+| **Overall** | **8.7** | **4.4** | **6.6** |
+
+To reach 7.5 with nothing under 6:
+- **11f, characters and crowd:** unnamed villagers (new baked actors from the KayKit bodies) at work in the town
+  and on the Vale's roads; the cast's colours checked against the warm light.
+- **11g, silhouettes:**
+  - a round stone tower under a conical tile roof (the temple, the keep);
+  - dormers and an overhanging storey on the larger houses;
+  - low dry-stone walls and fences between the fields.
+- **11h, shadow:** crisp cast shadows under figures and props, as the reference has them.

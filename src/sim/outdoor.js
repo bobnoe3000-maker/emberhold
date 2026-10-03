@@ -231,6 +231,30 @@ function wheat(o) {
   }
 }
 
+// Farmyard life and dressed doorsteps (critic pass 11e: the reference's village is busy with cows, hay, pumpkins,
+// barrels and flowers; ours stood bare). `herd`: n of a kind round a spot, apart and clear of everything. `dress`:
+// a house's camera-facing walls (+x, +y) get a thing or two at their foot. Their own stream, placed before the
+// wheat and the undergrowth, so nothing placed earlier moves.
+function herd(o, rng, ids, cx, cy, n, spread) {
+  for (let k = 0, t = 0; k < n && t < n * 12; t++) {
+    const id = pick(rng, ids), x = cx + (rng() - 0.5) * spread * 2, y = cy + (rng() - 0.5) * spread * 2;
+    if (fits(o, id, x, y, 0.4)) { put(o, id, x, y, 'round', 0.3); k++; }
+  }
+}
+const DOORSTEP = ['barrel', 'crate_A_small', 'sack', 'planter_1', 'planter_1', 'pumpkins_1', 'hay_2', 'bucket_water'];
+function dress(o, rng, keepOut) {
+  for (const st of o.structs.slice()) {
+    if (!/_(house|housex)_\d$/.test(st.id)) continue;
+    const f = ENV_FOOT[st.id]; if (!f) continue;
+    for (let k = 0, n = 1 + Math.floor(rng() * 2), t = 0; k < n && t < 10; t++) {
+      const onX = rng() < 0.5, id = pick(rng, DOORSTEP);
+      const x = onX ? st.x + f[2] + 0.9 : st.x + f[0] + 0.8 + rng() * (f[2] - f[0] - 1.6), y = onX ? st.y + f[1] + 0.8 + rng() * (f[3] - f[1] - 1.6) : st.y + f[3] + 0.9;
+      if (keepOut(x, y) || !fits(o, id, x, y, 0.15)) continue;
+      put(o, id, x, y, 'rect', 0.1); k++;
+    }
+  }
+}
+
 // Keep the view of a landmark clear: the camera looks from +x+y, so anything tall in the wedge
 // in front of (and a little around) a site hides it. True if (x, y) is in that wedge.
 function inFrontOf(sites, x, y, depth = 30, half = 18) {
@@ -324,6 +348,10 @@ function buildTown(seed, region) {
     return n > 0.55 && rng() < 0.4 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
   });
   forestRing(o, rng, 10);
+  { const fr = mulberry32(streamSeed(seed, 4417));                // the farms' beasts, the houses' doorsteps
+    herd(o, fr, ['cow_1', 'cow_2', 'cow_3'], 160, 34, 4, 6); herd(o, fr, ['sheep_1', 'sheep_2'], 160, 98, 5, 6);
+    herd(o, fr, ['hens_1'], 136, 58, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 154, 52, 3, 4); herd(o, fr, ['pumpkins_1', 'hay_1'], 152, 116, 2, 3);
+    dress(o, fr, (x, y) => hypot(x - o.hub.x, y - o.hub.y) < o.hub.r); }
   wheat(o);
   // the undergrowth: the walls' verges (in and out), the stream's banks, the gardens, flower patches; never the square
   undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
@@ -510,6 +538,10 @@ function buildOverland(seed) {
   }
   scatter(o, trng, 0, 0, 260, 260, 10, (x, y) => (trng() < 0.01 && clear(x, y, 'rock_F') ? pick(trng, ROCKS) : null));
   forestRing(o, rng, 6);
+  { const fr = mulberry32(streamSeed(seed, 4417));                // the farms' beasts, hay at the mill and the camp
+    herd(o, fr, ['cow_1', 'cow_2', 'cow_3'], 80, 118, 4, 6); herd(o, fr, ['sheep_1', 'sheep_2'], 34, 92, 6, 8); herd(o, fr, ['sheep_1', 'sheep_2'], 186, 168, 4, 6);
+    herd(o, fr, ['hens_1'], 58, 132, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 50, 100, 3, 4); herd(o, fr, ['hay_2', 'sack', 'barrel'], 86, 114, 3, 3);
+    herd(o, fr, ['pumpkins_1', 'hay_1'], 36, 130, 2, 3); }
   wheat(o);
   // the undergrowth: thick at the woods' and forests' edges and along the river's banks, in patches in the meadows;
   // clear of every site and its way in

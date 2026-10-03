@@ -718,7 +718,73 @@ function wheatMesh(r, v) {
   }
   return g;
 }
+// Farmyard life (critic pass 11e: the reference's village is busy with cows, hay, pumpkins and flowers; ours
+// stood bare). Low-poly, built in code like the rest; animals stand still, grazing or looking about.
+function lump(geo, r, amt) { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) * (1 + (r() - 0.5) * amt), p.getY(i) * (1 + (r() - 0.5) * amt), p.getZ(i) * (1 + (r() - 0.5) * amt)); geo.computeVertexNormals(); return geo; }
+function cowMesh(r, v) {
+  const g = new THREE.Group(), white = flat('#d6cfc0'), black = flat('#262020'), pink = flat('#d08a7c'), horn = flat('#d8cfb4');
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.17, 0.19), white); body.position.y = 0.2; g.add(body);
+  for (const [px, py] of [[-0.11, 0.23], [0.07, 0.18]]) {           // two patches, proud of the hide on every side, one over the back
+    const w = 0.07 + r() * 0.03, h = 0.07 + r() * 0.03, pt = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.2), black);
+    pt.position.set(px + (r() - 0.5) * 0.03, py, 0); g.add(pt);
+  }
+  const top = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.09), black); top.position.set(-0.02, 0.29, 0.02); g.add(top);
+  const graze = v % 2 === 0, head = new THREE.Group(); head.position.set(0.22, graze ? 0.1 : 0.27, 0); head.rotation.z = graze ? -0.6 : 0.1; g.add(head);
+  const hd = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.1), white); head.add(hd);
+  const hp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.104, 0.104), black); hp.position.x = -0.03; head.add(hp);
+  const muz = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.09), pink); muz.position.set(0.07, -0.02, 0); head.add(muz);
+  for (const sz of [-1, 1]) { const h = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.05, 4), horn); h.position.set(-0.01, 0.07, sz * 0.045); h.rotation.x = sz * 0.6; head.add(h); const e = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.025, 0.04), black); e.position.set(-0.02, 0.03, sz * 0.065); head.add(e); }
+  for (const [x, z] of [[0.15, 0.06], [0.15, -0.06], [-0.15, 0.06], [-0.15, -0.06]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.12, 5), white); l.position.set(x, 0.06, z); g.add(l); const hf = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.03), black); hf.position.set(x, 0.01, z); g.add(hf); }
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.14, 4), white); tail.position.set(-0.21, 0.17, 0); tail.rotation.z = 0.2; g.add(tail);
+  g.rotation.y = r() * 0.6 - 0.3; return g;
+}
+function sheepMesh(r, v) {
+  const g = new THREE.Group(), wool = flat('#ece6d6'), face = flat('#2b2622');
+  const body = new THREE.Mesh(lump(new THREE.IcosahedronGeometry(0.11, 1), r, 0.18), wool); body.scale.set(1.35, 0.9, 1); body.position.y = 0.15; g.add(body);
+  for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.IcosahedronGeometry(0.05, 0), wool); t.position.set((r() - 0.5) * 0.22, 0.2 + r() * 0.05, (r() - 0.5) * 0.14); g.add(t); }   // the fleece's tufts
+  const graze = v % 2 === 1, hd = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.06), face); hd.position.set(0.15, graze ? 0.07 : 0.18, 0); g.add(hd);
+  for (const [x, z] of [[0.07, 0.05], [0.07, -0.05], [-0.07, 0.05], [-0.07, -0.05]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 4), face); l.position.set(x, 0.045, z); g.add(l); }
+  g.rotation.y = r() * 6.28; return g;
+}
+function hensMesh(r) {
+  const g = new THREE.Group(), feather = [flat('#efe8da'), flat('#a5652e'), flat('#efe8da')], comb = flat('#c8322a'), beak = flat('#d8a23a');
+  for (let i = 0; i < 4; i++) {
+    const h = new THREE.Group(); h.position.set((r() - 0.5) * 0.3, 0, (r() - 0.5) * 0.3); h.rotation.y = r() * 6.28; g.add(h);
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.035, 0), feather[i % 3]); b.scale.set(1.3, 1, 1); b.position.y = 0.05; h.add(b);
+    const hd = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.028, 0.022), feather[i % 3]); hd.position.set(0.04, 0.08, 0); h.add(hd);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.012, 0.006), comb); c.position.set(0.04, 0.1, 0); h.add(c);
+    const k = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.008, 0.008), beak); k.position.set(0.058, 0.078, 0); h.add(k);
+  }
+  return g;
+}
+function pumpkinsMesh(r) {
+  const g = new THREE.Group(), cols = ['#c86a1c', '#d47a22', '#b85a18'].map((c) => flat(c)), stem = flat('#5a5a2a'), leaf = flat('#4e5e26');
+  for (let i = 0; i < 5; i++) {
+    const s = 0.035 + r() * 0.03, p = new THREE.Mesh(lump(new THREE.IcosahedronGeometry(s, 1), r, 0.1), cols[i % 3]); p.scale.set(1.25, 0.8, 1.25);
+    const x = (r() - 0.5) * 0.24, z = (r() - 0.5) * 0.24; p.position.set(x, s * 0.75, z); g.add(p);
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.007, 0.03, 4), stem); st.position.set(x, s * 1.5, z); g.add(st);
+    const lf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.03, 0), leaf); lf.scale.set(1.4, 0.3, 1); lf.position.set(x + 0.04, 0.012, z - 0.03); g.add(lf);
+  }
+  return g;
+}
+function hayMesh(r, v) {
+  const g = new THREE.Group(), hay = mat(tex('thatch', '#b89a4c', 7 + v));
+  if (v % 2 === 0) {                                                   // round bales, lying
+    for (let i = 0; i < 2; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.12, 10), hay); b.rotation.x = Math.PI / 2; b.rotation.z = r() * 0.6; b.position.set(i * 0.2 - 0.1, 0.09, (r() - 0.5) * 0.08); g.add(b); }
+  } else {                                                             // a stack, thatched on top
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.18, 9), hay); h.position.y = 0.09; g.add(h);
+    const c = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.14, 9), hay); c.position.y = 0.25; g.add(c);
+  }
+  return g;
+}
+function planterMesh(r) {
+  const g = new THREE.Group(), wood = mat(tex('planks', '#6a4a30', 3)), soil = flat('#3a2a1e'), petals = ['#c84a8a', '#e8e0f0', '#e0b040', '#8a5ac8'].map((c) => flat(c)), leaf = flat('#4a6a2a');
+  box(0.26, 0.07, 0.08, wood, 0, 0, 0, g); box(0.24, 0.01, 0.07, soil, 0, 0.07, 0, g);
+  for (let i = 0; i < 9; i++) { const x = -0.1 + i * 0.025, y = 0.08 + r() * 0.04; const l = new THREE.Mesh(new THREE.IcosahedronGeometry(0.018, 0), leaf); l.position.set(x, y, (r() - 0.5) * 0.04); g.add(l); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.014, 0), petals[(r() * 4) | 0]); f.position.set(x, y + 0.02, (r() - 0.5) * 0.04); g.add(f); }
+  return g;
+}
 const NATURE = {
+  cow: (r, v) => cowMesh(r, v), sheep: (r, v) => sheepMesh(r, v), hens: (r) => hensMesh(r), pumpkins: (r) => pumpkinsMesh(r), hay: (r, v) => hayMesh(r, v), planter: (r) => planterMesh(r),
   wheat: (r, v) => wheatMesh(r, v),
   bridge: (r) => bridgeMesh(r),
   rock: (r, v) => { const g = new THREE.Group(), n = [1, 1, 2, 3, 2][v % 5], big = [0.2, 0.14, 0.24, 0.18, 0.32][v % 5];
