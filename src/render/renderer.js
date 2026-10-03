@@ -101,7 +101,9 @@ void main(){
   vec3 amb=dot(uAmbC,vec3(1.0))>0.0?uAmbC:mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
   vec3 col=A.rgb*amb*(0.72+0.28*n.z);
   float sd=max(dot(n,uSunL),0.0);
-  col+=A.rgb*uSunC*(sd+0.55*sd*sd*sd*sd);   // + a lift on faces squarely to the sun: the reference's lit tops go near white-gold (pass 11b)
+  bool figPx=Et.a>0.97&&Et.a<0.99;   // an actor's pixel (EMI alpha 250)
+  col+=A.rgb*uSunC*(sd+(figPx?0.0:0.55*sd*sd*sd*sd));   // a figure skips the lift: its normals face the sun, and it washed
+  // pale cloth to white and red to pink (pass 11i)   // + a lift on faces squarely to the sun: the reference's lit tops go near white-gold (pass 11b)
   for(int i=0;i<3;i++){
     vec3 lp=uL[i];
     vec3 d=vec3(p.x-lp.x,(lp.y-p.y)*1.8,lp.z-h);
