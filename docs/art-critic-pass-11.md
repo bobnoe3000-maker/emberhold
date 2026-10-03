@@ -372,6 +372,30 @@ as the nature-pack decision has it: nothing is placed on it.
 - Ground, 6.5 → **7**: the meadows flower.
 - **Overall, 6.9 → 7.1.**
 
+## Iteration 11g, part two: walled and fenced fields (shipped 2026-10-03)
+
+![11g, before and after: Thornwick's east farm](img/art11/g-fields.jpg)
+
+**What changed:**
+- **A knee-high dry-stone wall** (`buildkit.js` `drywall`, `drywall_0` / `_90`, re-baked):
+  - rough courses of field stone, each its own size, tone and tilt, under a row of laid cap stones;
+  - beside the rail fence (`fence_0` / `_90`), which had been baked but never placed. The fence takes 11c's warmer
+    grade.
+- **Each field's back edges** (north and west, which the camera sees past the crop) get 12-tile runs, in
+  `outdoor.js` `bound`:
+  - Thornwick's fields are fenced; the Vale's alternate wall and fence.
+  - A run is left out wherever it would cross a road, the water or anything placed. The front edges stay open, so
+    a field never walls a road off.
+  - The runs are placed after the herds and before the wheat, which grows round them, and they take no draws.
+- **Counts:** four runs in Thornwick, two in the Vale. The Vale's fields are hemmed in by the town's walls and
+  the farms.
+- **Test:** `test/overland.test.mjs`. The fields keep their runs, every run stands on grass or field, and the Vale
+  has its dry-stone wall.
+
+**Score:**
+- Life and density, 6.5 → **7**: the farms read as worked land, fenced, with herds and hay.
+- **Overall, 7.1 → 7.1** (7.14).
+
 ## Where it stands, and what's next
 
 | Area | Reference | Start | Now |
@@ -382,10 +406,11 @@ as the nature-pack decision has it: nothing is placed on it.
 | Trees and plants | 9 | 4.5 | 7 |
 | Ground | 8 | 5 | 7 |
 | Characters | 8 | 5 | 6 |
-| Life and density | 9 | 4 | 6.5 |
+| Life and density | 9 | 4 | 7 |
 | **Overall** | **8.7** | **4.4** | **7.1** |
 
-To reach 7.5 with nothing under 6:
-- **11g, the rest:** low dry-stone walls and fences between the fields, and an overhanging storey on the
-  larger houses.
-- **Then characters again:** passers-by at work (carrying, hoeing), and a crisper cast.
+To reach 7.5 with nothing under 6, the cast is now the weakest area (6):
+- **Characters:** the reference's people are rounder and more saturated, and they work. Ours are pale where they
+  wear white and they stroll. Next: the cast's palette (fewer white garments, warmer skin, darker hair), and
+  passers-by carrying things.
+- **Trees and plants (7):** taller, layered tree masses at the town's edges, as the reference frames its village.

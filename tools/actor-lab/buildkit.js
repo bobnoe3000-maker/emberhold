@@ -1115,6 +1115,19 @@ Object.assign(TYPES, {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.004, 3, 10), mat(null, '#7a5c3c')); ring.rotation.x = Math.PI / 2; ring.position.y = 0.103; g.add(ring);
     for (let i = 0; i < 4; i++) { const a = (i / 4) * 6.28 + r(); const root = box(0.03, 0.03, 0.08, bark, Math.cos(a) * 0.09, 0, Math.sin(a) * 0.09, g); root.rotation.y = -a; root.rotation.x = 0.3; }
   },
+  drywall(S, g) {                                        // a knee-high dry-stone wall run along z (1.16 long), round the fields
+    // (critic pass 11g: the reference's fields are walled and fenced; ours lay open on the grass). Rough courses of
+    // field stone, each its own size, tone and tilt, under a row of laid cap stones.
+    const L = 1.16, r = S.rnd, tones = [S.m.stone, S.m.stone, S.m.stoneDark];
+    for (let row = 0; row < 3; row++) {
+      const y = row * 0.045, w = 0.13 - row * 0.02;
+      for (let z = -L / 2 + (row % 2) * 0.03; z < L / 2 - 0.01;) {
+        const len = Math.min(0.05 + r() * 0.06, L / 2 - z), b = box(w * (0.85 + r() * 0.3), 0.04 + r() * 0.012, len - 0.006, tones[(r() * 3) | 0], (r() - 0.5) * 0.015, y, z + len / 2, g);
+        b.rotation.y = (r() - 0.5) * 0.25; b.rotation.z = (r() - 0.5) * 0.12; z += len;
+      }
+    }
+    for (let z = -L / 2; z < L / 2 - 0.01;) { const len = Math.min(0.08 + r() * 0.05, L / 2 - z), c = box(0.11, 0.028, len - 0.008, S.m.stone, 0, 0.135, z + len / 2, g); c.rotation.x = (r() - 0.5) * 0.3; z += len; }
+  },
   fence(S, g) {                                          // a waist-high rail fence run along z (1.16 long)
     const L = 1.16, n = 5;
     for (let i = 0; i <= n; i++) { const z = -L / 2 + (L * i) / n; box(0.035, 0.3, 0.035, S.m.beam, 0, 0, z, g); const cap = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.04, 4), S.m.beam); cap.position.set(0, 0.32, z); g.add(cap); }

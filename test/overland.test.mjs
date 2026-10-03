@@ -61,3 +61,18 @@ test('no road under the river but at a bridge; every site reachable from the gat
   while (q.length) { const [x, y] = q.pop(), k = x + ',' + y; if (seen.has(k) || x < -20 || y < -20 || x > 280 || y > 280 || !isWalkable(o, x + 0.5, y + 0.5)) continue; seen.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
   for (const [id, v] of Object.entries(o.arrivals)) assert.ok(seen.has(Math.floor(v.x) + ',' + Math.floor(v.y)), `${id} can't be reached`);
 });
+
+test('the fields are walled and fenced on their back edges, never across a road or the water (pass 11g)', () => {
+  const t = createOutdoor(20260807, 'town', 'vale');
+  for (const [w, min] of [[t, 3], [o, 2]]) {
+    const runs = w.structs.filter((s) => /^(fence|drywall)_(0|90)$/.test(s.id));
+    assert.ok(runs.length >= min, `${w.kind}: ${runs.length} runs`);
+    for (const s of runs) {
+      const f = ENV_FOOT[s.id];
+      for (let y = Math.floor(s.y + f[1] + 0.2); y <= Math.floor(s.y + f[3] - 0.2); y++) for (let x = Math.floor(s.x + f[0] + 0.2); x <= Math.floor(s.x + f[2] - 0.2); x++) {
+        const g = groundAt(w, x + 0.5, y + 0.5).g; assert.ok(g === G.GRASS || g === G.FIELD, `${w.kind}: ${s.id} at ${s.x.toFixed(0)},${s.y.toFixed(0)} on ground ${g}`);
+      }
+    }
+  }
+  assert.ok(o.structs.some((s) => s.id.startsWith('drywall_')), 'a dry-stone wall in the Vale');
+});
