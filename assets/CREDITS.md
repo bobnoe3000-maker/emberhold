@@ -60,10 +60,10 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
   - the shoot, fireball, freeze, shock, heal, shield, block, warcry and quake powers;
   - footsteps (cloth, leather, metal, echo);
   - level up, flying loot, coins, the wood door, stairs;
-  - the river, cave droplets, cave wind, bird, owl and open-fire loops.
+  - the river, cave droplets, cave wind, wind, bird, owl and open-fire loops.
 - **Changes:**
   - trimmed, folded to mono and level-normalised;
-  - the cave wind cut to 10 s;
+  - the cave wind cut to 10 s, the wind to 8 s;
   - re-encoded as MP3 by `tools/audio/prep.mjs` (sources listed in `tools/audio/sounds.json`).
 - **Licence of the copies:** the adapted files in `assets/audio/` are shared under the same licence, CC-BY-SA 3.0.
   The share-alike covers the sound files, not the game's code.

@@ -1,13 +1,14 @@
 // @ts-check
-// weatherfx.js — how the weather looks (sim/weather.js says what it is). The owner (2026-10-03): rain, fog and snow
-// "not overly visually intrusive". So it's mostly in the light, and only a little on the screen:
+// weatherfx.js — how the weather looks (sim/weather.js says what it is). The owner (2026-10-03): rain, fog, snow and
+// wind, "not overly visually intrusive". So it's mostly in the light, and only a little on the screen:
 //   light   rain and fog take some of the sun, soften the shadows and the colour, and thicken the haze; snow cools
-//           and lifts the ambient a touch. At full strength the light loses at most a third.
+//           and lifts the ambient a touch; wind clears the air (less haze, a touch more colour). At full strength the
+//           light loses at most a third.
 //   screen  rain: sparse fine streaks, faint; snow: a few slow flakes that drift; fog: a soft drifting veil,
 //           thickest toward the top of the screen (the distance) and thin over the party, at the bottom
 // Outdoors only (underground there's no sky), and never on the dev Stage. The particles are placed by a hash of their
 // index and the clock, anchored to the world (they pass by as the camera moves), so nothing is stored or allocated
-// per frame. ?dev&weather=rain|fog|snow|clear[:0..1] holds a weather for captures.
+// per frame. ?dev&weather=rain|fog|snow|wind|clear[:0..1] holds a weather for captures.
 
 import { weatherAt } from '../sim/weather.js';
 
@@ -17,7 +18,7 @@ let hold = null;
 export function holdWeather(v) {
   if (!v) { hold = null; return; }
   const [kind, k] = String(v).split(':');
-  hold = ['clear', 'fog', 'rain', 'snow'].includes(kind) ? { kind: /** @type {any} */ (kind), k: kind === 'clear' ? 0 : Math.max(0, Math.min(1, k === undefined ? 1 : +k)) } : null;
+  hold = ['clear', 'fog', 'rain', 'snow', 'wind'].includes(kind) ? { kind: /** @type {any} */ (kind), k: kind === 'clear' ? 0 : Math.max(0, Math.min(1, k === undefined ? 1 : +k)) } : null;
 }
 /** the weather now, for any reader (the renderer, the sound, the HUD) @param {any} sim */
 export function weatherNow(sim) {
@@ -37,6 +38,7 @@ export const lightOf = (sky) => Math.max(0, Math.min(1, (sky.sun[0] + sky.sun[1]
  * @param {import('./daylight.js').Sky} sky @param {{ kind: string, k: number }} w */
 export function weatherLight(sky, w) {
   const k = w.k; if (!k) return;
+  if (w.kind === 'wind') { sky.haze *= 1 - 0.35 * k; sky.sat *= 1 + 0.05 * k; return; }   // the wind clears the air
   const sun = w.kind === 'rain' ? 0.32 : w.kind === 'fog' ? 0.24 : 0.16, sat = w.kind === 'snow' ? 0.22 : 0.16;
   for (let i = 0; i < 3; i++) sky.sun[i] *= 1 - sun * k;
   if (w.kind === 'snow') { sky.amb[0] *= 1 + 0.04 * k; sky.amb[1] *= 1 + 0.06 * k; sky.amb[2] *= 1 + 0.12 * k; }   // a cold, even light
@@ -75,6 +77,17 @@ export function drawWeather(c, w, o) {
       const y = ((h1(i, 3) * H + t * sp - o.camY * S) % H + H) % H - 4;
       const x = (((h1(i, 5) * W - o.camX * S + Math.sin(t * (0.6 + h1(i, 13)) + i) * 9 * S / 3) % W) + W) % W - 8;
       c.fillRect(x, y, sz, sz);
+    }
+  } else if (w.kind === 'wind') {
+    // a few leaves, blown across side-on: each tumbles (its width flickers with its spin) and rides the gusts up and down
+    const n = Math.round(22 * k * Math.max(0.6, area)), W = vw + 40, H = vh + 40, LEAF = ['168,120,58', '138,92,44', '112,122,60', '150,72,40'];
+    const gust = 0.75 + 0.25 * Math.sin(t * 0.7) + 0.15 * Math.sin(t * 1.9);
+    for (let i = 0; i < n; i++) {
+      const sp = (0.22 + 0.22 * h1(i, 7)) * vw * gust, sz = Math.max(3, S * (1.8 + 0.9 * h1(i, 11)));   // (a native leaf is ~2 px: smaller ones were lost in the ground's own flecks)
+      const x = (((h1(i, 5) * W + t * sp - o.camX * S) % W) + W) % W - 20;
+      const y = (((h1(i, 3) * H + t * 0.025 * vh + Math.sin(t * (1.3 + h1(i, 13)) + i) * 10 * S / 3 - o.camY * S) % H) + H) % H - 20;
+      const spin = Math.abs(Math.cos(t * (2.5 + 2 * h1(i, 17)) + i));
+      c.fillStyle = `rgba(${LEAF[i % 4]},${night ? 0.6 : 0.9})`; c.fillRect(x, y, Math.max(1, sz * (0.3 + 0.7 * spin)), Math.max(1, sz * 0.55));
     }
   } else if (w.kind === 'fog') {
     // a veil, thickest at the top (the distance), thin over the party at the bottom; soft banks drift through it

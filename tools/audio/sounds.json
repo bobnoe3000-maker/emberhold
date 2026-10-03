@@ -39,6 +39,7 @@
   "amb_cave": { "src": "environment/cave_wind_loop.ogg", "take": 10 },
   "amb_birds": { "src": "environment/bird_twitter_loop.ogg" },
   "amb_owl": { "src": "environment/forest_owl_loop.ogg" },
-  "amb_fire": { "src": "environment/open_fire_loop.ogg" }
+  "amb_fire": { "src": "environment/open_fire_loop.ogg" },
+  "amb_wind": { "src": "environment/wind_loop.ogg", "take": 8 }
  }
 }

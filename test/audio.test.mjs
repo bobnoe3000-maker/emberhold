@@ -56,15 +56,17 @@ test('ambience: the creek louder the nearer it runs, silent out of reach; birds 
   for (const k of Object.keys(warren)) assert.ok(bank.loops[k] || k.startsWith('syn_'), k);   // (syn_: made by the engine)
   const rain = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }), dry = at(Infinity, 1);
   assert.ok(rain.syn_rain > 0 && rain.amb_birds < dry.amb_birds * 0.3, 'rain hisses and the birds go quiet');
-  assert.ok(ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'snow', k: 1 } }).amb_cave > 0, 'a soft wind over the snow');
+  assert.ok(ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'snow', k: 1 } }).amb_wind > 0, 'a soft wind over the snow');
+  const windy = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'wind', k: 1 } });
+  assert.ok(windy.amb_wind > 0.5 && windy.amb_birds < dry.amb_birds && windy.amb_birds > 0, 'a windy day blows, and the birds sing less');
   assert.equal(ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }).syn_rain, 0, 'no rain underground');
 });
 
-test('the sound fits its budget: every file in the bank is there, ≤ 750 KB in all', () => {
+test('the sound fits its budget: every file in the bank is there, ≤ 800 KB in all (750 until the wind came)', () => {
   let bytes = 0;
   for (const list of Object.values(bank.shots)) for (const v of list) bytes += statSync(new URL(`../assets/audio/${v.f}`, import.meta.url)).size;
   for (const v of Object.values(bank.loops)) bytes += statSync(new URL(`../assets/audio/${v.f}`, import.meta.url)).size;
-  assert.ok(bytes < 750 * 1024, `${(bytes / 1024).toFixed(0)} KB`);
+  assert.ok(bytes < 800 * 1024, `${(bytes / 1024).toFixed(0)} KB`);
 });
 
 test('the animator flags a foot coming down twice a cycle, at the contacts, and a swing once, as it begins', () => {

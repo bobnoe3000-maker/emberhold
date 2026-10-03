@@ -121,7 +121,7 @@ export function createHud(sim) {
     const t = sim.state.t, part = partOf(t), next = (part + 1) % 4, b = bill(), dawn = Math.max(1, Math.ceil(toDawn() / 60));
     const mins = Math.max(1, Math.ceil((PART_S - (t % PART_S)) / 60));
     const w = weatherNow(sim), wName = w.k > 0.15 ? weatherName(w.kind) : '', left = Math.max(1, Math.ceil(weatherLeft(sim.seed >>> 0, t, sim.world.region || 'vale') / 60));
-    const ends = { fog: 'lifting', rain: 'clearing', snow: 'easing' }[w.kind];
+    const ends = { fog: 'lifting', rain: 'clearing', snow: 'easing', wind: 'dropping' }[w.kind];
     return `${PART_NAMES[part]} · ${PART_NAMES[next].toLowerCase()} in ${mins} min` + (wName ? ` · ${wName.toLowerCase()}, ${ends} in ${left} min` : '') + (next === 0 ? '' : ` · dawn in ${dawn} min`) + (b ? ` · wages ${b} gold at dawn` : '');
   };
   skyEl.addEventListener('pointerdown', (e) => e.stopPropagation());

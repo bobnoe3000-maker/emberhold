@@ -16,12 +16,13 @@ test('the same seed and moment give the same weather; another seed another sky',
   assert.ok(differ > 10, `${differ} of 50 spells differ`);
 });
 
-test('the Vale is mostly fair; the heights snowier; fog and rain both come', () => {
-  const count = (region) => { const c = { clear: 0, fog: 0, rain: 0, snow: 0 }; for (let n = 0; n < 3000; n++) c[spellOf(SEED, n, region).kind]++; return c; };
+test('the Vale is mostly fair; the heights snowier and windier; fog, rain and wind all come', () => {
+  const count = (region) => { const c = { clear: 0, fog: 0, rain: 0, snow: 0, wind: 0 }; for (let n = 0; n < 3000; n++) c[spellOf(SEED, n, region).kind]++; return c; };
   const vale = count('vale'), heights = count('heights');
   assert.ok(vale.clear / 3000 > 0.38 && vale.clear / 3000 < 0.52, JSON.stringify(vale));
-  assert.ok(vale.rain > 500 && vale.fog > 400 && vale.snow > 150, JSON.stringify(vale));
+  assert.ok(vale.rain > 500 && vale.fog > 400 && vale.snow > 150 && vale.wind > 150, JSON.stringify(vale));
   assert.ok(heights.snow > vale.snow * 2.5, `heights ${heights.snow} vs vale ${vale.snow}`);
+  assert.ok(heights.wind > vale.wind * 1.2 && count('reach').wind > vale.wind * 1.5, 'the open country is windier');
 });
 
 test('long cycles: a weather lasts a spell (20 min) or more, and its strength eases in and out, never jumps', () => {
@@ -49,4 +50,6 @@ test('nothing underground; a dev hold wins; the light loses at most a third at f
     const sky = mixSky(makeSky(), LOOKS.day, LOOKS.day, 0), sun0 = sky.sun[0]; weatherLight(sky, { kind, k: 1 });
     assert.ok(sky.sun[0] >= sun0 * 0.66 && sky.sun[0] < sun0, `${kind}: sun ${sun0} → ${sky.sun[0].toFixed(2)}`);
   }
+  const windy = mixSky(makeSky(), LOOKS.day, LOOKS.day, 0), haze0 = windy.haze, sun0 = windy.sun[0]; weatherLight(windy, { kind: 'wind', k: 1 });
+  assert.ok(windy.haze < haze0 && windy.sun[0] === sun0, 'the wind clears the air and keeps the sun');
 });

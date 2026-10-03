@@ -87,10 +87,11 @@ export function eventCue(name, ev) {
 // waterD: tiles from the view's centre to the nearest river or mill-race tile (Infinity: none near). part: the time of
 // day (npcs.js partOf: 0 dawn · 1 day · 2 dusk · 3 night). theme: the dungeon's (sites.js), null for the barrows.
 export const RIVER_REACH = 14;
-// weather: sim/weather.js (outdoors): rain hisses and quiets the birds; snow brings a soft wind and a hush; fog only hushes.
+// weather: sim/weather.js (outdoors): rain hisses and quiets the birds; wind blows (and hushes them a little); snow brings
+// a soft wind and a hush; fog only hushes.
 /** @param {{ kind: string, theme?: string | null, part: number, waterD: number, weather?: { kind: string, k: number } }} w @returns {Record<string, number>} */
 export function ambienceFor({ kind, theme = null, part, waterD, weather = { kind: 'clear', k: 0 } }) {
-  const out = { amb_river: 0, amb_birds: 0, amb_owl: 0, amb_drips: 0, amb_cave: 0, amb_fire: 0, syn_rain: 0 };
+  const out = { amb_river: 0, amb_birds: 0, amb_owl: 0, amb_drips: 0, amb_cave: 0, amb_fire: 0, amb_wind: 0, syn_rain: 0 };
   if (kind === 'dungeon') {
     out.amb_cave = theme === 'desert' ? 0.3 : 0.5;                                                  // the mill's cellars are dry
     out.amb_drips = theme === 'desert' ? 0.25 : theme === 'poison' ? 0.95 : theme === 'warren' ? 0.85 : 0.7;   // the chapel's pools, the old mine
@@ -103,10 +104,11 @@ export function ambienceFor({ kind, theme = null, part, waterD, weather = { kind
   if (kind === 'town') { out.amb_birds *= 0.6; out.amb_owl *= 0.6; }
   const wk = weather.k || 0;
   if (wk) {
-    const hush = weather.kind === 'rain' ? 0.85 : weather.kind === 'snow' ? 0.7 : 0.5;   // the birds go quiet under it
+    const hush = { rain: 0.85, snow: 0.7, fog: 0.5, wind: 0.4 }[weather.kind] ?? 0;      // the birds go quiet under it
     out.amb_birds *= 1 - hush * wk; out.amb_owl *= 1 - hush * 0.6 * wk;
     if (weather.kind === 'rain') out.syn_rain = 0.75 * wk;
-    if (weather.kind === 'snow') out.amb_cave = 0.3 * wk;                              // (the draught's loop, as a soft wind over the snow)
+    if (weather.kind === 'wind') out.amb_wind = 0.85 * wk;
+    if (weather.kind === 'snow') out.amb_wind = 0.35 * wk;                             // a soft wind over the snow
   }
   return out;
 }

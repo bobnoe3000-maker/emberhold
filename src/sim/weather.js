@@ -1,11 +1,11 @@
 // @ts-check
 // weather.js — the weather (the owner, 2026-10-03: "Add weather cycles also, not overly visually intrusive though —
-// rain, fog, snow… on longer cycles"; GDD §10.1). A pure function of the world's seed, the clock and the region: no
+// rain, fog, snow… on longer cycles", then "windy day for weather too"; GDD §10.1). A pure function of the world's seed, the clock and the region: no
 // state, no draw from any stream, nothing saved. Every reader agrees (the renderer, the sound, the HUD's sky dial),
 // a reload brings back the same sky, and a replay is untouched (the sim's rules don't read it).
 //
-// The clock is cut into spells of SPELL_S (20 minutes of play, a third of a day). Each spell is clear, fog, rain or
-// snow by a hash of the seed and the spell's number, weighted by region; fog comes more often in a spell that starts
+// The clock is cut into spells of SPELL_S (20 minutes of play, a third of a day). Each spell is clear, fog, rain,
+// snow or wind by a hash of the seed and the spell's number, weighted by region; fog comes more often in a spell that starts
 // in the night or at dawn. A spell builds over RAMP_S and fades over RAMP_S, except where the next spell is the same
 // weather, which runs on unbroken (so it lasts 40 or 60 minutes). Its strength: 0.55–1 at its height.
 
@@ -13,19 +13,20 @@ import { hash2, STREAM } from './rng.js';
 import { DAY_S } from './heroes.js';
 
 export const SPELL_S = 1200, RAMP_S = 180;
-export const KINDS = /** @type {const} */ (['clear', 'fog', 'rain', 'snow']);
-/** @typedef {'clear' | 'fog' | 'rain' | 'snow'} WeatherKind */
-// [clear, fog, rain, snow] by region: the Vale is mostly fair, the fens wet and misty, the heights snowy
-const WEIGHTS = { vale: [0.46, 0.18, 0.26, 0.1], fens: [0.36, 0.3, 0.28, 0.06], reach: [0.5, 0.2, 0.2, 0.1], heights: [0.36, 0.16, 0.14, 0.34] };
+export const KINDS = /** @type {const} */ (['clear', 'fog', 'rain', 'snow', 'wind']);
+/** @typedef {'clear' | 'fog' | 'rain' | 'snow' | 'wind'} WeatherKind */
+// [clear, fog, rain, snow, wind] by region: the Vale mostly fair, the fens wet and misty and sheltered, the reach open
+// and gusty, the heights snowy and windswept
+const WEIGHTS = { vale: [0.41, 0.17, 0.24, 0.09, 0.09], fens: [0.34, 0.3, 0.26, 0.05, 0.05], reach: [0.42, 0.16, 0.16, 0.08, 0.18], heights: [0.3, 0.14, 0.12, 0.3, 0.14] };
 
 /** the weather of spell n: its kind and its strength at its height @param {number} seed @param {number} n @param {string} region */
 export function spellOf(seed, n, region = 'vale') {
   const w = (WEIGHTS[region] || WEIGHTS.vale).slice();
   const startPart = Math.floor((((n * SPELL_S) % DAY_S) + DAY_S) % DAY_S / (DAY_S / 4));    // 0 dawn · 1 day · 2 dusk · 3 night
   if (startPart === 0 || startPart === 3) w[1] *= 1.6;                                        // mist at night and dawn
-  const tot = w[0] + w[1] + w[2] + w[3], s = (seed ^ STREAM.WEATHER) | 0;
+  const tot = w.reduce((a, b) => a + b, 0), s = (seed ^ STREAM.WEATHER) | 0;
   let r = hash2(n, 0, s) * tot, i = 0;
-  while (i < 3 && r >= w[i]) { r -= w[i]; i++; }
+  while (i < w.length - 1 && r >= w[i]) { r -= w[i]; i++; }
   return { kind: KINDS[i], peak: 0.55 + 0.45 * hash2(n, 1, s) };
 }
 
@@ -54,4 +55,4 @@ export function weatherLeft(seed, t, region = 'vale') {
 }
 
 /** the weather's name for the sky dial ('' when clear) @param {WeatherKind} kind */
-export const weatherName = (kind) => ({ clear: '', fog: 'Fog', rain: 'Rain', snow: 'Snow' })[kind];
+export const weatherName = (kind) => ({ clear: '', fog: 'Fog', rain: 'Rain', snow: 'Snow', wind: 'Wind' })[kind];

@@ -291,6 +291,10 @@
   "amb_fire": {
    "f": "amb_fire.mp3",
    "d": 2.8
+  },
+  "amb_wind": {
+   "f": "amb_wind.mp3",
+   "d": 8.05
   }
  }
 }

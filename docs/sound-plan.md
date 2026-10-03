@@ -331,8 +331,8 @@ Golden-rule upkeep in every phase:
   freesound and OpenGameArt couldn't be reached from the build environment; GitHub could.
 - **Format:** one MP3 per variant, not a sprite. Every browser decodes MP3, Safari included, so no AAC twin is
   needed. Loops crossfade their own seam to hide MP3's padding.
-- **Size:** about 690 KB in all. One-shots are decoded on the first tap; loops only in the place that has them.
-  The budget in the test is 750 KB.
+- **Size:** about 755 KB in all, with the wind loop (63 KB) for the weather. One-shots are decoded on the first
+  tap; loops only in the place that has them. The budget in the test is 800 KB.
 - **Mix data:** the cue table is code (`src/audio/cues.js`, pure and tested), not `content/sounds.json`. The
   sources are data (`tools/audio/sounds.json`).
 - **Synthesis:** the blows (filtered noise, with a crack on a crit). Footsteps, water and wind are samples, which
