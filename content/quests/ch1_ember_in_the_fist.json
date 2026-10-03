@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "chapel",
-      "journal": "Go to the Sunken Chapel, in the marsh south of Thornwick, and down to its second floor. Find the robed stranger who pays for the digging, and stop him.",
+      "journal": "Go to the Sunken Chapel, in the marsh where the river leaves the Vale, out past the lumber camp, and down to its second floor. Find the robed stranger who pays for the digging, and stop him.",
       "objectives": [
         {
           "type": "boss",

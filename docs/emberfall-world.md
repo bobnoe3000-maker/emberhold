@@ -1,6 +1,10 @@
 # Emberfall — World Summary
 
-**v1.17 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.18 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.18 says where the Vale's sites lie (§3.1): the easy ones near Thornwick, the hard ones far out. The
+Sunken Chapel's marsh is where the river leaves the Vale, out past the lumber camp; the Ninth Milestone stands
+where the old Wickham road runs on north-east past the Deepdelve mine. Nothing new about what they are.
 
 v1.17 gives Thornwick its edge (§3.1; docs/town-layout-proposal.md). It's a farming town on the barrows
 road, so it keeps a timber palisade on an earth bank, with watchtowers and one gate on the road where it
@@ -140,10 +144,10 @@ it's where everyone starts.
     The Redhand squat in it and burn the miller's carts for warmth. Levels 1–3.
   - **Wickham Keep:** an imperial keep on the Wickham road, now the Redhand's hold, with cellars
     that go down into older stone. Levels 3–6.
-  - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh, where the
-    legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
+  - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh where the river
+    leaves the Vale, out past the lumber camp (v1.18), where the legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
-    Wickham road. Nobody knows it's there until the Chronicle says so.
+    Wickham road, out where the old road runs on north-east past the Deepdelve mine (v1.18). Nobody knows it's there until the Chronicle says so.
 - **The road (v1.9): why the Vale fights its dead.** The barrows lie under the old Wickham road.
   Its stretch past them, which Thornwick calls the *barrows road*, is the short way out of the
   Vale for the Greyholt cart and everyone else. When the digging woke the Third Legion this spring,

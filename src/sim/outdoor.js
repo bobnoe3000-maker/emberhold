@@ -447,18 +447,21 @@ function buildOverland(seed) {
   const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4402)), B = (t, n = 1) => `vale_${t}_${n}`;
   o.name = 'The Hollow Vale';
   const town = [52, 150], cross = [150, 132], keep = [168, 44], barrows = [66, 228], mine = [226, 70], camp = [196, 214];
-  const mill = [92, 106], chapel = [92, 174], stone = [168, 86];   // the Tithe Mill, the Sunken Chapel, the ninth milestone (M5)
-  // The river (critic pass 10): the old course as a spline, with a slow meander and a breathing width (meander), held
+  // the Tithe Mill, the Sunken Chapel, the ninth milestone (M5). By difficulty (the owner, 2026-10-03): the easy sites near
+  // Thornwick's gate, the hard ones far out. From the gate: the mill (1–3) 57 tiles, the barrows (1–4) 79, the keep (3–6)
+  // 154, the chapel (5–8) 183 in the marsh where the river leaves the Vale, the milestone (8) 211 on the old road north-east.
+  const mill = [92, 106], chapel = [226, 218], stone = [236, 40];
+  // The river (critic pass 10): the old course as a spline (its lower reach swings east to the chapel's marsh, 2026-10-03), with a slow meander and a breathing width (meander), held
   // where it was at the bridges and the mill. Bridges are axis-aligned (bridge_90 spans x), so every road crosses its
   // bridge on a straight run along x, and the river runs across it (~+y) there.
-  o.rivers.push({ w: 9, pts: meander(seed, chaikin([[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]], 3), [[120, 142], [115, 199], [106, 102]]) });
+  o.rivers.push({ w: 9, pts: meander(seed, chaikin([[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [118, 212], [150, 240], [200, 252], [250, 252], [300, 290], [340, 350]], 3), [[120, 142], [115, 199], [106, 102]]) });
   // the Tithe Mill's race: a narrow channel off the river, under the wheel on the mill's +x side, and back (pass 10:
   // the wheel turned 10 tiles from water)
   o.rivers.push({ w: 2.6, pts: chaikin([[102, 88], [99.5, 95], [98.8, 101], [98.8, 110], [100.5, 116], [106, 120], [112, 121]], 2) });
   // Thornwick's brook (2026-10-03: the town scene has a stream 12 tiles past its east gate, under the bridge the road
   // comes in on; the Vale showed the gate on open meadow). The same brook here, at the same place: it leaves the river
   // above the mill, runs down past the farm, under Thornwick's road 13.5 tiles from the gate (on the run along y the
-  // bridge needs), then east above the Sunken Chapel back into the river.
+  // bridge needs), then east back into the river.
   o.rivers.push({ w: 6, pts: chaikin([[88, 62], [82, 84], [80, 108], [79, 128], [70.5, 140], [69.5, 150], [70.5, 158], [80, 162], [98, 160], [116, 161]], 2) });
   // The roads, filleted (no elbows), the spurs to the mill, the chapel and the camp narrow tracks without ruts.
   const ROADS = [
@@ -467,9 +470,10 @@ function buildOverland(seed) {
     { w: 5, surface: 'dirt', pts: [cross, [132, 170], [132, 186], [129, 199], [100, 199], [88, 212], [barrows[0] + 8, barrows[1] - 4]] },
     { w: 5, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] },
     { w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] },
+    { w: 4, surface: 'dirt', pts: [[206, 108], [238, 92], [244, 66], [stone[0] + 0.5, stone[1] + 7.5]] },   // the old road on north-east to the ninth milestone
     { w: 3, surface: 'track', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] },
     { w: 3, surface: 'track', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] },                // up to the mill
-    { w: 3, surface: 'track', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] },          // the causeway to the chapel
+    { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   // a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
   for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
@@ -551,7 +555,7 @@ function buildOverland(seed) {
     for (const c of sites) if (hypot(x - c[0], y - c[1]) < (c === camp ? 16 : 24)) return false;
     return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32);
   };
-  const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 230, y: 214, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
+  const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 236, y: 182, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
   // a wood's crowns close over each other (groves overlap there, as the range's massifs do); its edge thins to singles
   for (let y = -80; y < 350; y += 6) for (let x = -80; x < 350; x += 6) {
     const jx = x + (trng() - 0.5) * 5.4, jy = y + (trng() - 0.5) * 5.4;

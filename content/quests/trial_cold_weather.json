@@ -13,7 +13,7 @@
   "steps": [
     {
       "id": "chapel",
-      "journal": "Hold six waves in the Sunken Chapel, in the marsh south of Thornwick.",
+      "journal": "Hold six waves in the Sunken Chapel, in the marsh where the river leaves the Vale, out past the lumber camp.",
       "objectives": [
         {
           "type": "waves",

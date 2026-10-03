@@ -89,3 +89,14 @@ test('no tree on a road: no crown over a road or plaza, in any seed (the owner, 
     }
   }
 });
+
+test('the easy sites lie near Thornwick, the hard ones far out (the owner, 2026-10-03)', async () => {
+  const { levelBand } = await import('../src/sim/sites.js');
+  const gate = o.labels.find((l) => l.text === 'Thornwick'), rows = o.labels.filter((l) => l.site).map((l) => ({ id: l.site, d: Math.hypot(l.x - gate.x, l.y - gate.y), lv: String(levelBand(l.site)).split('–').map(Number) }));
+  for (const r of rows) if (r.lv.length === 1) r.lv.push(r.lv[0]);
+  rows.sort((a, b) => a.d - b.d);
+  for (let i = 1; i < rows.length; i++) {
+    const a = rows[i - 1], b = rows[i];
+    assert.ok(a.lv[1] <= b.lv[1] && a.lv[0] <= b.lv[0], `${a.id} (${a.lv.join('–')}, ${a.d.toFixed(0)} tiles) is nearer than ${b.id} (${b.lv.join('–')}, ${b.d.toFixed(0)} tiles)`);
+  }
+});

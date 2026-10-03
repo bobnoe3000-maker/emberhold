@@ -132,7 +132,7 @@ Osric reads the page you give him twice, then a third time, which is once more t
 -> osric_topics
 
 == osric_ch3_offer ==
-"The Sunken Chapel. In the marsh south of here, where the river's been eating it for a century."
+"The Sunken Chapel. Down the river, out past the lumber camp, in the marsh where the river leaves the Vale. It's been eating the place for a century."
 "Men in robes paid Garrow to dig there, and paid well, and asked for nothing up. Whatever they want is still down there. Or it was."
 "Find the one who pays. Ask him what for. If he won't say, stop him paying."
 + [I'll go down into the chapel. #mark: quest]
