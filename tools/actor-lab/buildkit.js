@@ -520,7 +520,8 @@ const TYPES = {
 // ── trees (our own, to replace the stock cones): pine, broadleaf, dead, groves ──
 const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
 const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
-const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], bark: '#3a2c22', dead: '#4a4038' };
+// leaf: olive toward gold, autumn: amber and rust, birch: gold (pass 11d: the reference's autumn harmony)
+const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#4a5226', '#56602b', '#646a30'], autumn: ['#9a6a22', '#a87a26', '#8a5a1e'], birch: ['#a8872a', '#b8962e', '#97762a'], bark: '#3a2c22', dead: '#4a4038' };
 // Foliage (critic pass 2: faceted gem-like crowns clashed with the buildings): closed,
 // softly-shaded masses. Geometry is vertex-merged BEFORE jittering so faces never crack
 // apart, shaded smooth, and vertex-coloured from a dark self-shadowed underside to a lighter
@@ -555,12 +556,35 @@ function broadleaf(g, r, x, z, sc = 1, autumn = false) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.064, 0.44, 7), flat(TREE_COL.bark)); trunk.position.y = 0.22; t.add(trunk);
   for (const a of [0.6, 2.7, 4.6]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.024, 0.2, 5), flat(TREE_COL.bark)); b.position.set(Math.cos(a) * 0.05, 0.44, Math.sin(a) * 0.05); b.rotation.set(Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7); t.add(b); }
-  const pal = autumn ? TREE_COL.autumn : TREE_COL.leaf, n = 7 + ((r() * 4) | 0);
-  for (let i = 0; i < n; i++) {                            // a cloud of rounded clumps: big core, smaller lobes around and on top
-    const a = (i / n) * Math.PI * 2 + r(), rr = i === 0 ? 0 : 0.17 + r() * 0.1, size = i === 0 ? 0.3 : 0.15 + r() * 0.09;   // a broad crown, not a lollipop
+  leafCrown(t, r, autumn ? TREE_COL.autumn : TREE_COL.leaf, 0.66, 0.3, 7 + ((r() * 4) | 0));
+}
+// A crown of leaf clusters (critic pass 11d, scored against the owner's reference: our crowns were a few smooth
+// blobs; its are many small leaf clumps, each lit on top and dark beneath). A few smooth lobes still give the
+// mass; over them, faceted clumps (icosahedra, one flat normal a face) toned from a dark underside to a lit crown.
+const leafMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
+function leafCrown(t, r, pal, cy, R, lobes, clumps = 30) {
+  for (let i = 0; i < lobes; i++) {                        // the mass: a broad core, lobes around and on top
+    const a = (i / lobes) * Math.PI * 2 + r(), rr = i === 0 ? 0 : R * (0.55 + r() * 0.35), size = i === 0 ? R : R * (0.5 + r() * 0.3);
     const b = new THREE.Mesh(foliage(new THREE.IcosahedronGeometry(size, 1), r, size * 0.22, pal[(r() * 3) | 0]), foliageMat);
-    b.position.set(Math.cos(a) * rr, 0.6 + (i === 0 ? 0.1 : r() * 0.18 - 0.06), Math.sin(a) * rr); t.add(b);
+    b.position.set(Math.cos(a) * rr, cy + (i === 0 ? R * 0.3 : r() * R * 0.6 - R * 0.2), Math.sin(a) * rr); t.add(b);
   }
+  for (let i = 0; i < clumps; i++) {                       // the clumps, over the mass's skin (not underneath: unseen)
+    const u = r() * 1.5 - 0.5, a = r() * Math.PI * 2, ring = Math.sqrt(Math.max(0, 1 - u * u)), size = R * (0.2 + r() * 0.14);
+    const px = Math.cos(a) * ring * R * 1.2, py = cy + R * 0.3 + u * R * 1.05, pz = Math.sin(a) * ring * R * 1.2;
+    const geo = new THREE.IcosahedronGeometry(size, 0), p = geo.attributes.position, col = new Float32Array(p.count * 3);
+    const c = new THREE.Color(pal[(r() * 3) | 0]), lit = 0.7 + 0.75 * Math.min(1, Math.max(0, (u + 0.5) / 1.5)) * (0.9 + r() * 0.2);
+    for (let v = 0; v < p.count; v++) { p.setXYZ(v, p.getX(v) * (0.85 + r() * 0.3), p.getY(v) * (0.8 + r() * 0.3), p.getZ(v) * (0.85 + r() * 0.3)); col[v * 3] = c.r * lit; col[v * 3 + 1] = c.g * lit; col[v * 3 + 2] = c.b * lit; }
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, leafMat); m.position.set(px, py, pz); m.rotation.set(r() * 3, r() * 3, r() * 3); t.add(m);
+  }
+}
+// A birch (pass 11d: the reference's white trunks): slim, a pale bark with dark marks, a light crown, gold in autumn.
+function birch(g, r, x, z, sc = 1, autumn = true) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const bark = flat('#d9d4c6'), mark = flat('#2e2a26');
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.03, 0.72, 6), bark); trunk.position.y = 0.36; trunk.rotation.z = (r() - 0.5) * 0.12; t.add(trunk);
+  for (let i = 0; i < 5; i++) { const k = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.012, 0.034), mark); k.position.set(0, 0.1 + i * 0.12 + r() * 0.04, 0); k.rotation.y = r() * 3; t.add(k); }
+  leafCrown(t, r, autumn ? TREE_COL.birch : TREE_COL.leaf, 0.74, 0.19, 4, 22);
 }
 function deadTree(g, r, x, z, sc = 1) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
@@ -573,6 +597,7 @@ const TREES = {
   oak: (g, r) => broadleaf(g, r, 0, 0, 1.15 + r() * 0.3),
   autumn: (g, r) => broadleaf(g, r, 0, 0, 1.1 + r() * 0.3, true),
   dead: (g, r) => deadTree(g, r, 0, 0, 1.2 + r() * 0.2),
+  birch: (g, r) => { birch(g, r, -0.12, 0.05, 1.2 + r() * 0.2); if (r() < 0.7) birch(g, r, 0.16, -0.1, 0.95 + r() * 0.2); },   // a pair, as they grow
   // a clump of 5–8 mixed trees. Critic pass 10: trees set inside each other's crowns baked a pine's dark tiers
   // through an oak's crown, so each keeps its crown's room (a pine 0.29 × scale, a broadleaf 0.42 × scale), and
   // the pines stand toward the back (−x −z: away from the camera), the broadleaves in front
@@ -585,7 +610,7 @@ const TREES = {
       if (kind === 'pine' && x + z > 0.2) { x -= 0.35; z -= 0.35; }                 // pines to the back
       if (placed.some((q) => Math.hypot(q.x - x, q.z - z) < (q.rad + rad) * 0.85)) continue;
       placed.push({ x, z, rad }); i++;
-      if (kind === 'pine') pine(g, r, x, z, sc); else if (kind === 'leaf') broadleaf(g, r, x, z, sc, r() < 0.3); else deadTree(g, r, x, z, 1);
+      if (kind === 'pine') pine(g, r, x, z, sc); else if (kind === 'leaf') { const k2 = r(); if (k2 < 0.2) birch(g, r, x, z, sc * 1.1); else broadleaf(g, r, x, z, sc, k2 < 0.5); } else deadTree(g, r, x, z, 1);
     }
   },
 };
@@ -681,7 +706,20 @@ function bridgeMesh(r) {
   for (const sz of [-1, 1]) for (const sx of [-1, 1]) box(0.08, 0.2, 0.08, stone, sx * (W / 2 + 0.01), 0, sz * (L - 0.02), g);   // end posts
   return g;
 }
+// A tuft of wheat (critic pass 11d: the reference's fields are volumes of stalks, ours flat stripes): stalks leaning
+// a little, each with its ear, toned from straw at the foot to gold at the ears.
+function wheatMesh(r, v) {
+  const g = new THREE.Group(), n = 16 + v * 3, straw = flat('#9a8442'), ears = ['#c9a646', '#d6b552', '#b8933c'].map((c) => flat(c));
+  for (let i = 0; i < n; i++) {
+    const a = r() * 6.28, d = Math.sqrt(r()) * 0.07, h = 0.1 + r() * 0.05, lean = (r() - 0.5) * 0.35;
+    const st = new THREE.Group(); st.position.set(Math.cos(a) * d, 0, Math.sin(a) * d); st.rotation.set(lean, r() * 3, lean * 0.6); g.add(st);
+    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.004, h, 3), straw); stalk.position.y = h / 2; st.add(stalk);
+    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.035, 4), ears[(r() * 3) | 0]); ear.position.y = h + 0.012; st.add(ear);
+  }
+  return g;
+}
 const NATURE = {
+  wheat: (r, v) => wheatMesh(r, v),
   bridge: (r) => bridgeMesh(r),
   rock: (r, v) => { const g = new THREE.Group(), n = [1, 1, 2, 3, 2][v % 5], big = [0.2, 0.14, 0.24, 0.18, 0.32][v % 5];
     for (let i = 0; i < n; i++) { const m = rockMesh(r, big * (i ? 0.55 + r() * 0.3 : 1), 0.55 + r() * 0.25); m.position.x = i ? (r() - 0.5) * big * 2.2 : 0; m.position.z = i ? (r() - 0.5) * big * 2.2 : 0; m.rotation.y = r() * 6; g.add(m); }

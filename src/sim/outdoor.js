@@ -175,7 +175,7 @@ function putWall(o, id, alongX, at, a, b) {
 }
 function putProp(o, kind, x, y) { o.props.set(Math.floor(x) + ',' + Math.floor(y), kind); const i = gi(o, x, y); if (i >= 0) o.occ[i] = 1; }
 
-const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6', 'oak_1', 'oak_2', 'oak_3', 'oak_4', 'autumn_1', 'autumn_2', 'autumn_3', 'dead_1', 'dead_2'];
+const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6', 'oak_1', 'oak_2', 'oak_3', 'oak_4', 'autumn_1', 'autumn_2', 'autumn_3', 'birch_1', 'birch_2', 'birch_3', 'dead_1', 'dead_2'];   // (birches: critic pass 11d)
 const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'];
 const ROCKS = ['rock_F', 'rock_G', 'rock_H'];        // the nature pack's (docs/nature-pack-proposal.md); rock_A..E stay at the barrows
 // The undergrowth (Quaternius' Stylized Nature MegaKit, CC0): LOW is walked through (flowers, grass, ferns, clover,
@@ -212,6 +212,21 @@ function undergrowth(o, x0, y0, x1, y1, step, density) {
     for (let k = 0, n = 1 + Math.floor(rng() * 3); k < n; k++) {
       const a = (rng() - 0.5) * 2.2 + Math.PI / 4, dist = rad * (0.7 + rng() * 0.5), x = t.x + cos(a) * dist, y = t.y + sin(a) * dist, id = pick(rng, FOOT);
       if (density(x, y) >= 0 && fits(o, id, x, y, 0.1)) put(o, id, x, y, 'none', 0.35);
+    }
+  }
+}
+
+// Wheat on the fields (critic pass 11d: the reference's fields stand up, ours were painted stripes): tufts in rows
+// along the field's furrows, walked through. Its own stream; placed before the undergrowth, which then grows round it.
+const WHEAT = ['wheat_1', 'wheat_2', 'wheat_3'];
+function wheat(o) {
+  const rng = mulberry32(streamSeed(o.seed, 4416));
+  for (const f of o.fields) {
+    const X = f.axis === 'x', rows = X ? f.y1 - f.y0 : f.x1 - f.x0, cols = X ? f.x1 - f.x0 : f.y1 - f.y0;
+    for (let r0 = 0.75; r0 < rows - 0.5; r0 += 1.5) for (let c0 = 0.8; c0 < cols - 0.5; c0 += 1.25) {   // a row on each furrow's crest (outdoorpaint: 1.5 apart)
+      const x = X ? f.x0 + c0 : f.x0 + r0, y = X ? f.y0 + r0 : f.y0 + c0;
+      const jx = x + (rng() - 0.5) * 0.4, jy = y + (rng() - 0.5) * 0.25, id = pick(rng, WHEAT);
+      if (fits(o, id, jx, jy, 0)) put(o, id, jx, jy, 'none');
     }
   }
 }
@@ -309,6 +324,7 @@ function buildTown(seed, region) {
     return n > 0.55 && rng() < 0.4 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
   });
   forestRing(o, rng, 10);
+  wheat(o);
   // the undergrowth: the walls' verges (in and out), the stream's banks, the gardens, flower patches; never the square
   undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
     if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
@@ -404,6 +420,8 @@ function buildOverland(seed) {
     if (!o.aprons.some((a) => hypot(a.x - best[0][0], a.y - best[0][1]) < 3)) o.aprons.push({ x: best[0][0], y: best[0][1], r: Math.max(r.w, best[1].w) / 2 + 1.5 });
   }
   o.roads.push(...ROADS);
+  // the farms' fields (lost in pass 10's road rewrite, restored in 11d)
+  o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
   finalizeGround(o);
 
   // bridges where roads cross the river
@@ -492,6 +510,7 @@ function buildOverland(seed) {
   }
   scatter(o, trng, 0, 0, 260, 260, 10, (x, y) => (trng() < 0.01 && clear(x, y, 'rock_F') ? pick(trng, ROCKS) : null));
   forestRing(o, rng, 6);
+  wheat(o);
   // the undergrowth: thick at the woods' and forests' edges and along the river's banks, in patches in the meadows;
   // clear of every site and its way in
   const nearWater = (x, y) => { for (const [dx, dy] of [[0, 0], [2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]]) { const g = groundAt(o, x + dx, y + dy).g; if (g === G.WATER || g === G.BANK) return true; } return false; };

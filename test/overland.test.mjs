@@ -34,6 +34,11 @@ test('woods where you walk: 25–35 % of the map within 8 tiles of a tree, 40+ g
   assert.ok(o.structs.filter((s) => /^rock_[FGH]$/.test(s.id) && inMap(s)).length <= 30, 'rocks mostly off the meadow');
 });
 
+test('the farms keep their fields, and wheat stands on them (pass 10 lost the fields; 11d restored them)', () => {
+  assert.equal(o.fields.length, 3);
+  assert.ok(o.structs.filter((s) => /^wheat_/.test(s.id)).length >= 40, 'wheat on the fields');
+});
+
 test('the river runs under both bridges (both ramps on land) and the mill wheel turns in its race', () => {
   for (const b of o.structs.filter((s) => s.id === 'bridge_90')) {
     assert.equal(groundAt(o, b.x, b.y).g, G.WATER, `water under the bridge at ${b.x},${b.y}`);

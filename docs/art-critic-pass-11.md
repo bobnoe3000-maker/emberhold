@@ -203,3 +203,40 @@ warmth 0.20–0.22 → **0.22–0.27** (0.25), highlights 0.69–0.73 → 0.70�
 - **Overall, 5.4 → 5.7.**
 
 **Next:** 11d, trees, plants and ground.
+
+## Iteration 11d: trees, plants and ground (shipped 2026-10-03)
+
+![11d, before and after: the north-west and the crossroads](img/art11/d-plants.jpg)
+
+![11d: wheat on the Vale's fields and Thornwick's, the high street](img/art11/d-fields.jpg)
+
+**What changed:**
+- **Leaf-cluster crowns** (`buildkit.js` `leafCrown`):
+  - A few smooth lobes keep the mass. About 30 faceted clumps sit over its skin: icosahedra with one flat
+    normal a face, toned from a dark underside to a lit crown.
+  - The leaves move toward the reference's harmony: olive toward gold, amber autumn.
+- **Birches** (`birch_1`–`3`, and one broadleaf in five in the groves): slim pale trunks with dark marks and a
+  gold crown, as a pair.
+- **Wheat on the fields** (`wheat_1`–`3`, `outdoor.js` `wheat`):
+  - Tufts of stalks with their ears stand in rows on the furrows' crests, walked through.
+  - They're on their own stream, placed before the undergrowth.
+  - 64 tufts on the Vale, 120 in Thornwick.
+- **The Vale's fields:** pass 10's road rewrite had dropped them; they're restored, with a test that they stay.
+- **Grass:** olive toward ochre. Under the warm day the old olive-grey read lime.
+- **The day's saturation grade** eased (1.28 → 1.12): with warm leaves and grass it overshot (0.62–0.69).
+
+**Measured** (six frames, Vale and town; reference in brackets):
+- luminance 0.41–0.49 (0.40);
+- saturation 0.47–0.61 (0.49);
+- colourfulness 0.22–0.29 (0.23);
+- warmth 0.25–0.32 (0.25);
+- highlights 0.68–0.79 (0.72);
+- edge density: the Vale's woods 3.5 → **4.1** (4.6); the crossroads 3.0 (open meadow by design).
+
+**Score:**
+- Trees and plants, 4.5 → **7**: leafy, faceted, autumn-lit crowns, white birches, standing wheat. The
+  reference's hay, pumpkins and flower dots are still missing.
+- Ground, 5.5 → **6.5**.
+- **Overall, 5.7 → 6.2.**
+
+**Next:** 11e, life: dressed bases, people at work, and animals (a CC0 animal pack, which the owner fetches).
