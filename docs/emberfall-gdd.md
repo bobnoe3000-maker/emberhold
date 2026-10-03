@@ -1,6 +1,12 @@
 # Emberfall — Game Design Document
 
-**v1.14 · 2026-10-02 · Plan of record for game design.** v1.14 asks before a shrine is used (§3.6):
+**v1.15 · 2026-10-03 · Plan of record for game design.** v1.15 lays out the towns (§10;
+docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
+regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
+square. Every service's entrance faces the well, so their places in the square change once. On the
+approach road the camera leads toward the gate.
+
+v1.14 asks before a shrine is used (§3.6):
 touching one opens a card that says what its blessing would do, with Use or Close.
 
 v1.13 opens the forge and the shop (§8, §11):
@@ -870,20 +876,32 @@ progress):
   when it does; with the last one the road opens, the wagon's gone, and the town says so.
 - **Towns are hubs, one per region** (Thornwick, Saltmere, Ashgate, Frosthold). Each is the
   same place in a different region.
-  - **Approach road:** it passes the cosmetic buildings (houses, farms and fields), which stand
-    well away from the square, out past the stream, so the square stays clear.
+  - **A walled town** (v1.15). The circuit is a box of curtain and towers.
+    - **Material:** Thornwick, a beginning town, has a timber palisade with watchtowers; the later
+      regions' towns have stone.
+    - **The way in:** the road crosses a stream on a bridge straight into the one gate, then a
+      cobbled high street runs up to the square.
+    - **What's where:** the houses stand inside, against the back walls. The farms and fields stay
+      outside.
+    - **The camera:** on the approach road it leads halfway to the gate, so the gate is in view
+      from the moment you arrive.
   - **The square is the home screen.** It is laid out **exactly the same in every town**, so it
-    stays familiar like a menu:
+    stays familiar like a menu.
+    - **Every entrance faces the well.** The camera sees only the two faces of a building toward
+      the bottom of the screen, so every service stands up-screen of the well, with its door on
+      the face toward it.
+    - **The services stand 8+ tiles apart,** and every door is inside the square's frame.
 
-    | Position | Left | Right |
-    |---|---|---|
-    | Back row | Temple | Inn |
-    | Middle row | Shop | Tavern |
-    | Front | Smithy (forge open to the square) | Well |
+    | Position | Left (door faces right) | Centre | Right (door faces left) |
+    |---|---|---|---|
+    | Head | | Temple | |
+    | Upper | Tavern | Shop | |
+    | Front | Smithy (forge open to the well) | Well (the Watch) | Inn, by the high street |
 
   - **Using services:**
     - When the hero nears the square, the camera settles on that fixed framing and a bar of the
       five services slides up. Tapping a building or its button opens that service's menu.
+    - Every service's name plaque stays on screen there, clear of the HUD's buttons.
     - Away from the square, tapping a service building walks you to the square instead.
     - Buildings aren't enterable.
   - **Same shapes, regional tones.** The five service buildings have identical silhouettes and

@@ -1,6 +1,6 @@
 # The town: layout, walls and gates — review and replan (proposal)
 
-**Proposal, 2026-10-02 (revision 2). Nothing is shipped.** This review looks at the town scene and at
+**Implemented, 2026-10-03 (revision 2, approved).** See *Shipped* at the end. Proposed 2026-10-02. This review looks at the town scene and at
 Thornwick on the overland the way an art critic would: the square, the way in, and the town's edge. It
 proposes a replan that keeps the square as the menu and gives it more room.
 
@@ -18,9 +18,7 @@ Everything marked *blockout* was built and captured in the real renderer, in a s
 
 The pieces are stand-ins for the art, not the art. The layout's numbers are the part to judge.
 
-The blockout's code is kept as [`town-layout-blockout.patch`](./town-layout-blockout.patch). It's a
-starting point, not shippable: it touches `outdoor.js`, `renderer.js`, `buildkit.js` and `town.json`.
-To try it, apply it to `11d08c4` and run `node tools/actor-lab/bake-env.cjs`.
+The blockout's code is superseded by the shipped code (see *Shipped*).
 
 ## How it was measured
 
@@ -309,3 +307,48 @@ the shop and the tavern. In the first blockout, the temple's door was on the fac
    - keep it, the price of every door facing the well;
    - or let the temple's door face the square's axis rather than the well itself, which brings it
      about 10 tiles closer but turns its door partly away.
+
+## Shipped
+
+**What shipped (2026-10-03):**
+- **The layout:** `buildTown` in `src/sim/outdoor.js` — the circuit, the gate, the high street, the square, the
+  services' places and turns, the houses, `o.hub`, `o.lead` and the arrivals. Every region's town shares it.
+- **The overland:** Thornwick walled in timber, with the road west through it dropped.
+- **Wall runs:** `putWall` lays runs end to end. A run that stopped short had left a 4-tile gap beside the gate.
+- **The pieces** (`tools/actor-lab/buildkit.js`, `town.json`):
+  - timber `palisade`, `watchtower` (with a ladder) and `timbergate` for the vale;
+  - stone `curtain`, `tower` and `gatehouse` for the other regions;
+  - their roofs come from `hipRoof`, which keeps the bake's footprints true.
+  - The temple is turned (door +y), the tavern and smithy face +x, the shop +y. The unused `wally` and
+    unturned gate pieces are gone.
+- **The renderer** (`src/render/renderer.js`):
+  - the camera lead on the approach road;
+  - service plaques kept on screen in the square: they slide in from the edges, below the top HUD and
+    clear of the compass and journal buttons, and show however far off they are;
+  - the shop's plaque sits on its own roof, off the temple's door.
+- **The square's zone** reaches the temple's forecourt, so a wiped party wakes with the services bar up.
+- **The townsfolk** (`src/sim/npcs.js`): every spot re-authored. All nine are 0 % hidden at every part of the
+  day (browser test 15d), and each has room to stroll.
+- **Canon:** world doc v1.17 (Thornwick's palisade). **Design:** GDD v1.15 (§10, the towns).
+
+![The shipped town: the way in, the square by day, dusk and night, Thornwick on the overland](img/town/shipped.jpg)
+
+**Measured** (the shipped layout, against the town before):
+
+| Measure | Before | Shipped |
+|---|---|---|
+| Entrances pointing at the well (within 45°) | 4 of 5 (the smithy's faced away) | 5 of 5 |
+| Nearest gap between two services | 4.4 tiles | 8.8 |
+| Open paving in the square's frame | 939 tiles | 1385 (+47 %) |
+| Wall, tower and gate pieces in the town | 0 | 32 |
+| Townsfolk hidden at any part of the day | 0 % | 0 % |
+| Town atlases (all four regions) | 2.73 MB | 3.39 MB (+0.66 MB) |
+
+**Tests:** `test/town.test.mjs`, for every region:
+- the entrances face the well;
+- the services stand 8+ tiles apart, with every door in the square's frame;
+- the walls close, with the way out only through the gate (this one fails without `putWall`);
+- you wake in the square;
+- the camera lead;
+- timber for Thornwick, stone elsewhere;
+- Thornwick walled on the overland.

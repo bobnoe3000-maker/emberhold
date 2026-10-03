@@ -1,6 +1,11 @@
 # Emberfall — World Summary
 
-**v1.16 · 2026-10-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+**v1.17 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
+
+v1.17 gives Thornwick its edge (§3.1; docs/town-layout-proposal.md). It's a farming town on the barrows
+road, so it keeps a timber palisade on an earth bank, with watchtowers and one gate on the road where it
+crosses the stream. Greyholt stays the Vale's walled market town, in stone. Nothing new about who
+lives there.
 
 v1.16 says how the Vale's enemies look (§5, §8; art critic pass 9). Captain Garrow fights bareheaded:
 dark hair going back, a goatee, and a gold ring in one ear. The Robed Stranger wears the Cult's charcoal and ember and
@@ -125,7 +130,9 @@ town, its hub**, with the same four services in the same buildings, toned for th
 Rolling farmland, hedgerows and the barrows of the old legions. It's the safest region, and
 it's where everyone starts.
 - **Town:** **Thornwick**: tavern *The Tired Mule*, inn *The Crossed Keys*, *Hale & Daughter,
-  Smiths*, the *Shrine of the Ember*. **Greyholt** (walled market town, seat of the useless Lord
+  Smiths*, the *Shrine of the Ember*. (v1.17) It keeps a timber palisade on an earth bank, with
+  watchtowers and one gate where the road comes over the stream; the shops face the square round
+  the well, and the Shrine stands at its head. **Greyholt** (walled market town, seat of the useless Lord
   Pellam) is an overland landmark, not a hub.
 - **Sites:** the Old Barrows (crypts), **Wickham Keep** (a ruin the Redhand bandits hold), the
   Sunken Chapel and the Tithe Mill. (v1.7:)
