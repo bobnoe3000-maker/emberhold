@@ -17,6 +17,11 @@
 //   nova   — power × ATK to every foe within `radius`, slowed for `slow` s
 //   mend   — heal the most hurt ally for `heal` × their max HP (the cleric's heals are +20 %)
 //   bless  — the whole party: +`buff` ATK and DEF for `dur` s
+//   breath — the whole party: `hot` × max HP back every second and +`buff` ATK for `dur` s (a heal over time)
+//   hex    — every foe within `radius` of the thickest knot of them (or a boss or elite alone): −`debuff` ATK and DEF for `dur` s
+// A strike may also drain (Spirit Drain): a stack of `drain` × ATK a second for `ddur` s, up to `dmax` stacks (each
+// hit adds one and renews them all); every tick mends the most hurt ally for DRAIN_MEND of it. A long fight (a boss)
+// is where the stacks pay.
 
 export const SKILLS = {
   fighter: [
@@ -39,12 +44,18 @@ export const SKILLS = {
     { id: 'bless', name: 'Bless', lv: 6, trial: true, mp: 25, kind: 'bless', buff: 0.15, dur: 8, text: 'the whole party: +15 % ATK and DEF for 8 s' },
     { id: 'turn_undead', name: 'Turn Undead', lv: 12, mp: 30, kind: 'nova', power: 1.6, radius: 3, slow: 0, undead: true, text: '1.6× to every Ashbound within 3 tiles (not the living)' },
   ],
+  shaman: [
+    { id: 'spirit_drain', name: 'Spirit Drain', lv: 1, mp: 9, kind: 'strike', power: 0.7, drain: 0.12, ddur: 8, dmax: 5, text: '0.7× at range, then a stacking drain: 0.12× ATK a second for 8 s, up to 5 stacks; it mends the most hurt ally' },
+    { id: 'ancestors_breath', name: "Ancestors' Breath", lv: 6, trial: true, mp: 22, kind: 'breath', hot: 0.05, buff: 0.1, dur: 6, text: 'the whole party: 5 % of max HP back a second and +10 % ATK for 6 s' },
+    { id: 'hex', name: 'Hex', lv: 12, mp: 22, kind: 'hex', debuff: 0.2, radius: 3.5, dur: 8, text: 'the foes in a knot (or a boss or elite alone): −20 % ATK and DEF for 8 s' },
+  ],
 };
 export const PASSIVES = {
   fighter: { id: 'iron_hide', name: 'Iron Hide', lv: 20, text: '+10 % DEF; HP regen doubles below 30 % HP' },
   rogue: { id: 'opportunist', name: 'Opportunist', lv: 20, text: 'critical hits restore 5 MP' },
   mage: { id: 'kindled_mind', name: 'Kindled Mind', lv: 20, text: '+25 % MP regen' },
   cleric: { id: 'lifeline', name: 'Lifeline', lv: 20, text: 'once a room visit, an ally who would be Downed holds on at 1 HP' },
+  shaman: { id: 'old_ways', name: 'Old Ways', lv: 20, text: 'Spirit Drain stacks to 8, and every tick of it gives back 1 MP' },
 };
 export const MAX_RANK = 5;
 export const STANCES = /** @type {const} */ (['aggressive', 'balanced', 'defensive']);
@@ -84,6 +95,8 @@ export const rankPower = (rank) => 1 + 0.1 * (rank - 1);
 export const skillMult = (rank, gearPower = 0, statPower = 0) => rankPower(rank) * (1 + gearPower) * (1 + statPower);
 /** the cleric's heals are this much stronger */
 export const HEAL_BONUS = 1.2;
+/** of what a Spirit Drain tick takes, the most hurt ally gets this much back; Old Ways adds stacks */
+export const DRAIN_MEND = 0.5, OLD_WAYS_STACKS = 3;
 /** MP cost at a rank @param {{mp:number}} s @param {number} rank */
 export const rankCost = (s, rank) => s.mp - (rank >= 3 ? 1 : 0) - (rank >= 5 ? 1 : 0);
 /** @param {any} m */

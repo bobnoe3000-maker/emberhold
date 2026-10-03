@@ -376,5 +376,19 @@
    "earring",
    "wrinkles"
   ]
+ },
+ "hedge_caller": {
+  "skin": "tan",
+  "hair": "braid",
+  "hairColor": "grey",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "green",
+  "mouth": "line",
+  "nose": "long",
+  "marks": [
+   "wrinkles",
+   "freckles"
+  ]
  }
 }

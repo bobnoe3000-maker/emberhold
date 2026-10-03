@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.19 · 2026-10-03 · Plan of record for game design.** v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.19 · 2026-10-03 · Plan of record for game design.** v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -374,25 +374,26 @@ Four attributes feed the derived stats above:
 
 ## 5. Classes
 
-Four launch classes. Each has **base stats at level 1**, **growth per level**, three abilities
+Five classes. Each has **base stats at level 1**, **growth per level**, three abilities
 (unlocked at levels 1, 6 and 12) and a passive at level 20. The Cleric joined at M3 (sourced
-from the Grey Sisters, world doc §4): playable at creation and hireable at every tavern.
+from the Grey Sisters, world doc §4): playable at creation and hireable at every tavern. The
+**Shaman** joined at v1.19 (the Vale's hedge-callers, world doc §4), the same way.
 
-| | **Fighter** | **Rogue** | **Mage** | **Cleric** |
-|---|---|---|---|---|
-| Role | Front line, tank | Burst, crits, evasion | Ranged spells, area damage, shields | Support: heals, blessings, the bane of the dead |
-| HP | 140 (+14/lvl) | 100 (+10) | 80 (+8) | 125 (+12) |
-| MP | 20 (+2) | 30 (+3) | 80 (+8) | 50 (+5) |
-| ATK | 12 (+2.0) | 13 (+2.2) | 14 (+2.4) | 11 (+1.8) |
-| DEF | 14 (+2.0) | 8 (+1.2) | 6 (+0.8) | 12 (+1.8) |
-| CRIT | 5 % | **15 %** | 8 % | 5 % |
-| DODGE | 5 % | **15 %** | 5 % | 5 % |
-| HP regen | **2.0 /s** | 1.2 /s | 0.8 /s | 1.6 /s |
-| MP regen | 0.5 /s | 0.8 /s | **2.0 /s** | 1.5 /s |
-| Class bonus | +10 % DEF while carrying a shield | Crits from behind the target deal +25 % | Spells deal +20 % to a foe with two or more others within 2 tiles | Heals are +20 % stronger |
-| Abilities | **Cleave** (10 MP: 1.3× to target and adjacent) · **Shield Wall** (20 MP: +50 % DEF for 6 s, taunt) · **Second Wind** (25 MP: heal 25 % HP) | **Backstab** (10 MP: 1.6×, +25 % crit) · **Smoke Step** (15 MP: +30 % dodge for 5 s, drop aggro) · **Venom** (20 MP: poison over time) | **Firebolt** (12 MP: 1.8×) · **Frost Nova** (30 MP: 0.8× area, slow) · **Arcane Ward** (25 MP: shield an ally for 30 % of their max HP) | **Mend** (12 MP: heal the most hurt ally 22 % of max HP) · **Bless** (25 MP: the party +15 % ATK and DEF for 8 s) · **Turn Undead** (30 MP: 1.6× to every Ashbound within 3 tiles) |
-| Passive (20) | *Iron Hide*: +10 % DEF, double HP regen below 30 % HP | *Opportunist*: crits restore 5 MP | *Kindled Mind*: +25 % MP regen | *Lifeline*: once a room visit, an ally who would be Downed holds on at 1 HP |
-| Model (KayKit) | Knight / Barbarian | Rogue / Rogue Hooded | Mage | Mage, bareheaded, in off-white vestments with a grey stole, a flanged mace (our own model) and a chained psalter |
+| | **Fighter** | **Rogue** | **Mage** | **Cleric** | **Shaman** (v1.19) |
+|---|---|---|---|---|---|
+| Role | Front line, tank | Burst, crits, evasion | Ranged spells, area damage, shields | Support: heals, blessings, the bane of the dead | Ranged support: drains over time, heals over time, hexes; strongest in a long fight |
+| HP | 140 (+14/lvl) | 100 (+10) | 80 (+8) | 125 (+12) | 98 (+9.5) |
+| MP | 20 (+2) | 30 (+3) | 80 (+8) | 50 (+5) | 58 (+6) |
+| ATK | 12 (+2.0) | 13 (+2.2) | 14 (+2.4) | 11 (+1.8) | 12.5 (+2.0) |
+| DEF | 14 (+2.0) | 8 (+1.2) | 6 (+0.8) | 12 (+1.8) | 7 (+1.2) |
+| CRIT | 5 % | **15 %** | 8 % | 5 % | 6 % |
+| DODGE | 5 % | **15 %** | 5 % | 5 % | 6 % |
+| HP regen | **2.0 /s** | 1.2 /s | 0.8 /s | 1.6 /s | 1.3 /s |
+| MP regen | 0.5 /s | 0.8 /s | **2.0 /s** | 1.5 /s | 1.7 /s |
+| Class bonus | +10 % DEF while carrying a shield | Crits from behind the target deal +25 % | Spells deal +20 % to a foe with two or more others within 2 tiles | Heals are +20 % stronger | A spirit bolt at range (6 tiles, every 1.5 s); stands off like the mage |
+| Abilities | **Cleave** (10 MP: 1.3× to target and adjacent) · **Shield Wall** (20 MP: +50 % DEF for 6 s, taunt) · **Second Wind** (25 MP: heal 25 % HP) | **Backstab** (10 MP: 1.6×, +25 % crit) · **Smoke Step** (15 MP: +30 % dodge for 5 s, drop aggro) · **Venom** (20 MP: poison over time) | **Firebolt** (12 MP: 1.8×) · **Frost Nova** (30 MP: 0.8× area, slow) · **Arcane Ward** (25 MP: shield an ally for 30 % of their max HP) | **Mend** (12 MP: heal the most hurt ally 22 % of max HP) · **Bless** (25 MP: the party +15 % ATK and DEF for 8 s) · **Turn Undead** (30 MP: 1.6× to every Ashbound within 3 tiles) | **Spirit Drain** (9 MP: 0.7×, then a drain of 0.12× ATK a second for 8 s that stacks to 5; each tick mends the most hurt ally for half of it) · **Ancestors' Breath** (22 MP: the party gets 5 % of max HP back a second and +10 % ATK for 6 s) · **Hex** (22 MP: the foes within 3.5 tiles of the thickest knot, or a lone boss or elite, −20 % ATK and DEF for 8 s) |
+| Passive (20) | *Iron Hide*: +10 % DEF, double HP regen below 30 % HP | *Opportunist*: crits restore 5 MP | *Kindled Mind*: +25 % MP regen | *Lifeline*: once a room visit, an ally who would be Downed holds on at 1 HP | *Old Ways*: Spirit Drain stacks to 8, and each tick gives back 1 MP |
+| Model (KayKit) | Knight / Barbarian | Rogue / Rogue Hooded | Mage | Mage, bareheaded, in off-white vestments with a grey stole, a flanged mace (our own model) and a chained psalter | Mage, bareheaded with a grey braid, in undyed wool and hide with a moss cape and a staff hung with bones |
 
 The class bonuses sit on top of the class table: a fighter in the class kit (with its round
 shield) has 15.4 DEF. The cleric's kit is a mace, a chained psalter, vestments and pilgrim boots.
@@ -400,6 +401,28 @@ It carries the same stats as the fighter-style kit it replaced (sword, kite shie
 sabatons), so the class's numbers are unchanged; only its look is different. The cleric can also
 wear the fighter's sword, shields, great helm, plate and sabatons, and has two more items of its
 own (Chapel Sword, Book of Hours). Recommended build: Grit, Focus, Grit.
+
+**The Shaman (v1.19).** The kit is a Spirit Staff, Hide Robes and Wrapped Boots, with an Antler Rod, a Bone Fetish
+and a Hide Cowl to find. Recommended build: Focus, Grit, Might. Their gear drops for a party with a shaman in it and
+in the shop; drops "for any class" still roll among the first four, so no other party's loot moved. A shaman
+sellsword sits last at every tavern's table and can carry *Devout*, *Field Medic* or their own *Deep Drinker*
+(Spirit Drain lasts 2 s longer).
+- **What they're for.** A party's healer and a boss's undoing. The drain is slow to build and mends as it goes,
+  so the longer the fight, the more it does. Measured (`roomlv.mjs` 300 s at the room's level, fighter + rogue
+  + shaman, hires 1,4, 3 seeds; trials done):
+  - level 6: held all three runs (17 / 15 / 16 waves; the cleric's party 16 / 15);
+  - level 9: held all three runs (14 / 14 / 13 waves; the cleric's 13 held / 13 beaten).
+  Its troughs are lower (heals over time, not on the spot), and its bosses fall faster (`boss.mjs --healer
+  shaman`, 4 seeds against the cleric's 3):
+  | Boss | Shaman's party | Cleric's party |
+  |---|---|---|
+  | Garrow (Wickham Keep, L6) | 44–52 s | 55–61 s |
+  | Old Skarn (the Scrag Warren, L5) | 70–78 s, a down or two | 93–108 s |
+  | The Robed Stranger (the Sunken Chapel, L8) | 47–61 s | 52–78 s |
+  | The Standard (the Old Barrows, L9) | 63–107 s | 80–101 s |
+- **Alone** (the contract): at level 1 a lone shaman lasts 4–8 waves (the mage 4–7); at level 6, 1–2.
+
+![The mage, the cleric and the shaman on the Stage](img/shaman.jpg)
 
 **Bows and crossbows (v1.8).** A rogue fights with what they hold. Daggers close in, as
 before. A rogue holding a bow or crossbow shoots from range. Like the mage, they back off from
@@ -456,7 +479,8 @@ Both slot in with the same stat block and ability format. No system changes are 
     (M5) The level-6 trials are the company's, not the hero's: a trial is offered when anyone of
     that class in the party or on the bench is level 6+, and once done every member of the class
     knows the ability, companions hired later included. Teachers: Osric (fighter), Nell Tolley
-    (rogue), Hedda (mage), Sister Ilse (cleric). Handing a trial in says so in the conversation,
+    (rogue), Hedda (mage), Sister Ilse (cleric), Col the carter (shaman, v1.19: *Old Roads*, six waves
+    in the Scrag Warren). Handing a trial in says so in the conversation,
     under the quest's own reward note: *New skill learned: Smoke Step · every rogue in your company
     knows it*, with what the skill does (`src/ui/dialogue.js`; the HUD says it too). The level-12
     abilities unlock by level until the M8 trials;

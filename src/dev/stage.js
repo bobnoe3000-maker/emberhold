@@ -27,7 +27,7 @@ import { unproject } from '../render/iso.js';
 const CAST = [
   ['party', 'hero_knight', 'Knight'], ['party', 'hero_barbarian', 'Barbarian'], ['party', 'hero_rogue', 'Rogue'],
   ['party', 'hero_rogue_bow', 'Bow'], ['party', 'hero_rogue_longbow', 'Longbow'], ['party', 'hero_rogue_xbow', 'Crossbow'],   // (the rogue's ranged looks)
-  ['party', 'hero_rogue_hxbow', 'Hand xbow'], ['party', 'hero_mage', 'Mage'], ['party', 'hero_cleric', 'Cleric'], ['party', 'hero_brannoc', 'Brannoc'],
+  ['party', 'hero_rogue_hxbow', 'Hand xbow'], ['party', 'hero_mage', 'Mage'], ['party', 'hero_cleric', 'Cleric'], ['party', 'hero_shaman', 'Shaman'], ['party', 'hero_brannoc', 'Brannoc'],
   ['town', 'npc_maudry', 'Maudry'], ['town', 'npc_osric', 'Osric'], ['town', 'npc_ilse', 'Ilse'], ['town', 'npc_wendel', 'Wendel'], ['town', 'npc_bess', 'Bess'],
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
   ['foes', 'skeleton_warrior', 'Warrior'], ['foes', 'skeleton_minion', 'Minion'], ['foes', 'skeleton_rogue', 'Archer'], ['foes', 'skeleton_mage', 'Mage'],

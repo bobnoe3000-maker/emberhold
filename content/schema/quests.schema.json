@@ -356,7 +356,8 @@
         "fighter",
         "rogue",
         "mage",
-        "cleric"
+        "cleric",
+        "shaman"
       ],
       "description": "a class trial: offered while someone of this class in the company is level 6+; done, it teaches the class its level-6 ability"
     }

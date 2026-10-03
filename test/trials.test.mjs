@@ -12,7 +12,7 @@ import { SKILLS, unlocked, TRIAL_CLASSES } from '../src/sim/skills.js';
 import { createStoryBook } from '../src/story/adapter.js';
 
 const SEED = 20260807;
-const TRIALS = { fighter: ['trial_hold_the_keep_gate', 'osric_hale'], rogue: ['trial_quiet_feet', 'nell_tolley'], mage: ['trial_cold_weather', 'hedda'], cleric: ['trial_last_rites', 'sister_ilse'] };
+const TRIALS = { fighter: ['trial_hold_the_keep_gate', 'osric_hale'], rogue: ['trial_quiet_feet', 'nell_tolley'], mage: ['trial_cold_weather', 'hedda'], cleric: ['trial_last_rites', 'sister_ilse'], shaman: ['trial_old_roads', 'col'] };
 const town = () => { const s = createSim(SEED, undefined, { scene: 'town' }); s.tick(); return s; };
 function talk(sim, npc) {
   const n = sim.world.npcs.find((q) => q.id === npc), p = sim.state.player;
@@ -23,7 +23,7 @@ const say = (sim, verb, id) => { sim.commands.push({ type: 'dialogueEffect', tag
 const trialSkill = (cls) => SKILLS[cls].find((s) => s.trial);
 
 test('one trial ability per class, the level-6 one; level 12 still unlocks by level', () => {
-  assert.deepEqual(TRIAL_CLASSES, ['fighter', 'rogue', 'mage', 'cleric']);
+  assert.deepEqual(TRIAL_CLASSES, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const cls of TRIAL_CLASSES) {
     const A = trialSkill(cls), m = makeMember('x', 'X', cls, 12);
     assert.equal(A.lv, 6); assert.equal(SKILLS[cls].filter((s) => s.trial).length, 1);

@@ -8,6 +8,11 @@ north of the mill, and its chief is **Old Skarn**. They took no interest in the 
 dead closed the barrows road and the carters started going the long way round, under the range, past the
 Scrag's front door. Now there are goblins in Hedda's hen-house. Nothing new about the Ember or the Cult.
 
+v1.19 also brings the Vale's **hedge-callers** (§4), the source of the **Shaman** class: the old way, older than the
+Ember-faith, that talks to what lives in the hedgerows and the hearth. A hedge-caller draws the life out of a foe a
+breath at a time and breathes it into their friends. Col the carter's grandmother was one, and he still leaves a cup
+of ale by the wheel at night (§5).
+
 v1.18 also brings the **Homeward Scroll**: a road-prayer the Grey Sisters write on a strip of vellum. Read aloud,
 it sets the reader down on the square of the nearest town, once. Wendel stocks them at 300 gold and calls it
 cheaper than walking. They turn up in the deep places too, in the packs of people who didn't read theirs in time.
@@ -249,6 +254,7 @@ marching dead: they run straight through anything in the way, hill, bog or villa
 | **The Cinder Cult** | Zealots who believe the Ember was *stolen* and must be relit | To rekindle the Ember Throne | **Main antagonists.** Human enemies, necromancers and the source of the rising dead. |
 | **The Ashbound** | The empire's bound dead, waking as the Cult stirs the embers | Nothing. They obey old orders (the Vale's: hold the Wickham road until relieved, §3.1 *The road*). | **The main enemy family.** Four skeleton archetypes plus elites. They glow with the Ember's colours. |
 | **The Redhand Company** | Deserters turned bandits | Loot, and to be left alone | Act I human enemies; recurring later as hirelings. |
+| **The hedge-callers** (v1.19) | The Vale's wise-folk, one or two to a parish, mostly old women and a few shepherds | To keep the old courtesies: a cup by the hearth, a word to the hedge | **Source of the Shaman class.** Older than the Ember-faith and never written down. They talk to what lives in hedgerows, hearths and the quiet of the barrows; in a fight they draw the spirit out of a foe a breath at a time, breathe it into their friends, and put a hex on a crowd. They walk in undyed wool and hide, with a staff hung with bones and ribbon. The Grey Sisters call it superstition and send for one when the milk turns. Some take coin at a tavern like anyone else. |
 | **The Grey Sisters** | Healers and archivists in the fens | To preserve the old records | Lore keepers. Source of the **Cleric** class (their clerics walk the Vale roads in off-white vestments with a flanged mace and a chained psalter, and some take coin at a tavern) and, later, the **Healer**. |
 | **The Deepdelvers** | Miners' charter in the Cinder Reach (dwarf-folk) | To reopen the old seams | Neutral traders; the smith upgrades. |
 | **Lord Pellam's Watch** | Greyholt's underpaid militia | Order, cheaply | Bounties; comic relief; occasionally brave. |
@@ -338,6 +344,9 @@ around the square by day and somewhere else by night:
 - **Bess Hale**, the daughter at Hale & Daughter, Smiths, who does the work. She is no relation
   to the Captain, as both of them will tell you at once.
 - **Col**, a carter. He took the long way round the barrows for a month and wants it known.
+  (v1.19) His grandmother was a hedge-caller, and he leaves a cup of ale by the cart's wheel at night
+  because she did. He's the one who teaches a company's shamans the old breath (*Old Roads*, the
+  shaman's trial): the long way round runs past the Scrag, and he wants it quiet.
 - **Jory**, the Watch's only man in Thornwick: young, earnest, and Osric's runner.
 - **Nell Tolley**, keeper of the Crossed Keys. She charges for the stairs, not the bed.
 - **Hedda**, who sells eggs by the well and knows the weather, and says she knows nothing else.

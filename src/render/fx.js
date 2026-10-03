@@ -32,6 +32,7 @@ export const FX_STYLES = {
   hero_rogue_xbow:    { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [215, 255, 225] },
   hero_rogue_hxbow:   { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [215, 255, 225] },
   hero_cleric:      { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 236, 180], wide: 1.15 },   // the mace: short, heavy, warm gold
+  hero_shaman:      { col: [150, 235, 215], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [180, 255, 230] },   // (v1.19) a spirit bolt, pale green-white
   hero_mage:        { col: ARCANE, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [175, 195, 255], heavySpark: [255, 170, 80] },
   skeleton_warrior: { col: SOUL, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [200, 255, 210] },
   skeleton_minion:  { col: BILE, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [225, 240, 190] },
@@ -53,7 +54,7 @@ export const FX_STYLES = {
   boss_standard:     { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 226, 160], wide: 1.2 },
 };
 // combat events name the striker by its actor / class (party) or kind (the Ashbound)
-const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' };
+const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };
 /** @param {Record<string, string>} [foeActor] a foe kind's atlas (the renderer's ENEMY_ACTOR): the Redhand's and the bosses' sparks too */
 export const styleOfSrc = (src, foe, foeActor = {}) => FX_STYLES[foe ? foeActor[src] || 'skeleton_' + src : CLASS_ACTOR[src] || src] || null;
 

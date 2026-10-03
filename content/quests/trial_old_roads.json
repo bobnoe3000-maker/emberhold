@@ -1,0 +1,38 @@
+{
+  "id": "trial_old_roads",
+  "kind": "trial",
+  "trial": "shaman",
+  "title": "Old Roads",
+  "giver": "col",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Col the carter's grandmother was a hedge-caller. If your company quiets the goblins on the long way round, he'll show your shamans the breath she taught him (the shaman's level-6 skill).",
+  "steps": [
+    {
+      "id": "warren",
+      "journal": "Hold six waves in the Scrag Warren, at the foot of the north range past the mill, where the long way round runs.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "scrag_warren",
+          "count": 6,
+          "label": "Waves held in the Scrag Warren"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Col the carter, in Thornwick's square.",
+  "done": "Col taught your shamans Ancestors' Breath, the way his grandmother taught him: one for you, one for them.",
+  "rewards": {
+    "xp": 600,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "col_trial_offer",
+    "turnin": "col_trial_turnin"
+  }
+}

@@ -2321,5 +2321,78 @@
    0.5
   ],
   "height": 0.86
+ },
+ {
+  "id": "SH1",
+  "cls": "Shaman",
+  "label": "Shaman \u00b7 a hedge-caller's staff hung with bones, undyed wool and hide",
+  "model": "Mage",
+  "show": [
+   "2H_Staff",
+   "Mage_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a7a5e",
+     "#2e2618"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#7a6a50",
+     "#262016"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#6a5034",
+     "#22160c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#cfc3a4",
+     "#5a5040"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a5a3a",
+     "#16200e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#4a5a3a",
+     "#16200e"
+    ]
+   }
+  ],
+  "face": "hedge_caller"
  }
 ]

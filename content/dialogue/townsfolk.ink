@@ -20,6 +20,7 @@ VAR q_trial_quiet_feet = -1
 VAR road_ranks = 3
 VAR q_trial_cold_weather = -1
 VAR q_vale_hens_under_the_hill = -1
+VAR q_trial_old_roads = -1
 
 == wendel_hub ==
 { flag_met_wendel == 0:
@@ -56,7 +57,36 @@ VAR q_vale_hens_under_the_hill = -1
 - else:
     {&"The horse still shies at the mounds. So do I. Neither of us will say so."|"A day out of the way, both ways, for a month. Somebody ought to pay me for that day. Nobody will."|"Saw one standing in the road at dusk last week. It saluted. I didn't."|"That's my wagon on its side by the barrows road. They didn't hurt me. They just stood in front of the horse till it went over. Then they went back to facing north."}
 }
+{ q_trial_old_roads >= 0 && q_trial_old_roads <= 2: -> col_topics }
 -> END
+
+// ── the shaman's trial (content/quests/trial_old_roads.json; world doc v1.19) ──
+== col_topics ==
++ { q_trial_old_roads == 2 } [The Scrag's quiet. Six waves. #mark: quest ready] -> col_trial_turnin
++ { q_trial_old_roads == 0 } [You leave ale out by the wheel. #mark: quest] -> col_trial_offer
++ { q_trial_old_roads == 1 } [About the long way round… #mark: quest active] -> col_trial_active
++ [Safe roads, Col.] -> END
+
+== col_trial_offer ==
+"Cup by the wheel, every night. My gran did it, and her gran. You'll laugh."
+He doesn't wait to see if you do. He looks at your shaman instead.
+"She was one of those. Hedge-caller. Breathed on a cut and it closed. Breathed on a man who'd beaten his wife and he coughed for a year. She showed me the first part. I never had the knack for it. Yours might."
+"The long way round goes under the range, past the Scrag. Goblins. They don't stop carts the way the dead do. They just take things off them. Go and hold that hole for six waves, and I'll show your hedge-caller what she showed me."
++ [We'll hold it. #mark: quest]
+    "Breathe slow when it's worst. That's the whole of it, she said. I never believed her." # quest: accept trial_old_roads
+    -> col_topics
++ [Not yet.]
+    "Road'll still be there. That's the trouble with roads."
+    -> col_topics
+
+== col_trial_active ==
+"The Scrag, under the range past the mill. Six waves. When it's worst, breathe slow."
+-> col_topics
+
+== col_trial_turnin ==
+Col takes your shaman's hand in both of his and breathes on it, once, the way you'd warm a child's fingers, and something old in the Vale breathes with him.
+"One for you, one for them. That's how she said it. Go on. And leave something by your wheel tonight." # quest: turnin trial_old_roads
+-> col_topics
 
 == jory_hub ==
 { flag_met_jory == 0:

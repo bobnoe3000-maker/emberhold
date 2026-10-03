@@ -3,12 +3,12 @@
 // the fight run: did the boss fall, how long, the lowest party HP, downs and Fallen. Trials counted as
 // done (their level-6 abilities), as the difficulty contract assumes.
 //
-//   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir]
+//   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman]   (--healer: who's third, v1.19)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
 
-const args = process.argv.slice(2), si = args.indexOf('--src');
+const args = process.argv.slice(2), hi = args.indexOf('--healer'), HEALER = hi >= 0 ? args.splice(hi, 2)[1] : 'cleric', si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
@@ -18,9 +18,9 @@ const [site, HL] = [args[0], +args[1]], seeds = (args[2] || '20260807,777,4242')
 for (const seed of seeds) {
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
   const sim = createSim(seed, undefined, { scene: 'dungeon', site });
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
-  sim.state.party[0].cls = 'fighter'; const want = ['fighter', 'rogue', 'cleric'];
+  sim.state.party[0].cls = 'fighter'; const want = ['fighter', 'rogue', HEALER];
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });
   if (sim.state.trials) for (const c of want) sim.state.trials[c] = 1;
   sim.tick();

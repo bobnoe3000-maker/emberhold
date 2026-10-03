@@ -11,7 +11,7 @@
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
-import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive, skillMult, HEAL_BONUS } from '../sim/skills.js';
+import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive, skillMult, HEAL_BONUS, DRAIN_MEND, OLD_WAYS_STACKS } from '../sim/skills.js';
 import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
@@ -259,7 +259,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
   // where a drop came from (loot.js sources; quests.js / core.js heirlooms)
 const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault' };
 // who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
-const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse' };
+const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse', shaman: 'Col the carter' };
 const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
 
   // What an ability does at a rank, in this member's own numbers (GDD §5.1): the multiplier battle.js
@@ -272,16 +272,19 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     // e: the whole effect; v: only what a rank changes (for the next-rank line)
     let e, v;
     if (A.kind === 'strike') {
-      v = dmg(A.power * k); e = v + (m.cls === 'mage' ? ' at range' : '');
+      v = dmg(A.power * k); e = v + (m.cls === 'mage' || m.cls === 'shaman' ? ' at range' : '');
       if (A.splash) { e += ` to the target, ${dmg(A.splash * k)} to those beside it`; v += `, ${dmg(A.splash * k)} beside`; }
       if (A.crit) e += `, +${A.crit} % crit chance`;
       if (A.poison) { e += `, then poison: ${dmg(A.poison * k)} a second for ${A.pdur} s`; v += `, poison ${dmg(A.poison * k)} a second`; }
+      if (A.drain) { const cap = A.dmax + (hasPassive(m) ? OLD_WAYS_STACKS : 0); e += `, then a drain of ${dmg(A.drain * k)} a second a stack for ${A.ddur} s, up to ${cap} stacks; ${Math.round(DRAIN_MEND * 100)} % of it mends the most hurt ally`; v += `, drain ${dmg(A.drain * k)} a stack`; }
     } else if (A.kind === 'guard') { v = A.taunt ? `+${pct(A.def * k)} DEF` : `+${Math.round(A.dodge * k * 10) / 10} % DODGE`; e = `${v} for ${A.dur} s; ${A.taunt ? 'foes turn on you' : 'foes lose you'}`; }
     else if (A.kind === 'heal') { const h = A.heal * k * healMod(m, S.party); v = `heal ${pct(h)} of max HP (${Math.round(s.maxHp * h)} HP)`; e = v; }
     else if (A.kind === 'mend') { v = `heal ${pct(A.heal * k * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, S.party))} of their max HP`; e = `the most hurt ally: ${v}`; }
     else if (A.kind === 'ward') { v = `shield ${pct(A.ward * k)} of their max HP`; e = `the most hurt ally: ${v}`; }
     else if (A.kind === 'nova') { v = dmg(A.power * k); e = `${v} to every ${A.undead ? 'Ashbound' : 'foe'} within ${A.radius} tiles${A.undead ? ' (not the living)' : ''}${A.slow ? `; slows them for ${A.slow} s` : ''}`; }
     else if (A.kind === 'bless') { v = `+${pct(A.buff * k)} ATK and DEF`; e = `the whole party: ${v} for ${A.dur} s`; }
+    else if (A.kind === 'breath') { v = `${pct(A.hot * k * healMod(m, S.party))} of max HP a second, +${pct(A.buff * k)} ATK`; e = `the whole party: ${v} for ${A.dur} s`; }
+    else if (A.kind === 'hex') { v = `−${pct(Math.min(0.4, A.debuff * k))} ATK and DEF`; e = `the foes within ${A.radius} tiles of a knot of them (or a boss or elite alone): ${v} for ${A.dur} s`; }
     else { e = A.text; v = ''; }
     return { mp, e, v };
   }

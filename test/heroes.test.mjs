@@ -62,7 +62,7 @@ test('origin edges: Redhand +1 ATK, Thornwick-born one more hireling', () => {
   run(a, [{ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'redhand_deserter', name: 'A' }]);
   run(b, [{ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'B' }]);
   assert.equal(statsFor(a.state.party[0]).atk, statsFor(b.state.party[0]).atk + 1);
-  assert.equal(a.heroes.roster().length, 4); assert.equal(b.heroes.roster().length, 5);   // one per class; Thornwick-born +1
+  assert.equal(a.heroes.roster().length, 5); assert.equal(b.heroes.roster().length, 6);   // one per class (the shaman since v1.19); Thornwick-born +1
   run(b, [{ type: 'hire', idx: 3 }]);
   assert.equal(b.state.party.length, 2);
 });

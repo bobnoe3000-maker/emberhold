@@ -46,13 +46,13 @@ export const PERKS = {
   keen_eyed:      { fam: 'stat', cost: 1 },                                    // +3 % CRIT
   light_footed:   { fam: 'stat', cost: 1 },                                    // +3 % DODGE
   iron_lunged:    { fam: 'stat', cost: 1 },                                    // +25 % HP regen
-  devout:         { fam: 'stat', cost: 1, cls: ['cleric', 'fighter'] },        // their heals +10 %
+  devout:         { fam: 'stat', cost: 1, cls: ['cleric', 'fighter', 'shaman'] },   // their heals +10 %
   // how they fight (battle.js)
   bodyguard:      { fam: 'fight', cost: 2, cls: ['fighter'] },                 // takes 20 % of what's aimed at the hero, within 3 tiles
   skirmisher:     { fam: 'fight', cost: 2, cls: ['rogue', 'fighter'] },        // +20 % to a foe that isn't fighting them
   finisher:       { fam: 'fight', cost: 2 },                                   // +15 % to a foe under half its HP
   last_stand:     { fam: 'fight', cost: 2, cls: ['fighter', 'rogue'] },        // +20 % ATK under a quarter HP
-  field_medic:    { fam: 'fight', cost: 2, cls: ['cleric', 'mage', 'fighter'] },   // every 12 s in a fight: the most hurt ally +5 % max HP
+  field_medic:    { fam: 'fight', cost: 2, cls: ['cleric', 'mage', 'fighter', 'shaman'] },   // every 12 s in a fight: the most hurt ally +5 % max HP
   grave_warden:   { fam: 'fight', cost: 2 },                                   // +15 % to the Ashbound
   redhand_breaker: { fam: 'fight', cost: 2 },                                  // +15 % to the living
   // their abilities (battle.js)
@@ -61,6 +61,7 @@ export const PERKS = {
   long_watch:     { fam: 'skill', cost: 2, cls: ['fighter'] },                 // Shield Wall lasts 2 s longer
   kindler:        { fam: 'skill', cost: 2, cls: ['mage'] },                    // Firebolt splashes 0.3× to those beside its target
   steady_hands:   { fam: 'skill', cost: 2, cls: ['cleric'] },                  // Mend heals 15 % more
+  deep_drinker:   { fam: 'skill', cost: 2, cls: ['shaman'] },                  // Spirit Drain lasts 2 s longer (v1.19)
   // party auras (battle.js): only the strongest of a kind counts, however many carry it
   drillmaster:    { fam: 'aura', cost: 3, aura: 'pace' },                      // the party attacks 5 % faster
   banner_man:     { fam: 'aura', cost: 3, aura: 'guard' },                     // the party +5 % DEF
@@ -82,7 +83,7 @@ export const PERKS = {
 };
 export const PERK_IDS = Object.keys(PERKS);
 export const STAT = { stubborn: 1.1, hardy: 1.1, keen_eyed: 3, light_footed: 3, iron_lunged: 1.25, devout: 1.1, reckless: [1.1, 0.9], drinker: 0.95 };
-export const FIGHT = { bodyguard: 0.2, bodyguardR: 3, skirmisher: 1.2, finisher: 1.15, last_stand: 1.2, medicEvery: 12, medicHeal: 0.05, warden: 1.15, venom: 2, smoke: 2, wall: 2, kindle: 0.3, steady: 1.15 };
+export const FIGHT = { bodyguard: 0.2, bodyguardR: 3, skirmisher: 1.2, finisher: 1.15, last_stand: 1.2, medicEvery: 12, medicHeal: 0.05, warden: 1.15, venom: 2, smoke: 2, wall: 2, kindle: 0.3, steady: 1.15, drink: 2 };
 export const AURA = { pace: 0.95, guard: 1.05, regen: 1.1 };
 export const BOND = { hometown: 1.08, deserters_bond: 1.1, sisters_ward: 1.15, delvers_eyes: 1.1, shield_brother: 1.1 };
 export const GOLD = { thrifty: 0.7, haggler: 0.85, scavenger: 0.1, greedy: 0.05, greedyWage: 1.5 };

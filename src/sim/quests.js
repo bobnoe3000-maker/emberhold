@@ -111,6 +111,11 @@ export const QUESTS = {
     steps: [{ id: 'chapel', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 6 }] }],
     rewards: { xp: 600, gold: 60 },
   },
+  trial_old_roads: {                                 // (v1.19) Col teaches the hedge-callers' breath; the long way round runs past the Scrag
+    kind: 'trial', giver: 'col', trial: 'shaman', region: 'vale', level: [1, 30],
+    steps: [{ id: 'warren', objectives: [{ type: 'waves', site: 'scrag_warren', count: 6 }] }],
+    rewards: { xp: 600, gold: 60 },
+  },
   trial_last_rites: {
     kind: 'trial', giver: 'sister_ilse', trial: 'cleric', region: 'vale', level: [1, 30],
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],

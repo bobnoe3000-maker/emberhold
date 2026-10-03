@@ -19,6 +19,8 @@ export const CLASSES = {
   rogue:   { label: 'Rogue',   abbr: 'ROG', hp: [100, 10], mp: [30, 3], atk: [11, 2.2], def: [5, 1.2],  crit: 14, dodge: 11, hpr: 1.2, mpr: 0.8, actor: 'hero_rogue' },
   mage:    { label: 'Mage',    abbr: 'MAG', hp: [80, 8],   mp: [63, 8], atk: [12, 2.4], def: [3, 0.8],  crit: 8, dodge: 5, hpr: 0.8, mpr: 1.9, actor: 'hero_mage' },
   cleric:  { label: 'Cleric',  abbr: 'CLR', hp: [118, 12], mp: [47, 5], atk: [10, 1.8], def: [8, 1.8],  crit: 5, dodge: 5, hpr: 1.6, mpr: 1.5, actor: 'hero_cleric' },
+  // (v1.19) the hedge-callers' shaman: a ranged support who drains a foe a breath at a time
+  shaman:  { label: 'Shaman',  abbr: 'SHM', hp: [94, 9.5], mp: [50, 6], atk: [10.5, 2.0], def: [5, 1.2], crit: 6, dodge: 6, hpr: 1.3, mpr: 1.6, actor: 'hero_shaman' },
 };
 // Class bonuses (GDD §5), on top of the class table: the fighter's shield (+10 % DEF while one
 // is carried) is here; the rogue's backstab crits, the mage's clusters and the cleric's
@@ -75,8 +77,8 @@ export function makeMember(id, name, cls, level = 1, trait = null) {
 
 // ── the main character (GDD §6.1, development plan §2.3) ────────────────────
 // Looks are baked atlases (assets/actors); the first is the class default.
-export const LOOKS = { fighter: ['hero_knight', 'hero_barbarian'], rogue: ['hero_rogue'], mage: ['hero_mage'], cleric: ['hero_cleric'] };
-export const LOOK_LABEL = { hero_knight: 'Knight', hero_barbarian: 'Barbarian', hero_rogue: 'Rogue', hero_mage: 'Mage', hero_cleric: 'Grey Sister’s cleric' };
+export const LOOKS = { fighter: ['hero_knight', 'hero_barbarian'], rogue: ['hero_rogue'], mage: ['hero_mage'], cleric: ['hero_cleric'], shaman: ['hero_shaman'] };
+export const LOOK_LABEL = { hero_knight: 'Knight', hero_barbarian: 'Barbarian', hero_rogue: 'Rogue', hero_mage: 'Mage', hero_cleric: 'Grey Sister’s cleric', hero_shaman: 'Hedge-caller' };
 // Origins: content/origins.json holds the text; the ids and their rule edges live here, and a
 // test keeps the two in step (the sim can't read JSON files, and must not trust the client's).
 export const ORIGINS = ['thornwick_born', 'redhand_deserter', 'grey_sisters_ward', 'deepdelver_fostered'];
@@ -107,10 +109,12 @@ const NAMES = {
   rogue: ['Wren', 'Osk', 'Tamsin', 'Lark', 'Vesna', 'Quill'],
   mage: ['Sigrun', 'Ilsabet', 'Corwin', 'Aveline', 'Merrow', 'Thane'],
   cleric: ['Maren', 'Aldous', 'Wenna', 'Cuthbert', 'Edda', 'Rowan'],
+  shaman: ['Gammer Rook', 'Tobin', 'Hesk', 'Old Mab', 'Wilber', 'Sedge'],
 };
 // Today's sellswords at a town's tavern (GDD §6.2): one candidate per class, deterministic per
 // (world seed, town, day, times you asked around), within ±1 of your level. A Thornwick-born hero
-// sees one more. The order: fighter, rogue, mage, then that extra hireling, then the cleric. Each
+// sees one more. The order: fighter, rogue, mage, then that extra hireling, then the cleric, then (v1.19) the
+// shaman, last, so every earlier sellsword's draws stand as they were. Each
 // has a Lantern Guild rank and perks (companions.js), drawn on their own stream. (The tavern drew a
 // trait here before the perks were real: the draw stays, so the names and levels are as they were.)
 /** A new companion's level (GDD §6.2 v1.11, world doc §4 v1.12): half the hero's, rounded up. The Guild
@@ -121,7 +125,7 @@ export function tavernRoster(seed, region, day, heroLevel, extra = 0, ask = 0) {
   const rng = mulberry32(streamSeed(seed ^ (day * 7919) ^ Math.imul(ask, 104729), 6100 + region.length * 13 + region.charCodeAt(0)));
   const classes = ['fighter', 'rogue', 'mage'];
   for (let i = 0; i < extra; i++) classes.push(['fighter', 'rogue', 'mage'][i % 3]);
-  classes.push('cleric');
+  classes.push('cleric', 'shaman');
   return classes.map((cls, i) => {
     const name = NAMES[cls][(rng() * NAMES[cls].length) | 0]; rng();
     // (the id as it always was for a day's first roster: same draw, same sellsword; battle.js also

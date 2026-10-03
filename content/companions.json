@@ -35,6 +35,7 @@
     "long_watch": { "name": "Long Watch", "text": "Shield Wall lasts 2 s longer." },
     "kindler": { "name": "Kindler", "text": "Firebolt also burns those beside its target, for 0.3×." },
     "steady_hands": { "name": "Steady Hands", "text": "Mend heals 15 % more." },
+    "deep_drinker": { "name": "Deep Drinker", "text": "Spirit Drain lasts 2 s longer." },
     "drillmaster": { "name": "Drillmaster", "text": "Party aura: everyone attacks 5 % faster." },
     "banner_man": { "name": "Banner-man", "text": "Party aura: everyone +5 % DEF." },
     "old_campaigner": { "name": "Old Campaigner", "text": "Party aura: everyone regains HP 10 % faster in a fight." },

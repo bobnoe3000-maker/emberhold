@@ -452,7 +452,7 @@ export function createRenderer(canvas, sim, input) {
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.9)) continue;
       const j = y * w + x; sp.mask[j] = 1; sp.alb.set(col, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < 1.8 ? glow : 0;
@@ -1007,7 +1007,7 @@ export function createRenderer(canvas, sim, input) {
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
-      const atl = memberAtlas(m, m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric' })[m.cls]); if (!atl || m.x === undefined) return;
+      const atl = memberAtlas(m, m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' })[m.cls]); if (!atl || m.x === undefined) return;
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
@@ -1344,6 +1344,7 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'heal') addFloat(c.x, c.y, '+' + c.amount, '#8fe07a', 12, 20);
     else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
     else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
+    else if (c.t === 'hex') addFloat(c.x, c.y, 'hexed', '#b8e070', 11, 20);
     else if (c.t === 'lifeline') addFloat(c.x, c.y, 'Lifeline', '#f0e0a0', 12, 24);
     else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: performance.now(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });

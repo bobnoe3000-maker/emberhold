@@ -85,6 +85,13 @@ export const BASES = {
   pilgrimboots: { name: 'Pilgrim Boots', slot: 'boots', cls: 'cleric', icon: 'boots_mage', kind: 'leather', st: { def: [0.5, 0.15] } },
   chapelsword: { name: 'Chapel Sword', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
   hours:       { name: 'Book of Hours', slot: 'off', cls: 'cleric', icon: 'tome', kind: 'prayer book', st: { mp: [4, 1.4], def: [0.3, 0.1] } },
+  // ── shaman (v1.19, the hedge-callers): a staff hung with bones, or a rod and a fetish; undyed wool and hide
+  spiritstaff: { name: 'Spirit Staff', slot: 'weapon', cls: 'shaman', hands: 2, icon: 'staff', kind: 'staff', st: { atk: [1.6, 0.58], mp: [4, 1.4] } },
+  antlerrod:   { name: 'Antler Rod', slot: 'weapon', cls: 'shaman', hands: 1, icon: 'wand', kind: 'rod', st: { atk: [1, 0.36], mp: [3, 1] } },
+  fetish:      { name: 'Bone Fetish', slot: 'off', cls: 'shaman', icon: 'charm', kind: 'fetish', st: { mp: [3, 1.2], def: [0.4, 0.12] } },
+  hidecowl:    { name: 'Hide Cowl', slot: 'helm', cls: 'shaman', icon: 'hood_rogue', kind: 'hide', st: { def: [0.3, 0.1], mp: [2, 0.8] } },
+  hiderobes:   { name: 'Hide Robes', slot: 'armor', cls: 'shaman', icon: 'armor_leather', kind: 'hide', st: { def: [0.6, 0.2], hp: [3, 1.2], mp: [2, 0.8] } },
+  wrapboots:   { name: 'Wrapped Boots', slot: 'boots', cls: 'shaman', icon: 'boots_leather', kind: 'hide', st: { def: [0.3, 0.08], mpr: [0.1, 0.02] } },
   // ── trinkets (any class)
   ring:        { name: 'Ring', slot: 'trinket', cls: 'any', icon: 'ring', kind: 'ring', st: { atk: [0.5, 0.15] } },
   amulet:      { name: 'Amulet', slot: 'trinket', cls: 'any', icon: 'amulet', kind: 'amulet', st: { hp: [3, 1.5] } },
@@ -104,13 +111,17 @@ export const STARTER = {
   rogue: { weapon: 'dagger', off: 'offdagger', helm: 'hood', armor: 'leathers', boots: 'softboots' },
   mage: { weapon: 'staff', helm: 'witchhat', armor: 'robes', boots: 'slippers' },
   cleric: { weapon: 'mace', off: 'psalter', armor: 'vestments', boots: 'pilgrimboots' },   // bareheaded, off-white vestments (a Grey Sister's cleric)
+  shaman: { weapon: 'spiritstaff', armor: 'hiderobes', boots: 'wrapboots' },                    // bareheaded, undyed wool and hide (a hedge-caller)
 };
+// The classes a drop for "any class" rolls between. The shaman (v1.19) isn't here: adding a class would move every
+// party's loot draws. Shaman gear drops for a party with a shaman in it (rollItem's 80 %), and in the shop.
 export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
+export const ALL_CLASSES = [...CLASS_IDS, 'shaman'];
 /** the classes that can wear a base ([] = any) @param {any} B */
 export const classesOf = (B) => (B.cls === 'any' || B.cls === 'none' ? [] : [B.cls, ...(B.also || [])]);   // ('none': a scroll, anyone reads it)
 export const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
 // Rare ability modifiers: each class's ability costs less or hits harder (battle.js applies them)
-export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt', cleric: 'Mend' };
+export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt', cleric: 'Mend', shaman: 'Spirit Drain' };
 const FINE_WORDS = ['Tempered', 'Ashwarden', 'Emberforged', 'Grim', 'Barrow-hewn', 'Oakheart', 'Tallowmere', 'Cinderbrand', 'Hollow', 'Gravewatch', 'Black-iron', 'Moss-bound', 'Wickham', 'Pilgrim\'s', 'Lantern-lit'];
 const RARE_WORDS = ['the Last Hearth', 'Embers', 'the Barrows', 'Ash', 'the Long Dark', 'Saint Ilse', 'the Drowned Bell', 'Cinders', 'the Hollow King', 'Thornwick', 'Kindling', 'the Pale Road'];
 const FLAVOUR = [
@@ -231,6 +242,7 @@ const WEIGHT = {
   rogue: { atk: 1, def: 0.55, hp: 0.07, mp: 0.02, crit: 0.6, dodge: 0.6, hpr: 1, mpr: 0.3 },
   mage: { atk: 1.1, def: 0.45, hp: 0.06, mp: 0.08, crit: 0.4, dodge: 0.35, hpr: 0.8, mpr: 2 },
   cleric: { atk: 0.8, def: 0.9, hp: 0.08, mp: 0.06, crit: 0.3, dodge: 0.3, hpr: 1.2, mpr: 1.6 },
+  shaman: { atk: 1, def: 0.6, hp: 0.07, mp: 0.07, crit: 0.4, dodge: 0.35, hpr: 1, mpr: 1.8 },
 };
 const score = (cls, it) => { if (!it) return 0; const w = WEIGHT[cls], s = itemStats(it); let v = 0; for (const k in s) v += (w[k] || 0) * s[k]; return v + (it.mod && it.mod.ab === ABILITY_OF[cls] ? 1.5 : 0); };
 export function upgradeScore(m, it) {

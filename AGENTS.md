@@ -33,7 +33,7 @@ npm run check                             # everything CI runs except browsers:
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
 npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --fresh = hires at their hire level (half the hero's), not levelled up; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); --up N = every kit piece at the smith's +N; DMG=1: damage by member
-node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir]             # a boss hall vs fighter + rogue + cleric at a level (TRACE=1: a timeline)
+node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman]   # a boss hall vs fighter + rogue + cleric (or shaman) at a level (TRACE=1: a timeline)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level (dev plan §2.7 targets)
 node tools/capture/stage.mjs [--group g] [--clip c] [--dir d] [--tod t] [--zoom z] [--size 390x844] [--cmp <checkout>] [--frames N] [--fps 12]   # Stage captures: frames cropped to the lineup, sheet.png, loop.html (tools/capture/out/); --cmp: before/after twins
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)

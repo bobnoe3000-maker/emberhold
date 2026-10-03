@@ -32,7 +32,7 @@ import { statsFor, gainXp } from './party.js';
 import { abilityMods, shotOf } from './items.js';
 import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
 import { DAY_S } from './heroes.js';
-import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, hasPassive, HEAL_BONUS } from './skills.js';
+import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, hasPassive, HEAL_BONUS, DRAIN_MEND, OLD_WAYS_STACKS } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
@@ -43,6 +43,7 @@ const CLASS_FIGHT = {
   rogue:   { interval: 0.9, range: 2.8, speed: 7.5 },
   mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire' },
   cleric:  { interval: 1.3, range: 3.0, speed: 6.6 },
+  shaman:  { interval: 1.5, range: 6.0, speed: 6.5, bolt: 'spirit' },   // (v1.19) a spirit bolt at range; stands off like the mage
 };
 // A rogue with a bow or crossbow (items.js `shot`) shoots instead of closing in, and backs off what
 // comes at them as the mage does. Bows are quick, crossbows hit hard and slow; the longer the reach,
@@ -204,7 +205,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const combatStats = (m) => {
     const s = statsFor(m), b = m.buff, k = company(m);
     s.atk *= k.atk; s.def *= k.def;
-    if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } }
+    if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } if (b.breath > 0) s.atk = s.atk * (1 + b.breathAtk); }
     return s;
   };
 
@@ -323,6 +324,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
 
   // ── combat ──────────────────────────────────────────────────────────────────
+  // a Hexed foe (the shaman's Hex): its ATK when it swings and its DEF when it's struck, cut while the hex lasts
+  const hexed = (o) => o.hex && o.hex.t > 0;
+  const hexAtk = (e) => (hexed(e) ? { ...e, atk: e.atk * (1 - e.hex.k) } : e);
+  const hexDef = (e) => (hexed(e) ? { ...e, def: e.def * (1 - e.hex.k) } : e);
   function resolve(att, def, power, bonusCrit = 0, critMul = 1) {
     const w = getWorld();
     if (rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
@@ -416,12 +421,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (stance === 'balanced') return state.party.some((q) => alive(q) && q.hp < statsFor(q).maxHp * STANCE_AI.balanced.low) ? low : 0;
     return Math.max(low, s.maxMp * STANCE_AI[stance].reserve);
   }
+  const drainCap = (m, A) => A.dmax + (hasPassive(m) ? OLD_WAYS_STACKS : 0);
+  // the knot a Hex goes on: the foe with the most others (not yet hexed) within its radius, or a lone boss or elite
+  function hexCentre(A, foes) {
+    let best = null, bn = 0;
+    for (const o of foes) { if (o.spawn > 0) continue; const n = foes.filter((q) => !q.dead && q.hp > 0 && !hexed(q) && hypot(q.x - o.x, q.y - o.y) < A.radius).length; if (n > bn || (n === bn && o.boss)) { bn = n; best = o; } }   // (a boss breaks a tie)
+    if (best && bn >= 2) return best;
+    return foes.find((o) => (o.boss || o.elite) && !hexed(o) && !(o.spawn > 0)) || null;
+  }
   // the strike to swing with (paid for here), or null for a basic attack
   function pickStrike(m, tgt) {
     const s = statsFor(m), keep = reserve(m, s);
     for (const A of priorityOf(m)) {
       if (A.kind !== 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       if (A.poison && tgt.poison && tgt.poison.t > 1) continue;                    // Venom: already poisoned
+      if (A.drain && tgt.drain && tgt.drain.n >= drainCap(m, A) && tgt.drain.t > 2) continue;   // Spirit Drain: stacked full, still running
       const c = cast(m, A); if (m.mp < c.cost + keep) continue;
       m.mp -= c.cost; return c;
     }
@@ -451,6 +465,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       } else if (A.kind === 'bless') {
         if (foes.length < 2 || state.party.some((q) => q.buff && q.buff.bless > 0)) continue;
       } else if (A.kind === 'nova') { if (novaTargets(A, foes, m).length < 2) continue; }
+      else if (A.kind === 'breath') {                          // the party's hurt, and nobody's breathing it already
+        if (state.party.some((q) => q.buff && q.buff.breath > 0)) continue;
+        const hurt = state.party.filter((q) => alive(q) && q.hp < statsFor(q).maxHp * Math.min(0.85, ai.low + 0.25));
+        if (!(hurt.length >= 2 || hurt.some((q) => q.hp < statsFor(q).maxHp * ai.low))) continue;
+      } else if (A.kind === 'hex') { target = hexCentre(A, foes); if (!target) continue; }
       m.mp -= c.cost; m.act = 0.55; m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
       bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
       const tg = target;
@@ -478,6 +497,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!alive(tgt)) return;
       tgt.ward = Math.round(statsFor(tgt).maxHp * A.ward * mult);
       bus.emit('combat', { t: 'ward', x: tgt.x, y: tgt.y, amount: tgt.ward });
+    } else if (A.kind === 'breath') {
+      const k = A.hot * mult * healMod(m, state.party);
+      for (const q of state.party) if (alive(q)) { const b = q.buff || (q.buff = {}); b.breath = A.dur; b.breathK = k; b.breathAtk = A.buff * mult; }
+      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
+    } else if (A.kind === 'hex') {
+      if (!tgt) return;
+      const k = Math.min(0.4, A.debuff * mult);
+      for (const o of w.enemies) if (!o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < A.radius) o.hex = { t: A.dur, k };
+      bus.emit('combat', { t: 'hex', x: tgt.x, y: tgt.y, party: false });
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
       for (const o of novaTargets(A, w.enemies, m)) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
@@ -504,13 +532,17 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const dead = familyOf(w).undead(tgt.kind);
         if ((has(att, 'grave_warden') && dead) || (has(att, 'redhand_breaker') && !dead)) pw *= FIGHT.warden;
       }
-      const r = resolve(aStats, isPartyAtt ? tgt : combatStats(tgt), pw, bonus, critMul);   // the defender's guards count when the blow lands
+      const r = resolve(isPartyAtt ? aStats : hexAtk(aStats), isPartyAtt ? hexDef(tgt) : combatStats(tgt), pw, bonus, critMul);   // the defender's guards count when the blow lands (a Hex: both ways)
       applyHit(aStats, tgt, r, !isPartyAtt, w, heavy);
       if (r.crit && isPartyAtt && att.cls === 'rogue' && hasPassive(att)) att.mp = Math.min(statsFor(att).maxMp, att.mp + 5);   // Opportunist
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
       const splash = ab ? ab.splash || (ab.id === 'firebolt' && has(att, 'kindler') ? FIGHT.kindle : 0) : 0;   // (a Kindler's Firebolt splashes)
       if (splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, splash * c.mult), false, w);
       if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur + (has(att, 'venomous') ? FIGHT.venom : 0), dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
+      if (ab && ab.drain && tgt.hp > 0) {                          // Spirit Drain: one more stack, and they all run again
+        const d = tgt.drain || (tgt.drain = { n: 0, t: 0, acc: 0, dps: 0, by: att });
+        d.n = Math.min(drainCap(att, ab), d.n + 1); d.t = ab.ddur + (has(att, 'deep_drinker') ? FIGHT.drink : 0); d.dps = aStats.atk * ab.drain * c.mult; d.by = att;
+      }
     };
     if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
@@ -601,7 +633,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const nearest = (u, list, pred = () => true, bias = null) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = hypot(o.x - u.x, o.y - u.y) + (bias ? bias(o) : 0); if (d < bd) { bd = d; best = o; } } return best; };
   // formation (GDD §3.5: front fighter, mid rogue, back mage): foes reach for the front line
   // first — the back line counts as this many tiles further away
-  const BACKLINE = { fighter: 0, cleric: 1, rogue: 1, mage: 2.5 }, reach = (q) => BACKLINE[q.cls] || 0;
+  const BACKLINE = { fighter: 0, cleric: 1, rogue: 1, mage: 2.5, shaman: 2.5 }, reach = (q) => BACKLINE[q.cls] || 0;
 
   // Claim (or keep) a melee station around tgt for u this tick; returns its world point.
   let claims = new Map();
@@ -824,7 +856,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         for (const q of state.party) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
         if (low) { const qs = statsFor(low), n = Math.round(qs.maxHp * FIGHT.medicHeal); low.hp = Math.min(qs.maxHp, low.hp + n); bus.emit('combat', { t: 'heal', x: low.x, y: low.y, amount: n }); }
       } m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
-      if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); }
+      if (m.buff && m.buff.breath > 0) m.hp = Math.min(s.maxHp, m.hp + s.maxHp * m.buff.breathK * dt);   // Ancestors' Breath
+      if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); m.buff.breath = Math.max(0, (m.buff.breath || 0) - dt); }
       m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
     // companions out of battle: follow in formation, loosen up when the hero stands still
@@ -902,6 +935,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (e.poison && e.poison.t <= 0) e.poison = null;
           if (e.hp <= 0) continue;
         }
+        if (e.drain) {                                                      // Spirit Drain ticks once a second, a stack's worth each
+          const d = e.drain; d.t -= dt; d.acc += dt;
+          while (e.drain && d.acc >= 1 && e.hp > 0) {
+            d.acc -= 1; const n = Math.max(1, Math.round(d.dps * d.n)); applyHit(d.by, e, { dmg: n, crit: false }, false, w);
+            let low = null, lo = 1; for (const q of state.party) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
+            if (low) { const back = Math.max(1, Math.round(n * DRAIN_MEND)); low.hp = Math.min(statsFor(low).maxHp, low.hp + back); }
+            if (hasPassive(d.by) && !d.by.down) d.by.mp = Math.min(statsFor(d.by).maxMp, d.by.mp + 1);   // Old Ways
+          }
+          if (e.drain && e.drain.t <= 0) e.drain = null;
+          if (e.hp <= 0) continue;
+        }
+        if (e.hex) { e.hex.t -= dt; if (e.hex.t <= 0) e.hex = null; }
         const slow = e.slow > 0 ? 0.5 : 1; if (e.slow > 0) e.slow -= dt;     // Frost Nova
         e.cd = Math.max(0, e.cd - dt * slow);
         const taunt = nearest(e, taunts, (q) => hypot(q.x - e.x, q.y - e.y) < 7);

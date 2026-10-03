@@ -2417,6 +2417,102 @@
         "contrast": 1.15
       },
       "px": 73
+    },
+    {
+      "out": "hero_shaman",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Spellcast_Raise",
+          0.45
+        ],
+        "yaw": -30
+      },
+      "variant": "SH1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Running_A",
+          "frames": 10,
+          "fps": 12
+        },
+        {
+          "key": "attack",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Long",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.8
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        },
+        {
+          "key": "sitdown",
+          "clip": "Sit_Floor_Down",
+          "frames": 6,
+          "fps": 9,
+          "once": true
+        },
+        {
+          "key": "sit",
+          "clip": "Sit_Floor_Idle",
+          "frames": 6,
+          "fps": 5
+        }
+      ]
     }
   ]
 }
