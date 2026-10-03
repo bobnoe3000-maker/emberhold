@@ -1,7 +1,9 @@
 # Art critic pass 11 — toward the reference: plan and scores
 
-**Status: Implemented (2026-10-03), 11a–11l: overall 4.4 → 7.3, no area under 6.5.** Each iteration below has its
-numbers, captures and score; what's left is at the end.
+**Status: Implemented (2026-10-03), 11a–11m.** **The owner's direction (2026-10-03): keep the game's dusky, gloomy
+colour tones; the reference is for the detail in the art assets: trees, buildings, vegetation.** So 11m put the
+light, the grade and every palette back to the game's own, and kept all the detail. The rubric below scores detail
+only; light and colour are no longer measured against the reference.
 
 The owner gave a reference to score against: a frame of a commercial mobile builder's art, a hand-finished 3D
 village in autumn. It's another studio's work, so it stays out of the repo: it's kept in the scratch tree, used
@@ -119,6 +121,8 @@ re-scored, and a before/after sheet added below.
 
 ## Iteration 11a: light and colour (shipped 2026-10-03)
 
+*Reverted in 11m, at the owner's direction: the game keeps its own light and grade. The grass's smooth tone blend stays.*
+
 ![11a, before and after: the square, the high street, the crossroads, the north-west](img/art11/a-light.jpg)
 
 **What changed** (`src/render/daylight.js`, `renderer.js`, `outdoorpaint.js`):
@@ -155,6 +159,8 @@ re-scored, and a before/after sheet added below.
 
 ## Iteration 11b: shadow and depth (shipped 2026-10-03)
 
+*The lift on faces squarely to the sun and the deeper day shadows were reverted in 11m. The contact shade stays.*
+
 ![11b, before and after: the north-west, the square, the crossroads, the high street](img/art11/b-shadow.jpg)
 
 **What changed:**
@@ -178,6 +184,8 @@ re-scored, and a before/after sheet added below.
 **Next:** 11c, buildings.
 
 ## Iteration 11c: buildings (shipped 2026-10-03)
+
+*Colours reverted in 11m (terracotta, cream, blue shutters, the brighter bake). The tiled roof's shapes stay, laid in the old slate.*
 
 ![11c, before and after: the square and the high street](img/art11/c-buildings.jpg)
 
@@ -440,21 +448,68 @@ clearing, with its trees outside the walls.
   own frame changes little.
 - **Overall, 7.2 → 7.3** (7.29).
 
+## Iteration 11m: the dusk kept, the detail kept (shipped 2026-10-03)
+
+![The square before pass 11, at 11l's bright day, and now: the dusk tones with pass 11's detail](img/art11/m-dusk.jpg)
+
+The owner: keep the dusky, gloomy tones; the reference is for the detail in the art assets.
+
+**Put back to the game's own:**
+- **Every part of the day's light** (`daylight.js`): the pre-11 sun, ambient and shadow lift.
+  - The grade is the old fixed one: vignette 0.85, the full violet haze, no saturation grade.
+  - The `vig`, `haze` and `sat` fields stay, set to those values, so a later look can still change them.
+- **The light pass:** no lift on faces squarely to the sun (11b, and 11i's exemption for figures with it).
+- **Palettes:**
+  - the dusk meadow's grass;
+  - the meadow flowers' muted colours (the patches stay);
+  - the trees' olive-grey leaves and dull amber autumn, the birches in a muted gold;
+  - the flower boxes and ivy in darker, duller tones.
+- **Thornwick's bake:** `town.json` is byte for byte its pre-11 self (gain 0.7, desaturation 0.12, the warm tint).
+  The style's limewash and stone are A's again, with no blue shutters.
+- **Pass 11's new props and beasts** take the old prop grade (gain 0.72, desaturation 0.1, the same tint).
+
+**Kept, all detail:**
+- the tiled roofs' shapes (rounded tiles, each its own tone, a lit lip), now laid in the old slate blue-grey;
+- dormers and the round bell tower;
+- flower boxes and ivy;
+- leaf-cluster crowns and birches;
+- standing wheat, the farmyard's beasts, hay and pumpkins, and dressed doorsteps;
+- field walls and fences;
+- the trees among the houses;
+- meadow flower patches;
+- the crowd and its tools;
+- contact shade, and figures' cast shadows.
+
+**Measured** (the square and the high street; before pass 11 → 11l → now):
+
+| | Before | 11l | Now |
+|---|---|---|---|
+| Luminance | 0.279 / 0.267 | 0.447 / 0.435 | **0.263 / 0.244** |
+| Warmth (R − B) | 0.059 / 0.043 | 0.254 / 0.249 | **0.054 / 0.036** |
+| Saturation | 0.288 / 0.362 | 0.477 / 0.568 | **0.290 / 0.358** |
+| Edge density (detail) | 5.40 / 3.78 | 5.84 / 4.70 | **5.38 / 3.91** |
+
+The tone is back where it was, a shade darker for the contact shade and cast shadows. The detail stays: the high
+street's edge density 3.78 → 3.91. On the square the dark slate roofs hide some of the tiles' contrast that the
+terracotta showed.
+
 ## Where it stands, and what's next
+
+Scored on detail only (the owner's direction); light and colour are the game's own and no longer measured against
+the reference.
 
 | Area | Reference | Start | Now |
 |---|---|---|---|
-| Light and colour | 9 | 3 | 8 |
-| Shadow and depth | 9 | 4 | 7 |
-| Buildings | 9 | 5.5 | 8 |
+| Light and colour | — | — | the game's dusk, kept |
+| Shadow and depth | 9 | 4 | 6.5 |
+| Buildings | 9 | 5.5 | 7.5 |
 | Trees and plants | 9 | 4.5 | 7.5 |
 | Ground | 8 | 5 | 7 |
 | Characters | 8 | 5 | 6.5 |
 | Life and density | 9 | 4 | 7 |
-| **Overall** | **8.7** | **4.4** | **7.3** |
+| **Overall (detail)** | **8.7** | **4.7** | **7.0** |
 
-Every area is now 6.5 or better, and the overall is 7.3 against the 7.5 target. What's left, by what it would
-buy:
+Every area is 6.5 or better. What's left, by what it would buy, all of it detail:
 - **Characters (6.5 → 7.5): work in place.** The reference's villagers hoe, hammer and carry; ours walk and wait
   with their tools in hand. Short work loops (hoe, hammer, sweep, carry) mean new clips in the actor bake for the
   KayKit bodies. It's the largest remaining gain, and a bake and animation change, so it's the owner's call.

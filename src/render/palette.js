@@ -91,7 +91,7 @@ export const ELIT = {
   mud:    ['#110b07', '#1c130b', '#281b11', '#352417', '#452f1d'].map(_hx),  // mud pools
   pit:    ['#040306', '#08070c', '#0e0c14', '#16131e', '#1f1b29'].map(_hx),  // sunken pits
   // surface scenes (town / overland at dusk)
-  grass:  ['#15170e', '#202414', '#2d331b', '#3c4323', '#50562c'].map(_hx),  // meadow, olive toward ochre (pass 11d: lime under the warm day)
+  grass:  ['#12170f', '#1c2317', '#27301f', '#343e29', '#465036'].map(_hx),  // dusk meadow, olive-grey
   grass_fens:    ['#0f150f', '#161f18', '#1e2a20', '#28362a', '#374636'].map(_hx),  // sodden fen grass
   grass_reach:   ['#131110', '#1d1a17', '#27231f', '#332e28', '#433c34'].map(_hx),  // ash-dusted scrub
   grass_heights: ['#191c1d', '#242929', '#303736', '#414946', '#58605b'].map(_hx),  // frost-bitten turf

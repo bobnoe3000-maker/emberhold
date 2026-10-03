@@ -5,12 +5,12 @@
       "model": "tavern",
       "build": "tavern",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "faceX": true
     },
@@ -19,12 +19,12 @@
       "model": "inn",
       "build": "inn",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -32,12 +32,12 @@
       "model": "shop",
       "build": "shop",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -45,12 +45,12 @@
       "model": "temple",
       "build": "temple",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -58,12 +58,12 @@
       "model": "well",
       "build": "well",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -71,12 +71,12 @@
       "model": "house",
       "build": "house",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 1
     },
@@ -85,12 +85,12 @@
       "model": "house",
       "build": "house",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 2
     },
@@ -99,12 +99,12 @@
       "model": "house",
       "build": "house",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 3
     },
@@ -113,12 +113,12 @@
       "model": "house",
       "build": "house",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 4,
       "faceX": true
@@ -128,12 +128,12 @@
       "model": "house",
       "build": "house",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 5,
       "faceX": true
@@ -143,12 +143,12 @@
       "model": "farm",
       "build": "farm",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -156,12 +156,12 @@
       "model": "farm",
       "build": "farm",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "seed": 2,
       "faceX": true
@@ -171,12 +171,12 @@
       "model": "keep",
       "build": "keep",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -184,12 +184,12 @@
       "model": "wall",
       "build": "wall",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -197,12 +197,12 @@
       "model": "smith",
       "build": "smith",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "faceX": true
     },
@@ -211,12 +211,12 @@
       "model": "palisade",
       "build": "palisade",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -224,12 +224,12 @@
       "model": "palisade",
       "build": "palisade",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "rotY": 90
     },
@@ -238,12 +238,12 @@
       "model": "watchtower",
       "build": "watchtower",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ]
     },
     {
@@ -251,12 +251,12 @@
       "model": "timbergate",
       "build": "timbergate",
       "style": "vale",
-      "gain": 0.78,
-      "desat": 0.02,
+      "gain": 0.7,
+      "desat": 0.12,
       "tint": [
         1.0,
-        0.98,
-        0.95
+        0.96,
+        0.9
       ],
       "rotY": 90
     }

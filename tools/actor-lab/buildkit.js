@@ -126,7 +126,7 @@ function windowOn(g, S, face, u, y, w = 0.12, h = 0.16, opt = {}) {
 }
 // Thornwick's dressing (critic pass 11j, scored against the owner's reference: its walls carry flower boxes and ivy,
 // ours were bare). On its own stream (S.frnd), so no window's light changes; tagged `dress`, so no footprint grows.
-const FLOWER = ['#d8305a', '#f0e8f4', '#f0b828', '#a050d8', '#f05a28'], LEAF = ['#36561e', '#456a24', '#5a802c'];
+const FLOWER = ['#9a3a50', '#c8c0c8', '#b89040', '#7a5098', '#a85a34'], LEAF = ['#2e4420', '#3a5226', '#46602a'];
 const dressMats = new Map(), dressMat = (c) => { if (!dressMats.has(c)) dressMats.set(c, flat(c)); return dressMats.get(c); };
 function dress(mesh) { mesh.userData.dress = true; return mesh; }
 function flowerBox(g, S, place, face, u, y, w) {
@@ -212,9 +212,9 @@ export const STYLES = {
 // inn and temple read the same everywhere) and changes only materials and colour.
 const A_SHAPE = { roofRise: 1.05, jetty: 0.04, timber: true };
 Object.assign(STYLES, {
-  // Hollow Vale: warm oak, cream limewash, terracotta tile, blue shutters (critic pass 11c, scored against the
-  // owner's reference: blue-grey slate and grey limewash read cold beside its warm village)
-  vale:    { ...STYLES.A, key: 'vale', lower: ['field', '#8a7e6a'], upper: ['plaster', '#d9c9a6'], roof: ['tile', '#8a4130'], shutter: '#3b679c', dress: true },
+  // Hollow Vale: warm oak, limewash, slate. Critic pass 11 keeps its detail (the roofs laid in rounded tiles, each its
+  // own tone; flower boxes and ivy) in the game's own dusky colours (the owner, 2026-10-03: the reference is for detail)
+  vale:    { ...STYLES.A, key: 'vale', roof: ['tile', '#434856'], dress: true },
   fens:    { ...A_SHAPE, key: 'fens', lower: ['rubble', '#5b5f57'], upper: ['plaster', '#98a089'], roof: ['slate', '#363d36'],
              wood: '#35302a', beam: '#26231f', door: '#3d3a30', trim: '#1f201c', banner: '#3b5a4a', hay: '#6f6a46', signboard: '#4a463a' },  // damp, mossy, grey-green
   reach:   { ...A_SHAPE, key: 'reach', lower: ['field', '#4c4542'], upper: ['plaster', '#8c7d70'], roof: ['slate', '#5e3024'],
@@ -566,8 +566,8 @@ const TYPES = {
 // ── trees (our own, to replace the stock cones): pine, broadleaf, dead, groves ──
 const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
 const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
-// leaf: olive toward gold, autumn: amber and rust, birch: gold (pass 11d: the reference's autumn harmony)
-const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#4a5226', '#56602b', '#646a30'], autumn: ['#9a6a22', '#a87a26', '#8a5a1e'], birch: ['#a8872a', '#b8962e', '#97762a'], bark: '#3a2c22', dead: '#4a4038' };
+// leaf: olive-grey, autumn: dull amber, birch: a muted gold (the game's dusk palette; pass 11d's warmer one reverted)
+const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], birch: ['#7a6428', '#86702c', '#6e5824'], bark: '#3a2c22', dead: '#4a4038' };
 // Foliage (critic pass 2: faceted gem-like crowns clashed with the buildings): closed,
 // softly-shaded masses. Geometry is vertex-merged BEFORE jittering so faces never crack
 // apart, shaded smooth, and vertex-coloured from a dark self-shadowed underside to a lighter

@@ -17,9 +17,8 @@ const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[
 const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
 const frac = (v) => v - Math.floor(v);
 const N_TUFT = norm3(0, 0.55, 0.83), N_WATER = norm3(0, 0.36, 0.93);
-// brighter than they were (critic pass 11j: the reference's meadows are dotted yellow, white, pink and violet; ours
-// were four muted single pixels on 6 % of tiles)
-const FLOWERS = [[232, 200, 84], [226, 216, 240], [214, 92, 116], [244, 238, 224], [164, 116, 214]];
+// muted, to sit in the dusk (critic pass 11j added the meadow patches; their colours stay the game's own)
+const FLOWERS = [[168, 150, 80], [160, 150, 178], [150, 70, 66], [176, 170, 150]];
 const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat };
 const OUT = { c: null, n: N_UP, e: 0 };
 const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OUT; };
