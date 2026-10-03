@@ -255,8 +255,12 @@ The recommendations, 2026-10-03:
 
 ![Before and after: the north edge, the crossroads, the Tithe Mill, the north-west](img/art10/shipped-1.jpg)
 
-*Each pair: before on the left, after on the right, the same spot at the same light. More pairs follow when the
-rest of the after frames are in.*
+![Before and after: the east edge, the south bridge, the camp road, a meadow](img/art10/shipped-2.jpg)
+
+![Before and after: the north-east, the barrows road, the river south, the south edge](img/art10/shipped-3.jpg)
+
+*Each pair: before on the left, after on the right, the same spot at the same light. In the river frames the hero
+stands on the water only because the capture put him there.*
 
 ### What was found on the way
 
