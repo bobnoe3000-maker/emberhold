@@ -25,8 +25,11 @@ const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OU
 // 3-blade 'W'), rare flowers. rx/ry = pixel offset from the tile's top vertex.
 function grass(o, gx, gy, tx, ty, rx, ry, dark = 0) {
   const Rg = (o.region && ELIT['grass_' + o.region]) || R.g;
-  const n = fbm(gx * 0.06, gy * 0.06, o.seed + 41) + dark;
-  let c = n < 0.40 ? Rg[1] : n < 0.58 ? Rg[2] : Rg[3];
+  // three tones blended smoothly by the noise, with a little dither (critic pass 11a: hard thresholds drew
+  // camouflage blotches that, in the brighter day, read before anything placed on them)
+  const n = fbm(gx * 0.06, gy * 0.06, o.seed + 41) + dark + (H(tx * 7 + rx, ty * 7 + ry, o.seed + 3) - 0.5) * 0.05;
+  const k = Math.min(1, Math.max(0, (n - 0.32) / 0.34));
+  let c = k < 0.5 ? mix(Rg[1], Rg[2], k * 2) : mix(Rg[2], Rg[3], k * 2 - 1);
   const h = H(tx, ty, o.seed + 5);
   if (h > 0.5) {                                          // tuft centre in screen px within the diamond
     const tu = 0.3 + 0.4 * H(tx, ty, o.seed + 6), tv = 0.3 + 0.4 * H(ty, tx, o.seed + 7);

@@ -7,7 +7,7 @@ import { skyAt, makeSky, LOOKS, PART_IDS, PART_NAMES, BLEND_S, holdT } from '../
 import { DAY_S } from '../src/sim/heroes.js';
 import { PART_S, PARTS, partOf } from '../src/sim/npcs.js';
 
-const flat = (s) => [...s.sun, ...s.amb, s.win, s.lamp, s.wisp, s.bloom, s.lift];
+const flat = (s) => [...s.sun, ...s.amb, s.win, s.lamp, s.wisp, s.bloom, s.lift, s.vig, s.haze, s.sat];
 const lum = (s) => (s.sun[0] + s.sun[1] + s.sun[2]) * 0.5 + (s.amb[0] + s.amb[1] + s.amb[2]);   // the sun lights a lit face about half the time
 
 test('each part holds its own look, in the sim\'s order (partOf: dawn, day, dusk, night)', () => {

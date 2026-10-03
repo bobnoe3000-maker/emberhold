@@ -79,7 +79,7 @@ uniform vec2 uRes; uniform float uTime,uAmb,uWispA;
 uniform vec3 uL[3]; uniform vec3 uLC[3];
 uniform vec2 uWispPx;
 uniform vec3 uSunL, uSunC, uAmbC;   // outdoor scenes: directional sun + ambient colour by the time of day (zero in dungeons)
-uniform float uWin, uLift;          // lit windows' glow ×; how far baked ground shadows lift (daylight.js)
+uniform float uWin, uLift, uHaze;   // lit windows' glow ×; how far baked ground shadows lift; the violet haze × (daylight.js)
 out vec4 O;
 float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
 float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
@@ -120,14 +120,14 @@ void main(){
   col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.16)*uWispA*0.85;      // a small ember mote, not a disc over the figure
   col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.02)*uWispA*0.16;
   float fog=n2(uv*vec2(7.0,3.5)+vec2(uTime*0.05,uTime*0.02));
-  float fa=smoothstep(0.3,0.9,fog)*0.10*(1.0-uv.y*0.5);
+  float fa=smoothstep(0.3,0.9,fog)*0.10*(1.0-uv.y*0.5)*uHaze;
   col=mix(col,vec3(0.10,0.07,0.16),fa);
   O=vec4(col,1.0);
 }`;
 const POST_FS = `#version 300 es
 precision highp float;
 uniform sampler2D uLit,uLitM,uAlbT,uNrmT,uEmiT;
-uniform vec2 uOut,uNative; uniform float uScale,uBloom,uTime;
+uniform vec2 uOut,uNative; uniform float uScale,uBloom,uTime,uVig,uSat;
 uniform vec2 uOff; uniform int uView;
 out vec4 O;
 float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
@@ -153,9 +153,10 @@ void main(){
   col+=bl*uBloom*1.8;
   col=aces(col*1.12);
   col=pow(col,vec3(1.03,1.0,0.95));
+  col=max(mix(vec3(dot(col,vec3(0.2126,0.7152,0.0722))),col,uSat),vec3(0.0));   // the time of day's saturation grade (1 in the dungeons)
   col+=vec3(0.010,0.002,0.020)*(1.0-col);
   vec2 c=gl_FragCoord.xy/uOut-0.5;
-  col*=1.0-dot(c,c)*0.85;
+  col*=1.0-dot(c,c)*uVig;
   col+=(h21(floor(gl_FragCoord.xy*0.5))-0.5)*0.008;   // a whisper of static grain (animated per-pixel grain crawled over small figures)
   O=vec4(col,1.0);
 }`;
@@ -1049,6 +1050,7 @@ export function createRenderer(canvas, sim, input) {
     if (outdoor) { gl.uniform3fv(U(lightP, 'uSunC'), sky.sun); gl.uniform3fv(U(lightP, 'uAmbC'), sky.amb); } else { gl.uniform3f(U(lightP, 'uSunC'), 0, 0, 0); gl.uniform3f(U(lightP, 'uAmbC'), 0, 0, 0); }
     gl.uniform1f(U(lightP, 'uWin'), outdoor ? sky.win : 1);
     gl.uniform1f(U(lightP, 'uLift'), outdoor ? sky.lift : 0);
+    gl.uniform1f(U(lightP, 'uHaze'), outdoor ? sky.haze : 1);
     gl.uniform2f(U(lightP, 'uWispPx'), hx + 19, oy + P.sy - 50 + Math.sin(t * 2.1) * 1.5);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
@@ -1069,6 +1071,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform1f(U(postP, 'uScale'), S);
     gl.uniform2f(U(postP, 'uOff'), (lastCam.rx - ox) * S, (lastCam.ry - oy) * S);   // the sub-pixel part of the camera
     gl.uniform1f(U(postP, 'uBloom'), outdoor ? BLOOM * sky.bloom : BLOOM);
+    gl.uniform1f(U(postP, 'uVig'), outdoor ? sky.vig : 0.85); gl.uniform1f(U(postP, 'uSat'), outdoor ? sky.sat : 1);
     gl.uniform1f(U(postP, 'uTime'), t);
     gl.uniform1i(U(postP, 'uView'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);

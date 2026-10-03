@@ -115,3 +115,39 @@ Read plainly:
 
 After each iteration: the town and Vale frames re-captured at the same spots, the metrics re-run, the rubric
 re-scored, and a before/after sheet added below.
+
+## Iteration 11a: light and colour (shipped 2026-10-03)
+
+![11a, before and after: the square, the high street, the crossroads, the north-west](img/art11/a-light.jpg)
+
+**What changed** (`src/render/daylight.js`, `renderer.js`, `outdoorpaint.js`):
+- **Day:** a warm high sun, from [1.02, 0.94, 0.80] to [1.62, 1.38, 1.02], and a warm ambient, from
+  [0.44, 0.45, 0.50] to [0.62, 0.57, 0.50]. Shadows lift less (0.45 → 0.3), so they read.
+- **The grade is the sky's:** the vignette (`vig`), the drifting violet haze (`haze`) and a new saturation
+  grade (`sat`) now come with the time of day:
+  - day: 0.32 / 0 / 1.28;
+  - dawn: 0.5 / 0.5 / 1.12;
+  - dusk: 0.6 / 0.6 / 1.1, keeping its old fixed light;
+  - night, and the dungeons: 0.85 / 1 / 1.
+- **Grass:** its three tones blend smoothly by the noise, with a little dither. Hard thresholds drew camouflage
+  blotches, and in the brighter day they read before anything placed on them.
+
+**Measured** (the same four frames):
+
+| | Reference | Before | 11a |
+|---|---|---|---|
+| Luminance | 0.40 | 0.24–0.29 | **0.37–0.44** |
+| Highlights (p95) | 0.72 | 0.46–0.54 | 0.62–0.69 |
+| Contrast (s.d.) | 0.18 | 0.11–0.16 | 0.14–0.19 |
+| Saturation | 0.49 | 0.29–0.42 | **0.46–0.60** |
+| Colourfulness | 0.23 | 0.09–0.16 | **0.19–0.25** |
+| Warmth | 0.25 | 0.00–0.06 | **0.21–0.25** |
+| Edge density, Vale / town | 4.6 | 2.4–2.6 / 3.8–5.4 | 2.8–3.3 / 4.3–5.7 |
+
+**Score:**
+- Light and colour, 3 → **7**: the lit tops still stop short of the reference's near-white gold.
+- Ground, 5 → **5.5**: the blotches are gone; the grass is still a touch lime against the reference's ochre.
+- Shadow, 4 → **4.5**: tree shadows now read on the brighter grass.
+- **Overall, 4.4 → 5.1.**
+
+**Next:** 11b, shadow and depth.
