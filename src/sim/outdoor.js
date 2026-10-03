@@ -33,8 +33,9 @@ function buildIndex(o) {
   for (const f of [...o.rivers.map((r) => ({ ...r, type: 'river' })), ...o.roads.map((r) => ({ ...r, type: 'road' }))]) {
     let acc = 0;
     for (let i = 0; i + 1 < f.pts.length; i++) {
-      const [x1, y1] = f.pts[i], [x2, y2] = f.pts[i + 1], len = hypot(x2 - x1, y2 - y1);
-      o.segs.push({ x1, y1, x2, y2, len, s0: acc, w: f.w, type: f.type, surface: f.surface || 'dirt' });
+      const [x1, y1, wa] = f.pts[i], [x2, y2, wb] = f.pts[i + 1], len = hypot(x2 - x1, y2 - y1);   // (a point's own width: the river's, critic pass 10)
+      const w1 = wa || f.w, w2 = wb || f.w;
+      o.segs.push({ x1, y1, x2, y2, len, s0: acc, w: Math.max(w1, w2), w1, w2, type: f.type, surface: f.surface || 'dirt' });
       acc += len;
     }
   }
@@ -50,32 +51,41 @@ function buildIndex(o) {
 // Ground at a continuous world point. Returns a shared scratch object:
 // { g: code, t: 0 centre → 1 edge (roads/rivers/plazas), lat: signed lateral
 //   offset in tiles, along: distance along the feature, hw: half width }.
-const OUT = { g: 0, t: 0, lat: 0, along: 0, hw: 0, fx: 0 };
+const OUT = { g: 0, t: 0, lat: 0, along: 0, hw: 0, fx: 0, cap: false, track: false };
 export function groundAt(o, gx, gy) {
-  const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0; out.cap = false;
+  const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0; out.cap = false; out.track = false;
   const cell = o.grid.get(Math.floor(gx / CELL) + ',' + Math.floor(gy / CELL));
-  let best = 0, bestRank = 0, roadD = Infinity;      // rank: water 4 > bank 3 > cobble 2 > dirt 1
+  let best = 0, bestRank = 0, roadD = Infinity, riverD = Infinity;      // rank: water 4 > bank 3 > cobble 2 > dirt 1
   if (cell) {
     for (const i of cell) {
       const s = o.segs[i], q = segDist(gx, gy, s);
       if (s.type === 'river') {
-        const wob = (fbm(gx * 0.18, gy * 0.18, o.seed + 11) - 0.5) * 2.2, hw = s.w / 2 + wob, d = q.d;
-        if (d < hw && bestRank < 4) { bestRank = 4; out.g = G.WATER; out.t = d / hw; out.lat = Math.sign(q.side) * d; out.along = s.s0 + q.t * s.len; out.hw = hw; }
-        else if (d < hw + 1.1 && bestRank < 3) { bestRank = 3; out.g = G.BANK; out.t = (d - hw) / 1.1; out.hw = hw; }
+        // its width eased along the segment; a small wobble (the meander is in the points); a bank 0.5–2.5 wide
+        // (critic pass 10: ±1.1 of wobble at a short wavelength, a 1.1-tile bank the whole way)
+        const w = s.w1 + (s.w2 - s.w1) * q.t, wob = (fbm(gx * 0.12, gy * 0.12, o.seed + 11) - 0.5) * w * 0.12, hw = w / 2 + wob, d = q.d;
+        const bw = Math.min(w * 0.3, 0.5 + 2 * fbm(gx * 0.05, gy * 0.05, o.seed + 13));
+        // the NEAREST segment paints it, as for the roads (pass 10: the river's 3-tile segments drew arcs round their ends)
+        if (d < hw && (bestRank < 4 || d - hw < riverD)) { bestRank = 4; riverD = d - hw; out.g = G.WATER; out.t = d / hw; out.lat = Math.sign(q.side) * d; out.along = s.s0 + q.t * s.len; out.hw = hw; }
+        else if (d < hw + bw && bestRank < 4 && (bestRank < 3 || d - hw < riverD)) { bestRank = 3; riverD = d - hw; out.g = G.BANK; out.t = (d - hw) / bw; out.hw = hw; }
       } else {
         const rank = s.surface === 'cobble' ? 2 : 1;
-        const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 23) - 0.5) * (rank === 2 ? 0.4 : 1.4), hw = s.w / 2 + wob;
+        const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 23) - 0.5) * (rank === 2 ? 0.4 : Math.min(1.4, s.w * 0.17)), hw = s.w / 2 + wob;   // (the wobble by the width: a narrow road's edge chewed, pass 10)
         // the NEAREST road segment paints the pixel (not the first found); where that nearest point is a
         // segment end (bends, joins, road ends) the lateral offset is radial, so the painter drops the
         // wheel ruts there (cap) — they used to curl into rings at every bend
         if (q.d < hw && (bestRank < rank || (bestRank === rank && q.d < roadD))) {
           bestRank = rank; roadD = q.d; out.g = rank === 2 ? G.COBBLE : G.DIRT; out.t = q.d / hw; out.lat = Math.sign(q.side) * q.d; out.along = s.s0 + q.t * s.len; out.hw = hw;
-          out.cap = (q.t <= 0.001 || q.t >= 0.999) && q.d > 0.6;
+          out.cap = (q.t <= 0.001 || q.t >= 0.999) && q.d > 0.6; out.track = s.surface === 'track';
         }
       }
     }
   }
   if (bestRank >= 3) return out;
+  // a junction's apron: packed earth where roads meet, no ruts (critic pass 10: each road's ruts ran on into the join)
+  for (const a of o.aprons) {
+    const d = hypot(gx - a.x, gy - a.y);
+    if (d < a.r && bestRank <= 1) { if (!bestRank) { out.g = G.DIRT; out.t = d / a.r * 0.85; out.lat = 0; out.hw = a.r; } out.cap = true; bestRank = 1; }
+  }
   for (const p of o.plazas) {                        // cobbled squares: soft superellipse
     const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
     const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 29) - 0.5) * 0.25;
@@ -96,7 +106,7 @@ function makeWorld(seed, kind, W, H, PAD) {
   const GW = W + 2 * PAD, GH = H + 2 * PAD;
   return {
     kind, theme: kind, seed, depth: 0, W, H, PAD, GW, GH,
-    rivers: [], roads: [], plazas: [], fields: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
+    rivers: [], roads: [], plazas: [], fields: [], aprons: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
     blocked: new Uint8Array(GW * GH), occ: new Uint8Array(GW * GH), tmat: new Uint8Array(GW * GH),
     props: new Map(), mods: new Map(), hp: new Map(), discovered: new Set(), enemies: [], projectiles: [],
     level: { rooms: [], edges: [], cells: new Map(), th: { name: kind, wall: 'basalt', floors: ['soil'], hazard: 'water' } },
@@ -313,27 +323,87 @@ function buildTown(seed, region) {
   return o;
 }
 
+// ── smooth lines (critic pass 10) ────────────────────────────────────────────
+// Roads were straight polylines with hard elbows (up to 77°) and the river ran ruler-straight between kinks.
+// fillet: each corner becomes a quadratic arc from d back along the incoming segment to d on along the outgoing,
+// d = min(R·tan(θ/2), 0.45 × either segment). chaikin: corner cutting, for the river's spline.
+function fillet(pts, R) {
+  const out = [pts[0]];
+  for (let i = 1; i + 1 < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1], l1 = hypot(bx - ax, by - ay), l2 = hypot(cx - bx, cy - by);
+    const ux = (bx - ax) / l1, uy = (by - ay) / l1, vx = (cx - bx) / l2, vy = (cy - by) / l2, c = ux * vx + uy * vy;
+    if (c > 0.9986) { out.push(pts[i]); continue; }                       // (under 3°: leave it)
+    const d = Math.min(R * Math.sqrt((1 - c) / (1 + c)), 0.45 * l1, 0.45 * l2), p0 = [bx - ux * d, by - uy * d], p2 = [bx + vx * d, by + vy * d];
+    for (let k = 0; k <= 6; k++) { const t = k / 6, a = (1 - t) * (1 - t), b = 2 * t * (1 - t), e = t * t; out.push([a * p0[0] + b * bx + e * p2[0], a * p0[1] + b * by + e * p2[1]]); }
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+function chaikin(pts, n) {
+  let p = pts;
+  for (let k = 0; k < n; k++) {
+    const q = [p[0]];
+    for (let i = 0; i + 1 < p.length; i++) { const [ax, ay] = p[i], [bx, by] = p[i + 1]; q.push([0.75 * ax + 0.25 * bx, 0.75 * ay + 0.25 * by], [0.25 * ax + 0.75 * bx, 0.25 * ay + 0.75 * by]); }
+    q.push(p[p.length - 1]); p = q;
+  }
+  return p;
+}
+// the nearest point on a polyline to (x, y): [x, y, distance]
+function nearestOn(pts, x, y) {
+  let best = [pts[0][0], pts[0][1], Infinity];
+  for (let i = 0; i + 1 < pts.length; i++) { const s = { x1: pts[i][0], y1: pts[i][1], x2: pts[i + 1][0], y2: pts[i + 1][1] }, q = segDist(x, y, s);
+    if (q.d < best[2]) best = [s.x1 + (s.x2 - s.x1) * q.t, s.y1 + (s.y2 - s.y1) * q.t, q.d]; }
+  return best;
+}
+// The river's course: resampled every 3 tiles, pushed sideways by a slow meander (a 52-tile wavelength, ±4) and
+// given a width that breathes (6.5–12.5), both eased to nothing near the pins (the bridges, the mill), where it
+// runs as it always did. Its own stream for the phases. Points carry their width: [x, y, w].
+function meander(seed, pts, pins) {
+  const rng = mulberry32(streamSeed(seed, 4415)), ph1 = rng() * 6.2832, ph2 = rng() * 6.2832, res = [];
+  let acc = 0;
+  for (let i = 0; i + 1 < pts.length; i++) { const [ax, ay] = pts[i], [bx, by] = pts[i + 1], L = hypot(bx - ax, by - ay); for (let t = 0; t < L; t += 3) res.push([ax + (bx - ax) * t / L, ay + (by - ay) * t / L, acc + t]); acc += L; }
+  res.push([pts[pts.length - 1][0], pts[pts.length - 1][1], acc]);
+  return res.map(([x, y, s], i) => {
+    const a = res[Math.max(0, i - 1)], b = res[Math.min(res.length - 1, i + 1)], tx = b[0] - a[0], ty = b[1] - a[1], tl = hypot(tx, ty) || 1;
+    let pin = Infinity; for (const [px, py] of pins) pin = Math.min(pin, hypot(x - px, y - py));
+    const k = Math.max(0, Math.min(1, (pin - 12) / 24)), m = 4 * k * sin(s * 6.2832 / 52 + ph1), w = 9 + k * 3 * sin(s * 6.2832 / 74 + ph2);
+    return [x - ty / tl * m, y + tx / tl * m, w];
+  });
+}
+
 // ── THE HOLLOW VALE — the overland around Thornwick ──────────────────────────
 function buildOverland(seed) {
   const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4402)), B = (t, n = 1) => `vale_${t}_${n}`;
   o.name = 'The Hollow Vale';
-  o.rivers.push({ w: 9, pts: [[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]] });
   const town = [52, 150], cross = [150, 132], keep = [168, 44], barrows = [66, 228], mine = [226, 70], camp = [196, 214];
   const mill = [92, 106], chapel = [92, 174], stone = [168, 86];   // the Tithe Mill, the Sunken Chapel, the ninth milestone (M5)
-  // Bridges are axis-aligned (bridge_90 spans x, bridge_0 spans y), so every road crosses
-  // its bridge on a straight run along that axis, long enough to reach past both ramps, and
-  // each crossing sits where the river runs across the bridge (here the river flows ~+y, so
-  // both bridges span x). Critic pass (roads): the south bridge used to lie along the river
-  // and the north road met its bridge at an angle.
-  o.roads.push({ w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] });
-  o.roads.push({ w: 5, surface: 'dirt', pts: [cross, [158, 100], [164, 70], [keep[0], keep[1] + 14]] });
-  o.roads.push({ w: 5, surface: 'dirt', pts: [cross, [132, 170], [132, 186], [129, 199], [100, 199], [88, 212], [barrows[0] + 8, barrows[1] - 4]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] });
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] });                // up to the mill
-  o.roads.push({ w: 4, surface: 'dirt', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] });          // the causeway to the chapel
-  o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
+  // The river (critic pass 10): the old course as a spline, with a slow meander and a breathing width (meander), held
+  // where it was at the bridges and the mill. Bridges are axis-aligned (bridge_90 spans x), so every road crosses its
+  // bridge on a straight run along x, and the river runs across it (~+y) there.
+  o.rivers.push({ w: 9, pts: meander(seed, chaikin([[20, -90], [40, 0], [80, 50], [104, 96], [120, 140], [112, 186], [122, 230], [150, 290], [170, 350]], 3), [[120, 142], [115, 199], [106, 102]]) });
+  // the Tithe Mill's race: a narrow channel off the river, under the wheel on the mill's +x side, and back (pass 10:
+  // the wheel turned 10 tiles from water)
+  o.rivers.push({ w: 2.6, pts: chaikin([[102, 88], [99.5, 95], [98.8, 101], [98.8, 110], [100.5, 116], [106, 120], [112, 121]], 2) });
+  // The roads, filleted (no elbows), the spurs to the mill, the chapel and the camp narrow tracks without ruts.
+  const ROADS = [
+    { w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] },
+    { w: 5, surface: 'dirt', pts: [cross, [158, 100], [164, 70], [keep[0], keep[1] + 14]] },
+    { w: 5, surface: 'dirt', pts: [cross, [132, 170], [132, 186], [129, 199], [100, 199], [88, 212], [barrows[0] + 8, barrows[1] - 4]] },
+    { w: 5, surface: 'dirt', pts: [cross, [190, 140], [230, 150], [350, 156]] },
+    { w: 4, surface: 'dirt', pts: [[190, 140], [206, 108], [mine[0] - 6, mine[1] + 12]] },
+    { w: 3, surface: 'track', pts: [[132, 176], [168, 196], [camp[0] - 8, camp[1] - 6]] },
+    { w: 3, surface: 'track', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] },                // up to the mill
+    { w: 3, surface: 'track', pts: [[100, 199], [96, 192], [chapel[0] + 1, chapel[1] + 14]] },          // the causeway to the chapel
+  ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
+  // a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
+  for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
+    const [x, y] = r.pts[end];
+    let best = null; for (const h of ROADS) if (h !== r) { const n = nearestOn(h.pts, x, y); if (n[2] < 6 && (!best || n[2] < best[0][2])) best = [n, h]; }
+    if (!best) continue;
+    r.pts[end] = [best[0][0], best[0][1]];
+    if (!o.aprons.some((a) => hypot(a.x - best[0][0], a.y - best[0][1]) < 3)) o.aprons.push({ x: best[0][0], y: best[0][1], r: Math.max(r.w, best[1].w) / 2 + 1.5 });
+  }
+  o.roads.push(...ROADS);
   finalizeGround(o);
 
   // bridges where roads cross the river
@@ -368,30 +438,68 @@ function buildOverland(seed) {
     { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
 
-  // mountains along the north and east, forests where the forest mask is high, meadow trees and rocks
-  const MOUNT = ['mountain_A_grass_trees', 'mountain_B_grass_trees', 'mountain_C_grass_trees', 'mountain_A', 'mountain_B'];
-  scatter(o, rng, -60, -80, 350, 350, 15, (x, y) => {
-    const north = -y + 6 + (fbm(x * 0.04, 0, o.seed + 5) - 0.5) * 30, east = x - 250 + (fbm(0, y * 0.04, o.seed + 6) - 0.5) * 30;
-    return north > 0 || east > 0 ? pick(rng, MOUNT) : null;
+  // THE RANGES (critic pass 10: mountains smaller than the keep, on a 15-tile lattice, 11 of them on the meadow).
+  // North, past the map's edge: massifs on a spine, the great peaks (twice the keep's height) among smaller ones,
+  // overlapping into one range. East, between the camera and the Vale, lower mountains further out. Between them
+  // and the meadow a foothill belt: scree, the barrows' grey rocks, pines and dead trees. Nothing of a mountain on
+  // the walked map. Their own stream: the sites and the town don't move.
+  const mrng = mulberry32(streamSeed(seed, 4411)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
+  const MASSIF = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'], SHOULDER = ['mountain_A', 'mountain_B', 'mountain_A_grass_trees', 'mountain_B_grass_trees', 'mountain_C_grass_trees'];
+  const GORGE = [14, 52];                                              // where the river comes down out of the range
+  for (let x = -90, i = 0; x < 360; i++) {
+    const id = MASSIF[[2, 1, 0, 2, 1, 0, 1, 2][i % 8]], f = F(id);
+    if (x < GORGE[1] && x + f[2] - f[0] > GORGE[0]) { x = GORGE[1]; continue; }
+    put(o, id, x - f[0], -12 - f[3] - mrng() * 14, 'round', 0.3);
+    x += (f[2] - f[0]) * (0.55 + mrng() * 0.2);
+  }
+  for (let x = -60; x < 330; x += 20 + mrng() * 14) { const id = pick(mrng, SHOULDER), f = F(id); if (x + f[2] > GORGE[0] && x + f[0] < GORGE[1]) continue; put(o, id, x, -6 - f[3] - mrng() * 6, 'round', 0.35); }   // shoulders before the range
+  for (let y = -40; y < 320; y += 20 + mrng() * 10) { const id = pick(mrng, SHOULDER), f = F(id); put(o, id, 268 - f[0] + mrng() * 16, y, 'round', 0.35); }   // the east: lower, further out
+  const FOOT_ROCK = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E'];
+  scatter(o, mrng, -60, -30, 330, 320, 5, (x, y) => {                // the foothills: thick at the range, thinning to the meadow
+    const d = Math.min(Math.max(0, y + 12), Math.max(0, 270 - x)), belt = 1 - d / 18;
+    if (belt <= 0 || mrng() > belt * 0.7) return null;
+    const k = mrng();
+    return k < 0.35 ? pick(mrng, FOOT_ROCK) : k < 0.75 ? pick(mrng, ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6']) : k < 0.9 ? pick(mrng, TREE_CLUSTER) : pick(mrng, ['dead_1', 'dead_2']);
   });
-  scatter(o, rng, -80, -80, 350, 350, 10, (x, y) => {
-    const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
-    if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return null;
-    for (const c of [keep, barrows, mine, camp, [60, 112], mill, chapel, stone]) if (hypot(x - c[0], y - c[1]) < 24) return null;
-    // sightlines to every landmark: the clear wedge runs deeper for taller things (a grove's
-    // crowns reach ~30 tiles up-screen, a lone tree ~15), so nothing in front rises over the site
-    const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone];
-    const id = f > 0.58 ? (rng() < 0.8 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE)) : f > 0.45 && rng() < 0.3 ? pick(rng, TREE_SINGLE) : rng() < 0.05 ? pick(rng, ROCKS) : null;
-    if (!id) return null;
-    const reach = /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62;
-    return inFrontOf(sights, x, y, reach, 32) ? null : id;
-  });
+
+  // WOODS AND CLUMPS (pass 10: 42 trees on the walked map, 13 % of it within 8 tiles of a tree, a lumber camp in
+  // the open). Woods where a wood belongs: the north-west, the slopes under the range, round the lumber camp, the
+  // barrows' far side; then the old forest mask; then meadow trees in clumps of 2–4. Every site keeps its clearing
+  // and its sightline (inFrontOf). Rocks mostly at the foothills now: 1 % on the meadow, not 5 %.
+  const trng = mulberry32(streamSeed(seed, 4412)), sites = [keep, barrows, mine, camp, [60, 112], mill, chapel, stone];
+  const sights = [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone];
+  const clear = (x, y, id) => {
+    if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return false;
+    for (const c of sites) if (hypot(x - c[0], y - c[1]) < (c === camp ? 16 : 24)) return false;
+    return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32);
+  };
+  const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 230, y: 214, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
+  // a wood's crowns close over each other (groves overlap there, as the range's massifs do); its edge thins to singles
+  for (let y = -80; y < 350; y += 6) for (let x = -80; x < 350; x += 6) {
+    const jx = x + (trng() - 0.5) * 5.4, jy = y + (trng() - 0.5) * 5.4;
+    let wood = 0; for (const w of WOODS) wood = Math.max(wood, 1 - hypot(jx - w.x, jy - w.y) / w.r);
+    const f = fbm(jx * 0.022, jy * 0.022, o.seed + 7), core = wood > 0.4 || f > 0.6;
+    const id = core ? (trng() < 0.7 ? pick(trng, TREE_CLUSTER) : pick(trng, TREE_SINGLE)) : (wood > 0 || f > 0.52) && trng() < 0.45 ? pick(trng, TREE_SINGLE) : null;
+    if (id && clear(jx, jy, id) && fits(o, id, jx, jy, core && /grove/.test(id) ? -5 : 0.6)) put(o, id, jx, jy, 'round', 0.35);
+  }
+  for (let y = 4; y < 256; y += 16) for (let x = 4; x < 256; x += 16) {     // meadow clumps
+    if (trng() > 0.32) continue;
+    const cx = x + trng() * 12, cy = y + trng() * 12;
+    for (let k = 0, n = 2 + Math.floor(trng() * 3); k < n; k++) {
+      const id = pick(trng, TREE_SINGLE), tx = cx + (trng() - 0.5) * 9, ty = cy + (trng() - 0.5) * 9;
+      if (clear(tx, ty, id) && fits(o, id, tx, ty, 0.6)) put(o, id, tx, ty, 'round', 0.35);
+    }
+  }
+  scatter(o, trng, 0, 0, 260, 260, 10, (x, y) => (trng() < 0.01 && clear(x, y, 'rock_F') ? pick(trng, ROCKS) : null));
   forestRing(o, rng, 6);
-  // the undergrowth: thick at the forests' edges, in patches in the meadows; clear of every site and its way in
+  // the undergrowth: thick at the woods' and forests' edges and along the river's banks, in patches in the meadows;
+  // clear of every site and its way in
+  const nearWater = (x, y) => { for (const [dx, dy] of [[0, 0], [2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]]) { const g = groundAt(o, x + dx, y + dy).g; if (g === G.WATER || g === G.BANK) return true; } return false; };
   undergrowth(o, -40, -40, 300, 300, 4, (x, y) => {
     for (const c of [keep, barrows, mine, camp, cross, [town[0] + 4, town[1]], mill, chapel, stone]) if (hypot(x - c[0], y - c[1]) < 14) return -1;
+    let wood = 0; for (const w of WOODS) wood = Math.max(wood, 1 - hypot(x - w.x, y - w.y) / w.r);
     const f = fbm(x * 0.022, y * 0.022, o.seed + 7);
-    return f > 0.5 && f < 0.6 ? 0.4 : fbm(x * 0.08, y * 0.08, o.seed + 13) > 0.68 ? 0.45 : 0;
+    return nearWater(x, y) ? 0.55 : (f > 0.5 && f < 0.6) || (wood > 0 && wood < 0.35) ? 0.4 : fbm(x * 0.08, y * 0.08, o.seed + 13) > 0.68 ? 0.45 : 0;
   });
 
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });

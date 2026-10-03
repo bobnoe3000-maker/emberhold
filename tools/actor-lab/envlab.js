@@ -91,6 +91,9 @@ window.bakeEnv = async (name, o = {}) => {
   // (a `mask` mesh — a stairwell's floor — writes depth only: it hides, and is never drawn or framed)
   const box = new THREE.Box3(); root.traverse((m) => { if (m.isMesh && !m.userData.mask) box.expandByObject(m); });
   // frame: project the 8 bbox corners with the game camera to size the canvas
+  // o.up: bake at 1/o.up of the pixels and let the renderer scale it back ×up (nearest) when it slices the sprite —
+  // for the mountain massifs, the largest sprites, seen from afar (critic pass 10). The depth key stays in tiles.
+  const ppu = PPU / (o.up || 1);
   const pr = THREE.MathUtils.degToRad(30), yw = THREE.MathUtils.degToRad(45);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
   cam.position.set(50 * Math.cos(pr) * Math.sin(yw), 50 * Math.sin(pr), 50 * Math.cos(pr) * Math.cos(yw)); cam.lookAt(0, 0, 0); cam.updateMatrixWorld(true);
@@ -100,11 +103,11 @@ window.bakeEnv = async (name, o = {}) => {
   for (const X of [box.min.x, box.max.x]) for (const Y of [minY, box.max.y]) for (const Z of [box.min.z, box.max.z]) {
     const vs = [new THREE.Vector3(X, Y, Z)];
     if (o.shadow !== false) vs.push(new THREE.Vector3(X, 0, Z).addScaledVector(SUN, -Y / SUN.y));
-    for (const v of vs) { const sx = v.dot(right) * PPU, sy = v.dot(up) * PPU;
+    for (const v of vs) { const sx = v.dot(right) * ppu, sy = v.dot(up) * ppu;
       x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); } }
   const W = Math.ceil(x1 - x0) + 4, H = Math.ceil(y1 - y0) + 4, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-  cam.left = -W / 2 / PPU; cam.right = W / 2 / PPU; cam.top = H / 2 / PPU; cam.bottom = -H / 2 / PPU;
-  cam.position.addScaledVector(right, cx / PPU).addScaledVector(up, cy / PPU); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
+  cam.left = -W / 2 / ppu; cam.right = W / 2 / ppu; cam.top = H / 2 / ppu; cam.bottom = -H / 2 / ppu;
+  cam.position.addScaledVector(right, cx / ppu).addScaledVector(up, cy / ppu); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
   R.setSize(W, H);
   const scene = new THREE.Scene(); scene.add(root);
   const albMats = new Map();
@@ -186,7 +189,7 @@ window.bakeAll = async (list, width = 2048) => {
   const meta = {};
   items.forEach(({ e, r }, i) => { const [px, py] = pos[i];
     xa.putImageData(r.A, px, py); xn.putImageData(r.N, px, py); xk.putImageData(r.K, px, py);
-    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.emi ? (e.glowId || 9) : 0 }; });   // glow: its GLOW_ID (9 lit windows; 2 violet)
+    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.emi ? (e.glowId || 9) : 0, ...(e.up > 1 ? { up: e.up } : {}) }; });   // glow: its GLOW_ID (9 lit windows; 2 violet)
   return { meta, width, height: H, alb: ca.toDataURL('image/png'), nrm: cn.toDataURL('image/png'), key: ck.toDataURL('image/png') };
 };
 window.ready = true;

@@ -360,10 +360,11 @@ export function createRenderer(canvas, sim, input) {
     const m = envMeta && envMeta.sprites[id]; if (!m) return null;
     const envImgs = envAtlases.get(m.atlas); if (!envImgs) return null;
     const grab = (img) => { ecv.width = m.w; ecv.height = m.h; ectx.clearRect(0, 0, m.w, m.h); ectx.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h); return ectx.getImageData(0, 0, m.w, m.h).data; };
-    const A = grab(envImgs.a), N = grab(envImgs.n), K = grab(envImgs.k), n = m.w * m.h;
-    const sp = { w: m.w, h: m.h, ax: m.ax, ay: m.ay, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
+    const A = grab(envImgs.a), N = grab(envImgs.n), K = grab(envImgs.k), U = m.up || 1, w = m.w * U, h = m.h * U, n = w * h;
+    // (m.up: baked at 1/up of the pixels, the mountain massifs; scaled back ×up, nearest, here: critic pass 10)
+    const sp = { w, h, ax: m.ax * U, ay: m.ay * U, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
     for (let j = 0; j < n; j++) {
-      const i = j * 4;
+      const i = U === 1 ? j * 4 : (Math.floor(Math.floor(j / w) / U) * m.w + Math.floor((j % w) / U)) * 4;
       if (A[i + 3] >= 128) {
         sp.mask[j] = 1;
         sp.alb[j * 3] = A[i]; sp.alb[j * 3 + 1] = A[i + 1]; sp.alb[j * 3 + 2] = A[i + 2];

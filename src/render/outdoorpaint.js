@@ -44,15 +44,21 @@ function grass(o, gx, gy, tx, ty, rx, ry, dark = 0) {
   return ret(c);
 }
 
-// Dirt road: two tones, wheel ruts, a grassy crown on country roads, pebbles, soft verge.
+// Dirt road: two tones, a groove per wheel, a grassy crown on country roads, pebbles, a worn verge. Critic pass 10:
+// each rut was a dark line and a half-tone one (four stripes a road, like rails); a hard edge stepped on the
+// diagonals. Now one soft groove per wheel; a half-tile verge of worn grass, dithered into the meadow; a track (the
+// spurs to the mill, the chapel and the camp) is one worn band without ruts; aprons and bends are packed earth.
 function dirt(o, q, gx, gy, tx, ty, rx, ry) {
   const n = fbm(gx * 0.12, gy * 0.12, o.seed + 43);
   let c = n < 0.5 ? R.d[2] : R.d[3];
-  const al = Math.abs(q.lat), rut = Math.abs(al - q.hw * 0.42);
-  if (q.t > 0.88) return ret(mix(c, R.g[1], 0.55));                          // verge
-  if (q.cap) { /* bends / joins / road ends: packed dirt, no ruts or crown (radial ruts drew rings) */ }
-  else if (rut < 0.2) c = R.d[1];
-  else if (rut < 0.34) c = mix(c, R.d[1], 0.4);
+  const al = Math.abs(q.lat), vt = 1 - 0.5 / Math.max(1, q.hw);
+  if (q.t > vt) {                                                            // the verge
+    const k = (q.t - vt) / (1 - vt);
+    return H(Math.floor(gx * 8), Math.floor(gy * 8), o.seed + 61) < k * k ? grass(o, gx, gy, tx, ty, rx, ry, -0.06) : ret(mix(c, R.g[1], 0.5));
+  }
+  if (q.track) { if (al < q.hw * 0.5) c = mix(c, R.d[4], 0.22); }        // a worn band down the middle
+  else if (q.cap) { /* bends' ends, joins, aprons: packed earth */ }
+  else if (Math.abs(al - q.hw * 0.42) < 0.26) c = mix(c, R.d[1], 0.75);    // the groove
   else if (o.kind === 'overland' && al < 0.45 && q.hw > 2.2) return grass(o, gx, gy, tx, ty, rx, ry, -0.12);   // crown
   const pc = Math.floor(gx * 2.2), pr = Math.floor(gy * 2.2);
   if (H(pc, pr, o.seed + 47) > 0.9 && frac(gx * 2.2) > 0.4 && frac(gx * 2.2) < 0.62 && frac(gy * 2.2) > 0.4 && frac(gy * 2.2) < 0.62) return ret(R.d[4], norm3(0, 0.45, 0.88));
@@ -66,13 +72,15 @@ function cobble(o, q, gx, gy) {
   return ret(r.c, r.n || N_UP);
 }
 
-// River: depth tones centre→bank, flow streaks along the current, a pale foam line, rare glints.
+// River: depth by distance from the bank, broken by slow noise; thin dashes along the current; lighter shallows at
+// the edge; rare glints. Critic pass 10: three tones at fixed fractions drew canal stripes parallel to the banks, a
+// pale foam line outlined it, and the flow streaks ran across the current in a cell pattern, like ice.
 function water(o, q, gx, gy) {
-  const w = R.w, t = q.t;
-  if (t > 0.9) return ret(mix(w[4], [150, 160, 160], 0.25), N_WATER);          // foam at the bank
-  let c = t < 0.4 ? w[1] : t < 0.75 ? w[2] : w[3];
-  const streak = frac(q.along * 0.22 + q.lat * 0.07 + fbm(gx * 0.2, gy * 0.2, o.seed + 53) * 0.8);
-  if (t < 0.8 && streak < 0.05) c = mix(c, w[4], 0.45);
+  const w = R.w, t = q.t + (fbm(gx * 0.07, gy * 0.07, o.seed + 55) - 0.5) * 0.4;
+  let c = t < 0.45 ? w[1] : t < 0.8 ? w[2] : w[3];
+  if (q.t > 0.9) return ret(mix(w[3], R.m[3], 0.3), N_WATER);               // the shallows
+  const lane = frac(q.lat / 1.8 + fbm(gx * 0.1, gy * 0.1, o.seed + 53) * 0.6), dash = frac(q.along * 0.09 + H(Math.floor(q.lat / 1.8 + 64), 0, o.seed + 59));
+  if (q.t < 0.8 && Math.abs(lane - 0.5) < 0.05 && dash < 0.3) c = mix(c, w[4], 0.4);
   const gc = Math.floor(gx * 1.5), gr = Math.floor(gy * 1.5);
   const e = t < 0.7 && H(gc, gr, o.seed + 57) > 0.985 && frac(gx * 1.5) < 0.2 && frac(gy * 1.5) < 0.2 ? 8 : 0;
   return ret(c, N_WATER, e);

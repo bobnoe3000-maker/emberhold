@@ -24,7 +24,17 @@ export const RANKS = [
 const LINE = { x0: 132, y0: 186, x1: 129, y1: 199 }, RANK_Y = [186, 191, 196], ABREAST = [-4.5, -1.5, 1.5, 4.5];
 const WAGON = { id: 'wagon_0', x: 128.5, y: 181 };   // tipped on the west verge, north of the line
 export const NEAR = 12;
-const xAt = (y) => LINE.x0 + ((LINE.x1 - LINE.x0) * (y - LINE.y0)) / (LINE.y1 - LINE.y0);
+const lineX = (y) => LINE.x0 + ((LINE.x1 - LINE.x0) * (y - LINE.y0)) / (LINE.y1 - LINE.y0);
+// where the road's centre crosses row y, nearest the line (critic pass 10: the roads are filleted now, so the stretch
+// bends into the turn below it; the ranks stand on the road as it's drawn) @param {any} world @param {number} y
+const xAt = (world, y) => {
+  const L = lineX(y); let best = L, bd = 4;
+  for (const r of world.roads || []) for (let i = 0; i + 1 < r.pts.length; i++) {
+    const [ax, ay] = r.pts[i], [bx, by] = r.pts[i + 1]; if ((ay - y) * (by - y) > 0 || ay === by) continue;
+    const x = ax + ((bx - ax) * (y - ay)) / (by - ay); if (Math.abs(x - L) < bd) { bd = Math.abs(x - L); best = x; }
+  }
+  return best;
+};
 
 /** is this rank still on the road? @param {any} state @param {typeof RANKS[number]} r */
 const holds = (state, r) => (r.gone.quest ? !(state.quests && state.quests[r.gone.quest] && state.quests[r.gone.quest].st === 3) : !(state.bosses || {})[r.gone.boss || '']);
@@ -37,12 +47,12 @@ export function placeRoad(world, state) {
   world.pickets = [];
   if (world.kind !== 'overland' || !state) return world;
   const held = ranksHeld(state);
-  world.road = { x: xAt(191) + 0.5, y: 191.5, ranks: held.length };
+  world.road = { x: xAt(world, 191) + 0.5, y: 191.5, ranks: held.length };
   if (!held.length) return world;
   oPut(world, WAGON.id, WAGON.x, WAGON.y, 'rect', 0.2);
   RANKS.forEach((r, i) => {
     if (!holds(state, r)) return;
-    const y = RANK_Y[i], xc = xAt(y);
+    const y = RANK_Y[i], xc = xAt(world, y);
     r.kinds.forEach((kind, k) => {
       const x = Math.floor(xc + ABREAST[k]) + 0.5, py = y + 0.5;
       world.pickets.push({ x, y: py, kind, rank: r.id });

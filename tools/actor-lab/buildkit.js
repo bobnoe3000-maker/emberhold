@@ -520,7 +520,9 @@ function foliage(geo, r, amt, base, top = 1.35, bottom = 0.55) {
   const col = new Float32Array(p.count * 3), c = new THREE.Color(base);
   for (let i = 0; i < p.count; i++) {
     p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt);
-    const t = (p.getY(i) - y0) / Math.max(1e-6, y1 - y0), k = (bottom + (top - bottom) * Math.pow(t, 0.8)) * (0.92 + r() * 0.16);
+    // (t clamped: the jitter can push a vertex under the lowest one, and pow(−t, 0.8) is NaN, a black vertex — every
+    // pine's lower rings came out black, critic pass 10)
+    const t = Math.min(1, Math.max(0, (p.getY(i) - y0) / Math.max(1e-6, y1 - y0))), k = (bottom + (top - bottom) * Math.pow(t, 0.8)) * (0.92 + r() * 0.16);
     col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
   }
   m.setAttribute('color', new THREE.BufferAttribute(col, 3)); m.computeVertexNormals();
@@ -558,10 +560,20 @@ const TREES = {
   oak: (g, r) => broadleaf(g, r, 0, 0, 1.15 + r() * 0.3),
   autumn: (g, r) => broadleaf(g, r, 0, 0, 1.1 + r() * 0.3, true),
   dead: (g, r) => deadTree(g, r, 0, 0, 1.2 + r() * 0.2),
-  grove: (g, r) => {                                  // a clump of 5–8 mixed trees
-    const n = 5 + ((r() * 4) | 0);
-    for (let i = 0; i < n; i++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.62, x = Math.cos(a) * d, z = Math.sin(a) * d, k = r();
-      if (k < 0.6) pine(g, r, x, z, 0.95 + r() * 0.45); else if (k < 0.9) broadleaf(g, r, x, z, 0.9 + r() * 0.35, r() < 0.3); else deadTree(g, r, x, z, 1); }
+  // a clump of 5–8 mixed trees. Critic pass 10: trees set inside each other's crowns baked a pine's dark tiers
+  // through an oak's crown, so each keeps its crown's room (a pine 0.29 × scale, a broadleaf 0.42 × scale), and
+  // the pines stand toward the back (−x −z: away from the camera), the broadleaves in front
+  grove: (g, r) => {
+    const n = 5 + ((r() * 4) | 0), placed = [];
+    for (let i = 0, t = 0; i < n && t < 200; t++) {
+      const k = r(), kind = k < 0.6 ? 'pine' : k < 0.9 ? 'leaf' : 'dead', sc = kind === 'pine' ? 0.95 + r() * 0.45 : kind === 'leaf' ? 0.9 + r() * 0.35 : 1;
+      const rad = (kind === 'pine' ? 0.29 : kind === 'leaf' ? 0.42 : 0.12) * sc, a = r() * 6.28, d = Math.sqrt(r()) * 0.8;
+      let x = Math.cos(a) * d, z = Math.sin(a) * d;
+      if (kind === 'pine' && x + z > 0.2) { x -= 0.35; z -= 0.35; }                 // pines to the back
+      if (placed.some((q) => Math.hypot(q.x - x, q.z - z) < (q.rad + rad) * 0.85)) continue;
+      placed.push({ x, z, rad }); i++;
+      if (kind === 'pine') pine(g, r, x, z, sc); else if (kind === 'leaf') broadleaf(g, r, x, z, sc, r() < 0.3); else deadTree(g, r, x, z, 1);
+    }
   },
 };
 export function makeTree(kind, seed = 1) { const g = new THREE.Group(); TREES[kind](g, rng(seed * 101 + kind.length)); return g; }
@@ -599,25 +611,44 @@ function rockMesh(r, size, flatten = 0.6) {
     ny > 0.6 && q < 0.8 ? tint(ROCK.moss, 0.9 + q * 0.2) : ny > 0.3 ? tint(ROCK.light, 0.9 + q * 0.15) : tint(ROCK.base, 0.85 + q * 0.2));
   const m = new THREE.Mesh(geo, vmat()); m.scale.y = flatten; m.position.y = size * flatten * 0.55; return m;
 }
-function mountainMesh(r, { h = 2.0, w = 0.9, peaks = 3, snow = true, grass = false }) {
-  const g = new THREE.Group();
+// Critic pass 10: the crags were jittered by a third of their radius and tinted ±10–25 % face by face, a crumple of
+// tiny light and dark triangles; and the snow took every face above 58 % of the height, a white cone tip. Now:
+// fewer, larger faces, jittered a tenth, tinted a few per cent, so the light (the normals) draws the planes; a
+// snowline that follows the facets (faces that look up, above a ragged line); scree and grass by height.
+function mountainMesh(r, { h = 2.0, w = 0.9, peaks = 3, snow = true, grass = false }, g = new THREE.Group(), at = [0, 0]) {
   const colorFn = (ny, y, q) => {
-    if (snow && y > h * 0.58 && ny > 0.05) return tint(ROCK.snow, 0.9 + q * 0.12);
-    if (snow && y > h * 0.5 && ny > 0.45) return tint(ROCK.snow, 0.8 + q * 0.1);
-    if (grass && y < h * 0.34 && ny > 0.4) return tint(ROCK.grass, 0.85 + q * 0.25);
-    if (y < h * 0.1) return tint(ROCK.scree, 0.85 + q * 0.2);
-    return ny > 0.35 ? tint(ROCK.light, 0.85 + q * 0.2) : tint(ROCK.base, 0.78 + q * 0.25);
+    const line = h * (0.62 + (q - 0.5) * 0.22);                      // ragged: each face draws its own line
+    if (snow && y > line && ny > 0.15) return tint(ROCK.snow, 0.94 + q * 0.06);
+    if (grass && y < h * 0.3 && ny > 0.45) return tint(ROCK.grass, 0.95 + q * 0.08);
+    if (y < h * 0.1) return tint(ROCK.scree, 0.95 + q * 0.08);
+    return tint(ny > 0.5 ? ROCK.light : ROCK.base, 0.95 + q * 0.08);
   };
-  const crag = (x, z, rad, ht, seg = 7) => {
-    const geo = new THREE.ConeGeometry(rad, ht, seg, 3); geo.translate(0, ht / 2, 0);
-    const m = new THREE.Mesh(faceted(geo, r, rad * 0.32, colorFn), vmat()); m.position.set(x, 0, z); m.rotation.y = r() * 6; g.add(m);
+  // a crag: an icosahedron stretched up and tapered to a peak (chunky planes and an uneven point, not a cone's
+  // smooth sides or a boulder's dome), sunk into the ground
+  const crag = (x, z, rad, ht) => {
+    const geo = new THREE.IcosahedronGeometry(1, 1), p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const t = (p.getY(i) + 1) / 2, k = 1 - 0.82 * Math.pow(t, 1.3); p.setXYZ(i, p.getX(i) * k, p.getY(i), p.getZ(i) * k); }
+    geo.scale(rad * 1.25, ht / 1.55, rad * 1.25); geo.translate(0, ht * 0.36, 0);
+    const m = new THREE.Mesh(faceted(geo, r, rad * 0.14, colorFn), vmat()); m.position.set(at[0] + x, 0, at[1] + z); m.rotation.y = r() * 6; g.add(m);
   };
   // a low broad skirt, then a ring of shoulder crags around one main peak
-  crag(0, 0, w, h * 0.34, 10);
-  crag((r() - 0.5) * 0.1, (r() - 0.5) * 0.1, w * 0.62, h, 8);
+  crag(0, 0, w, h * 0.34);
+  crag((r() - 0.5) * 0.1, (r() - 0.5) * 0.1, w * 0.62, h);
   for (let i = 0; i < peaks; i++) { const a = (i / peaks) * 6.28 + r(), d = w * (0.38 + r() * 0.2); crag(Math.cos(a) * d, Math.sin(a) * d, w * (0.42 + r() * 0.12), h * (0.5 + r() * 0.22)); }
-  for (let i = 0; i < 5; i++) { const a = r() * 6.28, rr = w * (0.8 + r() * 0.25); const k = rockMesh(r, 0.12 + r() * 0.1, 0.7); k.position.x = Math.cos(a) * rr; k.position.z = Math.sin(a) * rr; g.add(k); }
-  if (grass) for (let i = 0; i < 10; i++) { const a = r() * 6.28, rr = w * (0.62 + r() * 0.35); pine(g, r, Math.cos(a) * rr, Math.sin(a) * rr, 0.75 + r() * 0.4); }
+  for (let i = 0; i < 5; i++) { const a = r() * 6.28, rr = w * (0.8 + r() * 0.25); const k = rockMesh(r, 0.12 + r() * 0.1, 0.7); k.position.set(at[0] + Math.cos(a) * rr, 0, at[1] + Math.sin(a) * rr); g.add(k); }
+  if (grass) for (let i = 0; i < 10; i++) { const a = r() * 6.28, rr = w * (0.62 + r() * 0.35); pine(g, r, at[0] + Math.cos(a) * rr, at[1] + Math.sin(a) * rr, 0.75 + r() * 0.4); }
+  return g;
+}
+// A massif (critic pass 10): a range's worth of mountain in one sprite — one great peak and its neighbours, a
+// skirt of shoulders and foothills, pines on the lower slopes — so a range reads as one shape, and its peak
+// stands about twice Wickham Keep's height. Baked at half the pixels (env.json `up: 2`).
+function massifMesh(r, { h, peaks, snow, spread }) {
+  const g = new THREE.Group();
+  mountainMesh(r, { h, w: h * 0.62, peaks: 3, snow, grass: false }, g, [0, 0]);
+  for (let i = 0; i < peaks; i++) {
+    const a = (i / peaks) * 6.28 + r() * 0.8, d = spread * (0.75 + r() * 0.3), hh = h * (0.45 + r() * 0.25);
+    mountainMesh(r, { h: hh, w: hh * 0.66, peaks: 2, snow: snow && hh > 2.6, grass: hh < 2.4 }, g, [Math.cos(a) * d, Math.sin(a) * d]);
+  }
   return g;
 }
 // Stone bridge: one humped arch, parapets, cutwaters, spanning 1.9 units along z.
@@ -642,6 +673,7 @@ const NATURE = {
   rock: (r, v) => { const g = new THREE.Group(), n = [1, 1, 2, 3, 2][v % 5], big = [0.2, 0.14, 0.24, 0.18, 0.32][v % 5];
     for (let i = 0; i < n; i++) { const m = rockMesh(r, big * (i ? 0.55 + r() * 0.3 : 1), 0.55 + r() * 0.25); m.position.x = i ? (r() - 0.5) * big * 2.2 : 0; m.position.z = i ? (r() - 0.5) * big * 2.2 : 0; m.rotation.y = r() * 6; g.add(m); }
     return g; },
+  massif: (r, v) => massifMesh(r, [{ h: 4.6, peaks: 4, snow: true, spread: 1.7 }, { h: 3.8, peaks: 3, snow: true, spread: 1.5 }, { h: 3.0, peaks: 3, snow: false, spread: 1.3 }][v % 3]),
   mountain: (r, v) => mountainMesh(r, [
     { h: 1.5, w: 0.95, peaks: 3, snow: false, grass: true },
     { h: 1.9, w: 0.95, peaks: 3, snow: true, grass: true },
