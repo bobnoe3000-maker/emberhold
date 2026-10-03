@@ -9,8 +9,8 @@
 //         'gearChanged' { member } — after any equip / unequip / salvage.
 //         'gearRefused' { reason } — an equip the rules don't allow.
 
-import { mulberry32, streamSeed } from './rng.js';
-import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf } from './items.js';
+import { mulberry32, streamSeed, STREAM } from './rng.js';
+import { BASES, SALVAGE, rollItem, canWear, isTwoHanded, upgradeScore, makeHeirloom, salvageOf, makeItem, SCROLL_DROP } from './items.js';
 import { statsFor } from './party.js';
 
 export const BAG_SIZE = 20;                  // slots; a slot holds one item or a stack
@@ -59,11 +59,21 @@ export function createLoot({ state, bus, seed }) {
     return best;
   }
 
+  // a Homeward Scroll beside the gear, now and then (rare loot): its own stream, keyed by the drop counter, so the
+  // gear rolls are as they were; one that won't fit the bag is lost (a scroll isn't salvage)
+  function scroll(src, n, x, y) {
+    const p = SCROLL_DROP[src]; if (!p || mulberry32(streamSeed(seed ^ Math.imul(n, 0x27d4eb2f), STREAM.SCROLL))() >= p) return;
+    C.uidN = (C.uidN || 0) + 1;
+    const item = makeItem('homeward', 1, 'common', { uid: 'i' + C.uidN });
+    if (!fits([item])) return;
+    toBag(item); bus.emit('loot', { item, x, y, src, best: null, salvaged: 0 });
+  }
+
   function drop(src, { ilv, x, y }) {
     const odds = DROP[src]; if (!odds) return null;
     C.lootN = (C.lootN || 0) + 1;
-    const rng = mulberry32(streamSeed(seed, 91000 + C.lootN));
-    if (rng() >= (odds.chance >= 1 ? 1 : Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1))))) return null;   // (a chance of 1 is a promise: the cap was eating 5 % of them)
+    const rng = mulberry32(streamSeed(seed, 91000 + C.lootN)), n = C.lootN;
+    if (rng() >= (odds.chance >= 1 ? 1 : Math.min(0.95, odds.chance * (1 + 0.05 * Math.max(0, ilv - 1))))) { scroll(src, n, x, y); return null; }   // (a chance of 1 is a promise: the cap was eating 5 % of them)
     const q = rng(), rarity = q < odds.rare ? 'rare' : q < odds.rare + odds.fine || odds.min === 'fine' ? 'fine' : 'common';
     C.uidN = (C.uidN || 0) + 1;
     const classes = [...new Set(state.party.map((m) => m.cls))];
@@ -72,6 +82,7 @@ export function createLoot({ state, bus, seed }) {
     if (fits([item])) toBag(item);
     else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }            // bag full: straight to Embers
     bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged });
+    scroll(src, n, x, y);
     bus.emit('countersChanged', { ...C });
     return item;
   }

@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.16 · 2026-10-03 · Plan of record for game design.** v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.17 · 2026-10-03 · Plan of record for game design.** v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -800,7 +800,13 @@ over 300 s with the right party in a same-level room: 312 → 212 gold at level 
   - **Sell** a bag item for 6 / 15 / 40 gold × item level (Common / Fine / Rare), +25 % a
     smith's step on it. Heirlooms aren't sold.
   - **Buy back:** the last five things you sold wait, at what they fetched.
-  - **No draughts.** The shop sells gear only (§3.4).
+  - **No draughts.** The shop sells gear, and one thing besides (§3.4).
+  - **The Homeward Scroll** (v1.17), always on the shelf at **300 gold**. Read anywhere out of town, it puts
+    the party on the square of the region's town (the nearest town), and it's gone. Read mid-fight, it's walking
+    out, as a step-out is. It also turns up as rare loot beside a drop: 3 % from a chest, 4 % from an elite,
+    15 % from a boss's first fall and 5 % from its later ones, on a stream of its own so the gear rolls don't move.
+    It sells back for 75, is never worn, upgraded or reforged, and *Salvage every plain Common* leaves it.
+    Scrolls stack in the bag like plain gear.
 - **The party bag** has 20 slots. Identical plain items stack in one slot, up to 10: the same
   base, rarity, item level and name, and no affixes, Rare modifier or flavour. A full bag still
   takes an item that fits an existing stack; anything else that drops is salvaged at once.

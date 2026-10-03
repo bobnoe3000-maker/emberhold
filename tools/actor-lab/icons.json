@@ -33,6 +33,7 @@
     {"id": "ring", "proc": "ring"},
     {"id": "amulet", "proc": "amulet"},
     {"id": "charm", "proc": "charm"},
+    {"id": "scroll", "proc": "scroll"},
     {"id": "armor_plate", "file": "Knight.glb", "mesh": "Knight_Body"},
     {"id": "armor_fur", "file": "Barbarian.glb", "mesh": "Barbarian_Body"},
     {"id": "armor_leather", "file": "Rogue.glb", "mesh": "Rogue_Body"},

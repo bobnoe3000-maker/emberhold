@@ -10,7 +10,7 @@ import { findPath } from './path.js';
 import { listDestinations } from './travel.js';
 import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
 import { makeHero, statsFor } from './party.js';
-import { starterKit, refreshItem } from './items.js';
+import { starterKit, refreshItem, isUsable, BASES } from './items.js';
 import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createSmith } from './smith.js';
@@ -302,7 +302,21 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     const p = state.player;
     if (!cmd || typeof cmd !== 'object') return;
     if (loot.command(cmd)) return;                         // equip / unequip / salvage
-    if (smith.command(cmd)) return;                        // upgrade / reforge / salvageCommons / buy / sell / buyBack
+    if (smith.command(cmd)) return;                        // upgrade / reforge / salvageCommons / buy / buyScroll / sell / buyBack
+    if (cmd.type === 'useItem') {                          // a thing in the bag you read once (items.js `use`)
+      const i = state.bag.findIndex((it) => it && it.uid === cmd.uid), it = state.bag[i];
+      if (i < 0 || !isUsable(it)) return;
+      if (BASES[it.base].use === 'homeward') {             // the Homeward Scroll: back to the square of the region's town (the
+        // nearest: each region has one). Read mid-fight, it's walking out, as a step-out is (battle.reset).
+        if (world.kind === 'town') { bus.emit('refused', { reason: 'You are already in town' }); return; }
+        if (state.party[0].down || state.party[0].fallen) return;
+        state.bag.splice(i, 1);
+        bus.emit('itemUsed', { uid: it.uid, base: it.base });
+        travel('town', 'default');
+        bus.emit('gearChanged', { member: null });
+      }
+      return;
+    }
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
     if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon

@@ -46,6 +46,7 @@ import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
 import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice } from '../sim/smith.js';
+import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 
 const CSS = SW_CSS + `
 #hubBar { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
@@ -157,6 +158,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const sv = e.target.closest('[data-salvage]'); if (sv) { const it = sim.state.bag.find((q) => q.uid === sv.dataset.salvage);   // a Fine or better: tap twice
       if (it && it.r !== 'common' && armUid !== it.uid) { armUid = it.uid; return smith(); } armUid = null; return send({ type: 'salvage', uid: sv.dataset.salvage }); }
     if (e.target.closest('[data-salvagecommons]')) return send({ type: 'salvageCommons' });
+    if (e.target.closest('[data-buyscroll]')) return send({ type: 'buyScroll' });
     const by = e.target.closest('[data-buy]'); if (by) return send({ type: 'buy', idx: +by.dataset.buy });
     const sl = e.target.closest('[data-sell]'); if (sl) return send({ type: 'sell', uid: sl.dataset.sell });
     const bb = e.target.closest('[data-buyback]'); if (bb) return send({ type: 'buyBack', uid: bb.dataset.buyback });
@@ -277,7 +279,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   /** everything the company holds: worn by the party, then the bag */
   const holdings = () => { const out = [];
     for (const m of sim.state.party) for (const k of Object.keys(m.gear || {})) { const it = m.gear[k]; if (it) out.push([it, `worn by ${esc(m.name)}`]); }
-    for (const it of sim.state.bag) out.push([it, 'in the bag']); return out; };
+    for (const it of sim.state.bag) if (!isUsable(it)) out.push([it, 'in the bag']); return out; };   // (a scroll isn't the forge's)
 
   // Hale & Daughter's forge: Upgrade (+1…+5), Reforge (one affix of a Fine or better), Salvage (the bag)
   function smith(tab) {
@@ -296,7 +298,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       : (() => { const commons = sim.state.bag.filter((it) => it.r === 'common' && !(it.up > 0));
         return `<p class="hint2">Gear in the bag becomes cinders for the forge: more for finer pieces, and half of what any upgrades took. Worn gear stays worn.</p>
         ${commons.length ? `<div class="row go" data-salvagecommons><div><b>Salvage every plain Common · ✦ ${commons.length}</b><span>${commons.length} in the bag (upgraded pieces are kept)</span></div><div class="go-arrow">›</div></div>` : ''}
-        ${sim.state.bag.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
+        ${sim.state.bag.filter((it) => !isUsable(it)).map((it) => `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
           <button class="btn${armUid === it.uid ? ' warnb' : ' ghost'}" data-salvage="${it.uid}">${armUid === it.uid ? `Sure? ✦ ${salvageOf(it)}` : `Salvage · ✦ ${salvageOf(it)}`}</button></div>`).join('') || '<p>The bag is empty.</p>'}`; })();
     sheet.innerHTML = `${head('Smith', sv ? esc(sv.name) : 'The forge', 'Bess Hale’s forge. Upgrade what you wear and carry, reforge a trait, or melt down what you won’t use into cinders.')}
       ${purse()}${tabs('ftab', forgeTab, [['upgrade', 'Upgrade'], ['reforge', 'Reforge'], ['salvage', 'Salvage', `${sim.state.bag.length} in the bag`]])}${body}`;
@@ -307,7 +309,9 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     view = 'shop'; if (tab) shopTab = tab;
     const S = sim.state, st = sim.world.kind === 'town' ? sim.smith.stock() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60)), sv = (sim.world.services || []).find((q) => q.kind === 'shop');
     const who = (it) => { const c = classesOf(BASES[it.base]); return c.length ? c.map((k) => CLASSES[k].label).join(', ') : 'anyone'; };
-    const body = shopTab === 'buy' ? `<h3>Today's stock · new at dawn, in ${mins} min</h3>
+    const scrollRow = `<div class="merc"><div class="who"><b>Homeward Scroll</b><em>always on the shelf · ${S.bag.filter(isUsable).length} in the bag</em><span>Read it anywhere out of town and you're on ${esc(sim.world.name || 'the town')}'s square. Once.</span></div>
+      <button class="btn" data-buyscroll ${SCROLL_PRICE > gold() ? 'disabled' : ''}>Buy · ${SCROLL_PRICE}${SCROLL_PRICE > gold() ? '<small>not enough gold</small>' : ''}</button></div>`;
+    const body = shopTab === 'buy' ? `${scrollRow}<h3>Today's stock · new at dawn, in ${mins} min</h3>
       ${st.map((it, i) => { const done = S.shop.bought.includes(i), p = buyPrice(it), poor = p > gold();
         return `<div class="merc"><div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
         <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || '<p>Wendel’s shelves go up at dawn.</p>'}`

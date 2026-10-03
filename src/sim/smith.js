@@ -24,7 +24,7 @@
 // 'traded' { what: 'buy' | 'sell' | 'buyBack', uid, gold }.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
-import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, UP_MATS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS } from './items.js';
+import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, UP_MATS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS, makeItem, isUsable, SCROLL_PRICE } from './items.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { DAY_S } from './heroes.js';
 import { ORIGIN_EDGE } from './party.js';
@@ -45,7 +45,7 @@ export function upgradeCost(it, origin) {
 /** the next reforge's price @param {any} it */
 export const reforgeCost = (it) => ({ gold: REFORGE_GOLD * it.ilv * (1 << Math.min(10, it.rf || 0)), cinders: REFORGE_CINDERS });
 /** what the shop pays (null: it won't buy it) @param {any} it */
-export const sellPrice = (it) => (SELL[it.r] ? Math.round(SELL[it.r] * it.ilv * (1 + 0.25 * (it.up || 0))) : null);
+export const sellPrice = (it) => (isUsable(it) ? Math.round(SCROLL_PRICE / 4) : SELL[it.r] ? Math.round(SELL[it.r] * it.ilv * (1 + 0.25 * (it.up || 0))) : null);   // a scroll: a quarter of its price
 /** what the shop asks @param {any} it */
 export const buyPrice = (it) => BUY * it.ilv;
 
@@ -87,7 +87,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
     switch (cmd.type) {
       case 'upgrade': {
         if (!inTown()) return refuse('Upgrades are done at the forge in town');
-        const it = find(cmd.uid); if (!it) return true;
+        const it = find(cmd.uid); if (!it || isUsable(it)) return true;
         const cost = upgradeCost(it, state.party[0].origin); if (!cost) return refuse(`${it.name} is at +${UP_MAX}`);
         const no = short(cost); if (no) return refuse(`Not enough ${no}`);
         pay(cost); it.up = (it.up || 0) + 1;
@@ -105,7 +105,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('forged', { uid: it.uid, what: 'reforge', aff: i }); counters(); gear(); return true;
       }
       case 'salvageCommons': {
-        const plain = state.bag.filter((it) => it.r === 'common' && !(it.up > 0));
+        const plain = state.bag.filter((it) => it.r === 'common' && !(it.up > 0) && !isUsable(it));   // (never a scroll)
         if (!plain.length) return true;
         state.bag = state.bag.filter((it) => !plain.includes(it));
         C.embers = (C.embers || 0) + plain.length * SALVAGE.common;
@@ -119,6 +119,15 @@ export function createSmith({ state, bus, getWorld, seed }) {
         C.gold -= price; C.uidN = (C.uidN || 0) + 1;
         state.bag.push({ ...it, uid: 'i' + C.uidN }); state.shop.bought = [...state.shop.bought, cmd.idx];
         bus.emit('traded', { what: 'buy', uid: 'i' + C.uidN, gold: price }); counters(); gear(); return true;
+      }
+      case 'buyScroll': {                                    // a Homeward Scroll: always on the shelf, at SCROLL_PRICE
+        if (!inTown()) return refuse('Buy at the shop in town');
+        if ((C.gold || 0) < SCROLL_PRICE) return refuse('Not enough gold');
+        C.uidN = (C.uidN || 0) + 1;
+        const it = makeItem('homeward', 1, 'common', { uid: 'i' + C.uidN });
+        if (!fits([it])) { C.uidN -= 1; return refuse('The bag is full'); }
+        C.gold -= SCROLL_PRICE; state.bag.push(it);
+        bus.emit('traded', { what: 'buy', uid: it.uid, gold: SCROLL_PRICE }); counters(); gear(); return true;
       }
       case 'sell': {
         if (!inTown()) return refuse('Sell at the shop in town');

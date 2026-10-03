@@ -13,7 +13,7 @@ import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive, skillMult, HEAL_BONUS } from '../sim/skills.js';
 import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
-import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods } from '../sim/items.js';
+import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
 import { NPCS } from '../sim/npcs.js';
@@ -336,7 +336,11 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     if (!worn && wearer && isTwoHanded(it) && wearer.gear.off) warn = `⚠ Two-handed: ${wearer.gear.off.name} goes to the bag`;
     if (!worn && wearer && B.slot === 'off' && isTwoHanded(wearer.gear.weapon)) warn = `⚠ ${wearer.gear.weapon.name} needs both hands`;
     let btns;
-    if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
+    if (isUsable(it)) {                                    // a scroll: read it, not wear it (core.js useItem)
+      const town = sim.world.kind === 'town';
+      lines.push(`<div class="ln">Read it and the party is on the town square at once. It works once.${town ? ' <em>You are in town.</em>' : ''}</div>`);
+      btns = `<button class="gbtn pri" data-act="use" ${town ? 'disabled' : ''}>Read it · home</button><button class="gbtn ghost" data-act="close">Close</button>`;
+    } else if (worn) btns = `<button class="gbtn" data-act="unequip">Unequip</button><button class="gbtn ghost" data-act="close">Close</button>`;
     else {
       const eq = wearer ? `<button class="gbtn pri" data-act="equip" data-to="${wearer.id}">${wearer === m ? 'Equip' : `Give to ${esc(wearer.name)}`}</button>` : '';
       const armed = armSalvage === it.uid;
@@ -377,6 +381,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     const b = e.target.closest('[data-act]'); if (!b) return;
     const it = findSel(), m = member(), act = b.dataset.act; note = null;
     if (act === 'close' || !it) { sel = null; render(); return; }
+    if (act === 'use') { sim.commands.push({ type: 'useItem', uid: it.uid }); sel = null; close(); return; }
     if (act === 'equip') { sim.commands.push({ type: 'equip', member: b.dataset.to, uid: it.uid }); pendingSel = { uid: it.uid, to: b.dataset.to }; }
     if (act === 'unequip') sim.commands.push({ type: 'unequip', member: m.id, slot: sel.worn });
     if (act === 'salvage') {

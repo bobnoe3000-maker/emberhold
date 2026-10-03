@@ -38,6 +38,15 @@ const PROC = {
     const loop = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.09, 8, 24), cord); loop.position.y = 0.66; g.add(loop);
     for (const [x, y] of [[-0.55, 0.25], [0.55, 0.25]]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), std(0x9a2a2a, { metalness: 0.1, roughness: 0.3 })); b.position.set(x, y, 0); g.add(b); }
     g.rotation.set(0.2, 0.4, -0.35); return g; },
+  // the Homeward Scroll: rolled vellum on two turned knobs, tied with a ribbon under a red wax seal
+  scroll: () => { const g = new THREE.Group(), vellum = std(0xe8dcb8, { metalness: 0, roughness: 0.85 }), wood = std(0x6a4426, { metalness: 0, roughness: 0.6 }), wax = std(0xb02a20, { metalness: 0.1, roughness: 0.35, emissive: 0x300604 });
+    const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.2, 24), vellum); roll.rotation.z = Math.PI / 2; g.add(roll);
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.04, 0.5), vellum); lip.position.set(0.1, -0.42, 0.28); lip.rotation.x = 0.5; g.add(lip);
+    for (const s of [-1, 1]) { const k = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.36, 14), wood); k.rotation.z = Math.PI / 2; k.position.x = s * 1.26; g.add(k);
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), wood); ball.position.x = s * 1.48; g.add(ball); }
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.06, 8, 28), wax); band.rotation.y = Math.PI / 2; g.add(band);
+    const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.1, 18), wax); seal.rotation.x = Math.PI / 2; seal.position.set(0, -0.05, 0.47); g.add(seal);
+    g.rotation.set(0.35, -0.45, 0.4); return g; },
 };
 
 // the accessory as a standalone group (its meshes re-expressed relative to the node)

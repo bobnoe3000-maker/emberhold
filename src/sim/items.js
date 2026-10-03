@@ -19,7 +19,7 @@
 // (the cleric can also wear the fighter's shields, plate and sword).
 
 export const SLOTS = ['weapon', 'off', 'helm', 'armor', 'boots', 'trinket'];
-export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', armor: 'Armor', boots: 'Boots', trinket: 'Trinket' };
+export const SLOT_LABEL = { weapon: 'Weapon', off: 'Off-hand', helm: 'Helm', armor: 'Armor', boots: 'Boots', trinket: 'Trinket', use: 'To use' };
 export const STAT_LABEL = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', crit: 'CRIT', dodge: 'DODGE', hpr: 'HP regen', mpr: 'MP regen' };
 export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
@@ -89,7 +89,15 @@ export const BASES = {
   ring:        { name: 'Ring', slot: 'trinket', cls: 'any', icon: 'ring', kind: 'ring', st: { atk: [0.5, 0.15] } },
   amulet:      { name: 'Amulet', slot: 'trinket', cls: 'any', icon: 'amulet', kind: 'amulet', st: { hp: [3, 1.5] } },
   charm:       { name: 'Charm', slot: 'trinket', cls: 'any', icon: 'charm', kind: 'charm', st: { crit: [1, 0.08] } },
+  // ── things you use, not wear (GDD §8.3, 2026-10-03): no gear slot, so never worn, rolled, upgraded or reforged;
+  //    `use` names what reading one does (core.js useItem). The Homeward Scroll: once, back to the nearest town's square.
+  homeward:    { name: 'Homeward Scroll', slot: 'use', cls: 'none', icon: 'scroll', kind: 'scroll', st: {}, use: 'homeward' },
 };
+/** a thing you use (a scroll), not gear @param {any} it */
+export const isUsable = (it) => !!(it && BASES[it.base] && BASES[it.base].use);
+export const SCROLL_PRICE = 300;                          // Wendel's, always in stock (smith.js buyScroll)
+// how often a Homeward Scroll turns up besides the gear (loot.js), by source: rare loot, on its own stream
+export const SCROLL_DROP = { chest: 0.03, elite: 0.04, boss: 0.15, bossAgain: 0.05 };
 // what each class starts in (Common, item level = the member's level) — the kit the model wears
 export const STARTER = {
   fighter: { weapon: 'sword', off: 'roundshield', helm: 'greathelm', armor: 'plate', boots: 'sabatons' },
@@ -99,7 +107,7 @@ export const STARTER = {
 };
 export const CLASS_IDS = ['fighter', 'rogue', 'mage', 'cleric'];
 /** the classes that can wear a base ([] = any) @param {any} B */
-export const classesOf = (B) => (B.cls === 'any' ? [] : [B.cls, ...(B.also || [])]);
+export const classesOf = (B) => (B.cls === 'any' || B.cls === 'none' ? [] : [B.cls, ...(B.also || [])]);   // ('none': a scroll, anyone reads it)
 export const AFFIX = { atk: [0.5, 0.2], def: [0.5, 0.22], hp: [3, 1.6], mp: [3, 1.2], crit: [1, 0.08], dodge: [1, 0.06], hpr: [0.1, 0.02], mpr: [0.1, 0.02] };
 // Rare ability modifiers: each class's ability costs less or hits harder (battle.js applies them)
 export const ABILITY_OF = { fighter: 'Cleave', rogue: 'Backstab', mage: 'Firebolt', cleric: 'Mend' };
@@ -116,6 +124,7 @@ const round = (k, v) => (k === 'hpr' || k === 'mpr' ? Math.max(0.1, Math.round(v
 const pick = (rng, a) => a[Math.floor(rng() * a.length)];
 
 // (Low-level common metal was "Worn …", which read as "the one you're wearing" in the bag.)
+/** @param {string} base @param {number} ilv @param {string} [r] @param {{ uid?: string, aff?: any[], mod?: any, name?: string, flav?: string }} [o] */
 export function makeItem(base, ilv, r = 'common', { uid, aff = [], mod = null, name, flav } = {}) {
   const B = BASES[base], st = {};
   for (const [k, [a, b]] of Object.entries(B.st)) st[k] = round(k, (a + b * ilv + (GEAR_GROWTH - 1) * b * Math.max(0, ilv - 1)) * (a < 0 ? 1 : RMULT[r]));

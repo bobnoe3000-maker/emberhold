@@ -2,6 +2,10 @@
 
 **v1.18 · 2026-10-03 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).**
 
+v1.18 also brings the **Homeward Scroll**: a road-prayer the Grey Sisters write on a strip of vellum. Read aloud,
+it sets the reader down on the square of the nearest town, once. Wendel stocks them at 300 gold and calls it
+cheaper than walking. They turn up in the deep places too, in the packs of people who didn't read theirs in time.
+
 v1.18 says where the Vale's sites lie (§3.1): the easy ones near Thornwick, the hard ones far out. The
 Sunken Chapel's marsh is where the river leaves the Vale, out past the lumber camp; the Ninth Milestone stands
 where the old Wickham road runs on north-east past the Deepdelve mine. Nothing new about what they are.
