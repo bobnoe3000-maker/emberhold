@@ -500,7 +500,7 @@ function buildWaystation(seed, region) {
   o.pools.push({ cx: 92, cy: 40, rx: 26, ry: 18 }, { cx: 18, cy: 80, rx: 16, ry: 26 }, { cx: 96, cy: 100, rx: 34, ry: 14 }, { cx: 48, cy: 104, rx: 24, ry: 11 },
     { cx: 118, cy: 60, rx: 14, ry: 30 }, { cx: 70, cy: 6, rx: 30, ry: 10 }, { cx: 6, cy: 30, rx: 14, ry: 22 });
   o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22, surface: 'deck' }, { cx: 40, cy: 40, rx: 10, ry: 8, surface: 'deck' });
-  o.roads.push({ w: 5, surface: 'deck', pts: [[160, GY], [84, GY], [76, 76]] });                                          // the boardwalk in, from the canal road
+  o.roads.push({ w: 9, surface: 'deck', pts: [[160, GY], [84, GY], [76, 76]] });   // the boardwalk in, from the canal road: a street's width (5 was a plank with a party on it: the owner, 2026-10-04)
   for (const pts of [[[50, 62], [32, 72], [24, 72]], [[60, 44], [76, 24], [86, 22]], [[78, 66], [100, 68]], [[48, 80], [40, 98]], [[84, 82], [94, 94]], [[64, 86], [62, 100]]])
     o.roads.push({ w: 3, surface: 'deck', pts });                                                                            // boardwalks to the houses
   finalizeGround(o);
@@ -511,7 +511,7 @@ function buildWaystation(seed, region) {
   o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };
   o.lead = { x0: 100, y0: GY - 10, x1: 146, y1: GY + 10, x: 100, y: GY, k: 0.5 };
   for (const [n, x, y] of [[1, 26, 76], [2, 88, 22], [3, 102, 68], [1, 40, 102], [2, 96, 96], [3, 62, 104], [1, 78, 18], [2, 110, 40]]) put(o, B('stilt', n), x, y);
-  for (const [id, x, y] of [[B('punt'), 104, 84], [B('punt'), 30, 92], [B('punt'), 112, 76], [B('eeltrap'), 116, 92], [B('eeltrap'), 14, 64], [B('eeltrap'), 84, 112]]) put(o, id, x, y, 'rect', 0);
+  for (const [id, x, y] of [[B('punt'), 106, 92], [B('punt'), 30, 92], [B('punt'), 122, 68], [B('eeltrap'), 116, 92], [B('eeltrap'), 14, 64], [B('eeltrap'), 84, 112]]) put(o, id, x, y, 'rect', 0);
   for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77]]) put(o, id, x, y, 'rect', 0);
   scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
     if (hypot(x - 60, y - 60) < 44) return null;

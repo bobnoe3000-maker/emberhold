@@ -69,6 +69,14 @@ tavern and another house at the end of a short diagonal boardwalk, with nothing 
 road that leads there (Thornwick's gate, the lumber camp, the barrow's mound). Saltmere's way in is through the gate,
 under its name. Both tests fail on the layout before the fix.
 
+### The owner's report: Saltmere's boardwalk (2026-10-04)
+
+*"The boardwalk entrance into the town square is too skinny."* It was 5 tiles wide (Thornwick's high street is 6),
+and with a party of four on it it read as a plank. It's 9 now, a street's width, with the two punts moored at its
+edges moved out into the mere. All 482 of its deck tiles between the square and the way out are open.
+
+![Saltmere's boardwalk before and after](img/fens/saltmere-boardwalk.jpg)
+
 ## Pass 2: art, slice 3 (the Fens' sites)
 
 Five landmarks baked in code (`tools/actor-lab/buildkit.js`: `boathall`, `lockhall`, `vats`, `abbey`, `priory`; in
