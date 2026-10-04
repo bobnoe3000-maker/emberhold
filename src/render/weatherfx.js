@@ -4,8 +4,9 @@
 //   light   rain and fog take some of the sun, soften the shadows and the colour, and thicken the haze; snow cools
 //           and lifts the ambient a touch; wind clears the air (less haze, a touch more colour). At full strength the
 //           light loses at most a third.
-//   screen  rain: sparse fine streaks, faint; snow: a few slow flakes that drift; fog: a soft drifting veil,
-//           thickest toward the top of the screen (the distance) and thin over the party, at the bottom
+//   screen  rain: sparse fine streaks, faint; snow: a few slow flakes that drift; wind: long thin gust lines that come
+//           and go, and a few leaves; fog: a soft drifting veil, thickest toward the top of the screen (the distance)
+//           and thin over the party, at the bottom
 // Outdoors only (underground there's no sky), and never on the dev Stage. The particles are placed by a hash of their
 // index and the clock, anchored to the world (they pass by as the camera moves), so nothing is stored or allocated
 // per frame. ?dev&weather=rain|fog|snow|wind|clear[:0..1] holds a weather for captures.
@@ -79,12 +80,35 @@ export function drawWeather(c, w, o) {
       c.fillRect(x, y, sz, sz);
     }
   } else if (w.kind === 'wind') {
-    // a few leaves, blown across side-on: each tumbles (its width flickers with its spin) and rides the gusts up and down
-    const n = Math.round(22 * k * Math.max(0.6, area)), W = vw + 40, H = vh + 40, LEAF = ['168,120,58', '138,92,44', '112,122,60', '150,72,40'];
+    // the owner (2026-10-03): "longer intermittent string like streaks". Gust lines: each a long, thin, gently waving
+    // thread that draws itself across the screen on the wind and is gone, a few at a time with gaps between (each slot
+    // is seen for half its own cycle); pale, brightest at the head, fading to nothing at the tail
     const gust = 0.75 + 0.25 * Math.sin(t * 0.7) + 0.15 * Math.sin(t * 1.9);
+    const ns = Math.round(10 * k * Math.max(0.7, area)), W = vw * 1.15, SEG = 16;
+    c.lineWidth = Math.max(2.5, S * 1.2); c.lineCap = 'round';
+    const rgb = night ? '190,200,220' : '236,240,244', a0 = (night ? 0.36 : 0.55) * Math.min(1, 0.4 + 0.6 * k);
+    for (let i = 0; i < ns; i++) {
+      const per = 3.2 + 2.6 * h1(i, 31), ph = (t / per + h1(i, 33)) % 1, cyc = Math.floor(t / per + h1(i, 33));
+      if (ph > 0.5) continue;                                                   // between gusts: not there
+      const u = ph / 0.5, ri = h1(i * 131 + cyc, 35), rj = h1(i * 131 + cyc, 37);   // (each cycle somewhere new)
+      const len = (0.4 + 0.3 * ri) * vw, travel = (0.7 + 0.35 * rj) * vw * gust;
+      const head = travel * Math.min(1, u * 1.25), tail = Math.max(0, head - len * Math.min(1, u * 2.2)) + travel * Math.max(0, u - 0.6) * 1.6;
+      if (head - tail < 2) continue;
+      const x0 = (((ri * W - o.camX * S * 0.8) % W) + W) % W - vw * 0.45, y0 = (((rj * 0.8 + 0.05) * vh - o.camY * S * 0.8) % vh + vh) % vh;
+      const amp = (0.005 + 0.007 * h1(i, 39)) * vh, wl = (0.05 + 0.04 * h1(i, 41)) * vw, wp = t * 2.4 + i, env = Math.min(1, 2.5 * Math.sin(Math.PI * u));
+      const ay = (d) => y0 + d * 0.06 + amp * Math.sin(d / wl + wp);           // (a little downhill, and waving)
+      let px = x0 + tail, py = ay(tail);
+      for (let j = 1; j <= SEG; j++) {
+        const d = tail + ((head - tail) * j) / SEG, x = x0 + d, y = ay(d);
+        c.strokeStyle = `rgba(${rgb},${(a0 * env * Math.sqrt(j / SEG)).toFixed(3)})`;
+        c.beginPath(); c.moveTo(px, py); c.lineTo(x, y); c.stroke(); px = x; py = y;
+      }
+    }
+    // and a few leaves, blown across side-on: each tumbles (its width flickers with its spin) and rides the gusts
+    const n = Math.round(10 * k * Math.max(0.6, area)), LW = vw + 40, H = vh + 40, LEAF = ['168,120,58', '138,92,44', '112,122,60', '150,72,40'];
     for (let i = 0; i < n; i++) {
       const sp = (0.22 + 0.22 * h1(i, 7)) * vw * gust, sz = Math.max(3, S * (1.8 + 0.9 * h1(i, 11)));   // (a native leaf is ~2 px: smaller ones were lost in the ground's own flecks)
-      const x = (((h1(i, 5) * W + t * sp - o.camX * S) % W) + W) % W - 20;
+      const x = (((h1(i, 5) * LW + t * sp - o.camX * S) % LW) + LW) % LW - 20;
       const y = (((h1(i, 3) * H + t * 0.025 * vh + Math.sin(t * (1.3 + h1(i, 13)) + i) * 10 * S / 3 - o.camY * S) % H) + H) % H - 20;
       const spin = Math.abs(Math.cos(t * (2.5 + 2 * h1(i, 17)) + i));
       c.fillStyle = `rgba(${LEAF[i % 4]},${night ? 0.6 : 0.9})`; c.fillRect(x, y, Math.max(1, sz * (0.3 + 0.7 * spin)), Math.max(1, sz * 0.55));
