@@ -36,6 +36,7 @@ import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMem
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
+import { makeItem } from './items.js';
 import { hired, feeOf, wageOf, loyaltyOf, retrainPerk, priceMod, PERKS, REVEAL_AT, SWORN_AT, ASK_COST, RETRAIN_COST, FOUND_PERKS } from './companions.js';
 
 export const BENCH_MAX = 6;
@@ -131,6 +132,8 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (!name) return refuse('Your hero needs a name');
         state.party[0] = makeHero({ cls, look, origin, name });
         state.created = true;
+        // every company sets out with one Homeward Scroll (GDD §8 v1.30; the owner, 2026-10-04): a sim rule, once
+        state.counters.uidN = (state.counters.uidN || 0) + 1; state.bag.push(makeItem('homeward', 1, 'common', { uid: 'i' + state.counters.uidN }));
         bus.emit('heroCreated', { cls, look, origin, name }); changed(); return true;
       }
       case 'spendPoint': {

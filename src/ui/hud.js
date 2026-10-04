@@ -35,8 +35,11 @@ export function createHud(sim) {
   const paintCounters = (c) => { wood.textContent = c.wood; stone.textContent = c.stone; if (gold) gold.textContent = c.gold || 0; if (embers) embers.textContent = c.embers || 0; };
   sim.bus.on('countersChanged', paintCounters); paintCounters(sim.state.counters);
   sim.bus.on('harvested', ({ kind }) => show(kind === 'tree' ? '+3 wood' : '+2 stone'));
-  // a shrine says what it did (GDD §3.6): raised one of the slain, mended everyone, or kept its light
-  sim.bus.on('shrine', (e) => show(e.did === 'raised' ? `Shrine · ${e.name} rises, at half health · its light is spent`
+  // a shrine says what it did (GDD §3.6): raised one of the slain, mended everyone, lit a boon (v1.30), or kept its light
+  sim.bus.on('shrine', (e) => show(e.did === 'might' ? 'Shrine of Might · the whole party strikes harder, +25 % ATK for 2 minutes · its light is spent'
+    : e.did === 'ward' ? 'Shrine of Warding · the whole party stands firmer, +25 % DEF for 2 minutes · its light is spent'
+    : e.did === 'none' && e.kind && e.kind !== 'mend' ? 'Shrine · nobody is standing to take it · it keeps its light'
+    : e.did === 'raised' ? `Shrine · ${e.name} rises, at half health · its light is spent`
     : e.did === 'mended' ? 'Shrine · everyone standing is mended, HP and MP · its light is spent'
       : 'Shrine · nobody needs mending · it keeps its light for when someone is hurt or slain', e.did === 'none' ? 3200 : 2800));
   // a chest says what it held, every time, and says so when that was no gear (GDD §8, 2026-10-01); the
@@ -151,6 +154,21 @@ export function createHud(sim) {
     weak.textContent = t; weak.style.display = t ? '' : 'none'; weak.setAttribute('aria-label', t ? `Weakened for ${Math.ceil(left / 60)} more minutes` : '');
   };
   sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); setInterval(paintWeak, 1000); paintWeak();
+
+  // a red or blue shrine's boon (sim shrines.js): a chip while it lasts, with the word and the time left (never the
+  // colour alone), beside Weakened
+  const boon = document.createElement('div'); boon.className = 'stat'; boon.style.cssText = 'display:none';
+  if (depth) depth.parentElement.parentElement.appendChild(boon);
+  let boonText = '';
+  const paintBoon = () => {
+    const B = sim.state.boons || {}, t = sim.state.t, part = [];
+    const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    if (B.atk > t) part.push(`<span style="color:#ff9a84">might +25% ATK ${clock(B.atk - t)}</span>`);
+    if (B.def > t) part.push(`<span style="color:#9fd4f4">ward +25% DEF ${clock(B.def - t)}</span>`);
+    const h = part.join(' · '); if (h === boonText) return; boonText = h;
+    boon.innerHTML = h; boon.style.display = h ? '' : 'none';
+  };
+  sim.bus.on('boonsChanged', paintBoon); setInterval(paintBoon, 500); paintBoon();
 
   // Toasts stack (the owner, 2026-10-04: a quest's count was bare orange text, and the next message, a chest, a skill
   // or a hire, replaced it at once): each line is its own backed pill with its own timer, newest on top, at most

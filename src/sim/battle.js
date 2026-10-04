@@ -29,6 +29,7 @@
 
 import { mulberry32, streamSeed } from './rng.js';
 import { statsFor, gainXp } from './party.js';
+import { boonK } from './shrines.js';
 import { abilityMods, shotOf } from './items.js';
 import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
 import { DAY_S } from './heroes.js';
@@ -225,7 +226,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const company = (m) => companyMods(m, state.party, { depth: state.depth, innDay: state.innDay, day: Math.floor(state.t / DAY_S) });
   const combatStats = (m) => {
     const s = statsFor(m), b = m.buff, k = company(m);
-    s.atk *= k.atk; s.def *= k.def;
+    s.atk *= k.atk * boonK(state, 'atk'); s.def *= k.def * boonK(state, 'def');   // (a red / blue shrine's boon, shrines.js)
     if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } if (b.breath > 0) s.atk = s.atk * (1 + b.breathAtk); }
     return s;
   };

@@ -12,7 +12,7 @@
 import { hash2, fbm, mulberry32 } from '../sim/rng.js';
 import { ELIT, EGLOW } from './palette.js';
 
-export const GLOW_ID = { 1: EGLOW.poison, 2: EGLOW.violet, 3: EGLOW.ember, 4: EGLOW.water, 5: EGLOW.lava, 6: EGLOW.soul, 7: EGLOW.frost, 8: EGLOW.aqua, 9: EGLOW.window, 10: EGLOW.marsh };
+export const GLOW_ID = { 1: EGLOW.poison, 2: EGLOW.violet, 3: EGLOW.ember, 4: EGLOW.water, 5: EGLOW.lava, 6: EGLOW.soul, 7: EGLOW.frost, 8: EGLOW.aqua, 9: EGLOW.window, 10: EGLOW.marsh, 11: EGLOW.mend, 12: EGLOW.might };
 const OUTLINE_RGB = [8, 5, 14];
 const clampi = (v, a, b) => (v < a ? a : v > b ? b : v);
 export function norm3(x, y, z) { const l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }
@@ -147,7 +147,8 @@ export const voxChestOpen = () => chestVox(true);
 // the company once. The old 9×9×16 basalt pedestal stood at ankle height against the dark floor and read
 // as a speck of violet (2026-10-01); at 19×19×36, banded in bone, it stands as tall as a hero.
 // A used shrine stays where it was, its orb gone to dark stone (voxShrineSpent), so you can see it's spent.
-function shrineVox(spent) {
+// (v1.30, sim shrines.js) Three kinds, by the orb: green mends or raises, red lifts ATK, blue lifts DEF.
+function shrineVox(spent, glow = 8) {
   const S = 19, H = 36, vox = new Uint8Array(S * S * H), c = (S - 1) / 2;
   const put = (x, y, z, m) => { if (x >= 0 && y >= 0 && z >= 0 && x < S && y < S && z < H) vox[(z * S + y) * S + x] = m; };
   for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
@@ -159,9 +160,9 @@ function shrineVox(spent) {
   }
   for (let z = 19; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++)
     if (Math.hypot(x - c, y - c, (z - 27) * 1.05) < 5.6) put(x, y, z, spent ? 1 : 2);                 // the orb
-  return bakeVox(vox, S, S, H, ELIT.stone, 8, ELIT.bone);
+  return bakeVox(vox, S, S, H, ELIT.stone, glow, ELIT.bone);
 }
-export const voxShrine = () => shrineVox(false);
+export const voxShrine = (glow = 8) => shrineVox(false, glow);
 export const voxShrineSpent = () => shrineVox(true);
 // A Cult harvester's lantern-cage, dropped where it fell (M8, sim lamps.js): six iron bars on a ring under a hood, the
 // caught soul a violet light inside. Broken: two bars gone, the hood knocked askew, nothing inside.
@@ -297,6 +298,7 @@ export function buildProps(seed) {
     chest: [voxChest()],
     chestOpen: [voxChestOpen()],
     shrine: [voxShrine()],
+    shrine_mend: [voxShrine(11)], shrine_might: [voxShrine(12)], shrine_ward: [voxShrine(8)],
     shrineSpent: [voxShrineSpent()],
     cage: [voxCage()],
     cageOpen: [voxCageOpen()],
@@ -314,7 +316,7 @@ export function buildProps(seed) {
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.
-export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35], cage: [0.9, 0.7, 1.9] };
+export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], shrine_mend: [0.5, 1.7, 0.7], shrine_might: [1.9, 0.5, 0.4], shrine_ward: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35], cage: [0.9, 0.7, 1.9] };
 
 // ---- billboard from an already-quantized character canvas (albedo) ----
 // Normal is a soft vertical cylinder: pixels bow toward their row's horizontal

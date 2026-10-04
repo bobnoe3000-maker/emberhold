@@ -663,9 +663,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     await p.waitForTimeout(800); await run(5);
-    const at = await p.evaluate(() => {
-      const s = globalThis.__sim, find = () => [...s.world.props].find(([, v]) => v === 'shrine');
-      for (let d = 1; d < 4 && !find(); d++) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth: d, floors: [] });   // (a floor with a shrine)
+    const at = await p.evaluate(async () => {
+      const { shrineKind } = await import('./src/sim/shrines.js');   // (v1.30: a green one, the kind that mends)
+      const s = globalThis.__sim, find = () => [...s.world.props].find(([k, v]) => v === 'shrine' && shrineKind(s.world, ...k.split(',').map(Number)) === 'mend');
+      for (let d = 1; d < 6 && !find(); d++) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth: d, floors: [] });   // (a floor with a shrine)
       const k = find(); if (!k) return null; const [x, y] = k[0].split(',').map(Number), q = s.state.player;
       q.x = q.px = x + 1.5; q.y = q.py = y + 0.5; s.state.party[0].hp = 5;
       s.commands.push({ type: 'harvest', tx: x, ty: y }); return { x, y };

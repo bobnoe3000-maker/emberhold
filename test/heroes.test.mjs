@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
+import { shrineKind } from '../src/sim/shrines.js';
 import { isWalkable } from '../src/sim/world.js';
 import { CLASSES, SHIELD_DEF, ORIGINS, ORIGIN_EDGE, statsFor, makeMember, cleanName, xpToNext } from '../src/sim/party.js';
 import { pendingPoints, autoAllocate, POINTS_PER_LEVEL } from '../src/sim/attributes.js';
@@ -236,8 +237,8 @@ test('the temple raises the Fallen: free once a day to level 5, then 25 gold × 
 test('a shrine raises one Fallen member at half HP, once', () => {
   const sim = createSim(SEED, undefined, { scene: 'dungeon' }), c = makeMember('c1', 'Maera', 'fighter', 1);
   c.fallen = true; c.hp = 0; sim.state.party.push(c);
-  let at = null; for (const [k, v] of sim.world.props) if (v === 'shrine') { at = k.split(',').map(Number); break; }
-  if (!at) return;                                              // (this seed's first level has no shrine)
+  let at = null; for (const [k, v] of sim.world.props) if (v === 'shrine' && shrineKind(sim.world, ...k.split(',').map(Number)) === 'mend') { at = k.split(',').map(Number); break; }
+  if (!at) return;                                              // (this seed's first level has no green shrine: shrines.test covers it)
   const p = sim.state.player; p.x = at[0] + 1.5; p.y = at[1] + 0.5;
   run(sim, [{ type: 'harvest', tx: at[0], ty: at[1] }, { type: 'useShrine', tx: at[0], ty: at[1] }]);   // touch, then the popup's Use
   assert.equal(c.fallen, false); assert.ok(Math.abs(c.hp - statsFor(c).maxHp * 0.5) <= 1);

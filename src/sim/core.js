@@ -27,6 +27,7 @@ import { createBoard } from './board.js';
 import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
 import { restoreCount, credit } from './lamps.js';
+import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -94,6 +95,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
     count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
+    boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
@@ -368,10 +370,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
       if (propAt(world, cmd.tx, cmd.ty) !== 'shrine') return;
       if (Math.max(Math.abs(dx), Math.abs(dy)) > REACH) { bus.emit('outOfReach', { tx: cmd.tx, ty: cmd.ty }); return; }
-      if (!shrineNeeded()) { bus.emit('shrine', { tx: cmd.tx, ty: cmd.ty, did: 'none' }); return; }   // kept for later
+      const kind = shrineKind(world, cmd.tx, cmd.ty);
+      if (!shrineNeeded(kind)) { bus.emit('shrine', { tx: cmd.tx, ty: cmd.ty, kind, did: 'none' }); return; }   // kept for later
       face(p, dx, dy);
       world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
-      shrine(cmd.tx, cmd.ty);
+      shrine(cmd.tx, cmd.ty, kind);
       bus.emit('looted', { tx: cmd.tx, ty: cmd.ty, kind: 'shrine' });
       bus.emit('countersChanged', { ...state.counters });
       return;
@@ -388,7 +391,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
         if (prop === 'stairs' || prop === 'stairwell') { bus.emit('descend', { depth: state.depth + 1 }); descend(); return; }   // any tile of the stairwell
         if (prop === 'shrine') {                           // a touch reads it and offers its blessing; using it is its own command (useShrine)
           bus.emit('shrineTouched', { tx: cmd.tx, ty: cmd.ty });   // what's written on it is read either way (lore.js)
-          bus.emit('shrineOffer', { tx: cmd.tx, ty: cmd.ty, ...shrineWould() });
+          bus.emit('shrineOffer', { tx: cmd.tx, ty: cmd.ty, ...shrineWould(shrineKind(world, cmd.tx, cmd.ty)) });
           return;
         }
         if (prop === 'cage') {                              // a harvester's lantern-cage (lamps.js): a touch breaks it, and its soul goes free
@@ -428,19 +431,29 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     }
   }
 
-  // A site shrine (one use each, GDD §3.6): raises the first Fallen member at 50 % HP; with
-  // nobody Fallen it restores the party instead. A touch (harvest) only offers it: 'shrineOffer'
-  // { tx, ty, will: 'raise' | 'mend' | 'none', name? } and the popup (ui/shrine.js) shows the blessing
-  // with Use or Close (v1.14; it was used on the touch). `useShrine { tx, ty }` uses it, and only when it
-  // would do something: with nobody Fallen and everyone standing whole it stays lit for later. Events:
-  // 'shrine' { tx, ty, did: 'raised' | 'mended' | 'none', name? }.
+  // A site shrine (one use each, GDD §3.6), of three kinds (v1.30, shrines.js: its tile's, by the floor's seed). A
+  // green one (mend) raises the first Fallen member at 50 % HP, or with nobody Fallen restores the party; a red one
+  // (might) and a blue one (ward) give the whole party +25 % ATK / DEF for 2 minutes. A touch (harvest) only offers
+  // it: 'shrineOffer' { tx, ty, kind, will: 'raise' | 'mend' | 'might' | 'ward' | 'none', name?, secs?, k? } and the
+  // popup (ui/shrine.js) shows the blessing with Use or Close. `useShrine { tx, ty }` uses it, and only when it would
+  // do something: a green one with nobody Fallen and everyone whole, or any one with nobody standing, stays lit for
+  // later. Events: 'shrine' { tx, ty, kind, did: 'raised' | 'mended' | 'might' | 'ward' | 'none', name?, secs?, k? }.
   const hurt = (m) => { if (m.down || m.fallen) return false; const s = statsFor(m); return m.hp < s.maxHp || (m.mp ?? s.maxMp) < s.maxMp; };
-  const shrineNeeded = () => state.party.some((m) => m.fallen || hurt(m));
-  const shrineWould = () => { const f = state.party.find((m) => m.fallen); return f ? { will: 'raise', name: f.name } : { will: shrineNeeded() ? 'mend' : 'none' }; };
-  function shrine(tx, ty) {
-    const f = state.party.find((m) => m.fallen);
-    if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); bus.emit('shrine', { tx, ty, did: 'raised', name: f.name }); }
-    else { for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; } bus.emit('shrine', { tx, ty, did: 'mended' }); }
+  const standing = () => state.party.some((m) => !m.down && !m.fallen);
+  const shrineNeeded = (kind) => (kind === 'mend' ? state.party.some((m) => m.fallen || hurt(m)) : standing());
+  const shrineWould = (kind) => {
+    if (kind !== 'mend') { const S = SHRINES[kind]; return { kind, will: standing() ? kind : 'none', secs: S.secs, k: S.k }; }
+    const f = state.party.find((m) => m.fallen); return f ? { kind, will: 'raise', name: f.name } : { kind, will: shrineNeeded(kind) ? 'mend' : 'none' };
+  };
+  function shrine(tx, ty, kind) {
+    if (kind !== 'mend') {
+      const S = SHRINES[kind]; boonsOf(state)[S.stat] = state.t + S.secs;
+      bus.emit('shrine', { tx, ty, kind, did: kind, secs: S.secs, k: S.k }); bus.emit('boonsChanged', { ...state.boons });
+    } else {
+      const f = state.party.find((m) => m.fallen);
+      if (f) { heroes.raise(f, 0.5); bus.emit('resurrected', { id: f.id, name: f.name, how: 'shrine', cost: 0 }); bus.emit('shrine', { tx, ty, kind, did: 'raised', name: f.name }); }
+      else { for (const m of state.party) if (!m.down) { const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; } bus.emit('shrine', { tx, ty, kind, did: 'mended' }); }
+    }
     bus.emit('partyChanged', state.party);
   }
 
@@ -533,6 +546,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       flags: { ...state.flags },
       bosses: { ...state.bosses },
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
+      boons: { ...boonsOf(state) },     // (v20)
       trials: Object.keys(state.trials),
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
@@ -596,6 +610,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
     { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
+    state.boons = restoreBoons(data);   // v19 and older: none
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);

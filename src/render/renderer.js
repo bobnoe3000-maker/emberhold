@@ -24,6 +24,7 @@ import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc, raisedLook } from './fx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
+import { shrineKind } from '../sim/shrines.js';
 import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
@@ -838,9 +839,10 @@ export function createRenderer(canvas, sim, input) {
       const md = world.mods.get(tx + ',' + ty);
       const pk = propAt(world, tx, ty) || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);   // (an opened chest stays, lid back; a used shrine, its orb dark; a broken cage, empty)
       if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
-        const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
+        const arr = props[pk === 'shrine' ? 'shrine_' + shrineKind(world, tx, ty) : pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
-        if (PROP_LIGHT[pk]) j.lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[pk] });   // braziers / gate / shrine glow
+        const lk = pk === 'shrine' ? 'shrine_' + shrineKind(world, tx, ty) : pk;   // (a shrine's light is its orb's: shrines.js)
+        if (PROP_LIGHT[lk]) j.lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[lk] });   // braziers / gate / shrine glow
       }
       const rk = resourceAt(world, tx, ty);
       if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
@@ -1322,7 +1324,13 @@ export function createRenderer(canvas, sim, input) {
     return best;
   }
   // An unused shrine says what it is from across the room, and what it does as you come near (GDD §3.6):
-  // its orb's aqua, never the colour alone. A used one goes dark and unlabelled.
+  // its orb's colour, never the colour alone (v1.30: the name says which of the three, sim shrines.js). A used one
+  // goes dark and unlabelled.
+  const SHRINE_LABEL = {
+    mend: { name: 'Shrine of Mending', rgb: '150,236,170', does: 'mends everyone, or raises one of the slain · once' },
+    might: { name: 'Shrine of Might', rgb: '255,150,130', does: 'the party strikes harder: +25 % ATK for 2 minutes · once' },
+    ward: { name: 'Shrine of Warding', rgb: '150,214,244', does: 'the party stands firmer: +25 % DEF for 2 minutes · once' },
+  };
   function drawShrines(ox, oy, ix, iy) {
     const w = sim.world, sp = props.shrine && props.shrine[0]; if (!w.props || !sp) return;
     const k = vw / window.innerWidth;
@@ -1332,12 +1340,12 @@ export function createRenderer(canvas, sim, input) {
       if (d > 14 || propAt(w, tx, ty) !== 'shrine') continue;
       const P = project(tx + 0.5, ty + 0.5, heightAt(w, tx, ty)), sx = (ox + P.sx) * S, sy = (oy + P.sy - sp.ay - 4) * S;
       if (sx < -60 * k || sx > vw + 60 * k || sy < (hudB + 14) * k || sy > vh) continue;
-      const a = Math.max(0, Math.min(1, (14 - d) / 4));
+      const a = Math.max(0, Math.min(1, (14 - d) / 4)), sk = shrineKind(w, tx, ty), L = SHRINE_LABEL[sk];
       octx.textAlign = 'center'; octx.font = `700 ${Math.round(12 * k)}px Georgia, 'Times New Roman', serif`;
-      octx.fillStyle = `rgba(6,10,14,${0.8 * a})`; octx.fillText('Shrine', sx + k, sy + k);
-      octx.fillStyle = `rgba(150,232,244,${a})`; octx.fillText('Shrine', sx, sy);
+      octx.fillStyle = `rgba(6,10,14,${0.8 * a})`; octx.fillText(L.name, sx + k, sy + k);
+      octx.fillStyle = `rgba(${L.rgb},${a})`; octx.fillText(L.name, sx, sy);
       if (d <= 6) {
-        const b = Math.max(0, Math.min(1, (6 - d) / 2)), t2 = 'mends everyone, or raises one of the slain · once';
+        const b = Math.max(0, Math.min(1, (6 - d) / 2)), t2 = L.does;
         octx.font = `${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`;
         octx.fillStyle = `rgba(6,10,14,${0.8 * b})`; octx.fillText(t2, sx + k, sy + 14 * k + k);
         octx.fillStyle = `rgba(200,236,240,${b})`; octx.fillText(t2, sx, sy + 14 * k);
