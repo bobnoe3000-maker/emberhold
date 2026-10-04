@@ -144,6 +144,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#party .card[data-idx="1"]').tap(); await p.waitForTimeout(400);
     await p.locator('#gearSheet [data-view=contract]').tap(); await p.waitForTimeout(300);
     const contract = await p.locator('#gearSheet .ct').innerText().catch(() => '');
+    // the ✕ is a thumb's size and clear of the member tabs (the owner, 2026-10-04: it overlapped the last tab by 3 px)
+    const xb = await p.evaluate(() => { const x = document.querySelector('#gearSheet .x').getBoundingClientRect(), t = document.querySelector('#gearSheet .tabs').getBoundingClientRect(); return { w: x.width, h: x.height, gap: t.top - x.bottom }; });
+    check('character window: the close button is 44 px and clear of the member tabs', xb.w >= 44 && xb.h >= 44 && xb.gap >= 0, JSON.stringify(xb));
     await p.locator('#gearSheet [data-close]').tap(); await p.waitForTimeout(300);
     check('m3: wages on screen: the gold line, the card tag, the Contract tab, the Guild\'s terms', /−\d+ · dawn \d+m/.test(wageLine) && /◆ \d+\/D/i.test(tag)
       && /The Guild.s terms/i.test(terms) && rows === 5 && /Loyalty/i.test(contract) && /gold a dawn/i.test(contract), `${wageLine} | ${tag} | rows ${rows} | ${contract.split('\n').slice(0, 3).join(' / ')}`);

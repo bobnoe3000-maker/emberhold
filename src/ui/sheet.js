@@ -39,8 +39,8 @@ const CSS = SW_CSS + `
   padding: 0 12px calc(env(safe-area-inset-bottom, 0px) + 12px); font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #efe4cf; overflow-y: auto; }
 #gearSheet.on { transform: none; }
 #gearSheet .grab { width: 38px; height: 4px; border-radius: 2px; background: #3a3346; margin: 7px auto 4px; }
-#gearSheet .x { position: absolute; right: 12px; top: 10px; width: 30px; height: 30px; border-radius: 15px; border: 1px solid rgba(214,170,98,0.45); color: #d8a040; display: grid; place-items: center; font-size: 14px; background: none; }
-#gearSheet .tabs { display: flex; gap: 6px; margin-top: 26px; }
+#gearSheet .x { position: absolute; right: 12px; top: 6px; width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.45); color: #d8a040; display: grid; place-items: center; font-size: 14px; background: none; }
+#gearSheet .tabs { display: flex; gap: 6px; margin-top: 44px; }   /* clear of the ✕ (it overlapped the last tab by 3 px: owner, 2026-10-04) */
 #gearSheet .tab { flex: 1; display: flex; gap: 7px; align-items: center; padding: 5px 7px; border: 1px solid #2c2838; border-radius: 6px; background: rgba(255,255,255,.02); min-width: 0; cursor: pointer; }
 #gearSheet .tab.on { border-color: #d8a040; background: rgba(216,160,64,.10); box-shadow: inset 0 -2px 0 #d8a040; }
 #gearSheet .tab canvas { width: 30px; height: 35px; flex: none; background: #0c0a12; border: 1px solid #2c2838; }
