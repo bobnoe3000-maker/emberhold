@@ -7,9 +7,10 @@ mountain pass with some snow on the ground. Rocky outcrops."*
 It follows [world-map-proposal.md](./world-map-proposal.md) §3, where every region gets one full town as the
 player's base. Nothing here ships until the owner picks. Each town is built with its region's milestone.
 
-![The six towns at one scale, each drawn in the game's own view](img/towns/town-plans.jpg)
+![The towns at one scale, each drawn in the game's own view](img/towns/town-plans.jpg)
 
-*Drawn by `node tools/worldmap/towns.mjs` as block models, not bakes. All six are at one scale, so a small town
+*Drawn by `node tools/worldmap/towns.mjs` as block models, not bakes. Saltmere is drawn too, for the owner's
+"swampy area is an option too". All of them are at one scale, so a small town
 reads small. The camera looks from the south-east, so the top of each panel is the town's back (north and west).*
 
 ## What stays the same
@@ -33,6 +34,7 @@ A player who knows Thornwick's square knows every town's square. Everything roun
 | Town | Region | Size | Edge | Ground | Its set pieces |
 |---|---|---|---|---|---|
 | **Thornwick** (shipped) | Emberfall | medium: 10 houses | timber palisade | meadow grass, farms, a brook | fields, the bridge |
+| **Saltmere** (waystation) | Emberfall: the Fens | **small**: 8 stilt houses | **no wall**: water all round | **bog water, peat and mud, reed beds, duckweed**; boardwalks | **houses on stilts**, the square a deck on piles, punts, eel traps, dead trees, marsh-lights |
 | **Ashgate** | the Reach | **large**: 16 houses in terraces | **slag-brick stone walls**, 10 towers | **dry, cracked earth and dust; red rock outcrops**; black slag | the pithead wheel over the gate, the Cinderworks' chimneys, slag heaps, the ore rails, a tailings pond |
 | **Tollhaven** | the Tidemark | **large**: 13 houses and 4 warehouses | **stone walls landward**, the harbour open to the sea | **beach sand, wet sand, shingle, dune grass**; quay stone | **the quay, three jetties and moored boats**, two moles and the harbour chain, boats drawn up on the beach, net racks |
 | **Rookstead** | the Greenwood | **small**: 6 longhouses | **no wall**: a ring of standing stones | forest floor, moss, leaf litter; a grass clearing | the great oak, the moot-stone, skeps, the charcoal clamp; the wood close round |
@@ -44,6 +46,7 @@ The ground area each town paints, against Thornwick's 170 × 145 tiles:
 | Town | Tiles | Against Thornwick |
 |---|---|---|
 | Rookstead | 138 × 124 | −31 % |
+| Saltmere | 146 × 128 | −24 % |
 | Frosthold | 160 × 148 | −4 % (the crags take a third of it) |
 | Tollhaven | 192 × 182 | +42 % |
 | Ashgate | 202 × 176 | +44 % |
@@ -55,6 +58,26 @@ The ground area each town paints, against Thornwick's 170 × 145 tiles:
 
 The reference. It's a farming town with a timber palisade on an earth bank, thatch and timber-frame, fields outside
 the gate and a brook under the bridge. Nothing changes.
+
+### Saltmere, the Greywater Fens: small, no wall, swamp
+
+The owner: *"Swampy area is an option too."* The Fens are already the swamp on the map, so Saltmere, their
+waystation, shows it. It's a stilt town in the bog a day from Thornwick.
+- **Edge: none.** The water is all round it, and the only dry way in is **the boardwalk** along the old canal road.
+- **Ground.**
+  - **Bog water** everywhere, dark and still, with **duckweed** in green skins.
+  - **Islands of peat and mud**, and **reed beds** standing in clumps.
+  - The square is **a deck on piles**, plank instead of paving, in the same place and the same shape as every
+    square. Boardwalks run off it to the houses.
+- **Buildings.**
+  - **Houses on stilts**: the Fens' rubble-and-plaster in its grey-green tones, slate roofs, raised a man's height.
+  - As a waystation it has two services, standing where a town's tavern and temple stand: the *Drowned Eel*, with
+    the Guild's board, and the Grey Sisters' chapel.
+  - The well is a rainwater cistern: nobody drinks the fen.
+- **Set pieces.** Punts tied at the boardwalks, eel traps on stakes, stunted alders and dead trees, and
+  **marsh-lights**, the pale wisps over the water at night. They are presentation only, and they never lead
+  anywhere good.
+- **Mood.** Fog, frogs and bitterns, the boardwalk's creak underfoot. Dusk comes early here.
 
 ### Ashgate, the Cinder Reach: large, slag-brick walls, arid
 
@@ -165,7 +188,7 @@ a town.
 
 | Waystation | Region | Its look |
 |---|---|---|
-| **Saltmere** | the Fens | stilt houses over the fen water, boardwalks for streets, eel traps |
+| **Saltmere** | the Fens | drawn above: stilt houses over the bog, boardwalks for streets, eel traps |
 | **Kell's Rest** | the Reach | the Assay's dusty depot under a dead volcano: sheds, wagons, red outcrops |
 | **Brine Cross** | the Tidemark | a bridge-town: houses on the bridge itself, the river below |
 | **Hollin Ford** | the Greenwood | a ford, a barn and a few houses among oaks |
@@ -194,10 +217,13 @@ the same art rules: structure over noise, few tones, low-frequency normals.
 | **snow** | Frosthold, the Hospice | patches from noise, biased to the lee (north of anything solid); a little height |
 | **forest floor** | Rookstead, Hollin Ford | loam, with litter and moss as low-frequency patches |
 | **flagstones** | the Lamphall | large paver cells, with weeds in the joints by hash |
+| **bog water**, **peat**, **reed bed**, **duckweed** | Saltmere, and anywhere swampy | still dark water with a faint sheen; peat as low lumps; reeds as upright tufts (the grass tuft, taller); duckweed as flat green patches on the water |
 
 **New baked pieces** in `tools/actor-lab/buildkit.js` (never hand-edited, AGENTS.md):
 - **Ashgate:** the pithead wheel, terraces, chimneys, slag heaps;
 - **Tollhaven:** the quay, jetties (walkable decks, like the bridge), boats, warehouses, net racks, chain towers;
+- **Saltmere:** stilt houses, the deck on piles, boardwalks (walkable decks, like the bridge), punts, eel traps, dead
+  trees;
 - **Rookstead:** longhouses, standing stones, the moot-stone, skeps, the charcoal clamp, the great oak;
 - **Frosthold:** crags, the bell tower, cairns, and snow-capped variants of the shipped rocks and pines;
 - **the Lamphall:** tenements, roofless shells, columns, rubble, imperial wall pieces, the Great Beacon.
@@ -244,3 +270,9 @@ The `?scene=town&region=` previews for `fens`, `reach` and `heights` stay until 
 3. **Tollhaven's harbour:** in front (south, as drawn), where you walk past it on the way in but the menu bar
    covers it in the square? Or behind (north-west), where the sea is always on screen behind the temple but the
    jetties stand behind the houses?
+4. **Swamp, where else?** It's drawn for Saltmere, where the Fens already are. The same ground could also go to:
+   - the Greenwood's south edge, with Hollin Ford as a fen ford;
+   - a salt marsh behind Tollhaven's beach;
+   - the Fens' sites (the Sickpools, the approach to the Drowned Abbey).
+
+   Saltmere only, or some of these too?

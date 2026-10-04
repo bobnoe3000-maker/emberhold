@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns', 'town-plans.jpg'));
-const W = 1200, PW = 1200, PH = 780, TOP = 112, H = TOP + PH * 6 + 20, K = 2.45;   // one column: read on a phone held upright
+const W = 1200, PW = 1200, PH = 780, TOP = 112, K = 2.45;   // one column: read on a phone held upright
 const BG = '#17161d', PANEL = '#1e1d25', TEXT = '#e6d9bd', DIM = '#a89c84', EDGE = '#0e0d12';
 
 let seed = 0x70e115;
@@ -36,12 +36,14 @@ function panel(col, row, spec) {
     // a block: footprint x0..x1 × y0..y1, h tall. The camera sees its top and its +x and +y faces.
     box: (bx0, by0, bx1, by1, h, c, o = {}) => solids.push({ d: bx1 + by1, s: () => {
       const top = [[bx0, by0], [bx1, by0], [bx1, by1], [bx0, by1]];
-      let s = `<polygon points="${[P(bx0, by1), P(bx1, by1), P(bx1, by1, h), P(bx0, by1, h)].map((p) => p.map(f1).join(',')).join(' ')}" fill="${c[1]}" stroke="${EDGE}" stroke-width="0.8"/>`;
-      s += `<polygon points="${[P(bx1, by0), P(bx1, by1), P(bx1, by1, h), P(bx1, by0, h)].map((p) => p.map(f1).join(',')).join(' ')}" fill="${c[2]}" stroke="${EDGE}" stroke-width="0.8"/>`;
-      s += `<polygon points="${pts(top, h)}" fill="${o.open ? '#2a2620' : c[0]}" stroke="${EDGE}" stroke-width="0.8"/>`;
+      const z = o.z || 0, t = z + h;   // o.z: stood on posts (Saltmere's stilts)
+      let s = z ? [[bx0, by1], [bx1, by1], [bx1, by0], [(bx0 + bx1) / 2, by1]].map(([x, y]) => { const [a, b] = P(x, y), [, c2] = P(x, y, z); return `<line x1="${f1(a)}" y1="${f1(b)}" x2="${f1(a)}" y2="${f1(c2)}" stroke="#2a2018" stroke-width="1.6"/>`; }).join('') : '';
+      s += `<polygon points="${[P(bx0, by1, z), P(bx1, by1, z), P(bx1, by1, t), P(bx0, by1, t)].map((p) => p.map(f1).join(',')).join(' ')}" fill="${c[1]}" stroke="${EDGE}" stroke-width="0.8"/>`;
+      s += `<polygon points="${[P(bx1, by0, z), P(bx1, by1, z), P(bx1, by1, t), P(bx1, by0, t)].map((p) => p.map(f1).join(',')).join(' ')}" fill="${c[2]}" stroke="${EDGE}" stroke-width="0.8"/>`;
+      s += `<polygon points="${pts(top, t)}" fill="${o.open ? '#2a2620' : c[0]}" stroke="${EDGE}" stroke-width="0.8"/>`;
       if (o.ridge) { const [a, b] = o.ridge === 'x' ? [[bx0, (by0 + by1) / 2], [bx1, (by0 + by1) / 2]] : [[(bx0 + bx1) / 2, by0], [(bx0 + bx1) / 2, by1]];
-        s += `<polyline points="${pts([a, b], h)}" stroke="${EDGE}" stroke-width="1" opacity="0.6"/>`; }
-      if (o.lit) for (let i = 0; i < o.lit; i++) { const t = (i + 0.5) / o.lit, [wx, wy] = P(bx0 + (bx1 - bx0) * t, by1, h * 0.45); s += `<rect x="${f1(wx - 1.2)}" y="${f1(wy - 1.6)}" width="2.4" height="3.2" fill="#e8a24a" opacity="0.9"/>`; }
+        s += `<polyline points="${pts([a, b], t)}" stroke="${EDGE}" stroke-width="1" opacity="0.6"/>`; }
+      if (o.lit) for (let i = 0; i < o.lit; i++) { const u = (i + 0.5) / o.lit, [wx, wy] = P(bx0 + (bx1 - bx0) * u, by1, z + h * 0.45); s += `<rect x="${f1(wx - 1.2)}" y="${f1(wy - 1.6)}" width="2.4" height="3.2" fill="#e8a24a" opacity="0.9"/>`; }
       return s; } }),
     tree: (x, y, r, c = '#34452a', trunk = 3) => solids.push({ d: x + y, s: () => { const [a, b] = P(x, y), [, tb] = P(x, y, trunk);
       return `<line x1="${f1(a)}" y1="${f1(b)}" x2="${f1(a)}" y2="${f1(tb)}" stroke="#2a1f17" stroke-width="2"/><ellipse cx="${f1(a)}" cy="${f1(tb - r * K * 0.55)}" rx="${f1(r * K)}" ry="${f1(r * K * 0.75)}" fill="${c}" stroke="${EDGE}" stroke-width="0.8"/>`; } }),
@@ -114,6 +116,29 @@ const TOWNS = [
       scatter(70, -10, -10, 160, 135, (x, y) => (x < 4 || y < 2) && x + y < 120, (x, y) => g.tree(x, y, rr(3, 5)));
       scatter(10, 86, 86, 110, 106, () => true, (x, y) => g.tree(x, y, 3, '#3c5130'));
       g.note(139, 30, 'fields'); g.note(124, 120, 'brook');
+    } },
+  { name: 'Saltmere', sub: 'the Greywater Fens · Emberfall’s waystation · levels 8–15', tag: 'small · no wall: stilts over the water', tagc: '#9fb08a',
+    extent: [-6, -6, 140, 122], outside: '#161c1a',
+    swatches: [['#2f3a33', 'bog water'], ['#3a3226', 'peat and mud'], ['#6b6a3e', 'reed beds'], ['#4e5a2e', 'duckweed'], ['#5e4a36', 'boardwalk']],
+    draw(g) {
+      g.poly([[-6, -6], [140, -6], [140, 122], [-6, 122]], '#2f3a33');
+      for (let i = 0; i < 30; i++) g.blob(rr(-6, 140), rr(-6, 122), rr(5, 13), '#3a3226', 0.6);                 // islands of peat
+      for (let i = 0; i < 40; i++) g.blob(rr(-6, 140), rr(-6, 122), rr(2, 5), '#4e5a2e', 0.7);                  // duckweed
+      for (let i = 0; i < 34; i++) { const x = rr(-6, 140), y = rr(-6, 122); for (let k = 0; k < 6; k++) { const a = rr(-0.6, 0.6); g.line([[x + k * 0.7, y], [x + k * 0.7 + a, y - 0.1]], 0.5, '#6b6a3e'); } g.blob(x + 2, y, 2.4, '#6b6a3e', 0.6); }   // reed beds
+      g.ellipse(60, 62, 25, 23, '#5e4a36'); g.ellipse(36, 40, 9, 8, '#5e4a36');                                 // the square is a deck on piles
+      g.line([[140, 80], [84, 80], [76, 76]], 3.4, '#5e4a36');                                                     // the boardwalk in
+      g.line([[30, 56], [20, 76], [24, 96]], 2.4, '#5e4a36'); g.line([[66, 50], [80, 26], [96, 22]], 2.4, '#5e4a36'); g.line([[72, 70], [92, 92], [110, 100]], 2.4, '#5e4a36');
+      const st = { house: ['#363d36', '#5b5f57', '#6a6e64'], temple: ['#363d36', '#7a7e72', '#8a8e82'] };
+      g.box(26, 19, 42, 30, 11, st.temple, { ridge: 'x', lit: 2, z: 2 });   // the Grey Sisters' chapel, where a town's temple stands
+      g.box(23, 42, 34, 55, 9, st.house, { ridge: 'y', lit: 2, z: 2 });    // the Drowned Eel, with the board, where the tavern stands
+      g.box(65, 70, 67.5, 72.5, 2, ['#3a3a3a', '#2c2c30', '#36363a']);     // the well, here a cistern of rainwater
+      for (const [x, y, w, d] of [[48, 40, 8, 8], [76, 22, 9, 8], [96, 22, 8, 9], [20, 76, 8, 9], [24, 96, 9, 8], [92, 92, 8, 8], [110, 100, 9, 8], [50, 68, 8, 8]])
+        g.box(x - w / 2, y - d / 2, x + w / 2, y + d / 2, 6, st.house, { ridge: w > d ? 'x' : 'y', lit: 1, z: 3 });
+      for (const [x, y] of [[104, 60], [112, 66], [20, 30]]) g.box(x - 1, y - 3, x + 1, y + 3, 1.6, ['#4b3a2b', '#3e3024', '#5e4a36']);   // punts
+      for (const [x, y] of [[120, 40], [118, 46], [124, 52], [8, 110]]) g.box(x - 0.6, y - 0.6, x + 0.6, y + 0.6, 3, ['#6b5a40', '#4b3a2b', '#5e4a36']);   // eel traps on stakes
+      scatter(36, -6, -6, 140, 122, (x, y) => (x - 60) ** 2 + (y - 62) ** 2 > 2200, (x, y) => rand() < 0.6 ? g.tree(x, y, rr(2, 3.4), '#3a4232', rr(4, 6)) : g.raw(x + y, () => { const [a, b] = g.P(x, y), [, c] = g.P(x, y, 9); return `<path d="M${f1(a)},${f1(b)} L${f1(a)},${f1(c)} M${f1(a)},${f1(c + 8)} l-7,-6 M${f1(a)},${f1(c + 14)} l6,-5" stroke="#2c241c" stroke-width="2" fill="none"/>`; }));   // stunted alders, dead trees
+      g.raw(400, () => [[16, 12], [118, 20], [100, 112], [6, 60]].map(([x, y]) => { const [a, b] = g.P(x, y, 4); return `<circle cx="${f1(a)}" cy="${f1(b)}" r="3" fill="#b8d4c0" opacity="0.8"/><circle cx="${f1(a)}" cy="${f1(b)}" r="9" fill="#b8d4c0" opacity="0.12"/>`; }).join(''));   // marsh-lights
+      g.note(110, 112, 'the boardwalk in', { size: 13 }); g.note(60, 92, 'the square: a deck on piles', { size: 13 }); g.note(122, 34, 'eel traps', { size: 13 }); g.note(16, 4, 'marsh-lights', { size: 13, z: 8 });
     } },
   { name: 'Ashgate', sub: 'the Cinder Reach · levels 15–30 · a mining town', tag: 'large · slag-brick walls', tagc: '#d08a5a',
     extent: [-26, -26, 176, 150], outside: '#2a221c', dy: 36,
@@ -243,6 +268,7 @@ const TOWNS = [
 ];
 
 // ── the sheet ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+const H = TOP + PH * TOWNS.length + 20;
 add(`<rect width="${W}" height="${H}" fill="${BG}"/>`);
 add(`<text x="30" y="50" font-family="Fell SC" font-size="34" fill="${TEXT}" letter-spacing="3">The region towns</text>`);
 add(`<text x="30" y="80" font-family="Fell It" font-size="17" fill="${DIM}">One scale throughout. Seen as the game sees it: the camera looks from the south-east, so each town's back (north and west)</text>`);
