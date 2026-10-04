@@ -21,18 +21,18 @@ export const TOWER = { site: 'mere_tower', level: 9, step: 0.06, landing: 10, ga
 export const BLOCKS = ['ashbound', 'redhand', 'goblin', 'reedmen', 'chapel', 'lockcult', 'diggers', 'harvest', 'drowned'];
 // the wardens (world doc §12), shaped as battle.js BOSSES: a `like` kind's stats × their own, one mechanic each, no
 // XP and no coin of their own (the satchel pays). Their called men are their block's (battle.js gives them `escort`).
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'swarm', escort: string[], tower: true }>} */
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'swarm', escort: string[], tower: true, heirloom: string }>} */
 export const WARDENS = {
-  warden_doorward:   { name: 'The Doorward',    like: 'warrior',   hp: 24, atk: 2.1, def: 1.7, speed: 2.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true },
-  warden_mudlark:    { name: 'The Mudlark',     like: 'fenghoul',  hp: 22, atk: 2.2, def: 1.4, speed: 3.4, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true },
-  warden_bellringer: { name: 'The Bellringer',  like: 'acolyte',   hp: 30, atk: 2.4, def: 2.0, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true },
-  warden_lensman:    { name: 'The Lensman',     like: 'crossbow',  hp: 26, atk: 2.5, def: 1.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true },
-  warden_hush:       { name: 'The Hush',        like: 'rogue',     hp: 24, atk: 2.4, def: 1.5, speed: 3.6, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true },
-  warden_twins:      { name: 'The Twins',       like: 'brute',     hp: 28, atk: 2.2, def: 1.8, speed: 2.8, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true },
-  warden_hound:      { name: 'The Tower Hound', like: 'goblin',    hp: 24, atk: 2.3, def: 1.5, speed: 4.0, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true },
-  warden_gatherer:   { name: 'The Gatherer',    like: 'harvester', hp: 30, atk: 2.3, def: 1.9, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true },
-  warden_watcher:    { name: 'The Watcher',     like: 'mage',      hp: 26, atk: 2.6, def: 1.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true },
-  warden_starroom:   { name: 'The Star Room',   like: 'warrior',   hp: 34, atk: 2.4, def: 2.0, speed: 2.4, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true },
+  warden_doorward:   { name: 'The Doorward',    like: 'warrior',   hp: 24, atk: 2.1, def: 1.7, speed: 2.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true, heirloom: 'doorwards_visor' },
+  warden_mudlark:    { name: 'The Mudlark',     like: 'fenghoul',  hp: 22, atk: 2.2, def: 1.4, speed: 3.4, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true, heirloom: 'mudlarks_boots' },
+  warden_bellringer: { name: 'The Bellringer',  like: 'acolyte',   hp: 30, atk: 2.4, def: 2.0, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true, heirloom: 'bell_tongue' },
+  warden_lensman:    { name: 'The Lensman',     like: 'crossbow',  hp: 26, atk: 2.5, def: 1.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true, heirloom: 'lensmans_eye' },
+  warden_hush:       { name: 'The Hush',        like: 'rogue',     hp: 24, atk: 2.4, def: 1.5, speed: 3.6, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true, heirloom: 'the_hush' },
+  warden_twins:      { name: 'The Twins',       like: 'brute',     hp: 28, atk: 2.2, def: 1.8, speed: 2.8, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true, heirloom: 'twins_ring' },
+  warden_hound:      { name: 'The Tower Hound', like: 'goblin',    hp: 24, atk: 2.3, def: 1.5, speed: 4.0, xp: 0, gold: 0, mech: 'swarm',  escort: ['minion', 'rogue'], tower: true, heirloom: 'hounds_collar' },
+  warden_gatherer:   { name: 'The Gatherer',    like: 'harvester', hp: 30, atk: 2.3, def: 1.9, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true, heirloom: 'gatherers_hook' },
+  warden_watcher:    { name: 'The Watcher',     like: 'mage',      hp: 26, atk: 2.6, def: 1.6, xp: 0, gold: 0, mech: 'call',   escort: ['minion', 'rogue'], tower: true, heirloom: 'watchers_hood' },
+  warden_starroom:   { name: 'The Star Room',   like: 'warrior',   hp: 34, atk: 2.4, def: 2.0, speed: 2.4, xp: 0, gold: 0, mech: 'kindle', escort: ['minion', 'rogue'], tower: true, heirloom: 'the_star_cut' },
 };
 const WARDEN_IDS = Object.keys(WARDENS);
 
@@ -58,13 +58,21 @@ export const inTower = (w) => !!w && w.kind === 'dungeon' && w.site === TOWER.si
 /** @param {any} state */
 export function towerOf(state) {
   if (!state.tower) state.tower = fresh();
+  if (!state.tower.won) state.tower.won = {};
   return state.tower;
 }
-const fresh = () => ({ wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 } });
+const fresh = () => ({ wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} });
+// A warden's heirloom (items.js; world doc v1.25 §12) drops the first time the company puts it down in a bracket of the
+// hero's level (GDD §17: 15–29, 30–44, 45–59, 60–75; the Tower opens at 12, so 12–14 is a bracket of its own), at the
+// bracket's top item level, made for a class in the party. tower.won { [warden]: [bracket indexes won] } (save v23).
+export const BRACKETS = [[12, 14], [15, 29], [30, 44], [45, 59], [60, 75]];
+/** the bracket a level is in (its index) @param {number} level */
+export const bracketOf = (level) => { const i = BRACKETS.findIndex(([a, b]) => level >= a && level <= b); return i >= 0 ? i : level < 12 ? 0 : BRACKETS.length - 1; };
 /** a save's climb, read back whole or not at all: non-negative integers @param {any} data */
 export function restoreTower(data) {
   const t = data && data.tower, n = (v) => (Number.isInteger(v) && v >= 0 ? v : 0);
   if (!t || typeof t !== 'object') return fresh();
   const s = t.satchel || {}, wave = n(t.wave);
-  return { wave, best: Math.max(n(t.best), wave), landing: n(t.landing), atLanding: !!t.atLanding && wardenWave(wave), satchel: { gold: n(s.gold), cinders: n(s.cinders) } };
+  const won = {}; for (const id of Object.keys(WARDENS)) { const v = t.won && t.won[id]; if (Array.isArray(v)) won[id] = [...new Set(v.filter((b) => Number.isInteger(b) && b >= 0 && b < BRACKETS.length))]; }
+  return { wave, best: Math.max(n(t.best), wave), landing: n(t.landing), atLanding: !!t.atLanding && wardenWave(wave), satchel: { gold: n(s.gold), cinders: n(s.cinders) }, won };
 }

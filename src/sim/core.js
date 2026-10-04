@@ -15,7 +15,7 @@ import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
-import { hash2 } from './rng.js';
+import { hash2, mulberry32, streamSeed } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
 import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
@@ -28,7 +28,7 @@ import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
-import { towerOf, restoreTower, inTower } from './tower.js';
+import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
 import { createExpeditions } from './expeditions.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
@@ -105,7 +105,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
     away: null,                       // the time away being played through (offline progress, above): runtime only
     boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
-    tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 } },   // the Mere Tower's climb (tower.js)
+    tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
@@ -130,7 +130,18 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bus.emit('vaultOpened', { site: curSite, heirloom: v.heirloom });
   });
   // a boss down: its heirloom and a Fine-or-better drop the first time (items.js HEIRLOOMS); later falls roll for one (loot.js DROP)
-  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
+  bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.tower) wardenHeirloom(e, B); else if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
+  // a Mere Tower warden's heirloom (tower.js): the first fall in each bracket of the hero's level, at the bracket's top
+  // item level, made for a class in the party (drawn on its own stream from the warden and the bracket)
+  function wardenHeirloom(e, B) {
+    const T = towerOf(state), b = bracketOf(state.party[0].level), got = T.won[e.id] || (T.won[e.id] = []);
+    if (got.includes(b) || !B.heirloom) return;
+    got.push(b);
+    const classes = [...new Set(state.party.filter((m) => !m.fallen).map((m) => m.cls))];
+    let h = 7; for (const c of e.id) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+    const cls = classes[Math.floor(mulberry32(streamSeed((baseSeed ^ h ^ Math.imul(b + 1, 0x9e3779b1)) >>> 0, 0x4e1f))() * classes.length)] || state.party[0].cls;
+    loot.grant(B.heirloom, { ilv: BRACKETS[b][1], x: e.x, y: e.y, src: 'boss', cls });
+  }
 
   // named NPCs and conversations (npcs.js); walkTo is hoisted, standable is called only later
   // quests (quests.js), counted from this sim's events; the Lantern Guild's board jobs (board.js) are quests built from their ids

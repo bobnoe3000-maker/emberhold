@@ -176,11 +176,29 @@ export const HEIRLOOMS = {
   broken_chain: { base: 'charm', name: 'The Broken Chain', flav: 'He kept one link.', aff: ['def', 'hp', 'atk'] },
   last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
   skarns_drum: { base: 'charm', name: "Skarn's Drum", flav: 'It still keeps time. Nobody comes out any more.', aff: ['atk', 'hp', 'crit'] },
+  // the Mere Tower's wardens (sim tower.js; world doc v1.25 §12): a slot, not a base: each is made for a class in the
+  // company when it drops (wardenBase), at the top of the bracket it was won in
+  doorwards_visor: { slot: 'helm', name: "The Doorward's Visor", flav: 'It only ever looked one way: in.', aff: ['def', 'hp', 'hpr'] },
+  mudlarks_boots: { slot: 'boots', name: "The Mudlark's Wading-Boots", flav: 'Dry inside. Nobody knows how.', aff: ['dodge', 'hp', 'def'] },
+  bell_tongue: { slot: 'off', name: 'The Bell-Tongue', flav: 'It rang the hours for a town under the water.', aff: ['mp', 'mpr', 'def'] },
+  lensmans_eye: { slot: 'weapon', name: "The Lensman's Eye", flav: 'Ground from a lamp-glass. It still sees in the dark.', aff: ['crit', 'atk', 'dodge'] },
+  the_hush: { slot: 'armor', name: 'The Hush', flav: 'Not a sound. Not even a heartbeat.', aff: ['dodge', 'def', 'hp'] },
+  twins_ring: { slot: 'trinket', name: "One of the Twins' Rings", flav: 'Its pair is somewhere above you.', aff: ['atk', 'crit', 'hp'] },
+  hounds_collar: { slot: 'trinket', name: "The Hound's Collar", flav: 'The name on it is worn smooth.', aff: ['hp', 'hpr', 'def'] },
+  gatherers_hook: { slot: 'weapon', name: "The Gatherer's Hook", flav: 'It brought in a harvest nobody planted.', aff: ['atk', 'hp', 'crit'] },
+  watchers_hood: { slot: 'helm', name: "The Watcher's Hood", flav: "You'd swear something looks out of it.", aff: ['mp', 'crit', 'mpr'] },
+  the_star_cut: { slot: 'weapon', name: 'The Star-Cut', flav: 'One point on its guard is cut deeper than the rest, with a line under it.', aff: ['atk', 'def', 'crit'] },
 };
-/** an heirloom at an item level @param {string} id @param {number} ilv @param {string} uid */
-export function makeHeirloom(id, ilv, uid) {
+/** the base a slot-heirloom takes for a class: the first of that slot the class can use (a trinket: anyone's)
+ * @param {string} id @param {string} cls */
+export function wardenBase(id, cls) {
+  const H = HEIRLOOMS[id]; if (H.base) return H.base;
+  return Object.keys(BASES).find((b) => BASES[b].slot === H.slot && (classesOf(BASES[b]).length === 0 || classesOf(BASES[b]).includes(cls))) || 'charm';
+}
+/** an heirloom at an item level (a warden's: made for `cls`) @param {string} id @param {number} ilv @param {string} uid @param {string} [cls] */
+export function makeHeirloom(id, ilv, uid, cls = 'fighter') {
   const H = HEIRLOOMS[id];
-  return makeItem(H.base, ilv, 'heirloom', { uid, name: H.name, flav: H.flav, aff: H.aff.map((k) => { const [a, b] = AFFIX[k]; return [k, round(k, (a + b * ilv) * 1.1)]; }) });
+  return makeItem(H.base || wardenBase(id, cls), ilv, 'heirloom', { uid, name: H.name, flav: H.flav, aff: H.aff.map((k) => { const [a, b] = AFFIX[k]; return [k, round(k, (a + b * ilv) * 1.1)]; }) });
 }
 
 export const modText = (m) => (m.k === 'cost' ? `${m.ab} costs ${m.v} less MP` : `${m.ab} hits ${Math.round(m.v * 100)}% harder`);

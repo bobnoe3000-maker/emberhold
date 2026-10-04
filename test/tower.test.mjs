@@ -95,6 +95,47 @@ test('a climb is saved and carries on at its wave, paid once; a bad save reads a
   const paid = []; r.bus.on('towerWave', (e) => paid.push(e.wave)); r.bus.on('wave', (e) => { if (!e.cleared) paid.push('w' + e.wave); });
   for (let i = 0; i < 20 * 30; i++) { strong(r); r.tick(); }
   assert.equal(paid[0], 'w' + (T.wave + 1), `carries on at ${T.wave + 1}, nothing paid twice: ${paid.slice(0, 3)}`);
-  assert.deepEqual(restoreTower({ tower: { wave: -2, best: 'x', satchel: { gold: 1.5 } } }), { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 } });
+  assert.deepEqual(restoreTower({ tower: { wave: -2, best: 'x', satchel: { gold: 1.5 } } }), { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} });
   assert.equal(restoreTower({ tower: { wave: 7, atLanding: true } }).atLanding, false, 'a landing is every tenth wave');
+});
+
+// v1.34 (world doc v1.25): a warden's heirloom, the first fall in each bracket of the hero's level, at the bracket's top
+// item level, made for a class in the party
+import { HEIRLOOMS, wardenBase, makeHeirloom, canWear, BASES } from '../src/sim/items.js';
+import { bracketOf, BRACKETS } from '../src/sim/tower.js';
+
+test('every warden has its heirloom, and each can be made for any class, wearable by it', () => {
+  for (const id of Object.keys(WARDENS)) {
+    const h = WARDENS[id].heirloom; assert.ok(HEIRLOOMS[h], `${id} → ${h}`);
+    for (const cls of ['fighter', 'rogue', 'mage', 'cleric', 'shaman']) {
+      const it = makeHeirloom(h, 14, 'x', cls); assert.equal(it.r, 'heirloom'); assert.equal(BASES[it.base].slot, HEIRLOOMS[h].slot);
+      assert.ok(canWear({ cls, level: 14 }, it), `${h} as ${it.base} for a ${cls}`);
+    }
+  }
+  assert.equal(wardenBase('doorwards_visor', 'fighter'), 'greathelm');
+  assert.deepEqual([11, 12, 14, 15, 29, 30, 75].map(bracketOf), [0, 0, 0, 1, 1, 2, 4]);
+});
+
+test('a warden\'s first fall in a bracket leaves its heirloom at the bracket\'s top level, for a class in the party; not again in that bracket', () => {
+  const { sim, ev } = inHall(30); sim.state.party[0].level = 12; strong(sim);
+  const heir = []; sim.bus.on('loot', (e) => { if (e.heirloom) heir.push(e); });
+  toLanding(sim, ev);
+  assert.equal(heir.length, 1); const it = heir[0].item;
+  assert.equal(heir[0].heirloom, 'doorwards_visor'); assert.equal(it.ilv, BRACKETS[0][1]);
+  assert.ok(sim.state.party.some((m) => canWear({ cls: m.cls, level: 99 }, it)), `${it.base} fits someone in the company`);
+  assert.deepEqual(sim.state.tower.won, { warden_doorward: [0] });
+  // the next climb's Doorward, the same bracket: nothing; at 15, the next bracket's
+  sim.commands.push({ type: 'towerLeave' }); sim.tick();
+  const b = inHall(30); b.sim.state.party[0].level = 12; b.sim.state.tower = JSON.parse(JSON.stringify(sim.state.tower)); b.sim.state.tower.wave = 0; b.sim.state.tower.atLanding = false;
+  const h2 = []; b.sim.bus.on('loot', (e) => { if (e.heirloom) h2.push(e); });
+  toLanding(b.sim, b.ev); assert.equal(h2.length, 0, 'once a bracket');
+  const c = inHall(30); c.sim.state.party[0].level = 15; c.sim.state.tower = JSON.parse(JSON.stringify(sim.state.tower)); c.sim.state.tower.wave = 0; c.sim.state.tower.atLanding = false;
+  const h3 = []; c.sim.bus.on('loot', (e) => { if (e.heirloom) h3.push(e); });
+  toLanding(c.sim, c.ev); assert.equal(h3.length, 1); assert.equal(h3[0].item.ilv, BRACKETS[1][1]);
+  assert.deepEqual(c.sim.state.tower.won.warden_doorward, [0, 1]);
+});
+
+test('the heirlooms won are saved; a bad record reads as none', () => {
+  assert.deepEqual(restoreTower({ tower: { won: { warden_doorward: [0, 0, 9, 'x'], nobody: [1] } } }).won, { warden_doorward: [0] });
+  assert.deepEqual(restoreTower({ tower: {} }).won, {});
 });

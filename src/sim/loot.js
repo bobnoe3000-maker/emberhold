@@ -88,9 +88,9 @@ export function createLoot({ state, bus, seed }) {
   }
 
   // an heirloom (items.js HEIRLOOMS): once, from its boss's first fall, a companion's chain or a vault
-  function grant(id, { ilv, x, y, src }) {
+  function grant(id, { ilv, x, y, src, cls }) {
     C.uidN = (C.uidN || 0) + 1;
-    const item = makeHeirloom(id, Math.max(1, ilv), 'i' + C.uidN);
+    const item = makeHeirloom(id, Math.max(1, ilv), 'i' + C.uidN, cls);   // (cls: a warden's heirloom is made for a class in the party)
     let salvaged = 0;
     if (fits([item])) toBag(item); else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }
     bus.emit('loot', { item, x, y, src, best: salvaged ? null : bestFor(item), salvaged, heirloom: id });

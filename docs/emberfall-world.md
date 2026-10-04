@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.24 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.25 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -885,6 +885,13 @@ Optional, repeatable foes, each drawn from a fragment of the Chronicle (§7):
   tenth landing with a heirloom the first time a company beats it in a bracket, and **the Wall**, the leaderboard,
   written only by the replay validator. Its wardens: the Doorward, the Mudlark, the Bellringer, the Lensman, the
   Hush, the Twins, the Tower Hound, the Gatherer, the Watcher, and the Star Room.
+  (v1.25) **What each leaves behind**, the first time a company puts it down: the Doorward's Visor (*it only ever looked
+  one way: in*); the Mudlark's Wading-Boots (*dry inside; nobody knows how*); the Bell-Tongue (*it rang the hours for a
+  town under the water*); the Lensman's Eye (*ground from a lamp-glass, and it still sees in the dark*); the Hush (*not
+  a sound, not even a heartbeat*); one of the Twins' Rings (*its pair is somewhere above you*); the Hound's Collar (*the
+  name on it is worn smooth*); the Gatherer's Hook (*it brought in a harvest nobody planted*); the Watcher's Hood (*you'd
+  swear something looks out of it*); the Star-Cut (*one point on its guard is cut deeper than the rest, with a line
+  under it*). Each is made for whoever in the company can use it: the Tower seems to know who's come.
 - **The Great Beacon** (§3.9): the Guild's finite tower. It opens with the Reach, two landings a region, and its
   lamp-room after the Throne: ★ *Let Them Go Dark*, where the company breaks the last lamp on Mabry Cole's list
   with her hammer and becomes the first Beacon in the Guild's own books.
