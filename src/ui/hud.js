@@ -7,7 +7,8 @@ import { wageOf } from '../sim/companions.js';
 import { DAY_S } from '../sim/heroes.js';
 import { PART_S, partOf } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
-import { weatherLeft, weatherName } from '../sim/weather.js';
+import { weatherLeft, weatherName, skyAt } from '../sim/weather.js';
+import { weatherIcon, skyWord } from './weathericon.js';
 import { PART_NAMES } from '../render/daylight.js';
 
 export function createHud(sim) {
@@ -104,25 +105,32 @@ export function createHud(sim) {
   css.textContent += `#hud .stat #hudSky { display: flex; align-items: center; gap: 4px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: .3px; margin: -11px -10px -19px; padding: 12px 10px 19px; pointer-events: auto; cursor: pointer; white-space: nowrap; }
     #hud .stat #hudSky svg { flex: none; overflow: visible; }`;
   let skyKey = '';
+  /** the sky's icon state, or null underground (a dev hold of the weather wins, as it does on screen) */
+  const skyNow = () => {
+    if (!sim.world || sim.world.kind === 'dungeon') return null;
+    const w = weatherNow(sim);
+    return w.sky || (w.kind !== 'clear' ? (w.k > 0.15 ? w.kind : 'partly') : skyAt(sim.seed >>> 0, sim.state.t || 0, sim.world.region || 'vale'));
+  };
   function paintSky() {
     const t = sim.state.t, part = partOf(t), f = (((t % DAY_S) + DAY_S) % DAY_S) / DAY_S;
     const up = part < 3, k = up ? f / 0.75 : (f - 0.75) / 0.25, a = Math.PI * (1 - k);   // left to right along the arc
-    const w = weatherNow(sim), wName = w.k > 0.15 ? weatherName(w.kind) : '';   // (the weather once it's set in, outdoors: sim/weather.js)
-    const x = 11 + 9 * Math.cos(a), y = 11 - 9 * Math.sin(a), key = `${part}${Math.round(x * 2)}${Math.round(y * 2)}${wName}`;
+    const sky = skyNow(), word = sky ? skyWord(sky, part === 3) : '';   // (the weather's icon, outdoors: sim/weather.js skyAt)
+    const x = 11 + 9 * Math.cos(a), y = 11 - 9 * Math.sin(a), key = `${part}${Math.round(x * 2)}${Math.round(y * 2)}${sky}`;
     if (key === skyKey) return; skyKey = key;
     const col = SKY_COL[part], next = (part + 1) % 4, mins = Math.max(1, Math.ceil((PART_S - (t % PART_S)) / 60));
     skyEl.innerHTML = `<svg width="22" height="13" viewBox="0 0 22 13" aria-hidden="true"><path d="M2 11.5 A9 9 0 0 1 20 11.5" fill="none" stroke="rgba(214,190,150,.45)" stroke-width="1.2"/>`
       + `<line x1="0" y1="11.8" x2="22" y2="11.8" stroke="rgba(214,190,150,.6)" stroke-width="1"/>`
       + (up ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="${col}"/>` : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="${col}"/><circle cx="${(x + 1.3).toFixed(1)}" cy="${(y - 0.9).toFixed(1)}" r="2.3" fill="#141020"/>`)
-      + `</svg><span style="color:${col}">${PART_NAMES[part]}</span>` + (wName ? `<span style="color:#b8c0cc">· ${wName.toLowerCase()}</span>` : '');
-    skyEl.setAttribute('aria-label', `Time of day: ${PART_NAMES[part]}${wName ? `, ${wName.toLowerCase()}` : ''}. ${PART_NAMES[next]} in ${mins} minutes.`);
+      + `</svg>` + (sky ? weatherIcon(sky, part === 3) : '') + `<span style="color:${col}">${PART_NAMES[part]}</span>`;
+    skyEl.setAttribute('aria-label', `Time of day: ${PART_NAMES[part]}${word ? `, ${word}` : ''}. ${PART_NAMES[next]} in ${mins} minutes.`);
   }
   const skyLine = () => {
     const t = sim.state.t, part = partOf(t), next = (part + 1) % 4, b = bill(), dawn = Math.max(1, Math.ceil(toDawn() / 60));
     const mins = Math.max(1, Math.ceil((PART_S - (t % PART_S)) / 60));
     const w = weatherNow(sim), wName = w.k > 0.15 ? weatherName(w.kind) : '', left = Math.max(1, Math.ceil(weatherLeft(sim.seed >>> 0, t, sim.world.region || 'vale') / 60));
-    const ends = { fog: 'lifting', rain: 'clearing', snow: 'easing', wind: 'dropping' }[w.kind];
-    return `${PART_NAMES[part]} · ${PART_NAMES[next].toLowerCase()} in ${mins} min` + (wName ? ` · ${wName.toLowerCase()}, ${ends} in ${left} min` : '') + (next === 0 ? '' : ` · dawn in ${dawn} min`) + (b ? ` · wages ${b} gold at dawn` : '');
+    const ends = { fog: 'lifting', rain: 'clearing', snow: 'easing', wind: 'dropping' }[w.kind], sky = skyNow();
+    const said = wName ? ` · ${wName.toLowerCase()}, ${ends} in ${left} min` : sky ? ` · ${skyWord(sky, part === 3)}` : '';
+    return `${PART_NAMES[part]} · ${PART_NAMES[next].toLowerCase()} in ${mins} min` + said + (next === 0 ? '' : ` · dawn in ${dawn} min`) + (b ? ` · wages ${b} gold at dawn` : '');
   };
   skyEl.addEventListener('pointerdown', (e) => e.stopPropagation());
   skyEl.addEventListener('click', (e) => { e.stopPropagation(); show(skyLine(), 3600); });

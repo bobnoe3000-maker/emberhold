@@ -13,12 +13,14 @@
 
 import { weatherAt } from '../sim/weather.js';
 
-/** @type {{ kind: import('../sim/weather.js').WeatherKind, k: number } | null} */
+/** @type {{ kind: import('../sim/weather.js').WeatherKind, k: number, sky?: 'sunny' | 'partly' } | null} */
 let hold = null;
-/** dev: hold a weather (null: follow the clock) @param {string | null} v e.g. 'rain', 'fog:0.6' */
+/** dev: hold a weather (null: follow the clock) @param {string | null} v e.g. 'rain', 'fog:0.6', or 'sunny' / 'partly'
+ * (a clear sky, its HUD icon held too) */
 export function holdWeather(v) {
   if (!v) { hold = null; return; }
   const [kind, k] = String(v).split(':');
+  if (kind === 'sunny' || kind === 'partly') { hold = { kind: 'clear', k: 0, sky: kind }; return; }
   hold = ['clear', 'fog', 'rain', 'snow', 'wind'].includes(kind) ? { kind: /** @type {any} */ (kind), k: kind === 'clear' ? 0 : Math.max(0, Math.min(1, k === undefined ? 1 : +k)) } : null;
 }
 /** the weather now, for any reader (the renderer, the sound, the HUD) @param {any} sim */

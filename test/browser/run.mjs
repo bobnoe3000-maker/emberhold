@@ -540,7 +540,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       await run(60); await p.waitForTimeout(1300); await run(3);
       await p.locator('#hudSky').tap(); await run(2); await p.waitForTimeout(250);
       const r = await p.evaluate(() => {
-        const sky = document.getElementById('hudSky'), parts = [sky.querySelector('svg'), sky.querySelector('span')].map((e) => e.getBoundingClientRect());
+        const sky = document.getElementById('hudSky'), parts = [...sky.querySelectorAll('svg, span')].map((e) => e.getBoundingClientRect());   // the dial, the weather's icon, the word
         const box = { l: Math.min(...parts.map((q) => q.left)), t: Math.min(...parts.map((q) => q.top)), r: Math.max(...parts.map((q) => q.right)), b: Math.max(...parts.map((q) => q.bottom)) };
         const vw = innerWidth, vh = innerHeight, hits = [];
         for (const e of document.querySelectorAll('body *')) {
@@ -553,7 +553,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
           if (ix > 0.5 && iy > 0.5) hits.push(`${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${typeof e.className === 'string' && e.className ? '.' + e.className.split(' ').join('.') : ''} "${(e.textContent || '').trim().slice(0, 24)}"`);
         }
         const hud = document.getElementById('hud').getBoundingClientRect(), tap = sky.getBoundingClientRect(), toast = document.getElementById('hudToast');
-        return { box, hits, hudB: hud.bottom, vw, tapH: tap.height, tapW: tap.width, word: sky.querySelector('span').textContent, toast: toast.classList.contains('on') ? toast.textContent : '', battle: !!globalThis.__sim.battle, tracker: !!document.querySelector('#questTrack') && getComputedStyle(document.querySelector('#questTrack')).display !== 'none', menuW: document.getElementById('menuBtn').getBoundingClientRect().width };
+        return { box, hits, hudB: hud.bottom, vw, tapH: tap.height, tapW: tap.width, word: sky.querySelector('span').textContent, icon: !!sky.querySelector('svg.wx'), toast: toast.classList.contains('on') ? toast.textContent : '', battle: !!globalThis.__sim.battle, tracker: !!document.querySelector('#questTrack') && getComputedStyle(document.querySelector('#questTrack')).display !== 'none', menuW: document.getElementById('menuBtn').getBoundingClientRect().width };
       });
       const where = `${W}px ${scene}`, probs = [];
       if (r.hits.length) probs.push('overlaps ' + r.hits.join(', '));
@@ -561,7 +561,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       if (r.box.l < 0 || r.box.r > r.vw) probs.push('off screen');
       if (r.tapH < 44 || r.tapW < 44) probs.push(`tap area ${r.tapW.toFixed(0)}×${r.tapH.toFixed(0)}`);
       if (r.menuW < 34) probs.push(`the menu button squeezed to ${r.menuW.toFixed(0)} px`);
-      if (r.word !== 'Night' || !/^Night · dawn in \d+ min · wages \d+ gold at dawn$/.test(r.toast)) probs.push(`says ${r.word} / "${r.toast}"`);
+      if (r.word !== 'Night' || !/^Night · dawn in \d+ min( · [a-z ]+(, [a-z]+ in \d+ min)?)? · wages \d+ gold at dawn$/.test(r.toast)) probs.push(`says ${r.word} / "${r.toast}"`);
+      if (scene !== 'dungeon' && !r.icon) probs.push('no weather icon outdoors'); if (scene === 'dungeon' && r.icon) probs.push('a weather icon underground');
       if (scene === 'dungeon' && !r.battle) probs.push('no fight to check against');
       if (errs.length) probs.push(errs.join(' | '));
       if (probs.length) bad.push(`${where}: ${probs.join('; ')}`); else seen.push(where);

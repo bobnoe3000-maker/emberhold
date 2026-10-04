@@ -1,5 +1,10 @@
 # The weather icon: a mockup
 
+**Implemented, 2026-10-04: B, the icon alone; partly sunny by option 1, without the light change** (GDD v1.22 §10.1;
+`src/ui/weathericon.js`, `skyAt` in `src/sim/weather.js`). The owner: *"icons only for weather"*. The proposal as it was:
+
+![As shipped, by day and night](img/weather/icon-shipped.png)
+
 **Proposal, 2026-10-04.** The owner (2026-10-03): "next to the day time icon in the upper right is where an icon should
 go for any current weather including a partly sunny or sunny state. Propose a mockup."
 

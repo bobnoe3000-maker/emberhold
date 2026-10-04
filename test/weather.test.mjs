@@ -53,3 +53,21 @@ test('nothing underground; a dev hold wins; the light loses at most a third at f
   const windy = mixSky(makeSky(), LOOKS.day, LOOKS.day, 0), haze0 = windy.haze, sun0 = windy.sun[0]; weatherLight(windy, { kind: 'wind', k: 1 });
   assert.ok(windy.haze < haze0 && windy.sun[0] === sun0, 'the wind clears the air and keeps the sun');
 });
+
+test('the HUD icon: clear spells split sunny and partly sunny by region, the same sky for everyone on a seed; a weather setting in reads partly', async () => {
+  const { skyAt } = await import('../src/sim/weather.js');
+  const { weatherIcon, skyWord } = await import('../src/ui/weathericon.js');
+  const share = (region) => { let clear = 0, partly = 0; for (let n = 0; n < 3000; n++) { const t = n * SPELL_S + 600; if (spellOf(SEED, n, region).kind !== 'clear') continue; clear++; if (skyAt(SEED, t, region) === 'partly') partly++; } return partly / clear; };
+  const vale = share('vale'), reach = share('reach'), fens = share('fens');
+  assert.ok(vale > 0.4 && vale < 0.6, `vale ${vale.toFixed(2)}`);
+  assert.ok(reach < vale && fens > vale, `reach ${reach.toFixed(2)} · fens ${fens.toFixed(2)}: sunnier in the Reach, cloudier in the Fens`);
+  for (const t of [0, 4321, 99999]) assert.equal(skyAt(SEED, t), skyAt(SEED, t));
+  let ramp = -1; for (let t = 0; t < 40 * 3600 && ramp < 0; t += 5) { const w = weatherAt(SEED, t); if (w.kind !== 'clear' && w.k > 0 && w.k < 0.1) ramp = t; }
+  assert.equal(skyAt(SEED, ramp), 'partly', 'a weather still setting in shows the partly sunny icon');
+  for (const sky of /** @type {const} */ (['sunny', 'partly', 'fog', 'rain', 'snow', 'wind'])) for (const night of [false, true]) {
+    const svg = weatherIcon(sky, night);
+    assert.match(svg, /^<svg class="wx" width="16" height="14"/); assert.ok(svg.length > 200, `${sky} draws something`);
+    assert.ok(skyWord(sky, night).length > 0, 'and always has a word for the tap and the screen reader');
+  }
+  assert.equal(skyWord('sunny', true), 'clear'); assert.equal(skyWord('partly', true), 'partly cloudy'); assert.equal(skyWord('partly', false), 'partly sunny');
+});

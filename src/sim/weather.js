@@ -54,5 +54,18 @@ export function weatherLeft(seed, t, region = 'vale') {
   return (n + 1) * SPELL_S - t;
 }
 
+// How cloudy a clear spell is likely to be, by region (the owner chose the weather icon, 2026-10-04: "icons only for
+// weather"; docs/weather-icon-mockup.md option 1). It only picks the HUD's icon: the light and the sim never read it.
+const CLOUD = { vale: 0.5, fens: 0.65, reach: 0.35, heights: 0.6 };
+/** @typedef {'sunny' | 'partly' | 'fog' | 'rain' | 'snow' | 'wind'} SkyKind */
+/** the sky for the HUD's icon: a clear spell is sunny or partly sunny by its own hash on the weather stream, the same
+ * for everyone on a seed; a weather still setting in or clearing (strength under 0.15) reads as partly sunny
+ * @param {number} seed @param {number} t @param {string} [region] @returns {SkyKind} */
+export function skyAt(seed, t, region = 'vale') {
+  const w = weatherAt(seed, t, region);
+  if (w.kind !== 'clear') return w.k > 0.15 ? w.kind : 'partly';
+  return hash2(Math.floor(t / SPELL_S), 2, (seed ^ STREAM.WEATHER) | 0) < (CLOUD[region] ?? 0.5) ? 'partly' : 'sunny';
+}
+
 /** the weather's name for the sky dial ('' when clear) @param {WeatherKind} kind */
 export const weatherName = (kind) => ({ clear: '', fog: 'Fog', rain: 'Rain', snow: 'Snow', wind: 'Wind' })[kind];

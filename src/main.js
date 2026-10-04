@@ -145,7 +145,7 @@ let last = performance.now();
 let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
 const TOD = DEV ? params.get('tod') : null;              // ?dev&tod=dawn|day|dusk|night|0..1: hold the light (look-dev; the sim's clock runs on)
-if (DEV && params.get('weather')) holdWeather(params.get('weather'));   // ?dev&weather=rain|fog|snow|wind|clear[:0..1]: hold the weather (render/weatherfx.js)
+if (DEV && params.get('weather')) holdWeather(params.get('weather'));   // ?dev&weather=rain|fog|snow|wind|clear[:0..1]|sunny|partly: hold the weather (and the HUD's icon) (render/weatherfx.js)
 // dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
 if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));
