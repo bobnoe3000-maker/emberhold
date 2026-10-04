@@ -22,7 +22,7 @@ import { GLOW_ID, norm3, buildProps, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
-import { createFX, styleOfSrc } from './fx.js';
+import { createFX, styleOfSrc, raisedLook } from './fx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
@@ -1018,8 +1018,8 @@ export function createRenderer(canvas, sim, input) {
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
-      const up = raisedAt.get(m), ua = up === undefined ? 1 : (now - up) / 1000;   // just raised: the ghost holds a beat, then a warm rim fades off them
-      const look = m.fallen ? GHOST : ua < 0.35 ? GHOST : ua < 1.6 ? { flash: 0.55 * (1 - (ua - 0.35) / 1.25), fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
+      const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
+      const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
       draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a });
     });
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a

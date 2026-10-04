@@ -65,6 +65,10 @@ export const FX_STYLES = {
 const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };
 /** @param {Record<string, string>} [foeActor] a foe kind's atlas (the renderer's ENEMY_ACTOR): the Redhand's and the bosses' sparks too */
 export const styleOfSrc = (src, foe, foeActor = {}) => FX_STYLES[foe ? foeActor[src] || 'skeleton_' + src : CLASS_ACTOR[src] || src] || null;
+/** A raised member's look, s seconds after the 'resurrected' event (undefined: never raised): the ghost holds a beat,
+ *  then a warm rim fades off them. null once it's over — and for one never raised (an always-on rim read as a selection outline).
+ *  @param {number | undefined} s @returns {'ghost' | number | null} the rim's strength */
+export const raisedLook = (s) => s === undefined || s >= 1.6 ? null : s < 0.35 ? 'ghost' : 0.55 * (1 - (s - 0.35) / 1.25);
 
 export function createFX() {
   let B = null;                                   // { EMI, DEP, W, H, DPX }
