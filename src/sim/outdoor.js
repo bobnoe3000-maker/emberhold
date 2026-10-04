@@ -311,7 +311,7 @@ function forestRing(o, rng, inset) {
 }
 
 // ── TOWNS — one hub per region ───────────────────────────────────────────────
-// Every region's town is the same hub (docs/town-layout-proposal.md): a walled circuit, the road over a stream
+// Every region's town is the same hub (docs/town-layout-proposal.md): a walled circuit, the road
 // straight into the east gate, a cobbled high street, then the TOWN SQUARE, framed like a home screen, with the
 // five services in the same places and the same shapes everywhere. Only the names, the region's tones and the
 // circuit's material change (tools/actor-lab town.json → assets/env/town-<region>: Thornwick's is timber).
@@ -333,7 +333,7 @@ function buildTown(seed, region) {
   // service, every door in the hub frame, 8+ tiles between services (test/town.test.mjs holds them to it).
   const WX0 = 10, WX1 = 112, WY0 = 8, WY1 = 108, GY = 80;
   const M = [66, 71];                                    // the square's centre: the well
-  o.rivers.push({ w: 6, pts: [[124, -90], [122, 20], [126, 60], [125, 100], [130, 210]] });
+  // (no stream outside the gate any more: the owner, 2026-10-04, took it and its bridge off the approach)
   o.roads.push({ w: 6, surface: 'dirt', pts: [[230, GY], [112, GY]] });
   o.roads.push({ w: 6, surface: 'cobble', pts: [[114, GY], [84, GY], [76, 76]] });
   o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22 }, { cx: 36, cy: 40, rx: 8, ry: 7 });      // the square, and the temple's forecourt open to it
@@ -359,7 +359,6 @@ function buildTown(seed, region) {
   putWall(o, B('curtainy'), false, WX1, WY0, GY - 7); putWall(o, B('curtainy'), false, WX1, GY + 7, WY1);
   for (const [x, y] of towers) put(o, B('tower'), x, y, 'round', 0.1);
   putGate(o, B('gatehousey'), WX1, GY);
-  put(o, 'bridge_90', 125.5, GY, 'deck');
 
   // houses: a row along the high street's north side, the quarters at the back (north and west), low gardens in front
   [[100, 68, 'house', 1], [76, 19, 'house', 2], [88, 19, 'house', 1], [100, 19, 'house', 3], [101, 31, 'housex', 2], [89, 33, 'housex', 1],
@@ -373,7 +372,7 @@ function buildTown(seed, region) {
   // the services and hide nobody; a spot is left bare if anything is there.
   for (const [id, x, y] of [['birch_1', 60, 20], ['birch_1', 80, 30], ['autumn_2', 96, 44], ['birch_1', 22, 60], ['autumn_2', 36, 86]])
     if (fits(o, id, x, y, 0)) put(o, id, x, y, 'round', 0.35);
-  // outside: farms on the fields, the stream under the east wall
+  // outside: farms on the fields
   put(o, B('farm'), 140, 34); put(o, B('farmx'), 144, 104);
 
   // trees: orchards and gardens in the walls' front corners, woods beyond the back walls, the ring
@@ -392,12 +391,12 @@ function buildTown(seed, region) {
     herd(o, fr, ['hens_1'], 136, 58, 2, 3); herd(o, fr, ['hay_1', 'hay_2', 'pumpkins_1'], 154, 52, 3, 4); herd(o, fr, ['pumpkins_1', 'hay_1'], 152, 116, 2, 3);
     dress(o, fr, (x, y) => hypot(x - o.hub.x, y - o.hub.y) < o.hub.r); }
   wheat(o);
-  // the undergrowth: the walls' verges (in and out), the stream's banks, the gardens, flower patches; never the square
+  // the undergrowth: the walls' verges (in and out), the gardens, flower patches; never the square
   undergrowth(o, -10, -10, 150, 130, 3, (x, y) => {
     if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
     const wall = Math.min(Math.abs(x - WX0), Math.abs(x - WX1), Math.abs(y - WY0), Math.abs(y - WY1));
     const inBox = x > WX0 - 9 && x < WX1 + 9 && y > WY0 - 9 && y < WY1 + 9;
-    return Math.max(inBox && wall < 5 ? 0.5 : 0, Math.abs(x - 125) < 9 ? 0.5 : 0, x > 84 && y > 84 && x < WX1 && y < WY1 ? 0.5 : 0,
+    return Math.max(inBox && wall < 5 ? 0.5 : 0, x > 84 && y > 84 && x < WX1 && y < WY1 ? 0.5 : 0,
       fbm(x * 0.09, y * 0.09, o.seed + 9) > 0.66 ? 0.45 : 0);
   });
   o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: 'thornwick' });
@@ -595,11 +594,8 @@ function buildOverland(seed) {
   // the Tithe Mill's race: a narrow channel off the river, under the wheel on the mill's +x side, and back (pass 10:
   // the wheel turned 10 tiles from water)
   o.rivers.push({ w: 2.6, pts: chaikin([[102, 88], [99.5, 95], [98.8, 101], [98.8, 110], [100.5, 116], [106, 120], [112, 121]], 2) });
-  // Thornwick's brook (2026-10-03: the town scene has a stream 12 tiles past its east gate, under the bridge the road
-  // comes in on; the Vale showed the gate on open meadow). The same brook here, at the same place: it leaves the river
-  // above the mill, runs down past the farm, under Thornwick's road 13.5 tiles from the gate (on the run along y the
-  // bridge needs), then east back into the river.
-  o.rivers.push({ w: 6, pts: chaikin([[88, 62], [82, 84], [80, 108], [79, 128], [70.5, 140], [69.5, 150], [70.5, 158], [80, 162], [98, 160], [116, 161]], 2) });
+  // (Thornwick's brook, a branch of the river across the road 13.5 tiles from the gate with a bridge over it, is gone:
+  // the owner, 2026-10-04, took it off the approach, here and outside the town scene's gate)
   // The roads, filleted (no elbows), the spurs to the mill, the chapel and the camp narrow tracks without ruts.
   const ROADS = [
     { w: 6, surface: 'dirt', pts: [town, [86, 148], [104, 142], [136, 142], cross] },
@@ -630,7 +626,6 @@ function buildOverland(seed) {
   // bridges where roads cross the river
   put(o, 'bridge_90', 120, 142, 'deck');
   put(o, 'bridge_90', 115, 199, 'deck');
-  put(o, 'bridge_90', town[0] + 17.5, town[1], 'deck');      // over the brook, as the town scene's bridge (13.5 from the gate)
   // Thornwick from outside: the town scene's circuit in small (its timber palisade and watchtowers), the gate on
   // its road, the temple's spire and a few roofs inside
   { const X0 = 18, X1 = town[0] + 4, Y0 = 128, Y1 = 172, GY = town[1];

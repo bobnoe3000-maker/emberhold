@@ -495,6 +495,8 @@ terracotta showed.
 
 ## Iteration 11n: Thornwick's brook on the Vale; no tree on a road (shipped 2026-10-03)
 
+*(2026-10-04: the brook and its bridge are gone from both, the owner's call; see the GDD v1.26.)*
+
 ![Inside Thornwick's east gate (the town scene), and the Vale's gate now: the same brook under the same bridge](img/art11/n-brook.jpg)
 
 The owner, from a phone at dusk: approaching Thornwick and then entering it, the river and bridge don't agree.

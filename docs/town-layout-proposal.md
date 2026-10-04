@@ -142,11 +142,11 @@ places change once, here.
 | **Tavern / Shop** | (29, 48) / (50, 41) | The upper pair |
 | **Smithy / Inn** | (51, 67) / (73, 55) | The front pair |
 | **Houses** | the north-east and west quarters, against the back walls | Backdrop, out of the services' way |
-| **Outside** | farms, fields and the stream east of the wall | The country |
+| **Outside** | farms and fields east of the wall (2026-10-04: the stream is gone) | The country |
 
 ### The way in (blockout)
 
-From the overland you arrive east of the stream.
+From the overland you arrive on the road east of the gate.
 1. **The arrival.** On the approach road the camera **leads toward the gate**, half the way from you to
    it. So the gate is in the frame from the moment you arrive. Before, it sat off the left edge until
    you'd walked a few steps.

@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.21 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.22 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -260,7 +260,7 @@ Rolling farmland, hedgerows and the barrows of the old legions. It's the safest 
 it's where everyone starts.
 - **Town:** **Thornwick**: tavern *The Tired Mule*, inn *The Crossed Keys*, *Hale & Daughter,
   Smiths*, the *Shrine of the Ember*. (v1.17) It keeps a timber palisade on an earth bank, with
-  watchtowers and one gate where the road comes over the stream; the shops face the square round
+  watchtowers and one gate on the road (v1.22: no stream before it; the owner took the brook and its bridge off the approach); the shops face the square round
   the well, and the Shrine stands at its head. **Greyholt** (walled market town, seat of the useless Lord
   Pellam) is an overland landmark, not a hub.
 - **Sites:** the Old Barrows (crypts), **Wickham Keep** (a ruin the Redhand bandits hold), the

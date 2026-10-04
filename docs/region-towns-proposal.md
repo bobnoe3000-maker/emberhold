@@ -33,7 +33,7 @@ A player who knows Thornwick's square knows every town's square. Everything roun
 
 | Town | Region | Size | Edge | Ground | Its set pieces |
 |---|---|---|---|---|---|
-| **Thornwick** (shipped) | Emberfall | medium: 10 houses | timber palisade | meadow grass, farms, a brook | fields, the bridge |
+| **Thornwick** (shipped) | Emberfall | medium: 10 houses | timber palisade | meadow grass, farms | fields |
 | **Saltmere** (waystation) | Emberfall: the Fens | **small**: 8 stilt houses | **no wall**: water all round | **bog water, peat and mud, reed beds, duckweed**; boardwalks | **houses on stilts**, the square a deck on piles, punts, eel traps, dead trees, marsh-lights |
 | **Hollin Ford** (waystation) | the Greenwood | **small**: 3 longhouses and the barn | **no wall**: the fen river to the north, the oaks round the rest | **fen water, peat banks, reed beds**; forest floor | **the ford**'s stepping stones, Hollin Ford Barn (the dungeon site), alder and willow fen |
 | **Ashgate** | the Reach | **large**: 16 houses in terraces | **slag-brick stone walls**, 10 towers | **dry, cracked earth and dust; red rock outcrops**; black slag | the pithead wheel over the gate, the Cinderworks' chimneys, slag heaps, the ore rails, a tailings pond |
@@ -59,7 +59,7 @@ The ground area each town paints, against Thornwick's 170 × 145 tiles:
 ### Thornwick, Emberfall (shipped)
 
 The reference. It's a farming town with a timber palisade on an earth bank, thatch and timber-frame, fields outside
-the gate and a brook under the bridge. Nothing changes.
+the gate (2026-10-04: the brook and its bridge before the gate are gone, the owner's call). Nothing else changes.
 
 ### Saltmere, the Greywater Fens: small, no wall, swamp
 
