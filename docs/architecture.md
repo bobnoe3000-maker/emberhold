@@ -215,7 +215,7 @@ of [emberhold-design.md §7](./emberhold-design.md) still stand, and are restate
 - **Validation:** every progression session and every leaderboard entry arrives as a claim:
   seed, start state, command log, tick count and end hash. A Node worker (or edge function)
   replays it with `sim/replay.js`. Only a matching result is written (§7, §10).
-- **Realtime (M10+):** Colyseus rooms run `/sim` server-side, one per shared instance:
+- **Realtime (M15+):** Colyseus rooms run `/sim` server-side, one per shared instance:
   - town presence;
   - co-op site;
   - raid;
@@ -357,7 +357,7 @@ Node.**
 
 | Option | Verdict |
 |---|---|
-| **Colyseus on Node (chosen, M10+)** | Authoritative rooms with state sync and reconnection, in JS/TS. `/sim` runs inside a room unchanged. Hosted on Railway or Fly.io. It was already the planned stack. |
+| **Colyseus on Node (chosen, M15+)** | Authoritative rooms with state sync and reconnection, in JS/TS. `/sim` runs inside a room unchanged. Hosted on Railway or Fly.io. It was already the planned stack. |
 | Nakama authoritative matches | See §8.7: the goja runtime can't run our sim unchanged |
 | Raw `ws` / uWebSockets.js | Minimal and fast, but we'd rebuild rooms, matchmaking and reconnection |
 | WebRTC (geckos.io) | Lower latency for action games. An autobattler at 20 Hz doesn't need it, and NAT traversal adds ops. |

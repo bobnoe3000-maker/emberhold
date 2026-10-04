@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.22 · 2026-10-04 · Plan of record for game design.** v1.22 (§10.1): the weather's icon beside the sky dial, the icon alone, with the word in the dial's tap; clear spells are sunny or partly sunny. v1.21 (§10.1): the wind shows as long, thin gust lines that come and go; the birds, the owl and the dungeon drips are single calls at least 10 s apart; and every kind of sound, the music too, has its own volume slider. v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.23 · 2026-10-04 · Plan of record for game design.** v1.23 (§17) brings in **the Old Provinces**, decided by the owner: six regions to a cap of 75, one town each, numbers that compound before any band past 30, skill tiers and a loadout, lamps and the count, the Bowl, the Mere Tower and the Great Beacon (canon in world doc v1.20). v1.22 (§10.1): the weather's icon beside the sky dial, the icon alone, with the word in the dial's tap; clear spells are sunny or partly sunny. v1.21 (§10.1): the wind shows as long, thin gust lines that come and go; the birds, the owl and the dungeon drips are single calls at least 10 s apart; and every kind of sound, the music too, has its own volume slider. v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -708,7 +708,7 @@ with `roomlv.mjs --perks` on 4 seeds, 300 s, fighter + rogue + cleric in the cla
 
 ## 7. Progression and the grind
 
-- **Levels 1–30** at launch. XP to next level = 300 × L^1.6 (L1→2: 300; L10→11: ~12,000;
+- **Levels 1–30** at launch; (v1.23) the cap rises with each region to **75** (§17). XP to next level = 300 × L^1.6 (L1→2: 300; L10→11: ~12,000;
   L29→30: ~66,000). (v1.7: tripled from 100 × L^1.6, so each level takes three times the play.)
   Stats grow per the class tables.
 - **Enemy scaling.** Enemy level = the room's level (§3.3), offset by the region base and the
@@ -987,8 +987,10 @@ progress):
   the barrows road beside a stopped wagon: walkers get through, wagons don't. Each rank goes when its
   part of the legion is put down (Maudry's errand, Osric's bounty, the Standard), with a HUD line
   when it does; with the last one the road opens, the wagon's gone, and the town says so.
-- **Towns are hubs, one per region** (Thornwick, Saltmere, Ashgate, Frosthold). Each is the
-  same place in a different region.
+- **Towns are hubs, one per region** (v1.23: Thornwick, Ashgate, Tollhaven, Rookstead, Frosthold, and the
+  Lamphall in Solmere; §17). Each is the same square in a different region; the size, the edge, the ground and the
+  set pieces change ([region-towns-proposal.md](./region-towns-proposal.md)). A region's other stops are
+  **waystations**: a tavern with the board and a shrine (Saltmere in the Fens).
   - **A walled town** (v1.15). The circuit is a box of curtain and towers.
     - **Material:** Thornwick, a beginning town, has a timber palisade with watchtowers; the later
       regions' towns have stone.
@@ -1257,8 +1259,8 @@ Emberfall rename.
 
 > **v1.2:** the build order is now kept in
 > [development-plan.md §3](./development-plan.md). It adds M2.5 Foundations, M3 Heroes,
-> M4 Story engine, M5 The Hollow Vale, M6 Accounts and ship, M7 Endgame loops, M8–M9 the
-> remaining regions, and M10–M12 multiplayer. The table below is the original v1.1 plan,
+> M4 Story engine, M5 The Hollow Vale, M6 Accounts and ship, M7 Endgame loops, and (v1.23) M8–M14
+> the Old Provinces a region at a time, with multiplayer around them (M10, M15, M16). The table below is the original v1.1 plan,
 > kept for history.
 
 | Milestone | Scope | Exit test |
@@ -1337,3 +1339,58 @@ alone, at any level. The before and after numbers are in
 6. **Rename timing:** switch the build from EMBERHOLD to EMBERFALL now, or at M2?
 7. **Room-level pacing.** Is +1 level every two rooms and +3 per floor the right slope, and
    should a floor's rooms hold a fixed range regardless of layout?
+
+---
+
+## 17. The Old Provinces (v1.23)
+
+The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposal.md),
+[region-towns-proposal.md](./region-towns-proposal.md); canon in world doc v1.20). Each rule lands with its milestone
+(development plan §3); until then the shipped rules stand.
+
+**The map and the cap.**
+- **Six regions to level 75**, five bands of 15: Emberfall 1–15 (the Vale 1–8, the Fens 8–15), the Reach 15–30, the
+  Tidemark 30–45, the Greenwood 45–60, the Heights and the Throne 60–75. Solmere opens at 15.
+- **One gate:** each region opens at the previous region's finale. Renown opens side content and Solmere's embassies.
+- **One full town per region**, the player's base, with the same square; waystations elsewhere. Decided: large and
+  walled (Ashgate, Tollhaven, the Lamphall); small and open (Rookstead, Frosthold, Saltmere); Thornwick as built.
+
+**Numbers, before any band past 30.**
+- **XP goes linear above 30**, about 26 minutes of fighting a level, so the late bands don't swell.
+- **Stats compound, from integer tables** (deterministic, like `XP_TABLE`): today's linear growth makes one level
+  stop mattering above 30 (a room three up is +41 % HP at L6, +15 % at L30, +9 % at L60). The room premium is capped.
+- **The smoke contract** (§7.1) extends to levels 15, 30, 45, 60 and 75.
+- **One ground-hazard system**, with the party's AI stepping out of it (burning patches, the Abbess's water, slag).
+
+**Skills.**
+- **One new active per class per region**, at 18, 33, 48 and 63, learned at a trial with a named teacher: the
+  company chooses one of two.
+- **A second passive at 40**, which changes how the class plays and never touches gold.
+- **The loadout:** from the fifth active (L33) a member carries four into a fight; the rest wait in the book.
+- **A free respec** at any temple.
+- Every skill states its **autocast test**; there's one "can't drop below 1 HP" effect in the game (the cleric's
+  *Lifeline*). The **Healer** class is deferred.
+
+**Lamps and the count.**
+- **A lamp** is a site's set piece in its last room, with the list of foes tied to it. While its keeper stands it
+  can't be struck; once broken, every foe on its list lies down. One sim rule, reusing "break what shields him".
+- **Cages:** a Cult harvester's or buyer's lantern-cage frees one soul when broken.
+- **The count:** the Chronicle keeps **lamps broken** (cages included) and **souls freed** (each Ashbound put down,
+  each cage, each soul a broken lamp held). Two durable integers on the game slot, added to only by sim rules, with
+  a save bump; a migration credits saves that already broke the Standard. Later a leaderboard, **the Freed**,
+  written only by the replay validator.
+
+**Solmere.**
+- **The Bowl:** async company against company first; server-picked opponents, one try a pairing a day, your own
+  account's companies never in your pool, levels evened by bracket (15–29, 30–44, 45–59, 60–75), crowd control
+  halved against companies, written rivals offline. It pays **marks of the Bowl** from verified bouts only (a
+  daily cap); the heirloom shop's stock is defined later, and nothing in it outdoes a boss heirloom of its level.
+- **The Mere Tower:** no XP; gold and cinders each wave; **+6 % a wave, compounding**, from a table; a new kind of
+  foe every tenth wave; a landing every tenth (leave there and keep everything; beaten, keep what you'd won to the
+  last landing). **Always playable offline**, the same sim; a climb counts once its replay is verified. **The Wall**
+  counts the highest wave held in a live, verified, timed climb (the flame clock), per bracket and per season, seeded
+  per season, written only by the validator. Each tenth-landing warden drops its heirloom the first time a company
+  beats it, once per game slot per bracket, at the bracket's top item level, for a class in the party.
+  *Tower-found* pieces (the Kindled pool) replace a room's Fine roll, no stronger than a Rare.
+- **The Great Beacon:** a finite Guild site, two landings opening with each region from the Reach, its lamp-room
+  after the Throne (★ *Let Them Go Dark*).

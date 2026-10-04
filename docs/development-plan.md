@@ -344,7 +344,7 @@ talk clips only.
 Full spec: [quest-lore-system.md](./quest-lore-system.md). In summary:
 
 - **Hero quests:**
-  - **Chapter quests:** the main arc, four acts, gated by renown (GDD §9).
+  - **Chapter quests:** the main arc, six acts (world doc §6, v1.20), each region opening at the last one's finale.
   - **Companion quests:** personal chains for Brannoc, Wren, and more later.
   - **Class quests:** a trial at levels 6, 12 and 20 unlocks the next ability or the passive.
 - **Side quests**, small and repeatable-ish:
@@ -651,7 +651,8 @@ prove cross-engine hashes stay identical.
 
 ## 3. Milestones
 
-These re-baseline GDD §15. M1 is done; M2 is partly done.
+These re-baseline GDD §15. M1 is done; M2 is partly done. (2026-10-04) M8 onward follow the Old Provinces
+(world doc v1.20, GDD §17): one region a milestone to the cap of 75, with multiplayer after the campaign.
 
 | # | Milestone | Scope | Exit test |
 |---|---|---|---|
@@ -662,11 +663,12 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 | **M5** ✓ | **The Hollow Vale** (done 2026-09-30; content-complete region 1; plan: [m5-plan.md](./m5-plan.md)) | Overland sites (Old Barrows, Wickham Keep, Sunken Chapel, Tithe Mill); Act I chapter quests; Brannoc's companion chain; the class trials at level 6; the Redhand Captain and the Standard of the Third Legion; the Vale Chronicle set and its hidden site; loot tuned to "rare"; balance for levels 1–8 | Levels 1–8 playable start to finish in about 6–8 hours. Met in code: a headless golden path plays the whole Vale (`test/m5-golden.test.mjs`) and the browser test walks Act I's first chapter; loot within ±25 % of the §2.7 targets over a 27 h farm; the balance gates hold. Chapters pay their guaranteed Fine. Pacing (owner's playtest, 2026-09-30): levels 1–8 took 30–60 min, so the XP a level takes was tripled (GDD §7 v1.7); expect roughly 1.5–3 h now, still under the 6–8 h target. Open: re-time after the tripling; bad-luck protection. |
 | **M6** | **Accounts and ship** | Supabase guest → linked accounts; **verified progression** (session upload, server replay validator, rollback; §2.13); cloud saves; Vite packaging; PWA; Capacitor iOS and Android builds; Sentry; a settings screen; store assets and privacy policy | TestFlight and Play internal track. Airplane-mode play works. |
 | **M7** | **Endgame loops** | Ember Rifts and leaderboards (reusing the M6 validator); expeditions (idle, GDD §12); bad-luck protection; smith upgrades, salvage and reroll; Heirlooms. *Done early (2026-10-01): the companion economy, the first gold sink: Lantern Guild ranks, signing fees, dawn wages, 32 rolled perks, loyalty, Ask around and Retrain (GDD §6.2, `sim/companions.js`).* | A day of play plus idle feels rewarding. Leaderboard entries are validated. |
-| **M8** | **Fens and Reach** | Acts II–III; Cult, beast and fen-ghoul art; Delve, Escort and Investigate templates; Wren's chain; the Healer unlock | Levels 8–22 |
-| **M9** | **Heights and Throne** | Act IV; the finale; the Undervaults post-game; the Healer | Campaign complete |
-| **M10** | **Multiplayer A (async)** | Hire-a-friend, async arena, leaderboards | 1,000 simulated snapshots validated |
-| **M11** | **Multiplayer B (shared instances, co-op)** | Colyseus town presence and co-op sites | A 3-player co-op site at 20 Hz on mobile networks |
-| **M12** | **Multiplayer C/D (raids, PvP)** | Heroic raids, live arena, seasons | A raid clear; a PvP season ladder |
+| **M8** | **The Fens** (v1.20 canon; [m8-plan.md](./m8-plan.md)) | Act II, *The Drowned Abbey*, levels 8–15: six chapters; the Fens' sites (Toadking's Mound, the Canal Locks, the Sickpools, the Drowned Abbey, the hidden Reedholm Undercroft); **Saltmere** as the Fens' waystation (swamp ground, stilts); Wren's chain; fen ghouls, bog-witches, harvesters and the drowned clergy; the Toadking, Brother Teague, the Abbess Below and the Drowned Choir; **the lamp rule** (the Standard's lamp, the choir-lamp, cages) and **the count**; the Fens Chronicle set; balance and loot to 15. Then **a Solmere shell**: the Lamphall and the Mere Tower, played offline. Art, story and quest critic passes on every slice. | Levels 8–15 playable start to finish; a headless golden path through Act II; the balance gates hold at 9, 12 and 15. |
+| **M9** | **The Reach** | Act III, *Quota*, 15–30; **Ashgate**; the Great Beacon's first landings; the stat rescale (compounding tables) and linear XP above 30; the first skill tier (L18); the cap to 30 | Levels 15–30; the smoke contract at 15 and 30 |
+| **M10** | **Multiplayer A (async)** | The Bowl, async, with its written rivals; hire-a-friend; the Mere Tower's Wall and seasons and the Freed (on M6's validator) | 1,000 simulated snapshots validated |
+| **M11–M14** | **The Tidemark, the Greenwood, the Heights, the Throne** | One region per milestone (Acts IV–VI), each with its town and the Great Beacon's next landings, raising the cap 15 at a time; the skill tiers at 33, 48, 63 and the passive at 40; the finale (always Lucan's verse), the Undervaults and ★ *Let Them Go Dark* | Campaign complete at 75 |
+| **M15** | **Multiplayer B (shared instances, co-op)** | Colyseus town presence and co-op sites | A 3-player co-op site at 20 Hz on mobile networks |
+| **M16** | **Multiplayer C/D (raids, PvP)** | Heroic raids, live arena, seasons; the Bowl's heirloom shop | A raid clear; a PvP season ladder |
 
 **Ordering rationale:**
 - Foundations come first, because every later feature adds content shapes and windows.
@@ -702,7 +704,7 @@ These re-baseline GDD §15. M1 is done; M2 is partly done.
 | **Low-end phone performance** | Budgets in architecture §9; a 30 fps saver; per-region lazy atlases; Playwright perf traces in CI |
 | **Store policy** (Apple sign-in, account deletion, privacy labels) | Designed in at M6 (§2.2) |
 | **Save migrations** across many milestones | `SAVE_VERSION` bumps with tests per step; saves hold ids, not text |
-| **Multiplayer ops cost** | Async first (Supabase only); Colyseus rooms only for M11+; interest management; autoscale on Railway or Fly |
+| **Multiplayer ops cost** | Async first (Supabase only); Colyseus rooms only for M15+ (shared instances); interest management; autoscale on Railway or Fly |
 
 ---
 
