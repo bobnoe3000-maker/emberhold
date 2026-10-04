@@ -50,3 +50,33 @@ over the wood's edge: **25.2 %**.
 - Saltmere's contrast (σ 21 against the Vale's 33) is the flat deck's. If the square reads as a floor rather than
   a place once its people stand on it, the next pass adds coiled rope, nets drying on rails and a moored punt to
   break it up.
+
+## Pass 2: art, slice 3 (the Fens' sites)
+
+Five landmarks baked in code (`tools/actor-lab/buildkit.js`: `boathall`, `lockhall`, `vats`, `abbey`, `priory`; in
+`town.json`'s Fens list, so the shared atlas and every existing footprint stay as they were), each with its way in
+toward the camera and a lantern by it. Seen from each site's arrival, by day:
+
+![The Fens' five sites from their arrivals](img/fens/sites-overland.jpg)
+
+### Found and fixed in this pass
+
+| Finding | Fix |
+|---|---|
+| The Toadking's hulls were the hall's darkest thing: a heap of lumps, no boats | Weathered silver-grey planking, paler than the mound; stem and stern posts; a lintel plank over the door |
+| The Sickpools' vats showed stone tops: the green sat under their rims | The slime sits on the rims, and glows; Vat Seven, drained, shows black, with its ladder |
+| The Undercroft's door was buried in Reedholm's rise | Lifted to ground level, with jambs and three steps down to it |
+| The Abbey's way in stood in the flood, off the causeway's end | The causeway turns and comes straight up to the west door |
+| The Locks and the Abbey used the water look: a saturated blue checker with glowing blue pools (saturation 193, against the Sunken Chapel's 143), and the two read the same | A new **drowned** look (`tilestyles.js`): grey dressed stone gone green in the joints, black-green standing water that gives no light, a rare glint. The Locks are flagstone (a new `sluice` theme), the Abbey temple-checker. Saturation 150 / 152, luma 18 / 17 (the Chapel 24) |
+
+![The water look before, the drowned look after](img/fens/drowned-before-after.jpg)
+
+Every way in is reachable from the Fens' arrival in three seeds, and every arrival stands on open ground
+(`test/sites.test.mjs`).
+
+### Still open
+
+- The Fens' trees are the Vale's birches, whose ochre crowns read round and cheerful here. Alder and willow, darker
+  and lower, are for the slice-4 art pass.
+- The Toadking's hall reads as a heap of boats from its arrival, but its crown on the boat-hook is three pixels
+  wide. The boss pass (slice 6) can give it a flag.

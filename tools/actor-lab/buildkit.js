@@ -1040,6 +1040,147 @@ Object.assign(TYPES, {
     const wick = mat(null, '#6a5a38');
     for (const [y, a] of [[0.06, 0.3], [0.16, -0.4]]) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 7, 1, true), wick); c.position.set(0.06, y, 0); c.rotation.z = Math.PI / 2 + a * 0.3; g.add(c); }
   },
+  // ── the Fens' sites (M8 slice 3; world doc v1.20 §3.2). Each way in faces the camera (+z), where the overland's
+  // exit is, with a lantern by it.
+  // Toadking's Mound: an island of stolen boats. A turfed mound with a hall roofed in three hulls laid keel-up, side by
+  // side; its door framed in oars under a painted wooden crown on a boat-hook; more hulls on their sides along the
+  // shore, a punt pulled up, stakes, reeds.
+  boathall(S, g, r) {
+    const turf = (ny, y, q) => (ny > 0.5 ? tint(ROCK.grass, 0.72 + q * 0.2) : tint(C3('#3e352a'), 0.8 + q * 0.2));
+    const mg = new THREE.SphereGeometry(0.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2); mg.scale(1.2, 0.3, 1);
+    const mound = new THREE.Mesh(faceted(mg, r, 0.05, turf), vmat()); mound.position.set(-0.05, 0, -0.1); g.add(mound);
+    const hull = (x, y, z, len, wide, ry, rz = 0, k = 1) => {
+      const hg = new THREE.Group(); hg.position.set(x, y, z); hg.rotation.set(0, ry, rz); g.add(hg);
+      const geo = new THREE.SphereGeometry(1, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2); geo.scale(wide, wide * 0.8, len);
+      const wood = mat(tex('planks', '#' + new THREE.Color('#77705f').multiplyScalar(k).getHexString(), 61 + Math.floor(r() * 9)));   // weathered silver-grey, paler than the mound
+      hg.add(new THREE.Mesh(geo, wood));
+      box(0.025, 0.03, len * 1.7, S.m.beam, 0, wide * 0.78, 0, hg);                                   // the keel
+      for (const sz of [-1, 1]) box(0.02, 0.05, 0.02, S.m.beam, 0, wide * 0.7, sz * len * 0.88, hg);   // stem and stern posts
+      return hg;
+    };
+    // the hall: three hulls keel-up over a low plank wall, the middle one longest
+    box(0.82, 0.16, 0.7, S.m.wood, 0, 0.12, -0.12, g);
+    hull(-0.26, 0.26, -0.12, 0.44, 0.17, 0, 0, 0.9); hull(0.02, 0.28, -0.1, 0.5, 0.19, 0); hull(0.3, 0.25, -0.14, 0.42, 0.16, 0, 0, 0.85);
+    // the door: dark, framed in two oars, a boat-hook standing by it with the Toadking's crown on top
+    box(0.2, 0.24, 0.06, mat(null, '#0c0a0c'), 0.02, 0.1, 0.24, g); box(0.26, 0.03, 0.08, S.m.wood, 0.02, 0.34, 0.25, g);   // the door, a lintel plank over it
+    for (const sx of [-1, 1]) { const oar = box(0.022, 0.34, 0.02, S.m.beam, 0.02 + sx * 0.13, 0.1, 0.25, g); oar.rotation.z = -sx * 0.12; const blade = box(0.05, 0.08, 0.012, S.m.wood, 0.02 + sx * 0.15, 0.4, 0.25, g); blade.rotation.z = -sx * 0.12; }
+    box(0.02, 0.6, 0.02, S.m.beam, 0.3, 0.06, 0.32, g);
+    const hook = box(0.012, 0.08, 0.012, S.m.trim, 0.33, 0.62, 0.32, g); hook.rotation.z = -0.8;
+    const gold = mat(null, '#a8843a');
+    box(0.09, 0.03, 0.09, gold, 0.3, 0.66, 0.32, g);
+    for (const [dx, dz] of [[-0.035, -0.035], [0.035, -0.035], [-0.035, 0.035], [0.035, 0.035]]) box(0.016, 0.04, 0.016, gold, 0.3 + dx, 0.69, 0.32 + dz, g);
+    lantern(g, S, -0.2, 0.34, 0.3);
+    // hulls on their sides along the shore, a punt, stakes, reeds
+    hull(-0.72, 0.1, 0.2, 0.36, 0.13, 0.9, 1.25, 0.8); hull(0.72, 0.1, -0.3, 0.32, 0.12, -0.5, -1.2, 0.75); hull(-0.5, 0.08, -0.7, 0.3, 0.12, 0.2, 1.3, 0.7);
+    box(0.16, 0.025, 0.44, S.m.wood, 0.6, 0, 0.42, g).rotation.y = -0.6;
+    for (const [x, z, h] of [[-0.62, 0.52, 0.26], [-0.45, 0.62, 0.2], [0.78, 0.1, 0.24]]) { const st = new THREE.Mesh(new THREE.ConeGeometry(0.02, h, 5), S.m.beam); st.position.set(x, h / 2, z); st.rotation.z = (r() - 0.5) * 0.4; g.add(st); }
+    const reed = mat(null, '#6a6a3e');
+    for (const [cx, cz] of [[-0.86, -0.1], [0.9, 0.36], [-0.2, 0.7], [0.4, -0.78]]) for (let i = 0; i < 6; i++) {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.009, 0.1 + r() * 0.06, 3), reed); b.position.set(cx + (r() - 0.5) * 0.08, 0.05, cz + (r() - 0.5) * 0.08); b.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); g.add(b); }
+  },
+  // The Canal Locks: the lock-keepers' hall, imperial ashlar under a slate roof with a squat stair-tower, its door to
+  // the camera; on its canal side (+x) a stone pier with the windlass the gates were worked by, a gate's balance beam
+  // run out over it, and a spare gate leaf lying in the reeds.
+  lockhall(S, g, r) {
+    const w = 0.7, d = 0.56, h = 0.5, st = S.m.ashlar;
+    box(w + 0.08, 0.06, d + 0.08, S.m.stoneDark, 0, 0, 0, g);                                        // the plinth, water-stained
+    storeyBlock(S, g, w, d, 0.06, h, st, true, { doorZ: -0.08 });
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.08, 0.2, 0.36, true);
+    roofOver(S, g, w, d, h + 0.06, S.roofRise * 0.9, true); chimney(g, S, 0.2, -0.12, h + 0.06, 0.3);
+    const tw = new THREE.Group(); tw.position.set(-w / 2 - 0.02, 0, -d / 2 + 0.12); g.add(tw);
+    box(0.24, 0.82, 0.24, st, 0, 0, 0, tw); pyramid(tw, 0.28, 0.82, 0.22, S.m.roof);
+    windowOn(tw, S, { side: 'z', wallW: 0.24, wallD: 0.24 }, 0, 0.6, 0.06, 0.12, { lit: true });
+    // the pier and the windlass: a capstan with four bars, chain to the gate
+    const pr = new THREE.Group(); pr.position.set(w / 2 + 0.3, 0, 0.1); g.add(pr);
+    box(0.34, 0.12, 0.3, st, 0, 0, 0, pr);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.16, 10), S.m.wood); cap.position.set(0, 0.2, 0); pr.add(cap);
+    for (let i = 0; i < 4; i++) { const bar = box(0.3, 0.018, 0.018, S.m.beam, 0, 0.25, 0, pr); bar.rotation.y = (i * Math.PI) / 4; }
+    for (let i = 0; i < 6; i++) box(0.02, 0.02, 0.03, S.m.trim, 0.1 + i * 0.03, 0.16 - i * 0.022, 0, pr);   // the chain
+    const beam = box(0.62, 0.06, 0.07, S.m.beam, 0.34, 0.14, 0.06, pr); beam.rotation.y = -0.3;            // a gate's balance beam
+    const leaf = new THREE.Group(); leaf.position.set(0.36, 0.03, 0.5); leaf.rotation.set(-Math.PI / 2 + 0.1, 0.5, 0); g.add(leaf);   // a spare leaf, fallen
+    box(0.4, 0.5, 0.04, S.m.wood, 0, 0, 0, leaf); for (const y of [0.08, 0.25, 0.42]) box(0.42, 0.03, 0.05, S.m.trim, 0, y, 0, leaf);
+    lantern(g, S, 0.14, 0.34, d / 2 + 0.04);
+    barrel(g, S, -0.3, d / 2 + 0.12);
+  },
+  // The Sickpools: three imperial vats, stone-ringed tubs on a flagged floor, still brimming green; Vat Seven at the
+  // front drained, a ladder down into it; a pipe run between them, a broken valve wheel, a Cult lantern-pole.
+  vats(S, g, r) {
+    const st = S.m.ashlar, slime = mat(null, '#5a8a3a'), dark = mat(null, '#0e0c0c');
+    box(1.3, 0.03, 1.0, S.m.stoneDark, 0, 0, -0.05, g);
+    const vat = (x, z, rad, full) => {
+      const v = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 1.05, 0.26, 14), st); v.position.set(x, 0.13, z); g.add(v);
+      for (const y of [0.06, 0.2]) { const h = new THREE.Mesh(new THREE.TorusGeometry(rad * 1.02, 0.012, 4, 18), S.m.trim); h.rotation.x = Math.PI / 2; h.position.set(x, y, z); g.add(h); }
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.92, rad * 0.92, 0.01, 14), full ? slime : dark); top.position.set(x, full ? 0.266 : 0.262, z); if (full) top.userData.glow = true; g.add(top);
+      if (full) for (let i = 0; i < 3; i++) { const drip = box(0.03, 0.12 + r() * 0.08, 0.012, slime, x + (r() - 0.5) * rad, 0.04, z + rad * 0.98, g); drip.rotation.y = (r() - 0.5) * 0.5; }
+    };
+    vat(-0.36, -0.3, 0.26, true); vat(0.32, -0.36, 0.24, true); vat(0.42, 0.24, 0.2, true); vat(-0.14, 0.24, 0.24, false);
+    for (let i = 0; i < 6; i++) box(0.012, 0.02, 0.07, S.m.wood, -0.14, 0.23 - i * 0.035, 0.24 + 0.24 - i * 0.005, g);   // the ladder's rungs, over the lip
+    for (const sx of [-1, 1]) { const rail = box(0.014, 0.28, 0.014, S.m.beam, -0.14 + sx * 0.04, 0.02, 0.48, g); rail.rotation.x = -0.25; }
+    const pipe = (x0, z0, x1, z1) => { const l = Math.hypot(x1 - x0, z1 - z0), p = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, l, 8), S.m.trim); p.rotation.set(0, -Math.atan2(z1 - z0, x1 - x0), Math.PI / 2); p.position.set((x0 + x1) / 2, 0.3, (z0 + z1) / 2); g.add(p); };
+    pipe(-0.36, -0.3, 0.32, -0.36); pipe(0.32, -0.36, 0.42, 0.24);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.008, 4, 10), S.m.trim); wheel.position.set(0, 0.33, -0.33); g.add(wheel);
+    box(0.02, 0.62, 0.02, S.m.beam, 0.12, 0.02, 0.5, g);                                                 // a Cult lantern-pole, its cage empty
+    const cage = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.08, 6, 1, true), S.m.trim); cage.position.set(0.12, 0.6, 0.54); g.add(cage);
+    lantern(g, S, -0.42, 0.34, 0.4);
+    const reed = mat(null, '#5e6a3a');
+    for (const [cx, cz] of [[-0.66, 0.36], [0.68, -0.1], [0.66, 0.5]]) for (let i = 0; i < 6; i++) {
+      const b = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.009, 0.1 + r() * 0.06, 3), reed); b.position.set(cx + (r() - 0.5) * 0.08, 0.05, cz + (r() - 0.5) * 0.08); b.rotation.set((r() - 0.5) * 0.7, 0, (r() - 0.5) * 0.7); g.add(b); }
+  },
+  // The Drowned Abbey: the binding clergy's abbey church standing in the canal's flood, sunk to its sills and leaning;
+  // the nave long and whole-roofed, its bell tower at the front still standing (the bells ring on their own), the
+  // west door to the camera at the causeway's end, a broken cloister arcade off its side, the water lapping it.
+  abbey(S, g, r) {
+    const st = S.m.ashlar, w = 0.7, d = 1.3, h = 0.86;
+    const nave = new THREE.Group(); nave.position.set(0.05, -0.1, -0.2); nave.rotation.set(0.03, 0, -0.04); g.add(nave);
+    box(w, h, d, st, 0, 0, 0, nave);
+    for (let i = 0; i < 4; i++) windowOn(nave, S, { side: 'x', wallW: w, wallD: d }, -d / 2 + (d * (i + 0.5)) / 4, h * 0.62, 0.08, 0.3, { pointed: true, lit: i === 1 });
+    buttresses(S, nave, w, d, h);
+    gable(nave, w, d, h, S.roofRise * w / 2 * 1.5, S.m.roof, st, 0.06, 0.04);
+    const tw = new THREE.Group(); tw.position.set(-0.1, -0.08, d / 2 - 0.1); tw.rotation.z = 0.03; g.add(tw);
+    box(0.36, 1.36, 0.34, st, 0, 0, 0, tw);
+    doorOn(tw, S, { side: 'z', wallW: 0.36, wallD: 0.34 }, 0, 0.18, 0.36, true);
+    windowOn(tw, S, { side: 'z', wallW: 0.36, wallD: 0.34 }, 0, 0.98, 0.1, 0.2, { pointed: true, lit: false });
+    windowOn(tw, S, { side: 'x', wallW: 0.36, wallD: 0.34 }, 0, 0.98, 0.1, 0.2, { pointed: true, lit: false });
+    crenels(tw, S, 0.36, 0.34, 1.36, st, 0.06);
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.07, 0.09, 10), mat(null, '#6a5a3a')); bell.position.set(0, 1.0, 0.12); tw.add(bell);
+    // the cloister arcade off the +x side: three arches, the last fallen
+    const cl = new THREE.Group(); cl.position.set(w / 2 + 0.2, -0.06, 0.1); g.add(cl);
+    for (let i = 0; i < 4; i++) box(0.07, i === 3 ? 0.14 : 0.42, 0.07, st, 0, 0, -0.4 + i * 0.26, cl);
+    for (let i = 0; i < 2; i++) box(0.07, 0.06, 0.3, st, 0, 0.42, -0.27 + i * 0.26, cl);
+    box(0.16, 0.07, 0.12, st, 0.1, 0, 0.5, cl).rotation.y = 0.5;
+    // the flood: dark water round the walls' feet, weed on the stones, a dead tree, a lantern on the causeway post
+    const water = mat(null, '#2c3e3e');
+    for (const [x, z, sx, sz] of [[0, 0.1, 1.2, 1.0], [0.5, 0.6, 0.6, 0.4], [-0.55, -0.2, 0.5, 0.8]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.004, 18), water); p.scale.set(sx, 1, sz); p.position.set(x, 0.002, z); g.add(p); }
+    deadTree(g, r, -0.62, 0.35, 0.9);
+    box(0.03, 0.34, 0.03, S.m.beam, 0.14, 0, 0.62, g); lantern(g, S, 0.14, 0.36, 0.62);
+  },
+  // Reedholm, the Grey Sisters' prioress house, on its rise: a small chapel and a dormitory range round a walled
+  // garth, the bell-cote over the chapel's gable, and in the chapel's front, below the sill, the low iron-banded door
+  // of the undercroft (the hidden site's way in).
+  priory(S, g, r) {
+    const st = S.m.ashlar;
+    const rise = new THREE.SphereGeometry(0.9, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2); rise.scale(1.15, 0.16, 1);
+    g.add(new THREE.Mesh(faceted(rise, r, 0.03, (ny, y, q) => (ny > 0.6 ? tint(ROCK.grass, 0.72 + q * 0.18) : tint(ROCK.base, 0.78 + q * 0.2))), vmat()));
+    const ch = new THREE.Group(); ch.position.set(-0.12, 0.1, -0.05); g.add(ch);
+    const w = 0.46, d = 0.8, h = 0.5;
+    box(w, h, d, st, 0, 0, 0, ch);
+    for (let i = 0; i < 3; i++) windowOn(ch, S, { side: 'x', wallW: w, wallD: d }, -d / 2 + (d * (i + 0.5)) / 3, h * 0.6, 0.07, 0.2, { pointed: true, lit: i === 2 });
+    windowOn(ch, S, { side: 'z', wallW: w, wallD: d }, 0, h * 0.7, 0.1, 0.2, { pointed: true, lit: true });
+    gable(ch, w, d, h, S.roofRise * w / 2 * 1.4, S.m.roof, st, 0.06, 0.04);
+    box(0.08, 0.14, 0.06, st, 0, h + 0.28, d / 2 - 0.03, ch);                                           // the bell-cote
+    // the undercroft door: low in the chapel's front, half below the ground, steps down to it, iron bands
+    box(0.22, 0.2, 0.05, mat(null, '#0c0a0c'), 0, -0.04, d / 2 + 0.02, ch);
+    box(0.16, 0.17, 0.012, S.m.door, 0, -0.02, d / 2 + 0.05, ch);
+    for (const y of [0.02, 0.1]) box(0.17, 0.014, 0.015, S.m.trim, 0, y, d / 2 + 0.058, ch);
+    for (const sx of [-1, 1]) box(0.04, 0.22, 0.06, st, sx * 0.12, -0.04, d / 2 + 0.04, ch);   // its jambs
+    for (let i = 0; i < 3; i++) box(0.26, 0.025, 0.07, st, 0, -0.08 + i * 0.03, d / 2 + 0.16 - i * 0.05, ch);   // steps down to it
+    // the dormitory range and the garth wall, behind and to the side
+    const dm = new THREE.Group(); dm.position.set(0.42, 0.1, -0.26); g.add(dm);
+    storeyBlock(S, dm, 0.36, 0.5, 0, 0.36, S.m.upper, true, {}); roofOver(S, dm, 0.36, 0.5, 0.36, S.roofRise, false);
+    for (const [x, z, l, ry] of [[0.42, 0.26, 0.4, 0], [0.62, 0.04, 0.5, Math.PI / 2], [-0.5, -0.4, 0.5, Math.PI / 2]]) box(l, 0.12, 0.05, st, x, 0.08, z, g).rotation.y = ry;
+    lantern(g, S, 0.12, 0.42, 0.42);
+    deadTree(g, r, 0.66, -0.62, 0.8);
+  },
   // The Tithe Mill (M5): Lord Pellam's watermill. A stone ground storey, a timbered loft under a
   // steep roof, a big undershot wheel on the +x side (the river's), a sluice and a mill-race, sacks
   // of the tithe grain by the door, and the Redhand's mark: a red rag on a pole, a burned cart.

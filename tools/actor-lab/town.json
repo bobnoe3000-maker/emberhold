@@ -620,6 +620,76 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_boathall_1",
+      "model": "boathall",
+      "build": "boathall",
+      "seed": 61,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_lockhall_1",
+      "model": "lockhall",
+      "build": "lockhall",
+      "seed": 62,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_vats_1",
+      "model": "vats",
+      "build": "vats",
+      "seed": 63,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_abbey_1",
+      "model": "abbey",
+      "build": "abbey",
+      "seed": 64,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_priory_1",
+      "model": "priory",
+      "build": "priory",
+      "seed": 65,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [

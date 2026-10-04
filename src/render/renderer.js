@@ -561,8 +561,9 @@ export function createRenderer(canvas, sim, input) {
   const qs = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
   const tileKey = qs.get('tiles') || 'cobble', tileVariant = qs.get('tv') || '';
   const tileStyle = tileKey === 'classic' ? null : (TILE_STYLES[tileKey] || TILE_STYLES.cobble);
-  // a site may keep its own style (the goblins' warren is dug, not laid: cavern), unless ?tiles= says otherwise
-  const THEME_STYLE = { warren: 'cavern' }, styleOf = (w) => (!qs.has('tiles') && THEME_STYLE[w.theme] ? TILE_STYLES[THEME_STYLE[w.theme]] : tileStyle);
+  // a site may keep its own style (the goblins' warren is dug, not laid: cavern; the Toadking's mire too; the Drowned
+  // Abbey is temple-checker, world doc §3.2; the lock-keepers' halls flagstone), unless ?tiles= says otherwise
+  const THEME_STYLE = { warren: 'cavern', mire: 'cavern', water: 'temple', sluice: 'flagstone' }, styleOf = (w) => (!qs.has('tiles') && THEME_STYLE[w.theme] ? TILE_STYLES[THEME_STYLE[w.theme]] : tileStyle);
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
   // DEPTH (bDEP): distance toward the camera in tile units = ground x+y of the surface

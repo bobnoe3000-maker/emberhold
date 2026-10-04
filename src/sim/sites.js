@@ -10,17 +10,27 @@
 // Barrows go on down). A site's last floor has no stairs down; its hall is where it ends.
 // `hidden` sites can't be entered, and don't show on the Vale, until revealed (state.revealed:
 // a chapter's reward, or the Chronicle). A `vault` site keeps a chest in its last hall with an
-// heirloom in it, once (items.js HEIRLOOMS; core.js, state.flags vault_<site>).
+// heirloom in it, once (items.js HEIRLOOMS; core.js, state.flags vault_<site>). `region`: the land whose overland
+// has its way in (regions.js); entering a site's floors puts you in its land.
+//
+// The Greywater Fens (M8, docs/m8-plan.md slice 3; world doc v1.20 §3.2): five sites from 8 to 15. Their families
+// are stand-ins (the Vale's) until the Fens' own foes are baked (slice 4), and their halls fight as any other
+// until their bosses come (slice 6). The Drowned Abbey has three floors of four rooms, so its band stays 12–15.
 
-/** @typedef {{ name: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, bosses?: Record<number, string>, families?: string[], vault?: string, mix: number }} SiteDef */
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, bosses?: Record<number, string>, families?: string[], vault?: string, mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
-  barrows: { name: 'The Old Barrows', theme: null, base: 1, perFloor: 3, floors: 0, family: 'ashbound', rooms: null, bosses: { 3: 'standard' }, mix: 0 },
-  tithe_mill: { name: 'The Tithe Mill', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], mix: 0x3117 },
-  wickham_keep: { name: 'Wickham Keep', theme: 'dread', base: 3, perFloor: 1, floors: 2, family: 'redhand', families: ['redhand', 'diggers'], rooms: [6, 6], hidden: true, bosses: { 2: 'redhand_captain' }, mix: 0x7e40 },
-  sunken_chapel: { name: 'The Sunken Chapel', theme: 'poison', base: 5, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], bosses: { 2: 'robed_stranger' }, mix: 0xc4a9 },
-  scrag_warren: { name: 'The Scrag Warren', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], bosses: { 2: 'goblin_chief' }, mix: 0x6b1d },
-  ninth_milestone: { name: 'The Ninth Milestone', theme: 'chasm', base: 8, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, vault: 'last_order', mix: 0x9e11 },
+  barrows: { name: 'The Old Barrows', region: 'vale', theme: null, base: 1, perFloor: 3, floors: 0, family: 'ashbound', rooms: null, bosses: { 3: 'standard' }, mix: 0 },
+  tithe_mill: { name: 'The Tithe Mill', region: 'vale', theme: 'desert', base: 1, perFloor: 0, floors: 1, family: 'redhand', rooms: [6, 6], mix: 0x3117 },
+  wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', base: 3, perFloor: 1, floors: 2, family: 'redhand', families: ['redhand', 'diggers'], rooms: [6, 6], hidden: true, bosses: { 2: 'redhand_captain' }, mix: 0x7e40 },
+  sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'poison', base: 5, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], bosses: { 2: 'robed_stranger' }, mix: 0xc4a9 },
+  scrag_warren: { name: 'The Scrag Warren', region: 'vale', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], bosses: { 2: 'goblin_chief' }, mix: 0x6b1d },
+  ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 8, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, vault: 'last_order', mix: 0x9e11 },
+  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 8, perFloor: 1, floors: 2, family: 'redhand', families: ['redhand', 'diggers'], rooms: [6, 6], mix: 0x70ad },
+  canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', base: 9, perFloor: 1, floors: 2, family: 'chapel', families: ['ashbound', 'chapel'], rooms: [6, 6], mix: 0x10c5 },
+  sickpools: { name: 'The Sickpools', region: 'fens', theme: 'poison', base: 10, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], mix: 0x51c7 },
+  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 12, perFloor: 1, floors: 3, family: 'chapel', rooms: [4, 4], mix: 0xab3e },
+  reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 15, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, mix: 0x4e3d },
 };
 export const SITE_IDS = Object.keys(SITES);
 
@@ -36,7 +46,7 @@ export const bossAt = (id, depth) => (siteOf(id).bosses || {})[depth + 1] || nul
 export function levelBand(id) {
   const s = siteOf(id);
   if (s.flat) return `${s.base}`;
-  const top = s.floors ? s.base + s.perFloor * (s.floors - 1) + 2 : s.base + 3;
+  const top = s.floors ? s.base + s.perFloor * (s.floors - 1) + Math.floor(((s.rooms ? s.rooms[1] : 6) - 2) / 2) : s.base + 3;   // (the hall is the last ranked room)
   return `${s.base}–${top}`;
 }
 /** can the party go in? (not hidden, or revealed) @param {string} id @param {Set<string> | string[]} revealed */

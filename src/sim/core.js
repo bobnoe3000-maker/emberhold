@@ -65,6 +65,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   // a floor's seed: the world's, the site's own mix (the Old Barrows' is 0: its floors are as they were) and the depth
   const levelSeed = (d) => (baseSeed ^ Math.imul(siteOf(curSite).mix, 0x9e3779b1) ^ Math.imul(d >>> 0, 2654435761)) >>> 0;
   let curScene = scene, curSite = SITES[site] ? site : 'barrows';
+  if (curScene === 'dungeon') curRegion = SITES[curSite].region;   // a site's floors are in its land (a ?site= preview, a test)
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
   const buildWorld = (d) => placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
     isWalkable, (id) => !!clock && ![...clock.party, ...clock.bench].some((m) => m.id === id)), clock);   // a found companion waits in his hall until he joins; the dead hold the barrows road (road.js)
@@ -273,7 +274,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     stopWalk(); state.player.resume = null;
     if (region && LANDS[region]) curRegion = landId(region);
     floors = new Map();                                    // a new visit: the site's floors are fresh
-    if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; state.sitesEntered.add(curSite); }
+    if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; curRegion = SITES[curSite].region; state.sitesEntered.add(curSite); }
     curScene = to; state.depth = 0;
     world = buildWorld(0);
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;

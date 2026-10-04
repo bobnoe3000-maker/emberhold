@@ -80,6 +80,14 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
 
    The Drowned Choir is the Abbey's repeatable echo once the Abbess has fallen. Tests: content ↔ table, bands,
    exits.
+   - **Done** (2026-10-04): `src/sim/sites.js` (each site's `region`; the Fens' five, their families the Vale's
+     stand-ins until slice 4, their halls bossless until slice 6; `levelBand` reads the room count, so the Abbey's three
+     floors of four rooms read 12–15), `level.js` (themes `mire`, `water`, `sluice`), `tilestyles.js` (the
+     **drowned** look), `outdoor.js` (`buildFens`: the landmarks, roads to their doors, ways in and arrivals),
+     `core.js` (a site's floors are in its land), `content/sites/*.json`; `test/sites.test.mjs`. The Locks are
+     `sluice` (flagstone), not `water`, so they don't read as the Abbey. Art pass: [fens-critic-pass.md](./fens-critic-pass.md) §2.
+     Saltmere's board still posts jobs at the Old Barrows; jobs by region come with Saltmere's people (slice 8).
+
 4. **The Fens' foes.** Mirroring the Ashbound roles, as the Redhand and goblins did.
    - **Fen ghoul** (melee, a new silhouette: long-armed, hunched, mud-dark), **bog-witch** (caster, a new
      silhouette: a hag in sacking with a lantern of marsh-light), **harvester** (a Cult acolyte carrying a

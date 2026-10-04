@@ -23,6 +23,10 @@ export const THEMES = {
   chasm:  { name: 'Soulcracks',   wall: 'basalt', floors: ['chasm', 'chasm', 'basalt'],      hazard: 'abyss',  hazardScale: 0.20, hazardCut: 0.72 },
   // a site's own look, never drawn for the Old Barrows (THEME_KEYS is what their seed picks from)
   warren: { name: 'Goblin Warren', wall: 'basalt', floors: ['soil', 'soil', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.18, hazardCut: 0.76 },
+  // the Fens' (M8): the Toadking's mud-floored island halls, the drowned Abbey, the lock-keepers' halls
+  mire:   { name: 'Mire Halls',    wall: 'basalt', floors: ['soil', 'soil', 'sand', 'soil'],  hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.68 },
+  water:  { name: 'Drowned Works', wall: 'basalt', floors: ['soil', 'bone', 'soil'],          hazard: 'water',  hazardScale: 0.21, hazardCut: 0.64 },
+  sluice: { name: 'Lock Halls',    wall: 'basalt', floors: ['soil', 'bone', 'soil'],          hazard: 'water',  hazardScale: 0.18, hazardCut: 0.6 },
 };
 export const THEME_KEYS = ['dread', 'desert', 'poison', 'ember', 'lava', 'chasm'];
 

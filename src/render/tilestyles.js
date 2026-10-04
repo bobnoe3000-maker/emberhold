@@ -178,10 +178,15 @@ export const VARIANTS = {
   water:  { label: 'Water',  floor: 'slate',  wall: 'slate',   pool: 'water',  accent: 8,
             patch: { ramp: 'tide', step: 3, t: 0.75, wet: true },
             joint: () => ({ c: P('tide')[1] }) },                                         // water-dark joints
+  // the Fens' drowned imperial works (M8): grey dressed stone gone green in the joints, standing water in black-green
+  // pools that give no light (the water variant's blue glow read as neon against the owner's dusk)
+  drowned: { label: 'Drowned', floor: 'stone', wall: 'slate', pool: 'bog',   accent: 1,
+            patch: { ramp: 'moss', step: 1, t: 0.4, wet: true },
+            joint: (c, h) => (h > 0.5 ? { c: P('moss')[1] } : null) },
 };
 export const VARIANT_KEYS = Object.keys(VARIANTS);
 // Default variant per biome when none is forced with ?tv=.
-export const THEME_VARIANT = { dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock', warren: 'rock' };
+export const THEME_VARIANT = { dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock', warren: 'rock', mire: 'earth', water: 'drowned', sluice: 'drowned' };
 // Point-light colour for glowing pools (the renderer thins these to a few lamps).
 export const POOL_LIGHT = { lava: [1.7, 0.8, 0.25], poison: [0.5, 1.5, 0.35], ice: [0.4, 0.7, 1.2], water: [0.3, 0.8, 1.6] };
 
@@ -202,6 +207,7 @@ const POOLS = {
   poison(c) { const r = liquid(c, P('poison')); r.e = glint(c, 1); return r; },
   water(c)  { const r = liquid(c, P('tide'), 2, 3); r.e = glint(c, 8); return r; },
   mud(c)    { const r = liquid(c, P('mud'), 0, 1); if (vnoise(c.gx * 1.6, c.gy * 1.6, c.seed + 65) > 0.74) r.c = P('mud')[3]; r.n = N_UP; return r; },   // glossy sump
+  bog(c)    { const r = liquid(c, P('bog'), 1, 2); if (vnoise(c.gx * 1.2, c.gy * 1.2, c.seed + 69) > 0.7) r.c = P('weed')[1]; else r.e = glint(c, 8); r.n = N_UP; return r; },   // still black-green water, a skin of weed, a rare glint
   pit(c)    { return { c: fbm(c.gx * 0.5, c.gy * 0.5, c.seed + 66) < 0.5 ? P('pit')[1] : P('pit')[2], n: N_UP }; },
   ice(c) {                                     // frozen pool: pale sheet, long hairline cracks, rare frost glint
     const f = P('frost'), crack = Math.abs(vnoise(c.gx * 0.9 + 11, c.gy * 0.9, c.seed + 67) - 0.5) < 0.03;
