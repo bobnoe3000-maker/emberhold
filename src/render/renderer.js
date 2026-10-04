@@ -1577,6 +1577,8 @@ export function createRenderer(canvas, sim, input) {
     /** settles once the first actor and environment atlases have loaded (or failed), and every member of the party and the
      * bench has their own look: the loading screen's cue. Read after the save is restored (main.js), so a created hero (a
      * cleric, say) is in before the first frame; before, only the knight was, and the rest showed the pink paper doll. */
+    /** after the time away was played through with the bus quiet (ui/away.js): re-bake the floor (cages, chests) */
+    refresh() { terrValid = false; banner = null; },
     get ready() {
       for (const m of [...sim.state.party, ...sim.state.bench]) memberAtlas(m, m.actor && m.actor !== 'hero_knight' ? m.actor : m.main ? 'hero_knight' : MEMBER_LOOK[m.cls]);
       return Promise.allSettled([...firstLoads.filter(Boolean), ...partyPending.values()]);

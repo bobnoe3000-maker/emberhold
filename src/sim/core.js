@@ -34,6 +34,12 @@ import { hypot, atan2, sin, cos } from './detmath.js';
 
 export const TICK_HZ = 20;
 export const TICK_DT = 1 / TICK_HZ;
+// Offline progress (GDD §12 v1.32): the time away, played on the same rules. The page says how long it was away
+// (`away` { secs }, wall-clock: offline play is unverified until it syncs) and then ticks the sim through it as fast as
+// it can (ui/away.js); the sim counts the ticks down (state.away, runtime only) and says 'awayEnded'. Nothing is given:
+// the party fights the room it was left in, or waits in town on retainer (heroes.js: half wages), or stands where it
+// was. At most AWAY_MAX counts (the free window); under AWAY_MIN isn't worth a catch-up. `awayStop` ends it early.
+export const AWAY_MAX = 4 * 3600, AWAY_MIN = 60;
 
 export const PLAYER_SPEED = 8.8;   // tiles / second (5.8 → 7.0 → 8.0 → 8.8)
 // Movement has a VELOCITY (critic pass 3: instant starts, stops and pivots read as stiff):
@@ -96,6 +102,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
     count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
+    away: null,                       // the time away being played through (offline progress, above): runtime only
     boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 } },   // the Mere Tower's climb (tower.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
@@ -368,6 +375,13 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
     }
+    if (cmd.type === 'away') {                              // the time away (see AWAY_MAX): once at a time, a whole number of seconds
+      const secs = Math.floor(Number(cmd.secs));
+      if (!state.created || state.away || !(secs >= AWAY_MIN)) return;
+      const n = Math.min(secs, AWAY_MAX); state.away = { left: n * TICK_HZ, secs: n };
+      bus.emit('awayStarted', { secs: n, asked: secs }); return;
+    }
+    if (cmd.type === 'awayStop') { if (state.away) { const done = state.away.secs - state.away.left / TICK_HZ; state.away = null; bus.emit('awayEnded', { secs: Math.round(done), stopped: true }); } return; }
     // the Mere Tower (tower.js): at a landing, climb on, or go home with Wenna and keep everything (the punt: out at the jetty)
     if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
     if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) travel('overland', curSite); return; }
@@ -518,6 +532,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     else if (world.exitAt && hypot(p.x - world.exitAt.x, p.y - world.exitAt.y) < 1.6) { if (state.depth > 0) ascend(); else travel('overland', curSite); }   // walk up the stair: a floor up, or out
     if (p.journey && !p.path && !p.resume) p.journey = null;   // arrived (a leg that changed scenes has already walked on), or stopped
     state.t += TICK_DT; state.tick += 1;
+    if (state.away && --state.away.left <= 0) { const secs = state.away.secs; state.away = null; bus.emit('awayEnded', { secs, stopped: false }); }
   }
 
   // a party member's durable fields; runtime ones (position, velocity, cooldowns, melee-station
@@ -619,6 +634,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
     state.boons = restoreBoons(data);   // v19 and older: none
     state.tower = restoreTower(data);   // v20 and older: no climb
+    state.away = null;                  // (a catch-up is never saved: ui/away.js holds the autosave while one runs)
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);

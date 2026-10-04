@@ -929,6 +929,55 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
   }
 }
+// 20. Offline progress (GDD §12 v1.32; the owner, 2026-10-04): a slot saved a while ago picks the time up as play starts:
+// "While you were away…" plays it through, then says what happened; the save is written at once, so a reload doesn't play it
+// again. In a fight, Stop here ends it early and says so; the bus is loud again after, and the game ticks on.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); let p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?slot=3&dev&notitle`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__away, null, { timeout: 60000 });
+    await p.evaluate(() => { const s = globalThis.__sim; s.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Away' }); for (let i = 0; i < 3; i++) s.tick(); window.dispatchEvent(new Event('pagehide')); });
+    await p.waitForTimeout(400); await p.close();                      // (closing fires the autosave: its savedAt is now)
+    // saved half an hour ago: set from a page of the same origin that isn't the game, so no autosave writes over it
+    const q = await ctx.newPage(); await q.goto(`${base}/content/sites/barrows.json`);
+    await q.evaluate(async () => { const idb = await import('/src/persist/idb.js'), v = await idb.get('slot3'), ago = Date.now() - 1800 * 1000; v.savedAt = ago; await idb.set('slot3', v);
+      const k = 'emberfall.backup.slot3', bk = JSON.parse(localStorage.getItem(k) || 'null'); if (bk) { bk.savedAt = ago; localStorage.setItem(k, JSON.stringify(bk)); } });   // (and its backup)
+    await q.close(); p = await ctx.newPage(); p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?slot=3&dev&notitle`);
+    await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__away, null, { timeout: 60000 });
+    const ran = await p.waitForSelector('#away .go', { timeout: 300000 }).then(() => true, () => false);
+    const said = ran ? await p.locator('#away').innerText() : '', t1 = await p.evaluate(() => globalThis.__sim.state.t);
+    if (ran) await p.locator('#away .go').tap();
+    await p.waitForTimeout(600);
+    const savedAt = await p.evaluate(async () => (await (await import('./src/persist/idb.js')).get('slot3')).savedAt);
+    await p.evaluate(() => (window.__old = 1)); await p.reload();
+    await p.waitForFunction(() => !!globalThis.__sim && !window.__old, null, { timeout: 60000 }); await p.waitForTimeout(1500);
+    const again = await p.evaluate(() => document.getElementById('awayWrap').classList.contains('on'));
+    check('away: a slot saved half an hour ago plays the time through as it loads, says so, saves at once, and a reload doesn\'t play it again',
+      ran && /You were away 30 min/.test(said) && /In town/.test(said) && t1 >= 1790 && Date.now() - savedAt < 60000 && !again, JSON.stringify({ ran, t1, savedAge: Date.now() - savedAt, again, said: said.replace(/\n/g, ' · ') }));
+    await p.evaluate(async () => { const { deleteSlot } = await import('./src/persist/save.js'); await deleteSlot(3); });
+    // a fight, stopped early
+    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon&site=barrows`); await p.waitForFunction(() => !!globalThis.__away && !!globalThis.__renderer, null, { timeout: 60000 });
+    await p.evaluate(async () => {
+      const s = globalThis.__sim, P = await import('./src/sim/party.js'); s.state.created = true;
+      s.state.party = [s.state.party[0], P.makeMember('c1', 'Osk', 'rogue', 6), P.makeMember('c2', 'Manic', 'cleric', 6)];
+      for (const m of s.state.party) { m.level = 6; m.hp = P.statsFor(m).maxHp; m.mp = P.statsFor(m).maxMp; }
+      const L = s.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom), pl = s.state.player; pl.x = pl.px = r.cx + 0.5; pl.y = pl.py = r.cy + 0.5;
+      globalThis.__t0 = s.state.t; globalThis.__away.run(4 * 3600);
+    });
+    await p.waitForTimeout(2500); await p.locator('#away .stop').tap();
+    await p.waitForSelector('#away .go', { timeout: 60000 });
+    const f = await p.evaluate(() => ({ text: document.getElementById('away').innerText, played: globalThis.__sim.state.t - globalThis.__t0, quiet: globalThis.__sim.bus.quiet, away: globalThis.__sim.state.away }));
+    await p.locator('#away .go').tap(); await p.waitForTimeout(1500);
+    const ticking = await p.evaluate(() => globalThis.__sim.state.t - globalThis.__t0) > f.played;
+    check('away: in a fight, waves are held and paid on the way; Stop here ends it early and says so; the bus is loud again and the game ticks on; no page errors',
+      /Held \d+ waves/.test(f.text) && /You stopped it after/.test(f.text) && f.played > 60 && f.played < 4 * 3600 - 60 && !f.quiet && f.away === null && ticking && errs.length === 0,
+      JSON.stringify({ played: Math.round(f.played), quiet: f.quiet, ticking, errs, text: f.text.replace(/\n/g, ' · ').slice(0, 300) }));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

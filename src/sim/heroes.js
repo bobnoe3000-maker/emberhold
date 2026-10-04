@@ -92,10 +92,11 @@ export function createHeroes({ state, bus, getWorld, seed }) {
     if (now >= REVEAL_AT && m.hidden) { const perk = m.hidden; m.perks = [...m.perks, perk]; m.hidden = null; bus.emit('perkRevealed', { id: m.id, name: m.name, perk }); }
     if (now >= SWORN_AT && before < SWORN_AT) bus.emit('sworn', { id: m.id, name: m.name });
   }
-  // the dawn wage: the party first, then the bench at half; each paid in full or owed
+  // the dawn wage: the party first, then the bench at half; each paid in full or owed. (GDD §12) While you're away
+  // and the company is in town, it's on retainer: the party is paid the bench's half too.
   function payDawn(d) {
-    const C2 = state.counters; let paid = 0, total = 0; const unpaid = [];
-    for (const [list, benched] of [[state.party, false], [state.bench, true]]) for (const m of list) {
+    const C2 = state.counters; let paid = 0, total = 0; const unpaid = [], retainer = !!state.away && getWorld().kind === 'town';
+    for (const [list, benched] of [[state.party, retainer], [state.bench, true]]) for (const m of list) {
       if (!hired(m)) continue;
       const w = wageOf(m, benched), due = w + (m.owed || 0); total += due;
       if ((C2.gold || 0) >= due) { C2.gold -= due; paid += due; m.owed = 0; if (!benched && !m.fallen) bonded(m, 1); }

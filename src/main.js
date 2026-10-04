@@ -1,6 +1,6 @@
 // main.js — boot + game loop. Fixed 20 Hz sim, render interpolated at display rate.
 
-import { createSim, TICK_DT } from './sim/core.js';
+import { createSim, TICK_DT, AWAY_MIN } from './sim/core.js';
 import { createRenderer } from './render/renderer.js';
 import { watchSafeArea } from './ui/safearea.js';
 import { createInput } from './ui/input.js';
@@ -20,6 +20,7 @@ import { createJournal } from './ui/journal.js';
 import { createStepOut } from './ui/stepout.js';
 import { createShrineCard } from './ui/shrine.js';
 import { createTowerCard } from './ui/tower.js';
+import { createAway } from './ui/away.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
 import { NPCS } from './sim/npcs.js';
@@ -58,6 +59,16 @@ const saved = PREVIEW ? null : await readSlot(SLOT);
 const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
 const sim = createSim(SEED, THEME, { scene: SCENE, region: STAGE ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
+// offline progress (ui/away.js; GDD §12): made before anything presentational listens, then the bus is sealed, so while
+// the time away plays through (the bus quiet) only the sim's own listeners and its collector hear the hours of fighting
+let autosave = null;
+const away = createAway({ sim, hold: (on) => { if (autosave) { autosave.hold(on); if (!on) autosave.save(); } }, refresh: () => {
+  renderer.refresh();
+  sim.bus.emit('countersChanged', { ...sim.state.counters }); sim.bus.emit('partyChanged', sim.state.party);
+  sim.bus.emit('boonsChanged', { ...(sim.state.boons || {}) }); sim.bus.emit('questTracked', { id: sim.state.tracked });
+} });
+sim.bus.seal();
+if (DEV) globalThis.__away = away;
 const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const renderer = createRenderer(canvas, sim, input);
@@ -93,7 +104,6 @@ const dialogue = createDialogue({ sim, cast: () => cast, openService: (kind) => 
 // the first render so restored mods are reflected in chunk bakes.
 if (saved) sim.restore(saved.data);
 // Autosave only a game that has its hero: a slot stays empty until creation's Begin.
-let autosave = null;
 const startAutosave = () => { if (PREVIEW || autosave) return; autosave = createAutosave(sim, SLOT); autosave.save(); };
 if (sim.state.created) startAutosave();
 sim.bus.on('heroCreated', startAutosave);
@@ -111,10 +121,15 @@ const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
 const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
-  openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => cinema.stopMusic(),
+  openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
+// offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title
+// can stand open as long as it likes: that isn't time away); and a tab that comes back after a minute or more
+let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
+function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
+if (!BOOT) renderer.ready.then(() => catchUp());
 if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal };
 
 
@@ -150,6 +165,7 @@ function frame(now) {
   // the next frame first: an error while drawing (a renderer bug) must not stop the loop — it
   // did once, and a missing class in a lookup froze the whole game at the first fight
   if (!MANUAL) requestAnimationFrame(frame);
+  if (away.running) { last = now; return; }   // the time away is being played through (ui/away.js): no ticks, no drawing
   const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1;
   let dt = (now - last) / 1000 / SLOW;
   last = now;
@@ -181,5 +197,8 @@ else requestAnimationFrame(frame);
 
 // pause the clock when backgrounded (offline math covers gaps later)
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) last = performance.now();
+  if (document.hidden) { hiddenAt = Date.now(); return; }
+  last = performance.now();
+  if (hiddenAt && !paused && !away.running) catchUp((Date.now() - hiddenAt) / 1000);
+  hiddenAt = 0;
 });

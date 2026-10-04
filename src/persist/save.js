@@ -163,14 +163,18 @@ export function setActiveSlot(i) { try { localStorage.setItem(ACTIVE_KEY, String
 // that matter — tab hidden, page hidden — when a synchronous backup is written as well.
 /** @param {any} sim @param {number} slot */
 export function createAutosave(sim, slot, { intervalMs = AUTOSAVE_MS } = {}) {
-  const save = () => writeSlot(slot, sim);
-  const urgent = () => { writeBackup(slot, sim); save(); };
+  // held while the time away is played through (ui/away.js): a page closed half-way keeps its old save and savedAt,
+  // so the whole window plays again next time rather than half of it twice
+  let held = false;
+  const save = () => (held ? Promise.resolve(false) : writeSlot(slot, sim));
+  const urgent = () => { if (held) return; writeBackup(slot, sim); save(); };
   const timer = setInterval(save, intervalMs);
   const onHide = () => { if (document.hidden) urgent(); };
   document.addEventListener('visibilitychange', onHide);
   window.addEventListener('pagehide', urgent);
   return {
     save, urgent,
+    /** @param {boolean} on */ hold(on) { held = !!on; },
     stop() { clearInterval(timer); document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', urgent); },
   };
 }
