@@ -19,7 +19,7 @@ const frac = (v) => v - Math.floor(v);
 const N_TUFT = norm3(0, 0.55, 0.83), N_WATER = norm3(0, 0.36, 0.93);
 // muted, to sit in the dusk (critic pass 11j added the meadow patches; their colours stay the game's own)
 const FLOWERS = [[168, 150, 80], [160, 150, 178], [150, 70, 66], [176, 170, 150]];
-const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat };
+const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat, p: ELIT.peat, b: ELIT.bog, k: ELIT.weed, r: ELIT.reed, deck: ELIT.deck };
 const OUT = { c: null, n: N_UP, e: 0 };
 const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OUT; };
 
@@ -86,6 +86,7 @@ function cobble(o, q, gx, gy) {
 // the edge; rare glints. Critic pass 10: three tones at fixed fractions drew canal stripes parallel to the banks, a
 // pale foam line outlined it, and the flow streaks ran across the current in a cell pattern, like ice.
 function water(o, q, gx, gy) {
+  if (o.region === 'fens') return canal(o, q, gx, gy);
   const w = R.w, t = q.t + (fbm(gx * 0.07, gy * 0.07, o.seed + 55) - 0.5) * 0.4;
   let c = t < 0.45 ? w[1] : t < 0.8 ? w[2] : w[3];
   if (q.t > 0.9) return ret(mix(w[3], R.m[3], 0.3), N_WATER);               // the shallows
@@ -96,10 +97,67 @@ function water(o, q, gx, gy) {
   return ret(c, N_WATER, e);
 }
 
+// The Fens' drowned canal (M8): still, black-green, no current; the old line of the far bank's stones under it as a
+// slightly lighter band; a rare glint.
+function canal(o, q, gx, gy) {
+  const n = fbm(gx * 0.05, gy * 0.05, o.seed + 93), b = R.b;
+  if (q.t > 0.88) return ret(mix(b[3], R.s[1], 0.35), N_WATER);                         // the drowned kerb under the surface
+  if (fbm(gx * 0.09, gy * 0.09, o.seed + 95) > 0.66) return ret(R.k[2], N_UP);          // weed lying on it
+  const gc = Math.floor(gx * 1.4), gr = Math.floor(gy * 1.4);
+  const e = H(gc, gr, o.seed + 97) > 0.99 && frac(gx * 1.4) < 0.2 && frac(gy * 1.4) < 0.2 ? 6 : 0;
+  return ret(n < 0.5 ? b[1] : b[2], N_WATER, e);
+}
 function bank(o, q, gx, gy, tx, ty, rx, ry) {
+  if (o.region === 'fens' && q.t < 0.7) {                                                  // the canal's broken stone edge (M8)
+    const bx = Math.floor(gx * 0.9), by = Math.floor(gy * 0.9), keep = H(bx, by, o.seed + 99);
+    if (keep > 0.3) { const f = frac(gx * 0.9) < 0.1 || frac(gy * 0.9) < 0.1; return ret(f ? R.s[0] : keep > 0.8 ? R.s[3] : R.s[2], f ? N_UP : norm3(0, 0.4, 0.92)); }
+    return ret(R.p[2], N_WATER);
+  }
   if (q.t < 0.45) return ret(R.m[3], N_WATER);                                 // wet mud
   if (q.t < 0.8) return ret(R.m[2]);
   return grass(o, gx, gy, tx, ty, rx, ry, -0.2);
+}
+
+// The Fens (M8). Still bog water: near-black green, slow tone changes, skins of duckweed lying flat on it, a rare glint
+// and the shallows going to peat at the edge. No current: no dashes.
+function pool(o, q, gx, gy) {
+  const n = fbm(gx * 0.06, gy * 0.06, o.seed + 71);
+  if (q.t > 0.82) return ret(mix(R.b[3], R.p[2], (q.t - 0.82) / 0.18), N_WATER);    // the shallows, going to peat
+  const weed = fbm(gx * 0.09, gy * 0.09, o.seed + 73);
+  if (weed > 0.6) return ret(weed > 0.68 ? R.k[3] : R.k[2], N_UP);                     // duckweed, flat and matte
+  const gc = Math.floor(gx * 1.4), gr = Math.floor(gy * 1.4);
+  const e = H(gc, gr, o.seed + 75) > 0.988 && frac(gx * 1.4) < 0.2 && frac(gy * 1.4) < 0.2 ? 6 : 0;
+  return ret(n < 0.45 ? R.b[1] : n < 0.62 ? R.b[2] : R.b[3], N_WATER, e);
+}
+// Wet peat with reeds: two tones of peat, sheens of standing water in its hollows, and upright reed tufts (the
+// meadow's tuft, taller and straw-coloured), thickest at a pool's edge.
+function marsh(o, q, gx, gy, tx, ty, rx, ry) {
+  const n = fbm(gx * 0.1, gy * 0.1, o.seed + 77);
+  let c = n < 0.5 ? R.p[2] : R.p[3];
+  if (fbm(gx * 0.07, gy * 0.07, o.seed + 79) > 0.63) c = mix(R.b[3], R.p[2], 0.35);    // standing water in a hollow
+  const dense = q.t < 1 ? 0.55 : 0.16, h = H(tx, ty, o.seed + 81);   // (art pass: everywhere at 0.45 the ground read as speckle)
+  if (h < dense) {
+    for (let j = 0; j < 2; j++) {                                                         // up to two reed clumps a tile
+      const tu = 0.2 + 0.6 * H(tx + j * 13, ty, o.seed + 83), tv = 0.2 + 0.6 * H(ty, tx + j * 13, o.seed + 85);
+      const dx = Math.round(rx - (tu - tv) * 8), dy = Math.round(ry - (tu + tv) * 4);
+      if ((dx === -1 || dx === 1) && dy >= -4 && dy <= 0) return ret(dy <= -3 ? R.r[3] : R.r[2], N_TUFT);
+      if (dx === 0 && dy >= -5 && dy <= 0) return ret(dy <= -4 ? R.r[3] : R.r[1], N_TUFT);
+      if (dy === 1 && Math.abs(dx) <= 1) return ret(R.p[0]);
+    }
+  }
+  return ret(c);
+}
+// Boardwalk: planks across the way (along the walk's length), a dark gap between boards, the odd board lighter or
+// darker, a nail-head now and then, and the stringer beams dark at the edges. Saltmere's square is one deck.
+function deck(o, q, gx, gy) {
+  const P = 0.6, a = q.along / P, b = Math.floor(a), f = frac(a);
+  if (q.hw && q.t > 0.9) return ret(R.deck[0]);                                         // the stringers' edge
+  if (f < 0.12) return ret(R.deck[0]);                                                  // the gap
+  const e = (q.lat + (b % 3) * 1.4) / 4.2, seg = Math.floor(e);                          // boards 4.2 tiles long, their ends staggered
+  if (frac(e) < 0.03) return ret(R.deck[1]);                                             // a butt joint
+  const tone = H(b, seg, o.seed + 87), c = tone < 0.25 ? R.deck[2] : tone > 0.85 ? R.deck[4] : R.deck[3];
+  if (Math.abs(f - 0.55) < 0.06 && H(b, Math.floor(q.lat * 2), o.seed + 89) > 0.9) return ret(R.deck[1], norm3(0, 0.45, 0.88));   // a nail
+  return ret(fbm(gx * 0.5, gy * 0.5, o.seed + 91) > 0.62 ? mix(c, R.deck[1], 0.35) : c);
 }
 
 // Wheat: rows across the field's axis, furrows between, lit crests.
@@ -153,6 +211,9 @@ export function paintOutdoor(o, gx, gy, tx, ty, rx, ry) {
     case G.DIRT: r = dirt(o, q, gx, gy, tx, ty, rx, ry); break;
     case G.COBBLE: r = cobble(o, q, gx, gy); break;
     case G.FIELD: r = field(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.POOL: return pool(o, q, gx, gy);
+    case G.MARSH: r = marsh(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.DECK: r = deck(o, q, gx, gy); break;
     default: r = grass(o, gx, gy, tx, ty, rx, ry);
   }
   const a = aoAt(o, gx, gy);

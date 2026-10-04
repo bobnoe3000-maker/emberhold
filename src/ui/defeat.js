@@ -2,7 +2,7 @@
 // defeat.js — the defeat screen. A wipe used to cut straight to the temple in town; now the sim's
 // 'defeat' event (battle.js: the party wakes at the Shrine, Weakened, a quarter of the gold gone) opens
 // this screen first, over everything: where the party fell, how far it got, who struck the last blow,
-// what it costs. "Wake at the temple" closes it, and you're in Thornwick at the temple. A slain
+// what it costs. "Wake at the temple" closes it, and you're at the land's temple (Thornwick's, or Saltmere's chapel). A slain
 // companion is raised by the wipe itself.
 // DOM only: it reads the event's recap and never touches sim state. Foe names come from
 // content/foes.json; a boss is named by the sim (battle.js BOSSES).
@@ -59,7 +59,7 @@ export function createDefeat({ sim }) {
     const held = document.createElement('p'); held.className = 'held';
     held.textContent = r ? `You held the room ${dur(r.secs)}. ${r.foesLeft === 1 ? 'One foe was' : `${r.foesLeft} foes were`} still standing.` : '';
     const cost = document.createElement('div'); cost.className = 'cost';
-    cost.append(line('You wake at the temple in Thornwick, the Shrine of the Ember, everyone on their feet.'));
+    cost.append(line(sim.state.region === 'fens' ? 'You wake at the chapel in Saltmere, the Grey Sisters’, everyone on their feet.' : 'You wake at the temple in Thornwick, the Shrine of the Ember, everyone on their feet.'));   // (the land's town: regions.js)
     const weak = document.createElement('div'); weak.append('Weakened for ', Object.assign(document.createElement('b'), { textContent: `${Math.round((e.weakS || 600) / 60)} minutes` }), ': −10 % HP, MP, ATK and DEF. A night at the inn lifts it.');
     cost.append(weak);
     if (e.lost > 0) { const g = document.createElement('div'); g.append(Object.assign(document.createElement('b'), { textContent: `−${e.lost} gold` }), ', a quarter of your purse, gone with you.'); cost.append(g); }

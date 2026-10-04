@@ -55,7 +55,10 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   if (state.wageDay === undefined) state.wageDay = 0;       // the last dawn the wages were settled
   if (state.innDay === undefined) state.innDay = -1e9;      // the last day the company slept at an inn (a Drinker's)
   const C = state.counters;
-  const inTown = () => getWorld().kind === 'town';
+  // a service the town you're in has (M8: a waystation such as Saltmere has only its tavern and temple, outdoor.js);
+  // null if it's here, else the refusal: where to go instead
+  const NOUN = { temple: 'temple', inn: 'inn', tavern: 'tavern' };
+  const lacks = (kind, away) => { const w = getWorld(); if (w.kind !== 'town') return away; return (w.services || []).some((v) => v.kind === kind) ? null : `${w.name} has no ${NOUN[kind]}`; };
   const find = (id) => state.party.find((m) => m.id === id) || state.bench.find((m) => m.id === id) || null;
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
   const changed = () => bus.emit('partyChanged', state.party);
@@ -147,7 +150,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       }
       case 'respec': {
         const m = find(cmd.id); if (!m) return true;
-        if (!inTown()) return refuse('Respec at a town temple');
+        { const no = lacks('temple', 'Respec at a town temple'); if (no) return refuse(no); }
         if (!pay(respecCost(m))) return refuse('Not enough gold');
         m.attrs = { might: 0, grit: 0, finesse: 0, focus: 0 }; m.respecs = (m.respecs || 0) + 1; m.autoAttrs = false;
         clampPools(m); bus.emit('respec', { id: m.id }); changed(); return true;
@@ -180,7 +183,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       }
       case 'resurrect': {
         const m = find(cmd.id); if (!m || !m.fallen) return true;
-        if (!inTown()) return refuse('Only a temple can raise the Fallen here');
+        { const no = lacks('temple', 'Only a temple can raise the Fallen here'); if (no) return refuse(no); }
         const cost = resurrectCost(m);
         if (!pay(cost)) return refuse('Not enough gold');
         if (!cost) state.temple.freeDay = day();
@@ -188,14 +191,14 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         bus.emit('resurrected', { id: m.id, name: m.name, how: 'temple', cost }); changed(); return true;
       }
       case 'rest': {
-        if (!inTown()) return refuse('Rest at a town inn');
+        { const no = lacks('inn', 'Rest at a town inn'); if (no) return refuse(no); }
         if (!pay(restCost())) return refuse('Not enough gold');
         for (const m of state.party) if (!m.fallen) { m.weakUntil = 0; m.down = false; const s = statsFor(m); m.hp = s.maxHp; m.mp = s.maxMp; }
         state.innDay = day();
         bus.emit('rested', {}); changed(); return true;
       }
       case 'hire': {                                      // today's roster at this town's tavern
-        if (!inTown()) return true;
+        if (lacks('tavern', 'x')) return true;
         const c = roster()[cmd.idx];
         if (!c || find(c.id)) return true;
         if (state.party.length > MAX_COMPANIONS && state.bench.length >= BENCH_MAX) return refuse('The party and the bench are full');
@@ -206,14 +209,14 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         changed(); return true;
       }
       case 'askAround': {                                 // new faces at the tavern, for a price that doubles each time today
-        if (!inTown()) return true;
+        if (lacks('tavern', 'x')) return true;
         if (!pay(askCost())) return refuse('Not enough gold');
         state.tavern = { day: day(), ask: asked() + 1 };
         bus.emit('rosterChanged', { ask: state.tavern.ask }); return true;
       }
       case 'retrain': {                                   // one perk for another of its family
         const m = find(cmd.id); if (!m || !hired(m) || !Array.isArray(m.perks) || !Number.isInteger(cmd.idx) || cmd.idx < 0 || cmd.idx >= m.perks.length) return true;
-        if (!inTown()) return refuse('Retrain in a town');
+        { const no = lacks('tavern', 'Retrain in a town'); if (no) return refuse(no); }
         if (PERKS[m.perks[cmd.idx]]?.fam === 'quirk') return refuse(`${m.name} won't be trained out of that`);
         const next = retrainPerk(seed, m, cmd.idx);
         if (!next) return refuse('There is nothing else of that kind to learn');
@@ -222,7 +225,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         bus.emit('retrained', { id: m.id, name: m.name, was, perk: next }); changed(); return true;
       }
       case 'payWages': {                                  // settle what the sellswords are owed, each in full
-        if (!inTown()) return refuse('Settle wages at a town tavern');
+        { const no = lacks('tavern', 'Settle wages at a town tavern'); if (no) return refuse(no); }
         let any = false;
         for (const m of [...state.party, ...state.bench]) if (m.owed > 0 && pay(m.owed)) { m.owed = 0; any = true; }
         if (!any) return refuse(owed() ? 'Not enough gold' : 'Nobody is owed anything');
@@ -231,7 +234,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'dismiss': {                                   // a companion goes to the bench at the inn
         const i = state.party.findIndex((m) => m.id === cmd.id && !m.main);
         if (i < 1) return true;
-        if (!inTown()) return refuse('Companions wait at a town inn');
+        { const no = lacks('inn', 'Companions wait at a town inn'); if (no) return refuse(no); }
         if (state.bench.length >= BENCH_MAX) return refuse('The bench is full');
         const [m] = state.party.splice(i, 1); m.down = false; state.bench.push(m);
         changed(); return true;
@@ -239,7 +242,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'swap': {                                      // bench → companion slot (1 or 2); the one there takes its place
         const slot = cmd.slot, j = state.bench.findIndex((m) => m.id === cmd.id);
         if ((slot !== 1 && slot !== 2) || j < 0) return true;
-        if (!inTown()) return refuse('Swap companions in a town');
+        { const no = lacks('inn', 'Swap companions in a town'); if (no) return refuse(no); }
         const incoming = state.bench[j];
         if (slot < state.party.length) { const out = state.party[slot]; out.down = false; state.party[slot] = incoming; state.bench[j] = out; }
         else if (state.party.length <= MAX_COMPANIONS) { state.party.push(incoming); state.bench.splice(j, 1); }
@@ -250,7 +253,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         const j = state.bench.findIndex((m) => m.id === cmd.id);
         if (j < 0) return true;
         if (FOUND[cmd.id]) return refuse(`${state.bench[j].name} isn't going anywhere`);
-        if (!inTown()) return refuse('Only at a town inn');
+        { const no = lacks('inn', 'Only at a town inn'); if (no) return refuse(no); }
         const m = state.bench[j], keep = Object.values(m.gear || {}).filter((it) => it && it.r !== 'common');
         if (bagStacks(state.bag.concat(keep)).length > BAG_SIZE) return refuse(`No room in the bag for ${m.name}'s gear (${keep.length})`);
         state.bench.splice(j, 1); m.gear = {}; m.owed = 0;

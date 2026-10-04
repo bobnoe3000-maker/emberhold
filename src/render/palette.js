@@ -99,6 +99,12 @@ export const ELIT = {
   street: ['#1a1816', '#272420', '#36312b', '#46403a', '#59524a'].map(_hx),  // town cobbles, warm grey
   river:  ['#09131b', '#0e1d28', '#142838', '#1d394a', '#385565'].map(_hx),  // cold river water
   wheat:  ['#242011', '#353018', '#4a4222', '#61562d', '#7a6c3a'].map(_hx),  // late wheat
+  // the Fens' swamp ground (M8; docs/region-towns-proposal.md): peat, still bog water, duckweed, reeds, boardwalk wood
+  peat:   ['#0f0c08', '#18130d', '#221b12', '#2d2418', '#3a2f20'].map(_hx),  // wet peat and mud
+  bog:    ['#060b09', '#0a120f', '#0f1a16', '#16241f', '#22332c'].map(_hx),  // still black-green water
+  weed:   ['#121a0c', '#1a2511', '#243317', '#2f421d', '#3d5326'].map(_hx),  // duckweed skins
+  reed:   ['#1f1d10', '#2c2916', '#3b361d', '#4c4626', '#605932'].map(_hx),  // dead-gold reeds
+  deck:   ['#140f0b', '#1f1810', '#2b2117', '#382b1e', '#473727'].map(_hx),  // weathered boardwalk planks
 };
 export const EGLOW = {
   poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70],

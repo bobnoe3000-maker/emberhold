@@ -15,8 +15,10 @@ import { ENV_FOOT } from './envfoot.js';
 import { hypot, sin, cos } from './detmath.js';
 
 // ground codes (pixel + tile)
-export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5 };
-const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field'];
+// (M8: the Fens' swamp ground, docs/region-towns-proposal.md: MARSH is wet peat and reeds you can walk; POOL still bog
+// water you can't; DECK the boardwalks and Saltmere's square on piles, laid over either)
+export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5, MARSH: 6, POOL: 7, DECK: 8 };
+const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'marsh', 'pool', 'deck'];
 const CELL = 8;                         // spatial-index cell, tiles
 
 // ── geometry helpers ─────────────────────────────────────────────────────────
@@ -56,9 +58,11 @@ export function groundAt(o, gx, gy) {
   const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0; out.cap = false; out.track = false;
   const cell = o.grid.get(Math.floor(gx / CELL) + ',' + Math.floor(gy / CELL));
   let best = 0, bestRank = 0, roadD = Infinity, riverD = Infinity;      // rank: water 4 > bank 3 > cobble 2 > dirt 1
+  let deckD = Infinity, deckQ = null, deckS = null;                      // a boardwalk lies over everything (M8)
   if (cell) {
     for (const i of cell) {
       const s = o.segs[i], q = segDist(gx, gy, s);
+      if (s.surface === 'deck') { if (q.d < s.w / 2 && q.d < deckD) { deckD = q.d; deckQ = q; deckS = s; } continue; }
       if (s.type === 'river') {
         // its width eased along the segment; a small wobble (the meander is in the points); a bank 0.5–2.5 wide
         // (critic pass 10: ±1.1 of wobble at a short wavelength, a 1.1-tile bank the whole way)
@@ -80,6 +84,7 @@ export function groundAt(o, gx, gy) {
       }
     }
   }
+  if (deckS) { out.g = G.DECK; out.t = deckD / (deckS.w / 2); out.lat = Math.sign(deckQ.side) * deckD; out.along = deckS.s0 + deckQ.t * deckS.len; out.hw = deckS.w / 2; return out; }
   if (bestRank >= 3) return out;
   // a junction's apron: packed earth where roads meet, no ruts (critic pass 10: each road's ruts ran on into the join)
   for (const a of o.aprons) {
@@ -89,15 +94,22 @@ export function groundAt(o, gx, gy) {
   for (const p of o.plazas) {                        // cobbled squares: soft superellipse
     const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
     const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 29) - 0.5) * 0.25;
-    if (e < 1 + wob && bestRank < 2) { bestRank = 2; out.g = G.COBBLE; out.t = e; out.lat = 0; out.hw = 0; }
+    if (e < 1 + wob && bestRank < 2) { bestRank = 2; out.g = p.surface === 'deck' ? G.DECK : G.COBBLE; out.t = e; out.lat = p.surface === 'deck' ? (gx - gy) / 2 : 0; out.hw = 0; out.along = gx + gy; }
   }
   if (bestRank) return out;
+  for (const p of o.pools || []) {                   // still water (M8): a soft superellipse, a reedy fringe round it
+    const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
+    const wob = (fbm(gx * 0.11, gy * 0.11, o.seed + 37) - 0.5) * 0.55;
+    if (e < 1 + wob) { out.g = G.POOL; out.t = e; return out; }
+    if (e < 1.45 + wob) { out.g = G.MARSH; out.t = (e - 1) / 0.45; return out; }
+  }
   for (const f of o.fields) {
     if (gx >= f.x0 && gx < f.x1 && gy >= f.y0 && gy < f.y1) {
       out.g = G.FIELD; out.fx = f.axis === 'x' ? gy - f.y0 : gx - f.x0;
       out.t = Math.min(gx - f.x0, f.x1 - gx, gy - f.y0, f.y1 - gy); return out;
     }
   }
+  if (o.marsh && fbm(gx * 0.045, gy * 0.045, o.seed + 31) > 0.55) { out.g = G.MARSH; out.t = 1; }   // the fen's open ground: patches of wet peat and reed
   return out;
 }
 
@@ -106,7 +118,7 @@ function makeWorld(seed, kind, W, H, PAD) {
   const GW = W + 2 * PAD, GH = H + 2 * PAD;
   return {
     kind, theme: kind, seed, depth: 0, W, H, PAD, GW, GH,
-    rivers: [], roads: [], plazas: [], fields: [], aprons: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
+    rivers: [], roads: [], pools: [], plazas: [], fields: [], aprons: [], structs: [], exits: [], arrivals: {}, labels: [], services: [], hub: null, region: 'vale',
     blocked: new Uint8Array(GW * GH), occ: new Uint8Array(GW * GH), tmat: new Uint8Array(GW * GH),
     props: new Map(), mods: new Map(), hp: new Map(), discovered: new Set(), enemies: [], projectiles: [],
     level: { rooms: [], edges: [], cells: new Map(), th: { name: kind, wall: 'basalt', floors: ['soil'], hazard: 'water' } },
@@ -120,8 +132,8 @@ function finalizeGround(o) {
   for (let Y = 0; Y < o.GH; Y++) for (let X = 0; X < o.GW; X++) {
     const g = groundAt(o, X - o.PAD + 0.5, Y - o.PAD + 0.5).g;
     o.tmat[Y * o.GW + X] = g;
-    if (g === G.WATER) o.blocked[Y * o.GW + X] = 1;
-    if (g !== G.GRASS && g !== G.FIELD) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
+    if (g === G.WATER || g === G.POOL) o.blocked[Y * o.GW + X] = 1;
+    if (g !== G.GRASS && g !== G.FIELD && g !== G.MARSH) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
   }
 }
 
@@ -394,6 +406,106 @@ function buildTown(seed, region) {
   return o;
 }
 
+// ── THE GREYWATER FENS (M8; world doc §3.2) — the overland south of the Vale ───────────────────────────────────
+// Reed-choked marsh round a drowned imperial canal, ruled straight north to south. The canal road comes down from
+// the Vale on its west bank to Saltmere, the stilt town in its mere, and on south to the Canal Locks, where it
+// crosses, and the Drowned Abbey in the canal's flood. Open ground is wet peat and reed (o.marsh), with meres of
+// still bog water. The sites' ways in are added with the sites (m8-plan slice 3).
+export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190] };
+function buildFens(seed) {
+  const o = makeWorld(seed, 'overland', 240, 240, 90), rng = mulberry32(streamSeed(seed, 4431)), B = (t, n = 1) => `fens_${t}_${n}`;
+  o.name = 'The Greywater Fens'; o.region = 'fens'; o.marsh = true;
+  const { north, salt, mound, locks, pools, abbey, reedholm } = FENS;
+  // the canal: straight runs between the imperial works, wider where it broke its banks
+  o.rivers.push({ w: 10, pts: [[104, -60], [103, 60], [101, locks[1]], [104, 180], [118, 200], [128, 230], [134, 320]] });
+  // meres: Saltmere's, the Mound's, the Sickpools' green water, the Abbey's flood; and the fen's own, by the seed
+  o.pools.push({ cx: salt[0] - 3, cy: salt[1] - 6, rx: 16, ry: 13 }, { cx: mound[0] - 6, cy: mound[1] + 2, rx: 17, ry: 13 },
+    { cx: pools[0] + 6, cy: pools[1] - 4, rx: 15, ry: 10 }, { cx: abbey[0] + 2, cy: abbey[1] - 2, rx: 24, ry: 17 });
+  const keepOut = [north, salt, mound, locks, pools, abbey, reedholm];
+  for (let i = 0; i < 26; i++) {
+    const cx = rng() * 240, cy = rng() * 240, rx = 5 + rng() * 11, ry = 4 + rng() * 8;
+    if (keepOut.some(([x, y]) => hypot(x - cx, y - cy) < 26 + rx) || Math.abs(cx - 103) < 16 + rx) continue;
+    o.pools.push({ cx, cy, rx, ry });
+  }
+  const ROADS = [
+    { w: 5, surface: 'dirt', pts: [[north[0], -30], [north[0] + 2, 14], [salt[0] + 12, salt[1] - 20], [salt[0] + 20, salt[1] + 6], [92, 100], [locks[0] - 8, locks[1]]] },   // the canal road, down from the Vale past Saltmere to the Locks
+    { w: 4, surface: 'deck', pts: [[salt[0] + 19, salt[1] + 6], [salt[0] + 10, salt[1] + 3], [salt[0] + 4, salt[1] + 1]] },          // Saltmere's boardwalk, in from its front
+    { w: 5, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [locks[0] + 18, locks[1]]] },                                  // over the lock gates
+    { w: 4, surface: 'dirt', pts: [[locks[0] + 18, locks[1]], [150, 116], [pools[0] - 10, pools[1] + 8]] },                   // east to the Sickpools
+    { w: 4, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [94, 170], [abbey[0] - 26, abbey[1] - 14]] },                   // south to the Abbey's flood
+    { w: 4, surface: 'deck', pts: [[abbey[0] - 26, abbey[1] - 14], [abbey[0] - 12, abbey[1] - 6], [abbey[0] - 4, abbey[1] + 2]] },   // the causeway over it
+    { w: 3, surface: 'track', pts: [[locks[0] + 18, locks[1]], [150, 150], [reedholm[0] - 8, reedholm[1] - 4]] },              // to Reedholm on its rise
+    { w: 3, surface: 'track', pts: [[92, 96], [62, 100], [mound[0] + 12, mound[1] - 2]] },                                    // west to the Toadking's shore
+  ].map((r) => ({ ...r, pts: r.surface === 'deck' ? r.pts : fillet(r.pts, Math.max(8, r.w * 2)) }));
+  o.roads.push(...ROADS);
+  finalizeGround(o);
+  put(o, 'bridge_90', locks[0] + 1, locks[1], 'deck');                                                              // the lock gates' bridge
+  // Saltmere from outside: its stilt houses standing in the mere round the boardwalk's end
+  for (const [id, x, y] of [[B('stilttavern'), salt[0] + 2, salt[1] - 10], [B('stilt', 1), salt[0] - 10, salt[1] - 4], [B('stilt', 2), salt[0] + 12, salt[1] - 10],
+    [B('stilt', 3), salt[0] - 4, salt[1] + 8], [B('stilt', 1), salt[0] - 16, salt[1] - 16], [B('stilt', 2), salt[0] - 4, salt[1] - 22]]) put(o, id, x, y);
+  for (const [id, x, y] of [[B('punt'), salt[0] - 14, salt[1] + 6], [B('punt'), salt[0] + 6, salt[1] - 18], [B('eeltrap'), salt[0] - 18, salt[1] + 2], [B('eeltrap'), salt[0] + 2, salt[1] + 12]]) put(o, id, x, y, 'rect', 0);
+  o.labels.push({ x: salt[0] + 2, y: salt[1] - 10, id: B('stilttavern'), text: 'Saltmere' });
+  // the fen's trees: stunted birch and alder in carrs, dead trees standing in the water's edge; never on a road
+  scatter(o, rng, -60, -60, 300, 300, 7, (x, y) => {
+    if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 18)) return null;
+    const n = fbm(x * 0.03, y * 0.03, o.seed + 41), out = Math.max(-x, x - 240, -y, y - 240);
+    if (out > 0) return rng() < 0.8 ? pick(rng, ['grove_2', 'grove_4', 'dead_1', 'birch_2']) : null;
+    return n > 0.58 ? pick(rng, ['birch_1', 'birch_2', 'birch_3', 'grove_2', 'dead_1']) : rng() < 0.05 ? pick(rng, ['dead_1', 'dead_2']) : null;
+  });
+  forestRing(o, rng, 6);
+  undergrowth(o, -10, -10, 250, 250, 4, (x, y) => {
+    if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12)) return -1;
+    return fbm(x * 0.08, y * 0.08, o.seed + 43) > 0.6 ? 0.5 : 0.08;
+  });
+  o.exits.push({ x0: north[0] - 8, y0: -11, x1: north[0] + 9, y1: -4, to: 'overland', region: 'vale', arrive: 'fens' });   // back up the canal road to the Vale
+  o.exits.push({ x0: salt[0] + 1, y0: salt[1] - 2, x1: salt[0] + 6, y1: salt[1] + 4, to: 'town', arrive: 'overland' });     // the boardwalk's end: into Saltmere
+  o.arrivals = { default: { x: salt[0] + 16.5, y: salt[1] + 6.5 }, saltmere: { x: salt[0] + 16.5, y: salt[1] + 6.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
+// ── SALTMERE, the Fens' waystation (M8; docs/region-towns-proposal.md) ─────────────────────────────────────────
+// No wall: the water is all round it. Stilt houses over the bog, boardwalks for streets, the square a deck on piles
+// in the same place and shape as every town's, and two services standing where a town's tavern and temple stand:
+// the Drowned Eel (with the Guild's board) and the Grey Sisters' chapel, on its own peat island. The well is a
+// rainwater cistern: nobody drinks the fen.
+function buildWaystation(seed, region) {
+  const R = region, info = REGIONS[R], o = makeWorld(seed, 'town', 130, 116, 90), rng = mulberry32(streamSeed(seed, 4433)), B = (t, n = 1) => `${R}_${t}_${n}`;
+  o.name = info.name; o.region = R; o.marsh = true; o.waystation = true;
+  const M = [66, 71], GY = 80;
+  // the mere under the town: open water round the square, the chapel's island left dry at the head
+  o.pools.push({ cx: 92, cy: 40, rx: 26, ry: 18 }, { cx: 18, cy: 80, rx: 16, ry: 26 }, { cx: 96, cy: 100, rx: 34, ry: 14 }, { cx: 48, cy: 104, rx: 24, ry: 11 },
+    { cx: 118, cy: 60, rx: 14, ry: 30 }, { cx: 70, cy: 6, rx: 30, ry: 10 }, { cx: 6, cy: 30, rx: 14, ry: 22 });
+  o.plazas.push({ cx: 60, cy: 62, rx: 24, ry: 22, surface: 'deck' }, { cx: 40, cy: 40, rx: 10, ry: 8, surface: 'deck' });
+  o.roads.push({ w: 5, surface: 'deck', pts: [[160, GY], [84, GY], [76, 76]] });                                          // the boardwalk in, from the canal road
+  for (const pts of [[[50, 62], [32, 72], [24, 72]], [[60, 44], [76, 24], [86, 22]], [[78, 66], [100, 68]], [[48, 80], [40, 98]], [[84, 82], [94, 94]], [[64, 86], [62, 100]]])
+    o.roads.push({ w: 3, surface: 'deck', pts });                                                                            // boardwalks to the houses
+  finalizeGround(o);
+  const svc = [['temple', B('temple'), [34, 24]], ['tavern', B('stilttavern'), [29, 48]]];
+  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind === 'tavern' ? 'tavern' : 'temple'] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
+  put(o, B('cistern'), M[0], M[1]);
+  for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
+  o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };
+  o.lead = { x0: 100, y0: GY - 10, x1: 146, y1: GY + 10, x: 100, y: GY, k: 0.5 };
+  for (const [n, x, y] of [[1, 26, 76], [2, 88, 22], [3, 102, 68], [1, 40, 102], [2, 96, 96], [3, 62, 104], [1, 78, 18], [2, 110, 40]]) put(o, B('stilt', n), x, y);
+  for (const [id, x, y] of [[B('punt'), 104, 84], [B('punt'), 30, 92], [B('punt'), 112, 76], [B('eeltrap'), 116, 92], [B('eeltrap'), 14, 64], [B('eeltrap'), 84, 112]]) put(o, id, x, y, 'rect', 0);
+  for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77]]) put(o, id, x, y, 'rect', 0);
+  scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
+    if (hypot(x - 60, y - 60) < 44) return null;
+    return rng() < 0.4 ? pick(rng, ['dead_1', 'dead_2', 'birch_2', 'grove_2']) : null;
+  });
+  forestRing(o, rng, 10);
+  // reed beds and sedge on the peat between the houses and round the meres' edges; never the square
+  undergrowth(o, -10, -10, 140, 126, 3, (x, y) => {
+    if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;
+    return fbm(x * 0.09, y * 0.09, o.seed + 47) > 0.55 ? 0.5 : 0.15;
+  });
+  o.exits.push({ x0: 136, y0: GY - 8, x1: 146, y1: GY + 8, to: 'overland', arrive: 'saltmere' });   // the boardwalk's end (the ring's hard edge is at 146)
+  o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 128.5, y: GY + 0.5 }, temple: { x: 40.5, y: 42.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
 // ── smooth lines (critic pass 10) ────────────────────────────────────────────
 // Roads were straight polylines with hard elbows (up to 77°) and the river ran ruler-straight between kinks.
 // fillet: each corner becomes a quadratic arc from d back along the incoming segment to d on along the outgoing,
@@ -477,6 +589,7 @@ function buildOverland(seed) {
     { w: 3, surface: 'track', pts: [[86, 148], [88, 132], [mill[0] - 1, mill[1] + 12]] },                // up to the mill
     { w: 3, surface: 'track', pts: [[168, 196], [184, 226], [206, 234], [chapel[0] + 1, chapel[1] + 14]] },   // the causeway to the chapel, off the camp track
     { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
+    { w: 5, surface: 'dirt', fens: true, pts: [[92, 206], [80, 236], [54, 250], [38, 264], [38, 274]] },   // the canal road south off the barrows road, to the Fens (M8; shut until Act I is done)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
   // a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
   for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
@@ -583,6 +696,17 @@ function buildOverland(seed) {
       if (clear(tx, ty, id) && fits(o, id, tx, ty, 0.6)) put(o, id, tx, ty, 'round', 0.35);
     }
   }
+  // the canal road's verges: oaks either side every 6 tiles, crowns closing over the wood's edge where it meets the
+  // road. No draws, so nothing else moves; they give back the cover the road took out of the south-west wood.
+  { const pts = ROADS.find((r) => r.fens).pts;
+    for (let i = 0, run = 0, next = 3.5; i + 1 < pts.length; i++) {
+      const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = hypot(bx - ax, by - ay), nx = -(by - ay) / l, ny = (bx - ax) / l;
+      for (; next < run + l; next += 6) for (const s of [-11, 11]) {
+        const t = next - run, id = Math.floor(next / 6) % 3 ? 'oak_1' : 'autumn_2', x = ax + (bx - ax) * t / l + nx * s, y = ay + (by - ay) * t / l + ny * s;
+        if (y < 258 && clear(x, y, id) && fits(o, id, x, y, -3) && offRoad(o, id, x, y)) put(o, id, x, y, 'round', 0.35);
+      }
+      run += l;
+    } }
   scatter(o, trng, 0, 0, 260, 260, 10, (x, y) => (trng() < 0.01 && clear(x, y, 'rock_F') ? pick(trng, ROCKS) : null));
   forestRing(o, rng, 6);
   bound(o, (k) => (k % 2 ? 'fence' : 'drywall'));                  // the fields' walls first: the beasts graze round them
@@ -613,7 +737,10 @@ function buildOverland(seed) {
   o.exits.push({ x0: warren[0] - 1, y0: warren[1] + 4.5, x1: warren[0] + 5.5, y1: warren[1] + 8, to: 'dungeon', site: 'scrag_warren' });   // the old adit's mouth
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 } };
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 } };
+  // the canal road leaves the Vale at its south edge, for the Fens (regions.js); shut, with a word, until Act I is done
+  o.exits.push({ x0: 30, y0: 263, x1: 47, y1: 271, to: 'overland', region: 'fens', arrive: 'vale_road',
+    shut: "The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a reason to go." });
   o.spawn = o.arrivals.default;
   return o;
 }
@@ -631,9 +758,14 @@ function buildStage(seed, floor) {
   return o;
 }
 
-// region picks the town (one hub per region: vale · fens · reach · heights); the overland is the Hollow Vale's;
+// region picks the land (regions.js): the Vale's overland and Thornwick, or the Fens' and Saltmere; reach · heights
+// still preview their walled hubs;
 // 'stage' takes its floor in `region`'s place (grass · cobble)
-export function createOutdoor(seed, kind, region = 'vale') { return kind === 'town' ? buildTown(seed, region) : kind === 'stage' ? buildStage(seed, region) : buildOverland(seed); }
+export function createOutdoor(seed, kind, region = 'vale') {
+  if (kind === 'stage') return buildStage(seed, region);
+  if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : buildFens(seed);   // (M8: Saltmere, the Fens)
+  return kind === 'town' ? buildTown(seed, region) : buildOverland(seed);
+}
 
 // ── world API (dispatched from world.js) ─────────────────────────────────────
 export const oHeightAt = () => FLOOR_Z;

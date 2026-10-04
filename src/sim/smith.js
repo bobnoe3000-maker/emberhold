@@ -62,7 +62,8 @@ export function createSmith({ state, bus, getWorld, seed }) {
   if (!state.shop) state.shop = { day: -1, lv: 1, bought: [] };
   if (!state.buyback) state.buyback = [];
   const C = state.counters;
-  const inTown = () => getWorld().kind === 'town';
+  // the forge or the shop, if this town has it (M8: a waystation has neither); null if here, else the refusal
+  const lacks = (kind, away) => { const w = getWorld(); if (w.kind !== 'town') return away; return (w.services || []).some((v) => v.kind === kind) ? null : `${w.name} has no ${kind === 'smith' ? 'forge' : 'shop'}`; };
   const day = () => Math.floor(state.t / DAY_S);
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
   const members = () => [...state.party, ...state.bench];
@@ -77,7 +78,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
 
   // the day's stock goes up the first time you're in town that day (like the board)
   function tick() {
-    if (state.shop.day === day() || !inTown()) return;
+    if (state.shop.day === day() || lacks('shop', 'x')) return;
     state.shop = { day: day(), lv: state.party[0].level, bought: [] };
   }
   const stock = () => (state.shop.day >= 0 ? shopStock(seed, state.shop.day, state.shop.lv, classes()) : []);
@@ -86,7 +87,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
   function command(cmd) {
     switch (cmd.type) {
       case 'upgrade': {
-        if (!inTown()) return refuse('Upgrades are done at the forge in town');
+        { const no = lacks('smith', 'Upgrades are done at the forge in town'); if (no) return refuse(no); }
         const it = find(cmd.uid); if (!it || isUsable(it)) return true;
         const cost = upgradeCost(it, state.party[0].origin); if (!cost) return refuse(`${it.name} is at +${UP_MAX}`);
         const no = short(cost); if (no) return refuse(`Not enough ${no}`);
@@ -94,7 +95,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('forged', { uid: it.uid, what: 'upgrade', up: it.up }); counters(); gear(); return true;
       }
       case 'reforge': {
-        if (!inTown()) return refuse('Reforging is done at the forge in town');
+        { const no = lacks('smith', 'Reforging is done at the forge in town'); if (no) return refuse(no); }
         const it = find(cmd.uid); if (!it || !Array.isArray(it.aff)) return true;
         const i = cmd.aff; if (!Number.isInteger(i) || i < 0 || i >= it.aff.length) return true;
         const cost = reforgeCost(it), no = short(cost); if (no) return refuse(`Not enough ${no}`);
@@ -112,7 +113,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('forged', { uid: null, what: 'salvage', n: plain.length }); counters(); gear(); return true;
       }
       case 'buy': {
-        if (!inTown()) return refuse('Buy at the shop in town');
+        { const no = lacks('shop', 'Buy at the shop in town'); if (no) return refuse(no); }
         const st = stock(), it = st[cmd.idx]; if (!it || state.shop.bought.includes(cmd.idx)) return true;
         const price = buyPrice(it); if ((C.gold || 0) < price) return refuse('Not enough gold');
         if (!fits([it])) return refuse('The bag is full');
@@ -121,7 +122,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('traded', { what: 'buy', uid: 'i' + C.uidN, gold: price }); counters(); gear(); return true;
       }
       case 'buyScroll': {                                    // a Homeward Scroll: always on the shelf, at SCROLL_PRICE
-        if (!inTown()) return refuse('Buy at the shop in town');
+        { const no = lacks('shop', 'Buy at the shop in town'); if (no) return refuse(no); }
         if ((C.gold || 0) < SCROLL_PRICE) return refuse('Not enough gold');
         C.uidN = (C.uidN || 0) + 1;
         const it = makeItem('homeward', 1, 'common', { uid: 'i' + C.uidN });
@@ -130,7 +131,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('traded', { what: 'buy', uid: it.uid, gold: SCROLL_PRICE }); counters(); gear(); return true;
       }
       case 'sell': {
-        if (!inTown()) return refuse('Sell at the shop in town');
+        { const no = lacks('shop', 'Sell at the shop in town'); if (no) return refuse(no); }
         const i = state.bag.findIndex((q) => q.uid === cmd.uid); if (i < 0) return true;
         const it = state.bag[i], price = sellPrice(it); if (price === null) return refuse('Wendel won\'t take an heirloom');
         state.bag.splice(i, 1); C.gold = (C.gold || 0) + price;
@@ -138,7 +139,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         bus.emit('traded', { what: 'sell', uid: it.uid, gold: price }); counters(); gear(); return true;
       }
       case 'buyBack': {
-        if (!inTown()) return refuse('Buy back at the shop in town');
+        { const no = lacks('shop', 'Buy back at the shop in town'); if (no) return refuse(no); }
         const i = state.buyback.findIndex((q) => q.uid === cmd.uid); if (i < 0) return true;
         const { sold, ...it } = state.buyback[i];
         if ((C.gold || 0) < sold) return refuse('Not enough gold');

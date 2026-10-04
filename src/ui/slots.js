@@ -8,6 +8,7 @@
 // a whole-page reset is the simplest way to guarantee a clean sim, renderer and world.
 
 import { siteOf } from '../sim/sites.js';
+import { LANDS, landId } from '../sim/regions.js';
 import { html, render } from 'htm/preact';
 import { useEffect, useState } from 'preact/hooks';
 import { CLASSES } from '../sim/party.js';
@@ -36,7 +37,7 @@ const CSS = `
 .slot button.del.arm { background: #5a1c16; color: #ffd0c8; }
 `;
 
-const where = (m) => (m.scene === 'dungeon' ? `${siteOf(m.site).name.replace(/^The /, '')} · depth ${m.depth + 1}` : m.scene === 'overland' ? 'The Hollow Vale' : 'Thornwick');
+const where = (m) => { const L = LANDS[landId(m.region)]; return m.scene === 'dungeon' ? `${siteOf(m.site).name.replace(/^The /, '')} · depth ${m.depth + 1}` : m.scene === 'overland' ? L.name : L.town; };   // (the land: regions.js, save v18)
 const hours = (s) => (s < 3600 ? `${Math.max(1, Math.round(s / 60))} min` : `${(s / 3600).toFixed(1)} h`);
 const ago = (t) => { const d = (Date.now() - t) / 1000; return d < 90 ? 'just now' : d < 5400 ? `${Math.round(d / 60)} min ago` : d < 172800 ? `${Math.round(d / 3600)} h ago` : `${Math.round(d / 86400)} days ago`; };
 

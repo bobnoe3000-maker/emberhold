@@ -130,7 +130,7 @@ function StoryStatus({ sim, story, defOf, npcName }) {
     ${leads.length ? html`<div class="grp side">${story.leadsTitle} · ${leads.length}</div><ul class="leads">${leads.map((l) => html`<li key=${l.id + (l.cls || '')}>${fill(story.leads[l.id], vars(l))}</li>`)}</ul>` : ''}`;
 }
 
-const SET_NAME = { vale: 'The Hollow Vale' };
+const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens' };
 /** the Chronicle (world doc §7): each set in reading order; found fragments in full, missing ones as a place */
 function Chronicle({ sim, lore }) {
   const found = new Set(sim.state.fragments || []);
@@ -243,6 +243,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   const sites = {};
   sim.bus.on('siteRevealed', (e) => toast(`${(sites[e.site] || e).name} is open to you. It's on the compass now.`, 3200));
   sim.bus.on('siteShut', (e) => { const w = sites[e.site]; if (w && w.shut) toast(w.shut, 2800); });
+  sim.bus.on('landShut', (e) => { if (e.line) toast(e.line, 3200); });   // the road to a land not yet open (regions.js; outdoor.js has its words)
 
   // the words: one file per quest the sim knows, and the board's templates
   const ready = Promise.all([boardReady, ...SITE_IDS.map((id) => fetch(`./content/sites/${id}.json`).then((r) => r.json()).then((d) => { sites[id] = d; }).catch(() => {})), ...Object.keys(FRAGMENTS).map((id) => fetch(`./content/lore/${id}.json`).then((r) => r.json()).then((d) => { lore[id] = d; }).catch(() => {})), ...Object.keys(QUESTS).map((id) => fetch(`./content/quests/${id}.json`).then((r) => r.json()).then((d) => { defs[id] = d; }).catch(() => {}))])

@@ -17,10 +17,12 @@ const door = (s, faceX) => { const r = rect(s); return faceX ? { x: r[2], y: (r[
 
 for (const region of Object.keys(REGIONS)) {
   const o = createOutdoor(1, 'town', region), entry = (id) => TOWN[region].find((e) => e.id === id);
-  const well = o.structs.find((s) => s.id === `${region}_well_1`), gate = o.structs.find((s) => s.id === `${region}_gatehousey_1`);
+  const well = o.structs.find((s) => s.id === `${region}_well_1` || s.id === `${region}_cistern_1`), gate = o.structs.find((s) => s.id === `${region}_gatehousey_1`);
 
+  const way = !!o.waystation;                                   // (M8: a waystation such as Saltmere: its tavern and temple, no wall)
   test(`${region}: every entrance faces the well, on a face the camera sees`, () => {
-    assert.equal(o.services.length, 5);
+    assert.equal(o.services.length, way ? 2 : 5);
+    if (way) assert.deepEqual(o.services.map((v) => v.kind).sort(), ['tavern', 'temple']);
     for (const sv of o.services) {
       const d = door(sv, !!entry(sv.id).faceX), vx = well.x - d.x, vy = well.y - d.y;
       const deg = Math.acos((vx * d.n[0] + vy * d.n[1]) / Math.hypot(vx, vy)) * 180 / Math.PI;
@@ -39,7 +41,7 @@ for (const region of Object.keys(REGIONS)) {
     }
   });
 
-  test(`${region}: the walls are closed — the way out is only through the gate`, () => {
+  if (!way) test(`${region}: the walls are closed — the way out is only through the gate`, () => {
     const exit = o.exits.find((e) => e.to === 'overland');
     const reach = (shut) => {                                   // flood the walkable tiles from the well; shut = the gate's way through
       const seen = new Set(), q = [[Math.floor(well.x), Math.floor(well.y) + 4]];
@@ -60,7 +62,13 @@ for (const region of Object.keys(REGIONS)) {
     for (const k of ['default', 'temple']) { const a = o.arrivals[k]; assert.ok(Math.hypot(a.x - o.hub.x, a.y - o.hub.y) < o.hub.r - 6, `${k} arrival is off the square`); }
   });
 
-  test(`${region}: on the approach road the camera leads to the gate`, () => {
+  if (way) test(`${region}: a waystation has no wall: the square reaches the way out, and the camera leads in along the boardwalk`, () => {
+    const exit = o.exits.find((e) => e.to === 'overland'), seen = new Set(), q = [[Math.floor(well.x), Math.floor(well.y) + 4]]; let out = false;
+    while (q.length && !out) { const [x, y] = q.pop(), k = x + ',' + y; if (seen.has(k) || !isWalkable(o, x + 0.5, y + 0.5)) continue; if (x >= exit.x0 && x < exit.x1 && y >= exit.y0 && y < exit.y1) out = true; seen.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+    assert.ok(out, 'the square should reach the way out');
+    const a = o.arrivals.overland, L = o.lead; assert.ok(a.x > L.x0 && a.x < L.x1 && a.y > L.y0 && a.y < L.y1, 'the arrival is off the approach'); assert.ok(L.k > 0 && L.k < 1);
+  });
+  if (!way) test(`${region}: on the approach road the camera leads to the gate`, () => {
     const a = o.arrivals.overland, L = o.lead;
     assert.ok(a.x > L.x0 && a.x < L.x1 && a.y > L.y0 && a.y < L.y1, 'the arrival is off the approach road');
     assert.deepEqual([L.x, L.y], [gate.x, gate.y]); assert.ok(L.k > 0 && L.k < 1);
@@ -69,6 +77,7 @@ for (const region of Object.keys(REGIONS)) {
 
 test("Thornwick's circuit is timber; the other towns' stone", () => {
   for (const [region, list] of Object.entries(TOWN)) {
+    if (createOutdoor(1, 'town', region).waystation) continue;   // (Saltmere has no wall; its walled pieces stay baked for a preview)
     const build = (n) => list.find((e) => e.id === `${region}_${n}_1`).build;
     assert.deepEqual(['curtain', 'tower', 'gatehousey'].map(build), region === 'vale' ? ['palisade', 'watchtower', 'timbergate'] : ['curtain', 'tower', 'gatehouse']);
   }

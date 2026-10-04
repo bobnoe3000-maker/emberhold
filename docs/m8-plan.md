@@ -46,6 +46,11 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      Vale only), the HUD's road fetch.
    - Dev: `?region=fens&scene=overland`. Tests: the region survives a save round trip; the road is shut, then open;
      crossing both ways lands at the other side's arrival; old saves load in the Vale.
+   - **Done** (2026-10-04): `src/sim/regions.js` (`LANDS`), `core.js` (`state.region`, `landOpen`, the `landShut`
+     event), `persist/save.js` (v18), `travel.js`, `heroes.js` / `smith.js` / `board.js` (services by kind),
+     `ui/townmenu.js`, `slots.js`, `journal.js`, `defeat.js`; `test/regions.test.mjs`. The shut road's word is
+     Ilse's: *"The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a
+     reason to go."* (it leaves the barrows road, not the mill's). `storystatus.js` by act waits for Act II (slice 7).
 2. **The Fens overland and Saltmere.** Art.
    - **Swamp ground** in `outdoorpaint.js`: bog water (still, a faint sheen), peat, reed beds (the grass tuft,
      taller), duckweed (region-towns proposal: Saltmere, Hollin Ford and Tollhaven's salt marsh share it).
@@ -58,6 +63,11 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      landmarks. Never hand-edited.
    - **Art critic pass**: before/after captures by day and at dusk at in-game scale; luma and contrast against the
      Vale (it must stay dusky); readability of the walkable boardwalks; a contact sheet.
+   - **Done** (2026-10-04): `src/sim/outdoor.js` (`buildFens`, `buildWaystation`, `G.MARSH` / `POOL` / `DECK`),
+     `src/render/outdoorpaint.js` (`marsh`, `pool`, `deck`, `canal`), `palette.js`; bakes `fens_stilt_1–3`,
+     `fens_stilttavern_1`, `fens_cistern_1`, `fens_punt_1`, `fens_eeltrap_1` (`tools/actor-lab/buildkit.js`,
+     `town.json`). The pass: [fens-critic-pass.md](./fens-critic-pass.md) §1. **Marsh-lights move to slice 4**,
+     with the bog-witch's lantern: both want a drifting light.
 3. **The Fens' sites as data.** `SITES` and `content/sites/`:
 
    | Site | Levels | Floors | Family | Boss | Theme |
@@ -76,6 +86,8 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      lantern-cage on a pole), **reed-cutter** (a Redhand recolour with a bill-hook), **the drowned clergy**
      (Ashbound recolours in sodden grey habits, waterweed).
    - Bakes, the Stage lineup, `ENEMY_ACTOR`, swing profiles; `test/fens-foes.test.mjs`.
+   - **Marsh-lights** (moved here from slice 2): a drifting point of pale light over the meres at dusk and night,
+     presentation only, the same path as the bog-witch's lantern.
    - **Art critic pass** on the Stage: silhouettes against the Vale's cast, their faces, readability at 56 px.
 5. **Lamps, cages and the count** (GDD §17).
    - **A lamp** is an object in a site's last room with the list of foes tied to it, held by its keeper. While

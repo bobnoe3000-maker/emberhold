@@ -45,7 +45,7 @@ export const ranksHeld = (state) => RANKS.filter((r) => holds(state, r));
  * tiles, world.road = { x, y, ranks } @param {any} world @param {any} state */
 export function placeRoad(world, state) {
   world.pickets = [];
-  if (world.kind !== 'overland' || !state) return world;
+  if (world.kind !== 'overland' || world.region !== 'vale' || !state) return world;   // (the Vale's road only)
   const held = ranksHeld(state);
   world.road = { x: xAt(world, 191) + 0.5, y: 191.5, ranks: held.length };
   if (!held.length) return world;

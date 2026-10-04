@@ -18,6 +18,7 @@ import { findPath } from './path.js';
 import { heightAt, isWalkable } from './world.js';
 import { hypot } from './detmath.js';
 import { SITES, siteOpen, levelBand } from './sites.js';
+import { LANDS, landId } from './regions.js';
 
 
 export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
@@ -116,7 +117,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     if (world.exitAt) {
       const t = standOn(world.exitAt.x, world.exitAt.y, 3), steps = t && pathLenD(t.tx, t.ty);
       const top = !world.depth;                             // the first floor's stair leads out; deeper ones climb one floor
-      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: top ? 'Exit to the Hollow Vale' : 'Stairs up', sub: top ? `stair up · ${steps} steps` : `to depth ${world.depth} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
+      if (steps !== null && steps !== undefined) out.push({ id: 'exit', icon: 'exit', label: top ? `Exit to ${LANDS[landId(state.region)].name.replace(/^The /, 'the ')}` : 'Stairs up', sub: top ? `stair up · ${steps} steps` : `to depth ${world.depth} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps, sep: true });
     }
     return out;
   }
@@ -128,7 +129,7 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     for (const e of world.exits) {
       const t = zone(e), steps = t && pathLen(t.tx, t.ty); if (steps == null) continue;
       out.push({ id: 'to-dungeon', icon: 'dungeon', label: 'Nearest dungeon', sub: `by the road out · ${steps}+ steps`, chip: 'Nearest dungeon', tx: t.tx, ty: t.ty, near: 0, steps, journey: 'delve' });
-      out.push({ id: 'road-out', icon: 'next', label: 'Road out', sub: `to the Hollow Vale · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps });
+      out.push({ id: 'road-out', icon: 'next', label: 'Road out', sub: `to ${LANDS[landId(state.region)].name.replace(/^The /, 'the ')} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps });
     }
     return out;
   }
@@ -139,6 +140,10 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   for (const e of world.exits) {
     const t = zone(e); if (!t) continue;
     if (e.to === 'town') { const lab = labelNear((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2), steps = pathLen(t.tx, t.ty); if (steps != null) out.push({ id: 'town', icon: 'town', label: lab ? lab.l.text : 'Town', sub: `town · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps }); }
+    else if (e.to === 'overland' && e.region && LANDS[e.region]) {      // the road to another land (regions.js): shut until its chapter is done
+      const L = LANDS[landId(e.region)], q = L.opens && state.quests && state.quests[L.opens], open = !L.opens || (q && q.st === 3), steps = pathLen(t.tx, t.ty);
+      if (steps != null) out.push({ id: 'land:' + e.region, icon: 'next', label: L.name, sub: open ? `the road there · ${steps} steps` : 'the road is shut', tx: t.tx, ty: t.ty, near: 0, steps, ...(open ? {} : { off: true }) });
+    }
     else if (e.to === 'dungeon' && SITES[e.site] && siteOpen(e.site, state.revealed || [])) { const steps = pathLen(t.tx, t.ty); if (steps != null) sites.push({ ...t, site: e.site, steps }); }
   }
   for (const d of sites.sort((a, b) => a.steps - b.steps)) {

@@ -52,11 +52,12 @@
 //   v17: the forge and the shop (sim/smith.js) — items gain up (the smith's +1…+5) and rf (reforges);
 //       shop { day, lv, bought } and buyback [items sold, each with what it fetched]. Only grew: older
 //       items have no upgrade, and there's no shop until you're next in town.
+//   v18: the land you're in (sim/regions.js): region 'vale' | 'fens' (M8). Only grew: older data is in the Vale.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
 
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -68,7 +69,7 @@ export function metaOf(data) {
   const h = (data.party && data.party[0]) || {};
   return {
     name: h.name || 'Hero', cls: h.cls || 'fighter', level: h.level || 1, actor: h.actor || null, origin: h.origin || null,
-    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows',
+    party: (data.party || []).length, scene: data.scene || 'town', depth: data.depth || 0, site: data.site || 'barrows', region: data.region || 'vale',
     playtime: Math.round(Number.isFinite(data.tick) && data.tick > 0 ? data.tick / TICK_HZ : data.t || 0),   // seconds played (t is game time, retimed when the day changed length) gold: (data.counters && data.counters.gold) || 0,
   };
 }

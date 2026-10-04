@@ -132,7 +132,14 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   document.body.append(bar, sheet);
   const hint = document.getElementById('hint');
   const svg = (p) => `<svg viewBox="0 0 24 24">${p}</svg>`;
-  bar.innerHTML = ORDER.map((k) => `<button data-k="${k}">${svg(SERVICES[k].icon)}${SERVICES[k].label}</button>`).join('');
+  // the town's own services, in the bar's order (M8: a waystation such as Saltmere has only its tavern and temple)
+  let barKinds = '';
+  const paintBar = () => {
+    const have = ORDER.filter((k) => (sim.world.services || []).some((v) => v.kind === k)), key = have.join();
+    if (key === barKinds) return; barKinds = key;
+    bar.innerHTML = have.map((k) => `<button data-k="${k}">${svg(SERVICES[k].icon)}${SERVICES[k].label}</button>`).join('');
+  };
+  paintBar(); sim.bus.on('levelChanged', paintBar);
   const block = (e) => e.stopPropagation();
   for (const el of [bar, sheet]) for (const ev of ['pointerdown', 'touchstart', 'mousedown']) el.addEventListener(ev, block);
   bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) open(b.dataset.k); });

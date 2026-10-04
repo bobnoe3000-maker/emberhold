@@ -1255,7 +1255,7 @@ export function createRenderer(canvas, sim, input) {
     for (const L of w.labels || []) {
       if (L.service || hiddenHere(L)) continue;
       const mx = bx + (L.x - x0) / span * MM, my = by + (L.y - y0) / span * MM, r = Math.max(2.5, 3.2 * k);
-      octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
+      octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick|Saltmere/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
       octx.beginPath(); octx.moveTo(mx, my - r); octx.lineTo(mx + r, my); octx.lineTo(mx, my + r); octx.lineTo(mx - r, my); octx.closePath(); octx.fill();
       octx.strokeStyle = 'rgba(0,0,0,0.55)'; octx.lineWidth = Math.max(1, 0.8 * k); octx.stroke();
     }

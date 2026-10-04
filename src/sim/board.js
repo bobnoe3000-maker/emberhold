@@ -114,7 +114,7 @@ export function createBoard({ state, bus, getWorld, seed, quests }) {
   if (!state.board) state.board = { day: -1, lv: 1, half: 0 };
   const day = () => Math.floor(state.t / DAY_S);
   const half = () => ((state.t % DAY_S) >= DAY_S / 2 ? 1 : 0);                 // dusk starts the day's second half
-  const inTown = () => getWorld().kind === 'town';
+  const inTown = () => getWorld().kind === 'town' && (getWorld().services || []).some((v) => v.kind === 'tavern');   // (the board hangs in the tavern: a waystation's too, M8)
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
   const today = () => (state.board.day >= 0 ? boardOffers(seed, state.board.day, state.board.lv, state.board.half || 0) : []);
   const open = () => Object.keys(state.quests).filter((k) => ID.test(k) && (state.quests[k].st === QS.ACTIVE || state.quests[k].st === QS.READY)).length;

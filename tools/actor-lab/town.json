@@ -521,6 +521,105 @@
         0.95
       ],
       "rotY": 90
+    },
+    {
+      "id": "fens_stilt_1",
+      "model": "stilthouse",
+      "build": "stilthouse",
+      "seed": 41,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_stilt_2",
+      "model": "stilthouse",
+      "build": "stilthouse",
+      "seed": 42,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_stilt_3",
+      "model": "stilthouse",
+      "build": "stilthouse",
+      "seed": 43,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_stilttavern_1",
+      "model": "stilttavern",
+      "build": "stilttavern",
+      "seed": 51,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "faceX": true
+    },
+    {
+      "id": "fens_cistern_1",
+      "model": "cistern",
+      "build": "cistern",
+      "seed": 52,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_punt_1",
+      "model": "punt",
+      "build": "punt",
+      "seed": 53,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_eeltrap_1",
+      "model": "eeltrap",
+      "build": "eeltrap",
+      "seed": 54,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [

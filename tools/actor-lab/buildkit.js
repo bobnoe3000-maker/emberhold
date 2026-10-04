@@ -975,6 +975,71 @@ Object.assign(TYPES, {
     lantern(g, S, 0.32, 0.46, 0.62);
     barrel(g, S, -0.35, 0.55); barrel(g, S, -0.45, 0.5);
   },
+  // ── Saltmere, the Fens' waystation (M8; docs/region-towns-proposal.md): a stilt town over the bog ─────────────
+  // A house on piles: a plank platform on six posts a man's height over the water, the house on it (plaster over
+  // rubble, a steep slate roof), a ladder down at the front, a lantern by the door, nets and an eel basket hung out.
+  stilthouse(S, g, r) {
+    const P = 0.2, w = 0.58 + r() * 0.12, d = 0.5, h = 0.4, pw = w + 0.24, pd = d + 0.22;
+    for (const [x, z] of [[-pw / 2, -pd / 2], [pw / 2, -pd / 2], [-pw / 2, pd / 2], [pw / 2, pd / 2], [0, pd / 2], [pw / 2, 0]]) box(0.04, P + 0.02, 0.04, S.m.beam, x, -0.02, z, g);
+    for (const x of [-pw / 2, pw / 2]) { const br = box(0.02, 0.02, pd * 1.05, S.m.beam, x, P * 0.45, 0, g); br.rotation.x = 0.35; }   // cross-braces
+    box(pw + 0.04, 0.03, pd + 0.04, S.m.wood, 0, P, 0, g);                                             // the platform
+    const hs = new THREE.Group(); hs.position.set(-0.03, P + 0.03, -0.04); g.add(hs);
+    storeyBlock(S, hs, w, d, 0, h, r() < 0.5 ? S.m.upper : S.m.lower, true, { doorZ: 0.08 });
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.08, 0.15, 0.3, false);
+    roofOver(S, hs, w, d, h, S.roofRise * 1.3, r() < 0.5);
+    if (r() < 0.6) chimney(hs, S, -w / 2 + 0.1, -d / 4, h, 0.28);
+    for (let i = 0; i < 5; i++) box(0.11, 0.012, 0.018, S.m.wood, 0.06, P - 0.04 - i * 0.045, pd / 2 + 0.03, g);   // the ladder's rungs
+    for (const sx of [0, 0.12]) box(0.012, P + 0.03, 0.012, S.m.beam, sx, -0.02, pd / 2 + 0.03, g);
+    lantern(g, S, 0.2, P + 0.3, pd / 2 - 0.02);
+    const net = mat(null, '#4a4a3a'); box(0.2, 0.16, 0.006, net, pw / 2 - 0.12, P + 0.06, pd / 2 + 0.01, g);       // a net hung to dry
+    const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.02, 0.09, 7), mat(null, '#6a5a38')); basket.position.set(pw / 2 + 0.02, P - 0.06, 0.05); g.add(basket);
+  },
+  // The Drowned Eel: the waystation's tavern (and the Guild's board), bigger, two storeys on piles, a porch over
+  // the deck with a bench, two lanterns and the board by the door, an eel on the sign.
+  stilttavern(S, g, r) {
+    const P = 0.18, w = 1.0, d = 0.7, h1 = 0.46, h2 = 0.4, pw = w + 0.3, pd = d + 0.34;
+    for (let i = 0; i < 4; i++) for (const z of [-pd / 2, pd / 2]) box(0.05, P + 0.02, 0.05, S.m.beam, -pw / 2 + (pw * i) / 3, -0.02, z, g);
+    box(pw + 0.04, 0.035, pd + 0.04, S.m.wood, 0, P, 0, g);
+    const hs = new THREE.Group(); hs.position.set(-0.02, P + 0.035, -0.08); g.add(hs);
+    storeyBlock(S, hs, w, d, 0, h1, S.m.lower, true, { doorZ: 0.05 });
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.05, 0.22, 0.38, true);
+    storeyBlock(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.m.upper, true, { timber: true });
+    roofOver(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise * 1.1);
+    chimney(hs, S, 0.34, -0.12, h1 + h2, 0.42);
+    sign(hs, S, 0.32, 0.48, d / 2);
+    const po = new THREE.Group(); po.position.set(0.1, P + 0.035, d / 2 + 0.06); g.add(po);
+    for (const x of [-0.3, 0.42]) box(0.035, 0.4, 0.035, S.m.beam, x, 0, 0.1, po);
+    const pr = box(0.8, 0.03, 0.3, S.m.roof, 0.06, 0.41, 0, po); pr.rotation.x = 0.3;
+    box(0.36, 0.03, 0.08, S.m.wood, 0.02, 0.09, 0.08, po);                                              // the bench
+    lantern(po, S, -0.3, 0.36, 0.13); lantern(po, S, 0.42, 0.36, 0.13);
+    const nb = new THREE.Group(); nb.position.set(-0.44, P + 0.035, d / 2 + 0.06); g.add(nb);           // the Guild's board
+    for (const sx of [-1, 1]) box(0.025, 0.32, 0.025, S.m.beam, sx * 0.13, 0, 0, nb);
+    box(0.3, 0.18, 0.025, S.m.wood, 0, 0.13, 0, nb); box(0.34, 0.03, 0.06, S.m.roof, 0, 0.31, 0, nb);
+    for (const [x, y] of [[-0.08, 0.24], [0.03, 0.19], [0.09, 0.24], [-0.02, 0.15]]) box(0.05, 0.06, 0.03, S.m.paper, x, y, 0.004, nb);
+    barrel(g, S, pw / 2 - 0.08, pd / 2 - 0.05);
+  },
+  // The waystation's well: a rain cistern, a staved tub on a stand under a little roof, a dipper on a hook.
+  cistern(S, g, r) {
+    for (const [x, z] of [[-0.12, -0.12], [0.12, -0.12], [-0.12, 0.12], [0.12, 0.12]]) box(0.03, 0.14, 0.03, S.m.beam, x, 0, z, g);
+    const tub = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.2, 12), S.m.wood); tub.position.set(0, 0.24, 0); g.add(tub);
+    for (const y of [0.17, 0.31]) { const h = new THREE.Mesh(new THREE.TorusGeometry(0.152, 0.008, 4, 14), S.m.trim); h.rotation.x = Math.PI / 2; h.position.y = y; g.add(h); }
+    for (const sx of [-1, 1]) box(0.025, 0.34, 0.025, S.m.beam, sx * 0.17, 0.14, 0, g);
+    const rf = box(0.42, 0.025, 0.3, S.m.roof, 0, 0.5, 0, g); rf.rotation.x = 0.15;
+    box(0.012, 0.012, 0.12, S.m.trim, 0.17, 0.4, 0.06, g);
+  },
+  // A fen punt: a flat-bottomed boat, square at both ends, its pole laid along it.
+  punt(S, g, r) {
+    box(0.18, 0.025, 0.56, S.m.wood, 0, 0.0, 0, g);
+    for (const sx of [-1, 1]) box(0.02, 0.06, 0.56, S.m.beam, sx * 0.09, 0.0, 0, g);
+    for (const sz of [-1, 1]) box(0.18, 0.05, 0.02, S.m.beam, 0, 0.0, sz * 0.28, g);
+    const pole = box(0.012, 0.012, 0.7, S.m.beam, 0.05, 0.05, 0.02, g); pole.rotation.y = 0.08;
+  },
+  // Eel traps: a stake in the water with two wicker cones lashed to it, mouths down-stream.
+  eeltrap(S, g, r) {
+    box(0.025, 0.36, 0.025, S.m.beam, 0, -0.02, 0, g);
+    const wick = mat(null, '#6a5a38');
+    for (const [y, a] of [[0.06, 0.3], [0.16, -0.4]]) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 7, 1, true), wick); c.position.set(0.06, y, 0); c.rotation.z = Math.PI / 2 + a * 0.3; g.add(c); }
+  },
   // The Tithe Mill (M5): Lord Pellam's watermill. A stone ground storey, a timbered loft under a
   // steep roof, a big undershot wheel on the +x side (the river's), a sluice and a mill-race, sacks
   // of the tithe grain by the door, and the Redhand's mark: a red rag on a pole, a burned cart.
