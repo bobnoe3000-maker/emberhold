@@ -52,9 +52,10 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // a site's furniture (M5): the living keep stores and camps where the dead keep crypts. The same
   // draws either way, so an Old Barrows floor is dressed as it always was.
   // (the goblins keep a camp of what fell off the carts, and their totems)
-  const human = S.family === 'redhand', gob = S.family === 'goblin';
+  // (the Toadking's reed-cutters keep stores like the Redhand; the drowned clergy keep their naves like the chapel)
+  const human = S.family === 'redhand' || S.family === 'reedmen', gob = S.family === 'goblin';
   const decor = human ? ['crates', 'barrels', 'sacks'] : gob ? ['sacks', 'totem', 'crates'] : ['spire', 'monolith', 'totem'];
-  const themes = human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : S.family === 'chapel' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
+  const themes = human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : S.family === 'chapel' || S.family === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
     if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }

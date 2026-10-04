@@ -225,6 +225,16 @@ export const PROPS = {
     g.traverse((o) => { if (o.isMesh) o.name = 'Kettle_Hat'; });
     return g;
   },
+  // the Toadking's reed-cutters' hat (M8): a broad, shallow cone of plaited reed, worn on the head bone like the brute's kettle
+  reedhat: () => {
+    const g = new THREE.Group(); g.name = 'Reed_Hat';
+    const reed = mat(0xa08a52, 0, 0.95), band = mat(0x4a5a34, 0, 0.9);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.0, 0.42, 14, 1, true), reed); cone.position.set(0, 0.78, 0.02); g.add(cone);
+    const under = new THREE.Mesh(new THREE.ConeGeometry(1.0, 0.42, 14, 1, true), reed.clone()); under.material.side = THREE.BackSide; under.position.copy(cone.position); g.add(under);
+    const tie = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.56, 0.08, 14), band); tie.position.set(0, 0.62, 0.02); g.add(tie);
+    g.traverse((o) => { if (o.isMesh) o.name = 'Reed_Hat'; });
+    return g;
+  },
   // the Ashbound minion's rag (skeleton-skull proposal, shipped): what's left of a cloak, worn low on the
   // shoulders so the jaw and the ribcage show. KayKit's cloak rode up over the jaw, and the skull read as an egg.
   // (chest bone space: y up from the chest at 1.07 m, z forward; the jaw starts about 0.22 up, the shoulders at 0.13)
@@ -241,6 +251,60 @@ export const PROPS = {
     tongues(0, 0.62, -0.25, 0.17, [0.36, 0.46, 0.32, 0.5, 0.4, 0.3, 0.44], -0.1);
     // in front, only a torn fringe at the collarbones: long lapels read as stripes down the ribs
     for (const sx of [-1, 1]) tongues(sx * 0.19, 0.2, 0.24, 0.17, sx < 0 ? [0.11, 0.06, 0.09] : [0.08, 0.12, 0.05], 0.12);
+    return g;
+  },
+  // ── the Fens' foes (M8 slice 4; world doc §8 v1.20) ──
+  // the reed-cutters' bill-hook: a long ash pole, a broad iron blade at its head curving into a hook, swung two-handed
+  billhook: () => {
+    const g = new THREE.Group(); g.name = 'Billhook';
+    const wood = mat(0x6a5236, 0, 0.85), iron = mat(0x55585c, 0.8, 0.45);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.9, 7), wood); pole.position.y = 0.45; g.add(pole);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.46, 0.2), iron); blade.position.set(0, 1.5, 0.08); g.add(blade);
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.035, 5, 10, Math.PI * 0.9), iron); hook.position.set(0, 1.72, 0.2); hook.rotation.y = Math.PI / 2; g.add(hook);
+    return g;
+  },
+  // a Cult harvester's lantern-cage on a pole (world doc §8): an iron cage at the pole's head with a caught soul in
+  // it, pale violet (userData.glow: the soul's light); swung like a polearm
+  cagepole: () => {
+    const g = new THREE.Group(); g.name = 'Cagepole';
+    const wood = mat(0x2e2420, 0, 0.85), iron = mat(0x3a3634, 0.75, 0.45), soul = new THREE.MeshStandardMaterial({ color: 0xc8b8ff, emissive: 0x7050d0, emissiveIntensity: 1.3, roughness: 0.3 });
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.0, 7), wood); pole.position.y = 0.45; g.add(pole);
+    const top = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.16, 6), iron); top.position.y = 1.98; g.add(top);
+    const floor = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.04, 6), iron); floor.position.y = 1.5; g.add(floor);
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, bar = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.42, 0.03), iron); bar.position.set(Math.cos(a) * 0.17, 1.71, Math.sin(a) * 0.17); g.add(bar); }
+    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), soul); s.position.y = 1.7; s.name = 'Cage_Soul'; s.userData.glow = 0xb8a0ff; g.add(s);
+    return g;
+  },
+  // a bog-witch's marsh-light: a crooked lantern of bent withies with a cold green-white light in it, hung plumb
+  marshlamp: () => {
+    const g = new THREE.Group(); g.name = 'Marshlamp'; g.userData.hang = true;
+    const withy = mat(0x4a4030, 0, 0.9), light = new THREE.MeshStandardMaterial({ color: 0xd8f0c8, emissive: 0x70b070, emissiveIntensity: 1.3, roughness: 0.3 });
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 4), withy); cord.position.y = 0.1; g.add(cord);
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 1), light); orb.position.y = 0.36; orb.name = 'Marsh_Light'; orb.userData.glow = 0xc8f0c0; g.add(orb);
+    for (let k = 0; k < 5; k++) { const a = k * Math.PI * 0.4, w = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.014, 4, 10, Math.PI * 1.1), withy); w.position.y = 0.36; w.rotation.set(Math.PI / 2, a, 0.3); g.add(w); }
+    return g;
+  },
+  // a bog-witch's crook: a gnarled stick, crooked at the head, carried upright
+  crook: () => {
+    const g = new THREE.Group(); g.name = 'Crook'; g.userData.hang = 'up';
+    const wood = mat(0x4a3a28, 0, 0.9);
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.8, 6), wood); stick.position.y = 0.3; stick.rotation.z = 0.04; g.add(stick);
+    const head = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 5, 10, Math.PI * 1.2), wood); head.position.set(0.12, 1.22, 0); g.add(head);
+    return g;
+  },
+  // the drowned clergy's habit (worn on the chest bone, like the minion's rag): a sodden grey cowl over the shoulders
+  // and a long scapular to the knees, front and back, its hem in tatters, waterweed hanging off it
+  habit: () => {
+    const g = new THREE.Group(); g.name = 'Habit';
+    const cloth = mat(0x8a8c84, 0, 0.95), dark = mat(0x5e605a, 0, 0.95), weed = mat(0x4a6a32, 0, 0.9);
+    const cowl = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.09, 6, 12), cloth); cowl.rotation.x = Math.PI / 2; cowl.position.y = 0.2; cowl.name = 'Habit_Cloth'; g.add(cowl);
+    for (const [z, tilt] of [[0.22, 0.1], [-0.24, -0.08]]) for (let k = 0; k < 5; k++) {
+      const len = 0.62 + ((k * 7) % 5) * 0.06, t = new THREE.Mesh(new THREE.BoxGeometry(0.1, len, 0.03), k % 2 ? dark : cloth);
+      t.position.set(-0.2 + k * 0.1, 0.16 - len / 2, z); t.rotation.x = tilt; t.name = 'Habit_Cloth'; g.add(t);
+    }
+    for (const [x, z, len] of [[-0.18, 0.25, 0.3], [0.12, 0.25, 0.22], [0.22, -0.27, 0.34], [-0.05, -0.27, 0.26]]) {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(0.035, len, 0.02), weed); w.position.set(x, 0.12 - len / 2, z); w.rotation.z = (x > 0 ? 1 : -1) * 0.12; g.add(w);
+    }
     return g;
   },
   // the Vale's bows (world doc §3.1 v1.10), held the way the kit holds its crossbows: gripped in

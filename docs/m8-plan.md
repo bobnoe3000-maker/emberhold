@@ -96,6 +96,14 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
    - Bakes, the Stage lineup, `ENEMY_ACTOR`, swing profiles; `test/fens-foes.test.mjs`.
    - **Marsh-lights** (moved here from slice 2): a drifting point of pale light over the meres at dusk and night,
      presentation only, the same path as the bog-witch's lantern.
+   - **Done** (2026-10-04): `src/sim/battle.js` (kinds `fenghoul`, `reedcutter`, `fowler`, `bogwitch`, `harvester`,
+     `drowned`, `cantor`; families `reedmen`, `lockcult`, `harvest`, `drowned`), `sites.js`, `world.js` (their rooms'
+     dressing); bakes `fen_ghoul`, `bog_witch`, `reed_cutter`, `reed_fowler`, `cult_harvester`, `drowned_brother`,
+     `drowned_cantor` (`tools/actor-lab`: `variants.json`, `bake.json`, `faces.json`, `props.js` billhook, cagepole,
+     marshlamp, crook, habit, reedhat; `lab.js` the `frame` knob); `renderer.js`, `fx.js` (styles, `wisps`),
+     `gsprite.js` (GLOW_ID 10, marsh), `audio/cues.js`, `dev/stage.js`, `content/foes.json`; `test/fens-foes.test.mjs`.
+     World doc v1.21 §8, GDD v1.25 §3. Art pass and balance: [fens-critic-pass.md](./fens-critic-pass.md) §3. The fowler
+     (a reed-cutter with a fowling crossbow) fills the family's ranged slot.
    - **Art critic pass** on the Stage: silhouettes against the Vale's cast, their faces, readability at 56 px.
 5. **Lamps, cages and the count** (GDD §17).
    - **A lamp** is an object in a site's last room with the list of foes tied to it, held by its keeper. While

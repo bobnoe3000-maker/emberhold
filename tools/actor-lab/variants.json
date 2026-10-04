@@ -2394,5 +2394,448 @@
    }
   ],
   "face": "hedge_caller"
+ },
+ {
+  "id": "FG1",
+  "cls": "Fens",
+  "label": "Fen ghoul \u00b7 bare-handed, long-armed, hunched, mud-dark",
+  "model": "Barbarian",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3e3a2a",
+     "#12100a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#3e3a2a",
+     "#12100a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#3e3a2a",
+     "#12100a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#4a4232",
+     "#16120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#4a4232",
+     "#16120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a2a",
+     "#12100a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a3426",
+     "#100e0a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5c6244",
+     "#1c2014"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#5c6244",
+     "#1c2014"
+    ]
+   }
+  ],
+  "face": "fen_ghoul",
+  "height": 0.9,
+  "frame": {
+   "reach": {
+    "upperarm": 1.15,
+    "lowerarm": 1.6,
+    "wrist": 1.6,
+    "hand": 1.3
+   },
+   "scale": {
+    "hand": 1.45
+   },
+   "bend": {
+    "spine": [
+     0.55,
+     0,
+     0
+    ],
+    "chest": [
+     0.35,
+     0,
+     0
+    ],
+    "head": [
+     -0.7,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "BW1",
+  "cls": "Fens",
+  "label": "Bog-witch \u00b7 a crook and a marsh-light, in sacking",
+  "model": "Mage",
+  "show": [
+   "Mage_Hat"
+  ],
+  "hold": {
+   "handslot.r": "crook",
+   "handslot.l": "marshlamp"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a5e44",
+     "#221c12"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5038",
+     "#1c180e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a4232",
+     "#16120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a6a3e",
+     "#1c2210"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a4232",
+     "#16120c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#5a5038",
+     "#1c180e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a4232",
+     "#16120c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     2
+    ],
+    "to": [
+     "#5a6a3e",
+     "#1c2210"
+    ]
+   }
+  ],
+  "face": "bog_witch",
+  "height": 0.92,
+  "frame": {
+   "bend": {
+    "spine": [
+     0.4,
+     0,
+     0
+    ],
+    "chest": [
+     0.2,
+     0,
+     0
+    ],
+    "head": [
+     -0.5,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ {
+  "id": "RC1",
+  "cls": "Fens",
+  "label": "The Toadking's reed-cutter \u00b7 a bill-hook (Redhand brute, fen colours)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "billhook"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a5238",
+     "#1e1a10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a5a3a",
+     "#161e10"
+    ]
+   }
+  ],
+  "face": "reed_cutter",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "wear": {
+   "head": "reedhat"
+  }
+ },
+ {
+  "id": "RC2",
+  "cls": "Fens",
+  "label": "The Toadking's fowler \u00b7 a fowling crossbow (Redhand crossbowman, fen colours)",
+  "model": "Rogue_Hooded",
+  "show": [
+   "2H_Crossbow"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4a5a3a",
+     "#161e10"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5238",
+     "#1e1a10"
+    ]
+   }
+  ],
+  "face": "fowler",
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "HV1",
+  "cls": "Cult",
+  "label": "Cult harvester \u00b7 a lantern-cage on a pole, charcoal robes with violet trim",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "cagepole"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3034",
+     "#141012"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#8a6ac8",
+     "#2a1a4a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#2a2226",
+     "#0e0a0c"
+    ]
+   }
+  ],
+  "face": "harvester",
+  "height": 1.02
+ },
+ {
+  "id": "DC1",
+  "cls": "Undead",
+  "label": "The drowned clergy \u00b7 a brother in a sodden habit, a mace",
+  "model": "Skeleton_Minion",
+  "hold": {
+   "handslot.r": "mace"
+  },
+  "eyes": "0x7ad8e8",
+  "hide": [
+   "Skeleton_Minion_Cloak"
+  ],
+  "wear": {
+   "chest": "habit"
+  },
+  "skull": true
+ },
+ {
+  "id": "DC2",
+  "cls": "Undead",
+  "label": "The drowned clergy \u00b7 a cantor in a sodden habit, a staff",
+  "model": "Skeleton_Mage",
+  "attach": {
+   "handslot.r": "Skeleton_Staff.gltf"
+  },
+  "eyes": "0x7ad8e8",
+  "wear": {
+   "chest": "habit"
+  },
+  "skull": true,
+  "hide": [
+   "Skeleton_Mage_Hat"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#8a8c84",
+     "#2a2c28"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#8a8c84",
+     "#2a2c28"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#6a6c64",
+     "#202220"
+    ]
+   }
+  ]
  }
 ]

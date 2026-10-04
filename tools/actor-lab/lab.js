@@ -96,13 +96,24 @@ async function build(v, { far = false } = {}) {
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((o) => { if (o.isMesh && /Eyes/.test(o.name)) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(v.eyes); o.material.emissiveIntensity = 3; } });
-  return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations };
+  return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations, frame: v.frame || null };
+}
+// a variant's own frame (M8, the fen ghoul; `body` is the body-kit mock-up's): `frame: { reach: { bone: k }, scale: { bone: k }, bend: { bone: [x, y, z] } }`,
+// after the heroic pass: reach lengthens a segment as the heroic pass does, scale grows a bone (and what hangs off it),
+// bend turns a bone by radians on top of the clip's pose (a hunch: the spine and chest bowed forward)
+function applyFrame(root, body) {
+  root.traverse((b) => { if (!b.isBone) return;
+    const base = b.name.replace(/\.?(l|r)$/, '');
+    if (body.scale && body.scale[base]) b.scale.multiplyScalar(body.scale[base]);
+    if (body.reach && body.reach[base]) b.position.multiplyScalar(body.reach[base]);
+    if (body.bend && body.bend[base]) { const [x, y, z] = body.bend[base]; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z))); } });
 }
 function pose(c, clipName, t, heroic) {
   c.mixer.stopAllAction();
   const clip = c.clips.find((a) => a.name === clipName) || c.clips.find((a) => a.name === 'Idle');
   c.mixer.clipAction(clip).play(); c.mixer.setTime(t * clip.duration);
   if (heroic) applyHeroic(c.root);                       // after sampling: clips key scale+translation
+  if (heroic && c.frame) applyFrame(c.root, c.frame);
   c.root.updateMatrixWorld(true);
   plumb(c.root);
 }

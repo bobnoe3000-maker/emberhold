@@ -1,5 +1,5 @@
 {
-  "$comment": "What the defeat screen calls each foe (world doc §8 bestiary). The kinds are the sim's (src/sim/battle.js ENEMY_KINDS); a test keeps the two in step. Bosses use their own names (battle.js BOSSES).",
+  "$comment": "What the defeat screen calls each foe (world doc \u00a78 bestiary). The kinds are the sim's (src/sim/battle.js ENEMY_KINDS); a test keeps the two in step. Bosses use their own names (battle.js BOSSES).",
   "foes": {
     "minion": {
       "a": "an Ashbound minion"
@@ -39,6 +39,29 @@
     },
     "hexer": {
       "a": "a goblin hexer"
+    },
+    "fenghoul": {
+      "a": "a fen ghoul"
+    },
+    "reedcutter": {
+      "a": "one of the Toadking's reed-cutters",
+      "elite": "the Toadking's reeve"
+    },
+    "fowler": {
+      "a": "one of the Toadking's fowlers"
+    },
+    "bogwitch": {
+      "a": "a bog-witch"
+    },
+    "harvester": {
+      "a": "a Cult harvester",
+      "elite": "a Cult harvester with a full cage"
+    },
+    "drowned": {
+      "a": "one of the drowned clergy"
+    },
+    "cantor": {
+      "a": "a drowned cantor"
     }
   }
 }

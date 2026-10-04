@@ -33,10 +33,12 @@ const CAST = [
   ['foes', 'skeleton_warrior', 'Warrior'], ['foes', 'skeleton_minion', 'Minion'], ['foes', 'skeleton_rogue', 'Archer'], ['foes', 'skeleton_mage', 'Mage'],
   ['foes', 'redhand_cutthroat', 'Cutthroat'], ['foes', 'redhand_brute', 'Brute'], ['foes', 'redhand_crossbow', 'Crossbow'], ['foes', 'cinder_acolyte', 'Acolyte'],
   ['foes', 'goblin_skirmisher', 'Goblin'], ['foes', 'goblin_bruiser', 'Bruiser'], ['foes', 'goblin_archer', 'Gob. archer'], ['foes', 'goblin_hexer', 'Hexer'],
+  ['foes', 'fen_ghoul', 'Fen ghoul'], ['foes', 'reed_cutter', 'Reed-cutter'], ['foes', 'reed_fowler', 'Fowler'], ['foes', 'bog_witch', 'Bog-witch'],
+  ['foes', 'cult_harvester', 'Harvester'], ['foes', 'drowned_brother', 'Drowned'], ['foes', 'drowned_cantor', 'Cantor'],
   ['bosses', 'boss_garrow', 'Garrow'], ['bosses', 'boss_stranger', 'Stranger'], ['bosses', 'boss_standard', 'Standard'], ['bosses', 'boss_skarn', 'Skarn'],
 ];
 const GROUP_NAME = { party: 'The party', town: 'Thornwick', foes: 'Foes', bosses: 'Bosses' };
-const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
+const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard|^drowned_/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
 const SPEED = { party: 8.8, folk: 1.6, human: 3.2, undead: 3.0 };             // tiles/s: the hero, an amble, the Redhand, the Ashbound
 export const CLIPS = ['idle', 'walk', 'attack', 'attack2', 'heavy', 'hit', 'death', 'fidget', 'look', 'sit', 'spawn'];
 const OPTS = { group: ['party', 'town', 'foes', 'bosses', 'all'], clip: CLIPS, dir: ['0', '1', '2', '3', '4', '5', '6', '7', 'turn', 'all'], tod: ['dawn', 'day', 'dusk', 'night'], floor: ['grass', 'cobble'], zoom: ['1', '2', '3'] };

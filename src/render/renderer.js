@@ -45,8 +45,9 @@ const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'ske
 const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', rogue: 'skeleton_rogue', mage: 'skeleton_mage',
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
+  fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
   redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn' };
-const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard']));   // (they rise from the ground and shamble)
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'drowned_brother', 'drowned_cantor']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
@@ -55,6 +56,9 @@ const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the
 // goblins run (Running_A/B, measured the same way: 3.0–3.2): their short legs barely parted in a walk, and read as skating.
 const strideOf = (atl, fallback) => (atl && atl.meta.stride) || fallback;
 const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
+// a marsh world's marsh-lights: one over each mere big enough to hold one, at its middle, with its own phase (fx.wisps)
+const WISPS = new WeakMap();
+const wispsOf = (w) => { let l = WISPS.get(w); if (!l) { l = (w.pools || []).filter((p) => p.rx >= 6 && p.ry >= 5).map((p, i) => ({ x: p.cx, y: p.cy, ph: i * 2.39 })); WISPS.set(w, l); } return l; };
 
 const MARGIN = 96;                 // native-px slack around the view held in the bake
 const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
@@ -461,7 +465,7 @@ export function createRenderer(canvas, sim, input) {
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.9)) continue;
       const j = y * w + x; sp.mask[j] = 1; sp.alb.set(col, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < 1.8 ? glow : 0;
@@ -1128,7 +1132,10 @@ export function createRenderer(canvas, sim, input) {
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
     fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
-    fx.particles(now, (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; });
+    const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
+    fx.particles(now, fxProj);
+    // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
+    if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
 
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     // upload the window G-buffer

@@ -122,6 +122,20 @@ Object.assign(ENEMIES, {
   archer:  { hp: 34, atk: 8.2, def: 3, crit: 10, dodge: 11, interval: 1.6, range: 6.5, speed: 3.6, xp: 12, gold: 2, bolt: 'arrow' },
   hexer:   { hp: 32, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 7.0, speed: 2.8, xp: 14, gold: 3, bolt: 'hex' },
 });
+// The Greywater Fens' own (M8 slice 4; world doc §8 v1.20), the same mirror. The fen ghoul a minion's strength (a
+// long-armed scavenger: quick, a long reach, more dodge), the Toadking's reed-cutter a warrior's (a bill-hook: the
+// longest reach of the melee), his fowler a rogue's (a fowling crossbow), the bog-witch a mage's (a marsh-light, cast).
+// The Cult's harvester carries a lantern-cage on a pole, a warrior's strength (and the Fens' elite). The drowned clergy
+// are Ashbound: the brother a minion's, the cantor a mage's, singing a soul-bolt.
+Object.assign(ENEMIES, {
+  fenghoul:   { hp: 34, atk: 7.4, def: 3, crit: 7, dodge: 9, interval: 1.1, range: 3.0, speed: 3.7, xp: 10, gold: 1 },
+  reedcutter: { hp: 56, atk: 9.4, def: 5, crit: 6, dodge: 3, interval: 1.5, range: 3.3, speed: 2.9, xp: 14, gold: 3 },
+  fowler:     { hp: 35, atk: 9.0, def: 3, crit: 10, dodge: 7, interval: 1.7, range: 6.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  bogwitch:   { hp: 33, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 7.0, speed: 2.7, xp: 15, gold: 3, bolt: 'marsh' },
+  harvester:  { hp: 57, atk: 9.5, def: 5, crit: 5, dodge: 3, interval: 1.5, range: 3.4, speed: 2.8, xp: 15, gold: 4 },
+  drowned:    { hp: 37, atk: 7, def: 4, crit: 5, dodge: 4, interval: 1.2, range: 2.8, speed: 3.1, xp: 10, gold: 1 },
+  cantor:     { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -134,6 +148,12 @@ export const FAMILIES = {
   diggers: { melee: ['cutthroat', 'minion'], ranged: ['crossbow', 'rogue'], elite: 'brute', undead: (k) => k === 'minion' || k === 'rogue' },
   chapel: { melee: ['minion', 'warrior'], ranged: ['rogue', 'acolyte'], elite: 'warrior', undead: (k) => k !== 'acolyte' },
   goblin: { melee: ['goblin', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'bruiser', undead: () => false },
+  // the Fens (M8, sites.js): the Toadking's men and the ghouls they keep off; the Cult's harvest with the bound lock-men
+  // under it, at the Sickpools with the ghouls and the witches, and among the drowned clergy at the Abbey
+  reedmen: { melee: ['fenghoul', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },
+  lockcult: { melee: ['minion', 'harvester'], ranged: ['rogue', 'acolyte'], elite: 'harvester', undead: (k) => k === 'minion' || k === 'rogue' },
+  harvest: { melee: ['fenghoul', 'harvester'], ranged: ['rogue', 'bogwitch'], elite: 'harvester', undead: (k) => k === 'rogue' },
+  drowned: { melee: ['drowned', 'harvester'], ranged: ['rogue', 'cantor'], elite: 'harvester', undead: (k) => k === 'drowned' || k === 'cantor' || k === 'rogue' },
 };
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall (sites.js `bosses`) opens with its boss and
 // an escort; once the boss falls the room goes quiet for the visit. A boss is its `like` archetype's

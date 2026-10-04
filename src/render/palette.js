@@ -110,4 +110,5 @@ export const EGLOW = {
   poison: [190, 255, 110], violet: [180, 140, 255], ember: [255, 150, 70],
   water: [100, 80, 200], lava: [255, 110, 40], soul: [150, 120, 255],
   frost: [170, 225, 255], aqua: [80, 180, 235], window: [255, 176, 92],
+  marsh: [190, 240, 200],                 // (M8) a bog-witch's marsh-light: cold green-white
 };

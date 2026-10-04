@@ -48,6 +48,14 @@ export const FX_STYLES = {
   goblin_bruiser:    { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 210, 150], wide: 1.1 },
   goblin_archer:     { col: VERDANT, spark: [215, 240, 170] },
   goblin_hexer:      { col: BILE, attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [170, 255, 120] },
+  // (M8) the Fens' own: a ghoul's claws, a bill-hook, a fowling crossbow, a marsh-light; the harvester's cage-pole, the drowned
+  fen_ghoul:         { col: BILE, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [215, 225, 180], thin: true },
+  reed_cutter:       { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 150], wide: 1.2 },
+  reed_fowler:       { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [255, 225, 170] },
+  bog_witch:         { col: [200, 240, 205], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [210, 245, 215] },
+  cult_harvester:    { col: [190, 160, 255], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [215, 200, 255], wide: 1.2 },
+  drowned_brother:   { col: [140, 220, 230], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [200, 240, 245] },
+  drowned_cantor:    { col: [140, 220, 230], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [190, 235, 245] },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
   boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },
@@ -222,5 +230,22 @@ export function createFX() {
     }
   }
 
-  return { target, weapon, impact, beam, particles, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
+  // marsh-lights (M8; the Fens' meres at dusk and night): a pale point drifting slowly over each mere, a hand's breadth to
+  // a man's height above the water, swelling and fading on its own beat. `list` is [{ x, y, ph }] (tile space, a phase),
+  // `k` the light's strength (0: none, by day). Drawn after the particles, depth-tested like them.
+  const MARSH = [190, 240, 200];
+  function wisps(now, proj, list, k) {
+    if (!(k > 0)) return;
+    const t = now / 1000;
+    for (const w of list) {
+      const x = w.x + 1.6 * Math.sin(t * 0.21 + w.ph) + 0.6 * Math.sin(t * 0.53 + w.ph * 2), y = w.y + 1.3 * Math.cos(t * 0.17 + w.ph * 1.3);
+      const P = proj(x, y), lift = 9 + 5 * Math.sin(t * 0.7 + w.ph * 3), beat = 0.55 + 0.45 * Math.sin(t * 1.1 + w.ph * 5);
+      if (P.sx < -8 || P.sy < -24 || P.sx > B.W + 8 || P.sy > B.H + 24) continue;
+      depth(P.key + 0.3, P.sy, P.h);
+      disc(P.sx, P.sy - lift, 6, k * 0.9 * beat, 1.5); disc(P.sx, P.sy - lift, 2, k * 2 * beat, 0.8);   // a halo, a hot core
+      flush(MARSH);
+    }
+  }
+
+  return { target, weapon, impact, beam, particles, wisps, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
 }

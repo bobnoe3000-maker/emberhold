@@ -98,3 +98,52 @@ Every way in is reachable from the Fens' arrival in three seeds, and every arriv
   and lower, are for the slice-4 art pass.
 - The Toadking's hall reads as a heap of boats from its arrival, but its crown on the boat-hook is three pixels
   wide. The boss pass (slice 6) can give it a flag.
+
+## Pass 3: art, slice 4 (the Fens' own)
+
+Seven new bakes, mirroring Ashbound roles. The two new silhouettes canon allows are the **fen ghoul** (the Barbarian,
+hunched, long-armed, with a new lab knob, `frame`: extra reach and scale for chosen bones and a bend at the spine) and
+the **bog-witch** (the Mage in sacking under a battered hat, with a crook and a marsh-light). The rest are recolours:
+the **reed-cutter** and the **fowler** (Redhand, in fen colours), the **harvester** (an acolyte with violet trim and a
+lantern-cage on a pole, the soul in it lit), and the **drowned brother** and **cantor** (Ashbound in grey habits with
+weed on them, aqua eyes). Idle toward the camera (left) and walking (right) at 2× in-game scale, with the acolyte, the
+brute and the minion for reference:
+
+![The Fens' own on the Stage](img/fens/foes-stage.jpg)
+
+### Found and fixed in this pass
+
+| Finding | Fix |
+|---|---|
+| The ghoul and the witch came out as the Knight: grey helm, gold band, red tabard | The new knob was first named `body`, which the lab already used for its body-kit mock-up. It's `frame` now |
+| Both kept a red stripe from their base models | The swatches that carried it repainted: the Barbarian's leather and skin, every tile of the Mage's robe |
+| The cantor wore the Skeleton Mage's red robe and hat | The robe repainted grey; the hat hidden |
+| The ghoul was a dark lump: no face, the arms lost | Paler grey-green skin, wide eyes, the forearms 1.6× and the hands 1.45×: its knuckles reach its knees |
+| The reed-cutter read as a hatless Redhand brute, close to the party's barbarian | A broad reed hat (`reedhat`): the Toadking's men now read at a glance |
+
+![The ghoul and the reed-cutter before and after](img/fens/foes-before-after.jpg)
+
+**Marsh-lights** (moved here from slice 2) are in: `fx.wisps`, a pale green-white point with a halo, drifting over
+each mere big enough to hold one, rising and fading on its own beat. They show as the lamps come up (dusk, night),
+depth-tested like every effect, with nothing on the sim.
+
+### Balance (room-level harness: fighter, rogue and cleric at the room's level, 300 s, seeds 1–4, waves)
+
+| Site, level | Before (stand-ins) | After (the Fens' own) |
+|---|---|---|
+| Old Barrows L9 (reference) | 13, 13†, 14, 13 | (unchanged) |
+| Toadking's Mound L9 | 13, 13†, 14, 13 | 11, 13, 10†, 13 |
+| Canal Locks L10 | 11, 10†, 11, 10 | 11, 9†, 9†, 9 |
+| Sickpools L11 | 12, 9†, 11†, 8 | 10†, 9†, 7†, 9 |
+| Drowned Abbey L12 | 5†, 5†, 6†, 4† | 7†, 6†, 7†, 8† |
+
+† defeated before 300 s. About a wave harder at the Mound, the Locks and the Sickpools (a bog-witch casts where a
+crossbowman shot; the harvester is the elite where a brute or warrior was), two easier at the Abbey. The Fens' own each
+stay within 15 % of their role's HP and ATK (`test/fens-foes.test.mjs`). The sites past level 10 are hard at level
+whoever holds them: setting the numbers for 9–15 is slice 11's.
+
+### Still open
+
+- The harvester is the acolyte with a pole: canon says so, and the pole and its lit soul tell them apart, but only
+  just at 56 px. If it's lost in a fight, a cowl is the next step.
+- The drowned clergy's weed is too thin to read at 56 px; their grey habits and aqua eyes carry them.

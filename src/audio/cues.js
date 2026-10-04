@@ -17,6 +17,8 @@ const VOICE = {
   minion: { fam: 'bone', rate: 1.08 }, warrior: { fam: 'bone', rate: 0.9 }, rogue: { fam: 'bone', rate: 1.04 }, mage: { fam: 'bone', rate: 1.12 }, standard: { fam: 'bone', rate: 0.7 },
   cutthroat: { fam: 'man', rate: 1.06 }, brute: { fam: 'man', rate: 0.86 }, crossbow: { fam: 'man', rate: 1 }, redhand_captain: { fam: 'man', rate: 0.8 },
   acolyte: { fam: 'cult', rate: 1.1 }, robed_stranger: { fam: 'cult', rate: 0.8 },
+  fenghoul: { fam: 'gob', rate: 0.7 }, reedcutter: { fam: 'man', rate: 0.9 }, fowler: { fam: 'man', rate: 1.04 }, bogwitch: { fam: 'cult', rate: 1.3 },   // (M8) the Fens'
+  harvester: { fam: 'cult', rate: 0.92 }, drowned: { fam: 'bone', rate: 0.96 }, cantor: { fam: 'bone', rate: 1.02, cry: 'cult_cry' },
 };
 const FAM = { gob: { cry: 'gob_cry', hurt: 'gob_hurt', die: 'gob_die' }, bone: { cry: 'bone_rise', hurt: 'bone_hurt', die: 'bone_die' },
   man: { cry: 'man_cry', hurt: 'man_hurt', die: 'man_die' }, cult: { cry: 'cult_cry', hurt: 'man_hurt', die: 'man_die' } };
@@ -35,12 +37,12 @@ export const familyOf = (kind) => (VOICE[kind] || VOICE.minion).fam;
 /** @param {string} atlas the actor atlas (hero_mage, goblin_archer, skeleton_rogue, …) @returns {Cue} */
 export function swingOf(atlas) {
   const a = atlas || '';
-  if (/crossbow/.test(a)) return { cue: 'bow', bus: 'combat', rate: 0.8, gain: 0.8 };
+  if (/crossbow|fowler/.test(a)) return { cue: 'bow', bus: 'combat', rate: 0.8, gain: 0.8 };
   if (/_bow|archer|skeleton_rogue/.test(a)) return { cue: 'bow', bus: 'combat', rate: 1, gain: 0.75 };
-  if (/hero_mage|skeleton_mage|acolyte|boss_stranger/.test(a)) return { cue: 'fire', bus: 'combat', rate: 1, gain: 0.7 };
-  if (/shaman/.test(a)) return { cue: 'spirit', bus: 'combat', rate: 1.1, gain: 0.6 };
+  if (/hero_mage|skeleton_mage|acolyte|boss_stranger|cantor/.test(a)) return { cue: 'fire', bus: 'combat', rate: 1, gain: 0.7 };
+  if (/shaman|bog_witch/.test(a)) return { cue: 'spirit', bus: 'combat', rate: 1.1, gain: 0.6 };
   if (/hexer/.test(a)) return { cue: 'hex', bus: 'combat', rate: 1.2, gain: 0.6 };
-  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard/.test(a);
+  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard|reed_cutter|harvester/.test(a);
   return { cue: 'swing', bus: 'combat', rate: heavy ? 0.82 : /goblin/.test(a) ? 1.2 : 1, gain: heavy ? 0.85 : 0.7 };
 }
 

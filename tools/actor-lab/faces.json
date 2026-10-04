@@ -394,5 +394,71 @@
    "wrinkles",
    "freckles"
   ]
+ },
+ "fen_ghoul": {
+  "skin": "#7c805c",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "wide",
+  "iris": "amber",
+  "mouth": "open",
+  "nose": "hook",
+  "shape": "oblong",
+  "marks": [
+   "wrinkles",
+   "scar"
+  ]
+ },
+ "bog_witch": {
+  "skin": "#9a9070",
+  "hair": "long",
+  "hairColor": "grey",
+  "brows": "worried",
+  "eyes": "narrow",
+  "iris": "green",
+  "mouth": "grin",
+  "nose": "hook",
+  "shape": "thin",
+  "marks": [
+   "wrinkles"
+  ]
+ },
+ "reed_cutter": {
+  "skin": "olive",
+  "hair": "crop",
+  "hairColor": "straw",
+  "brows": "angry",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "frown",
+  "nose": "broad",
+  "beard": "stubble",
+  "shape": "thick",
+  "marks": [
+   "scar"
+  ]
+ },
+ "fowler": {
+  "skull": "own",
+  "skin": "tan",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "hazel",
+  "mouth": "line",
+  "beard": "short",
+  "beardColor": "straw"
+ },
+ "harvester": {
+  "skin": "porcelain",
+  "hair": "bald",
+  "brows": "thin",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "long",
+  "shape": "thin",
+  "marks": [
+   "wrinkles"
+  ]
  }
 }
