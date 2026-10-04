@@ -21,7 +21,6 @@ export function createHud(sim) {
   const stone = document.getElementById('hudStone');
   const depth = document.getElementById('hudDepth');
   const toast = document.getElementById('hudToast');
-  let toastTimer = null;
 
   // dungeon: "depth N"; town / overland: the place's name
   const setDepth = (d) => {
@@ -153,12 +152,29 @@ export function createHud(sim) {
   };
   sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); setInterval(paintWeak, 1000); paintWeak();
 
-  function show(msg, ms = 1000) {
-    toast.textContent = msg;
-    toast.classList.add('on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
+  // Toasts stack (the owner, 2026-10-04: a quest's count was bare orange text, and the next message, a chest, a skill
+  // or a hire, replaced it at once): each line is its own backed pill with its own timer, newest on top, at most
+  // TOAST_MAX. A line given a key (a quest objective's count) updates in place rather than stacking. The stack sits
+  // under the loot card while that's up (sheet.js #lootToast), so neither covers the other.
+  const TOAST_MAX = 3;
+  /** @type {Map<HTMLElement, { key: string | null, timer: any }>} */
+  const lines = new Map();
+  const place = () => {
+    const loot = document.getElementById('lootToast'), lr = loot && loot.classList.contains('on') ? loot.getBoundingClientRect() : null;
+    toast.style.top = lr ? `${Math.round(lr.bottom + 8)}px` : '';
+  };
+  const drop = (el) => { const l = lines.get(el); if (!l) return; clearTimeout(l.timer); lines.delete(el); el.remove(); if (!lines.size) toast.classList.remove('on'); };
+  /** @param {string} msg @param {number} [ms] @param {string} [key] a line to update in place (the same objective's count) */
+  function show(msg, ms = 1000, key) {
+    let el = null;
+    for (const [e, l] of lines) if ((key && l.key === key) || e.textContent === msg) { el = e; break; }
+    if (!el) { el = document.createElement('div'); el.className = 't'; lines.set(el, { key: key || null, timer: null }); }
+    el.textContent = msg; toast.prepend(el);
+    const l = lines.get(el); clearTimeout(l.timer); l.timer = setTimeout(() => drop(el), ms);
+    while (lines.size > TOAST_MAX) drop(/** @type {HTMLElement} */ (toast.lastElementChild));
+    place(); toast.classList.add('on');
   }
+  setInterval(() => { if (lines.size) place(); }, 250);   // the loot card comes and goes on its own
   /** fn() → true if it handled a tap on the wage line (main.js: the tavern, in town) */
   return { show, onWage: (fn) => { onWage = fn; } };
 }

@@ -338,8 +338,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     await p.waitForTimeout(800); await run(5);
     await p.evaluate(() => { const s = globalThis.__sim, n = s.world.npcs[0], q = s.state.player; q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: n.id }); });
-    await run(3);
-    const talking = await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).then(() => true, () => false);
+    // (the clock is manual: the wait runs frames, since a scene's bake holds the sim for as many frames as the machine needs)
+    const talking = await (async () => { for (let i = 0; i < 150 && !(await p.locator('#talkWrap.on').count()); i++) { await run(2); await p.waitForTimeout(20); } return (await p.locator('#talkWrap.on').count()) > 0; })();
     const more = async () => { for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); } };   // (a line with effects waits a tick for the sim)
     await more(); await p.locator('#talk .ch', { hasText: 'Anything I can do' }).tap(); await more();
     await p.locator('#talk .ch', { hasText: "I'll see to it" }).tap(); await run(3); await more();
@@ -383,7 +383,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     const more = async () => { for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); } };
-    const talkTo = async (id) => { await p.evaluate((id) => { const s = globalThis.__sim, n = s.world.npcs.find((q) => q.id === id), q = s.state.player; s.commands.push({ type: 'endTalk' }); q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: id }); }, id); await run(3); await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).catch(() => null); await more(); };
+    const talkTo = async (id) => { await p.evaluate((id) => { const s = globalThis.__sim, n = s.world.npcs.find((q) => q.id === id), q = s.state.player; s.commands.push({ type: 'endTalk' }); q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: id }); }, id); await (async () => { for (let i = 0; i < 150 && !(await p.locator('#talkWrap.on').count()); i++) { await run(2); await p.waitForTimeout(20); } return (await p.locator('#talkWrap.on').count()) > 0; })(); await more(); };   // (frames until it opens: a 3-frame wait then real time was flaky after a scene change)
     await p.waitForTimeout(800); await run(5);
     await talkTo('maudry_fenn');
     await p.locator('#talk .ch', { hasText: 'You said something about smoke' }).tap(); await more();
@@ -556,7 +556,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
           if (ix > 0.5 && iy > 0.5) hits.push(`${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${typeof e.className === 'string' && e.className ? '.' + e.className.split(' ').join('.') : ''} "${(e.textContent || '').trim().slice(0, 24)}"`);
         }
         const hud = document.getElementById('hud').getBoundingClientRect(), tap = sky.getBoundingClientRect(), toast = document.getElementById('hudToast');
-        return { box, hits, hudB: hud.bottom, vw, tapH: tap.height, tapW: tap.width, word: sky.querySelector('span').textContent, icon: !!sky.querySelector('svg.wx'), toast: toast.classList.contains('on') ? toast.textContent : '', battle: !!globalThis.__sim.battle, tracker: !!document.querySelector('#questTrack') && getComputedStyle(document.querySelector('#questTrack')).display !== 'none', menuW: document.getElementById('menuBtn').getBoundingClientRect().width };
+        return { box, hits, hudB: hud.bottom, vw, tapH: tap.height, tapW: tap.width, word: sky.querySelector('span').textContent, icon: !!sky.querySelector('svg.wx'), toast: toast.classList.contains('on') && toast.firstElementChild ? toast.firstElementChild.textContent : '', battle: !!globalThis.__sim.battle, tracker: !!document.querySelector('#questTrack') && getComputedStyle(document.querySelector('#questTrack')).display !== 'none', menuW: document.getElementById('menuBtn').getBoundingClientRect().width };
       });
       const where = `${W}px ${scene}`, probs = [];
       if (r.hits.length) probs.push('overlaps ' + r.hits.join(', '));
@@ -616,7 +616,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       s.quests.begin('trial_quiet_feet'); s.state.quests.trial_quiet_feet.st = 2;                // three sergeants down: ready to hand in
       const n = s.world.npcs.find((q) => q.id === 'nell_tolley'), q = s.state.player; q.x = q.px = n.x - 1; q.y = q.py = n.y + 1; s.commands.push({ type: 'talk', npc: 'nell_tolley' });
     });
-    await run(3); await p.waitForSelector('#talkWrap.on', { timeout: 10000 }).catch(() => null); await more();
+    await (async () => { for (let i = 0; i < 150 && !(await p.locator('#talkWrap.on').count()); i++) { await run(2); await p.waitForTimeout(20); } return (await p.locator('#talkWrap.on').count()) > 0; })(); await more();
     await p.locator('#talk .ch', { hasText: 'Three sergeants' }).tap().catch(() => null); await run(4); await more();
     const done = await p.locator('#talk .note.done').first().innerText().catch(() => ''), skill = await p.locator('#talk .note.skill').innerText().catch(() => '');
     check('skill: handing in a trial says a new skill is learned (name, who knows it, what it does), under the quest\'s own note', /Handed in/.test(done) && /New skill learned: Smoke Step/.test(skill) && /every rogue in your company knows it/.test(skill) && /DODGE/.test(skill) && errs.length === 0, `${done} || ${skill.replace(/\n/g, ' · ')}` + (errs.length ? ' · ' + errs.join(' | ') : ''));
@@ -760,8 +760,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('[data-k="temple"]').tap(); await run(3);
     await p.locator('[data-go^="raise"]').tap(); await run(3);
     await p.locator('[data-raise]').first().tap(); await run(6);
-    const r = await p.evaluate(() => { const s = globalThis.__sim, t = document.getElementById('hudToast'), q = t.getBoundingClientRect(), cs = getComputedStyle(t);
-      return { fallen: s.state.party[1].fallen, text: t.textContent, on: t.classList.contains('on'), left: q.left, right: q.right, h: q.height, line: parseFloat(cs.lineHeight) || 18, z: +cs.zIndex, sheetZ: +getComputedStyle(document.getElementById('hubSheet') || document.body).zIndex || 0 }; });
+    const r = await p.evaluate(() => { const s = globalThis.__sim, box = document.getElementById('hudToast'), t = box.firstElementChild || box, q = t.getBoundingClientRect(), cs = getComputedStyle(t);   // (the newest line of the stack)
+      return { fallen: s.state.party[1].fallen, text: t.textContent, on: box.classList.contains('on'), left: q.left, right: q.right, h: t.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), line: parseFloat(cs.lineHeight) || 18, z: +getComputedStyle(box).zIndex, sheetZ: +getComputedStyle(document.getElementById('hubSheet') || document.body).zIndex || 0 }; });
     check('raise: the temple raises a slain companion; the toast names them on one line, over the open sheet, on screen; no page errors',
       !!name && r.fallen === false && r.on && r.text.includes(name) && /^Raised/.test(r.text) && r.left >= 0 && r.right <= 390 && r.h < r.line * 1.6 && r.z > r.sheetZ && errs.length === 0,
       JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));

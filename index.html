@@ -46,13 +46,15 @@
   #hud .stat b { color: #e8e4da; font-weight: 600; }
   #hud .stat .ember { color: #ff9440; font-style: normal; }
   #hudToast {
-    position: fixed; left: 50%; top: 22%;
+    position: fixed; left: 50%; top: 22%; display: flex; flex-direction: column; align-items: center; gap: 6px;
     transform: translateX(-50%) translateY(6px);
-    font-size: 13px; color: #ff9440; letter-spacing: 1px;
     width: max-content; max-width: calc(100vw - 32px); text-align: center;   /* (left: 50% alone squeezed it to half the screen: every long toast wrapped ragged) */
     opacity: 0; transition: opacity .18s, transform .18s;
-    pointer-events: none; text-shadow: 0 1px 0 #0d0913; z-index: 10;   /* over the menu sheets: the temple's raise list is open when it speaks */
+    pointer-events: none; z-index: 10;   /* over the menu sheets: the temple's raise list is open when it speaks */
   }
+  /* a backed pill each (bare orange text was lost over the world: owner, 2026-10-04) */
+  #hudToast .t { font-size: 13px; color: #ffb066; letter-spacing: .5px; padding: 6px 12px; border-radius: 9px;
+    background: rgba(18,14,24,.9); border: 1px solid rgba(214,170,98,.4); box-shadow: 0 4px 14px rgba(0,0,0,.5); }
   #hudToast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
   /* the studio splash, up before any script runs; the boot (src/cutscene/player.js) takes over */
   #bootSplash { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;

@@ -176,7 +176,7 @@ function Journal({ sim, defOf, npcName, onClose, lore, story }) {
   </div>`;
 }
 
-/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number) => void, partyPanel?: { height: () => number } }} o */
+/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number, key?: string) => void, partyPanel?: { height: () => number } }} o */
 export function createJournal({ sim, npcName, toast, partyPanel }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('button'); btn.id = 'journalBtn'; btn.setAttribute('aria-label', 'Journal'); btn.innerHTML = BOOK;
@@ -237,7 +237,7 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
     if (def && e.state === QS.ACTIVE && !was) { toast(`Quest accepted · ${def.title}`, 2200); btn.classList.add('due'); }
     else if (def && e.state === QS.ACTIVE && was && was.step === e.step) {
       const i = n.findIndex((v, k) => v > (was.n[k] || 0)), o = i >= 0 && def.steps[e.step].objectives[i];
-      if (o) toast(`${o.label} ${n[i]}/${o.count}`, 1600);
+      if (o) toast(`${o.label} ${n[i]}/${o.count}`, 2200, `q:${e.id}:${i}`);   // one line per objective, its count updated in place
     } else if (def && e.state === QS.READY && (!was || was.st !== QS.READY)) toast(`Quest complete · ${def.ready}`, 2600);
     if (e.id) seen.set(e.id, { st: e.state, step: e.step, n: n.slice() });
     paintTracker(); paint();
