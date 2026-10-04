@@ -1,6 +1,6 @@
 # The region towns: size, edge and ground
 
-**Proposal, 2026-10-04.** The owner: *"Propose each region's town look, some a bit smaller with no wall, some larger
+**Proposal, 2026-10-04; walls, Frosthold and Tollhaven's harbour decided the same day.** The owner: *"Propose each region's town look, some a bit smaller with no wall, some larger
 with stone walls. The ground can fit based on the map: dry dirt and arid, seaside with docks and a beach, low
 mountain pass with some snow on the ground. Rocky outcrops."*
 
@@ -36,9 +36,9 @@ A player who knows Thornwick's square knows every town's square. Everything roun
 | **Thornwick** (shipped) | Emberfall | medium: 10 houses | timber palisade | meadow grass, farms, a brook | fields, the bridge |
 | **Saltmere** (waystation) | Emberfall: the Fens | **small**: 8 stilt houses | **no wall**: water all round | **bog water, peat and mud, reed beds, duckweed**; boardwalks | **houses on stilts**, the square a deck on piles, punts, eel traps, dead trees, marsh-lights |
 | **Ashgate** | the Reach | **large**: 16 houses in terraces | **slag-brick stone walls**, 10 towers | **dry, cracked earth and dust; red rock outcrops**; black slag | the pithead wheel over the gate, the Cinderworks' chimneys, slag heaps, the ore rails, a tailings pond |
-| **Tollhaven** | the Tidemark | **large**: 13 houses and 4 warehouses | **stone walls landward**, the harbour open to the sea | **beach sand, wet sand, shingle, dune grass**; quay stone | **the quay, three jetties and moored boats**, two moles and the harbour chain, boats drawn up on the beach, net racks |
+| **Tollhaven** | the Tidemark | **large**: 14 houses and 4 warehouses | **stone walls on the landward sides**; **the harbour behind the town**, west, opposite the gate | **beach sand, wet sand, shingle, dune grass**; quay stone | **the quay along the back, three jetties and moored boats**, two moles and the harbour chain, boats drawn up on the beaches either side |
 | **Rookstead** | the Greenwood | **small**: 6 longhouses | **no wall**: a ring of standing stones | forest floor, moss, leaf litter; a grass clearing | the great oak, the moot-stone, skeps, the charcoal clamp; the wood close round |
-| **Frosthold** | the Heights | **small**: 6 houses | **no circuit: the pass is its wall.** Crags behind, a drop in front, one wall across the road | **patchy snow over frozen dirt and tussock; rock outcrops and scree**; snowy pines | the north crags, the bell tower, the pass-wall, the frozen stream, the pilgrims' cairns |
+| **Frosthold** | the Heights | **small**: 6 houses | **no circuit: the mountain pass is its wall** (decided). Crags behind, a drop in front, one wall across the road | **patchy snow over frozen dirt and tussock; rock outcrops and scree**; snowy pines | the north crags, the bell tower, the pass-wall, the frozen stream, the pilgrims' cairns |
 | **The Lamphall** | Solmere | **largest**: 10 tenements and 4 roofless shells | **broken imperial stone walls**, with a breach | imperial flagstones with weeds in the joints; rubble; the Mere's mud flats | **the Great Beacon** over it all, the colonnade, the breach, the quay over the mud, the Mere Tower far out |
 
 The ground area each town paints, against Thornwick's 170 × 145 tiles:
@@ -48,7 +48,7 @@ The ground area each town paints, against Thornwick's 170 × 145 tiles:
 | Rookstead | 138 × 124 | −31 % |
 | Saltmere | 146 × 128 | −24 % |
 | Frosthold | 160 × 148 | −4 % (the crags take a third of it) |
-| Tollhaven | 192 × 182 | +42 % |
+| Tollhaven | 216 × 148 | +30 % (a third of it is sea) |
 | Ashgate | 202 × 176 | +44 % |
 | The Lamphall | 204 × 190 | +57 % |
 
@@ -100,25 +100,27 @@ A mining town that pays well and doesn't ask.
 - **Mood.** Dust on the wind, the shift-bell, the furnace glow behind the north
   wall at night.
 
-### Tollhaven, the Tidemark: large, stone walls, the sea
+### Tollhaven, the Tidemark: large, stone walls, the harbour behind
 
 The League's largest port, where even the harbour chain takes a toll.
-- **Edge.** Grey stone walls with round towers on the landward sides: the back (north and west, a backdrop behind
-  the temple) and the east, with the gate. **The south is the harbour**, closed by two moles and a chain between
-  their towers.
+- **Edge.** Grey stone walls with round towers on the three landward sides, with the gate in the east wall on the
+  road in. **The harbour is behind the town**, on the west, opposite the gate (the owner). The quay is the town's
+  edge there, and two moles close the harbour, with the chain between their towers.
+- **Why behind works.** The back of a town is the top of the screen, so **the sea is always in view behind the
+  square**: the jetties, the masts and the chain towers stand beyond the temple and the tavern. The front stays low
+  for the walk in, as the rules want.
 - **Ground.**
   - Brick and cobble in the town, and wet quay stone along the water.
-  - Outside the east gate, **a beach**: sand, a band of darker wet sand at the tide line, shingle where the creek
-    comes down, and dune grass on the rise.
+  - **Beaches** either side of the harbour, outside the north and south walls: sand, a band of darker wet sand at
+    the tide line, and shingle.
+  - Dune grass on the rise north of the town; scrub and a few trees by the road in.
 - **Buildings.**
   - Brick and tile in warm red-browns.
-  - **Warehouses** in a row along the quay, the Speaker's counting-house among them.
+  - **Warehouses** along the quay, the Speaker's counting-house among them.
 - **The water.**
-  - **The quay** runs the length of the town, with **three wooden jetties** off it and boats tied up.
-  - Out on the beach, boats are drawn up on the sand and nets are hung to dry.
-  - The creek runs under the bridge to the sea.
-- **Mood.** Fog and rain (the coast's weather), gulls on every ridge, the chain's creak, rigging. The water catches
-  the lamps at night.
+  - **The quay** runs the length of the town's back, with **three wooden jetties** off it and boats tied up.
+  - On the beaches, boats are drawn up on the sand and nets are hung to dry.
+- **Mood.** Fog and rain, gulls on every ridge, the chain's creak, rigging. The water catches the lamps at night.
 
 ### Rookstead, the Greenwood: small, no wall
 
@@ -258,19 +260,19 @@ direction).
 
 The `?scene=town&region=` previews for `fens`, `reach` and `heights` stay until their towns are built.
 
-## For the owner
+## Decided
 
-1. **Sizes and edges:**
-   - large and walled: Ashgate, Tollhaven and the Lamphall;
-   - small and open: Rookstead and Frosthold;
-   - medium: Thornwick.
+The owner (2026-10-04):
+- **Walls per town are right:**
+  - large and walled: Ashgate, Tollhaven and the Lamphall;
+  - small and open: Rookstead, Frosthold and Saltmere;
+  - Thornwick's timber palisade as shipped.
+- **Frosthold's walls are the mountain pass:** crags behind, the drop in front, one wall across the road.
+- **Tollhaven's harbour is behind the town**, on the side opposite the gate (drawn so above).
 
-   Is that the split you want?
-2. **Frosthold:** the pass as its wall (as drawn), or a small stone circuit like a fortress?
-3. **Tollhaven's harbour:** in front (south, as drawn), where you walk past it on the way in but the menu bar
-   covers it in the square? Or behind (north-west), where the sea is always on screen behind the temple but the
-   jetties stand behind the houses?
-4. **Swamp, where else?** It's drawn for Saltmere, where the Fens already are. The same ground could also go to:
+## Still open
+
+1. **Swamp, where else?** It's drawn for Saltmere, where the Fens already are. The same ground could also go to:
    - the Greenwood's south edge, with Hollin Ford as a fen ford;
    - a salt marsh behind Tollhaven's beach;
    - the Fens' sites (the Sickpools, the approach to the Drowned Abbey).

@@ -167,36 +167,37 @@ const TOWNS = [
       scatter(40, -26, -26, 176, 150, (x, y) => x < -12 || y < -14 || x > 126 || y > 122, (x, y) => rand() < 0.45 ? g.rock(x, y, rr(3, 8), rr(3, 9), '#7d4a35', '#9a5e44') : g.tree(x, y, 1.6, '#5a5a38', 2));
       g.note(156, -16, 'slag heaps'); g.note(-2, -30, 'the Cinderworks', { z: 26, anchor: 'start' }); g.note(122, 80, 'pithead wheel', { z: 36, size: 13 });
     } },
-  { name: 'Tollhaven', sub: 'the Tidemark · levels 30–45 · the free port', tag: 'large · stone walls, the harbour open', tagc: '#8fb3c0',
-    extent: [-14, -14, 178, 168], outside: '#1a2329',
+  { name: 'Tollhaven', sub: 'the Tidemark · levels 30–45 · the free port', tag: 'large · stone walls, the harbour behind', tagc: '#8fb3c0',
+    extent: [-66, -16, 150, 132], outside: '#1a2329',
     swatches: [['#a08c68', 'beach sand'], ['#7d7360', 'wet sand'], ['#77756c', 'shingle'], ['#6b6e45', 'dune grass'], ['#2f4b55', 'the sea']],
     draw(g) {
-      g.poly([[-14, -14], [178, -14], [178, 168], [-14, 168]], '#2f4b55');
-      g.poly([[-14, -14], [178, -14], [178, 70], [150, 96], [124, 112], [112, 122], [10, 122], [-14, 128]], '#5b5a48');       // the land behind the shore
-      g.poly([[124, 60], [178, 40], [178, 120], [160, 140], [134, 136], [118, 122]], '#a08c68');                                // the beach
-      g.poly([[178, 120], [160, 140], [134, 136], [118, 122], [124, 126], [138, 142], [162, 146], [178, 128]], '#7d7360');     // the wet sand
-      g.poly([[118, 122], [124, 126], [138, 142], [162, 146], [178, 128], [178, 150], [160, 156], [130, 150], [116, 132]], '#46656b');   // the shallows
-      for (let i = 0; i < 20; i++) g.blob(rr(126, 176), rr(44, 110), rr(3, 6), '#6b6e45', 0.6);                               // dune grass
-      for (let i = 0; i < 16; i++) g.blob(rr(112, 128), rr(100, 124), rr(1.5, 3), '#77756c', 0.5);                             // shingle
-      g.line([[124, -14], [122, 30], [126, 70], [122, 110], [126, 130]], 6, '#3a5a64');                                        // the creek to the sea
-      g.line([[178, 80], [112, 80]], 6, '#7a6a52'); g.line([[114, 80], [84, 80], [76, 76]], 6, '#6a5a50');
-      g.box(119, 77, 129, 83, 1.4, ['#7a7064', '#5a5148', '#6a6158']);
+      // the gate is east, on the road in; the harbour is west, behind the town, so the sea is on screen behind the square
+      g.poly([[-66, -16], [150, -16], [150, 132], [-66, 132]], '#2f4b55');
+      g.poly([[-8, -16], [150, -16], [150, 132], [-8, 132], [-14, 112], [-10, 70], [-16, 30]], '#5b5a48');               // the land
+      g.poly([[-16, -16], [6, -16], [6, 4], [-2, 8], [-22, 10], [-30, 0]], '#a08c68');                                     // the north beach
+      g.poly([[-30, 0], [-22, 10], [-26, 14], [-36, 4]], '#7d7360');
+      g.poly([[-16, 114], [-2, 110], [6, 116], [6, 132], [-24, 132], [-30, 122]], '#a08c68');                               // the south beach
+      g.poly([[-30, 122], [-24, 132], [-34, 132], [-38, 124]], '#7d7360');
+      g.poly([[-40, -16], [-30, 0], [-36, 4], [-40, 30], [-24, 40], [-24, 76], [-40, 90], [-38, 124], [-34, 132], [-66, 132], [-66, -16]], '#2a434c');   // deeper water
+      for (let i = 0; i < 18; i++) g.blob(rr(16, 146), rr(-14, 6), rr(3, 6), '#6b6e45', 0.6);                             // dune grass on the rise
+      for (let i = 0; i < 12; i++) g.blob(rr(-12, 4), rr(-12, 4), rr(1.2, 2.4), '#77756c', 0.5);                          // shingle
+      g.line([[150, 80], [112, 80]], 6, '#7a6a52'); g.line([[114, 80], [84, 80], [76, 76]], 6, '#6a5a50');
       const st = { house: ['#6a3a2c', '#6c5446', '#7a6050'], temple: ['#4a4f5a', '#6c6460', '#7a726c'] }, wall = ['#706a60', '#4e4942', '#5e5850'];
-      g.poly([[8, 108], [114, 108], [114, 124], [8, 124]], '#6e6a64');                                                         // the quay
+      g.poly([[-2, 8], [10, 8], [10, 108], [-2, 108]], '#6e6a64');                                                          // the quay, along the back of the town
       square(g, st, '#6a5a50');
-      houses(g, [[76, 19], [88, 19], [100, 19], [101, 31], [89, 33], [76, 32], [24, 70], [24, 82], [24, 96], [100, 66], [40, 92], [90, 92], [102, 92]], st.house);
-      for (const x of [22, 46, 70, 94]) g.box(x - 8, 100, x + 8, 106, 7, ['#4a4f5a', '#4e4942', '#5e5850'], { ridge: 'x' });  // warehouses on the quay
-      g.box(-2, 8, 0, 124, 8, wall); g.box(-2, 6, 114, 8, 8, wall); g.box(112, 8, 114, 74, 8, wall); g.box(112, 86, 114, 108, 8, wall);
+      houses(g, [[76, 19], [88, 19], [100, 19], [101, 31], [89, 33], [76, 32], [24, 70], [24, 82], [24, 96], [100, 66], [40, 96], [90, 94], [102, 94], [60, 96]], st.house);
+      for (const y of [18, 66, 84, 100]) g.box(11, y - 6, 17, y + 6, 7, ['#4a4f5a', '#4e4942', '#5e5850'], { ridge: 'y' });   // warehouses on the quay
+      g.box(10, 6, 114, 8, 8, wall); g.box(10, 108, 114, 110, 8, wall); g.box(112, 8, 114, 74, 8, wall); g.box(112, 86, 114, 108, 8, wall);
       g.box(111, 73, 116, 77, 13, wall); g.box(111, 83, 116, 87, 13, wall);
-      towers(g, [[-1, 7], [56, 7], [113, 7], [-1, 60], [113, 40]], 13, wall);
-      g.box(8, 124, 14, 154, 3, wall); g.box(96, 124, 102, 154, 3, wall);                                                     // the moles
-      towers(g, [[11, 156], [99, 156]], 12, wall);
-      g.raw(320, () => { const [a, b] = g.P(11, 156, 4), [c, d] = g.P(99, 156, 4); return `<path d="M${f1(a)},${f1(b)} Q${f1((a + c) / 2)},${f1((b + d) / 2 + 12)} ${f1(c)},${f1(d)}" fill="none" stroke="#14131a" stroke-width="2" stroke-dasharray="3 2"/>`; });
-      for (const x of [30, 54, 78]) { g.box(x - 1.5, 124, x + 1.5, 144, 1, ['#5e4a36', '#3e3024', '#4b3a2b']); g.box(x + 3, 132, x + 9, 136, 1.6, ['#4b3a2b', '#3e3024', '#5e4a36']); g.raw(x + 140, () => { const [a, b] = g.P(x + 6, 134, 1.6); return `<line x1="${f1(a)}" y1="${f1(b)}" x2="${f1(a)}" y2="${f1(b - 22)}" stroke="#2a2018" stroke-width="1.4"/>`; }); }
-      for (const [x, y] of [[150, 128], [140, 120]]) g.box(x - 4, y - 1.5, x + 4, y + 1.5, 1.4, ['#4b3a2b', '#3e3024', '#5e4a36']);   // boats on the beach
-      for (const [x, y] of [[140, 70], [146, 80]]) g.box(x - 4, y, x + 4, y + 0.6, 4, ['#3e3024', '#3e3024', '#4b3a2b']);            // net racks
-      scatter(14, -14, -14, 120, 6, () => true, (x, y) => g.tree(x, y, rr(2.5, 4), '#3c4a34'));
-      g.note(55, 164, 'the harbour chain'); g.note(158, 96, 'the beach'); g.note(54, 140, 'the jetties', { size: 13 });
+      towers(g, [[11, 7], [61, 7], [113, 7], [113, 40], [11, 109], [61, 109], [113, 109]], 13, wall);
+      g.box(-24, 38, 0, 42, 3, wall); g.box(-24, 74, 0, 78, 3, wall);                                                        // the moles
+      towers(g, [[-26, 40], [-26, 76]], 12, wall);
+      g.raw(0, () => { const [a, b] = g.P(-26, 40, 4), [c, d] = g.P(-26, 76, 4); return `<path d="M${f1(a)},${f1(b)} Q${f1((a + c) / 2 + 8)},${f1((b + d) / 2 + 6)} ${f1(c)},${f1(d)}" fill="none" stroke="#14131a" stroke-width="2" stroke-dasharray="3 2"/>`; });
+      for (const y of [48, 58, 68]) { g.box(-18, y - 1.5, -2, y + 1.5, 1, ['#5e4a36', '#3e3024', '#4b3a2b']); g.box(-14, y + 2.5, -8, y + 5.5, 1.6, ['#4b3a2b', '#3e3024', '#5e4a36']); g.raw(-11 + y + 4, () => { const [a, b] = g.P(-11, y + 4, 1.6); return `<line x1="${f1(a)}" y1="${f1(b)}" x2="${f1(a)}" y2="${f1(b - 22)}" stroke="#2a2018" stroke-width="1.4"/>`; }); }
+      for (const [x, y] of [[-12, -4], [-18, 2], [-14, 122]]) g.box(x - 4, y - 1.5, x + 4, y + 1.5, 1.4, ['#4b3a2b', '#3e3024', '#5e4a36']);   // boats on the beaches
+      for (const [x, y] of [[-4, -10], [0, 124]]) g.box(x - 4, y, x + 4, y + 0.6, 4, ['#3e3024', '#3e3024', '#4b3a2b']);                  // net racks
+      scatter(16, 118, 10, 150, 130, () => true, (x, y) => g.tree(x, y, rr(2.5, 4), '#3c4a34'));
+      g.note(-34, 58, 'the harbour chain', { size: 13 }); g.note(-10, -14, 'the beach'); g.note(-10, 64, 'the jetties', { size: 13 }); g.note(132, 78, 'the gate', { size: 13 });
     } },
   { name: 'Rookstead', sub: 'the Greenwood · levels 45–60 · a clan steading', tag: 'small · no wall: a ring of stones', tagc: '#9fb07a',
     extent: [-6, -6, 132, 118], outside: '#171d15',
