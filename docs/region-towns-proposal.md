@@ -1,6 +1,6 @@
 # The region towns: size, edge and ground
 
-**Proposal, 2026-10-04; walls, Frosthold and Tollhaven's harbour decided the same day.** The owner: *"Propose each region's town look, some a bit smaller with no wall, some larger
+**Proposal, 2026-10-04; its questions answered by the owner the same day (see Decided).** The owner: *"Propose each region's town look, some a bit smaller with no wall, some larger
 with stone walls. The ground can fit based on the map: dry dirt and arid, seaside with docks and a beach, low
 mountain pass with some snow on the ground. Rocky outcrops."*
 
@@ -35,8 +35,9 @@ A player who knows Thornwick's square knows every town's square. Everything roun
 |---|---|---|---|---|---|
 | **Thornwick** (shipped) | Emberfall | medium: 10 houses | timber palisade | meadow grass, farms, a brook | fields, the bridge |
 | **Saltmere** (waystation) | Emberfall: the Fens | **small**: 8 stilt houses | **no wall**: water all round | **bog water, peat and mud, reed beds, duckweed**; boardwalks | **houses on stilts**, the square a deck on piles, punts, eel traps, dead trees, marsh-lights |
+| **Hollin Ford** (waystation) | the Greenwood | **small**: 3 longhouses and the barn | **no wall**: the fen river to the north, the oaks round the rest | **fen water, peat banks, reed beds**; forest floor | **the ford**'s stepping stones, Hollin Ford Barn (the dungeon site), alder and willow fen |
 | **Ashgate** | the Reach | **large**: 16 houses in terraces | **slag-brick stone walls**, 10 towers | **dry, cracked earth and dust; red rock outcrops**; black slag | the pithead wheel over the gate, the Cinderworks' chimneys, slag heaps, the ore rails, a tailings pond |
-| **Tollhaven** | the Tidemark | **large**: 14 houses and 4 warehouses | **stone walls on the landward sides**; **the harbour behind the town**, west, opposite the gate | **beach sand, wet sand, shingle, dune grass**; quay stone | **the quay along the back, three jetties and moored boats**, two moles and the harbour chain, boats drawn up on the beaches either side |
+| **Tollhaven** | the Tidemark | **large**: 12 houses and 4 warehouses | **stone walls on the landward sides**, the gate west on the Highmarch road; **the harbour north-east**, on the sea side | **beach sand, wet sand, dune grass; a salt marsh** along the north shore; quay stone | **the quay along the east, three jetties and moored boats**, two moles and the harbour chain, the beach south-east toward Gullwick |
 | **Rookstead** | the Greenwood | **small**: 6 longhouses | **no wall**: a ring of standing stones | forest floor, moss, leaf litter; a grass clearing | the great oak, the moot-stone, skeps, the charcoal clamp; the wood close round |
 | **Frosthold** | the Heights | **small**: 6 houses | **no circuit: the mountain pass is its wall** (decided). Crags behind, a drop in front, one wall across the road | **patchy snow over frozen dirt and tussock; rock outcrops and scree**; snowy pines | the north crags, the bell tower, the pass-wall, the frozen stream, the pilgrims' cairns |
 | **The Lamphall** | Solmere | **largest**: 10 tenements and 4 roofless shells | **broken imperial stone walls**, with a breach | imperial flagstones with weeds in the joints; rubble; the Mere's mud flats | **the Great Beacon** over it all, the colonnade, the breach, the quay over the mud, the Mere Tower far out |
@@ -47,8 +48,9 @@ The ground area each town paints, against Thornwick's 170 × 145 tiles:
 |---|---|---|
 | Rookstead | 138 × 124 | −31 % |
 | Saltmere | 146 × 128 | −24 % |
+| Hollin Ford | 138 × 154 | −14 % |
 | Frosthold | 160 × 148 | −4 % (the crags take a third of it) |
-| Tollhaven | 216 × 148 | +30 % (a third of it is sea) |
+| Tollhaven | 216 × 174 | +52 % (a third of it is sea and salt marsh) |
 | Ashgate | 202 × 176 | +44 % |
 | The Lamphall | 204 × 190 | +57 % |
 
@@ -100,27 +102,34 @@ A mining town that pays well and doesn't ask.
 - **Mood.** Dust on the wind, the shift-bell, the furnace glow behind the north
   wall at night.
 
-### Tollhaven, the Tidemark: large, stone walls, the harbour behind
+### Tollhaven, the Tidemark: large, stone walls, the harbour north-east
 
 The League's largest port, where even the harbour chain takes a toll.
-- **Edge.** Grey stone walls with round towers on the three landward sides, with the gate in the east wall on the
-  road in. **The harbour is behind the town**, on the west, opposite the gate (the owner). The quay is the town's
-  edge there, and two moles close the harbour, with the chain between their towers.
-- **Why behind works.** The back of a town is the top of the screen, so **the sea is always in view behind the
-  square**: the jetties, the masts and the chain towers stand beyond the temple and the tavern. The front stays low
-  for the walk in, as the rules want.
+- **Where it sits.** On the wall map Tollhaven is on the east coast, with the road from Highmarch and Brine Cross
+  coming in from the west. So the town faces the same way (the owner):
+  - **the gate is in the west wall**, where that road arrives;
+  - **the harbour is on the north-east**, on the sea side, opposite the gate;
+  - the coast road runs south past the beach to Gullwick.
+- **Edge.** Grey stone walls with round towers on the three landward sides (north, west, south). On the sea side,
+  the quay is the town's edge, and two moles close the harbour, with the chain between their towers.
+- **What the camera sees.** North-east is the right of the screen. The harbour lies along the right of the town:
+  the masts and the chain towers stand beyond the warehouses and the inn. The way in comes down from the top left,
+  through the back wall's gate, so the camera's lead on the approach points down-screen, not left as in Thornwick
+  (a per-town setting).
 - **Ground.**
   - Brick and cobble in the town, and wet quay stone along the water.
-  - **Beaches** either side of the harbour, outside the north and south walls: sand, a band of darker wet sand at
-    the tide line, and shingle.
-  - Dune grass on the rise north of the town; scrub and a few trees by the road in.
+  - **A salt marsh** along the north shore, between the north wall and the sea: mud, creeks, reeds and samphire.
+    It's the swamp ground (below), salted.
+  - **A beach** to the south-east, toward Gullwick: sand, a band of darker wet sand at the tide line, and dune grass
+    on the rise behind it.
 - **Buildings.**
   - Brick and tile in warm red-browns.
   - **Warehouses** along the quay, the Speaker's counting-house among them.
 - **The water.**
-  - **The quay** runs the length of the town's back, with **three wooden jetties** off it and boats tied up.
-  - On the beaches, boats are drawn up on the sand and nets are hung to dry.
-- **Mood.** Fog and rain, gulls on every ridge, the chain's creak, rigging. The water catches the lamps at night.
+  - **The quay** runs the length of the sea side, with **three wooden jetties** off it and boats tied up.
+  - On the beach, boats are drawn up on the sand and nets are hung to dry.
+- **Mood.** Fog and rain, gulls on every ridge, the chain's creak, rigging, curlews over the marsh. The water
+  catches the lamps at night.
 
 ### Rookstead, the Greenwood: small, no wall
 
@@ -182,6 +191,24 @@ The Guild's house in the dead capital, and the square where every company meets.
   - The road west to the Bowl.
 - **Mood.** Pigeons and echoes, braziers in the ruins at night, the Beacon's black shape against the sky.
 
+### Hollin Ford, the Greenwood's waystation: small, no wall, a fen ford
+
+Swamp, the second of the owner's three places for it. It's a ford on the Tithe Road where the Greenwood's slow river
+spreads into fen.
+- **Edge: none.** It's a steading on raised ground, with the river and its fen to the north and the oaks round the
+  rest.
+- **Ground.**
+  - **Fen water** in a slow river, with **peat and mud** banks and **reed beds**: the swamp ground.
+  - Forest floor and leaf litter on the dry side.
+  - The square is trodden earth on the raised bank.
+- **Buildings.** Turf-roofed longhouses like Rookstead's. The two services stand where a town's tavern and temple
+  do: an alehouse with the Guild's board, and a shrine, both set up a step on the bank.
+- **Set pieces.**
+  - **The ford**: stepping stones across the river, up a track from the square.
+  - **Hollin Ford Barn**, the dungeon site (*the Threshing Floor*), on the dry ground beside the steading.
+  - Alder and willow fen along the water.
+- **Mood.** Mist on the river, frogs, the barn's doors that won't stay shut.
+
 ### The waystations: small, no wall
 
 Each region's other stops are **waystations** (world-map proposal §3): a tavern with the Guild's board and a
@@ -193,7 +220,7 @@ a town.
 | **Saltmere** | the Fens | drawn above: stilt houses over the bog, boardwalks for streets, eel traps |
 | **Kell's Rest** | the Reach | the Assay's dusty depot under a dead volcano: sheds, wagons, red outcrops |
 | **Brine Cross** | the Tidemark | a bridge-town: houses on the bridge itself, the river below |
-| **Hollin Ford** | the Greenwood | a ford, a barn and a few houses among oaks |
+| **Hollin Ford** | the Greenwood | drawn above: a ford across a fen river, a barn and a few houses among oaks |
 | **The Frozen Hospice** | the Heights | a single hospice building and its yard at the foot of the Stair, deep snow |
 
 ## What it would take
@@ -219,11 +246,12 @@ the same art rules: structure over noise, few tones, low-frequency normals.
 | **snow** | Frosthold, the Hospice | patches from noise, biased to the lee (north of anything solid); a little height |
 | **forest floor** | Rookstead, Hollin Ford | loam, with litter and moss as low-frequency patches |
 | **flagstones** | the Lamphall | large paver cells, with weeds in the joints by hash |
-| **bog water**, **peat**, **reed bed**, **duckweed** | Saltmere, and anywhere swampy | still dark water with a faint sheen; peat as low lumps; reeds as upright tufts (the grass tuft, taller); duckweed as flat green patches on the water |
+| **bog water**, **peat**, **reed bed**, **duckweed** | **Saltmere, Hollin Ford, and Tollhaven's salt marsh** (the owner) | still dark water with a faint sheen; peat as low lumps; reeds as upright tufts (the grass tuft, taller); duckweed as flat green patches on the water |
 
 **New baked pieces** in `tools/actor-lab/buildkit.js` (never hand-edited, AGENTS.md):
 - **Ashgate:** the pithead wheel, terraces, chimneys, slag heaps;
 - **Tollhaven:** the quay, jetties (walkable decks, like the bridge), boats, warehouses, net racks, chain towers;
+- **Hollin Ford:** the ford's stepping stones, the barn, alders and willows;
 - **Saltmere:** stilt houses, the deck on piles, boardwalks (walkable decks, like the bridge), punts, eel traps, dead
   trees;
 - **Rookstead:** longhouses, standing stones, the moot-stone, skeps, the charcoal clamp, the great oak;
@@ -235,7 +263,7 @@ The shipped rock clusters cover the outcrops, recoloured per region.
 **Budget.**
 - **Atlases.** Only the current region's town atlas loads. Each new one should stay within the shipped four's
   average (3.39 MB for four, about 0.85 MB each).
-- **Ground.** The large towns paint 42–57 % more ground than Thornwick. The ground is painted per pixel, so measure
+- **Ground.** The large towns paint 44–57 % more ground than Thornwick. The ground is painted per pixel, so measure
   the scene's load and frame time on a real phone before shipping the first of them (AGENTS.md: measure, don't
   guess).
 
@@ -255,7 +283,7 @@ direction).
 | M8 | **the Lamphall** (with the Solmere shell); **Saltmere** becomes the Fens' waystation |
 | M9 | **Ashgate**, with the Reach |
 | M11 | **Tollhaven**, with the Tidemark |
-| M12 | **Rookstead**, with the Greenwood |
+| M12 | **Rookstead**, with the Greenwood, and **Hollin Ford** |
 | M13 | **Frosthold**, with the Heights |
 
 The `?scene=town&region=` previews for `fens`, `reach` and `heights` stay until their towns are built.
@@ -268,13 +296,10 @@ The owner (2026-10-04):
   - small and open: Rookstead, Frosthold and Saltmere;
   - Thornwick's timber palisade as shipped.
 - **Frosthold's walls are the mountain pass:** crags behind, the drop in front, one wall across the road.
-- **Tollhaven's harbour is behind the town**, on the side opposite the gate (drawn so above).
+- **Tollhaven's harbour is on the north-east**, the sea side, as the town sits on the wall map, with the gate west,
+  opposite it (drawn so above).
+- **Swamp ground in three places:** Saltmere, Hollin Ford, and the salt marsh by Tollhaven.
 
 ## Still open
 
-1. **Swamp, where else?** It's drawn for Saltmere, where the Fens already are. The same ground could also go to:
-   - the Greenwood's south edge, with Hollin Ford as a fen ford;
-   - a salt marsh behind Tollhaven's beach;
-   - the Fens' sites (the Sickpools, the approach to the Drowned Abbey).
-
-   Saltmere only, or some of these too?
+Nothing. The next step is building Ashgate with the Reach (M9).
