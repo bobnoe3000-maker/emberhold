@@ -17,7 +17,7 @@
 import { findPath } from './path.js';
 import { heightAt, isWalkable } from './world.js';
 import { hypot } from './detmath.js';
-import { SITES, siteOpen, levelBand } from './sites.js';
+import { SITES, siteOpen, levelBand, hasFloorBelow } from './sites.js';
 import { LANDS, landId } from './regions.js';
 
 
@@ -101,7 +101,8 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
     const chest = nearestD(loot);
     if (chest) out.push({ id: 'loot', icon: chest.kind, label: chest.kind === 'chest' ? 'Unopened chest' : 'Unused shrine', sub: `seen · ${chest.steps} steps`, tx: chest.tx, ty: chest.ty, near: 1, then: { type: 'harvest', tx: chest.tx, ty: chest.ty }, steps: chest.steps });
 
-    const dr = L.descentRoom, dlv = dr && lv.get(dr.id);
+    const dr = L.descentRoom, dlv = dr && lv.get(dr.id), below = hasFloorBelow(world.site || 'barrows', world.depth || 0);
+    const siteName = (SITES[world.site || 'barrows'] || SITES.barrows).name.replace(/^The /, 'the ');
     if (dr && world.discovered.has(dr.id)) {
       // the nearest tile beside the stairwell (any side: it's used from anywhere on its rim), then use it
       const at = world.stairsAt || { x: dr.cx, y: dr.cy }, S = world.stairwell, rim = [];
@@ -111,8 +112,12 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
       }
       const best = S ? nearestD(rim) : null, steps = S ? best && best.steps : pathLenD(at.x, at.y, 1);
       const [ux, uy] = best ? best.use : [at.x, at.y];
-      if (steps !== null && steps !== undefined) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: best ? best.tx : at.x, ty: best ? best.ty : at.y, near: best ? 0 : 1, then: { type: 'harvest', tx: ux, ty: uy }, steps, journey: 'delve' });
-    } else if (dr) out.push({ id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true });
+      // a site's last floor ends in its hall, with no stairs (sites.js): the row says so, and walks you in. It said "Stairs
+      // down · to depth 2" in the Tithe Mill, and sent the owner looking for stairs that aren't there (2026-10-04)
+      if (steps !== null && steps !== undefined) out.push(below
+        ? { id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: `to depth ${(world.depth || 0) + 2} · ${steps} steps`, level: dlv, tx: best ? best.tx : at.x, ty: best ? best.ty : at.y, near: best ? 0 : 1, then: { type: 'harvest', tx: ux, ty: uy }, steps, journey: 'delve' }
+        : { id: 'last-hall', icon: 'farm', label: 'The last hall', sub: `where ${siteName} ends · no way down · ${steps} steps`, level: dlv, tx: at.x, ty: at.y, near: 1, room: dr.id, steps });
+    } else if (dr) out.push(below ? { id: 'stairs-down', icon: 'down', label: 'Stairs down', sub: 'not found yet', level: dlv, off: true } : { id: 'last-hall', icon: 'farm', label: 'The last hall', sub: `where ${siteName} ends · not found yet`, level: dlv, off: true });
 
     if (world.exitAt) {
       const t = standOn(world.exitAt.x, world.exitAt.y, 3), steps = t && pathLenD(t.tx, t.ty);

@@ -268,10 +268,10 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       else if (world.kind !== 'dungeon') base = site ? pick('site:' + site) : null;           // the site it wants (sites.js)
       else if (!inSite) base = pick('exit');                                                  // the wrong dungeon: out first
       else {
-        const o = there, down = pick('stairs-down');
+        const o = there, down = pick('stairs-down'), last = pick('last-hall');                // (a site's last floor: its hall, no stairs)
         if (!o) base = null;
         else if (o.type === 'reach' || (o.floor && floorHere() < o.floor)) base = down || pick('next-room');
-        else if (o.hall) base = down ? { ...down, then: null, label: 'The stairs-down hall', sub: down.sub.replace(/^to depth \d+ · /, '') } : pick('next-room');
+        else if (o.hall) base = down ? { ...down, then: null, label: 'The stairs-down hall', sub: down.sub.replace(/^to depth \d+ · /, '') } : last || pick('next-room');
         else if (o.type === 'loot' || o.type === 'fragment') base = pick('loot', 'next-room', 'farm-room');
         else base = pick('next-room', 'farm-room', 'loot');
       }
