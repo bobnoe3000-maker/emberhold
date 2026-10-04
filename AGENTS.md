@@ -44,6 +44,7 @@ BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BA
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
+node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md) → docs/img/world/old-provinces.jpg + .svg
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here
