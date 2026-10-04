@@ -45,8 +45,10 @@ over the wood's edge: **25.2 %**.
   Eel's keeper, eel-men on the boardwalks.
 - **Marsh-lights** (plan slice 2) move to slice 4: they want a drifting light the renderer has no path for yet,
   and the bog-witch's lantern needs the same thing.
-- **At night the hero is drawn as a pink stand-in** after 120 manual frames, in the Vale too. It predates M8.
-  Logged for a renderer pass, not fixed here.
+- ~~**At night the hero is drawn as a pink stand-in**~~ Fixed (2026-10-04): it was the old paper doll, drawn until the
+  hero's atlas loaded. The renderer is made before the save is restored, so the loading screen waited only for the
+  default knight; any other hero loaded on its first frame. `ready` now waits for every member's own look, and the
+  doll is gone (a figure whose atlas isn't in yet isn't drawn, as a companion wasn't). Browser check 15f.
 - Saltmere's contrast (σ 21 against the Vale's 33) is the flat deck's. If the square reads as a floor rather than
   a place once its people stand on it, the next pass adds coiled rope, nets drying on rails and a moored punt to
   break it up.

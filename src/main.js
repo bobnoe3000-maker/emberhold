@@ -9,8 +9,6 @@ import { createTownMenu } from './ui/townmenu.js';
 import { createPartyPanel } from './ui/party.js';
 import { createCompass } from './ui/compass.js';
 import { createGearSheet } from './ui/sheet.js';
-import { mulberry32, streamSeed, STREAM } from './sim/rng.js';
-import { rollRecipe } from './assetforge/doll.js';
 import { SLOTS, activeSlot, setActiveSlot, readSlot, writeSlot, migrateLegacy, createAutosave } from './persist/save.js';
 import { createSlotsWindow } from './ui/slots.js';
 import { createTitle } from './ui/title.js';
@@ -117,11 +115,6 @@ if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal };
 
-// Hero: deterministic recipe from the world seed's recipe stream.
-const heroRng = mulberry32(streamSeed(SEED, STREAM.RECIPE));
-const hero = rollRecipe(heroRng);
-hero.tool = null;                 // hands free at spawn; tools come from crafting (phase 1)
-renderer.setHero(hero);
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
 // shrine / stairs / growth when it's what you tapped)

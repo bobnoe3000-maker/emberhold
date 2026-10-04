@@ -765,6 +765,22 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15f. The pink stand-in (fens critic pass 1): the renderer was made before the save was restored, so its `ready` (what the
+// loading screen waits for) held only the default knight's atlas. A created hero (a cleric) showed the old paper doll,
+// pink, until theirs came in. Now `ready`, read after the restore, waits for every member's own look.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    const got = {}; p.on('response', (r) => { const m = r.url().match(/assets\/actors\/(hero_\w+)\.alb\.png/); if (m) got[m[1]] = Date.now(); });
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__renderer, null, { timeout: 60000 });
+    const t = await p.evaluate(async () => { const H = globalThis.__sim.state.party[0]; H.actor = 'hero_cleric'; H.cls = 'cleric'; await globalThis.__renderer.ready; return Date.now(); });
+    check('ready: the loading screen waits for the hero\'s own look (a cleric), not only the knight; no page errors',
+      !!got.hero_cleric && got.hero_cleric <= t && errs.length === 0, JSON.stringify({ cleric: got.hero_cleric ? got.hero_cleric - t : null }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
 // and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {

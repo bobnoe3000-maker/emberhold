@@ -15,11 +15,10 @@ import { materialAt, heightAt, resourceAt, propAt, isWalkable } from '../sim/wor
 import { ELIT, EGLOW } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
-import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { beastOf, beastFrame } from './beasts.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
-import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
+import { GLOW_ID, norm3, buildProps, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
@@ -70,12 +69,9 @@ const TRANSIT_BUDGET = 24, TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 let viewTiles = VIEW_TILES;        // (the dev Stage zooms in: VIEW_TILES ÷ its integer zoom)
 const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per native px (≈ 0.98), the size of things elsewhere
-const DOLL_AX = 12, DOLL_AY = 34;  // hero foot anchor within the 24×36 doll
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
 const AMB = 0.62, WISP = 0.72, BLOOM = 0.55;
-// Map the warm paper-doll into the cold world: snap each pixel to an Emberlit ramp.
-const QUANT = ELIT.soil.concat(ELIT.bone, ELIT.flesh, ELIT.obsid);
 
 const clampf = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -263,38 +259,15 @@ export function createRenderer(canvas, sim, input) {
   const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px; + the notch's inset, safeR)
   const mmTop = () => hudB + 10;                                 // the minimap's top edge (CSS px)
 
-  /* ── load-time bakes: props, hero doll frames ───────────────────────────── */
+  /* ── load-time bakes: props ─────────────────────────────────────────────── */
   let props = buildProps(sim.world.seed);
   const harvest = buildHarvest();
 
-  const dollCache = new Map();
-  let heroRecipe = null;
-  const qCv = document.createElement('canvas'); qCv.width = DETAIL_W; qCv.height = DETAIL_H;
-  const qCtx = qCv.getContext('2d');
-  function setHero(r) { heroRecipe = r; dollCache.clear(); }
-  function heroSprite(frame, mirror) {
-    const k = frame + '|' + mirror;
-    let sp = dollCache.get(k);
-    if (!sp) {
-      qCtx.clearRect(0, 0, DETAIL_W, DETAIL_H);
-      drawDollDetailed(qCtx, heroRecipe, frame, mirror);
-      const id = qCtx.getImageData(0, 0, DETAIL_W, DETAIL_H), d = id.data;
-      for (let i = 0; i < d.length; i += 4) {
-        if (d[i + 3] === 0) continue;
-        let bj = 0, bd = 1e18;
-        for (let j = 0; j < QUANT.length; j++) { const q = QUANT[j], dd = (d[i] - q[0]) ** 2 + (d[i + 1] - q[1]) ** 2 + (d[i + 2] - q[2]) ** 2; if (dd < bd) { bd = dd; bj = j; } }
-        d[i] = QUANT[bj][0]; d[i + 1] = QUANT[bj][1]; d[i + 2] = QUANT[bj][2];
-      }
-      sp = spriteFromCanvasData(d, DETAIL_W, DETAIL_H, DOLL_AX, DOLL_AY);
-      dollCache.set(k, sp);
-    }
-    return sp;
-  }
 
   // ── Actor atlases: KayKit CC0 figures baked at 56 px (heroic + grim) by
   // tools/actor-lab/bake.cjs into albedo / normal / emissive sheets, sliced here
   // into per-(direction, frame) G-sprites with real 3D normals, so they relight in
-  // the deferred pass. Loaded async; until ready the hero falls back to the
+  // the deferred pass. Loaded async; until ready a figure isn't drawn (the boot's
   // paper-doll and skeletons simply don't draw yet.
   let heroAtlas = null, outMap = null;
   const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
@@ -554,7 +527,9 @@ export function createRenderer(canvas, sim, input) {
   // in their dagger look until that atlas has loaded
   const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
   const memberAtlas = (m, base) => { const k = base === 'hero_rogue' && shotOf(m); return (k && partyAtlas(base + RANGED_LOOK[k])) || partyAtlas(base); };
-  const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {}); } return partyAtlases[name]; };
+  const partyPending = new Map();                     // name → its load, for `ready` (the restored party's looks load behind the loading screen)
+  const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; partyPending.set(name, loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {})); } return partyAtlases[name]; };
+  const MEMBER_LOOK = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };
 
   const fol = [];                                     // smoothed companion draw positions
 
@@ -1029,17 +1004,15 @@ export function createRenderer(canvas, sim, input) {
     if (st) stageDraws(st, draws, ox, oy, now); else {               // the dev Stage: its lineup instead of the world's people
     // the hero
     const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
-    if (hAtl) {
+    if (hAtl) {                                       // (until its atlas is in, the hero isn't drawn, as a companion isn't: the old paper doll read as a pink stand-in)
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
       draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a });
-    } else {
-      draws.push({ d: ix + iy + 0.01, sp: heroSprite(p.moving ? p.frame : 0, p.mirror), fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy });
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
-      const atl = memberAtlas(m, m.actor || ({ fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' })[m.cls]); if (!atl || m.x === undefined) return;
+      const atl = memberAtlas(m, m.actor || MEMBER_LOOK[m.cls]); if (!atl || m.x === undefined) return;
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
@@ -1564,7 +1537,7 @@ export function createRenderer(canvas, sim, input) {
   }
 
   return {
-    render, setHero, resize,
+    render, resize,
     /** hold the outdoor light at a look (a part's name or a fraction of the day, daylight.js holdT), or
      * null to follow the sim's clock; a change eases in. The title holds dusk; ?dev&tod= holds any. */
     holdSky(v) {
@@ -1573,8 +1546,13 @@ export function createRenderer(canvas, sim, input) {
     },
     /** true while a scene change is still baking behind black (main.js holds the sim still meanwhile) */
     get transiting() { return !!transit && !terrValid; },
-    /** settles once the first actor and environment atlases have loaded (or failed): the loading screen's cue */
-    ready: Promise.allSettled(firstLoads.filter(Boolean)),
+    /** settles once the first actor and environment atlases have loaded (or failed), and every member of the party and the
+     * bench has their own look: the loading screen's cue. Read after the save is restored (main.js), so a created hero (a
+     * cleric, say) is in before the first frame; before, only the knight was, and the rest showed the pink paper doll. */
+    get ready() {
+      for (const m of [...sim.state.party, ...sim.state.bench]) memberAtlas(m, m.actor && m.actor !== 'hero_knight' ? m.actor : m.main ? 'hero_knight' : MEMBER_LOOK[m.cls]);
+      return Promise.allSettled([...firstLoads.filter(Boolean), ...partyPending.values()]);
+    },
     enemyAt(sxPx, syPx) {                                  // the enemy under (or nearest to) a tap, for focus
       const w = sim.world; if (!w.enemies || !w.enemies.length) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
