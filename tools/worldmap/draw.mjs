@@ -199,7 +199,7 @@ for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), fal
 const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-linejoin="round"`;
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in the hand of whoever added it later
-const REG = [[330, 860, 'EMBERFALL', '1 – 15'], [450, 345, 'THE CINDER REACH', '15 – 30'], [1520, 380, 'THE TIDEMARK', '30 – 45'], [1290, 1112, 'THE TITHEWOOD', '45 – 60'], [1000, 238, 'THE PALE HEIGHTS', '60 – 80']];
+const REG = [[330, 860, 'EMBERFALL', '1 – 15'], [450, 345, 'THE CINDER REACH', '15 – 30'], [1520, 380, 'THE TIDEMARK', '30 – 45'], [1290, 1112, 'THE TITHEWOOD', '45 – 60'], [1000, 238, 'THE PALE HEIGHTS', '60 – 75']];
 for (const [x, y, n, lv] of REG) { label(x, y, n, n === 'THE PALE HEIGHTS' ? 33 : 38, { sc: true, ls: n === 'THE PALE HEIGHTS' ? 5 : 7 }); label(x, y + 30, `levels ${lv}`, 21, { it: true, fill: RED }); }
 label(600, 960, 'the Hollow Vale', 20, { it: true }); label(330, 1170, 'the Greywater Fens', 20, { it: true });
 label(1000, 790, 'SOLMERE', 34, { sc: true, ls: 9 }); label(1000, 816, 'the dead capital · the Bowl · the Great Beacon', 18, { it: true });
