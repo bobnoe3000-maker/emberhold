@@ -434,6 +434,7 @@ function buildFens(seed) {
   const ROADS = [
     { w: 5, surface: 'dirt', pts: [[north[0], -30], [north[0] + 2, 14], [salt[0] + 12, salt[1] - 20], [salt[0] + 20, salt[1] + 6], [92, 100], [locks[0] - 8, locks[1]]] },   // the canal road, down from the Vale past Saltmere to the Locks
     { w: 4, surface: 'deck', pts: [[salt[0] + 19, salt[1]], [salt[0] - 2, salt[1]]] },                                     // Saltmere's boardwalk, straight in off the canal road to its landing gate
+    { w: 3, surface: 'deck', pts: [[salt[0] + 10, salt[1] + 1], [salt[0] + 10, salt[1] + 4]] },                            // (world doc v1.23) the jetty off it to Wenna Pike's punt: the Mere Tower
     { w: 5, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [locks[0] + 18, locks[1]]] },                                  // over the lock gates
     { w: 3, surface: 'track', pts: [[92, 114], [86, 122], [lockhall[0] + 1, lockhall[1] + 11]] },                         // to the lock-keepers' door
     { w: 4, surface: 'dirt', pts: [[locks[0] + 18, locks[1]], [150, 116], door(pools, 14)] },                              // east to the Sickpools
@@ -462,7 +463,8 @@ function buildFens(seed) {
   o.labels.push({ x: salt[0] + 4, y: salt[1], id: B('landing'), text: 'Saltmere' },
     { x: mound[0], y: mound[1], id: B('boathall'), text: "Toadking's Mound", site: 'toadking_mound' }, { x: lockhall[0], y: lockhall[1], id: B('lockhall'), text: 'The Canal Locks', site: 'canal_locks' },
     { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools', site: 'sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },
-    { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' });
+    { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' },
+    { x: salt[0] + 10, y: salt[1] + 8, id: B('punt'), text: 'The Mere Tower · Wenna’s punt', site: 'mere_tower' });
   // the fen's trees: alder carr and willows, low and dark, dead trees standing in the water's edge; never on a road
   // (fens critic pass 2: the Vale's birches and mixed groves read round and cheerful here; the same draws, the Fens' kinds)
   scatter(o, rng, -60, -60, 300, 300, 7, (x, y) => {
@@ -485,6 +487,9 @@ function buildFens(seed) {
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.exits.push({ x0: x - 2.5, y0: y + DOOR_Y[site], x1: x + 3.5, y1: y + DOOR_Y[site] + 3, to: 'dungeon', site });
   o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };   // on the boardwalk, facing the gate
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.arrivals[site] = { x: x + 1.5, y: y + DOOR_Y[site] + 7.5 };
+  // Wenna Pike's punt at the jetty's end (world doc v1.23; tower.js): out to the Mere Tower, and back to the jetty
+  o.exits.push({ x0: salt[0] + 8.5, y0: salt[1] + 3.5, x1: salt[0] + 11.5, y1: salt[1] + 5.5, to: 'dungeon', site: 'mere_tower' });
+  o.arrivals.mere_tower = { x: salt[0] + 10.5, y: salt[1] + 1 };
   o.spawn = o.arrivals.default;
   return o;
 }

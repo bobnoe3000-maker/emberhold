@@ -50,6 +50,9 @@ export function createHud(sim) {
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
   sim.bus.on('resurrected', (r) => { if (r.how !== 'shrine') show(`Raised · ${r.name} · ${r.cost ? `${r.cost} gold` : 'free today'}`, 3000); });   // (a shrine says its own: above)
+  // the Mere Tower (sim tower.js): Wenna won't take a company under 12; out of the hall mid-climb, the satchel's lost
+  sim.bus.on('siteLevel', (e) => show(e.site === 'mere_tower' ? `Wenna Pike won’t row a company under level ${e.need} out to the Mere Tower` : `Come back at level ${e.need}`, 3200));
+  sim.bus.on('towerOut', (e) => { if (e.lost && (e.lost.gold || e.lost.cinders)) show(`Out of the Tower mid-climb · the satchel is lost: ${e.lost.gold} gold, ${e.lost.cinders} cinders`, 3600); });
   sim.bus.on('cageDropped', () => show('A cage falls · tap it to free the soul in it', 2600));   // (lamps.js)
   sim.bus.on('cageBroken', () => { const c = sim.state.count; show(`The cage breaks · a soul goes free · ${c.souls} freed`, 2600); });
   sim.bus.on('fallen', (f) => show(`${f.name} is slain: out of the fight until raised · at the temple in town, or a shrine below`, 3200));

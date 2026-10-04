@@ -30,6 +30,7 @@
 import { mulberry32, streamSeed } from './rng.js';
 import { statsFor, gainXp } from './party.js';
 import { boonK } from './shrines.js';
+import { TOWER, WARDENS, towerTough, blockFamily, wardenWave, wardenAt, waveGold, towerOf } from './tower.js';
 import { abilityMods, shotOf } from './items.js';
 import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
 import { DAY_S } from './heroes.js';
@@ -176,6 +177,7 @@ export const BOSSES = {
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
   goblin_chief: { name: 'Old Skarn', like: 'bruiser', hp: 26, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'swarm', escort: ['goblin', 'archer'], heirloom: 'skarns_drum' },
   standard: { name: 'The Standard of the Third Legion', like: 'warrior', hp: 34, atk: 2.2, def: 1.8, speed: 2.3, xp: 14, gold: 30, mech: 'line', escort: ['warrior', 'minion', 'rogue'], undead: true, heirloom: 'the_relief' },
+  ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
@@ -220,6 +222,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // a room tile keeps its room id even where a corridor was carved through it
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
   const hero = () => state.party[0];
+  // whose this fight's waves are: the floor's, or in the Mere Tower the block of ten the climb is in (tower.js)
+  const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : familyOf(w));
+  const towerK = () => towerTough(Math.max(1, battle ? battle.wave : 1)) * (1 + PREMIUM * Math.max(0, TOWER.level - 3));
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
   // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
   // the company a member keeps (companions.js: auras, bonds, a Drinker's dry spell), in a fight
@@ -315,6 +320,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (fall) return fall;
       const c = cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
     };
+    if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
       foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
@@ -330,6 +336,28 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     b.wave += 1;
     bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
+  }
+  // the Mere Tower's next wave (tower.js): a level-12 room's, TOUGH[n] strong, of its block's kind; every tenth a warden
+  // and an escort of the block's. Its strength shows on the room pill as a tide would (b.tide).
+  function spawnTower(w, b, spot) {
+    const next = b.wave + 1, F = FAMILIES[blockFamily(next)], prem = 1 + PREMIUM * Math.max(0, b.level - 3), tough = towerTough(next) * prem;
+    b.tide = towerTough(next) - 1;
+    if (wardenWave(next)) {
+      const id = wardenAt(next), B = BOSSES[id], [bx, by] = spot();
+      const u = foe(w, id, b.level, bx, by, tough, false, F, B); u.escort = [F.melee[0], F.ranged[0]];
+      u.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); foe(w, k, b.level, ex, ey, tough, false, F); });
+      b.wave = next; b.bossUp = true; b.boss = id;
+      bus.emit('bossWave', { id, name: B.name, tower: true });
+      bus.emit('wave', { wave: b.wave, level: b.level, tide: b.tide, tower: true });
+      return;
+    }
+    const eliteWave = next % 5 === 0, n = Math.max(1, waveSize(b.level) - (eliteWave ? 1 : 0)), ranged = Math.max(next % 2, Math.floor(n / 3));
+    for (let i = 0; i < n; i++) {
+      const [x, y] = spot(), elite = eliteWave && i === n - 1;
+      foe(w, elite ? F.elite : i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1], b.level, x, y, tough, elite, F);
+    }
+    b.wave = next;
+    bus.emit('wave', { wave: b.wave, level: b.level, tide: b.tide, tower: true });
   }
   /** one foe into the fight: a kind's stats at the room's level × tough (tide and premium); an elite is
    * ×2.5 HP, ×1.3 ATK; a boss (B) its own multiples @param {any} w @param {string} k @param {number} lvl
@@ -360,16 +388,27 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
       tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null };
+    if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
+      const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
+    }
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
     bus.emit('battle', { on: true, room, level: battle.level });
   }
   function endBattle(w, why) {
+    if (battle && battle.tower && why !== 'defeat') towerOut();
     battle = null; focusId = 0; pending = [];
     if (w) { w.enemies = []; w.projectiles = []; }
     downedOut(why === 'left');
     bus.emit('battle', { on: false, why });
     bus.emit('partyChanged', state.party);
+  }
+  // out of the Mere Tower's hall (walked out, read a scroll, took Wenna home): the climb ends. At a landing the satchel
+  // is already banked; mid-climb what's in it is lost (tower.js). Beaten: the same, and no gold besides (defeat).
+  function towerOut() {
+    const T = towerOf(state), lost = T.atLanding ? null : { ...T.satchel };
+    T.wave = 0; T.atLanding = false; T.satchel = { gold: 0, cinders: 0 };
+    bus.emit('towerOut', { lost });
   }
   // the fight is over with members still Downed: walked out on, a companion is Fallen (the
   // main character gets up); otherwise they rise at 20 %
@@ -433,6 +472,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
   function reward(e) {
+    if (battle && battle.tower) { towerReward(e); return; }
     const living = state.party.filter(alive);
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
     const lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
@@ -450,6 +490,34 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
     freeing(e);
+  }
+  // a foe down in the Mere Tower: no XP and no coin (the satchel pays by the wave), a warden's cinders into the satchel,
+  // its fall a boss's (state.bosses, core.js pays its drop), and the count as anywhere
+  function towerReward(e) {
+    if (e.boss) {
+      const T = towerOf(state), first = !(state.bosses || {})[e.boss]; T.satchel.cinders += TOWER.wardenCinders;
+      (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; battle.quiet = true;
+      bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl, tower: true });
+    } else battle.lastSlain = { x: e.x, y: e.y };
+    bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });
+    freeing(e);
+  }
+  function towerCleared() {
+    const T = towerOf(state), n = battle.wave;
+    T.wave = n; T.best = Math.max(T.best, n); T.satchel.gold += waveGold(n); T.satchel.cinders += TOWER.cinders;
+    bus.emit('towerWave', { wave: n, satchel: { ...T.satchel } });
+    if (!wardenWave(n)) return;
+    const banked = { ...T.satchel };                                // a landing: the satchel is yours, and the hall waits
+    state.counters.gold = (state.counters.gold || 0) + banked.gold; state.counters.embers = (state.counters.embers || 0) + banked.cinders;
+    T.satchel = { gold: 0, cinders: 0 }; T.atLanding = true; T.landing = Math.max(T.landing, n / TOWER.landing); battle.quiet = true;
+    bus.emit('countersChanged', { ...state.counters });
+    bus.emit('towerLanding', { wave: n, landing: n / TOWER.landing, banked });
+  }
+  /** climb on from a landing (the `towerClimb` command; core.js checks you're there) @returns {boolean} */
+  function towerClimb() {
+    if (!battle || !battle.tower || !towerOf(state).atLanding) return false;
+    towerOf(state).atLanding = false; battle.quiet = false; battle.boss = null; battle.bossUp = false; battle.between = true; battle.lull = LULL;
+    bus.emit('towerClimb', { wave: battle.wave + 1 }); return true;
   }
   // The count (lamps.js): an Ashbound put down frees its soul; a lamp's keeper falling breaks the lamp, and every bound foe
   // still standing in the room lies down (freed, not beaten: no XP, no coin); a harvester drops its cage where it falls.
@@ -482,7 +550,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       secs: Math.round(state.t - (b.t0 ?? state.t)), foesLeft: w.enemies.filter((e) => !e.dead && e.hp > 0).length,
       killer: b.lastBlow ? { ...b.lastBlow, bossName: b.lastBlow.boss && BOSSES[b.lastBlow.boss] ? BOSSES[b.lastBlow.boss].name : '' } : null,
       party: state.party.map((m) => m.name) } : null;
-    const lost = Math.floor((state.counters.gold || 0) * 0.25);
+    const tower = !!(b && b.tower); if (tower) towerOut();         // (the Tower takes the satchel, not a quarter of your gold)
+    const lost = tower ? 0 : Math.floor((state.counters.gold || 0) * 0.25);
     state.counters.gold = (state.counters.gold || 0) - lost;
     endBattle(w, 'defeat');
     for (const m of state.party) {
@@ -617,7 +686,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (has(att, 'skirmisher') && tgt.aim !== att) pw *= FIGHT.skirmisher;
         if (has(att, 'finisher') && tgt.hp < tgt.maxHp / 2) pw *= FIGHT.finisher;
         if (has(att, 'last_stand') && att.hp < statsFor(att).maxHp / 4) pw *= FIGHT.last_stand;
-        const dead = familyOf(w).undead(tgt.kind);
+        const dead = fam(w).undead(tgt.kind);
         if ((has(att, 'grave_warden') && dead) || (has(att, 'redhand_breaker') && !dead)) pw *= FIGHT.warden;
       }
       const r = resolve(isPartyAtt ? aStats : hexAtk(aStats), isPartyAtt ? hexDef(tgt) : combatStats(tgt), pw, bonus, critMul);   // the defender's guards count when the blow lands (a Hex: both ways)
@@ -890,10 +959,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     return [fx, fy];
   }
   function bossMech(e, w, dt) {
-    const B = BOSSES[e.boss], F = familyOf(w), tough = 1 + PREMIUM * Math.max(0, e.lvl - 3);
+    const B = BOSSES[e.boss], F = fam(w), tough = battle && battle.tower ? towerK() : 1 + PREMIUM * Math.max(0, e.lvl - 3), esc = e.escort || B.escort;
     if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
       e.called++;
-      e.guards = B.escort.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F).id; });
+      e.guards = esc.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F).id; });
       bus.emit('bossCall', { id: e.boss, x: e.x, y: e.y });
     } else if (B.mech === 'kindle' && (e.kindleT += dt) >= KINDLE_S) {
       e.kindleT = 0;
@@ -908,7 +977,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         let best = null, bd = -1;
         for (let t = 0; t < 4; t++) { const c = cells[(rng() * cells.length) | 0], d = hypot(c[0] + 0.5 - e.x, c[1] + 0.5 - e.y); if (d > bd && isWalkable(w, c[0] + 0.5, c[1] + 0.5)) { bd = d; best = c; } }
         if (!best) continue;
-        const u = foe(w, B.escort[i % B.escort.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id;
+        const u = foe(w, esc[i % esc.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id;
       }
       if (n > 0) bus.emit('bossSwarm', { id: e.boss, x: e.x, y: e.y, n });
     }
@@ -956,8 +1025,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
           battle.between = true; battle.lull = LULL;
-          bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room });
-          onDrop('wave', battle.level, p.x, p.y);                // now and then a fallen wave leaves something behind
+          bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room, tower: !!battle.tower });
+          if (battle.tower) towerCleared();                        // the Mere Tower pays by the wave, and banks at a landing
+          else onDrop('wave', battle.level, p.x, p.y);             // now and then a fallen wave leaves something behind
           for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
             m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));
@@ -1061,7 +1131,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
-    reset() { const was = !!battle; battle = null; focusId = 0; pending = []; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
+    reset() { const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
+    towerClimb,
   };
 }

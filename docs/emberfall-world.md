@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.22 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.23 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -465,6 +465,10 @@ Throne's flame carried out. It was built for half a million people; about twenty
   on, and nobody has found the top. Nobody holds it: **Wenna Pike** ferries companies out, the Grey Sisters write
   down who goes in, and companies scratch their marks on the stair-wall at the highest landing they held (**the
   Wall**). It isn't the Guild's, and it isn't a lamp. It seems to take in whatever comes near it and keep it.
+  (v1.23) **Before Solmere is reached,** Wenna Pike also works out of Saltmere: a second punt tied at the end of a
+  jetty off Saltmere's boardwalk, up the old canal and across the Mere. It's a long row and she charges nothing for
+  it ("the Tower pays me"; nobody has asked how). The Sisters' register at the Tower's door won't write down a
+  company under level 12: *"We only write down the ones we'd expect to see again."*
 - **The Great Beacon**: the imperial beacon-tower over the Lamphall, which carried the Voices' orders. Its
   **signal corps** are bound to its lamp under one order, *muster at the lamp*, and climb to the lamp-room every
   night. It's the Guild's, and the one lamp it has never broken.

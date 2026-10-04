@@ -28,6 +28,7 @@ import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
+import { towerOf, restoreTower, inTower } from './tower.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -96,6 +97,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
     boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
+    tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 } },   // the Mere Tower's climb (tower.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
@@ -366,6 +368,9 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       walkTo(cmd.tx, cmd.ty, thing ? { type: 'harvest', tx: cmd.tx, ty: cmd.ty } : null);
       return;
     }
+    // the Mere Tower (tower.js): at a landing, climb on, or go home with Wenna and keep everything (the punt: out at the jetty)
+    if (cmd.type === 'towerClimb') { if (inTower(world)) battle.towerClimb(); return; }
+    if (cmd.type === 'towerLeave') { if (inTower(world) && towerOf(state).atLanding && battle.battle && battle.battle.tower) travel('overland', curSite); return; }
     if (cmd.type === 'useShrine') {                        // the shrine popup's Use (ui/shrine.js): unspent, in reach, and needed
       const dx = cmd.tx + 0.5 - p.x, dy = cmd.ty + 0.5 - p.y;
       if (propAt(world, cmd.tx, cmd.ty) !== 'shrine') return;
@@ -505,6 +510,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (world.kind !== 'dungeon') {
       const ex = oExitAt(world, p.x, p.y);
       if (ex && ex.to === 'dungeon' && !siteOpen(ex.site, state.revealed)) { if (shut !== ex) { shut = ex; bus.emit('siteShut', { site: ex.site }); } }   // not found yet: its way in stays shut
+      else if (ex && ex.to === 'dungeon' && SITES[ex.site].minLevel && state.party[0].level < SITES[ex.site].minLevel) { if (shut !== ex) { shut = ex; bus.emit('siteLevel', { site: ex.site, need: SITES[ex.site].minLevel }); } }   // not yet: the Mere Tower takes a company from 12
       else if (ex && ex.region && !landOpen(ex.region)) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: ex.region, line: ex.shut || '' }); } }   // a land not yet opened (regions.js)
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
@@ -547,6 +553,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       bosses: { ...state.bosses },
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
       boons: { ...boonsOf(state) },     // (v20)
+      tower: JSON.parse(JSON.stringify(towerOf(state))),   // (v21)
       trials: Object.keys(state.trials),
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
@@ -611,6 +618,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
     { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
     state.boons = restoreBoons(data);   // v19 and older: none
+    state.tower = restoreTower(data);   // v20 and older: no climb
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);

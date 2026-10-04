@@ -17,7 +17,7 @@
 // Fens' own (battle.js FAMILIES reedmen, lockcult, harvest, drowned; the Locks' first floor the bound lock-men, the
 // Ashbound). Their halls fight as any other until their bosses come (slice 6). The Drowned Abbey has three floors of four rooms, so its band stays 12–15.
 
-/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, bosses?: Record<number, string>, families?: string[], vault?: string, mix: number }} SiteDef */
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], vault?: string, mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   barrows: { name: 'The Old Barrows', region: 'vale', theme: null, base: 1, perFloor: 3, floors: 0, family: 'ashbound', rooms: null, bosses: { 3: 'standard' }, mix: 0 },
@@ -30,6 +30,9 @@ export const SITES = {
   canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', base: 9, perFloor: 1, floors: 2, family: 'lockcult', families: ['ashbound', 'lockcult'], rooms: [6, 6], mix: 0x10c5 },
   sickpools: { name: 'The Sickpools', region: 'fens', theme: 'poison', base: 10, perFloor: 1, floors: 2, family: 'harvest', rooms: [6, 6], mix: 0x51c7 },
   drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 12, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], mix: 0xab3e },
+  // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
+  // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty)
+  mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], flat: true, minLevel: 12, mix: 0x3e7e },
   reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 15, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, mix: 0x4e3d },
 };
 export const SITE_IDS = Object.keys(SITES);

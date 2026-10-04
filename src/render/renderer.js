@@ -25,6 +25,7 @@ import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc, raisedLook } from './fx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
+import { WARDENS } from '../sim/tower.js';
 import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
@@ -47,6 +48,8 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
   fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
   redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn' };
+// the Mere Tower's wardens (sim tower.js) wear their kind's look for now (their own bakes later), named on the boss bar
+for (const [id, W] of Object.entries(WARDENS)) ENEMY_ACTOR[id] = ENEMY_ACTOR[W.like];
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'drowned_brother', 'drowned_cantor']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
@@ -1390,12 +1393,14 @@ export function createRenderer(canvas, sim, input) {
   // bosses (battle.js): who stands in the hall, what it does, and its fall
   const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'] };
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
-  sim.bus.on('bossCall', () => { banner = { text: 'Garrow calls his men', sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
-  sim.bus.on('bossSwarm', () => { banner = { text: 'Skarn drums: goblins pour out', sub: bossLine.swarm[1], until: performance.now() + 2000, small: true }; });
-  sim.bus.on('bossKindle', () => { banner = { text: 'The Stranger kindles the dead', sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
-  sim.bus.on('bossDown', ({ name, first }) => { banner = { text: `${name} falls`, sub: first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
+  // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
+  const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
+  sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
+  sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });
-  sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
+  sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: performance.now() + 1600 } : { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
   sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
   // one of the slain raised: the column of holy light over them where they stand (fx.rise), and their ghost turning solid
@@ -1431,7 +1436,8 @@ export function createRenderer(canvas, sim, input) {
       party.forEach((m, i) => { if (m.down || m.fallen) return; const x = i ? (fol[i - 1] || m).x : ix, y = i ? (fol[i - 1] || m).y : iy; const s = sim.state.party[i]; const mx = maxHpOf(s); bar(x, y, s.hp / mx, '#5aa35c', 16); });
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
-      const txt = `ROOM LV ${b.level}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}`, dc = dangerColor(b.level);
+      const T = b.tower && sim.state.tower, sat = T ? `  ·  ${T.satchel.gold}g ${T.satchel.cinders}✦` : '';   // (the Mere Tower: its wave, its strength, the satchel at risk)
+      const txt = `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;

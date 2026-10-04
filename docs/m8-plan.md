@@ -180,6 +180,8 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
     what each found, what changed, and the before/after numbers.
 13. **Then the Solmere shell** (development plan M8): the Lamphall and the Mere Tower, played offline. Planned in
     its own document when the Fens are done.
+    *The Mere Tower came early (2026-10-04, the owner): reached by Wenna Pike's punt from Saltmere until Solmere is in
+    (world doc v1.23, GDD §17 v1.31, `src/sim/tower.js`). The Lamphall waits for Solmere.*
 
 ## Decisions
 
