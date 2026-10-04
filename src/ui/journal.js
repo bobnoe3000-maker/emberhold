@@ -67,6 +67,10 @@ const CSS = `
 #journal .acts button.del.arm { background: #5a1c16; color: #ffd0c8; }
 #journal .empty { font: 14px/1.5 Georgia, serif; color: #978c80; padding: 10px 2px 16px; }
 #journal .set { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 1.5px; color: #a08a6a; text-transform: uppercase; margin: 2px 0 10px; }
+#journal .count { border: 1px solid #3a3024; border-radius: 8px; padding: 10px 12px; margin: 2px 0 16px; background: rgba(40,30,22,0.35); }
+#journal .count .nums { display: flex; gap: 18px; font-size: 14px; color: #d8cfc0; margin: -2px 0 6px; }
+#journal .count .nums b { color: #e8c88a; font-size: 18px; font-weight: 600; margin-right: 3px; }
+#journal .count .nt { font-size: 12px; color: #9a9080; line-height: 1.4; }
 #journal .frag { border-left: 3px solid #c09a50; padding: 8px 10px 9px 12px; margin-bottom: 10px; background: rgba(240,224,190,.04); border-radius: 0 10px 10px 0; }
 #journal .frag h3 { font: 600 15px Georgia, serif; color: #f0c880; margin: 0 0 4px; }
 #journal .frag q { display: block; font: italic 14px/1.45 Georgia, serif; color: #e2d6c0; quotes: none; }
@@ -133,8 +137,12 @@ function StoryStatus({ sim, story, defOf, npcName }) {
 const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens' };
 /** the Chronicle (world doc §7): each set in reading order; found fragments in full, missing ones as a place */
 function Chronicle({ sim, lore }) {
-  const found = new Set(sim.state.fragments || []);
-  return html`${Object.entries(SETS).map(([set, ids]) => html`<div key=${set}>
+  const found = new Set(sim.state.fragments || []), c = sim.state.count || { lamps: 0, souls: 0 };
+  // the count (world doc §7, sim lamps.js): the company's two numbers, at the Chronicle's head
+  return html`<div class="count"><div class="set">The count · kept by Sister Ilse</div>
+    <div class="nums"><span><b>${c.lamps}</b> ${c.lamps === 1 ? 'lamp' : 'lamps'} broken</span><span><b>${c.souls}</b> ${c.souls === 1 ? 'soul' : 'souls'} freed</span></div>
+    <div class="nt">A soul for each of the bound put down and each cage broken, and every soul a broken lamp held. The living never count: they were never bound.</div></div>
+  ${Object.entries(SETS).map(([set, ids]) => html`<div key=${set}>
     <div class="set">${SET_NAME[set] || set} · ${ids.filter((id) => found.has(id)).length} of ${ids.length} found · kept by Sister Ilse</div>
     ${ids.map((id) => { const w = lore[id]; if (!w) return null;
       return found.has(id)

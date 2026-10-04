@@ -27,6 +27,8 @@ VAR frag_vale_chaplains_prayer = 0
 VAR frag_vale_binding_rite = 0
 VAR frag_vale_chaplains_last_page = 0
 VAR frag_vale_standards_ribbon = 0
+VAR count_lamps = 0
+VAR count_souls = 0
 
 == ilse_hub ==
 { flag_met_ilse == 0: -> ilse_first_meet }
@@ -71,6 +73,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
 + { q_vale_first_page == 1 } [About the first page… #mark: quest active] -> ilse_page_active
 + { frag_vale_count > 0 } [Read me the Chronicle.] -> ilse_read
++ { count_souls > 0 } [You keep a count?] -> ilse_count
 + [What are you writing?] -> ilse_writing
 + [What should I look for?] -> ilse_look
 + [I'll be going.] -> ilse_bye
@@ -98,6 +101,16 @@ Ilse writes a line, reads it twice, and puts the pen down.
 == ilse_writing ==
 "The Chronicle. Anything the old empire left that still says something: orders, rolls, letters. One to three lines, usually. They didn't write for us."
 "Put enough of them in order and they stop being scraps and start being a sentence. Then you find out whether you wanted to read it."
+-> ilse_topics
+
+== ilse_count ==
+"Of the freed. {count_souls} by my reckoning{count_lamps > 0:, and {count_lamps} {count_lamps == 1:lamp|lamps} broken}."
+{ count_lamps == 0:
+  "The bound you put down go free one at a time. A lamp lets them all go at once, if you can get at it. Its keeper won't let you."
+- else:
+  "A lamp is worse than the dead it keeps. Break one and every soul in it goes at once. You'll have felt the room go quiet."
+}
+"The empire kept a tally of everyone it bound. It seems fair to keep one of everyone let go. Nobody else will."
 -> ilse_topics
 
 == ilse_look ==

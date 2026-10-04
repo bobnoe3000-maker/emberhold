@@ -177,3 +177,29 @@ whoever holds them: setting the numbers for 9–15 is slice 11's.
 - The harvester is the acolyte with a pole: canon says so, and the pole and its lit soul tell them apart, but only
   just at 56 px. If it's lost in a fight, a cowl is the next step.
 - The drowned clergy's weed is too thin to read at 56 px; their grey habits and aqua eyes carry them.
+
+## Pass 4: art and story, slice 5 (lamps, cages and the count)
+
+![A harvester's cage, broken, and the count](img/fens/cage-and-count.jpg)
+
+### Art
+
+| Finding | Fix |
+|---|---|
+| The cage (11 × 17 voxels) stood knee-high on the Sickpools' floor and read as a speck mid-fight | 15 × 23: a hooded iron cage on a floor ring, its soul a violet light inside, as tall as a hero's knee to hip |
+| The capture's hero stood in front of it and hid it | (a capture matter: the cage is underfoot, never in the way; the renderer draws the hero over it, and the x-ray shows them through) |
+| Breaking it showed nothing | The soul goes up in a pale violet column (`fx.rise`, the raise's own effect in the souls' colour); a lamp's breaking is a taller one over its keeper, and each bound foe it lays down sends up its own |
+
+### Words
+
+- **The toasts.** *"A harvester's cage falls with it · break it, and the soul inside goes free"* wrapped to two lines
+  mid-fight; now *"A cage falls · tap it to free the soul in it."* Breaking one said *"0 freed"*: it spoke before the
+  count did. The count is credited first now: *"The cage breaks · a soul goes free · 1 freed."*
+- **The lamp's banner.** *"The Third Legion's standard-lamp breaks"*, then *"240 souls go free · its line lies
+  down"*, or, on his echo's later visits, only *"its line lies down"*.
+- **Ilse** (`ilse.ink`, *"You keep a count?"*, once anything's freed): *"Of the freed. 12 by my reckoning, and 1 lamp
+  broken."* Then, with no lamp yet, how a lamp works and that its keeper won't let you near; with one, that you'll
+  have felt the room go quiet. She closes: *"The empire kept a tally of everyone it bound. It seems fair to keep one of
+  everyone let go. Nobody else will."* It's plain, and dry; the empire and the Rite are named only as she would.
+- **The Chronicle's head.** *"A soul for each of the bound put down and each cage broken, and every soul a broken lamp
+  held. The living never count: they were never bound."* World doc §7's own terms, in one line.

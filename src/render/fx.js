@@ -203,7 +203,7 @@ export function createFX() {
   function beam(x, y, col, { now = performance.now(), life = 2.6 } = {}) { beams.push({ x, y, col, t0: now, life }); if (beams.length > 8) beams.shift(); }
   // one of the slain raised (the temple, a shrine): a tall column of holy light over them, a ring of it spreading at their
   // feet, and motes rising up the column
-  function rise(x, y, { now = performance.now(), life = 1.9 } = {}) { beams.push({ x, y, col: HOLY, t0: now, life, rise: true }); if (beams.length > 8) beams.shift(); }
+  function rise(x, y, { now = performance.now(), life = 1.9, col = HOLY } = {}) { beams.push({ x, y, col, t0: now, life, rise: true }); if (beams.length > 8) beams.shift(); }   // (a lamp's souls going free: violet, lamps.js)
 
   // proj(x, y) → { sx, sy, h, key } the struck figure's foot on screen, its height and depth key
   function particles(now, proj) {

@@ -54,11 +54,15 @@
 //       items have no upgrade, and there's no shop until you're next in town.
 //   v18: the land you're in (sim/regions.js): region 'vale' | 'fens' (M8). Only grew: older data is in the Vale.
 //        board.region: the land whose town's board the posting went up in (M8, Saltmere's); none is the Vale's.
+//   v19: the count (sim/lamps.js; GDD §17): count { lamps, souls } and lampsBroken [ids]. Older data starts at nothing,
+//       but a save that already put the Standard of the Third Legion down is credited his lamp: one lamp, and the 240
+//       souls of the legion's muster it held. (What else it freed before v19 wasn't counted, so isn't.)
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
+import { LAMPS } from '../sim/lamps.js';
 
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -79,8 +83,15 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(raw.data), data: raw.data };
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { const data = raw.version < 19 ? countFrom(raw.data) : raw.data; return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
+}
+
+/** v18 → v19: the count, crediting the Standard's lamp if he fell (see v19 above) @param {any} data */
+export function countFrom(data) {
+  if (data.count) return data;
+  const L = LAMPS.third_legion, fell = !!(data.bosses && data.bosses[L.keeper] > 0);
+  return { ...data, count: { lamps: fell ? 1 : 0, souls: fell ? L.souls : 0 }, lampsBroken: fell ? ['third_legion'] : [] };
 }
 
 // one-time: the v3 single save (localStorage) becomes slot 1

@@ -36,6 +36,7 @@ import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
+import { LAMPS, lampOf, CAGE_KINDS, countOf, credit } from './lamps.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
@@ -405,6 +406,30 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
     bus.emit('slain', { kind: e.kind, elite: !!e.elite, lvl: e.lvl });   // (quests count elites)
+    freeing(e);
+  }
+  // The count (lamps.js): an Ashbound put down frees its soul; a lamp's keeper falling breaks the lamp, and every bound foe
+  // still standing in the room lies down (freed, not beaten: no XP, no coin); a harvester drops its cage where it falls.
+  function freeing(e) {
+    const w = getWorld();
+    if (e.undead) credit(state, bus, { souls: 1 });
+    const lamp = e.boss ? lampOf(e.boss) : null;
+    if (lamp) {
+      const bound = (w.enemies || []).filter((o) => o !== e && o.undead && o.hp > 0 && !o.dead);
+      for (const o of bound) { o.hp = 0; o.dead = DEATH_T; if (focusId === o.id) focusId = 0; bus.emit('combat', { t: 'freed', x: o.x, y: o.y }); }
+      const broken = countOf(state) && state.lampsBroken, first = !broken.includes(lamp);
+      if (first) broken.push(lamp);
+      credit(state, bus, { lamps: first ? 1 : 0, souls: bound.length + (first ? LAMPS[lamp].souls : 0) });
+      bus.emit('lampBroken', { id: lamp, name: LAMPS[lamp].name, first, freed: bound.length, held: first ? LAMPS[lamp].souls : 0, x: e.x, y: e.y });
+    }
+    if (CAGE_KINDS.has(e.kind) && w.kind === 'dungeon') {            // its cage, on the floor where it fell (or the nearest free tile)
+      const fx = Math.floor(e.x), fy = Math.floor(e.y);
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+        const tx = fx + dx, ty = fy + dy, k = tx + ',' + ty;
+        if (w.props.has(k) || w.mods.has(k) || !isWalkable(w, tx + 0.5, ty + 0.5)) continue;
+        w.mods.set(k, { cage: true }); bus.emit('cageDropped', { tx, ty }); break;
+      }
+    }
   }
   // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone. The
   // 'defeat' event carries a recap for the defeat screen (ui/defeat.js): where, how far in, who struck

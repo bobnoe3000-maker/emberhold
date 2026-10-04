@@ -163,6 +163,23 @@ function shrineVox(spent) {
 }
 export const voxShrine = () => shrineVox(false);
 export const voxShrineSpent = () => shrineVox(true);
+// A Cult harvester's lantern-cage, dropped where it fell (M8, sim lamps.js): six iron bars on a ring under a hood, the
+// caught soul a violet light inside. Broken: two bars gone, the hood knocked askew, nothing inside.
+function cageVox(open) {
+  const S = 15, H = 23, vox = new Uint8Array(S * S * H), c = (S - 1) / 2, R = 5.3;   // (critic pass: at 11 × 17 it stood knee-high and read as a speck)
+  const put = (x, y, z, m) => { if (x >= 0 && y >= 0 && z >= 0 && x < S && y < S && z < H) vox[(z * S + y) * S + x] = m; };
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const r = Math.hypot(x - c, y - c); if (r <= R + 0.9 && r >= R - 1) { put(x, y, 0, 1); put(x, y, 1, 1); } }   // the floor ring
+  for (let k = 0; k < 6; k++) {
+    if (open && (k === 1 || k === 4)) continue;
+    const a = (k / 6) * Math.PI * 2, bx = Math.round(c + Math.cos(a) * R), by = Math.round(c + Math.sin(a) * R);
+    for (let z = 2; z < 16; z++) put(bx, by, z, 1);
+  }
+  for (let z = 16; z < 20; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const r = Math.hypot(x - c - (open ? 1 : 0), y - c); if (r <= R + 0.9 - (z - 16) * 1.6) put(x, y, z - (open ? 1 : 0), 3); }   // the hood
+  if (!open) for (let z = 3; z < 15; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - c, y - c, (z - 9) * 1.1) < 3.2) put(x, y, z, 2);   // the soul
+  return bakeVox(vox, S, S, H, ELIT.obsid, 6, ELIT.basalt);
+}
+export const voxCage = () => cageVox(false);
+export const voxCageOpen = () => cageVox(true);
 // Brazier: a bowl of coals on a stem — a doorway light.
 export function voxBrazier() {
   const S = 7, H = 12, vox = new Uint8Array(S * S * H), c = S / 2;
@@ -264,6 +281,8 @@ export function buildProps(seed) {
     chestOpen: [voxChestOpen()],
     shrine: [voxShrine()],
     shrineSpent: [voxShrineSpent()],
+    cage: [voxCage()],
+    cageOpen: [voxCageOpen()],
     brazier: [voxBrazier()],
     pillar: [0, 1].map((v) => voxPillar(mulberry32((seed * 17 + v * 53 + 5) >>> 0))),
     brokenpillar: [0, 1, 2].map((v) => voxPillar(mulberry32((seed * 19 + v * 71 + 9) >>> 0), true)),
@@ -277,7 +296,7 @@ export function buildProps(seed) {
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.
-export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35] };
+export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35], cage: [0.9, 0.7, 1.9] };
 
 // ---- billboard from an already-quantized character canvas (albedo) ----
 // Normal is a soft vertical cylinder: pixels bow toward their row's horizontal

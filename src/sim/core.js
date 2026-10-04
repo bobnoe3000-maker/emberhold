@@ -26,6 +26,7 @@ import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
 import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES } from './sites.js';
+import { restoreCount, credit } from './lamps.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -91,6 +92,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
     flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
     bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
+    count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
+    lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
     trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
   };
   clock = state;
@@ -126,7 +129,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const lore = createLore({ state, bus, getWorld: () => world, seed: baseSeed });
   const smith = createSmith({ state, bus, getWorld: () => world, seed: baseSeed });   // the forge and the shop (in town)
   const road = createRoad({ state, bus, getWorld: () => world });              // the dead on the barrows road (road.js)   // the Chronicle's fragments (lore.js)
-  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars(), road_ranks: road.held() }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
+  // (Ink may read the count too, count_lamps and count_souls: lamps.js; Ilse keeps it)
+  const talk = createTalk({ state, bus, getWorld: () => world, walkTo, canStand: (x, y) => standable(x, y, x, y), moreVars: (id) => ({ ...quests.varsFor(id), ...lore.varsFor(), ...bossVars(), road_ranks: road.held(), count_lamps: state.count.lamps, count_souls: state.count.souls }), effect: (id, args) => quests.effect(id, args), join: (id) => heroes.join(id) });
   function bossVars() { /** @type {Record<string, number>} */ const v = {}; for (const k of Object.keys(BOSSES)) v['boss_' + k] = state.bosses[k] ? 1 : 0; return v; }   // Ink: has he fallen?
 
   function tryMove(p, dx, dy) {
@@ -387,6 +391,12 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
           bus.emit('shrineOffer', { tx: cmd.tx, ty: cmd.ty, ...shrineWould() });
           return;
         }
+        if (prop === 'cage') {                              // a harvester's lantern-cage (lamps.js): a touch breaks it, and its soul goes free
+          world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
+          credit(state, bus, { lamps: 1, souls: 1 });           // (counted first: what it says reads the count)
+          bus.emit('cageBroken', { tx: cmd.tx, ty: cmd.ty, x: cmd.tx + 0.5, y: cmd.ty + 0.5 });
+          return;
+        }
         if (CONSUMABLE_PROP.has(prop)) {
           world.mods.set(cmd.tx + ',' + cmd.ty, { opened: true });
           if (prop === 'chest') { state.counters.wood += 4 + state.depth; state.counters.stone += 3 + state.depth; }
@@ -522,6 +532,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       revealed: [...state.revealed],
       flags: { ...state.flags },
       bosses: { ...state.bosses },
+      count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
       trials: Object.keys(state.trials),
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
@@ -584,6 +595,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
+    { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);

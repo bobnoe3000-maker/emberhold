@@ -449,8 +449,9 @@ export function resourceAt(world, x, y) {
 // Props: room decor + functional gates/loot. A looted chest / spent shrine is
 // consumed via the mods overlay (opened) and stops rendering + blocking.
 export function propAt(world, x, y) {
-  const k = K(x, y);
-  if (world.mods.get(k)?.opened) return null;
+  const k = K(x, y), m = world.mods.get(k);
+  if (m?.opened) return null;
+  if (m?.cage) return 'cage';                       // a harvester's lantern-cage where it fell (lamps.js; kept in the mods, so saved)
   return world.props.get(k) || null;
 }
 export const CONSUMABLE_PROP = new Set(['chest', 'shrine']);
@@ -465,7 +466,7 @@ export function isWalkable(world, x, y, fromZ) {
   if (NONWALK.has(materialAt(world, tx, ty))) return false;
   if (fromZ !== undefined && heightAt(world, tx, ty) - fromZ > MAX_CLIMB) return false;
   if (resourceAt(world, tx, ty)) return false;
-  if (propAt(world, tx, ty)) return false;
+  const pr = propAt(world, tx, ty); if (pr && pr !== 'cage') return false;   // (a dropped cage is underfoot: it never blocks)
   return true;
 }
 

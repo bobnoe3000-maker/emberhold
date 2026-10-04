@@ -115,6 +115,15 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
    - The Chronicle tab shows the count at its head; Ilse remarks on it.
    - Tests: a lamp can't be struck while its keeper stands; breaking it lays its list down; the count's sources and
      its exclusions (the living, beasts); the migration; no command sets it.
+   - **Done** (2026-10-04): `src/sim/lamps.js` (LAMPS: the Third Legion's standard-lamp, 240 souls, the legion's
+     muster; `credit`, `restoreCount`), `battle.js` (`freeing`: an Ashbound put down, a lamp breaking with its keeper and
+     laying the bound in the room down, a harvester's cage dropped into the floor's mods), `core.js` (a touch breaks a
+     cage; the count in the snapshot; Ink's `count_lamps` / `count_souls`), `world.js` (a cage is a prop underfoot),
+     `persist/save.js` (**v19**, `countFrom`), `render/gsprite.js` (the cage), `renderer.js` / `fx.js` (the lamp's
+     violet column, a freed foe's, a cage's), `ui/journal.js` (the count at the Chronicle's head), `ui/hud.js`,
+     `content/dialogue/ilse.ink` (*"You keep a count?"*); `test/lamps.test.mjs`. Every lamp so far breaks with its keeper
+     (the Standard; the Abbess's choir-lamp in slice 6), so none is struck on its own yet. Passes:
+     [fens-critic-pass.md](./fens-critic-pass.md) §4.
 6. **Bosses and the first ground hazard.**
    - **One ground-hazard system** (GDD §17): patches on the floor with an effect and a lifetime, and the party's
      AI steps out of them.

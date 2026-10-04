@@ -833,7 +833,8 @@ export function createRenderer(canvas, sim, input) {
       const z = heightAt(world, tx, ty);
       // static props / resources composite into the bake (depth order via the sort)
       const was = !propAt(world, tx, ty) && world.props && world.props.get(tx + ',' + ty);
-      const pk = propAt(world, tx, ty) || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : null);   // (an opened chest stays, lid back; a used shrine, its orb dark)
+      const md = world.mods.get(tx + ',' + ty);
+      const pk = propAt(world, tx, ty) || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);   // (an opened chest stays, lid back; a used shrine, its orb dark; a broken cage, empty)
       if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
         const arr = props[pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
         stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
@@ -900,6 +901,7 @@ export function createRenderer(canvas, sim, input) {
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'The Old Barrows'} · depth ${sim.state.depth + 1}` : sim.world.name);
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
+  sim.bus.on('cageDropped', () => { terrValid = false; }); sim.bus.on('cageBroken', () => { terrValid = false; });   // (lamps.js: a harvester's cage on the floor, then broken)
   sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
   preloadFamily();
   banner = { text: sceneTitle(), until: performance.now() + 2600 };
@@ -1298,11 +1300,12 @@ export function createRenderer(canvas, sim, input) {
   // times, so a tap on the lid or the orb landed on the tile behind and only walked there (2026-10-01).
   // Within 3 native px of a drawn pixel counts; the nearest the camera wins. (nx, ny) are native px from
   // the camera origin.
-  const USABLE = new Set(['chest', 'shrine', 'stairs']);
+  const USABLE = new Set(['chest', 'shrine', 'stairs', 'cage']);
   function propUnder(nx, ny) {
     const w = sim.world; if (!w.props) return null;
     let best = null;
-    for (const [key, kind] of w.props) {
+    const dropped = [...w.mods].filter(([, m]) => m && m.cage && !m.opened).map(([k]) => [k, 'cage']);   // (a harvester's cage, where it fell: lamps.js)
+    for (const [key, kind] of dropped.length ? [...w.props, ...dropped] : w.props) {
       if (!USABLE.has(kind) || (kind === 'stairs' && w.stairwell)) continue;
       const c = key.indexOf(','), tx = +key.slice(0, c), ty = +key.slice(c + 1);
       if (propAt(w, tx, ty) !== kind || (best && tx + ty <= best.tx + best.ty)) continue;
@@ -1366,6 +1369,7 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
     else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
     else if (c.t === 'hex') addFloat(c.x, c.y, 'hexed', '#b8e070', 11, 20);
+    else if (c.t === 'freed') fx.beam(c.x, c.y, SOUL_FREE, { now: clockNow || performance.now(), life: 1.4 });   // a bound foe laid down by its lamp's breaking: its soul goes up
     else if (c.t === 'lifeline') addFloat(c.x, c.y, 'Lifeline', '#f0e0a0', 12, 24);
     else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: performance.now(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
@@ -1391,6 +1395,13 @@ export function createRenderer(canvas, sim, input) {
     raisedAt.set(m, now);
     const u = m === sim.state.party[0] ? sim.state.player : m; if (u.x !== undefined) fx.rise(u.x, u.y, { now });
   });
+  // the count (sim lamps.js): a lamp breaks with its keeper, its souls going up in a violet column; a cage breaks underfoot
+  const SOUL_FREE = [200, 180, 255];
+  sim.bus.on('lampBroken', (l) => {
+    banner = { text: `${l.name} breaks`, sub: l.first ? `${l.held} souls go free · its line lies down` : 'its line lies down', until: performance.now() + 3600 };
+    fx.rise(l.x, l.y, { now: clockNow || performance.now(), life: 2.6, col: SOUL_FREE });
+  });
+  sim.bus.on('cageBroken', (c) => fx.rise(c.x, c.y, { now: clockNow || performance.now(), life: 1.6, col: SOUL_FREE }));
   sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} is raised`, sub: r.how === 'shrine' ? 'back on their feet · the shrine’s light fades' : 'back on their feet · the temple’s grace', until: performance.now() + 3000 }; });
   // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
