@@ -231,18 +231,60 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   };
 
   // runtime fields on party members (positions for companions; the hero is the player)
-  function ensureRuntime() {
+  function ensureRuntime(w, dt) {
     const p = state.player;
     state.party.forEach((m, i) => {
       if (m.mp === undefined) m.mp = statsFor(m).maxMp;
       if (i === 0) { m.x = p.x; m.y = p.y; }
       // catch up after a jump (travel, stairs, a load) — never mid-fight: a companion chasing
       // across a big room popped back to the hero in one tick (~14 tiles)
-      else if (m.x === undefined || (!battle && hypot(m.x - p.x, m.y - p.y) > 14)) { m.x = p.x - 0.8 * i; m.y = p.y + 0.8; }
+      else if (m.x === undefined || (!battle && hypot(m.x - p.x, m.y - p.y) > 14)) [m.x, m.y] = besideHero(w, p.x - 0.8 * i, p.y + 0.8);
+      else unstick(m, w, p, dt);
       m.cd = m.cd || 0; m.act = m.act || 0;
     });
   }
-  function placeCompanions() { const p = state.player; state.party.forEach((m, i) => { if (i) { m.x = p.x + (i === 1 ? -1 : 1) * 0.9; m.y = p.y + 0.9; } }); }
+  function placeCompanions() { const p = state.player, w = getWorld(); state.party.forEach((m, i) => { if (i) { [m.x, m.y] = besideHero(w, p.x + (i === 1 ? -1 : 1) * 0.9, p.y + 0.9); } }); }
+
+  // Auto-unstick (the owner, 2026-10-04: "companions get stuck in a wall, especially when they flash forward to
+  // catch up"). The catch-up and a placement put a companion at a fixed offset from the hero, wall or not, and one
+  // inside a wall can't take a step (every step from it lands in the wall too). So: a placement takes the open floor
+  // nearest the wanted spot that the hero can see (besideHero); each tick a companion found inside a wall moves to
+  // the nearest open floor; and out of a fight, one that hasn't moved for STUCK_S while a wall stands between it and
+  // the hero, more than STUCK_D tiles off, comes round to the hero's side. (stuckT is runtime, never saved.)
+  const STUCK_S = 2, STUCK_D = 3;
+  /** (x, y) if it's open floor, else the open floor nearest it that the hero can see, tile centres out to 3 tiles from the hero, else the hero's own spot */
+  function besideHero(w, x, y) {
+    const p = state.player;
+    if (isWalkable(w, x, y)) return [x, y];                          // (the wanted spot is under a tile from the hero: no wall fits between)
+    const hx = Math.floor(p.x), hy = Math.floor(p.y); let best = null, bd = Infinity;
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      const cx = hx + dx + 0.5, cy = hy + dy + 0.5, d = hypot(cx - x, cy - y);
+      if (d < bd && (dx || dy) && isWalkable(w, cx, cy) && lineOpen(w, p.x, p.y, cx, cy)) { bd = d; best = [cx, cy]; }
+    }
+    return best || [p.x, p.y];
+  }
+  /** the open floor nearest (x, y): tile centres in rings out to 3 tiles, else beside the hero */
+  function openNear(w, x, y) {
+    const tx = Math.floor(x), ty = Math.floor(y);
+    for (let r = 1; r <= 3; r++) {
+      let best = null, bd = Infinity;
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const cx = tx + dx + 0.5, cy = ty + dy + 0.5, d = hypot(cx - x, cy - y);
+        if (d < bd && isWalkable(w, cx, cy)) { bd = d; best = [cx, cy]; }
+      }
+      if (best) return best;
+    }
+    return besideHero(w, x, y);
+  }
+  function unstick(m, w, p, dt) {
+    if (m.fallen) return;
+    if (!isWalkable(w, m.x, m.y)) { [m.x, m.y] = openNear(w, m.x, m.y); m.vx = m.vy = 0; m.stuckT = 0; bus.emit('unstuck', { id: m.id, x: m.x, y: m.y }); return; }
+    const still = m.px === undefined || hypot(m.x - m.px, m.y - m.py) < 0.02;
+    if (battle || m.down || !still || hypot(m.x - p.x, m.y - p.y) <= STUCK_D || lineOpen(w, p.x, p.y, m.x, m.y)) { m.stuckT = 0; return; }
+    m.stuckT = (m.stuckT || 0) + dt;
+    if (m.stuckT >= STUCK_S) { [m.x, m.y] = besideHero(w, p.x - 0.8, p.y + 0.8); m.vx = m.vy = 0; m.stuckT = 0; bus.emit('unstuck', { id: m.id, x: m.x, y: m.y }); }
+  }
 
   // ── spawning ────────────────────────────────────────────────────────────────
   function spawnWave(w) {
@@ -876,7 +918,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     stepN++;
     const w = getWorld(), p = state.player, H = hero();
     p.steer = (p.steer ?? 1e9) + dt;
-    ensureRuntime();
+    ensureRuntime(w, dt);
     // last tick's positions, so the renderer can interpolate every unit between 20 Hz steps
     for (const m of state.party) { m.px = m.x; m.py = m.y; }
     for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
