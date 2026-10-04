@@ -1,8 +1,10 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 4 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 5 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
-who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3).
+who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
+people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
+them. The review of that account is §10.4.
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
@@ -28,7 +30,7 @@ The owner (2026-10-04):
 The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
 
 **Contents.**
-- §1 The idea; §1.1 How the Ember works (spark, vessel, Voice, fuel); §1.2 The factions; §1.3 The fuel
+- §1 The idea; §1.1 How the Ember works (the sacrifice, the Ashbound, the Voice); §1.2 The factions; §1.3 The fuel
 - §2 The map
 - §3 The regions (Emberfall, the Reach, the Tidemark, the Tithewood, the Heights)
 - §4 Solmere: the Bowl and the Great Beacon
@@ -79,56 +81,65 @@ Each region shows the player one of them. The Cult doesn't win every time.
 - at the miners' burial in Ashgate, paying for the stones;
 - at the would-be emperor's table.
 
-### 1.1 How the Ember works: spark, vessel, Voice and fuel
+### 1.1 How the Ember works: the sacrifice, the Ashbound, the Voice
 
-This is what the story runs on, set down in one place. The Chronicle gives it to the player in pieces (canon:
-history is found, not told). The rules:
+**In short** (the owner, draft 5):
+1. **The sacrifice.** The Ember is fed with people. Someone with a reason (the empire once, the Cult and its
+   partners now) sacrifices a person with the **Binding Rite**, in the Ember's light or a shard's.
+2. **The fuel.** The rite tears the soul out and ties it to the flame. The tied soul is the Ember's fuel. It burns
+   slowly, a little at a time, for as long as the flame is lit.
+3. **The Ashbound.** The body doesn't stay down. It rises around the tie, a **captive**: it can't die, can't rest,
+   and serves. The Vale calls them **the ashen**.
+4. **The Voice.** Whoever has learned the **Canticle** commands the Ashbound (below). Without a Voice they keep
+   the last order they were given, forever.
+5. **The freeing.** Break the body and the tie breaks with it, and the soul goes free to rest. Putting one down
+   isn't killing it. It's letting it go: canon's *"Putting them down is the only relief anyone has brought
+   them."*
 
-**The Ember** is a flame that burns souls: not wood, not oil, souls.
-- Its light **binds**. A person bound by the **Binding Rite**, spoken in the Ember's light (canon: *"Speak the order
-  last. The bound keep the last thing they hear."*), dies and doesn't leave. The soul stays in the body, and the body
-  goes on obeying the last order it heard.
-- That is an **Ashbound**, which the Vale's people call **the ashen**.
-- The binding clergy (§3.1) bound them by the tithe, the legion and the shift, for six hundred years.
+**The Ember** is a flame that burns souls: not wood, not oil, souls. It was found in the crater a thousand years
+ago, and the empire built the Throne around it and kept it fed.
 
-**The spark** is an **ember-shard**: a sliver of a bound soul's light, struck out of an Ashbound like flint from a
+**The Binding Rite** is the sacrifice.
+- It's spoken over a living person in the Ember's light, or a shard's, and ends with an order: canon's *"Speak the
+  order last. The bound keep the last thing they hear."*
+- The empire called it duty: the tithe, the legion's oath, the foundry's shift. Some went willingly. Canon's
+  chaplain prayed *"Bind them gently. Most of them volunteered."*
+- The binding clergy (§3.1) spoke it, for six hundred years.
+
+**The Ashbound** are what's left: a body, and a soul tied between it and the flame, burning.
+- They obey the last order they heard, and nothing else, unless a Voice gives them another.
+- When the Ember went out on the night of the Fall, the ties went slack and the Ashbound dropped where they stood.
+  They weren't freed. For three hundred years they lay captive in the dark: in barrows, under water, in barns.
+- Now the Cult stirs the embers, the ties pull, and they get up again.
+
+**The spark** is an **ember-shard**: a sliver of a captive soul's light, cut out of an Ashbound like flint from a
 stone.
-- A shard holds a little of the flame without fuel, like a coal in a pocket. It glows.
-- Near the bound, it stirs them: that's why the dead wake wherever the Cult digs.
-- It's how a new flame is lit.
-- The Cult mines shards from the bound in Emberfall (Act II).
+- It holds a little flame without fuel, like a coal in a pocket.
+- It's enough light to speak the Rite by, and enough to light a vessel.
+- Near the bound, it stirs them.
 
-**The vessel** is a lamp of Throne-iron, the only thing that will hold the flame without burning through.
-- The Throne's dark pit was the first.
-- The Reach's foundries cast the second (Act III).
+**The vessel** is a lamp of Throne-iron, the only thing that will hold the flame without burning through. The
+Throne's dark pit was the first. The Reach's foundries cast the second (Act III).
 
-**A Voice** is anyone who has learned **the Canticle**.
-- **The Canticle** is a single scroll: the chant the first binding clergy wrote when the Ember was found. It holds
-  the words the flame itself was bound with. It is long, in the old tongue, and must be sung exactly. Learning it
-  takes a season.
-- **Whoever learns it becomes a Voice: they can command the Ashbound.** A Voice's order goes over the last order a
-  bound one heard. That's the only way it can be changed, and why the Sunken Chapel's chaplain, who was no Voice,
-  wrote *"I cannot bind a second order over the first."*
-- **The empire had six Voices**, the Voices of the Throne. They sang their orders into the Great Beacon at
-  Solmere, and the beacon-light carried them to every province's bound (§4).
-- **The Canticle's last verse** speaks to the flame itself. It tells it to stop, and it takes the voice of whoever
+**The Voice** is anyone who has learned **the Canticle**, the lost sacred scroll.
+- **The Canticle** is the chant the first binding clergy wrote when the Ember was found. It's long, in the old
+  tongue, and must be sung exactly. It takes a season to learn.
+- **Whoever learns it becomes a Voice, and commands the Ashbound.** A Voice's order goes over the last order the
+  bound heard. Nothing else can change it, which is why the Sunken Chapel's chaplain, no Voice, wrote *"I cannot
+  bind a second order over the first."*
+- **A Voice commands. A Voice can't free.** Only breaking the tie does that.
+- **The empire had six Voices**, the Voices of the Throne. They sang their orders into the Great Beacon at Solmere,
+  and the beacon-light carried them to every province's Ashbound (§4).
+- **The Canticle's last verse** speaks to the flame itself and tells it to stop. It takes the voice of whoever
   sings it.
-- **Aurelle** was a Voice before she was an Empress. On the night of the Fall she sang the last verse herself, and
-  the six Voices of the Throne were silent ever after.
-- **It's sacred and it's lost.** That night Aurelle gave the scroll to her sister, the Lady **Livia**, who fled
-  east with it on the flagship *Aurelle's Grace*. Livia came ashore in the march of Highmarch with her children and
-  a sealed box she told them never to open. The Cult has hunted the scroll for three hundred years.
-- **Lucan Varro opened the box** (Act IV).
+- **Aurelle** was a Voice before she was an Empress. On the night of the Fall she sang the last verse herself.
+- **It's lost.** That night she gave the scroll to her sister, the Lady **Livia**, who fled east with it on the
+  flagship *Aurelle's Grace*. Livia came ashore in Highmarch with her children and a sealed box she told them never
+  to open. The Cult has hunted it for three hundred years. **Lucan Varro opened the box** (Act IV).
 
-**Fuel** is **bound souls** (§1.3). The spark lights a flame, and the fuel keeps it lit.
-
-**Why the Cult needs all four.**
-- A spark in a vessel is a flame.
-- With fuel, it's a flame that lasts.
-- Without a Voice, it's a fire in a lamp: it binds whatever is near it and answers to no one, which is how the
-  empire learned it needed the Voices.
-- With a Voice, it's the Ember Throne again: every bound soul in the provinces standing up at once, waiting for
-  orders. The Kindler believes that is a gift, the tireless dead doing the work so the living never starve again.
+**Why the Cult needs all four.** A spark in a vessel is a flame. Fuel keeps it lit. A Voice rules it, and with it
+every Ashbound in the provinces stands up at once, waiting for orders. The Kindler believes that's a gift: the
+tireless dead doing the work, so the living never starve again. He doesn't count the cost. The Ashbound pay it.
 
 ### 1.2 The factions
 
@@ -161,16 +172,19 @@ Each faction below gives:
   - then the Throne.
 - **Stance:** enemy, and courteous about it. The Kindler preaches, and never lies.
 
-**The Ashbound, "the ashen"** (canon): the empire's bound dead. They aren't a faction: they want nothing.
-- **Mission:** whatever their last order was:
+**The Ashbound, "the ashen"** (canon): the sacrificed, risen as captives (§1.1). They aren't a faction, and
+they want nothing they can say.
+- **Mission:** their last order, forever:
   - *hold the road until relieved* (the Third Legion);
   - *keep the hours* (the Drowned Abbey);
   - *hold station until recalled* (the Grace);
   - *muster at the lamp* (the Beacon);
   - *collect the tithe* (the Reeve).
 - **Hook:** the barrows road, the first evening.
-- **Objectives:** their orders, until somebody puts them down, or a Voice gives them new ones.
-- **Stance:** in the way. *"They just stand there. Facing north."*
+- **Objectives:** none of their own. They're captives: they can't rest until their tie is broken, and they obey
+  whoever holds the Canticle.
+- **Stance:** in the way, and not to blame. *"They just stand there. Facing north."* Every one the company puts down
+  is one freed.
 
 **The Grey Sisters** (canon): healers and archivists, and, draft 2 found, heirs of the empire's binding clergy.
 - **Mission:** keep the records. Unspoken: make up for what their mothers wrote in them.
@@ -246,40 +260,45 @@ name the Guild hides behind).
 
 ### 1.3 The fuel: what it is, where it's found, how it's used
 
-**What it is.** A **bound soul**: a soul the Binding Rite has kept in its body after death.
-- Only a bound soul burns. An ordinary soul has gone where souls go, and there's nothing left for the flame.
-- That's what made the empire bind its own. The Ashbound weren't only labour. They were the empire's **fuel
-  store**: the legions that dug and marched were firewood stacked on the road.
+**What it is.** The souls of sacrificed people, tied to the Ember by the Binding Rite. Every soul feeding the flame
+belongs to an Ashbound somewhere, a captive. **The fuel and the Ashbound are the same people.**
 
-**How it burns.**
-- A bound one is brought to the flame and given to it.
-- The body falls to ash, and the soul's light goes into the fire. That's the *ash* in Ashbound, and the light in the
-  Soulcracks' rock.
-- A soul can also be drawn out of its body and carried as a wisp in a **lantern-cage**. That's how the Cult's
-  harvesters move it: the bright cages on poles, which shield a boss until they're broken.
+**How it's made.**
+- A person is sacrificed with the Rite, by Ember-light or a shard's.
+- The soul is tied to the flame and starts to burn.
+- The body rises, Ashbound, and serves.
+- The Cult has two cheaper ways:
+  - **re-tie** the old Ashbound left over from the empire, whose ties went slack at the Fall, to its new flame;
+  - **carry the soul itself**: drawn out of an Ashbound as a wisp, it rides in a **lantern-cage** to the vessel.
 
 **How much.**
-- One bound soul keeps a flame the size of the Throne's lit for about a day.
-- The empire tithed its provinces in souls to keep it fed. Canon: *"Furnace nine requires eleven more souls per
-  week to meet quota."* The Vale paid *"two hundred and forty"* in a year.
+- One soul keeps a flame the size of the Throne's lit for about a day.
+- The empire tithed its provinces in people to keep it fed. Canon: *"Furnace nine requires eleven more souls per
+  week to meet quota."* The Vale paid *"two hundred and forty"* in a year, and they became the Third Legion.
 - The Kindler needs about a year's tithe to keep a new flame lit long enough for a Voice to wake the provinces.
 
-**Where it's found**, wherever the empire bound people and they're still held:
+**Who does it, and where.** The sacrificers are always people with a reason, a ledger and a quota:
 
-| Where | Whose souls | How the Cult gets them |
-|---|---|---|
-| Emberfall's barrows and the Drowned Abbey | the Third Legion, the drowned clergy | dug up and **struck for shards**: spent as the spark, not the fuel |
-| The Cinderworks (the Reach) | the living, bound for the furnace | **made**: Vane sells miners to the furnace-priests at the Cult's rate, who bind them by shard-light and burn them in the forges that cast the vessel |
-| The Tithewood's granaries | three hundred years of the clans' tithe, laid in rows like sheaves | **bought**, a cart at a time, from a clan short of grain: the largest store in the provinces |
-| The Praetory (the Heights) | the Empress's bound guard | **guarded**: the Cult can't reach them, and the Praetorians obey no one but a Voice |
-| The Cult itself | its faithful | **given**: at the Throne they kneel in the vessel's light, take the Rite on themselves, and walk in. *"Most of them volunteered."* |
+| Where | Who is sacrificed | By whom | What the player finds |
+|---|---|---|---|
+| Emberfall, then | the Vale's tithe, the Third Legion; the clergy who drowned at their office | the empire | captives under the barrows road and in the Abbey, stirred by the Cult's digging; it cuts shards from them (the spark) |
+| The Reach, now | miners off the night shift | the Kell Assay sells them, and the Cult's furnace-priests sacrifice them by shard-light in the forges that cast the vessel | the shift that doesn't come up, and new Ashbound at the furnaces |
+| The Tithewood, then and now | three hundred years of the clans' tithe, Ashbound lying in rows in the granaries; and the living the Reeve takes for the count | the empire, then the Tithe-Reeve; the Cult buys the captives a cart at a time | the largest store in the provinces, and the cheapest |
+| The Heights, then | the Empress's guard | the empire | the Praetorians, who obey only a Voice |
+| The Throne, at the end | the Cult's own faithful | themselves | they take the Rite in the vessel's light and walk in. *"Most of them volunteered."* They rise as Ashbound in the last fight. |
 
-**How it's used in play.**
-- Fuel shows as wisps in cages: the Cult's harvesters and buyers carry them, and a boss's cages shield it.
-- **Breaking a cage frees the soul.** It goes, and the Cult has that much less.
-- In the Tithewood the count matters: the more of the granaries' tithe you free before the Root Granary, the less
-  the Cult has (the region's story still ends the same).
-- At the Throne the flame grows in phases as the fuel feeds it, which is why the faithful walk in.
+**How it plays.**
+- **Every Ashbound you put down is freed:** its tie breaks and its soul goes to rest. (A later idea: the Chronicle
+  could keep the count, as Ilse would.)
+- **Cages:** the Cult's harvesters and buyers carry fuel as wisps in lantern-cages, and a boss's cages shield it.
+  Break a cage, and the soul inside goes free and the Cult has that much less.
+- **The Tithewood's count:** the more of the granaries you free before the Root Granary, the less fuel reaches the
+  Throne. The story still ends the same.
+- **At the Throne:** the flame grows in phases as the faithful feed it, and the newly bound faithful come at you.
+  Lucan's last verse stops the flame, so nothing is fed to it again.
+  - The Ashbound already made don't go free with it: they stay captive until someone puts them down.
+  - That's the companies' work in the post-game: the Undervaults' deep captives, and the Beacon's bound signal
+    corps.
 
 ---
 
@@ -599,10 +618,10 @@ Fall. They build to the reveal without giving it away.
 grain and in souls.
 - The Vale paid its share, as canon's Tithe Ledger has it: *"Souls, two hundred and forty."* That's the Third
   Legion's muster of two hundred and forty bound. The Vale's tithe became its legion.
-- The clans' tithe never became anything. The empire took them alive, bound them, and laid them in **tithe-
-  granaries**, barns under the oaks, in rows like sheaves, with a reeve and a ledger, to wait for the carts to the
-  Throne.
-- On the night of the Fall the bound dropped where they lay, and no carts came.
+- The clans' tithe never became anything. The empire's reeves sacrificed them at the barns by shard-light, and their
+  souls went to feed the Ember. Their bodies, Ashbound, were laid in **tithe-granaries**, barns under the oaks, in
+  rows like sheaves, with a reeve and a ledger, to wait for the carts to the works.
+- On the night of the Fall the ties went slack, the bound dropped where they lay, and no carts came.
 - The clans sealed the barns because they couldn't bear to open them. They call what's inside their grandparents.
 - **The hedge-callers** (canon §4) learned their trade here first. This is the old country of the cup by the
   hearth.
@@ -621,7 +640,8 @@ grain and in souls.
    chains. The Reeve has counted the Cult's buyers as *arrears* and collected them, with their carts.
 5. ★ *The Thornway* (55–57). The Tithe Road through the deep wood, and the wardens who won't let it be used again.
 6. ★ *Paid in Full* (57–60). The **Root Granary** under the oldest oak: the Reeve, the count, and the Unpaid.
-   - You open the granary, the bound lie down, and the clans bury their grandparents.
+   - You open the granary and put the bound down, row by row. Each tie breaks, each soul goes free, and the clans
+     bury their grandparents.
    - **Mostly a win.** The carts the clan sold are already gone, and they're the only fuel the Cult has (§1.3).
      It's a few hundred souls against the year's tithe it needed: enough to light a flame, not to keep it.
 
@@ -690,8 +710,8 @@ found, and the flame's palace in it.
    to. Forgive me. They will call it the Fall. Let them. — A."* (Its last three sentences are canon's.)
 6. ★ *The Throne of Embers* (73–75). In the Throne, the Kindler sets the vessel in the dark pit with the spark in
    it, the fuel beside it, and Lucan standing by: the four things together.
-   - **The fight is in phases.** The fuel is too little, so between phases the Cult's faithful walk into the
-     vessel, one rank at a time, and the flame grows.
+   - **The fight is in phases.** The fuel is too little, so between phases the Cult's faithful take the Rite and
+     walk into the vessel, one rank at a time. The flame grows, and they come back out Ashbound.
    - Beaten, the Kindler walks in last: *"Most of them volunteered."*
    - **It's always Lucan** (the owner: one ending, so every player's world is the same one, for multiplayer).
      - He sings the Canticle's last verse, the one Aurelle sang: *stop*.
@@ -1025,8 +1045,12 @@ hours of pure fighting; real play is about 2–3× that.
    - No bloodline.
 6. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
 7. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
-8. **The Cult's four needs** (spark, vessel, Voice, fuel, §1.1). **Fuel is bound souls** (§1.3), and the faithful
-   are the last of it.
+8. **The sacrifice** (§1.1, §1.3).
+   - The Ember is fed with sacrificed people. The Binding Rite ties each soul to the flame, where it burns slowly,
+     and the body rises Ashbound: a captive that can't rest and serves.
+   - Breaking the body frees the soul. A Voice commands the Ashbound but can't free them.
+   - The Cult's four needs are spark, vessel, Voice and fuel, and its faithful are the last of the fuel.
+   - Canon §4's "the empire's bound dead" stays true, and gains the why: they were sacrificed to feed the flame.
    **The ending:** always Lucan's *stop*, and the darker *keep the flame* ending (§6) dropped, for one shared world.
    **Saltmere** becomes a waystation (§3 now says each region has one town).
 9. **Acts I–VI by region** (§6 now has four acts).
@@ -1135,7 +1159,40 @@ writer. Here is what they found, and what draft 2 did about it.
 | The Bowl's rewards | "Arena is special tokens that the user can use for a future special arena shop of heirlooms" | marks of the Bowl, and a future heirloom shop. Both critics wanted standing only, so the guard is: verified bouts only, a daily cap, and no heirloom stronger than a boss's of its level (§4.1) |
 | The Voice (draft 4) | "Change it to a sacred lost scroll where anyone who finds it and learns the chant becomes a Voice who can command the ashen" | the Canticle and the Voices (§1.1); no bloodline anywhere; Lucan is the seventh Voice; the last verse ends the flame and takes the singer's voice |
 | The factions and the fuel (draft 4) | "Clarify … the major factions, and their mission, hook and objectives. And clarify the Fuel, what is it exactly and how is it found and used" | §1.2 (twelve factions: mission, hook, objectives, stance); §1.3 (fuel is bound souls: what, how much, where, how the Cult gets it, how it plays) |
+| The fuel (draft 5) | "people are sacrificed by nefarious actors and extract their souls to feed the Ember, turning the sacrifices into Ashenbound … Ashbound are captives and not able to rest. Forever servants. Until someone undoes it and frees them" | §1.1 and §1.3 rewritten to it, with the review in §10.4 |
 | The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
+
+### 10.4 The owner's account of the fuel, reviewed (draft 5)
+
+The owner's account: *people are sacrificed by nefarious actors, who extract their souls to feed the Ember; the
+sacrifices become Ashbound; a Voice controls the Ashbound; the Ashbound are captives, unable to rest, forever
+servants, until someone undoes it and frees them.*
+
+**What it does well.**
+- **It's simple.** One sentence explains the fuel, the enemy and the stakes.
+- **The villains are people.** Every sacrificer in it has a ledger and a reason: the empire's tithe, the Assay's
+  quota, the Reeve's count, the Cult's faith. That keeps the tone rule: the dead are trouble, and the living are
+  the cause.
+- **The Ashbound become sympathetic.** Each one the party fights was somebody, and putting it down frees it. Canon
+  already says it (*"the only relief anyone has brought them"*), and it gives the grind a reason as well as a
+  reward.
+- **It fits every line the Chronicle already has:**
+  - the tithe of *"two hundred and forty"*;
+  - the muster roll's *"two hundred and forty bound … there are never absences"*;
+  - *"most of them volunteered"*;
+  - the quota of *"eleven more souls per week"*.
+
+**What it left open, and what draft 5 does.**
+
+| # | The gap | Draft 5 |
+|---|---|---|
+| 1 | If the soul is taken out and burned, what's left in the Ashbound, and how is it a captive? | The Rite **ties** the soul to the flame rather than taking it away. The soul burns slowly, a little at a time, and stays tethered to its body. Fuel and captive are the same person (§1.1). |
+| 2 | What undoes it? A "free everyone" button would end the game's enemy and the post-game. | **Breaking the body breaks the tie**, one at a time: putting one down, or a cleric's *Unbinding*. A Voice commands but can't free. The finale stops the burning, so no one is sacrificed again; it doesn't free those already made. That's the companies' work, and the Undervaults' and the Beacon's reason. |
+| 3 | Canon: when the Ember went out at the Fall, the Ashbound dropped. Were they freed? | No. The ties went slack and they lay captive for three hundred years. That's why the Cult can stir them, re-tie them to a new flame and use them as cheap fuel. |
+| 4 | "Nefarious actors": who, region by region? | The empire (the tithe, the legion, the foundries, the guard); the Kell Assay (it sells the night shift); the Cult's furnace-priests and harvesters; the Tithe-Reeve (a captive himself, still collecting); and the Cult's faithful, at the end, on themselves (§1.3's table). Lucan isn't one: he commands the drowned, but he refused the furnace. That keeps him tragic, not monstrous. |
+| 5 | The tone rule: no cosmic horror. Eternal captivity edges toward it. | It's kept human-scale. The horror is in ledgers and quotas, the townsfolk talk about it plainly (*"They just stand there"*), and there's always something to do about it: put them down. |
+| 6 | The name: "Ashenbound". | Canon is **Ashbound**. The folk word, "the ashen", is in. |
+| 7 | Can the player become a Voice? Can the player sacrifice? | No and no. The Canticle is Lucan's, and it goes into the dark with the flame. The player frees; the player never binds. |
 
 ## 11. Still open
 
