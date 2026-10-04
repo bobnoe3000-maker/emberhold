@@ -1,10 +1,12 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 5 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 6 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
 who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
 people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
-them. The review of that account is §10.4.
+them. The review of that account is §10.4. Draft 6 makes five factions the story's drivers, each with a
+storyline through every region: the Lantern Guild, the Cinder Cult, the Ashbound, the Grey Sisters and the
+Redhand. The rest are minor players (§1.2).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
@@ -67,8 +69,10 @@ stretches, but no further: the last quest is about **the fate of the Old Provinc
 - **The Tithewood:** the souls the empire took and never spent. Folk horror.
 - **The Pale Heights:** the flame itself. A pilgrimage, and an ending.
 
-**The Cinder Cult** runs underneath all five as a buyer, a patron and a thief. In each region somebody else is the
-villain, with their own reasons. The Cult needs four things to light the Ember again (§1.1):
+**Five factions drive the story** through every region (§1.2): the **Lantern Guild**, the **Cinder Cult**, the
+**Ashbound**, the **Grey Sisters** and the **Redhand Company**. Each region's own powers are minor players: in each
+region somebody local is the villain of its act, with their own reasons. The Cult, the antagonist of the whole arc,
+needs four things to light the Ember again (§1.1):
 - **a spark**;
 - **a vessel**;
 - **a Voice**;
@@ -143,120 +147,140 @@ tireless dead doing the work, so the living never starve again. He doesn't count
 
 ### 1.2 The factions
 
-Each faction below gives:
-- **Mission:** what it wants, in the long run.
-- **Hook:** how the player meets it, and why they'd care.
-- **Objectives:** what it's doing now, region by region.
-- **Stance:** where it stands with the player.
+**Five factions drive the story** (the owner): the Lantern Guild, the Cinder Cult, the Ashbound, the Grey Sisters
+and the Redhand Company.
+- **Each has a storyline that runs through every region.** The region's main story is the stage, and these five are
+  the plot.
+- **Everyone else is a minor player:** the local power, ally or villain a region needs. Each matters in one region
+  and is done when it's done.
 
-**The Lantern Guild** (canon §4): the sellswords' guild, with a board in every town.
-- **Mission:** keep the roads open and the lamps lit, and take its cut. Unspoken: make sure no Voice ever sings
-  through a beacon again. The Guild is what's left of the empire's beacon-keepers, who lit the orders (§4).
-- **Hook:** Maudry's board in the Tired Mule, and the company is a Guild company from the first job.
-- **Objectives:**
-  - pin and pay the jobs;
-  - promote companies;
-  - send them on to Solmere;
-  - hold the Great Beacon's door;
-  - keep the Dim Peace in the capital.
-- **Stance:** employer. Aldo Pennick, its Master of the Roll, is the one who finally says why the beacons went dark.
+**The storylines at a glance:**
 
-**The Cinder Cult** (canon): zealots who believe the Ember was *stolen*.
+| | Emberfall (I–II) | The Reach (III) | The Tidemark (IV) | The Tithewood (V) | The Heights (VI) |
+|---|---|---|---|---|---|
+| **The Lantern Guild** | Maudry's board hires the company | the Lamphall enters it on the Roll | Old Gannet's lamp; Pennick's truth | the Guild maps the carts | holds the Great Beacon dark |
+| **The Cinder Cult** | mines the spark | buys the vessel | courts the Voice | buys the fuel | lights the flame |
+| **The Ashbound** | the Third Legion; the drowned clergy | the new-made at the furnaces | the drowned fleet; the Grace | the Unpaid in the granaries | the Praetorians; the faithful |
+| **The Grey Sisters** | Ilse; the Abbey's binding rolls saved | the rolls name the dead | Maren reads them | the Unbinding is learned | the rolls opened to all |
+| **The Redhand** | dig for the Cult; Garrow falls | Ruddock's Company guards the Assay | hired crossbows for Lucan | drive the fuel carts | turn, and hold the Stair |
+
+#### The Lantern Guild
+
+The sellswords' guild (canon), with a board in every town. It's what's left of the empire's beacon-keepers (§4).
+
+- **Mission:** keep the roads open and the lamps lit, and take its cut. Its quiet aim: **no Voice ever sings through
+  a beacon again.** The keepers lit the orders, and the Guild has kept the beacons dark for three hundred years.
+- **Hook:** Maudry's board in the Tired Mule. The company is a Guild company from its first job.
+- **Objectives, region by region:**
+  - **Emberfall:** pin the jobs, pay the company, and at the end of Act II send it on to Solmere with Maudry's
+    letter.
+  - **The Reach:** in the Lamphall, Aldo Pennick enters the company on the Roll and opens the Great Beacon's door
+    to it.
+  - **The Tidemark:** Old Gannet keeps the last lit lamp on the coast, and the Guild has never told him to put it
+    out. When Lucan, a living Voice, marches, Pennick tells the company why the beacons went dark, and what the
+    Guild was before.
+  - **The Tithewood:** the Guild's roadmen track the Cult's fuel carts, and the boards fill with jobs to stop them.
+  - **The Heights:** while the company climbs to the Throne, the Guild holds the Great Beacon, so that a relit
+    flame's orders can't be carried to the provinces.
+- **Where it ends:** the flame is out, and the Guild opens the Beacon to every company (the tower, §4.2), because
+  there's nothing left to fear from it. There are still captives on its stair to free.
+- **Its people:** Maudry Fenn, Aldo Pennick, Old Gannet, and every tavern's board.
+
+#### The Cinder Cult
+
+Zealots (canon) who believe the Ember was *stolen*, and the antagonist of the whole arc.
+
 - **Mission:** relight the Ember with a Voice to rule it, and give the provinces back the tireless dead.
-- **Hook:** the Robed Stranger dies with a shard in his fist (Act I).
-- **Objectives:**
-  - the spark: mining the bound of Emberfall;
-  - the vessel: bought from the Kell Assay;
-  - the Voice: courting Lucan, the first Voice in three hundred years;
-  - the fuel: buying the Tithewood's granaries a cart at a time;
-  - then the Throne.
-- **Stance:** enemy, and courteous about it. The Kindler preaches, and never lies.
+- **Hook:** the Robed Stranger dies with an ember-shard in his fist (Act I).
+- **Objectives, region by region** (its four needs, §1.1):
+  - **Emberfall:** **the spark**. It digs the Vale's captives up and cuts shards from them, and harvests the
+    drowned clergy at the Abbey.
+  - **The Reach:** **the vessel**, cast to its order by the Kell Assay in forges fed with sacrificed miners.
+  - **The Tidemark:** **the Voice**. It courts Lucan, who learned the Canticle. He refuses, until he's beaten.
+  - **The Tithewood:** **the fuel**, the granaries' captives, bought a cart at a time.
+  - **The Heights:** the Throne. The four things together, and the faithful give themselves to the flame.
+- **Where it ends:** at the Throne. The Kindler walks into the vessel last: *"Most of them volunteered."*
+- **Its people:** the Kindler (met at the Canal Locks, at the Ashgate burial, at Lucan's table, and at the
+  Throne), the Robed Stranger, Brother Teague, the furnace-priests, the harvesters and the buyers.
 
-**The Ashbound, "the ashen"** (canon): the sacrificed, risen as captives (§1.1). They aren't a faction, and
-they want nothing they can say.
-- **Mission:** their last order, forever:
-  - *hold the road until relieved* (the Third Legion);
-  - *keep the hours* (the Drowned Abbey);
-  - *hold station until recalled* (the Grace);
-  - *muster at the lamp* (the Beacon);
-  - *collect the tithe* (the Reeve).
-- **Hook:** the barrows road, the first evening.
-- **Objectives:** none of their own. They're captives: they can't rest until their tie is broken, and they obey
-  whoever holds the Canticle.
-- **Stance:** in the way, and not to blame. *"They just stand there. Facing north."* Every one the company puts down
-  is one freed.
+#### The Ashbound, "the ashen"
 
-**The Grey Sisters** (canon): healers and archivists, and, draft 2 found, heirs of the empire's binding clergy.
-- **Mission:** keep the records. Unspoken: make up for what their mothers wrote in them.
-- **Hook:** Sister Ilse in Thornwick's Shrine, and the Chronicle she keeps.
-- **Objectives:**
-  - copy whatever comes up out of the barrows (Ilse);
-  - save the Drowned Abbey's binding rolls (Act II);
-  - keep the Reedholm Undercroft shut (Mother Agnes), against reading it (Ilse);
-  - a chaplain on Tollhaven's quays (Maren).
-- **Stance:** ally, and the source of clerics.
+The sacrificed, risen as captives (§1.1). They're a faction because they're in every place the story goes, and
+every region turns on them. They want nothing they can say.
 
-**The Redhand Company** (canon): deserters turned bandits.
-- **Mission:** loot, and to be left alone.
-- **Hook:** the Tithe Mill (Act I).
-- **Objectives:** dig at the Sunken Chapel for the robes' coin (Act I); then hire out their crossbows to Highmarch
-  (Act IV, canon: "recurring later as hirelings").
-- **Stance:** enemy for hire. Brannoc got out.
+- **Mission:** their last order, forever.
+- **Hook:** the barrows road on the first evening: *"They just stand there. Facing north."*
+- **Their orders, region by region:**
+  - **Emberfall:** *hold the road until relieved* (the Third Legion); *keep the hours* (the drowned clergy).
+  - **The Reach:** *work the shift*: the new-made at the furnaces, and Oruth, their forgemaster.
+  - **The Tidemark:** *hold station until recalled* (the Grace); the drowned fleet, who obey Lucan.
+  - **The Tithewood:** *collect the tithe* (the Reeve and his tallymen); the Unpaid, waiting in rows.
+  - **The Heights:** *guard the Empress* (the Praetorians); *muster at the lamp* (the Beacon's signal corps).
+- **Where it ends:** the burning stops at the Throne. The captives already made stay captive until someone puts
+  them down, and every one put down is freed. The company frees them region by region, and in the post-game the
+  Undervaults and the Beacon hold the rest.
+- **The player's part:** the relief that never came.
 
-**The hedge-callers and the clans of the Tithewood** (canon, and §3.4).
-- **Mission:** keep the old courtesies: a cup by the hearth, a word to the hedge, the dead put to rest properly.
-- **Hook:** Col's cup by the cart-wheel (the Vale), then Grandmother Yew at Rookstead.
-- **Objectives:**
-  - open the granaries and bury three hundred years of the tithe;
-  - stop the Reeve collecting the living;
-  - keep the Cult's buyers out of the wood, against the clan that sells to them.
-- **Stance:** ally, and the source of shamans.
+#### The Grey Sisters
 
-**The Deepdelver Charter** (canon): the dwarf-folk miners' charter in the Reach.
-- **Mission:** reopen the old seams and keep the charter's word.
-- **Hook:** Ashgate's boom, and the night shift that doesn't come up (Act III).
-- **Objectives:**
-  - decide at the moot whether to take the Assay's coin;
-  - get the night shift back;
-  - put Oruth, their own ancestor, down.
-- **Split:** the Slagborn clan sold the lease.
-- **Stance:** ally, mostly.
+Healers and archivists (canon), and heirs of the empire's binding clergy (§3.1): their mothers spoke the Rite and
+kept the rolls of everyone they bound.
 
-**The Kell Assay** (new): a human assay and trading house at Kell's Rest.
-- **Mission:** profit: relight the foundries and sell what they make.
-- **Hook:** coal-red wax with a thumbprint in it, on the Paymaster's Box (Act I), then on the Abbey's Cult ledgers
-  (Act II).
-- **Objectives:**
-  - run the Cinderworks to quota;
-  - pay the Cult's rate in miners;
-  - cast and deliver the vessel, under contract.
-- **Stance:** enemy. Morrow Vane believes every soul has a price, and pays it.
+- **Mission:** keep the records. Their quiet aim: make up for what their mothers wrote in them.
+- **Hook:** Sister Ilse in Thornwick's Shrine, and the Chronicle she keeps for the company.
+- **Objectives, region by region:**
+  - **Emberfall:** Ilse copies what comes up out of the barrows. In the Fens, the company saves the Drowned Abbey's
+    **binding rolls** from the Cult, and Mother Agnes wants them locked in the Reedholm Undercroft.
+  - **The Reach:** the rolls name the foundry crews the empire bound, and Ilse begins to read them against Agnes's
+    word.
+  - **The Tidemark:** Sister Maren, chaplain on Tollhaven's quays, reads Reedholm's copy first. She learns that
+    one line of it sent the Kindler to Lucan, and joins the company (cleric).
+  - **The Tithewood:** the Sisters learn the **Unbinding**, the rite that breaks the tie and frees the soul, from
+    the hedge-callers they always called superstitious (the cleric's skill, §5): *"Your Sisters bound them. You
+    can learn to let go."*
+  - **The Heights:** Sister Hild keeps Frosthold's infirmary for the climb.
+- **Where it ends:** the Sisters open the Undercroft and publish the rolls: the name of everyone their mothers bound,
+  and where they lie. It's the map of every captive left to free.
+- **Their people:** Sister Ilse, Mother Agnes, Sister Maren, Sister Hild.
 
-**The Tidemark League** (new): the free ports of the east coast.
-- **Mission:** free trade, and nobody's crown.
-- **Hook:** the corsairs, and Old Gannet's lamp (Act IV).
-- **Objectives:**
-  - break the Gull Fleet;
-  - hold Brine Cross;
-  - keep Solmere free under the Dim Peace.
-- **Stance:** ally. Hester Quaile counts what you cost.
+#### The Redhand Company
 
-**The Kingdom of Highmarch, the Seventh's Own** (new).
-- **Mission:** a new empire, under Lucanus, the seventh Voice.
-- **Hook:** Lucan's claim: he speaks, and the drowned fleet stands up.
-- **Objectives:**
-  - march on Solmere and be crowned in it, with living soldiers, hired crossbows and the drowned crews he commands;
-  - refuse the Cult's furnace, until he's beaten.
-- **Stance:** enemy, then the one man who can end it.
+Deserters turned bandits (canon), in the iron kettle hats they deserted in, with a band of the Company's red. They
+are the Cult's hired hands across the provinces: coin is coin.
 
-**The Monks of Frosthold** (canon's monastery).
-- **Mission:** keep the Pilgrims' Stair and bury the pilgrims who don't come back.
-- **Hook:** Act VI.
-- **Objectives:** hold Frosthold against the Cult's camp; keep the barracks' keys (Brother Cobb).
-- **Stance:** ally, and in the end Lucan's keepers.
+- **Mission:** loot, and to be left alone. In practice, whoever pays. The robes' coin comes in coal-red wax with a
+  thumbprint in it.
+- **Hook:** the Tithe Mill, Act I's first chapter.
+- **Objectives, region by region:**
+  - **Emberfall:** they dig at the Sunken Chapel for the robes' coin. Captain Garrow falls at Wickham Keep, and
+    Brannoc walks out (canon). **Nan Ruddock**, Garrow's quartermaster, takes the Company and the Cult's contract
+    with it.
+  - **The Reach:** Ruddock's Company guards the Kell Assay's yards, and escorts the vessel's dray out on the
+    Solmere road.
+  - **The Tidemark:** hired crossbows in Lucan's legion (canon: "recurring later as hirelings").
+  - **The Tithewood:** they drive the Cult's fuel carts out of the wood. At the Charcoal Clearing Ruddock finds out
+    what's under the sacking: somebody's grandparents.
+  - **The Heights:** the Company turns. Ruddock and what's left of the Redhand hold the Pilgrims' Stair against
+    the Cult while the company goes up. Brannoc is with them, if he's in the party.
+- **Where it ends:** the Redhand stand down, with nothing to show for it but the Stair. Ruddock: *"First job we
+  ever did for free. Don't tell anyone."*
+- **Their people:** Captain Garrow, Nan Ruddock, the sergeants, and Brannoc, who got out first.
 
-*Minor:* Lord Pellam's Watch (canon: bounties, comic relief, occasionally brave); the Peace Wardens of Solmere (a
-name the Guild hides behind).
+#### The minor players
+
+Each matters in one region and is done when that region is done.
+
+| Region | Minor player | What it is | Its part |
+|---|---|---|---|
+| Emberfall | **Lord Pellam's Watch** (canon) | Greyholt's underpaid militia | Osric's bounties; comic relief, occasionally brave |
+| Emberfall | **The hill goblins** (canon) | the Scrag Warren | Hedda's hens |
+| The Reach | **The Deepdelver Charter** (canon) | the dwarf-folk miners' charter | Dagny's moot, the night shift, Oruth; the Slagborn sold the lease |
+| The Reach | **The Kell Assay** | a human assay house at Kell's Rest | Act III's villain: Morrow Vane sells the night shift and casts the vessel |
+| The Tidemark | **The Tidemark League** | the free ports | Hester Quaile; Brine Cross; the Gull Fleet broken |
+| The Tidemark | **The Kingdom of Highmarch** | Lucan's march-kingdom | Act IV's war; Lucan, the Seventh Voice |
+| The Tithewood | **The hedge-callers and the clans** (canon) | the old courtesies | Grandmother Yew, Moth, Thane Ivo; the granaries opened |
+| The Heights | **The Monks of Frosthold** | pilgrims who never went home | the hospice, the barracks' keys, Lucan's keepers |
+| Solmere | **The Peace Wardens** | a name the Guild hides behind | the Dim Peace |
 
 ### 1.3 The fuel: what it is, where it's found, how it's used
 
@@ -472,7 +496,8 @@ levels moved).
    more souls per week"* (canon). Vane falls.
 6. ★ *The Cast* (28–30). The **Magma Vault**.
    - The furnaces were casting a **vessel**: a lamp the size of a cart, with room inside for a flame.
-   - The furnace-priests have it on a dray, going north-east by the Solmere road.
+   - The furnace-priests have it on a dray, going north-east by the Solmere road, with Nan Ruddock's Redhand
+     riding escort.
    - **The loss:** you reach the Vault a day late.
    - **The trace:** in Solmere an Exchange customs stub reads *"One lamp, large. Duty paid."*
 
@@ -507,7 +532,7 @@ levels moved).
 **Enemies.**
 - Canon: forge-wights, cinder hounds, Ashbound warriors, Cult furnace-priests.
 - New, at most two new silhouettes (§6):
-  - **Assay guards**: recoloured humans in Kell livery;
+  - **Assay guards**: recoloured humans in Kell livery, and Ruddock's Redhand on the yards' gates;
   - **Slagborn renegades**: recoloured Deepdelvers;
   - **slag haulers**: a new silhouette.
 - **Bosses:**
@@ -634,6 +659,7 @@ grain and in souls.
    three hundred years in arrears. He takes the living to make up the count.
 2. ★ *Charcoal and Coin* (48–50). In the charcoal burners' clearing, a clan that's short of grain has been selling
    its grandparents to the Cult, a cart at a time. The Cult doesn't steal here. It buys.
+   - The carters are Redhand. Nan Ruddock lifts the sacking off a cart, and doesn't drive another.
 3. ★ *The Moot of Antlers* (50–53). At the stones, the clans, the hedge-callers and the wood's own wardens decide
    what to do. The clans want the barns opened and their dead let go.
 4. ★ *The Tally* (53–55). The **Tally-House**, where the empire kept the count: its tallymen, Ashbound clerks in
@@ -677,7 +703,7 @@ grain and in souls.
 - **Tallymen**: Ashbound clerks, a recolour with chains and ledgers. They mark a target, and the marked member takes
   more.
 - **Barn-wights**: the stirred tithe, rising off the threshing floors (the ghost look, §6).
-- Cult **buyers** and their carters, recoloured.
+- Cult **buyers**, and the Redhand who drive their carts (canon art).
 - **Thorn-wardens**: the wood's own (one new silhouette).
 - **Wolves** and **boars** (the shared quadruped).
 - **Bosses:**
@@ -701,7 +727,8 @@ found, and the flame's palace in it.
 **Act VI, *The Throne of Embers*.**
 1. ★ *The Frozen Hospice* (60–62). The pilgrims' hospice at the foot of the Stair, and the Cult's camp around it.
    The vessel's dray is in the yard. Lucan isn't.
-2. ★ *The Pilgrims' Stair* (62–65). Up the Stair after him, with the Cult on it.
+2. ★ *The Pilgrims' Stair* (62–65). Up the Stair after him, with the Cult on it. Halfway up, Nan Ruddock's
+   Redhand turn and hold the Stair behind you, Brannoc with them if he's in the party.
 3. ★ *The Soulcracks* (65–68). The canyon the Fall split open. What the Ember burned is down there, as light in the
    rock.
 4. ★ *The Praetory* (68–71). The Empress's bound guard, still at their posts in the palace barracks.
@@ -1059,7 +1086,7 @@ hours of pure fighting; real play is about 2–3× that.
 11. **New names.**
     - Places: the Old Provinces, the Mere, the Dim Peace, the Lamphall, the Bowl, the Great Beacon, the Tidemark,
       Tollhaven, Highmarch, Brine Cross, Gullwick, the Tithewood, Rookstead, Hollin Ford, the Tithe Road.
-    - People: the Lady Livia, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
+    - People: the Lady Livia, Nan Ruddock, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
       Coalbrook, Morrow Vane, Gunnar Slagg, Hob, Old Brannagh, Mother Coke, Grandmother Yew, Moth, Thane Ivo,
       Lirien, Prior Anselm, Sister Hild, Brother Cobb, Mother Agnes, Pim Rushlight, Brother Teague, Aldo Pennick,
       Ma Gorrie, the Crier.
@@ -1160,6 +1187,7 @@ writer. Here is what they found, and what draft 2 did about it.
 | The Voice (draft 4) | "Change it to a sacred lost scroll where anyone who finds it and learns the chant becomes a Voice who can command the ashen" | the Canticle and the Voices (§1.1); no bloodline anywhere; Lucan is the seventh Voice; the last verse ends the flame and takes the singer's voice |
 | The factions and the fuel (draft 4) | "Clarify … the major factions, and their mission, hook and objectives. And clarify the Fuel, what is it exactly and how is it found and used" | §1.2 (twelve factions: mission, hook, objectives, stance); §1.3 (fuel is bound souls: what, how much, where, how the Cult gets it, how it plays) |
 | The fuel (draft 5) | "people are sacrificed by nefarious actors and extract their souls to feed the Ember, turning the sacrifices into Ashenbound … Ashbound are captives and not able to rest. Forever servants. Until someone undoes it and frees them" | §1.1 and §1.3 rewritten to it, with the review in §10.4 |
+| The factions (draft 6) | "the Lantern guild, cinder cult, ashbound, grey sisters and redhand being the major factions and story lines" | §1.2: the five, each with a mission, a hook, objectives in every region and an ending; a table of the five storylines by region; the Redhand carried through every act under Nan Ruddock, Garrow's quartermaster; everyone else a minor player, in one table |
 | The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ### 10.4 The owner's account of the fuel, reviewed (draft 5)
