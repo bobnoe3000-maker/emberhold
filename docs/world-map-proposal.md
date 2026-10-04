@@ -1,6 +1,6 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 8 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 9 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
 who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
 people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
@@ -11,7 +11,8 @@ Redhand. The rest are minor players (§1.2). Draft 7 gives the Lantern Guild its
 lit (§1.1, §1.2, §4). Draft 8 takes the endless tower away from the Guild: the **Mere Tower** is older than the
 empire, drowned under the Mere and found about forty years ago (§4.2). The Great Beacon stays the Guild's, and is
 now a finite site after the Throne (§4.3). Throne-iron becomes **pale iron**, mined only from the Ember's crater; that
-the two fell from the sky is hinted, never said (§1.1, §10.6).
+the two fell from the sky is hinted, never said (§1.1, §10.6). Draft 9: the Chronicle keeps a count of lamps broken and souls freed, a
+leaderboard later (§1.3); the Bowl's shop stock is defined later (§4.1).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
@@ -418,8 +419,7 @@ people.**
 | The Throne, at the end | the Cult's own faithful | themselves | the vessel | they take the Rite in the vessel's light and walk in. *"Most of them volunteered."* They rise as Ashbound in the last fight. |
 
 **How it plays.**
-- **Every Ashbound you put down is freed:** its tie breaks and its soul goes to rest. (A later idea: the Chronicle
-  could keep the count, as Ilse would.)
+- **Every Ashbound you put down is freed:** its tie breaks and its soul goes to rest.
 - **Cages:** the Cult's harvesters and buyers carry fuel as wisps in lantern-cages, and a boss's cages shield it.
   Break a cage, and the soul inside goes free and the Cult has that much less.
 - **Lamps:** a lamp is a site's set piece, in its last room: the **lamp-room**, held by its keeper (a boss, or
@@ -440,6 +440,31 @@ people.**
   - With the flame out, the vessel is dark, and the company breaks it: the faithful go free.
   - That's the companies' work in the post-game: the lamps left in the lamp-book, the Undervaults' deep captives,
     and the Great Beacon's bound signal corps (§4.3).
+
+**The count** (the owner, draft 9). The Chronicle keeps two numbers for the company, as Ilse would, and they become
+a leaderboard later:
+- **Lamps broken:** every lamp, from a Cult cage to the vessel. A cage is a small lamp, so it counts. The Chronicle
+  shows the set-piece lamps by name under the number (*the Standard's · the choir-lamp · Furnace Nine …*).
+- **Souls freed:**
+  - one for every Ashbound put down, and one for every cage broken;
+  - for a lamp, the souls still in it, a number set in its content (the Standard's lamp holds what's left of the
+    Third Legion's 240).
+  - Living foes (the Redhand, the Cult, the Seventh's Own), beasts and the Mere Tower's kept things don't count.
+    They were never bound.
+- **Where it shows:** at the head of the Chronicle tab (*"Lamps broken: 7 · Souls freed: 3,412"*). Ilse remarks on
+  it, and Pennick reads it when the company comes to the Lamphall.
+- **Fair play.**
+  - The counts are two integers on the game slot, added to only by sim rules: a foe of the bound family put down,
+    a cage broken, a lamp broken. No command sets them.
+  - They're durable: in the snapshot, with a save-version bump and a migration.
+  - The migration credits a save that has already beaten the Standard with that lamp and its souls, worked out
+    from the chapter's quest state, so nobody loses Act I.
+- **The leaderboard, later: *the Freed*.** It's written only by the replay validator, from verified play, like
+  the Wall.
+  - It ranks souls freed, per bracket and per season, with an all-time column. Lamps broken is shown beside it.
+  - Unlike the Wall, it rewards time put in, not holding power. That suits it: it's the company's devotion, and a
+    long offline season counts in full once it's verified.
+  - It waits for the validator (M6), like the Wall. The Chronicle shows the counts from the day they ship.
 
 ---
 
@@ -986,8 +1011,9 @@ him be."*
   Cousins*.
 - **Rewards: marks of the Bowl** (the owner).
   - These are tokens won in bouts and kept on the company. They buy from **the Bowl's heirloom shop**, which
-    comes later: the named arms of the empire's champions, each with its line of history. For example:
-    *The Crier's Bell* — "He called the bout. He'll call yours."
+    comes later. **What it sells is defined later** (the owner, draft 9); the idea is the named arms of the
+    empire's champions, each with its line of history, such as *The Crier's Bell* — "He called the bout. He'll
+    call yours."
   - Marks come only from **verified** bouts, at most a set number a day, with a season bonus by standing.
   - An arena heirloom is **no stronger than a boss's heirloom of its level**. The Bowl is another road to the best
     gear, not a shorter one, and the PvE paths keep their worth.
@@ -1237,9 +1263,9 @@ hours of pure fighting; real play is about 2–3× that.
 
 | Milestone | What |
 |---|---|
-| **M8** | **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Mere Tower, played offline, with no Wall yet. A capped player has an endgame loop before new regions come. |
+| **M8** | **the count** in the Chronicle (lamps broken, souls freed; the Standard credited by migration); **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Mere Tower, played offline, with no Wall yet. A capped player has an endgame loop before new regions come. |
 | **M9** | **the Reach** (Act III); the stat rescale; the first skill tier (L18); the cap to 30 |
-| **After M6's validator** | the Mere Tower's Wall and seasons; the Bowl's marks |
+| **After M6's validator** | the Mere Tower's Wall and seasons; the Freed (souls freed); the Bowl's marks |
 | **M10** | **the Bowl**, async, with its written rivals; the heirloom shop after it |
 | **M11–M14** | one region per milestone (the Tidemark, the Tithewood, the Heights and the Throne), raising the cap each time |
 
@@ -1309,7 +1335,8 @@ hours of pure fighting; real play is about 2–3× that.
 - the Bowl and the Mere Tower rules;
 - regions gated by the previous finale, with renown opening side content;
 - one full town per region, with waystations;
-- the Bowl's marks and its heirloom shop (power capped at a boss heirloom's).
+- the Bowl's marks and its heirloom shop (power capped at a boss heirloom's; its stock defined later);
+- the count (lamps broken, souls freed) and its leaderboard, the Freed.
 
 **Dev plan:** §8's phasing, and the content budget, rescaled.
 
@@ -1400,6 +1427,7 @@ writer. Here is what they found, and what draft 2 did about it. The tables keep 
 | The factions (draft 6) | "the Lantern guild, cinder cult, ashbound, grey sisters and redhand being the major factions and story lines" | §1.2: the five, each with a mission, a hook, objectives in every region and an ending; a table of the five storylines by region; the Redhand carried through every act under Nan Ruddock, Garrow's quartermaster; everyone else a minor player, in one table |
 | The Lantern Guild (draft 7) | "Enhance the Lantern Guild purpose story, its members seek to destroy those lamps that hold souls captive as the Ashen, as well as to prevent new ones" | souls are held in **lamps** (§1.1); the Guild's story, oath, mission, ranks and secrecy (§1.2); a lamp broken in every region; Mabry Cole and the Great Beacon (§4); one lamp rule (§1.3, §8); reviewed in §10.5 |
 | The tower and the iron (draft 8) | "The endless tower wasn't built or run by the lantern guild. It was built before the empire, only recently discovered or rediscovered after the solemere empire fell … Throne-iron isn't a good name. How about iron mined near where the ember was found. Perhaps the iron and the ember are a remnant of a meteor that fell from the sky long ago.. only hinted at" | the Mere Tower (§4.2) and the Great Beacon as the Guild's own finite site (§4.3); pale iron and the hints (§1.1); reviewed in §10.6 |
+| The count and the shop (draft 9) | "Yes keep a count of lanterns broken and souls freed.. future leaderboard item. The arena token shop items can be defined later" | the count in the Chronicle, credited only by sim rules, and its future leaderboard, the Freed (§1.3, §8); the shop's stock deferred (§4.1, §11) |
 | The tower offline | "Tower can always bee played offline" | always playable offline. The Wall stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ### 10.4 The owner's account of the fuel, reviewed (draft 5)
@@ -1491,10 +1519,10 @@ becomes iron mined where the Ember was found, and the two are the remnant of a s
 
 ## 11. Still open
 
-1. **The Bowl's heirloom shop:** what it sells and at what price, when its milestone comes (after M10).
-2. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
+1. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
    square at its head) and the region's materials.
-3. **When the Great Beacon ships** (★ *Let Them Go Dark*, §4.3): with the Heights (M14), or as the first post-game
+2. **When the Great Beacon ships** (★ *Let Them Go Dark*, §4.3): with the Heights (M14), or as the first post-game
    update after it?
-4. **The lamp count.** Should the Chronicle keep the company's count of lamps broken and souls freed, as Ilse
-   would? It's a stat the sim already has the events for.
+
+**Deferred by the owner, not open:** the Bowl's heirloom shop, what it sells and at what price, is defined later
+(after M10).
