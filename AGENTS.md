@@ -45,6 +45,7 @@ node tools/actor-lab/faces.cjs            # the face board: every faces.json pre
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
 node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md) → docs/img/world/old-provinces.jpg + .svg
+node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here
