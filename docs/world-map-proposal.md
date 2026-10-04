@@ -1,8 +1,16 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 2 (2026-10-04), awaiting the owner.** Draft 2 takes in two critic passes: a game designer's and a
-D&D writer's (§10). Nothing here is canon until the owner signs it off and it lands in
-[emberfall-world.md](./emberfall-world.md) (canon first) and the [GDD](./emberfall-gdd.md) (design).
+**Proposal, draft 3 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+Draft 3 takes the owner's answers to its questions (§10.3).
+- The map is portrait.
+- Each region has one full town, styled to the region: the player's base.
+- The cap is 75, and the skills are as recommended.
+- At the end it's always Lucan's voice.
+- The Bowl pays tokens for a future heirloom shop.
+- The Beacon can always be played offline.
+
+It becomes canon when it lands in [emberfall-world.md](./emberfall-world.md) (canon first) and the
+[GDD](./emberfall-gdd.md) (design).
 
 The owner (2026-10-04):
 
@@ -29,7 +37,7 @@ The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
 - §8 Numbers and phasing
 - §9 Canon and design changes
 - §10 The critic passes
-- §11 Questions for the owner
+- §11 Still open
 
 ---
 
@@ -76,22 +84,25 @@ Each region shows the player one of them. The Cult doesn't win every time.
 
 ![The Old Provinces of Solmere, in the 301st year of the Dim](img/world/old-provinces.jpg)
 
-The Lantern Guild's own wall map: ink on parchment, hills in hatching, woods in little crowns, the imperial roads
-ruled straight, with a dead beacon-tower every day's march. The corners are blank, because nobody has been. Source:
+The Lantern Guild's own wall map, drawn **portrait**, the shape of a phone held upright (the owner):
+- ink on parchment, hills in hatching, woods in little crowns;
+- the imperial roads ruled straight, with a dead beacon-tower every day's march;
+- the island running north to south, from the Heights to Emberfall;
+- the corners left blank, because nobody has been. Source:
 `tools/worldmap/draw.mjs` (seeded; `node tools/worldmap/draw.mjs` redraws it, with an SVG beside the JPG).
 
 | | Where | Levels | Hub | Main story |
 |---|---|---|---|---|
-| **Act I–II · Emberfall** (the Hollow Vale and the Greywater Fens) | the south-west corner | **1–15** | **Thornwick** (and Saltmere, §3.1) | *Until Relieved*: the Ashbound dead |
-| **Act III · The Cinder Reach** (the Deepdelver Charter) | the black hills of the west | **15–30** | **Ashgate** | *Quota*: the forges relit, and who feeds them |
+| **Act I–II · Emberfall** (the Hollow Vale and the Greywater Fens) | the south, at the island's foot | **1–15** | **Thornwick** | *Until Relieved*: the Ashbound dead |
+| **Act III · The Cinder Reach** (the Deepdelver Charter) | the black hills of the north-west | **15–30** | **Ashgate** | *Quota*: the forges relit, and who feeds them |
 | **Solmere**, the dead capital (a free city) | the centre, on the Mere | from 15 | **the Lamphall** | the Bowl (arena) and the Great Beacon (the tower); side quests only |
-| **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the east coast | **30–45** | **Tollhaven** | *The Seventh Solmere*: a would-be emperor's war |
+| **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the north-east coast | **30–45** | **Tollhaven** | *The Seventh Solmere*: a would-be emperor's war |
 | **Act V · The Tithewood** (the clan woods) | the south-east | **45–60** | **Rookstead** | *The Unpaid*: the tithe the empire never collected |
 | **Act VI · The Pale Heights and the Ember Throne** | the north, round the crater | **60–75** | **Frosthold** | *The Throne of Embers*: the finale |
 | After the finale | under the Throne, and in Solmere | 75 | — | the Undervaults (canon: the XP and loot dive) and the Great Beacon (the leaderboard) |
 
-**The route** goes round the capital: Emberfall, up the Wickham road into the Reach, east to Solmere, out to the
-coast, south into the wood, and last north up the Pilgrims' Stair.
+**The route** goes round the capital: Emberfall, north up the Wickham road into the Reach, across to Solmere, out
+to the coast, down into the wood, and last north up the Pilgrims' Stair.
 - **Every region opens at the previous region's finale.** Maudry Fenn sends the company on after Act II, with a
   letter to the Guild in Solmere (*"Don't let them make you pay for the stairs"*).
 - **Every region's first two sites overlap the last band by about three levels.** So a company can finish one
@@ -101,6 +112,24 @@ coast, south into the wood, and last north up the Pilgrims' Stair.
 ---
 
 ## 3. The regions
+
+**One full town per region: the player's base** (the owner). Each has the same five services in the same places
+(GDD §10: the tavern with the Guild's board, the inn, the smith, the shop and the temple), round a square with the
+region's trouble on the board. Each is built and lit in the region's own way, so arriving in one feels like
+arriving somewhere new.
+
+| Region | Town | Its look | Its square |
+|---|---|---|---|
+| Emberfall | **Thornwick** (shipped) | a farming town: timber palisade on an earth bank, thatch and timber-frame | the well; Maudry's *Tired Mule* |
+| The Reach | **Ashgate** | a mining town in black stone and iron: slag-brick walls, chimneys, a pithead wheel over the gate, every window lit orange | the Charter's anvil; *The Slag & Bellows* |
+| The Tidemark | **Tollhaven** | a harbour town in brick and tile on stone quays, a chain across the harbour mouth, gulls on every ridge | the Speaker's counting-house; *The Drowned Eel*'s sister house, *The Paid Toll* |
+| The Tithewood | **Rookstead** | a clan steading: longhouses of oak and turf inside a ring of standing stones, smoke through the roofs | the moot-stone; a mead-hall for a tavern, *The Antler* |
+| The Heights | **Frosthold** (canon) | a monastery turned fortress: grey stone, snow on everything, bells | the cloister; *The Frozen Flagon* |
+| (Solmere) | **the Lamphall** | the capital's ruin, the Guild's mother-house at the Beacon's foot | the city square where every company meets (§4) |
+
+Other places in a region are **waystations**: a tavern, a board and a shrine, and no smith or inn. Examples are
+Saltmere in the Fens, Kell's Rest, Brine Cross, Hollin Ford and the Frozen Hospice. A Homeward Scroll still takes
+you to the nearest town.
 
 Each region below has the same parts:
 - what it is;
@@ -116,10 +145,10 @@ Its skills are in §5.
 ### 3.1 Emberfall: levels 1–15 · Acts I–II · *Until Relieved*
 
 **What it is.** As canon has it: the Hollow Vale's farms and barrows (1–8), and south of them the Greywater Fens
-(8–15), round the drowned imperial canal. **Thornwick** is its town, and its chapters and board run to 15.
-- **Saltmere** is the Fens' second town. Its square has all four services, in the stilt town's tone (GDD §10), so
-  an 8–15 company needn't walk home to mend.
-- The owner's "Thornwick to 15" reads as **Emberfall's story to 15**. That's question 1 in §11.
+(8–15), round the drowned imperial canal.
+- **Thornwick** is the town and the base, to 15 (the owner), and its chapters and board run that far.
+- **Saltmere**, the stilt town, is the Fens' waystation: the *Drowned Eel* with its board, the Grey Sisters'
+  chapel, and Pim's chandlery. It's a day from Thornwick by the canal road.
 
 **The Grey Sisters, explained.**
 - The Drowned Abbey belonged to the order the Grey Sisters came out of: the imperial **binding clergy**, who bound
@@ -299,7 +328,7 @@ We did not tell them."*
    - **The win:** the war ends and the League stands.
    - **The cost:** a Solmere voice is on the Pilgrims' Stair.
    - (The Kindler learned the blood was common from the genealogies you saved. Sister Maren, who read them first,
-     knows her own name is in them.)
+     has carried them since.)
 
 **Sites.**
 
@@ -451,10 +480,13 @@ found, and the flame's palace in it.
    - **The fight is in phases.** The fuel is too little, so between phases the Cult's faithful walk into the
      vessel, one rank at a time, and the flame grows.
    - Beaten, the Kindler walks in last: *"Most of them volunteered."*
-   - **The choice is canon's, and the player's.**
-     - Whose voice: Lucan's, or **Sister Maren**'s, if she's in the company (her name is in the genealogies).
-     - What it says: *stop*, as Aurelle said, the good ending; or *burn*, which keeps the flame, gives the darker
-       ending and opens the post-game Undervaults (canon).
+   - **It's always Lucan** (the owner: one ending, so every player's world is the same one, for multiplayer).
+     - He gives the flame its last order, the one Aurelle gave: *stop*.
+     - It takes the voice that gave it. Lucan never speaks again. He stays at Frosthold as a lay brother and
+       sweeps the Stair.
+     - The player's part is getting him there, and holding the Throne while he does it.
+   - The Throne's vaults open to everyone: the **Undervaults**, canon's endless dive.
+   - Canon's darker ending, keeping the flame, is dropped, so that there's one world.
 
 **Sites.**
 
@@ -550,8 +582,14 @@ him be."*
 - **Offline, the Bowl still has a ladder:** **written rival companies**, each with a name and a manner, and a
   tavern table you can see them at. For example: *the Widow Brack's Three*; *the Coalbrook Boys*; *Hesk's
   Cousins*.
-- **Rewards: standing only.** Titles, the season's banner over the company's tavern table, Bowl tabards and
-  colours. No gear with stats, so power is never behind PvP (dev plan §2.12, pillar 8).
+- **Rewards: marks of the Bowl** (the owner).
+  - These are tokens won in bouts and kept on the company. They buy from **the Bowl's heirloom shop**, which
+    comes later: the named arms of the empire's champions, each with its line of history. For example:
+    *The Crier's Bell* — "He called the bout. He'll call yours."
+  - Marks come only from **verified** bouts, at most a set number a day, with a season bonus by standing.
+  - An arena heirloom is **no stronger than a boss's heirloom of its level**. The Bowl is another road to the best
+    gear, not a shorter one, and the PvE paths keep their worth.
+  - Titles, the season's banner over the company's tavern table and Bowl tabards come on top.
 - **Later (M12):** live 1v1 and 3v3, and the Heroic raids gathering in the Lamphall.
 
 ### 4.2 The Great Beacon: the dark tower
@@ -570,6 +608,8 @@ but it isn't empty.
   way to grow.
 - **It pays.** Gold and cinders each wave, rising with the wave (pillar 3: waves pay for their danger), within the
   economy's budget. Its loot is below.
+- **It can always be played offline** (the owner). It's the same sim, offline or on, like every site (GDD §12):
+  the loot and the waves are the same, and a climb made offline counts once it syncs and its replay is verified.
 - **The climb.**
   - Each wave is harder than the last: **+6 % a wave, compounding**, from a table (deterministic, like
     `XP_TABLE`).
@@ -579,12 +619,12 @@ but it isn't empty.
     up to the last landing.
 - **The Roll** (the leaderboard).
   - It counts the **highest wave held in a live, verified climb**, per bracket and per season.
-  - **The flame clock:** a climb has a time limit, like the Rifts', so the Roll measures holding power, not hours.
-  - Going offline in the tower counts as stepping out at the last landing. Offline time can't climb the Roll, and
-    premium windows can't buy standing (pillar 8).
+  - **The flame clock:** a climb has a time limit, like the Rifts', on the sim's own clock, online or off. The Roll
+    measures holding power, not hours, so a longer premium offline window can't buy standing (pillar 8).
   - Each season's waves are seeded **per season**, the same for everyone.
   - The Roll is written only by the replay validator (AGENTS.md, architecture §10).
-- **Before the validator exists** (M6), the Beacon still plays: waves 1–30 as an offline site, with no Roll.
+- **Before the validator exists** (M6), the Beacon still plays in full. The Roll fills in once climbs can be
+  verified.
 
 **The lampwardens.** A warden holds every tenth landing. The **first time a hero's company beats one, in a bracket,
 it drops that warden's heirloom**:
@@ -687,7 +727,7 @@ proposal.
 | The Reach | the forges, still needing fuel | the Kell Assay, for profit | **the vessel** | a loss: a day late |
 | The Tidemark | the throne, still empty | Lucan, for a crown | **the voice**: anyone of the blood | a win, and a man who walks north on his own |
 | The Tithewood | the tithe, still uncollected | the Reeve, for the count | **the fuel**: bought, not stolen | mostly a win: too little fuel got out |
-| The Heights | the flame | the Kindler, for faith | it all comes together | the choice |
+| The Heights | the flame | the Kindler, for faith | it all comes together | Lucan says *stop*, and loses his voice |
 
 **The Chronicle builds the reveal across the map:**
 - **the Vale:** the dead were tithed;
@@ -743,10 +783,10 @@ hours of pure fighting; real play is about 2–3× that.
 
 | Milestone | What |
 |---|---|
-| **M8** | **the Fens** to 15 (Act II), and Saltmere; **a Solmere shell**: the Lamphall, and the Beacon's waves 1–30 as an offline site, with no Roll. A capped player has an endgame loop before new regions come. |
+| **M8** | **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Beacon, played offline, with no Roll yet. A capped player has an endgame loop before new regions come. |
 | **M9** | **the Reach** (Act III); the stat rescale; the first skill tier (L18); the cap to 30 |
-| **After M6's validator** | the Beacon's Roll and seasons |
-| **M10** | **the Bowl**, async, with its written rivals |
+| **After M6's validator** | the Beacon's Roll and seasons; the Bowl's marks |
+| **M10** | **the Bowl**, async, with its written rivals; the heirloom shop after it |
 | **M11–M14** | one region per milestone (the Tidemark, the Tithewood, the Heights and the Throne), raising the cap each time |
 
 ---
@@ -767,6 +807,8 @@ hours of pure fighting; real play is about 2–3× that.
 6. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
 7. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
 8. **The Cult's four needs** (spark, vessel, voice, fuel), and the faithful as the last fuel.
+   **The ending:** always Lucan's *stop*, and the darker *keep the flame* ending (§6) dropped, for one shared world.
+   **Saltmere** becomes a waystation (§3 now says each region has one town).
 9. **Acts I–VI by region** (§6 now has four acts).
 10. **Level bands:** the Reach 15–30, the Heights 60–75, the Throne at 73–75. New: the Tidemark 30–45, the
     Tithewood 45–60.
@@ -786,7 +828,8 @@ hours of pure fighting; real play is about 2–3× that.
 - one ground-hazard system;
 - the Bowl and the Beacon rules;
 - regions gated by the previous finale, with renown opening side content;
-- Saltmere's hub, if the owner agrees.
+- one full town per region, with waystations;
+- the Bowl's marks and its heirloom shop (power capped at a boss heirloom's).
 
 **Dev plan:** §8's phasing, and the content budget, rescaled.
 
@@ -860,14 +903,20 @@ writer. Here is what they found, and what draft 2 did about it.
 
 ---
 
-## 11. Questions for the owner
+### 10.3 The owner's answers (draft 3)
 
-1. **"Thornwick to 15."** Draft 2 reads it as Emberfall's story to 15, from Thornwick, with Saltmere a full town
-   for the Fens. Or do you want Saltmere a waystation, so the whole band comes home to Thornwick?
-2. **The cap of 75**, in five bands of 15? Your note allowed 15–20; 15 keeps every band to six sites and six
-   chapters.
-3. **The skill choice:** one new active per region, picked from two at the trial, and four carried from the fifth?
-4. **The finale's voice:** the player chooses Lucan's or Maren's. Or should Lucan's be the only one, so Maren is
-   never at risk?
-5. **The Bowl's rewards:** standing only (titles, banners, tabards), as both critics recommend?
-6. **The Beacon:** waves 1–30 offline at M8, before the Roll exists at M6's validator?
+| Question | The owner | What changed |
+|---|---|---|
+| The map | "more elongated and taller to fit mobile portrait mode" | redrawn portrait (1200 × 2400), the island north to south |
+| Thornwick to 15; Saltmere | "Each region can have a full town, different styling but its the players base" | one full town per region, each styled to it (§3); Saltmere and the rest are waystations |
+| The cap | "Level cap 75 for now" | as draft 2 |
+| The skills | "Go with your skills recommendation" | as draft 2 (§5) |
+| The finale's voice | "At the end its always Lucan so its consistent for multiplayer" | always Lucan's *stop*, and it costs him his voice; the darker ending is dropped (§3.5) |
+| The Bowl's rewards | "Arena is special tokens that the user can use for a future special arena shop of heirlooms" | marks of the Bowl, and a future heirloom shop. Both critics wanted standing only, so the guard is: verified bouts only, a daily cap, and no heirloom stronger than a boss's of its level (§4.1) |
+| The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
+
+## 11. Still open
+
+1. **The Bowl's heirloom shop:** what it sells and at what price, when its milestone comes (after M10).
+2. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
+   square at its head) and the region's materials.

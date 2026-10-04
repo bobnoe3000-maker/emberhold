@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'world', 'old-provinces.jpg'));
-const W = 2000, H = 1400;
+const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
 // ── chance, seeded ───────────────────────────────────────────────────────────────────────────────────────────────────
 let seed = 0x5017e7e;
@@ -41,20 +41,20 @@ function ragged(pts, closed, rough = 0.18, depth = 5) {
 const pathOf = (pts, closed) => 'M' + pts.map((p) => f1(p[0]) + ',' + f1(p[1])).join('L') + (closed ? 'Z' : '');
 const inside = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if (((yi > pt[1]) !== (yj > pt[1])) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c; } return c; };
 
-// ── the land ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-const COAST = ragged([[300, 230], [420, 205], [520, 150], [600, 190], [720, 160], [840, 120], [930, 150], [1010, 105], [1100, 140], [1230, 125],
-  [1330, 170], [1440, 150], [1560, 210], [1650, 200], [1720, 290], [1800, 350], [1770, 420], [1720, 450], [1760, 520], [1735, 585],
-  [1660, 600], [1640, 640], [1700, 680], [1720, 760], [1680, 850], [1700, 930], [1620, 1010], [1580, 1090], [1480, 1120], [1400, 1180],
-  [1290, 1170], [1200, 1210], [1110, 1180], [1050, 1110], [990, 1090], [940, 1140], [880, 1170], [780, 1160], [690, 1200], [600, 1185],
-  [540, 1240], [470, 1255], [400, 1225], [330, 1190], [300, 1120], [240, 1060], [215, 960], [265, 900], [255, 830], [330, 790],
-  [360, 740], [300, 700], [235, 690], [200, 620], [230, 560], [195, 480], [240, 420], [215, 340], [250, 280]], true, 0.2, 5);
+// ── the land (portrait, the owner: "more elongated and taller to fit mobile portrait mode"): the island runs north to
+// south, the Heights at the top, Emberfall at the foot ────────────────────────────────────────────────────────────────
+const COAST = ragged([[300, 250], [420, 205], [520, 168], [620, 190], [720, 158], [820, 198], [900, 250], [960, 330], [1010, 420], [990, 520],
+  [1040, 620], [1062, 720], [1020, 800], [1060, 880], [1050, 960], [985, 1010], [1022, 1080], [1040, 1180], [1000, 1260], [1032, 1340],
+  [1010, 1450], [1042, 1560], [1000, 1680], [962, 1780], [982, 1860], [900, 1940], [820, 1975], [740, 1945], [680, 2005], [620, 2080],
+  [560, 2160], [480, 2200], [400, 2192], [320, 2168], [240, 2120], [200, 2040], [222, 1960], [170, 1880], [190, 1780], [160, 1680],
+  [200, 1600], [262, 1560], [250, 1500], [180, 1462], [150, 1380], [190, 1300], [160, 1200], [200, 1100], [150, 1000], [172, 880],
+  [140, 780], [180, 680], [160, 580], [210, 480], [200, 380], [250, 300]], true, 0.2, 5);
 const ISLES = [
-  ragged([[1810, 470], [1860, 480], [1870, 525], [1820, 540], [1795, 505]], true, 0.3, 4),    // the Gull Isles
-  ragged([[1850, 580], [1895, 590], [1890, 630], [1845, 625]], true, 0.3, 4),
-  ragged([[1790, 650], [1825, 655], [1818, 690], [1785, 682]], true, 0.3, 4),
-  ragged([[120, 640], [170, 630], [180, 690], [130, 705]], true, 0.3, 4),                      // the western skerries
-  ragged([[150, 520], [180, 515], [185, 545], [155, 550]], true, 0.3, 4),
-  ragged([[880, 1270], [960, 1262], [975, 1300], [900, 1312]], true, 0.3, 4),                  // the southern rocks
+  ragged([[1085, 875], [1125, 880], [1132, 922], [1090, 930]], true, 0.3, 4),                 // the Gull Isles
+  ragged([[1098, 958], [1140, 962], [1136, 1002], [1096, 996]], true, 0.3, 4),
+  ragged([[62, 1000], [104, 994], [110, 1040], [70, 1046]], true, 0.3, 4),                     // the western skerries
+  ragged([[80, 860], [106, 856], [110, 884], [84, 888]], true, 0.3, 4),
+  ragged([[760, 2110], [818, 2102], [830, 2142], [772, 2152]], true, 0.3, 4),                  // the southern rocks
 ];
 
 // ── the frame of the drawing ─────────────────────────────────────────────────────────────────────────────────────────
@@ -111,48 +111,47 @@ function range(line, n, h, w, dark = false) {
 
 // rivers first (marks sit over them), roads after the land
 const RIVERS = [
-  [[985, 470], [990, 540], [970, 600], [985, 668]],                                            // the Sol, from the crater to the Mere
-  [[1080, 720], [1180, 760], [1290, 800], [1420, 840], [1530, 880], [1625, 905]],              // the Long Water, the Mere to the sea
-  [[1460, 470], [1540, 520], [1610, 560], [1700, 605]],                                         // the Highmarch water, to Tollhaven
-  [[470, 790], [455, 860], [470, 930], [440, 1000], [420, 1070], [395, 1150]],                 // the Vale's river, to the fens and the sea
-  [[640, 520], [700, 600], [780, 650], [905, 700]],                                             // the Ashwater, from the Reach to the Mere
+  [[600, 600], [606, 760], [588, 900], [602, 1090]],                                            // the Sol, from the crater to the Mere
+  [[680, 1200], [780, 1300], [880, 1400], [960, 1520], [1010, 1600]],                            // the Long Water, the Mere to the sea
+  [[820, 840], [880, 880], [950, 920], [1020, 960]],                                             // the Highmarch water, to Tollhaven
+  [[380, 1525], [360, 1650], [330, 1800], [300, 1950], [262, 2140]],                             // the Vale's river, to the fens and the sea
+  [[400, 860], [440, 950], [490, 1040], [540, 1120]],                                            // the Ashwater, from the Reach to the Mere
 ];
 for (const rv of RIVERS) { const p = ragged(rv, false, 0.35, 4); add(`<path d="${pathOf(p, false)}" fill="none" stroke="${INK2}" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`); }
-// the Mere, and the drowned canal (ruled straight, as the empire cut it)
-const MERE = ragged([[915, 690], [980, 668], [1070, 680], [1090, 720], [1040, 760], [950, 755], [905, 725]], true, 0.25, 4);
+const MERE = ragged([[520, 1130], [580, 1100], [670, 1110], [690, 1150], [640, 1195], [550, 1192], [510, 1162]], true, 0.25, 4);
 add(`<path d="${pathOf(MERE, true)}" fill="${SEA}" fill-opacity="0.75" stroke="${INK}" stroke-width="1.8"/>`);
-for (let i = 0; i < 4; i++) add(`<path d="M${930 + i * 30},${700 + (i % 2) * 22} h22" stroke="${INK2}" stroke-width="0.9" opacity="0.6"/>`);
-add(`<path d="M470,960 L470,1195" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>`);
+for (let i = 0; i < 4; i++) add(`<path d="M${535 + i * 30},${1135 + (i % 2) * 24} h20" stroke="${INK2}" stroke-width="0.9" opacity="0.6"/>`);
+add(`<path d="M342,1800 L342,2185" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>`);   // the drowned canal
 
 // the land's marks
-const HEIGHTS_C = [1000, 400];
-for (let i = 0; i < 26; i++) { const a = (i / 26) * Math.PI * 2, rad = rr(78, 92); const x = HEIGHTS_C[0] + Math.cos(a) * rad * 1.25, y = HEIGHTS_C[1] + Math.sin(a) * rad * 0.8; if (Math.sin(a) > 0.55 && Math.abs(Math.cos(a)) < 0.3) continue; add(peak(x, y + 10, rr(26, 40), rr(14, 20))); }   // the crater's rim (open to the south: the Pilgrims' Stair)
-range([[600, 300], [670, 262], [740, 250], [790, 262]], 11, 46, 22); range([[1215, 262], [1280, 250], [1340, 270], [1400, 310]], 11, 46, 22);   // the Pale Heights (the crater's north kept clear for the name)
-range([[700, 330], [800, 300], [900, 300]], 9, 34, 18); range([[1100, 300], [1200, 320], [1300, 350]], 9, 34, 18);
-range([[330, 420], [420, 460], [520, 470], [620, 470]], 16, 30, 16, true);                    // the Cinder Reach: black hills
-range([[360, 560], [440, 610], [560, 630]], 10, 24, 14, true);
-add(peak(395, 470, 62, 34, true)); add(`<path d="M382,410 q13,-14 26,0" fill="none" stroke="${INK}" stroke-width="1.4"/>`);   // Kell's dead volcano, and its smoke
-for (let i = 0; i < 3; i++) add(`<path d="M${398 + i * 4},${400 - i * 6} q${8 + i * 3},-10 0,-${18 + i * 6} q-${8 + i * 3},-10 0,-${18 + i * 4}" fill="none" stroke="${INK2}" stroke-width="1" opacity="${0.5 - i * 0.12}"/>`);
-range([[350, 770], [420, 760], [500, 765], [580, 780]], 12, 22, 13);                          // the Vale's north range (the Scrag Warren)
-range([[1380, 380], [1460, 400], [1520, 440]], 8, 26, 14);                                    // the Highmarch fells
-range([[1500, 1000], [1560, 960], [1610, 900]], 7, 22, 12);
-scatter([[1060, 830], [1260, 800], [1460, 880], [1520, 1000], [1400, 1060], [1150, 1070], [1010, 1020], [1000, 900]], 280, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Tithewood
-scatter([[560, 840], [700, 830], [760, 900], [700, 980], [600, 960]], 34, 18, (x, y) => tree(x, y, rr(6, 8)));               // the Vale's woods
-scatter([[600, 380], [700, 350], [760, 420], [680, 470], [600, 450]], 30, 17, (x, y) => pine(x, y, rr(8, 11)));              // pines under the Heights
-scatter([[1180, 400], [1300, 390], [1350, 470], [1240, 500]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));
-scatter([[300, 1000], [440, 980], [600, 1050], [640, 1160], [420, 1180], [300, 1120]], 70, 16, (x, y) => reeds(x, y, rr(5, 7)));   // the Greywater Fens
-scatter([[700, 760], [880, 760], [920, 880], [800, 960], [700, 900]], 26, 30, (x, y) => hill(x, y, rr(10, 15)));             // the downs
-scatter([[1160, 560], [1360, 540], [1420, 640], [1250, 680], [1150, 640]], 22, 34, (x, y) => hill(x, y, rr(10, 15)));
-scatter([[640, 1000], [880, 960], [960, 1100], [780, 1140]], 16, 36, (x, y) => hill(x, y, rr(9, 14)));
+const HEIGHTS_C = [600, 520];
+for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, rad = rr(78, 92); const x = HEIGHTS_C[0] + Math.cos(a) * rad * 1.25, y = HEIGHTS_C[1] + Math.sin(a) * rad * 0.8; if (Math.sin(a) > 0.55 && Math.abs(Math.cos(a)) < 0.3) continue; add(peak(x, y + 10, rr(26, 40), rr(14, 20))); }   // the crater's rim, open to the south (the Pilgrims' Stair)
+range([[240, 390], [310, 350], [380, 345], [430, 368]], 9, 44, 21); range([[770, 368], [830, 345], [900, 350], [960, 400]], 9, 44, 21);   // the Pale Heights (the name between them)
+range([[230, 470], [300, 440]], 5, 32, 17); range([[900, 450], [970, 480]], 5, 32, 17);
+range([[200, 770], [270, 742], [340, 752], [430, 770]], 12, 30, 16, true);                    // the Cinder Reach: black hills
+range([[220, 1010], [300, 1036], [410, 1046]], 9, 24, 14, true);
+add(peak(236, 800, 60, 32, true)); add(`<path d="M224,742 q12,-13 24,0" fill="none" stroke="${INK}" stroke-width="1.4"/>`);   // Kell's dead volcano, and its smoke
+for (let i = 0; i < 3; i++) add(`<path d="M${239 + i * 4},${732 - i * 6} q${8 + i * 3},-10 0,-${18 + i * 6} q-${8 + i * 3},-10 0,-${18 + i * 4}" fill="none" stroke="${INK2}" stroke-width="1" opacity="${0.5 - i * 0.12}"/>`);
+range([[205, 1525], [280, 1512], [360, 1518], [440, 1534]], 11, 22, 13);                      // the Vale's north range (the Scrag Warren)
+range([[930, 820], [985, 800], [1015, 840]], 5, 24, 13);                                      // the Highmarch fells
+range([[930, 1790], [960, 1720], [990, 1650]], 5, 22, 12);
+scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [640, 1760], [600, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Tithewood
+scatter([[440, 1650], [560, 1650], [580, 1770], [470, 1810], [420, 1730]], 26, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
+scatter([[200, 470], [330, 470], [380, 580], [240, 620]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));                                      // pines under the Heights
+scatter([[830, 470], [960, 480], [990, 610], [850, 620]], 24, 17, (x, y) => pine(x, y, rr(8, 11)));
+scatter([[190, 1880], [360, 1860], [560, 1930], [560, 2120], [400, 2180], [230, 2130]], 64, 16, (x, y) => reeds(x, y, rr(5, 7)));      // the Greywater Fens
+scatter([[460, 1340], [600, 1300], [610, 1470], [500, 1500]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));                                 // the downs
+scatter([[220, 1150], [440, 1150], [450, 1310], [250, 1330]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));
+scatter([[700, 980], [900, 950], [950, 1100], [760, 1130]], 12, 34, (x, y) => hill(x, y, rr(10, 14)));
 
 // ── the imperial roads, ruled straight from Solmere, with their dead beacon-towers ──────────────────────────────────
-const SOL = [1000, 712];
+const SOL = [600, 1150];
 const PLACES = {
-  thornwick: [470, 905], greyholt: [565, 838], saltmere: [385, 1105], reedholm: [545, 1120], ashgate: [525, 560], kells: [395, 485],
-  frosthold: [880, 300], glass: [1130, 315], throne: [1000, 402], tollhaven: [1700, 600], highmarch: [1440, 470], brine: [1290, 575],
-  gullwick: [1665, 790], rookstead: [1240, 965], hollin: [1095, 885],
+  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [262, 2062], reedholm: [470, 2082], ashgate: [360, 905], kells: [240, 838],
+  frosthold: [420, 440], glass: [790, 440], throne: [600, 522], tollhaven: [1020, 960], highmarch: [820, 835], brine: [722, 1012],
+  gullwick: [998, 1180], rookstead: [800, 1600], hollin: [690, 1450],
 };
-const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [1000, 470]], [PLACES.ashgate, PLACES.kells], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
+const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
 for (const r of ROADS) {
   add(`<path d="${pathOf(r, false)}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6" opacity="0.8"/>`);
   for (let i = 0; i < r.length - 1; i++) {                      // a beacon-tower each long stretch
@@ -160,8 +159,7 @@ for (const r of ROADS) {
     for (let k = 1; k <= n; k++) { const t = k / (n + 1), x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t; add(`<path d="M${f1(x - 3)},${f1(y + 4)} l1,-11 h4 l1,11 z" fill="${INK}" opacity="0.75"/>`); }
   }
 }
-// the Pilgrims' Stair: a zigzag up into the crater
-add(`<path d="M1000,560 l-14,-14 l22,-12 l-20,-14 l18,-14 l-12,-12 l8,-10" fill="none" stroke="${RED}" stroke-width="1.8" stroke-dasharray="5 4"/>`);
+add(`<path d="M600,770 l-14,-16 l22,-14 l-20,-16 l18,-16 l-12,-14 l8,-12" fill="none" stroke="${RED}" stroke-width="1.8" stroke-dasharray="5 4"/>`);   // the Pilgrims' Stair
 
 // ── places ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 const town = (x, y) => `<rect x="${x - 6}" y="${y - 6}" width="12" height="10" fill="${PAPER}" stroke="${INK}" stroke-width="1.5"/><path d="M${x - 7},${y - 6} l7,-7 l7,7" fill="${PAPER}" stroke="${INK}" stroke-width="1.5"/>`;
@@ -178,77 +176,67 @@ add(`<path d="M${SOL[0] - 9},${SOL[1] + 4} l3,-46 h12 l3,46 z" fill="#1e1610" st
 add(`<ellipse cx="${HEIGHTS_C[0]}" cy="${HEIGHTS_C[1]}" rx="52" ry="30" fill="${PAPER}" stroke="${INK}" stroke-width="1.8"/>`);
 for (let i = 0; i < 9; i++) add(`<path d="M${f1(HEIGHTS_C[0] - 44 + i * 11)},${f1(HEIGHTS_C[1] - 16 + Math.abs(i - 4) * 2.5)} l4,9" stroke="${INK}" stroke-width="0.9"/>`);
 add(`<path d="M${HEIGHTS_C[0] - 10},${HEIGHTS_C[1] + 8} v-12 l4,-6 l3,4 l3,-8 l3,8 l3,-4 l4,6 v12 z" fill="#1e1610"/>`);
-// towns and sites
 for (const k of ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold']) add(hub(...PLACES[k]));
 for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
-const SITES = [[540, 800, 'site'], [392, 1032, 'ruin'], [520, 1010, 'site'], [620, 900, 'ruin'], [560, 520, 'site'], [610, 560, 'ruin'], [460, 600, 'site'], [1130, 315, 'ruin'], [1215, 440, 'site'],
-  [1825, 505, 'site'], [1600, 650, 'ruin'], [1440, 470, 'site'], [1120, 940, 'ruin'], [1320, 1040, 'site'], [1120, 1040, 'ruin']];
+const SITES = [[400, 1550, 'site'], [470, 1772, 'ruin'], [300, 1962, 'ruin'], [430, 1930, 'site'], [530, 2030, 'site'], [420, 818, 'site'], [482, 952, 'ruin'], [282, 990, 'site'],
+  [790, 440, 'ruin'], [752, 618, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [722, 1562, 'ruin'], [860, 1722, 'site'], [700, 1772, 'ruin']];
 for (const [x, y, k] of SITES) add(k === 'ruin' ? ruin(x, y) : site(x, y));
-// the Soulcracks: a jagged split in the Heights
-add(`<path d="${pathOf(ragged([[1150, 430], [1195, 446], [1240, 428], [1290, 452]], false, 0.6, 3), false)}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);
+add(`<path d="${pathOf(ragged([[690, 610], [730, 626], [770, 606], [815, 628]], false, 0.6, 3), false)}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);   // the Soulcracks
 
 // ── the old province lines, faint and dotted (the Guild's guess at where one ends) ────────────────────────────────
-const BORDERS = [[[230, 700], [420, 720], [600, 720], [760, 760], [820, 900], [800, 1060], [780, 1160]],   // Emberfall
-  [[600, 720], [700, 620], [760, 520], [780, 420], [740, 300], [700, 180]],                                  // the Reach / the Heights
-  [[760, 520], [900, 560], [1100, 560], [1250, 520], [1320, 420], [1300, 300], [1350, 170]],                 // the Heights' foot
-  [[1250, 520], [1320, 640], [1400, 760], [1560, 820], [1690, 820]],                                         // the Tidemark
-  [[820, 900], [960, 820], [1100, 790], [1250, 760], [1400, 760]]];                                           // the Tithewood
+const BORDERS = [[[160, 660], [350, 690], [480, 720], [600, 770], [720, 720], [860, 690], [1040, 680]],   // the Heights' foot
+  [[480, 720], [520, 860], [500, 1000], [440, 1120], [300, 1250], [160, 1300]],                              // the Reach
+  [[720, 720], [680, 880], [700, 1060], [780, 1250], [1030, 1300]],                                          // the Tidemark
+  [[160, 1420], [330, 1440], [500, 1420], [580, 1520], [620, 1720], [640, 1960]],                            // Emberfall
+  [[580, 1520], [640, 1330], [780, 1260], [1030, 1300]]];                                                    // the Tithewood
 for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), false)}" fill="none" stroke="${INK}" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>`);
 
 // ── lettering ────────────────────────────────────────────────────────────────────────────────────────────────────────
 const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-linejoin="round"`;
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
-// the regions: spaced capitals, and the band under each in the hand of whoever added it later
-const REG = [[330, 860, 'EMBERFALL', '1 – 15'], [450, 345, 'THE CINDER REACH', '15 – 30'], [1520, 380, 'THE TIDEMARK', '30 – 45'], [1290, 1112, 'THE TITHEWOOD', '45 – 60'], [1000, 238, 'THE PALE HEIGHTS', '60 – 75']];
-for (const [x, y, n, lv] of REG) { label(x, y, n, n === 'THE PALE HEIGHTS' ? 33 : 38, { sc: true, ls: n === 'THE PALE HEIGHTS' ? 5 : 7 }); label(x, y + 30, `levels ${lv}`, 21, { it: true, fill: RED }); }
-label(600, 960, 'the Hollow Vale', 20, { it: true }); label(330, 1170, 'the Greywater Fens', 20, { it: true });
-label(1000, 790, 'SOLMERE', 34, { sc: true, ls: 9 }); label(1000, 816, 'the dead capital · the Bowl · the Great Beacon', 18, { it: true });
-label(1000, 360, 'the Ember Throne', 17, { it: true });
-label(1000, 652, 'the Mere', 16, { it: true });
-// towns
-const T = [['thornwick', 'Thornwick', 0, 26], ['greyholt', 'Greyholt', 36, -10], ['saltmere', 'Saltmere', -6, 24], ['reedholm', 'Reedholm', 30, 22], ['ashgate', 'Ashgate', 0, 28], ['kells', "Kell’s Rest", -64, 4],
-  ['frosthold', 'Frosthold', -58, 6], ['glass', 'the Glass Keep', 4, 28], ['tollhaven', 'Tollhaven', 0, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -50, 6],
-  ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', -6, -12]];
-for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, k === 'thornwick' || k === 'ashgate' || k === 'tollhaven' || k === 'rookstead' || k === 'frosthold' ? 22 : 18); }
-// sites, small and italic
-const S = [[540, 790, 'the Scrag Warren'], [380, 1056, 'the Drowned Abbey'], [520, 1030, 'the Sickpools'], [620, 920, 'the Old Barrows'], [560, 508, 'the Cinderworks'], [612, 584, 'the Forgehall'], [458, 622, 'the Slag Tunnels'],
-  [1230, 478, 'the Soulcracks'], [1820, 462, 'the Gull Isles'], [1592, 676, 'the Drowned Mole'], [1120, 962, 'the Tally-House'], [1320, 1062, 'the Root Granary'], [1120, 1060, 'the First Barn?']];
-for (const [x, y, n] of S) label(x, y, n, 15, { it: true });
-// seas, waters, and the blank corners
-label(115, 760, 'THE GREY SEA', 30, { sc: true, ls: 14, rot: -90, halo: false, op: 0.75 });
-label(1880, 900, 'THE NARROW SEA', 30, { sc: true, ls: 14, rot: 90, halo: false, op: 0.75 });
-label(760, 1300, 'THE SALT DEEPS', 30, { sc: true, ls: 14, halo: false, op: 0.75 });
-label(1000, 1150, 'the Bight of Sol', 16, { it: true, halo: false, op: 0.7 });
-label(290, 735, 'Cinder Bight', 15, { it: true, halo: false, op: 0.7 });
-label(1000, 78, 'the White Waste', 24, { it: true, halo: false, op: 0.7 });
-label(1640, 140, 'Here the map is not finished.', 20, { it: true, halo: false, op: 0.55 });
-label(1520, 905, 'the Long Water', 15, { it: true, rot: 18 });
-label(950, 600, 'the Sol', 15, { it: true, rot: -80 });
-label(756, 640, 'the Ashwater', 15, { it: true, rot: 30 });
-label(1040, 520, 'the Pilgrims’ Stair', 15, { it: true, anchor: 'start' });
-label(486, 1150, 'the drowned canal', 14, { it: true, anchor: 'start', rot: -90 });
-// a sea-serpent, because there always is one
-add(`<g transform="translate(-1720,-30)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);
+// the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
+const REG = [[310, 1598, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE TITHEWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
+for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 34, l, 32, { sc: true, ls: 5 })); label(x, y + (lines.length - 1) * 34 + 28, `levels ${lv}`, 20, { it: true, fill: RED }); }
+label(520, 1840, 'the Hollow Vale', 19, { it: true }); label(470, 2160, 'the Greywater Fens', 19, { it: true });
+label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
+label(600, 480, 'the Ember Throne', 16, { it: true });
+label(600, 1088, 'the Mere', 15, { it: true });
+const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells', 'Kell’s Rest', 0, 26],
+  ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
+  ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
+for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 21 : 17); }
+const S = [[400, 1574, 'the Scrag Warren'], [470, 1796, 'the Old Barrows'], [268, 1986, 'the Drowned Abbey'], [440, 1954, 'the Sickpools'], [530, 2054, 'the Toadking'], [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
+  [752, 652, 'the Soulcracks'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [722, 1586, 'the Tally-House'], [860, 1746, 'the Root Granary'], [700, 1796, 'the First Barn?']];
+for (const [x, y, n] of S) label(x, y, n, 14, { it: true });
+label(70, 1300, 'THE GREY SEA', 28, { sc: true, ls: 12, rot: -90, halo: false, op: 0.75 });
+label(1135, 1450, 'THE NARROW SEA', 28, { sc: true, ls: 12, rot: 90, halo: false, op: 0.75 });
+label(800, 2215, 'THE SALT DEEPS', 26, { sc: true, ls: 12, halo: false, op: 0.75 });
+label(600, 118, 'the White Waste', 22, { it: true, halo: false, op: 0.7 });
+label(990, 196, 'Here the map', 18, { it: true, halo: false, op: 0.55 }); label(990, 216, 'is not finished.', 18, { it: true, halo: false, op: 0.55 });
+label(912, 1470, 'the Long Water', 14, { it: true, rot: 52 });
+label(578, 930, 'the Sol', 14, { it: true, rot: -88 });
+label(486, 1012, 'the Ashwater', 14, { it: true, rot: 60 });
+label(618, 700, 'the Pilgrims’ Stair', 14, { it: true, anchor: 'start' });
+label(356, 2010, 'the drowned canal', 13, { it: true, anchor: 'start', rot: -90 });
+label(700, 1990, 'the Bight of Sol', 14, { it: true, halo: false, op: 0.7 });
+add(`<g transform="translate(-1745,640)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);   // a sea-serpent, because there always is one
 
-// ── the cartouche, the rose, the scale and the border ───────────────────────────────────────────────────────────────
-add(`<g transform="translate(250,1255)"><rect x="-190" y="-62" width="380" height="118" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><rect x="-182" y="-54" width="364" height="102" fill="none" stroke="${INK}" stroke-width="1"/></g>`);
-label(250, 1228, 'The Old Provinces', 36, { sc: true, ls: 3, halo: false });
-label(250, 1258, 'of Solmere', 26, { it: true, halo: false });
-label(250, 1284, 'as the Lantern Guild knows them, in the', 16, { it: true, halo: false });
-label(250, 1302, 'three hundred and first year of the Dim', 16, { it: true, halo: false });
-const rose = [1800, 1230];
-add(`<g transform="translate(${rose[0]},${rose[1]})"><circle r="62" fill="none" stroke="${INK}" stroke-width="1.4"/><circle r="56" fill="none" stroke="${INK}" stroke-width="0.8"/>`
+// ── the cartouche, the rose, the key, the scale and the border ─────────────────────────────────────────────────────
+add(`<g transform="translate(280,2300)"><rect x="-200" y="-56" width="400" height="104" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><rect x="-192" y="-48" width="384" height="88" fill="none" stroke="${INK}" stroke-width="1"/></g>`);
+label(280, 2280, 'The Old Provinces', 32, { sc: true, ls: 3, halo: false });
+label(280, 2306, 'of Solmere', 22, { it: true, halo: false });
+label(280, 2330, 'as the Lantern Guild knows them, in the 301st year of the Dim', 13, { it: true, halo: false });
+const rose = [1050, 2270];
+add(`<g transform="translate(${rose[0]},${rose[1]}) scale(0.8)"><circle r="62" fill="none" stroke="${INK}" stroke-width="1.4"/><circle r="56" fill="none" stroke="${INK}" stroke-width="0.8"/>`
   + [0, 90, 180, 270].map((a) => `<path d="M0,0 L-11,-11 L0,-70 L11,-11 Z" fill="${PAPER}" stroke="${INK}" stroke-width="1.4" transform="rotate(${a})"/><path d="M0,0 L0,-70 L11,-11 Z" fill="${INK}" transform="rotate(${a})"/>`).join('')
   + [45, 135, 225, 315].map((a) => `<path d="M0,0 L-7,-7 L0,-44 L7,-7 Z" fill="${PAPER}" stroke="${INK}" stroke-width="1.1" transform="rotate(${a})"/>`).join('') + `<circle r="5" fill="${RED}"/></g>`);
-label(rose[0], rose[1] - 80, 'N', 26, { sc: true, halo: false });
-add(`<g transform="translate(1500,1300)">` + [0, 1, 2, 3].map((i) => `<rect x="${i * 50}" y="0" width="50" height="8" fill="${i % 2 ? PAPER : INK}" stroke="${INK}" stroke-width="1.2"/>`).join('') + `</g>`);
-label(1600, 1290, 'leagues', 16, { it: true, halo: false }); label(1500, 1330, '0', 14, { halo: false }); label(1600, 1330, '50', 14, { halo: false }); label(1700, 1330, '100', 14, { halo: false });
-// the key
-add(`<g transform="translate(1580,1100)">`
-  + `<g transform="translate(0,0)">${hub(0, 0)}</g><g transform="translate(0,28)">${town(0, 0)}</g><g transform="translate(0,56)">${site(0, 0)}</g><g transform="translate(0,82)">${ruin(0, 0)}</g>`
-  + `<path d="M-12,108 h24" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6"/><path d="M-3,138 l1,-11 h4 l1,11 z" fill="${INK}"/></g>`);
-for (const [i, t] of ['a hub town', 'a town or waystation', 'a dungeon or site', 'a ruin', 'an imperial road', 'a dead beacon-tower'].entries()) label(1600, 1106 + i * 27 + (i > 3 ? 2 : 0), t, 15, { it: true, anchor: 'start', halo: false });
-// the border
+label(rose[0], rose[1] - 64, 'N', 22, { sc: true, halo: false });
+add(`<g transform="translate(660,2316)">` + [0, 1, 2, 3].map((i) => `<rect x="${i * 40}" y="0" width="40" height="7" fill="${i % 2 ? PAPER : INK}" stroke="${INK}" stroke-width="1.2"/>`).join('') + `</g>`);
+label(740, 2308, 'leagues', 14, { it: true, halo: false }); label(660, 2342, '0', 12, { halo: false }); label(740, 2342, '50', 12, { halo: false }); label(820, 2342, '100', 12, { halo: false });
+add(`<g transform="translate(80,96)">`
+  + `<g>${hub(0, 0)}</g><g transform="translate(0,26)">${town(0, 0)}</g><g transform="translate(0,52)">${site(0, 0)}</g><g transform="translate(0,76)">${ruin(0, 0)}</g>`
+  + `<path d="M-12,100 h24" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6"/><path d="M-3,128 l1,-11 h4 l1,11 z" fill="${INK}"/></g>`);
+for (const [i, t] of ['a region’s town', 'a town or waystation', 'a dungeon or site', 'a ruin', 'an imperial road', 'a dead beacon-tower'].entries()) label(100, 101 + i * 25 + (i > 3 ? 2 : 0), t, 14, { it: true, anchor: 'start', halo: false });
 add(`<rect x="22" y="22" width="${W - 44}" height="${H - 44}" fill="none" stroke="${INK}" stroke-width="3"/><rect x="34" y="34" width="${W - 68}" height="${H - 68}" fill="none" stroke="${INK}" stroke-width="1.2"/>`);
 for (const [x, y] of [[34, 34], [W - 34, 34], [34, H - 34], [W - 34, H - 34]]) add(`<circle cx="${x}" cy="${y}" r="9" fill="${PAPER}" stroke="${INK}" stroke-width="1.6"/><circle cx="${x}" cy="${y}" r="3" fill="${RED}"/>`);
 add(`<rect width="${W}" height="${H}" filter="url(#grain)"/>`);
