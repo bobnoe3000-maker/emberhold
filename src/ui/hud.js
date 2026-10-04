@@ -50,6 +50,10 @@ export function createHud(sim) {
   sim.bus.on('outOfReach', () => show('too far'));
   sim.bus.on('refused', (r) => show(r.reason, 1800));                   // a command the rules turned down (heroes.js)
   sim.bus.on('resurrected', (r) => { if (r.how !== 'shrine') show(`Raised · ${r.name} · ${r.cost ? `${r.cost} gold` : 'free today'}`, 3000); });   // (a shrine says its own: above)
+  // expeditions (sim expeditions.js): off on the road, and back with what it paid
+  const EXP_NAME = { short: 'a watch on the road', day: 'a day for the Guild', long: 'the long round' }, RW2 = { common: 'Common', fine: 'Fine', rare: 'Rare', heirloom: 'Heirloom' };
+  sim.bus.on('expeditionSent', (e) => show(`${e.name} sets out on ${EXP_NAME[e.kind] || 'the road'}`, 2400));
+  sim.bus.on('expeditionBack', (e) => show(`${e.name} is back from the road · +${e.xp} XP${e.levels ? ` (level ${e.levels > 1 ? '+' + e.levels : 'up'})` : ''} · +${e.gold} gold${e.item ? ` · ${e.item.name} (${RW2[e.item.r] || e.item.r})${e.salvaged ? `, salvaged ✦${e.salvaged}: the bag was full` : ''}` : ''}`, 4200));
   // the Mere Tower (sim tower.js): Wenna won't take a company under 12; out of the hall mid-climb, the satchel's lost
   sim.bus.on('siteLevel', (e) => show(e.site === 'mere_tower' ? `Wenna Pike won’t row a company under level ${e.need} out to the Mere Tower` : `Come back at level ${e.need}`, 3200));
   sim.bus.on('towerOut', (e) => { if (e.lost && (e.lost.gold || e.lost.cinders)) show(`Out of the Tower mid-climb · the satchel is lost: ${e.lost.gold} gold, ${e.lost.cinders} cinders`, 3600); });

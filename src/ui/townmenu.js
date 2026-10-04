@@ -25,7 +25,7 @@ const SERVICES = {
   },
   inn: {
     label: 'Inn', blurb: 'Rest, lodge the companions you’re not taking, and send parties out while you’re away.',
-    actions: [['Rest', 'restore HP and MP · lifts Weakened'], ['Party & bench', 'your three hero slots and the companions who wait here'], ['Expeditions', 'send a party to farm a room while you’re offline']],
+    actions: [['Rest', 'restore HP and MP · lifts Weakened'], ['Party & bench', 'your three hero slots and the companions who wait here'], ['Expeditions', 'send a benched companion on the road: XP, gold, maybe a find']],
     icon: '<path d="M3 18V7M3 13h18v5M21 18v-3M6 13v-2a2 2 0 0 1 2-2h3v4M12 9h6a3 3 0 0 1 3 3v1"/>',
   },
   temple: {
@@ -47,6 +47,7 @@ import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsRe
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
 import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice } from '../sim/smith.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
+import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
 
 const CSS = SW_CSS + `
 #hubBar { position: fixed; left: var(--party-side, 0px); right: var(--safe-r, 0px); bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
@@ -98,6 +99,12 @@ const CSS = SW_CSS + `
 #hubSheet .job .brief:before { content: '◆ '; color: #e0a84a; }
 #hubSheet .job .rw { font: 11px ui-monospace, Menlo, monospace; color: #c09a50; margin-top: 4px; }
 #hubSheet .job .btn { display: block; width: 100%; min-height: 44px; margin-top: 10px; font-size: 14px; }
+/* expeditions (sim/expeditions.js): a bench member, then their three jobs, each a thumb's height */
+#hubSheet .exp { display: block; }
+#hubSheet .exp .trio { display: flex; gap: 6px; margin-top: 8px; }
+#hubSheet .exp .trio .btn { flex: 1; min-height: 46px; padding: 6px 4px; line-height: 1.25; font-size: 12px; }
+#hubSheet .exp .trio .btn small { display: block; font: 10.5px ui-monospace, Menlo, monospace; opacity: .85; }
+#hubSheet .exp .road { font: 11.5px ui-monospace, Menlo, monospace; color: #cbbfae; margin-top: 6px; }
 #hubSheet .job .btn.in { background: #8fe07a; }
 #hubSheet .merc.fallen .who b { color: #b8c4d8; }
 #hubSheet .merc .btn { min-height: 44px; }
@@ -172,6 +179,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const bb = e.target.closest('[data-buyback]'); if (bb) return send({ type: 'buyBack', uid: bb.dataset.buyback });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
+    const ex = e.target.closest('[data-exp]'); if (ex) return send({ type: 'expeditionSend', id: ex.dataset.who, kind: ex.dataset.exp });
     const tk = e.target.closest('[data-take]'); if (tk) return send({ type: 'boardAccept', id: tk.dataset.take });
     const hi = e.target.closest('[data-handin]'); if (hi) return send({ type: 'boardTurnIn', id: hi.dataset.handin });
     if (e.target.closest('[data-rest]')) send({ type: 'rest' });
@@ -179,13 +187,13 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const redraw = () => { if (sheet.classList.contains('on') && VIEWS[view]) VIEWS[view](); };
   sim.bus.on('partyChanged', redraw); sim.bus.on('countersChanged', redraw);
   sim.bus.on('questChanged', redraw); sim.bus.on('boardChanged', redraw); boardReady.then(redraw); wordsReady.then(redraw);
-  for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed', 'forged', 'traded', 'gearChanged']) sim.bus.on(ev, redraw);
+  for (const ev of ['rosterChanged', 'wages', 'retrained', 'wagesSettled', 'perkRevealed', 'forged', 'traded', 'gearChanged', 'expeditionSent', 'expeditionBack']) sim.bus.on(ev, redraw);
   sim.bus.on('rested', () => { note = ''; restDone = true; redraw(); });
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
   let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;   // (armRel: a bench member's Dismiss for good, tapped once)
 
   const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
-    Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
+    Expeditions: 'expeditions', Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
@@ -370,7 +378,25 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       <div class="row go" data-rest><div><b>${restDone ? 'Rested' : 'Rest the night'}</b><span>${c} gold · you have ${gold()}</span></div><div class="go-arrow">›</div></div>`;
     restDone = false;
   }
-  const VIEWS = { board, hire, raise, respec, rest, retrain, smith, shop };
+  // The inn: expeditions (sim/expeditions.js) — a bench member out on the Guild's road work for a short job, a day's or a
+  // long round; back on their own with XP, gold and maybe a find. The countdowns tick in their own spans (the buttons are
+  // never re-rendered under a finger: a redraw comes only from the sim's events).
+  const EXP_WORDS = { short: ['A watch on the road', '15 min'], day: ['A day for the Guild', '1 hour'], long: ['The long round', '4 hours'] };
+  const mins = (s) => { const m = Math.max(1, Math.ceil(s / 60)); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; };
+  function expeditions() {
+    view = 'expeditions';
+    const S = sim.state, bench = S.bench || [];
+    sheet.innerHTML = `${head('Inn', 'Expeditions', 'The Lantern Guild always has road work going. Send someone off the bench: they come back on their own when the job’s done, with what it paid and now and then something they found. They draw their bench wage as usual.')}
+      ${bench.map((m) => {
+        const who = `<div class="who"><b>${esc(m.name)}</b><em>L${m.level} ${CLASSES[m.cls].label}</em>`;
+        if (m.exp) return `<div class="merc exp">${who}<span>${esc(EXP_WORDS[m.exp.kind][0])} · back in <span data-until="${m.exp.until}">${mins(m.exp.until - S.t)}</span></span></div></div>`;
+        if (m.fallen) return `<div class="merc exp fallen">${who}<span>Slain: the temple first</span></div></div>`;
+        return `<div class="merc exp">${who}<span>On the bench</span></div><div class="trio">${Object.keys(EXPEDITIONS).map((k) => { const p = expeditionPay(k, m.level);
+          return `<button class="btn" data-exp="${k}" data-who="${m.id}" aria-label="${esc(EXP_WORDS[k][0])}, ${EXP_WORDS[k][1]}">${EXP_WORDS[k][1]}<small>+${p.xp} XP · ${p.gold}g</small></button>`; }).join('')}</div></div>`;
+      }).join('') || '<p>Nobody is on the bench. Companions you dismiss at the inn wait here, and can go out on the road.</p>'}`;
+  }
+  setInterval(() => { if (view !== 'expeditions' || !sheet.classList.contains('on')) return; for (const el of sheet.querySelectorAll('[data-until]')) el.textContent = mins(+el.dataset.until - sim.state.t); }, 1000);
+  const VIEWS = { board, hire, raise, respec, rest, retrain, smith, shop, expeditions };
   function close() { sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square

@@ -29,6 +29,7 @@ import { siteOf, siteOpen, SITES } from './sites.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower } from './tower.js';
+import { createExpeditions } from './expeditions.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -112,6 +113,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
 
   // gear drops, the bag and the equip commands (loot.js)
   const loot = createLoot({ state, bus, seed: baseSeed });
+  const expeditions = createExpeditions({ state, bus, getWorld: () => world, seed: baseSeed, give: (it, src) => loot.give(it, src) });   // the bench's road work (expeditions.js)
   // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
@@ -337,6 +339,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       }
       return;
     }
+    if (expeditions.command(cmd)) return;                  // expeditionSend (an inn)
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
     if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon
@@ -514,6 +517,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     } else { p.frame = 0; p.frameAcc = 0; }
     updateDiscovery();
     heroes.tick();
+    expeditions.tick();                                    // the bench back from the road
     board.tick();                                          // a new day's board goes up in town
     smith.tick();                                          // and the shop's stock
     talk.tick();
@@ -545,7 +549,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const CHEST_GOLD = [10, 5];
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
-    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains'];
+    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp'];   // (exp: out on an expedition, v22)
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;

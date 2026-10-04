@@ -257,7 +257,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
       ${terms}</div>`;
   }
   // where a drop came from (loot.js sources; quests.js / core.js heirlooms)
-const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault' };
+const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault', expedition: 'on the road, by a companion' };
 // who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
 const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse', shaman: 'Col the carter' };
 const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;

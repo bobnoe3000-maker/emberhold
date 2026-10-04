@@ -63,6 +63,8 @@
 //       (stacked with any it has; left out only if the bag is full and holds none to stack with).
 //   v21: the Mere Tower's climb (sim/tower.js; GDD §17 v1.31): tower { wave, best, landing, atLanding, satchel }. Only
 //       grew: older data hasn't been up it.
+//   v22: expeditions (sim/expeditions.js; GDD §6.3 v1.33): a bench member's exp { kind, from, until } while out on the
+//       road. Only grew: older data has nobody out.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -70,7 +72,7 @@ import { LAMPS } from '../sim/lamps.js';
 import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

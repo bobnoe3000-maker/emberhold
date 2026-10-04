@@ -98,6 +98,14 @@ export function createLoot({ state, bus, seed }) {
     return item;
   }
 
+  // an item found off the field (an expedition's, expeditions.js): into the bag, or its cinders if the bag is full
+  /** @returns {number} the cinders it was salvaged for (0: it's in the bag) */
+  function give(item, src) {
+    let salvaged = 0;
+    if (fits([item])) toBag(item); else { salvaged = SALVAGE[item.r]; C.embers = (C.embers || 0) + salvaged; }
+    bus.emit('loot', { item, x: 0, y: 0, src, best: salvaged ? null : bestFor(item), salvaged, away: true });
+    return salvaged;
+  }
   const refuse = (reason) => { bus.emit('gearRefused', { reason }); return true; };
   const changed = (m) => {
     const s = statsFor(m); m.hp = Math.min(m.hp, s.maxHp); if (m.mp !== undefined) m.mp = Math.min(m.mp, s.maxMp);
@@ -131,5 +139,5 @@ export function createLoot({ state, bus, seed }) {
     }
     return false;
   }
-  return { drop, grant, command, bestFor };
+  return { drop, grant, give, command, bestFor };
 }

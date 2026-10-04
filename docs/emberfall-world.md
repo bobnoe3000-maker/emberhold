@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.23 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.24 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -526,6 +526,12 @@ Guild's rules say so, and it's bad for business otherwise. But they do the job a
 it, and whatever they're good at for, they keep to themselves until they're paid. A sellsword
 who stays with a company long enough, paid and kept alive, may come to stay for the company and
 not the coin. The Guild calls them **Sworn** and takes a smaller cut.
+
+**Road work (v1.24).** A company's sellswords waiting at the inn needn't sit idle: the Guild always has small work
+going on the roads (a watch on a carters' track, a day's errand between towns, the long round of the waystations),
+and a company can send one of its own out on it. They come back when it's done, with the Guild's pay, a little more
+seasoned, and now and then with something they picked up. The Guild keeps the work dull on purpose: nobody it
+sends out on the road comes back slain. *"If it were dangerous, we'd put it on the board."*
 
 Found companions (Brannoc, §5) aren't Guild members and take no wage.
 

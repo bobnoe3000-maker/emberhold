@@ -221,6 +221,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'retrain': {                                   // one perk for another of its family
         const m = find(cmd.id); if (!m || !hired(m) || !Array.isArray(m.perks) || !Number.isInteger(cmd.idx) || cmd.idx < 0 || cmd.idx >= m.perks.length) return true;
         { const no = lacks('tavern', 'Retrain in a town'); if (no) return refuse(no); }
+        if (m.exp) return refuse(`${m.name} is out on the road`);   // (expeditions.js)
         if (PERKS[m.perks[cmd.idx]]?.fam === 'quirk') return refuse(`${m.name} won't be trained out of that`);
         const next = retrainPerk(seed, m, cmd.idx);
         if (!next) return refuse('There is nothing else of that kind to learn');
@@ -248,6 +249,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if ((slot !== 1 && slot !== 2) || j < 0) return true;
         { const no = lacks('inn', 'Swap companions in a town'); if (no) return refuse(no); }
         const incoming = state.bench[j];
+        if (incoming.exp) return refuse(`${incoming.name} is out on the road`);   // (expeditions.js: back when the job's done)
         if (slot < state.party.length) { const out = state.party[slot]; out.down = false; state.party[slot] = incoming; state.bench[j] = out; }
         else if (state.party.length <= MAX_COMPANIONS) { state.party.push(incoming); state.bench.splice(j, 1); }
         else return true;
@@ -257,6 +259,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         const j = state.bench.findIndex((m) => m.id === cmd.id);
         if (j < 0) return true;
         if (FOUND[cmd.id]) return refuse(`${state.bench[j].name} isn't going anywhere`);
+        if (state.bench[j].exp) return refuse(`${state.bench[j].name} is out on the road`);
         { const no = lacks('inn', 'Only at a town inn'); if (no) return refuse(no); }
         const m = state.bench[j], keep = Object.values(m.gear || {}).filter((it) => it && it.r !== 'common');
         if (bagStacks(state.bag.concat(keep)).length > BAG_SIZE) return refuse(`No room in the bag for ${m.name}'s gear (${keep.length})`);
