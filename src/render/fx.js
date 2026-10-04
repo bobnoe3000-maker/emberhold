@@ -201,14 +201,24 @@ export function createFX() {
   }
   // a loot drop: a column of light over where it fell and a glint on the ground, in the rarity's colour
   function beam(x, y, col, { now = performance.now(), life = 2.6 } = {}) { beams.push({ x, y, col, t0: now, life }); if (beams.length > 8) beams.shift(); }
+  // one of the slain raised (the temple, a shrine): a tall column of holy light over them, a ring of it spreading at their
+  // feet, and motes rising up the column
+  function rise(x, y, { now = performance.now(), life = 1.9 } = {}) { beams.push({ x, y, col: HOLY, t0: now, life, rise: true }); if (beams.length > 8) beams.shift(); }
 
   // proj(x, y) → { sx, sy, h, key } the struck figure's foot on screen, its height and depth key
   function particles(now, proj) {
     for (let i = beams.length - 1; i >= 0; i--) {
       const b = beams[i], age = Math.max(0, (now - b.t0) / 1000 / b.life); if (age >= 1) { beams.splice(i, 1); continue; }
-      const P = proj(b.x, b.y), k = age < 0.1 ? age / 0.1 : 1 - Math.pow((age - 0.1) / 0.9, 2), H = 46 * (age < 0.1 ? age / 0.1 : 1);
+      const P = proj(b.x, b.y), k = age < 0.1 ? age / 0.1 : 1 - Math.pow((age - 0.1) / 0.9, 2), H = (b.rise ? 72 : 46) * (age < 0.1 ? age / 0.1 : 1);
+      if (b.rise) {                                                          // the ring at the feet and the rising motes
+        depth(P.key + 0.4, P.sy, P.h);
+        const R = 5 + 17 * Math.min(1, age * 1.6), ra = 1.1 * (1 - age);
+        for (let t = 0; t < 48; t++) { const a = (t / 48) * Math.PI * 2; disc(P.sx + Math.cos(a) * R, P.sy + Math.sin(a) * R * 0.5, 1.6, ra, 1); }
+        for (let m = 0; m < 7; m++) { const u = (age * (1.2 + m * 0.11) + m * 0.14) % 1; disc(P.sx + Math.sin(m * 1.9 + u * 3) * (5 + m), P.sy - 6 - u * 64, 1.8, k * 1.3 * (1 - u), 1); }
+        flush(b.col);
+      }
       depth(P.key + 0.4, P.sy, P.h);
-      for (let yy = 0; yy < H; yy++) { const f = yy / H, w = 3 * (1 - f * 0.55), a = k * 1.6 * Math.pow(1 - f, 1.3) * (0.85 + 0.15 * Math.sin(now / 90 + yy * 0.5));
+      for (let yy = 0; yy < H; yy++) { const f = yy / H, w = (b.rise ? 5 : 3) * (1 - f * 0.55), a = k * (b.rise ? 2.6 : 1.6) * Math.pow(1 - f, b.rise ? 0.9 : 1.3) * (0.85 + 0.15 * Math.sin(now / 90 + yy * 0.5));
         for (let xx = -Math.ceil(w); xx <= Math.ceil(w); xx++) mark(P.sx + xx, P.sy - yy, a * Math.max(0, 1 - Math.abs(xx) / (w + 0.5))); }
       flush(b.col);
       depth(P.key + 0.4, P.sy, P.h);
@@ -247,5 +257,5 @@ export function createFX() {
     }
   }
 
-  return { target, weapon, impact, beam, particles, wisps, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
+  return { target, weapon, impact, beam, rise, particles, wisps, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
 }

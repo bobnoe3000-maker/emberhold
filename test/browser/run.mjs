@@ -740,6 +740,31 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15e. Raising the slain (the owner, 2026-10-04: "Resurrection should have some sort of animated flash and a message that the
+// companion was raised"). Through the temple's own menu: a companion slain in town, the Temple's Raise the slain, its button.
+// They're raised; the toast names them on one line, over the open sheet, inside the screen; the banner says it; no errors.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800);
+    const name = await p.evaluate(() => { const s = globalThis.__sim; s.state.counters.gold = 5000; s.commands.push({ type: 'hire', idx: 0 }); for (let i = 0; i < 4; i++) globalThis.__frame(50);   // (a tick or two: the hire is a command)
+      const m = s.state.party[1]; if (!m) return null; m.fallen = true; m.hp = 0; return m.name; });
+    await run(20);
+    await p.locator('[data-k="temple"]').tap(); await run(3);
+    await p.locator('[data-go^="raise"]').tap(); await run(3);
+    await p.locator('[data-raise]').first().tap(); await run(6);
+    const r = await p.evaluate(() => { const s = globalThis.__sim, t = document.getElementById('hudToast'), q = t.getBoundingClientRect(), cs = getComputedStyle(t);
+      return { fallen: s.state.party[1].fallen, text: t.textContent, on: t.classList.contains('on'), left: q.left, right: q.right, h: q.height, line: parseFloat(cs.lineHeight) || 18, z: +cs.zIndex, sheetZ: +getComputedStyle(document.getElementById('hubSheet') || document.body).zIndex || 0 }; });
+    check('raise: the temple raises a slain companion; the toast names them on one line, over the open sheet, on screen; no page errors',
+      !!name && r.fallen === false && r.on && r.text.includes(name) && /^Raised/.test(r.text) && r.left >= 0 && r.right <= 390 && r.h < r.line * 1.6 && r.z > r.sheetZ && errs.length === 0,
+      JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 16. The forge and the shop (GDD §8): an upgrade from the Smith's Upgrade tab takes the gold and cinders
 // and shows the next step; a level-1 piece too small to gain says so; the shop buys and sells.
 {

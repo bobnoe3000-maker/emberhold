@@ -1043,7 +1043,9 @@ export function createRenderer(canvas, sim, input) {
       const mx = lerp(m, 'x'), my = lerp(m, 'y'), f = fol[i] || (fol[i] = {}); f.x = mx; f.y = my;
       const cz = heightAt(sim.world, Math.floor(mx), Math.floor(my)), cp = project(mx, my, cz);
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
-      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look: m.fallen ? GHOST : lookOf(m, m.down ? 0.35 : 0), team: m.fallen ? undefined : 1, atl, a });
+      const up = raisedAt.get(m), ua = up === undefined ? 1 : (now - up) / 1000;   // just raised: the ghost holds a beat, then a warm rim fades off them
+      const look = m.fallen ? GHOST : ua < 0.35 ? GHOST : ua < 1.6 ? { flash: 0.55 * (1 - (ua - 0.35) / 1.25), fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
+      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a });
     });
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
     // gesture now and then. Their playback state is presentation-only, kept here by NPC id.
@@ -1408,7 +1410,15 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('battle', (b) => { if (b.on) banner = { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
   sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
-  sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} rises`, sub: r.how === 'shrine' ? 'the shrine’s light fades' : 'the temple’s grace', until: performance.now() + 2600, small: true }; });
+  // one of the slain raised: the column of holy light over them where they stand (fx.rise), and their ghost turning solid
+  // (raisedAt, keyed by the member: presentation only). One on the bench isn't drawn, so only the banner says it.
+  const raisedAt = new WeakMap();
+  sim.bus.on('resurrected', (r) => {
+    const m = sim.state.party.find((q) => q.id === r.id), now = clockNow || performance.now(); if (!m) return;
+    raisedAt.set(m, now);
+    const u = m === sim.state.party[0] ? sim.state.player : m; if (u.x !== undefined) fx.rise(u.x, u.y, { now });
+  });
+  sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} is raised`, sub: r.how === 'shrine' ? 'back on their feet · the shrine’s light fades' : 'back on their feet · the temple’s grace', until: performance.now() + 3000 }; });
   // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
   const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
