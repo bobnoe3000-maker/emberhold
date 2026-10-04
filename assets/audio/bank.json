@@ -208,6 +208,30 @@
     "d": 1.04
    }
   ],
+  "bird": [
+   {
+    "f": "bird_1.mp3",
+    "d": 1.04
+   },
+   {
+    "f": "bird_2.mp3",
+    "d": 1.2
+   },
+   {
+    "f": "bird_3.mp3",
+    "d": 1.99
+   }
+  ],
+  "owl": [
+   {
+    "f": "owl_1.mp3",
+    "d": 2.04
+   },
+   {
+    "f": "owl_2.mp3",
+    "d": 2.04
+   }
+  ],
   "step_cloth": [
    {
     "f": "step_cloth_1.mp3",
@@ -289,14 +313,6 @@
   "amb_cave": {
    "f": "amb_cave.mp3",
    "d": 10.03
-  },
-  "amb_birds": {
-   "f": "amb_birds.mp3",
-   "d": 9.4
-  },
-  "amb_owl": {
-   "f": "amb_owl.mp3",
-   "d": 11.36
   },
   "amb_fire": {
    "f": "amb_fire.mp3",

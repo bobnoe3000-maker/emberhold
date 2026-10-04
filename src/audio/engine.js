@@ -4,7 +4,7 @@
 // the sim reads.
 //
 //   master (the player's volume) → a limiter → the speakers
-//   buses: ambient · combat · steps · voices, each on or off by the player's settings (audio/settings.js)
+//   buses: ambient · combat · steps · voices, each at the player's level for it (audio/settings.js: 0 is off)
 //
 // Samples come from assets/audio/bank.json (tools/audio/prep.mjs): one-shots decoded on first use (the whole set is
 // small: ~250 KB), loops only for the place you're in. A cue picks one of its variants, never the same twice
@@ -13,12 +13,13 @@
 // plain loop would click on).
 
 import { audioContext, resumeAudio } from './context.js';
-import { loadSettings, saveSettings, cleanSettings } from './settings.js';
+import { soundSettings, setSoundSettings, onSoundSettings } from './settings.js';
 
 /** @typedef {import('./settings.js').SoundSettings} SoundSettings */
 /** @typedef {'ambient' | 'combat' | 'steps' | 'voices'} Bus */
 
-// each bus's level under the master (sound critic pass 1 set these), and how many voices it may hold at once
+// each bus's level under the master (sound critic pass 1 set these; the player's level for it scales this: 1 is as
+// mixed), and how many voices it may hold at once
 const BUS_GAIN = { ambient: 0.65, combat: 0.62, steps: 0.36, voices: 0.7 };
 const BUS_CAP = { ambient: 8, combat: 6, steps: 4, voices: 3 };
 const GAP_MS = { steps: 45, combat: 55, voices: 220 };     // the shortest time between two of the same cue
@@ -27,12 +28,20 @@ const XFADE = 0.6;                                          // a loop's seam, s
 /** the master gain for the player's 0..1 volume: a gentle curve, so 0.6 (the default) is moderate, not loud */
 export const masterGain = (v) => Math.pow(Math.max(0, Math.min(1, v)), 1.6);
 
+/** the music's level for the player's settings: its slider, under the master volume (at the default volume or above,
+ * the music plays at its own slider's level: the score has no limiter after it to take more) @param {SoundSettings} s */
+export const musicLevel = (s) => s.music * Math.min(1, masterGain(s.volume) / masterGain(0.6));
+
 /** @param {{ base?: string }} [o] */
 export function createAudio({ base = './assets/audio/' } = {}) {
   /** @type {AudioContext | null} */ let ctx = null;
   /** @type {any} */ let master = null, bank = null, limiter = null;
   /** @type {Record<string, GainNode>} */ const buses = {};
-  /** @type {SoundSettings} */ let settings = loadSettings();
+  /** @type {SoundSettings} */ let settings = soundSettings();
+  onSoundSettings((s) => {                                 // (from the menu, or the intro's ♪)
+    settings = s; apply();
+    if (ctx) for (const [, L] of loops) L.g.gain.setTargetAtTime(settings.ambient > 0 ? L.level : 0, ctx.currentTime, 0.3);
+  });
   const buffers = new Map(), live = { ambient: 0, combat: 0, steps: 0, voices: 0 }, lastVariant = new Map(), lastAt = new Map();
   const loops = new Map();
   let seed = 0x9e3779b9;
@@ -55,7 +64,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
     if (!ctx || !master) return;
     const t = ctx.currentTime, tc = now ? 0.001 : 0.08;
     master.gain.setTargetAtTime(masterGain(settings.volume), t, tc);
-    for (const [k, g] of Object.entries(buses)) g.gain.setTargetAtTime(settings[k] ? BUS_GAIN[k] : 0, t, tc);
+    for (const [k, g] of Object.entries(buses)) g.gain.setTargetAtTime(BUS_GAIN[k] * settings[k], t, tc);
   }
 
   /** @param {string} f @returns {AudioBuffer | null} the decoded buffer, or null while it loads */
@@ -72,7 +81,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
   /** play a one-shot cue
    * @param {{ cue: string, bus: Bus, rate?: number, gain?: number }} c @param {{ pan?: number, gain?: number, when?: number }} [o] */
   function play(c, o = {}) {
-    if (!ctx || !master || !bank || ctx.state !== 'running' || !settings[c.bus]) return false;
+    if (!ctx || !master || !bank || ctx.state !== 'running' || !(settings[c.bus] > 0)) return false;
     const list = bank.shots[c.cue]; if (!list || !list.length) return false;
     const nowMs = ctx.currentTime * 1000, gap = GAP_MS[c.bus] || 0;
     if (nowMs - (lastAt.get(c.cue) ?? -1e9) < gap || live[c.bus] >= BUS_CAP[c.bus]) return false;
@@ -94,7 +103,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
    * low end). The weapon's own sound is the swing; this is what it lands on.
    * @param {{ crit?: boolean, heavy?: boolean }} b @param {{ pan?: number, gain?: number }} [o] */
   function blow(b, o = {}) {
-    if (!ctx || !master || ctx.state !== 'running' || !settings.combat) return false;
+    if (!ctx || !master || ctx.state !== 'running' || !(settings.combat > 0)) return false;
     const nowMs = ctx.currentTime * 1000; if (nowMs - (lastAt.get('_blow') ?? -1e9) < 70 || live.combat >= BUS_CAP.combat) return false;
     lastAt.set('_blow', nowMs);
     const t = ctx.currentTime, len = b.heavy ? 0.22 : 0.14, n = Math.floor(ctx.sampleRate * len), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
@@ -142,7 +151,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
     let L = loops.get(name);
     if (!L) { if (level <= 0) return; const g = ctx.createGain(); g.gain.value = 0; g.connect(buses.ambient); L = { g, cur: null, next: 0, level: 0 }; loops.set(name, L); }
     L.level = level;
-    L.g.gain.setTargetAtTime(settings.ambient ? level : 0, ctx.currentTime, 0.8);
+    L.g.gain.setTargetAtTime(settings.ambient > 0 ? level : 0, ctx.currentTime, 0.8);
   }
 
   /** keep the loops going: start a layer before the last one runs out, crossfading the seam (call each frame) */
@@ -169,7 +178,7 @@ export function createAudio({ base = './assets/audio/' } = {}) {
   return {
     start, play, blow, loop, tick,
     /** @returns {SoundSettings} */ get settings() { return settings; },
-    /** @param {Partial<SoundSettings>} s */ set(s) { settings = cleanSettings({ ...settings, ...s }); saveSettings(settings); apply(); for (const [, L] of loops) L.g.gain.setTargetAtTime(settings.ambient ? L.level : 0, ctx ? ctx.currentTime : 0, 0.3); },
+    /** @param {Partial<SoundSettings>} s */ set(s) { setSoundSettings(s); },
     get running() { return !!(ctx && master && ctx.state === 'running'); },
     get ready() { return !!bank; },
     /** dev (the sound critic's meter): the output after the limiter, as RMS and peak dBFS since the last read */

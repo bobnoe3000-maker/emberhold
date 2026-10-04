@@ -4,24 +4,35 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, DRIP_MIN, RIVER_REACH } from '../src/audio/cues.js';
-import { cleanSettings, loadSettings, saveSettings, DEFAULTS, SOUND_KEY } from '../src/audio/settings.js';
-import { masterGain } from '../src/audio/engine.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, DRIP_MIN, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from '../src/audio/cues.js';
+import { cleanSettings, loadSettings, saveSettings, soundSettings, setSoundSettings, onSoundSettings, DEFAULTS, SOUND_KEY } from '../src/audio/settings.js';
+import { masterGain, musicLevel } from '../src/audio/engine.js';
 import { createAnimator } from '../src/render/anim.js';
 
 const bank = JSON.parse(readFileSync(new URL('../assets/audio/bank.json', import.meta.url), 'utf8'));
 const has = (c) => c && Array.isArray(bank.shots[c.cue]) && bank.shots[c.cue].length > 0;
 
-test('settings start moderate with everything on, and come back whole whatever was stored', () => {
+test('settings start moderate, footsteps at a quarter, a level for each kind of sound and the music; old switches and garbage come back whole', () => {
   assert.deepEqual(cleanSettings(null), { ...DEFAULTS });
-  assert.equal(DEFAULTS.volume, 0.6);
-  assert.deepEqual(cleanSettings({ volume: 3, ambient: false, combat: 'yes', steps: 0 }), { volume: 1, ambient: false, combat: true, steps: true, voices: true });
-  assert.equal(cleanSettings({ volume: -1 }).volume, 0);
+  assert.equal(DEFAULTS.volume, 0.6); assert.equal(DEFAULTS.steps, 0.25, 'footsteps at 25 % of their level before the sliders (the owner)');
+  for (const k of ['music', 'ambient', 'combat', 'voices']) assert.equal(DEFAULTS[k], 1, `${k} as mixed`);
+  assert.deepEqual(cleanSettings({ volume: 3, music: -2, ambient: 0.4, combat: 'yes', steps: NaN }), { volume: 1, music: 0, ambient: 0.4, combat: 1, steps: 0.25, voices: 1 });
+  // the switches before the sliders: on is the default level (so footsteps that were on are now a quarter), off is 0
+  assert.deepEqual(cleanSettings({ volume: 0.5, ambient: false, combat: true, steps: true, voices: false }), { volume: 0.5, music: 1, ambient: 0, combat: 1, steps: 0.25, voices: 0 });
   const box = new Map(), store = { getItem: (k) => box.get(k) ?? null, setItem: (k, v) => box.set(k, v) };
-  saveSettings({ ...DEFAULTS, ambient: false, volume: 0.25 }, store);
-  assert.deepEqual(loadSettings(store), { volume: 0.25, ambient: false, combat: true, steps: true, voices: true });
+  saveSettings({ ...DEFAULTS, ambient: 0.3, volume: 0.25 }, store);
+  assert.deepEqual(loadSettings(store), { ...DEFAULTS, ambient: 0.3, volume: 0.25 });
   box.set(SOUND_KEY, '{not json'); assert.deepEqual(loadSettings(store), { ...DEFAULTS });
+  box.set(SOUND_KEY, JSON.stringify({ volume: 0.6, ambient: true })); box.set('emberfall.music', 'off'); assert.equal(loadSettings(store).music, 0, 'the intro’s old ♪ off carries over');
   assert.ok(masterGain(0.6) > 0.3 && masterGain(0.6) < 0.6, 'the default volume is moderate'); assert.equal(masterGain(0), 0); assert.equal(masterGain(1), 1);
+  assert.equal(musicLevel({ ...DEFAULTS }), 1, 'the music as it was made, at the defaults');
+  assert.ok(musicLevel({ ...DEFAULTS, volume: 0.3 }) < 0.5 && musicLevel({ ...DEFAULTS, music: 0.5 }) === 0.5 && musicLevel({ ...DEFAULTS, volume: 1 }) === 1, 'under the volume, never over its own level');
+});
+
+test('one copy of the settings for the page: a change is kept and every reader hears it', () => {
+  const heard = []; const stop = onSoundSettings((st) => heard.push(st.music));
+  const before = soundSettings().music; setSoundSettings({ music: 0.4 }); setSoundSettings({ music: before }); stop(); setSoundSettings({ music: 0.7 });
+  assert.deepEqual(heard, [0.4, before]); assert.equal(soundSettings().music, 0.7);
 });
 
 test('every foe cries on arrival, flinches and dies in its family’s voice, pitched to its size; every cue exists', () => {
@@ -46,27 +57,39 @@ test('swings by weapon and school, steps by ground and weight, events by kind: a
   assert.equal(eventCue('combat', { t: 'hit' }), null, 'a hit is the listener’s: it needs who was hit');
 });
 
-test('ambience: the creek louder the nearer it runs, silent out of reach; birds by day, owls by night; the dungeons drip', () => {
-  const at = (d, part = 1, kind = 'overland') => ambienceFor({ kind, part, waterD: d });
+test('ambience: the creek louder the nearer it runs, silent out of reach; rain and wind by the weather; the dungeons’ draught', () => {
+  const at = (d, kind = 'overland') => ambienceFor({ kind, part: 1, waterD: d });
   assert.ok(at(1).amb_river > at(6).amb_river && at(6).amb_river > at(12).amb_river && at(12).amb_river > 0);
   assert.equal(at(RIVER_REACH).amb_river, 0); assert.equal(at(Infinity).amb_river, 0);
-  assert.ok(at(Infinity, 1).amb_birds > 0 && at(Infinity, 1).amb_owl === 0); assert.ok(at(Infinity, 3).amb_owl > 0 && at(Infinity, 3).amb_birds === 0);
   const warren = ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity }), mill = ambienceFor({ kind: 'dungeon', theme: 'desert', part: 1, waterD: Infinity });
-  assert.ok(warren.amb_cave > mill.amb_cave && warren.amb_fire > 0 && warren.amb_birds === 0 && warren.amb_river === 0);
-  // the drips: single drops, never closer than 10 s (the owner), wetter places nearer the minimum, the mill seldom
-  for (const th of [null, 'warren', 'poison', 'desert', 'dread', 'chasm']) for (let r = 0; r <= 1; r += 0.05) assert.ok(dripGap(th, r) >= DRIP_MIN && DRIP_MIN >= 10, `${th} ${r}`);
-  assert.ok(dripGap('desert', 0) > dripGap('warren', 1) - 1 && dripGap('warren', 0.5) < dripGap(null, 0.5));
-  assert.ok(has(dripOf(0.3)) && dripOf(0.3).bus === 'ambient');
+  assert.ok(warren.amb_cave > mill.amb_cave && warren.amb_fire > 0 && warren.amb_river === 0);
   for (const k of Object.keys(warren)) assert.ok(bank.loops[k] || k.startsWith('syn_'), k);   // (syn_: made by the engine)
-  const rain = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }), dry = at(Infinity, 1);
-  assert.ok(rain.syn_rain > 0 && rain.amb_birds < dry.amb_birds * 0.3, 'rain hisses and the birds go quiet');
-  assert.ok(ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'snow', k: 1 } }).amb_wind > 0, 'a soft wind over the snow');
-  const windy = ambienceFor({ kind: 'overland', part: 1, waterD: Infinity, weather: { kind: 'wind', k: 1 } });
-  assert.ok(windy.amb_wind > 0.5 && windy.amb_birds < dry.amb_birds && windy.amb_birds > 0, 'a windy day blows, and the birds sing less');
-  assert.equal(ambienceFor({ kind: 'dungeon', theme: 'warren', part: 1, waterD: Infinity, weather: { kind: 'rain', k: 1 } }).syn_rain, 0, 'no rain underground');
+  assert.ok(ambienceFor({ kind: 'overland', waterD: Infinity, weather: { kind: 'rain', k: 1 } }).syn_rain > 0, 'rain hisses');
+  assert.ok(ambienceFor({ kind: 'overland', waterD: Infinity, weather: { kind: 'snow', k: 1 } }).amb_wind > 0, 'a soft wind over the snow');
+  assert.ok(ambienceFor({ kind: 'overland', waterD: Infinity, weather: { kind: 'wind', k: 1 } }).amb_wind > 0.5, 'a windy day blows');
+  assert.equal(ambienceFor({ kind: 'dungeon', theme: 'warren', waterD: Infinity, weather: { kind: 'rain', k: 1 } }).syn_rain, 0, 'no rain underground');
+  assert.ok(!('amb_birds' in at(Infinity)) && !bank.loops.amb_birds && !bank.loops.amb_owl && !bank.loops.amb_drips, 'the birds, the owl and the drips are calls now, not loops');
 });
 
-test('the sound fits its budget: every file in the bank is there, ≤ 800 KB in all (750 until the wind came)', () => {
+test('calls: a drip, a bird, an owl, each single and never closer than 10 s (the owner), fewer where it’s quieter', () => {
+  assert.ok(CALL_MIN >= 10 && DRIP_MIN === CALL_MIN);
+  // the drips: wetter places nearer the minimum, the mill seldom
+  for (const th of [null, 'warren', 'poison', 'desert', 'dread', 'chasm']) for (let r = 0; r <= 1; r += 0.05) assert.ok(dripGap(th, r) >= CALL_MIN, `${th} ${r}`);
+  assert.ok(dripGap('desert', 0) > dripGap('warren', 1) - 1 && dripGap('warren', 0.5) < dripGap(null, 0.5));
+  // birds by day, the owl by night; in the dungeons only the drips
+  const c = (part, o = {}) => callsFor({ kind: 'overland', part, ...o });
+  assert.ok(c(1).bird > 0 && c(1).owl === 0 && c(1).drip === 0); assert.ok(c(3).owl > 0 && c(3).bird === 0); assert.ok(c(2).bird > 0 && c(2).owl > 0, 'dusk has both');
+  assert.deepEqual(callsFor({ kind: 'dungeon', part: 1 }), { drip: 1, bird: 0, owl: 0 });
+  assert.ok(c(1, { weather: { kind: 'rain', k: 1 } }).bird < c(1).bird * 0.3, 'the birds go quiet in the rain');
+  assert.ok(c(1, { weather: { kind: 'wind', k: 1 } }).bird < c(1).bird && c(1, { weather: { kind: 'wind', k: 1 } }).bird > 0, 'and fewer in the wind');
+  assert.ok(callsFor({ kind: 'town', part: 1 }).bird < c(1).bird, 'fewer in town');
+  for (const name of ['bird', 'owl', 'drip']) for (const lv of [0.03, 0.1, 0.3, 0.55, 1]) for (let r = 0; r <= 1; r += 0.1) assert.ok(callGap(name, lv, null, r) >= CALL_MIN, `${name} ${lv} ${r}`);
+  assert.ok(callGap('bird', 0.1, null, 0.5) > callGap('bird', 0.55, null, 0.5), 'a hushed bird calls seldom');
+  for (const name of ['bird', 'owl', 'drip']) { const q = callOf(name, 0.5, 0.3); assert.ok(has(q), name); assert.equal(q.bus, 'ambient'); }
+  assert.ok(has(dripOf(0.3)));
+});
+
+test('the sound fits its budget: every file in the bank is there, ≤ 800 KB in all (750 until the wind came; 622 since the birds, the owl and the drips became single calls)', () => {
   let bytes = 0;
   for (const list of Object.values(bank.shots)) for (const v of list) bytes += statSync(new URL(`../assets/audio/${v.f}`, import.meta.url)).size;
   for (const v of Object.values(bank.loops)) bytes += statSync(new URL(`../assets/audio/${v.f}`, import.meta.url)).size;

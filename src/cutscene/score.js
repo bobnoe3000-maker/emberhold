@@ -31,13 +31,13 @@ const FADE = { loading: 1.2, kindling: 1.8, empire: 1.8, fall: 0.35, thornwick: 
 
 export function createScore() {
   /** @type {any} */ let ac = null;
-  /** @type {any} */ let out, verbIn, echoIn, noise, fx, cur = null, cueId = null, muted = false;
+  /** @type {any} */ let out, verbIn, echoIn, noise, fx, cur = null, cueId = null, level = 1;
   const mid = (m) => 440 * Math.pow(2, (m - 69) / 12), now = () => ac.currentTime;
   function init(ctx) {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
     ac = ctx || audioContext() || new (window.AudioContext || /** @type {any} */ (window).webkitAudioContext)();   // (the game's one context: audio/context.js)
     const comp = ac.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3; comp.attack.value = 0.03; comp.release.value = 0.5; comp.connect(ac.destination);
-    out = ac.createGain(); out.gain.value = muted ? 0 : 0.9; out.connect(comp);
+    out = ac.createGain(); out.gain.value = 0.9 * level; out.connect(comp);
     // a long, dark hall: decaying noise that loses its top end as it tails off
     const len = ac.sampleRate * 6, ir = ac.createBuffer(2, len, ac.sampleRate);
     for (let ch = 0; ch < 2; ch++) { const x = ir.getChannelData(ch); let y = 0; for (let i = 0; i < len; i++) { const k = i / len; y += (0.12 + 0.8 * (1 - k)) * (Math.random() * 2 - 1 - y); x[i] = y * Math.pow(1 - k, 2.4); } }
@@ -155,9 +155,9 @@ export function createScore() {
     card(card, music) { if (!ac) return; chime(card); play(music); },
     /** fade the music out */
     stop(fade = 2.4) { if (!ac || !cur) return; end(cur, fade); cur = null; cueId = null; },
-    /** @param {boolean} m */
-    setMuted(m) { muted = m; if (ac) out.gain.setTargetAtTime(m ? 0 : 0.9, now(), 0.15); },
-    get muted() { return muted; },
+    /** the music's level, 0 (off) .. 1 (as it was made): the player's Music slider (audio/engine.js musicLevel) @param {number} x */
+    setLevel(x) { level = Math.max(0, Math.min(1, x)); if (ac) out.gain.setTargetAtTime(0.9 * level, now(), 0.15); },
+    get muted() { return level <= 0; },
     get cue() { return cueId; },
   };
 }

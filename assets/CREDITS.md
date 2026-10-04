@@ -64,7 +64,7 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
 - **Changes:**
   - trimmed, folded to mono and level-normalised;
   - the cave wind cut to 10 s, the wind to 8 s;
-  - three single drops cut from the cave droplets loop (the loop itself isn't shipped);
+  - single drops, bird calls and owl calls cut from the cave droplets, bird and owl loops (the loops themselves aren't shipped); the bird calls denoised and band-passed;
   - re-encoded as MP3 by `tools/audio/prep.mjs` (sources listed in `tools/audio/sounds.json`).
 - **Licence of the copies:** the adapted files in `assets/audio/` are shared under the same licence, CC-BY-SA 3.0.
   The share-alike covers the sound files, not the game's code.

@@ -4,8 +4,8 @@
 // world: the wordmark, this slot's hero, and Continue — or Begin, for a slot with no hero yet,
 // which plays the intro and then opens character creation. ☰ in the HUD brings it back
 // mid-game as a pause menu (Resume). From here: Game slots, Party, The Chronicle (the intro
-// again), Sound (the volume, and ambience, attacks and spells, footsteps and foes' cries each on or off: kept per
-// device, audio/settings.js), Account (cloud saves arrive at M6) and Copy debug report (debugreport.js: the game's
+// again), Sound (the volume, and a slider each for the music, ambience, attacks and spells, footsteps and foes' cries:
+// kept per device, audio/settings.js), Account (cloud saves arrive at M6) and Copy debug report (debugreport.js: the game's
 // state as text on the clipboard, to paste into a bug report; read only).
 //
 // The sim doesn't tick while the title is up (main.js pauses the loop), so a battle behind
@@ -32,12 +32,13 @@ const CSS = `
 #title button:disabled { color: #6f6880; border-color: #3a3346; background: rgba(16,12,22,.6); }
 #title button small { display: block; font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: .5px; color: inherit; opacity: .75; margin-top: 2px; }
 #title .row { display: flex; gap: 10px; } #title .row button { flex: 1; }
-#title .snd { text-align: left; margin: 0 0 12px; }
+#title .snd { text-align: left; margin: 0 0 12px; max-height: calc(100vh - 150px); overflow-y: auto; }
 #title .snd label { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 12px; margin: 0 0 8px;
   border-radius: 10px; border: 1px solid rgba(214,170,98,0.35); background: rgba(16,12,22,.8); font: 600 15px Georgia, serif; color: #efe4cf; }
 #title .snd label small { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 2px; letter-spacing: .3px; }
-#title .snd input[type=checkbox] { width: 26px; height: 26px; accent-color: #e0a84a; flex: none; }
-#title .snd input[type=range] { width: 52%; height: 32px; accent-color: #e0a84a; flex: none; }
+#title .snd label > span { min-width: 0; }
+#title .snd small b { font-weight: 600; color: #f0c880; }
+#title .snd input[type=range] { width: 46%; height: 40px; accent-color: #e0a84a; flex: none; }
 `;
 
 /**
@@ -50,18 +51,22 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   swallow(wrap);
   let mode = 'title', panel = '';
 
-  // Sound: the player's settings, applied as they change (audio/engine.js keeps them)
-  const SOUND_ROWS = [['ambient', 'Ambient sound', 'the creek, drips, wind, birds and owls'], ['combat', 'Attacks and spells', 'blows, bows, spells, loot and level-ups'],
-    ['steps', 'Footsteps', 'on grass, cobbles and stone'], ['voices', 'Foes arriving and falling', 'goblins’ screeches, the dead rising, death cries']];
+  // Sound: the player's settings, applied as they change (audio/settings.js keeps them): the volume, then a slider for
+  // each kind of sound (the owner: "instead of on or off for each effect add a volume slider", and one for the music)
+  const SOUND_ROWS = [['music', 'Music', 'the Chronicle’s score, under the title'], ['ambient', 'Ambient sound', 'the creek, wind, rain, drips, birds and owls'],
+    ['combat', 'Attacks and spells', 'blows, bows, spells, loot and level-ups'], ['steps', 'Footsteps', 'on grass, cobbles and stone'],
+    ['voices', 'Foes arriving and falling', 'goblins’ screeches, the dead rising, death cries']];
+  const slider = (k, label, what, v) => { const pct = Math.round(v * 100);
+    return html`<label key=${k}><span>${label}<small>${what ? html`${what} · ` : ''}<b>${pct === 0 ? 'off' : `${pct} %`}</b></small></span>
+      <input type="range" min="0" max="100" step="5" value=${pct} aria-label=${label} aria-valuetext=${pct === 0 ? 'off' : `${pct} percent`}
+        onInput=${(e) => { audio.set({ [k]: +e.currentTarget.value / 100 }); draw(); }} /></label>`; };
   function Sound() {
-    const st = audio.settings, pct = Math.round(st.volume * 100);
+    const st = audio.settings;
     return html`<div id="title">
       <div class="mark" style="font-size:32px">SOUND</div>
       <div class="snd">
-        <label>Volume<small>${pct === 0 ? 'off' : pct} </small><input type="range" min="0" max="100" step="5" value=${pct} aria-label="Volume"
-          onInput=${(e) => { audio.set({ volume: +e.currentTarget.value / 100 }); draw(); }} /></label>
-        ${SOUND_ROWS.map(([k, label, what]) => html`<label key=${k}><span>${label}<small>${what}</small></span>
-          <input type="checkbox" checked=${st[k]} aria-label=${label} onChange=${(e) => { audio.set({ [k]: e.currentTarget.checked }); draw(); }} /></label>`)}
+        ${slider('volume', 'Volume', '', st.volume)}
+        ${SOUND_ROWS.map(([k, label, what]) => slider(k, label, what, st[k]))}
       </div>
       <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
     </div>`;
@@ -88,7 +93,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
-      ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · ambient · attacks and spells · footsteps · foes</small></button>`}
+      ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
     </div>`;
   }

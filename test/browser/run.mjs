@@ -828,10 +828,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
   }
 }
-// 18. Sound (docs/sound-plan.md; the owner, 2026-10-03: "sound should start moderate, with a game menu of settings to
-// turn on and off ambient sounds and attack/spell fx, and NPCs spawn and death sounds"): the first tap starts it at the
-// moderate default with everything on; the menu's Sound panel has the volume and four switches (each row a thumb's
-// height); switching the ambience off takes at once and survives a reload; nothing errors
+// 18. Sound (docs/sound-plan.md; the owner, 2026-10-03: "sound should start moderate, with a game menu of settings…",
+// then "instead of on or off for each effect add a volume slider. Include a slider option for any background music" and
+// "default foot steps should be 25% of current volume"): the first tap starts it at the moderate default; the menu's
+// Sound panel has the volume and a slider each for music, ambience, attacks and spells, footsteps (at 25) and foes (each
+// row a thumb's height); turning the ambience down to 0 takes at once and survives a reload; nothing errors
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -841,14 +842,18 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.mouse.click(200, 300);
     const started = await p.waitForFunction(() => globalThis.__audio.running && globalThis.__audio.ready, null, { timeout: 15000 }).then(() => true, () => false);
     await p.click('#menuBtn'); await p.click('#title button:has-text("Sound")');
-    const panel = await p.evaluate(() => ({ boxes: [...document.querySelectorAll('#title .snd input[type=checkbox]')].map((i) => i.checked), vol: +document.querySelector('#title .snd input[type=range]').value,
-      rowH: Math.min(...[...document.querySelectorAll('#title .snd label')].map((l) => l.getBoundingClientRect().height)) }));
-    await p.click('#title .snd input[aria-label="Ambient sound"]');
-    const after = await p.evaluate(() => globalThis.__audio.settings);
+    const panel = await p.evaluate(() => ({ sliders: Object.fromEntries([...document.querySelectorAll('#title .snd input[type=range]')].map((i) => [i.getAttribute('aria-label'), +i.value])),
+      boxes: document.querySelectorAll('#title .snd input[type=checkbox]').length,
+      rowH: Math.min(...[...document.querySelectorAll('#title .snd label')].map((l) => l.getBoundingClientRect().height)),
+      fits: [...document.querySelectorAll('#title .snd label, #title button')].every((el) => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }) }));
+    await p.evaluate(() => { const i = document.querySelector('#title .snd input[aria-label="Ambient sound"]'); i.value = '0'; i.dispatchEvent(new Event('input', { bubbles: true })); });
+    const after = await p.evaluate(() => ({ ...globalThis.__audio.settings, shown: document.querySelector('#title .snd input[aria-label="Ambient sound"]').closest('label').textContent }));
     await p.reload(); await p.waitForFunction(() => !!globalThis.__audio, null, { timeout: 60000 });
     const kept = await p.evaluate(() => globalThis.__audio.settings);
-    check('sound: the first tap starts it, moderate, everything on; Sound in the menu switches the ambience off at once, and it stays off after a reload; no page errors',
-      started && panel.boxes.length === 4 && panel.boxes.every(Boolean) && panel.vol === 60 && panel.rowH >= 44 && after.ambient === false && kept.ambient === false && kept.combat && kept.voices && kept.steps && errs.length === 0,
+    const S = panel.sliders;
+    check('sound: the first tap starts it, moderate; Sound in the menu has a slider each (music, ambient, attacks, footsteps at 25, foes), each row ≥ 44 px, all on screen; the ambience down to 0 takes at once and stays after a reload; no page errors',
+      started && panel.boxes === 0 && S.Volume === 60 && S.Music === 100 && S['Ambient sound'] === 100 && S['Attacks and spells'] === 100 && S.Footsteps === 25 && S['Foes arriving and falling'] === 100
+        && panel.rowH >= 44 && panel.fits && after.ambient === 0 && /off/.test(after.shown) && kept.ambient === 0 && kept.combat === 1 && kept.steps === 0.25 && kept.music === 1 && errs.length === 0,
       JSON.stringify({ started, panel, after, kept, errs }));
     await ctx.close(); await b.close();
   }

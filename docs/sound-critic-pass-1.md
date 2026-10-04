@@ -83,6 +83,10 @@ It also covers the settings menu the owner asked for. The owner's direction (202
   - **Since (the owner):** the drip loop dripped 12 times in 10 s, which is too busy. It's gone. Single cut drops now
     fall at random, at least 10 s apart (measured in the warren over 80 s: 10.8–15.1 s; the chapel about 14 s; the
     mill about 30 s). The size is now 702 KB.
+  - **Then the birds and the owl** went the same way: single calls cut from their loops, at least 10 s apart (birds
+    12–25 s at dawn, the owl 10.5–19 s at night). The bird cuts are denoised: levelled alone, the field recording's
+    hiss showed. The size is now 622 KB.
+  - **Footsteps start at 25 %** of their pass-1 level (the owner), about −12 dB, on the new Footsteps slider.
 - **Sync:** 20 footfalls in 10 cycles, every one on frame 4 or 9 (the contacts); a swing is flagged once, on its
   first frame.
 - **Size:** 692 KB (51 one-shot files for 31 cues, plus 6 loops). One-shots load after the first tap; loops only

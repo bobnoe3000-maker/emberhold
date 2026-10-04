@@ -321,8 +321,11 @@ Golden-rule upkeep in every phase:
    - Our own recordings can replace them later. A cue is a list of files in `tools/audio/sounds.json`.
 2. **Music in play:** none for now. The Vale and the dungeons have ambience only.
 3. **Default level:** sound starts moderate (volume 0.6 ≈ −4.5 dB under full) after the first tap. The menu's
-   Sound panel holds the volume and four switches: ambient, attacks and spells, footsteps, foes arriving and
-   falling.
+   Sound panel holds the volume and a slider each (2026-10-03, "instead of on or off for each effect add a volume
+   slider. Include a slider option for any background music"): music, ambient, attacks and spells, footsteps, foes
+   arriving and falling. Each is a gain on its bus, 100 % as mixed. Footsteps start at 25 % ("default foot steps
+   should be 25% of current volume"). Old on/off settings carry over: on is the default level, off is 0. The intro's
+   old ♪ off becomes music 0, and its ♪ chip now sets the Music slider.
 
 ## 9. What shipped (sound critic pass 1: [sound-critic-pass-1.md](./sound-critic-pass-1.md))
 
@@ -331,13 +334,19 @@ Golden-rule upkeep in every phase:
   freesound and OpenGameArt couldn't be reached from the build environment; GitHub could.
 - **Format:** one MP3 per variant, not a sprite. Every browser decodes MP3, Safari included, so no AAC twin is
   needed. Loops crossfade their own seam to hide MP3's padding.
-- **Size:** about 702 KB in all, with the wind loop (63 KB) for the weather. One-shots are decoded on the first
+- **Size:** about 622 KB in all (702 with the bird and owl loops), with the wind loop (63 KB) for the weather. One-shots are decoded on the first
   tap; loops only in the place that has them. The budget in the test is 800 KB.
 - **Drips (the owner, 2026-10-03: "at least 10 sec between each drop"):** no loop and no emitters. Single drops
   (three cuts from Flare's cave-droplets loop, which dripped 12 times in 10 s) fall at random, never closer than
   10 s: 10–16 s in the warren and the chapel's pools, 10–22 s elsewhere, 16–36 s in the mill's dry cellars
   (`dripGap` in `src/audio/cues.js`). Each varies in pitch, level and pan. The timing is the listener's own chance,
   new each session, so no rhythm forms. Measured over 80 s in the warren: gaps of 10.8–15.1 s.
+- **Birds and the owl ("same with birds and owls"):** single calls too, not loops. Three bird calls and two owl calls
+  are cut from Flare's loops. The birds are denoised (`afftdn`) and band-passed, since levelling a −50 dBFS field
+  recording raised its hiss. Each kind is never closer than 10 s to its last call, even across a change of place
+  (`callsFor`, `callGap`, `callOf` in `cues.js`). The quieter its place (dusk, weather, town), the further apart:
+  10–20 s at full, up to ~70 s when hushed. Measured in the browser: birds 12.1–25.2 s apart at dawn (5 calls in
+  90 s), the owl 10.5–19.3 s at night (6 in 100 s).
 - **Mix data:** the cue table is code (`src/audio/cues.js`, pure and tested), not `content/sounds.json`. The
   sources are data (`tools/audio/sounds.json`).
 - **Synthesis:** the blows (filtered noise, with a crack on a crit). Footsteps, water and wind are samples, which
@@ -348,9 +357,9 @@ Golden-rule upkeep in every phase:
 | File | What it does |
 |---|---|
 | `src/audio/context.js` | The one AudioContext, shared with the intro's score |
-| `src/audio/settings.js` | Volume plus four switches, per device |
+| `src/audio/settings.js` | Volume and a level for music, ambient, attacks and spells, footsteps (25 %) and foes, per device; one copy for the page, which the engine and the score both hear |
 | `src/audio/engine.js` | Buses, the limiter, voice caps, retrigger gaps, variant choice, pan, crossfaded loops, synthesised blows, a dev meter |
-| `src/audio/cues.js` | Voices by kind, swings by atlas, steps by ground and weight, events, ambience by place and time |
+| `src/audio/cues.js` | Voices by kind, swings by atlas, steps by ground and weight, events, ambience by place, calls (drip, bird, owl) by place and time |
 | `src/audio/listen.js` | The listener on `sim.bus` and `renderer.onFrame` |
 | `render/anim.js` | Flags `step` (a foot down at the contacts, 0.45 and 0.95 of the cycle) and `swing` |
 | `ui/title.js` | The Sound panel in the menu |
@@ -362,8 +371,8 @@ Golden-rule upkeep in every phase:
   - every cue present;
   - pitch order by size;
   - the creek's fall-off;
-  - day and night;
+  - day and night; the calls never closer than 10 s;
   - the budget;
   - footfalls on frames 4 and 9, 20 in 10 cycles;
   - a swing flagged once.
-- Browser test 18: the first tap starts sound; the panel's switches; ambient off survives a reload.
+- Browser test 18: the first tap starts sound; the panel's sliders (footsteps at 25), each row ≥ 44 px and on screen; ambient at 0 survives a reload.

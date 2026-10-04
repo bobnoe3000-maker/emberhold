@@ -3,14 +3,14 @@
 //   sim.bus     the sim's events: blows, heals, wards, level-ups, loot, chests, stairs (cues.js eventCue)
 //   each frame  the figures the renderer drew (renderer.onFrame): a foot coming down, a swing beginning; and the
 //               foes in the world: one arriving (its cry), one falling (its death)
-// and keeps the place's ambience: the creek by its distance, birds and owls by the time of day, rain or a wind by the
-// weather, the dungeon's drips (single drops, ten seconds or more apart), its draught and the goblins' fires.
+// and keeps the place's ambience: the creek by its distance, rain or a wind by the weather, the dungeon's draught and the
+// goblins' fires; and its calls, single and ten seconds or more apart: a drip in the dark, a bird by day, an owl by night.
 //
 // Positions: a sound pans by where its figure stands on the screen, and fades with its distance from the view's centre
 // (silent beyond HEAR tiles). The party is heard at full level, foes a little under, townsfolk quietly.
 // Catch-up is silent: a frame that ran many ticks (a resume) plays nothing it missed, and a world change starts clean.
 
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, RIVER_REACH } from './cues.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from './cues.js';
 import { materialAt } from '../sim/world.js';
 import { partOf } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
@@ -24,8 +24,10 @@ const AMB_EVERY = 400;                              // ms between ambience updat
 export function createListener({ sim, audio, renderer }) {
   /** @type {Map<number, { dead: boolean, cried: boolean }>} */ let foes = new Map();
   const cried = new Map();
-  let world = sim.world, ambAt = -1e9, dripAt = -1, view = { hx: 0, hy: 0, nvw: 360, ix: 0, iy: 0 };
-  let seed = (Math.random() * 4294967296) >>> 0;   // presentation's own chance (never the sim's), new each session: the drips keep no rhythm
+  let world = sim.world, ambAt = -1e9, view = { hx: 0, hy: 0, nvw: 360, ix: 0, iy: 0 };
+  /** @type {Record<'drip' | 'bird' | 'owl', number>} */ let calls = { drip: 0, bird: 0, owl: 0 };   // how lively each is here (callsFor)
+  const callAt = { drip: -1, bird: -1, owl: -1 }, callLast = { drip: -1e9, bird: -1e9, owl: -1e9 };   // ms: when each calls next (-1: not yet set), and last did
+  let seed = (Math.random() * 4294967296) >>> 0;   // presentation's own chance (never the sim's), new each session: the calls keep no rhythm
   const rand = () => { seed = (Math.imul(seed ^ (seed >>> 13), 0x5bd1e995) + 0x6d2b79f5) >>> 0; return seed / 4294967296; };
 
   const fall = (dx, dy) => { const d = Math.hypot(dx, dy); return d > HEAR ? 0 : 1 / (1 + (d / 9) * (d / 9)); };
@@ -52,7 +54,7 @@ export function createListener({ sim, audio, renderer }) {
       if (best) audio.play(voiceOf(best.kind, 'hurt'), { pan, gain: g });
     }
   }
-  sim.bus.on('levelChanged', () => { foes = new Map(); cried.clear(); world = sim.world; ambAt = -1e9; dripAt = -1; });
+  sim.bus.on('levelChanged', () => { foes = new Map(); cried.clear(); world = sim.world; ambAt = -1e9; callAt.drip = callAt.bird = callAt.owl = -1; });
 
   // each frame: steps and swings from the figures drawn, arrivals and deaths from the foes
   renderer.onFrame((draws, v) => {
@@ -82,9 +84,12 @@ export function createListener({ sim, audio, renderer }) {
       }
     }
     if (now - ambAt > AMB_EVERY) { ambAt = now; ambience(); }
-    if (world.kind === 'dungeon') {                   // a single drop now and then, somewhere off in the dark (≥ DRIP_MIN s apart)
-      if (dripAt < 0) dripAt = now + (3 + dripGap(world.theme ?? null, rand()) * rand()) * 1000;   // (the first comes sooner, but not at once)
-      else if (now >= dripAt) { const r = rand(); audio.play(dripOf(r), { pan: (rand() - 0.5) * 1.4 }); dripAt = now + dripGap(world.theme ?? null, rand()) * 1000; }
+    for (const name of /** @type {const} */ (['drip', 'bird', 'owl'])) {   // a single call now and then, off somewhere (≥ CALL_MIN s apart)
+      const lv = calls[name], th = world.theme ?? null;
+      if (!lv) { callAt[name] = -1; continue; }
+      // (the first comes sooner, but not at once, and never inside CALL_MIN of the last, whatever came between)
+      if (callAt[name] < 0) callAt[name] = Math.max(now + (3 + callGap(name, lv, th, rand()) * rand()) * 1000, callLast[name] + CALL_MIN * 1000);
+      else if (now >= callAt[name]) { audio.play(callOf(name, lv, rand()), { pan: (rand() - 0.5) * 1.4 }); callLast[name] = now; callAt[name] = now + callGap(name, lv, th, rand()) * 1000; }
     }
     audio.tick();
   });
@@ -99,7 +104,9 @@ export function createListener({ sim, audio, renderer }) {
         const m = materialAt(world, view.ix + dx, view.iy + dy); if (m === 'water' || m === 'bank') waterD = d;
       }
     }
-    const levels = ambienceFor({ kind, theme: world.theme ?? null, part: partOf(sim.state.t || 0), waterD, weather: weatherNow(sim) });
+    const part = partOf(sim.state.t || 0), weather = weatherNow(sim);
+    const levels = ambienceFor({ kind, theme: world.theme ?? null, part, waterD, weather });
+    calls = callsFor({ kind, part, weather });
     for (const [name, lv] of Object.entries(levels)) audio.loop(name, lv);
   }
 }

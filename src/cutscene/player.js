@@ -11,6 +11,8 @@
 
 import { paint, W, H } from './scenes.js';
 import { createScore } from './score.js';
+import { soundSettings, setSoundSettings, onSoundSettings, DEFAULTS } from '../audio/settings.js';
+import { musicLevel } from '../audio/engine.js';
 import { swallow } from '../ui/actorart.js';
 
 const CSS = `
@@ -54,7 +56,6 @@ const CSS = `
 @media (prefers-reduced-motion: reduce) { #cine .begin { animation: none; } #cine .say span, #cine .veil { transition: none; } }
 `;
 const LINE_MS = 1500, FADE_MS = 450, SPLASH_MS = 1500, MIN_LOAD_MS = 2400, MAX_LOAD_MS = 12000, TIP_MS = 7800;   // a tip holds 7.8 s (2.6 s cycled too fast to read)
-const MUSIC_KEY = 'emberfall.music';
 
 export function createCinema() {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
@@ -69,7 +70,10 @@ export function createCinema() {
   const col = $('.col'), stage = /** @type {HTMLCanvasElement} */ ($('canvas')), veil = $('.veil'), skipBtn = $('.skip'), muteBtn = $('.mute'), pips = $('.pips');
   const L = { splash: $('.splash'), load: $('.load'), card: $('.card') };
   const score = createScore();
-  try { score.setMuted(localStorage.getItem(MUSIC_KEY) === 'off'); } catch {}
+  // the music's level is the menu's Music slider (audio/settings.js); ♪ here sets it to 0, or back to where it was
+  score.setLevel(musicLevel(soundSettings()));
+  onSoundSettings((s) => { score.setLevel(musicLevel(s)); muteLabel(); });
+  let musicWas = soundSettings().music || DEFAULTS.music;
   const muteLabel = () => { muteBtn.textContent = score.muted ? '♪ off' : '♪ on'; muteBtn.setAttribute('aria-label', score.muted ? 'Music off' : 'Music on'); };
   muteLabel();
 
@@ -109,7 +113,7 @@ export function createCinema() {
   /** @type {() => void} */ let onSkip = () => {};
   root.addEventListener('click', (e) => { const el = /** @type {HTMLElement} */ (e.target); if (el.closest('.skip')) onSkip(); else if (el.closest('.mute')) toggleMusic(); else onNext(); });
   root.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNext(); } else if (e.key === 'Escape') onSkip(); });
-  function toggleMusic() { score.setMuted(!score.muted); muteLabel(); try { localStorage.setItem(MUSIC_KEY, score.muted ? 'off' : 'on'); } catch {} }
+  function toggleMusic() { const m = soundSettings().music; if (m > 0) { musicWas = m; setSoundSettings({ music: 0 }); } else setSoundSettings({ music: musicWas }); }
 
   /**
    * Splash, then the loading screen until `ready` settles (and at least long enough to read a tip),

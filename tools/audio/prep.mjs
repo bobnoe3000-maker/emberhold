@@ -27,7 +27,9 @@ for (const [cue, list] of Object.entries(spec.shots)) {
   list.forEach((v, i) => {
     // a variant: a file, or a cut from one ({ src, at, len }: a single drop out of a loop), faded out at its end
     const cut = typeof v === 'object', inF = join(SRC, cut ? v.src : v), tmp = join(OUT, `_${cue}_${i}.wav`), out = join(OUT, `${cue}_${i + 1}.mp3`);
-    const span = cut ? ['-ss', String(v.at), '-t', String(v.len)] : [], fade = cut ? `,afade=t=out:st=${Math.max(0, v.len - 0.12)}:d=0.12` : '';
+    // (`af` filters a cut first, e.g. a bird's call high-passed off the field recording's rumble; `in` fades it in over
+    // that many seconds, for a cut that starts inside the recording's own background)
+    const span = cut ? ['-ss', String(v.at), '-t', String(v.len)] : [], fade = cut ? `${v.af ? ',' + v.af : ''}${v.in ? `,afade=t=in:d=${v.in}` : ''},afade=t=out:st=${Math.max(0, v.len - 0.12)}:d=0.12` : '';
     ff([...span, '-i', inF, '-af', `aformat=channel_layouts=mono${cut ? '' : ',' + TRIM}${fade}`, '-ar', '44100', tmp]);
     const vd = measure(tmp, 'volumedetect'), peak = +(/max_volume: (-?[\d.]+) dB/.exec(vd) || [0, 0])[1], mean = +(/mean_volume: (-?[\d.]+) dB/.exec(vd) || [0, 0])[1];
     // voices (sound critic pass 1): levelled by their mean, not their peak (a cue's variants sat 12.6 dB apart),

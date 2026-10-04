@@ -83,10 +83,12 @@ export function eventCue(name, ev) {
   return null;
 }
 
-// ── drips: single drops in the dungeons, never closer than DRIP_MIN s (the owner, 2026-10-03: "at least 10 sec between
-// each drop"; the cave-droplets loop they replace dripped 12 times in 10 s). Wetter places drip nearer the minimum, the
-// mill's dry cellars seldom. r: 0..1, the listener's own chance.
-export const DRIP_MIN = 10;
+// ── calls: the sparse sounds, single and never closer than CALL_MIN s apart (the owner, 2026-10-03: "Drip sound should
+// have at least 10 sec between each drop", then "same with birds and owls"; the loops they replace dripped 12 times in
+// 10 s, and the birds and the owl never stopped). A drip in the dungeons; outdoors a bird by day, an owl at dusk and by
+// night, fewer under weather. Wetter places drip nearer the minimum, the mill's dry cellars seldom; a hushed bird calls
+// seldom. r: 0..1, the listener's own chance.
+export const CALL_MIN = 10, DRIP_MIN = CALL_MIN;
 /** seconds until the next drop @param {string | null} theme @param {number} r */
 export function dripGap(theme, r) {
   const span = theme === 'desert' ? 20 : theme === 'poison' || theme === 'warren' ? 6 : 12;   // the mill · the chapel's pools, the old mine · the rest
@@ -95,31 +97,50 @@ export function dripGap(theme, r) {
 /** a drop: one of the cut drips, now nearer, now farther off in the dark @param {number} r @returns {Cue} */
 export const dripOf = (r) => ({ cue: 'drip', bus: 'ambient', rate: 0.9 + 0.2 * r, gain: 0.45 + 0.4 * r });
 
+// how lively each call is here and now, 0..1 (0: none). part: the time of day (0 dawn · 1 day · 2 dusk · 3 night).
+const BIRDS = [0.55, 0.5, 0.22, 0], OWLS = [0, 0, 0.18, 0.5], FULL = { bird: 0.55, owl: 0.5 }, SPAN = { bird: 10, owl: 14 };
+/** @param {{ kind: string, part: number, weather?: { kind: string, k: number } }} w @returns {{ drip: number, bird: number, owl: number }} */
+export function callsFor({ kind, part, weather = { kind: 'clear', k: 0 } }) {
+  if (kind === 'dungeon') return { drip: 1, bird: 0, owl: 0 };
+  let bird = BIRDS[part] ?? 0, owl = OWLS[part] ?? 0;
+  if (kind === 'town') { bird *= 0.6; owl *= 0.6; }
+  const wk = weather.k || 0, hush = ({ rain: 0.85, snow: 0.7, fog: 0.5, wind: 0.4 })[weather.kind] ?? 0;   // they go quiet under weather
+  bird *= 1 - hush * wk; owl *= 1 - hush * 0.6 * wk;
+  return { drip: 0, bird: bird < 0.03 ? 0 : bird, owl: owl < 0.03 ? 0 : owl };
+}
+/** seconds until the next call: the minimum, and longer the quieter its place @param {'drip' | 'bird' | 'owl'} name
+ * @param {number} level (callsFor) @param {string | null} theme @param {number} r */
+export function callGap(name, level, theme, r) {
+  if (name === 'drip') return dripGap(theme, r);
+  const q = Math.min(1, Math.max(0.08, level / FULL[name]));
+  return CALL_MIN + (Math.max(0, Math.min(1, r)) * SPAN[name]) / q;
+}
+/** a call: one of its cut variants, a little nearer or farther (and a different bird) each time
+ * @param {'drip' | 'bird' | 'owl'} name @param {number} level @param {number} r @returns {Cue} */
+export function callOf(name, level, r) {
+  if (name === 'drip') return dripOf(r);
+  const near = 0.5 + 0.5 * Math.min(1, level / FULL[name]);
+  return name === 'bird' ? { cue: 'bird', bus: 'ambient', rate: 0.92 + 0.18 * r, gain: (0.18 + 0.2 * r) * near } : { cue: 'owl', bus: 'ambient', rate: 0.95 + 0.08 * r, gain: (0.16 + 0.14 * r) * near };
+}
+
 // ── ambience: the level each loop should sit at, here and now ───────────────────────────────────────────────────────
-// waterD: tiles from the view's centre to the nearest river or mill-race tile (Infinity: none near). part: the time of
-// day (npcs.js partOf: 0 dawn · 1 day · 2 dusk · 3 night). theme: the dungeon's (sites.js), null for the barrows.
+// waterD: tiles from the view's centre to the nearest river or mill-race tile (Infinity: none near). theme: the dungeon's
+// (sites.js), null for the barrows. (The time of day is callsFor's: the birds and the owl.)
 export const RIVER_REACH = 14;
-// weather: sim/weather.js (outdoors): rain hisses and quiets the birds; wind blows (and hushes them a little); snow brings
-// a soft wind and a hush; fog only hushes.
-/** @param {{ kind: string, theme?: string | null, part: number, waterD: number, weather?: { kind: string, k: number } }} w @returns {Record<string, number>} */
-export function ambienceFor({ kind, theme = null, part, waterD, weather = { kind: 'clear', k: 0 } }) {
-  const out = { amb_river: 0, amb_birds: 0, amb_owl: 0, amb_cave: 0, amb_fire: 0, amb_wind: 0, syn_rain: 0 };
+// weather: sim/weather.js (outdoors): rain hisses; wind blows; snow brings a soft wind (the birds' and owls' hush under
+// it is callsFor's).
+/** @param {{ kind: string, theme?: string | null, part?: number, waterD: number, weather?: { kind: string, k: number } }} w @returns {Record<string, number>} */
+export function ambienceFor({ kind, theme = null, waterD, weather = { kind: 'clear', k: 0 } }) {
+  const out = { amb_river: 0, amb_cave: 0, amb_fire: 0, amb_wind: 0, syn_rain: 0 };
   if (kind === 'dungeon') {
     out.amb_cave = theme === 'desert' ? 0.3 : 0.5;                                                  // the mill's cellars are dry
     if (theme === 'warren') out.amb_fire = 0.3;                                                     // goblin fires down the tunnels
     return out;
   }
   if (waterD < RIVER_REACH) { const k = 1 - waterD / RIVER_REACH; out.amb_river = Math.min(1, k * k * 1.15); }
-  out.amb_birds = [0.55, 0.5, 0.22, 0][part] ?? 0;
-  out.amb_owl = [0, 0, 0.18, 0.5][part] ?? 0;
-  if (kind === 'town') { out.amb_birds *= 0.6; out.amb_owl *= 0.6; }
   const wk = weather.k || 0;
-  if (wk) {
-    const hush = { rain: 0.85, snow: 0.7, fog: 0.5, wind: 0.4 }[weather.kind] ?? 0;      // the birds go quiet under it
-    out.amb_birds *= 1 - hush * wk; out.amb_owl *= 1 - hush * 0.6 * wk;
-    if (weather.kind === 'rain') out.syn_rain = 0.75 * wk;
-    if (weather.kind === 'wind') out.amb_wind = 0.85 * wk;
-    if (weather.kind === 'snow') out.amb_wind = 0.35 * wk;                             // a soft wind over the snow
-  }
+  if (weather.kind === 'rain') out.syn_rain = 0.75 * wk;
+  if (weather.kind === 'wind') out.amb_wind = 0.85 * wk;
+  if (weather.kind === 'snow') out.amb_wind = 0.35 * wk;                                 // a soft wind over the snow
   return out;
 }
