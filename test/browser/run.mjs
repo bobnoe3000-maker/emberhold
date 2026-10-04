@@ -900,6 +900,31 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 19. Zoom (the owner, 2026-10-03 "too zoomed in" on desktop; again 2026-10-04 on a 1× screen): CSS px per native px is
+// the phone's upright fit (390 / 400) on a phone either way up, and a quarter more with a mouse whatever the window or
+// the screen's pixel ratio. A floor on device px per native px (1.5) had overridden the desktop cap on 1× screens.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const cases = [
+      ['desktop 568x800 @1x', { viewport: { width: 568, height: 800 }, deviceScaleFactor: 1 }, 1.22],
+      ['desktop 568x800 @2x', { viewport: { width: 568, height: 800 }, deviceScaleFactor: 2 }, 1.22],
+      ['desktop 1440x900 @1x', { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 }, 1.22],
+      ['phone 390x844 @3x', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, 0.975],
+      ['phone sideways 844x390 @3x', { viewport: { width: 844, height: 390 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, 0.975],
+    ];
+    const got = {};
+    for (const [name, opts] of cases) {
+      const ctx = await b.newContext(opts), p = await ctx.newPage();
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__renderer, null, { timeout: 60000 });
+      got[name] = await p.evaluate(() => Math.round((globalThis.__renderer.view.S / Math.min(3, devicePixelRatio)) * 1000) / 1000);
+      await ctx.close();
+    }
+    check('zoom: things are the phone\'s size on a phone either way up, a quarter larger with a mouse, at 1× and 2× alike',
+      cases.every(([name, , want]) => Math.abs(got[name] - want) < 0.01), JSON.stringify(got));
+    await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

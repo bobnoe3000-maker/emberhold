@@ -228,7 +228,9 @@ export function createRenderer(canvas, sim, input) {
     const cw = window.innerWidth, zk = VIEW_TILES / viewTiles, fit = cw / (viewTiles * TW);
     const touch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches), upright = touch && cw <= 500;
     const css = upright ? fit : Math.min(fit, PHONE_CSS * (touch ? 1 : 1.25) * zk);
-    S = Math.max(1.5, css * dpr);                          // fractional; PASS B upscales sharp-bilinear
+    // Device px per native px: fractional, PASS B upscales sharp-bilinear; never under one (no downsampling). (Its floor
+    // was 1.5, from when 25 tiles filled any window: on a 1× desktop that overrode the cap, 1.5 for 1.22, owner 2026-10-04.)
+    S = Math.max(1, css * dpr);
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
     const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
