@@ -1,6 +1,6 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 9 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 10 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
 who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
 people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
@@ -12,7 +12,9 @@ lit (§1.1, §1.2, §4). Draft 8 takes the endless tower away from the Guild: th
 empire, drowned under the Mere and found about forty years ago (§4.2). The Great Beacon stays the Guild's, and is
 now a finite site after the Throne (§4.3). Throne-iron becomes **pale iron**, mined only from the Ember's crater; that
 the two fell from the sky is hinted, never said (§1.1, §10.6). Draft 9: the Chronicle keeps a count of lamps broken and souls freed, a
-leaderboard later (§1.3); the Bowl's shop stock is defined later (§4.1).
+leaderboard later (§1.3); the Bowl's shop stock is defined later (§4.1). Draft 10: the Tithewood is renamed **the
+Greenwood**; the Great Beacon ships with the next region, a landing pair per release (§4.3); each region's town look
+is proposed in [region-towns-proposal.md](./region-towns-proposal.md).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
@@ -41,7 +43,7 @@ The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
 - §1 The idea; §1.1 How the Ember works (the sacrifice, the lamps, the Ashbound, the Voice); §1.2 The factions;
   §1.3 The fuel
 - §2 The map
-- §3 The regions (Emberfall, the Reach, the Tidemark, the Tithewood, the Heights)
+- §3 The regions (Emberfall, the Reach, the Tidemark, the Greenwood, the Heights)
 - §4 Solmere: the Bowl, the Mere Tower and the Great Beacon
 - §5 New skills
 - §6 Enemies and art
@@ -73,7 +75,7 @@ stretches, but no further: the last quest is about **the fate of the Old Provinc
 - **Emberfall:** the dead who kept their orders. A war-ghost story.
 - **The Cinder Reach:** the forges that still need feeding. A company town.
 - **The Tidemark:** the living who want the throne back. A war of succession.
-- **The Tithewood:** the souls the empire took and never spent. Folk horror.
+- **The Greenwood:** the souls the empire took and never spent. Folk horror.
 - **The Pale Heights:** the flame itself. A pilgrimage, and an ending.
 
 **Five factions drive the story** through every region (§1.2): the **Lantern Guild**, the **Cinder Cult**, the
@@ -205,7 +207,7 @@ and the Redhand Company.
 
 **The storylines at a glance:**
 
-| | Emberfall (I–II) | The Reach (III) | The Tidemark (IV) | The Tithewood (V) | The Heights (VI) |
+| | Emberfall (I–II) | The Reach (III) | The Tidemark (IV) | The Greenwood (V) | The Heights (VI) |
 |---|---|---|---|---|---|
 | **The Lantern Guild** | Maudry's board hires the company; the Standard's lamp and the choir-lamp broken | Pennick's truth; Furnace Nine broken; the vessel gone a day ahead | Old Gannet breaks his own lamp, and Lucan's drowned lie down | the tithe-lamps broken, the carts tracked | holds the Great Beacon dark; breaks the vessel |
 | **The Cinder Cult** | mines the spark | buys the vessel | courts the Voice | buys the fuel | lights the flame |
@@ -272,7 +274,7 @@ the oath she wrote that winter is the Guild's:
       crews lie down in the river: *"Sixty years. Somebody might have said."*
     - The Grace's stern-lantern lies in the Sister's Cabin, holding Livia's crew. Lucan won't recall them; the
       company can let them go.
-  - **The Tithewood:** a tithe-lamp hangs in every granary, and the great lamp in the Root Granary. The Guild's
+  - **The Greenwood:** a tithe-lamp hangs in every granary, and the great lamp in the Root Granary. The Guild's
     roadmen track the Cult's carts, the boards fill with jobs to stop them, and every granary's lamp the company
     breaks frees its rows before the Cult can buy them.
   - **The Heights:**
@@ -299,7 +301,7 @@ Zealots (canon) who believe the Ember was *stolen*, and the antagonist of the wh
     drowned clergy at the Abbey.
   - **The Reach:** **the vessel**, cast to its order by the Kell Assay in forges fed with sacrificed miners.
   - **The Tidemark:** **the Voice**. It courts Lucan, who learned the Canticle. He refuses, until he's beaten.
-  - **The Tithewood:** **the fuel**, the granaries' captives, bought a cart at a time.
+  - **The Greenwood:** **the fuel**, the granaries' captives, bought a cart at a time.
   - **The Heights:** the Throne. The four things together, and the faithful give themselves to the flame.
 - **Where it ends:** at the Throne. The Kindler walks into the vessel last: *"Most of them volunteered."*
 - **Its people:** the Kindler (met at the Canal Locks, at the Ashgate burial, at Lucan's table, and at the
@@ -316,7 +318,7 @@ every region turns on them. They want nothing they can say.
   - **Emberfall:** *hold the road until relieved* (the Third Legion); *keep the hours* (the drowned clergy).
   - **The Reach:** *work the shift*: the new-made at the furnaces, and Oruth, their forgemaster.
   - **The Tidemark:** *hold station until recalled* (the Grace); the drowned fleet, who obey Lucan.
-  - **The Tithewood:** *collect the tithe* (the Reeve and his tallymen); the Unpaid, waiting in rows.
+  - **The Greenwood:** *collect the tithe* (the Reeve and his tallymen); the Unpaid, waiting in rows.
   - **The Heights:** *guard the Empress* (the Praetorians); *muster at the lamp* (the Beacon's signal corps).
 - **Where it ends:** the burning stops at the Throne. The captives already made stay captive until someone puts
   them down or breaks their lamp, and every one is freed. The company frees them region by region, and in the
@@ -337,7 +339,7 @@ kept the rolls of everyone they bound.
     word.
   - **The Tidemark:** Sister Maren, chaplain on Tollhaven's quays, reads Reedholm's copy first. She learns that
     one line of it sent the Kindler to Lucan, and joins the company (cleric).
-  - **The Tithewood:** the Sisters learn the **Unbinding**, the rite that breaks the tie and frees the soul, from
+  - **The Greenwood:** the Sisters learn the **Unbinding**, the rite that breaks the tie and frees the soul, from
     the hedge-callers they always called superstitious (the cleric's skill, §5): *"Your Sisters bound them. You
     can learn to let go."*
   - **The Heights:** Sister Hild keeps Frosthold's infirmary for the climb.
@@ -361,7 +363,7 @@ are the Cult's hired hands across the provinces: coin is coin.
   - **The Reach:** Ruddock's Company guards the Kell Assay's yards, and escorts the vessel's dray out on the
     Solmere road.
   - **The Tidemark:** hired crossbows in Lucan's legion (canon: "recurring later as hirelings").
-  - **The Tithewood:** they drive the Cult's fuel carts out of the wood. At the Charcoal Clearing Ruddock finds out
+  - **The Greenwood:** they drive the Cult's fuel carts out of the wood. At the Charcoal Clearing Ruddock finds out
     what's under the sacking: somebody's grandparents.
   - **The Heights:** the Company turns. Ruddock and what's left of the Redhand hold the Pilgrims' Stair against
     the Cult while the company goes up. Brannoc is with them, if he's in the party.
@@ -381,7 +383,7 @@ Each matters in one region and is done when that region is done.
 | The Reach | **The Kell Assay** | a human assay house at Kell's Rest | Act III's villain: Morrow Vane sells the night shift and casts the vessel |
 | The Tidemark | **The Tidemark League** | the free ports | Hester Quaile; Brine Cross; the Gull Fleet broken |
 | The Tidemark | **The Kingdom of Highmarch** | Lucan's march-kingdom | Act IV's war; Lucan, the Seventh Voice |
-| The Tithewood | **The hedge-callers and the clans** (canon) | the old courtesies | Grandmother Yew, Moth, Thane Ivo; the granaries opened |
+| The Greenwood | **The hedge-callers and the clans** (canon) | the old courtesies | Grandmother Yew, Moth, Thane Ivo; the granaries opened |
 | The Heights | **The Monks of Frosthold** | pilgrims who never went home | the hospice, the barracks' keys, Lucan's keepers |
 | Solmere | **The Peace Wardens** | a name the Guild hides behind | the Dim Peace |
 
@@ -414,7 +416,7 @@ people.**
 | Emberfall, then | the Vale's tithe, the Third Legion; the clergy who drowned at their office | the empire | the Standard's lamp; the Abbey's choir-lamp | captives under the barrows road and in the Abbey, stirred by the Cult's digging; it cuts shards from them (the spark) |
 | The Reach, now | miners off the night shift | the Kell Assay sells them, and the Cult's furnace-priests sacrifice them by shard-light in the forges that cast the vessel | Furnace Nine | the shift that doesn't come up, and new Ashbound at the furnaces |
 | The Tidemark, then | the imperial fleet's crews | the empire | the Lamp Fort's coast-lamp; the Grace's stern-lantern | the drowned, who stand up for Lucan |
-| The Tithewood, then and now | three hundred years of the clans' tithe, Ashbound lying in rows in the granaries; and the living the Reeve takes for the count | the empire, then the Tithe-Reeve; the Cult buys the captives a cart at a time | a tithe-lamp in every granary; the Root Granary's great lamp | the largest store in the provinces, and the cheapest |
+| The Greenwood, then and now | three hundred years of the clans' tithe, Ashbound lying in rows in the granaries; and the living the Reeve takes for the count | the empire, then the Tithe-Reeve; the Cult buys the captives a cart at a time | a tithe-lamp in every granary; the Root Granary's great lamp | the largest store in the provinces, and the cheapest |
 | The Heights, then | the Empress's guard | the empire | the Praetory's guard-lamp | the Praetorians, who obey only a Voice |
 | The Throne, at the end | the Cult's own faithful | themselves | the vessel | they take the Rite in the vessel's light and walk in. *"Most of them volunteered."* They rise as Ashbound in the last fight. |
 
@@ -431,7 +433,7 @@ people.**
     biggest lamp the company has broken.
   - It's one rule in the sim (a lamp is an object with a list of the foes tied to it), and the boss system
     already has "break what shields him". See §8.
-- **The Tithewood's count:** the more of the granaries you free before the Root Granary, the less fuel reaches the
+- **The Greenwood's count:** the more of the granaries you free before the Root Granary, the less fuel reaches the
   Throne. The story still ends the same.
 - **At the Throne:** the flame grows in phases as the faithful feed it, and the newly bound faithful come at you.
   Lucan's last verse stops the flame, so nothing is fed to it again.
@@ -485,7 +487,7 @@ The Lantern Guild's own wall map, drawn **portrait**, the shape of a phone held 
 | **Act III · The Cinder Reach** (the Deepdelver Charter) | the black hills of the north-west | **15–30** | **Ashgate** | *Quota*: the forges relit, and who feeds them |
 | **Solmere**, the dead capital (a free city) | the centre, on the Mere | from 15 | **the Lamphall** | the Bowl (arena), the Mere Tower (the endless tower) and the Great Beacon (the Guild's); side quests only |
 | **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the north-east coast | **30–45** | **Tollhaven** | *The Seventh Voice*: a would-be emperor's war |
-| **Act V · The Tithewood** (the clan woods) | the south-east | **45–60** | **Rookstead** | *The Unpaid*: the tithe the empire never collected |
+| **Act V · The Greenwood** (the clan woods) | the south-east | **45–60** | **Rookstead** | *The Unpaid*: the tithe the empire never collected |
 | **Act VI · The Pale Heights and the Ember Throne** | the north, round the crater | **60–75** | **Frosthold** | *The Throne of Embers*: the finale |
 | After the finale | under the Throne, and in Solmere | 75 | — | the Undervaults (canon: the XP and loot dive), the Great Beacon (★ *Let Them Go Dark*, §4.3) and the Mere Tower (the leaderboard, §4.2) |
 
@@ -501,7 +503,8 @@ to the coast, down into the wood, and last north up the Pilgrims' Stair.
 
 ## 3. The regions
 
-**One full town per region: the player's base** (the owner). Each has the same five services in the same places
+**One full town per region: the player's base** (the owner). Each town's size, edge and ground are proposed in
+[region-towns-proposal.md](./region-towns-proposal.md). Each has the same five services in the same places
 (GDD §10: the tavern with the Guild's board, the inn, the smith, the shop and the temple), round a square with the
 region's trouble on the board. Each is built and lit in the region's own way, so arriving in one feels like
 arriving somewhere new.
@@ -511,7 +514,7 @@ arriving somewhere new.
 | Emberfall | **Thornwick** (shipped) | a farming town: timber palisade on an earth bank, thatch and timber-frame | the well; Maudry's *Tired Mule* |
 | The Reach | **Ashgate** | a mining town in black stone and iron: slag-brick walls, chimneys, a pithead wheel over the gate, every window lit orange | the Charter's anvil; *The Slag & Bellows* |
 | The Tidemark | **Tollhaven** | a harbour town in brick and tile on stone quays, a chain across the harbour mouth, gulls on every ridge | the Speaker's counting-house; *The Drowned Eel*'s sister house, *The Paid Toll* |
-| The Tithewood | **Rookstead** | a clan steading: longhouses of oak and turf inside a ring of standing stones, smoke through the roofs | the moot-stone; a mead-hall for a tavern, *The Antler* |
+| The Greenwood | **Rookstead** | a clan steading: longhouses of oak and turf inside a ring of standing stones, smoke through the roofs | the moot-stone; a mead-hall for a tavern, *The Antler* |
 | The Heights | **Frosthold** (canon) | a monastery turned fortress: grey stone, snow on everything, bells | the cloister; *The Frozen Flagon* |
 | (Solmere) | **the Lamphall** | the capital's ruin, the Guild's mother-house at the Beacon's foot | the city square where every company meets (§4) |
 
@@ -571,7 +574,7 @@ shipped content: the Standard carries the legion's lamp, which breaks when it fa
    - **The win:** the dead of the province are put down, and the records are safe.
    - **The cost, found later:** the rolls you saved are copied at Reedholm, and the Kindler reads the copy. One
      line sends him east (*"The Canticle went with the Lady Livia on the Grace"*). Another sends him into the
-     Tithewood, to the granaries.
+     Greenwood, to the granaries.
 
 **Sites.**
 
@@ -664,7 +667,7 @@ levels moved).
 - "The Assay pays double for the night shift." (True. Nobody asks why.)
 - "Oruth's hammer still rings in the Forgehall." (True, once the forges are lit.)
 - "The Slagborn sold their own grandmothers to the Assay." (False: they sold the lease. The grandmothers come up in
-  the Tithewood.)
+  the Greenwood.)
 
 **People.**
 - **Charter-Reeve Dagny Coalbrook:** a Deepdelver, head of the moot. Short-tempered, honest, broke. She gives the
@@ -787,10 +790,11 @@ Fall. They build to the reveal without giving it away.
 - *"You are to marry a march-lord and live by the sea. I envy you the sea."*
 - The last fragment: *"Take the Grace. Take the children. Take the box from my chapel, and never open it."*
 
-### 3.4 The Tithewood: levels 45–60 · Act V · *The Unpaid*
+### 3.4 The Greenwood: levels 45–60 · Act V · *The Unpaid*
 
 **What it is.** The great wood and the hill-clans of the south-east, which the empire conquered and **tithed**, in
-grain and in souls.
+grain and in souls. The clans call it **the Greenwood**; the empire's maps called it the Tithe Forest, and the
+clans burned the maps.
 - The Vale paid its share, as canon's Tithe Ledger has it: *"Souls, two hundred and forty."* That's the Third
   Legion's muster of two hundred and forty bound. The Vale's tithe became its legion.
 - The clans' tithe never became anything. The empire's reeves sacrificed them at the barns by shard-light, and their
@@ -834,7 +838,7 @@ grain and in souls.
 | **The Tally-House** | 51–55 | *the Abacus Floor*: the count kept in stone beads the size of fists, still moving |
 | **The Thornway** | 54–57 | the road the wood is taking back |
 | **The Root Granary** | 56–60 | under the oldest oak |
-| **The First Barn** (hidden: the Tithewood set) | 60 | where the first tithe was taken, and a hedge-caller's grave |
+| **The First Barn** (hidden: the Greenwood set) | 60 | where the first tithe was taken, and a hedge-caller's grave |
 
 **Rumours.**
 - "The barns are full of gold the empire left." (False. They're full of grandparents.)
@@ -844,7 +848,7 @@ grain and in souls.
 **People.**
 - **Grandmother Yew:** the eldest hedge-caller of Rookstead, who gives the chapters. If Col taught the company, she
   calls the player "the carter's friend".
-- **Moth:** a hedge-caller's boy, small and serious, and the Tithewood's found companion (shaman). His great-great-
+- **Moth:** a hedge-caller's boy, small and serious, and the Greenwood's found companion (shaman). His great-great-
   grandmother is in the Root Granary.
 - **Thane Ivo of the Antlers:** the clans' war-leader. He'd burn the Tally-House with the tallymen in it.
 - **Lirien:** an elf, and as canon has it, passing through. She comes every seventy years to see whether the barns
@@ -867,7 +871,7 @@ grain and in souls.
     open strips one).
 - **Region boss:** **The Unpaid**, the granary's host as one. It's beaten, not killed: it lies down.
 
-**Chronicle: the Tithewood set.** The tithe from the clans' side: tally-sticks, a reeve's diary, hedge-callers'
+**Chronicle: the Greenwood set.** The tithe from the clans' side: tally-sticks, a reeve's diary, hedge-callers'
 charms. The last fragment, cut into a tally-stick: *"Hide the little ones in the hay. The carts take what is
 counted."*
 
@@ -1110,17 +1114,34 @@ but it isn't empty.
 - Its garrison was the empire's **signal corps**, bound to the Beacon's own lamp and quartered landing by landing,
   under one order: *muster at the lamp*. Every night they climb to the lamp-room, as ordered, and every morning
   they're back on their landings.
-- **It's the one lamp the Guild has never broken**, the first on Mabry Cole's list. While the Ember burned anywhere,
-  the corps would come back to its stair. The Guild holds the door and lets nobody up.
+- **It's the one lamp the Guild has never broken**, the first on Mabry Cole's list. The Guild holds the door.
 - **Act VI:** while the company climbs to the Throne, the Guild holds the Great Beacon, so a relit flame's orders
   can't be carried to the provinces (§1.2).
 
+**It ships with the next region** (the owner, draft 10): it opens with the Reach (M9), and grows a stage with every
+region after.
+- **Opening (M9, the Reach).** After *Pennick's truth* in the Lamphall (Act III), Pennick lets the company up the
+  stair. *"Every one you put down on that stair is one Mabry didn't have to. Mind the fifth landing."* It's a Guild
+  job the company can come back to: put the corps down, a landing at a time. Every one counts in souls freed.
+- **A landing pair per region.** Each region's release opens the next two landings, and their corps fight at that
+  band's level. The site is finite: ten landings and a lamp-room.
+
+| Release | Landings | Levels | What's new |
+|---|---|---|---|
+| M9, the Reach | 1–2 | 15–30 | the door opens to the company; the corps |
+| M11, the Tidemark | 3–4 | 30–45 | the keepers' quarters: Mabry Cole's copy of the lamp-book's lost Tidemark pages |
+| M12, the Greenwood | 5–6 | 45–60 | **the Signalman** on the fifth (existing: adds, pouring in until he falls) |
+| M13, the Heights | 7–8 | 60–75 | the stair where Mabry Cole fell; the Act VI hold |
+| M14, after the Throne | 9–10 and the lamp-room | 75 | ★ *Let Them Go Dark* |
+
+- **The lamp-room stays shut until the Throne.** The Last Keeper holds it, and the Guild won't try him while the
+  Cult has a flame anywhere: a Voice with a relit Ember could stand a freed corps up again on its own stair.
+
 **★ *Let Them Go Dark*** (75, after the Throne). The Guild's last job, and the end of its oath.
-- With the Ember out and the vessel broken, Pennick opens the door. He takes Mabry Cole's hammer down from over the
-  board and gives it to the company.
-- **A site of ten landings:** the signal corps, a landing at a time; **the Signalman** on the fifth (existing: adds,
-  pouring in until he falls); **the Last Keeper** in the lamp-room (existing: enrage, his order to keep the lamp lit
-  and nothing else).
+- With the Ember out and the vessel broken, Pennick takes Mabry Cole's hammer down from over the board and gives
+  it to the company.
+- **The last landings and the lamp-room:** the signal corps' last ranks, then **the Last Keeper** in the lamp-room
+  (existing: enrage, his order to keep the lamp lit and nothing else).
 - **The lamp.** Beaten, the Keeper lets the lamp go out. The company breaks it with Mabry Cole's hammer, and the
   whole corps lies down at once, on every landing.
 - **The reward:** *Mabry's Hammer* (mace, an heirloom), and the company is the first **Beacon** in the Guild's own
@@ -1148,7 +1169,7 @@ trial, with a named teacher and a quest.
 
 Each cell below gives two options: the first and the second.
 
-| Class | The Reach (L18) · teacher | The Tidemark (L33) · teacher | The Tithewood (L48) · teacher | The Heights (L63) · teacher |
+| Class | The Reach (L18) · teacher | The Tidemark (L33) · teacher | The Greenwood (L48) · teacher | The Heights (L63) · teacher |
 |---|---|---|---|---|
 | **Fighter** | **Anvil Stance** (6 s: melee on you takes 20 % back; *test:* 2+ melee foes on you) / **Shoulder Charge** (knock the nearest caster down 1 s; *test:* a caster within 4 tiles) · *Dagny Coalbrook* | **Hold the Bridge** (the party behind you takes 25 % less for 6 s; *test:* 3+ foes in front) / **Boarding Rush** (charge the farthest foe; *test:* an archer out of reach) · *Hester's sergeant, Brine Cross* | **Thornhide** (5 s: whoever hits you bleeds; *test:* 3+ on you) / **Taunt the Wood** (pull every foe in 4 tiles onto you; *test:* an ally below 40 %) · *Thane Ivo* | **Hold Fast** (8 s: the party +40 % DEF, but slowed; *test:* the party below 50 % on average) / **Praetor's Cut** (2.4× through the front rank; *test:* a formation) · *Brother Cobb* |
 | **Rogue** | **Slag Pot** (a burning patch, the ground-hazard system; *test:* 3+ clustered) / **Cut the Strap** (−30 % DEF 6 s on an elite; *test:* an elite or boss) · *Hob* | **Mark for the Fleet** (the party's crits on the mark +20 %; *test:* the focus target) / **Harpoon** (pull a caster to you; *test:* a caster out of reach) · *Old Gannet* | **Fade into the Thorn** (drop aggro; reappear behind the farthest caster; *test:* below 40 % HP) / **Twice-Bitten** (Venom spreads on a kill; *test:* 3+ foes) · *Lirien* | **Glasswalk** (blink through a foe, the next strike crits; *test:* a foe below 30 %) / **Lampblack** (2 s: foes in 3 tiles miss; *test:* 3+ on you) · *the Prior's lay brother* |
@@ -1178,7 +1199,7 @@ adventurers, the skeletons and the goblins.
 | Emberfall (Fens) | fen ghoul, bog-witch | Cult harvesters (acolytes), reed-cutters (Redhand), drowned clergy (Ashbound) |
 | The Reach | slag hauler, forge-wight | Assay guards, Slagborn (humans), furnace-priests (Cult), cinder hounds (the quadruped) |
 | The Tidemark | (none: all human) | legionaries, corsairs, engineers (humans), drowned sailors (Ashbound), war-hounds (the quadruped) |
-| The Tithewood | thorn-warden | tallymen (Ashbound), barn-wights and the Unpaid (the ghost look the Fallen already have), wolves and boars (the quadruped) |
+| The Greenwood | thorn-warden | tallymen (Ashbound), barn-wights and the Unpaid (the ghost look the Fallen already have), wolves and boars (the quadruped) |
 | The Heights | glass-touched | Praetorians (Ashbound elites), frost revenants (Ashbound recolour), snow-wolves (the quadruped) |
 | Solmere: the Mere Tower and the Great Beacon | (none) | the Tower: every region's mix, and wardens from recolours and the quadruped; the Beacon: the signal corps (Ashbound) |
 
@@ -1196,7 +1217,7 @@ proposal.
 | Emberfall | the dead, still under orders | nobody: they just stand there | **the spark**: the Cult is mining the dead | a win, with a cost found later (the copied binding rolls) |
 | The Reach | the forges, still needing fuel | the Kell Assay, for profit | **the vessel** | a loss, a day late, though Furnace Nine is broken and nothing more is cast |
 | The Tidemark | the throne, still empty | Lucan, for a crown | **the Voice**: whoever learns the Canticle | a win, and a man who walks north on his own |
-| The Tithewood | the tithe, still uncollected | the Reeve, for the count | **the fuel**: bought, not stolen | mostly a win: too little fuel got out |
+| The Greenwood | the tithe, still uncollected | the Reeve, for the count | **the fuel**: bought, not stolen | mostly a win: too little fuel got out |
 | The Heights | the flame | the Kindler, for faith | it all comes together | Lucan sings the last verse, and loses his voice |
 
 **The Chronicle builds the reveal across the map:**
@@ -1204,7 +1225,7 @@ proposal.
 - **the Fens:** the Sisters' mothers bound them;
 - **the Reach:** the forges burned them;
 - **the Tidemark:** the Empress held the Canticle, and sent it away;
-- **the Tithewood:** the tithe was *counted*;
+- **the Greenwood:** the tithe was *counted*;
 - **the Heights:** she told it to stop.
 
 The Chronicle grows from about 45 fragments to about **60**: ten per region and set.
@@ -1241,7 +1262,7 @@ hours of pure fighting; real play is about 2–3× that.
 | Emberfall 1–15 | ~2.5 | 6 shipped + 5 | 8 (Acts I–II) |
 | The Reach 15–30 | ~5.4 | 6 + hidden | 6 |
 | The Tidemark 30–45 | ~6.5 | 6 + hidden | 6 |
-| The Tithewood 45–60 | ~6.5 | 6 + hidden | 6 |
+| The Greenwood 45–60 | ~6.5 | 6 + hidden | 6 |
 | The Heights 60–75 | ~6.5 | 7 | 6 |
 
 **The prerequisites, before any band past 30:**
@@ -1264,10 +1285,10 @@ hours of pure fighting; real play is about 2–3× that.
 | Milestone | What |
 |---|---|
 | **M8** | **the count** in the Chronicle (lamps broken, souls freed; the Standard credited by migration); **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Mere Tower, played offline, with no Wall yet. A capped player has an endgame loop before new regions come. |
-| **M9** | **the Reach** (Act III); the stat rescale; the first skill tier (L18); the cap to 30 |
+| **M9** | **the Reach** (Act III) and **Ashgate**; **the Great Beacon's** first landings (§4.3); the stat rescale; the first skill tier (L18); the cap to 30 |
 | **After M6's validator** | the Mere Tower's Wall and seasons; the Freed (souls freed); the Bowl's marks |
 | **M10** | **the Bowl**, async, with its written rivals; the heirloom shop after it |
-| **M11–M14** | one region per milestone (the Tidemark, the Tithewood, the Heights and the Throne), raising the cap each time |
+| **M11–M14** | one region per milestone (the Tidemark, the Greenwood, the Heights and the Throne), each with its town and the Great Beacon's next landings, raising the cap each time |
 
 ---
 
@@ -1316,10 +1337,10 @@ hours of pure fighting; real play is about 2–3× that.
    **Saltmere** becomes a waystation (§3 now says each region has one town).
 11. **Acts I–VI by region** (§6 now has four acts).
 12. **Level bands:** the Reach 15–30, the Heights 60–75, the Throne at 73–75. New: the Tidemark 30–45, the
-    Tithewood 45–60.
+    Greenwood 45–60.
 13. **New names.**
     - Places: the Old Provinces, the Mere, the Dim Peace, the Lamphall, the Bowl, the Great Beacon, the Mere Tower, the Tidemark,
-      Tollhaven, Highmarch, Brine Cross, Gullwick, the Tithewood, Rookstead, Hollin Ford, the Tithe Road.
+      Tollhaven, Highmarch, Brine Cross, Gullwick, the Greenwood, Rookstead, Hollin Ford, the Tithe Road.
     - People: the Lady Livia, Nan Ruddock, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
       Coalbrook, Morrow Vane, Gunnar Slagg, Hob, Old Brannagh, Mother Coke, Grandmother Yew, Moth, Thane Ivo,
       Lirien, Prior Anselm, Sister Hild, Brother Cobb, Mother Agnes, Pim Rushlight, Brother Teague, Aldo Pennick,
@@ -1379,7 +1400,7 @@ writer. Here is what they found, and what draft 2 did about it. The tables keep 
 | 4 | The Tidemark letters gave away the Glass Keep's reveal at level 45 | High | the letters only hint ("the flame knows our voices"); "one last order" moved to the Glass Keep |
 | 5 | Every region ended "what the Cult took", four losses in a row; the Cult burning records it needed | High | varied endings; the Cult *steals* the genealogies, and the copy you save is the one the Kindler reads |
 | 6 | The Kindler first met at level 41 | High | met at the Canal Locks (~10), the Ashgate burial (~19) and Lucan's table |
-| 7 | The tithe logic didn't hold; the Tithewood repeated the Abbey's harvest | High | the Vale's 240 tithed became the Third Legion; the clans' bound lay in the granaries; the Cult *buys*; the Reeve collects the buyers as arrears |
+| 7 | The tithe logic didn't hold; the Greenwood repeated the Abbey's harvest | High | the Vale's 240 tithed became the Third Legion; the clans' bound lay in the granaries; the Cult *buys*; the Reeve collects the buyers as arrears |
 | 8 | The act numbering broke; the vessel's route and how it crossed Solmere | Medium | Acts I–VI by region; the vessel goes north-east by the Solmere road; the customs stub |
 | 9 | The Grey Sisters tangled (drowned, yet alive); the Abbess and the Choir the same boss; the Healer given to the wrong Sister | Medium | the binding clergy; the Abbess the story kill and the Choir her echo; the Healer deferred; Mother Agnes the one who'd keep the Undercroft shut |
 | 10 | Lucan's syllable gag didn't work; "Ninth" was overloaded; his turn had no hook; the Empress's Cabin held letters *to* her sister | Medium | *Lucanus* ("his mother called him Luke"); *the Seventh*; the bound legions obey a Solmere voice; the Sister's Cabin |
@@ -1428,6 +1449,7 @@ writer. Here is what they found, and what draft 2 did about it. The tables keep 
 | The Lantern Guild (draft 7) | "Enhance the Lantern Guild purpose story, its members seek to destroy those lamps that hold souls captive as the Ashen, as well as to prevent new ones" | souls are held in **lamps** (§1.1); the Guild's story, oath, mission, ranks and secrecy (§1.2); a lamp broken in every region; Mabry Cole and the Great Beacon (§4); one lamp rule (§1.3, §8); reviewed in §10.5 |
 | The tower and the iron (draft 8) | "The endless tower wasn't built or run by the lantern guild. It was built before the empire, only recently discovered or rediscovered after the solemere empire fell … Throne-iron isn't a good name. How about iron mined near where the ember was found. Perhaps the iron and the ember are a remnant of a meteor that fell from the sky long ago.. only hinted at" | the Mere Tower (§4.2) and the Great Beacon as the Guild's own finite site (§4.3); pale iron and the hints (§1.1); reviewed in §10.6 |
 | The count and the shop (draft 9) | "Yes keep a count of lanterns broken and souls freed.. future leaderboard item. The arena token shop items can be defined later" | the count in the Chronicle, credited only by sim rules, and its future leaderboard, the Freed (§1.3, §8); the shop's stock deferred (§4.1, §11) |
+| The Greenwood, the Beacon, the towns (draft 10) | "Not Tithewood, call it greenwood. The great beacon site lets ship it with the next region. Propose each regions town look, some a bit smaller with no wall, some larger with stone walls…" | renamed throughout and on the map; the Great Beacon opens with the Reach (M9), two landings a region, the lamp-room after the Throne (§4.3); the towns in their own proposal |
 | The tower offline | "Tower can always bee played offline" | always playable offline. The Wall stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ### 10.4 The owner's account of the fuel, reviewed (draft 5)
@@ -1519,10 +1541,8 @@ becomes iron mined where the Ember was found, and the two are the remnant of a s
 
 ## 11. Still open
 
-1. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
-   square at its head) and the region's materials.
-2. **When the Great Beacon ships** (★ *Let Them Go Dark*, §4.3): with the Heights (M14), or as the first post-game
-   update after it?
+1. **Each town's look:** proposed in [region-towns-proposal.md](./region-towns-proposal.md) (draft 10), for the
+   owner's pick.
 
 **Deferred by the owner, not open:** the Bowl's heirloom shop, what it sells and at what price, is defined later
 (after M10).

@@ -135,7 +135,7 @@ for (let i = 0; i < 3; i++) add(`<path d="M${239 + i * 4},${732 - i * 6} q${8 + 
 range([[205, 1525], [280, 1512], [360, 1518], [440, 1534]], 11, 22, 13);                      // the Vale's north range (the Scrag Warren)
 range([[930, 820], [985, 800], [1015, 840]], 5, 24, 13);                                      // the Highmarch fells
 range([[930, 1790], [960, 1720], [990, 1650]], 5, 22, 12);
-scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [640, 1760], [600, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Tithewood
+scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [640, 1760], [600, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Greenwood
 scatter([[440, 1650], [560, 1650], [580, 1770], [470, 1810], [420, 1730]], 26, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
 scatter([[200, 470], [330, 470], [380, 580], [240, 620]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));                                      // pines under the Heights
 scatter([[830, 470], [960, 480], [990, 610], [850, 620]], 24, 17, (x, y) => pine(x, y, rr(8, 11)));
@@ -190,14 +190,14 @@ const BORDERS = [[[160, 660], [350, 690], [480, 720], [600, 770], [720, 720], [8
   [[480, 720], [520, 860], [500, 1000], [440, 1120], [300, 1250], [160, 1300]],                              // the Reach
   [[720, 720], [680, 880], [700, 1060], [780, 1250], [1030, 1300]],                                          // the Tidemark
   [[160, 1420], [330, 1440], [500, 1420], [580, 1520], [620, 1720], [640, 1960]],                            // Emberfall
-  [[580, 1520], [640, 1330], [780, 1260], [1030, 1300]]];                                                    // the Tithewood
+  [[580, 1520], [640, 1330], [780, 1260], [1030, 1300]]];                                                    // the Greenwood
 for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), false)}" fill="none" stroke="${INK}" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>`);
 
 // ── lettering ────────────────────────────────────────────────────────────────────────────────────────────────────────
 const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-linejoin="round"`;
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
-const REG = [[310, 1598, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE TITHEWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
+const REG = [[310, 1598, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE GREENWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
 for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 34, l, 32, { sc: true, ls: 5 })); label(x, y + (lines.length - 1) * 34 + 28, `levels ${lv}`, 20, { it: true, fill: RED }); }
 label(520, 1840, 'the Hollow Vale', 19, { it: true }); label(470, 2160, 'the Greywater Fens', 19, { it: true });
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
