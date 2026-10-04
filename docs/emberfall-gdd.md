@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.20 · 2026-10-03 · Plan of record for game design.** v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.21 · 2026-10-04 · Plan of record for game design.** v1.21 (§10.1): the wind shows as long, thin gust lines that come and go; the birds, the owl and the dungeon drips are single calls at least 10 s apart; and every kind of sound, the music too, has its own volume slider. A weather icon by the sky dial is proposed in [weather-icon-mockup.md](./weather-icon-mockup.md). v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -1098,8 +1098,13 @@ progress):
     - **Fog:** a veil, thickest toward the top of the screen (the distance) and thin over the party,
       with soft banks drifting through. At night it's a darkening, not a grey wash.
     - **Snow:** a cold, even light and a few slow drifting flakes.
-    - **Wind:** the air clears (less of the violet haze), and a few leaves tumble across the screen on the
-      gusts. The light and contrast are otherwise unchanged (+0.4 % and +0.8 % by day).
+    - **Wind:** the air clears (less of the violet haze). Long, thin gust lines (the owner, v1.21: "longer
+      intermittent string like streaks") draw themselves across the screen on the wind and are gone: each is seen
+      for half its own 3–6 s cycle, about 4 on screen at once, a median 26 % of the screen's width long (p90
+      47 %). They wave gently, brightest at the head. A few leaves still tumble by. The light and contrast are
+      otherwise unchanged (+0.4 % and +0.8 % by day).
+
+      ![Wind before (leaves only) and after (gust lines)](img/weather/wind-streaks.jpg)
 
     Measured at full strength against clear, the change in mean luma and contrast:
 
@@ -1112,7 +1117,11 @@ progress):
     ![The Vale clear, in rain, fog and snow, by day and at night](img/weather/vale-weathers.jpg)
   - **The sound:** rain hisses (synthesised: `audio/engine.js`) and quiets the birds. Wind blows (Flare's
     wind loop) and the birds sing less. Snow brings a softer wind and a hush. Fog only hushes. It's all on
-    the ambient switch.
+    the ambient slider.
+  - **Calls** (v1.21; the owner: "at least 10 sec between each drop", then "same with birds and owls"): a bird
+    by day, an owl at dusk and by night, a drip in the dungeons. Each is a single call, never closer than 10 s
+    to the last of its kind, and further apart where it's quieter (dusk, weather, town, the mill's dry cellars).
+    Measured: birds 12–25 s apart at dawn, the owl 10.5–19 s at night, drips 10.8–15.1 s in the warren.
   - **The dial** names it: "Day · rain". Tap it to learn when it clears, lifts, eases or drops.
   - **Dev:** `?dev&weather=rain|fog|snow|wind|clear[:0..1]` holds a weather for captures.
 
