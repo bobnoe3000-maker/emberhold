@@ -23,7 +23,7 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
     const r = await p.evaluate(async (l) => await window.bakeAll(l), l);
     for (const c of ['alb', 'nrm', 'key']) fs.writeFileSync(path.join(OUT, `${name}.${c}.png`), Buffer.from(r[c].split(',')[1], 'base64'));
     fs.writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify({ width: r.width, height: r.height, sprites: r.meta }) + '\n');
-    for (const [k, m] of Object.entries(r.meta)) foot[k] = m.foot;
+    for (const [k, m] of Object.entries(r.meta)) if (!k.includes('~')) foot[k] = m.foot;   // (id~frame: an idle frame of id, not a thing of its own)
     console.log(`  ${name}: ${l.length} sprites → ${r.width}×${r.height}`);
   }
   fs.writeFileSync(path.join(ROOT, 'src', 'sim', 'envfoot.js'),

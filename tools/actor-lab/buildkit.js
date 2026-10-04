@@ -588,6 +588,10 @@ function foliage(geo, r, amt, base, top = 1.35, bottom = 0.55) {
   m.setAttribute('color', new THREE.BufferAttribute(col, 3)); m.computeVertexNormals();
   return m;
 }
+// a pine's boughs take the leaf pattern too (beside the leafy broadleaves, plain cones read as plastic): smaller,
+// flatter tufts (cells squashed in y), a gentler bulge, so a tier reads as layered needles, not clusters. No cuts at
+// the rim: the tiers' clean stepped outline is the pine (cut, it frayed into a blur)
+const PINE_LEAF = { cell: 0.05, leaf: 0.02, bump: 0.6, gap: 0.4, rim: 0, stretch: 0.55 };
 function pine(g, r, x, z, sc = 1) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.045, 0.34, 6), flat(TREE_COL.bark)); trunk.position.y = 0.17; t.add(trunk);
@@ -595,7 +599,7 @@ function pine(g, r, x, z, sc = 1) {
   for (let i = 0; i < tiers; i++) {                        // drooping boughs, each a little narrower, overlapping
     const rad = 0.29 * (1 - i / (tiers + 0.8)), h = 0.3 * (1 - i * 0.08);
     const c = new THREE.Mesh(foliage(new THREE.ConeGeometry(rad, h, 11, 2), r, 0.035, col, 1.55, 0.62), foliageMat);
-    c.position.y = 0.2 + i * 0.16 + h / 2; c.rotation.y = r() * 3; t.add(c);
+    c.position.y = 0.2 + i * 0.16 + h / 2; c.rotation.y = r() * 3; c.userData.leaf = PINE_LEAF; t.add(c);
   }
 }
 function broadleaf(g, r, x, z, sc = 1, autumn = false) {
@@ -608,11 +612,18 @@ function broadleaf(g, r, x, z, sc = 1, autumn = false) {
 // blobs; its are many small leaf clumps, each lit on top and dark beneath). A few smooth lobes still give the
 // mass; over them, faceted clumps (icosahedra, one flat normal a face) toned from a dark underside to a lit crown.
 const leafMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
+// The tree critic pass (2026-10-04; the owner: "they look like they have odd lumps … what about removing the lumps
+// and adding a leaf like shader?"): the faceted clumps lit as hard gem plates (38 % of a broadleaf's crown in plates
+// of one flat normal). They're gone; the lobes carry a leaf pattern instead, worked out in the bake (envlab.js
+// leafPass): clusters of CROWN_LEAF.cell world units (~8 px), bulged, with shaded gaps; leaves of .leaf (~3 px), toned;
+// the rim cut into leaves.
+const CLUMPS = false;
+const CROWN_LEAF = { cell: 0.075, leaf: 0.028, bump: 0.95, gap: 0.5, rim: 0.5 };
 function leafCrown(t, r, pal, cy, R, lobes, clumps = 30) {
   for (let i = 0; i < lobes; i++) {                        // the mass: a broad core, lobes around and on top
     const a = (i / lobes) * Math.PI * 2 + r(), rr = i === 0 ? 0 : R * (0.55 + r() * 0.35), size = i === 0 ? R : R * (0.5 + r() * 0.3);
     const b = new THREE.Mesh(foliage(new THREE.IcosahedronGeometry(size, 1), r, size * 0.22, pal[(r() * 3) | 0]), foliageMat);
-    b.position.set(Math.cos(a) * rr, cy + (i === 0 ? R * 0.3 : r() * R * 0.6 - R * 0.2), Math.sin(a) * rr); t.add(b);
+    b.position.set(Math.cos(a) * rr, cy + (i === 0 ? R * 0.3 : r() * R * 0.6 - R * 0.2), Math.sin(a) * rr); b.userData.leaf = CROWN_LEAF; t.add(b);
   }
   for (let i = 0; i < clumps; i++) {                       // the clumps, over the mass's skin (not underneath: unseen)
     const u = r() * 1.5 - 0.5, a = r() * Math.PI * 2, ring = Math.sqrt(Math.max(0, 1 - u * u)), size = R * (0.2 + r() * 0.14);
@@ -621,7 +632,10 @@ function leafCrown(t, r, pal, cy, R, lobes, clumps = 30) {
     const c = new THREE.Color(pal[(r() * 3) | 0]), lit = 0.7 + 0.75 * Math.min(1, Math.max(0, (u + 0.5) / 1.5)) * (0.9 + r() * 0.2);
     for (let v = 0; v < p.count; v++) { p.setXYZ(v, p.getX(v) * (0.85 + r() * 0.3), p.getY(v) * (0.8 + r() * 0.3), p.getZ(v) * (0.85 + r() * 0.3)); col[v * 3] = c.r * lit; col[v * 3 + 1] = c.g * lit; col[v * 3 + 2] = c.b * lit; }
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
-    const m = new THREE.Mesh(geo, leafMat); m.position.set(px, py, pz); m.rotation.set(r() * 3, r() * 3, r() * 3); t.add(m);
+    const m = new THREE.Mesh(geo, leafMat); m.position.set(px, py, pz); m.rotation.set(r() * 3, r() * 3, r() * 3);
+    // (made either way, and kept unseen: the seed's draws stay where they were, and so does the footprint, which the sim
+    // places the world by: src/sim/envfoot.js)
+    if (!CLUMPS) m.visible = false; t.add(m);
   }
 }
 // A birch (pass 11d: the reference's white trunks): slim, a pale bark with dark marks, a light crown, gold in autumn.
@@ -800,7 +814,9 @@ function limb(parent, m, x0, y0, z0, x1, y1, z1, r0, r1) {      // a tapered cyl
   const c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, len, 7), m); c.position.copy(a).add(b).multiplyScalar(0.5);
   c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); parent.add(c); return c;
 }
-function cowMesh(r, v) {
+// pose (the idle frames, baked beside the cow; renderer.js plays them): tail -1 | 1, swished to one side; head 1, a
+// grazing cow lifts her head to chew, one looking up turns hers. A pose never draws from r(), so a frame is the same cow.
+function cowMesh(r, v, pose = {}) {
   const g = new THREE.Group(), W = '#d6cfc0', K = '#262020', white = smooth(W), black = smooth(K), pink = smooth('#c08478'), horn = smooth('#d8cfb4');
   // the barrel: a capsule along x, a little deeper than wide, in a painted piebald hide
   const geo = new THREE.CapsuleGeometry(0.085, 0.2, 8, 20); geo.rotateZ(Math.PI / 2); geo.scale(1, 1.05, 0.9);
@@ -814,8 +830,9 @@ function cowMesh(r, v) {
   }
   // the neck and head: grazing (head down to the grass) or looking up
   const graze = v % 2 === 0, hx = graze ? 0.26 : 0.27, hy = graze ? 0.07 : 0.29, darkHead = v % 3 === 1, hm = darkHead ? black : white;
-  limb(g, white, 0.15, 0.24, 0, hx - 0.03, hy + 0.02, 0, 0.055, 0.04);
-  const head = new THREE.Group(); head.position.set(hx, hy, 0); head.rotation.z = graze ? -1.0 : -0.25; g.add(head);
+  limb(g, white, 0.15, 0.24, 0, hx - 0.03, hy + 0.02 + (pose.head && graze ? 0.03 : 0), 0, 0.055, 0.04);
+  const hd = pose.head ? 1 : 0, head = new THREE.Group(); head.position.set(hx - hd * (graze ? 0.01 : 0), hy + hd * (graze ? 0.035 : 0), 0);
+  head.rotation.z = (graze ? -1.0 : -0.25) + hd * (graze ? 0.3 : 0); head.rotation.y = hd * (graze ? 0 : 0.55); g.add(head);
   ellipsoid(0.045, 1.35, 0.95, 0.9, hm, 0.01, 0, 0, head);                     // the skull, longer than deep
   ellipsoid(0.034, 1, 0.85, 1.05, pink, 0.065, -0.012, 0, head);              // the muzzle
   if (darkHead) ellipsoid(0.02, 1.6, 0.5, 0.6, white, 0.02, 0.03, 0, head);   // a white blaze
@@ -824,8 +841,9 @@ function cowMesh(r, v) {
     const h = new THREE.Mesh(new THREE.ConeGeometry(0.009, 0.04, 6), horn); h.position.set(-0.005, 0.045, sz * 0.03); h.rotation.x = sz * -0.9; h.rotation.z = 0.3; head.add(h);
   }
   // the tail: hanging from the rump to a dark tassel
-  limb(g, white, -0.2, 0.25, 0, -0.215, 0.11, 0.01, 0.007, 0.006);
-  ellipsoid(0.014, 0.8, 1.6, 0.8, black, -0.215, 0.1, 0.01, g, 6);
+  const tz = 0.01 + (pose.tail || 0) * 0.075, ty = 0.11 + (pose.tail ? 0.03 : 0), tx = -0.215 - (pose.tail ? 0.02 : 0);
+  limb(g, white, -0.2, 0.25, 0, tx, ty, tz, 0.007, 0.006);
+  ellipsoid(0.014, 0.8, 1.6, 0.8, black, tx, ty - 0.01, tz, g, 6);
   g.rotation.y = r() * 0.6 - 0.3; return g;
 }
 function sheepMesh(r, v) {
@@ -882,7 +900,7 @@ function planterMesh(r) {
   return g;
 }
 const NATURE = {
-  cow: (r, v) => cowMesh(r, v), sheep: (r, v) => sheepMesh(r, v), hens: (r) => hensMesh(r), pumpkins: (r) => pumpkinsMesh(r), hay: (r, v) => hayMesh(r, v), planter: (r) => planterMesh(r),
+  cow: (r, v, pose) => cowMesh(r, v, pose), sheep: (r, v) => sheepMesh(r, v), hens: (r) => hensMesh(r), pumpkins: (r) => pumpkinsMesh(r), hay: (r, v) => hayMesh(r, v), planter: (r) => planterMesh(r),
   wheat: (r, v) => wheatMesh(r, v),
   bridge: (r) => bridgeMesh(r),
   rock: (r, v) => { const g = new THREE.Group(), n = [1, 1, 2, 3, 2][v % 5], big = [0.2, 0.14, 0.24, 0.18, 0.32][v % 5];
@@ -897,7 +915,7 @@ const NATURE = {
     { h: 2.1, w: 0.95, peaks: 4, snow: true, grass: false },
   ][v % 5]),
 };
-export function makeNature(kind, seed = 1, variant = 0) { return NATURE[kind](rng(seed * 131 + kind.length), variant); }
+export function makeNature(kind, seed = 1, variant = 0, pose = undefined) { return NATURE[kind](rng(seed * 131 + kind.length), variant, pose); }
 
 // ── overland sites (our own, replacing the stock ruin / mine / lumber mill) ─────
 function lantern(g, S, x, y, z) {

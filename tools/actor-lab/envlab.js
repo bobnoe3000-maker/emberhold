@@ -71,6 +71,67 @@ function cutPass(src, kind) {
   return (c[kind] = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS[kind], fragmentShader: FS[kind], side: THREE.DoubleSide }));
 }
 
+// LEAF meshes (userData.leaf: a tree's crown lobes; the owner, 2026-10-04: "remove the lumps and add a leaf like
+// shader"). The crowns were smooth lobes studded with faceted icosahedra (pass 11d), which lit as hard gem plates. Now
+// the lobes alone carry a leaf pattern, worked out per pixel in every pass from the same world-space cells, so the
+// albedo, the normals, the depth key and the shadow agree. Two scales (one alone read as scales or as cobbles):
+//   - clusters (Worley cells of `cell` world units, ~8 px): the normal bulged out from each one's centre, so a cluster
+//     is lit on its sun side, and its underside darker in the albedo (the shade a cluster casts on the next; dark
+//     lines along the cells' edges read as cracked mud);
+//   - leaves (cells of `leaf`, ~3 px): a tone each (±10 %) and a slight tilt of the normal, no outline: texture, not tiles;
+//   - toward the rim (the surface turning away from the camera), leaves and the gaps between clusters cut out, so the
+//     outline breaks into leaves instead of a balloon's curve.
+// Front faces only (where the rim is cut): a cut shows what's behind the lobe (another lobe, or nothing), never the
+// lobe's own inside.
+// userData.leaf: { cell, leaf (world units), bump, gap, rim, stretch: y squash of the cells (1 round; < 1 flatter) }
+const LEAF_GLSL = `
+uniform float uCell, uLeaf, uBump, uGap, uRim, uStretch;
+varying vec3 vP; varying vec3 vNw; varying vec3 vNv;
+vec3 lh3(vec3 p) { p = fract(p * vec3(0.1031, 0.1030, 0.0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
+// F1, F2 and the nearest cell's centre and hash
+void cells(vec3 q, out float f1, out float f2, out vec3 c, out vec3 h) {
+  vec3 b = floor(q); f1 = 9.0; f2 = 9.0;
+  for (int z = -1; z <= 1; z++) for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec3 g = b + vec3(x, y, z), hh = lh3(g), o = g + 0.15 + 0.7 * hh; float d = length(q - o);
+    if (d < f1) { f2 = f1; f1 = d; c = o; h = hh; } else if (d < f2) f2 = d;
+  }
+}
+// the leaf at this pixel: keep (false: cut), the tone, the bulged world normal
+bool leafAt(out float tone, out vec3 nw) {
+  vec3 q = vP / uCell; q.y /= uStretch;
+  float f1, f2; vec3 c, h; cells(q, f1, f2, c, h);
+  float s1, s2; vec3 sc, sh; cells(vP / uLeaf + 17.0, s1, s2, sc, sh);
+  float gap = f2 - f1, facing = abs(normalize(vNv).z);
+  float rim = uRim > 0.0 ? 1.0 - smoothstep(uRim * 0.35, uRim, facing) : 0.0;   // 0 facing the camera … 1 at the outline (rim 0: no cuts)
+  if (rim > 0.0 && (gap < 0.18 * rim || sh.z < rim * 0.7)) return false;
+  vec3 n0 = normalize(vNw), d = q - c; d.y *= uStretch;
+  vec3 ds = (vP / uLeaf + 17.0) - sc;
+  nw = normalize(n0 + uBump * (d - n0 * dot(d, n0)) + 0.3 * (ds - n0 * dot(ds, n0)));
+  float under = smoothstep(-0.55, 0.35, d.y + 0.25 * (h.y - 0.5));          // each cluster's underside in its own shade
+  tone = (0.9 + 0.2 * sh.x) * (0.94 + 0.12 * h.x) * mix(1.0 - uGap, 1.0, under);
+  return true;
+}`;
+const LEAF_VS = 'varying vec3 vP; varying vec3 vNw; varying vec3 vNv; #COL void main(){ #COLSET vec4 w = modelMatrix * vec4(position,1.0); vP = w.xyz; vNw = normalize(mat3(modelMatrix) * normal); vNv = normalize(normalMatrix * normal); gl_Position = projectionMatrix * viewMatrix * w; }';
+const LEAF_SH_VS = 'uniform vec3 uSun; varying vec3 vP; varying vec3 vNw; varying vec3 vNv; void main(){ vec4 w = modelMatrix * vec4(position,1.0); vP = w.xyz; vNw = normalize(mat3(modelMatrix) * normal); vNv = normalize(normalMatrix * normal); w.y = max(w.y, 0.0); w.xyz -= uSun * (w.y / uSun.y); w.y = 0.001; gl_Position = projectionMatrix * viewMatrix * w; }';
+const leafCache = new Map();
+function leafPass(o, kind) {
+  const id = JSON.stringify(o) + kind; if (leafCache.has(id)) return leafCache.get(id);
+  const U = { uCell: { value: o.cell }, uLeaf: { value: o.leaf }, uBump: { value: o.bump }, uGap: { value: o.gap }, uRim: { value: o.rim }, uStretch: { value: o.stretch || 1 }, uFloor: keyMat.uniforms.uFloor, uSun: { value: SUN } };
+  const body = {
+    alb: 'varying vec3 vCol; void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; vec3 c = vCol * t; c.r *= 0.97 + 0.06 * t; gl_FragColor = vec4(c, 1.0);\n#include <colorspace_fragment>\n}',
+    nrm: 'void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; vec3 n = normalize((viewMatrix * vec4(nw, 0.0)).xyz) * (gl_FrontFacing ? 1.0 : -1.0); gl_FragColor = vec4(n * 0.5 + 0.5, 1.0); }',
+    key: `uniform float uFloor; void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; if (vP.y < uFloor) discard; float k = (vP.x + vP.z + 0.816 * vP.y) * ${UNIT_TILES.toFixed(1)} + 128.0; gl_FragColor = vec4(floor(k) / 255.0, fract(k), 0.0, 1.0); }`,
+    sh: 'void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; gl_FragColor = vec4(1.0); }',
+    uv: 'void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }',
+    emi: 'void main(){ float t; vec3 nw; if (!leafAt(t, nw)) discard; gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }',
+  }[kind];
+  const col = kind === 'alb';
+  const vs = kind === 'sh' ? LEAF_SH_VS : LEAF_VS.replace('#COL', col ? 'varying vec3 vCol;' : '').replace('#COLSET', col ? 'vCol = color;' : '');
+  // (front faces only where the rim is cut; a pine's jittered cones turn a few faces away, which must still draw)
+  const m = new THREE.ShaderMaterial({ uniforms: U, vertexShader: vs, fragmentShader: LEAF_GLSL + body, side: o.rim > 0 ? THREE.FrontSide : THREE.DoubleSide, vertexColors: col });
+  leafCache.set(id, m); return m;
+}
+
 // atlas swatch id (8 × 4 gradient swatches): R = column/8, G = row/4 — used to find windows
 const uvMat = new THREE.ShaderMaterial({
   uniforms: { uFloor: keyMat.uniforms.uFloor },
@@ -80,7 +141,7 @@ const uvMat = new THREE.ShaderMaterial({
 
 // bake one model → { w, h, ax, ay, alb, nrm, key (dataURLs), emi, foot } ; ax/ay = pixel of the model origin
 window.bakeEnv = async (name, o = {}) => {
-  const root = o.nature ? makeNature(o.nature, o.seed || 1, o.variant || 0) : o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(o.gltf ? `./models/${o.gltf}.gltf` : `./models/env/${name}.gltf`)).scene;   // o.gltf: a path under models/ (models/nature: the Stylized Nature MegaKit)
+  const root = o.nature ? makeNature(o.nature, o.seed || 1, o.variant || 0, o.pose) : o.tree ? makeTree(o.tree, o.seed || 1) : o.build ? makeBuilding(o.build, o.style, o.seed || 1, !!o.faceX) : (await load(o.gltf ? `./models/${o.gltf}.gltf` : `./models/env/${name}.gltf`)).scene;   // o.gltf: a path under models/ (models/nature: the Stylized Nature MegaKit)
   if (o.rotY) root.rotation.y = o.rotY * Math.PI / 180;
   if (o.scale) root.scale.setScalar(o.scale);
   root.updateMatrixWorld(true);
@@ -114,14 +175,17 @@ window.bakeEnv = async (name, o = {}) => {
   const maskMat = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
   const cut = new Map();                                    // a cut-out mesh → its source material (alphaTest, map)
   root.traverse((m) => { if (m.isMesh && !m.userData.mask && m.material.alphaTest > 0 && m.material.map) cut.set(m, m.material); });
-  root.traverse((m) => { if (m.isMesh && m.userData.mask) albMats.set(m, maskMat); else if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, alphaTest: m.material.alphaTest || 0, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
+  const per = new Map();                                    // a mesh with passes of its own: a cut-out, or leaves
+  for (const [m, src] of cut) per.set(m, (kind) => cutPass(src, kind));
+  root.traverse((m) => { if (m.isMesh && m.userData.leaf) per.set(m, (kind) => leafPass(m.userData.leaf, kind)); });
+  root.traverse((m) => { if (m.isMesh && m.userData.mask) albMats.set(m, maskMat); else if (m.isMesh && m.userData.leaf) albMats.set(m, leafPass(m.userData.leaf, 'alb')); else if (m.isMesh) albMats.set(m, new THREE.MeshBasicMaterial({ map: m.material.map, color: m.material.color, vertexColors: !!m.geometry.attributes.color, alphaTest: m.material.alphaTest || 0, clippingPlanes: CLIP, side: THREE.DoubleSide })); });
   const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H; const tx = tmp.getContext('2d', { willReadFrequently: true });
   const pass = (kind) => {
     if (kind === 'alb') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = albMats.get(m); }); R.outputColorSpace = THREE.SRGBColorSpace; }
-    else if (kind === 'emi') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = m.userData.glow ? glowOn : cut.has(m) ? cutPass(cut.get(m), 'emi') : glowOff; }); R.outputColorSpace = THREE.SRGBColorSpace; }
-    else if (cut.size) {                                    // per mesh: a cut-out mesh drops its cut texels in every pass
+    else if (kind === 'emi') { scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = m.userData.glow ? glowOn : per.has(m) ? per.get(m)('emi') : glowOff; }); R.outputColorSpace = THREE.SRGBColorSpace; }
+    else if (per.size) {                                    // per mesh: a cut-out or leaf mesh drops its cut texels in every pass
       const base = kind === 'nrm' ? nrmMat : kind === 'uv' ? uvMat : kind === 'sh' ? shadowMat : keyMat;
-      scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = cut.has(m) ? cutPass(cut.get(m), kind) : base; }); R.outputColorSpace = THREE.LinearSRGBColorSpace;
+      scene.overrideMaterial = null; root.traverse((m) => { if (m.isMesh) m.material = per.has(m) ? per.get(m)(kind) : base; }); R.outputColorSpace = THREE.LinearSRGBColorSpace;
     }
     else { scene.overrideMaterial = kind === 'nrm' ? nrmMat : kind === 'uv' ? uvMat : kind === 'sh' ? shadowMat : keyMat; R.outputColorSpace = THREE.LinearSRGBColorSpace; }
     R.toneMapping = THREE.NoToneMapping; R.setClearColor(0, 0); R.render(scene, cam);
@@ -147,6 +211,11 @@ window.bakeEnv = async (name, o = {}) => {
     let vx = n[i] / 127.5 - 1, vy = n[i + 1] / 127.5 - 1, vz = Math.max(0.05, n[i + 2] / 127.5 - 1);
     vy = vy * 0.6 - 0.25; const l = Math.hypot(vx, vy, vz);
     n[i] = (vx / l * 0.5 + 0.5) * 255; n[i + 1] = (vy / l * 0.5 + 0.5) * 255; n[i + 2] = vz / l * 255;
+  }
+  // a leaf bake: drop lone pixels (a cut leaf's last pixel, which the outline would ring into a speck)
+  if (per.size && [...per.keys()].some((m) => m.userData.leaf)) {
+    const al = new Uint8Array(W * H); for (let j = 0; j < W * H; j++) al[j] = a[j * 4 + 3];
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const j = y * W + x; if (al[j] && al[j - 1] + al[j + 1] + al[j - W] + al[j + W] <= 255) a[j * 4 + 3] = 0; }
   }
   // 1px ink outline (only where the sprite meets transparency), keyed like its neighbour
   if (o.outline !== false) {

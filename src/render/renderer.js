@@ -17,6 +17,7 @@ import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
 import { drawDollDetailed, DETAIL_W, DETAIL_H } from '../assetforge/doll.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
+import { beastOf, beastFrame } from './beasts.js';
 import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 import { GLOW_ID, norm3, buildProps, spriteFromCanvasData, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
@@ -363,6 +364,7 @@ export function createRenderer(canvas, sim, input) {
   // Two atlases are live at a time: the shared base ('env': trees, rocks, props) and the
   // current region's town buildings ('town-<region>': same shapes, the region's tones).
   let envMeta = null;                                  // { sprites: id → meta (+ .atlas) } merged across loaded atlases
+  let envGen = 0;                                      // bumped as each atlas lands (the beasts' list is rebuilt)
   const envAtlases = new Map(), envCache = new Map();
   function loadAtlas(name) {
     if (envAtlases.has(name)) return null;
@@ -373,7 +375,7 @@ export function createRenderer(canvas, sim, input) {
         envAtlases.set(name, { a, n, k });
         envMeta = envMeta || { sprites: {} };
         for (const [id, sm] of Object.entries(m.sprites)) envMeta.sprites[id] = { ...sm, atlas: name };
-        terrValid = false; outMap = null;
+        terrValid = false; outMap = null; envGen++;
       }).catch(() => envAtlases.delete(name));
   }
   const wantAtlases = () => [loadAtlas('env'), sim.world.kind !== 'dungeon' ? loadAtlas('town-' + (sim.world.region || 'vale')) : null];   // env carries the dungeon's stair too
@@ -411,7 +413,7 @@ export function createRenderer(canvas, sim, input) {
       const z = heightAt(world, Math.floor(st.x), Math.floor(st.y));
       const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
       if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup'), hole: !!st.hole });
+      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup'), hole: !!st.hole, beast: isBeast(st.id) });
       const gl = envMeta.sprites[st.id].glow;
       if (gl && lights.length < 30) lights.push(gl === 2 ? { x: st.x, y: st.y - 2.5, z: z - 1, color: PROP_LIGHT.stairs } : { x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
     }
@@ -528,6 +530,22 @@ export function createRenderer(canvas, sim, input) {
   // each townsperson's own beat: an idle phase and a gesture rhythm from their id, so the square doesn't
   // breathe and wave in unison (it did: every NPC had seed 0.61 and the same fidget schedule)
   const idHash = (id) => { let h = 0x811c9dc5; for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 0x01000193); return h >>> 0; };
+  // farm beasts at their ease (beasts.js): a struct with idle frames baked beside it leaves the static bake, all but its
+  // ground shadow, and is stamped each frame instead, on a timeline of its own
+  const isBeast = (id) => !!(envMeta && envMeta.sprites[id + '~tl']);
+  let beasts = [], beastWorld = null, beastGen = -1;
+  function beastList() {
+    if (beastWorld === sim.world && beastGen === envGen) return beasts;
+    beastWorld = sim.world; beastGen = envGen;
+    return (beasts = (sim.world.structs || []).filter((st) => isBeast(st.id)).map(beastOf));
+  }
+  const beastSp = new Map();                           // an env sprite as a figure (its shadow-only pixels dropped)
+  function beastSprite(id) {
+    let s = beastSp.get(id); if (s) return s;
+    const e = envSprite(id); if (!e) return null;
+    s = { w: e.w, h: e.h, ax: e.ax, ay: e.ay, mask: e.mask.map((v) => (v === 1 ? 1 : 0)), alb: e.alb, nrm: e.nrm, emi: e.emi };
+    beastSp.set(id, s); return s;
+  }
   // a rogue is drawn with what they shoot with (sim items.js `shot`; the atlases: actor-lab bake.json),
   // in their dagger look until that atlas has loaded
   const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
@@ -855,7 +873,7 @@ export function createRenderer(canvas, sim, input) {
     if (j.phase === 1) { j.list = structList(bx, by, j.lights); j.k = 0; j.phase = 2; }
     while (j.phase === 2 && j.k < j.list.length) { stampShadow(j.list[j.k++], by); if (performance.now() > deadline) return false; }
     if (j.phase === 2) { j.phase = 3; j.k = 0; }
-    while (j.phase === 3 && j.k < j.list.length) { stampSprite(j.list[j.k++], by); if (performance.now() > deadline) return false; }
+    while (j.phase === 3 && j.k < j.list.length) { const it = j.list[j.k++]; if (!it.beast) stampSprite(it, by); if (performance.now() > deadline) return false; }   // (a beast: its shadow only; it's drawn each frame)
     // thin the hazard pools to a few representatives spread apart, then pool all
     // candidates; render picks the two nearest the hero each frame.
     j.hazards.sort((a, b) => b.s - a.s);
@@ -1062,6 +1080,13 @@ export function createRenderer(canvas, sim, input) {
       if (qx < -60 || qx > nvw + 60 || qy < -40 || qy > nvh + 120) continue;
       const a = pickAnim(q, atl, { now, x: q.x, y: q.y, moving: false, faceX: -0.25, faceY: -1, facing: true, dir0: 2, stride: STRIDE.skel, seed: (q.x * 0.37 + q.y * 0.11) % 1 });
       draws.push({ d: q.x + q.y, sp: atl.cells[a.dir][a.frame], fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a });
+    }
+    // the farm beasts, at their ease (beastFrame): no ring, no tap, and their ground shadow is in the bake
+    for (const bst of beastList()) {
+      const st = bst.st, bz = heightAt(sim.world, Math.floor(st.x), Math.floor(st.y)), bp = project(st.x, st.y, bz), bxs = ox + bp.sx, bys = oy + bp.sy;
+      if (bxs < -60 || bxs > nvw + 60 || bys < -40 || bys > nvh + 80) continue;
+      const sp = beastSprite(st.id + beastFrame(bst, now)) || beastSprite(st.id); if (!sp) continue;
+      draws.push({ d: st.x + st.y, sp, fx: bxs, fy: bys, h: bz * ZH, k: st.x + st.y, look: null, noXray: true });
     }
     // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {
