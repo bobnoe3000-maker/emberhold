@@ -172,6 +172,8 @@ for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; add(`<rect x="$
 add(`<path d="M${SOL[0] - 30},${SOL[1] + 8} a34,34 0 0 0 22,24" fill="none" stroke="${INK}" stroke-width="3" stroke-dasharray="3 5" opacity="0.6"/>`);   // a breach in the wall
 add(`<ellipse cx="${SOL[0] + 14}" cy="${SOL[1] + 10}" rx="10" ry="7" fill="none" stroke="${INK}" stroke-width="1.6"/><ellipse cx="${SOL[0] + 14}" cy="${SOL[1] + 10}" rx="5" ry="3.2" fill="none" stroke="${INK}" stroke-width="1"/>`);   // the Bowl
 add(`<path d="M${SOL[0] - 9},${SOL[1] + 4} l3,-46 h12 l3,46 z" fill="#1e1610" stroke="${INK}" stroke-width="1.4"/><path d="M${SOL[0] - 8},${SOL[1] - 42} h16 l-3,-9 h-10 z" fill="#1e1610"/>`);   // the Great Beacon: dark
+// the Mere Tower: older than the empire, standing up out of the lake east of the city
+add(`<path d="M661,1140 v-17 l3,-3 l2,2 l3,-4 l2,3 l3,-2 l2,3 v18 z" fill="#1e1610" stroke="${INK}" stroke-width="1.2"/><path d="M656,1141 q15,-4 30,0" fill="none" stroke="${INK}" stroke-width="1"/>`);
 // the crater and the Throne in it
 add(`<ellipse cx="${HEIGHTS_C[0]}" cy="${HEIGHTS_C[1]}" rx="52" ry="30" fill="${PAPER}" stroke="${INK}" stroke-width="1.8"/>`);
 for (let i = 0; i < 9; i++) add(`<path d="M${f1(HEIGHTS_C[0] - 44 + i * 11)},${f1(HEIGHTS_C[1] - 16 + Math.abs(i - 4) * 2.5)} l4,9" stroke="${INK}" stroke-width="0.9"/>`);
@@ -200,7 +202,7 @@ for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 
 label(520, 1840, 'the Hollow Vale', 19, { it: true }); label(470, 2160, 'the Greywater Fens', 19, { it: true });
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
-label(600, 1088, 'the Mere', 15, { it: true });
+label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
 const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells', 'Kell’s Rest', 0, 26],
   ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];

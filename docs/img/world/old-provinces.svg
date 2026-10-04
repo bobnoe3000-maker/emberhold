@@ -616,6 +616,7 @@
 <path d="M570,1158 a34,34 0 0 0 22,24" fill="none" stroke="#3b2a1c" stroke-width="3" stroke-dasharray="3 5" opacity="0.6"/>
 <ellipse cx="614" cy="1160" rx="10" ry="7" fill="none" stroke="#3b2a1c" stroke-width="1.6"/><ellipse cx="614" cy="1160" rx="5" ry="3.2" fill="none" stroke="#3b2a1c" stroke-width="1"/>
 <path d="M591,1154 l3,-46 h12 l3,46 z" fill="#1e1610" stroke="#3b2a1c" stroke-width="1.4"/><path d="M592,1108 h16 l-3,-9 h-10 z" fill="#1e1610"/>
+<path d="M661,1140 v-17 l3,-3 l2,2 l3,-4 l2,3 l3,-2 l2,3 v18 z" fill="#1e1610" stroke="#3b2a1c" stroke-width="1.2"/><path d="M656,1141 q15,-4 30,0" fill="none" stroke="#3b2a1c" stroke-width="1"/>
 <ellipse cx="600" cy="520" rx="52" ry="30" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.8"/>
 <path d="M556.0,514.0 l4,9" stroke="#3b2a1c" stroke-width="0.9"/>
 <path d="M567.0,511.5 l4,9" stroke="#3b2a1c" stroke-width="0.9"/>
@@ -680,6 +681,7 @@
 <text x="600" y="1296" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Great Beacon</text>
 <text x="600" y="480" font-family="Fell It" font-size="16" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Ember Throne</text>
 <text x="600" y="1088" font-family="Fell It" font-size="15" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Mere</text>
+<text x="684" y="1124" font-family="Fell It" font-size="15" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Mere Tower</text>
 <text x="330" y="1748" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Thornwick</text>
 <text x="514" y="1661" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Greyholt</text>
 <text x="262" y="2088" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Saltmere</text>

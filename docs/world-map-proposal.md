@@ -1,6 +1,6 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 7 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 8 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
 who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
 people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
@@ -8,13 +8,16 @@ them. The review of that account is §10.4. Draft 6 makes five factions the stor
 storyline through every region: the Lantern Guild, the Cinder Cult, the Ashbound, the Grey Sisters and the
 Redhand. The rest are minor players (§1.2). Draft 7 gives the Lantern Guild its purpose: the soul is held in a
 **lamp**, and the Guild's members are sworn to break every lamp that holds the ashen captive and to let no new one be
-lit (§1.1, §1.2, §4).
+lit (§1.1, §1.2, §4). Draft 8 takes the endless tower away from the Guild: the **Mere Tower** is older than the
+empire, drowned under the Mere and found about forty years ago (§4.2). The Great Beacon stays the Guild's, and is
+now a finite site after the Throne (§4.3). Throne-iron becomes **pale iron**, mined only from the Ember's crater; that
+the two fell from the sky is hinted, never said (§1.1, §10.6).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
 - At the end it's always Lucan, the last Voice.
 - The Bowl pays tokens for a future heirloom shop.
-- The Beacon can always be played offline.
+- The Mere Tower, the endless tower, can always be played offline.
 
 It becomes canon when it lands in [emberfall-world.md](./emberfall-world.md) (canon first) and the
 [GDD](./emberfall-gdd.md) (design).
@@ -38,7 +41,7 @@ The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
   §1.3 The fuel
 - §2 The map
 - §3 The regions (Emberfall, the Reach, the Tidemark, the Tithewood, the Heights)
-- §4 Solmere: the Bowl and the Great Beacon
+- §4 Solmere: the Bowl, the Mere Tower and the Great Beacon
 - §5 New skills
 - §6 Enemies and art
 - §7 How it hangs together
@@ -107,7 +110,21 @@ Each region shows the player one of them. The Cult doesn't win every time.
      That's the Lantern Guild's work (§1.2).
 
 **The Ember** is a flame that burns souls: not wood, not oil, souls. It was found in the crater a thousand years
-ago, and the empire built the Throne around it and kept it fed.
+ago, in a bed of pale iron, and the empire built the Throne around it and kept it fed.
+
+**Where the Ember came from: only hinted.** For the writers, not the players: the Ember and the pale iron are
+what's left of a star that fell, long before the empire, and made the crater. **No line in the game ever says
+so.** It's left in the world to be noticed:
+- **The crater** is a crater, and the iron is only in its walls.
+- **The frost pattern** in cut pale iron is the pattern found in iron that fell from the sky.
+- **The hedge-callers** never call it the Ember. Their old word for it is *the Guest*.
+- **The Mere Tower** (§4.2), older than the empire, has the night sky carved over its door, with one star cut
+  deeper than the rest and a line under it. Its Star Room has the same sky, and a hole where that star should be.
+- **A rumour in the Heights:** *"The flame came down before it came up."* Nobody in Frosthold will say what it
+  means.
+
+It stays a hint. The tone rule (§1) wants the fate of the Old Provinces, never the world, and a falling star
+explained would make the Ember a cosmic power. Left unexplained, it's just old, and strange, and nobody's fault.
 
 **The Binding Rite** is the sacrifice.
 - It's spoken over a living person by a lamp's light, and ends with an order: canon's *"Speak the order last. The
@@ -116,9 +133,15 @@ ago, and the empire built the Throne around it and kept it fed.
   chaplain prayed *"Bind them gently. Most of them volunteered."*
 - The binding clergy (§3.1) spoke it, for six hundred years.
 
+**Pale iron** is what the lamps are made of.
+- It's mined from the walls of the crater in the Pale Heights where the Ember was found, and nowhere else. The
+  empire carted it down to the Reach's foundries.
+- It's heavier than iron should be, and it never rusts. Cut and etched, it shows a pattern like frost on a window.
+- It's the only metal that holds the flame without burning through, and only soul-fire melts it. So every lamp
+  the empire made cost souls to cast.
+
 **The lamps** are where the souls are kept.
-- **Every soul-lamp is Throne-iron**, the only metal that holds the flame without burning through. Only soul-fire
-  melts Throne-iron, so every lamp the empire made cost souls to cast.
+- **Every soul-lamp is pale iron.**
 - **Every lamp was lit from the Ember**, and passed its burning back to it. The empire hung them wherever it bound
   people:
   - **standard-lamps**, one on each legion's standard, holding the legion (the Third Legion's is on the Standard in
@@ -147,7 +170,7 @@ stone.
 - It's enough light to speak the Rite by, and enough to light a lamp, or a vessel.
 - Near the bound, it stirs them.
 
-**The vessel** is a new lamp, the greatest since the Throne's dark pit, which was the first: Throne-iron the size
+**The vessel** is a new lamp, the greatest since the Throne's dark pit, which was the first: pale iron the size
 of a cart, with room inside for the Ember itself. The Reach's foundries cast it (Act III), in soul-fire.
 
 **The Voice** is anyone who has learned **the Canticle**, the lost sacred scroll.
@@ -207,8 +230,8 @@ the oath she wrote that winter is the Guild's:
   - **Break the old lamps.** The Guild has worked down the lamp-book for three hundred years. It broke every lamp
     it could reach in its first century. The ones left are the hard ones: under water, in sealed barns, guarded by
     their own bound, or lost when a chapter of the Guild was lost.
-  - **Stop new ones.** A lamp needs Throne-iron, cast in soul-fire, and a light: a shard, or the Ember. The Guild
-    buys up old Throne-iron and sinks it in the Mere. It watches every furnace that could melt it and every
+  - **Stop new ones.** A lamp needs pale iron, cast in soul-fire, and a light: a shard, or the Ember. The Guild
+    buys up old pale iron and sinks it in deep water. It watches every furnace that could melt it and every
     harvester who cuts shards. It pays a bounty on every Cult lantern-cage, because a cage is a new lamp, only a
     small one.
 - **Its face and its purse.** The sellswords' guild is what everyone sees. It keeps the roads open, and every
@@ -232,7 +255,7 @@ the oath she wrote that winter is the Guild's:
   - **The Reach:** stop the casting.
     - In the Lamphall, Aldo Pennick enters the company on the Roll. It has broken two lamps, so it may know:
       **Pennick's truth** is the oath, Mabry Cole and the lamp-book.
-    - Throne-iron melts only in soul-fire, so the relit Cinderworks mean somebody is making lamps. Pennick sends
+    - Pale iron melts only in soul-fire, so the relit Cinderworks mean somebody is making lamps. Pennick sends
       the company west.
     - **Furnace Nine** is a furnace-lamp. Breaking it frees the night shift it holds: Tamsin Coalbrook's cousins,
       freed, not brought back.
@@ -258,8 +281,9 @@ the oath she wrote that winter is the Guild's:
     - After Lucan's verse, the vessel is dark, and dark lamps break. **The company breaks the vessel**: the faithful
       bound into it go free, and the Kindler, last in, is freed with them.
 - **Where it ends:** the flame is out and the vessel broken. No new lamp can be cast, because there's no soul-fire
-  left hot enough to melt Throne-iron. The Guild opens the lamp-book to every company, beside the Sisters' rolls:
-  the map of every lamp left to break. It opens the Beacon too (the tower, §4.2), though its lamp still stands.
+  left hot enough to melt pale iron. The Guild opens the lamp-book to every company, beside the Sisters' rolls:
+  the map of every lamp left to break. Then Pennick opens the Great Beacon to the company, and it breaks the last
+  lamp on Mabry Cole's list (§4.3).
 - **Its people:** Maudry Fenn, Aldo Pennick (Master of the Roll), Old Gannet, every tavern's board, and Mabry
   Cole, three hundred years dead, whose hammer hangs in the Lamphall.
 
@@ -295,7 +319,7 @@ every region turns on them. They want nothing they can say.
   - **The Heights:** *guard the Empress* (the Praetorians); *muster at the lamp* (the Beacon's signal corps).
 - **Where it ends:** the burning stops at the Throne. The captives already made stay captive until someone puts
   them down or breaks their lamp, and every one is freed. The company frees them region by region, and in the
-  post-game the Undervaults, the Beacon and the lamp-book hold the rest.
+  post-game the Undervaults, the Great Beacon and the lamp-book hold the rest.
 - **The player's part:** the relief that never came.
 
 #### The Grey Sisters
@@ -415,7 +439,7 @@ people.**
     their lamp.
   - With the flame out, the vessel is dark, and the company breaks it: the faithful go free.
   - That's the companies' work in the post-game: the lamps left in the lamp-book, the Undervaults' deep captives,
-    and the Beacon's bound signal corps.
+    and the Great Beacon's bound signal corps (§4.3).
 
 ---
 
@@ -434,11 +458,11 @@ The Lantern Guild's own wall map, drawn **portrait**, the shape of a phone held 
 |---|---|---|---|---|
 | **Act I–II · Emberfall** (the Hollow Vale and the Greywater Fens) | the south, at the island's foot | **1–15** | **Thornwick** | *Until Relieved*: the Ashbound dead |
 | **Act III · The Cinder Reach** (the Deepdelver Charter) | the black hills of the north-west | **15–30** | **Ashgate** | *Quota*: the forges relit, and who feeds them |
-| **Solmere**, the dead capital (a free city) | the centre, on the Mere | from 15 | **the Lamphall** | the Bowl (arena) and the Great Beacon (the tower); side quests only |
+| **Solmere**, the dead capital (a free city) | the centre, on the Mere | from 15 | **the Lamphall** | the Bowl (arena), the Mere Tower (the endless tower) and the Great Beacon (the Guild's); side quests only |
 | **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the north-east coast | **30–45** | **Tollhaven** | *The Seventh Voice*: a would-be emperor's war |
 | **Act V · The Tithewood** (the clan woods) | the south-east | **45–60** | **Rookstead** | *The Unpaid*: the tithe the empire never collected |
 | **Act VI · The Pale Heights and the Ember Throne** | the north, round the crater | **60–75** | **Frosthold** | *The Throne of Embers*: the finale |
-| After the finale | under the Throne, and in Solmere | 75 | — | the Undervaults (canon: the XP and loot dive) and the Great Beacon (the leaderboard) |
+| After the finale | under the Throne, and in Solmere | 75 | — | the Undervaults (canon: the XP and loot dive), the Great Beacon (★ *Let Them Go Dark*, §4.3) and the Mere Tower (the leaderboard, §4.2) |
 
 **The route** goes round the capital: Emberfall, north up the Wickham road into the Reach, across to Solmere, out
 to the coast, down into the wood, and last north up the Pilgrims' Stair.
@@ -589,7 +613,7 @@ levels moved).
    **Oruth the Forgemaster** (canon) wakes in the heat, the empire's bound forgemaster and the clans' own ancestor,
    and goes back to work as ordered. The moot ends in a fight, with Oruth on the wrong side of it.
 5. ★ *Furnace Nine* (26–28). The Cinderworks' last furnace, and a furnace-lamp: soul-fire hot enough to melt
-   Throne-iron. Vane has fed it miners at the Cult's rate: *"eleven more souls per week"* (canon). Vane falls, the
+   pale iron. Vane has fed it miners at the Cult's rate: *"eleven more souls per week"* (canon). Vane falls, the
    furnace's light goes out, and the company breaks it. The night shift goes free: Tamsin's cousins, freed, not
    brought back. Nothing will be cast in the Reach again.
 6. ★ *The Cast* (28–30). The **Magma Vault**.
@@ -854,9 +878,9 @@ found, and the flame's palace in it.
      - The player's part is getting him there, and holding the Throne while he does it.
    - **The last lamp.** With the flame out, the vessel is dark, and dark lamps break. The company breaks it, and the
      faithful bound in it lie down free, the Kindler with them. With Furnace Nine and the vessel gone, there's no
-     soul-fire left hot enough to melt Throne-iron, so no new lamp can be cast, and with the Ember out, a lamp lit
+     soul-fire left hot enough to melt pale iron, so no new lamp can be cast, and with the Ember out, a lamp lit
      with a shard has nothing left to feed. The Guild's oath holds for the new lamps. The old ones are in the
-     lamp-book, and the oldest of them, the Great Beacon's, still stands (§4.2).
+     lamp-book, and the last on Mabry Cole's list, the Great Beacon's, is the post-game's first job (§4.3).
    - The Throne's vaults open to everyone: the **Undervaults**, canon's endless dive.
    - Canon's darker ending, keeping the flame, is dropped, so that there's one world.
 
@@ -876,6 +900,7 @@ found, and the flame's palace in it.
 - "The Glass Keep has no door." (True: you go in through the Soulcracks.)
 - "The monks of Frosthold were pilgrims who never went home." (True.)
 - "The flame was never lit at all." (False, and the Cult hangs men for saying it.)
+- "The flame came down before it came up." (Unanswered. The monks change the subject.)
 
 **People.**
 - **Prior Anselm of Frosthold:** gives the chapters, and has buried more pilgrims than he's fed.
@@ -896,7 +921,7 @@ found, and the flame's palace in it.
 
 ---
 
-## 4. Solmere, the dead capital (from 15): the Bowl and the Great Beacon
+## 4. Solmere, the dead capital (from 15): the Bowl, the Mere Tower and the Great Beacon
 
 **What it is.** The empire's capital on the Mere, where the court sat, the treasury counted and the clerks wrote the
 orders the Throne's flame carried out. It was built for half a million people. About twenty thousand live there now,
@@ -911,6 +936,7 @@ in the best of the ruins.
   - the Solmeres' town palace is a tenement with very good ceilings;
   - the Grand Archive is half burned and half lived in;
   - the **Exchange** is shut: *the sign says* Reopening. *It has said so for two hundred and sixty years.*
+  - the Mere is twenty feet lower than the city was built for, and the quays stand over mud.
 
 **The beacons, and the Guild's guilty history.**
 - The flame was in the Heights, and the orders came from Solmere. A chain of beacon-towers carried them by
@@ -928,7 +954,7 @@ in the best of the ruins.
 **What's here** (a social hub: the "large city where players gather" from GDD §1, pillar 7):
 - **The Lamphall.** The Guild's mother-house: the company's arrival (Maudry's letter), a city-wide board, and the
   square where companies meet. The Master of the Roll is **Aldo Pennick**.
-- **The Bowl** (below), and **the Great Beacon** (below).
+- **The Bowl** (§4.1), **the Mere Tower** (§4.2) and **the Great Beacon** (§4.3).
 - **The embassy quarters**: the Charter's, Highmarch's, the League's and the clans'. Each opens with that region's
   renown, and each has its own errands.
 - **The Grey Sisters' Hospice**: the temple.
@@ -968,22 +994,35 @@ him be."*
   - Titles, the season's banner over the company's tavern table and Bowl tabards come on top.
 - **Later (M12):** live 1v1 and 3v3, and the Heroic raids gathering in the Lamphall.
 
-### 4.2 The Great Beacon: the dark tower
+### 4.2 The Mere Tower: the endless tower
 
-**What it is.** The tower that sent the Throne's orders to the provinces. It has been dark for three hundred years,
-but it isn't empty.
-- Its garrison was the empire's **signal corps**, bound to the Beacon's own lamp and quartered landing by landing,
-  under one order: *muster at the lamp*.
-- Every night they climb the stair to the lamp-room, as ordered, and every morning they're back on their landings.
-- **It's the one lamp the Guild has never broken**, the first on Mabry Cole's list. The corps is thousands strong,
-  and nobody has yet reached the lamp-room and lived to swing a hammer there. Every one of the corps a company puts
-  down on the stair goes free, and the Guild counts that as the oath's work too.
-- The Guild holds the door. For a fee and a signature it lets a company **climb the Beacon**: wave after wave of
-  the corps on the stair, as long as it can hold.
-- The Roll counts the waves held, not the steps. *The Guild stopped arguing about the arithmetic.*
+**What it is.** A tower older than the empire, found after it fell. Nobody built it that anyone knows of, and
+nobody runs it.
+- **How it was found.** The empire dammed the Sol to make the Mere for its capital, eight hundred years ago, and
+  drowned the valley under it. If its surveyors saw a tower in that valley, they didn't write it down, or the page
+  burned with the Archive.
+- After the Fall nobody kept the dam's sluices. In the 262nd year of the Dim, about forty years ago, a dry summer
+  and a broken sluice let the Mere down twenty feet, and a tower stood up out of the water, black and wet, a
+  long row from the quays.
+- **What it is like.** From the shore it's a stump of black stone a hundred feet high. Inside, the stair goes up for
+  much longer than that. Nobody has found the top. The stone isn't any stone the Deepdelvers know, and they've
+  stopped being asked.
+- **Over its door** the night sky is carved, the old constellations the hedge-callers still use, with one star
+  cut deeper than the rest and a line under it (§1.1).
+- **What's in it.** The Tower is full, of what nobody knows at first. On the low landings it's things like the
+  provinces' own: the dead, wolves, men who look like Redhand. Higher up it's older things. The Grey Sisters' guess
+  is that the Tower takes in whatever comes near it and keeps it. The first scavengers who rowed out that summer
+  are on its landings now.
+- **Who holds it: nobody.** The Dim Peace says no crown may hold Solmere, and forgot the Mere.
+  - **Wenna Pike**, the Mere's ferrywoman, rows companies out to the door for a fee, and back if they come back.
+  - The Grey Sisters keep a book of everyone who goes in.
+  - The companies keep **the Wall**: each scratches its mark into the stair-wall at the highest landing it held.
+    *There are a lot of marks at the tenth landing, and a lot of crossings-out.*
+- **The Lantern Guild** has nothing to do with it. It isn't a lamp and holds no captives. Pennick doesn't like it,
+  and can't say why.
 
 **The rules** (the owner's, made to hold up):
-- **No XP.** The Beacon teaches nothing. Outside XP, it can never be the place to level, and the regions stay the
+- **No XP.** The Tower teaches nothing. Outside XP, it can never be the place to level, and the regions stay the
   way to grow.
 - **It pays.** Gold and cinders each wave, rising with the wave (pillar 3: waves pay for their danger), within the
   economy's budget. Its loot is below.
@@ -992,48 +1031,74 @@ but it isn't empty.
 - **The climb.**
   - Each wave is harder than the last: **+6 % a wave, compounding**, from a table (deterministic, like
     `XP_TABLE`).
-  - A new kind of foe joins at every tenth: the corps first, then every province's dead, then worse.
+  - A new kind of foe joins at every tenth: the provinces' own first, then every region's mix, then the Tower's
+    older things.
   - It starts at the company's level, and a run ends when you leave or are beaten.
   - **Landings, every tenth wave:** leave there and you keep everything. If you're beaten, you keep what you'd won
     up to the last landing.
-- **The Roll** (the leaderboard).
+- **The Wall** (the leaderboard).
   - It counts the **highest wave held in a live, verified climb**, per bracket and per season.
-  - **The flame clock:** a climb has a time limit, like the Rifts', on the sim's own clock, online or off. The Roll
+  - **The flame clock:** a climb has a time limit, like the Rifts', on the sim's own clock, online or off. The Wall
     measures holding power, not hours, so a longer premium offline window can't buy standing (pillar 8).
   - Each season's waves are seeded **per season**, the same for everyone.
-  - The Roll is written only by the replay validator (AGENTS.md, architecture §10).
-- **Before the validator exists** (M6), the Beacon still plays in full. The Roll fills in once climbs can be
+  - The Wall is written only by the replay validator (AGENTS.md, architecture §10).
+- **Before the validator exists** (M6), the Tower still plays in full. The Wall fills in once climbs can be
   verified.
 
-**The lampwardens.** A warden holds every tenth landing. The **first time a hero's company beats one, in a bracket,
-it drops that warden's heirloom**:
+**The wardens.** A warden holds every tenth landing. The **first time a hero's company beats one, in a bracket, it
+drops that warden's heirloom**:
 - at the bracket's top item level;
 - for a class in the party (Rare and above always fits the party, GDD §8);
 - once per game slot, per bracket.
 
-After that a warden drops ordinary Beacon loot. Each warden is tagged with the mechanic it reuses or the one thing it
-adds.
+After that a warden drops ordinary Tower loot. Each warden is tagged with the mechanic it reuses or the one thing it
+adds. The low wardens are things the Tower kept since it was found; the high ones were there before.
 
 | Wave | Warden | Mechanic | First kill (one of, for the party's classes) |
 |---|---|---|---|
-| 10 | **The Doorward** | new: *front*, half damage from the front (the Seventh's Own's formation) | *The Doorward's Latch* (shield) · *Doorward's Bar* (staff) |
-| 20 | **The Oilwright** | the ground-hazard system (§8): burning oil, which the party steps out of | *Oilwright's Apron* (armour, any class) |
-| 30 | **The Bellringer** | existing: adds, a rank of the corps on each bell | *The Ringing Iron* (mace) · *Bell-Rope* (belt) |
-| 40 | **The Lensman** | new: *reflect*, one spell in four comes back at its caster (the autocast learns to hold) | *The Lensman's Glass* (off-hand) |
-| 50 | **The Keeper of Wicks** | new: *snuff*, one buff gone every 2 s | *Snuffer* (dagger) · *Wick-Trimmer* (sword) |
-| 60 | **The Twin Lamps** | new: *pair*, kill them within 5 s of each other or the other relights (the party hits the healthier twin) | *The Pair* (rings) |
-| 70 | **The Beacon Hound** | existing: hunts the lowest-HP member (the shared quadruped) | *Houndsmaster's Lead* (bow) · *Collar of the Hound* (amulet) |
-| 80 | **The Signalman** | existing: adds, pouring in until he falls | *Signal Horn* (amulet) |
-| 90 | **The Last Keeper** | existing: enrage, his order to keep the lamp lit and nothing else | *Keeper's Oath* (helm) |
-| 100 | **The Lamp-Room** | the room itself: the great lamp draws on whoever stands nearest, like a wick (ground hazard). Beaten, it isn't broken: the corps' own lamp is too big for one company's hammer (§11) | *Lampblack* (cloak; a dark shimmer on the figure) |
+| 10 | **The Doorward**: a stone figure that stood inside the door before anyone came | new: *front*, half damage from the front (the Seventh's Own's formation) | *The Doorward's Latch* (shield) · *Doorward's Bar* (staff) |
+| 20 | **The Mudlark**: the first scavenger to row out, the summer the Mere fell, with a pot of pitch and a torch | the ground-hazard system (§8): burning pitch, which the party steps out of | *Mudlark's Apron* (armour, any class) |
+| 30 | **The Bellringer**: the Tower has bells nobody hung | existing: adds, a rank on each bell | *The Ringing Iron* (mace) · *Bell-Rope* (belt) |
+| 40 | **The Lensman**: a glass-grinder from the Archive, who went up to look at the carvings | new: *reflect*, one spell in four comes back at its caster (the autocast learns to hold) | *The Lensman's Glass* (off-hand) |
+| 50 | **The Hush** | new: *snuff*, one buff gone every 2 s | *Snuffer* (dagger) · *Hush-Blade* (sword) |
+| 60 | **The Twins** | new: *pair*, kill them within 5 s of each other or the other rises again (the party hits the healthier twin) | *The Pair* (rings) |
+| 70 | **The Tower Hound**: it was a dog once | existing: hunts the lowest-HP member (the shared quadruped) | *Houndsmaster's Lead* (bow) · *Collar of the Hound* (amulet) |
+| 80 | **The Gatherer**: what the Tower uses to take things in | existing: adds, pouring in until he falls | *Gatherer's Horn* (amulet) |
+| 90 | **The Watcher**: older than the empire, at a slit window, watching the sky | existing: enrage, the longer he's kept from the window | *Watcher's Hood* (helm) |
+| 100 | **The Star Room** | the room itself: a dome with the night sky cut into it and a hole where one star should be. The dark under the hole draws on whoever stands nearest (ground hazard) | *Hole in the Sky* (cloak; a dark shimmer on the figure) |
 
-Past wave 100 the wardens come round again, harder, with nothing new to drop. That's for the Roll.
+Past wave 100 the stair goes on, and the wardens come round again, harder, with nothing new to drop. That's for the
+Wall.
 
-**Beacon loot.**
-- Between wardens the tower drops **beacon-lit** pieces: the canon *Kindled* affix pool (world doc §10.1) with the
-  tower's name on it (*"Still warm. Nobody knows from what."*) and a faint pale glow on the figure.
+**Tower loot.**
+- Between wardens the Tower drops **tower-found** pieces: the canon *Kindled* affix pool (world doc §10.1) with the
+  Tower's name on it (*"Still warm. Nobody knows from what."*) and a faint pale glow on the figure.
 - They replace a room's Fine roll inside the loot budget (dev plan §2.7); they don't add to it.
-- A beacon-lit piece is no stronger than a Rare.
+- A tower-found piece is no stronger than a Rare.
+
+### 4.3 The Great Beacon: the last lamp
+
+**What it is.** The imperial beacon-tower over the Lamphall, which sent the Throne's orders to the provinces. It's
+the Lantern Guild's, and it isn't endless: ten landings and a lamp-room. It has been dark for three hundred years,
+but it isn't empty.
+- Its garrison was the empire's **signal corps**, bound to the Beacon's own lamp and quartered landing by landing,
+  under one order: *muster at the lamp*. Every night they climb to the lamp-room, as ordered, and every morning
+  they're back on their landings.
+- **It's the one lamp the Guild has never broken**, the first on Mabry Cole's list. While the Ember burned anywhere,
+  the corps would come back to its stair. The Guild holds the door and lets nobody up.
+- **Act VI:** while the company climbs to the Throne, the Guild holds the Great Beacon, so a relit flame's orders
+  can't be carried to the provinces (§1.2).
+
+**★ *Let Them Go Dark*** (75, after the Throne). The Guild's last job, and the end of its oath.
+- With the Ember out and the vessel broken, Pennick opens the door. He takes Mabry Cole's hammer down from over the
+  board and gives it to the company.
+- **A site of ten landings:** the signal corps, a landing at a time; **the Signalman** on the fifth (existing: adds,
+  pouring in until he falls); **the Last Keeper** in the lamp-room (existing: enrage, his order to keep the lamp lit
+  and nothing else).
+- **The lamp.** Beaten, the Keeper lets the lamp go out. The company breaks it with Mabry Cole's hammer, and the
+  whole corps lies down at once, on every landing.
+- **The reward:** *Mabry's Hammer* (mace, an heirloom), and the company is the first **Beacon** in the Guild's own
+  books (§1.2). Pennick: *"She'd have wanted to do it herself. She'd have settled for you."*
 
 ---
 
@@ -1089,9 +1154,9 @@ adventurers, the skeletons and the goblins.
 | The Tidemark | (none: all human) | legionaries, corsairs, engineers (humans), drowned sailors (Ashbound), war-hounds (the quadruped) |
 | The Tithewood | thorn-warden | tallymen (Ashbound), barn-wights and the Unpaid (the ghost look the Fallen already have), wolves and boars (the quadruped) |
 | The Heights | glass-touched | Praetorians (Ashbound elites), frost revenants (Ashbound recolour), snow-wolves (the quadruped) |
-| The Beacon | (none) | the signal corps (Ashbound), every region's mix |
+| Solmere: the Mere Tower and the Great Beacon | (none) | the Tower: every region's mix, and wardens from recolours and the quadruped; the Beacon: the signal corps (Ashbound) |
 
-**One quadruped rig** carries every hound, wolf and boar, and the Beacon Hound. It's the one new rig in this
+**One quadruped rig** carries every hound, wolf and boar, and the Tower Hound. It's the one new rig in this
 proposal.
 
 ---
@@ -1131,11 +1196,11 @@ The Chronicle grows from about 45 fragments to about **60**: ten per region and 
 - "most of them volunteered": the Sunken Chapel, then the Throne;
 - the lamps: the Gate-Warden's *"Keep the lamps lit"*, Maudry's question about the Standard, the Abbess trimming
   the choir-lamp, Pennick's truth and Mabry Cole's *"Let them go dark"*, Gannet putting out his light, the vessel
-  broken, and the Great Beacon's lamp, still standing.
+  broken, and last of all the Great Beacon's, with Mabry Cole's hammer.
 
 **The Lantern Guild's thread** is the one that runs under the others. In every region the company breaks the lamp
 at the heart of that region's trouble: the Standard's, the choir's, Furnace Nine, Gannet's, the Root Granary's, the
-Praetory's and the vessel. Each region's main story is someone's ledger, and the Guild's lamp-book is the one ledger
+Praetory's and the vessel, and after the Throne the Great Beacon's. Each region's main story is someone's ledger, and the Guild's lamp-book is the one ledger
 that's being paid off.
 
 ---
@@ -1160,8 +1225,8 @@ hours of pure fighting; real play is about 2–3× that.
   - foes, classes and items move to a **compounding integer table** (deterministic, like `XP_TABLE`);
   - the room premium is capped;
   - the smoke contract (GDD §7.1) extends to levels 15, 30, 45, 60 and 75.
-- **One ground-hazard system**, with the party's AI stepping out of it. Slag Pot, Slagstorm, the Oilwright, Oruth,
-  the Lamp-Room and the Abbess's water all use it.
+- **One ground-hazard system**, with the party's AI stepping out of it. Slag Pot, Slagstorm, the Mudlark, Oruth,
+  the Star Room and the Abbess's water all use it.
 - **One lamp rule** (§1.3): a lamp is an object in a site's last room with the list of foes tied to it. While its
   keeper stands it can't be struck; once broken, every foe on its list lies down. It's deterministic, needs no new
   stream, and reuses the boss system's "break what shields him".
@@ -1172,9 +1237,9 @@ hours of pure fighting; real play is about 2–3× that.
 
 | Milestone | What |
 |---|---|
-| **M8** | **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Beacon, played offline, with no Roll yet. A capped player has an endgame loop before new regions come. |
+| **M8** | **the Fens** to 15 (Act II), and Saltmere's waystation; **a Solmere shell**: the Lamphall, and the Mere Tower, played offline, with no Wall yet. A capped player has an endgame loop before new regions come. |
 | **M9** | **the Reach** (Act III); the stat rescale; the first skill tier (L18); the cap to 30 |
-| **After M6's validator** | the Beacon's Roll and seasons; the Bowl's marks |
+| **After M6's validator** | the Mere Tower's Wall and seasons; the Bowl's marks |
 | **M10** | **the Bowl**, async, with its written rivals; the heirloom shop after it |
 | **M11–M14** | one region per milestone (the Tidemark, the Tithewood, the Heights and the Throne), raising the cap each time |
 
@@ -1195,39 +1260,45 @@ hours of pure fighting; real play is about 2–3× that.
      them go dark."* The sellswords' guild is its face and its purse.
    - **The lamp-book**: the keepers' list of every lamp and what it holds.
    - Canon's ranks keep their tavern meaning; in the Guild's own books a rank is the lamp a member has broken.
-5. **The Canticle and the Voices** (§1.1).
-   - The binding is done by the Rite, in the Ember's light.
+   - **The Great Beacon** holds the signal corps, bound to its lamp; the company breaks it after the Throne.
+5. **The Mere Tower** is older than the empire. The empire drowned it under the Mere without a word in the
+    Archive, and it stood up out of the water about forty years ago, when the dam's sluice broke. Nobody built it
+    that anyone knows of, and nobody holds it.
+6. **Pale iron** is mined only from the crater's walls, where the Ember was found. Where the two came from is
+    hinted, never said (§1.1).
+7. **The Canticle and the Voices** (§1.1).
+   - The binding is done by the Rite, by a lamp's light.
    - The command belongs to a **Voice**: anyone who learns the Canticle, the lost sacred scroll. The empire had
      six Voices.
    - The last verse stops the flame and takes the singer's voice. Aurelle sang it.
    - The scroll went east with the Lady Livia, and Lucan Varro learned it.
    - No bloodline.
-6. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
-7. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
-8. **The sacrifice** (§1.1, §1.3).
-   - The Ember is fed with sacrificed people. The Binding Rite shuts each soul in a **lamp** of Throne-iron, lit
+8. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
+9. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
+10. **The sacrifice** (§1.1, §1.3).
+   - The Ember is fed with sacrificed people. The Binding Rite shuts each soul in a **lamp** of pale iron, lit
      from the Ember, which burns it slowly into the flame. The body rises Ashbound, tied to the lamp: a captive
      that can't rest and serves.
    - Breaking the body frees its soul; breaking the lamp frees every soul in it. A lit lamp must be put out first.
      A Voice commands the Ashbound but can't free them.
-   - Throne-iron melts only in soul-fire. Every lamp went dark at the Fall, and held.
+   - Pale iron melts only in soul-fire. Every lamp went dark at the Fall, and held.
    - **The shipped Standard** gains a lamp: the legion's, broken when it falls. That's why the line breaks
      (canon §3.1 already says it does). One line for Maudry asking after it.
    - The Cult's four needs are spark, vessel, Voice and fuel, and its faithful are the last of the fuel.
    - Canon §4's "the empire's bound dead" stays true, and gains the why: they were sacrificed to feed the flame.
    **The ending:** always Lucan's *stop*, and the darker *keep the flame* ending (§6) dropped, for one shared world.
    **Saltmere** becomes a waystation (§3 now says each region has one town).
-9. **Acts I–VI by region** (§6 now has four acts).
-10. **Level bands:** the Reach 15–30, the Heights 60–75, the Throne at 73–75. New: the Tidemark 30–45, the
+11. **Acts I–VI by region** (§6 now has four acts).
+12. **Level bands:** the Reach 15–30, the Heights 60–75, the Throne at 73–75. New: the Tidemark 30–45, the
     Tithewood 45–60.
-11. **New names.**
-    - Places: the Old Provinces, the Mere, the Dim Peace, the Lamphall, the Bowl, the Great Beacon, the Tidemark,
+13. **New names.**
+    - Places: the Old Provinces, the Mere, the Dim Peace, the Lamphall, the Bowl, the Great Beacon, the Mere Tower, the Tidemark,
       Tollhaven, Highmarch, Brine Cross, Gullwick, the Tithewood, Rookstead, Hollin Ford, the Tithe Road.
     - People: the Lady Livia, Nan Ruddock, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
       Coalbrook, Morrow Vane, Gunnar Slagg, Hob, Old Brannagh, Mother Coke, Grandmother Yew, Moth, Thane Ivo,
       Lirien, Prior Anselm, Sister Hild, Brother Cobb, Mother Agnes, Pim Rushlight, Brother Teague, Aldo Pennick,
-      Ma Gorrie, the Crier, Mabry Cole.
-    - Things: the lamp-book; soul-lamps (standard-, choir-, furnace-, coast- and tithe-lamps); Throne-iron.
+      Ma Gorrie, the Crier, Mabry Cole, Wenna Pike.
+    - Things: the lamp-book; soul-lamps (standard-, choir-, furnace-, coast- and tithe-lamps); pale iron; the Wall.
 
 **GDD:**
 - the cap 30 → 75;
@@ -1235,7 +1306,7 @@ hours of pure fighting; real play is about 2–3× that.
 - compounding stat tables;
 - the skill tiers, the loadout and the respec;
 - one ground-hazard system;
-- the Bowl and the Beacon rules;
+- the Bowl and the Mere Tower rules;
 - regions gated by the previous finale, with renown opening side content;
 - one full town per region, with waystations;
 - the Bowl's marks and its heirloom shop (power capped at a boss heirloom's).
@@ -1247,7 +1318,8 @@ hours of pure fighting; real play is about 2–3× that.
 ## 10. The critic passes
 
 Two critics read draft 1 against the world doc, the GDD, the dev plan and AGENTS.md: a game designer and a D&D
-writer. Here is what they found, and what draft 2 did about it.
+writer. Here is what they found, and what draft 2 did about it. The tables keep the names of the time: until draft
+8 the endless tower was the Great Beacon, and the leaderboard was the Roll (§10.6).
 
 ### 10.1 The game designer
 
@@ -1327,7 +1399,8 @@ writer. Here is what they found, and what draft 2 did about it.
 | The fuel (draft 5) | "people are sacrificed by nefarious actors and extract their souls to feed the Ember, turning the sacrifices into Ashenbound … Ashbound are captives and not able to rest. Forever servants. Until someone undoes it and frees them" | §1.1 and §1.3 rewritten to it, with the review in §10.4 |
 | The factions (draft 6) | "the Lantern guild, cinder cult, ashbound, grey sisters and redhand being the major factions and story lines" | §1.2: the five, each with a mission, a hook, objectives in every region and an ending; a table of the five storylines by region; the Redhand carried through every act under Nan Ruddock, Garrow's quartermaster; everyone else a minor player, in one table |
 | The Lantern Guild (draft 7) | "Enhance the Lantern Guild purpose story, its members seek to destroy those lamps that hold souls captive as the Ashen, as well as to prevent new ones" | souls are held in **lamps** (§1.1); the Guild's story, oath, mission, ranks and secrecy (§1.2); a lamp broken in every region; Mabry Cole and the Great Beacon (§4); one lamp rule (§1.3, §8); reviewed in §10.5 |
-| The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
+| The tower and the iron (draft 8) | "The endless tower wasn't built or run by the lantern guild. It was built before the empire, only recently discovered or rediscovered after the solemere empire fell … Throne-iron isn't a good name. How about iron mined near where the ember was found. Perhaps the iron and the ember are a remnant of a meteor that fell from the sky long ago.. only hinted at" | the Mere Tower (§4.2) and the Great Beacon as the Guild's own finite site (§4.3); pale iron and the hints (§1.1); reviewed in §10.6 |
+| The tower offline | "Tower can always bee played offline" | always playable offline. The Wall stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ### 10.4 The owner's account of the fuel, reviewed (draft 5)
 
@@ -1386,17 +1459,42 @@ prevent new ones.*
 | 3 | Why hasn't the Guild finished in three hundred years? | It needs the lamp-book and the rolls together, and it lost pages of the book with a chapter. The rest are guarded by their own bound. The Cult's shards make it urgent again: a lit lamp can't be broken. |
 | 4 | Why the secrecy? | The lamp-book is a map the Cult would kill for. A member learns the oath after breaking a lamp: the company in the Lamphall (Act III). |
 | 5 | Canon's Standard already breaks the line when it falls. | The lamp is why. It's one line of new dialogue for Maudry on shipped content, flagged in §9. |
-| 6 | Isn't "prevent new ones" done once the Ember is out? | Not quite. The vessel is the last new lamp and has to be broken; then no soul-fire is left to cast Throne-iron, and a shard-lit lamp has no flame to feed. The old lamps stay in the lamp-book for the post-game. |
-| 7 | The tower is endless; does the Guild ever break the Great Beacon's lamp? | Not in this proposal. It's the first lamp on Mabry Cole's list and the last one left (§11). |
+| 6 | Isn't "prevent new ones" done once the Ember is out? | Not quite. The vessel is the last new lamp and has to be broken; then no soul-fire is left to cast pale iron, and a shard-lit lamp has no flame to feed. The old lamps stay in the lamp-book for the post-game. |
+| 7 | The tower is endless; does the Guild ever break the Great Beacon's lamp? | *(Draft 8: the endless tower is now the Mere Tower, §4.2.)* Yes: the Great Beacon is a finite site after the Throne, and the company breaks its lamp (§4.3). |
 | 8 | Tone: is a secret order of lamp-breakers a chosen-one story? | No. They're tired road-folk paid by the job, and the company is hired before it's told. Gannet is the Guild at its most human: an old man nobody told. |
+
+### 10.6 The tower and the iron, reviewed (draft 8)
+
+The owner: the endless tower wasn't the Guild's; it's older than the empire and was found after the Fall. Throne-iron
+becomes iron mined where the Ember was found, and the two are the remnant of a star that fell, only hinted.
+
+**What it fixes.**
+- **Why the tower is endless.** As the Great Beacon it was an imperial building with a known garrison, so "endless"
+  needed excuses (the corps climbing every night, a lamp too big to break). The Mere Tower is older than anyone's
+  records and nobody knows its top, so endlessness is simply what it is.
+- **The Guild's story gets an ending.** With the endless tower gone from the Great Beacon, the Beacon's lamp can be
+  broken. The oath ends where it started, with Mabry Cole's hammer, and the company becomes the Guild's first
+  Beacon.
+- **The name.** "Throne-iron" named the metal after a building made from it. "Pale iron" names it after the place
+  it's dug, as miners would, and it sits beside the Pale Heights without explaining anything.
+
+**What it raised, and what draft 8 does.**
+
+| # | The question | Draft 8 |
+|---|---|---|
+| 1 | Where is the tower, and how was it missed for eight hundred years? | In the Mere at Solmere, so the arena and the tower share the hub. The empire flooded its valley to make the lake, and the Mere hid it until the dam's sluice failed, about forty years ago. |
+| 2 | Who runs it, if not the Guild? | Nobody. A ferrywoman rows companies out; the Sisters write down who goes in; the companies keep the Wall themselves. The leaderboard is renamed **the Wall**, because "the Roll" is the Guild's book of members. |
+| 3 | What's in it, and why? | Unexplained, on purpose. The Sisters' guess: it takes in whatever comes near and keeps it. Low wardens are people it kept since it was found; high ones were there before. |
+| 4 | Its wardens were all beacon-themed. | Re-themed, with the same mechanics: the Mudlark, the Hush, the Twins, the Tower Hound, the Gatherer, the Watcher and the Star Room. The Signalman and the Last Keeper move to the Great Beacon. |
+| 5 | How much should the star be hinted? | Five hints at most (§1.1): the crater, the frost pattern in the iron, the hedge-callers' word *the Guest*, the carved sky with one star missing, and one rumour. No line ever says it. Explained, it would make the Ember cosmic and break the tone rule. |
+| 6 | Does the tower tie into the Ember? | Only by the carving: its builders watched the sky, and one star in it is missing. That's all. |
 
 ## 11. Still open
 
 1. **The Bowl's heirloom shop:** what it sells and at what price, when its milestone comes (after M10).
 2. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
    square at its head) and the region's materials.
-3. **The Great Beacon's lamp.** Is it ever broken? One idea: every company that holds the Lamp-Room (wave 100)
-   strikes it once, and the Roll shows the crack growing across the season. When it breaks, the corps goes free
-   and the tower changes. That's a shared, server-counted event, so it would wait for the validator (M6).
+3. **When the Great Beacon ships** (★ *Let Them Go Dark*, §4.3): with the Heights (M14), or as the first post-game
+   update after it?
 4. **The lamp count.** Should the Chronicle keep the company's count of lamps broken and souls freed, as Ilse
    would? It's a stat the sim already has the events for.
