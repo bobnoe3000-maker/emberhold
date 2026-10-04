@@ -968,7 +968,7 @@ export function createRenderer(canvas, sim, input) {
     const rx = nvw / 2 + ((sideL - safeR) * vw) / (2 * window.innerWidth * S) - C.sx + jx, ry = nvh * anchor - C.sy + jy;
     return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
-  let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 };
+  let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 }, lastDrawn = 0;   // (lastDrawn: the frame's clock, so npcAt knows a drawn position is current)
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
@@ -979,7 +979,7 @@ export function createRenderer(canvas, sim, input) {
     const ix = st ? st.cam.x : p.px + (p.x - p.px) * alpha, iy = st ? st.cam.y : p.py + (p.y - p.py) * alpha;   // the Stage frames its lineup, not the hero
     const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
-    const { ox, oy } = (lastCam = camera(ix, iy, pz));
+    const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
 
     const t0 = performance.now();
     keepBaked(ox, oy, t0);
@@ -1034,6 +1034,7 @@ export function createRenderer(canvas, sim, input) {
       if (nx < -60 || nx > nvw + 60 || ny < -40 || ny > nvh + 120) continue;
       let u = npcPres.get(n.id);
       if (!u) { const h = idHash(n.id); npcPres.set(n.id, (u = { fidgetN: 0, lookN: 0, h, seed: (h % 997) / 997, next: now + 2500 + (h % 6000), near: false })); }
+      u.qx = qx; u.qy = qy; u.qz = nz; u.drawn = now;                   // where they're drawn, for a tap (npcAt)
       const near = Math.hypot(ix - n.x, iy - n.y) < 7, talking = talkingTo === n.id;
       if (greet === n.id) { greet = null; u.fidgetN++; u.next = now + 2600; }   // a greeting as the conversation opens
       else if (near && !u.near && !talking) u.lookN++;                  // she looks up as you come over
@@ -1576,12 +1577,22 @@ export function createRenderer(canvas, sim, input) {
     },
     /** the named NPCs' content defs (content/npcs/*.json), by id: until they load, nobody stands there */
     setCast(c) { cast = c || {}; },
-    npcAt(sxPx, syPx) {                                    // the named person under a tap (their body, a little generous for a thumb)
+    npcAt(sxPx, syPx) {                                    // the named person under a tap: their whole drawn figure, a thumb wide
+      // (the owner, 2026-10-04: "Col is pretty hard to click on". The test was a 28 × 40 px oval round the chest, at
+      // the sim's stepped position for one walking a routine: now a box round the figure where it's drawn, at least
+      // 44 CSS px wide, from the feet to over the head; the nearest body centre wins where two overlap.)
       const w = sim.world; if (!w.npcs || !w.npcs.length) return null;
-      const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
-      let best = null, bd = 20;
-      for (const n of w.npcs) { if (!cast[n.id]) continue; const z = heightAt(w, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, z);
-        const d = Math.hypot((lastCam.rx + P.sx - nx) * 1.4, lastCam.ry + P.sy - 24 - ny); if (d < bd) { bd = d; best = n; } }
+      const dpr = vw / window.innerWidth, k = S / dpr, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;
+      const hw = Math.max(13, 22 / k), up = Math.max(54, 60 / k), dn = Math.max(6, 8 / k);   // native px: half-width, above and below the foot
+      let best = null, bd = Infinity;
+      for (const n of w.npcs) {
+        if (!cast[n.id]) continue;
+        const u = npcPres.get(n.id), fresh = u && u.drawn !== undefined && lastDrawn - u.drawn < 500;
+        const qx = fresh ? u.qx : n.x, qy = fresh ? u.qy : n.y, z = fresh ? u.qz : heightAt(w, Math.floor(n.x), Math.floor(n.y)), P = project(qx, qy, z);
+        const dx = nx - (lastCam.rx + P.sx), dy = ny - (lastCam.ry + P.sy);
+        if (Math.abs(dx) > hw || dy < -up || dy > dn) continue;
+        const d = Math.hypot(dx, dy + up * 0.45); if (d < bd) { bd = d; best = n; }
+      }
       return best;
     },
     serviceAt(sxPx, syPx) {
