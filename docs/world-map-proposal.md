@@ -1,11 +1,12 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 3 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
-Draft 3 takes the owner's answers to its questions (§10.3).
+**Proposal, draft 4 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
+who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
-- At the end it's always Lucan's voice.
+- At the end it's always Lucan, the last Voice.
 - The Bowl pays tokens for a future heirloom shop.
 - The Beacon can always be played offline.
 
@@ -27,7 +28,7 @@ The owner (2026-10-04):
 The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
 
 **Contents.**
-- §1 The idea
+- §1 The idea; §1.1 How the Ember works (spark, vessel, Voice, fuel); §1.2 The factions; §1.3 The fuel
 - §2 The map
 - §3 The regions (Emberfall, the Reach, the Tidemark, the Tithewood, the Heights)
 - §4 Solmere: the Bowl and the Great Beacon
@@ -65,10 +66,10 @@ stretches, but no further: the last quest is about **the fate of the Old Provinc
 - **The Pale Heights:** the flame itself. A pilgrimage, and an ending.
 
 **The Cinder Cult** runs underneath all five as a buyer, a patron and a thief. In each region somebody else is the
-villain, with their own reasons. The Cult needs four things to light the Ember again:
-- **a spark:** shards struck from bound souls;
-- **a vessel** to hold a flame;
-- **a voice** the flame will obey;
+villain, with their own reasons. The Cult needs four things to light the Ember again (§1.1):
+- **a spark**;
+- **a vessel**;
+- **a Voice**;
 - **fuel**.
 
 Each region shows the player one of them. The Cult doesn't win every time.
@@ -77,6 +78,208 @@ Each region shows the player one of them. The Cult doesn't win every time.
 - preaching from a Cult boat at the Canal Locks, around level 10;
 - at the miners' burial in Ashgate, paying for the stones;
 - at the would-be emperor's table.
+
+### 1.1 How the Ember works: spark, vessel, Voice and fuel
+
+This is what the story runs on, set down in one place. The Chronicle gives it to the player in pieces (canon:
+history is found, not told). The rules:
+
+**The Ember** is a flame that burns souls: not wood, not oil, souls.
+- Its light **binds**. A person bound by the **Binding Rite**, spoken in the Ember's light (canon: *"Speak the order
+  last. The bound keep the last thing they hear."*), dies and doesn't leave. The soul stays in the body, and the body
+  goes on obeying the last order it heard.
+- That is an **Ashbound**, which the Vale's people call **the ashen**.
+- The binding clergy (§3.1) bound them by the tithe, the legion and the shift, for six hundred years.
+
+**The spark** is an **ember-shard**: a sliver of a bound soul's light, struck out of an Ashbound like flint from a
+stone.
+- A shard holds a little of the flame without fuel, like a coal in a pocket. It glows.
+- Near the bound, it stirs them: that's why the dead wake wherever the Cult digs.
+- It's how a new flame is lit.
+- The Cult mines shards from the bound in Emberfall (Act II).
+
+**The vessel** is a lamp of Throne-iron, the only thing that will hold the flame without burning through.
+- The Throne's dark pit was the first.
+- The Reach's foundries cast the second (Act III).
+
+**A Voice** is anyone who has learned **the Canticle**.
+- **The Canticle** is a single scroll: the chant the first binding clergy wrote when the Ember was found. It holds
+  the words the flame itself was bound with. It is long, in the old tongue, and must be sung exactly. Learning it
+  takes a season.
+- **Whoever learns it becomes a Voice: they can command the Ashbound.** A Voice's order goes over the last order a
+  bound one heard. That's the only way it can be changed, and why the Sunken Chapel's chaplain, who was no Voice,
+  wrote *"I cannot bind a second order over the first."*
+- **The empire had six Voices**, the Voices of the Throne. They sang their orders into the Great Beacon at
+  Solmere, and the beacon-light carried them to every province's bound (§4).
+- **The Canticle's last verse** speaks to the flame itself. It tells it to stop, and it takes the voice of whoever
+  sings it.
+- **Aurelle** was a Voice before she was an Empress. On the night of the Fall she sang the last verse herself, and
+  the six Voices of the Throne were silent ever after.
+- **It's sacred and it's lost.** That night Aurelle gave the scroll to her sister, the Lady **Livia**, who fled
+  east with it on the flagship *Aurelle's Grace*. Livia came ashore in the march of Highmarch with her children and
+  a sealed box she told them never to open. The Cult has hunted the scroll for three hundred years.
+- **Lucan Varro opened the box** (Act IV).
+
+**Fuel** is **bound souls** (§1.3). The spark lights a flame, and the fuel keeps it lit.
+
+**Why the Cult needs all four.**
+- A spark in a vessel is a flame.
+- With fuel, it's a flame that lasts.
+- Without a Voice, it's a fire in a lamp: it binds whatever is near it and answers to no one, which is how the
+  empire learned it needed the Voices.
+- With a Voice, it's the Ember Throne again: every bound soul in the provinces standing up at once, waiting for
+  orders. The Kindler believes that is a gift, the tireless dead doing the work so the living never starve again.
+
+### 1.2 The factions
+
+Each faction below gives:
+- **Mission:** what it wants, in the long run.
+- **Hook:** how the player meets it, and why they'd care.
+- **Objectives:** what it's doing now, region by region.
+- **Stance:** where it stands with the player.
+
+**The Lantern Guild** (canon §4): the sellswords' guild, with a board in every town.
+- **Mission:** keep the roads open and the lamps lit, and take its cut. Unspoken: make sure no Voice ever sings
+  through a beacon again. The Guild is what's left of the empire's beacon-keepers, who lit the orders (§4).
+- **Hook:** Maudry's board in the Tired Mule, and the company is a Guild company from the first job.
+- **Objectives:**
+  - pin and pay the jobs;
+  - promote companies;
+  - send them on to Solmere;
+  - hold the Great Beacon's door;
+  - keep the Dim Peace in the capital.
+- **Stance:** employer. Aldo Pennick, its Master of the Roll, is the one who finally says why the beacons went dark.
+
+**The Cinder Cult** (canon): zealots who believe the Ember was *stolen*.
+- **Mission:** relight the Ember with a Voice to rule it, and give the provinces back the tireless dead.
+- **Hook:** the Robed Stranger dies with a shard in his fist (Act I).
+- **Objectives:**
+  - the spark: mining the bound of Emberfall;
+  - the vessel: bought from the Kell Assay;
+  - the Voice: courting Lucan, the first Voice in three hundred years;
+  - the fuel: buying the Tithewood's granaries a cart at a time;
+  - then the Throne.
+- **Stance:** enemy, and courteous about it. The Kindler preaches, and never lies.
+
+**The Ashbound, "the ashen"** (canon): the empire's bound dead. They aren't a faction: they want nothing.
+- **Mission:** whatever their last order was:
+  - *hold the road until relieved* (the Third Legion);
+  - *keep the hours* (the Drowned Abbey);
+  - *hold station until recalled* (the Grace);
+  - *muster at the lamp* (the Beacon);
+  - *collect the tithe* (the Reeve).
+- **Hook:** the barrows road, the first evening.
+- **Objectives:** their orders, until somebody puts them down, or a Voice gives them new ones.
+- **Stance:** in the way. *"They just stand there. Facing north."*
+
+**The Grey Sisters** (canon): healers and archivists, and, draft 2 found, heirs of the empire's binding clergy.
+- **Mission:** keep the records. Unspoken: make up for what their mothers wrote in them.
+- **Hook:** Sister Ilse in Thornwick's Shrine, and the Chronicle she keeps.
+- **Objectives:**
+  - copy whatever comes up out of the barrows (Ilse);
+  - save the Drowned Abbey's binding rolls (Act II);
+  - keep the Reedholm Undercroft shut (Mother Agnes), against reading it (Ilse);
+  - a chaplain on Tollhaven's quays (Maren).
+- **Stance:** ally, and the source of clerics.
+
+**The Redhand Company** (canon): deserters turned bandits.
+- **Mission:** loot, and to be left alone.
+- **Hook:** the Tithe Mill (Act I).
+- **Objectives:** dig at the Sunken Chapel for the robes' coin (Act I); then hire out their crossbows to Highmarch
+  (Act IV, canon: "recurring later as hirelings").
+- **Stance:** enemy for hire. Brannoc got out.
+
+**The hedge-callers and the clans of the Tithewood** (canon, and §3.4).
+- **Mission:** keep the old courtesies: a cup by the hearth, a word to the hedge, the dead put to rest properly.
+- **Hook:** Col's cup by the cart-wheel (the Vale), then Grandmother Yew at Rookstead.
+- **Objectives:**
+  - open the granaries and bury three hundred years of the tithe;
+  - stop the Reeve collecting the living;
+  - keep the Cult's buyers out of the wood, against the clan that sells to them.
+- **Stance:** ally, and the source of shamans.
+
+**The Deepdelver Charter** (canon): the dwarf-folk miners' charter in the Reach.
+- **Mission:** reopen the old seams and keep the charter's word.
+- **Hook:** Ashgate's boom, and the night shift that doesn't come up (Act III).
+- **Objectives:**
+  - decide at the moot whether to take the Assay's coin;
+  - get the night shift back;
+  - put Oruth, their own ancestor, down.
+- **Split:** the Slagborn clan sold the lease.
+- **Stance:** ally, mostly.
+
+**The Kell Assay** (new): a human assay and trading house at Kell's Rest.
+- **Mission:** profit: relight the foundries and sell what they make.
+- **Hook:** coal-red wax with a thumbprint in it, on the Paymaster's Box (Act I), then on the Abbey's Cult ledgers
+  (Act II).
+- **Objectives:**
+  - run the Cinderworks to quota;
+  - pay the Cult's rate in miners;
+  - cast and deliver the vessel, under contract.
+- **Stance:** enemy. Morrow Vane believes every soul has a price, and pays it.
+
+**The Tidemark League** (new): the free ports of the east coast.
+- **Mission:** free trade, and nobody's crown.
+- **Hook:** the corsairs, and Old Gannet's lamp (Act IV).
+- **Objectives:**
+  - break the Gull Fleet;
+  - hold Brine Cross;
+  - keep Solmere free under the Dim Peace.
+- **Stance:** ally. Hester Quaile counts what you cost.
+
+**The Kingdom of Highmarch, the Seventh's Own** (new).
+- **Mission:** a new empire, under Lucanus, the seventh Voice.
+- **Hook:** Lucan's claim: he speaks, and the drowned fleet stands up.
+- **Objectives:**
+  - march on Solmere and be crowned in it, with living soldiers, hired crossbows and the drowned crews he commands;
+  - refuse the Cult's furnace, until he's beaten.
+- **Stance:** enemy, then the one man who can end it.
+
+**The Monks of Frosthold** (canon's monastery).
+- **Mission:** keep the Pilgrims' Stair and bury the pilgrims who don't come back.
+- **Hook:** Act VI.
+- **Objectives:** hold Frosthold against the Cult's camp; keep the barracks' keys (Brother Cobb).
+- **Stance:** ally, and in the end Lucan's keepers.
+
+*Minor:* Lord Pellam's Watch (canon: bounties, comic relief, occasionally brave); the Peace Wardens of Solmere (a
+name the Guild hides behind).
+
+### 1.3 The fuel: what it is, where it's found, how it's used
+
+**What it is.** A **bound soul**: a soul the Binding Rite has kept in its body after death.
+- Only a bound soul burns. An ordinary soul has gone where souls go, and there's nothing left for the flame.
+- That's what made the empire bind its own. The Ashbound weren't only labour. They were the empire's **fuel
+  store**: the legions that dug and marched were firewood stacked on the road.
+
+**How it burns.**
+- A bound one is brought to the flame and given to it.
+- The body falls to ash, and the soul's light goes into the fire. That's the *ash* in Ashbound, and the light in the
+  Soulcracks' rock.
+- A soul can also be drawn out of its body and carried as a wisp in a **lantern-cage**. That's how the Cult's
+  harvesters move it: the bright cages on poles, which shield a boss until they're broken.
+
+**How much.**
+- One bound soul keeps a flame the size of the Throne's lit for about a day.
+- The empire tithed its provinces in souls to keep it fed. Canon: *"Furnace nine requires eleven more souls per
+  week to meet quota."* The Vale paid *"two hundred and forty"* in a year.
+- The Kindler needs about a year's tithe to keep a new flame lit long enough for a Voice to wake the provinces.
+
+**Where it's found**, wherever the empire bound people and they're still held:
+
+| Where | Whose souls | How the Cult gets them |
+|---|---|---|
+| Emberfall's barrows and the Drowned Abbey | the Third Legion, the drowned clergy | dug up and **struck for shards**: spent as the spark, not the fuel |
+| The Cinderworks (the Reach) | the living, bound for the furnace | **made**: Vane sells miners to the furnace-priests at the Cult's rate, who bind them by shard-light and burn them in the forges that cast the vessel |
+| The Tithewood's granaries | three hundred years of the clans' tithe, laid in rows like sheaves | **bought**, a cart at a time, from a clan short of grain: the largest store in the provinces |
+| The Praetory (the Heights) | the Empress's bound guard | **guarded**: the Cult can't reach them, and the Praetorians obey no one but a Voice |
+| The Cult itself | its faithful | **given**: at the Throne they kneel in the vessel's light, take the Rite on themselves, and walk in. *"Most of them volunteered."* |
+
+**How it's used in play.**
+- Fuel shows as wisps in cages: the Cult's harvesters and buyers carry them, and a boss's cages shield it.
+- **Breaking a cage frees the soul.** It goes, and the Cult has that much less.
+- In the Tithewood the count matters: the more of the granaries' tithe you free before the Root Granary, the less
+  the Cult has (the region's story still ends the same).
+- At the Throne the flame grows in phases as the fuel feeds it, which is why the faithful walk in.
 
 ---
 
@@ -96,7 +299,7 @@ The Lantern Guild's own wall map, drawn **portrait**, the shape of a phone held 
 | **Act I–II · Emberfall** (the Hollow Vale and the Greywater Fens) | the south, at the island's foot | **1–15** | **Thornwick** | *Until Relieved*: the Ashbound dead |
 | **Act III · The Cinder Reach** (the Deepdelver Charter) | the black hills of the north-west | **15–30** | **Ashgate** | *Quota*: the forges relit, and who feeds them |
 | **Solmere**, the dead capital (a free city) | the centre, on the Mere | from 15 | **the Lamphall** | the Bowl (arena) and the Great Beacon (the tower); side quests only |
-| **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the north-east coast | **30–45** | **Tollhaven** | *The Seventh Solmere*: a would-be emperor's war |
+| **Act IV · The Tidemark** (the free ports, and the kingdom of Highmarch) | the north-east coast | **30–45** | **Tollhaven** | *The Seventh Voice*: a would-be emperor's war |
 | **Act V · The Tithewood** (the clan woods) | the south-east | **45–60** | **Rookstead** | *The Unpaid*: the tithe the empire never collected |
 | **Act VI · The Pale Heights and the Ember Throne** | the north, round the crater | **60–75** | **Frosthold** | *The Throne of Embers*: the finale |
 | After the finale | under the Throne, and in Solmere | 75 | — | the Undervaults (canon: the XP and loot dive) and the Great Beacon (the leaderboard) |
@@ -169,16 +372,18 @@ Robed Stranger, the Standard of the Third Legion. The road opens and the carts r
    from rotting by whatever the empire brewed there.
 4. ★ *The Bells* (12–13). The **Drowned Abbey**. The binding clergy drowned at their office when the canal broke
    on the night of the Fall. **The Abbess Below** still keeps the hours under the water.
-5. ★ *The Rolls* (13–14). The Cult isn't burning the Abbey's records. It's **stealing** the binding rolls and the
-   genealogies of every house the clergy served. You save what's left and carry it to Reedholm.
+5. ★ *The Rolls* (13–14). The Cult isn't burning the Abbey's records. It's **stealing** the binding rolls: where
+   every tithe was laid, and what became of the Canticle on the night of the Fall. You save what's left and carry
+   it to Reedholm.
 6. ★ *The Last Office* (14–15).
    - The Abbess falls, and Sister Ilse lays the province's shards side by side. Each one was cut from a bound soul's
      last light, struck from a legion or a choir like flint. The Cult wasn't raising the dead. It was mining them.
    - The Abbey's Cult ledgers name a buyer: the **Kell Assay** in the Reach. It pays in coal-red wax with a
      thumbprint in it, the same as the Paymaster's Box.
    - **The win:** the dead of the province are put down, and the records are safe.
-   - **The cost, found later:** the genealogies you saved are copied at Reedholm, and the Kindler reads the copy in
-     the Tidemark.
+   - **The cost, found later:** the rolls you saved are copied at Reedholm, and the Kindler reads the copy. One
+     line sends him east (*"The Canticle went with the Lady Livia on the Grace"*). Another sends him into the
+     Tithewood, to the granaries.
 
 **Sites.**
 
@@ -296,39 +501,45 @@ levels moved).
 fragment: *"The charter is renewed for another hundred years. The Deepdelvers did not ask what the furnaces burn.
 We did not tell them."*
 
-### 3.3 The Tidemark: levels 30–45 · Act IV · *The Seventh Solmere*
+### 3.3 The Tidemark: levels 30–45 · Act IV · *The Seventh Voice*
 
 **What it is.** The east coast: the **Tidemark League** of free ports, and inland the walled kingdom of
 **Highmarch**, once the empire's eastern march.
 - **Hub: Tollhaven**, the League's largest port, where even the harbour chain takes a toll.
 - Towns: **Brine Cross** (a bridge-town on the Highmarch road) and **Gullwick**.
 
-**Act IV, *The Seventh Solmere*.** A war, between reasonable-sounding people.
+**Act IV, *The Seventh Voice*.** A war, between reasonable-sounding people.
 1. ★ *Letters of Marque* (30–33). The Gull Fleet's corsairs raid League shipping under Highmarch commissions. The
    **Lamp Fort**, Old Gannet's coast light, is the first place they hit.
 2. ★ *The Admiral's Ledger* (33–35). In the Gull Isles, **Admiral Hesk**'s books show who pays: Highmarch.
 3. ★ *The Claim* (35–38).
-   - **Lucan Varro of Highmarch** signs himself **Lucanus Solmere, the Seventh** (his mother called him Luke). He
+   - **Lucan Varro of Highmarch** signs himself **Lucanus, the Seventh Voice** (his mother called him Luke). He
      means to march on the capital and be crowned in it.
-   - Is he Solmere blood? He is: the Empress's sister fled east on the flagship *Aurelle's Grace* the night of the
-     Fall, and her line is in Highmarch.
-   - So is half the Tidemark's minor nobility. She had eleven children. Lucan isn't special. He's the one who
-     wants it.
-4. ★ *The Road West* (38–41). Lucan's legion marches: living soldiers drilled to the old manuals, with hired
-   Redhand crossbows (canon: the Redhand "recurring later as hirelings"). You raid its camps on the Highmarch road.
+   - The empire had six Voices; he says he's the seventh, and he is.
+   - The Varros descend from the Lady Livia's household, and kept her sealed box in their chapel for three hundred
+     years, as she told them, unopened. Lucan opened it. It held the **Canticle**, and he spent four years
+     learning it.
+   - At the Drowned Mole he sings, and the drowned crews of the imperial fleet stand up out of the water and fall
+     in. *"The empire was never a bloodline. It was a voice."*
+4. ★ *The Road West* (38–41). Lucan's legion marches:
+   - living soldiers drilled to the old manuals;
+   - the drowned crews he commands;
+   - hired Redhand crossbows (canon: the Redhand "recurring later as hirelings").
+
+   You raid its camps on the Highmarch road.
 5. ★ *Brine Cross* (41–43). The bridge-town that blocks his road, held room by room. The League holds, and so do
    you.
 6. ★ *The Seventh's Palace* (43–45). You storm Highmarch. Lucan is beaten, not killed.
    - In his study are letters from **the Kindler**, who has dined at Lucan's table all year.
-   - What the Kindler offered: a relit Ember, and with it the bound legions of every province obeying a Solmere
-     voice.
+   - What the Kindler offered: a relit Ember, with a Voice to rule it. With it, every bound soul in the provinces
+     stands up at once, waiting for the seventh Voice's orders.
    - Lucan wanted the empire, not its kitchen fire, and refused. Beaten, he sees that the furnace is the only road
      to the empire he wanted. *"I wanted the empire, not its kitchen fire. It seems they were the same room."*
    - He walks north to the Heights himself. The Cult never takes him.
    - **The win:** the war ends and the League stands.
-   - **The cost:** a Solmere voice is on the Pilgrims' Stair.
-   - (The Kindler learned the blood was common from the genealogies you saved. Sister Maren, who read them first,
-     has carried them since.)
+   - **The cost:** the only Voice in the provinces is on the Pilgrims' Stair, with the Canticle in his coat.
+   - The Kindler found him through the binding rolls you saved (Act II). Sister Maren, who read the copy first,
+     has carried that since.
 
 **Sites.**
 
@@ -343,7 +554,7 @@ We did not tell them."*
 | **The Sister's Cabin** (hidden: the Tidemark set) | 45 | the wreck of *Aurelle's Grace* |
 
 **Rumours.**
-- "Lucan's mother was a fishwife." (False. His mother was a Varro, and she'd want that known.)
+- "Lucan can make the drowned walk." (True.)
 - "The Gull Fleet's admiral has a commission from a king." (True.)
 - "There's a ship off the Mole that never comes in." (True: the Grace.)
 
@@ -351,10 +562,11 @@ We did not tell them."*
 - **Hester Quaile:** Speaker of the League, harbourmistress of Tollhaven. She counts everything twice and gives the
   chapters.
 - **Sister Maren:** a Grey Sister, chaplain on Tollhaven's quays, and the Tidemark's found companion (cleric). She
-  read the genealogies first and wishes she hadn't.
+  read Reedholm's copy of the binding rolls first, and wishes she hadn't.
 - **Old Gannet:** keeper of the Lamp Fort and the Guild's oldest member. He keeps the light because nobody told him
   to stop.
-- **Lucan Varro, "Lucanus the Seventh":** handsome, educated and sincere. A tragedy who thinks he's a history.
+- **Lucan Varro, "Lucanus, the Seventh Voice":** handsome, educated and sincere. A tragedy who thinks he's a
+  history.
 - **Admiral Grell Hesk:** a corsair with a commission, and proud of it.
 - **The Kindler:** at Lucan's table, the third time you meet him.
 
@@ -365,7 +577,7 @@ We did not tell them."*
 - **Gull Fleet corsairs**: boarders and harpooners, recoloured.
 - **War-hounds** (the shared quadruped, §6).
 - **Siege engineers**, who build a ballista mid-fight if they're let (new: a structure that's a target).
-- **Drowned sailors**: Ashbound of the imperial fleet, recoloured.
+- **Drowned sailors**: Ashbound of the imperial fleet, under Lucan's orders, recoloured.
 - **Bosses:**
   - **Admiral Hesk** (new: harpoons pull a member out of the formation);
   - the Mole's **Harbourmaster** (existing: "break the chain that shields him");
@@ -373,12 +585,13 @@ We did not tell them."*
   - **Lucan** (existing: his guard must fall before he can be reached).
 - **Region boss:** **The Grace**, the flagship's bound crew, holding station off the Mole "until recalled". It's the
   Tidemark's mirror of the Third Legion, and comes in on a spring tide.
+  - Lucan could recall it, and won't: *"Livia's crew. Let them rest."*
 
-**Chronicle: the Tidemark set.** Letters from the Empress to her sister, from girlhood to the year before the
+**Chronicle: the Tidemark set.** Letters from the Empress to her sister Livia, from girlhood to the year before the
 Fall. They build to the reveal without giving it away.
-- *"Father says the flame knows our voices, the way a dog knows its master's step."*
+- *"Father let me hold the Canticle today. It is only a scroll. It weighs more than a scroll."*
 - *"You are to marry a march-lord and live by the sea. I envy you the sea."*
-- The last fragment: *"Take the Grace. Take the children. Don't ask me why, and don't come back."*
+- The last fragment: *"Take the Grace. Take the children. Take the box from my chapel, and never open it."*
 
 ### 3.4 The Tithewood: levels 45–60 · Act V · *The Unpaid*
 
@@ -409,8 +622,8 @@ grain and in souls.
 5. ★ *The Thornway* (55–57). The Tithe Road through the deep wood, and the wardens who won't let it be used again.
 6. ★ *Paid in Full* (57–60). The **Root Granary** under the oldest oak: the Reeve, the count, and the Unpaid.
    - You open the granary, the bound lie down, and the clans bury their grandparents.
-   - **Mostly a win.** The carts the clan sold are already gone, and they're the only fuel the Cult has: enough to
-     light a flame, not to keep it.
+   - **Mostly a win.** The carts the clan sold are already gone, and they're the only fuel the Cult has (§1.3).
+     It's a few hundred souls against the year's tithe it needed: enough to light a flame, not to keep it.
 
 **Sites.**
 
@@ -472,18 +685,19 @@ found, and the flame's palace in it.
 3. ★ *The Soulcracks* (65–68). The canyon the Fall split open. What the Ember burned is down there, as light in the
    rock.
 4. ★ *The Praetory* (68–71). The Empress's bound guard, still at their posts in the palace barracks.
-5. ★ *The Glass Keep* (71–73). **The Glass Legate** (canon) guards Aurelle's last letter. The reveal is canon:
-   *"Forgive me. They will call it the Fall. Let them. — A."* With it comes the line the Tidemark letters only
-   hinted at: *"It knows our voice. It will hear one last order, and then no more. — A."*
+5. ★ *The Glass Keep* (71–73). **The Glass Legate** (canon) guards Aurelle's last letter, the reveal:
+   *"I was a Voice before I was an Empress. Tonight I sang the last verse. It took my voice, as it was always going
+   to. Forgive me. They will call it the Fall. Let them. — A."* (Its last three sentences are canon's.)
 6. ★ *The Throne of Embers* (73–75). In the Throne, the Kindler sets the vessel in the dark pit with the spark in
-   it, and Lucan standing by.
+   it, the fuel beside it, and Lucan standing by: the four things together.
    - **The fight is in phases.** The fuel is too little, so between phases the Cult's faithful walk into the
      vessel, one rank at a time, and the flame grows.
    - Beaten, the Kindler walks in last: *"Most of them volunteered."*
    - **It's always Lucan** (the owner: one ending, so every player's world is the same one, for multiplayer).
-     - He gives the flame its last order, the one Aurelle gave: *stop*.
-     - It takes the voice that gave it. Lucan never speaks again. He stays at Frosthold as a lay brother and
-       sweeps the Stair.
+     - He sings the Canticle's last verse, the one Aurelle sang: *stop*.
+     - It takes the voice that sang it. Lucan never speaks again. He stays at Frosthold as a lay brother and sweeps
+       the Stair.
+     - The Canticle goes into the dark with the flame. There will be no more Voices.
      - The player's part is getting him there, and holding the Throne while he does it.
    - The Throne's vaults open to everyone: the **Undervaults**, canon's endless dive.
    - Canon's darker ending, keeping the flame, is dropped, so that there's one world.
@@ -723,30 +937,30 @@ proposal.
 
 | Region | What the Fall left | Who wants it | What it shows the player | How it ends |
 |---|---|---|---|---|
-| Emberfall | the dead, still under orders | nobody: they just stand there | **the spark**: the Cult is mining the dead | a win, with a cost found later (the copied genealogies) |
+| Emberfall | the dead, still under orders | nobody: they just stand there | **the spark**: the Cult is mining the dead | a win, with a cost found later (the copied binding rolls) |
 | The Reach | the forges, still needing fuel | the Kell Assay, for profit | **the vessel** | a loss: a day late |
-| The Tidemark | the throne, still empty | Lucan, for a crown | **the voice**: anyone of the blood | a win, and a man who walks north on his own |
+| The Tidemark | the throne, still empty | Lucan, for a crown | **the Voice**: whoever learns the Canticle | a win, and a man who walks north on his own |
 | The Tithewood | the tithe, still uncollected | the Reeve, for the count | **the fuel**: bought, not stolen | mostly a win: too little fuel got out |
-| The Heights | the flame | the Kindler, for faith | it all comes together | Lucan says *stop*, and loses his voice |
+| The Heights | the flame | the Kindler, for faith | it all comes together | Lucan sings the last verse, and loses his voice |
 
 **The Chronicle builds the reveal across the map:**
 - **the Vale:** the dead were tithed;
 - **the Fens:** the Sisters' mothers bound them;
 - **the Reach:** the forges burned them;
-- **the Tidemark:** the flame knew the Empress's voice;
+- **the Tidemark:** the Empress held the Canticle, and sent it away;
 - **the Tithewood:** the tithe was *counted*;
 - **the Heights:** she told it to stop.
 
 The Chronicle grows from about 45 fragments to about **60**: ten per region and set.
 
 **Nobody is a chosen one** (world doc §9).
-- The blood is common: half the Tidemark has a drop of it. The ones who matter are the ones who want it (Lucan) and
-  the one who's afraid of it (Maren).
+- A Voice is learned, not born: anyone who finds the Canticle and learns it. Lucan is the one who found it and
+  wanted it.
 - The player is a company of sellswords with good boots.
 
 **The callbacks are planned:**
 - the coal-red wax: the Paymaster's Box, then the Abbey, then the Assay;
-- the genealogies: the Abbey, then Reedholm's copy, then the Kindler, then Maren;
+- the binding rolls: the Abbey, then Reedholm's copy, then the Kindler, then Maren;
 - Col's grandmother, and Grandmother Yew;
 - "until relieved": the Third Legion, then the Grace, and nothing else, so the phrase keeps its weight;
 - "most of them volunteered": the Sunken Chapel, then the Throne;
@@ -802,11 +1016,17 @@ hours of pure fighting; real play is about 2–3× that.
    flame's palace in the crater.
 4. **The beacons.** The Throne's orders went out by beacon-light. The Lantern Guild is what's left of the
    beacon-keepers, and its ranks are their lamps. When the lamps went dark, no stand-down reached anyone.
-5. **The voice.** Anyone binds *by* the Ember's light. The flame itself obeys the voice it was taught, the house
-   of Solmere's, and the blood is common.
+5. **The Canticle and the Voices** (§1.1).
+   - The binding is done by the Rite, in the Ember's light.
+   - The command belongs to a **Voice**: anyone who learns the Canticle, the lost sacred scroll. The empire had
+     six Voices.
+   - The last verse stops the flame and takes the singer's voice. Aurelle sang it.
+   - The scroll went east with the Lady Livia, and Lucan Varro learned it.
+   - No bloodline.
 6. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
 7. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
-8. **The Cult's four needs** (spark, vessel, voice, fuel), and the faithful as the last fuel.
+8. **The Cult's four needs** (spark, vessel, Voice, fuel, §1.1). **Fuel is bound souls** (§1.3), and the faithful
+   are the last of it.
    **The ending:** always Lucan's *stop*, and the darker *keep the flame* ending (§6) dropped, for one shared world.
    **Saltmere** becomes a waystation (§3 now says each region has one town).
 9. **Acts I–VI by region** (§6 now has four acts).
@@ -815,7 +1035,7 @@ hours of pure fighting; real play is about 2–3× that.
 11. **New names.**
     - Places: the Old Provinces, the Mere, the Dim Peace, the Lamphall, the Bowl, the Great Beacon, the Tidemark,
       Tollhaven, Highmarch, Brine Cross, Gullwick, the Tithewood, Rookstead, Hollin Ford, the Tithe Road.
-    - People: Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
+    - People: the Lady Livia, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
       Coalbrook, Morrow Vane, Gunnar Slagg, Hob, Old Brannagh, Mother Coke, Grandmother Yew, Moth, Thane Ivo,
       Lirien, Prior Anselm, Sister Hild, Brother Cobb, Mother Agnes, Pim Rushlight, Brother Teague, Aldo Pennick,
       Ma Gorrie, the Crier.
@@ -867,7 +1087,7 @@ writer. Here is what they found, and what draft 2 did about it.
 |---|---|---|---|
 | 1 | The scale broke "the empire's mines and granaries" and "the fate of the province" | High | Emberfall is the granary; "the fate of the Old Provinces, never the world" (§1, §9) |
 | 2 | Two palaces: the Throne in the crater and the Solmeres' palace in Solmere; the Beacon carrying a light that was in the Heights | High | Solmere was the court; the Throne the flame's palace; the beacons carried **orders**, which explains the unsent Dispatch and "keep the lamps lit" (§4) |
-| 3 | "The Ember answers only to Solmere blood" contradicted "whoever tends it can bind the dead", and came near a chosen one | High | anyone binds by its light; the flame obeys the voice it was taught (the Binding Rite: "the bound keep the last thing they hear"); the blood is common (§3.3, §9) |
+| 3 | "The Ember answers only to Solmere blood" contradicted "whoever tends it can bind the dead", and came near a chosen one | High | *(draft 4: replaced by the owner's Canticle, §1.1)* anyone binds by its light; the flame obeys the voice it was taught (the Binding Rite: "the bound keep the last thing they hear"); the blood is common (§3.3, §9) |
 | 4 | The Tidemark letters gave away the Glass Keep's reveal at level 45 | High | the letters only hint ("the flame knows our voices"); "one last order" moved to the Glass Keep |
 | 5 | Every region ended "what the Cult took", four losses in a row; the Cult burning records it needed | High | varied endings; the Cult *steals* the genealogies, and the copy you save is the one the Kindler reads |
 | 6 | The Kindler first met at level 41 | High | met at the Canal Locks (~10), the Ashgate burial (~19) and Lucan's table |
@@ -913,6 +1133,8 @@ writer. Here is what they found, and what draft 2 did about it.
 | The skills | "Go with your skills recommendation" | as draft 2 (§5) |
 | The finale's voice | "At the end its always Lucan so its consistent for multiplayer" | always Lucan's *stop*, and it costs him his voice; the darker ending is dropped (§3.5) |
 | The Bowl's rewards | "Arena is special tokens that the user can use for a future special arena shop of heirlooms" | marks of the Bowl, and a future heirloom shop. Both critics wanted standing only, so the guard is: verified bouts only, a daily cap, and no heirloom stronger than a boss's of its level (§4.1) |
+| The Voice (draft 4) | "Change it to a sacred lost scroll where anyone who finds it and learns the chant becomes a Voice who can command the ashen" | the Canticle and the Voices (§1.1); no bloodline anywhere; Lucan is the seventh Voice; the last verse ends the flame and takes the singer's voice |
+| The factions and the fuel (draft 4) | "Clarify … the major factions, and their mission, hook and objectives. And clarify the Fuel, what is it exactly and how is it found and used" | §1.2 (twelve factions: mission, hook, objectives, stance); §1.3 (fuel is bound souls: what, how much, where, how the Cult gets it, how it plays) |
 | The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ## 11. Still open
