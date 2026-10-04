@@ -180,6 +180,23 @@ function cageVox(open) {
 }
 export const voxCage = () => cageVox(false);
 export const voxCageOpen = () => cageVox(true);
+// A gibbet: an empty iron cage hung from a timber post's arm, taller than the walls (a standing obstacle out on a
+// room's floor, sim world.js; the owner, 2026-10-04). Nothing inside, no light: the Cult took what it held.
+export function voxGibbet() {
+  const S = 13, H = 40, vox = new Uint8Array(S * S * H);
+  const put = (x, y, z, m) => { if (x >= 0 && y >= 0 && z >= 0 && x < S && y < S && z < H) vox[(z * S + y) * S + x] = m; };
+  for (let z = 0; z < 3; z++) for (let y = 4; y <= 9; y++) for (let x = 0; x <= 5; x++) put(x, y, z, 3);       // the footing
+  for (let z = 3; z < 39; z++) for (let y = 6; y <= 7; y++) for (let x = 2; x <= 3; x++) put(x, y, z, 1);      // the post
+  for (let z = 36; z < 38; z++) for (let x = 2; x <= 11; x++) for (let y = 6; y <= 7; y++) put(x, y, z, 1);    // the arm
+  for (let z = 31; z < 36; z++) put(9, 6, z, 3);                                                               // the chain
+  const c = 9, cy = 6.5, R = 2.8;
+  for (let z = 14; z < 31; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot(x - c, y - cy), ring = z === 14 || z === 15 || z === 22 || z >= 29;
+    if (r <= R + 0.6 && r >= R - 0.6 && (ring || (x + y) % 2 === 0)) put(x, y, z, 3);                          // bars and hoops
+    if (z === 14 && r < R) put(x, y, z, 3);                                                                     // the floor plate
+  }
+  return bakeVox(vox, S, S, H, ELIT.wood, 0, ELIT.obsid);
+}
 // Brazier: a bowl of coals on a stem — a doorway light.
 export function voxBrazier() {
   const S = 7, H = 12, vox = new Uint8Array(S * S * H), c = S / 2;
@@ -283,6 +300,7 @@ export function buildProps(seed) {
     shrineSpent: [voxShrineSpent()],
     cage: [voxCage()],
     cageOpen: [voxCageOpen()],
+    gibbet: [voxGibbet()],
     brazier: [voxBrazier()],
     pillar: [0, 1].map((v) => voxPillar(mulberry32((seed * 17 + v * 53 + 5) >>> 0))),
     brokenpillar: [0, 1, 2].map((v) => voxPillar(mulberry32((seed * 19 + v * 71 + 9) >>> 0), true)),

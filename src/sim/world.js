@@ -49,6 +49,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   //   • a chest and sometimes a shrine sit against a wall, away from the doorways.
   // All snap onto solid, open floor; the descent gate goes in the farthest room.
   const prng = mulberry32(streamSeed(seed, 321));
+  const orng = mulberry32(streamSeed(seed, 324)), OBSTACLES = ['pillar', 'pillar', 'monolith', 'gibbet'];   // (the standing obstacles: below)
   // a site's furniture (M5): the living keep stores and camps where the dead keep crypts. The same
   // draws either way, so an Old Barrows floor is dressed as it always was.
   // (the goblins keep a camp of what fell off the carts, and their totems)
@@ -119,6 +120,20 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       } else {
         for (let i = 0; i < 6; i++) { const q = pickEdge(6); if (q) place(q[0], q[1], 'bones'); }
         for (const side of [-1, 1]) putAt(side * L * 0.35, -side * Wd * 0.45, 'brokenpillar');
+      }
+    }
+    // a standing obstacle or two out on the open floor, sparingly (where the pools were: the owner, 2026-10-04): a
+    // pillar taller than the walls, a monolith, or an empty gibbet-cage on its post. Each with open floor all round
+    // (3 × 3 clear, 5 tiles from other furniture), never by a doorway, never in the entrance or the descent hall. On
+    // their own stream, so the rest of a floor's dressing stands where it did.
+    if (r !== level.entrance && r !== level.descentRoom) {
+      const n = 1 + (orng() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
+      for (let i = 0, got = 0; i < 30 && got < n && mid.length; i++) {
+        const [x, y] = mid[(orng() * mid.length) | 0];
+        let clear = true;
+        for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) { const c = level.cells.get(K(x + dx, y + dy)); if (!c || c.kind !== 'floor' || c.corridor || world.props.has(K(x + dx, y + dy))) { clear = false; break; } }
+        if (!clear || [...world.props.keys()].some((k) => { const [a, b] = k.split(',').map(Number); return Math.abs(a - x) < 5 && Math.abs(b - y) < 5; })) continue;
+        if (place(x, y, OBSTACLES[(orng() * OBSTACLES.length) | 0])) got++;
       }
     }
     const nDecor = r === level.entrance ? 1 : 1 + ((prng() * 2) | 0);
@@ -268,7 +283,7 @@ function keepTheWaysOpen(world, level) {
   else if (world.stairsAt) ends.push(around(world.stairsAt.x, world.stairsAt.y));
   if (world.vault) { const [x, y] = world.vault.key.split(',').map(Number); ends.push(around(x, y)); }
   for (const a of [world.exitAt, world.stairArrive, world.stairsDownArrive]) if (a) { const x = Math.floor(a.x), y = Math.floor(a.y); ends.push([[x, y], ...around(x, y)]); }   // (within reach is enough: core.js)
-  const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew']);
+  const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet']);
   const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
   // a tile's cost to open: 0 walkable, 1 a pool or decor to clear, Infinity never (walls, the well, chests)
   const cost = (x, y) => {
@@ -401,16 +416,10 @@ export function heightAt(world, x, y) {
   return c.kind === 'wall' ? (c.wz ?? WALL_Z) : FLOOR_Z;
 }
 
-// Hazard field: blobby pools of the theme's hazard material across open floor.
-// Pools spread as you descend (lower threshold = more hazard, deeper = deadlier).
-function hazardAt(world, x, y) {
-  const th = world.level.th;
-  const cut = Math.max(0.34, th.hazardCut - world.depth * 0.045);
-  return fbm(x * th.hazardScale, y * th.hazardScale, world.cs + 909) > cut;
-}
-
-// Material: abyss off-platform, the theme's wall on the ring, else a noise-picked
-// floor material with hazard pools cut into open (non-corridor) ground.
+// Material: abyss off-platform, the theme's wall on the ring, else a noise-picked floor material. (Rooms had
+// the theme's hazard pools cut into them, impassable and spreading with depth: the owner, 2026-10-04, "Its too
+// hard now to navigate a room". Every floor tile walks now; a few standing obstacles stand in for them, below.
+// THEMES keeps each theme's hazard for the ground hazard to come, M8.6.)
 export function materialAt(world, x, y) {
   if (world.kind !== 'dungeon') return oMaterialAt(world, x, y);
   const tx = Math.floor(x), ty = Math.floor(y), c = cellAt(world, tx, ty);
@@ -420,7 +429,6 @@ export function materialAt(world, x, y) {
   const th = world.level.th;
   let m;
   if (c.kind === 'wall') m = th.wall;
-  else if (!c.corridor && !(world.dry && world.dry.has(K(tx, ty))) && hazardAt(world, tx, ty)) m = th.hazard;
   else { const bag = th.floors; m = bag[clampi(Math.floor(fbm(tx * 0.11, ty * 0.11, world.ss) * bag.length), 0, bag.length - 1)]; }
   g.mat[idx] = m; return m;
 }

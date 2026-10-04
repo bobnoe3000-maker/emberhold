@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
-import { createWorld, isWalkable, heightAt, propAt } from '../src/sim/world.js';
+import { createWorld, isWalkable, heightAt, propAt, materialAt, NONWALK } from '../src/sim/world.js';
 import { hasFloorBelow } from '../src/sim/sites.js';
 
 const K = (x, y) => x + ',' + y;
@@ -34,12 +34,43 @@ function ways(site, seed, depth) {
   return { w, shut };
 }
 
-test('the floors whose stair up a pool cut off: a strip is drained, and they open', () => {
+test('the floors whose stair up a pool cut off: open, and with the pools gone (2026-10-04) nothing is drained', () => {
   for (const [site, seed, depth] of [['barrows', 23757, 1], ['barrows', 31676, 0], ['sunken_chapel', 23757, 1], ['sunken_chapel', 63352, 0], ['wickham_keep', 197975, 1]]) {
     const { w, shut } = ways(site, seed, depth);
     assert.deepEqual(shut, [], `${site} ${seed} floor ${depth + 1}`);
-    assert.ok(w.dry && w.dry.size > 0, `${site} ${seed} floor ${depth + 1}: a strip of pool drained`);
+    assert.ok(!w.dry || w.dry.size === 0, `${site} ${seed} floor ${depth + 1}: nothing to drain`);
   }
+});
+
+// The owner, 2026-10-04: "In stone floor dungeons lets eliminate black non traversable tiles … In a room like the
+// green floor, just make all the tiles traversable … we will place some pillars or other obstacles … Its too hard
+// now to navigate a room." Every room's floor walks; one or two standing obstacles (a pillar, a monolith, a
+// gibbet) out on its open floor, with open floor all round.
+test('no hazard pools: every floor tile of every room is open ground, on every site and theme', () => {
+  for (const site of ['barrows', 'tithe_mill', 'wickham_keep', 'sunken_chapel', 'scrag_warren', 'toadking_mound', 'canal_locks', 'sickpools', 'drowned_abbey']) for (const seed of [104729, 209458]) {
+    let w; try { w = floor(site, seed, 0); } catch (e) { continue; }   // (a site this checkout doesn't have)
+    for (const [k, c] of w.level.cells) {
+      if (c.kind !== 'floor') continue;
+      const [x, y] = k.split(',').map(Number);
+      assert.ok(!NONWALK.has(materialAt(w, x, y)), `${site} ${seed}: ${materialAt(w, x, y)} at ${k}`);
+    }
+  }
+});
+
+test('one or two standing obstacles in each fighting room, out on the floor with room to walk round', () => {
+  const OB = new Set(['pillar', 'monolith', 'gibbet']);
+  let rooms = 0, total = 0;
+  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) for (const seed of [104729, 209458, 314187]) {
+    const w = floor(site, seed, 0), L = w.level, seen = reach(w);
+    for (const r of L.rooms) {
+      if (r === L.entrance || r === L.descentRoom) continue;
+      const mine = [...w.props].filter(([k, kind]) => { if (!OB.has(kind)) return false; const [x, y] = k.split(',').map(Number), c = L.cells.get(k); return c && c.room === r.id && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && Math.hypot(x - r.cx, y - r.cy) > 4; });
+      rooms++; total += mine.length;
+      assert.ok(mine.length <= 2, `${site} ${seed} room ${r.id}: ${mine.length}`);
+      for (const [k] of mine) { const [x, y] = k.split(',').map(Number); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.ok(seen.has(K(x + dx, y + dy)), `${site} ${seed}: boxed in beside ${k}`); }
+    }
+  }
+  assert.ok(total >= rooms, `about one or two a room: ${total} in ${rooms}`);
 });
 
 test('the floors with no stair up (a diamond-shaped entrance): a rectangular hall with its stair', () => {

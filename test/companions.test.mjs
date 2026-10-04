@@ -165,7 +165,8 @@ function fight(perks, roomLv = 3, lv = 3) {
 
 test('in a fight: a Field Medic patches up the most hurt every 12 s; a Sworn sellsword gets up once a visit', () => {
   const a = fight([[], ['field_medic']]), heals = []; a.bus.on('combat', (c) => { if (c.t === 'heal') heals.push(a.state.t); });
-  for (let i = 0; i < 20 * 60; i++) a.tick();
+  const H = a.state.party[0];   // (kept hurt, so the rule is what's counted, not how the fight's blows fall: a floor's layout moves them)
+  for (let i = 0; i < 20 * 60; i++) { H.hp = Math.min(H.hp, statsFor(H).maxHp * 0.6); a.tick(); }
   assert.ok(heals.length >= 4, `${heals.length} heals in a minute`);
   const b = fight([[], []]), none = []; b.bus.on('combat', (c) => { if (c.t === 'heal') none.push(1); });
   for (let i = 0; i < 20 * 60; i++) b.tick();
