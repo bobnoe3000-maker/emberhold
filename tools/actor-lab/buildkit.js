@@ -1040,6 +1040,22 @@ Object.assign(TYPES, {
     const wick = mat(null, '#6a5a38');
     for (const [y, a] of [[0.06, 0.3], [0.16, -0.4]]) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.2, 7, 1, true), wick); c.position.set(0.06, y, 0); c.rotation.z = Math.PI / 2 + a * 0.3; g.add(c); }
   },
+  // Saltmere's landing gate (the way in from the canal road): two tall piles either side of the boardwalk, a beam
+  // across with the town's board hung under it (an eel on it), a lantern on each pile. The boardwalk runs along x, so
+  // the piles stand apart along z and the board faces the camera's +x.
+  landing(S, g, r) {
+    const H = 0.62, Z = 0.25;
+    for (const sz of [-1, 1]) {
+      box(0.06, H, 0.06, S.m.beam, 0, -0.02, sz * Z, g);
+      box(0.09, 0.03, 0.09, S.m.trim, 0, H - 0.02, sz * Z, g);
+      lantern(g, S, 0.02, H + 0.2, sz * Z);
+      const brace = box(0.025, 0.2, 0.025, S.m.beam, 0, H - 0.22, sz * (Z - 0.08), g); brace.rotation.x = sz * 0.7;
+    }
+    box(0.07, 0.06, Z * 2 + 0.14, S.m.beam, 0, H - 0.06, 0, g);                                        // the beam
+    for (const sz of [-1, 1]) box(0.008, 0.08, 0.008, S.m.trim, 0.02, H - 0.14, sz * 0.12, g);           // the board's chains
+    box(0.03, 0.12, 0.3, S.m.signboard, 0.02, H - 0.26, 0, g);                                           // the board
+    const eel = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 4), mat(null, '#b8a060')); eel.scale.set(0.008, 0.022, 0.11); eel.position.set(0.04, H - 0.2, 0); eel.rotation.x = 0.2; g.add(eel);
+  },
   // ── the Fens' sites (M8 slice 3; world doc v1.20 §3.2). Each way in faces the camera (+z), where the overland's
   // exit is, with a lantern by it.
   // Toadking's Mound: an island of stolen boats. A turfed mound with a hall roofed in three hulls laid keel-up, side by

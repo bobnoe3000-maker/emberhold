@@ -51,6 +51,24 @@ over the wood's edge: **25.2 %**.
   a place once its people stand on it, the next pass adds coiled rope, nets drying on rails and a moored punt to
   break it up.
 
+### The owner's report: Saltmere's way in (2026-10-04)
+
+From a phone at night: *"The building sits on top of the road and it isn't obvious for the entrance into Saltmere."*
+Both were so. A stilt house stood on the canal road (41 road tiles under it), and the way in was a gap between the
+tavern and another house at the end of a short diagonal boardwalk, with nothing marking it.
+
+| Finding | Fix |
+|---|---|
+| A stilt house stood on the canal road | Saltmere's houses moved up-screen and west, behind and beside the boardwalk's end, clear of the road |
+| Nothing marked the way in | The boardwalk runs straight in off the road to a **landing gate** (a new bake, `landing`: two piles with a lantern each, a beam, the town's board with an eel on it). The way in is through it, the name *Saltmere* stands over it, and you arrive on the boardwalk facing it |
+| The same check found more | The Locks' hall stood over the canal road and Reedholm's track ran into the priory: both moved. A punt was moored on the Abbey's causeway. In the Vale, a rock and a stump stood on the barrows road and a stump on the camp track |
+
+![Saltmere's landing gate at night and by day](img/fens/saltmere-gate.jpg)
+
+`test/town.test.mjs` now holds both lands to it, in three seeds: no road tile is blocked except at the end of the
+road that leads there (Thornwick's gate, the lumber camp, the barrow's mound). Saltmere's way in is through the gate,
+under its name. Both tests fail on the layout before the fix.
+
 ## Pass 2: art, slice 3 (the Fens' sites)
 
 Five landmarks baked in code (`tools/actor-lab/buildkit.js`: `boathall`, `lockhall`, `vats`, `abbey`, `priory`; in

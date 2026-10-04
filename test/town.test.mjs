@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createOutdoor, REGIONS } from '../src/sim/outdoor.js';
+import { createOutdoor, REGIONS, groundAt, G } from '../src/sim/outdoor.js';
 import { ENV_FOOT } from '../src/sim/envfoot.js';
 import { isWalkable } from '../src/sim/world.js';
 
@@ -103,4 +103,28 @@ for (const [kind, region] of [['town', 'vale'], ['town', 'fens'], ['overland', '
     const cx = (e.x0 + e.x1) / 2, cy = (e.y0 + e.y1) / 2;
     for (const s of o.structs.filter(ug)) assert.ok(Math.hypot(s.x - cx, s.y - cy) >= 6, `${s.id} at a way in (${e.site || e.to})`);
   }
+});
+
+// Nothing placed stands on a road (2026-10-04, the owner: a stilt house sat on the canal road): every road tile a
+// building, rock or prop blocks is one of a road's own ends, at the thing it leads to (a gate, the camp, the barrow)
+test('no house, rock or prop stands on a road, in either land', () => {
+  const ok = /gatehouse|lumbermill|^ruin$/;
+  for (const region of ['vale', 'fens']) for (const seed of [20260807, 7, 3096714577]) {
+    const o = createOutdoor(seed, 'overland', region);
+    for (let y = 0; y < o.H; y++) for (let x = 0; x < o.W; x++) {
+      const g = groundAt(o, x + 0.5, y + 0.5).g; if (g !== G.DIRT && g !== G.COBBLE && g !== G.DECK) continue;
+      if (!o.blocked[(y + o.PAD) * o.GW + x + o.PAD]) continue;
+      const by = o.structs.filter((s) => { const f = ENV_FOOT[s.id]; return f && x + 0.5 >= s.x + f[0] && x + 0.5 <= s.x + f[2] && y + 0.5 >= s.y + f[1] && y + 0.5 <= s.y + f[3]; });
+      assert.ok(by.some((s) => ok.test(s.id)), `${region} ${seed}: the road at ${x},${y} is blocked by ${by.map((s) => s.id).join(', ') || 'nothing placed'}`);
+    }
+  }
+});
+
+test('Saltmere on the Fens: the boardwalk runs in off the canal road, through the landing gate, under its name', () => {
+  const o = createOutdoor(20260807, 'overland', 'fens'), gate = o.structs.find((s) => s.id === 'fens_landing_1'), into = o.exits.find((e) => e.to === 'town');
+  const label = o.labels.find((l) => l.text === 'Saltmere'), a = o.arrivals.saltmere;
+  assert.ok(gate && Math.abs(label.x - gate.x) < 1 && Math.abs(label.y - gate.y) < 1, 'the name is over the gate');
+  assert.ok(into.x1 >= gate.x - 0.5 && into.x0 < gate.x && gate.y > into.y0 && gate.y < into.y1, 'the way in is through the gate');
+  assert.ok(a.x > gate.x && Math.abs(a.y - gate.y) < 1, 'you arrive on the boardwalk, facing the gate');
+  for (let x = Math.floor(gate.x); x <= a.x; x++) assert.ok(isWalkable(o, x + 0.5, gate.y), `the boardwalk is open at ${x}`);
 });

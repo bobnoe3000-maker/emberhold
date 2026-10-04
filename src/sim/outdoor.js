@@ -412,7 +412,7 @@ function buildTown(seed, region) {
 // crosses, and the Drowned Abbey in the canal's flood. Open ground is wet peat and reed (o.marsh), with meres of
 // still bog water. The five sites (m8-plan slice 3) stand on the canal's banks and the meres' shores, each with its
 // way in toward the camera (+y) where its road or causeway ends, its own water behind it.
-export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], lockhall: [80, 116], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190] };
+export const FENS = { north: [60, -6], salt: [72, 60], mound: [34, 104], locks: [100, 128], lockhall: [76, 112], pools: [180, 96], abbey: [126, 206], reedholm: [202, 190] };
 function buildFens(seed) {
   const o = makeWorld(seed, 'overland', 240, 240, 90), rng = mulberry32(streamSeed(seed, 4431)), B = (t, n = 1) => `fens_${t}_${n}`;
   o.name = 'The Greywater Fens'; o.region = 'fens'; o.marsh = true;
@@ -432,28 +432,33 @@ function buildFens(seed) {
   const door = (p, dy = 12) => [p[0] + 1, p[1] + dy];                                                            // a site's way in, in front of it
   const ROADS = [
     { w: 5, surface: 'dirt', pts: [[north[0], -30], [north[0] + 2, 14], [salt[0] + 12, salt[1] - 20], [salt[0] + 20, salt[1] + 6], [92, 100], [locks[0] - 8, locks[1]]] },   // the canal road, down from the Vale past Saltmere to the Locks
-    { w: 4, surface: 'deck', pts: [[salt[0] + 19, salt[1] + 6], [salt[0] + 10, salt[1] + 3], [salt[0] + 4, salt[1] + 1]] },          // Saltmere's boardwalk, in from its front
+    { w: 4, surface: 'deck', pts: [[salt[0] + 19, salt[1]], [salt[0] - 2, salt[1]]] },                                     // Saltmere's boardwalk, straight in off the canal road to its landing gate
     { w: 5, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [locks[0] + 18, locks[1]]] },                                  // over the lock gates
-    { w: 3, surface: 'track', pts: [[92, 112], [86, 124], door(lockhall, 10)] },                                         // to the lock-keepers' door
+    { w: 3, surface: 'track', pts: [[92, 114], [86, 122], [lockhall[0] + 1, lockhall[1] + 11]] },                         // to the lock-keepers' door
     { w: 4, surface: 'dirt', pts: [[locks[0] + 18, locks[1]], [150, 116], door(pools, 14)] },                              // east to the Sickpools
     { w: 4, surface: 'dirt', pts: [[locks[0] - 8, locks[1]], [94, 170], [abbey[0] - 26, abbey[1] - 4]] },                    // south to the Abbey's flood
     { w: 4, surface: 'deck', pts: [[abbey[0] - 26, abbey[1] - 4], [abbey[0] - 14, abbey[1] + 10], [abbey[0] - 5, abbey[1] + 17], door(abbey, 17), door(abbey, 9)] },   // the causeway over it, up to the west door
-    { w: 3, surface: 'track', pts: [[locks[0] + 18, locks[1]], [150, 150], [reedholm[0] - 6, reedholm[1] + 6], door(reedholm, 14)] },   // up Reedholm's rise
+    { w: 3, surface: 'track', pts: [[locks[0] + 18, locks[1]], [150, 150], [184, 196], [192, 204], [reedholm[0] - 2, reedholm[1] + 14]] },   // up to the foot of Reedholm's rise
     { w: 3, surface: 'track', pts: [[92, 96], [62, 100], [mound[0] + 14, mound[1] + 14], door(mound, 12)] },                  // west to the Toadking's shore
   ].map((r) => ({ ...r, pts: r.surface === 'deck' ? r.pts : fillet(r.pts, Math.max(8, r.w * 2)) }));
   o.roads.push(...ROADS);
   finalizeGround(o);
   put(o, 'bridge_90', locks[0] + 1, locks[1], 'deck');                                                              // the lock gates' bridge
-  // Saltmere from outside: its stilt houses standing in the mere round the boardwalk's end
-  for (const [id, x, y] of [[B('stilttavern'), salt[0] + 2, salt[1] - 10], [B('stilt', 1), salt[0] - 10, salt[1] - 4], [B('stilt', 2), salt[0] + 12, salt[1] - 10],
-    [B('stilt', 3), salt[0] - 4, salt[1] + 8], [B('stilt', 1), salt[0] - 16, salt[1] - 16], [B('stilt', 2), salt[0] - 4, salt[1] - 22]]) put(o, id, x, y);
-  for (const [id, x, y] of [[B('punt'), salt[0] - 14, salt[1] + 6], [B('punt'), salt[0] + 6, salt[1] - 18], [B('eeltrap'), salt[0] - 18, salt[1] + 2], [B('eeltrap'), salt[0] + 2, salt[1] + 12]]) put(o, id, x, y, 'rect', 0);
+  // Saltmere from outside: the boardwalk comes in straight off the canal road to the landing gate (its board and two
+  // lanterns: the way in, the town's name over it), the stilt houses standing in the mere behind and beside its end,
+  // up-screen of it and clear of the road (2026-10-04, the owner: a house stood on the road and the way in was a gap)
+  { const G = [salt[0] + 4, salt[1]];
+    put(o, B('landing'), G[0], G[1], 'none');
+    for (const dy of [-2.6, 2.6]) { const i = gi(o, G[0], G[1] + dy); if (i >= 0) o.blocked[i] = 1; }   // the piles
+    for (const [id, x, y] of [[B('stilttavern'), salt[0] - 6, salt[1] - 12], [B('stilt', 1), salt[0] - 16, salt[1]], [B('stilt', 2), salt[0] + 2, salt[1] - 18],
+      [B('stilt', 3), salt[0] - 14, salt[1] + 12], [B('stilt', 1), salt[0] - 20, salt[1] - 16], [B('stilt', 2), salt[0] - 8, salt[1] - 26]]) put(o, id, x, y);
+    for (const [id, x, y] of [[B('punt'), salt[0] + 10, salt[1] + 8], [B('punt'), salt[0] - 22, salt[1] - 8], [B('eeltrap'), salt[0] - 22, salt[1] + 4], [B('eeltrap'), salt[0] + 2, salt[1] + 10]]) put(o, id, x, y, 'rect', 0); }
   // the sites (world doc §3.2): the Toadking's island, the lock-keepers' hall by the gates, the vats, the Abbey in its
   // flood, Reedholm on its rise (the Undercroft's door in its chapel front, shut until the Fens set is whole)
   put(o, B('boathall'), mound[0], mound[1]); put(o, B('lockhall'), lockhall[0], lockhall[1]); put(o, B('vats'), pools[0], pools[1]);
   put(o, B('abbey'), abbey[0], abbey[1]); put(o, B('priory'), reedholm[0], reedholm[1]);
-  for (const [id, x, y] of [[B('punt'), mound[0] - 14, mound[1] + 4], [B('eeltrap'), mound[0] - 18, mound[1] - 2], [B('punt'), abbey[0] - 20, abbey[1] + 6]]) put(o, id, x, y, 'rect', 0);
-  o.labels.push({ x: salt[0] + 2, y: salt[1] - 10, id: B('stilttavern'), text: 'Saltmere' },
+  for (const [id, x, y] of [[B('punt'), mound[0] - 14, mound[1] + 4], [B('eeltrap'), mound[0] - 18, mound[1] - 2], [B('punt'), abbey[0] + 16, abbey[1] + 10]]) put(o, id, x, y, 'rect', 0);
+  o.labels.push({ x: salt[0] + 4, y: salt[1], id: B('landing'), text: 'Saltmere' },
     { x: mound[0], y: mound[1], id: B('boathall'), text: "Toadking's Mound", site: 'toadking_mound' }, { x: lockhall[0], y: lockhall[1], id: B('lockhall'), text: 'The Canal Locks', site: 'canal_locks' },
     { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools', site: 'sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },
     { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' });
@@ -471,12 +476,12 @@ function buildFens(seed) {
     return fbm(x * 0.08, y * 0.08, o.seed + 43) > 0.6 ? 0.5 : 0.08;
   });
   o.exits.push({ x0: north[0] - 8, y0: -11, x1: north[0] + 9, y1: -4, to: 'overland', region: 'vale', arrive: 'fens' });   // back up the canal road to the Vale
-  o.exits.push({ x0: salt[0] + 1, y0: salt[1] - 2, x1: salt[0] + 6, y1: salt[1] + 4, to: 'town', arrive: 'overland' });     // the boardwalk's end: into Saltmere
+  o.exits.push({ x0: salt[0] - 2, y0: salt[1] - 2, x1: salt[0] + 3.5, y1: salt[1] + 2, to: 'town', arrive: 'overland' });   // through the landing gate: into Saltmere
   // each site's door: a box in front of it (the Undercroft's is the low door in Reedholm's chapel front, left of centre)
   const SITE_AT = { toadking_mound: mound, canal_locks: lockhall, sickpools: pools, drowned_abbey: abbey, reedholm_undercroft: [reedholm[0] - 3, reedholm[1]] };
   const DOOR_Y = { toadking_mound: 7, canal_locks: 5.5, sickpools: 6, drowned_abbey: 8.5, reedholm_undercroft: 7.5 };
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.exits.push({ x0: x - 2.5, y0: y + DOOR_Y[site], x1: x + 3.5, y1: y + DOOR_Y[site] + 3, to: 'dungeon', site });
-  o.arrivals = { default: { x: salt[0] + 16.5, y: salt[1] + 6.5 }, saltmere: { x: salt[0] + 16.5, y: salt[1] + 6.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };
+  o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };   // on the boardwalk, facing the gate
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.arrivals[site] = { x: x + 1.5, y: y + DOOR_Y[site] + 7.5 };
   o.spawn = o.arrivals.default;
   return o;
@@ -638,7 +643,7 @@ function buildOverland(seed) {
   put(o, B('keep'), keep[0], keep[1]);
   put(o, B('shop', 1), cross[0] + 12, cross[1] - 12);          // waystation at the crossroads
   put(o, 'ruin', barrows[0], barrows[1], 'round', 0.3);          // the mound blocks; its doorway (front, +y) stays open
-  for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 18, barrows[1] + 2], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] + 14, barrows[1] - 6]]) put(o, id, x, y, 'rect', 0);
+  for (const [id, x, y] of [['rock_C', barrows[0] - 8, barrows[1] + 4], ['rock_E', barrows[0] + 24, barrows[1] + 8], ['rock_A', barrows[0] - 4, barrows[1] - 9], ['stump', barrows[0] - 14, barrows[1] - 4]]) put(o, id, x, y, 'rect', 0);
   put(o, 'mine_0', mine[0], mine[1]);
   put(o, 'lumbermill_90', camp[0], camp[1]);
   put(o, 'watermill_0', mill[0], mill[1]);
@@ -647,7 +652,7 @@ function buildOverland(seed) {
   put(o, 'warren_0', warren[0], warren[1]);
   for (const [id, dx, dy] of [['grove_3', -20, -2], ['grove_5', 14, -20], ['pine_2', -12, -12], ['pine_5', 16, -6]]) put(o, id, warren[0] + dx, warren[1] + dy, 'round', 0.35);   // the range's foot is wooded either side of the scar
   put(o, B('farm'), 64, 114); put(o, 'wheelbarrow', 57, 128, 'rect', 0);
-  for (const [id, x, y] of [['resource_lumber', camp[0] + 10, camp[1] + 4], ['stump', camp[0] - 12, camp[1] + 8], ['stump', camp[0] + 4, camp[1] + 14], ['flag_red', keep[0] - 14, keep[1] + 30]])
+  for (const [id, x, y] of [['resource_lumber', camp[0] + 10, camp[1] + 4], ['stump', camp[0] - 16, camp[1] + 14], ['stump', camp[0] + 4, camp[1] + 14], ['flag_red', keep[0] - 14, keep[1] + 30]])
     put(o, id, x, y, 'rect', 0);
   putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);

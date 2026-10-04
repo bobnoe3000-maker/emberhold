@@ -690,6 +690,20 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_landing_1",
+      "model": "landing",
+      "build": "landing",
+      "seed": 66,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [
