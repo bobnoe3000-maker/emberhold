@@ -17,11 +17,16 @@
 //   boardAccept { id }   one of today's jobs, not already taken, at most MAX_JOBS open at once
 //   boardTurnIn { id }   a job whose objectives are done: paid once (quests.js)
 // Events: 'boardChanged' { day, lv }; 'refused' { reason } for the window; quest events from quests.js.
+//
+// Each town's board posts its own land's jobs (M8): Thornwick's the Old Barrows', Saltmere's the Fens' sites
+// (fensOffers). A posting belongs to the town it went up in (state.board.region; older saves: the Vale), and a Fens
+// job's id ends _fens, so it rebuilds alone. The Vale's postings draw exactly as they did.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { DAY_S } from './heroes.js';
 import { QS } from './quests.js';
 import { ROOM_LEVELS_PER_FLOOR } from './world.js';
+import { SITES, SITE_IDS } from './sites.js';
 
 export const MAX_JOBS = 3;                 // board jobs open (active or ready) at once
 export const KEEP_DONE = 12;               // finished board jobs kept for the Journal's Completed tab
@@ -83,7 +88,7 @@ export const rewardFor = (effort, lv, skulls) => {
   return { xp: round5(12 * lv * effort * k), gold: round5(effort * (3 + 2 * lv) * k) };
 };
 
-/** @typedef {{ id: string, tpl: string, day: number, half: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
+/** @typedef {{ id: string, tpl: string, day: number, half: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, site?: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */
 const cache = new Map();
 /** A posting's jobs. @param {number} seed @param {number} day @param {number} lv @param {number} [half] 0 dawn · 1 dusk @returns {Job[]} */
 export function boardOffers(seed, day, lv, half = 0) {
@@ -102,29 +107,71 @@ export function boardOffers(seed, day, lv, half = 0) {
   cache.set(key, jobs);
   return jobs;
 }
-const ID = /^board_(\d+)(d?)_(\d+)_(\d)$/;
+// ── the Fens' board (Saltmere's, M8) ─────────────────────────────────────────────────────────────────────────
+// Each job picks one of the Fens' open sites a party at the hero's level can take on (its first rooms no more than
+// two levels up; the lowest if none), and asks for its waves, chests or elites, a floor of it, or its stair hall.
+// A site's floor and hall levels are its own (sites.js), not the Old Barrows' formula.
+const siteFloorLv = (S, f) => S.base + S.perFloor * (f - 1);
+const siteHallLv = (S, f) => siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2);
+const FENS_SITES = SITE_IDS.filter((id) => SITES[id].region === 'fens' && !SITES[id].hidden);
+/** @type {Record<string, (S: any, rng: () => number, lv: number) => ({ s: Size, target: number } | null)>} */
+const FENS_SIZE = {
+  hold: (S, rng, lv) => ({ s: { n: 3 + ((rng() * 4) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
+  retrieve: (S, rng, lv) => ({ s: { n: 1 + ((rng() * 3) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
+  bounty: (S, rng, lv) => ({ s: { n: 1 + ((rng() * 2) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
+  delve: (S, rng, lv) => { let top = 1; while (top < S.floors && siteFloorLv(S, top + 1) <= lv + 2) top++; if (top < 2) return null; const f = 2 + ((rng() * (top - 1)) | 0); return { s: { n: 0, floor: f }, target: siteFloorLv(S, f) }; },
+  warden: (S, rng, lv) => { let top = 0; while (top < S.floors && siteHallLv(S, top + 1) <= lv + 2) top++; if (top < 1) return null; const f = 1 + ((rng() * top) | 0); return { s: { n: 2 + ((rng() * 2) | 0), floor: f }, target: siteHallLv(S, f) }; },
+};
+const FENS_EFFORT = { hold: (s) => s.n, retrieve: (s) => 2 * s.n, bounty: (s) => 5 * s.n, delve: (s) => 3 * (s.floor - 1) + 1, warden: (s) => s.n + 2 * (s.floor - 1) + 1 };
+/** Saltmere's posting: its own stream, so nothing the Vale's board draws moves. @param {number} seed @param {number} day @param {number} lv @param {number} half @returns {Job[]} */
+function fensOffers(seed, day, lv, half) {
+  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ 0x7e55, STREAM.BOARD));
+  const near = FENS_SITES.filter((id) => SITES[id].base <= lv + 2), sites = near.length ? near : [FENS_SITES[0]];
+  const pool = [...TEMPLATES];
+  for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const jobs = [];
+  for (const tpl of pool) {
+    if (jobs.length >= 4) break;
+    const site = sites[(rng() * sites.length) | 0], S = SITES[site], got = FENS_SIZE[tpl](S, rng, lv); if (!got) continue;
+    const { s, target } = got, slot = jobs.length, skulls = skullsFor(target, lv), company = target >= 4 && target >= lv - 1;   // (every Fens room is 8+: one near your level wants company)
+    /** @type {[number, number]} */ const pick = [rng(), rng()];
+    const base = BOARD[tpl].objective(s), objective = { ...base, site };
+    jobs.push({ id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}_fens`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
+      kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region: 'fens', site, level: /** @type {[number, number]} */ ([lv, lv]),
+      steps: [{ id: 'job', objectives: [objective] }], rewards: rewardFor(FENS_EFFORT[tpl](s), lv, skulls) });
+  }
+  return jobs;
+}
+/** a land's posting @param {number} seed @param {number} day @param {number} lv @param {number} half @param {string} [region] */
+export function offersIn(seed, day, lv, half, region = 'vale') {
+  if (region !== 'fens') return boardOffers(seed, day, lv, half);
+  const key = `${seed}_${day}_${lv}_${half}_fens`; if (cache.has(key)) return cache.get(key);
+  const jobs = fensOffers(seed, day, lv, half); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
+}
+const ID = /^board_(\d+)(d?)_(\d+)_(\d)(_fens)?$/;
 /** a job from its id alone (null if it isn't one) @param {number} seed @param {string} id */
 export function jobOf(seed, id) {
   const m = ID.exec(String(id)); if (!m) return null;
-  return boardOffers(seed, +m[1], +m[3], m[2] ? 1 : 0)[+m[4]] || null;
+  return offersIn(seed, +m[1], +m[3], m[2] ? 1 : 0, m[5] ? 'fens' : 'vale')[+m[4]] || null;
 }
 
 /** @param {{ state: any, bus: any, getWorld: () => any, seed: number, quests: any }} o */
 export function createBoard({ state, bus, getWorld, seed, quests }) {
-  if (!state.board) state.board = { day: -1, lv: 1, half: 0 };
+  if (!state.board) state.board = { day: -1, lv: 1, half: 0, region: 'vale' };
+  const here = () => (getWorld().region === 'fens' ? 'fens' : 'vale');
   const day = () => Math.floor(state.t / DAY_S);
   const half = () => ((state.t % DAY_S) >= DAY_S / 2 ? 1 : 0);                 // dusk starts the day's second half
   const inTown = () => getWorld().kind === 'town' && (getWorld().services || []).some((v) => v.kind === 'tavern');   // (the board hangs in the tavern: a waystation's too, M8)
   const refuse = (reason) => { bus.emit('refused', { reason }); return true; };
-  const today = () => (state.board.day >= 0 ? boardOffers(seed, state.board.day, state.board.lv, state.board.half || 0) : []);
+  const today = () => (state.board.day >= 0 ? offersIn(seed, state.board.day, state.board.lv, state.board.half || 0, state.board.region || 'vale') : []);
   const open = () => Object.keys(state.quests).filter((k) => ID.test(k) && (state.quests[k].st === QS.ACTIVE || state.quests[k].st === QS.READY)).length;
   /** a job the save could have earned: not from a posting to come, not above the hero's level @param {string} id */
   const def = (id) => { const j = jobOf(seed, id); return j && (j.day < day() || (j.day === day() && j.half <= half())) && j.lv <= state.party[0].level ? j : null; };
 
-  // a new posting goes up the first time you're in a town after it's due (dawn and dusk)
+  // a new posting goes up the first time you're in a town after it's due (dawn and dusk), or in another land's town
   function tick() {
-    if ((state.board.day === day() && (state.board.half || 0) === half()) || !inTown()) return;
-    state.board = { day: day(), lv: state.party[0].level, half: half() };
+    if ((state.board.day === day() && (state.board.half || 0) === half() && (state.board.region || 'vale') === here()) || !inTown()) return;
+    state.board = { day: day(), lv: state.party[0].level, half: half(), region: here() };
     bus.emit('boardChanged', { ...state.board });
   }
   function command(cmd) {
@@ -152,7 +199,8 @@ export function createBoard({ state, bus, getWorld, seed, quests }) {
   function restore(data) {
     const b = data?.board, d = b && Number.isInteger(b.day) ? b.day : -1, lv = b && Number.isInteger(b.lv) ? b.lv : 1, h = b && b.half === 1 ? 1 : 0;   // v15 and older: no half (dawn)
     const due = d >= 0 && (d < day() || (d === day() && h <= half()));
-    state.board = due && lv >= 1 && lv <= state.party[0].level ? { day: d, lv, half: h } : { day: -1, lv: 1, half: 0 };   // v8 and older: none yet
+    const region = b && b.region === 'fens' ? 'fens' : 'vale';                   // (M8; before, every posting was the Vale's)
+    state.board = due && lv >= 1 && lv <= state.party[0].level ? { day: d, lv, half: h, region } : { day: -1, lv: 1, half: 0, region: 'vale' };   // v8 and older: none yet
   }
   const nextDawn = () => DAY_S - (state.t % DAY_S);                          // seconds of play until the next dawn (the wage)
   /** the next posting: 'dawn' or 'dusk', and the seconds of play until it */

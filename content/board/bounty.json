@@ -13,5 +13,21 @@
   "label": "Elites defeated in the Old Barrows",
   "journal": "Defeat {n} of the bright-eyed ones in the Old Barrows. Hold a room until one comes to lead the rest (about every fifth wave).",
   "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
-  "done": "Fewer of the dead in the barrows march in step."
+  "done": "Fewer of the dead in the barrows march in step.",
+  "fens": {
+    "titles": ["The Worst of Them", "Heads Above Water", "A Bigger Fish", "Bounty on the Fen"],
+    "hooks": [
+      { "by": "The Lantern Guild", "text": "\"The worst of what's in {site} comes out every so often to see who's about. Be about. Put it down.\"" },
+      { "by": "The eel-men", "text": "\"There's a big one in {site}. There's always a big one. This time, somebody kill it.\"" },
+      { "by": "Pim Rushlight, chandler", "text": "\"I'm told the brutes in {site} carry better than the rest. I'm told this by people who never came back. Go and see.\"" },
+      { "by": "The Grey Sisters", "text": "\"Some of what walks in {site} leads the rest. Take away the leaders, and the rest may lie down.\"" },
+      { "by": "The Drowned Eel", "text": "\"Bring us a story about one of the big ones in {site}. A true one. The coin's for the truth.\"" },
+      { "by": "Saltmere's ferryman", "text": "\"Something in {site} took a pole out of my hands last week. It was a good pole. Avenge it.\"" }
+    ],
+    "brief": { "one": "Put down one of the elites in {site}", "many": "Put down {n} elites in {site}" },
+    "label": "Elites put down in {site}",
+    "journal": "Go into {site} and put down {n} of the elites that come with every fifth wave.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
+    "done": "Something big stopped walking about in the reeds."
+  }
 }

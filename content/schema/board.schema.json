@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "A Lantern Guild board template's words (quest-lore-system §4.2). The shape (what it counts, what it pays) is the sim's: src/sim/board.js BOARD; a test keeps the two in step. Slots take only a number ({n}) or a word from this file ({floor} → ordinals), so every line stays grammatical.",
+  "title": "A Lantern Guild board template's words (quest-lore-system §4.2). The shape (what it counts, what it pays) is the sim's: src/sim/board.js BOARD; a test keeps the two in step. Slots take only a number ({n}), a word from this file ({floor} → ordinals) or, in `fens`, a site's name ({site}), so every line stays grammatical.",
   "type": "object",
   "required": ["id", "titles", "hooks", "brief", "label", "journal", "ready", "done"],
   "additionalProperties": false,
@@ -18,6 +18,29 @@
     "journal": { "type": "string", "minLength": 1, "maxLength": 160 },
     "ready": { "type": "string", "minLength": 1, "maxLength": 120 },
     "done": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "ordinals": { "type": "array", "minItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 12 } }
+    "ordinals": { "type": "array", "minItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 12 } },
+    "fens": { "$ref": "#/definitions/words", "description": "Saltmere's board (M8): the same template in the Fens' voice; {site} takes the job's site's name (sim board.js picks it)" }
+  },
+  "definitions": {
+    "words": {
+      "type": "object",
+      "required": ["titles", "hooks", "brief", "label", "journal", "ready", "done"],
+      "additionalProperties": false,
+      "properties": {
+        "titles": { "type": "array", "minItems": 4, "items": { "type": "string", "minLength": 1, "maxLength": 32 } },
+        "hooks": {
+          "type": "array", "minItems": 6,
+          "items": { "type": "object", "required": ["by", "text"], "additionalProperties": false,
+            "properties": { "by": { "type": "string", "minLength": 1, "maxLength": 32 }, "text": { "type": "string", "minLength": 1, "maxLength": 200 } } }
+        },
+        "brief": { "type": "object", "required": ["one", "many"], "additionalProperties": false,
+          "properties": { "one": { "type": "string", "minLength": 1, "maxLength": 64 }, "many": { "type": "string", "minLength": 1, "maxLength": 64 } } },
+        "label": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "journal": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "ready": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "done": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "ordinals": { "type": "array", "minItems": 6, "items": { "type": "string", "minLength": 1, "maxLength": 12 } }
+      }
+    }
   }
 }

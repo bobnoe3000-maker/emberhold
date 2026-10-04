@@ -14,5 +14,22 @@
   "journal": "Go down into the Old Barrows and take the stairs down, floor by floor, until you reach the {floor} floor.",
   "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "You know how deep it goes. Deeper than that, probably.",
-  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"],
+  "fens": {
+    "titles": ["Further Down", "Below the Waterline", "The Deep End", "Go Down Wet"],
+    "hooks": [
+      { "by": "The Lantern Guild", "text": "\"The Guild's map of {site} stops at the first floor. Go further and draw the rest, or at least come back and tell us.\"" },
+      { "by": "The Grey Sisters", "text": "\"The lower rooms of {site} were sealed for a reason. We would like to know whether the reason is still down there.\"" },
+      { "by": "Pim Rushlight, chandler", "text": "\"Lamp oil burns longer the deeper you go. That's not true, but buy some anyway, and go down into {site}.\"" },
+      { "by": "The eel-men", "text": "\"The water in {site} comes up from somewhere. Go down and find where, and whether it's eels.\"" },
+      { "by": "The Drowned Eel", "text": "\"Wager on the board: nobody gets to the {floor} floor of {site} this month. Prove the house wrong.\"" },
+      { "by": "Saltmere's ferryman", "text": "\"I took a party to {site} who said they'd go all the way down. Nobody paid the return fare. Go and collect.\"" }
+    ],
+    "brief": { "one": "Reach the {floor} floor of {site}", "many": "Reach the {floor} floor of {site}" },
+    "label": "Floor reached in {site}",
+    "journal": "Go into {site} and get down to its {floor} floor.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
+    "done": "The Guild's map of the place got a little longer, and a little wetter.",
+    "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  }
 }

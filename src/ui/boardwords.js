@@ -6,6 +6,7 @@
 // ({floor} → ordinals), never free text. Shared by the board (townmenu.js) and the Journal.
 
 import { TEMPLATES } from '../sim/board.js';
+import { SITES } from '../sim/sites.js';
 
 /** @type {Record<string, any>} */
 const words = {};
@@ -15,12 +16,14 @@ const at = (arr, u) => arr[Math.max(0, Math.min(arr.length - 1, Math.floor(u * a
 
 /** a quest def the Journal can show, from a sim job (null until the words have loaded) @param {any} job */
 export function boardWords(job) {
-  const w = job && words[job.tpl]; if (!w) return null;
-  const fill = (/** @type {string} */ s) => s.replace('{n}', String(job.n)).replace('{floor}', w.ordinals ? w.ordinals[Math.max(0, Math.min(w.ordinals.length - 1, job.floor - 1))] : String(job.floor));
+  const t = job && words[job.tpl], w = t && (job.region === 'fens' && t.fens ? t.fens : t); if (!w) return null;
+  // a Fens job's site, in a sentence ("the Canal Locks", "Toadking's Mound": M8, Saltmere's board)
+  const site = job.site && SITES[job.site] ? SITES[job.site].name.replace(/^The /, 'the ') : '';
+  const fill = (/** @type {string} */ s) => s.replace('{n}', String(job.n)).replace(/\{site\}/g, site).replace('{floor}', w.ordinals ? w.ordinals[Math.max(0, Math.min(w.ordinals.length - 1, job.floor - 1))] : String(job.floor));
   const hook = at(w.hooks, job.pick[1]), o = job.steps[0].objectives[0];
   return {
     id: job.id, kind: 'board', giver: 'lantern_guild', giverName: hook.by, level: job.level, skulls: job.skulls, company: !!job.company, rewards: job.rewards,
-    title: at(w.titles, job.pick[0]), hook: hook.text, summary: hook.text, brief: fill(job.n === 1 ? w.brief.one : w.brief.many),
-    steps: [{ id: 'job', journal: fill(w.journal), objectives: [{ ...o, label: w.label }] }], ready: w.ready, done: w.done,
+    title: at(w.titles, job.pick[0]), hook: fill(hook.text), summary: fill(hook.text), brief: fill(job.n === 1 ? w.brief.one : w.brief.many),
+    steps: [{ id: 'job', journal: fill(w.journal), objectives: [{ ...o, label: fill(w.label) }] }], ready: w.ready, done: w.done,
   };
 }

@@ -14,5 +14,22 @@
   "journal": "Go down to the {floor} floor of the Old Barrows or deeper, find its stair hall (the room with the stairs down), and hold {n} waves there.",
   "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
   "done": "The stair was held for three hundred years. Not any more.",
-  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"],
+  "fens": {
+    "titles": ["The Stair Below the Water", "Break the Guard", "At the Foot of the Stairs", "Who Keeps the Hall"],
+    "hooks": [
+      { "by": "The Lantern Guild", "text": "\"Every floor of {site} ends in a hall, and every hall has a guard that hasn't moved in years. Move it.\"" },
+      { "by": "The Grey Sisters", "text": "\"Those who keep the halls of {site} kept them for the empire. They needn't any longer. Tell them so, firmly.\"" },
+      { "by": "Pim Rushlight, chandler", "text": "\"There's always a lamp burning in the halls of {site}. I'd like to know who's buying their oil.\"" },
+      { "by": "The eel-men", "text": "\"The hall at the bottom of the stair in {site} is where they gather. That's where you stand. That's what the coin is for.\"" },
+      { "by": "The Drowned Eel", "text": "\"Hold the hall on the {floor} floor of {site} and drink here free that night. One drink. It's a small hall.\"" },
+      { "by": "Saltmere's ferryman", "text": "\"Whatever keeps the rest of them in order sits by the stairs in {site}. Unsettle it.\"" }
+    ],
+    "brief": { "one": "Hold a wave in a hall of {site}, {floor} floor on", "many": "Hold {n} waves in a hall of {site}, {floor} floor on" },
+    "label": "Waves held in a hall of {site}",
+    "journal": "Go to the {floor} floor of {site} or deeper, find its hall (at the stairs, or the last room), and hold {n} waves there.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
+    "done": "The hall stood empty for a night. In the Fens, that counts.",
+    "ordinals": ["first", "second", "third", "fourth", "fifth", "sixth"]
+  }
 }

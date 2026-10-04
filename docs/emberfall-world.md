@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.22 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.22 · 2026-10-04 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -339,6 +339,8 @@ on the stilt-houses never go out.
     comes up through the floor. The Abbess keeps the **choir-lamp** trimmed there.
   - **The Reedholm Undercroft** (hidden, the Fens set): the binding clergy's copy-room. Mother Agnes has kept it
     locked for forty years.
+- **Saltmere's own (v1.22):** the **eel-men**, who run the traps along the canal and eat what's in them, and **Saltmere's
+  ferryman**, who poles a punt across the meres for a copper and won't go past the sites after dark.
 - **People:** Wren; Pim Rushlight, a fen-folk chandler who sells lamp oil cheaper than Wendel and wants Wendel
   told; Mother Agnes of Reedholm, the prioress, who'd rather the rolls stayed shut; the Toadking, fat, cheerful and
   armed with a boat-hook; Brother Teague, the Cult's harvester at the Abbey, who gives his name.

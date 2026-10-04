@@ -53,6 +53,7 @@
 //       shop { day, lv, bought } and buyback [items sold, each with what it fetched]. Only grew: older
 //       items have no upgrade, and there's no shop until you're next in town.
 //   v18: the land you're in (sim/regions.js): region 'vale' | 'fens' (M8). Only grew: older data is in the Vale.
+//        board.region: the land whose town's board the posting went up in (M8, Saltmere's); none is the Vale's.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';

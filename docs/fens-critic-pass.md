@@ -79,6 +79,20 @@ edges moved out into the mere. All 482 of its deck tiles between the square and 
 
 ![Saltmere's boardwalk before and after](img/fens/saltmere-boardwalk.jpg)
 
+### Story pass 1: Saltmere's board (2026-10-04)
+
+Saltmere's board posts the Fens' jobs in its own voice (`content/board/<template>.json`, `fens`): six posters per
+template, all canon (Pim Rushlight, the Drowned Eel, the Grey Sisters, the Lantern Guild, and, new in world doc v1.22,
+Saltmere's eel-men and its ferryman). Read against the tone rules (small stakes, wry, history found not told):
+
+- **Kept:** Pim selling oil in every second line ("Lamp oil burns longer the deeper you go. That's not true, but buy
+  some anyway"), the Eel's one free drink ("It's a small hall"), the ferryman's lost pole. Nobody is chosen; the
+  Guild pays by the fight.
+- **Checked:** no hook names the binding rolls or the Sisters' past. Act II tells that (world doc §3.2: "Nobody in
+  Reedholm likes to say so"), so the Sisters' hooks speak only of the dead, and of praying.
+- **Grammar:** `{site}` takes the site's name with *The* lowered ("the Canal Locks"); no line starts with it. A brief
+  stays under 64 characters before the name goes in (the warden's was cut to "…, {floor} floor on").
+
 ## Pass 2: art, slice 3 (the Fens' sites)
 
 Five landmarks baked in code (`tools/actor-lab/buildkit.js`: `boathall`, `lockhall`, `vats`, `abbey`, `priory`; in

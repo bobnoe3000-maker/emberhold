@@ -13,5 +13,21 @@
   "label": "Waves held in the Old Barrows",
   "journal": "Go down into the Old Barrows and hold {n} waves against the dead there, in any rooms.",
   "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
-  "done": "The barrows road was quiet for a night or two."
+  "done": "The barrows road was quiet for a night or two.",
+  "fens": {
+    "titles": ["Keep the Reeds Quiet", "Mind the Water", "Hold Fast in the Fen", "A Dry Night"],
+    "hooks": [
+      { "by": "Pim Rushlight, chandler", "text": "\"Nobody buys lamp oil to sit in the dark, and nobody sits in the dark with that lot about. Thin them out. Then buy oil.\"" },
+      { "by": "The Drowned Eel", "text": "\"Fewer of them in {site} means more of you in here of an evening. We've thought about it, and we're for it.\"" },
+      { "by": "The Grey Sisters", "text": "\"We pray for the dead of {site}. It would help if fewer of them were walking about while we did.\"" },
+      { "by": "The eel-men", "text": "\"The traps by {site} come up empty and chewed. Go and stand there a while. Loudly.\"" },
+      { "by": "The Lantern Guild", "text": "\"Standing job, Saltmere rate: go in, hold the room, come back dry if you can. The Guild pays by the fight.\"" },
+      { "by": "Saltmere's ferryman", "text": "\"I'll not pole past {site} after dark until somebody's been in and argued with them. Be that somebody.\"" }
+    ],
+    "brief": { "one": "Hold a wave in {site}", "many": "Hold {n} waves in {site}" },
+    "label": "Waves held in {site}",
+    "journal": "Go into {site} and hold {n} waves there, in any rooms.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
+    "done": "Saltmere slept a little better. The eels did not care either way."
+  }
 }

@@ -86,7 +86,7 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      **drowned** look), `outdoor.js` (`buildFens`: the landmarks, roads to their doors, ways in and arrivals),
      `core.js` (a site's floors are in its land), `content/sites/*.json`; `test/sites.test.mjs`. The Locks are
      `sluice` (flagstone), not `water`, so they don't read as the Abbey. Art pass: [fens-critic-pass.md](./fens-critic-pass.md) §2.
-     Saltmere's board still posts jobs at the Old Barrows; jobs by region come with Saltmere's people (slice 8).
+     Saltmere's board posts the Fens' jobs (2026-10-04: `board.js` `offersIn`, the `fens` words in `content/board/`).
 
 4. **The Fens' foes.** Mirroring the Ashbound roles, as the Redhand and goblins did.
    - **Fen ghoul** (melee, a new silhouette: long-armed, hunched, mud-dark), **bog-witch** (caster, a new

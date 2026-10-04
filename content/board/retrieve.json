@@ -13,5 +13,21 @@
   "label": "Chests opened in the Old Barrows",
   "journal": "Go down into the Old Barrows and open {n} of the chests there.",
   "ready": "Hand it in at the Lantern Guild's board, inside the Tired Mule in Thornwick.",
-  "done": "Whatever was in the boxes is somebody else's problem now."
+  "done": "Whatever was in the boxes is somebody else's problem now.",
+  "fens": {
+    "titles": ["What the Water Kept", "Salvage", "Lost Cargo", "Fen Pickings"],
+    "hooks": [
+      { "by": "Pim Rushlight, chandler", "text": "\"There's stock in {site} that was somebody's once and is nobody's now. Bring it out and I'll make it mine, fairly.\"" },
+      { "by": "The Lantern Guild", "text": "\"Chests in {site}, unopened since the canal drowned. The Guild would like to know what's in them, and so would you.\"" },
+      { "by": "The Drowned Eel", "text": "\"The last lot who went into {site} took our good tankards. Bring back anything. Bring back the tankards.\"" },
+      { "by": "The Grey Sisters", "text": "\"Some of what lies in {site} belongs to families in Saltmere. Bring it up, and we'll see it home.\"" },
+      { "by": "The eel-men", "text": "\"A box floated up out of {site} last spring with coin in it. There'll be more. We can't swim that far.\"" },
+      { "by": "Saltmere's ferryman", "text": "\"I'll carry anything you bring out of {site}, for a share. Mind the boxes that knock back.\"" }
+    ],
+    "brief": { "one": "Open a chest in {site}", "many": "Open {n} chests in {site}" },
+    "label": "Chests opened in {site}",
+    "journal": "Go into {site} and open {n} of its chests.",
+    "ready": "Hand it in at the Lantern Guild's board, inside the Drowned Eel in Saltmere.",
+    "done": "Whatever was in them is Saltmere's now, which is to say Pim's."
+  }
 }
