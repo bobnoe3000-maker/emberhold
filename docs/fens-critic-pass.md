@@ -118,8 +118,14 @@ Every way in is reachable from the Fens' arrival in three seeds, and every arriv
 
 ### Still open
 
-- The Fens' trees are the Vale's birches, whose ochre crowns read round and cheerful here. Alder and willow, darker
-  and lower, are for the slice-4 art pass.
+- ~~The Fens' trees are the Vale's birches~~ Done (2026-10-04): the Fens' own trees, baked in code
+  (`buildkit.js`: `alder`, low and dark on two or three leaning stems; `willow`, a crooked trunk under a broad crown with
+  fronds hanging round it; `carr`, alders crowded on a hummock), in the shared atlas with no existing footprint moved.
+  The Fens overland, its forest ring and Saltmere's draw from them (`FENS_CLUSTER`, `FENS_SINGLE`) where they drew
+  the Vale's birches and mixed groves, the same draws, the Fens' kinds; dead trees stay. The baked alder's dark root
+  stool read as a ball at its foot and went.
+
+  ![The Fens and Saltmere, the Vale's trees before and the Fens' own after](img/fens/trees-before-after.jpg)
 - The Toadking's hall reads as a heap of boats from its arrival, but its crown on the boat-hook is three pixels
   wide. The boss pass (slice 6) can give it a flag.
 

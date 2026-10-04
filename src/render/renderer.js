@@ -1225,7 +1225,7 @@ export function createRenderer(canvas, sim, input) {
       for (const st of w.structs) {
         const f = envMeta && envMeta.sprites[st.id]; if (!f) continue;
         if (st.id.startsWith('ug_')) continue;                   // (the undergrowth isn't mapped: a tuft isn't a landmark)
-        const tree = /pine|oak|autumn|dead|grove|mountain|rock/.test(st.id), sx = (st.x - x0) * N / span, sy = (st.y - y0) * N / span;
+        const tree = /pine|oak|autumn|dead|grove|alder|willow|carr|mountain|rock/.test(st.id), sx = (st.x - x0) * N / span, sy = (st.y - y0) * N / span;
         x.fillStyle = /mountain/.test(st.id) ? 'rgba(120,118,128,0.9)' : tree ? 'rgba(24,44,28,0.9)' : 'rgba(170,86,70,0.95)';
         const r = tree ? (/grove|mountain/.test(st.id) ? 3 : 1.3) : 2.2; x.fillRect(sx - r, sy - r, r * 2, r * 2);
       }

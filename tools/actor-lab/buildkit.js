@@ -567,7 +567,8 @@ const TYPES = {
 const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
 const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
 // leaf: olive-grey, autumn: dull amber, birch: a muted gold (the game's dusk palette; pass 11d's warmer one reverted)
-const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], birch: ['#7a6428', '#86702c', '#6e5824'], bark: '#3a2c22', dead: '#4a4038' };
+const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], birch: ['#7a6428', '#86702c', '#6e5824'], bark: '#3a2c22', dead: '#4a4038',
+  alder: ['#2c3626', '#33402b', '#28301f'], willow: ['#4a5236', '#535c3c', '#41482f'], wetbark: '#2e2a24' };   // (M8) the Fens': dark carr green, willow grey-green
 // Foliage (critic pass 2: faceted gem-like crowns clashed with the buildings): closed,
 // softly-shaded masses. Geometry is vertex-merged BEFORE jittering so faces never crack
 // apart, shaded smooth, and vertex-coloured from a dark self-shadowed underside to a lighter
@@ -646,6 +647,30 @@ function birch(g, r, x, z, sc = 1, autumn = true) {
   for (let i = 0; i < 5; i++) { const k = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.012, 0.034), mark); k.position.set(0, 0.1 + i * 0.12 + r() * 0.04, 0); k.rotation.y = r() * 3; t.add(k); }
   leafCrown(t, r, autumn ? TREE_COL.birch : TREE_COL.leaf, 0.74, 0.19, 4, 22);
 }
+// The Fens' trees (M8; fens critic pass 2: the Vale's birches read round and cheerful in a swamp). An alder: low and
+// dark, two or three stems leaning out of one wet stool, a crown wider than tall. A willow: a short thick trunk,
+// crooked, a broad crown with fronds hanging round it to the water. A carr: alders crowded on a hummock.
+function alder(g, r, x, z, sc = 1) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const bark = flat(TREE_COL.wetbark), stems = 2 + ((r() * 2) | 0);
+  for (let i = 0; i < stems; i++) { const a = r() * 6.28, lean = 0.12 + r() * 0.16, st = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.03, 0.42, 6), bark);
+    st.position.set(Math.cos(a) * 0.04, 0.2, Math.sin(a) * 0.04); st.rotation.set(Math.sin(a) * lean, 0, -Math.cos(a) * lean); t.add(st); }
+  const crown = new THREE.Group(); crown.scale.set(1.15, 0.8, 1.15); t.add(crown);
+  leafCrown(crown, r, TREE_COL.alder, 0.6, 0.24, 6 + ((r() * 3) | 0), 20);
+}
+function willow(g, r, x, z, sc = 1) {
+  const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
+  const bark = flat(TREE_COL.wetbark), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.07, 0.34, 7), bark);
+  trunk.position.y = 0.17; trunk.rotation.z = (r() - 0.5) * 0.3; t.add(trunk);
+  const crown = new THREE.Group(); crown.scale.set(1.3, 0.62, 1.3); t.add(crown);
+  leafCrown(crown, r, TREE_COL.willow, 0.6, 0.26, 7, 18);
+  const frond = flat(TREE_COL.willow[2]), frond2 = flat(TREE_COL.willow[0]);
+  for (let i = 0; i < 22; i++) {                              // the hanging fronds, all round, longest at the front
+    const a = (i / 22) * Math.PI * 2 + r() * 0.2, R = 0.26 + r() * 0.06, len = 0.22 + r() * 0.14;
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.018, len, 0.01), i % 2 ? frond : frond2);
+    f.position.set(Math.cos(a) * R, 0.42 - len / 2, Math.sin(a) * R); f.rotation.y = -a; f.rotation.z = (r() - 0.5) * 0.15; t.add(f);
+  }
+}
 function deadTree(g, r, x, z, sc = 1) {
   const t = new THREE.Group(); t.position.set(x, 0, z); t.scale.setScalar(sc); g.add(t);
   const m = flat(TREE_COL.dead), trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.05, 0.8, 5), m); trunk.position.y = 0.4; trunk.rotation.z = (r() - 0.5) * 0.15; t.add(trunk);
@@ -658,6 +683,9 @@ const TREES = {
   autumn: (g, r) => broadleaf(g, r, 0, 0, 1.1 + r() * 0.3, true),
   dead: (g, r) => deadTree(g, r, 0, 0, 1.2 + r() * 0.2),
   birch: (g, r) => { birch(g, r, -0.12, 0.05, 1.2 + r() * 0.2); if (r() < 0.7) birch(g, r, 0.16, -0.1, 0.95 + r() * 0.2); },   // a pair, as they grow
+  alder: (g, r) => alder(g, r, 0, 0, 1.1 + r() * 0.25),
+  willow: (g, r) => willow(g, r, 0, 0, 1.15 + r() * 0.25),
+  carr: (g, r) => { for (const [x, z, k] of [[-0.18, -0.16, 1.05], [0.14, -0.2, 0.95], [-0.04, 0.12, 1.1], [0.24, 0.12, 0.85], [-0.28, 0.14, 0.9]]) alder(g, r, x, z, k + r() * 0.15); },   // alders crowded on a hummock
   // a clump of 5–8 mixed trees. Critic pass 10: trees set inside each other's crowns baked a pine's dark tiers
   // through an oak's crown, so each keeps its crown's room (a pine 0.29 × scale, a broadleaf 0.42 × scale), and
   // the pines stand toward the back (−x −z: away from the camera), the broadleaves in front

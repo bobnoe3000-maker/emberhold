@@ -199,6 +199,8 @@ function putProp(o, kind, x, y) { o.props.set(Math.floor(x) + ',' + Math.floor(y
 
 const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6', 'oak_1', 'oak_2', 'oak_3', 'oak_4', 'autumn_1', 'autumn_2', 'autumn_3', 'birch_1', 'birch_2', 'birch_3', 'dead_1', 'dead_2'];   // (birches: critic pass 11d)
 const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'];
+// the Fens' (M8, fens critic pass 2): alder carr and willows, low and dark, and the drowned dead
+const FENS_CLUSTER = ['carr_1', 'carr_2'], FENS_SINGLE = ['alder_1', 'alder_2', 'alder_3', 'willow_1', 'willow_2', 'dead_1', 'dead_2'];
 const ROCKS = ['rock_F', 'rock_G', 'rock_H'];        // the nature pack's (docs/nature-pack-proposal.md); rock_A..E stay at the barrows
 // The undergrowth (Quaternius' Stylized Nature MegaKit, CC0): LOW is walked through (flowers, grass, ferns, clover,
 // a plant), SOLID isn't (a flowering bush, the rocks); FOOT grows at a tree's foot (and the shelf fungus only there).
@@ -213,7 +215,7 @@ function scatter(o, rng, x0, y0, x1, y1, step, fn) {
   for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
     const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, id = fn(jx, jy);
     if (!id) continue;
-    const mount = /mountain/.test(id), round = mount || /pine|oak|autumn|dead|grove/.test(id);
+    const mount = /mountain/.test(id), round = mount || /pine|oak|autumn|dead|grove|alder|willow|carr/.test(id);
     if (fits(o, id, jx, jy, mount ? -1 : round ? 0.6 : 0.5)) put(o, id, jx, jy, round ? 'round' : 'rect', round ? 0.35 : 0.1);
   }
 }
@@ -229,7 +231,7 @@ function undergrowth(o, x0, y0, x1, y1, step, density) {
     if (fits(o, id, jx, jy, solid ? 0.4 : 0.1)) put(o, id, jx, jy, solid ? 'round' : 'none', 0.35);
   }
   for (const t of o.structs.slice()) {
-    if (!/pine|oak|autumn|grove/.test(t.id) || rng() < 0.35) continue;
+    if (!/pine|oak|autumn|grove|alder|willow|carr/.test(t.id) || rng() < 0.35) continue;
     const f = ENV_FOOT[t.id], rad = f ? Math.max(f[2] - f[0], f[3] - f[1]) / 2 : 4;
     for (let k = 0, n = 1 + Math.floor(rng() * 3); k < n; k++) {
       const a = (rng() - 0.5) * 2.2 + Math.PI / 4, dist = rad * (0.7 + rng() * 0.5), x = t.x + cos(a) * dist, y = t.y + sin(a) * dist, id = pick(rng, FOOT);
@@ -296,12 +298,12 @@ function inFrontOf(sites, x, y, depth = 30, half = 18) {
 }
 
 // forest ring around the playable area (hides the world's edge, bounds the camera)
-function forestRing(o, rng, inset) {
+function forestRing(o, rng, inset, cluster = TREE_CLUSTER, single = TREE_SINGLE) {
   const lo = -o.PAD + 4, hiX = o.W + o.PAD - 4, hiY = o.H + o.PAD - 4;
   scatter(o, rng, lo, lo, hiX, hiY, 11, (x, y) => {
     const out = Math.max(-x - inset, x - (o.W + inset), -y - inset, y - (o.H + inset));
     if (out < 0) return null;
-    return out > 8 || rng() < 0.75 ? pick(rng, TREE_CLUSTER) : pick(rng, TREE_SINGLE);
+    return out > 8 || rng() < 0.75 ? pick(rng, cluster) : pick(rng, single);
   });
   // hard edge: nothing walks past the ring
   for (let Y = 0; Y < o.GH; Y++) for (let X = 0; X < o.GW; X++) {
@@ -461,14 +463,15 @@ function buildFens(seed) {
     { x: mound[0], y: mound[1], id: B('boathall'), text: "Toadking's Mound", site: 'toadking_mound' }, { x: lockhall[0], y: lockhall[1], id: B('lockhall'), text: 'The Canal Locks', site: 'canal_locks' },
     { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools', site: 'sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },
     { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' });
-  // the fen's trees: stunted birch and alder in carrs, dead trees standing in the water's edge; never on a road
+  // the fen's trees: alder carr and willows, low and dark, dead trees standing in the water's edge; never on a road
+  // (fens critic pass 2: the Vale's birches and mixed groves read round and cheerful here; the same draws, the Fens' kinds)
   scatter(o, rng, -60, -60, 300, 300, 7, (x, y) => {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 18) || inFrontOf(keepOut, x, y, 26, 14)) return null;
     const n = fbm(x * 0.03, y * 0.03, o.seed + 41), out = Math.max(-x, x - 240, -y, y - 240);
-    if (out > 0) return rng() < 0.8 ? pick(rng, ['grove_2', 'grove_4', 'dead_1', 'birch_2']) : null;
-    return n > 0.58 ? pick(rng, ['birch_1', 'birch_2', 'birch_3', 'grove_2', 'dead_1']) : rng() < 0.05 ? pick(rng, ['dead_1', 'dead_2']) : null;
+    if (out > 0) return rng() < 0.8 ? pick(rng, ['carr_1', 'carr_2', 'dead_1', 'willow_1']) : null;
+    return n > 0.58 ? pick(rng, ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'willow_2']) : rng() < 0.05 ? pick(rng, ['dead_1', 'dead_2']) : null;
   });
-  forestRing(o, rng, 6);
+  forestRing(o, rng, 6, FENS_CLUSTER, FENS_SINGLE);
   const ways = [mound, lockhall, pools, abbey, reedholm].map((p) => door(p, 8));
   undergrowth(o, -10, -10, 250, 250, 4, (x, y) => {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || ways.some(([kx, ky]) => hypot(x - kx, y - ky) < 8)) return -1;
@@ -514,9 +517,9 @@ function buildWaystation(seed, region) {
   for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77]]) put(o, id, x, y, 'rect', 0);
   scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
     if (hypot(x - 60, y - 60) < 44) return null;
-    return rng() < 0.4 ? pick(rng, ['dead_1', 'dead_2', 'birch_2', 'grove_2']) : null;
+    return rng() < 0.4 ? pick(rng, ['dead_1', 'dead_2', 'willow_1', 'carr_2']) : null;   // (the Fens' kinds: fens critic pass 2)
   });
-  forestRing(o, rng, 10);
+  forestRing(o, rng, 10, FENS_CLUSTER, FENS_SINGLE);
   // reed beds and sedge on the peat between the houses and round the meres' edges; never the square
   undergrowth(o, -10, -10, 140, 126, 3, (x, y) => {
     if (hypot(x - o.hub.x, y - o.hub.y) < o.hub.r + 4) return -1;

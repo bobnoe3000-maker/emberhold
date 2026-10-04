@@ -180,7 +180,7 @@ function aoField(o) {
   const S = 2, X0 = -o.PAD, Y0 = -o.PAD, W = o.GW * S, Hh = o.GH * S, g = new Float32Array(W * Hh);
   for (const st of o.structs) {
     const ft = ENV_FOOT[st.id]; if (!ft) continue;
-    const tree = /pine|oak|autumn|grove|dead/.test(st.id), small = /^ug_|^rock|stump|flag|wheelbarrow|resource/.test(st.id);
+    const tree = /pine|oak|autumn|grove|dead|alder|willow|carr/.test(st.id), small = /^ug_|^rock|stump|flag|wheelbarrow|resource/.test(st.id);
     if (st.id.startsWith('bridge') || /mountain/.test(st.id)) continue;
     const k = tree ? 0.42 : small ? 0.25 : 0.55, x0 = st.x + ft[0], y0 = st.y + ft[1], x1 = st.x + ft[2], y1 = st.y + ft[3];
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2 * (tree ? 0.75 : 1), ry = (y1 - y0) / 2 * (tree ? 0.75 : 1);
