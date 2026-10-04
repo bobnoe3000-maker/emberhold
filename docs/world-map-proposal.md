@@ -1,12 +1,14 @@
 # The Old Provinces: a world beyond Emberfall
 
-**Proposal, draft 6 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
+**Proposal, draft 7 (2026-10-04).** Draft 2 took in two critic passes, a game designer's and a D&D writer's (§10).
 Draft 3 took the owner's answers to its questions (§10.3). Draft 4 makes the Voice a **lost sacred scroll**: anyone
 who finds it and learns its chant can command the Ashbound. It also sets out the factions (§1.2) and the fuel (§1.3). Draft 5 takes the owner's plainer account of the fuel:
 people are sacrificed, their souls feed the Ember, and their bodies rise as Ashbound, captives until someone frees
 them. The review of that account is §10.4. Draft 6 makes five factions the story's drivers, each with a
 storyline through every region: the Lantern Guild, the Cinder Cult, the Ashbound, the Grey Sisters and the
-Redhand. The rest are minor players (§1.2).
+Redhand. The rest are minor players (§1.2). Draft 7 gives the Lantern Guild its purpose: the soul is held in a
+**lamp**, and the Guild's members are sworn to break every lamp that holds the ashen captive and to let no new one be
+lit (§1.1, §1.2, §4).
 - The map is portrait.
 - Each region has one full town, styled to the region: the player's base.
 - The cap is 75, and the skills are as recommended.
@@ -32,7 +34,8 @@ The owner (2026-10-04):
 The "ashenborn dead" are the canon **Ashbound**, and this doc uses that name.
 
 **Contents.**
-- §1 The idea; §1.1 How the Ember works (the sacrifice, the Ashbound, the Voice); §1.2 The factions; §1.3 The fuel
+- §1 The idea; §1.1 How the Ember works (the sacrifice, the lamps, the Ashbound, the Voice); §1.2 The factions;
+  §1.3 The fuel
 - §2 The map
 - §3 The regions (Emberfall, the Reach, the Tidemark, the Tithewood, the Heights)
 - §4 Solmere: the Bowl and the Great Beacon
@@ -85,45 +88,67 @@ Each region shows the player one of them. The Cult doesn't win every time.
 - at the miners' burial in Ashgate, paying for the stones;
 - at the would-be emperor's table.
 
-### 1.1 How the Ember works: the sacrifice, the Ashbound, the Voice
+### 1.1 How the Ember works: the sacrifice, the lamps, the Ashbound, the Voice
 
-**In short** (the owner, draft 5):
+**In short** (the owner, drafts 5 and 7):
 1. **The sacrifice.** The Ember is fed with people. Someone with a reason (the empire once, the Cult and its
-   partners now) sacrifices a person with the **Binding Rite**, in the Ember's light or a shard's.
-2. **The fuel.** The rite tears the soul out and ties it to the flame. The tied soul is the Ember's fuel. It burns
-   slowly, a little at a time, for as long as the flame is lit.
-3. **The Ashbound.** The body doesn't stay down. It rises around the tie, a **captive**: it can't die, can't rest,
-   and serves. The Vale calls them **the ashen**.
+   partners now) sacrifices a person with the **Binding Rite**, by the light of a **lamp** lit from the Ember.
+2. **The lamp.** The rite tears the soul out and shuts it in that lamp. The lamp is the prison. It burns the soul
+   slowly, a little at a time, and passes the burning on to the Ember, as a wick feeds a flame. The burning soul is
+   the Ember's **fuel**.
+3. **The Ashbound.** The body doesn't stay down. It rises, tied to its lamp, a **captive**: it can't die, can't
+   rest, and serves. The Vale calls them **the ashen**.
 4. **The Voice.** Whoever has learned the **Canticle** commands the Ashbound (below). Without a Voice they keep
    the last order they were given, forever.
-5. **The freeing.** Break the body and the tie breaks with it, and the soul goes free to rest. Putting one down
-   isn't killing it. It's letting it go: canon's *"Putting them down is the only relief anyone has brought
-   them."*
+5. **The freeing.** The tie runs from the body to the lamp, and cutting it at either end frees the soul.
+   - **Break the body**, and that one soul goes free to rest. Putting one down isn't killing it. It's letting it
+     go: canon's *"Putting them down is the only relief anyone has brought them."*
+   - **Break the lamp**, and every soul in it goes free at once, and their bodies lie down wherever they stand.
+     That's the Lantern Guild's work (§1.2).
 
 **The Ember** is a flame that burns souls: not wood, not oil, souls. It was found in the crater a thousand years
 ago, and the empire built the Throne around it and kept it fed.
 
 **The Binding Rite** is the sacrifice.
-- It's spoken over a living person in the Ember's light, or a shard's, and ends with an order: canon's *"Speak the
-  order last. The bound keep the last thing they hear."*
+- It's spoken over a living person by a lamp's light, and ends with an order: canon's *"Speak the order last. The
+  bound keep the last thing they hear."*
 - The empire called it duty: the tithe, the legion's oath, the foundry's shift. Some went willingly. Canon's
   chaplain prayed *"Bind them gently. Most of them volunteered."*
 - The binding clergy (§3.1) spoke it, for six hundred years.
 
-**The Ashbound** are what's left: a body, and a soul tied between it and the flame, burning.
+**The lamps** are where the souls are kept.
+- **Every soul-lamp is Throne-iron**, the only metal that holds the flame without burning through. Only soul-fire
+  melts Throne-iron, so every lamp the empire made cost souls to cast.
+- **Every lamp was lit from the Ember**, and passed its burning back to it. The empire hung them wherever it bound
+  people:
+  - **standard-lamps**, one on each legion's standard, holding the legion (the Third Legion's is on the Standard in
+    the barrows);
+  - **choir-lamps**, in the binding clergy's chapels, holding the clergy who served them;
+  - **furnace-lamps**, the foundries' furnaces themselves, holding their shifts;
+  - **coast-lamps** and stern-lanterns, holding the fleet;
+  - **tithe-lamps**, one in every granary, holding the tithe laid there;
+  - **the beacons**, holding their signal corps, and carrying the Voices' orders by their light (§4).
+- **When the Ember went out, every lamp went out with it.** The ties went slack, but the lamps held. A dark lamp is
+  still a prison.
+- **A lamp lit with soul-fire can't be broken.** Its light has to be put out first: its keeper beaten, its shard
+  taken. A dark lamp breaks like old iron, if you can reach it. Most can't be reached: they're under water, in
+  sealed barns, or guarded by their own bound, whose last order was to keep them. Canon's gate-warden wrote
+  *"Keep the lamps lit."*
+
+**The Ashbound** are what's left: a body, tied to a lamp that holds its soul, burning.
 - They obey the last order they heard, and nothing else, unless a Voice gives them another.
 - When the Ember went out on the night of the Fall, the ties went slack and the Ashbound dropped where they stood.
   They weren't freed. For three hundred years they lay captive in the dark: in barrows, under water, in barns.
-- Now the Cult stirs the embers, the ties pull, and they get up again.
+- Now the Cult lights lamps again with shards, the ties pull, and they get up again.
 
 **The spark** is an **ember-shard**: a sliver of a captive soul's light, cut out of an Ashbound like flint from a
 stone.
 - It holds a little flame without fuel, like a coal in a pocket.
-- It's enough light to speak the Rite by, and enough to light a vessel.
+- It's enough light to speak the Rite by, and enough to light a lamp, or a vessel.
 - Near the bound, it stirs them.
 
-**The vessel** is a lamp of Throne-iron, the only thing that will hold the flame without burning through. The
-Throne's dark pit was the first. The Reach's foundries cast the second (Act III).
+**The vessel** is a new lamp, the greatest since the Throne's dark pit, which was the first: Throne-iron the size
+of a cart, with room inside for the Ember itself. The Reach's foundries cast it (Act III), in soul-fire.
 
 **The Voice** is anyone who has learned **the Canticle**, the lost sacred scroll.
 - **The Canticle** is the chant the first binding clergy wrote when the Ember was found. It's long, in the old
@@ -158,7 +183,7 @@ and the Redhand Company.
 
 | | Emberfall (I–II) | The Reach (III) | The Tidemark (IV) | The Tithewood (V) | The Heights (VI) |
 |---|---|---|---|---|---|
-| **The Lantern Guild** | Maudry's board hires the company | the Lamphall enters it on the Roll | Old Gannet's lamp; Pennick's truth | the Guild maps the carts | holds the Great Beacon dark |
+| **The Lantern Guild** | Maudry's board hires the company; the Standard's lamp and the choir-lamp broken | Pennick's truth; Furnace Nine broken; the vessel gone a day ahead | Old Gannet breaks his own lamp, and Lucan's drowned lie down | the tithe-lamps broken, the carts tracked | holds the Great Beacon dark; breaks the vessel |
 | **The Cinder Cult** | mines the spark | buys the vessel | courts the Voice | buys the fuel | lights the flame |
 | **The Ashbound** | the Third Legion; the drowned clergy | the new-made at the furnaces | the drowned fleet; the Grace | the Unpaid in the granaries | the Praetorians; the faithful |
 | **The Grey Sisters** | Ilse; the Abbey's binding rolls saved | the rolls name the dead | Maren reads them | the Unbinding is learned | the rolls opened to all |
@@ -166,25 +191,77 @@ and the Redhand Company.
 
 #### The Lantern Guild
 
-The sellswords' guild (canon), with a board in every town. It's what's left of the empire's beacon-keepers (§4).
+The sellswords' guild (canon), with a board in every town. Under the board, it's what's left of the empire's
+lamp- and beacon-keepers, sworn to undo their own work (§4).
 
-- **Mission:** keep the roads open and the lamps lit, and take its cut. Its quiet aim: **no Voice ever sings through
-  a beacon again.** The keepers lit the orders, and the Guild has kept the beacons dark for three hundred years.
-- **Hook:** Maudry's board in the Tired Mule. The company is a Guild company from its first job.
+**Its story.** The keepers trimmed and tended the empire's lamps for six hundred years, and lit the beacons that
+carried the Voices' orders. Most of them never asked what the lamps held. On the night of the Fall, **Mabry Cole**,
+keeper of the Great Beacon, watched every lamp in Solmere go dark at once. Nobody came to stand the bound down. She
+read the keepers' **lamp-book**, the empire's list of every lamp and what was shut in it, understood it, and tried
+to break the Great Beacon's lamp with a keeper's hammer. Its signal corps threw her down the stair. She lived, and
+the oath she wrote that winter is the Guild's:
+
+> *"Every lamp we lit, we will break. No lamp will be lit again. Let them go dark."*
+
+- **Mission: break every lamp that holds the ashen, and let no new one be lit.**
+  - **Break the old lamps.** The Guild has worked down the lamp-book for three hundred years. It broke every lamp
+    it could reach in its first century. The ones left are the hard ones: under water, in sealed barns, guarded by
+    their own bound, or lost when a chapter of the Guild was lost.
+  - **Stop new ones.** A lamp needs Throne-iron, cast in soul-fire, and a light: a shard, or the Ember. The Guild
+    buys up old Throne-iron and sinks it in the Mere. It watches every furnace that could melt it and every
+    harvester who cuts shards. It pays a bounty on every Cult lantern-cage, because a cage is a new lamp, only a
+    small one.
+- **Its face and its purse.** The sellswords' guild is what everyone sees. It keeps the roads open, and every
+  job's cut pays for the work under it. The ranks carry two meanings:
+  - **in the tavern** (canon), a rank is the lamp a sellsword can carry: Wick, Lamp, Lantern, Beacon;
+  - **in the Guild's own books**, a rank is the lamp a member has broken: a wick is a cage, a lamp is a granary's,
+    a lantern is a legion's. Nobody has ever held Beacon in that sense, because nobody has broken a beacon. Mabry
+    Cole tried.
+- **Why it keeps quiet.** The lamp-book is a map of every captive and every lamp the Cult could relight. The Guild
+  tells a member when the member has broken a lamp, and not before.
+- **Hook:** Maudry's board in the Tired Mule. The company is a Guild company from its first job. When the Standard
+  of the Third Legion falls, Maudry asks one question nobody else does: *"Was there a lamp on it? What became of
+  it?"*
 - **Objectives, region by region:**
-  - **Emberfall:** pin the jobs, pay the company, and at the end of Act II send it on to Solmere with Maudry's
-    letter.
-  - **The Reach:** in the Lamphall, Aldo Pennick enters the company on the Roll and opens the Great Beacon's door
-    to it.
-  - **The Tidemark:** Old Gannet keeps the last lit lamp on the coast, and the Guild has never told him to put it
-    out. When Lucan, a living Voice, marches, Pennick tells the company why the beacons went dark, and what the
-    Guild was before.
-  - **The Tithewood:** the Guild's roadmen track the Cult's fuel carts, and the boards fill with jobs to stop them.
-  - **The Heights:** while the company climbs to the Throne, the Guild holds the Great Beacon, so that a relit
-    flame's orders can't be carried to the provinces.
-- **Where it ends:** the flame is out, and the Guild opens the Beacon to every company (the tower, §4.2), because
-  there's nothing left to fear from it. There are still captives on its stair to free.
-- **Its people:** Maudry Fenn, Aldo Pennick, Old Gannet, and every tavern's board.
+  - **Emberfall:**
+    - The Standard of the Third Legion carries the legion's lamp. When the Standard falls the lamp breaks with it,
+      which is why the line on the road breaks (canon: *"With the Standard down the line breaks"*).
+    - In the Drowned Abbey the Abbess Below keeps the choir-lamp trimmed: *keep the hours*. Breaking it lays the
+      drowned clergy down.
+    - At the end of Act II Maudry's letter to Solmere reports two lamps broken, and sends the company on.
+  - **The Reach:** stop the casting.
+    - In the Lamphall, Aldo Pennick enters the company on the Roll. It has broken two lamps, so it may know:
+      **Pennick's truth** is the oath, Mabry Cole and the lamp-book.
+    - Throne-iron melts only in soul-fire, so the relit Cinderworks mean somebody is making lamps. Pennick sends
+      the company west.
+    - **Furnace Nine** is a furnace-lamp. Breaking it frees the night shift it holds: Tamsin Coalbrook's cousins,
+      freed, not brought back.
+    - The vessel is already on the road, a day ahead. The Guild learns what's coming.
+  - **The Tidemark:** the lost lamp.
+    - The Guild lost the coast's pages of the lamp-book long ago, when the Gull Fleet wiped out its Tidemark
+      chapter. So when Lucan raises the drowned fleet at the Mole, Pennick knows only that their lamp is still
+      whole, and has to work out where it is.
+    - It's the coast-lamp at the Lamp Fort. **Old Gannet** has kept a light in it for sixty years because nobody
+      told him to stop: he was a Wick when his master died, and nobody ever came. That's why Hesk's corsairs hit
+      the Lamp Fort first: Lucan wants that lamp whole.
+    - At the siege of Brine Cross, Gannet puts out his light and breaks the lamp himself, and Lucan's drowned
+      crews lie down in the river: *"Sixty years. Somebody might have said."*
+    - The Grace's stern-lantern lies in the Sister's Cabin, holding Livia's crew. Lucan won't recall them; the
+      company can let them go.
+  - **The Tithewood:** a tithe-lamp hangs in every granary, and the great lamp in the Root Granary. The Guild's
+    roadmen track the Cult's carts, the boards fill with jobs to stop them, and every granary's lamp the company
+    breaks frees its rows before the Cult can buy them.
+  - **The Heights:**
+    - While the company climbs, the Guild holds the Great Beacon, so a relit flame's orders can't be carried to
+      the provinces.
+    - The Praetory's guard-lamp holds the Empress's guard; breaking it frees them.
+    - After Lucan's verse, the vessel is dark, and dark lamps break. **The company breaks the vessel**: the faithful
+      bound into it go free, and the Kindler, last in, is freed with them.
+- **Where it ends:** the flame is out and the vessel broken. No new lamp can be cast, because there's no soul-fire
+  left hot enough to melt Throne-iron. The Guild opens the lamp-book to every company, beside the Sisters' rolls:
+  the map of every lamp left to break. It opens the Beacon too (the tower, §4.2), though its lamp still stands.
+- **Its people:** Maudry Fenn, Aldo Pennick (Master of the Roll), Old Gannet, every tavern's board, and Mabry
+  Cole, three hundred years dead, whose hammer hangs in the Lamphall.
 
 #### The Cinder Cult
 
@@ -217,8 +294,8 @@ every region turns on them. They want nothing they can say.
   - **The Tithewood:** *collect the tithe* (the Reeve and his tallymen); the Unpaid, waiting in rows.
   - **The Heights:** *guard the Empress* (the Praetorians); *muster at the lamp* (the Beacon's signal corps).
 - **Where it ends:** the burning stops at the Throne. The captives already made stay captive until someone puts
-  them down, and every one put down is freed. The company frees them region by region, and in the post-game the
-  Undervaults and the Beacon hold the rest.
+  them down or breaks their lamp, and every one is freed. The company frees them region by region, and in the
+  post-game the Undervaults, the Beacon and the lamp-book hold the rest.
 - **The player's part:** the relief that never came.
 
 #### The Grey Sisters
@@ -240,7 +317,8 @@ kept the rolls of everyone they bound.
     can learn to let go."*
   - **The Heights:** Sister Hild keeps Frosthold's infirmary for the climb.
 - **Where it ends:** the Sisters open the Undercroft and publish the rolls: the name of everyone their mothers bound,
-  and where they lie. It's the map of every captive left to free.
+  where they lie, and which lamp holds them. Beside the Guild's lamp-book, it's the map of every captive left to
+  free.
 - **Their people:** Sister Ilse, Mother Agnes, Sister Maren, Sister Hild.
 
 #### The Redhand Company
@@ -284,16 +362,19 @@ Each matters in one region and is done when that region is done.
 
 ### 1.3 The fuel: what it is, where it's found, how it's used
 
-**What it is.** The souls of sacrificed people, tied to the Ember by the Binding Rite. Every soul feeding the flame
-belongs to an Ashbound somewhere, a captive. **The fuel and the Ashbound are the same people.**
+**What it is.** The souls of sacrificed people, shut in lamps by the Binding Rite and burned into the Ember. Every
+soul feeding the flame belongs to an Ashbound somewhere, a captive. **The fuel and the Ashbound are the same
+people.**
 
 **How it's made.**
-- A person is sacrificed with the Rite, by Ember-light or a shard's.
-- The soul is tied to the flame and starts to burn.
+- A person is sacrificed with the Rite, by a lamp's light.
+- The soul is shut in the lamp and starts to burn.
 - The body rises, Ashbound, and serves.
 - The Cult has two cheaper ways:
-  - **re-tie** the old Ashbound left over from the empire, whose ties went slack at the Fall, to its new flame;
-  - **carry the soul itself**: drawn out of an Ashbound as a wisp, it rides in a **lantern-cage** to the vessel.
+  - **relight an old lamp** with a shard. Its Ashbound, left over from the empire, wake with it, and its souls burn
+    for the new flame;
+  - **carry the soul itself**: drawn out of an Ashbound as a wisp, it rides in a **lantern-cage**, a small new
+    lamp, to the vessel.
 
 **How much.**
 - One soul keeps a flame the size of the Throne's lit for about a day.
@@ -303,26 +384,38 @@ belongs to an Ashbound somewhere, a captive. **The fuel and the Ashbound are the
 
 **Who does it, and where.** The sacrificers are always people with a reason, a ledger and a quota:
 
-| Where | Who is sacrificed | By whom | What the player finds |
-|---|---|---|---|
-| Emberfall, then | the Vale's tithe, the Third Legion; the clergy who drowned at their office | the empire | captives under the barrows road and in the Abbey, stirred by the Cult's digging; it cuts shards from them (the spark) |
-| The Reach, now | miners off the night shift | the Kell Assay sells them, and the Cult's furnace-priests sacrifice them by shard-light in the forges that cast the vessel | the shift that doesn't come up, and new Ashbound at the furnaces |
-| The Tithewood, then and now | three hundred years of the clans' tithe, Ashbound lying in rows in the granaries; and the living the Reeve takes for the count | the empire, then the Tithe-Reeve; the Cult buys the captives a cart at a time | the largest store in the provinces, and the cheapest |
-| The Heights, then | the Empress's guard | the empire | the Praetorians, who obey only a Voice |
-| The Throne, at the end | the Cult's own faithful | themselves | they take the Rite in the vessel's light and walk in. *"Most of them volunteered."* They rise as Ashbound in the last fight. |
+| Where | Who is sacrificed | By whom | Their lamp | What the player finds |
+|---|---|---|---|---|
+| Emberfall, then | the Vale's tithe, the Third Legion; the clergy who drowned at their office | the empire | the Standard's lamp; the Abbey's choir-lamp | captives under the barrows road and in the Abbey, stirred by the Cult's digging; it cuts shards from them (the spark) |
+| The Reach, now | miners off the night shift | the Kell Assay sells them, and the Cult's furnace-priests sacrifice them by shard-light in the forges that cast the vessel | Furnace Nine | the shift that doesn't come up, and new Ashbound at the furnaces |
+| The Tidemark, then | the imperial fleet's crews | the empire | the Lamp Fort's coast-lamp; the Grace's stern-lantern | the drowned, who stand up for Lucan |
+| The Tithewood, then and now | three hundred years of the clans' tithe, Ashbound lying in rows in the granaries; and the living the Reeve takes for the count | the empire, then the Tithe-Reeve; the Cult buys the captives a cart at a time | a tithe-lamp in every granary; the Root Granary's great lamp | the largest store in the provinces, and the cheapest |
+| The Heights, then | the Empress's guard | the empire | the Praetory's guard-lamp | the Praetorians, who obey only a Voice |
+| The Throne, at the end | the Cult's own faithful | themselves | the vessel | they take the Rite in the vessel's light and walk in. *"Most of them volunteered."* They rise as Ashbound in the last fight. |
 
 **How it plays.**
 - **Every Ashbound you put down is freed:** its tie breaks and its soul goes to rest. (A later idea: the Chronicle
   could keep the count, as Ilse would.)
 - **Cages:** the Cult's harvesters and buyers carry fuel as wisps in lantern-cages, and a boss's cages shield it.
   Break a cage, and the soul inside goes free and the Cult has that much less.
+- **Lamps:** a lamp is a site's set piece, in its last room: the **lamp-room**, held by its keeper (a boss, or
+  the lamp's own bound). It's the end of the site, so it never skips the fighting before it.
+  - A lit lamp can't be struck. Beat its keeper and its light goes out.
+  - Then break it: every Ashbound tied to it lies down, in the room and all over the site. It's a room cleared by
+    the story, not by the fight.
+  - Every lamp broken is a Guild job paid, and a line in the Chronicle. The Guild's rank, in its own books, is the
+    biggest lamp the company has broken.
+  - It's one rule in the sim (a lamp is an object with a list of the foes tied to it), and the boss system
+    already has "break what shields him". See §8.
 - **The Tithewood's count:** the more of the granaries you free before the Root Granary, the less fuel reaches the
   Throne. The story still ends the same.
 - **At the Throne:** the flame grows in phases as the faithful feed it, and the newly bound faithful come at you.
   Lucan's last verse stops the flame, so nothing is fed to it again.
-  - The Ashbound already made don't go free with it: they stay captive until someone puts them down.
-  - That's the companies' work in the post-game: the Undervaults' deep captives, and the Beacon's bound signal
-    corps.
+  - The Ashbound already made don't go free with it: they stay captive until someone puts them down or breaks
+    their lamp.
+  - With the flame out, the vessel is dark, and the company breaks it: the faithful go free.
+  - That's the companies' work in the post-game: the lamps left in the lamp-book, the Undervaults' deep captives,
+    and the Beacon's bound signal corps.
 
 ---
 
@@ -403,7 +496,8 @@ Its skills are in §5.
 - The Sisters keep records because their mothers kept the **binding rolls**. Nobody in Reedholm likes to say so.
 
 **Act I, *Smoke over the Vale*** (shipped, 1–9): the Tithe Mill, Wickham Keep and Garrow, the Sunken Chapel and the
-Robed Stranger, the Standard of the Third Legion. The road opens and the carts run.
+Robed Stranger, the Standard of the Third Legion. The road opens and the carts run. (Draft 7 adds one thing to
+shipped content: the Standard carries the legion's lamp, which breaks when it falls, and Maudry asks after it.)
 
 **Act II, *The Drowned Abbey*** (8–15):
 1. ★ *Fog on the Canal* (8–10). In Saltmere, **Wren** (canon) owes the Cult money and knows where its boats go at
@@ -414,7 +508,8 @@ Robed Stranger, the Standard of the Third Legion. The road opens and the carts r
 3. ★ *The Sickpools* (11–12). The Cult is draining the imperial vats. What's at the bottom is the fen dead, kept
    from rotting by whatever the empire brewed there.
 4. ★ *The Bells* (12–13). The **Drowned Abbey**. The binding clergy drowned at their office when the canal broke
-   on the night of the Fall. **The Abbess Below** still keeps the hours under the water.
+   on the night of the Fall. **The Abbess Below** still keeps the hours under the water, and keeps the choir-lamp
+   trimmed. The Cult has put a shard in it, and the drowned clergy are getting up.
 5. ★ *The Rolls* (13–14). The Cult isn't burning the Abbey's records. It's **stealing** the binding rolls: where
    every tithe was laid, and what became of the Canticle on the night of the Fall. You save what's left and carry
    it to Reedholm.
@@ -423,6 +518,7 @@ Robed Stranger, the Standard of the Third Legion. The road opens and the carts r
      last light, struck from a legion or a choir like flint. The Cult wasn't raising the dead. It was mining them.
    - The Abbey's Cult ledgers name a buyer: the **Kell Assay** in the Reach. It pays in coal-red wax with a
      thumbprint in it, the same as the Paymaster's Box.
+   - The choir-lamp goes dark with her, and the company breaks it. The choir stops singing.
    - **The win:** the dead of the province are put down, and the records are safe.
    - **The cost, found later:** the rolls you saved are copied at Reedholm, and the Kindler reads the copy. One
      line sends him east (*"The Canticle went with the Lady Livia on the Grace"*). Another sends him into the
@@ -492,8 +588,10 @@ levels moved).
 4. ★ *The Charter Moot* (23–26). The clans meet in the **Forgehall of Oruth** to decide whether to take Vane's coin.
    **Oruth the Forgemaster** (canon) wakes in the heat, the empire's bound forgemaster and the clans' own ancestor,
    and goes back to work as ordered. The moot ends in a fight, with Oruth on the wrong side of it.
-5. ★ *Furnace Nine* (26–28). The Cinderworks' last furnace. Vane has fed it miners at the Cult's rate: *"eleven
-   more souls per week"* (canon). Vane falls.
+5. ★ *Furnace Nine* (26–28). The Cinderworks' last furnace, and a furnace-lamp: soul-fire hot enough to melt
+   Throne-iron. Vane has fed it miners at the Cult's rate: *"eleven more souls per week"* (canon). Vane falls, the
+   furnace's light goes out, and the company breaks it. The night shift goes free: Tamsin's cousins, freed, not
+   brought back. Nothing will be cast in the Reach again.
 6. ★ *The Cast* (28–30). The **Magma Vault**.
    - The furnaces were casting a **vessel**: a lamp the size of a cart, with room inside for a flame.
    - The furnace-priests have it on a dray, going north-east by the Solmere road, with Nan Ruddock's Redhand
@@ -554,7 +652,8 @@ We did not tell them."*
 
 **Act IV, *The Seventh Voice*.** A war, between reasonable-sounding people.
 1. ★ *Letters of Marque* (30–33). The Gull Fleet's corsairs raid League shipping under Highmarch commissions. The
-   **Lamp Fort**, Old Gannet's coast light, is the first place they hit.
+   **Lamp Fort**, Old Gannet's coast light, is the first place they hit. They want its lamp whole, and nobody yet
+   knows why.
 2. ★ *The Admiral's Ledger* (33–35). In the Gull Isles, **Admiral Hesk**'s books show who pays: Highmarch.
 3. ★ *The Claim* (35–38).
    - **Lucan Varro of Highmarch** signs himself **Lucanus, the Seventh Voice** (his mother called him Luke). He
@@ -571,8 +670,10 @@ We did not tell them."*
    - hired Redhand crossbows (canon: the Redhand "recurring later as hirelings").
 
    You raid its camps on the Highmarch road.
-5. ★ *Brine Cross* (41–43). The bridge-town that blocks his road, held room by room. The League holds, and so do
-   you.
+5. ★ *Brine Cross* (41–43). The bridge-town that blocks his road, held room by room.
+   - Pennick has worked out where the drowned fleet's lamp is: the Lamp Fort's. Old Gannet, told at last, puts out
+     the light he has kept for sixty years and breaks the lamp.
+   - Lucan's drowned crews lie down in the river, mid-assault. The League holds, and so do you.
 6. ★ *The Seventh's Palace* (43–45). You storm Highmarch. Lucan is beaten, not killed.
    - In his study are letters from **the Kindler**, who has dined at Lucan's table all year.
    - What the Kindler offered: a relit Ember, with a Voice to rule it. With it, every bound soul in the provinces
@@ -595,7 +696,7 @@ We did not tell them."*
 | **The Highmarch Road** | 37–41 | the legion's camps, a tent at a time |
 | **Brine Cross** | 40–43 | the siege |
 | **The Seventh's Palace** | 42–45 | *the Long Gallery*: three hundred years of Solmere portraits, all of them bought |
-| **The Sister's Cabin** (hidden: the Tidemark set) | 45 | the wreck of *Aurelle's Grace* |
+| **The Sister's Cabin** (hidden: the Tidemark set) | 45 | the wreck of *Aurelle's Grace*, and its stern-lantern, which holds Livia's crew |
 
 **Rumours.**
 - "Lucan can make the drowned walk." (True.)
@@ -608,7 +709,7 @@ We did not tell them."*
 - **Sister Maren:** a Grey Sister, chaplain on Tollhaven's quays, and the Tidemark's found companion (cleric). She
   read Reedholm's copy of the binding rolls first, and wishes she hadn't.
 - **Old Gannet:** keeper of the Lamp Fort and the Guild's oldest member. He keeps the light because nobody told him
-  to stop.
+  to stop. When somebody does, he breaks the lamp himself: *"Sixty years. Somebody might have said."*
 - **Lucan Varro, "Lucanus, the Seventh Voice":** handsome, educated and sincere. A tragedy who thinks he's a
   history.
 - **Admiral Grell Hesk:** a corsair with a commission, and proud of it.
@@ -666,8 +767,11 @@ grain and in souls.
    chains. The Reeve has counted the Cult's buyers as *arrears* and collected them, with their carts.
 5. ★ *The Thornway* (55–57). The Tithe Road through the deep wood, and the wardens who won't let it be used again.
 6. ★ *Paid in Full* (57–60). The **Root Granary** under the oldest oak: the Reeve, the count, and the Unpaid.
-   - You open the granary and put the bound down, row by row. Each tie breaks, each soul goes free, and the clans
-     bury their grandparents.
+   - The Reeve keeps the granary's great tithe-lamp lit with a shard he took from a Cult buyer. Beaten, his light
+     goes out, and the company breaks the lamp. The Unpaid lie down in their rows, every tie broken at once, and
+     the clans bury their grandparents.
+   - Every granary whose lamp the company broke on the way (Hollin Ford, the Threshing Floor, the First Barn) is
+     already empty when the Cult's carts come for it.
    - **Mostly a win.** The carts the clan sold are already gone, and they're the only fuel the Cult has (§1.3).
      It's a few hundred souls against the year's tithe it needed: enough to light a flame, not to keep it.
 
@@ -731,7 +835,9 @@ found, and the flame's palace in it.
    Redhand turn and hold the Stair behind you, Brannoc with them if he's in the party.
 3. ★ *The Soulcracks* (65–68). The canyon the Fall split open. What the Ember burned is down there, as light in the
    rock.
-4. ★ *The Praetory* (68–71). The Empress's bound guard, still at their posts in the palace barracks.
+4. ★ *The Praetory* (68–71). The Empress's bound guard, still at their posts in the palace barracks. Their
+   guard-lamp hangs in the barracks chapel. Brother Cobb, a Praetorian's grandson, has the key, and he lets the
+   company break it.
 5. ★ *The Glass Keep* (71–73). **The Glass Legate** (canon) guards Aurelle's last letter, the reveal:
    *"I was a Voice before I was an Empress. Tonight I sang the last verse. It took my voice, as it was always going
    to. Forgive me. They will call it the Fall. Let them. — A."* (Its last three sentences are canon's.)
@@ -746,6 +852,11 @@ found, and the flame's palace in it.
        the Stair.
      - The Canticle goes into the dark with the flame. There will be no more Voices.
      - The player's part is getting him there, and holding the Throne while he does it.
+   - **The last lamp.** With the flame out, the vessel is dark, and dark lamps break. The company breaks it, and the
+     faithful bound in it lie down free, the Kindler with them. With Furnace Nine and the vessel gone, there's no
+     soul-fire left hot enough to melt Throne-iron, so no new lamp can be cast, and with the Ember out, a lamp lit
+     with a shard has nothing left to feed. The Guild's oath holds for the new lamps. The old ones are in the
+     lamp-book, and the oldest of them, the Great Beacon's, still stands (§4.2).
    - The Throne's vaults open to everyone: the **Undervaults**, canon's endless dive.
    - Canon's darker ending, keeping the flame, is dropped, so that there's one world.
 
@@ -804,11 +915,15 @@ in the best of the ruins.
 **The beacons, and the Guild's guilty history.**
 - The flame was in the Heights, and the orders came from Solmere. A chain of beacon-towers carried them by
   beacon-light, from the Great Beacon to every province's bound.
-- The empire's **beacon-keepers** lit them. The Lantern Guild is what's left of the keepers, and its ranks are
-  their lamps: **Wick, Lamp, Lantern, Beacon**.
+- The empire's **keepers** lit them, and tended every other lamp in the empire too (§1.1). The Lantern Guild is
+  what's left of the keepers, and its ranks are their lamps: **Wick, Lamp, Lantern, Beacon**.
 - On the night of the Fall the lamps went dark, so no *stand down* could reach anyone. That's why the Last Dispatch
   was never sent, and why a gate-warden wrote *"Keep the lamps lit."*
-- The Guild keeps the roads now. It doesn't talk about why.
+- That night **Mabry Cole**, keeper of the Great Beacon, read the lamp-book and understood what the keepers had
+  been keeping. She tried to break the Beacon's lamp, and its signal corps threw her down the stair. Her oath is
+  the Guild's: *"Every lamp we lit, we will break. No lamp will be lit again. Let them go dark."* Her hammer hangs
+  over the Lamphall's board.
+- The Guild keeps the roads now, and breaks lamps under cover of it. It doesn't talk about why (§1.2).
 
 **What's here** (a social hub: the "large city where players gather" from GDD §1, pillar 7):
 - **The Lamphall.** The Guild's mother-house: the company's arrival (Maudry's letter), a city-wide board, and the
@@ -857,9 +972,12 @@ him be."*
 
 **What it is.** The tower that sent the Throne's orders to the provinces. It has been dark for three hundred years,
 but it isn't empty.
-- Its garrison was the empire's **signal corps**, bound and quartered landing by landing, under one order: *muster
-  at the lamp*.
+- Its garrison was the empire's **signal corps**, bound to the Beacon's own lamp and quartered landing by landing,
+  under one order: *muster at the lamp*.
 - Every night they climb the stair to the lamp-room, as ordered, and every morning they're back on their landings.
+- **It's the one lamp the Guild has never broken**, the first on Mabry Cole's list. The corps is thousands strong,
+  and nobody has yet reached the lamp-room and lived to swing a hammer there. Every one of the corps a company puts
+  down on the stair goes free, and the Guild counts that as the oath's work too.
 - The Guild holds the door. For a fee and a signature it lets a company **climb the Beacon**: wave after wave of
   the corps on the stair, as long as it can hold.
 - The Roll counts the waves held, not the steps. *The Guild stopped arguing about the arithmetic.*
@@ -907,7 +1025,7 @@ adds.
 | 70 | **The Beacon Hound** | existing: hunts the lowest-HP member (the shared quadruped) | *Houndsmaster's Lead* (bow) · *Collar of the Hound* (amulet) |
 | 80 | **The Signalman** | existing: adds, pouring in until he falls | *Signal Horn* (amulet) |
 | 90 | **The Last Keeper** | existing: enrage, his order to keep the lamp lit and nothing else | *Keeper's Oath* (helm) |
-| 100 | **The Lamp-Room** | the room itself: the dark lamp burns whoever stands nearest (ground hazard) | *Lampblack* (cloak; a dark shimmer on the figure) |
+| 100 | **The Lamp-Room** | the room itself: the great lamp draws on whoever stands nearest, like a wick (ground hazard). Beaten, it isn't broken: the corps' own lamp is too big for one company's hammer (§11) | *Lampblack* (cloak; a dark shimmer on the figure) |
 
 Past wave 100 the wardens come round again, harder, with nothing new to drop. That's for the Roll.
 
@@ -985,7 +1103,7 @@ proposal.
 | Region | What the Fall left | Who wants it | What it shows the player | How it ends |
 |---|---|---|---|---|
 | Emberfall | the dead, still under orders | nobody: they just stand there | **the spark**: the Cult is mining the dead | a win, with a cost found later (the copied binding rolls) |
-| The Reach | the forges, still needing fuel | the Kell Assay, for profit | **the vessel** | a loss: a day late |
+| The Reach | the forges, still needing fuel | the Kell Assay, for profit | **the vessel** | a loss, a day late, though Furnace Nine is broken and nothing more is cast |
 | The Tidemark | the throne, still empty | Lucan, for a crown | **the Voice**: whoever learns the Canticle | a win, and a man who walks north on his own |
 | The Tithewood | the tithe, still uncollected | the Reeve, for the count | **the fuel**: bought, not stolen | mostly a win: too little fuel got out |
 | The Heights | the flame | the Kindler, for faith | it all comes together | Lucan sings the last verse, and loses his voice |
@@ -1011,7 +1129,14 @@ The Chronicle grows from about 45 fragments to about **60**: ten per region and 
 - Col's grandmother, and Grandmother Yew;
 - "until relieved": the Third Legion, then the Grace, and nothing else, so the phrase keeps its weight;
 - "most of them volunteered": the Sunken Chapel, then the Throne;
-- the dark lamps: the Gate-Warden's note, then the Great Beacon, then the Guild's ranks.
+- the lamps: the Gate-Warden's *"Keep the lamps lit"*, Maudry's question about the Standard, the Abbess trimming
+  the choir-lamp, Pennick's truth and Mabry Cole's *"Let them go dark"*, Gannet putting out his light, the vessel
+  broken, and the Great Beacon's lamp, still standing.
+
+**The Lantern Guild's thread** is the one that runs under the others. In every region the company breaks the lamp
+at the heart of that region's trouble: the Standard's, the choir's, Furnace Nine, Gannet's, the Root Granary's, the
+Praetory's and the vessel. Each region's main story is someone's ledger, and the Guild's lamp-book is the one ledger
+that's being paid off.
 
 ---
 
@@ -1037,6 +1162,9 @@ hours of pure fighting; real play is about 2–3× that.
   - the smoke contract (GDD §7.1) extends to levels 15, 30, 45, 60 and 75.
 - **One ground-hazard system**, with the party's AI stepping out of it. Slag Pot, Slagstorm, the Oilwright, Oruth,
   the Lamp-Room and the Abbess's water all use it.
+- **One lamp rule** (§1.3): a lamp is an object in a site's last room with the list of foes tied to it. While its
+  keeper stands it can't be struck; once broken, every foe on its list lies down. It's deterministic, needs no new
+  stream, and reuses the boss system's "break what shields him".
 - **The tables are seeded where they must be.** Each region's minor sites fill out between its six main ones, as
   GDD §10 already allows.
 
@@ -1061,8 +1189,12 @@ hours of pure fighting; real play is about 2–3× that.
 2. **The tone rule** (§1): "the fate of the Old Provinces, never the world".
 3. **Solmere and the Throne.** Solmere was the capital: the court, the treasury and the orders. The Throne was the
    flame's palace in the crater.
-4. **The beacons.** The Throne's orders went out by beacon-light. The Lantern Guild is what's left of the
-   beacon-keepers, and its ranks are their lamps. When the lamps went dark, no stand-down reached anyone.
+4. **The beacons and the Guild.** The Throne's orders went out by beacon-light. The Lantern Guild is what's left of
+   the empire's keepers, and its ranks are their lamps. When the lamps went dark, no stand-down reached anyone.
+   - **The Guild's oath** (Mabry Cole's): break every lamp that holds the ashen, and let no new one be lit. *"Let
+     them go dark."* The sellswords' guild is its face and its purse.
+   - **The lamp-book**: the keepers' list of every lamp and what it holds.
+   - Canon's ranks keep their tavern meaning; in the Guild's own books a rank is the lamp a member has broken.
 5. **The Canticle and the Voices** (§1.1).
    - The binding is done by the Rite, in the Ember's light.
    - The command belongs to a **Voice**: anyone who learns the Canticle, the lost sacred scroll. The empire had
@@ -1073,9 +1205,14 @@ hours of pure fighting; real play is about 2–3× that.
 6. **The Grey Sisters** came out of the imperial binding clergy. The Drowned Abbey was theirs.
 7. **The Vale's tithe became the Third Legion** (240 = 240). The clans' tithe lay in the granaries.
 8. **The sacrifice** (§1.1, §1.3).
-   - The Ember is fed with sacrificed people. The Binding Rite ties each soul to the flame, where it burns slowly,
-     and the body rises Ashbound: a captive that can't rest and serves.
-   - Breaking the body frees the soul. A Voice commands the Ashbound but can't free them.
+   - The Ember is fed with sacrificed people. The Binding Rite shuts each soul in a **lamp** of Throne-iron, lit
+     from the Ember, which burns it slowly into the flame. The body rises Ashbound, tied to the lamp: a captive
+     that can't rest and serves.
+   - Breaking the body frees its soul; breaking the lamp frees every soul in it. A lit lamp must be put out first.
+     A Voice commands the Ashbound but can't free them.
+   - Throne-iron melts only in soul-fire. Every lamp went dark at the Fall, and held.
+   - **The shipped Standard** gains a lamp: the legion's, broken when it falls. That's why the line breaks
+     (canon §3.1 already says it does). One line for Maudry asking after it.
    - The Cult's four needs are spark, vessel, Voice and fuel, and its faithful are the last of the fuel.
    - Canon §4's "the empire's bound dead" stays true, and gains the why: they were sacrificed to feed the flame.
    **The ending:** always Lucan's *stop*, and the darker *keep the flame* ending (§6) dropped, for one shared world.
@@ -1089,7 +1226,8 @@ hours of pure fighting; real play is about 2–3× that.
     - People: the Lady Livia, Nan Ruddock, Lucan Varro, Hester Quaile, Sister Maren, Old Gannet, Admiral Grell Hesk, Dagny and Tamsin
       Coalbrook, Morrow Vane, Gunnar Slagg, Hob, Old Brannagh, Mother Coke, Grandmother Yew, Moth, Thane Ivo,
       Lirien, Prior Anselm, Sister Hild, Brother Cobb, Mother Agnes, Pim Rushlight, Brother Teague, Aldo Pennick,
-      Ma Gorrie, the Crier.
+      Ma Gorrie, the Crier, Mabry Cole.
+    - Things: the lamp-book; soul-lamps (standard-, choir-, furnace-, coast- and tithe-lamps); Throne-iron.
 
 **GDD:**
 - the cap 30 → 75;
@@ -1188,6 +1326,7 @@ writer. Here is what they found, and what draft 2 did about it.
 | The factions and the fuel (draft 4) | "Clarify … the major factions, and their mission, hook and objectives. And clarify the Fuel, what is it exactly and how is it found and used" | §1.2 (twelve factions: mission, hook, objectives, stance); §1.3 (fuel is bound souls: what, how much, where, how the Cult gets it, how it plays) |
 | The fuel (draft 5) | "people are sacrificed by nefarious actors and extract their souls to feed the Ember, turning the sacrifices into Ashenbound … Ashbound are captives and not able to rest. Forever servants. Until someone undoes it and frees them" | §1.1 and §1.3 rewritten to it, with the review in §10.4 |
 | The factions (draft 6) | "the Lantern guild, cinder cult, ashbound, grey sisters and redhand being the major factions and story lines" | §1.2: the five, each with a mission, a hook, objectives in every region and an ending; a table of the five storylines by region; the Redhand carried through every act under Nan Ruddock, Garrow's quartermaster; everyone else a minor player, in one table |
+| The Lantern Guild (draft 7) | "Enhance the Lantern Guild purpose story, its members seek to destroy those lamps that hold souls captive as the Ashen, as well as to prevent new ones" | souls are held in **lamps** (§1.1); the Guild's story, oath, mission, ranks and secrecy (§1.2); a lamp broken in every region; Mabry Cole and the Great Beacon (§4); one lamp rule (§1.3, §8); reviewed in §10.5 |
 | The Beacon offline | "Tower can always bee played offline" | always playable offline. The Roll stays fair through the flame clock (a time limit on the sim's clock) and verification on sync (§4.2) |
 
 ### 10.4 The owner's account of the fuel, reviewed (draft 5)
@@ -1222,8 +1361,42 @@ servants, until someone undoes it and frees them.*
 | 6 | The name: "Ashenbound". | Canon is **Ashbound**. The folk word, "the ashen", is in. |
 | 7 | Can the player become a Voice? Can the player sacrifice? | No and no. The Canticle is Lucan's, and it goes into the dark with the flame. The player frees; the player never binds. |
 
+### 10.5 The Lantern Guild's purpose, reviewed (draft 7)
+
+The owner's ask: *the Guild's members seek to destroy the lamps that hold souls captive as the ashen, and to
+prevent new ones.*
+
+**What it does well.**
+- **The Guild gets a reason to exist beyond hiring.** It was the company's employer and a guilty history. Now it's
+  the one faction working to undo the empire: the Cult wants the flame back, the Sisters want to make amends on
+  paper, and the Guild breaks things.
+- **The name finally means something.** A *lantern* guild that breaks lamps; ranks named for lamps; a gate-warden's
+  *"Keep the lamps lit"* that turns out to be the order the bound obey to guard their own prison.
+- **It gives every region a second win** beside its main story, so even the Reach's loss ends with Furnace Nine
+  broken.
+- **It pays off characters already planned:** Maudry, Pennick, Old Gannet (who "keeps the light because nobody told
+  him to stop", now the Guild's own Third Legion), Tamsin's cousins and Brother Cobb.
+
+**What it raised, and what draft 7 does.**
+
+| # | The question | Draft 7 |
+|---|---|---|
+| 1 | If souls are in lamps, what's the Ember? | The mother flame. The lamps are where souls are held; each one burns its souls into the Ember, as a wick feeds a flame (§1.1). Fuel, sacrifice and Voice are unchanged. |
+| 2 | Doesn't breaking a lamp free too many at once, and empty the game? | Lamps are set pieces at the end of a site, held by a keeper who has to be beaten first. Most lamps are lost, sunk, sealed or guarded, and the Guild's first century broke every easy one. Breaking one is a site's ending, never a shortcut through it. |
+| 3 | Why hasn't the Guild finished in three hundred years? | It needs the lamp-book and the rolls together, and it lost pages of the book with a chapter. The rest are guarded by their own bound. The Cult's shards make it urgent again: a lit lamp can't be broken. |
+| 4 | Why the secrecy? | The lamp-book is a map the Cult would kill for. A member learns the oath after breaking a lamp: the company in the Lamphall (Act III). |
+| 5 | Canon's Standard already breaks the line when it falls. | The lamp is why. It's one line of new dialogue for Maudry on shipped content, flagged in §9. |
+| 6 | Isn't "prevent new ones" done once the Ember is out? | Not quite. The vessel is the last new lamp and has to be broken; then no soul-fire is left to cast Throne-iron, and a shard-lit lamp has no flame to feed. The old lamps stay in the lamp-book for the post-game. |
+| 7 | The tower is endless; does the Guild ever break the Great Beacon's lamp? | Not in this proposal. It's the first lamp on Mabry Cole's list and the last one left (§11). |
+| 8 | Tone: is a secret order of lamp-breakers a chosen-one story? | No. They're tired road-folk paid by the job, and the company is hired before it's told. Gannet is the Guild at its most human: an old man nobody told. |
+
 ## 11. Still open
 
 1. **The Bowl's heirloom shop:** what it sells and at what price, when its milestone comes (after M10).
 2. **Each town's look:** an art pass per region, with the town layout proposal's rules (one gate, a high street, the
    square at its head) and the region's materials.
+3. **The Great Beacon's lamp.** Is it ever broken? One idea: every company that holds the Lamp-Room (wave 100)
+   strikes it once, and the Roll shows the crack growing across the season. When it breaks, the corps goes free
+   and the tower changes. That's a shared, server-counted event, so it would wait for the validator (M6).
+4. **The lamp count.** Should the Chronicle keep the company's count of lamps broken and souls freed, as Ilse
+   would? It's a stat the sim already has the events for.
