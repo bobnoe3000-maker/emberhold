@@ -7,7 +7,7 @@
 // capture here is what a player sees, without the world in front of it.
 //
 // URL parameters (the panel at the top writes them and reloads):
-//   group  party · town · foes · bosses · all, or actor ids separated by commas      (default party)
+//   group  party · town · foes · bosses · wardens · all, or actor ids separated by commas      (default party)
 //   clip   idle · walk · attack · attack2 · heavy · hit · death · fidget · look · sit · spawn   (idle)
 //   dir    0–7 (0 = east, 1 = south-east toward the camera, … clockwise) · turn (a facing a second)
 //          · all (each figure in all 8 facings, a row each)                                    (1)
@@ -36,12 +36,15 @@ const CAST = [
   ['foes', 'fen_ghoul', 'Fen ghoul'], ['foes', 'reed_cutter', 'Reed-cutter'], ['foes', 'reed_fowler', 'Fowler'], ['foes', 'bog_witch', 'Bog-witch'],
   ['foes', 'cult_harvester', 'Harvester'], ['foes', 'drowned_brother', 'Drowned'], ['foes', 'drowned_cantor', 'Cantor'],
   ['bosses', 'boss_garrow', 'Garrow'], ['bosses', 'boss_stranger', 'Stranger'], ['bosses', 'boss_standard', 'Standard'], ['bosses', 'boss_skarn', 'Skarn'],
+  // the Mere Tower's wardens (sim tower.js)
+  ['wardens', 'boss_doorward', 'Doorward'], ['wardens', 'boss_mudlark', 'Mudlark'], ['wardens', 'boss_bellringer', 'Bellringer'], ['wardens', 'boss_lensman', 'Lensman'], ['wardens', 'boss_hush', 'Hush'],
+  ['wardens', 'boss_twins', 'Twins'], ['wardens', 'boss_hound', 'Hound'], ['wardens', 'boss_gatherer', 'Gatherer'], ['wardens', 'boss_watcher', 'Watcher'], ['wardens', 'boss_starroom', 'Star Room'],
 ];
-const GROUP_NAME = { party: 'The party', town: 'Thornwick', foes: 'Foes', bosses: 'Bosses' };
-const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard|^drowned_/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
+const GROUP_NAME = { party: 'The party', town: 'Thornwick', foes: 'Foes', bosses: 'Bosses', wardens: 'The Mere Tower\'s wardens' };
+const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard|^drowned_|boss_(bellringer|hush|watcher|starroom)/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
 const SPEED = { party: 8.8, folk: 1.6, human: 3.2, undead: 3.0 };             // tiles/s: the hero, an amble, the Redhand, the Ashbound
 export const CLIPS = ['idle', 'walk', 'attack', 'attack2', 'heavy', 'hit', 'death', 'fidget', 'look', 'sit', 'spawn'];
-const OPTS = { group: ['party', 'town', 'foes', 'bosses', 'all'], clip: CLIPS, dir: ['0', '1', '2', '3', '4', '5', '6', '7', 'turn', 'all'], tod: ['dawn', 'day', 'dusk', 'night'], floor: ['grass', 'cobble'], zoom: ['1', '2', '3'] };
+const OPTS = { group: ['party', 'town', 'foes', 'bosses', 'wardens', 'all'], clip: CLIPS, dir: ['0', '1', '2', '3', '4', '5', '6', '7', 'turn', 'all'], tod: ['dawn', 'day', 'dusk', 'night'], floor: ['grass', 'cobble'], zoom: ['1', '2', '3'] };
 
 // a screen octant (0 = east, clockwise) → a world-space facing; the inverse of anim.js's octant
 const facing = (k) => { const a = (k * Math.PI) / 4, u = Math.cos(a), v = Math.sin(a); return { x: (u + v) / 2, y: (v - u) / 2 }; };

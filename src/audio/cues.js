@@ -19,6 +19,10 @@ const VOICE = {
   acolyte: { fam: 'cult', rate: 1.1 }, robed_stranger: { fam: 'cult', rate: 0.8 },
   fenghoul: { fam: 'gob', rate: 0.7 }, reedcutter: { fam: 'man', rate: 0.9 }, fowler: { fam: 'man', rate: 1.04 }, bogwitch: { fam: 'cult', rate: 1.3 },   // (M8) the Fens'
   harvester: { fam: 'cult', rate: 0.92 }, drowned: { fam: 'bone', rate: 0.96 }, cantor: { fam: 'bone', rate: 1.02, cry: 'cult_cry' },
+  // the Mere Tower's wardens (sim tower.js): pitched low, as the bosses are
+  warden_doorward: { fam: 'man', rate: 0.78 }, warden_mudlark: { fam: 'gob', rate: 0.66 }, warden_bellringer: { fam: 'bone', rate: 0.8, cry: 'cult_cry' }, warden_lensman: { fam: 'man', rate: 0.9 },
+  warden_hush: { fam: 'bone', rate: 0.84 }, warden_twins: { fam: 'man', rate: 0.82 }, warden_hound: { fam: 'gob', rate: 0.6 }, warden_gatherer: { fam: 'cult', rate: 0.8 },
+  warden_watcher: { fam: 'bone', rate: 0.86 }, warden_starroom: { fam: 'bone', rate: 0.68 },
 };
 const FAM = { gob: { cry: 'gob_cry', hurt: 'gob_hurt', die: 'gob_die' }, bone: { cry: 'bone_rise', hurt: 'bone_hurt', die: 'bone_die' },
   man: { cry: 'man_cry', hurt: 'man_hurt', die: 'man_die' }, cult: { cry: 'cult_cry', hurt: 'man_hurt', die: 'man_die' } };
@@ -28,7 +32,7 @@ const FAM = { gob: { cry: 'gob_cry', hurt: 'gob_hurt', die: 'gob_die' }, bone: {
 export function voiceOf(kind, what) {
   const v = VOICE[kind] || VOICE.minion, f = FAM[v.fam];
   const cue = what === 'cry' && v.cry ? v.cry : f[what];
-  return { cue, bus: 'voices', rate: v.rate, gain: what === 'hurt' ? 0.55 : what === 'cry' && VOICE[kind] && /chief|captain|stranger|standard/.test(kind) ? 1.15 : 1 };
+  return { cue, bus: 'voices', rate: v.rate, gain: what === 'hurt' ? 0.55 : what === 'cry' && VOICE[kind] && /chief|captain|stranger|standard|warden_/.test(kind) ? 1.15 : 1 };
 }
 /** the family a kind belongs to (one cry per family per wave) @param {string} kind */
 export const familyOf = (kind) => (VOICE[kind] || VOICE.minion).fam;

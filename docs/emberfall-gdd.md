@@ -1468,5 +1468,6 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
   - the climb is saved (v21) and carries on at its wave after a load; the company's highest wave and landing are kept
     (its own Wall until the validator writes the real one; the flame clock, brackets and Tower-found pieces come with it).
   The jetty, a warden and a landing: `docs/img/mere-tower.jpg`.
+  The wardens are baked at the bosses' 73 px, each its own look (2026-10-05; `docs/img/wardens.jpg`, `docs/fens-critic-pass.md`).
 - **The Great Beacon:** a finite Guild site, two landings opening with each region from the Reach, its lamp-room
   after the Throne (★ *Let Them Go Dark*).

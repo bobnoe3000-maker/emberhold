@@ -203,3 +203,36 @@ whoever holds them: setting the numbers for 9–15 is slice 11's.
   everyone let go. Nobody else will."* It's plain, and dry; the empire and the Rite are named only as she would.
 - **The Chronicle's head.** *"A soul for each of the bound put down and each cage broken, and every soul a broken lamp
   held. The living never count: they were never bound."* World doc §7's own terms, in one line.
+
+## Art pass: the Mere Tower's wardens (2026-10-05)
+
+The owner: *"Do the art for the wardens."* Until now each warden wore its base kind's 56 px look. Now each has its own
+bake at the bosses' 73 px (`tools/actor-lab/variants.json` W1–W10, `bake.json` `boss_doorward` … `boss_starroom`;
+`node tools/capture/stage.mjs --group wardens`). The Tower's palette: blackened iron, lamp-glass blue, tarnished brass,
+drowned grey; four are kept bound or drowned, as the Tower keeps what comes near it. Lineup: `docs/img/wardens.jpg`.
+
+| Warden | Built on | What reads |
+|---|---|---|
+| The Doorward | Knight: helm, round shield, sword | a door-guard in black iron, a verdigris cloak |
+| The Mudlark | Barbarian, bare-armed | mud-dark, a hoe and a basket of what the lake gave up |
+| The Bellringer | Skeleton mage in a brass-tarnished habit | the bell's hammer and a lantern; brass eyes |
+| The Lensman | Hooded rogue, heavy crossbow | lamp-glass blue, a pale grey face |
+| The Hush | Skeleton rogue | all black, frost-white eyes |
+| The Twins | Barbarian, great-axe | pale and dark in one figure |
+| The Tower Hound | Barbarian, an axe | black-furred, pointed ears, a dark face |
+| The Gatherer | Mage with the lantern-cage and a marsh-light | drowned teal, lamp-blue trim |
+| The Watcher | Skeleton mage, the hat kept | black robe, amber eyes |
+| The Star Room | Skeleton legionary, sword and shield | a night-blue cloak, star-pale eyes |
+
+What the first bake got wrong, and what changed:
+- **The Hush** wore the skeleton rogue's red hood and **the Star Room** its red cloak: the recolour had hit the wrong
+  tiles of the shared skeleton texture. The cloth is tiles [7,1], [2,2] and [1,2] (the drowned cantor's robe uses the
+  same); recoloured black and night blue, re-baked.
+- **Eye glows** came from the templates (the Hush would have glowed ember-orange in the dark): frost for the Hush and
+  the Star Room, window-amber for the Bellringer and the Watcher.
+- **Faces:** six wore other foes' or heroes' faces (`test/foes.test.mjs` caught it: no foe wears a hero's face, and no
+  two kinds share one). Each has its own preset now (`faces.json`: doorward … gatherer), Tower-grey; the Hound no
+  longer reads as a green goblin.
+
+Still open: the Twins don't yet read as *half pale, half dark* (the swatch tiles split by part, not by side); the
+Mudlark's hoe stands straight up at idle; the Hound would read more beast-like with a hunch (the lab's `frame` knob).

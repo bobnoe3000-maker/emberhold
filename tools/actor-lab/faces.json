@@ -460,5 +460,80 @@
   "marks": [
    "wrinkles"
   ]
+ },
+ "doorward": {
+  "skin": "#8a8c90",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "broad",
+  "marks": [
+   "scar"
+  ]
+ },
+ "mudlark": {
+  "skin": "#6e7258",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "wide",
+  "iris": "amber",
+  "mouth": "open",
+  "nose": "hook",
+  "shape": "oblong",
+  "marks": [
+   "wrinkles"
+  ]
+ },
+ "lensman": {
+  "skull": "own",
+  "skin": "#9aa0a8",
+  "brows": "thin",
+  "eyes": "sharp",
+  "iris": "grey",
+  "mouth": "grim",
+  "marks": []
+ },
+ "twins": {
+  "skin": "porcelain",
+  "hair": "crop",
+  "hairColor": "soot",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "frown",
+  "nose": "broad",
+  "beard": "full",
+  "shape": "thick",
+  "marks": []
+ },
+ "hound": {
+  "ears": "pointed",
+  "skin": "#4a4640",
+  "hair": "bald",
+  "brows": "heavy",
+  "eyes": "wide",
+  "iris": "amber",
+  "mouth": "open",
+  "nose": "broad",
+  "shape": "thick",
+  "marks": [
+   "scar"
+  ]
+ },
+ "gatherer": {
+  "skin": "#a8b4b8",
+  "hair": "bald",
+  "brows": "thin",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "grim",
+  "nose": "long",
+  "shape": "thin",
+  "marks": [
+   "wrinkles",
+   "scar"
+  ]
  }
 }

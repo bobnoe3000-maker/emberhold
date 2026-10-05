@@ -27,7 +27,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?region=vale|fens|reach|heights  ?site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone (with ?scene=dungeon)
 #   ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)
-#   ?dev&scene=stage[&group=party|town|foes|bosses|all&clip=idle|walk|attack|…&dir=0-7|turn|all&zoom=1-3&floor=grass|cobble&cmp=/before/]: the cast lined up, animated in place (docs/character-stage-proposal.md)
+#   ?dev&scene=stage[&group=party|town|foes|bosses|wardens|all&clip=idle|walk|attack|…&dir=0-7|turn|all&zoom=1-3&floor=grass|cobble&cmp=/before/]: the cast lined up, animated in place (docs/character-stage-proposal.md)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)

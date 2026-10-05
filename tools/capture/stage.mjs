@@ -2,7 +2,7 @@
 // and animated in place through the real renderer, on the manual clock, so a capture is the same pixels
 // every run.
 //
-//   node tools/capture/stage.mjs [--group party|town|foes|bosses|all|id,id] [--clip idle|walk|attack|…]
+//   node tools/capture/stage.mjs [--group party|town|foes|bosses|wardens|all|id,id] [--clip idle|walk|attack|…]
 //        [--dir 0-7|turn|all] [--tod dawn|day|dusk|night] [--floor grass|cobble] [--zoom 1|2|3]
 //        [--cmp <checkout dir>] [--frames N] [--fps 12] [--size 390x844] [--out dir]
 //

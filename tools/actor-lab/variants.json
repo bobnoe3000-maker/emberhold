@@ -2837,5 +2837,551 @@
     ]
    }
   ]
+ },
+ {
+  "id": "W1",
+  "cls": "Warden",
+  "label": "The Doorward \u00b7 the Mere Tower: a door-guard in blackened iron, verdigris cloak, a great sword and shield",
+  "model": "Knight",
+  "show": [
+   "1H_Sword",
+   "Round_Shield",
+   "Knight_Helmet",
+   "Knight_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#4a4e58",
+     "#16181e"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3e6a64",
+     "#122220"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     1
+    ],
+    "to": [
+     "#3a2e26",
+     "#140e0a"
+    ]
+   }
+  ],
+  "face": "doorward",
+  "height": 1
+ },
+ {
+  "id": "W2",
+  "cls": "Warden",
+  "label": "The Mudlark \u00b7 the Mere Tower: bare-armed in drowned mud, a hoe and a basket of what the lake gave up",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "hoe",
+   "handslot.l": "basket"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e2a20",
+     "#0c0a06"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2e2a20",
+     "#0c0a06"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2e2a20",
+     "#0c0a06"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#3a3428",
+     "#100e0a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#3a3428",
+     "#100e0a"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e2a20",
+     "#0c0a06"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2620",
+     "#0a0806"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#6a7a6e",
+     "#1e2420"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#6a7a6e",
+     "#1e2420"
+    ]
+   }
+  ],
+  "face": "mudlark",
+  "height": 1
+ },
+ {
+  "id": "W3",
+  "cls": "Warden",
+  "label": "The Bellringer \u00b7 the Mere Tower: a drowned sexton in a tarnished habit, the bell's hammer and a lamp",
+  "model": "Skeleton_Mage",
+  "hold": {
+   "handslot.r": "hammer",
+   "handslot.l": "lantern"
+  },
+  "eyes": "0xf0d080",
+  "wear": {
+   "chest": "habit"
+  },
+  "skull": true,
+  "hide": [
+   "Skeleton_Mage_Hat"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#7a6a48",
+     "#262014"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#7a6a48",
+     "#262014"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a3a36",
+     "#121210"
+    ]
+   }
+  ],
+  "height": 1
+ },
+ {
+  "id": "W4",
+  "cls": "Warden",
+  "label": "The Lensman \u00b7 the Mere Tower: hooded in lamp-glass blue, a heavy crossbow",
+  "model": "Rogue_Hooded",
+  "show": [
+   "2H_Crossbow",
+   "Rogue_Cape"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a3a4e",
+     "#0c1218"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2e2a26",
+     "#0e0c0a"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a3a4e",
+     "#0c1218"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#5a4a30",
+     "#1e180e"
+    ]
+   }
+  ],
+  "face": "lensman",
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ],
+  "height": 1
+ },
+ {
+  "id": "W5",
+  "cls": "Warden",
+  "label": "The Hush \u00b7 the Mere Tower: a bound rogue gone black, eyes like frost, not a sound",
+  "model": "Skeleton_Rogue",
+  "attach": {
+   "handslot.r": "Skeleton_Crossbow.gltf"
+  },
+  "eyes": "0xe8f0ff",
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ],
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#26242c",
+     "#08080a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#1e1c22",
+     "#060608"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2830",
+     "#0a0a0e"
+    ]
+   }
+  ],
+  "height": 1
+ },
+ {
+  "id": "W6",
+  "cls": "Warden",
+  "label": "The Twins \u00b7 the Mere Tower: one of a pair, half pale and half dark, a great-axe",
+  "model": "Barbarian",
+  "show": [
+   "2H_Axe"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#b8b4a8",
+     "#3a3832"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2a2830",
+     "#0c0a0e"
+    ]
+   }
+  ],
+  "face": "twins",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 1
+ },
+ {
+  "id": "W7",
+  "cls": "Warden",
+  "label": "The Tower Hound \u00b7 the Mere Tower: something that runs on all fours when nobody's looking, black-furred, an axe",
+  "model": "Barbarian",
+  "show": [
+   "1H_Axe"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2a2622",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#3a322a",
+     "#100c0a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2a2622",
+     "#0c0a08"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#8a7a5a",
+     "#2a2418"
+    ]
+   }
+  ],
+  "face": "hound",
+  "height": 0.92
+ },
+ {
+  "id": "W8",
+  "cls": "Warden",
+  "label": "The Gatherer \u00b7 the Mere Tower: a harvester in drowned teal, the lantern-cage and a marsh-light",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "cagepole",
+   "handslot.l": "marshlamp"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3e44",
+     "#0e1416"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#9ac8e0",
+     "#2a4a5a"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#1e2a2e",
+     "#080c0e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#1e2a2e",
+     "#080c0e"
+    ]
+   }
+  ],
+  "face": "gatherer",
+  "height": 1.04
+ },
+ {
+  "id": "W9",
+  "cls": "Warden",
+  "label": "The Watcher \u00b7 the Mere Tower: a bound mage in black with amber eyes and the old hat",
+  "model": "Skeleton_Mage",
+  "attach": {
+   "handslot.r": "Skeleton_Staff.gltf"
+  },
+  "eyes": "0xffc060",
+  "skull": true,
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#1e1c24",
+     "#08080c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#1e1c24",
+     "#08080c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#2a2632",
+     "#0c0a10"
+    ]
+   }
+  ],
+  "height": 1
+ },
+ {
+  "id": "W10",
+  "cls": "Warden",
+  "label": "The Star Room \u00b7 the Mere Tower: a bound legionary in a night-blue cloak, star-pale eyes, a sword and shield",
+  "model": "Skeleton_Warrior",
+  "attach": {
+   "handslot.l": "Skeleton_Shield_Small_A.gltf"
+  },
+  "hold": {
+   "handslot.r": "sword"
+  },
+  "eyes": "0xc8d8ff",
+  "skull": true,
+  "height": 1,
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a4a7a",
+     "#0c1430"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2a3a6a",
+     "#0a1028"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a5a8a",
+     "#141c3a"
+    ]
+   }
+  ]
  }
 ]
