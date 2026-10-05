@@ -1,0 +1,10 @@
+{
+  "id": "frag_fens_canal_order",
+  "region": "fens",
+  "set": "fens",
+  "order": 2,
+  "title": "A Canal Order",
+  "text": "All barges to clear the Locks by the second watch. The Throne's tithe-boats have the canal tonight.",
+  "note": "Carved under a shrine at the Canal Locks, in a clerk's square hand.",
+  "where": "Somewhere in the Canal Locks, first floor"
+}

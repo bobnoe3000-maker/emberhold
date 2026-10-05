@@ -34,9 +34,20 @@ export const FRAGMENTS = {
   frag_vale_binding_rite: { set: 'vale', order: 8, site: 'sunken_chapel', floor: 2, via: 'shrine' },
   frag_vale_chaplains_last_page: { set: 'vale', order: 9, site: 'sunken_chapel', floor: 2, via: 'boss' },  // under the Stranger's feet
   frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'barrows', floor: 3, via: 'boss' },         // taken from the Standard
+  // the Fens set (world doc §7, v1.30; M8 slice 10): the lock-men, the vats, the Abbey, and the night the canal broke
+  frag_fens_lock_tally: { set: 'fens', order: 1, site: 'canal_locks', floor: 1, via: 'chest' },
+  frag_fens_canal_order: { set: 'fens', order: 2, site: 'canal_locks', floor: 1, via: 'shrine' },
+  frag_fens_sluice_book: { set: 'fens', order: 3, site: 'canal_locks', floor: 2, via: 'hall' },          // in the Sluice
+  frag_fens_reed_stick: { set: 'fens', order: 4, site: 'toadking_mound', floor: 1, via: 'chest' },
+  frag_fens_tithe_plate: { set: 'fens', order: 5, site: 'toadking_mound', floor: 2, via: 'boss' },       // it hung in the Toadking's Boat Hall
+  frag_fens_vat_ledger: { set: 'fens', order: 6, site: 'sickpools', floor: 1, via: 'chest' },
+  frag_fens_drain_order: { set: 'fens', order: 7, site: 'sickpools', floor: 2, via: 'shrine' },
+  frag_fens_novice_letter: { set: 'fens', order: 8, site: 'drowned_abbey', floor: 1, via: 'chest' },
+  frag_fens_day_book: { set: 'fens', order: 9, site: 'drowned_abbey', floor: 2, via: 'hall' },           // in the Choir
+  frag_fens_last_hour: { set: 'fens', order: 10, site: 'drowned_abbey', floor: 3, via: 'boss' },         // the Abbess Below's
 };
 /** a whole set reveals its hidden site (sites.js; world doc §7) */
-export const SET_REVEALS = { vale: 'ninth_milestone' };
+export const SET_REVEALS = { vale: 'ninth_milestone', fens: 'reedholm_undercroft' };
 /** the fragments of each set, in reading order */
 export const SETS = /** @type {Record<string, string[]>} */ ({});
 for (const [id, f] of Object.entries(FRAGMENTS)) (SETS[f.set] ||= []).push(id);

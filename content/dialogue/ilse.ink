@@ -29,6 +29,17 @@ VAR frag_vale_chaplains_prayer = 0
 VAR frag_vale_binding_rite = 0
 VAR frag_vale_chaplains_last_page = 0
 VAR frag_vale_standards_ribbon = 0
+VAR frag_fens_count = 0
+VAR frag_fens_lock_tally = 0
+VAR frag_fens_canal_order = 0
+VAR frag_fens_sluice_book = 0
+VAR frag_fens_reed_stick = 0
+VAR frag_fens_tithe_plate = 0
+VAR frag_fens_vat_ledger = 0
+VAR frag_fens_drain_order = 0
+VAR frag_fens_novice_letter = 0
+VAR frag_fens_day_book = 0
+VAR frag_fens_last_hour = 0
 VAR count_lamps = 0
 VAR count_souls = 0
 
@@ -81,6 +92,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
 + { q_vale_first_page == 1 } [About the first page… #mark: quest active] -> ilse_page_active
 + { frag_vale_count > 0 } [Read me the Chronicle.] -> ilse_read
++ { frag_fens_count > 0 } [Read me what we found in the Fens.] -> ilse_read_fens
 + { count_souls > 0 } [You keep a count?] -> ilse_count
 + [What are you writing?] -> ilse_writing
 + [What should I look for?] -> ilse_look
@@ -197,6 +209,53 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
     "There's more of it down there. There always is. The Vale's set will have gaps until someone goes deeper."
 - else:
     "There are gaps still. The mill, the Keep, the chapel. The old empire kept its papers where it kept its sins."
+}
+-> ilse_topics
+
+// ── the Fens set (world doc §7 v1.30): she reads them as she reads the Vale's, in order ──
+== ilse_read_fens ==
+{ frag_fens_lock_tally == 1:
+    "A lock-keeper's tally. Sixty lock-men on the Abbey's rolls, bound. They don't tire at the windlass. The Abbess says they don't mind it."
+    "The Abbess says. Not the lock-men."
+}
+{ frag_fens_canal_order == 1:
+    "A canal order. All barges clear of the Locks by the second watch: the Throne's tithe-boats have the canal tonight."
+}
+{ frag_fens_sluice_book == 1:
+    "The sluice-book. Gates three and four untended since the second watch. The bound lock-men lying in the sluice. The water coming up the chapel steps."
+    "The second watch again. The same hour the legion dropped on the Wickham road. The same night."
+}
+{ frag_fens_reed_stick == 1:
+    "A reed-cutter's tally-stick. Four boats off the flood, the night the water came, nobody aboard. One with a lamp in the bow, still lit."
+}
+{ frag_fens_tithe_plate == 1:
+    "A plate off a boat. Tithe-boat Ninth, the Drowned Abbey to the Ember Throne. Cargo: lamps, forty."
+    "Forty lamps. Not grain. Not coin. They shipped the dead up the canal by the boatload."
+}
+{ frag_fens_vat_ledger == 1:
+    "The vat-master's ledger. Vat seven: forty bound, steeped. The Abbey's lamps want filling by the new moon."
+}
+{ frag_fens_drain_order == 1:
+    "The drain order. If the gates fail, open the vats to the canal. Better drowned than loose."
+    "That's why the Fens are what they are. Somebody did as they were told."
+}
+{ frag_fens_novice_letter == 1:
+    "A novice's letter to her mother. They let her write the names. Most of them volunteered. She asked about the rest, and was given more names to write."
+    She reads that one twice, and then doesn't say anything for a while.
+}
+{ frag_fens_day_book == 1:
+    "The Abbess's day-book. The Throne is dark. The bound won't lie down without the order, and there's nobody left to give it. We will keep the hours."
+}
+{ frag_fens_last_hour == 1:
+    "The last of it, off the Abbess herself. We kept the hours. The water kept us."
+}
+{
+- frag_fens_count == 10:
+    Ilse lays the ten from the Fens beside the ten from the Vale, and the two lines are the same length.
+    "The same night. The Throne went dark at the second watch, and everything it had bound stopped where it stood, and nobody was left to tell it to lie down. The Vale held its road. The Fens kept their hours."
+    "And my order wrote the names." She doesn't look up. "The rolls were copied out fair at Reedholm, in the Undercroft. Mother Agnes has the key. She's had it forty years. Ask her. Tell her I sent you, and that I'm sorry."
+- else:
+    "There are gaps. The Locks, the Mound, the vats, the Abbey. The Fens kept their papers wet, but they kept them."
 }
 -> ilse_topics
 

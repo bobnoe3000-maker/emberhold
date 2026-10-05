@@ -53,7 +53,7 @@ export function openLeads(state, status, region = 'vale') {
   return out;
 }
 
-// the Fens (world doc v1.29 §5, §6): Wren, the Choir, her chain, the Tower, the board
+// the Fens (world doc v1.29 §5, §6, v1.30 §7): Wren, the Choir, her chain, the Chronicle and the Undercroft, the trials, the Tower, the board
 function fensLeads(state, status) {
   const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
   if (!bosses.toadking) out.push({ id: 'toadking' });
@@ -61,6 +61,10 @@ function fensLeads(state, status) {
   if (!bosses.drowned_choir) out.push({ id: 'choir' });
   const owed = ['wren_the_marker', 'wren_night_boats', 'wren_settled'].find((q) => status(q) === QS.AVAILABLE);
   if (owed) out.push({ id: 'owed' });
+  const has = (x, k) => (x instanceof Set ? x.has(k) : Array.isArray(x) ? x.includes(k) : !!(x && x[k]));
+  const fens = SETS.fens || [], found = fens.filter((f) => has(state.fragments, f)).length;   // (the Fens set, v1.30: the last reveals the Undercroft)
+  if (!has(state.revealed, 'reedholm_undercroft') && found < fens.length) out.push({ id: 'fenschronicle', n: found, of: fens.length });
+  if (has(state.revealed, 'reedholm_undercroft') && !has(state.sitesEntered, 'reedholm_undercroft')) out.push({ id: 'undercroft' });
   out.push(...trialLeads(status, 12), { id: 'tower' }, { id: 'fensboard' });
   return out;
 }

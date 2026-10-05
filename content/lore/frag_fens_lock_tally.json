@@ -1,0 +1,10 @@
+{
+  "id": "frag_fens_lock_tally",
+  "region": "fens",
+  "set": "fens",
+  "order": 1,
+  "title": "The Lock-Keeper's Tally",
+  "text": "Lock-men on the Abbey's rolls: sixty, bound. They do not tire at the windlass. The Abbess says they do not mind it.",
+  "note": "Found in a chest at the Canal Locks. They are still at the windlass.",
+  "where": "Somewhere in the Canal Locks, first floor"
+}

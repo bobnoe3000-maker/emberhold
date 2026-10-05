@@ -15,6 +15,7 @@ VAR flag_met_agnes = 0
 VAR q_ch2_the_rolls = -1
 VAR q_ch2_the_last_office = -1
 VAR q_trial_vigil = -1
+VAR frag_fens_count = 0
 
 == agnes_hub ==
 { flag_met_agnes == 0: -> agnes_first_meet }
@@ -39,6 +40,7 @@ An old Grey Sister sits in the chapel's one good chair with her hands folded on 
 + { q_trial_vigil == 2 } [We kept the vigil. Six waves. #mark: quest ready] -> agnes_vigil_turnin
 + { q_trial_vigil == 0 } [Would you teach a cleric? #mark: quest] -> agnes_vigil_offer
 + { q_trial_vigil == 1 } [About the vigil… #mark: quest active] -> agnes_vigil_active
++ { frag_fens_count == 10 } [Ilse sent us. We've read the Fens' Chronicle.] -> agnes_undercroft
 + [Why keep the rolls shut?] -> agnes_shut
 + [I'll be going.] -> agnes_bye
 
@@ -84,6 +86,13 @@ She unties the first one, and reads it standing up, and then she sits down to re
 == agnes_vigil_turnin ==
 Agnes has your cleric kneel, which takes her a long time to get down beside, and says the words once, very quietly, in a voice that hasn't said them since she was young.
 "That's the turning. It doesn't hurt them. It hurts what holds them. Use it kindly, if there's a kind way." # quest: turnin trial_vigil
+-> agnes_topics
+
+// ── the Fens set whole (world doc §7 v1.30): the Undercroft ──
+== agnes_undercroft ==
+Agnes listens to you list them, all ten, and her hands stay folded on the stick the whole time.
+"Then you know what we were." She gets up, which takes a while, and doesn't let you help. "Go on. The Undercroft's under the priory at Reedholm, past the Abbey. The key's on the nail by the door. It always was."
+"Nobody wanted it badly enough to look. That was the lock."
 -> agnes_topics
 
 == agnes_shut ==

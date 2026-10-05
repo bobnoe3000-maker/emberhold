@@ -53,8 +53,11 @@ test('Act II: a chapter given in Saltmere says so; both acts done, the end is th
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'fens' });
-  S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'tower', 'fensboard']);
-  S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'tower', 'fensboard']);
+  S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'fenschronicle', 'tower', 'fensboard']);
+  S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'fenschronicle', 'tower', 'fensboard']);
+  assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'fenschronicle'), { id: 'fenschronicle', n: 0, of: 10 });
+  S.revealed = new Set(['reedholm_undercroft']); S.sitesEntered = new Set();
+  assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'undercroft', 'tower', 'fensboard'], 'the set whole: the Undercroft');
 });
 
 test('a second trial on offer is a Fens lead, with its teacher\'s town', () => {

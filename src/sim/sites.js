@@ -34,7 +34,7 @@ export const SITES = {
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty)
   mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], flat: true, minLevel: 12, mix: 0x3e7e },
-  reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 15, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, mix: 0x4e3d },
+  reedholm_undercroft: { name: 'The Reedholm Undercroft', region: 'fens', theme: 'chasm', base: 15, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, vault: 'the_fair_copy', mix: 0x4e3d },
 };
 export const SITE_IDS = Object.keys(SITES);
 

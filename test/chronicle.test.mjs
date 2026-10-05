@@ -16,10 +16,14 @@ const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
 const at = (sim, site, depth) => sim.restore({ ...snap(sim), scene: 'dungeon', site, depth, floors: [] });
 const events = (sim, names) => { const out = []; for (const n of names) sim.bus.on(n, (e) => out.push({ n, ...e })); return out; };
 
-test('ten in reading order; every one lies somewhere on its floor, for any seed', () => {
-  assert.equal(SETS.vale.length, 10); assert.deepEqual(SETS.vale.map((id) => FRAGMENTS[id].order), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  assert.deepEqual(Object.keys(SET_REVEALS), ['vale']); assert.equal(SITES[SET_REVEALS.vale].hidden, true);
-  for (const seed of [SEED, 7, 99991]) for (const id of SETS.vale) {
+test('ten in reading order a set (the Vale\'s, the Fens\'); every one lies somewhere on its floor, for any seed', () => {
+  assert.deepEqual(Object.keys(SETS), ['vale', 'fens']); assert.deepEqual(Object.keys(SET_REVEALS), ['vale', 'fens']);
+  for (const set of Object.keys(SETS)) {
+    assert.equal(SETS[set].length, 10); assert.deepEqual(SETS[set].map((id) => FRAGMENTS[id].order), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    assert.equal(SITES[SET_REVEALS[set]].hidden, true); assert.equal(SITES[SET_REVEALS[set]].region, set, 'its own land\'s hidden site');
+    assert.ok(SETS[set].every((id) => SITES[FRAGMENTS[id].site].region === set), `${set}: found in its own land`);
+  }
+  for (const seed of [SEED, 7, 99991]) for (const id of [...SETS.vale, ...SETS.fens]) {
     const f = FRAGMENTS[id], sim = createSim(seed, undefined, { scene: 'dungeon', site: f.site });
     at(sim, f.site, f.floor - 1);
     const h = holderOf(seed, id, sim.world, {});
@@ -88,4 +92,35 @@ test('content: each new fragment\'s words are canon; Ilse reads the whole set an
   const b = c.choose(c.first.choices.find((x) => x.text.startsWith('Read me the Chronicle')).index);
   const text = b.lines.join(' ');
   assert.match(text, /Stand down/); assert.match(text, /ninth milestone of the Wickham road/); assert.match(text, /It's on your map now/);
+});
+
+// ── the Fens set (M8 slice 10; world doc §7 v1.30): the last found reveals the Reedholm Undercroft, whose hall keeps
+// The Fair Copy; the Toadking and the Abbess carry theirs; Ilse reads it, and sends you to Mother Agnes for the key ──
+test('the Fens set: the bosses carry theirs; the last found reveals the Undercroft, whose vault keeps The Fair Copy, once', () => {
+  const sim = createSim(SEED, undefined, { scene: 'town' }), ev = events(sim, ['fragmentFound', 'siteRevealed']); sim.tick(); sim.state.party[0].level = 15;
+  at(sim, 'toadking_mound', 1); sim.state.bosses.toadking = 1; sim.bus.emit('bossDown', { id: 'toadking', first: true });
+  at(sim, 'drowned_abbey', 2); sim.state.bosses.abbess_below = 1; sim.bus.emit('bossDown', { id: 'abbess_below', first: true });
+  assert.deepEqual(ev.filter((e) => e.n === 'fragmentFound').map((e) => e.id), ['frag_fens_tithe_plate', 'frag_fens_last_hour']);
+  sim.state.fragments.push(...SETS.fens.filter((id) => !sim.state.fragments.includes(id) && id !== 'frag_fens_sluice_book'));
+  assert.ok(!sim.state.revealed.has('reedholm_undercroft'));
+  at(sim, 'canal_locks', 1); const hall = sim.world.level.descentRoom.id;
+  sim.bus.emit('battle', { on: true, room: hall }); for (let i = 0; i < HALL_WAVES; i++) sim.bus.emit('wave', { cleared: true, room: hall });
+  assert.equal(ev.at(-1).site, 'reedholm_undercroft', 'the Sluice-Book, last: the Undercroft revealed');
+  at(sim, 'reedholm_undercroft', 0);
+  const v = sim.world.vault; assert.ok(v); assert.equal(v.heirloom, 'the_fair_copy');
+  const [x, y] = v.key.split(',').map(Number), p = sim.state.player; p.x = p.px = x + 0.5; p.y = p.py = y + 1.5;
+  sim.commands.push({ type: 'harvest', tx: x, ty: y }); sim.tick(); sim.commands.push({ type: 'harvest', tx: x, ty: y }); sim.tick();
+  assert.equal(sim.state.bag.filter((it) => it.name === 'The Fair Copy').length, 1);
+});
+
+test('content: the Fens set is canon; Ilse reads it whole and sends you to Agnes, who has the key', async () => {
+  const world = readFileSync('docs/emberfall-world.md', 'utf8').replace(/\s+/g, ' ');
+  for (const id of SETS.fens) { const d = JSON.parse(readFileSync(`content/lore/${id}.json`, 'utf8')); assert.ok(world.includes(d.text), `${id}: canon`); assert.equal(d.region, 'fens'); }
+  const book = createStoryBook(async (f) => JSON.parse(readFileSync(`content/dialogue/${f}.json`, 'utf8')));
+  const all = Object.fromEntries(SETS.fens.map((id) => [id, 1]));
+  const c = await book.open('ilse', 'ilse_hub', { hero_name: 'Tam', flag_met_ilse: 1, fallen_name: '', frag_fens_count: 10, ...all }, () => {});
+  const text = c.choose(c.first.choices.find((x) => x.text.startsWith('Read me what we found in the Fens')).index).lines.join(' ');
+  assert.match(text, /We kept the hours/); assert.match(text, /Mother Agnes has the key/);
+  const a = await book.open('agnes', 'agnes_hub', { hero_name: 'Tam', flag_met_agnes: 1, fallen_name: '', frag_fens_count: 10 }, () => {});
+  assert.match(a.choose(a.first.choices.find((x) => /Fens' Chronicle/.test(x.text)).index).lines.join(' '), /The key's on the nail by the door/);
 });

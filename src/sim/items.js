@@ -181,6 +181,8 @@ export const HEIRLOOMS = {
   teagues_name: { base: 'ring', name: "Teague's Name", flav: 'He gave it to everyone he took.', aff: ['crit', 'atk', 'mp'] },
   vespers: { base: 'charm', name: 'Vespers', flav: 'Sung in water, heard in bone.', aff: ['mp', 'mpr', 'hpr'] },
   the_last_office: { base: 'amulet', name: 'The Last Office', flav: 'Said every night, by the dead, for the living.', aff: ['def', 'hp', 'hpr'] },
+  // the Fens set's vault, the Reedholm Undercroft (world doc v1.30 §7)
+  the_fair_copy: { base: 'charm', name: 'The Fair Copy', flav: 'Every name, in a better hand than it was ever written in.', aff: ['mp', 'mpr', 'def'] },
   // Wren's chain, What's Owed (world doc v1.29 §5)
   the_receipt: { base: 'ring', name: 'The Receipt', flav: 'She kept it. Of course she kept it.', aff: ['crit', 'dodge', 'atk'] },
   // the Mere Tower's wardens (sim tower.js; world doc v1.25 §12): a slot, not a base: each is made for a class in the

@@ -1,0 +1,10 @@
+{
+  "id": "frag_fens_drain_order",
+  "region": "fens",
+  "set": "fens",
+  "order": 7,
+  "title": "The Drain Order",
+  "text": "If the gates fail, open the vats to the canal. Better drowned than loose.",
+  "note": "On a shrine in the Sickpools. Somebody opened them.",
+  "where": "Somewhere in the Sickpools, second floor"
+}

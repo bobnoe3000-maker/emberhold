@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.30 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.30 (§5): the level-12 trials and who teaches them in the Fens. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.30 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.30 (§5): the level-12 trials and who teaches them in the Fens; (§7) the Fens set, ten fragments, and the Undercroft's heirloom. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -829,6 +829,33 @@ Stranger was digging, and is found when he falls. The Standard's Ribbon is on th
 
 The **Ninth Milestone's** vault holds the heirloom *The Last Order* — *"It says: hold. It doesn't
 say for how long."*
+**The Fens set (v1.30).** Ten, from the Fens' four sites; the last one found reveals the Reedholm Undercroft. They say
+the binding clergy at the Abbey bound the canal's lock-men and steeped the drowned for the Throne's lamps, and what
+happened the night the Throne went dark and the canal broke:
+1. **The Lock-Keeper's Tally**, in a chest on the Canal Locks' first floor: *"Lock-men on the Abbey's rolls: sixty,
+   bound. They do not tire at the windlass. The Abbess says they do not mind it."*
+2. **A Canal Order**, at a shrine on the Locks' first floor: *"All barges to clear the Locks by the second watch. The
+   Throne's tithe-boats have the canal tonight."*
+3. **The Sluice-Book**, in the Sluice, the Locks' second-floor hall: *"Gates three and four untended since the second
+   watch. The bound lock-men are lying in the sluice. The water is coming up the chapel steps."*
+4. **A Reed-Cutter's Stick**, in a chest on Toadking's Mound's first floor, notched and burned: *"Four boats off the
+   flood, the night the water came. Nobody aboard. One had a lamp in the bow, still lit."*
+5. **A Tithe-Boat's Plate**, off the Toadking when he falls (it hung in his Boat Hall): *"Tithe-boat Ninth. The Drowned
+   Abbey to the Ember Throne. Cargo: lamps, forty."*
+6. **The Vat-Master's Ledger**, in a chest in the Sickpools: *"Vat seven: forty bound, steeped. The Abbey's lamps want
+   filling by the new moon."*
+7. **The Drain Order**, at a shrine on the Sickpools' second floor: *"If the gates fail, open the vats to the canal.
+   Better drowned than loose."*
+8. **A Novice's Letter**, in a chest on the Drowned Abbey's first floor: *"Mother, they let me write the names today.
+   Most of them volunteered. I asked the Abbess about the rest, and she gave me more names to write."*
+9. **The Abbess's Day-Book**, in the Choir, the Abbey's second-floor hall: *"The Throne is dark. The bound will not lie
+   down without the order, and there is no one left to give it. We will keep the hours."*
+10. **The Last Hour**, from the Abbess Below when she falls: *"We kept the hours. The water kept us."*
+
+The **Reedholm Undercroft** is where the binding rolls were written out fair. Its vault holds the heirloom *The Fair
+Copy* — *"Every name, in a better hand than it was ever written in."* Mother Agnes, told the set is whole: *"Then you
+know what we were. Go on. The key's on the nail by the door. It always was."*
+
 - *"Furnace nine requires eleven more souls per week to meet quota."* (A Cinderworks ledger.)
 - *"Forgive me. They will call it the Fall. Let them. — A."* (Glass Keep, last of the set.)
 

@@ -195,6 +195,11 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
 10. **The Fens Chronicle.** Ten fragments (the night the canal broke; world doc §7), placed as the Vale's are; the
     last reveals the Reedholm Undercroft, whose vault holds the set's heirloom. Ilse reads them all; Mother Agnes has
     a line for the set whole.
+    - **Done** (2026-10-05): `lore.js` (ten `frag_fens_*`: three at the Canal Locks, two on Toadking's Mound with the
+      Toadking's plate, two in the Sickpools, three in the Drowned Abbey with the Abbess's; `SET_REVEALS.fens`),
+      `sites.js` (the Undercroft's vault), `items.js` (*The Fair Copy*), `content/lore/frag_fens_*.json`, Ilse's reading
+      (`ilse_read_fens`) and Agnes's key (`agnes_undercroft`), the Journal's Fens leads (the set's count; the
+      Undercroft once open). World doc v1.30 §7. Tests: `test/chronicle.test.mjs`.
 11. **Loot, balance and the golden path.**
     - The room-level harness at each site's band, solo and party; the boss harness at each hall.
     - The smoke gates add 12 and 15 (the right party holds a same-level room 10+ waves, nobody Fallen in the first
