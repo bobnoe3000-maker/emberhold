@@ -19,7 +19,7 @@ import { CLASSES } from '../sim/party.js';
 import { storyStatus, openLeads } from './storystatus.js';
 
 const CSS = `
-#journalBtn { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); top: calc(var(--hud-b, 50px) + 172px); z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
+#journalBtn { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); top: calc(var(--hud-l1, 30px) + 174px); z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
   background: rgba(16,12,22,0.92); border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
 #journalBtn svg { width: 22px; height: 22px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
 #journalBtn .dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 5px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }

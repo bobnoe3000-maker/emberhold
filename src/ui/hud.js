@@ -10,12 +10,17 @@ import { weatherNow } from '../render/weatherfx.js';
 import { weatherLeft, weatherName, skyAt } from '../sim/weather.js';
 import { weatherIcon, skyWord } from './weathericon.js';
 import { PART_NAMES } from '../render/daylight.js';
+import { SHRINES } from '../sim/shrines.js';
 
 export function createHud(sim) {
-  // the HUD row's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it: the
-  // compass and Journal buttons follow the minimap down (the renderer measures the same edge)
-  const hudEl = document.getElementById('hud');
-  const syncTop = () => { if (hudEl) document.documentElement.style.setProperty('--hud-b', `${Math.round(Math.max(40, hudEl.getBoundingClientRect().bottom))}px`); };
+  // the top bar's bottom edge (the phone's safe area included) as --hud-b, for what stacks under it, and its line 1's
+  // as --hud-l1: the minimap hangs 6 px under line 1, and the compass and Journal buttons under the minimap (the
+  // renderer measures the same edges; docs/hud-mockup.html)
+  const hudEl = document.getElementById('hud'), l1El = document.getElementById('hudL1');
+  const syncTop = () => {
+    if (hudEl) document.documentElement.style.setProperty('--hud-b', `${Math.round(Math.max(40, hudEl.getBoundingClientRect().bottom))}px`);
+    if (l1El) document.documentElement.style.setProperty('--hud-l1', `${Math.round(Math.max(24, l1El.getBoundingClientRect().bottom))}px`);
+  };
   syncTop(); window.addEventListener('resize', syncTop); setInterval(syncTop, 1000);
   const wood = document.getElementById('hudWood');
   const stone = document.getElementById('hudStone');
@@ -79,11 +84,16 @@ export function createHud(sim) {
   // with ⚠ when the gold won't cover it, red with "owed" when anyone already is (never colour alone).
   // Tap it: the tavern's Hire view in town (main.js), else a one-line summary. Two minutes before a dawn
   // you can't pay, one warning.
+  const line2 = document.getElementById('hudLine2'), line3 = document.getElementById('hudLine3');
   const wageEl = document.createElement('span'); wageEl.id = 'hudWage'; wageEl.setAttribute('role', 'button');
-  if (gold) gold.parentElement.appendChild(wageEl);
+  if (line2) line2.appendChild(wageEl);
   const css = document.createElement('style');
-  css.textContent = `#hud .stat #hudWage { display: none; font: 11px ui-monospace, Menlo, monospace; color: #b8ac98; letter-spacing: .3px; margin-top: 1px; pointer-events: auto; padding: 4px 0 12px; margin-bottom: -12px; cursor: pointer; }
-    #hud .stat #hudWage.on { display: block; } #hud .stat #hudWage.short { color: #ffc060; } #hud .stat #hudWage.owed { color: #ff8a7a; font-weight: 700; }`;
+  // (each piece of lines 2 and 3 is its own tap, 44 px tall: the sky dial's by padding given back as negative margin, the
+  // wages' and the chips' by an invisible ::after, so where the wages wrap under the dial on a narrow phone nothing shows over it)
+  css.textContent = `#hudWage { display: none; font: 11px/16px ui-monospace, Menlo, monospace; color: #b8ac98; letter-spacing: .3px; white-space: nowrap; pointer-events: auto; cursor: pointer; position: relative; }
+    #hudWage::after { content: ''; position: absolute; left: -4px; right: -4px; top: -14px; bottom: -14px; }
+    #hudWage.on { display: block; } #hudWage.short { color: #ffc060; } #hudWage.owed { color: #ff8a7a; font-weight: 700; }
+    #hudSky ~ #hudWage.on::before { content: '·'; color: #6a6478; margin-right: 8px; font-weight: 400; }`;
   document.head.appendChild(css);
   const bill = () => sim.state.party.reduce((n, m) => n + wageOf(m, false), 0) + sim.state.bench.reduce((n, m) => n + wageOf(m, true), 0);
   const owedAll = () => [...sim.state.party, ...sim.state.bench].reduce((n, m) => n + (m.owed || 0), 0);
@@ -112,10 +122,14 @@ export function createHud(sim) {
   // Tap it: when the next part comes, and the dawn and its wages. It sits in the HUD row, so everything
   // laid out under the row (minimap, compass, Journal, room pill) moves down with it.
   const skyEl = document.createElement('span'); skyEl.id = 'hudSky'; skyEl.setAttribute('role', 'button');
-  if (embers) embers.parentElement.appendChild(skyEl);
+  if (line2) line2.prepend(skyEl);
   const SKY_COL = ['#f4b0a0', '#f0d478', '#ffa060', '#a8c0ff'];
-  css.textContent += `#hud .stat #hudSky { display: flex; align-items: center; gap: 4px; font: 11px ui-monospace, Menlo, monospace; letter-spacing: .3px; margin: -11px -10px -19px; padding: 12px 10px 19px; pointer-events: auto; cursor: pointer; white-space: nowrap; }
-    #hud .stat #hudSky svg { flex: none; overflow: visible; }`;
+  css.textContent += `#hudSky { display: flex; align-items: center; gap: 4px; height: 16px; font: 11px/16px ui-monospace, Menlo, monospace; letter-spacing: .3px; margin: -14px -4px; padding: 14px 4px; box-sizing: content-box; pointer-events: auto; cursor: pointer; white-space: nowrap; position: relative; z-index: 1; }   /* (over the wages' pad when they wrap under it, on a narrow phone) */
+    #hudSky svg { flex: none; overflow: visible; }
+    #hudLine3 .chip { font: 11px/16px ui-monospace, Menlo, monospace; padding: 1px 6px; border-radius: 6px; background: rgba(16,12,22,.78); border: 1px solid; white-space: nowrap; text-shadow: none; pointer-events: auto; cursor: pointer; position: relative; }
+    #hudLine3 .chip::after { content: ''; position: absolute; left: -3px; right: -3px; top: -12px; bottom: -12px; }
+    #hudLine3 .chip.atk { color: #ff9a84; border-color: rgba(255,154,132,.45); } #hudLine3 .chip.def { color: #9fd4f4; border-color: rgba(159,212,244,.45); }
+    #hudLine3 .chip.weak { color: #e0a060; border-color: rgba(224,160,96,.45); }`;
   let skyKey = '';
   /** the sky's icon state, or null underground (a dev hold of the weather wins, as it does on screen) */
   const skyNow = () => {
@@ -149,33 +163,37 @@ export function createHud(sim) {
   setInterval(paintSky, 1000); paintSky(); sim.bus.on('levelChanged', paintSky);
   syncTop();
 
-  // Weakened (after a wipe): an amber chip in the HUD while it lasts
-  // with the minutes it has left (it wears off after 10 minutes of play, or at the inn)
-  const weak = document.createElement('div'); weak.className = 'stat'; weak.style.cssText = 'color:#e0a060;display:none'; weak.textContent = 'weakened';
-  if (depth) depth.parentElement.parentElement.appendChild(weak);
-  let weakText = '';
-  const paintWeak = () => {
-    const left = Math.max(0, ...sim.state.party.map((m) => (m.weakUntil > 0 ? m.weakUntil - sim.state.t : 0)));
-    const t = left > 0 ? `weakened · ${Math.max(1, Math.ceil(left / 60))} min` : '';
-    if (t === weakText) return; weakText = t;
-    weak.textContent = t; weak.style.display = t ? '' : 'none'; weak.setAttribute('aria-label', t ? `Weakened for ${Math.ceil(left / 60)} more minutes` : '');
+  // Line 3 of the top bar, only while something's lit (docs/hud-mockup.html; the owner, 2026-10-05: "account for the
+  // shrine buff text"): Weakened after a wipe, and a red or blue shrine's boon, each a chip with its word, its amount
+  // and the time left (never the colour alone), wrapping in the left column, clear of the minimap. Each is a tap: what
+  // it is, in a line. (They had shared line 1, where two boons squeezed the place name to nothing and ran off screen.)
+  const chip = (cls, say) => {
+    const el = document.createElement('span'); el.className = `chip ${cls}`; el.setAttribute('role', 'button'); el.style.display = 'none';
+    el.addEventListener('pointerdown', (e) => e.stopPropagation());
+    el.addEventListener('click', (e) => { e.stopPropagation(); show(say(), 3200); });
+    if (line3) line3.appendChild(el); return el;
   };
-  sim.bus.on('weakened', paintWeak); sim.bus.on('partyChanged', paintWeak); setInterval(paintWeak, 1000); paintWeak();
-
-  // a red or blue shrine's boon (sim shrines.js): a chip while it lasts, with the word and the time left (never the
-  // colour alone), beside Weakened
-  const boon = document.createElement('div'); boon.className = 'stat'; boon.style.cssText = 'display:none';
-  if (depth) depth.parentElement.parentElement.appendChild(boon);
-  let boonText = '';
-  const paintBoon = () => {
-    const B = sim.state.boons || {}, t = sim.state.t, part = [];
-    const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-    if (B.atk > t) part.push(`<span style="color:#ff9a84">might +25% ATK ${clock(B.atk - t)}</span>`);
-    if (B.def > t) part.push(`<span style="color:#9fd4f4">ward +25% DEF ${clock(B.def - t)}</span>`);
-    const h = part.join(' · '); if (h === boonText) return; boonText = h;
-    boon.innerHTML = h; boon.style.display = h ? '' : 'none';
+  const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const pct = (stat) => Math.round(100 * (Object.values(SHRINES).find((q) => q.stat === stat) || { k: 0.25 }).k);
+  const weakLeft = () => Math.max(0, ...sim.state.party.map((m) => (m.weakUntil > 0 ? m.weakUntil - sim.state.t : 0)));
+  const boonLeft = (stat) => Math.max(0, ((sim.state.boons || {})[stat] || 0) - sim.state.t);
+  const weak = chip('weak', () => `Weakened · ${Math.max(1, Math.ceil(weakLeft() / 60))} min more · it wears off after 10 minutes of play, or at the inn`);
+  const atk = chip('atk', () => `Shrine of Might · the whole party strikes harder, +${pct('atk')} % ATK · ${clock(boonLeft('atk'))} left`);
+  const def = chip('def', () => `Shrine of Warding · the whole party stands firmer, +${pct('def')} % DEF · ${clock(boonLeft('def'))} left`);
+  let line3Text = '';
+  const set = (el, t, label) => { el.textContent = t; el.style.display = t ? '' : 'none'; el.setAttribute('aria-label', t ? label : ''); };
+  const paintLine3 = () => {
+    const w = weakLeft(), a = boonLeft('atk'), d = boonLeft('def');
+    const tw = w > 0 ? `weakened · ${Math.max(1, Math.ceil(w / 60))} min` : '', ta = a > 0 ? `ATK +${pct('atk')}% ${clock(a)}` : '', td = d > 0 ? `DEF +${pct('def')}% ${clock(d)}` : '';
+    const key = `${tw}|${ta}|${td}`; if (key === line3Text) return; line3Text = key;
+    set(atk, ta, `Shrine of Might: plus ${pct('atk')} percent attack, ${Math.ceil(a)} seconds left`);
+    set(def, td, `Shrine of Warding: plus ${pct('def')} percent defence, ${Math.ceil(d)} seconds left`);
+    set(weak, tw, `Weakened for ${Math.ceil(w / 60)} more minutes`);
+    if (line3) line3.style.display = tw || ta || td ? '' : 'none';
+    syncTop();
   };
-  sim.bus.on('boonsChanged', paintBoon); setInterval(paintBoon, 500); paintBoon();
+  for (const ev of ['weakened', 'partyChanged', 'boonsChanged']) sim.bus.on(ev, paintLine3);
+  setInterval(paintLine3, 500); paintLine3();
 
   // Toasts stack (the owner, 2026-10-04: a quest's count was bare orange text, and the next message, a chest, a skill
   // or a hire, replaced it at once): each line is its own backed pill with its own timer, newest on top, at most

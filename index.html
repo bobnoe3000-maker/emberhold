@@ -26,22 +26,32 @@
     position: fixed; inset: 0; pointer-events: none;
     background: radial-gradient(ellipse at 50% 52%, transparent 64%, rgba(6,4,12,0.32) 100%);
   }
+  /* The top bar (docs/hud-mockup.html; the owner, 2026-10-05): the ☰, then two lines. Line 1: the place name, and gold
+     and cinders ending on the minimap's right edge (12 px in). Line 2, under the name: the sky dial, then the wages.
+     Line 3, only while lit: the shrines' boons and Weakened as chips. Lines 2 and 3 stop 118 px short of the right
+     (the minimap's 108 and a gap), so the minimap sits just under line 1 (renderer.js mmTop, --hud-l1). */
   #hud {
     position: fixed; top: 0; left: 0; right: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 14px) 14px 8px;
-    display: flex; align-items: baseline; gap: 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))) 8px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
     pointer-events: none; color: #e8e4da;
     text-shadow: 0 1px 0 #0d0913;
   }
+  #hudMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  #hudL1 { display: flex; align-items: baseline; gap: 14px; height: 16px; line-height: 16px; }
+  #hudL1 .money { margin-left: auto; display: flex; gap: 12px; flex: none; }
+  #hudLine2, #hudLine3 { display: flex; flex-wrap: wrap; align-items: center; max-width: calc(100% - 118px); }
+  #hudLine2 { column-gap: 8px; row-gap: 3px; min-height: 16px; }
+  #hudLine3 { gap: 4px 6px; margin-top: 3px; } #hudLine3:empty { display: none; }
   #hud .title { font-size: 13px; letter-spacing: 2px; font-weight: 700; }
-  #menuBtn { pointer-events: auto; align-self: center; width: 34px; height: 34px; margin: -6px -4px -6px -6px; border-radius: 8px;
+  #menuBtn { pointer-events: auto; align-self: flex-start; width: 34px; height: 34px; margin: -1px 0 0 -6px; border-radius: 8px;
     background: rgba(16,12,22,0.7); border: 1px solid rgba(214,170,98,0.35); color: #e0a85a; font-size: 16px; line-height: 1; }
   #hud .title em { color: #ff9440; font-style: normal; }
-  #hud .stat { font-size: 12px; color: #8f8ca4; flex: none; white-space: nowrap; }
+  #hud .stat { font-size: 12px; line-height: 16px; color: #8f8ca4; flex: none; white-space: nowrap; }
   /* the row must fit one phone line: nothing shrinks but the place name (last, with an ellipsis); on a
      phone the wordmark gives its room to the wage line and the sky dial under gold and cinders */
-  #hud .stat.place { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  #menuBtn, #hud .title { flex: none; }
+  #hud .stat.place { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: #e8e4da; }
+  #menuBtn, #hud .title { flex: none; } #hud .title { line-height: 16px; }
   @media (max-width: 479px) { #hud .title { display: none; } }
   #hud .stat b { color: #e8e4da; font-weight: 600; }
   #hud .stat .ember { color: #ff9440; font-style: normal; }
@@ -74,11 +84,19 @@
   <div id="hud">
     <button id="menuBtn" aria-label="Game slots">☰</button>
     <div class="title">EMBER<em>FALL</em></div>
-    <div class="stat place">depth <b id="hudDepth">1</b></div>
-    <div class="stat">gold <b id="hudGold">0</b></div>
-    <div class="stat" aria-label="cinders"><em class="ember">✦</em> <b id="hudEmbers">0</b></div>
-    <div class="stat" style="display:none">wood <b id="hudWood">0</b></div>
-    <div class="stat" style="display:none">stone <b id="hudStone">0</b></div>
+    <div id="hudMain">
+      <div id="hudL1">
+        <div class="stat place">depth <b id="hudDepth">1</b></div>
+        <div class="money">
+          <div class="stat">gold <b id="hudGold">0</b></div>
+          <div class="stat" aria-label="cinders"><em class="ember">✦</em> <b id="hudEmbers">0</b></div>
+        </div>
+      </div>
+      <div id="hudLine2"></div>
+      <div id="hudLine3"></div>
+      <div class="stat" style="display:none">wood <b id="hudWood">0</b></div>
+      <div class="stat" style="display:none">stone <b id="hudStone">0</b></div>
+    </div>
   </div>
   <div id="hudToast"></div>
   <div id="bootSplash"><div class="dot"></div><div>No Game Studios</div></div>

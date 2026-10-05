@@ -249,21 +249,24 @@ export function createRenderer(canvas, sim, input) {
   // The HUD row's bottom edge, in CSS px: it sits under the phone's safe area (an iPhone's camera island
   // pushes it ~60 px down), so everything drawn along the top (minimap, room pill, boss bar, labels)
   // keys off it rather than a fixed height that fit a desktop and overlapped on a phone.
-  let hudB = 50;
+  let hudB = 50, hudL1 = 30;   // (hudL1: the bar's line 1, which the minimap hangs under: docs/hud-mockup.html)
   // ...and the party's column down the left on a phone held sideways (ui/party.js sets --party-side, CSS px; 0 when
   // the cards sit along the bottom): the camera centres the hero in the rest of the screen
   // and the notch's inset on the right, if it's there (ui/safearea.js's probe): the minimap and the room pill keep clear of it
   let sideL = 0, safeR = 0;
   const measureHud = () => {
     const h = typeof document !== 'undefined' && document.getElementById('hud'); if (h) hudB = Math.max(40, h.getBoundingClientRect().bottom);
+    const l1 = typeof document !== 'undefined' && document.getElementById('hudL1'); hudL1 = l1 ? Math.max(24, l1.getBoundingClientRect().bottom) : hudB - 24;
     if (typeof document !== 'undefined') {
       sideL = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--party-side')) || 0;
       const pr = document.getElementById('safeProbe'); safeR = pr ? parseFloat(getComputedStyle(pr).paddingRight) || 0 : 0;
     }
   };
   measureHud(); window.addEventListener('resize', () => { measureHud(); requestAnimationFrame(measureHud); }); setInterval(measureHud, 1000);
-  const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 10;                // the minimap's size and margins (CSS px; + the notch's inset, safeR)
-  const mmTop = () => hudB + 10;                                 // the minimap's top edge (CSS px)
+  const MM_CSS = 96, MM_PAD = 6, MM_RIGHT = 12;                // the minimap's size and margins (CSS px; + the notch's inset, safeR): its frame's
+  // right edge lines up with the bar's gold and cinders and the compass and Journal (12 px in)
+  const mmTop = () => hudL1 + 6 + MM_PAD;                        // the map's top edge (CSS px): its frame 6 px under the bar's line 1, which
+  // leaves line 2 and 3's left column clear (they stop 118 px short); the buttons hang under the frame (compass.js, journal.js: --hud-l1 + 122 / + 174)
 
   /* ── load-time bakes: props ─────────────────────────────────────────────── */
   let props = buildProps(sim.world.seed);
@@ -1272,7 +1275,7 @@ export function createRenderer(canvas, sim, input) {
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
         sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // a service at the frame's edge keeps its plaque on screen
-        if (sy > (hudB + 112) * k && sy - th < (hudB + 222) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 120 to 216 under the HUD)
+        if (sy > (hudL1 + 114) * k && sy - th < (hudL1 + 224) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 122 to 218 under the bar's line 1)
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
@@ -1622,6 +1625,12 @@ export function createRenderer(canvas, sim, input) {
         const d = Math.hypot(dx, dy + up * 0.45); if (d < bd) { bd = d; best = n; }
       }
       return best;
+    },
+    /** the minimap's frame as drawn this frame (CSS px), or null when there's none (the town's home screen; a test) */
+    get minimapRect() {
+      const w = sim.world; if (!w || (w.kind !== 'dungeon' && camT >= 0.5) || (w.kind === 'dungeon' && !w.level.rooms.length)) return null;
+      const r = window.innerWidth - (MM_RIGHT + safeR), t = mmTop() - MM_PAD;
+      return { l: r - MM_CSS - 2 * MM_PAD, t, r, b: t + MM_CSS + 2 * MM_PAD };
     },
     /** the door label (a plaque with a ›) under a tap, a thumb's reach round it (44 CSS px tall at least), or null */
     doorAt(sxPx, syPx) {

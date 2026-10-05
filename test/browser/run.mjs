@@ -186,7 +186,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
     check('m3: "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
     await p.waitForTimeout(1100);
-    const chip = await p.locator('#hud .stat', { hasText: 'weakened' }).innerText().catch(() => '');
+    const chip = await p.locator('#hudLine3 .chip', { hasText: 'weakened' }).innerText().catch(() => '');
     check('m3: the HUD says Weakened, with the minutes it has left', /^weakened · (10|9) min$/.test(chip.trim()), chip);
     // the inn lifts Weakened
     await p.waitForTimeout(600);
@@ -998,6 +998,64 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('the Mere Tower: from Saltmere\'s boardwalk its sign is a plaque on screen; a tap walks you down the jetty and Wenna takes you out',
       !!at && at.site === 'mere_tower' && kind === 'dungeon' && site === 'mere_tower' && errs.length === 0, JSON.stringify({ at, kind, site, errs }));
     await ctx.close(); await b.close();
+  }
+}
+// 22. The top bar (docs/hud-mockup.html; the owner, 2026-10-05: "The weather icons line can move left, making room to
+// shift the mini map and buttons below up" and "account for the shrine buff text"): line 1 the place and the purse, the
+// purse ending on the minimap's right edge; line 2 the sky dial and wages, line 3 (only while lit) the boons and
+// Weakened, both stopping short of the minimap; the minimap 6 px under line 1, the compass and Journal 8 and 60 px
+// under it, every right edge at 12 px. Checked at 360/390/430 on the Fens with six-figure gold and wages owed, with
+// both boons and Weakened lit, and in a fight underground: nothing of the bar under the minimap or off screen, no tap
+// pad on it, and the place name keeps its room (two boons had squeezed it to nothing).
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const bad = [], seen = []; let shot = null;
+    for (const W of [360, 390, 430]) for (const [scene, lit] of [['overland', false], ['overland', true], ['dungeon', true]]) {
+      const ctx = await b.newContext({ viewport: { width: W, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=${scene}${scene === 'overland' ? '&region=fens' : ''}&tod=night`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+      await p.waitForTimeout(600); await run(5);
+      await p.evaluate(({ lit, fight }) => {
+        const s = globalThis.__sim, C = s.state.counters; s.state.t = 4 * 900 - 100;
+        s.state.party.push({ ...s.state.party[0], id: 'tb1', name: 'Tam', main: false, rank: 'lantern', perks: [], level: 9, owed: 120 });   // wages owed
+        C.gold = 123456; C.embers = 1204; s.bus.emit('countersChanged', { ...C }); s.bus.emit('partyChanged', s.state.party);
+        if (lit) { s.state.party[0].weakUntil = s.state.t + 600; s.bus.emit('weakened', { on: true }); s.state.boons = { atk: s.state.t + 112, def: s.state.t + 100 }; s.bus.emit('boonsChanged', {}); }
+        if (fight) { const L = s.world.level, r = L.rooms.find((q) => s.world.roomLevels.get(q.id) === 1), pl = s.state.player; pl.x = pl.px = r.cx + 0.5; pl.y = pl.py = r.cy + 0.5; }
+      }, { lit, fight: scene === 'dungeon' });
+      await run(60); await p.waitForTimeout(1300); await run(3);
+      const r = await p.evaluate(() => {
+        const R = (e) => { const q = e.getBoundingClientRect(); return { l: q.left, t: q.top, r: q.right, b: q.bottom }; }, vis = (e) => e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 0;
+        const mm = globalThis.__renderer.minimapRect, place = document.querySelector('#hud .stat.place'), money = document.querySelector('#hudL1 .money');
+        const texts = [...document.querySelectorAll('#hudLine2 svg, #hudLine2 span:not(#hudSky):not(#hudWage), #hudWage, #hudLine3 .chip, #hud .stat.place')].filter(vis);
+        const pads = [...document.querySelectorAll('#hudSky')].filter(vis).map(R).concat([...document.querySelectorAll('#hudWage')].filter(vis).map((e) => { const q = R(e); return { l: q.l - 4, t: q.t - 14, r: q.r + 4, b: q.b + 14 }; })).concat([...document.querySelectorAll('#hudLine3 .chip')].filter(vis).map((e) => { const q = R(e); return { l: q.l - 3, t: q.t - 12, r: q.r + 3, b: q.b + 12 }; }));
+        return { mm, vw: innerWidth, place: R(place), placeFull: place.scrollWidth <= place.clientWidth + 1, money: R(money), texts: texts.map(R), pads, chips: [...document.querySelectorAll('#hudLine3 .chip')].filter(vis).map((e) => e.textContent),
+          compass: R(document.getElementById('compassBtn')), journal: R(document.getElementById('journalBtn')), menu: R(document.getElementById('menuBtn')), l1: R(document.getElementById('hudL1')) };
+      });
+      const where = `${W}px ${scene}${lit ? ' lit' : ''}`, probs = [], hit = (a, q) => Math.min(a.r, q.r) - Math.max(a.l, q.l) > 0.5 && Math.min(a.b, q.b) - Math.max(a.t, q.t) > 0.5;
+      if (!r.mm) probs.push('no minimap');
+      else {
+        if (r.texts.some((q) => hit(q, r.mm))) probs.push('bar text under the minimap');
+        if (r.pads.some((q) => hit(q, r.mm))) probs.push('a tap pad over the minimap');
+        if (Math.abs(r.mm.t - (r.l1.b + 6)) > 1) probs.push(`minimap at ${r.mm.t} (line 1 ends ${r.l1.b})`);
+        if (Math.abs(r.money.r - r.mm.r) > 1 || Math.abs(r.compass.r - r.mm.r) > 1 || Math.abs(r.journal.r - r.mm.r) > 1) probs.push(`right edges ${r.money.r}/${r.mm.r}/${r.compass.r}/${r.journal.r}`);
+        if (Math.abs(r.compass.t - (r.mm.b + 8)) > 1 || Math.abs(r.journal.t - (r.mm.b + 60)) > 1) probs.push(`buttons at ${r.compass.t}/${r.journal.t} under a minimap ending ${r.mm.b}`);
+      }
+      if (r.texts.some((q) => q.l < 0 || q.r > r.vw)) probs.push('off screen');
+      if (hit(r.place, r.money)) probs.push('the place name runs into the purse');
+      if (!r.placeFull && r.place.r - r.place.l < 60) probs.push(`the place name squeezed to ${(r.place.r - r.place.l).toFixed(0)} px`);   // (shortened with an ellipsis it may be, but not to nothing)
+      if (lit && r.chips.length !== 3) probs.push(`chips: ${r.chips.join(', ')}`);
+      if (!lit && r.chips.length) probs.push('chips with nothing lit');
+      if (Math.abs(r.menu.t - r.l1.t) > 2) probs.push(`☰ at ${r.menu.t}, line 1 at ${r.l1.t}`);
+      if (errs.length) probs.push(errs.join(' | '));
+      if (probs.length) bad.push(`${where}: ${probs.join('; ')}`); else seen.push(where);
+      if (W === 390 && lit && scene === 'overland') shot = r;
+      await ctx.close();
+    }
+    check('top bar: line 1 the place and the purse, lines 2–3 short of the minimap; the minimap under line 1, the buttons under it, one right edge; boons and Weakened as chips, the place name kept (360/390/430, the Fens, lit, a fight)',
+      bad.length === 0, bad.length ? bad.join(' · ') : `${seen.length} layouts · at 390 lit: minimap ${shot && JSON.stringify(shot.mm)}, chips ${shot && shot.chips.join(' / ')}, place ${shot && Math.round(shot.place.r - shot.place.l)} px${shot && shot.placeFull ? ' (whole)' : ' (shortened)'}`);
+    await b.close();
   }
 }
 srv.close();

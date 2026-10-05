@@ -672,8 +672,8 @@ by 1 for each boss it helps put down. They fall by 2 for each dawn it isn't paid
 - **Found companions:** Brannoc has no rank, fee or wage; he has his own perks (Bodyguard, Hardy).
 
 **On screen and where it's explained** (2026-10-01):
-- **Top bar:** a line under the gold gives the next dawn's wage bill and the time to it,
-  `−300 · dawn 14m`.
+- **Top bar:** a line under the place name (after the sky dial; v1.35) gives the next dawn's wage bill and the time
+  to it, `−300 · dawn 14m`.
   - **Short:** amber with ⚠ when the gold won't cover it.
   - **Owed:** red, `owed N ⚠`, when anyone is owed.
   - **Tap it:** in town it opens the tavern's Hire view; out of town it shows who costs what.
@@ -1115,13 +1115,24 @@ progress):
 
   Each part blends into the next over two minutes of play, centred on the boundary. The title screen
   is always at dusk.
-- **The sky dial.** It sits under the cinders in the HUD row. A half arc carries the sun from dawn to
+- **The top bar** (v1.35, 2026-10-05; `docs/hud-mockup.html`, the owner: "The weather icons line can move left, making
+  room to shift the mini map and buttons below up", and "account for the shrine buff text"). The ☰, then two lines:
+  - **Line 1:** the place name; gold and cinders on the right, ending on the minimap's right edge.
+  - **Line 2,** under the name: the sky dial, then the wages. It stops 118 px short of the right edge (it wraps on a
+    narrow phone), so nothing of the bar sits over the minimap.
+  - **Line 3,** only while lit: Weakened and the shrines' boons as chips (`weakened · 7 min`, `ATK +25% 1:52`,
+    `DEF +25% 1:40`), word, amount and time left; tap one for a line on it. (On line 1, two boons had squeezed the
+    place name to nothing and run off screen.)
+  - **The minimap** hangs 6 px under line 1 (it was 10 px under the whole bar: 22 px higher on a phone), the compass and
+    the Journal 8 and 60 px under it; every right edge 12 px in. Measured at 390 × 844: the minimap 270–378 × 36–144,
+    the compass 152, the Journal 204 (were 58, 174, 226).
+- **The sky dial.** It sits at the start of the bar's line 2 (v1.35; it was under the cinders). A half arc carries the sun from dawn to
   the end of dusk and a crescent moon through the night, and the part's name is always written next to
   it, never colour alone.
   - **Tap it** (44 px or more) for one line: when the next part comes, when dawn comes and the wages
     then.
-  - **Room for it:** on a phone the EMBERFALL wordmark leaves the in-game HUD, so the row fits one
-    line: place, gold and wage, cinders and dial. Only the place name can shorten, with an ellipsis.
+  - **Room for it:** on a phone the EMBERFALL wordmark leaves the in-game HUD, so line 1 fits: place, gold,
+    cinders. Only the place name can shorten, with an ellipsis.
   - **No overlaps:** a browser test checks the dial against everything on screen at four widths, in
     town, on the Vale and in a fight.
 - **Weather** (v1.20; the owner, 2026-10-03: "weather cycles … not overly visually intrusive — rain, fog,
