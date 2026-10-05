@@ -358,7 +358,8 @@ which is deliberate; they differ in hair, prop and the habit's tone.
 - **Wren's chain** is hers to give, only while she's with you, and hers to take in from her card. *Settled* pays *The
   Receipt*, a ring (crit, dodge, attack), once.
 
-Still open: *Settled* holds the Abbey's first-floor hall, which is Brother Teague's until he falls. A company that
-takes her chain before *The Bells* fights him for it. Osric and Maudry have no Fens lines yet; their Ink doesn't
-read Act II's quests. The level-12 trials and the Fens Chronicle are slices 9 and 10.
+Closed after (the owner: *"do the open items"*): *Settled* held the Abbey's first-floor hall, which is Brother
+Teague's until he falls, so a company that took her chain before *The Bells* fought him for it. It now waits for *The
+Bells*, and Wren says so (*"Once he's gone, I've a fire to light"*). Maudry and Osric each have a line for the Fens
+and one for Act II's end: every conversation now reads `chapters_done`, how many chapters are handed in.
 

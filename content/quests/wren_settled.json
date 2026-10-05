@@ -10,7 +10,8 @@
   ],
   "companion": "wren",
   "after": [
-    "wren_night_boats"
+    "wren_night_boats",
+    "ch2_the_bells"
   ],
   "summary": "The Cult's boat ties up under the Drowned Abbey. Wren would like to burn it, and needs someone to hold the door while she does.",
   "steps": [

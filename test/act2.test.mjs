@@ -187,3 +187,15 @@ test('the golden path: chapter 1 on the compass alone, Thornwick to Saltmere to 
   assert.equal(ev.filter((e) => e.n === 'companionJoined').length, 1, 'Wren came along');
   assert.deepEqual(ev.filter((e) => e.n === 'questReward').map((e) => e.gold), [220]);
 });
+
+test('Settled waits for The Bells (the hall she wants held is Teague\'s until he falls); anyone may read how far the story has got', () => {
+  const sim = after1(12);
+  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 1); talk(sim, 'wren'); effect(sim, 'companion', 'join');
+  for (const id of ['wren_the_marker', 'wren_night_boats']) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] };
+  assert.equal(st(sim, 'wren_settled'), QS.LOCKED, 'Teague still holds the hall');
+  sim.state.quests.ch2_the_bells = { st: QS.DONE, step: 0, n: [] };
+  assert.equal(st(sim, 'wren_settled'), QS.AVAILABLE);
+  const ev = events(sim, ['dialogue']);
+  goTo(sim, 'town', 'barrows', 0, 'vale'); talk(sim, 'maudry_fenn');
+  assert.equal(ev.at(-1).vars.chapters_done, 4, 'Act I and The Bells');
+});

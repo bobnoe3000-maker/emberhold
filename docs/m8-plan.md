@@ -168,7 +168,7 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      beats, `src/ui/storystatus.js` (the giver's town; the Fens' leads; Act II's end), the cast baked (`tools/actor-lab`
      N10–N14). World doc v1.29, GDD v1.40. Tests: `test/act2.test.mjs` (with the compass walk of chapter 1), the
      browser walk to Dace in Saltmere. Passes: `docs/fens-critic-pass.md`, `docs/img/act2-cast.jpg`. Maudry and Osric
-     have no Fens lines yet.
+     read `chapters_done` for their Fens lines.
 8. **Wren.** A found rogue (world doc §5: a smuggler who owes the Cult money). Freed by the Toadking's fall: she's
    tied in his boat hall as surety for her debt. Her chain, *What's Owed*:
    1. *The Marker* — three harvester elites in the Canal Locks carry her debt's marker between them.
@@ -179,7 +179,7 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      as a hireling's name, as it did *Brannoc* (and *Tamsin*, who is the Reach's, in M9).
    - **Done** (2026-10-05): `heroes.js` `FOUND.wren` (freed by the Toadking; a hireling who'd taken her name takes
      another), `companions.js` (her perks: skirmisher, smoke artist), the chain as `wren_the_marker`, `wren_night_boats`
-     and `wren_settled` (named *Settled*, world doc v1.29), *The Receipt* (`items.js`), Ink `wren`, `hero_wren` baked
+     and `wren_settled` (named *Settled*, world doc v1.29; after *The Bells*: its hall is Teague's), *The Receipt* (`items.js`), Ink `wren`, `hero_wren` baked
      (CP2). The tavern's rogue name *Wren* is now *Pell*.
 9. **The level-12 trials.** The 12s have been unlocked by level since M5. Each gets a trial and a teacher, as the
    6s did: fighter (Osric, *The Long Watch*), rogue (Wren, *Dead Water*), mage (Pim Rushlight, *Lamp Oil*: a

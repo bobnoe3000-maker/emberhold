@@ -20,6 +20,7 @@ VAR q_ch1_ember_in_the_fist = -1
 VAR q_trial_hold_the_keep_gate = -1
 VAR frag_vale_count = 0
 VAR road_ranks = 3
+VAR chapters_done = 0
 
 == osric_hub ==
 { flag_met_osric == 0: -> osric_first_meet }
@@ -51,6 +52,8 @@ A grey man at a folding table by the well turns a page in a ledger and doesn't l
 { q_ch1_ember_in_the_fist == 3: "Sister Ilse sent me a note. It says 'the fens.' Two words. She's never used two words for anything." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "Sister Ilse read me your tablets. A legion holding a road until relieved." He looks at the ledger for a long moment. "I know how that goes." }
 { frag_vale_count == 10: "Ilse says the order to stand down was written and never sent." He closes the ledger, which he never does. "Somebody should have sent it. That's all a Watch is, in the end. Somebody who sends the letter."}
+{ chapters_done >= 4 && chapters_done < 9: "The Fens. Saltmere's not Greyholt's, nor anybody's. If they ask who sent you, say the Watch. It means nothing down there, but they'll like that you said it." }
+{ chapters_done == 9: "The Kell Assay." He writes it at the top of a clean page. "Assay houses don't do anything for nothing. Neither do I, but I write mine down." }
 -> osric_topics
 
 == osric_greet_fallen ==

@@ -17,6 +17,7 @@ VAR q_vale_long_way_round = -1
 VAR q_ch1_smoke_over_the_vale = -1
 VAR frag_vale_count = 0
 VAR road_ranks = 3
+VAR chapters_done = 0
 
 == maudry_hub ==
 { flag_met_maudry == 0: -> maudry_first_meet }
@@ -54,6 +55,8 @@ The woman at the Mule's door looks you over and goes on wiping a mug that was al
 { q_ch1_smoke_over_the_vale == 3: "Osric's been writing in that ledger of his like it owes him money. Whatever you told him, he took it serious." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "Sister Ilse was in here last night. Didn't drink. Just sat. Said the dead in the barrows are still following orders. I said so are half my customers. She didn't laugh." }
 { frag_vale_count == 10: "Sister Ilse bought a round last night. Sister Ilse. She said it was for a legion. I didn't ask which. I poured." }
+{ chapters_done >= 4 && chapters_done < 9: "You've been down to Saltmere, then. Is Dace Pike still writing everything down? Tell him the Mule's paid up. He'll check. He always checks." }
+{ chapters_done == 9: "Ilse's been sitting on the Shrine step all week not writing. I've never seen her not write. It's put the whole square off its ale." }
 -> maudry_topics
 
 == maudry_greet_fallen ==

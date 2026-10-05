@@ -180,8 +180,8 @@ export const QUESTS = {
     steps: [{ id: 'pools', objectives: [{ type: 'loot', site: 'sickpools', count: 2 }] }],
     rewards: { share: 0.3, lv: 11, gold: 180 },
   },
-  wren_settled: {
-    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats'],
+  wren_settled: {                                   // (after The Bells: the hall she wants held is Brother Teague's until he falls)
+    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],
     steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, hall: true, floor: 1 }] }],
     rewards: { share: 0.45, lv: 12, gold: 200, item: 'the_receipt' },
   },
@@ -311,6 +311,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     /** @type {Record<string, number>} */
     const v = {};
     for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc || takerOf(d) === npc || d.steps.some((s) => s.objectives.some((o) => o.npc === npc))) { v['q_' + id] = status(id); v['s_' + id] = inst(id) ? inst(id).step : 0; }   // (s_: the step it's on, M8: who's met along the way reads where it stands)
+    v.chapters_done = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter' && status(id) === QS.DONE).length;   // (anyone may say where the story's got to: 3 = Act I over, 9 = Act II)
     return v;
   }
   /** the tracked quest's next place, as a compass row made from one of the rows already listed

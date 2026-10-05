@@ -69,6 +69,7 @@ A small woman sits roped to the mast of an upturned boat, next to a lectern with
 == wren_greet ==
 {&Wren falls into step and pretends she was already there.|"What? I wasn't touching anything."|Wren is flipping a coin across her knuckles. It isn't hers. It might be yours.}
 { q_wren_settled == 3: "No marker. No boat. No debt. I keep checking my pockets for it. Habit." }
+{ q_wren_night_boats == 3 && q_wren_settled == -1: "The Cult's boat ties up under the Abbey. There's a man with a cage at the choir's door above it, though. Once he's gone, I've a fire to light." }
 -> wren_topics
 
 == wren_greet_fallen ==
