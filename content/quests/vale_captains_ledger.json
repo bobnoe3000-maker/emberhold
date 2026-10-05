@@ -17,6 +17,6 @@
   ],
   "ready": "Go back to Osric Hale at the Watch post by the well in Thornwick.",
   "done": "Osric Hale paid for three bright-eyed ones from the Old Barrows, and wrote three more lines in his ledger.",
-  "rewards": { "xp": 260, "gold": 60 },
+  "rewards": { "share": 0.3, "lv": 3, "gold": 60 },
   "dialogue": { "file": "osric", "offer": "osric_ledger_offer", "turnin": "osric_ledger_turnin" }
 }

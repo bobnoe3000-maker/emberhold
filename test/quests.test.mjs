@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
-import { QUESTS, QS } from '../src/sim/quests.js';
+import { QUESTS, QS, questXp } from '../src/sim/quests.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 
 const ID = 'vale_long_way_round';
@@ -73,9 +73,9 @@ test('the golden path: accept, the Old Barrows on the compass, 4 waves and a che
   }
   assert.equal(status(sim), QS.DONE, `not done (${JSON.stringify(sim.state.quests[ID])}, last row ${last}, scene ${sim.world.kind})`);
   assert.ok(went > 3, 'the compass led the way');
-  assert.deepEqual(ev.filter((e) => e.e === 'questReward').map((e) => [e.xp, e.gold]), [[150, 40]]);
+  assert.deepEqual(ev.filter((e) => e.e === 'questReward').map((e) => [e.xp, e.gold]), [[questXp(QUESTS.vale_long_way_round.rewards, 6), 40]]);   // (a quarter of level 2's: written for 2, the hero's 6)
   assert.ok(sim.state.counters.gold >= gold0 + 40);
-  assert.ok(h.level > lv0 || h.xp >= xp0 + 150);
+  assert.ok(h.level > lv0 || h.xp >= xp0 + questXp(QUESTS.vale_long_way_round.rewards, 6));
   assert.equal(sim.state.tracked, null);
   say(sim, 'turnin'); assert.equal(ev.filter((e) => e.e === 'questReward').length, 1, 'paid once');
 });
@@ -108,5 +108,5 @@ test('Osric\'s ledger: locked at level 1, taken only in his conversation, counte
   talk('osric_hale'); tag('accept'); assert.equal(sim.quests.status(Q), QS.ACTIVE);
   sim.state.quests[Q].st = QS.READY;                                             // (elites counted: test/board.test.mjs walks it)
   const ev = events(sim, ['questReward']); tag('turnin'); tag('turnin');
-  assert.equal(sim.quests.status(Q), QS.DONE); assert.deepEqual(ev.map((e) => [e.xp, e.gold]), [[260, 60]]);
+  assert.equal(sim.quests.status(Q), QS.DONE); assert.deepEqual(ev.map((e) => [e.xp, e.gold]), [[questXp(QUESTS[Q].rewards, 3), 60]]);
 });

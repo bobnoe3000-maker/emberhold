@@ -30,7 +30,7 @@
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
   "done": "The paymaster's boxes at the Tithe Mill: coal-red wax on every purse, no crest. Brannoc kept one seal.",
   "rewards": {
-    "xp": 500,
+    "share": 0.3, "lv": 5,
     "gold": 120
   },
   "dialogue": {

@@ -27,7 +27,7 @@
   "ready": "Go back to Osric Hale at the Watch post by Thornwick's well.",
   "done": "Osric taught your fighters Shield Wall: plant your feet, lift the shield, and let them come to you.",
   "rewards": {
-    "xp": 600,
+    "share": 0.3, "lv": 6,
     "gold": 60
   },
   "dialogue": {

@@ -27,7 +27,7 @@
   "ready": "Go back to Col the carter, in Thornwick's square.",
   "done": "Col taught your shamans Ancestors' Breath, the way his grandmother taught him: one for you, one for them.",
   "rewards": {
-    "xp": 600,
+    "share": 0.3, "lv": 6,
     "gold": 60
   },
   "dialogue": {

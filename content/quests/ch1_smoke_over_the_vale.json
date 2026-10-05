@@ -27,7 +27,7 @@
   "ready": "Tell Osric Hale, at the Watch post by Thornwick's well, that the mill is clear. He'll ask where they went.",
   "done": "You drove the Redhand out of the Tithe Mill. They went to Wickham Keep; Osric Hale wrote it down.",
   "rewards": {
-    "xp": 300,
+    "share": 0.35, "lv": 2,
     "gold": 60
   },
   "reveal": [

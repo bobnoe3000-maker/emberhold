@@ -27,7 +27,7 @@
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
   "done": "You defeated the three sergeants who kept Brannoc's chain oiled. He said nothing, and stood up straighter.",
   "rewards": {
-    "xp": 700,
+    "share": 0.35, "lv": 4,
     "gold": 90
   },
   "dialogue": {

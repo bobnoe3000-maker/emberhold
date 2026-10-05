@@ -17,7 +17,7 @@
 // [ids] in the order found (save v10).
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
-import { gainXp, ORIGIN_EDGE } from './party.js';
+import { gainXp, ORIGIN_EDGE, levelShare } from './party.js';
 import { bossAt } from './sites.js';
 import { BOSSES } from './battle.js';
 
@@ -41,7 +41,7 @@ export const SET_REVEALS = { vale: 'ninth_milestone' };
 export const SETS = /** @type {Record<string, string[]>} */ ({});
 for (const [id, f] of Object.entries(FRAGMENTS)) (SETS[f.set] ||= []).push(id);
 for (const k of Object.keys(SETS)) SETS[k].sort((a, b) => FRAGMENTS[a].order - FRAGMENTS[b].order);
-export const HALL_WAVES = 3, LORE_XP = 20;
+export const HALL_WAVES = 3, LORE_SHARE = 0.05;   // (GDD §9 v1.39: a fragment is 5 % of a level, each finder's own; it was 20 XP × the hero's level)
 const hashId = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
 
 /** where a fragment lies on this world, if this is its floor: { via, key?, boss? } (key = 'x,y' of its
@@ -67,8 +67,8 @@ export function createLore({ state, bus, getWorld, seed }) {
     if (has(id)) return;
     state.fragments.push(id);
     const f = FRAGMENTS[id], h = state.party[0], edge = ORIGIN_EDGE[h.origin]?.kind === 'loreXp' ? ORIGIN_EDGE[h.origin].value : 0;
-    const xp = Math.round(LORE_XP * h.level * (1 + edge)), lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
-    for (const m of state.party) if (!m.fallen) gainXp(m, xp, lv);
+    const xpOf = (m) => levelShare(m.level, LORE_SHARE * (1 + edge)), xp = xpOf(h), lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
+    for (const m of state.party) if (!m.fallen) gainXp(m, xpOf(m), lv);
     const got = SETS[f.set].filter(has).length;
     bus.emit('fragmentFound', { id, set: f.set, order: f.order, found: got, of: SETS[f.set].length, xp });
     bus.emit('partyChanged', state.party);

@@ -18,6 +18,6 @@
   ],
   "ready": "Go back to Maudry Fenn at the Tired Mule in Thornwick and tell her.",
   "done": "You knocked back the dead in the Old Barrows for Maudry Fenn. The carters complain about something else now.",
-  "rewards": { "xp": 150, "gold": 40 },
+  "rewards": { "share": 0.25, "lv": 2, "gold": 40 },
   "dialogue": { "file": "maudry", "offer": "maudry_longway_offer", "turnin": "maudry_longway_turnin" }
 }

@@ -29,7 +29,7 @@
   "ready": "Go back to Sister Ilse at the Shrine of the Ember in Thornwick.",
   "done": "Ilse taught your clerics Bless: the rites said forward, for the living, which she says is the only direction that helps.",
   "rewards": {
-    "xp": 600,
+    "share": 0.3, "lv": 6,
     "gold": 60
   },
   "dialogue": {

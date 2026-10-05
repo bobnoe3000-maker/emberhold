@@ -31,33 +31,39 @@
 // bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
 // level-6 ability (state.trials, skills.js), every member of the class, for good.
 
-import { gainXp } from './party.js';
+import { gainXp, levelShare } from './party.js';
 import { FRAGMENTS } from './lore.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
+// What a quest pays in XP (GDD §9 v1.39; the owner, 2026-10-05, with the slower curve): a share of a level, at the level
+// the quest is written for (rewards.lv), or a member's own if they're under it. So a chapter is about half a level to
+// whoever it was meant for, an underlevelled companion catches up, and an old errand doesn't hand a high-level company
+// a third of its level. (They were fixed numbers sized for the old curve: a chapter fell from ~25 % to ~3 % of a level.)
+/** @param {{ share?: number, lv?: number }} r @param {number} level the member's */
+export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
 /** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
-/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { xp: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string }} QuestDef */
+/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
   vale_long_way_round: {
     kind: 'errand', giver: 'maudry_fenn', region: 'vale', level: [1, 8],
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 4 }, { type: 'loot', site: 'barrows', count: 1 }] }],
-    rewards: { xp: 150, gold: 40 },
+    rewards: { share: 0.25, lv: 2, gold: 40 },
   },
   vale_captains_ledger: {                            // Osric's bounty (world doc §5, v1.6): the bright-eyed ones lead every fifth wave
     kind: 'bounty', giver: 'osric_hale', region: 'vale', level: [2, 8],
     steps: [{ id: 'barrows', objectives: [{ type: 'elites', site: 'barrows', count: 3 }] }],
-    rewards: { xp: 260, gold: 60 },
+    rewards: { share: 0.3, lv: 3, gold: 60 },
   },
   vale_first_page: {                                 // Sister Ilse's errand (world doc §7, v1.6): bring her the first line of the Vale's Chronicle
     kind: 'errand', giver: 'sister_ilse', region: 'vale', level: [1, 8],
     steps: [{ id: 'barrows', objectives: [{ type: 'fragment', site: 'barrows', count: 1 }] }],
-    rewards: { xp: 120, gold: 25 },
+    rewards: { share: 0.2, lv: 1, gold: 25 },
   },
   vale_hens_under_the_hill: {                        // Hedda's errand (world doc §5, v1.19): the goblins have her hens; tell their chief
     kind: 'errand', giver: 'hedda', region: 'vale', level: [2, 30],   // (open past 8: a Vale hero who finished Act I still finds it)
     steps: [{ id: 'warren', objectives: [{ type: 'boss', site: 'scrag_warren', boss: 'goblin_chief', count: 1 }] }],
-    rewards: { xp: 420, gold: 70 },
+    rewards: { share: 0.3, lv: 4, gold: 70 },
   },
   // Act I, Smoke over the Vale (world doc §6, v1.7; docs/m5-plan.md §4): the Tithe Mill for Maudry, then
   // Wickham Keep and Captain Garrow for Osric, then the Sunken Chapel, where the Robed Stranger dies
@@ -65,61 +71,61 @@ export const QUESTS = {
   ch1_smoke_over_the_vale: {
     kind: 'chapter', giver: 'maudry_fenn', turnin: 'osric_hale', region: 'vale', level: [1, 30],
     steps: [{ id: 'mill', objectives: [{ type: 'waves', site: 'tithe_mill', count: 4 }] }],
-    rewards: { xp: 300, gold: 60 }, reveal: ['wickham_keep'],
+    rewards: { share: 0.35, lv: 2, gold: 60 }, reveal: ['wickham_keep'],
   },
   ch1_the_diggers: {
     kind: 'chapter', giver: 'osric_hale', region: 'vale', level: [3, 30], after: ['ch1_smoke_over_the_vale'],
     steps: [{ id: 'keep', objectives: [{ type: 'reach', site: 'wickham_keep', count: 2 }] },
       { id: 'captain', objectives: [{ type: 'boss', site: 'wickham_keep', boss: 'redhand_captain', count: 1 }] }],
-    rewards: { xp: 700, gold: 150 },
+    rewards: { share: 0.45, lv: 4, gold: 150 },
   },
   ch1_ember_in_the_fist: {
     kind: 'chapter', giver: 'osric_hale', turnin: 'sister_ilse', region: 'vale', level: [5, 30], after: ['ch1_the_diggers'],
     steps: [{ id: 'chapel', objectives: [{ type: 'boss', site: 'sunken_chapel', boss: 'robed_stranger', count: 1 }] }],
-    rewards: { xp: 1200, gold: 200 },
+    rewards: { share: 0.55, lv: 6, gold: 200 },
   },
   // Brannoc's chain, Chains of the Redhand (world doc §5, v1.7; docs/m5-plan.md §5): the debts he owes the
   // Company, the Paymaster's box, and a last stand with the legion that never deserted anything
   brannoc_old_debts: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30],
     steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
-    rewards: { xp: 700, gold: 90 },
+    rewards: { share: 0.35, lv: 4, gold: 90 },
   },
   brannoc_paymasters_box: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
     steps: [{ id: 'mill', objectives: [{ type: 'loot', site: 'tithe_mill', count: 2 }] }],
-    rewards: { xp: 500, gold: 120 },
+    rewards: { share: 0.3, lv: 5, gold: 120 },
   },
   brannoc_standing_down: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
-    rewards: { xp: 1100, gold: 100, item: 'broken_chain' },
+    rewards: { share: 0.45, lv: 6, gold: 100, item: 'broken_chain' },
   },
   // the class trials (world doc §5 v1.7; docs/m5-plan.md §6): at level 6, from Thornwick's people
   trial_hold_the_keep_gate: {
     kind: 'trial', giver: 'osric_hale', trial: 'fighter', region: 'vale', level: [1, 30],
     steps: [{ id: 'keep', objectives: [{ type: 'waves', site: 'wickham_keep', count: 8 }] }],
-    rewards: { xp: 600, gold: 60 },
+    rewards: { share: 0.3, lv: 6, gold: 60 },
   },
   trial_quiet_feet: {
     kind: 'trial', giver: 'nell_tolley', trial: 'rogue', region: 'vale', level: [1, 30],
     steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
-    rewards: { xp: 600, gold: 60 },
+    rewards: { share: 0.3, lv: 6, gold: 60 },
   },
   trial_cold_weather: {
     kind: 'trial', giver: 'hedda', trial: 'mage', region: 'vale', level: [1, 30],
     steps: [{ id: 'chapel', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 6 }] }],
-    rewards: { xp: 600, gold: 60 },
+    rewards: { share: 0.3, lv: 6, gold: 60 },
   },
   trial_old_roads: {                                 // (v1.19) Col teaches the hedge-callers' breath; the long way round runs past the Scrag
     kind: 'trial', giver: 'col', trial: 'shaman', region: 'vale', level: [1, 30],
     steps: [{ id: 'warren', objectives: [{ type: 'waves', site: 'scrag_warren', count: 6 }] }],
-    rewards: { xp: 600, gold: 60 },
+    rewards: { share: 0.3, lv: 6, gold: 60 },
   },
   trial_last_rites: {
     kind: 'trial', giver: 'sister_ilse', trial: 'cleric', region: 'vale', level: [1, 30],
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
-    rewards: { xp: 600, gold: 60 },
+    rewards: { share: 0.3, lv: 6, gold: 60 },
   },
 };
 export const TRIAL_LEVEL = 6;
@@ -169,12 +175,13 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
 
   function pay(id) {
     const r = /** @type {QuestDef} */ (defOf(id)).rewards, lv = (m) => bus.emit('levelUp', { id: m.id, name: m.name, level: m.level });
-    for (const m of state.party) if (!m.fallen) gainXp(m, r.xp, lv);
-    for (const m of state.bench || []) gainXp(m, Math.round(r.xp * BENCH_XP), lv);
+    const xpOf = (m) => (r.xp !== undefined ? r.xp : questXp(r, m.level)), heroXp = xpOf(state.party[0]);   // (a board job's is a number: board.js)
+    for (const m of state.party) if (!m.fallen) gainXp(m, xpOf(m), lv);
+    for (const m of state.bench || []) gainXp(m, Math.round(xpOf(m) * BENCH_XP), lv);
     state.counters.gold = (state.counters.gold || 0) + r.gold;
     if (r.item) grant(r.item);
     if (/** @type {QuestDef} */ (defOf(id)).kind === 'chapter') drop('chapter');                 // (GDD §8: a chapter pays a Fine too)
-    bus.emit('questReward', { id, xp: r.xp, gold: r.gold, ...(r.item ? { item: r.item } : {}) });
+    bus.emit('questReward', { id, xp: heroXp, gold: r.gold, ...(r.item ? { item: r.item } : {}) });
     bus.emit('countersChanged', { ...state.counters }); bus.emit('partyChanged', state.party);
   }
   const nextTracked = () => Object.keys(state.quests).find((k) => state.quests[k].st === QS.ACTIVE || state.quests[k].st === QS.READY) || null;

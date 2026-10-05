@@ -27,6 +27,7 @@ import { DAY_S } from './heroes.js';
 import { QS } from './quests.js';
 import { ROOM_LEVELS_PER_FLOOR } from './world.js';
 import { SITES, SITE_IDS } from './sites.js';
+import { levelShare } from './party.js';
 
 export const MAX_JOBS = 3;                 // board jobs open (active or ready) at once
 export const KEEP_DONE = 12;               // finished board jobs kept for the Journal's Completed tab
@@ -79,13 +80,14 @@ export const companyFor = (tpl, target, lv) => (tpl === 'warden' || tpl === 'del
 /** 1 easy · 2 fair · 3 hard: the job's own level against the hero's (GDD §9) */
 export const skullsFor = (target, lv) => (target - lv <= 0 ? 1 : target - lv <= 2 ? 2 : 3);
 const round5 = (v) => Math.max(5, Math.round(v / 5) * 5);
-// A job pays on top of what its fighting earns. Measured (solo, same-level room, 5 waves): a wave
-// gives about 23 XP × level (L1 24, L3 68) and 2.6 gold × level (L1 3, L3 8). The job adds half the
-// XP again and a little more than the gold again, more for skulls. (XP as a share of a level falls
-// with level, as it does for the fights: the XP table is steeper than the enemies' XP.)
+// A job pays on top of what its fighting earns: gold a little more than the fighting's again, more for skulls; and
+// (GDD §9 v1.39, with the slower curve) XP as a share of a level at the job's level, 2 % an effort, so a fair job of
+// five efforts is about a tenth of a level. (It was 12 XP × level × effort, sized for the old curve: ~5 % of a level
+// at 3, under 1 % at 17.)
+export const BOARD_SHARE = 0.02;
 export const rewardFor = (effort, lv, skulls) => {
   const k = 1 + 0.25 * (skulls - 1);
-  return { xp: round5(12 * lv * effort * k), gold: round5(effort * (3 + 2 * lv) * k) };
+  return { xp: round5(levelShare(lv, BOARD_SHARE * effort * k)), gold: round5(effort * (3 + 2 * lv) * k) };
 };
 
 /** @typedef {{ id: string, tpl: string, day: number, half: number, lv: number, slot: number, n: number, floor: number, skulls: number, company: boolean, pick: [number, number], kind: 'board', giver: string, region: string, site?: string, level: [number, number], steps: { id: string, objectives: any[] }[], rewards: { xp: number, gold: number } }} Job */

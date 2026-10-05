@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { createWorld } from '../src/sim/world.js';
-import { FRAGMENTS, SETS, HALL_WAVES, holderOf } from '../src/sim/lore.js';
+import { FRAGMENTS, SETS, HALL_WAVES, holderOf, LORE_SHARE } from '../src/sim/lore.js';
+import { levelShare } from '../src/sim/party.js';
 import { QS } from '../src/sim/quests.js';
 
 const dungeon = (seed = 20260807) => createSim(seed, undefined, { scene: 'dungeon' });
@@ -47,7 +48,7 @@ test('opening its chest finds Standing Order 14: once, paid a little XP; another
   const xp0 = sim.state.party[0].xp, lv0 = sim.state.party[0].level;
   open(sim, h.key); open(sim, h.key);
   assert.deepEqual(sim.state.fragments, ['frag_vale_standing_order']);
-  assert.equal(ev.length, 1); assert.deepEqual([ev[0].found, ev[0].of, ev[0].xp], [1, 10, 20]);
+  assert.equal(ev.length, 1); assert.deepEqual([ev[0].found, ev[0].of, ev[0].xp], [1, 10, levelShare(sim.state.party[0].level, LORE_SHARE)]);   // (GDD §9 v1.39: 5 % of a level)
   assert.ok(sim.state.party[0].xp > xp0 || sim.state.party[0].level > lv0);
 });
 
@@ -80,7 +81,7 @@ test('a ward of the Grey Sisters is paid a fifth more for lore', () => {
   const sim = dungeon(), ev = events(sim, ['fragmentFound']); sim.state.party[0].origin = 'grey_sisters_ward';
   goDown(sim); const hall = sim.world.level.descentRoom.id; sim.bus.emit('battle', { on: true, room: hall });
   for (let i = 0; i < HALL_WAVES; i++) sim.bus.emit('wave', { cleared: true, room: hall });
-  assert.equal(ev[0].xp, 24);
+  assert.equal(ev[0].xp, levelShare(1, LORE_SHARE * 1.2));
 });
 
 test('Ink reads the fragments; Sister Ilse\'s errand counts one found in the Barrows and is hers alone', () => {

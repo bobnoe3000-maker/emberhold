@@ -10,7 +10,7 @@
 
 import { html, render } from 'htm/preact';
 import { useState } from 'preact/hooks';
-import { QUESTS, QS } from '../sim/quests.js';
+import { QUESTS, QS, questXp } from '../sim/quests.js';
 import { SITE_IDS } from '../sim/sites.js';
 import { swallow } from './actorart.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
@@ -100,7 +100,9 @@ export function questNow(def, q) {
   return { text: step.journal, ready: false, objectives: step.objectives.map((o, i) => ({ label: o.label, n: q.n[i] || 0, of: o.count })) };
 }
 
-function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
+// a quest's XP for the hero (sim quests.js questXp: a share of a level); a board job's is a number (GDD §9 v1.39)
+const xpOf = (def, lv) => (def.rewards.xp !== undefined ? def.rewards.xp : questXp(def.rewards, lv)).toLocaleString('en');
+function Card({ id, def, q, tracked, onTrack, onAbandon, npcName, lv }) {
   const [arm, setArm] = useState(false);
   const now = questNow(def, q);
   return html`<div class=${'q' + (tracked ? ' tracked' : '') + (isMain(def) ? ' main' : '')}>
@@ -110,7 +112,7 @@ function Card({ id, def, q, tracked, onTrack, onAbandon, npcName }) {
     <div class="summary why">${def.summary}</div>
     <div class=${'step' + (now.ready ? ' ready' : '')}>${now.ready ? '' : html`<b class="now">Now: </b>`}${now.text}</div>
     ${now.objectives.map((o) => html`<div key=${o.label} class=${'obj' + (o.n >= o.of ? ' done' : '')}><span>${o.label}</span><span class="bar"><i style=${`width:${Math.round((100 * o.n) / o.of)}%`}></i></span><span class="n">${o.n}/${o.of}</span></div>`)}
-    <div class="rew">Reward · ${def.rewards.xp} XP · ${def.rewards.gold} gold</div>
+    <div class="rew">Reward · ${xpOf(def, lv)} XP · ${def.rewards.gold} gold</div>
     <div class="acts">
       <button class=${tracked ? 'on' : ''} onClick=${() => onTrack(tracked ? null : id)}>${tracked ? 'Tracked' : 'Track'}</button>
       ${def.kind !== 'chapter' ? html`<button class=${'del' + (arm ? ' arm' : '')} onClick=${() => (arm ? onAbandon(id) : setArm(true))}>${arm ? 'Sure?' : 'Abandon'}</button>` : ''}
@@ -167,11 +169,11 @@ function Journal({ sim, defOf, npcName, onClose, lore, story }) {
       <button class=${tab === 'chron' ? 'on' : ''} onClick=${() => setTab('chron')}>Chronicle · ${(sim.state.fragments || []).length}</button>
     </div>
     ${tab === 'chron' ? html`<${Chronicle} sim=${sim} lore=${lore} />` : tab === 'active'
-      ? (active.length || story ? html`${groups.some(([k]) => k === 'main') ? '' : html`<${StoryStatus} sim=${sim} story=${story} defOf=${defOf} npcName=${npcName} />`}${groups.map(([k, label, list]) => html`<div key=${k}><div class=${'grp ' + k}>${label} · ${list.length}</div>${list.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName}
+      ? (active.length || story ? html`${groups.some(([k]) => k === 'main') ? '' : html`<${StoryStatus} sim=${sim} story=${story} defOf=${defOf} npcName=${npcName} />`}${groups.map(([k, label, list]) => html`<div key=${k}><div class=${'grp ' + k}>${label} · ${list.length}</div>${list.map(([id, q]) => html`<${Card} key=${id} id=${id} def=${defOf(id)} q=${q} tracked=${sim.state.tracked === id} npcName=${npcName} lv=${sim.state.party[0].level}
           onTrack=${(t) => push({ type: 'track', id: t })} onAbandon=${(t) => push({ type: 'questAbandon', id: t })} />`)}</div>`)}`
         : html`<div class="empty">No quests yet. People in town ask for help when they know you. Maudry Fenn at the Tired Mule usually has something, and the Lantern Guild's board by her door always does.</div>`)
       : (done.length ? done.slice().reverse().map(([id]) => { const d = defOf(id); return html`<div key=${id} class=${'q' + (isMain(d) ? ' main' : '')}>${kindTag(d)}<h3>${d.title}</h3>
-          <div class="giver">${d.giverName || npcName(d.giver)}</div><div class="summary">${d.done}</div><div class="rew">Earned · ${d.rewards.xp} XP · ${d.rewards.gold} gold</div></div>`; })
+          <div class="giver">${d.giverName || npcName(d.giver)}</div><div class="summary">${d.done}</div><div class="rew">Earned · ${xpOf(d, sim.state.party[0].level)} XP · ${d.rewards.gold} gold</div></div>`; })
         : html`<div class="empty">Nothing finished yet.</div>`)}
   </div>`;
 }

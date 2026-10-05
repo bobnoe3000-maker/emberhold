@@ -32,7 +32,7 @@
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
   "done": "You held the barrows' stair hall with Brannoc. He stood; they stood. He gave you his old chain, less one link.",
   "rewards": {
-    "xp": 1100,
+    "share": 0.45, "lv": 6,
     "gold": 100,
     "item": "broken_chain"
   },

@@ -47,6 +47,8 @@ const XP_TABLE = [
  * the XP table, and the bench's expeditions. @param {number} lv */
 export const xpRate = (lv) => 85 * lv + 1.4 * lv * lv;
 export const xpToNext = (lv) => XP_TABLE[Math.max(1, Math.min(XP_TABLE.length, lv)) - 1];
+/** a share of a level in XP, at a level (GDD §9 v1.39: what quests, the board and the Chronicle pay) @param {number} lv @param {number} share */
+export const levelShare = (lv, share) => Math.round(xpToNext(lv) * share);
 
 // Weakened (a wipe, GDD §3.6): −10 % to max HP / MP, ATK and DEF until an inn rest or 10 minutes
 export const WEAK = 0.9;

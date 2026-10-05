@@ -218,7 +218,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const nx = sim.board.nextPosting(), mins = Math.max(1, Math.ceil(nx.secs / 60));
     const card = (job, st) => {
       const d = boardWords(job); if (!d) return '';
-      const btn = st === QS.READY ? `<button class="btn in" data-handin="${job.id}">Hand in · ${d.rewards.xp} XP · ${d.rewards.gold} gold</button>`
+      const btn = st === QS.READY ? `<button class="btn in" data-handin="${job.id}">Hand in · ${d.rewards.xp.toLocaleString('en')} XP · ${d.rewards.gold} gold</button>`
         : st === QS.ACTIVE ? '<button class="btn" disabled>Taken · in your Journal</button>'
         : st === QS.DONE ? '<button class="btn" disabled>Done</button>'
         : `<button class="btn" data-take="${job.id}" ${open >= MAX_JOBS ? 'disabled' : ''}>Take the job</button>`;
@@ -226,7 +226,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
         <div class="jt"><b>${esc(d.title)}</b><em class="sk s${d.skulls}">${'☠'.repeat(d.skulls)} ${SKULLS[d.skulls]}</em></div>
         ${d.company ? '<div class="co">⚑ Bring company: a lone hero won’t hold this room</div>' : ''}
         <div class="by">Posted · ${esc(d.giverName)}</div><div class="hook">${esc(d.hook)}</div>
-        <div class="brief">${esc(d.brief)}</div><div class="rw">Pays ${d.rewards.xp} XP · ${d.rewards.gold} gold</div>${btn}</div>`;
+        <div class="brief">${esc(d.brief)}</div><div class="rw">Pays ${d.rewards.xp.toLocaleString('en')} XP · ${d.rewards.gold} gold</div>${btn}</div>`;
     };
     const today = new Set(offers.map((j) => j.id));
     const readyOld = Object.keys(S.quests).filter((id) => !today.has(id) && S.quests[id].st === QS.READY && sim.quests.def(id)?.kind === 'board').map((id) => sim.quests.def(id));

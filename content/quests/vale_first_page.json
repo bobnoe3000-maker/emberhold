@@ -17,6 +17,6 @@
   ],
   "ready": "Take it to Sister Ilse, on the step of the Shrine of the Ember in Thornwick.",
   "done": "You brought Sister Ilse the first fragment out of the barrows. The Chronicle of the Vale has a first page.",
-  "rewards": { "xp": 120, "gold": 25 },
+  "rewards": { "share": 0.2, "lv": 1, "gold": 25 },
   "dialogue": { "file": "ilse", "offer": "ilse_page_offer", "turnin": "ilse_page_turnin" }
 }

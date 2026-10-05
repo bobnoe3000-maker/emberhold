@@ -27,7 +27,7 @@
   "ready": "Go back to Hedda, by the well in Thornwick.",
   "done": "Old Skarn's drum is quiet. Hedda won't get her four hens back, but nobody else will lose theirs.",
   "rewards": {
-    "xp": 420,
+    "share": 0.3, "lv": 4,
     "gold": 70
   },
   "dialogue": {

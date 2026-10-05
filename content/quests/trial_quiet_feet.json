@@ -27,7 +27,7 @@
   "ready": "Go back to Nell Tolley at the Crossed Keys in Thornwick.",
   "done": "Nell taught your rogues Smoke Step, on the Crossed Keys' stairs, without once making them creak.",
   "rewards": {
-    "xp": 600,
+    "share": 0.3, "lv": 6,
     "gold": 60
   },
   "dialogue": {

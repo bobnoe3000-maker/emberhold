@@ -42,7 +42,7 @@
   "ready": "Go back to Osric Hale at the Watch post by Thornwick's well. Garrow kept a ledger; Osric will want it.",
   "done": "You defeated Captain Garrow in Wickham Keep. His ledger says robed strangers paid him to dig at the Sunken Chapel.",
   "rewards": {
-    "xp": 700,
+    "share": 0.45, "lv": 4,
     "gold": 150
   },
   "dialogue": {

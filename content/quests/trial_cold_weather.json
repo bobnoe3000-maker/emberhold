@@ -27,7 +27,7 @@
   "ready": "Go back to Hedda, by the well in Thornwick.",
   "done": "Hedda taught your mages Frost Nova, and said it was only a hard frost, early. She said it about eggs, too.",
   "rewards": {
-    "xp": 600,
+    "share": 0.3, "lv": 6,
     "gold": 60
   },
   "dialogue": {

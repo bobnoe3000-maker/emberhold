@@ -285,14 +285,21 @@
     "rewards": {
       "type": "object",
       "required": [
-        "xp",
+        "share",
+        "lv",
         "gold"
       ],
       "additionalProperties": false,
       "properties": {
-        "xp": {
+        "share": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1.5
+        },
+        "lv": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 75
         },
         "gold": {
           "type": "integer",
