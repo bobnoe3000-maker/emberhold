@@ -686,13 +686,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup on a phone (390 × 844), every
+// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1180), every
 // atlas loaded, no two figures overlapping and none off the screen; walking in place, their frames change and
 // their spots don't.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale)
+    const ctx = await b.newContext({ viewport: { width: 390, height: 1180 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844)
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     await p.goto(`${base}/index.html?dev&manual&scene=stage&group=all&clip=walk&dir=1`);
     await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
