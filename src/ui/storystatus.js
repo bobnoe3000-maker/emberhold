@@ -6,39 +6,45 @@
 // (content/story.json); this only picks which ones apply.
 //   next   the next chapter is offered: who gives it
 //   level  the next chapter waits for a level
-//   end    the act is over and the next isn't open yet (Act II: development plan M8)
+//   end    the last act told is over and the next isn't open yet (Act III: a later update); `region` says whose words
+// Every chapter names its region (Act I the Vale, Act II the Fens), and its giver stands in a town: 'next' names the
+// giver's (Act II opens with Ilse, in Thornwick). The leads listed are the ones open where the company stands.
 // (no status while a chapter is active or ready: its own card in the Journal says what to do)
 
 import { QUESTS, QS } from '../sim/quests.js';
 import { SETS } from '../sim/lore.js';
 import { FOUND } from '../sim/heroes.js';
 import { SKILLS } from '../sim/skills.js';
+import { LANDS } from '../sim/regions.js';
+import { NPCS } from '../sim/npcs.js';
 
 /** the main story's chapters, in the order they're told */
 export const CHAPTERS = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter');
 const TRIAL_OF = Object.fromEntries(Object.entries(QUESTS).filter(([, d]) => d.trial).map(([id, d]) => [d.trial, id]));
 
 /** @param {any} state @param {(id: string) => number} status the sim's quest status (quests.js)
- * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, level?: number } | null} */
+ * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string } | null} */
 export function storyStatus(state, status) {
   for (const id of CHAPTERS) {
     const st = status(id);
     if (st === QS.DONE) continue;
     if (st === QS.ACTIVE || st === QS.READY) return null;
     const d = QUESTS[id];
-    if (st === QS.AVAILABLE) return { kind: 'next', id, giver: d.giver };
+    if (st === QS.AVAILABLE) return { kind: 'next', id, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town };
     if ((d.after || []).every((a) => status(a) === QS.DONE)) return { kind: 'level', id, level: d.level[0] };
     return null;
   }
-  return { kind: 'end' };
+  return { kind: 'end', region: QUESTS[CHAPTERS[CHAPTERS.length - 1]].region || 'vale' };
 }
 
-/** what's still open in the Vale, by lead id (content/story.json `leads`), with the numbers its words take
- * @param {any} state @param {(id: string) => number} status @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string }[]} */
-export function openLeads(state, status) {
+/** what's still open in a region, by lead id (content/story.json `leads`), with the numbers its words take
+ * @param {any} state @param {(id: string) => number} status @param {string} [region] where the company stands
+ * @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string }[]} */
+export function openLeads(state, status, region = 'vale') {
+  if (region === 'fens') return fensLeads(state, status);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
-  if (bosses.redhand_captain && Object.keys(FOUND).some((id) => !company.some((m) => m.id === id))) out.push({ id: 'brannoc' });
+  if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
   if (!bosses.standard) out.push({ id: 'standard' });
   if (status('vale_hens_under_the_hill') !== QS.DONE && status('vale_hens_under_the_hill') !== QS.LOCKED) out.push({ id: 'warren' });
   const vale = SETS.vale || [], found = vale.filter((f) => has(state.fragments, f)).length;
@@ -50,5 +56,17 @@ export function openLeads(state, status) {
     const st = status(q); if (st === QS.AVAILABLE) out.push({ id: 'trial', cls, giver: QUESTS[q].giver });
   }
   out.push({ id: 'board' });
+  return out;
+}
+
+// the Fens (world doc v1.29 §5, §6): Wren, the Choir, her chain, the Tower, the board
+function fensLeads(state, status) {
+  const out = [], bosses = state.bosses || {}, company = [...state.party, ...(state.bench || [])];
+  if (!bosses.toadking) out.push({ id: 'toadking' });
+  else if (!company.some((m) => m.id === 'wren')) out.push({ id: 'wren' });
+  if (!bosses.drowned_choir) out.push({ id: 'choir' });
+  const owed = ['wren_the_marker', 'wren_night_boats', 'wren_settled'].find((q) => status(q) === QS.AVAILABLE);
+  if (owed) out.push({ id: 'owed' });
+  out.push({ id: 'tower' }, { id: 'fensboard' });
   return out;
 }

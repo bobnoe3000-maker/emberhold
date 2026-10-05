@@ -28,8 +28,10 @@ const CAST = [
   ['party', 'hero_knight', 'Knight'], ['party', 'hero_barbarian', 'Barbarian'], ['party', 'hero_rogue', 'Rogue'],
   ['party', 'hero_rogue_bow', 'Bow'], ['party', 'hero_rogue_longbow', 'Longbow'], ['party', 'hero_rogue_xbow', 'Crossbow'],   // (the rogue's ranged looks)
   ['party', 'hero_rogue_hxbow', 'Hand xbow'], ['party', 'hero_mage', 'Mage'], ['party', 'hero_cleric', 'Cleric'], ['party', 'hero_shaman', 'Shaman'], ['party', 'hero_brannoc', 'Brannoc'],
+  ['party', 'hero_wren', 'Wren'],   // (M8, Act II: the Fens' found companion)
   ['town', 'npc_maudry', 'Maudry'], ['town', 'npc_osric', 'Osric'], ['town', 'npc_ilse', 'Ilse'], ['town', 'npc_wendel', 'Wendel'], ['town', 'npc_bess', 'Bess'],
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
+  ['town', 'npc_dace', 'Dace'], ['town', 'npc_pim', 'Pim'], ['town', 'npc_orla', 'Orla'], ['town', 'npc_agnes', 'Agnes'], ['town', 'npc_kindler', 'Kindler'],   // (Saltmere's, and the Kindler)
   ['foes', 'skeleton_warrior', 'Warrior'], ['foes', 'skeleton_minion', 'Minion'], ['foes', 'skeleton_rogue', 'Archer'], ['foes', 'skeleton_mage', 'Mage'],
   ['foes', 'redhand_cutthroat', 'Cutthroat'], ['foes', 'redhand_brute', 'Brute'], ['foes', 'redhand_crossbow', 'Crossbow'], ['foes', 'cinder_acolyte', 'Acolyte'],
   ['foes', 'goblin_skirmisher', 'Goblin'], ['foes', 'goblin_bruiser', 'Bruiser'], ['foes', 'goblin_archer', 'Gob. archer'], ['foes', 'goblin_hexer', 'Hexer'],
@@ -41,7 +43,7 @@ const CAST = [
   ['wardens', 'boss_doorward', 'Doorward'], ['wardens', 'boss_mudlark', 'Mudlark'], ['wardens', 'boss_bellringer', 'Bellringer'], ['wardens', 'boss_lensman', 'Lensman'], ['wardens', 'boss_hush', 'Hush'],
   ['wardens', 'boss_twins', 'Twins'], ['wardens', 'boss_hound', 'Hound'], ['wardens', 'boss_gatherer', 'Gatherer'], ['wardens', 'boss_watcher', 'Watcher'], ['wardens', 'boss_starroom', 'Star Room'],
 ];
-const GROUP_NAME = { party: 'The party', town: 'Thornwick', foes: 'Foes', bosses: 'Bosses', wardens: 'The Mere Tower\'s wardens' };
+const GROUP_NAME = { party: 'The party', town: 'Townsfolk', foes: 'Foes', bosses: 'Bosses', wardens: 'The Mere Tower\'s wardens' };
 const kindOf = (group, atlas) => (group === 'party' ? 'party' : /^skeleton_|boss_standard|^drowned_|boss_(bellringer|hush|watcher|starroom)/.test(atlas) ? 'undead' : group === 'town' ? 'folk' : 'human');
 const SPEED = { party: 8.8, folk: 1.6, human: 3.2, undead: 3.0 };             // tiles/s: the hero, an amble, the Redhand, the Ashbound
 export const CLIPS = ['idle', 'walk', 'attack', 'attack2', 'heavy', 'hit', 'death', 'fidget', 'look', 'sit', 'spawn'];

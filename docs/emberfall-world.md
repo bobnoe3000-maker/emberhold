@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.28 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.29 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -348,6 +348,15 @@ on the stilt-houses never go out.
 - **People:** Wren; Pim Rushlight, a fen-folk chandler who sells lamp oil cheaper than Wendel and wants Wendel
   told; Mother Agnes of Reedholm, the prioress, who'd rather the rolls stayed shut; the Toadking, fat, cheerful and
   armed with a boat-hook; Brother Teague, the Cult's harvester at the Abbey, who gives his name.
+- **Saltmere's people (v1.29).**
+  - **Dace Pike** keeps the Drowned Eel. Wenna's older brother, broad, slow, and the only man in Saltmere who
+    writes things down. He lends nobody money, which is why everyone tells him what they owe.
+  - **Pim Rushlight** has no shop in Saltmere; he sells his oil off a handcart by the cistern, and moves it when
+    the Sisters look at him.
+  - **Sister Orla** keeps the Grey Sisters' chapel in Saltmere: young, sent down from Reedholm for her temper, and
+    the only Sister who'll say the binding rolls out loud.
+  - **Mother Agnes** comes down from Reedholm to the chapel when the Abbey's bells start ringing (Act II), and stays
+    until the Abbey is quiet. She'd rather the rolls stayed shut, and says so to anyone who asks about them.
 - **The bosses in their halls (v1.27).** One a hall, each with the one thing it does:
   - **The Toadking** holds the Boat Hall (the Mound's second floor) with his reed-cutters and fowlers. He stamps, and
     the mound's mud comes up round his visitors' feet; his men know where to stand. He leaves **The Last Tooth**
@@ -626,6 +635,15 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   in his free hand: the one he dies holding.
 - **Wren**, a Saltmere smuggler and **found companion** (rogue) who owes the Cult money. (v1.20) Wren knows where
   the Cult's boats go at night, and the Fens' chapters start with that.
+  (v1.29) She borrowed from the Toadking to pay the Cult, couldn't pay the Toadking, and he kept her tied in the Boat
+  Hall as surety, beside his berth-book. Small, quick, a black braid, a smirk she uses instead of thanks. She reads
+  the berth-book for you after he falls, then decides you're a better bet than the canal. Her debt to the Cult is a
+  **marker**, cut in three and carried by three harvesters: until it's broken, the Cult can come and collect. Her
+  chain, *What's Owed*: *The Marker* (its three pieces, off the harvesters' leaders at the Canal Locks); *Night
+  Boats* (two of her caches in the Sickpools, before the Cult finds them); *Settled* (the Cult's boat at the Abbey,
+  burned while the company holds the first floor's hall). She leaves you **The Receipt** (a ring): *"She kept it. Of
+  course she kept it."* (The Lantern Guild's tavern rolls stop calling
+  anyone Wren once she's been found.)
 - **Sister Ilse**, a Grey Sister archivist. She keeps the Chronicle (§7). (The Healer class she was to unlock is
   deferred, v1.20.) (v1.6) Reedholm sent her up to the Shrine of the Ember in Thornwick to copy
   whatever comes up out of the barrows. She pays in blessings, trusts nothing she hasn't read
@@ -703,6 +721,24 @@ needs, and the endings vary: the Cult doesn't win every time.
    what's left and carries it to Reedholm, the Abbess falls, the choir-lamp breaks, and Ilse lays the province's
    shards side by side: the Cult wasn't raising the dead, it was mining them. The Abbey's ledgers name a buyer in
    the Reach. **The cost, found later:** the rolls are copied at Reedholm, and the Kindler reads the copy.
+   (v1.29) **As told, six chapters:**
+   1. *Fog on the Canal* (8–10). Ilse can't read the shard's mark, but the Cult's boats come up from the Fens, and
+      Reedholm's Sisters write from Saltmere. She sends the company south to Dace Pike at the Drowned Eel. Dace
+      says the one who knows where the boats go is Wren, and the Toadking has her. Put him down; Wren reads his
+      berth-book: the Cult's boat ties up at the Canal Locks.
+   2. *The Locks* (10–11). On the Locks' first floor a courteous man in a plain coat is preaching to whoever will
+      sit, and the lock-men in the Sluice below have stopped lying still. He speaks to the company kindly, won't
+      give his name, and leaves on the Cult's boat: **the Kindler**, met. Then hold the Sluice, the hall below.
+   3. *The Sickpools* (11–12). Pim says the vats are being drained by night, and he'd know: he buys what comes out.
+      The harvesters there are filling their cages. Break three full cages.
+   4. *The Bells* (12–13). Sister Orla: the Abbey's bells rang three nights running, and the Cult has a man at the
+      choir's door. Brother Teague, who tells you his name.
+   5. *The Rolls* (13–14). The Cult is carrying off the binding rolls from the Abbey's lowest floor. Get down there
+      and save what's left (two chests' worth), and carry them to Mother Agnes, come down to Saltmere's chapel.
+   6. *The Last Office* (14–15). Agnes reads the rolls and wishes she hadn't: the Abbess kept the choir-lamp lit for
+      the Cult's harvest. Put her down; the lamp breaks. Back to Ilse in Thornwick, who lays the shards side by side
+      and reads the Abbey's ledger: the Cult wasn't raising the dead, it was **mining** them, and the buyer's mark (a
+      pair of scales over a pick) is the Kell Assay's, in the Reach. Act II ends.
 3. **Act III — Quota** (the Reach, 15–30). A courteous stranger pays for the miners' stones. The Kell Assay has
    relit the Cinderworks and feeds Furnace Nine with the night shift. Oruth wakes and goes back to work. The company
    breaks Furnace Nine, but the vessel is a day ahead on the Solmere road. **The vessel**, a loss.

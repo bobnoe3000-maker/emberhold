@@ -1,0 +1,55 @@
+{
+  "id": "ch2_the_rolls",
+  "kind": "chapter",
+  "title": "The Rolls",
+  "giver": "sister_orla",
+  "turnin": "mother_agnes",
+  "region": "fens",
+  "level": [
+    13,
+    30
+  ],
+  "after": [
+    "ch2_the_bells"
+  ],
+  "summary": "The Cult is carrying the binding rolls off the Abbey's lowest floor. Orla wants what's left saved, and taken to Mother Agnes, who has come down from Reedholm and would rather they stayed shut.",
+  "steps": [
+    {
+      "id": "down",
+      "journal": "Go down to the Drowned Abbey's third floor.",
+      "objectives": [
+        {
+          "type": "reach",
+          "site": "drowned_abbey",
+          "count": 3,
+          "label": "The Abbey's third floor"
+        }
+      ]
+    },
+    {
+      "id": "rolls",
+      "journal": "Save what's left of the rolls: open two chests on the Abbey's third floor.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "drowned_abbey",
+          "count": 2,
+          "floor": 3,
+          "label": "Chests opened on the third floor"
+        }
+      ]
+    }
+  ],
+  "ready": "You have what's left of the rolls. Take them to Mother Agnes, at the Grey Sisters' chapel in Saltmere.",
+  "done": "Mother Agnes took the rolls, read the first one standing up, and then sat down to read the rest.",
+  "rewards": {
+    "share": 0.45,
+    "lv": 14,
+    "gold": 320
+  },
+  "dialogue": {
+    "file": "orla",
+    "offer": "orla_rolls_offer",
+    "turnin": "agnes_rolls_turnin"
+  }
+}

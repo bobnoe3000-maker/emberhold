@@ -33,6 +33,8 @@
 
 import { gainXp, levelShare } from './party.js';
 import { FRAGMENTS } from './lore.js';
+import { NPCS } from './npcs.js';
+import { SITES } from './sites.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 // What a quest pays in XP (GDD §9 v1.39; the owner, 2026-10-05, with the slower curve): a share of a level, at the level
@@ -41,7 +43,9 @@ export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 // a third of its level. (They were fixed numbers sized for the old curve: a chapter fell from ~25 % to ~3 % of a level.)
 /** @param {{ share?: number, lv?: number }} r @param {number} level the member's */
 export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
-/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss', site: string, count: number, hall?: boolean, floor?: number, boss?: string }} Objective */
+// (M8, Act II) two more kinds: `meet` (a conversation opened with `npc`: in a town of `region`, or in a dungeon at `site`)
+// and `cages` (full lantern-cages broken at `site`, lamps.js); `loot` can want a floor too
+/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string }} Objective */
 /** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
@@ -127,6 +131,60 @@ export const QUESTS = {
     steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],
     rewards: { share: 0.3, lv: 6, gold: 60 },
   },
+  // Act II, The Drowned Abbey (world doc v1.29 §6; docs/m8-plan.md slice 7): Ilse sends the company south to Dace Pike;
+  // the Toadking has Wren, who reads his berth-book; the Kindler at the Locks; the Sickpools' cages; Teague at the
+  // choir's door; the rolls off the Abbey's lowest floor to Mother Agnes; the Abbess, and back to Ilse with the ledger
+  ch2_fog_on_the_canal: {
+    kind: 'chapter', giver: 'sister_ilse', turnin: 'dace_pike', region: 'fens', level: [8, 30], after: ['ch1_ember_in_the_fist'],
+    steps: [{ id: 'dace', objectives: [{ type: 'meet', npc: 'dace_pike', region: 'fens', count: 1 }] },
+      { id: 'toadking', objectives: [{ type: 'boss', site: 'toadking_mound', boss: 'toadking', count: 1 }] },
+      { id: 'wren', objectives: [{ type: 'meet', npc: 'wren', site: 'toadking_mound', count: 1 }] }],
+    rewards: { share: 0.35, lv: 9, gold: 220 },
+  },
+  ch2_the_locks: {
+    kind: 'chapter', giver: 'dace_pike', region: 'fens', level: [10, 30], after: ['ch2_fog_on_the_canal'],
+    steps: [{ id: 'kindler', objectives: [{ type: 'meet', npc: 'kindler', site: 'canal_locks', count: 1 }] },
+      { id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 5, hall: true, floor: 2 }] }],
+    rewards: { share: 0.4, lv: 11, gold: 260 },
+  },
+  ch2_the_sickpools: {
+    kind: 'chapter', giver: 'pim_rushlight', region: 'fens', level: [11, 30], after: ['ch2_the_locks'],
+    steps: [{ id: 'cages', objectives: [{ type: 'cages', site: 'sickpools', count: 3 }] }],
+    rewards: { share: 0.4, lv: 12, gold: 280 },
+  },
+  ch2_the_bells: {
+    kind: 'chapter', giver: 'sister_orla', region: 'fens', level: [12, 30], after: ['ch2_the_sickpools'],
+    steps: [{ id: 'teague', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'teague', count: 1 }] }],
+    rewards: { share: 0.45, lv: 13, gold: 300 },
+  },
+  ch2_the_rolls: {
+    kind: 'chapter', giver: 'sister_orla', turnin: 'mother_agnes', region: 'fens', level: [13, 30], after: ['ch2_the_bells'],
+    steps: [{ id: 'down', objectives: [{ type: 'reach', site: 'drowned_abbey', count: 3 }] },
+      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 3 }] }],
+    rewards: { share: 0.45, lv: 14, gold: 320 },
+  },
+  ch2_the_last_office: {
+    kind: 'chapter', giver: 'mother_agnes', turnin: 'sister_ilse', region: 'fens', level: [14, 30], after: ['ch2_the_rolls'],
+    steps: [{ id: 'abbess', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'abbess_below', count: 1 }] }],
+    rewards: { share: 0.55, lv: 15, gold: 400 },
+  },
+  // Wren's chain, What's Owed (world doc v1.29 §5): her marker off the Locks' harvesters, her caches in the Sickpools,
+  // and the Cult's boat at the Abbey burned while the company holds the first floor's hall
+  wren_the_marker: {
+    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30],
+    steps: [{ id: 'locks', objectives: [{ type: 'elites', site: 'canal_locks', count: 3 }] }],
+    rewards: { share: 0.35, lv: 10, gold: 150 },
+  },
+  wren_night_boats: {
+    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
+    steps: [{ id: 'pools', objectives: [{ type: 'loot', site: 'sickpools', count: 2 }] }],
+    rewards: { share: 0.3, lv: 11, gold: 180 },
+  },
+  wren_settled: {
+    kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats'],
+    steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, hall: true, floor: 1 }] }],
+    rewards: { share: 0.45, lv: 12, gold: 200, item: 'the_receipt' },
+  },
 };
 export const TRIAL_LEVEL = 6;
 const BENCH_XP = 0.5;                                // the bench earns half, as in battle
@@ -166,7 +224,9 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     }
   }
   bus.on('wave', (e) => { if (e.cleared) count((o, n) => (o.type === 'waves' && siteHere(o.site) && (!o.hall || hallHere(e.room)) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
-  bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) ? n + 1 : n)); });
+  bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
+  bus.on('dialogue', (e) => count((o, n) => (o.type === 'meet' && o.npc === e.npc ? n + 1 : n)));          // (M8) a word with someone
+  bus.on('cageBroken', () => count((o, n) => (o.type === 'cages' && siteHere(o.site) ? n + 1 : n)));      // (M8) a full cage broken, by a tap or the company
   bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) ? n + 1 : n)); });
   bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? Math.max(n + 1, heldAt(o.site)) : n)));
   bus.on('bossDown', (e) => count((o, n) => (o.type === 'boss' && o.boss === e.id && siteHere(o.site) ? n + 1 : n)));
@@ -206,6 +266,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       objs.forEach((o, i) => {
         if (o.type === 'boss' && (state.bosses || {})[o.boss]) q.n[i] = target(o);
         if (o.type === 'fragment') q.n[i] = Math.max(q.n[i], Math.min(target(o), heldAt(o.site)));
+        if (o.type === 'meet' && NPCS[o.npc] && NPCS[o.npc].visitor && (state.flags || {})[NPCS[o.npc].visitor]) q.n[i] = target(o);   // (the Kindler, met and gone before the chapter: he won't be back)
+        if (o.type === 'meet' && NPCS[o.npc] && NPCS[o.npc].found && withUs(o.npc)) q.n[i] = target(o);   // (Wren, freed before the chapter asked: she's already told you)
       });
       if (!objs.every((o, i) => q.n[i] >= target(o))) return;
       if (q.step + 1 < d.steps.length) { q.step += 1; q.n = d.steps[q.step].objectives.map(() => 0); } else { q.st = QS.READY; return; }
@@ -248,7 +310,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   function varsFor(npc) {
     /** @type {Record<string, number>} */
     const v = {};
-    for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc || takerOf(d) === npc) v['q_' + id] = status(id);
+    for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc || takerOf(d) === npc || d.steps.some((s) => s.objectives.some((o) => o.npc === npc))) { v['q_' + id] = status(id); v['s_' + id] = inst(id) ? inst(id).step : 0; }   // (s_: the step it's on, M8: who's met along the way reads where it stands)
     return v;
   }
   /** the tracked quest's next place, as a compass row made from one of the rows already listed
@@ -260,7 +322,13 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     if (!q || !d || (q.st !== QS.ACTIVE && q.st !== QS.READY)) return rows;
     const pick = (...ids) => ids.map((k) => rows.find((r) => r.id === k && !r.off)).find(Boolean);
     let base = null;
-    if (q.st === QS.READY) {
+    // (M8) somewhere in another land: out of town, out of the dungeon, or along the road to it (travel.js land:<id>)
+    const here = world.region || state.region || 'vale', regionOf = (o) => (o.site && SITES[o.site] ? SITES[o.site].region : o.region || (NPCS[o.npc] || {}).region || here);
+    const away = (r) => (world.kind === 'town' ? pick('road-out') : world.kind === 'dungeon' ? pick('exit') : pick('land:' + r));
+    const talkTo = (npc) => { const n = (world.npcs || []).find((x) => x.id === npc); return n ? { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: world.kind === 'town' ? 'in town' : 'here', steps: 0 } : null; };
+    const takerRegion = (NPCS[takerOf(d)] || {}).region;
+    if (q.st === QS.READY && d.kind !== 'board' && !(d.companion && withUs(d.companion)) && takerRegion && takerRegion !== here) base = away(takerRegion);
+    else if (q.st === QS.READY) {
       if (d.companion && withUs(d.companion)) return rows;           // he's with you: hand it in from his card
       if (world.kind === 'town') {
         if (d.kind === 'board') base = pick('square');                 // the board is in the tavern, off the square (none once you're there)
@@ -270,8 +338,12 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       const objs = d.steps[q.step].objectives, owe = objs.filter((o, i) => q.n[i] < o.count);
       const inSite = owe.some((o) => siteHere(o.site));
       if (battle && inSite && owe.some((o) => (o.type === 'waves' && (!o.hall || hallHere(battle.room)) && (!o.floor || floorHere() >= o.floor)) || o.type === 'elites')) return rows;
-      const there = owe.find((o) => siteHere(o.site)) || owe[0], site = there ? there.site : null;
-      if (world.kind === 'town') base = pick('road-out');
+      const there = owe.find((o) => siteHere(o.site)) || owe.find((o) => regionOf(o) === here) || owe[0], site = there ? there.site : null;
+      if (there && regionOf(there) !== here) base = away(regionOf(there));
+      else if (there && there.type === 'meet' && !there.site) base = world.kind === 'town' ? talkTo(there.npc) : world.kind === 'dungeon' ? pick('exit') : pick('town');   // (someone in town)
+      else if (there && there.type === 'meet' && inSite && NPCS[there.npc] && NPCS[there.npc].found && floorHere() >= NPCS[there.npc].found.depth + 1) base = talkTo(there.npc) || pick('next-room');   // (someone in the dungeon: on their floor)
+      else if (there && there.type === 'meet' && inSite) base = pick('stairs-down') || pick('next-room');
+      else if (world.kind === 'town') base = pick('road-out');
       else if (world.kind !== 'dungeon') base = site ? pick('site:' + site) : null;           // the site it wants (sites.js)
       else if (!inSite) base = pick('exit');                                                  // the wrong dungeon: out first
       else {

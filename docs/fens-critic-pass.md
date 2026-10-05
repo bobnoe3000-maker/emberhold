@@ -301,3 +301,64 @@ room, so the three stand 8+ tiles apart with every door in the square's frame (`
 inn stood behind the chapel and under the compass buttons, and the move brought it out from behind both. The bar shows
 Tavern, Inn and Temple; the inn's menu is any town's (rest, party and bench, expeditions). No other footprint changed
 (the env bake compared before and after: 0). The square with the inn, and its menu: `docs/img/saltmere-inn.jpg`.
+
+## Act II and Wren: the story and quest passes (2026-10-05)
+
+The owner: *"proceed as recommended"* (Act II, with Wren). Six chapters, Saltmere's four people, Wren and her chain,
+the Kindler once (world doc v1.29 §3.2, §5, §6; `content/quests/ch2_*`, `wren_*`; `content/dialogue/dace`, `pim`,
+`orla`, `agnes`, `wren`, `kindler`, and Ilse's two new beats). The cast, baked: `docs/img/act2-cast.jpg`.
+
+| Who | Built on | What reads |
+|---|---|---|
+| Dace Pike | Barbarian, an oilskin waistcoat | broad, a full brown beard, his book of who owes who in hand |
+| Pim Rushlight | Rogue (hooded), oil-dark | thin, straw hair, a grin, a lit lantern |
+| Sister Orla | Mage, grey habit and cape | young, cropped copper hair, angry brows, a scrubbing rag |
+| Mother Agnes | Mage, dark habit | white hair in a bun, wrinkles, the Undercroft's keys |
+| The Kindler | Mage, plain grey | ash hair, a kind smile, nothing in his hands |
+| Wren | Rogue, tar-dark leathers, twin knives | a black braid, amber eyes, a smirk, an earring |
+
+**Art.** The first bake gave Agnes the mage's staff, orb and all, which read as a wizard. She carries keys now: she
+has kept the Undercroft locked for forty years. The Kindler's boots came out rust from the belt swatch, and are dark
+now. Nobody new shares a silhouette with the Vale's people at in-game scale except Orla and Ilse, the two Grey Sisters,
+which is deliberate; they differ in hair, prop and the habit's tone.
+
+**Story pass** (voice, canon, tone):
+- Every line is plain and small-stakes. Nobody explains the past. Orla says the binding prayer *out loud* because the
+  world doc says she's the only Sister who will; Agnes says why she wouldn't. The binding rolls are argued over, not
+  explained.
+- The Kindler is sincere, never threatening: he's sorry about the Robed Stranger, asks the company to be kind to
+  the lock-men, and leaves. His first answer was *"Somebody who used to keep a lamp"*. That hinted at a past the
+  canon doesn't give him (a Lantern Guild man?), so it's now *"Somebody who lights lamps that have gone out"*.
+- Wren's first draft gave her a brother lost in the Sickpools. That was new canon nobody had written, so she now
+  says only what the world doc says: she owed the Cult, borrowed from the Toadking to pay them, and you've seen how
+  that went.
+- Ilse's turn-in names the buyer's mark as *a pair of scales over a pick*. That's new, so it went into the world
+  doc first (v1.29 §6). The canal road leaves the Vale at its south edge, past the barrows, as the overland has it,
+  not past the lumber camp as the first draft said.
+- Every journal line fits the 160-character limit and every summary fits 240 (the schema checks both). Three
+  `ready` and `done` lines were cut to the 120-character limit.
+
+**Quest pass** (clear, reachable, walkable, paid):
+- **Levels.** The first table had each chapter one level under the world doc's band (8, 9, 10, 11, 12, 13). That sent
+  *The Rolls* to the Abbey's third floor (level 14) at level 12, two levels up, where the contract says a same-level
+  party is worn down. Now the chapters open at the canon's bands, 8, 10, 11, 12, 13 and 14, each one under its hall,
+  as Act I's are. Each pays a share of the level it's written for (0.35–0.55 of 9–15), plus a Fine (GDD §8).
+- **Clear.** Each journal line names the site, the floor and the thing: *"the Sluice, the hall at the far end"*,
+  *"only the harvesters who lead the others carry a full one"*, *"open two chests on the Abbey's third floor"*.
+- **Walkable.** The compass leads across lands: out of town by the road, out of a dungeon by the stairs up, and along
+  the overland to the other land's road. In a town it walks to whoever you're to talk to; in a dungeon, down to their
+  floor and then to them. `test/act2.test.mjs` walks chapter 1 on the compass alone: Thornwick, the Vale, the canal
+  road, the Fens, Saltmere, Dace, Toadking's Mound, the Boat Hall, Wren, and back to Dace.
+- **No dead ends.** Freeing Wren before the chapter asks counts her word; hearing the Kindler before the Locks counts
+  him (he's gone on the boat and won't be back); a boss who already fell counts, as in Act I. A chapter is never
+  abandoned.
+- **Hands in where you'd expect.** Each chapter goes back to whoever sent you, except *The Rolls* (to Mother Agnes,
+  who wanted them) and *The Last Office* (to Ilse in Thornwick, who reads the ledger). Ready, the compass points at
+  the taker, even in the other land.
+- **Wren's chain** is hers to give, only while she's with you, and hers to take in from her card. *Settled* pays *The
+  Receipt*, a ring (crit, dodge, attack), once.
+
+Still open: *Settled* holds the Abbey's first-floor hall, which is Brother Teague's until he falls. A company that
+takes her chain before *The Bells* fights him for it. Osric and Maudry have no Fens lines yet; their Ink doesn't
+read Act II's quests. The level-12 trials and the Fens Chronicle are slices 9 and 10.
+

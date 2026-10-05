@@ -1,0 +1,14 @@
+{
+  "id": "kindler",
+  "name": "The Kindler",
+  "role": [
+    "giver"
+  ],
+  "town": "saltmere",
+  "region": "fens",
+  "look": "npc_kindler",
+  "portrait": "npc_kindler",
+  "dialogue": "kindler",
+  "knot": "kindler_hub",
+  "note": "Master Corvane Vell, the Cinder Cult's voice, met once on the Canal Locks' first floor by its way in; won't give his name, and leaves on the Cult's boat (world doc §5, §6, v1.29)."
+}

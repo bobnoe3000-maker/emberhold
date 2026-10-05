@@ -18,7 +18,7 @@ import { createHeroes, DAY_S } from './heroes.js';
 import { hash2, mulberry32, streamSeed } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
-import { placeNpcs, placeFound, createTalk, stepFolk, partOf } from './npcs.js';
+import { placeNpcs, placeFound, createTalk, stepFolk, partOf, NPCS } from './npcs.js';
 import { placeRoad, createRoad } from './road.js';
 import { createQuests, TRIAL_LEVEL, QS } from './quests.js';
 import { LANDS, landId } from './regions.js';
@@ -78,7 +78,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   if (curScene === 'dungeon') curRegion = SITES[curSite].region;   // a site's floors are in its land (a ?site= preview, a test)
   /** @type {any} */ let clock = null;                     // the state, once made: a town is built with its people where the hour has them
   const buildWorld = (d) => placeRoad(placeFound(placeNpcs(curScene === 'dungeon' ? createWorld(levelSeed(d), override, d, curSite) : createOutdoor(baseSeed, curScene, curRegion), isWalkable, oBlock, clock ? partOf(clock.t) : 0),
-    isWalkable, (id) => !!clock && ![...clock.party, ...clock.bench].some((m) => m.id === id)), clock);   // a found companion waits in his hall until he joins; the dead hold the barrows road (road.js)
+    isWalkable, (id) => !!clock && (NPCS[id].visitor ? !(clock.flags || {})[NPCS[id].visitor] : ![...clock.party, ...clock.bench].some((m) => m.id === id))), clock);   // a found companion waits in his hall until he joins, a visitor until he's gone (npcs.js); the dead hold the barrows road (road.js)
 
   let world = buildWorld(0);
   const bus = createBus();

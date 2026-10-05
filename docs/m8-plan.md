@@ -161,6 +161,14 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
      rule, the Kindler's sincerity, every line ≤ the journal's 160 characters where it's a journal line.
    - **Quest critic pass**: each chapter's objective is clear from its journal line, reachable at its level, never
      needs a backtrack the compass can't walk, hands in where the player expects, and pays like Act I.
+   - **Done** (2026-10-05): `src/sim/quests.js` (the six chapters; objectives `meet`, a word with someone, and `cages`,
+     full cages broken; `loot` can want a floor; `s_<id>` for the Ink; the compass across lands), `npcs.js` (Dace Pike,
+     Pim Rushlight, Sister Orla and Mother Agnes in Saltmere; the Kindler, a `visitor` by the Canal Locks' way in, gone
+     once he's had his say), `content/quests/ch2_*.json`, Ink `dace`, `pim`, `orla`, `agnes`, `kindler` and Ilse's two
+     beats, `src/ui/storystatus.js` (the giver's town; the Fens' leads; Act II's end), the cast baked (`tools/actor-lab`
+     N10–N14). World doc v1.29, GDD v1.40. Tests: `test/act2.test.mjs` (with the compass walk of chapter 1), the
+     browser walk to Dace in Saltmere. Passes: `docs/fens-critic-pass.md`, `docs/img/act2-cast.jpg`. Maudry and Osric
+     have no Fens lines yet.
 8. **Wren.** A found rogue (world doc §5: a smuggler who owes the Cult money). Freed by the Toadking's fall: she's
    tied in his boat hall as surety for her debt. Her chain, *What's Owed*:
    1. *The Marker* — three harvester elites in the Canal Locks carry her debt's marker between them.
@@ -169,6 +177,10 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
       trinket (written in the story pass).
    - Her face is the `wren` preset already in `faces.json` (a black braid, a smirk). The tavern stops drawing *Wren*
      as a hireling's name, as it did *Brannoc* (and *Tamsin*, who is the Reach's, in M9).
+   - **Done** (2026-10-05): `heroes.js` `FOUND.wren` (freed by the Toadking; a hireling who'd taken her name takes
+     another), `companions.js` (her perks: skirmisher, smoke artist), the chain as `wren_the_marker`, `wren_night_boats`
+     and `wren_settled` (named *Settled*, world doc v1.29), *The Receipt* (`items.js`), Ink `wren`, `hero_wren` baked
+     (CP2). The tavern's rogue name *Wren* is now *Pell*.
 9. **The level-12 trials.** The 12s have been unlocked by level since M5. Each gets a trial and a teacher, as the
    6s did: fighter (Osric, *The Long Watch*), rogue (Wren, *Dead Water*), mage (Pim Rushlight, *Lamp Oil*: a
    chandler knows fire), cleric (Mother Agnes, *Vigil*), shaman (Col, *The Old Water*). Older saves count every class

@@ -1,0 +1,15 @@
+{
+  "id": "sister_orla",
+  "name": "Sister Orla",
+  "role": [
+    "priest",
+    "giver"
+  ],
+  "town": "saltmere",
+  "region": "fens",
+  "look": "npc_orla",
+  "portrait": "npc_orla",
+  "dialogue": "orla",
+  "knot": "orla_hub",
+  "note": "Keeps the Grey Sisters' chapel in Saltmere: young, sent down from Reedholm for her temper, the only Sister who'll say the binding rolls out loud (world doc §3.2, v1.29). Gives The Bells and The Rolls."
+}

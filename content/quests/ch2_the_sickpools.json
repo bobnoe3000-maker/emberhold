@@ -1,0 +1,41 @@
+{
+  "id": "ch2_the_sickpools",
+  "kind": "chapter",
+  "title": "The Sickpools",
+  "giver": "pim_rushlight",
+  "region": "fens",
+  "level": [
+    11,
+    30
+  ],
+  "after": [
+    "ch2_the_locks"
+  ],
+  "summary": "Pim Rushlight says the old vats in the Sickpools are being drained by night, and he'd know: he buys what comes out. The Cult's harvesters are down there filling their cages.",
+  "steps": [
+    {
+      "id": "cages",
+      "journal": "Go into the Sickpools and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
+      "objectives": [
+        {
+          "type": "cages",
+          "site": "sickpools",
+          "count": 3,
+          "label": "Full cages broken"
+        }
+      ]
+    }
+  ],
+  "ready": "Three cages broken. Tell Pim, at his handcart by Saltmere's cistern.",
+  "done": "Pim counted the broken cages on his fingers twice and said his oil would be dearer now. He didn't sound sorry.",
+  "rewards": {
+    "share": 0.4,
+    "lv": 12,
+    "gold": 280
+  },
+  "dialogue": {
+    "file": "pim",
+    "offer": "pim_pools_offer",
+    "turnin": "pim_pools_turnin"
+  }
+}

@@ -32,7 +32,7 @@
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
-import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames } from './party.js';
+import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames, freeName } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
@@ -43,6 +43,7 @@ export const BENCH_MAX = 6;
 // the found companions (world doc §5): who they are, and whose fall frees them
 export const FOUND = {
   brannoc: { name: 'Brannoc', cls: 'fighter', actor: 'hero_brannoc', trait: ['Redhand deserter', 'found in Wickham Keep'], freedBy: 'redhand_captain' },
+  wren: { name: 'Wren', cls: 'rogue', actor: 'hero_wren', trait: ['Saltmere smuggler', 'found in the Boat Hall'], freedBy: 'toadking' },   // (M8, world doc v1.29 §5)
 };
 export const DAY_S = 3600;              // an in-game day: an hour of play (2.5 min = 1 h); 1440 (24 min) before save v15
 export const WEAK_S = 600;              // Weakened lasts 10 minutes of play
@@ -279,6 +280,9 @@ export function createHeroes({ state, bus, getWorld, seed }) {
     if (!F || find(id) || !(state.bosses || {})[F.freedBy]) return;
     const m = { ...makeMember(id, F.name, F.cls, hireLevel(state.party[0].level), F.trait),   // months on a chain: half as seasoned as you (world doc §5 v1.12)
       actor: F.actor, rank: 'found', perks: [...(FOUND_PERKS[id] || [])], hidden: null, bond: 0, owed: 0 };
+    // (no two of a company share a name: a hireling who took a found one's name before she was found takes another)
+    const company = [...state.party, ...state.bench], taken = new Set(company.map((q) => q.name));
+    for (const q of company) if (q.name === m.name && !q.main) { taken.delete(q.name); q.name = freeName(q.cls, q.name, new Set([...taken, m.name])); taken.add(q.name); }
     if (state.party.length <= MAX_COMPANIONS) state.party.push(m);
     else if (state.bench.length < BENCH_MAX) { state.bench.push(m); bus.emit('benched', { id: m.id, name: m.name }); }
     else { refuse('The party and the bench are full'); return; }

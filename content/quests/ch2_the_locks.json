@@ -1,0 +1,56 @@
+{
+  "id": "ch2_the_locks",
+  "kind": "chapter",
+  "title": "The Locks",
+  "giver": "dace_pike",
+  "region": "fens",
+  "level": [
+    10,
+    30
+  ],
+  "after": [
+    "ch2_fog_on_the_canal"
+  ],
+  "summary": "The Cult's boat ties up at the Canal Locks, and the eel-men say somebody is preaching there. Dace would like to know what he's preaching, and what's listening.",
+  "steps": [
+    {
+      "id": "kindler",
+      "journal": "Go into the Canal Locks, up the canal from Saltmere. Someone is preaching on the first floor, by the way in. Hear him out.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "kindler",
+          "site": "canal_locks",
+          "count": 1,
+          "label": "The preacher at the Locks"
+        }
+      ]
+    },
+    {
+      "id": "sluice",
+      "journal": "The lock-men in the Sluice have stopped lying still. Go down to the Locks' second floor and hold the Sluice, the hall at the far end, for five waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "canal_locks",
+          "count": 5,
+          "hall": true,
+          "floor": 2,
+          "label": "Waves held in the Sluice"
+        }
+      ]
+    }
+  ],
+  "ready": "The Sluice is quiet again. Tell Dace Pike, at the Drowned Eel in Saltmere.",
+  "done": "You told Dace about the man in the plain coat. He wrote it down, then wrote 'no name' next to it, then underlined that.",
+  "rewards": {
+    "share": 0.4,
+    "lv": 11,
+    "gold": 260
+  },
+  "dialogue": {
+    "file": "dace",
+    "offer": "dace_locks_offer",
+    "turnin": "dace_locks_turnin"
+  }
+}

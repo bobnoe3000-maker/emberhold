@@ -1,0 +1,43 @@
+{
+  "id": "ch2_the_last_office",
+  "kind": "chapter",
+  "title": "The Last Office",
+  "giver": "mother_agnes",
+  "turnin": "sister_ilse",
+  "region": "fens",
+  "level": [
+    14,
+    30
+  ],
+  "after": [
+    "ch2_the_rolls"
+  ],
+  "summary": "Mother Agnes has read the rolls and wishes she hadn't: the Abbess Below keeps the choir-lamp lit, and the Cult harvests what's in it. Three hundred and twelve professed. Agnes wants them let go.",
+  "steps": [
+    {
+      "id": "abbess",
+      "journal": "Go down to the Drowned Abbey's chapter-house, the third floor's hall, and put down the Abbess Below. The water comes in with her bells; keep out of it.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "drowned_abbey",
+          "boss": "abbess_below",
+          "count": 1,
+          "label": "The Abbess Below"
+        }
+      ]
+    }
+  ],
+  "ready": "The Abbess is down and the choir-lamp broken. Take her ledger to Sister Ilse at the Shrine of the Ember in Thornwick.",
+  "done": "Ilse read the Abbey's ledger twice: the Cult was mining the dead, for the Kell Assay. Act II is done.",
+  "rewards": {
+    "share": 0.55,
+    "lv": 15,
+    "gold": 400
+  },
+  "dialogue": {
+    "file": "agnes",
+    "offer": "agnes_office_offer",
+    "turnin": "ilse_ch2_turnin"
+  }
+}

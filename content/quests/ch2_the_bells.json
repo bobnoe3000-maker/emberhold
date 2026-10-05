@@ -1,0 +1,42 @@
+{
+  "id": "ch2_the_bells",
+  "kind": "chapter",
+  "title": "The Bells",
+  "giver": "sister_orla",
+  "region": "fens",
+  "level": [
+    12,
+    30
+  ],
+  "after": [
+    "ch2_the_sickpools"
+  ],
+  "summary": "The Drowned Abbey's bells rang three nights running, and Sister Orla says the Cult has a man at the choir's door. She'd go herself, and the Mother would have her sent further than Saltmere.",
+  "steps": [
+    {
+      "id": "teague",
+      "journal": "Go into the Drowned Abbey, out past the Sickpools. Brother Teague waits at the choir's door, in the first floor's hall. Break his cage, then him.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "drowned_abbey",
+          "boss": "teague",
+          "count": 1,
+          "label": "Brother Teague"
+        }
+      ]
+    }
+  ],
+  "ready": "Brother Teague is down. Tell Sister Orla, at the Grey Sisters' chapel in Saltmere.",
+  "done": "Orla wrote Teague's name in the chapel's book, under the names he'd taken. She said it was the least he was owed.",
+  "rewards": {
+    "share": 0.45,
+    "lv": 13,
+    "gold": 300
+  },
+  "dialogue": {
+    "file": "orla",
+    "offer": "orla_bells_offer",
+    "turnin": "orla_bells_turnin"
+  }
+}

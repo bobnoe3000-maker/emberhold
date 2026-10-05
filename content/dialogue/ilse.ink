@@ -15,6 +15,8 @@ VAR day_part = 0
 VAR flag_met_ilse = 0
 VAR q_vale_first_page = -1
 VAR q_ch1_ember_in_the_fist = -1
+VAR q_ch2_fog_on_the_canal = -1
+VAR q_ch2_the_last_office = -1
 VAR q_trial_last_rites = -1
 VAR frag_vale_count = 0
 VAR frag_vale_standing_order = 0
@@ -55,7 +57,10 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 == ilse_greet_back ==
 {&Ilse looks up from the board and holds up a finger until she finishes the word.|"{hero_name}. Anything with writing on it today?"|"The Shrine's quiet. The quiet is the nice part."}
 { q_vale_first_page == 2: "You've found something. I can tell by the way you're holding your hands. Give it here." }
-{ q_ch1_ember_in_the_fist == 3: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
+{ q_ch1_ember_in_the_fist == 3 && q_ch2_fog_on_the_canal < 1: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
+{ q_ch2_fog_on_the_canal == 1: "Dace Pike, at the Drowned Eel in Saltmere. Give him my letter. He'll read it slowly. Let him." }
+{ q_ch2_fog_on_the_canal == 3 && q_ch2_the_last_office < 2: "Reedholm writes that you're keeping Saltmere busy. Orla writes that you're keeping the Mother busy. I like Orla's letters better." }
+{ q_ch2_the_last_office == 3: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
 { frag_vale_count >= 3 && frag_vale_count < 10: "The Vale's set has more gaps than words. I've read what we have four times. It doesn't get kinder." }
 { frag_vale_count == 10: "The Vale's set is whole. All ten. I've copied it for Reedholm and kept the copy I made first, because I'm not a fool." }
 -> ilse_topics
@@ -66,6 +71,9 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 
 == ilse_topics ==
 + { q_ch1_ember_in_the_fist == 2 } [The robed stranger in the chapel died holding this. #mark: quest ready] -> ilse_ch3_turnin
++ { q_ch2_the_last_office == 2 } [The Abbess Below is down. This was under the lamp. #mark: quest ready] -> ilse_ch2_turnin
++ { q_ch2_fog_on_the_canal == 0 } [What about the shard? #mark: quest] -> ilse_ch2_offer
++ { q_ch2_fog_on_the_canal == 1 } [About Saltmere… #mark: quest active] -> ilse_ch2_active
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
 + { q_trial_last_rites == 2 } [The rites are said, in the barrows. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
@@ -201,5 +209,31 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
 Ilse takes the shard in a cloth, not her hand. It glows faintly through the cloth, the colour of a coal just before it goes out.
 "Warm. Three hundred years in the dark and it's warm." She turns it over. "There's a mark on the back. An imperial foundry mark. Fens work. Saltmere, or near it."
 "The robed men weren't digging for gold. They were digging for this. Somebody wants the old fire back." She wraps it twice more. "I'm going to need to write to Reedholm. You're going to need to go south." # quest: turnin ch1_ember_in_the_fist
+-> ilse_topics
+
+// ── Act II, chapter 1: Fog on the Canal (content/quests/ch2_fog_on_the_canal.json): to Dace Pike in Saltmere ──
+== ilse_ch2_offer ==
+"The shard." She has it out of the cloth before you've finished, which she never does. "I can't read the foundry mark. I've tried. I've tried twice, and then a third time, which is a sin at Reedholm."
+"But the robed men's boats come up from the Fens, and the Sisters at Saltmere write to me about them, and they're frightened, and Sisters don't frighten."
+"There's a man at the Drowned Eel in Saltmere, Dace Pike. He writes down what everybody owes. If somebody's paying for boats, he'll have it in a column somewhere."
++ [We'll go south. #mark: quest]
+    She writes a letter, reads it twice, and gives it to you folded small. "Give him this. He'll read it with his finger. Be patient. He's the only man in Saltmere who reads at all." # quest: accept ch2_fog_on_the_canal
+    "The canal road leaves the Vale at its south edge, past the barrows. Saltmere's a day. You'll smell it before you see it."
+    -> ilse_topics
++ [Not yet.]
+    "No. Not yet. It's kept three hundred years." She wraps it again. "I'd still rather it didn't keep much longer."
+    -> ilse_topics
+
+== ilse_ch2_active ==
+"Saltmere: the canal road south, a day. Dace Pike, at the Drowned Eel. Give him my letter, and let him read it slowly."
+-> ilse_topics
+
+// ── Act II, chapter 6: The Last Office (content/quests/ch2_the_last_office.json, given by Mother Agnes) ──
+== ilse_ch2_turnin ==
+Ilse takes the ledger from you with both hands. The water's got into it, and she turns each page as if it were skin.
+She reads it once, and puts it down, and reads it again, with the shard beside it on the cloth.
+"They weren't raising the dead. Nobody ever was. They were mining them: the bound in the vats, the sisters in the lamp, a soul to a cage. Weighed out like ore." She puts a finger on the last column. "And sold. Every shipment, to the same mark."
+"Scales and a pick. The Kell Assay. Up in the Reach, at the Cinderworks." # quest: turnin ch2_the_last_office
+"I'm going to write to Reedholm. Then I'm going to sit here for a while, and not write anything. Then you're going to need to go to the Reach."
 -> ilse_topics
 

@@ -1,0 +1,39 @@
+{
+  "id": "wren_the_marker",
+  "kind": "companion",
+  "title": "The Marker",
+  "giver": "wren",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "companion": "wren",
+  "summary": "Wren's debt to the Cult is a marker, cut in three, and three harvesters carry the pieces. Until it's broken the Cult can come and collect. She'd like it broken.",
+  "steps": [
+    {
+      "id": "locks",
+      "journal": "Defeat three harvesters' leaders at the Canal Locks. They lead every fifth wave there, and carry the marker's pieces.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "canal_locks",
+          "count": 3,
+          "label": "The marker's carriers"
+        }
+      ]
+    }
+  ],
+  "ready": "Tell Wren it's done: tap her party card, then Talk.",
+  "done": "You took the marker's three pieces off the Cult's harvesters. Wren put them together, read them once, and burned them.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 10,
+    "gold": 150
+  },
+  "dialogue": {
+    "file": "wren",
+    "offer": "wren_marker_offer",
+    "turnin": "wren_marker_turnin"
+  }
+}

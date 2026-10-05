@@ -1,0 +1,42 @@
+{
+  "id": "wren_night_boats",
+  "kind": "companion",
+  "title": "Night Boats",
+  "giver": "wren",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "companion": "wren",
+  "after": [
+    "wren_the_marker"
+  ],
+  "summary": "Wren hid two caches in the Sickpools, back when she ran the canal at night. The Cult has started drying the vats out, and she'd like them back before it finds them.",
+  "steps": [
+    {
+      "id": "pools",
+      "journal": "Open two chests in the Sickpools. Wren says they're hers, and you'll know them by the knots.",
+      "objectives": [
+        {
+          "type": "loot",
+          "site": "sickpools",
+          "count": 2,
+          "label": "Wren's caches"
+        }
+      ]
+    }
+  ],
+  "ready": "Tell Wren it's done: tap her party card, then Talk.",
+  "done": "You found both of Wren's caches. She counted them in front of you, which she says is a compliment.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 11,
+    "gold": 180
+  },
+  "dialogue": {
+    "file": "wren",
+    "offer": "wren_boats_offer",
+    "turnin": "wren_boats_turnin"
+  }
+}

@@ -8,7 +8,7 @@
     "next": { "type": "string", "maxLength": 120 },
     "level": { "type": "string", "maxLength": 120 },
     "end": { "type": "object", "additionalProperties": { "type": "object", "required": ["title", "text"], "properties": { "title": { "type": "string" }, "text": { "type": "string", "maxLength": 320 } }, "additionalProperties": false } },
-    "leadsTitle": { "type": "string" },
+    "leadsTitle": { "type": "object", "required": ["vale", "fens"], "additionalProperties": { "type": "string" } },
     "leads": {
       "type": "object",
       "required": ["brannoc", "standard", "warren", "chronicle", "milestone", "trial", "board"],

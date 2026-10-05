@@ -114,7 +114,7 @@ export function makeHero({ cls = 'fighter', look, origin = null, name = 'Aldric'
 // (Brannoc was a fighter's name here; he's a found companion now, M5, and there's only one of him)
 const NAMES = {
   fighter: ['Garruk', 'Dunstan', 'Hild', 'Torvald', 'Maera', 'Osric'],
-  rogue: ['Wren', 'Osk', 'Tamsin', 'Lark', 'Vesna', 'Quill'],
+  rogue: ['Pell', 'Osk', 'Tamsin', 'Lark', 'Vesna', 'Quill'],   // (Wren is the Fens' found companion now: world doc v1.29)
   mage: ['Sigrun', 'Ilsabet', 'Corwin', 'Aveline', 'Merrow', 'Thane'],
   cleric: ['Maren', 'Aldous', 'Wenna', 'Cuthbert', 'Edda', 'Rowan'],
   shaman: ['Gammer Rook', 'Tobin', 'Hesk', 'Old Mab', 'Wilber', 'Sedge'],

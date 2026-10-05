@@ -126,14 +126,15 @@ const fill = (t, v) => String(t || '').replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? 
 function StoryStatus({ sim, story, defOf, npcName }) {
   if (!story) return null;
   const st = storyStatus(sim.state, (id) => sim.quests.status(id)); if (!st) return null;
-  const end = st.kind === 'end' ? story.end[(sim.world && sim.world.region) || 'vale'] || story.end.vale : null, d = st.id ? defOf(st.id) : null;
-  const leads = st.kind === 'next' ? [] : openLeads(sim.state, (id) => sim.quests.status(id));
+  const region = (sim.world && sim.world.region) || sim.state.region || 'vale';
+  const end = st.kind === 'end' ? story.end[st.region || 'fens'] : null, d = st.id ? defOf(st.id) : null;
+  const leads = st.kind === 'next' ? [] : openLeads(sim.state, (id) => sim.quests.status(id), region);
   const vars = (l) => ({ ...l, cls: l.cls ? `${CLASSES[l.cls].label.toLowerCase()}s` : '', giver: l.giver ? npcName(l.giver) : '' });
   return html`<div class="grp main">Main story</div>
     <div class="q main story"><span class="kind main">★ Main story${end ? '' : ' · next chapter'}</span>
       <h3>${end ? end.title : d ? d.title : ''}</h3>
-      <div class="summary">${end ? end.text : fill(story[st.kind], { title: d ? d.title : '', giver: st.giver ? npcName(st.giver) : '', level: st.level })}</div></div>
-    ${leads.length ? html`<div class="grp side">${story.leadsTitle} · ${leads.length}</div><ul class="leads">${leads.map((l) => html`<li key=${l.id + (l.cls || '')}>${fill(story.leads[l.id], vars(l))}</li>`)}</ul>` : ''}`;
+      <div class="summary">${end ? end.text : fill(story[st.kind], { title: d ? d.title : '', giver: st.giver ? npcName(st.giver) : '', town: st.town || '', level: st.level })}</div></div>
+    ${leads.length ? html`<div class="grp side">${story.leadsTitle[region] || story.leadsTitle.vale} · ${leads.length}</div><ul class="leads">${leads.map((l) => html`<li key=${l.id + (l.cls || '')}>${fill(story.leads[l.id], vars(l))}</li>`)}</ul>` : ''}`;
 }
 
 const SET_NAME = { vale: 'The Hollow Vale', fens: 'The Greywater Fens' };

@@ -21,7 +21,9 @@ test('Thornwick\'s people stand in Thornwick: the named on tiles you walk round,
   assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), Object.keys(NPCS).filter((k) => NPCS[k].region === 'vale' && !NPCS[k].found).sort(), 'all nine (a found companion waits in his dungeon)');
   for (const n of sim.world.npcs) assert.equal(isWalkable(sim.world, n.x, n.y), !!n.folk, `${n.id}: ${n.folk ? 'a walker' : 'solid'}`);
   const again = town().world.npcs; assert.deepEqual(again.map((n) => [n.id, n.x, n.y]), sim.world.npcs.map((n) => [n.id, n.x, n.y]));   // the same spots every time
-  for (const region of ['fens', 'reach', 'heights']) assert.equal(town(region).world.npcs.length, 0);
+  for (const region of ['reach', 'heights']) assert.equal(town(region).world.npcs.length, 0);
+  // (M8, Act II) Saltmere's own four stand in Saltmere; Wren and the Kindler wait in their dungeons
+  assert.deepEqual(town('fens').world.npcs.map((n) => n.id).sort(), ['dace_pike', 'mother_agnes', 'pim_rushlight', 'sister_orla']);
   assert.equal(createSim(1, undefined, { scene: 'overland' }).world.npcs.length, 0);
   assert.equal(createSim(1, undefined, { scene: 'dungeon' }).world.npcs.length, 0);
 });

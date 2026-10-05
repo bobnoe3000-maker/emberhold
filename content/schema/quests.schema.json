@@ -149,6 +149,11 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 48
+                    },
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "on this floor or deeper"
                     }
                   }
                 },
@@ -258,6 +263,74 @@
                       "type": "integer",
                       "minimum": 1,
                       "description": "the floor to reach (1 = the first)"
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "npc",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "description": "(M8) a word with someone: in a town of `region`, or in a dungeon at `site`",
+                  "properties": {
+                    "type": {
+                      "const": "meet"
+                    },
+                    "npc": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "region": {
+                      "enum": [
+                        "vale",
+                        "fens",
+                        "reach",
+                        "heights"
+                      ]
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "site",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "description": "(M8) full lantern-cages broken at the site",
+                  "properties": {
+                    "type": {
+                      "const": "cages"
+                    },
+                    "site": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
                     },
                     "label": {
                       "type": "string",

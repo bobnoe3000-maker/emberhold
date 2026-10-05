@@ -3655,5 +3655,430 @@
    }
   ],
   "height": 1.1
+ },
+ {
+  "id": "N10",
+  "cls": "NPC",
+  "label": "Dace Pike \u00b7 keeps the Drowned Eel, Saltmere (an oilskin waistcoat, his book of who owes who)",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#4a5650",
+     "#1a201c"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a5038",
+     "#241a10"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     0
+    ],
+    "to": [
+     "#5a4a3a",
+     "#201810"
+    ]
+   }
+  ],
+  "face": "dace",
+  "height": 1.02
+ },
+ {
+  "id": "N11",
+  "cls": "NPC",
+  "label": "Pim Rushlight \u00b7 a chandler off a handcart by the cistern (oil to the elbows, a lit lantern)",
+  "model": "Rogue_Hooded",
+  "show": [],
+  "hold": {
+   "handslot.r": "lantern"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5a5a3a",
+     "#22220e"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a26",
+     "#1a120a"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3e3a2e",
+     "#16140e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2e20",
+     "#120e08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#4a3a26",
+     "#1a120a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3626",
+     "#1a120a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#3e3a2e",
+     "#16140e"
+    ]
+   }
+  ],
+  "face": "pim",
+  "height": 0.9
+ },
+ {
+  "id": "N12",
+  "cls": "NPC",
+  "label": "Sister Orla \u00b7 the Grey Sisters' chapel, Saltmere (young, sleeves rolled, a scrubbing rag)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "rag"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#a8a8a0",
+     "#4a4a46"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#5a6474",
+     "#20242e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#6a7484",
+     "#262c36"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#5a4a3a",
+     "#201810"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a4440",
+     "#181614"
+    ]
+   }
+  ],
+  "face": "orla",
+  "height": 0.9
+ },
+ {
+  "id": "N13",
+  "cls": "NPC",
+  "label": "Mother Agnes \u00b7 prioress of Reedholm, come down to Saltmere (dark habit, the Undercroft's keys)",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "keys"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#5e5e5a",
+     "#222220"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#3a3e4a",
+     "#121418"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#4a4e5a",
+     "#181a20"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a3e34",
+     "#18120e"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a3632",
+     "#121010"
+    ]
+   }
+  ],
+  "face": "agnes",
+  "height": 0.86
+ },
+ {
+  "id": "N14",
+  "cls": "NPC",
+  "label": "The Kindler \u00b7 Master Corvane Vell, the Cinder Cult's voice: a plain grey coat, one ember at the belt",
+  "model": "Mage",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#6a6a6c",
+     "#262628"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a4a4e",
+     "#1a1a1c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#5a5a5e",
+     "#202022"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#3a3434",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a3434",
+     "#121010"
+    ]
+   }
+  ],
+  "face": "kindler",
+  "height": 1.0
+ },
+ {
+  "id": "CP2",
+  "cls": "Companion",
+  "label": "Wren \u00b7 Saltmere smuggler, twin knives (black braid, tar-dark leathers)",
+  "model": "Rogue",
+  "show": [
+   "Knife",
+   "Knife_Offhand"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3a3a",
+     "#0e1414"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2e",
+     "#1a120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3424",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   }
+  ],
+  "face": "wren",
+  "height": 0.88
  }
 ]

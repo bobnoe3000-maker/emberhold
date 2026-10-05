@@ -328,6 +328,38 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+
+// 6b. Act II in Saltmere (M8; world doc v1.29 §6): Ilse's letter in hand (Fog on the Canal, its first step), Dace Pike stands
+// on the Drowned Eel's boards; tap him, his window opens under his name and the Eel's, the Ink reads the meeting still to
+// have, and having it moves the chapter on to the Toadking (a word counts: quests.js `meet`)
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&region=fens`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    await p.evaluate(() => { const S = globalThis.__sim.state; for (const id of ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist']) S.quests[id] = { st: 3, step: 0, n: [] }; S.party[0].level = 9; S.quests.ch2_fog_on_the_canal = { st: 1, step: 0, n: [0] }; S.tracked = 'ch2_fog_on_the_canal'; });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    let at = null;
+    for (let k = 0; k < 20 && !at; k++) {
+      await p.waitForTimeout(300); await run(3);
+      at = await p.evaluate(() => { for (let y = 120; y < 800; y += 4) for (let x = 8; x < 390; x += 4) if (globalThis.__renderer.npcAt(x, y)?.id === 'dace_pike' && document.elementFromPoint(x, y)?.id === 'game') return { x, y }; return null; });
+    }
+    check('act II: Dace Pike stands in Saltmere', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
+    if (at) {
+      await p.touchscreen.tap(at.x, at.y); await run(150);
+      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).then(() => true, () => false);
+      const who = open ? await p.textContent('#talk .who .nm') : '', first = open ? await p.textContent('#talk .line') : '';
+      await p.waitForTimeout(600);
+      const face = await p.evaluate(() => { const c = document.querySelector('#talk .who canvas'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n; });   // (drawn pixels: his portrait loaded)
+      const q = await p.evaluate(() => globalThis.__sim.state.quests.ch2_fog_on_the_canal);
+      check('act II: tap him → his window, under his name and the Drowned Eel\'s, his portrait drawn, his first words; the meeting counts (on to the Toadking)',
+        open && /Dace Pike/.test(who) && /Drowned Eel/.test(who) && face > 0 && /Eel's counter/.test(first) && q.step === 1 && errs.length === 0,
+        JSON.stringify({ who, first: first.slice(0, 60), face, q }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    }
+    await ctx.close(); await b.close();
+  }
+}
 // 7. Maudry's errand: accept in conversation → tracker, Journal, compass
 {
   const b = await launch(chromium, 'chromium');
@@ -355,7 +387,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('quest: the tracker line names it, with its counts', /The Long Way Round/.test(tracker) && /Waves 0\/4/.test(tracker), tracker.replace(/\n/g, ' · '));
     await p.locator('#journalBtn').tap();
     const card = await p.locator('#journal .q:not(.story)').first().innerText().catch(() => '');
-    check('quest: the Journal shows it (who wants it and why, the step, both objectives, the reward)', /Hold four waves there/.test(card) && /Maudry Fenn keeps the Tired Mule/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /150 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
+    check('quest: the Journal shows it (who wants it and why, the step, both objectives, the reward)', /Hold four waves there/.test(card) && /Maudry Fenn keeps the Tired Mule/.test(card) && /0\/4/.test(card) && /0\/1/.test(card) && /433 XP/.test(card), card.split('\n').slice(0, 3).join(' · '));
     await p.locator('#journal .acts button', { hasText: 'Tracked' }).tap(); await run(2);
     const untracked = await p.evaluate(() => globalThis.__sim.state.tracked);
     await p.locator('#journal .acts button', { hasText: 'Track' }).first().tap(); await run(2);
@@ -686,13 +718,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1300), every
+// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1400), every
 // atlas loaded, no two figures overlapping and none off the screen; walking in place, their frames change and
 // their spots don't.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 1300 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844; 1300 with the Fens' four bosses)
+    const ctx = await b.newContext({ viewport: { width: 390, height: 1400 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844; 1300 with the Fens' four bosses; 1400 with Act II's six)
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     await p.goto(`${base}/index.html?dev&manual&scene=stage&group=all&clip=walk&dir=1`);
     await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
@@ -704,8 +736,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const off = s1.filter((a) => !a.box || a.box[0] < 0 || a.box[1] < 0 || a.box[2] > v.w || a.box[3] > v.h).map((a) => a.id);
     const moved = s1.filter((a, i) => a.x !== s2[i].x || a.y !== s2[i].y).length, animating = s1.filter((a, i) => JSON.stringify(a.box) !== JSON.stringify(s2[i].box)).length;
     const hud = await p.evaluate(() => [...document.body.children].filter((e) => e.tagName !== 'CANVAS' && e.id !== 'stagePanel' && e.tagName !== 'SCRIPT' && getComputedStyle(e).display !== 'none').map((e) => e.id || e.tagName));
-    check('stage: the whole cast lined up (57: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens and the Fens\' four bosses), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
-      s1.length === 57 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
+    check('stage: the whole cast lined up (63: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens, the Fens\' four bosses and Act II\'s six), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
+      s1.length === 63 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
       JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }

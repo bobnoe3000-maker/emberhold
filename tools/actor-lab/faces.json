@@ -563,5 +563,69 @@
   "nose": "long",
   "beard": "short",
   "shape": "thin"
+ },
+ "dace": {
+  "skin": "fair",
+  "hair": "short",
+  "hairColor": "brown",
+  "brows": "heavy",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "broad",
+  "beard": "full",
+  "shape": "thick"
+ },
+ "pim": {
+  "skin": "rose",
+  "hair": "swept",
+  "hairColor": "straw",
+  "brows": "worried",
+  "eyes": "wide",
+  "iris": "hazel",
+  "mouth": "grin",
+  "nose": "long",
+  "beard": "stubble",
+  "shape": "thin"
+ },
+ "orla": {
+  "skin": "fair",
+  "hair": "crop",
+  "hairColor": "copper",
+  "brows": "angry",
+  "eyes": "sharp",
+  "iris": "green",
+  "mouth": "line",
+  "marks": [
+   "freckles"
+  ]
+ },
+ "agnes": {
+  "skin": "porcelain",
+  "hair": "bun",
+  "hairColor": "white",
+  "tieColor": "#d8d0c0",
+  "brows": "thin",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "frown",
+  "nose": "long",
+  "marks": [
+   "wrinkles"
+  ],
+  "shape": "thin"
+ },
+ "kindler": {
+  "skin": "fair",
+  "hair": "swept",
+  "hairColor": "ash",
+  "brows": "straight",
+  "eyes": "round",
+  "iris": "amber",
+  "mouth": "smile",
+  "nose": "kk",
+  "marks": [
+   "wrinkles"
+  ]
  }
 }

@@ -1,0 +1,15 @@
+{
+  "id": "mother_agnes",
+  "name": "Mother Agnes",
+  "role": [
+    "priest",
+    "giver"
+  ],
+  "town": "saltmere",
+  "region": "fens",
+  "look": "npc_agnes",
+  "portrait": "npc_agnes",
+  "dialogue": "agnes",
+  "knot": "agnes_hub",
+  "note": "Prioress of Reedholm, come down to Saltmere's chapel while the Abbey's bells ring; would rather the rolls stayed shut (world doc §3.2, v1.29). Takes in The Rolls; gives The Last Office."
+}

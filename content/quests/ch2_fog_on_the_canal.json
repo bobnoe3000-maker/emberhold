@@ -1,0 +1,69 @@
+{
+  "id": "ch2_fog_on_the_canal",
+  "kind": "chapter",
+  "title": "Fog on the Canal",
+  "giver": "sister_ilse",
+  "turnin": "dace_pike",
+  "region": "fens",
+  "level": [
+    8,
+    30
+  ],
+  "after": [
+    "ch1_ember_in_the_fist"
+  ],
+  "summary": "The shard's foundry mark is Fens work, and the Cult's boats come up the canal from the south. Sister Ilse is sending you to Saltmere, to Dace Pike at the Drowned Eel, who writes down what everyone owes.",
+  "steps": [
+    {
+      "id": "dace",
+      "journal": "Take the canal road south to Saltmere and find Dace Pike at the Drowned Eel.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "dace_pike",
+          "region": "fens",
+          "count": 1,
+          "label": "Talk to Dace Pike in Saltmere"
+        }
+      ]
+    },
+    {
+      "id": "toadking",
+      "journal": "Dace says Wren knows where the Cult's boats go, and the Toadking has her. Go down to the second floor of Toadking's Mound, out in the reeds, and put him down.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "toadking_mound",
+          "boss": "toadking",
+          "count": 1,
+          "label": "The Toadking"
+        }
+      ]
+    },
+    {
+      "id": "wren",
+      "journal": "The Toadking kept Wren tied in the Boat Hall beside his berth-book. Talk to her there.",
+      "objectives": [
+        {
+          "type": "meet",
+          "npc": "wren",
+          "site": "toadking_mound",
+          "count": 1,
+          "label": "Talk to Wren in the Boat Hall"
+        }
+      ]
+    }
+  ],
+  "ready": "Wren read the Toadking's berth-book: the Cult's boat ties up at the Canal Locks. Tell Dace Pike in Saltmere.",
+  "done": "Dace wrote the Canal Locks in his book, under the Cult's name, and drew a line under it. Wren is out of the Boat Hall.",
+  "rewards": {
+    "share": 0.35,
+    "lv": 9,
+    "gold": 220
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_ch2_offer",
+    "turnin": "dace_fog_turnin"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "dace_pike",
+  "name": "Dace Pike",
+  "role": [
+    "innkeeper",
+    "giver"
+  ],
+  "town": "saltmere",
+  "region": "fens",
+  "look": "npc_dace",
+  "portrait": "npc_dace",
+  "dialogue": "dace",
+  "knot": "dace_hub",
+  "note": "Keeps the Drowned Eel in Saltmere; Wenna Pike's older brother, and the only man in Saltmere who writes things down (world doc §3.2, v1.29). Takes in Fog on the Canal; gives The Locks."
+}

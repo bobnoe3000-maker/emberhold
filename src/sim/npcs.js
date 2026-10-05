@@ -23,6 +23,8 @@
 // not walls: you pass through them). A town built mid-day places them where the hour has them; their
 // positions are runtime, never saved. Everyone keeps apart on screen, so a tap picks one person.
 //
+// (M8) A visitor (`visitor`: the Kindler) stands in a dungeon's entrance room until a flag of his own says he's gone:
+// he's met, talks, and leaves when the conversation ends.
 // Found companions (`found`: Brannoc, M5) stand in a dungeon until they join: at the back of their
 // site's floor's hall (placeFound), a walker like townsfolk (the hall is a fight room). Once one has
 // joined (heroes.js FOUND), `talk` reaches him wherever you are, from his party card, while he's in the
@@ -49,6 +51,16 @@ export const NPCS = {
   nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [1, 22]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
   hedda: { region: 'vale', folk: true, spots: [['hub', [21, 14]], ['shop', [1, 14]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
   brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
+  // (M8, Act II; world doc v1.29 §3.2) Saltmere's people: Dace Pike by the Drowned Eel, Pim's handcart by the cistern,
+  // Sister Orla and Mother Agnes by the chapel
+  dace_pike: { region: 'fens', spots: [['tavern', [10, 2]]], knot: 'dace_hub', flags: ['met_dace'] },
+  pim_rushlight: { region: 'fens', spots: [['hub', [12, 9]]], knot: 'pim_hub', flags: ['met_pim'] },
+  sister_orla: { region: 'fens', spots: [['temple', [8, 9]]], knot: 'orla_hub', flags: ['met_orla'] },
+  mother_agnes: { region: 'fens', spots: [['temple', [14, 4]]], knot: 'agnes_hub', flags: ['met_agnes'] },
+  // Wren, found tied in the Toadking's Boat Hall (world doc v1.29 §5); the Kindler, met once on the Canal Locks' first
+  // floor, by its way in (`entrance`), who leaves when he's said his piece (`visitor`: gone once that flag is set)
+  wren: { region: 'fens', found: { site: 'toadking_mound', depth: 1, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
+  kindler: { region: 'fens', found: { site: 'canal_locks', depth: 0, entrance: true }, visitor: 'met_kindler', spots: [], knot: 'kindler_hub', flags: ['met_kindler'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -126,17 +138,19 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
 export function placeFound(world, isWalkable, waiting) {
   if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
-  const r = world.level.descentRoom;
   for (const [id, n] of Object.entries(NPCS)) {
     if (!n.found || n.found.site !== (world.site || 'barrows') || n.found.depth !== (world.depth || 0) || !waiting(id)) continue;
+    // (a visitor by the way in stands in the entrance room, nearest its middle: no fight starts there)
+    const r = n.found.entrance ? world.level.entrance : world.level.descentRoom; if (!r) continue;
     let best = null;
     for (const [k, c] of world.level.cells) {
       if (c.room !== r.id || c.kind !== 'floor') continue;
       const [x, y] = k.split(',').map(Number), q = { x: x + 0.5, y: y + 0.5 };
       const open = [[0, 0], [1, 0], [0, 1], [1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // room to walk up beside him
-      if (open && (!best || x + y < best.k || (x + y === best.k && x < best.x - 0.5))) best = { ...q, k: x + y };
+      const key = n.found.entrance ? hypot(x - r.cx, y - r.cy) : x + y;
+      if (open && (!best || key < best.k || (key === best.k && x < best.x - 0.5))) best = { ...q, k: key };
     }
-    if (best) world.npcs.push({ id, found: true, boss: n.found.boss, x: best.x, y: best.y, px: best.x, py: best.y });
+    if (best) world.npcs.push({ id, found: true, visitor: !!n.visitor, boss: n.found.boss, x: best.x, y: best.y, px: best.x, py: best.y });
   }
   return world;
 }
@@ -181,8 +195,8 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
   if (!state.flags) state.flags = {};
   let talking = null;                             // the NPC id of the open conversation (runtime only)
   const npcHere = (id) => (getWorld().npcs || []).find((n) => n.id === id) || null;
-  // a found companion in the party, up: you talk to him from his card, wherever you are
-  const withYou = (id) => !!NPCS[id] && !!NPCS[id].found && state.party.some((m) => m.id === id && !m.down && !m.fallen);
+  // a found companion in the party, up: you talk to him from his card, wherever you are (a visitor never joins)
+  const withYou = (id) => !!NPCS[id] && !!NPCS[id].found && !NPCS[id].visitor && state.party.some((m) => m.id === id && !m.down && !m.fallen);
   const withParty = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
   const dist = (n) => { const p = state.player; return hypot(n.x - p.x, n.y - p.y); };
 
@@ -239,6 +253,7 @@ export function createTalk({ state, bus, getWorld, walkTo, canStand, moreVars = 
   // walking off ends the conversation (a stale one can't be used to set flags later)
   function tick() {
     const w = getWorld();
+    if (!talking && w.npcs && w.npcs.some((n) => n.visitor && state.flags[NPCS[n.id].visitor])) w.npcs = w.npcs.filter((n) => !(n.visitor && state.flags[NPCS[n.id].visitor]));   // a visitor who's said his piece is gone
     if (!talking && w.npcs && w.npcs.some((n) => n.found && withParty(n.id))) {   // a found companion who joined leaves the hall with you; it stays quiet for the visit (battle.js)
       w.npcs = w.npcs.filter((n) => !(n.found && withParty(n.id)));
       if (w.level && w.level.descentRoom) w.freedHall = w.level.descentRoom.id;
