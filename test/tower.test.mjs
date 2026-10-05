@@ -45,6 +45,20 @@ test('Wenna\'s punt at Saltmere\'s jetty: under level 12 she won\'t take you; at
   const a = sim.world.arrivals.mere_tower; assert.equal(sim.world.kind, 'overland'); assert.ok(Math.hypot(p.x - a.x, p.y - a.y) < 2, 'back on the jetty');
 });
 
+// (2026-10-05, the owner: "Its not obvious what to click on to get to the mere tower") the ferry stage stands over the
+// jetty's end, its sign a door label; a tap on it walks you there as the compass row does, from Saltmere's boardwalk
+test('the way to the punt is marked: the ferry stage over the jetty\'s end, a sign that walks you there from the boardwalk', () => {
+  const sim = createSim(SEED, undefined, { scene: 'overland', region: 'fens' }), w = sim.world;
+  const ex = w.exits.find((e) => e.site === 'mere_tower'), st = w.structs.find((s) => s.id === 'fens_ferrystage_1'), sign = w.labels.find((l) => l.door && l.site === 'mere_tower');
+  assert.ok(st && sign && sign.id === st.id, 'the sign hangs on the stage');
+  assert.ok(st.x > ex.x0 && st.x < ex.x1 && st.y <= ex.y0 && st.y > ex.y0 - 2, 'the way out is under the arch');
+  sim.state.party[0].level = 12;
+  const row = sim.destinations().find((d) => d.id === 'site:mere_tower'); assert.ok(row && !row.off, 'a compass row for it');
+  sim.commands.push({ type: 'goto', tx: row.tx, ty: row.ty, near: 0, label: row.label, site: row.site, journey: row.journey });
+  for (let i = 0; i < 20 * 60 && w === sim.world; i++) sim.tick();
+  assert.equal(sim.world.site, 'mere_tower', 'walked to the punt and out to the Tower');
+});
+
 test('the climb: no XP; each wave into the satchel; the tenth a warden; at the landing the satchel is banked and the hall waits', () => {
   const { sim, ev } = inHall(), xp0 = sim.state.party.map((m) => m.xp), g0 = sim.state.counters.gold || 0;
   toLanding(sim, ev);

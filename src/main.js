@@ -139,6 +139,13 @@ input.onTap((sx, sy) => {
   if (STAGE) return;                                     // the Stage: nothing in the world to tap
   const npc = renderer.npcAt(sx, sy);                    // a named person: walk over and talk (the sim checks reach)
   if (npc) { sim.commands.push({ type: 'talk', npc: npc.id }); return; }
+  const door = renderer.doorAt(sx, sy);                  // a way somewhere's sign (the Mere Tower's punt): walk to it, as its compass row does
+  if (door) {
+    const row = door.site && sim.destinations().find((d) => d.id === 'site:' + door.site && !d.off);
+    if (row) sim.commands.push({ type: 'goto', tx: row.tx, ty: row.ty, near: 0, label: row.label, site: row.site, journey: row.journey || null });
+    else { const t = renderer.screenToTile(sx, sy, 1); sim.commands.push({ type: 'tap', tx: t.tx, ty: t.ty }); }
+    return;
+  }
   const sv = renderer.serviceAt(sx, sy);                 // a service building: its menu once you're in the square,
   if (sv && townMenu.inSquare()) { townMenu.open(sv); return; }
   if (sv) { const h = sim.world.hub; sim.commands.push({ type: 'tap', tx: Math.floor(h.x), ty: Math.floor(h.y) }); return; }   // else walk to the square

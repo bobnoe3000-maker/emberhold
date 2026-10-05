@@ -1084,6 +1084,26 @@ Object.assign(TYPES, {
     box(0.03, 0.12, 0.3, S.m.signboard, 0.02, H - 0.26, 0, g);                                           // the board
     const eel = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 4), mat(null, '#b8a060')); eel.scale.set(0.008, 0.022, 0.11); eel.position.set(0.04, H - 0.2, 0); eel.rotation.x = 0.2; g.add(eel);
   },
+  // Wenna Pike's ferry stage (world doc v1.23; sim tower.js): an arch over the end of the jetty off Saltmere's boardwalk,
+  // where her punt takes companies out to the Mere Tower (2026-10-05, the owner: it wasn't obvious where to go). Taller
+  // than the landing gate, a lantern high on each post and one low (it shows across the dark), a black board painted
+  // with a pale tower hung square to the camera (+z), and the bell you ring for her. The jetty runs under it, along z.
+  ferrystage(S, g, r) {
+    const H = 0.86, X = 0.22;
+    for (const sx of [-1, 1]) {
+      box(0.07, H, 0.07, S.m.beam, sx * X, H / 2 - 0.02, 0, g);
+      box(0.1, 0.03, 0.1, S.m.trim, sx * X, H - 0.01, 0, g);
+      lantern(g, S, sx * X, H + 0.2, 0); lantern(g, S, sx * (X + 0.06), 0.46, 0.02);
+      const brace = box(0.025, 0.2, 0.025, S.m.beam, sx * (X - 0.08), H - 0.2, 0, g); brace.rotation.z = -sx * 0.7;
+    }
+    box(X * 2 + 0.16, 0.06, 0.08, S.m.beam, 0, H - 0.04, 0, g);                                         // the beam
+    for (const sx of [-1, 1]) box(0.008, 0.08, 0.008, S.m.trim, sx * 0.12, H - 0.12, 0.02, g);           // the board's chains
+    box(0.32, 0.2, 0.03, mat(null, '#1a181e'), 0, H - 0.27, 0.02, g);                                   // the black board…
+    box(0.05, 0.14, 0.034, mat(null, '#c8d0dc'), 0, H - 0.27, 0.02, g);                                 // …its pale tower…
+    box(0.08, 0.025, 0.034, mat(null, '#c8d0dc'), 0, H - 0.2, 0.02, g);                                  // …and the tower's lit top
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 4, 0, Math.PI * 2, 0, Math.PI * 0.6), mat(null, '#8a7a48'));
+    bell.scale.set(0.045, 0.06, 0.045); bell.position.set(X + 0.1, H - 0.14, 0); g.add(bell);           // the bell for Wenna, off the beam's end
+  },
   // ── the Fens' sites (M8 slice 3; world doc v1.20 §3.2). Each way in faces the camera (+z), where the overland's
   // exit is, with a lantern by it.
   // Toadking's Mound: an island of stolen boats. A turfed mound with a hall roofed in three hulls laid keel-up, side by

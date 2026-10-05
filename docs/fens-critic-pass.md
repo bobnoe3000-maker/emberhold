@@ -236,3 +236,23 @@ What the first bake got wrong, and what changed:
 
 Still open: the Twins don't yet read as *half pale, half dark* (the swatch tiles split by part, not by side); the
 Mudlark's hoe stands straight up at idle; the Hound would read more beast-like with a hunch (the lab's `frame` knob).
+
+## The way to the Mere Tower (2026-10-05)
+
+The owner, at Saltmere at night: *"Its not obvious what to click on to get to the mere tower."* The way was a short
+jetty off the boardwalk with a punt at its end and the name over it in the same plain text as any landmark's; nothing
+said it was a place you could go, and at night the jetty was a dark smudge by the landing gate.
+
+- **A ferry stage** (`tools/actor-lab/buildkit.js` `ferrystage`, `town.json` `fens_ferrystage_1`): an arch over the
+  jetty's end, taller than the landing gate (12.7 against 8.85 tiles of sprite top), a lantern high on each post and
+  one low, a black board painted with a pale tower hung square to the camera, and the bell you ring for Wenna.
+- **The jetty** runs 11 tiles now (it was 3), under the arch, to a small pool of its own where the punt is moored; the
+  way out to the Tower is just past the arch (`src/sim/outdoor.js` buildFens). No other footprint moved (the env bake's
+  footprints compared before and after: 0 changed).
+- **Its sign is a plaque** (`renderer.js` drawLabels, a label with `door`): gold-bordered, with a ›, kept on screen,
+  hung at the arch's beam so it doesn't sit on Saltmere's own name. A tap on it (`renderer.doorAt`, at least 44 CSS px
+  tall) walks the party there as the compass's row does (`goto` with the `site:mere_tower` row; a tap on the ground
+  when the row isn't there).
+- Checked: `test/tower.test.mjs` (the stage over the jetty's end, the sign on it, the compass row walks you out to the
+  Tower); browser §21 (from the boardwalk at night the plaque is on screen; a tap walks you down the jetty and out).
+  Before and after: `docs/img/mere-tower-way.jpg`.

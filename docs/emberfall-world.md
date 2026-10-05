@@ -466,7 +466,8 @@ Throne's flame carried out. It was built for half a million people; about twenty
   down who goes in, and companies scratch their marks on the stair-wall at the highest landing they held (**the
   Wall**). It isn't the Guild's, and it isn't a lamp. It seems to take in whatever comes near it and keep it.
   (v1.23) **Before Solmere is reached,** Wenna Pike also works out of Saltmere: a second punt tied at the end of a
-  jetty off Saltmere's boardwalk, up the old canal and across the Mere. It's a long row and she charges nothing for
+  jetty off Saltmere's boardwalk (the jetty ends under her stage: a lantern arch, a black board painted with a pale
+  tower, and a bell to ring for her), up the old canal and across the Mere. It's a long row and she charges nothing for
   it ("the Tower pays me"; nobody has asked how). The Sisters' register at the Tower's door won't write down a
   company under level 12: *"We only write down the ones we'd expect to see again."*
 - **The Great Beacon**: the imperial beacon-tower over the Lamphall, which carried the Voices' orders. Its

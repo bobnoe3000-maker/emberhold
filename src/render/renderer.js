@@ -1256,12 +1256,15 @@ export function createRenderer(canvas, sim, input) {
     octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.stroke();
   }
   // Place names float over nearby landmarks (the tavern, the guild hall, the keep…).
+  // a door label's plaque as last drawn (canvas px), for a tap (doorAt): a way somewhere, tapped to walk there
+  const doorRects = [];
   function drawLabels(ox, oy, ix, iy) {
     const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
+    doorRects.length = 0;
     octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     for (const L of sim.world.labels || []) {
-      const d = Math.hypot(L.x - ix, L.y - iy); if (d > (L.service && camT > 0.5 ? 90 : 60) || hiddenHere(L)) continue;   // (on the home screen every service's plaque, however far: the temple heads the square)
-      const top = (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100;
+      const d = Math.hypot(L.x - ix, L.y - iy); if (d > (L.service && camT > 0.5 ? 90 : L.door ? 70 : 60) || hiddenHere(L)) continue;   // (on the home screen every service's plaque, however far: the temple heads the square)
+      const top = ((envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100) * (L.door ? 0.62 : 1);   // (a door's sign hangs on it, at its beam)
       const P = project(L.x, L.y, z), sy0 = (oy + P.sy - top - 10) * S; let sx = (ox + P.sx) * S;
       if (L.service ? (sx < -vw * 0.3 || sx > vw * 1.3 || sy0 < -vh * 0.4 || sy0 > vh) : (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh)) continue;
       const sy = Math.max(sy0, (hudB + 22) * k);               // never under the top HUD: a tall spire's label slides down below it
@@ -1273,6 +1276,15 @@ export function createRenderer(canvas, sim, input) {
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
+        continue;
+      }
+      if (L.door) {                                                 // a way somewhere (the Mere Tower's punt): a sign with a ›, tapped to walk there
+        const t = L.text + '  ›', tw = octx.measureText(t).width + 16 * k, th = 19 * k, y0 = sy - th + 5 * k;
+        sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);       // (kept on screen whole, as a service's is)
+        octx.fillStyle = `rgba(16,12,22,${0.82 * a})`; octx.strokeStyle = `rgba(232,190,110,${0.85 * a})`; octx.lineWidth = Math.max(1.5, 1.5 * k);
+        octx.beginPath(); octx.roundRect(sx - tw / 2, y0, tw, th, 6 * k); octx.fill(); octx.stroke();
+        octx.fillStyle = `rgba(250,214,140,${a})`; octx.fillText(t, sx, sy);
+        if (a > 0.3) doorRects.push({ x0: sx - tw / 2, y0, x1: sx + tw / 2, y1: y0 + th, L });
         continue;
       }
       octx.fillStyle = `rgba(8,5,14,${0.7 * a})`; octx.fillText(L.text, sx + k, sy + k);
@@ -1610,6 +1622,12 @@ export function createRenderer(canvas, sim, input) {
         const d = Math.hypot(dx, dy + up * 0.45); if (d < bd) { bd = d; best = n; }
       }
       return best;
+    },
+    /** the door label (a plaque with a ›) under a tap, a thumb's reach round it (44 CSS px tall at least), or null */
+    doorAt(sxPx, syPx) {
+      const k = vw / window.innerWidth, x = sxPx * k, y = syPx * k;
+      for (const r of doorRects) { const pad = Math.max(0, (44 * k - (r.y1 - r.y0)) / 2); if (x >= r.x0 - 6 * k && x <= r.x1 + 6 * k && y >= r.y0 - pad && y <= r.y1 + pad) return r.L; }
+      return null;
     },
     serviceAt(sxPx, syPx) {
       const w = sim.world; if (!w.services || !w.services.length || !envMeta) return null;

@@ -704,6 +704,20 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_ferrystage_1",
+      "model": "ferrystage",
+      "build": "ferrystage",
+      "seed": 67,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [
