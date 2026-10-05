@@ -14,6 +14,7 @@ VAR day_part = 0
 VAR flag_met_agnes = 0
 VAR q_ch2_the_rolls = -1
 VAR q_ch2_the_last_office = -1
+VAR q_trial_vigil = -1
 
 == agnes_hub ==
 { flag_met_agnes == 0: -> agnes_first_meet }
@@ -35,6 +36,9 @@ An old Grey Sister sits in the chapel's one good chair with her hands folded on 
 + { q_ch2_the_rolls == 2 } [We brought up what's left of the rolls. #mark: quest ready] -> agnes_rolls_turnin
 + { q_ch2_the_last_office == 0 } [What do the rolls say? #mark: quest] -> agnes_office_offer
 + { q_ch2_the_last_office == 1 } [About the Abbess… #mark: quest active] -> agnes_office_active
++ { q_trial_vigil == 2 } [We kept the vigil. Six waves. #mark: quest ready] -> agnes_vigil_turnin
++ { q_trial_vigil == 0 } [Would you teach a cleric? #mark: quest] -> agnes_vigil_offer
++ { q_trial_vigil == 1 } [About the vigil… #mark: quest active] -> agnes_vigil_active
 + [Why keep the rolls shut?] -> agnes_shut
 + [I'll be going.] -> agnes_bye
 
@@ -60,6 +64,26 @@ She unties the first one, and reads it standing up, and then she sits down to re
 
 == agnes_office_active ==
 "The Drowned Abbey, the third floor's hall: the chapter-house. Stay out of the water when the bells ring. Break the lamp. Bring Ilse the ledger."
+-> agnes_topics
+
+// ── the cleric's second trial (content/quests/trial_vigil.json; world doc v1.30) ──
+== agnes_vigil_offer ==
+"A vigil is a night you stay awake for somebody who can't. That's all it is. People make it sound holy so they don't have to do it."
+"The Abbey's dead have had nobody awake for them in three hundred years. Go and keep one. Six waves, anywhere in the Abbey. Then I'll teach your cleric the last thing the order taught before it stopped teaching anything: how to send the dead on."
++ [We'll keep it. #mark: quest]
+    "Stay awake. Don't pray at them. Pray for them. They can tell the difference." # quest: accept trial_vigil
+    -> agnes_topics
++ [Not yet.]
+    "No. It's a long night. Go when you've the strength for it."
+    -> agnes_topics
+
+== agnes_vigil_active ==
+"The Drowned Abbey, anywhere in it. Six waves. Stay awake."
+-> agnes_topics
+
+== agnes_vigil_turnin ==
+Agnes has your cleric kneel, which takes her a long time to get down beside, and says the words once, very quietly, in a voice that hasn't said them since she was young.
+"That's the turning. It doesn't hurt them. It hurts what holds them. Use it kindly, if there's a kind way." # quest: turnin trial_vigil
 -> agnes_topics
 
 == agnes_shut ==

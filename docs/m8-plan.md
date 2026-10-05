@@ -185,6 +185,13 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
    6s did: fighter (Osric, *The Long Watch*), rogue (Wren, *Dead Water*), mage (Pim Rushlight, *Lamp Oil*: a
    chandler knows fire), cleric (Mother Agnes, *Vigil*), shaman (Col, *The Old Water*). Older saves count every class
    the company had at 12, so nobody loses an ability. Canon first: the teachers go in world doc §5.
+   - **Done** (2026-10-05): `quests.js` (`trialLv: 12`: offered at 12 after the class's first trial; it sets
+     `state.trials[cls + '12']`), `skills.js` (`trialKey`; the 12s are `trial` abilities), five quests
+     (`trial_the_long_watch`, `trial_dead_water`, `trial_lamp_oil`, `trial_vigil`, `trial_the_old_water`) and their
+     Ink in Osric's, Wren's, Pim's, Agnes's and Col's files. Save v26 (`persist/save.js trials12For`). The Journal's
+     Fens leads list a 12s trial on offer, and where its teacher stands; the character sheet names the teacher.
+     World doc v1.30, GDD v1.41. Tests: `test/trials.test.mjs`, `test/save.test.mjs`. The balance harnesses and boss
+     tests assume both trials done, as the contract assumes the 6s.
 10. **The Fens Chronicle.** Ten fragments (the night the canal broke; world doc §7), placed as the Vale's are; the
     last reveals the Reedholm Undercroft, whose vault holds the set's heirloom. Ilse reads them all; Mother Agnes has
     a line for the set whole.

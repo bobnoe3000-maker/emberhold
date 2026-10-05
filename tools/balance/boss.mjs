@@ -19,11 +19,11 @@ const [site, HL] = [args[0], +args[1]], seeds = (args[2] || '20260807,777,4242')
 for (const seed of seeds) {
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
   const sim = createSim(seed, undefined, { scene: 'dungeon', site });
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   sim.state.party[0].cls = 'fighter'; const want = ['fighter', 'rogue', HEALER];
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });
-  if (sim.state.trials) for (const c of want) sim.state.trials[c] = 1;
+  if (sim.state.trials) for (const c of want) { sim.state.trials[c] = 1; sim.state.trials[c + '12'] = 1; }
   sim.tick();
   while (sim.world.stairsAt && !(FLOOR && sim.state.depth >= FLOOR - 1)) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); if (site === 'barrows' && sim.state.depth >= 2) break; }
   // into the hall: the tile nearest its middle within its largest open stretch (some halls are mostly

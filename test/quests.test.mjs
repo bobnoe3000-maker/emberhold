@@ -86,8 +86,8 @@ test('content/quests matches the sim table; the giver says the right tags', () =
   assert.deepEqual(defs.map((d) => d.id).sort(), Object.keys(QUESTS).sort());
   for (const d of defs) {
     const q = QUESTS[d.id];
-    assert.deepEqual({ kind: d.kind, giver: d.giver, region: d.region, level: d.level, rewards: d.rewards, turnin: d.turnin, after: d.after, reveal: d.reveal, companion: d.companion, trial: d.trial },
-      { kind: q.kind, giver: q.giver, region: q.region, level: q.level, rewards: q.rewards, turnin: q.turnin, after: q.after, reveal: q.reveal, companion: q.companion, trial: q.trial }, d.id);
+    assert.deepEqual({ kind: d.kind, giver: d.giver, region: d.region, level: d.level, rewards: d.rewards, turnin: d.turnin, after: d.after, reveal: d.reveal, companion: d.companion, trial: d.trial, trialLv: d.trialLv },
+      { kind: q.kind, giver: q.giver, region: q.region, level: q.level, rewards: q.rewards, turnin: q.turnin, after: q.after, reveal: q.reveal, companion: q.companion, trial: q.trial, trialLv: q.trialLv }, d.id);
     assert.deepEqual(d.steps.map((s) => ({ id: s.id, objectives: s.objectives.map(({ label, ...o }) => o) })), q.steps, d.id);
     // offered in its giver's conversation, handed in in its taker's (a chapter can go to someone else)
     const inkOf = (npc) => readFileSync(`content/dialogue/${JSON.parse(readFileSync(`content/npcs/${npc}.json`, 'utf8')).dialogue}.ink`, 'utf8');

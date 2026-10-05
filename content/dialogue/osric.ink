@@ -18,6 +18,7 @@ VAR q_ch1_smoke_over_the_vale = -1
 VAR q_ch1_the_diggers = -1
 VAR q_ch1_ember_in_the_fist = -1
 VAR q_trial_hold_the_keep_gate = -1
+VAR q_trial_the_long_watch = -1
 VAR frag_vale_count = 0
 VAR road_ranks = 3
 VAR chapters_done = 0
@@ -71,6 +72,9 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 + { q_trial_hold_the_keep_gate == 2 } [We held Wickham Keep, eight waves. #mark: quest ready] -> osric_trial_turnin
 + { q_trial_hold_the_keep_gate == 0 } [Can you teach a fighter anything? #mark: quest] -> osric_trial_offer
 + { q_trial_hold_the_keep_gate == 1 } [About holding the gate… #mark: quest active] -> osric_trial_active
++ { q_trial_the_long_watch == 2 } [We held the Sluice. Ten waves. #mark: quest ready] -> osric_long_watch_turnin
++ { q_trial_the_long_watch == 0 } [Is there more a fighter could learn? #mark: quest] -> osric_long_watch_offer
++ { q_trial_the_long_watch == 1 } [About the long watch… #mark: quest active] -> osric_long_watch_active
 + { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones are down. #mark: quest ready] -> osric_ledger_turnin
 + { q_vale_captains_ledger == 0 } [Any bounties posted? #mark: quest] -> osric_ledger_offer
 + { q_vale_captains_ledger == 1 } [About the bounty… #mark: quest active] -> osric_ledger_active
@@ -78,6 +82,27 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 + [What does the Watch do here?] -> osric_watch
 + [Tell me about Lord Pellam.] -> osric_pellam
 + [I'll be going.] -> osric_bye
+
+// ── the fighter's second trial (content/quests/trial_the_long_watch.json; world doc v1.30) ──
+== osric_long_watch_offer ==
+"The gate at the Keep was a fight. This is the other thing. A post." He turns the ledger round and shows you a page of names with dates beside them and no second dates.
+"Men I've put on a post and not relieved. Some of them I couldn't. Some of them I forgot. They stood anyway. That's the Watch. Not the sword. The standing."
+"The Canal Locks, down in the Fens. The Sluice, at the bottom, where the dead lock-men won't lie down. Hold it ten waves with nobody coming, and I'll teach your fighters how to get their breath back without stepping off the line."
++ [We'll hold it. #mark: quest]
+    "Ten. Count them. Write them down if you like. I would." # quest: accept trial_the_long_watch
+    -> osric_topics
++ [Not yet.]
+    "The post's not going anywhere. That's the point of a post."
+    -> osric_topics
+
+== osric_long_watch_active ==
+"The Sluice, at the bottom of the Canal Locks. Ten waves. Nobody's coming. Breathe anyway."
+-> osric_topics
+
+== osric_long_watch_turnin ==
+Osric hears the count out, nods at each number, and then shows your fighters how a man on a post gets his wind back: low, slow, and without taking his eyes off the road.
+"Second wind. Every old soldier has one. The trick's knowing it's there before you need it." He writes your company's name on the page of names, and a date beside it. Then a second date. # quest: turnin trial_the_long_watch
+-> osric_topics
 
 == osric_ledger_early ==
 "For you? Not yet. The ones worth a bounty lead the walking kind, and they'd have you for breakfast."

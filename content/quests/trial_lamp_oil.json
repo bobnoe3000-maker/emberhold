@@ -1,0 +1,40 @@
+{
+  "id": "trial_lamp_oil",
+  "kind": "trial",
+  "trial": "mage",
+  "trialLv": 12,
+  "title": "Lamp Oil",
+  "giver": "pim_rushlight",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Pim Rushlight knows what burns, and the Sickpools' vats burn better than anything he sells. Hold eight waves out there, and he'll show your mages how to keep a fire off somebody (the mage's level-12 skill).",
+  "steps": [
+    {
+      "id": "vats",
+      "journal": "Hold eight waves in the Sickpools, among the old vats.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "sickpools",
+          "count": 8,
+          "label": "Waves held in the Sickpools"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Pim Rushlight, at his handcart by Saltmere's cistern.",
+  "done": "Pim taught your mages Arcane Ward. He charged nothing, and told you so three times.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 12,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "pim",
+    "offer": "pim_lamp_oil_offer",
+    "turnin": "pim_lamp_oil_turnin"
+  }
+}

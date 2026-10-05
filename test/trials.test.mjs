@@ -20,18 +20,45 @@ function talk(sim, npc) {
   p.x = p.px = n.x + 1; p.y = p.py = n.y - 1; sim.commands.push({ type: 'talk', npc }); sim.tick();
 }
 const say = (sim, verb, id) => { sim.commands.push({ type: 'dialogueEffect', tag: 'quest', args: [verb, id] }); sim.tick(); };
-const trialSkill = (cls) => SKILLS[cls].find((s) => s.trial);
+const trialSkill = (cls, lv = 6) => SKILLS[cls].find((s) => s.trial && s.lv === lv);
+// (M8, slice 9; world doc v1.30) the second trials, at 12, taught for the Fens
+const TRIALS12 = { fighter: ['trial_the_long_watch', 'osric_hale'], rogue: ['trial_dead_water', 'wren'], mage: ['trial_lamp_oil', 'pim_rushlight'], cleric: ['trial_vigil', 'mother_agnes'], shaman: ['trial_the_old_water', 'col'] };
 
-test('one trial ability per class, the level-6 one; level 12 still unlocks by level', () => {
+test('two trial abilities per class, the level-6 and level-12 ones, each wanting its own trial', () => {
   assert.deepEqual(TRIAL_CLASSES, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const cls of TRIAL_CLASSES) {
-    const A = trialSkill(cls), m = makeMember('x', 'X', cls, 12);
-    assert.equal(A.lv, 6); assert.equal(SKILLS[cls].filter((s) => s.trial).length, 1);
+    const A = trialSkill(cls), B = trialSkill(cls, 12), m = makeMember('x', 'X', cls, 12);
+    assert.deepEqual(SKILLS[cls].filter((s) => s.trial).map((s) => s.lv), [6, 12]);
     assert.ok(!unlocked(m, A, {}), `${A.name}: not without the trial`); assert.ok(unlocked(m, A, { [cls]: 1 }));
     assert.ok(!unlocked({ ...m, level: 5 }, A, { [cls]: 1 }), 'nor before level 6');
-    assert.ok(unlocked(m, SKILLS[cls].find((s) => s.lv === 12), {}), 'the level-12 one by level');
+    assert.ok(!unlocked(m, B, { [cls]: 1 }), `${B.name}: not with the first trial only`); assert.ok(unlocked(m, B, { [cls]: 1, [cls + '12']: 1 }));
+    assert.ok(!unlocked({ ...m, level: 11 }, B, { [cls]: 1, [cls + '12']: 1 }), 'nor before level 12');
     assert.equal(QUESTS[TRIALS[cls][0]].trial, cls); assert.equal(QUESTS[TRIALS[cls][0]].giver, TRIALS[cls][1]);
+    assert.deepEqual([QUESTS[TRIALS12[cls][0]].trial, QUESTS[TRIALS12[cls][0]].trialLv, QUESTS[TRIALS12[cls][0]].giver], [cls, 12, TRIALS12[cls][1]]);
   }
+});
+
+test('the second trial: offered at 12, once the class\'s first is done, by its teacher; done, the level-12 ability for the whole class', () => {
+  const sim = town(), [id, giver] = TRIALS12.fighter, st = () => sim.quests.status(id), ev = [];
+  sim.bus.on('trialDone', (e) => ev.push(e));
+  sim.state.party[0].level = 12;
+  assert.equal(st(), QS.LOCKED, 'the Keep Gate first');
+  sim.state.trials = { fighter: 1 }; assert.equal(st(), QS.AVAILABLE);
+  sim.state.party[0].level = 11; assert.equal(st(), QS.LOCKED, 'at 12'); sim.state.party[0].level = 12;
+  talk(sim, 'hedda'); say(sim, 'accept', id); assert.equal(st(), QS.AVAILABLE, 'not from Hedda');
+  talk(sim, giver); say(sim, 'accept', id); assert.equal(st(), QS.ACTIVE);
+  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'canal_locks', depth: 1 });
+  const hall = sim.world.level.descentRoom.id;
+  for (let i = 0; i < 10; i++) sim.bus.emit('wave', { cleared: true, room: hall });
+  assert.equal(st(), QS.READY);
+  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'town', depth: 0, region: 'vale' });
+  talk(sim, giver); say(sim, 'turnin', id); say(sim, 'turnin', id);
+  assert.equal(st(), QS.DONE); assert.deepEqual(ev, [{ cls: 'fighter', id, lv: 12 }], 'once');
+  assert.deepEqual(sim.state.trials, { fighter: 1, fighter12: 1 });
+  assert.ok(unlocked(makeMember('h', 'H', 'fighter', 13), trialSkill('fighter', 12), sim.state.trials), 'Second Wind, for a fighter hired later too');
+  // Wren's is hers to give, only while she's with you
+  const w = town(); w.state.party[0].cls = 'rogue'; w.state.party[0].level = 12; w.state.trials = { rogue: 1 };
+  assert.equal(w.quests.status('trial_dead_water'), QS.LOCKED, 'Wren not found');
 });
 
 test('a trial is offered while someone of its class in the company is level 6+, by its teacher only; done, the whole class knows it', () => {
@@ -50,7 +77,7 @@ test('a trial is offered while someone of its class in the company is level 6+, 
   assert.equal(st(), QS.READY);
   sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'town', depth: 0 });
   talk(sim, giver); say(sim, 'turnin', id); say(sim, 'turnin', id);
-  assert.equal(st(), QS.DONE); assert.deepEqual(ev, [{ cls: 'fighter', id }], 'once');
+  assert.equal(st(), QS.DONE); assert.deepEqual(ev, [{ cls: 'fighter', id, lv: 6 }], 'once');
   assert.deepEqual(sim.state.trials, { fighter: 1 });
   sim.commands.push({ type: 'rankSkill', id: 'you', skill: 'shield_wall' }); sim.tick();
   assert.equal(sim.state.party[0].skills.shield_wall, 2, 'now it takes points');

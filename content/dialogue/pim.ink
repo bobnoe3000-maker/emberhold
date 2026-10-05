@@ -12,6 +12,7 @@ VAR fallen_name = ""
 VAR day_part = 0
 VAR flag_met_pim = 0
 VAR q_ch2_the_sickpools = -1
+VAR q_trial_lamp_oil = -1
 
 == pim_hub ==
 { flag_met_pim == 0: -> pim_first_meet }
@@ -32,6 +33,9 @@ A thin man with oil to the elbows leans on a handcart full of stoppered jars. He
 + { q_ch2_the_sickpools == 2 } [Three cages, broken. #mark: quest ready] -> pim_pools_turnin
 + { q_ch2_the_sickpools == 0 } [Dace says you want to see me. #mark: quest] -> pim_pools_offer
 + { q_ch2_the_sickpools == 1 } [About the Sickpools… #mark: quest active] -> pim_pools_active
++ { q_trial_lamp_oil == 2 } [Eight waves among the vats. #mark: quest ready] -> pim_lamp_oil_turnin
++ { q_trial_lamp_oil == 0 } [You know a lot about fire. #mark: quest] -> pim_lamp_oil_offer
++ { q_trial_lamp_oil == 1 } [About the vats… #mark: quest active] -> pim_lamp_oil_active
 + [Where does your oil come from?] -> pim_oil
 + [Are the eels really fat this year?] -> pim_eels
 + [I'll be going.] -> pim_bye
@@ -56,6 +60,27 @@ He looks both ways along the boards, and at the chapel, and lowers his voice.
 Pim counts on his fingers, twice, and wipes his hands on his apron, which makes them worse.
 "Three. Good. That's good. That's somebody's grandmother not in a jar." He looks at his own jars for a while. # quest: turnin ch2_the_sickpools
 "Orla at the chapel's been asking for you. Asking everyone. Loudly. The bells, she says. I'd go before she comes to find you."
+-> pim_topics
+
+// ── the mage's second trial (content/quests/trial_lamp_oil.json; world doc v1.30) ──
+== pim_lamp_oil_offer ==
+He looks at your mage the way he looks at a lamp that's smoking.
+"You burn things. Yes. Everybody can burn things. The trick, the whole trade, is keeping the fire off what you don't want burned. The wick, the glass, the hand holding it."
+"Go and stand among the vats in the Sickpools. Eight waves. They burn lovely out there, and the harvesters don't care what catches. Come back unsinged and I'll show you how a chandler keeps a flame off his fingers. It works for friends too."
++ [We'll go. #mark: quest]
+    "Eight. Unsinged. Well. Mostly unsinged." # quest: accept trial_lamp_oil
+    -> pim_topics
++ [Not now.]
+    "No. Of course. I'll be here. Or a bit to the left of here."
+    -> pim_topics
+
+== pim_lamp_oil_active ==
+"The Sickpools, among the vats. Eight waves. Mind your sleeves."
+-> pim_topics
+
+== pim_lamp_oil_turnin ==
+Pim lights a wick, cups it in his bare hands, and shows your mage the trick: not a wall, just a little room around the flame where the heat isn't. Then he does it round your mage's hand instead.
+"Arcane ward, the Sisters call it. I call it not burning yourself. No charge. No charge at all. You'll remember I said no charge." # quest: turnin trial_lamp_oil
 -> pim_topics
 
 == pim_oil ==

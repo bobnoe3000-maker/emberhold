@@ -147,7 +147,7 @@ import { STARTER } from './src/sim/items.js';
 import { makeHero, makeMember } from './src/sim/party.js';
 function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, gear = lv, rarity = 'common', secs = 300 }) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1 };   // the contract's runs assume the class trials done, as they assume gear at level (M5)
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };   // the contract's runs assume the class trials done, as they assume gear at level (M5)
   sim.state.party = classes.map((c, i) => {
     const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m);
     for (const sl of Object.keys(m.gear)) if (STARTER[c][sl]) m.gear[sl] = makeItem(STARTER[c][sl], gear, rarity, { uid: `${i}${sl}` });

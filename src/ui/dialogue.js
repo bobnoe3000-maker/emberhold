@@ -116,8 +116,8 @@ export function createDialogue({ sim, cast, openService, questTitle = (id) => id
   sim.bus.on('questAccepted', ({ id }) => tell({ kind: 'taken', title: questTitle(id) || 'a new quest', sub: "it's in your Journal" }));
   sim.bus.on('questReward', ({ id, xp, gold }) => tell({ kind: 'done', title: questTitle(id) || 'the quest', sub: [xp ? `+${xp} XP` : '', gold ? `+${gold} gold` : ''].filter(Boolean).join(' · ') }));
   // (the sim hands the trial in first, then says the skill is learned: the row joins the quest's note)
-  sim.bus.on('trialDone', ({ cls, id }) => {
-    const A = (SKILLS[cls] || []).find((q) => q.trial); if (!A) return;
+  sim.bus.on('trialDone', ({ cls, id, lv = 6 }) => {
+    const A = (SKILLS[cls] || []).find((q) => q.trial && q.lv === lv); if (!A) return;   // (lv: the 6 or the 12, M8)
     const l = (CLASSES[cls] || { label: cls }).label.toLowerCase();
     tell({ ...(note || { kind: 'done', title: questTitle(id) || 'the trial', sub: '' }), skill: { name: A.name, who: `every ${l} in your company knows it`, text: A.text } });
   });

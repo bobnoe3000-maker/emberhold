@@ -56,3 +56,11 @@ test('Act II: a chapter given in Saltmere says so; both acts done, the end is th
   S.bosses = {}; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['toadking', 'choir', 'tower', 'fensboard']);
   S.bosses = { toadking: 1 }; assert.deepEqual(openLeads(S, status(sim), 'fens').map((l) => l.id), ['wren', 'choir', 'tower', 'fensboard']);
 });
+
+test('a second trial on offer is a Fens lead, with its teacher\'s town', () => {
+  const sim = town(), S = sim.state;
+  S.party[0].cls = 'cleric'; S.party[0].level = 12; S.trials = { cleric: 1 }; S.bosses = { toadking: 1, drowned_choir: 1 };
+  assert.deepEqual(openLeads(S, status(sim), 'fens').find((l) => l.id === 'trial'), { id: 'trial', cls: 'cleric', giver: 'mother_agnes', town: 'Saltmere' });
+  S.trials.cleric12 = 1; assert.equal(openLeads(S, status(sim), 'fens').find((l) => l.id === 'trial'), undefined, 'done');
+  assert.equal(openLeads(S, status(sim), 'vale').find((l) => l.id === 'trial'), undefined, 'not a Vale lead');
+});

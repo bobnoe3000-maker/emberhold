@@ -72,6 +72,9 @@
 //       next free name in their class's list (namesFor). The hero keeps theirs.
 //   v25: the slower XP curve (sim/party.js; GDD §7 v1.38). Levels are kept; the XP each member had toward their next
 //       level becomes the same share of the new table's (xpFor), so a bar three-quarters full stays three-quarters full.
+//   v26: the level-12 trials (sim/quests.js; GDD §5 v1.41): trials gains `<cls>12` for a class's second trial. Older
+//       data: every class someone in the company had at level 12 counts as done (trials12For), so nobody loses an
+//       ability they had (the 12s were unlocked by level until now). The shape is the same.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -80,7 +83,7 @@ import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 import { dedupeNames, xpToNext } from '../sim/party.js';
 
-export const SAVE_VERSION = 25;
+export const SAVE_VERSION = 26;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -101,7 +104,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -133,6 +136,16 @@ export function xpFor(data) {
     return { ...m, xp: Math.min(xpToNext(L) - 1, Math.floor(share * xpToNext(L))) };
   };
   return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
+}
+
+/** v25 → v26: a class anyone in the company had at 12 keeps its level-12 ability (see v26 above). A save from before
+ * the first trials (v12, no list) has its 6s worked out here too, as the sim would have. @param {any} data */
+export function trials12For(data) {
+  const company = [...(Array.isArray(data.party) ? data.party : []), ...(Array.isArray(data.bench) ? data.bench : [])].filter((m) => m && typeof m.cls === 'string');
+  const had = (lv) => [...new Set(company.filter((m) => m.level >= lv).map((m) => m.cls))];
+  const trials = Array.isArray(data.trials) ? [...data.trials] : had(6);
+  for (const c of had(12)) if (!trials.includes(c + '12')) trials.push(c + '12');
+  return { ...data, trials };
 }
 
 /** v19 → v20: one Homeward Scroll in the bag (see v20 above) @param {any} data */

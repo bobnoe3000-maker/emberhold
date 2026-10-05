@@ -106,7 +106,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     away: null,                       // the time away being played through (offline progress, above): runtime only
     boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
-    trials: {},                       // class trials the company has done: { [cls]: 1 } (quests.js; skills.js unlocks)
+    trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
   };
   clock = state;
   if (curScene === 'overland') placeRoad(world, state);   // (the first build ran before the state existed)
@@ -653,7 +653,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     // v12 and older, from before the trials: a class anyone in the company had at level 6 keeps its level-6 ability
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);
-    for (const c of tr) if (TRIAL_CLASSES.includes(c)) state.trials[c] = 1;
+    for (const c of tr) if (TRIAL_CLASSES.includes(c) || (/12$/.test(c) && TRIAL_CLASSES.includes(c.slice(0, -2)))) state.trials[c] = 1;   // (cls12: the level-12 trial, M8; v25 and older: persist/save.js trials12For)
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet

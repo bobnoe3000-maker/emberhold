@@ -19,7 +19,7 @@ const SEED = 20260807;
 // the right party (fighter, rogue, cleric) at a level, walked into a site's hall on floor `floor`
 function inHall(site, level, floor, seed = SEED) {
   const sim = createSim(seed, undefined, { scene: 'dungeon', site });
-  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1 };
+  sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m, perks: [], hidden: null })));
   ['fighter', 'rogue', 'cleric'].forEach((c, i) => { const m = sim.state.party[i]; m.cls = c; m.level = level; m.attrs = null; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });

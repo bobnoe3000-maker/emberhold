@@ -21,6 +21,7 @@ VAR road_ranks = 3
 VAR q_trial_cold_weather = -1
 VAR q_vale_hens_under_the_hill = -1
 VAR q_trial_old_roads = -1
+VAR q_trial_the_old_water = -1
 
 == wendel_hub ==
 { flag_met_wendel == 0:
@@ -57,7 +58,7 @@ VAR q_trial_old_roads = -1
 - else:
     {&"The horse still shies at the mounds. So do I. Neither of us will say so."|"A day out of the way, both ways, for a month. Somebody ought to pay me for that day. Nobody will."|"Saw one standing in the road at dusk last week. It saluted. I didn't."|"That's my wagon on its side by the barrows road. They didn't hurt me. They just stood in front of the horse till it went over. Then they went back to facing north."}
 }
-{ q_trial_old_roads >= 0 && q_trial_old_roads <= 2: -> col_topics }
+{ (q_trial_old_roads >= 0 && q_trial_old_roads <= 2) || (q_trial_the_old_water >= 0 && q_trial_the_old_water <= 2): -> col_topics }
 -> END
 
 // ── the shaman's trial (content/quests/trial_old_roads.json; world doc v1.19) ──
@@ -65,6 +66,9 @@ VAR q_trial_old_roads = -1
 + { q_trial_old_roads == 2 } [The Scrag's quiet. Six waves. #mark: quest ready] -> col_trial_turnin
 + { q_trial_old_roads == 0 } [You leave ale out by the wheel. #mark: quest] -> col_trial_offer
 + { q_trial_old_roads == 1 } [About the long way round… #mark: quest active] -> col_trial_active
++ { q_trial_the_old_water == 2 } [The Toadking's island is quiet. #mark: quest ready] -> col_old_water_turnin
++ { q_trial_the_old_water == 0 } [Where wouldn't your gran go? #mark: quest] -> col_old_water_offer
++ { q_trial_the_old_water == 1 } [About the island… #mark: quest active] -> col_old_water_active
 + [Safe roads, Col.] -> END
 
 == col_trial_offer ==
@@ -86,6 +90,27 @@ He doesn't wait to see if you do. He looks at your shaman instead.
 == col_trial_turnin ==
 Col takes your shaman's hand in both of his and breathes on it, once, the way you'd warm a child's fingers, and something old in the Vale breathes with him.
 "One for you, one for them. That's how she said it. Go on. And leave something by your wheel tonight." # quest: turnin trial_old_roads
+-> col_topics
+
+// ── the shaman's second trial (content/quests/trial_the_old_water.json; world doc v1.30) ──
+== col_old_water_offer ==
+"Gran called them out of every pond in the Vale. Ditches. Horse troughs. She'd have called one out of a cup if you held it still."
+"Not the Fens. Never the Fens. There's an island down there the Toadking sat on, and she wouldn't go within a mile of it. Said the water there was old, and old water doesn't come when it's called. It comes when it likes."
+"Go and quiet it. Eight waves on the second floor of that mound. Then I'll show your shaman the other thing she knew. The one she didn't like showing."
++ [We'll go. #mark: quest]
+    "Leave a cup by the water first. Couldn't hurt. Probably couldn't hurt." # quest: accept trial_the_old_water
+    -> col_topics
++ [Not yet.]
+    "It's waited. Old water does."
+    -> col_topics
+
+== col_old_water_active ==
+"Toadking's Mound, down in the Fens. The second floor. Eight waves. Leave a cup."
+-> col_topics
+
+== col_old_water_turnin ==
+Col doesn't breathe on your shaman's hand this time. He takes a pinch of road dust, spits in it, and draws a line across their palm with his thumb.
+"That's what she did to a man she didn't want near her. Not a curse. Just a little weight. They feel it, the ones you put it on. Go on. Leave something by your wheel." # quest: turnin trial_the_old_water
 -> col_topics
 
 == jory_hub ==

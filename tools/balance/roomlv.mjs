@@ -22,7 +22,7 @@ const GIVE = PERKS && PERKS !== 'keep' ? PERKS.split('/').map((s) => s.split(','
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const ti = args.indexOf('--site'), SITE = ti >= 0 ? args.splice(ti, 2)[1] : 'barrows';
-const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1 };
+const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
 const hi = args.indexOf('--hero'), HERO = hi >= 0 ? args.splice(hi, 2)[1] : null;
 const ri = args.indexOf('--rogue'), ROGUE = ri >= 0 ? args.splice(ri, 2)[1] : null;
 // --fresh: the hires fight at the level they're hired at (half the hero's, rounded up: GDD §6.2 v1.11), not

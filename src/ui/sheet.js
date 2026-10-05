@@ -258,8 +258,9 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
   }
   // where a drop came from (loot.js sources; quests.js / core.js heirlooms)
 const FOUND_AT = { chest: 'in a chest', elite: 'on an elite', wave: 'after the wave', boss: 'on the boss', bossAgain: 'on the boss', quest: 'as a reward', chapter: 'as a reward', vault: 'in the vault', expedition: 'on the road, by a companion' };
-// who teaches each class's trial (world doc §5 v1.7; sim/quests.js trial_*)
-const TRIAL_GIVER = { fighter: 'Osric Hale', rogue: 'Nell Tolley', mage: 'Hedda', cleric: 'Sister Ilse', shaman: 'Col the carter' };
+// who teaches each class's trial, and where (world doc §5 v1.7, v1.30: the 12s; sim/quests.js trial_*)
+const TRIAL_GIVER = { fighter: 'Osric Hale in Thornwick', rogue: 'Nell Tolley in Thornwick', mage: 'Hedda in Thornwick', cleric: 'Sister Ilse in Thornwick', shaman: 'Col the carter in Thornwick' };
+const TRIAL_GIVER_12 = { fighter: 'Osric Hale in Thornwick', rogue: 'Wren, once she\'s with you', mage: 'Pim Rushlight in Saltmere', cleric: 'Mother Agnes in Saltmere', shaman: 'Col the carter in Thornwick' };
 const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter: 'Redhand deserter', grey_sisters_ward: 'Ward of the Grey Sisters', deepdelver_fostered: 'Deepdelver-fostered' })[id] || id;
 
   // What an ability does at a rank, in this member's own numbers (GDD §5.1): the multiplier battle.js
@@ -297,7 +298,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
       return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
           ${(() => { const now = effectAt(m, A, r), nx = open && r < MAX_RANK ? effectAt(m, A, r + 1) : null;
-            const lock = open ? '' : `<span>${m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s trial` : ''}` : `the ${c.label.toLowerCase()}'s trial teaches it: ask ${TRIAL_GIVER[m.cls]} in Thornwick`}</span>`;
+            const lock = open ? '' : `<span>${m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial` : ''}` : `the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial teaches it: ask ${(A.lv >= 12 ? TRIAL_GIVER_12 : TRIAL_GIVER)[m.cls]}`}</span>`;
             return `${lock}<span class="eff">Rank ${r}: ${now.mp} MP · ${now.e}</span>${nx ? `<span class="nx">Rank ${r + 1} → ${nx.mp !== now.mp ? `${nx.mp} MP · ` : ''}${nx.v}</span>` : open ? '<span class="nx">Top rank</span>' : ''}`; })()}</div>
         <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
           <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>

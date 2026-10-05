@@ -1,0 +1,42 @@
+{
+  "id": "trial_the_long_watch",
+  "kind": "trial",
+  "trial": "fighter",
+  "trialLv": 12,
+  "title": "The Long Watch",
+  "giver": "osric_hale",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Osric Hale says a Watch post is a place you stand when nobody comes to relieve you. Hold the Canal Locks' Sluice that long, and he'll teach your fighters to get their breath back (the fighter's level-12 skill).",
+  "steps": [
+    {
+      "id": "sluice",
+      "journal": "Go down to the Canal Locks' second floor and hold the Sluice, the hall at the far end, for ten waves.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "canal_locks",
+          "count": 10,
+          "hall": true,
+          "floor": 2,
+          "label": "Waves held in the Sluice"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Osric Hale at his Watch post in Thornwick.",
+  "done": "Osric taught your fighters Second Wind, and wrote down that he had.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 12,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "osric",
+    "offer": "osric_long_watch_offer",
+    "turnin": "osric_long_watch_turnin"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "trial_the_old_water",
+  "kind": "trial",
+  "trial": "shaman",
+  "trialLv": 12,
+  "title": "The Old Water",
+  "giver": "col",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Col's grandmother called the hedge-spirits from every pond in the Vale, but never went near the Toadking's island. Col wants to know why. Quiet its second floor, and he'll teach your shamans what she knew (the shaman's level-12 skill).",
+  "steps": [
+    {
+      "id": "mound",
+      "journal": "Hold eight waves on Toadking's Mound, the second floor or deeper.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "toadking_mound",
+          "count": 8,
+          "floor": 2,
+          "label": "Waves held on the Mound's second floor"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Col, the carter, in Thornwick.",
+  "done": "Col taught your shamans Hex, his grandmother's way, with a cup of ale left out for the spirits.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 12,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "col_old_water_offer",
+    "turnin": "col_old_water_turnin"
+  }
+}

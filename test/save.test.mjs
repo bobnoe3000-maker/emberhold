@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v25', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 25); });
+test('three game slots, save v26', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 26); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -54,3 +54,21 @@ test('save v25: levels kept; the XP toward the next level carried over as the sa
   assert.equal(m.party[0].level, 17); assert.ok(Math.abs(m.party[0].xp / xpToNext(17) - 22182 / 27915) < 0.001, String(m.party[0].xp));
   assert.equal(m.bench[0].xp, 0); assert.equal(migrate({ version: 25, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
 });
+
+// (save v26, the level-12 trials) the 12s were unlocked by level: a class anyone had at 12 keeps its ability
+test('save v26: a class someone had at 12 counts its level-12 trial done; the others wait for theirs', async () => {
+  const { createSim } = await import('../src/sim/core.js');
+  const { unlocked, SKILLS } = await import('../src/sim/skills.js');
+  const data = JSON.parse(JSON.stringify(createSim(1, undefined, { scene: 'town' }).snapshot()));
+  data.party[0] = { ...data.party[0], cls: 'cleric', level: 14 }; data.bench = [{ ...data.party[0], id: 'b', name: 'B', main: false, cls: 'rogue', level: 11 }];
+  data.trials = ['cleric', 'rogue'];
+  const m = migrate({ version: 25, savedAt: 1, data }).data;
+  assert.deepEqual(m.trials, ['cleric', 'rogue', 'cleric12']);
+  assert.deepEqual(migrate({ version: 25, savedAt: 1, data: { ...data, trials: undefined } }).data.trials, ['cleric', 'rogue', 'cleric12'], 'from before any trials: the 6s too');
+  const sim = createSim(1, undefined, { scene: 'town' }); sim.restore(m);
+  const turn = SKILLS.cleric.find((s) => s.lv === 12), venom = SKILLS.rogue.find((s) => s.lv === 12);
+  assert.ok(unlocked(sim.state.party[0], turn, sim.state.trials), 'the cleric keeps Turn Undead');
+  assert.ok(!unlocked({ cls: 'rogue', level: 12 }, venom, sim.state.trials), 'a rogue reaching 12 now wants Wren\'s trial');
+  assert.deepEqual(migrate({ version: 26, savedAt: 1, data: m }).data.trials, m.trials, 'once');
+});
+

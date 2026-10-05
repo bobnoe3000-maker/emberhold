@@ -440,6 +440,13 @@
         "shaman"
       ],
       "description": "a class trial: offered while someone of this class in the company is level 6+; done, it teaches the class its level-6 ability"
+    },
+    "trialLv": {
+      "enum": [
+        6,
+        12
+      ],
+      "description": "(M8) the trial's level: 6 teaches the class's level-6 ability, 12 its level-12 one (after the 6's trial)"
     }
   }
 }

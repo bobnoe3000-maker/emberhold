@@ -14,13 +14,11 @@
 import { QUESTS, QS } from '../sim/quests.js';
 import { SETS } from '../sim/lore.js';
 import { FOUND } from '../sim/heroes.js';
-import { SKILLS } from '../sim/skills.js';
 import { LANDS } from '../sim/regions.js';
 import { NPCS } from '../sim/npcs.js';
 
 /** the main story's chapters, in the order they're told */
 export const CHAPTERS = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter');
-const TRIAL_OF = Object.fromEntries(Object.entries(QUESTS).filter(([, d]) => d.trial).map(([id, d]) => [d.trial, id]));
 
 /** @param {any} state @param {(id: string) => number} status the sim's quest status (quests.js)
  * @returns {{ kind: 'next' | 'level' | 'end', id?: string, giver?: string, town?: string, level?: number, region?: string } | null} */
@@ -39,7 +37,7 @@ export function storyStatus(state, status) {
 
 /** what's still open in a region, by lead id (content/story.json `leads`), with the numbers its words take
  * @param {any} state @param {(id: string) => number} status @param {string} [region] where the company stands
- * @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string }[]} */
+ * @returns {{ id: string, n?: number, of?: number, cls?: string, giver?: string, town?: string }[]} */
 export function openLeads(state, status, region = 'vale') {
   if (region === 'fens') return fensLeads(state, status);
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
@@ -50,11 +48,7 @@ export function openLeads(state, status, region = 'vale') {
   const vale = SETS.vale || [], found = vale.filter((f) => has(state.fragments, f)).length;
   if (!has(revealed, 'ninth_milestone') && found < vale.length) out.push({ id: 'chronicle', n: found, of: vale.length });
   if (has(revealed, 'ninth_milestone') && !has(entered, 'ninth_milestone')) out.push({ id: 'milestone' });
-  // a class trial waiting: someone of the class at 6+, its trial not taken up yet
-  for (const cls of Object.keys(SKILLS)) {
-    const q = TRIAL_OF[cls]; if (!q || has(state.trials, cls)) continue;
-    const st = status(q); if (st === QS.AVAILABLE) out.push({ id: 'trial', cls, giver: QUESTS[q].giver });
-  }
+  out.push(...trialLeads(status, 6));
   out.push({ id: 'board' });
   return out;
 }
@@ -67,6 +61,14 @@ function fensLeads(state, status) {
   if (!bosses.drowned_choir) out.push({ id: 'choir' });
   const owed = ['wren_the_marker', 'wren_night_boats', 'wren_settled'].find((q) => status(q) === QS.AVAILABLE);
   if (owed) out.push({ id: 'owed' });
-  out.push({ id: 'tower' }, { id: 'fensboard' });
+  out.push(...trialLeads(status, 12), { id: 'tower' }, { id: 'fensboard' });
   return out;
 }
+
+// a class trial on offer (someone of the class at its level, the one before it done: quests.js), the 6s in the Vale and
+// the 12s in the Fens; who teaches it, and in which town they stand
+function trialLeads(status, lv) {
+  return Object.keys(QUESTS).filter((id) => QUESTS[id].trial && (QUESTS[id].trialLv || 6) === lv && status(id) === QS.AVAILABLE)
+    .map((id) => { const d = QUESTS[id]; return { id: 'trial', cls: d.trial, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town }; });
+}
+

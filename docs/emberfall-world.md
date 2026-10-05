@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.29 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.30 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.30 (§5): the level-12 trials and who teaches them in the Fens. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -701,6 +701,14 @@ Tolley are the smallest; Brannoc stands taller than any of them.
 for fighters (*Hold the Keep Gate*), **Nell Tolley** for rogues (*Quiet Feet*; she was something
 else before she kept an inn, and won't say what), **Hedda** for mages (*Cold Weather*; the weather
 listens to her) and **Sister Ilse** for clerics (*Last Rites*).
+
+**The level-12 trials (v1.30).** At level 12, once a class has its first trial, it has a second, fought in the Fens. From
+Thornwick, **Osric Hale** sets the fighters' (*The Long Watch*: hold the Canal Locks' Sluice ten waves, as the
+Watch holds a post nobody comes to relieve). **Wren** teaches rogues (*Dead Water*: five of the harvesters' leaders in
+the Sickpools, before they see you) and **Pim Rushlight** mages (*Lamp Oil*: a chandler knows what burns, and the
+vats burn). **Mother Agnes** sets clerics a vigil in the Drowned Abbey (*Vigil*), and **Col** sends shamans to the
+Toadking's island, where his grandmother wouldn't go (*The Old Water*). What each teaches: Second Wind, Venom, Arcane
+Ward, Turn Undead and Hex.
 
 ---
 

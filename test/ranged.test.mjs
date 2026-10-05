@@ -14,7 +14,7 @@ import { starterKit, makeItem } from '../src/sim/items.js';
 function fight(secs) {
   const seed = 20260807, t = createSim(seed, undefined, { scene: 'town' });
   for (const i of [1, 3]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); }
-  const sim = createSim(seed, undefined, { scene: 'dungeon' }); sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1 };
+  const sim = createSim(seed, undefined, { scene: 'dungeon' }); sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m, perks: [], hidden: null })));
   sim.state.party[2].cls = 'mage';
   for (const m of sim.state.party) {

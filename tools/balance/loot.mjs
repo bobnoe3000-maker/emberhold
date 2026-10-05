@@ -21,7 +21,7 @@ const HL = +args[0], HOURS = +(args[1] || 1), seed = +(args[2] || 20260807), DEP
 
 const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
 const sim = createSim(seed, undefined, { scene: 'dungeon' });
-sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1 };
+sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };
 sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
 const want = ['fighter', 'rogue', 'cleric'];
 const fresh = (m, i) => { m.cls = want[i]; m.level = HL; m.xp = 0; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.fallen = false; m.down = false; m.weakUntil = 0; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; };

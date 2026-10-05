@@ -34,7 +34,7 @@ test('the shaman is a class like the others: table, kit, build, three abilities 
 function fight(level = 12, passive = false, site = 'tithe_mill') {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site }); sim.tick();
   const sh = makeMember('sh', 'Sedge', 'shaman', passive ? 20 : level), fi = makeMember('fi', 'Hild', 'fighter', passive ? 20 : level);
-  sim.state.party.push(sh, fi); sim.state.trials = { shaman: 1 };
+  sim.state.party.push(sh, fi); sim.state.trials = { shaman: 1, shaman12: 1 };
   for (const m of sim.state.party) { m.level = Math.max(m.level, passive ? 20 : level); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; }
   const L = sim.world.level, r = L.rooms.find((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), p = sim.state.player;
   let at = [r.cx + 0.5, r.cy + 0.5]; if (!isWalkable(sim.world, at[0], at[1])) for (const [k, c] of L.cells) if (c.kind === 'floor' && c.room === r.id) { const [x, y] = k.split(',').map(Number); if (isWalkable(sim.world, x + 0.5, y + 0.5)) { at = [x + 0.5, y + 0.5]; break; } }

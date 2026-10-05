@@ -29,12 +29,15 @@
 // the party or on the bench); `rewards.item` is an heirloom (items.js HEIRLOOMS) paid into the bag.
 // A class trial (`trial`: the class) is offered while someone of that class in the company (party or
 // bench) is level 6 or more and the company hasn't done it; handed in, it teaches that class its
-// level-6 ability (state.trials, skills.js), every member of the class, for good.
+// level-6 ability (state.trials, skills.js), every member of the class, for good. (M8, slice 9) A second trial
+// (`trialLv: 12`) teaches the level-12 one, in the Fens: offered once someone of the class is 12 and the class's
+// first trial is done; it sets state.trials[cls + '12'] (skills.js trialKey).
 
 import { gainXp, levelShare } from './party.js';
 import { FRAGMENTS } from './lore.js';
 import { NPCS } from './npcs.js';
 import { SITES } from './sites.js';
+import { trialKey } from './skills.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 // What a quest pays in XP (GDD §9 v1.39; the owner, 2026-10-05, with the slower curve): a share of a level, at the level
@@ -46,7 +49,7 @@ export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
 // (M8, Act II) two more kinds: `meet` (a conversation opened with `npc`: in a town of `region`, or in a dungeon at `site`)
 // and `cages` (full lantern-cages broken at `site`, lamps.js); `loot` can want a floor too
 /** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string }} Objective */
-/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string }} QuestDef */
+/** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string, trialLv?: number }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
   vale_long_way_round: {
@@ -168,6 +171,32 @@ export const QUESTS = {
     steps: [{ id: 'abbess', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'abbess_below', count: 1 }] }],
     rewards: { share: 0.55, lv: 15, gold: 400 },
   },
+  // the level-12 trials (world doc v1.30 §5; docs/m8-plan.md slice 9): in the Fens, at 12, after the class's first
+  trial_the_long_watch: {                            // Osric: a fighter holds the Sluice ten waves, as the Watch holds a post
+    kind: 'trial', giver: 'osric_hale', trial: 'fighter', trialLv: 12, region: 'fens', level: [1, 30],
+    steps: [{ id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 10, hall: true, floor: 2 }] }],
+    rewards: { share: 0.3, lv: 12, gold: 120 },
+  },
+  trial_dead_water: {                                // Wren: the harvesters' leaders in the Sickpools, unseen
+    kind: 'trial', giver: 'wren', companion: 'wren', trial: 'rogue', trialLv: 12, region: 'fens', level: [1, 30],
+    steps: [{ id: 'pools', objectives: [{ type: 'elites', site: 'sickpools', count: 5 }] }],
+    rewards: { share: 0.3, lv: 12, gold: 120 },
+  },
+  trial_lamp_oil: {                                  // Pim: a mage learns what burns in the Sickpools' vats
+    kind: 'trial', giver: 'pim_rushlight', trial: 'mage', trialLv: 12, region: 'fens', level: [1, 30],
+    steps: [{ id: 'vats', objectives: [{ type: 'waves', site: 'sickpools', count: 8 }] }],
+    rewards: { share: 0.3, lv: 12, gold: 120 },
+  },
+  trial_vigil: {                                     // Mother Agnes: a cleric keeps a night's vigil in the Drowned Abbey
+    kind: 'trial', giver: 'mother_agnes', trial: 'cleric', trialLv: 12, region: 'fens', level: [1, 30],
+    steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 6 }] }],
+    rewards: { share: 0.3, lv: 12, gold: 120 },
+  },
+  trial_the_old_water: {                             // Col: a shaman quiets the Toadking's island, where his grandmother wouldn't go
+    kind: 'trial', giver: 'col', trial: 'shaman', trialLv: 12, region: 'fens', level: [1, 30],
+    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 8, floor: 2 }] }],
+    rewards: { share: 0.3, lv: 12, gold: 120 },
+  },
   // Wren's chain, What's Owed (world doc v1.29 §5): her marker off the Locks' harvesters, her caches in the Sickpools,
   // and the Cult's boat at the Abbey burned while the company holds the first floor's hall
   wren_the_marker: {
@@ -199,8 +228,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   const defOf = (id) => (Object.prototype.hasOwnProperty.call(QUESTS, id) ? QUESTS[id] : extraDef(id));
   const inst = (id) => state.quests[id] || null;
   const withUs = (id) => [...state.party, ...(state.bench || [])].some((m) => m.id === id);
-  const trialOpen = (cls) => !(state.trials || {})[cls] && [...state.party, ...(state.bench || [])].some((m) => m.cls === cls && m.level >= TRIAL_LEVEL);
-  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)) && (!d.trial || trialOpen(d.trial)); };
+  const trialOpen = (cls, lv = TRIAL_LEVEL) => { const T = state.trials || {}; return !T[trialKey(cls, lv)] && (lv <= TRIAL_LEVEL || !!T[cls]) && [...state.party, ...(state.bench || [])].some((m) => m.cls === cls && m.level >= lv); };
+  const gates = (id) => { const d = QUESTS[id], lv = state.party[0].level; return !!d && lv >= d.level[0] && lv <= d.level[1] && (d.after || []).every((a) => inst(a) && inst(a).st === QS.DONE) && (!d.companion || withUs(d.companion)) && (!d.trial || trialOpen(d.trial, d.trialLv)); };
   const takerOf = (d) => d.turnin || d.giver;         // who hands out the reward
   /** @param {string} id */
   const status = (id) => (inst(id) ? inst(id).st : gates(id) ? QS.AVAILABLE : QS.LOCKED);
@@ -280,7 +309,8 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     pay(id);
     for (const s of /** @type {QuestDef} */ (defOf(id)).reveal || []) reveal(s);
     const cls = /** @type {QuestDef} */ (defOf(id)).trial;
-    if (cls && !(state.trials ||= {})[cls]) { state.trials[cls] = 1; bus.emit('trialDone', { cls, id }); bus.emit('partyChanged', state.party); }
+    const tlv = /** @type {QuestDef} */ (defOf(id)).trialLv || TRIAL_LEVEL, key = cls ? trialKey(cls, tlv) : '';
+    if (cls && !(state.trials ||= {})[key]) { state.trials[key] = 1; bus.emit('trialDone', { cls, id, lv: tlv }); bus.emit('partyChanged', state.party); }
     if (state.tracked === id) state.tracked = nextTracked();
     changed(id);
   }

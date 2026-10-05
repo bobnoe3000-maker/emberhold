@@ -1,0 +1,40 @@
+{
+  "id": "trial_vigil",
+  "kind": "trial",
+  "trial": "cleric",
+  "trialLv": 12,
+  "title": "Vigil",
+  "giver": "mother_agnes",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Mother Agnes says a vigil is a night you stay awake for somebody who can't. The Drowned Abbey's dead have had nobody for three hundred years. Keep six waves there, and she'll teach your clerics to send them on (the cleric's level-12 skill).",
+  "steps": [
+    {
+      "id": "abbey",
+      "journal": "Keep a vigil in the Drowned Abbey: hold six waves anywhere on its floors.",
+      "objectives": [
+        {
+          "type": "waves",
+          "site": "drowned_abbey",
+          "count": 6,
+          "label": "Waves kept in the Abbey"
+        }
+      ]
+    }
+  ],
+  "ready": "Go back to Mother Agnes at the Grey Sisters' chapel in Saltmere.",
+  "done": "Mother Agnes taught your clerics Turn Undead, and said a prayer for the dead you'll use it on.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 12,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "agnes",
+    "offer": "agnes_vigil_offer",
+    "turnin": "agnes_vigil_turnin"
+  }
+}

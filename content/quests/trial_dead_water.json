@@ -1,0 +1,41 @@
+{
+  "id": "trial_dead_water",
+  "kind": "trial",
+  "trial": "rogue",
+  "trialLv": 12,
+  "title": "Dead Water",
+  "giver": "wren",
+  "region": "fens",
+  "level": [
+    1,
+    30
+  ],
+  "companion": "wren",
+  "summary": "Wren says the harvesters' leaders in the Sickpools never look behind them, because nothing there ever has. Get behind five, and she'll teach your rogues what she puts on her knives (the rogue's level-12 skill).",
+  "steps": [
+    {
+      "id": "pools",
+      "journal": "Defeat five harvesters' leaders in the Sickpools. They lead every fifth wave there.",
+      "objectives": [
+        {
+          "type": "elites",
+          "site": "sickpools",
+          "count": 5,
+          "label": "Harvesters' leaders"
+        }
+      ]
+    }
+  ],
+  "ready": "Tell Wren it's done: tap her party card, then Talk.",
+  "done": "Wren taught your rogues Venom, and wouldn't say where she learned it.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 12,
+    "gold": 120
+  },
+  "dialogue": {
+    "file": "wren",
+    "offer": "wren_dead_water_offer",
+    "turnin": "wren_dead_water_turnin"
+  }
+}
