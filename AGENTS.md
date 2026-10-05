@@ -102,9 +102,9 @@ in the same change that introduces it.
    - a lone level-1 hero beats level-1 foes (3+ waves) but can't farm them (down by wave 12);
    - from level 4 a same-level room wants company (a lone level-6 hero is down within 2 waves);
    - the right party (fighter, rogue, cleric) in gear at level holds a same-level room 10+
-     waves at levels 3, 6 and 9, with nobody Fallen in the first five;
+     waves at levels 3, 6, 9, 12 and 15, with nobody Fallen in the first five;
    - a party with no healer is worn down at level 6;
-   - a room three levels up defeats even the right party;
+   - a room three levels up defeats even the right party (and at 12 and 15 a lone hero is down within 2 waves);
    - companions add strength: the same wave as a lone hero, and 80 %+ of its XP a minute;
    - gear matters: gear at level holds a room two up longer than a level-1 kit.
 

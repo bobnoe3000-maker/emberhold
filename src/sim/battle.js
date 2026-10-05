@@ -76,14 +76,16 @@ const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5;
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
 const WIND = 1;
 // Difficulty (GDD §7.1, 2026-09-30). The ROOM sets the wave, not the party: 2 foes to room level 3,
-// then 1 + level / 2 (3 at 4–5, 4 at 6–7, 5 at 8–9 …), up to 7. (Waves had grown with the party,
+// then 1 + level / 2 (3 at 4–5, 4 at 6–7), 5 from level 8 on. (It went on to 7, at 12: measured in M8, the right party
+// held a same-level room 12–14 waves at 9 and 4–8 from 12 to 15, against the contract's 10+. Capped at 5, it holds
+// 11–13 to 15, and the foes keep growing with their level: GDD §7.1 v1.42.) (Waves had grown with the party,
 // 2 / 5 / 7 for one / two / three: each member faced more foes the more companions they had, and
 // companions added nothing.) So a lone hero beats level-1 foes, and from level 4 a same-level room
 // wants company. Nothing is free inside a room: the waves of one visit rise with a TIDE and the lull
 // between them is a short breath, not a full recovery, so a visit ends when you choose to walk out
 // (corridors and towns restore you) or when the room wins. Above level 3 foes carry PREMIUM a level
 // more, for the party and the gear a same-level room now expects.
-export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(7, 1 + Math.floor(lvl / 2)));
+export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl / 2)));
 export const PREMIUM = 0.05;
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room). A wave at the top is followed by one back at the start,
@@ -332,9 +334,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // last draw, which could be a pool: a foe stood in it for good and the wave never ended; the M5 farm.)
     const spot = () => {
       let fall = null;
-      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0], x = c[0] + 0.5, y = c[1] + 0.5; if (!reachable(c)) continue; if (hypot(x - p.x, y - p.y) > 9) return [x, y]; if (!fall) fall = [x, y]; }
+      // (and open ground: Brother Teague came up on the stairwell in his hall, a tile no blow reaches, his cage with him)
+      const ok = (c) => reachable(c) && isWalkable(w, c[0] + 0.5, c[1] + 0.5);
+      for (let t = 0; t < 60; t++) { const c = cells[(rng() * cells.length) | 0], x = c[0] + 0.5, y = c[1] + 0.5; if (!ok(c)) continue; if (hypot(x - p.x, y - p.y) > 9) return [x, y]; if (!fall) fall = [x, y]; }
       if (fall) return fall;
-      const c = cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
+      const c = cells.find(ok) || cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
     };
     if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
@@ -393,9 +397,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
 
   // Brother Teague's lantern-cage (BOSSES cage): a foe that doesn't fight, carried at his side; it takes blows as any foe
   // (CAGE_HP of his HP, his armour), pays nothing, and breaking it frees its soul (freeing)
+  // where the cage hangs: on open ground at his side, his right, else his left, else at his feet (with his back to a wall
+  // it was carried into the wall, where nobody could reach it, and while it's lit he mends: seed 4242, a fight that never
+  // ended)
+  function cageAt(w, o) {
+    const k = hypot(o.fx || 0, o.fy || 1) || 1, sx = -((o.fy || 1) / k) * 0.7, sy = ((o.fx || 0) / k) * 0.7;
+    return [[o.x + sx, o.y + sy], [o.x - sx, o.y - sy]].find(([x, y]) => isWalkable(w, x, y)) || [o.x, o.y];
+  }
   function lantern(w, owner) {
-    const hp = Math.round(owner.maxHp * CAGE_HP);
-    const u = { id: nextId++, kind: 'lantern', inert: true, owner: owner.id, undead: false, elite: false, lvl: owner.lvl, x: owner.x + 0.7, y: owner.y + 0.5, hp, maxHp: hp,
+    const hp = Math.round(owner.maxHp * CAGE_HP), [cx, cy] = cageAt(w, owner);
+    const u = { id: nextId++, kind: 'lantern', inert: true, owner: owner.id, undead: false, elite: false, lvl: owner.lvl, x: cx, y: cy, hp, maxHp: hp,
       atk: 0, def: owner.def, crit: 0, dodge: 0, interval: 99, range: 0, speed: owner.speed, xp: 0, gold: 0, cd: 99, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
     w.enemies.push(u);
     return u;
@@ -838,10 +849,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // ease it: a screen px of height is a quarter tile of depth, so a small overlap on screen
       // shoved a unit ~1.2 tiles in one tick (a visible pop); overlaps now part over a few ticks
       const pl = hypot(px, py); if (pl > MAX_SHOVE) { px *= MAX_SHOVE / pl; py *= MAX_SHOVE / pl; }
-      if (!a.isHero && isWalkable(w, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
-      if (!b.isHero && isWalkable(w, b.x + px, b.y + py)) { b.x += px; b.y += py; }
+      if (!a.isHero && shoveOk(w, a.x, a.y, a.x - px, a.y - py)) { a.x -= px; a.y -= py; }
+      if (!b.isHero && shoveOk(w, b.x, b.y, b.x + px, b.y + py)) { b.x += px; b.y += py; }
     }
   }
+  // a shove keeps to open ground, and in a fight never carries anyone out of the room (Brother Teague was shoved into the
+  // corridor below his hall, the fighter after him, where the rest of the party, leashed to the room, couldn't follow:
+  // a fight that never ended, seed 4242)
+  const shoveOk = (w, x0, y0, x, y) => isWalkable(w, x, y) && (!battle || roomAt(w, x0, y0) !== battle.room || roomAt(w, x, y) === battle.room);
   const nearest = (u, list, pred = () => true, bias = null) => { let best = null, bd = 1e9; for (const o of list) { if (!pred(o)) continue; const d = hypot(o.x - u.x, o.y - u.y) + (bias ? bias(o) : 0); if (d < bd) { bd = d; best = o; } } return best; };
   // formation (GDD §3.5: front fighter, mid rogue, back mage): foes reach for the front line
   // first — the back line counts as this many tiles further away
@@ -1178,7 +1193,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (e.dead > 0 || e.hp <= 0) { e.moving = false; continue; }
         if (e.inert) {                                                       // Teague's cage: carried at his side
           const o = w.enemies.find((q) => q.id === e.owner && q.hp > 0 && !q.dead);
-          if (o) { const k = hypot(o.fx || 0, o.fy || 0) || 1; e.x = o.x - ((o.fy || 0) / k) * 0.7; e.y = o.y + ((o.fx || 0) / k) * 0.7; e.fx = o.fx; e.fy = o.fy; e.moving = o.moving; }
+          if (o) { const at = cageAt(w, o); e.x = at[0]; e.y = at[1]; e.fx = o.fx; e.fy = o.fy; e.moving = o.moving; }
           continue;
         }
         if (e.boss) bossMech(e, w, dt);
@@ -1210,7 +1225,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
       }
-      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good)
+      separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
     }
     // wind-ups: blows land and bolts leave on the attack clip's impact frame
     if (pending.length) { const due = []; pending = pending.filter((q) => ((q.t -= dt) > 0 ? true : (due.push(q), false))); if (battle) for (const q of due) q.fn(); }

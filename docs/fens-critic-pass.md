@@ -363,3 +363,54 @@ Teague's until he falls, so a company that took her chain before *The Bells* fou
 Bells*, and Wren says so (*"Once he's gone, I've a fire to light"*). Maudry and Osric each have a line for the Fens
 and one for Act II's end: every conversation now reads `chapters_done`, how many chapters are handed in.
 
+## Balance to 15 and the golden path (M8 slice 11, 2026-10-05)
+
+**The finding.** The right party (fighter, rogue, cleric, kit at level) held a same-level room 12–14 waves at level 9,
+but fell away from 10: 8–9 waves at 10, 7–11 at 11, 5–8 at 12, 4–8 at 13–15 (`tools/balance/roomlv.mjs`, three
+seeds, the Old Barrows; the Fens' sites the same: 4–7 at 12 and 15). The contract wants 10+. The cause is the wave:
+it grew 5 → 6 → 7 foes at 10 and 12, on top of the foes' own growth a level. Capped at 5 (from level 8 on), the same
+runs hold 11–13 waves at 10, 11 and 13–15, and 8–14 at 12 (nine seeds: 9, 12, 13, 13, 14, 13, 12, 8, 11). A cap of 6
+held 8–11.
+
+| Level | Waves held, before (3 seeds) | After (3 seeds) |
+|---|---|---|
+| 9 | 12 · 14 · 14 | 12 · 14 · 14 (unchanged: 5 foes either way) |
+| 10 | 9 · 9 · 8 | 13 · 13 · 13 |
+| 11 | 7 · 11 · 9 | 11 · 11 · 13 |
+| 12 | 5 · 7 · 8 | 12 · 8 · 11 |
+| 13 | 6 · 6 · 6 | 13 · 13 · 13 |
+| 14 | 4 · 5 · 8 | 13 · 12 · 13 |
+| 15 | 6 · 5 · 7 | 12 · 13 · 13 |
+
+The smoke test now gates 12 and 15 as it gates 3, 6 and 9: the right party holds 10+ waves with nobody Fallen in the
+first five (12w, 10w, 13w, 11w on its two seeds), a lone hero is down within 2 waves, and a room three up defeats the
+right party (6 and 7 waves). The 3 / 6 / 9 gates read as they did.
+
+**XP a minute** fell with the foes from 10 (the party clears fewer at once): mean of three seeds, 976 → 872 at 10,
+1,129 → 948 at 11, 1,281 → 1,084 at 12, 1,360 → 1,101 at 13, 1,375 → 1,175 at 14, 1,520 → 1,221 at 15 (× 0.80–0.89).
+The XP table is priced on that rate, so `xpRate` takes × 0.9 at 10 and × 0.84 from 11, and the table from 10 is
+smaller by as much: a level still takes the owner's 20 × 1.15^(L − 1) minutes. Save v27 carries each member's share
+of the way to their next level over.
+
+**Three bugs the boss harness found** (Brother Teague, seed 4242, at his hall's level, after the cap moved its draws):
+- He was shoved out of his hall into the corridor below it, and the fighter after him; the rest of the party is
+  leashed to the room and stood at its edge. A shove now never carries anyone out of the fight's room.
+- His cage was carried 0.7 tiles to his side with his back to a wall, into the wall, where no blow reaches it; while
+  it's lit he mends, so the fight never ended. It hangs on his open side now, and isn't shoved.
+- A foe could come up on a tile a prop blocks (the hall's stairwell): spawns keep to open ground.
+
+Teague at 12 now falls 8 of 8 (62–78 s; it was 8 of 8 before the cap and 7 of 8 after it, before these fixes). The
+Toadking at 9, the Choir at 13 and the Abbess at 14 fall 6 of 6. `test/fens-bosses.test.mjs` has the case (it fails
+without the fixes).
+
+**Loot** (`tools/balance/loot.mjs`, 5 h, one seed; the targets are about 3 Common, about 1 Fine and about 0.2 Rare an
+hour): 4.0 / 2.0 / 0 at 9, 4.2 / 1.4 / 0.4 at 12, 3.4 / 2.0 / 0 at 15; the same before the cap (1 h: 5 / 2 / 1 and
+6 / 2 / 0). Fines run over, most of it the floor's boss re-killed each visit (*bossAgain*, 15 % a fall, 1.2–1.8 an
+hour on the farm). Left as it is for now: the farm re-runs the barrows' third floor, not the Fens, and one seed is
+±30 %. Open: a longer farm in the Fens' sites, and *bossAgain* if it holds.
+
+**The golden path.** `test/m8-golden.test.mjs` plays Act II in one game after Act I: Ilse, Dace, the Toadking and
+Wren, the Kindler and the Sluice, Wren's marker and caches, Pim's cages, Teague, Settled, the rolls to Agnes, the
+Abbess, Ilse; then the fighters' level-12 trial in the Sluice, where the Fens set's last page lies, and the
+Undercroft's vault; and a save round trip. About 6 s.
+

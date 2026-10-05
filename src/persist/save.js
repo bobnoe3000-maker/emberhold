@@ -75,6 +75,9 @@
 //   v26: the level-12 trials (sim/quests.js; GDD §5 v1.41): trials gains `<cls>12` for a class's second trial. Older
 //       data: every class someone in the company had at level 12 counts as done (trials12For), so nobody loses an
 //       ability they had (the 12s were unlocked by level until now). The shape is the same.
+//   v27: the wave stops growing at 5 foes (sim/battle.js waveSize; GDD §7.1 v1.42), and XP a minute from level 10 fell
+//       with it, so the XP table from level 10 is smaller by as much (sim/party.js xpRate). Levels are kept; the XP each
+//       member had toward their next level becomes the same share of the new table's (xpFor27), as v25 did.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -83,7 +86,7 @@ import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 import { dedupeNames, xpToNext } from '../sim/party.js';
 
-export const SAVE_VERSION = 26;
+export const SAVE_VERSION = 27;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -104,7 +107,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -128,12 +131,26 @@ export function namesFor(data) {
 const XP_BEFORE_25 = [100, 303, 580, 919, 1313, 1758, 2250, 2786, 3363, 3981, 4637, 5330, 6058, 6820, 7616, 8445, 9305, 10196, 11117, 12068,
   13048, 14056, 15093, 16156, 17247, 18364, 19507, 20675, 21869, 23088, 24332, 25600, 26892, 28208, 29547, 30909, 32294, 33702, 35132, 36584,
   38059, 39555, 41072, 42611, 44171, 45752, 47354, 48976, 50619, 52282, 53965, 55668, 57391, 59133, 60895, 62676, 64476, 66296, 68134, 69991].map((v) => 3 * v);
+// the XP table from level 10 before v27 (the same as now below it), kept here only to carry a save's progress over (xpFor27)
+const XP_BEFORE_27 = { 10: 69700, 11: 89400, 12: 114000, 13: 144000, 14: 180000, 15: 225000, 16: 280000, 17: 346000, 18: 427000, 19: 525000,
+  20: 643000, 21: 786000, 22: 959000, 23: 1170000, 24: 1420000, 25: 1720000, 26: 2080000, 27: 2510000, 28: 3030000, 29: 3650000, 30: 4390000 };
+/** v26 → v27: each member at level 10+ keeps the same share of the way to their next level @param {any} data */
+export function xpFor27(data) {
+  const carry = (m) => {
+    if (!m || !Number.isInteger(m.level) || !XP_BEFORE_27[m.level]) return m;
+    const share = Math.max(0, Math.min(1, (Number(m.xp) || 0) / XP_BEFORE_27[m.level]));
+    return { ...m, xp: Math.min(xpToNext(m.level) - 1, Math.floor(share * xpToNext(m.level))) };
+  };
+  return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
+}
+
 /** v24 → v25: each member's XP toward their next level, as the same share of the new table's @param {any} data */
 export function xpFor(data) {
   const carry = (m) => {
     if (!m || !Number.isInteger(m.level)) return m;
     const L = Math.max(1, Math.min(60, m.level)), was = XP_BEFORE_25[L - 1], share = Math.max(0, Math.min(1, (Number(m.xp) || 0) / was));
-    return { ...m, xp: Math.min(xpToNext(L) - 1, Math.floor(share * xpToNext(L))) };
+    const to = XP_BEFORE_27[L] || xpToNext(L);                     // (v25's table: xpFor27 carries it on to today's)
+    return { ...m, xp: Math.min(to - 1, Math.floor(share * to)) };
   };
   return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
 }

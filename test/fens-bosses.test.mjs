@@ -12,6 +12,7 @@ import { autoAllocate } from '../src/sim/attributes.js';
 import { starterKit, HEIRLOOMS } from '../src/sim/items.js';
 import { BOSSES, MUD_S, MUD_T, BELL_S, FLOOD_MAX, VESPERS_S, halved } from '../src/sim/battle.js';
 import { bossAt } from '../src/sim/sites.js';
+import { isWalkable } from '../src/sim/world.js';
 import { LAMPS } from '../src/sim/lamps.js';
 import { HAZARD, hazardAt, edgeDistances, openGround } from '../src/sim/hazards.js';
 
@@ -26,7 +27,7 @@ function inHall(site, level, floor, seed = SEED) {
   sim.tick();
   while (sim.world.stairsAt && sim.state.depth < floor - 1) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); }
   const L = sim.world.level, r = L.descentRoom, p = sim.state.player; let best = null, bd = 1e9;
-  for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd) { bd = d; best = [x, y]; } }
+  for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }   // (open ground: not the stairwell)
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; sim.state.party.forEach((m, i) => { if (i) { m.x = m.px = p.x + (i === 1 ? -0.9 : 0.9); m.y = m.py = p.y + 0.9; } });
   const ev = []; for (const k of ['bossWave', 'bossDown', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'lampBroken', 'loot', 'defeat']) sim.bus.on(k, (e) => ev.push([k, e]));
   return { sim, ev };
@@ -92,7 +93,7 @@ test('Brother Teague: his lit cage mends him and halves his hurts; broken, its s
   assert.ok(halved(T, sim.world.enemies), 'blows slide off him while it\'s lit');
   T.hp = Math.round(T.maxHp * 0.5); const h0 = T.hp; for (let i = 0; i < 20; i++) sim.tick();
   assert.ok(T.hp > h0, `it mends him (${h0} → ${T.hp})`);
-  assert.ok(Math.hypot(cage.x - T.x, cage.y - T.y) < 1.2, 'carried at his side');
+  assert.ok(Math.hypot(cage.x - T.x, cage.y - T.y) < 1.2, `carried at his side (${Math.hypot(cage.x - T.x, cage.y - T.y).toFixed(2)}: ${cage.x.toFixed(2)},${cage.y.toFixed(2)} spawn ${cage.spawn} vs ${T.x.toFixed(2)},${T.y.toFixed(2)} spawn ${T.spawn} hp ${cage.hp})`);
   const n0 = { ...sim.state.count };
   until(sim, 120, () => ev.some(([k]) => k === 'bossCage'));
   assert.ok(ev.some(([k]) => k === 'bossCage'), 'the party breaks it');
@@ -102,6 +103,26 @@ test('Brother Teague: his lit cage mends him and halves his hurts; broken, its s
   assert.ok(ev.some(([k]) => k === 'bossDown'));
   assert.ok(ev.some(([k, e]) => k === 'loot' && e.heirloom === 'teagues_name'));
   assert.equal(sim.state.bosses.teague, 1);
+});
+
+// (M8 slice 11, the boss harness) seed 4242 at the hall's level never ended: Teague was shoved out of his hall into the
+// corridor below it, the fighter after him, where the rest of the party (leashed to the room) couldn't follow; and his
+// cage, carried at his side with his back to a wall, sat in the wall where no blow could reach it
+test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall: the right party at 12 puts him down, every seed', () => {
+  for (const seed of [4242, 3, 20260807]) {
+    const { sim, ev } = inHall('drowned_abbey', 12, 1, seed);
+    let outside = 0, inWall = 0;
+    const roomAt = (w, x, y) => { const c = w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' ? c.room : -1; };
+    for (let i = 0; i < 20 * 150 && !ev.some(([k]) => k === 'bossDown' || k === 'defeat'); i++) {
+      sim.tick();
+      const T = boss(sim), cage = sim.world.enemies.find((e) => e.kind === 'lantern' && e.hp > 0), b = sim.battle;
+      if (T && b && roomAt(sim.world, T.x, T.y) !== b.room && T.spawn <= 0) outside++;
+      if (cage && cage.spawn <= 0 && !isWalkable(sim.world, cage.x, cage.y)) inWall++;   // (once it's up: a spawning foe can't be struck)
+    }
+    assert.ok(ev.some(([k]) => k === 'bossDown'), `seed ${seed}: he falls in 150 s`);
+    assert.equal(inWall, 0, `seed ${seed}: his cage stayed where blows could reach it`);
+    assert.ok(outside < 20, `seed ${seed}: he stayed in his hall (${outside} ticks out)`);
+  }
 });
 
 test('the Drowned Choir: while a cantor sings the drowned mend; with the singers down, another stands up out of the stalls', () => {

@@ -32,20 +32,22 @@ export const MAX_COMPANIONS = 2;
 // longer to fight through than the one before, from 20 minutes for level 1 → 2: T(L) = 20 × 1.15^(L − 1) minutes of
 // fighting rooms of your own level, at xpRate (what the right party earns a minute each there, measured). So the
 // table is T(L) × xpRate(L), rounded to three figures: level 10 in ~6 h of fighting, 15 in ~14 h, 20 in ~29 h, 30 in
-// ~126 h. (It was 300 × L^1.6: level 30 in ~8 h.) A fixed integer table: Math.pow is engine-approximated, and the curve
+// ~126 h. (v27: from level 10 smaller by what the rate fell when the wave stopped growing; the minutes are the same.) (It was 300 × L^1.6: level 30 in ~8 h.) A fixed integer table: Math.pow is engine-approximated, and the curve
 // must replay bit-for-bit on the server (detmath.js).
 const XP_TABLE = [
-  1730, 4040, 7080, 11000, 16100, 22500, 30700, 40900, 53700, 69700,
-  89400, 114000, 144000, 180000, 225000, 280000, 346000, 427000, 525000, 643000,
-  786000, 959000, 1170000, 1420000, 1720000, 2080000, 2510000, 3030000, 3650000, 4390000,
-  5270000, 6330000, 7580000, 9080000, 10900000, 13000000, 15500000, 18500000, 22100000, 26300000,
-  31300000, 37200000, 44200000, 52600000, 62400000, 74100000, 87800000, 104000000, 123000000, 146000000,
-  173000000, 205000000, 242000000, 286000000, 338000000, 399000000, 471000000, 556000000, 656000000, 773000000,
+  1730, 4040, 7080, 11000, 16100, 22500, 30700, 40900, 53700, 62700,
+  75100, 95500, 121000, 151000, 189000, 235000, 291000, 359000, 441000, 540000,
+  661000, 806000, 980000, 1190000, 1440000, 1750000, 2110000, 2540000, 3060000, 3690000,
+  4430000, 5310000, 6370000, 7630000, 9120000, 10900000, 13000000, 15500000, 18500000, 22100000,
+  26300000, 31300000, 37200000, 44100000, 52400000, 62200000, 73800000, 87500000, 104000000, 123000000,
+  145000000, 172000000, 203000000, 240000000, 284000000, 335000000, 396000000, 467000000, 551000000, 649000000,
 ];
 /** XP a minute each, the right party (fighter, rogue, cleric, kit at level) in a room of its own level, while fighting:
- * measured 2026-10-05 (L2 132, L4 354, L6 555, L9 862, L12 1219, L15 1569), fit 85 L + 1.4 L². Priced against this:
- * the XP table, and the bench's expeditions. @param {number} lv */
-export const xpRate = (lv) => 85 * lv + 1.4 * lv * lv;
+ * measured 2026-10-05 (L2 132, L4 354, L6 555, L9 862, L12 1219, L15 1569), fit 85 L + 1.4 L². From level 10 the wave
+ * stopped growing at 5 foes (battle.js waveSize, GDD §7.1 v1.42) and the rate fell by a measured 0.89 at 10 and
+ * 0.80–0.85 from 11 (three seeds, the same harness either side): × 0.9 at 10, × 0.84 from 11, so a level still takes
+ * T(L) minutes. Priced against this: the XP table, and the bench's expeditions. @param {number} lv */
+export const xpRate = (lv) => (85 * lv + 1.4 * lv * lv) * (lv <= 9 ? 1 : lv === 10 ? 0.9 : 0.84);
 export const xpToNext = (lv) => XP_TABLE[Math.max(1, Math.min(XP_TABLE.length, lv)) - 1];
 /** a share of a level in XP, at a level (GDD §9 v1.39: what quests, the board and the Chronicle pay) @param {number} lv @param {number} share */
 export const levelShare = (lv, share) => Math.round(xpToNext(lv) * share);

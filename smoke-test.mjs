@@ -193,7 +193,15 @@ console.log('companions add strength (same wave, 80 %+ of the XP a minute):', co
 const oldKit = roomVisit({ classes: FRC, lv: 6, rl: 8, gear: 1 }), fine = roomVisit({ classes: FRC, lv: 6, rl: 8, rarity: 'fine' });
 const gearOk2 = fine.waves > oldKit.waves;
 console.log('gear at level holds a room two up longer than a level-1 kit:', gearOk2, `${show(fine)} vs ${show(oldKit)}`);
-const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2;
+// (M8, slice 11) the Fens' band: the same contract at 12 and 15 (the right party holds; a lone hero is down within two
+// waves; a room three up defeats the right party)
+const right15 = []; for (const seed of [20260807, 777]) for (const lv of [12, 15]) right15.push(roomVisit({ seed, classes: FRC, lv }));
+const right15Ok = right15.every((v) => v.waves >= 10 && !v.fallenEarly);
+console.log('the right party holds same-level rooms (L12/15):', right15Ok, right15.map(show).join(', '));
+const solo15 = [12, 15].map((lv) => roomVisit({ lv, secs: 120 })), up15 = [roomVisit({ classes: FRC, lv: 12, rl: 15 }), roomVisit({ classes: FRC, lv: 15, rl: 18 })];
+const band15Ok = solo15.every((v) => v.defeated && v.waves <= 2) && up15.every((v) => v.defeated);
+console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L12/15):', band15Ok, [...solo15, ...up15].map(show).join(', '));
+const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
 const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && rl.roomLevels.get(rl.level.descentRoom.id) === Math.max(...rlv);
 console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));

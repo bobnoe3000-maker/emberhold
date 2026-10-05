@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v26', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 26); });
+test('three game slots, save v27', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 27); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -52,7 +52,7 @@ test('save v25: levels kept; the XP toward the next level carried over as the sa
   data.party[0] = { ...data.party[0], level: 17, xp: 22182 }; data.bench = [{ ...data.party[0], id: 'b', name: 'B', main: false, level: 10, xp: 0 }];
   const m = migrate({ version: 24, savedAt: 1, data }).data;
   assert.equal(m.party[0].level, 17); assert.ok(Math.abs(m.party[0].xp / xpToNext(17) - 22182 / 27915) < 0.001, String(m.party[0].xp));
-  assert.equal(m.bench[0].xp, 0); assert.equal(migrate({ version: 25, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
+  assert.equal(m.bench[0].xp, 0); assert.equal(migrate({ version: 27, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
 });
 
 // (save v26, the level-12 trials) the 12s were unlocked by level: a class anyone had at 12 keeps its ability
@@ -70,5 +70,19 @@ test('save v26: a class someone had at 12 counts its level-12 trial done; the ot
   assert.ok(unlocked(sim.state.party[0], turn, sim.state.trials), 'the cleric keeps Turn Undead');
   assert.ok(!unlocked({ cls: 'rogue', level: 12 }, venom, sim.state.trials), 'a rogue reaching 12 now wants Wren\'s trial');
   assert.deepEqual(migrate({ version: 26, savedAt: 1, data: m }).data.trials, m.trials, 'once');
+});
+
+// (save v27, GDD §7.1 v1.42) the wave stops growing at 5 foes, XP a minute from 10 fell with it, and so did the table:
+// the share of the way to the next level is kept; under 10 nothing changes
+test('save v27: from level 10, the XP toward the next level is the same share of the smaller table', async () => {
+  const { xpToNext } = await import('../src/sim/party.js');
+  const { createSim } = await import('../src/sim/core.js');
+  const data = JSON.parse(JSON.stringify(createSim(1, undefined, { scene: 'town' }).snapshot()));
+  data.party[0] = { ...data.party[0], level: 12, xp: 57000 }; data.bench = [{ ...data.party[0], id: 'b', name: 'B', main: false, level: 9, xp: 40000 }];
+  const m = migrate({ version: 26, savedAt: 1, data }).data;
+  assert.equal(m.party[0].level, 12); assert.ok(Math.abs(m.party[0].xp / xpToNext(12) - 57000 / 114000) < 0.001, String(m.party[0].xp));
+  assert.equal(m.bench[0].xp, 40000, 'level 9: the table is as it was');
+  assert.ok(xpToNext(12) < 114000 && xpToNext(9) === 53700);
+  assert.equal(migrate({ version: 27, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
 });
 

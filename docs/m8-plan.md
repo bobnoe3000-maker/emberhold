@@ -208,6 +208,11 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
     - `test/m8-golden.test.mjs` plays Act II headless after Act I: the road south, the chapters, Wren and her chain,
       a level-12 trial, the count, the set and the vault, and a save round trip. The browser test walks the first
       chapter: Ilse → the canal road → Saltmere → Wren.
+    - **Done** (2026-10-05): the wave stops at 5 foes from level 8 (`battle.js waveSize`; it grew to 7 at 12, and the
+      right party held 4–8 waves from 12 to 15); `party.js xpRate` and the table from 10 follow the measured rate (save
+      v27); the smoke gates at 12 and 15; three boss-fight bugs fixed (a shove out of the room, Teague's cage in a wall,
+      a spawn on a stairwell); `test/m8-golden.test.mjs`; the browser walks to Dace in Saltmere (6b). GDD v1.42. Numbers:
+      `docs/fens-critic-pass.md` (balance). Open: loot runs over on Fines (the floor's boss re-killed each visit).
 12. **The critic passes, gathered.** `docs/fens-critic-pass.md`: the art, story and quest passes from each slice,
     what each found, what changed, and the before/after numbers.
 13. **Then the Solmere shell** (development plan M8): the Lamphall and the Mere Tower, played offline. Planned in
