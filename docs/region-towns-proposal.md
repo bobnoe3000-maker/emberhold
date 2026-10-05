@@ -74,7 +74,8 @@ waystation, shows it. It's a stilt town in the bog a day from Thornwick.
 - **Buildings.**
   - **Houses on stilts**: the Fens' rubble-and-plaster in its grey-green tones, slate roofs, raised a man's height.
   - As a waystation it has two services, standing where a town's tavern and temple stand: the *Drowned Eel*, with
-    the Guild's board, and the Grey Sisters' chapel.
+    the Guild's board, and the Grey Sisters' chapel. (2026-10-05, the owner: "Saltmere needs an inn for party mgt")
+    And a third, the inn: **the Stilt House**, at the head of the square (GDD v1.37).
   - The well is a rainwater cistern: nobody drinks the fen.
 - **Set pieces.** Punts tied at the boardwalks, eel traps on stakes, stunted alders and dead trees, and
   **marsh-lights**, the pale wisps over the water at night. They are presentation only, and they never lead

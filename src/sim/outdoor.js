@@ -502,9 +502,10 @@ function buildFens(seed) {
 
 // ── SALTMERE, the Fens' waystation (M8; docs/region-towns-proposal.md) ─────────────────────────────────────────
 // No wall: the water is all round it. Stilt houses over the bog, boardwalks for streets, the square a deck on piles
-// in the same place and shape as every town's, and two services standing where a town's tavern and temple stand:
-// the Drowned Eel (with the Guild's board) and the Grey Sisters' chapel, on its own peat island. The well is a
-// rainwater cistern: nobody drinks the fen.
+// in the same place and shape as every town's, and three services: the Drowned Eel (with the Guild's board) and the
+// Grey Sisters' chapel, on its own peat island, where a town's tavern and temple stand, and (2026-10-05, the owner:
+// "Saltmere needs an inn for party mgt") the Stilt House over the square's head, where a company's sellswords wait.
+// The well is a rainwater cistern: nobody drinks the fen.
 function buildWaystation(seed, region) {
   const R = region, info = REGIONS[R], o = makeWorld(seed, 'town', 130, 116, 90), rng = mulberry32(streamSeed(seed, 4433)), B = (t, n = 1) => `${R}_${t}_${n}`;
   o.name = info.name; o.region = R; o.marsh = true; o.waystation = true;
@@ -517,8 +518,8 @@ function buildWaystation(seed, region) {
   for (const pts of [[[50, 62], [32, 72], [24, 72]], [[60, 44], [76, 24], [86, 22]], [[78, 66], [100, 68]], [[48, 80], [40, 98]], [[84, 82], [94, 94]], [[64, 86], [62, 100]]])
     o.roads.push({ w: 3, surface: 'deck', pts });                                                                            // boardwalks to the houses
   finalizeGround(o);
-  const svc = [['temple', B('temple'), [34, 24]], ['tavern', B('stilttavern'), [29, 48]]];
-  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind === 'tavern' ? 'tavern' : 'temple'] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
+  const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]]];
+  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
   put(o, B('cistern'), M[0], M[1]);
   for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
   o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };

@@ -111,6 +111,34 @@ const NAMES = {
   cleric: ['Maren', 'Aldous', 'Wenna', 'Cuthbert', 'Edda', 'Rowan'],
   shaman: ['Gammer Rook', 'Tobin', 'Hesk', 'Old Mab', 'Wilber', 'Sedge'],
 };
+// No two in a company share a name (the owner, 2026-10-05: "I have 2 Tobins"): a name already taken goes to the next
+// free one in its class's list after it, then any class's, then "the Younger". Deterministic: the same company and
+// the same roster give the same names.
+const ALL_NAMES = Object.values(NAMES).flat();
+/** a name for a `cls` hireling not in `taken`: `want` if it's free @param {string} cls @param {string} want @param {Set<string>} taken */
+export function freeName(cls, want, taken) {
+  if (!taken.has(want)) return want;
+  const own = NAMES[cls] || [], at = own.indexOf(want);
+  for (let k = 1; k <= own.length; k++) { const n = own[(Math.max(0, at) + k) % own.length]; if (!taken.has(n)) return n; }
+  for (const n of ALL_NAMES) if (!taken.has(n)) return n;
+  for (let k = 2; ; k++) { const n = k === 2 ? `${want} the Younger` : `${want} ${k}`; if (!taken.has(n)) return n; }
+}
+/** a tavern's roster with names nobody in the company has (nor anyone earlier on the list); one already hired keeps the
+ * name they joined with @param {any[]} list @param {any[]} company the party and the bench */
+export function distinctNames(list, company) {
+  const byId = new Map(company.map((m) => [m.id, m])), taken = new Set(company.map((m) => m.name));
+  for (const c of list) {
+    const was = byId.get(c.id);
+    if (was) c.name = was.name; else { c.name = freeName(c.cls, c.name, taken); taken.add(c.name); }
+  }
+  return list;
+}
+/** a company's members, a later one with a name already taken renamed (save v24) @param {any[]} members in order: the party, then the bench */
+export function dedupeNames(members) {
+  const seen = new Set(), taken = new Set(members.map((m) => m.name));        // (a new name mustn't be one a later member has)
+  for (const m of members) { if (seen.has(m.name) && !m.main) { m.name = freeName(m.cls, m.name, taken); taken.add(m.name); } seen.add(m.name); }
+  return members;
+}
 // Today's sellswords at a town's tavern (GDD §6.2): one candidate per class, deterministic per
 // (world seed, town, day, times you asked around), within ±1 of your level. A Thornwick-born hero
 // sees one more. The order: fighter, rogue, mage, then that extra hireling, then the cleric, then (v1.19) the

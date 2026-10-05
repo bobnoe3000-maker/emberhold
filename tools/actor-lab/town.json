@@ -718,6 +718,20 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_stiltinn_1",
+      "model": "stiltinn",
+      "build": "stiltinn",
+      "seed": 71,
+      "style": "fens",
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [

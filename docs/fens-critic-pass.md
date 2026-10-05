@@ -289,3 +289,15 @@ fight (47–58 %). Now everyone steps out of a patch: 6–17 % for the fighter, 
 
 Still open: the Choir and the Abbess share the cantors' frame (a skeleton mage in a habit), told apart by colour and
 what they hold; a hood or veil would help. The Toadking's white trim is still the barbarian's fur.
+
+## Saltmere's inn (2026-10-05)
+
+The owner: *"Saltmere needs an inn for party mgt."* Saltmere had only its tavern and chapel, so the bench, swaps,
+rest and expeditions were refused there. **The Stilt House** is a new building (`tools/actor-lab/buildkit.js`
+`stiltinn`, `town.json` `fens_stiltinn_1`). It's long and narrow on its piles, two storeys under one steep roof,
+with a gallery and a bench along its front, two lanterns, a sign with a candle on it, a ladder to the water, and
+bedding aired over the rail. It stands at the head of the square. The chapel moves 6 tiles west on its island to make
+room, so the three stand 8+ tiles apart with every door in the square's frame (`test/town.test.mjs`). At first the
+inn stood behind the chapel and under the compass buttons, and the move brought it out from behind both. The bar shows
+Tavern, Inn and Temple; the inn's menu is any town's (rest, party and bench, expeditions). No other footprint changed
+(the env bake compared before and after: 0). The square with the inn, and its menu: `docs/img/saltmere-inn.jpg`.

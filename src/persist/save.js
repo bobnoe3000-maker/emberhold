@@ -67,14 +67,18 @@
 //       road. Only grew: older data has nobody out.
 //   v23: the Mere Tower's wardens' heirlooms (sim/tower.js, items.js; GDD §17 v1.34): tower.won { [warden]: [brackets] }.
 //       Only grew: older data has won none.
+//   v24: no two in a company share a name (sim/party.js; the owner, 2026-10-05: "I have 2 Tobins"). The shape is the
+//       same; an older company with a name twice has the later one (the party first, then the bench) renamed to the
+//       next free name in their class's list (namesFor). The hero keeps theirs.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
 import { LAMPS } from '../sim/lamps.js';
 import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
+import { dedupeNames } from '../sim/party.js';
 
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -95,7 +99,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -104,6 +108,15 @@ export function countFrom(data) {
   if (data.count) return data;
   const L = LAMPS.third_legion, fell = !!(data.bosses && data.bosses[L.keeper] > 0);
   return { ...data, count: { lamps: fell ? 1 : 0, souls: fell ? L.souls : 0 }, lampsBroken: fell ? ['third_legion'] : [] };
+}
+
+/** v23 → v24: no two in a company share a name (the owner, 2026-10-05: "I have 2 Tobins"); the later one, in the
+ * party then on the bench, takes the next free name (party.js freeName) @param {any} data */
+export function namesFor(data) {
+  if (!Array.isArray(data.party)) return data;
+  const party = data.party.map((m) => ({ ...m })), bench = (Array.isArray(data.bench) ? data.bench : []).map((m) => ({ ...m }));
+  dedupeNames([...party, ...bench]);
+  return { ...data, party, bench };
 }
 
 /** v19 → v20: one Homeward Scroll in the bag (see v20 above) @param {any} data */

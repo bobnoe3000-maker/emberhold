@@ -1046,6 +1046,32 @@ Object.assign(TYPES, {
     for (const [x, y] of [[-0.08, 0.24], [0.03, 0.19], [0.09, 0.24], [-0.02, 0.15]]) box(0.05, 0.06, 0.03, S.m.paper, x, y, 0.004, nb);
     barrel(g, S, pw / 2 - 0.08, pd / 2 - 0.05);
   },
+  // The Stilt House (2026-10-05, the owner: "Saltmere needs an inn for party mgt"): the waystation's lodging, where a
+  // company's sellswords wait. Long and narrow on its piles, two storeys under one steep roof, a row of shuttered
+  // sleeping-room windows upstairs, a ladder down to a moored punt, a lantern and a hanging sign with a candle on it,
+  // and a gallery along its front where the bench sits. Faces the camera (+z), as the tavern does.
+  stiltinn(S, g, r) {
+    const P = 0.2, w = 1.22, d = 0.56, h1 = 0.4, h2 = 0.34, pw = w + 0.26, pd = d + 0.36;
+    for (let i = 0; i < 5; i++) for (const z of [-pd / 2, pd / 2]) box(0.05, P + 0.02, 0.05, S.m.beam, -pw / 2 + (pw * i) / 4, -0.02, z, g);
+    for (const x of [-pw / 2, pw / 2]) { const br = box(0.02, 0.02, pd * 1.05, S.m.beam, x, P * 0.45, 0, g); br.rotation.x = 0.35; }   // cross-braces
+    box(pw + 0.04, 0.035, pd + 0.04, S.m.wood, 0, P, 0, g);                                             // the platform
+    const hs = new THREE.Group(); hs.position.set(0, P + 0.035, -0.1); g.add(hs);
+    storeyBlock(S, hs, w, d, 0, h1, S.m.lower, true, { doorZ: -0.2 });
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, -0.2, 0.2, 0.34, false);
+    storeyBlock(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.m.upper, true, { timber: true });
+    roofOver(S, hs, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise * 1.25);
+    chimney(hs, S, -0.42, -0.1, h1 + h2, 0.4); chimney(hs, S, 0.44, -0.1, h1 + h2, 0.34);
+    sign(hs, S, -0.46, 0.46, d / 2);
+    const candle = mat(null, '#e8d8a8'); box(0.02, 0.06, 0.012, candle, -0.46, 0.43, d / 2 + 0.06, hs);   // the candle painted on the sign
+    const ga = new THREE.Group(); ga.position.set(0, P + 0.035, d / 2 - 0.02); g.add(ga);                // the gallery: a rail, posts, a bench
+    for (const x of [-0.56, -0.1, 0.36, 0.6]) box(0.03, 0.2, 0.03, S.m.beam, x, 0, 0.12, ga);
+    box(1.2, 0.025, 0.025, S.m.beam, 0.02, 0.18, 0.12, ga);
+    box(0.4, 0.03, 0.08, S.m.wood, 0.2, 0.09, 0.02, ga);
+    lantern(ga, S, -0.2, 0.36, 0.1); lantern(ga, S, 0.6, 0.36, 0.1);
+    for (let i = 0; i < 5; i++) box(0.11, 0.012, 0.018, S.m.wood, pw / 2 - 0.16, P - 0.04 - i * 0.045, pd / 2 + 0.03, g);   // the ladder down to the water
+    for (const sx of [pw / 2 - 0.22, pw / 2 - 0.1]) box(0.012, P + 0.03, 0.012, S.m.beam, sx, -0.02, pd / 2 + 0.03, g);
+    const blanket = mat(null, '#6a4a3a'); box(0.22, 0.012, 0.1, blanket, -0.3, P + h1 + 0.06, d / 2 + 0.12, g);   // bedding aired over the gallery rail
+  },
   // The waystation's well: a rain cistern, a staved tub on a stand under a little roof, a dipper on a hook.
   cistern(S, g, r) {
     for (const [x, z] of [[-0.12, -0.12], [0.12, -0.12], [-0.12, 0.12], [0.12, 0.12]]) box(0.03, 0.14, 0.03, S.m.beam, x, 0, z, g);

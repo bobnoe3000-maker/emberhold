@@ -32,7 +32,7 @@
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
-import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel } from './party.js';
+import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
@@ -77,7 +77,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
   const restCost = () => Math.round(REST_COST * state.party[0].level * priceMod(state.party));
   const extraHirelings = () => (ORIGIN_EDGE[state.party[0].origin]?.kind === 'tavernHirelings' ? ORIGIN_EDGE[state.party[0].origin].value : 0);
   const asked = () => (state.tavern.day === day() ? state.tavern.ask : 0);
-  const roster = () => tavernRoster(seed, getWorld().region, day(), state.party[0].level, extraHirelings(), asked());
+  const roster = () => distinctNames(tavernRoster(seed, getWorld().region, day(), state.party[0].level, extraHirelings(), asked()), [...state.party, ...state.bench]);   // (no two of a company share a name)
   /** asking around again today @returns {number} */
   const askCost = () => { let c = ASK_COST * state.party[0].level; for (let i = 0; i < asked(); i++) c *= 2; return c; };
   /** @param {any} m */

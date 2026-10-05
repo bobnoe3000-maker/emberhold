@@ -34,7 +34,7 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   // into Saltmere and out again
   standAt(sim, sim.world.exits.find((x) => x.to === 'town')); sim.tick();
   assert.equal(sim.world.kind, 'town'); assert.equal(sim.world.name, 'Saltmere'); assert.equal(sim.state.region, 'fens');
-  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['tavern', 'temple'], 'a waystation: the tavern and the chapel');
+  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['inn', 'tavern', 'temple'], 'a waystation: the tavern, the inn and the chapel');
   standAt(sim, sim.world.exits.find((x) => x.to === 'overland')); sim.tick();
   assert.equal(sim.world.kind, 'overland'); assert.equal(sim.state.region, 'fens');
   // back north to the Vale
@@ -43,11 +43,26 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   const b = sim.world.arrivals.fens; assert.ok(Math.hypot(p.x - b.x, p.y - b.y) < 1, 'back on the canal road at the Vale\'s south edge');
 });
 
-test('Saltmere refuses what it has no house for: no inn, no forge, no shop', () => {
+test('Saltmere refuses what it has no house for: no forge, no shop', () => {
   const sim = createSim(20260807, undefined, { scene: 'town', region: 'fens' }); sim.tick();
   const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
-  for (const c of [{ type: 'rest' }, { type: 'upgrade', uid: 1 }, { type: 'buy', id: 'x' }]) { sim.commands.push(c); sim.tick(); }
-  assert.deepEqual(why, ['Saltmere has no inn', 'Saltmere has no forge', 'Saltmere has no shop']);
+  for (const c of [{ type: 'upgrade', uid: 1 }, { type: 'buy', id: 'x' }]) { sim.commands.push(c); sim.tick(); }
+  assert.deepEqual(why, ['Saltmere has no forge', 'Saltmere has no shop']);
+});
+
+// (2026-10-05, the owner: "Saltmere needs an inn for party mgt") the Stilt House: a night's rest, the bench, swaps
+test('Saltmere\'s inn, the Stilt House: rest there, bench a companion and swap them back', () => {
+  const sim = createSim(20260807, undefined, { scene: 'town', region: 'fens' }); sim.state.counters.gold = 1e6; sim.tick();
+  const inn = sim.world.services.find((s) => s.kind === 'inn'); assert.equal(inn.name, 'The Stilt House');
+  const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
+  for (const idx of [0, 1, 2]) { sim.commands.push({ type: 'hire', idx }); sim.tick(); }
+  assert.equal(sim.state.party.length, 3); assert.equal(sim.state.bench.length, 1);
+  const out = sim.state.party[1], waiting = sim.state.bench[0];
+  sim.state.party[0].hp = 1; sim.commands.push({ type: 'rest' }); sim.tick(); assert.ok(sim.state.party[0].hp > 1, 'rested');
+  sim.commands.push({ type: 'swap', slot: 1, id: waiting.id }); sim.tick();
+  assert.equal(sim.state.party[1], waiting); assert.ok(sim.state.bench.includes(out), 'swapped at the inn');
+  sim.commands.push({ type: 'dismiss', id: waiting.id }); sim.tick(); assert.ok(sim.state.bench.includes(waiting), 'benched at the inn');
+  assert.deepEqual(why, []);
 });
 
 test('the land round-trips through a save, and a save from before M8 loads in the Vale', () => {

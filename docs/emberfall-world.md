@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.27 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.28 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -325,7 +325,9 @@ on the stilt-houses never go out.
 - **Town:** Thornwick stays the base to level 15. **Saltmere** (v1.20) is the Fens' **waystation**, a day from
   Thornwick by the canal road: stilt houses over the bog, boardwalks for streets, a square that's a deck on piles,
   *The Drowned Eel* with the Guild's board, the Grey Sisters' chapel, and Pim Rushlight's chandlery. **Reedholm**
-  (the Sisters' prioress house) is an overland landmark.
+  (the Sisters' prioress house) is an overland landmark. (v1.28) **The Stilt House**, at the head of the square, is
+  Saltmere's lodging: long and narrow on its piles, its sleeping-rooms let by the week to the eel-men in the season
+  and to whoever the Guild sends the rest of the year. Companies leave the sellswords they're not taking there.
 - **The Grey Sisters, explained (v1.20).** The Drowned Abbey belonged to the order the Sisters came out of: the
   imperial **binding clergy**, who bound the tithe for the Throne and kept the **binding rolls** of everyone they
   bound. *"Bind them gently. Most of them volunteered."* was their prayer. Nobody in Reedholm likes to say so.
