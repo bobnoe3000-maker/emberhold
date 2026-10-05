@@ -10,7 +10,7 @@
 // count: they were never bound. No command touches it (the replay validator will write the leaderboard, the Freed).
 // state.count = { lamps, souls }; state.lampsBroken = [lamp ids] (a lamp counts once, though its keeper's echo comes
 // back on the next visit). Save v19 (persist/save.js): older saves credit the Standard's lamp if he fell.
-// Events: 'lampBroken' { id, name, first, freed, x, y } · 'cageBroken' { tx, ty } · 'countChanged' { lamps, souls }.
+// Events: 'lampBroken' { id, name, first, freed, x, y } · 'cageBroken' { tx, ty, x, y, by?, auto? } · 'countChanged' { lamps, souls }.
 
 /** @type {Record<string, { name: string, keeper: string, souls: number }>} */
 export const LAMPS = {
@@ -19,8 +19,12 @@ export const LAMPS = {
 };
 /** the lamp a boss carries, if any @param {string} boss */
 export const lampOf = (boss) => Object.keys(LAMPS).find((id) => LAMPS[id].keeper === boss) || null;
-/** the kinds that drop a cage where they fall */
+/** the kinds that drop a cage where they fall: only the band's elite carries a caught soul (world doc v1.26; the owner,
+ * 2026-10-05: a cage from every harvester was ~1 a wave, 250+ an hour) */
 export const CAGE_KINDS = new Set(['harvester']);
+// and the party picks a cage up on its own (GDD v1.35): after CAGE_PICKUP_S with no foe standing, every cage within
+// CAGE_REACH tiles of the hero breaks, by the member standing nearest it (the same lamp and soul as a tap)
+export const CAGE_PICKUP_S = 3, CAGE_REACH = 14;
 
 /** @param {any} state */
 export function countOf(state) {

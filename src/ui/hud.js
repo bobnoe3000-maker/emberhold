@@ -57,8 +57,8 @@ export function createHud(sim) {
   // the Mere Tower (sim tower.js): Wenna won't take a company under 12; out of the hall mid-climb, the satchel's lost
   sim.bus.on('siteLevel', (e) => show(e.site === 'mere_tower' ? `Wenna Pike won’t row a company under level ${e.need} out to the Mere Tower` : `Come back at level ${e.need}`, 3200));
   sim.bus.on('towerOut', (e) => { if (e.lost && (e.lost.gold || e.lost.cinders)) show(`Out of the Tower mid-climb · the satchel is lost: ${e.lost.gold} gold, ${e.lost.cinders} cinders`, 3600); });
-  sim.bus.on('cageDropped', () => show('A cage falls · tap it to free the soul in it', 2600));   // (lamps.js)
-  sim.bus.on('cageBroken', () => { const c = sim.state.count; show(`The cage breaks · a soul goes free · ${c.souls} freed`, 2600); });
+  sim.bus.on('cageDropped', () => show('A full cage falls · the company will break it when the fighting stops', 2600, 'cage'));   // (lamps.js: or tap it)
+  sim.bus.on('cageBroken', (e) => { const c = sim.state.count; show(`${e && e.auto && e.by ? `${e.by} breaks the cage` : 'The cage breaks'} · a soul goes free · ${c.souls} freed`, 2600, 'cage'); });
   sim.bus.on('fallen', (f) => show(`${f.name} is slain: out of the fight until raised · at the temple in town, or a shrine below`, 3200));
   sim.bus.on('benched', (b) => show(`${b.name} waits on the bench at the inn`, 2200));
   // the dead on the barrows road (sim road.js): a line as you come near, and when a rank goes (content/road/)

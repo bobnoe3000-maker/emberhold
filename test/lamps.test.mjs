@@ -69,6 +69,44 @@ test('a harvester drops its cage where it falls; a touch in reach breaks it, onc
   const back = createSim(1); back.restore(JSON.parse(JSON.stringify(sim.snapshot()))); assert.deepEqual(back.state.count, sim.state.count);
 });
 
+// (2026-10-05, the owner: "Lantern cages drop way too often" … "elite harvesters only, and characters should automatically
+// pick up after a few seconds when not in combat") a plain harvester leaves nothing; the elite's cage breaks itself
+// 3 s into the calm (a room's lull counts), by the member nearest it; one too far from the hero waits for a tap
+test('only an elite harvester drops a cage; 3 s with no foe standing and the nearest member breaks it', () => {
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sickpools' }); party(sim, 13); sim.tick(); room(sim);
+  const slain = [], cages = [], broke = []; let calmFrom = -1;
+  sim.bus.on('slain', (e) => slain.push(e)); sim.bus.on('cageDropped', (c) => cages.push(c));
+  sim.bus.on('cageBroken', (c) => broke.push({ ...c, t: sim.state.t, calmFrom }));
+  sim.bus.on('wave', (e) => { if (e.cleared) calmFrom = sim.state.t; });
+  fight(sim, 300, () => broke.length >= 2);
+  const plain = slain.filter((e) => e.kind === 'harvester' && !e.elite).length, elite = slain.filter((e) => e.kind === 'harvester' && e.elite).length;
+  assert.ok(plain >= 3, `plain harvesters fell (${plain})`); assert.ok(elite >= 1, 'an elite fell');
+  assert.ok(cages.length <= elite + 1 && cages.length >= 1, `cages ${cages.length} for ${elite} elites and ${plain} plain`);
+  const b = broke[0]; assert.ok(b.auto && b.by, 'broken by the company, not a tap'); assert.ok(sim.state.party.some((m) => m.name === b.by));
+  assert.ok(b.t - b.calmFrom >= 3 - 1e-6 && b.t - b.calmFrom < 3.2, `3 s into the lull (${(b.t - b.calmFrom).toFixed(2)})`);
+  assert.equal(propAt(sim.world, b.tx, b.ty), null, 'broken');
+  assert.ok(sim.state.count.lamps >= 2, 'each counts as a tap would');
+});
+
+test('a cage far from the hero waits; a fight under way holds it', () => {
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sickpools' }); party(sim, 13); sim.tick(); room(sim);
+  const cages = []; sim.bus.on('cageDropped', (c) => cages.push(c));
+  fight(sim, 300, () => cages.length > 0);
+  const c = cages[0], p = sim.state.player, n0 = sim.state.count.lamps;
+  for (const [k, m] of sim.world.mods) if (m && m.cage && k !== c.tx + ',' + c.ty) sim.world.mods.delete(k);
+  sim.world.mods.set('2,2', { cage: true });                                                // one out of reach (in the rock: it never matters)
+  let cleared = false; sim.bus.on('wave', (e) => { if (e.cleared) cleared = true; });
+  fight(sim, 60, () => cleared);                                                            // the rest of the wave: no foe may be left standing first
+  assert.ok(cleared); assert.equal(propAt(sim.world, c.tx, c.ty), 'cage', 'held while the fight goes on');
+  for (let i = 0; i < 20 * 2.5; i++) sim.tick();
+  assert.equal(propAt(sim.world, c.tx, c.ty), 'cage', 'not before 3 s');
+  for (let i = 0; i < 20 * 1; i++) sim.tick();
+  assert.equal(propAt(sim.world, c.tx, c.ty), null, 'broken in the lull');
+  assert.ok(sim.world.mods.get('2,2').cage && !sim.world.mods.get('2,2').opened, 'a cage 14+ tiles off waits for a tap');
+  assert.equal(sim.state.count.lamps, n0 + 1);
+  assert.ok(Math.hypot(2.5 - p.x, 2.5 - p.y) > 14);
+});
+
 test('save v19: an older save is credited the Standard\'s lamp if he fell; bad counts are refused; no command sets it', () => {
   const data = JSON.parse(JSON.stringify(createSim(SEED, undefined, { scene: 'town' }).snapshot())); delete data.count; delete data.lampsBroken;
   const fell = migrate({ version: 18, savedAt: 1, data: { ...data, bosses: { standard: 2 } } }).data;

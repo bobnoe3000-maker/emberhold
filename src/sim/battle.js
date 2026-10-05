@@ -38,7 +38,7 @@ import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
-import { LAMPS, lampOf, CAGE_KINDS, countOf, credit } from './lamps.js';
+import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
@@ -217,7 +217,7 @@ const REVIVE = 0.25, HERO_R = 0.32;   // HERO_R: the hero's collision radius (co
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
-  let battle = null, nextId = 1, focusId = 0, pending = [];   // pending: blows and releases waiting on their wind-up
+  let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0;   // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
 
   // a room tile keeps its room id even where a corridor was carved through it
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
@@ -533,13 +533,27 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       credit(state, bus, { lamps: first ? 1 : 0, souls: bound.length + (first ? LAMPS[lamp].souls : 0) });
       bus.emit('lampBroken', { id: lamp, name: LAMPS[lamp].name, first, freed: bound.length, held: first ? LAMPS[lamp].souls : 0, x: e.x, y: e.y });
     }
-    if (CAGE_KINDS.has(e.kind) && w.kind === 'dungeon') {            // its cage, on the floor where it fell (or the nearest free tile)
+    if (CAGE_KINDS.has(e.kind) && e.elite && w.kind === 'dungeon') {   // the band's elite: its cage, on the floor where it fell (or the nearest free tile)
       const fx = Math.floor(e.x), fy = Math.floor(e.y);
       for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
         const tx = fx + dx, ty = fy + dy, k = tx + ',' + ty;
         if (w.props.has(k) || w.mods.has(k) || !isWalkable(w, tx + 0.5, ty + 0.5)) continue;
         w.mods.set(k, { cage: true }); bus.emit('cageDropped', { tx, ty }); break;
       }
+    }
+  }
+  // A caged soul the party walks past (lamps.js, GDD v1.35): a few seconds with no foe standing and the member nearest
+  // each cage near the hero breaks it, as a tap would (mods in insertion order: the same every replay)
+  function pickCages(w, p) {
+    for (const [k, m] of w.mods) {
+      if (!m || !m.cage || m.opened) continue;
+      const c = k.indexOf(','), tx = +k.slice(0, c), ty = +k.slice(c + 1), x = tx + 0.5, y = ty + 0.5;
+      if (hypot(x - p.x, y - p.y) > CAGE_REACH) continue;
+      let by = null, bd = 1e9;
+      state.party.forEach((q, i) => { if (!alive(q)) return; const qx = i ? q.x : p.x, qy = i ? q.y : p.y, d = hypot(x - qx, y - qy); if (d < bd) { bd = d; by = q; } });
+      w.mods.set(k, { opened: true });
+      credit(state, bus, { lamps: 1, souls: 1 });
+      bus.emit('cageBroken', { tx, ty, x, y, by: by ? by.name : '', auto: true });
     }
   }
   // a wipe: wake at the temple — 30 % HP, Fallen cleared, Weakened, a quarter of the gold gone. The
@@ -1020,6 +1034,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // companions out of battle: follow in formation, loosen up when the hero stands still
     const foes = battle ? w.enemies.filter((e) => !e.dead && e.hp > 0 && e.spawn <= 0) : [];
     if (!foes.length) atEase(dt, w, p, H);
+    calmT = foes.length || (battle && !battle.between && battle.wave > 0) ? 0 : calmT + dt;   // (a wave between its last fall and its lull isn't calm yet)
+    if (calmT >= CAGE_PICKUP_S && inDungeon && alive(H)) pickCages(w, p);
     if (battle) {
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
@@ -1131,7 +1147,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
-    reset() { const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
+    reset() { const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
     towerClimb,
   };
