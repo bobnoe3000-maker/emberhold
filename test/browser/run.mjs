@@ -686,13 +686,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1180), every
+// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1300), every
 // atlas loaded, no two figures overlapping and none off the screen; walking in place, their frames change and
 // their spots don't.
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 1180 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844)
+    const ctx = await b.newContext({ viewport: { width: 390, height: 1300 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844; 1300 with the Fens' four bosses)
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     await p.goto(`${base}/index.html?dev&manual&scene=stage&group=all&clip=walk&dir=1`);
     await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
@@ -704,8 +704,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const off = s1.filter((a) => !a.box || a.box[0] < 0 || a.box[1] < 0 || a.box[2] > v.w || a.box[3] > v.h).map((a) => a.id);
     const moved = s1.filter((a, i) => a.x !== s2[i].x || a.y !== s2[i].y).length, animating = s1.filter((a, i) => JSON.stringify(a.box) !== JSON.stringify(s2[i].box)).length;
     const hud = await p.evaluate(() => [...document.body.children].filter((e) => e.tagName !== 'CANVAS' && e.id !== 'stagePanel' && e.tagName !== 'SCRIPT' && getComputedStyle(e).display !== 'none').map((e) => e.id || e.tagName));
-    check('stage: the whole cast lined up (53: M8 adds the Fens\' seven, and the Mere Tower\'s ten wardens), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
-      s1.length === 53 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
+    check('stage: the whole cast lined up (57: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens and the Fens\' four bosses), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
+      s1.length === 57 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
       JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }

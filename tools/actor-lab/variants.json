@@ -3383,5 +3383,277 @@
     ]
    }
   ]
+ },
+ {
+  "id": "FB1",
+  "cls": "Boss",
+  "label": "The Toadking \u00b7 Toadking's Mound: fat, cheerful, bald, in a stolen captain's coat gone green with the mere, a boat-hook",
+  "model": "Barbarian",
+  "show": [],
+  "hold": {
+   "handslot.r": "boathook"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e4a4a",
+     "#0e1818"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5a38",
+     "#1a1a0e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#4a4230",
+     "#16140c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2e4a4a",
+     "#0e1818"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     1
+    ],
+    "to": [
+     "#6a5a3a",
+     "#201a10"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     1
+    ],
+    "to": [
+     "#6a5a3a",
+     "#201a10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     0
+    ],
+    "to": [
+     "#a8884a",
+     "#3a2a10"
+    ]
+   }
+  ],
+  "face": "toadking",
+  "pose": [
+   "2H_Melee_Idle",
+   0.5
+  ],
+  "height": 1.0,
+  "frame": {
+   "scale": {
+    "chest": 1.2,
+    "head": 0.88
+   }
+  }
+ },
+ {
+  "id": "FB2",
+  "cls": "Boss",
+  "label": "Brother Teague \u00b7 the Drowned Abbey: the Cult's harvester, charcoal and violet, a grey collar, his book of names and a pole",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "staff",
+   "handslot.l": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e2a30",
+     "#0e0c10"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#4a3a6a",
+     "#160e26"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#24202a",
+     "#0a080c"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#8a8c90",
+     "#2a2c30"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#3a2e4a",
+     "#120c1a"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#3a2e4a",
+     "#120c1a"
+    ]
+   }
+  ],
+  "face": "teague",
+  "height": 1.04
+ },
+ {
+  "id": "FB3",
+  "cls": "Boss",
+  "label": "The Drowned Choir \u00b7 the Drowned Abbey: a sister drowned at her office, a sodden green-grey habit, her psalter open",
+  "model": "Skeleton_Mage",
+  "hold": {
+   "handslot.l": "book"
+  },
+  "eyes": "0x9ae8d8",
+  "wear": {
+   "chest": "habit"
+  },
+  "skull": true,
+  "hide": [
+   "Skeleton_Mage_Hat"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#7a8a7a",
+     "#222a22"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#7a8a7a",
+     "#222a22"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#4a5a4a",
+     "#141c14"
+    ]
+   }
+  ],
+  "height": 1.06
+ },
+ {
+  "id": "FB4",
+  "cls": "Boss",
+  "label": "The Abbess Below \u00b7 the Drowned Abbey: black habit, pale wimple, her crozier and the choir-lamp",
+  "model": "Skeleton_Mage",
+  "hold": {
+   "handslot.r": "crook",
+   "handslot.l": "choirlamp"
+  },
+  "eyes": "0xc8e0ff",
+  "wear": {
+   "chest": "habit"
+  },
+  "skull": true,
+  "hide": [
+   "Skeleton_Mage_Hat"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a30",
+     "#0a0a0e"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#2a2a30",
+     "#0a0a0e"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#c8c8c0",
+     "#3a3a36"
+    ]
+   }
+  ],
+  "height": 1.1
  }
 ]

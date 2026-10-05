@@ -36,6 +36,7 @@ const CAST = [
   ['foes', 'fen_ghoul', 'Fen ghoul'], ['foes', 'reed_cutter', 'Reed-cutter'], ['foes', 'reed_fowler', 'Fowler'], ['foes', 'bog_witch', 'Bog-witch'],
   ['foes', 'cult_harvester', 'Harvester'], ['foes', 'drowned_brother', 'Drowned'], ['foes', 'drowned_cantor', 'Cantor'],
   ['bosses', 'boss_garrow', 'Garrow'], ['bosses', 'boss_stranger', 'Stranger'], ['bosses', 'boss_standard', 'Standard'], ['bosses', 'boss_skarn', 'Skarn'],
+  ['bosses', 'boss_toadking', 'Toadking'], ['bosses', 'boss_teague', 'Teague'], ['bosses', 'boss_choir', 'Choir'], ['bosses', 'boss_abbess', 'Abbess'],   // (M8.6: the Fens')
   // the Mere Tower's wardens (sim tower.js)
   ['wardens', 'boss_doorward', 'Doorward'], ['wardens', 'boss_mudlark', 'Mudlark'], ['wardens', 'boss_bellringer', 'Bellringer'], ['wardens', 'boss_lensman', 'Lensman'], ['wardens', 'boss_hush', 'Hush'],
   ['wardens', 'boss_twins', 'Twins'], ['wardens', 'boss_hound', 'Hound'], ['wardens', 'boss_gatherer', 'Gatherer'], ['wardens', 'boss_watcher', 'Watcher'], ['wardens', 'boss_starroom', 'Star Room'],

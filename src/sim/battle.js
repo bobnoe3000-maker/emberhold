@@ -39,6 +39,7 @@ import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
+import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards } from './hazards.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
 const CLASS_FIGHT = {
@@ -171,20 +172,35 @@ export const FAMILIES = {
 // Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
 // which are paid, are not.
 export const GOLD_DROP = 0.7;
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+//   (M8.6, GDD §17 v1.36, world doc v1.27: the Fens' four)
+//   mud     (the Toadking) every MUD_S s a patch of mud (hazards.js) under each of the party standing
+//   cage    (Brother Teague) his lantern-cage stands at his side (an inert foe, CAGE_HP of his HP): while it's lit he mends
+//           CAGE_MEND of his HP a second and takes half damage; broken, its soul goes free (a lamp and a soul)
+//   vespers (the Drowned Choir) its cantors sing: while one stands every Ashbound foe in the hall mends VESPERS_MEND a
+//           second; with fewer than two singing, every VESPERS_S s another stands up out of the stalls
+//   bells   (the Abbess Below) every BELL_S s a bell, and the hall floods further in from its walls, FLOOD_STEP of the way
+//           to its middle a bell (to FLOOD_MAX bells: about three quarters of the floor; hazards.js); it drains when she
+//           falls (her choir-lamp breaks with her: lamps.js)
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
   goblin_chief: { name: 'Old Skarn', like: 'bruiser', hp: 26, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'swarm', escort: ['goblin', 'archer'], heirloom: 'skarns_drum' },
   standard: { name: 'The Standard of the Third Legion', like: 'warrior', hp: 34, atk: 2.2, def: 1.8, speed: 2.3, xp: 14, gold: 30, mech: 'line', escort: ['warrior', 'minion', 'rogue'], undead: true, heirloom: 'the_relief' },
+  toadking: { name: 'The Toadking', like: 'reedcutter', hp: 18, atk: 2.1, def: 1.6, speed: 2.6, xp: 12, gold: 30, mech: 'mud', escort: ['reedcutter', 'fowler'], heirloom: 'the_last_tooth' },
+  teague: { name: 'Brother Teague', like: 'harvester', hp: 16, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'cage', escort: ['drowned', 'rogue'], once: true, heirloom: 'teagues_name' },
+  drowned_choir: { name: 'The Drowned Choir', like: 'cantor', hp: 26, atk: 2.0, def: 1.8, xp: 14, gold: 30, mech: 'vespers', escort: ['cantor', 'cantor', 'drowned'], undead: true, heirloom: 'vespers' },
+  abbess_below: { name: 'The Abbess Below', like: 'drowned', hp: 36, atk: 2.5, def: 1.9, speed: 2.5, xp: 14, gold: 32, mech: 'bells', escort: ['drowned', 'cantor'], undead: true, heirloom: 'the_last_office' },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
+export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
 export function halved(tgt, foes) {
   const up = (o) => o.hp > 0 && !o.dead;
   if (tgt.boss && tgt.guards && tgt.guards.length && foes.some((o) => tgt.guards.includes(o.id) && up(o))) return true;
+  if (tgt.boss && tgt.cage && foes.some((o) => o.id === tgt.cage && up(o))) return true;   // Teague's cage still lit
   if (tgt.undead && !tgt.boss) return foes.some((o) => o.boss === 'standard' && up(o) && hypot(o.x - tgt.x, o.y - tgt.y) < LINE_R);
   return false;
 }
@@ -323,8 +339,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
-      foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
-      B.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); foe(w, k, lvl, ex, ey, 1 + PREMIUM * Math.max(0, lvl - 3), false, F); });
+      const boss = foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
+      B.escort.forEach((k, i) => { const [ex, ey] = onFloor(w, bx + (i % 2 ? 1.4 : -1.4), by + 1 + i * 0.4, bx, by); const u = foe(w, k, lvl, ex, ey, 1 + PREMIUM * Math.max(0, lvl - 3), false, F); if (B.mech === 'vespers' && k === 'cantor') u.singer = boss.id; });
+      if (B.mech === 'cage') boss.cage = lantern(w, boss).id;
       b.bossUp = true; b.wave += 1;
       bus.emit('bossWave', { id: b.boss, name: B.name });
       bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
@@ -369,11 +386,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.mend = 0; }
     w.enemies.push(u);
     return u;
   }
 
+  // Brother Teague's lantern-cage (BOSSES cage): a foe that doesn't fight, carried at his side; it takes blows as any foe
+  // (CAGE_HP of his HP, his armour), pays nothing, and breaking it frees its soul (freeing)
+  function lantern(w, owner) {
+    const hp = Math.round(owner.maxHp * CAGE_HP);
+    const u = { id: nextId++, kind: 'lantern', inert: true, owner: owner.id, undead: false, elite: false, lvl: owner.lvl, x: owner.x + 0.7, y: owner.y + 0.5, hp, maxHp: hp,
+      atk: 0, def: owner.def, crit: 0, dodge: 0, interval: 99, range: 0, speed: owner.speed, xp: 0, gold: 0, cd: 99, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
+    w.enemies.push(u);
+    return u;
+  }
   const hallHere = (w, room) => !!w.level.descentRoom && w.level.descentRoom.id === room;
   function startBattle(w, room) {
     const cells = [];
@@ -387,7 +413,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null };
+      tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
+      hazards: [], flood: 0, edge: null };                                                                               // the ground hazard (hazards.js)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
       const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
     }
@@ -472,6 +499,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
   function reward(e) {
+    if (e.inert) { freeing(e); return; }                         // Teague's cage: no XP, no coin, its soul goes free
     if (battle && battle.tower) { towerReward(e); return; }
     const living = state.party.filter(alive);
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
@@ -484,6 +512,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (ci) { state.counters.embers = (state.counters.embers || 0) + ci; bus.emit('combat', { t: 'cinders', x: e.x, y: e.y, amount: ci }); }
     bus.emit('countersChanged', { ...state.counters });
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
+    if (e.boss) bossGone(e);
     if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
       bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
@@ -521,8 +550,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   // The count (lamps.js): an Ashbound put down frees its soul; a lamp's keeper falling breaks the lamp, and every bound foe
   // still standing in the room lies down (freed, not beaten: no XP, no coin); a harvester drops its cage where it falls.
+  // a boss down: what it called up goes with it (the Toadking's mud, the Abbess's water), and Teague's cage breaks
+  function bossGone(e) {
+    if (!battle) return;
+    battle.hazards = []; if (battle.flood) { battle.flood = 0; bus.emit('bossFlood', { id: e.boss, level: 0 }); }
+    const w = getWorld(), c = e.cage && (w.enemies || []).find((o) => o.id === e.cage && o.hp > 0 && !o.dead);
+    if (c) { c.hp = 0; c.dead = DEATH_T; if (focusId === c.id) focusId = 0; freeing(c); }
+  }
   function freeing(e) {
     const w = getWorld();
+    if (e.kind === 'lantern') {                                     // Teague's cage: a caught soul, as a harvester's cage holds
+      credit(state, bus, { lamps: 1, souls: 1 });
+      bus.emit('bossCage', { id: 'teague', x: e.x, y: e.y }); bus.emit('combat', { t: 'freed', x: e.x, y: e.y });
+      return;
+    }
     if (e.undead) credit(state, bus, { souls: 1 });
     const lamp = e.boss ? lampOf(e.boss) : null;
     if (lamp) {
@@ -994,6 +1035,34 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const u = foe(w, esc[i % esc.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id;
       }
       if (n > 0) bus.emit('bossSwarm', { id: e.boss, x: e.x, y: e.y, n });
+    } else if (B.mech === 'mud' && battle && (e.mudT += dt) >= MUD_S) {
+      // he stamps: mud comes up under each of the party standing (hazards.js), for MUD_T s
+      e.mudT = 0;
+      const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
+      for (const [x, y] of at) battle.hazards.push({ kind: 'mud', x, y, r: MUD_R, from: state.t, until: state.t + MUD_T });
+      bus.emit('bossMud', { id: e.boss, x: e.x, y: e.y, n: at.length });
+    } else if (B.mech === 'cage') {
+      // his lantern-cage, while it's lit: he mends (in whole points, as blows land)
+      const c = e.cage && (w.enemies || []).find((o) => o.id === e.cage && o.hp > 0 && !o.dead);
+      if (c && e.hp < e.maxHp) { e.mend += e.maxHp * CAGE_MEND * dt; const n = Math.floor(e.mend); if (n > 0) { e.mend -= n; e.hp = Math.min(e.maxHp, e.hp + n); } }
+    } else if (B.mech === 'vespers' && battle) {
+      // the Choir's cantors sing: while one stands the hall's Ashbound mend; too few, and another stands up out of the stalls
+      const singers = (w.enemies || []).filter((o) => o.singer === e.id && o.hp > 0 && !o.dead && !(o.spawn > 0)).length;
+      if (singers) for (const o of w.enemies) if (o.undead && o.hp > 0 && !o.dead && o.hp < o.maxHp) {
+        o.mend = (o.mend || 0) + o.maxHp * VESPERS_MEND * dt; const n = Math.floor(o.mend); if (n > 0) { o.mend -= n; o.hp = Math.min(o.maxHp, o.hp + n); }
+      }
+      if (singers < 2 && (e.vesT += dt) >= VESPERS_S) {
+        e.vesT = 0;
+        const cells = battle.cells; let best = null, bd = -1;
+        for (let t = 0; t < 4 && cells.length; t++) { const c = cells[(rng() * cells.length) | 0], d = hypot(c[0] + 0.5 - state.player.x, c[1] + 0.5 - state.player.y); if (d > bd && isWalkable(w, c[0] + 0.5, c[1] + 0.5)) { bd = d; best = c; } }
+        if (best) { const u = foe(w, 'cantor', e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.singer = e.id; bus.emit('bossVespers', { id: e.boss, x: u.x, y: u.y }); }
+      } else if (singers >= 2) e.vesT = 0;
+    } else if (B.mech === 'bells' && battle && (e.bellT += dt) >= BELL_S) {
+      // a bell: the water comes a tile further in from the walls (hazards.js), to FLOOD_MAX
+      e.bellT = 0;
+      if (!battle.edge) { battle.edge = edgeDistances(battle.cells); let deep = 1; for (const d of battle.edge.values()) if (d > deep) deep = d; battle.floodStep = Math.max(1, Math.round(deep * FLOOD_STEP)); }   // (a bell's worth: a share of the way to the middle)
+      if (battle.flood < FLOOD_MAX) battle.flood++;
+      bus.emit('bossFlood', { id: e.boss, level: battle.flood, x: e.x, y: e.y });
     }
   }
 
@@ -1029,7 +1098,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       } m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       if (m.buff && m.buff.breath > 0) m.hp = Math.min(s.maxHp, m.hp + s.maxHp * m.buff.breathK * dt);   // Ancestors' Breath
       if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); m.buff.breath = Math.max(0, (m.buff.breath || 0) - dt); }
-      m.cd = Math.max(0, m.cd - dt); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
+      const mired = battle && hazardAt(battle, m === H ? p.x : m.x, m === H ? p.y : m.y) ? HAZARD.recover : 1;   // (in the mud or the water: slower to recover)
+      m.cd = Math.max(0, m.cd - dt * mired); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
     }
     // companions out of battle: follow in formation, loosen up when the hero stands still
     const foes = battle ? w.enemies.filter((e) => !e.dead && e.hp > 0 && e.spawn <= 0) : [];
@@ -1037,6 +1107,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     calmT = foes.length || (battle && !battle.between && battle.wave > 0) ? 0 : calmT + dt;   // (a wave between its last fall and its lull isn't calm yet)
     if (calmT >= CAGE_PICKUP_S && inDungeon && alive(H)) pickCages(w, p);
     if (battle) {
+      ageHazards(battle, state.t);
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
@@ -1059,7 +1130,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // party AI
       state.party.forEach((m, i) => {
         if (!alive(m) || !foes.length) return;
-        const F = fightOf(m), stance = stanceOf(m);
+        const mx = i ? m.x : p.x, my = i ? m.y : p.y, hz = hazardAt(battle, mx, my), F0 = fightOf(m), stance = stanceOf(m);
+        const F = hz ? { ...F0, speed: F0.speed * HAZARD.slow } : F0;   // (the ground hazard: half speed in it)
         // Defensive companions fight only what comes near the leader, and fall back to it otherwise
         const near = i > 0 && stance === 'defensive' && !F.bolt ? foes.filter((e) => hypot(e.x - p.x, e.y - p.y) < DEF_LEASH) : foes;
         if (!near.length) { if (hypot(p.x - m.x, p.y - m.y) > 2.5) chase(m, p.x, p.y, F.speed, dt, w); else m.moving = false; return; }
@@ -1087,10 +1159,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
             if (q.x !== p.x || q.y !== p.y) { moveHero(q.x - p.x, q.y - p.y); m.x = p.x; m.y = p.y; }
           };
           const go = heroMove((q, gx, gy) => chase(q, gx, gy, F.speed, dt, w));
+          if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, p.x, p.y, tgt.x, tgt.y, (x, y) => isWalkable(w, x, y) && roomAt(w, x, y) === battle.room); if (o) { go(o[0], o[1]); return; } }   // out of it first
           if (F.bolt) ranged(m, tgt, F, foes, w, true, go, heroMove((q, gx, gy) => stepToward(q, gx, gy, F.speed, dt, w, battle.room)));
           else melee(m, tgt, F, dt, w, true, go);
           return;
         }
+        if (hz && (hz !== 'water' || F.bolt || d > F.range + 0.25)) { const o = openGround(battle, m.x, m.y, tgt.x, tgt.y, (x, y) => isWalkable(w, x, y) && roomAt(w, x, y) === battle.room); if (o) { chase(m, o[0], o[1], F.speed, dt, w); return; } }   // out of it first: mud always; the water unless it's in reach of what it's fighting
         if (F.bolt) ranged(m, tgt, F, foes, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w), (gx, gy) => stepToward(m, gx, gy, F.speed, dt, w, battle.room));
         else melee(m, tgt, F, dt, w, true, (gx, gy) => chase(m, gx, gy, F.speed, dt, w));
       });
@@ -1102,6 +1176,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         e.act = Math.max(0, e.act - dt); e.flash = Math.max(0, e.flash - dt);
         if (e.spawn > 0) { e.spawn -= dt; continue; }
         if (e.dead > 0 || e.hp <= 0) { e.moving = false; continue; }
+        if (e.inert) {                                                       // Teague's cage: carried at his side
+          const o = w.enemies.find((q) => q.id === e.owner && q.hp > 0 && !q.dead);
+          if (o) { const k = hypot(o.fx || 0, o.fy || 0) || 1; e.x = o.x - ((o.fy || 0) / k) * 0.7; e.y = o.y + ((o.fx || 0) / k) * 0.7; e.fx = o.fx; e.fy = o.fy; e.moving = o.moving; }
+          continue;
+        }
         if (e.boss) bossMech(e, w, dt);
         if (e.poison) {                                                     // Venom ticks once a second
           e.poison.t -= dt; e.poison.acc += dt;
@@ -1147,6 +1226,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
+    /** the ground hazard's pull on the party at (x, y): HAZARD.slow in one, else 1 (core.js: the hero you steer) */
+    slowAt(x, y) { return battle && hazardAt(battle, x, y) ? HAZARD.slow : 1; },
     reset() { const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out
     placeCompanions,
     towerClimb,

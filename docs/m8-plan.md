@@ -135,6 +135,14 @@ adds art, words or quests ends with its pass (below), and the last slice gathers
    - **The Drowned Choir** — *Vespers*: its song mends the drowned while its cantor stands.
    - Heirlooms (world doc §10.2: *Vespers — "Sung in water, heard in bone."*; the others written in the story pass).
      `tools/balance/boss.mjs` at each hall's level: each falls to a party at its level, 3 of 3.
+   - **Done** (2026-10-05): `src/sim/hazards.js` (patches and a hall's flooded edge; half speed and 0.7 recovery in
+     one; the AI steps out), `battle.js` (BOSSES `toadking` / `teague` / `drowned_choir` / `abbess_below`, mechanics
+     `mud` / `cage` / `vespers` / `bells`; Teague's cage an inert foe), `sites.js` (the Mound's floor 2; the Abbey's
+     1, 2 and 3), `lamps.js` (the choir-lamp, 312 souls), `items.js` (*The Last Tooth*, *Teague's Name*, *Vespers*,
+     *The Last Office*), the renderer (the four baked at 73 px: `tools/actor-lab` FB1–FB4; the mud and the water
+     painted on the ground; the cage carried at Teague's side). World doc v1.27, GDD v1.36. Balance: GDD §17 (each
+     falls 3 of 3 at its hall's level). Tests: `test/fens-bosses.test.mjs`. Art: `docs/fens-critic-pass.md`,
+     `docs/img/fens-bosses.jpg`. The Canal Locks' and the Sickpools' halls stay boss-less until Act II asks.
 7. **Act II, *The Drowned Abbey*.** Six chapters, Ink for every beat (world doc §6):
    1. *Fog on the Canal* (8–10): Ilse sends the company south; in Saltmere, **Wren** knows where the Cult's boats
       go at night: the Toadking rents them berths. Put the Toadking down; his berth-book names the Locks.

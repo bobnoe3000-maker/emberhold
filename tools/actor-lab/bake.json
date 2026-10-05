@@ -3644,6 +3644,280 @@
         "desat": 0.2,
         "contrast": 1.12
       }
+    },
+    {
+      "out": "boss_toadking",
+      "variant": "FB1",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "2H_Melee_Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Stab",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_teague",
+      "variant": "FB2",
+      "glow": 6,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "2H_Melee_Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_A",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "attack",
+          "clip": "2H_Melee_Attack_Chop",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "2H_Melee_Attack_Slice",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "2H_Melee_Attack_Stab",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_A",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 0.6,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.15
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_choir",
+      "variant": "FB3",
+      "glow": 9,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 10,
+          "fps": 8
+        },
+        {
+          "key": "attack",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Summon",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_C_Skeletons",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        },
+        {
+          "key": "spawn",
+          "clip": "Spawn_Ground_Skeletons",
+          "frames": 8,
+          "fps": 14,
+          "once": true
+        }
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      },
+      "px": 73
+    },
+    {
+      "out": "boss_abbess",
+      "variant": "FB4",
+      "glow": 9,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_D_Skeletons",
+          "frames": 10,
+          "fps": 8
+        },
+        {
+          "key": "attack",
+          "clip": "Spellcast_Shoot",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Spellcast_Raise",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3,
+          "to": 0.55
+        },
+        {
+          "key": "heavy",
+          "clip": "Spellcast_Summon",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5,
+          "to": 0.5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit_A",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death_C_Skeletons",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        },
+        {
+          "key": "spawn",
+          "clip": "Spawn_Ground_Skeletons",
+          "frames": 8,
+          "fps": 14,
+          "once": true
+        }
+      ],
+      "gain": 0.62,
+      "grade": {
+        "desat": 0.2,
+        "contrast": 1.12
+      },
+      "px": 73
     }
   ]
 }

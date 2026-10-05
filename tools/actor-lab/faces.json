@@ -535,5 +535,33 @@
    "wrinkles",
    "scar"
   ]
+ },
+ "toadking": {
+  "skin": "rose",
+  "hair": "bald",
+  "brows": "arched",
+  "eyes": "round",
+  "iris": "amber",
+  "mouth": "grin",
+  "nose": "broad",
+  "beard": "stubble",
+  "shape": "round",
+  "marks": [
+   "blush",
+   "earring",
+   "wrinkles"
+  ]
+ },
+ "teague": {
+  "skin": "fair",
+  "hair": "crop",
+  "hairColor": "soot",
+  "brows": "straight",
+  "eyes": "narrow",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "long",
+  "beard": "short",
+  "shape": "thin"
  }
 }

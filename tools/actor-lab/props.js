@@ -275,6 +275,29 @@ export const PROPS = {
     const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), soul); s.position.y = 1.7; s.name = 'Cage_Soul'; s.userData.glow = 0xb8a0ff; g.add(s);
     return g;
   },
+  // (M8.6, world doc v1.27) the Toadking's boat-hook: a long tarred pole, an iron spike at its head and a hook curving
+  // back off it, a ring of rope at the grip; swung two-handed like the bill-hook
+  boathook: () => {
+    const g = new THREE.Group(); g.name = 'Boathook';
+    const wood = mat(0x3e3226, 0, 0.85), iron = mat(0x4a4c4e, 0.8, 0.45), rope = mat(0x8a7a52, 0, 0.95);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.1, 7), wood); pole.position.y = 0.5; g.add(pole);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 6), iron); spike.position.y = 1.72; g.add(spike);
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 5, 10, Math.PI * 1.1), iron); hook.position.set(0, 1.5, 0.15); hook.rotation.set(0, Math.PI / 2, Math.PI * 0.55); g.add(hook);
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.025, 5, 10), rope); coil.rotation.x = Math.PI / 2; coil.position.y = 0.05; g.add(coil);
+    return g;
+  },
+  // (M8.6) the Abbey's choir-lamp, as the Abbess Below carries it: pale iron, a tall cage of six ribs under a ring, and
+  // the roll's light in it, cold blue-white (userData.glow); hung plumb from the hand
+  choirlamp: () => {
+    const g = new THREE.Group(); g.name = 'Choirlamp'; g.userData.hang = true;
+    const pale = mat(0xb8bcc0, 0.7, 0.4), light = new THREE.MeshStandardMaterial({ color: 0xe0f0ff, emissive: 0x6090d0, emissiveIntensity: 1.4, roughness: 0.3 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 6, 12), pale); ring.position.y = 0.1; g.add(ring);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.16, 6), pale); cap.rotation.z = Math.PI; cap.position.y = 0.26; g.add(cap);
+    for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, rib = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.4, 0.025), pale); rib.position.set(Math.cos(a) * 0.15, 0.52, Math.sin(a) * 0.15); g.add(rib); }
+    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 1), light); s.position.y = 0.52; s.name = 'Choir_Light'; s.userData.glow = 0xc8e0ff; g.add(s);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.12, 0.06, 6), pale); base.position.y = 0.74; g.add(base);
+    return g;
+  },
   // a bog-witch's marsh-light: a crooked lantern of bent withies with a cold green-white light in it, hung plumb
   marshlamp: () => {
     const g = new THREE.Group(); g.name = 'Marshlamp'; g.userData.hang = true;

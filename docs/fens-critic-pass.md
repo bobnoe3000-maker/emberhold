@@ -256,3 +256,36 @@ said it was a place you could go, and at night the jetty was a dark smudge by th
 - Checked: `test/tower.test.mjs` (the stage over the jetty's end, the sign on it, the compass row walks you out to the
   Tower); browser §21 (from the boardwalk at night the plaque is on screen; a tap walks you down the jetty and out).
   Before and after: `docs/img/mere-tower-way.jpg`.
+
+## The Fens' bosses (2026-10-05)
+
+The owner: *"Yes, do the Fens bosses."* Four bakes at the bosses' 73 px (`tools/actor-lab/variants.json` FB1–FB4,
+`bake.json` `boss_toadking`, `boss_teague`, `boss_choir`, `boss_abbess`; two new held props, the boat-hook and the
+choir-lamp, in `props.js`; faces `toadking` and `teague`), and the ground hazard drawn for the first time.
+Lineup and the four fights: `docs/img/fens-bosses.jpg`.
+
+| Boss | Built on | What reads |
+|---|---|---|
+| The Toadking | Barbarian, the chest grown 1.2 (the head held back) | fat, bald, cheerful, a captain's coat gone green with the mere, a boat-hook |
+| Brother Teague | Mage, the harvesters' charcoal | a grey collar, a dark violet cape, his book of names and a pole; his lantern-cage drawn at his side |
+| The Drowned Choir | Skeleton mage in a habit | a sister in sodden green-grey, her psalter open |
+| The Abbess Below | Skeleton mage in a black habit | a pale wimple, her crozier and the choir-lamp, lit cold |
+
+What the first looks got wrong, and what changed:
+- **The Toadking** wore the reed-cutters' hat, and from every side the brim hid his face. In red with white trim he
+  read as Santa. The hat's gone (he's bald), and the coat is a drowned teal.
+- **Teague's cape** came out bright magenta: the swatch that dyes the harvesters' trim isn't the cape's. Tiles [2,1]
+  and [2,2] are; dyed a dark violet.
+- **The mud** was tinted toward the mire's own brown and vanished into its floor. A fresh patch was also drawn at 60 %
+  of its size, under the figures standing in it. Now it's near-black with a pale wet rim, full size from the start,
+  welling up over 0.4 s.
+- **The water's** rippling sheen drew as neon stripes along the walls, and three tiles of flood in a hall fifty
+  across was a strip nobody stood in. Now the water is a deep teal with sparse glints, and each bell takes it 12 % of
+  the way to the middle (four bells: about three quarters of the floor).
+
+Measured in the boss harness (the right party at the hall's level, three seeds): GDD §17. Every one falls 3 of 3.
+Also measured: how much of the Toadking's fight the party spends in the mud. Melee in reach stayed in it, half the
+fight (47–58 %). Now everyone steps out of a patch: 6–17 % for the fighter, 12–40 % for the others.
+
+Still open: the Choir and the Abbess share the cantors' frame (a skeleton mage in a habit), told apart by colour and
+what they hold; a hood or veil would help. The Toadking's white trim is still the barbarian's fur.

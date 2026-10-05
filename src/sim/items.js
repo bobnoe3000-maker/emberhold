@@ -176,6 +176,11 @@ export const HEIRLOOMS = {
   broken_chain: { base: 'charm', name: 'The Broken Chain', flav: 'He kept one link.', aff: ['def', 'hp', 'atk'] },
   last_order: { base: 'amulet', name: 'The Last Order', flav: "It says: hold. It doesn't say for how long.", aff: ['atk', 'def', 'mpr'] },
   skarns_drum: { base: 'charm', name: "Skarn's Drum", flav: 'It still keeps time. Nobody comes out any more.', aff: ['atk', 'hp', 'crit'] },
+  // the Fens' bosses (world doc v1.27 §3.2, §10.2)
+  the_last_tooth: { base: 'charm', name: 'The Last Tooth', flav: "A boat for every one he'd lost. This one he kept.", aff: ['hp', 'atk', 'def'] },
+  teagues_name: { base: 'ring', name: "Teague's Name", flav: 'He gave it to everyone he took.', aff: ['crit', 'atk', 'mp'] },
+  vespers: { base: 'charm', name: 'Vespers', flav: 'Sung in water, heard in bone.', aff: ['mp', 'mpr', 'hpr'] },
+  the_last_office: { base: 'amulet', name: 'The Last Office', flav: 'Said every night, by the dead, for the living.', aff: ['def', 'hp', 'hpr'] },
   // the Mere Tower's wardens (sim tower.js; world doc v1.25 §12): a slot, not a base: each is made for a class in the
   // company when it drops (wardenBase), at the top of the bracket it was won in
   doorwards_visor: { slot: 'helm', name: "The Doorward's Visor", flav: 'It only ever looked one way: in.', aff: ['def', 'hp', 'hpr'] },

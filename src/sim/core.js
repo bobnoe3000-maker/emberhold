@@ -239,7 +239,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function integrate() {
     const p = state.player, w = p.want;
     let sp = hypot(p.vx || 0, p.vy || 0), hd = sp > 0.05 ? atan2(p.vy, p.vx) : null;
-    const ts = w ? hypot(w.x, w.y) : 0, th = ts > 0.05 ? atan2(w.y, w.x) : hd;
+    const ts = w ? hypot(w.x, w.y) * battle.slowAt(p.x, p.y) : 0, th = ts > 0.05 ? atan2(w.y, w.x) : hd;   // (half speed in the mud or the water: hazards.js)
     let target = ts;
     if (th !== null) {
       if (hd === null || sp < 1) hd = th;                                   // from a standstill: set off facing the way you want

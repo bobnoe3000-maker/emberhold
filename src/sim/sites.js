@@ -15,7 +15,8 @@
 //
 // The Greywater Fens (M8, docs/m8-plan.md slices 3–4; world doc v1.20 §3.2): five sites from 8 to 15, held by the
 // Fens' own (battle.js FAMILIES reedmen, lockcult, harvest, drowned; the Locks' first floor the bound lock-men, the
-// Ashbound). Their halls fight as any other until their bosses come (slice 6). The Drowned Abbey has three floors of four rooms, so its band stays 12–15.
+// Ashbound). (M8.6) The Toadking holds the Mound's hall; the Abbey's three are Brother Teague's, the Drowned Choir's and
+// the Abbess Below's (world doc v1.27); the Locks' and the Sickpools' halls fight as any other until Act II gives them one. The Drowned Abbey has three floors of four rooms, so its band stays 12–15.
 
 /** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], vault?: string, mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
@@ -26,10 +27,10 @@ export const SITES = {
   sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'poison', base: 5, perFloor: 1, floors: 2, family: 'chapel', rooms: [6, 6], bosses: { 2: 'robed_stranger' }, mix: 0xc4a9 },
   scrag_warren: { name: 'The Scrag Warren', region: 'vale', theme: 'warren', base: 2, perFloor: 1, floors: 2, family: 'goblin', rooms: [6, 6], bosses: { 2: 'goblin_chief' }, mix: 0x6b1d },
   ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 8, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], flat: true, hidden: true, vault: 'last_order', mix: 0x9e11 },
-  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 8, perFloor: 1, floors: 2, family: 'reedmen', rooms: [6, 6], mix: 0x70ad },
+  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 8, perFloor: 1, floors: 2, family: 'reedmen', rooms: [6, 6], bosses: { 2: 'toadking' }, mix: 0x70ad },
   canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', base: 9, perFloor: 1, floors: 2, family: 'lockcult', families: ['ashbound', 'lockcult'], rooms: [6, 6], mix: 0x10c5 },
   sickpools: { name: 'The Sickpools', region: 'fens', theme: 'poison', base: 10, perFloor: 1, floors: 2, family: 'harvest', rooms: [6, 6], mix: 0x51c7 },
-  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 12, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], mix: 0xab3e },
+  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 12, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], bosses: { 1: 'teague', 2: 'drowned_choir', 3: 'abbess_below' }, mix: 0xab3e },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty)
   mere_tower: { name: 'The Mere Tower', region: 'fens', theme: 'dread', base: 12, perFloor: 0, floors: 1, family: 'ashbound', rooms: [2, 2], flat: true, minLevel: 12, mix: 0x3e7e },

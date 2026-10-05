@@ -60,6 +60,11 @@ export const FX_STYLES = {
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
   boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },
   boss_standard:     { col: HOLY, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 226, 160], wide: 1.2 },
+  // (M8.6) the Fens' four: the Toadking's boat-hook, Teague's pole (the Cult's violet), the Choir's and the Abbess's drowned light
+  boss_toadking:     { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 150], wide: 1.3 },
+  boss_teague:       { col: [190, 160, 255], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [215, 200, 255], wide: 1.15 },
+  boss_choir:        { col: [140, 220, 230], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [190, 235, 245] },
+  boss_abbess:       { col: [190, 215, 255], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [210, 230, 255] },
 };
 // combat events name the striker by its actor / class (party) or kind (the Ashbound)
 const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };

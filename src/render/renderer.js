@@ -47,10 +47,11 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
   fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
-  redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn' };
+  redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn',
+  toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess' };   // (M8.6: the Fens' four)
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
-const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom']));   // (they rise from the ground and shamble)
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
@@ -622,6 +623,45 @@ export function createRenderer(canvas, sim, input) {
       }
     }
   }
+  // The ground hazard (sim hazards.js), painted into the window G-buffer's ground before the figures: the Toadking's mud
+  // a dark, wet brown disc (dithered at the rim, as the floor's own edges are), the Abbess's water each flooded tile a
+  // deep teal with a faint steady sheen in the emissive plane that drifts, so it reads as water in the dark. Ground only
+  // (as footMark: nothing at a height over the floor's), no allocation (presentation only).
+  // (capture 1, 2026-10-05: mud tinted toward the mire's own brown vanished into it, and a rippling sheen drew the water as
+  // neon stripes; now the mud is near-black with a pale wet rim, and the water a deep teal with sparse glints)
+  const MUD_RGB = [26, 20, 14], MUD_RIM = [128, 104, 64], WATER_RGB = [16, 54, 64];
+  function tintGround(px, py, h, rgb, a, glint) {
+    if (px < 0 || py < 0 || px >= nvw || py >= nvh) return;
+    const i = (py * nvw + px) * 4; if (sNRM[i + 3] > Math.min(255, h * 4) + 8) return;
+    sALB[i] += (rgb[0] - sALB[i]) * a; sALB[i + 1] += (rgb[1] - sALB[i + 1]) * a; sALB[i + 2] += (rgb[2] - sALB[i + 2]) * a;
+    if (glint > 0) { sEMI[i] = Math.max(sEMI[i], 14 * glint); sEMI[i + 1] = Math.max(sEMI[i + 1], 34 * glint); sEMI[i + 2] = Math.max(sEMI[i + 2], 40 * glint); sEMI[i + 3] = 250; }
+  }
+  function paintHazards(b, ox, oy, now) {
+    const w = sim.world, t = now / 1000;
+    for (const hz of b.hazards || []) {
+      const z = heightAt(w, Math.floor(hz.x), Math.floor(hz.y)), P = project(hz.x, hz.y, z), cx = Math.round(ox + P.sx), cy = Math.round(oy + P.sy);
+      const rx = hz.r * HW * Math.SQRT2, ry = hz.r * HH * Math.SQRT2, fade = Math.min(1, (hz.until - sim.state.t) / 0.8, (sim.state.t - (hz.from ?? -1e9)) / 0.4);   // (wells up, then sinks away)
+      for (let dy = -Math.ceil(ry); dy <= Math.ceil(ry); dy++) for (let dx = -Math.ceil(rx); dx <= Math.ceil(rx); dx++) {
+        const e = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry); if (e >= 1) continue;
+        if (e > 0.82 && BAYER[((cy + dy) & 3) * 4 + ((cx + dx) & 3)] < (e - 0.82) * 5.5) continue;
+        const rim = e > 0.7, bubble = !rim && ((cx + dx) * 7 + (cy + dy) * 13 + Math.floor(t * 3)) % 97 === 0;
+        tintGround(cx + dx, cy + dy, z * ZH, rim ? MUD_RIM : MUD_RGB, (rim ? 0.42 : 0.82) * fade, bubble ? 0.5 * fade : 0);
+      }
+    }
+    if (b.flood > 0 && b.edge) {
+      for (const [k, d] of b.edge) {
+        if (d > b.flood * (b.floodStep || 1)) continue;
+        const c = k.indexOf(','), tx = +k.slice(0, c), ty = +k.slice(c + 1), z = heightAt(w, tx, ty), P = project(tx + 0.5, ty + 0.5, z), cx = Math.round(ox + P.sx), cy = Math.round(oy + P.sy);
+        if (cx < -HW || cx > nvw + HW || cy < -HH || cy > nvh + HH) continue;
+        const shore = d > (b.flood - 1) * (b.floodStep || 1) && d === b.flood * (b.floodStep || 1);   // the tide line: a touch lighter
+        for (let dy = -HH; dy <= HH; dy++) for (let dx = -HW; dx <= HW; dx++) {
+          if (Math.abs(dx) / HW + Math.abs(dy) / HH > 1) continue;
+          const gx = cx + dx, gy = cy + dy, glint = ((gx * 31 + gy * 17 + Math.floor(t * 2 + gx * 0.07)) % 53 === 0) ? 1 : 0;
+          tintGround(gx, gy, z * ZH, WATER_RGB, shore ? 0.55 : 0.72, glint);
+        }
+      }
+    }
+  }
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
     const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
@@ -1083,6 +1123,12 @@ export function createRenderer(canvas, sim, input) {
     }
     // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {
+      if (e.kind === 'lantern') {                                                 // Brother Teague's lit cage (battle.js): the harvester's cage, held up at his side
+        const lx = lerp(e, 'x'), ly = lerp(e, 'y'), lz = heightAt(sim.world, Math.floor(lx), Math.floor(ly)), lp = project(lx, ly, lz), sp = props.cage && props.cage[0];
+        if (!sp || e.hp <= 0) continue;
+        draws.push({ d: lx + ly + 0.05, sp, fx: ox + lp.sx, fy: oy + lp.sy - 12, h: lz * ZH + 12, k: lx + ly + 0.05, look: { flash: e.flash > 0 ? 0.36 : 0 }, uid: e.id });
+        continue;
+      }
       const skelAtlas = enemyAtlas(e.kind);
       if (!skelAtlas) continue;
       const undead = UNDEAD_LOOK.has(skelAtlas.name);
@@ -1114,6 +1160,7 @@ export function createRenderer(canvas, sim, input) {
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const rings = !!sim.battle;
+    if (sim.battle && (sim.battle.hazards?.length || sim.battle.flood > 0)) paintHazards(sim.battle, ox, oy, now);   // the mud and the water, on the ground under the figures
     if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
@@ -1406,12 +1453,18 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
-  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'] };
+  const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'],
+    mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
+    vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'] };
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
   sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
   sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: performance.now() + 1800, small: true }; });
+  sim.bus.on('bossCage', () => { banner = { text: "Teague's cage breaks", sub: "a soul goes free · he's only a man now", until: performance.now() + 2400, small: true }; });
+  sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: performance.now() + 2000, small: true }; });
+  sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: performance.now() + 2000, small: true } : { text: 'The water goes down', until: performance.now() + 1800, small: true }; });
   sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
   sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });

@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.26 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.27 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -336,7 +336,9 @@ on the stilt-houses never go out.
     holding their windlasses.
   - **The Sickpools** (10–13): imperial vats, still leaking. *Vat Seven*: drained, with a ladder down.
   - **The Drowned Abbey** (12–15): three floors into the water. *The Choir*: the stalls are full, and the singing
-    comes up through the floor. The Abbess keeps the **choir-lamp** trimmed there.
+    comes up through the floor. (v1.27) Under it is the **chapter-house**, where the Abbess keeps the **choir-lamp**
+    trimmed; the lamp holds the Abbey's roll, *"three hundred and twelve professed"*, every one of the binding clergy
+    who ever took the vows there.
   - **The Reedholm Undercroft** (hidden, the Fens set): the binding clergy's copy-room. Mother Agnes has kept it
     locked for forty years.
 - **Saltmere's own (v1.22):** the **eel-men**, who run the traps along the canal and eat what's in them, and **Saltmere's
@@ -344,6 +346,20 @@ on the stilt-houses never go out.
 - **People:** Wren; Pim Rushlight, a fen-folk chandler who sells lamp oil cheaper than Wendel and wants Wendel
   told; Mother Agnes of Reedholm, the prioress, who'd rather the rolls stayed shut; the Toadking, fat, cheerful and
   armed with a boat-hook; Brother Teague, the Cult's harvester at the Abbey, who gives his name.
+- **The bosses in their halls (v1.27).** One a hall, each with the one thing it does:
+  - **The Toadking** holds the Boat Hall (the Mound's second floor) with his reed-cutters and fowlers. He stamps, and
+    the mound's mud comes up round his visitors' feet; his men know where to stand. He leaves **The Last Tooth**
+    (a charm): *"A boat for every one he'd lost. This one he kept."*
+  - **Brother Teague** waits at the choir's door (the Abbey's first floor) with a lantern-cage on his pole, a caught
+    soul in it. While it's lit it mends him, and blows slide off him; break the cage and he's only a man. He tells
+    you his name before you fight. He leaves **Teague's Name** (a ring): *"He gave it to everyone he took."*
+  - **The Drowned Choir** sings in the stalls of the Choir (the second floor): the Abbey's sisters, drowned at their
+    office. While a cantor stands and sings, the drowned in the hall mend; when the cantors are down, another stands
+    up out of the stalls to take the note. It leaves **Vespers** (§10.2).
+  - **The Abbess Below** keeps the chapter-house (the third floor). She rings the Abbey's bells, and with each bell
+    the water comes in from the walls, a little further each time; the drowned don't mind it. The choir-lamp breaks
+    with her, and the Abbey's roll goes free. She leaves **The Last Office** (an amulet): *"Said every night, by the
+    dead, for the living."*
 - **Rumours:** *"The Toadking's got a boat for every tooth he's lost."* (true) · *"The Abbey bells ring on their
   own at the dark of the moon."* (true) · *"Saltmere eels are fat this year because of what's in the canal."*
   (false: Pim started it to sell oil).

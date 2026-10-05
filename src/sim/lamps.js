@@ -16,6 +16,8 @@
 export const LAMPS = {
   // "Souls, two hundred and forty" is the Third Legion's muster (world doc §3.6, the tithe ledger)
   third_legion: { name: "The Third Legion's standard-lamp", keeper: 'standard', souls: 240 },
+  // the Abbey's roll, "three hundred and twelve professed" (world doc v1.27 §3.2): the Abbess Below keeps it trimmed
+  choir_lamp: { name: "The Abbey's choir-lamp", keeper: 'abbess_below', souls: 312 },
 };
 /** the lamp a boss carries, if any @param {string} boss */
 export const lampOf = (boss) => Object.keys(LAMPS).find((id) => LAMPS[id].keeper === boss) || null;

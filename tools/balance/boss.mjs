@@ -3,12 +3,13 @@
 // the fight run: did the boss fall, how long, the lowest party HP, downs and Fallen. Trials counted as
 // done (their level-6 abilities), as the difficulty contract assumes.
 //
-//   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman]   (--healer: who's third, v1.19)
+//   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman] [--floor N]   (--healer: who's third, v1.19;
+//   --floor: the hall on floor N, for a site with a boss on more than one: the Drowned Abbey's 1–3; default the last)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
 
-const args = process.argv.slice(2), hi = args.indexOf('--healer'), HEALER = hi >= 0 ? args.splice(hi, 2)[1] : 'cleric', si = args.indexOf('--src');
+const args = process.argv.slice(2), hi = args.indexOf('--healer'), HEALER = hi >= 0 ? args.splice(hi, 2)[1] : 'cleric', fi = args.indexOf('--floor'), FLOOR = fi >= 0 ? +args.splice(fi, 2)[1] : 0, si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
@@ -24,7 +25,7 @@ for (const seed of seeds) {
   sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; });
   if (sim.state.trials) for (const c of want) sim.state.trials[c] = 1;
   sim.tick();
-  while (sim.world.stairsAt) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); if (site === 'barrows' && sim.state.depth >= 2) break; }
+  while (sim.world.stairsAt && !(FLOOR && sim.state.depth >= FLOOR - 1)) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); if (site === 'barrows' && sim.state.depth >= 2) break; }
   // into the hall: the tile nearest its middle within its largest open stretch (some halls are mostly
   // pools; you walk in along open ground, you don't land in a pocket)
   const L = sim.world.level, r = L.descentRoom, p = sim.state.player, K = (x, y) => x + ',' + y;
@@ -40,13 +41,14 @@ for (const seed of seeds) {
   // the company walks in together: each companion on an open tile of the same stretch, beside the hero
   const beside = [...comp].filter(([, id]) => id === big).map(([k]) => k.split(',').map(Number)).filter(([x, y]) => (x !== best[0] || y !== best[1])).sort((a, c) => Math.hypot(a[0] - best[0], a[1] - best[1]) - Math.hypot(c[0] - best[0], c[1] - best[1]));
   sim.state.party.forEach((m, i) => { if (i) { const [x, y] = beside[i * 2 - 1] || best; m.x = m.px = x + 0.5; m.y = m.py = y + 0.5; } });
-  let fell = false, defeat = false, downs = 0, fallen = 0, low = 1, calls = 0;
-  sim.bus.on('bossDown', () => { fell = true; }); sim.bus.on('defeat', () => { defeat = true; }); sim.bus.on('bossCall', () => calls++);
+  let fell = false, defeat = false, downs = 0, fallen = 0, low = 1, calls = 0, mech = 0;
+  let who = ''; sim.bus.on('bossWave', (e) => { who = e.id; }); sim.bus.on('bossDown', () => { fell = true; }); sim.bus.on('defeat', () => { defeat = true; }); sim.bus.on('bossCall', () => calls++);
+  for (const k of ['bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSwarm', 'bossKindle']) sim.bus.on(k, () => mech++);
   sim.bus.on('combat', (c) => { if (c.t === 'down') downs++; }); sim.bus.on('fallen', () => fallen++);
   let bossHp = 1; sim.bus.on('bossWave', () => {}); const bossLeft = () => { const b = (sim.world.enemies || []).find((e) => e.boss); if (b) bossHp = b.hp / b.maxHp; };
   const frac = () => { let a = 0, b = 0; for (const m of sim.state.party) { if (m.fallen) continue; a += m.down ? 0 : m.hp; b += statsFor(m).maxHp; } return a / b; };
   const t0 = sim.state.t, hall = sim.world.roomLevels.get(r.id);
   for (let i = 0; i < 20 * 300 && !fell && !defeat; i++) { sim.tick(); if (!defeat) { low = Math.min(low, frac()); bossLeft(); }
     if (process.env.TRACE && i % 60 === 0 && !defeat) console.log('  ', (i / 20).toFixed(0) + 's', 'foes', (sim.world.enemies || []).filter((e) => e.hp > 0).map((e) => `${e.kind}${e.boss ? '*' : ''}:${Math.round(100 * e.hp / e.maxHp)}%@${e.x.toFixed(0)},${e.y.toFixed(0)}`).join(' '), '| party', sim.state.party.map((m) => `${m.cls}:${m.down ? 'D' : Math.round(100 * m.hp / statsFor(m).maxHp) + '%'}@${(m.x || 0).toFixed(0)},${(m.y || 0).toFixed(0)}`).join(' ')); }
-  console.log(`${site} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}`);
+  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}`);
 }

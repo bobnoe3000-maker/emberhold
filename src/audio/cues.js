@@ -19,6 +19,7 @@ const VOICE = {
   acolyte: { fam: 'cult', rate: 1.1 }, robed_stranger: { fam: 'cult', rate: 0.8 },
   fenghoul: { fam: 'gob', rate: 0.7 }, reedcutter: { fam: 'man', rate: 0.9 }, fowler: { fam: 'man', rate: 1.04 }, bogwitch: { fam: 'cult', rate: 1.3 },   // (M8) the Fens'
   harvester: { fam: 'cult', rate: 0.92 }, drowned: { fam: 'bone', rate: 0.96 }, cantor: { fam: 'bone', rate: 1.02, cry: 'cult_cry' },
+  toadking: { fam: 'man', rate: 0.7 }, teague: { fam: 'cult', rate: 0.86 }, drowned_choir: { fam: 'bone', rate: 0.9, cry: 'cult_cry' }, abbess_below: { fam: 'bone', rate: 0.74, cry: 'cult_cry' },   // (M8.6) the Fens' bosses
   // the Mere Tower's wardens (sim tower.js): pitched low, as the bosses are
   warden_doorward: { fam: 'man', rate: 0.78 }, warden_mudlark: { fam: 'gob', rate: 0.66 }, warden_bellringer: { fam: 'bone', rate: 0.8, cry: 'cult_cry' }, warden_lensman: { fam: 'man', rate: 0.9 },
   warden_hush: { fam: 'bone', rate: 0.84 }, warden_twins: { fam: 'man', rate: 0.82 }, warden_hound: { fam: 'gob', rate: 0.6 }, warden_gatherer: { fam: 'cult', rate: 0.8 },
@@ -32,7 +33,7 @@ const FAM = { gob: { cry: 'gob_cry', hurt: 'gob_hurt', die: 'gob_die' }, bone: {
 export function voiceOf(kind, what) {
   const v = VOICE[kind] || VOICE.minion, f = FAM[v.fam];
   const cue = what === 'cry' && v.cry ? v.cry : f[what];
-  return { cue, bus: 'voices', rate: v.rate, gain: what === 'hurt' ? 0.55 : what === 'cry' && VOICE[kind] && /chief|captain|stranger|standard|warden_/.test(kind) ? 1.15 : 1 };
+  return { cue, bus: 'voices', rate: v.rate, gain: what === 'hurt' ? 0.55 : what === 'cry' && VOICE[kind] && /chief|captain|stranger|standard|warden_|toadking|teague|choir|abbess/.test(kind) ? 1.15 : 1 };
 }
 /** the family a kind belongs to (one cry per family per wave) @param {string} kind */
 export const familyOf = (kind) => (VOICE[kind] || VOICE.minion).fam;
@@ -43,10 +44,10 @@ export function swingOf(atlas) {
   const a = atlas || '';
   if (/crossbow|fowler/.test(a)) return { cue: 'bow', bus: 'combat', rate: 0.8, gain: 0.8 };
   if (/_bow|archer|skeleton_rogue/.test(a)) return { cue: 'bow', bus: 'combat', rate: 1, gain: 0.75 };
-  if (/hero_mage|skeleton_mage|acolyte|boss_stranger|cantor/.test(a)) return { cue: 'fire', bus: 'combat', rate: 1, gain: 0.7 };
+  if (/hero_mage|skeleton_mage|acolyte|boss_stranger|cantor|boss_choir|boss_abbess/.test(a)) return { cue: 'fire', bus: 'combat', rate: 1, gain: 0.7 };
   if (/shaman|bog_witch/.test(a)) return { cue: 'spirit', bus: 'combat', rate: 1.1, gain: 0.6 };
   if (/hexer/.test(a)) return { cue: 'hex', bus: 'combat', rate: 1.2, gain: 0.6 };
-  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard|reed_cutter|harvester/.test(a);
+  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard|reed_cutter|harvester|toadking|teague/.test(a);
   return { cue: 'swing', bus: 'combat', rate: heavy ? 0.82 : /goblin/.test(a) ? 1.2 : 1, gain: heavy ? 0.85 : 0.7 };
 }
 
