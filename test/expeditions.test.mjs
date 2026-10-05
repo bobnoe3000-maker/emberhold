@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { EXPEDITIONS, expeditionPay } from '../src/sim/expeditions.js';
-import { xpToNext } from '../src/sim/party.js';
+import { xpToNext, xpRate } from '../src/sim/party.js';
 
 const SEED = 20260807;
 // Thornwick with a full party and one on the bench
@@ -33,9 +33,12 @@ test('sent from an inn, a bench member is out until it\'s done, then back with X
   assert.ok(s.state.counters.gold > g0 - 1e5);
 });
 
-test('a long one is about a level; a short one a small share; gold by level and time', () => {
-  assert.ok(Math.abs(expeditionPay('long', 6).xp - xpToNext(6) * 1.4) <= 1);
+// (GDD v1.38) XP by the minute out, a share of active play's (xpRate), less the longer the job: never more than playing
+test('XP is a share of active play\'s a minute (less the longer the job); gold by level and time', () => {
+  assert.equal(expeditionPay('long', 6).xp, Math.round(xpRate(6) * 240 * 0.2));
   assert.ok(expeditionPay('short', 6).xp < expeditionPay('day', 6).xp && expeditionPay('day', 6).xp < expeditionPay('long', 6).xp);
+  for (const L of [3, 9, 17, 25]) for (const k of ['short', 'day', 'long']) assert.ok(expeditionPay(k, L).xp <= xpRate(L) * EXPEDITIONS[k].secs / 60 * 0.3 + 1, `${k} at ${L} pays under active play's`);
+  assert.ok(expeditionPay('long', 6).xp > xpToNext(6) * 0.9, 'a long one is still about a level at 6');
   assert.equal(expeditionPay('day', 10).gold, 2 * expeditionPay('day', 5).gold);
   assert.deepEqual(Object.keys(EXPEDITIONS), ['short', 'day', 'long']);
 });

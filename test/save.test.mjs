@@ -4,11 +4,11 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v24', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 24); });
+test('three game slots, save v25', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 25); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
-  assert.equal(m.version, SAVE_VERSION); for (const v of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]) assert.equal(migrate({ version: v, savedAt: 6, data }).version, SAVE_VERSION);
+  assert.equal(m.version, SAVE_VERSION); for (const v of [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]) assert.equal(migrate({ version: v, savedAt: 6, data }).version, SAVE_VERSION);
   assert.equal(m.version, SAVE_VERSION); assert.equal(m.savedAt, 5); assert.deepEqual(m.meta, metaOf(data));
   assert.equal(migrate({ version: 1, data }), null);
   assert.equal(migrate({ version: 99, data }), null);
@@ -41,4 +41,16 @@ test('a v19 save is given one Homeward Scroll as it migrates, once; a v20 save i
   const r = createSim(20260807); r.restore(m.data); assert.equal(scrolls(r.state.bag), had + 1, 'and the sim reads it');
   const full = { ...data, bag: Array.from({ length: 50 }, (_, i) => ({ base: 'sword', uid: 'x' + i, ilv: i + 1, r: 'common' })) };
   assert.equal(scrolls(migrate({ version: 19, savedAt: 1, data: full }).data.bag), 0, 'a full bag with none to stack on: left out');
+});
+
+// (save v25, GDD §7 v1.38: the slower curve) a level-17 cleric 22,182 / 27,915 of the way (the owner's debug report) keeps
+// level 17 and the same share of the new table's level: about 79 %
+test('save v25: levels kept; the XP toward the next level carried over as the same share of the new curve', async () => {
+  const { xpToNext } = await import('../src/sim/party.js');
+  const { createSim } = await import('../src/sim/core.js');
+  const data = JSON.parse(JSON.stringify(createSim(1, undefined, { scene: 'town' }).snapshot()));
+  data.party[0] = { ...data.party[0], level: 17, xp: 22182 }; data.bench = [{ ...data.party[0], id: 'b', name: 'B', main: false, level: 10, xp: 0 }];
+  const m = migrate({ version: 24, savedAt: 1, data }).data;
+  assert.equal(m.party[0].level, 17); assert.ok(Math.abs(m.party[0].xp / xpToNext(17) - 22182 / 27915) < 0.001, String(m.party[0].xp));
+  assert.equal(m.bench[0].xp, 0); assert.equal(migrate({ version: 25, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
 });

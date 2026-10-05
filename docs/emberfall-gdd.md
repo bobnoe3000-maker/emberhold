@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.37 · 2026-10-05 · Plan of record for game design.** v1.37 (§10, §6.2): Saltmere has an inn, the Stilt House (rest, the bench, expeditions); no two in a company share a name. v1.36 (§17): the ground hazard, and the Fens' bosses: the Toadking's mud, Brother Teague's cage, the Drowned Choir's Vespers, the Abbess Below's bells. v1.35 (§17, §10.1): only an elite harvester drops a cage, and the party breaks a cage near it on its own after 3 s with no foe standing; the top bar is two lines, the shrines' boons and Weakened on a third while lit. v1.34 (§17): the Mere Tower's wardens leave their heirlooms, once a bracket, for a class in the party. v1.33 (§6.3): expeditions: send a benched companion on the Guild's road work for 15 min, an hour or four; back with XP, gold and maybe a find. v1.32 (§12): offline progress is in: the time away (up to 4 h) is played through on the same sim behind a progress screen, then summed up. v1.31 (§17): the Mere Tower is in, ahead of Solmere: Wenna's punt from Saltmere from level 12, waves compounding 6 % from a level-9 room, a warden every tenth, no XP, a satchel banked at each landing. v1.30 (§3.6, §8): shrines of three kinds (green mends, red +25 % ATK and blue +25 % DEF for 2 minutes); every company carries one Homeward Scroll. v1.29 (§3.7): no impassable pools in rooms; one or two pillars, monoliths or gibbets out on the floor instead. v1.28 (§17): lamps, cages and the count are in. v1.27 (§9): each town's board posts its own land's jobs; Saltmere's the Fens'. v1.26 (§10): no stream or bridge before Thornwick's gate, on the Vale or in the town. v1.25 (§3): the Fens' own fill the Fens' sites, each mirroring an Ashbound role. v1.24 (§10): a waystation's bar shows its two services, and the sim refuses the ones it lacks by name. v1.23 (§17) brings in **the Old Provinces**, decided by the owner: six regions to a cap of 75, one town each, numbers that compound before any band past 30, skill tiers and a loadout, lamps and the count, the Bowl, the Mere Tower and the Great Beacon (canon in world doc v1.20). v1.22 (§10.1): the weather's icon beside the sky dial, the icon alone, with the word in the dial's tap; clear spells are sunny or partly sunny. v1.21 (§10.1): the wind shows as long, thin gust lines that come and go; the birds, the owl and the dungeon drips are single calls at least 10 s apart; and every kind of sound, the music too, has its own volume slider. v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
+**v1.38 · 2026-10-05 · Plan of record for game design.** v1.38 (§7, §6.3): much slower levels: each level takes 15 % longer than the last, from 20 minutes for level 2 (level 30 in ~126 h of fighting, was ~8 h); expeditions pay a share of active play's XP a minute. v1.37 (§10, §6.2): Saltmere has an inn, the Stilt House (rest, the bench, expeditions); no two in a company share a name. v1.36 (§17): the ground hazard, and the Fens' bosses: the Toadking's mud, Brother Teague's cage, the Drowned Choir's Vespers, the Abbess Below's bells. v1.35 (§17, §10.1): only an elite harvester drops a cage, and the party breaks a cage near it on its own after 3 s with no foe standing; the top bar is two lines, the shrines' boons and Weakened on a third while lit. v1.34 (§17): the Mere Tower's wardens leave their heirlooms, once a bracket, for a class in the party. v1.33 (§6.3): expeditions: send a benched companion on the Guild's road work for 15 min, an hour or four; back with XP, gold and maybe a find. v1.32 (§12): offline progress is in: the time away (up to 4 h) is played through on the same sim behind a progress screen, then summed up. v1.31 (§17): the Mere Tower is in, ahead of Solmere: Wenna's punt from Saltmere from level 12, waves compounding 6 % from a level-9 room, a warden every tenth, no XP, a satchel banked at each landing. v1.30 (§3.6, §8): shrines of three kinds (green mends, red +25 % ATK and blue +25 % DEF for 2 minutes); every company carries one Homeward Scroll. v1.29 (§3.7): no impassable pools in rooms; one or two pillars, monoliths or gibbets out on the floor instead. v1.28 (§17): lamps, cages and the count are in. v1.27 (§9): each town's board posts its own land's jobs; Saltmere's the Fens'. v1.26 (§10): no stream or bridge before Thornwick's gate, on the Vale or in the town. v1.25 (§3): the Fens' own fill the Fens' sites, each mirroring an Ashbound role. v1.24 (§10): a waystation's bar shows its two services, and the sim refuses the ones it lacks by name. v1.23 (§17) brings in **the Old Provinces**, decided by the owner: six regions to a cap of 75, one town each, numbers that compound before any band past 30, skill tiers and a loadout, lamps and the count, the Bowl, the Mere Tower and the Great Beacon (canon in world doc v1.20). v1.22 (§10.1): the weather's icon beside the sky dial, the icon alone, with the word in the dial's tap; clear spells are sunny or partly sunny. v1.21 (§10.1): the wind shows as long, thin gust lines that come and go; the birds, the owl and the dungeon drips are single calls at least 10 s apart; and every kind of sound, the music too, has its own volume slider. v1.20 adds **weather** (§10.1): rain, fog, snow and wind in spells of 20 minutes or more, on the Vale and in the towns, set by the seed and the clock. It's quiet on the screen (mostly the light) and has its own sound. v1.19 opens the **Scrag Warren** (§3, levels 2–5, two floors) under the north range: the hill goblins (skirmisher, bruiser, archer, hexer), and Old Skarn, whose drum brings two more goblins out of the tunnels every 10 s while he stands. Hedda's side quest *Hens Under the Hill* sends you to him. v1.19 also adds a fifth class, the **Shaman** (§5; the hedge-callers, world doc §4): a ranged support with a stacking Spirit Drain that mends the party as it ticks, a party heal over time with an ATK lift (Ancestors' Breath, Col's trial *Old Roads*), and Hex on a knot of foes. It's playable at creation and sits last at every tavern's table. v1.18 sets down the owner's **key pillars** (§1): level-gated skills learned from quests, optional companions worth 5–25 % each, waves that pay for their danger, online and offline grinding on the same rules (with premium windows), the main story apart from side quests, play styles from party make-up, and single-player now with shared spaces later. §12's offline rules follow them. v1.17 adds the one thing the shop sells besides gear: the **Homeward Scroll** (§8), 300 gold or rare loot, read once to stand on the nearest town's square; still no draughts. v1.16 cuts dropped gold (a kill's, a chest's) to 70 % (§8), quest and board rewards unchanged; and those who shoot hold a stand-off (§5, *Bows and crossbows*). v1.15 lays out the towns (§10;
 docs/town-layout-proposal.md). Each town is walled: a timber palisade in Thornwick, stone in the later
 regions. Its one gate stands on the road where it crosses a stream, and a high street leads up to the
 square. Every service's entrance faces the well, so their places in the square change once. On the
@@ -727,11 +727,14 @@ The owner, 2026-10-04: *"let me send my benched companions on timed adventures t
 possibly one looted item back."* At a town's inn, **Expeditions** sends a companion off the bench on the Lantern
 Guild's road work (world doc v1.24 §4). Three jobs:
 
-| Job | Time | XP (of their next level) | Gold | A find | Fine / Rare among finds |
+| Job | Time | XP (v1.38: of active play's in that time, `xpRate`) | Gold | A find | Fine / Rare among finds |
 |---|---|---|---|---|---|
-| A watch on the road | 15 min | 15 % | 4 × level × 15 | 15 % | 25 % / 3 % |
-| A day for the Guild | 1 h | 45 % | 4 × level × 60 | 40 % | 30 % / 5 % |
-| The long round | 4 h | 140 % (about a level) | 4 × level × 240 | 85 % | 35 % / 8 % |
+| A watch on the road | 15 min | 30 % | 4 × level × 15 | 15 % | 25 % / 3 % |
+| A day for the Guild | 1 h | 25 % | 4 × level × 60 | 40 % | 30 % / 5 % |
+| The long round | 4 h | 20 % | 4 × level × 240 | 85 % | 35 % / 8 % |
+
+(v1.38) XP was a share of their next level (the long round 140 %). With every level 15 % longer than the last, from
+about level 17 a long round paid more levels than playing for the same four hours, so it's priced off play instead.
 
 - The time is the game's clock: it runs while you play and through the time away (§12). They come back on their own,
   wherever the company is, and the HUD says what they brought.
@@ -739,18 +742,33 @@ Guild's road work (world doc v1.24 §4). Three jobs:
   the bag, or salvaged for cinders if it's full.
 - While out they can't be swapped in, released or retrained; they draw the bench's half wage as usual. Anyone on the
   bench who isn't slain can go, any number at once. Nobody is hurt or lost on the road.
-- For scale: a level-6 companion's long round pays about 1.4 levels and 5,760 gold over 4 hours; a party of three at 6
-  in a same-level room went 6 → 7 in 20 minutes and took ~2,200 gold (`roomlv.mjs 1200 6 6 1,3`). The road is a slow,
-  safe trickle for whoever is waiting, never a rival to playing.
+- For scale (v1.38): a level-6 companion's long round pays 26,900 XP (about 1.2 levels at 6) and 5,760 gold over 4
+  hours; at level 17 it pays 0.3 of a level, where 4 hours of play at 17 is about 1.3. The road is a slow, safe trickle
+  for whoever is waiting, never a rival to playing.
 - `src/sim/expeditions.js` (`expeditionSend`; save v22), the Inn's Expeditions view (`src/ui/townmenu.js`).
 
 ---
 
 ## 7. Progression and the grind
 
-- **Levels 1–30** at launch; (v1.23) the cap rises with each region to **75** (§17). XP to next level = 300 × L^1.6 (L1→2: 300; L10→11: ~12,000;
-  L29→30: ~66,000). (v1.7: tripled from 100 × L^1.6, so each level takes three times the play.)
-  Stats grow per the class tables.
+- **Levels 1–30** at launch; (v1.23) the cap rises with each region to **75** (§17). Stats grow per the class tables.
+- **XP to the next level (v1.38;** the owner, 2026-10-05: *"Much slower level progression"*, then chose ×1.15 a level
+  over ×1.5, which put level 30 ~10 years out). Each level takes **15 % longer to fight through** than the one before,
+  from **20 minutes** for level 1 → 2: T(L) = 20 × 1.15^(L − 1) minutes in rooms of your own level. The table
+  (`party.js`, three figures) is T(L) × what the right party earns a minute each there (`xpRate`: measured L2 132, L6
+  555, L9 862, L12 1,219, L15 1,569; fit 85 L + 1.4 L²). L1→2: 1,730 XP; L10→11: 69,700; L17→18: 346,000; L29→30:
+  3,650,000. Hours of fighting to reach a level, at level:
+
+  | Level | 2 | 3 | 5 | 8 | 10 | 15 | 20 | 30 |
+  |---|---|---|---|---|---|---|---|---|
+  | That level alone | 20 min | 23 min | 30 min | 46 min | 1 h | 2 h | 4.1 h | 16.7 h |
+  | From level 1 | 0.3 h | 0.7 h | 1.7 h | 3.7 h | 5.6 h | 13.5 h | 29 h | 126 h |
+
+  (It was 300 × L^1.6, v1.7: level 30 in ~8 h of fighting, a level at 17 in ~20 min; an hour offline in the Sickpools
+  took a level-17 company ~3 levels.) Farming rooms below you still pays the room's XP, and kills come faster there;
+  the curve, not a level-gap cut, sets the pace. Quests and the board pay what they always did, so they count for less
+  of a level. Save v25 keeps every member's level and carries the XP toward their next as the same share of the new.
+  (§17's "XP goes linear above 30" waits for M9's rescale: until then the 15 % a level carries on.)
 - **Enemy scaling.** Enemy level = the room's level (§3.3), offset by the region base and the
   site tier (+0 to +3). Stats = archetype base × (1 + 0.14 × (level − 1)) (ATK 0.12).
   *Elite*: ×2.5 HP, ×1.3 ATK. *Boss*: ×8 HP plus a signature mechanic.
@@ -1425,7 +1443,8 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
   walled (Ashgate, Tollhaven, the Lamphall); small and open (Rookstead, Frosthold, Saltmere); Thornwick as built.
 
 **Numbers, before any band past 30.**
-- **XP goes linear above 30**, about 26 minutes of fighting a level, so the late bands don't swell.
+- **XP goes linear above 30**, about 26 minutes of fighting a level, so the late bands don't swell. (v1.38: superseded for
+  now by §7's 15 % a level, the owner's call; M9 revisits the bands past 30 with the stat rescale.)
 - **Stats compound, from integer tables** (deterministic, like `XP_TABLE`): today's linear growth makes one level
   stop mattering above 30 (a room three up is +41 % HP at L6, +15 % at L30, +9 % at L60). The room premium is capped.
 - **The smoke contract** (§7.1) extends to levels 15, 30, 45, 60 and 75.

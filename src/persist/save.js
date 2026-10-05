@@ -70,15 +70,17 @@
 //   v24: no two in a company share a name (sim/party.js; the owner, 2026-10-05: "I have 2 Tobins"). The shape is the
 //       same; an older company with a name twice has the later one (the party first, then the bench) renamed to the
 //       next free name in their class's list (namesFor). The hero keeps theirs.
+//   v25: the slower XP curve (sim/party.js; GDD §7 v1.38). Levels are kept; the XP each member had toward their next
+//       level becomes the same share of the new table's (xpFor), so a bar three-quarters full stays three-quarters full.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
 import { LAMPS } from '../sim/lamps.js';
 import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
-import { dedupeNames } from '../sim/party.js';
+import { dedupeNames, xpToNext } from '../sim/party.js';
 
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -99,7 +101,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -117,6 +119,20 @@ export function namesFor(data) {
   const party = data.party.map((m) => ({ ...m })), bench = (Array.isArray(data.bench) ? data.bench : []).map((m) => ({ ...m }));
   dedupeNames([...party, ...bench]);
   return { ...data, party, bench };
+}
+
+// the XP table before v25 (3 × round(100 × L^1.6)), kept here only to carry a save's progress over (xpFor)
+const XP_BEFORE_25 = [100, 303, 580, 919, 1313, 1758, 2250, 2786, 3363, 3981, 4637, 5330, 6058, 6820, 7616, 8445, 9305, 10196, 11117, 12068,
+  13048, 14056, 15093, 16156, 17247, 18364, 19507, 20675, 21869, 23088, 24332, 25600, 26892, 28208, 29547, 30909, 32294, 33702, 35132, 36584,
+  38059, 39555, 41072, 42611, 44171, 45752, 47354, 48976, 50619, 52282, 53965, 55668, 57391, 59133, 60895, 62676, 64476, 66296, 68134, 69991].map((v) => 3 * v);
+/** v24 → v25: each member's XP toward their next level, as the same share of the new table's @param {any} data */
+export function xpFor(data) {
+  const carry = (m) => {
+    if (!m || !Number.isInteger(m.level)) return m;
+    const L = Math.max(1, Math.min(60, m.level)), was = XP_BEFORE_25[L - 1], share = Math.max(0, Math.min(1, (Number(m.xp) || 0) / was));
+    return { ...m, xp: Math.min(xpToNext(L) - 1, Math.floor(share * xpToNext(L))) };
+  };
+  return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
 }
 
 /** v19 → v20: one Homeward Scroll in the bag (see v20 above) @param {any} data */

@@ -1,7 +1,7 @@
 // gear: seeded rolls, class kits reproduce the GDD level-1 numbers, XP table matches the curve
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeMember, statsFor, xpToNext } from '../src/sim/party.js';
+import { makeMember, statsFor, xpToNext, xpRate } from '../src/sim/party.js';
 import { rollItem, makeItem } from '../src/sim/items.js';
 import { createSim } from '../src/sim/core.js';
 import { mulberry32 } from '../src/sim/rng.js';
@@ -19,8 +19,17 @@ test('item rolls are a pure function of the stream', () => {
   assert.deepEqual(a, b);
   assert.equal(a.aff.length, 2); assert.ok(a.mod);
 });
-test('XP table matches round(100 × L^1.6)', () => {
-  for (let L = 1; L <= 60; L++) assert.equal(xpToNext(L), 3 * Math.round(100 * Math.pow(L, 1.6)));
+// (GDD §7 v1.38, the owner, 2026-10-05: "Much slower level progression") each level 15 % longer to fight through,
+// from 20 minutes for 1 → 2, at what the right party earns a minute in rooms of its own level (xpRate)
+test('the XP table: 20 minutes of fighting for level 2, each level after 15 % longer; level 30 in ~126 h', () => {
+  let h = 0;
+  for (let L = 1; L <= 60; L++) {
+    const mins = xpToNext(L) / xpRate(L);
+    assert.ok(Math.abs(mins / (20 * Math.pow(1.15, L - 1)) - 1) < 0.006, `L${L}: ${mins.toFixed(1)} min`);
+    assert.ok(Number.isInteger(xpToNext(L)) && (L === 1 || xpToNext(L) > xpToNext(L - 1)));
+    if (L < 30) h += mins / 60;
+  }
+  assert.ok(h > 120 && h < 132, `1 → 30 in ${h.toFixed(1)} h of fighting`);
 });
 
 // Difficulty (GDD §7.1, 2026-09-30): gear grows twice as fast with item level, so old gear falls
