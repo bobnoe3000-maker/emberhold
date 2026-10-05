@@ -16,6 +16,7 @@
     background: #07060b center top / 390px 844px no-repeat; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
   .phone.short { height: 196px; border-radius: 22px; }
   .before { background-image: url(img/hud-mockup/before.jpg); }
+  .before-boons { background-image: url(img/hud-mockup/before-boons.jpg); }
   .bare { background-image: url(img/hud-mockup/bare.jpg); }
   /* the numbered problems on the "before" capture, and the guides on the proposal */
   .mk { position: absolute; width: 18px; height: 18px; border-radius: 9px; background: var(--bad); color: #1a0d0a; font: 700 11px/18px ui-monospace, Menlo, monospace; text-align: center; box-shadow: 0 0 0 2px #1a0d0a; }
@@ -28,7 +29,7 @@
   /* ── the proposal: the HUD as two lines in a grid. Line 1: place name left, gold and cinders right, ending on the
      minimap's right edge. Line 2 (left only): the sky dial, then the wages. The ☰ spans both lines. */
   .hud2 { position: absolute; left: 0; right: 0; top: var(--st, 0px); padding: 14px 12px 0 8px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto;
-    grid-template-rows: 16px 16px; column-gap: 10px; row-gap: 3px; color: #e8e4da; text-shadow: 0 1px 0 #0d0913; font-size: 12px; line-height: 16px; }
+    grid-template-rows: 16px 16px auto; column-gap: 10px; row-gap: 3px; color: #e8e4da; text-shadow: 0 1px 0 #0d0913; font-size: 12px; line-height: 16px; }
   .hud2 .menu { grid-row: 1 / 3; width: 34px; height: 34px; margin-top: -1px; border-radius: 8px; background: rgba(16,12,22,0.7); border: 1px solid rgba(214,170,98,0.35); color: #e0a85a;
     font-size: 16px; display: grid; place-items: center; }
   .hud2 .place { grid-column: 2; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -37,6 +38,11 @@
   .hud2 .l2 { grid-column: 2 / 4; grid-row: 2; display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .3px; max-width: calc(100% - 118px); white-space: nowrap; }
   .hud2 .sky { display: flex; align-items: center; gap: 4px; }
   .hud2 .wage { color: #b8ac98; } .hud2 .wage.owed { color: #ff8a7a; font-weight: 700; } .hud2 .wage .dot { color: #6a6478; margin-right: 8px; }
+  /* line 3, only while something's lit: a shrine's boons and Weakened as small backed chips, word + number + time
+     (never the colour alone), wrapping inside the same left column as line 2 */
+  .hud2 .l3 { grid-column: 2 / 4; grid-row: 3; display: flex; flex-wrap: wrap; gap: 4px 6px; max-width: calc(100% - 118px); margin-top: 3px; }
+  .hud2 .chip { font-size: 11px; line-height: 16px; padding: 1px 6px; border-radius: 6px; background: rgba(16,12,22,.78); border: 1px solid; white-space: nowrap; text-shadow: none; }
+  .chip.atk { color: #ff9a84; border-color: rgba(255,154,132,.45); } .chip.def { color: #9fd4f4; border-color: rgba(159,212,244,.45); } .chip.weak { color: #e0a060; border-color: rgba(224,160,96,.45); }
   .mm { position: absolute; right: 12px; width: 108px; height: 108px; padding: 5px; background: rgba(10,8,16,0.6); border: 1px solid rgba(130,120,160,0.35); }
   .mm img { display: block; width: 96px; height: 96px; image-rendering: auto; }
   .rb { position: absolute; right: 12px; width: 44px; height: 44px; border-radius: 22px; background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
@@ -91,6 +97,15 @@
       <li>The right edges don't line up: the minimap frame is 10&nbsp;px from the edge, the compass and Journal 12&nbsp;px.</li>
       <li>The ☰ button is centred between two lines of different lengths, so it lines up with neither.</li>
     </ol>
+    <div class="phone short before-boons" style="margin-top:22px">
+      <div class="box" style="left:48px;top:12px;width:20px;height:18px"></div><div class="mk" style="left:28px;top:56px">7</div>
+      <div class="box" style="left:270px;top:12px;width:118px;height:18px"></div><div class="mk" style="left:362px;top:34px">8</div>
+    </div>
+    <h2>Before, with a shrine's boons lit (live)</h2>
+    <ol start="7">
+      <li>The boon text is a third item squeezed into line 1. The place name shrinks to nothing (it's the only thing allowed to shrink).</li>
+      <li>"might +25% ATK 1:52 · ward +25% DEF 1:40" runs off the right edge, so you never see the ward or the time left on it. Weakened is added to the same row, so it would make this worse.</li>
+    </ol>
   </div>
 
   <!-- AFTER: the proposal over the same world, the minimap moved -->
@@ -103,12 +118,16 @@
       <li>Line 2, under the place name: the sky dial, the weather and the time of day, then the wages, in one row with one left edge. It stops 118&nbsp;px short of the right side, so it never runs under the minimap. Each item keeps its own tap pad (44&nbsp;px tall), and the pads touch nothing else.</li>
       <li>The minimap's frame starts 6&nbsp;px under line 1 (y&nbsp;36, was 58). The compass (152, was 174) and the Journal (204, was 226) follow it up with the same 8&nbsp;px gaps.</li>
       <li>Every right edge is 12&nbsp;px in from the screen edge: the gold and cinders, the minimap, the compass, the Journal.</li>
+      <li>A shrine's boons and Weakened get a third line of their own, only while lit (top right). They never share line 1.</li>
     </ol>
   </div>
 
   <!-- THE HARD CASES -->
   <div class="cap">
-    <div class="phone short bare" id="fens" style="background-position:center -0px"></div>
+    <div class="phone short bare" id="boons"></div>
+    <h2>Shrine boons and Weakened lit</h2>
+    <p>A third line, only while something's lit. It holds small backed chips (<b>ATK +25% 1:52</b>, <b>DEF +25% 1:40</b>, <b>weakened · 7 min</b>), each with the word, the amount and the time left, so the colour is never the only cue. They wrap inside the same left column as line 2, so they never go under the minimap and never push the place name off line 1. Two boons fit on one row (206 of 208&nbsp;px). Weakened wraps to a second row. The bar's bottom grows with them, so map labels and the room pill move down clear of the chips. Tap a chip and it says which shrine it came from.</p>
+    <div class="phone short bare" id="fens" style="margin-top:22px"></div>
     <h2>Longest: Fens, 6-figure gold, wages owed</h2>
     <p>"The Greywater Fens", gold 123&nbsp;456, the wages owed and shown in red with ⚠. Line 1 still fits: the name ends at x&nbsp;182 and the gold starts at x&nbsp;243. The place name is the only thing that shrinks (with an ellipsis), as it does now.</p>
     <div class="phone short bare" id="dungeon" style="margin-top:22px"></div>
@@ -138,6 +157,7 @@
     <h3>How it would be built</h3>
     <ul>
       <li><code>index.html</code>: <code>#hud</code> becomes a 3-column grid (☰ · name and line 2 · gold and cinders), two 16 px rows.</li>
+      <li><code>src/ui/hud.js</code>: the boon and Weakened chips move off line 1 into a line-3 row (<code>#hudLine3</code>, hidden when empty). Each is its own chip with its own tap, and their text gets shorter: "ATK +25% 1:52" instead of "might +25% ATK 1:52".</li>
       <li><code>src/ui/hud.js</code>: the sky dial and wages move into one line-2 row under the name (<code>#hudLine2</code>), each keeping its own button and tap pad. It publishes <code>--hud-l1</code> (line 1's bottom) beside <code>--hud-b</code>.</li>
       <li><code>src/render/renderer.js</code>: <code>mmTop()</code> reads line 1's bottom + 6, not the bar's bottom + 10. <code>MM_RIGHT</code> becomes 12. The label rule that keeps plaques clear of the buttons takes the new tops.</li>
       <li><code>src/ui/compass.js</code>, <code>journal.js</code>: <code>top</code> becomes the minimap's bottom + 8 / + 60 (one <code>--mm-b</code> variable), so the buttons can't drift from the minimap again.</li>
@@ -148,6 +168,7 @@
     <h3>Checks</h3>
     <ul>
       <li>Browser test: the existing "the sky dial overlaps nothing" check is extended. No tap pad on the bar meets the minimap's frame, and line 2 ends left of it, for the Vale, for the Fens with 6-figure gold and owed wages, and underground.</li>
+      <li>With both boons and Weakened lit, the place name keeps its full width, every chip sits inside the left column (none off screen, none over the minimap), and the room pill sits below them. Today the name is squeezed to nothing and the boon text runs off screen.</li>
       <li>Every right edge is 12 px in (plus the notch inset), and the buttons sit at the minimap's bottom + 8 and + 60.</li>
       <li>Before-and-after captures at 390 × 844 and on a phone on its side, kept in <code>docs/img/</code>.</li>
     </ul>
@@ -166,10 +187,11 @@
     const sky = o.sky === false ? '' : `<span class="sky">${night}${rain}<span style="color:#a8c0ff">Night</span></span>`;
     let h = `<div class="hud2" style="--st:${st}px"><div class="menu">☰</div><div class="place">${o.place}</div>`
       + `<div class="money">gold <b>${o.gold}</b><span class="sep"></span><em>✦</em> <b>${o.embers}</b></div>`
-      + `<div class="l2">${sky}<span class="wage${o.owed ? ' owed' : ''}">${o.wage}</span></div></div>`
+      + `<div class="l2">${sky}<span class="wage${o.owed ? ' owed' : ''}">${o.wage}</span></div>`
+      + (o.chips ? `<div class="l3">${o.chips.map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('')}</div>` : '') + `</div>`
       + `<div class="mm" style="top:${mmT}px"><img src="img/hud-mockup/minimap.png" alt=""></div>`;
     if (o.buttons !== false) h += `<div class="rb" style="top:${mmT + 108 + 8}px">${compass}</div><div class="rb" style="top:${mmT + 108 + 60}px">${book}</div>`;
-    if (o.pill) h += `<div class="pill" style="top:${st + 62}px;left:calc((390px - 130px) / 2)">${o.pill}</div>`;
+    if (o.pill) h += `<div class="pill" style="top:${st + (o.chips ? 106 : 62)}px;left:calc((390px - 130px) / 2)">${o.pill}</div>`;
     if (o.inset) h += `<div class="notch"></div><div class="sb" style="left:48px">5:47</div>`;
     if (o.guides) h += `<div class="gd v" style="left:378px"></div><div class="gl" style="left:330px;top:${mmT + 290}px">right 12</div>`
       + `<div class="gd h" style="top:${l1b}px"></div><div class="gl" style="left:6px;top:${l1b + 30}px">line 1 ↓ 6 → minimap ${mmT}</div>`
@@ -179,6 +201,8 @@
     return h;
   }
   document.getElementById('after').innerHTML = bar({ place: 'The Hollow Vale', gold: '9440', embers: '68', wage: '<span class="dot">·</span>−312 · dawn 3m', guides: true });
+  document.getElementById('boons').innerHTML = bar({ place: 'The Hollow Vale', gold: '9440', embers: '68', wage: '<span class="dot">·</span>−312 · dawn 3m', buttons: false,
+    chips: [['atk', 'ATK +25% 1:52'], ['def', 'DEF +25% 1:40'], ['weak', 'weakened · 7 min']] });
   document.getElementById('fens').innerHTML = bar({ place: 'The Greywater Fens', gold: '123456', embers: '1204', wage: '<span class="dot">·</span>owed 120 ⚠', owed: true, buttons: false, guides: true });
   document.getElementById('dungeon').innerHTML = bar({ place: 'depth 3', gold: '9440', embers: '68', wage: '−312 · dawn 3m', sky: false, buttons: false, pill: 'ROOM LV 13 · WAVE 4' });
   document.getElementById('notch').style.backgroundPosition = 'center 47px';
