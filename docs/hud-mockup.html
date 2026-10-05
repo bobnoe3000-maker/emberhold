@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Top Bar Tidy</title>
+<style>
+  :root { --bg: #0b0910; --panel: rgba(16,12,22,0.95); --gold: #f0c880; --gold2: #d8a040; --line: rgba(214,170,98,0.45); --dim: #978c80; --text: #efe4cf; --guide: #6fd0ff; --bad: #ff8a7a; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: Georgia, serif; padding: 28px 24px 40px; }
+  h1 { font-size: 22px; color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+  .lede { color: #b8aca0; font-size: 14px; max-width: 980px; line-height: 1.45; margin-bottom: 22px; }
+  .row { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
+  .cap { width: 390px; }
+  .cap h2 { font: 12px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 12px 0 4px; }
+  .cap p, .cap li { font-size: 13px; color: #b8aca0; line-height: 1.4; }
+  .cap ol { margin: 6px 0 0 18px; padding: 0; } .cap li { margin-bottom: 4px; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 34px; overflow: hidden; box-shadow: 0 0 0 8px #1c1824, 0 18px 50px rgba(0,0,0,.6);
+    background: #07060b center top / 390px 844px no-repeat; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+  .phone.short { height: 196px; border-radius: 22px; }
+  .before { background-image: url(img/hud-mockup/before.jpg); }
+  .bare { background-image: url(img/hud-mockup/bare.jpg); }
+  /* the numbered problems on the "before" capture, and the guides on the proposal */
+  .mk { position: absolute; width: 18px; height: 18px; border-radius: 9px; background: var(--bad); color: #1a0d0a; font: 700 11px/18px ui-monospace, Menlo, monospace; text-align: center; box-shadow: 0 0 0 2px #1a0d0a; }
+  .box { position: absolute; border: 1px dashed var(--bad); border-radius: 3px; pointer-events: none; }
+  .gd { position: absolute; border: 0 dashed var(--guide); pointer-events: none; opacity: .85; }
+  .gd.v { border-left-width: 1px; top: 0; bottom: 0; } .gd.h { border-top-width: 1px; left: 0; right: 0; }
+  .gl { position: absolute; font: 10px ui-monospace, Menlo, monospace; color: var(--guide); background: rgba(6,10,16,.8); padding: 1px 4px; border-radius: 3px; white-space: nowrap; }
+  .guides-off .gd, .guides-off .gl, .guides-off .mk, .guides-off .box { display: none; }
+
+  /* ── the proposal: the HUD as two lines in a grid. Line 1: place name left, gold and cinders right, ending on the
+     minimap's right edge. Line 2 (left only): the sky dial, then the wages. The ☰ spans both lines. */
+  .hud2 { position: absolute; left: 0; right: 0; top: var(--st, 0px); padding: 14px 12px 0 8px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto;
+    grid-template-rows: 16px 16px; column-gap: 10px; row-gap: 3px; color: #e8e4da; text-shadow: 0 1px 0 #0d0913; font-size: 12px; line-height: 16px; }
+  .hud2 .menu { grid-row: 1 / 3; width: 34px; height: 34px; margin-top: -1px; border-radius: 8px; background: rgba(16,12,22,0.7); border: 1px solid rgba(214,170,98,0.35); color: #e0a85a;
+    font-size: 16px; display: grid; place-items: center; }
+  .hud2 .place { grid-column: 2; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hud2 .money { grid-column: 3; text-align: right; white-space: nowrap; color: #8f8ca4; }
+  .hud2 .money b { color: #e8e4da; font-weight: 600; } .hud2 .money em { color: #ff9440; font-style: normal; } .hud2 .money .sep { display: inline-block; width: 12px; }
+  .hud2 .l2 { grid-column: 2 / 4; grid-row: 2; display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .3px; max-width: calc(100% - 118px); white-space: nowrap; }
+  .hud2 .sky { display: flex; align-items: center; gap: 4px; }
+  .hud2 .wage { color: #b8ac98; } .hud2 .wage.owed { color: #ff8a7a; font-weight: 700; } .hud2 .wage .dot { color: #6a6478; margin-right: 8px; }
+  .mm { position: absolute; right: 12px; width: 108px; height: 108px; padding: 5px; background: rgba(10,8,16,0.6); border: 1px solid rgba(130,120,160,0.35); }
+  .mm img { display: block; width: 96px; height: 96px; image-rendering: auto; }
+  .rb { position: absolute; right: 12px; width: 44px; height: 44px; border-radius: 22px; background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
+  .rb svg { width: 24px; height: 24px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+  .pill { position: absolute; left: 50%; transform: translateX(-50%); font: 11px ui-monospace, Menlo, monospace; color: #e8dcc4; background: rgba(16,12,22,.82); border: 1px solid rgba(214,170,98,.35); border-radius: 10px; padding: 3px 9px; white-space: nowrap; }
+  .notch { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: 120px; height: 34px; border-radius: 18px; background: #000; }
+  .sb { position: absolute; top: 16px; font: 600 15px -apple-system, system-ui, sans-serif; color: #fff; }
+  .spec { max-width: 1260px; margin-top: 34px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px 28px; }
+  .spec h3 { font: 12px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin-bottom: 6px; }
+  .spec li { font-size: 13.5px; color: #cfc2ae; line-height: 1.45; margin: 0 0 5px 16px; }
+  .spec table { border-collapse: collapse; font: 12px ui-monospace, Menlo, monospace; color: #cfc2ae; }
+  .spec td, .spec th { padding: 3px 10px 3px 0; text-align: left; border-bottom: 1px solid rgba(214,170,98,.12); } .spec th { color: #a08a6a; font-weight: 400; }
+  .toggle { font: 12px ui-monospace, Menlo, monospace; color: var(--gold); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-height: 44px; margin-bottom: 18px; cursor: pointer; }
+  @media (max-width: 440px) { body { padding: 16px; } .cap { width: 100%; } .phone { transform-origin: 0 0; } }
+</style></head>
+<body>
+<h1>Top bar tidy: mockup</h1>
+<p class="lede">
+  The owner (2026-10-05): <i>"Lets clean up and align the hud a bit. The weather icons line can move left, making room to
+  shift the mini map and buttons below up."</i> Proposal: the top bar becomes two tidy lines. On line 1 the place name
+  sits on the left, and gold and cinders sit on the right, ending exactly on the minimap's edge. Line 2 sits under the
+  place name: the sky dial and weather first, then the wages, both still tappable. Nothing sits on line 2 over on the
+  right, so the minimap goes up to just under line 1, and the compass and Journal follow it up. That gains
+  <b>22&nbsp;px</b> for the minimap and both buttons, and every right edge lines up at 12&nbsp;px. Both phones use real
+  captures of the game: the Vale at night in rain, a party of three, 390&times;844, with no notch inset.
+</p>
+<button class="toggle" onclick="document.body.classList.toggle('guides-off')">Show / hide guides</button>
+
+<div class="row">
+
+  <!-- BEFORE: the real top bar, measured -->
+  <div class="cap">
+    <div class="phone before">
+      <div class="box" style="left:172px;top:29px;width:101px;height:30px"></div>
+      <div class="box" style="left:275px;top:17px;width:101px;height:45px"></div>
+      <div class="mk" style="left:150px;top:36px">1</div>
+      <div class="box" style="left:316px;top:12px;width:66px;height:18px"></div>
+      <div class="mk" style="left:362px;top:2px">2</div>
+      <div class="gd h" style="top:58px;left:240px"></div><div class="gl" style="left:206px;top:60px">minimap 58</div>
+      <div class="mk" style="left:252px;top:84px">3</div>
+      <div class="mk" style="left:258px;top:46px">4</div>
+      <div class="gd v" style="left:380px;top:50px;bottom:560px"></div><div class="gd v" style="left:378px;top:160px;bottom:560px;border-color:var(--bad)"></div>
+      <div class="mk" style="left:326px;top:276px">5</div>
+      <div class="mk" style="left:46px;top:46px">6</div>
+    </div>
+    <h2>Before (live, measured)</h2>
+    <ol>
+      <li>The two second lines hang under different columns: the wages start at x&nbsp;174 under the gold, the sky dial at x&nbsp;275 under the cinders. The edge is ragged.</li>
+      <li>Line 1 stops at x&nbsp;314, leaving about 64&nbsp;px empty on the right. Gold and cinders float in the middle of the row.</li>
+      <li>The minimap waits for the whole two-line row to end (bar bottom 54 + 10 → frame at 58), only because the sky dial sits above it.</li>
+      <li>The tap areas overlap the minimap. The sky dial's tap pad (275–376 × 17–62) covers its top 4&nbsp;px, and the wages' pad reaches its left edge when the line is long (6&nbsp;px over with "dawn 60m").</li>
+      <li>The right edges don't line up: the minimap frame is 10&nbsp;px from the edge, the compass and Journal 12&nbsp;px.</li>
+      <li>The ☰ button is centred between two lines of different lengths, so it lines up with neither.</li>
+    </ol>
+  </div>
+
+  <!-- AFTER: the proposal over the same world, the minimap moved -->
+  <div class="cap">
+    <div class="phone bare" id="after"></div>
+    <h2>Proposed</h2>
+    <ol>
+      <li>The ☰ button spans both lines (34&nbsp;px = 16 + 3 + 16 − 1), so its top and bottom line up with the text.</li>
+      <li>Line 1: the place name on the left. Gold and cinders are on the right, ending on the minimap's right edge (12&nbsp;px from the screen edge).</li>
+      <li>Line 2, under the place name: the sky dial, the weather and the time of day, then the wages, in one row with one left edge. It stops 118&nbsp;px short of the right side, so it never runs under the minimap. Each item keeps its own tap pad (44&nbsp;px tall), and the pads touch nothing else.</li>
+      <li>The minimap's frame starts 6&nbsp;px under line 1 (y&nbsp;36, was 58). The compass (152, was 174) and the Journal (204, was 226) follow it up with the same 8&nbsp;px gaps.</li>
+      <li>Every right edge is 12&nbsp;px in from the screen edge: the gold and cinders, the minimap, the compass, the Journal.</li>
+    </ol>
+  </div>
+
+  <!-- THE HARD CASES -->
+  <div class="cap">
+    <div class="phone short bare" id="fens" style="background-position:center -0px"></div>
+    <h2>Longest: Fens, 6-figure gold, wages owed</h2>
+    <p>"The Greywater Fens", gold 123&nbsp;456, the wages owed and shown in red with ⚠. Line 1 still fits: the name ends at x&nbsp;182 and the gold starts at x&nbsp;243. The place name is the only thing that shrinks (with an ellipsis), as it does now.</p>
+    <div class="phone short bare" id="dungeon" style="margin-top:22px"></div>
+    <h2>Underground: no sky, depth and room pill</h2>
+    <p>No sky dial underground, so line 2 shows only the wages. The room pill and a boss's bar still sit under the bar, centred, and clear of the minimap (the renderer already keeps them left of it).</p>
+    <div class="phone short bare" id="notch" style="margin-top:22px"></div>
+    <h2>A phone with a notch</h2>
+    <p>The same layout moved down by the safe-area inset (47&nbsp;px here). The minimap still sits 6&nbsp;px under line 1.</p>
+  </div>
+</div>
+
+<div class="spec">
+  <div>
+    <h3>Measured (CSS px, 390 wide, no inset)</h3>
+    <table>
+      <tr><th></th><th>before</th><th>proposed</th></tr>
+      <tr><td>bar, line 1</td><td>14–28</td><td>14–30</td></tr>
+      <tr><td>bar bottom (labels clamp)</td><td>54</td><td>54</td></tr>
+      <tr><td>minimap frame</td><td>272–380 × 58–166</td><td>270–378 × 36–144</td></tr>
+      <tr><td>compass</td><td>334–378 × 174–218</td><td>334–378 × 152–196</td></tr>
+      <tr><td>Journal</td><td>334–378 × 226–270</td><td>334–378 × 204–248</td></tr>
+      <tr><td>sky tap pad over minimap</td><td>4 px</td><td>none</td></tr>
+      <tr><td>wages tap pad over minimap</td><td>up to 6 px</td><td>none</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>How it would be built</h3>
+    <ul>
+      <li><code>index.html</code>: <code>#hud</code> becomes a 3-column grid (☰ · name and line 2 · gold and cinders), two 16 px rows.</li>
+      <li><code>src/ui/hud.js</code>: the sky dial and wages move into one line-2 row under the name (<code>#hudLine2</code>), each keeping its own button and tap pad. It publishes <code>--hud-l1</code> (line 1's bottom) beside <code>--hud-b</code>.</li>
+      <li><code>src/render/renderer.js</code>: <code>mmTop()</code> reads line 1's bottom + 6, not the bar's bottom + 10. <code>MM_RIGHT</code> becomes 12. The label rule that keeps plaques clear of the buttons takes the new tops.</li>
+      <li><code>src/ui/compass.js</code>, <code>journal.js</code>: <code>top</code> becomes the minimap's bottom + 8 / + 60 (one <code>--mm-b</code> variable), so the buttons can't drift from the minimap again.</li>
+      <li>Phone on its side and desktop: the same grid. On a wide screen the EMBERFALL wordmark comes back after the ☰, as it does now.</li>
+    </ul>
+  </div>
+  <div>
+    <h3>Checks</h3>
+    <ul>
+      <li>Browser test: the existing "the sky dial overlaps nothing" check is extended. No tap pad on the bar meets the minimap's frame, and line 2 ends left of it, for the Vale, for the Fens with 6-figure gold and owed wages, and underground.</li>
+      <li>Every right edge is 12 px in (plus the notch inset), and the buttons sit at the minimap's bottom + 8 and + 60.</li>
+      <li>Before-and-after captures at 390 × 844 and on a phone on its side, kept in <code>docs/img/</code>.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // the proposal, drawn over the bare world (the real capture with the bar, minimap and buttons taken off)
+  const night = `<svg width="22" height="13" viewBox="0 0 22 13" aria-hidden="true"><path d="M2 11.5 A9 9 0 0 1 20 11.5" fill="none" stroke="rgba(214,190,150,.45)" stroke-width="1.2"/><line x1="0" y1="11.8" x2="22" y2="11.8" stroke="rgba(214,190,150,.6)" stroke-width="1"/><circle cx="8.2" cy="2.6" r="2.8" fill="#a8c0ff"/><circle cx="9.5" cy="1.7" r="2.3" fill="#141020"/></svg>`;
+  const rain = `<svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true"><g transform="translate(0 -3)"><path d="M3.2 12.6h8.6a2.5 2.5 0 0 0 .2-5 3.3 3.3 0 0 0-6.3-1 2.6 2.6 0 0 0-2.5 6z" fill="#7a8090" stroke="#141020" stroke-width=".8" stroke-linejoin="round"/></g>`
+    + [4.5, 8, 11.5].map((x) => `<line x1="${x}" y1="11" x2="${x - 1.4}" y2="13.8" stroke="#141020" stroke-width="2.4" stroke-linecap="round"/><line x1="${x}" y1="11" x2="${x - 1.4}" y2="13.8" stroke="#7fb0e0" stroke-width="1.2" stroke-linecap="round"/>`).join('') + `</svg>`;
+  const compass = `<svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M13 5l3 8-3 8-3-8z" fill="#e0a85a" stroke="none"/><path d="M13 13l3 0-3 8-3-8z" fill="#5a4630" stroke="none"/></svg>`;
+  const book = `<svg viewBox="0 0 24 24"><path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z"/><path d="M12 6.3v13.4"/></svg>`;
+  function bar(o) {
+    const st = o.inset || 0, l1b = st + 30, mmT = l1b + 6;
+    const sky = o.sky === false ? '' : `<span class="sky">${night}${rain}<span style="color:#a8c0ff">Night</span></span>`;
+    let h = `<div class="hud2" style="--st:${st}px"><div class="menu">☰</div><div class="place">${o.place}</div>`
+      + `<div class="money">gold <b>${o.gold}</b><span class="sep"></span><em>✦</em> <b>${o.embers}</b></div>`
+      + `<div class="l2">${sky}<span class="wage${o.owed ? ' owed' : ''}">${o.wage}</span></div></div>`
+      + `<div class="mm" style="top:${mmT}px"><img src="img/hud-mockup/minimap.png" alt=""></div>`;
+    if (o.buttons !== false) h += `<div class="rb" style="top:${mmT + 108 + 8}px">${compass}</div><div class="rb" style="top:${mmT + 108 + 60}px">${book}</div>`;
+    if (o.pill) h += `<div class="pill" style="top:${st + 62}px;left:calc((390px - 130px) / 2)">${o.pill}</div>`;
+    if (o.inset) h += `<div class="notch"></div><div class="sb" style="left:48px">5:47</div>`;
+    if (o.guides) h += `<div class="gd v" style="left:378px"></div><div class="gl" style="left:330px;top:${mmT + 290}px">right 12</div>`
+      + `<div class="gd h" style="top:${l1b}px"></div><div class="gl" style="left:6px;top:${l1b + 30}px">line 1 ↓ 6 → minimap ${mmT}</div>`
+      + `<div class="gd h" style="top:${mmT + 108 + 8}px;left:300px"></div><div class="gl" style="left:236px;top:${mmT + 118}px">compass ${mmT + 116}</div>`
+      + `<div class="gd v" style="left:52px;top:${st}px;bottom:${844 - st - 60}px"></div>`
+      + `<div class="gd v" style="left:${390 - 120}px;top:${st + 30}px;bottom:${844 - st - 52}px"></div><div class="gl" style="left:200px;top:${st + 62 + (o.pill ? 22 : 0)}px">line 2 stops ↦</div>`;
+    return h;
+  }
+  document.getElementById('after').innerHTML = bar({ place: 'The Hollow Vale', gold: '9440', embers: '68', wage: '<span class="dot">·</span>−312 · dawn 3m', guides: true });
+  document.getElementById('fens').innerHTML = bar({ place: 'The Greywater Fens', gold: '123456', embers: '1204', wage: '<span class="dot">·</span>owed 120 ⚠', owed: true, buttons: false, guides: true });
+  document.getElementById('dungeon').innerHTML = bar({ place: 'depth 3', gold: '9440', embers: '68', wage: '−312 · dawn 3m', sky: false, buttons: false, pill: 'ROOM LV 13 · WAVE 4' });
+  document.getElementById('notch').style.backgroundPosition = 'center 47px';
+  document.getElementById('notch').innerHTML = bar({ place: 'The Hollow Vale', gold: '9440', embers: '68', wage: '<span class="dot">·</span>−312 · dawn 3m', inset: 47, buttons: false });
+</script>
+</body></html>
