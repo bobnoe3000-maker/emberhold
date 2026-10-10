@@ -1123,12 +1123,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify({ card: card.replace(/\n/g, ' | '), after }));
     await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits.find((x) => x.to === 'overland'), pl = s.state.player; pl.x = pl.px = (e.x0 + e.x1) / 2; pl.y = pl.py = (e.y0 + e.y1) / 2; });
     await run(20); await p.waitForTimeout(1200); await run(20);
+    await p.waitForFunction(() => !globalThis.__renderer.transiting, null, { timeout: 30000 });   // (the Fens baked: until then the sim holds still, and a walk can't start)
     await p.locator('#mapBtn').tap(); await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 }); await p.waitForTimeout(600);
     const toad = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), q = L.pins.find((x) => x.id === 'toadking_mound'), m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / L.w; return { x: r.left + (q.x - L.x0) * k, y: r.top + (q.y - L.y0) * k }; });
     await p.touchscreen.tap(toad.x, toad.y); await p.waitForTimeout(300);
     const land = await p.evaluate(() => ({ title: document.querySelector('#worldmap h2').textContent, card: document.querySelector('#worldmap .card.on')?.innerText || '' }));
-    await p.locator('#worldmap .card .go').tap(); await run(10);
-    const walk = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return { dest: pl.dest && pl.dest.label, open: document.querySelector('#mapWrap').classList.contains('on') }; });
+    await p.locator('#worldmap .card .go').tap();
+    let walk = null;
+    for (let i = 0; i < 20 && !(walk && walk.dest); i++) { await run(3); walk = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return { dest: pl.dest && pl.dest.label, open: document.querySelector('#mapWrap').classList.contains('on') }; }); }
     check('world map: on the Fens, the land tab\'s Toadking\'s Mound (levels, floors, its boss) → Walk there walks you to it',
       land.title === 'The Greywater Fens' && /Toadking's Mound/.test(land.card) && /levels 8–11/.test(land.card) && /The Toadking/.test(land.card) && walk.dest === "Toadking's Mound" && !walk.open && errs.length === 0,
       JSON.stringify({ land: { ...land, card: land.card.replace(/\n/g, ' | ') }, walk }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
