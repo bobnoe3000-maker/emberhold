@@ -41,22 +41,24 @@ import { siteOf, bossAt } from './sites.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards } from './hazards.js';
 
-// class combat traits (stats are in party.js / the GDD tables; abilities in skills.js)
+// class combat traits (stats are in party.js / the GDD tables; abilities in skills.js). v1.47 (the owner: "Ranged
+// combat is too close, double the current target range"): every shooter's reach is twice what it was, here, under SHOT
+// and among the foes, and BOLT_SPEED with it, so a shot takes as long to land
 const CLASS_FIGHT = {
   fighter: { interval: 1.3, range: 3.0, speed: 6.8 },
   rogue:   { interval: 0.9, range: 2.8, speed: 7.5 },
-  mage:    { interval: 1.6, range: 7.0,  speed: 6.4, bolt: 'fire' },
+  mage:    { interval: 1.6, range: 14.0,  speed: 6.4, bolt: 'fire' },
   cleric:  { interval: 1.3, range: 3.0, speed: 6.6 },
-  shaman:  { interval: 1.5, range: 6.0, speed: 6.5, bolt: 'spirit' },   // (v1.19) a spirit bolt at range; stands off like the mage
+  shaman:  { interval: 1.5, range: 12.0, speed: 6.5, bolt: 'spirit' },   // (v1.19) a spirit bolt at range; stands off like the mage
 };
 // A rogue with a bow or crossbow (items.js `shot`) shoots instead of closing in, and backs off what
 // comes at them as the mage does. Bows are quick, crossbows hit hard and slow; the longer the reach,
 // the slower the shot. Their ATK is the weapon's, so the trade is the reach and the off-hand.
 const SHOT = {
-  bow:      { interval: 0.95, range: 5.0, bolt: 'arrow', speed: 6.4 },
-  longbow:  { interval: 1.1,  range: 6.5, bolt: 'arrow', speed: 6.4 },
-  crossbow: { interval: 1.05, range: 5.0, bolt: 'bolt',  keepAway: 2.8, speed: 6.4 },   // the hand crossbow: one hand, the parrying dagger stays
-  heavy:    { interval: 1.35, range: 6.0, bolt: 'bolt',  keepAway: 3.2, speed: 6.4 },
+  bow:      { interval: 0.95, range: 10.0, bolt: 'arrow', speed: 6.4 },
+  longbow:  { interval: 1.1,  range: 13.0, bolt: 'arrow', speed: 6.4 },
+  crossbow: { interval: 1.05, range: 10.0, bolt: 'bolt',  keepAway: 2.8, speed: 6.4 },   // the hand crossbow: one hand, the parrying dagger stays
+  heavy:    { interval: 1.35, range: 12.0, bolt: 'bolt',  keepAway: 3.2, speed: 6.4 },
 };
 /** how a party member fights: its class's traits, or its bow's @param {any} m */
 export const fightOf = (m) => { const F = CLASS_FIGHT[m.cls], k = m.cls === 'rogue' && shotOf(m); return k ? { ...F, ...SHOT[k] } : F; };
@@ -71,7 +73,7 @@ export const behind = (att, tgt) => ((tgt.fx || 0) * (att.x - tgt.x) + (tgt.fy |
 export const clustered = (tgt, foes) => foes.filter((o) => o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < CLUSTER_R).length >= 2;
 // stance: the HP fraction under which heals / guards go up, and whether MP is held back for them
 const STANCE_AI = { aggressive: { low: 0.3, reserve: 0 }, balanced: { low: 0.5, reserve: 0 }, defensive: { low: 0.65, reserve: 0.5 } };
-const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5;
+const BENCH_XP = 0.5, WIPE_HP = 0.3, DEF_LEASH = 5, ROGUE_PICK = 8;
 // a room holds for as long as you stay, so "downed twice in one visit" is measured over a
 // stretch: stand through WIND waves in a row and a member's downs are forgotten
 const WIND = 1;
@@ -112,8 +114,8 @@ const XP_SHARE = [1, 1, 0.65, 0.5];
 const ENEMIES = {
   minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
   warrior: { hp: 54, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 3.0, speed: 2.9, xp: 14, gold: 2 },
-  rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 6.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
-  mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
+  rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 12.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
+  mage:    { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5,  interval: 2.0, range: 14.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 };
 // The Redhand Company (world doc §8, M5): deserters turned bandits, baked from recoloured hero models.
 // Each mirrors an Ashbound role's strength (the difficulty contract holds whoever fills the wave):
@@ -122,8 +124,8 @@ const ENEMIES = {
 Object.assign(ENEMIES, {
   cutthroat: { hp: 33, atk: 7.5, def: 3, crit: 9, dodge: 8, interval: 1.1, range: 2.8, speed: 3.6, xp: 10, gold: 2 },
   brute:     { hp: 58, atk: 9.5, def: 5, crit: 5, dodge: 2,  interval: 1.5, range: 3.0, speed: 2.8, xp: 14, gold: 3 },
-  crossbow:  { hp: 36, atk: 9.3, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 6.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
-  acolyte:   { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 7.0, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
+  crossbow:  { hp: 36, atk: 9.3, def: 3, crit: 10, dodge: 6, interval: 1.7, range: 13.0, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  acolyte:   { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 14.0, speed: 2.8, xp: 15, gold: 4, bolt: 'fire' },
 });
 // The hill goblins of the Scrag Warren (world doc §8, v1.19): small, quick and many. The same mirror: the skirmisher
 // a minion's strength (lighter, quicker, more dodge), the bruiser a warrior's (their elite), the archer a rogue's
@@ -131,8 +133,8 @@ Object.assign(ENEMIES, {
 Object.assign(ENEMIES, {
   goblin:  { hp: 31, atk: 7.2, def: 3, crit: 8, dodge: 12, interval: 1.0, range: 2.6, speed: 3.9, xp: 10, gold: 2 },
   bruiser: { hp: 56, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.5, range: 3.0, speed: 2.9, xp: 14, gold: 3 },
-  archer:  { hp: 34, atk: 8.2, def: 3, crit: 10, dodge: 11, interval: 1.6, range: 6.5, speed: 3.6, xp: 12, gold: 2, bolt: 'arrow' },
-  hexer:   { hp: 32, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 7.0, speed: 2.8, xp: 14, gold: 3, bolt: 'hex' },
+  archer:  { hp: 34, atk: 8.2, def: 3, crit: 10, dodge: 11, interval: 1.6, range: 13.0, speed: 3.6, xp: 12, gold: 2, bolt: 'arrow' },
+  hexer:   { hp: 32, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 14.0, speed: 2.8, xp: 14, gold: 3, bolt: 'hex' },
 });
 // The Greywater Fens' own (M8 slice 4; world doc §8 v1.20), the same mirror. The fen ghoul a minion's strength (a
 // long-armed scavenger: quick, a long reach, more dodge), the Toadking's reed-cutter a warrior's (a bill-hook: the
@@ -142,11 +144,11 @@ Object.assign(ENEMIES, {
 Object.assign(ENEMIES, {
   fenghoul:   { hp: 34, atk: 7.4, def: 3, crit: 7, dodge: 9, interval: 1.1, range: 3.0, speed: 3.7, xp: 10, gold: 1 },
   reedcutter: { hp: 56, atk: 9.4, def: 5, crit: 6, dodge: 3, interval: 1.5, range: 3.3, speed: 2.9, xp: 14, gold: 3 },
-  fowler:     { hp: 35, atk: 9.0, def: 3, crit: 10, dodge: 7, interval: 1.7, range: 6.5, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
-  bogwitch:   { hp: 33, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 7.0, speed: 2.7, xp: 15, gold: 3, bolt: 'marsh' },
+  fowler:     { hp: 35, atk: 9.0, def: 3, crit: 10, dodge: 7, interval: 1.7, range: 13.0, speed: 3.3, xp: 12, gold: 3, bolt: 'bolt' },
+  bogwitch:   { hp: 33, atk: 10.5, def: 2, crit: 5, dodge: 6, interval: 2.0, range: 14.0, speed: 2.7, xp: 15, gold: 3, bolt: 'marsh' },
   harvester:  { hp: 57, atk: 9.5, def: 5, crit: 5, dodge: 3, interval: 1.5, range: 3.4, speed: 2.8, xp: 15, gold: 4 },
   drowned:    { hp: 37, atk: 7, def: 4, crit: 5, dodge: 4, interval: 1.2, range: 2.8, speed: 3.1, xp: 10, gold: 1 },
-  cantor:     { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 7.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
+  cantor:     { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 14.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 });
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
@@ -217,7 +219,7 @@ export function halved(tgt, foes) {
 export const novaTargets = (A, foes, m) => foes.filter((o) => !o.dead && o.hp > 0 && !(o.spawn > 0) && (!A.undead || o.undead) && hypot(o.x - m.x, o.y - m.y) < A.radius);
 /** the family filling this floor's waves @param {any} w */
 export const familyOf = (w) => { const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound; };
-const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 13, AUTO_DELAY = 0.5;
+const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
 // skeleton lies DEATH_T s (death clip, then a fade) before it's cleared.
@@ -1159,7 +1161,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // a fighter guards the leader — while it stands: guarding a Downed hero, one stood idle 45 s
         // on a far station beside two foes hitting it
         const guard = m.cls === 'fighter' && i > 0 && stance !== 'aggressive' && alive(H);
-        let tgt = (focus && near.includes(focus) ? focus : null) || (m.cls === 'rogue' ? near.reduce((a, b) => (b.hp < a.hp ? b : a)) : guard ? nearest(H, near) : nearest(m, near));
+        // a rogue picks off the weakest foe it can get at: within 8 tiles, or its bow's reach (v1.47: with shooters standing
+        // twice as far back, the weakest anywhere sent a dagger rogue on runs across the room, and the right party held a
+        // level-9 room 1.2 waves less)
+        const pick = m.cls === 'rogue' ? near.filter((e) => hypot(e.x - m.x, e.y - m.y) < Math.max(ROGUE_PICK, F.range)) : null;
+        let tgt = (focus && near.includes(focus) ? focus : null) || (pick ? (pick.length ? pick.reduce((a, b) => (b.hp < a.hp ? b : a)) : nearest(m, near)) : guard ? nearest(H, near) : nearest(m, near));
         if (!tgt) return;
 
         const d = hypot(tgt.x - m.x, tgt.y - m.y);
