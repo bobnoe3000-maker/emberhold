@@ -50,6 +50,8 @@ node tools/worldmap/towns.mjs             # the region towns at one scale (docs/
 node tools/worldmap/streets.mjs [--waystations]   # the region towns' and waystations' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
 node tools/worldmap/overlands.mjs         # each region's overland at the game's scale (docs/town-streets-proposal.md) → docs/img/world/overland-<region>.jpg
 node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin and an overland's pins) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png; the overlands' copies in assets/maps/ (the World map's land tab)
+node tools/dungeon/plans.mjs [seeds]      # the dungeon layouts top-down at one scale, today's caverns beside the proposed halls (docs/dungeon-halls-proposal.md) → docs/img/dungeon/plans.png, and the numbers
+node tools/dungeon/capture.mjs [site] [out]   # both layouts in the game (needs npm run serve; the prototype is swapped in by the browser, the game is unchanged): entrance, hall, room, descent
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here
