@@ -11,6 +11,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const { ENV_FOOT } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'envfoot.js')).href);
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns'));
 const W = 1200, S = 4.4, MARGIN = 40;
 const PAPER = '#e9dfc6', INK = '#3b2f24', DIM = '#6e5e4a', GOLD = '#b8862e', SVC = '#d9ae4e';
@@ -23,7 +24,8 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 // ── the square every town keeps (src/sim/outdoor.js buildTown: Thornwick's tiles) ─────────────────────────────────────
 const SQUARE = {
   plaza: [60, 62, 24, 22], forecourt: [36, 40, 8, 7], well: [66, 71], mouth: [76, 76], hub: [58, 58, 32],
-  services: [['temple', 27, 17, 41, 30], ['tavern', 23, 42, 35, 54], ['shop', 45, 37, 55, 45], ['smith', 46, 63, 56, 71], ['inn', 68, 50, 78, 60]],
+  // the services' real footprints: where buildTown puts them, and their baked sizes (src/sim/envfoot.js)
+  services: [['temple', 34, 24], ['tavern', 29, 48], ['shop', 50, 41], ['smith', 51, 67], ['inn', 73, 55]].map(([k, x, y]) => { const f = ENV_FOOT[`vale_${k}_1`]; return [k, x + f[0], y + f[1], x + f[2], y + f[3]]; }),
 };
 
 // ── a plan: a builder the town specs draw into, then one SVG ──────────────────────────────────────────────────────────

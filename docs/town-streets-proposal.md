@@ -1,6 +1,6 @@
 # The region towns' streets, and their overlands
 
-**Proposal, 2026-10-10.** The owner: *"Design the other town layouts. Town square works well for the menu, but outside
+**Proposal, 2026-10-10; two of its questions answered the same day (see Decided).** The owner: *"Design the other town layouts. Town square works well for the menu, but outside
 of this there could be a few side streets and in the bigger towns, a grid with houses and shops. The city with the
 dock, show me layout designs for each, and their respective overland maps."*
 
@@ -33,7 +33,7 @@ sketches, not bakes. The plans are top-down, north up, all at one scale, in the 
 | Kind | What it is | On the plans |
 |---|---|---|
 | **House** | Scenery. A door, lit windows at night, a doorstep (the shipped `dress` props). Terraces in Ashgate, brick in Tollhaven, tenements in the Lamphall. | red-brown blocks |
-| **Shop** | A named shopfront with a sign: a lampwright, a ship-chandler, a pawnbroker. Recommended: it's **where a named person stands** (a quest-giver, a trial teacher, a board job's poster, a rumour), not a new menu. The five services stay the only menus. | orange, numbered |
+| **Shop** | A named shopfront with a sign: a lampwright, a ship-chandler, a pawnbroker. It's scenery, and **where a named person stands** (a quest-giver, a trial teacher, a board job's poster, a rumour), not a new menu. The five services stay the only menus (decided). | orange, numbered |
 | **Landmark** | Something you go and look at, or a quest goes to: the Shift-Office's bell, the Speaker's counting-house, the bell tower, the embassy quarters. | purple, numbered |
 | **Low building** | Workshops, sheds, stalls: one storey, so they can stand in front of the square. | pale |
 
@@ -160,12 +160,33 @@ to the west, and the Glass Keep stands north-east.
   - nothing over one storey stands in the hatched half of the frame;
   - the only way out is through the gate.
 
+## Thornwick, as shipped, and the minimap
+
+Thornwick stays as it is (decided). Its map is drawn from the game's own world, not by hand:
+`node tools/worldmap/minimap.mjs` builds each shipped scene with the sim (`createSim` → `world`) and draws:
+- every tile's ground (`world.tmat`);
+- every placed building, wall, tree and rock at its baked footprint (`world.structs`, `src/sim/envfoot.js`).
+
+So the map lines up with the world tile for tile.
+
+![Thornwick, drawn from the game's world](img/towns/map-thornwick.jpg)
+
+**For the minimap** (the owner: *"we might use these as the minimap backgrounds"*), the same tool writes a bare copy
+of every shipped scene, with no words: Thornwick, Saltmere, the Vale overland and the Fens overland. Each is
+`docs/img/towns/minimap-<scene>.png`, at 4 px a tile, with a `.json` beside it giving the world tile at its top-left
+corner (`x0`, `y0`) and its size. A minimap places the hero at `((x − x0) × 4, (y − y0) × 4)`, and redraws a scene's
+image when its layout changes (the tool reruns from the sim). Each new town gets its bare map from the same tool once
+it's built. The street plans above are proposals, and their maps come from the built towns, not the sketches.
+
+## Decided
+
+The owner (2026-10-10):
+- **Shops are scenery, with people.** A shopfront is where a named person stands. The five services in the square
+  stay the only menus.
+- **Thornwick stays as it is.** It gets a map drawn from the game (above), and the shipped scenes get bare copies for
+  the minimap.
+
 ## Still open
 
-1. **Shops: scenery with a person, or new counters?** Recommended: a shopfront is where a named person stands (quest,
-   trial, rumour), and the five services stay the only menus, as the owner's note puts it. The other way would give
-   a few shops one thing the region's shop doesn't sell. That's more UI, and it moves the menu off the square.
-2. **Thornwick:** it could get the same treatment (two or three lanes behind the square: Maudry's back yard, Bess
-   Hale's workshop, Nell Tolley's stable), or stay as the reference it is.
-3. **The waystations** (Kell's Rest, Brine Cross, Hollin Ford, the Frozen Hospice) stay a single street each.
+1. **The waystations** (Kell's Rest, Brine Cross, Hollin Ford, the Frozen Hospice) stay a single street each.
    Brine Cross's street is its bridge.
