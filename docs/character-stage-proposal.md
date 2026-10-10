@@ -13,6 +13,8 @@ animated in place, none overlapping, through the real renderer.
 - **Test:** browser §15c. The whole cast at 390 × 844 loads, nothing overlaps or falls off
   screen, and figures walk in place.
 - **Use it:** see *As built* below.
+- **The rest of the art** (every environment sprite, prop, effect, icon and portrait) has its own views on the same
+  page, `show=env|props|fx|icons|faces`: see [art-review.md](./art-review.md).
 
 ![Layout mock: the party, Thornwick and the foes in rows, walking in place](img/character-stage-mock.png)
 

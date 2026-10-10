@@ -448,10 +448,13 @@ export function createRenderer(canvas, sim, input) {
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : [210, 210, 220], glow = kind === 'fire' ? 3 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : [210, 210, 220], glow = kind === 'fire' ? 5 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.9)) continue;
-      const j = y * w + x; sp.mask[j] = 1; sp.alb.set(col, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < 1.8 ? glow : 0;
+      // a round orb, a hot core in a coloured rim (a 2.9 radius took the whole 5 × 5 square and read as a square tile at
+      // any zoom: art critic pass 16, the effects' strips)
+      const d = Math.hypot(x - 3, y - 3); if (d > (kind === 'bolt' ? 1.6 : 2.5)) continue;
+      const j = y * w + x, hot = kind !== 'bolt' && d < 1.2, c = hot ? [col[0] + (255 - col[0]) * 0.6, col[1] + (255 - col[1]) * 0.6, col[2] + (255 - col[2]) * 0.6] : col;
+      sp.mask[j] = 1; sp.alb.set(c, j * 3); sp.nrm.set([127, 160, 250], j * 3); sp.emi[j] = d < (kind === 'fire' ? 2.6 : 1.8) ? glow : 0;   // (fire: the whole orb burns, lava-hot; with ember at its core it read a dull tan at night)
     }
     return (bolts[kind] = sp);
   }
@@ -944,8 +947,13 @@ export function createRenderer(canvas, sim, input) {
     }
   }
 
+  // the render clock (dev slow motion runs it slow, ?dev&manual steps it): everything timed on screen reads this, so a
+  // capture on the manual clock is the same pixels every run (the numbers and the camera's jolt read the wall clock
+  // once, and came out at random in captures: art-review.md)
+  let clockNow = 0;
+  const clock = () => clockNow || performance.now();
   let flash = null;
-  sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: performance.now() + 90 }; });
+  sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: clock() + 90 }; });
   // descending / restoring rebuilds the world — rebuild seed-keyed props + re-bake.
   const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
   props = withExit(props);
@@ -954,9 +962,9 @@ export function createRenderer(canvas, sim, input) {
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
   sim.bus.on('cageDropped', () => { terrValid = false; }); sim.bus.on('cageBroken', () => { terrValid = false; });   // (lamps.js: a harvester's cage on the floor, then broken)
-  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: performance.now() + 2600 }; });
+  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
   preloadFamily();
-  banner = { text: sceneTitle(), until: performance.now() + 2600 };
+  banner = { text: sceneTitle(), until: clock() + 2600 };
 
   // ── The Stage (dev only: src/dev/stage.js, docs/character-stage-proposal.md) ──────────────────────
   // A lineup of figures on the stage world, each standing on its spot and playing the clip the Stage
@@ -978,8 +986,15 @@ export function createRenderer(canvas, sim, input) {
       const z = heightAt(sim.world, Math.floor(a.x), Math.floor(a.y)), q = project(a.x, a.y, z);
       const sp = atl.cells[an.dir][an.frame], fx = ox + q.sx, fy = oy + q.sy, bb = spriteBox(sp);
       a.box = [Math.round(fx) - sp.ax + bb[0], Math.round(fy) - sp.ay + bb[1], Math.round(fx) - sp.ax + bb[2], Math.round(fy) - sp.ay + bb[3]];   // drawn bounds, native px (the overlap test)
-      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: 0, atl, a: an });
+      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: a.team || 0, atl, a: an });
     }
+    // the art review's other views (src/dev/stage.js: show=env · props · fx): what the Stage lays out besides figures,
+    // drawn by the same stamping, light and effects as play. The Stage pushes sprite draws and calls effects through this.
+    if (st.frame) st.frame(stageApi(draws, ox, oy, now));
+  }
+  function stageApi(draws, ox, oy, now) {
+    return { now, ox, oy, draws, project, ZH, HW, HH, fx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE,
+      at: (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, z }; } };
   }
   const boxes = new WeakMap();
   const spriteBox = (sp) => { let b = boxes.get(sp); if (b) return b; let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
@@ -1010,7 +1025,7 @@ export function createRenderer(canvas, sim, input) {
     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
     const anchor = (sideL ? 0.52 : 0.47) + (0.56 - 0.47) * t;   // hero sits higher (party cards below; level with no cards there); the square keeps its framing
     let jx = 0, jy = 0;
-    if (shake) { const a = (performance.now() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
+    if (shake) { const a = (clock() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
     // SUB-PIXEL SCROLL (critic pass 3: the world stepped in whole native pixels — 3 CSS px — in
     // an uneven 1-1-2 cadence, a judder over the whole screen). The window is rendered at the
     // camera rounded UP (ox, oy) and PASS B shifts the upscaled image back by the fraction
@@ -1022,7 +1037,6 @@ export function createRenderer(canvas, sim, input) {
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
-  let clockNow = 0;                                   // the render clock (dev slow motion runs it slow)
   function render(alpha, now) {
     clockNow = now;
     const p = sim.state.player, st = stage && sim.world.kind === 'stage' ? stage : null;
@@ -1161,8 +1175,8 @@ export function createRenderer(canvas, sim, input) {
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
-    const rings = !!sim.battle;
-    if (sim.battle && (sim.battle.hazards?.length || sim.battle.flood > 0)) paintHazards(sim.battle, ox, oy, now);   // the mud and the water, on the ground under the figures
+    const hb = st ? st.hazard : sim.battle, rings = st ? !!st.rings : !!sim.battle;   // (the Stage's FX view paints its own hazard, and rings its figures)
+    if (hb && (hb.hazards?.length || hb.flood > 0)) paintHazards(hb, ox, oy, now);   // the mud and the water, on the ground under the figures
     if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
@@ -1171,6 +1185,7 @@ export function createRenderer(canvas, sim, input) {
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
     fx.particles(now, fxProj);
+    if (st && st.afterFx) st.afterFx({ now, proj: fxProj, fx });   // (the art review's FX view: what draws straight into the light, the marsh-lights)
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
     if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
 
@@ -1353,7 +1368,7 @@ export function createRenderer(canvas, sim, input) {
     }
     // who has a quest for you (sim quests.js marks): a gold "!" for one to take, a green "?" for one to hand
     // in, bobbing over their head and seen from across the square. The symbol says which, not just the colour.
-    const QM = sim.quests && sim.quests.marks ? sim.quests.marks() : {}, bob = Math.sin(performance.now() / 380) * 2;
+    const QM = sim.quests && sim.quests.marks ? sim.quests.marks() : {}, bob = Math.sin(clock() / 380) * 2;
     for (const n of sim.world.npcs || []) {
       const m = QM[n.id], d = Math.hypot(n.x - ix, n.y - iy); if (!m || d > 40 || !cast[n.id]) continue;
       const nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, nz);
@@ -1424,7 +1439,7 @@ export function createRenderer(canvas, sim, input) {
   const floats = [];
   // numbers fan out: each new float near a recent one steps sideways/up so a melee doesn't stack them into mush
   const addFloat = (x, y, text, color, size = 12, rise = 22) => {
-    const t0 = performance.now(), busy = floats.filter((f) => t0 - f.t0 < 450 && Math.hypot(f.x - x, f.y - y) < 1.5).length;
+    const t0 = clock(), busy = floats.filter((f) => t0 - f.t0 < 450 && Math.hypot(f.x - x, f.y - y) < 1.5).length;
     floats.push({ x, y, text, color, size, rise, t0, jx: ((busy % 3) - 1) * 11 + (busy ? 0 : 0), jy: Math.floor(busy / 3) * 9 + (busy % 2) * 4 });
     if (floats.length > 40) floats.shift();
   };
@@ -1434,7 +1449,7 @@ export function createRenderer(canvas, sim, input) {
     if (c.t === 'hit') {                                                          // sparks fly off the struck, away from the striker
       const st = styleOfSrc(c.src, c.party, ENEMY_ACTOR), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);
       let dx = b.sx - a.sx, dy = b.sy - a.sy; const l = Math.hypot(dx, dy); if (l > 1e-3) { dx /= l; dy /= l; } else { dx = 0; dy = -1; }
-      fx.impact(c.x, c.y, dx, dy, (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200], { heavy: c.heavy, crit: c.crit, now: clockNow || performance.now() });
+      fx.impact(c.x, c.y, dx, dy, (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200], { heavy: c.heavy, crit: c.crit, now: clock() });
     }
     if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
@@ -1448,48 +1463,48 @@ export function createRenderer(canvas, sim, input) {
     else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
     else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
     else if (c.t === 'hex') addFloat(c.x, c.y, 'hexed', '#b8e070', 11, 20);
-    else if (c.t === 'freed') fx.beam(c.x, c.y, SOUL_FREE, { now: clockNow || performance.now(), life: 1.4 });   // a bound foe laid down by its lamp's breaking: its soul goes up
+    else if (c.t === 'freed') fx.beam(c.x, c.y, SOUL_FREE, { now: clock(), life: 1.4 });   // a bound foe laid down by its lamp's breaking: its soul goes up
     else if (c.t === 'lifeline') addFloat(c.x, c.y, 'Lifeline', '#f0e0a0', 12, 24);
-    else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: performance.now(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
+    else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: clock(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
-  sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clockNow || performance.now() }); });   // a drop: a column of light where it fell
-  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: performance.now() + (w.cleared ? 1600 : 1300), small: true }; });
+  sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clock() }); });   // a drop: a column of light where it fell
+  sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: clock() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
   const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'],
     mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
     vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'] };
-  sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: performance.now() + 3200 }; });
+  sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: clock() + 3200 }; });
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
-  sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: performance.now() + 2200, small: true }; });
-  sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: performance.now() + 2000, small: true }; });
-  sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: performance.now() + 1800, small: true }; });
-  sim.bus.on('bossCage', () => { banner = { text: "Teague's cage breaks", sub: "a soul goes free · he's only a man now", until: performance.now() + 2400, small: true }; });
-  sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: performance.now() + 2000, small: true }; });
-  sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: performance.now() + 2000, small: true } : { text: 'The water goes down', until: performance.now() + 1800, small: true }; });
-  sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: performance.now() + 2000, small: true }; });
-  sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: performance.now() + 3200 }; });
-  sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: performance.now() + 2200, small: true }; });
-  sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: performance.now() + 1600 } : { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: performance.now() + 1100 }; });
-  sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: performance.now() + 2200, small: true }; });
-  sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: performance.now() + 3600 }; });
+  sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: clock() + 2200, small: true }; });
+  sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: clock() + 1800, small: true }; });
+  sim.bus.on('bossCage', () => { banner = { text: "Teague's cage breaks", sub: "a soul goes free · he's only a man now", until: clock() + 2400, small: true }; });
+  sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: clock() + 2000, small: true } : { text: 'The water goes down', until: clock() + 1800, small: true }; });
+  sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: clock() + 3200 }; });
+  sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
+  sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: clock() + 1100 }; });
+  sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: clock() + 2200, small: true }; });
+  sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: clock() + 3600 }; });
   // one of the slain raised: the column of holy light over them where they stand (fx.rise), and their ghost turning solid
   // (raisedAt, keyed by the member: presentation only). One on the bench isn't drawn, so only the banner says it.
   const raisedAt = new WeakMap();
   sim.bus.on('resurrected', (r) => {
-    const m = sim.state.party.find((q) => q.id === r.id), now = clockNow || performance.now(); if (!m) return;
+    const m = sim.state.party.find((q) => q.id === r.id), now = clock(); if (!m) return;
     raisedAt.set(m, now);
     const u = m === sim.state.party[0] ? sim.state.player : m; if (u.x !== undefined) fx.rise(u.x, u.y, { now });
   });
   // the count (sim lamps.js): a lamp breaks with its keeper, its souls going up in a violet column; a cage breaks underfoot
   const SOUL_FREE = [200, 180, 255];
   sim.bus.on('lampBroken', (l) => {
-    banner = { text: `${l.name} breaks`, sub: l.first ? `${l.held} souls go free · its line lies down` : 'its line lies down', until: performance.now() + 3600 };
-    fx.rise(l.x, l.y, { now: clockNow || performance.now(), life: 2.6, col: SOUL_FREE });
+    banner = { text: `${l.name} breaks`, sub: l.first ? `${l.held} souls go free · its line lies down` : 'its line lies down', until: clock() + 3600 };
+    fx.rise(l.x, l.y, { now: clock(), life: 2.6, col: SOUL_FREE });
   });
-  sim.bus.on('cageBroken', (c) => fx.rise(c.x, c.y, { now: clockNow || performance.now(), life: 1.6, col: SOUL_FREE }));
-  sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} is raised`, sub: r.how === 'shrine' ? 'back on their feet · the shrine’s light fades' : 'back on their feet · the temple’s grace', until: performance.now() + 3000 }; });
+  sim.bus.on('cageBroken', (c) => fx.rise(c.x, c.y, { now: clock(), life: 1.6, col: SOUL_FREE }));
+  sim.bus.on('resurrected', (r) => { banner = { text: `${r.name} is raised`, sub: r.how === 'shrine' ? 'back on their feet · the shrine’s light fades' : 'back on their feet · the temple’s grace', until: clock() + 3000 }; });
   // How a room's level reads against your hero's: at or below → gold, +1 → amber, +2 → orange, +3 or more → red.
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
   const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
@@ -1529,7 +1544,7 @@ export function createRenderer(canvas, sim, input) {
       }
     }
     // floating numbers
-    const t = performance.now();
+    const t = clock();
     for (let i = floats.length - 1; i >= 0; i--) {
       const f = floats[i], a = (t - f.t0) / 900; if (a >= 1) { floats.splice(i, 1); continue; }
       const [sx0, sy0] = scr(f.x, f.y, 56 + (f.jy || 0) + f.rise * a), sx = sx0 + (f.jx || 0) * S, sy = sy0;
@@ -1713,6 +1728,14 @@ export function createRenderer(canvas, sim, input) {
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
     /** dev: the Stage (src/dev/stage.js) — its lineup, camera and overlay; null to leave it */
     setStage(s) { stage = s; },
+    /** dev: the art review loads every environment atlas it shows (env, town-<region>) @param {string[]} names */
+    stageLoad(names) { for (const n of names) loadAtlas(n); },
+    /** dev: which environment atlases have landed, and the sprite ids in one (null until it has) @param {string} name */
+    envIds(name) { const a = envAtlases.get(name); return a ? Object.entries((envMeta || { sprites: {} }).sprites).filter(([, m]) => m.atlas === name).map(([id]) => id) : null; },
+    /** dev: the prop kinds the renderer draws (gsprite.js buildProps), each with its variants' count */
+    get propKinds() { return Object.fromEntries(Object.entries(props).map(([k, v]) => [k, v.length])); },
+    /** dev: the floating numbers on screen now (they live 900 ms of the render clock: browser test §15c2) */
+    get floatCount() { return floats.length; },
     /** dev: the Stage's zoom (integer): fewer tiles across the screen, the same native-pixel look */
     setZoom(z) { viewTiles = VIEW_TILES / Math.max(1, Math.round(z) || 1); resize(); },
     /** dev: the native view size (px) and whether every stage atlas has loaded (or failed) */

@@ -80,7 +80,7 @@ const audio = createAudio();
 createListener({ sim, audio, renderer });
 for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => audio.start(), { capture: true });
 if (DEV) globalThis.__audio = audio;
-if (STAGE) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
+if (STAGE) import('./dev/stage.js').then(async ({ createStage }) => { globalThis.__stage = await createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench

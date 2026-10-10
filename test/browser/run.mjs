@@ -698,9 +698,12 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForTimeout(800); await run(5);
     const at = await p.evaluate(async () => {
       const { shrineKind } = await import('./src/sim/shrines.js');   // (v1.30: a green one, the kind that mends)
-      const s = globalThis.__sim, find = () => [...s.world.props].find(([k, v]) => v === 'shrine' && shrineKind(s.world, ...k.split(',').map(Number)) === 'mend');
-      for (let d = 1; d < 6 && !find(); d++) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth: d, floors: [] });   // (a floor with a shrine)
-      const k = find(); if (!k) return null; const [x, y] = k[0].split(',').map(Number), q = s.state.player;
+      // a green shrine (the kind that mends) in the entrance, the sanctuary: in a fighting room the touch starts the fight and the
+      // hero walks off to it, closing the card (rooms in three sizes bring the foes in sooner); the card is what's tested here
+      const s = globalThis.__sim, L = s.world.level, isF = (x, y) => { const c = L.cells.get(x + ',' + y); return c && c.kind === 'floor' && c.room === L.entrance.id && !c.corridor; };
+      let k = null;
+      for (const [key, c] of L.cells) { if (k || c.kind !== 'floor' || c.room !== L.entrance.id || c.corridor || s.world.props.has(key)) continue; const [x, y] = key.split(',').map(Number); if (isF(x + 1, y) && isF(x + 2, y) && isF(x, y + 1) && shrineKind(s.world, x, y) === 'mend') k = [key]; }
+      if (!k) return null; s.world.props.set(k[0], 'shrine'); const [x, y] = k[0].split(',').map(Number), q = s.state.player;
       q.x = q.px = x + 1.5; q.y = q.py = y + 0.5; s.state.party[0].hp = 5;
       s.commands.push({ type: 'harvest', tx: x, ty: y }); return { x, y };
     });
@@ -741,6 +744,36 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       s1.length === 63 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
       JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
+  }
+}
+// 15c2. The art review's views (src/dev/review.js, docs/art-review.md): the environment (every atlas), the props, the
+// effects, the icons and the faces each open with no page error and list everything they should: every base sprite in
+// every environment atlas across their pages, every prop variant, every effect, every icon, and a face and a figure for
+// everyone a window shows (the party and the townsfolk), none of them missing.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const got = {};
+    for (const show of ['env', 'props', 'fx', 'icons', 'faces']) {
+      const ctx = await b.newContext({ viewport: { width: 1000, height: 900 } }), p = await ctx.newPage(), errs = [];
+      p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`);
+      await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
+      for (let i = 0; i < 120 && !(await p.evaluate(() => globalThis.__stage.ready)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
+      await p.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 60); });
+      if (show === 'icons' || show === 'faces') await p.waitForFunction(() => [...document.querySelectorAll('#reviewGrid img')].every((im) => im.complete), null, { timeout: 30000 });
+      // (a face, figure or icon that didn't load is replaced by its note, or is an image with no width)
+      got[show] = await p.evaluate(() => ({ total: globalThis.__stage.total, of: globalThis.__stage.of, pages: globalThis.__stage.pages,
+        missing: [...document.querySelectorAll('#reviewGrid i')].length + [...document.querySelectorAll('#reviewGrid img')].filter((im) => !im.naturalWidth).length }));
+      // the numbers live 900 ms of the render clock, not the wall's: one every 600 ms leaves one or two up after 20 s of
+      // the manual clock, however long the frames took to draw (on the wall clock they died early: none were up, and a
+      // capture caught them at random: art critic pass 16)
+      if (show === 'fx') got.fx.floats = await p.evaluate(() => { for (let i = 0; i < 1200; i++) globalThis.__frame(1000 / 60); return globalThis.__renderer.floatCount; });
+      got[show].errs = errs; await ctx.close();
+    }
+    await b.close();
+    check('art review: environment, props, effects, icons and faces each list every piece they should, with no page errors',
+      Object.values(got).every((v) => v.total > 0 && v.total === v.of && v.errs.length === 0 && !v.missing) && got.fx.floats >= 1 && got.fx.floats <= 2 && got.env.total >= 150, JSON.stringify(got));
   }
 }
 // 15d. Thornwick's people stand in view (art critic pass 8): at each part of the day, with everyone on that

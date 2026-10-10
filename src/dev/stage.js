@@ -52,9 +52,37 @@ const OPTS = { group: ['party', 'town', 'foes', 'bosses', 'wardens', 'all'], cli
 // a screen octant (0 = east, clockwise) → a world-space facing; the inverse of anim.js's octant
 const facing = (k) => { const a = (k * Math.PI) / 4, u = Math.cos(a), v = Math.sin(a); return { x: (u + v) / 2, y: (v - u) / 2 }; };
 
+// ── playback: what each figure is told, every frame (the animator does the rest). A figure's own `clip` (the art
+// review's FX view: each attacker its own) wins over the page's.
+/** @param {string} clip0 @param {string} dirP @param {number} speedP */
+export function makeAnim(clip0, dirP, speedP) {
+  const dur = (c) => (c ? (c.len / c.fps) * 1000 : 0);
+  return function anim(a, atl, now) {
+    const clip = a.clip || clip0;
+    const C = atl.meta.clips, k = a.dir !== null && a.dir !== undefined ? a.dir : dirP === 'turn' ? Math.floor(now / 1000) % 8 : +dirP || 0, f = facing(k);
+    const want = C[clip] ? clip : 'idle', base = { faceX: f.x, faceY: f.y, facing: true, dir0: k, x: a.vx, y: a.vy, moving: false, seed: 0 };
+    const dt = a.last ? Math.min(100, now - a.last) : 0; a.last = now;
+    if (want === 'walk') {                                                      // in place: a virtual walk the animator steps by distance
+      const v = (speedP || SPEED[a.kind]) * dt / 1000; a.vx += f.x * v * Math.SQRT2; a.vy += f.y * v * Math.SQRT2;
+      return { ...base, x: a.vx, y: a.vy, moving: true, facing: false };
+    }
+    const c = C[want], period = dur(c) + 700, n = Math.floor(now / period) + 1;   // one-shots repeat, with a breath between
+    if (want === 'attack' || want === 'attack2' || want === 'heavy') { a.unit.atkN = n; a.unit.atkKind = want === 'heavy' ? 'heavy' : want === 'attack2' ? 'b' : undefined; }
+    else if (want === 'hit') a.unit.hitN = n;
+    else if (want === 'fidget') a.unit.fidgetN = n;
+    else if (want === 'look') a.unit.lookN = n;
+    else if (want === 'death') { const p2 = dur(c) + 1500; return { ...base, dead: true, deadT: (now % p2) / 1000 }; }
+    else if (want === 'sit') return { ...base, sit: true };
+    else if (want === 'spawn') { const p2 = dur(c) + 900, q = (now % p2) / dur(c); return { ...base, spawnP: Math.min(0.999, q) }; }
+    return base;
+  };
+}
+
 /** @param {{ renderer: any, sim: any, params: URLSearchParams }} o */
-export function createStage({ renderer, sim, params }) {
+export async function createStage({ renderer, sim, params }) {
   const P = (k, d) => params.get(k) ?? d;
+  // the art review's other views (src/dev/review.js): the environment, the props, the effects, the icons, the faces
+  if (P('show', 'cast') !== 'cast') { const { createReview } = await import('./review.js'); return createReview({ renderer, sim, params, CAST, makeAnim }); }
   const zoom = Math.max(1, Math.min(3, Math.round(+P('zoom', '1')) || 1));
   renderer.setZoom(zoom);
   const clip = CLIPS.includes(P('clip', 'idle')) ? P('clip', 'idle') : 'idle', dirP = P('dir', '1'), cmp = P('cmp', ''), labels = P('labels', '1') !== '0';
@@ -101,26 +129,7 @@ export function createStage({ renderer, sim, params }) {
   }
   const headAt = heads.map((h) => ({ text: h.text, ...unproject(-W / 2 + 4, top + h.y + 10) }));
 
-  // ── playback: what each figure is told, every frame (the animator does the rest) ──
-  const dur = (c) => (c ? (c.len / c.fps) * 1000 : 0);
-  function anim(a, atl, now) {
-    const C = atl.meta.clips, k = a.dir !== null ? a.dir : dirP === 'turn' ? Math.floor(now / 1000) % 8 : +dirP || 0, f = facing(k);
-    const want = C[clip] ? clip : 'idle', base = { faceX: f.x, faceY: f.y, facing: true, dir0: k, x: a.vx, y: a.vy, moving: false, seed: 0 };
-    const dt = a.last ? Math.min(100, now - a.last) : 0; a.last = now;
-    if (want === 'walk') {                                                      // in place: a virtual walk the animator steps by distance
-      const v = (speedP || SPEED[a.kind]) * dt / 1000; a.vx += f.x * v * Math.SQRT2; a.vy += f.y * v * Math.SQRT2;
-      return { ...base, x: a.vx, y: a.vy, moving: true, facing: false };
-    }
-    const c = C[want], period = dur(c) + 700, n = Math.floor(now / period) + 1;   // one-shots repeat, with a breath between
-    if (want === 'attack' || want === 'attack2' || want === 'heavy') { a.unit.atkN = n; a.unit.atkKind = want === 'heavy' ? 'heavy' : want === 'attack2' ? 'b' : undefined; }
-    else if (want === 'hit') a.unit.hitN = n;
-    else if (want === 'fidget') a.unit.fidgetN = n;
-    else if (want === 'look') a.unit.lookN = n;
-    else if (want === 'death') { const p2 = dur(c) + 1500; return { ...base, dead: true, deadT: (now % p2) / 1000 }; }
-    else if (want === 'sit') return { ...base, sit: true };
-    else if (want === 'spawn') { const p2 = dur(c) + 900, q = (now % p2) / dur(c); return { ...base, spawnP: Math.min(0.999, q) }; }
-    return base;
-  }
+  const anim = makeAnim(clip, dirP, speedP);
 
   // ── names under the feet, group headings; device px from the renderer's projection ──
   function overlay(ctx, toPx, S) {
