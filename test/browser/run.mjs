@@ -777,6 +777,37 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15d2. The square's menu is the same in every town (2026-10-10, the owner: "Make sure the town square menu layout stays
+// for each town"): in Thornwick, Ashgate and Frosthold the bar holds the five services in one order, and each service's
+// plaque is drawn in the same place (±1 px), whole on screen, clear of the others and of the right-hand buttons. The
+// plaques hang at set heights (sim outdoor.js SIGN_TOP), so a roof that changes (art critic pass 14) moves none of them.
+// Saltmere's four are on screen and clear too.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const seen = {};
+    for (const region of ['vale', 'reach', 'heights', 'fens']) {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&region=${region}`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      for (let i = 0; i < 60; i++) { await p.waitForTimeout(100); await p.evaluate(() => { for (let j = 0; j < 3; j++) globalThis.__frame(1000 / 30); }); if (i > 20 && !(await p.evaluate(() => globalThis.__renderer.transiting))) break; }   // (atlases load in real time; the camera settles on the square)
+      await p.evaluate(() => { for (let j = 0; j < 60; j++) globalThis.__frame(1000 / 30); });
+      seen[region] = await p.evaluate(() => {
+        const box = (id) => { const e = document.getElementById(id), r = e && e.getBoundingClientRect(); return r && r.width ? { l: r.left, t: r.top, r: r.right, b: r.bottom } : null; };
+        return { plaques: globalThis.__renderer.plaques, bar: [...document.querySelectorAll('#hubBar.on button')].map((x) => x.dataset.k), buttons: ['compassBtn', 'journalBtn', 'mapBtn'].map(box).filter(Boolean) };
+      });
+      seen[region].errs = errs; await ctx.close();
+    }
+    const hit = (a, c) => a.l < c.r && c.l < a.r && a.t < c.b && c.t < a.b;
+    const fine = (v, n) => v.plaques.length === n && v.errs.length === 0 && v.plaques.every((q, i) => q.l >= 0 && q.r <= 390 && q.t >= 0 && q.b <= 844 && !v.buttons.some((x) => hit(q, x)) && v.plaques.every((o, j) => j === i || !hit(q, o)));
+    const at = (v) => Object.fromEntries(v.plaques.map((q) => [q.kind, [Math.round(q.l), Math.round(q.t)]]));
+    const same = ['reach', 'heights'].every((r) => seen[r].plaques.length === seen.vale.plaques.length && seen.vale.plaques.every((q) => { const o = seen[r].plaques.find((x) => x.kind === q.kind); return o && Math.abs(o.t - q.t) <= 1 && Math.abs(o.ax - q.ax) <= 1; }));   // (ax: where it hangs; a long name is then kept on screen and off the buttons)
+    check('town square: the same menu in every town: the bar\'s five services in order, each plaque in the same place in Thornwick, Ashgate and Frosthold, whole, clear of each other and the buttons; Saltmere\'s four too',
+      ['vale', 'reach', 'heights'].every((r) => seen[r].bar.join() === 'shop,smith,tavern,inn,temple' && fine(seen[r], 5)) && same && seen.fens.bar.join() === 'shop,tavern,inn,temple' && fine(seen.fens, 4),
+      JSON.stringify({ vale: at(seen.vale), reach: at(seen.reach), heights: at(seen.heights), fens: at(seen.fens), bars: Object.fromEntries(Object.entries(seen).map(([k, v]) => [k, v.bar.length])), errs: Object.values(seen).flatMap((v) => v.errs) }));
+    await b.close();
+  }
+}
 // 15e. Raising the slain (the owner, 2026-10-04: "Resurrection should have some sort of animated flash and a message that the
 // companion was raised"). Through the temple's own menu: a companion slain in town, the Temple's Raise the slain, its button.
 // They're raised; the toast names them on one line, over the open sheet, inside the screen; the banner says it; no errors.

@@ -157,6 +157,43 @@ building's south and east faces, so a home can't stand south of what it opens on
 | Homes from the set | 6 | 6 | 6 | 3 |
 | Common things | 15 | 14 | 14 | 6 |
 
+### The square's menu stays put
+
+The owner, after the first round: *"Make sure the town square menu layout stays for each town."*
+
+A service's plaque used to hang at its sprite's roof top. When the shop and the inn came down a storey, their
+plaques came down with them:
+- Wendel's Provisions dropped 33 px;
+- the Crossed Keys fell below the buttons' band and slid to the right edge.
+
+Each service's plaque now hangs at a set height, the same in every town (`SIGN_TOP` in `src/sim/outdoor.js`, carried
+on the label as `top`; the renderer uses it before the sprite's). The heights are the roof tops the square was laid
+out at: temple 23.5, tavern 15.1, shop 13.4, smithy 11.1, inn 18.7. Saltmere's are pinned the same way. So the menu
+is where it was before this pass, and no later building can move it.
+
+![Before this pass, after its first round, fixed, then Ashgate, Frosthold and Saltmere](img/towns-critic/menu.jpg)
+
+*Left to right:*
+1. *Thornwick before the pass;*
+2. *after its first round (the shop's and inn's plaques fallen);*
+3. *fixed;*
+4. *Ashgate;*
+5. *Frosthold;*
+6. *Saltmere.*
+
+**Tests:**
+- `test/town.test.mjs`: every walled town has the same services, doors, plaque spots and plaque heights.
+- The browser suite measures each plaque as drawn (`__renderer.plaques`) in Thornwick, Ashgate and Frosthold:
+  - where each plaque hangs and its top match within 1 px in every town;
+  - every plaque is whole on screen and clear of the others and of the compass, journal and map buttons;
+  - the bar holds the same five services in order;
+  - Saltmere's four plaques are whole on screen and clear too.
+
+| Plaque top (CSS px, 390 × 844) | Before pass 14 | First round | Fixed (all three towns) |
+|---|---|---|---|
+| Shop | 255 | 288 | **255** |
+| Inn | 299, kept left of the buttons (right edge 328) | 339, at the screen's edge (right 386) | **299**, right edge 328 |
+
 ## Measured
 
 | | Before | After |
@@ -173,9 +210,6 @@ building's south and east faces, so a home can't stand south of what it opens on
 
 ## Left as they are
 
-- **The inn's plaque** in Thornwick and Frosthold now sits at the right edge of the frame, over the inn's roof. The
-  inn's top is 4 tiles lower, so its plaque falls below the buttons' band, and the band's nudge no longer moves it
-  in. It stays whole on screen, and clear of the globe button.
 - **The Fens' cottage, longhouse and workshop stand only in Saltmere.** The Fens have no walled town, and Reedholm
   is the Sisters' house, not a village (world doc).
 - **The props are the Vale's wood** (`env.json` bakes them in the Vale's style). Their timber reads the same in

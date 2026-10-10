@@ -162,3 +162,19 @@ for (const region of Object.keys(REGIONS)) test(`${region}: the town set is plac
     assert.ok(ok, `${s.id} at ${s.x},${s.y}: its door can't be walked to`);
   }
 });
+
+// The square is the home screen and its plaques are its menu (2026-10-10, the owner: "Make sure the town square menu
+// layout stays for each town"): every walled town has the same five services in the same places, each plaque at the
+// same spot and at a set height, not its roof's, so a building's art can't move the menu
+test('the square\'s menu is the same in every town: services, doors and plaques in the same places, plaques at set heights', () => {
+  const towns = Object.keys(REGIONS).map((r) => createOutdoor(1, 'town', r)).filter((o) => !o.waystation);
+  const menu = (o) => o.services.map((sv) => { const L = o.labels.find((l) => l.service === sv.kind); return { kind: sv.kind, x: sv.x, y: sv.y, at: [L.x, L.y], top: L.top }; });
+  assert.ok(towns.length >= 3);
+  for (const o of towns) {
+    assert.deepEqual(menu(o), menu(towns[0]), `${o.name}'s square differs from ${towns[0].name}'s`);
+    assert.ok(menu(o).every((m) => m.top > 0), `${o.name}: a plaque hangs at its roof's height, not a set one`);
+  }
+  assert.deepEqual(Object.fromEntries(menu(towns[0]).map((m) => [m.kind, m.top])), { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 });
+  const salt = createOutdoor(1, 'town', 'fens');
+  assert.ok(salt.labels.filter((l) => l.service).every((l) => l.top > 0), 'Saltmere: a plaque hangs at its roof\'s height');
+});

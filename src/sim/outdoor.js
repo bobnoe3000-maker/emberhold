@@ -323,6 +323,12 @@ export const REGIONS = {
   reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows', inn: "Deepdelver's Rest", shop: 'The Ashgate Exchange', smith: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
   heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',  inn: "Pilgrims' Hall",    shop: 'Frosthold Outfitters', smith: 'Ironpeak Smithy',         temple: 'The Monastery Chapel' },
 };
+// The square is the home screen, and its plaques are its menu: each service's sign hangs at a set height (tiles over
+// the ground), the same in every town, not at its roof's top. A roof that changes (art critic pass 14: the shop and
+// the inn came down a storey) moves no plaque, so the menu reads alike in every town (test/town.test.mjs). These are
+// the heights the plaques were laid out at (the roofs' tops before that pass).
+const SIGN_TOP = { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 };
+const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 13.4 };   // a waystation's (its stilt tavern and inn)
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
@@ -348,7 +354,7 @@ function buildTown(seed, region) {
     ['smith', B('smith'), [51, 67]], ['inn', B('inn'), [73, 55]],
   ];
   const PLAQUE = { shop: [8, 5] };                         // the shop's plaque down on its own roof: off the temple's door behind it and the HUD's buttons
-  for (const [kind, id, [x, y]] of svc) { const [px, py] = PLAQUE[kind] || [0, 0]; put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x: x + px, y: y + py, id, text: info[kind], service: kind }); }
+  for (const [kind, id, [x, y]] of svc) { const [px, py] = PLAQUE[kind] || [0, 0]; put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x: x + px, y: y + py, id, text: info[kind], service: kind, top: SIGN_TOP[kind] }); }
   put(o, B('well'), M[0], M[1]);
   for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
   for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77], ['bucket_water', M[0] + 4, M[1] + 2]]) put(o, id, x, y, 'rect', 0);
@@ -534,7 +540,7 @@ function buildWaystation(seed, region) {
   // (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")
   // Pim Rushlight's chandlery stands on the deck right of the square, its door to the cistern, its own day's stock
   const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]], ['shop', B('shop'), [62, 49]]];
-  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
+  for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind, top: WAY_SIGN_TOP[kind] }); }
   put(o, B('cistern'), M[0], M[1]);
   for (const [x, y] of [[41, 57], [52, 54], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);   // (the second off the chandlery's deck)
   o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };

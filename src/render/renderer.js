@@ -1307,24 +1307,25 @@ export function createRenderer(canvas, sim, input) {
   }
   // Place names float over nearby landmarks (the tavern, the guild hall, the keep…).
   // a door label's plaque as last drawn (canvas px), for a tap (doorAt): a way somewhere, tapped to walk there
-  const doorRects = [];
+  const doorRects = [], plaqueRects = [];   // (plaqueRects: the square's service plaques as last drawn, canvas px: a test reads them)
   function drawLabels(ox, oy, ix, iy) {
     const k = vw / window.innerWidth, z = heightAt(sim.world, 0, 0);
-    doorRects.length = 0;
+    doorRects.length = 0; plaqueRects.length = 0;
     octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     for (const L of sim.world.labels || []) {
       const d = Math.hypot(L.x - ix, L.y - iy); if (d > (L.service && camT > 0.5 ? 90 : L.door ? 70 : 60) || hiddenHere(L)) continue;   // (on the home screen every service's plaque, however far: the temple heads the square)
-      const top = ((envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100) * (L.door ? 0.62 : 1);   // (a door's sign hangs on it, at its beam)
+      const top = (L.top ? L.top * 9.8 : (envMeta && L.id && envMeta.sprites[L.id]) ? envMeta.sprites[L.id].top * 9.8 : 100) * (L.door ? 0.62 : 1);   // (a door's sign hangs on it, at its beam; a service's plaque at its set height, sim outdoor.js SIGN_TOP)
       const P = project(L.x, L.y, z), sy0 = (oy + P.sy - top - 10) * S; let sx = (ox + P.sx) * S;
       if (L.service ? (sx < -vw * 0.3 || sx > vw * 1.3 || sy0 < -vh * 0.4 || sy0 > vh) : (sx < 0 || sx > vw || sy0 < -40 * k || sy0 > vh)) continue;
       const sy = Math.max(sy0, (hudB + 22) * k);               // never under the top HUD: a tall spire's label slides down below it
       const a = L.service && camT > 0.5 ? 1 : Math.max(0, Math.min(1, (60 - d) / 20));   // on the home screen every service reads
       if (L.service) {                                              // service plaques: tappable-looking signs
-        const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
+        const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k, ax = sx;   // (ax: where it hangs, before it's kept on screen)
         sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // a service at the frame's edge keeps its plaque on screen
         if (sy > (hudL1 + 114) * k && sy - th < (hudL1 + 288) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass, journal and world map buttons on the right (ui/compass.js, ui/journal.js, ui/worldmap.js: right 12, 44 wide, from 122 to 284 under the bar's line 1)
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
+        plaqueRects.push({ kind: L.service, ax, x0: sx - tw / 2, y0: sy - th + 4 * k, x1: sx + tw / 2, y1: sy + 4 * k });
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);
         continue;
       }
@@ -1685,6 +1686,8 @@ export function createRenderer(canvas, sim, input) {
       const r = window.innerWidth - (MM_RIGHT + safeR), t = mmTop() - MM_PAD;
       return { l: r - MM_CSS - 2 * MM_PAD, t, r, b: t + MM_CSS + 2 * MM_PAD };
     },
+    /** the square's service plaques as last drawn (CSS px): the town's menu, the same in every town (a test) */
+    get plaques() { const k = vw / window.innerWidth; return plaqueRects.map((r) => ({ kind: r.kind, ax: r.ax / k, l: r.x0 / k, t: r.y0 / k, r: r.x1 / k, b: r.y1 / k })); },
     /** the door label (a plaque with a ›) under a tap, a thumb's reach round it (44 CSS px tall at least), or null */
     doorAt(sxPx, syPx) {
       const k = vw / window.innerWidth, x = sxPx * k, y = syPx * k;
