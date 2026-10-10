@@ -71,7 +71,7 @@ const CSS = `
 // a globe: the world, not a page of it (the owner: "use a globe icon")
 const GLOBE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4c2.5 2.4 3.7 5.3 3.7 8.6s-1.2 6.2-3.7 8.6c-2.5-2.4-3.7-5.3-3.7-8.6s1.2-6.2 3.7-8.6z"/><path d="M5.2 7.4c1.9.9 4.2 1.4 6.8 1.4s4.9-.5 6.8-1.4M5.2 16.6c1.9-.9 4.2-1.4 6.8-1.4s4.9.5 6.8 1.4"/></svg><i class="dot"></i>';
 // what each coach stop is (sim/coach.js COACH; outdoor.js builds them)
-const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · tavern, inn and chapel' };
+const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · tavern, shop, inn and chapel' };
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five'];
 const lower = (/** @type {string} */ s) => s.replace(/^The /, 'the ');
 // the wall map is drawn for a wall: at a phone's width its words are too small to read, so it opens larger, scrolled to

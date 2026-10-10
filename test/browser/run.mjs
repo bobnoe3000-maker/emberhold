@@ -1123,7 +1123,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify({ card: card.replace(/\n/g, ' | '), after }));
     await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits.find((x) => x.to === 'overland'), pl = s.state.player; pl.x = pl.px = (e.x0 + e.x1) / 2; pl.y = pl.py = (e.y0 + e.y1) / 2; });
     await run(20); await p.waitForTimeout(1200); await run(20);
-    await p.waitForFunction(() => !globalThis.__renderer.transiting, null, { timeout: 30000 });   // (the Fens baked: until then the sim holds still, and a walk can't start)
+    for (let i = 0; i < 60 && await p.evaluate(() => globalThis.__renderer.transiting); i++) { await run(5); await p.waitForTimeout(250); }   // (the Fens baked, on the manual clock: until then the sim holds still, and a walk can't start)
     await p.locator('#mapBtn').tap(); await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 }); await p.waitForTimeout(600);
     const toad = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), q = L.pins.find((x) => x.id === 'toadking_mound'), m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / L.w; return { x: r.left + (q.x - L.x0) * k, y: r.top + (q.y - L.y0) * k }; });
     await p.touchscreen.tap(toad.x, toad.y); await p.waitForTimeout(300);
