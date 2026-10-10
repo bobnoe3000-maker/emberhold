@@ -50,3 +50,9 @@ test('Emberfall on the wall map is the game\'s: each town stands where its overl
   const a = EMBERFALL.vale((out.x0 + out.x1) / 2, (out.y0 + out.y1) / 2), b = EMBERFALL.fens((back.x0 + back.x1) / 2, (back.y0 + back.y1) / 2);
   assert.ok(Math.hypot(a[0] - b[0], a[1] - b[1]) < 12, `${a} vs ${b}`);
 });
+
+test('the wall map\'s coast is in assets/maps for the fog, and every coach stop stands on land (art critic pass 13)', () => {
+  const W = JSON.parse(readFileSync(new URL('assets/maps/old-provinces.json', ROOT), 'utf8'));
+  assert.equal(W.w, WALL.w); assert.equal(W.h, WALL.h); assert.ok(W.coast.length > 100);
+  for (const [id] of Object.entries(COACH)) assert.ok(inside(PLACES[id], W.coast), `${id} on land`);
+});

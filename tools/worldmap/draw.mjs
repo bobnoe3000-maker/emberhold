@@ -24,6 +24,16 @@ for (const r of ['vale', 'fens']) for (const e of createOutdoor(1, 'overland', r
   const [x, y] = EMBERFALL[r]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
   EMBER.push({ id: e.site, x: Math.round(x), y: Math.round(y), name: GAME_SITES[e.site].name.replace(/^The /, 'the '), ruin: ['barrows', 'sunken_chapel', 'drowned_abbey'].includes(e.site) });
 }
+// and their water (art critic pass 13): the Vale's river and the Fens' drowned canal as the game lays them (each land's
+// widest river; the mill-race is too small for a wall), the whole of each, drawn under the coast so both run to the sea
+const WATER = {};
+for (const r of ['vale', 'fens']) {
+  const pts = [...createOutdoor(1, 'overland', r).rivers].sort((a, b) => b.w - a.w)[0].pts;
+  WATER[r] = pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1).map(([x, y]) => EMBERFALL[r](x, y).map((v) => Math.round(v)));
+}
+// the canal starts where the Fens do (the Vale's road south meets it there), not up in the Vale
+{ const top = 1886, a = WATER.fens, i = a.findIndex(([, y]) => y >= top);
+  if (i > 0) { const [x0, y0] = a[i - 1], [x1, y1] = a[i]; WATER.fens = [[Math.round(x0 + ((x1 - x0) * (top - y0)) / (y1 - y0)), top], ...a.slice(i)]; } }
 const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
 // ── chance, seeded ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -114,13 +124,17 @@ function scatter(poly, n, minD, make) {
   pts.sort((a, b) => a[1] - b[1]); for (const p of pts) add(make(p[0], p[1]));
 }
 // a chain of peaks along a line
+// (art critic pass 13: the Vale's north range ran out over the Grey Sea) a peak stands only where both ends of its foot,
+// and a little past them, are on land
+const onLand = (x, y, w) => inside([x - w - 6, y], COAST) && inside([x + w + 6, y], COAST) && inside([x, y - 4], COAST);
+let peaksAtSea = 0;
 function range(line, n, h, w, dark = false) {
   const pts = [];
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1), seg = t * (line.length - 1), k = Math.min(line.length - 2, Math.floor(seg)), u = seg - k, a = line[k], b = line[k + 1];
     pts.push([a[0] + (b[0] - a[0]) * u + rr(-10, 10), a[1] + (b[1] - a[1]) * u + rr(-12, 12), h * rr(0.7, 1.25), w * rr(0.8, 1.2)]);
   }
-  pts.sort((p, q) => p[1] - q[1]); for (const p of pts) add(peak(p[0], p[1], p[2], p[3], dark));
+  pts.sort((p, q) => p[1] - q[1]); for (const p of pts) { if (!onLand(p[0], p[1], p[3])) { peaksAtSea++; continue; } add(peak(p[0], p[1], p[2], p[3], dark)); }
 }
 
 // rivers first (marks sit over them), roads after the land
@@ -128,14 +142,14 @@ const RIVERS = [
   [[600, 600], [606, 760], [588, 900], [602, 1090]],                                            // the Sol, from the crater to the Mere
   [[680, 1200], [780, 1300], [880, 1400], [960, 1520], [1010, 1600]],                            // the Long Water, the Mere to the sea
   [[820, 840], [880, 880], [950, 920], [1020, 960]],                                             // the Highmarch water, to Tollhaven
-  [[380, 1525], [360, 1650], [330, 1800], [300, 1950], [262, 2140]],                             // the Vale's river, to the fens and the sea
   [[400, 860], [440, 950], [490, 1040], [540, 1120]],                                            // the Ashwater, from the Reach to the Mere
 ];
 for (const rv of RIVERS) { const p = ragged(rv, false, 0.35, 4); add(`<path d="${pathOf(p, false)}" fill="none" stroke="${INK2}" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`); }
 const MERE = ragged([[520, 1130], [580, 1100], [670, 1110], [690, 1150], [640, 1195], [550, 1192], [510, 1162]], true, 0.25, 4);
 add(`<path d="${pathOf(MERE, true)}" fill="${SEA}" fill-opacity="0.75" stroke="${INK}" stroke-width="1.8"/>`);
 for (let i = 0; i < 4; i++) add(`<path d="M${535 + i * 30},${1135 + (i % 2) * 24} h20" stroke="${INK2}" stroke-width="0.9" opacity="0.6"/>`);
-add(`<path d="M305,1880 L329,2006 L352,2186" fill="none" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>`);   // the drowned canal: the Vale's road south, the Locks, the sea
+add(`<path d="${pathOf(WATER.vale, false)}" fill="none" stroke="${INK2}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" clip-path="url(#land)"/>`);   // the Vale's river, as the game runs it, out to the Bight
+add(`<path d="${pathOf(WATER.fens, false)}" fill="none" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8" clip-path="url(#land)"/>`);   // the drowned canal, as the Fens lay it, to the sea
 
 // the land's marks
 const HEIGHTS_C = [600, 520];
@@ -149,7 +163,7 @@ for (let i = 0; i < 3; i++) add(`<path d="M${239 + i * 4},${732 - i * 6} q${8 + 
 range([[205, 1525], [280, 1512], [360, 1518], [440, 1534]], 11, 22, 13);                      // the Vale's north range (the Scrag Warren)
 range([[930, 820], [985, 800], [1015, 840]], 5, 24, 13);                                      // the Highmarch fells
 range([[930, 1790], [960, 1720], [990, 1650]], 5, 22, 12);
-scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [640, 1760], [600, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Greenwood
+scatter([[640, 1380], [800, 1340], [960, 1420], [990, 1600], [930, 1780], [760, 1830], [660, 1760], [626, 1560]], 250, 17, (x, y) => tree(x, y, rr(7, 10)));   // the Greenwood (its west edge off Emberfall's line: pass 13)
 scatter([[440, 1650], [560, 1650], [580, 1770], [470, 1810], [420, 1730]], 26, 18, (x, y) => tree(x, y, rr(6, 8)));                      // the Vale's woods
 scatter([[200, 470], [330, 470], [380, 580], [240, 620]], 26, 17, (x, y) => pine(x, y, rr(8, 11)));                                      // pines under the Heights
 scatter([[830, 470], [960, 480], [990, 610], [850, 620]], 24, 17, (x, y) => pine(x, y, rr(8, 11)));
@@ -208,7 +222,7 @@ const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-fam
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
 const REG = [[262, 1624, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE GREENWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
 for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 34, l, 32, { sc: true, ls: 5 })); label(x, y + (lines.length - 1) * 34 + 28, `levels ${lv}`, 20, { it: true, fill: RED }); }
-label(470, 1770, 'the Hollow Vale', 22, { it: true }); label(470, 1918, 'the Greywater Fens', 22, { it: true });
+label(482, 1792, 'the Hollow Vale', 22, { it: true }); label(470, 1918, 'the Greywater Fens', 22, { it: true });
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
@@ -217,7 +231,8 @@ const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], [
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
 for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 25 : 20); }
 const EMBER_DX = { canal_locks: 44, toadking_mound: -18, tithe_mill: 30, drowned_abbey: 44 };
-const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + 24, e.name]), [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
+const EMBER_DY = { sunken_chapel: -14 };   // (above its mark: the Vale's river runs under it)
+const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + (EMBER_DY[e.id] || 24), e.name]), [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
   [752, 652, 'the Soulcracks'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [722, 1586, 'the Tally-House'], [860, 1746, 'the Root Granary'], [700, 1796, 'the First Barn?']];
 for (const [x, y, n] of S) label(x, y, n, 17, { it: true });
 label(70, 1300, 'THE GREY SEA', 28, { sc: true, ls: 12, rot: -90, halo: false, op: 0.75 });
@@ -231,7 +246,7 @@ label(486, 1012, 'the Ashwater', 17, { it: true, rot: 60 });
 label(618, 700, 'the Pilgrims’ Stair', 17, { it: true, anchor: 'start' });
 label(346, 2040, 'the drowned canal', 15, { it: true, anchor: 'start', rot: 83 });
 label(700, 1990, 'the Bight of Sol', 14, { it: true, halo: false, op: 0.7 });
-add(`<g transform="translate(-1745,640)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);   // a sea-serpent, because there always is one
+add(`<g transform="translate(-1782,700)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);   // a sea-serpent, because there always is one
 
 // ── the cartouche, the rose, the key, the scale and the border ─────────────────────────────────────────────────────
 add(`<g transform="translate(280,2300)"><rect x="-200" y="-56" width="400" height="104" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><rect x="-192" y="-48" width="384" height="88" fill="none" stroke="${INK}" stroke-width="1"/></g>`);
@@ -274,4 +289,10 @@ await p.screenshot({ path: OUT, type: OUT.endsWith('.png') ? 'png' : 'jpeg', ...
 await b.close();
 const { unlinkSync } = await import('node:fs'); unlinkSync(tmp);
 console.log('drew', OUT);
-if (!process.argv[2]) { const A = join(ROOT, 'assets', 'maps'); mkdirSync(A, { recursive: true }); copyFileSync(OUT, join(A, 'old-provinces.jpg')); console.log('copied', join(A, 'old-provinces.jpg')); }
+console.log(`${peaksAtSea} peaks kept off the sea`);
+if (!process.argv[2]) {
+  const A = join(ROOT, 'assets', 'maps'); mkdirSync(A, { recursive: true }); copyFileSync(OUT, join(A, 'old-provinces.jpg')); console.log('copied', join(A, 'old-provinces.jpg'));
+  // the coast, for the World map's fog: a land you can walk is lit to its shore and a little past, not to a ruled line
+  // across the sea (src/ui/worldmap.js; art critic pass 13). Every other point, whole map units.
+  writeFileSync(join(A, 'old-provinces.json'), JSON.stringify({ w: W, h: H, coast: COAST.filter((_, i) => i % 2 === 0).map(([x, y]) => [Math.round(x), Math.round(y)]) }) + '\n');
+}

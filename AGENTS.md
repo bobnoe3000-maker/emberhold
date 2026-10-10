@@ -45,7 +45,7 @@ BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BA
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
-node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/
+node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/ (with its coast, old-provinces.json, for the World map's fog)
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
 node tools/worldmap/streets.mjs [--waystations]   # the region towns' and waystations' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
 node tools/worldmap/overlands.mjs         # each region's overland at the game's scale (docs/town-streets-proposal.md) → docs/img/world/overland-<region>.jpg

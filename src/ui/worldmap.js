@@ -105,6 +105,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   tabL.addEventListener('click', () => show('land'));
 
   /** @type {Record<string, any>} */ const lands = {};      // assets/maps/minimap-<land>.json: the overland's frame and pins
+  /** @type {number[][] | null} */ let coast = null;         // assets/maps/old-provinces.json: the wall map's coast, for the fog
+  fetch('./assets/maps/old-provinces.json').then((q) => q.json()).then((j) => { coast = j.coast; const f = view.querySelector('svg.fog'); if (open && tab === 'world' && f) f.replaceWith(fogSvg()); }).catch(() => {});
   const landData = (/** @type {string} */ r) => lands[r] || (lands[r] = fetch(`./assets/maps/minimap-${r}.json`).then((q) => q.json()).catch(() => null));
   let open = false, tab = 'world', sel = '', pins = /** @type {any[]} */ ([]), scrolled = false;
 
@@ -145,7 +147,9 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
       const at = PLACES[townOf(region())];
-      const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w; view.scrollLeft = Math.max(0, at[0] * k - view.clientWidth / 2); view.scrollTop = Math.max(0, at[1] * k - view.clientHeight * 0.42); };
+      // scrolled to where you are, with "you are here" (west of the pin) wholly in view
+      const go = () => { if (scrolled) return; scrolled = true; const k = map.clientWidth / WALL.w, me = pins.find((p) => p.here), tw = me ? me.here.length * 6.6 + 12 + 22 + 10 : 0;
+        view.scrollLeft = Math.max(0, Math.min(at[0] * k - view.clientWidth / 2, at[0] * k - tw)); view.scrollTop = Math.max(0, at[1] * k - view.clientHeight * 0.42); };
       if (img.complete) go(); else img.addEventListener('load', go, { once: true });
       requestAnimationFrame(go);
     } else {
@@ -185,7 +189,9 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       for (const p of [...list].sort((a, b) => (b.here ? 1 : 0) - (a.here ? 1 : 0))) {
         const text = p.here ? p.here : p.label; if (!text) continue;
         const w = text.length * 6.6 + 12, h = 18, cx = (x) => Math.min(Math.max(x, 2), MW - w - 2);
-        const spots = [[cx(p.sx - w / 2), p.sy + (p.here ? 18 : 12)], [cx(p.sx - w / 2), p.sy - (p.here ? 18 : 12) - h], [p.sx + 14, p.sy - h / 2], [p.sx - 14 - w, p.sy - h / 2]]
+        const below = [cx(p.sx - w / 2), p.sy + (p.here ? 18 : 12)], above = [cx(p.sx - w / 2), p.sy - (p.here ? 18 : 12) - h];
+        const left = [p.sx - (p.here ? 22 : 14) - w, p.sy - h / 2], right = [p.sx + 14, p.sy - h / 2];
+        const spots = (p.west ? [left, above, below, right] : [below, above, right, left])
           .filter(([lx, ly]) => lx >= 0 && lx + w <= MW && ly >= 0 && ly + h <= MH);
         const at = spots.find(([lx, ly]) => free([lx, ly, lx + w, ly + h])) || (p.here ? spots[0] : null);
         if (!at) continue;
@@ -207,18 +213,25 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   const mark = (/** @type {HTMLElement} */ map) => { for (const n of map.querySelectorAll('.pin')) n.classList.toggle('sel', /** @type {HTMLElement} */ (n).dataset.key === sel); };
 
   // the fog: the whole map but the open lands (even-odd: the lands don't overlap), and its words
+  // (art critic pass 13: the lit land was a die-cut box, a ruled edge across land and sea, the Vale and the Fens split
+  // by a dashed line.) Now the fog lifts off the open lands as far as their shore and a little past it, the coast
+  // drawn by draw.mjs (assets/maps/old-provinces.json), with a feathered edge where one land meets one not yet open.
   function fogSvg() {
-    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+    const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'), el2 = (/** @type {string} */ tag, /** @type {Record<string, any>} */ at) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(at)) e.setAttribute(k, String(v)); return e; };
     svg.setAttribute('class', 'fog'); svg.setAttribute('viewBox', `0 0 ${WALL.w} ${WALL.h}`); svg.setAttribute('preserveAspectRatio', 'none');
     const opened = Object.keys(LAND_AREA).filter((r) => LANDS[r] && sim.landOpen(r));
-    const d = `M0,0H${WALL.w}V${WALL.h}H0Z` + opened.map((r) => 'M' + LAND_AREA[r].map((p) => p.join(',')).join('L') + 'Z').join('');
-    const path = document.createElementNS(NS, 'path'); path.setAttribute('d', d); path.setAttribute('fill-rule', 'evenodd');
-    path.setAttribute('fill', 'rgba(36,28,40,0.62)'); path.setAttribute('stroke', 'rgba(240,200,128,0.7)'); path.setAttribute('stroke-width', '3'); path.setAttribute('stroke-dasharray', '10 8');
-    svg.append(path);
+    const lands = opened.map((r) => 'M' + LAND_AREA[r].map((p) => p.join(',')).join('L') + 'Z').join('');
+    const defs = el2('defs', {}), clip = el2('clipPath', { id: 'wmLands' }), feather = el2('filter', { id: 'wmFeather', x: '-5%', y: '-5%', width: '110%', height: '110%' });
+    clip.append(el2('path', { d: lands || 'M0,0Z' })); feather.append(el2('feGaussianBlur', { stdDeviation: 7 }));
+    const mask = el2('mask', { id: 'wmFog', maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: WALL.w, height: WALL.h }), soft = el2('g', { filter: 'url(#wmFeather)' }), cut = el2('g', { 'clip-path': 'url(#wmLands)' });
+    // the open lands, to the shore and 28 units of sea past it (the coast's own ripple-lines); without the coast yet, the lands as drawn
+    cut.append(coast ? el2('path', { d: 'M' + coast.map((p) => p.join(',')).join('L') + 'Z', fill: '#000', stroke: '#000', 'stroke-width': 56, 'stroke-linejoin': 'round' }) : el2('path', { d: lands || 'M0,0Z', fill: '#000' }));
+    soft.append(cut); mask.append(el2('rect', { width: WALL.w, height: WALL.h, fill: '#fff' }), soft); defs.append(clip, feather, mask); svg.append(defs);
+    svg.append(el2('rect', { width: WALL.w, height: WALL.h, fill: 'rgba(36,28,40,0.62)', mask: 'url(#wmFog)' }));
     const words = [FOG_WORDS.beyond, ...(opened.includes('fens') ? [] : [FOG_WORDS.fens])];
     for (const w of words) w.lines.forEach((line, i) => {
-      const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(w.at[0])); t.setAttribute('y', String(w.at[1] + i * 46)); t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-family', 'Georgia, serif'); t.setAttribute('font-style', 'italic'); t.setAttribute('font-size', i === 0 ? '40' : '36'); t.setAttribute('fill', '#f0e2c4');
+      const t = document.createElementNS(NS, 'text'); t.setAttribute('x', String(w.at[0])); t.setAttribute('y', String(w.at[1] + i * 42)); t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('font-family', 'Georgia, serif'); t.setAttribute('font-style', 'italic'); t.setAttribute('font-size', i === 0 ? '36' : '31'); t.setAttribute('fill', '#f0e2c4');
       t.setAttribute('stroke', 'rgba(20,14,22,.85)'); t.setAttribute('stroke-width', '6'); t.setAttribute('paint-order', 'stroke');
       t.textContent = line; svg.append(t);
     });
@@ -232,7 +245,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       const land = COACH[id].land; if (!sim.landOpen(land) || !PLACES[id]) continue;
       const [x, y] = PLACES[id];
       out.push({ key: id, kind: 'stop', id, land, x, y, tap: true, cls: S().reached.has(id) ? 'lit' : 'dim', label: '',
-        here: id === here ? (inTown ? 'you are here' : `you are in ${lower(LANDS[land].name)}`) : '', star: !!(q && q.land === land && townOf(land) === id) });
+        here: id === here ? (inTown ? 'you are here' : `you are in ${lower(LANDS[land].name)}`) : '', star: !!(q && q.land === land && townOf(land) === id),
+        west: true });   // (the wall map writes a town's name under its mark and its sites' round it; west of Emberfall's towns is open land and the coast: "you are here" goes there, pass 13)
     }
     return out;
   }

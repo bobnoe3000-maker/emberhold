@@ -33,5 +33,5 @@ export const LAND_AREA = {
 // the words on the fog: what's beyond the lands you can walk, and a land not open yet (where its words go on the map)
 export const FOG_WORDS = {
   beyond: { at: [600, 1080], lines: ['The Cinder Reach, Solmere, the Tidemark,', 'the Greenwood and the Pale Heights', 'the Guild’s roads north aren’t open yet'] },
-  fens: { at: [400, 2090], lines: ['The Greywater Fens', 'the canal road south is shut'] },
+  fens: { at: [372, 2090], lines: ['The Greywater Fens', 'the canal road south is shut'] },
 };
