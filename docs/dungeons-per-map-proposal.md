@@ -1,4 +1,4 @@
-# Three dungeons a map, each one built for its place
+# One dungeon a level, each one built for its place
 
 **Proposal (2026-10-10), for the owner's review. Nothing here is built yet.** The ask:
 
@@ -9,12 +9,114 @@
 > like a crypt or a cave should look like a cave (pools, stalactites, some boulders). Build off what we have. Create a
 > plan, critique it then let me review."*
 
-The doc has five parts:
+**Revised the same day** after two more words from the owner:
+- *"Is it better to have a map take a player up to level 15? Add a dungeon and keep a secret dungeon also for a total
+  of 5 per map?"*
+- *"My main objective is to not have more than 1 dungeon overlapping what levels to grind."*
+
+[Part 0](#0-the-rule-one-dungeon-a-level) sets out the rule that follows and what it changes. It supersedes parts 2–5
+where they disagree; they're kept below as the reasoning that led here.
+
+The doc has six parts:
+0. [The rule: one dungeon a level](#0-the-rule-one-dungeon-a-level);
 1. [Where we are](#1-where-we-are);
 2. [the plan](#2-the-plan), as first drawn;
 3. [the critique](#3-the-critique) of it;
 4. [the plan revised](#4-the-plan-revised) after the critique;
 5. [what needs your call](#5-what-needs-your-call).
+
+---
+
+## 0. The rule: one dungeon a level
+
+**Every level a player grinds at belongs to exactly one dungeon.** At level 5 there is one place to go: the dungeon
+whose band holds 5. How many dungeons a map has follows from how many levels it spans, three to a dungeon, so there's
+no cap per map to keep.
+
+- **A dungeon is a band of three levels:**
+  - three floors, a level each;
+  - every room on a floor at its floor's level, but its last two rooms a level up, capped at the band's top (rooms
+    still pay for their danger);
+  - its boss in floor 3's last hall, at the band's top.
+- **The bands run on without a gap or an overlap:** 1–3, 4–6, 7–9, 10–12 and so on, across the maps.
+- **What doesn't count, because it isn't a grind:**
+  - **A secret dungeon**, one a map: a one-time delve, kept as you asked. The map's Chronicle opens it, it stands at
+    the map's top level, and once its last hall is cleared it stays quiet: no waves come back. Its prize is its
+    heirloom, its fragments and the story, not XP by the hour.
+  - **The Mere Tower** pays no XP (v1.31), so it competes with no band. It stays a challenge.
+- **No endless descent.** The Old Barrows going on down would overlap every band.
+
+### Emberfall, levels 1–18
+
+The Vale and the Fens as the rule lays them out, with the Fens kept whole (see below). Nothing overlaps:
+
+| Levels | Dungeon | Map | Boss (its hall's level) | Act |
+|---|---|---|---|---|
+| 1–3 | **The Old Barrows** (a crypt) | Vale | the Quartermaster (3) | I |
+| 4–6 | **Wickham Keep** (a fort, then a cave) | Vale | Captain Garrow (6); Old Skarn, a guest in the bailey (4) | I |
+| 7–9 | **The Sunken Chapel** (a drowned chapel) | Vale | the Robed Stranger (8); the Standard of the Third Legion (9) | I ends |
+| 10–12 | **Toadking's Mound** (a cave of boats and mud) | Fens | the Toadking (12) | II |
+| 13–15 | **The Canal Locks** (lock halls, then the vats) | Fens | a new boss for the Locks (15) | II |
+| 16–18 | **The Drowned Abbey** (a drowned abbey) | Fens | Teague (16), the Choir (17), the Abbess Below (18) | II ends |
+| secret, 9 | *The Ninth Milestone* (one-time) | Vale | | after Act I |
+| secret, 18 | *The Reedholm Undercroft* (one-time) | Fens | | after Act II |
+| no XP | *The Mere Tower* (challenge, from 12) | Fens | a warden every tenth wave | |
+
+- **The Vale goes to 9**, as you asked, and is unchanged from §4 below:
+  - the Tithe Mill and the Scrag Warren go to the Cinder Reach;
+  - the Standard moves to the Chapel's last hall;
+  - the Keep's third floor is a cave.
+- **The Fens become 10–18 and keep all their story.** The Sickpools stop being a dungeon of their own and become **the
+  Locks' third floor, *Vat Seven***: the canal drains the vats, so the lock-keepers' halls go down into them. Each
+  Fens chapter keeps its place:
+  - *The Locks* (Dace Pike; the Kindler at the Locks' entrance): unchanged, floors 1–2;
+  - *The Sickpools* (Pim's cages): the Locks' third floor;
+  - Wren's *Night Boats* and *The Marker*, and the trials *Dead Water*, *Lamp Oil* and *The Long Watch*: to the Locks;
+  - the Fens Chronicle's five fragments in the Locks and the Sickpools: to the Locks' three floors.
+- **Act II's levels rise by about three:**
+  - its chapters from 10, 13 and 15 (were 8, 10 to 11, and 12 to 14);
+  - the Fens bosses' halls from 12 to 18 (were 11 to 15).
+
+  The level-12 trials sit in the Mound's band, where they're taught. The Mere Tower opens at 12, as now.
+- **The Reach would open at 19, not 15.** That's the one wider change; see the calls below.
+
+### The other two ways for the Fens
+
+| | Fens dungeons | Emberfall's top | What it costs |
+|---|---|---|---|
+| **Kept whole, recommended** | Mound, Locks (with the Sickpools as its third floor), Abbey | 18 | Act II re-levelled by about +3; the Reach opens at 19 |
+| Cut to fit 15 | Mound 10–12, Abbey 13–15 | 15 | the Locks and the Sickpools leave, and with them: two chapters, two of Wren's quests, three trials, five Chronicle fragments and the Kindler's place. Act II would be rewritten round the gap |
+| All four | Mound, Locks, Sickpools, Abbey: 10–21 | 21 | nothing cut; Act II re-levelled by about +6; the Reach opens at 22; Act II becomes about 30 hours of fighting against the Vale's 6 |
+
+### What the rule does to the later maps
+
+With bands of three, the cap at 75 is 25 dungeons in all, however the maps divide them:
+- **Emberfall:** 6 (1–18);
+- **the rest:** 19 dungeons over the Reach, the Tidemark, the Greenwood and the Heights, about five each (15 levels a
+  map, as the plan of record had).
+
+The world doc already lists six or seven sites for the Reach, so it has the places. Each later map gets one secret
+dungeon besides.
+
+### What this changes in the rest of the doc
+
+- §2.1's "at most three a map" becomes this rule.
+- §2.6 (the Fens) is replaced by the table above.
+- §5's call 3 (nine levels a map against 75) is settled by the rule.
+- §5's call 4 (vaults) is settled: they stay secret dungeons, made one-time, rather than folded in.
+
+The rest of the Vale's design (§2.3–2.5, §4) stands.
+
+### The calls left for you
+
+1. **The Fens:** kept whole at 10–18 with the Sickpools as the Locks' third floor (recommended), cut to fit 15, or
+   all four at 10–21.
+2. **The Reach** opening at 19 rather than 15, so the rest of the levels shift.
+3. **The Standard at the Chapel** at 9, with a new Quartermaster for the Barrows (recommended), or the Standard
+   stays in the Barrows at 3.
+4. **Secret dungeons are one-time** (clear them and they stay quiet), so they never compete with a band. Agreed?
+5. **Art:** add KayKit's *Dungeon Remastered* (CC0) for crypt and keep furniture, or procedural props only.
+6. **Old Skarn** as the Keep's guest, or the goblins go with the Warren.
 
 ---
 
