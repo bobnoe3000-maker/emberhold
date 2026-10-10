@@ -4,7 +4,9 @@
 // point top-right) with a 3/4 tilt, lights it warm key + cool rim, renders at 4× and
 // area-averages down, then adds a 1 px ink outline. Driven by icons.cjs (icons.json). A spec's
 // `swatches` repaints the kit texture the way the figure's variant does (props.js), and the
-// cleric's mace is the same code-built prop the figure holds.
+// cleric's mace is the same code-built prop the figure holds. `sat` (0–1) pulls an icon's colour
+// toward grey, for a kit colour that shouts in the bag; `rim` scales the cool rim light (art critic
+// pass 16: the bag's loudness).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PROPS, repaint } from './props.js';
@@ -103,7 +105,8 @@ window.bakeIcon = async (spec, S = 96) => {
   const scene = new THREE.Scene(); scene.add(pivot);
   scene.add(new THREE.HemisphereLight(0xfff0dc, 0x2a2436, 1.5));
   const key = new THREE.DirectionalLight(0xffe2b8, 2.6); key.position.set(-2, 3, 4); scene.add(key);
-  const rim = new THREE.DirectionalLight(0x9ab8ff, 1.6); rim.position.set(3, -1, -2); scene.add(rim);
+  // (`rim`: a book's cover, turned from the key, took the blue rim alone and read lavender whatever its colour)
+  const rim = new THREE.DirectionalLight(0x9ab8ff, 1.6 * (spec.rim ?? 1)); rim.position.set(3, -1, -2); scene.add(rim);
   const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(0, 0, 5); scene.add(fill);
   R.setSize(S * SS, S * SS); R.setClearColor(0, 0); R.render(scene, cam);
   const big = document.createElement('canvas'); big.width = big.height = S * SS; const bx = big.getContext('2d', { willReadFrequently: true }); bx.drawImage(R.domElement, 0, 0);
@@ -112,6 +115,7 @@ window.bakeIcon = async (spec, S = 96) => {
     let r = 0, g = 0, bl = 0, a = 0;
     for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) { const i = ((y * SS + sy) * S * SS + x * SS + sx) * 4, al = b[i + 3] / 255; r += b[i] * al; g += b[i + 1] * al; bl += b[i + 2] * al; a += al; }
     const j = (y * S + x) * 4; if (a > 0) { o[j] = r / a; o[j + 1] = g / a; o[j + 2] = bl / a; } o[j + 3] = (a / (SS * SS)) * 255;
+    if (spec.sat != null && a > 0) { const l = 0.3 * o[j] + 0.59 * o[j + 1] + 0.11 * o[j + 2]; for (let k = 0; k < 3; k++) o[j + k] = l + (o[j + k] - l) * spec.sat; }   // `sat`: toward grey (1 = as lit)
   }
   const src = new Uint8ClampedArray(o), A = (x, y) => (x < 0 || y < 0 || x >= S || y >= S ? 0 : src[(y * S + x) * 4 + 3]);
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {                      // ink outline under soft edges

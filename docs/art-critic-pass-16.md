@@ -9,7 +9,8 @@ Every view was captured on the manual clock:
 - `fx` (37 cells) at night at zoom 2, 30 frames at 12 fps, with its strips;
 - `icons` (42) and `faces` (22).
 
-The dusky, gloomy tones were kept.
+Then the owner: *"Fix the faint hit sparks and the loud icons too"* (4 and 5 below, from the first draft's *Left as
+they are*). The dusky, gloomy tones were kept.
 
 ## What was wrong, and what was done
 
@@ -38,6 +39,41 @@ Ranked by how much each one hurts.
 
 *`strips.png`, the six bolt rows, before (left) and after (right).*
 
+4. **A plain hit's sparks were faint** (fixed, a follow-up the owner asked for).
+   - Five specks and a flash that lived 0.1 s: a plain hit lit a third of a heavy hit's pixels and half a crit's, and
+     showed in 21 of 60 frames.
+   - Now seven sparks that live a little longer (0.26–0.46 s), and a flash of 0.14 s, a touch wider. A crit gets ten
+     sparks and a small star of its own, between a plain hit and a heavy blow; a heavy blow is unchanged.
+   - Measured on the effects' strips (60 frames at 12 fps, at night at zoom 2: a pixel counts in a frame when it's 40
+     over its own darkest value across the frames, so the grass and the names don't):
+
+     | | Before | After |
+     |---|---|---|
+     | Plain hit | 1,570 px-frames, 21 / 60 frames | **2,952**, 26 / 60 |
+     | Crit | 2,915, 22 / 60 | **4,775**, 27 / 60 |
+     | Heavy | 6,300, 24 / 60 | 6,049, 24 / 60 (unchanged: the sparks are random) |
+
+     A plain hit now reads about as a crit did, and the order holds: plain, crit, heavy.
+5. **Five icons shouted in the bag** (fixed, a follow-up).
+   - Measured as each icon's mean HSV saturation × value over its opaque pixels, against the bag's median (0.167):
+     the hood 2.54 ×, the leather boots 2.22 ×, the leathers 2.12 ×, the mage's slippers 2.09 ×, the tome 1.96 ×. The
+     next was the wand, at 1.58 ×.
+   - **The rogue's leathers** (hood, leathers, boots) were KayKit's raw orange and green. The rogue the player sees
+     (variant R2) wears them repainted dark brown, so the icons now take R2's own swatches and match the figure. The
+     hood keeps the figure's green, a little greyer (`sat` 0.7), and the face in it is in shadow now: a hood, not a
+     portrait.
+   - **The tome** was magenta. Its cover is now oxblood leather. Its big face, turned from the key light, took the cool
+     rim light alone and read lavender whatever the cover's colour, so the tome and the psalter take a sixth of it (`rim` 0.15).
+   - **The mage's slippers** keep their colour, greyer (`sat` 0.6).
+   - After: the hood 1.60 ×, level with the wand (1.59 ×); the leathers 1.53 ×, the slippers 1.26 ×, the tome 1.19 ×, the
+     leather boots 1.11 ×.
+   - Two knobs in the icon lab: `sat` and `rim` (`tools/actor-lab/iconlab.js`, `icons.json`). Re-baked with
+     `node tools/actor-lab/icons.cjs`.
+
+![Hit sparks before (top) and after: plain, heavy and crit, the first 12 frames](img/art-review/sparks.jpg)
+
+![The six icons before (top) and after](img/art-review/icons-loud.jpg)
+
 ### In the views themselves
 
 Using them found three faults in the tools, fixed before the pass went on:
@@ -51,13 +87,9 @@ Using them found three faults in the tools, fixed before the pass went on:
 
 ## Left as they are
 
-- **A plain hit's sparks are faint**: a few pale specks, there for two frames. Heavy hits and crits read. A plain hit
-  is the most common thing on screen, and it's the right one to be quiet.
 - **The crossbow's bolt is a 3-pixel square.** At its speed it reads as a dot in flight.
 - **The chest is three times a barrel** (zoom 3, `props`), and bones and sacks are a few pale pixels at zoom 1. The
   chest is the thing a player looks for in a room; the bones and sacks are dressing.
-- **Two icons are louder than the rest of the bag**: the tome (magenta) and the rogue's hood (bright green, with a face
-  in it). They're KayKit's own colours. A grade for icons would be an `icons.cjs` change and a re-bake.
 - **At night every figure goes the same blue-violet.** That's the night's grade, the mood, and the rings and names
   still tell the party from the foes.
 

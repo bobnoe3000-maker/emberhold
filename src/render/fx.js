@@ -198,14 +198,17 @@ export function createFX() {
 
   // ── impacts: a spray of sparks off the struck figure, away from the striker ────
   // (x, y) world position of the struck, dir = screen-space unit direction of the blow
+  // A plain hit is the most common thing on screen and stays the quietest, but it must read: at 5 sparks and a 0.1 s
+  // flash it lit a third of a crit's pixels and was gone in two frames (art critic pass 16). A crit sits between it and
+  // a heavy blow, with a small star of its own.
   function impact(x, y, dx, dy, col, { heavy = false, crit = false, now = performance.now() } = {}) {
-    const n = heavy ? 11 : crit ? 8 : 5;
+    const n = heavy ? 11 : crit ? 10 : 7;
     for (let k = 0; k < n; k++) {
       const sp = (heavy ? 150 : 110) * (0.55 + Math.random() * 0.6), off = (Math.random() - 0.5) * 1.5;
       const vx = (dx * Math.cos(off) - dy * Math.sin(off)) * sp, vy = (dx * Math.sin(off) + dy * Math.cos(off)) * sp - 50 - Math.random() * 40;
-      parts.push({ x, y, ox: (Math.random() - 0.5) * 4, oy: -24 + (Math.random() - 0.5) * 8, vx, vy, t0: now, life: 0.2 + Math.random() * (heavy ? 0.25 : 0.16), col });
+      parts.push({ x, y, ox: (Math.random() - 0.5) * 4, oy: -24 + (Math.random() - 0.5) * 8, vx, vy, t0: now, life: (heavy ? 0.2 : 0.26) + Math.random() * (heavy ? 0.25 : 0.2), col });
     }
-    flashes.push({ x, y, t0: now, life: heavy ? 0.18 : 0.1, r: heavy ? 5.5 : crit ? 4 : 3, col, heavy });
+    flashes.push({ x, y, t0: now, life: heavy ? 0.18 : crit ? 0.15 : 0.14, r: heavy ? 5.5 : crit ? 4.5 : 3.8, col, heavy, crit });
     if (parts.length > 240) parts.splice(0, parts.length - 240);
   }
   // a loot drop: a column of light over where it fell and a glint on the ground, in the rarity's colour
@@ -238,7 +241,7 @@ export function createFX() {
     for (let i = flashes.length - 1; i >= 0; i--) {
       const f = flashes[i], age = Math.max(0, (now - f.t0) / 1000 / f.life); if (age >= 1) { flashes.splice(i, 1); continue; }
       const P = proj(f.x, f.y); depth(P.key + 0.6, P.sy, P.h);
-      disc(P.sx, P.sy - 24, f.r * (0.7 + 0.5 * age), 0.75 * (1 - age), 1.4); if (f.heavy) star(P.sx, P.sy - 24, 9 * (1 - age * 0.5), 0.9 * (1 - age));
+      disc(P.sx, P.sy - 24, f.r * (0.7 + 0.5 * age), 0.75 * (1 - age), 1.4); if (f.heavy || f.crit) star(P.sx, P.sy - 24, (f.heavy ? 9 : 6) * (1 - age * 0.5), 0.9 * (1 - age));
       flush(f.col);
     }
     for (let i = parts.length - 1; i >= 0; i--) {

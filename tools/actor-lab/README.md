@@ -130,7 +130,11 @@ WebGL. Set `CHROME_PATH` if Chromium isn't at the sandbox's `/opt/pw-browsers` p
 - `swatches` — `[{ tile: [col, row], to: [light, dark] }]` repaints whole swatches of the kit's
   8 × 4 gradient-swatch texture by the swatch's own luminance, so its gradient survives and only
   the parts that use that swatch change. The cleric's off-white vestments are the Mage's robe
-  swatch `[0, 1]`. Icons can reuse a variant's swatches (`"swatches": "C1"` in `icons.json`).
+  swatch `[0, 1]`. Icons can reuse a variant's swatches (`"swatches": "C1"` in `icons.json`), or mix one with
+  their own (`["R2", { "tile": [0, 0], "to": [...] }]`: the rogue's leathers, and the face in the hood in shadow).
+- `sat` and `rim` in `icons.json` (art critic pass 16): `sat` (0–1) pulls an icon's colour toward grey, for a kit
+  colour that shouts in the bag; `rim` scales the cool rim light, which a surface turned from the key takes alone
+  (a book's cover read lavender under it).
 - `recolor` — a CSS filter applied to the model's colour texture; how human enemy NPCs reuse hero models.
   (Look-dev only: the shipping version should remap swatches in the small palette texture exactly.)
 - `eyes` — emissive colour for the skeletons' separate `*_Eyes` mesh.

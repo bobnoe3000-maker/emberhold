@@ -14,7 +14,9 @@ const DIR = __dirname, OUT = path.join(DIR, '..', '..', 'assets', 'items');
   const variants = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(DIR, 'variants.json'))).map((v) => [v.id, v]));
   for (const ic of spec.icons) {
     if (only && !only.includes(ic.id)) continue;
-    const s = typeof ic.swatches === 'string' ? { ...ic, swatches: variants[ic.swatches].swatches } : ic;   // "swatches": "C1" = that variant's repaint
+    // "swatches": "C1" = that variant's repaint; a list may mix variant ids and swatches: ["R2", { tile, to }]
+    const sw = ic.swatches == null ? null : (Array.isArray(ic.swatches) ? ic.swatches : [ic.swatches]).flatMap((w) => (typeof w === 'string' ? variants[w].swatches : [w]));
+    const s = sw ? { ...ic, swatches: sw } : ic;
     const url = await p.evaluate(async ([s, n]) => await window.bakeIcon(s, n), [s, spec.size]);
     fs.writeFileSync(path.join(OUT, `${ic.id}.png`), Buffer.from(url.split(',')[1], 'base64')); console.log(ic.id);
   }
