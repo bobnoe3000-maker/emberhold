@@ -25,7 +25,7 @@ import { chromium, webkit } from 'playwright';
 import { scriptedSession } from '../fixtures/session.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.css': 'text/css' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css' };
 const srv = createServer(async (req, res) => {
   const p = normalize(join(ROOT, decodeURIComponent(req.url.split('?')[0])));
   if (!p.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
@@ -1036,7 +1036,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 // shift the mini map and buttons below up" and "account for the shrine buff text"): line 1 the place and the purse, the
 // purse ending on the minimap's right edge; line 2 the sky dial and wages, line 3 (only while lit) the boons and
 // Weakened, both stopping short of the minimap; the minimap 6 px under line 1, the compass and Journal 8 and 60 px
-// under it, every right edge at 12 px. Checked at 360/390/430 on the Fens with six-figure gold and wages owed, with
+// under it, the World map's globe 22 px under the Journal, every right edge at 12 px. Checked at 360/390/430 on the Fens with six-figure gold and wages owed, with
 // both boons and Weakened lit, and in a fight underground: nothing of the bar under the minimap or off screen, no tap
 // pad on it, and the place name keeps its room (two boons had squeezed it to nothing).
 {
@@ -1063,7 +1063,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         const texts = [...document.querySelectorAll('#hudLine2 svg, #hudLine2 span:not(#hudSky):not(#hudWage), #hudWage, #hudLine3 .chip, #hud .stat.place')].filter(vis);
         const pads = [...document.querySelectorAll('#hudSky')].filter(vis).map(R).concat([...document.querySelectorAll('#hudWage')].filter(vis).map((e) => { const q = R(e); return { l: q.l - 4, t: q.t - 14, r: q.r + 4, b: q.b + 14 }; })).concat([...document.querySelectorAll('#hudLine3 .chip')].filter(vis).map((e) => { const q = R(e); return { l: q.l - 3, t: q.t - 12, r: q.r + 3, b: q.b + 12 }; }));
         return { mm, vw: innerWidth, place: R(place), placeFull: place.scrollWidth <= place.clientWidth + 1, money: R(money), texts: texts.map(R), pads, chips: [...document.querySelectorAll('#hudLine3 .chip')].filter(vis).map((e) => e.textContent),
-          compass: R(document.getElementById('compassBtn')), journal: R(document.getElementById('journalBtn')), menu: R(document.getElementById('menuBtn')), l1: R(document.getElementById('hudL1')) };
+          compass: R(document.getElementById('compassBtn')), journal: R(document.getElementById('journalBtn')), globe: R(document.getElementById('mapBtn')), menu: R(document.getElementById('menuBtn')), l1: R(document.getElementById('hudL1')) };
       });
       const where = `${W}px ${scene}${lit ? ' lit' : ''}`, probs = [], hit = (a, q) => Math.min(a.r, q.r) - Math.max(a.l, q.l) > 0.5 && Math.min(a.b, q.b) - Math.max(a.t, q.t) > 0.5;
       if (!r.mm) probs.push('no minimap');
@@ -1073,6 +1073,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         if (Math.abs(r.mm.t - (r.l1.b + 6)) > 1) probs.push(`minimap at ${r.mm.t} (line 1 ends ${r.l1.b})`);
         if (Math.abs(r.money.r - r.mm.r) > 1 || Math.abs(r.compass.r - r.mm.r) > 1 || Math.abs(r.journal.r - r.mm.r) > 1) probs.push(`right edges ${r.money.r}/${r.mm.r}/${r.compass.r}/${r.journal.r}`);
         if (Math.abs(r.compass.t - (r.mm.b + 8)) > 1 || Math.abs(r.journal.t - (r.mm.b + 60)) > 1) probs.push(`buttons at ${r.compass.t}/${r.journal.t} under a minimap ending ${r.mm.b}`);
+        if (Math.abs(r.globe.r - r.mm.r) > 1 || Math.abs(r.globe.t - (r.journal.b + 22)) > 1 || r.globe.r - r.globe.l < 44 || r.globe.b - r.globe.t < 44) probs.push(`the globe at ${JSON.stringify(r.globe)}, the Journal ending ${r.journal.b}`);   // (22 px under the Journal: the owner, "too close")
       }
       if (r.texts.some((q) => q.l < 0 || q.r > r.vw)) probs.push('off screen');
       if (hit(r.place, r.money)) probs.push('the place name runs into the purse');
@@ -1088,6 +1089,49 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('top bar: line 1 the place and the purse, lines 2–3 short of the minimap; the minimap under line 1, the buttons under it, one right edge; boons and Weakened as chips, the place name kept (360/390/430, the Fens, lit, a fight)',
       bad.length === 0, bad.length ? bad.join(' · ') : `${seen.length} layouts · at 390 lit: minimap ${shot && JSON.stringify(shot.mm)}, chips ${shot && shot.chips.join(' / ')}, place ${shot && Math.round(shot.place.r - shot.place.l)} px${shot && shot.placeFull ? ' (whole)' : ' (shortened)'}`);
     await b.close();
+  }
+}
+// 23. The World map and the Guild's coach (docs/worldmap-travel-proposal.md): with Act I done and Saltmere reached, the
+// tavern's coach row opens the map on the Old Provinces; Saltmere's pin, its card, Travel → the coach card, then
+// Saltmere's square, 10 gold lighter; out on the Fens the land tab's Toadking's Mound walks you there. Tap targets 44 px.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(30);
+    await p.evaluate(() => { const s = globalThis.__sim; s.state.quests.ch1_ember_in_the_fist = { st: 3, step: 0, n: [] }; s.state.reached.add('saltmere'); s.state.counters.gold = 120; });
+    await run(3);
+    await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="coach"]').tap();
+    await p.waitForSelector('#mapWrap.on #worldmap .map img', { timeout: 10000 }); await p.waitForTimeout(600);
+    const tabs = await p.evaluate(() => [...document.querySelectorAll('#worldmap .tabs button')].map((e) => ({ t: e.textContent, on: e.classList.contains('on'), h: e.getBoundingClientRect().height })));
+    const pin = await p.evaluate(() => { const m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / 1200; return { x: r.left + 262 * k, y: r.top + 2062 * k }; });
+    await p.touchscreen.tap(pin.x, pin.y); await p.waitForTimeout(500);
+    const cardText = await p.evaluate(() => document.querySelector('#worldmap .card.on')?.innerText || '');
+    const go = await p.evaluate(() => { const q = document.querySelector('#worldmap .card .go'); const r = q.getBoundingClientRect(); return { w: r.width, h: r.height, off: q.disabled }; });
+    check('world map: the tavern\'s coach row opens the Old Provinces; Saltmere\'s card offers the coach, a day and 10 gold',
+      tabs[0].on && /Old Provinces/i.test(tabs[0].t) && tabs.every((t) => t.h >= 44) && /Saltmere/.test(cardText) && /a day on the road · 10 gold/.test(cardText) && go.w >= 44 && go.h >= 44 && !go.off,
+      JSON.stringify({ tabs, cardText: cardText.replace(/\n/g, ' | '), go }));
+    await p.locator('#worldmap .card .go').tap(); await run(3);
+    const card = await p.evaluate(() => document.querySelector('#coachCard.on')?.innerText || '');
+    await p.waitForTimeout(800); await run(20);
+    const after = await p.evaluate(() => { const s = globalThis.__sim, h = s.world.hub, pl = s.state.player; return { where: s.world.name, gold: s.state.counters.gold, onSquare: Math.hypot(pl.x - h.x, pl.y - h.y) < h.r }; });
+    check('world map: Travel → the coach card, then Saltmere\'s square, 10 gold lighter', /Thornwick to Saltmere/.test(card) && after.where === 'Saltmere' && after.gold === 110 && after.onSquare,
+      JSON.stringify({ card: card.replace(/\n/g, ' | '), after }));
+    await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits.find((x) => x.to === 'overland'), pl = s.state.player; pl.x = pl.px = (e.x0 + e.x1) / 2; pl.y = pl.py = (e.y0 + e.y1) / 2; });
+    await run(20); await p.waitForTimeout(1200); await run(20);
+    await p.locator('#mapBtn').tap(); await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 }); await p.waitForTimeout(600);
+    const toad = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), q = L.pins.find((x) => x.id === 'toadking_mound'), m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / L.w; return { x: r.left + (q.x - L.x0) * k, y: r.top + (q.y - L.y0) * k }; });
+    await p.touchscreen.tap(toad.x, toad.y); await p.waitForTimeout(300);
+    const land = await p.evaluate(() => ({ title: document.querySelector('#worldmap h2').textContent, card: document.querySelector('#worldmap .card.on')?.innerText || '' }));
+    await p.locator('#worldmap .card .go').tap(); await run(10);
+    const walk = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return { dest: pl.dest && pl.dest.label, open: document.querySelector('#mapWrap').classList.contains('on') }; });
+    check('world map: on the Fens, the land tab\'s Toadking\'s Mound (levels, floors, its boss) → Walk there walks you to it',
+      land.title === 'The Greywater Fens' && /Toadking's Mound/.test(land.card) && /levels 8–11/.test(land.card) && /The Toadking/.test(land.card) && walk.dest === "Toadking's Mound" && !walk.open && errs.length === 0,
+      JSON.stringify({ land: { ...land, card: land.card.replace(/\n/g, ' | ') }, walk }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
   }
 }
 srv.close();

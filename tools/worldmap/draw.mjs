@@ -3,13 +3,16 @@
 // straight with their dead beacon-towers, the blank corners left blank. Deterministic (seeded), so a re-run draws the
 // same map; edit the places below and run it again.
 //   node tools/worldmap/draw.mjs [out.jpg]   → docs/img/world/old-provinces.jpg (and .svg beside it)
-// The labels are set in IM Fell English (assets/fonts, OFL), the game's own face; Chromium renders the SVG.
-import { writeFileSync, mkdirSync } from 'node:fs';
+// The labels are set in IM Fell English (assets/fonts, OFL), the game's own face; Chromium renders the SVG. The places
+// are the game's own data (src/ui/wallmap.js: the World map's pins stand on them), and a default run also writes the
+// copy the game loads, assets/maps/old-provinces.jpg.
+import { writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'world', 'old-provinces.jpg'));
+const { PLACES } = await import(pathToFileURL(join(ROOT, 'src', 'ui', 'wallmap.js')).href);
 const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
 // ── chance, seeded ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -146,11 +149,6 @@ scatter([[700, 980], [900, 950], [950, 1100], [760, 1130]], 12, 34, (x, y) => hi
 
 // ── the imperial roads, ruled straight from Solmere, with their dead beacon-towers ──────────────────────────────────
 const SOL = [600, 1150];
-const PLACES = {
-  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [262, 2062], reedholm: [470, 2082], ashgate: [360, 905], kells: [240, 838],
-  frosthold: [420, 440], glass: [790, 440], throne: [600, 522], tollhaven: [1020, 960], highmarch: [820, 835], brine: [722, 1012],
-  gullwick: [998, 1180], rookstead: [800, 1600], hollin: [690, 1450],
-};
 const ROADS = [[SOL, PLACES.greyholt, PLACES.thornwick], [SOL, PLACES.ashgate], [SOL, PLACES.brine, PLACES.highmarch, PLACES.tollhaven], [SOL, PLACES.rookstead], [SOL, [600, 770]], [PLACES.ashgate, PLACES.kells], [PLACES.tollhaven, PLACES.gullwick], [PLACES.greyholt, PLACES.ashgate]];
 for (const r of ROADS) {
   add(`<path d="${pathOf(r, false)}" fill="none" stroke="${RED}" stroke-width="2" stroke-dasharray="9 6" opacity="0.8"/>`);
@@ -264,3 +262,4 @@ await p.screenshot({ path: OUT, type: OUT.endsWith('.png') ? 'png' : 'jpeg', ...
 await b.close();
 const { unlinkSync } = await import('node:fs'); unlinkSync(tmp);
 console.log('drew', OUT);
+if (!process.argv[2]) { const A = join(ROOT, 'assets', 'maps'); mkdirSync(A, { recursive: true }); copyFileSync(OUT, join(A, 'old-provinces.jpg')); console.log('copied', join(A, 'old-provinces.jpg')); }

@@ -1,10 +1,34 @@
 # The world map, and the Guild's coach between regions
 
-**Proposal, 2026-10-10. Nothing built yet.** The owner asked: *"Ok now how will we implement the world map and fast
-travel between regions? I'd like a world map button below the journal button."*
+**Implemented, 2026-10-10** (proposed and decided the same day; see §9). The owner asked: *"Ok now how will we
+implement the world map and fast travel between regions? I'd like a world map button below the journal button."*
+Then: *"Go with your recommendations and build it. But the map button looks too close to the journal: use a globe
+icon."*
 
-Mockup: [worldmap-mockup.html](./worldmap-mockup.html), rendered over the real HUD to
-[img/worldmap/mockup.jpg](img/worldmap/mockup.jpg). It shows three frames, each 390 × 844 (a phone, CSS px).
+**As shipped:**
+
+| What | Where |
+|---|---|
+| The coach, its roads and fares, the `coach` command, `state.reached` | `src/sim/coach.js`, `src/sim/core.js` |
+| Save v28: `reached`, and the migration (`reachedFor`) | `src/persist/save.js` |
+| The globe, the map sheet, its two tabs, the coach card | `src/ui/worldmap.js` |
+| The wall map's places, the lands' areas and the fog's words (shared with `draw.mjs`) | `src/ui/wallmap.js` |
+| The tavern's *The Guild's coach* row | `src/ui/townmenu.js` |
+| Service plaques kept clear of the globe | `src/render/renderer.js` |
+| The maps the game loads: `old-provinces.jpg`, `minimap-{vale,fens}.png` + `.json` (with the pins) | `assets/maps/`, written by `tools/worldmap/draw.mjs` and `minimap.mjs` |
+| Tests | `test/coach.test.mjs`, `test/save.test.mjs`, `smoke-test.mjs` (a coach replay, a tamper), `test/browser/run.mjs` §22–23 |
+
+![As shipped: the globe, Saltmere's coach card, the trip, the Fens and Toadking's Mound](img/worldmap/shipped.jpg)
+
+*As shipped, 390 × 844, captured on the manual clock: the HUD with the globe 22 px under the Journal (the signs keep
+clear of it); the Old Provinces at 1.7× with Saltmere picked; the coach card while Saltmere comes up; the Fens with
+Toadking's Mound picked.*
+
+The proposal follows as written, with the changes the build made marked **(built)**.
+
+Mockup (the proposal's; the shipped button is a globe, set lower): [worldmap-mockup.html](./worldmap-mockup.html),
+rendered over the real HUD to [img/worldmap/mockup.jpg](img/worldmap/mockup.jpg). It shows three frames, each
+390 × 844 (a phone, CSS px).
 
 ![World map mockup: the button, the Old Provinces, a region](img/worldmap/mockup.jpg)
 
@@ -21,9 +45,12 @@ A round 44 px **World map** button, the fourth in the right-hand column, directl
 |---|---|---|
 | Compass | `calc(var(--hud-l1, 30px) + 122px)` | `src/ui/compass.js` |
 | Journal | `+ 174px` | `src/ui/journal.js` |
-| **World map** | **`+ 226px`** | `src/ui/worldmap.js` (new) |
+| **World map** | **`+ 240px`** (built; proposed `+ 226px`) | `src/ui/worldmap.js` |
 
-- It uses the Journal button's style: a dark disc, a gold rim and a gold line icon (a folded map).
+- **(built)** The owner found the mockup's button too close to the Journal: it stands 22 px under it, not 8, and the
+  service plaques keep clear of it as they do of the compass and the Journal.
+- It uses the Journal button's style: a dark disc, a gold rim and a gold line icon, **a globe (built**; proposed: a
+  folded map).
 - `aria-label="World map"`. Like every overlay, it swallows `pointerdown`, `touchstart` and `mousedown`.
 - It sits at the same right edge as the column (`--safe-r`), so the landscape safe area holds.
 - It shows everywhere: in town, on the overland, and in a dungeon (where it only shows the map; see §2).
@@ -34,7 +61,9 @@ A full sheet, like the Journal's, with ✕ (44 px) and two tabs.
 
 ### Tab 1: the Old Provinces (frame 2)
 
-The wall map (`old-provinces.jpg`, 1200 × 2400), scrolled so the land you're in sits in view.
+The wall map (`old-provinces.jpg`, 1200 × 2400), scrolled so the land you're in sits in view. **(built)** At a
+phone's width the map's words were too small to read, so it opens at 1.7× the sheet's width and scrolls both ways;
+a picked pin scrolls clear of its card.
 
 - **Fog** covers every land that isn't open, with one line saying when it opens: *"the roads north open from
   level 15"*, *"the Greenwood opens at 45"*. The wall map's own unfinished edges read as fog already.
@@ -48,16 +77,17 @@ The wall map (`old-provinces.jpg`, 1200 × 2400), scrolled so the land you're in
   - what it is (a town, or a waystation with tavern, inn and temple);
   - the ★ quest, if there is one;
   - the coach and its fare (§3), and **[Travel]**.
-- The pin positions come from `draw.mjs`'s `PLACES`, moved into shared data (`src/data/worldmap.js`) that the tool
-  and the UI both import. The map and its pins can't drift apart.
+- The pin positions come from `draw.mjs`'s `PLACES`, moved into shared data (**`src/ui/wallmap.js`**, built) that the
+  tool and the UI both import. The map and its pins can't drift apart (the re-run map is byte-identical).
 
 ### Tab 2: the region you're in (frame 3)
 
 The region's bare minimap (`minimap-<scene>.png`, drawn from the sim at 4 px a tile, with the origin in its
 `.json`), scaled to the sheet's width.
 
-- **Pins:** the town, every site, and the region's road exits. They come from the same rows the compass lists
-  (`travel.js destinations()`), so they show only what the compass would.
+- **Pins:** the town, every site, and the region's road exits. **(built)** They come from the overland's exits,
+  written into the map's `.json` by `minimap.mjs` (the exits don't move with the seed), so they show in town and
+  underground too; a hidden site stays off the map until it's found. Walk there uses the compass's own rows.
   - A site you haven't entered is hollow. A site that isn't revealed yet (`siteOpen`) is greyed and says so.
   - The tracked quest's site gets the ★.
 - **"Here"** is placed at `((x − x0) × 4, (y − y0) × 4)`, scaled.
@@ -72,7 +102,7 @@ The region's bare minimap (`minimap-<scene>.png`, drawn from the sim at 4 px a t
 The world doc already has the Guild running the roads (expeditions are "the Guild's road work", GDD §6.3). The
 coach is their service: a seat on a cart that goes between the towns they keep a tavern in.
 
-**The rules, as recommended:**
+**The rules (recommended, then decided and built):**
 
 1. **Where you board:** the **tavern in a town or a waystation**, from the square. The world map's [Travel] only
    works there. Out in the field the card says *"the coach leaves from a tavern"*. Getting home from the field is
@@ -131,7 +161,8 @@ It validates in this order. A refused command does nothing but emit `refused` wi
 **When it goes:**
 - take the fare from the gold;
 - set the region to the destination's land;
-- `travel('town', 'coach', null, land)`: an arrival named `coach`, by the tavern, in each town's spec;
+- `travel('town', 'default', undefined, land)` **(built)**: the square's own arrival by the well, so no town needs a
+  new one;
 - emit `coach { from, to, days, fare }`.
 
 The UI shows the card on `coach` and waits for `levelChanged`.
@@ -158,10 +189,10 @@ Each must leave the hash where it was.
 | File | What |
 |---|---|
 | `src/ui/worldmap.js` (new) | the button, the sheet and its two tabs, the pins, the cards. Keyed Preact (no full re-renders under a finger: the cards hold a press by town id). Text only, never HTML. |
-| `src/data/worldmap.js` (new) | the wall map's `PLACES`, the lands' fog rectangles and their lines. `draw.mjs` imports it. |
+| `src/ui/wallmap.js` (built) | the wall map's `PLACES`, the lands' areas (the fog is the map with the open ones cut out) and the fog's words. `draw.mjs` imports it. |
 | `src/ui/townmenu.js` | the tavern menu gets a row, *"The Guild's coach"*, that opens the map on the Old Provinces tab |
 | `src/ui/compass.js` | none: the region tab reads `destinations()` the same way |
-| `assets/maps/` | `old-provinces.jpg` and the bare `minimap-*.png` + `.json`, copied from `docs/img/` by `minimap.mjs` / `draw.mjs` (a flag, `--assets`), so the game never loads from `docs/` |
+| `assets/maps/` | `old-provinces.jpg` and the overlands' bare `minimap-*.png` + `.json`, copied by a default run of `draw.mjs` / `minimap.mjs` (built: no flag), so the game never loads from `docs/` |
 
 The sheet has no per-frame redraw. It reads state when it opens, and on `levelChanged`, `coach` and
 `questTracked`.
@@ -210,3 +241,11 @@ save.
 3. **Time:** instant with a card (recommended), or does the day pass (the sky dial jumps a day, and the weather
    rerolls)?
 4. **Unreached towns:** drawn but dim (recommended), or hidden until you reach them?
+
+## 9. Decided
+
+The owner (2026-10-10): *"Go with your recommendations and build it. But the map button looks too close to the
+journal: use a globe icon."*
+- The coach leaves from a town's square (the tavern), to a town reached on foot, for 10 gold a day of road, at once
+  with a card. Unreached towns in an open land are drawn dim.
+- The button is a globe, 22 px under the Journal.

@@ -1322,7 +1322,7 @@ export function createRenderer(canvas, sim, input) {
       if (L.service) {                                              // service plaques: tappable-looking signs
         const tw = octx.measureText(L.text).width + 14 * k, th = 17 * k;
         sx = Math.min(Math.max(sx, tw / 2 + 4 * k), vw - tw / 2 - 4 * k);      // a service at the frame's edge keeps its plaque on screen
-        if (sy > (hudL1 + 114) * k && sy - th < (hudL1 + 224) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass and journal buttons on the right (ui/compass.js, ui/journal.js: right 12, 44 wide, from 122 to 218 under the bar's line 1)
+        if (sy > (hudL1 + 114) * k && sy - th < (hudL1 + 288) * k) sx = Math.min(sx, vw - tw / 2 - (62 + safeR) * k);   // ...and clear of the compass, journal and world map buttons on the right (ui/compass.js, ui/journal.js, ui/worldmap.js: right 12, 44 wide, from 122 to 284 under the bar's line 1)
         octx.fillStyle = `rgba(16,12,22,${0.78 * a})`; octx.strokeStyle = `rgba(214,170,98,${0.55 * a})`; octx.lineWidth = Math.max(1, k);
         octx.beginPath(); octx.roundRect(sx - tw / 2, sy - th + 4 * k, tw, th, 5 * k); octx.fill(); octx.stroke();
         octx.fillStyle = `rgba(240,200,128,${a})`; octx.fillText(L.text, sx, sy);

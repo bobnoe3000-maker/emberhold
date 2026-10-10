@@ -17,6 +17,7 @@ import { createPartyScreen } from './ui/partyscreen.js';
 import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
 import { createJournal } from './ui/journal.js';
+import { createWorldMap } from './ui/worldmap.js';
 import { createStepOut } from './ui/stepout.js';
 import { createShrineCard } from './ui/shrine.js';
 import { createTowerCard } from './ui/tower.js';
@@ -84,8 +85,9 @@ const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
 const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for its sellswords (GDD §6.2): from the tavern and a Contract tab
-const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open() });   // subscribe before restore, so a loaded counters event repaints
+const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open(), openMap: () => worldMap.open('world') });   // subscribe before restore, so a loaded counters event repaints
 const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms, key) => hud.show(m, ms, key), partyPanel });   // quests (M4): the Journal, tracker and toasts
+const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // the World map and the Guild's coach (docs/worldmap-travel-proposal.md)
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
@@ -122,7 +124,7 @@ const creation = createCreation({ sim, onDone: () => { paused = false; cinema.st
 const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
-  onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); } });   // the menu comes up over a clear screen
+  onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); } });   // the menu comes up over a clear screen
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 // offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title
@@ -130,7 +132,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal };
+if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal, worldMap };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /

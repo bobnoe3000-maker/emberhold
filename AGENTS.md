@@ -31,7 +31,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --fresh = hires at their hire level (half the hero's), not levelled up; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); --up N = every kit piece at the smith's +N; DMG=1: damage by member
 node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman] [--floor N]   # a boss hall vs fighter + rogue + cleric (or shaman) at a level (TRACE=1: a timeline); --floor: the hall on floor N (the Drowned Abbey has three)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level (dev plan §2.7 targets)
@@ -45,11 +45,11 @@ BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BA
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
-node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md) → docs/img/world/old-provinces.jpg + .svg
+node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
 node tools/worldmap/streets.mjs           # the region towns' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
 node tools/worldmap/overlands.mjs         # each region's overland at the game's scale (docs/town-streets-proposal.md) → docs/img/world/overland-<region>.jpg
-node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png
+node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin and an overland's pins) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png; the overlands' copies in assets/maps/ (the World map's land tab)
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here

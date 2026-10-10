@@ -8,12 +8,15 @@
 //                                  world tile at its top-left corner (x0, y0), so a minimap can place the player on it
 //   map-<scene>.jpg               a sheet with a title and the names on it (Thornwick; the owner's ask)
 //   node tools/worldmap/minimap.mjs [outDir]   → docs/img/towns/
-import { writeFileSync, mkdirSync, unlinkSync } from 'node:fs';
+// An overland's .json also lists its pins (its exits: the town, every site, the road to another land; at the middle of
+// each, in tiles), and a default run copies the overlands' bare maps to assets/maps/ for the World map's region tab
+// (src/ui/worldmap.js). The exits don't move with the seed (test/worldmap.test.mjs holds the copies to the sim).
+import { writeFileSync, mkdirSync, unlinkSync, copyFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns'));
+const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns')), ASSETS = process.argv[2] ? null : join(ROOT, 'assets', 'maps');
 const { createSim } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'core.js')).href);
 const { ENV_FOOT } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'envfoot.js')).href);
 const SEED = 20260807, PX = 4;
@@ -49,6 +52,10 @@ function scene(id, simOpts, crop, region) {
   pieces.sort((a, b) => order[a.k] - order[b.k] || (a.y1 - b.y1));
   return { id, region, crop, cw, ch, ground, pieces, services: w.services, labels: w.labels, exits: w.exits, hub: w.hub, name: w.name };
 }
+
+// an overland's pins: the middle of each exit (outdoor.js exits), in tiles
+const r1 = (v) => Math.round(v * 10) / 10;
+const pinsOf = (sc) => sc.exits.map((e) => ({ kind: e.to === 'dungeon' ? 'site' : e.to === 'town' ? 'town' : 'land', id: e.site || e.region || sc.region, x: r1((e.x0 + e.x1) / 2), y: r1((e.y0 + e.y1) / 2) }));
 
 const SCENES = [
   scene('thornwick', { scene: 'town', region: 'vale' }, [-22, -20, 166, 136], 'vale'),
@@ -126,7 +133,9 @@ const shoot = async (html, w, h, file, type) => {
 };
 for (const sc of SCENES) {
   await shoot(page(sc, null), sc.cw * PX, sc.ch * PX, join(OUT, `minimap-${sc.id}.png`), 'png');
-  writeFileSync(join(OUT, `minimap-${sc.id}.json`), JSON.stringify({ scene: sc.id, region: sc.region, px: PX, x0: sc.crop[0], y0: sc.crop[1], w: sc.cw, h: sc.ch, seed: SEED }, null, 1) + '\n');
+  const over = sc.id === sc.region, pins = over ? pinsOf(sc) : undefined;
+  writeFileSync(join(OUT, `minimap-${sc.id}.json`), JSON.stringify({ scene: sc.id, region: sc.region, px: PX, x0: sc.crop[0], y0: sc.crop[1], w: sc.cw, h: sc.ch, seed: SEED, ...(pins ? { pins } : {}) }, null, 1) + '\n');
+  if (over && ASSETS) { mkdirSync(ASSETS, { recursive: true }); for (const ext of ['png', 'json']) copyFileSync(join(OUT, `minimap-${sc.id}.${ext}`), join(ASSETS, `minimap-${sc.id}.${ext}`)); console.log('copied', `assets/maps/minimap-${sc.id}`); }
   if (sc.id === 'thornwick') { const s = sheetFor(sc); await shoot(page(sc, s), s.W, s.H, join(OUT, `map-${sc.id}.jpg`), 'jpeg'); }
 }
 await b.close();

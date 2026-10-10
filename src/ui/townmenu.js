@@ -20,7 +20,7 @@ const SERVICES = {
   },
   tavern: {
     label: 'Tavern', blurb: 'The Lantern Guild’s quest board, sellswords for hire, and rumours over a pint.',
-    actions: [['Quest board', 'the Lantern Guild’s mini-quests for this region'], ['Hire companions', 'two party slots · today’s sellswords'], ['Rumours', 'hooks, lore and where the dead are stirring']],
+    actions: [['Quest board', 'the Lantern Guild’s mini-quests for this region'], ['Hire companions', 'two party slots · today’s sellswords'], ['The Guild’s coach', 'to a town you’ve walked to · 10 gold a day of road'], ['Rumours', 'hooks, lore and where the dead are stirring']],
     icon: '<path d="M5 6h10v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM15 9h2a2 2 0 0 1 0 6h-2M6 3c1 1 2 1 3 0 1 1 2 1 3 0 1 1 2 1 3 0v3H6z"/>',
   },
   inn: {
@@ -132,7 +132,7 @@ const CSS = SW_CSS + `
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
 
-export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerms = () => {} } = {}) {
+export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerms = () => {}, openMap = () => {} } = {}) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const bar = document.createElement('div'); bar.id = 'hubBar';
   const sheet = document.createElement('div'); sheet.id = 'hubSheet';
@@ -154,7 +154,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     if (e.target.closest('.close')) return close();
     if (e.target.closest('.back')) { note = ''; return view === 'retrain' ? hire() : open(current); }
     const go = e.target.closest('[data-go]');
-    if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } return VIEWS[v](t); }
+    if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } if (v === 'coach') { close(); openMap(); return; } return VIEWS[v](t); }
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
     const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
     if (e.target.closest('[data-ask]')) return send({ type: 'askAround' });
@@ -192,7 +192,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
   let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;   // (armRel: a bench member's Dismiss for good, tapped once)
 
-  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
+  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'The Guild’s coach': 'coach', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
     Expeditions: 'expeditions', Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
   function open(kind) {
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
