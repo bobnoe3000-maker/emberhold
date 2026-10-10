@@ -30,7 +30,7 @@ function fitName(cx, cy, w, h, name) {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const { ENV_FOOT } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'envfoot.js')).href);
-const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns'));
+const OUT = resolve(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : join(ROOT, 'docs', 'img', 'towns'));
 const W = 1200, S = 4.4, MARGIN = 40;
 const PAPER = '#e9dfc6', INK = '#3b2f24', DIM = '#6e5e4a', GOLD = '#b8862e', SVC = '#d9ae4e';
 
@@ -40,10 +40,18 @@ const f1 = (v) => (+v).toFixed(1);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
 
 // ── the square every town keeps (src/sim/outdoor.js buildTown: Thornwick's tiles) ─────────────────────────────────────
-const SQUARE = {
+const TOWN_SQUARE = {
   plaza: [60, 62, 24, 22], forecourt: [36, 40, 8, 7], well: [66, 71], mouth: [76, 76], hub: [58, 58, 32],
   // the services' real footprints: where buildTown puts them, and their baked sizes (src/sim/envfoot.js)
   services: [['temple', 34, 24], ['tavern', 29, 48], ['shop', 50, 41], ['smith', 51, 67], ['inn', 73, 55]].map(([k, x, y]) => { const f = ENV_FOOT[`vale_${k}_1`]; return [k, x + f[0], y + f[1], x + f[2], y + f[3]]; }),
+};
+
+// ── the square every waystation keeps (outdoor.js buildWaystation: Saltmere's tiles): a small tavern, the shop, the inn
+// and the shrine round the cistern, no forge (GDD §10 v1.44; the owner: "there should at least be a shop, and small
+// tavern at these way stations… a reason to be there")
+const WAY = {
+  plaza: [60, 62, 24, 22], forecourt: [40, 40, 10, 8], well: [66, 71], mouth: [76, 76], hub: [58, 58, 32],
+  services: [['temple', 28, 24, 'fens_temple_1'], ['tavern', 29, 48, 'fens_stilttavern_1'], ['inn', 49, 29, 'fens_stiltinn_1'], ['shop', 62, 49, 'fens_shop_1']].map(([k, x, y, id]) => { const f = ENV_FOOT[id]; return [k, x + f[0], y + f[1], x + f[2], y + f[3]]; }),
 };
 
 // ── a plan: a builder the town specs draw into, then one SVG ──────────────────────────────────────────────────────────
@@ -102,6 +110,7 @@ function plan(spec) {
       t.poly([[x - dx, y - dy], [x - dx * 0.4 + nx, y - dy * 0.4 + ny], [x + dx * 0.7 + nx * 0.6, y + dy * 0.7 + ny * 0.6], [x + dx, y + dy], [x + dx * 0.7 - nx * 0.6, y + dy * 0.7 - ny * 0.6], [x - dx * 0.4 - nx, y - dy * 0.4 - ny]], c, 'trees', `stroke="${INK}" stroke-width="0.8"`); },
   };
   spec.draw(t);
+  const SQUARE = spec.square || TOWN_SQUARE;
 
   // the square: the services, the well, the plaza; the camera's frame at it, its front half hatched (keep it low)
   const [hx, hy, hr] = SQUARE.hub, cid = 'c' + spec.id;
@@ -412,12 +421,137 @@ TOWNS.push({ id: 'lamphall', name: 'The Lamphall', sub: 'Solmere · from level 1
     t.tower(198, 72, 3.4, WL, false); t.tower(198, 88, 3.4, WL, false); t.note(208, 96, 'the arch', { size: 13 });
   } });
 
+// ── the waystations (world doc v1.31 §3, *The waystations*): one street, or a bridge, or a beach, off the same square
+const WAYSTATIONS = [];
+const WAY_NOTE = 'Four services round the square, as Saltmere\'s: a small tavern (the board, hiring, the coach), the shop with its own shelves, a bed and a shrine. No forge: that\'s the town\'s.';
+
+// KELL'S REST, the Reach: the Kell Assay's depot under the dead volcano. Depot Street runs east from the square to the
+// Kell road; the Assay's walled yard behind it, the weigh-house at its gate; the old track climbs the volcano behind the shrine.
+WAYSTATIONS.push({ id: 'kells', name: 'Kell\'s Rest', square: WAY, sub: 'the Cinder Reach · levels 15–30 · the Kell Assay\'s depot under the dead volcano', size: 'waystation · one street · no wall', extent: [-12, -24, 168, 128],
+  lede: 'Depot Street east to the Kell road; the Assay\'s walled yard and its weigh-house behind; the old track up the volcano.',
+  svcNames: { tavern: 'The Short Weight', shop: 'The Company Store', inn: 'The Bunkhouse', temple: 'Ash Shrine' },
+  palette: { house: '#9a5a42', low: '#b89878', shop: '#c98a3c', land: '#b07a9a', ware: '#8a6a52', plaza: '#cdb595', stall: '#d4a45a' },
+  swatches: [['#c9a77a', 'dry earth'], ['#6e5a50', 'the volcano\'s foot'], ['#a0563a', 'red rock'], ['#8a6a52', 'ore sheds']],
+  legend: 'dry earth; the street is beaten cinder',
+  notes: [WAY_NOTE, 'Why stop: the Assay Yards next door, the depot\'s company store (scrip at par, coin at a premium), and the track up to the Ninth Vault.'],
+  draw(t) {
+    t.rect(-12, -24, 168, 128, '#c9a77a');
+    t.poly([[-12, -24], [80, -24], [60, -6], [30, 4], [10, 18], [-12, 30]], '#6e5a50', 'low', `stroke="${INK}" stroke-width="1"`); t.note(14, -12, 'the dead volcano\'s foot', { anchor: 'start', size: 12.5, ink: '#f0e2c8', halo: 'none' });
+    t.street([[20, 12], [8, 0], [4, -14]], 2.4, '', '#b39a70', { dash: '3 2' }); t.note(-2, 6, 'the old track up', { anchor: 'start', size: 12, rot: -60 });
+    const ST = '#a9998a';
+    t.street([[76, 76], [96, 80], [168, 80]], 7, 'Depot Street', ST); t.note(158, 92, 'the Kell road', { size: 12 });
+    // the Assay's yard behind the street: a fence, the weigh-house at its gate, the ore sheds
+    t.line([[96, 30], [160, 30], [160, 72], [96, 72], [96, 30]], 0.6, INK, 'low', 'stroke-dasharray="2 2"');
+    t.bld(98, 62, 112, 72, 'land', { n: 1, name: 'The weigh-house', note: 'the Assay\'s scales: every cart weighed in and out' });
+    t.bld(118, 36, 156, 46, 'ware', { n: 2, name: 'The ore sheds' }); t.bld(118, 52, 140, 66, 'ware'); t.note(138, 26, 'the Assay\'s yard', { size: 12.5 });
+    t.note(170, 34, 'to the Assay Yards ›', { anchor: 'end', size: 12 });
+    // in front, low: the bunk huts, a farrier
+    t.row(96, 86, 150, 92, 'low', 9); t.bld(80, 88, 90, 96, 'stall', { n: 3, name: 'A farrier', note: 'the depot\'s carts and their mules' });
+    t.row(84, 100, 140, 106, 'low', 9); t.note(112, 114, 'the bunk huts, one storey', { size: 12 });
+    for (const [x, y, r] of [[150, 110, 5], [160, 100, 4], [-6, 96, 6], [6, 110, 4]]) t.rock(x, y, r, '#a0563a');
+  } });
+
+// BRINE CROSS, the Tidemark: the bridge-town on the Highmarch road. Its street is the bridge: houses on both sides of
+// it over the Brine, the tollhouse at mid-span; the far bank is where the siege comes.
+WAYSTATIONS.push({ id: 'brine', name: 'Brine Cross', square: WAY, sub: 'the Tidemark · levels 30–45 · the bridge-town on the Highmarch road', size: 'waystation · the street is the bridge', extent: [-12, -16, 196, 128],
+  lede: 'The square on the west bank; the bridge east over the Brine, built up on both sides; the tollhouse at mid-span; the far bank.',
+  svcNames: { tavern: 'The Middle Arch', shop: 'The Bridge Stores', inn: 'The Upstream Rooms', temple: 'Bridgehead Shrine' },
+  palette: { house: '#8a6a58', low: '#a89880', shop: '#c98a3c', land: '#a07aa0', plaza: '#cfc0a2', stall: '#d4a45a' },
+  swatches: [['#cfbd9a', 'brick and setts'], ['#6f8d98', 'the Brine'], ['#a69b86', 'the bridge'], ['#8a6a58', 'houses on the bridge']],
+  legend: 'setts in town, the bridge\'s stone over the water',
+  notes: [WAY_NOTE, 'Why stop: the only crossing of the Brine on the Highmarch road; Act IV\'s siege is held here room by room (a site, 40–43).'],
+  draw(t) {
+    t.rect(-12, -16, 196, 128, '#cfbd9a');
+    t.poly([[100, -16], [132, -16], [136, 40], [130, 90], [138, 128], [104, 128], [98, 90], [104, 40]], '#6f8d98', 'water'); t.note(118, -6, 'the Brine', { size: 13, ink: '#f0e8d4', halo: 'none' });
+    t.rect(132, -16, 196, 128, '#c8b894');
+    t.street([[76, 76], [96, 80], [196, 80]], 8, '', '#a69b86');
+    for (let x = 98; x < 140; x += 7) t.bld(x, 70, x + 6, 75.6, 'house'); for (let x = 98; x < 140; x += 7) t.bld(x, 84.4, x + 6, 90, 'house');
+    t.note(118, 64, 'the bridge: houses both sides', { size: 12.5 });
+    t.bld(115, 76.5, 121, 83.5, 'land', { n: 1, name: 'The tollhouse', note: 'mid-span; a coin a cart, a copper a walker' });
+    t.line([[166, 70], [166, 90]], 1.2, '#5a3e2a', 'trees'); t.bld(164, 66, 170, 70, 'stall', { n: 2, name: 'The east barricade', note: 'where the siege comes (Act IV)' });
+    t.note(186, 96, 'to Highmarch', { anchor: 'end', size: 12 });
+    t.row(84, 94, 96, 108, 'low', 6); t.bld(82, 110, 96, 118, 'stall', { n: 3, name: 'The boat-stairs', note: 'down to the water, under the first arch' });
+    t.row(140, 36, 150, 66, 'house', 8); t.row(152, 36, 160, 66, 'house', 8); t.row(140, 94, 160, 112, 'house', 8);
+  } });
+
+// GULLWICK, the Tidemark: a fishing hamlet on the beach south of Tollhaven. The Strand runs down from the square to the
+// sand; cottages along it, boats hauled up, the net racks; the beach road north to Tollhaven.
+WAYSTATIONS.push({ id: 'gullwick', name: 'Gullwick', square: WAY, sub: 'the Tidemark · levels 30–45 · a fishing hamlet on the beach road', size: 'waystation · one street down to the sand', extent: [-12, -16, 190, 132],
+  lede: 'The Strand down from the square to the beach; cottages along it, the boats drawn up, the net racks; the sea east.',
+  svcNames: { tavern: 'The Gutted Herring', shop: 'Net & Needle', inn: 'The Net Loft', temple: 'Drowned Men\'s Cairn' },
+  palette: { house: '#8e8a7c', low: '#a89c86', shop: '#c98a3c', land: '#a07aa0', plaza: '#d8c8a2', stall: '#c8a464' },
+  swatches: [['#cdbf9a', 'dune grass'], ['#e3cf9e', 'sand'], ['#6f8d98', 'the sea'], ['#8e8a7c', 'cottages']],
+  legend: 'dune grass and sand; the Strand is shingle',
+  notes: [WAY_NOTE, 'Why stop: the beach road south of Tollhaven, and the only boats out to the Drowned Mole and the reef.'],
+  draw(t) {
+    t.rect(-12, -16, 190, 132, '#cdbf9a');
+    t.poly([[110, -16], [190, -16], [190, 132], [96, 132], [104, 90], [100, 40]], '#e3cf9e');
+    t.poly([[146, -16], [190, -16], [190, 132], [134, 132], [142, 100], [138, 60], [146, 20]], '#6f8d98', 'water'); t.note(170, 50, 'the sea', { size: 13, ink: '#f0e8d4', halo: 'none' });
+    t.street([[76, 76], [96, 80], [132, 86]], 6, 'the Strand', '#c2b49a');
+    t.street([[104, 40], [108, 10], [112, -16]], 4, '', '#c2b49a', { cap: 'round' }); t.note(118, -6, 'the beach road, to Tollhaven', { anchor: 'start', size: 12 });
+    t.row(92, 68, 128, 74, 'house', 8); t.row(92, 90, 128, 96, 'house', 8);
+    for (const [x, y, a] of [[134, 94, 80], [138, 108, 70], [130, 116, 95], [140, 72, 85]]) t.boat(x, y, 10, a);
+    for (let i = 0; i < 4; i++) t.line([[108 + i * 6, 102], [108 + i * 6, 112]], 0.4, INK, 'trees');
+    t.bld(106, 100, 128, 104, 'stall', { n: 1, name: 'The net racks', note: 'drying in rows' });
+    t.bld(84, 100, 96, 108, 'low', { n: 2, name: 'The fish-smokery' });
+    t.bld(124, 76, 132, 84, 'land', { n: 3, name: 'The ferryman\'s post', note: 'out to the Drowned Mole, weather allowing' });
+    t.blob(176, 112, 4, '#d8c7a0', 'trees'); t.note(170, 124, 'the reef', { size: 12 });
+  } });
+
+// HOLLIN FORD, the Greenwood: where the slow river spreads into fen. The Tithe Road runs from the square down to the
+// ford; log houses along it; the barn the clans keep shut across the water.
+WAYSTATIONS.push({ id: 'hollin', name: 'Hollin Ford', square: WAY, sub: 'the Greenwood · levels 45–60 · the ford on the Tithe Road', size: 'waystation · one road to the ford', extent: [-12, -16, 184, 132],
+  lede: 'The Tithe Road down from the square to the ford; log houses along it; the fen both sides; the shut barn across the water.',
+  svcNames: { tavern: 'The Wet Boots', shop: 'The Ford Store', inn: 'The Hayloft', temple: 'Ford Stone' },
+  palette: { house: '#7d6a4e', low: '#9a8a62', shop: '#c98a3c', land: '#a07aa0', plaza: '#b9a77e', stall: '#c8a464' },
+  swatches: [['#8a9660', 'clearing grass'], ['#5d6b44', 'the wood'], ['#7f8a66', 'fen'], ['#6f8d98', 'the slow river']],
+  legend: 'grass and trodden earth; the ford is stones',
+  notes: [WAY_NOTE, 'Why stop: the ford is the Tithe Road\'s only crossing, and the clans\' trading post is the last before Rookstead.'],
+  draw(t) {
+    t.rect(-12, -16, 184, 132, '#8a9660');
+    t.poly([[112, -16], [150, -16], [156, 132], [104, 132]], '#7f8a66'); for (let i = 0; i < 40; i++) t.tree(110 + rand() * 46, rand() * 148 - 16, 0.6, '#5a6a44');
+    t.line([[132, -16], [128, 40], [132, 80], [126, 132]], 6, '#6f8d98', 'water'); t.note(138, 8, 'the slow river', { anchor: 'start', size: 12.5 });
+    t.street([[76, 76], [96, 80], [126, 80]], 6, 'the Tithe Road', '#b39a70'); t.street([[138, 80], [184, 80]], 6, '', '#b39a70');
+    for (let i = 0; i < 5; i++) t.stone(127 + i * 2.6, 78 + (i % 2) * 3, 1.1, '#9c988e'); t.note(132, 92, 'the ford', { size: 12.5 });
+    t.bld(126, 66, 134, 72, 'land', { n: 1, name: 'The Ford Stone\'s keeper', note: 'calls the water: wade, or wait' });
+    t.row(92, 68, 120, 74, 'house', 9); t.row(92, 88, 120, 94, 'low', 9);
+    t.bld(150, 50, 172, 66, 'land', { n: 2, name: 'Hollin Ford Barn', note: 'sealed; the clans call what\'s inside their grandparents (a site, 42–47)' });
+    t.bld(84, 98, 94, 106, 'stall', { n: 3, name: 'A cooper', note: 'the trading post\'s salt barrels' });
+    for (let i = 0; i < 260; i++) { const x = rand() * 196 - 12, y = rand() * 148 - 16; if (Math.hypot(x - 62, y - 64) > 58 && (x < 104 || x > 160) && Math.abs(y - 80) > 8) t.tree(x, y, 2 + rand() * 2.2, rand() < 0.5 ? '#4f6a3a' : '#5a7442'); }
+  } });
+
+// THE FROZEN HOSPICE, the Heights: the pilgrims' hospice at the foot of the Stair. A walled court round the square; the
+// Stair goes up from its north-east gate; the Cult's camp outside the wall is the site.
+WAYSTATIONS.push({ id: 'hospice', name: 'The Frozen Hospice', square: WAY, sub: 'the Pale Heights · levels 60–75 · the pilgrims\' hospice at the foot of the Stair', size: 'waystation · a walled court', extent: [-12, -24, 176, 128],
+  lede: 'A walled court round the square; the Stair up from the north-east gate; the Sol frozen below; the Cult\'s camp outside the wall.',
+  svcNames: { tavern: 'The Warming Room', shop: 'The Pilgrims\' Store', inn: 'The Long Dormitory', temple: 'Stair Shrine' },
+  palette: { house: '#6e7684', low: '#8e8a84', shop: '#c98a3c', land: '#a07aa0', plaza: '#cfc7b8', stall: '#c8a464' },
+  swatches: [['#eef0f2', 'snow'], ['#b8aa94', 'frozen dirt'], ['#9a9690', 'the court wall'], ['#a9c4d4', 'the Sol, frozen']],
+  legend: 'frozen dirt; snow drifted against every wall',
+  notes: [WAY_NOTE, 'Why stop: the last warm room before the Stair. The hospice keeps its court; the Cult\'s camp round it is the site (57–62).'],
+  draw(t) {
+    t.rect(-12, -24, 176, 128, '#b8aa94');
+    for (let i = 0; i < 18; i++) t.drift(rand() * 188 - 12, rand() * 152 - 24, 5 + rand() * 9, '#eef0f2');
+    t.line([[150, -24], [146, 40], [152, 90], [148, 128]], 5, '#a9c4d4', 'water'); t.note(156, 0, 'the Sol', { anchor: 'start', size: 12.5 });
+    const WL = '#9a9690';
+    t.wall([[6, 8], [100, 8], [100, 70]], 2, WL); t.wall([[100, 90], [100, 112], [6, 112], [6, 8]], 2, WL);
+    t.tower(100, 70, 2.6, WL, false); t.tower(100, 90, 2.6, WL, false); t.note(108, 104, 'the court gate', { anchor: 'start', size: 12 });
+    t.street([[76, 76], [100, 80], [140, 80]], 5, '', '#c9bfae');
+    t.street([[100, 8], [110, -6], [118, -24]], 4, 'the Stair', '#c9bfae', { steps: true });
+    t.bld(94, 2, 102, 10, 'land', { n: 1, name: 'The Stair\'s first step', note: 'and the bell rung for pilgrims who don\'t come down' });
+    for (const [x, y] of [[118, 30], [128, 40], [116, 50], [126, 100], [114, 112], [136, 116], [134, 60]]) t.poly([[x - 4, y + 3], [x, y - 3], [x + 4, y + 3]], '#7a6050', 'trees', `stroke="${INK}" stroke-width="0.8"`);
+    t.bld(112, 22, 120, 28, 'stall', { n: 2, name: 'The Cult\'s camp', note: 'tents round the hospice\'s wall: the site' });
+    t.bld(80, 94, 94, 104, 'low', { n: 3, name: 'The woodstore', note: 'a winter\'s fuel, stacked to the eaves' });
+    t.row(10, 92, 40, 98, 'low', 8);
+  } });
+
 // ── draw ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
 mkdirSync(OUT, { recursive: true });
 const font = (f) => pathToFileURL(join(ROOT, 'assets', 'fonts', f)).href;
 const { chromium } = await import(pathToFileURL(join(ROOT, 'node_modules', 'playwright', 'index.mjs')).href);
 const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' }).catch(() => chromium.launch());
-for (const spec of TOWNS) {
+const ONLY = process.argv.includes('--waystations');   // just the waystations' sheets
+for (const spec of ONLY ? WAYSTATIONS : [...TOWNS, ...WAYSTATIONS]) {
   seed = 0x57ee75 ^ spec.id.length * 7919;
   const { svg, H } = plan(spec), file = join(OUT, `streets-${spec.id}.jpg`), tmp = file.replace(/\.jpg$/, '.render.html');
   writeFileSync(tmp, `<!doctype html><html><head><meta charset="utf-8"><style>

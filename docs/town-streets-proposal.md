@@ -1,6 +1,6 @@
 # The region towns' streets, and their overlands
 
-**Proposal, 2026-10-10; two of its questions answered the same day (see Decided).** The owner: *"Design the other town layouts. Town square works well for the menu, but outside
+**Proposal, 2026-10-10; all three of its questions answered the same day (see Decided), with the waystations' plans added.** The owner: *"Design the other town layouts. Town square works well for the menu, but outside
 of this there could be a few side streets and in the bigger towns, a grid with houses and shops. The city with the
 dock, show me layout designs for each, and their respective overland maps."*
 
@@ -186,7 +186,66 @@ The owner (2026-10-10):
 - **Thornwick stays as it is.** It gets a map drawn from the game (above), and the shipped scenes get bare copies for
   the minimap.
 
-## Still open
+- **The waystations get street plans, and every one has a shop and a small tavern** (the owner: *"yes on street
+  layouts for way stations. There should at least be a shop, and small tavern at these way stations… a reason to be
+  there"*). Below.
 
-1. **The waystations** (Kell's Rest, Brine Cross, Hollin Ford, the Frozen Hospice) stay a single street each.
-   Brine Cross's street is its bridge.
+## The waystations
+
+Every waystation keeps **Saltmere's square**, as the game builds it (`src/sim/outdoor.js buildWaystation`), with
+four services round the cistern:
+- a **small tavern**: the Guild's board, hiring and the coach;
+- **the shop**, with its own shelves (GDD §10 v1.44: each town's and waystation's stock is its own roll, so a stop is
+  worth looking in);
+- a bed;
+- a shrine.
+
+There's no forge: that stays in the town. Off the square there's one street, or a bridge, or a beach. The names and
+each one's reason to stop are canon (world doc v1.31 §3, *The waystations*).
+
+Saltmere is built: its shop, *Rushlight's Chandlery*, stands on the deck right of the square with Pim Rushlight at
+its door. The plans below are drawn by `node tools/worldmap/streets.mjs --waystations`.
+
+### Kell's Rest, the Cinder Reach
+
+![Kell's Rest](img/towns/streets-kells.jpg)
+
+The Kell Assay's depot under the dead volcano:
+- *Depot Street* runs east to the Kell road.
+- Behind it stands the Assay's fenced yard, with the weigh-house at its gate and the ore sheds.
+- In front are one-storey bunk huts.
+- The old track climbs the volcano behind the shrine.
+
+### Brine Cross, the Tidemark
+
+![Brine Cross](img/towns/streets-brine.jpg)
+
+The street is the bridge:
+- Houses stand on both sides of it over the Brine, with the tollhouse at mid-span.
+- The east barricade is where Act IV's siege comes.
+- The boat-stairs go down to the water under the first arch.
+
+### Gullwick, the Tidemark
+
+![Gullwick](img/towns/streets-gullwick.jpg)
+
+- *The Strand* runs down from the square to the sand, with cottages along it, the boats drawn up and the net racks.
+- The beach road goes north to Tollhaven.
+- The ferryman's post is the only way out to the Drowned Mole.
+
+### Hollin Ford, the Greenwood
+
+![Hollin Ford](img/towns/streets-hollin.jpg)
+
+- The Tithe Road runs down from the square to the ford's stones, with the fen on both banks.
+- The Ford Stone's keeper calls the water.
+- Across it stands the barn the clans keep shut (the site, 42–47).
+
+### The Frozen Hospice, the Pale Heights
+
+![The Frozen Hospice](img/towns/streets-hospice.jpg)
+
+- A walled court surrounds the square.
+- The Stair climbs from the north-east gate, with the bell for pilgrims who don't come down.
+- The Cult's camp of tents round the wall is the site (57–62).
+- The frozen Sol runs below.

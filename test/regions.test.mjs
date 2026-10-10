@@ -34,7 +34,7 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   // into Saltmere and out again
   standAt(sim, sim.world.exits.find((x) => x.to === 'town')); sim.tick();
   assert.equal(sim.world.kind, 'town'); assert.equal(sim.world.name, 'Saltmere'); assert.equal(sim.state.region, 'fens');
-  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['inn', 'tavern', 'temple'], 'a waystation: the tavern, the inn and the chapel');
+  assert.deepEqual(sim.world.services.map((s) => s.kind).sort(), ['inn', 'shop', 'tavern', 'temple'], 'a waystation: the tavern, the shop, the inn and the chapel');
   standAt(sim, sim.world.exits.find((x) => x.to === 'overland')); sim.tick();
   assert.equal(sim.world.kind, 'overland'); assert.equal(sim.state.region, 'fens');
   // back north to the Vale
@@ -43,11 +43,27 @@ test('once Act I is done the road takes you to the Fens and back, arriving on th
   const b = sim.world.arrivals.fens; assert.ok(Math.hypot(p.x - b.x, p.y - b.y) < 1, 'back on the canal road at the Vale\'s south edge');
 });
 
-test('Saltmere refuses what it has no house for: no forge, no shop', () => {
+test('Saltmere refuses what it has no house for: no forge', () => {
   const sim = createSim(20260807, undefined, { scene: 'town', region: 'fens' }); sim.tick();
   const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
-  for (const c of [{ type: 'upgrade', uid: 1 }, { type: 'buy', id: 'x' }]) { sim.commands.push(c); sim.tick(); }
-  assert.deepEqual(why, ['Saltmere has no forge', 'Saltmere has no shop']);
+  for (const c of [{ type: 'upgrade', uid: 1 }]) { sim.commands.push(c); sim.tick(); }
+  assert.deepEqual(why, ['Saltmere has no forge']);
+});
+
+// (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")
+test('Saltmere has a shop, Rushlight\'s Chandlery, with shelves of its own: not Thornwick\'s, and they keep through a save', async () => {
+  const { shopStock } = await import('../src/sim/smith.js');
+  const sim = createSim(20260807, undefined, { scene: 'town', region: 'fens' }); sim.state.counters.gold = 1e6; sim.tick();
+  const shop = sim.world.services.find((s) => s.kind === 'shop'); assert.equal(shop.name, 'Rushlight\'s Chandlery');
+  const here = sim.smith.stock(), there = shopStock(sim.seed, sim.state.shops.saltmere.day, sim.state.shops.saltmere.lv, [...new Set(sim.state.party.map((m) => m.cls))], 'thornwick');
+  assert.equal(here.length, 4); assert.notDeepEqual(here.map((it) => it.base + it.ilv + JSON.stringify(it.st)), there.map((it) => it.base + it.ilv + JSON.stringify(it.st)), 'its own roll');
+  sim.commands.push({ type: 'buy', idx: 2 }); sim.tick();
+  assert.deepEqual(sim.state.shops.saltmere.bought, [2]); assert.equal(sim.state.shops.thornwick, undefined, 'Thornwick\'s shelves untouched');
+  const why = []; sim.bus.on('refused', (e) => why.push(e.reason));
+  sim.state.bag.push({ ...sim.state.bag[sim.state.bag.length - 1], uid: 'h1', r: 'heirloom' }); sim.commands.push({ type: 'sell', uid: 'h1' }); sim.tick();
+  assert.deepEqual(why, ['Pim won\'t take an heirloom']);
+  const r = createSim(20260807); r.restore(JSON.parse(JSON.stringify(sim.snapshot()))); assert.deepEqual(r.state.shops.saltmere.bought, [2]);
+  assert.ok(r.world.npcs.some((n) => n.id === 'pim_rushlight' && Math.hypot(n.x - shop.x, n.y - shop.y) < 12), 'Pim at his door');
 });
 
 // (2026-10-05, the owner: "Saltmere needs an inn for party mgt") the Stilt House: a night's rest, the bench, swaps

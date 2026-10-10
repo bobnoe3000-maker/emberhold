@@ -75,7 +75,7 @@ test("the forge and the shop keep: upgrades, the day's stock and the buyback rou
   const sold = s.state.bag.at(-1); run(s, { type: 'sell', uid: sold.uid });
   const data = JSON.parse(JSON.stringify(s.snapshot())), r = createSim(SEED, undefined, { scene: 'town' }); r.restore(data);
   assert.equal(r.state.party[0].gear.weapon.up, 1); assert.deepEqual(r.state.shop, s.state.shop); assert.deepEqual(r.state.buyback.map((it) => it.uid), [sold.uid]);
-  const old = { ...data }; delete old.shop; delete old.buyback; r.restore(old); assert.equal(r.state.shop.day, -1); assert.deepEqual(r.state.buyback, []);
+  const old = { ...data }; delete old.shop; delete old.shops; delete old.buyback; r.restore(old); assert.equal(r.state.shop.day, -1); assert.deepEqual(r.state.buyback, []);
 });
 
 test('elites give a cinder and bosses five, when they fall', () => {

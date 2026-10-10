@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v28', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 28); });
+test('three game slots, save v29', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 29); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -86,3 +86,13 @@ test('save v27: from level 10, the XP toward the next level is the same share of
   assert.equal(migrate({ version: 27, savedAt: 1, data: m }).data.party[0].xp, m.party[0].xp, 'once');
 });
 
+
+// v29 (GDD §10 v1.44): every town and waystation keeps its own shop shelves; an older save's one shop was Thornwick's
+test('v28 → v29: the one shop becomes Thornwick\'s shelves, and restores as them', async () => {
+  const { shopsFor } = await import('../src/persist/save.js');
+  const old = { ...createSim(7, undefined, { scene: 'town' }).snapshot() }; delete old.shops; old.shop = { day: 0, lv: 1, bought: [1, 3] };
+  const m = migrate({ version: 28, savedAt: 1, data: old });
+  assert.deepEqual(m.data.shops, { thornwick: { day: 0, lv: 1, bought: [1, 3] } }); assert.equal(m.data.shop, undefined);
+  assert.deepEqual(shopsFor(m.data), m.data, 'once');
+  const r = createSim(7, undefined, { scene: 'town' }); r.restore(m.data); assert.deepEqual(r.state.shop.bought, [1, 3]);
+});

@@ -47,7 +47,7 @@ node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
 node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
-node tools/worldmap/streets.mjs           # the region towns' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
+node tools/worldmap/streets.mjs [--waystations]   # the region towns' and waystations' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
 node tools/worldmap/overlands.mjs         # each region's overland at the game's scale (docs/town-streets-proposal.md) → docs/img/world/overland-<region>.jpg
 node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin and an overland's pins) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png; the overlands' copies in assets/maps/ (the World map's land tab)
 ```

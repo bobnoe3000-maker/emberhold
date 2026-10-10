@@ -13,8 +13,10 @@
 // (salvage { uid } is loot.js's, anywhere: it now gives back half the cinders an upgrade took.)
 //
 // The shop (in town): a stock of STOCK_N plain Commons at the hero's level, for the party's classes,
-// rolled on the SHOP stream for the day and put up the first time you're in town that day (state.shop
-// = { day, lv, bought }); bought ones are gone until the next dawn.
+// rolled on the SHOP stream for the day and put up the first time you're in town that day; bought ones are gone until
+// the next dawn. Every town and waystation keeps its own shelves (v1.44: a waystation's shop is a reason to go there):
+// state.shops = { [town]: { day, lv, bought } } (coach.js town ids; saved since v29), each rolled on its own mix of the
+// stream, Thornwick's as it always was. state.shop is the shelves of the town of the land you're in.
 //   buy { idx }             BUY × item level gold, into the bag
 //   sell { uid }            a bag item (not an heirloom) for SELL[rarity] × item level, +25 % a smith's step;
 //                           the last BUYBACK_N sold wait in state.buyback
@@ -28,12 +30,15 @@ import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, UP_MATS, rollItem, rollAff
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { DAY_S } from './heroes.js';
 import { ORIGIN_EDGE } from './party.js';
+import { townOf, COACH } from './coach.js';
 
 export { UP_GOLD, UP_CINDERS, UP_MATS, salvageOf, cindersIn };
 export const REFORGE_GOLD = 50, REFORGE_CINDERS = 3;     // × item level, doubling with each reforge of the item
 export const BUY = 40, STOCK_N = 4, BUYBACK_N = 5;
 export const SELL = { common: 6, fine: 15, rare: 40 };   // × item level (heirlooms aren't sold)
 const hashStr = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
+/** who keeps each town's shop (their words: "Wendel won't take an heirloom") */
+export const SHOPKEEP = { thornwick: 'Wendel', saltmere: 'Pim' };
 
 /** the next upgrade's price, or null at +5; a Deepdelver-fostered hero's gold is 10 % less (ORIGIN_EDGE)
  * @param {any} it @param {string} [origin] the hero's @returns {{ gold: number, cinders: number, wood: number, stone: number } | null} */
@@ -49,17 +54,23 @@ export const sellPrice = (it) => (isUsable(it) ? Math.round(SCROLL_PRICE / 4) : 
 /** what the shop asks @param {any} it */
 export const buyPrice = (it) => BUY * it.ilv;
 
-/** The shop's stock for a day: plain Commons at a level, for these classes (the party's).
- * @param {number} seed @param {number} day @param {number} lv @param {string[]} classes */
-export function shopStock(seed, day, lv, classes) {
-  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x85ebca6b), STREAM.SHOP)), out = [];
-  for (let i = 0; i < STOCK_N; i++) out.push(rollItem(rng, { ilv: Math.max(1, lv), rarity: 'common', classes: classes.length ? classes : CLASS_IDS, uid: `shop${day}.${i}` }));
+/** The shop's stock for a day: plain Commons at a level, for these classes (the party's), at a town's shop (Thornwick's
+ * unmixed, so its shelves are what they always were).
+ * @param {number} seed @param {number} day @param {number} lv @param {string[]} classes @param {string} [town] */
+export function shopStock(seed, day, lv, classes, town = 'thornwick') {
+  const mix = town === 'thornwick' ? 0 : hashStr(town), tag = town === 'thornwick' ? '' : town + '.';
+  const rng = mulberry32(streamSeed((seed ^ mix ^ Math.imul(day + 1, 0x85ebca6b)) >>> 0, STREAM.SHOP)), out = [];
+  for (let i = 0; i < STOCK_N; i++) out.push(rollItem(rng, { ilv: Math.max(1, lv), rarity: 'common', classes: classes.length ? classes : CLASS_IDS, uid: `shop${tag}${day}.${i}` }));
   return out;
 }
+const NO_SHELF = () => ({ day: -1, lv: 1, bought: [] });
 
 /** @param {{ state: any, bus: any, getWorld: () => any, seed: number }} o */
 export function createSmith({ state, bus, getWorld, seed }) {
-  if (!state.shop) state.shop = { day: -1, lv: 1, bought: [] };
+  if (!state.shops) state.shops = {};
+  const here = () => townOf(state.region);                 // the land's town: the shelves a buy or a sell would be at
+  Object.defineProperty(state, 'shop', { configurable: true, enumerable: false,
+    get: () => state.shops[here()] || (state.shops[here()] = NO_SHELF()), set: (v) => { state.shops[here()] = v; } });
   if (!state.buyback) state.buyback = [];
   const C = state.counters;
   // the forge or the shop, if this town has it (M8: a waystation has neither); null if here, else the refusal
@@ -81,7 +92,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
     if (state.shop.day === day() || lacks('shop', 'x')) return;
     state.shop = { day: day(), lv: state.party[0].level, bought: [] };
   }
-  const stock = () => (state.shop.day >= 0 ? shopStock(seed, state.shop.day, state.shop.lv, classes()) : []);
+  const stock = () => (state.shop.day >= 0 ? shopStock(seed, state.shop.day, state.shop.lv, classes(), here()) : []);
 
   /** @param {any} cmd @returns {boolean} true when the command was ours */
   function command(cmd) {
@@ -133,7 +144,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
       case 'sell': {
         { const no = lacks('shop', 'Sell at the shop in town'); if (no) return refuse(no); }
         const i = state.bag.findIndex((q) => q.uid === cmd.uid); if (i < 0) return true;
-        const it = state.bag[i], price = sellPrice(it); if (price === null) return refuse('Wendel won\'t take an heirloom');
+        const it = state.bag[i], price = sellPrice(it); if (price === null) return refuse(`${SHOPKEEP[here()] || 'The shop'} won't take an heirloom`);
         state.bag.splice(i, 1); C.gold = (C.gold || 0) + price;
         state.buyback = [{ ...it, sold: price }, ...state.buyback].slice(0, BUYBACK_N);
         bus.emit('traded', { what: 'sell', uid: it.uid, gold: price }); counters(); gear(); return true;
@@ -150,11 +161,14 @@ export function createSmith({ state, bus, getWorld, seed }) {
     }
     return false;
   }
-  const snapshot = () => ({ shop: { ...state.shop, bought: [...state.shop.bought] }, buyback: state.buyback.map((it) => ({ ...it })) });
+  const snapshot = () => ({ shops: Object.fromEntries(Object.entries(state.shops).map(([k, v]) => [k, { ...v, bought: [...v.bought] }])), buyback: state.buyback.map((it) => ({ ...it })) });
+  // a saved shelf as it can be: today or before, at the hero's level or under, the bought ones in the stock
+  const shelf = (s) => { const d = s && Number.isInteger(s.day) ? s.day : -1, lv = s && Number.isInteger(s.lv) ? s.lv : 1;
+    return d >= 0 && d <= day() && lv >= 1 && lv <= state.party[0].level ? { day: d, lv, bought: (Array.isArray(s.bought) ? s.bought : []).filter((i) => Number.isInteger(i) && i >= 0 && i < STOCK_N) } : NO_SHELF(); };
   function restore(data) {
-    const s = data && data.shop, d = s && Number.isInteger(s.day) ? s.day : -1, lv = s && Number.isInteger(s.lv) ? s.lv : 1;
-    const ok = d >= 0 && d <= day() && lv >= 1 && lv <= state.party[0].level;
-    state.shop = ok ? { day: d, lv, bought: (Array.isArray(s.bought) ? s.bought : []).filter((i) => Number.isInteger(i) && i >= 0 && i < STOCK_N) } : { day: -1, lv: 1, bought: [] };   // v16 and older: none yet
+    state.shops = {};
+    const saved = data && data.shops && typeof data.shops === 'object' ? data.shops : { thornwick: data && data.shop };   // v28 and older: one shop, Thornwick's (persist/save.js shopsFor)
+    for (const k of Object.keys(COACH)) if (saved[k]) state.shops[k] = shelf(saved[k]);   // v16 and older: none yet
     state.buyback = (Array.isArray(data && data.buyback) ? data.buyback : []).filter((it) => it && BASES[it.base] && Number.isInteger(it.sold) && it.sold > 0).slice(0, BUYBACK_N).map((it) => refreshItem({ ...it }));
   }
   return { tick, command, stock, snapshot, restore, find };

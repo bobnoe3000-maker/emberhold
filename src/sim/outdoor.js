@@ -319,7 +319,7 @@ function forestRing(o, rng, inset, cluster = TREE_CLUSTER, single = TREE_SINGLE)
 // circuit's material change (tools/actor-lab town.json → assets/env/town-<region>: Thornwick's is timber).
 export const REGIONS = {
   vale:    { name: 'Thornwick', tavern: 'The Tired Mule',     inn: 'The Crossed Keys',  shop: "Wendel's Provisions",  smith: 'Hale & Daughter, Smiths', temple: 'Shrine of the Ember' },
-  fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',    inn: 'The Stilt House',   shop: 'Saltmere Chandlery',   smith: 'The Tidewater Forge',     temple: 'Chapel of the Grey Sisters' },
+  fens:    { name: 'Saltmere',  tavern: 'The Drowned Eel',    inn: 'The Stilt House',   shop: "Rushlight's Chandlery",   smith: 'The Tidewater Forge',     temple: 'Chapel of the Grey Sisters' },
   reach:   { name: 'Ashgate',   tavern: 'The Slag & Bellows', inn: "Deepdelver's Rest", shop: 'The Ashgate Exchange', smith: 'The Ashgate Forge',       temple: 'Shrine of the Last Flame' },
   heights: { name: 'Frosthold', tavern: 'The Frozen Flagon',  inn: "Pilgrims' Hall",    shop: 'Frosthold Outfitters', smith: 'Ironpeak Smithy',         temple: 'The Monastery Chapel' },
 };
@@ -518,10 +518,12 @@ function buildWaystation(seed, region) {
   for (const pts of [[[50, 62], [32, 72], [24, 72]], [[60, 44], [76, 24], [86, 22]], [[78, 66], [100, 68]], [[48, 80], [40, 98]], [[84, 82], [94, 94]], [[64, 86], [62, 100]]])
     o.roads.push({ w: 3, surface: 'deck', pts });                                                                            // boardwalks to the houses
   finalizeGround(o);
-  const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]]];
+  // (v1.44, the owner: "there should at least be a shop, and small tavern at these way stations… a reason to be there")
+  // Pim Rushlight's chandlery stands on the deck right of the square, its door to the cistern, its own day's stock
+  const svc = [['temple', B('temple'), [28, 24]], ['tavern', B('stilttavern'), [29, 48]], ['inn', B('stiltinn'), [49, 29]], ['shop', B('shop'), [62, 49]]];
   for (const [kind, id, [x, y]] of svc) { put(o, id, x, y); o.services.push({ kind, id, x, y, name: info[kind] }); o.labels.push({ x, y, id, text: info[kind], service: kind }); }
   put(o, B('cistern'), M[0], M[1]);
-  for (const [x, y] of [[41, 57], [60, 50], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);
+  for (const [x, y] of [[41, 57], [52, 54], [80, 64], [61, 80]]) putProp(o, 'brazier', x, y);   // (the second off the chandlery's deck)
   o.hub = { x: 58, y: 58, r: 32, focus: { x: 60, y: 60 } };
   o.lead = { x0: 100, y0: GY - 10, x1: 146, y1: GY + 10, x: 100, y: GY, k: 0.5 };
   for (const [n, x, y] of [[1, 26, 76], [2, 88, 22], [3, 102, 68], [1, 40, 102], [2, 96, 96], [3, 62, 104], [1, 78, 18], [2, 110, 40]]) put(o, B('stilt', n), x, y);

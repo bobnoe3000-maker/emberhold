@@ -9,7 +9,7 @@
 
 const SERVICES = {
   shop: {
-    label: 'Shop', blurb: 'Wendel’s: plain arms and armour at your level, new each dawn, and a fair price for what you carry.',
+    label: 'Shop', blurb: 'Plain arms and armour at your level, new each dawn, a fair price for what you carry, and a Homeward Scroll always on the shelf.',
     actions: [['Buy', 'plain arms and armour for your company, new each dawn'], ['Sell', 'gold for what you carry · buy back what you sold']],
     icon: '<path d="M4 9h16l-1 11H5zM8 9V7a4 4 0 0 1 8 0v2"/>',
   },
@@ -45,7 +45,8 @@ import { boardWords, boardReady, SKULLS } from './boardwords.js';
 import { feeOf, wageOf, hired, PERKS } from '../sim/companions.js';
 import { rankMark, perkLines, loyaltyWord, wageLine, perkWord, rankLine, wordsReady, SW_CSS } from './sellswords.js';
 import { BASES, SLOT_LABEL, STAT_LABEL, UP_MAX, itemStats, classesOf } from '../sim/items.js';
-import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice } from '../sim/smith.js';
+import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP } from '../sim/smith.js';
+import { townOf } from '../sim/coach.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
 
@@ -209,6 +210,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const head = (kind, title, blurb) => `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
       <div class="kind">${kind} · ${esc(sim.world.name || '')}</div><h2>${title}</h2><p>${blurb}</p>${note ? `<div class="note">${esc(note)}</div>` : ''}`;
   const gold = () => sim.state.counters.gold || 0;
+  const keeper = () => SHOPKEEP[townOf(sim.state.region)] || 'The shopkeeper';   // (every town's shop its own: smith.js)
   // The Lantern Guild's board (GDD §9): today's jobs, each with who pinned it, its hook, what it asks,
   // how hard (skulls, with the word) and what it pays; and every finished job you're holding, from
   // any day, to hand in. Up to MAX_JOBS open at once; the sim checks every take and hand-in.
@@ -321,7 +323,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       ${purse()}${tabs('ftab', forgeTab, [['upgrade', 'Upgrade'], ['reforge', 'Reforge'], ['salvage', 'Salvage', `${sim.state.bag.length} in the bag`]])}${body}`;
   }
 
-  // Wendel's: Buy (the day's plain gear at your level) · Sell (and buy back what you sold)
+  // the shop (Wendel's, Pim's): Buy (the day's plain gear at your level) · Sell (and buy back what you sold)
   function shop(tab) {
     view = 'shop'; if (tab) shopTab = tab;
     const S = sim.state, st = sim.world.kind === 'town' ? sim.smith.stock() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60)), sv = (sim.world.services || []).find((q) => q.kind === 'shop');
@@ -331,13 +333,13 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const body = shopTab === 'buy' ? `${scrollRow}<h3>Today's stock · new at dawn, in ${mins} min</h3>
       ${st.map((it, i) => { const done = S.shop.bought.includes(i), p = buyPrice(it), poor = p > gold();
         return `<div class="merc"><div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
-        <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || '<p>Wendel’s shelves go up at dawn.</p>'}`
+        <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || `<p>${keeper()}’s shelves go up at dawn.</p>`}`
       : `${S.bag.map((it) => { const p = sellPrice(it);
         return `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
         <button class="btn${p === null ? '' : ' ghost'}" data-sell="${it.uid}" ${p === null ? 'disabled' : ''}>${p === null ? 'Not for sale' : `Sell · ${p}`}</button></div>`; }).join('') || '<p>The bag is empty.</p>'}
       ${S.buyback.length ? `<h3>Sold here · buy back</h3>${S.buyback.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'sold')}<span>${statLine(it)}</span></div>
         <button class="btn" data-buyback="${it.uid}" ${it.sold > gold() ? 'disabled' : ''}>Buy back · ${it.sold}</button></div>`).join('')}` : ''}`;
-    sheet.innerHTML = `${head('Shop', sv ? esc(sv.name) : 'The shop', 'Plain arms and armour for your company, new each dawn, and a fair price for what you carry. Wendel won’t take heirlooms.')}
+    sheet.innerHTML = `${head('Shop', sv ? esc(sv.name) : 'The shop', `Plain arms and armour for your company, new each dawn, and a fair price for what you carry. ${keeper()} won’t take heirlooms.`)}
       <div class="purse">You have <b>${gold()}</b> gold · the bag ${S.bag.length} items</div>
       ${tabs('ptab', shopTab, [['buy', 'Buy', `${st.length - S.shop.bought.length} today`], ['sell', 'Sell', `${S.bag.length} in the bag`]])}${body}`;
   }

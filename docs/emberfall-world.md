@@ -1,6 +1,6 @@
 # Emberfall — World Summary
 
-**v1.30 · 2026-10-05 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.30 (§5): the level-12 trials and who teaches them in the Fens; (§7) the Fens set, ten fragments, and the Undercroft's heirloom. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.31 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.31 (§3): every waystation is a small tavern with the Guild's board, a shop, a bed and a shrine (no forge: the smith stays in the town), each named, with a reason to stop; Saltmere's shop is Pim Rushlight's chandlery. v1.30 (§5): the level-12 trials and who teaches them in the Fens; (§7) the Fens set, ten fragments, and the Undercroft's heirloom. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -240,8 +240,23 @@ the south-east, and **Emberfall**, the Vale and the Fens, in the south-west. The
 
 Each region is a level band, an act, a set of tile variants and biomes (the engine's `?tiles=&tv=` language) and
 an enemy mix. Each has **one town, the player's base**, with the same five services in the same places round the
-square (GDD §10), built and lit in the region's own way; its other stops are **waystations** (a tavern with the
-Guild's board, and a shrine). The towns' looks are in [region-towns-proposal.md](./region-towns-proposal.md).
+square (GDD §10), built and lit in the region's own way; its other stops are **waystations** (v1.31: a small tavern
+with the Guild's board, a shop, a bed and a shrine; no forge, which stays in the town). The towns' looks are in
+[region-towns-proposal.md](./region-towns-proposal.md).
+
+**The waystations** (v1.31, the owner: *"there should at least be a shop, and small tavern at these way stations… a
+reason to be there"*). Each is one street, or a bridge, or a beach, round the same square as a town's, with the
+Guild's coach stopping at its tavern. Its shop keeps its own shelves, so it's worth looking in. Its tavern's board
+posts its own land's jobs.
+
+| Waystation | Land | Small tavern | Shop | Bed | Shrine | Why a company stops |
+|---|---|---|---|---|---|---|
+| **Saltmere** | the Fens | *The Drowned Eel* | *Rushlight's Chandlery*: Pim's lamp-oil, wicks and waders, and the day's gear | *The Stilt House* | the Grey Sisters' chapel | the first dry boards south of the Vale; Wenna's punt to the Mere Tower |
+| **Kell's Rest** | the Reach | *The Short Weight*, the depot's taproom, where the Assay's clerks drink and don't talk | *The Company Store*: the Assay's, scrip at par and coin at a premium | *The Bunkhouse* | the Ash Shrine | the Assay Yards next door; the old track up to where the quota office kept its strongroom |
+| **Brine Cross** | the Tidemark | *The Middle Arch*, a taproom at the bridge's foot, named for the arch no flood has reached | *The Bridge Stores* | *The Upstream Rooms* | the Bridgehead Shrine | the only crossing of the Brine on the Highmarch road |
+| **Gullwick** | the Tidemark | *The Gutted Herring* | *Net & Needle*: rope, oilskins, mending | *The Net Loft* | the Drowned Men's Cairn | the beach road south of Tollhaven; boats out to the Drowned Mole |
+| **Hollin Ford** | the Greenwood | *The Wet Boots* | *The Ford Store*, a clan trading post: horn, hide and salt | *The Hayloft* | the Ford Stone | the ford, and the barn the clans keep shut |
+| **The Frozen Hospice** | the Heights | *The Warming Room* | *The Pilgrims' Store*: staves, crampons, tapers | *The Long Dormitory* | the Stair Shrine | the foot of the Stair, the last warm room before it |
 
 | Region | Levels | Act | Town | The story |
 |---|---|---|---|---|
@@ -324,7 +339,8 @@ Reed-choked marsh around a drowned imperial canal, south of the Vale. There's fo
 on the stilt-houses never go out.
 - **Town:** Thornwick stays the base to level 15. **Saltmere** (v1.20) is the Fens' **waystation**, a day from
   Thornwick by the canal road: stilt houses over the bog, boardwalks for streets, a square that's a deck on piles,
-  *The Drowned Eel* with the Guild's board, the Grey Sisters' chapel, and Pim Rushlight's chandlery. **Reedholm**
+  *The Drowned Eel* with the Guild's board, the Grey Sisters' chapel, and Pim Rushlight's chandlery (v1.31: Saltmere's shop,
+*Rushlight's Chandlery*, Pim at its door). **Reedholm**
   (the Sisters' prioress house) is an overland landmark. (v1.28) **The Stilt House**, at the head of the square, is
   Saltmere's lodging: long and narrow on its piles, its sleeping-rooms let by the week to the eel-men in the season
   and to whoever the Guild sends the rest of the year. Companies leave the sellswords they're not taking there.

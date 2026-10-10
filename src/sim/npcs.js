@@ -54,7 +54,7 @@ export const NPCS = {
   // (M8, Act II; world doc v1.29 §3.2) Saltmere's people: Dace Pike by the Drowned Eel, Pim's handcart by the cistern,
   // Sister Orla and Mother Agnes by the chapel
   dace_pike: { region: 'fens', spots: [['tavern', [10, 2]]], knot: 'dace_hub', flags: ['met_dace'] },
-  pim_rushlight: { region: 'fens', spots: [['hub', [12, 9]]], knot: 'pim_hub', flags: ['met_pim'] },
+  pim_rushlight: { region: 'fens', spots: [['shop', [2, 9]]], knot: 'pim_hub', flags: ['met_pim'] },   // (at his chandlery's door, v1.44)
   sister_orla: { region: 'fens', spots: [['temple', [8, 9]]], knot: 'orla_hub', flags: ['met_orla'] },
   mother_agnes: { region: 'fens', spots: [['temple', [14, 4]]], knot: 'agnes_hub', flags: ['met_agnes'] },
   // Wren, found tied in the Toadking's Boat Hall (world doc v1.29 §5); the Kindler, met once on the Canal Locks' first
