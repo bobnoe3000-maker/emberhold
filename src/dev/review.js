@@ -122,12 +122,22 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
     H('Light', 'a soul freed', { period: 2000, go: (a, x, y, now) => a.fx.beam(x, y, a.SOUL_FREE, { now, life: 1.4 }) });
     H('Light', 'raised', { period: 2200, go: (a, x, y, now) => a.fx.rise(x, y, { now }) });
     H('Light', 'souls go free', { period: 2800, go: (a, x, y, now) => a.fx.rise(x, y, { now, life: 2.6, col: a.SOUL_FREE }) });
-    for (const kind of ['fire', 'soul', 'hex', 'spirit', 'marsh', 'bolt']) H('In flight', `bolt · ${kind}`, { draw: (a, x, y, now) => {
-      const t = (now % 900) / 900, bx = x - 2 + 4 * t, by = y + 2 - 4 * t, q = a.at(bx, by);
-      a.draws.push({ d: bx + by + 0.2, sp: a.boltSprite(kind), fx: q.sx, fy: q.sy - 18, h: q.h + 18, k: bx + by + 1.5 }); } });
+    // a bolt flies its 4 tiles at the game's speed (battle.js BOLT_SPEED, 26 tiles a second) and lands, once every 0.9 s,
+    // as the game draws one: its trail, halo and floor glow, then its burst (renderer stageApi.bolt: a new object each
+    // flight, and one let go lands)
+    const fly = (c, a, x, y, now, kind, sp) => {
+      const n = Math.floor(now / 900), t = (now % 900) / 155; if (t >= 1) return;
+      const bx = x - 2 + 4 * t, by = y + 2 - 4 * t, q = a.at(bx, by);
+      if (c.n !== n) { c.n = n; c.shot = {}; }
+      a.bolt(c.shot, bx, by, kind); a.draws.push({ d: bx + by + 0.2, sp, fx: q.sx, fy: q.sy - 18, h: q.h + 18, k: bx + by + 1.5 });
+    };
+    for (const kind of ['fire', 'soul', 'hex', 'spirit', 'marsh', 'bolt']) H('In flight', `bolt · ${kind}`, { draw(a, x, y, now) { fly(this, a, x, y, now, kind, a.boltSprite(kind)); } });
     H('In flight', 'arrows · 16 headings', { draw: (a, x, y) => { for (let qd = 0; qd < 16; qd++) { const ang = (qd / 16) * Math.PI * 2, q = a.at(x, y); a.draws.push({ d: x + y, sp: a.arrowSprite(qd), fx: q.sx + Math.cos(ang) * 16, fy: q.sy - 18 + Math.sin(ang) * 10, h: q.h + 18, k: x + y + 1.5 }); } } });
-    H('In flight', 'an arrow', { draw: (a, x, y, now) => { const t = (now % 800) / 800, bx = x - 2 + 4 * t, by = y + 2 - 4 * t, q = a.at(bx, by), vx = 1, vy = -1, ang = Math.atan2((vx + vy) * a.HH, (vx - vy) * a.HW);
-      a.draws.push({ d: bx + by + 0.2, sp: a.arrowSprite(((Math.round(ang / (Math.PI / 8)) % 16) + 16) % 16), fx: q.sx, fy: q.sy - 18, h: q.h + 18, k: bx + by + 1.5 }); } });
+    H('In flight', 'an arrow', { draw(a, x, y, now) { const ang = Math.atan2(0, 2 * a.HW); fly(this, a, x, y, now, 'arrow', a.arrowSprite(((Math.round(ang / (Math.PI / 8)) % 16) + 16) % 16)); } });
+    H('Ground', 'shockwave · crit', { period: 1100, go: (a, x, y, now) => a.fx.shock(x, y, [255, 225, 170], { now }) });
+    H('Ground', 'shockwave · heavy crit', { period: 1300, go: (a, x, y, now) => a.fx.shock(x, y, [255, 196, 120], { now, big: true }) });
+    H('Ground', 'a foe goes out', { period: 1700, go: (a, x, y, now) => a.fx.soul(x, y, [200, 255, 210], { now }) });
+    H('Ground', 'a boss goes out', { period: 2100, go: (a, x, y, now) => a.fx.soul(x, y, [255, 200, 130], { now, big: true }) });
     H('Ground', 'the Toadking\'s mud', { mud: true, span: 2 });
     H('Ground', 'the Abbess\'s water', { flood: true, span: 2 });
     H('Rings', 'the party', { actor: ['hero_knight', 1, 'idle'] });

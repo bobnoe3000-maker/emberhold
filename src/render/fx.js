@@ -12,6 +12,8 @@
 //   shot  — a muzzle flash at the crossbow's nose
 //   heavy — any heavy clip adds an impact flash at the tip on its impact frame
 //   hit sparks — spray from the struck figure away from the attacker (combat 'hit')
+//   (v1.47, "a bit more dynamic visually, like an ARPG") — a bolt's trail, its halo and the glow it throws on the
+//   floor; a burst where it lands; a shockwave at the feet of a heavy blow or a crit; a foe's last light going up
 //
 // Depth: each mark carries the depth the figure it belongs to was stamped at, nudged in
 // front or behind by the anchor's z, so a blade swung behind the body tucks under it and
@@ -21,6 +23,9 @@
 const STEEL = [185, 210, 255], WARM = [255, 170, 90], VERDANT = [120, 255, 170], ARCANE = [110, 140, 255], FIRE = [255, 120, 30];
 const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], SOULCAST = [80, 255, 130], HOLY = [255, 214, 120];
 const REDHAND = [255, 92, 70], EMBER = [255, 140, 40];   // (art pass 9) the Company's red; the Cult's ember
+
+// a projectile's colour by its kind (the sim's bolt kinds: battle.js), for its trail, halo, floor glow and burst
+export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200] };
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
@@ -79,7 +84,7 @@ export function createFX() {
   let B = null;                                   // { EMI, DEP, W, H, DPX }
   let acc = null, touched = [];                   // one shape's coverage (max-blended, so overlaps don't double up)
   const ctx = { key: 0, fy: 0, h: 0 };            // depth context of the figure being drawn
-  const parts = [], flashes = [], beams = [];
+  const parts = [], flashes = [], beams = [], rings = [];
 
   function target(buf) {
     B = buf;
@@ -211,6 +216,47 @@ export function createFX() {
     flashes.push({ x, y, t0: now, life: heavy ? 0.18 : crit ? 0.15 : 0.14, r: heavy ? 5.5 : crit ? 4.5 : 3.8, col, heavy, crit });
     if (parts.length > 240) parts.splice(0, parts.length - 240);
   }
+  // ── v1.47: the ARPG-style weight (bolts that streak and land, blows that thump the ground, foes that go out) ──
+  // a bolt in flight, drawn each frame from its last few positions on screen (pts: [{ sx, sy }] oldest → newest, at the
+  // bolt's height; foot: its point on the floor): a tapering streak, a halo round the head, and a pool of its light on
+  // the floor under it. An arrow is a thin pale streak only.
+  function trail(pts, col, key, footY, baseH, arrow) {
+    const n = pts.length; if (!n) return;
+    depth(key + 0.2, footY, baseH);
+    for (let k = 1; k < n; k++) { const p = pts[k - 1], q = pts[k], u0 = (k - 1) / (n - 1), u1 = k / (n - 1);
+      if (arrow) seg(p.sx, p.sy, q.sx, q.sy, 0.25 * u0, 0.6 * u1);
+      else seg(p.sx, p.sy, q.sx, q.sy, 0.9 * u0 * u0, 0.9 * u1 * u1, 0.4 + 1.2 * u1); }
+    const h = pts[n - 1];
+    if (!arrow) { disc(h.sx, h.sy, 5.5, 0.55, 1.6); disc(h.sx, h.sy, 2.2, 1.3, 0.8); }
+    flush(col);
+    if (arrow) return;
+    depth(key - 0.3, footY, baseH);                                             // the floor under it, lit (an ellipse, the ground's 2:1)
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -7; dx <= 7; dx++) { const e = (dx * dx) / 49 + (dy * dy) / 9; if (e < 1) mark(h.sx + dx, footY + dy, 0.5 * (1 - e) * (1 - e)); }
+    flush(col);
+  }
+  // where a bolt lands: a flash, a ring thrown out round the struck at its height, sparks in its colour (fire sheds
+  // embers that fall)
+  function burst(x, y, col, { now = performance.now(), size = 1, ember = false } = {}) {
+    flashes.push({ x, y, t0: now, life: 0.16, r: 5 * size, col, heavy: true });
+    rings.push({ x, y, t0: now, life: 0.32, r0: 3, r1: 14 * size, col, lift: 18, a: 1 });
+    const n = ember ? 12 : 8;
+    for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2 + Math.random() * 0.5, sp = 60 + Math.random() * 70;
+      parts.push({ x, y, ox: 0, oy: -18, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6 - 40, t0: now, life: 0.28 + Math.random() * (ember ? 0.45 : 0.2), col, g: ember ? 260 : 340 }); }
+    if (parts.length > 240) parts.splice(0, parts.length - 240);
+  }
+  // a heavy blow or a crit lands: a ring runs out over the ground from the struck's feet
+  function shock(x, y, col, { now = performance.now(), big = false } = {}) {
+    rings.push({ x, y, t0: now, life: big ? 0.36 : 0.26, r0: 4, r1: big ? 22 : 15, col, lift: 0, a: big ? 1.1 : 0.8 });
+    if (rings.length > 24) rings.shift();
+  }
+  // a foe goes out: a flash, a ring at its feet, and motes of its light rising off where it stood
+  function soul(x, y, col, { now = performance.now(), big = false } = {}) {
+    flashes.push({ x, y, t0: now, life: 0.22, r: big ? 7 : 5, col, heavy: false });
+    rings.push({ x, y, t0: now, life: 0.45, r0: 3, r1: big ? 20 : 13, col, lift: 0, a: 0.7 });
+    const n = big ? 16 : 10;
+    for (let k = 0; k < n; k++) parts.push({ x, y, ox: (Math.random() - 0.5) * 14, oy: -6 - Math.random() * 22, vx: (Math.random() - 0.5) * 16, vy: -30 - Math.random() * 40, t0: now + k * 25, life: 0.6 + Math.random() * 0.5, col, g: -20, mote: true });
+    if (parts.length > 240) parts.splice(0, parts.length - 240);
+  }
   // a loot drop: a column of light over where it fell and a glint on the ground, in the rarity's colour
   function beam(x, y, col, { now = performance.now(), life = 2.6 } = {}) { beams.push({ x, y, col, t0: now, life }); if (beams.length > 8) beams.shift(); }
   // one of the slain raised (the temple, a shrine): a tall column of holy light over them, a ring of it spreading at their
@@ -244,11 +290,21 @@ export function createFX() {
       disc(P.sx, P.sy - 24, f.r * (0.7 + 0.5 * age), 0.75 * (1 - age), 1.4); if (f.heavy || f.crit) star(P.sx, P.sy - 24, (f.heavy ? 9 : 6) * (1 - age * 0.5), 0.9 * (1 - age));
       flush(f.col);
     }
+    for (let i = rings.length - 1; i >= 0; i--) {                              // shockwaves and bursts: an ellipse running out, thinning
+      const r = rings[i], age = (now - r.t0) / 1000 / r.life; if (age >= 1) { rings.splice(i, 1); continue; } if (age < 0) continue;
+      const P = proj(r.x, r.y), e = 1 - (1 - age) * (1 - age), R = r.r0 + (r.r1 - r.r0) * e, a = r.a * (1 - age) * (1 - age), cy = P.sy - r.lift;
+      depth(P.key + (r.lift ? 0.6 : -0.2), P.sy, P.h);
+      const m = Math.max(24, Math.ceil(R * 4));
+      for (let t = 0; t < m; t++) { const th = (t / m) * Math.PI * 2; disc(P.sx + Math.cos(th) * R, cy + Math.sin(th) * R * 0.5, 1.2 + 0.8 * (1 - age), a, 1); }
+      flush(r.col);
+    }
     for (let i = parts.length - 1; i >= 0; i--) {
-      const s = parts[i], age = Math.max(0, (now - s.t0) / 1000); if (age >= s.life) { parts.splice(i, 1); continue; }
-      const P = proj(s.x, s.y), x = P.sx + s.ox + s.vx * age, y = P.sy + s.oy + s.vy * age + 0.5 * 340 * age * age;
-      const vx = s.vx, vy = s.vy + 340 * age, k = 1 - age / s.life;
-      depth(P.key + 0.6, P.sy, P.h); seg(x - vx * 0.022, y - vy * 0.022, x, y, 0.15 * k, 1.1 * k); flush(s.col);
+      const s = parts[i], age = (now - s.t0) / 1000; if (age >= s.life) { parts.splice(i, 1); continue; } if (age < 0) continue;
+      const g = s.g ?? 340, P = proj(s.x, s.y), x = P.sx + s.ox + s.vx * age, y = P.sy + s.oy + s.vy * age + 0.5 * g * age * age;
+      const vx = s.vx, vy = s.vy + g * age, k = 1 - age / s.life;
+      depth(P.key + 0.6, P.sy, P.h);
+      if (s.mote) disc(x, y, 1.6, 1.1 * k * Math.min(1, age * 6), 0.9); else seg(x - vx * 0.022, y - vy * 0.022, x, y, 0.15 * k, 1.1 * k);
+      flush(s.col);
     }
   }
 
@@ -269,5 +325,5 @@ export function createFX() {
     }
   }
 
-  return { target, weapon, impact, beam, rise, particles, wisps, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
+  return { target, weapon, impact, beam, rise, trail, burst, shock, soul, particles, wisps, primitives: { depth, mark, flush, disc, seg, star, ribbon } };
 }

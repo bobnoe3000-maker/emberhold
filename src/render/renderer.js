@@ -22,7 +22,7 @@ import { GLOW_ID, norm3, buildProps, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
-import { createFX, styleOfSrc, raisedLook } from './fx.js';
+import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
@@ -962,7 +962,7 @@ export function createRenderer(canvas, sim, input) {
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
   sim.bus.on('cageDropped', () => { terrValid = false; }); sim.bus.on('cageBroken', () => { terrValid = false; });   // (lamps.js: a harvester's cage on the floor, then broken)
-  sim.bus.on('levelChanged', () => { transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
+  sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
   preloadFamily();
   banner = { text: sceneTitle(), until: clock() + 2600 };
 
@@ -992,8 +992,31 @@ export function createRenderer(canvas, sim, input) {
     // drawn by the same stamping, light and effects as play. The Stage pushes sprite draws and calls effects through this.
     if (st.frame) st.frame(stageApi(draws, ox, oy, now));
   }
+  // v1.47 (the owner: "fx should be a bit more dynamic visually like an arpg"): a bolt streaks (its last few points),
+  // bursts where it lands, and a fallen foe's light goes up. Presentation only, keyed by the sim's own objects.
+  const trails = new WeakMap(), gone = new WeakSet(), stageBolts = [];
+  let liveBolts = new Set(), nextBolts = new Set();
+  function boltFx(b, bx, by, kind, proj) {
+    let t = trails.get(b); if (!t) trails.set(b, t = []);
+    t.push(bx, by); if (t.length > 14) t.splice(0, 2);
+    const P = proj(bx, by), pts = [];
+    for (let k = 0; k < t.length; k += 2) { const q = proj(t[k], t[k + 1]); pts.push({ sx: q.sx, sy: q.sy - 18 }); }
+    fx.trail(pts, BOLT_RGB[kind] || BOLT_RGB.bolt, P.key, P.sy, P.h, kind === 'arrow');
+    nextBolts.add(b);
+  }
+  function boltsLand(now) {                                     // a bolt gone since the last frame has landed: burst where it was
+    for (const b of liveBolts) if (!nextBolts.has(b)) {
+      const t = trails.get(b); if (!t || !t.length) continue;
+      const small = b.kind === 'arrow' || b.kind === 'bolt';
+      fx.burst(t[t.length - 2], t[t.length - 1], BOLT_RGB[b.kind] || BOLT_RGB.bolt, { now, size: small ? 0.55 : 1, ember: b.kind === 'fire' });
+    }
+    const o = liveBolts; liveBolts = nextBolts; nextBolts = o; nextBolts.clear();
+  }
   function stageApi(draws, ox, oy, now) {
-    return { now, ox, oy, draws, project, ZH, HW, HH, fx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE,
+    return { now, ox, oy, draws, project, ZH, HW, HH, fx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE, BOLT_RGB,
+      // a bolt in flight as the game draws one (its sprite, and its trail, halo and floor glow in the effects pass); a new
+      // `obj` each flight, so the last one lands (bursts) when it's let go
+      bolt: (obj, x, y, kind) => { stageBolts.push(obj); obj.kind = kind; obj.bx = x; obj.by = y; },
       at: (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, z }; } };
   }
   const boxes = new WeakMap();
@@ -1184,6 +1207,13 @@ export function createRenderer(canvas, sim, input) {
     fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
+    for (const b of sim.world.projectiles || []) if (b.kind) boltFx(b, lerp(b, 'x'), lerp(b, 'y'), b.kind, fxProj);
+    for (const b of stageBolts) boltFx(b, b.bx, b.by, b.kind, fxProj);
+    stageBolts.length = 0; boltsLand(clock());
+    for (const e of sim.world.enemies || []) if (e.dead && !gone.has(e) && e.kind !== 'lantern') {   // a foe goes out
+      gone.add(e); const fs = styleOfSrc(e.kind, true, ENEMY_ACTOR);
+      fx.soul(e.x, e.y, (fs && fs.spark) || [220, 220, 235], { now: clock(), big: !!(e.boss || e.elite) });
+    }
     fx.particles(now, fxProj);
     if (st && st.afterFx) st.afterFx({ now, proj: fxProj, fx });   // (the art review's FX view: what draws straight into the light, the marsh-lights)
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
@@ -1449,7 +1479,9 @@ export function createRenderer(canvas, sim, input) {
     if (c.t === 'hit') {                                                          // sparks fly off the struck, away from the striker
       const st = styleOfSrc(c.src, c.party, ENEMY_ACTOR), a = project(c.ax ?? c.x, c.ay ?? c.y, 0), b = project(c.x, c.y, 0);
       let dx = b.sx - a.sx, dy = b.sy - a.sy; const l = Math.hypot(dx, dy); if (l > 1e-3) { dx /= l; dy /= l; } else { dx = 0; dy = -1; }
-      fx.impact(c.x, c.y, dx, dy, (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200], { heavy: c.heavy, crit: c.crit, now: clock() });
+      const sc = (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200];
+      fx.impact(c.x, c.y, dx, dy, sc, { heavy: c.heavy, crit: c.crit, now: clock() });
+      if (c.heavy || c.crit) fx.shock(c.x, c.y, sc, { now: clock(), big: !!(c.heavy && c.crit) });   // (v1.47) the blow thumps the ground
     }
     if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
