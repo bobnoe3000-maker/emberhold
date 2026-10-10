@@ -62,7 +62,8 @@ A full sheet, like the Journal's, with ✕ (44 px) and two tabs.
 ### Tab 1: the Old Provinces (frame 2)
 
 The wall map (`old-provinces.jpg`, 1200 × 2400), scrolled so the land you're in sits in view. **(built)** At a
-phone's width the map's words were too small to read, so it opens at 1.7× the sheet's width and scrolls both ways;
+phone's width the map's words were too small to read, so it opens at 1.7× the sheet's width (at least 800 px since
+[art critic pass 12](./art-critic-pass-12.md), where its smallest words are 11 px) and scrolls both ways;
 a picked pin scrolls clear of its card.
 
 - **Fog** covers every land that isn't open, with one line saying when it opens: *"the roads north open from

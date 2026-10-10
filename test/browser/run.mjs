@@ -23,6 +23,7 @@ import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, webkit } from 'playwright';
 import { scriptedSession } from '../fixtures/session.mjs';
+import { PLACES } from '../../src/ui/wallmap.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css' };
@@ -1107,7 +1108,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="coach"]').tap();
     await p.waitForSelector('#mapWrap.on #worldmap .map img', { timeout: 10000 }); await p.waitForTimeout(600);
     const tabs = await p.evaluate(() => [...document.querySelectorAll('#worldmap .tabs button')].map((e) => ({ t: e.textContent, on: e.classList.contains('on'), h: e.getBoundingClientRect().height })));
-    const pin = await p.evaluate(() => { const m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / 1200; return { x: r.left + 262 * k, y: r.top + 2062 * k }; });
+    const pin = await p.evaluate(([px, py]) => { const m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / 1200; return { x: r.left + px * k, y: r.top + py * k }; }, PLACES.saltmere);
     await p.touchscreen.tap(pin.x, pin.y); await p.waitForTimeout(500);
     const cardText = await p.evaluate(() => document.querySelector('#worldmap .card.on')?.innerText || '');
     const go = await p.evaluate(() => { const q = document.querySelector('#worldmap .card .go'); const r = q.getBoundingClientRect(); return { w: r.width, h: r.height, off: q.disabled }; });

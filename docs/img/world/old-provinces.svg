@@ -48,7 +48,7 @@
 <path d="M565,1159 h20" stroke="#5a4330" stroke-width="0.9" opacity="0.6"/>
 <path d="M595,1135 h20" stroke="#5a4330" stroke-width="0.9" opacity="0.6"/>
 <path d="M625,1159 h20" stroke="#5a4330" stroke-width="0.9" opacity="0.6"/>
-<path d="M342,1800 L342,2185" stroke="#5a4330" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>
+<path d="M305,1880 L329,2006 L352,2186" fill="none" stroke="#5a4330" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>
 <path d="M680.3,530.0 L695.4,497.4 L715.4,530.0" fill="#eadcbc" fill-opacity="1" stroke="#3b2a1c" stroke-width="1.6" stroke-linejoin="round"/><path d="M698.3,502.1 l-5.3,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M701.1,506.7 l-5.0,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M704.0,511.4 l-4.6,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M706.8,516.0 l-4.3,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M709.7,520.7 l-4.0,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M712.5,525.3 l-3.7,5.9" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/>
 <path d="M693.6,549.0 L710.3,522.9 L727.8,549.0" fill="#eadcbc" fill-opacity="1" stroke="#3b2a1c" stroke-width="1.6" stroke-linejoin="round"/><path d="M713.8,528.1 l-5.0,4.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M717.3,533.3 l-4.6,4.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M720.8,538.5 l-4.2,4.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M724.3,543.8 l-3.7,4.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/>
 <path d="M672.3,563.5 L689.8,531.6 L708.9,563.5" fill="#eadcbc" fill-opacity="1" stroke="#3b2a1c" stroke-width="1.6" stroke-linejoin="round"/><path d="M693.0,536.9 l-5.5,5.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M696.2,542.2 l-5.1,5.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M699.4,547.5 l-4.7,5.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M702.6,552.8 l-4.3,5.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/><path d="M705.7,558.2 l-3.9,5.7" stroke="#3b2a1c" stroke-width="1" opacity="0.8"/>
@@ -634,18 +634,21 @@
 <circle cx="800" cy="1600" r="9" fill="#eadcbc" stroke="#3b2a1c" stroke-width="2"/><circle cx="800" cy="1600" r="4" fill="#8a3a22"/>
 <circle cx="420" cy="440" r="9" fill="#eadcbc" stroke="#3b2a1c" stroke-width="2"/><circle cx="420" cy="440" r="4" fill="#8a3a22"/>
 <rect x="464" y="1649" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M463,1649 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
-<rect x="256" y="2056" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M255,2056 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
-<rect x="464" y="2076" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M463,2076 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
+<rect x="317" y="1941" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M316,1941 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
+<rect x="524" y="2071" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M523,2071 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="234" y="832" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M233,832 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="814" y="829" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M813,829 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="716" y="1006" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M715,1006 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="992" y="1174" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M991,1174 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="684" y="1444" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M683,1444 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
-<path d="M395,1554 l5,-9 l5,9 z" fill="#3b2a1c"/>
-<path d="M463,1776 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
-<path d="M293,1966 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
-<path d="M425,1934 l5,-9 l5,9 z" fill="#3b2a1c"/>
-<path d="M525,2034 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M339,1841 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
+<path d="M374,1677 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M563,1834 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
+<path d="M401,1555 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M257,2004 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M324,2010 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M491,1995 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M402,2107 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
 <path d="M415,822 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M475,956 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
 <path d="M277,994 l5,-9 l5,9 z" fill="#3b2a1c"/>
@@ -663,8 +666,8 @@
 <path d="M720.0,720.0L721.9,741.1L715.8,761.4L717.4,782.5L710.6,802.7L698.5,819.9L689.8,839.1L681.9,858.8L680.0,880.0L673.5,902.4L674.8,925.7L676.0,948.7L674.3,971.7L688.6,990.7L697.4,1012.9L703.5,1036.2L700.0,1060.0L708.0,1085.4L715.9,1110.8L729.6,1134.4L752.0,1149.9L766.2,1172.6L769.1,1199.1L769.8,1225.6L780.0,1250.0L813.7,1252.2L845.1,1239.5L877.1,1249.4L910.5,1247.5L939.3,1263.4L971.0,1272.0L999.7,1287.8L1030.0,1300.0" fill="none" stroke="#3b2a1c" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>
 <path d="M160.0,1420.0L180.4,1427.3L201.5,1432.6L223.3,1434.8L243.4,1443.8L265.1,1443.8L286.8,1443.4L308.1,1437.7L330.0,1440.0L351.5,1432.9L368.8,1418.2L391.2,1419.1L413.2,1414.6L435.1,1413.4L456.6,1418.0L478.3,1417.6L500.0,1420.0L507.6,1434.6L519.4,1446.1L533.2,1454.7L545.0,1466.0L554.4,1479.7L567.8,1489.6L576.9,1503.6L580.0,1520.0L590.2,1543.8L596.1,1569.1L591.2,1594.9L596.6,1620.7L605.9,1644.6L611.4,1669.6L613.7,1695.1L620.0,1720.0L626.4,1749.6L626.0,1780.0L635.9,1809.0L633.9,1839.7L630.1,1869.9L635.1,1899.9L642.1,1929.6L640.0,1960.0" fill="none" stroke="#3b2a1c" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>
 <path d="M580.0,1520.0L587.3,1495.0L604.0,1474.9L620.0,1454.9L631.2,1431.7L636.9,1406.5L643.0,1381.5L641.1,1355.8L640.0,1330.0L658.7,1322.2L676.3,1312.2L687.3,1294.8L703.6,1282.3L723.7,1280.6L742.1,1272.2L762.1,1269.3L780.0,1260.0L812.2,1262.1L844.0,1256.6L876.0,1259.6L908.0,1261.5L939.6,1268.1L968.3,1282.8L1000.4,1287.0L1030.0,1300.0" fill="none" stroke="#3b2a1c" stroke-width="1.6" stroke-dasharray="1 7" stroke-linecap="round" opacity="0.55" clip-path="url(#land)"/>
-<text x="310" y="1598" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="5" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">EMBERFALL</text>
-<text x="310" y="1626" font-family="Fell It" font-size="20" fill="#8a3a22" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">levels 1 – 15</text>
+<text x="262" y="1624" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="5" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">EMBERFALL</text>
+<text x="262" y="1652" font-family="Fell It" font-size="20" fill="#8a3a22" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">levels 1 – 15</text>
 <text x="330" y="636" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="5" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">THE CINDER</text>
 <text x="330" y="670" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="5" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">REACH</text>
 <text x="330" y="698" font-family="Fell It" font-size="20" fill="#8a3a22" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">levels 15 – 30</text>
@@ -674,54 +677,57 @@
 <text x="800" y="1930" font-family="Fell It" font-size="20" fill="#8a3a22" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">levels 45 – 60</text>
 <text x="600" y="300" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="5" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">THE PALE HEIGHTS</text>
 <text x="600" y="328" font-family="Fell It" font-size="20" fill="#8a3a22" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">levels 60 – 75</text>
-<text x="520" y="1840" font-family="Fell It" font-size="19" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Hollow Vale</text>
-<text x="470" y="2160" font-family="Fell It" font-size="19" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Greywater Fens</text>
+<text x="470" y="1770" font-family="Fell It" font-size="22" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Hollow Vale</text>
+<text x="470" y="1918" font-family="Fell It" font-size="22" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Greywater Fens</text>
 <text x="600" y="1250" font-family="Fell SC" font-size="32" fill="#3b2a1c" text-anchor="middle" letter-spacing="8" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">SOLMERE</text>
 <text x="600" y="1276" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the dead capital · the Bowl</text>
 <text x="600" y="1296" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Great Beacon</text>
 <text x="600" y="480" font-family="Fell It" font-size="16" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Ember Throne</text>
 <text x="600" y="1088" font-family="Fell It" font-size="15" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Mere</text>
 <text x="684" y="1124" font-family="Fell It" font-size="15" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Mere Tower</text>
-<text x="330" y="1748" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Thornwick</text>
-<text x="514" y="1661" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Greyholt</text>
-<text x="262" y="2088" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Saltmere</text>
-<text x="470" y="2108" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Reedholm</text>
-<text x="360" y="933" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Ashgate</text>
-<text x="240" y="864" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Kell’s Rest</text>
-<text x="420" y="468" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Frosthold</text>
-<text x="790" y="426" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Glass Keep</text>
-<text x="1008" y="990" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Tollhaven</text>
-<text x="820" y="819" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Highmarch</text>
-<text x="722" y="1038" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Brine Cross</text>
-<text x="950" y="1186" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Gullwick</text>
-<text x="800" y="1628" font-family="Fell" font-size="21" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Rookstead</text>
-<text x="690" y="1436" font-family="Fell" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Hollin Ford</text>
-<text x="400" y="1574" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Scrag Warren</text>
-<text x="470" y="1796" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Old Barrows</text>
-<text x="268" y="1986" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Drowned Abbey</text>
-<text x="440" y="1954" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Sickpools</text>
-<text x="530" y="2054" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Toadking</text>
-<text x="420" y="842" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Cinderworks</text>
-<text x="482" y="976" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Forgehall</text>
-<text x="282" y="1014" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Slag Tunnels</text>
-<text x="752" y="652" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Soulcracks</text>
-<text x="1105" y="862" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Gull Isles</text>
-<text x="960" y="1086" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Drowned Mole</text>
-<text x="1040" y="784" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Lamp Fort</text>
-<text x="722" y="1586" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Tally-House</text>
-<text x="860" y="1746" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Root Granary</text>
-<text x="700" y="1796" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the First Barn?</text>
+<text x="330" y="1748" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Thornwick</text>
+<text x="514" y="1661" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Greyholt</text>
+<text x="323" y="1973" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Saltmere</text>
+<text x="530" y="2103" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Reedholm</text>
+<text x="360" y="933" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Ashgate</text>
+<text x="240" y="864" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Kell’s Rest</text>
+<text x="420" y="468" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Frosthold</text>
+<text x="790" y="426" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Glass Keep</text>
+<text x="1008" y="990" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Tollhaven</text>
+<text x="820" y="819" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Highmarch</text>
+<text x="722" y="1038" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Brine Cross</text>
+<text x="950" y="1186" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Gullwick</text>
+<text x="800" y="1628" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Rookstead</text>
+<text x="690" y="1436" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Hollin Ford</text>
+<text x="346" y="1861" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Old Barrows</text>
+<text x="409" y="1697" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Tithe Mill</text>
+<text x="570" y="1854" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Sunken Chapel</text>
+<text x="406" y="1575" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Scrag Warren</text>
+<text x="244" y="2024" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Toadking's Mound</text>
+<text x="373" y="2030" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Canal Locks</text>
+<text x="496" y="2015" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Sickpools</text>
+<text x="453" y="2127" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Drowned Abbey</text>
+<text x="420" y="842" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Cinderworks</text>
+<text x="482" y="976" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Forgehall</text>
+<text x="282" y="1014" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Slag Tunnels</text>
+<text x="752" y="652" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Soulcracks</text>
+<text x="1105" y="862" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Gull Isles</text>
+<text x="960" y="1086" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Drowned Mole</text>
+<text x="1040" y="784" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Lamp Fort</text>
+<text x="722" y="1586" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Tally-House</text>
+<text x="860" y="1746" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Root Granary</text>
+<text x="700" y="1796" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the First Barn?</text>
 <text x="70" y="1300" font-family="Fell SC" font-size="28" fill="#3b2a1c" text-anchor="middle" letter-spacing="12"  transform="rotate(-90 70 1300)" opacity="0.75">THE GREY SEA</text>
 <text x="1135" y="1450" font-family="Fell SC" font-size="28" fill="#3b2a1c" text-anchor="middle" letter-spacing="12"  transform="rotate(90 1135 1450)" opacity="0.75">THE NARROW SEA</text>
 <text x="800" y="2215" font-family="Fell SC" font-size="26" fill="#3b2a1c" text-anchor="middle" letter-spacing="12"  opacity="0.75">THE SALT DEEPS</text>
 <text x="600" y="118" font-family="Fell It" font-size="22" fill="#3b2a1c" text-anchor="middle" letter-spacing="0"  opacity="0.7">the White Waste</text>
 <text x="990" y="196" font-family="Fell It" font-size="18" fill="#3b2a1c" text-anchor="middle" letter-spacing="0"  opacity="0.55">Here the map</text>
 <text x="990" y="216" font-family="Fell It" font-size="18" fill="#3b2a1c" text-anchor="middle" letter-spacing="0"  opacity="0.55">is not finished.</text>
-<text x="912" y="1470" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(52 912 1470)">the Long Water</text>
-<text x="578" y="930" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(-88 578 930)">the Sol</text>
-<text x="486" y="1012" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(60 486 1012)">the Ashwater</text>
-<text x="618" y="700" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Pilgrims’ Stair</text>
-<text x="356" y="2010" font-family="Fell It" font-size="13" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(-90 356 2010)">the drowned canal</text>
+<text x="912" y="1470" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(52 912 1470)">the Long Water</text>
+<text x="578" y="930" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(-88 578 930)">the Sol</text>
+<text x="486" y="1012" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(60 486 1012)">the Ashwater</text>
+<text x="618" y="700" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Pilgrims’ Stair</text>
+<text x="346" y="2040" font-family="Fell It" font-size="15" fill="#3b2a1c" text-anchor="start" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round" transform="rotate(83 346 2040)">the drowned canal</text>
 <text x="700" y="1990" font-family="Fell It" font-size="14" fill="#3b2a1c" text-anchor="middle" letter-spacing="0"  opacity="0.7">the Bight of Sol</text>
 <g transform="translate(-1745,640)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="#3b2a1c" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="#eadcbc" stroke="#3b2a1c" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="#3b2a1c"/></g>
 <g transform="translate(280,2300)"><rect x="-200" y="-56" width="400" height="104" fill="#eadcbc" stroke="#3b2a1c" stroke-width="2"/><rect x="-192" y="-48" width="384" height="88" fill="none" stroke="#3b2a1c" stroke-width="1"/></g>

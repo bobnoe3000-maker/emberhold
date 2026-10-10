@@ -12,7 +12,18 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'world', 'old-provinces.jpg'));
-const { PLACES } = await import(pathToFileURL(join(ROOT, 'src', 'ui', 'wallmap.js')).href);
+const { PLACES, EMBERFALL } = await import(pathToFileURL(join(ROOT, 'src', 'ui', 'wallmap.js')).href);
+// Emberfall is the corner the game has built: its sites stand where the game's own overlands put them (src/sim/outdoor.js
+// exits, through wallmap.js EMBERFALL), so the Guild's map and the land you walk agree (art critic pass 12: the Fens were
+// drawn upside down). A hidden site stays off the map until the game reveals it, as on the World map.
+const { createOutdoor } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'outdoor.js')).href);
+const { SITES: GAME_SITES } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'sites.js')).href);
+const EMBER = [];
+for (const r of ['vale', 'fens']) for (const e of createOutdoor(1, 'overland', r).exits) {
+  if (e.to !== 'dungeon' || !GAME_SITES[e.site] || GAME_SITES[e.site].hidden || e.site === 'mere_tower') continue;   // (the Tower stands in Solmere's Mere: Wenna's punt goes there)
+  const [x, y] = EMBERFALL[r]((e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
+  EMBER.push({ id: e.site, x: Math.round(x), y: Math.round(y), name: GAME_SITES[e.site].name.replace(/^The /, 'the '), ruin: ['barrows', 'sunken_chapel', 'drowned_abbey'].includes(e.site) });
+}
 const W = 1200, H = 2400;                 // portrait, the shape of a phone held upright (the owner)
 
 // ── chance, seeded ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -124,7 +135,7 @@ for (const rv of RIVERS) { const p = ragged(rv, false, 0.35, 4); add(`<path d="$
 const MERE = ragged([[520, 1130], [580, 1100], [670, 1110], [690, 1150], [640, 1195], [550, 1192], [510, 1162]], true, 0.25, 4);
 add(`<path d="${pathOf(MERE, true)}" fill="${SEA}" fill-opacity="0.75" stroke="${INK}" stroke-width="1.8"/>`);
 for (let i = 0; i < 4; i++) add(`<path d="M${535 + i * 30},${1135 + (i % 2) * 24} h20" stroke="${INK2}" stroke-width="0.9" opacity="0.6"/>`);
-add(`<path d="M342,1800 L342,2185" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>`);   // the drowned canal
+add(`<path d="M305,1880 L329,2006 L352,2186" fill="none" stroke="${INK2}" stroke-width="2.4" stroke-dasharray="14 5" opacity="0.8"/>`);   // the drowned canal: the Vale's road south, the Locks, the sea
 
 // the land's marks
 const HEIGHTS_C = [600, 520];
@@ -178,7 +189,7 @@ for (let i = 0; i < 9; i++) add(`<path d="M${f1(HEIGHTS_C[0] - 44 + i * 11)},${f
 add(`<path d="M${HEIGHTS_C[0] - 10},${HEIGHTS_C[1] + 8} v-12 l4,-6 l3,4 l3,-8 l3,8 l3,-4 l4,6 v12 z" fill="#1e1610"/>`);
 for (const k of ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold']) add(hub(...PLACES[k]));
 for (const k of ['greyholt', 'saltmere', 'reedholm', 'kells', 'highmarch', 'brine', 'gullwick', 'hollin']) add(town(...PLACES[k]));
-const SITES = [[400, 1550, 'site'], [470, 1772, 'ruin'], [300, 1962, 'ruin'], [430, 1930, 'site'], [530, 2030, 'site'], [420, 818, 'site'], [482, 952, 'ruin'], [282, 990, 'site'],
+const SITES = [...EMBER.map((e) => [e.x, e.y, e.ruin ? 'ruin' : 'site']), [420, 818, 'site'], [482, 952, 'ruin'], [282, 990, 'site'],
   [790, 440, 'ruin'], [752, 618, 'site'], [1108, 902, 'site'], [960, 1062, 'ruin'], [1040, 760, 'site'], [722, 1562, 'ruin'], [860, 1722, 'site'], [700, 1772, 'ruin']];
 for (const [x, y, k] of SITES) add(k === 'ruin' ? ruin(x, y) : site(x, y));
 add(`<path d="${pathOf(ragged([[690, 610], [730, 626], [770, 606], [815, 628]], false, 0.6, 3), false)}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);   // the Soulcracks
@@ -195,29 +206,30 @@ for (const bd of BORDERS) add(`<path d="${pathOf(ragged(bd, false, 0.25, 3), fal
 const halo = `paint-order="stroke" stroke="${PAPER}" stroke-width="5" stroke-linejoin="round"`;
 const label = (x, y, txt, size, o = {}) => add(`<text x="${x}" y="${y}" font-family="${o.sc ? 'Fell SC' : o.it ? 'Fell It' : 'Fell'}" font-size="${size}" fill="${o.fill || INK}" text-anchor="${o.anchor || 'middle'}" letter-spacing="${o.ls || 0}" ${o.halo === false ? '' : halo}${o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : ''}${o.op ? ` opacity="${o.op}"` : ''}>${txt}</text>`);
 // the regions: spaced capitals, and the band under each in red, in whoever's hand added it later
-const REG = [[310, 1598, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE GREENWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
+const REG = [[262, 1624, ['EMBERFALL'], '1 – 15'], [330, 636, ['THE CINDER', 'REACH'], '15 – 30'], [870, 726, ['THE TIDEMARK'], '30 – 45'], [800, 1902, ['THE GREENWOOD'], '45 – 60'], [600, 300, ['THE PALE HEIGHTS'], '60 – 75']];
 for (const [x, y, lines, lv] of REG) { lines.forEach((l, i) => label(x, y + i * 34, l, 32, { sc: true, ls: 5 })); label(x, y + (lines.length - 1) * 34 + 28, `levels ${lv}`, 20, { it: true, fill: RED }); }
-label(520, 1840, 'the Hollow Vale', 19, { it: true }); label(470, 2160, 'the Greywater Fens', 19, { it: true });
+label(470, 1770, 'the Hollow Vale', 22, { it: true }); label(470, 1918, 'the Greywater Fens', 22, { it: true });
 label(600, 1250, 'SOLMERE', 32, { sc: true, ls: 8 }); label(600, 1276, 'the dead capital · the Bowl', 17, { it: true }); label(600, 1296, 'the Great Beacon', 17, { it: true });
 label(600, 480, 'the Ember Throne', 16, { it: true });
 label(600, 1088, 'the Mere', 15, { it: true }); label(684, 1124, 'the Mere Tower', 15, { it: true, anchor: 'start' });
 const T = [['thornwick', 'Thornwick', 0, 28], ['greyholt', 'Greyholt', 44, 6], ['saltmere', 'Saltmere', 0, 26], ['reedholm', 'Reedholm', 0, 26], ['ashgate', 'Ashgate', 0, 28], ['kells', 'Kell’s Rest', 0, 26],
   ['frosthold', 'Frosthold', 0, 28], ['glass', 'the Glass Keep', 0, -14], ['tollhaven', 'Tollhaven', -12, 30], ['highmarch', 'Highmarch', 0, -16], ['brine', 'Brine Cross', 0, 26], ['gullwick', 'Gullwick', -48, 6],
   ['rookstead', 'Rookstead', 0, 28], ['hollin', 'Hollin Ford', 0, -14]];
-for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 21 : 17); }
-const S = [[400, 1574, 'the Scrag Warren'], [470, 1796, 'the Old Barrows'], [268, 1986, 'the Drowned Abbey'], [440, 1954, 'the Sickpools'], [530, 2054, 'the Toadking'], [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
+for (const [k, n, dx, dy] of T) { const [x, y] = PLACES[k]; label(x + dx, y + dy, n, ['thornwick', 'ashgate', 'tollhaven', 'rookstead', 'frosthold'].includes(k) ? 25 : 20); }
+const EMBER_DX = { canal_locks: 44, toadking_mound: -18, tithe_mill: 30, drowned_abbey: 44 };
+const S = [...EMBER.map((e) => [e.x + (EMBER_DX[e.id] || 0), e.y + 24, e.name]), [420, 842, 'the Cinderworks'], [482, 976, 'the Forgehall'], [282, 1014, 'the Slag Tunnels'],
   [752, 652, 'the Soulcracks'], [1105, 862, 'the Gull Isles'], [960, 1086, 'the Drowned Mole'], [1040, 784, 'the Lamp Fort'], [722, 1586, 'the Tally-House'], [860, 1746, 'the Root Granary'], [700, 1796, 'the First Barn?']];
-for (const [x, y, n] of S) label(x, y, n, 14, { it: true });
+for (const [x, y, n] of S) label(x, y, n, 17, { it: true });
 label(70, 1300, 'THE GREY SEA', 28, { sc: true, ls: 12, rot: -90, halo: false, op: 0.75 });
 label(1135, 1450, 'THE NARROW SEA', 28, { sc: true, ls: 12, rot: 90, halo: false, op: 0.75 });
 label(800, 2215, 'THE SALT DEEPS', 26, { sc: true, ls: 12, halo: false, op: 0.75 });
 label(600, 118, 'the White Waste', 22, { it: true, halo: false, op: 0.7 });
 label(990, 196, 'Here the map', 18, { it: true, halo: false, op: 0.55 }); label(990, 216, 'is not finished.', 18, { it: true, halo: false, op: 0.55 });
-label(912, 1470, 'the Long Water', 14, { it: true, rot: 52 });
-label(578, 930, 'the Sol', 14, { it: true, rot: -88 });
-label(486, 1012, 'the Ashwater', 14, { it: true, rot: 60 });
-label(618, 700, 'the Pilgrims’ Stair', 14, { it: true, anchor: 'start' });
-label(356, 2010, 'the drowned canal', 13, { it: true, anchor: 'start', rot: -90 });
+label(912, 1470, 'the Long Water', 17, { it: true, rot: 52 });
+label(578, 930, 'the Sol', 17, { it: true, rot: -88 });
+label(486, 1012, 'the Ashwater', 17, { it: true, rot: 60 });
+label(618, 700, 'the Pilgrims’ Stair', 17, { it: true, anchor: 'start' });
+label(346, 2040, 'the drowned canal', 15, { it: true, anchor: 'start', rot: 83 });
 label(700, 1990, 'the Bight of Sol', 14, { it: true, halo: false, op: 0.7 });
 add(`<g transform="translate(-1745,640)"><path d="M1835,1060 q14,-26 28,0 q14,26 28,0 q14,-26 28,0" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M1828,1062 q-12,-16 -2,-24 q10,-4 12,8" fill="${PAPER}" stroke="${INK}" stroke-width="2"/><circle cx="1830" cy="1046" r="1.6" fill="${INK}"/></g>`);   // a sea-serpent, because there always is one
 

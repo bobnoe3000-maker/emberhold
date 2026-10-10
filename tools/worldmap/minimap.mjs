@@ -80,8 +80,11 @@ const t = document.createElement('canvas'); t.width = sc.cw; t.height = sc.ch; c
 const rgb = GROUND.map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
 for (let i = 0; i < sc.cw * sc.ch; i++) { const [r, gg, bb] = rgb[sc.ground[i]] || rgb[0]; im.data.set([r, gg, bb, 255], i * 4); }
 tg.putImageData(im, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(t, 0, 0, sc.cw * P, sc.ch * P);
+// and again through a blur of half a tile, over itself: the tile steps along a square's or a pool's edge soften into a line
+// (art critic pass 12: they read as stairs on Thornwick's sheet); the copy beneath keeps the map's edges whole
+g.filter = 'blur(' + (P * 0.5) + 'px)'; g.drawImage(t, 0, 0, sc.cw * P, sc.ch * P); g.filter = 'none';
 const X = (x) => (x - sc.crop[0]) * P, Y = (y) => (y - sc.crop[1]) * P;
-const FILL = { gate: '#4a3c30', house: '#a8644a', svc: '#d9ae4e', wall: '#5a4a3c', tower: '#4a3c30', site: '#9a7aa0', deck: '#8a6a48', rock: '#9a958a' };
+const FILL = { gate: '#4a3c30', house: sc.region === 'fens' ? '#7e7464' : '#a8644a', svc: '#d9ae4e', wall: '#5a4a3c', tower: '#4a3c30', site: '#9a7aa0', deck: '#8a6a48', rock: '#9a958a' };   // (the Fens' stilt houses grey thatch, not the Vale's brick)
 for (const p of sc.pieces) {
   const x = X(p.x0), y = Y(p.y0), w = (p.x1 - p.x0) * P, h = (p.y1 - p.y0) * P;
   if (p.k === 'tree') { g.fillStyle = sc.region === 'fens' ? '#5d6e4a' : '#5e7444'; g.strokeStyle = INK; g.lineWidth = 0.6; g.beginPath(); g.ellipse(x + w / 2, y + h / 2, w * 0.36, h * 0.36, 0, 0, 6.2832); g.fill(); g.globalAlpha = 0.5; g.stroke(); g.globalAlpha = 1; continue; }

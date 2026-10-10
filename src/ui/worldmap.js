@@ -74,9 +74,10 @@ const GLOBE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d
 const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · tavern, inn and chapel' };
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five'];
 const lower = (/** @type {string} */ s) => s.replace(/^The /, 'the ');
-// the wall map is drawn for a wall: at a phone's width its words are too small to read, so it opens this much larger,
-// scrolled to where you are (both ways); the land's overland fits the sheet's width as it is
-const WALL_ZOOM = 1.7;
+// the wall map is drawn for a wall: at a phone's width its words are too small to read, so it opens larger, scrolled to
+// where you are (both ways): at least 800 px wide, two-thirds of its own size, where its smallest words (17 px, the
+// sites') are 11 px (art critic pass 12). The land's overland fits the sheet's width as it is.
+const WALL_ZOOM = 1.7, WALL_MIN = 800;
 
 /** @param {string} tag @param {string} [cls] @param {string} [text] */
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
@@ -139,7 +140,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
     img.alt = ''; map.append(img); view.append(map);
     if (tab === 'world') {
       img.src = WALL.src; img.width = WALL.w; img.height = WALL.h;
-      map.style.width = `${Math.round(view.clientWidth * WALL_ZOOM)}px`;
+      map.style.width = `${Math.round(Math.max(view.clientWidth * WALL_ZOOM, WALL_MIN))}px`;
       map.append(fogSvg());
       pins = worldPins();
       place(map, pins, WALL.w, 0, 0);
@@ -178,12 +179,17 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
         if (p.cls !== null) { const n = el('div', 'pin' + (p.cls ? ' ' + p.cls : '') + (sel === p.key ? ' sel' : '')); n.dataset.key = p.key; n.style.left = `${p.sx}px`; n.style.top = `${p.sy}px`; map.append(n); }
         if (p.star) { const s = el('div', 'star', '★'); s.style.left = `${p.sx + 10}px`; s.style.top = `${p.sy}px`; map.append(s); }
       }
-      // the words beside the pins: you are here first, then the names, skipping one that would cover another
+      // the words beside the pins: you are here first, then the names, each below its pin, or above, right or left
+      // where that would cover another (art critic pass 12: three of the Fens' were dropped); skipped only when none is free
+      const MW = map.clientWidth, MH = map.clientHeight || 1e9;
       for (const p of [...list].sort((a, b) => (b.here ? 1 : 0) - (a.here ? 1 : 0))) {
         const text = p.here ? p.here : p.label; if (!text) continue;
-        const w = text.length * 6.6 + 12, lx = Math.min(Math.max(p.sx - w / 2, 2), map.clientWidth - w - 2), ly = p.sy + (p.here ? 18 : 12);
-        if (!free([lx, ly, lx + w, ly + 18]) && !p.here) continue;
-        const t = el('div', 'tag' + (p.here ? ' me' : ''), text); t.style.left = `${lx}px`; t.style.top = `${ly}px`; map.append(t);
+        const w = text.length * 6.6 + 12, h = 18, cx = (x) => Math.min(Math.max(x, 2), MW - w - 2);
+        const spots = [[cx(p.sx - w / 2), p.sy + (p.here ? 18 : 12)], [cx(p.sx - w / 2), p.sy - (p.here ? 18 : 12) - h], [p.sx + 14, p.sy - h / 2], [p.sx - 14 - w, p.sy - h / 2]]
+          .filter(([lx, ly]) => lx >= 0 && lx + w <= MW && ly >= 0 && ly + h <= MH);
+        const at = spots.find(([lx, ly]) => free([lx, ly, lx + w, ly + h])) || (p.here ? spots[0] : null);
+        if (!at) continue;
+        const t = el('div', 'tag' + (p.here ? ' me' : ''), text); t.style.left = `${at[0]}px`; t.style.top = `${at[1]}px`; map.append(t);
       }
     };
     lay();

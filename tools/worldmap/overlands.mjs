@@ -3,7 +3,9 @@
 // ink on parchment, hills hatched, woods in crowns, imperial roads ruled straight with a dead beacon-tower every day's
 // march), at the game's own scale: 260 × 260 tiles, as the Vale's overland is (src/sim/outdoor.js buildOverland), north
 // up. Sites from world-map-proposal.md §3–4 with their levels; the roads leave by the edge toward the next region.
-// Deterministic (seeded); a proposal sketch, not the game's map.
+// Deterministic (seeded); a proposal sketch, not the game's map. Scattered marks (trees, hills, peaks, rocks, reeds) keep
+// off the words, the places, the roads and the rivers (art critic pass 12: the Greenwood's oaks stood in its river and on
+// its road, the Heights' peaks on their sites' names): each is dropped where it would cover one.
 //   node tools/worldmap/overlands.mjs [outDir]   → docs/img/world/overland-<region>.jpg
 import { writeFileSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -21,8 +23,22 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const X = (x) => OX + x * S, Y = (y) => OY + y * S;
 const pts = (a) => a.map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join(' ');
 
+// a smoothed line (Chaikin): a coast or a shore drawn by hand, not ruled
+function chaikin(a, n = 2, closed = false) {
+  let p = a;
+  for (let k = 0; k < n; k++) { const q = closed ? [] : [p[0]]; for (let i = 0; i < (closed ? p.length : p.length - 1); i++) { const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length]; q.push([x0 * 0.75 + x1 * 0.25, y0 * 0.75 + y1 * 0.25], [x0 * 0.25 + x1 * 0.75, y0 * 0.25 + y1 * 0.75]); } if (!closed) q.push(p[p.length - 1]); p = q; }
+  return p;
+}
+const segD = (px, py, [ax, ay], [bx, by]) => { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)); return Math.hypot(px - ax - u * dx, py - ay - u * dy); };
+
 function map(spec) {
   const L = { wash: [], water: [], terrain: [], roads: [], places: [], text: [] }, key = [];
+  // what the scattered marks keep off, in sheet px: words (a box, turned with the word), places (a circle), lines
+  const avoid = { words: [], spots: [], lines: [], fns: [] };
+  let soft = false;
+  // a terrain mark: its svg, and the circle it covers (px); a scattered one is dropped later if it covers anything kept
+  const mark = (svg, cx, cy, r) => L.terrain.push({ svg, cx, cy, r, soft });
+  const line = (a, half) => { const q = a.map(([x, y]) => [X(x), Y(y)]); for (let i = 0; i + 1 < q.length; i++) avoid.lines.push([q[i], q[i + 1], half]); };
   const m = {
     wash: (a, fill, o = '') => L.wash.push(`<polygon points="${pts(a)}" fill="${fill}" ${o}/>`),
     blob: (x, y, r, fill, layer = 'wash', rough = 0.35, n = 14, o = '') => L[layer].push(`<polygon points="${pts(Array.from({ length: n }, (_, i) => { const a = i / n * 6.2832, k = 1 + (rand() - 0.5) * rough; return [x + Math.cos(a) * r * k, y + Math.sin(a) * r * k]; }))}" fill="${fill}" ${o}/>`),
@@ -30,40 +46,55 @@ function map(spec) {
     // a sea: everything past a coastline, its edge inked with the wall map's ripple lines
     sea: (a) => { L.water.push(`<polygon points="${pts(a)}" fill="${SEA}" stroke="${INK}" stroke-width="1.4"/>`); for (let k = 1; k <= 3; k++) L.water.push(`<polygon points="${pts(a)}" fill="none" stroke="${INK}" stroke-width="0.6" opacity="${0.35 / k}" transform="translate(${k * 4} 0)"/>`); },
     river: (a, w = 1.2, name, o = {}) => { const s = []; for (let i = 0; i + 1 < a.length; i++) { const [x0, y0] = a[i], [x1, y1] = a[i + 1]; for (let j = 0; j < 6; j++) { const u = j / 6, n = (rand() - 0.5) * 3; s.push([x0 + (x1 - x0) * u + n, y0 + (y1 - y0) * u + n * 0.5]); } } s.push(a[a.length - 1]);
-      L.water.push(`<polyline points="${pts(s)}" fill="none" stroke="#4e6a74" stroke-width="${f1(w * S * 0.9)}" stroke-linecap="round" stroke-linejoin="round"/>`);
+      L.water.push(`<polyline points="${pts(s)}" fill="none" stroke="#4e6a74" stroke-width="${f1(w * S * 0.9)}" stroke-linecap="round" stroke-linejoin="round"/>`); line(s, w * S * 0.45 + 4);
       if (name) m.note(o.at ? o.at[0] : a[1][0] + 4, o.at ? o.at[1] : a[1][1], name, { size: 12.5, rot: o.rot || 0 }); },
     road: (a, kind = 'imperial', o = {}) => {
+      if (kind !== 'faint') line(a, kind === 'imperial' ? 5 : 3.5);
       if (kind === 'imperial') { L.roads.push(`<polyline points="${pts(a)}" fill="none" stroke="${RED}" stroke-width="2.2" stroke-dasharray="9 5" stroke-linecap="round"/>`);
         // a dead beacon-tower every day's march
         for (let i = 0; i + 1 < a.length; i++) { const [x0, y0] = a[i], [x1, y1] = a[i + 1], d = Math.hypot(x1 - x0, y1 - y0); for (let u = 30; u < d - 10; u += 46) { const x = x0 + (x1 - x0) * u / d, y = y0 + (y1 - y0) * u / d; L.roads.push(`<rect x="${f1(X(x) - 2.5)}" y="${f1(Y(y) - 7)}" width="5" height="8" fill="${INK}"/>`); } } }
       else L.roads.push(`<polyline points="${pts(a)}" fill="none" stroke="${INK}" stroke-width="${kind === 'rails' ? 1.6 : 1.3}" stroke-dasharray="${kind === 'rails' ? '2 3' : kind === 'faint' ? '1 4' : '3 3'}" stroke-linecap="round" opacity="${kind === 'faint' ? 0.55 : 0.85}"/>`);
       if (o.name) m.note(o.at[0], o.at[1], o.name, { size: 12, rot: o.rot || 0, ink: kind === 'imperial' ? RED : INK }); },
     // terrain glyphs, the wall map's
-    mountain: (x, y, h, fill = PAPER, snow = false) => { const w = h * 0.9; L.terrain.push(`<polygon points="${f1(X(x - w))},${f1(Y(y))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + w))},${f1(Y(y))}" fill="${fill}" stroke="${INK}" stroke-width="1.2"/>`
+    mountain: (x, y, h, fill = PAPER, snow = false) => { const w = h * 0.9; mark(`<polygon points="${f1(X(x - w))},${f1(Y(y))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + w))},${f1(Y(y))}" fill="${fill}" stroke="${INK}" stroke-width="1.2"/>`
       + `<polygon points="${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + w))},${f1(Y(y))} ${f1(X(x + w * 0.25))},${f1(Y(y))}" fill="${INK}" opacity="${fill === PAPER ? 0.28 : 0.35}"/>`
-      + (snow ? `<polygon points="${f1(X(x - w * 0.32))},${f1(Y(y - h * 0.65))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + w * 0.32))},${f1(Y(y - h * 0.65))}" fill="#f6f3ec" stroke="${INK}" stroke-width="0.6"/>` : '')); },
-    hill: (x, y, w) => L.terrain.push(`<path d="M${f1(X(x - w))},${f1(Y(y))} Q${f1(X(x))},${f1(Y(y - w * 0.8))} ${f1(X(x + w))},${f1(Y(y))}" fill="none" stroke="${INK}" stroke-width="1.1"/>`),
-    tree: (x, y, r, fill = PAPER) => L.terrain.push(`<circle cx="${f1(X(x))}" cy="${f1(Y(y - r))}" r="${f1(r * S)}" fill="${fill}" stroke="${INK}" stroke-width="0.9"/><line x1="${f1(X(x))}" y1="${f1(Y(y))}" x2="${f1(X(x))}" y2="${f1(Y(y) + 3)}" stroke="${INK}" stroke-width="0.9"/>`),
-    pine: (x, y, h, snow) => L.terrain.push(`<polygon points="${f1(X(x - h * 0.35))},${f1(Y(y))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + h * 0.35))},${f1(Y(y))}" fill="${snow ? '#f6f3ec' : PAPER}" stroke="${INK}" stroke-width="0.9"/>`),
-    tuft: (x, y) => L.terrain.push(`<path d="M${f1(X(x) - 4)},${f1(Y(y))} l2,-6 M${f1(X(x))},${f1(Y(y))} l0,-7 M${f1(X(x) + 4)},${f1(Y(y))} l-2,-6" stroke="${INK}" stroke-width="0.8" fill="none"/>`),
-    heap: (x, y, r) => L.terrain.push(`<path d="M${f1(X(x - r))},${f1(Y(y))} Q${f1(X(x))},${f1(Y(y - r * 1.2))} ${f1(X(x + r))},${f1(Y(y))} z" fill="#4a4440" stroke="${INK}" stroke-width="0.8"/>`),
-    rock: (x, y, r) => L.terrain.push(`<polygon points="${pts(Array.from({ length: 6 }, (_, i) => { const a = i / 6 * 6.2832, k = 0.7 + rand() * 0.5; return [x + Math.cos(a) * r * k, y + Math.sin(a) * r * k * 0.7]; }))}" fill="#b0664a" stroke="${INK}" stroke-width="0.8"/>`),
-    ruin: (x, y) => L.terrain.push(`<path d="M${f1(X(x) - 6)},${f1(Y(y))} v-7 h3 v4 h3 v-6 h3 v9" fill="none" stroke="${INK}" stroke-width="1.1"/>`),
+      + (snow ? `<polygon points="${f1(X(x - w * 0.32))},${f1(Y(y - h * 0.65))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + w * 0.32))},${f1(Y(y - h * 0.65))}" fill="#f6f3ec" stroke="${INK}" stroke-width="0.6"/>` : ''), X(x), Y(y - h * 0.4), h * S * 0.62); },
+    hill: (x, y, w) => mark(`<path d="M${f1(X(x - w))},${f1(Y(y))} Q${f1(X(x))},${f1(Y(y - w * 0.8))} ${f1(X(x + w))},${f1(Y(y))}" fill="none" stroke="${INK}" stroke-width="1.1"/>`, X(x), Y(y - w * 0.3), w * S * 0.85),
+    tree: (x, y, r, fill = PAPER) => mark(`<circle cx="${f1(X(x))}" cy="${f1(Y(y - r))}" r="${f1(r * S)}" fill="${fill}" stroke="${INK}" stroke-width="0.9"/><line x1="${f1(X(x))}" y1="${f1(Y(y))}" x2="${f1(X(x))}" y2="${f1(Y(y) + 3)}" stroke="${INK}" stroke-width="0.9"/>`, X(x), Y(y - r), r * S + 1),
+    pine: (x, y, h, snow) => mark(`<polygon points="${f1(X(x - h * 0.35))},${f1(Y(y))} ${f1(X(x))},${f1(Y(y - h))} ${f1(X(x + h * 0.35))},${f1(Y(y))}" fill="${snow ? '#f6f3ec' : PAPER}" stroke="${INK}" stroke-width="0.9"/>`, X(x), Y(y - h * 0.45), h * S * 0.45),
+    tuft: (x, y) => mark(`<path d="M${f1(X(x) - 4)},${f1(Y(y))} l2,-6 M${f1(X(x))},${f1(Y(y))} l0,-7 M${f1(X(x) + 4)},${f1(Y(y))} l-2,-6" stroke="${INK}" stroke-width="0.8" fill="none"/>`, X(x), Y(y) - 3.5, 5),
+    heap: (x, y, r) => mark(`<path d="M${f1(X(x - r))},${f1(Y(y))} Q${f1(X(x))},${f1(Y(y - r * 1.2))} ${f1(X(x + r))},${f1(Y(y))} z" fill="#4a4440" stroke="${INK}" stroke-width="0.8"/>`, X(x), Y(y - r * 0.4), r * S),
+    rock: (x, y, r) => mark(`<polygon points="${pts(Array.from({ length: 6 }, (_, i) => { const a = i / 6 * 6.2832, k = 0.7 + rand() * 0.5; return [x + Math.cos(a) * r * k, y + Math.sin(a) * r * k * 0.7]; }))}" fill="#b0664a" stroke="${INK}" stroke-width="0.8"/>`, X(x), Y(y), r * S * 1.1),
+    ruin: (x, y) => mark(`<path d="M${f1(X(x) - 6)},${f1(Y(y))} v-7 h3 v4 h3 v-6 h3 v9" fill="none" stroke="${INK}" stroke-width="1.1"/>`, X(x), Y(y) - 3.5, 7),
     // places
-    town: (x, y, name, o = {}) => { L.places.push(`<circle cx="${f1(X(x))}" cy="${f1(Y(y))}" r="9" fill="${PAPER}" stroke="${RED}" stroke-width="2.4"/><circle cx="${f1(X(x))}" cy="${f1(Y(y))}" r="3.6" fill="${RED}"/>`); m.note(x + (o.dx ?? 0), y + (o.dy ?? 7.5), name, { font: 'Fell SC', size: 21 }); if (o.sub) m.note(x + (o.dx ?? 0), y + (o.dy ?? 7.5) + 5, o.sub, { size: 12.5, ink: DIM }); },
-    stop: (x, y, name, o = {}) => { L.places.push(`<path d="M${f1(X(x) - 7)},${f1(Y(y) + 6)} v-8 l7,-6 l7,6 v8 z" fill="${PAPER}" stroke="${INK}" stroke-width="1.4"/>`); m.note(x + (o.dx ?? 0), y + (o.dy ?? 6.5), name, { font: 'Fell', size: 15 }); if (o.sub) m.note(x + (o.dx ?? 0), y + (o.dy ?? 6.5) + 4.2, o.sub, { size: 11.5, ink: DIM }); },
-    site: (x, y, name, lv, room, o = {}) => { const n = key.length + 1, hid = !!o.hidden;
+    town: (x, y, name, o = {}) => { avoid.spots.push([X(x), Y(y), 16]); L.places.push(`<circle cx="${f1(X(x))}" cy="${f1(Y(y))}" r="9" fill="${PAPER}" stroke="${RED}" stroke-width="2.4"/><circle cx="${f1(X(x))}" cy="${f1(Y(y))}" r="3.6" fill="${RED}"/>`); m.note(x + (o.dx ?? 0), y + (o.dy ?? 7.5), name, { font: 'Fell SC', size: 21 }); if (o.sub) m.note(x + (o.dx ?? 0), y + (o.dy ?? 7.5) + 5, o.sub, { size: 12.5, ink: DIM }); },
+    stop: (x, y, name, o = {}) => { avoid.spots.push([X(x), Y(y) - 1, 12]); L.places.push(`<path d="M${f1(X(x) - 7)},${f1(Y(y) + 6)} v-8 l7,-6 l7,6 v8 z" fill="${PAPER}" stroke="${INK}" stroke-width="1.4"/>`); m.note(x + (o.dx ?? 0), y + (o.dy ?? 6.5), name, { font: 'Fell', size: 15 }); if (o.sub) m.note(x + (o.dx ?? 0), y + (o.dy ?? 6.5) + 4.2, o.sub, { size: 11.5, ink: DIM }); },
+    site: (x, y, name, lv, room, o = {}) => { const n = key.length + 1, hid = !!o.hidden; avoid.spots.push([X(x), Y(y), 11], [X(x) + 11, Y(y) - 8, 9]);
       L.places.push(`<polygon points="${f1(X(x) - 7)},${f1(Y(y) + 5)} ${f1(X(x))},${f1(Y(y) - 8)} ${f1(X(x) + 7)},${f1(Y(y) + 5)}" fill="${hid ? 'none' : INK}" stroke="${INK}" stroke-width="1.4"${hid ? ' stroke-dasharray="3 2"' : ''}/>`);
       L.places.push(`<circle cx="${f1(X(x) + 11)}" cy="${f1(Y(y) - 8)}" r="7.5" fill="${hid ? '#5a3a6a' : '#7a2e1e'}"/><text x="${f1(X(x) + 11)}" y="${f1(Y(y) - 8)}" dy="0.36em" text-anchor="middle" font-family="Fell" font-size="10.5" fill="#f4ead2">${n}</text>`);
       m.note(x + (o.dx ?? 0), y + (o.dy ?? 5.6), name, { size: 13.5 }); m.note(x + (o.dx ?? 0), y + (o.dy ?? 5.6) + 3.8, (hid ? 'hidden · ' : '') + 'levels ' + lv, { size: 11.5, ink: RED });
       key.push({ n, name, lv, room, hid }); },
-    exit: (x, y, ang, label, sub) => { const a = ang * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a);
+    exit: (x, y, ang, label, sub) => { const a = ang * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a); line([[x - dx * 8, y - dy * 8], [x, y]], 6);
       L.places.push(`<line x1="${f1(X(x - dx * 8))}" y1="${f1(Y(y - dy * 8))}" x2="${f1(X(x))}" y2="${f1(Y(y))}" stroke="${RED}" stroke-width="2.4" marker-end="url(#ex)"/>`);
       m.note(x - dx * 16, y - dy * 16 - 2, label, { size: 13.5, ink: RED }); if (sub) m.note(x - dx * 16, y - dy * 16 + 2, sub, { size: 11.5, ink: DIM }); },
-    note: (x, y, s, o = {}) => L.text.push(`<text x="${f1(X(x))}" y="${f1(Y(y))}" text-anchor="${o.anchor || 'middle'}" font-family="${o.font || 'Fell It'}" font-size="${o.size || 13}" fill="${o.ink || INK}" stroke="${PAPER}" stroke-width="3.2" paint-order="stroke"${o.rot ? ` transform="rotate(${o.rot} ${f1(X(x))} ${f1(Y(y))})"` : ''}>${esc(s)}</text>`),
-    scatter: (n, x0, y0, x1, y1, fn, keep = () => true) => { for (let i = 0; i < n; i++) { const x = x0 + rand() * (x1 - x0), y = y0 + rand() * (y1 - y0); if (keep(x, y)) fn(x, y); } },
+    note: (x, y, s, o = {}) => { const size = o.size || 13; avoid.words.push({ x: X(x), y: Y(y), w: String(s).length * size * (o.font === 'Fell SC' ? 0.62 : 0.47) + 6, h: size, rot: o.rot || 0, anchor: o.anchor || 'middle' }); L.text.push(`<text x="${f1(X(x))}" y="${f1(Y(y))}" text-anchor="${o.anchor || 'middle'}" font-family="${o.font || 'Fell It'}" font-size="${o.size || 13}" fill="${o.ink || INK}" stroke="${PAPER}" stroke-width="3.2" paint-order="stroke"${o.rot ? ` transform="rotate(${o.rot} ${f1(X(x))} ${f1(Y(y))})"` : ''}>${esc(s)}</text>`); },
+    scatter: (n, x0, y0, x1, y1, fn, keep = () => true) => { soft = true; for (let i = 0; i < n; i++) { const x = x0 + rand() * (x1 - x0), y = y0 + rand() * (y1 - y0); if (keep(x, y)) fn(x, y); } soft = false; },
+    // a keep-out of the region's own (the crater's rim): fn(px x, px y, r) → true where a mark mustn't stand
+    avoid: (fn) => avoid.fns.push(fn),
+    // hand-placed marks that may still give way to a word or a place (the Reach's hills round the Ninth Vault)
+    yielding: (fn) => { soft = true; fn(); soft = false; },
+    shore: (x, y, rx, ry, fill, layer = 'wash', o = '', rough = 0.1, n = 22) => L[layer].push(`<polygon points="${pts(chaikin(Array.from({ length: n }, (_, i) => { const a = i / n * 6.2832, k = 1 + (rand() - 0.5) * rough; return [x + Math.cos(a) * rx * k, y + Math.sin(a) * ry * k]; }), 3, true))}" fill="${fill}" ${o}/>`),
   };
   spec.draw(m);
+  // the scattered marks off everything kept: a mark is dropped where its circle meets a word's box, a place or a line
+  const covers = (t) => avoid.words.some((q) => { const a = -q.rot * Math.PI / 180, dx = t.cx - q.x, dy = t.cy - q.y, u = dx * Math.cos(a) - dy * Math.sin(a), v = dx * Math.sin(a) + dy * Math.cos(a);
+      const x0 = q.anchor === 'middle' ? -q.w / 2 : q.anchor === 'end' ? -q.w : 0, nx = Math.max(x0, Math.min(x0 + q.w, u)), ny = Math.max(-q.h * 0.85, Math.min(q.h * 0.3, v)); return Math.hypot(u - nx, v - ny) < t.r; })
+    || avoid.spots.some(([x, y, r]) => Math.hypot(t.cx - x, t.cy - y) < r + t.r)
+    || avoid.lines.some(([a, b, half]) => segD(t.cx, t.cy, a, b) < half + t.r * 0.8)
+    || avoid.fns.some((fn) => fn(t.cx, t.cy, t.r));
+  const kept = L.terrain.filter((t) => !t.soft || !covers(t));
+  dropped.push([spec.id, L.terrain.length - kept.length, L.terrain.filter((t) => t.soft).length]);
+  L.terrain = kept.map((t) => t.svg);
   const rows = Math.ceil(key.length / 2), H = OY + T * S + 64 + rows * 42 + (spec.notes || []).length * 22 + 40;
   const svg = [];
   svg.push(`<defs><marker id="ex" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${RED}"/></marker>
@@ -95,7 +126,7 @@ function map(spec) {
   return { svg: svg.join('\n'), H };
 }
 
-const REGIONS = [];
+const REGIONS = [], dropped = [];
 
 // THE CINDER REACH (15–30): black slag hills north-west, dry earth and red rock; Ashgate in the middle where the Wickham
 // road from Emberfall meets the road to Kell's Rest and the road east to Solmere; the Cinderworks up the Ashwater.
@@ -104,9 +135,9 @@ REGIONS.push({ id: 'reach', name: 'The Cinder Reach', sub: 'levels 15–30 · Ac
   notes: ['Ore rails run from the Cinderworks down to Ashgate\'s gate. The tailings ponds are rust-red, and nothing grows at their edge.'],
   draw(m) {
     m.scatter(18, 0, 160, 260, 260, (x, y) => m.blob(x, y, 8 + rand() * 12, '#dcc298'));
-    for (const [x, y, h] of [[20, 40, 16], [40, 30, 20], [62, 46, 15], [86, 36, 18], [104, 52, 14], [30, 64, 13], [120, 26, 12], [56, 18, 13], [12, 18, 12], [76, 66, 12],
-      [62, 176, 13], [80, 186, 16], [98, 176, 12], [52, 196, 11], [94, 200, 12]]) m.mountain(x, y, h, '#7a706a');
-    m.mountain(30, 92, 26, '#8a6a56'); m.ellipse(30, 68, 5, 2.2, '#3b2f24', 'terrain'); m.note(30, 100, 'the dead volcano', { size: 12.5 });
+    m.yielding(() => { for (const [x, y, h] of [[20, 40, 16], [40, 30, 20], [62, 46, 15], [86, 36, 18], [104, 52, 14], [30, 64, 13], [120, 26, 12], [56, 18, 13], [12, 18, 12], [76, 66, 12],
+      [62, 176, 13], [80, 186, 16], [98, 176, 12], [52, 196, 11], [94, 200, 12]]) m.mountain(x, y, h, '#7a706a'); });
+    m.mountain(30, 92, 26, '#8a6a56'); m.avoid((x, y, r) => Math.hypot(x - X(30), y - Y(80)) < 16 * S + r);   // (no rock on the volcano's flank) m.ellipse(30, 68, 5, 2.2, '#3b2f24', 'terrain'); m.note(30, 100, 'the dead volcano', { size: 12.5 });
     m.scatter(40, 0, 0, 260, 260, (x, y) => m.rock(x, y, 2 + rand() * 2.4), (x, y) => Math.hypot(x - 130, y - 140) > 18);
     m.scatter(14, 150, 40, 210, 90, (x, y) => m.heap(x, y, 3 + rand() * 3));
     m.blob(160, 92, 9, '#b8643a', 'wash'); m.blob(204, 72, 7, '#b8643a', 'wash'); m.note(160, 106, 'tailings', { size: 11.5 });
@@ -137,7 +168,7 @@ REGIONS.push({ id: 'solmere', name: 'Solmere', sub: 'from level 15 · the dead c
   notes: ['Solmere has no main story (pillar 5): its sites are the Bowl, the Mere Tower and the Great Beacon, and its trouble is side quests.',
     'Every road out opens with the region it goes to: the Reach from 15, the Tidemark from 30, the Greenwood from 45, the Heights from 60.'],
   draw(m) {
-    m.ellipse(132, 92, 82, 60, '#b9a57e'); m.ellipse(132, 90, 70, 50, SEA, 'water', `stroke="${INK}" stroke-width="1.4"`);
+    m.shore(132, 92, 82, 60, '#b9a57e', 'wash', '', 0.16); m.shore(132, 90, 70, 50, SEA, 'water', `stroke="${INK}" stroke-width="1.4"`, 0.12);
     m.note(112, 70, 'the Mere', { font: 'Fell SC', size: 20 }); m.note(132, 150, 'the mud flats, where the lake was', { size: 12 });
     m.river([[132, 0], [130, 20], [132, 40]], 1.8, 'the Sol', { at: [140, 14] });
     m.road([[124, 154], [150, 112], [158, 82]], 'track'); L_tower(m, 158, 80);
@@ -175,7 +206,7 @@ REGIONS.push({ id: 'tidemark', name: 'The Tidemark', sub: 'levels 30–45 · Act
   lede: 'In from Solmere to Brine Cross on the Brine; the Highmarch road north to the walled kingdom; east to Tollhaven on the coast.',
   notes: ['The salt marsh lies along the shore north of Tollhaven (the town\'s north wall looks over it); the beach runs south to Gullwick.'],
   draw(m) {
-    m.sea([[200, 0], [260, 0], [260, 260], [190, 260], [196, 230], [186, 210], [198, 190], [204, 150], [196, 124], [210, 100], [204, 70], [214, 40], [206, 20]]);
+    m.sea([[262, -4], [262, 264], ...chaikin([[190, 264], [196, 230], [186, 210], [198, 190], [204, 150], [196, 124], [210, 100], [204, 70], [214, 40], [206, 20], [200, -4]], 3)]);
     for (const [x, y, r] of [[238, 92, 8], [248, 116, 6], [232, 124, 4]]) m.blob(x, y, r, '#e8d9b4', 'water', 0.5, 12, `stroke="${INK}" stroke-width="1.3"`);
     m.blob(250, 172, 3, '#d8c7a0', 'water', 0.6, 9, `stroke="${INK}" stroke-width="1" stroke-dasharray="2 2"`);
     m.scatter(30, 176, 56, 206, 104, (x, y) => m.tuft(x, y)); m.note(184, 52, 'salt marsh', { size: 12 });
@@ -185,10 +216,10 @@ REGIONS.push({ id: 'tidemark', name: 'The Tidemark', sub: 'levels 30–45 · Act
     m.road([[0, 232], [64, 170]], 'imperial', { name: 'from Solmere', at: [24, 206], rot: -44 });
     m.road([[64, 170], [72, 112], [80, 56]], 'imperial', { name: 'the Highmarch road', at: [62, 136], rot: -82 });
     m.road([[80, 56], [206, 112]], 'imperial', { name: 'the coast road', at: [140, 78], rot: 24 });
-    m.road([[206, 112], [194, 186], [196, 224]], 'track'); m.road([[208, 104], [214, 60], [222, 30]], 'track');
+    m.road([[206, 112], [194, 186], [182, 226]], 'track'); m.road([[208, 104], [214, 60], [222, 30]], 'track');
     m.road([[206, 112], [236, 96]], 'faint'); m.road([[198, 160], [210, 168]], 'faint');
     m.blob(80, 56, 11, '#dccba4', 'wash', 0.15); m.town(206, 112, 'Tollhaven', { sub: 'the harbour, the chain', dx: -22, dy: 8 });
-    m.stop(64, 170, 'Brine Cross', { sub: 'houses on the bridge', dx: -2, dy: 7 }); m.stop(196, 224, 'Gullwick', { dx: -18, dy: 2 });
+    m.stop(64, 170, 'Brine Cross', { sub: 'houses on the bridge', dx: -2, dy: 7 }); m.stop(182, 226, 'Gullwick', { dx: -18, dy: 2 });
     m.site(222, 28, 'The Lamp Fort', '27–32', 'the Lamp-Room: the last lit lamp on the coast', { dx: -22, dy: -2 });
     m.site(238, 90, 'The Gull Isles', '30–34', 'the Prize Hall, stacked with League cargo', { dy: -14 });
     m.site(210, 168, 'The Drowned Mole', '33–37', 'the sunken harbour: the Chain-House', { dx: 4, dy: 7 });
@@ -241,7 +272,8 @@ REGIONS.push({ id: 'heights', name: 'The Pale Heights', sub: 'levels 60–75 · 
     m.scatter(60, 190, 160, 260, 260, (x, y) => m.pine(x, y, 5 + rand() * 3, rand() < 0.5), keep);
     m.river([[150, 106], [146, 160], [136, 210], [132, 260]], 1.4, 'the Sol', { at: [154, 180], rot: 84 });
     m.road([[132, 260], [140, 214]], 'imperial');
-    const stair = [[140, 214]]; for (let i = 1; i <= 10; i++) stair.push([140 + (i % 2 ? 8 : -6), 214 - i * 10.8]); stair.push([150, 104]);
+    const stair = [[140, 214]]; for (let i = 1; i <= 12; i++) { const u = i / 13, rx = 140 + (150 - 140) * u - (u < 0.5 ? 0 : 2) + 9; stair.push([rx + (i % 2 ? 3 : -3), 214 - i * 8.4]); } stair.push([152, 106]);
+    m.avoid((x, y, r) => { const u = (x - X(150)) / (54 * S), v = (y - Y(74)) / (40 * S); return Math.hypot(u, v) < 1 + r / (40 * S); });
     m.road(stair, 'track', { name: 'the Pilgrims\' Stair', at: [168, 168], rot: -84 });
     m.road([[140, 214], [96, 160], [56, 96]], 'track', { name: 'the pass road', at: [84, 142], rot: 52 });
     m.road([[176, 92], [214, 96]], 'faint'); m.road([[150, 104], [200, 150]], 'faint'); m.road([[184, 60], [216, 34]], 'faint');
@@ -275,3 +307,4 @@ html, body { margin: 0; }</style></head><body><svg xmlns="http://www.w3.org/2000
   console.log('drew', file);
 }
 await b.close();
+for (const [id, n, of] of dropped) console.log(`${id}: ${n} of ${of} scattered marks kept off the words, places, roads and rivers`);

@@ -10,6 +10,24 @@ import { writeFileSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+
+// a smoothed line (Chaikin), for a creek or a drift's edge
+function chaikin(a, n = 2, closed = false) {
+  let p = a;
+  for (let k = 0; k < n; k++) { const q = closed ? [] : [p[0]]; for (let i = 0; i < (closed ? p.length : p.length - 1); i++) { const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length]; q.push([x0 * 0.75 + x1 * 0.25, y0 * 0.75 + y1 * 0.25], [x0 * 0.25 + x1 * 0.75, y0 * 0.25 + y1 * 0.75]); } if (!closed) q.push(p[p.length - 1]); p = q; }
+  return p;
+}
+// a building's name inside it (art critic pass 12: "Deepdelver's Rest" ran out of its walls): one line if it fits, else
+// two, else smaller, down to 9 px
+function fitName(cx, cy, w, h, name) {
+  const width = (s, sz) => s.length * sz * 0.47, words = String(name).split(' ');
+  let lines = [String(name)];
+  if (width(name, 11) > w && words.length > 1) { let best = null; for (let i = 1; i < words.length; i++) { const a = words.slice(0, i).join(' '), b = words.slice(i).join(' '), m = Math.max(width(a, 11), width(b, 11)); if (!best || m < best[0]) best = [m, a, b]; } lines = [best[1], best[2]]; }
+  let size = 11; while (size > 9 && (Math.max(...lines.map((l) => width(l, size))) > w || lines.length * size * 1.1 > h)) size -= 0.5;
+  const y0 = cy - ((lines.length - 1) * size * 1.1) / 2;
+  return `<text text-anchor="middle" font-family="Fell" font-size="${size}" fill="${INK}">${lines.map((l, k) => `<tspan x="${f1(cx)}" y="${f1(y0 + k * size * 1.1)}" dy="0.35em">${esc(l)}</tspan>`).join('')}</text>`;
+}
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const { ENV_FOOT } = await import(pathToFileURL(join(ROOT, 'src', 'sim', 'envfoot.js')).href);
 const OUT = resolve(process.argv[2] || join(ROOT, 'docs', 'img', 'towns'));
@@ -42,6 +60,7 @@ function plan(spec) {
     poly: (a, fill, layer = 'ground', o = '') => L[layer].push(`<polygon points="${pts(a)}" fill="${fill}" ${o}/>`),
     ellipse: (x, y, rx, ry, fill, layer = 'ground', o = '') => L[layer].push(`<ellipse cx="${f1(X(x))}" cy="${f1(Y(y))}" rx="${f1(rx * S)}" ry="${f1(ry * S)}" fill="${fill}" ${o}/>`),
     blob: (x, y, r, fill, layer = 'ground', rough = 0.35, n = 13) => t.poly(Array.from({ length: n }, (_, i) => { const a = i / n * 6.2832, k = 1 + (rand() - 0.5) * rough; return [x + Math.cos(a) * r * k, y + Math.sin(a) * r * k]; }), fill, layer),
+    drift: (x, y, r, fill, layer = 'ground') => t.poly(chaikin(Array.from({ length: 11 }, (_, i) => { const a = i / 11 * 6.2832, k = 1 + (rand() - 0.5) * 0.45; return [x + Math.cos(a) * r * k, y + Math.sin(a) * r * k * 0.8]; }), 3, true), fill, layer),
     line: (a, w, stroke, layer = 'ground', o = '') => L[layer].push(`<polyline points="${pts(a)}" fill="none" stroke="${stroke}" stroke-width="${f1(w * S)}" stroke-linecap="round" stroke-linejoin="round" ${o}/>`),
     // a street: an inked edge, its surface, and its name along its longest run
     street: (a, w, name, surf = '#d8c9a8', o = {}) => {
@@ -95,7 +114,7 @@ function plan(spec) {
   square.push(`<ellipse cx="${f1(X(fx))}" cy="${f1(Y(fy))}" rx="${f1(frx * S)}" ry="${f1(fry * S)}" fill="${spec.palette.plaza}"/>`);
   for (const [kind, x0, y0, x1, y1] of SQUARE.services) {
     square.push(`<rect x="${f1(X(x0))}" y="${f1(Y(y0))}" width="${f1((x1 - x0) * S)}" height="${f1((y1 - y0) * S)}" fill="${SVC}" stroke="${INK}" stroke-width="1.6"/>`);
-    square.push(`<text x="${f1(X((x0 + x1) / 2))}" y="${f1(Y((y0 + y1) / 2))}" dy="0.35em" text-anchor="middle" font-family="Fell" font-size="11" fill="${INK}">${(spec.svcNames || {})[kind] || kind}</text>`);
+    square.push(fitName(X((x0 + x1) / 2), Y((y0 + y1) / 2), (x1 - x0) * S - 6, (y1 - y0) * S - 4, (spec.svcNames || {})[kind] || kind));
   }
   square.push(`<circle cx="${f1(X(SQUARE.well[0]))}" cy="${f1(Y(SQUARE.well[1]))}" r="${f1(1.8 * S)}" fill="#7d8e96" stroke="${INK}" stroke-width="1.2"/>`);
   square.push(`<circle cx="${f1(X(hx))}" cy="${f1(Y(hy))}" r="${f1(hr * S)}" fill="none" stroke="${GOLD}" stroke-width="2" stroke-dasharray="7 5"/>`);
@@ -155,7 +174,9 @@ TOWNS.push({ id: 'ashgate', name: 'Ashgate', sub: 'the Cinder Reach · levels 15
     for (let i = 0; i < 9; i++) t.blob(rand() * 236 - 10, rand() * 200 - 32, 8 + rand() * 10, '#d6bb8f');        // dust pans
     t.rect(8, 6, 188, 152, '#c4a072');
     // outside: the Cinderworks' chimneys over the north wall, slag heaps, the tailings pond, the ore rails
-    t.rect(112, -30, 170, -6, '#5a4c42'); for (const x of [124, 140, 156]) { t.ellipse(x, -18, 5, 5, '#2c2622', 'trees', `stroke="${INK}" stroke-width="1"`); } t.note(141, -2, 'the Cinderworks, over the wall', { size: 12.5 });
+    t.rect(112, -30, 170, -6, '#5a4c42', 'ground', `stroke="${INK}" stroke-width="1"`); for (const y of [-24, -12]) t.line([[113, y], [169, y]], 0.25, INK, 'ground', 'opacity="0.5"');
+    for (const x of [126, 141, 156]) { t.line(chaikin([[x, -18], [x - 5, -25], [x - 2, -32], [x - 9, -40], [x - 7, -46]], 3), 2.2, '#8a827a', 'trees', 'opacity="0.55"'); t.ellipse(x, -18, 2.6, 2.6, '#2c2622', 'trees', `stroke="${INK}" stroke-width="1"`); }
+    t.note(141, -2, 'the Cinderworks, over the wall', { size: 12.5 });
     for (const [x, y, r] of [[200, 14, 9], [214, 30, 7], [198, 44, 6], [-2, 120, 7]]) t.blob(x, y, r, '#4a4440');
     t.blob(212, 150, 18, '#a86a3c'); t.blob(212, 150, 12, '#c07a44'); t.note(212, 172, 'the tailings pond', { size: 12 });
     t.line([[188, 92], [236, 92]], 1.2, INK, 'low', 'stroke-dasharray="4 3"');
@@ -221,7 +242,7 @@ TOWNS.push({ id: 'tollhaven', name: 'Tollhaven', sub: 'the Tidemark · levels 30
     t.rect(-14, -36, 226, 178, '#cfbd9a');
     // the salt marsh along the north shore, the sea and the harbour, the beach south-east
     t.poly([[-14, -36], [170, -36], [170, 6], [-14, 6]], '#8f9a72');
-    for (let i = 0; i < 9; i++) { let x = rand() * 150, y = -34; const a = [[x, y]]; while (y < 2) { y += 3 + rand() * 3; x += (rand() - 0.5) * 7; a.push([x, y]); } t.line(a, 0.7 + rand() * 0.6, '#6f8d98'); }
+    for (let i = 0; i < 9; i++) { let x = 8 + i * 17 + rand() * 6, y = -36, dx = (rand() - 0.5) * 2; const a = [[x, y]]; while (y < 3) { y += 4 + rand() * 2; dx = dx * 0.6 + (rand() - 0.5) * 3.2; x += dx; a.push([x, y]); } t.line(chaikin(a, 3), 0.45 + rand() * 0.4, '#6f8d98'); }
     t.note(60, -14, 'the salt marsh', { size: 13 });
     t.poly([[164, -36], [226, -36], [226, 178], [150, 178], [140, 160], [164, 140]], '#6f8d98', 'water');
     t.poly([[90, 150], [130, 150], [164, 140], [150, 178], [70, 178]], '#e3cf9e');
@@ -310,10 +331,10 @@ TOWNS.push({ id: 'frosthold', name: 'Frosthold', sub: 'the Pale Heights · level
   notes: ['The street climbs: steps every few tiles (presentation only; the walk is level). Snow lies deepest north of everything.'],
   draw(t) {
     t.rect(-12, -16, 168, 152, '#b8aa94');
-    for (let i = 0; i < 26; i++) t.blob(rand() * 180 - 12, rand() * 168 - 16, 6 + rand() * 12, '#eef0f2');
+    for (let i = 0; i < 26; i++) t.drift(rand() * 180 - 12, rand() * 168 - 16, 6 + rand() * 12, '#eef0f2');
     // the crags behind: the north, and a spur down the west
     t.poly([[-12, -16], [168, -16], [168, 10], [130, 6], [110, 12], [90, 6], [60, 10], [44, 4], [20, 8], [8, 20], [6, 50], [-2, 70], [-12, 70]], '#8a8d94', 'low', `stroke="${INK}" stroke-width="1"`);
-    for (let i = 0; i < 18; i++) t.blob(rand() * 170 - 10, -14 + rand() * 12, 3 + rand() * 4, '#eef0f2', 'low');
+    for (let i = 0; i < 18; i++) t.drift(rand() * 170 - 10, -14 + rand() * 12, 3 + rand() * 4, '#eef0f2', 'low');
     t.note(84, -4, 'the north crags', { size: 13 });
     // the frozen stream in front, and the drop
     t.line([[-12, 132], [40, 136], [90, 130], [140, 138], [168, 134]], 4, '#a9c4d4', 'water'); t.rect(58, 128, 64, 140, '#7a5a3e', 'trees'); t.note(61, 148, 'the footbridge', { size: 12 });

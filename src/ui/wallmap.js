@@ -8,9 +8,18 @@ export const WALL = { w: 1200, h: 2400, src: './assets/maps/old-provinces.jpg' }
 
 /** @type {Record<string, [number, number]>} */
 export const PLACES = {
-  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [262, 2062], reedholm: [470, 2082], ashgate: [360, 905], kells: [240, 838],
+  thornwick: [330, 1720], greyholt: [470, 1655], saltmere: [323, 1947], reedholm: [530, 2077], ashgate: [360, 905], kells: [240, 838],
   frosthold: [420, 440], glass: [790, 440], throne: [600, 522], tollhaven: [1020, 960], highmarch: [820, 835], brine: [722, 1012],
   gullwick: [998, 1180], rookstead: [800, 1600], hollin: [690, 1450],
+};
+
+// Emberfall's two overlands on the wall map (art critic pass 12): a tile of each (x, y) to the map's units, north up, so
+// the Guild's map puts every site and town where the game does. The Vale's Thornwick lands on its place; the Fens' road
+// north meets the Vale's road south (draw.mjs draws the sites through these; test/worldmap.test.mjs checks the towns).
+/** @type {Record<string, (x: number, y: number) => [number, number]>} */
+export const EMBERFALL = {
+  vale: (x, y) => [252 + 1.4 * x, 1470 + 1.35 * (y + 36)],
+  fens: (x, y) => [207 + 1.6 * x, 1887 + y],
 };
 
 // the game's lands (sim/regions.js) on the wall map: each one's ground, as a polygon that doesn't overlap the others
