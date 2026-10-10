@@ -12,13 +12,14 @@
   "steps": [
     {
       "id": "barrows",
-      "journal": "Defeat three elites in the Old Barrows: the bright-eyed ones that come to lead every fifth wave. Hold a room long enough and one comes to you.",
+      "journal": "Defeat three elites among the dead, in the Long Gallery or below: the bright-eyed ones that lead every fifth wave. Hold a room and one comes.",
       "objectives": [
         {
           "type": "elites",
           "site": "barrows",
           "count": 3,
-          "label": "Elites defeated in the Old Barrows"
+          "floor": 2,
+          "label": "Bright-eyed ones defeated"
         }
       ]
     }

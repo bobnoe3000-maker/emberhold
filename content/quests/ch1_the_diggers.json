@@ -43,7 +43,7 @@
   "done": "You defeated Captain Garrow in Wickham Keep. His ledger says robed strangers paid him to dig at the Sunken Chapel.",
   "rewards": {
     "share": 0.45,
-    "lv": 4,
+    "lv": 6,
     "gold": 150
   },
   "dialogue": {

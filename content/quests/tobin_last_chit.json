@@ -1,0 +1,39 @@
+{
+  "id": "tobin_last_chit",
+  "kind": "errand",
+  "title": "The Last Chit",
+  "giver": "tobin_hask",
+  "region": "vale",
+  "level": [
+    3,
+    30
+  ],
+  "summary": "Tobin Hask, Thornwick's sexton, keeps the dead's names at the barrow mouth. The Quartermaster in the Muster Hall still issues: knock his men down and he has them up again, re-armed. Tobin is tired of crossing names out twice.",
+  "steps": [
+    {
+      "id": "muster",
+      "journal": "Go down to the Muster Hall, the Old Barrows' third floor, and put down the Quartermaster in its last hall. His broken ranks stand up while he does.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "barrows",
+          "boss": "quartermaster",
+          "count": 1,
+          "label": "The Quartermaster"
+        }
+      ]
+    }
+  ],
+  "ready": "The Quartermaster has handed in his last chit. Tell Tobin Hask at the barrow mouth.",
+  "done": "Tobin crossed out the Quartermaster once, and closed the book. The Gallery's dead stay down now.",
+  "rewards": {
+    "share": 0.3,
+    "lv": 3,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "tobin",
+    "offer": "tobin_chit_offer",
+    "turnin": "tobin_chit_turnin"
+  }
+}

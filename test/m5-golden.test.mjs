@@ -4,8 +4,8 @@
 // chain → the fighter's trial → the Chronicle's last fragment off the Standard → the Ninth Milestone's
 // vault, which then seals itself for a while. Then the save round-trips it all. (v1.48, one dungeon a level: the
 // first chapter is the barrows' mouth, not the Tithe Mill, and reveals nothing; Garrow and Brannoc are on the Keep's
-// third floor, the paymaster's chests on its second; Brannoc's legion holds the Barrows' third-floor hall; the
-// Standard is the Sunken Chapel's third-floor boss.)
+// third floor, the paymaster's chests on its second; the Standard is the Sunken Chapel's third-floor boss. v1.49: Brannoc
+// stands with the legion in the Binding Crypt, and the Standard is Act I's fourth chapter, Ilse's.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -75,7 +75,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch1_ember_in_the_fist');
 
   // Brannoc's chain, from his card: 3 sergeants in the Keep, 2 of the paymaster's chests on the Keep's second floor,
-  // 5 waves in the Barrows' third-floor hall
+  // 5 waves among the bound in the Sunken Chapel's Binding Crypt (v1.49)
   const card = () => { sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); };
   card(); effect(sim, 'quest', 'accept', 'brannoc_old_debts');
   go(sim, 'dungeon', 'wickham_keep', 0); assert.ok(fightIn(sim, () => st(sim, 'brannoc_old_debts') === QS.READY, firstRoom, 900), 'three sergeants');
@@ -91,7 +91,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   }
   assert.equal(st(sim, 'brannoc_paymasters_box'), QS.READY, 'two chests on the Keep\'s second floor');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
-  go(sim, 'dungeon', 'barrows', 1); assert.ok(fightIn(sim, () => st(sim, 'brannoc_standing_down') === QS.READY));
+  go(sim, 'dungeon', 'sunken_chapel', 2); assert.ok(fightIn(sim, () => st(sim, 'brannoc_standing_down') === QS.READY, firstRoom));
   card(); effect(sim, 'quest', 'turnin', 'brannoc_standing_down');
   assert.equal(sim.state.bag.filter((it) => it.name === 'The Broken Chain').length, 1);
 
@@ -103,16 +103,21 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'turnin', 'trial_hold_the_keep_gate');
   assert.ok(sim.state.party.filter((m) => m.cls === 'fighter').every((m) => unlocked(m, wall, sim.state.trials)), 'the hero and Brannoc both');
 
-  // the Chronicle: the rest found (the test's shortcut), the last off the Standard in the Chapel's crypt; the Ninth Milestone opens
+  // Act I, 4 (v1.49): Ilse's, the Standard; and the Chronicle: the rest found (the test's shortcut), the last off the
+  // Standard in the Chapel's crypt; the Ninth Milestone opens
+  talk(sim, 'sister_ilse'); effect(sim, 'quest', 'accept', 'ch1_the_standard'); assert.equal(st(sim, 'ch1_the_standard'), QS.ACTIVE);
   sim.state.fragments = SETS.vale.filter((id) => id !== 'frag_vale_standards_ribbon');
   go(sim, 'dungeon', 'sunken_chapel', 2); assert.ok(fightIn(sim, () => sim.state.fragments.length === 10), 'the Standard falls: its ribbon');
+  assert.equal(st(sim, 'ch1_the_standard'), QS.READY);
+  talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch1_the_standard');
+  assert.equal(sim.quests.status('ch2_fog_on_the_canal'), QS.AVAILABLE, 'Act I done: Act II is Ilse\'s next (the company is 12)');
   assert.ok(sim.state.revealed.has('ninth_milestone'));
   go(sim, 'dungeon', 'ninth_milestone', 0); const t0 = sim.state.t; openAt(sim, sim.world.vault.key);
   assert.equal(sim.state.bag.filter((it) => it.name === 'The Last Order').length, 1);
   const sealed = sim.state.secrets.ninth_milestone;
   assert.ok(sealed >= t0 + SECRET_REST && sealed <= sim.state.t + SECRET_REST, 'its vault opened, the Milestone seals for SECRET_REST of play');
 
-  assert.deepEqual(paid, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'brannoc_old_debts', 'brannoc_paymasters_box', 'brannoc_standing_down', 'trial_hold_the_keep_gate']);
+  assert.deepEqual(paid, ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'brannoc_old_debts', 'brannoc_paymasters_box', 'brannoc_standing_down', 'trial_hold_the_keep_gate', 'ch1_the_standard']);
   assert.deepEqual(ev, ['companionJoined:brannoc', 'trialDone:trial_hold_the_keep_gate', 'siteRevealed:ninth_milestone', 'setComplete:vale', 'vaultOpened:ninth_milestone', 'secretSealed:ninth_milestone']);
   for (const k of ['redhand_captain', 'robed_stranger', 'standard']) assert.ok(sim.state.bosses[k] >= 1, k);
 

@@ -10,19 +10,19 @@
     1,
     30
   ],
-  "summary": "Osric Hale says a Watch post is a place you stand when nobody comes to relieve you. Hold the Canal Locks' Sluice that long, and he'll teach your fighters to get their breath back (the fighter's level-12 skill).",
+  "summary": "Osric Hale says a Watch post is a place you stand when nobody comes to relieve you. Hold the Toadking's Mound that long, and he'll teach your fighters to get their breath back (the fighter's level-12 skill).",
   "steps": [
     {
-      "id": "sluice",
-      "journal": "Go down to the Canal Locks' second floor and hold the Sluice, the hall at the far end, for ten waves.",
+      "id": "mound",
+      "journal": "Go down to Toadking's Mound's second floor and hold its last hall, the one with the stairs down, for ten waves.",
       "objectives": [
         {
           "type": "waves",
-          "site": "canal_locks",
+          "site": "toadking_mound",
           "count": 10,
           "hall": true,
           "floor": 2,
-          "label": "Waves held in the Sluice"
+          "label": "Waves held in the Mound's hall"
         }
       ]
     }

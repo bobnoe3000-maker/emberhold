@@ -152,7 +152,7 @@ She sets the mug down.
 // ── her errand: The Long Way Round (content/quests/vale_long_way_round.json) ──
 == maudry_longway_offer ==
 "Since you ask. The carters won't take the barrows road any more. They go the long way round, a day out of their way, and they put it on the price of everything I pour."
-"Go down into the Old Barrows, out past the fields. Knock the walking kind back. Four waves of them, four good fights, and open one of their chests, so I know you went further than the door."
+"Go down into the Old Barrows, out past the fields, past the Redhand at the door, to the Long Gallery where the walking kind lie in their niches. Knock them back. Four waves of them, four good fights, and open one of their chests, so I know you went further than the door."
 "Come back and tell me. I'll make it worth the boots."
 + [I'll see to it. #mark: quest]
     "Good. Mind the ones with crossbows." # quest: accept vale_long_way_round
@@ -162,7 +162,7 @@ She sets the mug down.
     -> maudry_topics
 
 == maudry_longway_active ==
-"The walking kind still walking, are they? Four waves held in the Old Barrows, and one of their chests opened. I'm not asking you to empty the place. Just to make the road less interesting."
+"The walking kind still walking, are they? Four waves held in the Long Gallery, down past the Redhand's dig, and one of their chests opened. I'm not asking you to empty the place. Just to make the road less interesting."
 -> maudry_topics
 
 == maudry_longway_turnin ==

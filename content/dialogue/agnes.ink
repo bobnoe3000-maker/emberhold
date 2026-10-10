@@ -71,7 +71,7 @@ She unties the first one, and reads it standing up, and then she sits down to re
 // ── the cleric's second trial (content/quests/trial_vigil.json; world doc v1.30) ──
 == agnes_vigil_offer ==
 "A vigil is a night you stay awake for somebody who can't. That's all it is. People make it sound holy so they don't have to do it."
-"The Abbey's dead have had nobody awake for them in three hundred years. Go and keep one. Six waves, anywhere in the Abbey. Then I'll teach your cleric the last thing the order taught before it stopped teaching anything: how to send the dead on."
+"The Toadking's island was a burying-ground before it was his. The fen-folk put their drowned in the mud there, and nobody there had the words, so nobody said anything over them. Go and keep a vigil on its third floor, six waves, where the old graves are. Then I'll teach your cleric the last thing the order taught before it stopped teaching anything."
 + [We'll keep it. #mark: quest]
     "Stay awake. Don't pray at them. Pray for them. They can tell the difference." # quest: accept trial_vigil
     -> agnes_topics
@@ -80,7 +80,7 @@ She unties the first one, and reads it standing up, and then she sits down to re
     -> agnes_topics
 
 == agnes_vigil_active ==
-"The Drowned Abbey, anywhere in it. Six waves. Stay awake."
+"Toadking's Mound, its third floor, where the old graves are. Six waves. Stay awake."
 -> agnes_topics
 
 == agnes_vigil_turnin ==

@@ -9,6 +9,7 @@ VAR party_size = 1
 VAR fallen_name = ""
 VAR flag_met_tobin = 0
 VAR boss_quartermaster = 0
+VAR q_tobin_last_chit = -1
 
 == tobin_hub ==
 { flag_met_tobin == 0: -> tobin_first }
@@ -23,6 +24,9 @@ An old man in a rusty black coat sits on a coffin-lid laid over two stones, a la
 -> tobin_talk
 
 == tobin_talk ==
++ { q_tobin_last_chit == 2 } [The Quartermaster's down. #mark: quest ready] -> tobin_chit_turnin
++ { q_tobin_last_chit == 0 } [Can I do anything about the dead? #mark: quest] -> tobin_chit_offer
++ { q_tobin_last_chit == 1 } [About the Quartermaster… #mark: quest active] -> tobin_chit_active
 + [What is this place?] -> tobin_floors
 + [Who's down there?] -> tobin_dead
 + [What's in the book?] -> tobin_book
@@ -52,3 +56,25 @@ He turns it so you can see: columns of names in a careful hand, and beside some 
 == tobin_bye ==
 "Mind the third step down. It's not a step any more."
 -> END
+
+// ── his errand, The Last Chit (content/quests/tobin_last_chit.json; world doc v1.33 §3.1) ──
+== tobin_chit_offer ==
+He runs a finger down a column and stops at a name with three dates beside it.
+"Corporal Aulus. Put down in the Gallery a week ago Tuesday. Up again Wednesday, with a new shield. Put down Thursday. Up again Friday." He taps the third date. "That's the Quartermaster. He still issues. Every man who goes down, he has back on his feet and re-armed out of the racks."
+"I can't keep crossing them out twice. The ink's dear. Put the old man down, and the ones you put down will stay down."
++ [We'll put him down. #mark: quest]
+    "The Muster Hall, at the bottom. He keeps the last hall, by the racks. Knock his lads down and he stands them up, so go for him first, if you can get through." # quest: accept tobin_last_chit
+    -> tobin_talk
++ [Not yet.]
+    "No. He's not going anywhere. That's rather the trouble."
+    -> tobin_talk
+
+== tobin_chit_active ==
+"The Muster Hall, the third floor down. The Quartermaster, in the last hall. Him first, if you can; his lads after."
+-> tobin_talk
+
+== tobin_chit_turnin ==
+Tobin finds the Quartermaster's name, a long way up the page, in an older hand than his own.
+"Gaius Venn, quartermaster-sergeant, Third Legion. Issued, it says here, to the last." He crosses it out once, firmly, and closes the book on the pen. # quest: turnin tobin_last_chit
+"There. And Aulus can stay where he is. I'll put that in tomorrow. Ink's dear."
+-> tobin_talk

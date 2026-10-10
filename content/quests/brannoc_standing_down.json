@@ -12,28 +12,27 @@
   "after": [
     "brannoc_paymasters_box"
   ],
-  "summary": "Brannoc has heard of the legion in the Old Barrows that held its road for three hundred years because nobody told it to stop. He'd like to stand with it once, the way he never stood with anyone.",
+  "summary": "Brannoc has heard of the Third Legion, bound where it stood under the Sunken Chapel, that never deserted anything because nobody told it to stop. He'd like to stand with it once, the way he never stood with anyone.",
   "steps": [
     {
-      "id": "barrows",
-      "journal": "Go down to the Long Gallery, the Old Barrows' second floor, and hold its last hall for five waves.",
+      "id": "crypt",
+      "journal": "Go down to the Binding Crypt, the Sunken Chapel's third floor, where the bound stand in rows, and hold five waves there with Brannoc.",
       "objectives": [
         {
           "type": "waves",
-          "site": "barrows",
+          "site": "sunken_chapel",
           "count": 5,
-          "hall": true,
-          "floor": 2,
-          "label": "Waves held in the Long Gallery's last hall"
+          "floor": 3,
+          "label": "Waves held in the Binding Crypt"
         }
       ]
     }
   ],
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
-  "done": "You held the Long Gallery's last hall with Brannoc. He stood; they stood. He gave you his old chain, less one link.",
+  "done": "You held the Binding Crypt with Brannoc among the bound. He stood; they stood. He gave you his old chain, less one link.",
   "rewards": {
     "share": 0.45,
-    "lv": 6,
+    "lv": 9,
     "gold": 100,
     "item": "broken_chain"
   },

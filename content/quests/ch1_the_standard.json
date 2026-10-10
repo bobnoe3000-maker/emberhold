@@ -1,0 +1,42 @@
+{
+  "id": "ch1_the_standard",
+  "kind": "chapter",
+  "title": "The Standard",
+  "giver": "sister_ilse",
+  "region": "vale",
+  "level": [
+    9,
+    30
+  ],
+  "after": [
+    "ch1_ember_in_the_fist"
+  ],
+  "summary": "The shard is a spark, cut out of one of the bound, and near the bound a spark stirs them. The robed men dug down to the Third Legion under the Sunken Chapel. Sister Ilse wants its lamp broken, and the legion laid down.",
+  "steps": [
+    {
+      "id": "standard",
+      "journal": "Go down to the Binding Crypt, the Sunken Chapel's third floor, where the legion was bound, and break the Standard of the Third Legion in its last hall.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "sunken_chapel",
+          "boss": "standard",
+          "count": 1,
+          "label": "The Standard of the Third Legion"
+        }
+      ]
+    }
+  ],
+  "ready": "The Standard's lamp is broken, and the legion lay down where it stood. Tell Sister Ilse at the Shrine of the Ember.",
+  "done": "The Third Legion lay down, and the barrows road is open. Sister Ilse wrote it all down. Act I is done.",
+  "rewards": {
+    "share": 0.55,
+    "lv": 9,
+    "gold": 240
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_ch4_offer",
+    "turnin": "ilse_ch4_turnin"
+  }
+}

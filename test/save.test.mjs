@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v31', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 31); });
+test('three game slots, save v32', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 32); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -152,4 +152,21 @@ test('v30 → v31: a save in a gone site stands in what took its place, at its f
   assert.deepEqual(t.data.sitesEntered, ['canal_locks']); assert.deepEqual(t.data.secrets, { ninth_milestone: 900 });
   const r = createSim(7, undefined, { scene: 'town' }); r.restore(t.data); assert.deepEqual(r.state.secrets, { ninth_milestone: 900 });
   assert.equal(migrate(t), t, 'v31 is current');
+});
+
+// v32 (GDD §9 v1.49, the quests re-pointed): The Rolls under way starts again at its first step (the Choir), The
+// Sickpools ready before the Vatwarden goes on to him, Standing Down's Barrows waves start again in the Binding Crypt;
+// a finished quest, and anything else, is as it was
+test('v31 → v32: the quests whose steps changed restart cleanly; finished ones and the rest kept', async () => {
+  const { questsFor32 } = await import('../src/persist/save.js');
+  const base = JSON.parse(JSON.stringify(createSim(20260807, undefined, { scene: 'town' }).snapshot()));
+  const quests = { ch2_the_rolls: [1, 1, 1], ch2_the_sickpools: [2, 0, 3], brannoc_standing_down: [1, 0, 4], vale_long_way_round: [1, 0, 2, 1], ch2_the_bells: [3, 0, 1] };
+  const m = migrate({ version: 31, savedAt: 1, data: { ...base, quests } });
+  assert.equal(m.version, SAVE_VERSION);
+  assert.deepEqual(m.data.quests, { ch2_the_rolls: [1, 0, 0], ch2_the_sickpools: [1, 1, 0], brannoc_standing_down: [1, 0, 0], vale_long_way_round: [1, 0, 2, 1], ch2_the_bells: [3, 0, 1] });
+  assert.deepEqual(questsFor32(m.data), m.data, 'once');
+  const done = { ch2_the_rolls: [3, 1, 2], ch2_the_sickpools: [3, 0, 3], brannoc_standing_down: [2, 0, 5] };
+  assert.deepEqual(migrate({ version: 31, savedAt: 1, data: { ...base, quests: done } }).data.quests, done, 'finished, or ready, kept');
+  const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
+  assert.deepEqual(r.state.quests.ch2_the_sickpools, { st: 1, step: 1, n: [0] }, 'on to the Vatwarden');
 });

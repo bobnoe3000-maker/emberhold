@@ -11,7 +11,7 @@
   "after": [
     "ch2_the_locks"
   ],
-  "summary": "Pim Rushlight says the old vats under the Canal Locks are being drained by night, and he'd know: he buys what comes out. The Cult's harvesters are down at Vat Seven filling their cages.",
+  "summary": "Pim Rushlight says the old vats under the Canal Locks are being drained by night, and he'd know: he buys what comes out. The Cult's harvesters are down at Vat Seven filling their cages for the Vatwarden.",
   "steps": [
     {
       "id": "cages",
@@ -24,13 +24,26 @@
           "label": "Full cages broken"
         }
       ]
+    },
+    {
+      "id": "vatwarden",
+      "journal": "The cages are broken. Now the man who fills them: put down the Vatwarden in Vat Seven's hall. Keep out of the sick water when he opens the sluice.",
+      "objectives": [
+        {
+          "type": "boss",
+          "site": "canal_locks",
+          "boss": "vatwarden",
+          "count": 1,
+          "label": "The Vatwarden"
+        }
+      ]
     }
   ],
   "ready": "Three cages broken. Tell Pim, at his handcart by Saltmere's cistern.",
-  "done": "Pim counted the broken cages on his fingers twice and said his oil would be dearer now. He didn't sound sorry.",
+  "done": "Pim counted the cages twice, heard about the Vatwarden, and said his oil would be dearer now. Not sorry.",
   "rewards": {
     "share": 0.4,
-    "lv": 12,
+    "lv": 15,
     "gold": 280
   },
   "dialogue": {

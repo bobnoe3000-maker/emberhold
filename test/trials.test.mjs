@@ -47,7 +47,7 @@ test('the second trial: offered at 12, once the class\'s first is done, by its t
   sim.state.party[0].level = 11; assert.equal(st(), QS.LOCKED, 'at 12'); sim.state.party[0].level = 12;
   talk(sim, 'hedda'); say(sim, 'accept', id); assert.equal(st(), QS.AVAILABLE, 'not from Hedda');
   talk(sim, giver); say(sim, 'accept', id); assert.equal(st(), QS.ACTIVE);
-  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'canal_locks', depth: 1 });
+  sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'toadking_mound', depth: 1 });   // (v1.49: the Mound's second-floor hall, where a 12 fights)
   const hall = sim.world.level.descentRoom.id;
   for (let i = 0; i < 10; i++) sim.bus.emit('wave', { cleared: true, room: hall });
   assert.equal(st(), QS.READY);
@@ -134,7 +134,7 @@ test('the Ink: Osric, Nell, Hedda and Ilse each offer their trial and take it in
   const cases = [['osric', 'osric_hub', 'trial_hold_the_keep_gate', ['Can you teach a fighter anything?', "We'll hold it."], ['We held Wickham Keep, eight waves.']],
     ['townsfolk', 'nell_hub', 'trial_quiet_feet', ['You walk very quietly for an innkeeper.', 'Done.'], ['Three sergeants, and they never heard us.']],
     ['townsfolk', 'hedda_hub', 'trial_cold_weather', ['Does the weather really listen to you?', "We'll go."], ['It listened. Six waves in the chapel.']],
-    ['ilse', 'ilse_hub', 'trial_last_rites', ["Is there anything you'd teach a cleric?", "We'll say them."], ['The rites are said, in the barrows.']]];
+    ['ilse', 'ilse_hub', 'trial_last_rites', ["Is there anything you'd teach a cleric?", "We'll say them."], ['The rites are said, in the chapel.']]];
   for (const [file, knot, id, offer, turnin] of cases) {
     assert.deepEqual((await play(file, knot, { ...met, ['q_' + id]: 0 }, offer)).quest, [`accept ${id}`], id);
     assert.deepEqual((await play(file, knot, { ...met, ['q_' + id]: 2 }, turnin)).quest, [`turnin ${id}`], id);
@@ -142,5 +142,20 @@ test('the Ink: Osric, Nell, Hedda and Ilse each offer their trial and take it in
   for (const knot of ['nell_hub', 'hedda_hub']) for (const q of [-1, 3]) {
     const r = await play('townsfolk', knot, { ...met, q_trial_quiet_feet: q, q_trial_cold_weather: q }, []);
     assert.ok(r.ended && !r.choices.length, `${knot} with the trial ${q}: a line and done, as before`);
+  }
+});
+
+// (v1.49, GDD §5.1) every trial is fought where its class's company fights: no room it wants is more than one level above
+// the level it's offered at (the level-12 ones were in rooms of 14–16 after v1.48)
+test('every trial is fought within a level of where it\'s offered', async () => {
+  const { QUESTS: Q, TRIAL_LEVEL } = await import('../src/sim/quests.js'), { SITES, roomLevelAt } = await import('../src/sim/sites.js');
+  for (const [id, d] of Object.entries(Q)) {
+    if (!d.trial) continue;
+    const lv = d.trialLv || TRIAL_LEVEL;
+    for (const o of d.steps.flatMap((s) => s.objectives)) {
+      const S = SITES[o.site], floor = o.floor || 1, low = roomLevelAt(o.site, floor - 1, 0, 6);
+      assert.ok(low <= lv + 1, `${id}: ${o.site} floor ${floor} starts at ${low}, offered at ${lv}`);
+      assert.ok(S.base + floor - 1 >= lv - 2, `${id}: ${o.site} floor ${floor} is too easy for ${lv}`);
+    }
   }
 });

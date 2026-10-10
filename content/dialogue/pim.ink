@@ -30,12 +30,12 @@ A thin man with oil to the elbows leans on a handcart full of stoppered jars. He
 -> pim_topics
 
 == pim_topics ==
-+ { q_ch2_the_sickpools == 2 } [Three cages, broken. #mark: quest ready] -> pim_pools_turnin
++ { q_ch2_the_sickpools == 2 } [Three cages broken, and the Vatwarden's down. #mark: quest ready] -> pim_pools_turnin
 + { q_ch2_the_sickpools == 0 } [Dace says you want to see me. #mark: quest] -> pim_pools_offer
 + { q_ch2_the_sickpools == 1 } [About the Sickpools… #mark: quest active] -> pim_pools_active
-+ { q_trial_lamp_oil == 2 } [Eight waves among the vats. #mark: quest ready] -> pim_lamp_oil_turnin
++ { q_trial_lamp_oil == 2 } [Eight waves at the Locks. #mark: quest ready] -> pim_lamp_oil_turnin
 + { q_trial_lamp_oil == 0 } [You know a lot about fire. #mark: quest] -> pim_lamp_oil_offer
-+ { q_trial_lamp_oil == 1 } [About the vats… #mark: quest active] -> pim_lamp_oil_active
++ { q_trial_lamp_oil == 1 } [About the lock stores… #mark: quest active] -> pim_lamp_oil_active
 + [Where does your oil come from?] -> pim_oil
 + [Are the eels really fat this year?] -> pim_eels
 + [I'll be going.] -> pim_bye
@@ -46,19 +46,19 @@ He looks both ways along the boards, and at the chapel, and lowers his voice.
 "The old vats, the Sickpools. The canal drains them now, under the Locks: Vat Seven. Imperial. Still leaking. What leaks out burns lovely, and nobody asks a chandler where he gets his oil, so."
 "Somebody's draining them. At night. Men with poles, and on the poles there's little cages, and the cages are full of light I didn't sell them." He swallows. "And the vats are full of the drowned. They were. They're emptying."
 + [We'll look into it. #mark: quest]
-    "Break the cages. The full ones, the ones that glow: their leaders carry those. Three would do. Three would make me feel a good deal better about my oil." # quest: accept ch2_the_sickpools
+    "Break the cages. The full ones, the ones that glow: their leaders carry those. Three would do. Then the one they carry them to. The eel-men call him the Vatwarden. He opens the sluice on anyone who comes down, and the water does the rest." # quest: accept ch2_the_sickpools
     -> pim_topics
 + [Not now.]
     "No. No, of course. Lovely oil, though. Burns very bright."
     -> pim_topics
 
 == pim_pools_active ==
-"Vat Seven, the bottom of the Locks, where the water goes the wrong colour. Their leaders carry the full cages. Break three, and then don't tell me what was in them."
+"Vat Seven, the bottom of the Locks, where the water goes the wrong colour. Their leaders carry the full cages: break three. Then the Vatwarden, in the hall at the end. Keep out of the sick water when he opens the sluice."
 -> pim_topics
 
 == pim_pools_turnin ==
 Pim counts on his fingers, twice, and wipes his hands on his apron, which makes them worse.
-"Three. Good. That's good. That's somebody's grandmother not in a jar." He looks at his own jars for a while. # quest: turnin ch2_the_sickpools
+"Three. Good. That's good. That's somebody's grandmother not in a jar. And him, the one who opened the sluice on people." He looks at his own jars for a while. # quest: turnin ch2_the_sickpools
 "Orla at the chapel's been asking for you. Asking everyone. Loudly. The bells, she says. I'd go before she comes to find you."
 -> pim_topics
 
@@ -66,7 +66,7 @@ Pim counts on his fingers, twice, and wipes his hands on his apron, which makes 
 == pim_lamp_oil_offer ==
 He looks at your mage the way he looks at a lamp that's smoking.
 "You burn things. Yes. Everybody can burn things. The trick, the whole trade, is keeping the fire off what you don't want burned. The wick, the glass, the hand holding it."
-"Go and stand among the vats at Vat Seven, under the Locks. Eight waves. They burn lovely out there, and the harvesters don't care what catches. Come back unsinged and I'll show you how a chandler keeps a flame off his fingers. It works for friends too."
+"Go and stand in the Canal Locks, among the lock-keepers' stores: barrels of the old imperial oil, three hundred years down there and still good. Eight waves. They burn lovely, and the bound don't care what catches. Come back unsinged and I'll show you how a chandler keeps a fire off his own coat."
 + [We'll go. #mark: quest]
     "Eight. Unsinged. Well. Mostly unsinged." # quest: accept trial_lamp_oil
     -> pim_topics
@@ -75,7 +75,7 @@ He looks at your mage the way he looks at a lamp that's smoking.
     -> pim_topics
 
 == pim_lamp_oil_active ==
-"Vat Seven, under the Locks, among the vats. Eight waves. Mind your sleeves."
+"The Canal Locks, any floor, among the oil stores. Eight waves. Mind your sleeves."
 -> pim_topics
 
 == pim_lamp_oil_turnin ==

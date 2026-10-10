@@ -12,13 +12,14 @@
   "steps": [
     {
       "id": "barrows",
-      "journal": "Go down into the Old Barrows, the burial mounds out past Thornwick's fields. Hold four waves there, in any rooms, and open one of their chests.",
+      "journal": "Go down to the Long Gallery, the Old Barrows' second floor, where the dead lie in their niches. Hold four waves there, and open one of their chests.",
       "objectives": [
         {
           "type": "waves",
           "site": "barrows",
           "count": 4,
-          "label": "Waves held in the Old Barrows"
+          "floor": 2,
+          "label": "Waves held in the Long Gallery"
         },
         {
           "type": "loot",
@@ -30,7 +31,7 @@
     }
   ],
   "ready": "Go back to Maudry Fenn at the Tired Mule in Thornwick and tell her.",
-  "done": "You knocked back the dead in the Old Barrows for Maudry Fenn. The carters complain about something else now.",
+  "done": "You knocked back the dead in the Long Gallery for Maudry Fenn. The carters complain about something else now.",
   "rewards": {
     "share": 0.25,
     "lv": 2,

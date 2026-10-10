@@ -43,7 +43,7 @@ export function openLeads(state, status, region = 'vale') {
   const out = [], has = (s, k) => (s instanceof Set ? s.has(k) : Array.isArray(s) ? s.includes(k) : !!(s && s[k]));
   const bosses = state.bosses || {}, entered = state.sitesEntered, revealed = state.revealed, company = [...state.party, ...(state.bench || [])];
   if (bosses.redhand_captain && FOUND.brannoc && !company.some((m) => m.id === 'brannoc')) out.push({ id: 'brannoc' });
-  if (!bosses.standard) out.push({ id: 'standard' });
+  if (!bosses.standard && status('ch1_the_standard') === QS.LOCKED) out.push({ id: 'standard' });   // (v1.49: once its chapter's offered, the Journal's main story says so)
   if (status('vale_hens_under_the_hill') !== QS.DONE && status('vale_hens_under_the_hill') !== QS.LOCKED) out.push({ id: 'warren' });
   const vale = SETS.vale || [], found = vale.filter((f) => has(state.fragments, f)).length;
   if (!has(revealed, 'ninth_milestone') && found < vale.length) out.push({ id: 'chronicle', n: found, of: vale.length });

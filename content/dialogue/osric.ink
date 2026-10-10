@@ -72,7 +72,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 + { q_trial_hold_the_keep_gate == 2 } [We held Wickham Keep, eight waves. #mark: quest ready] -> osric_trial_turnin
 + { q_trial_hold_the_keep_gate == 0 } [Can you teach a fighter anything? #mark: quest] -> osric_trial_offer
 + { q_trial_hold_the_keep_gate == 1 } [About holding the gate… #mark: quest active] -> osric_trial_active
-+ { q_trial_the_long_watch == 2 } [We held the Sluice. Ten waves. #mark: quest ready] -> osric_long_watch_turnin
++ { q_trial_the_long_watch == 2 } [We held the Mound's hall. Ten waves. #mark: quest ready] -> osric_long_watch_turnin
 + { q_trial_the_long_watch == 0 } [Is there more a fighter could learn? #mark: quest] -> osric_long_watch_offer
 + { q_trial_the_long_watch == 1 } [About the long watch… #mark: quest active] -> osric_long_watch_active
 + { q_vale_captains_ledger == 2 } [Three of the bright-eyed ones are down. #mark: quest ready] -> osric_ledger_turnin
@@ -87,7 +87,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 == osric_long_watch_offer ==
 "The gate at the Keep was a fight. This is the other thing. A post." He turns the ledger round and shows you a page of names with dates beside them and no second dates.
 "Men I've put on a post and not relieved. Some of them I couldn't. Some of them I forgot. They stood anyway. That's the Watch. Not the sword. The standing."
-"The Canal Locks, down in the Fens. The Sluice, at the bottom, where the dead lock-men won't lie down. Hold it ten waves with nobody coming, and I'll teach your fighters how to get their breath back without stepping off the line."
+"Toadking's Mound, down in the Fens. The hall at the bottom of its second floor, the one with the stairs down, where everything on the island comes past sooner or later. Hold it ten waves with nobody coming, and I'll teach your fighters how to get their breath back without stepping off the line."
 + [We'll hold it. #mark: quest]
     "Ten. Count them. Write them down if you like. I would." # quest: accept trial_the_long_watch
     -> osric_topics
@@ -96,7 +96,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
     -> osric_topics
 
 == osric_long_watch_active ==
-"The Sluice, at the bottom of the Canal Locks. Ten waves. Nobody's coming. Breathe anyway."
+"The Mound's second floor, its last hall. Ten waves. Nobody's coming. Breathe anyway."
 -> osric_topics
 
 == osric_long_watch_turnin ==
@@ -112,7 +112,7 @@ Osric hears the count out, nods at each number, and then shows your fighters how
 == osric_ledger_offer ==
 "There's one kind worth paying for. Every fifth wave or so, one of them comes up with eyes like forge coals and the rest fall into step behind it."
 "They're the ones holding the second rank across the barrows road. Officers. Put enough of them down below and the rank on the road goes with them."
-"Put three of those down in the Old Barrows. Lord Pellam's coin is due any week now, which is what it said last month. Until it comes, I pay, and I write it down."
+"Put three of those down in the Old Barrows, among the dead: the Long Gallery or below. The Redhand at the door don't count, whatever they call themselves. Lord Pellam's coin is due any week now, which is what it said last month. Until it comes, I pay, and I write it down."
 + [I'll see to it. #mark: quest]
     "Good. Don't go alone into the deep rooms. I've enough names on that page." # quest: accept vale_captains_ledger
     -> osric_topics

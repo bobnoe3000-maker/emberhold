@@ -10,17 +10,18 @@
     1,
     30
   ],
-  "summary": "Mother Agnes says a vigil is a night you stay awake for somebody who can't. The Drowned Abbey's dead have had nobody for three hundred years. Keep six waves there, and she'll teach your clerics to send them on (the cleric's level-12 skill).",
+  "summary": "Mother Agnes says a vigil is a night you stay awake for somebody who can't. The Toadking's island was the fen-folk's burying-ground, and nobody said anything over its drowned. Keep six waves there (the cleric's level-12 skill).",
   "steps": [
     {
-      "id": "abbey",
-      "journal": "Keep a vigil in the Drowned Abbey: hold six waves anywhere on its floors.",
+      "id": "mound",
+      "journal": "Keep a vigil on the Toadking's island: hold six waves on its third floor, its old burying-ground.",
       "objectives": [
         {
           "type": "waves",
-          "site": "drowned_abbey",
+          "site": "toadking_mound",
           "count": 6,
-          "label": "Waves kept in the Abbey"
+          "floor": 3,
+          "label": "Waves kept on the Mound's third floor"
         }
       ]
     }

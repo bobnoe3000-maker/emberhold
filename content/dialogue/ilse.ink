@@ -15,6 +15,8 @@ VAR day_part = 0
 VAR flag_met_ilse = 0
 VAR q_vale_first_page = -1
 VAR q_ch1_ember_in_the_fist = -1
+VAR q_ch1_the_standard = -1
+VAR boss_standard = 0
 VAR q_ch2_fog_on_the_canal = -1
 VAR q_ch2_the_last_office = -1
 VAR q_trial_last_rites = -1
@@ -68,7 +70,8 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 == ilse_greet_back ==
 {&Ilse looks up from the board and holds up a finger until she finishes the word.|"{hero_name}. Anything with writing on it today?"|"The Shrine's quiet. The quiet is the nice part."}
 { q_vale_first_page == 2: "You've found something. I can tell by the way you're holding your hands. Give it here." }
-{ q_ch1_ember_in_the_fist == 3 && q_ch2_fog_on_the_canal < 1: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
+{ q_ch1_the_standard == 1: "The Binding Crypt, under the chapel. The standard with the lamp on it. Break the lamp, and they can all lie down." }
+{ q_ch1_the_standard == 3 && q_ch2_fog_on_the_canal < 1: "I've written to Reedholm about the shard. Twice. The second letter was mostly apologising for the first." }
 { q_ch2_fog_on_the_canal == 1: "Dace Pike, at the Drowned Eel in Saltmere. Give him my letter. He'll read it slowly. Let him." }
 { q_ch2_fog_on_the_canal == 3 && q_ch2_the_last_office < 2: "Reedholm writes that you're keeping Saltmere busy. Orla writes that you're keeping the Mother busy. I like Orla's letters better." }
 { q_ch2_the_last_office == 3: "I've copied the Abbey's ledger for Reedholm. I've kept the copy I made first. I'm still not a fool." }
@@ -82,11 +85,14 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 
 == ilse_topics ==
 + { q_ch1_ember_in_the_fist == 2 } [The robed stranger in the chapel died holding this. #mark: quest ready] -> ilse_ch3_turnin
++ { q_ch1_the_standard == 2 } [The Standard's down. Its lamp broke. #mark: quest ready] -> ilse_ch4_turnin
++ { q_ch1_the_standard == 0 } [What is the shard? #mark: quest] -> ilse_ch4_offer
++ { q_ch1_the_standard == 1 } [About the Standard… #mark: quest active] -> ilse_ch4_active
 + { q_ch2_the_last_office == 2 } [The Abbess Below is down. This was under the lamp. #mark: quest ready] -> ilse_ch2_turnin
 + { q_ch2_fog_on_the_canal == 0 } [What about the shard? #mark: quest] -> ilse_ch2_offer
 + { q_ch2_fog_on_the_canal == 1 } [About Saltmere… #mark: quest active] -> ilse_ch2_active
 + { q_vale_first_page == 2 } [I found this in the barrows. #mark: quest ready] -> ilse_page_turnin
-+ { q_trial_last_rites == 2 } [The rites are said, in the barrows. #mark: quest ready] -> ilse_trial_turnin
++ { q_trial_last_rites == 2 } [The rites are said, in the chapel. #mark: quest ready] -> ilse_trial_turnin
 + { q_trial_last_rites == 0 } [Is there anything you'd teach a cleric? #mark: quest] -> ilse_trial_offer
 + { q_trial_last_rites == 1 } [About the rites… #mark: quest active] -> ilse_trial_active
 + { q_vale_first_page == 0 } [Can I help with the Chronicle? #mark: quest] -> ilse_page_offer
@@ -100,7 +106,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 
 // ── the cleric's trial (content/quests/trial_last_rites.json) ──
 == ilse_trial_offer ==
-"Nobody said the rites for the legion in the barrows. They were waiting to be relieved. You don't bury people who are waiting."
+"Nobody said the rites for the Third Legion. They were waiting to be relieved. You don't bury people who are waiting."
 "I'd like a cleric of yours to go down into the Sunken Chapel, where the legion was bound, to the Nave's last hall, and stand, and say them. The dead will object. Say them anyway, five waves long."
 + [We'll say them. #mark: quest]
     "Properly. Every word. I'll know if you skip one, and so will they." # quest: accept trial_last_rites
@@ -267,7 +273,31 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
 == ilse_ch3_turnin ==
 Ilse takes the shard in a cloth, not her hand. It glows faintly through the cloth, the colour of a coal just before it goes out.
 "Warm. Three hundred years in the dark and it's warm." She turns it over. "There's a mark on the back. An imperial foundry mark. Fens work. Saltmere, or near it."
-"The robed men weren't digging for gold. They were digging for this. Somebody wants the old fire back." She wraps it twice more. "I'm going to need to write to Reedholm. You're going to need to go south." # quest: turnin ch1_ember_in_the_fist
+"The robed men weren't digging for gold. They were digging for this. Somebody wants the old fire back." She wraps it twice more. "Leave it with me tonight. I know what it is. I want to be wrong about where it came from." # quest: turnin ch1_ember_in_the_fist
+-> ilse_topics
+
+// ── Act I, chapter 4: The Standard (content/quests/ch1_the_standard.json; world doc v1.33 §6) ──
+== ilse_ch4_offer ==
+"I wasn't wrong." She has the shard on the cloth, and a roll of the order's open beside it, held flat with a cup. "It's a spark. You cut one out of one of the bound, like flint out of a stone. It holds a little of the fire, enough to light a lamp by. And near the bound, it stirs them."
+"The Third Legion was bound under that chapel, where it stood. The robed men dug down to it and cut sparks out of it, and every spark they carried past the barrows on the road woke the rest. That's why the barrows opened this spring. Nobody called a muster. Somebody walked past with a pocketful of them."
+"Their standard's still down there, in the Binding Crypt, with the legion's lamp on it. It's dark. A dark lamp breaks like old iron. Break it, and every one of them goes free at once, and lies down wherever they're standing. The road with them."
++ [We'll break it. #mark: quest]
+    "The third floor. The bound stand in rows down there, the way they were stopped. Don't wake more of them than you have to. And bring me back what you can of the lamp. I'd like to know who cast it." # quest: accept ch1_the_standard
+    { boss_standard == 1: "You've already been down. Then it's done, and you can tell me about it now." }
+    -> ilse_topics
++ [Not yet.]
+    "No. They've stood three hundred years. One more week won't hurt them. It's us it hurts."
+    -> ilse_topics
+
+== ilse_ch4_active ==
+"The Binding Crypt, the Sunken Chapel's third floor. The standard with the lamp on it. Break the lamp, and they lie down."
+-> ilse_topics
+
+== ilse_ch4_turnin ==
+You tell her about the crypt: the rows, the lamp, the sound it made, and how they went down all at once, like a field when the wind drops.
+She writes for a long time without looking up. "They were waiting to be relieved. Somebody finally came." She puts the pen down. "Col took the barrows road this morning, Maudry says. All four wheels."
+"The first part of anything is finding out it's worse than you thought. That was ours." # quest: turnin ch1_the_standard
+"Now. The shard, and where it was made." She turns it over to the foundry mark. "That's for later. For tonight, sit down. You look like you've been standing three hundred years yourself."
 -> ilse_topics
 
 // ── Act II, chapter 1: Fog on the Canal (content/quests/ch2_fog_on_the_canal.json): to Dace Pike in Saltmere ──

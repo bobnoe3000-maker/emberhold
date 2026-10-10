@@ -12,30 +12,31 @@
   "after": [
     "ch2_the_bells"
   ],
-  "summary": "The Cult is carrying the binding rolls off the Abbey's lowest floor. Orla wants what's left saved, and taken to Mother Agnes, who has come down from Reedholm and would rather they stayed shut.",
+  "summary": "The Cult is carrying the binding rolls up off the Abbey's lowest floor, under the Drowned Choir. Orla wants what's left saved, and taken to Mother Agnes, who has come down from Reedholm and would rather they stayed shut.",
   "steps": [
     {
-      "id": "down",
-      "journal": "Go down to the Drowned Abbey's third floor.",
+      "id": "choir",
+      "journal": "Go down to the Drowned Abbey's second floor. The Drowned Choir sings in its hall, over the stair the rolls come up. Silence the Choir.",
       "objectives": [
         {
-          "type": "reach",
+          "type": "boss",
           "site": "drowned_abbey",
-          "count": 3,
-          "label": "The Abbey's third floor"
+          "boss": "drowned_choir",
+          "count": 1,
+          "label": "The Drowned Choir"
         }
       ]
     },
     {
       "id": "rolls",
-      "journal": "Save what's left of the rolls: open two chests on the Abbey's third floor.",
+      "journal": "Save what's left of the rolls: open two chests on the Abbey's second floor, where the Cult dropped them when the singing stopped.",
       "objectives": [
         {
           "type": "loot",
           "site": "drowned_abbey",
           "count": 2,
-          "floor": 3,
-          "label": "Chests opened on the third floor"
+          "floor": 2,
+          "label": "Chests opened on the second floor"
         }
       ]
     }
@@ -44,7 +45,7 @@
   "done": "Mother Agnes took the rolls, read the first one standing up, and then sat down to read the rest.",
   "rewards": {
     "share": 0.45,
-    "lv": 14,
+    "lv": 17,
     "gold": 320
   },
   "dialogue": {

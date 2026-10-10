@@ -1,9 +1,10 @@
 # Quest progression: a critique (after one dungeon a level)
 
-**For review (2026-10-10).** The owner: *"critique the quest progression.. does the story make sense and is it
-compelling and clear?"* This reads the main story, the errands, the companions' chains and the trials as the game
-has them after [one dungeon a level](./dungeons-per-map-proposal.md) (v1.48), against the
-[world doc's arc](./emberfall-world.md) (§6). It changes nothing. The fixes are proposed at the end.
+**Implemented (2026-10-10).** The owner: *"critique the quest progression.. does the story make sense and is it
+compelling and clear?"*, then *"Yes implement all this"*. This reads the main story, the errands, the companions'
+chains and the trials as the game had them after [one dungeon a level](./dungeons-per-map-proposal.md) (v1.48),
+against the [world doc's arc](./emberfall-world.md) (§6). All seven fixes are in: [As done](#as-done-2026-10-10) at
+the end (world doc v1.33, GDD v1.49, save v32).
 
 ## The short answer
 
@@ -189,3 +190,58 @@ What I'd keep as it is:
 - `content/story.json`: the Journal's leads;
 - `src/ui/storystatus.js`: "Next: … once your hero reaches level N";
 - world doc §3.1, §3.2, §6.
+
+## As done (2026-10-10)
+
+Canon first (world doc v1.33), then the rules (GDD v1.49 §5.1, §9), then `src/sim/quests.js`, `content/quests/`, the
+Ink and the tests. Save v32.
+
+1. **Chapters pay at their own level.** Every quest's `rewards.lv` is the level its dungeon asks when it's done (the
+   hardest thing it asks; a companion's chain no sooner than he joins). A test holds every quest to within a level of
+   it. Every chapter now pays 100 % of its share where it paid 40–56 %.
+2. **The Barrows' errands are among the dead.**
+   - *The Long Way Round*'s waves and *The Captain's Ledger*'s elites count from the Long Gallery down (`floor: 2`).
+   - The elite counter didn't read a floor at all; it does now (a bug, with a test).
+   - *Smoke* stays at the Barrow Mouth with the Redhand. Maudry's two quests are fought in different places.
+   - *The Long Way Round* is still offered at 1 (the Long Gallery is one level up), so a first errand stays to hand.
+3. **The words:**
+   - *The Bells* puts the Abbey in the canal's flood beyond the Locks.
+   - *The Rolls* opens at 17 and asks for the second floor (see 4).
+   - Ilse's trial is said in the chapel, not the barrows.
+4. **The bosses' quests:**
+   - **The Quartermaster:** Tobin Hask's errand *The Last Chit* (3), given and taken in at the barrow mouth. The
+     compass leads a ready errand back to a giver who stands in a dungeon (`quests.js` compass). The Quartermaster
+     has a name now, Gaius Venn, in Tobin's book.
+   - **The Vatwarden:** *The Sickpools*' second step, after the cages.
+   - **The Choir:** *The Rolls*' first step. The Cult carries the rolls up the choir's stair, she sings over it, and
+     two chests on the second floor are what they dropped.
+5. ***The Standard*, Act I's fourth chapter** (Ilse, 9; `ch1_the_standard`).
+   - She reads the shard: a spark cut out of one of the bound, and near the bound a spark stirs them. That's why the
+     barrows woke this spring.
+   - Break the Standard's lamp, and the legion lies down and the road opens. (The road was already the Standard's:
+     `road.js`.)
+   - *Fog on the Canal* comes after it. A Standard already fallen counts.
+   - The Journal's *Standard* lead gives way to the chapter once it's offered.
+6. **The level-12 trials at 11–13:**
+   - *The Long Watch* holds the Mound's second-floor hall;
+   - *Lamp Oil* is fought in the Locks, from their first floor;
+   - *Vigil* is kept on the Mound's third floor, the fen-folk's old burying-ground (canon v1.33).
+
+   A test holds every trial to within a level of where it's offered.
+7. ***Standing Down* is in the Binding Crypt**, any room among the bound (the Standard's hall goes quiet once he
+   falls). Brannoc's chain walks forward, 6 to 9.
+
+**Save v32** (`questsFor32`):
+- *The Rolls* under way starts again at its first step;
+- *The Sickpools*, ready before the Vatwarden was part of it, goes on to him;
+- *Standing Down*'s Barrows waves start again;
+- everything else carries over.
+
+A save already in Act II without *The Standard* keeps its Act II chapter, and can go back for the Standard.
+
+**Tests:**
+- `test/questfix.test.mjs`: the reward levels, *The Standard*, *The Last Chit* and its compass, the Barrows' floors;
+- the trials test's level guard;
+- the v32 migration;
+- both golden paths (M5 with Act I's four chapters, M8 with the Vatwarden, the Choir and the Mound's trial);
+- the story status, the Act II chain, Brannoc.

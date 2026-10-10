@@ -32,7 +32,7 @@
   "done": "You found both of Wren's caches. She counted them in front of you, which she says is a compliment.",
   "rewards": {
     "share": 0.3,
-    "lv": 11,
+    "lv": 15,
     "gold": 180
   },
   "dialogue": {

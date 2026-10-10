@@ -10,18 +10,17 @@
     1,
     30
   ],
-  "summary": "Pim Rushlight knows what burns, and the vats under the Canal Locks burn better than anything he sells. Hold eight waves down there, and he'll show your mages how to keep a fire off somebody (the mage's level-12 skill).",
+  "summary": "Pim Rushlight knows what burns, and the lock-keepers' oil stores under the Canal Locks burn better than anything he sells. Hold eight waves there, and he'll show your mages how to keep a fire off somebody (the mage's level-12 skill).",
   "steps": [
     {
-      "id": "vats",
-      "journal": "Hold eight waves at Vat Seven, the Canal Locks' third floor, among the old vats.",
+      "id": "locks",
+      "journal": "Hold eight waves in the Canal Locks, among the lock-keepers' stores. Any floor will do.",
       "objectives": [
         {
           "type": "waves",
           "site": "canal_locks",
           "count": 8,
-          "floor": 3,
-          "label": "Waves held at Vat Seven"
+          "label": "Waves held at the Canal Locks"
         }
       ]
     }

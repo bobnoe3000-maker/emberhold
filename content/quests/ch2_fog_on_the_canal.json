@@ -10,7 +10,7 @@
     30
   ],
   "after": [
-    "ch1_ember_in_the_fist"
+    "ch1_the_standard"
   ],
   "summary": "The shard's foundry mark is Fens work, and the Cult's boats come up the canal from the south. Sister Ilse is sending you to Saltmere, to Dace Pike at the Drowned Eel, who writes down what everyone owes.",
   "steps": [
@@ -58,7 +58,7 @@
   "done": "Dace wrote the Canal Locks in his book, under the Cult's name, and drew a line under it. Wren is out of the Boat Hall.",
   "rewards": {
     "share": 0.35,
-    "lv": 9,
+    "lv": 12,
     "gold": 220
   },
   "dialogue": {

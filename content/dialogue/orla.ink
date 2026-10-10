@@ -33,7 +33,7 @@ A young Grey Sister is scrubbing the chapel step hard enough to take the grey of
 == orla_greet_back ==
 {&Orla straightens up from the step with her hands on her back.|"{hero_name}. Good. I've been wanting to shout at somebody who'd shout back."|The chapel door is open. Orla is inside, reading something she has been told not to.}
 { q_ch2_the_bells == 1: "Teague's at the choir's door. He'll tell you his name. Don't tell him yours." }
-{ q_ch2_the_rolls == 1: "The lowest floor. Whatever's left of the rolls, bring it up. The Mother's waiting, and she's very bad at it." }
+{ q_ch2_the_rolls == 1: "The second floor, under the Choir. Whatever's left of the rolls, bring it up. The Mother's waiting, and she's very bad at it." }
 { q_ch2_the_rolls >= 2: "The Mother's inside with the rolls. Go on. She'll pretend she isn't glad." }
 -> orla_topics
 
@@ -57,7 +57,7 @@ A young Grey Sister is scrubbing the chapel step hard enough to take the grey of
 "The Mother says it's the wind. There's no wind at the dark of the moon. There's a man at the choir's door, the eel-men say, with a cage on a pole and a light in it, and he tells them his name."
 "I'd go myself. I asked. The Mother said if I went she'd send me somewhere that makes Saltmere look like Reedholm."
 + [We'll go. #mark: quest]
-    "The Drowned Abbey, out past the Sickpools. The choir's door is the first floor's hall. Break his cage first: the eel-men say while it's lit, nothing touches him." # quest: accept ch2_the_bells
+    "The Drowned Abbey, in the canal's flood beyond the Locks. The choir's door is the first floor's hall. Break his cage first: the eel-men say while it's lit, nothing touches him." # quest: accept ch2_the_bells
     -> orla_topics
 + [Not yet.]
     "Then listen tonight. You'll hear them. Everyone here does, and nobody says so."
@@ -78,14 +78,14 @@ Orla opens the chapel's book at the back, where the names go, and writes *Teague
 "The binding rolls. Every name the order ever bound, under the Abbey, in the water. The Cult is taking them away, and I don't know what for, and that frightens me more than the bells did."
 "The Mother's come down from Reedholm. She'd rather they stayed shut. I'd rather they stayed ours."
 + [We'll bring up what's left. #mark: quest]
-    "The lowest floor, the third. Whatever's left of them, two chests' worth, if the Cult's left that. Take them to the Mother, inside. Don't let her send you away first." # quest: accept ch2_the_rolls
+    "They bring them up from the lowest floor by the choir's stair, and the Choir sings over the stair while they do. Stop the singing, and they'll drop what they're carrying on the second floor. Two chests' worth, if the Cult's left that. Take them to the Mother, inside. Don't let her send you away first." # quest: accept ch2_the_rolls
     -> orla_topics
 + [Not yet.]
     "They've been in the water three hundred years. A few more days won't drown them. It's the boxes I mind."
     -> orla_topics
 
 == orla_rolls_active ==
-"The Abbey's third floor. Two chests of whatever's left. Then the Mother, in the chapel. She'll say thank you. She'll say it as if it hurt."
+"The Abbey's second floor: the Choir first, then two chests of whatever's left. Then the Mother, in the chapel. She'll say thank you. She'll say it as if it hurt."
 -> orla_topics
 
 == orla_rolls_what ==

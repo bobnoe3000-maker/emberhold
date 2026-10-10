@@ -91,6 +91,10 @@
 //       they're cleared (secrets { [site]: until }). Older data (bandsFor): a save in a gone site stands in what took its
 //       place (the Old Barrows, Wickham Keep, the Canal Locks), a dungeon visit starts again at its first floor, the
 //       sites entered follow, and a board job under way is let go (its posting is drawn anew from the new dungeons).
+//   v32: the quests re-pointed (GDD §9 v1.49). The shape is unchanged, but three quests under way changed what they
+//       count. Older data (questsFor32): The Rolls under way starts again at its first step (the Choir, who counts at
+//       once if she's fallen); The Sickpools, ready before the Vatwarden was part of it, goes on to him; Standing Down's
+//       waves, held in the Old Barrows, start again in the Binding Crypt. Everything else carries over as it was.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -101,7 +105,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 31;
+export const SAVE_VERSION = 32;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -122,7 +126,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -177,6 +181,16 @@ export function bandsFor(data) {
   const out = { ...data, site, region: data.scene === 'dungeon' && SITES[site] ? SITES[site].region : data.region, secrets: data.secrets || {}, quests,
     sitesEntered: [...new Set((data.sitesEntered || []).map(to))] };
   return data.scene === 'dungeon' ? visitFor(out) : out;
+}
+/** v31 → v32: the quests whose steps changed, under way (see v32 above). A quest is [state, step, ...counters];
+ * 1 active, 2 ready, 3 done @param {any} data */
+export function questsFor32(data) {
+  if (!data || typeof data !== 'object' || !data.quests) return data;
+  const quests = { ...data.quests }, under = (v) => Array.isArray(v) && (v[0] === 1 || v[0] === 2);
+  if (under(quests.ch2_the_rolls)) quests.ch2_the_rolls = [1, 0, 0];
+  if (Array.isArray(quests.ch2_the_sickpools) && quests.ch2_the_sickpools[0] === 2 && quests.ch2_the_sickpools[1] === 0) quests.ch2_the_sickpools = [1, 1, 0];
+  if (Array.isArray(quests.brannoc_standing_down) && quests.brannoc_standing_down[0] === 1) quests.brannoc_standing_down = [1, 0, 0];
+  return { ...data, quests };
 }
 /** sites gone in v31, and what took their place @type {Record<string, string>} */
 export const GONE_SITES = { tithe_mill: 'barrows', scrag_warren: 'wickham_keep', sickpools: 'canal_locks' };

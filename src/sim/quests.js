@@ -19,7 +19,7 @@
 // Objective types (quest-lore-system §4.3), each counted in its site:
 //   waves   waves cleared (hall: only in a floor's stairs-down hall; floor: on that floor or deeper)
 //   loot    chests opened
-//   elites  elites slain
+//   elites  elites slain (floor: on that floor or deeper, v1.49)
 //   reach   the deepest floor reached (count = the floor, 1 = the first), going down after taking it
 //   fragment  Chronicle fragments found (lore.js 'fragmentFound')
 //   boss      a named boss put down in its site (battle.js 'bossDown'); one who already fell counts on accept
@@ -54,12 +54,19 @@ export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
 export const QUESTS = {
   vale_long_way_round: {
     kind: 'errand', giver: 'maudry_fenn', region: 'vale', level: [1, 9],
-    steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 4 }, { type: 'loot', site: 'barrows', count: 1 }] }],
+    steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 4, floor: 2 }, { type: 'loot', site: 'barrows', count: 1 }] }],   // (v1.49: among the dead, the Long Gallery; the Barrow Mouth is the Redhand's)
     rewards: { share: 0.25, lv: 2, gold: 40 },
   },
   vale_captains_ledger: {                            // Osric's bounty (world doc §5, v1.6): the bright-eyed ones lead every fifth wave
     kind: 'bounty', giver: 'osric_hale', region: 'vale', level: [2, 9],
-    steps: [{ id: 'barrows', objectives: [{ type: 'elites', site: 'barrows', count: 3 }] }],
+    steps: [{ id: 'barrows', objectives: [{ type: 'elites', site: 'barrows', count: 3, floor: 2 }] }],   // (v1.49: the dead's, on the second floor or deeper)
+    rewards: { share: 0.3, lv: 3, gold: 60 },
+  },
+  // (v1.49) Tobin Hask's errand at the barrow mouth (world doc v1.33 §3.1): the Quartermaster still issues, and the Long
+  // Gallery's dead keep standing up whole; put him down
+  tobin_last_chit: {
+    kind: 'errand', giver: 'tobin_hask', region: 'vale', level: [3, 30],
+    steps: [{ id: 'muster', objectives: [{ type: 'boss', site: 'barrows', boss: 'quartermaster', count: 1 }] }],
     rewards: { share: 0.3, lv: 3, gold: 60 },
   },
   vale_first_page: {                                 // Sister Ilse's errand (world doc §7, v1.6): bring her the first line of the Vale's Chronicle
@@ -84,29 +91,37 @@ export const QUESTS = {
     kind: 'chapter', giver: 'osric_hale', region: 'vale', level: [4, 30], after: ['ch1_smoke_over_the_vale'],
     steps: [{ id: 'keep', objectives: [{ type: 'reach', site: 'wickham_keep', count: 3 }] },
       { id: 'captain', objectives: [{ type: 'boss', site: 'wickham_keep', boss: 'redhand_captain', count: 1 }] }],
-    rewards: { share: 0.45, lv: 4, gold: 150 },
+    rewards: { share: 0.45, lv: 6, gold: 150 },
   },
   ch1_ember_in_the_fist: {
     kind: 'chapter', giver: 'osric_hale', turnin: 'sister_ilse', region: 'vale', level: [7, 30], after: ['ch1_the_diggers'],
     steps: [{ id: 'chapel', objectives: [{ type: 'boss', site: 'sunken_chapel', boss: 'robed_stranger', count: 1 }] }],
-    rewards: { share: 0.55, lv: 6, gold: 200 },
+    rewards: { share: 0.55, lv: 8, gold: 200 },
+  },
+  // (v1.49, world doc v1.33 §6) Act I's fourth: Ilse knows the shard for a spark cut out of one of the bound, and near the
+  // bound a spark stirs them; the robed men dug down to the Third Legion's binding under the chapel. Break the Standard's
+  // lamp and the legion lies down (and the barrows road opens: road.js, on the Standard's fall).
+  ch1_the_standard: {
+    kind: 'chapter', giver: 'sister_ilse', region: 'vale', level: [9, 30], after: ['ch1_ember_in_the_fist'],
+    steps: [{ id: 'standard', objectives: [{ type: 'boss', site: 'sunken_chapel', boss: 'standard', count: 1 }] }],   // (one who fell before counts: settle)
+    rewards: { share: 0.55, lv: 9, gold: 240 },
   },
   // Brannoc's chain, Chains of the Redhand (world doc §5, v1.7; docs/m5-plan.md §5): the debts he owes the
   // Company, the Paymaster's box, and a last stand with the legion that never deserted anything
   brannoc_old_debts: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30],
     steps: [{ id: 'keep', objectives: [{ type: 'elites', site: 'wickham_keep', count: 3 }] }],
-    rewards: { share: 0.35, lv: 4, gold: 90 },
+    rewards: { share: 0.35, lv: 6, gold: 90 },
   },
   brannoc_paymasters_box: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_old_debts'],
     steps: [{ id: 'strongroom', objectives: [{ type: 'loot', site: 'wickham_keep', count: 2, floor: 2 }] }],
-    rewards: { share: 0.3, lv: 5, gold: 120 },
+    rewards: { share: 0.3, lv: 6, gold: 120 },
   },
   brannoc_standing_down: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
-    steps: [{ id: 'barrows', objectives: [{ type: 'waves', site: 'barrows', count: 5, hall: true, floor: 2 }] }],   // (the Long Gallery's hall: a boss's hall goes quiet when he falls)
-    rewards: { share: 0.45, lv: 6, gold: 100, item: 'broken_chain' },
+    steps: [{ id: 'crypt', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 5, floor: 3 }] }],   // (v1.49: among the bound in the Binding Crypt, any room: the Standard's hall goes quiet once he falls)
+    rewards: { share: 0.45, lv: 9, gold: 100, item: 'broken_chain' },
   },
   // the class trials (world doc §5 v1.7; docs/m5-plan.md §6): at level 6, from Thornwick's people
   trial_hold_the_keep_gate: {
@@ -138,43 +153,44 @@ export const QUESTS = {
   // the Toadking has Wren, who reads his berth-book; the Kindler at the Locks; the Sickpools' cages; Teague at the
   // choir's door; the rolls off the Abbey's lowest floor to Mother Agnes; the Abbess, and back to Ilse with the ledger
   ch2_fog_on_the_canal: {
-    kind: 'chapter', giver: 'sister_ilse', turnin: 'dace_pike', region: 'fens', level: [10, 30], after: ['ch1_ember_in_the_fist'],
+    kind: 'chapter', giver: 'sister_ilse', turnin: 'dace_pike', region: 'fens', level: [10, 30], after: ['ch1_the_standard'],
     steps: [{ id: 'dace', objectives: [{ type: 'meet', npc: 'dace_pike', region: 'fens', count: 1 }] },
       { id: 'toadking', objectives: [{ type: 'boss', site: 'toadking_mound', boss: 'toadking', count: 1 }] },
       { id: 'wren', objectives: [{ type: 'meet', npc: 'wren', site: 'toadking_mound', count: 1 }] }],
-    rewards: { share: 0.35, lv: 9, gold: 220 },
+    rewards: { share: 0.35, lv: 12, gold: 220 },
   },
   ch2_the_locks: {
     kind: 'chapter', giver: 'dace_pike', region: 'fens', level: [13, 30], after: ['ch2_fog_on_the_canal'],
     steps: [{ id: 'kindler', objectives: [{ type: 'meet', npc: 'kindler', site: 'canal_locks', count: 1 }] },
       { id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 5, hall: true, floor: 2 }] }],
-    rewards: { share: 0.4, lv: 11, gold: 260 },
+    rewards: { share: 0.4, lv: 14, gold: 260 },
   },
   ch2_the_sickpools: {
     kind: 'chapter', giver: 'pim_rushlight', region: 'fens', level: [15, 30], after: ['ch2_the_locks'],
-    steps: [{ id: 'cages', objectives: [{ type: 'cages', site: 'canal_locks', count: 3 }] }],   // (v1.48: Vat Seven, the Locks' third floor)
-    rewards: { share: 0.4, lv: 12, gold: 280 },
+    steps: [{ id: 'cages', objectives: [{ type: 'cages', site: 'canal_locks', count: 3 }] },   // (v1.48: Vat Seven, the Locks' third floor)
+      { id: 'vatwarden', objectives: [{ type: 'boss', site: 'canal_locks', boss: 'vatwarden', count: 1 }] }],   // (v1.49: then the man who fills them)
+    rewards: { share: 0.4, lv: 15, gold: 280 },
   },
   ch2_the_bells: {
     kind: 'chapter', giver: 'sister_orla', region: 'fens', level: [16, 30], after: ['ch2_the_sickpools'],
     steps: [{ id: 'teague', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'teague', count: 1 }] }],
-    rewards: { share: 0.45, lv: 13, gold: 300 },
+    rewards: { share: 0.45, lv: 16, gold: 300 },
   },
   ch2_the_rolls: {
     kind: 'chapter', giver: 'sister_orla', turnin: 'mother_agnes', region: 'fens', level: [17, 30], after: ['ch2_the_bells'],
-    steps: [{ id: 'down', objectives: [{ type: 'reach', site: 'drowned_abbey', count: 3 }] },
-      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 3 }] }],
-    rewards: { share: 0.45, lv: 14, gold: 320 },
+    steps: [{ id: 'choir', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'drowned_choir', count: 1 }] },   // (v1.49: caught on the way up, under the Choir)
+      { id: 'rolls', objectives: [{ type: 'loot', site: 'drowned_abbey', count: 2, floor: 2 }] }],
+    rewards: { share: 0.45, lv: 17, gold: 320 },
   },
   ch2_the_last_office: {
     kind: 'chapter', giver: 'mother_agnes', turnin: 'sister_ilse', region: 'fens', level: [18, 30], after: ['ch2_the_rolls'],
     steps: [{ id: 'abbess', objectives: [{ type: 'boss', site: 'drowned_abbey', boss: 'abbess_below', count: 1 }] }],
-    rewards: { share: 0.55, lv: 15, gold: 400 },
+    rewards: { share: 0.55, lv: 18, gold: 400 },
   },
   // the level-12 trials (world doc v1.30 §5; docs/m8-plan.md slice 9): in the Fens, at 12, after the class's first
-  trial_the_long_watch: {                            // Osric: a fighter holds the Sluice ten waves, as the Watch holds a post
+  trial_the_long_watch: {                            // Osric: a fighter holds a hall ten waves, as the Watch holds a post
     kind: 'trial', giver: 'osric_hale', trial: 'fighter', trialLv: 12, region: 'fens', level: [1, 30],
-    steps: [{ id: 'sluice', objectives: [{ type: 'waves', site: 'canal_locks', count: 10, hall: true, floor: 2 }] }],
+    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 10, hall: true, floor: 2 }] }],   // (v1.49: the Mound's second-floor hall, 11; it was the Sluice, 14)
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
   trial_dead_water: {                                // Wren: the harvesters' leaders at the vats, unseen (v1.48: the Locks')
@@ -182,14 +198,14 @@ export const QUESTS = {
     steps: [{ id: 'vats', objectives: [{ type: 'elites', site: 'canal_locks', count: 5 }] }],
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
-  trial_lamp_oil: {                                  // Pim: a mage learns what burns in the vats (v1.48: Vat Seven, the Locks' third floor)
+  trial_lamp_oil: {                                  // Pim: a mage learns what burns in the lock halls' oil stores
     kind: 'trial', giver: 'pim_rushlight', trial: 'mage', trialLv: 12, region: 'fens', level: [1, 30],
-    steps: [{ id: 'vats', objectives: [{ type: 'waves', site: 'canal_locks', count: 8, floor: 3 }] }],
+    steps: [{ id: 'locks', objectives: [{ type: 'waves', site: 'canal_locks', count: 8 }] }],   // (v1.49: the Locks from their first floor, 13; it was Vat Seven, 15)
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
-  trial_vigil: {                                     // Mother Agnes: a cleric keeps a night's vigil in the Drowned Abbey
+  trial_vigil: {                                     // Mother Agnes: a cleric keeps a vigil on the Toadking's island, its burying-ground
     kind: 'trial', giver: 'mother_agnes', trial: 'cleric', trialLv: 12, region: 'fens', level: [1, 30],
-    steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 6 }] }],
+    steps: [{ id: 'mound', objectives: [{ type: 'waves', site: 'toadking_mound', count: 6, floor: 3 }] }],   // (v1.49: the Mound's burying-ground, 12; it was the Abbey, 16+)
     rewards: { share: 0.3, lv: 12, gold: 120 },
   },
   trial_the_old_water: {                             // Col: a shaman quiets the Toadking's island, where his grandmother wouldn't go
@@ -202,17 +218,17 @@ export const QUESTS = {
   wren_the_marker: {
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30],
     steps: [{ id: 'locks', objectives: [{ type: 'elites', site: 'canal_locks', count: 3 }] }],
-    rewards: { share: 0.35, lv: 10, gold: 150 },
+    rewards: { share: 0.35, lv: 13, gold: 150 },
   },
   wren_night_boats: {
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_the_marker'],
     steps: [{ id: 'vats', objectives: [{ type: 'loot', site: 'canal_locks', count: 2, floor: 3 }] }],
-    rewards: { share: 0.3, lv: 11, gold: 180 },
+    rewards: { share: 0.3, lv: 15, gold: 180 },
   },
   wren_settled: {                                   // (after The Bells: the hall she wants held is Brother Teague's until he falls)
     kind: 'companion', giver: 'wren', companion: 'wren', region: 'fens', level: [1, 30], after: ['wren_night_boats', 'ch2_the_bells'],
     steps: [{ id: 'abbey', objectives: [{ type: 'waves', site: 'drowned_abbey', count: 5, hall: true, floor: 1 }] }],
-    rewards: { share: 0.45, lv: 12, gold: 200, item: 'the_receipt' },
+    rewards: { share: 0.45, lv: 16, gold: 200, item: 'the_receipt' },
   },
 };
 export const TRIAL_LEVEL = 6;
@@ -256,7 +272,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('dialogue', (e) => count((o, n) => (o.type === 'meet' && o.npc === e.npc ? n + 1 : n)));          // (M8) a word with someone
   bus.on('cageBroken', () => count((o, n) => (o.type === 'cages' && siteHere(o.site) ? n + 1 : n)));      // (M8) a full cage broken, by a tap or the company
-  bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) ? n + 1 : n)); });
+  bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? Math.max(n + 1, heldAt(o.site)) : n)));
   bus.on('bossDown', (e) => count((o, n) => (o.type === 'boss' && o.boss === e.id && siteHere(o.site) ? n + 1 : n)));
   // a floor change inside a site (arriving from the overland or loading a save carry a scene, and don't count)
@@ -341,7 +357,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     /** @type {Record<string, number>} */
     const v = {};
     for (const [id, d] of Object.entries(QUESTS)) if (d.giver === npc || takerOf(d) === npc || d.steps.some((s) => s.objectives.some((o) => o.npc === npc))) { v['q_' + id] = status(id); v['s_' + id] = inst(id) ? inst(id).step : 0; }   // (s_: the step it's on, M8: who's met along the way reads where it stands)
-    v.chapters_done = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter' && status(id) === QS.DONE).length;   // (anyone may say where the story's got to: 3 = Act I over, 9 = Act II)
+    v.chapters_done = Object.keys(QUESTS).filter((id) => QUESTS[id].kind === 'chapter' && status(id) === QS.DONE).length;   // (anyone may say where the story's got to: 4 = Act I over, 10 = Act II)
     return v;
   }
   /** the tracked quest's next place, as a compass row made from one of the rows already listed
@@ -358,8 +374,14 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     const away = (r) => (world.kind === 'town' ? pick('road-out') : world.kind === 'dungeon' ? pick('exit') : pick('land:' + r));
     const talkTo = (npc) => { const n = (world.npcs || []).find((x) => x.id === npc); return n ? { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: world.kind === 'town' ? 'in town' : 'here', steps: 0 } : null; };
     const takerRegion = (NPCS[takerOf(d)] || {}).region;
+    const tk = NPCS[takerOf(d)], kept = tk && tk.found && !tk.visitor && !withUs(takerOf(d)) ? tk.found : null;   // (v1.49: a keeper by a dungeon's way in, Tobin: back to him there)
     if (q.st === QS.READY && d.kind !== 'board' && !(d.companion && withUs(d.companion)) && takerRegion && takerRegion !== here) base = away(takerRegion);
-    else if (q.st === QS.READY) {
+    else if (q.st === QS.READY && kept) {
+      if (world.kind === 'dungeon' && siteHere(kept.site) && floorHere() === kept.depth + 1) base = talkTo(takerOf(d));
+      else if (world.kind === 'dungeon') base = pick('exit');                                 // (a deeper floor's exit is its stairs up)
+      else if (world.kind === 'town') base = pick('road-out');
+      else base = pick('site:' + kept.site);
+    } else if (q.st === QS.READY) {
       if (d.companion && withUs(d.companion)) return rows;           // he's with you: hand it in from his card
       if (world.kind === 'town') {
         if (d.kind === 'board') base = pick('square');                 // the board is in the tavern, off the square (none once you're there)

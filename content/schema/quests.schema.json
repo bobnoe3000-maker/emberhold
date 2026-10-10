@@ -181,6 +181,11 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 48
+                    },
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "on this floor or deeper (v1.49: the Barrows' dead, not the Redhand at their door)"
                     }
                   }
                 },

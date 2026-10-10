@@ -136,12 +136,13 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   goTo(sim, 'dungeon', 'wickham_keep', 1); for (let i = 0; i < 2; i++) sim.bus.emit('looted', { kind: 'chest' });
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); assert.equal(st('brannoc_paymasters_box'), QS.DONE);
   card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
-  // the Long Gallery's hall, the Barrows' second floor (v1.48: the third floor's is the Quartermaster's, and a boss's hall
-  // goes quiet when he falls): a wave on the first floor's hall, or in another room, doesn't count
-  goTo(sim, 'dungeon', 'barrows', 0); sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
-  goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('wave', { cleared: true, room: sim.world.level.entrance.id });
+  // the Binding Crypt, the Sunken Chapel's third floor, among the bound (v1.49; it was the Barrows' Long Gallery): a wave
+  // in the Barrows, or on the chapel's floors above, doesn't count; any room of the crypt does
+  goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
+  goTo(sim, 'dungeon', 'sunken_chapel', 1); sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
   assert.deepEqual(sim.state.quests.brannoc_standing_down.n, [0]);
-  for (let i = 0; i < 5; i++) sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
+  goTo(sim, 'dungeon', 'sunken_chapel', 2); const crypt = sim.world.level.rooms.find((r) => r !== sim.world.level.entrance && r !== sim.world.level.descentRoom);
+  for (let i = 0; i < 5; i++) sim.bus.emit('wave', { cleared: true, room: crypt.id });
   assert.equal(st('brannoc_standing_down'), QS.READY);
   assert.deepEqual(sim.destinations().filter((r) => r.id === 'quest'), [], 'no compass row: hand it in from his card');
   const bag = sim.state.bag.length;

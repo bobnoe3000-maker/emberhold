@@ -16,7 +16,7 @@ import { storyStatus } from '../src/ui/storystatus.js';
 import { hire } from './fixtures/hire.mjs';
 
 const SEED = 20260807;
-const ACT1 = ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist'];
+const ACT1 = ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch1_the_standard'];   // (v1.49: Act I's four)
 const snap = (sim) => JSON.parse(JSON.stringify(sim.snapshot()));
 const goTo = (sim, scene, site = 'barrows', depth = 0, region) => sim.restore({ ...snap(sim), scene, site, depth, floors: [], ...(region ? { region } : {}) });
 const events = (sim, names) => { const out = []; for (const n of names) sim.bus.on(n, (e) => out.push({ n, ...e })); return out; };
@@ -112,19 +112,25 @@ test('freed before the chapter asked, Wren\'s word is already had; the Kindler h
   assert.equal(sim.state.quests.ch2_the_locks.step, 1, 'he won\'t be back to be heard: on to the Sluice');
 });
 
-test('the new objectives: full cages broken at the Canal Locks (Vat Seven); chests on the Abbey\'s third floor, not its first', () => {
+test('the new objectives: full cages broken at the Canal Locks (Vat Seven), then the Vatwarden; the Choir, then chests on the Abbey\'s second floor, not its first', () => {
   const sim = after1(17);
   sim.state.quests.ch2_the_sickpools = { st: QS.ACTIVE, step: 0, n: [0] };
-  sim.state.quests.ch2_the_rolls = { st: QS.ACTIVE, step: 1, n: [0] };
+  sim.state.quests.ch2_the_rolls = { st: QS.ACTIVE, step: 0, n: [0] };
   goTo(sim, 'dungeon', 'toadking_mound', 2); sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
   assert.deepEqual(sim.state.quests.ch2_the_sickpools.n, [0], 'not in the Mound');
   goTo(sim, 'dungeon', 'drowned_abbey', 0); sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
   assert.deepEqual(sim.state.quests.ch2_the_sickpools.n, [0], 'nor in the Abbey');
   goTo(sim, 'dungeon', 'canal_locks', 2); for (let i = 0; i < 3; i++) sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
+  assert.deepEqual([st(sim, 'ch2_the_sickpools'), sim.state.quests.ch2_the_sickpools.step], [QS.ACTIVE, 1], 'the cages, then the man who fills them (v1.49)');
+  sim.bus.emit('bossDown', { id: 'vatwarden' });
   assert.equal(st(sim, 'ch2_the_sickpools'), QS.READY);
+  goTo(sim, 'dungeon', 'drowned_abbey', 1); sim.bus.emit('looted', { kind: 'chest' });
+  assert.deepEqual([sim.state.quests.ch2_the_rolls.step, sim.state.quests.ch2_the_rolls.n], [0, [0]], 'the Choir first (v1.49)');
+  sim.bus.emit('bossDown', { id: 'drowned_choir' });
+  assert.equal(sim.state.quests.ch2_the_rolls.step, 1);
   goTo(sim, 'dungeon', 'drowned_abbey', 0); sim.bus.emit('looted', { kind: 'chest' });
   assert.deepEqual(sim.state.quests.ch2_the_rolls.n, [0], 'the first floor\'s chests aren\'t the rolls');
-  goTo(sim, 'dungeon', 'drowned_abbey', 2); sim.bus.emit('looted', { kind: 'chest' }); sim.bus.emit('looted', { kind: 'chest' });
+  goTo(sim, 'dungeon', 'drowned_abbey', 1); sim.bus.emit('looted', { kind: 'chest' }); sim.bus.emit('looted', { kind: 'chest' });
   assert.equal(st(sim, 'ch2_the_rolls'), QS.READY);
 });
 
@@ -200,5 +206,5 @@ test('Settled waits for The Bells (the hall she wants held is Teague\'s until he
   assert.equal(st(sim, 'wren_settled'), QS.AVAILABLE);
   const ev = events(sim, ['dialogue']);
   goTo(sim, 'town', 'barrows', 0, 'vale'); talk(sim, 'maudry_fenn');
-  assert.equal(ev.at(-1).vars.chapters_done, 4, 'Act I and The Bells');
+  assert.equal(ev.at(-1).vars.chapters_done, 5, 'Act I (four, v1.49) and The Bells');
 });

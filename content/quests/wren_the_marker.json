@@ -28,7 +28,7 @@
   "done": "You took the marker's three pieces off the Cult's harvesters. Wren put them together, read them once, and burned them.",
   "rewards": {
     "share": 0.35,
-    "lv": 10,
+    "lv": 13,
     "gold": 150
   },
   "dialogue": {
