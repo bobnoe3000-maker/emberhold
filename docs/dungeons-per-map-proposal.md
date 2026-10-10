@@ -47,8 +47,8 @@ no cap per map to keep.
 
 - **A dungeon is a band of three levels:**
   - three floors, a level each;
-  - every room on a floor at its floor's level, but its last two rooms a level up, capped at the band's top (rooms
-    still pay for their danger);
+  - every room on a floor at its floor's level, but the two rooms before its hall a level up, capped at the band's
+    top (rooms still pay for their danger); the hall keeps its floor's level;
   - its boss in floor 3's last hall, at the band's top.
 - **The bands run on without a gap or an overlap:** 1–3, 4–6, 7–9, 10–12 and so on, across the maps.
 - **What doesn't count, because it isn't a grind:**
@@ -368,7 +368,8 @@ The critique changes six things; the rest stands.
    the imperial stone: pools, stalagmites, boulders, a dripping fringe at the walls. It's the cave kit's first use,
    and the Keep's floors become a fort's, a barracks' and a cave's.
 3. **Rooms still pay for their danger, inside the band.** A floor's level is the band's base + its number − 1, as
-   planned, but **its last two rooms are a level up, capped at the band's top**:
+   planned, but **the two rooms before its hall are a level up, capped at the band's top** (as built: the hall keeps
+   its floor's level, so a floor's boss meets the party at the floor's own level):
    - floor 1: 1–2;
    - floor 2: 2–3;
    - floor 3: 3 (the boss's floor).
@@ -414,3 +415,40 @@ The critique changes six things; the rest stands.
 5. **Art source:** add KayKit's *Dungeon Remastered* (CC0) for crypt and keep furniture, or procedural props only?
 6. **Old Skarn as the Bailey's guest**, or let the goblins go with the Warren?
 7. **The endless Barrows go** (the Tower is the endless climb): agreed?
+
+---
+
+## 6. As built: phase 1, with the Fens (2026-10-10)
+
+The owner's call took the Fens in with the Vale, so phases 1 and 3 shipped together. Save v31.
+
+- **The bands** (`src/sim/sites.js`, `band: true`; `roomLevelAt`): the Old Barrows 1–3, Wickham Keep 4–6, the Sunken
+  Chapel 7–9, Toadking's Mound 10–12, the Canal Locks 13–15 and the Drowned Abbey 16–18. Each has three floors; the
+  two rooms before a floor's hall are a level up, and the hall keeps its floor's level.
+- **Floors with their own looks and foes** (`themes`, `families`): the Barrows' mouth is the Redhand's dig (the
+  diggers), and its galleries are a crypt (`crypt`); the Keep's cellars go down into a cave (`cave`) the Redhand are
+  digging; the Locks' third floor is Vat Seven, the old Sickpools, with the Harvest's people.
+- **Out of the Vale:** the Tithe Mill and the Scrag Warren are parked for the Reach (`parked: true`), and the Mill
+  stands on the overland as a landmark. The Sickpools' own site is gone. Saves made inside a gone site wake up at the
+  dungeon that took it over (`GONE_SITES` in `persist/save.js`), and a save made inside a dungeon starts again at its
+  first floor.
+- **Bosses:** the Quartermaster (*Issue*) holds the Barrows' Muster Hall, and the Vatwarden (*Sluice*) holds Vat
+  Seven. Both are new, and their looks are baked (variants B4 and FB5). The Standard holds the Chapel's last hall;
+  Old Skarn is the Bailey's guest (the Keep, floor 1). The Fens' four keep their mechanics at their new halls.
+  Measured in GDD §17 (all ten win at the hall's level, lowest HP 55–82 %).
+- **Secret dungeons** (`secret: true`): the Ninth Milestone (9) and the Reedholm Undercroft (18). Each seals for two
+  hours of play once its vault chest is opened (`SECRET_REST`, `state.secrets`), with a toast on the way out and at
+  the sealed door.
+- **Quests, the board and the compass:** every quest, trial, fragment and lead points at its new place (the Vale's
+  errands run 1–9, Act II 10–18). Brannoc's *Standing Down* is in the Long Gallery, the Barrows' floor-2 hall,
+  because the Quartermaster's own hall goes quiet once he falls. Each town's board sends you to the dungeon that holds
+  your level (sometimes the one below), and a warden job only goes to a hall with no boss. A chest job's compass now
+  makes for chests only (shrines have their own row), and goes down a floor when the floor runs out of them.
+- **A repair to v1.47's reach** (GDD §17): the Choir's singers hold near her, and drummed shooters close to half their
+  reach before they shoot.
+
+**Left for phase 2 (the looks):**
+- the dressing kits and the props built in code;
+- pools, light tints, and the entrance NPCs (Tobin Hask, Ned Fallow, Hester Lowe);
+- the Quartermaster's own colours: he shares the Standard's body and red scarf and is told apart by his blade and
+  keys.

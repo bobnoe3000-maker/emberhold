@@ -313,9 +313,9 @@ it's where everyone starts.
     most broken of his ranks stands up whole, re-armed from his racks. Thornwick's sexton, **Tobin Hask**, keeps a
     lantern at the barrow mouth and the dead's names in a book nobody asked him to keep.
   - **Wickham Keep** (4–6), a fort, then a cave: *the Bailey* (the Company's camp), *the Barracks* (bunks, the
-    armoury and the paymaster's strongroom; Brannoc waits here), *the Old Cellars*, where the Redhand dug through the
+    armoury and the paymaster's strongroom), *the Old Cellars*, where the Redhand dug through the
     imperial stone and broke into a cave under it: pools, stone teeth up out of the floor, the roof's water coming
-    down. **Captain Garrow** holds the cellars. **Old Skarn** and his band came down out of the hills with a cart of
+    down. **Captain Garrow** holds the cellars, and keeps Brannoc there. **Old Skarn** and his band came down out of the hills with a cart of
     stolen hens to sell the Company, and are in the bailey haggling, drum and all. The Redhand hold **Ned Fallow**,
     the Tithe Mill's miller, in the bailey for Lord Pellam's ransom, which Lord Pellam hasn't paid.
   - **The Sunken Chapel** (7–9), a chapel the river has half swallowed: *the Nave* (pews under water, fallen saints,
