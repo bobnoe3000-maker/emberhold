@@ -11,17 +11,17 @@
     30
   ],
   "companion": "wren",
-  "summary": "Wren says the harvesters' leaders in the Sickpools never look behind them, because nothing there ever has. Get behind five, and she'll teach your rogues what she puts on her knives (the rogue's level-12 skill).",
+  "summary": "Wren says the harvesters' leaders at the vats never look behind them, because nothing down there ever has. Get behind five, and she'll teach your rogues what she puts on her knives (the rogue's level-12 skill).",
   "steps": [
     {
-      "id": "pools",
-      "journal": "Defeat five harvesters' leaders in the Sickpools. They lead every fifth wave there.",
+      "id": "vats",
+      "journal": "Defeat five of the Canal Locks' wave-leaders. At Vat Seven, the third floor, they're the harvesters'.",
       "objectives": [
         {
           "type": "elites",
-          "site": "sickpools",
+          "site": "canal_locks",
           "count": 5,
-          "label": "Harvesters' leaders"
+          "label": "Wave-leaders at the Locks"
         }
       ]
     }

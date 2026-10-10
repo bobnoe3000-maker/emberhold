@@ -254,6 +254,9 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   const sites = {};
   sim.bus.on('siteRevealed', (e) => toast(`${(sites[e.site] || e).name} is open to you. It's on the compass now.`, 3200));
   sim.bus.on('siteShut', (e) => { const w = sites[e.site]; if (w && w.shut) toast(w.shut, 2800); });
+  // (v1.48) a secret site rests after it was cleared, then can be walked again (sim core.js state.secrets)
+  sim.bus.on('secretSealed', (e) => toast(`${(sites[e.site] || { name: 'It' }).name} seals itself behind you. It will open again in two hours.`, 3600));
+  sim.bus.on('siteSealed', (e) => toast(`${(sites[e.site] || { name: 'It' }).name} is sealed. It opens again in ${e.mins} minute${e.mins === 1 ? '' : 's'}.`, 3000));
   sim.bus.on('landShut', (e) => { if (e.line) toast(e.line, 3200); });   // the road to a land not yet open (regions.js; outdoor.js has its words)
 
   // the words: one file per quest the sim knows, and the board's templates

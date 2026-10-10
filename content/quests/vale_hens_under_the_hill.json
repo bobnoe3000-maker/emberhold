@@ -5,18 +5,18 @@
   "giver": "hedda",
   "region": "vale",
   "level": [
-    2,
+    4,
     30
   ],
-  "summary": "Hedda has lost four hens since the thaw, and it wasn't a fox. The hill goblins under the north range have found the carters going the long way round, and come down for whatever else they can carry. She wants their chief told.",
+  "summary": "Hedda has lost four hens since the thaw, and it wasn't a fox. Old Skarn and his goblins came down out of the hills with a cartful of the Vale's poultry, and they're selling it to the Redhand in Wickham Keep's bailey. Tell their chief.",
   "steps": [
     {
-      "id": "warren",
-      "journal": "Go down two floors into the Scrag Warren, at the foot of the north range past the mill, and put down Old Skarn, the goblin chief who drums.",
+      "id": "bailey",
+      "journal": "Go to Wickham Keep and find Old Skarn in the last hall of the Bailey, the Keep's first floor, haggling with his drum. Put him down.",
       "objectives": [
         {
           "type": "boss",
-          "site": "scrag_warren",
+          "site": "wickham_keep",
           "boss": "goblin_chief",
           "count": 1,
           "label": "Old Skarn put down"
@@ -25,9 +25,10 @@
     }
   ],
   "ready": "Go back to Hedda, by the well in Thornwick.",
-  "done": "Old Skarn's drum is quiet. Hedda won't get her four hens back, but nobody else will lose theirs.",
+  "done": "Old Skarn's drum is quiet. Hedda won't get her four hens back; the Redhand ate them. But nobody else will lose theirs.",
   "rewards": {
-    "share": 0.3, "lv": 4,
+    "share": 0.3,
+    "lv": 4,
     "gold": 70
   },
   "dialogue": {

@@ -26,7 +26,7 @@ test('accepted only in conversation with Maudry, once, and only at the right lev
   say(sim, 'accept'); assert.equal(status(sim), QS.ACTIVE); assert.equal(sim.state.tracked, ID);
   say(sim, 'accept'); assert.deepEqual(sim.state.quests[ID], { st: QS.ACTIVE, step: 0, n: [0, 0] });
   say(sim, 'turnin'); assert.equal(status(sim), QS.ACTIVE, 'not done yet');
-  const old = town(); old.state.party[0].level = 9; assert.equal(old.quests.status(ID), QS.LOCKED);
+  const old = town(); old.state.party[0].level = 10; assert.equal(old.quests.status(ID), QS.LOCKED, 'past the Vale (1–9, v1.48): the Fens\' 10 is too high');
   talkNow(old); assert.equal(old.state.quests[ID], undefined);
   const ev = events(old, ['dialogue']); old.commands.push({ type: 'endTalk' }); old.tick(); talkNow(old);
   assert.equal(ev[0].vars['q_' + ID], QS.LOCKED, 'Ink reads the status');

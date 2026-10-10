@@ -31,7 +31,7 @@ import { levelShare } from './party.js';
 
 export const MAX_JOBS = 3;                 // board jobs open (active or ready) at once
 export const KEEP_DONE = 12;               // finished board jobs kept for the Journal's Completed tab
-const SITE = 'barrows';                    // the Vale's one site so far; more with M5
+const SITE = 'barrows';                    // (a template's objective names the site its posting picks: landOffers)
 const floorLv = (f) => 1 + ROOM_LEVELS_PER_FLOOR * (f - 1);     // a floor's first rooms (world.js rankRooms)
 const hallLv = (f) => floorLv(f) + 3;                           // its stairs-down hall comes last: 2–3 higher (measured, 4 seeds × 4 floors)
 // No job asks for a place more than two levels above the hero: three above defeats you (GDD balance).
@@ -95,52 +95,45 @@ const cache = new Map();
 /** A posting's jobs. @param {number} seed @param {number} day @param {number} lv @param {number} [half] 0 dawn · 1 dusk @returns {Job[]} */
 export function boardOffers(seed, day, lv, half = 0) {
   const key = `${seed}_${day}_${lv}_${half}`; if (cache.has(key)) return cache.get(key);
-  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0), STREAM.BOARD));
-  const pool = TEMPLATES.filter((t) => BOARD[t].min(lv));
-  for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  const jobs = pool.slice(0, lv >= 4 ? 4 : 3).map((tpl, slot) => {
-    const T = BOARD[tpl], s = T.size(rng, lv), target = T.target(s, lv), skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv);
-    /** @type {[number, number]} */ const pick = [rng(), rng()];              // the words: a title / hook and a poster (content/board)
-    return { id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
-      kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region: 'vale', level: /** @type {[number, number]} */ ([lv, lv]),
-      steps: [{ id: 'job', objectives: [T.objective(s)] }], rewards: rewardFor(T.effort(s), lv, skulls) };
-  });
-  if (cache.size > 64) cache.clear();
-  cache.set(key, jobs);
-  return jobs;
+  const jobs = landOffers(seed, day, lv, half, 'vale'); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
 }
-// ── the Fens' board (Saltmere's, M8) ─────────────────────────────────────────────────────────────────────────
-// Each job picks one of the Fens' open sites a party at the hero's level can take on (its first rooms no more than
-// two levels up; the lowest if none), and asks for its waves, chests or elites, a floor of it, or its stair hall.
-// A site's floor and hall levels are its own (sites.js), not the Old Barrows' formula.
-const siteFloorLv = (S, f) => S.base + S.perFloor * (f - 1);
-const siteHallLv = (S, f) => siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2);
-const FENS_SITES = SITE_IDS.filter((id) => SITES[id].region === 'fens' && !SITES[id].hidden);
+// ── a land's board (v1.48, one dungeon a level: GDD §3) ──────────────────────────────────────────────
+// Each job picks the land's dungeon whose band holds the hero's level (the one below it, now and then, for an easier
+// job; the land's last if the hero is past them all), and asks for its waves, chests or elites, a floor of it, or a
+// floor's stair hall. A floor's and a hall's level are the dungeon's own (sites.js roomLevelAt: a band's floor is its
+// base + floor − 1, and the hall keeps its floor's level). The Vale's posting keeps its stream and its ids; Saltmere's
+// has its own (M8), so nothing one land draws moves the other's.
+const siteFloorLv = (S, f) => (S.band ? S.base + (f - 1) : S.base + S.perFloor * (f - 1));
+const siteHallLv = (S, f) => (S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
+const landSites = (region) => SITE_IDS.filter((id) => SITES[id].region === region && SITES[id].band && !SITES[id].hidden && !SITES[id].parked);
 /** @type {Record<string, (S: any, rng: () => number, lv: number) => ({ s: Size, target: number } | null)>} */
-const FENS_SIZE = {
+const LAND_SIZE = {
   hold: (S, rng, lv) => ({ s: { n: 3 + ((rng() * 4) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
   retrieve: (S, rng, lv) => ({ s: { n: 1 + ((rng() * 3) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
   bounty: (S, rng, lv) => ({ s: { n: 1 + ((rng() * 2) | 0), floor: 0 }, target: Math.max(S.base, Math.min(lv, siteHallLv(S, S.floors))) }),
   delve: (S, rng, lv) => { let top = 1; while (top < S.floors && siteFloorLv(S, top + 1) <= lv + 2) top++; if (top < 2) return null; const f = 2 + ((rng() * (top - 1)) | 0); return { s: { n: 0, floor: f }, target: siteFloorLv(S, f) }; },
-  warden: (S, rng, lv) => { let top = 0; while (top < S.floors && siteHallLv(S, top + 1) <= lv + 2) top++; if (top < 1) return null; const f = 1 + ((rng() * top) | 0); return { s: { n: 2 + ((rng() * 2) | 0), floor: f }, target: siteHallLv(S, f) }; },
+  // (a boss's hall goes quiet once he falls, so a Warden job holds a hall with no boss in it)
+  warden: (S, rng, lv) => { const ok = []; for (let f = 1; f <= S.floors && siteHallLv(S, f) <= lv + 2; f++) if (!(S.bosses && S.bosses[f])) ok.push(f); if (!ok.length) return null; const f = ok[(rng() * ok.length) | 0]; return { s: { n: 2 + ((rng() * 2) | 0), floor: f }, target: siteHallLv(S, f) }; },
 };
-const FENS_EFFORT = { hold: (s) => s.n, retrieve: (s) => 2 * s.n, bounty: (s) => 5 * s.n, delve: (s) => 3 * (s.floor - 1) + 1, warden: (s) => s.n + 2 * (s.floor - 1) + 1 };
-/** Saltmere's posting: its own stream, so nothing the Vale's board draws moves. @param {number} seed @param {number} day @param {number} lv @param {number} half @returns {Job[]} */
-function fensOffers(seed, day, lv, half) {
-  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ 0x7e55, STREAM.BOARD));
-  const near = FENS_SITES.filter((id) => SITES[id].base <= lv + 2), sites = near.length ? near : [FENS_SITES[0]];
+const LAND_EFFORT = { hold: (s) => s.n, retrieve: (s) => 2 * s.n, bounty: (s) => 5 * s.n, delve: (s) => 3 * (s.floor - 1) + 1, warden: (s) => s.n + 2 * (s.floor - 1) + 1 };
+/** a land's posting @param {number} seed @param {number} day @param {number} lv @param {number} half @param {string} region @returns {Job[]} */
+function landOffers(seed, day, lv, half, region) {
+  const fens = region === 'fens';
+  const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ (fens ? 0x7e55 : 0), STREAM.BOARD));
+  const all = landSites(region), at = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + SITES[id].floors - 1);
+  const yours = at >= 0 ? at : lv < SITES[all[0]].base ? 0 : all.length - 1, sites = yours > 0 ? [all[yours], all[yours], all[yours - 1]] : [all[yours]];
   const pool = [...TEMPLATES];
   for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const jobs = [];
   for (const tpl of pool) {
-    if (jobs.length >= 4) break;
-    const site = sites[(rng() * sites.length) | 0], S = SITES[site], got = FENS_SIZE[tpl](S, rng, lv); if (!got) continue;
-    const { s, target } = got, slot = jobs.length, skulls = skullsFor(target, lv), company = target >= 4 && target >= lv - 1;   // (every Fens room is 8+: one near your level wants company)
+    if (jobs.length >= (lv >= 4 ? 4 : 3)) break;
+    const site = sites[(rng() * sites.length) | 0], S = SITES[site], got = LAND_SIZE[tpl](S, rng, lv); if (!got) continue;
+    const { s, target } = got, slot = jobs.length, skulls = skullsFor(target, lv), company = companyFor(tpl, target, lv) || (fens && target >= lv - 1);
     /** @type {[number, number]} */ const pick = [rng(), rng()];
-    const base = BOARD[tpl].objective(s), objective = { ...base, site };
-    jobs.push({ id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}_fens`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
-      kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region: 'fens', site, level: /** @type {[number, number]} */ ([lv, lv]),
-      steps: [{ id: 'job', objectives: [objective] }], rewards: rewardFor(FENS_EFFORT[tpl](s), lv, skulls) });
+    const objective = { ...BOARD[tpl].objective(s), site };
+    jobs.push({ id: `board_${day}${half ? 'd' : ''}_${lv}_${slot}${fens ? '_fens' : ''}`, tpl, day, half, lv, slot, n: s.n, floor: s.floor, skulls, company, pick,
+      kind: /** @type {'board'} */ ('board'), giver: 'lantern_guild', region, site, level: /** @type {[number, number]} */ ([lv, lv]),
+      steps: [{ id: 'job', objectives: [objective] }], rewards: rewardFor(LAND_EFFORT[tpl](s), lv, skulls) });
   }
   return jobs;
 }
@@ -148,7 +141,7 @@ function fensOffers(seed, day, lv, half) {
 export function offersIn(seed, day, lv, half, region = 'vale') {
   if (region !== 'fens') return boardOffers(seed, day, lv, half);
   const key = `${seed}_${day}_${lv}_${half}_fens`; if (cache.has(key)) return cache.get(key);
-  const jobs = fensOffers(seed, day, lv, half); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
+  const jobs = landOffers(seed, day, lv, half, 'fens'); if (cache.size > 64) cache.clear(); cache.set(key, jobs); return jobs;
 }
 const ID = /^board_(\d+)(d?)_(\d+)_(\d)(_fens)?$/;
 /** a job from its id alone (null if it isn't one) @param {number} seed @param {string} id */

@@ -5,29 +5,29 @@
   "giver": "osric_hale",
   "region": "vale",
   "level": [
-    3,
+    4,
     30
   ],
   "after": [
     "ch1_smoke_over_the_vale"
   ],
-  "summary": "The Redhand you drove out of the Tithe Mill went to Wickham Keep, under a Captain Garrow. Osric Hale has heard they are digging in its cellars. Bandits don't dig, so somebody must be paying them to.",
+  "summary": "The Redhand you drove out of the Old Barrows went back to Wickham Keep, under a Captain Garrow. Osric Hale has heard they are digging under its cellars. Bandits don't dig, so somebody must be paying them to.",
   "steps": [
     {
       "id": "keep",
-      "journal": "Go to Wickham Keep, on the Wickham road north of the crossroads, and take the stairs down to its second floor.",
+      "journal": "Go to Wickham Keep, on the Wickham road north of the crossroads, and go down to its third floor, the Old Cellars, where the digging is.",
       "objectives": [
         {
           "type": "reach",
           "site": "wickham_keep",
-          "count": 2,
-          "label": "Down to the Keep's second floor"
+          "count": 3,
+          "label": "Down to the Old Cellars"
         }
       ]
     },
     {
       "id": "captain",
-      "journal": "Captain Garrow waits in the stair hall of the Keep's second floor (the room with the stairs down). Defeat him; his men come when he shouts.",
+      "journal": "Captain Garrow holds the last hall of the Old Cellars. Defeat him; his men come when he shouts.",
       "objectives": [
         {
           "type": "boss",
@@ -42,7 +42,8 @@
   "ready": "Go back to Osric Hale at the Watch post by Thornwick's well. Garrow kept a ledger; Osric will want it.",
   "done": "You defeated Captain Garrow in Wickham Keep. His ledger says robed strangers paid him to dig at the Sunken Chapel.",
   "rewards": {
-    "share": 0.45, "lv": 4,
+    "share": 0.45,
+    "lv": 4,
     "gold": 150
   },
   "dialogue": {

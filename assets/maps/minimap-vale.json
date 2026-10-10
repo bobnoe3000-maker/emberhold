@@ -22,12 +22,6 @@
   },
   {
    "kind": "site",
-   "id": "tithe_mill",
-   "x": 91,
-   "y": 114.5
-  },
-  {
-   "kind": "site",
    "id": "wickham_keep",
    "x": 168,
    "y": 52
@@ -43,12 +37,6 @@
    "id": "ninth_milestone",
    "x": 236.5,
    "y": 45.5
-  },
-  {
-   "kind": "site",
-   "id": "scrag_warren",
-   "x": 110.3,
-   "y": 24.3
   },
   {
    "kind": "land",

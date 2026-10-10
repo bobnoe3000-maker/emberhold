@@ -9,17 +9,17 @@
     1,
     30
   ],
-  "summary": "Col the carter's grandmother was a hedge-caller. If your company quiets the goblins on the long way round, he'll show your shamans the breath she taught him (the shaman's level-6 skill).",
+  "summary": "Col the carter's grandmother was a hedge-caller. The old Wickham road runs under the Keep's cellars, older than the Keep. If your company holds there, he'll show your shamans the breath she taught him (the shaman's level-6 skill).",
   "steps": [
     {
-      "id": "warren",
-      "journal": "Hold six waves in the Scrag Warren, at the foot of the north range past the mill, where the long way round runs.",
+      "id": "keep",
+      "journal": "Hold six waves in Wickham Keep, on the Wickham road north of the crossroads.",
       "objectives": [
         {
           "type": "waves",
-          "site": "scrag_warren",
+          "site": "wickham_keep",
           "count": 6,
-          "label": "Waves held in the Scrag Warren"
+          "label": "Waves held in Wickham Keep"
         }
       ]
     }
@@ -27,7 +27,8 @@
   "ready": "Go back to Col the carter, in Thornwick's square.",
   "done": "Col taught your shamans Ancestors' Breath, the way his grandmother taught him: one for you, one for them.",
   "rewards": {
-    "share": 0.3, "lv": 6,
+    "share": 0.3,
+    "lv": 6,
     "gold": 60
   },
   "dialogue": {

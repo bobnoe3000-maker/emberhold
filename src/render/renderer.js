@@ -48,10 +48,11 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
   fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
   redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn',
-  toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess' };   // (M8.6: the Fens' four)
+  toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess',   // (M8.6: the Fens' four)
+  quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden' };   // (v1.48)
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
-const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
+const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
 // walk-cycle length in tiles (one full loop of the baked walk clip): frames advance with
 // distance, so this sets the stride — hero/companion run (Running_A), skeleton shamble
 const STRIDE = { hero: 4.5, skel: 3.2, walk: 2.2 };   // tiles a cycle, from the baked feet: the party's run ~50 px of screen travel, the Ashbound's shuffle ~36 px;
@@ -635,6 +636,7 @@ export function createRenderer(canvas, sim, input) {
   // (capture 1, 2026-10-05: mud tinted toward the mire's own brown vanished into it, and a rippling sheen drew the water as
   // neon stripes; now the mud is near-black with a pale wet rim, and the water a deep teal with sparse glints)
   const MUD_RGB = [26, 20, 14], MUD_RIM = [128, 104, 64], WATER_RGB = [16, 54, 64];
+  const SLUICE_RGB = [24, 40, 14], SLUICE_RIM = [104, 132, 52];   // (v1.48) the Vatwarden's sluice: the vat's sick water, green-black with a bilious rim
   function tintGround(px, py, h, rgb, a, glint) {
     if (px < 0 || py < 0 || px >= nvw || py >= nvh) return;
     const i = (py * nvw + px) * 4; if (sNRM[i + 3] > Math.min(255, h * 4) + 8) return;
@@ -650,7 +652,8 @@ export function createRenderer(canvas, sim, input) {
         const e = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry); if (e >= 1) continue;
         if (e > 0.82 && BAYER[((cy + dy) & 3) * 4 + ((cx + dx) & 3)] < (e - 0.82) * 5.5) continue;
         const rim = e > 0.7, bubble = !rim && ((cx + dx) * 7 + (cy + dy) * 13 + Math.floor(t * 3)) % 97 === 0;
-        tintGround(cx + dx, cy + dy, z * ZH, rim ? MUD_RIM : MUD_RGB, (rim ? 0.42 : 0.82) * fade, bubble ? 0.5 * fade : 0);
+        const sl = hz.kind === 'sluice';
+        tintGround(cx + dx, cy + dy, z * ZH, rim ? (sl ? SLUICE_RIM : MUD_RIM) : (sl ? SLUICE_RGB : MUD_RGB), (rim ? 0.42 : 0.82) * fade, bubble ? 0.5 * fade : 0);
       }
     }
     if (b.flood > 0 && b.edge) {
@@ -1505,12 +1508,15 @@ export function createRenderer(canvas, sim, input) {
   // bosses (battle.js): who stands in the hall, what it does, and its fall
   const bossLine = { call: ['calls his men to him', 'he stands behind them until they fall'], kindle: ['kindles the dead', 'the last one down gets back up'], line: ['holds the line', 'the dead near it take half: knock it down first'], swarm: ['drums', 'while he drums, more come out of the tunnels: put him down'],
     mud: ['stamps', 'mud comes up round your feet: step out of it'], cage: ['carries a lit cage', 'while his cage burns he mends: break it first'],
-    vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'] };
+    vespers: ['sings', 'while a cantor sings, the drowned mend: silence them'], bells: ['rings the bells', 'the water comes in from the walls: keep to the middle'],
+    issue: ['issues arms', 'the most broken of his ranks stands up whole: put him down first'], sluice: ['opens the sluice', 'the vat runs across the floor: step out of it'] };
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: clock() + 3200 }; });
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
   sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: clock() + 2200, small: true }; });
   sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossIssue', ({ id }) => { banner = { text: `${bossName(id)} issues arms`, sub: 'one of his ranks stands up whole', until: clock() + 1800, small: true }; });
+  sim.bus.on('bossSluice', ({ id }) => { banner = { text: `${bossName(id)} opens the sluice`, sub: bossLine.sluice[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossCage', () => { banner = { text: "Teague's cage breaks", sub: "a soul goes free · he's only a man now", until: clock() + 2400, small: true }; });
   sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: clock() + 2000, small: true }; });

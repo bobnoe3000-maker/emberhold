@@ -21,22 +21,24 @@ const intoHall = (sim) => {
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; sim.state.party.forEach((m, i) => { if (i) { m.x = m.px = p.x + (i === 1 ? -0.9 : 0.9); m.y = m.py = p.y + 0.9; } });
 };
 const fight = (sim, secs, until) => { for (let i = 0; i < secs * 20 && !until(); i++) { for (const m of sim.state.party) if (!m.down) m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.6); sim.tick(); } };
-const room = (sim) => { const L = sim.world.level, r = L.rooms.find((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5; };
+// (v1.48) the harvest: Vat Seven, the Canal Locks' third floor (it was the Sickpools, a site of their own)
+const vats = (sim) => { down(sim); down(sim); assert.equal(sim.state.depth, 2); };
+const room = (sim, size) => { const L = sim.world.level, open = L.rooms.filter((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), r = open.find((q) => !size || q.size === size) || open[0], p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5; };
 
 test('an Ashbound put down frees a soul; the living never count', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 6); sim.tick(); room(sim);
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 6); sim.tick(); down(sim); room(sim);   // (v1.48: the barrows' second floor is the Ashbound's; the first, the diggers')
   const slain = []; sim.bus.on('slain', (e) => slain.push(e.kind));
   fight(sim, 60, () => slain.length >= 6);
-  assert.equal(sim.state.count.souls, slain.length, `the barrows' dead: ${slain.join(',')}`); assert.equal(sim.state.count.lamps, 0);
-  const keep = createSim(SEED, undefined, { scene: 'dungeon', site: 'tithe_mill' }); party(keep, 4); keep.tick(); room(keep);
+  assert.ok(slain.length >= 6); assert.equal(sim.state.count.souls, slain.length, `the barrows' dead: ${slain.join(',')}`); assert.equal(sim.state.count.lamps, 0);
+  const keep = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); party(keep, 4); keep.tick(); room(keep);   // (the Keep's first floor: the Redhand, living; v1.48, the Mill is parked)
   const living = []; keep.bus.on('slain', (e) => living.push(e.kind));
   fight(keep, 60, () => living.length >= 4);
   assert.ok(living.length >= 4); assert.deepEqual(keep.state.count, { lamps: 0, souls: 0 }, 'the Redhand were never bound');
 });
 
 test('the Standard falls: his lamp breaks once (240 souls), and the bound still standing in his hall lie down', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 12); sim.tick();
-  down(sim); down(sim); assert.equal(sim.state.depth, 2);
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim, 12); sim.tick();   // (v1.48: he stands over the binding, the Chapel's third floor)
+  down(sim); down(sim); assert.equal(sim.state.depth, 2); assert.ok(!sim.world.stairsAt, 'the Chapel\'s last floor');
   const ev = []; for (const k of ['bossWave', 'lampBroken', 'bossDown']) sim.bus.on(k, (e) => ev.push([k, e]));
   intoHall(sim);
   let before = null;
@@ -53,7 +55,7 @@ test('the Standard falls: his lamp breaks once (240 souls), and the bound still 
 });
 
 test('a harvester drops its cage where it falls; a touch in reach breaks it, once: a lamp and a soul', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sickpools' }); party(sim, 13); sim.tick(); room(sim);
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }); party(sim, 15); sim.tick(); vats(sim); room(sim);
   const cages = []; sim.bus.on('cageDropped', (c) => cages.push(c));
   fight(sim, 240, () => cages.length > 0);
   assert.ok(cages.length, 'a harvester fell and dropped its cage'); const c = cages[0];
@@ -73,7 +75,9 @@ test('a harvester drops its cage where it falls; a touch in reach breaks it, onc
 // pick up after a few seconds when not in combat") a plain harvester leaves nothing; the elite's cage breaks itself
 // 3 s into the calm (a room's lull counts), by the member nearest it; one too far from the hero waits for a tap
 test('only an elite harvester drops a cage; 3 s with no foe standing and the nearest member breaks it', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sickpools' }); party(sim, 13); sim.tick(); room(sim);
+  // (a small room: Vat Seven is built in halls, and a medium one there spans 37 tiles, so a cage can fall 14+ tiles from
+  // the hero and wait for a tap, the next test's rule; here every cage should be the company's to break)
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }); party(sim, 15); sim.tick(); vats(sim); room(sim, 'small');
   const slain = [], cages = [], broke = []; let calmFrom = -1;
   sim.bus.on('slain', (e) => slain.push(e)); sim.bus.on('cageDropped', (c) => cages.push(c));
   sim.bus.on('cageBroken', (c) => broke.push({ ...c, t: sim.state.t, calmFrom }));
@@ -89,7 +93,7 @@ test('only an elite harvester drops a cage; 3 s with no foe standing and the nea
 });
 
 test('a cage far from the hero waits; a fight under way holds it', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sickpools' }); party(sim, 13); sim.tick(); room(sim);
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }); party(sim, 15); sim.tick(); vats(sim); room(sim);
   const cages = []; sim.bus.on('cageDropped', (c) => cages.push(c));
   fight(sim, 300, () => cages.length > 0);
   const c = cages[0], p = sim.state.player, n0 = sim.state.count.lamps;

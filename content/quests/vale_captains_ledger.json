@@ -4,19 +4,35 @@
   "title": "The Captain's Ledger",
   "giver": "osric_hale",
   "region": "vale",
-  "level": [2, 8],
+  "level": [
+    2,
+    9
+  ],
   "summary": "Osric Hale, Warden-Captain of the Watch at Thornwick's well, pays a bounty on the bright-eyed ones: the elite dead who lead the rest. He pays out of his own purse when Lord Pellam's coin is late, and writes every one down.",
   "steps": [
     {
       "id": "barrows",
       "journal": "Defeat three elites in the Old Barrows: the bright-eyed ones that come to lead every fifth wave. Hold a room long enough and one comes to you.",
       "objectives": [
-        { "type": "elites", "site": "barrows", "count": 3, "label": "Elites defeated in the Old Barrows" }
+        {
+          "type": "elites",
+          "site": "barrows",
+          "count": 3,
+          "label": "Elites defeated in the Old Barrows"
+        }
       ]
     }
   ],
   "ready": "Go back to Osric Hale at the Watch post by the well in Thornwick.",
   "done": "Osric Hale paid for three bright-eyed ones from the Old Barrows, and wrote three more lines in his ledger.",
-  "rewards": { "share": 0.3, "lv": 3, "gold": 60 },
-  "dialogue": { "file": "osric", "offer": "osric_ledger_offer", "turnin": "osric_ledger_turnin" }
+  "rewards": {
+    "share": 0.3,
+    "lv": 3,
+    "gold": 60
+  },
+  "dialogue": {
+    "file": "osric",
+    "offer": "osric_ledger_offer",
+    "turnin": "osric_ledger_turnin"
+  }
 }

@@ -4,19 +4,35 @@
   "title": "The First Page",
   "giver": "sister_ilse",
   "region": "vale",
-  "level": [1, 8],
+  "level": [
+    1,
+    9
+  ],
   "summary": "Sister Ilse, a Grey Sister at the Shrine of the Ember in Thornwick, is writing down whatever the old empire left in the barrows: the Chronicle. So far nothing has come out of them but the dead, and they don't hold still to be read.",
   "steps": [
     {
       "id": "barrows",
       "journal": "Find a Chronicle fragment in the Old Barrows: anything with the old imperial stamp on it. The chests on the first floor are a start.",
       "objectives": [
-        { "type": "fragment", "site": "barrows", "count": 1, "label": "Fragments found in the Old Barrows" }
+        {
+          "type": "fragment",
+          "site": "barrows",
+          "count": 1,
+          "label": "Fragments found in the Old Barrows"
+        }
       ]
     }
   ],
   "ready": "Take it to Sister Ilse, on the step of the Shrine of the Ember in Thornwick.",
   "done": "You brought Sister Ilse the first fragment out of the barrows. The Chronicle of the Vale has a first page.",
-  "rewards": { "share": 0.2, "lv": 1, "gold": 25 },
-  "dialogue": { "file": "ilse", "offer": "ilse_page_offer", "turnin": "ilse_page_turnin" }
+  "rewards": {
+    "share": 0.2,
+    "lv": 1,
+    "gold": 25
+  },
+  "dialogue": {
+    "file": "ilse",
+    "offer": "ilse_page_offer",
+    "turnin": "ilse_page_turnin"
+  }
 }

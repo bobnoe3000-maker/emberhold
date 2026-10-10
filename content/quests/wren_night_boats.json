@@ -12,16 +12,17 @@
   "after": [
     "wren_the_marker"
   ],
-  "summary": "Wren hid two caches in the Sickpools, back when she ran the canal at night. The Cult has started drying the vats out, and she'd like them back before it finds them.",
+  "summary": "Wren hid two caches down at the vats under the Canal Locks, back when she ran the canal at night. The Cult has started drying the vats out, and she'd like them back before it finds them.",
   "steps": [
     {
-      "id": "pools",
-      "journal": "Open two chests in the Sickpools. Wren says they're hers, and you'll know them by the knots.",
+      "id": "vats",
+      "journal": "Open two chests at Vat Seven, the Canal Locks' third floor. Wren says they're hers, and you'll know them by the knots.",
       "objectives": [
         {
           "type": "loot",
-          "site": "sickpools",
+          "site": "canal_locks",
           "count": 2,
+          "floor": 3,
           "label": "Wren's caches"
         }
       ]

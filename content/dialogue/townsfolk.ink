@@ -75,7 +75,7 @@ VAR q_trial_the_old_water = -1
 "Cup by the wheel, every night. My gran did it, and her gran. You'll laugh."
 He doesn't wait to see if you do. He looks at your shaman instead.
 "She was one of those. Hedge-caller. Breathed on a cut and it closed. Breathed on a man who'd beaten his wife and he coughed for a year. She showed me the first part. I never had the knack for it. Yours might."
-"The long way round goes under the range, past the Scrag. Goblins. They don't stop carts the way the dead do. They just take things off them. Go and hold that hole for six waves, and I'll show your hedge-caller what she showed me."
+"The old road runs under Wickham Keep, older than the Keep. The Redhand dug down to it. Go and hold that place for six waves, and I'll show your hedge-caller what she showed me."
 + [We'll hold it. #mark: quest]
     "Breathe slow when it's worst. That's the whole of it, she said. I never believed her." # quest: accept trial_old_roads
     -> col_topics
@@ -84,7 +84,7 @@ He doesn't wait to see if you do. He looks at your shaman instead.
     -> col_topics
 
 == col_trial_active ==
-"The Scrag, under the range past the mill. Six waves. When it's worst, breathe slow."
+"Wickham Keep, on the old road. Six waves. When it's worst, breathe slow."
 -> col_topics
 
 == col_trial_turnin ==
@@ -194,8 +194,8 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
 // ── her hens (content/quests/vale_hens_under_the_hill.json; world doc v1.19) ──
 == hedda_hens_offer ==
 "Four. Four hens since the thaw, and a green hand through the slats where the fox used to come. It isn't a fox."
-"The carters go the long way round now, under the range, and the goblins up there have found out what falls off a cart. Hens don't fall off carts. They came down for them."
-"There's a hole in the scar at the foot of the range, north of the mill. The one with the drum is their chief. Old Skarn, the carters call him. Go and tell him about my hens."
+"The goblins from under the range came down for them. Hens don't fall off carts. And now they're selling them to the Redhand, up at Wickham Keep, a whole cartful."
+"They're in the Keep's bailey, haggling. The one with the drum is their chief. Old Skarn, the carters call him. Go and tell him about my hens."
 + [We'll tell him. #mark: quest]
     "Tell him loudly. I'll know if you whisper." # quest: accept vale_hens_under_the_hill
     -> hedda_topics
@@ -204,7 +204,7 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
     -> hedda_topics
 
 == hedda_hens_active ==
-"The Scrag, at the foot of the range, north of the mill. Down two floors, where the drum is. Put the drummer down and the rest stop coming."
+"Wickham Keep, the bailey, the first floor's last hall, where the drum is. Put the drummer down and the rest stop coming."
 -> hedda_topics
 
 == hedda_hens_turnin ==

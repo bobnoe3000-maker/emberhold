@@ -2,7 +2,8 @@
 // wall and stairs down in its descent room. Down goes one floor deeper, arriving at the foot of
 // the stair up; up climbs one floor, arriving in the corridor by that floor's stairs down; the
 // first floor's stair leads out to the surface. A visit remembers its floors (chests stay opened),
-// and so does the save; leaving the site forgets them.
+// and so does the save; leaving the site forgets them. (v1.48: the Old Barrows have a bottom, three floors; the last
+// ends in its hall, with no stairs down.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -15,15 +16,20 @@ const goDown = (sim) => { const s = stairsDown(sim.world); at(sim, { x: s.x + 1.
 const goUp = (sim) => { at(sim, sim.world.exitAt); sim.tick(); };
 const cellOf = (w, q) => w.level.cells.get(Math.floor(q.x) + ',' + Math.floor(q.y));
 
-for (const seed of [20260807, 7, 99991]) test(`every floor has a stair up, stairs down and a safe arrival by them (seed ${seed})`, () => {
+for (const seed of [20260807, 7, 99991]) test(`every floor has a stair up; every floor but the last, stairs down and a safe arrival by them (seed ${seed})`, () => {
   const sim = dungeon(seed);
-  for (let d = 0; d < 4; d++) {
+  for (let d = 0; d < 3; d++) {
     const w = sim.world;
     assert.equal(w.depth, d);
     assert.ok(w.exitAt && w.stairArrive, `depth ${d}: no stair up`);
-    assert.ok(stairsDown(w), `depth ${d}: no stairs down`);
-    assert.ok(w.stairsDownArrive && isWalkable(w, w.stairsDownArrive.x, w.stairsDownArrive.y) && cellOf(w, w.stairsDownArrive).corridor && cellOf(w, w.stairsDownArrive).room < 0, `depth ${d}: no corridor arrival by the stairs down`);
-    if (d < 3) goDown(sim);
+    if (d < 2) {
+      assert.ok(stairsDown(w), `depth ${d}: no stairs down`);
+      assert.ok(w.stairsDownArrive && isWalkable(w, w.stairsDownArrive.x, w.stairsDownArrive.y) && cellOf(w, w.stairsDownArrive).corridor && cellOf(w, w.stairsDownArrive).room < 0, `depth ${d}: no corridor arrival by the stairs down`);
+      goDown(sim);
+    } else {
+      assert.ok(!stairsDown(w) && !w.stairwell, `depth ${d}: the last floor, no stairs down`);
+      assert.ok(w.level.descentRoom, `depth ${d}: it ends in its hall`);
+    }
   }
 });
 
@@ -88,10 +94,15 @@ test('the compass: the first floor\'s stair is the way out; deeper it is "Stairs
 // The stairs down are a stairwell you can see (a 6×6 hole in the descent room, 'stairsdown_0'):
 // nothing walks over it, any of its tiles takes you down from its rim, a tap in its middle walks
 // you to its top step, and the compass finds a way to its rim on every floor.
-test('the stairs down are a stairwell: solid to walk on, used from any side, found by the compass', () => {
+test('the stairs down are a stairwell: solid to walk on, used from any side, found by the compass; the last floor has none', () => {
   for (const seed of [20260807, 777, 4242, 6]) {
     const sim = dungeon(seed);
     for (let d = 0; d < 3; d++) {
+      if (d === 2) {                                                  // the Old Barrows' third floor is their last: no stairwell, none on the compass
+        assert.ok(!sim.world.stairwell && !sim.world.structs.some((s) => s.id === 'stairsdown_0'), `no stairwell on the last floor (seed ${seed})`);
+        assert.ok(!sim.destinations().some((r) => r.id === 'stairs-down' && !r.off), `no stairs down on the compass (seed ${seed})`);
+        break;
+      }
       const w = sim.world, S = w.stairwell;
       assert.ok(S && S.x1 - S.x0 === 6 && S.y1 - S.y0 === 6, `a stairwell (seed ${seed}, floor ${d + 1})`);
       assert.ok(w.structs.some((s) => s.id === 'stairsdown_0' && s.hole), 'drawn by its structure');
@@ -105,7 +116,7 @@ test('the stairs down are a stairwell: solid to walk on, used from any side, fou
       } else if (d === 1) {                                           // a tap in the middle walks to the top step, and down
         at(sim, { x: w.stairsAt.x + 0.5, y: w.stairsAt.y + 4.5 }); sim.commands.push({ type: 'tap', tx: S.x0 + 2, ty: S.y0 + 2 });
         for (let i = 0; i < 200 && sim.state.depth === d; i++) sim.tick();
-      } else goDown(sim);
+      }
       assert.equal(sim.state.depth, d + 1, `down a floor (seed ${seed}, from floor ${d + 1})`);
     }
   }

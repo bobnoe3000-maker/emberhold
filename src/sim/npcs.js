@@ -50,7 +50,7 @@ export const NPCS = {
   jory: { region: 'vale', folk: true, spots: [['hub', [8, 17]], ['inn', [10, 9]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
   nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [1, 22]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
   hedda: { region: 'vale', folk: true, spots: [['hub', [21, 14]], ['shop', [1, 14]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
-  brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
+  brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 2, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
   // (M8, Act II; world doc v1.29 §3.2) Saltmere's people: Dace Pike by the Drowned Eel, Pim's handcart by the cistern,
   // Sister Orla and Mother Agnes by the chapel
   dace_pike: { region: 'fens', spots: [['tavern', [10, 2]]], knot: 'dace_hub', flags: ['met_dace'] },
@@ -59,7 +59,7 @@ export const NPCS = {
   mother_agnes: { region: 'fens', spots: [['temple', [12, 15]]], knot: 'agnes_hub', flags: ['met_agnes'] },   // (on the chapel's deck: at [14, 4] she stood in the Stilt House's footprint, drawn through it on the home screen: Saltmere's critic pass)
   // Wren, found tied in the Toadking's Boat Hall (world doc v1.29 §5); the Kindler, met once on the Canal Locks' first
   // floor, by its way in (`entrance`), who leaves when he's said his piece (`visitor`: gone once that flag is set)
-  wren: { region: 'fens', found: { site: 'toadking_mound', depth: 1, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
+  wren: { region: 'fens', found: { site: 'toadking_mound', depth: 2, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
   kindler: { region: 'fens', found: { site: 'canal_locks', depth: 0, entrance: true }, visitor: 'met_kindler', spots: [], knot: 'kindler_hub', flags: ['met_kindler'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night

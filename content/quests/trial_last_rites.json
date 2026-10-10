@@ -9,19 +9,19 @@
     1,
     30
   ],
-  "summary": "Sister Ilse at the Shrine of the Ember says nobody said the last rites for the dead legion in the Old Barrows. Hold where they fell while they're said, and she'll teach your clerics a blessing (the cleric's level-6 skill).",
+  "summary": "Sister Ilse at the Shrine of the Ember says nobody said the last rites for the dead in the Sunken Chapel, where the legion was bound. Hold its nave while they're said, and she'll teach your clerics a blessing (the cleric's level-6 skill).",
   "steps": [
     {
-      "id": "barrows",
-      "journal": "Go down to the Old Barrows' second floor or deeper, and hold a stair hall (the room with the stairs down) for five waves.",
+      "id": "chapel",
+      "journal": "Go to the Sunken Chapel, in the marsh where the river leaves the Vale, and hold the last hall of the Nave, its first floor, for five waves.",
       "objectives": [
         {
           "type": "waves",
-          "site": "barrows",
+          "site": "sunken_chapel",
           "count": 5,
           "hall": true,
-          "floor": 2,
-          "label": "Waves held in a stair hall, floor 2 or deeper"
+          "floor": 1,
+          "label": "Waves held in the Nave's last hall"
         }
       ]
     }
@@ -29,7 +29,8 @@
   "ready": "Go back to Sister Ilse at the Shrine of the Ember in Thornwick.",
   "done": "Ilse taught your clerics Bless: the rites said forward, for the living, which she says is the only direction that helps.",
   "rewards": {
-    "share": 0.3, "lv": 6,
+    "share": 0.3,
+    "lv": 6,
     "gold": 60
   },
   "dialogue": {

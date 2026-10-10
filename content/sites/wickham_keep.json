@@ -2,9 +2,7 @@
   "id": "wickham_keep",
   "region": "vale",
   "name": "Wickham Keep",
-  "levels": "3–6",
-  "floors": 2,
-  "hidden": true,
-  "summary": "An imperial keep on the Wickham road, the Redhand Company's hold, with cellars that go down into older stone.",
-  "shut": "The gate is barred from inside, and somebody up on the wall laughs at you."
+  "levels": "4–6",
+  "floors": 3,
+  "summary": "An imperial keep on the Wickham road, the Redhand's hold: the Bailey, where Old Skarn sells them stolen hens; the Barracks and the paymaster's strongroom; and the Old Cellars, down into a cave where Garrow has them digging."
 }

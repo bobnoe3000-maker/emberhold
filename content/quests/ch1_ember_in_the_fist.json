@@ -6,7 +6,7 @@
   "turnin": "sister_ilse",
   "region": "vale",
   "level": [
-    5,
+    7,
     30
   ],
   "after": [
@@ -31,7 +31,8 @@
   "ready": "The robed stranger died holding something warm. Take it to Sister Ilse at the Shrine of the Ember in Thornwick.",
   "done": "Sister Ilse has the warm shard from the Sunken Chapel: an ember-shard made in the fens. Act I is done.",
   "rewards": {
-    "share": 0.55, "lv": 6,
+    "share": 0.55,
+    "lv": 6,
     "gold": 200
   },
   "dialogue": {

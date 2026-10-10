@@ -63,7 +63,7 @@ Osric looks at the space beside you where {fallen_name} should be, and writes so
 -> osric_topics
 
 == osric_topics ==
-+ { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the mill. #mark: quest ready] -> osric_ch1_report
++ { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the barrows. #mark: quest ready] -> osric_ch1_report
 + { q_ch1_the_diggers == 0 } [Where did the Redhand go? #mark: quest] -> osric_ch2_offer
 + { q_ch1_the_diggers == 1 } [About Wickham Keep… #mark: quest active] -> osric_ch2_active
 + { q_ch1_the_diggers == 2 } [Captain Garrow is down. I have his ledger. #mark: quest ready] -> osric_ch2_turnin
@@ -133,7 +133,7 @@ Osric counts on his fingers, then writes three short lines in the ledger and blo
 // ── Act I (content/quests/ch1_*.json) ──
 == osric_ch1_report ==
 Osric opens the ledger to a fresh page, which for him is a ceremony.
-"Out of the mill. Good. Where to?" He listens, and writes. "Wickham Keep. Of course. It has walls, and nobody's collected rent on it for three hundred years."
+"Out of the barrows. Good. Where to?" He listens, and writes. "Wickham Keep. Of course. It has walls, and nobody's collected rent on it for three hundred years."
 "The Keep's on the Wickham road, north of the crossroads. The gate's been barred since spring. It won't be now, not to you. They'll want to see who knocked." # quest: turnin ch1_smoke_over_the_vale
 -> osric_topics
 
@@ -142,14 +142,14 @@ Osric opens the ledger to a fresh page, which for him is a ceremony.
 "Here's what I don't like. The carters say there's digging in the cellars of Wickham Keep. Bandits don't dig. Bandits take what somebody else dug up."
 "Somebody's paying them. I'd like to know who, and I'd like Garrow to stop collecting."
 + [I'll go to the Keep. #mark: quest]
-    "Down to the second floor. That's where he'll be, counting. Take company, {hero_name}. Garrow doesn't fight alone. He never has." # quest: accept ch1_the_diggers
+    "Down to the cellars, the third floor. That's where he'll be, counting. Take company, {hero_name}. Garrow doesn't fight alone. He never has." # quest: accept ch1_the_diggers
     -> osric_topics
 + [Not yet.]
     "He's not going anywhere. That's rather the problem."
     -> osric_topics
 
 == osric_ch2_active ==
-"Wickham Keep, second floor. Garrow keeps his men close and his coin closer."
+"Wickham Keep, the Old Cellars. Garrow keeps his men close and his coin closer."
 "When he's in trouble he shouts, and they come. Put down the ones who come, then him. That's the whole of the tactics. It's usually enough."
 -> osric_topics
 

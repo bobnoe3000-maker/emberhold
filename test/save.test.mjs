@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v30', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 30); });
+test('three game slots, save v31', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 31); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -97,16 +97,59 @@ test('v28 → v29: the one shop becomes Thornwick\'s shelves, and restores as th
   const r = createSim(7, undefined, { scene: 'town' }); r.restore(m.data); assert.deepEqual(r.state.shop.bought, [1, 3]);
 });
 
-test('v29 → v30: a visit under way starts again at the site\'s first floor, in its entrance; a save outside keeps its place', () => {
+test('v29 → v30: a visit under way starts again at the site\'s first floor, in its entrance; a save outside keeps its place', async () => {
+  const { visitFor } = await import('../src/persist/save.js');
   const sim = createSim(20260807, undefined, { scene: 'dungeon', site: 'wickham_keep' }), L = sim.world.level, far = L.rooms[L.rooms.length - 1];
   sim.state.player.x = sim.state.player.px = far.cx + 0.5; sim.state.player.y = sim.state.player.py = far.cy + 0.5;
   const old = JSON.parse(JSON.stringify(sim.snapshot())); old.depth = 1; old.mods = [['10,10', { opened: true }]]; old.discovered = [0, 1, 2]; old.floors = [[0, { mods: [], hp: [], discovered: [0], visited: [] }]];
-  const m = migrate({ version: 29, savedAt: 1, data: old });
-  assert.equal(m.version, 30); assert.equal(m.data.depth, 0); assert.deepEqual([m.data.mods, m.data.discovered, m.data.floors], [[], [], []]);
-  const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
-  const e = r.world.level.entrance, p = r.state.player;
-  assert.equal(r.world.depth, 0); assert.equal(r.world.level.layout, 'halls');
-  assert.ok(Math.abs(p.x - r.world.level.spawn.x) < 3 && Math.abs(p.y - r.world.level.spawn.y) < 3 && r.world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)).room === e.id, 'not in the entrance');
+  const v30 = visitFor(old);                                            // the v30 step alone
+  assert.equal(v30.depth, 0); assert.deepEqual([v30.mods, v30.discovered, v30.floors], [[], [], []]); assert.equal(v30.site, 'wickham_keep');
+  const m = migrate({ version: 29, savedAt: 1, data: old });            // and on through v31 (a site still in play keeps its place)
+  assert.equal(m.version, SAVE_VERSION); assert.equal(m.data.site, 'wickham_keep'); assert.equal(m.data.depth, 0); assert.deepEqual([m.data.mods, m.data.discovered, m.data.floors], [[], [], []]);
+  for (const data of [v30, m.data]) {
+    const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(data);
+    const e = r.world.level.entrance, p = r.state.player;
+    assert.equal(r.world.site, 'wickham_keep'); assert.equal(r.world.depth, 0); assert.equal(r.world.level.layout, 'halls');
+    assert.ok(Math.abs(p.x - r.world.level.spawn.x) < 3 && Math.abs(p.y - r.world.level.spawn.y) < 3 && r.world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)).room === e.id, 'not in the entrance');
+  }
   const town = createSim(7, undefined, { scene: 'town' }).snapshot(), t = migrate({ version: 29, savedAt: 1, data: JSON.parse(JSON.stringify(town)) });
   assert.deepEqual(t.data.player, town.player, 'a save in town keeps its place');
+});
+
+// v31 (GDD §3 v1.48, one dungeon a level): the Tithe Mill and the Scrag Warren are parked and the Sickpools are the Canal
+// Locks' third floor, so a save in one stands in what took its place (the Old Barrows, Wickham Keep, the Canal Locks), and
+// the sites entered follow; every banded dungeon's floors are new, so a visit starts again at its first floor (the Old
+// Barrows' fifth floor is no more); secret sites keep a seal ({} to start); a board job under way is let go (its posting
+// is drawn anew from the new dungeons), a finished one kept for the Journal
+test('v30 → v31: a save in a gone site stands in what took its place, at its first floor; sites entered follow; board jobs under way let go', async () => {
+  const { bandsFor, GONE_SITES } = await import('../src/persist/save.js');
+  assert.deepEqual(GONE_SITES, { tithe_mill: 'barrows', scrag_warren: 'wickham_keep', sickpools: 'canal_locks' });
+  const base = JSON.parse(JSON.stringify(createSim(20260807, undefined, { scene: 'dungeon' }).snapshot())); delete base.secrets;
+  const quests = { board_3_5_0: [1, 0, 2], board_3_5_1: [2, 0, 3], board_2d_5_2: [3, 0, 1], board_4_12_0_fens: [1, 0, 0], board_1_12_3_fens: [3, 0, 2], vale_long_way_round: [1, 0, 2, 0] };
+  for (const [site, depth, to, region] of [['tithe_mill', 0, 'barrows', 'vale'], ['scrag_warren', 1, 'wickham_keep', 'vale'], ['sickpools', 0, 'canal_locks', 'fens'], ['barrows', 4, 'barrows', 'vale']]) {
+    const old = { ...base, scene: 'dungeon', site, region: site === 'sickpools' ? 'fens' : 'vale', depth, mods: [['10,10', { opened: true }]], discovered: [0, 1], floors: [[0, { mods: [], hp: [], discovered: [0], visited: [] }]],
+      player: { ...base.player, x: 140.5, y: 120.5 }, sitesEntered: ['barrows', 'tithe_mill', 'scrag_warren', 'sickpools', 'canal_locks'], quests };
+    const m = migrate({ version: 30, savedAt: 1, data: old });
+    assert.equal(m.version, SAVE_VERSION); assert.deepEqual(m.meta, metaOf(m.data));
+    assert.equal(m.data.site, to, site); assert.equal(m.data.region, region, `${site}: its land`); assert.equal(m.data.depth, 0, `${site}: its first floor`);
+    assert.deepEqual([m.data.mods, m.data.discovered, m.data.floors], [[], [], []], `${site}: a new visit`);
+    assert.deepEqual(m.data.sitesEntered, ['barrows', 'wickham_keep', 'canal_locks'], 'the sites entered follow (once each)');
+    assert.deepEqual(m.data.secrets, {});
+    assert.deepEqual(Object.keys(m.data.quests).sort(), ['board_1_12_3_fens', 'board_2d_5_2', 'vale_long_way_round'], 'board jobs under way let go; done ones and quests kept');
+    assert.deepEqual(m.data.quests.vale_long_way_round, quests.vale_long_way_round);
+    assert.deepEqual(bandsFor(m.data), m.data, 'once');
+    // the sim reads it: in the site that took its place, at its first floor's entrance, in its land
+    const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
+    assert.equal(r.world.kind, 'dungeon'); assert.equal(r.world.site, to); assert.equal(r.world.depth, 0); assert.equal(r.state.region, region);
+    const p = r.state.player, e = r.world.level.entrance;
+    assert.equal(r.world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)).room, e.id, `${site}: in the entrance`);
+    assert.deepEqual([...r.state.sitesEntered], ['barrows', 'wickham_keep', 'canal_locks']); assert.deepEqual(r.state.secrets, {});
+  }
+  // a save outside keeps its place and its land; a secret's seal is kept; the current version is left as it is
+  const town = JSON.parse(JSON.stringify(createSim(7, undefined, { scene: 'town' }).snapshot())); delete town.secrets;
+  const t = migrate({ version: 30, savedAt: 1, data: { ...town, sitesEntered: ['sickpools'], secrets: { ninth_milestone: 900 } } });
+  assert.deepEqual(t.data.player, town.player, 'a save in town keeps its place'); assert.equal(t.data.region, town.region); assert.equal(t.data.scene, 'town');
+  assert.deepEqual(t.data.sitesEntered, ['canal_locks']); assert.deepEqual(t.data.secrets, { ninth_milestone: 900 });
+  const r = createSim(7, undefined, { scene: 'town' }); r.restore(t.data); assert.deepEqual(r.state.secrets, { ninth_milestone: 900 });
+  assert.equal(migrate(t), t, 'v31 is current');
 });

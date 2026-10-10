@@ -5,21 +5,21 @@
   "giver": "pim_rushlight",
   "region": "fens",
   "level": [
-    11,
+    15,
     30
   ],
   "after": [
     "ch2_the_locks"
   ],
-  "summary": "Pim Rushlight says the old vats in the Sickpools are being drained by night, and he'd know: he buys what comes out. The Cult's harvesters are down there filling their cages.",
+  "summary": "Pim Rushlight says the old vats under the Canal Locks are being drained by night, and he'd know: he buys what comes out. The Cult's harvesters are down at Vat Seven filling their cages.",
   "steps": [
     {
       "id": "cages",
-      "journal": "Go into the Sickpools and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
+      "journal": "Go down to Vat Seven, the Canal Locks' third floor, and break three full lantern-cages. Only the harvesters who lead the others carry a full one.",
       "objectives": [
         {
           "type": "cages",
-          "site": "sickpools",
+          "site": "canal_locks",
           "count": 3,
           "label": "Full cages broken"
         }

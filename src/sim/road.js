@@ -17,7 +17,7 @@ import { oBlock, oPut } from './outdoor.js';
 export const RANKS = [
   { id: 'front', gone: { quest: 'vale_long_way_round' }, kinds: ['minion', 'minion', 'minion', 'minion'] },   // the walking kind (Maudry's errand)
   { id: 'officers', gone: { quest: 'vale_captains_ledger' }, kinds: ['warrior', 'rogue', 'rogue', 'warrior'] },   // the bright-eyed ones (Osric's bounty)
-  { id: 'standard', gone: { boss: 'standard' }, kinds: ['warrior', 'mage', 'standard', 'warrior'] },           // around the Standard (the barrows' third-floor hall)
+  { id: 'standard', gone: { boss: 'standard' }, kinds: ['warrior', 'mage', 'standard', 'warrior'] },           // around the Standard (the Sunken Chapel's Binding Crypt (v1.48; it was the barrows' third-floor hall))
 ];
 // The line on the overland's barrows road (outdoor.js: the stretch from (132, 186) to (129, 199), past
 // the lumber camp's turn and before the chapel's): a rank every 5 tiles, four abreast, 3 tiles apart (closer, they melt into one crowd on screen).

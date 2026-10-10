@@ -34,7 +34,7 @@ test('the owner\'s save (Act I done, level 11): Act II is next, from Ilse; at le
   S.party[0].level = 11; S.party[0].cls = 'cleric'; S.bosses = { redhand_captain: 1, robed_stranger: 1 }; S.trials = { cleric: 1, mage: 1, rogue: 1 };
   S.fragments = ['frag_vale_standing_order', 'frag_vale_last_dispatch', 'frag_vale_chaplains_prayer', 'frag_vale_chaplains_last_page', 'frag_vale_centurion_tablet'];
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_fog_on_the_canal', giver: 'sister_ilse', town: 'Thornwick' });
-  S.party[0].level = 6; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch2_fog_on_the_canal', level: 8 });
+  S.party[0].level = 6; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch2_fog_on_the_canal', level: 10 });
   S.party[0].level = 11;
   const leads = openLeads(S, status(sim)).map((l) => l.id);
   assert.deepEqual(leads, ['brannoc', 'standard', 'warren', 'chronicle', 'board']);
@@ -49,7 +49,8 @@ test('the owner\'s save (Act I done, level 11): Act II is next, from Ilse; at le
 test('Act II: a chapter given in Saltmere says so; both acts done, the end is the Fens\' words; the Fens\' leads follow Wren', () => {
   const sim = town(), S = sim.state;
   for (const id of ['ch1_smoke_over_the_vale', 'ch1_the_diggers', 'ch1_ember_in_the_fist', 'ch2_fog_on_the_canal']) S.quests[id] = { st: 3, step: 0, n: [] };
-  S.party[0].level = 12;
+  S.party[0].level = 12; assert.deepEqual(storyStatus(S, status(sim)), { kind: 'level', id: 'ch2_the_locks', level: 13 }, 'the Locks\' band starts at 13 (v1.48)');
+  S.party[0].level = 13;
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'next', id: 'ch2_the_locks', giver: 'dace_pike', town: 'Saltmere' });
   for (const id of CHAPTERS) S.quests[id] = { st: 3, step: 0, n: [] };
   assert.deepEqual(storyStatus(S, status(sim)), { kind: 'end', region: 'fens' });

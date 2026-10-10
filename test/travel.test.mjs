@@ -17,22 +17,25 @@ const walk = (sim, id) => {
 for (const seed of [20260807, 7, 99991]) test(`the compass walk to town from the barrows reaches town, seed ${seed}`, () => {
   assert.equal(walk(outFromBarrows(seed), 'town'), 'town');
 });
-test('a walk that ends in an exit still goes through it (every site open from the start)', () => {
-  for (const site of ['barrows', 'tithe_mill', 'sunken_chapel']) {
+test('a walk that ends in an exit still goes through it (every site open from the start); the parked ones are on no compass', () => {
+  const rows = createSim(20260807, undefined, { scene: 'overland' }).destinations();
+  for (const site of ['tithe_mill', 'scrag_warren']) assert.ok(!rows.some((d) => d.id === 'site:' + site), `${site}: parked (v1.48), no way in`);
+  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
     const sim = createSim(20260807, undefined, { scene: 'overland' });   // from the Thornwick road
     assert.equal(walk(sim, 'site:' + site), 'dungeon'); assert.equal(sim.state.site, site); assert.equal(sim.world.site, site);
   }
 });
 test('a hidden site is shut, off the compass and unnamed until revealed; then it opens', () => {
   const sim = createSim(20260807, undefined, { scene: 'overland' }); sim.tick();
-  assert.ok(!sim.destinations().some((d) => d.id === 'site:wickham_keep'), 'not on the compass');
-  const e = sim.world.exits.find((x) => x.site === 'wickham_keep'), p = sim.state.player; let shut = 0; sim.bus.on('siteShut', () => shut++);
+  // (v1.48: Wickham Keep is open from the start, a band of its own; the Vale's hidden site is its secret, the Ninth Milestone)
+  assert.ok(!sim.destinations().some((d) => d.id === 'site:ninth_milestone'), 'not on the compass');
+  const e = sim.world.exits.find((x) => x.site === 'ninth_milestone'), p = sim.state.player; let shut = 0; sim.bus.on('siteShut', () => shut++);
   p.x = p.px = (e.x0 + e.x1) / 2; p.y = p.py = (e.y0 + e.y1) / 2; for (let i = 0; i < 5; i++) sim.tick();
   assert.equal(sim.world.kind, 'overland', 'its way in stays shut'); assert.equal(shut, 1, 'said once');
-  sim.reveal('wickham_keep'); sim.tick();
-  assert.equal(sim.world.kind, 'dungeon'); assert.equal(sim.world.site, 'wickham_keep');
+  sim.reveal('ninth_milestone'); sim.tick();
+  assert.equal(sim.world.kind, 'dungeon'); assert.equal(sim.world.site, 'ninth_milestone');
   const back = createSim(1); back.restore(JSON.parse(JSON.stringify(sim.snapshot())));
-  assert.equal(back.world.site, 'wickham_keep', 'the save keeps the site'); assert.ok(back.state.revealed.has('wickham_keep'), 'and what was revealed');
+  assert.equal(back.world.site, 'ninth_milestone', 'the save keeps the site'); assert.ok(back.state.revealed.has('ninth_milestone'), 'and what was revealed');
 });
 test('the stick still takes you through any exit', () => {
   const sim = outFromBarrows(20260807);
@@ -45,7 +48,8 @@ test('the stick still takes you through any exit', () => {
 // compass reading "Stairs down · to depth 2" (2026-10-04)
 test('no "Stairs down" on a last floor: the compass offers the last hall instead', async () => {
   const { SITES, hasFloorBelow } = await import('../src/sim/sites.js');
-  for (const site of ['tithe_mill', 'ninth_milestone', 'wickham_keep', 'sunken_chapel', 'scrag_warren', 'toadking_mound', 'drowned_abbey']) {
+  // (the Mill and the Warren are parked, v1.48, but still build: ?site= previews them)
+  for (const site of ['tithe_mill', 'barrows', 'ninth_milestone', 'wickham_keep', 'sunken_chapel', 'scrag_warren', 'toadking_mound', 'canal_locks', 'drowned_abbey']) {
     const sim = createSim(20260807, undefined, { scene: 'dungeon', site }); sim.tick();
     for (let d = 0; d < (SITES[site].floors || 1); d++) {
       if (d) { const t = sim.world.stairsAt, p = sim.state.player; p.x = p.px = t.x + 0.5; p.y = p.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }

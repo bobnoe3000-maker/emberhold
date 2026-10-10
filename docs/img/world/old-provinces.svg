@@ -635,12 +635,10 @@
 <rect x="992" y="1174" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M991,1174 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <rect x="684" y="1444" width="12" height="10" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/><path d="M683,1444 l7,-7 l7,7" fill="#eadcbc" stroke="#3b2a1c" stroke-width="1.5"/>
 <path d="M339,1841 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
-<path d="M374,1677 l5,-9 l5,9 z" fill="#3b2a1c"/>
+<path d="M482,1593 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M563,1834 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
-<path d="M401,1555 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M257,2004 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M324,2010 l5,-9 l5,9 z" fill="#3b2a1c"/>
-<path d="M491,1995 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M402,2107 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
 <path d="M415,822 l5,-9 l5,9 z" fill="#3b2a1c"/>
 <path d="M475,956 v-8 h3 v4 h3 v-6 h3 v5 h2 v5" fill="none" stroke="#3b2a1c" stroke-width="1.4"/>
@@ -693,12 +691,10 @@
 <text x="800" y="1628" font-family="Fell" font-size="25" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Rookstead</text>
 <text x="690" y="1436" font-family="Fell" font-size="20" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Hollin Ford</text>
 <text x="346" y="1861" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Old Barrows</text>
-<text x="409" y="1697" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Tithe Mill</text>
+<text x="487" y="1613" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Wickham Keep</text>
 <text x="570" y="1816" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Sunken Chapel</text>
-<text x="406" y="1575" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Scrag Warren</text>
 <text x="244" y="2024" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">Toadking's Mound</text>
 <text x="373" y="2030" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Canal Locks</text>
-<text x="496" y="2015" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Sickpools</text>
 <text x="453" y="2127" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Drowned Abbey</text>
 <text x="420" y="842" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Cinderworks</text>
 <text x="482" y="976" font-family="Fell It" font-size="17" fill="#3b2a1c" text-anchor="middle" letter-spacing="0" paint-order="stroke" stroke="#eadcbc" stroke-width="5" stroke-linejoin="round">the Forgehall</text>

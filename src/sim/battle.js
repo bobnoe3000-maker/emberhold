@@ -191,7 +191,11 @@ export const GOLD_DROP = 0.7;
 //   bells   (the Abbess Below) every BELL_S s a bell, and the hall floods further in from its walls, FLOOD_STEP of the way
 //           to its middle a bell (to FLOOD_MAX bells: about three quarters of the floor; hazards.js); it drains when she
 //           falls (her choir-lamp breaks with her: lamps.js)
-/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
+//   (v1.48, one dungeon a level)
+//   issue   (the Quartermaster) every ISSUE_S s the most hurt of his ranks (not himself) stands up whole, re-armed
+//   sluice  (the Vatwarden) every SLUICE_S s a strip of the vat's sick water (hazards.js, SLUICE_R patches for SLUICE_T
+//           s) runs across the hall through the party's middle, along one axis then the other
+/** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
 export const BOSSES = {
   redhand_captain: { name: 'Captain Garrow', like: 'brute', hp: 22, atk: 2.3, def: 1.6, speed: 3.0, xp: 12, gold: 30, mech: 'call', escort: ['cutthroat', 'crossbow'], once: true, heirloom: 'garrows_due' },
   robed_stranger: { name: 'The Robed Stranger', like: 'acolyte', hp: 38, atk: 2.8, def: 2.5, xp: 12, gold: 25, mech: 'kindle', escort: ['minion', 'minion'], once: true },
@@ -201,9 +205,13 @@ export const BOSSES = {
   teague: { name: 'Brother Teague', like: 'harvester', hp: 16, atk: 2.1, def: 1.5, speed: 2.8, xp: 12, gold: 28, mech: 'cage', escort: ['drowned', 'rogue'], once: true, heirloom: 'teagues_name' },
   drowned_choir: { name: 'The Drowned Choir', like: 'cantor', hp: 26, atk: 2.0, def: 1.8, xp: 14, gold: 30, mech: 'vespers', escort: ['cantor', 'cantor', 'drowned'], undead: true, heirloom: 'vespers' },
   abbess_below: { name: 'The Abbess Below', like: 'drowned', hp: 36, atk: 2.5, def: 1.9, speed: 2.5, xp: 14, gold: 32, mech: 'bells', escort: ['drowned', 'cantor'], undead: true, heirloom: 'the_last_office' },
+  // (v1.48, GDD §17, world doc v1.32) the Old Barrows' Quartermaster, and the Vatwarden at Vat Seven (the Locks' third floor)
+  quartermaster: { name: 'The Quartermaster', like: 'warrior', hp: 24, atk: 1.9, def: 1.6, speed: 2.6, xp: 12, gold: 22, mech: 'issue', escort: ['warrior', 'minion'], undead: true },
+  vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
+export const STALL_R = 3, ISSUE_S = 10, SLUICE_S = 11, SLUICE_R = 1.5, SLUICE_T = 6, SLUICE_L = 8;
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -398,7 +406,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       atk: E.atk * atkScale * tough * (elite ? 1.3 : 1) * (B ? B.atk : 1), def: E.def * scale * (B ? B.def : 1),
       crit: E.crit, dodge: E.dodge, interval: E.interval, range: E.range, speed: B && B.speed ? B.speed : E.speed, bolt: E.bolt,
       xp: E.xp * (elite ? 3 : 1) * (B ? B.xp : 1), gold: E.gold * (elite ? 4 : 1) * (B ? B.gold : 1), cd: 0.6 + rng() * 0.8, act: 0, flash: 0, dead: 0, dir: 2, moving: false, spawn: 0.5 };
-    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.mend = 0; }
+    if (B) { u.boss = k; u.called = 0; u.guards = []; u.kindleT = 0; u.swarmT = 0; u.mudT = 0; u.vesT = 0; u.bellT = 0; u.issueT = 0; u.sluiceT = 0; u.sluiceN = 0; u.mend = 0; }
     w.enemies.push(u);
     return u;
   }
@@ -1064,6 +1072,24 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
       for (const [x, y] of at) battle.hazards.push({ kind: 'mud', x, y, r: MUD_R, from: state.t, until: state.t + MUD_T });
       bus.emit('bossMud', { id: e.boss, x: e.x, y: e.y, n: at.length });
+    } else if (B.mech === 'issue' && battle && (e.issueT += dt) >= ISSUE_S) {
+      // he issues: the most hurt of his ranks (alive, not himself) stands up whole
+      e.issueT = 0;
+      let worst = null; for (const o of w.enemies || []) if (o !== e && !o.boss && o.hp > 0 && !o.dead && !(o.spawn > 0) && o.hp < o.maxHp && (!worst || o.hp / o.maxHp < worst.hp / worst.maxHp)) worst = o;
+      if (worst) { worst.hp = worst.maxHp; bus.emit('bossIssue', { id: e.boss, x: worst.x, y: worst.y }); }
+    } else if (B.mech === 'sluice' && battle && (e.sluiceT += dt) >= SLUICE_S) {
+      // he opens the sluice: a strip of sick water across the hall through the party's middle, along x, then along y
+      e.sluiceT = 0; e.sluiceN++;
+      const up = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
+      if (up.length) {
+        const cx = up.reduce((a, q) => a + q[0], 0) / up.length, cy = up.reduce((a, q) => a + q[1], 0) / up.length, alongX = e.sluiceN % 2 === 1;
+        let n = 0;
+        for (let t = -SLUICE_L; t <= SLUICE_L; t += 2.2) {
+          const x = alongX ? cx + t : cx, y = alongX ? cy : cy + t;
+          if (isWalkable(w, x, y) && roomAt(w, x, y) === battle.room) { battle.hazards.push({ kind: 'sluice', x, y, r: SLUICE_R, from: state.t, until: state.t + SLUICE_T }); n++; }
+        }
+        bus.emit('bossSluice', { id: e.boss, x: e.x, y: e.y, n });
+      }
     } else if (B.mech === 'cage') {
       // his lantern-cage, while it's lit: he mends (in whole points, as blows land)
       const c = e.cage && (w.enemies || []).find((o) => o.id === e.cage && o.hp > 0 && !o.dead);
@@ -1234,7 +1260,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const t = taunt || (e.bolt ? nearest(e, targets, undefined, reach) : nearest(e, targets, (q) => freeStations(q) > 0 || e.slotTgt === q, reach) || nearest(e, targets, undefined, reach));
         if (!t) { e.moving = false; continue; }
         const d = hypot(t.x - e.x, t.y - e.y); e.fx = t.x - e.x; e.fy = t.y - e.y; e.aim = t;   // (who it's fighting: a Skirmisher's opening)
-        if (e.bolt) { if (d > e.range) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
+        // (v1.48) a boss's own ranged foes don't hold off at their full reach (v1.47 doubled it, and two halls broke: the
+        // Choir 3 of 3 down to 0 of 3 at 14, Old Skarn 3 of 3 to 1 of 3 at 5): the Choir's cantors sing in the stalls, at
+        // its side, and what Skarn's drum brings out closes to half its reach before it shoots
+        const sing = e.singer ? w.enemies.find((o) => o.id === e.singer && o.hp > 0 && !o.dead) : null;
+        if (sing && hypot(sing.x - e.x, sing.y - e.y) > STALL_R) { chase(e, sing.x, sing.y, e.speed * slow, dt, w); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
+        else if (sing) { e.moving = false; if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
+        else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
         else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
       }
       separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)

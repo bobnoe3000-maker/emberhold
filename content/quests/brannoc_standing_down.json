@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "barrows",
-      "journal": "Go down to the Old Barrows' second floor or deeper, and hold a stair hall (the room with the stairs down) for five waves.",
+      "journal": "Go down to the Long Gallery, the Old Barrows' second floor, and hold its last hall for five waves.",
       "objectives": [
         {
           "type": "waves",
@@ -24,15 +24,16 @@
           "count": 5,
           "hall": true,
           "floor": 2,
-          "label": "Waves held in a stair hall, floor 2 or deeper"
+          "label": "Waves held in the Long Gallery's last hall"
         }
       ]
     }
   ],
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
-  "done": "You held the barrows' stair hall with Brannoc. He stood; they stood. He gave you his old chain, less one link.",
+  "done": "You held the Long Gallery's last hall with Brannoc. He stood; they stood. He gave you his old chain, less one link.",
   "rewards": {
-    "share": 0.45, "lv": 6,
+    "share": 0.45,
+    "lv": 6,
     "gold": 100,
     "item": "broken_chain"
   },

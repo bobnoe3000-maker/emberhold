@@ -7,7 +7,9 @@
 // per hour of play (sim time).
 //
 //   node tools/balance/loot.mjs <heroLv> [hours] [seed] [--src dir]
-// Floors: level 1–4 the first, 5–7 the second, 8+ the third (room levels base 1 + 3 a floor).
+// Floors: level 1–4 the first, 5–7 the second, 8+ the third (room levels base 1 + 3 a floor), in an older checkout's
+// endless Barrows. (v1.48, one dungeon a level) In a checkout with bands, the dungeon whose band holds the level, on the
+// floor of that level (its last floor past the band).
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
@@ -17,7 +19,10 @@ const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
-const HL = +args[0], HOURS = +(args[1] || 1), seed = +(args[2] || 20260807), DEPTH = HL <= 4 ? 0 : HL <= 7 ? 1 : 2;
+const HL = +args[0], HOURS = +(args[1] || 1), seed = +(args[2] || 20260807);
+const sites = await load('sim/sites.js'), banded = Object.entries(sites.SITES).filter(([, S]) => S.band && !S.hidden && !S.parked);
+const home = banded.find(([, S]) => S.base <= HL && HL <= S.base + S.floors - 1) || (banded.length ? banded[banded.length - 1] : null);
+const SITE = home ? home[0] : 'barrows', DEPTH = home ? Math.min(home[1].floors - 1, Math.max(0, HL - home[1].base)) : HL <= 4 ? 0 : HL <= 7 ? 1 : 2;
 
 const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
 const sim = createSim(seed, undefined, { scene: 'dungeon' });
@@ -28,7 +33,7 @@ const fresh = (m, i) => { m.cls = want[i]; m.level = HL; m.xp = 0; m.attrs = nul
 sim.state.party.forEach(fresh);
 const patch = () => { for (const m of sim.state.party) { m.level = HL; m.xp = 0; m.fallen = false; m.down = false; m.weakUntil = 0; m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; } };
 // a fresh visit: the floor as new (chests full, nothing explored), from its entrance
-const enter = () => { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'barrows', depth: DEPTH, floors: [], bag: [], mods: [], hp: [], discovered: [], visited: [], player: { x: -1, y: -1 } }); patch(); };
+const enter = () => { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: SITE, depth: DEPTH, floors: [], bag: [], mods: [], hp: [], discovered: [], visited: [], player: { x: -1, y: -1 } }); patch(); };
 enter();
 
 const got = {}, add = (src, r) => { got[src] ||= { common: 0, fine: 0, rare: 0, heirloom: 0 }; got[src][r] = (got[src][r] || 0) + 1; };

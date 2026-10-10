@@ -101,7 +101,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
 // ── the cleric's trial (content/quests/trial_last_rites.json) ──
 == ilse_trial_offer ==
 "Nobody said the rites for the legion in the barrows. They were waiting to be relieved. You don't bury people who are waiting."
-"I'd like a cleric of yours to go down into the Old Barrows, to the hall by the stairs down on the second floor or below, and stand, and say them. The dead will object. Say them anyway, five waves long."
+"I'd like a cleric of yours to go down into the Sunken Chapel, where the legion was bound, to the Nave's last hall, and stand, and say them. The dead will object. Say them anyway, five waves long."
 + [We'll say them. #mark: quest]
     "Properly. Every word. I'll know if you skip one, and so will they." # quest: accept trial_last_rites
     -> ilse_topics
@@ -110,7 +110,7 @@ A Grey Sister sits on the Shrine's step with a writing board on her knees, copyi
     -> ilse_topics
 
 == ilse_trial_active ==
-"The hall by the stairs down, in the Old Barrows, the second floor or deeper. Five waves. The rites don't need to be loud. They need to be finished."
+"The Nave's last hall, in the Sunken Chapel, the first floor. Five waves. The rites don't need to be loud. They need to be finished."
 -> ilse_topics
 
 == ilse_trial_turnin ==
@@ -208,7 +208,7 @@ Ilse takes it in both hands, tilts it to the light, and reads it twice without m
 - frag_vale_count < 3:
     "There's more of it down there. There always is. The Vale's set will have gaps until someone goes deeper."
 - else:
-    "There are gaps still. The mill, the Keep, the chapel. The old empire kept its papers where it kept its sins."
+    "There are gaps still. The barrows, the Keep, the chapel. The old empire kept its papers where it kept its sins."
 }
 -> ilse_topics
 

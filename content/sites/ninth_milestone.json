@@ -2,9 +2,9 @@
   "id": "ninth_milestone",
   "region": "vale",
   "name": "The Ninth Milestone",
-  "levels": "8",
+  "levels": "9",
   "floors": 1,
   "hidden": true,
-  "summary": "The legion's strongroom under the ninth milestone of the Wickham road.",
+  "summary": "The legion's strongroom under the ninth milestone of the Wickham road. Once its vault is opened it seals itself for a while; then it can be walked again.",
   "shut": "A mile-stone with IX cut into it. The slab at its foot doesn't quite sit flat."
 }

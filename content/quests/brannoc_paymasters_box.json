@@ -12,25 +12,27 @@
   "after": [
     "brannoc_old_debts"
   ],
-  "summary": "Brannoc says the Redhand's paymaster kept the robed strangers' coin at the Tithe Mill, in two boxes, because he trusted nobody, himself included. Brannoc wants to see whose seal is on the purses.",
+  "summary": "Brannoc says the Redhand's paymaster kept the robed strangers' coin in Wickham Keep's strongroom, in two boxes, because he trusted nobody, himself included. Brannoc wants to see whose seal is on the purses.",
   "steps": [
     {
-      "id": "mill",
-      "journal": "Open two chests in the Tithe Mill, up the river from Thornwick.",
+      "id": "strongroom",
+      "journal": "Open two chests in the Barracks, Wickham Keep's second floor, where the paymaster kept his strongroom.",
       "objectives": [
         {
           "type": "loot",
-          "site": "tithe_mill",
+          "site": "wickham_keep",
           "count": 2,
+          "floor": 2,
           "label": "The paymaster's chests"
         }
       ]
     }
   ],
   "ready": "Tell Brannoc it's done: tap his party card, then Talk.",
-  "done": "The paymaster's boxes at the Tithe Mill: coal-red wax on every purse, no crest. Brannoc kept one seal.",
+  "done": "The paymaster's boxes in the Keep's strongroom: coal-red wax on every purse, no crest. Brannoc kept one seal.",
   "rewards": {
-    "share": 0.3, "lv": 5,
+    "share": 0.3,
+    "lv": 5,
     "gold": 120
   },
   "dialogue": {

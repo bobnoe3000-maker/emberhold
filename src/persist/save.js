@@ -86,6 +86,11 @@
 //       dungeon's floors are new, so a visit under way can't be read back onto them (its opened chests, its fog, the
 //       other floors, where you stood: all keyed by tiles). Older data (visitFor): a save in a dungeon starts the visit
 //       again at the site's first floor, in its entrance; the shape is unchanged.
+//   v31: one dungeon a level (sim/sites.js; GDD §3 v1.48). The Tithe Mill and the Scrag Warren leave play and the
+//       Sickpools become the Canal Locks' third floor; every banded dungeon's floors are new; secret sites seal after
+//       they're cleared (secrets { [site]: until }). Older data (bandsFor): a save in a gone site stands in what took its
+//       place (the Old Barrows, Wickham Keep, the Canal Locks), a dungeon visit starts again at its first floor, the
+//       sites entered follow, and a board job under way is let go (its posting is drawn anew from the new dungeons).
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -96,7 +101,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 30;
+export const SAVE_VERSION = 31;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -117,7 +122,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -162,6 +167,19 @@ export function visitFor(data) {
   if (!data || data.scene !== 'dungeon') return { ...data, floors: [] };
   return { ...data, depth: 0, mods: [], hp: [], discovered: [], visited: [], floors: [], player: { ...(data.player || {}), x: -1, y: -1 } };   // (off every floor: restore stands you at the spawn)
 }
+
+/** v30 → v31: one dungeon a level (see v31 above) @param {any} data */
+export function bandsFor(data) {
+  if (!data || typeof data !== 'object') return data;
+  const to = (id) => GONE_SITES[id] || id, site = to(data.site || 'barrows');
+  const quests = { ...(data.quests || {}) };
+  for (const [k, v] of Object.entries(quests)) if (/^board_/.test(k) && !(Array.isArray(v) && v[0] === 3)) delete quests[k];   // (3: done)
+  const out = { ...data, site, region: data.scene === 'dungeon' && SITES[site] ? SITES[site].region : data.region, secrets: data.secrets || {}, quests,
+    sitesEntered: [...new Set((data.sitesEntered || []).map(to))] };
+  return data.scene === 'dungeon' ? visitFor(out) : out;
+}
+/** sites gone in v31, and what took their place @type {Record<string, string>} */
+export const GONE_SITES = { tithe_mill: 'barrows', scrag_warren: 'wickham_keep', sickpools: 'canal_locks' };
 
 /** v28 → v29: the one shop's shelves were Thornwick's (see v29 above) @param {any} data */
 export function shopsFor(data) { if (data.shops) return data; const { shop, ...rest } = data; return { ...rest, shops: shop ? { thornwick: shop } : {} }; }

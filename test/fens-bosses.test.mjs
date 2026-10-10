@@ -2,7 +2,8 @@
 // bosses"). One a hall, each with one mechanic: the Toadking's mud (a patch under each of the party), Brother Teague's
 // lantern-cage (it mends him and halves his hurts until it's broken; its soul goes free), the Drowned Choir's Vespers
 // (its cantors' song mends the drowned; another stands up when they're down), the Abbess Below's bells (the hall floods
-// in from its walls; her choir-lamp breaks with her). In a hazard the party moves at half speed and recovers slower,
+// in from its walls; her choir-lamp breaks with her); (v1.48) the Vatwarden's sluice (a line of sick water across his
+// hall through the party). In a hazard the party moves at half speed and recovers slower,
 // and steps out of it; each boss falls to the right party at its hall's level.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import { createSim } from '../src/sim/core.js';
 import { statsFor } from '../src/sim/party.js';
 import { autoAllocate } from '../src/sim/attributes.js';
 import { starterKit, HEIRLOOMS } from '../src/sim/items.js';
-import { BOSSES, MUD_S, MUD_T, BELL_S, FLOOD_MAX, VESPERS_S, halved } from '../src/sim/battle.js';
+import { BOSSES, MUD_S, MUD_T, BELL_S, FLOOD_MAX, VESPERS_S, SLUICE_S, SLUICE_R, SLUICE_T, halved } from '../src/sim/battle.js';
 import { bossAt } from '../src/sim/sites.js';
 import { isWalkable } from '../src/sim/world.js';
 import { LAMPS } from '../src/sim/lamps.js';
@@ -29,15 +30,15 @@ function inHall(site, level, floor, seed = SEED) {
   const L = sim.world.level, r = L.descentRoom, p = sim.state.player; let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }   // (open ground: not the stairwell)
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; sim.state.party.forEach((m, i) => { if (i) { m.x = m.px = p.x + (i === 1 ? -0.9 : 0.9); m.y = m.py = p.y + 0.9; } });
-  const ev = []; for (const k of ['bossWave', 'bossDown', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'lampBroken', 'loot', 'defeat']) sim.bus.on(k, (e) => ev.push([k, e]));
+  const ev = []; for (const k of ['bossWave', 'bossDown', 'bossMud', 'bossCage', 'bossVespers', 'bossFlood', 'bossSluice', 'lampBroken', 'loot', 'defeat']) sim.bus.on(k, (e) => ev.push([k, e]));
   return { sim, ev };
 }
 const until = (sim, secs, done) => { for (let i = 0; i < secs * 20 && !done(); i++) sim.tick(); };
 const boss = (sim) => (sim.world.enemies || []).find((e) => e.boss && e.hp > 0);
 const pos = (sim, i) => (i ? sim.state.party[i] : sim.state.player);
 
-test('the halls: the Toadking on the Mound\'s second floor; Teague, the Choir and the Abbess on the Abbey\'s three', () => {
-  assert.equal(bossAt('toadking_mound', 1), 'toadking');
+test('the halls: the Toadking on the Mound\'s third floor; Teague, the Choir and the Abbess on the Abbey\'s three', () => {
+  assert.deepEqual([0, 1, 2].map((d) => bossAt('toadking_mound', d)), [null, null, 'toadking']);
   assert.deepEqual([0, 1, 2].map((d) => bossAt('drowned_abbey', d)), ['teague', 'drowned_choir', 'abbess_below']);
   for (const id of ['toadking', 'teague', 'drowned_choir', 'abbess_below']) assert.ok(HEIRLOOMS[BOSSES[id].heirloom], `${id}'s heirloom`);
   assert.deepEqual([BOSSES.teague.once, BOSSES.toadking.once], [true, undefined], 'Teague falls once; the others come back');
@@ -55,7 +56,7 @@ test('the hazard: a hall\'s edge, a patch, the ground out of it', () => {
 });
 
 test('the Toadking: mud under each of the party every 9 s; in it, half speed and slower to recover; they step out; it goes with him', () => {
-  const { sim, ev } = inHall('toadking_mound', 11, 2);
+  const { sim, ev } = inHall('toadking_mound', 12, 3);
   until(sim, 30, () => ev.some(([k]) => k === 'bossMud'));
   const mud = ev.find(([k]) => k === 'bossMud'); assert.ok(mud, 'he stamped'); assert.equal(ev.find(([k]) => k === 'bossWave')[1].id, 'toadking');
   const B = sim.battle; assert.equal(B.hazards.length, mud[1].n); assert.ok(mud[1].n >= 2);
@@ -71,7 +72,7 @@ test('the Toadking: mud under each of the party every 9 s; in it, half speed and
 });
 
 test('in the mud: the hero you steer goes at half speed, and a blow takes longer to recover from', () => {
-  const { sim } = inHall('toadking_mound', 11, 2);
+  const { sim } = inHall('toadking_mound', 12, 3);
   until(sim, 4, () => !!(sim.battle && sim.battle.bossUp));
   const p = sim.state.player, run = (mud) => {
     sim.battle.hazards = mud ? [{ kind: 'mud', x: p.x, y: p.y, r: 30, until: sim.state.t + 60 }] : [];
@@ -85,7 +86,7 @@ test('in the mud: the hero you steer goes at half speed, and a blow takes longer
 });
 
 test('Brother Teague: his lit cage mends him and halves his hurts; broken, its soul goes free and he\'s only a man; once', () => {
-  const { sim, ev } = inHall('drowned_abbey', 13, 1);
+  const { sim, ev } = inHall('drowned_abbey', 16, 1);
   until(sim, 10, () => !!boss(sim));
   const T = boss(sim); assert.equal(T.boss, 'teague');
   const cage = sim.world.enemies.find((e) => e.kind === 'lantern'); assert.ok(cage && cage.inert && cage.owner === T.id && cage.id === T.cage);
@@ -108,9 +109,9 @@ test('Brother Teague: his lit cage mends him and halves his hurts; broken, its s
 // (M8 slice 11, the boss harness) seed 4242 at the hall's level never ended: Teague was shoved out of his hall into the
 // corridor below it, the fighter after him, where the rest of the party (leashed to the room) couldn't follow; and his
 // cage, carried at his side with his back to a wall, sat in the wall where no blow could reach it
-test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall: the right party at 12 puts him down, every seed', () => {
+test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall: the right party at 16 puts him down, every seed', () => {
   for (const seed of [4242, 3, 20260807]) {
-    const { sim, ev } = inHall('drowned_abbey', 12, 1, seed);
+    const { sim, ev } = inHall('drowned_abbey', 16, 1, seed);
     let outside = 0, inWall = 0;
     const roomAt = (w, x, y) => { const c = w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' ? c.room : -1; };
     for (let i = 0; i < 20 * 150 && !ev.some(([k]) => k === 'bossDown' || k === 'defeat'); i++) {
@@ -126,7 +127,7 @@ test('Teague can\'t be shoved out of his hall, nor his cage carried into a wall:
 });
 
 test('the Drowned Choir: while a cantor sings the drowned mend; with the singers down, another stands up out of the stalls', () => {
-  const { sim, ev } = inHall('drowned_abbey', 14, 2);
+  const { sim, ev } = inHall('drowned_abbey', 17, 2);
   until(sim, 10, () => !!boss(sim));
   const C = boss(sim); assert.equal(C.boss, 'drowned_choir');
   const singers = () => sim.world.enemies.filter((e) => e.singer === C.id && e.hp > 0 && !e.dead);
@@ -145,7 +146,7 @@ test('the Drowned Choir: while a cantor sings the drowned mend; with the singers
 });
 
 test('the Abbess Below: each bell floods the hall a tile further in, to 3; she falls, the water goes, her choir-lamp breaks once', () => {
-  const { sim, ev } = inHall('drowned_abbey', 15, 3);
+  const { sim, ev } = inHall('drowned_abbey', 18, 3);
   until(sim, 10, () => !!boss(sim)); assert.equal(boss(sim).boss, 'abbess_below');
   until(sim, BELL_S + 1, () => ev.some(([k]) => k === 'bossFlood'));
   assert.equal(sim.battle.flood, 1); const E = sim.battle.edge; assert.ok(E && E.size > 10);
@@ -159,4 +160,36 @@ test('the Abbess Below: each bell floods the hall a tile further in, to 3; she f
   const lb = ev.find(([k]) => k === 'lampBroken'); assert.ok(lb && lb[1].id === 'choir_lamp' && lb[1].first && lb[1].held === 312);
   assert.ok(sim.state.lampsBroken.includes('choir_lamp'));
   assert.ok(ev.some(([k, e]) => k === 'loot' && e.heirloom === 'the_last_office'));
+});
+
+// (v1.48, one dungeon a level: GDD §17, world doc v1.32) the Vatwarden holds Vat Seven, the Locks' third floor (it was the
+// Sickpools): every SLUICE_S s a strip of sick water across his hall through the party's middle, along x, then along y
+test('the Vatwarden: every 11 s a line of sick water across his hall through the party, one way then the other; it runs out; it goes with him', () => {
+  assert.deepEqual([0, 1, 2].map((d) => bossAt('canal_locks', d)), [null, null, 'vatwarden']);
+  const { sim, ev } = inHall('canal_locks', 15, 3);
+  const opened = [];                                                                       // (at the moment it opens: the party's middle, the new patches)
+  sim.bus.on('bossSluice', () => {
+    const up = sim.state.party.map((m, i) => (!m.down && m.hp > 0 ? pos(sim, i) : null)).filter(Boolean);
+    opened.push({ t: sim.state.t, cx: up.reduce((a, q) => a + q.x, 0) / up.length, cy: up.reduce((a, q) => a + q.y, 0) / up.length, room: sim.battle.room, patches: sim.battle.hazards.filter((h) => h.kind === 'sluice' && h.from === sim.state.t).map((h) => ({ ...h })) });
+  });
+  until(sim, 10, () => !!boss(sim)); assert.equal(boss(sim).boss, 'vatwarden');
+  until(sim, SLUICE_S + 2, () => opened.length >= 1);
+  const roomAt = (x, y) => { const c = sim.world.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' ? c.room : -1; };
+  const [a] = opened; assert.ok(a, 'he opened the sluice');
+  assert.equal(ev.find(([k]) => k === 'bossSluice')[1].n, a.patches.length); assert.ok(a.patches.length >= 3, `a line, not a puddle (${a.patches.length})`);
+  for (const h of a.patches) {
+    assert.ok(Math.abs(h.y - a.cy) < 1e-9, 'the first runs along x, through the party\'s middle');
+    assert.equal(h.r, SLUICE_R); assert.ok(Math.abs(h.until - a.t - SLUICE_T) < 1e-9);
+    assert.equal(roomAt(h.x, h.y), a.room, 'all of it in his hall'); assert.ok(isWalkable(sim.world, h.x, h.y));
+  }
+  assert.equal(hazardAt({ hazards: a.patches }, a.cx, a.cy), 'sluice', 'over where the party stood');
+  until(sim, SLUICE_T + 0.5, () => false);
+  assert.ok(!sim.battle || !sim.battle.hazards.some((h) => h.from === a.t), 'it runs out in 6 s');
+  until(sim, SLUICE_S, () => opened.length >= 2);
+  const [, b] = opened; assert.ok(b, 'again 11 s on'); assert.ok(Math.abs(b.t - a.t - SLUICE_S) < 0.1, `${(b.t - a.t).toFixed(2)} s apart`);
+  assert.ok(b.patches.length >= 3); for (const h of b.patches) assert.ok(Math.abs(h.x - b.cx) < 1e-9, 'the second runs along y');
+  assert.equal(hazardAt({ hazards: b.patches }, b.cx, b.cy), 'sluice', 'over where the party stood, again');
+  until(sim, 240, () => ev.some(([k]) => k === 'bossDown' || k === 'defeat'));
+  assert.ok(ev.some(([k, e]) => k === 'bossDown' && e.id === 'vatwarden'), 'he falls to the right party at his hall\'s level');
+  assert.equal(sim.battle ? sim.battle.hazards.length : 0, 0, 'the water goes with him');
 });

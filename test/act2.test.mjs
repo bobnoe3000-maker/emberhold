@@ -1,6 +1,6 @@
 // Act II, The Drowned Abbey (M8 slices 7–8; world doc v1.29 §3.2, §5, §6; the owner, 2026-10-05: "proceed as
 // recommended": Act II with Wren). Six chapters from Ilse in Thornwick down to Saltmere and back; Saltmere's people;
-// Wren, found in the Toadking's Boat Hall, and her chain; the Kindler, met once at the Canal Locks and gone. Two new
+// Wren, found in the Toadking's Boat Hall (the Mound's third floor since v1.48), and her chain; the Kindler, met once at the Canal Locks and gone. Two new
 // objectives (a word with someone, full cages broken) and a chest objective that wants a floor; the compass across
 // lands. The golden path walks chapter 1 on the compass alone: Thornwick → the canal road → Saltmere → Dace → the
 // Toadking's Mound → Wren → back to Dace.
@@ -41,7 +41,8 @@ test('Saltmere\'s people stand in Saltmere; Wren waits in the Boat Hall; the Kin
   const sim = after1(9, 'town', 'fens');
   assert.deepEqual(sim.world.npcs.map((n) => n.id).sort(), ['dace_pike', 'mother_agnes', 'pim_rushlight', 'sister_orla']);
   goTo(sim, 'dungeon', 'toadking_mound', 0); assert.equal(npc(sim, 'wren'), undefined, 'not on the Mound\'s first floor');
-  goTo(sim, 'dungeon', 'toadking_mound', 1);
+  goTo(sim, 'dungeon', 'toadking_mound', 1); assert.equal(npc(sim, 'wren'), undefined, 'nor its second: the Boat Hall is the third floor\'s (v1.48)');
+  goTo(sim, 'dungeon', 'toadking_mound', 2);
   const w = npc(sim, 'wren'), L = sim.world.level; assert.ok(w, 'in the Boat Hall');
   assert.equal(L.cells.get(Math.floor(w.x) + ',' + Math.floor(w.y)).room, L.descentRoom.id);
   assert.equal(NPCS.wren.found.boss, FOUND.wren.freedBy);
@@ -58,10 +59,10 @@ test('Saltmere\'s people stand in Saltmere; Wren waits in the Boat Hall; the Kin
   assert.ok(![...sim.state.party, ...sim.state.bench].some((m) => m.id === 'kindler'), 'a visitor never joins');
 });
 
-test('Fog on the Canal: Ilse gives it at 8 after Act I; a word with Dace counts (and the Ink reads the step before it does)', () => {
-  const sim = after1(7);
-  assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.LOCKED, 'level 7');
-  sim.state.party[0].level = 8;
+test('Fog on the Canal: Ilse gives it at 10 after Act I; a word with Dace counts (and the Ink reads the step before it does)', () => {
+  const sim = after1(9);
+  assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.LOCKED, 'level 9: the Vale\'s top, the Fens begin at 10 (v1.48)');
+  sim.state.party[0].level = 10;
   assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.AVAILABLE);
   const ev = events(sim, ['dialogue', 'questChanged']);
   talk(sim, 'sister_ilse'); assert.equal(ev.at(-1).vars.q_ch2_fog_on_the_canal, QS.AVAILABLE);
@@ -79,13 +80,13 @@ test('Wren: joins once the Toadking has fallen, as a rogue named Wren; a hirelin
   const sim = after1(10);
   hire(sim, [1]); const hid = sim.state.party[1].id; sim.state.party[1].name = 'Wren';   // (the tavern's rolls had a Wren once)
   sim.state.quests.ch2_fog_on_the_canal = { st: QS.ACTIVE, step: 1, n: [0] };
-  goTo(sim, 'dungeon', 'toadking_mound', 1);
+  goTo(sim, 'dungeon', 'toadking_mound', 2);
   const ev = events(sim, ['dialogue', 'companionJoined']);
   talk(sim, 'wren'); assert.equal(ev.at(-1).vars.boss_toadking, 0); effect(sim, 'companion', 'join');
   assert.ok(![...sim.state.party, ...sim.state.bench].some((m) => m.id === 'wren'), 'the Toadking still holds her');
   sim.state.bosses.toadking = 1; sim.quests.settleAll();
   assert.equal(sim.state.quests.ch2_fog_on_the_canal.step, 2, 'the boss who already fell counts');
-  goTo(sim, 'dungeon', 'toadking_mound', 1); talk(sim, 'wren');
+  goTo(sim, 'dungeon', 'toadking_mound', 2); talk(sim, 'wren');
   assert.equal(ev.filter((e) => e.n === 'dialogue').at(-1).vars.s_ch2_fog_on_the_canal, 2, 'the Ink reads the berth-book beat');
   assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.READY, 'her word counts');
   effect(sim, 'companion', 'join');
@@ -99,8 +100,8 @@ test('Wren: joins once the Toadking has fallen, as a rogue named Wren; a hirelin
 });
 
 test('freed before the chapter asked, Wren\'s word is already had; the Kindler heard before the Locks counts too', () => {
-  const sim = after1(10);
-  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 1); talk(sim, 'wren'); effect(sim, 'companion', 'join');
+  const sim = after1(13);                                                          // (the Locks' chapter from 13, v1.48)
+  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 2); talk(sim, 'wren'); effect(sim, 'companion', 'join');
   sim.state.quests.ch2_fog_on_the_canal = { st: QS.ACTIVE, step: 0, n: [0] };
   goTo(sim, 'town', 'barrows', 0, 'fens'); talk(sim, 'dace_pike');
   assert.equal(st(sim, 'ch2_fog_on_the_canal'), QS.READY, 'Dace, then the Toadking (down), then Wren (with you): all had');
@@ -111,13 +112,15 @@ test('freed before the chapter asked, Wren\'s word is already had; the Kindler h
   assert.equal(sim.state.quests.ch2_the_locks.step, 1, 'he won\'t be back to be heard: on to the Sluice');
 });
 
-test('the new objectives: full cages broken in the Sickpools; chests on the Abbey\'s third floor, not its first', () => {
-  const sim = after1(12);
+test('the new objectives: full cages broken at the Canal Locks (Vat Seven); chests on the Abbey\'s third floor, not its first', () => {
+  const sim = after1(17);
   sim.state.quests.ch2_the_sickpools = { st: QS.ACTIVE, step: 0, n: [0] };
   sim.state.quests.ch2_the_rolls = { st: QS.ACTIVE, step: 1, n: [0] };
-  goTo(sim, 'dungeon', 'canal_locks', 0); sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
-  assert.deepEqual(sim.state.quests.ch2_the_sickpools.n, [0], 'not in the Locks');
-  goTo(sim, 'dungeon', 'sickpools', 0); for (let i = 0; i < 3; i++) sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
+  goTo(sim, 'dungeon', 'toadking_mound', 2); sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
+  assert.deepEqual(sim.state.quests.ch2_the_sickpools.n, [0], 'not in the Mound');
+  goTo(sim, 'dungeon', 'drowned_abbey', 0); sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
+  assert.deepEqual(sim.state.quests.ch2_the_sickpools.n, [0], 'nor in the Abbey');
+  goTo(sim, 'dungeon', 'canal_locks', 2); for (let i = 0; i < 3; i++) sim.bus.emit('cageBroken', { tx: 0, ty: 0, x: 0, y: 0 });
   assert.equal(st(sim, 'ch2_the_sickpools'), QS.READY);
   goTo(sim, 'dungeon', 'drowned_abbey', 0); sim.bus.emit('looted', { kind: 'chest' });
   assert.deepEqual(sim.state.quests.ch2_the_rolls.n, [0], 'the first floor\'s chests aren\'t the rolls');
@@ -126,7 +129,7 @@ test('the new objectives: full cages broken in the Sickpools; chests on the Abbe
 });
 
 test('the chapters run in order, each from its giver to its taker; the last goes back to Ilse, and Act II is over', () => {
-  const sim = after1(14), ev = events(sim, ['questReward']);
+  const sim = after1(18), ev = events(sim, ['questReward']);                     // (the last chapter from 18, v1.48)
   const chain = [['ch2_fog_on_the_canal', 'sister_ilse', 'dace_pike'], ['ch2_the_locks', 'dace_pike', 'dace_pike'], ['ch2_the_sickpools', 'pim_rushlight', 'pim_rushlight'],
     ['ch2_the_bells', 'sister_orla', 'sister_orla'], ['ch2_the_rolls', 'sister_orla', 'mother_agnes'], ['ch2_the_last_office', 'mother_agnes', 'sister_ilse']];
   for (const [id, giver, taker] of chain) {
@@ -148,7 +151,7 @@ test('the chapters run in order, each from its giver to its taker; the last goes
 test('Settled pays The Receipt, once', () => {
   assert.ok(HEIRLOOMS.the_receipt); assert.equal(QUESTS.wren_settled.rewards.item, 'the_receipt');
   const sim = after1(12);
-  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 1); talk(sim, 'wren'); effect(sim, 'companion', 'join');
+  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 2); talk(sim, 'wren'); effect(sim, 'companion', 'join');
   for (const id of ['wren_the_marker', 'wren_night_boats']) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] };
   sim.state.quests.wren_settled = { st: QS.READY, step: 0, n: [5] };
   const ev = events(sim, ['questReward', 'loot']);
@@ -190,7 +193,7 @@ test('the golden path: chapter 1 on the compass alone, Thornwick to Saltmere to 
 
 test('Settled waits for The Bells (the hall she wants held is Teague\'s until he falls); anyone may read how far the story has got', () => {
   const sim = after1(12);
-  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 1); talk(sim, 'wren'); effect(sim, 'companion', 'join');
+  sim.state.bosses.toadking = 1; goTo(sim, 'dungeon', 'toadking_mound', 2); talk(sim, 'wren'); effect(sim, 'companion', 'join');
   for (const id of ['wren_the_marker', 'wren_night_boats']) sim.state.quests[id] = { st: QS.DONE, step: 0, n: [] };
   assert.equal(st(sim, 'wren_settled'), QS.LOCKED, 'Teague still holds the hall');
   sim.state.quests.ch2_the_bells = { st: QS.DONE, step: 0, n: [] };

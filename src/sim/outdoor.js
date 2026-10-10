@@ -493,7 +493,7 @@ function buildFens(seed) {
   for (const [id, x, y] of [[B('punt'), mound[0] - 14, mound[1] + 4], [B('eeltrap'), mound[0] - 18, mound[1] - 2], [B('punt'), abbey[0] + 16, abbey[1] + 10]]) put(o, id, x, y, 'rect', 0);
   o.labels.push({ x: salt[0] + 4, y: salt[1], id: B('landing'), text: 'Saltmere' },
     { x: mound[0], y: mound[1], id: B('boathall'), text: "Toadking's Mound", site: 'toadking_mound' }, { x: lockhall[0], y: lockhall[1], id: B('lockhall'), text: 'The Canal Locks', site: 'canal_locks' },
-    { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools', site: 'sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },
+    { x: pools[0], y: pools[1], id: B('vats'), text: 'The Sickpools' }, { x: abbey[0], y: abbey[1], id: B('abbey'), text: 'The Drowned Abbey', site: 'drowned_abbey' },   // (v1.48: the Sickpools a landmark; their vats are the Canal Locks' third floor)
     { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' },
     { x: salt[0] + 10, y: salt[1] + 9, id: B('ferrystage'), text: 'The Mere Tower · Wenna’s punt', site: 'mere_tower', door: true });   // door: a plaque a tap walks you to (renderer doorAt)
   // the fen's trees: alder carr and willows, low and dark, dead trees standing in the water's edge; never on a road
@@ -513,8 +513,8 @@ function buildFens(seed) {
   o.exits.push({ x0: north[0] - 8, y0: -11, x1: north[0] + 9, y1: -4, to: 'overland', region: 'vale', arrive: 'fens' });   // back up the canal road to the Vale
   o.exits.push({ x0: salt[0] - 2, y0: salt[1] - 2, x1: salt[0] + 3.5, y1: salt[1] + 2, to: 'town', arrive: 'overland' });   // through the landing gate: into Saltmere
   // each site's door: a box in front of it (the Undercroft's is the low door in Reedholm's chapel front, left of centre)
-  const SITE_AT = { toadking_mound: mound, canal_locks: lockhall, sickpools: pools, drowned_abbey: abbey, reedholm_undercroft: [reedholm[0] - 3, reedholm[1]] };
-  const DOOR_Y = { toadking_mound: 7, canal_locks: 5.5, sickpools: 6, drowned_abbey: 8.5, reedholm_undercroft: 7.5 };
+  const SITE_AT = { toadking_mound: mound, canal_locks: lockhall, drowned_abbey: abbey, reedholm_undercroft: [reedholm[0] - 3, reedholm[1]] };   // (v1.48: the Sickpools have no door of their own)
+  const DOOR_Y = { toadking_mound: 7, canal_locks: 5.5, drowned_abbey: 8.5, reedholm_undercroft: 7.5 };
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.exits.push({ x0: x - 2.5, y0: y + DOOR_Y[site], x1: x + 3.5, y1: y + DOOR_Y[site] + 3, to: 'dungeon', site });
   o.arrivals = { default: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, saltmere: { x: salt[0] + 12.5, y: salt[1] + 0.5 }, vale_road: { x: north[0] + 0.5, y: 2.5 } };   // on the boardwalk, facing the gate
   for (const [site, [x, y]] of Object.entries(SITE_AT)) o.arrivals[site] = { x: x + 1.5, y: y + DOOR_Y[site] + 7.5 };
@@ -699,8 +699,8 @@ function buildOverland(seed) {
   putProp(o, 'stairs', barrows[0] + 1, barrows[1] + 7);           // just outside the barrow's door
   for (const [x, y] of [[barrows[0] + 10, barrows[1] - 2], [cross[0] + 4, cross[1] + 4], [town[0] + 9, town[1] - 5], [town[0] + 9, town[1] + 5]]) putProp(o, 'brazier', x, y);
   o.labels.push({ x: town[0] + 4, y: town[1], id: B('gatehousey'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
-    { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill', site: 'tithe_mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },
-    { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' }, { x: warren[0], y: warren[1], id: 'warren_0', text: 'The Scrag Warren', site: 'scrag_warren' },
+    { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },   // (v1.48: the Tithe Mill a working mill again, a landmark)
+    { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },   // (v1.48: the Scrag Warren's adit is boarded up again: no label)
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
 
   // THE RANGES (critic pass 10: mountains smaller than the keep, on a 15-tile lattice, 11 of them on the meadow).
@@ -793,13 +793,12 @@ function buildOverland(seed) {
   o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
   o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon', site: 'barrows' });
-  // the other sites' ways in (M5, sites.js): the mill's door, the keep's door, the chapel's door
-  // across the pools, a slab at the milestone's foot. A hidden site's stays shut until it's revealed (core.js).
-  o.exits.push({ x0: mill[0] - 4, y0: mill[1] + 7, x1: mill[0] + 2, y1: mill[1] + 10, to: 'dungeon', site: 'tithe_mill' });
+  // the other sites' ways in (M5, sites.js): the keep's door, the chapel's door across the pools, a slab at the milestone's
+  // foot. A hidden site's stays shut until it's revealed (core.js). (v1.48: the mill and the warren have none: one
+  // dungeon a level, and those two went to the Reach.)
   o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 6.5, x1: keep[0] + 3, y1: keep[1] + 9.5, to: 'dungeon', site: 'wickham_keep' });   // the keep's own door (the owner removed its curtain wall)
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
-  o.exits.push({ x0: warren[0] - 1, y0: warren[1] + 4.5, x1: warren[0] + 5.5, y1: warren[1] + 8, to: 'dungeon', site: 'scrag_warren' });   // the old adit's mouth
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
     scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 } };

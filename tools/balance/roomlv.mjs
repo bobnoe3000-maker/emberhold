@@ -1,14 +1,16 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
 // power since 2026-09-30: a level-1 kit on a level-6 hero measures the kit, not the level).
 // --src points at another checkout's src/ for before/after runs. --site fights in that site's first
 // fighting room, against its family (sim/sites.js; default the Old Barrows). The class trials count as
-// done (the contract's assumption, M5); --no-trials measures a company that hasn't done them yet.
+// done (the contract's assumption, M5). --floor N fights on that floor (it walks down the stairs); the Old Barrows'
+// default is 2, the Long Gallery, where the Ashbound the contract is measured against are (since v1.48 floor 1 is the
+// Redhand's dig), any other site's 1. --no-trials measures a company that hasn't done them yet.
 // --hero makes the main character that class (default the knight); --rogue arms every rogue with that
 // weapon base instead of the dagger (huntbow, longbow, handbow, heavybow: a two-handed one frees the off-hand).
 import { pathToFileURL } from 'node:url';
@@ -22,6 +24,7 @@ const GIVE = PERKS && PERKS !== 'keep' ? PERKS.split('/').map((s) => s.split(','
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const ti = args.indexOf('--site'), SITE = ti >= 0 ? args.splice(ti, 2)[1] : 'barrows';
+const fl = args.indexOf('--floor'), FLOOR = fl >= 0 ? +args.splice(fl, 2)[1] : SITE === 'barrows' ? 2 : 1;
 // --size small|medium|large: fight in the first room of that size (level.js ROOM_SIZES); large by default, the contract's arena (an older checkout's rooms have no size: its first room)
 const zi = args.indexOf('--size'), SIZE = zi >= 0 ? args.splice(zi, 2)[1] : 'large';
 const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
@@ -40,6 +43,7 @@ const items = await load('sim/items.js').catch(() => null);
 const [secs, RL, HL] = args.slice(0, 3).map(Number), hire = (args[3] || '').split(',').filter(Boolean).map(Number), seed = +(args[4] || 20260807);
 const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } s.state.counters.gold = 0; s.state.party.slice(1).forEach((m, i) => { if (PERKS !== 'keep') { m.perks = GIVE ? GIVE[i] || [] : []; m.hidden = null; } });   // (the contract: hires without perks)
 const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }); sim.state.trials = TRIALS;   // (older checkouts ignore it)
+while (sim.state.depth < FLOOR - 1) { const t = sim.world.stairsAt, q = sim.state.player; q.x = q.px = t.x + 0.5; q.y = q.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }
 sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
 if (HERO) sim.state.party[0].cls = HERO;
 for (const m of sim.state.party) {

@@ -27,21 +27,21 @@ export const FRAGMENTS = {
   frag_vale_muster_roll: { set: 'vale', order: 2, site: 'barrows', floor: 2, via: 'shrine' },
   frag_vale_centurion_tablet: { set: 'vale', order: 3, site: 'barrows', floor: 2, via: 'hall' },
   // the rest of the Vale set (world doc §7, v1.7)
-  frag_vale_tithe_ledger: { set: 'vale', order: 4, site: 'tithe_mill', floor: 1, via: 'chest' },
+  frag_vale_tithe_ledger: { set: 'vale', order: 4, site: 'wickham_keep', floor: 2, via: 'chest' },   // (v1.48: in the Keep's strongroom, with the paymaster's box; it was the Mill's)
   frag_vale_gate_warden_note: { set: 'vale', order: 5, site: 'wickham_keep', floor: 1, via: 'shrine' },
-  frag_vale_last_dispatch: { set: 'vale', order: 6, site: 'wickham_keep', floor: 2, via: 'boss' },        // Garrow had it, sealed
+  frag_vale_last_dispatch: { set: 'vale', order: 6, site: 'wickham_keep', floor: 3, via: 'boss' },        // Garrow had it, sealed (v1.48: he holds the Old Cellars)
   frag_vale_chaplains_prayer: { set: 'vale', order: 7, site: 'sunken_chapel', floor: 1, via: 'chest' },
   frag_vale_binding_rite: { set: 'vale', order: 8, site: 'sunken_chapel', floor: 2, via: 'shrine' },
   frag_vale_chaplains_last_page: { set: 'vale', order: 9, site: 'sunken_chapel', floor: 2, via: 'boss' },  // under the Stranger's feet
-  frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'barrows', floor: 3, via: 'boss' },         // taken from the Standard
+  frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'sunken_chapel', floor: 3, via: 'boss' },   // taken from the Standard (v1.48: over the binding in the Chapel's crypt)
   // the Fens set (world doc §7, v1.30; M8 slice 10): the lock-men, the vats, the Abbey, and the night the canal broke
   frag_fens_lock_tally: { set: 'fens', order: 1, site: 'canal_locks', floor: 1, via: 'chest' },
   frag_fens_canal_order: { set: 'fens', order: 2, site: 'canal_locks', floor: 1, via: 'shrine' },
   frag_fens_sluice_book: { set: 'fens', order: 3, site: 'canal_locks', floor: 2, via: 'hall' },          // in the Sluice
   frag_fens_reed_stick: { set: 'fens', order: 4, site: 'toadking_mound', floor: 1, via: 'chest' },
-  frag_fens_tithe_plate: { set: 'fens', order: 5, site: 'toadking_mound', floor: 2, via: 'boss' },       // it hung in the Toadking's Boat Hall
-  frag_fens_vat_ledger: { set: 'fens', order: 6, site: 'sickpools', floor: 1, via: 'chest' },
-  frag_fens_drain_order: { set: 'fens', order: 7, site: 'sickpools', floor: 2, via: 'shrine' },
+  frag_fens_tithe_plate: { set: 'fens', order: 5, site: 'toadking_mound', floor: 3, via: 'boss' },       // it hung in the Toadking's Boat Hall (v1.48: the Mound's third floor)
+  frag_fens_vat_ledger: { set: 'fens', order: 6, site: 'canal_locks', floor: 3, via: 'chest' },   // (v1.48: Vat Seven, the Locks' third floor; it was the Sickpools')
+  frag_fens_drain_order: { set: 'fens', order: 7, site: 'canal_locks', floor: 3, via: 'shrine' },
   frag_fens_novice_letter: { set: 'fens', order: 8, site: 'drowned_abbey', floor: 1, via: 'chest' },
   frag_fens_day_book: { set: 'fens', order: 9, site: 'drowned_abbey', floor: 2, via: 'hall' },           // in the Choir
   frag_fens_last_hour: { set: 'fens', order: 10, site: 'drowned_abbey', floor: 3, via: 'boss' },         // the Abbess Below's

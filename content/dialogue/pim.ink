@@ -25,7 +25,7 @@ A thin man with oil to the elbows leans on a handcart full of stoppered jars. He
 
 == pim_greet_back ==
 {&"Oil? Oil. Everybody needs oil. The dead don't, but they're not my customers."|Pim has moved the cart three boards to the left since you last saw it.|"{hero_name}! Did you tell Wendel?"}
-{ q_ch2_the_sickpools == 1: "The Sickpools. The cages with something in them glow. You'll know. Your teeth know." }
+{ q_ch2_the_sickpools == 1: "Vat Seven, under the Locks. The cages with something in them glow. You'll know. Your teeth know." }
 { q_ch2_the_sickpools == 3: "Three cages. Three. My oil's going to cost more now, you know. I'm only telling you so you know." }
 -> pim_topics
 
@@ -43,7 +43,7 @@ A thin man with oil to the elbows leans on a handcart full of stoppered jars. He
 // ── The Sickpools (content/quests/ch2_the_sickpools.json) ──
 == pim_pools_offer ==
 He looks both ways along the boards, and at the chapel, and lowers his voice.
-"The old vats out in the Sickpools. Imperial. Still leaking. What leaks out burns lovely, and nobody asks a chandler where he gets his oil, so."
+"The old vats, the Sickpools. The canal drains them now, under the Locks: Vat Seven. Imperial. Still leaking. What leaks out burns lovely, and nobody asks a chandler where he gets his oil, so."
 "Somebody's draining them. At night. Men with poles, and on the poles there's little cages, and the cages are full of light I didn't sell them." He swallows. "And the vats are full of the drowned. They were. They're emptying."
 + [We'll look into it. #mark: quest]
     "Break the cages. The full ones, the ones that glow: their leaders carry those. Three would do. Three would make me feel a good deal better about my oil." # quest: accept ch2_the_sickpools
@@ -53,7 +53,7 @@ He looks both ways along the boards, and at the chapel, and lowers his voice.
     -> pim_topics
 
 == pim_pools_active ==
-"The Sickpools. Past the reed-beds, where the water goes the wrong colour. Their leaders carry the full cages. Break three, and then don't tell me what was in them."
+"Vat Seven, the bottom of the Locks, where the water goes the wrong colour. Their leaders carry the full cages. Break three, and then don't tell me what was in them."
 -> pim_topics
 
 == pim_pools_turnin ==
@@ -66,7 +66,7 @@ Pim counts on his fingers, twice, and wipes his hands on his apron, which makes 
 == pim_lamp_oil_offer ==
 He looks at your mage the way he looks at a lamp that's smoking.
 "You burn things. Yes. Everybody can burn things. The trick, the whole trade, is keeping the fire off what you don't want burned. The wick, the glass, the hand holding it."
-"Go and stand among the vats in the Sickpools. Eight waves. They burn lovely out there, and the harvesters don't care what catches. Come back unsinged and I'll show you how a chandler keeps a flame off his fingers. It works for friends too."
+"Go and stand among the vats at Vat Seven, under the Locks. Eight waves. They burn lovely out there, and the harvesters don't care what catches. Come back unsinged and I'll show you how a chandler keeps a flame off his fingers. It works for friends too."
 + [We'll go. #mark: quest]
     "Eight. Unsinged. Well. Mostly unsinged." # quest: accept trial_lamp_oil
     -> pim_topics
@@ -75,7 +75,7 @@ He looks at your mage the way he looks at a lamp that's smoking.
     -> pim_topics
 
 == pim_lamp_oil_active ==
-"The Sickpools, among the vats. Eight waves. Mind your sleeves."
+"Vat Seven, under the Locks, among the vats. Eight waves. Mind your sleeves."
 -> pim_topics
 
 == pim_lamp_oil_turnin ==

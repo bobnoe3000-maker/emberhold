@@ -77,10 +77,10 @@ test('halls: a wall that would hide floor from the camera is a stub, every other
   }
 });
 
-test('each site is on its layout: halls for what was built, caverns for what was dug or grew', () => {
-  const halls = ['tithe_mill', 'wickham_keep', 'sunken_chapel', 'ninth_milestone', 'canal_locks', 'drowned_abbey', 'mere_tower', 'reedholm_undercroft'];
+test('each site is on its layout: halls for what was built (the Old Barrows\' crypts too, v1.48), caverns for what was dug or grew', () => {
+  const halls = ['barrows', 'tithe_mill', 'wickham_keep', 'sunken_chapel', 'ninth_milestone', 'canal_locks', 'drowned_abbey', 'mere_tower', 'reedholm_undercroft'];
   for (const [id, S] of Object.entries(SITES)) assert.equal(S.layout || 'caverns', halls.includes(id) ? 'halls' : 'caverns', id);
-  for (const id of ['wickham_keep', 'barrows']) {
+  for (const id of ['wickham_keep', 'barrows', 'toadking_mound']) {
     const w = createSim(20260807, undefined, { scene: 'dungeon', site: id }).world;
     assert.equal(w.level.layout, halls.includes(id) ? 'halls' : 'caverns');
     assert.ok(w.exitAt && w.stairArrive, `${id}: the stair up stands`);

@@ -145,8 +145,13 @@ if (snapped.tx !== 5 || snapped.ty !== 5 || lid.tx !== 5 || lid.ty !== 5) isoOk 
 // autobattle without ever walking out; rooms deepen with distance from the entrance and per floor.
 import { STARTER } from './src/sim/items.js';
 import { makeHero, makeMember } from './src/sim/party.js';
+// The contract is measured against the Ashbound, as it always was: since v1.48 the Barrows' first floor is the Redhand's
+// dig (sites.js families), so the visit goes down to the Long Gallery, the Ashbound's first floor there.
+const ASHBOUND_FLOOR = 2;
+function downStairs(sim) { const t = sim.world.stairsAt, p = sim.state.player; p.x = p.px = t.x + 0.5; p.y = p.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }
 function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, gear = lv, rarity = 'common', secs = 300 }) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
+  while (sim.state.depth < ASHBOUND_FLOOR - 1) downStairs(sim);
   sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1 };   // the contract's runs assume the class trials done, as they assume gear at level (M5)
   sim.state.party = classes.map((c, i) => {
     const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m);
@@ -204,8 +209,10 @@ const band15Ok = solo15.every((v) => v.defeated && v.waves <= 2) && up15.every((
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L12/15):', band15Ok, [...solo15, ...up15].map(show).join(', '));
 const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
-const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && rl.roomLevels.get(rl.level.descentRoom.id) === Math.max(...rlv);
-console.log('room levels (entrance safe, 1 → deepest at the descent):', roomLvOk, rlv.join(','));
+// (v1.48, one dungeon a level) the Old Barrows' first floor: its rooms level 1, the two before its hall level 2, its hall 1
+const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && Math.max(...rlv) === 2 && rl.roomLevels.get(rl.level.descentRoom.id) === 1
+  && rlv.filter((v) => v === 2).length === 2;
+console.log('room levels (entrance safe; floor 1 at 1, the two rooms before its hall at 2):', roomLvOk, rlv.join(','));
 
 // Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
 const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;
@@ -228,7 +235,7 @@ cDun.commands.push({ type: 'goto', ...nextRoom });
 let reachedRoom = false; for (let t = 0; t < 20 * 40 && !reachedRoom; t++) { cDun.tick(); reachedRoom = !!cDun.battle || !cDun.state.player.path; }
 const cOv = createSim(20260807, undefined, { scene: 'overland' }); cOv.tick();
 const od = cOv.destinations().map((o) => o.id);
-const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('site:barrows') && od.includes('site:tithe_mill') && !od.includes('site:wickham_keep');
+const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('site:barrows') && od.includes('site:wickham_keep') && !od.includes('site:tithe_mill') && !od.includes('site:ninth_milestone');   // (v1.48: the Keep open, the Mill gone, the secret shut)
 console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', od.join(','));
 
 // Gear and loot (GDD §8): six slots with class kits, seeded drops, equip rules, stats, saves.

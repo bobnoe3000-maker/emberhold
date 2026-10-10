@@ -34,12 +34,6 @@
   },
   {
    "kind": "site",
-   "id": "sickpools",
-   "x": 180.5,
-   "y": 103.5
-  },
-  {
-   "kind": "site",
    "id": "drowned_abbey",
    "x": 126.5,
    "y": 216

@@ -1,5 +1,5 @@
 // Brannoc, the first found companion (M5, docs/m5-plan.md §5; world doc §5 v1.7): chained at the back of
-// Wickham Keep's second-floor hall; once Captain Garrow has fallen, `# companion: join` in his own talk
+// Wickham Keep's third-floor hall (v1.48, one dungeon a level: Garrow holds the Old Cellars, the Keep's last floor); once Captain Garrow has fallen, `# companion: join` in his own talk
 // brings him to the party (the bench when it's full). He can be benched, never released; you talk to him
 // from his card. His chain, Chains of the Redhand, is his to give and take in, and pays The Broken Chain.
 import { test } from 'node:test';
@@ -27,24 +27,25 @@ function talkInHall(sim) {
 const effect = (sim, tag, ...args) => { sim.commands.push({ type: 'dialogueEffect', tag, args }); sim.tick(); };
 const withUs = (sim) => [...sim.state.party, ...sim.state.bench].filter((m) => m.id === 'brannoc');
 
-test('he waits at the back of the Keep\'s second-floor hall, and nowhere else', () => {
+test('he waits at the back of the Keep\'s third-floor hall, and nowhere else', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   assert.equal(him(sim), undefined, 'not in Thornwick');
   goTo(sim, 'dungeon', 'wickham_keep', 0); assert.equal(him(sim), undefined, 'not on the first floor');
-  goTo(sim, 'dungeon', 'barrows', 1); assert.equal(him(sim), undefined, 'not in the Old Barrows');
-  goTo(sim, 'dungeon', 'wickham_keep', 1);
+  goTo(sim, 'dungeon', 'wickham_keep', 1); assert.equal(him(sim), undefined, 'not on the second floor');
+  goTo(sim, 'dungeon', 'barrows', 2); assert.equal(him(sim), undefined, 'not in the Old Barrows');
+  goTo(sim, 'dungeon', 'wickham_keep', 2);
   const n = him(sim), L = sim.world.level, c = L.cells.get(Math.floor(n.x) + ',' + Math.floor(n.y));
   assert.ok(n && c && c.room === L.descentRoom.id, 'in the hall');
   assert.ok(isWalkable(sim.world, n.x, n.y) && isWalkable(sim.world, n.x + 1, n.y), 'and you can walk up beside him');
   assert.equal(NPCS.brannoc.found.boss, FOUND.brannoc.freedBy, 'his captor, the same in both tables');
-  const again = createSim(SEED, undefined, { scene: 'town' }); goTo(again, 'dungeon', 'wickham_keep', 1);
+  const again = createSim(SEED, undefined, { scene: 'town' }); goTo(again, 'dungeon', 'wickham_keep', 2);
   assert.deepEqual([him(again).x, him(again).y], [n.x, n.y], 'the same spot every time');
 });
 
 test('he joins only once Garrow has fallen; then he leaves the hall with you, and never comes back to it', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   const ev = events(sim, ['dialogue', 'companionJoined', 'talkEnded']);
-  goTo(sim, 'dungeon', 'wickham_keep', 1);
+  goTo(sim, 'dungeon', 'wickham_keep', 2);
   talkInHall(sim); assert.equal(ev.at(-1).n, 'dialogue'); assert.equal(ev.at(-1).knot, 'brannoc_hub'); assert.equal(ev.at(-1).vars.boss_redhand_captain, 0); assert.equal(ev.at(-1).vars.joined, 0);
   effect(sim, 'companion', 'join'); assert.equal(withUs(sim).length, 0, 'Garrow still has the key');
   sim.state.bosses.redhand_captain = 1; sim.state.party[0].level = 7;   // (he joins at half the hero's level, rounded up: world doc §5 v1.12)
@@ -57,7 +58,7 @@ test('he joins only once Garrow has fallen; then he leaves the hall with you, an
   effect(sim, 'companion', 'join'); assert.equal(withUs(sim).length, 1, 'once');
   sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.tick();
   assert.equal(him(sim), undefined, 'the talk over, he walks with you');
-  goTo(sim, 'dungeon', 'wickham_keep', 1); assert.equal(him(sim), undefined, 'the hall is empty of him');
+  goTo(sim, 'dungeon', 'wickham_keep', 2); assert.equal(him(sim), undefined, 'the hall is empty of him');
   // a stranger's tag from someone else's talk does nothing
   const other = createSim(SEED, undefined, { scene: 'town' }); other.tick(); other.state.bosses.redhand_captain = 1;
   const osric = other.world.npcs.find((q) => q.id === 'osric_hale'), p = other.state.player; p.x = p.px = osric.x + 1; p.y = p.py = osric.y - 1;
@@ -67,15 +68,15 @@ test('he joins only once Garrow has fallen; then he leaves the hall with you, an
 
 test('while he waits, his captor fallen, the hall is quiet: you can walk up and talk; before, it\'s Garrow\'s fight', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  goTo(sim, 'dungeon', 'wickham_keep', 1);
+  goTo(sim, 'dungeon', 'wickham_keep', 2);
   const n = him(sim), p = sim.state.player; p.x = p.px = n.x + 1; p.y = p.py = n.y; for (let i = 0; i < 10; i++) sim.tick();
   assert.ok(sim.battle && sim.battle.boss === 'redhand_captain', 'Garrow holds the hall');
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1);
+  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 2);
   p.x = p.px = him(sim).x + 1; p.y = p.py = him(sim).y; for (let i = 0; i < 40; i++) sim.tick();
   assert.equal(sim.battle, null, 'quiet');
   talkInHall(sim); effect(sim, 'companion', 'join'); sim.commands.push({ type: 'endTalk' }); for (let i = 0; i < 40; i++) sim.tick();
   assert.equal(sim.battle, null, 'and stays quiet the rest of the visit, once he\'s walked out of it with you');
-  goTo(sim, 'dungeon', 'wickham_keep', 1); p.x = p.px = n.x + 1; p.y = p.py = n.y; for (let i = 0; i < 40; i++) sim.tick();
+  goTo(sim, 'dungeon', 'wickham_keep', 2); p.x = p.px = n.x + 1; p.y = p.py = n.y; for (let i = 0; i < 40; i++) sim.tick();
   assert.ok(sim.battle, 'the next visit, with him gone, the hall fights like any other');
 });
 
@@ -84,7 +85,7 @@ test('a full party puts him on the bench; he can be benched and swapped, never r
   hire(sim, [0, 1]);
   assert.equal(sim.state.party.length, 3);
   const ev = events(sim, ['benched', 'refused']);
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
+  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 2); talkInHall(sim); effect(sim, 'companion', 'join');
   assert.equal(sim.state.bench.at(-1).id, 'brannoc'); assert.ok(ev.some((e) => e.n === 'benched' && e.name === 'Brannoc'));
   goTo(sim, 'town');
   sim.commands.push({ type: 'release', id: 'brannoc' }); sim.tick();
@@ -93,12 +94,12 @@ test('a full party puts him on the bench; he can be benched and swapped, never r
   sim.commands.push({ type: 'dismiss', id: 'brannoc' }); sim.tick(); assert.equal(sim.state.bench.at(-1).id, 'brannoc', 'benched again');
   const back = createSim(SEED, undefined, { scene: 'town' }); back.restore(snap(sim));
   const b = back.state.bench.find((m) => m.id === 'brannoc'); assert.ok(b); assert.equal(b.actor, 'hero_brannoc');
-  goTo(back, 'dungeon', 'wickham_keep', 1); assert.equal(him(back), undefined, 'a loaded game doesn\'t put him back in the hall');
+  goTo(back, 'dungeon', 'wickham_keep', 2); assert.equal(him(back), undefined, 'a loaded game doesn\'t put him back in the hall');
 });
 
 test('from his card: talk to him wherever you are while he\'s in the party and up; not from the bench, not while you\'re Downed', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
+  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 2); talkInHall(sim); effect(sim, 'companion', 'join');
   sim.commands.push({ type: 'endTalk' }); sim.tick();
   const ev = events(sim, ['dialogue', 'talkEnded']);
   goTo(sim, 'overland');
@@ -117,7 +118,7 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   const st = (id) => sim.quests.status(id), paid = events(sim, ['questReward', 'loot']);
   assert.equal(st('brannoc_old_debts'), QS.LOCKED, 'not before he joins');
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
+  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 2); talkInHall(sim); effect(sim, 'companion', 'join');
   assert.equal(st('brannoc_old_debts'), QS.AVAILABLE); assert.equal(st('brannoc_paymasters_box'), QS.LOCKED);
   sim.commands.push({ type: 'endTalk' }); sim.tick();
   const card = () => { sim.commands.push({ type: 'endTalk' }); sim.tick(); sim.commands.push({ type: 'talk', npc: 'brannoc' }); sim.tick(); };
@@ -128,10 +129,15 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
   assert.equal(st('brannoc_old_debts'), QS.READY);
   card(); effect(sim, 'quest', 'turnin', 'brannoc_old_debts'); assert.equal(st('brannoc_old_debts'), QS.DONE);
   card(); effect(sim, 'quest', 'accept', 'brannoc_paymasters_box');
-  goTo(sim, 'dungeon', 'tithe_mill', 0); for (let i = 0; i < 2; i++) sim.bus.emit('looted', { kind: 'chest' });
+  // the paymaster's boxes, in the Keep's strongroom (its second floor): a chest on another floor doesn't count
+  goTo(sim, 'dungeon', 'wickham_keep', 0); sim.bus.emit('looted', { kind: 'chest' });
+  goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('looted', { kind: 'chest' });
+  assert.deepEqual(sim.state.quests.brannoc_paymasters_box.n, [0]);
+  goTo(sim, 'dungeon', 'wickham_keep', 1); for (let i = 0; i < 2; i++) sim.bus.emit('looted', { kind: 'chest' });
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); assert.equal(st('brannoc_paymasters_box'), QS.DONE);
   card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
-  // the Barrows' second-floor hall: a wave on the first floor, or in another room, doesn't count
+  // the Long Gallery's hall, the Barrows' second floor (v1.48: the third floor's is the Quartermaster's, and a boss's hall
+  // goes quiet when he falls): a wave on the first floor's hall, or in another room, doesn't count
   goTo(sim, 'dungeon', 'barrows', 0); sim.bus.emit('wave', { cleared: true, room: sim.world.level.descentRoom.id });
   goTo(sim, 'dungeon', 'barrows', 1); sim.bus.emit('wave', { cleared: true, room: sim.world.level.entrance.id });
   assert.deepEqual(sim.state.quests.brannoc_standing_down.n, [0]);
@@ -150,7 +156,7 @@ test('Chains of the Redhand: his to give and take in, in order, only while he\'s
 test('his quests can\'t be taken from anyone else, or from him while he\'s on the bench', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   hire(sim, [0, 1]);
-  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 1); talkInHall(sim); effect(sim, 'companion', 'join');
+  sim.state.bosses.redhand_captain = 1; goTo(sim, 'dungeon', 'wickham_keep', 2); talkInHall(sim); effect(sim, 'companion', 'join');
   sim.commands.push({ type: 'endTalk' }); sim.tick(); goTo(sim, 'town');
   assert.equal(sim.state.bench.at(-1).id, 'brannoc');
   const osric = sim.world.npcs.find((q) => q.id === 'osric_hale'), p = sim.state.player; p.x = p.px = osric.x + 1; p.y = p.py = osric.y - 1;
@@ -180,7 +186,7 @@ test('the Ink: chained and short while Garrow lives; asks to come once he\'s fal
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 0 }, ['Is there anything you need to settle?', "We'll settle it."])).sent, ['quest accept brannoc_old_debts']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 2 }, ["That's Garrow's three sergeants down."])).sent, ['quest turnin brannoc_old_debts']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_old_debts: 3, q_brannoc_paymasters_box: 0 }, ["Where did the robes' coin go?", "We'll find the boxes."])).sent, ['quest accept brannoc_paymasters_box']);
-  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 2 }, ["We found the paymaster's boxes at the mill."])).sent, ['quest turnin brannoc_paymasters_box']);
+  assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 2 }, ["We found the paymaster's boxes in the Keep."])).sent, ['quest turnin brannoc_paymasters_box']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_paymasters_box: 3, q_brannoc_standing_down: 0 }, ['What do you want now?', "We'll stand with them."])).sent, ['quest accept brannoc_standing_down']);
   assert.deepEqual((await play('brannoc_hub', { ...w, q_brannoc_standing_down: 2 }, ['We stood with the legion. Five waves.'])).sent, ['quest turnin brannoc_standing_down']);
   const topics = (await play('brannoc_hub', { ...w, q_brannoc_old_debts: -1 }, [])).choices;

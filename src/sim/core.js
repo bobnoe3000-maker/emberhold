@@ -25,7 +25,7 @@ import { LANDS, landId } from './regions.js';
 import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
 import { createLore, SET_REVEALS } from './lore.js';
-import { siteOf, siteOpen, SITES } from './sites.js';
+import { siteOf, siteOpen, SITES, SECRET_REST } from './sites.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
@@ -96,6 +96,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     bag: [],                          // the party bag (loot.js): items not worn, shared by everyone
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     revealed: new Set(),              // hidden sites found (sites.js): a chapter's reward, or the Chronicle's
+    secrets: {},                      // (v31) a secret site's seal: { [site]: sealed until state.t } (sites.js SECRET_REST)
     party: [makeHero()],                                   // [your main character, …up to two companions]
     bench: [],                        // recruited companions waiting at the inn (heroes.js)
     created: false,                   // has this game's main character been made? (createHero, once)
@@ -134,6 +135,14 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (e.kind !== 'chest' || !v || v.key !== `${e.tx},${e.ty}` || state.flags[flag]) return;
     state.flags[flag] = 1; loot.grant(v.heirloom, { ilv: Math.max(state.party[0].level, siteOf(curSite).base), x: e.tx + 0.5, y: e.ty + 0.5, src: 'vault' });
     bus.emit('vaultOpened', { site: curSite, heirloom: v.heirloom });
+  });
+  // (v1.48) a secret site seals itself once its vault is opened, every time: SECRET_REST of play, then it can be walked
+  // again on a fresh floor (its heirloom came once, above; its vault keeps an ordinary find after)
+  bus.on('looted', (e) => {
+    const v = world.vault;
+    if (e.kind !== 'chest' || !v || v.key !== `${e.tx},${e.ty}` || !SITES[curSite] || !SITES[curSite].secret) return;
+    state.secrets[curSite] = state.t + SECRET_REST;
+    bus.emit('secretSealed', { site: curSite, until: state.secrets[curSite] });
   });
   // a boss down: its heirloom and a Fine-or-better drop the first time (items.js HEIRLOOMS); later falls roll for one (loot.js DROP)
   bus.on('bossDown', (e) => { const B = BOSSES[e.id]; if (e.tower) wardenHeirloom(e, B); else if (e.first && B.heirloom) loot.grant(B.heirloom, { ilv: e.lvl, x: e.x, y: e.y, src: 'boss' }); loot.drop(e.first ? 'boss' : 'bossAgain', { ilv: e.lvl, x: e.x, y: e.y }); });
@@ -547,6 +556,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (world.kind !== 'dungeon') {
       const ex = oExitAt(world, p.x, p.y);
       if (ex && ex.to === 'dungeon' && !siteOpen(ex.site, state.revealed)) { if (shut !== ex) { shut = ex; bus.emit('siteShut', { site: ex.site }); } }   // not found yet: its way in stays shut
+      else if (ex && ex.to === 'dungeon' && (state.secrets[ex.site] || 0) > state.t) { if (shut !== ex) { shut = ex; bus.emit('siteSealed', { site: ex.site, mins: Math.ceil((state.secrets[ex.site] - state.t) / 60) }); } }   // a secret site resting after it was cleared
       else if (ex && ex.to === 'dungeon' && SITES[ex.site].minLevel && state.party[0].level < SITES[ex.site].minLevel) { if (shut !== ex) { shut = ex; bus.emit('siteLevel', { site: ex.site, need: SITES[ex.site].minLevel }); } }   // not yet: the Mere Tower takes a company from 12
       else if (ex && ex.region && !landOpen(ex.region)) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: ex.region, line: ex.shut || '' }); } }   // a land not yet opened (regions.js)
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
@@ -587,6 +597,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       visited: [...(world.visited || [])],
       sitesEntered: [...state.sitesEntered],
       revealed: [...state.revealed],
+      secrets: { ...state.secrets },     // (v31)
       flags: { ...state.flags },
       bosses: { ...state.bosses },
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
@@ -652,6 +663,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.bag = (data.bag ?? []).map((it) => refreshItem({ ...it }));
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
+    state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet

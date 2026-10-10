@@ -1,7 +1,7 @@
 // The Redhand Company (M5, world doc §8): each site's waves come from its family (battle.js FAMILIES).
-// Bandits in the Tithe Mill and Wickham Keep, the diggers (bandits and the dead they dug up) on the
-// Keep's second floor, the Ashbound and the Cinder Cult's acolytes in the Sunken Chapel; the Old
-// Barrows as before. Turn Undead reaches only the Ashbound.
+// (v1.48, one dungeon a level) Bandits on Wickham Keep's first two floors, the diggers (bandits and the dead they dug
+// up) in its Old Cellars, its third floor, and at the Old Barrows' mouth, their first; the Ashbound below that; the
+// Ashbound and the Cinder Cult's acolytes in the Sunken Chapel. Turn Undead reaches only the Ashbound.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -12,7 +12,7 @@ import { skillDef } from '../src/sim/skills.js';
 // fight in a room for a while and collect every kind that spawned
 function kindsIn(site, depth = 0, secs = 90) {
   const sim = createSim(20260807, undefined, { scene: 'dungeon', site }), seen = new Map();
-  if (depth) { const w = createWorld(sim.world.seed, undefined, depth, site); assert.ok(w); }
+  if (depth) { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth, floors: [] }); assert.equal(sim.world.depth, depth); assert.ok(createWorld(sim.world.seed, undefined, depth, site)); }
   const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance), p = sim.state.player;
   let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
@@ -22,21 +22,27 @@ function kindsIn(site, depth = 0, secs = 90) {
   return seen;
 }
 
-test('each site fills its waves from its own family', () => {
-  const mill = kindsIn('tithe_mill');
-  assert.ok([...mill.keys()].every((k) => ['cutthroat', 'brute', 'crossbow'].includes(k)), `the mill: ${[...mill.keys()]}`);
-  assert.ok([...mill.values()].every((u) => u === false), 'the living');
-  const barrows = kindsIn('barrows');
-  assert.ok([...barrows.keys()].every((k) => ['minion', 'warrior', 'rogue', 'mage'].includes(k)), `the barrows: ${[...barrows.keys()]}`);
+test('each site fills its waves from its own family, floor by floor', () => {
+  const keep = kindsIn('wickham_keep');
+  assert.ok(keep.size && [...keep.keys()].every((k) => ['cutthroat', 'brute', 'crossbow'].includes(k)), `the Keep's bailey: ${[...keep.keys()]}`);
+  assert.ok([...keep.values()].every((u) => u === false), 'the living');
+  const mouth = kindsIn('barrows');                                   // the Redhand's dig at the barrow mouth: the diggers
+  assert.ok(mouth.size && [...mouth.keys()].every((k) => ['cutthroat', 'minion', 'crossbow', 'rogue', 'brute'].includes(k)), `the barrow mouth: ${[...mouth.keys()]}`);
+  for (const [k, u] of mouth) assert.equal(u, FAMILIES.diggers.undead(k), `${k}: the diggers' dead and living`);
+  const barrows = kindsIn('barrows', 1);
+  assert.ok(barrows.size && [...barrows.keys()].every((k) => ['minion', 'warrior', 'rogue', 'mage'].includes(k)), `the barrows' second floor: ${[...barrows.keys()]}`);
   assert.ok([...barrows.values()].every((u) => u === true), 'the dead');
   const chapel = kindsIn('sunken_chapel', 0, 160);
-  assert.ok([...chapel.keys()].every((k) => ['minion', 'warrior', 'rogue', 'acolyte'].includes(k)), `the chapel: ${[...chapel.keys()]}`);
+  assert.ok(chapel.size && [...chapel.keys()].every((k) => ['minion', 'warrior', 'rogue', 'acolyte'].includes(k)), `the chapel: ${[...chapel.keys()]}`);
 });
 
-test('the Keep\'s second floor is the diggers\'; a floor picks its family', () => {
+test('the Keep\'s third floor (the Old Cellars) and the Barrows\' first are the diggers\'; a floor picks its family', () => {
   assert.equal(familyOf({ site: 'wickham_keep', depth: 0 }), FAMILIES.redhand);
-  assert.equal(familyOf({ site: 'wickham_keep', depth: 1 }), FAMILIES.diggers);
-  assert.equal(familyOf({ site: 'barrows', depth: 5 }), FAMILIES.ashbound);
+  assert.equal(familyOf({ site: 'wickham_keep', depth: 1 }), FAMILIES.redhand);
+  assert.equal(familyOf({ site: 'wickham_keep', depth: 2 }), FAMILIES.diggers);
+  assert.equal(familyOf({ site: 'barrows', depth: 0 }), FAMILIES.diggers);
+  assert.equal(familyOf({ site: 'barrows', depth: 1 }), FAMILIES.ashbound);
+  assert.equal(familyOf({ site: 'barrows', depth: 2 }), FAMILIES.ashbound);
   assert.ok(FAMILIES.diggers.undead('minion') && !FAMILIES.diggers.undead('cutthroat'));
 });
 

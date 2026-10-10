@@ -10,17 +10,18 @@
     1,
     30
   ],
-  "summary": "Pim Rushlight knows what burns, and the Sickpools' vats burn better than anything he sells. Hold eight waves out there, and he'll show your mages how to keep a fire off somebody (the mage's level-12 skill).",
+  "summary": "Pim Rushlight knows what burns, and the vats under the Canal Locks burn better than anything he sells. Hold eight waves down there, and he'll show your mages how to keep a fire off somebody (the mage's level-12 skill).",
   "steps": [
     {
       "id": "vats",
-      "journal": "Hold eight waves in the Sickpools, among the old vats.",
+      "journal": "Hold eight waves at Vat Seven, the Canal Locks' third floor, among the old vats.",
       "objectives": [
         {
           "type": "waves",
-          "site": "sickpools",
+          "site": "canal_locks",
           "count": 8,
-          "label": "Waves held in the Sickpools"
+          "floor": 3,
+          "label": "Waves held at Vat Seven"
         }
       ]
     }

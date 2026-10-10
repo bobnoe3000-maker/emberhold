@@ -98,8 +98,11 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
       const [x, y] = k.split(',').map(Number), c = cellAt(x, y);
       if (c && c.room >= 0 && world.discovered.has(c.room)) loot.push({ tx: x, ty: y, kind, near: 1 });
     }
-    const chest = nearestD(loot);
-    if (chest) out.push({ id: 'loot', icon: chest.kind, label: chest.kind === 'chest' ? 'Unopened chest' : 'Unused shrine', sub: `seen · ${chest.steps} steps`, tx: chest.tx, ty: chest.ty, near: 1, then: { type: 'harvest', tx: chest.tx, ty: chest.ty }, steps: chest.steps });
+    // chests and shrines on rows of their own: a chest job (quests.js) makes for a chest, never
+    // a shrine, which is only spent when wanted, so a job led to one would stall beside it
+    const chest = nearestD(loot.filter((l) => l.kind === 'chest')), shrine = nearestD(loot.filter((l) => l.kind === 'shrine'));
+    if (chest) out.push({ id: 'loot', icon: 'chest', label: 'Unopened chest', sub: `seen · ${chest.steps} steps`, tx: chest.tx, ty: chest.ty, near: 1, then: { type: 'harvest', tx: chest.tx, ty: chest.ty }, steps: chest.steps });
+    if (shrine) out.push({ id: 'shrine', icon: 'shrine', label: 'Unused shrine', sub: `seen · ${shrine.steps} steps`, tx: shrine.tx, ty: shrine.ty, near: 1, then: { type: 'harvest', tx: shrine.tx, ty: shrine.ty }, steps: shrine.steps });
 
     const dr = L.descentRoom, dlv = dr && lv.get(dr.id), below = hasFloorBelow(world.site || 'barrows', world.depth || 0);
     const siteName = (SITES[world.site || 'barrows'] || SITES.barrows).name.replace(/^The /, 'the ');

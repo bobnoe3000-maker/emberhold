@@ -26,7 +26,7 @@ test('the Fens\' families: every kind is the sim\'s and named for the defeat scr
   for (const id of Object.keys(SITES).filter((s) => SITES[s].region === 'fens'))
     for (const f of [SITES[id].family, ...(SITES[id].families || [])]) assert.ok(FAMILIES[f], `${id}: ${f}`);
   assert.equal(SITES.toadking_mound.family, 'reedmen'); assert.equal(SITES.drowned_abbey.family, 'drowned');
-  assert.deepEqual(SITES.canal_locks.families, ['ashbound', 'lockcult'], 'the Locks\' first floor is the bound lock-men');
+  assert.deepEqual(SITES.canal_locks.families, ['ashbound', 'lockcult', 'harvest'], 'the Locks\' first floor is the bound lock-men; Vat Seven, the third (the Sickpools, v1.48), the harvest');
 });
 
 test('each of the Fens\' own mirrors a role (HP and ATK within 15 % of it), so the contract holds whoever fills a wave', async () => {
@@ -50,10 +50,12 @@ test('every foe kind has a baked look: the renderer names its atlas and the atla
   for (const k of FENS) assert.ok(stage.includes(`'${actor[k]}'`), `the Stage lines up ${actor[k]}`);
 });
 
-// a room in each site fills with its own family and nothing else (fought with a party kept on its feet)
-for (const [site, depth, kinds] of [['toadking_mound', 0, ['fenghoul', 'reedcutter', 'fowler', 'bogwitch']], ['drowned_abbey', 0, ['drowned', 'harvester', 'rogue', 'cantor']]])
-  test(`a room in ${site} fills with its own: ${kinds.join(', ')}`, () => {
+// a room in each site fills with its own family and nothing else (fought with a party kept on its feet); (v1.48) the
+// Sickpools' harvest fills Vat Seven, the Canal Locks' third floor
+for (const [site, depth, kinds] of [['toadking_mound', 0, ['fenghoul', 'reedcutter', 'fowler', 'bogwitch']], ['drowned_abbey', 0, ['drowned', 'harvester', 'rogue', 'cantor']], ['canal_locks', 2, ['fenghoul', 'harvester', 'rogue', 'bogwitch']]])
+  test(`a room in ${site}${depth ? ` (floor ${depth + 1})` : ''} fills with its own: ${kinds.join(', ')}`, () => {
     const sim = createSim(SEED, undefined, { scene: 'dungeon', site }); sim.tick();
+    if (depth) { sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth, floors: [] }); assert.equal(sim.world.depth, depth); }
     const t = createSim(SEED, undefined, { scene: 'town' }); hire(t, [1, 3]);
     sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m }))); for (const m of sim.state.party) { m.level = SITES[site].base + depth; m.hp = statsFor(m).maxHp; }
     const L = sim.world.level, r = L.rooms.find((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), p = sim.state.player;

@@ -1,6 +1,7 @@
-// Chests are a find (GDD §8, 2026-10-01): about one a floor, never none on a floor that drew any (the Tithe
-// Mill's single floor holds Brannoc's paymaster's coin); every chest gives gold, and says what else it
-// held, or that it held no gear; an opened chest stays where it was (drawn open), out of the way.
+// Chests are a find (GDD §8, 2026-10-01): about one a floor, never none (v1.48: Brannoc's paymaster's box and the
+// tithe ledger are in Wickham Keep's strongroom, its second floor; they were the Tithe Mill's); every chest gives
+// gold, and says what else it held, or that it held no gear; an opened chest stays where it was (drawn open), out
+// of the way.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -9,21 +10,25 @@ import { hasFloorBelow } from '../src/sim/sites.js';
 import { DROP } from '../src/sim/loot.js';
 import { GOLD_DROP } from '../src/sim/battle.js';
 
+// (each site its own seeds: a chest's find is drawn from the game's seed and how many drops came before (loot.js), so
+// the same seeds in every site would draw the same few rolls)
+const SITES_HERE = ['barrows', 'wickham_keep', 'sunken_chapel'];
 function floors(n = 12) {
   const out = [];
-  for (const site of ['barrows', 'tithe_mill', 'wickham_keep', 'sunken_chapel']) for (let i = 1; i <= n; i++) for (const depth of [0, 1, 2]) {
+  for (const [si, site] of SITES_HERE.entries()) for (let i = 1; i <= n; i++) for (const depth of [0, 1, 2]) {
     if (depth && !hasFloorBelow(site, depth - 1)) continue;
-    const s = createSim(i * 7919, undefined, { scene: 'dungeon', site }); if (depth) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth, floors: [] });
-    out.push({ site, s, chests: [...s.world.props].filter(([, k]) => k === 'chest').map(([k]) => k) });
+    const s = createSim((i + 100 * si) * 7919, undefined, { scene: 'dungeon', site }); if (depth) s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth, floors: [] });
+    out.push({ site, depth, s, chests: [...s.world.props].filter(([, k]) => k === 'chest').map(([k]) => k) });
   }
   return out;
 }
 
-test('about one chest a floor (it was about three); the Tithe Mill never has none', () => {
+test('about one chest a floor (it was about three); no floor has none, the Keep\'s strongroom floor included', () => {
   const all = floors(), avg = (a) => a.reduce((x, y) => x + y.chests.length, 0) / a.length;
   const vale = all.filter((f) => f.site !== 'sunken_chapel');
-  assert.ok(avg(vale) >= 0.9 && avg(vale) <= 1.6, `${avg(vale).toFixed(2)} a floor in the Barrows, the Mill and the Keep`);
-  assert.ok(all.filter((f) => f.site === 'tithe_mill').every((f) => f.chests.length >= 1), 'every Tithe Mill floor has a chest');
+  assert.ok(avg(vale) >= 0.9 && avg(vale) <= 1.6, `${avg(vale).toFixed(2)} a floor in the Barrows and the Keep`);
+  assert.ok(all.every((f) => f.chests.length >= 1), 'every floor has a chest');
+  assert.ok(all.filter((f) => f.site === 'wickham_keep' && f.depth === 1).every((f) => f.chests.length >= 1), 'every Keep second floor has a chest (the paymaster\'s box, the tithe ledger)');
 });
 
 test('a chest gives gold, every time, and says what else it held (or that it held no gear); it stays where it was, opened', () => {

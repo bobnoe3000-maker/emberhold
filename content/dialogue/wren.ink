@@ -90,7 +90,7 @@ Wren keeps looking back the way you came, where {fallen_name} should be, and pre
 + { q_wren_settled == 1 } [About the boat… #mark: quest active] -> wren_settled_active
 + { q_trial_dead_water == 2 } [Five of their leaders. None of them saw us. #mark: quest ready] -> wren_dead_water_turnin
 + { q_trial_dead_water == 0 } [What's on your knives? #mark: quest] -> wren_dead_water_offer
-+ { q_trial_dead_water == 1 } [About the Sickpools… #mark: quest active] -> wren_dead_water_active
++ { q_trial_dead_water == 1 } [About the vats… #mark: quest active] -> wren_dead_water_active
 + [Why did you borrow from the Cult?] -> wren_why
 + [Tell me about the Toadking.] -> wren_toadking
 + [That's all.] -> wren_bye
@@ -120,14 +120,14 @@ She reads it once, holds it over the nearest light until it catches, and drops i
 "Back when I ran the canal at night, I left things in the Sickpools. Nobody goes there. That was the point."
 "Now the Cult's draining the vats, and somebody's going to drain one of mine. Two chests, tied with my knot. I'd like them back before somebody in a robe opens them and learns things about the Sisters."
 + [We'll get them. #mark: quest]
-    "The Sickpools. Any two chests will be mine, probably. I hid a lot." # quest: accept wren_night_boats
+    "Vat Seven, under the Locks. Any two chests down there will be mine, probably. I hid a lot." # quest: accept wren_night_boats
     -> wren_topics
 + [Not now.]
     "They've kept this long. Most things I hide do."
     -> wren_topics
 
 == wren_boats_active ==
-"Two chests in the Sickpools. My knot's the one that looks wrong and isn't."
+"Two chests at Vat Seven, the bottom of the Locks. My knot's the one that looks wrong and isn't."
 -> wren_topics
 
 == wren_boats_turnin ==
@@ -169,7 +169,7 @@ She takes a ring off her thumb and holds it out. "I paid the Cult with this, the
     -> wren_topics
 
 == wren_dead_water_active ==
-"Five of the harvesters' leaders in the Sickpools. From behind. They never look."
+"Five of the harvesters' leaders, down at the Locks' vats. From behind. They never look."
 -> wren_topics
 
 == wren_dead_water_turnin ==

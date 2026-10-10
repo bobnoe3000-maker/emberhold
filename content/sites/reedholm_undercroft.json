@@ -2,9 +2,9 @@
   "id": "reedholm_undercroft",
   "region": "fens",
   "name": "The Reedholm Undercroft",
-  "levels": "15",
+  "levels": "18",
   "floors": 1,
   "hidden": true,
-  "summary": "The binding clergy's copy-room under Reedholm priory, where the binding rolls were written out fair. Mother Agnes has kept it locked for forty years.",
+  "summary": "The binding clergy's copy-room under Reedholm priory, where the binding rolls were written out fair. Mother Agnes has kept it locked for forty years. Once its vault is opened it seals itself for a while; then it can be walked again.",
   "shut": "A low door under the priory, iron-banded. The lock is newer than the door, and well oiled."
 }

@@ -8,11 +8,12 @@ import { createOutdoor } from '../src/sim/outdoor.js';
 import { LANDS } from '../src/sim/regions.js';
 import { COACH } from '../src/sim/coach.js';
 import { WALL, PLACES, LAND_AREA } from '../src/ui/wallmap.js';
+import { SITES, SITE_IDS } from '../src/sim/sites.js';
 
 const ROOT = new URL('..', import.meta.url);
 const inside = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if (((yi > pt[1]) !== (yj > pt[1])) && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c; } return c; };
 
-test('each land\'s map is in assets/maps, and its pins are the overland\'s exits on any seed', () => {
+test('each land\'s map is in assets/maps, and its pins are the overland\'s exits on any seed: a pin for each of its sites but the parked', () => {
   for (const r of Object.keys(LANDS)) {
     for (const ext of ['png', 'json']) assert.ok(existsSync(new URL(`assets/maps/minimap-${r}.${ext}`, ROOT)), `minimap-${r}.${ext}`);
     const L = JSON.parse(readFileSync(new URL(`assets/maps/minimap-${r}.json`, ROOT), 'utf8'));
@@ -22,6 +23,8 @@ test('each land\'s map is in assets/maps, and its pins are the overland\'s exits
       assert.deepEqual(L.pins, want, `${r} on seed ${seed}: rerun node tools/worldmap/minimap.mjs`);
     }
     assert.ok(L.w > 0 && L.h > 0 && L.px === 4);
+    // (v1.48) one pin a site of the land in play: the Mill and the Warren are parked for the Reach, the Sickpools gone
+    assert.deepEqual(L.pins.filter((p) => p.kind === 'site').map((p) => p.id).sort(), SITE_IDS.filter((id) => SITES[id].region === r && !SITES[id].parked).sort(), `${r}: its sites' pins`);
   }
   assert.ok(existsSync(new URL(WALL.src.replace('./', ''), ROOT)), 'the wall map');
 });

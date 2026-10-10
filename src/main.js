@@ -47,7 +47,7 @@ const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAG
 const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : SCENE0;
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
-// ?scene=dungeon&site=tithe_mill|wickham_keep|sunken_chapel|ninth_milestone previews another dungeon site (sim/sites.js).
+// ?scene=dungeon&site=wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|… previews another dungeon site (sim/sites.js; a parked one, the Mill or the Warren, too).
 const SITE = new URLSearchParams(location.search).get('site') || 'barrows';
 // Game slots (GDD §6.1): three games, each its own seed, main character, party and progress.
 // ?slot=N picks one (and makes it active). An explicit ?scene= link (review / preview) starts

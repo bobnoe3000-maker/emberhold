@@ -1,5 +1,5 @@
 // brannoc.ink — Brannoc, a Redhand deserter and the first found companion (world doc §5, v1.7).
-// Captain Garrow kept him chained in Wickham Keep's second-floor hall as an example to the others.
+// Captain Garrow kept him chained in the last hall of Wickham Keep's Old Cellars as an example to the others.
 // Big, slow to talk, quick to apologise. Entry: brannoc_hub: in the hall while he waits there, and
 // from his party card once he's with you. Bound in by src/story/adapter.js from the sim
 // (sim/npcs.js varsFor: joined 0 / 1, in_party 0 / 1; core.js: boss_<id> 0 / 1); Ink only reads them.
@@ -70,7 +70,7 @@ Brannoc looks back the way you came, where {fallen_name} should be.
 
 == brannoc_topics ==
 + { q_brannoc_old_debts == 2 } [That's Garrow's three sergeants down. #mark: quest ready] -> brannoc_debts_turnin
-+ { q_brannoc_paymasters_box == 2 } [We found the paymaster's boxes at the mill. #mark: quest ready] -> brannoc_box_turnin
++ { q_brannoc_paymasters_box == 2 } [We found the paymaster's boxes in the Keep. #mark: quest ready] -> brannoc_box_turnin
 + { q_brannoc_standing_down == 2 } [We stood with the legion. Five waves. #mark: quest ready] -> brannoc_standing_turnin
 + { q_brannoc_old_debts == 0 } [Is there anything you need to settle? #mark: quest] -> brannoc_debts_offer
 + { q_brannoc_old_debts == 1 } [About the sergeants… #mark: quest active] -> brannoc_debts_active
@@ -104,17 +104,17 @@ Brannoc is quiet for a while.
 
 // The Paymaster's Box (content/quests/brannoc_paymasters_box.json)
 == brannoc_box_offer ==
-"The paymaster kept the robes' coin at the Tithe Mill, not the Keep. He trusted nobody. Not Garrow, not the men, not himself. So two boxes, in two places."
+"The paymaster kept the robes' coin in the Keep's strongroom, down in the Barracks, not with Garrow. He trusted nobody. Not Garrow, not the men, not himself. So two boxes, in two places."
 "I'd like to see whose seal is on the purses. Garrow never asked. I'm asking."
 + [We'll find the boxes. #mark: quest]
-    "Two chests in the Tithe Mill, up the river. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
+    "Two chests in the Barracks, the Keep's second floor. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
     -> brannoc_topics
 + [Not now.]
     "The coin's not going anywhere. That was always the paymaster's whole idea."
     -> brannoc_topics
 
 == brannoc_box_active ==
-"Two chests in the Tithe Mill. He'd keep them close to the doors, where he could count them on his way past."
+"Two chests in the Barracks, the Keep's second floor. He'd keep them close to the doors, where he could count them on his way past."
 -> brannoc_topics
 
 == brannoc_box_turnin ==
@@ -127,14 +127,14 @@ Brannoc tips a purse into his hand and holds the wax to the light. It's red, the
 "Osric says there's a legion in the barrows that held a road for three hundred years because nobody told them to stop."
 "I left everything I was ever in. Twice. I'd like to stand somewhere once, with somebody who didn't. Even if they're dead. Especially if."
 + [We'll stand with them. #mark: quest]
-    "The Old Barrows. The hall by the stairs down, on the second floor or deeper, where they come thickest. Five waves, and nobody steps out. Sorry. I know you'll step out if you have to. I mean I won't." # quest: accept brannoc_standing_down
+    "The Old Barrows. The Long Gallery, the second floor, its last hall, where they stand in rows. Five waves, and nobody steps out. Sorry. I know you'll step out if you have to. I mean I won't." # quest: accept brannoc_standing_down
     -> brannoc_topics
 + [Not now.]
     "They've waited a long time. They'll understand."
     -> brannoc_topics
 
 == brannoc_standing_active ==
-"The Old Barrows. The hall by the stairs down, the second floor or deeper. Five waves. I've been practising standing still. It's harder than it looks."
+"The Old Barrows. The Long Gallery's last hall, the second floor. Five waves. I've been practising standing still. It's harder than it looks."
 -> brannoc_topics
 
 == brannoc_standing_turnin ==

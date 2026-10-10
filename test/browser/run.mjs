@@ -427,11 +427,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const tracker = await p.locator('#questTrack.on').innerText().catch(() => '');
     check('act I: Maudry gives Smoke over the Vale in conversation; the tracker names it', st.q && st.q.st === 1 && st.tracked === 'ch1_smoke_over_the_vale' && /Smoke over the Vale/.test(tracker), tracker.replace(/\n/g, ' · '));
     const row = await p.evaluate(() => { const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'overland', depth: 0 }); const r = s.destinations()[0]; return { id: r.id, site: r.id === 'quest' ? r.journey : null }; });
-    const site = await p.evaluate(() => { const s = globalThis.__sim, r = s.destinations()[0]; return s.destinations().find((q) => q.id === 'site:tithe_mill' && q.tx === r.tx && q.ty === r.ty) ? 'tithe_mill' : ''; });
-    check('act I: on the Vale, the compass leads with it, to the Tithe Mill', row.id === 'quest' && site === 'tithe_mill', JSON.stringify({ ...row, site }));
-    // the mill: a strong company holds a room four waves (sim ticks, not frames)
+    const site = await p.evaluate(() => { const s = globalThis.__sim, r = s.destinations()[0]; return s.destinations().find((q) => q.id === 'site:barrows' && q.tx === r.tx && q.ty === r.ty) ? 'barrows' : ''; });
+    check('act I: on the Vale, the compass leads with it, to the Old Barrows', row.id === 'quest' && site === 'barrows', JSON.stringify({ ...row, site }));
+    // the barrow mouth (v1.48; it was the Tithe Mill): a strong company holds a room four waves (sim ticks, not frames)
     const held = await p.evaluate(() => {
-      const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'dungeon', site: 'tithe_mill', depth: 0 });
+      const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'dungeon', site: 'barrows', depth: 0 });
       for (const m of s.state.party) { m.level = 12; m.hp = 9999; }
       const L = s.world.level, r = L.rooms.find((q) => q !== L.entrance), pl = s.state.player; let best = null, bd = 1e9;
       for (const [k, c] of L.cells) { if (c.room !== r.id || c.kind !== 'floor') continue; const [x, y] = k.split(',').map(Number), d = Math.hypot(x - r.cx, y - r.cy); if (d < bd) { bd = d; best = [x, y]; } }
@@ -440,15 +440,15 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return s.state.quests.ch1_smoke_over_the_vale;
     });
     await run(5);
-    check('act I: four waves held in the Tithe Mill: ready', held.st === 2, JSON.stringify(held));
+    check('act I: four waves held at the Barrow Mouth: ready', held.st === 2, JSON.stringify(held));
     await p.evaluate(() => { const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), scene: 'town', depth: 0, player: { x: 0, y: 0 } }); });
     await p.waitForTimeout(300); await run(5);
     await talkTo('osric_hale');
-    await p.locator('#talk .ch', { hasText: 'The Redhand are out of the mill' }).tap(); await run(3); await more();
+    await p.locator('#talk .ch', { hasText: 'The Redhand are out of the barrows' }).tap(); await run(3); await more();
     await run(10);
-    const done = await p.evaluate(() => ({ st: globalThis.__sim.state.quests.ch1_smoke_over_the_vale.st, keep: globalThis.__sim.state.revealed.has('wickham_keep') }));
+    const done = await p.evaluate(() => ({ st: globalThis.__sim.state.quests.ch1_smoke_over_the_vale.st }));   // (v1.48: the Keep is open from the start: smoke-test's compass)
     const offers = await p.locator('#talk .ch').allTextContents();
-    check('act I: handed in to Osric; Wickham Keep is revealed, and he offers the next chapter; no page errors', done.st === 3 && done.keep && offers.some((t) => /Where did the Redhand go/.test(t)) && errs.length === 0, JSON.stringify(done) + ' · ' + JSON.stringify(offers) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('act I: handed in to Osric, and he offers the next chapter; no page errors', done.st === 3 && offers.some((t) => /Where did the Redhand go/.test(t)) && errs.length === 0, JSON.stringify(done) + ' · ' + JSON.stringify(offers) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
@@ -616,7 +616,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=tithe_mill`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=wickham_keep`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     await p.waitForTimeout(800); await run(5);
     const key = await p.evaluate(() => { const s = globalThis.__sim, k = [...s.world.props].find(([, v]) => v === 'chest')[0], [x, y] = k.split(',').map(Number), pl = s.state.player; pl.x = pl.px = x + 1.5; pl.y = pl.py = y + 0.5; return k; });
@@ -740,8 +740,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const off = s1.filter((a) => !a.box || a.box[0] < 0 || a.box[1] < 0 || a.box[2] > v.w || a.box[3] > v.h).map((a) => a.id);
     const moved = s1.filter((a, i) => a.x !== s2[i].x || a.y !== s2[i].y).length, animating = s1.filter((a, i) => JSON.stringify(a.box) !== JSON.stringify(s2[i].box)).length;
     const hud = await p.evaluate(() => [...document.body.children].filter((e) => e.tagName !== 'CANVAS' && e.id !== 'stagePanel' && e.tagName !== 'SCRIPT' && getComputedStyle(e).display !== 'none').map((e) => e.id || e.tagName));
-    check('stage: the whole cast lined up (63: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens, the Fens\' four bosses and Act II\'s six), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
-      s1.length === 63 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
+    check('stage: the whole cast lined up (65: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens, the Fens\' four bosses and Act II\'s six; v1.48 the Quartermaster and the Vatwarden), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
+      s1.length === 65 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
       JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
@@ -1003,7 +1003,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon&site=scrag_warren`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__audio, null, { timeout: 60000 });
+    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon&site=wickham_keep`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__audio, null, { timeout: 60000 });
     await p.mouse.click(200, 300);
     const started = await p.waitForFunction(() => globalThis.__audio.running && globalThis.__audio.ready, null, { timeout: 15000 }).then(() => true, () => false);
     await p.click('#menuBtn'); await p.click('#title button:has-text("Sound")');
@@ -1218,7 +1218,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     let walk = null;
     for (let i = 0; i < 20 && !(walk && walk.dest); i++) { await run(3); walk = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return { dest: pl.dest && pl.dest.label, open: document.querySelector('#mapWrap').classList.contains('on') }; }); }
     check('world map: on the Fens, the land tab\'s Toadking\'s Mound (levels, floors, its boss) → Walk there walks you to it',
-      land.title === 'The Greywater Fens' && /Toadking's Mound/.test(land.card) && /levels 8–11/.test(land.card) && /The Toadking/.test(land.card) && walk.dest === "Toadking's Mound" && !walk.open && errs.length === 0,
+      land.title === 'The Greywater Fens' && /Toadking's Mound/.test(land.card) && /levels 10–12/.test(land.card) && /The Toadking/.test(land.card) && walk.dest === "Toadking's Mound" && !walk.open && errs.length === 0,
       JSON.stringify({ land: { ...land, card: land.card.replace(/\n/g, ' | ') }, walk }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }

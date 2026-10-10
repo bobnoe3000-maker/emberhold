@@ -9,7 +9,7 @@ import { hash2, fbm, streamSeed, mulberry32, STREAM } from './rng.js';
 import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
 import { hypot } from './detmath.js';
-import { siteOf, roomLevelAt, hasFloorBelow } from './sites.js';
+import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt } from './sites.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -26,11 +26,11 @@ const clampi = (v, a, b) => (v < a ? a : v > b ? b : v);
 const K = (x, y) => x + ',' + y;
 
 // site (sites.js): which dungeon this is — its look, its rooms, its levels and whether a floor
-// goes on down. The Old Barrows' look is still picked from the seed.
+// goes on down. A floor can have its own look and foes (sites.js themes, families: the Keep's cellars are a cave).
 export const CHEST_KEEP = 0.35;
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
-  const S = siteOf(site);   // (its furniture below: `human`, `themes`)
-  const th = theme || S.theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
+  const S = siteOf(site), FAM = familyAt(site, depth);   // (its furniture below: `human`, `themes`)
+  const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout });
   const world = {
     kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name,
@@ -54,9 +54,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // draws either way, so an Old Barrows floor is dressed as it always was.
   // (the goblins keep a camp of what fell off the carts, and their totems)
   // (the Toadking's reed-cutters keep stores like the Redhand; the drowned clergy keep their naves like the chapel)
-  const human = S.family === 'redhand' || S.family === 'reedmen', gob = S.family === 'goblin';
+  const human = FAM === 'redhand' || FAM === 'reedmen' || FAM === 'diggers', gob = FAM === 'goblin';
   const decor = human ? ['crates', 'barrels', 'sacks'] : gob ? ['sacks', 'totem', 'crates'] : ['spire', 'monolith', 'totem'];
-  const themes = human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : S.family === 'chapel' || S.family === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
+  const themes = human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : FAM === 'chapel' || FAM === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
     if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }
@@ -184,8 +184,8 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
 // Room difficulty (GDD §3.3). Rooms are ranked by walking distance from the entrance
 // (BFS over the floor); the descent room always ranks last. Every two rooms deeper is
 // one level harder, and each floor down starts where the one above left off:
-// room level = the site's base + its levels a floor × depth + ⌊rank ÷ 2⌋ (sites.js roomLevelAt; the Old
-// Barrows: 1 + ROOM_LEVELS_PER_FLOOR × depth + ⌊rank ÷ 2⌋). The entrance is safe (0).
+// room level = sites.js roomLevelAt (v1.48: a band's floor level, the two rooms before the hall one up). The entrance is
+// safe (0). ROOM_LEVELS_PER_FLOOR is the old Barrows' rule, kept for older checkouts' tools.
 export const ROOM_LEVELS_PER_FLOOR = 3;
 function rankRooms(level, depth, site) {
   const { cells, rooms, entrance } = level, out = new Map();
@@ -204,7 +204,7 @@ function rankRooms(level, depth, site) {
   const ranked = rooms.filter((r) => r !== entrance)
     .sort((a, b) => (a === level.descentRoom) - (b === level.descentRoom) || (best.get(a.id) ?? 1e9) - (best.get(b.id) ?? 1e9) || a.id - b.id);
   out.set(entrance.id, 0);
-  ranked.forEach((r, i) => out.set(r.id, roomLevelAt(site, depth, i)));
+  ranked.forEach((r, i) => out.set(r.id, roomLevelAt(site, depth, i, ranked.length)));
   return out;
 }
 

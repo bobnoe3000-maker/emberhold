@@ -1,5 +1,6 @@
-// Act I, Smoke over the Vale (M5, docs/m5-plan.md §4; world doc §6): three chapters in order. The Tithe
-// Mill for Maudry, handed in to Osric, who then opens Wickham Keep; Captain Garrow for Osric; the
+// Act I, Smoke over the Vale (M5, docs/m5-plan.md §4; world doc §6): three chapters in order. The Redhand's
+// dig at the Old Barrows' mouth (its first floor; v1.48, it was the Tithe Mill) for Maudry, handed in to Osric;
+// Captain Garrow on Wickham Keep's third floor (open from the start since v1.48: nothing to reveal) for Osric; the
 // Robed Stranger in the Sunken Chapel for Osric, handed in to Sister Ilse. Each is taken only from its
 // giver and handed in only to its taker, only in order; a chapter can't be abandoned; a boss who fell
 // before the chapter was taken still counts.
@@ -9,6 +10,7 @@ import { createSim } from '../src/sim/core.js';
 import { QS } from '../src/sim/quests.js';
 import { isWalkable } from '../src/sim/world.js';
 import { statsFor } from '../src/sim/party.js';
+import { siteOpen } from '../src/sim/sites.js';
 
 const SEED = 20260807;
 const talk = (sim, npc) => {
@@ -33,7 +35,7 @@ function fightIn(sim, room, until, secs = 300) {
 }
 const down = (sim) => { const t = sim.world.stairsAt, p = sim.state.player; p.x = p.px = t.x + 0.5; p.y = p.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); };
 
-test('Act I from start to finish: the mill, the Keep, the chapel, in order, each paid once', () => {
+test('Act I from start to finish: the barrows, the Keep, the chapel, in order, each paid once', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }); sim.tick();
   const t = createSim(SEED, undefined, { scene: 'town' }); hire(t, [0, 2]);
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
@@ -43,21 +45,23 @@ test('Act I from start to finish: the mill, the Keep, the chapel, in order, each
 
   // 1. Smoke over the Vale: from Maudry only; the others can't start before it's done
   assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.AVAILABLE);
-  assert.equal(st(sim, 'ch1_the_diggers'), QS.LOCKED, 'the Keep waits on the mill');
+  assert.equal(st(sim, 'ch1_the_diggers'), QS.LOCKED, 'the Keep waits on the barrows');
+  assert.ok(siteOpen('wickham_keep', sim.state.revealed), 'the Keep itself is open from the start (v1.48): only the chapter waits');
   talk(sim, 'osric_hale'); say(sim, 'accept', 'ch1_smoke_over_the_vale'); assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.AVAILABLE, 'not from Osric');
   talk(sim, 'maudry_fenn'); say(sim, 'accept', 'ch1_smoke_over_the_vale'); assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.ACTIVE);
   sim.commands.push({ type: 'questAbandon', id: 'ch1_smoke_over_the_vale' }); sim.tick(); assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.ACTIVE, 'a chapter stays');
-  goTo(sim, 'tithe_mill'); let cleared = 0; sim.bus.on('wave', (e) => { if (e.cleared) cleared++; });
+  goTo(sim, 'barrows'); assert.equal(sim.state.depth, 0, 'the barrow mouth: the first floor'); let cleared = 0; sim.bus.on('wave', (e) => { if (e.cleared) cleared++; });
   fightIn(sim, (L) => L.rooms.find((q) => q !== L.entrance), () => st(sim, 'ch1_smoke_over_the_vale') === QS.READY);
   assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.READY); assert.ok(cleared >= 4);
   talk(sim, 'maudry_fenn'); say(sim, 'turnin', 'ch1_smoke_over_the_vale'); assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.READY, 'handed in to Osric, not Maudry');
-  assert.ok(!sim.state.revealed.has('wickham_keep'));
   talk(sim, 'osric_hale'); say(sim, 'turnin', 'ch1_smoke_over_the_vale');
-  assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.DONE); assert.deepEqual(revealed, ['wickham_keep'], 'the Keep is revealed');
+  assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.DONE); assert.deepEqual(revealed, [], 'nothing to reveal: the Keep was never hidden (v1.48)');
 
-  // 2. The Diggers: Osric; down to the Keep's second floor, then Garrow
+  // 2. The Diggers: Osric; down to the Keep's third floor (the Old Cellars), then Garrow
   say(sim, 'accept', 'ch1_the_diggers'); assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE);
   goTo(sim, 'wickham_keep'); down(sim); assert.equal(sim.state.depth, 1);
+  assert.equal(sim.state.quests.ch1_the_diggers.step, 0, 'the second floor is not the cellars');
+  down(sim); assert.equal(sim.state.depth, 2);
   assert.equal(sim.state.quests.ch1_the_diggers.step, 1, 'on to Garrow');
   fightIn(sim, (L) => L.descentRoom, () => st(sim, 'ch1_the_diggers') === QS.READY);
   assert.equal(st(sim, 'ch1_the_diggers'), QS.READY); assert.equal(sim.state.bosses.redhand_captain, 1);
@@ -80,9 +84,10 @@ test('a boss who fell before his chapter was taken still counts; Ink reads a cha
   sim.state.party[0].level = 5;
   sim.state.bosses.redhand_captain = 1;
   talk(sim, 'osric_hale'); say(sim, 'accept', 'ch1_the_diggers');
-  // the first step (reach floor 2) still wants walking; Garrow is counted when it's reached
+  // the first step (reach floor 3) still wants walking; Garrow is counted when it's reached
   assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE);
-  goTo(sim, 'wickham_keep'); down(sim);
+  goTo(sim, 'wickham_keep'); down(sim); assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE, 'the second floor is not enough');
+  down(sim);
   assert.equal(st(sim, 'ch1_the_diggers'), QS.READY, 'reaching the floor was the last thing left: Garrow already fell');
   let got = null; sim.bus.on('dialogue', (e) => { got = e.vars; });
   talk(sim, 'sister_ilse'); assert.ok('q_ch1_ember_in_the_fist' in got, 'Ilse reads the chapter she takes in');
@@ -100,9 +105,9 @@ async function play(file, knot, vars, picks) {
   return sent.filter((x) => x.tag === 'quest').map((x) => x.args.join(' '));
 }
 const base = { hero_name: 'Wren', hero_level: 6, party_size: 3, fallen_name: '', flag_met_maudry: 1, flag_met_osric: 1, flag_met_ilse: 1 };
-test('the Ink: Maudry offers the mill, Osric takes it in and offers the Keep and the chapel, Ilse takes the shard', async () => {
+test('the Ink: Maudry offers the barrows, Osric takes it in and offers the Keep and the chapel, Ilse takes the shard', async () => {
   assert.deepEqual(await play('maudry', 'maudry_hub', { ...base, q_ch1_smoke_over_the_vale: 0 }, ['You said something about smoke?', "I'll shift them."]), ['accept ch1_smoke_over_the_vale']);
-  assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_smoke_over_the_vale: 2 }, ['The Redhand are out of the mill.']), ['turnin ch1_smoke_over_the_vale']);
+  assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_smoke_over_the_vale: 2 }, ['The Redhand are out of the barrows.']), ['turnin ch1_smoke_over_the_vale']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_smoke_over_the_vale: 3, q_ch1_the_diggers: 0 }, ['Where did the Redhand go?', "I'll go to the Keep."]), ['accept ch1_the_diggers']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_the_diggers: 2 }, ['Captain Garrow is down. I have his ledger.']), ['turnin ch1_the_diggers']);
   assert.deepEqual(await play('osric', 'osric_hub', { ...base, q_ch1_the_diggers: 3, q_ch1_ember_in_the_fist: 0 }, ['Who paid for the digging?', "I'll go down into the chapel."]), ['accept ch1_ember_in_the_fist']);

@@ -36,12 +36,12 @@ You give him Sister Ilse's letter. He reads it twice, slowly, with his finger, a
 "Robed men, boats at night, up the canal toward your Vale. Aye. Nobody in Saltmere's seen where they tie up. Nobody but Wren, and Wren owes everybody."
 "She owed the Toadking last. He's a bandit out in the reeds with a mound of stolen boats, and when you can't pay him he keeps you. He's kept her a month." He turns the book round so you can see her line. It's long.
 { boss_toadking == 1: "You've been out there already, have you. Then go back down and talk to her. She'll be in his Boat Hall, if she's anywhere." }
-{ boss_toadking == 0: "Toadking's Mound. The Boat Hall's the second floor down. Put him down and Wren'll talk. She'll talk anyway. Put him down first." }
+{ boss_toadking == 0: "Toadking's Mound. The Boat Hall's the third floor down. Put him down and Wren'll talk. She'll talk anyway. Put him down first." }
 -> dace_topics
 
 == dace_greet_back ==
 {&Dace looks up from the book and nods at the bench by the stove.|"{hero_name}. You're in here." He taps the book. "Nothing against you yet."|Dace is adding up a column. He holds up a hand until it comes out the same twice.}
-{ q_ch2_fog_on_the_canal == 1 && s_ch2_fog_on_the_canal == 1: "Toadking's Mound. The Boat Hall's the second floor. He's fat and cheerful and he'll hit you with a boat-hook. Don't let the cheerful fool you." }
+{ q_ch2_fog_on_the_canal == 1 && s_ch2_fog_on_the_canal == 1: "Toadking's Mound. The Boat Hall's the third floor. He's fat and cheerful and he'll hit you with a boat-hook. Don't let the cheerful fool you." }
 { q_ch2_fog_on_the_canal == 1 && s_ch2_fog_on_the_canal == 2: "He's down? Then go and get Wren before somebody else she owes gets there first." }
 { q_ch2_the_locks == 1: "The Canal Locks. Up the cut, past the eel-traps. Mind the man doing the talking. Folk who talk that well usually want something." }
 { q_ch2_the_locks == 3: "No name. I've had men in here owe me with no name. Never one I didn't want to find." }

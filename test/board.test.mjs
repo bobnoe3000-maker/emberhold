@@ -8,7 +8,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
-import { boardOffers, jobOf, BOARD, TEMPLATES, MAX_JOBS, KEEP_DONE } from '../src/sim/board.js';
+import { boardOffers, jobOf, TEMPLATES, MAX_JOBS, KEEP_DONE, skullsFor } from '../src/sim/board.js';
+import { SITES } from '../src/sim/sites.js';
 import { QS } from '../src/sim/quests.js';
 import { DAY_S } from '../src/sim/heroes.js';
 import { autoAllocate } from '../src/sim/attributes.js';
@@ -19,24 +20,44 @@ const setLv = (sim, lv) => { const h = sim.state.party[0]; h.level = lv; h.xp = 
 const town = (lv = 1, seed = SEED) => { const s = createSim(seed, undefined, { scene: 'town' }); setLv(s, lv); s.tick(); return s; };   // the board goes up on the first tick in town
 const push = (sim, cmd) => { sim.commands.push(cmd); sim.tick(); };
 const events = (sim, names) => { const ev = []; for (const e of names) sim.bus.on(e, (d) => ev.push({ e, ...d })); return ev; };
+// (v1.48, one dungeon a level: GDD §3) a land's board sends you to the dungeon whose band holds your level, now and then
+// the one below; a floor is at its band's base + floor − 1 and its hall keeps that level; waves, chests and elites are
+// wanted at your level within the dungeon's band
+const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'] };
+const yoursAt = (region, lv) => { const all = BANDS[region], i = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + 2); return i >= 0 ? i : lv < SITES[all[0]].base ? 0 : all.length - 1; };
+const placeLv = (j) => { const S = SITES[j.site]; return j.tpl === 'delve' || j.tpl === 'warden' ? S.base + j.floor - 1 : Math.max(S.base, Math.min(j.lv, S.base + 2)); };
+/** a job's site is its land's band for the level or the one below; its floor is in the site; it asks for nothing more
+ * than two levels up; its skulls are its place's level against the hero's @param {any} j @param {string} region */
+const checkPlace = (j, region) => {
+  const all = BANDS[region], i = yoursAt(region, j.lv), S = SITES[j.site];
+  assert.ok(j.site === all[i] || (i > 0 && j.site === all[i - 1]), `${j.id}: ${j.site} for L${j.lv}`);
+  assert.equal(j.steps[0].objectives[0].site, j.site);
+  if (j.tpl === 'delve') assert.ok(j.floor >= 2 && j.floor <= S.floors, `${j.id}: delve to floor ${j.floor}`);
+  else if (j.tpl === 'warden') assert.ok(j.floor >= 1 && j.floor <= S.floors, `${j.id}: the hall of floor ${j.floor}`);
+  else assert.equal(j.floor, 0);
+  assert.ok(placeLv(j) <= j.lv + 2, `${j.id} ${j.tpl} at ${j.site} floor ${j.floor} (L${placeLv(j)}): too deep for L${j.lv}`);
+  assert.equal(j.skulls, skullsFor(placeLv(j), j.lv), `${j.id}: skulls for a place of L${placeLv(j)}`);
+};
 /** the first job of a template at this level, from day 0 on @returns {any} */
 const findJob = (lv, tpl, ok = () => true, seed = SEED) => { for (let d = 0; d < 400; d++) { const j = boardOffers(seed, d, lv).find((x) => x.tpl === tpl && ok(x)); if (j) return j; } return null; };
 
 test('a day\'s jobs are pure, differ by day, and never ask for a place more than two levels up', () => {
   assert.deepEqual(boardOffers(SEED, 3, 5), boardOffers(SEED, 3, 5));
   assert.notDeepEqual([0, 1, 2, 3, 4].map((d) => boardOffers(SEED, d, 5).map((j) => j.tpl + j.n + j.floor)), Array(5).fill(boardOffers(SEED, 0, 5).map((j) => j.tpl + j.n + j.floor)));
+  const at = {};                                                        // jobs a level sends to its own band, and to the one below
   for (let lv = 1; lv <= 12; lv++) for (let d = 0; d < 30; d++) {
     const jobs = boardOffers(SEED, d, lv);
     assert.equal(jobs.length, lv >= 4 ? 4 : 3, `L${lv}`);
     assert.equal(new Set(jobs.map((j) => j.tpl)).size, jobs.length, 'no template twice');
     for (const j of jobs) {
-      const T = BOARD[j.tpl];
-      assert.ok(T.target({ n: j.n, floor: j.floor }, lv) <= lv + 2, `${j.id} ${j.tpl} floor ${j.floor}: too deep for L${lv}`);
+      checkPlace(j, 'vale');
       assert.ok(j.skulls >= 1 && j.skulls <= 3 && j.rewards.xp > 0 && j.rewards.gold > 0);
       assert.deepEqual(jobOf(SEED, j.id), j, 'the id rebuilds the job');
+      const k = j.site === BANDS.vale[yoursAt('vale', lv)] ? 'yours' : 'below'; at[k] = (at[k] || 0) + 1;
     }
-    if (lv < 2) assert.ok(!jobs.some((j) => j.tpl === 'delve' || j.tpl === 'warden'), 'nothing below the first floor\'s halls at level 1');
+    if (lv <= 3) assert.ok(jobs.every((j) => j.site === 'barrows'), 'levels 1–3: the Old Barrows\' alone (no band below)');
   }
+  assert.ok(at.below > 0 && at.yours > 2 * at.below, `mostly your own band, sometimes the one below: ${JSON.stringify(at)}`);
   assert.equal(jobOf(SEED, 'board_x'), null); assert.equal(jobOf(SEED, 'board_0_1_7'), null);
 });
 
@@ -75,10 +96,10 @@ test('jobs are taken at the board, in town, once each, three at a time', () => {
 
 test('each kind of job counts from the sim\'s own events, in its site', async () => {
   const { isWalkable } = await import('../src/sim/world.js');
-  const dungeon = (job) => { const s = createSim(SEED, undefined, { scene: 'dungeon' }); setLv(s, job.lv); s.state.t = job.day * DAY_S; s.quests.begin(job.id); assert.ok(s.state.quests[job.id], job.id); return s; };
+  const dungeon = (job) => { const s = createSim(SEED, undefined, { scene: 'dungeon', site: job.site }); setLv(s, job.lv); s.state.t = job.day * DAY_S; s.quests.begin(job.id); assert.ok(s.state.quests[job.id], job.id); return s; };
   const n = (s, job) => s.state.quests[job.id].n[0], st = (s, job) => s.state.quests[job.id].st;
   const goDown = (s) => { let t; for (const [k, v] of s.world.props) if (v === 'stairs') t = k.split(',').map(Number); const p = s.state.player; p.x = p.px = t[0] + 1.5; p.y = p.py = t[1] + 0.5; push(s, { type: 'harvest', tx: t[0], ty: t[1] }); };
-  // hold: any cleared wave in the Barrows
+  // hold: any cleared wave in its site
   const hold = findJob(5, 'hold'), a = dungeon(hold), room = a.world.level.rooms[1].id;
   for (let i = 0; i < hold.n; i++) a.bus.emit('wave', { cleared: true, room }); a.bus.emit('wave', { wave: 9 });
   assert.equal(st(a, hold), QS.READY);
@@ -92,6 +113,8 @@ test('each kind of job counts from the sim\'s own events, in its site', async ()
   c.bus.emit('slain', { elite: true }); c.bus.emit('slain', { elite: true }); assert.equal(st(c, bty), QS.READY);
   // delve: going down counts the floor you reach; loading a save or arriving from outside doesn't
   const dlv = findJob(8, 'delve', (j) => j.floor === 3), d = dungeon(dlv);
+  const away = createSim(SEED, undefined, { scene: 'dungeon', site: dlv.site === 'barrows' ? 'wickham_keep' : 'barrows' }); setLv(away, dlv.lv); away.state.t = dlv.day * DAY_S; away.quests.begin(dlv.id);
+  goDown(away); assert.equal(n(away, dlv), 0, 'another site\'s floors don\'t count');
   goDown(d); assert.equal(n(d, dlv), 2); goDown(d); assert.equal(st(d, dlv), QS.READY);
   const d2 = dungeon(dlv); d2.bus.emit('levelChanged', { depth: 5, scene: 'dungeon' }); assert.equal(n(d2, dlv), 0);
   // warden: only in a stairs-down hall, on its floor or deeper
@@ -179,22 +202,21 @@ for (const [tpl, lv, hires] of [['hold', 1, []], ['retrieve', 6, []], ['bounty',
 
 // Saltmere's board (M8): each town's board posts its own land's jobs. Saltmere's send you to the Fens' open sites
 // (never one whose first rooms are more than two levels up), its ids end _fens and rebuild alone, and a job counts
-// in its own site. Thornwick's are as they were.
-test('Saltmere\'s board posts the Fens\' jobs; Thornwick\'s the Old Barrows\'', async () => {
+// in its own site. (v1.48) Thornwick's send you to the Vale's banded dungeons the same way.
+test('Saltmere\'s board posts the Fens\' jobs; Thornwick\'s the Vale\'s', async () => {
   const { offersIn } = await import('../src/sim/board.js');
-  const { SITES } = await import('../src/sim/sites.js');
   for (let lv = 8; lv <= 15; lv++) for (let d = 0; d < 20; d++) for (const h of [0, 1]) {
     const jobs = offersIn(SEED, d, lv, h, 'fens');
     assert.ok(jobs.length >= 3, `L${lv} day ${d}`);
     for (const j of jobs) {
       assert.match(j.id, /_fens$/); assert.equal(j.region, 'fens'); assert.deepEqual(jobOf(SEED, j.id), j, 'the id rebuilds the job');
-      const S = SITES[j.site]; assert.equal(S.region, 'fens'); assert.ok(!S.hidden, `${j.site} is open`);
+      const S = SITES[j.site]; assert.equal(S.region, 'fens'); assert.ok(!S.hidden && !S.parked && S.band, `${j.site} is open, a band`);
       assert.ok(S.base <= lv + 2 || j.site === 'toadking_mound', `${j.site} (${S.base}) for L${lv}`);
-      assert.equal(j.steps[0].objectives[0].site, j.site);
-      if (j.floor) assert.ok(j.floor <= S.floors, `${j.id}: floor ${j.floor} of ${S.floors}`);
+      checkPlace(j, 'fens');
     }
   }
-  assert.deepEqual(offersIn(SEED, 3, 10, 0, 'vale'), boardOffers(SEED, 3, 10, 0), 'the Vale\'s posting is the same as it was');
+  assert.deepEqual(offersIn(SEED, 3, 10, 0, 'vale'), boardOffers(SEED, 3, 10, 0), 'the Vale\'s posting is the board\'s own');
+  for (let lv = 13; lv <= 18; lv++) for (let d = 0; d < 10; d++) for (const j of offersIn(SEED, d, lv, 0, 'fens')) checkPlace(j, 'fens');   // the Locks and the Abbey
   // in Saltmere, the posting that goes up is the Fens'; a job taken there counts waves held in its own site
   const sim = createSim(SEED, undefined, { scene: 'town', region: 'fens' }); setLv(sim, 10); sim.tick();
   const offers = sim.board.offers(); assert.ok(offers.length && offers.every((j) => j.region === 'fens'), 'Saltmere\'s board is the Fens\'');

@@ -66,8 +66,8 @@ Maudry looks past you at the door, then back. "No {fallen_name} today?"
 
 == maudry_topics ==
 + { q_ch1_smoke_over_the_vale == 0 } [You said something about smoke? #mark: quest] -> maudry_ch1_offer
-+ { q_ch1_smoke_over_the_vale == 1 } [About the Tithe Mill… #mark: quest active] -> maudry_ch1_active
-+ { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the Tithe Mill. #mark: quest active] -> maudry_ch1_ready
++ { q_ch1_smoke_over_the_vale == 1 } [About the Redhand at the barrows… #mark: quest active] -> maudry_ch1_active
++ { q_ch1_smoke_over_the_vale == 2 } [The Redhand are out of the barrows. #mark: quest active] -> maudry_ch1_ready
 + { q_vale_long_way_round == 2 } [I knocked the barrows back, like you asked. #mark: quest ready] -> maudry_longway_turnin
 + { q_vale_long_way_round == 0 } [Anything I can do? #mark: quest] -> maudry_longway_offer
 + { q_vale_long_way_round == 1 } [About the barrows road… #mark: quest active] -> maudry_longway_active
@@ -172,9 +172,9 @@ She sets the mug down.
 
 // ── Act I, chapter 1: Smoke over the Vale (content/quests/ch1_smoke_over_the_vale.json) ──
 == maudry_ch1_offer ==
-"The Redhand Company. Deserters, when they're being polite about it. They're squatting in the Tithe Mill again, up the river."
-"Burned the miller's cart for warmth. It's summer. That's not warmth, that's spite."
-"The tithe grain goes through that mill. Lord Pellam's grain, strictly, but it's our bread before it's his. Somebody has to shift them, and it's never going to be the Watch."
+"The Redhand Company. Deserters, when they're being polite about it. They've dug in at the mouth of the Old Barrows, down the barrows road."
+"Burning the carters' wagons for warmth while they dig. It's summer. That's not warmth, that's spite."
+"Everything that comes into the Vale comes down that road. Lord Pellam's grain, strictly, but it's our bread before it's his. Somebody has to shift them, and it's never going to be the Watch."
 + [I'll shift them. #mark: quest]
     "Good. Four waves of them ought to make the point. When they've gone, tell Osric Hale at the Watch post by the well. He'll want to write down where they went." # quest: accept ch1_smoke_over_the_vale
     -> maudry_topics

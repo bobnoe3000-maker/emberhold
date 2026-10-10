@@ -10,6 +10,7 @@ import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
 import { statsFor } from '../src/sim/party.js';
 import { boardOffers, companyFor } from '../src/sim/board.js';
+import { SITES } from '../src/sim/sites.js';
 
 const SEED = 20260807;
 const inRoom = (seed = SEED) => {
@@ -78,5 +79,14 @@ test('the board says which jobs want company: a Warden or Delve room of level 4+
   assert.equal(companyFor('delve', 4, 8), false, 'well below you: fine alone');
   assert.equal(companyFor('hold', 9, 9), false, 'you pick the room');
   assert.equal(companyFor('warden', 3, 1), false, 'a level-3 hall: a lone hero can manage');
-  for (let d = 0; d < 20; d++) for (const j of boardOffers(SEED, d, 3)) if (j.tpl === 'warden' || j.tpl === 'delve') assert.equal(j.company, true, j.id);
+  // (v1.48) a job's floor and hall are its dungeon's band (a floor at base + floor − 1, the hall at its floor's level): at
+  // level 3 the Old Barrows' (1–3) never want company; at 5 and 6 Wickham Keep's (4–6) deeper ones do
+  const want = {};
+  for (const lv of [3, 5, 6]) for (let d = 0; d < 20; d++) for (const j of boardOffers(SEED, d, lv)) if (j.tpl === 'warden' || j.tpl === 'delve') {
+    const target = SITES[j.site].base + j.floor - 1;
+    assert.equal(j.company, companyFor(j.tpl, target, lv), `${j.id}: ${j.tpl} at ${j.site} floor ${j.floor} (L${target})`);
+    want[lv] = (want[lv] || 0) + (j.company ? 1 : 0);
+  }
+  assert.equal(want[3] || 0, 0, 'level 3: the Old Barrows\' halls and floors, a lone hero manages');
+  assert.ok(want[5] > 0 && want[6] > 0, `levels 5, 6: the Keep's deeper halls want company (${JSON.stringify(want)})`);
 });

@@ -23,6 +23,9 @@ export const THEMES = {
   lava:   { name: 'Magma Vault',  wall: 'obsid',  floors: ['basalt', 'basalt'],              hazard: 'lava',   hazardScale: 0.17, hazardCut: 0.58 },
   chasm:  { name: 'Soulcracks',   wall: 'basalt', floors: ['chasm', 'chasm', 'basalt'],      hazard: 'abyss',  hazardScale: 0.20, hazardCut: 0.72 },
   // a site's own look, never drawn for the Old Barrows (THEME_KEYS is what their seed picks from)
+  // (v1.48) the Old Barrows' crypts (dry-stone, packed earth, bone) and the cave under Wickham Keep (wet rock, pools)
+  crypt:  { name: 'Barrow Crypts',  wall: 'basalt', floors: ['soil', 'bone', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.16, hazardCut: 0.78 },
+  cave:   { name: 'Cellar Cave',    wall: 'basalt', floors: ['soil', 'basalt', 'soil', 'sand'], hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.66 },
   warren: { name: 'Goblin Warren', wall: 'basalt', floors: ['soil', 'soil', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.18, hazardCut: 0.76 },
   // the Fens' (M8): the Toadking's mud-floored island halls, the drowned Abbey, the lock-keepers' halls
   mire:   { name: 'Mire Halls',    wall: 'basalt', floors: ['soil', 'soil', 'sand', 'soil'],  hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.68 },

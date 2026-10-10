@@ -2,7 +2,7 @@
   "id": "barrows",
   "region": "vale",
   "name": "The Old Barrows",
-  "levels": "1–4",
-  "floors": 0,
-  "summary": "The barrows of the old legions, south of Thornwick. They opened this year, and the walking kind came up out of them."
+  "levels": "1–3",
+  "floors": 3,
+  "summary": "The old legions' barrows south of Thornwick, three floors of crypts under the mounds: the Barrow Mouth, where the Redhand dug in; the Long Gallery; and the Muster Hall, where the Quartermaster still keeps the stores."
 }

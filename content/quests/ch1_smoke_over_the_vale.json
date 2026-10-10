@@ -9,30 +9,29 @@
     1,
     30
   ],
-  "summary": "Maudry Fenn at the Tired Mule says the Redhand Company, deserters turned bandits, are squatting in the Tithe Mill again and burning the miller's carts. The Vale's tithe grain goes through that mill, and she wants them gone.",
+  "summary": "Maudry Fenn at the Tired Mule says the Redhand Company, deserters turned bandits, have dug in at the Old Barrows' mouth and are burning the carters' wagons to keep warm. The smoke's been over the Vale a week, and she wants them gone.",
   "steps": [
     {
-      "id": "mill",
-      "journal": "Go to the Tithe Mill, up the river from Thornwick, and drive the Redhand out: hold four waves there.",
+      "id": "barrows",
+      "journal": "Go to the Old Barrows, down the barrows road past the mounds, and drive the Redhand out of their dig at the barrow mouth: hold four waves on the first floor.",
       "objectives": [
         {
           "type": "waves",
-          "site": "tithe_mill",
+          "site": "barrows",
           "count": 4,
-          "label": "Waves held in the Tithe Mill"
+          "floor": 1,
+          "label": "Waves held at the Barrow Mouth"
         }
       ]
     }
   ],
-  "ready": "Tell Osric Hale, at the Watch post by Thornwick's well, that the mill is clear. He'll ask where they went.",
-  "done": "You drove the Redhand out of the Tithe Mill. They went to Wickham Keep; Osric Hale wrote it down.",
+  "ready": "Tell Osric Hale, at the Watch post by Thornwick's well, that the barrow mouth is clear. He'll ask where they went.",
+  "done": "You drove the Redhand out of their dig in the Old Barrows. They went back to Wickham Keep; Osric Hale wrote it down.",
   "rewards": {
-    "share": 0.35, "lv": 2,
+    "share": 0.35,
+    "lv": 2,
     "gold": 60
   },
-  "reveal": [
-    "wickham_keep"
-  ],
   "dialogue": {
     "file": "maudry",
     "offer": "maudry_ch1_offer",
