@@ -1,6 +1,16 @@
 # Emberfall — World Summary
 
-**v1.31 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.31 (§3): every waystation is a small tavern with the Guild's board, a shop, a bed and a shrine (no forge: the smith stays in the town), each named, with a reason to stop; Saltmere's shop is Pim Rushlight's chandlery. v1.30 (§5): the level-12 trials and who teaches them in the Fens; (§7) the Fens set, ten fragments, and the Undercroft's heirloom. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
+**v1.32 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.32 (§3, §6; the owner's decision,
+[dungeons-per-map-proposal.md](./dungeons-per-map-proposal.md)): **one dungeon a level**. Emberfall runs 1–18 in six
+dungeons of three levels each, none overlapping: in the Vale the Old Barrows (1–3), Wickham Keep (4–6) and the Sunken
+Chapel (7–9); in the Fens Toadking's Mound (10–12), the Canal Locks (13–15, the Sickpools its third floor, *Vat Seven*)
+and the Drowned Abbey (16–18). Each land keeps one secret dungeon (the Ninth Milestone, the Reedholm Undercroft), which
+seals itself for a while after it's cleared and then can be walked again. The Tithe Mill and the Scrag Warren leave the
+Vale for the Cinder Reach (its Assay Yards and its Cold Seam); the Mill stands on the Vale as a working mill again once
+its miller is home. The Standard of the Third Legion stands over the binding in the Sunken Chapel, and the Old Barrows
+are the Quartermaster's; Old Skarn sells the Redhand stolen hens in Wickham Keep's bailey. The Reach opens at 19.
+
+v1.31 (§3): every waystation is a small tavern with the Guild's board, a shop, a bed and a shrine (no forge: the smith stays in the town), each named, with a reason to stop; Saltmere's shop is Pim Rushlight's chandlery. v1.30 (§5): the level-12 trials and who teaches them in the Fens; (§7) the Fens set, ten fragments, and the Undercroft's heirloom. v1.29 (§3.2, §5, §6): Act II's six chapters as told; Saltmere's people named (Dace Pike, Sister Orla); Wren freed from the Boat Hall and her debt, *What's Owed*; the Kindler at the Locks. v1.28 (§3.2): Saltmere's inn, the Stilt House. v1.27 (§3.2, §8): the Fens' bosses in their halls, what each does and what each leaves; the Abbey's choir-lamp and its roll. v1.26 (§8): most harvesters go out with an empty cage; only the one leading them carries a caught soul. v1.25 (§12): what the Mere Tower's wardens leave behind. v1.24 (§4): the Guild's road work, which a company's benched sellswords can be sent on. v1.23 (§3.9, §12): the Mere Tower opens before Solmere does. Wenna Pike keeps a second punt at Saltmere's landing and rows companies up the old canal and across the Mere to the Tower; the Sisters' register takes a company from level 12. v1.22 (§3.1): Thornwick's road comes straight to its gate over open meadow; the brook and its bridge are gone. (§3.2) Saltmere's eel-men and ferryman, who post on its board. v1.21 (§8): the Fens' own as they are drawn: the ghoul's hunch and reach, the bog-witch's hat and marsh-light, the reed-cutters' reed hats and fowlers, the drowned clergy's brothers and cantors.
 
 v1.20 is **the Old Provinces** (the owner's decisions, 2026-10-04; worked out in
 [world-map-proposal.md](./world-map-proposal.md) and [region-towns-proposal.md](./region-towns-proposal.md)).
@@ -260,8 +270,8 @@ posts its own land's jobs.
 
 | Region | Levels | Act | Town | The story |
 |---|---|---|---|---|
-| **Emberfall**: the Hollow Vale (§3.1) and the Greywater Fens (§3.2) | 1–15 | I–II | **Thornwick** (Saltmere is the Fens' waystation) | the dead who kept their orders |
-| **The Cinder Reach** (§3.3) | 15–30 | III | **Ashgate** | the forges that still need feeding |
+| **Emberfall**: the Hollow Vale (§3.1) and the Greywater Fens (§3.2) | 1–18 (v1.32) | I–II | **Thornwick** (Saltmere is the Fens' waystation) | the dead who kept their orders |
+| **The Cinder Reach** (§3.3) | 19–30 (v1.32) | III | **Ashgate** | the forges that still need feeding |
 | **The Tidemark** (§3.7) | 30–45 | IV | **Tollhaven** | the living who want the throne back |
 | **The Greenwood** (§3.8) | 45–60 | V | **Rookstead** | the souls the empire took and never spent |
 | **The Pale Heights and the Ember Throne** (§3.4, §3.5) | 60–75 | VI | **Frosthold** | the flame itself |
@@ -270,7 +280,7 @@ posts its own land's jobs.
 Each region opens at the previous region's finale. (The section numbers keep their old places; the order of play
 is the table's.)
 
-### 3.1 The Hollow Vale: levels 1–8 · Act I
+### 3.1 The Hollow Vale: levels 1–9 · Act I
 Rolling farmland, hedgerows and the barrows of the old legions. It's the safest region, and
 it's where everyone starts.
 - **Town:** **Thornwick**: tavern *The Tired Mule*, inn *The Crossed Keys*, *Hale & Daughter,
@@ -281,20 +291,41 @@ it's where everyone starts.
 - **Sites:** the Old Barrows (crypts), **Wickham Keep** (a ruin the Redhand bandits hold), the
   Sunken Chapel and the Tithe Mill. (v1.7:)
   - **The Tithe Mill:** Lord Pellam's mill on the river, where the Vale's tithe grain is ground.
-    The Redhand squat in it and burn the miller's carts for warmth. Levels 1–3.
+    The Redhand squat in it and burn the miller's carts for warmth. Levels 1–3. (v1.32: moved to the Reach.)
   - **Wickham Keep:** an imperial keep on the Wickham road, now the Redhand's hold, with cellars
-    that go down into older stone. Levels 3–6.
+    that go down into older stone. Levels 3–6 (v1.32: 4–6).
   - **The Sunken Chapel:** an imperial chapel half-swallowed by the river marsh where the river
-    leaves the Vale, out past the lumber camp (v1.18), where the legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8.
+    leaves the Vale, out past the lumber camp (v1.18), where the legion was bound. Robed strangers pay the Redhand to dig there. Levels 5–8 (v1.32: 7–9).
   - **The Scrag Warren** (v1.19): the hill goblins' burrow at the foot of the north range, north of
     the mill, where the long way round runs under the scree. Its door is an old adit (v1.19a): somebody
     drove a level into the range for lead long before anyone in the Vale remembers, timbered it, worked
     it out and boarded it up. Nobody knows whose it was; the rails have rusted through and the spoil heap
     has grassed over. The goblins tore the boards down, hung a horse skull on the cap and dug on past the
-    old workings: two floors of tunnels, full of whatever has fallen off a cart this spring. Levels 2–5.
+    old workings: two floors of tunnels, full of whatever has fallen off a cart this spring. Levels 2–5. (v1.32: moved to the Reach.)
     Its chief, Old Skarn, beats a drum in the deepest hall, and goblins come out of the walls when he does.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
     Wickham road, out where the old road runs on north-east past the Deepdelve mine (v1.18). Nobody knows it's there until the Chronicle says so.
+- **The Vale's three, and its secret (v1.32).** One dungeon a band of three levels, three floors each, none
+  overlapping another:
+  - **The Old Barrows** (1–3), a crypt: *the Barrow Mouth* (the Redhand's dig at the door, their spoil, their camp),
+    *the Long Gallery* (burial niches, the dead in rows), *the Muster Hall*, where **the Quartermaster** of the Third
+    Legion still keeps the stores. He is the legion's issuing officer, and he still issues: every little while the
+    most broken of his ranks stands up whole, re-armed from his racks. Thornwick's sexton, **Tobin Hask**, keeps a
+    lantern at the barrow mouth and the dead's names in a book nobody asked him to keep.
+  - **Wickham Keep** (4–6), a fort, then a cave: *the Bailey* (the Company's camp), *the Barracks* (bunks, the
+    armoury and the paymaster's strongroom; Brannoc waits here), *the Old Cellars*, where the Redhand dug through the
+    imperial stone and broke into a cave under it: pools, stone teeth up out of the floor, the roof's water coming
+    down. **Captain Garrow** holds the cellars. **Old Skarn** and his band came down out of the hills with a cart of
+    stolen hens to sell the Company, and are in the bailey haggling, drum and all. The Redhand hold **Ned Fallow**,
+    the Tithe Mill's miller, in the bailey for Lord Pellam's ransom, which Lord Pellam hasn't paid.
+  - **The Sunken Chapel** (7–9), a chapel the river has half swallowed: *the Nave* (pews under water, fallen saints,
+    the altar), *the Cult's Cut* (the dig; **the Robed Stranger**), *the Binding Crypt*, where the Third Legion was
+    bound and its standard still stands over the binding: **the Standard of the Third Legion**. **Hester Lowe** keeps
+    bees in the chapel's dry porch and watched the robed strangers come and go all spring.
+  - **The Ninth Milestone** (secret, 9): opened by the Vale's Chronicle. Once it's cleared it seals itself for a
+    while, and then it can be walked again.
+  - **The Tithe Mill** is a working mill again once Ned is home; its Redhand squatters went to the Reach. The **Scrag
+    Warren's** adit is boarded up: the goblins dug on through the range and came out in the Reach (§3.3).
 - **The road (v1.9): why the Vale fights its dead.** The barrows lie under the old Wickham road.
   Its stretch past them, which Thornwick calls the *barrows road*, is the short way out of the
   Vale for the Greyholt cart and everyone else. When the digging woke the Third Legion this spring,
@@ -313,8 +344,8 @@ it's where everyone starts.
       *The Long Way Round*);
     - the officers' rank, when the bright-eyed ones who lead them fall (Osric's bounty, *The
       Captain's Ledger*);
-    - the last rank, around the Standard, when the Standard of the Third Legion falls in the
-      barrows' third-floor hall.
+    - the last rank, around the Standard, when the Standard of the Third Legion falls. (v1.32: it stands over the
+      legion's binding in the Sunken Chapel's crypt, not in the barrows, and it falls at the end of Act I.)
     With the Standard down the line breaks, the road opens, and the carts run again. (v1.20) The Standard
     carries the legion's **standard-lamp**, which breaks when it falls: that's why the line breaks (§2.1).
     Maudry asks one question nobody else does: *"Was there a lamp on it? What became of it?"*
@@ -334,7 +365,7 @@ it's where everyone starts.
 - **Enemies:** Redhand bandits and cutpurses, Ashbound minions, grave rats, and (v1.19) the hill
   goblins of the Scrag Warren.
 
-### 3.2 The Greywater Fens: levels 8–15 · Act II
+### 3.2 The Greywater Fens: levels 10–18 · Act II
 Reed-choked marsh around a drowned imperial canal, south of the Vale. There's fog every morning, and the lanterns
 on the stilt-houses never go out.
 - **Town:** Thornwick stays the base to level 15. **Saltmere** (v1.20) is the Fens' **waystation**, a day from
@@ -348,17 +379,22 @@ on the stilt-houses never go out.
   imperial **binding clergy**, who bound the tithe for the Throne and kept the **binding rolls** of everyone they
   bound. *"Bind them gently. Most of them volunteered."* was their prayer. Nobody in Reedholm likes to say so.
 - **Sites (v1.20):**
-  - **Toadking's Mound** (8–11): a fen-folk bandit chief's island of stolen boats. *The Boat Hall*: forty hulls
+  - **Toadking's Mound** (8–11; v1.32: 10–12): a fen-folk bandit chief's island of stolen boats. *The Boat Hall*: forty hulls
     on their sides, and something living in each.
-  - **The Canal Locks** (9–12): the lock-keepers' halls. *The Sluice*: the bound lock-men lie in it in rows, still
+  - **The Canal Locks** (9–12; v1.32: 13–15): the lock-keepers' halls. *The Sluice*: the bound lock-men lie in it in rows, still
     holding their windlasses.
-  - **The Sickpools** (10–13): imperial vats, still leaking. *Vat Seven*: drained, with a ladder down.
-  - **The Drowned Abbey** (12–15): three floors into the water. *The Choir*: the stalls are full, and the singing
+  - **The Sickpools** (10–13; v1.32: the Locks' third floor): imperial vats, still leaking. *Vat Seven*: drained, with a ladder down.
+  - **The Drowned Abbey** (12–15; v1.32: 16–18): three floors into the water. *The Choir*: the stalls are full, and the singing
     comes up through the floor. (v1.27) Under it is the **chapter-house**, where the Abbess keeps the **choir-lamp**
     trimmed; the lamp holds the Abbey's roll, *"three hundred and twelve professed"*, every one of the binding clergy
     who ever took the vows there.
   - **The Reedholm Undercroft** (hidden, the Fens set): the binding clergy's copy-room. Mother Agnes has kept it
     locked for forty years.
+- **The Fens' three, and its secret (v1.32).** Toadking's Mound (10–12), the Canal Locks (13–15) and the Drowned Abbey
+  (16–18), none overlapping. The Sickpools are the Locks' third floor now, *Vat Seven*: the canal drains the vats, and
+  the lock-keepers' halls go down into them. **The Vatwarden**, the Cult's overseer at Vat Seven, keeps the vat's
+  sluice; every little while he opens it, and the vat's sick water runs across his hall. The Reedholm Undercroft is
+  the Fens' secret dungeon (18): once it's cleared it seals itself for a while, and then it can be walked again.
 - **Saltmere's own (v1.22):** the **eel-men**, who run the traps along the canal and eat what's in them, and **Saltmere's
   ferryman**, who poles a punt across the meres for a copper and won't go past the sites after dark.
 - **People:** Wren; Pim Rushlight, a fen-folk chandler who sells lamp oil cheaper than Wendel and wants Wendel
@@ -395,7 +431,7 @@ on the stilt-houses never go out.
 - **Enemies:** Cinder Cult acolytes and **harvesters** (a lantern-cage on a pole), fen ghouls, Ashbound rogues and
   the drowned clergy, bog-witches, the Toadking's reed-cutters.
 
-### 3.3 The Cinder Reach: levels 15–30 · Act III
+### 3.3 The Cinder Reach: levels 19–30 · Act III
 Black hills of slag west of the capital, and the imperial foundries in them. Someone has lit the furnaces again.
 - **Town:** **Ashgate**, a hard mining town under the Deepdelvers' charter, large and walled in black slag-brick,
   with a pithead wheel over its gate: *The Slag & Bellows*, *Deepdelver's Rest*, *The Ashgate Forge*, the *Shrine
@@ -407,7 +443,12 @@ Black hills of slag west of the capital, and the imperial foundries in them. Som
   them in **Furnace Nine**, a furnace-lamp hot enough to melt pale iron. They're casting **the vessel**. The company
   breaks Furnace Nine and frees the night shift, but the vessel leaves on the Solmere road a day ahead.
 - **Sites:** the Cold Seam, the Slag Tunnels, the Assay Yards (Kell's Rest), the **Cinderworks**, the **Forgehall
-  of Oruth**, the **Magma Vault**, and the hidden **Ninth Vault** (the Reach set).
+  of Oruth**, the **Magma Vault**, and the hidden **Ninth Vault** (the Reach set). (v1.32) One dungeon a band of
+  three levels, none overlapping, and one secret: the list is cut to fit when the Reach is built. Two come from the
+  Vale. The **Cold Seam** is the Scrag Warren's goblins, who dug on through the range, and the **Assay Yards** keep
+  the Tithe Mill's Redhand on their gates.
+- **Beyond 75 (v1.32, the owner):** more maps, islands off the Old Provinces' coast, can carry the bands on past the
+  Throne. A dungeon can widen to four or five levels if a land wants fewer of them.
 - **People:** Charter-Reeve Dagny Coalbrook; Tamsin Coalbrook, her niece, a mage-smith and the Reach's found
   companion (mage); Morrow Vane; Gunnar Slagg, the Slagborn headman who sold the lease; Hob, a fixer;
   **Oruth the Forgemaster**, the empire's bound forgemaster and the clans' own ancestor, who goes back to work as
@@ -738,32 +779,35 @@ needs, and the endings vary: the Cult doesn't win every time.
    them into Wickham Keep reveals they're paid by robed strangers to *dig*. The barrows are open, the Ashbound
    walk, and a Cult acolyte dies with a strange ember-shard in his fist. (v1.7: the chapters run: the Tithe Mill
    for Maudry; Wickham Keep and Captain Garrow for Osric; the Sunken Chapel, where the Robed Stranger dies with the
-   shard, which goes to Sister Ilse; the Standard of the Third Legion.) **The spark.**
-2. **Act II — The Drowned Abbey** (the Fens, 8–15). The shard leads south. Wren knows where the Cult's boats go;
+   shard, which goes to Sister Ilse; the Standard of the Third Legion.) (v1.32: the bandits' smoke is their fires at
+   the barrow mouth, where they've dug in, and Maudry's errand is there; Garrow holds the Keep's old cellars; the
+   Robed Stranger works the Chapel's dig, and the Standard stands under it in the Binding Crypt, the Vale's last hall
+   at 9: the lamp breaks, the road opens, Act I ends.) **The spark.**
+2. **Act II — The Drowned Abbey** (the Fens, 10–18; was 8–15). The shard leads south. Wren knows where the Cult's boats go;
    the Kindler preaches from one at the Canal Locks, and won't give his name yet. The Cult is draining the
    Sickpools and harvesting the drowned clergy at the Abbey, and **stealing** the binding rolls. The company saves
    what's left and carries it to Reedholm, the Abbess falls, the choir-lamp breaks, and Ilse lays the province's
    shards side by side: the Cult wasn't raising the dead, it was mining them. The Abbey's ledgers name a buyer in
    the Reach. **The cost, found later:** the rolls are copied at Reedholm, and the Kindler reads the copy.
    (v1.29) **As told, six chapters:**
-   1. *Fog on the Canal* (8–10). Ilse can't read the shard's mark, but the Cult's boats come up from the Fens, and
+   1. *Fog on the Canal* (8–10; v1.32: 10–12). Ilse can't read the shard's mark, but the Cult's boats come up from the Fens, and
       Reedholm's Sisters write from Saltmere. She sends the company south to Dace Pike at the Drowned Eel. Dace
       says the one who knows where the boats go is Wren, and the Toadking has her. Put him down; Wren reads his
       berth-book: the Cult's boat ties up at the Canal Locks.
-   2. *The Locks* (10–11). On the Locks' first floor a courteous man in a plain coat is preaching to whoever will
+   2. *The Locks* (10–11; v1.32: 13–14). On the Locks' first floor a courteous man in a plain coat is preaching to whoever will
       sit, and the lock-men in the Sluice below have stopped lying still. He speaks to the company kindly, won't
       give his name, and leaves on the Cult's boat: **the Kindler**, met. Then hold the Sluice, the hall below.
-   3. *The Sickpools* (11–12). Pim says the vats are being drained by night, and he'd know: he buys what comes out.
+   3. *The Sickpools* (11–12; v1.32: 15, the Locks' third floor, Vat Seven). Pim says the vats are being drained by night, and he'd know: he buys what comes out.
       The harvesters there are filling their cages. Break three full cages.
-   4. *The Bells* (12–13). Sister Orla: the Abbey's bells rang three nights running, and the Cult has a man at the
+   4. *The Bells* (12–13; v1.32: 16). Sister Orla: the Abbey's bells rang three nights running, and the Cult has a man at the
       choir's door. Brother Teague, who tells you his name.
-   5. *The Rolls* (13–14). The Cult is carrying off the binding rolls from the Abbey's lowest floor. Get down there
+   5. *The Rolls* (13–14; v1.32: 17). The Cult is carrying off the binding rolls from the Abbey's lowest floor. Get down there
       and save what's left (two chests' worth), and carry them to Mother Agnes, come down to Saltmere's chapel.
-   6. *The Last Office* (14–15). Agnes reads the rolls and wishes she hadn't: the Abbess kept the choir-lamp lit for
+   6. *The Last Office* (14–15; v1.32: 18). Agnes reads the rolls and wishes she hadn't: the Abbess kept the choir-lamp lit for
       the Cult's harvest. Put her down; the lamp breaks. Back to Ilse in Thornwick, who lays the shards side by side
       and reads the Abbey's ledger: the Cult wasn't raising the dead, it was **mining** them, and the buyer's mark (a
       pair of scales over a pick) is the Kell Assay's, in the Reach. Act II ends.
-3. **Act III — Quota** (the Reach, 15–30). A courteous stranger pays for the miners' stones. The Kell Assay has
+3. **Act III — Quota** (the Reach, 19–30; was 15–30). A courteous stranger pays for the miners' stones. The Kell Assay has
    relit the Cinderworks and feeds Furnace Nine with the night shift. Oruth wakes and goes back to work. The company
    breaks Furnace Nine, but the vessel is a day ahead on the Solmere road. **The vessel**, a loss.
 4. **Act IV — The Seventh Voice** (the Tidemark, 30–45). Lucan Varro, who opened Livia's box and learned the

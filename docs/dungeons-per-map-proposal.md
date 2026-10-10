@@ -1,6 +1,18 @@
 # One dungeon a level, each one built for its place
 
-**Proposal (2026-10-10), for the owner's review. Nothing here is built yet.** The ask:
+**Decided (2026-10-10); being built.** The owner: *"Go with your recommendation.. secret dungeons are timed after clear
+so players can replay them. Art, build props in code, old skarn stays as a guest boss. We can extend dungeons later to
+cover up to 4 or 5 levels if needed and in the future we can have additional island maps to carry up to level 75 and
+beyond."* So:
+- the Fens are kept whole (10–18, the Sickpools the Locks' third floor) and the Reach opens at 19;
+- the Standard moves to the Chapel, with the Quartermaster in the Barrows;
+- secret dungeons seal for two hours of play after their vault is opened, then can be walked again;
+- props are built in code;
+- Old Skarn is Wickham Keep's guest.
+
+Canon in world doc v1.32, rules in GDD v1.48 (§3, §17).
+
+The original ask:
 
 > *"Each map should have at most 3 dungeons, one covering each 3 level range for grinding. So the hallow vale has 5
 > dungeons, 2 too many. Hallow vale should carry a player up to level 9 with level 9 enemies. Adjust accordingly
