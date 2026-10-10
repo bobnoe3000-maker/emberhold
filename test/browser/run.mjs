@@ -777,6 +777,28 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// 15d1. Saltmere's square (its critic pass): on the home screen, as you wake, nobody of Saltmere's stands behind a building
+// (Mother Agnes stood in the Stilt House's footprint, drawn through it as a ghost), and every one of them is in view
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&region=fens&tod=day`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    for (let i = 0; i < 50; i++) { await p.waitForTimeout(100); await p.evaluate(() => { for (let j = 0; j < 3; j++) globalThis.__frame(1000 / 30); }); if (i > 20 && !(await p.evaluate(() => globalThis.__renderer.transiting))) break; }
+    const seen = await p.evaluate(() => {
+      for (let j = 0; j < 60; j++) globalThis.__frame(1000 / 30);
+      globalThis.__xray = {}; globalThis.__frame(16); const x = globalThis.__xray; globalThis.__xray = null;
+      const w = globalThis.__sim.world, out = {};
+      for (const n of w.npcs) { let on = false; for (let y = 60; y < 640 && !on; y += 4) for (let sx = 4; sx < 390 && !on; sx += 4) on = globalThis.__renderer.npcAt(sx, y)?.id === n.id; out[n.id] = { xray: x[n.id] == null ? 1 : Math.round(x[n.id] * 100) / 100, on }; }
+      return out;
+    });
+    const bad = Object.entries(seen).filter(([, v]) => v.xray > 0.05 || !v.on);
+    check('Saltmere: on the home screen nobody stands behind a building (≤ 5 % drawn as x-ray), and everyone is in view',
+      Object.keys(seen).length >= 4 && bad.length === 0 && errs.length === 0, JSON.stringify(seen) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 15d2. The square's menu is the same in every town (2026-10-10, the owner: "Make sure the town square menu layout stays
 // for each town"): in Thornwick, Ashgate and Frosthold the bar holds the five services in one order, and each service's
 // plaque is drawn in the same place (±1 px), whole on screen, clear of the others and of the right-hand buttons. The

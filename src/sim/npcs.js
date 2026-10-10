@@ -56,7 +56,7 @@ export const NPCS = {
   dace_pike: { region: 'fens', spots: [['tavern', [10, 2]]], knot: 'dace_hub', flags: ['met_dace'] },
   pim_rushlight: { region: 'fens', spots: [['shop', [2, 9]]], knot: 'pim_hub', flags: ['met_pim'] },   // (at his chandlery's door, v1.44)
   sister_orla: { region: 'fens', spots: [['temple', [8, 9]]], knot: 'orla_hub', flags: ['met_orla'] },
-  mother_agnes: { region: 'fens', spots: [['temple', [14, 4]]], knot: 'agnes_hub', flags: ['met_agnes'] },
+  mother_agnes: { region: 'fens', spots: [['temple', [12, 15]]], knot: 'agnes_hub', flags: ['met_agnes'] },   // (on the chapel's deck: at [14, 4] she stood in the Stilt House's footprint, drawn through it on the home screen: Saltmere's critic pass)
   // Wren, found tied in the Toadking's Boat Hall (world doc v1.29 §5); the Kindler, met once on the Canal Locks' first
   // floor, by its way in (`entrance`), who leaves when he's said his piece (`visitor`: gone once that flag is set)
   wren: { region: 'fens', found: { site: 'toadking_mound', depth: 1, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },

@@ -151,7 +151,7 @@ function marsh(o, q, gx, gy, tx, ty, rx, ry) {
 // darker, a nail-head now and then, and the stringer beams dark at the edges. Saltmere's square is one deck.
 function deck(o, q, gx, gy) {
   const P = 0.6, a = q.along / P, b = Math.floor(a), f = frac(a);
-  if (q.hw && q.t > 0.9) return ret(R.deck[0]);                                         // the stringers' edge
+  if (q.hw ? q.t > 0.9 : q.t > 0.94) return ret(R.deck[0]);                             // the stringers' edge (a deck square's too: its rim, Saltmere's critic pass)
   if (f < 0.12) return ret(R.deck[0]);                                                  // the gap
   const e = (q.lat + (b % 3) * 1.4) / 4.2, seg = Math.floor(e);                          // boards 4.2 tiles long, their ends staggered
   if (frac(e) < 0.03) return ret(R.deck[1]);                                             // a butt joint

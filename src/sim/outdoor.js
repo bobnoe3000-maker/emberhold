@@ -84,6 +84,10 @@ export function groundAt(o, gx, gy) {
       }
     }
   }
+  // (Saltmere's critic pass: a boardwalk running into the square laid its own planks across it, and its rounded end lay
+  // on the square like a rug; inside a deck square the square's deck is the floor)
+  let walkIn = false;                                                  // (and no rim across a boardwalk's mouth)
+  if (deckS) for (const p of o.plazas) if (p.surface === 'deck') { const u = Math.abs(gx - p.cx) / p.rx, v = Math.abs(gy - p.cy) / p.ry; if (u * u * u + v * v * v < 1) { deckS = null; walkIn = true; break; } }
   if (deckS) { out.g = G.DECK; out.t = deckD / (deckS.w / 2); out.lat = Math.sign(deckQ.side) * deckD; out.along = deckS.s0 + deckQ.t * deckS.len; out.hw = deckS.w / 2; return out; }
   if (bestRank >= 3) return out;
   // a junction's apron: packed earth where roads meet, no ruts (critic pass 10: each road's ruts ran on into the join)
@@ -93,8 +97,10 @@ export function groundAt(o, gx, gy) {
   }
   for (const p of o.plazas) {                        // cobbled squares: soft superellipse
     const u = (gx - p.cx) / p.rx, v = (gy - p.cy) / p.ry, au = Math.abs(u), av = Math.abs(v), e = au * au * au + av * av * av;
-    const wob = (fbm(gx * 0.3, gy * 0.3, o.seed + 29) - 0.5) * 0.25;
+    const wob = p.surface === 'deck' ? 0 : (fbm(gx * 0.3, gy * 0.3, o.seed + 29) - 0.5) * 0.25;   // (a deck's edge is built: no wobble)
     if (e < 1 + wob && bestRank < 2) { bestRank = 2; out.g = p.surface === 'deck' ? G.DECK : G.COBBLE; out.t = e; out.lat = p.surface === 'deck' ? (gx - gy) / 2 : 0; out.hw = 0; out.along = gx + gy; }
+    else if (e < 1 && p.surface === 'deck' && out.g === G.DECK) out.t = Math.min(out.t, e);   // (two decks joined: the rim only where both end)
+    if (walkIn && out.g === G.DECK) out.t = Math.min(out.t, 0.9);
   }
   if (bestRank) return out;
   for (const p of o.pools || []) {                   // still water (M8): a soft superellipse, a reedy fringe round it
@@ -328,7 +334,7 @@ export const REGIONS = {
 // the inn came down a storey) moves no plaque, so the menu reads alike in every town (test/town.test.mjs). These are
 // the heights the plaques were laid out at (the roofs' tops before that pass).
 const SIGN_TOP = { temple: 23.5, tavern: 15.1, shop: 13.4, smith: 11.1, inn: 18.7 };
-const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 13.4 };   // a waystation's (its stilt tavern and inn)
+const WAY_SIGN_TOP = { temple: 23.5, tavern: 15.25, inn: 14.05, shop: 10.1 };   // a waystation's (its stilt tavern and inn; the chandlery's on its one-storey roof: at 13.4 it hung over the Stilt House, Saltmere's critic pass)
 function buildTown(seed, region) {
   const R = REGIONS[region] ? region : 'vale', info = REGIONS[R];
   const o = makeWorld(seed, 'town', 140, 120, 90), rng = mulberry32(streamSeed(seed, 4401)), B = (t, n = 1) => `${R}_${t}_${n}`;
@@ -551,7 +557,7 @@ function buildWaystation(seed, region) {
   // the town set (art critic pass 14): on the peat, the Fens' one-storey homes on their short piles and a boat-builder's
   // shed by the north mere, each with its door to dry ground (on a face the camera sees: down-screen, so never south of the square); on the deck, an eel-stall, the colours where the boardwalk comes in, a lamp, the Eel's table
   for (const [id, x, y] of [[B('cottage'), 62, 28], [B('workshop'), 104, 17], [B('longhouse'), 23, 1]]) put(o, id, x, y);
-  for (const [id, x, y] of [[B('foodstand'), 46, 74], [B('standard'), 88, 73], ['lamppost_0', 96, 73], ['table_0', 37, 58], ['boxes_0', 70, 47], ['handcart_0', 52, 77]])
+  for (const [id, x, y] of [[B('foodstand'), 75, 60], [B('standard'), 88, 73], ['lamppost_0', 96, 73], ['table_0', 37, 58], ['boxes_0', 70, 47], ['handcart_0', 52, 77]])
     put(o, id, x, y, 'rect', 0.1);
   scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
     if (hypot(x - 60, y - 60) < 44) return null;

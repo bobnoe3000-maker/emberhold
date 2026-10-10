@@ -178,3 +178,22 @@ test('the square\'s menu is the same in every town: services, doors and plaques 
   const salt = createOutdoor(1, 'town', 'fens');
   assert.ok(salt.labels.filter((l) => l.service).every((l) => l.top > 0), 'Saltmere: a plaque hangs at its roof\'s height');
 });
+
+// Saltmere's square (its critic pass, 2026-10-10): the square is one deck with a built edge. A boardwalk that runs
+// into it lays none of its own planks there (its rounded end lay on the square like a rug), and the square's rim
+// doesn't cross a boardwalk's mouth. The eel-stall stands where the home screen sees it.
+test('Saltmere: the square is one deck, no boardwalk planks or rim across it, the eel-stall on the home screen', () => {
+  const o = createOutdoor(1, 'town', 'fens'), sq = o.plazas[0];
+  let inside = 0, rug = 0, rim = 0;
+  for (let gy = sq.cy - sq.ry; gy < sq.cy + sq.ry; gy += 0.5) for (let gx = sq.cx - sq.rx; gx < sq.cx + sq.rx; gx += 0.5) {
+    const u = Math.abs(gx - sq.cx) / sq.rx, v = Math.abs(gy - sq.cy) / sq.ry, e = u * u * u + v * v * v; if (e >= 1) continue;
+    const q = groundAt(o, gx, gy); inside++;
+    if (q.g !== G.DECK || q.hw) rug++;                                       // a boardwalk's own paint (hw > 0) on the square
+    if (e > 0.94 && q.t > 0.94 && o.roads.some((r) => r.surface === 'deck' && r.pts.some((p, i) => i && segDistPt(gx, gy, r.pts[i - 1], p) < r.w / 2))) rim++;
+  }
+  assert.ok(inside > 1500 && rug === 0, `${rug} of ${inside} points of the square painted as a boardwalk`);
+  assert.equal(rim, 0, 'the square\'s rim runs across a boardwalk\'s mouth');
+  const stall = o.structs.find((s) => s.id === 'fens_foodstand_1'), F = o.hub.focus, dd = (stall.x - stall.y) - (F.x - F.y), ds = (stall.x + stall.y) - (F.x + F.y);
+  assert.ok(Math.abs(dd) < 22 && ds > -93 && ds < 50, `the eel-stall is off the home screen (${dd}, ${ds})`);
+});
+function segDistPt(px, py, [ax, ay], [bx, by]) { const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(px - ax - t * vx, py - ay - t * vy); }
