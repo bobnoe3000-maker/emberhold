@@ -37,7 +37,7 @@ export function bagStacks(bag) {
 export const DROP = {
   chest: { chance: 0.15, fine: 0.2, rare: 0.07 },                  // (2026-10-01: chests are rarer, 3.8 opened an hour on the farm, not 6.6; each holds gear more often, so the gear an hour holds)
   boss: { chance: 1, fine: 0.7, rare: 0.3, min: 'fine' },             // a boss's first fall always leaves something, never less than Fine
-  bossAgain: { chance: 0.15, fine: 0.9, rare: 0.1, min: 'fine' },     // later falls roll for it (the Standard can be farmed: Rares stay rare)
+  bossAgain: { chance: 0.05, fine: 0.9, rare: 0.1, min: 'fine' },     // later falls roll for it (the Standard can be farmed: Rares stay rare). 15 % → 5 % (v1.44: a re-killed hall's boss was most of the farm's Fines, 1.4–2.0 an hour against about 1)
   chapter: { chance: 1, fine: 0.9, rare: 0.1, min: 'fine' },          // a chapter quest's hand-in: a guaranteed Fine (GDD §8), in the bag
   wave: { chance: 0.0095, fine: 0.17, rare: 0.05 },
   elite: { chance: 0.05, fine: 0.35, rare: 0.1 },

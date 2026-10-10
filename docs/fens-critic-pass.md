@@ -409,6 +409,19 @@ hour): 4.0 / 2.0 / 0 at 9, 4.2 / 1.4 / 0.4 at 12, 3.4 / 2.0 / 0 at 15; the same 
 hour on the farm). Left as it is for now: the farm re-runs the barrows' third floor, not the Fens, and one seed is
 ±30 %. Open: a longer farm in the Fens' sites, and *bossAgain* if it holds.
 
+*Since (2026-10-10, the owner: yes on lowering it):* *bossAgain* is 5 % a fall, not 15 %. The same farm, 5 h on each
+of two seeds:
+
+| Level | Fine an hour, before → after |
+|---|---|
+| 9 | 2.0 / 1.8 → 1.4 / 0.8 |
+| 12 | 1.4 / 2.0 → 0.8 / 1.6 |
+| 15 | 2.0 / 1.8 → 1.4 / 1.2 |
+
+- The mean is 1.83 → **1.2**, within the plan's ±25 % of about 1.
+- Rares are 0.30 → 0.27 an hour, against about 0.2.
+- Commons are unchanged, since the other sources' rolls don't move (GDD v1.44).
+
 **The golden path.** `test/m8-golden.test.mjs` plays Act II in one game after Act I: Ilse, Dace, the Toadking and
 Wren, the Kindler and the Sluice, Wren's marker and caches, Pim's cages, Teague, Settled, the rolls to Agnes, the
 Abbess, Ilse; then the fighters' level-12 trial in the Sluice, where the Fens set's last page lies, and the
