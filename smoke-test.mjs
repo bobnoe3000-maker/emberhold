@@ -274,8 +274,15 @@ const tGold = tamper((t) => { t.state.counters.gold += 5000; });
 const es = createSim(SEED, undefined, { scene: 'dungeon' }), esHash = stateHash(es.snapshot()), bad = es.snapshot(); bad.party[0].level = 25; es.restore(bad);
 const tSave = verifySession(startSession(es).claim(), { verified: esHash, elapsedMs: 1e9 });
 const tSpeed = verifySession(vclaim, { verified: verifiedStart, elapsedMs: vclaim.ticks * 5 });
-const cheatOk = honest.ok && !tLevel.ok && !tItem.ok && !tGold.ok && !tSave.ok && !tSpeed.ok;
-console.log('verified progression (honest replays; level / item / gold / save / speed tampering rejected):', cheatOk, honest.ok, tLevel.ok, tItem.ok, tGold.ok, tSave.ok, tSpeed.ok,
+// the Guild's coach (sim/coach.js): an honest trip verifies; a town marked reached by hand mid-session doesn't
+const coachRun = (edit) => { const t = createSim(SEED, undefined, { scene: 'town' }); t.state.quests.ch1_ember_in_the_fist = { st: 3, step: 0, n: [] }; t.state.counters.gold = 100;
+  const h = t.world.hub; t.state.player.x = t.state.player.px = h.x + 0.5; t.state.player.y = t.state.player.py = h.y + 4.5; if (!edit) t.state.reached.add('saltmere');
+  const ss = startSession(t, { scene: 'town' }); for (let i = 0; i < 40; i++) { if (i === 5 && edit) t.state.reached.add('saltmere'); if (i === 10) t.commands.push({ type: 'coach', to: 'saltmere' }); t.tick(); }
+  return { v: verifySession(ss.claim(), { verified: ss.startHash, elapsedMs: 1e9 }), where: t.world.name, gold: t.state.counters.gold }; };
+const cHonest = coachRun(false), cTamper = coachRun(true);
+const coachOk = cHonest.v.ok && cHonest.where === 'Saltmere' && cHonest.gold === 90 && !cTamper.v.ok;
+const cheatOk = honest.ok && !tLevel.ok && !tItem.ok && !tGold.ok && !tSave.ok && !tSpeed.ok && coachOk;
+console.log('verified progression (honest replays; level / item / gold / save / speed / coach tampering rejected):', cheatOk, honest.ok, tLevel.ok, tItem.ok, tGold.ok, tSave.ok, tSpeed.ok, coachOk,
   `| ${vclaim.ticks} ticks, L${vh.level} ${vh.xp}xp ${vs.state.counters.gold}g, hash ${honest.hash}`);
 
 const ok = cheatOk && gearOk && compassOk && tapOk && holdOk && roomLvOk && found && res2 && destroyed && relocated && descended && looted && discOK && discPersist

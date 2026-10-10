@@ -78,6 +78,8 @@
 //   v27: the wave stops growing at 5 foes (sim/battle.js waveSize; GDD §7.1 v1.42), and XP a minute from level 10 fell
 //       with it, so the XP table from level 10 is smaller by as much (sim/party.js xpRate). Levels are kept; the XP each
 //       member had toward their next level becomes the same share of the new table's (xpFor27), as v25 did.
+//   v28: the Guild's coach (sim/coach.js; GDD §10 v1.43): reached [town ids], the towns you've stood in. Older data
+//       (reachedFor): Thornwick, and Saltmere too when the save is in the Fens or has been in a Fens site.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -85,8 +87,10 @@ import { LAMPS } from '../sim/lamps.js';
 import { makeItem } from '../sim/items.js';
 import { bagStacks, BAG_SIZE } from '../sim/loot.js';
 import { dedupeNames, xpToNext } from '../sim/party.js';
+import { reachedOf } from '../sim/coach.js';
+import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 27;
+export const SAVE_VERSION = 28;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -107,7 +111,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -143,6 +147,9 @@ export function xpFor27(data) {
   };
   return { ...data, party: (data.party || []).map(carry), bench: (data.bench || []).map(carry) };
 }
+
+/** v27 → v28: the towns reached (see v28 above) @param {any} data */
+export function reachedFor(data) { return { ...data, reached: reachedOf({ ...data, reached: undefined }, SITES) }; }
 
 /** v24 → v25: each member's XP toward their next level, as the same share of the new table's @param {any} data */
 export function xpFor(data) {

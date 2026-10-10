@@ -30,6 +30,7 @@ import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
 import { createExpeditions } from './expeditions.js';
+import { createCoach, reachedOf, townOf, COACH } from './coach.js';
 import { createBus, createCommandQueue } from './bus.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 
@@ -107,6 +108,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     boons: { atk: 0, def: 0 },        // a red / blue shrine's boon: until when on the sim's clock (shrines.js)
     tower: { wave: 0, best: 0, landing: 0, atLanding: false, satchel: { gold: 0, cinders: 0 }, won: {} },   // the Mere Tower's climb and the heirlooms won (tower.js)
     trials: {},                       // class trials the company has done: { [cls]: 1 } for the 6s, { [cls + '12']: 1 } for the 12s (quests.js; skills.js unlocks)
+    reached: new Set(['thornwick']),  // the towns you've stood in (coach.js): where the Guild's coach will take you
   };
   clock = state;
   if (curScene === 'overland') placeRoad(world, state);   // (the first build ran before the state existed)
@@ -120,6 +122,10 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
+
+  // the Guild's coach between the towns (coach.js): from a square, to a town reached, for its fare
+  const coach = createCoach({ state, bus, getWorld: () => world, landOpen: (id) => landOpen(id), inBattle: () => !!battle.battle, go: (land) => travel('town', 'default', undefined, land) });
+  if (curScene === 'town' && LANDS[curRegion]) state.reached.add(townOf(curRegion));
 
   // the Chronicle: a whole set reveals its hidden site (lore.js SET_REVEALS); a vault's chest holds its heirloom, once (sites.js `vault`)
   bus.on('setComplete', (e) => { if (SET_REVEALS[e.set]) reveal(SET_REVEALS[e.set]); });
@@ -305,6 +311,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (to === 'dungeon') { curSite = SITES[site] ? site : 'barrows'; curRegion = SITES[curSite].region; state.sitesEntered.add(curSite); }
     curScene = to; state.depth = 0;
     world = buildWorld(0);
+    if (to === 'town' && LANDS[curRegion]) { const k = townOf(curRegion); if (!state.reached.has(k)) { state.reached.add(k); bus.emit('townReached', { town: k, name: COACH[k].name }); } }   // the coach stops here now
     const a = (world.arrivals && (world.arrivals[arrive] || world.arrivals.default)) || world.stairArrive || null;
     const p = state.player;
     const s = a && isWalkable(world, a.x, a.y) ? a : findSpawn(world);
@@ -351,6 +358,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       return;
     }
     if (expeditions.command(cmd)) return;                  // expeditionSend (an inn)
+    if (coach.command(cmd)) return;                        // coach (a town's square: coach.js)
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
     if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon
@@ -585,6 +593,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       boons: { ...boonsOf(state) },     // (v20)
       tower: JSON.parse(JSON.stringify(towerOf(state))),   // (v21)
       trials: Object.keys(state.trials),
+      reached: [...state.reached],       // (v28)
       floors: [...floors.entries()],     // the other floors of this visit: [depth, { mods, hp, discovered, visited }]
       ...quests.snapshot(),              // quests: { [id]: [state, step, ...counters] }, tracked
       ...board.snapshot(),               // board: { day, lv } (today's jobs are rebuilt from them)
@@ -654,6 +663,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.trials = {};
     const tr = Array.isArray(data.trials) ? data.trials : [...state.party, ...state.bench].filter((m) => m.level >= TRIAL_LEVEL).map((m) => m.cls);
     for (const c of tr) if (TRIAL_CLASSES.includes(c) || (/12$/.test(c) && TRIAL_CLASSES.includes(c.slice(0, -2)))) state.trials[c] = 1;   // (cls12: the level-12 trial, M8; v25 and older: persist/save.js trials12For)
+    state.reached = new Set(reachedOf(data, SITES));        // v27 and older: worked out (coach.js; persist/save.js reachedFor)
     quests.restore(data);                                  // v6 and older: none yet
     board.restore(data);                                   // v8 and older: none yet
     lore.restore(data);                                    // v9 and older: none yet
