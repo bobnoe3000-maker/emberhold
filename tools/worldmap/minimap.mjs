@@ -32,7 +32,7 @@ const kindOf = (id) => {
   if (/_(curtainy?|wall)_\d/.test(id)) return 'wall';
   if (/_tower_\d/.test(id)) return 'tower';
   if (/_gatehousey?_\d/.test(id)) return 'gate';
-  if (/_(housex?|stilt)_\d|_farmx?_\d/.test(id)) return 'house';
+  if (/_(housex?|stilt|cottagex?|longhousex?|workshopx?)_\d|_farmx?_\d|^windmill_/.test(id)) return 'house';   // (the town set, art critic pass 14: every home, and the Vale's mill)
   if (/^(oak|autumn|birch|grove|pine|dead|alder|willow|carr)_/.test(id)) return 'tree';
   if (/^(rock_|mountain)/.test(id)) return 'rock';
   if (/^fence_/.test(id)) return 'fence';

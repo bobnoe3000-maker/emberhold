@@ -279,7 +279,7 @@ function herd(o, rng, ids, cx, cy, n, spread) {
 const DOORSTEP = ['barrel', 'crate_A_small', 'sack', 'planter_1', 'planter_1', 'pumpkins_1', 'hay_2', 'bucket_water'];
 function dress(o, rng, keepOut) {
   for (const st of o.structs.slice()) {
-    if (!/_(house|housex)_\d$/.test(st.id)) continue;
+    if (!/_(house|housex|cottage|cottagex|longhouse|longhousex)_\d$/.test(st.id)) continue;
     const f = ENV_FOOT[st.id]; if (!f) continue;
     for (let k = 0, n = 1 + Math.floor(rng() * 2), t = 0; k < n && t < 10; t++) {
       const onX = rng() < 0.5, id = pick(rng, DOORSTEP);
@@ -362,10 +362,23 @@ function buildTown(seed, region) {
   for (const [x, y] of towers) put(o, B('tower'), x, y, 'round', 0.1);
   putGate(o, B('gatehousey'), WX1, GY);
 
-  // houses: a row along the high street's north side, the quarters at the back (north and west), low gardens in front
-  [[100, 68, 'house', 1], [76, 19, 'house', 2], [88, 19, 'house', 1], [100, 19, 'house', 3], [101, 31, 'housex', 2], [89, 33, 'housex', 1],
-   [24, 70, 'housex', 2], [24, 82, 'house', 1], [40, 97, 'house', 3], [24, 96, 'housex', 1]]
+  // houses: a row along the high street's north side, the quarters at the back (north and west), low gardens in front.
+  // Every home is one storey (2026-10-10, the owner: "Inns should be 2 story, homes and shops one story"), and the
+  // quarters mix the house with the town set's cottage, longhouse and workshop (art critic pass 14), each dressed for its region
+  [[100, 68, 'house', 1], [76, 19, 'cottage', 1], [88, 19, 'house', 1], [101, 19, 'longhouse', 1], [101, 31, 'housex', 2], [89, 32, 'workshopx', 1],
+   [24, 70, 'housex', 2], [24, 82, 'cottagex', 1], [40, 97, 'workshop', 1], [24, 97, 'longhousex', 1]]
     .forEach(([x, y, t, n]) => put(o, B(t, n), x, y));
+  // the town set's common things (art critic pass 14), each where it would be and none in the way: off the roads,
+  // clear of the walk from the square to every door (test/town.test.mjs holds them to it)
+  for (const [id, x, y] of [
+    [B('standard'), 104, 73], [B('standard'), 104, 87],             // the town's colours either side of the high street, inside the gate
+    ['lamppost_0', 88, 85], ['lamppost_0', 101, 85],                // lamps down the high street's south side (the braziers are the north's)
+    [B('foodstand'), 40, 77], ['boxes_0', 47, 77],                  // a stall at the square's south-west edge, the smithy's delivery beside it
+    ['table_0', 65, 63], ['bench_0', 43, 33],                       // the inn's table out front; a bench on the temple's forecourt
+    ['handcart_0', 57, 44], [B('lanewell'), 70, 28], ['woodpile_0', 24, 62],   // by the shop; the north quarter's own well; a home's winter wood
+    ['cart_90', 124, 70], ['cart_0', 153, 42], ['trough_0', 136, 60],   // outside: a cart off the road by the gate, one at the farm, the beasts' trough
+  ]) put(o, id, x, y, 'rect', 0.1);
+  if (R === 'vale') put(o, 'windmill_0', 122, 20, 'round', 0.2);     // the Vale's corn: a post mill by the north field
   for (const [x, y] of [[97, 75], [107, 75], [87, 75]]) putProp(o, 'brazier', x, y);
   for (const [id, x, y] of [['wheelbarrow', 96, 90], ['resource_lumber', 88, 96], ['barrel', 106, 70], ['crate_A_big', 92, 84]]) put(o, id, x, y, 'rect', 0);
   for (const [id, x, y] of [['oak_2', 20, 18], ['oak_3', 46, 16], ['autumn_3', 19, 36]]) put(o, id, x, y, 'round', 0.35);   // the churchyard's trees, behind the temple
@@ -529,6 +542,11 @@ function buildWaystation(seed, region) {
   for (const [n, x, y] of [[1, 26, 76], [2, 88, 22], [3, 102, 68], [1, 40, 102], [2, 96, 96], [3, 62, 104], [1, 78, 18], [2, 110, 40]]) put(o, B('stilt', n), x, y);
   for (const [id, x, y] of [[B('punt'), 106, 92], [B('punt'), 30, 92], [B('punt'), 122, 68], [B('eeltrap'), 116, 92], [B('eeltrap'), 14, 64], [B('eeltrap'), 84, 112]]) put(o, id, x, y, 'rect', 0);
   for (const [id, x, y] of [['barrel', 84, 60], ['barrel', 85, 62], ['crate_A_big', 57, 75], ['sack', 58, 77]]) put(o, id, x, y, 'rect', 0);
+  // the town set (art critic pass 14): on the peat, the Fens' one-storey homes on their short piles and a boat-builder's
+  // shed by the north mere, each with its door to dry ground (on a face the camera sees: down-screen, so never south of the square); on the deck, an eel-stall, the colours where the boardwalk comes in, a lamp, the Eel's table
+  for (const [id, x, y] of [[B('cottage'), 62, 28], [B('workshop'), 104, 17], [B('longhouse'), 23, 1]]) put(o, id, x, y);
+  for (const [id, x, y] of [[B('foodstand'), 46, 74], [B('standard'), 88, 73], ['lamppost_0', 96, 73], ['table_0', 37, 58], ['boxes_0', 70, 47], ['handcart_0', 52, 77]])
+    put(o, id, x, y, 'rect', 0.1);
   scatter(o, rng, -40, -40, 170, 156, 8, (x, y) => {
     if (hypot(x - 60, y - 60) < 44) return null;
     return rng() < 0.4 ? pick(rng, ['dead_1', 'dead_2', 'willow_1', 'carr_2']) : null;   // (the Fens' kinds: fens critic pass 2)

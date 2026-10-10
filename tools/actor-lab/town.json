@@ -259,6 +259,135 @@
         0.9
       ],
       "rotY": 90
+    },
+    {
+      "id": "vale_cottage_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "vale",
+      "seed": 11,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_cottagex_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "vale",
+      "seed": 13,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ],
+      "faceX": true
+    },
+    {
+      "id": "vale_longhouse_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "vale",
+      "seed": 21,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_longhousex_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "vale",
+      "seed": 22,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ],
+      "faceX": true
+    },
+    {
+      "id": "vale_workshop_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "vale",
+      "seed": 31,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_workshopx_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "vale",
+      "seed": 32,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ],
+      "faceX": true
+    },
+    {
+      "id": "vale_foodstand_1",
+      "model": "foodstand",
+      "build": "foodstand",
+      "style": "vale",
+      "seed": 81,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_standard_1",
+      "model": "standard",
+      "build": "standard",
+      "style": "vale",
+      "seed": 83,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
+    },
+    {
+      "id": "vale_lanewell_1",
+      "model": "lanewell",
+      "build": "lanewell",
+      "style": "vale",
+      "seed": 84,
+      "gain": 0.7,
+      "desat": 0.12,
+      "tint": [
+        1.0,
+        0.96,
+        0.9
+      ]
     }
   ],
   "fens": [
@@ -732,6 +861,135 @@
         0.98,
         0.95
       ]
+    },
+    {
+      "id": "fens_cottage_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "fens",
+      "seed": 11,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_cottagex_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "fens",
+      "seed": 13,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "faceX": true
+    },
+    {
+      "id": "fens_longhouse_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "fens",
+      "seed": 21,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_longhousex_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "fens",
+      "seed": 22,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "faceX": true
+    },
+    {
+      "id": "fens_workshop_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "fens",
+      "seed": 31,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_workshopx_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "fens",
+      "seed": 32,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ],
+      "faceX": true
+    },
+    {
+      "id": "fens_foodstand_1",
+      "model": "foodstand",
+      "build": "foodstand",
+      "style": "fens",
+      "seed": 81,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_standard_1",
+      "model": "standard",
+      "build": "standard",
+      "style": "fens",
+      "seed": 83,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
+    },
+    {
+      "id": "fens_lanewell_1",
+      "model": "lanewell",
+      "build": "lanewell",
+      "style": "fens",
+      "seed": 84,
+      "gain": 0.66,
+      "desat": 0.2,
+      "tint": [
+        0.94,
+        0.98,
+        0.95
+      ]
     }
   ],
   "reach": [
@@ -994,6 +1252,135 @@
         0.88
       ],
       "rotY": 90
+    },
+    {
+      "id": "reach_cottage_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "reach",
+      "seed": 11,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_cottagex_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "reach",
+      "seed": 13,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "faceX": true
+    },
+    {
+      "id": "reach_longhouse_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "reach",
+      "seed": 21,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_longhousex_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "reach",
+      "seed": 22,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "faceX": true
+    },
+    {
+      "id": "reach_workshop_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "reach",
+      "seed": 31,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_workshopx_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "reach",
+      "seed": 32,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ],
+      "faceX": true
+    },
+    {
+      "id": "reach_foodstand_1",
+      "model": "foodstand",
+      "build": "foodstand",
+      "style": "reach",
+      "seed": 81,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_standard_1",
+      "model": "standard",
+      "build": "standard",
+      "style": "reach",
+      "seed": 83,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
+    },
+    {
+      "id": "reach_lanewell_1",
+      "model": "lanewell",
+      "build": "lanewell",
+      "style": "reach",
+      "seed": 84,
+      "gain": 0.66,
+      "desat": 0.15,
+      "tint": [
+        1.0,
+        0.93,
+        0.88
+      ]
     }
   ],
   "heights": [
@@ -1256,6 +1643,135 @@
         1.0
       ],
       "rotY": 90
+    },
+    {
+      "id": "heights_cottage_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "heights",
+      "seed": 11,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_cottagex_1",
+      "model": "cottage",
+      "build": "cottage",
+      "style": "heights",
+      "seed": 13,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ],
+      "faceX": true
+    },
+    {
+      "id": "heights_longhouse_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "heights",
+      "seed": 21,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_longhousex_1",
+      "model": "longhouse",
+      "build": "longhouse",
+      "style": "heights",
+      "seed": 22,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ],
+      "faceX": true
+    },
+    {
+      "id": "heights_workshop_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "heights",
+      "seed": 31,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_workshopx_1",
+      "model": "workshop",
+      "build": "workshop",
+      "style": "heights",
+      "seed": 32,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ],
+      "faceX": true
+    },
+    {
+      "id": "heights_foodstand_1",
+      "model": "foodstand",
+      "build": "foodstand",
+      "style": "heights",
+      "seed": 81,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_standard_1",
+      "model": "standard",
+      "build": "standard",
+      "style": "heights",
+      "seed": 83,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
+    },
+    {
+      "id": "heights_lanewell_1",
+      "model": "lanewell",
+      "build": "lanewell",
+      "style": "heights",
+      "seed": 84,
+      "gain": 0.66,
+      "desat": 0.18,
+      "tint": [
+        0.94,
+        0.96,
+        1.0
+      ]
     }
   ]
 }

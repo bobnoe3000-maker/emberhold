@@ -264,18 +264,8 @@ function roofOver(S, g, w, d, y0, rise, alongX = true) {
   gable(r, W, D, y0, rise * D / 2, S.m.roof, S.m.upper, S.thatch ? 0.1 : 0.07, S.thatch ? 0.09 : 0.04);
   if (S.thatch) { const rr = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, W + 0.2, 8), S.m.roof); rr.rotation.z = Math.PI / 2; rr.position.y = y0 + rise * D / 2 + 0.01; r.add(rr); }
   if (S.gothic) { for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.14, 4), S.m.trim); f.position.set(sx * W / 2, y0 + rise * D / 2 + 0.06, 0); r.add(f); } }
+  if (S.key === 'heights') { snowCap(r, W, D, y0, rise, S.m.upper); g.userData.snowed = true; }   // (pass 14: every roof in the Heights under snow, not only the homes')
   return r;
-}
-// A dormer on a gable's front slope (critic pass 11c/g: the reference's roofs are broken by dormers and turrets;
-// ours were plain planes): a small timbered box with its own little gable and a window, at x, halfway up the slope
-// of a roof over depth D from eaves y0 rising rise × D/2.
-function dormer(S, g, x, D, y0, rise) {
-  const dg = new THREE.Group(), half = D / 2, rh = rise * half, z = half * 0.5, y = y0 + rh * 0.5 - 0.06;
-  dg.position.set(x, 0, 0); g.add(dg);
-  box(0.17, 0.16, half * 0.75, S.m.upper, 0, y, z - half * 0.2, dg);
-  const gr = new THREE.Group(); gr.position.set(0, 0, z - half * 0.2); gr.rotation.y = Math.PI / 2; dg.add(gr);
-  gable(gr, half * 0.75, 0.17, y + 0.16, 0.08, S.m.roof, S.m.upper, 0.03, 0.02);
-  windowOn(dg, S, { side: 'z', wallW: 0.17, wallD: (z - half * 0.2) * 2 + half * 0.75 }, 0, y + 0.08, 0.08, 0.09, { lit: S.rnd() < 0.5 });
 }
 // a hipped roof over a w-square, its quarter-turn in the geometry: the bake measures a footprint from each
 // mesh's box, and a rotated mesh's box (pyramid()) comes out √2 too wide
@@ -290,15 +280,16 @@ function buttresses(S, g, w, d, h) {
 
 // ── building types ───────────────────────────────────────────────────────────
 const TYPES = {
+  // a home: ONE storey (the owner, 2026-10-10: "Inns should be 2 story, homes and shops one story"). Its walls are
+  // the region's: limewash over oak on a stone plinth in the Vale and the Fens, bare stone in the Reach and the Heights
   house(S, g, r) {
-    const w = 0.72, d = 0.58, h1 = 0.5, h2 = S.thatch ? 0 : 0.42;
-    storeyBlock(S, g, w, d, 0, h1, S.m.lower, true, { doorZ: -0.12 });
+    const w = 0.72, d = 0.58, h1 = 0.52, framed = S.timber && (S.key === 'vale' || S.key === 'fens');
+    if (framed) box(w + 0.03, 0.1, d + 0.03, S.m.stone, 0, 0, 0, g);              // the stone plinth under the framing
+    storeyBlock(S, g, w, d, 0, h1, framed ? S.m.upper : S.m.lower, true, { doorZ: -0.12, timber: framed });
     doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.12, 0.17, 0.36, !S.timber);
-    let top = h1;
-    if (h2) { const j = S.jetty; storeyBlock(S, g, w + j * 2, d + j * 2, h1, h2, S.m.upper, true, { timber: true }); top += h2; }
-    roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, top, S.roofRise);
-    chimney(g, S, w / 2 - 0.12, -d / 4, top, 0.32 + S.roofRise * 0.2);
-    if (h2 && !S.gothic) dormer(S, g, -0.1, d + S.jetty * 2, top, S.roofRise);
+    roofOver(S, g, w, d, h1, S.roofRise * 1.1);
+    chimney(g, S, w / 2 - 0.12, -d / 4, h1, 0.32 + S.roofRise * 0.2);
+    regional(S, g, w, d, h1, S.roofRise * 1.1, r);
     if (S.gothic) buttresses(S, g, w, d, h1);
   },
   tavern(S, g, r) {
@@ -325,8 +316,9 @@ const TYPES = {
     for (const [x, y] of [[-0.08, 0.26], [0.02, 0.2], [0.09, 0.25], [-0.03, 0.16], [0.08, 0.16]]) box(0.05, 0.06, 0.03, S.m.paper, x, y, 0.004, nb);
     if (S.gothic) buttresses(S, g, w, d, h1);
   },
+  // the inn: TWO storeys (the owner, 2026-10-10), the rooms upstairs under dormers
   inn(S, g, r) {
-    const w = 1.2, d = 0.66, h = [0.52, 0.46, 0.44];
+    const w = 1.2, d = 0.66, h = [0.54, 0.48];
     let y = 0; h.forEach((hh, i) => { storeyBlock(S, g, w + (i ? S.jetty * 2 : 0), d + (i ? S.jetty * 2 : 0), y, hh, i ? (S.thatch ? S.m.lower : S.m.upper) : S.m.lower, true, { doorZ: 0.3, timber: i > 0 }); y += hh; });
     doorOn(g, S, { side: 'z', wallW: w, wallD: d }, 0.3, 0.24, 0.42, true);
     roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, y, S.roofRise);
@@ -340,19 +332,20 @@ const TYPES = {
     hay(st, S, 0.05, 0.05, 0.08);
     sign(g, S, -0.2, 0.52, d / 2);
   },
+  // the shop: ONE storey (the owner, 2026-10-10), a broad shopfront under a deep roof, the stall and the awning
   shop(S, g, r) {
-    const w = 0.62, d = 0.62, h1 = 0.52, h2 = 0.44;
+    const w = 0.62, d = 0.62, h1 = 0.56;
     storeyBlock(S, g, w, d, 0, h1, S.m.lower, false);
     doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.16, 0.17, 0.36, false);
     windowOn(g, S, { side: 'z', wallW: w, wallD: d }, 0.12, 0.26, 0.2, 0.14);
     windowOn(g, S, { side: 'x', wallW: w, wallD: d }, 0, 0.3, 0.16, 0.14);
-    storeyBlock(S, g, w + S.jetty * 2, d + S.jetty * 2, h1, h2, S.thatch ? S.m.lower : S.m.upper, true, { timber: true });
-    roofOver(S, g, w + S.jetty * 2, d + S.jetty * 2, h1 + h2, S.roofRise, false);
+    if (S.timber) { timber(g, S, { side: 'z', wallW: w, wallD: d }, 0.38, h1, 3, false); timber(g, S, { side: 'x', wallW: w, wallD: d }, 0.38, h1, 3, false); }   // a framed band over the shopfront
+    roofOver(S, g, w + 0.04, d + 0.04, h1, S.roofRise * 1.15, false);
     // striped awning + stall counter with goods
     const aw = box(0.36, 0.02, 0.2, S.m.banner, 0.1, 0.44, d / 2 + 0.1, g); aw.rotation.x = 0.35;
     box(0.34, 0.12, 0.12, S.m.wood, 0.1, 0, d / 2 + 0.1, g);
     for (let i = 0; i < 4; i++) box(0.05, 0.04, 0.05, i % 2 ? S.m.hay : S.m.banner, -0.02 + i * 0.08, 0.12, d / 2 + 0.1, g);
-    barrel(g, S, 0.38, 0.3); chimney(g, S, -0.2, -0.2, h1 + h2, 0.35);
+    barrel(g, S, 0.38, 0.3); chimney(g, S, -0.2, -0.2, h1, 0.42);
     // a general store: crates and sacks stacked by the stall, a hanging sign (the forge is the smithy's now)
     crate(g, S, 0.12, 0.1, 0.12, w / 2 + 0.1, 0.18); crate(g, S, 0.1, 0.08, 0.1, w / 2 + 0.12, 0.05, true); sackMesh(g, S, w / 2 + 0.2, 0.3);
     sign(g, S, -0.2, 0.46, d / 2);
@@ -1662,6 +1655,236 @@ Object.assign(TYPES, {
     slab(E + e + 2 * HX, E, (E - e) / 2, HZ + E / 2);                              // in front
     slab(e, 2 * HZ + e, -HX - e / 2, -e / 2); slab(E, 2 * HZ + e, HX + E / 2, -e / 2);   // the sides
     slab(E + e + 2 * HX, e, (E - e) / 2, -HZ - e / 2);                             // behind
+  },
+});
+
+// ── the town set (2026-10-10, the owner: "Create a set of town building assets, each with a style fitting the town
+// aesthetic… Inns should be 2 story, homes and shops one story"): three one-storey homes, each dressed for its region,
+// and the common things a town has lying about. A region's look comes from its style (STYLES) and from `regional`:
+//   vale     limewash and oak on a stone plinth, clay tile, flower boxes and ivy (the dress pass)
+//   fens     grey plaster on short piles out of the wet, reed thatch, a net and an eel basket by the door
+//   reach    soot-dark slag brick, rust tile, a coal bin, soot up the chimney wall
+//   heights  thick pale stone, steep blue slate under snow, split logs stacked under the eaves
+const SNOW = flat('#e6e8ec'), SOOT = flat('#1e1a18'), COAL = flat('#151318'), NET = flat('#4a4a3a'), WICKER = flat('#6a5a38');
+const REED = mat(tex('thatch', '#635c44', 61)), LOGS = flat('#5a4430'), LOGEND = flat('#a8865a');
+// snow on a gable roof over w × d (ridge along x) from eaves y0, rise × d/2: the upper 60 % of each slope, the same pitch
+function snowCap(g, w, d, y0, rise, wallM) {
+  const D0 = d / 2 + 0.07, R = rise * d / 2, D1 = d * 0.3 + 0.03, R1 = R * D1 / D0;
+  gable(g, w + 0.03, d * 0.6, y0 + R - R1 + 0.012, R1, SNOW, wallM, 0.03, 0.02);
+}
+function logStack(g, x, z, n = 3, len = 0.22, alongX = true) {
+  for (let row = 0; row < n; row++) for (let i = 0; i < n - row; i++) {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.03, len, 6), LOGS), off = (i - (n - row - 1) / 2) * 0.058, y = 0.03 + row * 0.05;
+    if (alongX) { c.rotation.z = Math.PI / 2; c.position.set(x, y, z + off); } else { c.rotation.x = Math.PI / 2; c.position.set(x + off, y, z); }
+    g.add(c);
+    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.004, 6), LOGEND); if (alongX) { e.rotation.z = Math.PI / 2; e.position.set(x + sx * len / 2, y, z + off); } else { e.rotation.x = Math.PI / 2; e.position.set(x + off, y, z + sx * len / 2); } g.add(e); }
+  }
+}
+// the region's touches on a one-storey home of w × d with its roof from h (rise × d/2), door on +z
+function regional(S, g, w, d, h, rise, r) {
+  if (S.key === 'fens') {
+    box(0.18, 0.14, 0.006, NET, w / 2 - 0.14, 0.12, d / 2 + 0.012, g);                                  // a net hung to dry
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.022, 0.09, 7), WICKER); b.position.set(w / 2 + 0.05, 0.045, d / 2 - 0.1); g.add(b);   // an eel basket
+  } else if (S.key === 'reach') {
+    box(0.1, h * 0.8, 0.01, SOOT, w / 2 - 0.12, h * 0.2, -d / 2 - 0.006, g);                         // soot up the chimney wall
+    const bin = box(0.14, 0.08, 0.1, S.m.wood, w / 2 + 0.09, 0, d / 2 - 0.12, g);                    // the coal bin
+    const heap = new THREE.Mesh(new THREE.DodecahedronGeometry(0.05, 0), COAL); heap.scale.y = 0.5; heap.position.set(w / 2 + 0.09, 0.09, d / 2 - 0.12); g.add(heap); void bin;
+  } else if (S.key === 'heights') {
+    if (!g.userData.snowed) snowCap(g, w, d, h, rise, S.m.lower);                                     // (homeRoof lays its own)
+    logStack(g, w / 2 + 0.06, -0.02, 3, 0.36, false);                                                  // split logs under the eaves
+  }
+}
+// a roof in the region's covering: reed thatch in the Fens, else the style's
+function roofFor(S) { return S.key === 'fens' ? REED : S.m.roof; }
+function homeRoof(S, g, w, d, y0, rise, alongX = true) {
+  const r = new THREE.Group(); g.add(r); if (!alongX) r.rotation.y = Math.PI / 2;
+  const [W, D] = alongX ? [w, d] : [d, w], thatch = S.key === 'fens';
+  gable(r, W, D, y0, rise * D / 2, roofFor(S), S.key === 'vale' || S.key === 'fens' ? S.m.upper : S.m.lower, thatch ? 0.1 : 0.07, thatch ? 0.08 : 0.04);
+  if (thatch) { const rr = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, W + 0.18, 8), REED); rr.rotation.z = Math.PI / 2; rr.position.y = y0 + rise * D / 2 + 0.01; r.add(rr); }
+  if (S.key === 'heights') { snowCap(r, W, D, y0, rise, S.m.lower); g.userData.snowed = true; }
+  return r;
+}
+// the walls of a one-storey home: framed limewash on a plinth (vale, fens), else the region's stone
+function homeWalls(S, g, w, d, h, doorZ) {
+  const framed = S.key === 'vale' || S.key === 'fens';
+  if (framed) box(w + 0.03, 0.1, d + 0.03, S.m.stone, 0, 0, 0, g);
+  storeyBlock(S, g, w, d, 0, h, framed ? S.m.upper : S.m.lower, true, { doorZ, timber: framed });
+}
+// a plank on posts: a home in the Fens stands a hand's breadth out of the wet
+function piles(S, g, w, d, P) {
+  for (const [x, z] of [[-w / 2, -d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [w / 2, d / 2], [0, d / 2], [0, -d / 2]]) box(0.035, P, 0.035, S.m.beam, x, 0, z, g);
+  box(w + 0.06, 0.025, d + 0.08, S.m.wood, 0, P, 0.02, g);
+  for (let i = 0; i < 2; i++) box(0.14, 0.02, 0.05, S.m.wood, -0.1, P * (0.3 + i * 0.35), d / 2 + 0.06 + (1 - i) * 0.05, g);   // two steps up
+}
+Object.assign(TYPES, {
+  // a cottage: the smallest home, two rooms under one roof, a door, two windows, a chimney
+  cottage(S, g, r) {
+    const fens = S.key === 'fens', P = fens ? 0.07 : 0, w = 0.58, d = 0.48, h = 0.46, hs = new THREE.Group(); hs.position.y = P; g.add(hs);
+    if (fens) piles(S, g, w, d, P);
+    homeWalls(S, hs, w, d, h, 0.1);
+    doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, 0.1, 0.16, 0.34, !S.timber);
+    homeRoof(S, hs, w, d, h, S.roofRise * 1.15);
+    chimney(hs, S, -w / 2 + 0.1, -d / 4, h, 0.3);
+    regional(S, hs, w, d, h, S.roofRise * 1.15, r);
+    if (S.key === 'vale') { fenceRun(g, S, -w / 2 - 0.02, d / 2 + 0.2, -0.04, d / 2 + 0.2); hay(g, S, -w / 2 + 0.06, d / 2 + 0.1, 0.05); }   // a garden rail, a little hay
+  },
+  // a longhouse: one storey, long and low, two doors (two households under one roof, or a row's end), a chimney each
+  longhouse(S, g, r) {
+    const fens = S.key === 'fens', P = fens ? 0.07 : 0, w = 1.08, d = 0.5, h = 0.46, hs = new THREE.Group(); hs.position.y = P; g.add(hs);
+    if (fens) piles(S, g, w, d, P);
+    homeWalls(S, hs, w, d, h, -0.28);
+    for (const u of [-0.28, 0.3]) doorOn(hs, S, { side: 'z', wallW: w, wallD: d }, u, 0.16, 0.34, !S.timber);
+    homeRoof(S, hs, w, d, h, S.roofRise * 1.05);
+    chimney(hs, S, -0.12, -d / 4, h, 0.28); chimney(hs, S, w / 2 - 0.1, -d / 4, h, 0.28);
+    regional(S, hs, w, d, h, S.roofRise * 1.05, r);
+    if (S.key === 'reach') { const bin2 = box(0.12, 0.07, 0.09, S.m.wood, -w / 2 - 0.08, 0, d / 2 - 0.1, hs); void bin2; }
+  },
+  // a workshop: one storey, a work-room and an open lean-to shed down its +x side with the trade out on show:
+  // a carpenter's bench and sawhorse (vale), a boat-builder's upturned punt (fens), a coal-black forge (reach), a woodcutter's block and stack (heights)
+  workshop(S, g, r) {
+    const w = 0.56, d = 0.52, h = 0.48;
+    homeWalls(S, g, w, d, h, -0.08);
+    doorOn(g, S, { side: 'z', wallW: w, wallD: d }, -0.08, 0.2, 0.36, false);
+    homeRoof(S, g, w, d, h, S.roofRise);
+    chimney(g, S, -w / 2 + 0.1, -d / 4, h, 0.3);
+    const sh = new THREE.Group(); sh.position.set(w / 2 + 0.2, 0, 0); g.add(sh);                       // the shed: posts, a sloping roof
+    for (const [x, z] of [[0.17, d / 2 - 0.02], [0.17, -d / 2 + 0.02]]) box(0.035, 0.34, 0.035, S.m.beam, x, 0, z, sh);
+    const lr = box(0.44, 0.03, d + 0.08, roofFor(S), 0, 0.36, 0, sh); lr.rotation.z = -0.32;
+    if (S.key === 'heights') { const sc = box(0.4, 0.015, d * 0.9, SNOW, -0.01, 0.39, 0, sh); sc.rotation.z = -0.32; }
+    if (S.key === 'vale') { box(0.26, 0.03, 0.12, S.m.wood, 0, 0.13, 0, sh); for (const [x, z] of [[-0.11, -0.04], [0.11, -0.04], [-0.11, 0.04], [0.11, 0.04]]) box(0.018, 0.13, 0.018, S.m.beam, x, 0, z, sh);   // a bench
+      for (let i = 0; i < 4; i++) box(0.3, 0.012, 0.04, S.m.wood, -0.02, 0.012 * i, -0.17, sh); }                                                // planks stacked
+    if (S.key === 'fens') { const hull = box(0.34, 0.05, 0.12, S.m.wood, 0, 0.08, 0.02, sh); hull.rotation.x = Math.PI; for (const x of [-0.13, 0.13]) box(0.03, 0.08, 0.03, S.m.beam, x, 0, 0.02, sh); }   // an upturned punt on trestles
+    if (S.key === 'reach') { box(0.16, 0.14, 0.14, S.m.stone, 0, 0, 0, sh); const c = box(0.12, 0.02, 0.1, mat(null, '#e0a050'), 0, 0.14, 0, sh); c.userData.glow = true; box(0.1, 0.06, 0.05, S.m.dark, 0.02, 0, 0.14, sh); }   // a forge and an anvil
+    if (S.key === 'heights') { const blk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.1, 8), LOGS); blk.position.set(0, 0.05, 0.08); sh.add(blk); logStack(sh, 0, -0.12, 3, 0.3, true); }
+    sign(g, S, w / 2 - 0.08, 0.42, d / 2);
+  },
+
+  // ── common things ───────────────────────────────────────────────────────────────────────────────────────────────────
+  // a windmill: a post mill on a stone round-house, its body boarded, four sails on the +z face; the sails and the
+  // tail-pole are `dress`, so its footprint is the round-house's (they turn over the field, not on the ground)
+  windmill(S, g0, r) {
+    const g = new THREE.Group(); g.scale.setScalar(1.35); g0.add(g);     // (pass 14: no taller than a cottage at 1×; a mill is the landmark of its fields)
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.42, 12), S.m.stone); base.position.y = 0.21; g.add(base);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.03, 12), S.m.stoneDark); cap.position.y = 0.42; g.add(cap);
+    doorOn(g, S, { side: 'z', wallW: 0.5, wallD: 0.5 }, 0, 0.12, 0.24, true);
+    const body = new THREE.Group(); body.position.y = 0.44; g.add(body);
+    box(0.34, 0.42, 0.38, S.m.wood, 0, 0, 0, body);
+    const rf = new THREE.Group(); rf.position.y = 0.42; body.add(rf); gable(rf, 0.38, 0.38, 0, 0.18, S.m.roof, S.m.wood, 0.04, 0.03);
+    windowOn(body, S, { side: 'x', wallW: 0.34, wallD: 0.38 }, 0, 0.26, 0.07, 0.08, { lit: true });
+    const hub = new THREE.Group(); hub.position.set(0, 0.3, 0.23); body.add(hub);
+    const axle = dress(new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.08, 8), S.m.beam)); axle.rotation.x = Math.PI / 2; hub.add(axle);
+    const sails = new THREE.Group(); sails.position.z = 0.05; sails.rotation.z = 0.35; hub.add(sails);
+    const cloth = flat('#cfc4a8');
+    for (let k = 0; k < 4; k++) {
+      const arm = new THREE.Group(); arm.rotation.z = (k * Math.PI) / 2; sails.add(arm);
+      arm.add(dress(box(0.025, 0.62, 0.02, S.m.beam, 0, 0.0, 0)));
+      const sail = dress(box(0.12, 0.46, 0.01, cloth, 0.075, 0.14, 0.008)); arm.add(sail);
+      for (let i = 0; i < 6; i++) arm.add(dress(box(0.14, 0.01, 0.014, S.m.beam, 0.07, 0.16 + i * 0.08, 0.012)));
+    }
+    const tail = dress(box(0.03, 0.03, 0.5, S.m.beam, 0, 0.06, -0.38)); tail.rotation.x = -0.5; body.add(tail);   // the tail-pole that turns it to the wind
+  },
+  // an ox-cart at rest: a plank bed on two spoked wheels, shafts down on the ground, a load of hay and a sack
+  cart(S, g, r) {
+    const bed = new THREE.Group(); bed.position.y = 0.12; bed.rotation.x = 0.12; g.add(bed);
+    box(0.24, 0.025, 0.4, S.m.wood, 0, 0, 0, bed);
+    for (const sx of [-1, 1]) box(0.015, 0.08, 0.4, S.m.wood, sx * 0.12, 0.025, 0, bed);
+    box(0.24, 0.08, 0.015, S.m.wood, 0, 0.025, -0.2, bed);
+    for (const sx of [-1, 1]) { const sh = box(0.022, 0.022, 0.28, S.m.beam, sx * 0.09, -0.02, 0.32, bed); sh.rotation.x = 0.18; }   // the shafts, resting on the ground
+    for (const sx of [-1, 1]) {
+      const wh = new THREE.Group(); wh.position.set(sx * 0.15, 0.11, -0.02); g.add(wh);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 5, 16), S.m.wood); rim.rotation.y = Math.PI / 2; wh.add(rim);
+      const tyre = new THREE.Mesh(new THREE.TorusGeometry(0.104, 0.006, 4, 16), S.m.trim); tyre.rotation.y = Math.PI / 2; wh.add(tyre);
+      for (let k = 0; k < 6; k++) { const sp = box(0.01, 0.2, 0.012, S.m.beam, 0, -0.1, 0, wh); sp.rotation.x = (k * Math.PI) / 6; sp.position.y = 0; sp.geometry.translate(0, 0, 0); }
+      const nave = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.04, 8), S.m.beam); nave.rotation.z = Math.PI / 2; wh.add(nave);
+    }
+    hay(bed, S, -0.03, -0.05, 0.08); hay(bed, S, 0.05, 0.08, 0.07); sackMesh(bed, S, 0.06, -0.12, 0.8);
+  },
+  // a handcart: two small wheels, a box body, two handles to the front, crates in it
+  handcart(S, g, r) {
+    const body = new THREE.Group(); body.position.y = 0.07; body.rotation.x = 0.18; g.add(body);
+    box(0.16, 0.07, 0.22, S.m.wood, 0, 0, 0, body);
+    for (const sx of [-1, 1]) box(0.014, 0.014, 0.24, S.m.beam, sx * 0.07, 0.05, 0.2, body);
+    for (const sx of [-1, 1]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 10), S.m.wood); wh.rotation.z = Math.PI / 2; wh.position.set(sx * 0.1, 0.06, -0.04); g.add(wh); }
+    crate(body, S, 0.09, 0.08, 0.09, -0.02, -0.03); sackMesh(body, S, 0.04, 0.05, 0.7, 0.4);
+  },
+  // a trestle table with its two benches, mugs and a jug, a loaf on a board: a place to sit outside
+  table(S, g, r) {
+    box(0.36, 0.02, 0.14, S.m.wood, 0, 0.12, 0, g);
+    for (const sx of [-1, 1]) { const t = box(0.02, 0.12, 0.12, S.m.beam, sx * 0.14, 0, 0, g); t.rotation.y = 0; }
+    for (const sz of [-1, 1]) { box(0.34, 0.016, 0.05, S.m.wood, 0, 0.07, sz * 0.12, g); for (const sx of [-1, 1]) box(0.016, 0.07, 0.04, S.m.beam, sx * 0.13, 0, sz * 0.12, g); }
+    const pot = flat('#7a6a5a'), bread = flat('#a8804a');
+    for (const [x, z] of [[-0.1, -0.03], [0.04, 0.04], [0.12, -0.02]]) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.012, 0.03, 6), pot); m.position.set(x, 0.155, z); g.add(m); }
+    const jug = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.05, 7), pot); jug.position.set(-0.02, 0.165, -0.02); g.add(jug);
+    box(0.08, 0.008, 0.05, S.m.wood, 0.1, 0.14, 0.03, g); const loaf = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 4), bread); loaf.scale.set(1.3, 0.7, 1); loaf.position.set(0.1, 0.16, 0.03); g.add(loaf);
+  },
+  // a standing banner: a pole on a stone foot, a crossbar, the region's colour hanging, a band of trim across it
+  standard(S, g, r) {
+    box(0.08, 0.05, 0.08, S.m.stone, 0, 0, 0, g);
+    box(0.022, 0.78, 0.022, S.m.beam, 0, 0.05, 0, g);
+    box(0.2, 0.018, 0.018, S.m.beam, 0, 0.78, 0.012, g);
+    const cloth = box(0.17, 0.36, 0.008, S.m.banner, 0, 0.42, 0.02, g); void cloth;
+    box(0.17, 0.03, 0.01, S.m.trim, 0, 0.6, 0.025, g); box(0.17, 0.03, 0.01, S.m.trim, 0, 0.47, 0.025, g);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.05, 6), S.m.trim); tip.position.y = 0.86; g.add(tip);
+    const tail = box(0.17, 0.05, 0.008, S.m.banner, 0, 0.37, 0.02, g); tail.scale.x = 0.6; tail.position.x = 0.0;
+  },
+  // boxes: a stack of crates, a barrel and sacks against a wall, someone's delivery waiting
+  boxes(S, g, r) {
+    crate(g, S, 0.18, 0.16, 0.18, -0.08, -0.04); crate(g, S, 0.13, 0.12, 0.13, -0.08, -0.04, true).position.y = 0.16; crate(g, S, 0.14, 0.12, 0.14, 0.11, -0.06, true);
+    TYPES.barrel(S, (() => { const b = new THREE.Group(); b.position.set(0.12, 0, 0.12); b.scale.setScalar(0.9); g.add(b); return b; })());
+    sackMesh(g, S, -0.04, 0.12, 0.9); sackMesh(g, S, -0.14, 0.1, 0.8, 1);
+  },
+  // an open food stand: a counter under an awning on four posts, the region's food out in baskets and on hooks
+  foodstand(S, g, r) {
+    const w = 0.42, d = 0.24;
+    for (const [x, z] of [[-w / 2, -d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [w / 2, d / 2]]) box(0.025, 0.38, 0.025, S.m.beam, x, 0, z, g);
+    const aw = box(w + 0.1, 0.02, d + 0.14, S.m.banner, 0, 0.38, 0.03, g); aw.rotation.x = 0.22;
+    for (let i = 0; i < 5; i++) box((w + 0.1) / 10, 0.022, d + 0.15, S.m.trim, -(w + 0.1) / 2 + (w + 0.1) * (i * 2 + 1) / 10, 0.381, 0.03, g).rotation.x = 0.22;   // the awning's stripes
+    box(w, 0.13, 0.1, S.m.wood, 0, 0, d / 2 - 0.04, g);                                                      // the counter, to the front
+    box(w, 0.02, d - 0.04, S.m.wood, 0, 0.18, -0.04, g);                                                     // the back shelf
+    const FOOD = { vale: ['#8a2a20', '#5a7a30', '#a8804a'], fens: ['#5a6050', '#7a7a6a', '#a8804a'], reach: ['#8a6a40', '#a8804a', '#6a4a3a'], heights: ['#d8c890', '#a8804a', '#7a4a3a'] }[S.key] || ['#8a2a20', '#5a7a30', '#a8804a'];
+    for (let i = 0; i < 3; i++) {                                                                            // three baskets on the counter
+      const x = -w / 2 + 0.08 + i * 0.13, bk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.04, 8), WICKER); bk.position.set(x, 0.15, d / 2 - 0.04); g.add(bk);
+      for (let k = 0; k < 5; k++) { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.018, 0), flat(FOOD[i])); f.position.set(x + (r() - 0.5) * 0.05, 0.18 + r() * 0.01, d / 2 - 0.04 + (r() - 0.5) * 0.05); g.add(f); }
+    }
+    for (let i = 0; i < 4; i++) { const hang = box(0.025, 0.07, 0.02, flat(S.key === 'fens' ? '#4a5048' : '#8a5a3a'), -w / 2 + 0.07 + i * 0.1, 0.25, -d / 2 + 0.03, g); void hang; }   // strings of eels / sausages / onions
+    sackMesh(g, S, w / 2 + 0.06, 0.04, 0.8); TYPES.barrel(S, (() => { const b = new THREE.Group(); b.position.set(-w / 2 - 0.07, 0, -0.02); b.scale.setScalar(0.8); g.add(b); return b; })());
+  },
+  // a lane well: a square stone curb, an A-frame and a winch with its crank, the bucket up on the rope
+  lanewell(S, g, r) {
+    for (const [x, z, w, d] of [[0, -0.11, 0.26, 0.04], [0, 0.11, 0.26, 0.04], [-0.11, 0, 0.04, 0.18], [0.11, 0, 0.04, 0.18]]) box(w, 0.15, d, S.m.stone, x, 0, z, g);
+    const water = box(0.18, 0.005, 0.18, flat('#1d3040'), 0, 0.1, 0, g); void water;
+    for (const sx of [-1, 1]) { const a = box(0.024, 0.4, 0.024, S.m.beam, sx * 0.14, 0, 0, g); a.rotation.z = sx * 0.12; }
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.26, 8), S.m.wood); drum.rotation.z = Math.PI / 2; drum.position.y = 0.36; g.add(drum);
+    box(0.012, 0.012, 0.08, S.m.trim, 0.16, 0.36, 0.04, g); box(0.012, 0.05, 0.012, S.m.trim, 0.16, 0.36, 0.08, g);   // the crank
+    box(0.006, 0.14, 0.006, S.m.trim, 0, 0.22, 0, g);
+    const bk = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.05, 8), S.m.wood); bk.position.set(0, 0.2, 0); g.add(bk);
+    if (S.key === 'heights') { const sc = box(0.27, 0.012, 0.27, SNOW, 0, 0.15, 0, g); void sc; }
+  },
+  // a lamp post: a timber post on a stone foot, an iron arm and a hanging lantern, lit
+  lamppost(S, g, r) {
+    box(0.07, 0.05, 0.07, S.m.stone, 0, 0, 0, g); box(0.025, 0.56, 0.025, S.m.beam, 0, 0.05, 0, g);
+    box(0.012, 0.012, 0.12, S.m.trim, 0, 0.58, 0.05, g);
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.06), S.m.glass); l.userData.glow = true; l.position.set(0, 0.51, 0.1); g.add(l);
+    box(0.075, 0.016, 0.075, S.m.trim, 0, 0.55, 0.1, g); box(0.006, 0.03, 0.006, S.m.trim, 0, 0.56, 0.1, g);
+  },
+  // a bench: two plank legs, a seat, a back rail
+  bench(S, g, r) {
+    box(0.3, 0.018, 0.08, S.m.wood, 0, 0.08, 0, g);
+    for (const sx of [-1, 1]) box(0.018, 0.08, 0.07, S.m.beam, sx * 0.12, 0, 0, g);
+    for (const sx of [-1, 1]) box(0.016, 0.1, 0.016, S.m.beam, sx * 0.12, 0.09, -0.035, g);
+    box(0.3, 0.03, 0.014, S.m.wood, 0, 0.16, -0.035, g);
+  },
+  // a stone water trough, half full
+  trough(S, g, r) {
+    box(0.36, 0.03, 0.14, S.m.stone, 0, 0, 0, g); for (const sz of [-1, 1]) box(0.36, 0.1, 0.025, S.m.stone, 0, 0, sz * 0.0575, g); for (const sx of [-1, 1]) box(0.025, 0.1, 0.09, S.m.stone, sx * 0.1675, 0, 0, g);
+    box(0.31, 0.006, 0.09, flat('#2a4458'), 0, 0.07, 0, g);   // (pass 14: the water was inside a solid block)
+    box(0.03, 0.14, 0.03, S.m.beam, 0.2, 0, -0.04, g); box(0.012, 0.012, 0.06, S.m.trim, 0.2, 0.13, -0.01, g);   // a pump-post and its spout
+  },
+  // a woodpile: split logs stacked between two stakes under a little plank roof
+  woodpile(S, g, r) {
+    logStack(g, 0, 0, 4, 0.34, false);
+    for (const sx of [-1, 1]) box(0.025, 0.3, 0.025, S.m.beam, sx * 0.14, 0, 0.04, g);
+    const pr = box(0.36, 0.018, 0.22, S.m.wood, 0, 0.3, 0.0, g); pr.rotation.x = -0.25;
   },
 });
 

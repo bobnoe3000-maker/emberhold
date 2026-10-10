@@ -128,3 +128,37 @@ test('Saltmere on the Fens: the boardwalk runs in off the canal road, through th
   assert.ok(a.x > gate.x && Math.abs(a.y - gate.y) < 1, 'you arrive on the boardwalk, facing the gate');
   for (let x = Math.floor(gate.x); x <= a.x; x++) assert.ok(isWalkable(o, x + 0.5, gate.y), `the boardwalk is open at ${x}`);
 });
+
+// The town set (art critic pass 14; 2026-10-10, the owner: "add them to the town layouts.. make sure placement makes
+// sense and is not in the way"): the one-storey homes and the common things are in every town, none stands on a road
+// or in the walk from where you wake to a door, and every door, the homes' too, can still be walked to.
+const SET = /_(cottagex?|longhousex?|workshopx?|foodstandx?|standard|lanewell)_\d$|^(windmill|cart|handcart|table|boxes|lamppost|bench|trough|woodpile)_\d+$/;
+const HOME = /_(housex?|cottagex?|longhousex?|workshopx?)_\d$/;
+const segDist = (px, py, [ax, ay], [bx, by]) => { const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(px - ax - t * vx, py - ay - t * vy); };
+const rectDist = (r, x, y) => Math.hypot(Math.max(r[0] - x, x - r[2], 0), Math.max(r[1] - y, y - r[3], 0));
+for (const region of Object.keys(REGIONS)) test(`${region}: the town set is placed, off the roads, out of the way, every door still walked to`, () => {
+  const o = createOutdoor(1, 'town', region), entry = (id) => TOWN[region].find((e) => e.id === id), set = o.structs.filter((s) => SET.test(s.id));
+  const kinds = new Set(set.map((s) => s.id.replace(`${region}_`, '').replace(/x?_\d+$/, '')));
+  for (const k of ['cottage', 'longhouse', 'workshop', 'foodstand', 'standard', 'lamppost', 'table', 'boxes', 'handcart']) assert.ok(kinds.has(k), `no ${k} in ${region}`);
+  if (!o.waystation) for (const k of ['lanewell', 'cart', 'trough', 'woodpile', 'bench']) assert.ok(kinds.has(k), `no ${k} in ${region}`);
+  assert.equal(kinds.has('windmill'), region === 'vale', 'the windmill is the Vale\'s');
+  // off every road: no footprint tile within the road's half-width of its line
+  for (const s of set) { const r = rect(s);
+    for (let y = Math.floor(r[1]); y <= Math.floor(r[3]); y++) for (let x = Math.floor(r[0]); x <= Math.floor(r[2]); x++)
+      for (const rd of o.roads) for (let i = 0; i + 1 < rd.pts.length; i++) assert.ok(segDist(x + 0.5, y + 0.5, rd.pts[i], rd.pts[i + 1]) > rd.w / 2, `${s.id} at ${s.x},${s.y} is on a road`); }
+  // out of the way: 2 tiles clear of the straight walk from each arrival in the square to each service's door
+  const doorOf = (s) => door(s, !!(entry(s.id) || {}).faceX);
+  for (const a of [o.arrivals.default, o.arrivals.temple]) for (const sv of o.services) {
+    const d = doorOf(sv), b = [d.x + d.n[0], d.y + d.n[1]];
+    for (const s of set) for (let t = 0; t <= 1; t += 0.02) { const x = a.x + (b[0] - a.x) * t, y = a.y + (b[1] - a.y) * t;
+      assert.ok(rectDist(rect(s), x, y) >= 2, `${s.id} at ${s.x},${s.y} is in the way to the ${sv.kind}`); }
+  }
+  // every door walked to from where you wake: the tile a step out of the door's face, somewhere along its middle
+  const seen = new Set(), q = [[Math.floor(o.arrivals.default.x), Math.floor(o.arrivals.default.y)]];
+  while (q.length) { const [x, y] = q.pop(), k = x + ',' + y; if (seen.has(k) || x < -20 || y < -20 || x > o.W + 20 || y > o.H + 20 || !isWalkable(o, x + 0.5, y + 0.5)) continue; seen.add(k); q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+  for (const s of [...o.services, ...o.structs.filter((t) => HOME.test(t.id))]) {
+    const r = rect(s), fx = !!(entry(s.id) || {}).faceX, span = fx ? [r[1], r[3]] : [r[0], r[2]], m = (span[1] - span[0]) * 0.2;
+    let ok = false; for (let u = Math.floor(span[0] + m); u <= span[1] - m && !ok; u++) ok = seen.has(fx ? `${Math.floor(r[2] + 0.6)},${u}` : `${u},${Math.floor(r[3] + 0.6)}`);
+    assert.ok(ok, `${s.id} at ${s.x},${s.y}: its door can't be walked to`);
+  }
+});
