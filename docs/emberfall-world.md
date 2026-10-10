@@ -1,6 +1,15 @@
 # Emberfall — World Summary
 
-**v1.32 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.32 (§3, §6; the owner's decision,
+**v1.33 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.33 (§3, §5, §6; the owner's
+decision, [quest-progression-critique.md](./quest-progression-critique.md)): **Act I has four chapters.** The fourth,
+*The Standard*, is Sister Ilse's: an ember-shard is cut out of one of the bound, and near the bound it stirs them, so
+the robed men's digging down to the Third Legion's binding under the Sunken Chapel is why the barrows woke; break the
+Standard's lamp and the legion lies down. Tobin Hask's errand, *The Last Chit*, puts down the Quartermaster. *The
+Sickpools* ends with the Vatwarden; *The Rolls* are caught on the Abbey's second floor, under the Choir. The level-12
+trials are fought where a level-12 company fights (the Mound, the Locks' first floor); Brannoc's *Standing Down* is
+in the Binding Crypt, among the bound.
+
+v1.32 (§3, §6; the owner's decision,
 [dungeons-per-map-proposal.md](./dungeons-per-map-proposal.md)): **one dungeon a level**. Emberfall runs 1–18 in six
 dungeons of three levels each, none overlapping: in the Vale the Old Barrows (1–3), Wickham Keep (4–6) and the Sunken
 Chapel (7–9); in the Fens Toadking's Mound (10–12), the Canal Locks (13–15, the Sickpools its third floor, *Vat Seven*)
@@ -197,7 +206,8 @@ never rusts, and shows a pattern like frost on a window when it's cut and etched
 the flame without burning through, and only soul-fire melts it, so every lamp ever made cost souls to cast.
 
 **The lamps.** Every soul-lamp is pale iron, lit from the Ember. The empire hung them wherever it bound people:
-- **standard-lamps**, one on each legion's standard (the Third Legion's is on the Standard in the barrows);
+- **standard-lamps**, one on each legion's standard (the Third Legion's is on the Standard, over its binding in the
+  Sunken Chapel's crypt: v1.32);
 - **choir-lamps**, in the binding clergy's chapels;
 - **furnace-lamps**, the foundries' furnaces themselves;
 - **coast-lamps** and stern-lanterns, for the fleet;
@@ -311,7 +321,9 @@ it's where everyone starts.
     *the Long Gallery* (burial niches, the dead in rows), *the Muster Hall*, where **the Quartermaster** of the Third
     Legion still keeps the stores. He is the legion's issuing officer, and he still issues: every little while the
     most broken of his ranks stands up whole, re-armed from his racks. Thornwick's sexton, **Tobin Hask**, keeps a
-    lantern at the barrow mouth and the dead's names in a book nobody asked him to keep.
+    lantern at the barrow mouth and the dead's names in a book nobody asked him to keep. (v1.33) His errand, *The
+    Last Chit*: while the Quartermaster (Gaius Venn, quartermaster-sergeant, in Tobin's book) issues, the Long Gallery's dead keep getting up whole; put him down, and the
+    ones you put down stay down, and Tobin can stop crossing names out twice.
   - **Wickham Keep** (4–6), a fort, then a cave: *the Bailey* (the Company's camp), *the Barracks* (bunks, the
     armoury and the paymaster's strongroom), *the Old Cellars*, where the Redhand dug through the
     imperial stone and broke into a cave under it: pools, stone teeth up out of the floor, the roof's water coming
@@ -393,7 +405,10 @@ on the stilt-houses never go out.
 - **The Fens' three, and its secret (v1.32).** Toadking's Mound (10–12), the Canal Locks (13–15) and the Drowned Abbey
   (16–18), none overlapping. The Sickpools are the Locks' third floor now, *Vat Seven*: the canal drains the vats, and
   the lock-keepers' halls go down into them. **The Vatwarden**, the Cult's overseer at Vat Seven, keeps the vat's
-  sluice; every little while he opens it, and the vat's sick water runs across his hall. The Reedholm Undercroft is
+  sluice; every little while he opens it, and the vat's sick water runs across his hall. (v1.33) *The Sickpools*
+  ends with him: the cages, then the man who fills them. Toadking's Mound was the fen-folk's burying-island before
+  the Toadking took it, and its drowned went into the mud with nothing said over them; Mother Agnes's *Vigil* is kept
+  there, on its third floor. The Reedholm Undercroft is
   the Fens' secret dungeon (18): once it's cleared it seals itself for a while, and then it can be walked again.
 - **Saltmere's own (v1.22):** the **eel-men**, who run the traps along the canal and eat what's in them, and **Saltmere's
   ferryman**, who poles a punt across the meres for a copper and won't go past the sites after dark.
@@ -679,8 +694,9 @@ halflings in the marsh, and rare, aloof elves passing through. Standard fantasy,
   (v1.8) Its three parts: *Old Debts*, Garrow's sergeants, who kept his chain oiled and say he still
   owes them; *The Paymaster's Box*, the Company paymaster's two chests in the Tithe Mill (he trusted
   nobody, himself included), where every purse of the robes' coin is sealed in coal-red wax with no
-  crest in it, only a thumbprint; and *Standing Down*, where he stands five waves in the Old Barrows
-  beside the legion that never deserted anything. He found the key to his chain on Garrow and
+  crest in it, only a thumbprint; and *Standing Down*, where he stands five waves beside the legion that never
+  deserted anything (v1.33: in the Sunken Chapel's Binding Crypt, among the bound, where they were stopped; it was the
+  Old Barrows). He found the key to his chain on Garrow and
   hadn't used it when you came in. He joins your company there.
 - **Captain Garrow** (v1.7), captain of the Redhand Company. He collects: tolls, tithes, debts,
   and men who owe him. The robed strangers' coin made him careless.
@@ -760,11 +776,13 @@ else before she kept an inn, and won't say what), **Hedda** for mages (*Cold Wea
 listens to her) and **Sister Ilse** for clerics (*Last Rites*).
 
 **The level-12 trials (v1.30).** At level 12, once a class has its first trial, it has a second, fought in the Fens. From
-Thornwick, **Osric Hale** sets the fighters' (*The Long Watch*: hold the Canal Locks' Sluice ten waves, as the
-Watch holds a post nobody comes to relieve). **Wren** teaches rogues (*Dead Water*: five of the harvesters' leaders in
-the Sickpools, before they see you) and **Pim Rushlight** mages (*Lamp Oil*: a chandler knows what burns, and the
-vats burn). **Mother Agnes** sets clerics a vigil in the Drowned Abbey (*Vigil*), and **Col** sends shamans to the
-Toadking's island, where his grandmother wouldn't go (*The Old Water*). What each teaches: Second Wind, Venom, Arcane
+Thornwick, **Osric Hale** sets the fighters' (*The Long Watch*: hold the Mound's second-floor hall ten waves, as the
+Watch holds a post nobody comes to relieve). **Wren** teaches rogues (*Dead Water*: five of the Canal Locks' wave
+leaders, before they see you) and **Pim Rushlight** mages (*Lamp Oil*: a chandler knows what burns, and the lock
+halls' oil stores burn). **Mother Agnes** sets clerics a vigil on the Toadking's island, its burying-ground, where
+nobody said anything over the drowned (*Vigil*), and **Col** sends shamans to the same island, where his grandmother
+wouldn't go (*The Old Water*). (v1.33: all five are fought at 11–13, where a level-12 company fights; they were in the
+Locks' Sluice, Vat Seven and the Abbey, two to four levels up.) What each teaches: Second Wind, Venom, Arcane
 Ward, Turn Undead and Hex.
 
 ---
@@ -782,7 +800,13 @@ needs, and the endings vary: the Cult doesn't win every time.
    shard, which goes to Sister Ilse; the Standard of the Third Legion.) (v1.32: the bandits' smoke is their fires at
    the barrow mouth, where they've dug in, and Maudry's errand is there; Garrow holds the Keep's old cellars; the
    Robed Stranger works the Chapel's dig, and the Standard stands under it in the Binding Crypt, the Vale's last hall
-   at 9: the lamp breaks, the road opens, Act I ends.) **The spark.**
+   at 9: the lamp breaks, the road opens, Act I ends.) (v1.33) **As told, four chapters:** *Smoke over the Vale*
+   (Maudry, 1: the Redhand at the barrow mouth); *The Diggers* (Osric, 4–6: Garrow); *An Ember in the Fist* (Osric,
+   7–8: the Stranger and the shard, to Ilse); and *The Standard* (Ilse, 9). Ilse knows what the shard is: a spark cut
+   out of one of the bound, and near the bound a spark stirs them. The robed men dug down to the Third Legion where
+   it was bound, under the chapel, and cut sparks out of it, and every spark carried past the barrows woke the rest;
+   that's why the dead stood up this spring. The Standard's lamp is dark, so it can be broken: break it, and every
+   soul in it goes free, and the legion lies down where it stands. **The spark.**
 2. **Act II — The Drowned Abbey** (the Fens, 10–18; was 8–15). The shard leads south. Wren knows where the Cult's boats go;
    the Kindler preaches from one at the Canal Locks, and won't give his name yet. The Cult is draining the
    Sickpools and harvesting the drowned clergy at the Abbey, and **stealing** the binding rolls. The company saves
@@ -798,11 +822,14 @@ needs, and the endings vary: the Cult doesn't win every time.
       sit, and the lock-men in the Sluice below have stopped lying still. He speaks to the company kindly, won't
       give his name, and leaves on the Cult's boat: **the Kindler**, met. Then hold the Sluice, the hall below.
    3. *The Sickpools* (11–12; v1.32: 15, the Locks' third floor, Vat Seven). Pim says the vats are being drained by night, and he'd know: he buys what comes out.
-      The harvesters there are filling their cages. Break three full cages.
+      The harvesters there are filling their cages. Break three full cages. (v1.33) Then the Vatwarden, the
+      overseer who fills them, in Vat Seven's hall.
    4. *The Bells* (12–13; v1.32: 16). Sister Orla: the Abbey's bells rang three nights running, and the Cult has a man at the
       choir's door. Brother Teague, who tells you his name.
    5. *The Rolls* (13–14; v1.32: 17). The Cult is carrying off the binding rolls from the Abbey's lowest floor. Get down there
       and save what's left (two chests' worth), and carry them to Mother Agnes, come down to Saltmere's chapel.
+      (v1.33) They're caught on the way up: the Cult carries them up the choir's stair while the Drowned Choir sings
+      over it. Silence the Choir, then save two chests' worth on the second floor.
    6. *The Last Office* (14–15; v1.32: 18). Agnes reads the rolls and wishes she hadn't: the Abbess kept the choir-lamp lit for
       the Cult's harvest. Put her down; the lamp breaks. Back to Ilse in Thornwick, who lays the shards side by side
       and reads the Abbey's ledger: the Cult wasn't raising the dead, it was **mining** them, and the buyer's mark (a
