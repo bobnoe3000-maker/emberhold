@@ -36,7 +36,8 @@ function fight(level = 12, passive = false, site = 'tithe_mill') {
   const sh = makeMember('sh', 'Sedge', 'shaman', passive ? 20 : level), fi = makeMember('fi', 'Hild', 'fighter', passive ? 20 : level);
   sim.state.party.push(sh, fi); sim.state.trials = { shaman: 1, shaman12: 1 };
   for (const m of sim.state.party) { m.level = Math.max(m.level, passive ? 20 : level); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; }
-  const L = sim.world.level, r = L.rooms.find((q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id)), p = sim.state.player;
+  // a large room, as every room was when these were written (rooms come in three sizes now: level.js ROOM_SIZES); these measure the rules
+  const L = sim.world.level, mid = (q) => q.id !== L.entrance.id && (!L.descentRoom || q.id !== L.descentRoom.id), r = L.rooms.find((q) => mid(q) && q.size === 'large') || L.rooms.find(mid), p = sim.state.player;
   let at = [r.cx + 0.5, r.cy + 0.5]; if (!isWalkable(sim.world, at[0], at[1])) for (const [k, c] of L.cells) if (c.kind === 'floor' && c.room === r.id) { const [x, y] = k.split(',').map(Number); if (isWalkable(sim.world, x + 0.5, y + 0.5)) { at = [x + 0.5, y + 0.5]; break; } }
   p.x = p.px = at[0]; p.y = p.py = at[1];
   // the room's foes made tough enough to outlast the drain (this measures the rules, not the balance)
@@ -71,11 +72,13 @@ test('Spirit Drain stacks on a foe (to 5; Old Ways to 8), ticks, and mends the m
 });
 
 test('Ancestors\' Breath: the whole party heals over time and hits harder while it lasts; Hex cuts a knot of foes', () => {
-  const sim = fight(14, false, 'wickham_keep'), sh = sim.state.party.find((m) => m.cls === 'shaman');   // (its rooms send 3–4 at once: a knot)
+  const sim = fight(14, false, 'wickham_keep'), sh = sim.state.party.find((m) => m.cls === 'shaman');
   sh.off = ['spirit_drain'];
   let breathed = false, healedOverTime = false, hexed = false, hexNote = '';
   for (let i = 0; i < 20 * 90 && !(breathed && hexed); i++) {
     if (i % 40 === 0) for (const m of sim.state.party) if (!m.down) m.hp = statsFor(m).maxHp * 0.45;
+    // a knot to hex: the foes gathered in a huddle beside the party now and then (a kiting party split them for good on some floors; this measures the rule)
+    if (i % 100 === 50) { const p = sim.state.player, live = (sim.world.enemies || []).filter((e) => !e.dead && e.hp > 0 && !(e.spawn > 0)); live.forEach((e, k) => { e.x = e.px = p.x + 3 + (k % 2) * 0.8; e.y = e.py = p.y + 3 + Math.floor(k / 2) * 0.8; }); }
     const hp0 = sim.state.party.map((m) => m.hp);
     sim.tick();
     const all = sim.state.party.filter((m) => !m.down && m.buff && m.buff.breath > 0);

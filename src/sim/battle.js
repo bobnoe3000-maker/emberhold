@@ -86,6 +86,12 @@ const WIND = 1;
 // (corridors and towns restore you) or when the room wins. Above level 3 foes carry PREMIUM a level
 // more, for the party and the gear a same-level room now expects.
 export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl / 2)));
+// A room's size (level.js ROOM_SIZES; GDD §3.1 v1.46) caps how many come at once: a small room has no space to spread
+// out and kite in, so it holds four at most (the wave's five, from level 8, is four there); a medium or large room
+// takes the full wave. Measured with tools/balance/roomlv.mjs --size, the right party at its level over three seeds:
+// with five, a small room at 9 held 9.3 waves (the contract wants 10+); one fewer at every level made it the easiest
+// room (33 waves at 3 against 24 in a large one, 23 at 6 against 17).
+export const SIZE_CAP = { small: 4 };
 export const PREMIUM = 0.05;
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room). A wave at the top is followed by one back at the start,
@@ -316,7 +322,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     // the room's level sets the size, stats and mix (at most a third archers and mages); every fifth
     // wave an elite takes one slot; each wave of the visit rises with the tide
     const eliteWave = (b.wave + 1) % 5 === 0;
-    const n = Math.max(1, waveSize(lvl) - (eliteWave ? 1 : 0));
+    const n = Math.max(1, Math.min(SIZE_CAP[b.size] || 99, waveSize(lvl)) - (eliteWave ? 1 : 0));
     // the tide: a step up from the last wave, to the top; after the top, back to the start
     if (b.wave > 0) {
       const T = tideOf(w, b.room);
@@ -425,7 +431,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
       tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
-      hazards: [], flood: 0, edge: null };                                                                               // the ground hazard (hazards.js)
+      hazards: [], flood: 0, edge: null, size: (w.level.rooms.find((r) => r.id === room) || {}).size || 'large' };       // the ground hazard (hazards.js); the room's size (SIZE_CAP)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
       const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
     }

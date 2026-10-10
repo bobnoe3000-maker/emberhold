@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v29', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 29); });
+test('three game slots, save v30', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 30); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -95,4 +95,18 @@ test('v28 → v29: the one shop becomes Thornwick\'s shelves, and restores as th
   assert.deepEqual(m.data.shops, { thornwick: { day: 0, lv: 1, bought: [1, 3] } }); assert.equal(m.data.shop, undefined);
   assert.deepEqual(shopsFor(m.data), m.data, 'once');
   const r = createSim(7, undefined, { scene: 'town' }); r.restore(m.data); assert.deepEqual(r.state.shop.bought, [1, 3]);
+});
+
+test('v29 → v30: a visit under way starts again at the site\'s first floor, in its entrance; a save outside keeps its place', () => {
+  const sim = createSim(20260807, undefined, { scene: 'dungeon', site: 'wickham_keep' }), L = sim.world.level, far = L.rooms[L.rooms.length - 1];
+  sim.state.player.x = sim.state.player.px = far.cx + 0.5; sim.state.player.y = sim.state.player.py = far.cy + 0.5;
+  const old = JSON.parse(JSON.stringify(sim.snapshot())); old.depth = 1; old.mods = [['10,10', { opened: true }]]; old.discovered = [0, 1, 2]; old.floors = [[0, { mods: [], hp: [], discovered: [0], visited: [] }]];
+  const m = migrate({ version: 29, savedAt: 1, data: old });
+  assert.equal(m.version, 30); assert.equal(m.data.depth, 0); assert.deepEqual([m.data.mods, m.data.discovered, m.data.floors], [[], [], []]);
+  const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
+  const e = r.world.level.entrance, p = r.state.player;
+  assert.equal(r.world.depth, 0); assert.equal(r.world.level.layout, 'halls');
+  assert.ok(Math.abs(p.x - r.world.level.spawn.x) < 3 && Math.abs(p.y - r.world.level.spawn.y) < 3 && r.world.level.cells.get(Math.floor(p.x) + ',' + Math.floor(p.y)).room === e.id, 'not in the entrance');
+  const town = createSim(7, undefined, { scene: 'town' }).snapshot(), t = migrate({ version: 29, savedAt: 1, data: JSON.parse(JSON.stringify(town)) });
+  assert.deepEqual(t.data.player, town.player, 'a save in town keeps its place');
 });

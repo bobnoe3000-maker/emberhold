@@ -31,7 +31,7 @@ export const CHEST_KEEP = 0.35;
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site);   // (its furniture below: `human`, `themes`)
   const th = theme || S.theme || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
-  const level = generateLevel(seed, th, { rooms: S.rooms });
+  const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout });
   const world = {
     kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name,
     ss: streamSeed(seed, 131),            // floor-material selector

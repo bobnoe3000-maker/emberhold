@@ -153,7 +153,8 @@ function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, ge
     for (const sl of Object.keys(m.gear)) if (STARTER[c][sl]) m.gear[sl] = makeItem(STARTER[c][sl], gear, rarity, { uid: `${i}${sl}` });
     m.hp = statsFor(m).maxHp; m.mp = undefined; return m;
   });
-  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom), p = sim.state.player; sim.world.roomLevels.set(r.id, rl);
+  // (a large room: the arena the contract is set for; rooms come in three sizes, level.js ROOM_SIZES, and the room-level harness measures the others: tools/balance/roomlv.mjs --size)
+  const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom && q.size === 'large'), p = sim.state.player; sim.world.roomLevels.set(r.id, rl);
   let best = null, bd = 1e9;
   for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } }
   p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5;

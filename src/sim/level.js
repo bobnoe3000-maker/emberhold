@@ -10,6 +10,7 @@
 
 import { mulberry32, fbm } from './rng.js';
 import { hypot } from './detmath.js';
+import { generateHalls } from './halls.js';
 
 // Terrain themes. `floors` is a weighted bag sampled by noise for the base
 // ground; `hazard` is a material that pools across the floor (impassable);
@@ -50,9 +51,39 @@ function inRoom(shape, dx, dy, rw, rh) {
   }
 }
 
+// Rooms come in three sizes (2026-10-10, the owner: "both halls and the cavern style rooms should generally come in 3
+// sizes, small, medium and large with large being what you currently have"): tiles across, each way. Large is the
+// GDD's arena (§3.1), as every room was. A floor's descent room, its boss's hall, is always large; the others come
+// from a bag of the three, shuffled, so a floor has some of each (sizesFor).
+export const ROOM_SIZES = { small: [18, 26], medium: [28, 38], large: [40, 62] };
+/** a size's width and depth, drawn @param {string} size @param {() => number} rng @returns {[number, number]} */
+export const roomDims = (size, rng) => { const [a, b] = ROOM_SIZES[size] || ROOM_SIZES.large; return [a + Math.floor(rng() * (b - a + 1)), a + Math.floor(rng() * (b - a + 1))]; };
+/** the sizes of a floor's rooms but its descent room's: bags of small, medium and large, each shuffled @param {number} n @param {() => number} rng */
+export function sizesFor(n, rng) {
+  const out = [];
+  while (out.length < n) { const bag = ['small', 'medium', 'large']; for (let i = bag.length - 1; i > 0; i--) { const k = Math.floor(rng() * (i + 1)); [bag[i], bag[k]] = [bag[k], bag[i]]; } out.push(...bag); }
+  return out.slice(0, n);
+}
+
 // opts.rooms: [min, max] rooms for a floor (a site's own, sites.js); the Old Barrows keep 6–8. Either
-// way it's one draw, so a Barrows floor comes out as it always has.
+// way it's one draw, so a Barrows floor's rooms stand where they always have.
+// opts.layout: 'caverns' (here: rooms of any shape scattered in the abyss, corridors between) or 'halls' (halls.js:
+// one building of rectangular rooms and short straight halls; docs/dungeon-halls-proposal.md). A site's (sites.js).
 export function generateLevel(seed, theme, opts = {}) {
+  if (opts.layout === 'halls') return hallsLevel(seed, theme, opts);
+  return cavernsLevel(seed, theme, opts);
+}
+
+// The halls: the room count drawn as the caverns draw it, then the building (halls.js)
+function hallsLevel(seed, theme, opts) {
+  const th = THEMES[theme] || THEMES.dread, rng = mulberry32(((seed >>> 0) ^ 0x9e3779b9) >>> 0);
+  const want = opts.rooms ? opts.rooms[0] + Math.floor(rng() * (opts.rooms[1] - opts.rooms[0] + 1)) : 6 + Math.floor(rng() * 3);
+  const sizes = [...sizesFor(want - 1, mulberry32(((seed >>> 0) ^ 0x5123e5) >>> 0)), 'large'];
+  const L = generateHalls(seed, { want, sizes, dims: roomDims, floorZ: FLOOR_Z, wallZ: WALL_Z });
+  return { ...L, theme, th, layout: 'halls' };
+}
+
+function cavernsLevel(seed, theme, opts = {}) {
   const th = THEMES[theme] || THEMES.dread;
   const rng = mulberry32(((seed >>> 0) ^ 0x9e3779b9) >>> 0);
   const shapes = ['rect', 'rect', 'oval', 'oval', 'diamond', 'ell'];   // open arenas (no pinched 'plus')
@@ -78,6 +109,24 @@ export function generateLevel(seed, theme, opts = {}) {
   // diamond, so only floor is added; the draws are the same, and every other room as it was.
   const order = [...rooms].sort((p, q) => (p.cx + p.cy) - (q.cx + q.cy));
   if (order[0] && order[0].shape === 'diamond') order[0].shape = 'rect';
+
+  // the sizes (ROOM_SIZES): the descent room (farthest from the entrance, as below) stays large, as placed; the rest
+  // take the bag's, on their own stream, each shrinking about its own middle. So every room and every corridor stands
+  // where it did, and a large room is the room it always was. A small diamond would be a pinch: it's an oval.
+  {
+    const ent = order[0], far = ent && rooms.reduce((best, r) => (hypot(r.cx - ent.cx, r.cy - ent.cy) > hypot(best.cx - ent.cx, best.cy - ent.cy) ? r : best), ent);
+    const srng = mulberry32(((seed >>> 0) ^ 0x5123e5) >>> 0), rest = rooms.filter((r) => r !== far), sizes = sizesFor(rest.length, srng);
+    // the entrance is never small: corridors cross it, and a small oval had no stretch of back wall left for the stair up
+    // (it swaps with the next room that isn't, so the floor keeps its mix)
+    const ei = rest.indexOf(ent), si = sizes.findIndex((z, i) => i !== ei && z !== 'small');
+    if (ei >= 0 && sizes[ei] === 'small') { if (si >= 0) [sizes[ei], sizes[si]] = [sizes[si], sizes[ei]]; else sizes[ei] = 'medium'; }   // (no other to trade with: medium)
+    rest.forEach((r, i) => {
+      r.size = sizes[i]; if (r.size === 'large') return;
+      const [w, d] = roomDims(r.size, srng); r.rw = Math.min(r.rw, Math.floor(w / 2)); r.rh = Math.min(r.rh, Math.floor(d / 2));
+      if (r.size === 'small' && r.shape === 'diamond') r.shape = 'oval';
+    });
+    if (far) far.size = 'large';
+  }
 
   const cells = new Map();
   const setFloor = (x, y, room, corridor) => {
@@ -117,9 +166,14 @@ export function generateLevel(seed, theme, opts = {}) {
       if (!cells.has(nk)) wallKeys.add(nk);
     }
   }
+  const ent = order[0];
+  const entranceBack = (x, y) => { const s = cells.get(key(x, y + 1)), e = cells.get(key(x + 1, y)); return !!ent && ((s && s.room === ent.id) || (e && e.room === ent.id)); };
   for (const nk of wallKeys) {
     if (cells.has(nk)) continue;
     const [x, y] = nk.split(',').map(Number);
+    // the entrance's north and west walls always stand, whole: the stair up is built against them (a small entrance
+    // had too little standing wall for it once rooms came in sizes)
+    if (entranceBack(x, y)) { cells.set(nk, { kind: 'wall', room: -1, corridor: false, wz: WALL_Z }); continue; }
     if (fbm(x * 0.16, y * 0.16, seed + 4001) < 0.30) continue;          // fallen away → open edge
     // height: often full, weathered down in patches (>= FLOOR_Z+2 so it still reads as a wall)
     const wz = fbm(x * 0.24, y * 0.24, seed + 811) > 0.52
@@ -133,5 +187,5 @@ export function generateLevel(seed, theme, opts = {}) {
   // the level to find the way down.
   let descentRoom = entrance;
   if (entrance) { let bd = -1; for (const r of rooms) { const d = hypot(r.cx - entrance.cx, r.cy - entrance.cy); if (d > bd) { bd = d; descentRoom = r; } } }
-  return { cells, rooms, edges, theme, th, spawn, entrance, descentRoom, W, H };
+  return { cells, rooms, edges, theme, th, spawn, entrance, descentRoom, W, H, layout: 'caverns' };
 }
