@@ -1,0 +1,14 @@
+{
+  "id": "ned_fallow",
+  "name": "Ned Fallow",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_ned",
+  "portrait": "npc_ned",
+  "dialogue": "ned",
+  "knot": "ned_hub",
+  "note": "The Tithe Mill's miller, held in Wickham Keep's bailey by the Redhand for Lord Pellam's ransom, which Lord Pellam hasn't paid; he knows the Keep's floors (world doc §3.1, v1.32)."
+}

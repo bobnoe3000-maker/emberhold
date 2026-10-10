@@ -627,5 +627,50 @@
   "marks": [
    "wrinkles"
   ]
+ },
+ "tobin": {
+  "skin": "fair",
+  "hair": "receding",
+  "hairColor": "grey",
+  "brows": "heavy",
+  "browColor": "white",
+  "eyes": "tired",
+  "iris": "grey",
+  "mouth": "line",
+  "nose": "long",
+  "beard": "stubble",
+  "beardColor": "white",
+  "marks": [
+   "wrinkles"
+  ]
+ },
+ "ned": {
+  "skin": "rose",
+  "hair": "crop",
+  "hairColor": "straw",
+  "brows": "worried",
+  "eyes": "wide",
+  "iris": "blue",
+  "mouth": "frown",
+  "nose": "broad",
+  "beard": "stubble",
+  "beardColor": "straw",
+  "marks": [
+   "blush"
+  ]
+ },
+ "hester": {
+  "skin": "tan",
+  "hair": "long",
+  "hairColor": "grey",
+  "brows": "thin",
+  "eyes": "narrow",
+  "iris": "green",
+  "mouth": "smirk",
+  "nose": "hook",
+  "marks": [
+   "wrinkles",
+   "freckles"
+  ]
  }
 }

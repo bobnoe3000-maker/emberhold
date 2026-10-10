@@ -4080,6 +4080,256 @@
   "height": 1.0
  },
  {
+  "id": "N15",
+  "cls": "NPC",
+  "label": "Tobin Hask \u00b7 Thornwick's sexton, at the barrow mouth: a rusty black coat, his lantern and the dead's book",
+  "model": "Rogue",
+  "show": [],
+  "hold": {
+   "handslot.r": "lantern",
+   "handslot.l": "book"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#3a3634",
+     "#121010"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#2e2a28",
+     "#0e0c0a"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2624",
+     "#0c0a0a"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2e24",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#4a3a2a",
+     "#1a120a"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#3a2e22",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2624",
+     "#0c0a0a"
+    ]
+   }
+  ],
+  "face": "tobin",
+  "height": 0.9
+ },
+ {
+  "id": "N16",
+  "cls": "NPC",
+  "label": "Ned Fallow \u00b7 the Tithe Mill's miller, held in Wickham Keep's bailey: flour-pale shirt and apron gone grey, a week unshaven",
+  "model": "Rogue",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#bcb29a",
+     "#4a4434"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#5a5446",
+     "#1e1c16"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#8a826e",
+     "#2e2a22"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a3a2a",
+     "#18120a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4836",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2a",
+     "#18120a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#8a826e",
+     "#2e2a22"
+    ]
+   }
+  ],
+  "face": "ned",
+  "height": 0.96
+ },
+ {
+  "id": "N17",
+  "cls": "NPC",
+  "label": "Hester Lowe \u00b7 keeps bees in the Sunken Chapel's dry porch: undyed wool, a hood for a veil, a basket for the comb",
+  "model": "Rogue_Hooded",
+  "show": [],
+  "hold": {
+   "handslot.r": "basket"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#8a7e62",
+     "#2e2a1e"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#6a6048",
+     "#221e14"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#9a906e",
+     "#343024"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#4a3c2a",
+     "#18120a"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a4836",
+     "#1e160e"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3a2a",
+     "#18120a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#9a906e",
+     "#343024"
+    ]
+   }
+  ],
+  "face": "hester",
+  "height": 0.88
+ },
+ {
   "id": "CP2",
   "cls": "Companion",
   "label": "Wren \u00b7 Saltmere smuggler, twin knives (black braid, tar-dark leathers)",

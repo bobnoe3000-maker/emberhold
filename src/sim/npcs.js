@@ -61,6 +61,11 @@ export const NPCS = {
   // floor, by its way in (`entrance`), who leaves when he's said his piece (`visitor`: gone once that flag is set)
   wren: { region: 'fens', found: { site: 'toadking_mound', depth: 2, boss: 'toadking' }, spots: [], knot: 'wren_hub', flags: ['met_wren'] },
   kindler: { region: 'fens', found: { site: 'canal_locks', depth: 0, entrance: true }, visitor: 'met_kindler', spots: [], knot: 'kindler_hub', flags: ['met_kindler'] },
+  // (v1.48, world doc §3.1) the Vale's dungeons each have someone by the way in, who names the floors: Thornwick's
+  // sexton at the barrow mouth, the Mill's miller held in the Keep's bailey, the beekeeper in the chapel's porch
+  tobin_hask: { region: 'vale', found: { site: 'barrows', depth: 0, entrance: true }, spots: [], knot: 'tobin_hub', flags: ['met_tobin'] },
+  ned_fallow: { region: 'vale', found: { site: 'wickham_keep', depth: 0, entrance: true }, spots: [], knot: 'ned_hub', flags: ['met_ned'] },
+  hester_lowe: { region: 'vale', found: { site: 'sunken_chapel', depth: 0, entrance: true }, spots: [], knot: 'hester_hub', flags: ['met_hester'] },
 };
 export const PARTS = 4, PART_S = DAY_S / PARTS;                  // dawn · day · dusk · night
 /** the part of the in-game day at time t (s of play) @param {number} t */
@@ -147,6 +152,7 @@ export function placeFound(world, isWalkable, waiting) {
       if (c.room !== r.id || c.kind !== 'floor') continue;
       const [x, y] = k.split(',').map(Number), q = { x: x + 0.5, y: y + 0.5 };
       const open = [[0, 0], [1, 0], [0, 1], [1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // room to walk up beside him
+      if (n.found.entrance && world.level.spawn && hypot(q.x - world.level.spawn.x, q.y - world.level.spawn.y) < 3) continue;   // (not where you arrive: you'd stand in him)
       const key = n.found.entrance ? hypot(x - r.cx, y - r.cy) : x + y;
       if (open && (!best || key < best.k || (key === best.k && x < best.x - 0.5))) best = { ...q, k: key };
     }

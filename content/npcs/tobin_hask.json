@@ -1,0 +1,14 @@
+{
+  "id": "tobin_hask",
+  "name": "Tobin Hask",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_tobin",
+  "portrait": "npc_tobin",
+  "dialogue": "tobin",
+  "knot": "tobin_hub",
+  "note": "Thornwick's sexton, who keeps a lantern at the Old Barrows' mouth and the dead's names in a book nobody asked him to keep; he gives the Barrows' floors their names (world doc §3.1, v1.32)."
+}

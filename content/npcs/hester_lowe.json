@@ -1,0 +1,14 @@
+{
+  "id": "hester_lowe",
+  "name": "Hester Lowe",
+  "role": [
+    "townsfolk"
+  ],
+  "town": "thornwick",
+  "region": "vale",
+  "look": "npc_hester",
+  "portrait": "npc_hester",
+  "dialogue": "hester",
+  "knot": "hester_hub",
+  "note": "Keeps bees in the Sunken Chapel's dry porch, and watched the robed strangers come and go all spring; she knows the chapel's floors (world doc §3.1, v1.32)."
+}

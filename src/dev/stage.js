@@ -32,6 +32,7 @@ const CAST = [
   ['town', 'npc_maudry', 'Maudry'], ['town', 'npc_osric', 'Osric'], ['town', 'npc_ilse', 'Ilse'], ['town', 'npc_wendel', 'Wendel'], ['town', 'npc_bess', 'Bess'],
   ['town', 'npc_col', 'Col'], ['town', 'npc_jory', 'Jory'], ['town', 'npc_nell', 'Nell'], ['town', 'npc_hedda', 'Hedda'],
   ['town', 'npc_dace', 'Dace'], ['town', 'npc_pim', 'Pim'], ['town', 'npc_orla', 'Orla'], ['town', 'npc_agnes', 'Agnes'], ['town', 'npc_kindler', 'Kindler'],   // (Saltmere's, and the Kindler)
+  ['town', 'npc_tobin', 'Tobin'], ['town', 'npc_ned', 'Ned'], ['town', 'npc_hester', 'Hester'],   // (v1.48: by the Vale's dungeons' ways in)
   ['foes', 'skeleton_warrior', 'Warrior'], ['foes', 'skeleton_minion', 'Minion'], ['foes', 'skeleton_rogue', 'Archer'], ['foes', 'skeleton_mage', 'Mage'],
   ['foes', 'redhand_cutthroat', 'Cutthroat'], ['foes', 'redhand_brute', 'Brute'], ['foes', 'redhand_crossbow', 'Crossbow'], ['foes', 'cinder_acolyte', 'Acolyte'],
   ['foes', 'goblin_skirmisher', 'Goblin'], ['foes', 'goblin_bruiser', 'Bruiser'], ['foes', 'goblin_archer', 'Gob. archer'], ['foes', 'goblin_hexer', 'Hexer'],

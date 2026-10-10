@@ -4260,6 +4260,129 @@
       ]
     },
     {
+      "out": "npc_tobin",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N15",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_ned",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N16",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
+      "out": "npc_hester",
+      "portrait": true,
+      "figure": {
+        "pose": [
+          "Use_Item",
+          0.45
+        ]
+      },
+      "variant": "N17",
+      "glow": 0,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walking_B",
+          "frames": 10,
+          "fps": 10
+        },
+        {
+          "key": "fidget",
+          "clip": "Interact",
+          "frames": 10,
+          "fps": 8,
+          "once": true
+        },
+        {
+          "key": "look",
+          "clip": "Use_Item",
+          "frames": 8,
+          "fps": 7,
+          "once": true,
+          "to": 0.7
+        }
+      ]
+    },
+    {
       "out": "hero_wren",
       "portrait": true,
       "figure": {
