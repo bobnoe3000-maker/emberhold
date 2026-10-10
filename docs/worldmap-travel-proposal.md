@@ -26,7 +26,7 @@ A round 44 px **World map** button, the fourth in the right-hand column, directl
 - It uses the Journal button's style: a dark disc, a gold rim and a gold line icon (a folded map).
 - `aria-label="World map"`. Like every overlay, it swallows `pointerdown`, `touchstart` and `mousedown`.
 - It sits at the same right edge as the column (`--safe-r`), so the landscape safe area holds.
-- It shows everywhere: in town, on the overland, and in a dungeon (where it only shows the map; see §3).
+- It shows everywhere: in town, on the overland, and in a dungeon (where it only shows the map; see §2).
 
 ## 2. The map window
 
@@ -47,7 +47,7 @@ The wall map (`old-provinces.jpg`, 1200 × 2400), scrolled so the land you're in
   - the town's name and its land;
   - what it is (a town, or a waystation with tavern, inn and temple);
   - the ★ quest, if there is one;
-  - the coach and its fare (§4), and **[Travel]**.
+  - the coach and its fare (§3), and **[Travel]**.
 - The pin positions come from `draw.mjs`'s `PLACES`, moved into shared data (`src/data/worldmap.js`) that the tool
   and the UI both import. The map and its pins can't drift apart.
 
