@@ -47,7 +47,7 @@ export function swingOf(atlas) {
   if (/hero_mage|skeleton_mage|acolyte|boss_stranger|cantor|boss_choir|boss_abbess/.test(a)) return { cue: 'fire', bus: 'combat', rate: 1, gain: 0.7 };
   if (/shaman|bog_witch/.test(a)) return { cue: 'spirit', bus: 'combat', rate: 1.1, gain: 0.6 };
   if (/hexer/.test(a)) return { cue: 'hex', bus: 'combat', rate: 1.2, gain: 0.6 };
-  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard|reed_cutter|harvester|toadking|teague/.test(a);
+  const heavy = /brute|bruiser|garrow|skarn|warrior|barbarian|standard|reed_cutter|harvester|toadking|teague|quartermaster|vatwarden/.test(a);
   return { cue: 'swing', bus: 'combat', rate: heavy ? 0.82 : /goblin/.test(a) ? 1.2 : 1, gain: heavy ? 0.85 : 0.7 };
 }
 

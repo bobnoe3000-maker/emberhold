@@ -1606,6 +1606,21 @@
   "skull": true
  },
  {
+  "id": "B4",
+  "cls": "Boss",
+  "label": "The Quartermaster \u00b7 the Old Barrows: the Third Legion's issuing officer, a legion blade and the stores' keys, eyes like old brass",
+  "model": "Skeleton_Warrior",
+  "attach": {
+   "handslot.r": "Skeleton_Blade.gltf"
+  },
+  "hold": {
+   "handslot.l": "keys"
+  },
+  "eyes": "0xc89a50",
+  "height": 1.04,
+  "skull": true
+ },
+ {
   "id": "CP1",
   "cls": "Companion",
   "label": "Brannoc \u00b7 Redhand deserter, axe & shield",
@@ -3655,6 +3670,83 @@
    }
   ],
   "height": 1.1
+ },
+ {
+  "id": "FB5",
+  "cls": "Boss",
+  "label": "The Vatwarden \u00b7 the Canal Locks: the Cult's overseer at Vat Seven, charcoal and sick green, the sluice's iron bar and a lamp",
+  "model": "Mage",
+  "show": [
+   "Mage_Cape"
+  ],
+  "hold": {
+   "handslot.r": "boathook",
+   "handslot.l": "lantern"
+  },
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3230",
+     "#0e100e"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#6a8a3a",
+     "#1e2a0e"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     2
+    ],
+    "to": [
+     "#22261e",
+     "#0a0c08"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#5a5e48",
+     "#1a1c12"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     1
+    ],
+    "to": [
+     "#3a4430",
+     "#10140c"
+    ]
+   },
+   {
+    "tile": [
+     2,
+     2
+    ],
+    "to": [
+     "#3a4430",
+     "#10140c"
+    ]
+   }
+  ],
+  "face": "harvester",
+  "height": 1.06
  },
  {
   "id": "N10",
