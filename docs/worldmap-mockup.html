@@ -1,0 +1,107 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>World map and the Guild's coach: mockup</title>
+<!-- docs/worldmap-proposal.md. Three phone frames (390 × 844), over the real game: 1) the World map button under the
+     Journal button; 2) the map open on the Old Provinces, a town's coach card; 3) the region view (the Fens), a site's
+     card. Static: rendered to docs/img/worldmap/mockup.jpg by Playwright. -->
+<style>
+body { margin: 0; background: #1a1720; display: flex; gap: 28px; padding: 28px; font-family: Georgia, serif; }
+.phone { position: relative; width: 390px; height: 844px; overflow: hidden; border-radius: 28px; background: #0b0910; box-shadow: 0 0 0 2px #3a3040; flex: none; }
+.phone .bg { position: absolute; inset: 0; width: 390px; height: 844px; object-fit: cover; }
+.dim { position: absolute; inset: 0; background: rgba(8,6,12,.55); }
+/* the HUD's round buttons (src/ui/journal.js #journalBtn) */
+.rb { position: absolute; right: 12px; width: 44px; height: 44px; border-radius: 22px; background: rgba(16,12,22,0.92); border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5); box-sizing: border-box; }
+.rb svg { width: 22px; height: 22px; fill: none; stroke: #e0a85a; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.rb.new { box-shadow: 0 0 0 3px rgba(224,168,90,.35), 0 2px 10px rgba(0,0,0,.5); }
+.call { position: absolute; right: 64px; padding: 6px 10px; border-radius: 10px; background: rgba(16,12,22,0.95); border: 1px solid rgba(214,170,98,0.5); color: #f0c880; font: italic 13px Georgia, serif; white-space: nowrap; }
+.call::after { content: ''; position: absolute; right: -7px; top: 50%; margin-top: -6px; border: 6px solid transparent; border-left-color: rgba(214,170,98,0.6); border-right: 0; }
+/* the map window: a full sheet like the Journal's */
+.sheet { position: absolute; left: 0; right: 0; top: 48px; bottom: 0; background: #100c16; border-top: 1px solid rgba(214,170,98,0.45); border-radius: 16px 16px 0 0; color: #efe4cf; overflow: hidden; }
+.sheet .top { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 8px; }
+.sheet h2 { font: 600 19px Georgia, serif; color: #f0c880; margin: 0; }
+.x { width: 44px; height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.35); background: none; color: #e0a85a; font: 20px Georgia; display: grid; place-items: center; }
+.tabs { display: flex; gap: 6px; padding: 0 14px 8px; }
+.tabs b { flex: 1; text-align: center; padding: 12px 0; border-radius: 10px; border: 1px solid rgba(214,170,98,0.3); font: 13px ui-monospace, Menlo, monospace; color: #b8a888; font-weight: normal; }
+.tabs b.on { background: rgba(224,168,90,.16); color: #f0c880; border-color: rgba(224,168,90,.6); }
+.view { position: absolute; left: 0; right: 0; top: 116px; bottom: 0; overflow: hidden; }
+.map { position: absolute; left: 0; width: 390px; }
+.fog { position: absolute; left: 0; width: 390px; background: rgba(233,220,190,.72); display: grid; place-items: center; color: #6a5a44; font: italic 14px Georgia; text-align: center; }
+.pin { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; display: grid; place-items: center; }
+.pin i { width: 16px; height: 16px; border-radius: 8px; border: 2.5px solid #9a3a22; background: #f6ecd2; box-sizing: border-box; }
+.pin.lit i { background: #e0a85a; border-color: #5a2e14; box-shadow: 0 0 10px rgba(224,168,90,.9); }
+.pin.off i { border-color: #8a7e6a; background: #d8ccb2; opacity: .8; }
+.pin.sel i { outline: 3px solid #f0c880; outline-offset: 3px; }
+.here { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 15px; border: 2px solid #f0c880; box-shadow: 0 0 0 4px rgba(240,200,128,.25); }
+.here::after { content: 'you are here'; position: absolute; left: 34px; top: 4px; font: italic 12px Georgia; color: #3b2f24; background: rgba(240,228,200,.9); padding: 1px 5px; border-radius: 5px; white-space: nowrap; }
+.star { position: absolute; margin: -12px 0 0 -8px; color: #b8402a; font: 20px Georgia; text-shadow: 0 0 3px #f0e4c8, 0 0 3px #f0e4c8; }
+.lbl { position: absolute; font: 12.5px Georgia; color: #2a2018; background: rgba(240,228,200,.85); padding: 1px 5px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, 0); }
+.card { position: absolute; left: 10px; right: 10px; bottom: 12px; background: rgba(16,12,22,0.97); border: 1px solid rgba(214,170,98,0.5); border-radius: 14px; padding: 12px 14px; box-shadow: 0 -4px 18px rgba(0,0,0,.5); }
+.card h3 { margin: 0; font: 600 17px Georgia; color: #f0c880; }
+.card .sub { font: 12px ui-monospace, Menlo, monospace; color: #b8a888; margin-top: 3px; }
+.card .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.card .fare { font: 13px ui-monospace, Menlo, monospace; color: #efe4cf; line-height: 1.5; }
+.card .fare em { color: #e0a85a; font-style: normal; }
+.go { min-width: 120px; height: 48px; border-radius: 12px; border: 1px solid #e0a85a; background: linear-gradient(#5a3e1e, #3e2a14); color: #f8e2b4; font: 600 15px Georgia; }
+.go.walk { background: linear-gradient(#2e3e2a, #1e2a1c); border-color: #8fbf7a; color: #dff0d2; }
+.cap { color: #d8c8a8; font: italic 14px Georgia; text-align: center; margin-top: 10px; }
+</style></head>
+<body>
+
+<!-- 1. the HUD: the World map button under the Journal -->
+<div>
+<div class="phone" id="f1">
+  <img class="bg" src="img/worldmap/hud-town-before.jpg">
+  <div class="rb new" style="top:256px"><svg viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2z"/><path d="M9 4.5v13M15 6.5v13"/></svg></div>
+  <div class="call" style="top:263px">the world map</div>
+</div><div class="cap">1 · the World map button, under the Journal</div></div>
+
+<!-- 2. the Old Provinces: you're in Thornwick's square; Saltmere picked; the coach -->
+<div>
+<div class="phone" id="f2">
+  <img class="bg" src="img/worldmap/hud-town-before.jpg"><div class="dim"></div>
+  <div class="sheet">
+    <div class="top"><h2>The Old Provinces</h2><div class="x">✕</div></div>
+    <div class="tabs"><b class="on">The Old Provinces</b><b>The Hollow Vale</b></div>
+    <div class="view">
+      <img class="map" src="img/world/old-provinces.jpg" style="top:-205px">
+      <!-- lands not open yet: the wall map's own "not finished" -->
+      <div class="fog" style="top:0; height:200px">The Cinder Reach, Solmere, the Tidemark and the Heights<br>the roads north open from level 15</div>
+      <div class="fog" style="top:200px; height:250px; left:160px; width:230px">the Greenwood<br>opens at 45</div>
+      <div class="pin lit" style="left:107px; top:354px"><i></i></div>
+      <div class="here" style="left:107px; top:354px"></div>
+      <div class="pin lit sel" style="left:85px; top:465px"><i></i></div>
+      <div class="star" style="left:100px; top:455px">★</div>
+      <div class="lbl" style="left:85px; top:477px">Saltmere</div>
+    </div>
+    <div class="card">
+      <h3>Saltmere</h3>
+      <div class="sub">the Greywater Fens · waystation · ★ Fog on the Canal</div>
+      <div class="row"><div class="fare">The Guild's coach<br><em>a day on the road · 10 gold</em></div><button class="go">Travel</button></div>
+    </div>
+  </div>
+</div><div class="cap">2 · the Old Provinces: towns you've reached, the coach from this tavern</div></div>
+
+<!-- 3. the region: the Fens' overland, from the sim; you're on the canal road; a site picked: walk there -->
+<div>
+<div class="phone" id="f3">
+  <img class="bg" src="img/worldmap/hud-town-before.jpg"><div class="dim"></div>
+  <div class="sheet">
+    <div class="top"><h2>The Greywater Fens</h2><div class="x">✕</div></div>
+    <div class="tabs"><b>The Old Provinces</b><b class="on">The Greywater Fens</b></div>
+    <div class="view" style="background:#7f8a66">
+      <img class="map" src="img/towns/minimap-fens.png" style="top:0">
+      <div class="here" style="left:112px; top:87px"></div>
+      <div class="pin lit" style="left:121px; top:149px"><i></i></div><div class="lbl" style="left:121px; top:161px">Saltmere</div>
+      <div class="pin sel" style="left:62px; top:217px"><i></i></div><div class="star" style="left:77px; top:207px">★</div><div class="lbl" style="left:70px; top:229px">Toadking's Mound</div>
+      <div class="pin" style="left:128px; top:229px"><i></i></div><div class="lbl" style="left:150px; top:241px">the Canal Locks</div>
+      <div class="pin off" style="left:288px; top:204px"><i></i></div><div class="lbl" style="left:288px; top:216px">the Sickpools</div>
+      <div class="pin off" style="left:204px; top:375px"><i></i></div><div class="lbl" style="left:204px; top:387px">the Drowned Abbey</div>
+    </div>
+    <div class="card">
+      <h3>Toadking's Mound</h3>
+      <div class="sub">levels 8–11 · two floors · ★ the Toadking</div>
+      <div class="row"><div class="fare">on this road<br><em>about 160 steps</em></div><button class="go walk">Walk there</button></div>
+    </div>
+  </div>
+</div><div class="cap">3 · the region, drawn from the game: tap a site to walk there</div></div>
+
+</body></html>
