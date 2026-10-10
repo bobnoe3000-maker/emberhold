@@ -11,7 +11,7 @@
 // demo's, unchanged; only the bake is driven from our infinite world.js. The old
 // (The old Canvas2D and flat renderers were retired at M2.5; see git history.)
 
-import { materialAt, heightAt, resourceAt, propAt, isWalkable } from '../sim/world.js';
+import { materialAt, heightAt, resourceAt, propAt, isWalkable, DRESS } from '../sim/world.js';
 import { ELIT, EGLOW } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
@@ -78,6 +78,16 @@ const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per n
 // Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
 // visible via a raised ambient, and lights ADD warmth rather than veil).
 const AMB = 0.62, WISP = 0.72, BLOOM = 0.55;
+// A dungeon floor's light, by its dressing kit (v1.48, sim world.js DRESS): the ambient (the shader's dark-to-lit mix at
+// AMB) tinted, never brightened much, so the floors keep the dusk and still differ: the legion's cold blue in the
+// Barrows' galleries, the Redhand's fires in the Keep, the Cult's embers, Vat Seven's sick green.
+const AMB_BASE = [0.10 + 0.45 * AMB, 0.07 + 0.41 * AMB, 0.17 + 0.45 * AMB];
+const KIT_TINT = {
+  dig: [1.06, 0.98, 0.86], gallery: [0.88, 0.94, 1.12], muster: [0.84, 0.92, 1.16],
+  bailey: [1.1, 0.92, 0.84], barracks: [1.04, 0.96, 0.88], cellar: [0.9, 1.0, 0.98],
+  nave: [0.86, 0.98, 1.04], cultcut: [1.14, 0.88, 0.78], binding: [0.98, 0.86, 1.14],
+  mound: [0.96, 1.04, 0.86], locks: [0.88, 1.0, 1.0], vats: [0.86, 1.08, 0.84], abbey: [0.86, 0.96, 1.1],
+};
 
 const clampf = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -557,7 +567,7 @@ export function createRenderer(canvas, sim, input) {
   // a site may keep its own style (the goblins' warren is dug, not laid: cavern; the Toadking's mire too; the Drowned
   // Abbey is temple-checker, world doc §3.2; the lock-keepers' halls flagstone), unless ?tiles= says otherwise; a site
   // built as halls (sim halls.js) is dressed stone, flagstones and ashlar courses, where its theme has no style of its own
-  const THEME_STYLE = { warren: 'cavern', mire: 'cavern', water: 'temple', sluice: 'flagstone' };
+  const THEME_STYLE = { warren: 'cavern', mire: 'cavern', water: 'temple', sluice: 'flagstone', cave: 'cavern' };   // (v1.48: the Keep's cellars go down into rock)
   const styleOf = (w) => (qs.has('tiles') ? tileStyle : THEME_STYLE[w.theme] ? TILE_STYLES[THEME_STYLE[w.theme]] : w.level && w.level.layout === 'halls' ? TILE_STYLES.flagstone : tileStyle);
 
   /* ── G-buffer writers ───────────────────────────────────────────────────── */
@@ -798,7 +808,9 @@ export function createRenderer(canvas, sim, input) {
   function drawTileStyled(sx, sy, x, y, z, m) {
     const world = sim.world, th = world.level.th, cell = world.level.cells.get(x + ',' + y);
     const isWall = !!cell && cell.kind === 'wall', hPix = z * ZH, seed = world.ss;
-    const V = variantFor(world.theme, tileVariant), pool = !isWall && m === th.hazard, ST = styleOf(world);
+    // a kit's shallow pools (sim world.pools: walkable, v1.48) paint as its water; the theme's hazard tiles as before
+    const kp = !isWall && world.pools && world.pools.has(x + ',' + y) && DRESS[world.kit], V0 = variantFor(world.theme, tileVariant);
+    const V = kp ? { ...V0, pool: kp.pool || V0.pool } : V0, pool = !isWall && (m === th.hazard || !!kp), ST = styleOf(world);
     const fr = ELIT[V.floor], wr = ELIT[V.wall], accent = V.accent;
     const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
     // wall faces sit one ramp step darker than floors/caps, so the play space reads first
@@ -1266,7 +1278,8 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
     // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
     gl.uniform3f(U(lightP, 'uSunL'), -0.72, 0.16, 0.67);                 // low sun from the upper left (matches the baked shadows)
-    if (outdoor) { gl.uniform3fv(U(lightP, 'uSunC'), sky.sun); gl.uniform3fv(U(lightP, 'uAmbC'), sky.amb); } else { gl.uniform3f(U(lightP, 'uSunC'), 0, 0, 0); gl.uniform3f(U(lightP, 'uAmbC'), 0, 0, 0); }
+    const kt = !outdoor && !st && KIT_TINT[sim.world.kit];   // (a dungeon floor's kit tints its light)
+    if (outdoor) { gl.uniform3fv(U(lightP, 'uSunC'), sky.sun); gl.uniform3fv(U(lightP, 'uAmbC'), sky.amb); } else { gl.uniform3f(U(lightP, 'uSunC'), 0, 0, 0); if (kt) gl.uniform3f(U(lightP, 'uAmbC'), AMB_BASE[0] * kt[0], AMB_BASE[1] * kt[1], AMB_BASE[2] * kt[2]); else gl.uniform3f(U(lightP, 'uAmbC'), 0, 0, 0); }
     gl.uniform1f(U(lightP, 'uWin'), outdoor ? sky.win : 1);
     gl.uniform1f(U(lightP, 'uLift'), outdoor ? sky.lift : 0);
     gl.uniform1f(U(lightP, 'uHaze'), outdoor ? sky.haze : 1);

@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
-import { createWorld, isWalkable, heightAt, propAt, materialAt, NONWALK } from '../src/sim/world.js';
+import { createWorld, isWalkable, heightAt, propAt, materialAt, NONWALK, DRESS } from '../src/sim/world.js';
 import { hasFloorBelow } from '../src/sim/sites.js';
 
 const K = (x, y) => x + ',' + y;
@@ -58,7 +58,7 @@ test('no hazard pools: every floor tile of every room is open ground, on every s
 });
 
 test('one or two standing obstacles in each fighting room, out on the floor with room to walk round', () => {
-  const OB = new Set(['pillar', 'monolith', 'gibbet']);
+  const OB = new Set(['pillar', 'monolith', 'gibbet', ...Object.values(DRESS).flatMap((k) => k.obstacles)]);   // (v1.48: each kit its own)
   let rooms = 0, total = 0;
   for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) for (const seed of [104729, 209458, 314187]) {
     const w = floor(site, seed, 0), L = w.level, seen = reach(w);

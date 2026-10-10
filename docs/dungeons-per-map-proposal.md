@@ -1,6 +1,6 @@
 # One dungeon a level, each one built for its place
 
-**Decided (2026-10-10); being built.** The owner: *"Go with your recommendation.. secret dungeons are timed after clear
+**Implemented (2026-10-10)**: phases 1 and 2 (§6 As built). The owner: *"Go with your recommendation.. secret dungeons are timed after clear
 so players can replay them. Art, build props in code, old skarn stays as a guest boss. We can extend dungeons later to
 cover up to 4 or 5 levels if needed and in the future we can have additional island maps to carry up to level 75 and
 beyond."* So:
@@ -447,8 +447,17 @@ The owner's call took the Fens in with the Vale, so phases 1 and 3 shipped toget
 - **A repair to v1.47's reach** (GDD §17): the Choir's singers hold near her, and drummed shooters close to half their
   reach before they shoot.
 
-**Left for phase 2 (the looks):**
-- the dressing kits and the props built in code;
-- pools, light tints, and the entrance NPCs (Tobin Hask, Ned Fallow, Hester Lowe);
-- the Quartermaster's own colours: he shares the Standard's body and red scarf and is told apart by his blade and
-  keys.
+**Phase 2, the looks** ([art critic pass 18](./art-critic-pass-18.md)):
+- a dressing kit for every band floor (`world.js DRESS`, `sites.js dress`), naming its rooms, decor, obstacles and
+  pools;
+- 23 props built in code (`gsprite.js`);
+- shallow, walkable pools (`world.pools`);
+- each kit's light tint (`renderer.js KIT_TINT`);
+- crypt, cave, nave and cinder floors;
+- Tobin Hask, Ned Fallow and Hester Lowe at the Vale's ways in.
+
+**Left:**
+- the Quartermaster's own colours: he shares the Standard's body and red scarf, told apart by his blade and keys;
+- wall-face dressing (a renderer change, for a phone);
+- footsteps in the pools;
+- freeing Ned Fallow.

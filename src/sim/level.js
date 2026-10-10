@@ -26,6 +26,10 @@ export const THEMES = {
   // (v1.48) the Old Barrows' crypts (dry-stone, packed earth, bone) and the cave under Wickham Keep (wet rock, pools)
   crypt:  { name: 'Barrow Crypts',  wall: 'basalt', floors: ['soil', 'bone', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.16, hazardCut: 0.78 },
   cave:   { name: 'Cellar Cave',    wall: 'basalt', floors: ['soil', 'basalt', 'soil', 'sand'], hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.66 },
+  // (v1.48) the Sunken Chapel's nave: cracked flags under silt, standing water
+  nave:   { name: 'Sunken Nave',    wall: 'basalt', floors: ['soil', 'bone', 'soil', 'sand'],  hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.68 },
+  // (v1.48) the Cult's cut under the chapel: scorched stone, cinders in the joints
+  cinder: { name: "The Cult's Cut", wall: 'obsid',  floors: ['basalt', 'soil', 'basalt'],     hazard: 'ember',  hazardScale: 0.2,  hazardCut: 0.7 },
   warren: { name: 'Goblin Warren', wall: 'basalt', floors: ['soil', 'soil', 'soil', 'sand'],  hazard: 'chasm',  hazardScale: 0.18, hazardCut: 0.76 },
   // the Fens' (M8): the Toadking's mud-floored island halls, the drowned Abbey, the lock-keepers' halls
   mire:   { name: 'Mire Halls',    wall: 'basalt', floors: ['soil', 'soil', 'sand', 'soil'],  hazard: 'water',  hazardScale: 0.2,  hazardCut: 0.68 },

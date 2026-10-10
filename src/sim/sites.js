@@ -27,21 +27,22 @@
 // its floor's level with its boss. Emberfall runs 1–18 in six. A `secret` site (one a land, `hidden` until its Chronicle
 // is whole, `flat` at the land's top level) seals for SECRET_REST of play once its vault is opened, then can be walked
 // again (core.js). `parked` sites are out of play, kept for a land not built yet (the Reach): no way in, on no overland.
-// `themes` / `families` give a floor its own look and foes (by depth).
+// `themes` / `families` give a floor its own look and foes (by depth); `dress` its dressing kit (world.js DRESS: the
+// furniture, the pools, the light's tint), floor by floor.
 
-/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, mix: number }} SiteDef */
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   // the Hollow Vale, 1–9: a crypt, a fort that goes down into a cave, a drowned chapel; the Ninth Milestone its secret
-  barrows: { name: 'The Old Barrows', region: 'vale', theme: 'crypt', base: 1, perFloor: 1, floors: 3, family: 'ashbound', families: ['diggers', 'ashbound', 'ashbound'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'quartermaster' }, mix: 0 },
-  wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', themes: ['dread', 'dread', 'cave'], base: 4, perFloor: 1, floors: 3, family: 'redhand', families: ['redhand', 'redhand', 'diggers'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 1: 'goblin_chief', 3: 'redhand_captain' }, mix: 0x7e40 },
-  sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'poison', base: 7, perFloor: 1, floors: 3, family: 'chapel', rooms: [6, 6], layout: 'halls', band: true, bosses: { 2: 'robed_stranger', 3: 'standard' }, mix: 0xc4a9 },
+  barrows: { name: 'The Old Barrows', region: 'vale', theme: 'crypt', base: 1, perFloor: 1, floors: 3, family: 'ashbound', families: ['diggers', 'ashbound', 'ashbound'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'quartermaster' }, dress: ['dig', 'gallery', 'muster'], mix: 0 },
+  wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', themes: ['dread', 'dread', 'cave'], base: 4, perFloor: 1, floors: 3, family: 'redhand', families: ['redhand', 'redhand', 'diggers'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 1: 'goblin_chief', 3: 'redhand_captain' }, dress: ['bailey', 'barracks', 'cellar'], mix: 0x7e40 },
+  sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'nave', themes: ['nave', 'cinder', 'crypt'], base: 7, perFloor: 1, floors: 3, family: 'chapel', rooms: [6, 6], layout: 'halls', band: true, bosses: { 2: 'robed_stranger', 3: 'standard' }, dress: ['nave', 'cultcut', 'binding'], mix: 0xc4a9 },
   ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 9, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'last_order', mix: 0x9e11 },
   // the Greywater Fens, 10–18: the Toadking's island of boats, the lock halls going down into the vats, the Abbey; the
   // Undercroft its secret. The Sickpools are the Locks' third floor, Vat Seven (they were a site of their own).
-  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 3, family: 'reedmen', rooms: [6, 6], band: true, bosses: { 3: 'toadking' }, mix: 0x70ad },
-  canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'sluice', 'poison'], base: 13, perFloor: 1, floors: 3, family: 'lockcult', families: ['ashbound', 'lockcult', 'harvest'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'vatwarden' }, mix: 0x10c5 },
-  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], layout: 'halls', band: true, bosses: { 1: 'teague', 2: 'drowned_choir', 3: 'abbess_below' }, mix: 0xab3e },
+  toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 3, family: 'reedmen', rooms: [6, 6], band: true, bosses: { 3: 'toadking' }, dress: ['mound', 'mound', 'mound'], mix: 0x70ad },
+  canal_locks: { name: 'The Canal Locks', region: 'fens', theme: 'sluice', themes: ['sluice', 'sluice', 'poison'], base: 13, perFloor: 1, floors: 3, family: 'lockcult', families: ['ashbound', 'lockcult', 'harvest'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'vatwarden' }, dress: ['locks', 'locks', 'vats'], mix: 0x10c5 },
+  drowned_abbey: { name: 'The Drowned Abbey', region: 'fens', theme: 'water', base: 16, perFloor: 1, floors: 3, family: 'drowned', rooms: [4, 4], layout: 'halls', band: true, bosses: { 1: 'teague', 2: 'drowned_choir', 3: 'abbess_below' }, dress: ['abbey', 'abbey', 'abbey'], mix: 0xab3e },
   // the Mere Tower (tower.js; world doc v1.23): its landing and the stair hall, where the climb goes on; Wenna Pike's punt
   // from Saltmere's landing, from level 12 (minLevel: core.js turns a company under it back at the jetty). It pays no XP,
   // so it competes with no band.
@@ -80,6 +81,8 @@ export function levelBand(id) {
 /** a floor's look (level.js THEMES) and foes (battle.js FAMILIES) @param {string} id @param {number} depth */
 export const themeAt = (id, depth) => { const s = siteOf(id); return (s.themes && s.themes[depth]) || s.theme; };
 export const familyAt = (id, depth) => { const s = siteOf(id); return (s.families && s.families[depth]) || s.family; };
+/** a floor's dressing kit (world.js DRESS), or null: dressed by its family, as before @param {string} id @param {number} depth */
+export const dressAt = (id, depth) => { const s = siteOf(id); return (s.dress && s.dress[depth]) || null; };
 /** play time a secret site stays sealed once its vault is opened (seconds of sim time: two hours of play) */
 export const SECRET_REST = 7200;
 /** can the party go in? (not hidden, or revealed) @param {string} id @param {Set<string> | string[]} revealed */

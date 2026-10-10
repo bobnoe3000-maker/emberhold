@@ -288,6 +288,229 @@ export function voxPew() {
   return bakeVox(vox, SX, SY, H, ELIT.wood, 0, ELIT.obsid);
 }
 
+// ---- the dungeons' own furniture (v1.48, the dressing kits: sim world.js DRESS) ----------------------------------
+// Each dungeon floor is dressed for its place: the Redhand's dig at the barrow mouth, the legion's galleries and
+// muster, the Company's bailey and barracks, the cave under the Keep, the drowned chapel and the Cult's cut, the Fens'
+// mound, locks and vats. Built here in code, as voxels, like the rest. Colours stay in the dusk: dark wood, cold
+// stone, dull iron, and light only where something burns.
+const RED = [[34, 10, 9], [62, 16, 13], [92, 24, 18], [122, 34, 24], [150, 48, 32]];          // the Redhand's red, dyed and dirty
+const LEGION = [[16, 20, 34], [26, 32, 52], [38, 46, 72], [52, 62, 92], [70, 80, 110]];      // the Third Legion's faded blue
+const CLAY = [[38, 22, 14], [62, 38, 24], [88, 56, 36], [112, 74, 48], [136, 94, 62]];
+const WAX = [[70, 64, 52], [110, 102, 84], [150, 140, 116], [184, 174, 146], [210, 200, 172]];
+const vgrid = (SX, SY, SZ) => { const vox = new Uint8Array(SX * SY * SZ); return { vox, put: (x, y, z, m) => { x = Math.round(x); y = Math.round(y); z = Math.round(z); if (x >= 0 && y >= 0 && z >= 0 && x < SX && y < SY && z < SZ) vox[(z * SY + y) * SX + x] = m; } }; };
+// (Sizes: a voxel is about a pixel, and a hero stands about 56 tall, so furniture is built to a hero's scale in height
+// and kept to about a tile's footprint, the one tile it blocks: a tent is as tall as a man, a shelf of niches taller.)
+// A spoil heap: the dig's thrown-up earth, a pick stuck in its top.
+export function voxSpoil(rng) {
+  const S = 16, H = 22, { vox, put } = vgrid(S, S, H), c = S / 2, ph = rng() * 6.28;
+  for (let z = 0; z < 11; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot((x - c) * 0.9, (y - c) * 1.1) + z * 0.72 + Math.sin(Math.atan2(y - c, x - c) * 3 + ph) * 0.7;
+    if (r < 7.4 && hash2(x * 5 + z, y * 3, 41) > 0.08) put(x, y, z, z > 7 && hash2(x, y + z, 43) > 0.7 ? 3 : 1);
+  }
+  for (let k = 0; k < 12; k++) put(c + 1 + k * 0.3, c - 0.5, 7 + k, 3);                      // the pick's haft
+  for (let k = -3; k <= 3; k++) put(c + 4.6, c - 0.5 + k, 19 - Math.abs(k) * 0.4, 3);          // its head
+  return bakeVox(vox, S, S, H, ELIT.sand, 0, ELIT.wood);   // (fresh-dug, paler than the floor it's thrown on)
+}
+// A digger's lantern on a post: a light at the dig and in the cellars.
+export function voxLantern() {
+  const S = 8, H = 34, { vox, put } = vgrid(S, S, H);
+  for (let z = 0; z < 31; z++) for (const [x, y] of [[3, 3], [4, 3], [3, 4], [4, 4]]) put(x, y, z, 1);
+  for (let x = 3; x <= 7; x++) put(x, 3, 31, 1);
+  for (let z = 22; z < 29; z++) for (let y = 2; y <= 4; y++) for (let x = 5; x <= 7; x++) put(x, y, z, z === 22 || z === 28 ? 3 : 2);
+  return bakeVox(vox, S, S, H, ELIT.wood, 3, ELIT.obsid);
+}
+// A burial niche shelf: a dry-stone shelf against the wall, taller than a man, three tiers of recesses, an urn or a
+// skull in each, pale against the dark of the recess.
+export function voxUrnShelf(rng) {
+  const SX = 18, SY = 6, SZ = 38, { vox, put } = vgrid(SX, SY, SZ);
+  for (let z = 0; z < SZ; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
+    const shelf = z % 12 < 2 || z >= SZ - 2 || x < 2 || x > SX - 3 || y < 2;                     // the frame, the tiers and the back
+    const post = x === 8 || x === 9;
+    if (shelf || post) put(x, y, z, 1);
+  }
+  for (const z0 of [2, 14, 26]) for (const x0 of [2, 10]) {
+    const skull = rng() < 0.5, cx = x0 + 3, cy = 3.6;
+    for (let z = 0; z < 9; z++) for (let y = 2; y < SY; y++) for (let x = x0; x < x0 + 6; x++) {
+      const d = skull ? Math.hypot(x - cx + 0.5, y - cy, (z - 3) * 0.9) : Math.hypot(x - cx + 0.5, y - cy) - (z < 6 ? Math.sin((z / 6) * Math.PI) * 1.2 : -0.6);
+      if (skull ? d < 2.6 && z < 6 : d < 1.6 && z < 8) put(x, y, z0 + z, 3);
+    }
+  }
+  return bakeVox(vox, SX, SY, SZ, ELIT.stone, 0, ELIT.bone);
+}
+// Grave urns: two or three clay jars with lids, standing together, knee to waist high.
+export function voxUrns(rng) {
+  const S = 14, H = 20, { vox, put } = vgrid(S, S, H), n = 2 + (rng() < 0.6 ? 1 : 0);
+  for (const [cx, cy, h] of [[4.5, 4.5, 19], [9.5, 6, 14], [5.5, 10, 16]].slice(0, n)) for (let z = 0; z < h; z++) {
+    const t = z / (h - 1), r = 1.4 + Math.sin(t * Math.PI * 0.9) * 2.1 - (t > 0.85 ? 0.8 : 0);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - cx, y - cy) < r) put(x, y, z, z >= h - 2 || z === 0 || z === ((h * 0.55) | 0) ? 3 : 1);
+  }
+  return bakeVox(vox, S, S, H, CLAY, 0, ELIT.obsid);
+}
+// A cluster of candles on the floor, wax run down over the stone: the galleries' and the chapel's light.
+export function voxCandles(rng) {
+  const S = 12, H = 14, { vox, put } = vgrid(S, S, H);
+  for (let y = 2; y < 10; y++) for (let x = 2; x < 10; x++) if (Math.hypot(x - 6, y - 6) < 3.8) put(x, y, 0, 1);   // the pooled wax
+  for (const [x, y] of [[4, 5], [6, 3], [7, 7], [5, 7], [8, 5]]) {
+    const h = 4 + ((rng() * 7) | 0);
+    for (let z = 1; z <= h; z++) for (const [dx, dy] of [[0, 0], [1, 0]]) put(x + dx, y + dy, z, 1);
+    put(x, y, h + 1, 2); put(x, y, h + 2, 2);
+  }
+  return bakeVox(vox, S, S, H, WAX, 3);
+}
+// A weapon rack: the legion's spears and round shields in a timber frame, as tall as a man.
+export function voxRack() {
+  const SX = 16, SY = 5, SZ = 40, { vox, put } = vgrid(SX, SY, SZ);
+  for (let z = 0; z < 30; z++) { put(1, 2, z, 3); put(2, 2, z, 3); put(13, 2, z, 3); put(14, 2, z, 3); }
+  for (let x = 1; x <= 14; x++) { put(x, 2, 6, 3); put(x, 2, 26, 3); }
+  for (const x of [4, 6, 8, 10]) for (let z = 1; z < 39; z++) put(x, 3, z, z > 33 ? 1 : 3);    // spears, iron heads
+  for (let z = 8; z < 22; z++) for (let x = 8; x <= 16; x++) if (Math.hypot(x - 12, z - 15) < 4.6) put(x, 4, z, Math.hypot(x - 12, z - 15) < 1.4 ? 3 : 1);   // a round shield hung on the end, its boss
+  return bakeVox(vox, SX, SY, SZ, ELIT.stone, 0, ELIT.wood);
+}
+// A legion standard: a tall pole and crossbar, a faded banner hanging from it, rotted at the hem.
+// (or the Redhand's: their red, and a hand on it)
+function standardVox(ramp, rng) {
+  const SX = 14, SY = 4, SZ = 48, { vox, put } = vgrid(SX, SY, SZ);
+  for (let z = 0; z < 48; z++) { put(2, 2, z, 3); put(2, 3, z, 3); }
+  for (let x = 2; x <= 12; x++) put(x, 2, 43, 3);
+  for (let z = 20; z < 43; z++) for (let x = 3; x <= 12; x++) {
+    if (z < 25 && hash2(x * 3, z, ((rng() * 9) | 0) + 1) < (25 - z) * 0.2) continue;          // the ragged hem
+    put(x, 1, z, (x === 7 || x === 8) && z > 28 && z < 37 ? 2 : (x === 6 || x === 9) && z > 30 && z < 35 ? 2 : 1);
+  }
+  return bakeVox(vox, SX, SY, SZ, ramp, 0, ELIT.wood);
+}
+export const voxStandard = (rng) => standardVox(LEGION, rng);
+export const voxBanner = (rng) => standardVox(RED, rng);
+// A Company bell tent: round dirty canvas on a centre pole, as tall as a man, its door flap open toward the camera.
+// (An A-frame's voxel slope stair-stepped into stripes, a ladder; a cone shades as one surface, like the stalagmites.)
+export function voxTent() {
+  const S = 20, H = 34, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
+  for (let z = 0; z < 30; z++) {
+    const t = z / 29, r = 9.2 * (1 - t) * (0.55 + 0.45 * (1 - t)) + 0.9 + (z < 4 ? 0.3 : 0);   // a bell: steep at the foot, a long taper
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const d = Math.hypot(x - c, y - c); if (d > r) continue;
+      const a = Math.atan2(y - c, x - c), door = z < 14 && Math.abs(a - Math.PI / 4) < 0.32;   // the flap, on the camera's side
+      if (door && d > r - 1.2) { put(x, y, z, 3); continue; }
+      if (door) continue;
+      put(x, y, z, z === 3 || z === 4 ? 3 : 1);                                                 // a dark band of mud and wet at the hem
+    }
+  }
+  for (let z = 28; z < 34; z++) put(c, c, z, 3);                                                // the pole's top
+  return bakeVox(vox, S, S, H, ELIT.sand, 0, ELIT.wood);
+}
+// A barracks bunk: two tiers of timber and straw ticks, chest high and head high.
+export function voxBunk() {
+  const SX = 8, SY = 16, SZ = 30, { vox, put } = vgrid(SX, SY, SZ);
+  for (const [x, y] of [[1, 1], [6, 1], [1, 14], [6, 14]]) for (let z = 0; z < 30; z++) put(x, y, z, 3);
+  for (const z0 of [6, 20]) for (let y = 1; y <= 14; y++) for (let x = 1; x <= 6; x++) { put(x, y, z0, 3); if (y > 1 && y < 14 && x > 1 && x < 6) { put(x, y, z0 + 1, 1); put(x, y, z0 + 2, y < 4 ? 1 : 0); } }
+  return bakeVox(vox, SX, SY, SZ, ELIT.sand, 0, ELIT.wood);
+}
+// Scaffolding: the diggers' timber props against the cellar wall, a plank walk halfway up.
+export function voxScaffold() {
+  const SX = 16, SY = 6, SZ = 44, { vox, put } = vgrid(SX, SY, SZ);
+  for (const x of [1, 8, 14]) for (const y of [1, 4]) for (let z = 0; z < 44; z++) put(x, y, z, 1);
+  for (const z of [20, 41]) for (let x = 0; x < SX; x++) for (let y = 1; y <= 4; y++) put(x, y, z, 3);
+  for (let k = 0; k < 19; k++) { put(1 + k * 0.38, 1, 1 + k, 1); put(14 - k * 0.32, 4, 21 + k, 1); }   // the braces
+  return bakeVox(vox, SX, SY, SZ, ELIT.wood, 0, ELIT.loam);
+}
+// A stalagmite: a crooked tooth of wet rock up out of the cave floor, sometimes a smaller one beside it.
+export function voxStalagmite(rng) {
+  const S = 12, H = 40, { vox, put } = vgrid(S, S, H), h = 24 + ((rng() * 15) | 0), ph = rng() * 6.28, two = rng() < 0.5;
+  for (const [cx, cy, hh, r0] of [[5, 6, h, 3.8], ...(two ? [[9, 3.5, h * 0.45, 2.2]] : [])]) for (let z = 0; z < hh; z++) {
+    const r = r0 * (1 - z / hh) + 0.5, ox = Math.sin(z * 0.2 + ph) * 0.8;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - cx - ox, y - cy) < r + (fbm(x * 0.6, z * 0.4 + y, 33) - 0.5)) put(x, y, z, z > hh - 4 || z % 9 === 4 ? 3 : 1);
+  }
+  return bakeVox(vox, S, S, H, ELIT.rock, 0, ELIT.slate);
+}
+// A boulder: a rounded lump of fallen rock, half sunk in the floor.
+export function voxBoulder(rng) {
+  const S = 16, H = 14, { vox, put } = vgrid(S, S, H), sx = 1 + rng() * 0.3, sy = 1.25 - rng() * 0.3;
+  for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot((x - 8) * sx, (y - 8) * sy, (z + 1.5) * 0.95) < 7.6 + (fbm(x * 0.5, y * 0.5 + z, 61) - 0.5) * 1.6) put(x, y, z, 1);
+  return bakeVox(vox, S, S, H, ELIT.crag, 0);
+}
+// An altar: a stone table under a dark cloth, two tall candles burning on it.
+export function voxAltar() {
+  const SX = 16, SY = 8, SZ = 26, { vox, put } = vgrid(SX, SY, SZ);
+  for (let z = 0; z < 16; z++) for (let y = 1; y < 7; y++) for (let x = 0; x < SX; x++) put(x, y, z, (z === 15 && x > 2 && x < SX - 3) || (y === 6 && z > 8 && x > 4 && x < SX - 5) ? 3 : 1);
+  for (const x of [2, 13]) { for (let z = 16; z < 23; z++) put(x, 3, z, 1); put(x, 3, 23, 2); put(x, 3, 24, 2); }
+  return bakeVox(vox, SX, SY, SZ, ELIT.bone, 3, LEGION);   // (pale stone, the cloth dark on it: a blue box otherwise)
+}
+// A fallen saint: a statue off its plinth, face down in the silt, its head broken off beside it.
+export function voxSaint() {
+  const SX = 10, SY = 20, SZ = 10, { vox, put } = vgrid(SX, SY, SZ);
+  for (let y = 4; y < 18; y++) for (let x = 1; x < 9; x++) for (let z = 0; z < 6; z++) if (Math.hypot((x - 4.5) * 0.75, z - 2) < 3.4 - (y > 14 ? (y - 14) * 0.3 : 0)) put(x, y, z, 1);
+  for (let z = 0; z < 4; z++) for (let y = 0; y < 4; y++) for (let x = 5; x < 9; x++) if (Math.hypot(x - 6.5, y - 1.5, z - 1.5) < 2.2) put(x, y, z, 1);   // the head
+  for (let z = 0; z < 3; z++) for (let y = 15; y < 20; y++) for (let x = 0; x < SX; x++) put(x, y, z, 3);   // the broken plinth
+  return bakeVox(vox, SX, SY, SZ, ELIT.stone, 0, ELIT.basalt);
+}
+// A chain post: an iron-bound stake, chains hanging in loops to the floor (the Cult binds here).
+export function voxChains() {
+  const S = 12, H = 38, { vox, put } = vgrid(S, S, H);
+  for (let z = 0; z < 36; z++) for (const [x, y] of [[5, 5], [6, 5], [5, 6], [6, 6]]) put(x, y, z, z % 9 === 0 ? 3 : 1);
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1]]) for (let k = 0; k < 26; k++) { const t = k / 25, sag = Math.sin(t * Math.PI) * 8, z = 30 - sag - t * 22; put(5.5 + dx * (1 + t * 5), 5.5 + dy * (1 + t * 5), z, 3); put(5.5 + dx * (1 + t * 5) + dy, 5.5 + dy * (1 + t * 5) + dx, z, 3); }
+  for (let z = 0; z < 2; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - 5.5, y - 5.5) < 5.5 && Math.hypot(x - 5.5, y - 5.5) > 4.2 && hash2(x, y, 17) > 0.5) put(x, y, z, 3);   // the slack on the floor
+  return bakeVox(vox, S, S, H, ELIT.wood, 0, ELIT.stone);   // (iron chains in grey, so they read against the dark)
+}
+// A binding circle in the cinders: a ring of embers laid out on the floor, flat (walked over: sim world.js FLAT_PROPS).
+export function voxCircle() {
+  const S = 22, H = 2, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot(x - c, y - c), a = Math.atan2(y - c, x - c);
+    if (r > 8.6 && r < 10.2) put(x, y, 0, hash2(x, y, 29) > 0.55 ? 2 : 1);
+    else if (r < 8.6 && Math.abs(Math.sin(a * 2.5) * r) < 0.6 && r > 2) put(x, y, 0, 1);       // the spokes
+  }
+  return bakeVox(vox, S, S, H, ELIT.obsid, 3);
+}
+// One of the bound: a legionary standing as he was bound, chained, the Cult's still work (not a foe).
+export function voxBound(rng) {
+  const S = 12, H = 46, { vox, put } = vgrid(S, S, H), lean = (rng() - 0.5) * 0.04;
+  for (let z = 0; z < 44; z++) {
+    const head = z >= 36, r = head ? 2.6 : z < 18 ? 1.8 : 3.4 - (z > 32 ? (z - 32) * 0.3 : 0);
+    for (const off of head || z >= 18 ? [0] : [-1.8, 1.8]) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (Math.hypot(x - 5.5 - off - z * lean * 10, y - 5.5) < r) put(x, y, z, (z === 22 || z === 27 || z === 13 || z === 6) ? 3 : 1);
+  }
+  return bakeVox(vox, S, S, H, ELIT.bone, 0, ELIT.obsid);
+}
+// The binding font: a stone basin on a stem, the water in it lit violet from below.
+export function voxFont() {
+  const S = 16, H = 22, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
+  for (let z = 0; z < 21; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot(x - c, y - c);
+    if (z < 3 ? r < 6 : z < 13 ? r < 2.4 : r < 7.4 && (r > 5.8 || z === 13)) put(x, y, z, z === 20 || z === 2 ? 3 : 1);
+    if (z === 19 && r <= 5.8) put(x, y, z, 2);
+  }
+  return bakeVox(vox, S, S, H, ELIT.stone, 6, ELIT.basalt);
+}
+// An upturned boat on the Toadking's mound: a punt's hull, keel up, tarred.
+export function voxBoat() {
+  const SX = 10, SY = 22, SZ = 10, { vox, put } = vgrid(SX, SY, SZ);
+  for (let y = 0; y < SY; y++) { const t = Math.abs(y - 10.5) / 10.5, half = 4.6 * Math.sqrt(1 - t * t * 0.85);
+    for (let x = 0; x < SX; x++) for (let z = 0; z < SZ; z++) { const d = Math.hypot((x - 4.5) / Math.max(0.5, half), z / 8.5); if (d < 1 && d > 0.74) put(x, y, z, z >= 7 && Math.abs(x - 4.5) < 1 ? 3 : 1); } }
+  return bakeVox(vox, SX, SY, SZ, ELIT.wood, 0, ELIT.obsid);
+}
+// Reeds: a stand of them, grown up through the floor where the water comes in.
+export function voxReeds(rng) {
+  const S = 12, H = 32, { vox, put } = vgrid(S, S, H);
+  for (let k = 0; k < 20; k++) { const x0 = 1 + rng() * 10, y0 = 1 + rng() * 10, h = 14 + rng() * 17, bx = (rng() - 0.5) * 0.22; for (let z = 0; z < h; z++) put(x0 + z * bx, y0, z, z > h - 4 ? 3 : 1); }
+  return bakeVox(vox, S, S, H, ELIT.reed, 0, ELIT.wheat);
+}
+// A lock windlass: a timber drum on a frame, its crank handle out, rope wound on.
+export function voxWindlass() {
+  const SX = 14, SY = 9, SZ = 24, { vox, put } = vgrid(SX, SY, SZ);
+  for (const x of [0, 1, 12, 13]) for (let z = 0; z < 15; z++) for (const y of [1, 2, 6, 7]) put(x, y, z, 1);   // the stout A-frames
+  for (let x = 2; x <= 11; x++) for (let y = 0; y < SY; y++) for (let z = 0; z < SZ; z++) { const r = Math.hypot(y - 4, z - 15); if (r < 5.2) put(x, y, z, r > 3.8 || x === 2 || x === 11 ? 1 : 3); }   // the drum, rope wound on it
+  for (let z = 15; z < 22; z++) put(13, 4, z, 1); for (let y = 4; y <= 7; y++) put(13, y, 21, 1);
+  return bakeVox(vox, SX, SY, SZ, ELIT.wood, 0, ELIT.reed);
+}
+// A vat: one of the Cult's great tubs at Vat Seven, iron-hooped, the sick water in it giving off its light.
+export function voxVat() {
+  const S = 18, H = 24, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
+  for (let z = 0; z < 23; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const r = Math.hypot(x - c, y - c);
+    if (r < 8.2 && (r > 6.9 || z === 0)) put(x, y, z, z === 3 || z === 12 || z === 22 ? 3 : 1);
+    if (z === 20 && r <= 6.9) put(x, y, z, 2);
+  }
+  return bakeVox(vox, S, S, H, ELIT.wood, 1, ELIT.obsid);
+}
+
 // ---- deterministic prop set, keyed by world seed (same variant per tile) ----
 export function buildProps(seed) {
   return {
@@ -313,10 +536,35 @@ export function buildProps(seed) {
     sacks: [0, 1].map((v) => voxSacks(mulberry32((seed * 41 + v * 47 + 17) >>> 0))),
     bedroll: [voxBedroll()],
     pew: [voxPew()],
+    // (v1.48) the dressing kits' furniture
+    spoil: [0, 1].map((v) => voxSpoil(mulberry32((seed * 43 + v * 59 + 19) >>> 0))),
+    lantern: [voxLantern()],
+    urnshelf: [0, 1].map((v) => voxUrnShelf(mulberry32((seed * 47 + v * 61 + 23) >>> 0))),
+    urns: [0, 1].map((v) => voxUrns(mulberry32((seed * 53 + v * 67 + 29) >>> 0))),
+    candles: [0, 1].map((v) => voxCandles(mulberry32((seed * 59 + v * 71 + 31) >>> 0))),
+    rack: [voxRack()],
+    standard: [0, 1].map((v) => voxStandard(mulberry32((seed * 61 + v * 73 + 37) >>> 0))),
+    banner: [0, 1].map((v) => voxBanner(mulberry32((seed * 67 + v * 79 + 41) >>> 0))),
+    tent: [voxTent()],
+    bunk: [voxBunk()],
+    scaffold: [voxScaffold()],
+    stalagmite: [0, 1, 2].map((v) => voxStalagmite(mulberry32((seed * 71 + v * 83 + 43) >>> 0))),
+    boulder: [0, 1].map((v) => voxBoulder(mulberry32((seed * 73 + v * 89 + 47) >>> 0))),
+    altar: [voxAltar()],
+    saint: [voxSaint()],
+    chains: [voxChains()],
+    circle: [voxCircle()],
+    bound: [0, 1].map((v) => voxBound(mulberry32((seed * 79 + v * 97 + 53) >>> 0))),
+    font: [voxFont()],
+    boat: [voxBoat()],
+    reeds: [0, 1].map((v) => voxReeds(mulberry32((seed * 83 + v * 101 + 59) >>> 0))),
+    windlass: [voxWindlass()],
+    vat: [voxVat()],
   };
 }
 // Which prop kinds cast a point light, and the tint they cast.
-export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], shrine_mend: [0.5, 1.7, 0.7], shrine_might: [1.9, 0.5, 0.4], shrine_ward: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35], cage: [0.9, 0.7, 1.9] };
+export const PROP_LIGHT = { stairs: [0.7, 0.5, 1.7], shrine: [0.5, 1.2, 1.9], shrine_mend: [0.5, 1.7, 0.7], shrine_might: [1.9, 0.5, 0.4], shrine_ward: [0.5, 1.2, 1.9], brazier: [1.7, 0.9, 0.35], cage: [0.9, 0.7, 1.9],
+  lantern: [1.5, 0.95, 0.4], candles: [1.3, 0.85, 0.4], altar: [1.2, 0.8, 0.4], circle: [1.6, 0.6, 0.2], font: [0.8, 0.5, 1.6], vat: [0.6, 1.3, 0.35] };
 
 // ---- billboard from an already-quantized character canvas (albedo) ----
 // Normal is a soft vertical cylinder: pixels bow toward their row's horizontal

@@ -8,8 +8,8 @@
 import { hash2, fbm, streamSeed, mulberry32, STREAM } from './rng.js';
 import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
-import { hypot } from './detmath.js';
-import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt } from './sites.js';
+import { hypot, atan2, sin } from './detmath.js';
+import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt, dressAt } from './sites.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -28,12 +28,36 @@ const K = (x, y) => x + ',' + y;
 // site (sites.js): which dungeon this is — its look, its rooms, its levels and whether a floor
 // goes on down. A floor can have its own look and foes (sites.js themes, families: the Keep's cellars are a cave).
 export const CHEST_KEEP = 0.35;
+// The dressing kits (v1.48; sites.js `dress`, floor by floor): what a dungeon floor is furnished with, so a crypt reads
+// as a crypt and a cave as a cave (the owner, 2026-10-10). Each names its rooms' layouts (one drawn per fighting room,
+// below), the decor it stands against the walls, and its standing water: `pools`, the number of shallow pools a room
+// may have (walkable: world.pools, painted by the renderer; no impassable pools in rooms, v1.29) and `pool`, how the
+// water looks; `obstacles`, what stands out on a room's floor (below). The light's tint is the renderer's
+// (renderer.js KIT_TINT). A floor with no kit is dressed by its family, as before.
+/** @type {Record<string, { rooms: string[], decor: string[], obstacles: string[], pools?: number, pool?: string }>} */
+export const DRESS = {
+  dig:      { rooms: ['dig', 'camp', 'dig'], decor: ['spoil', 'lantern', 'crates'], obstacles: ['pillar', 'brokenpillar', 'spoil'] },                       // the Barrow Mouth: the Redhand's dig
+  gallery:  { rooms: ['gallery', 'crypt', 'gallery'], decor: ['urns', 'candles', 'bones'], obstacles: ['pillar', 'pillar', 'sarcophagus'] },                // the Long Gallery: niches, the dead in rows
+  muster:   { rooms: ['muster', 'colonnade', 'gallery'], decor: ['standard', 'urns', 'candles'], obstacles: ['pillar', 'standard', 'pillar'] },          // the Muster Hall: the legion racked
+  bailey:   { rooms: ['bailey', 'storehouse', 'camp'], decor: ['banner', 'crates', 'barrels'], obstacles: ['gibbet', 'pillar', 'banner'] },            // the Keep's bailey: the Company's camp
+  barracks: { rooms: ['barracks', 'storehouse', 'barracks'], decor: ['rack', 'banner', 'crates'], obstacles: ['pillar', 'pillar', 'rack'] },         // bunks, the armoury
+  cellar:   { rooms: ['cave', 'cellar', 'cave'], decor: ['stalagmite', 'boulder', 'lantern'], obstacles: ['stalagmite', 'boulder', 'scaffold'], pools: 2, pool: 'still' },   // dug into a cave
+  nave:     { rooms: ['nave', 'chancel', 'nave'], decor: ['candles', 'saint', 'urns'], obstacles: ['pillar', 'brokenpillar', 'saint'], pools: 2, pool: 'bog' },             // the drowned nave
+  cultcut:  { rooms: ['cultcut', 'camp', 'cultcut'], decor: ['chains', 'candles', 'sacks'], obstacles: ['gibbet', 'chains', 'pillar'] },               // the Cult's dig
+  binding:  { rooms: ['binding', 'crypt', 'binding'], decor: ['chains', 'candles', 'bones'], obstacles: ['bound', 'pillar', 'chains'] },              // where the legion was bound
+  mound:    { rooms: ['mound', 'storehouse', 'cave'], decor: ['reeds', 'boat', 'barrels'], obstacles: ['reeds', 'boat', 'gibbet'], pools: 2, pool: 'mud' },         // the Toadking's island of boats
+  locks:    { rooms: ['lockhall', 'storehouse', 'colonnade'], decor: ['windlass', 'barrels', 'chains'], obstacles: ['pillar', 'windlass', 'gibbet'], pools: 1, pool: 'bog' },
+  vats:     { rooms: ['vats', 'ossuary', 'vats'], decor: ['vat', 'barrels', 'bones'], obstacles: ['vat', 'pillar', 'gibbet'], pools: 2, pool: 'poison' },           // Vat Seven
+  abbey:    { rooms: ['nave', 'chancel', 'crypt'], decor: ['candles', 'urns', 'saint'], obstacles: ['pillar', 'brokenpillar', 'gibbet'], pools: 1, pool: 'bog' },
+};
+// Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
+export const FLAT_PROPS = new Set(['cage', 'circle']);
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
-  const S = siteOf(site), FAM = familyAt(site, depth);   // (its furniture below: `human`, `themes`)
+  const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
   const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout });
   const world = {
-    kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name,
+    kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name, kit,
     ss: streamSeed(seed, 131),            // floor-material selector
     hs: streamSeed(seed, 7919),           // cliff-face strata / detail
     cs: streamSeed(seed, 577),            // hazard field
@@ -55,8 +79,8 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // (the goblins keep a camp of what fell off the carts, and their totems)
   // (the Toadking's reed-cutters keep stores like the Redhand; the drowned clergy keep their naves like the chapel)
   const human = FAM === 'redhand' || FAM === 'reedmen' || FAM === 'diggers', gob = FAM === 'goblin';
-  const decor = human ? ['crates', 'barrels', 'sacks'] : gob ? ['sacks', 'totem', 'crates'] : ['spire', 'monolith', 'totem'];
-  const themes = human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : FAM === 'chapel' || FAM === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
+  const decor = KIT ? KIT.decor : human ? ['crates', 'barrels', 'sacks'] : gob ? ['sacks', 'totem', 'crates'] : ['spire', 'monolith', 'totem'];
+  const themes = KIT ? KIT.rooms : human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : FAM === 'chapel' || FAM === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
     if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }
@@ -114,6 +138,52 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
         for (const side of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, side * Wd * v, 'pew');
       } else if (theme === 'colonnade') {
         for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 7) putAt(u, side * Wd * 0.55, prng() < 0.25 ? 'brokenpillar' : 'pillar');
+      } else if (theme === 'dig') {                              // the dig: spoil thrown up at the walls, lanterns, a grave broken open
+        for (let i = 0; i < 4; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], 'spoil'); }
+        for (const side of [-1, 1]) putAt(side * L * 0.42, side * Wd * 0.45, 'lantern');
+        putAt(L * 0.3, -Wd * 0.5, 'sarcophagus');
+      } else if (theme === 'gallery') {                          // burial niches down both long walls, candles burning at their feet
+        for (const side of [-1, 1]) for (let u = -L * 0.5; u <= L * 0.5 + 0.01; u += 7) putAt(u, side * Wd * 0.58, 'urnshelf');
+        for (let i = 0; i < 3; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], i ? 'urns' : 'candles'); }
+      } else if (theme === 'muster') {                           // the legion's racks down the walls, its standards at either end
+        for (const side of [-1, 1]) for (let u = -L * 0.4; u <= L * 0.4 + 0.01; u += 7) putAt(u, side * Wd * 0.56, 'rack');
+        for (const side of [-1, 1]) putAt(side * L * 0.55, 0, 'standard');
+      } else if (theme === 'bailey') {                           // the Company's tents round the walls, a cookfire, their colours
+        for (let i = 0; i < 3; i++) { const q = pickEdge(10); if (q) place(q[0], q[1], 'tent'); }
+        putAt(L * 0.38, 0, 'brazier'); putAt(-L * 0.5, Wd * 0.45, 'banner');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], i ? 'barrels' : 'crates'); }
+      } else if (theme === 'barracks') {                         // bunks down the long walls, a rack at the end
+        for (const side of [-1, 1]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 6) putAt(u, side * Wd * 0.55, 'bunk');
+        putAt(L * 0.58, 0, 'rack');
+      } else if (theme === 'cellar') {                           // where they dug: scaffolding at the walls, spoil, lamps
+        for (const side of [-1, 1]) for (let u = -L * 0.35; u <= L * 0.35 + 0.01; u += 9) putAt(u, side * Wd * 0.58, 'scaffold');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], 'spoil'); }
+        putAt(-L * 0.45, -Wd * 0.4, 'lantern');
+      } else if (theme === 'cave') {                             // the rock: stalagmites up out of the floor at the walls, fallen boulders
+        for (let i = 0; i < 6; i++) { const q = pickEdge(5); if (q) place(q[0], q[1], 'stalagmite'); }
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], 'boulder'); }
+      } else if (theme === 'chancel') {                          // an altar at the far end, candles, a saint fallen from his plinth, two short pews
+        putAt(-L * 0.52, 0, 'altar');
+        for (const side of [-1, 1]) putAt(-L * 0.45, side * Wd * 0.4, 'candles');
+        for (const side of [-1, 1]) putAt(L * 0.15, side * Wd * 0.4, 'pew');
+        putAt(L * 0.45, Wd * 0.5, 'saint');
+      } else if (theme === 'cultcut') {                          // the Cult's dig: a binding circle in the cinders, chains, braziers
+        putAt(0, 0, 'circle');
+        for (const side of [-1, 1]) putAt(side * L * 0.4, side * Wd * 0.45, 'chains');
+        for (const side of [-1, 1]) putAt(side * L * 0.45, -side * Wd * 0.4, 'brazier');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], 'spoil'); }
+      } else if (theme === 'binding') {                          // the bound standing in rows at the walls, chains, the font
+        for (const side of [-1, 1]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, side * Wd * 0.58, 'bound');
+        putAt(L * 0.5, 0, 'font');
+      } else if (theme === 'mound') {                            // the Toadking's: boats hauled up and turned over, reeds through the floor
+        for (let i = 0; i < 3; i++) { const q = pickEdge(9); if (q) place(q[0], q[1], 'boat'); }
+        for (let i = 0; i < 4; i++) { const q = pickEdge(5); if (q) place(q[0], q[1], 'reeds'); }
+      } else if (theme === 'lockhall') {                         // the lock-keepers': windlasses at the walls, chains, barrels
+        for (const side of [-1, 1]) for (let u = -L * 0.4; u <= L * 0.4 + 0.01; u += 9) putAt(u, side * Wd * 0.56, 'windlass');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], i ? 'barrels' : 'chains'); }
+      } else if (theme === 'vats') {                             // Vat Seven: the Cult's tubs down the walls
+        for (const side of [-1, 1]) for (let u = -L * 0.35; u <= L * 0.35 + 0.01; u += 10) putAt(u, side * Wd * 0.55, 'vat');
+        for (let i = 0; i < 2; i++) { const q = pickEdge(7); if (q) place(q[0], q[1], 'barrels'); }
       } else if (theme === 'crypt') {
         for (const side of [-1, 1]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 6) putAt(u, side * Wd * 0.5, 'sarcophagus');
         for (let i = 0; i < 3; i++) { const q = pickEdge(6); if (q) place(q[0], q[1], 'bones'); }
@@ -133,7 +203,8 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
         let clear = true;
         for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) { const c = level.cells.get(K(x + dx, y + dy)); if (!c || c.kind !== 'floor' || c.corridor || world.props.has(K(x + dx, y + dy))) { clear = false; break; } }
         if (!clear || [...world.props.keys()].some((k) => { const [a, b] = k.split(',').map(Number); return Math.abs(a - x) < 5 && Math.abs(b - y) < 5; })) continue;
-        if (place(x, y, OBSTACLES[(orng() * OBSTACLES.length) | 0])) got++;
+        const OB = KIT ? KIT.obstacles : OBSTACLES;
+        if (place(x, y, OB[(orng() * OB.length) | 0])) got++;
       }
     }
     const nDecor = r === level.entrance ? 1 : 1 + ((prng() * 2) | 0);
@@ -152,6 +223,24 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const kept = chests.filter(() => keep() < CHEST_KEEP);
   if (!kept.length && chests.length) kept.push(chests[Math.floor(keep() * chests.length)]);
   for (const k of chests) if (!kept.includes(k)) world.props.delete(k);
+  // A kit's standing water (v1.48): a pool or two in a fighting room, shallow and walkable, on their own stream so the
+  // rest of the floor stands where it did. Each a blob of open floor away from the doorways' mouths; never under a prop.
+  world.pools = new Set();
+  if (KIT && KIT.pools) {
+    const wrng = mulberry32(streamSeed(seed, 325));
+    for (const r of level.rooms) {
+      if (r === level.entrance || r === level.descentRoom) continue;
+      const n = (wrng() * (KIT.pools + 1)) | 0;
+      for (let i = 0; i < n; i++) {
+        const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = 1.6 + wrng() * 1.8, ph = wrng() * 6.28;
+        for (let y = Math.floor(cy - rad - 1); y <= Math.ceil(cy + rad + 1); y++) for (let x = Math.floor(cx - rad - 1); x <= Math.ceil(cx + rad + 1); x++) {
+          const c = level.cells.get(K(x, y)); if (!c || c.kind !== 'floor' || c.corridor || c.room !== r.id) continue;
+          const a = atan2(y - cy, x - cx), rr = rad * (1 + 0.25 * sin(a * 3 + ph));
+          if (hypot(x - cx, y - cy) < rr) world.pools.add(K(x, y));
+        }
+      }
+    }
+  }
   // Every floor's way back up, one floor at a time: a stone stair built against the entrance
   // room's back wall (north or west, the walls you see), climbing into it. Walk up its bottom
   // steps: on the first floor it leads out to the surface, deeper to the floor above (core.js).
@@ -283,7 +372,8 @@ function keepTheWaysOpen(world, level) {
   else if (world.stairsAt) ends.push(around(world.stairsAt.x, world.stairsAt.y));
   if (world.vault) { const [x, y] = world.vault.key.split(',').map(Number); ends.push(around(x, y)); }
   for (const a of [world.exitAt, world.stairArrive, world.stairsDownArrive]) if (a) { const x = Math.floor(a.x), y = Math.floor(a.y); ends.push([[x, y], ...around(x, y)]); }   // (within reach is enough: core.js)
-  const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet']);
+  const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet',
+    'spoil', 'lantern', 'urnshelf', 'urns', 'candles', 'rack', 'standard', 'banner', 'tent', 'bunk', 'scaffold', 'stalagmite', 'boulder', 'altar', 'saint', 'chains', 'bound', 'font', 'boat', 'reeds', 'windlass', 'vat']);
   const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
   // a tile's cost to open: 0 walkable, 1 a pool or decor to clear, Infinity never (walls, the well, chests)
   const cost = (x, y) => {
@@ -474,7 +564,7 @@ export function isWalkable(world, x, y, fromZ) {
   if (NONWALK.has(materialAt(world, tx, ty))) return false;
   if (fromZ !== undefined && heightAt(world, tx, ty) - fromZ > MAX_CLIMB) return false;
   if (resourceAt(world, tx, ty)) return false;
-  const pr = propAt(world, tx, ty); if (pr && pr !== 'cage') return false;   // (a dropped cage is underfoot: it never blocks)
+  const pr = propAt(world, tx, ty); if (pr && !FLAT_PROPS.has(pr)) return false;   // (a dropped cage, a binding circle: underfoot, never in the way)
   return true;
 }
 

@@ -102,6 +102,7 @@ test('a cage far from the hero waits; a fight under way holds it', () => {
   let cleared = false; sim.bus.on('wave', (e) => { if (e.cleared) cleared = true; });
   fight(sim, 60, () => cleared);                                                            // the rest of the wave: no foe may be left standing first
   assert.ok(cleared); assert.equal(propAt(sim.world, c.tx, c.ty), 'cage', 'held while the fight goes on');
+  if (Math.hypot(c.tx - p.x, c.ty - p.y) > 10) { p.x = p.px = c.tx + 2.5; p.y = p.py = c.ty + 0.5; }   // (the chase can end past CAGE_REACH: this cage is the near one)
   for (let i = 0; i < 20 * 2.5; i++) sim.tick();
   assert.equal(propAt(sim.world, c.tx, c.ty), 'cage', 'not before 3 s');
   for (let i = 0; i < 20 * 1; i++) sim.tick();

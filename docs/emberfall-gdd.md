@@ -233,6 +233,9 @@ Levels rise as you **advance deeper**:
     Every room on a floor is that level, but the two rooms before its hall (by walking order) are a level up, capped
     at the band's top: rooms still pay for their danger. The hall itself keeps its floor's level, so a floor's boss
     meets the party at the floor's own level. The entrance stays a sanctuary.
+  - **Each floor is dressed for its place** (a dressing kit: its rooms' furniture, its obstacles, its shallow pools,
+    which are walked through, and its light's tint; [art critic pass 18](./art-critic-pass-18.md)). A crypt looks like
+    a crypt and a cave like a cave. The Vale's three dungeons each have someone by the way in who names the floors.
   - **Its boss holds floor 3's last hall**, at the band's top. A floor can have a boss of its own besides.
   - **The bands run on without a gap or an overlap**, land after land:
 

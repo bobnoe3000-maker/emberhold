@@ -183,10 +183,21 @@ export const VARIANTS = {
   drowned: { label: 'Drowned', floor: 'stone', wall: 'slate', pool: 'bog',   accent: 1,
             patch: { ramp: 'moss', step: 1, t: 0.4, wet: true },
             joint: (c, h) => (h > 0.5 ? { c: P('moss')[1] } : null) },
+  // (v1.48) the Old Barrows' crypts: packed earth between dry-stone, bone-dust in the joints; the cave under Wickham
+  // Keep: wet rock, slate-dark where the water stands
+  crypt:  { label: 'Crypt', floor: 'earth', wall: 'stone', pool: 'pit',   accent: 2,
+            patch: { ramp: 'stone', step: 1, t: 0.4 },
+            joint: (c, h) => (h > 0.6 ? { c: P('bone')[1] } : null) },
+  cave:   { label: 'Cave',  floor: 'rock',  wall: 'crag',  pool: 'water', accent: 6,
+            patch: { ramp: 'slate', step: 1, t: 0.45, wet: true } },
+  // the Cult's cut: scorched stone, a rare ember left in the joints (the lava variant's live cracks were loud for the dusk)
+  cinder: { label: 'Cinder', floor: 'basalt', wall: 'obsid', pool: 'pit',  accent: 3,
+            patch: { ramp: 'obsid', step: 1, t: 0.5 },
+            joint: (c, h) => (h > 0.7 ? { c: P('obsid')[0] } : null) },   // (no glow: the cut's light is its braziers and circles)
 };
 export const VARIANT_KEYS = Object.keys(VARIANTS);
 // Default variant per biome when none is forced with ?tv=.
-export const THEME_VARIANT = { dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock', warren: 'rock', mire: 'earth', water: 'drowned', sluice: 'drowned' };
+export const THEME_VARIANT = { crypt: 'crypt', cave: 'cave', nave: 'drowned', cinder: 'cinder', dread: 'plain', desert: 'earth', poison: 'poison', ember: 'lava', lava: 'lava', chasm: 'rock', warren: 'rock', mire: 'earth', water: 'drowned', sluice: 'drowned' };
 // Point-light colour for glowing pools (the renderer thins these to a few lamps).
 export const POOL_LIGHT = { lava: [1.7, 0.8, 0.25], poison: [0.5, 1.5, 0.35], ice: [0.4, 0.7, 1.2], water: [0.3, 0.8, 1.6] };
 
@@ -206,6 +217,7 @@ const POOLS = {
   lava(c)   { const r = liquid(c, P('lava')); r.e = Math.abs(vnoise(c.gx * 0.55 + 3, c.gy * 0.55, c.seed + 5) - 0.5) < 0.07 ? 5 : 0; return r; },
   poison(c) { const r = liquid(c, P('poison')); r.e = glint(c, 1); return r; },
   water(c)  { const r = liquid(c, P('tide'), 2, 3); r.e = glint(c, 8); return r; },
+  still(c)  { const r = liquid(c, P('slate'), 0, 1); r.n = N_UP; return r; },   // (v1.48) a cave's standing water: black, still, no glint
   mud(c)    { const r = liquid(c, P('mud'), 0, 1); if (vnoise(c.gx * 1.6, c.gy * 1.6, c.seed + 65) > 0.74) r.c = P('mud')[3]; r.n = N_UP; return r; },   // glossy sump
   bog(c)    { const r = liquid(c, P('bog'), 1, 2); if (vnoise(c.gx * 1.2, c.gy * 1.2, c.seed + 69) > 0.7) r.c = P('weed')[1]; else r.e = glint(c, 8); r.n = N_UP; return r; },   // still black-green water, a skin of weed, a rare glint
   pit(c)    { return { c: fbm(c.gx * 0.5, c.gy * 0.5, c.seed + 66) < 0.5 ? P('pit')[1] : P('pit')[2], n: N_UP }; },
