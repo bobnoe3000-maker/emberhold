@@ -51,7 +51,7 @@ node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/wo
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
 node tools/worldmap/streets.mjs [--waystations]   # the region towns' and waystations' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg
 node tools/worldmap/overlands.mjs         # each region's overland at the game's scale (docs/town-streets-proposal.md) → docs/img/world/overland-<region>.jpg
-node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin and an overland's pins) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png; the overlands' copies in assets/maps/ (the World map's land tab)
+node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the sim itself: Thornwick's map + bare minimap backgrounds (4 px a tile, .json with the origin and an overland's pins) → docs/img/towns/map-thornwick.jpg, minimap-<scene>.png, and each overland illustrated in the wall map's hand (land-<region>.jpg); those and the .json copied to assets/maps/ (the World map's land tab)
 node tools/dungeon/plans.mjs [seeds] [--src dir]   # the dungeon layouts top-down at one scale, the caverns beside the halls, rooms marked by size (docs/dungeon-halls-proposal.md) → docs/img/dungeon/plans.png, and the numbers
 node tools/dungeon/capture.mjs [site] [out] [tag] [base]   # a site's first floor in the game (needs npm run serve; base: another checkout served elsewhere, for a before): entrance, hall, room, descent, a small and a medium room
 ```

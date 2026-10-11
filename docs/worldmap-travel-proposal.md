@@ -86,6 +86,13 @@ a picked pin scrolls clear of its card.
 The region's bare minimap (`minimap-<scene>.png`, drawn from the sim at 4 px a tile, with the origin in its
 `.json`), scaled to the sheet's width.
 
+- **Since 2026-10-11 the region is drawn in the wall map's hand** (`assets/maps/land-<region>.jpg`, the owner: the flat
+  minimap read worse than the illustrated overlands). It has parchment, water inked with the coast's ripple lines, the
+  high roads in the imperial red and the tracks dotted, woods as crowns, peaks hatched, and roofs, walls and each site drawn
+  as plans (the barrows' mounds, the pithead, the mill wheel, the abbey's cross). `minimap.mjs` draws it from the same
+  tiles, road and river lines and footprints, in the same frame as the `.json`, so the pins still land true. There are no words:
+  the sheet writes its own beside the pins.
+
 - **Pins:** the town, every site, and the region's road exits. **(built)** They come from the overland's exits,
   written into the map's `.json` by `minimap.mjs` (the exits don't move with the seed), so they show in town and
   underground too; a hidden site stays off the map until it's found. Walk there uses the compass's own rows.

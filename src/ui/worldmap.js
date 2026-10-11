@@ -104,7 +104,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   tabW.addEventListener('click', () => show('world'));
   tabL.addEventListener('click', () => show('land'));
 
-  /** @type {Record<string, any>} */ const lands = {};      // assets/maps/minimap-<land>.json: the overland's frame and pins
+  /** @type {Record<string, any>} */ const lands = {};      // assets/maps/minimap-<land>.json: the overland's frame and pins (its picture: land-<land>.jpg)
   /** @type {number[][] | null} */ let coast = null;         // assets/maps/old-provinces.json: the wall map's coast, for the fog
   fetch('./assets/maps/old-provinces.json').then((q) => q.json()).then((j) => { coast = j.coast; const f = view.querySelector('svg.fog'); if (open && tab === 'world' && f) f.replaceWith(fogSvg()); }).catch(() => {});
   const landData = (/** @type {string} */ r) => lands[r] || (lands[r] = fetch(`./assets/maps/minimap-${r}.json`).then((q) => q.json()).catch(() => null));
@@ -156,7 +156,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       const r = region();
       landData(r).then((L) => {
         if (!open || tab !== 'land' || !L) return;
-        img.src = `./assets/maps/minimap-${r}.png`; img.width = L.w * L.px; img.height = L.h * L.px;
+        img.src = `./assets/maps/land-${r}.jpg`;   // (the overland in the wall map's hand: tools/worldmap/minimap.mjs) img.width = L.w * L.px; img.height = L.h * L.px;
         pins = landPins(r, L);
         place(map, pins, L.w, L.x0, L.y0);
       });

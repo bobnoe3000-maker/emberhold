@@ -15,7 +15,7 @@ const inside = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 
 
 test('each land\'s map is in assets/maps, and its pins are the overland\'s exits on any seed: a pin for each of its sites but the parked', () => {
   for (const r of Object.keys(LANDS)) {
-    for (const ext of ['png', 'json']) assert.ok(existsSync(new URL(`assets/maps/minimap-${r}.${ext}`, ROOT)), `minimap-${r}.${ext}`);
+    for (const f of [`land-${r}.jpg`, `minimap-${r}.json`]) assert.ok(existsSync(new URL(`assets/maps/${f}`, ROOT)), f);
     const L = JSON.parse(readFileSync(new URL(`assets/maps/minimap-${r}.json`, ROOT), 'utf8'));
     for (const seed of [20260807, 1, 0xdeadbeef]) {
       const o = createOutdoor(seed, 'overland', r);
