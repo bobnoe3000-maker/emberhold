@@ -35,9 +35,20 @@ const srv = createServer(async (req, res) => {
 await new Promise((r) => srv.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${srv.address().port}`;
 const CI = !!process.env.CI, GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
+// CI's runners draw WebGL in software and are sometimes loaded: a page's main thread can stall for longer than Playwright's
+// 30 s default, and a step that's fine on a quiet runner times out (2026-10-10, six of twelve runs: the creation screens'
+// taps, the art review's page load). On CI every wait is patient (SLOW× the explicit ones, PATIENT for the defaults);
+// a real failure still fails, only later.
+const SLOW = CI ? 3 : 1, PATIENT = 30000 * SLOW;
+function patient(b) {
+  if (!b) return b;
+  const ctx = b.newContext.bind(b);
+  b.newContext = async (o) => { const c = await ctx(o); c.setDefaultTimeout(PATIENT); c.setDefaultNavigationTimeout(PATIENT); return c; };   // (newPage makes its context through this)
+  return b;
+}
 async function launch(type, name) {
-  try { return await type.launch(type === chromium ? { args: GL } : {}); } catch (e) {
-    if (type === chromium && existsSync('/opt/pw-browsers/chromium')) return chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: GL });
+  try { return patient(await type.launch(type === chromium ? { args: GL } : {})); } catch (e) {
+    if (type === chromium && existsSync('/opt/pw-browsers/chromium')) return patient(await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: GL }));
     if (CI) throw e;
     console.log(`SKIP ${name}: not installed here (CI runs it)`); return null;
   }
@@ -48,7 +59,7 @@ const results = [];
 async function booted(p) {
   await p.waitForFunction(() => !!globalThis.__sim && !window.__old, null, { timeout: 60000 });
   if (await p.locator('#cine.on, #bootSplash').count()) {
-    await p.waitForSelector('#cine .begin:not([hidden])', { timeout: 60000 }); await p.tap('#cine'); await p.waitForSelector('#titleWrap.on', { timeout: 10000 });
+    await p.waitForSelector('#cine .begin:not([hidden])', { timeout: 60000 }); await p.tap('#cine'); await p.waitForSelector('#titleWrap.on', { timeout: 10000 * SLOW });
   }
   await p.waitForTimeout(500);
 }
@@ -181,7 +192,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const w = await S(() => { const s = globalThis.__sim, a = s.world.arrivals.temple, p = s.state.player; return { near: Math.hypot(p.x - a.x, p.y - a.y) < 1.5, weak: s.state.party.every((m) => m.weakUntil > 0), fallen: s.state.party.some((m) => m.fallen), gold: s.state.counters.gold, lost: window.__lost }; });
     check('m3: a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
     // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
-    await p.waitForSelector('#defeat.on', { timeout: 5000 }).catch(() => null);
+    await p.waitForSelector('#defeat.on', { timeout: 5000 * SLOW }).catch(() => null);
     const recap = await p.locator('#defeat').innerText().catch(() => '');
     check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party is beaten/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
     await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
@@ -223,13 +234,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#title button.pri', { hasText: 'Begin' }).tap();
     const seen = [];
     for (let k = 0; k < 6; k++) {
-      await p.waitForFunction((k) => globalThis.__ui.cinema.card === k, k, { timeout: 10000 }); await p.waitForTimeout(500);
+      await p.waitForFunction((k) => globalThis.__ui.cinema.card === k, k, { timeout: 10000 * SLOW }); await p.waitForTimeout(500);
       seen.push([await p.locator('#cine .age').textContent(), await C(() => globalThis.__ui.cinema.music)]);
       await p.tap('#cine'); await p.waitForTimeout(300);                                // every line at once
       if (k === 5) seen.push(await p.locator('#cine .say span.last').textContent());
       await p.tap('#cine');                                                             // the next card
     }
-    await p.waitForSelector('#createWrap.on', { timeout: 10000 });
+    await p.waitForSelector('#createWrap.on', { timeout: 10000 * SLOW });
     check('intro: six cards in order, the Fall\'s music unbroken through cards 3–5', JSON.stringify(seen.slice(0, 6)) === JSON.stringify([['The Kindling', 'kindling'], ['The Solmere Empire', 'empire'], ['The Fall', 'fall'], ['The Long Dim', 'fall'], ['Year 301 of the Dim', 'fall'], ['Thornwick', 'thornwick']]), JSON.stringify(seen));
     check('intro: it closes on "Looks like it is up to you." and hands over to creation', seen[6].trim() === 'Looks like it is up to you.' && (await C(() => globalThis.__ui.cinema.playing)) === false);
     await p.locator('#create .opt', { hasText: 'Rogue' }).first().tap(); await p.locator('#create .nav .pri').tap();
@@ -284,7 +295,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('talk: Maudry stands in Thornwick', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
     if (at) {
       await p.touchscreen.tap(at.x, at.y); await run(150);
-      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).then(() => true, () => false);
+      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 * SLOW }).then(() => true, () => false);
       const first = open ? await p.textContent('#talk .line') : '';
       check('talk: tap her → the hero walks over → the dialogue window', open && /Mule/.test(first), first.slice(0, 60));
       // (meeting her is an effect: a command that lands on the next tick, and the talk waits for it before going on)
@@ -318,7 +329,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         return { before, dir: t.party[0][3], want: +a.toFixed(2), off: +Math.abs(d).toFixed(2), talking: s.talk ? s.talk.talking : '?' };
       });
       check('talk: already beside her and facing away, the hero turns to her as the talk opens', turn.before !== turn.dir && turn.off <= 0.62, JSON.stringify(turn));
-      await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).catch(() => null);
+      await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 * SLOW }).catch(() => null);
       for (let i = 0; i < 12 && !(await p.locator('#talk .ch').count()); i++) { await run(2); if (await p.locator('#talk .more').count()) await p.locator('#talk .more').tap(); }
       await p.locator('#talk .ch', { hasText: 'Anyone for hire' }).tap();
       for (let i = 0; i < 6 && (await p.locator('#talk .more').count()) && !(await p.locator('#talk .ch').count()); i++) await p.locator('#talk .more').tap();
@@ -349,7 +360,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('act II: Dace Pike stands in Saltmere', !!at, at ? `at ${at.x},${at.y}` : 'not found on screen');
     if (at) {
       await p.touchscreen.tap(at.x, at.y); await run(150);
-      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 }).then(() => true, () => false);
+      const open = await p.waitForSelector('#talkWrap.on #talk .line', { timeout: 10000 * SLOW }).then(() => true, () => false);
       const who = open ? await p.textContent('#talk .who .nm') : '', first = open ? await p.textContent('#talk .line') : '';
       await p.waitForTimeout(600);
       const face = await p.evaluate(() => { const c = document.querySelector('#talk .who canvas'); if (!c) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n; });   // (drawn pixels: his portrait loaded)
@@ -462,7 +473,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     await p.waitForTimeout(800); await run(5);
     await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="board"]').tap();
-    await p.waitForSelector('#hubSheet .job', { timeout: 10000 }).catch(() => null);
+    await p.waitForSelector('#hubSheet .job', { timeout: 10000 * SLOW }).catch(() => null);
     const jobs = await p.locator('#hubSheet .job').count(), first = await p.locator('#hubSheet .job').first().innerText().catch(() => '');
     check('board: the Tavern\'s quest board shows today\'s jobs (title, poster, hook, what it asks, skulls with a word, pay)', jobs === 3 && /Posted · /.test(first) && /Easy|Fair|Hard/.test(first) && /Pays \d+ XP · \d+ gold/.test(first), `${jobs} jobs · ${first.split('\n').slice(0, 2).join(' · ')}`);
     await p.locator('#hubSheet [data-take]').first().tap(); await run(2);
@@ -494,7 +505,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForTimeout(800); await run(5);
     await p.evaluate(() => { const s = globalThis.__sim, L = s.world.level, r = L.rooms.find((q) => s.world.roomLevels.get(q.id) === 1), pl = s.state.player; pl.x = pl.px = r.cx + 0.5; pl.y = pl.py = r.cy + 0.5; });
     await run(90);
-    await p.waitForSelector('#stepOut.on', { timeout: 5000 }).catch(() => null);
+    await p.waitForSelector('#stepOut.on', { timeout: 5000 * SLOW }).catch(() => null);
     const inFight = await p.evaluate(() => !!globalThis.__sim.battle);
     const shown = await p.locator('#stepOut.on').count();
     // the compass list stays open through the fight (the battle walking the hero isn't the stick); the stick closes it
@@ -506,13 +517,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('compass: the list stays open while the fight walks the hero, and the stick still closes it', stillOpen === 1 && (await p.locator('#compassMenu.on').count()) === 0, `open through ${movedInFight}/16 moving samples: ${stillOpen} · after the stick: ${await p.locator('#compassMenu.on').count()}`);
     await p.evaluate(() => { const h = globalThis.__sim.state.party[0]; h.hp = Math.max(1, h.hp * 0.3); });
     await run(3);
-    await p.waitForSelector('#stepOut.on.low', { timeout: 5000 }).catch(() => null);   // (the button follows on animation frames: slow in headless)
+    await p.waitForSelector('#stepOut.on.low', { timeout: 5000 * SLOW }).catch(() => null);   // (the button follows on animation frames: slow in headless)
     const low = await p.locator('#stepOut.on.low').count(), label = await p.locator('#stepOut').innerText().catch(() => '');
     check('step out: in a fight the button shows, and pulses with a word when the party is low', inFight && shown === 1 && low === 1 && /Step out/.test(label) && /low/.test(label), label.replace(/\n/g, ' · '));
     await p.locator('#stepOut').tap();
     for (let i = 0; i < 20 && (await p.evaluate(() => !!globalThis.__sim.battle)); i++) await run(15);
     const after = await p.evaluate(() => ({ battle: !!globalThis.__sim.battle, room: (() => { const s = globalThis.__sim, pl = s.state.player, c = s.world.level.cells.get(Math.floor(pl.x) + ',' + Math.floor(pl.y)); return c ? c.room : null; })() }));
-    await p.waitForSelector('#stepOut.on', { state: 'hidden', timeout: 5000 }).catch(() => null);
+    await p.waitForSelector('#stepOut.on', { state: 'hidden', timeout: 5000 * SLOW }).catch(() => null);
     check('step out: a tap walks the hero out; the fight ends; no page errors', !after.battle && after.room < 0 && (await p.locator('#stepOut.on').count()) === 0 && errs.length === 0, JSON.stringify(after) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
@@ -757,7 +768,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     for (const show of ['env', 'props', 'fx', 'icons', 'faces']) {
       const ctx = await b.newContext({ viewport: { width: 1000, height: 900 } }), p = await ctx.newPage(), errs = [];
       p.on('pageerror', (e) => errs.push(e.message));
-      await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`);
+      await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`, { waitUntil: 'domcontentloaded' });   // (not every image: the waits below are the view's own readiness)
       await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
       for (let i = 0; i < 120 && !(await p.evaluate(() => globalThis.__stage.ready)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
       await p.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 60); });
@@ -1192,7 +1203,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(() => { const s = globalThis.__sim; s.state.quests.ch1_ember_in_the_fist = { st: 3, step: 0, n: [] }; s.state.reached.add('saltmere'); s.state.counters.gold = 120; });
     await run(3);
     await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="coach"]').tap();
-    await p.waitForSelector('#mapWrap.on #worldmap .map img', { timeout: 10000 }); await p.waitForTimeout(600);
+    await p.waitForSelector('#mapWrap.on #worldmap .map img', { timeout: 10000 * SLOW }); await p.waitForTimeout(600);
     const tabs = await p.evaluate(() => [...document.querySelectorAll('#worldmap .tabs button')].map((e) => ({ t: e.textContent, on: e.classList.contains('on'), h: e.getBoundingClientRect().height })));
     const pin = await p.evaluate(([px, py]) => { const m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / 1200; return { x: r.left + px * k, y: r.top + py * k }; }, PLACES.saltmere);
     await p.touchscreen.tap(pin.x, pin.y); await p.waitForTimeout(500);
@@ -1210,7 +1221,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits.find((x) => x.to === 'overland'), pl = s.state.player; pl.x = pl.px = (e.x0 + e.x1) / 2; pl.y = pl.py = (e.y0 + e.y1) / 2; });
     await run(20); await p.waitForTimeout(1200); await run(20);
     for (let i = 0; i < 60 && await p.evaluate(() => globalThis.__renderer.transiting); i++) { await run(5); await p.waitForTimeout(250); }   // (the Fens baked, on the manual clock: until then the sim holds still, and a walk can't start)
-    await p.locator('#mapBtn').tap(); await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 }); await p.waitForTimeout(600);
+    await p.locator('#mapBtn').tap(); await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 * SLOW }); await p.waitForTimeout(600);
     const toad = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), q = L.pins.find((x) => x.id === 'toadking_mound'), m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / L.w; return { x: r.left + (q.x - L.x0) * k, y: r.top + (q.y - L.y0) * k }; });
     await p.touchscreen.tap(toad.x, toad.y); await p.waitForTimeout(300);
     const land = await p.evaluate(() => ({ title: document.querySelector('#worldmap h2').textContent, card: document.querySelector('#worldmap .card.on')?.innerText || '' }));
