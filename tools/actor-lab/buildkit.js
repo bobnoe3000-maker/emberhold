@@ -558,7 +558,6 @@ const TYPES = {
 };
 // ── trees (our own, to replace the stock cones): pine, broadleaf, dead, groves ──
 const flat = (color) => new THREE.MeshStandardMaterial({ color: new THREE.Color(color), flatShading: true });
-const jitter = (geo, r, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + (r() - 0.5) * amt, p.getY(i) + (r() - 0.5) * amt * 0.6, p.getZ(i) + (r() - 0.5) * amt); geo.computeVertexNormals(); return geo; };
 // leaf: olive-grey, autumn: dull amber, birch: a muted gold (the game's dusk palette; pass 11d's warmer one reverted)
 const TREE_COL = { pine: ['#1f2b22', '#243226', '#2a392b'], leaf: ['#3a4527', '#42502c', '#4b5530'], autumn: ['#6a4f25', '#76582a', '#5e3f21'], birch: ['#7a6428', '#86702c', '#6e5824'], bark: '#3a2c22', dead: '#4a4038',
   alder: ['#2c3626', '#33402b', '#28301f'], willow: ['#4a5236', '#535c3c', '#41482f'], wetbark: '#2e2a24' };   // (M8) the Fens': dark carr green, willow grey-green
@@ -780,7 +779,7 @@ function massifMesh(r, { h, peaks, snow, spread }) {
 }
 // Stone bridge: one humped arch, parapets, cutwaters, spanning 1.9 units along z.
 function bridgeMesh(r) {
-  const g = new THREE.Group(), L = 0.95, W = 0.62, stone = mat(tex('ashlar', '#6a655c', 11)), deck = mat(tex('field', '#5e584f', 12));
+  const g = new THREE.Group(), L = 0.95, W = 0.62, stone = mat(tex('ashlar', '#6a655c', 11));
   stone.map = stone.map.clone(); stone.map.repeat.set(2, 2); stone.map.needsUpdate = true;
   const prof = new THREE.Shape();                                           // side profile in (z, y), arch cut out
   const CTRL = 0.5, top = (t) => 0.07 + 2 * t * (1 - t) * (CTRL - 0.07);   // deck hump (crown ≈ 0.285)

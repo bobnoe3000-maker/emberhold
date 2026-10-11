@@ -23,7 +23,7 @@ const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
 const R = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
 R.setPixelRatio(1); R.setSize(W, H); R.outputColorSpace = THREE.SRGBColorSpace;
 R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; document.body.appendChild(R.domElement);
-const loader = new GLTFLoader(), cache = new Map();
+const loader = new GLTFLoader();
 const load = (u) => new Promise((res, rej) => loader.load(u, res, undefined, rej));
 
 // every toggleable accessory per model (anything not listed in a variant's `show` is hidden)

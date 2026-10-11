@@ -251,7 +251,7 @@ const dropRun = () => { const s = createSim(SEED); s.tick(); const got = []; s.b
   return { s, got }; };
 const d1 = dropRun(), d2 = dropRun(), dropsOk = d1.got.length > 0 && d1.got.join('|') === d2.got.join('|');
 // equip rules: a greatsword frees the off-hand; a shield then refuses; a mage wand is refused on the fighter
-const gb = d1.s, fh = gb.state.party[0], bag0 = gb.state.bag.length; let refused = 0; gb.bus.on('gearRefused', () => refused++);
+const gb = d1.s, fh = gb.state.party[0]; let refused = 0; gb.bus.on('gearRefused', () => refused++);
 gb.state.bag.push(makeItem('greatsword', 3, 'fine', { uid: 't1', aff: [['crit', 3]] }), makeItem('kite', 3, 'common', { uid: 't2' }), makeItem('wand', 3, 'common', { uid: 't3' }));
 const atk0 = statsFor(fh).atk;
 gb.commands.push({ type: 'equip', member: fh.id, uid: 't1' }); gb.tick();

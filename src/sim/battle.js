@@ -486,7 +486,6 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hexAtk = (e) => (hexed(e) ? { ...e, atk: e.atk * (1 - e.hex.k) } : e);
   const hexDef = (e) => (hexed(e) ? { ...e, def: e.def * (1 - e.hex.k) } : e);
   function resolve(att, def, power, bonusCrit = 0, critMul = 1) {
-    const w = getWorld();
     if (rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
     const lvl = att.lvl || att.level || 1, mit = def.def / (def.def + 25 + 5 * lvl);
     let dmg = Math.max(1, att.atk * power * (1 - mit));

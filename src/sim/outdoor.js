@@ -9,7 +9,7 @@
 // Everything is a pure function of (seed, kind): layouts are hand-directed, the
 // scatter (trees, rocks, forests) is seeded.
 
-import { mulberry32, streamSeed, fbm, hash2 } from './rng.js';
+import { mulberry32, streamSeed, fbm } from './rng.js';
 import { FLOOR_Z } from './level.js';
 import { ENV_FOOT } from './envfoot.js';
 import { hypot, sin, cos } from './detmath.js';
@@ -57,7 +57,7 @@ const OUT = { g: 0, t: 0, lat: 0, along: 0, hw: 0, fx: 0, cap: false, track: fal
 export function groundAt(o, gx, gy) {
   const out = OUT; out.g = G.GRASS; out.t = 1; out.lat = 0; out.along = 0; out.hw = 0; out.fx = 0; out.cap = false; out.track = false;
   const cell = o.grid.get(Math.floor(gx / CELL) + ',' + Math.floor(gy / CELL));
-  let best = 0, bestRank = 0, roadD = Infinity, riverD = Infinity;      // rank: water 4 > bank 3 > cobble 2 > dirt 1
+  let bestRank = 0, roadD = Infinity, riverD = Infinity;                // rank: water 4 > bank 3 > cobble 2 > dirt 1
   let deckD = Infinity, deckQ = null, deckS = null;                      // a boardwalk lies over everything (M8)
   if (cell) {
     for (const i of cell) {

@@ -17,7 +17,7 @@ import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { beastOf, beastFrame } from './beasts.js';
-import { TW, TH, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
+import { TW, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
 import { GLOW_ID, norm3, buildProps, PROP_LIGHT } from './gsprite.js';
 import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
 import { paintOutdoor } from './outdoorpaint.js';
@@ -35,11 +35,7 @@ import { shotOf } from '../sim/items.js';
 const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
-// 0=E, 1=SE, 2=S (toward the camera), 3=SW, 4=W, 5=NW, 6=N, 7=NE. sdx/sdy are
-// screen-space deltas.
-function dir8(sdx, sdy) {
-  return ((Math.round(Math.atan2(sdy, sdx) / (Math.PI / 4)) % 8) + 8) % 8;
-}
+// 0=E, 1=SE, 2=S (toward the camera), 3=SW, 4=W, 5=NW, 6=N, 7=NE.
 const SKELETONS = ['skeleton_warrior', 'skeleton_minion', 'skeleton_rogue', 'skeleton_mage'];
 // every enemy kind's baked look (battle.js ENEMIES and the bosses): the Ashbound, the Redhand Company, the
 // Cinder Cult. The Ashbound load with the game; the others when a floor that has them loads.
@@ -89,7 +85,6 @@ const KIT_TINT = {
   mound: [0.96, 1.04, 0.86], locks: [0.88, 1.0, 1.0], vats: [0.86, 1.08, 0.84], abbey: [0.86, 0.96, 1.1],
 };
 
-const clampf = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /* ── shaders (verbatim from the Emberlit reference demo) ─────────────────── */
 const VS = `#version 300 es
@@ -967,8 +962,6 @@ export function createRenderer(canvas, sim, input) {
   // once, and came out at random in captures: art-review.md)
   let clockNow = 0;
   const clock = () => clockNow || performance.now();
-  let flash = null;
-  sim.bus.on('hit', ({ tx, ty }) => { flash = { tx, ty, until: clock() + 90 }; });
   // descending / restoring rebuilds the world — rebuild seed-keyed props + re-bake.
   const withExit = (p) => ({ ...p, exit: p.stairs });          // the dungeon's way back up reuses the stair sprite
   props = withExit(props);
@@ -977,7 +970,7 @@ export function createRenderer(canvas, sim, input) {
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
   sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
   sim.bus.on('cageDropped', () => { terrValid = false; }); sim.bus.on('cageBroken', () => { terrValid = false; });   // (lamps.js: a harvester's cage on the floor, then broken)
-  sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; flash = null; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
+  sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
   preloadFamily();
   banner = { text: sceneTitle(), until: clock() + 2600 };
 
@@ -1802,9 +1795,6 @@ export function createRenderer(canvas, sim, input) {
     },
     get stageReady() { return !!stage && stage.actors.every((a) => stageAtlases.get(`${a.root || ''}|${a.atlas}|${a.scale || 1}`) !== null && stageAtlases.has(`${a.root || ''}|${a.atlas}|${a.scale || 1}`)); },
     screenToTile(sxPx, syPx, alpha) {
-      const p = sim.state.player;
-      const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
-      const pz = heightAt(sim.world, Math.floor(p.x), Math.floor(p.y));
       const { rx: ox, ry: oy } = lastCam;
       const dpr = vw / window.innerWidth;
       return resolveTap((sxPx * dpr) / S - ox, (syPx * dpr) / S - oy, {
