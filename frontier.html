@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0913">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Emberfall · the Frontier (proof of concept)</title>
+<link rel="icon" href="data:,">
+<!-- The Frontier (docs/frontier-proposal.md): the Old Provinces as one land, a sandbox for the proof of concept. It has
+     its own sim (src/sim/frontier/), reads and writes no save, and nothing in it reaches a game slot. -->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #0d0913; color: #efe4cf; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #map { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  #top { position: fixed; top: 0; left: 0; right: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 8px 14px; pointer-events: none;
+    background: linear-gradient(rgba(13,9,19,0.82), rgba(13,9,19,0)); text-shadow: 0 1px 0 #0d0913; }
+  #where { font: 600 17px Georgia, serif; color: #f0c880; }
+  #band { font-size: 11px; color: #b8a888; margin-top: 2px; }
+  #party { display: flex; gap: 8px; margin-top: 8px; }
+  .pm { flex: 1; min-width: 0; }
+  .pm .n { font-size: 11px; color: #d8ccb4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar { height: 5px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; margin-top: 2px; }
+  .bar i { display: block; height: 100%; background: #c8463a; }
+  .bar.xp i { background: #b080e0; }
+  #zoomTier { position: absolute; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 12px); font-size: 11px; color: #978c80; }
+  #btns { position: fixed; right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 150px); display: flex; flex-direction: column; gap: 10px; }
+  #btns button, #menu button { min-width: 44px; min-height: 44px; border-radius: 22px; border: 1px solid rgba(214,170,98,0.5); background: rgba(16,12,22,0.86);
+    color: #e0a85a; font: 18px Georgia, serif; }
+  #btns button.on { background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; }
+  #lockCard { position: fixed; left: 12px; right: 70px; bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); pointer-events: none; display: none;
+    background: rgba(16,12,22,0.9); border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 9px 12px; font-size: 12px; line-height: 1.5; }
+  #lockCard.on { display: block; }
+  #lockCard b { color: #f0c880; font: 600 14px Georgia, serif; }
+  #lockCard em { color: #e0a85a; font-style: normal; }
+  #info { position: fixed; left: 12px; right: 12px; top: calc(env(safe-area-inset-top, 0px) + 96px); display: none; background: rgba(16,12,22,0.94);
+    border: 1px solid rgba(214,170,98,0.45); border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.5; pointer-events: none; }
+  #info.on { display: block; }
+  #info b { color: #f0c880; font: 600 15px Georgia, serif; }
+  #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 112px); transform: translateX(-50%); max-width: 86%; text-align: center; pointer-events: none; opacity: 0; transition: opacity .4s;
+    font: italic 16px Georgia, serif; color: #f0e2c4; text-shadow: 0 1px 3px #000, 0 0 10px #000; }
+  #toast.on { opacity: 1; }
+  #stick { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 48px; border: 2px solid rgba(240,200,128,0.45); pointer-events: none; display: none; }
+  #stick i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 18px; background: rgba(240,200,128,0.55); }
+  #menu { position: fixed; inset: 0; display: none; background: rgba(6,4,10,0.7); z-index: 5; }
+  #menu.on { display: block; }
+  #sheet { position: absolute; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; max-height: 80%; overflow: auto; background: #100c16;
+    border-top: 1px solid rgba(214,170,98,0.45); border-radius: 16px 16px 0 0; padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
+  #sheet h2 { font: 600 19px Georgia, serif; color: #f0c880; margin-bottom: 4px; }
+  #sheet p { font-size: 12px; color: #b8a888; line-height: 1.5; margin: 6px 0 10px; }
+  #sheet h3 { font: 600 14px Georgia, serif; color: #e0c090; margin: 12px 0 6px; }
+  #towns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #towns button { border-radius: 10px; font: 13px Georgia, serif; text-align: left; padding: 6px 10px; color: #efe4cf; }
+  #towns button small { display: block; font: 11px ui-monospace, Menlo, monospace; color: #b8a888; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row span { font-size: 15px; min-width: 64px; text-align: center; color: #f0c880; }
+  #close { position: absolute; right: 12px; top: 10px; }
+  a { color: #e0a85a; }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+<div id="top"><div id="where">the Frontier</div><div id="band"></div><div id="party"></div><div id="zoomTier"></div></div>
+<div id="btns"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="lvls" aria-label="Level overlay">◑</button><button id="menuBtn" aria-label="Menu">☰</button></div>
+<div id="lockCard"></div>
+<div id="info"></div>
+<div id="toast"></div>
+<div id="stick"><i></i></div>
+<div id="menu"><div id="sheet">
+  <button id="close" aria-label="Close">✕</button>
+  <h2>The Frontier</h2>
+  <p>A proof of concept: the whole of the Old Provinces as one land, 100× the Hollow Vale. Drag in the lower two-thirds to run; let go to hold a ring where you stand, and the party fights whatever comes into it. Pinch, scroll or − / + to zoom, out to the Guild's wall map. Tap the land to read it. Nothing here touches your game.</p>
+  <h3>The party's level</h3>
+  <div class="row"><button id="lvDown" aria-label="Level down">−</button><span id="lvNow">1</span><button id="lvUp" aria-label="Level up">+</button><button id="lvAt" style="border-radius:10px;font-size:12px;padding:0 10px">Match this ground</button></div>
+  <h3>Go to a town</h3>
+  <div id="towns"></div>
+  <h3>The map</h3>
+  <div class="row"><button id="fogBtn" style="border-radius:10px;font-size:12px;padding:0 12px">Fog: on</button></div>
+  <p><a href="./docs/frontier-proposal.md">The proposal</a> · <a href="./index.html">Back to the game</a></p>
+</div></div>
+<script type="module" src="./src/frontier/main.js"></script>
+</body>
+</html>

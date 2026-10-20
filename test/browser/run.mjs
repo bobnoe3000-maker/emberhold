@@ -1234,6 +1234,34 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+
+// the Frontier (docs/frontier-proposal.md): its page boots, the stick runs the party, letting go locks a ring, the wheel
+// zooms out through the map to the Guild's wall map, all without a page error
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/frontier.html?manual&lv=3`); await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__fr, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(50); }, n);
+    await run(10);
+    const x0 = await p.evaluate(() => globalThis.__fr.state.party[0].x);
+    await p.mouse.move(195, 620); await p.mouse.down(); await p.mouse.move(225, 620, { steps: 3 }); await p.mouse.move(255, 620, { steps: 3 });
+    await run(20);
+    const ran = await p.evaluate(() => ({ dx: globalThis.__fr.state.party[0].x, mode: globalThis.__fr.state.mode }));
+    await p.mouse.up(); await run(4);
+    const held = await p.evaluate(() => ({ mode: globalThis.__fr.state.mode, lock: !!globalThis.__fr.state.lock, card: document.getElementById('lockCard').classList.contains('on') }));
+    await run(4);
+    const card = await p.evaluate(() => document.getElementById('lockCard').innerText);
+    const s0 = await p.evaluate(() => globalThis.__view.cam.s);
+    for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 400); await run(3); }
+    const s1 = await p.evaluate(() => globalThis.__view.cam.s);
+    check('frontier: the stick runs the party, letting go holds a ring with its card, the wheel zooms out to the wall map',
+      ran.dx - x0 > 5 && ran.mode === 'explore' && held.mode === 'lock' && held.lock && /Holding/.test(card) && s1 < 1.5 && s1 < s0 && errs.length === 0,
+      JSON.stringify({ ran: +(ran.dx - x0).toFixed(1), held, card: card.replace(/\n/g, ' | '), s0, s1 }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');
