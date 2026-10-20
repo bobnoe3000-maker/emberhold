@@ -111,7 +111,7 @@ export const tideOf = (w, room) => { const L = w.level, r = L && L.rooms.find((q
 // clears faster, so each member earns about what they would alone, and the room they can take is higher)
 const XP_SHARE = [1, 1, 0.65, 0.5];
 // Ashbound archetypes at level 1 (GDD §7: × (1 + 0.14 × (level − 1)); elites on top)
-const ENEMIES = {
+export const ENEMIES = {
   minion:  { hp: 36, atk: 7,   def: 4, crit: 5, dodge: 5,  interval: 1.2, range: 2.8, speed: 3.3, xp: 10, gold: 1 },
   warrior: { hp: 54, atk: 9.5, def: 6, crit: 5, dodge: 3,  interval: 1.4, range: 3.0, speed: 2.9, xp: 14, gold: 2 },
   rogue:   { hp: 36, atk: 8,   def: 3, crit: 10, dodge: 10, interval: 1.6, range: 12.0, speed: 3.5, xp: 12, gold: 2, bolt: 'bolt' },
