@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createLand, G, WALK, CH, CAMP_GRID } from '../src/sim/frontier/land.js';
-import { createFrontier, conOf, aggroR, LOCK_R, LEASH, DT } from '../src/sim/frontier/frontier.js';
+import { createFrontier, conOf, aggroR, inLock, LOCK_HW, LOCK_HH, LOCK_MAX, LEASH, DT } from '../src/sim/frontier/frontier.js';
 import { K, TOWNS, REGIONS, SAFE } from '../src/sim/frontier/geo.js';
 import { xpToNext } from '../src/sim/party.js';
 
@@ -92,17 +92,28 @@ function atCamp(lv, areaLv, off = 6) {
   return { fr, k };
 }
 
-test('the stick explores; letting go locks a ring where the hero stands; the stick again lifts it', () => {
+test('the stick explores; letting go locks the screen\'s area; the stick again lifts it', () => {
   const fr = createFrontier(SEED, coast, { level: 3 }), H = fr.state.party[0], x0 = H.x;
   const seen = []; for (const e of ['lock', 'unlock']) fr.bus.on(e, () => seen.push(e));
   for (let i = 0; i < 20; i++) { fr.commands.push({ type: 'stick', x: 1, y: 0 }); fr.tick(); }
   assert.ok(H.x - x0 > 6, `ran ${(H.x - x0).toFixed(1)} tiles in a second`);
-  fr.commands.push({ type: 'release' }); fr.tick();
-  assert.equal(fr.state.mode, 'lock'); assert.deepEqual([Math.round(fr.state.lock.x), fr.state.lock.r], [Math.round(H.x), LOCK_R]);
-  for (let i = 0; i < 40; i++) fr.tick();
-  for (const m of fr.state.party) assert.ok(Math.hypot(m.x - fr.state.lock.x, m.y - fr.state.lock.y) <= LOCK_R + 4.01, 'nobody leaves the ring');
+  fr.commands.push({ type: 'release', hw: 12.2, hh: 26.4, ox: 0, oy: 0.8 }); fr.tick();      // (a phone's screen at the game's scale)
+  const L = fr.state.lock;
+  assert.equal(fr.state.mode, 'lock'); assert.deepEqual([Math.round(L.x), +(L.y - H.y).toFixed(1), L.hw, L.hh], [Math.round(H.x), 0.8, 12.2, 26.4]);
+  for (let i = 0; i < 20 * 30; i++) fr.tick();
+  for (const m of fr.state.party) assert.ok(inLock(L, m.x, m.y, 4.01), 'nobody leaves the screen\'s area');
   fr.commands.push({ type: 'stick', x: 0, y: 1 }); fr.tick();
   assert.equal(fr.state.mode, 'explore'); assert.equal(fr.state.lock, null); assert.deepEqual(seen, ['lock', 'unlock']);
+});
+
+test('the locked area is the screen\'s: a lock made zoomed out holds only the awake land; a bad one does nothing', () => {
+  const fr = createFrontier(SEED, coast, { level: 3 });
+  fr.commands.push({ type: 'release', hw: 'wide', hh: 20 }); fr.tick(); assert.equal(fr.state.mode, 'explore', 'not a number: nothing');
+  fr.commands.push({ type: 'release', hw: 900, hh: 1800, ox: 400, oy: -400 }); fr.tick();
+  const L = fr.state.lock, H = fr.state.party[0];
+  assert.deepEqual([L.hw, L.hh, +(L.x - H.x).toFixed(1), +(L.y - H.y).toFixed(1)], [LOCK_MAX, LOCK_MAX, 8, -8]);
+  const g = createFrontier(SEED, coast, { level: 3 }); g.commands.push({ type: 'release' }); g.tick();
+  assert.deepEqual([g.state.lock.hw, g.state.lock.hh], [LOCK_HW, LOCK_HH], 'no size given: a phone\'s screen');
 });
 
 test('commands are checked: a bad one does nothing', () => {
@@ -147,11 +158,17 @@ test('a foe pulled past its leash goes home, mending, and won\'t be hurt on the 
   assert.equal(f.state, 'idle'); assert.equal(f.hp, f.maxHp); assert.ok(Math.hypot(f.x - f.hx, f.y - f.hy) < 1);
 });
 
-test('a same-level party holds a ring; one three under it is worn down (proposal §6)', () => {
-  const run = (lv, area) => { const { fr } = atCamp(lv, area, 6); fr.commands.push({ type: 'release' }); let low = 1; for (let i = 0; i < 20 * 120; i++) { fr.tick(); for (const m of fr.state.party) low = Math.min(low, m.hp / m.st.maxHp); } return { low, wipes: fr.state.wipes, kills: fr.state.kills }; };
-  const same = run(6, 6), red = run(6, 9);
-  assert.ok(same.wipes === 0 && same.low > 0.3 && same.kills >= 3, `L6 on 6: ${JSON.stringify(same)}`);
-  assert.ok(red.wipes > 0 || red.low < 0.15, `L6 on 9: ${JSON.stringify(red)}`);
+test('a same-level party holds the screen; on red ground it pulls nothing, and a red camp that comes at it wears it down (proposal §6)', () => {
+  const run = (lv, area, off, pullThem = false) => {
+    const { fr, k } = atCamp(lv, area, off); fr.commands.push({ type: 'release' }); fr.tick();
+    if (pullThem) for (const f of fr.awake.get(k.id).foes) { f.state = 'fight'; f.tgt = fr.state.party[0]; }
+    let low = 1; for (let i = 0; i < 20 * 120; i++) { fr.tick(); for (const m of fr.state.party) low = Math.min(low, m.hp / m.st.maxHp); }
+    return { low: +low.toFixed(2), wipes: fr.state.wipes, kills: fr.state.kills };
+  };
+  const same = run(6, 6, 6), red = run(6, 9, 6), redAtUs = run(6, 9, 3, true);
+  assert.ok(same.wipes === 0 && same.low > 0.3 && same.kills >= 4, `L6 on 6: ${JSON.stringify(same)}`);
+  assert.ok(red.kills < same.kills / 2, `L6 on 9, held: it starts no red fight: ${JSON.stringify(red)}`);
+  assert.ok(redAtUs.wipes > 0 || redAtUs.low < 0.2, `L6 on 9, the camp at it: ${JSON.stringify(redAtUs)}`);
 });
 
 test('a kill that carries the party over a level says the new level, and the party fights on at it', () => {

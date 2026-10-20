@@ -114,7 +114,7 @@ The same colours tint the level overlay on the map, so a player can read where t
 
 **The con's edge.** A camp is two or three foes where a dungeon wave is five, at up to twice the strength (battle.js
 `TIDES`), and the party mends between pulls. So two things carry the danger:
-- **Field strength.** Every overland foe has × 1.5 HP and × 1.35 ATK.
+- **Field strength.** Every overland foe has × 1.5 HP and × 1.25 ATK.
 - **The edge.** From two levels over, each level past the first is a step: +45 % ATK, +6 dodge, +20 % HP. Orange is
   one step, red two or more.
 
@@ -181,15 +181,30 @@ This is MMO interest management in miniature. A shared world would keep the same
   - While it's held the party runs where you point, the companions behind, at the ground's pace.
   - The party fights back at anything in reach without stopping: you can run through a camp and take its blows. Foes
     that notice you chase you to their leash.
-- **Lift to hold.** Let go and the spot where the hero stands is **locked**: a ring of 12 tiles drawn on the ground.
-  - Inside it the party autobattles on its own: it takes on any foe inside the ring and any that comes at it, and
-    pulls the camps whose home is in the ring.
-  - It never steps out (it reaches 4 tiles past the edge, only for a foe that's attacking it). When there's nothing
-    to fight it goes back to the ring's middle and mends.
+- **Lift to hold.** Let go and **the whole screen is locked** (the owner, 2026-10-20: *"the autobattle area should
+  be the full area of the mobile screen, not a circle around the party"*). The area is the screen's own, in tiles, when
+  the stick lifts: 24 × 53 on an upright phone at the game's scale. Its edge is drawn on the ground, dashed gold with
+  solid corners, and shows once the camera drifts from where it was locked.
+  - The view sends the area with the command (`release`, half its width and height and its middle). The sim holds each
+    half to 6–56 tiles (the land it keeps awake) and the middle to within 8 tiles of the hero. Without a size it takes
+    a phone's screen. So a lock made zoomed out holds the land round the party, not a region.
+  - **The party fights as a group** inside it:
+    - what's already at it first, all of it;
+    - then the next pull, the nearest camp to the hero;
+    - not a grey one (it pays nothing), a red one, or an orange elite; any of them that comes at the party is fought;
+    - and only when everyone standing is back over 60 % and nobody is Downed.
+    - (Each member taking its own nearest pulled three camps at once across a screen, and the party was Downed at its
+      own level.)
+  - It never leaves the area. It reaches 4 tiles past the edge, only for a foe that's attacking it. Between pulls the
+    hero holds where it stands and the others gather on it.
+  - The card says what the screen holds: its camps, their levels, the next to stand again, kills and XP a minute.
+  - Drag again and the lock lifts.
   - The party's fight is the dungeon's numbers with a simpler party: basic attacks, and the cleric's Mend (22 % of the
     most hurt ally's max HP, +20 % for a cleric, for 12 MP). There are no abilities or stances yet.
-  - The ring's card says what it holds: its camps, their levels, the next respawn, kills and XP a minute.
-  - Drag again and the lock lifts.
+  ![The locked screen](./img/frontier/lock-screen.jpg)
+
+  *Let go: the screen is held (left); the party walks to its pull and fights, and the area's edge comes into view as
+  the camera follows (middle); zoomed out, the held area among the camps round it (right).*
 - **Wipe.** If the party falls, it wakes in the nearest town's square at 30 % HP and the lock is gone, as a wipe does
   in a dungeon.
 - **Zoom.** Pinch, the mouse wheel, or the − / + buttons (44 px, on the right, in thumb's reach). Three tiers that
@@ -208,7 +223,7 @@ This is MMO interest management in miniature. A shared world would keep the same
 
 ![The Frontier at 390 × 844](./img/frontier/tiers.jpg)
 
-*Top row, Near: a party holding a ring in the Vale (level 6), the Fens (12), Solmere's country (22) and the
+*Top row, Near: a party holding the screen in the Vale (level 6), the Fens (12), Solmere's country (22) and the
 Greenwood (50). Bottom row: the Heights (63); the map tier round Thornwick, its camps dotted by con colour; the level
 overlay for a level-4 party (gold at home, red beyond); the whole of the Old Provinces on the Guild's wall map.*
 
@@ -225,51 +240,56 @@ level; seed 20260807.
 | Camps, foes | about 9,900 and 23,800 |
 | A sim tick with the bubble awake | 15–35 µs |
 
-**Difficulty**, from `node tools/balance/frontier.mjs <party> <ground> 5 8`. Each case locks the party at up to eight
-camps of that level spread over the land, five minutes each. "Downed" counts a spot's Downs; "lowest" is the party's
-lowest HP; XP is the hero's.
+**Difficulty**, from `node tools/balance/frontier.mjs <party> <ground> 5 8`. Each case locks the party, with a phone's
+screen, at up to eight camps of that level spread over the land, five minutes each. "Downed" counts a spot's Downs;
+"lowest" is the party's lowest HP; XP is the hero's.
 
 | Party on ground | Wiped | Downed a spot | Lowest | Kills a minute | XP a minute |
 |---|---|---|---|---|---|
-| 3 on 3 | 0 of 4 | 0 | 62 % | 3.3 | 60 |
-| 3 on 5 (orange) | 1 of 8 | 0.4 | 31 % | 3.5 | 125 |
-| 3 on 6 (red) | 4 of 8 | 2.0 | 10 % | 1.7 | 148 |
-| 6 on 6 | 0 of 8 | 0 | 61 % | 3.7 | 125 |
-| 6 on 8 (orange) | 5 of 8 | 1.9 | 21 % | 1.8 | 215 |
-| 6 on 9 (red) | 4 of 8 | 1.5 | 21 % | 1.6 | 145 |
-| 9 on 9 | 2 of 8 | 0.8 | 53 % | 2.6 | 447 |
-| 9 on 12 (red) | 1 of 4 | 1.0 | 25 % | 1.9 | 355 |
-| 12 on 12 | 0 of 4 | 0 | 56 % | 3.4 | 290 |
-| 12 on 15 (red) | 1 of 8 | 0.6 | 24 % | 3.0 | 432 |
-| 15 on 15 | 0 of 8 | 0 | 63 % | 3.9 | 366 |
-| 15 on 18 (red) | 1 of 8 | 0.5 | 35 % | 2.9 | 455 |
-| 30 on 30 | 0 of 2 | 0 | 65 % | 2.7 | 550 |
-| 30 on 33 (red) | 1 of 4 | 1.0 | 3 % | 3.3 | 840 |
-| 45 on 45 | 0 of 3 | 0 | 65 % | 2.3 | 661 |
-| 45 on 48 (red) | 2 of 4 | 2.0 | 24 % | 2.2 | 881 |
-| 60 on 60 | 0 of 3 | 0 | 64 % | 3.8 | 1,336 |
-| 60 on 63 (red) | 1 of 5 | 0.6 | 43 % | 2.2 | 912 |
+| 3 on 3 | 0 of 4 | 0 | 37 % | 5.2 | 111 |
+| 3 on 5 (orange) | 2 of 8 | 0.9 | 24 % | 4.4 | 189 |
+| 3 on 6 (red) | 4 of 8 | 1.8 | 18 % | 1.8 | 111 |
+| 6 on 6 | 0 of 8 | 0.3 | 46 % | 6.4 | 238 |
+| 6 on 8 (orange) | 5 of 8 | 2.1 | 11 % | 2.5 | 257 |
+| 6 on 9 (red) | 3 of 8 | 1.1 | 34 % | 1.7 | 81 |
+| 9 on 9 | 1 of 8 | 0.4 | 57 % | 4.5 | 235 |
+| 9 on 12 (red) | 1 of 4 | 0.8 | 29 % | 3.4 | 395 |
+| 12 on 12 | 0 of 4 | 0 | 58 % | 5.9 | 441 |
+| 12 on 15 (red) | 0 of 8 | 0.3 | 23 % | 3.0 | 297 |
+| 15 on 15 | 0 of 8 | 0.1 | 59 % | 5.5 | 518 |
+| 15 on 18 (red) | 1 of 8 | 0.5 | 38 % | 3.0 | 466 |
+| 30 on 30 | 0 of 2 | 0 | 61 % | 4.4 | 939 |
+| 30 on 33 (red) | 0 of 4 | 0 | 46 % | 4.6 | 961 |
+| 45 on 45 | 0 of 3 | 0 | 70 % | 3.3 | 921 |
+| 45 on 48 (red) | 1 of 4 | 1.5 | 17 % | 3.5 | 1,170 |
+| 60 on 60 | 0 of 3 | 0 | 66 % | 6.7 | 2,514 |
+| 60 on 63 (red) | 1 of 5 | 0.6 | 37 % | 2.1 | 804 |
 
 **What the table says.**
-- **Your own level is safe:** nobody falls, and the party's lowest is 55–65 %. The one exception is level 9, where two
-  of eight spots stood among the Sunken Chapel's elites.
-- **Red is a real risk:** a wipe at one spot in eight up to half of them, with Downs at most.
+- **Your own level holds.** At no level did the party wipe, apart from one spot in eight at level 9, which stood among
+  the Sunken Chapel's elites. The party's lowest is 37–70 %.
+- **Red ground is held back from, but it still costs.** The party won't pull a red camp, so on red ground it fights
+  little. A red foe that notices it from its wider aggro still comes at it, and at the low levels that's a wipe at a
+  third to half of the spots.
 - **Orange costs most at the low levels.** A level is a larger share of the stats there; above 30 the GDD's stat
   rescale (§17, M9) isn't in yet, so the high bands are softer than they'll be.
-- **The overland earns about a third of a dungeon room.** A same-level ring pays 125 XP a minute at level 6, against
-  387 in a room (the smoke test's figure). The respawn timers and the camp grid are the knobs (§7).
-  - That seems right to me: the dungeons keep the faster XP, the loot and the bosses; the overland is for exploring,
-    for a fight on the way, and for a ring you can leave running. It's the owner's call (§9).
-- A ring at your level fights 3–4 kills a minute, and the party waits between respawns. The card says how long.
+- **A screen earns about three-fifths of a dungeon room.** A same-level lock pays 238 XP a minute at level 6, against
+  387 in a room (the smoke test's figure). The ring of 12 tiles paid 125. The respawn timers and the camp grid are the
+  knobs (§7).
+  - That still seems right to me: the dungeons keep the faster XP, the loot and the bosses; the overland is for
+    exploring, for a fight on the way, and for a screen you can leave running. It's the owner's call (§9).
+- Across a screen the party fights 4–6 kills a minute, walking from pull to pull; the card says when the next foe
+  stands again.
 
 ## 7. Knobs (where the design can move)
 
 | Knob | Now | Pushes toward |
 |---|---|---|
-| Respawn (wanderer / pack / camp / elite / lair) | 40 / 50 / 75 s / 8 / 15 min | faster: a ring earns more (halved: about two-thirds of a room) |
+| Respawn (wanderer / pack / camp / elite / lair) | 40 / 50 / 75 s / 8 / 15 min | faster: a locked screen earns more (halved, about a room's rate) |
 | Camp grid, density | 20 tiles, 0.25–0.8 | denser: more fights a minute walked |
-| Lock radius | 12 tiles | wider: more camps a lock |
-| Field strength, the con's edge | × 1.5 HP, × 1.35 ATK; +45 % ATK a step | the danger of every camp, and of red ground |
+| Locked area | the screen (24 × 53 tiles upright at the game's scale), 6–56 a half | zoomed out: more camps a lock, up to what's awake |
+| Pull rules | not grey, red or an orange elite; at 60 % HP | bolder: more XP, more wipes |
+| Field strength, the con's edge | × 1.5 HP, × 1.25 ATK; +45 % ATK a step | the danger of every camp, and of red ground |
 | Linked camps | 7 tiles | wider: more pulls go wrong |
 | Road safety | −2 / −1 | more: roads as the safe way through a hard land |
 | Aggro radius | 5 + ½ a level over, 3–9 | larger: a red land you can't walk through |
@@ -287,7 +307,7 @@ lowest HP; XP is the hero's.
   - `structList`'s walk over every structure behind a spatial index;
   - the minimap reading chunks.
   - The Near tier would be Emberlit itself; the Mid and Far tiers would be this map, as the World map is today.
-- **Battle.** `battle.js` fights in rooms with waves. The overland's fights are camps in a ring: a third mode beside the
+- **Battle.** `battle.js` fights in rooms with waves. The overland's fights are camps on a locked screen: a third mode beside the
   room and the tower, sharing `resolve`, `foe` and the party's AI (here simplified: basic attacks and the cleric's
   mending only, no abilities).
 - **Saves.** The camps' timers: about 8 bytes a fallen foe, sparse. The bubble keeps them few.
@@ -302,5 +322,6 @@ lowest HP; XP is the hero's.
 1. Is 100× of the Vale's area the scale, or the 15× the wall map gives at the Vale's own scale?
 2. Should the overland earn about what a dungeon room does at the same level, or less, with the dungeons for loot and
    bosses?
-3. Should a lock be free anywhere, or only at camps you've found?
+3. Should a lock be free anywhere, or only where you've found camps? And should it follow the zoom (more land when
+   zoomed out, up to what's awake, as now), or always be the game's own screen?
 4. Should the regions open as today (each at the last one's finale), or should the land be open and only its levels warn you?

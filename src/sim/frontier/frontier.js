@@ -7,7 +7,9 @@
 //
 // Commands:
 //   { type: 'stick', x, y }   the stick held: run that way (world axes, |v| ≤ 1); lifts any lock
-//   { type: 'release' }       the stick let go: lock a ring where the hero stands, and autobattle in it (§5)
+//   { type: 'release', hw, hh, ox, oy }   the stick let go: lock the screen's area (half its width and height in
+//                             tiles, its middle ox, oy from the hero) and autobattle in it (§5); without them, a phone's
+//                             screen at the game's scale
 //   { type: 'jump', town }    (proof of concept) stand in a town's square: every band within a minute's reach
 //   { type: 'level', n }      (proof of concept) the party at level n, 1–75
 // Events: 'hit' 'miss' 'heal' 'kill' 'respawn' 'aggro' 'evade' 'level' 'down' 'rise' 'wipe' 'lock' 'unlock'
@@ -29,7 +31,14 @@ import { hypot, sin, cos } from '../detmath.js';
 
 export const TICK_HZ = 20, DT = 1 / TICK_HZ;
 export const SPEED = 8.8;                                       // the hero's run, tiles/s (core.js PLAYER_SPEED)
-export const BUBBLE = 64, LOCK_R = 12, LEASH = 26, CALM_S = 3, RISE_S = 5, LINK_R = 7;
+export const BUBBLE = 64, LEASH = 26, CALM_S = 3, RISE_S = 5, LINK_R = 7;
+// the lock (§5, the owner: "the full area of the mobile screen, not a circle around the party"): the screen's area when
+// the stick is let go, in tiles. A phone held upright at the game's scale (16 px a tile, 390 × 844) shows 24 × 53; the
+// area is held to what the sim keeps awake (the bubble), so a lock made zoomed out is the land round the party, not a
+// region
+export const LOCK_HW = 12, LOCK_HH = 26, LOCK_MIN = 6, LOCK_MAX = 56, LOCK_OFF = 8;
+/** is (x, y) in the lock's area, `m` tiles of slack past its edges @param {{ x: number, y: number, hw: number, hh: number }} L */
+export const inLock = (L, x, y, m = 0) => Math.abs(x - L.x) <= L.hw + m && Math.abs(y - L.y) <= L.hh + m;
 const XP_SHARE = [1, 1, 0.65, 0.5];                              // battle.js: a kill's XP to each living member
 // the con's edge (§3): a foe two or more over the party hits harder, is harder to hit and lasts longer, a step a level
 // past the first (the dungeon's room premium does this for its waves; a camp is two or three, not five, and the party
@@ -37,7 +46,7 @@ const XP_SHARE = [1, 1, 0.65, 0.5];                              // battle.js: a
 export const GAP_ATK = 0.45, GAP_DODGE = 6, GAP_HP = 0.2;
 // a camp's foe stands for more than a wave's: a camp is two or three where a wave is five at up to twice the strength
 // (battle.js TIDES), and the party mends between pulls. Measured to the contract's shape (proposal §6)
-export const FIELD_HP = 1.5, FIELD_ATK = 1.35;
+export const FIELD_HP = 1.5, FIELD_ATK = 1.25;
 // the cleric's Mend (skills.js: 22 % of the most hurt ally's max HP, the cleric's heals +20 %), for its 12 MP
 const MEND = 0.22 * 1.2, MEND_MP = 12;
 const S_FIGHT = 0xf20f;
@@ -195,19 +204,36 @@ export function createFrontier(seed, coast, { level = 1, town = 'thornwick' } = 
   }
   const foesAwake = () => { const out = []; for (const a of awake.values()) for (const f of a.foes) if (!f.dead) out.push(f); return out; };
 
-  /** what a member goes for: in a lock, a foe in the ring (or one at the party); exploring, only what's in reach */
-  function targetFor(m, foes, locked) {
-    const L = state.lock;
-    const ok = (f) => !f.dead && f.state !== 'evade' && f.rise >= 1 && (!locked || !L ? true : hypot(f.x - L.x, f.y - L.y) <= L.r + 2 || (f.state === 'fight' && hypot(f.x - L.x, f.y - L.y) <= L.r + 9));
+  /** exploring: what's in a member's reach (never a grey one that isn't at us) */
+  function inReach(m, foes) {
     let best = null, bd = Infinity;
     for (const f of foes) {
-      if (!ok(f)) continue;
+      if (f.dead || f.state === 'evade' || f.rise < 1) continue;
       const d = hypot(f.x - m.x, f.y - m.y);
-      if (!locked && d > m.F.range + 0.5) continue;
-      if (!locked && conOf(f.lvl, partyLv()) === 'grey' && f.state !== 'fight') continue;   // exploring: no picking on the grey
-      const score = m.cls === 'rogue' && locked ? f.hp + d * 4 : d;                             // the rogue goes for the weakest near
-      if (score < bd) { bd = score; best = f; }
+      if (d > m.F.range + 0.5 || (conOf(f.lvl, partyLv()) === 'grey' && f.state !== 'fight')) continue;
+      if (d < bd) { bd = d; best = f; }
     }
+    return best;
+  }
+  // In a lock the party fights as a group (§5): what's already at it first, all of it, and only then the next pull, the
+  // nearest camp to the hero that isn't grey (nothing to gain) or red (the party won't start a fight it can't win, nor take on
+  // an orange elite; one that comes at it is fought), when everyone standing is back over PULL_HP and nobody's Downed. A screen
+  // holds several camps; a party that pulled them all at once (each its own nearest) was Downed at its own level.
+  const PULL_HP = 0.6;
+  function groupTargets(foes) {
+    const L = /** @type {any} */ (state.lock), H = hero(), lv = partyLv(), live = (f) => !f.dead && f.state !== 'evade' && f.rise >= 1;
+    const engaged = foes.filter((f) => live(f) && f.state === 'fight' && inLock(L, f.x, f.y, 8));
+    if (engaged.length) return { engaged, pull: null };
+    const ready = state.party.every((m) => !m.down && m.hp >= m.st.maxHp * PULL_HP);
+    if (!ready) return { engaged, pull: null };
+    let pull = null, bd = Infinity;
+    for (const f of foes) { const c = conOf(f.lvl, lv); if (!live(f) || !inLock(L, f.x, f.y, 1) || c === 'grey' || c === 'red' || (f.elite && c === 'orange')) continue; const d = hypot(f.x - H.x, f.y - H.y); if (d < bd) { bd = d; pull = f; } }
+    return { engaged, pull };
+  }
+  /** a member's pick among what the group is fighting: the nearest; the rogue the weakest near */
+  function pick(m, list) {
+    let best = null, bd = Infinity;
+    for (const f of list) { const d = hypot(f.x - m.x, f.y - m.y), score = m.cls === 'rogue' ? f.hp + d * 4 : d; if (score < bd) { bd = score; best = f; } }
     return best;
   }
   function partyStep(foes) {
@@ -217,6 +243,7 @@ export function createFrontier(seed, coast, { level = 1, town = 'thornwick' } = 
       const v = state.want, mag = hypot(v.x, v.y);
       if (mag > 0.05) { const s = SPEED * Math.min(1, mag) * pace(H.x, H.y) * DT; H.fx = v.x / mag; H.fy = v.y / mag; H.moving = step(H, (v.x / mag) * s, (v.y / mag) * s); } else H.moving = false;
     }
+    const G2 = locked ? groupTargets(foes) : null;
     state.party.forEach((m, i) => {
       m.flash = Math.max(0, (m.flash || 0) - DT);
       if (!alive(m)) { m.moving = false; return; }
@@ -229,17 +256,19 @@ export function createFrontier(seed, coast, { level = 1, town = 'thornwick' } = 
           if (locked) { m.moving = false; return; }
         }
       }
-      const f = targetFor(m, foes, locked);
+      const f = !locked ? inReach(m, foes) : G2.engaged.length ? pick(m, G2.engaged) : G2.pull;
       if (locked) {
         if (f) {
           const d = hypot(f.x - m.x, f.y - m.y), reach = m.F.range;
           if (d > reach) moveTo(m, f.x, f.y, m.F.speed * 1.2, reach * 0.85); else m.moving = false;
-          const lx = m.x - L.x, ly = m.y - L.y, ld = hypot(lx, ly), cap = L.r + (f.state === 'fight' ? 4 : 1);
-          if (ld > cap) { m.x = L.x + lx / ld * cap; m.y = L.y + ly / ld * cap; }   // never out of the ring (and only a little, after one at us)
+          const cap = f.state === 'fight' ? 4 : 0;                            // never out of the area (only a little, after one at us)
+          m.x = Math.max(L.x - L.hw - cap, Math.min(L.x + L.hw + cap, m.x)); m.y = Math.max(L.y - L.hh - cap, Math.min(L.y + L.hh + cap, m.y));
           if (d <= reach + 0.3 && m.cd <= 0) { strikeFoe(m, f); m.cd = m.F.interval; }
-        } else {
-          const ox = i === 0 ? 0 : i === 1 ? -1.6 : 1.6, oy = i === 0 ? 0 : 1.6;
-          moveTo(m, L.x + ox, L.y + oy, m.F.speed, 0.4);
+        } else if (i === 0) {                                              // nothing to fight: the hero holds where it is,
+          if (!inLock(L, m.x, m.y)) moveTo(m, L.x, L.y, m.F.speed, 0.4); else m.moving = false;
+        } else {                                                           // the others gather on it
+          const ox = i === 1 ? -1.6 : 1.6;
+          moveTo(m, state.party[0].x + ox, state.party[0].y + 1.6, m.F.speed, 0.4);
         }
         return;
       }
@@ -326,9 +355,13 @@ export function createFrontier(seed, coast, { level = 1, town = 'thornwick' } = 
       if (state.mode === 'lock') { state.mode = 'explore'; state.lock = null; bus.emit('unlock', {}); }
     } else if (c.type === 'release') {
       state.want = { x: 0, y: 0 };
-      const H = hero();
+      const H = hero(), opt = (v, d) => (v === undefined ? d : num(v) ? v : NaN);
+      const hw = opt(c.hw, LOCK_HW), hh = opt(c.hh, LOCK_HH), ox = opt(c.ox, 0), oy = opt(c.oy, 0);
+      if ([hw, hh, ox, oy].some((v) => Number.isNaN(v))) return;
+      const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
       if (state.mode === 'explore' && alive(H) && land.walkable(H.x, H.y)) {
-        state.mode = 'lock'; state.lock = { x: H.x, y: H.y, r: LOCK_R }; state.lockSince = state.tick; state.lockKills = 0; state.lockXp = 0;
+        state.mode = 'lock'; state.lock = { x: H.x + clamp(ox, -LOCK_OFF, LOCK_OFF), y: H.y + clamp(oy, -LOCK_OFF, LOCK_OFF), hw: clamp(hw, LOCK_MIN, LOCK_MAX), hh: clamp(hh, LOCK_MIN, LOCK_MAX) };
+        state.lockSince = state.tick; state.lockKills = 0; state.lockXp = 0;
         bus.emit('lock', { ...state.lock });
       }
     } else if (c.type === 'jump') {
@@ -352,10 +385,10 @@ export function createFrontier(seed, coast, { level = 1, town = 'thornwick' } = 
   }
 
   // ── reads, for the view and the tests ───────────────────────────────────────────────────────────────────────────────
-  /** what the ring holds: its camps, their levels, the next to stand again, and what it's paid */
+  /** what the locked area holds: its camps, their levels, the next to stand again, and what it's paid */
   function lockInfo() {
     const L = state.lock; if (!L) return null;
-    const camps = [...awake.values()].filter((a) => hypot(a.camp.x - L.x, a.camp.y - L.y) <= L.r + 2);
+    const camps = [...awake.values()].filter((a) => inLock(L, a.camp.x, a.camp.y, 1));
     let next = Infinity, lo = Infinity, hi = 0, standing = 0;
     for (const a of camps) {
       for (const f of a.camp.foes) { lo = Math.min(lo, f.lvl); hi = Math.max(hi, f.lvl); }

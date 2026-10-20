@@ -1235,7 +1235,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   }
 }
 
-// the Frontier (docs/frontier-proposal.md): its page boots, the stick runs the party, letting go locks a ring, the wheel
+// the Frontier (docs/frontier-proposal.md): its page boots, the stick runs the party, letting go locks the screen's area, the wheel
 // zooms out through the map to the Guild's wall map, all without a page error
 {
   const b = await launch(chromium, 'chromium');
@@ -1250,13 +1250,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await run(20);
     const ran = await p.evaluate(() => ({ dx: globalThis.__fr.state.party[0].x, mode: globalThis.__fr.state.mode }));
     await p.mouse.up(); await run(4);
-    const held = await p.evaluate(() => ({ mode: globalThis.__fr.state.mode, lock: !!globalThis.__fr.state.lock, card: document.getElementById('lockCard').classList.contains('on') }));
+    const held = await p.evaluate(() => ({ mode: globalThis.__fr.state.mode, lock: !!globalThis.__fr.state.lock && Math.abs(globalThis.__fr.state.lock.hw * 2 * globalThis.__view.cam.s - innerWidth) < 2 && Math.abs(globalThis.__fr.state.lock.hh * 2 * globalThis.__view.cam.s - innerHeight) < 2, card: document.getElementById('lockCard').classList.contains('on') }));
     await run(4);
     const card = await p.evaluate(() => document.getElementById('lockCard').innerText);
     const s0 = await p.evaluate(() => globalThis.__view.cam.s);
     for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 400); await run(3); }
     const s1 = await p.evaluate(() => globalThis.__view.cam.s);
-    check('frontier: the stick runs the party, letting go holds a ring with its card, the wheel zooms out to the wall map',
+    check('frontier: the stick runs the party, letting go holds the screen with its card, the wheel zooms out to the wall map',
       ran.dx - x0 > 5 && ran.mode === 'explore' && held.mode === 'lock' && held.lock && /Holding/.test(card) && s1 < 1.5 && s1 < s0 && errs.length === 0,
       JSON.stringify({ ran: +(ran.dx - x0).toFixed(1), held, card: card.replace(/\n/g, ' | '), s0, s1 }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();

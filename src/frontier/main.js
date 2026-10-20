@@ -1,7 +1,7 @@
 // @ts-check
 // main.js — the Frontier's page (frontier.html; docs/frontier-proposal.md §5): boots the sim on the wall map's coast,
 // runs it at a fixed 20 Hz, and turns the thumb into commands: drag in the lower two-thirds and the stick runs the party;
-// let go and the sim locks a ring there to fight in; two fingers, the wheel or the − / + buttons zoom; a tap reads the
+// let go and the sim locks the screen's area to fight in; two fingers, the wheel or the − / + buttons zoom; a tap reads the
 // land. A sandbox: no save is read or written. On localhost ?manual hands the clock to a capture script
 // (globalThis.__frame(ms)), and globalThis.__fr is the sim.
 
@@ -27,7 +27,7 @@ let toastT = 0;
 function toast(/** @type {string} */ msg, ms = 2600) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
 fr.bus.on('level', (e) => { if (e.name === fr.state.party[0].name) toast(`The party is level ${e.level}`); });
 fr.bus.on('wipe', (e) => toast(`The party fell. They wake in ${e.name}'s square at 30 %.`, 4000));
-fr.bus.on('lock', () => toast('Holding here: the party fights what comes into the ring', 2000));
+fr.bus.on('lock', () => toast('Holding: the party fights everything on the screen', 2000));
 toast('Drag in the lower two-thirds to run · let go to hold and fight · pinch or − + to zoom', 6000);
 
 // ── the thumb: the stick, the pinch, the tap ─────────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ const up = (/** @type {PointerEvent} */ e) => {
   const p = ptrs.get(e.pointerId); if (!p) return;
   ptrs.delete(e.pointerId);
   if (pinch) { if (ptrs.size === 0) pinch = null; return; }
-  if (stick) { stick = null; stickEl.style.display = 'none'; knob.style.transform = ''; fr.commands.push({ type: 'release' }); return; }
+  if (stick) { stick = null; stickEl.style.display = 'none'; knob.style.transform = ''; fr.commands.push({ type: 'release', ...view.screenArea() }); return; }
   if (performance.now() - p.t0 < TAP_MS && Math.hypot(p.x - p.x0, p.y - p.y0) < SLOP) read(p.x, p.y);
 };
 canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
@@ -102,7 +102,7 @@ for (const t of TOWNS) {
 }
 $('fogBtn').addEventListener('click', () => { view.opts.fog = !view.opts.fog; $('fogBtn').textContent = `Fog: ${view.opts.fog ? 'on' : 'off'}`; });
 
-// ── the HUD: where you are, the party, the ring ─────────────────────────────────────────────────────────────────────
+// ── the HUD: where you are, the party, the locked area ─────────────────────────────────────────────────────────────────────
 let lastRegion = '', hudT = 0;
 function hud() {
   const H = fr.state.party[0], R = fr.land.regionAt(H.x, H.y), lv = fr.partyLv(), here = fr.land.levelAt(H.x, H.y);
@@ -114,7 +114,7 @@ function hud() {
   const s = view.cam.s; $('zoomTier').textContent = s >= 10 ? 'near' : s >= 1.5 ? 'map' : 'the Guild\'s map';
   const I = fr.lockInfo(), card = $('lockCard');
   card.classList.toggle('on', !!I);
-  if (I) card.innerHTML = `<b>Holding</b> · ${I.camps ? `${I.camps} camp${I.camps > 1 ? 's' : ''}, ${I.lo === I.hi ? `level ${I.lo}` : `levels ${I.lo}–${I.hi}`}` : 'no camp in the ring: drag on to find one'}`
+  if (I) card.innerHTML = `<b>Holding</b> · ${I.camps ? `${I.camps} camp${I.camps > 1 ? 's' : ''}, ${I.lo === I.hi ? `level ${I.lo}` : `levels ${I.lo}–${I.hi}`}` : 'no camp on the screen: drag on to find one'}`
     + `<br>${I.standing} standing${I.next !== null ? ` · the next stands in <em>${Math.ceil(I.next)} s</em>` : ''} · ${I.kills} slain · <em>${I.mins >= 0.5 ? I.xpMin : '…'}</em> XP a minute`;
 }
 

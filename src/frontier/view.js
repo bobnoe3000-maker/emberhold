@@ -3,7 +3,7 @@
 // game's own scale out to the whole of the Old Provinces, in three tiers that cross-fade:
 //   Near (≥ 8 px a tile)   the land painted a chunk at a time (8 px a tile, cached), the game's own baked sprites on it
 //                          (trees, rocks, peaks, ruins, the towns' buildings, the party and the foes, animated), each
-//                          foe's level in its con colour, the lock's ring, the blows and the numbers
+//                          foe's level in its con colour, the locked area's edge, the blows and the numbers
 //   Mid  (1.5–12)          the land as a map in the wall map's hand, a chunk at a time (2 px a tile), every camp a dot
 //   Far  (< 1.5)           the Guild's wall map itself (assets/maps/old-provinces.jpg), which the land is laid out from
 // Presentation only: it reads the sim and never writes it; what it remembers (where an actor was a tick ago, its clip,
@@ -300,11 +300,8 @@ export function createView(canvas, fr) {
 
   function drawWorld(tl, br, cx0, cx1, cy0, cy1, alpha, aNear, lv) {
     const items = [], party = fr.state.party, L = fr.state.lock;
-    // the lock's ring on the ground
-    if (L) {
-      g.globalAlpha = aNear; g.fillStyle = 'rgba(240,200,128,0.07)'; g.beginPath(); g.arc(sx(L.x), sy(L.y), L.r * cam.s, 0, 6.2832); g.fill();
-      g.setLineDash([10, 7]); g.lineDashOffset = -now() * 12; g.strokeStyle = 'rgba(240,200,128,0.85)'; g.lineWidth = 2; g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
-    }
+    // the locked area's edge on the ground (the screen it was when the stick was let go; it shows when the camera drifts)
+    if (L) lockFrame(L, aNear);
     for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
       const c = land.chunk(cx, cy);
       for (const f of c.feats) if (f.x > tl.x - 16 && f.x < br.x + 16 && f.y > tl.y - 4 && f.y < br.y + 24) items.push({ y: f.y, f });
@@ -338,6 +335,14 @@ export function createView(canvas, fr) {
     for (const t of TOWNS) { const x = t.x * K, y = t.y * K; if (x > tl.x - 40 && x < br.x + 40 && y > tl.y - 40 && y < br.y + 40) label(t.name, sx(x), sy(y - t.r - 3), { size: 15, b: true, c: '#f0c880' }); }
     for (const s of SITES) { const x = s.x * K, y = s.y * K; if (x > tl.x - 20 && x < br.x + 20 && y > tl.y - 20 && y < br.y + 20) label(`${s.name} · ${s.lv[0]}–${s.lv[1]}`, sx(x), sy(y + 9), { size: 12, it: true }); }
     drawFx(aNear);
+  }
+  function lockFrame(L, a) {
+    const x0 = sx(L.x - L.hw), y0 = sy(L.y - L.hh), w = L.hw * 2 * cam.s, h = L.hh * 2 * cam.s;
+    g.globalAlpha = a; g.fillStyle = 'rgba(240,200,128,0.05)'; g.fillRect(x0, y0, w, h);
+    g.setLineDash([12, 8]); g.lineDashOffset = -now() * 12; g.strokeStyle = 'rgba(240,200,128,0.9)'; g.lineWidth = 2.5; g.strokeRect(x0 + 2, y0 + 2, w - 4, h - 4); g.setLineDash([]);
+    const c = 14; g.lineWidth = 4; g.strokeStyle = 'rgba(240,200,128,0.95)'; g.beginPath();   // its corners, solid, so the edge reads at the screen's border
+    for (const [px, py, dx, dy] of [[x0 + 2, y0 + 2, 1, 1], [x0 + w - 2, y0 + 2, -1, 1], [x0 + 2, y0 + h - 2, 1, -1], [x0 + w - 2, y0 + h - 2, -1, -1]]) { g.moveTo(px + dx * c, py); g.lineTo(px, py); g.lineTo(px, py + dy * c); }
+    g.stroke(); g.globalAlpha = 1;
   }
   function townItems(t, x, y, items) {
     const set = 'town-' + townSet(t.id), p = set.slice(5) + '_';
@@ -378,7 +383,7 @@ export function createView(canvas, fr) {
     g.globalAlpha = 1;
   }
 
-  // at the mid and far tiers: the camps as dots in their con colour, the towns and sites named, the party and the ring
+  // at the mid and far tiers: the camps as dots in their con colour, the towns and sites named, the party and the locked area
   function drawMapMarks(tl, br, lv, a) {
     const s = cam.s;
     g.globalAlpha = a;
@@ -395,7 +400,7 @@ export function createView(canvas, fr) {
       }
     }
     const L = fr.state.lock;
-    if (L) { g.strokeStyle = 'rgba(240,200,128,0.95)'; g.lineWidth = 2; g.setLineDash([5, 4]); g.beginPath(); g.arc(sx(L.x), sy(L.y), Math.max(5, L.r * s), 0, 6.2832); g.stroke(); g.setLineDash([]); }
+    if (L) lockFrame(L, a);
     for (const t of TOWNS) if (t.x * K > tl.x - 200 && t.x * K < br.x + 200 && t.y * K > tl.y - 200 && t.y * K < br.y + 200) {
       g.fillStyle = '#f6ecd2'; g.strokeStyle = '#8a3a22'; g.lineWidth = 2.5; g.beginPath(); g.arc(sx(t.x * K), sy(t.y * K), t.hub || t.city ? 6 : 4, 0, 6.2832); g.fill(); g.stroke();
       if (s >= 0.5 || t.hub || t.city) label(t.name, sx(t.x * K), sy(t.y * K) + 15, { size: 12, it: true, c: '#2a2018', pill: 'rgba(240,228,200,0.88)' });
@@ -408,5 +413,7 @@ export function createView(canvas, fr) {
     g.globalAlpha = 1;
   }
 
-  return { draw, beforeTick, toTile, cam, opts, resize, pending: () => want.length, ready: () => !!wall && !!sheets.env };
+  /** the screen's area in tiles: half its width and height, and its middle from the hero (the lock's area, §5) */
+  const screenArea = () => { if (canvas.clientWidth !== W || canvas.clientHeight !== H) resize(); const H0 = fr.state.party[0], c = toTile(W / 2, H / 2); return { hw: W / 2 / cam.s, hh: H / 2 / cam.s, ox: c.x - H0.x, oy: c.y - H0.y }; };
+  return { draw, beforeTick, toTile, screenArea, cam, opts, resize, pending: () => want.length, ready: () => !!wall && !!sheets.env };
 }
