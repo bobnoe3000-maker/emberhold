@@ -5,7 +5,8 @@ map that is 100x the current size suitable for an mmo style exploration. Let me 
 thumb stick the players explore and move. Lifting then the map area is locked and the characters autobattle in the
 area selected. Pay special attention to the map features, terrain and NPC difficulty and respawn."*
 
-- **Play it:** `/frontier.html` (on the deployed site too). It's a sandbox with its own sim. It reads no save,
+- **Play it:** the game's menu (☰) → *The Frontier*, which saves the slot first; or `/frontier.html` directly (on
+  the deployed site too). The Frontier's own menu has the way back. It's a sandbox with its own sim. It reads no save,
   writes none, and nothing earned in it reaches a game slot.
 - **Code:**
   - `src/sim/frontier/`: headless and deterministic, under the sim's lint rules.

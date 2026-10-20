@@ -1242,6 +1242,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    // the way in: the game's menu has a row for it, and it goes there
+    await p.goto(`${base}/index.html?dev&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 });
+    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
+    await p.waitForURL(/frontier\.html/, { timeout: 30000 * SLOW });
+    const viaMenu = /frontier\.html$/.test(p.url());
     await p.goto(`${base}/frontier.html?manual&lv=3`); await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__fr, null, { timeout: 60000 });
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(50); }, n);
     await run(10);
@@ -1256,9 +1261,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const s0 = await p.evaluate(() => globalThis.__view.cam.s);
     for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 400); await run(3); }
     const s1 = await p.evaluate(() => globalThis.__view.cam.s);
-    check('frontier: the stick runs the party, letting go holds the screen with its card, the wheel zooms out to the wall map',
-      ran.dx - x0 > 5 && ran.mode === 'explore' && held.mode === 'lock' && held.lock && /Holding/.test(card) && s1 < 1.5 && s1 < s0 && errs.length === 0,
-      JSON.stringify({ ran: +(ran.dx - x0).toFixed(1), held, card: card.replace(/\n/g, ' | '), s0, s1 }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('frontier: the game\'s menu goes there; the stick runs the party, letting go holds the screen with its card, the wheel zooms out to the wall map',
+      viaMenu && ran.dx - x0 > 5 && ran.mode === 'explore' && held.mode === 'lock' && held.lock && /Holding/.test(card) && s1 < 1.5 && s1 < s0 && errs.length === 0,
+      JSON.stringify({ viaMenu, ran: +(ran.dx - x0).toFixed(1), held, card: card.replace(/\n/g, ' | '), s0, s1 }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
