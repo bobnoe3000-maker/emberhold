@@ -31,6 +31,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?dev&scene=stage[&group=party|town|foes|bosses|wardens|all&clip=idle|walk|attack|…&dir=0-7|turn|all&zoom=1-3&floor=grass|cobble&cmp=/before/]: the cast lined up, animated in place (docs/character-stage-proposal.md)
 #   ?dev&scene=stage&show=env|props|fx|icons|faces[&set=env|town-vale|town-fens|town-reach|town-heights|all&match=…&page=N&tod=…&zoom=1-3]: the art review, every sprite, prop, effect, icon and portrait as the game draws it (docs/art-review.md)
 #   /lumina/ (the Luminati prototype, docs/lumina-prototype.md: Luminati's worlds, Emberfall's people; a built folder: rebuild, never edit)
+#   /lumina/game.html?…&from=game (as the menu's Compare worlds opens a map: its ◂ button goes back to the game)
 #   /lumina/world.html (never opened alone: the game frames it with ?renderer=luminati; built with the prototype)
 #   /lumina/game.html?autostart=1&level=thornwick|encounter|barrows|catalogue|catalogue-art|<theirs>&hero=hero_knight|…[&auto=1][&view=luminati] (our Thornwick, the Scrag Warren fight with the autobattle, the Old Barrows dungeon, the asset catalogue and its wing of Emberfall's art; the main game's camera and eight facings unless view=luminati)
 #   /frontier.html[?lv=1-75&town=thornwick|ashgate|…&zoom=0.15-40] (the Frontier, docs/frontier-proposal.md: the Old Provinces as one land, a sandbox with its own sim; ?manual on localhost: globalThis.__frame(ms), __fr, __view)

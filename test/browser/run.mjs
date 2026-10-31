@@ -1248,7 +1248,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     // the way in: the game's menu has a row for it, and it goes there
     await p.goto(`${base}/index.html?dev&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 });
-    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
+    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
     await p.waitForURL(/frontier\.html/, { timeout: 30000 * SLOW });
     const viaMenu = /frontier\.html$/.test(p.url());
     await p.goto(`${base}/frontier.html?manual&lv=3`); await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__fr, null, { timeout: 60000 });
@@ -1283,18 +1283,19 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const front = await p.evaluate(() => ({ ours: [...document.querySelectorAll('#ours .world')].map((a) => new URL(a.href).searchParams.get('level')), worlds: document.querySelectorAll('#worlds .world').length,
       views: document.querySelectorAll('#views button').length,
       heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue`);
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue&from=game`);   // (as the game's menu opens it: Compare worlds)
     await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
-    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk') }));
+    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk'),
+      back: [document.getElementById('ember-back')?.textContent, document.getElementById('ember-back')?.getAttribute('href')] }));
     // the ground (ember/ground.js): the ground cover at a quarter of its size, and no floating luminous dots
     const ground = await p.evaluate(() => { const w = window.__game.world, g = globalThis.__emberGround;
       return { size: g?.size, scaled: g?.scaled, fields: w.groundDetail?.fields?.length ?? 0, dust: !!w.emitters.dust, areas: w.areaEmitters.map((e) => e.preset) }; });
     check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
       ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
-    check('lumina: the front page lists our five levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
+    check('lumina: the front page lists our five levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, the Talk button, and (opened from the game\'s Compare worlds) a way straight back to the game',
       front.ours.join() === 'thornwick,encounter,barrows,catalogue,catalogue-art' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
-        && cast.npcs.join() === FOLK.join() && cast.talk && errs.length === 0,
+        && cast.npcs.join() === FOLK.join() && cast.talk && cast.back[0] === '◂ Game' && cast.back[1] === '../index.html' && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
     // engine stopped and stepped unrendered: from the square, each stick direction draws that screen octant's row
@@ -1384,13 +1385,17 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
     await p.locator('#title button', { hasText: 'Off' }).click();
     const dofOff = await p.evaluate(() => document.querySelector('iframe').contentWindow.__game?.postfx?.settings?.dof?.enabled === false);
+    // the menu's Compare worlds: this game's two renderers, the prototype's five maps, Luminati's worlds and the Frontier
+    await p.locator('#title button', { hasText: 'Back' }).click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click();
+    const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
     await p.evaluate(() => globalThis.__ui.title.close());
     // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
     const walked = await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits[0], w0 = s.world; s.commands.push({ type: 'tap', tx: Math.floor((e.x0 + e.x1) / 2), ty: Math.floor((e.y0 + e.y1) / 2) }); let n = 0; while (s.world === w0 && n < 4000) { s.tick(); n++; } return s.world.kind; });
     const vale = await built(2), offVale = vale ? await probe() : 99;
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); the frame takes no pointer; Graphics shows Luminati and turns the depth of field off',
-      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.actors > 0 && pressed.includes('Luminati') && dofOff && errs.length === 0,
-      JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); the frame takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
+      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+        && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
+      JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
     await ctx.close(); await b.close();
   }

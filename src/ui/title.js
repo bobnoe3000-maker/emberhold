@@ -98,9 +98,38 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
+  // Compare worlds (the owner, 2026-10-31: "Keep these map options available from the menu so i can compare gameplay
+  // and world art"): this game drawn by Emberlit or by Luminati (the trial: Graphics' choice, here too), and the
+  // Luminati prototype's own maps (docs/lumina-prototype.md), each opened with your hero's look and Emberfall's view,
+  // with a way straight back (its ◂ Game). The game is saved before a page of the prototype opens (openPage).
+  const PROTO = [['thornwick', 'Thornwick', 'our town, in Luminati’s own play', ''], ['encounter', 'The Scrag Warren', 'a party of three against the hill goblins · Auto', '&auto=1'],
+    ['barrows', 'The Old Barrows', 'the Ashbound and the Quartermaster · Auto', '&auto=1'], ['catalogue', 'The Catalogue', 'every world asset Luminati builds', ''],
+    ['catalogue-art', 'The Catalogue: our art', 'every piece of Emberfall’s world art in Luminati’s light', '']];
+  const PROTO_HEROES = ['hero_knight', 'hero_barbarian', 'hero_rogue', 'hero_mage', 'hero_cleric', 'hero_shaman', 'hero_wren', 'hero_brannoc'];
+  function Worlds() {
+    const r = graphics ? graphics.current() : 'emberlit', look = sim.state.party[0]?.actor, hero = PROTO_HEROES.includes(look) ? look : 'hero_knight';
+    const go = (slug, extra) => openPage(`./lumina/game.html?autostart=1&level=${slug}&hero=${hero}&from=game${extra}`);
+    return html`<div id="title">
+      <div class="mark" style="font-size:32px">WORLDS</div>
+      ${graphics && html`<div class="tag">This game, drawn by</div>
+      <div class="row">
+        ${choice('renderer', 'emberlit', 'Emberlit', 'the game’s own', r === 'emberlit')}
+        ${choice('renderer', 'luminati', 'Luminati', 'trial: the same game', r === 'luminati')}
+      </div>`}
+      <div class="tag">Luminati’s prototype maps</div>
+      ${PROTO.map(([slug, name, what, extra]) => html`<button key=${slug} onClick=${() => go(slug, extra)}>${name}<small>${what}</small></button>`)}
+      <div class="row">
+        <button onClick=${() => openPage('./lumina/index.html')}>All of Luminati’s worlds<small>and its other views</small></button>
+        <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
+      </div>
+      <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
+    </div>`;
+  }
+
   function Title() {
     if (panel === 'sound' && audio) return html`<${Sound} />`;
     if (panel === 'graphics' && graphics) return html`<${Graphics} />`;
+    if (panel === 'worlds' && openPage) return html`<${Worlds} />`;
     const S = sim.state, h = S.party[0], made = S.created;
     const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     return html`<div id="title">
@@ -120,10 +149,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
-      ${openPage && html`<div class="row">
-        <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
-        <button onClick=${() => openPage('./lumina/index.html')}>Another world<small>Luminati's dioramas, your people</small></button>
-      </div>`}
+      ${openPage && html`<button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>this game in Emberlit or Luminati · the Scrag Warren · the Old Barrows · Thornwick · the catalogues · the Frontier</small></button>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>${graphics.current() === 'luminati' ? 'Luminati (trial)' : 'Emberlit'} · depth of field</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>

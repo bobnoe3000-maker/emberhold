@@ -41,7 +41,9 @@ const css = `
 function mount() {
   const style = document.createElement('style'); style.textContent = css; document.head.append(style);
   const root = document.createElement('div'); root.id = 'ember-touch';
-  root.innerHTML = '<div id="ember-stick"><i></i></div><button id="ember-talk" aria-label="Talk">Talk</button><a id="ember-back" href="./index.html">◂ Worlds</a>';
+  // (opened from the game's menu, Compare worlds: ?from=game, and the way out goes straight back to the game)
+  const fromGame = new URLSearchParams(location.search).get('from') === 'game';
+  root.innerHTML = `<div id="ember-stick"><i></i></div><button id="ember-talk" aria-label="Talk">Talk</button><a id="ember-back" href="${fromGame ? '../index.html' : './index.html'}">◂ ${fromGame ? 'Game' : 'Worlds'}</a>`;
   document.body.append(root);
   const ring = /** @type {HTMLElement} */ (root.querySelector('#ember-stick')), knob = /** @type {HTMLElement} */ (ring.firstElementChild);
   const ptrs = new Map(); let origin = null, pinch = 0;
