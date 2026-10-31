@@ -54,6 +54,7 @@ And Emberfall's own (§3), written by `tools/lumina/levels.mjs` when it builds:
 | The Scrag Warren | 56 × 60 | an autobattle encounter: Wren and a Guild cleric with you against the hill goblins |
 | The Old Barrows | 48 × 72 | a dungeon: the Ashbound in the Long Gallery, the Quartermaster who stands them up again, Tobin's lantern to wake at (§8) |
 | The Catalogue | 112 × 119 | every world asset the engine builds, one of each and named, and Emberfall's whole cast |
+| The Catalogue: Emberfall's art | 126 × 93 | the second wing: all 290 pieces of the game's own world art and item icons (§10) |
 
 ## 2. How our people get into their world
 
@@ -440,3 +441,50 @@ The browser suite boots the Old Barrows and checks:
 - the issuer and his 14 ranks;
 - the cards replacing Luminati's vitals, in the same row upright and sideways;
 - a fall waking the party at Tobin's lantern.
+
+## 10. The catalogue's second wing: Emberfall's art
+
+The owner asked which of the original game's assets would suit the catalogue, then: *"Put them all into the
+catalog."*
+
+![Emberfall's art in Luminati's world: trees, two towns, the cows and sheep, the item icons](./img/lumina/catalogue-art.jpg)
+
+**All of it, in a wing of its own.** *The Catalogue: Emberfall's art* (`levels.mjs` `catalogueArt`, 126 × 93) holds
+290 pieces: every sprite of the game's baked world art and every item icon, each with a signpost naming it as the game
+names it (`env · sheep_1`, `town-vale · vale_tavern_1`, `item · sword_1h`). It's a level of its own because Luminati's
+levels are 128 a side at most, the first wing is 112 × 119, and the town sets alone take a dozen rows of house-sized
+cells.
+
+| Row | Pieces | Fit (as judged before) | How it reads in Emberfall's view |
+|---|---|---|---|
+| Props and the yard (`env`) | 31 | good | right: barrels, carts, the weapon rack, hay, stumps beside our people |
+| Animals | 15 | good, and fills a gap | right: cows from three sides, sheep, hens. Luminati's animals are chickens, cats, birds and dogs |
+| Trees | 31 | fair | better than expected: standing pines and oaks, flat only if the camera's turned |
+| Rocks and ground cover | 17 | rocks not judged; ground cover: skip | small; the ground cover is the kind that was shrunk (§7) |
+| Landmarks, bridges, walls and stairs | 16 | poor | the landmarks stand; the bridges, walls and stairs are cut-outs |
+| Mountains | 8 | poor | stand as scenery cut-outs |
+| The Vale's, the Fens', the Reach's and the Heights' towns | 28, 43, 28, 28 | poor | **better than expected**: drawn from the same angle as this view, a town reads as solid houses in Luminati's light and shadow. Walk round one and it's a flat card |
+| Item icons (`assets/items`) | 45 | not world art | two units tall, along the last lane |
+
+**How they stand** (`ember/props.js`):
+- **No object type in Luminati holds a picture**, so the level carries a sidecar, `levels/catalogue-art.ember.json`.
+  For each piece it gives where it stands (x, z), its rectangle in its atlas, and its foot (the atlas's own `ax ay`),
+  or an item by name.
+- **Standing them up.** `props.js` cuts each piece from its atlas once the image is in. It stands it as a Sprite3D, as
+  our characters stand: turned to the camera, at our scale (32 baked px to a unit), its foot on the ground.
+- **Light.** Luminati's sprite lighting, with a little of its warm fill. Our art was baked to be relit by its normal
+  maps, which aren't used, and reads dark without it.
+- **What they don't do:** nothing collides with them, and no lamp is added (Luminati's lamp count is fixed).
+
+**Signposts.** The camera looks from the south-east, so a small piece's sign stands behind it, north-west of it. A
+signpost in front hid every sheep. A tall piece's sign stands in front, where the piece doesn't hide it.
+
+**Rough:**
+- **One view.** The art is drawn from the game's camera only, so it lines up in Emberfall's view and not in Luminati's
+  (`?view=luminati` shows it turned wrong).
+- **No collision.** The buildings and walls are pictures: you walk through them.
+- **The same pieces could furnish our own levels:** the sheep in Thornwick's pasture, the weapon racks in the Muster
+  Hall.
+
+The browser suite opens the wing and checks that all 290 stand, a sheep, a cow's side view, a house from each of three
+towns and a sword among them.
