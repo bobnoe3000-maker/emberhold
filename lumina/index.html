@@ -9,7 +9,7 @@
 <!-- The Luminati prototype's front page (docs/lumina-prototype.md): another world for Emberfall's people. The worlds,
      their light, weather and water are Luminati's (https://gitlab.com/stubborn-hug/lumina, MIT); the player, the party
      and the villagers are Emberfall's own baked actors (assets/actors/, KayKit CC0), as they are. -->
-<style>*{box-sizing:border-box;margin:0;padding:0}html,body{color:#efe4cf;background:#0d0913;min-height:100%;font-family:ui-monospace,SF Mono,Menlo,Consolas,monospace}main{max-width:520px;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);margin:0 auto}h1{letter-spacing:3px;color:#f0c880;font:600 30px Georgia,serif}h1 em{color:#f08a3a;font-style:normal}.tag{color:#c8b89c;margin:6px 0 18px;font:italic 15px/1.45 Georgia,serif}h2{color:#e0c090;letter-spacing:.5px;margin:18px 0 8px;font:600 15px Georgia,serif}.heroes{grid-template-columns:repeat(4,1fr);gap:8px;display:grid}.heroes button{color:#d8ccb4;background:#100c16cc;border:1px solid #d6aa6266;border-radius:10px;flex-direction:column;align-items:center;gap:4px;min-height:44px;padding:6px 2px 4px;font:11px ui-monospace,Menlo,monospace;display:flex}.heroes button img{object-fit:contain;width:44px;height:52px;image-rendering:pixelated}.heroes button.on{color:#f6e6c4;background:linear-gradient(#e0a84a59,#b67c2a40);border-color:#f0c880}.world{color:inherit;background:linear-gradient(#181222e6,#0e0a14e6);border:1px solid #d6aa6266;border-radius:12px;min-height:44px;margin-bottom:10px;padding:12px 14px;text-decoration:none;display:block}.world b{color:#f0c880;font:600 17px Georgia,serif}.world small{color:#c8b89c;margin:2px 0 6px;font:italic 13px Georgia,serif;display:block}.world p{color:#b8ac98;font-size:12px;line-height:1.5}.world .meta{color:#978c80;margin-top:6px;font-size:11px}.world:active{border-color:#f0c880}footer{color:#978c80;margin-top:20px;font-size:11px;line-height:1.6}a{color:#e0a85a}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0}html,body{color:#efe4cf;background:#0d0913;min-height:100%;font-family:ui-monospace,SF Mono,Menlo,Consolas,monospace}main{max-width:520px;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);margin:0 auto}h1{letter-spacing:3px;color:#f0c880;font:600 30px Georgia,serif}h1 em{color:#f08a3a;font-style:normal}.tag{color:#c8b89c;margin:6px 0 18px;font:italic 15px/1.45 Georgia,serif}h2{color:#e0c090;letter-spacing:.5px;margin:18px 0 8px;font:600 15px Georgia,serif}.heroes{grid-template-columns:repeat(4,1fr);gap:8px;display:grid}.heroes button{color:#d8ccb4;background:#100c16cc;border:1px solid #d6aa6266;border-radius:10px;flex-direction:column;align-items:center;gap:4px;min-height:44px;padding:6px 2px 4px;font:11px ui-monospace,Menlo,monospace;display:flex}.heroes button img{object-fit:contain;width:44px;height:52px;image-rendering:pixelated}.heroes button.on{color:#f6e6c4;background:linear-gradient(#e0a84a59,#b67c2a40);border-color:#f0c880}.views{grid-template-columns:1fr 1fr;gap:8px;display:grid}.views button{color:#d8ccb4;text-align:left;background:#100c16cc;border:1px solid #d6aa6266;border-radius:10px;min-height:44px;padding:8px 10px;font:600 13px Georgia,serif}.views button small{color:#b8ac98;margin-top:2px;font:11px ui-monospace,Menlo,monospace;display:block}.views button.on{color:#f6e6c4;background:linear-gradient(#e0a84a59,#b67c2a40);border-color:#f0c880}.world{color:inherit;background:linear-gradient(#181222e6,#0e0a14e6);border:1px solid #d6aa6266;border-radius:12px;min-height:44px;margin-bottom:10px;padding:12px 14px;text-decoration:none;display:block}.world b{color:#f0c880;font:600 17px Georgia,serif}.world small{color:#c8b89c;margin:2px 0 6px;font:italic 13px Georgia,serif;display:block}.world p{color:#b8ac98;font-size:12px;line-height:1.5}.world .meta{color:#978c80;margin-top:6px;font-size:11px}.world:active{border-color:#f0c880}footer{color:#978c80;margin-top:20px;font-size:11px;line-height:1.6}a{color:#e0a85a}</style>
 </head>
 <body>
 <main>
@@ -19,6 +19,9 @@
 
   <h2>Who walks</h2>
   <div class="heroes" id="heroes"></div>
+
+  <h2>Seen as</h2>
+  <div class="views" id="views"></div>
 
   <h2>Emberfall's own, in Luminati's light</h2>
   <div id="ours"></div>
@@ -53,8 +56,10 @@
     ['starfall-vale', 'Starfall Vale', 'Where the Stars Come Home', 'A vale on the night of a festival: a market town on its river, a mountain with falls, a lake under the stars.', '128 × 128 · 29 villagers'],
     ['cinderwatch-pass', 'Cinderwatch Pass', 'Where the Old Fires Wake', 'A pass with a fight in it: companions to recruit (drawn as Emberfall\'s heroes), and Luminati\'s own foes.', '96 × 120 · a party and its fights'],
   ];
-  let hero = 'hero_knight';
-  try { hero = localStorage.getItem('ember-lumina-hero') || hero; } catch {}
+  // the view (ember/view.js): the main game's camera, or Luminati's own
+  const VIEWS = [['ember', 'Emberfall\'s view', 'isometric, from the south-east: the game\'s camera'], ['luminati', 'Luminati\'s view', 'looking north, a wider lens']];
+  let hero = 'hero_knight', view = 'ember';
+  try { hero = localStorage.getItem('ember-lumina-hero') || hero; view = localStorage.getItem('ember-lumina-view') === 'luminati' ? 'luminati' : 'ember'; } catch {}
   const heroes = document.getElementById('heroes'), worlds = document.getElementById('worlds'), ours = document.getElementById('ours');
   function paint() {
     heroes.textContent = '';
@@ -64,10 +69,17 @@
       b.addEventListener('click', () => { hero = id; try { localStorage.setItem('ember-lumina-hero', id); } catch {} paint(); });
       heroes.append(b);
     }
+    const views = document.getElementById('views'); views.textContent = '';
+    for (const [id, name, about] of VIEWS) {
+      const b = document.createElement('button'), s = document.createElement('small');
+      b.textContent = name; s.textContent = about; b.append(s); b.className = id === view ? 'on' : ''; b.setAttribute('aria-pressed', id === view ? 'true' : 'false');
+      b.addEventListener('click', () => { view = id; try { localStorage.setItem('ember-lumina-view', id); } catch {} paint(); });
+      views.append(b);
+    }
     for (const [list, into] of [[OURS, ours], [WORLDS, worlds]]) {
       into.textContent = '';
       for (const [slug, name, sub, about, meta, extra = ''] of list) {
-        const a = document.createElement('a'); a.className = 'world'; a.href = `./game.html?autostart=1&level=${slug}&hero=${hero}${extra}`;
+        const a = document.createElement('a'); a.className = 'world'; a.href = `./game.html?autostart=1&level=${slug}&hero=${hero}${view === 'luminati' ? '&view=luminati' : ''}${extra}`;
         const b = document.createElement('b'), s = document.createElement('small'), p = document.createElement('p'), m = document.createElement('div');
         b.textContent = name; s.textContent = sub; p.textContent = about; m.className = 'meta'; m.textContent = meta;
         a.append(b, s, p, m); into.append(a);

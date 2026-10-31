@@ -6,9 +6,10 @@
 // monsters, the humanoid ones (goblin, archer, shaman) are Emberfall's hill goblins; the rest keep Luminati's look.
 //
 // An atlas (tools/actor-lab/bake.cjs) is a row a screen octant (0 E, 1 SE, 2 S, 3 SW, 4 W, 5 NW, 6 N, 7 NE) and a column a
-// frame, its clips named in its JSON. Luminati's Sprite3D knows four directions, so the sheet made here takes four rows
-// (down S, left W, right E, up N) and, of the columns, the clips it plays: idle, walk (run is the walk, quicker), and the
-// attack, the hit and the death for the combat and festival poses it asks for by name.
+// frame, its clips named in its JSON. The sheet made here keeps all eight rows and, of the columns, the clips Luminati
+// plays: idle, walk (run is the walk, quicker), and the attack, the hit and the death for the combat and festival poses
+// it asks for by name. Luminati's Sprite3D knows four directions (down, left, right, up), and its animations name those
+// four rows; view.js draws the octant row of the sprite's heading within that quarter (`emberOctants`).
 //
 // The atlases are big (a hero's is 7392 × 816): only their JSON is fetched at boot (a few hundred bytes each, every one the
 // prototype might use); a sheet's image loads when it's first asked for and is cut into a small canvas of its own. Sprite3D
@@ -18,6 +19,7 @@
 import * as THREE from 'three';
 import * as LUMINATI from '../src/engine/pixel/CharacterSprites.js';
 import { ACTOR_NAMES, ACTOR_FACES } from './actors.js';
+import './view.js';                                           // (the camera, and the eight facings: before any sprite is made)
 
 export * from '../src/engine/pixel/CharacterSprites.js';
 
@@ -74,24 +76,24 @@ export function atlasFor(spec) {
 }
 
 // ── the sheet ───────────────────────────────────────────────────────────────────────────────────────────────────────
-const ROWS = { down: 2, left: 4, right: 0, up: 6 };                 // Luminati's directions → the atlas's octants
-const DIRS = ['down', 'left', 'right', 'up'];
+const DIRS = ['down', 'left', 'right', 'up'];                      // Luminati's four, its rows' names (view.js: → octants)
+const OCTANTS = 8;
 const CLIPS = ['idle', 'walk', 'attack', 'hit', 'death'];
 const pick = (n, k) => Array.from({ length: k }, (_, i) => Math.min(n - 1, Math.round((i * n) / k)));
 
-/** an atlas's cut: the canvas (four rows, the clips' columns side by side), filled once its image is in */
+/** an atlas's cut: the canvas (the eight octant rows, the clips' columns side by side), filled once its image is in */
 const cuts = new Map();
 function cutOf(name) {
   let c = cuts.get(name);
   if (c) return c;
   const m = META[name], cw = m.cw, ch = m.ch, at = {}; let cols = 0;
   for (const k of CLIPS) { const C = m.clips[k] || m.clips.idle; at[k] = { col: cols, len: C.len, fps: C.fps, impact: C.impact ?? Math.floor(C.len / 2) }; cols += C.len; }
-  const canvas = document.createElement('canvas'); canvas.width = cw * cols; canvas.height = ch * 4;
+  const canvas = document.createElement('canvas'); canvas.width = cw * cols; canvas.height = ch * OCTANTS;
   c = { name, m, cw, ch, cols, at, canvas, clones: new Set(), ready: false, face: null };
   const img = new Image(); img.decoding = 'async';
   img.onload = () => {
     const g = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')); g.imageSmoothingEnabled = false;
-    DIRS.forEach((d, row) => { for (const k of CLIPS) { const C = m.clips[k] || m.clips.idle, A = at[k]; g.drawImage(img, C.start * cw, ROWS[d] * ch, C.len * cw, ch, A.col * cw, row * ch, C.len * cw, ch); } });
+    for (let row = 0; row < OCTANTS; row++) for (const k of CLIPS) { const C = m.clips[k] || m.clips.idle, A = at[k]; g.drawImage(img, C.start * cw, row * ch, C.len * cw, ch, A.col * cw, row * ch, C.len * cw, ch); }
     c.ready = true;
     for (const t of c.clones) t.needsUpdate = true;                // every sprite's own copy, uploaded again
   };
@@ -150,8 +152,9 @@ export function emberSheet(spec, { combat = false, festival = false } = {}) {
     animations[`dance_${d}`] = { frames: ['dance0', 'dance1', 'dance2', 'dance3'].map((p) => ({ col: poses[p], row })), fps: 6, loop: true };
   });
   const label = `ember:${name}${combat ? ':combat' : festival ? ':festival' : ''}`, texture = textureOf(c, label);
+  texture.userData.emberOctants = true;                        // (the mark view.js reads: MonsterSprites rebuilds the sheet, keeps the texture)
   return {
-    texture, canvas: c.face, frameWidth: cw, frameHeight: ch, columns: c.cols, rows: 4,
+    texture, canvas: c.face, frameWidth: cw, frameHeight: ch, columns: c.cols, rows: OCTANTS,
     pixelsPerUnit: EMBER_PPU, anchor: [m.ax / cw, 1 - m.ay / ch], animations, name: label,
     spec: { ...(spec && typeof spec === 'object' ? spec : {}), preset: (spec && spec.preset) || 'villager' },
     ...(combat || festival ? { poses } : {}),

@@ -1281,15 +1281,33 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
     await p.goto(`${base}/lumina/index.html`);
     const front = await p.evaluate(() => ({ ours: [...document.querySelectorAll('#ours .world')].map((a) => new URL(a.href).searchParams.get('level')), worlds: document.querySelectorAll('#worlds .world').length,
+      views: document.querySelectorAll('#views button').length,
       heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
     await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue`);
     await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
     const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk') }));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
     check('lumina: the front page lists our three levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
-      front.ours.join() === 'thornwick,encounter,catalogue' && front.worlds === 6 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
+      front.ours.join() === 'thornwick,encounter,catalogue' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
         && cast.npcs.join() === FOLK.join() && cast.talk && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
+    // engine stopped and stepped unrendered: from the square, each stick direction draws that screen octant's row
+    const view = await p.evaluate(() => {
+      const G = window.__game, r = G.rig, deg = (v) => Math.round((v * 180) / Math.PI), E = G.engine, S = globalThis.__emberStick, V = globalThis.__emberView;
+      const cam = { yaw: deg(r.yaw), pitch: deg(r.pitch), fov: r.camera.fov }, step = (n) => { for (let i = 0; i < n; i++) E.step(1 / 60, { render: false }); };
+      E.stop(); const oct = [];
+      for (let k = 0; k < 8; k++) {
+        G.teleport(35, 37); S.on = false; S.x = S.y = 0; step(20);
+        S.on = true; S.x = Math.cos((k * Math.PI) / 4) * 0.6; S.y = Math.sin((k * Math.PI) / 4) * 0.6; step(45);
+        oct.push(V.octantOf(G.player.sprite));
+      }
+      S.on = false; S.x = S.y = 0; E.start();
+      return { cam, oct };
+    });
+    check('lumina: Emberfall\'s view by default (yaw 45°, pitch 30°, a 14° lens), and the stick\'s eight directions draw our eight octant rows',
+      view.cam.yaw === 45 && view.cam.pitch === 30 && view.cam.fov === 14 && view.oct.join() === '0,1,2,3,4,5,6,7' && errs.length === 0,
+      JSON.stringify(view) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     errs.length = 0;
     await p.goto(`${base}/lumina/game.html?autostart=1&level=encounter&hero=hero_knight&auto=1`);
     await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 3, null, { timeout: 180000 * SLOW });

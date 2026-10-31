@@ -9,6 +9,8 @@
 //     wrappers', which keep Luminati's painter (the monsters' come too: their humanoids are our goblins);
 //   · three call sites are tagged so a sheet knows whose it is: the player (Player.js), a party member (party/
 //     PartyMember.js) and a villager (Npc.js, with the villager's id);
+//   · the game's camera framing takes ember/view.js's (Game.js, DebugControls.js): Emberfall's 45° yaw, 30° pitch and
+//     near-orthographic lens, unless ?view=luminati;
 //   · the Japanese and Chinese font slices (fallbacks behind Google Fonts, for pages in those languages) are left out:
 //     the prototype is in English, and they were 15 MB of the build.
 import { defineConfig } from 'vite';
@@ -33,6 +35,14 @@ const TAGS = [
   ['game/party/PartyMember.js', 'createFestivalSheet(memberSpec(this.record, false))', "createFestivalSheet({ __ember: 'party', ...memberSpec(this.record, false) })"],
   ['game/Npc.js', 'const spec = { ...CHARACTER_PRESETS[def.preset], preset: def.preset, ...(def.spec || {}) };',
     "const spec = { ...CHARACTER_PRESETS[def.preset], preset: def.preset, ...(def.spec || {}), __ember: 'npc', __id: def.id };"],
+  // the camera (ember/view.js): Emberfall's yaw, pitch and lens over the level's framing, and the yaw the game resets to
+  ['game/Game.js', 'this.camera = Object.freeze({ ...CAMERA, ...cameraFraming(cam) });',
+    'this.camera = Object.freeze(((f) => ({ ...f, ...(globalThis.__emberView?.camera(f) ?? {}) }))({ ...CAMERA, ...cameraFraming(cam) }));'],
+  ['game/Game.js', 'this.rig = new CameraRig(camera, { ...this.camera, yaw: 0, lookAhead: 1.3 });', 'this.rig = new CameraRig(camera, { ...this.camera, yaw: this.camera.yaw ?? 0, lookAhead: 1.3 });'],
+  ['game/Game.js', 'rig.setAngles(0, this.camera.pitch);', 'rig.setAngles(this.camera.yaw ?? 0, this.camera.pitch);'],
+  ['game/DebugControls.js', 'rig.setAngles(0, C.pitch);', 'rig.setAngles(C.yaw ?? 0, C.pitch);'],
+  // and its lens: the depth of field over the deeper view (view.js post)
+  ['game/Game.js', "bokehBoost: 1.6 });", "bokehBoost: 1.6 }); globalThis.__emberView?.post(S);"],
 ];
 const CJK = /^@fontsource\/(?:noto-sans-jp|noto-sans-sc|dotgothic16)\//;
 
