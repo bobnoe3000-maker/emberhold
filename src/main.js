@@ -46,7 +46,8 @@ const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\]
 // dev Stage (src/dev/stage.js: the cast in a lineup, for captures), refused off localhost.
 const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAGE = SCENE0 === 'stage' && DEV;
 const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : SCENE0;
-// ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones).
+// ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
+// ?scene=overland its overland (the Reach's and the Heights' are previews: docs/reach-heights-overlands.md).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
 // ?scene=dungeon&site=wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|… previews another dungeon site (sim/sites.js; a parked one, the Mill or the Warren, too).
 const SITE = new URLSearchParams(location.search).get('site') || 'barrows';

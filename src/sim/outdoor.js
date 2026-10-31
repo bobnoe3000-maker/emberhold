@@ -17,8 +17,10 @@ import { hypot, sin, cos } from './detmath.js';
 // ground codes (pixel + tile)
 // (M8: the Fens' swamp ground, docs/region-towns-proposal.md: MARSH is wet peat and reeds you can walk; POOL still bog
 // water you can't; DECK the boardwalks and Saltmere's square on piles, laid over either)
-export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5, MARSH: 6, POOL: 7, DECK: 8 };
-const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'marsh', 'pool', 'deck'];
+// (the Reach's and the Heights' open ground, docs/reach-heights-overlands.md: SCREE is cracked earth and red rock in the
+// Reach, loose stone in the Heights; SNOW the Heights' patches. Both walked, both scattered on. Append-only.)
+export const G = { GRASS: 0, DIRT: 1, COBBLE: 2, WATER: 3, BANK: 4, FIELD: 5, MARSH: 6, POOL: 7, DECK: 8, SCREE: 9, SNOW: 10 };
+const G_MAT = ['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'marsh', 'pool', 'deck', 'scree', 'snow'];
 const CELL = 8;                         // spatial-index cell, tiles
 
 // ── geometry helpers ─────────────────────────────────────────────────────────
@@ -116,6 +118,10 @@ export function groundAt(o, gx, gy) {
     }
   }
   if (o.marsh && fbm(gx * 0.045, gy * 0.045, o.seed + 31) > 0.55) { out.g = G.MARSH; out.t = 1; }   // the fen's open ground: patches of wet peat and reed
+  else if (o.patches) for (const p of o.patches) {   // the Reach's cracked earth, the Heights' snow and scree: patches by a slow noise
+    const n = fbm(gx * p.f, gy * p.f, o.seed + p.s);   // (t: 0 at the patch's edge → 1 a little way in, for the painter's dither)
+    if (n > p.th) { out.g = p.g; out.t = Math.min(1, (n - p.th) / 0.06); break; }
+  }
   return out;
 }
 
@@ -139,7 +145,7 @@ function finalizeGround(o) {
     const g = groundAt(o, X - o.PAD + 0.5, Y - o.PAD + 0.5).g;
     o.tmat[Y * o.GW + X] = g;
     if (g === G.WATER || g === G.POOL) o.blocked[Y * o.GW + X] = 1;
-    if (g !== G.GRASS && g !== G.FIELD && g !== G.MARSH) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
+    if (g !== G.GRASS && g !== G.FIELD && g !== G.MARSH && g !== G.SCREE && g !== G.SNOW) o.occ[Y * o.GW + X] = 2;      // keep roads, plazas and water clear of scatter
   }
 }
 
@@ -228,19 +234,20 @@ function scatter(o, rng, x0, y0, x1, y1, step, fn) {
 // Dress the grass with undergrowth: density(x, y) → 0..1, where it may grow; then a few low plants at the front of
 // some trees' feet (the side the camera sees). Placed LAST, on its own stream: nothing it adds can move a tree,
 // rock or house (test/town.test.mjs checks the order).
-function undergrowth(o, x0, y0, x1, y1, step, density) {
+// (kinds: the lists it picks from, the same draws whichever: the Reach's and the Heights' grow dry grass and stones)
+function undergrowth(o, x0, y0, x1, y1, step, density, kinds = { low: LOW, solid: SOLID, foot: FOOT }) {
   const rng = mulberry32(streamSeed(o.seed, 4409));
   for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
     const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, d = density(jx, jy), r = rng();
     if (!(d > 0) || r > d) continue;
-    const solid = rng() < 0.3, id = pick(rng, solid ? SOLID : LOW);
+    const solid = rng() < 0.3, id = pick(rng, solid ? kinds.solid : kinds.low);
     if (fits(o, id, jx, jy, solid ? 0.4 : 0.1)) put(o, id, jx, jy, solid ? 'round' : 'none', 0.35);
   }
   for (const t of o.structs.slice()) {
     if (!/pine|oak|autumn|grove|alder|willow|carr/.test(t.id) || rng() < 0.35) continue;
     const f = ENV_FOOT[t.id], rad = f ? Math.max(f[2] - f[0], f[3] - f[1]) / 2 : 4;
     for (let k = 0, n = 1 + Math.floor(rng() * 3); k < n; k++) {
-      const a = (rng() - 0.5) * 2.2 + Math.PI / 4, dist = rad * (0.7 + rng() * 0.5), x = t.x + cos(a) * dist, y = t.y + sin(a) * dist, id = pick(rng, FOOT);
+      const a = (rng() - 0.5) * 2.2 + Math.PI / 4, dist = rad * (0.7 + rng() * 0.5), x = t.x + cos(a) * dist, y = t.y + sin(a) * dist, id = pick(rng, kinds.foot);
       if (density(x, y) >= 0 && fits(o, id, x, y, 0.1)) put(o, id, x, y, 'none', 0.35);
     }
   }
@@ -426,7 +433,7 @@ function buildTown(seed, region) {
     return Math.max(inBox && wall < 5 ? 0.5 : 0, x > 84 && y > 84 && x < WX1 && y < WY1 ? 0.5 : 0,
       fbm(x * 0.09, y * 0.09, o.seed + 9) > 0.66 ? 0.45 : 0);
   });
-  o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: 'thornwick' });
+  o.exits.push({ x0: 146, y0: 66, x1: 160, y1: 94, to: 'overland', arrive: R === 'vale' ? 'thornwick' : info.name.toLowerCase() });   // (out at the region's own overland's gate: ashgate, frosthold)
   o.arrivals = { default: { x: M[0] + 0.5, y: M[1] + 6.5 }, overland: { x: 141.5, y: GY + 0.5 }, temple: { x: 38.5, y: 42.5 } };
   o.spawn = o.arrivals.default;
   return o;
@@ -607,11 +614,41 @@ function nearestOn(pts, x, y) {
     if (q.d < best[2]) best = [s.x1 + (s.x2 - s.x1) * q.t, s.y1 + (s.y2 - s.y1) * q.t, q.d]; }
   return best;
 }
+// a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
+function joinRoads(o, ROADS) {
+  for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
+    const [x, y] = r.pts[end];
+    let best = null; for (const h of ROADS) if (h !== r) { const n = nearestOn(h.pts, x, y); if (n[2] < 6 && (!best || n[2] < best[0][2])) best = [n, h]; }
+    if (!best) continue;
+    r.pts[end] = [best[0][0], best[0][1]];
+    if (!o.aprons.some((a) => hypot(a.x - best[0][0], a.y - best[0][1]) < 3)) o.aprons.push({ x: best[0][0], y: best[0][1], r: Math.max(r.w, best[1].w) / 2 + 1.5 });
+  }
+}
+// The imperial roads' dead beacon-towers (world doc §3.6: one every day's march; the overland sketches draw one each
+// 46 tiles from 30 in): a tower `side` tiles off the road's left-hand verge, where it fits. No draws.
+function beacons(o, pts, id, side = 8, every = 46, first = 30) {
+  for (let i = 0, run = 0, next = first; i + 1 < pts.length; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = hypot(bx - ax, by - ay);
+    for (; next < run + l; next += every) {
+      const t = (next - run) / l, x = ax + (bx - ax) * t + (by - ay) / l * side, y = ay + (by - ay) * t - (bx - ax) / l * side;
+      for (const k of [1, -1]) {                                   // (the left-hand verge, or the right where that's taken)
+        const bx2 = x + (k - 1) * (by - ay) / l * side, by2 = y - (k - 1) * (bx - ax) / l * side;
+        if (bx2 > 6 && by2 > 6 && bx2 < o.W - 6 && by2 < o.H - 6 && fits(o, id, bx2, by2, 0.5)) { put(o, id, bx2, by2, 'round', 0.1); break; }
+      }
+    }
+    run += l;
+  }
+}
+// x where a polyline crosses the line y (the first crossing; its last point's x if none)
+function xAt(pts, y) {
+  for (let i = 0; i + 1 < pts.length; i++) { const [ax, ay] = pts[i], [bx, by] = pts[i + 1]; if ((ay - y) * (by - y) <= 0 && ay !== by) return ax + (bx - ax) * (y - ay) / (by - ay); }
+  return pts[pts.length - 1][0];
+}
 // The river's course: resampled every 3 tiles, pushed sideways by a slow meander (a 52-tile wavelength, ±4) and
 // given a width that breathes (6.5–12.5), both eased to nothing near the pins (the bridges, the mill), where it
-// runs as it always did. Its own stream for the phases. Points carry their width: [x, y, w].
-function meander(seed, pts, pins) {
-  const rng = mulberry32(streamSeed(seed, 4415)), ph1 = rng() * 6.2832, ph2 = rng() * 6.2832, res = [];
+// runs as it always did. Its own stream for the phases (each land's river its own). Points carry their width: [x, y, w].
+function meander(seed, pts, pins, stream = 4415) {
+  const rng = mulberry32(streamSeed(seed, stream)), ph1 = rng() * 6.2832, ph2 = rng() * 6.2832, res = [];
   let acc = 0;
   for (let i = 0; i + 1 < pts.length; i++) { const [ax, ay] = pts[i], [bx, by] = pts[i + 1], L = hypot(bx - ax, by - ay); for (let t = 0; t < L; t += 3) res.push([ax + (bx - ax) * t / L, ay + (by - ay) * t / L, acc + t]); acc += L; }
   res.push([pts[pts.length - 1][0], pts[pts.length - 1][1], acc]);
@@ -657,14 +694,7 @@ function buildOverland(seed) {
     { w: 4, surface: 'track', pts: [[161, 84], [142, 66], [122, 44], [warren[0] + 2.5, warren[1] + 7]] },      // up under the range to the warren's door (its adit faces down the track)
     { w: 5, surface: 'dirt', fens: true, pts: [[92, 206], [80, 236], [54, 250], [38, 264], [38, 274]] },   // the canal road south off the barrows road, to the Fens (M8; shut until Act I is done)
   ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
-  // a road that leaves another starts on it as smoothed (the corner it left from was cut), with an apron at the join
-  for (const r of ROADS) for (const end of [0, r.pts.length - 1]) {
-    const [x, y] = r.pts[end];
-    let best = null; for (const h of ROADS) if (h !== r) { const n = nearestOn(h.pts, x, y); if (n[2] < 6 && (!best || n[2] < best[0][2])) best = [n, h]; }
-    if (!best) continue;
-    r.pts[end] = [best[0][0], best[0][1]];
-    if (!o.aprons.some((a) => hypot(a.x - best[0][0], a.y - best[0][1]) < 3)) o.aprons.push({ x: best[0][0], y: best[0][1], r: Math.max(r.w, best[1].w) / 2 + 1.5 });
-  }
+  joinRoads(o, ROADS);
   o.roads.push(...ROADS);
   // the farms' fields (lost in pass 10's road rewrite, restored in 11d)
   o.fields.push({ x0: 22, y0: 104, x1: 50, y1: 124, axis: 'x' }, { x0: 54, y0: 100, x1: 70, y1: 126, axis: 'y' }, { x0: 26, y0: 174, x1: 46, y1: 196, axis: 'y' });
@@ -809,6 +839,209 @@ function buildOverland(seed) {
   return o;
 }
 
+// ── THE CINDER REACH (world doc §3.3, v1.34; docs/reach-heights-overlands.md) — the overland around Ashgate ─────
+// Laid out on the sketch (tools/worldmap/overlands.mjs `reach`, docs/img/world/overland-reach.jpg), 260 × 260, north
+// up. Three imperial roads meet at Ashgate's east gate: the Wickham road up from the Vale, the Kell road west round the
+// north wall to Kell's Rest under the dead volcano, the Solmere road east over the Ashwater's bridge, a dead
+// beacon-tower beside each every day's march. Tracks to the sites. NOT PLAYABLE YET (regions.js has no `reach`; Act III
+// isn't built): reached only by the preview (?scene=overland&region=reach). The sites are landmarks, with no doors;
+// the roads out are shut, each with its word. Its own streams: 4441 (the scatter), 4443 (the hills), 4445 (the river).
+export const REACH = { gate: [132, 140], join: [152, 140], kells: [38, 104], yards: [64, 132], works: [176, 64], vault: [168, 30], ninth: [64, 30],
+  tunnels: [74, 192], seam: [122, 212], forge: [194, 146], volcano: [14, 64], tailings: [[148, 90, 9, 7], [222, 76, 8, 6]] };
+function buildReach(seed) {
+  const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4441)), B = (t, n = 1) => `reach_${t}_${n}`;
+  o.name = 'The Cinder Reach'; o.region = 'reach';
+  const { gate, join, kells, yards, works, vault, ninth, tunnels, seam, forge, volcano, tailings } = REACH, town = [gate[0] - 4, gate[1]];
+  o.patches = [{ g: G.SCREE, f: 0.05, s: 51, th: 0.58 }];   // cracked earth and red rock through the ash-dusted scrub
+  // the Ashwater: down out of the north past the Cinderworks, straight (+y) under the Solmere road's bridge, out east
+  const riverPts = chaikin([[180, -60], [182, 0], [194, 50], [206, 100], [216, 140], [222, 160], [224, 172], [224, 186], [230, 204], [250, 220], [300, 250], [340, 280]], 3);
+  const BRIDGE = [xAt(riverPts, 179), 179];
+  o.rivers.push({ w: 8, pts: meander(seed, riverPts, [BRIDGE, [196, 60]], 4445) });
+  for (const [cx, cy, rx, ry] of tailings) o.pools.push({ cx, cy, rx, ry });   // the works' tailings ponds (painted rust: outdoorpaint.js)
+  const door = (p, dy) => [p[0] + 1, p[1] + dy];
+  const ROADS = [
+    { w: 6, surface: 'dirt', imperial: true, pts: [town, join, [BRIDGE[0] - 14, BRIDGE[1]], [BRIDGE[0] + 14, BRIDGE[1]], [300, 196]] },   // the gate road, on east as the Solmere road over the bridge
+    { w: 6, surface: 'dirt', imperial: true, pts: [[146, 276], join] },                                              // the Wickham road, up from the Vale
+    { w: 6, surface: 'dirt', imperial: true, pts: [join, [join[0], 102], [64, 102], [kells[0] + 12, kells[1]]] },   // the Kell road, round the north wall
+    { w: 4, surface: 'track', pts: [[join[0], 120], [168, 90], [works[0] - 1, works[1] + 10]] },                     // up to the Cinderworks
+    { w: 3, surface: 'track', pts: [[works[0] - 6, works[1] + 6], [166, 50], door(vault, 9)] },                      // on up to the Magma Vault's mouth, under Furnace Nine
+    { w: 3, surface: 'track', pts: [[150, 182], [108, 188], [82, 212], [tunnels[0] + 2.5, tunnels[1] + 8]] },        // west to the Slag Tunnels' adit, up to its mouth from below
+    { w: 3, surface: 'track', pts: [[148, 226], [132, 230], [seam[0] - 6, seam[1] + 12]] },                          // to the Cold Seam's pithead
+    { w: 3, surface: 'track', pts: [[190, 165], [forge[0] + 0.5, forge[1] + 8]] },                                   // to the Forgehall's door
+    { w: 3, surface: 'track', pts: [[76, 102], [76, 122], [yards[0] + 8, yards[1] + 2]] },                           // into the Assay Yards
+    { w: 2.5, surface: 'track', pts: [[kells[0], kells[1] - 6], [48, 82], [58, 56], door(ninth, 8)] },           // the old track up the volcano's flank (the Ninth Vault's)
+  ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
+  joinRoads(o, ROADS);
+  o.roads.push(...ROADS);
+  o.aprons.push({ x: kells[0] + 2, y: kells[1] + 4, r: 7 });                                                       // Kell's Rest's yard, packed earth
+  finalizeGround(o);
+  put(o, 'bridge_90', BRIDGE[0], BRIDGE[1], 'deck');
+  // Ashgate from outside: its slag-brick circuit in small, the gate on its road, the temple and roofs inside (the town
+  // scene's gate is east, as here)
+  { const X0 = 98, X1 = gate[0], Y0 = 114, Y1 = 166, GY = gate[1];   // (each half of the east wall a curtain piece long, so neither runs into the gate)
+    for (const [id, x, y] of [[B('temple'), 108, 124], [B('house', 1), 122, 124], [B('housex', 1), 106, 154], [B('house', 2), 121, 156], [B('smith'), 112, 140], [B('workshop'), 122, 140]]) put(o, id, x, y);
+    putWall(o, B('curtain'), true, Y0, X0, X1); putWall(o, B('curtain'), true, Y1, X0, X1); putWall(o, B('curtainy'), false, X0, Y0, Y1);
+    putWall(o, B('curtainy'), false, X1, Y0, GY - 7); putWall(o, B('curtainy'), false, X1, GY + 7, Y1);
+    for (const [x, y] of [[X0, Y0], [X1, Y0], [X0, Y1], [X1, Y1], [(X0 + X1) / 2, Y0], [(X0 + X1) / 2, Y1], [X0, GY]]) put(o, B('tower'), x, y, 'round', 0.1);
+    putGate(o, B('gatehousey'), X1, GY);
+    put(o, B('standard'), X1 + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X1 + 4, GY + 5, 'rect', 0.1); }
+  // Kell's Rest (a landmark: the waystation isn't built): the Assay's depot round its yard, the bunk huts in front
+  for (const [id, x, y] of [[B('longhouse'), kells[0] - 10, kells[1] - 8], [B('house', 3), kells[0] + 10, kells[1] - 6], [B('cottage'), kells[0] - 10, kells[1] + 8],
+    [B('workshopx'), kells[0] + 6, kells[1] + 14]]) put(o, id, x, y);
+  put(o, B('lanewell'), kells[0] + 2, kells[1] + 3, 'rect', 0.1);
+  // the Assay Yards: the counting house and the ore shed in their fence, the weigh-house's crates at the gate
+  put(o, B('longhouse'), yards[0], yards[1] - 3); put(o, B('workshop'), yards[0] - 4, yards[1] + 9);
+  for (const x of [yards[0] - 8, yards[0] + 4]) putRun(o, 'fence_90', x, yards[1] - 9);              // (the gate in it east, where the track comes in)
+  for (const y of [yards[1] - 3, yards[1] + 9]) putRun(o, 'fence_0', yards[0] - 14, y);
+  for (const [id, x, y] of [['crate_A_big', yards[0] + 7, yards[1] + 6], ['crate_A_small', yards[0] + 8, yards[1] + 8], ['resource_stone', yards[0] + 4, yards[1] + 12], ['cart_0', yards[0] - 10, yards[1] - 6]]) put(o, id, x, y, 'rect', 0.1);
+  // the Cinderworks: the furnace hall open to its yard, two stacks, the ore shed; Furnace Nine's stack over the Vault's
+  // mouth; the Slag Tunnels' adit; the Cold Seam's pithead; the Forgehall of Oruth; the Ninth Vault's ruin, unnamed
+  put(o, B('smith'), works[0], works[1]); put(o, B('workshopx'), works[0] - 13, works[1] + 2); put(o, B('tower'), works[0] + 9, works[1] - 7, 'round', 0.1); put(o, B('tower'), works[0] - 5, works[1] - 11, 'round', 0.1);
+  for (const [id, x, y] of [['wagon_0', works[0] + 8, works[1] + 9], ['resource_stone', works[0] - 9, works[1] + 10], ['crate_B_big', works[0] + 12, works[1] + 4]]) put(o, id, x, y, 'rect', 0.1);
+  put(o, 'ruin', vault[0], vault[1], 'round', 0.3); put(o, B('tower'), vault[0] + 10, vault[1] - 6, 'round', 0.1);
+  put(o, 'warren_0', tunnels[0], tunnels[1]); put(o, 'mine_0', seam[0], seam[1]); put(o, B('keep'), forge[0], forge[1]);
+  put(o, 'chapelruin_0', ninth[0], ninth[1]);
+  o.labels.push({ x: gate[0], y: gate[1], id: B('gatehousey'), text: 'Ashgate' }, { x: kells[0], y: kells[1], id: B('longhouse'), text: "Kell's Rest" },
+    { x: yards[0], y: yards[1], id: B('longhouse'), text: 'The Assay Yards' }, { x: works[0], y: works[1], id: B('smith'), text: 'The Cinderworks' },
+    { x: vault[0], y: vault[1], id: 'ruin', text: 'The Magma Vault' }, { x: tunnels[0], y: tunnels[1], id: 'warren_0', text: 'The Slag Tunnels' },
+    { x: seam[0], y: seam[1], id: 'mine_0', text: 'The Cold Seam' }, { x: forge[0], y: forge[1], id: B('keep'), text: 'The Forgehall of Oruth' });
+  for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
+
+  // THE HILLS (their own stream): the dead volcano over Kell's Rest; the black slag hills north-west, as the sketch
+  // has them; a range past the north and west edges; the low hills round the Slag Tunnels
+  const mrng = mulberry32(streamSeed(seed, 4443)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
+  put(o, 'mountain_massif_C', volcano[0], volcano[1], 'round', 0.3);
+  const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge];
+  const sights = [[gate[0], gate[1]], kells, yards, works, vault, tunnels, seam, forge];
+  const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22);
+  for (const [x, y] of [[40, 30], [86, 36], [106, 54], [118, 22], [28, 6], [62, 4], [92, 8], [80, 66], [140, 30], [36, 182], [58, 200], [100, 204], [30, 224]]) {
+    const id = mrng() < 0.5 ? 'mountain_A' : 'mountain_B', jx = x + (mrng() - 0.5) * 6, jy = y + (mrng() - 0.5) * 6;
+    if (clear(jx, jy, 20) && fits(o, id, jx, jy, -1)) put(o, id, jx, jy, 'round', 0.35);
+  }
+  for (let x = -90, i = 0; x < 360; i++) { const id = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'][i % 3], f = F(id); put(o, id, x - f[0], -14 - f[3] - mrng() * 12, 'round', 0.3); x += (f[2] - f[0]) * (0.6 + mrng() * 0.2); }
+  for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
+  // THE SCATTER: slag heaps round the works, red rock outcrops and their rubble everywhere, dead trees, pines on the
+  // hills' feet; never on a road, a site or its sightline
+  const HEAP = ['rock_C', 'rock_E', 'rock_D', 'rock_C', 'resource_stone'], RED = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E', 'rock_B'];   // (the barrows' bare stone: the nature pack's rock_F–H are mossy)
+  scatter(o, rng, -60, -60, 320, 320, 6, (x, y) => {
+    const out = Math.max(-x, x - 260, -y, y - 260);
+    if (out > 0) return rng() < 0.55 ? pick(rng, ['rock_E', 'rock_C', 'dead_1', 'dead_2', 'rock_D']) : null;
+    if (!clear(x, y, 14)) return null;
+    if (x > 140 && x < 220 && y > 30 && y < 104 && rng() < 0.35) return pick(rng, HEAP);           // the works' heaps
+    const n = fbm(x * 0.04, y * 0.04, o.seed + 61), hill = y < 70 && x < 140;
+    if (n > 0.6 || (hill && rng() < 0.2)) return rng() < 0.6 ? pick(rng, RED) : hill ? pick(rng, ['pine_2', 'pine_4', 'dead_2']) : pick(rng, ['dead_1', 'dead_2']);
+    return rng() < 0.03 ? pick(rng, RED) : null;
+  });
+  forestRing(o, rng, 6, ['rock_E', 'rock_C', 'dead_1', 'rock_D'], ['dead_1', 'dead_2', 'rock_A', 'rock_B']);
+  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 63) > 0.62 ? 0.4 : 0.05),
+    { low: ['ug_grass_1', 'ug_grass_2'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2'] });
+
+  o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
+  // the roads out: shut, each with its word (the Reach isn't joined to the other lands yet)
+  o.exits.push({ x0: 138, y0: 263, x1: 155, y1: 271, to: 'overland', closed: true, shut: "The Wickham road goes home to the Vale from here. Not yet: Ashgate's quota isn't met." });
+  o.exits.push({ x0: 263, y0: 180, x1: 271, y1: 198, to: 'overland', closed: true, shut: 'The Solmere road runs east, straight as the day it was laid, to the dead capital. Another day.' });
+  o.arrivals = { default: { x: join[0] - 4.5, y: gate[1] + 0.5 }, ashgate: { x: join[0] - 4.5, y: gate[1] + 0.5 }, kells_rest: { x: kells[0] + 10.5, y: kells[1] + 4.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
+// ── THE PALE HEIGHTS (world doc §3.4, v1.34; docs/reach-heights-overlands.md) — the overland around Frosthold ───
+// On the sketch (tools/worldmap/overlands.mjs `heights`, docs/img/world/overland-heights.jpg), 260 × 260, north up.
+// The imperial road comes up the frozen Sol to the Frozen Hospice; the pass road runs from it over the Sol's bridge
+// and north-west to Frosthold's one wall in its pass (the gate east, as the town scene's); the Pilgrims' Stair climbs
+// in switchbacks to the Lip, the one break in the crater's rim; the crater's floor is glass, the Throne half-sunk in
+// it. NOT PLAYABLE YET (no `heights` land, Act VI isn't built): the preview only (?scene=overland&region=heights).
+// Landmarks with no doors; the road out shut with its word. Its own streams: 4442 (the scatter), 4444 (the peaks).
+export const HEIGHTS = { gate: [74, 100], hospice: [152, 204], lip: [158, 100], crater: [150, 64], throne: [150, 60], cracks: [206, 152], praetory: [214, 104],
+  glass: [220, 34], tarn: [88, 142] };
+function buildHeights(seed) {
+  const o = makeWorld(seed, 'overland', 260, 260, 90), rng = mulberry32(streamSeed(seed, 4442)), B = (t, n = 1) => `heights_${t}_${n}`;
+  o.name = 'The Pale Heights'; o.region = 'heights';
+  const { gate, hospice, lip, crater, throne, cracks, praetory, glass, tarn } = HEIGHTS;
+  o.patches = [{ g: G.SNOW, f: 0.035, s: 53, th: 0.5 }, { g: G.SCREE, f: 0.06, s: 57, th: 0.64 }];   // patchy snow, rock and scree (§3.4)
+  // the Sol, from under the Lip down past the Hospice, frozen (outdoorpaint.js); Frosthold's stream east into its tarn
+  const sol = chaikin([[150, 100], [148, 120], [146, 150], [138, 180], [132, 210], [126, 250], [122, 300]], 3);
+  o.rivers.push({ w: 7, pts: sol });
+  o.rivers.push({ w: 3.5, pts: chaikin([[-40, 126], [10, 124], [44, 122], [68, 122], [80, 128], [tarn[0] - 2, tarn[1] - 2]], 2) });
+  // the crater's glass; the tarn; the Soulcracks, a chain of splits running south-east
+  o.pools.push({ cx: crater[0], cy: crater[1], rx: 34, ry: 22 }, { cx: tarn[0], cy: tarn[1], rx: 8, ry: 6 });
+  for (let k = 0; k < 8; k++) o.pools.push({ cx: cracks[0] - 20 + k * 5.6 + (k % 2 ? 1.5 : -1.5), cy: cracks[1] - 20 + k * 5.6 + (k % 2 ? -1.5 : 1.5), rx: 4.2, ry: 2.4 });
+  const BRIDGE = [xAt(sol, 188), 188];
+  const ROADS = [
+    { w: 6, surface: 'dirt', imperial: true, pts: [[150, 300], [150, hospice[1] - 6]] },                                 // up the Sol from Solmere
+    { w: 5, surface: 'dirt', pts: [[150, hospice[1] - 6], [150, 188], [BRIDGE[0] - 14, 188], [112, 160], [104, 110], [96, 100], [gate[0] - 4, gate[1]]] },   // the pass road, over the bridge to Frosthold's gate
+    { w: 3, surface: 'track', pts: [[158, 194], [168, 184], [158, 172], [170, 160], [160, 148], [172, 136], [162, 124], [168, 114], [lip[0], lip[1] + 6]] },   // the Pilgrims' Stair
+    { w: 3, surface: 'track', pts: [[164, 107], [192, 112], [praetory[0] + 1, praetory[1] + 12]] },                      // the Lip to the Praetory
+    { w: 3, surface: 'track', pts: [[praetory[0] + 1, praetory[1] + 12], [228, 114], [234, 84], [226, 56], [glass[0] + 0.5, glass[1] + 8]] },   // on round to the Glass Keep
+    { w: 2.5, surface: 'track', pts: [[171, 150], [188, 158], [cracks[0] - 14, cracks[1] + 6]] },                        // to the Soulcracks' edge
+  ].map((r) => ({ ...r, pts: fillet(r.pts, Math.max(8, r.w * 2)) }));
+  joinRoads(o, ROADS);
+  o.roads.push(...ROADS);
+  o.aprons.push({ x: hospice[0] - 2, y: hospice[1] - 4, r: 7 });                                                  // the Hospice's court, packed snow
+  finalizeGround(o);
+  put(o, 'bridge_90', BRIDGE[0], BRIDGE[1], 'deck');
+  // Frosthold: no circuit (§3.4), the crags behind and the stream in front its walls, one wall across the pass road
+  // with the gate in it; the chapel and its bell tower, the hall, the cells
+  { const X = gate[0], GY = gate[1];
+    for (const [id, x, y] of [[B('temple'), 50, 88], [B('house', 1), 62, 88], [B('longhouse'), 50, 106], [B('cottage'), 62, 108], [B('house', 2), 38, 98]]) put(o, id, x, y);
+    putRun(o, B('curtainy'), X, GY - 17); putRun(o, B('curtainy'), X, GY + 17);   // a curtain piece each side of the gate, the south one down into the stream
+    put(o, B('tower'), X, GY - 27, 'round', 0.1);
+    putGate(o, B('gatehousey'), X, GY);
+    put(o, B('standard'), X + 4, GY - 5, 'rect', 0.1); put(o, B('standard'), X + 4, GY + 5, 'rect', 0.1); }
+  // the Frozen Hospice (a landmark: the waystation isn't built): its walled court at the Stair's foot
+  put(o, B('inn'), hospice[0] + 12, hospice[1] - 2); put(o, B('longhouse'), hospice[0] + 12, hospice[1] + 12); put(o, B('lanewell'), hospice[0] + 4, hospice[1] + 4, 'rect', 0.1);
+  putRun(o, B('wall'), hospice[0] + 26, hospice[1] - 12); putRun(o, B('curtainy'), hospice[0] + 24, hospice[1] + 8);   // (the north wall stops short of the Stair: its gate)
+  // the Lip's marker stone; the Throne half-sunk in the glass; the Praetory's ruin between its two posts; the Glass Keep
+  put(o, 'milestone_0', lip[0] + 4, lip[1] + 2, 'rect', 0.2); put(o, B('keep'), throne[0], throne[1]);
+  put(o, 'chapelruin_0', praetory[0], praetory[1]); put(o, B('tower'), praetory[0] - 9, praetory[1] + 6, 'round', 0.1); put(o, B('tower'), praetory[0] - 8, praetory[1] - 8, 'round', 0.1);
+  put(o, B('keep'), glass[0], glass[1]);
+  o.labels.push({ x: gate[0], y: gate[1], id: B('gatehousey'), text: 'Frosthold' }, { x: hospice[0] + 8, y: hospice[1], id: B('inn'), text: 'The Frozen Hospice' },
+    { x: 165, y: 150, text: "The Pilgrims' Stair" }, { x: lip[0], y: lip[1], id: 'milestone_0', text: 'The Lip' }, { x: throne[0], y: throne[1], id: B('keep'), text: 'The Ember Throne' },
+    { x: cracks[0], y: cracks[1], text: 'The Soulcracks' }, { x: praetory[0], y: praetory[1], id: 'chapelruin_0', text: 'The Praetory' }, { x: glass[0], y: glass[1], id: B('keep'), text: 'The Glass Keep' });
+  for (const r of ROADS) if (r.imperial) beacons(o, r.pts, B('tower'));
+
+  // THE PEAKS (their own stream): the crater's rim, broken only at the Lip; the crags behind Frosthold; peaks over the
+  // whole north as the sketch has them; a range past the edges
+  const mrng = mulberry32(streamSeed(seed, 4444)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
+  const keepOut = [gate, hospice, lip, cracks, praetory, glass, tarn], sights = [gate, hospice, lip, cracks, praetory, glass, [165, 150]];
+  const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22)
+    && hypot(x - 60, y - 98) > 26 && hypot((x - crater[0]) / 40, (y - crater[1]) / 27) > 1;
+  for (let a = 0; a < 6.2832; a += 0.21) {                                                      // the rim: rocks and crags, the Lip left open
+    const x = crater[0] + cos(a) * 44, y = crater[1] + sin(a) * 30;
+    if (hypot(x - lip[0], y - lip[1]) < 16) continue;
+    const id = mrng() < 0.35 ? pick(mrng, ['mountain_A', 'mountain_B']) : pick(mrng, ['rock_C', 'rock_E', 'rock_D', 'rock_E']);
+    if (fits(o, id, x, y, -1.5)) put(o, id, x, y, /mountain/.test(id) ? 'round' : 'rect', /mountain/.test(id) ? 0.35 : 0.1);
+  }
+  for (const [x, y] of [[30, 70], [56, 66], [18, 96], [24, 112], [6, 70], [40, 46], [10, 30], [70, 40], [100, 24], [96, 62], [212, 70], [240, 58], [236, 14], [196, 16],
+    [246, 112], [230, 136], [102, 84], [120, 128], [96, 190], [184, 200], [236, 176]]) {
+    const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_A', 'mountain_B', 'mountain_massif_C']), jx = x + (mrng() - 0.5) * 8, jy = y + (mrng() - 0.5) * 8;
+    if (clear(jx, jy, 22) && fits(o, id, jx, jy, -1) && offRoad(o, id, jx, jy)) put(o, id, jx, jy, 'round', 0.35);
+  }
+  for (let x = -90, i = 0; x < 360; i++) { const id = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'][i % 3], f = F(id); put(o, id, x - f[0], -14 - f[3] - mrng() * 12, 'round', 0.3); x += (f[2] - f[0]) * (0.6 + mrng() * 0.2); }
+  for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
+  for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B']), f = F(id); put(o, id, 268 - f[0] + mrng() * 14, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.8 + mrng() * 0.3); }
+  // THE SCATTER: pines on the lower slopes (the south-west and south-east, as the sketch), scree and boulders, a dead
+  // tree here and there; never on a road, a site or its sightline
+  const PINES = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6'];
+  scatter(o, rng, -60, -60, 320, 320, 6, (x, y) => {
+    const out = Math.max(-x, x - 260, -y, y - 260);
+    if (out > 0) return rng() < 0.7 ? pick(rng, PINES) : null;
+    if (!clear(x, y, 14)) return null;
+    const low = y > 140 && (x < 110 || x > 180), n = fbm(x * 0.035, y * 0.035, o.seed + 65);
+    if (low && n > 0.42) return rng() < 0.8 ? pick(rng, PINES) : 'dead_1';
+    return n > 0.62 ? (rng() < 0.5 ? pick(rng, PINES) : pick(rng, ['rock_A', 'rock_C', 'rock_D', 'rock_E'])) : rng() < 0.03 ? pick(rng, ['rock_C', 'rock_D', 'rock_B', 'dead_2']) : null;
+  });
+  forestRing(o, rng, 6, PINES, [...PINES, 'dead_1']);
+  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 67) > 0.64 ? 0.35 : 0.04),
+    { low: ['ug_grass_1', 'ug_grass_2', 'ug_fern'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2', 'ug_fern'] });
+
+  o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
+  o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'overland', closed: true, shut: 'The road down the Sol goes to Solmere. Nobody climbs this far to turn round.' });
+  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 4.5 } };
+  o.spawn = o.arrivals.default;
+  return o;
+}
+
 // The Stage (docs/character-stage-proposal.md; src/dev/stage.js): a dev-only preview scene, a flat field
 // with nothing on it, where figures are lined up and drawn through the real renderer for captures. Grass
 // by default; `cobble` lays one wide cobbled square under it. No structures, people, foes or ways out.
@@ -823,11 +1056,13 @@ function buildStage(seed, floor) {
 }
 
 // region picks the land (regions.js): the Vale's overland and Thornwick, or the Fens' and Saltmere; reach · heights
-// still preview their walled hubs;
+// preview their walled hubs and their own overlands (not lands you can walk to yet: docs/reach-heights-overlands.md);
 // 'stage' takes its floor in `region`'s place (grass · cobble)
 export function createOutdoor(seed, kind, region = 'vale') {
   if (kind === 'stage') return buildStage(seed, region);
   if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : buildFens(seed);   // (M8: Saltmere, the Fens)
+  if (kind === 'overland' && region === 'reach') return buildReach(seed);
+  if (kind === 'overland' && region === 'heights') return buildHeights(seed);
   return kind === 'town' ? buildTown(seed, region) : buildOverland(seed);
 }
 

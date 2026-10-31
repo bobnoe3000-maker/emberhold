@@ -559,6 +559,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       else if (ex && ex.to === 'dungeon' && (state.secrets[ex.site] || 0) > state.t) { if (shut !== ex) { shut = ex; bus.emit('siteSealed', { site: ex.site, mins: Math.ceil((state.secrets[ex.site] - state.t) / 60) }); } }   // a secret site resting after it was cleared
       else if (ex && ex.to === 'dungeon' && SITES[ex.site].minLevel && state.party[0].level < SITES[ex.site].minLevel) { if (shut !== ex) { shut = ex; bus.emit('siteLevel', { site: ex.site, need: SITES[ex.site].minLevel }); } }   // not yet: the Mere Tower takes a company from 12
       else if (ex && ex.region && !landOpen(ex.region)) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: ex.region, line: ex.shut || '' }); } }   // a land not yet opened (regions.js)
+      else if (ex && ex.closed) { if (shut !== ex) { shut = ex; bus.emit('landShut', { region: '', line: ex.shut || '' }); } }   // a road out to a land not built yet (the Reach's, the Heights': outdoor.js)
       else if (ex && !(p.path && p.goalZone !== ex)) travel(ex.to, ex.arrive, ex.site, ex.region);
       if (!ex) shut = null;
     }
