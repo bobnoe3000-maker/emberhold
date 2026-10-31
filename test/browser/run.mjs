@@ -768,8 +768,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     for (const show of ['env', 'props', 'fx', 'icons', 'faces']) {
       const ctx = await b.newContext({ viewport: { width: 1000, height: 900 } }), p = await ctx.newPage(), errs = [];
       p.on('pageerror', (e) => errs.push(e.message));
-      await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`, { waitUntil: 'domcontentloaded' });   // (not every image: the waits below are the view's own readiness)
-      await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
+      // (only the navigation: DOMContentLoaded waits for the game's module scripts to run, and on CI's software WebGL that
+      // passed 90 s at the icons, runs 232 and 235; the waits below are the view's own readiness)
+      await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`, { waitUntil: 'commit' });
+      await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 120000 * SLOW });
       for (let i = 0; i < 120 && !(await p.evaluate(() => globalThis.__stage.ready)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
       await p.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 60); });
       if (show === 'icons' || show === 'faces') await p.waitForFunction(() => [...document.querySelectorAll('#reviewGrid img')].every((im) => im.complete), null, { timeout: 30000 });
