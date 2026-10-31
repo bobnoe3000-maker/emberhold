@@ -251,7 +251,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     S = Math.max(1, css * dpr);
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
-    if (EXTERNAL) { terrValid = false; return; }                // (no bake: the other painter has the world)
+    if (EXTERNAL) { sEMI = new Uint8Array(nvw * nvh * 4); terrValid = false; return; }   // (no bake: the other painter has the world; the fights' light still draws here, hybrid.js)
     const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
     front = mkSet(); back = mkSet(); job = null; target(front);
     sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
@@ -1224,17 +1224,18 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       foes: draws.filter((d) => d.team >= 2 && d.a && d.atl).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir, d.atl.name, d.uid]) });
     if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, pz, now, t: skyHoldT ?? sim.state.t });   // (t: the held look's, the title's dusk)
-    if (!X) {
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const hb = st ? st.hazard : sim.battle, rings = st ? !!st.rings : !!sim.battle;   // (the Stage's FX view paints its own hazard, and rings its figures)
+    if (!X) {
     if (hb && (hb.hazards?.length || hb.flood > 0)) paintHazards(hb, ox, oy, now);   // the mud and the water, on the ground under the figures
     if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
+    } else sEMI.fill(0);                                           // (another painter: the effects alone, on black, for it to lay over its world as light)
+    {
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
-    fx.target({ EMI: sEMI, DEP: sDEP, W: nvw, H: nvh, DPX });
+    fx.target({ EMI: sEMI, DEP: X ? null : sDEP, W: nvw, H: nvh, DPX });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
     for (const b of sim.world.projectiles || []) if (b.kind) boltFx(b, lerp(b, 'x'), lerp(b, 'y'), b.kind, fxProj);
@@ -1250,6 +1251,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
 
     }
+    // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, battle: hb, rings });   // (t: the held look's, the title's dusk)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     if (!X) {
     // upload the window G-buffer
@@ -1809,6 +1812,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     envIds(name) { const a = envAtlases.get(name); return a ? Object.entries((envMeta || { sprites: {} }).sprites).filter(([, m]) => m.atlas === name).map(([id]) => id) : null; },
     /** dev: the prop kinds the renderer draws (gsprite.js buildProps), each with its variants' count */
     get propKinds() { return Object.fromEntries(Object.entries(props).map(([k, v]) => [k, v.length])); },
+    /** dev: how many native px of the window's emissive plane are lit (with another painter: the fights' light it lays over its world) */
+    get emiLit() { let n = 0; if (sEMI) for (let i = 0; i < sEMI.length; i += 4) if (sEMI[i] | sEMI[i + 1] | sEMI[i + 2]) n++; return n; },
     /** dev: the floating numbers on screen now (they live 900 ms of the render clock: browser test §15c2) */
     get floatCount() { return floats.length; },
     /** dev: the Stage's zoom (integer): fewer tiles across the screen, the same native-pixel look */

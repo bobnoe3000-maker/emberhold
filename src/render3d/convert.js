@@ -247,7 +247,7 @@ function dungeon(w) {
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5) continue;
-    if (kind === 'brazier') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });   // (a core light: Luminati's monument brazier is The Bells of Evermere's and loads its kits)
+    if (kind === 'brazier') add({ type: 'wallTorch', x, z, rotation: 0, dy: 0.9, opts: { embers: true } });   // (a standing flame: a campfire each was a bonfire field in the Barrows' rooms)
     else if (kind === 'chest') add({ type: 'crate', x, z, rotation: 0.2, opts: {} });
     else if (kind === 'shrine') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'top' } });
     else if (/^stair/.test(kind) || kind === 'exit') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } });

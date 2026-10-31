@@ -37,11 +37,16 @@ export function hourOf(t) {
   return (PART_HOURS[p] + (PART_HOURS[p + 1] - PART_HOURS[p]) * u) % 24;
 }
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // (iso.js: a tile's half-width 8 px; two tiles a unit)
+const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];   // (renderer.js: the party's gold, foes' red, the elite's orange)
+const CARRY = [0.45, 0, 0.6, 1];                              // the carry light by the part of the day (dawn, day, dusk, night)
 
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
 export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
-const CSS = `#world3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: #000; overflow: hidden; }
+const CSS = `#world3d { position: fixed; inset: 0; pointer-events: none; background: #000; overflow: hidden; }
 #world3d canvas { display: block; width: 100%; height: 100%; }
+#world3d-fx, #world3d-glow { position: fixed; left: 0; top: 0; pointer-events: none; transform-origin: 0 0; mix-blend-mode: screen; }
+@supports (mix-blend-mode: plus-lighter) { #world3d-fx, #world3d-glow { mix-blend-mode: plus-lighter; } }
+#world3d-glow { filter: blur(5px); opacity: 0.85; }
 #world3d-ui { position: fixed; inset: 0; z-index: -1; visibility: hidden; pointer-events: none; overflow: hidden; }`;
 
 /**
@@ -52,7 +57,30 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const box = document.createElement('div'); box.id = 'world3d'; box.setAttribute('aria-hidden', 'true');
   const ui = document.createElement('div'); ui.id = 'world3d-ui'; ui.setAttribute('aria-hidden', 'true');
-  document.body.append(box, ui);
+  // the fights' light (Emberlit's fx.js, drawn on black at its native size each frame) laid over the world as light: a
+  // sharp layer and a blurred one for the bloom Emberlit's light pass gave it; both under Emberlit's overlay
+  const fxc = document.createElement('canvas'), glow = document.createElement('canvas'); fxc.id = 'world3d-fx'; glow.id = 'world3d-glow';
+  const fxg = /** @type {CanvasRenderingContext2D} */ (fxc.getContext('2d')), glg = /** @type {CanvasRenderingContext2D} */ (glow.getContext('2d'));
+  // (straight after the game's canvas, unstacked, as it is: so the vignette, the top bar and everything after them stay over
+  // the world. At z-index 1 the world covered the top bar, the ☰ and the vignette, none of which carry a z-index.)
+  const game = document.getElementById('game');
+  if (game) game.after(box, glow, fxc); else document.body.prepend(box, glow, fxc);
+  document.body.append(ui);
+  let img = null, lit = false;
+  /** Emberlit's emissive plane (RGBA bytes, native px) → the light layers, placed as Emberlit composites its window */
+  const drawLight = (c) => {
+    const { emi, nvw, nvh } = c; if (!emi) return;
+    if (fxc.width !== nvw || fxc.height !== nvh) { fxc.width = glow.width = nvw; fxc.height = glow.height = nvh; img = fxg.createImageData(nvw, nvh); lit = true; }
+    const d = img.data; let any = false;
+    for (let i = 0, n = nvw * nvh * 4; i < n; i += 4) {
+      const r = emi[i], g = emi[i + 1], b = emi[i + 2];
+      if (r | g | b) { any = true; d[i] = r * 2.4; d[i + 1] = g * 2.4; d[i + 2] = b * 2.4; d[i + 3] = 255; }   // (×2.4: Emberlit's light pass lifted it 3.2× before its bloom; 3 burned to white) else if (d[i + 3]) { d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0; }
+    }
+    if (any || lit) { fxg.putImageData(img, 0, 0); glg.clearRect(0, 0, nvw, nvh); glg.drawImage(fxc, 0, 0); }
+    lit = any;
+    const k = c.S / c.k, w = `${nvw * k}px`, h = `${nvh * k}px`, t = `translate(${((c.rx - c.ox) * k).toFixed(2)}px, ${((c.ry - c.oy) * k).toFixed(2)}px)`;
+    for (const el of [fxc, glow]) { if (el.style.width !== w) { el.style.width = w; el.style.height = h; } el.style.transform = t; }
+  };
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '' };
   renderer.setExternal({
@@ -77,18 +105,30 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const a = (cx - c.rx) / HW, b = (cy - c.ry + SIM_FLOOR * ZH) / HH;
       const mx = (a + b) / 2, my = (b - a) / 2;
       const ppu = (NATIVE_PER_UNIT * c.S) / c.k;              // CSS px a unit
-      const actors = [];
+      drawLight(c);
+      const actors = [], rings = [];
       for (const d of draws) {
         if (!d.atl || !d.a || !d.atl.name) continue;
         // the figure's ground point: Emberlit drew it at (fx, fy) = camera + project(x, y, z), z·ZH in d.h
         const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: (x - origin.x) / 2, z: (y - origin.y) / 2, fade });   // (cw: as drawn, a boss 1.3×)
+        const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0 });   // (cw: as drawn, a boss 1.3×)
+        // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
+        if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
+      }
+      // the ground a fight churns (battle.js hazards: the Toadking's mud, the Vatwarden's sluice), welling up and sinking away
+      const hazards = [];
+      for (const hz of (c.battle && c.battle.hazards) || []) {
+        const fade = Math.max(0, Math.min(1, (hz.until - sim.state.t) / 0.8, (sim.state.t - (hz.from ?? -1e9)) / 0.4));
+        hazards.push({ x: (hz.x - origin.x) / 2, z: (hz.y - origin.y) / 2, r: (hz.r * Math.SQRT2) / 2, col: hz.kind === 'sluice' ? [24, 40, 14] : [26, 20, 14], rim: hz.kind === 'sluice' ? [104, 132, 52] : [128, 104, 64], a: fade });
       }
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors });
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards,
+        // the hero's ember-wisp (Emberlit's carry light): a light at the shoulder, strong underground and by night, gone by day
+        carry: sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
     },
   });
   const mod = await import(vendor);

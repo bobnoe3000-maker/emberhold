@@ -149,6 +149,25 @@ function hidePlayer() {
   p.visible = false;
 }
 
+// ── the fight's ground: rings at the fighters' feet, the churned mud and sluice (hybrid.js), drawn on the ground ────────
+// The rings are Emberlit's footMark (its near arc in the side's colour), here a whole thin ring, a hand's breadth over the
+// ground so the terrain never cuts it; the hazards a dark pool and its rim. Made once and reused: no material is made
+// in a fight (a new program mid-fight is a hitch).
+const RING_GEO = new THREE.RingGeometry(0.46, 0.6, 40), DISC_GEO = new THREE.CircleGeometry(1, 40), RIM_GEO = new THREE.RingGeometry(0.8, 1, 40);
+const groundMat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
+const groundPools = { ring: [], disc: [], rim: [] };
+function groundMesh(kind, n) {
+  const p = groundPools[kind];
+  while (p.length <= n) { const m = new THREE.Mesh(kind === 'ring' ? RING_GEO : kind === 'disc' ? DISC_GEO : RIM_GEO, groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
+  return p[n];
+}
+function placeGround(m, x, z, r, col, a) {
+  m.visible = a > 0.01; if (!m.visible) return;
+  m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
+  m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
+}
+let carryLight = null, carryLevel = -1;
+
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
   ready: false,
@@ -178,7 +197,8 @@ const api = {
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, hero: number[] | null,
-   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number }[] }} f
+   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], carry?: number }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -195,11 +215,24 @@ const api = {
       s.visible = true;
       if (s._col !== a.col || s._row !== a.row) s.setFrame(a.col, a.row);
       standAt(s, a.x, a.z, (A.meta.ch - A.meta.ay) * k, sheet.pixelsPerUnit * k);
+      const fl = a.flash || 0;                                 // (a hit's flash: Emberlit's look.flash, white over the figure)
+      if (s._emberFlash !== fl) { s._emberFlash = fl; const k = 1 + fl * 2.6; s.tint = new THREE.Color(k, k * 0.96, k * 0.9); }   // (the sprite's colour lifted, lit as ever: Luminati's own hit flash, combatFx, drew our sheets as pale cut-outs)
       const op = 1 - (a.fade || 0);
       if (Math.abs(s.opacity - op) > 0.01) s.opacity = op;
       s.update(0, camera);
     }
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
+    // the fight's ground
+    const nk = { ring: 0, disc: 0, rim: 0 };
+    for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
+    for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
+    for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
+    // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
+    if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
+    if (carryLight && f.hero) {
+      const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
+      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: 4.5 * k, distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+    }
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)));
   },
   /** (for checks) a world point on the screen, CSS px, through this camera */
@@ -209,7 +242,8 @@ const api = {
     return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight];
   },
   get stats() {
-    return { level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
+    const shown = (k) => groundPools[k].filter((m) => m.visible).length;
+    return { rings: shown('ring'), hazards: shown('disc'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

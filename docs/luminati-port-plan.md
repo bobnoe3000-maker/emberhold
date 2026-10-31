@@ -443,6 +443,40 @@ Each step lands on main behind the Graphics switch, so the game stays playable i
     as the trial's.
 - **Checks.** The browser check now asserts no frame and Luminati's one canvas; `npm run check` passes (475 tests).
 
+**Step 2, fights: first cut done** (2026-10-31). ![Fights on Luminati](img/lumina/fights.jpg)
+- **The blows' and spells' light.**
+  - Emberlit's `fx.js` keeps drawing every effect: weapon arcs, stabs, casts and muzzle flashes from the atlases' weapon
+    anchors, bolts' trails and halos, hit sparks, shockwaves, a foe's last light, the Fens' marsh-lights.
+  - It draws them on black into its emissive plane at its native size: the only buffer an external Emberlit still
+    keeps.
+  - `hybrid.js` lays that over Luminati's world as light: a sharp layer and a blurred one for the bloom, blended
+    `plus-lighter` (`screen` where that's missing), placed as Emberlit composites its window, so each effect lands on
+    its figure exactly.
+  - Every effect, its timing and its colour are the game's own (`FX_STYLES`), with no second effects system to keep in
+    step.
+- **On Luminati's ground, in 3D.**
+  - A ring at each fighter's feet in its side's colour: the party's gold, foes' red, the elite's orange.
+  - The fight's mud and sluice (the Toadking's, the Vatwarden's) as pools with their rims, welling up and sinking away.
+  - Meshes made once and reused, so no new program appears mid-fight.
+- **A struck figure flashes.** Its colour is lifted, still lit; Luminati's own combat sprites drew our sheets as pale
+  cut-outs.
+- **The hero's ember-wisp.** One of Luminati's four spell lights (never a lamp) at the shoulder: full underground and
+  by night, less at dusk and dawn, none by day.
+- **Fixed along the way:**
+  - With Luminati drawing, the top bar, its ☰ and the vignette had sat under the world (none carry a z-index, the world
+    had 1). Its layers now go straight after the game's canvas.
+  - The dungeons' braziers are standing torches; a campfire each was a field of bonfires.
+- **Checked.**
+  - The browser suite fights in the Old Barrows on Luminati: blows' light drawn (`renderer.emiLit`), rings on the ground,
+    the hero's light taken, no page errors. It also asserts the world's layers sit under the top bar.
+  - Captures of the Old Barrows and the Scrag Warren, Emberlit's beside them, are in `docs/img/lumina/fights.jpg`.
+- **Still to do in this step.**
+  - Effects in true 3D (Luminati's FX quads, with depth, so a blade swung behind a figure tucks under it); the light
+    layer is depth-blind.
+  - The telegraphs and the flood.
+  - Spell lights on bolts.
+  - The dungeons' light (too blue and dark beside Emberlit's warm halls: step 3 and step 5).
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.

@@ -1381,7 +1381,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return Math.max(...[[0, 0], [10, 0], [0, 10], [-12, -6], [8, -14]].map(([a, c]) => { const r = h.probe(q.x + a, q.y + c); return r ? Math.hypot(r.emberlit[0] - r.luminati[0], r.emberlit[1] - r.luminati[1]) : 99; })); });
     const town = await built(1), offTown = town ? await probe() : 99;
     for (let i = 0; i < 200 && !(await p.evaluate(() => { globalThis.__frame(16); return globalThis.__world3d.world.stats.actors > 0; })); i++) await p.waitForTimeout(100);   // (the figures' atlases load after the level)
-    const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f); return { pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
+    const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f);
+      return { under: ['hud', 'vignette', 'menuBtn'].every((id) => !!(f.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING)) && cs.zIndex === 'auto', pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
     // the menu's Graphics: Luminati pressed, and the depth of field off at once
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
@@ -1395,10 +1396,23 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
     const walked = await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits[0], w0 = s.world; s.commands.push({ type: 'tap', tx: Math.floor((e.x0 + e.x1) / 2), ty: Math.floor((e.y0 + e.y1) / 2) }); let n = 0; while (s.world === w0 && n < 4000) { s.tick(); n++; } return s.world.kind; });
     const vale = await built(2), offVale = vale ? await probe() : 99;
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD, in the game\'s own page (no frame); the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
-      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD, in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
+      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
         && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
+    // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
+    await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&renderer=luminati`);
+    await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
+    const inDungeon = await built(1);
+    await p.evaluate(() => { const s = globalThis.__sim, w = s.world, P = s.state.player;
+      const rooms = w.level.rooms.slice().sort((a, b) => Math.hypot(a.cx - P.x, a.cy - P.y) - Math.hypot(b.cx - P.x, b.cy - P.y));
+      for (const rm of rooms) { s.commands.push({ type: 'tap', tx: Math.floor(rm.cx), ty: Math.floor(rm.cy) }); let n = 0; while (!s.battle && n < 1200) { s.tick(); n++; } if (s.battle) return; } });
+    let fight = { lit: 0, rings: 0, carry: 0, battle: false };
+    for (let f = 0; f < 600 && !(fight.lit > 100 && fight.rings >= 2); f++) fight = await p.evaluate((F) => { globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats;
+      return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, layer: getComputedStyle(document.getElementById('world3d-fx')).mixBlendMode }; }, fight);
+    check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world, a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
+      inDungeon && fight.battle && fight.lit > 100 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
     await ctx.close(); await b.close();
   }
