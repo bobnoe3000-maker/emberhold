@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import * as LUMINATI from '../src/engine/pixel/CharacterSprites.js';
 import { ACTOR_NAMES, ACTOR_FACES } from './actors.js';
 import './view.js';                                           // (the camera, and the eight facings: before any sprite is made)
+import './ground.js';                                         // (the ground cover's size and the motes: before the world is built)
 
 export * from '../src/engine/pixel/CharacterSprites.js';
 

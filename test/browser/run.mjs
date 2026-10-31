@@ -1286,6 +1286,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue`);
     await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
     const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk') }));
+    // the ground (ember/ground.js): the ground cover at a quarter of its size, and no floating luminous dots
+    const ground = await p.evaluate(() => { const w = window.__game.world, g = globalThis.__emberGround;
+      return { size: g?.size, scaled: g?.scaled, fields: w.groundDetail?.fields?.length ?? 0, dust: !!w.emitters.dust, areas: w.areaEmitters.map((e) => e.preset) }; });
+    check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
+      ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
     check('lumina: the front page lists our three levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
       front.ours.join() === 'thornwick,encounter,catalogue' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'

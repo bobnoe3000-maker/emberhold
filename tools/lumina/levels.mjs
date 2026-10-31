@@ -185,8 +185,6 @@ export async function thornwick(base) {
   const sq = w.plazas[0];
   if (sq) add({ type: 'region', minX: X(sq.cx - sq.rx), maxX: X(sq.cx + sq.rx), minZ: Z(sq.cy - sq.ry), maxZ: Z(sq.cy + sq.ry), name: 'The Square', sub: 'Thornwick', minY: -10, banner: '' });
   for (const svc of w.services) { const p = foot(w.structs.find((s) => s.id === svc.id)); if (p) add({ type: 'region', minX: r2(p.cx - p.w / 2), maxX: r2(p.cx + p.w / 2), minZ: r2(p.cz - p.d / 2), maxZ: r2(p.cz + p.d / 2 + 2), name: svc.name, sub: 'Thornwick', minY: -10, banner: '' }); }
-  // the dusk's life: smoke off the chimneys' quarter, a few fireflies in the farms' grass
-  add({ type: 'emitter', x: X(140), z: Z(70), preset: 'fireflies', size: [10, 2, 10], count: 22, dy: 0.9 });
 
   // the frame's edge: the Vale's woods (blocked), Luminati's forest border beyond
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (i === 0 || j === 0 || i === W - 1 || j === D - 1) { tiles[j][i] = 'T'; heights[j][i] = '2'; }
@@ -261,7 +259,8 @@ export async function catalogue(base, LUM) {
   row('Fences, bridges and boats', 0, 10, []);                // (laid out by hand, below: they need water)
   row('Life in the air and underfoot', 6.5, 5, [
     ...optionsOf('critters', 'kind').map((k) => ex('critters', `critters · kind ${k}`, { kind: k, count: 3, radius: 1.2 })),
-    ...optionsOf('emitter', 'preset').map((p) => ex('emitter', `emitter · preset ${p}`, { preset: p, size: [3, 2, 2.5], count: 20, dy: 0.8 })),
+    // (an exhibit: ground.js leaves the floating dots out of every level but here)
+    ...optionsOf('emitter', 'preset').map((p) => ex('emitter', `emitter · preset ${p}`, { preset: p, size: [3, 2, 2.5], count: 20, dy: 0.8, emberExhibit: true })),
   ]);
   row('The ground', 0, 5, []);                               // (tile patches, below)
   const actors = (await import('node:fs')).readdirSync(join(ROOT, 'assets', 'actors')).filter((f) => /^[a-z_0-9]+\.json$/.test(f)).map((f) => f.slice(0, -5)).sort();

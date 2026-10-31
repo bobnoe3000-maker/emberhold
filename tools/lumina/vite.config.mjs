@@ -11,6 +11,8 @@
 //     PartyMember.js) and a villager (Npc.js, with the villager's id);
 //   · the game's camera framing takes ember/view.js's (Game.js, DebugControls.js): Emberfall's 45° yaw, 30° pitch and
 //     near-orthographic lens, unless ?view=luminati;
+//   · the ground cover takes ember/ground.js's size, and the floating luminous dots are left out (GroundDetail.js,
+//     World.js);
 //   · the Japanese and Chinese font slices (fallbacks behind Google Fonts, for pages in those languages) are left out:
 //     the prototype is in English, and they were 15 MB of the build.
 import { defineConfig } from 'vite';
@@ -43,6 +45,10 @@ const TAGS = [
   ['game/DebugControls.js', 'rig.setAngles(0, C.pitch);', 'rig.setAngles(C.yaw ?? 0, C.pitch);'],
   // and its lens: the depth of field over the deeper view (view.js post)
   ['game/Game.js', "bokehBoost: 1.6 });", "bokehBoost: 1.6 }); globalThis.__emberView?.post(S);"],
+  // the ground (ember/ground.js): the ground cover at a quarter of its size, no floating luminous dots
+  ['game/GroundDetail.js', 'new Foliage({ sprite, instances: list, name: n,', 'new Foliage({ sprite, instances: globalThis.__emberGround ? globalThis.__emberGround.foliage(list) : list, name: n,'],
+  ['game/World.js', 'if (env.dust !== false) {', 'if (env.dust !== false && globalThis.__emberGround?.dust !== false) {'],
+  ['game/World.js', "for (const obj of this.objectsOf('emitter')) {", "for (const obj of this.objectsOf('emitter')) { if (globalThis.__emberGround && !globalThis.__emberGround.keeps(obj)) continue;"],
 ];
 const CJK = /^@fontsource\/(?:noto-sans-jp|noto-sans-sc|dotgothic16)\//;
 
