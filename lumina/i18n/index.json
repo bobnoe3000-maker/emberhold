@@ -1,0 +1,36 @@
+{
+  "format": "luminati-i18n-index",
+  "version": 1,
+  "languages": {
+    "ja": {
+      "tables": [
+        "common",
+        "levels/brightwater-crossing",
+        "levels/cinderwatch-pass",
+        "levels/emberfall",
+        "levels/gildhaven",
+        "levels/sample-hamlet",
+        "levels/starfall-vale",
+        "campaigns/bells-of-evermere",
+        "campaigns/emberfall-interiors",
+        "campaigns/ferrymans-lantern",
+        "campaigns/vanquish-the-evil-dragon"
+      ]
+    },
+    "zh": {
+      "tables": [
+        "common",
+        "levels/brightwater-crossing",
+        "levels/cinderwatch-pass",
+        "levels/emberfall",
+        "levels/gildhaven",
+        "levels/sample-hamlet",
+        "levels/starfall-vale",
+        "campaigns/bells-of-evermere",
+        "campaigns/emberfall-interiors",
+        "campaigns/ferrymans-lantern",
+        "campaigns/vanquish-the-evil-dragon"
+      ]
+    }
+  }
+}

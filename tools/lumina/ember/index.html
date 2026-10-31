@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0913">
+<title>Emberfall · Luminati prototype</title>
+<link rel="icon" href="data:,">
+<!-- The Luminati prototype's front page (docs/lumina-prototype.md): another world for Emberfall's people. The worlds,
+     their light, weather and water are Luminati's (https://gitlab.com/stubborn-hug/lumina, MIT); the player, the party
+     and the villagers are Emberfall's own baked actors (assets/actors/, KayKit CC0), as they are. -->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; background: #0d0913; color: #efe4cf; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+  main { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 22px) 16px calc(env(safe-area-inset-bottom, 0px) + 28px); }
+  h1 { font: 600 30px Georgia, serif; letter-spacing: 3px; color: #f0c880; }
+  h1 em { font-style: normal; color: #f08a3a; }
+  .tag { font: italic 15px Georgia, serif; color: #c8b89c; margin: 6px 0 18px; line-height: 1.45; }
+  h2 { font: 600 15px Georgia, serif; color: #e0c090; margin: 18px 0 8px; letter-spacing: .5px; }
+  .heroes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .heroes button { min-height: 44px; border-radius: 10px; border: 1px solid rgba(214,170,98,.4); background: rgba(16,12,22,.8); color: #d8ccb4; padding: 6px 2px 4px;
+    font: 11px ui-monospace, Menlo, monospace; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .heroes button img { width: 44px; height: 52px; object-fit: contain; image-rendering: pixelated; }
+  .heroes button.on { border-color: #f0c880; background: linear-gradient(rgba(224,168,74,.35), rgba(182,124,42,.25)); color: #f6e6c4; }
+  .world { display: block; text-decoration: none; color: inherit; border: 1px solid rgba(214,170,98,.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+    background: linear-gradient(rgba(24,18,34,.9), rgba(14,10,20,.9)); min-height: 44px; }
+  .world b { font: 600 17px Georgia, serif; color: #f0c880; }
+  .world small { display: block; font: italic 13px Georgia, serif; color: #c8b89c; margin: 2px 0 6px; }
+  .world p { font-size: 12px; line-height: 1.5; color: #b8ac98; }
+  .world .meta { font-size: 11px; color: #978c80; margin-top: 6px; }
+  .world:active { border-color: #f0c880; }
+  footer { margin-top: 20px; font-size: 11px; line-height: 1.6; color: #978c80; }
+  a { color: #e0a85a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>EMBER<em>FALL</em></h1>
+  <p class="tag">Another world for the same people: Luminati's lit pixel dioramas — light, shadow, water, weather and the
+    hour of the day — walked by Emberfall's own heroes and townsfolk.</p>
+
+  <h2>Who walks</h2>
+  <div class="heroes" id="heroes"></div>
+
+  <h2>Where</h2>
+  <div id="worlds"></div>
+
+  <footer>
+    <p>On a phone: drag on the world to walk (to the edge to run), <b>Talk</b> to speak and turn a page, two fingers to
+      zoom. With a keyboard: WASD or the arrows, Shift to run, Space to talk, Q / E to turn the camera, the wheel to zoom.</p>
+    <p style="margin-top:8px">A prototype. The worlds are Luminati's (<a href="https://gitlab.com/stubborn-hug/lumina">gitlab.com/stubborn-hug/lumina</a>,
+      MIT: <a href="./LUMINATI-LICENSE.txt">licence</a>), their villagers drawn as Emberfall's people. Nothing here touches
+      your game. <a href="../index.html">Back to the game</a> · <a href="../docs/lumina-prototype.md">The notes</a></p>
+  </footer>
+</main>
+<script>
+  // the heroes (Emberfall's baked looks: assets/actors/<look>.face.png for the portrait), and the worlds (Luminati's levels)
+  const HEROES = [['hero_knight', 'Knight'], ['hero_barbarian', 'Barbarian'], ['hero_rogue', 'Rogue'], ['hero_mage', 'Mage'],
+    ['hero_cleric', 'Cleric'], ['hero_shaman', 'Shaman'], ['hero_wren', 'Wren'], ['hero_brannoc', 'Brannoc']];
+  const WORLDS = [
+    ['emberfall', 'Emberfall', 'Riverside Village', 'A riverside village: the inn and the market square, a farm, Windmill Hill, Amberleaf Grove and the campfire meadow.', '48 × 40 · 8 villagers'],
+    ['sample-hamlet', 'Willowmere', 'A Hamlet by the Pond', 'A green with a well, three cottages, a pond with fireflies and an orchard on the terrace.', '28 × 22 · 3 villagers'],
+    ['brightwater-crossing', 'Brightwater Crossing', 'A Riverside Hamlet', 'Where the river bends: a windmill on the hill, a waterfall in the woods, lanterns at dusk.', '36 × 28 · 4 villagers'],
+    ['gildhaven', 'Gildhaven', 'Market Day on the River Gild', 'A walled river town on fair day: High Town and the abbey on the terrace, the Gildfall, the market on the river.', '128 × 128 · 68 villagers'],
+    ['starfall-vale', 'Starfall Vale', 'Where the Stars Come Home', 'A vale on the night of a festival: a market town on its river, a mountain with falls, a lake under the stars.', '128 × 128 · 29 villagers'],
+    ['cinderwatch-pass', 'Cinderwatch Pass', 'Where the Old Fires Wake', 'A pass with a fight in it: companions to recruit (drawn as Emberfall\'s heroes), and Luminati\'s own foes.', '96 × 120 · a party and its fights'],
+  ];
+  let hero = 'hero_knight';
+  try { hero = localStorage.getItem('ember-lumina-hero') || hero; } catch {}
+  const heroes = document.getElementById('heroes'), worlds = document.getElementById('worlds');
+  function paint() {
+    heroes.textContent = '';
+    for (const [id, name] of HEROES) {
+      const b = document.createElement('button'), img = document.createElement('img'), s = document.createElement('span');
+      img.src = `../assets/actors/${id}.face.png`; img.alt = ''; s.textContent = name; b.append(img, s); b.className = id === hero ? 'on' : '';
+      b.addEventListener('click', () => { hero = id; try { localStorage.setItem('ember-lumina-hero', id); } catch {} paint(); });
+      heroes.append(b);
+    }
+    worlds.textContent = '';
+    for (const [slug, name, sub, about, meta] of WORLDS) {
+      const a = document.createElement('a'); a.className = 'world'; a.href = `./game.html?autostart=1&level=${slug}&hero=${hero}`;
+      const b = document.createElement('b'), s = document.createElement('small'), p = document.createElement('p'), m = document.createElement('div');
+      b.textContent = name; s.textContent = sub; p.textContent = about; m.className = 'meta'; m.textContent = meta;
+      a.append(b, s, p, m); worlds.append(a);
+    }
+  }
+  paint();
+</script>
+</body>
+</html>

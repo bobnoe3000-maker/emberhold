@@ -69,3 +69,10 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
 - **Licence of the copies:** the adapted files in `assets/audio/` are shared under the same licence, CC-BY-SA 3.0.
   The share-alike covers the sound files, not the game's code.
 - **Synthesised in code** (`src/audio/engine.js`): the blows (filtered noise) and the crit's crack. These are ours.
+
+## The Luminati prototype — `lumina/`
+
+- **Luminati** (https://gitlab.com/stubborn-hug/lumina), © 2026 Luminati, MIT License (`lumina/LUMINATI-LICENSE.txt`):
+  the engine, its procedurally generated worlds, light, weather, UI and fonts' stylesheets, built into `lumina/` by
+  `tools/lumina/build.mjs` from commit `80e1aa6`. three.js r186 (MIT) inside the same build. The characters in it are
+  Emberfall's own actors (above), unchanged (docs/lumina-prototype.md).

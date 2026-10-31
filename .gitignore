@@ -7,3 +7,6 @@ dist/
 tools/actor-lab/models/
 tools/actor-lab/out/
 tools/capture/out/
+
+# the Luminati prototype: its checkout and node_modules (tools/lumina/build.mjs)
+tools/lumina/.work/

@@ -7,7 +7,7 @@ import globals from 'globals';
 const detmath = 'use sim/detmath.js — engine-approximated math forks server replays (AGENTS.md rule 1)';
 
 export default [
-  { ignores: ['**/node_modules/**', 'src/vendor/**', 'tools/actor-lab/models/**', 'tools/actor-lab/out/**', 'dist/**', 'docs/**'] },
+  { ignores: ['**/node_modules/**', 'src/vendor/**', 'tools/actor-lab/models/**', 'tools/actor-lab/out/**', 'dist/**', 'docs/**', 'lumina/**', 'tools/lumina/.work/**'] },
   js.configs.recommended,
   {
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...globals.browser, ...globals.node } },
