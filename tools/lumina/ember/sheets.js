@@ -2,8 +2,8 @@
 // runtime (CharacterSprites.js createCharacterSheet: 32 × 32 frames, four directions). The prototype's build (tools/lumina/
 // vite.config.mjs) points every import of that module here instead, so the player, the party, the villagers and anyone a
 // story brings on are drawn from Emberfall's baked actor atlases, as they are, from the game's own assets/actors/: no copy,
-// no re-bake. Everything else of Luminati's module passes through untouched (the presets, the creature sheets, the
-// monsters, which keep Luminati's own look).
+// no re-bake. Everything else of Luminati's module passes through untouched (the presets, the creature sheets). Of the
+// monsters, the humanoid ones (goblin, archer, shaman) are Emberfall's hill goblins; the rest keep Luminati's look.
 //
 // An atlas (tools/actor-lab/bake.cjs) is a row a screen octant (0 E, 1 SE, 2 S, 3 SW, 4 W, 5 NW, 6 N, 7 NE) and a column a
 // frame, its clips named in its JSON. Luminati's Sprite3D knows four directions, so the sheet made here takes four rows
@@ -17,6 +17,7 @@
 
 import * as THREE from 'three';
 import * as LUMINATI from '../src/engine/pixel/CharacterSprites.js';
+import { ACTOR_NAMES, ACTOR_FACES } from './actors.js';
 
 export * from '../src/engine/pixel/CharacterSprites.js';
 
@@ -42,6 +43,8 @@ const CAST = {
   bard: ['npc_col', 'npc_villager_3'],
   traveler: ['npc_villager_1', 'npc_tobin'],
   villager: ['npc_villager_1', 'npc_villager_2', 'npc_villager_3', 'npc_villager_4', 'npc_hester', 'npc_tobin', 'npc_bess', 'npc_ned'],
+  // Luminati's humanoid foes (MonsterSprites.js HUMANOID_SPECS) in Emberfall's hill goblins
+  goblin: ['goblin_skirmisher'], archer: ['goblin_archer'], shaman: ['goblin_hexer'],
 };
 // the party's classes (party/PartyMember.js memberSpec presets) in Emberfall's heroes
 const PARTY = { swordsman: 'hero_barbarian', guard: 'hero_brannoc', cleric: 'hero_cleric', scholar: 'hero_mage', hunter: 'hero_rogue_bow', bard: 'hero_shaman', traveler: 'hero_rogue' };
@@ -50,18 +53,21 @@ const params = new URLSearchParams(location.search);
 /** the player's look: ?hero=…, Emberfall's knight by default */
 export const HERO = HEROES.includes(/** @type {string} */ (params.get('hero'))) ? /** @type {string} */ (params.get('hero')) : 'hero_knight';
 
-const ALL = [...new Set([...HEROES, ...Object.values(CAST).flat(), ...Object.values(PARTY)])];
+// every actor baked (actors.js, the build's list of assets/actors/): a level names any of them by its look
+// (Emberfall's levels, tools/lumina/levels.mjs: spec.emberActor)
+const ALL = [...new Set([...HEROES, ...Object.values(CAST).flat(), ...Object.values(PARTY), ...ACTOR_NAMES])];
 /** every atlas's JSON, fetched once at boot (the module's import waits for it: the sheets are asked for synchronously) */
 const META = Object.fromEntries(await Promise.all(ALL.map(async (name) => {
   try { const r = await fetch(`${ACTORS}${name}.json`); return [name, r.ok ? await r.json() : null]; } catch { return [name, null]; }
 })));
 
 const hashOf = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193); return h >>> 0; };
-/** the atlas for a spec: the player's hero, a party member's class, a villager's preset (and seed and name) */
+/** the atlas for a spec: the player's hero, a level's named look, a party member's class, a villager's preset (and seed and name) */
 export function atlasFor(spec) {
   const s = spec && typeof spec === 'object' ? spec : { preset: typeof spec === 'string' ? spec : 'villager' };
   const preset = typeof s.preset === 'string' ? s.preset : 'villager';
   if (s.__ember === 'player') return HERO;
+  if (typeof s.emberActor === 'string' && META[s.emberActor]) return s.emberActor;   // a level's own choice (a townsman, a party member)
   if (s.__ember === 'party') { const a = PARTY[preset] || 'hero_rogue'; return a === HERO ? 'hero_rogue' : a; }
   const list = (CAST[preset] || CAST.villager).filter((a) => META[a]);
   return list.length ? list[hashOf(`${preset}|${s.seed ?? ''}|${s.__id ?? ''}|${s.female ? 'f' : ''}`) % list.length] : 'npc_villager_1';
@@ -95,7 +101,7 @@ function cutOf(name) {
   const face = document.createElement('canvas'); face.width = 32; face.height = 32; c.face = face;
   const fimg = new Image();
   fimg.onload = () => { const g = /** @type {CanvasRenderingContext2D} */ (face.getContext('2d')); g.imageSmoothingEnabled = true; g.drawImage(fimg, 8, 2, 17, 17); };
-  if (!/^npc_villager_/.test(name)) fimg.src = `${ACTORS}${name}.face.png`;   // (the townsfolk have no portrait baked: no portrait)
+  if (ACTOR_FACES.includes(name)) fimg.src = `${ACTORS}${name}.face.png`;   // (the townsfolk, the bow rogues and the foes have none baked)
   cuts.set(name, c);
   return c;
 }
@@ -153,7 +159,7 @@ export function emberSheet(spec, { combat = false, festival = false } = {}) {
   };
 }
 
-/** Luminati's createCharacterSheet, in Emberfall's people (the monsters never come here: vite.config.mjs) */
+/** Luminati's createCharacterSheet, in Emberfall's people (and its humanoid foes in our goblins) */
 export function createCharacterSheet(spec = {}, opts = {}) {
   return emberSheet(spec, { combat: !!(opts && opts.combat) });
 }

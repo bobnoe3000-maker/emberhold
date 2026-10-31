@@ -5,8 +5,8 @@
 //
 // What the build changes in Luminati, all here, none of it in their files:
 //   · every import of engine/pixel/CharacterSprites.js goes to ember/sheets.js (Emberfall's actor atlases), and every
-//     import of engine/pixel/FestivalPoses.js to ember/festival.js — except the monsters' (MonsterSprites.js), the
-//     original FestivalPoses and our own wrappers, which keep Luminati's painter;
+//     import of engine/pixel/FestivalPoses.js to ember/festival.js — except the original FestivalPoses' and our own
+//     wrappers', which keep Luminati's painter (the monsters' come too: their humanoids are our goblins);
 //   · three call sites are tagged so a sheet knows whose it is: the player (Player.js), a party member (party/
 //     PartyMember.js) and a villager (Npc.js, with the villager's id);
 //   · the Japanese and Chinese font slices (fallbacks behind Google Fonts, for pages in those languages) are left out:
@@ -21,7 +21,7 @@ const theirs = (await import(pathToFileURL(resolve(LUM, 'vite.config.js')).href)
 const SRC = resolve(LUM, 'src'), EMBER = resolve(LUM, 'ember');
 const CS = resolve(SRC, 'engine/pixel/CharacterSprites.js'), FP = resolve(SRC, 'engine/pixel/FestivalPoses.js');
 const WRAP_CS = resolve(EMBER, 'sheets.js'), WRAP_FP = resolve(EMBER, 'festival.js');
-const KEEP = new Set([WRAP_CS, WRAP_FP, FP, resolve(SRC, 'engine/pixel/MonsterSprites.js')]);
+const KEEP = new Set([WRAP_CS, WRAP_FP, FP]);
 
 // the call sites tagged: [file, what's there, what it becomes] — the build stops if Luminati's code has moved
 const TAGS = [

@@ -42,12 +42,16 @@
   <h2>Who walks</h2>
   <div class="heroes" id="heroes"></div>
 
-  <h2>Where</h2>
+  <h2>Emberfall's own, in Luminati's light</h2>
+  <div id="ours"></div>
+
+  <h2>Luminati's worlds</h2>
   <div id="worlds"></div>
 
   <footer>
     <p>On a phone: drag on the world to walk (to the edge to run), <b>Talk</b> to speak and turn a page, two fingers to
-      zoom. With a keyboard: WASD or the arrows, Shift to run, Space to talk, Q / E to turn the camera, the wheel to zoom.</p>
+      zoom. With a keyboard: WASD or the arrows, Shift to run, Space to talk, Q / E to turn the camera, the wheel to zoom.
+      In a fight, <b>Auto</b> lets your hero fight by itself; touch the world to take over.</p>
     <p style="margin-top:8px">A prototype. The worlds are Luminati's (<a href="https://gitlab.com/stubborn-hug/lumina">gitlab.com/stubborn-hug/lumina</a>,
       MIT: <a href="./LUMINATI-LICENSE.txt">licence</a>), their villagers drawn as Emberfall's people. Nothing here touches
       your game. <a href="../index.html">Back to the game</a> · <a href="../docs/lumina-prototype.md">The notes</a></p>
@@ -57,6 +61,12 @@
   // the heroes (Emberfall's baked looks: assets/actors/<look>.face.png for the portrait), and the worlds (Luminati's levels)
   const HEROES = [['hero_knight', 'Knight'], ['hero_barbarian', 'Barbarian'], ['hero_rogue', 'Rogue'], ['hero_mage', 'Mage'],
     ['hero_cleric', 'Cleric'], ['hero_shaman', 'Shaman'], ['hero_wren', 'Wren'], ['hero_brannoc', 'Brannoc']];
+  // Emberfall's own levels (tools/lumina/levels.mjs): [slug, name, sub, about, meta, extra query]
+  const OURS = [
+    ['thornwick', 'Thornwick', 'The Hollow Vale, as Emberfall builds it', 'Our town converted from the game itself: its walls, the Shrine, the Tired Mule, the Crossed Keys, the smithy, the farms, and the nine townsfolk at their posts with their own words.', '90 × 72 · 9 townsfolk'],
+    ['encounter', 'The Scrag Warren', 'An autobattle encounter', 'Brannoc, Wren and a Guild cleric with you against the hill goblins at their door. Auto is on: your hero fights by itself, and so does the party.', '56 × 60 · a party of four, ten goblins', '&auto=1'],
+    ['catalogue', 'The Catalogue', 'Every world asset, one of each', 'Every building, tree, stone, light, prop, piece of furniture, boat, creature and effect the engine builds, each with a signpost naming it; every tile; and Emberfall\'s whole cast in a line.', '112 × 119 · 195 exhibits'],
+  ];
   const WORLDS = [
     ['emberfall', 'Emberfall', 'Riverside Village', 'A riverside village: the inn and the market square, a farm, Windmill Hill, Amberleaf Grove and the campfire meadow.', '48 × 40 · 8 villagers'],
     ['sample-hamlet', 'Willowmere', 'A Hamlet by the Pond', 'A green with a well, three cottages, a pond with fireflies and an orchard on the terrace.', '28 × 22 · 3 villagers'],
@@ -67,7 +77,7 @@
   ];
   let hero = 'hero_knight';
   try { hero = localStorage.getItem('ember-lumina-hero') || hero; } catch {}
-  const heroes = document.getElementById('heroes'), worlds = document.getElementById('worlds');
+  const heroes = document.getElementById('heroes'), worlds = document.getElementById('worlds'), ours = document.getElementById('ours');
   function paint() {
     heroes.textContent = '';
     for (const [id, name] of HEROES) {
@@ -76,12 +86,14 @@
       b.addEventListener('click', () => { hero = id; try { localStorage.setItem('ember-lumina-hero', id); } catch {} paint(); });
       heroes.append(b);
     }
-    worlds.textContent = '';
-    for (const [slug, name, sub, about, meta] of WORLDS) {
-      const a = document.createElement('a'); a.className = 'world'; a.href = `./game.html?autostart=1&level=${slug}&hero=${hero}`;
-      const b = document.createElement('b'), s = document.createElement('small'), p = document.createElement('p'), m = document.createElement('div');
-      b.textContent = name; s.textContent = sub; p.textContent = about; m.className = 'meta'; m.textContent = meta;
-      a.append(b, s, p, m); worlds.append(a);
+    for (const [list, into] of [[OURS, ours], [WORLDS, worlds]]) {
+      into.textContent = '';
+      for (const [slug, name, sub, about, meta, extra = ''] of list) {
+        const a = document.createElement('a'); a.className = 'world'; a.href = `./game.html?autostart=1&level=${slug}&hero=${hero}${extra}`;
+        const b = document.createElement('b'), s = document.createElement('small'), p = document.createElement('p'), m = document.createElement('div');
+        b.textContent = name; s.textContent = sub; p.textContent = about; m.className = 'meta'; m.textContent = meta;
+        a.append(b, s, p, m); into.append(a);
+      }
     }
   }
   paint();

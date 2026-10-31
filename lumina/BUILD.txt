@@ -1,2 +1,2 @@
 Built by tools/lumina/build.mjs from Luminati 80e1aa6011159db7b88d52637d4b1112b1450ffa (https://gitlab.com/stubborn-hug/lumina.git, MIT: LUMINATI-LICENSE.txt)
-and Emberfall's tools/lumina/ember/. Levels: emberfall, sample-hamlet, brightwater-crossing, gildhaven, starfall-vale, cinderwatch-pass. Do not edit: rebuild.
+and Emberfall's tools/lumina/ember/. Levels: emberfall, sample-hamlet, brightwater-crossing, gildhaven, starfall-vale, cinderwatch-pass; Emberfall's thornwick, catalogue, encounter (tools/lumina/levels.mjs). Do not edit: rebuild.

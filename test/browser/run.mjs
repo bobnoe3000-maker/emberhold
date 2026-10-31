@@ -1269,21 +1269,33 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
-// the Luminati prototype (docs/lumina-prototype.md): its front page lists the worlds and the heroes, and a world boots with
-// Emberfall's people in it, the player and every villager drawn from our atlases (software WebGL is slow: a patient wait)
+// the Luminati prototype (docs/lumina-prototype.md): its front page lists the worlds and the heroes; Thornwick, converted
+// from our sim, boots with the hero and its nine townsfolk each in their own look; the encounter boots with the party
+// joined, its goblins drawn as ours and Auto on (software WebGL is slow: patient waits)
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
     await p.goto(`${base}/lumina/index.html`);
-    const front = await p.evaluate(() => ({ worlds: document.querySelectorAll('#worlds .world').length, heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=sample-hamlet&hero=hero_rogue`);
+    const front = await p.evaluate(() => ({ ours: [...document.querySelectorAll('#ours .world')].map((a) => new URL(a.href).searchParams.get('level')), worlds: document.querySelectorAll('#worlds .world').length,
+      heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue`);
     await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
-    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name), talk: !!document.getElementById('ember-talk') }));
-    check('lumina: the front page lists six worlds and eight heroes; a world boots with the hero and every villager drawn as Emberfall\'s, and the Talk button',
-      front.worlds === 6 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue' && cast.npcs.every((n) => /^ember:(npc_|hero_)/.test(n)) && cast.talk && errs.length === 0,
+    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk') }));
+    const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
+    check('lumina: the front page lists our three levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
+      front.ours.join() === 'thornwick,encounter,catalogue' && front.worlds === 6 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
+        && cast.npcs.join() === FOLK.join() && cast.talk && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    errs.length = 0;
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=encounter&hero=hero_knight&auto=1`);
+    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 3, null, { timeout: 180000 * SLOW });
+    const fight = await p.evaluate(() => { const C = window.__game.combat; return { allies: C.allies().map((a) => a.id), foes: [...new Set(C.system.enemies.map((e) => `${e.kind}:${e.sheet.frameWidth > 32 ? 'ours' : 'theirs'}`))].sort(),
+      auto: globalThis.__emberAuto?.on, button: document.getElementById('ember-auto')?.getAttribute('aria-pressed') }; });
+    check('lumina: the encounter boots with Brannoc, Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
+      fight.allies.join() === 'brannoc,wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
+      JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }
