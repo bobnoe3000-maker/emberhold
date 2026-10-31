@@ -1073,6 +1073,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     await p.goto(`${base}/index.html?slot=3&dev&notitle`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__away, null, { timeout: 60000 });
     await p.evaluate(() => { const s = globalThis.__sim; s.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Away' }); for (let i = 0; i < 3; i++) s.tick(); window.dispatchEvent(new Event('pagehide')); });
+    // (the save on creation is async (IndexedDB): wait until slot 3 is written before closing, rather than a fixed 400 ms,
+    // which CI run 247 outran: the next page then found no save to backdate)
+    await p.waitForFunction(async () => !!(await (await import('./src/persist/idb.js')).get('slot3')), null, { timeout: 30000, polling: 200 });
     await p.waitForTimeout(400); await p.close();                      // (closing fires the autosave: its savedAt is now)
     // saved half an hour ago: set from a page of the same origin that isn't the game, so no autosave writes over it
     const q = await ctx.newPage(); await q.goto(`${base}/content/sites/barrows.json`);
