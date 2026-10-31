@@ -22,7 +22,7 @@ const FLOWERS = [[168, 150, 80], [160, 150, 178], [150, 70, 66], [176, 170, 150]
 const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat, p: ELIT.peat, b: ELIT.bog, k: ELIT.weed, r: ELIT.reed, deck: ELIT.deck };
 // the Reach's and the Heights' grounds (docs/reach-heights-overlands.md), mixed from the palette's own ramps: cracked
 // earth and red rock, slag-stained tailings, snow, scree, river ice, the crater's glass
-const X = { e: ELIT.earth, k: ELIT.rock, l: ELIT.lava, m: ELIT.ember, sd: ELIT.sand, c: ELIT.crag, i: ELIT.ice, f: ELIT.frost, b: ELIT.bone, o: ELIT.obsid, gl: ELIT.glacier };
+const X = { e: ELIT.earth, k: ELIT.rock, l: ELIT.lava, m: ELIT.ember, sd: ELIT.sand, c: ELIT.crag, i: ELIT.ice, f: ELIT.frost, b: ELIT.bone, o: ELIT.obsid, gl: ELIT.glacier, bs: ELIT.basalt };
 const SNOW = [mix(X.i[2], X.b[2], 0.5), mix(X.i[3], X.b[3], 0.5), mix(X.i[4], X.b[3], 0.5), mix(X.f[4], X.b[4], 0.55), mix(X.f[4], X.b[4], 0.8)];
 const OWN_GRASS = { reach: ELIT.grass_reach, heights: ELIT.grass_heights };   // (a road's verge in the land's own grass: the Vale and the Fens keep theirs)
 const OUT = { c: null, n: N_UP, e: 0 };
@@ -174,10 +174,10 @@ function tailings(o, q, gx, gy) {
   return ret(n < 0.5 ? X.l[3] : mix(X.l[4], X.m[4], 0.5), N_WATER);
 }
 function glass(o, q, gx, gy) {
-  if (q.t > 0.86) return ret(mix(X.o[2], X.c[2], 0.5), norm3(0, 0.35, 0.94));
+  if (q.t > 0.86) return ret(mix(X.bs[2], X.c[2], 0.5), norm3(0, 0.35, 0.94));
   const n = fbm(gx * 0.05, gy * 0.05, o.seed + 133), gc = Math.floor(gx * 1.2), gr = Math.floor(gy * 1.2);
   const glint = H(gc, gr, o.seed + 135) > 0.985 && frac(gx * 1.2) < 0.25 && frac(gy * 1.2) < 0.25;
-  return ret(glint ? X.gl[4] : n < 0.5 ? X.o[1] : X.o[2], norm3(0, 0.2, 0.98), glint ? 6 : 0);
+  return ret(glint ? X.gl[4] : n < 0.5 ? mix(X.o[1], X.bs[0], 0.6) : mix(X.o[2], X.bs[1], 0.6), norm3(0, 0.2, 0.98), glint ? 6 : 0);   // (obsidian's violet taken down to black)
 }
 function stained(o, q, gx, gy, tx, ty, rx, ry) {
   if (o.region === 'heights') return scree(o, { t: 1 }, gx, gy, tx, ty, rx, ry);

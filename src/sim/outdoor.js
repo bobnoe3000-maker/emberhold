@@ -912,11 +912,11 @@ function buildReach(seed) {
   const mrng = mulberry32(streamSeed(seed, 4443)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
   put(o, 'mountain_massif_C', volcano[0], volcano[1], 'round', 0.3);
   const keepOut = [gate, kells, yards, works, vault, ninth, tunnels, seam, forge];
-  const sights = [[gate[0], gate[1]], kells, yards, works, vault, tunnels, seam, forge];
+  const sights = [[gate[0], gate[1]], [join[0] - 5, join[1]], kells, yards, works, vault, tunnels, seam, forge];   // (and where you arrive)
   const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22);
   for (const [x, y] of [[40, 30], [86, 36], [106, 54], [118, 22], [28, 6], [62, 4], [92, 8], [80, 66], [140, 30], [36, 182], [58, 200], [100, 204], [30, 224]]) {
     const id = mrng() < 0.5 ? 'mountain_A' : 'mountain_B', jx = x + (mrng() - 0.5) * 6, jy = y + (mrng() - 0.5) * 6;
-    if (clear(jx, jy, 20) && fits(o, id, jx, jy, -1)) put(o, id, jx, jy, 'round', 0.35);
+    if (clear(jx, jy, 20) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1)) put(o, id, jx, jy, 'round', 0.35);   // (a hill is tall: a deeper wedge)
   }
   for (let x = -90, i = 0; x < 360; i++) { const id = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'][i % 3], f = F(id); put(o, id, x - f[0], -14 - f[3] - mrng() * 12, 'round', 0.3); x += (f[2] - f[0]) * (0.6 + mrng() * 0.2); }
   for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
@@ -1003,7 +1003,7 @@ function buildHeights(seed) {
   // THE PEAKS (their own stream): the crater's rim, broken only at the Lip; the crags behind Frosthold; peaks over the
   // whole north as the sketch has them; a range past the edges
   const mrng = mulberry32(streamSeed(seed, 4444)), F = (id) => ENV_FOOT[id] || [-10, -10, 10, 10];
-  const keepOut = [gate, hospice, lip, cracks, praetory, glass, tarn], sights = [gate, hospice, lip, cracks, praetory, glass, [165, 150]];
+  const keepOut = [gate, hospice, lip, cracks, praetory, glass, tarn], sights = [gate, [gate[0] + 22, gate[1]], hospice, lip, cracks, praetory, glass, [165, 150]];   // (and where you arrive)
   const clear = (x, y, r = 18) => !keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < r) && !inFrontOf(sights, x, y, 40, 22)
     && hypot(x - 60, y - 98) > 26 && hypot((x - crater[0]) / 40, (y - crater[1]) / 27) > 1;
   for (let a = 0; a < 6.2832; a += 0.21) {                                                      // the rim: rocks and crags, the Lip left open
@@ -1013,9 +1013,9 @@ function buildHeights(seed) {
     if (fits(o, id, x, y, -1.5)) put(o, id, x, y, /mountain/.test(id) ? 'round' : 'rect', /mountain/.test(id) ? 0.35 : 0.1);
   }
   for (const [x, y] of [[30, 70], [56, 66], [18, 96], [24, 112], [6, 70], [40, 46], [10, 30], [70, 40], [100, 24], [96, 62], [212, 70], [240, 58], [236, 14], [196, 16],
-    [246, 112], [230, 136], [102, 84], [120, 128], [96, 190], [184, 200], [236, 176]]) {
+    [246, 112], [230, 136], [102, 84], [120, 128], [96, 190], [184, 200], [236, 176], [120, 14], [172, 12], [252, 84], [36, 150], [20, 52], [86, 50]]) {
     const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_A', 'mountain_B', 'mountain_massif_C']), jx = x + (mrng() - 0.5) * 8, jy = y + (mrng() - 0.5) * 8;
-    if (clear(jx, jy, 22) && fits(o, id, jx, jy, -1) && offRoad(o, id, jx, jy)) put(o, id, jx, jy, 'round', 0.35);
+    if (clear(jx, jy, 22) && !inFrontOf(sights, jx, jy, 72, 28) && fits(o, id, jx, jy, -1) && offRoad(o, id, jx, jy)) put(o, id, jx, jy, 'round', 0.35);   // (a peak is tall: a deeper wedge)
   }
   for (let x = -90, i = 0; x < 360; i++) { const id = ['mountain_massif_A', 'mountain_massif_B', 'mountain_massif_C'][i % 3], f = F(id); put(o, id, x - f[0], -14 - f[3] - mrng() * 12, 'round', 0.3); x += (f[2] - f[0]) * (0.6 + mrng() * 0.2); }
   for (let y = -20; y < 330; ) { const id = pick(mrng, ['mountain_A', 'mountain_B', 'mountain_massif_C']), f = F(id); put(o, id, -12 - f[2] - mrng() * 10, y - f[1], 'round', 0.35); y += (f[3] - f[1]) * (0.7 + mrng() * 0.2); }
