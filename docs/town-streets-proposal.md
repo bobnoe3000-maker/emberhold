@@ -101,7 +101,9 @@ sketches, not bakes. The plans are top-down, north up, all at one scale, in the 
 
 ## The overlands
 
-Each region's overland is drawn at the game's own scale, 260 × 260 tiles, the Vale's. Each shows:
+Each region's overland is drawn at the game's own scale, 260 × 260 tiles, the Vale's. (2026-10-31: the Reach's and the
+Heights' are built in the game as previews, and their sketches redrawn to the game's layout:
+[reach-heights-overlands.md](./reach-heights-overlands.md).) Each shows:
 - its town and waystations;
 - every site, with its levels and its room to remember;
 - the imperial roads, with a dead beacon-tower every day's march;
