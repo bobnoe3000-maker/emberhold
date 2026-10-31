@@ -5,7 +5,7 @@ environment. Let's keep our player and NPC character assets AS IS. https://gitla
 prototype."*
 
 **Play it:**
-- from the game's menu (☰), **Compare worlds**, which saves the slot first. The owner: *"Keep these map options
+- from the game's menu (☰), *Another world* (the front page, as before) or **Compare worlds**, both saving the slot first. The owner: *"Keep these map options
   available from the menu so i can compare gameplay and world art."* It lists:
   - this game drawn by Emberlit or by Luminati (the port's trial build, [luminati-port-plan.md](./luminati-port-plan.md)
     §12; the same choice as Graphics);
@@ -257,6 +257,10 @@ it's armed, as a tap would) and fights on.
   - It stages `tools/lumina/ember/` (our files, the six levels, Luminati's licence), writes our three levels
     (`levels.mjs`) and the list of baked actors (`actors.js`), runs Vite, and writes `lumina/`.
   - `node tools/lumina/levels.mjs [id]` prints what each of our levels holds, without building.
+  - Our five maps are **kept as the owner played them**: a build takes the levels `lumina/levels/` already holds, so
+    a change to the sim or the port's code never moves Thornwick, the Scrag Warren, the Old Barrows or the catalogues
+    (the owner: *"keep what you had from that prev build - the map and assets so i can play them"*).
+    `node tools/lumina/build.mjs --levels` writes them anew from `levels.mjs`, on purpose.
   - It also builds a third page, `lumina/world.html` (`ember/world.js`): not a level of the prototype but the frame the
     game itself puts its world in when the menu's Graphics is set to Luminati, the port plan's trial build
     ([luminati-port-plan.md](./luminati-port-plan.md) §12).

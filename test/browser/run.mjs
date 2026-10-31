@@ -1248,7 +1248,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
     // the way in: the game's menu has a row for it, and it goes there
     await p.goto(`${base}/index.html?dev&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 });
-    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
+    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
     await p.waitForURL(/frontier\.html/, { timeout: 30000 * SLOW });
     const viaMenu = /frontier\.html$/.test(p.url());
     await p.goto(`${base}/frontier.html?manual&lv=3`); await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__fr, null, { timeout: 60000 });

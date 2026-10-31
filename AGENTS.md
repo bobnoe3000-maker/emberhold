@@ -55,6 +55,7 @@ node tools/actor-lab/faces.cjs            # the face board: every faces.json pre
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
 node tools/lumina/build.mjs              # the Luminati prototype (docs/lumina-prototype.md): Luminati at its pin into tools/lumina/.work/ (npm ci there), tools/lumina/ember/ staged, our levels written, vite build → lumina/ (committed; 4 MB)
+node tools/lumina/build.mjs --levels     # … and our five prototype maps written anew from levels.mjs (without it, the committed ones are kept as they are)
 node tools/lumina/levels.mjs [thornwick|catalogue|catalogueArt|encounter|barrows]   # what Emberfall's own Luminati levels hold (the build writes them: Thornwick from createSim, the catalogue from Luminati's ObjectCatalog, the encounter, the Old Barrows)
 node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/ (with its coast, old-provinces.json, for the World map's fog)
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg

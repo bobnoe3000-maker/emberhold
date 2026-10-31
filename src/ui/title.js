@@ -149,7 +149,11 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
-      ${openPage && html`<button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>this game in Emberlit or Luminati · the Scrag Warren · the Old Barrows · Thornwick · the catalogues · the Frontier</small></button>`}
+      ${openPage && html`<div class="row">
+        <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
+        <button onClick=${() => openPage('./lumina/index.html')}>Another world<small>Luminati's dioramas, your people</small></button>
+      </div>
+      <button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>this game in Emberlit or Luminati · the Scrag Warren · the Old Barrows · Thornwick · the catalogues, one tap each</small></button>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>${graphics.current() === 'luminati' ? 'Luminati (trial)' : 'Emberlit'} · depth of field</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>

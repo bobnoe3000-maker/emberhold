@@ -293,6 +293,10 @@ lets stop at the trial build so i can play test before continuing."*
    ([reach-heights-overlands.md](./reach-heights-overlands.md)). They're previews (`?scene=overland&region=reach|heights`)
    until their acts are built. The converter draws them.
 3. **The Frontier** stays out of the port, on its own renderer.
+5. **The prototype's maps stay playable as they are** (the owner: *"keep what you had from that prev build - the map and
+   assets so i can play them"*): Thornwick, the Scrag Warren, the Old Barrows and both catalogues, with Luminati's own
+   play, from the menu (*Another world*, *Compare worlds*). The port never rebuilds them (`tools/lumina/build.mjs` keeps
+   the committed levels; `--levels` only on purpose).
 4. **Stop after phase 0**: the trial build (§12), for the owner to play on the phone. Phases 1–9 wait for that
    play-test, and the default stays Emberlit.
 

@@ -1,5 +1,6 @@
 // build.mjs — builds the Luminati prototype into lumina/ (docs/lumina-prototype.md): Luminati's world, Emberfall's people.
 //   node tools/lumina/build.mjs            fetch Luminati at PIN (once), npm ci there (once), stage ember/, vite build → lumina/
+//   node tools/lumina/build.mjs --levels   … and write our five levels anew from levels.mjs (else the ones lumina/ holds are kept)
 // Luminati (https://gitlab.com/stubborn-hug/lumina) is MIT; its checkout and node_modules live in tools/lumina/.work/
 // (ignored by git). The output is committed: the site has no build step (netlify.toml publishes the repo as it is).
 import { execFileSync } from 'node:child_process';
@@ -35,8 +36,15 @@ const actors = readdirSync(join(ROOT, 'assets', 'actors')).filter((f) => /^[a-z_
 const faces = actors.filter((a) => existsSync(join(ROOT, 'assets', 'actors', `${a}.face.png`)));
 const propLevels = [];
 const LV = await import('./levels.mjs'), base = JSON.parse(readFileSync(join(LUM, 'public', 'levels', 'sample-hamlet.json'), 'utf8'));
+// Our five maps are kept as the owner played them (2026-10-31: "keep what you had from that prev build - the map and
+// assets so i can play them"): a build takes the levels lumina/ already holds, so a change to the sim (a town's layout,
+// the Reach and the Heights) or to the port's code never moves them. --levels writes them anew from levels.mjs, on purpose.
+const REGEN = process.argv.includes('--levels');
+const kept = (l) => { const f = join(OUT, 'levels', `${l}.json`); if (REGEN || !existsSync(f)) return null;
+  const files = {}; const side = join(OUT, 'levels', `${l}.ember.json`); if (existsSync(side)) files[`${l}.ember.json`] = JSON.parse(readFileSync(side, 'utf8'));
+  const level = JSON.parse(readFileSync(f, 'utf8')); return { level, files, stats: { size: `${level.width} × ${level.depth} (kept)` } }; };
 for (const l of OURS) {
-  const { level, stats, files = {} } = await LV[l.replace(/-(\w)/g, (_, c) => c.toUpperCase())](base, LUM);   // (catalogue-art → catalogueArt)
+  const { level, stats, files = {} } = kept(l) ?? await LV[l.replace(/-(\w)/g, (_, c) => c.toUpperCase())](base, LUM);   // (catalogue-art → catalogueArt)
   writeFileSync(join(EMBER, 'public', 'levels', `${l}.json`), JSON.stringify(level));
   for (const [f, data] of Object.entries(files)) writeFileSync(join(EMBER, 'public', 'levels', f), JSON.stringify(data));   // (a level's sidecars: props.js)
   if (files[`${l}.ember.json`]) propLevels.push(l);
