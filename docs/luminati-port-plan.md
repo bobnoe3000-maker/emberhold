@@ -1,6 +1,7 @@
 # Luminati as Emberfall's renderer: a plan
 
-**Status: Proposal** (2026-10-31). Nothing here has shipped. The prototype it builds on is
+**Status: Proposal, with phase 0 built** (2026-10-31). The owner's choices are in §11. Phase 0, the trial build, is
+in the game behind the menu's Graphics setting (§12); the plan stops there until the owner has played it. The prototype it builds on is
 [lumina-prototype.md](./lumina-prototype.md) (`/lumina/`, architecture A16). Its decision row, A17, is proposed in
 [architecture.md §11](./architecture.md#11-decision-log).
 
@@ -280,12 +281,102 @@ Phases 3–5 can run side by side once phase 2 is done; each is one converter an
 
 ---
 
-## 11. Choices for the owner
+## 11. The owner's choices (2026-10-31)
 
-These can be made at the start of phase 0 or at the phase where they matter:
+The owner: *"Depth of field Blur is a new menu setting, design reach and heights now, leave out the Frontier for now,
+lets stop at the trial build so i can play test before continuing."*
 
-1. **Depth of field**: kept eased (as in the prototype's Emberfall view) or off for a crisper, more game-like read.
-2. **The Reach and Heights overlands**: they currently reuse the Vale's land. Draw them as they are, or design their
-   own first (a GDD change).
-3. **The Frontier**: left on its own renderer, or ported after the cutover.
-4. **When to flip the default**: after phase 7's gates, or earlier for play-tests on the owner's phone.
+1. **Depth of field** is a setting in the menu's new **Graphics** panel, per device: *Soft blur* (the prototype's eased
+   blur, the default) or *Off*. It applies at once (`src/render3d/settings.js`, `src/ui/title.js`).
+2. **The Reach and Heights overlands** are designed now, as their own lands, not the Vale's copied: their layout,
+   canon and the sim's builders are separate work from this plan (it's a design change: the world doc and the GDD
+   first). Until they land, the converter draws whatever the sim builds.
+3. **The Frontier** stays out of the port, on its own renderer.
+4. **Stop after phase 0**: the trial build (§12), for the owner to play on the phone. Phases 1–9 wait for that
+   play-test, and the default stays Emberlit.
+
+---
+
+## 12. Phase 0: the trial build
+
+**How to play it.** Menu → **Graphics** → *Luminati* (the game saves the slot and reloads), or add `?renderer=luminati`
+to the address. *Emberlit* goes back. It's the same game: the same slot, sim, HUD, menus and taps.
+
+![The trial build: Thornwick at dusk, the Hollow Vale by day, the Old Barrows, Thornwick sideways](img/lumina/trial.jpg)
+
+**How it's built, and how it differs from §2–§3.** The fastest honest way to put Luminati under the real game, so the
+owner can judge the look and the feel before the big work:
+
+- **Emberlit stays the game's eye.** It keeps its camera, its animator's choice of clip, octant and frame for every
+  figure, everything drawn over the world (the minimap, names, service plaques, bars and numbers, the banner, the
+  stick), and every tap test (`npcAt`, `enemyAt`, `serviceAt`, `doorAt`, `propAt`, `screenToTile`).
+  - With another painter set (`renderer.setExternal`, `src/render/renderer.js`), it skips its bake, its stamping and
+    its two light passes.
+  - It hands that painter each frame's figures and camera.
+- **Luminati draws the world in a frame.** `lumina/world.html` (`tools/lumina/ember/world.js`, built with the
+  prototype by `tools/lumina/build.mjs`) sits over Emberlit's world canvas and under its overlay.
+  - It takes no pointer and never has focus, so taps and keys reach the game as before.
+  - It boots Luminati's `Game` with none of Luminati's play: no title, no HUD, its player hidden, its loop stopped.
+  - The game steps it once a frame (`src/render3d/hybrid.js`).
+  - This stands in for §2's vendored module bundle. That bundle is phase 1, and the frame goes then.
+- **The camera is Emberlit's, exactly.**
+  - `hybrid.js` turns Emberlit's camera into the ground point at the middle of the screen, and the CSS px a unit.
+    It uses `iso.js`: a tile is 16 × 8 px, so a unit is 16√2 native px.
+  - `world.js` places a 45° / 30° camera on a 1° lens at the distance that gives that scale. That's near enough
+    orthographic that Emberlit's overlay and taps land on Luminati's ground.
+  - Measured with `hybrid.probe`, at five points round the hero: within **0.4 px** in the Old Barrows, **0.37 px** in
+    the Vale and **1.4 px** in Thornwick's square (whose camera eases onto the square).
+- **The figures are ours, drawn by Luminati.**
+  - Each figure is a sprite facing the camera, cut from its atlas by UV (one texture an atlas, nothing copied).
+  - Each stands at Emberlit's anchor, lit by Luminati's sun and lamps, with its shadow.
+  - Faded when Emberlit fades it (the Fallen, the dying).
+- **The hour and the weather are the sim's.**
+  - The sim's four parts of the day map onto Luminati's clock: dawn at 5:00, day 7:30, dusk 17:30, night 20:30. So
+    the dial's word and the sky agree.
+  - The title's held dusk holds Luminati's too.
+  - The sim's rain and snow are Luminati's. Its fog and wind aren't drawn yet.
+- **Every map is converted at runtime** from the sim's world (`src/render3d/convert.js`), as §5 says:
+  - towns and the waystation, with each region's walls and roofs;
+  - the overlands, with mountains raised as rock and the walls raised as terrain;
+  - every dungeon floor, per seed, its walls raised, its braziers lit and a torch to each room.
+  - Pieces with no Luminati match (mills, ruins, the keep, the Fens' stilt houses, animals, carts) stand as our own
+    baked art. This is §7's "both sets in reserve" working from day one.
+  - Over 128 units the map is cropped round its middle (§5's first remedy).
+
+**Measured** (headless Chromium on software WebGL, so times are a slow floor; a phone's GPU is what phase 7 measures):
+
+| | Thornwick | The Hollow Vale | The Old Barrows |
+|---|---|---|---|
+| Level (Luminati units) | 88 × 68 | 128 × 128 (cropped from 130) | 68 × 80 |
+| Luminati objects · our sprites | 72 · 137 | 133 · 99 | 75 · 0 |
+| Converting it (Node) | 0.13–0.19 s | 0.53 s | 0.66 s |
+| Built, first boot / a travel | 17–25 s / – | – / 11.5 s | 15 s / – |
+| Shader programs | 53 | 83 (after the travel) | 42 |
+| Off Emberlit's overlay | 1.4 px | 0.37 px | 0.4 px |
+
+The other levels convert inside Luminati's limits too: Saltmere 81 × 66, Ashgate 88 × 68, the Fens 128 × 128, the
+Toadking's Mound 128 × 128 (cropped), the Scrag Warren 128 × 97 (`test/render3d.test.mjs`).
+
+**Checks.**
+- `test/render3d.test.mjs` (node:test): every sample world converts to a valid level within the limit, the hero on a
+  walkable tile, the same world to the same level, a town's services as named houses, and the hours.
+- The browser suite's `render3d` check: the game with `?renderer=luminati` builds Thornwick, then the Vale after walking
+  out of the gate, the ground within 2 px of Emberlit's overlay, the frame taking no pointer, and Graphics turning the
+  depth of field off.
+- The sim is untouched: `npm run check` (replays, smoke, balance gates) as before.
+
+**What's rough** (for the play-test; each is a later phase's work):
+- **Effects.** No weapon or spell effects, hit sparks, floor rings or telegraphs yet: they were Emberlit's G-buffer
+  work (phase 6). The numbers, bars and names are there.
+- **Light.** No carry light round the hero in a dungeon, and the dungeon's fog is blue (Luminati's evening light).
+- **Day.** Luminati's day is brighter and greener than Emberlit's dusky one. The owner's direction (keep the gloom)
+  wants a pass on its keyframes.
+- **Placement.**
+  - Buildings are Luminati's houses sized to our footprints, so a door may sit off our service's spot. The tap still
+    goes by Emberlit's sprite.
+  - Our own art stands as flat cut-outs.
+- **Waits.** A first boot and each travel wait behind black while the level builds, longer on a slow phone.
+- **Memory and speed on a phone are unmeasured** (the gates in §8; phase 7).
+  - Each actor atlas is one texture of about 24 MB.
+  - The frame runs a second WebGL context beside Emberlit's idle one.
+- **The Reach and Heights overlands** are the Vale's until their own design lands (§11).
