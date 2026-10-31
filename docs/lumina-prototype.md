@@ -51,7 +51,8 @@ And Emberfall's own (§3), written by `tools/lumina/levels.mjs` when it builds:
 | Level | Size | What it is |
 |---|---|---|
 | Thornwick | 90 × 72 | our town converted from the game's own sim, its nine townsfolk with their own words |
-| The Scrag Warren | 56 × 60 | an autobattle encounter: Brannoc, Wren and a Guild cleric with you against the hill goblins |
+| The Scrag Warren | 56 × 60 | an autobattle encounter: Wren and a Guild cleric with you against the hill goblins |
+| The Old Barrows | 48 × 72 | a dungeon: the Ashbound in the Long Gallery, the Quartermaster who stands them up again, Tobin's lantern to wake at (§8) |
 | The Catalogue | 112 × 119 | every world asset the engine builds, one of each and named, and Emberfall's whole cast |
 
 ## 2. How our people get into their world
@@ -183,12 +184,14 @@ fight. They're in the encounter and in Cinderwatch.
 
 **The Scrag Warren** (world doc §3): the hill goblins' door at the foot of the range, an old adit with a horse skull on
 its cap, in the Reach since v1.32.
-- **The party** is GDD §7.1's right one, fighter, rogue and cleric:
-  - Brannoc (Luminati's greatshield, *guardian*);
-  - Wren (ranger, *hunter*);
+- **The party** is GDD §7.1's right one, fighter, rogue and cleric, at the game's size, you and two (so our three
+  player cards hold it, §9):
+  - your hero, the fighter;
+  - Wren (Luminati's ranger, *hunter*);
   - a Lantern Guild cleric (cleric, *support*).
+  - Brannoc (greatshield) was a fourth until the cards came: four cards across a phone cut every name short.
 - **How they join:** as the level opens (an `arrive` event: `party join …`). They fight by Luminati's party AI.
-- **Their lines:** Brannoc's and Wren's come from their Ink, as once joined. The cleric's is the Lamp rank's line in
+- **Their lines:** Wren's come from her Ink, as once joined. The cleric's is the Lamp rank's line in
   `content/companions.json`.
 - **The goblins:** 13 in four bands. 4 skirmishers (level 4) on the spoil heap, 3 archers (5) on the shelf, and 4
   skirmishers (5) and 2 hexers (6) at the door, all drawn as ours.
@@ -209,13 +212,19 @@ autobattle ticked every 6 frames.
 
 | Run | Cleared | Lowest HP (sampled every 5 s) | Draughts | Hero level |
 |---|---|---|---|---|
+| Auto on, levels 4–6 (13, shipped), the party of three | all, in 45 s | the hero 39/112, Wren 60/75, the cleric 65/78 | 0 | 1 → 4 |
+| *Before, with Brannoc (a party of four):* | | | | |
 | Auto on, goblins at levels 2–3 (9 goblins) | all, in 35 s | the hero 96/112, Brannoc 99/120 | 0 | 1 → 3 |
 | Auto on, levels 3–4 (13) | all, in 45 s | the hero 98/124, Brannoc 101/120 | 0 | 1 → 3 |
-| Auto on, levels 4–6 (13, shipped) | all, in 45 s | the hero 91/100, Brannoc 91/120 | 0 | 1 → 4 |
+| Auto on, levels 4–6 (13) | all, in 45 s | the hero 91/100, Brannoc 91/120 | 0 | 1 → 4 |
 | Auto off, the hero idle at camp | nothing: the party keeps to its leader, out of the goblins' reach | full | 0 | 1 |
 
-It's an easy fight at any of these levels. Luminati's party heals and levels up fast, and a level-up refills HP. The
-difficulty is Luminati's numbers, not ours. Raise the levels in `levels.mjs` for a harder one.
+It's an easy fight with four. With three it bites: the hero went down to 39 of 112 at the door. Luminati's party heals
+and levels up fast, and a level-up refills HP; the difficulty is Luminati's numbers, not ours. Raise the levels in
+`levels.mjs` for a harder one.
+
+When the hero falls with Auto on, the autobattle rises at the waystone by itself (a key to Luminati's death screen once
+it's armed, as a tap would) and fights on.
 
 ## 4. Build and deploy
 
@@ -335,3 +344,99 @@ the crates under the tent showing. Right pair: a farm in Thornwick, the hens in 
 
 Every level builds with no camera dust and no page errors. The browser suite checks Thornwick's ground cover size and
 that no dust, firefly or sparkle area is built.
+
+## 8. A dungeon: the Old Barrows
+
+The owner: *"Create an example dungeon level with an encounter and respawn."*
+
+**The Old Barrows** (world doc §3.1, v1.32–33) is the Vale's crypt. The level (`levels.mjs` `barrows`, 48 × 72) has one
+floor of each of its three, from the door down:
+- **The Barrow Mouth.**
+  - The Redhand's dig at the door: their spoil, their tent and cart, their campfire.
+  - **Tobin Hask**, Thornwick's sexton, on his coffin-lid with his lantern and his book. His six lines come from his Ink:
+    his first meeting, then the floors and the Muster Hall.
+  - **His lantern is the waystone.**
+  - The party joins here, as at the Scrag Warren: you, Wren and a Guild cleric.
+- **The Long Gallery.** Burial niches with a skull in each and the families' candles still burning, and the Ashbound in
+  rows: 3 minions, 4 warriors, 2 rogues.
+- **The Muster Hall.** The Third Legion's stores (racks, crates, sacks, barrels), four braziers, a chest, 3 warriors,
+  2 mages and **the Quartermaster**.
+
+**The encounter.** Luminati's goblin, archer and shaman are drawn as our Ashbound and the Quartermaster as himself:
+- each enemy object names its look (`emberActor`: `skeleton_minion`, `skeleton_warrior`, `skeleton_rogue`,
+  `skeleton_mage`, `boss_quartermaster`);
+- the build tags `CombatSystem._spawnGroup` to ask `sheets.js` `enemySheetFor` first. It builds the sheet as Luminati's
+  `humanoidSheet` does, with the kind's pose aliases;
+- they're named as `content/foes.json` names them (*Ashbound warrior* …).
+
+**The respawn.** Two kinds, one Emberfall's and one Luminati's:
+- **The Quartermaster still issues** (`ember/issue.js`). Canon says "every little while the most broken of his ranks
+  stands up whole, re-armed from his racks", and our sim's rule is `issue`, every `ISSUE_S` = 10 s.
+  - While he stands and a fight is on, every 10 s of combat time the most broken of his 14 ranks stands up whole.
+  - A fallen one goes first: back at its post, as Luminati's rest brings a foe back, and into the fight (the `wake`
+    hook). If none has fallen, the most hurt one is made whole where it stands.
+  - Put him down and the ones you put down stay down.
+  - Autobattle goes for him first, sooner than his ranks.
+- **Falling** (Luminati's death and respawn, COMBAT.md §6.11).
+  - You wake at the last waystone you walked by, Tobin's lantern, lighter in the purse. The foes you've killed stay
+    dead.
+  - A rest at the lantern heals the party and brings every foe back.
+  - With Auto on, the hero rises by itself.
+
+**The light.** The crypt has no sky, so it holds a fixed hour as Luminati's own rooms do. It's a warm dusk (19.4) for
+the gloom, lit by 12 wall torches, the braziers, the candles and the Redhand's fire. A level this deep shares Luminati's
+12 lamps by distance.
+
+**Measured** with the Knight and Auto on, on the manual clock (stepped 1/60 s, unrendered):
+
+| | |
+|---|---|
+| Party | you, Wren, the Guild cleric |
+| The gallery cleared | by 40 s; the Quartermaster had stood 2 back up meanwhile, at 15 s and 25 s (8 standing became 9) |
+| The Quartermaster | at 18/138 at 60 s, down by 65 s; nothing issued after |
+| All 15 cleared | in 70 s, 17 kills (two of them twice), nobody down, the hero level 1 → 4 |
+| Lowest HP (every 5 s) | the hero 93/112, Wren 58/69 |
+| A fall (struck down at the end) | Auto rose; the party woke at (22.5, 63.7), beside Tobin's lantern (then at 22.5, 62.5; now 23, 62.6, within the 2-unit attunement of where the party arrives), full HP |
+
+An earlier run, before an issued foe was woken, left one minion asleep at its post after the Quartermaster fell.
+Autobattle now also goes to sleeping foes once none are awake, so a dungeon is cleared rather than left.
+
+**Fixed on the way:** `touch.js` took any touch on a `<canvas>` for a touch on the world, but Luminati paints its UI's
+art on canvases too. A tap on the death screen's art never reached it. Canvases inside Luminati's UI root are now the
+UI's.
+
+## 9. Our player cards
+
+The owner: *"Keep the old player tiles HUD in the same locations both portrait and landscape."* That means the game's
+own party cards, in place of Luminati's frames, in the Luminati prototype.
+
+`ember/cards.js` draws the game's cards (`src/ui/party.js`'s look) along the bottom on a combat level: you in the
+middle, a companion either side.
+- **What each card shows:**
+  - a portrait: the face of whoever the sprite is drawn as;
+  - the level, name and class;
+  - the HP bar;
+  - four numbers: ATK, DEF, MP and SP for you; ATK, DEF, MP and kills for a companion;
+  - the level bar: your XP.
+  The numbers are Luminati's (its combat state and `MemberCombat.info`).
+- **The same place either way up.** One row, as wide as the screen up to 760 px, centred, at the bottom, upright and on
+  its side. The game's landscape column is not carried over.
+- **What moves out of the way:**
+  - Luminati's vitals (top left) and party frames give way to the cards.
+  - Its skill bar, loot feed and the folded controls' tab step up by the cards' height (`--ember-cards-h`).
+  - So do Talk and Auto. On a short screen Auto sits beside Talk, clear of the clock.
+- **A card is rebuilt only when what it shows changes**, so nothing re-renders under a finger.
+- **Peaceful levels** show no cards, as Luminati shows no vitals there.
+
+**Turning the phone keeps the hero's size.** A three.js lens is vertical, so in Emberfall's view the hero stood 24 px
+tall on a phone held sideways against 52 upright. The game keeps things the phone's size either way up, so the view now
+frames a figure at 52 CSS px whatever the window's height (`view.js`: about 99 u upright, 46 u on its side). It's
+re-framed when the phone turns, with the fog's start kept 7 u short of it as Luminati sets it.
+
+![The Old Barrows: the gallery, the cards upright and on a phone's side](./img/lumina/barrows.jpg)
+
+The browser suite boots the Old Barrows and checks:
+- the party of three, each group's look and the Quartermaster's;
+- the issuer and his 14 ranks;
+- the cards replacing Luminati's vitals, in the same row upright and sideways;
+- a fall waking the party at Tobin's lantern.
