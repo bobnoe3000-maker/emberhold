@@ -302,3 +302,36 @@ and the eight rows.
 - With the hero teleported between directions on the real clock in this sandbox (about 1 frame a second), only one or
   two frames were drawn after each jump, too few to see a turn. That is why the check steps the clock instead.
 - The encounter in Emberfall's view: all 13 goblins cleared in 40 game seconds, nobody down.
+
+## 7. The ground cover, and no floating dots
+
+The owner: *"The grasses and ground cover hide the characters too much, what if those were at 25% of current size?
+Other larger assets like trees, houses, are fine at current size. Also drop the floating luminous dots."*
+
+![Before and after: the encounter's camp and a Thornwick farm](./img/lumina/ground.jpg)
+
+*Before and after, at the same spots. Left pair: the party round the camp's fire, now standing full-length in the grass,
+the crates under the tent showing. Right pair: a farm in Thornwick, the hens in plain view.*
+
+`ember/ground.js`, in every world and both views (the build tags Luminati's `GroundDetail.js` and `World.js`):
+- **The ground cover at 25 %.** That's every grass tuft, tall grass, flower, bush, fern, mushroom, pebble and reed of
+  Luminati's ground detail, through its one `Foliage` call. Trees, houses, rocks, crags and the forest border are other
+  builders, so they're unchanged.
+- **No floating luminous dots.**
+  - The camera's dust motes are off: 120 glowing specks that follow the camera, on in every level.
+  - A level's dust, firefly and sparkle areas are left out.
+  - The embers rising off a fire stay, and so do the smoke, mist, leaves and petals.
+  - The catalogue keeps its labelled exhibits of the three (`emberExhibit` in `levels.mjs`), since that's what they
+    show.
+  - Thornwick's own firefly area over the farms is gone from `levels.mjs`.
+
+**Measured:**
+
+| Level | Ground cover at 25 % | Particle areas built |
+|---|---|---|
+| Thornwick | 19,350 instances in 10 fields | none (was fireflies) |
+| Willowmere | | petals (was fireflies, petals) |
+| Cinderwatch Pass | | petals, leaves ×2, smoke, mist ×2, embers (was 14: 5 fireflies, a sparkle and a dust too) |
+
+Every level builds with no camera dust and no page errors. The browser suite checks Thornwick's ground cover size and
+that no dust, firefly or sparkle area is built.
