@@ -15,7 +15,7 @@ export const PIN = '80e1aa6011159db7b88d52637d4b1112b1450ffa';
 export const LEVELS = ['emberfall', 'sample-hamlet', 'brightwater-crossing', 'gildhaven', 'starfall-vale', 'cinderwatch-pass'];
 // and Emberfall's own, written by levels.mjs: Thornwick from our sim, the catalogue of Luminati's world and its wing of
 // Emberfall's art, our fight, our dungeon
-export const OURS = ['thornwick', 'catalogue', 'catalogue-art', 'encounter', 'barrows'];
+export const OURS = ['thornwick', 'catalogue', 'catalogue-art', 'encounter', 'barrows', 'biomes'];
 const WORK = join(HERE, '.work'), LUM = join(WORK, 'luminati'), OUT = join(ROOT, 'lumina');
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', env: { ...process.env } });
 

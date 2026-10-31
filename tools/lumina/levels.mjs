@@ -555,10 +555,65 @@ export async function catalogueArt(base) {
     rows: [...new Set(rowsOut.filter((r) => r.region).map((r) => `${r.title}: ${placed.filter((p) => ART_ROWS.find(([t]) => t === r.title)[1](p.src, p.id)).length}`))] } };
 }
 
+// ══ the biomes: grassland, desert, snow and ice ═════════════════════════════════════════════════════════════════════
+// The owner (2026-10-31): "Can we also create assets/tiles in the new engine to cover desert/grassland, and icy/snowy
+// areas?" Luminati has them: its arid set (the set-piece kit) and its winter set (the season kit) beside its grassland,
+// with their trees, stones, crags and walls. The game's converter draws the Reach in the desert's and the Heights in the
+// snow's (src/render3d/convert.js BIOMES); this map stands the three side by side, west to east, each with its ground
+// tiles in bands (a signpost naming each), a pond or an oasis or a frozen tarn, its trees, its stones, a house in its
+// walls and a path. One level holds one light, so the three share the Vale's late afternoon (in the game the Reach
+// takes Luminati's arid day and the Heights its winter).
+export async function biomes(base) {
+  const { LEGEND } = await import(pathToFileURL(join(ROOT, 'src', 'render3d', 'convert.js')).href);
+  const BW = 34, W = BW * 3, D = 44;
+  const tiles = grid(W, D, 'g'), heights = grid(W, D, '2'), objects = [], count = {};
+  const add = (o) => { count[o.type] = (count[o.type] || 0) + 1; objects.push({ id: o.id || `${o.type}_${count[o.type]}`, ...o }); };
+  const fill = (x0, z0, x1, z1, ch, h = '2') => { for (let j = z0; j < z1; j++) for (let i = x0; i < x1; i++) { tiles[j][i] = ch; heights[j][i] = h; } };
+  const sign = (x, z, label) => add({ type: 'signpost', x: r2(x), z: r2(z), rotation: 0, speaker: 'Biomes', text: [label], opts: { boards: 1 } });
+  const BANDS = [
+    { name: 'Grassland', sub: 'the Hollow Vale, the Fens', ground: [['g', 'grass'], ['G', 'grass_dark'], ['f', 'grass_flowers'], ['F', 'farmland'], ['.', 'dirt_path'], ['c', 'cobblestone']],
+      path: '.', water: ['~', '0'], shore: 's', trees: ['oak', 'birch', 'pine', 'autumn'], stone: '', crag: null, wall: 'timber_frame', roof: 'roof_thatch', flat: false },
+    { name: 'Desert', sub: 'the Cinder Reach', ground: [['a', 'arid_dirt'], ['y', 'dry_grass'], ['e', 'cracked_earth'], ['r', 'red_sand'], ['q', 'scree'], ['Y', 'sandstone']],
+      path: 'Y', water: ['~', '0'], shore: 'r', trees: ['juniper', 'palm', 'deadwood', 'cypress'], stone: 'redrock', crag: ['mesa', 'hoodoo', 'spire'], wall: 'adobe', roof: 'roof_terracotta', flat: true },
+    { name: 'Snow and ice', sub: 'the Pale Heights', ground: [['n', 'snow_top'], ['h', 'snow_path'], ['R', 'frost_cobble'], ['i', 'ice_top'], ['q', 'scree'], ['k', 'stone_tiles']],
+      path: 'h', water: ['I', '1'], shore: 'n', trees: ['snowpine', 'bare', 'snowpine', 'bare'], stone: 'snow', crag: ['spire', 'pillar'], cragStone: 'ice', wall: 'stone_brick', roof: 'roof_slate', flat: false },
+  ];
+  BANDS.forEach((B, k) => {
+    const x0 = k * BW, cx = x0 + BW / 2;
+    fill(x0, 0, x0 + BW, D, B.ground[0][0]);
+    // the ground's tiles in bands down the west half, a signpost naming each
+    B.ground.forEach(([ch, top], n) => { fill(x0 + 2, 4 + n * 6, x0 + 14, 9 + n * 6, ch); sign(x0 + 1.4, 6.5 + n * 6, `${top} · '${ch}'`); });
+    // the path down the middle, a pond (or a frozen tarn) and its shore in the east half
+    fill(cx - 1, 0, cx + 1, D, B.path);
+    fill(x0 + 21, 6, x0 + 31, 16, B.shore, '2'); fill(x0 + 22, 7, x0 + 30, 15, B.water[0], B.water[1]);
+    sign(x0 + 20.4, 5.2, k === 2 ? 'ice_top · frozen water' : 'riverbed · water');
+    // trees, stones and crags, a house
+    B.trees.forEach((t, n) => { add({ type: 'tree', x: x0 + 21 + n * 3, z: 20, collider: true, opts: { kind: t, seed: 40 + n + k * 7 } }); sign(x0 + 20 + n * 3, 22.4, `tree · ${t}`); });
+    for (let n = 0; n < 3; n++) add({ type: 'rock', x: x0 + 22 + n * 3.4, z: 26, opts: { size: 0.8 + n * 0.3, ...(B.stone ? { stone: B.stone } : {}), seed: 7 + n } });
+    sign(x0 + 20.6, 27.6, `rock · stone ${B.stone || '(plain)'}`);
+    (B.crag || []).forEach((c, n) => { add({ type: 'crag', x: x0 + 22 + n * 4, z: 31, opts: { kind: c, ...(B.cragStone ? { stone: B.cragStone } : k === 1 ? { stone: n % 2 ? 'sandstone' : 'redrock' } : {}) } }); });
+    if (B.crag) sign(x0 + 20.6, 33.6, `crag · ${B.crag.join(', ')}`);
+    add({ type: 'house', x: x0 + 25, z: 39, rotation: 0, light: true, opts: { width: 5, depth: 3.6, stories: 1, wall: B.wall, roof: B.roof, flatRoof: B.flat, chimney: !B.flat, shutters: true, doorHood: false, woodpile: k === 2, gableFront: false, sign: false, upperWall: '', seed: 11 + k } });
+    sign(x0 + 21.4, 41.6, `house · wall ${B.wall}, roof ${B.roof}${B.flat ? ', flatRoof' : ''}`);
+    add({ type: 'lamppost', x: cx + 2, z: 24, rotation: 0, opts: { style: 'arm' } });
+    add({ type: 'region', minX: x0, maxX: x0 + BW, minZ: 0, maxZ: D, name: B.name, sub: B.sub, minY: -10, banner: '' });
+  });
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (j === 0 || j === D - 1) { tiles[j][i] = 'T'; heights[j][i] = '2'; }
+  const level = {
+    ...frame(base, { name: 'The Biomes', subtitle: 'Grassland, desert, snow and ice, in Luminati\'s own tiles', width: W, depth: D,
+      description: 'The three lands the game draws in Luminati (src/render3d/convert.js BIOMES): the grassland of the Vale and the Fens, the desert of the Cinder Reach, the snow and ice of the Pale Heights; each ground tile, tree, stone, crag and house with a signpost naming it. Generated by tools/lumina/levels.mjs.',
+      environment: { timeOfDay: 16.4, clock: true, weather: 'clear', border: 'forest', outerScenery: true, godRays: true, dust: false, camera: null, highGround: null } }),
+    legend: { ...base.legend, ...LEGEND },
+    spawn: { x: BW / 2, z: D - 4, facing: 'up' },
+    tiles: rows(tiles), heights: rows(heights), objects,
+  };
+  return { level, stats: { size: `${W} × ${D}`, objects: count } };
+}
+
 // standalone: what each level holds
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const LUM = join(dirname(fileURLToPath(import.meta.url)), '.work', 'luminati');
   const base = JSON.parse(readFileSync(join(LUM, 'public', 'levels', 'sample-hamlet.json'), 'utf8'));
-  const all = { thornwick, catalogue, encounter, barrows, catalogueArt };
+  const all = { thornwick, catalogue, encounter, barrows, catalogueArt, biomes };
   for (const id of process.argv[2] ? [process.argv[2]] : Object.keys(all)) console.log(id, JSON.stringify((await all[id](base, LUM)).stats, null, 1));
 }

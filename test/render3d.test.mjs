@@ -62,3 +62,16 @@ test('hour: the sim\'s four parts of the day land on Luminati\'s dawn, day, dusk
   assert.equal(hourOf(DAY_S), 5);                   // and round again
   for (let t = 0; t < DAY_S; t += 37) { const h = hourOf(t); assert.ok(h >= 0 && h < 24); }
 });
+
+test('biomes: the Reach is drawn in Luminati\'s desert, the Heights in its snow and ice, the Vale in its grassland', () => {
+  const tally = (region) => { const { level } = convertWorld(createSim(SEED, undefined, { scene: 'overland', region }).world, { region }); const t = {};
+    for (const r of level.tiles) for (const ch of r) t[ch] = (t[ch] || 0) + 1;
+    return { t, env: level.environment, trees: new Set(level.objects.filter((o) => o.type === 'tree').map((o) => o.opts.kind)), level }; };
+  const reach = tally('reach'), heights = tally('heights'), vale = tally('vale');
+  assert.equal(reach.env.climate, 'arid'); assert.ok(!reach.t.g && !reach.t.G && reach.t.a > 0 && reach.t.e > 0 && reach.t.X > 0, JSON.stringify(reach.t));
+  assert.ok([...reach.trees].every((k) => ['juniper', 'deadwood'].includes(k)), [...reach.trees].join());
+  assert.equal(heights.env.season, 'winter'); assert.ok(heights.t.n > heights.t.q && heights.t.I > 0 && heights.t.N > 0 && !heights.t['~'], JSON.stringify(heights.t));
+  assert.ok([...heights.trees].every((k) => ['snowpine', 'bare'].includes(k)), [...heights.trees].join());
+  assert.ok(!vale.env.climate && !vale.env.season && vale.t.g > 0 && !vale.t.n && !vale.t.a);
+  for (const x of [reach, heights, vale]) for (const ch of Object.keys(x.t)) assert.ok(x.level.legend[ch], `'${ch}' in the legend`);
+});

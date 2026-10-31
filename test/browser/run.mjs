@@ -1296,8 +1296,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
       ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
-    check('lumina: the front page lists our five levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, the Talk button, and (opened from the game\'s Compare worlds) a way straight back to the game',
-      front.ours.join() === 'thornwick,encounter,barrows,catalogue,catalogue-art' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
+    check('lumina: the front page lists our six levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, the Talk button, and (opened from the game\'s Compare worlds) a way straight back to the game',
+      front.ours.join() === 'thornwick,encounter,barrows,catalogue,catalogue-art,biomes' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
         && cast.npcs.join() === FOLK.join() && cast.talk && cast.back[0] === '◂ Game' && cast.back[1] === '../index.html' && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
@@ -1397,7 +1397,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const vale = await built(2), offVale = vale ? await probe() : 99;
     check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); the frame takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
       town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.actors > 0 && pressed.includes('Luminati') && dofOff
-        && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
+        && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
     await ctx.close(); await b.close();

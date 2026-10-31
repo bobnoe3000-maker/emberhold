@@ -104,7 +104,8 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   // with a way straight back (its ◂ Game). The game is saved before a page of the prototype opens (openPage).
   const PROTO = [['thornwick', 'Thornwick', 'our town, in Luminati’s own play', ''], ['encounter', 'The Scrag Warren', 'a party of three against the hill goblins · Auto', '&auto=1'],
     ['barrows', 'The Old Barrows', 'the Ashbound and the Quartermaster · Auto', '&auto=1'], ['catalogue', 'The Catalogue', 'every world asset Luminati builds', ''],
-    ['catalogue-art', 'The Catalogue: our art', 'every piece of Emberfall’s world art in Luminati’s light', '']];
+    ['catalogue-art', 'The Catalogue: our art', 'every piece of Emberfall’s world art in Luminati’s light', ''],
+    ['biomes', 'The Biomes', 'grassland, desert, snow and ice: the tiles the Vale, the Reach and the Heights are drawn in', '']];
   const PROTO_HEROES = ['hero_knight', 'hero_barbarian', 'hero_rogue', 'hero_mage', 'hero_cleric', 'hero_shaman', 'hero_wren', 'hero_brannoc'];
   function Worlds() {
     const r = graphics ? graphics.current() : 'emberlit', look = sim.state.party[0]?.actor, hero = PROTO_HEROES.includes(look) ? look : 'hero_knight';

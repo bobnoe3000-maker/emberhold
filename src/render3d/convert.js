@@ -30,7 +30,7 @@ const r2 = (v) => Math.round(v * 100) / 100;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // Luminati's ground types (their sample levels' legend), and the two of ours added: a dungeon's floor and its rock
-const LEGEND = {
+export const LEGEND = {
   g: { top: 'grass', side: 'cliff', lip: 'grass_side', walkable: true }, G: { top: 'grass_dark', side: 'cliff', lip: 'grass_side', walkable: true },
   f: { top: 'grass_flowers', side: 'cliff', lip: 'grass_side', walkable: true }, F: { top: 'farmland', side: 'dirt_side', walkable: true },
   s: { top: 'sand', side: 'dirt_side', walkable: true }, m: { top: 'moss_stone', side: 'cliff', walkable: true },
@@ -40,6 +40,15 @@ const LEGEND = {
   '~': { top: 'riverbed', side: 'cliff', water: true, walkable: false }, o: { top: 'riverbed', side: 'cliff', water: true, walkable: false, flow: 0 },
   T: { top: 'grass_dark', side: 'cliff', lip: 'grass_side', walkable: false }, x: { top: 'moss_stone', side: 'cliff', walkable: false },
   ' ': { void: true },
+  // the desert (Luminati's arid set, its set-piece kit): dry earth and scrub, cracked pans, red sand, scree, sandstone, red rock
+  a: { top: 'arid_dirt', side: 'arid_dirt_side', walkable: true }, y: { top: 'dry_grass', side: 'arid_dirt_side', lip: 'dry_grass_side', walkable: true },
+  e: { top: 'cracked_earth', side: 'arid_dirt_side', walkable: true }, r: { top: 'red_sand', side: 'arid_dirt_side', walkable: true },
+  q: { top: 'scree', side: 'arid_dirt_side', walkable: true }, Y: { top: 'sandstone', side: 'sandstone_cliff', walkable: true },
+  X: { top: 'redrock', side: 'redrock_cliff', walkable: false },
+  // the snow and ice (Luminati's winter set, its season kit): snow, trodden paths, frosted cobbles, ice, frozen water
+  n: { top: 'snow_top', side: 'snow_side', walkable: true }, h: { top: 'snow_path', side: 'snow_side', walkable: true },
+  R: { top: 'frost_cobble', side: 'stone_wall', walkable: true }, i: { top: 'ice_top', side: 'ice_cliff', walkable: true },
+  I: { top: 'ice_top', side: 'ice_cliff', walkable: false }, N: { top: 'snow_top', side: 'snow_side', walkable: false },
 };
 // a region's buildings in Luminati's walls and roofs, by our piece: the Vale's timber, plaster and thatch (stone for the
 // shrine and the forge), the Fens' dark planks and reed, the Reach's black slag-brick and slate, the Heights' stone
@@ -63,6 +72,22 @@ const REGION_LOOK = {
   heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
 };
 const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'deadwood' };
+// The biomes (the owner, 2026-10-31: "create assets/tiles in the new engine to cover desert/grassland, and icy/snowy
+// areas"): a region's look in Luminati's own tile sets. `ground` redraws our ground's tile (outdoor.js G, by the
+// grassland's character), `turf` scatters the open ground, `trees` and `stone` are the region's kinds, `mountain` the tile
+// a mountain's footprint is raised in, and `env` the level's light (Luminati's arid day; its winter).
+//   grassland: the Vale and the Fens, as before;  desert: the Cinder Reach (dry earth, cracked pans, red sand, scree,
+//   red rock, junipers and the dead);  snow: the Pale Heights (snow, trodden paths, frozen water, snow pines, bare trees).
+/** @type {Record<string, { ground: Record<string, string>, water?: string, turf: (h: number) => string, trees: Record<string, string>, stone: string, mountain: string, env: Record<string, any> }>} */
+export const BIOMES = {
+  grassland: { ground: {}, turf: (h) => (h < 12 ? 'G' : h < 16 ? 'f' : 'g'), trees: {}, stone: '', mountain: 'x', env: {} },
+  desert: { ground: { '.': 'e', c: 'Y', s: 'r', F: 'e', G: 'y', d: 'q', m: 'q' }, turf: (h) => (h < 52 ? 'a' : h < 76 ? 'y' : h < 90 ? 'e' : 'r'),
+    trees: { oak: 'juniper', autumn: 'juniper', birch: 'deadwood', pine: 'juniper', deadwood: 'deadwood' }, stone: 'redrock', mountain: 'X', env: { climate: 'arid' } },
+  snow: { ground: { '.': 'h', c: 'R', F: 'n', G: 'n', d: 'q', s: 'n' }, water: 'I', turf: (h) => (h < 82 ? 'n' : h < 93 ? 'h' : 'q'),   // (no green: Luminati's turf is a summer's)
+    trees: { oak: 'bare', autumn: 'bare', birch: 'bare', pine: 'snowpine', deadwood: 'bare' }, stone: 'snow', mountain: 'N', env: { season: 'winter' } },
+};
+/** the biome a region draws in */
+export const BIOME_OF = { vale: 'grassland', fens: 'grassland', reach: 'desert', heights: 'snow' };
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
 const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
@@ -102,17 +127,17 @@ function outdoor(w, region) {
   const C = crop(bx0, by0, bx1, by1, w.W / 2, w.H / 2), { x0, y0, W, D } = C;
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
   const tm = (x, y) => { const gx = x + w.PAD, gy = y + w.PAD; return gx >= 0 && gy >= 0 && gx < w.GW && gy < w.GH ? w.tmat[gy * w.GW + gx] : 0; };
+  const B = BIOMES[BIOME_OF[region] || 'grassland'];
   const tiles = grid(W, D, 'g'), heights = grid(W, D, '2');
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
     const n = new Map();                                       // (by our ground's index: the Fens' bank and the Heights' snow share a tile)
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const t = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] ? tm(x0 + 2 * i + dx, y0 + 2 * j + dy) : 0; n.set(t, (n.get(t) || 0) + 1); }
     const t = [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
-    let c = GROUND[t][0];
-    if (c === 'g') {                                           // (the Vale's turf with its flowers; the Reach's dry, cracked earth and ash scrub;
-      const h = hash('g', i, j) % 100;                         // the Heights' frost-bitten turf: the regions' own grounds, outdoorpaint.js)
-      c = region === 'reach' ? (h < 64 ? 'd' : h < 86 ? 'G' : '.') : region === 'heights' ? (h < 58 ? 'G' : 'g') : h < 12 ? 'G' : h < 16 ? 'f' : 'g';
-    }
-    tiles[j][i] = c; heights[j][i] = GROUND[t][1];
+    let c = GROUND[t][0], hh = GROUND[t][1];
+    if (c === 'g') c = B.turf(hash('g', i, j) % 100);         // (the open ground: the region's turf, scrub or snow)
+    else if ((c === '~' || c === 'o') && B.water) { c = B.water; hh = '1'; }   // (the Heights' water frozen over: ice, at the bank's height)
+    else c = B.ground[c] ?? c;
+    tiles[j][i] = c; heights[j][i] = hh;
   }
   const objects = [], sprites = [], count = {};
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
@@ -136,7 +161,7 @@ function outdoor(w, region) {
     if (/_curtainy?_\d/.test(s.id)) raise(s, 6, 'k');
     else if (/_tower_\d/.test(s.id)) raise(s, 8, 'k');
     else if (/_gatehousey?_\d/.test(s.id)) { raise(s, 8, 'k'); gates.push(s); }
-    else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, 'x', true);
+    else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, B.mountain, true);
   }
   // the roads through a gate stay open (the sim walks them)
   for (const g of gates) for (const r of w.roads || []) for (let k = 0; k + 1 < r.pts.length; k++) {
@@ -155,7 +180,7 @@ function outdoor(w, region) {
   for (const s of w.structs) {
     const id = s.id, p = foot(s);
     if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
-      if (/^ug_flowers/.test(id) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
+      if (/^ug_flowers/.test(id) && B === BIOMES.grassland && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
       continue;
     }
     const house = HOUSES.find(([re]) => re.test(id));
@@ -169,9 +194,9 @@ function outdoor(w, region) {
     const m = /^([a-z]+)_\d/.exec(id), kind = m && m[1];
     if (kind && (TREES[kind] || kind === 'grove')) {
       if (raised(p.cx, p.cz)) continue;
-      const h = hash(id, s.x, s.y), tk = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind];
+      const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind], tk = B.trees[tk0] || tk0;
       add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
-    } else if (/^rock_/.test(id)) add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6)), seed: hash(id, s.x) % 97 } });
+    } else if (/^rock_/.test(id)) add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6)), ...(B.stone ? { stone: B.stone } : {}), seed: hash(id, s.x) % 97 } });
     else if (/^(fence|drywall)_/.test(id)) {
       const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
       add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });
@@ -196,7 +221,7 @@ function outdoor(w, region) {
   }
   const outer = W * D <= 96 * 96;                               // (the outer scenery past the edge only round a town-sized map)
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
-    environment: { timeOfDay: 17.9, border: outer ? 'forest' : 'none', outerScenery: outer, godRays: outer, interior: false, ...(region === 'reach' ? { climate: 'arid' } : {}) } });
+    environment: { timeOfDay: 17.9, border: outer ? 'forest' : 'none', outerScenery: outer, godRays: outer, interior: false, ...B.env } });
   return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
 }
 
