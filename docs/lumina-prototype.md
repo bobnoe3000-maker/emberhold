@@ -88,8 +88,8 @@ module means, and doesn't touch Luminati's files:
   | villager | the four villagers, Hester, Tobin, Bess and Ned |
 
 - **The sheet.**
-  - **Four rows**, Luminati's directions from our octants: down is our S, left W, right E, up N. The diagonals are
-    left out (§4).
+  - **All eight octant rows** of our atlases. Luminati's animations name its four directions; the row drawn is the
+    octant of the sprite's heading within that direction's quarter (`ember/view.js`, §6).
   - **The columns** are our idle, walk, attack, hit and death clips. Luminati's poses by name (`slash`, `hurt`,
     `cheer0`, `kneel` …) point into them.
   - **Scale:** 32 native pixels to a world unit. Our 56-px figure stands 1.75 units, about a Luminati villager's height
@@ -233,8 +233,12 @@ difficulty is Luminati's numbers, not ours. Raise the levels in `levels.mjs` for
 
 ## 5. What's rough, and what would come next
 
-- **Four directions.** Luminati's Sprite3D faces down, left, right or up. Our atlases have eight. Teaching Sprite3D the
-  diagonals (its `DIRECTIONS`, `directionFromVector`) would let our figures turn as they do in Emberfall.
+- **The facing is ours, the turning is Luminati's.** Our eight octants are drawn (§6), but the four-way facing that
+  bounds them is still Luminati's choice, with its own hysteresis. Our animator also steps a turn through the octants in
+  between (`render/anim.js`, 55 ms a step); here a turn cuts straight to the new row.
+- **Emberfall's view on Luminati's worlds.** Their levels were laid out for a camera looking north: the forest border's
+  open south edge, the facades facing +Z, the roofs the north camera sees past (their level checks). Seen from the
+  south-east, a border's east side can stand between the camera and the play. Our own levels are laid out for it.
 - **Pixel scale.** Our figures are baked at 56 px against Luminati's 28-px people and painted props. Up close they're
   finer-grained than the world round them. Two fixes: re-bake our actors at Luminati's density for this look, or draw
   the world at twice Luminati's.
@@ -244,3 +248,57 @@ difficulty is Luminati's numbers, not ours. Raise the levels in `levels.mjs` for
   game's renderer is Emberlit, A2).
 - **Speed.** This sandbox has no GPU (software WebGL), so it measured nothing useful: about 1.5 frames a second at
   390 × 844 × 2. Luminati's own resolution governor scales its render. Try it on a phone before deciding anything.
+
+## 6. The main game's view
+
+The owner: *"What about matching the camera and isometric rotation in the main game?"*
+
+Emberfall is 2:1 isometric (`src/render/iso.js`). Its diamonds and its actors are baked by an orthographic camera at
+30° pitch and 45° yaw (`tools/actor-lab/lab.js`): seen from the south-east, one world axis runs down-right and the
+other down-left. Luminati's camera looks north (yaw 0, from +Z) through a 28° lens. The prototype now opens every world
+in **Emberfall's view**. The front page's *Seen as* switches to Luminati's (`?view=luminati`).
+
+![The same corner of Thornwick's square: the game, Emberfall's view, Luminati's view](./img/lumina/views.jpg)
+
+*The square from the hub, on a phone. Left, the game (Emberlit). Middle, Luminati in Emberfall's view: the same
+corner, the well and the table below the hero, Wendel's and the Crossed Keys to the right, the smithy to the left.
+Right, Luminati's own view, looking north.*
+
+| | The game | Emberfall's view | Luminati's view |
+|---|---|---|---|
+| Yaw | 45° | 45° | 0° (north) |
+| Pitch | 30° | 30° | 32° |
+| Lens | orthographic | 14° (near-orthographic) | 28° |
+| Distance | — | 99 u | 30 u |
+| A figure, of a phone's height | 1/16 (52 of 844 CSS px) | 1/17 | 1/10.5 |
+| Depth of field | none | the band 62 % of the screen, 16 u deep | the band 30 %, 6 u deep |
+
+**The camera** (`ember/view.js`; the build tags Luminati's `Game.js` and `DebugControls.js` to take it):
+- **Yaw 45°.** Screen right is then world +X −Z and screen down +X +Z, exactly as `iso.js` projects our x and y.
+  Thornwick is laid out on X = our x, Z = our y (`levels.mjs`), so the town sits on the screen as it does in the game.
+- **Pitch 30°**, the bake's.
+- **A 14° lens**, near-orthographic like the bake. The distance frames a figure as the game does on a phone: 1.75 units
+  seen a cos 30° shorter, a sixteenth of the height, so 99 units for Luminati's default 30. A level's own distance keeps
+  its ratio, so the encounter (24) stays closer.
+- **The depth of field** is opened out to match: our game has none, and the near-orthographic view spans two to three
+  times the depth on the screen that Luminati's does. The square is sharp; the far roofs and the near hedges soften a
+  little.
+- **Unchanged:** the stick and the keys walk screen-true at any yaw (Luminati's move basis follows the camera), Q / E
+  still turn it within Luminati's ±60° arc, and the wheel and pinch zoom.
+
+**The eight facings.** Our atlases have a row for each screen octant (0 E, 1 SE, 2 S … 7 NE); Luminati's sheets have
+four (down, left, right, up), chosen by every system it has: walking, talking, combat, the party.
+- The four stay Luminati's state.
+- When one of our sheets shows a frame, the row drawn is the octant of the sprite's heading on the ground since its last
+  frame. It's measured as our animator measures it (`render/anim.js`: screen right and screen down at the camera's yaw,
+  a hysteresis of 0.62 of an octant).
+- The octant is kept within the quarter of Luminati's own facing, so a turn to talk or to swing wins. A sprite standing
+  keeps its octant.
+- It works in both views. Luminati's own monsters keep their four.
+
+**Measured** on the manual clock (the engine stopped, stepped 1/60 s unrendered): from the square, each of the stick's
+eight directions for 0.75 s draws that screen octant's row, 8 of 8, in both views. The browser suite checks the camera
+and the eight rows.
+- With the hero teleported between directions on the real clock in this sandbox (about 1 frame a second), only one or
+  two frames were drawn after each jump, too few to see a turn. That is why the check steps the clock instead.
+- The encounter in Emberfall's view: all 13 goblins cleared in 40 game seconds, nobody down.
