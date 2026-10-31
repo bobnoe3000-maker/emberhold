@@ -112,8 +112,10 @@ function crop(x0, y0, x1, y1, mx, my) {
 const grid = (w, d, ch) => Array.from({ length: d }, () => Array(w).fill(ch));
 const rows = (g) => g.map((r) => r.join(''));
 function frame({ name, W, D, environment, tiles, heights, objects, spawn }) {
+  // (only the tiles the level uses: Luminati loads its desert's and its winter's kits for a legend that names theirs)
+  const used = new Set(tiles.flat()), legend = Object.fromEntries(Object.entries(LEGEND).filter(([ch]) => used.has(ch)));
   return { format: 'luminati-level', version: 1, name, subtitle: '', author: 'Emberfall', description: 'Converted at runtime from the sim (src/render3d/convert.js).',
-    width: W, depth: D, waterLevel: 0.4, water: { flow: [0, 0.45], reflect: 0.2, neutral: 0.2 }, legend: LEGEND,
+    width: W, depth: D, waterLevel: 0.4, water: { flow: [0, 0.45], reflect: 0.2, neutral: 0.2 }, legend,
     environment: { clock: false, weather: 'clear', music: false, dust: false, camera: null, highGround: null, ...environment },
     spawn, tiles: rows(tiles), heights: rows(heights), objects };
 }
@@ -217,7 +219,7 @@ function outdoor(w, region) {
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (!inside(x, z)) continue;
-    if (kind === 'brazier') add({ type: 'monument', x, z, opts: { kind: 'brazier', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+    if (kind === 'brazier') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });   // (a core light: Luminati's monument brazier is The Bells of Evermere's and loads its kits)
   }
   const outer = W * D <= 96 * 96;                               // (the outer scenery past the edge only round a town-sized map)
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
@@ -245,10 +247,10 @@ function dungeon(w) {
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5) continue;
-    if (kind === 'brazier') add({ type: 'monument', x, z, opts: { kind: 'brazier', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+    if (kind === 'brazier') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });   // (a core light: Luminati's monument brazier is The Bells of Evermere's and loads its kits)
     else if (kind === 'chest') add({ type: 'crate', x, z, rotation: 0.2, opts: {} });
-    else if (kind === 'shrine') add({ type: 'monument', x, z, opts: { kind: 'statue', fire: 'cold', lit: true, seed: hash(k) % 97 } });
-    else if (/^stair/.test(kind) || kind === 'exit') add({ type: 'monument', x, z, opts: { kind: 'lantern', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+    else if (kind === 'shrine') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'top' } });
+    else if (/^stair/.test(kind) || kind === 'exit') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } });
   }
   // a torch on the wall at each room's north side (the rooms' own light: Luminati's 12 lamps shared by distance)
   for (const r of w.level.rooms || []) {

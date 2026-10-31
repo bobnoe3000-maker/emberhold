@@ -1,18 +1,19 @@
-// world.js — Luminati drawing Emberfall's world under the game's own sim (docs/luminati-port-plan.md, phase 0: the
-// trial build). The owner (2026-10-31): "replace the current game with the new luminati engine using the emberfall iso
-// camera view … lets stop at the trial build so i can play test before continuing."
+// world.js — Luminati drawing Emberfall's world, in the game's own page (docs/luminati-port-plan.md §13 step 1; it was
+// phase 0's frame, lumina/world.html). Built by tools/render3d/build.mjs with Luminati's engine and world layers and
+// three.js into src/vendor/luminati-80e1aa6/luminati.js, which src/render3d/hybrid.js imports: `createWorld()`.
 //
-// This page (lumina/world.html) is never opened by itself: the game (src/render3d/hybrid.js) puts it in a frame behind
-// its own HUD, and drives it every frame. It boots Luminati's Game on a level the game converted from the sim
-// (src/render3d/convert.js), with none of Luminati's play: no title, no HUD, no input (the frame takes no pointer and
-// never has focus), its own player hidden. What it draws is the game's:
+// It boots Luminati's Game on a level the game converted from the sim (src/render3d/convert.js), with none of
+// Luminati's play: no title, no HUD (its UI root is a hidden element of ours), no input (its keys and pointer listen to
+// a detached target, tagged by the build, so the game's own keys and taps never reach it), no sound (its audio never
+// unlocks), its player hidden and its loop stopped. The game steps it once a frame. What it draws is the game's:
 //   · the camera: Emberlit's own, exactly (hybrid.js works out the ground point at the middle of the screen and how many
-//     CSS px a unit is, and the camera here is placed to match: yaw 45°, pitch 30°, a 1° lens at the distance that
-//     gives that scale, near enough orthographic that Emberlit's labels, minimap, names, bars and taps line up);
+//     CSS px a unit is; the camera here is placed to match: yaw 45°, pitch 30°, a 1° lens at the distance that gives
+//     that scale, near enough orthographic that Emberlit's labels, minimap, names, bars and taps line up);
 //   · the people: the sprites Emberlit chose this frame (its animator: the clip, the octant, the frame), drawn from our
 //     atlases as Luminati sprites facing the camera, lit by its sun and lamps, with its shadows;
-//   · the hour and the weather: the sim's (the game's clock, its day parts mapped onto Luminati's 24 hours);
-//   · our own art where the converter kept it (a mill, a ruin, the Fens' stilts): stood as a sprite at its foot.
+//   · the hour and the weather: the sim's;
+//   · our own art where the converter kept it (a mill, a ruin, the Fens' stilts): stood as a sprite at its foot;
+//   · the fights' effects (fx.js below).
 // The depth of field is the menu's (Graphics: soft or off).
 import * as THREE from 'three';
 import { Game } from '../src/game/Game.js';
@@ -26,15 +27,12 @@ import { Sprite3D } from '../src/engine/sprite/Sprite3D.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import './ground.js';
 
-const ASSETS = new URL('../assets/', document.baseURI).href;
+let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // Emberlit's native px a unit: a tile's half-width 8 px, two tiles a unit
 const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundness: 0.35, emissive: '#ffe9d2', emissiveIntensity: 0.12 };
 
-const lang = setLang('en');
-registerCoreStrings();
-const fonts = startFonts({ lang, px: artScale({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio || 1 }).px });
-const tables = loadContentTables(lang, {});
+let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
 let game = null, building = null, levelId = 0, dof = 'soft', yawDeg = 45, pitchDeg = 30;
 const images = new Map(), metas = new Map();
@@ -131,8 +129,12 @@ function placeCamera() {
 
 async function boot(level) {
   await tables;
-  game = new Game({ container: document.getElementById('app'), level, source: 'emberfall', autostart: true, lang, fonts, look: 'diorama' });
+  // (read by the build's tags in Game.js: its UI under a hidden root of ours, its input on a target nothing sends to, its
+  // sound never unlocked)
+  Object.assign(globalThis, { __emberUiRoot: uiRoot, __emberInputTarget: new EventTarget(), __emberSilent: true });
+  game = new Game({ container, level, source: 'emberfall', autostart: true, lang, fonts, look: 'diorama' });
   await game.init(() => {});
+  if (game.audio) game.audio.muted = true;                    // (the game has its own sound: src/audio/)
   game._updatePlayCamera = () => {};                          // (the camera is the game's: placeCamera)
   game._updateCameraBounds = () => {};
   game.start();
@@ -169,7 +171,9 @@ const api = {
   settings(o = {}) {
     if (o.dof) dof = o.dof;
     const S = game?.postfx?.settings;
-    if (S?.dof) S.dof.enabled = dof !== 'off';
+    // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
+    // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
+    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off', focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
   },
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
@@ -209,5 +213,18 @@ const api = {
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };
-Object.assign(globalThis, { __emberWorld: api });
-api.ready = true;
+/**
+ * Luminati, ready to draw the game's world into `container` (a full-window element of the game's, under its overlay)
+ * @param {{ container: HTMLElement, uiRoot: HTMLElement, assets: string }} o  uiRoot: a hidden element for Luminati's own UI;
+ *   assets: the game's assets/ folder (a URL ending in /)
+ */
+export function createWorld(o) {
+  if (container) throw new Error('createWorld: one world a page');
+  container = o.container; uiRoot = o.uiRoot; ASSETS = o.assets;
+  lang = setLang('en');
+  registerCoreStrings();
+  fonts = startFonts({ lang, px: artScale({ w: innerWidth, h: innerHeight, dpr: devicePixelRatio || 1 }).px });
+  tables = loadContentTables(lang, {});
+  api.ready = true;
+  return api;
+}

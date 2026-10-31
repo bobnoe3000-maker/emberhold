@@ -1367,7 +1367,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 }
 // the trial of Luminati as the game's world renderer (docs/luminati-port-plan.md, phase 0; src/render3d/): the game itself
 // with ?renderer=luminati. Thornwick is converted from the sim and built in the frame under the HUD; Luminati's camera
-// puts the ground where Emberlit's overlay and taps expect it (to a pixel or two); the frame takes no pointer; the menu's
+// puts the ground where Emberlit's overlay and taps expect it (to a pixel or two); Luminati\'s canvas takes no pointer; the menu's
 // Graphics shows the renderer and turns the depth of field off at once; walking out of the gate builds the Vale
 {
   const b = await launch(chromium, 'chromium');
@@ -1381,13 +1381,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return Math.max(...[[0, 0], [10, 0], [0, 10], [-12, -6], [8, -14]].map(([a, c]) => { const r = h.probe(q.x + a, q.y + c); return r ? Math.hypot(r.emberlit[0] - r.luminati[0], r.emberlit[1] - r.luminati[1]) : 99; })); });
     const town = await built(1), offTown = town ? await probe() : 99;
     for (let i = 0; i < 200 && !(await p.evaluate(() => { globalThis.__frame(16); return globalThis.__world3d.world.stats.actors > 0; })); i++) await p.waitForTimeout(100);   // (the figures' atlases load after the level)
-    const frame = await p.evaluate(() => { const f = document.querySelector('iframe'), cs = getComputedStyle(f); return { pe: cs.pointerEvents, z: cs.zIndex, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
+    const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f); return { pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
     // the menu's Graphics: Luminati pressed, and the depth of field off at once
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
     const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
     await p.locator('#title button', { hasText: 'Off' }).click();
-    const dofOff = await p.evaluate(() => document.querySelector('iframe').contentWindow.__game?.postfx?.settings?.dof?.enabled === false);
+    const dofOff = await p.evaluate(() => window.__game?.postfx?.settings?.dof?.enabled === false);
     // the menu's Compare worlds: this game's two renderers, the prototype's five maps, Luminati's worlds and the Frontier
     await p.locator('#title button', { hasText: 'Back' }).click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
@@ -1395,8 +1395,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
     const walked = await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits[0], w0 = s.world; s.commands.push({ type: 'tap', tx: Math.floor((e.x0 + e.x1) / 2), ty: Math.floor((e.y0 + e.y1) / 2) }); let n = 0; while (s.world === w0 && n < 4000) { s.tick(); n++; } return s.world.kind; });
     const vale = await built(2), offVale = vale ? await probe() : 99;
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); the frame takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
-      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD, in the game\'s own page (no frame); the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
+      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
         && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });

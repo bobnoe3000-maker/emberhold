@@ -1,0 +1,85 @@
+import { v as e } from "./core-C1cYbmwD.js";
+import { c as t, m as n, s as r } from "./gilt-DNFH9voM.js";
+//#region src/engine/ui/art/portrait.js
+var i = 32, a = Object.freeze({
+	dialogue: Object.freeze({
+		size: 40,
+		crop: Object.freeze([
+			8,
+			2,
+			17,
+			17
+		]),
+		k: 2
+	}),
+	tactics: Object.freeze({
+		size: 68,
+		crop: Object.freeze([
+			1,
+			0,
+			31,
+			31
+		]),
+		k: 2
+	}),
+	slot: Object.freeze({
+		size: 32,
+		crop: Object.freeze([
+			8,
+			1,
+			16,
+			16
+		]),
+		k: 2
+	})
+}), o = /* @__PURE__ */ new WeakMap();
+function s(e, t) {
+	let [n, r, i, a] = t, o = document.createElement("canvas");
+	o.width = i, o.height = a;
+	let s = o.getContext("2d", { willReadFrequently: !0 });
+	return s.imageSmoothingEnabled = !1, s.drawImage(e, n, r, i, a, 0, 0, i, a), {
+		data: s.getImageData(0, 0, i, a).data,
+		w: i,
+		h: a,
+		canvas: o
+	};
+}
+function c(e, t = a.slot.crop) {
+	let n = s(e, t).canvas;
+	return n.classList.add("px"), n;
+}
+function l(e, n = {}) {
+	let r = n.size ?? a.dialogue.size, i = n.crop ?? a.dialogue.crop, s = n.k ?? a.dialogue.k, c = n.glow ?? "amber", l = `${r}|${i.join(",")}|${s}|${c}`, d = o.get(e);
+	d || (d = /* @__PURE__ */ new Map(), o.set(e, d));
+	let f = d.get(l);
+	return f || (f = u(e, r, i, s, c), d.set(l, f)), t(f);
+}
+function u(t, a, o, c, l) {
+	let u = n(), d = s(t, [
+		Math.max(0, o[0]),
+		Math.max(0, o[1]),
+		Math.min(i, o[2]),
+		Math.min(i, o[3])
+	]), f = d.data, p = l === "amber" ? u.se1 : l === "sapphire" ? u.sa1 : l, m = a >= 30, h = m ? 3 : 1;
+	return r(a + 2, a + 2, (t) => {
+		m ? e(t, 1, 1, a, a, {
+			size: "XS",
+			fill: u.ink1,
+			sheen: !1
+		}) : (t.box(0, 0, a + 2, a + 2, u.ink0), t.box(1, 1, a, a, u.g3), t.px(1, 1, u.g5), t.hline(2, a, a - 1, u.g2), t.vline(a, 2, a - 1, u.g2));
+		let n = a - 2 * h, r = 1 + h, i = 1 + h, o = (n - 1) / 2;
+		for (let e = 0; e < n; e++) for (let a = 0; a < n; a++) {
+			let s = Math.hypot(a - o, (e - o) * 1.1) / (n / 2), c = u.ink1;
+			s < .95 && (c = (a + e) % 2 ? u.ink2 : u.ink1), s < .7 && (c = u.ink2), s < .5 && (c = (a + e) % 2 ? p : u.ink2), t.px(r + a, i + e, c);
+		}
+		let s = d.w * c, l = d.h * c, g = r + Math.floor((n - s) / 2), _ = i + n - l;
+		for (let e = 0; e < l; e++) for (let a = 0; a < s; a++) {
+			let o = g + a, s = _ + e;
+			if (o < r || s < i || o >= r + n || s >= i + n) continue;
+			let l = (Math.floor(e / c) * d.w + Math.floor(a / c)) * 4;
+			f[l + 3] > 0 && t.px(o, s, `rgb(${f[l]}, ${f[l + 1]}, ${f[l + 2]})`);
+		}
+	});
+}
+//#endregion
+export { l as n, c as r, a as t };

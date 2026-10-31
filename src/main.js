@@ -74,13 +74,14 @@ sim.bus.seal();
 if (DEV) globalThis.__away = away;
 const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
-const renderer = createRenderer(canvas, sim, input);
+const LUMINATI = rendererFor() === 'luminati' && !STAGE;      // (the world drawn by Luminati: render3d/hybrid.js, below)
+const renderer = createRenderer(canvas, sim, input, { external: LUMINATI });
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 // the world in Luminati (docs/luminati-port-plan.md, the trial build): the menu's Graphics or ?renderer=luminati. Emberlit
 // stays the game's eye (its camera, its figures' frames, everything over the world, every tap); Luminati draws the world
 // under it (render3d/hybrid.js). Not on the dev Stage, which reviews Emberlit's own art.
 let world3d = null;
-if (rendererFor() === 'luminati' && !STAGE) {
+if (LUMINATI) {
   import('./render3d/hybrid.js').then(({ attachLuminati }) => attachLuminati({ renderer, sim, region: REGION }))
     .then((h) => { world3d = h; if (DEV) globalThis.__world3d = h; })
     .catch((err) => console.error('[luminati] the trial renderer failed to start:', err));

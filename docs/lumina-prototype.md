@@ -262,16 +262,13 @@ it's armed, as a tap would) and fights on.
     a change to the sim or the port's code never moves Thornwick, the Scrag Warren, the Old Barrows or the catalogues
     (the owner: *"keep what you had from that prev build - the map and assets so i can play them"*).
     `node tools/lumina/build.mjs --levels` writes them anew from `levels.mjs`, on purpose.
-  - It also builds a third page, `lumina/world.html` (`ember/world.js`): not a level of the prototype but the frame the
-    game itself puts its world in when the menu's Graphics is set to Luminati, the port plan's trial build
-    ([luminati-port-plan.md](./luminati-port-plan.md) §12).
 - **Size:** 4.0 MB in all. The Japanese and Chinese font slices, 15 MB of Luminati's own build, are left out: they're
   fallbacks behind Google Fonts for pages in those languages, and the prototype is in English.
 - **Deploy:** `lumina/` is committed: the site has no build step (`netlify.toml` publishes the repo as it is). Never edit
   it; rebuild. `lumina/BUILD.txt` names the pin.
 - **Dependencies:** three.js, Luminati and Vite live only inside that build (architecture A16). The game's own pages
-  don't load three.js, and A2 (Emberlit) stands for the game; with the trial renderer chosen, the game frames
-  `lumina/world.html` and three.js loads there (A17, proposed).
+  don't load three.js, and A2 (Emberlit) stands for the game; the game's own Luminati renderer is a separate build
+  (`tools/render3d/build.mjs` → `src/vendor/luminati-80e1aa6/`, A17).
 
 ## 5. What's rough, and what would come next
 

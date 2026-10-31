@@ -410,6 +410,39 @@ Each step lands on main behind the Graphics switch, so the game stays playable i
 | 7 | **Tests and tools** (phase 8) | the browser suite run on both renderers; capture tools able to shoot either | CI runs both |
 | 8 | **The cutover** (phase 9) | the default flips to Luminati; Emberlit stays in the menu (Graphics, Compare worlds) | the owner's play-test |
 
+**Step 1: done** (2026-10-31).
+- **The bundle.** `tools/render3d/build.mjs` builds `tools/render3d/world.js`, with Luminati's engine and world layers
+  and three.js, into `src/vendor/luminati-80e1aa6/`: 67 ES modules, most loaded only by a level that needs them.
+  `src/render3d/hybrid.js` imports `luminati.js` and calls `createWorld({ container, uiRoot, assets })`. The frame and
+  `lumina/world.html` are gone.
+- **Living in the game's page.** The build tags three lines of Luminati's `Game.js`, so nothing of its own reaches the
+  player: its UI goes under a hidden root of ours, its input listens to a target nothing sends to, and its sound never
+  unlocks (and is muted). Our keys, taps and sound are the game's alone.
+- **One WebGL context draws.** Emberlit is made `external` (`createRenderer(…, { external: true })`): its canvas is
+  only the taps' surface, its light passes run on a 1 × 1 stub that never shows, and its bake's buffers are never
+  allocated (tens of MB on a phone).
+- **Converter fixes.**
+  - A level's legend now names only the tiles it uses. Naming the desert's and the snow's tiles had loaded both kits on
+    every level.
+  - Braziers, shrines and stairs are Luminati's core lights (campfires, lampposts). Its monument was The Bells of
+    Evermere's and loaded its season kit and the set-piece kit's flames.
+- **Measured.** What a scene fetches of the bundle (gzipped):
+
+  | Scene | Modules | Gzipped |
+  |---|---|---|
+  | Thornwick | 38 | 697 KB |
+  | the Old Barrows | 36 | 651 KB |
+  | the Reach | 39 | 699 KB |
+  | the Heights | 42 | 795 KB (both kits) |
+
+  - That's over §2's 450 KB target. The engine's core is 201 KB, the props 140 KB, three.js 56 KB, and the hidden
+    player's painter and the muted audio 49 KB.
+  - The trims (stubbing the player's painter, the audio and the UI's art; dead trees off the set-piece kit) belong to
+    step 6.
+  - The figures, the camera (within 0.85 px of Emberlit's overlay in Thornwick, 0.37 px in the Vale) and the look are
+    as the trial's.
+- **Checks.** The browser check now asserts no frame and Luminati's one canvas; `npm run check` passes (475 tests).
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.

@@ -1,0 +1,318 @@
+//#region src/engine/level/StoryCondition.js
+var e = [
+	"item",
+	"quest",
+	"stage",
+	"visits",
+	"visited",
+	"done",
+	"party"
+], t = [
+	"hour",
+	"day",
+	"gold",
+	"chapter",
+	"level",
+	"weather",
+	"visits",
+	"party"
+], n = /* @__PURE__ */ new Set([
+	...t,
+	"and",
+	"or",
+	"not",
+	"true",
+	"false",
+	"ending",
+	"self",
+	"random",
+	"player",
+	"time",
+	"none"
+]), r = [
+	"none",
+	"active",
+	"done",
+	"failed"
+], i = /* @__PURE__ */ new Set([
+	"quest",
+	"game:chapter",
+	"game:level",
+	"game:weather"
+]), a = (e) => i.has(e.kind) || i.has(`${e.kind}:${e.name}`), o = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/, s = /^-?(\d+(\.\d*)?|\.\d+)$/, c = /^-?(\d+(\.\d*)?|\.\d+)[eE][+-]?\d+$/, l = /* @__PURE__ */ new Set([
+	"=",
+	"==",
+	"!=",
+	"<",
+	"<=",
+	">",
+	">="
+]);
+function u(e) {
+	return typeof e == "string" && s.test(e) ? Number(e) : NaN;
+}
+function d(e) {
+	return typeof e == "string" && e.length <= 80 && o.test(e) && !s.test(e) && !c.test(e);
+}
+function f(e) {
+	return d(e) && !n.has(e.toLowerCase());
+}
+function p(e) {
+	let t = [], n = 0;
+	for (; n < e.length;) {
+		let r = e[n];
+		if (r === " " || r === "	") {
+			n++;
+			continue;
+		}
+		if (r === "(" || r === ")") {
+			t.push(r), n++;
+			continue;
+		}
+		let i = e.slice(n, n + 2);
+		if (i === "&&" || i === "||" || i === "<=" || i === ">=" || i === "!=" || i === "==") {
+			t.push(i), n += 2;
+			continue;
+		}
+		if (r === "<" || r === ">" || r === "=" || r === "!") {
+			t.push(r), n++;
+			continue;
+		}
+		let a = /^-?[A-Za-z0-9_.][A-Za-z0-9_.-]*(:[A-Za-z0-9_][A-Za-z0-9_.-]*)?/.exec(e.slice(n));
+		if (!a) return {
+			tokens: t,
+			error: `"${r}" cannot be in a condition`
+		};
+		t.push(a[0]), n += a[0].length;
+	}
+	return {
+		tokens: t,
+		error: ""
+	};
+}
+function m(r) {
+	let i = r.indexOf(":");
+	if (i >= 0) {
+		let t = r.slice(0, i), n = r.slice(i + 1);
+		return e.includes(t) ? d(n) ? {
+			kind: t,
+			name: n
+		} : `"${n}" is not a name` : `unknown kind "${t}:" (use ${e.map((e) => `${e}:`).join(", ")})`;
+	}
+	if (s.test(r)) return `a number (${r}) cannot stand alone`;
+	if (c.test(r)) return `"${r}" is a number with an exponent — numbers are plain decimals (1000, 0.5)`;
+	if (!d(r)) return `"${r}" is not a name`;
+	let a = r.toLowerCase();
+	return t.includes(a) ? {
+		kind: "game",
+		name: a
+	} : n.has(a) ? `"${r}" is a reserved word (not a flag name)` : {
+		kind: "",
+		name: r
+	};
+}
+function h(e, i, o, l) {
+	let u = a(e);
+	if (s.test(l)) {
+		if (u) throw Error(`${i} is compared to a word, not a number`);
+		return Number(l);
+	}
+	if (c.test(l)) throw Error(`"${l}" is a number with an exponent — numbers are plain decimals (1000, 0.5)`);
+	if (!d(l)) throw Error(`"${l}" is not a value`);
+	if (e.kind === "quest" && !r.includes(l)) throw Error(`a quest is ${r.join(", ")} — not "${l}"`);
+	if (u) {
+		if (o !== "=" && o !== "!=") throw Error(`${i} can only be compared with = or !=`);
+		return l;
+	}
+	if (e.kind === "stage") return l;
+	let f = l.toLowerCase();
+	if (f === "true") return 1;
+	if (f === "false") return 0;
+	if (t.includes(f)) throw Error(`"${l}" is a game value — on the right of a comparison write a number, true / false or a variable name (two game values cannot be compared)`);
+	if (n.has(f)) throw Error(`"${l}" is a reserved word — on the right of a comparison write a number, true / false or a variable name`);
+	return l;
+}
+function g(e) {
+	let t = typeof e == "string" ? e.trim() : "";
+	if (!t) return {
+		cond: {
+			op: "const",
+			value: !0
+		},
+		error: ""
+	};
+	if (t.length > 500) return {
+		cond: {
+			op: "const",
+			value: !1
+		},
+		error: "condition longer than 500 characters"
+	};
+	let { tokens: n, error: r } = p(t);
+	if (r) return {
+		cond: {
+			op: "const",
+			value: !1
+		},
+		error: r
+	};
+	let i = 0, a = 0, o = () => n[i], s = (e) => n[i] !== void 0 && n[i].toLowerCase() === e, c = () => {
+		let e = u();
+		for (; s("or") || o() === "||";) i++, e = {
+			op: "or",
+			a: e,
+			b: u()
+		};
+		return e;
+	}, u = () => {
+		let e = d();
+		for (; s("and") || o() === "&&";) i++, e = {
+			op: "and",
+			a: e,
+			b: d()
+		};
+		return e;
+	}, d = () => {
+		if (s("not") || o() === "!") {
+			if (i++, ++a > 32) throw Error("nested too deeply");
+			let e = d();
+			return a--, {
+				op: "not",
+				a: e
+			};
+		}
+		return f();
+	}, f = () => {
+		let e = o();
+		if (e === void 0) throw Error("the condition ends too early");
+		if (e === "(") {
+			if (i++, ++a > 32) throw Error("nested too deeply");
+			let e = c();
+			if (a--, o() !== ")") throw Error("a \")\" is missing");
+			return i++, e;
+		}
+		if (e === ")" || l.has(e) || e === "&&" || e === "||" || e === "!" || s("and") || s("or")) throw Error(`unexpected "${e}"`);
+		i++;
+		let t = e.toLowerCase();
+		if (t === "true" || t === "false") {
+			let n = o();
+			if (n !== void 0 && l.has(n)) throw Error(`"${e}" cannot be compared (it is always ${t})`);
+			return {
+				op: "const",
+				value: t === "true"
+			};
+		}
+		let n = m(e);
+		if (typeof n == "string") throw Error(n);
+		let r = o();
+		if (r !== void 0 && l.has(r)) {
+			i++;
+			let t = o();
+			if (t === void 0 || t === "(" || t === ")" || l.has(t) || t === "&&" || t === "||") throw Error(`a value is missing after "${r}"`);
+			i++;
+			let a = r === "==" ? "=" : r;
+			return {
+				op: "cmp",
+				ref: n,
+				cmp: a,
+				value: h(n, e, a, t)
+			};
+		}
+		return {
+			op: "ref",
+			ref: n
+		};
+	};
+	try {
+		let e = c();
+		if (i < n.length) throw Error(`unexpected "${n[i]}"`);
+		return {
+			cond: e,
+			error: ""
+		};
+	} catch (e) {
+		return {
+			cond: {
+				op: "const",
+				value: !1
+			},
+			error: e.message
+		};
+	}
+}
+function _(e) {
+	return e.length <= 500 && o.test(e) && !s.test(e);
+}
+function v(e) {
+	let t = typeof e == "string" ? e.trim() : "";
+	if (!t) return {
+		op: "const",
+		value: !0
+	};
+	if (_(t) && !t.includes(":")) return {
+		op: "ref",
+		ref: {
+			kind: "",
+			name: t
+		}
+	};
+	let { cond: n, error: r } = g(t);
+	return r ? {
+		op: "ref",
+		ref: {
+			kind: "",
+			name: t
+		}
+	} : n;
+}
+var y = /* @__PURE__ */ new Map(), b = /* @__PURE__ */ new Map();
+function x(e) {
+	let t = typeof e == "string" ? e : "", n = y.get(t);
+	return n || (y.size >= 4096 && y.clear(), n = v(t), y.set(t, n)), n;
+}
+function S(e) {
+	let t = typeof e == "string" ? e : "", n = b.get(t);
+	return n || (b.size >= 4096 && b.clear(), n = g(t).cond, b.set(t, n)), n;
+}
+var C = (e) => typeof e == "number" ? e !== 0 : e !== "" && e !== "none" && e != null;
+function w(e, t) {
+	switch (e.op) {
+		case "const": return e.value;
+		case "or": return w(e.a, t) || w(e.b, t);
+		case "and": return w(e.a, t) && w(e.b, t);
+		case "not": return !w(e.a, t);
+		case "ref": return C(t.get(e.ref));
+		case "cmp": {
+			let n = t.get(e.ref), r = typeof e.value == "string" && t.word ? t.word(e.ref, e.value) : e.value;
+			if (typeof n == "number" && typeof r == "number") switch (e.cmp) {
+				case "=": return n === r;
+				case "!=": return n !== r;
+				case "<": return n < r;
+				case "<=": return n <= r;
+				case ">": return n > r;
+				case ">=": return n >= r;
+				default: return !1;
+			}
+			return e.cmp === "=" ? String(n ?? "") === String(r) : e.cmp === "!=" && String(n ?? "") !== String(r);
+		}
+		default: return !1;
+	}
+}
+function T(e) {
+	if (typeof e == "string") return e.split(/\r?\n/);
+	if (!Array.isArray(e)) return [];
+	let t = [];
+	for (let n of e) if (typeof n == "string") for (let e of n.split(/\r?\n/)) t.push(e);
+	return t;
+}
+function E(e) {
+	return e.split(/[-_.]+/).filter(Boolean).map((e) => e[0].toUpperCase() + e.slice(1)).join(" ");
+}
+function D(e) {
+	return T(e).some((e) => {
+		let t = e.trim();
+		return t && !t.startsWith("#");
+	});
+}
+//#endregion
+export { D as a, g as c, T as d, E as f, w as i, m as l, x as n, f as o, S as r, d as s, n as t, u };

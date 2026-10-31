@@ -1,9 +1,11 @@
 // @ts-check
-// hybrid.js — the trial build of the port to Luminati (docs/luminati-port-plan.md, phase 0; the owner, 2026-10-31: "lets
-// stop at the trial build so i can play test before continuing"). With the menu's Graphics set to Luminati (or
-// ?renderer=luminati), Luminati draws the world: a frame (lumina/world.html, built by tools/lumina/build.mjs from
-// tools/lumina/ember/world.js) sits under Emberlit's overlay canvas and over its world canvas, and takes no pointer, so
-// the taps still reach the game's own canvas and input.
+// hybrid.js — Luminati drawing the game's world (docs/luminati-port-plan.md: phase 0's trial, then §13 step 1: in the
+// game's own page). With the menu's Graphics set to Luminati (or ?renderer=luminati), Luminati's world sits under
+// Emberlit's overlay canvas: its engine and world layers and three.js, built as ES modules into
+// src/vendor/luminati-80e1aa6/ (tools/render3d/build.mjs, from tools/render3d/world.js), imported here when it's
+// chosen. Its canvas takes no pointer, so the taps still reach the game's own canvas and input; its own UI is under a
+// hidden element, its input listens to nothing, and its sound never starts (the build's tags). One WebGL context draws:
+// Emberlit, made with `external` (render/renderer.js), keeps a 1 × 1 stub and none of its bake's buffers.
 //
 // Emberlit keeps running as the game's eye (render/renderer.js setExternal): its camera, its animator's choice of clip,
 // octant and frame for everyone on screen, and everything drawn over the world and every tap test (the minimap, the
@@ -14,6 +16,7 @@
 //     so what Emberlit draws over the world lands on it;
 //   · the figures: each one's atlas, frame and octant, and where it stands (Emberlit's screen point turned back into
 //     ours, then Luminati's units);
+//   · the fights' effects (fx3d.js: what Emberlit's fx.js drew into its light, as Luminati's);
 //   · the hour (the sim's clock: its four parts of the day onto Luminati's 24 hours, so dawn on the dial is dawn in the
 //     sky) and the weather (rain and snow; Luminati has no fog or wind of its own here).
 // When the sim changes world (a town gate, a dungeon's stairs, a load), the new world is converted (convert.js) and built
@@ -35,15 +38,21 @@ export function hourOf(t) {
 }
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // (iso.js: a tile's half-width 8 px; two tiles a unit)
 
+/** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
+export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
+const CSS = `#world3d { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: #000; overflow: hidden; }
+#world3d canvas { display: block; width: 100%; height: 100%; }
+#world3d-ui { position: fixed; inset: 0; z-index: -1; visibility: hidden; pointer-events: none; overflow: hidden; }`;
+
 /**
- * Put Luminati under the game. Resolves to a small handle (for checks) once the frame is up.
- * @param {{ renderer: any, sim: any, region?: string, base?: string }} o
+ * Put Luminati under the game. Resolves to a small handle (for checks) once Luminati is loaded.
+ * @param {{ renderer: any, sim: any, region?: string, vendor?: string }} o
  */
-export async function attachLuminati({ renderer, sim, region = 'vale', base = './lumina/world.html' }) {
-  const frame = document.createElement('iframe');
-  frame.src = base; frame.title = 'The world (Luminati)'; frame.setAttribute('aria-hidden', 'true'); frame.tabIndex = -1;
-  frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:1;pointer-events:none;background:#000';
-  document.body.appendChild(frame);
+export async function attachLuminati({ renderer, sim, region = 'vale', vendor = VENDOR }) {
+  const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
+  const box = document.createElement('div'); box.id = 'world3d'; box.setAttribute('aria-hidden', 'true');
+  const ui = document.createElement('div'); ui.id = 'world3d-ui'; ui.setAttribute('aria-hidden', 'true');
+  document.body.append(box, ui);
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '' };
   renderer.setExternal({
@@ -82,13 +91,11 @@ export async function attachLuminati({ renderer, sim, region = 'vale', base = '.
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors });
     },
   });
-  await new Promise((res) => {
-    const poll = () => { const w = /** @type {any} */ (frame.contentWindow); if (w && w.__emberWorld && w.__emberWorld.ready) { api = w.__emberWorld; res(null); } else setTimeout(poll, 50); };
-    frame.addEventListener('load', poll, { once: true });
-  });
+  const mod = await import(vendor);
+  api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof });
   return {
-    frame, state,
+    box, state,
     /** the menu's depth of field, applied at once @param {'soft'|'off'} dof */
     setDof: (dof) => api && api.settings({ dof }),
     get world() { return api; },

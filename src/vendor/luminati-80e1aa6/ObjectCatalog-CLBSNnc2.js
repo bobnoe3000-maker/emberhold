@@ -1,0 +1,3154 @@
+import { l as e, r as t } from "./math-Du_SWpiD.js";
+import { a as n, c as r, n as i, o as a, s as o } from "./own-rp3p7qEo.js";
+import { a as s } from "./StoryCondition-BKyw6JI2.js";
+//#region src/engine/i18n/ContentKeys.js
+var c = /^[0-9A-F]{32}$/, l = "#line:", u = 38;
+function d(e) {
+	return typeof e == "string" && e.length === 32 && c.test(e);
+}
+var f = /^[0-9A-Fa-f]{32}$/;
+function p(e) {
+	return typeof e != "string" || e.length !== 32 ? "" : c.test(e) ? e : f.test(e) ? e.toUpperCase() : "";
+}
+function m(e) {
+	return d(e) ? `${e}.2` : "";
+}
+var ee = (e) => e >= 48 && e <= 57 || e >= 65 && e <= 70 || e >= 97 && e <= 102;
+function te(e) {
+	let t = e.length;
+	for (; t > 0 && (e.charCodeAt(t - 1) === 32 || e.charCodeAt(t - 1) === 9 || e.charCodeAt(t - 1) === 13);) t--;
+	let n = t - u;
+	if (n < 0 || e.slice(n, n + 6) !== "#line:") return {
+		text: e,
+		tag: ""
+	};
+	for (let r = n + 6; r < t; r++) if (!ee(e.charCodeAt(r))) return {
+		text: e,
+		tag: ""
+	};
+	return n > 0 && e.charCodeAt(n - 1) !== 32 && e.charCodeAt(n - 1) !== 9 ? {
+		text: e,
+		tag: ""
+	} : {
+		text: e.slice(0, n).trimEnd(),
+		tag: e.slice(n + 6, t).toUpperCase()
+	};
+}
+var h = Object.freeze({
+	house: Object.freeze({ text: "lines" }),
+	well: Object.freeze({ text: "lines" }),
+	signpost: Object.freeze({ text: "lines" }),
+	npc: Object.freeze({
+		title: "text",
+		dialogue: "dialogue",
+		talk: "script"
+	}),
+	region: Object.freeze({
+		sub: "text",
+		banner: "text"
+	}),
+	exit: Object.freeze({
+		label: "text",
+		locked: "lines"
+	}),
+	event: Object.freeze({
+		label: "text",
+		run: "script"
+	})
+}), g = Object.freeze([
+	"subtitle",
+	"title.title",
+	"title.subtitle",
+	"title.prompt",
+	"title.credit"
+]);
+Object.freeze(["title", "subtitle"]);
+var _ = (e) => !!e && typeof e == "object" && !Array.isArray(e), v = (e, t) => _(e) && Object.prototype.hasOwnProperty.call(e, t) ? e[t] : void 0, y = (e) => {
+	let t = v(e, "textKeys");
+	return _(t) ? t : void 0;
+};
+function ne(e, t) {
+	let n = v(y(e), t);
+	return d(n) ? n : "";
+}
+function re(e, t, n) {
+	let r = v(y(e), t), i = Array.isArray(r) ? r[n] : void 0;
+	return d(i) ? i : "";
+}
+function ie(e, t) {
+	let n = v(y(e), "dialogue"), r = Array.isArray(n) ? n[t] : void 0, i = _(r) ? v(r, "key") : r;
+	return d(i) ? i : "";
+}
+function ae(e, t, n) {
+	let r = v(y(e), "dialogue"), i = v(Array.isArray(r) ? r[t] : void 0, "choices"), a = Array.isArray(i) ? i[n] : void 0;
+	return d(a) ? a : "";
+}
+var b = 0, x = 0, S = (e) => {
+	if (e === null) return null;
+	let t = p(e);
+	return t ? (t !== e && x++, t) : (b++, null);
+};
+function C(e, t = Infinity) {
+	if (!Array.isArray(e)) {
+		b++;
+		return;
+	}
+	e.length > t && (b += e.length - t);
+	let n = [];
+	for (let r = 0; r < Math.min(e.length, t); r++) n.push(S(e[r]));
+	return n;
+}
+function w(e, t) {
+	return Array.isArray(e) ? e.length : e == null ? 0 : +(t === "dialogue" || typeof e == "string");
+}
+function oe(e, t) {
+	if (!Array.isArray(e)) {
+		b++;
+		return;
+	}
+	let n = t !== void 0, r = n ? w(t, "dialogue") : Infinity;
+	e.length > r && (b += e.length - r);
+	let i = (e) => Array.isArray(t) ? t[e] : t, a = [];
+	for (let t = 0; t < Math.min(e.length, r); t++) {
+		let r = e[t];
+		if (!_(r)) {
+			a.push(S(r));
+			continue;
+		}
+		let o = {};
+		for (let e of Object.keys(r)) if (e === "key") o.key = S(r.key);
+		else if (e === "choices") {
+			let e = n ? v(i(t), "choices") : void 0, a = C(r.choices, n ? Array.isArray(e) ? e.length : 0 : Infinity);
+			a && (o.choices = a);
+		} else b++;
+		a.push(o);
+	}
+	return a;
+}
+function se(e, t, n) {
+	if (b = 0, x = 0, e === void 0) return {
+		keys: void 0,
+		dropped: 0,
+		upcased: 0
+	};
+	if (!_(e)) return {
+		keys: void 0,
+		dropped: 1,
+		upcased: 0
+	};
+	let r = n !== void 0, i = {};
+	for (let a of Object.keys(e)) {
+		let o = Object.prototype.hasOwnProperty.call(t, a) ? t[a] : "", s = e[a], c = r ? v(n, a) : void 0;
+		if (r && o && (c === void 0 || o === "text" && typeof c != "string")) {
+			b += ce(s);
+			continue;
+		}
+		if (o === "text") {
+			let e = p(s);
+			e ? (e !== s && x++, i[a] = e) : b++;
+		} else if (o === "lines") {
+			let e = C(s, r ? w(c, "lines") : Infinity);
+			e && (e.length || !r) && (i[a] = e);
+		} else if (o === "dialogue") {
+			let e = oe(s, r ? c : void 0);
+			e && (e.length || !r) && (i[a] = e);
+		} else b++;
+	}
+	return {
+		keys: Object.keys(i).length ? i : void 0,
+		dropped: b,
+		upcased: x
+	};
+}
+function ce(e) {
+	if (!Array.isArray(e)) return 1;
+	let t = 0;
+	for (let n of e) t += _(n) && Array.isArray(v(n, "choices")) ? 1 + v(n, "choices").length : 1;
+	return Math.max(1, t);
+}
+var le = Object.freeze(Object.fromEntries(g.map((e) => [e, "text"]))), ue = Object.freeze({
+	title: "text",
+	subtitle: "text"
+}), T = Object.freeze({ text: "text" });
+function E(e, t, n) {
+	return se(t, e === "root" ? le : e === "chapter" ? ue : e === "item" ? T : Object.prototype.hasOwnProperty.call(h, e) ? h[e] : {}, n);
+}
+function de(e) {
+	let t = [], n = Array.isArray(e) ? e : typeof e == "string" ? [e] : [];
+	for (let e = 0; e < n.length; e++) {
+		let r = n[e], i = typeof r == "string" ? r : typeof r == "number" && Number.isFinite(r) ? String(r) : null;
+		i !== null && i.trim() && t.push({
+			i: e,
+			text: i
+		});
+	}
+	return t;
+}
+function fe(e) {
+	let t = [], n = Array.isArray(e) ? e : [e];
+	for (let e = 0; e < n.length; e++) {
+		let r = n[e];
+		if (typeof r == "string") r.trim() && t.push({
+			i: e,
+			text: r,
+			choices: null
+		});
+		else if (r && typeof r == "object" && typeof r.text == "string") {
+			let n = [], i = Array.isArray(r.choices) ? r.choices : [];
+			for (let e = 0; e < i.length; e++) {
+				let t = i[e], r = typeof t == "string" ? t : typeof t == "number" && Number.isFinite(t) ? String(t) : "";
+				r.trim() && n.push({
+					j: e,
+					text: r
+				});
+			}
+			t.push({
+				i: e,
+				text: r.text,
+				choices: n.length ? n : null
+			});
+		}
+	}
+	return t;
+}
+var D = Object.freeze({
+	Talk: "talk",
+	Examine: "examine",
+	Knock: "knock",
+	Read: "read",
+	Look: "look",
+	Enter: "enter",
+	Rest: "rest",
+	Open: "open"
+});
+function pe(e) {
+	if (typeof e != "string") return "";
+	let t = e.trim();
+	return Object.prototype.hasOwnProperty.call(D, t) ? D[t] : "";
+}
+//#endregion
+//#region src/engine/level/ObjectCatalog.js
+var O = [
+	"timber_frame",
+	"plaster",
+	"brick",
+	"stone_brick",
+	"log_wall",
+	"wood_planks",
+	"wood_planks_dark",
+	"adobe",
+	"sandstone_brick",
+	"whitewash",
+	"charred_wall"
+], k = [
+	"roof_red",
+	"roof_blue",
+	"roof_thatch",
+	"roof_slate",
+	"roof_terracotta",
+	"roof_charred"
+], me = [
+	"oak",
+	"autumn",
+	"pine",
+	"birch",
+	"juniper",
+	"deadwood",
+	"palm",
+	"cypress",
+	"blossom",
+	"maple",
+	"goldbirch",
+	"snowpine",
+	"bare"
+], he = ["cloth_stripe", "cloth_red"], A = [
+	"down",
+	"left",
+	"right",
+	"up"
+], j = [
+	"N",
+	"S",
+	"E",
+	"W"
+], M = [
+	"traveler",
+	"swordsman",
+	"merchant",
+	"cleric",
+	"scholar",
+	"dancer",
+	"hunter",
+	"villager",
+	"farmer",
+	"elder",
+	"child",
+	"guard",
+	"innkeeper",
+	"bard"
+], N = [
+	"chicken",
+	"cat",
+	"bird",
+	"dog"
+], ge = [
+	"fireflies",
+	"leaves",
+	"petals",
+	"dust",
+	"embers",
+	"smoke",
+	"mist",
+	"sparkle",
+	"snow",
+	"rain"
+], _e = [
+	{
+		value: "none",
+		label: "Just talk"
+	},
+	{
+		value: "rest",
+		label: "Innkeeper: offer rest until morning"
+	},
+	{
+		value: "shop",
+		label: "Merchant: sell an item"
+	},
+	{
+		value: "music",
+		label: "Bard: play music (offers quiet when playing)"
+	}
+], P = [
+	"wander",
+	"post",
+	"perform",
+	"chase",
+	"panic",
+	"dance",
+	"cheer",
+	"cower",
+	"still"
+], F = [
+	"panic",
+	"dance",
+	"cheer",
+	"cower"
+], I = [
+	"",
+	"elder",
+	"innkeeper",
+	"merchant",
+	"guard",
+	"farmer",
+	"child",
+	"bard",
+	"scholar",
+	"drillmaster",
+	"shopkeeper"
+], ve = [{
+	value: "walk",
+	label: "Walk into it"
+}, {
+	value: "use",
+	label: "Press Space (a door, a cave mouth)"
+}], ye = [{
+	key: "when",
+	label: "Story: only when",
+	type: "condition",
+	help: "The object is there only while this story condition holds (a flag name, or e.g. \"bridge-mended and not flood\"). Blank = always."
+}, {
+	key: "unless",
+	label: "Story: gone when",
+	type: "condition",
+	help: "The object is gone while this story condition holds. Blank = never."
+}], be = [
+	{
+		value: "use",
+		label: "Space inside it (prompt: Label)"
+	},
+	{
+		value: "enter",
+		label: "The player walks in"
+	},
+	{
+		value: "leave",
+		label: "The player walks out"
+	},
+	{
+		value: "arrive",
+		label: "The player arrives in the level"
+	},
+	{
+		value: "change",
+		label: "Its condition becomes true"
+	},
+	{
+		value: "time",
+		label: "The clock reaches an hour (At hour)"
+	},
+	{
+		value: "cleared",
+		label: "An enemy group is defeated (Group)"
+	}
+], L = [
+	"red",
+	"blue",
+	"green",
+	"ochre",
+	"plum"
+], xe = [
+	"red",
+	"blue",
+	"green"
+], R = [
+	"slime",
+	"goblin",
+	"archer",
+	"shaman",
+	"bat",
+	"boar",
+	"dummy",
+	"golem",
+	"drakeborn",
+	"ashhound",
+	"wyrmcaller",
+	"kobold",
+	"whelp",
+	"emberimp",
+	"dragon",
+	"hushguard",
+	"frostwolf",
+	"rimecrow",
+	"cantor",
+	"rimehart",
+	"mawkin",
+	"gullet",
+	"hushedking"
+], z = (e, t = 0, n = 0, r = 0) => ({
+	label: e,
+	flier: !!n,
+	boss: !!t,
+	passive: !1,
+	humanoid: !!r,
+	setpiece: !0,
+	owner: "evermere"
+}), B = Object.freeze({
+	slime: {
+		label: "Moss Slime",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1
+	},
+	goblin: {
+		label: "Bramble Goblin",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !0
+	},
+	archer: {
+		label: "Thorn Archer",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !0
+	},
+	shaman: {
+		label: "Hex Shaman",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !0
+	},
+	bat: {
+		label: "Cinder Bat",
+		flier: !0,
+		boss: !1,
+		passive: !1,
+		humanoid: !1
+	},
+	boar: {
+		label: "Ironhide Boar",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1
+	},
+	dummy: {
+		label: "Straw Dummy",
+		flier: !1,
+		boss: !1,
+		passive: !0,
+		humanoid: !1
+	},
+	golem: {
+		label: "Cinderheart (boss)",
+		flier: !1,
+		boss: !0,
+		passive: !1,
+		humanoid: !1
+	},
+	drakeborn: {
+		label: "Drakeborn Ravager",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	ashhound: {
+		label: "Ashen Hellhound",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	wyrmcaller: {
+		label: "Wyrmcult Pyromancer",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	kobold: {
+		label: "Scalekin Skirmisher",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	whelp: {
+		label: "Ashwing Whelp",
+		flier: !1,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	emberimp: {
+		label: "Ember Imp",
+		flier: !0,
+		boss: !1,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	dragon: {
+		label: "Vorthrax (boss)",
+		flier: !1,
+		boss: !0,
+		passive: !1,
+		humanoid: !1,
+		setpiece: !0
+	},
+	hushguard: z("Hushguard", 0, 0, 1),
+	frostwolf: z("Frost Wolf"),
+	rimecrow: z("Rime Crow", 0, 1),
+	cantor: z("Hush Cantor", 0, 0, 1),
+	rimehart: z("Rimehart (boss)", 1),
+	mawkin: z("Harvest Mawkin (boss)", 1),
+	gullet: z("Old Gullet (boss)", 1),
+	hushedking: z("Hushed King (boss)", 1, 0, 1)
+}), Se = [
+	"none",
+	"maxHp",
+	"maxMp",
+	"attack"
+], Ce = {
+	none: "None",
+	maxHp: "Max HP +20",
+	maxMp: "Max MP +10",
+	attack: "Attack +3"
+}, we = [
+	"town",
+	"shrine",
+	"lighthouse",
+	"abbey",
+	"citadel",
+	"hush"
+], Te = [
+	"cog",
+	"sloop",
+	"rowboat"
+], Ee = [
+	"grave",
+	"statue",
+	"cairn",
+	"chime",
+	"brazier",
+	"lantern"
+], De = [
+	"warm",
+	"cold",
+	"out"
+], Oe = [
+	"forge",
+	"anvil",
+	"bellows",
+	"mould",
+	"rack",
+	"bellblank"
+], V = {
+	key: "rotation",
+	label: "Rotation",
+	type: "angle",
+	step: 15
+}, H = (e) => ({
+	key: "opts.kind",
+	label: "Kind",
+	type: "select",
+	options: e
+}), U = {
+	key: "opts.seed",
+	label: "Variation seed",
+	type: "int",
+	min: 0,
+	max: 9999
+}, W = {
+	key: "text",
+	label: "Text when examined",
+	type: "lines",
+	i18n: !0,
+	help: "One paragraph per dialog page. {word} is shown in gold."
+}, G = {
+	house: {
+		label: "House",
+		category: "Buildings",
+		placement: "point",
+		kind: "prop",
+		glyph: "⌂",
+		color: "#d9824b",
+		radius: 2.2,
+		rotatable: !0,
+		snap: .5,
+		help: "Windows glow at night, the chimney smokes. The door is interactive once “Text when knocking” is filled in.",
+		defaults: {
+			rotation: 0,
+			name: "",
+			light: !1,
+			text: [],
+			opts: {
+				width: 4,
+				depth: 3,
+				stories: 1,
+				wall: "timber_frame",
+				upperWall: "",
+				roof: "roof_red",
+				chimney: !0,
+				shutters: !0,
+				sign: !1,
+				doorHood: !1,
+				woodpile: !1,
+				gableFront: !1,
+				seed: 1
+			}
+		},
+		fields: [
+			{
+				key: "name",
+				label: "Name",
+				type: "text"
+			},
+			V,
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 3,
+				max: 8,
+				step: .5
+			},
+			{
+				key: "opts.depth",
+				label: "Depth",
+				type: "number",
+				min: 2.5,
+				max: 6,
+				step: .5
+			},
+			{
+				key: "opts.stories",
+				label: "Stories",
+				type: "int",
+				min: 1,
+				max: 2
+			},
+			{
+				key: "opts.wall",
+				label: "Walls",
+				type: "select",
+				options: O
+			},
+			{
+				key: "opts.upperWall",
+				label: "Upper walls",
+				type: "select",
+				options: ["", ...O]
+			},
+			{
+				key: "opts.roof",
+				label: "Roof",
+				type: "select",
+				options: k
+			},
+			{
+				key: "opts.chimney",
+				label: "Chimney",
+				type: "bool"
+			},
+			{
+				key: "opts.shutters",
+				label: "Shutters",
+				type: "bool"
+			},
+			{
+				key: "opts.sign",
+				label: "Hanging sign",
+				type: "bool"
+			},
+			{
+				key: "opts.doorHood",
+				label: "Door hood",
+				type: "bool"
+			},
+			{
+				key: "opts.woodpile",
+				label: "Woodpile",
+				type: "bool"
+			},
+			{
+				key: "opts.gableFront",
+				label: "Gable faces front",
+				type: "bool"
+			},
+			{
+				key: "opts.flatRoof",
+				label: "Flat roof (adobe)",
+				type: "bool",
+				help: "A flat adobe roof with a parapet and roof beams instead of the gable."
+			},
+			{
+				key: "opts.ruin",
+				label: "Damage",
+				type: "int",
+				min: 0,
+				max: 2,
+				help: "0 intact, 1 damaged (roof holes, cracked and charred walls), 2 gutted (roof mostly gone, a wall broken)."
+			},
+			{
+				key: "opts.burning",
+				label: "Burning",
+				type: "number",
+				min: 0,
+				max: 1,
+				step: .05,
+				help: "Fire on the roof and in the windows, a dark smoke column, embers and a fire light (0 = none)."
+			},
+			{
+				key: "opts.icicles",
+				label: "Icicles (while frozen)",
+				type: "bool"
+			},
+			{
+				key: "light",
+				label: "Door lantern casts light",
+				type: "bool",
+				help: "A real light while near the camera (the game shares 12 point lights among all lights)."
+			},
+			{
+				...W,
+				label: "Text when knocking",
+				help: "One paragraph per dialog page. Blank = the door is not interactive. {word} is shown in gold."
+			},
+			U
+		]
+	},
+	windmill: {
+		label: "Windmill",
+		category: "Buildings",
+		placement: "point",
+		kind: "prop",
+		glyph: "✢",
+		color: "#e0c68e",
+		radius: 1.8,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: {
+				height: 6,
+				roof: "roof_thatch"
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: 4,
+				max: 9,
+				step: .2
+			},
+			{
+				key: "opts.roof",
+				label: "Roof",
+				type: "select",
+				options: k
+			},
+			U
+		]
+	},
+	well: {
+		label: "Well",
+		category: "Buildings",
+		placement: "point",
+		kind: "prop",
+		glyph: "◎",
+		color: "#9aa0a8",
+		radius: 1,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			text: ["The well is deep and cold. You make a small wish."],
+			opts: { roof: "wood_planks" }
+		},
+		fields: [
+			V,
+			{
+				key: "opts.roof",
+				label: "Roof",
+				type: "select",
+				options: ["wood_planks", ...k]
+			},
+			W
+		]
+	},
+	marketStall: {
+		label: "Market stall",
+		category: "Buildings",
+		placement: "point",
+		kind: "prop",
+		glyph: "▤",
+		color: "#d24b4b",
+		radius: 1.6,
+		rotatable: !0,
+		snap: .5,
+		defaults: {
+			rotation: 0,
+			opts: {
+				cloth: "cloth_stripe",
+				width: 3
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.cloth",
+				label: "Awning",
+				type: "select",
+				options: he
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 2,
+				max: 4,
+				step: .25
+			},
+			{
+				key: "opts.crates",
+				label: "Side crates",
+				type: "select",
+				options: [
+					{
+						value: "",
+						label: "(by seed)"
+					},
+					"left",
+					"right",
+					"none"
+				]
+			},
+			U
+		]
+	},
+	belfry: {
+		label: "Belfry",
+		category: "Buildings",
+		placement: "point",
+		kind: "prop",
+		owner: "evermere",
+		glyph: "♮",
+		color: "#c9a45c",
+		radius: 2,
+		help: "A bell tower; the story rings its bell (toll <id>).",
+		defaults: { opts: {
+			kind: "town",
+			height: 9,
+			bell: "bronze",
+			lantern: !1,
+			seed: 1
+		} },
+		fields: [
+			H(we),
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: 4,
+				max: 24,
+				step: .5
+			},
+			{
+				key: "opts.bell",
+				label: "Bell",
+				type: "select",
+				options: ["bronze", "black"]
+			},
+			{
+				key: "opts.lantern",
+				label: "Lantern",
+				type: "bool"
+			},
+			U
+		]
+	},
+	tree: {
+		label: "Tree",
+		category: "Nature",
+		placement: "point",
+		kind: "prop",
+		glyph: "♣",
+		color: "#3f8f45",
+		radius: .6,
+		defaults: {
+			collider: !0,
+			opts: {
+				kind: "oak",
+				height: 4.5,
+				seed: 1
+			}
+		},
+		fields: [
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: me
+			},
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: 2.5,
+				max: 8,
+				step: .1
+			},
+			{
+				key: "collider",
+				label: "Blocks the player",
+				type: "bool"
+			},
+			{
+				key: "opts.charred",
+				label: "Charred",
+				type: "bool",
+				help: "Burnt black (dead wood, junipers)."
+			},
+			U
+		]
+	},
+	rock: {
+		label: "Rock",
+		category: "Nature",
+		placement: "point",
+		kind: "prop",
+		glyph: "●",
+		color: "#8a8a92",
+		radius: .5,
+		defaults: { opts: {
+			size: 1,
+			seed: 1
+		} },
+		fields: [
+			{
+				key: "opts.size",
+				label: "Size",
+				type: "number",
+				min: .3,
+				max: 2.5,
+				step: .05
+			},
+			{
+				key: "opts.stone",
+				label: "Stone",
+				type: "select",
+				options: [
+					{
+						value: "",
+						label: "Mossy grey"
+					},
+					{
+						value: "sandstone",
+						label: "Sandstone"
+					},
+					{
+						value: "redrock",
+						label: "Red rock"
+					},
+					{
+						value: "basalt",
+						label: "Basalt"
+					},
+					{
+						value: "ice",
+						label: "Ice"
+					},
+					{
+						value: "snow",
+						label: "Snow drift"
+					}
+				]
+			},
+			U
+		]
+	},
+	haystack: {
+		label: "Haystack",
+		category: "Nature",
+		placement: "point",
+		kind: "prop",
+		glyph: "▲",
+		color: "#d8b453",
+		radius: .9,
+		defaults: { opts: { size: 1 } },
+		fields: [{
+			key: "opts.size",
+			label: "Size",
+			type: "number",
+			min: .5,
+			max: 1.6,
+			step: .05
+		}, U]
+	},
+	crag: {
+		label: "Crag",
+		category: "Nature",
+		placement: "point",
+		kind: "prop",
+		setpiece: !0,
+		glyph: "◭",
+		color: "#c48a52",
+		radius: 1.25,
+		rotatable: !0,
+		help: "A set-piece rock formation (Vanquish the Evil Dragon): a spire, mesa, arch, pillar, boulder pile or hoodoo of sandstone, red rock or basalt. Blocks the player and casts shadows.",
+		defaults: { opts: {
+			kind: "spire",
+			stone: "sandstone",
+			height: 6,
+			width: 2.5,
+			seed: 1
+		} },
+		fields: [
+			V,
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: [
+					{
+						value: "spire",
+						label: "Spire"
+					},
+					{
+						value: "mesa",
+						label: "Mesa"
+					},
+					{
+						value: "arch",
+						label: "Arch"
+					},
+					{
+						value: "pillar",
+						label: "Pillar"
+					},
+					{
+						value: "boulders",
+						label: "Boulders"
+					},
+					{
+						value: "hoodoo",
+						label: "Hoodoo"
+					}
+				]
+			},
+			{
+				key: "opts.stone",
+				label: "Stone",
+				type: "select",
+				options: [
+					{
+						value: "sandstone",
+						label: "Sandstone"
+					},
+					{
+						value: "redrock",
+						label: "Red rock"
+					},
+					{
+						value: "basalt",
+						label: "Basalt"
+					},
+					{
+						value: "ice",
+						label: "Ice"
+					}
+				]
+			},
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: 1,
+				max: 24,
+				step: .25
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: .8,
+				max: 14,
+				step: .1
+			},
+			U
+		]
+	},
+	lamppost: {
+		label: "Lamppost",
+		category: "Lights",
+		placement: "point",
+		kind: "prop",
+		glyph: "☀",
+		color: "#ffc46b",
+		radius: .3,
+		rotatable: !0,
+		help: "A street lantern; a real light while near the camera (the game shares 12 point lights).",
+		defaults: {
+			rotation: 0,
+			opts: { style: "arm" }
+		},
+		fields: [V, {
+			key: "opts.style",
+			label: "Style",
+			type: "select",
+			options: ["arm", "top"]
+		}]
+	},
+	wallTorch: {
+		label: "Wall torch",
+		category: "Lights",
+		placement: "point",
+		kind: "prop",
+		glyph: "♨",
+		color: "#ff8a3d",
+		radius: .25,
+		rotatable: !0,
+		help: "Mount against a wall: rotation points the flame away from the wall. Uses one point light.",
+		defaults: {
+			rotation: 0,
+			dy: 2.1,
+			opts: { embers: !1 }
+		},
+		fields: [
+			V,
+			{
+				key: "dy",
+				label: "Height above ground",
+				type: "number",
+				min: .5,
+				max: 4,
+				step: .05
+			},
+			{
+				key: "opts.embers",
+				label: "Embers",
+				type: "bool"
+			}
+		]
+	},
+	campfire: {
+		label: "Campfire",
+		category: "Lights",
+		placement: "point",
+		kind: "prop",
+		glyph: "✹",
+		color: "#ff6a2a",
+		radius: .8,
+		rotatable: !0,
+		help: "Fire, embers and smoke; burns day and night. Uses one point light.",
+		defaults: {
+			rotation: .8,
+			opts: { seat: !1 }
+		},
+		fields: [V, {
+			key: "opts.seat",
+			label: "Log seats",
+			type: "bool"
+		}]
+	},
+	light: {
+		label: "Point light",
+		category: "Lights",
+		placement: "point",
+		kind: "prop",
+		glyph: "✦",
+		color: "#ffe08a",
+		radius: .25,
+		help: "An invisible light (e.g. a glow in a window); a real light while near the camera (the game shares 12 point lights).",
+		defaults: {
+			dy: 1.5,
+			color: "#ffb46b",
+			intensity: 8,
+			distance: 8,
+			flicker: .2,
+			nightOnly: !0
+		},
+		fields: [
+			{
+				key: "dy",
+				label: "Height above ground",
+				type: "number",
+				min: 0,
+				max: 6,
+				step: .1
+			},
+			{
+				key: "color",
+				label: "Colour",
+				type: "color"
+			},
+			{
+				key: "intensity",
+				label: "Intensity",
+				type: "number",
+				min: 0,
+				max: 40,
+				step: .5
+			},
+			{
+				key: "distance",
+				label: "Range",
+				type: "number",
+				min: 2,
+				max: 20,
+				step: .5
+			},
+			{
+				key: "flicker",
+				label: "Flicker",
+				type: "number",
+				min: 0,
+				max: 1,
+				step: .05
+			},
+			{
+				key: "nightOnly",
+				label: "Only at night",
+				type: "bool"
+			}
+		]
+	},
+	fire: {
+		label: "Fire",
+		category: "Lights",
+		placement: "point",
+		kind: "prop",
+		setpiece: !0,
+		glyph: "✺",
+		color: "#ff5a1f",
+		radius: .8,
+		help: "A set-piece fire (Vanquish the Evil Dragon): a blaze on rubble or a roof edge, the festival bonfire (blocks the player), a stone brazier or glowing embers. Flames, smoke and embers; one point light, day and night (the game shares 12 point lights).",
+		defaults: { opts: {
+			kind: "blaze",
+			size: 1.5,
+			smoke: !0,
+			light: !0,
+			seed: 1
+		} },
+		fields: [
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: [
+					{
+						value: "blaze",
+						label: "Blaze"
+					},
+					{
+						value: "bonfire",
+						label: "Bonfire"
+					},
+					{
+						value: "brazier",
+						label: "Brazier"
+					},
+					{
+						value: "embers",
+						label: "Embers"
+					}
+				]
+			},
+			{
+				key: "opts.size",
+				label: "Size",
+				type: "number",
+				min: .3,
+				max: 6,
+				step: .1
+			},
+			{
+				key: "opts.smoke",
+				label: "Smoke",
+				type: "bool"
+			},
+			{
+				key: "opts.light",
+				label: "Casts light",
+				type: "bool",
+				help: "A real light while near the camera (the game shares 12 point lights among all lights)."
+			},
+			U
+		]
+	},
+	bench: {
+		label: "Bench",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "▭",
+		color: "#a0703f",
+		radius: .9,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: {
+				length: 1.8,
+				back: !0
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.length",
+				label: "Length",
+				type: "number",
+				min: 1,
+				max: 3,
+				step: .1
+			},
+			{
+				key: "opts.back",
+				label: "Backrest",
+				type: "bool"
+			}
+		]
+	},
+	barrel: {
+		label: "Barrel",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "◍",
+		color: "#8e5a2e",
+		radius: .45,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: {
+				height: 1,
+				lying: !1
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: .6,
+				max: 1.4,
+				step: .05
+			},
+			{
+				key: "opts.lying",
+				label: "Lying down",
+				type: "bool"
+			}
+		]
+	},
+	crate: {
+		label: "Crate",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "■",
+		color: "#b07b44",
+		radius: .5,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: { size: .9 }
+		},
+		fields: [V, {
+			key: "opts.size",
+			label: "Size",
+			type: "number",
+			min: .4,
+			max: 1.4,
+			step: .05
+		}]
+	},
+	crateStack: {
+		label: "Crate stack",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "▦",
+		color: "#b07b44",
+		radius: .8,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: {
+				count: 3,
+				size: .85
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.count",
+				label: "Crates on the ground",
+				type: "int",
+				min: 1,
+				max: 4,
+				help: "One more crate sits on top (one or two from 3 on)."
+			},
+			{
+				key: "opts.size",
+				label: "Crate size",
+				type: "number",
+				min: .5,
+				max: 1.2,
+				step: .05
+			},
+			U
+		]
+	},
+	flowerbox: {
+		label: "Flower box",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "✿",
+		color: "#e27aa8",
+		radius: .6,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			opts: { length: 1.2 }
+		},
+		fields: [V, {
+			key: "opts.length",
+			label: "Length",
+			type: "number",
+			min: .6,
+			max: 2.4,
+			step: .1
+		}]
+	},
+	signpost: {
+		label: "Signpost",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		glyph: "⚑",
+		color: "#c9a45c",
+		radius: .3,
+		rotatable: !0,
+		defaults: {
+			rotation: 0,
+			speaker: "Signpost",
+			text: ["↑ Somewhere nice"],
+			opts: { boards: 2 }
+		},
+		fields: [
+			V,
+			{
+				key: "opts.boards",
+				label: "Boards",
+				type: "int",
+				min: 1,
+				max: 3
+			},
+			{
+				key: "speaker",
+				label: "Speaker",
+				type: "text",
+				i18n: !0
+			},
+			{
+				...W,
+				label: "Sign text"
+			}
+		]
+	},
+	debris: {
+		label: "Debris",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		setpiece: !0,
+		glyph: "▚",
+		color: "#8a6a4a",
+		radius: .8,
+		rotatable: !0,
+		help: "Set-piece wreckage (Vanquish the Evil Dragon): rubble, an overturned cart, fallen timbers, a broken wall stub, a torn awning, a dragon's bones (huge with Size) or a barricade.",
+		defaults: { opts: {
+			kind: "rubble",
+			size: 1,
+			charred: !1,
+			seed: 1
+		} },
+		fields: [
+			V,
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: [
+					{
+						value: "rubble",
+						label: "Rubble"
+					},
+					{
+						value: "cart",
+						label: "Overturned cart"
+					},
+					{
+						value: "timbers",
+						label: "Fallen timbers"
+					},
+					{
+						value: "wall",
+						label: "Broken wall"
+					},
+					{
+						value: "tent",
+						label: "Torn awning"
+					},
+					{
+						value: "bones",
+						label: "Bones"
+					},
+					{
+						value: "barricade",
+						label: "Barricade"
+					}
+				]
+			},
+			{
+				key: "opts.size",
+				label: "Size",
+				type: "number",
+				min: .3,
+				max: 8,
+				step: .1
+			},
+			{
+				key: "opts.charred",
+				label: "Charred",
+				type: "bool"
+			},
+			U
+		]
+	},
+	monument: {
+		label: "Monument",
+		category: "Props",
+		placement: "point",
+		kind: "prop",
+		owner: "evermere",
+		glyph: "⊓",
+		color: "#a8a8b4",
+		radius: .6,
+		help: "A grave, statue, cairn, wayside chime, brazier or bell-lantern.",
+		defaults: { opts: {
+			kind: "grave",
+			seed: 1
+		} },
+		fields: [
+			H(Ee),
+			{
+				key: "opts.fire",
+				label: "Fire (brazier)",
+				type: "select",
+				options: De
+			},
+			{
+				key: "opts.lit",
+				label: "Lit (lantern)",
+				type: "bool"
+			},
+			U
+		]
+	},
+	bed: {
+		label: "Bed",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "▬",
+		color: "#d86a5a",
+		radius: 1.1,
+		rotatable: !0,
+		snap: .25,
+		help: "Head against a wall (local −Z; rotation 0: a north wall), the foot toward the room. Width 1.2 is a single bed, from 1.6 a double with two pillows.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				width: 1.2,
+				length: 2.2,
+				blanket: "red"
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: .8,
+				max: 2.4,
+				step: .1
+			},
+			{
+				key: "opts.length",
+				label: "Length",
+				type: "number",
+				min: 1.6,
+				max: 2.8,
+				step: .1
+			},
+			{
+				key: "opts.blanket",
+				label: "Quilt",
+				type: "select",
+				options: L
+			},
+			U
+		]
+	},
+	table: {
+		label: "Table",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "◫",
+		color: "#b98653",
+		radius: .8,
+		rotatable: !0,
+		snap: .25,
+		help: "Rect on four legs or round on a pedestal, 0.82 high, with seeded tableware. A candle adds a small flame (add a Point light for its glow).",
+		defaults: {
+			rotation: 0,
+			opts: {
+				shape: "rect",
+				width: 1.6,
+				depth: .9,
+				cloth: !1,
+				items: !0,
+				candle: !1
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.shape",
+				label: "Shape",
+				type: "select",
+				options: ["rect", "round"]
+			},
+			{
+				key: "opts.width",
+				label: "Width (round: diameter)",
+				type: "number",
+				min: .6,
+				max: 3.2,
+				step: .1
+			},
+			{
+				key: "opts.depth",
+				label: "Depth (rect)",
+				type: "number",
+				min: .6,
+				max: 2,
+				step: .1
+			},
+			{
+				key: "opts.cloth",
+				label: "Table cloth",
+				type: "bool"
+			},
+			{
+				key: "opts.items",
+				label: "Tableware",
+				type: "bool"
+			},
+			{
+				key: "opts.candle",
+				label: "Candle",
+				type: "bool"
+			},
+			U
+		]
+	},
+	chair: {
+		label: "Chair",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "◳",
+		color: "#9a6840",
+		radius: .3,
+		rotatable: !0,
+		snap: .25,
+		help: "Rotation 0: the seat faces +Z (the camera), the back to the north. Turn it to face its table.",
+		defaults: {
+			rotation: 0,
+			opts: { style: "chair" }
+		},
+		fields: [
+			V,
+			{
+				key: "opts.style",
+				label: "Style",
+				type: "select",
+				options: ["chair", "stool"]
+			},
+			U
+		]
+	},
+	shelf: {
+		label: "Shelf",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "▥",
+		color: "#7c4f31",
+		radius: .8,
+		rotatable: !0,
+		snap: .25,
+		help: "An open shelf 0.5 deep, its back on a wall (rotation 0: a north wall): a bookshelf or a pantry of jars, bottles and sacks.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				kind: "books",
+				width: 1.6,
+				height: 2.2
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.kind",
+				label: "Holds",
+				type: "select",
+				options: [{
+					value: "books",
+					label: "Books"
+				}, {
+					value: "pantry",
+					label: "Pantry stores"
+				}]
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: .8,
+				max: 3.2,
+				step: .1
+			},
+			{
+				key: "opts.height",
+				label: "Height",
+				type: "number",
+				min: 1,
+				max: 3,
+				step: .1
+			},
+			U
+		]
+	},
+	hearth: {
+		label: "Hearth",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "◙",
+		color: "#ff7a3a",
+		radius: 1.1,
+		rotatable: !0,
+		snap: .25,
+		help: "A stone fireplace 1 deep, its back on a wall (rotation 0: a north wall). Lit: a flame, glowing embers, sparks and one point light, day and night (the game shares 12 point lights).",
+		defaults: {
+			rotation: 0,
+			opts: {
+				width: 2.2,
+				height: 2.6,
+				lit: !0,
+				embers: !0,
+				pot: !1
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 1.6,
+				max: 3.6,
+				step: .1
+			},
+			{
+				key: "opts.height",
+				label: "Chimney breast height",
+				type: "number",
+				min: 1.8,
+				max: 4.5,
+				step: .1,
+				help: "Match the wall: the breast reaches up to it."
+			},
+			{
+				key: "opts.lit",
+				label: "Fire burns",
+				type: "bool"
+			},
+			{
+				key: "opts.embers",
+				label: "Sparks",
+				type: "bool"
+			},
+			{
+				key: "opts.pot",
+				label: "Cooking pot",
+				type: "bool"
+			},
+			U
+		]
+	},
+	counter: {
+		label: "Counter",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "▰",
+		color: "#a0703f",
+		radius: 1.3,
+		rotatable: !0,
+		snap: .25,
+		help: "An inn bar or a shop counter, 0.7 deep; rotation 0: the panelled front faces +Z (the customers, the camera), the keeper stands north of it.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				style: "bar",
+				width: 2.6,
+				items: !0
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.style",
+				label: "Style",
+				type: "select",
+				options: [{
+					value: "bar",
+					label: "Inn bar"
+				}, {
+					value: "shop",
+					label: "Shop counter"
+				}]
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 1.2,
+				max: 6,
+				step: .1
+			},
+			{
+				key: "opts.items",
+				label: "Things on top",
+				type: "bool"
+			},
+			U
+		]
+	},
+	rug: {
+		label: "Rug",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "▧",
+		color: "#bf4b45",
+		radius: 1,
+		rotatable: !0,
+		snap: .25,
+		help: "Flat on the floor: walked over, casts no shadow. Length runs along local Z (the tassel ends).",
+		defaults: {
+			rotation: 0,
+			opts: {
+				color: "red",
+				width: 2,
+				length: 3
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.color",
+				label: "Colour",
+				type: "select",
+				options: xe
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 1,
+				max: 6,
+				step: .25
+			},
+			{
+				key: "opts.length",
+				label: "Length",
+				type: "number",
+				min: 1,
+				max: 8,
+				step: .25
+			},
+			U
+		]
+	},
+	staircase: {
+		label: "Staircase",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "◢",
+		color: "#c49358",
+		radius: 1.2,
+		rotatable: !0,
+		snap: .25,
+		help: "Marks where a \"use\" exit leads up or down (it is not walkable). Up: a flight along a wall (rotation 0: a north wall), rising to the east (or the west). Down: a stairwell, its open end toward +Z. Put the exit at its foot.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				dir: "up",
+				width: 1.2,
+				steps: 7,
+				height: 2.5,
+				flip: !1,
+				rail: !0
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.dir",
+				label: "Leads",
+				type: "select",
+				options: [{
+					value: "up",
+					label: "Up (a flight on a wall)"
+				}, {
+					value: "down",
+					label: "Down (a stairwell)"
+				}]
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: .8,
+				max: 2.4,
+				step: .1
+			},
+			{
+				key: "opts.steps",
+				label: "Steps",
+				type: "int",
+				min: 3,
+				max: 14
+			},
+			{
+				key: "opts.height",
+				label: "Height (up)",
+				type: "number",
+				min: 1,
+				max: 5,
+				step: .1,
+				help: "The top step: match the wall height."
+			},
+			{
+				key: "opts.flip",
+				label: "Rises to the west (up)",
+				type: "bool"
+			},
+			{
+				key: "opts.rail",
+				label: "Banister",
+				type: "bool"
+			},
+			U
+		]
+	},
+	wardrobe: {
+		label: "Wardrobe",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "▯",
+		color: "#7d5230",
+		radius: .7,
+		rotatable: !0,
+		snap: .25,
+		help: "A tall wardrobe (0.6 deep) or a chest of drawers (0.5 deep), its back on a wall (rotation 0: a north wall).",
+		defaults: {
+			rotation: 0,
+			opts: {
+				kind: "wardrobe",
+				width: 1.4
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: [{
+					value: "wardrobe",
+					label: "Wardrobe"
+				}, {
+					value: "drawers",
+					label: "Chest of drawers"
+				}]
+			},
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: .6,
+				max: 2.6,
+				step: .1
+			},
+			U
+		]
+	},
+	wallWindow: {
+		label: "Wall window",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "⊞",
+		color: "#bfe0f2",
+		radius: .6,
+		rotatable: !0,
+		snap: .25,
+		help: "Place it on a wall face; rotation points into the room (0: on a north wall). Its panes glow (emissive, no point light); by day a shaft of light falls onto the floor.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				panes: 1,
+				sill: .9,
+				glow: "daylight",
+				curtains: "red",
+				beam: !0
+			}
+		},
+		fields: [
+			V,
+			{
+				key: "opts.panes",
+				label: "Casements (1 wide each)",
+				type: "int",
+				min: 1,
+				max: 3
+			},
+			{
+				key: "opts.sill",
+				label: "Sill height",
+				type: "number",
+				min: .3,
+				max: 2,
+				step: .05
+			},
+			{
+				key: "opts.glow",
+				label: "Light",
+				type: "select",
+				options: [{
+					value: "daylight",
+					label: "Daylight (dark at night)"
+				}, {
+					value: "warm",
+					label: "Warm (glows day and night)"
+				}]
+			},
+			{
+				key: "opts.curtains",
+				label: "Curtains",
+				type: "select",
+				options: [
+					"red",
+					"linen",
+					"none"
+				]
+			},
+			{
+				key: "opts.beam",
+				label: "Light shaft by day",
+				type: "bool"
+			},
+			{
+				key: "opts.flowers",
+				label: "Flower box on the sill",
+				type: "bool"
+			}
+		]
+	},
+	sacks: {
+		label: "Grain sacks",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		glyph: "◓",
+		color: "#bea573",
+		radius: .7,
+		rotatable: !0,
+		snap: .25,
+		help: "Tied burlap sacks: up to three standing in a row, the fourth lying across them.",
+		defaults: {
+			rotation: 0,
+			opts: { count: 3 }
+		},
+		fields: [
+			V,
+			{
+				key: "opts.count",
+				label: "Sacks",
+				type: "int",
+				min: 1,
+				max: 4
+			},
+			U
+		]
+	},
+	smithy: {
+		label: "Smithy",
+		category: "Interior",
+		placement: "point",
+		kind: "prop",
+		interior: !0,
+		owner: "evermere",
+		glyph: "⚒",
+		color: "#b0603a",
+		radius: .8,
+		rotatable: !0,
+		snap: .25,
+		help: "A bell-founder's forge, anvil, bellows, bell mould, tool rack or bell blank.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				kind: "forge",
+				seed: 1
+			}
+		},
+		fields: [
+			V,
+			H(Oe),
+			U
+		]
+	},
+	fence: {
+		label: "Fence",
+		category: "Structures",
+		placement: "line",
+		kind: "prop",
+		glyph: "╪",
+		color: "#8e6038",
+		radius: .2,
+		help: "Click the start point, then the end point.",
+		defaults: { opts: {} },
+		fields: []
+	},
+	bridge: {
+		label: "Bridge",
+		category: "Structures",
+		placement: "line",
+		kind: "prop",
+		glyph: "═",
+		color: "#a0703f",
+		radius: 1,
+		help: "Click one bank, then the other. The deck is walkable over water.",
+		defaults: {
+			deckY: null,
+			opts: {
+				width: 2,
+				arch: .25
+			}
+		},
+		fields: [
+			{
+				key: "opts.width",
+				label: "Width",
+				type: "number",
+				min: 1.2,
+				max: 3.5,
+				step: .1
+			},
+			{
+				key: "opts.arch",
+				label: "Arch",
+				type: "number",
+				min: 0,
+				max: .6,
+				step: .02
+			},
+			{
+				key: "deckY",
+				label: "Deck height, world units (blank = auto)",
+				type: "number",
+				min: -2,
+				max: 20,
+				step: .05,
+				nullable: !0,
+				help: "World height = height level × 0.5. Blank: the height of the banks."
+			}
+		]
+	},
+	garland: {
+		label: "Garland",
+		category: "Structures",
+		placement: "line",
+		kind: "prop",
+		setpiece: !0,
+		glyph: "⌒",
+		color: "#e05a5a",
+		radius: .2,
+		help: "Click one end, then the other: a sagging line of pennants and / or lanterns at roof height (Vanquish the Evil Dragon's festival). Lanterns glow at night.",
+		defaults: { opts: {
+			kind: "pennants",
+			sag: .5,
+			posts: !0,
+			seed: 1
+		} },
+		fields: [
+			{
+				key: "opts.kind",
+				label: "Kind",
+				type: "select",
+				options: [
+					{
+						value: "pennants",
+						label: "Pennants"
+					},
+					{
+						value: "lanterns",
+						label: "Lanterns"
+					},
+					{
+						value: "both",
+						label: "Pennants and lanterns"
+					}
+				]
+			},
+			{
+				key: "opts.sag",
+				label: "Sag",
+				type: "number",
+				min: 0,
+				max: 2,
+				step: .05
+			},
+			{
+				key: "opts.posts",
+				label: "Posts at the ends",
+				type: "bool"
+			},
+			U
+		]
+	},
+	waterfall: {
+		label: "Waterfall",
+		category: "Water",
+		placement: "point",
+		kind: "prop",
+		glyph: "⇣",
+		color: "#8fd3ff",
+		radius: 1,
+		help: "Place on the edge between a higher and a lower water tile; `facing` is the direction the water falls toward.",
+		defaults: {
+			width: 2,
+			facing: "S"
+		},
+		fields: [{
+			key: "width",
+			label: "Width",
+			type: "number",
+			min: 1,
+			max: 6,
+			step: .5
+		}, {
+			key: "facing",
+			label: "Falls toward",
+			type: "select",
+			options: j
+		}]
+	},
+	ship: {
+		label: "Ship",
+		category: "Water",
+		placement: "point",
+		kind: "prop",
+		owner: "evermere",
+		glyph: "⛵",
+		color: "#8a6440",
+		radius: 2,
+		rotatable: !0,
+		help: "A cog, sloop or rowboat; frozen: locked in the ice until the thaw. Its deck is walkable.",
+		defaults: {
+			rotation: 0,
+			opts: {
+				kind: "cog",
+				frozen: !0,
+				sails: "furled",
+				seed: 1
+			}
+		},
+		fields: [
+			V,
+			H(Te),
+			{
+				key: "opts.frozen",
+				label: "Frozen in",
+				type: "bool"
+			},
+			{
+				key: "opts.sails",
+				label: "Sails",
+				type: "select",
+				options: ["furled", "set"]
+			},
+			U
+		]
+	},
+	npc: {
+		label: "Villager (NPC)",
+		category: "Characters",
+		placement: "point",
+		kind: "actor",
+		glyph: "☺",
+		color: "#f2e2b5",
+		radius: .35,
+		help: "A character who wanders near here and talks when the player presses Space.",
+		defaults: {
+			name: "Villager",
+			preset: "villager",
+			facing: "down",
+			wander: 1.2,
+			speed: 1,
+			portraitColor: "#c9a45c",
+			action: "none",
+			item: "",
+			behaviour: "wander",
+			script: "",
+			dialogue: ["Hello, traveler!"]
+		},
+		fields: [
+			{
+				key: "name",
+				label: "Name",
+				type: "text",
+				i18n: !0
+			},
+			{
+				key: "title",
+				label: "Title",
+				type: "text",
+				i18n: !0,
+				help: "The small title beside the name plate when this villager speaks (Warden of the Cinderwatch). Blank = none."
+			},
+			{
+				key: "dialogue",
+				label: "Dialogue",
+				type: "dialogue",
+				i18n: !0,
+				help: "One page per paragraph. A page like \"Question? [Yes | No]\" offers choices (one choice: \"[Okay |]\"); \\[ \\] \\| are literal. {word} is gold."
+			},
+			{
+				key: "action",
+				label: "Special action",
+				type: "select",
+				options: _e,
+				help: "Rest / shop: picking any answer but the first of the closing question runs it (a closing page of your own with one choice, \"[Okay |]\": that answer runs it). Music: starts the music (a closing question of your own: any answer but the first plays it — with one choice, that one; when the music is already playing, the built-in question offers to stop it)."
+			},
+			{
+				key: "item",
+				label: "Item sold (shop action)",
+				type: "text",
+				i18n: !0,
+				help: "Blank = \"Crisp Apple\"."
+			},
+			{
+				key: "preset",
+				label: "Look",
+				type: "select",
+				options: M
+			},
+			{
+				key: "facing",
+				label: "Facing",
+				type: "select",
+				options: A
+			},
+			{
+				key: "behaviour",
+				label: "Behaviour",
+				type: "select",
+				options: P
+			},
+			{
+				key: "wander",
+				label: "Wander radius",
+				type: "number",
+				min: 0,
+				max: 5,
+				step: .1
+			},
+			{
+				key: "speed",
+				label: "Walk speed",
+				type: "number",
+				min: .3,
+				max: 2,
+				step: .05
+			},
+			{
+				key: "portraitColor",
+				label: "Name plate colour",
+				type: "color"
+			},
+			{
+				key: "script",
+				label: "Built-in script (overrides dialogue)",
+				type: "select",
+				options: I
+			},
+			{
+				key: "talk",
+				label: "Talk script (overrides all of the above)",
+				type: "script",
+				i18n: !0,
+				help: "What this villager says and does, in the story language (docs/specs/STORY_SCRIPT.md). Blank = the dialogue above, or the actor's talk script."
+			},
+			{
+				key: "actor",
+				label: "Actor (story character)",
+				type: "text",
+				help: "The character this villager is across levels: name, look and talk script from the campaign's story files, one visit count. Blank = this villager only."
+			},
+			{
+				key: "flag",
+				label: "Story: sets flag after talking",
+				type: "text",
+				help: "The story flag set when a conversation with this villager ends. Blank = none."
+			}
+		]
+	},
+	critters: {
+		label: "Critters",
+		category: "Characters",
+		placement: "point",
+		kind: "actor",
+		glyph: "🐾",
+		color: "#f0a060",
+		radius: .4,
+		defaults: {
+			kind: "chicken",
+			count: 4,
+			radius: 2.5
+		},
+		fields: [
+			{
+				key: "kind",
+				label: "Kind",
+				type: "select",
+				options: N
+			},
+			{
+				key: "count",
+				label: "Count",
+				type: "int",
+				min: 1,
+				max: 8
+			},
+			{
+				key: "radius",
+				label: "Roam radius",
+				type: "number",
+				min: .5,
+				max: 8,
+				step: .1
+			}
+		]
+	},
+	emitter: {
+		label: "Particle area",
+		category: "Markers",
+		placement: "point",
+		kind: "marker",
+		glyph: "∴",
+		color: "#b8f07a",
+		radius: .5,
+		help: "Fireflies (night only), falling leaves, petals, dust… inside a box centred here.",
+		defaults: {
+			preset: "fireflies",
+			size: [
+				8,
+				2.4,
+				8
+			],
+			count: 30,
+			dy: 1.2
+		},
+		fields: [
+			{
+				key: "preset",
+				label: "Effect",
+				type: "select",
+				options: ge
+			},
+			{
+				key: "size.0",
+				label: "Size X",
+				type: "number",
+				min: .5,
+				max: 40,
+				step: .5
+			},
+			{
+				key: "size.1",
+				label: "Size Y",
+				type: "number",
+				min: .5,
+				max: 12,
+				step: .1
+			},
+			{
+				key: "size.2",
+				label: "Size Z",
+				type: "number",
+				min: .5,
+				max: 40,
+				step: .5
+			},
+			{
+				key: "dy",
+				label: "Height above ground",
+				type: "number",
+				min: 0,
+				max: 10,
+				step: .1
+			},
+			{
+				key: "count",
+				label: "Particles",
+				type: "int",
+				min: 1,
+				max: 200
+			}
+		]
+	},
+	region: {
+		label: "Region name",
+		category: "Markers",
+		placement: "rect",
+		kind: "marker",
+		glyph: "▢",
+		color: "#c9a45c",
+		radius: 0,
+		help: "Drag a rectangle. The HUD shows its name while the player is inside (first match wins).",
+		defaults: {
+			name: "New area",
+			sub: "",
+			minY: null,
+			banner: ""
+		},
+		fields: [
+			{
+				key: "name",
+				label: "Name",
+				type: "text",
+				i18n: !0
+			},
+			{
+				key: "sub",
+				label: "Subtitle",
+				type: "text",
+				i18n: !0
+			},
+			{
+				key: "minY",
+				label: "Only above height, world units (blank = any)",
+				type: "number",
+				min: -5,
+				max: 20,
+				step: .1,
+				nullable: !0,
+				help: "World height = height level × 0.5 (3 = level 6)."
+			},
+			{
+				key: "banner",
+				label: "Arrival banner subtitle (blank = none)",
+				type: "text",
+				i18n: !0,
+				help: "Shown with the region name the first time the player enters."
+			}
+		]
+	},
+	exit: {
+		label: "Exit (to another level)",
+		category: "Markers",
+		placement: "rect",
+		kind: "marker",
+		campaign: !0,
+		glyph: "⇨",
+		color: "#7fd6a8",
+		radius: 0,
+		help: "Drag a rectangle where the player leaves for another level of the campaign: walking into it travels (or Space, for a door). A level played on its own ignores it.",
+		defaults: {
+			to: "",
+			entrance: "",
+			mode: "walk",
+			label: "Enter",
+			requires: "",
+			locked: []
+		},
+		fields: [
+			{
+				key: "to",
+				label: "Leads to level",
+				type: "text",
+				help: "The level's file name in the campaign's levels/ folder, without \".json\"."
+			},
+			{
+				key: "entrance",
+				label: "Arrive at entrance",
+				type: "text",
+				help: "An entrance's name in that level. Blank: across the seam when campaign.json places both levels, else at its player start."
+			},
+			{
+				key: "mode",
+				label: "Travel",
+				type: "select",
+				options: ve
+			},
+			{
+				key: "label",
+				label: "Prompt (Space exits)",
+				type: "text",
+				i18n: !0,
+				help: "The verb shown over an exit used with Space (\"Enter\", \"Climb down\")."
+			},
+			{
+				key: "requires",
+				label: "Open only with story flag",
+				type: "text",
+				help: "Blank = always open."
+			},
+			{
+				key: "locked",
+				label: "Text while closed",
+				type: "lines",
+				i18n: !0,
+				help: "Shown when the flag is missing; one paragraph per dialog page (blank: \"The way is closed.\")."
+			}
+		]
+	},
+	entrance: {
+		label: "Entrance (arrival point)",
+		category: "Markers",
+		placement: "point",
+		kind: "marker",
+		campaign: !0,
+		glyph: "⊙",
+		color: "#7fd6a8",
+		radius: .4,
+		help: "Where the player arrives through an exit of another level that names it. A level played on its own ignores it.",
+		defaults: {
+			name: "",
+			facing: "down"
+		},
+		fields: [{
+			key: "name",
+			label: "Name",
+			type: "text",
+			help: "What exits in other levels call it (blank: its id)."
+		}, {
+			key: "facing",
+			label: "Facing on arrival",
+			type: "select",
+			options: A
+		}]
+	},
+	event: {
+		label: "Story event",
+		category: "Markers",
+		placement: "rect",
+		kind: "marker",
+		story: !0,
+		glyph: "!",
+		color: "#e8c25a",
+		radius: 0,
+		help: "Drag a rectangle: its script runs when the trigger fires (Space inside it, walking in, arriving in the level, a condition becoming true…).",
+		defaults: {
+			on: "use",
+			once: !1,
+			run: []
+		},
+		fields: [
+			{
+				key: "on",
+				label: "Runs when",
+				type: "select",
+				options: be
+			},
+			{
+				key: "label",
+				label: "Prompt (Space)",
+				type: "text",
+				i18n: !0,
+				help: "The verb shown over a Space event (\"Look\", \"Read\", \"Search\"). Blank = \"Look\"."
+			},
+			{
+				key: "if",
+				label: "Condition",
+				type: "condition",
+				help: "The event runs only while this holds; for \"Its condition becomes true\", the condition to watch. Blank = always."
+			},
+			{
+				key: "once",
+				label: "Only once",
+				type: "bool",
+				help: "Remembered in the save: it never runs again."
+			},
+			{
+				key: "background",
+				label: "Runs in the background",
+				type: "bool",
+				help: "The script plays while the player keeps walking: it holds no one and opens no dialog window. Only lines that need no answer and move no one but villagers — bark, emote, villagers' walk / face / teleport / home, wait, set, give, quest, toast, sfx … (no dialogue or choice: use bark). \"Check for problems\" lists the others."
+			},
+			{
+				key: "at",
+				label: "At hour (clock)",
+				type: "number",
+				min: 0,
+				max: 24,
+				step: .25,
+				nullable: !0
+			},
+			{
+				key: "group",
+				label: "Group (enemy id)",
+				type: "text",
+				help: "The enemy group object whose last foe ends the fight."
+			},
+			{
+				key: "run",
+				label: "Script",
+				type: "script",
+				i18n: !0,
+				help: "What happens (docs/specs/STORY_SCRIPT.md)."
+			}
+		]
+	},
+	marker: {
+		label: "Story marker (named spot)",
+		category: "Markers",
+		placement: "point",
+		kind: "marker",
+		story: !0,
+		glyph: "✦",
+		color: "#e8c25a",
+		radius: .35,
+		help: "A named spot the story scripts walk actors to, put them at or look at (\"walk ilse well-side\"). Invisible in the game.",
+		defaults: {
+			name: "",
+			facing: "down"
+		},
+		fields: [{
+			key: "name",
+			label: "Name",
+			type: "text",
+			help: "What scripts call it (blank: its id)."
+		}, {
+			key: "facing",
+			label: "Facing",
+			type: "select",
+			options: A,
+			help: "How an actor put here faces."
+		}]
+	},
+	enemy: {
+		label: "Enemy group",
+		category: "Combat",
+		placement: "point",
+		kind: "actor",
+		combat: !0,
+		glyph: "⚔",
+		color: "#e0674f",
+		radius: .45,
+		help: "A group of hostile creatures that turns combat on for the level. The boss (Cinderheart) needs an arena and a gate.",
+		defaults: {
+			kind: "slime",
+			count: 3,
+			radius: 3,
+			level: 1,
+			elite: !1,
+			name: ""
+		},
+		fields: [
+			{
+				key: "kind",
+				label: "Kind",
+				type: "select",
+				options: R.map((e) => ({
+					value: e,
+					label: B[e].label
+				}))
+			},
+			{
+				key: "count",
+				label: "Count",
+				type: "int",
+				min: 1,
+				max: 8
+			},
+			{
+				key: "radius",
+				label: "Home radius",
+				type: "number",
+				min: .5,
+				max: 12,
+				step: .1
+			},
+			{
+				key: "level",
+				label: "Level",
+				type: "int",
+				min: 1,
+				max: 10
+			},
+			{
+				key: "elite",
+				label: "Elite",
+				type: "bool"
+			},
+			{
+				key: "name",
+				label: "Name plate (optional)",
+				type: "text",
+				i18n: !0
+			},
+			{
+				key: "swarm",
+				label: "Swarm (rushes the party)",
+				type: "bool",
+				help: "On appearing (or at load when present) the whole group wakes and rushes the party: no leash, no home zone, aggro at any distance."
+			}
+		]
+	},
+	chest: {
+		label: "Treasure chest",
+		category: "Combat",
+		placement: "point",
+		kind: "prop",
+		combat: !0,
+		glyph: "▣",
+		color: "#e8cf8a",
+		radius: .5,
+		rotatable: !0,
+		help: "Opened with Space on a combat level; its contents pop out as pickups. On a peaceful level it is only examined.",
+		defaults: {
+			rotation: 0,
+			gold: 20,
+			potions: 0,
+			upgrade: "none"
+		},
+		fields: [
+			V,
+			{
+				key: "gold",
+				label: "Gold",
+				type: "int",
+				min: 0,
+				max: 500
+			},
+			{
+				key: "potions",
+				label: "Healing Draughts",
+				type: "int",
+				min: 0,
+				max: 5
+			},
+			{
+				key: "upgrade",
+				label: "Upgrade",
+				type: "select",
+				options: Se.map((e) => ({
+					value: e,
+					label: Ce[e] ?? e
+				}))
+			}
+		]
+	},
+	waystone: {
+		label: "Waystone (checkpoint)",
+		category: "Combat",
+		placement: "point",
+		kind: "prop",
+		combat: !0,
+		glyph: "◆",
+		color: "#7fe3ff",
+		radius: .6,
+		help: "Walk close to attune (respawn point); Space to rest (heal, enemies return).",
+		defaults: { name: "Waystone" },
+		fields: [{
+			key: "name",
+			label: "Name",
+			type: "text",
+			i18n: !0
+		}]
+	},
+	skyDragon: {
+		label: "Sky dragon (shadow)",
+		category: "Combat",
+		placement: "rect",
+		kind: "actor",
+		combat: !0,
+		setpiece: !0,
+		glyph: "❂",
+		color: "#c0392b",
+		radius: 0,
+		help: "Drag a rectangle: a dragon's shadow flies over it and hurls telegraphed fireballs every few seconds; it cannot be attacked. When the story removes it, it flies off toward \"Leaves toward\".",
+		defaults: {
+			interval: [5, 9],
+			volley: 2,
+			radius: 2.4,
+			power: 1.6,
+			leave: "N",
+			ambient: !0
+		},
+		fields: [
+			{
+				key: "interval.0",
+				label: "Volley every (s), least",
+				type: "number",
+				min: 1,
+				max: 60,
+				step: .5
+			},
+			{
+				key: "interval.1",
+				label: "Volley every (s), most",
+				type: "number",
+				min: 1,
+				max: 60,
+				step: .5
+			},
+			{
+				key: "volley",
+				label: "Fireballs per volley",
+				type: "int",
+				min: 0,
+				max: 10
+			},
+			{
+				key: "radius",
+				label: "Fireball radius",
+				type: "number",
+				min: .5,
+				max: 6,
+				step: .1
+			},
+			{
+				key: "power",
+				label: "Fireball power",
+				type: "number",
+				min: 0,
+				max: 6,
+				step: .1
+			},
+			{
+				key: "leave",
+				label: "Leaves toward",
+				type: "select",
+				options: j
+			},
+			{
+				key: "ambient",
+				label: "Flies in cutscenes (harmless)",
+				type: "bool",
+				help: "While a story scene holds the player, it keeps flying and its fireballs fall without hurting anyone."
+			}
+		]
+	}
+};
+for (let e of Object.values(G)) e.fields.push(...ye);
+var K = (e) => e === void 0 ? void 0 : JSON.parse(JSON.stringify(e));
+function ke(e, t) {
+	if (!e || !i(G, e.type)) throw Error(`Unknown object type "${n(e?.type)}"`);
+	let s = G[e.type], c = X(a(K(e)), K(s.defaults) ?? {}), l = (e, t = 0) => {
+		c[e] = Number.isFinite(o(c[e])) ? o(c[e]) : t;
+	};
+	if (s.placement === "point" && (l("x"), l("z")), s.placement === "line" && (l("x0"), l("z0"), l("x1", c.x0 + 2), l("z1", c.z0)), s.placement === "rect" && (l("minX"), l("maxX", c.minX + 4), l("minZ"), l("maxZ", c.minZ + 4), c.maxX < c.minX && ([c.minX, c.maxX] = [c.maxX, c.minX]), c.maxZ < c.minZ && ([c.minZ, c.maxZ] = [c.maxZ, c.minZ])), ("rotation" in s.defaults || c.rotation != null) && l("rotation"), c.id = r(c.id ?? "", ""), s.placement === "point" && (e.type === "npc" || e.type === "critters") && Ae(c), Object.prototype.hasOwnProperty.call(c, "textKeys")) {
+		let { keys: n, dropped: r, upcased: i } = E(e.type, c.textKeys, c);
+		n ? c.textKeys = n : delete c.textKeys, t && (t.textKeys += r, t.upcased += i);
+	}
+	return c;
+}
+var q = (e) => Math.round(e * 1e6) / 1e6, J = (e) => Array.isArray(e) && e.length >= 2 && Number.isFinite(e[0]) && Number.isFinite(e[1]), Y = (e) => !!e && typeof e == "object" && [
+	"minX",
+	"maxX",
+	"minZ",
+	"maxZ"
+].every((t) => Number.isFinite(e[t]));
+function Ae(e) {
+	let { x: t, z: n } = e;
+	J(e.talkPoint) && (J(e.talkOffset) || (e.talkOffset = [q(e.talkPoint[0] - t), q(e.talkPoint[1] - n)]), delete e.talkPoint), Y(e.bounds) && (Y(e.area) || (e.area = {
+		minX: q(e.bounds.minX - t),
+		maxX: q(e.bounds.maxX - t),
+		minZ: q(e.bounds.minZ - n),
+		maxZ: q(e.bounds.maxZ - n)
+	}), delete e.bounds), Array.isArray(e.spots) && (Array.isArray(e.spotOffsets) || (e.spotOffsets = e.spots.filter(J).map((e) => [q(e[0] - t), q(e[1] - n)])), delete e.spots);
+}
+function X(e, t) {
+	for (let [n, r] of Object.entries(t)) !(n in e) || e[n] === void 0 ? e[n] = r : Z(r) && Z(e[n]) && X(e[n], r);
+	return e;
+}
+var Z = (e) => !!e && typeof e == "object" && !Array.isArray(e), Q = (e) => Array.isArray(e) && e.length >= 2 && Number.isFinite(e[0]) && Number.isFinite(e[1]), $ = (e) => !!e && [
+	"minX",
+	"maxX",
+	"minZ",
+	"maxZ"
+].every((t) => Number.isFinite(e[t])) && e.maxX >= e.minX && e.maxZ >= e.minZ;
+function je(e) {
+	let t = Number(e.x) || 0, n = Number(e.z) || 0;
+	return $(e.area) ? {
+		minX: t + e.area.minX,
+		maxX: t + e.area.maxX,
+		minZ: n + e.area.minZ,
+		maxZ: n + e.area.maxZ
+	} : $(e.bounds) ? {
+		minX: e.bounds.minX,
+		maxX: e.bounds.maxX,
+		minZ: e.bounds.minZ,
+		maxZ: e.bounds.maxZ
+	} : null;
+}
+function Me(n, r = null) {
+	let i = N.includes(n.kind) ? n.kind : "chicken", a = Number(n.x) || 0, o = Number(n.z) || 0, s = Math.max(.3, Number(n.radius) || 2.5), c = null;
+	Array.isArray(n.spotOffsets) ? c = n.spotOffsets.filter(Q).map(([e, t]) => [a + e, o + t]) : Array.isArray(n.spots) && (c = n.spots.filter(Q).map(([e, t]) => [e, t])), c = c?.slice(0, 16) ?? null;
+	let l = Number.isFinite(Number(n.count)) && n.count !== null && n.count !== "" ? Math.max(0, Math.min(16, Math.round(Number(n.count)))) : c?.length ?? 0, u = {
+		minX: a - s,
+		maxX: a + s,
+		minZ: o - s,
+		maxZ: o + s
+	};
+	$(n.area) ? u = {
+		minX: a + n.area.minX,
+		maxX: a + n.area.maxX,
+		minZ: o + n.area.minZ,
+		maxZ: o + n.area.maxZ
+	} : $(n.bounds) && (u = { ...n.bounds });
+	let d = e(String(n.id ?? i)), f = new t((Number.isFinite(n.seed) ? n.seed : d) >>> 0), p = [];
+	for (let e = 0; e < l; e++) {
+		let t = a, n = o;
+		if (c && e < c.length) [t, n] = c[e];
+		else if (l > 1) for (let e = 0; e < 6 && (t = f.range(u.minX + .3, u.maxX - .3), n = f.range(u.minZ + .2, u.maxZ - .2), r && !r(t, n)); e++);
+		p.push([t, n]);
+	}
+	return p;
+}
+function Ne(n, r = null) {
+	let i = R.includes(n.kind) ? n.kind : "slime", a = Number(n.x) || 0, o = Number(n.z) || 0, s = Math.max(.3, Number(n.radius) || 3), c = B[i].boss ? 1 : 8, l = null;
+	Array.isArray(n.spotOffsets) && (l = n.spotOffsets.filter(Q).map(([e, t]) => [a + e, o + t])), l = l?.slice(0, c) ?? null;
+	let u = Number.isFinite(Number(n.count)) && n.count !== null && n.count !== "" ? Math.max(0, Math.min(c, Math.round(Number(n.count)))) : l?.length ?? 0, d = {
+		minX: a - s,
+		maxX: a + s,
+		minZ: o - s,
+		maxZ: o + s
+	};
+	$(n.area) && (d = {
+		minX: a + n.area.minX,
+		maxX: a + n.area.maxX,
+		minZ: o + n.area.minZ,
+		maxZ: o + n.area.maxZ
+	});
+	let f = e("enemy:" + String(n.id ?? i)), p = new t((Number.isFinite(n.seed) ? n.seed : f) >>> 0), m = [];
+	for (let e = 0; e < u; e++) {
+		let t = a, n = o;
+		if (l && e < l.length) [t, n] = l[e];
+		else if (u > 1) for (let e = 0; e < 6 && (t = p.range(d.minX + .3, d.maxX - .3), n = p.range(d.minZ + .2, d.maxZ - .2), r && !r(t, n)); e++);
+		m.push([t, n]);
+	}
+	return m;
+}
+function Pe(e) {
+	return i(G, e) && !!G[e].setpiece;
+}
+function Fe(e) {
+	for (let t of e?.objects ?? []) if (t?.type === "event" || t?.type === "npc" && (s(t.talk) || typeof t.actor == "string" && t.actor.trim())) return !0;
+	return !1;
+}
+function Ie(e) {
+	let t = e?.environment ?? {};
+	return t.combat === !0 || t.combat !== !1 && Array.isArray(e?.objects) && e.objects.some((e) => e?.type === "enemy");
+}
+//#endregion
+export { m as C, te as S, de as T, E as _, F as a, d as b, Ne as c, Fe as d, ke as f, ae as g, pe as h, G as i, Pe as l, l as m, B as n, Me as o, g as p, P as r, je as s, M as t, Ie as u, ie as v, ne as w, re as x, fe as y };

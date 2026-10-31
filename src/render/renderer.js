@@ -178,8 +178,15 @@ void main(){
   O=vec4(col,1.0);
 }`;
 
-export function createRenderer(canvas, sim, input) {
-  const gl = canvas.getContext('webgl2', { antialias: false, alpha: false });
+/**
+ * @param {HTMLCanvasElement} canvas @param {any} sim @param {any} input
+ * @param {{ external?: boolean }} [opts]  external: another painter draws the world from the first frame (Luminati:
+ *   src/render3d/hybrid.js, setExternal): the canvas is only the taps' surface, the light passes run on a 1 × 1 stub that
+ *   never shows, and the bake's buffers (tens of MB on a phone) are never made
+ */
+export function createRenderer(canvas, sim, input, opts = {}) {
+  const EXTERNAL = !!opts.external;
+  const gl = (EXTERNAL ? Object.assign(document.createElement('canvas'), { width: 1, height: 1 }) : canvas).getContext('webgl2', { antialias: false, alpha: false });
   if (!gl) throw new Error('WebGL2 not available');
   const hasF = gl.getExtension('EXT_color_buffer_float');
 
@@ -227,7 +234,7 @@ export function createRenderer(canvas, sim, input) {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     vw = Math.floor(window.innerWidth * dpr);
     vh = Math.floor(window.innerHeight * dpr);
-    canvas.width = vw; canvas.height = vh;
+    if (!EXTERNAL) { canvas.width = vw; canvas.height = vh; }
     canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
     overlay.width = vw; overlay.height = vh;
     overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
@@ -244,6 +251,7 @@ export function createRenderer(canvas, sim, input) {
     S = Math.max(1, css * dpr);
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
     tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
+    if (EXTERNAL) { terrValid = false; return; }                // (no bake: the other painter has the world)
     const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
     front = mkSet(); back = mkSet(); job = null; target(front);
     sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
@@ -1075,6 +1083,7 @@ export function createRenderer(canvas, sim, input) {
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
   function render(alpha, now) {
+    const X = !!ext || EXTERNAL;                                   // another painter draws the world (setExternal, opts.external)
     clockNow = now;
     const p = sim.state.player, st = stage && sim.world.kind === 'stage' ? stage : null;
     const ix = st ? st.cam.x : p.px + (p.x - p.px) * alpha, iy = st ? st.cam.y : p.py + (p.y - p.py) * alpha;   // the Stage frames its lineup, not the hero
@@ -1083,8 +1092,8 @@ export function createRenderer(canvas, sim, input) {
     const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
 
     const t0 = performance.now();
-    if (ext) {                                                     // (the other painter has the world: its level built is the bake)
-      const ok = ext.ready(sim.world);
+    if (X) {                                                       // (the other painter has the world: its level built is the bake)
+      const ok = !!ext && ext.ready(sim.world);                    // (made external, before the painter's module is in: black)
       if (!ok && !terrValid && !transit) transit = { job: null, fadeFrom: 0 };
       if (ok && !terrValid) { terrValid = true; if (transit) transit.fadeFrom = t0; }
       if (!ok) terrValid = false;
@@ -1097,7 +1106,7 @@ export function createRenderer(canvas, sim, input) {
 
     // copy the visible window out of the baked margin region (scratch x == native x)
     const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
-    if (!ext) for (let y = 0; y < nvh; y++) {
+    if (!X) for (let y = 0; y < nvh; y++) {
       const b0 = ((srcY + y) * tbw + srcX) * 4, s0 = (y * nvw) * 4, len = nvw * 4;
       sALB.set(bALB.subarray(b0, b0 + len), s0);
       sNRM.set(bNRM.subarray(b0, b0 + len), s0);
@@ -1216,7 +1225,7 @@ export function createRenderer(canvas, sim, input) {
     if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, pz, now, t: skyHoldT ?? sim.state.t });   // (t: the held look's, the title's dusk)
-    if (!ext) {
+    if (!X) {
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const hb = st ? st.hazard : sim.battle, rings = st ? !!st.rings : !!sim.battle;   // (the Stage's FX view paints its own hazard, and rings its figures)
@@ -1242,7 +1251,7 @@ export function createRenderer(canvas, sim, input) {
 
     }
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
-    if (!ext) {
+    if (!X) {
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
     gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sNRM);
@@ -1272,7 +1281,7 @@ export function createRenderer(canvas, sim, input) {
     });
 
     // PASS A — lighting at native resolution
-    if (!ext) {
+    if (!X) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
     gl.viewport(0, 0, nvw, nvh);
     gl.useProgram(lightP);
