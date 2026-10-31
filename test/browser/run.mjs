@@ -1292,8 +1292,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
       ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
-    check('lumina: the front page lists our four levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
-      front.ours.join() === 'thornwick,encounter,barrows,catalogue' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
+    check('lumina: the front page lists our five levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
+      front.ours.join() === 'thornwick,encounter,barrows,catalogue,catalogue-art' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
         && cast.npcs.join() === FOLK.join() && cast.talk && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
@@ -1321,6 +1321,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('lumina: the encounter boots with Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
       fight.allies.join() === 'wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
       JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the catalogue's second wing (levels.mjs catalogueArt, ember/props.js): all 290 pieces of Emberfall's own art stood up
+    errs.length = 0;
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=catalogue-art&hero=hero_knight`);
+    await p.waitForFunction(() => (globalThis.__emberProps?.placed ?? 0) >= 290, null, { timeout: 240000 * SLOW });
+    const art = await p.evaluate(() => { const ids = globalThis.__emberProps.ids; return { placed: ids.length,
+      has: ['env:sheep_1', 'env:cow_1~tl', 'town-vale:vale_tavern_1', 'town-fens:fens_abbey_1', 'town-heights:heights_tavern_1', 'item:sword_1h'].filter((i) => ids.includes(i)).length }; });
+    check('lumina: the catalogue\'s second wing stands all 290 pieces of Emberfall\'s art (its world art and item icons) in Luminati\'s world', art.placed === 290 && art.has === 6 && errs.length === 0,
+      JSON.stringify(art) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the dungeon (levels.mjs barrows): the party of three, each Ashbound group in its own look and the Quartermaster as
     // himself, his ranks known to issue.js; our player cards (cards.js) instead of Luminati's vitals, in one row along
     // the bottom upright and on its side; a fall wakes the party at Tobin's lantern

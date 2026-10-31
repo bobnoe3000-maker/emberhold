@@ -470,10 +470,94 @@ export async function barrows(base) {
   return { level, stats: { size: `${W} × ${D}`, objects: count, foes: objects.filter((o) => o.type === 'enemy').reduce((n, o) => n + o.count, 0), tobin: tobin.length } };
 }
 
+// ══ the catalogue's second wing: Emberfall's own art ══════════════════════════════════════════════════════════════
+// Every piece of the game's baked world art (assets/env: env and the four town sets) and every item icon
+// (assets/items), each stood in Luminati's world by ember/props.js from this level's sidecar (`files`), a signpost in
+// front naming it as the game names it (`<atlas> · <id>`). Rows by what they are, a region each; the pieces at their
+// true size (32 baked px to a unit), packed left to right and wrapped. A level of its own: the first wing is 112 × 119
+// and Luminati's levels are 128 at most, and the town sets alone take a dozen rows of house-sized cells.
+const ART_ROWS = [
+  ['Props and the yard', (s, id) => s === 'env' && /^(barrel|crate|sack|boxes|wheelbarrow|handcart|cart|wagon|weaponrack|bucket|resource|woodpile|stump|flag|milestone|table|bench|trough|lamppost|planter|pumpkins|hay|wheat)/.test(id)],
+  ['Animals', (s, id) => s === 'env' && /^(cow|sheep|hens)/.test(id)],
+  ['Trees', (s, id) => s === 'env' && /^(pine|oak|autumn|birch|dead|grove|alder|willow|carr)_/.test(id)],
+  ['Rocks and ground cover', (s, id) => s === 'env' && /^(rock_|ug_)/.test(id)],
+  ['Landmarks, bridges, walls and stairs', (s, id) => s === 'env' && /^(bridge|ruin|mine|lumbermill|watermill|chapelruin|warren|windmill|fence|drywall|stairs)/.test(id)],
+  ['Mountains', (s, id) => s === 'env' && /^mountain/.test(id)],
+  ['The Vale\'s town', (s) => s === 'town-vale'],
+  ['The Fens\' town', (s) => s === 'town-fens'],
+  ['The Reach\'s town', (s) => s === 'town-reach'],
+  ['The Heights\' town', (s) => s === 'town-heights'],
+  ['Item icons', (s) => s === 'item'],
+];
+export async function catalogueArt(base) {
+  const fs = await import('node:fs');
+  const all = [];
+  for (const src of ['env', 'town-vale', 'town-fens', 'town-reach', 'town-heights']) {
+    const sprites = JSON.parse(readFileSync(join(ROOT, 'assets', 'env', `${src}.json`), 'utf8')).sprites;
+    for (const [id, r] of Object.entries(sprites)) all.push({ src, id, sx: r.x, sy: r.y, w: r.w, h: r.h, ax: r.ax, ay: r.ay });
+  }
+  for (const f of fs.readdirSync(join(ROOT, 'assets', 'items')).filter((f) => f.endsWith('.png')).sort()) all.push({ src: 'item', id: f.slice(0, -4), w: 96, h: 96, ax: 48, ay: 96 });
+  const W = 126, GAP = 0.7, LANE = 1.4, PPU = 32;
+  const rowsOut = [], placed = [], left = new Set(all);
+  let z = 2.5;
+  for (const [title, test] of ART_ROWS) {
+    const items = all.filter((p) => test(p.src, p.id));
+    items.forEach((p) => left.delete(p));
+    if (!items.length) continue;
+    const z0 = z;
+    let x = 2, line = [];
+    const flush = () => {
+      if (!line.length) return;
+      const tall = Math.max(...line.map((p) => (p.src === 'item' ? 2 : p.h / PPU)));
+      const depth = Math.max(2.6, Math.min(6.2, tall * 0.62));
+      for (const p of line) placed.push({ ...p, z: r2(z + depth - 0.9) });
+      rowsOut.push({ title, z0: z, z1: z + depth, n: line.length });
+      z += depth; line = []; x = 2;
+    };
+    for (const p of items) {
+      const wide = p.src === 'item' ? 2.2 : Math.max(1.4, p.w / PPU);
+      if (x + wide > W - 2) flush();
+      // (the foot is the sprite's anchor: its centre sits wide/2 across from the left edge, give or take the anchor)
+      p.x = r2(x + (p.src === 'item' ? 1.1 : (p.ax / PPU)));
+      x += wide + GAP; line.push(p);
+    }
+    flush();
+    rowsOut.push({ title, z0, z1: z, region: true });
+    z += LANE;
+  }
+  const D = Math.ceil(z + 1);
+  if (D > 128) throw new Error(`levels.mjs catalogueArt: ${D} deep (128 at most)`);
+  const tiles = grid(W, D, 'g'), heights = grid(W, D, '2'), objects = [], count = {};
+  const add = (o) => { count[o.type] = (count[o.type] || 0) + 1; objects.push({ id: `${o.type}_${count[o.type]}`, ...o }); };
+  for (const r of rowsOut.filter((q) => q.region)) {
+    for (let j = Math.max(0, Math.floor(r.z1)); j < Math.min(D, Math.ceil(r.z1 + LANE)); j++) for (let i = 0; i < W; i++) tiles[j][i] = 'c';
+    add({ type: 'region', minX: 0, maxX: W, minZ: r2(r.z0 - 0.5), maxZ: r2(r.z1 + LANE - 0.5), name: r.title, sub: 'The catalogue · Emberfall\'s art', minY: -10, banner: '' });
+  }
+  // (the camera looks from the south-east: a small piece's sign stands behind it, north-west, so it doesn't hide it; a tall
+  // one's in front, where the piece doesn't hide the sign)
+  for (const p of placed) {
+    const small = p.src === 'item' || p.h / PPU < 2.6;
+    add({ type: 'signpost', x: r2(small ? p.x - 0.5 : p.x + 0.5), z: r2(small ? p.z - 1.1 : p.z + 0.75), rotation: 0, speaker: 'Catalogue', text: [`${p.src} · ${p.id}`], opts: { boards: 1 } });
+  }
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) if (i === 0 || j === 0 || i === W - 1 || j === D - 1) tiles[j][i] = 'T';
+  for (let i = 0; i < W; i++) { tiles[1][i] = 'c'; }
+  const level = {
+    ...frame(base, { name: 'The Catalogue: Emberfall\'s art', subtitle: 'Every piece of the game\'s own world art, and its item icons', width: W, depth: D,
+      description: 'Emberfall\'s baked world art (assets/env: env and the four town sets) and item icons, stood in Luminati\'s world as sprites by ember/props.js, each with a signpost naming it. Generated by tools/lumina/levels.mjs.',
+      environment: { timeOfDay: 15.5, clock: true, weather: 'clear', border: 'forest', outerScenery: true, godRays: false, dust: false, music: true, camera: null, highGround: null } }),
+    spawn: { x: 4, z: 1.5, facing: 'down' },
+    tiles: rows(tiles), heights: rows(heights), objects,
+  };
+  // (each sprite where it stands, x z, and where it is in its atlas, sx sy w h and its foot ax ay; an item by name)
+  const sprites = placed.map((p) => (p.src === 'item' ? { src: p.src, id: p.id, x: p.x, z: p.z } : { src: p.src, id: p.id, x: p.x, z: p.z, sx: p.sx, sy: p.sy, w: p.w, h: p.h, ax: p.ax, ay: p.ay }));
+  return { level, files: { 'catalogue-art.ember.json': { sprites } }, stats: { size: `${W} × ${D}`, pieces: placed.length, left: [...left].map((p) => `${p.src}/${p.id}`),
+    rows: [...new Set(rowsOut.filter((r) => r.region).map((r) => `${r.title}: ${placed.filter((p) => ART_ROWS.find(([t]) => t === r.title)[1](p.src, p.id)).length}`))] } };
+}
+
 // standalone: what each level holds
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const LUM = join(dirname(fileURLToPath(import.meta.url)), '.work', 'luminati');
   const base = JSON.parse(readFileSync(join(LUM, 'public', 'levels', 'sample-hamlet.json'), 'utf8'));
-  const all = { thornwick, catalogue, encounter, barrows };
+  const all = { thornwick, catalogue, encounter, barrows, catalogueArt };
   for (const id of process.argv[2] ? [process.argv[2]] : Object.keys(all)) console.log(id, JSON.stringify((await all[id](base, LUM)).stats, null, 1));
 }

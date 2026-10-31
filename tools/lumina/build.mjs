@@ -12,8 +12,9 @@ const REPO = 'https://gitlab.com/stubborn-hug/lumina.git';
 export const PIN = '80e1aa6011159db7b88d52637d4b1112b1450ffa';
 // the worlds the prototype ships (Luminati's public/levels): five at peace, one with a fight
 export const LEVELS = ['emberfall', 'sample-hamlet', 'brightwater-crossing', 'gildhaven', 'starfall-vale', 'cinderwatch-pass'];
-// and Emberfall's own, written by levels.mjs: Thornwick from our sim, the catalogue of Luminati's world, our fight, our dungeon
-export const OURS = ['thornwick', 'catalogue', 'encounter', 'barrows'];
+// and Emberfall's own, written by levels.mjs: Thornwick from our sim, the catalogue of Luminati's world and its wing of
+// Emberfall's art, our fight, our dungeon
+export const OURS = ['thornwick', 'catalogue', 'catalogue-art', 'encounter', 'barrows'];
 const WORK = join(HERE, '.work'), LUM = join(WORK, 'luminati'), OUT = join(ROOT, 'lumina');
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', env: { ...process.env } });
 
@@ -32,13 +33,16 @@ for (const l of LEVELS) cpSync(join(LUM, 'public', 'levels', `${l}.json`), join(
 // every baked actor's name, for the sheets (a level may name any of them: levels.mjs), and which have a portrait
 const actors = readdirSync(join(ROOT, 'assets', 'actors')).filter((f) => /^[a-z_0-9]+\.json$/.test(f)).map((f) => f.slice(0, -5)).sort();
 const faces = actors.filter((a) => existsSync(join(ROOT, 'assets', 'actors', `${a}.face.png`)));
-writeFileSync(join(EMBER, 'actors.js'), `// written by tools/lumina/build.mjs: assets/actors/ (every atlas, and those with a portrait baked)\nexport const ACTOR_NAMES = ${JSON.stringify(actors)};\nexport const ACTOR_FACES = ${JSON.stringify(faces)};\n`);
+const propLevels = [];
 const LV = await import('./levels.mjs'), base = JSON.parse(readFileSync(join(LUM, 'public', 'levels', 'sample-hamlet.json'), 'utf8'));
 for (const l of OURS) {
-  const { level, stats } = await LV[l](base, LUM);
+  const { level, stats, files = {} } = await LV[l.replace(/-(\w)/g, (_, c) => c.toUpperCase())](base, LUM);   // (catalogue-art → catalogueArt)
   writeFileSync(join(EMBER, 'public', 'levels', `${l}.json`), JSON.stringify(level));
+  for (const [f, data] of Object.entries(files)) writeFileSync(join(EMBER, 'public', 'levels', f), JSON.stringify(data));   // (a level's sidecars: props.js)
+  if (files[`${l}.ember.json`]) propLevels.push(l);
   console.log(`levels/${l}.json: ${stats.size}, ${level.objects.length} objects`);
 }
+writeFileSync(join(EMBER, 'actors.js'), `// written by tools/lumina/build.mjs: assets/actors/ (every atlas, and those with a portrait baked), and the levels with\n// a sidecar of Emberfall's art (props.js)\nexport const ACTOR_NAMES = ${JSON.stringify(actors)};\nexport const ACTOR_FACES = ${JSON.stringify(faces)};\nexport const PROP_LEVELS = ${JSON.stringify(propLevels)};\n`);
 mkdirSync(join(EMBER, 'public', 'i18n'), { recursive: true });
 cpSync(join(LUM, 'public', 'i18n', 'index.json'), join(EMBER, 'public', 'i18n', 'index.json'));
 cpSync(join(LUM, 'LICENSE'), join(EMBER, 'public', 'LUMINATI-LICENSE.txt'));
@@ -46,7 +50,7 @@ cpSync(join(LUM, 'LICENSE'), join(EMBER, 'public', 'LUMINATI-LICENSE.txt'));
 let game = readFileSync(join(LUM, 'game.html'), 'utf8');
 const MAIN = '<script type="module" src="./src/main.js"></script>';
 if (!game.includes(MAIN)) throw new Error('build.mjs: Luminati\'s game.html no longer loads ./src/main.js');
-game = game.replace(MAIN, '<script type="module" src="../src/main.js"></script>\n  <script type="module" src="./touch.js"></script>\n  <script type="module" src="./autobattle.js"></script>\n  <script type="module" src="./issue.js"></script>\n  <script type="module" src="./cards.js"></script>')
+game = game.replace(MAIN, '<script type="module" src="../src/main.js"></script>\n  <script type="module" src="./touch.js"></script>\n  <script type="module" src="./autobattle.js"></script>\n  <script type="module" src="./issue.js"></script>\n  <script type="module" src="./cards.js"></script>\n  <script type="module" src="./props.js"></script>')
   .replace(/<title>[^<]*<\/title>/, '<title>Emberfall · Luminati prototype</title>')
   .replace('<meta name="viewport" content="width=device-width, initial-scale=1" />', '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />');
 writeFileSync(join(EMBER, 'game.html'), game);
