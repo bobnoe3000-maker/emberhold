@@ -125,8 +125,9 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); },   // the menu comes up over a clear screen
-  // the Frontier (docs/frontier-proposal.md): its own sandbox page, the slot saved before the page goes
-  openFrontier: async () => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = './frontier.html'; } });
+  // the sandboxes (the Frontier, docs/frontier-proposal.md; the Luminati prototype, docs/lumina-prototype.md): pages of
+  // their own that touch no save, the slot saved before the page goes
+  openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; } });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 // offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title

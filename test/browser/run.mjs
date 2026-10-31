@@ -1267,6 +1267,24 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// the Luminati prototype (docs/lumina-prototype.md): its front page lists the worlds and the heroes, and a world boots with
+// Emberfall's people in it, the player and every villager drawn from our atlases (software WebGL is slow: a patient wait)
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
+    await p.goto(`${base}/lumina/index.html`);
+    const front = await p.evaluate(() => ({ worlds: document.querySelectorAll('#worlds .world').length, heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=sample-hamlet&hero=hero_rogue`);
+    await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
+    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name), talk: !!document.getElementById('ember-talk') }));
+    check('lumina: the front page lists six worlds and eight heroes; a world boots with the hero and every villager drawn as Emberfall\'s, and the Talk button',
+      front.worlds === 6 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue' && cast.npcs.every((n) => /^ember:(npc_|hero_)/.test(n)) && cast.talk && errs.length === 0,
+      JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');
