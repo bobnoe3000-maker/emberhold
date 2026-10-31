@@ -33,7 +33,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   /lumina/ (the Luminati prototype, docs/lumina-prototype.md: Luminati's worlds, Emberfall's people; a built folder: rebuild, never edit)
 #   /lumina/game.html?…&from=game (as the menu's Compare worlds opens a map: its ◂ button goes back to the game)
 #   /lumina/world.html (never opened alone: the game frames it with ?renderer=luminati; built with the prototype)
-#   /lumina/game.html?autostart=1&level=thornwick|encounter|barrows|catalogue|catalogue-art|<theirs>&hero=hero_knight|…[&auto=1][&view=luminati] (our Thornwick, the Scrag Warren fight with the autobattle, the Old Barrows dungeon, the asset catalogue and its wing of Emberfall's art; the main game's camera and eight facings unless view=luminati)
+#   /lumina/game.html?autostart=1&level=thornwick|encounter|barrows|catalogue|catalogue-art|biomes|<theirs>&hero=hero_knight|…[&auto=1][&view=luminati] (our Thornwick, the Scrag Warren fight with the autobattle, the Old Barrows dungeon, the asset catalogue and its wing of Emberfall's art; the main game's camera and eight facings unless view=luminati)
 #   /frontier.html[?lv=1-75&town=thornwick|ashgate|…&zoom=0.15-40] (the Frontier, docs/frontier-proposal.md: the Old Provinces as one land, a sandbox with its own sim; ?manual on localhost: globalThis.__frame(ms), __fr, __view)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
@@ -55,8 +55,8 @@ node tools/actor-lab/faces.cjs            # the face board: every faces.json pre
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
 node tools/lumina/build.mjs              # the Luminati prototype (docs/lumina-prototype.md): Luminati at its pin into tools/lumina/.work/ (npm ci there), tools/lumina/ember/ staged, our levels written, vite build → lumina/ (committed; 4 MB)
-node tools/lumina/build.mjs --levels     # … and our five prototype maps written anew from levels.mjs (without it, the committed ones are kept as they are)
-node tools/lumina/levels.mjs [thornwick|catalogue|catalogueArt|encounter|barrows]   # what Emberfall's own Luminati levels hold (the build writes them: Thornwick from createSim, the catalogue from Luminati's ObjectCatalog, the encounter, the Old Barrows)
+node tools/lumina/build.mjs --levels     # … and our prototype maps written anew from levels.mjs (without it, the committed ones are kept as they are)
+node tools/lumina/levels.mjs [thornwick|catalogue|catalogueArt|encounter|barrows|biomes]   # what Emberfall's own Luminati levels hold (the build writes them: Thornwick from createSim, the catalogue from Luminati's ObjectCatalog, the encounter, the Old Barrows)
 node tools/worldmap/draw.mjs              # the Old Provinces' wall map (docs/world-map-proposal.md; its places: src/ui/wallmap.js) → docs/img/world/old-provinces.jpg + .svg, and the game's copy in assets/maps/ (with its coast, old-provinces.json, for the World map's fog)
 node tools/worldmap/towns.mjs             # the region towns at one scale (docs/region-towns-proposal.md) → docs/img/towns/town-plans.jpg
 node tools/worldmap/streets.mjs [--waystations]   # the region towns' and waystations' street plans, top-down at one scale (docs/town-streets-proposal.md) → docs/img/towns/streets-<town>.jpg

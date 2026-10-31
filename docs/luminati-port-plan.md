@@ -1,7 +1,7 @@
 # Luminati as Emberfall's renderer: a plan
 
-**Status: Proposal, with phase 0 built** (2026-10-31). The owner's choices are in §11. Phase 0, the trial build, is
-in the game behind the menu's Graphics setting (§12); the plan stops there until the owner has played it. The prototype it builds on is
+**Status: Plan of record, phase 0 built** (2026-10-31): the owner is staying with Luminati (§13). The owner's choices are in §11. Phase 0, the trial build, is
+in the game behind the menu's Graphics setting (§12); the owner played it, and §13 orders what comes next. The prototype it builds on is
 [lumina-prototype.md](./lumina-prototype.md) (`/lumina/`, architecture A16). Its decision row, A17, is proposed in
 [architecture.md §11](./architecture.md#11-decision-log).
 
@@ -387,3 +387,80 @@ Toadking's Mound 128 × 128 (cropped), the Scrag Warren 128 × 97 (`test/render3
 - **The Reach and Heights overlands** are their own lands now ([reach-heights-overlands.md](./reach-heights-overlands.md)),
   and the converter draws them. In Luminati they still read green: its grass is green, its snow belongs to its season
   kit, and the Heights' snow stands as pale sand. They need a ground pass of their own in phase 3.
+
+---
+
+## 13. Committed to Luminati: what's next (2026-10-31)
+
+The owner, after the trial: *"assuming we are going to stick with the Luminati engine (keep the compare and other maps in
+the menu). Whats next on the main game to implement the Luminati engine."*
+
+So the port goes ahead. **Compare worlds**, *Another world* and the prototype's maps stay in the menu, and the
+prototype's maps are kept as they are (§11 point 5). The order below puts first what the owner sees most: the fights.
+Each step lands on main behind the Graphics switch, so the game stays playable in Emberlit all the way to the cutover.
+
+| # | Step | What it delivers | Done when |
+|---|---|---|---|
+| 1 | **The engine in the page** (§2's phase 1) | `tools/render3d/build.mjs` builds Luminati's engine and world layers and three.js as ES modules into `src/vendor/luminati-80e1aa6/` (import-mapped as `luminati`). `src/render3d/` imports it, and the frame goes. One WebGL context: Emberlit's world canvas isn't made when Luminati draws | the trial's checks pass without the frame; the renderer loads behind the title at ≤ 450 KB gzipped (§2); no second context |
+| 2 | **Fights** (§6, phase 6, brought forward) | <ul><li>Every `fx.js` effect in Luminati's FX quads, particles and ground markers: weapon trails, spells, hit sparks, the Fallen.</li><li>The floor rings, the telegraphs and the party's focus ring.</li><li>Hit flashes on the sprites (`combatFx`).</li><li>The hero's carry light (a combat VFX light, not a lamp).</li></ul> | a Scrag Warren and an Old Barrows fight in the game read as well as the prototype's; the M3 create → Fallen → temple → wipe check passes on Luminati |
+| 3 | **Dungeons dressed** | <ul><li>Each site's dressing kit (`world.js` DRESS: dig, gallery, muster, bailey, nave, mound, locks, vats, abbey) as Luminati props: racks, bones, braziers, banners, cages, as the prototype's Old Barrows has them.</li><li>Walls at their height in each site's stone.</li><li>Darker fog, and a fixed hour per kit.</li><li>The Mere Tower's landings.</li></ul> | a sample of seeds per site captured and judged against the prototype's Barrows |
+| 4 | **Towns and the waystation** | <ul><li>Buildings placed on our services' doors, not only sized to our footprints.</li><li>Saltmere's stilts and punts in 3D (until then our art stands in).</li><li>Each region's walls and roofs checked against the world doc.</li><li>The service plaques over Luminati's houses.</li></ul> | the square-menu and x-ray checks pass on Luminati |
+| 5 | **The light and the look** | <ul><li>Luminati's day keyframes moved toward Emberlit's dusky ones (the owner's standing direction: keep the gloom).</li><li>Fog and wind weather.</li><li>The biomes' light: the Reach's arid day, the Heights' winter (done in the converter, §14).</li><li>A depth-of-field pass at the phone's size.</li></ul> | a contact sheet at dawn, day, dusk and night in each region, before and after |
+| 6 | **The phone** (phase 7) | the gates in §8 on the owner's iPhone: frame rate, memory (atlas textures cut to the frames used, as the prototype's sheets were), level build time, context loss | the gates met, the numbers in the commit |
+| 7 | **Tests and tools** (phase 8) | the browser suite run on both renderers; capture tools able to shoot either | CI runs both |
+| 8 | **The cutover** (phase 9) | the default flips to Luminati; Emberlit stays in the menu (Graphics, Compare worlds) | the owner's play-test |
+
+After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
+plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
+that isn't planned: Emberlit stays in reserve.
+
+---
+
+## 14. The biomes: grassland, desert, snow and ice (2026-10-31)
+
+The owner: *"Can we also create assets/tiles in the new engine to cover desert/grassland, and icy/snowy areas?"*
+
+Luminati already paints all three, so nothing new is drawn by hand:
+
+- **Grassland:** its default set (grass, dark grass, flowers, farmland, dirt paths, cobbles).
+- **Desert:** its arid set, from its set-piece kit:
+  - ground: dry earth, dry grass, cracked earth, red sand, scree, sandstone;
+  - rock: red rock with its cliffs;
+  - trees and crags: junipers, palms, cypresses, dead trees, red-rock and sandstone crags (mesas, hoodoos, spires);
+  - houses: adobe walls, terracotta and flat roofs;
+  - light: an arid day (`climate: arid`).
+- **Snow and ice:** its winter set, from its season kit:
+  - ground: snow, trodden snow paths, frosted cobbles;
+  - ice: ice to walk on, frozen water;
+  - trees and stone: snow pines, bare trees, snow and ice stones and crags;
+  - season: `season: winter`.
+
+Each kit loads only for a level that uses it.
+
+What's built:
+- **In the game** (`src/render3d/convert.js` `BIOMES`, `BIOME_OF`), each region draws in its biome:
+  - **The Vale and the Fens** stay grassland.
+  - **The Cinder Reach** is desert. Its grass becomes dry earth, scrub, cracked pans and red sand; its paths cracked
+    earth; its cobbles sandstone; its mountains red rock; its trees junipers and the dead; its stones red rock. It takes
+    the arid light.
+  - **The Pale Heights** are snow and ice. Its open ground is snow with trodden patches and scree; its paths are snow
+    paths; its cobbles frosted; its water frozen to ice; its mountains snow; its trees snow pines and bare; its stones
+    snow. It takes the winter season.
+  - The town walls stay stone.
+- **In the prototype:** a seventh map, **The Biomes** (`levels.mjs` `biomes`).
+  - Grassland, desert, and snow and ice stand side by side, west to east. Each has its ground tiles in bands with a
+    signpost naming each tile, a pond (an oasis, a frozen tarn), its trees, stones, crags and a house, and a path.
+  - One level holds one light, so the three share an afternoon.
+  - It's in the menu's *Compare worlds* and on the prototype's front page.
+
+![The Biomes map, then the Reach and the Heights in the game](img/lumina/biomes.jpg)
+
+Checks: `test/render3d.test.mjs` asserts:
+- the Reach converts in the desert's tiles and trees with the arid light, and no grass;
+- the Heights convert in snow, ice and frozen water with the winter season, and its trees are snow pines and bare;
+- the Vale stays grassland;
+- every tile is in the legend.
+
+The browser suite checks the front page lists the Biomes.
+
+Rough: the town walls take no snow or sand, and the Heights' scree reads warm (it's the arid set's).

@@ -9,8 +9,9 @@ prototype."*
   available from the menu so i can compare gameplay and world art."* It lists:
   - this game drawn by Emberlit or by Luminati (the port's trial build, [luminati-port-plan.md](./luminati-port-plan.md)
     §12; the same choice as Graphics);
-  - our five maps, each opened straight into play with your hero's look: Thornwick, the Scrag Warren and the Old
-    Barrows (Auto on), the Catalogue and its second wing. Their ◂ button reads **◂ Game** and goes back to your game
+  - our six maps, each opened straight into play with your hero's look: Thornwick, the Scrag Warren and the Old
+    Barrows (Auto on), the Catalogue and its second wing, and the Biomes (grassland, desert, snow and ice:
+    [luminati-port-plan.md](./luminati-port-plan.md) §14). Their ◂ button reads **◂ Game** and goes back to your game
     (`?from=game`, `ember/touch.js`);
   - all of Luminati's worlds (this front page) and the Frontier;
 - or open `/lumina/` directly.
