@@ -180,9 +180,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#hubBar button[data-k=temple]').tap(); await p.waitForTimeout(400);
     await p.locator('#hubSheet [data-go=raise]').tap(); await p.waitForTimeout(300);
     const g0 = await S(() => globalThis.__sim.state.counters.gold);
-    await p.locator('#hubSheet [data-raise]').tap(); await p.waitForTimeout(400);
-    const raised = await S(() => { const c = globalThis.__sim.state.party[1]; return !c.fallen && c.hp > 0; });
-    check('m3: the temple raises the slain (free: hero level 5 or lower, once a day)', raised && (await S(() => globalThis.__sim.state.counters.gold)) === g0);
+    await p.locator('#hubSheet [data-raise]').tap();
+    // (the raise is a command the sim takes on its next tick: wait for it, not a fixed time, on a loaded runner)
+    const raised = await p.waitForFunction(() => { const c = globalThis.__sim.state.party[1]; return !c.fallen && c.hp > 0; }, null, { timeout: 15000 * SLOW, polling: 100 }).then(() => true, () => false);
+    const g1 = await S(() => globalThis.__sim.state.counters.gold);
+    check('m3: the temple raises the slain (free: hero level 5 or lower, once a day)', raised && g1 === g0, JSON.stringify({ raised, g0, g1 }));
     await p.locator('#hubSheet .close').tap();
     // a wipe: everyone at 1 HP in a room → wake at the temple, Weakened, a quarter of the gold gone
     await S(() => globalThis.__sim.bus.on('defeat', (d) => (window.__lost = d.lost)));
