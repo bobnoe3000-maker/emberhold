@@ -1,6 +1,15 @@
 # Emberfall — World Summary
 
-**v1.33 · 2026-10-10 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.33 (§3, §5, §6; the owner's
+**v1.34 · 2026-10-31 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.34 (§3.3, §3.4; the owner's
+decision, "design Reach and Heights now"; [reach-heights-overlands.md](./reach-heights-overlands.md)): **the lie of the
+Reach and the Heights.** Three imperial roads meet at Ashgate's gate: the Wickham road from the Vale, the Kell road to
+Kell's Rest under the dead volcano, and the Solmere road east over the **Ashwater**, the river that comes down past the
+Cinderworks; the Cinderworks' **tailings ponds** are rust-red and nothing grows at their edge. In the Heights the
+imperial road comes up the frozen Sol to the Frozen Hospice; the Pilgrims' Stair climbs from the Hospice to the Lip,
+and the **pass road** runs west to Frosthold, whose frozen stream ends in a tarn below the road. The crater's floor is
+glass. Where every site stands is in §3.3 and §3.4.
+
+v1.33 (§3, §5, §6; the owner's
 decision, [quest-progression-critique.md](./quest-progression-critique.md)): **Act I has four chapters.** The fourth,
 *The Standard*, is Sister Ilse's: an ember-shard is cut out of one of the bound, and near the bound it stirs them, so
 the robed men's digging down to the Third Legion's binding under the Sunken Chapel is why the barrows woke; break the
@@ -462,6 +471,17 @@ Black hills of slag west of the capital, and the imperial foundries in them. Som
   three levels, none overlapping, and one secret: the list is cut to fit when the Reach is built. Two come from the
   Vale. The **Cold Seam** is the Scrag Warren's goblins, who dug on through the range, and the **Assay Yards** keep
   the Tithe Mill's Redhand on their gates.
+- **The land (v1.34).** Ashgate stands in the middle of the Reach where three imperial roads meet at its east gate:
+  the **Wickham road**, up from the Vale in the south; the **Kell road**, west round the town's north wall to Kell's
+  Rest; and the **Solmere road**, east and over the **Ashwater** by the old bridge. A dead beacon-tower stands beside
+  each road every day's march (§3.6). The Ashwater comes down out of the north past the **Cinderworks**, which stand on
+  a track up from Ashgate among slag heaps, with Furnace Nine and the **Magma Vault** under it further up, and the
+  works' **tailings ponds**, rust-red, nothing growing at their edge. West, the **black slag hills**, and under them
+  the **dead volcano** with Kell's Rest at its foot; the **Assay Yards** stand fenced beside the depot, and the old
+  track climbs the volcano's flank into the hills, where the quota office kept its strongroom (the hidden **Ninth
+  Vault**). South-west, in the low hills off the Wickham road, the **Slag Tunnels'** adit; south, by the same road,
+  the **Cold Seam**, a played-out Deepdelver pithead. East, on the Ashwater's west bank below the Solmere road, the
+  **Forgehall of Oruth**. The open ground is ash-dusted scrub, cracked earth and red rock.
 - **Beyond 75 (v1.32, the owner):** more maps, islands off the Old Provinces' coast, can carry the bands on past the
   Throne. A dungeon can widen to four or five levels if a land wants fewer of them.
 - **People:** Charter-Reeve Dagny Coalbrook; Tamsin Coalbrook, her niece, a mage-smith and the Reach's found
@@ -481,6 +501,14 @@ Frozen passes round the crater where the Ember was found. The air hums.
   scree. **The Frozen Hospice** at the foot of the Stair is a waystation. The monks are pilgrims who never went home.
 - **Sites:** the Frozen Hospice, the **Pilgrims' Stair**, the **Soulcracks** (a canyon split by the Fall), the
   **Praetory** (the Empress's bound guard at their posts), the **Glass Keep**, and the Lip, the crater's rim.
+- **The land (v1.34).** The imperial road comes up from Solmere beside the **Sol**, frozen from bank to bank, to the
+  **Frozen Hospice**; the Sol rises under the crater's Lip. From the Hospice's north-east gate the **Pilgrims' Stair**
+  climbs north in switchbacks to **the Lip**, the one break in the crater's rim, where the First Pilgrim stands. The
+  crater's floor is black glass, and the **Ember Throne** stands half-sunk in it. The **pass road** runs north-west
+  from the Hospice to **Frosthold**, in its pass in the crags to the west, its one wall across the road; the frozen
+  stream in front of it runs east and ends in a frozen **tarn** below the road. East of the Stair the ground has split
+  open along the **Soulcracks**; east of the Lip stands the **Praetory**, and north-east, beyond the rim, the **Glass
+  Keep**. Peaks stand all round, pines on the lower slopes in the south; the ground is patchy snow, rock and scree.
 - **People:** Prior Anselm; Sister Hild, the infirmarian; Brother Cobb, a Praetorian's grandson, who keeps the
   barracks' keys; the Glass Legate; the First Pilgrim.
 - **Look:** `ice` and `rock` variants; cavern and flagstone. Biome: *Soulcracks*.
