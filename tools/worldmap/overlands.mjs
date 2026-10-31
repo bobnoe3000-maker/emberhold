@@ -130,35 +130,38 @@ const REGIONS = [], dropped = [];
 
 // THE CINDER REACH (15–30): black slag hills north-west, dry earth and red rock; Ashgate in the middle where the Wickham
 // road from Emberfall meets the road to Kell's Rest and the road east to Solmere; the Cinderworks up the Ashwater.
+// (2026-10-31: redrawn to the game's own layout, src/sim/outdoor.js buildReach / REACH, docs/reach-heights-overlands.md:
+// the roads meet at the gate on the town's east side, the Kell road round its north wall, the Solmere road over the
+// Ashwater's bridge; the ore rails aren't laid.)
 REGIONS.push({ id: 'reach', name: 'The Cinder Reach', sub: 'levels 15–30 · Act III, Quota · the town: Ashgate · a waystation: Kell\'s Rest', ground: '#e6d0a8',
   lede: 'In by the Wickham road from the Vale; Ashgate where three roads meet; the Cinderworks up the Ashwater, the old dead volcano west.',
-  notes: ['Ore rails run from the Cinderworks down to Ashgate\'s gate. The tailings ponds are rust-red, and nothing grows at their edge.'],
+  notes: ['The tailings ponds are rust-red, and nothing grows at their edge. Laid out as the game builds it (src/sim/outdoor.js buildReach).'],
   draw(m) {
     m.scatter(18, 0, 160, 260, 260, (x, y) => m.blob(x, y, 8 + rand() * 12, '#dcc298'));
-    m.yielding(() => { for (const [x, y, h] of [[20, 40, 16], [40, 30, 20], [62, 46, 15], [86, 36, 18], [104, 52, 14], [30, 64, 13], [120, 26, 12], [56, 18, 13], [12, 18, 12], [76, 66, 12],
-      [62, 176, 13], [80, 186, 16], [98, 176, 12], [52, 196, 11], [94, 200, 12]]) m.mountain(x, y, h, '#7a706a'); });
-    m.mountain(30, 92, 26, '#8a6a56'); m.avoid((x, y, r) => Math.hypot(x - X(30), y - Y(80)) < 16 * S + r);   // (no rock on the volcano's flank) m.ellipse(30, 68, 5, 2.2, '#3b2f24', 'terrain'); m.note(30, 100, 'the dead volcano', { size: 12.5 });
-    m.scatter(40, 0, 0, 260, 260, (x, y) => m.rock(x, y, 2 + rand() * 2.4), (x, y) => Math.hypot(x - 130, y - 140) > 18);
-    m.scatter(14, 150, 40, 210, 90, (x, y) => m.heap(x, y, 3 + rand() * 3));
-    m.blob(160, 92, 9, '#b8643a', 'wash'); m.blob(204, 72, 7, '#b8643a', 'wash'); m.note(160, 106, 'tailings', { size: 11.5 });
-    m.river([[168, 0], [184, 56], [200, 110], [214, 150], [236, 190], [260, 214]], 1.6, 'the Ashwater', { at: [198, 100], rot: 64 });
-    m.road([[142, 260], [130, 140]], 'imperial', { name: 'the Wickham road', at: [146, 200], rot: -84 });
-    m.road([[130, 140], [46, 118]], 'imperial', { name: 'the Kell road', at: [86, 124], rot: 15 });
-    m.road([[130, 140], [260, 196]], 'imperial', { name: 'the Solmere road', at: [196, 162], rot: 23 });
-    m.road([[130, 140], [176, 62]], 'track'); m.road([[132, 138], [178, 64]], 'rails'); m.road([[176, 62], [194, 44]], 'track');
-    m.road([[118, 140], [86, 178]], 'track'); m.road([[138, 208], [124, 214]], 'track'); m.road([[214, 160], [206, 150]], 'track');
-    m.road([[46, 118], [58, 124]], 'track'); m.road([[46, 112], [52, 70], [60, 42]], 'faint');
-    m.town(130, 140, 'Ashgate', { sub: 'slag-brick walls, the pithead wheel', dx: -2 });
-    m.stop(46, 118, 'Kell\'s Rest', { sub: 'the Assay\'s depot', dx: -14, dy: -9 });
-    m.site(124, 214, 'The Cold Seam', '12–17', 'a played-out Deepdelver mine: the Tally Wall');
-    m.site(80, 168, 'The Slag Tunnels', '15–19', 'the Shift-Bell, still ringing for a shift nobody works', { dy: 22 });
-    m.site(62, 128, 'The Assay Yards', '18–22', 'the Counting House: Vane\'s ledgers, coal-red wax', { dy: 7 });
-    m.site(176, 60, 'The Cinderworks', '20–25', 'one floor a furnace, hotter each floor', { dx: 6, dy: -12 });
-    m.site(206, 150, 'The Forgehall of Oruth', '23–27', 'the Anvil of the Charter, where the clans swear');
-    m.site(196, 40, 'The Magma Vault', '26–30', 'under Furnace Nine', { dx: 20, dy: -6 });
-    m.site(60, 40, 'The Ninth Vault', '30', 'the quota office\'s strongroom (the Reach set)', { hidden: true });
-    m.exit(142, 256, 90, 'to Emberfall', 'Thornwick, by the Wickham road');
-    m.exit(256, 194, 22, 'to Solmere', 'the Lamphall');
+    m.yielding(() => { for (const [x, y, h] of [[40, 30, 18], [86, 36, 18], [106, 54, 14], [118, 22, 12], [28, 10, 12], [62, 10, 13], [92, 12, 12], [80, 66, 12], [140, 30, 12],
+      [36, 182, 13], [58, 200, 12], [100, 204, 12], [30, 224, 11]]) m.mountain(x, y, h, '#7a706a'); });
+    m.mountain(16, 86, 26, '#8a6a56'); m.avoid((x, y, r) => Math.hypot(x - X(16), y - Y(72)) < 16 * S + r);   // (no rock on the volcano's flank)
+    m.scatter(40, 0, 0, 260, 260, (x, y) => m.rock(x, y, 2 + rand() * 2.4), (x, y) => Math.hypot(x - 116, y - 140) > 22);
+    m.scatter(14, 140, 30, 220, 104, (x, y) => m.heap(x, y, 3 + rand() * 3));
+    m.blob(148, 90, 9, '#b8643a', 'wash'); m.blob(222, 76, 7, '#b8643a', 'wash'); m.note(148, 104, 'tailings', { size: 11.5 });
+    m.river([[182, 0], [194, 50], [206, 100], [216, 140], [222, 160], [224, 172], [224, 186], [230, 204], [250, 220], [260, 226]], 1.6, 'the Ashwater', { at: [214, 112], rot: 68 });
+    m.road([[146, 260], [152, 140]], 'imperial', { name: 'the Wickham road', at: [156, 200], rot: -87 });
+    m.road([[152, 140], [152, 102], [64, 102], [50, 104]], 'imperial', { name: 'the Kell road', at: [104, 98], rot: 0 });
+    m.road([[132, 140], [152, 140], [210, 179], [238, 179], [260, 188]], 'imperial', { name: 'the Solmere road', at: [184, 166], rot: 34 });
+    m.road([[152, 120], [168, 90], [175, 74]], 'track'); m.road([[170, 70], [166, 50], [169, 39]], 'track');
+    m.road([[150, 182], [108, 188], [82, 212], [76, 200]], 'track'); m.road([[148, 226], [132, 230], [116, 224]], 'track'); m.road([[190, 165], [194, 154]], 'track');
+    m.road([[76, 102], [76, 122], [72, 134]], 'track'); m.road([[38, 98], [48, 82], [58, 56], [65, 38]], 'faint');
+    m.town(116, 140, 'Ashgate', { sub: 'slag-brick walls, the gate east', dx: -2 });
+    m.stop(38, 104, 'Kell\'s Rest', { sub: 'the Assay\'s depot', dx: -4, dy: 9 });
+    m.site(122, 212, 'The Cold Seam', '12–17', 'a played-out Deepdelver mine: the Tally Wall');
+    m.site(74, 192, 'The Slag Tunnels', '15–19', 'the Shift-Bell, still ringing for a shift nobody works', { dy: 14 });
+    m.site(64, 132, 'The Assay Yards', '18–22', 'the Counting House: Vane\'s ledgers, coal-red wax', { dy: 9 });
+    m.site(176, 64, 'The Cinderworks', '20–25', 'one floor a furnace, hotter each floor', { dx: 16, dy: -10 });
+    m.site(194, 146, 'The Forgehall of Oruth', '23–27', 'the Anvil of the Charter, where the clans swear', { dx: -4 });
+    m.site(168, 30, 'The Magma Vault', '26–30', 'under Furnace Nine', { dx: 22, dy: -4 });
+    m.site(64, 30, 'The Ninth Vault', '30', 'the quota office\'s strongroom (the Reach set)', { hidden: true });
+    m.exit(146, 256, 90, 'to Emberfall', 'Thornwick, by the Wickham road');
+    m.exit(256, 187, 20, 'to Solmere', 'the Lamphall');
   } });
 
 // SOLMERE (from 15): the Mere in the middle, the city on its south shore with the Beacon, the Bowl west of the walls,
@@ -259,34 +262,38 @@ REGIONS.push({ id: 'greenwood', name: 'The Greenwood', sub: 'levels 45–60 · A
 
 // THE PALE HEIGHTS (60–75): mountains round the crater; the Pilgrims' Stair up from the Frozen Hospice at its foot;
 // Frosthold in its pass west of the Stair; the Glass Keep north-east; the Throne in the crater.
+// (2026-10-31: redrawn to the game's own layout, src/sim/outdoor.js buildHeights / HEIGHTS: the pass road crosses the
+// Sol by a bridge; Frosthold's stream ends in a tarn below it.)
 REGIONS.push({ id: 'heights', name: 'The Pale Heights', sub: 'levels 60–75 · Act VI, The Throne of Embers · the town: Frosthold · a waystation: the Frozen Hospice', ground: '#ecebe4',
-  lede: 'Up the Sol from Solmere to the Frozen Hospice; the Pilgrims\' Stair to the crater; Frosthold in its pass to the west; the Glass Keep north-east.',
-  notes: ['After the finale, the Undervaults open under the Throne: the XP and loot dive (canon).'],
+  lede: 'Up the Sol from Solmere to the Frozen Hospice; the Pilgrims\' Stair to the Lip; the pass road over the Sol to Frosthold; the Glass Keep north-east.',
+  notes: ['After the finale, the Undervaults open under the Throne: the XP and loot dive (canon). Laid out as the game builds it (src/sim/outdoor.js buildHeights).'],
   draw(m) {
     m.scatter(22, 0, 0, 260, 260, (x, y) => m.blob(x, y, 10 + rand() * 14, '#f6f4ee'));
-    m.ellipse(150, 74, 48, 34, '#d8d2c4', 'wash', `stroke="${INK}" stroke-width="2"`); m.ellipse(150, 74, 36, 24, '#c9c0ae', 'wash', `stroke="${INK}" stroke-width="1"`);
-    m.note(150, 50, 'the crater', { size: 13 });
-    const keep = (x, y) => Math.hypot((x - 150) / 54, (y - 74) / 40) > 1 && Math.hypot(x - 56, y - 96) > 16 && Math.abs(x - (140 + (y > 110 ? (y - 110) * 0 : 0))) > 12 && Math.hypot(x - 216, y - 34) > 12;
+    m.ellipse(150, 64, 44, 30, '#d8d2c4', 'wash', `stroke="${INK}" stroke-width="2"`); m.ellipse(150, 64, 34, 22, '#4a4648', 'wash', `stroke="${INK}" stroke-width="1"`);
+    m.note(150, 30, 'the crater', { size: 13 }); m.note(150, 78, 'glass', { size: 11.5 });
+    const keep = (x, y) => Math.hypot((x - 150) / 50, (y - 64) / 36) > 1 && Math.hypot(x - 60, y - 98) > 22 && !(y > 96 && Math.abs(x - 150) < 22) && Math.hypot(x - 220, y - 34) > 12
+      && Math.hypot(x - 110, y - 150) > 14 && !(y > 180 && x > 112 && x < 170) && Math.hypot(x - 206, y - 150) > 26;
     m.scatter(70, 0, 0, 260, 200, (x, y) => m.mountain(x, y, 9 + rand() * 10, PAPER, true), keep);
-    m.scatter(60, 0, 140, 90, 260, (x, y) => m.pine(x, y, 5 + rand() * 3, rand() < 0.5), keep);
-    m.scatter(60, 190, 160, 260, 260, (x, y) => m.pine(x, y, 5 + rand() * 3, rand() < 0.5), keep);
-    m.river([[150, 106], [146, 160], [136, 210], [132, 260]], 1.4, 'the Sol', { at: [154, 180], rot: 84 });
-    m.road([[132, 260], [140, 214]], 'imperial');
-    const stair = [[140, 214]]; for (let i = 1; i <= 12; i++) { const u = i / 13, rx = 140 + (150 - 140) * u - (u < 0.5 ? 0 : 2) + 9; stair.push([rx + (i % 2 ? 3 : -3), 214 - i * 8.4]); } stair.push([152, 106]);
-    m.avoid((x, y, r) => { const u = (x - X(150)) / (54 * S), v = (y - Y(74)) / (40 * S); return Math.hypot(u, v) < 1 + r / (40 * S); });
-    m.road(stair, 'track', { name: 'the Pilgrims\' Stair', at: [168, 168], rot: -84 });
-    m.road([[140, 214], [96, 160], [56, 96]], 'track', { name: 'the pass road', at: [84, 142], rot: 52 });
-    m.road([[176, 92], [214, 96]], 'faint'); m.road([[150, 104], [200, 150]], 'faint'); m.road([[184, 60], [216, 34]], 'faint');
+    m.scatter(60, 0, 140, 110, 260, (x, y) => m.pine(x, y, 5 + rand() * 3, rand() < 0.5), keep);
+    m.scatter(60, 180, 140, 260, 260, (x, y) => m.pine(x, y, 5 + rand() * 3, rand() < 0.5), keep);
+    m.river([[150, 100], [148, 120], [146, 150], [138, 180], [132, 210], [126, 250], [124, 260]], 1.4, 'the Sol', { at: [128, 232], rot: 80 });
+    m.river([[0, 126], [10, 124], [44, 122], [68, 122], [80, 128], [86, 140]], 0.7); m.ellipse(88, 142, 8, 6, SEA, 'water', `stroke="${INK}" stroke-width="1"`); m.note(88, 154, 'the tarn', { size: 11.5 });
+    for (let k = 0; k < 8; k++) m.ellipse(186 + k * 5.6 + (k % 2 ? 1.5 : -1.5), 132 + k * 5.6 + (k % 2 ? -1.5 : 1.5), 4.2, 2.4, INK, 'water');
+    m.road([[150, 260], [150, 198]], 'imperial');
+    m.avoid((x, y, r) => { const u = (x - X(150)) / (50 * S), v = (y - Y(64)) / (36 * S); return Math.hypot(u, v) < 1 + r / (36 * S); });
+    m.road([[158, 194], [168, 184], [158, 172], [170, 160], [160, 148], [172, 136], [162, 124], [168, 114], [158, 106]], 'track', { name: 'the Pilgrims\' Stair', at: [180, 176], rot: -84 });
+    m.road([[150, 198], [150, 188], [122, 188], [112, 160], [104, 110], [96, 100], [70, 100]], 'track', { name: 'the pass road', at: [116, 128], rot: 80 });
+    m.road([[164, 107], [192, 112], [215, 116]], 'faint'); m.road([[215, 116], [228, 114], [234, 84], [226, 56], [220, 42]], 'faint'); m.road([[171, 150], [188, 158], [192, 158]], 'faint');
     m.town(56, 96, 'Frosthold', { sub: 'the monastery in the pass', dy: 9 });
-    m.stop(140, 214, '', {});
-    m.site(140, 222, 'The Frozen Hospice', '57–62', 'the hospice at the Stair\'s foot, and the Cult\'s camp', { dx: 24, dy: 8 });
-    m.site(146, 160, 'The Pilgrims\' Stair', '60–65', 'Nan Ruddock\'s Redhand hold it behind you', { dx: -26 });
-    m.site(200, 150, 'The Soulcracks', '64–68', 'the ground split open, and something under it');
-    m.site(214, 96, 'The Praetory', '67–71', 'the empire\'s last command post', { dx: 6 });
-    m.site(216, 34, 'The Glass Keep', '70–73', 'Aurelle\'s last letter, and the Glass Legate', { dy: 7 });
-    m.site(170, 104, 'The Lip', '72–75', 'the crater\'s rim: the First Pilgrim', { dx: 16, dy: 6 });
-    m.site(150, 74, 'The Ember Throne', '73–75', 'the finale', { dy: 7 });
-    m.exit(132, 256, 90, 'to Solmere', 'down the Sol');
+    m.stop(152, 204, '', {});
+    m.site(152, 212, 'The Frozen Hospice', '57–62', 'the hospice at the Stair\'s foot, and the Cult\'s camp', { dx: 24, dy: 8 });
+    m.site(164, 156, 'The Pilgrims\' Stair', '60–65', 'Nan Ruddock\'s Redhand hold it behind you', { dx: -30 });
+    m.site(206, 152, 'The Soulcracks', '64–68', 'the ground split open, and something under it', { dx: 8, dy: 8 });
+    m.site(214, 104, 'The Praetory', '67–71', 'the empire\'s last command post', { dx: 8 });
+    m.site(220, 34, 'The Glass Keep', '70–73', 'Aurelle\'s last letter, and the Glass Legate', { dy: 7 });
+    m.site(158, 100, 'The Lip', '72–75', 'the crater\'s rim: the First Pilgrim', { dx: 18, dy: 4 });
+    m.site(150, 60, 'The Ember Throne', '73–75', 'the finale', { dy: 7 });
+    m.exit(150, 256, 90, 'to Solmere', 'down the Sol');
   } });
 
 mkdirSync(OUT, { recursive: true });
