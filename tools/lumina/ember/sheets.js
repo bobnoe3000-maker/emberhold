@@ -167,5 +167,33 @@ export function emberSheet(spec, { combat = false, festival = false } = {}) {
 export function createCharacterSheet(spec = {}, opts = {}) {
   return emberSheet(spec, { combat: !!(opts && opts.combat) });
 }
+// ── a foe group's own look ─────────────────────────────────────────────────────────────────────────────────────────
+// Luminati makes one sheet a kind (CombatSystem: createEnemySheet), so every goblin is the same goblin. A level's enemy
+// object may name an atlas of ours (`emberActor`: the Old Barrows' Ashbound and its Quartermaster); the build tags
+// CombatSystem._spawnGroup to ask here first. The sheet is built as MonsterSprites' humanoidSheet builds its own: the
+// combat sheet, with the kind's pose aliases (its windup, attack, dead … named onto our columns).
+const MOVE = { move0: 'walk0', move1: 'walk1', move2: 'walk2', move3: 'walk3' };
+const ALIASES = {
+  goblin: { ...MOVE, windup: 'wind', attack: 'slash', attack2: 'backhand', dead: 'down' },
+  archer: { ...MOVE, windup: 'aim', attack: 'follow', shove: 'thrust', dead: 'down' },
+  shaman: { ...MOVE, windup: 'cast', attack: 'aim', blink: 'tuck', dead: 'down' },
+};
+const groupSheets = new Map();
+/** the sheet for a level enemy object that names its look, else null (Luminati's sheet for its kind) */
+export function enemySheetFor(g) {
+  const actor = g && typeof g.emberActor === 'string' ? g.emberActor : null, kind = g && g.kind;
+  if (!actor || !META[actor] || !Object.hasOwn(ALIASES, kind)) return null;
+  const key = `${kind}|${actor}`;
+  let sh = groupSheets.get(key);
+  if (sh) return sh;
+  const s = emberSheet({ preset: kind, emberActor: actor }, { combat: true }), poses = { ...s.poses };
+  for (const [alias, name] of Object.entries(ALIASES[kind])) poses[alias] = s.poses[name];
+  sh = { texture: s.texture, canvas: s.canvas, frameWidth: s.frameWidth, frameHeight: s.frameHeight, columns: s.columns, rows: s.rows, pixelsPerUnit: s.pixelsPerUnit,
+    anchor: s.anchor, animations: s.animations, name: kind, kind, poses, spriteOptions: {}, dispose() { s.dispose(); groupSheets.delete(key); } };
+  groupSheets.set(key, sh);
+  return sh;
+}
+Object.assign(globalThis, { __emberFoes: { sheetFor: enemySheetFor } });
+
 /** (for checks: the atlas a spec would get, and Luminati's own painter if wanted side by side) */
 export const luminatiCreateCharacterSheet = LUMINATI.createCharacterSheet;

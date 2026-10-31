@@ -1292,8 +1292,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
       ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
-    check('lumina: the front page lists our three levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
-      front.ours.join() === 'thornwick,encounter,catalogue' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
+    check('lumina: the front page lists our four levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, and the Talk button',
+      front.ours.join() === 'thornwick,encounter,barrows,catalogue' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
         && cast.npcs.join() === FOLK.join() && cast.talk && errs.length === 0,
       JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
@@ -1315,12 +1315,33 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify(view) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     errs.length = 0;
     await p.goto(`${base}/lumina/game.html?autostart=1&level=encounter&hero=hero_knight&auto=1`);
-    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 3, null, { timeout: 180000 * SLOW });
+    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 2, null, { timeout: 180000 * SLOW });
     const fight = await p.evaluate(() => { const C = window.__game.combat; return { allies: C.allies().map((a) => a.id), foes: [...new Set(C.system.enemies.map((e) => `${e.kind}:${e.sheet.frameWidth > 32 ? 'ours' : 'theirs'}`))].sort(),
       auto: globalThis.__emberAuto?.on, button: document.getElementById('ember-auto')?.getAttribute('aria-pressed') }; });
-    check('lumina: the encounter boots with Brannoc, Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
-      fight.allies.join() === 'brannoc,wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
+    check('lumina: the encounter boots with Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
+      fight.allies.join() === 'wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
       JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the dungeon (levels.mjs barrows): the party of three, each Ashbound group in its own look and the Quartermaster as
+    // himself, his ranks known to issue.js; our player cards (cards.js) instead of Luminati's vitals, in one row along
+    // the bottom upright and on its side; a fall wakes the party at Tobin's lantern
+    errs.length = 0;
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=barrows&hero=hero_knight`);
+    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 2 && document.body.classList.contains('ember-cards')
+      && document.querySelectorAll('#ember-party .card:not(.empty)').length === 3, null, { timeout: 180000 * SLOW });
+    const cardsAt = () => p.evaluate(() => [...document.querySelectorAll('#ember-party .card')].map((el) => { const r = el.getBoundingClientRect(); return { id: el.dataset.id, x: Math.round(r.left), top: Math.round(r.top), gap: Math.round(innerHeight - r.bottom) }; }));
+    const dungeon = await p.evaluate(() => { globalThis.__emberIssue.tick(); const C = window.__game.combat, I = globalThis.__emberIssue;
+      return { looks: [...new Set(C.system.enemies.map((e) => e.sheet.texture.name.replace(/^ember:|:combat$/g, '')))].sort(), issuers: I.issuers, ranks: I.ranks,
+        vitals: getComputedStyle(document.querySelector('.lu-vitals')).display }; });
+    const upright = await cardsAt();
+    await p.setViewportSize({ width: 844, height: 390 }); await p.waitForTimeout(2000 * SLOW);
+    const sideways = await cardsAt();
+    await p.setViewportSize({ width: 390, height: 844 });
+    const row = (cs) => cs.map((c) => c.id).join() === 'wren,you,guild_cleric' && cs.every((c) => c.top === cs[0].top && c.gap < 40) && cs[0].x < cs[1].x && cs[1].x < cs[2].x;
+    const woke = await p.evaluate(() => { const G = window.__game, C = G.combat; G.teleport(24, 40); C.respawn(); const q = G.player.position; return { checkpoint: C.state().player.checkpoint, d: +Math.hypot(q.x - 23, q.z - 62.6).toFixed(1) }; });
+    check('lumina: the Old Barrows boots with the party of three, the Ashbound and the Quartermaster in our looks, his ranks issued; our player cards replace Luminati\'s vitals in one row along the bottom upright and sideways; a fall wakes the party at Tobin\'s lantern',
+      dungeon.looks.join() === 'boss_quartermaster,skeleton_mage,skeleton_minion,skeleton_rogue,skeleton_warrior' && dungeon.issuers === 1 && dungeon.ranks === 14 && dungeon.vitals === 'none'
+        && row(upright) && row(sideways) && woke.checkpoint === 'waystone_mouth' && woke.d < 2.5 && errs.length === 0,
+      JSON.stringify({ dungeon, upright, sideways, woke }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }

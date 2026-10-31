@@ -45,6 +45,8 @@ const TAGS = [
   ['game/DebugControls.js', 'rig.setAngles(0, C.pitch);', 'rig.setAngles(C.yaw ?? 0, C.pitch);'],
   // and its lens: the depth of field over the deeper view (view.js post)
   ['game/Game.js', "bokehBoost: 1.6 });", "bokehBoost: 1.6 }); globalThis.__emberView?.post(S);"],
+  // a foe group's own look (sheets.js enemySheetFor: a level's enemy object naming one of our atlases)
+  ['game/combat/CombatSystem.js', 'const sheet = this.sheets.get(kind);', 'const sheet = globalThis.__emberFoes?.sheetFor(g) ?? this.sheets.get(kind);'],
   // the ground (ember/ground.js): the ground cover at a quarter of its size, no floating luminous dots
   ['game/GroundDetail.js', 'new Foliage({ sprite, instances: list, name: n,', 'new Foliage({ sprite, instances: globalThis.__emberGround ? globalThis.__emberGround.foliage(list) : list, name: n,'],
   ['game/World.js', 'if (env.dust !== false) {', 'if (env.dust !== false && globalThis.__emberGround?.dust !== false) {'],

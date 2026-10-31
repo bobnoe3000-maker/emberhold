@@ -2,11 +2,13 @@
 // the Scrag Warren, Cinderwatch Pass. The party's companions already fight by Luminati's party AI; this drives the
 // player the same way, through Luminati's own combat hooks (`window.__game.combat`, its COMBAT.md §20.1: `move`, `aim`,
 // `press`, `enemies`, `path`, `state`), so it takes the same paths, cooldowns and guards a thumb would.
-//   · the target: the nearest foe awake (one already fighting first), kept while it lives unless another is much nearer
+//   · the target: the nearest foe awake (one already fighting first, and one that raises the others — the Old Barrows'
+//     Quartermaster, issue.js — sooner than his ranks), kept while it lives unless another is much nearer
 //   · out of reach: walk to it, along the enemies' walk grid when the straight line is blocked (a wall, a cliff)
 //   · in reach: face it and swing; a skill in turn every few seconds (a skill on cooldown does nothing)
 //   · a Healing Draught under 40 % HP; a dodge away when a burst of damage lands
-//   · nothing left: stand, and hand the controls back
+//   · fallen: rise at the waystone (a key to the death screen, as a tap would), and fight on
+//   · none awake: the ones asleep at their posts, nearest first (a dungeon's rooms are cleared); nothing left: stand
 // On while the Auto button is lit (?auto=1 lights it at the start; the choice is kept on this device). Touching the
 // stick takes the hero back at once: Auto goes off.
 
@@ -16,6 +18,7 @@ const KEY = 'ember.lumina.auto';
 const read = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
 const write = (v) => { try { localStorage.setItem(KEY, v ? '1' : '0'); } catch { /* private mode: not kept */ } };
 let on = params.get('auto') === '1' || (params.get('auto') !== '0' && read() === '1');
+let downAt = 0, risenAt = 0;
 let driving = false, target = null, path = null, pathAt = 0, skillAt = 0, skillNo = 0, draughtAt = 0;
 const hpLog = [];                                             // [time, hp] over the last half second
 
@@ -48,6 +51,14 @@ function tick() {
   // a finger on the stick (touch.js) takes the hero back
   if (/** @type {any} */ (globalThis).__emberStick?.on) { set(false); return; }
   const sys = C.system, P = sys?.player?.position;
+  // fallen: rise at the waystone (Luminati's death screen takes any key once armed, 1 s), as a player would tap
+  if (C.state().player.hp <= 0) {
+    const t = performance.now();
+    if (!downAt) downAt = t;
+    else if (t - downAt > 2500 && t - risenAt > 1000) { risenAt = t; window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', key: 'Enter' })); }
+    return;
+  }
+  downAt = 0;
   if (!P || sys.game?.busy) return;                            // a dialogue, a cutscene, the death screen
   const st = C.state(), me = st.player, now = st.time * 1000;   // (the combat's own clock: the same when stepped)
   if (me.hp <= 0) return;
@@ -57,10 +68,14 @@ function tick() {
   if (me.hp < me.hpMax * DRAUGHT_AT && me.potions > 0 && now - draughtAt > 3000) { C.press('draught', 2); draughtAt = now; }
   const burst = hpLog.length > 1 && hpLog[0][1] - me.hp > me.hpMax * BURST;
   // the target
-  const foes = C.enemies().filter((e) => e.hp > 0 && e.state !== 'dead' && !e.dormant);
+  // (the foes awake; with none, the ones asleep at their posts: a dungeon's rooms are cleared, not left)
+  const standing = C.enemies().filter((e) => e.hp > 0 && e.state !== 'dead'), awake = standing.filter((e) => !e.dormant);
+  const foes = awake.length ? awake : standing;
   if (target) target = foes.find((e) => e.uid === target.uid) ?? null;
   let best = null, bd = Infinity;
-  for (const e of foes) { const d = dist(P, e) - (e.aggro ? 4 : 0); if (d < bd) { bd = d; best = e; } }
+  // (one already fighting first; and a foe that raises the others — the Quartermaster, issue.js — before his ranks)
+  const issuer = /** @type {any} */ (globalThis).__emberIssue?.isIssuer;
+  for (const e of foes) { const d = dist(P, e) - (e.aggro ? 4 : 0) - (issuer?.(e.uid) ? 10 : 0); if (d < bd) { bd = d; best = e; } }
   if (!target || (best && dist(P, best) + 3 < dist(P, target))) { target = best; path = null; }
   if (!target) { C.move(0, 0); C.aim(null); return; }        // nothing left: stand
   const d = dist(P, target);

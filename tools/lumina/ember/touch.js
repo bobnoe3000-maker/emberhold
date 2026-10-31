@@ -47,7 +47,9 @@ function mount() {
   const ptrs = new Map(); let origin = null, pinch = 0;
   for (const ev of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) root.addEventListener(ev, (e) => e.stopPropagation());
   // a finger on the world: caught before Luminati's own handlers (capture, on the document), and kept from them
-  const world = (e) => e.pointerType !== 'mouse' && e.target instanceof HTMLCanvasElement;
+  // (the game's own canvas: Luminati paints its UI's art on canvases too, inside its root — a tap on the death screen's
+  // or a window's art is the UI's)
+  const world = (e) => e.pointerType !== 'mouse' && e.target instanceof HTMLCanvasElement && !e.target.closest('.lu-root');
   document.addEventListener('pointerdown', (e) => {
     if (!world(e)) return;
     e.stopPropagation(); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });

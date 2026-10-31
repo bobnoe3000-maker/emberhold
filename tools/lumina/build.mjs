@@ -12,8 +12,8 @@ const REPO = 'https://gitlab.com/stubborn-hug/lumina.git';
 export const PIN = '80e1aa6011159db7b88d52637d4b1112b1450ffa';
 // the worlds the prototype ships (Luminati's public/levels): five at peace, one with a fight
 export const LEVELS = ['emberfall', 'sample-hamlet', 'brightwater-crossing', 'gildhaven', 'starfall-vale', 'cinderwatch-pass'];
-// and Emberfall's own, written by levels.mjs: Thornwick from our sim, the catalogue of Luminati's world, our fight
-export const OURS = ['thornwick', 'catalogue', 'encounter'];
+// and Emberfall's own, written by levels.mjs: Thornwick from our sim, the catalogue of Luminati's world, our fight, our dungeon
+export const OURS = ['thornwick', 'catalogue', 'encounter', 'barrows'];
 const WORK = join(HERE, '.work'), LUM = join(WORK, 'luminati'), OUT = join(ROOT, 'lumina');
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', env: { ...process.env } });
 
@@ -46,7 +46,7 @@ cpSync(join(LUM, 'LICENSE'), join(EMBER, 'public', 'LUMINATI-LICENSE.txt'));
 let game = readFileSync(join(LUM, 'game.html'), 'utf8');
 const MAIN = '<script type="module" src="./src/main.js"></script>';
 if (!game.includes(MAIN)) throw new Error('build.mjs: Luminati\'s game.html no longer loads ./src/main.js');
-game = game.replace(MAIN, '<script type="module" src="../src/main.js"></script>\n  <script type="module" src="./touch.js"></script>\n  <script type="module" src="./autobattle.js"></script>')
+game = game.replace(MAIN, '<script type="module" src="../src/main.js"></script>\n  <script type="module" src="./touch.js"></script>\n  <script type="module" src="./autobattle.js"></script>\n  <script type="module" src="./issue.js"></script>\n  <script type="module" src="./cards.js"></script>')
   .replace(/<title>[^<]*<\/title>/, '<title>Emberfall · Luminati prototype</title>')
   .replace('<meta name="viewport" content="width=device-width, initial-scale=1" />', '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />');
 writeFileSync(join(EMBER, 'game.html'), game);

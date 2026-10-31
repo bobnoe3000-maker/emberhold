@@ -8,7 +8,8 @@
 //   · yaw 45°: screen right is world +X −Z and screen down +X +Z, as iso.js projects our x and y (Thornwick is laid out
 //     on X = our x, Z = our y: levels.mjs), so the town sits on the screen as it does in the game;
 //   · pitch 30°, the bake's;
-//   · a 14° lens: near-orthographic, as our bake is, at the distance that frames a figure as the game does on a phone.
+//   · a 14° lens: near-orthographic, as our bake is, at the distance that frames a figure as the game does on a phone,
+//     upright or on its side.
 // Luminati's walk follows the camera (CameraRig.getMoveBasis), so the stick stays screen-true; Q / E still turn it.
 // The build passes the framing into the game (vite.config.mjs tags Game.js: __emberView.camera, the yaw).
 //
@@ -21,26 +22,41 @@
 // Luminati's own facing (a turn to talk or to swing wins). A sprite standing keeps its octant. In both views.
 import { Sprite3D } from '../src/engine/sprite/Sprite3D.js';
 import { globalUniforms } from '../src/engine/render/GlobalUniforms.js';
+import { setFogStart } from '../src/game/AtmosphereFog.js';
 
 const params = new URLSearchParams(location.search);
 /** the view: Emberfall's camera ('ember', the default) or Luminati's own */
 export const VIEW = params.get('view') === 'luminati' ? 'luminati' : 'ember';
 /** Emberfall's camera, in Luminati's framing terms (degrees) */
 export const EMBER_CAMERA = Object.freeze({ yaw: 45, pitch: 30, fov: 14 });
-// The distance that frames as the game does: on a phone a figure stands a 16th of the screen's height in Thornwick's
-// square (52 of 844 CSS px, measured), and ours are 1.75 units tall, seen a cos(pitch) shorter. A three.js lens is
-// vertical, so the share holds at any width. Luminati's levels set their own distance against its default (30): kept as a
-// ratio, so a level framed closer stays closer.
-const SHARE = 1 / 16, FIGURE = 1.75, LUMINATI_DISTANCE = 30;
-const D = (FIGURE * Math.cos(EMBER_CAMERA.pitch * Math.PI / 180)) / (SHARE * 2 * Math.tan((EMBER_CAMERA.fov / 2) * Math.PI / 180));   // ≈ 99
+// The distance that frames as the game does: on a phone a figure stands 52 CSS px tall in Thornwick's square (of 844,
+// measured), either way up (the game keeps things the phone's size whichever way it's held: its zoom check), and ours
+// are 1.75 units tall, seen a cos(pitch) shorter. A three.js lens is vertical, so the distance follows the window's height:
+// held upright on a phone it's about 99; on its side about 46, or the hero would be half the size. It's set again when the
+// window turns. Luminati's levels set their own distance against its default (30): kept as a ratio, so a level framed
+// closer stays closer.
+const FIGURE_PX = 52, FIGURE = 1.75, LUMINATI_DISTANCE = 30;
+const distanceFor = (h) => (FIGURE * Math.cos(EMBER_CAMERA.pitch * Math.PI / 180) * h) / (FIGURE_PX * 2 * Math.tan((EMBER_CAMERA.fov / 2) * Math.PI / 180));
+let ratio = 1, framedH = 0;                                  // (the window's height the camera was framed for)
 
 /** what Game._applyLevel spreads over its camera: our yaw, pitch and lens, the level's distances at our framing */
 function camera(framing) {
   if (VIEW !== 'ember') return {};
-  const k = D / LUMINATI_DISTANCE;
+  ratio = framing.distance / LUMINATI_DISTANCE; framedH = innerHeight;
+  const D = distanceFor(innerHeight), k = D / LUMINATI_DISTANCE;
   return { yaw: EMBER_CAMERA.yaw, pitch: EMBER_CAMERA.pitch, fov: EMBER_CAMERA.fov, distance: framing.distance * k,
     minDistance: framing.minDistance * k, maxDistance: framing.maxDistance * k };
 }
+// (the window turned or resized: the same figure size, the zoom kept as a share of the range)
+addEventListener('resize', () => {
+  const rig = /** @type {any} */ (window).__game?.rig;
+  if (VIEW !== 'ember' || !rig) return;
+  if (!framedH || innerHeight === framedH) return;
+  const f = innerHeight / framedH;                            // (the distance is linear in the height)
+  framedH = innerHeight;
+  rig.minDistance *= f; rig.maxDistance *= f; rig.distanceTarget *= f; rig.distance *= f;
+  setFogStart(rig.distanceTarget - 7);                        // (as Game._applyLevel sets it: 7 short of the framing)
+});
 // Our game has no depth of field: every tile is as sharp as the hero's. Luminati's diorama blurs outside a band 30 % of
 // the screen tall (its tilt-shift) and 6 units of depth round the focus. The near-orthographic view spans two to three
 // times that depth on the screen, so in Emberfall's view the band is most of the screen and the depth 16: the square
@@ -49,7 +65,7 @@ function post(S) {
   if (VIEW !== 'ember') return;
   Object.assign(S.dof, { focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
 }
-Object.assign(globalThis, { __emberView: { name: VIEW, camera, post, distance: D } });
+Object.assign(globalThis, { __emberView: { name: VIEW, camera, post, distanceFor, get ratio() { return ratio; } } });
 
 // ── the eight facings ──────────────────────────────────────────────────────────────────────────────────────────────
 // Luminati's four, by its row index (constants.js DIRECTIONS: down, left, right, up), as the octant at their middle
