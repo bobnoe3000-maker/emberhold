@@ -1349,10 +1349,11 @@ export function createRenderer(canvas, sim, input) {
     const bx = vw - MM - pad - (MM_RIGHT + safeR) * k, by = mmTop() * k, x0 = -12, y0 = -12, span = Math.max(w.W, w.H) + 24;
     if (!outMap) {
       const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), img = x.createImageData(N, N);
-      const COL = [[46, 64, 42], [96, 80, 60], [104, 98, 104], [40, 86, 118], [70, 60, 48], [128, 110, 60]];
+      const COL = [[46, 64, 42], [96, 80, 60], [104, 98, 104], [40, 86, 118], [70, 60, 48], [128, 110, 60], [112, 100, 86], [196, 202, 208]];
       for (let py = 0; py < N; py++) for (let px = 0; px < N; px++) {
         const tx = x0 + (px + 0.5) * span / N, ty = y0 + (py + 0.5) * span / N, m = materialAt(w, tx, ty), i = (py * N + px) * 4;
-        const cc = COL[['grass', 'dirt', 'cobble', 'water', 'bank', 'field'].indexOf(m)] || COL[0];
+        const turf = w.region === 'reach' ? [58, 54, 48] : w.region === 'heights' ? [74, 82, 78] : COL[0];   // (the ash scrub and frost-bitten turf, scree and snow: the Reach's and the Heights')
+        const cc = m === 'grass' ? turf : COL[['grass', 'dirt', 'cobble', 'water', 'bank', 'field', 'scree', 'snow'].indexOf(m)] || COL[0];
         img.data[i] = cc[0]; img.data[i + 1] = cc[1]; img.data[i + 2] = cc[2]; img.data[i + 3] = 235;
       }
       x.putImageData(img, 0, 0);
@@ -1372,7 +1373,7 @@ export function createRenderer(canvas, sim, input) {
     for (const L of w.labels || []) {
       if (L.service || hiddenHere(L)) continue;
       const mx = bx + (L.x - x0) / span * MM, my = by + (L.y - y0) / span * MM, r = Math.max(2.5, 3.2 * k);
-      octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick|Saltmere/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
+      octx.fillStyle = /Barrows/.test(L.text) ? '#b48cff' : /Thornwick|Saltmere|Ashgate|Frosthold/.test(L.text) ? '#e0b060' : 'rgba(220,210,190,0.85)';
       octx.beginPath(); octx.moveTo(mx, my - r); octx.lineTo(mx + r, my); octx.lineTo(mx, my + r); octx.lineTo(mx - r, my); octx.closePath(); octx.fill();
       octx.strokeStyle = 'rgba(0,0,0,0.55)'; octx.lineWidth = Math.max(1, 0.8 * k); octx.stroke();
     }

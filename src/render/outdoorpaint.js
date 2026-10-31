@@ -20,6 +20,11 @@ const N_TUFT = norm3(0, 0.55, 0.83), N_WATER = norm3(0, 0.36, 0.93);
 // muted, to sit in the dusk (critic pass 11j added the meadow patches; their colours stay the game's own)
 const FLOWERS = [[168, 150, 80], [160, 150, 178], [150, 70, 66], [176, 170, 150]];
 const R = { g: ELIT.grass, d: ELIT.dirt, s: ELIT.street, w: ELIT.river, m: ELIT.mud, f: ELIT.wheat, p: ELIT.peat, b: ELIT.bog, k: ELIT.weed, r: ELIT.reed, deck: ELIT.deck };
+// the Reach's and the Heights' grounds (docs/reach-heights-overlands.md), mixed from the palette's own ramps: cracked
+// earth and red rock, slag-stained tailings, snow, scree, river ice, the crater's glass
+const X = { e: ELIT.earth, k: ELIT.rock, l: ELIT.lava, m: ELIT.ember, sd: ELIT.sand, c: ELIT.crag, i: ELIT.ice, f: ELIT.frost, b: ELIT.bone, o: ELIT.obsid, gl: ELIT.glacier };
+const SNOW = [mix(X.i[2], X.b[2], 0.5), mix(X.i[3], X.b[3], 0.5), mix(X.i[4], X.b[3], 0.5), mix(X.f[4], X.b[4], 0.55), mix(X.f[4], X.b[4], 0.8)];
+const OWN_GRASS = { reach: ELIT.grass_reach, heights: ELIT.grass_heights };   // (a road's verge in the land's own grass: the Vale and the Fens keep theirs)
 const OUT = { c: null, n: N_UP, e: 0 };
 const ret = (c, n = N_UP, e = 0) => { OUT.c = c; OUT.n = n; OUT.e = e; return OUT; };
 
@@ -64,7 +69,7 @@ function dirt(o, q, gx, gy, tx, ty, rx, ry) {
   const al = Math.abs(q.lat), vt = 1 - 0.5 / Math.max(1, q.hw);
   if (q.t > vt) {                                                            // the verge
     const k = (q.t - vt) / (1 - vt);
-    return H(Math.floor(gx * 8), Math.floor(gy * 8), o.seed + 61) < k * k ? grass(o, gx, gy, tx, ty, rx, ry, -0.06) : ret(mix(c, R.g[1], 0.5));
+    return H(Math.floor(gx * 8), Math.floor(gy * 8), o.seed + 61) < k * k ? grass(o, gx, gy, tx, ty, rx, ry, -0.06) : ret(mix(c, (OWN_GRASS[o.region] || R.g)[1], 0.5));
   }
   if (q.track) { if (al < q.hw * 0.5) c = mix(c, R.d[4], 0.22); }        // a worn band down the middle
   else if (q.cap) { /* bends' ends, joins, aprons: packed earth */ }
@@ -87,6 +92,7 @@ function cobble(o, q, gx, gy) {
 // pale foam line outlined it, and the flow streaks ran across the current in a cell pattern, like ice.
 function water(o, q, gx, gy) {
   if (o.region === 'fens') return canal(o, q, gx, gy);
+  if (o.region === 'heights') return ice(o, q, gx, gy);
   const w = R.w, t = q.t + (fbm(gx * 0.07, gy * 0.07, o.seed + 55) - 0.5) * 0.4;
   let c = t < 0.45 ? w[1] : t < 0.8 ? w[2] : w[3];
   if (q.t > 0.9) return ret(mix(w[3], R.m[3], 0.3), N_WATER);               // the shallows
@@ -113,9 +119,70 @@ function bank(o, q, gx, gy, tx, ty, rx, ry) {
     if (keep > 0.3) { const f = frac(gx * 0.9) < 0.1 || frac(gy * 0.9) < 0.1; return ret(f ? R.s[0] : keep > 0.8 ? R.s[3] : R.s[2], f ? N_UP : norm3(0, 0.4, 0.92)); }
     return ret(R.p[2], N_WATER);
   }
+  if (o.region === 'heights') return q.t < 0.6 ? ret(H(Math.floor(gx * 3), Math.floor(gy * 3), o.seed + 101) > 0.5 ? SNOW[1] : SNOW[2]) : snow(o, 1, gx, gy);   // drifted snow down to the ice
   if (q.t < 0.45) return ret(R.m[3], N_WATER);                                 // wet mud
   if (q.t < 0.8) return ret(R.m[2]);
   return grass(o, gx, gy, tx, ty, rx, ry, -0.2);
+}
+
+// ── the Reach and the Heights (docs/reach-heights-overlands.md) ──────────────────────────────────────────────────────
+// The Sol, frozen bank to bank: grey-blue ice in slow sheets, long pale cracks across it, snow blown over its edges, the
+// odd glint. Matte, so it doesn't shine like water.
+function ice(o, q, gx, gy) {
+  if (q.t > 0.82) return ret(mix(SNOW[2], X.i[3], (1 - q.t) / 0.18 * 0.6));                  // snow blown over the edge
+  const n = fbm(gx * 0.08, gy * 0.08, o.seed + 103), c = n < 0.45 ? mix(X.f[2], X.i[3], 0.5) : n < 0.62 ? X.f[2] : mix(X.f[3], X.i[4], 0.5);
+  const crack = Math.abs(frac(q.along * 0.07 + q.lat * 0.31 + fbm(gx * 0.2, gy * 0.2, o.seed + 105) * 1.6) - 0.5) < 0.02;
+  if (crack) return ret(mix(X.f[4], X.b[4], 0.4), norm3(0, 0.3, 0.95));
+  const gc = Math.floor(gx * 1.5), gr = Math.floor(gy * 1.5);
+  return ret(c, N_UP, H(gc, gr, o.seed + 107) > 0.993 && frac(gx * 1.5) < 0.2 && frac(gy * 1.5) < 0.2 ? 5 : 0);
+}
+// Snow (the Heights' patches): two soft tones in drifts, a ripple along the wind, a sparkle now and then; at a patch's
+// edge it thins into the turf (t: 0 at the edge).
+function snow(o, t, gx, gy, tx, ty, rx, ry) {
+  if (t < 1 && H(Math.floor(gx * 6), Math.floor(gy * 6), o.seed + 109) > t) return grass(o, gx, gy, tx, ty, rx, ry, 0.08);
+  const n = fbm(gx * 0.09, gy * 0.09, o.seed + 111), rip = frac(gx * 0.22 + gy * 0.11 + fbm(gx * 0.05, gy * 0.05, o.seed + 113) * 2);
+  let c = n < 0.42 ? SNOW[2] : n < 0.6 ? SNOW[3] : SNOW[4];
+  if (rip < 0.08) c = mix(c, SNOW[1], 0.5);                                                  // a drift's shadowed lee
+  const gc = Math.floor(gx * 2), gr = Math.floor(gy * 2);
+  return ret(c, rip < 0.08 ? norm3(0, 0.4, 0.92) : N_UP, H(gc, gr, o.seed + 115) > 0.996 ? 4 : 0);
+}
+// Scree. In the Reach: dry earth cracked into plates, flecks of red rock. In the Heights: loose grey stones, each its
+// own tone, dark gaps between. Thins into the grass at its edge.
+function scree(o, q, gx, gy, tx, ty, rx, ry) {
+  if (q.t < 1 && H(Math.floor(gx * 5), Math.floor(gy * 5), o.seed + 117) > q.t) return grass(o, gx, gy, tx, ty, rx, ry, -0.04);
+  if (o.region === 'heights') {
+    const sx = Math.floor(gx * 1.6 + fbm(gx * 0.4, gy * 0.4, o.seed + 119) * 0.8), sy = Math.floor(gy * 1.6), h = H(sx, sy, o.seed + 121);
+    const fx = frac(gx * 1.6 + fbm(gx * 0.4, gy * 0.4, o.seed + 119) * 0.8), fy = frac(gy * 1.6);
+    if (fx < 0.12 || fy < 0.12) return ret(X.c[1]);                                           // the gaps between stones
+    return ret(h < 0.3 ? X.c[2] : h < 0.75 ? X.c[3] : X.c[4], norm3((h - 0.5) * 0.5, 0.45, 0.85));
+  }
+  const n = fbm(gx * 0.1, gy * 0.1, o.seed + 123);
+  let c = n < 0.5 ? X.e[3] : mix(X.e[3], X.sd[3], 0.4);                                      // pale, dry
+  const w = fbm(gx * 0.25, gy * 0.25, o.seed + 125) * 1.3;
+  if (Math.abs(frac(gx * 0.45 + w) - 0.5) < 0.035 || Math.abs(frac(gy * 0.45 - w) - 0.5) < 0.035) return ret(X.e[1]);   // the cracks
+  const pc = Math.floor(gx * 2.4), pr = Math.floor(gy * 2.4);
+  if (H(pc, pr, o.seed + 127) > 0.9 && frac(gx * 2.4) > 0.3 && frac(gy * 2.4) > 0.3 && frac(gx * 2.4) < 0.7 && frac(gy * 2.4) < 0.7) c = mix(X.k[3], X.l[4], 0.6);   // red rock
+  return ret(c);
+}
+// The Reach's tailings (rust-red, a scum of ochre lying on them) and the Heights' glass (the crater's floor and the
+// Soulcracks: black, a cold glint in it). Their fringe: in the Reach stained bare earth, nothing growing; in the Heights
+// scree.
+function tailings(o, q, gx, gy) {
+  if (q.t > 0.82) return ret(mix(X.m[3], X.e[3], (q.t - 0.82) / 0.18), N_WATER);
+  const n = fbm(gx * 0.07, gy * 0.07, o.seed + 129), scum = fbm(gx * 0.12, gy * 0.12, o.seed + 131);
+  if (scum > 0.62) return ret(mix(X.m[4], X.sd[3], 0.45), N_UP);
+  return ret(n < 0.5 ? X.l[3] : mix(X.l[4], X.m[4], 0.5), N_WATER);
+}
+function glass(o, q, gx, gy) {
+  if (q.t > 0.86) return ret(mix(X.o[2], X.c[2], 0.5), norm3(0, 0.35, 0.94));
+  const n = fbm(gx * 0.05, gy * 0.05, o.seed + 133), gc = Math.floor(gx * 1.2), gr = Math.floor(gy * 1.2);
+  const glint = H(gc, gr, o.seed + 135) > 0.985 && frac(gx * 1.2) < 0.25 && frac(gy * 1.2) < 0.25;
+  return ret(glint ? X.gl[4] : n < 0.5 ? X.o[1] : X.o[2], norm3(0, 0.2, 0.98), glint ? 6 : 0);
+}
+function stained(o, q, gx, gy, tx, ty, rx, ry) {
+  if (o.region === 'heights') return scree(o, { t: 1 }, gx, gy, tx, ty, rx, ry);
+  const n = fbm(gx * 0.1, gy * 0.1, o.seed + 137);
+  return ret(mix(n < 0.5 ? X.e[2] : X.e[3], X.m[3], 0.55 * (1 - q.t)));
 }
 
 // The Fens (M8). Still bog water: near-black green, slow tone changes, skins of duckweed lying flat on it, a rare glint
@@ -211,9 +278,11 @@ export function paintOutdoor(o, gx, gy, tx, ty, rx, ry) {
     case G.DIRT: r = dirt(o, q, gx, gy, tx, ty, rx, ry); break;
     case G.COBBLE: r = cobble(o, q, gx, gy); break;
     case G.FIELD: r = field(o, q, gx, gy, tx, ty, rx, ry); break;
-    case G.POOL: return pool(o, q, gx, gy);
-    case G.MARSH: r = marsh(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.POOL: return o.region === 'reach' ? tailings(o, q, gx, gy) : o.region === 'heights' ? glass(o, q, gx, gy) : pool(o, q, gx, gy);
+    case G.MARSH: r = OWN_GRASS[o.region] ? stained(o, q, gx, gy, tx, ty, rx, ry) : marsh(o, q, gx, gy, tx, ty, rx, ry); break;
     case G.DECK: r = deck(o, q, gx, gy); break;
+    case G.SCREE: r = scree(o, q, gx, gy, tx, ty, rx, ry); break;
+    case G.SNOW: r = snow(o, q.t, gx, gy, tx, ty, rx, ry); break;
     default: r = grass(o, gx, gy, tx, ty, rx, ry);
   }
   const a = aoAt(o, gx, gy);
