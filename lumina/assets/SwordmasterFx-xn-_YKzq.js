@@ -1,4 +1,4 @@
-import{$ as e,An as t,C as n,D as r,I as i,R as a,X as o,o as s,tt as c,yt as l}from"./three.core-VtIcmFgG.js";import{c as u,l as d,r as f}from"./math-laPxC5G9.js";import{t as p}from"./GlobalUniforms-D57M0nqS.js";import"./engine-BbwM80md.js";import{t as m}from"./glowSpots-DmXt8jmm.js";var h=4,g=4,_=.135,v=.74,y=.775,b=.94,x=Object.freeze({BEVEL_L:0,FLAT:1,FULLER_L:2,GUARD_Y:3,GUARD_Z:4,GRIP:5,POMMEL:6,GEM:7,BEVEL_R:8,FULLER_R:9}),S=`
+import{$ as e,An as t,C as n,D as r,I as i,R as a,X as o,o as s,tt as c,yt as l}from"./three.core-VtIcmFgG.js";import{c as u,l as d,r as f}from"./math-laPxC5G9.js";import{t as p}from"./GlobalUniforms-D57M0nqS.js";import"./engine-1k_p8Q_k.js";import{t as m}from"./glowSpots-DmXt8jmm.js";var h=4,g=4,_=.135,v=.74,y=.775,b=.94,x=Object.freeze({BEVEL_L:0,FLAT:1,FULLER_L:2,GUARD_Y:3,GUARD_Z:4,GRIP:5,POMMEL:6,GEM:7,BEVEL_R:8,FULLER_R:9}),S=`
 attribute vec4 aBlade;  // part (0 blade, 1 guard, 2 grip, 3 pommel / gem), side (0 / 1 / 0.5 at an apex), facet width (normalised), kind
 attribute vec4 iShape;  // length, width, seed, palette
 attribute vec4 iFx;     // dissolve, dissolve direction, glow, runes

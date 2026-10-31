@@ -1321,6 +1321,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('lumina: the encounter boots with Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
       fight.allies.join() === 'wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
       JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the first catalogue, the cast's 72 actors and all: it boots within a phone's canvas memory (iOS Safari killed it when
+    // every sheet held every clip in eight rows, ≈ 900 MB; sheets.js cuts what a figure can show)
+    errs.length = 0;
+    await p.goto(`${base}/lumina/game.html?autostart=1&level=catalogue&hero=hero_mage`);
+    await p.waitForFunction(() => (window.__game?.npcs?.length ?? 0) === 72 && (globalThis.__emberSheets?.cuts.length ?? 0) >= 73, null, { timeout: 240000 * SLOW });
+    const mem = await p.evaluate(() => ({ MB: globalThis.__emberSheets.canvasMB, cuts: globalThis.__emberSheets.cuts.length }));
+    check('lumina: the first catalogue boots with its 72-actor cast within a phone\'s canvas memory (its sheets under 64 MB)', mem.MB < 64 && errs.length === 0,
+      JSON.stringify(mem) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the catalogue's second wing (levels.mjs catalogueArt, ember/props.js): all 290 pieces of Emberfall's own art stood up
     errs.length = 0;
     await p.goto(`${base}/lumina/game.html?autostart=1&level=catalogue-art&hero=hero_knight`);

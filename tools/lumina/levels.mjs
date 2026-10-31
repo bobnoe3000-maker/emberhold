@@ -298,7 +298,8 @@ export async function catalogue(base, LUM) {
       R.items.forEach((it, i) => {
         const x = r2(R.cell * (i + 0.5) + (W - R.cell * R.items.length) / 2);
         if (it.actor) {
-          add({ type: 'npc', x, z: r2(zc), name: names[it.actor] || humanize(it.actor), title: it.actor, preset: /^hero_/.test(it.actor) ? 'traveler' : 'villager', spec: { emberActor: it.actor },
+          // (still, facing the camera: its sheet is the one idle row, sheets.js: 72 full sheets were ≈ 900 MB of canvas)
+          add({ type: 'npc', x, z: r2(zc), name: names[it.actor] || humanize(it.actor), title: it.actor, preset: /^hero_/.test(it.actor) ? 'traveler' : 'villager', spec: { emberActor: it.actor, emberStill: true },
             facing: 'down', behaviour: 'still', wander: 0, speed: 0, portraitColor: '#b8862e', action: 'none', item: '', script: '', dialogue: [it.label] });
           exhibits.push(it.actor);
           return;

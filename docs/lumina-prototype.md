@@ -92,6 +92,22 @@ module means, and doesn't touch Luminati's files:
 - **The sheet.**
   - **All eight octant rows** of our atlases. Luminati's animations name its four directions; the row drawn is the
     octant of the sprite's heading within that direction's quarter (`ember/view.js`, §6).
+  - **Only what the figure can show** (2026-10-31: the first catalogue crashed iOS Safari's tab). With every clip in
+    eight rows, its 72-actor cast held ≈ 900 MB of canvas. A sheet is now cut to one of three sets:
+    - *full* (idle, walk, attack, hit, death; eight rows) for anyone who fights or dances;
+    - *plain* (idle and walk; eight rows) for a villager, or the player on a peaceful level;
+    - *still* (idle, the one row facing the camera) for a `still` villager, who never turns.
+
+    A clip a sheet doesn't hold shows its idle, and the atlas image is let go once cut.
+
+    | Level | Canvas memory (measured) |
+    |---|---|
+    | The catalogue | 28 MB (72 still, 1 plain) |
+    | Thornwick | 49 MB |
+    | Gildhaven, 68 villagers | 64 MB |
+    | The encounter | 71 MB |
+
+    The browser suite holds the catalogue under 64 MB.
   - **The columns** are our idle, walk, attack, hit and death clips. Luminati's poses by name (`slash`, `hurt`,
     `cheer0`, `kneel` …) point into them.
   - **Scale:** 32 native pixels to a world unit. Our 56-px figure stands 1.75 units, about a Luminati villager's height

@@ -6,9 +6,9 @@
 // monsters, the humanoid ones (goblin, archer, shaman) are Emberfall's hill goblins; the rest keep Luminati's look.
 //
 // An atlas (tools/actor-lab/bake.cjs) is a row a screen octant (0 E, 1 SE, 2 S, 3 SW, 4 W, 5 NW, 6 N, 7 NE) and a column a
-// frame, its clips named in its JSON. The sheet made here keeps all eight rows and, of the columns, the clips Luminati
+// frame, its clips named in its JSON. The sheet made here keeps the eight rows and, of the columns, the clips Luminati
 // plays: idle, walk (run is the walk, quicker), and the attack, the hit and the death for the combat and festival poses
-// it asks for by name. Luminati's Sprite3D knows four directions (down, left, right, up), and its animations name those
+// it asks for by name — as many of them as its figure can show (cutOf: full, plain, still). Luminati's Sprite3D knows four directions (down, left, right, up), and its animations name those
 // four rows; view.js draws the octant row of the sprite's heading within that quarter (`emberOctants`).
 //
 // The atlases are big (a hero's is 7392 × 816): only their JSON is fetched at boot (a few hundred bytes each, every one the
@@ -78,23 +78,35 @@ export function atlasFor(spec) {
 
 // ── the sheet ───────────────────────────────────────────────────────────────────────────────────────────────────────
 const DIRS = ['down', 'left', 'right', 'up'];                      // Luminati's four, its rows' names (view.js: → octants)
-const OCTANTS = 8;
 const CLIPS = ['idle', 'walk', 'attack', 'hit', 'death'];
 const pick = (n, k) => Array.from({ length: k }, (_, i) => Math.min(n - 1, Math.round((i * n) / k)));
 
-/** an atlas's cut: the canvas (the eight octant rows, the clips' columns side by side), filled once its image is in */
+// What a sheet holds is what its figure can show (a phone's canvas memory is small: iOS Safari killed the catalogue, whose
+// 72 actors cut every clip in eight rows took ≈ 900 MB of canvas):
+//   full   idle, walk, attack, hit, death in eight rows: anyone who fights or dances (combat and festival sheets)
+//   plain  idle and walk in eight rows: a villager, the player on a peaceful level (≈ 47 % of full)
+//   still  idle in the one row facing the camera: a `still` villager, who never turns (the catalogue's cast; ≈ 3 %)
+// A clip a sheet doesn't hold is its idle (a pose asked of it shows the idle frame). The atlas image is let go once cut.
+const SETS = { full: CLIPS, plain: ['idle', 'walk'], still: ['idle'] };
+const STILL_ROW = 2;                                               // (the atlas's S octant: facing the camera, 'down')
+
+/** an atlas's cut for a set: the canvas (the rows, the clips' columns side by side), filled once its image is in */
 const cuts = new Map();
-function cutOf(name) {
-  let c = cuts.get(name);
+function cutOf(name, set = 'full') {
+  const key = `${name}|${set}`;
+  let c = cuts.get(key);
   if (c) return c;
-  const m = META[name], cw = m.cw, ch = m.ch, at = {}; let cols = 0;
-  for (const k of CLIPS) { const C = m.clips[k] || m.clips.idle; at[k] = { col: cols, len: C.len, fps: C.fps, impact: C.impact ?? Math.floor(C.len / 2) }; cols += C.len; }
-  const canvas = document.createElement('canvas'); canvas.width = cw * cols; canvas.height = ch * OCTANTS;
-  c = { name, m, cw, ch, cols, at, canvas, clones: new Set(), ready: false, face: null };
+  const m = META[name], cw = m.cw, ch = m.ch, at = {}, keep = SETS[set] || CLIPS, rows = set === 'still' ? [STILL_ROW] : [0, 1, 2, 3, 4, 5, 6, 7];
+  let cols = 0;
+  for (const k of CLIPS) if (keep.includes(k)) { const C = m.clips[k] || m.clips.idle; at[k] = { col: cols, len: C.len, fps: C.fps, impact: C.impact ?? Math.floor(C.len / 2) }; cols += C.len; }
+  for (const k of CLIPS) at[k] ??= at.idle;
+  const canvas = document.createElement('canvas'); canvas.width = cw * cols; canvas.height = ch * rows.length;
+  c = { name, set, m, cw, ch, cols, rows: rows.length, at, canvas, clones: new Set(), ready: false, face: null };
   const img = new Image(); img.decoding = 'async';
   img.onload = () => {
     const g = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')); g.imageSmoothingEnabled = false;
-    for (let row = 0; row < OCTANTS; row++) for (const k of CLIPS) { const C = m.clips[k] || m.clips.idle, A = at[k]; g.drawImage(img, C.start * cw, row * ch, C.len * cw, ch, A.col * cw, row * ch, C.len * cw, ch); }
+    rows.forEach((octant, row) => { for (const k of keep) { const C = m.clips[k] || m.clips.idle, A = at[k]; g.drawImage(img, C.start * cw, octant * ch, C.len * cw, ch, A.col * cw, row * ch, C.len * cw, ch); } });
+    img.onload = null; img.src = '';                               // (the decoded atlas, up to 24 MB, let go)
     c.ready = true;
     for (const t of c.clones) t.needsUpdate = true;                // every sprite's own copy, uploaded again
   };
@@ -105,7 +117,7 @@ function cutOf(name) {
   const fimg = new Image();
   fimg.onload = () => { const g = /** @type {CanvasRenderingContext2D} */ (face.getContext('2d')); g.imageSmoothingEnabled = true; g.drawImage(fimg, 8, 2, 17, 17); };
   if (ACTOR_FACES.includes(name)) fimg.src = `${ACTORS}${name}.face.png`;   // (the townsfolk, the bow rogues and the foes have none baked)
-  cuts.set(name, c);
+  cuts.set(key, c);
   return c;
 }
 /** a texture over the cut's canvas that hands its clones to the cut, so each is uploaded again when the pixels come in */
@@ -134,9 +146,11 @@ function posesOf(at) {
 }
 /** the sheet Luminati's Sprite3D plays (its SpriteSheet: texture, frames, animations by `<clip>_<dir>`) */
 export function emberSheet(spec, { combat = false, festival = false } = {}) {
-  const name = atlasFor(spec), c = cutOf(name), { at, cw, ch, m } = c, poses = posesOf(at);
+  const set = combat || festival ? 'full' : spec && typeof spec === 'object' && spec.emberStill === true ? 'still' : 'plain';
+  const name = atlasFor(spec), c = cutOf(name, set), { at, cw, ch, m } = c, poses = posesOf(at);
   const animations = {};
-  DIRS.forEach((d, row) => {
+  DIRS.forEach((d, four) => {
+    const row = set === 'still' ? 0 : four;                        // (a still sheet's one row serves every name)
     const run = (q, fps = q.fps, loop = true) => ({ frames: Array.from({ length: q.len }, (_, i) => ({ col: q.col + i, row })), fps, loop });
     animations[`idle_${d}`] = run(at.idle);
     animations[`walk_${d}`] = run(at.walk);
@@ -153,9 +167,9 @@ export function emberSheet(spec, { combat = false, festival = false } = {}) {
     animations[`dance_${d}`] = { frames: ['dance0', 'dance1', 'dance2', 'dance3'].map((p) => ({ col: poses[p], row })), fps: 6, loop: true };
   });
   const label = `ember:${name}${combat ? ':combat' : festival ? ':festival' : ''}`, texture = textureOf(c, label);
-  texture.userData.emberOctants = true;                        // (the mark view.js reads: MonsterSprites rebuilds the sheet, keeps the texture)
+  texture.userData.emberOctants = set !== 'still';             // (the mark view.js reads: MonsterSprites rebuilds the sheet, keeps the texture)
   return {
-    texture, canvas: c.face, frameWidth: cw, frameHeight: ch, columns: c.cols, rows: OCTANTS,
+    texture, canvas: c.face, frameWidth: cw, frameHeight: ch, columns: c.cols, rows: c.rows,
     pixelsPerUnit: EMBER_PPU, anchor: [m.ax / cw, 1 - m.ay / ch], animations, name: label,
     spec: { ...(spec && typeof spec === 'object' ? spec : {}), preset: (spec && spec.preset) || 'villager' },
     ...(combat || festival ? { poses } : {}),
@@ -194,6 +208,8 @@ export function enemySheetFor(g) {
   return sh;
 }
 Object.assign(globalThis, { __emberFoes: { sheetFor: enemySheetFor } });
+/** (for checks: the sheets cut, and the canvas memory they hold, MB) */
+Object.assign(globalThis, { __emberSheets: { get cuts() { return [...cuts.keys()]; }, get canvasMB() { let b = 0; for (const c of cuts.values()) b += c.canvas.width * c.canvas.height * 4; return +(b / 1048576).toFixed(1); } } });
 
 /** (for checks: the atlas a spec would get, and Luminati's own painter if wanted side by side) */
 export const luminatiCreateCharacterSheet = LUMINATI.createCharacterSheet;
