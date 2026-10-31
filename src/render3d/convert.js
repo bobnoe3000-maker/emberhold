@@ -63,9 +63,10 @@ const REGION_LOOK = {
   heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
 };
 const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'deadwood' };
-// our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck) as Luminati's tile and height
-const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2']];
-const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, G: 1, g: 0 };
+// our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
+// snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
+const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
+const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 
 /**
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
@@ -103,11 +104,15 @@ function outdoor(w, region) {
   const tm = (x, y) => { const gx = x + w.PAD, gy = y + w.PAD; return gx >= 0 && gy >= 0 && gx < w.GW && gy < w.GH ? w.tmat[gy * w.GW + gx] : 0; };
   const tiles = grid(W, D, 'g'), heights = grid(W, D, '2');
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    const n = {};
-    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const g = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] || GROUND[0]; n[g[0]] = (n[g[0]] || 0) + 1; }
-    let c = Object.keys(n).sort((a, b) => n[b] - n[a] || (RANK[b] ?? 0) - (RANK[a] ?? 0))[0];
-    if (c === 'g') { const h = hash('g', i, j) % 100; c = h < 12 ? 'G' : h < 16 ? 'f' : 'g'; }
-    tiles[j][i] = c; heights[j][i] = (GROUND.find((g) => g[0] === c) || ['', '2'])[1];
+    const n = new Map();                                       // (by our ground's index: the Fens' bank and the Heights' snow share a tile)
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const t = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] ? tm(x0 + 2 * i + dx, y0 + 2 * j + dy) : 0; n.set(t, (n.get(t) || 0) + 1); }
+    const t = [...n.keys()].sort((a, b) => n.get(b) - n.get(a) || (RANK[GROUND[b][0]] ?? 0) - (RANK[GROUND[a][0]] ?? 0))[0];
+    let c = GROUND[t][0];
+    if (c === 'g') {                                           // (the Vale's turf with its flowers; the Reach's dry, cracked earth and ash scrub;
+      const h = hash('g', i, j) % 100;                         // the Heights' frost-bitten turf: the regions' own grounds, outdoorpaint.js)
+      c = region === 'reach' ? (h < 64 ? 'd' : h < 86 ? 'G' : '.') : region === 'heights' ? (h < 58 ? 'G' : 'g') : h < 12 ? 'G' : h < 16 ? 'f' : 'g';
+    }
+    tiles[j][i] = c; heights[j][i] = GROUND[t][1];
   }
   const objects = [], sprites = [], count = {};
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };

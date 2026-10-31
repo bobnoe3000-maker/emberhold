@@ -288,9 +288,10 @@ lets stop at the trial build so i can play test before continuing."*
 
 1. **Depth of field** is a setting in the menu's new **Graphics** panel, per device: *Soft blur* (the prototype's eased
    blur, the default) or *Off*. It applies at once (`src/render3d/settings.js`, `src/ui/title.js`).
-2. **The Reach and Heights overlands** are designed now, as their own lands, not the Vale's copied: their layout,
-   canon and the sim's builders are separate work from this plan (it's a design change: the world doc and the GDD
-   first). Until they land, the converter draws whatever the sim builds.
+2. **The Reach and Heights overlands** are designed and built as their own lands, not the Vale's copied, as separate
+   work from this plan: the world doc (v1.34) and the GDD first, then the sim
+   ([reach-heights-overlands.md](./reach-heights-overlands.md)). They're previews (`?scene=overland&region=reach|heights`)
+   until their acts are built. The converter draws them.
 3. **The Frontier** stays out of the port, on its own renderer.
 4. **Stop after phase 0**: the trial build (§12), for the owner to play on the phone. Phases 1–9 wait for that
    play-test, and the default stays Emberlit.
@@ -379,4 +380,6 @@ Toadking's Mound 128 × 128 (cropped), the Scrag Warren 128 × 97 (`test/render3
 - **Memory and speed on a phone are unmeasured** (the gates in §8; phase 7).
   - Each actor atlas is one texture of about 24 MB.
   - The frame runs a second WebGL context beside Emberlit's idle one.
-- **The Reach and Heights overlands** are the Vale's until their own design lands (§11).
+- **The Reach and Heights overlands** are their own lands now ([reach-heights-overlands.md](./reach-heights-overlands.md)),
+  and the converter draws them. In Luminati they still read green: its grass is green, its snow belongs to its season
+  kit, and the Heights' snow stands as pale sand. They need a ground pass of their own in phase 3.

@@ -12,7 +12,7 @@ const { hourOf } = await import('../src/render3d/hybrid.js');
 
 const SEED = 20260807;
 const worlds = [
-  ['town', 'vale'], ['town', 'fens'], ['town', 'reach'], ['town', 'heights'], ['overland', 'vale'], ['overland', 'fens'],
+  ['town', 'vale'], ['town', 'fens'], ['town', 'reach'], ['town', 'heights'], ['overland', 'vale'], ['overland', 'fens'], ['overland', 'reach'], ['overland', 'heights'],
   ['dungeon', 'vale', 'barrows'], ['dungeon', 'vale', 'wickham_keep'], ['dungeon', 'vale', 'toadking_mound'], ['dungeon', 'vale', 'scrag_warren'],
 ];
 
