@@ -43,11 +43,12 @@ const CSS = `
 
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
- *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void }} o  onPlay: the title closes into play;
+ *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null }} o  onPlay: the title closes into play;
  *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md; the Luminati prototype,
- *   docs/lumina-prototype.md), the game saved first
+ *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js)
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -74,8 +75,32 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
+  // Graphics (render3d/settings.js, per device; docs/luminati-port-plan.md): the world drawn by Emberlit, the game's own,
+  // or by Luminati (the trial build: the same game, sim and screens, its world in Luminati's light); and the depth of
+  // field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off
+  const choice = (k, v, label, what, on) => html`<button key=${k + v} class=${on ? 'pri' : ''} aria-pressed=${on ? 'true' : 'false'}
+    onClick=${async () => { await graphics.set({ [k]: v }); draw(); }}>${label}<small>${what}</small></button>`;
+  function Graphics() {
+    const g = graphics.read(), r = graphics.current();
+    return html`<div id="title">
+      <div class="mark" style="font-size:32px">GRAPHICS</div>
+      <div class="tag">The world is drawn by</div>
+      <div class="row">
+        ${choice('renderer', 'emberlit', 'Emberlit', 'the game’s own', r === 'emberlit')}
+        ${choice('renderer', 'luminati', 'Luminati', 'trial: light, shadow, depth', r === 'luminati')}
+      </div>
+      <div class="tag">Depth of field${r === 'luminati' ? '' : ' (with Luminati)'}</div>
+      <div class="row">
+        ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
+        ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
+      </div>
+      <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
+    </div>`;
+  }
+
   function Title() {
     if (panel === 'sound' && audio) return html`<${Sound} />`;
+    if (panel === 'graphics' && graphics) return html`<${Graphics} />`;
     const S = sim.state, h = S.party[0], made = S.created;
     const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     return html`<div id="title">
@@ -100,6 +125,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => openPage('./lumina/index.html')}>Another world<small>Luminati's dioramas, your people</small></button>
       </div>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
+      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>${graphics.current() === 'luminati' ? 'Luminati (trial)' : 'Emberlit'} · depth of field</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
     </div>`;
   }

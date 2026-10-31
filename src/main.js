@@ -29,6 +29,7 @@ import { screenDirToWorld } from './render/iso.js';
 import { createAudio } from './audio/engine.js';
 import { createListener } from './audio/listen.js';
 import { holdWeather } from './render/weatherfx.js';
+import { rendererFor, readGraphics, writeGraphics } from './render3d/settings.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -74,6 +75,15 @@ const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const renderer = createRenderer(canvas, sim, input);
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
+// the world in Luminati (docs/luminati-port-plan.md, the trial build): the menu's Graphics or ?renderer=luminati. Emberlit
+// stays the game's eye (its camera, its figures' frames, everything over the world, every tap); Luminati draws the world
+// under it (render3d/hybrid.js). Not on the dev Stage, which reviews Emberlit's own art.
+let world3d = null;
+if (rendererFor() === 'luminati' && !STAGE) {
+  import('./render3d/hybrid.js').then(({ attachLuminati }) => attachLuminati({ renderer, sim, region: REGION }))
+    .then((h) => { world3d = h; if (DEV) globalThis.__world3d = h; })
+    .catch((err) => console.error('[luminati] the trial renderer failed to start:', err));
+}
 // sound (docs/sound-plan.md): presentation only, listening to the sim and the renderer. Browsers let it start only after
 // a gesture, so the first tap or key starts it; the player's settings (the menu's Sound) are kept per device.
 const audio = createAudio();
@@ -127,7 +137,18 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); },   // the menu comes up over a clear screen
   // the sandboxes (the Frontier, docs/frontier-proposal.md; the Luminati prototype, docs/lumina-prototype.md): pages of
   // their own that touch no save, the slot saved before the page goes
-  openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; } });
+  openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; },
+  // Graphics (render3d/settings.js, per device): the world's renderer takes a reload (the slot saved first); the depth of
+  // field applies at once
+  graphics: { read: readGraphics, set: async (patch) => {
+    const before = rendererFor(), next = writeGraphics(patch);
+    if (patch.dof && world3d) world3d.setDof(next.dof);
+    if (patch.renderer && patch.renderer !== before) {
+      if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {});
+      const u = new URL(location.href); u.searchParams.delete('renderer'); location.href = u.href;
+    }
+    return next;
+  }, current: rendererFor } });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 // offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title

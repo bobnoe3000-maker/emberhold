@@ -1361,6 +1361,40 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await ctx.close(); await b.close();
   }
 }
+// the trial of Luminati as the game's world renderer (docs/luminati-port-plan.md, phase 0; src/render3d/): the game itself
+// with ?renderer=luminati. Thornwick is converted from the sim and built in the frame under the HUD; Luminati's camera
+// puts the ground where Emberlit's overlay and taps expect it (to a pixel or two); the frame takes no pointer; the menu's
+// Graphics shows the renderer and turns the depth of field off at once; walking out of the gate builds the Vale
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
+    await p.goto(`${base}/index.html?scene=town&notitle&dev&manual&renderer=luminati`);
+    await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
+    const built = async (loads) => { for (let i = 0; i < 1200; i++) { if (await p.evaluate((n) => { globalThis.__frame(16); const h = globalThis.__world3d; return !!h && h.state.loads >= n && h.world?.stats.level >= n && !globalThis.__renderer.transiting; }, loads)) return true; await p.waitForTimeout(150); } return false; };
+    const probe = () => p.evaluate(() => { globalThis.__frame(16); const s = globalThis.__sim, q = s.state.player, h = globalThis.__world3d;
+      return Math.max(...[[0, 0], [10, 0], [0, 10], [-12, -6], [8, -14]].map(([a, c]) => { const r = h.probe(q.x + a, q.y + c); return r ? Math.hypot(r.emberlit[0] - r.luminati[0], r.emberlit[1] - r.luminati[1]) : 99; })); });
+    const town = await built(1), offTown = town ? await probe() : 99;
+    for (let i = 0; i < 200 && !(await p.evaluate(() => { globalThis.__frame(16); return globalThis.__world3d.world.stats.actors > 0; })); i++) await p.waitForTimeout(100);   // (the figures' atlases load after the level)
+    const frame = await p.evaluate(() => { const f = document.querySelector('iframe'), cs = getComputedStyle(f); return { pe: cs.pointerEvents, z: cs.zIndex, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
+    // the menu's Graphics: Luminati pressed, and the depth of field off at once
+    await p.evaluate(() => globalThis.__ui.title.open('pause'));
+    await p.locator('#title button', { hasText: 'Graphics' }).click();
+    const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
+    await p.locator('#title button', { hasText: 'Off' }).click();
+    const dofOff = await p.evaluate(() => document.querySelector('iframe').contentWindow.__game?.postfx?.settings?.dof?.enabled === false);
+    await p.evaluate(() => globalThis.__ui.title.close());
+    // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
+    const walked = await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits[0], w0 = s.world; s.commands.push({ type: 'tap', tx: Math.floor((e.x0 + e.x1) / 2), ty: Math.floor((e.y0 + e.y1) / 2) }); let n = 0; while (s.world === w0 && n < 4000) { s.tick(); n++; } return s.world.kind; });
+    const vale = await built(2), offVale = vale ? await probe() : 99;
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); the frame takes no pointer; Graphics shows Luminati and turns the depth of field off',
+      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.pe === 'none' && frame.actors > 0 && pressed.includes('Luminati') && dofOff && errs.length === 0,
+      JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
+    await ctx.close(); await b.close();
+  }
+}
 srv.close();
 const ok = results.length > 0 && results.every(Boolean);
 console.log(ok ? 'BROWSER_OK' : 'BROWSER_FAIL');

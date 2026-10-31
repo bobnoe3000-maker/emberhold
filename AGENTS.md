@@ -23,6 +23,7 @@ that happens.
 npm ci                                    # once: dev tooling only (the game itself has no build)
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
+#   ?renderer=luminati|emberlit (the world drawn by Luminati under the same sim, HUD and taps: the port plan's trial, docs/luminati-port-plan.md §12; the menu's Graphics stores it per device, with the depth of field)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
@@ -30,12 +31,13 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?dev&scene=stage[&group=party|town|foes|bosses|wardens|all&clip=idle|walk|attack|…&dir=0-7|turn|all&zoom=1-3&floor=grass|cobble&cmp=/before/]: the cast lined up, animated in place (docs/character-stage-proposal.md)
 #   ?dev&scene=stage&show=env|props|fx|icons|faces[&set=env|town-vale|town-fens|town-reach|town-heights|all&match=…&page=N&tod=…&zoom=1-3]: the art review, every sprite, prop, effect, icon and portrait as the game draws it (docs/art-review.md)
 #   /lumina/ (the Luminati prototype, docs/lumina-prototype.md: Luminati's worlds, Emberfall's people; a built folder: rebuild, never edit)
+#   /lumina/world.html (never opened alone: the game frames it with ?renderer=luminati; built with the prototype)
 #   /lumina/game.html?autostart=1&level=thornwick|encounter|barrows|catalogue|catalogue-art|<theirs>&hero=hero_knight|…[&auto=1][&view=luminati] (our Thornwick, the Scrag Warren fight with the autobattle, the Old Barrows dungeon, the asset catalogue and its wing of Emberfall's art; the main game's camera and eight facings unless view=luminati)
 #   /frontier.html[?lv=1-75&town=thornwick|ashgate|…&zoom=0.15-40] (the Frontier, docs/frontier-proposal.md: the Old Provinces as one land, a sandbox with its own sim; ?manual on localhost: globalThis.__frame(ms), __fr, __view)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's views list everything, the Frontier's stick, lock and zoom (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's views list everything, the Frontier's stick, lock and zoom, the Luminati trial renderer lined up with the HUD (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --fresh = hires at their hire level (half the hero's), not levelled up; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); --up N = every kit piece at the smith's +N; --size: fight in a room of that size (default large, the contract's arena); --floor N: on that floor (the Old Barrows' default 2, the Ashbound's, as the contract); DMG=1: damage by member
 node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman] [--floor N]   # a boss hall vs fighter + rogue + cleric (or shaman) at a level (TRACE=1: a timeline); --floor: the hall on floor N (the Drowned Abbey has three)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level, in the dungeon whose band holds it (dev plan §2.7 targets)

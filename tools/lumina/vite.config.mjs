@@ -89,6 +89,6 @@ export default defineConfig({
   logLevel: 'warn',
   build: {
     target: 'es2022', outDir: OUT, emptyOutDir: true, chunkSizeWarningLimit: 4000,
-    rollupOptions: { input: { index: resolve(EMBER, 'index.html'), game: resolve(EMBER, 'game.html') }, treeshake: theirs.build.rollupOptions.treeshake },
+    rollupOptions: { input: { index: resolve(EMBER, 'index.html'), game: resolve(EMBER, 'game.html'), world: resolve(EMBER, 'world.html') }, treeshake: theirs.build.rollupOptions.treeshake },
   },
 });

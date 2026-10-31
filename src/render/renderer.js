@@ -1064,6 +1064,12 @@ export function createRenderer(canvas, sim, input) {
     const rx = nvw / 2 + ((sideL - safeR) * vw) / (2 * window.innerWidth * S) - C.sx + jx, ry = nvh * anchor - C.sy + jy;
     return { ox: Math.ceil(rx), oy: Math.ceil(ry), rx, ry };
   }
+  // another world painter (src/render3d/hybrid.js: Luminati, the port plan's trial): it draws the world and the figures
+  // behind this renderer's overlay, from this camera and this frame's draws; here the bake, the stamping and the light
+  // passes are skipped, and everything over the world (the minimap, names, plaques, bars, numbers, the banner, the
+  // stick) and every tap test stay as they are. null: Emberlit draws the world itself.
+  /** @type {null | { ready: (world: any) => boolean, frame: (draws: any[], cam: any) => void }} */
+  let ext = null;
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 }, lastDrawn = 0;   // (lastDrawn: the frame's clock, so npcAt knows a drawn position is current)
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
@@ -1077,7 +1083,12 @@ export function createRenderer(canvas, sim, input) {
     const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
 
     const t0 = performance.now();
-    keepBaked(ox, oy, t0);
+    if (ext) {                                                     // (the other painter has the world: its level built is the bake)
+      const ok = ext.ready(sim.world);
+      if (!ok && !terrValid && !transit) transit = { job: null, fadeFrom: 0 };
+      if (ok && !terrValid) { terrValid = true; if (transit) transit.fadeFrom = t0; }
+      if (!ok) terrValid = false;
+    } else keepBaked(ox, oy, t0);
     if (transit && !terrValid) {                                   // the new scene is still baking: black, and the scene's name
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, vw, vh); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
       octx.clearRect(0, 0, vw, vh); drawBanner(now);
@@ -1086,7 +1097,7 @@ export function createRenderer(canvas, sim, input) {
 
     // copy the visible window out of the baked margin region (scratch x == native x)
     const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
-    for (let y = 0; y < nvh; y++) {
+    if (!ext) for (let y = 0; y < nvh; y++) {
       const b0 = ((srcY + y) * tbw + srcX) * 4, s0 = (y * nvw) * 4, len = nvw * 4;
       sALB.set(bALB.subarray(b0, b0 + len), s0);
       sNRM.set(bNRM.subarray(b0, b0 + len), s0);
@@ -1204,6 +1215,8 @@ export function createRenderer(canvas, sim, input) {
       foes: draws.filter((d) => d.team >= 2 && d.a && d.atl).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir, d.atl.name, d.uid]) });
     if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, pz, now, t: skyHoldT ?? sim.state.t });   // (t: the held look's, the title's dusk)
+    if (!ext) {
     draws.sort((a, b) => a.d - b.d);
     // ground the figures: a soft contact shadow under each, and in battle a faint team ring
     const hb = st ? st.hazard : sim.battle, rings = st ? !!st.rings : !!sim.battle;   // (the Stage's FX view paints its own hazard, and rings its figures)
@@ -1227,11 +1240,14 @@ export function createRenderer(canvas, sim, input) {
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
     if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
 
+    }
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
+    if (!ext) {
     // upload the window G-buffer
     gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
     gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sNRM);
     gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sEMI);
+    }
 
     const t = now / 1000;
     // hero carry-light + corruption flares (all in native/scratch pixel space)
@@ -1256,6 +1272,7 @@ export function createRenderer(canvas, sim, input) {
     });
 
     // PASS A — lighting at native resolution
+    if (!ext) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
     gl.viewport(0, 0, nvw, nvh);
     gl.useProgram(lightP);
@@ -1300,6 +1317,7 @@ export function createRenderer(canvas, sim, input) {
     gl.uniform1f(U(postP, 'uTime'), t);
     gl.uniform1i(U(postP, 'uView'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
@@ -1772,6 +1790,9 @@ export function createRenderer(canvas, sim, input) {
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
     /** dev: the Stage (src/dev/stage.js) — its lineup, camera and overlay; null to leave it */
     setStage(s) { stage = s; },
+    /** another painter for the world (src/render3d/hybrid.js), or null for Emberlit's own; the world is drawn by it from
+     * the next frame, behind black until its level is built */
+    setExternal(e) { ext = e || null; terrValid = false; transit = { job: null, fadeFrom: 0 }; },
     /** dev: the art review loads every environment atlas it shows (env, town-<region>) @param {string[]} names */
     stageLoad(names) { for (const n of names) loadAtlas(n); },
     /** dev: which environment atlases have landed, and the sprite ids in one (null until it has) @param {string} name */

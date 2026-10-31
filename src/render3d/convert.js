@@ -1,0 +1,233 @@
+// @ts-check
+// convert.js — the sim's world as a Luminati level (docs/luminati-port-plan.md §5; phase 0, the trial build). The owner
+// (2026-10-31): "Recreate each emberfall map in luminati." Every map the game has is built by the sim (towns, the
+// waystation, the overlands, every dungeon floor of every site, per save seed), so it is converted here at runtime, from
+// the world the sim is walking, and what you see is where the sim's walls are. It grew out of the prototype's build-time
+// Thornwick (tools/lumina/levels.mjs) and keeps its look tables.
+//
+// A Luminati tile is two of ours each way (X = x/2, Z = y/2: a figure is 3.5 of our tiles and 1.75 of theirs). The
+// ground is ours: grass, dirt, cobble, fields, water and banks (outdoor.js G), a dungeon's floor and walls (level.js
+// cells). The structs (envfoot.js footprints) become one of two things, by a table, so either art can stand anywhere
+// (the plan's §7, "keep both asset sets in reserve"):
+//   · a Luminati object: houses (each region's walls and roofs), trees, rocks, fences, wells, lamps, the small props;
+//     the town walls and the overlands' mountains raised as terrain;
+//   · an Emberfall sprite (`sprites`, stood by the world page as our baked art): everything Luminati has no match for
+//     (mills, ruins, the keep, the Fens' stilt houses, the animals, a milestone).
+// The undergrowth is left to Luminati's own ground cover (a quarter of its size: the owner, ember/ground.js).
+// Luminati holds a level to 128 units a side (LevelFormat MAX_SIZE): a bigger map is cropped round its middle (the plan's
+// §5; the overlands lose a few tiles of their edges).
+// Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
+import { ENV_FOOT } from '../sim/envfoot.js';
+import { FLOOR_Z } from '../sim/level.js';
+
+/** the most of ours a level takes each way: 128 of Luminati's */
+export const MAX_TILES = 256;
+/** the ground's height in the level (heights '2': a unit up, as Luminati's own levels stand) and ours (FLOOR_Z) */
+export const GROUND_Y = 1, SIM_FLOOR = FLOOR_Z;
+
+const hash = (...v) => { let h = 0x811c9dc5; for (const c of v.join('|')) h = Math.imul(h ^ c.charCodeAt(0), 0x01000193); return h >>> 0; };
+const r2 = (v) => Math.round(v * 100) / 100;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// Luminati's ground types (their sample levels' legend), and the two of ours added: a dungeon's floor and its rock
+const LEGEND = {
+  g: { top: 'grass', side: 'cliff', lip: 'grass_side', walkable: true }, G: { top: 'grass_dark', side: 'cliff', lip: 'grass_side', walkable: true },
+  f: { top: 'grass_flowers', side: 'cliff', lip: 'grass_side', walkable: true }, F: { top: 'farmland', side: 'dirt_side', walkable: true },
+  s: { top: 'sand', side: 'dirt_side', walkable: true }, m: { top: 'moss_stone', side: 'cliff', walkable: true },
+  '.': { top: 'dirt_path', side: 'dirt_side', walkable: true }, d: { top: 'dirt', side: 'dirt_side', walkable: true },
+  c: { top: 'cobblestone', side: 'stone_wall', walkable: true }, k: { top: 'stone_tiles', side: 'stone_wall', walkable: true },
+  b: { top: 'wood_deck', side: 'wood_planks_dark', walkable: true },
+  '~': { top: 'riverbed', side: 'cliff', water: true, walkable: false }, o: { top: 'riverbed', side: 'cliff', water: true, walkable: false, flow: 0 },
+  T: { top: 'grass_dark', side: 'cliff', lip: 'grass_side', walkable: false }, x: { top: 'moss_stone', side: 'cliff', walkable: false },
+  ' ': { void: true },
+};
+// a region's buildings in Luminati's walls and roofs, by our piece: the Vale's timber, plaster and thatch (stone for the
+// shrine and the forge), the Fens' dark planks and reed, the Reach's black slag-brick and slate, the Heights' stone
+/** @type {[RegExp, Record<string, any>][]} */
+const HOUSES = [
+  [/_temple_/, { wall: 'stone_brick', roof: 'roof_slate', stories: 2, chimney: false }],
+  [/_tavern_/, { wall: 'timber_frame', roof: 'roof_thatch', stories: 2, sign: true }],
+  [/_shop_/, { wall: 'plaster', roof: 'roof_red', stories: 1, sign: true, doorHood: true }],
+  [/_smith_/, { wall: 'stone_brick', roof: 'roof_slate', stories: 1, sign: true }],
+  [/_inn_/, { wall: 'stone_brick', upperWall: 'timber_frame', roof: 'roof_red', stories: 2, sign: true }],
+  [/_longhousex?_/, { wall: 'log_wall', roof: 'roof_thatch', stories: 1 }],
+  [/_workshopx?_/, { wall: 'wood_planks', roof: 'roof_slate', stories: 1 }],
+  [/_cottagex?_/, { wall: 'plaster', roof: 'roof_thatch', stories: 1 }],
+  [/_housex?_/, { wall: 'timber_frame', roof: 'roof_thatch', stories: 2 }],
+  [/_farmx?_/, { wall: 'wood_planks_dark', roof: 'roof_thatch', stories: 1 }],
+];
+const REGION_LOOK = {
+  vale: {},
+  fens: { wall: 'wood_planks_dark', upperWall: '', roof: 'roof_thatch' },
+  reach: { wall: 'stone_brick', upperWall: 'brick', roof: 'roof_slate' },
+  heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
+};
+const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'deadwood' };
+// our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck) as Luminati's tile and height
+const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2']];
+const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, G: 1, g: 0 };
+
+/**
+ * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
+ * @param {any} w the sim's world (sim.world)
+ * @param {{ region?: string }} [o]
+ * @returns {{ level: any, sprites: { id: string, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ */
+export function convertWorld(w, o = {}) {
+  return w.kind === 'dungeon' ? dungeon(w) : outdoor(w, o.region || w.region || 'vale');
+}
+
+/** a crop of ours, its tiles even and at most MAX_TILES a side, round a middle */
+function crop(x0, y0, x1, y1, mx, my) {
+  const cut = (a, b, m) => { a = Math.floor(a / 2) * 2; b = Math.ceil(b / 2) * 2; if (b - a > MAX_TILES) { a = Math.floor((m - MAX_TILES / 2) / 2) * 2; b = a + MAX_TILES; } return [a, b]; };
+  const [ax, bx] = cut(x0, x1, mx), [ay, by] = cut(y0, y1, my);
+  return { x0: ax, y0: ay, W: (bx - ax) / 2, D: (by - ay) / 2 };
+}
+const grid = (w, d, ch) => Array.from({ length: d }, () => Array(w).fill(ch));
+const rows = (g) => g.map((r) => r.join(''));
+function frame({ name, W, D, environment, tiles, heights, objects, spawn }) {
+  return { format: 'luminati-level', version: 1, name, subtitle: '', author: 'Emberfall', description: 'Converted at runtime from the sim (src/render3d/convert.js).',
+    width: W, depth: D, waterLevel: 0.4, water: { flow: [0, 0.45], reflect: 0.2, neutral: 0.2 }, legend: LEGEND,
+    environment: { clock: false, weather: 'clear', music: false, dust: false, camera: null, highGround: null, ...environment },
+    spawn, tiles: rows(tiles), heights: rows(heights), objects };
+}
+
+// ── towns and overlands ─────────────────────────────────────────────────────────────────────────────────────────────
+function outdoor(w, region) {
+  // the map, its approach roads (a town's exits lie past its edge) and a margin; never past the grid the sim built
+  let bx0 = 0, by0 = 0, bx1 = w.W, by1 = w.H;
+  for (const e of w.exits || []) { bx0 = Math.min(bx0, e.x0); by0 = Math.min(by0, e.y0); bx1 = Math.max(bx1, e.x1); by1 = Math.max(by1, e.y1); }
+  bx0 = Math.max(-w.PAD, bx0 - 8); by0 = Math.max(-w.PAD, by0 - 8); bx1 = Math.min(w.W + w.PAD, bx1 + 8); by1 = Math.min(w.H + w.PAD, by1 + 8);
+  const C = crop(bx0, by0, bx1, by1, w.W / 2, w.H / 2), { x0, y0, W, D } = C;
+  const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
+  const tm = (x, y) => { const gx = x + w.PAD, gy = y + w.PAD; return gx >= 0 && gy >= 0 && gx < w.GW && gy < w.GH ? w.tmat[gy * w.GW + gx] : 0; };
+  const tiles = grid(W, D, 'g'), heights = grid(W, D, '2');
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    const n = {};
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const g = GROUND[tm(x0 + 2 * i + dx, y0 + 2 * j + dy)] || GROUND[0]; n[g[0]] = (n[g[0]] || 0) + 1; }
+    let c = Object.keys(n).sort((a, b) => n[b] - n[a] || (RANK[b] ?? 0) - (RANK[a] ?? 0))[0];
+    if (c === 'g') { const h = hash('g', i, j) % 100; c = h < 12 ? 'G' : h < 16 ? 'f' : 'g'; }
+    tiles[j][i] = c; heights[j][i] = (GROUND.find((g) => g[0] === c) || ['', '2'])[1];
+  }
+  const objects = [], sprites = [], count = {};
+  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  const inside = (x, z, m = 0.5) => x > m && z > m && x < W - m && z < D - m;
+  const foot = (s) => { const f = ENV_FOOT[s.id]; if (!f) return null; return { cx: X(s.x + (f[0] + f[2]) / 2), cz: Z(s.y + (f[1] + f[3]) / 2), w: (f[2] - f[0]) / 2, d: (f[3] - f[1]) / 2, f }; };
+  const services = new Map((w.services || []).map((v) => [v.id, v]));
+  // raised ground under a footprint (the town's walls; a mountain, highest at its middle)
+  const raise = (s, level, ch, dome = false) => {
+    const f = ENV_FOOT[s.id]; if (!f) return;
+    const i0 = Math.floor((s.x + f[0] - x0) / 2), i1 = Math.ceil((s.x + f[2] - x0) / 2), j0 = Math.floor((s.y + f[1] - y0) / 2), j1 = Math.ceil((s.y + f[3] - y0) / 2);
+    for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+      if (i < 0 || j < 0 || i >= W || j >= D) continue;
+      let h = level;
+      if (dome) { const u = ((i + 0.5 - (i0 + i1) / 2) / ((i1 - i0) / 2)) ** 2 + ((j + 0.5 - (j0 + j1) / 2) / ((j1 - j0) / 2)) ** 2; if (u > 1) continue; h = Math.round(3 + (level - 3) * (1 - u)); }
+      const cur = parseInt(heights[j][i], 36);
+      if (cur < h) { tiles[j][i] = ch; heights[j][i] = h.toString(36); }
+    }
+  };
+  const gates = [];
+  for (const s of w.structs) {
+    if (/_curtainy?_\d/.test(s.id)) raise(s, 6, 'k');
+    else if (/_tower_\d/.test(s.id)) raise(s, 8, 'k');
+    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, 8, 'k'); gates.push(s); }
+    else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, 'x', true);
+  }
+  // the roads through a gate stay open (the sim walks them)
+  for (const g of gates) for (const r of w.roads || []) for (let k = 0; k + 1 < r.pts.length; k++) {
+    const [a, b] = [r.pts[k], r.pts[k + 1]];
+    for (let t = 0; t <= 1; t += 0.01) {
+      const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
+      if (Math.abs(x - g.x) > 8 || Math.abs(y - g.y) > 16) continue;
+      for (let ox = -r.w / 2; ox <= r.w / 2; ox += 1) for (let oy = -r.w / 2; oy <= r.w / 2; oy += 1) {
+        const i = Math.floor((x + ox - x0) / 2), j = Math.floor((y + oy - y0) / 2);
+        if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = 'c'; heights[j][i] = '2'; }
+      }
+    }
+  }
+  const raised = (x, z) => { const i = Math.floor(x), j = Math.floor(z); return i < 0 || j < 0 || i >= W || j >= D || heights[j][i] !== '2'; };
+  const look = REGION_LOOK[region] || {};
+  for (const s of w.structs) {
+    const id = s.id, p = foot(s);
+    if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
+      if (/^ug_flowers/.test(id) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
+      continue;
+    }
+    const house = HOUSES.find(([re]) => re.test(id));
+    if (house && /^(vale|fens|reach|heights)_/.test(id) && !/_stilt|_punt|_cistern|_eeltrap/.test(id)) {
+      const svc = services.get(id);
+      add({ type: 'house', x: p.cx, z: p.cz, rotation: 0, ...(svc ? { name: svc.name } : {}), light: !!svc || hash(id, s.x) % 3 === 0,
+        opts: { width: r2(clamp(p.w * 0.82, 3, 8)), depth: r2(clamp(p.d * 0.72, 2.5, 6)), chimney: true, shutters: true, doorHood: false, woodpile: false,
+          gableFront: false, sign: false, upperWall: '', ...house[1], ...(/_temple_|_smith_/.test(id) ? { ...look, wall: 'stone_brick' } : look), seed: hash(id, s.x, s.y) % 997 } });
+      continue;
+    }
+    const m = /^([a-z]+)_\d/.exec(id), kind = m && m[1];
+    if (kind && (TREES[kind] || kind === 'grove')) {
+      if (raised(p.cx, p.cz)) continue;
+      const h = hash(id, s.x, s.y), tk = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind];
+      add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
+    } else if (/^rock_/.test(id)) add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6)), seed: hash(id, s.x) % 97 } });
+    else if (/^(fence|drywall)_/.test(id)) {
+      const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
+      add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });
+    }
+    else if (/_(well|lanewell)_\d/.test(id)) add({ type: 'well', x: p.cx, z: p.cz, rotation: 0, opts: { roof: 'roof_thatch' } });
+    else if (/^windmill_/.test(id)) add({ type: 'windmill', x: p.cx, z: p.cz, rotation: 0, opts: { height: 7, roof: 'roof_thatch', seed: 7 } });
+    else if (/^lamppost_/.test(id)) add({ type: 'lamppost', x: p.cx, z: p.cz, rotation: 0, opts: { style: 'arm' } });
+    else if (/_foodstand_/.test(id)) add({ type: 'marketStall', x: p.cx, z: p.cz, rotation: 0, opts: { cloth: 'cloth_stripe', width: 3, crates: 'right', seed: 2 } });
+    else if (/^barrel/.test(id)) add({ type: 'barrel', x: p.cx, z: p.cz, rotation: (hash(id, s.x, s.y) % 7) / 7, opts: { height: 1, lying: false } });
+    else if (/^crate_|^boxes/.test(id)) add({ type: 'crateStack', x: p.cx, z: p.cz, rotation: 0.2, opts: { count: /^boxes/.test(id) ? 3 : 2, size: 0.8, seed: hash(id, s.x) % 31 } });
+    else if (/^sack/.test(id)) add({ type: 'sacks', x: p.cx, z: p.cz, rotation: 0, opts: { count: 3, seed: 5 } });
+    else if (/^table_/.test(id)) add({ type: 'table', x: p.cx, z: p.cz, rotation: 0, opts: { shape: 'rect', width: 1.6, depth: 0.9, cloth: false, items: true, candle: false, seed: 6 } });
+    else if (/^bench_/.test(id)) add({ type: 'bench', x: p.cx, z: p.cz, rotation: 0, opts: { length: 1.6, back: true } });
+    else if (/^hay_/.test(id)) add({ type: 'haystack', x: p.cx, z: p.cz, opts: { size: 0.8, seed: hash(id, s.x) % 31 } });
+    else sprites.push({ id, x: X(s.x), z: Z(s.y) });            // ours: Luminati has nothing like it (or it's ours to keep)
+  }
+  // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
+  for (const [k, kind] of w.props || []) {
+    const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
+    if (!inside(x, z)) continue;
+    if (kind === 'brazier') add({ type: 'monument', x, z, opts: { kind: 'brazier', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+  }
+  const outer = W * D <= 96 * 96;                               // (the outer scenery past the edge only round a town-sized map)
+  const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
+    environment: { timeOfDay: 17.9, border: outer ? 'forest' : 'none', outerScenery: outer, godRays: outer, interior: false, ...(region === 'reach' ? { climate: 'arid' } : {}) } });
+  return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
+}
+
+// ── a dungeon floor ─────────────────────────────────────────────────────────────────────────────────────────────────
+function dungeon(w) {
+  const cells = w.level.cells;
+  let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+  for (const k of cells.keys()) { const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1); if (x < bx0) bx0 = x; if (y < by0) by0 = y; if (x + 1 > bx1) bx1 = x + 1; if (y + 1 > by1) by1 = y + 1; }
+  const sp = w.spawn || { x: (bx0 + bx1) / 2, y: (by0 + by1) / 2 };
+  const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, sp.x, sp.y);
+  const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
+  const tiles = grid(W, D, 'x'), heights = grid(W, D, '6');
+  // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open)
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    let floor = 0;
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor') floor++; }
+    if (floor) { tiles[j][i] = hash('d', i, j) % 100 < 14 ? 'm' : 'k'; heights[j][i] = '2'; }
+  }
+  const objects = [], count = {};
+  const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  for (const [k, kind] of w.props || []) {
+    const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
+    if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5) continue;
+    if (kind === 'brazier') add({ type: 'monument', x, z, opts: { kind: 'brazier', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+    else if (kind === 'chest') add({ type: 'crate', x, z, rotation: 0.2, opts: {} });
+    else if (kind === 'shrine') add({ type: 'monument', x, z, opts: { kind: 'statue', fire: 'cold', lit: true, seed: hash(k) % 97 } });
+    else if (/^stair/.test(kind) || kind === 'exit') add({ type: 'monument', x, z, opts: { kind: 'lantern', fire: 'warm', lit: true, seed: hash(k) % 97 } });
+  }
+  // a torch on the wall at each room's north side (the rooms' own light: Luminati's 12 lamps shared by distance)
+  for (const r of w.level.rooms || []) {
+    const cx = r.x ?? r.cx, cy = (r.y ?? r.cy) - (r.rh ?? r.h ?? 3);
+    if (cx === undefined || !Number.isFinite(cy)) continue;
+    const x = X(cx), z = Z(cy);
+    if (x > 1 && z > 1 && x < W - 1 && z < D - 1) add({ type: 'wallTorch', x, z, rotation: 0, dy: 1.4, opts: { embers: true } });
+  }
+  const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
+    environment: { timeOfDay: 19.4, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: 'void' } });
+  return { level, sprites: [], origin: { x: x0, y: y0 }, stats: { ...count, size: W * 1000 + D } };
+}
