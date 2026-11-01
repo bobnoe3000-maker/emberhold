@@ -584,7 +584,7 @@ drawn as the converter has them now.
   checks). On Luminati two of its fixed waits were too short for software GL (a few frames a second); they wait for
   the outcome now.
 
-**Step 3, dungeons dressed: done for the Vale** (2026-11-01; art critic pass 19).
+**Step 3, dungeons dressed: done for the Vale** (2026-11-01; [art critic pass 19](./art-critic-pass-19.md)).
 - **The stone.**
   - Each kit's floor: the dig's earth, the bailey's cobbles, the cellar's bare rock, the nave's flags.
   - Its walls: dressed stone (crag tops, stone-brick faces), or rock for the cave and the Cult's cut.
@@ -624,8 +624,11 @@ drawn as the converter has them now.
   - colours greyer;
   - the sky darker, not whiter (greying the horizon also greyed the fog, and the Vale went milky);
   - the sun 0.72×, the fill softer, the nights darker.
-- **The picture graded as Emberlit's.** Luminati's game grades at a saturated 1.3 under a light vignette. In the Vale
-  it's saturation 0.92, exposure 0.9 and a heavy vignette.
+- **The picture graded as Emberlit's.** Luminati's game grades at a saturated 1.3 under a light vignette. In the Vale,
+  saturation runs from 0.74 by day to 0.92 by night, and exposure from 0.84 to 0.9, under a heavy vignette.
+- **The sim's dusk is Luminati's golden hour and sunset** (`PART_HOURS` 17 to 19.6). Emberlit's dusk is a warm low
+  sun. Held across Luminati's purple dusk it sat darker than night.
+- **The Vale's turf is mostly Luminati's dark grass.**
 - The other regions keep Luminati's palette and grade until the Vale is right.
 - **The sim's fog thickens Luminati's air.** Emberlit's overlay still drifts the fog banks and the wind; Luminati has
   neither weather.
