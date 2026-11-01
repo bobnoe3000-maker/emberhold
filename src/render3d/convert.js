@@ -105,7 +105,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
  * @param {{ region?: string }} [o]
- * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.kind === 'dungeon' ? dungeon(w) : outdoor(w, o.region || w.region || 'vale');
@@ -329,7 +329,7 @@ const AMB_BASE = [0.379, 0.324, 0.449];
 /** the ambient a floor's kit wants: Luminati's hemisphere light's sky and ground colours (linear) and intensity */
 export function ambientOf(kit) {
   const t = KIT_TINT[kit] || [1, 1, 1], c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
-  return { sky: c(0.42), ground: c(0.2), i: 1, sun: 0 };
+  return { sky: c(0.42), ground: c(0.2), i: 1, sun: 0, lamps: 0.5 };   // (lamps: Luminati's point lights ×: a brazier is a small warm point in Emberlit, a pool of orange at 1)
 }
 
 function dungeon(w) {

@@ -5382,7 +5382,7 @@ var Ia = null, La = -1, Ra = 0, za = null, Ba = {
 	},
 	frame(e) {
 		if (!Y || !Y.engine) return;
-		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((Y.lighting?.timeOfDay ?? -1) - e.hour) > .004 && Y.setTime(e.hour), e.weather && Y.weather?.weather !== e.weather && Y.setWeather(e.weather), Y.lighting?.settings && (Y.lighting.settings.fogMul = 1 + 2.4 * (e.fog || 0)), e.hero && Y.player && (Ta(), Y.player.position.set(e.hero[0], Y.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
+		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((Y.lighting?.timeOfDay ?? -1) - e.hour) > .004 && Y.setTime(e.hour), e.weather && Y.weather?.weather !== e.weather && Y.setWeather(e.weather), Y.lighting?.settings && (Y.lighting.settings.fogMul = 1 + 2.4 * (e.fog || 0), Y.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && Y.player && (Ta(), Y.player.position.set(e.hero[0], Y.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
 		let t = /* @__PURE__ */ new Map(), n = Y.engine.camera;
 		for (let r of e.actors) {
 			let e = na(r.name);
@@ -5429,7 +5429,7 @@ var Ia = null, La = -1, Ra = 0, za = null, Ba = {
 					1.15,
 					.42
 				],
-				intensity: 4.5 * t,
+				intensity: 4.5 * t / (e.ambient?.lamps ?? 1),
 				distance: 6,
 				decay: 1.4,
 				flicker: .12

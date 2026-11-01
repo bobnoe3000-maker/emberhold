@@ -354,14 +354,14 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number } | null, carry?: number }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
     cam.x = f.focus[0]; cam.y = f.focus[1]; cam.z = f.focus[2]; cam.ppu = f.ppu;
     if (Number.isFinite(f.hour) && Math.abs((game.lighting?.timeOfDay ?? -1) - f.hour) > 0.004) game.setTime(f.hour);
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);
-    if (game.lighting?.settings) game.lighting.settings.fogMul = 1 + 2.4 * (f.fog || 0);   // (the sim's fog: the air thicker)
+    if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 2.4 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air thicker; underground, the lamps the game's)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
     // the people: each atlas's pool filled in the order drawn; the rest hidden
     const used = new Map(), camera = game.engine.camera;
@@ -389,7 +389,7 @@ const api = {
     if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
     if (carryLight && f.hero) {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
-      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: 4.5 * k, distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * k) / (f.ambient?.lamps ?? 1), distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
     }
     // the farm's beasts, in the frame Emberlit chose
     let nb = 0;
