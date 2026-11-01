@@ -1333,7 +1333,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
     // 2D overlay (above the GL canvas): minimap + floating joystick
     octx.clearRect(0, 0, vw, vh);
-    if (wx.k) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });   // under the minimap and labels
+    // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
+    // doubled up, and fell over the top bar's words, this canvas being above it)
+    if (wx.k && !(X && (wx.kind === 'rain' || wx.kind === 'snow'))) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
     if (st) st.overlay(octx, (x, y) => { const q = project(x, y, pz); return [(lastCam.rx + q.sx) * S, (lastCam.ry + q.sy) * S]; }, S);   // the Stage's names and headings
     else if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
