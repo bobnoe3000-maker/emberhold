@@ -46,6 +46,26 @@ test('convert: the same world converts to the same level (presentation of a dete
   assert.deepEqual(a, b);
 });
 
+test('convert: a dungeon floor has its ways up and down as Luminati\'s stairs, not lampposts', () => {
+  for (const site of ['barrows', 'wickham_keep', 'toadking_mound', 'drowned_abbey']) {
+    const w = createSim(SEED, undefined, { scene: 'dungeon', site }).world;
+    const { level, origin } = convertWorld(w, { region: 'vale' });
+    const at = (x, y) => { const i = Math.floor((x - origin.x) / 2), j = Math.floor((y - origin.y) / 2); return { ch: level.tiles[j][i], h: parseInt(level.heights[j][i], 36), stairs: level.legend[level.tiles[j][i]].stairs }; };
+    // the way up: a flight climbing from the floor toward the wall it stands against (one level a tile)
+    const up = w.structs.find((s) => s.id.startsWith('stairsup')); assert.ok(up, `${site}: a way up`);
+    const flight = level.tiles.flatMap((r, j) => [...r].map((ch, i) => ({ ch, h: parseInt(level.heights[j][i], 36) })).filter((t) => level.legend[t.ch].stairs));
+    const rising = flight.filter((t) => level.legend[t.ch].stairs === (up.id === 'stairsup_0' ? 'N' : 'W'));
+    assert.ok(rising.length >= 3 && Math.max(...rising.map((t) => t.h)) === 4 && Math.min(...rising.map((t) => t.h)) === 2, `${site}: the flight up climbs 2 → 5 (${JSON.stringify(rising)})`);
+    // the way down: the well sunk two levels, its top step at the open edge
+    const wl = w.stairwell; assert.ok(wl, `${site}: a stairwell`);
+    const top = at(wl.x0 + 3, wl.y1 - 2), bottom = at(wl.x0 + 3, wl.y0 + 1);   // (inside the well whichever way our 2 × 2 falls)
+    assert.ok(top.stairs === 'S' && top.h === 1 && bottom.h === 0, `${site}: the well steps down from the floor (${JSON.stringify({ top, bottom })})`);
+    assert.equal(at(wl.x0 + 3, wl.y1 + 1).h, 2, `${site}: the floor in front of the well`);
+    const lit = [...w.props.values()].filter((k) => k === 'shrine' || k === 'exit').length;
+    assert.equal(level.objects.filter((o) => o.type === 'lamppost').length, lit, `${site}: a lamppost for each shrine only, none in the well`);
+  }
+});
+
 test('convert: a town keeps its services as named houses, its walls raised and its gate open', () => {
   const w = createSim(SEED, undefined, { scene: 'town', region: 'vale' }).world;
   const { level } = convertWorld(w);

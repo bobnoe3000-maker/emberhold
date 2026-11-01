@@ -522,6 +522,42 @@ frames. The point it left goes back to the bare picture, read straight off Lumin
 bare 171, lit 765, left 187, the difference being the torches' flicker. Netlify keeps `src/` for five minutes, so a
 reload after that picks up the fix.
 
+**From the owner, 2026-11-01:** *"Up and down stairs are missing from the dungeons"*. There were two causes:
+- **The converter drew both ways as lampposts**: one at the foot of the way up, and one on each of the stairwell's 36
+  tiles. Now each is Luminati's own stair tiles (`convert.js` `stairs()`; four new legend entries: `^ v > <`, a flight
+  climbing toward north, south, east or west):
+  - **The way up** is a flight of three. It climbs from the floor (level 2) toward the wall it stands against, over the
+    `stairsup` structure's 3 × 7 of ours, to level 5 under the wall's 6.
+  - **The way down** is the 6 × 6 stairwell sunk two levels: the top step at its open (+y) edge, then a step, then a
+    landing at level 0.
+  - The figures walk the steps' height, since Luminati places them by its ground.
+  - Measured in the Old Barrows (Luminati's ground, units):
+
+    | Where | Height |
+    |---|---|
+    | The floor in front of the well | 1.0 |
+    | The well's top step | 0.81 |
+    | The well's middle | 0.31 |
+    | The well's bottom | 0 |
+    | The way up's foot | 1.0 |
+    | The way up's middle | 1.5 |
+    | The way up's top | 2.19 |
+
+  - Each has a torch of its own: one on the wall beside the way up's top step, and one on the well's far wall below
+    the floor. Unlit, the sunk well read as more floor in the Barrows' dark.
+  - `world.ground(x, z)` (for checks) reads Luminati's ground, and the browser suite asserts both: the well more than
+    0.8 under the floor, the way up's top more than 1 above it.
+- **A cavern too big for one level lost its stairwell.** Luminati holds 256 × 256 of ours, and the crop was centred
+  on the hero's way in.
+  - The Toadking's Mound runs 265 of ours wide, and its well at x 272 lay past the crop's edge at 188. The Scrag Warren
+    lost its well the same way.
+  - The crop now centres on the middle of the way up and the way down when both fit, and is kept inside the floor's
+    bounds. A window past the bounds held nothing.
+  - Both ways are now in every site's level (`test/render3d.test.mjs`: barrows, wickham_keep, toadking_mound,
+    drowned_abbey).
+  - The far corners of those two caverns are still outside it. Rebuilding the level round the hero as they walk is
+    for step 3, dungeons dressed.
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.

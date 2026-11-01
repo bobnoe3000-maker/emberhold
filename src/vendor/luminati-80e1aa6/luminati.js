@@ -5345,6 +5345,9 @@ var Ea = null, Da = -1, Oa = {
 		let i = new r(e, t, n).project(X.engine.camera);
 		return [(i.x + 1) / 2 * innerWidth, (1 - i.y) / 2 * innerHeight];
 	},
+	ground(e, t) {
+		return X?.tileMap ? X.tileMap.getHeight(e, t) : null;
+	},
 	get stats() {
 		let e = (e) => Ca[e].filter((e) => e.visible).length;
 		return {

@@ -1428,6 +1428,15 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         return { bare, lit, left, light: W.stats.light };
       } finally { W.frame = orig; }
     });
+    // the floor's ways up and down (the owner, 2026-11-01: "Up and down stairs are missing from the dungeons"), as the
+    // figures would stand on them in Luminati: the stairwell sunk under the floor, the flight up climbing over it
+    const flights = await p.evaluate(async () => {
+      const { convertWorld } = await import('/src/render3d/convert.js');
+      const w = globalThis.__sim.world, o = convertWorld(w, { region: 'vale' }).origin, wl = w.stairwell, up = w.structs.find((q) => q.id.startsWith('stairsup'));
+      const G = (x, y) => globalThis.__world3d.world.ground((x - o.x) / 2, (y - o.y) / 2);
+      const w90 = up.id === 'stairsup_90', ux = Math.round(w90 ? up.x - 3.1 : up.x - 0.5), uy = Math.round(w90 ? up.y - 0.5 : up.y - 3.1);
+      return { floor: G(wl.x0 + 3, wl.y1 + 1), well: G(wl.x0 + 3, wl.y0 + 1), top: G(ux + 0.5, uy + 0.5) };
+    });
     await p.evaluate(() => { const s = globalThis.__sim, w = s.world, P = s.state.player;
       const rooms = w.level.rooms.slice().sort((a, b) => Math.hypot(a.cx - P.x, a.cy - P.y) - Math.hypot(b.cx - P.x, b.cy - P.y));
       for (const rm of rooms) { s.commands.push({ type: 'tap', tx: Math.floor(rm.cx), ty: Math.floor(rm.cy) }); let n = 0; while (!s.battle && n < 1200) { s.tick(); n++; } if (s.battle) return; } });
@@ -1436,6 +1445,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, light: F.light || st.light, layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
     check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
       inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: a dungeon floor\'s ways up and down are Luminati\'s stairs: the well sunk a whole unit under the floor, the flight up climbing over a unit above it',
+      flights.floor - flights.well > 0.8 && flights.top - flights.floor > 1, JSON.stringify(flights));
     check('render3d: the effects\' light leaves no trail: a point lit and then left reads as it did before (within the torches\' flicker: under a quarter of the light it had), and the light is drawn while lit',
       trail.lit - trail.bare > 120 && Math.abs(trail.left - trail.bare) < (trail.lit - trail.bare) / 4 && trail.light === 1, JSON.stringify(trail));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });

@@ -49,6 +49,9 @@ export const LEGEND = {
   n: { top: 'snow_top', side: 'snow_side', walkable: true }, h: { top: 'snow_path', side: 'snow_side', walkable: true },
   R: { top: 'frost_cobble', side: 'stone_wall', walkable: true }, i: { top: 'ice_top', side: 'ice_cliff', walkable: true },
   I: { top: 'ice_top', side: 'ice_cliff', walkable: false }, N: { top: 'snow_top', side: 'snow_side', walkable: false },
+  // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
+  '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
+  '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
 };
 // a region's buildings in Luminati's walls and roofs, by our piece: the Vale's timber, plaster and thatch (stone for the
 // shrine and the forge), the Fens' dark planks and reed, the Reach's black slag-brick and slate, the Heights' stone
@@ -105,7 +108,13 @@ export function convertWorld(w, o = {}) {
 
 /** a crop of ours, its tiles even and at most MAX_TILES a side, round a middle */
 function crop(x0, y0, x1, y1, mx, my) {
-  const cut = (a, b, m) => { a = Math.floor(a / 2) * 2; b = Math.ceil(b / 2) * 2; if (b - a > MAX_TILES) { a = Math.floor((m - MAX_TILES / 2) / 2) * 2; b = a + MAX_TILES; } return [a, b]; };
+  // (over the size Luminati holds: the window round m, kept inside the bounds: a window past them held nothing, and a
+  // cavern's stairwell fell outside it)
+  const cut = (a, b, m) => {
+    a = Math.floor(a / 2) * 2; b = Math.ceil(b / 2) * 2;
+    if (b - a > MAX_TILES) { a = Math.min(Math.max(Math.floor((m - MAX_TILES / 2) / 2) * 2, a), b - MAX_TILES); b = a + MAX_TILES; }
+    return [a, b];
+  };
   const [ax, bx] = cut(x0, x1, mx), [ay, by] = cut(y0, y1, my);
   return { x0: ax, y0: ay, W: (bx - ax) / 2, D: (by - ay) / 2 };
 }
@@ -237,13 +246,51 @@ function outdoor(w, region) {
   return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
 }
 
+// ── a floor's ways up and down (sim/world.js placeStairsUp, placeStairsDown), in Luminati's stair tiles ─────────────────
+// The way up: a flight of three climbing from the floor (level 2) into the wall it stands against, over the stairsup
+// structure's 3 × 7 of ours. The way down: the 6 × 6 stairwell sunk two levels, the top step at its open (+y) edge, a
+// landing at the bottom. Before, both were lampposts (one on each of the well's 36 tiles). A tile of Luminati's is
+// 2 × 2 of ours, and one is in the flight when its middle is.
+const FLOOR = 2;
+function stairs(w, x0, y0, W, D, tiles, heights) {
+  const lights = [];                                           // torches (ours): beside the way up's top step, at the well's foot
+  const set = (i, j, ch, h) => { if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = ch; heights[j][i] = String(h); } };
+  const cols = (a, b) => { const o = []; for (let i = 0; i < W; i++) { const c = x0 + 2 * i + 1; if (c >= a && c < b) o.push(i); } return o; };
+  const rows = (a, b) => { const o = []; for (let j = 0; j < D; j++) { const c = y0 + 2 * j + 1; if (c >= a && c < b) o.push(j); } return o; };
+  for (const st of w.structs || []) {
+    if (st.id === 'stairsup_0') {                                // against a north wall: x the middle of its 3, y its first row
+      const x = Math.round(st.x - 0.5), y = Math.round(st.y - 3.1), js = rows(y, y + 6);
+      for (const i of cols(x - 1, x + 2)) js.forEach((j, k) => set(i, j, '^', FLOOR + js.length - 1 - k));
+      lights.push({ x: x + 2.5, y: y + 0.5 });
+    } else if (st.id === 'stairsup_90') {                        // against a west wall
+      const x = Math.round(st.x - 3.1), y = Math.round(st.y - 0.5), is = cols(x, x + 6);
+      for (const j of rows(y - 1, y + 2)) is.forEach((i, k) => set(i, j, '<', FLOOR + is.length - 1 - k));
+      lights.push({ x: x + 0.5, y: y + 2.5 });
+    }
+  }
+  const wl = w.stairwell;
+  if (wl) {
+    const js = rows(wl.y0, wl.y1), n = js.length;                // from the far (−y) side: the landing, then the steps up
+    for (const i of cols(wl.x0, wl.x1)) js.forEach((j, k) => k === 0 ? set(i, j, 'k', FLOOR - (n - 1)) : set(i, j, 'v', FLOOR - (n - k)));
+    lights.push({ x: (wl.x0 + wl.x1) / 2, y: wl.y0 + 0.5, dy: 0.7 });   // (its bottom lit: unlit, the well read as more floor)
+  } else if (w.stairsAt) {                                       // no room for a well: one step down where the stairs are
+    const i = Math.floor((w.stairsAt.x - x0) / 2), j = Math.floor((w.stairsAt.y - y0) / 2);
+    set(i, j, 'v', FLOOR - 1);
+  }
+  return lights;
+}
+
 // ── a dungeon floor ─────────────────────────────────────────────────────────────────────────────────────────────────
 function dungeon(w) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
   for (const k of cells.keys()) { const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1); if (x < bx0) bx0 = x; if (y < by0) by0 = y; if (x + 1 > bx1) bx1 = x + 1; if (y + 1 > by1) by1 = y + 1; }
   const sp = w.spawn || { x: (bx0 + bx1) / 2, y: (by0 + by1) / 2 };
-  const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, sp.x, sp.y);
+  // a cavern too big for one level is held round the middle of its ways up and down, so both are in it (the Toadking's
+  // Mound and the Scrag Warren run past 256 of ours); round where the hero comes in when they're further apart
+  const up = (w.structs || []).find((s) => s.id.startsWith('stairsup')) || sp, wl = w.stairwell, dn = wl ? { x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2 } : w.stairsAt || sp;
+  const both = Math.abs(up.x - dn.x) < MAX_TILES - 24 && Math.abs(up.y - dn.y) < MAX_TILES - 24;
+  const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
   const tiles = grid(W, D, 'x'), heights = grid(W, D, '6');
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open)
@@ -252,15 +299,17 @@ function dungeon(w) {
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor') floor++; }
     if (floor) { tiles[j][i] = hash('d', i, j) % 100 < 14 ? 'm' : 'k'; heights[j][i] = '2'; }
   }
+  const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
   const objects = [], count = {};
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
+  for (const l of stairLights) add({ type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5) continue;
     if (kind === 'brazier') add({ type: 'wallTorch', x, z, rotation: 0, dy: 0.9, opts: { embers: true } });   // (a standing flame: a campfire each was a bonfire field in the Barrows' rooms)
     else if (kind === 'chest') add({ type: 'crate', x, z, rotation: 0.2, opts: {} });
     else if (kind === 'shrine') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'top' } });
-    else if (/^stair/.test(kind) || kind === 'exit') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } });
+    else if (kind === 'exit') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } });   // (the stairs are the floor's own: stairs())
   }
   // a torch on the wall at each room's north side (the rooms' own light: Luminati's 12 lamps shared by distance)
   for (const r of w.level.rooms || []) {

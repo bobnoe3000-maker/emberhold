@@ -330,6 +330,8 @@ const api = {
     const v = new THREE.Vector3(x, y, z).project(game.engine.camera);
     return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight];
   },
+  /** (for checks) the ground's height at a point of Luminati's, as its figures stand on it (a stair's step, a bridge's deck) */
+  ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
     return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
