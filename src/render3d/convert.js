@@ -308,7 +308,7 @@ const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KI
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
-  brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.45, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs)
+  brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.36, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs, at 0.45 still big)
   crates: (x, z, h) => ({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 1 + (h % 3), size: 0.7, seed: h % 997 } }),
   barrels: (x, z, h) => ({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 0.9, lying: h % 3 === 0 } }),
   sacks: (x, z, h) => ({ type: 'sacks', x, z, rotation: (h % 5) * 0.4, opts: { count: 2 + (h % 3), seed: h % 997 } }),
@@ -330,7 +330,8 @@ const hex = (c) => { const m = Math.max(...c, 1e-6); return '#' + c.map((v) => M
 const AMB_BASE = [0.379, 0.324, 0.449];
 /** the ambient a floor's kit wants: Luminati's hemisphere light's sky and ground colours (linear) and intensity */
 export function ambientOf(kit) {
-  const t = KIT_TINT[kit] || [1, 1, 1], c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
+  // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
+  const t = (KIT_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
   return { sky: c(0.42), ground: c(0.2), i: 1, sun: 0, lamps: 0.5 };   // (lamps: Luminati's point lights ×: a brazier is a small warm point in Emberlit, a pool of orange at 1)
 }
 
@@ -381,6 +382,7 @@ function dungeon(w) {
     if (lit && kind !== 'brazier') add({ type: 'light', x, z, dy: 0.9, color: hex(lit), intensity: 3.2, distance: 4.5, flicker: 0.15, nightOnly: false });
   }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
-    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: 'void' } });
+    // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)
+    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: '#040306' } });
   return { level, sprites, ambient: ambientOf(w.kit), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }

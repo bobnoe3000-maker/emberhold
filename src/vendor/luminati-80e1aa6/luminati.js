@@ -4989,7 +4989,7 @@ var Y = "", Ri = 1, zi = 16 * Math.SQRT2, Bi = {
 	wrap: .6,
 	roundness: .35,
 	emissive: "#ffe9d2",
-	emissiveIntensity: .12
+	emissiveIntensity: .2
 }, Vi = "en", Hi = null, Ui = null, Wi = null, Gi = null, X = null, Ki = null, Z = 0, qi = "soft", Ji = 45, Yi = 30, Xi = /* @__PURE__ */ new Map(), Zi = /* @__PURE__ */ new Map(), Qi = (e) => {
 	let t = Xi.get(e);
 	return t || (t = new Promise((t, n) => {
@@ -5123,7 +5123,7 @@ var ca = (e, t) => {
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.84 - .24 * t),
 		exp: e.exp * (.95 - .07 * t),
-		fog: e.fog * .75
+		fog: e.fog * (.5 + .3 * t)
 	};
 }), da = {
 	saturation: .92,
@@ -5373,21 +5373,21 @@ function za(t, n) {
 function Ba(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, X.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, _), e.material.opacity = a);
 }
-var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = {
+var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 	ready: !1,
 	async load(e, t = [], n = "vale") {
 		let r = ++Z;
 		n !== ba && (ba = n, ya.clear());
 		let i = ht(e).level;
 		return Ki = (async () => {
-			X ? await X.swapLevel(i, { spawn: i.spawn }) : await ka(i), r === Z && (Aa(), Ga.settings({ dof: qi }), ga(i, n), await sa(t, n));
+			X ? await X.swapLevel(i, { spawn: i.spawn }) : await ka(i), r === Z && (Aa(), Ga = !!i.environment?.interior, Ka.settings({ dof: qi }), ga(i, n), await sa(t, n));
 		})(), await Ki, r === Z;
 	},
 	settings(e = {}) {
 		e.dof && (qi = e.dof);
 		let t = X?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: qi !== "off",
+			enabled: qi !== "off" && !Ga,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
@@ -5456,7 +5456,9 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = {
 			r.visible = !0, aa(r, t.x, t.z, e.below, zi), r.update(0, n);
 		}
 		for (let e = i; e < Sa.length; e++) Sa[e]?.visible && (Sa[e].visible = !1);
-		Wa = e.ambient || null, Da(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)));
+		Wa = e.ambient || null;
+		for (let e of oa) e.update(0, n);
+		Da(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)));
 	},
 	sprites(e) {
 		X && sa(e, ba);
@@ -5489,7 +5491,7 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = {
 		};
 	}
 };
-function Ka(e) {
+function qa(e) {
 	if (Wi) throw Error("createWorld: one world a page");
 	return Wi = e.container, Gi = e.uiRoot, Y = e.assets, Vi = ut("en"), ge(), Hi = st({
 		lang: Vi,
@@ -5498,7 +5500,7 @@ function Ka(e) {
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), Ui = bn(Vi, {}), Ga.ready = !0, Ga;
+	}), Ui = bn(Vi, {}), Ka.ready = !0, Ka;
 }
 //#endregion
-export { Ka as createWorld };
+export { qa as createWorld };

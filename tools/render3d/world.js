@@ -31,7 +31,7 @@ import './ground.js';
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // Emberlit's native px a unit: a tile's half-width 8 px, two tiles a unit
-const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundness: 0.35, emissive: '#ffe9d2', emissiveIntensity: 0.12 };
+const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundness: 0.35, emissive: '#ffe9d2', emissiveIntensity: 0.2 };   // (0.12: a figure outside a lamp's pool went to a black silhouette underground; Emberlit's always read)
 
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
@@ -119,7 +119,7 @@ const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
   const night = f.night ?? 0;
   // (darker, not whiter: greying the horizon also greyed the fog, and the Vale went milky)
   return { ...f, top: dim(grey(f.top, 0.3), 0.8), horizon: dim(grey(f.horizon, 0.3), 0.6), bottom: dim(grey(f.bottom, 0.3), 0.75), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
-    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * 0.75 };   // (the far ground under a veil of the horizon's colour: thinner)
+    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * (0.5 + 0.3 * night) };   // (the far ground under a veil of the horizon's colour: thin by day, as Emberlit's day is clear)   // (the far ground under a veil of the horizon's colour: thinner)
 });
 // and the picture graded as Emberlit's is: Luminati's game grades it a saturated 1.3 under a light vignette; Emberlit's
 // Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
@@ -336,7 +336,7 @@ function placeGround(m, x, z, r, col, a) {
   m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
-let carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null;
+let carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
@@ -351,6 +351,7 @@ const api = {
       else await game.swapLevel(lv, { spawn: lv.spawn });
       if (id !== levelId) return;
       hidePlayer();
+      inside = !!lv.environment?.interior;
       api.settings({ dof });
       skyFor(lv, region);
       await placeEnv(sprites, region);
@@ -364,7 +365,8 @@ const api = {
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
-    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off', focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
+    // (none underground: the rooms below the one in view held their fires as blurred orbs over the HUD)
+    if (S?.dof) Object.assign(S.dof, { enabled: dof !== 'off' && !inside, focusRange: 16, tiltShift: 0.14, tiltWidth: 0.62 });
   },
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
@@ -416,6 +418,9 @@ const api = {
     }
     for (let i = nb; i < beastPool.length; i++) if (beastPool[i]?.visible) beastPool[i].visible = false;
     frameAmbient = f.ambient || null;
+    // our art kept standing (env, props) faces the camera: turned each frame as the figures are. Turned once, when it was
+    // placed, it kept the camera's angle before the camera was set, and the props read as thin leaning strips
+    for (const s of envSprites) s.update(0, camera);
     setLight(f.light);
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)));
   },
