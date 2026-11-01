@@ -106,6 +106,85 @@ async function placeEnv(list, region) {
   }
 }
 
+// ── the farm's beasts, alive (the owner, 2026-11-01: "The cows look bad too") ─────────────────────────────────────
+// Emberlit animates them (render/beasts.js: the tail swished, the head lifted to chew), from frames baked beside each
+// in the env atlas (cow_1, cow_1~tl, cow_1~tr, cow_1~hd). The converter leaves them out of the level; hybrid.js hands
+// the frame Emberlit chose each frame, and it's drawn here as a figure is: a sprite facing the camera at its foot, with
+// its shadow, from a texture cut once a frame of the atlas.
+const envFrames = new Map();                                  // id → sheet | null (loading) | false
+let envRegion = 'vale';
+function envSheet(id) {
+  if (envFrames.has(id)) return envFrames.get(id);
+  envFrames.set(id, null);
+  const sets = ['env', `town-${envRegion}`];
+  Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`))).then(async (all) => {
+    for (let i = 0; i < sets.length; i++) {
+      const m = all[i]?.sprites?.[id]; if (!m) continue;
+      const img = await image(`${ASSETS}env/${sets[i]}.alb.png`);
+      const c = document.createElement('canvas'); c.width = m.w; c.height = m.h;
+      /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')).drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h);
+      const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+      envFrames.set(id, { texture: tex, frameWidth: m.w, frameHeight: m.h, columns: 1, rows: 1, pixelsPerUnit: NATIVE_PER_UNIT, anchor: [m.ax / m.w, 0], below: m.h - m.ay,
+        animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: `ember-beast:${id}` });
+      return;
+    }
+    envFrames.set(id, false);
+  }).catch(() => envFrames.set(id, false));
+  return null;
+}
+const beastPool = [];                                         // Sprite3D, re-sheeted as their frame changes
+function beastSprite(n, sheet) {
+  let s = beastPool[n];
+  if (s && s.sheet !== sheet) { game.engine.scene.remove(s); s.dispose?.(); s = null; }
+  if (!s) { s = new Sprite3D(sheet, { ...SPRITE_OPTS }); game.engine.scene.add(s); beastPool[n] = s; }
+  return s;
+}
+
+// ── the fights' light, in Luminati's own render ─────────────────────────────────────────────────────────────────────
+// Emberlit's fx.js draws every blow's and spell's light on black into its emissive plane (hybrid.js `light`). Laid over
+// Luminati's finished picture after its post pass as light (added), with a little bloom from a few taps round each
+// pixel, placed as Emberlit composites its window. (It was two page layers blended over the canvas, plus-lighter and a
+// CSS blur: on a phone's Safari the top bar's words above them came out soft.)
+const LIGHT_VS = `uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;
+void main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }`;
+const LIGHT_FS = `uniform sampler2D tEmi; uniform vec2 uTexel; varying vec2 vUv;
+void main() {
+  vec3 c = texture2D(tEmi, vUv).rgb * 2.4, g = vec3(0.0);
+  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;
+    g += texture2D(tEmi, vUv + d * 2.0).rgb + texture2D(tEmi, vUv + d * 4.5).rgb * 0.6; }
+  gl_FragColor = vec4(c + g * 0.12, 1.0);
+}`;
+const light = { scene: null, cam: null, mat: null, tex: null, on: false };
+function lightPass() {
+  if (!light.on || !game) return;
+  const r = game.engine.renderer, ac = r.autoClear;
+  r.autoClear = false; r.setRenderTarget(null); r.render(light.scene, light.cam); r.autoClear = ac;
+}
+/** this frame's light: upload the plane only when anything is lit (a scan of its words), else draw nothing */
+function setLight(L) {
+  if (!L || !L.emi) { light.on = false; return; }
+  const words = new Uint32Array(L.emi.buffer, L.emi.byteOffset, L.emi.byteLength >> 2);
+  let any = false; for (let i = 0; i < words.length; i++) if (words[i] & 0x00ffffff) { any = true; break; }
+  light.on = any; if (!any) return;
+  if (!light.scene) {
+    light.scene = new THREE.Scene(); light.cam = new THREE.Camera();
+    light.mat = new THREE.ShaderMaterial({ vertexShader: LIGHT_VS, fragmentShader: LIGHT_FS, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { tEmi: { value: null }, uTexel: { value: new THREE.Vector2() }, uRect: { value: new THREE.Vector4() }, uView: { value: new THREE.Vector2() } } });
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0], 3)); geo.setIndex([0, 2, 1, 1, 2, 3]);
+    const mesh = new THREE.Mesh(geo, light.mat); mesh.frustumCulled = false; light.scene.add(mesh);
+    game.engine.events.on('afterRender', lightPass);
+  }
+  if (!light.tex || light.tex.image.width !== L.w || light.tex.image.height !== L.h || light.tex.image.data !== L.emi) {
+    light.tex?.dispose();
+    light.tex = new THREE.DataTexture(L.emi, L.w, L.h, THREE.RGBAFormat); light.tex.flipY = false;
+    light.tex.magFilter = light.tex.minFilter = THREE.LinearFilter; light.tex.generateMipmaps = false;
+    light.mat.uniforms.tEmi.value = light.tex; light.mat.uniforms.uTexel.value.set(1 / L.w, 1 / L.h);
+  }
+  light.tex.needsUpdate = true;
+  light.mat.uniforms.uRect.value.set(L.x, L.y, L.w * L.px, L.h * L.px);
+  light.mat.uniforms.uView.value.set(innerWidth, innerHeight);
+}
+
 // ── the camera: Emberlit's ──────────────────────────────────────────────────────────────────────────────────────────
 const cam = { x: 0, y: 1, z: 0, ppu: 22, ready: false };
 function placeCamera() {
@@ -174,6 +253,7 @@ const api = {
   /** build a level (the sim's world, converted), then stand our art in it; resolves when it's drawn */
   async load(level, sprites = [], region = 'vale') {
     const id = ++levelId;
+    if (region !== envRegion) { envRegion = region; envFrames.clear(); }
     const lv = normalizeLevel(level).level;
     building = (async () => {
       if (!game) await boot(lv);
@@ -233,6 +313,15 @@ const api = {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
       carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: 4.5 * k, distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
     }
+    // the farm's beasts, in the frame Emberlit chose
+    let nb = 0;
+    for (const b of f.beasts || []) {
+      const sh = envSheet(b.id); if (!sh) continue;
+      const s = beastSprite(nb++, sh); s.visible = true;
+      standAt(s, b.x, b.z, sh.below, NATIVE_PER_UNIT); s.update(0, camera);
+    }
+    for (let i = nb; i < beastPool.length; i++) if (beastPool[i]?.visible) beastPool[i].visible = false;
+    setLight(f.light);
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)));
   },
   /** (for checks) a world point on the screen, CSS px, through this camera */
@@ -243,7 +332,7 @@ const api = {
   },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { rings: shown('ring'), hazards: shown('disc'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
+    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

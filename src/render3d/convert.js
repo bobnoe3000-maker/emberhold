@@ -213,6 +213,16 @@ function outdoor(w, region) {
     else if (/^table_/.test(id)) add({ type: 'table', x: p.cx, z: p.cz, rotation: 0, opts: { shape: 'rect', width: 1.6, depth: 0.9, cloth: false, items: true, candle: false, seed: 6 } });
     else if (/^bench_/.test(id)) add({ type: 'bench', x: p.cx, z: p.cz, rotation: 0, opts: { length: 1.6, back: true } });
     else if (/^hay_/.test(id)) add({ type: 'haystack', x: p.cx, z: p.cz, opts: { size: 0.8, seed: hash(id, s.x) % 31 } });
+    // a bridge (the owner, 2026-11-01: "the bridge doesnt look right and characters dont walk over it they walk through it"):
+    // Luminati's own, its deck walkable (the figures stand on it: TileMap's walk surface), across its span on our deck's
+    // line (outdoor.js 'deck': the walkable 6.4 tiles of the footprint's short side), the river left open under it
+    else if (/^bridge/.test(id)) {
+      const f = p.f, alongX = f[2] - f[0] > f[3] - f[1];
+      add(alongX ? { type: 'bridge', x0: X(s.x + f[0]), z0: Z(s.y), x1: X(s.x + f[2]), z1: Z(s.y), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } }
+        : { type: 'bridge', x0: X(s.x), z0: Z(s.y + f[1]), x1: X(s.x), z1: Z(s.y + f[3]), deckY: GROUND_Y, opts: { width: 2.8, arch: 0.22 } });
+    }
+    else if (/^hens_/.test(id)) add({ type: 'critters', x: p.cx, z: p.cz, kind: 'chicken', count: 4, radius: 1.6 });   // (Luminati's own hens, pecking about)
+    else if (/^(cow|sheep)_/.test(id)) continue;               // (the farm's beasts are figures, alive: hybrid.js beasts, from Emberlit's animator)
     else sprites.push({ id, x: X(s.x), z: Z(s.y) });            // ours: Luminati has nothing like it (or it's ours to keep)
   }
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)

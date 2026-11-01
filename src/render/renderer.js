@@ -1185,8 +1185,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     for (const bst of beastList()) {
       const st = bst.st, bz = heightAt(sim.world, Math.floor(st.x), Math.floor(st.y)), bp = project(st.x, st.y, bz), bxs = ox + bp.sx, bys = oy + bp.sy;
       if (bxs < -60 || bxs > nvw + 60 || bys < -40 || bys > nvh + 80) continue;
-      const sp = beastSprite(st.id + beastFrame(bst, now)) || beastSprite(st.id); if (!sp) continue;
-      draws.push({ d: st.x + st.y, sp, fx: bxs, fy: bys, h: bz * ZH, k: st.x + st.y, look: null, noXray: true });
+      const fid = st.id + beastFrame(bst, now), own = beastSprite(fid), sp = own || beastSprite(st.id); if (!sp) continue;
+      draws.push({ d: st.x + st.y, sp, fx: bxs, fy: bys, h: bz * ZH, k: st.x + st.y, look: null, noXray: true, env: own ? fid : st.id });   // (env: the frame's sprite id, for another painter)
     }
     // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {

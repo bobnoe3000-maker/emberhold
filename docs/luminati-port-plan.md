@@ -487,6 +487,26 @@ Luminati's day and its snow are bright. With Luminati drawing (`body.world3d`):
 
 Emberlit's look is unchanged. Before and after: `docs/img/lumina/topbar.png`.
 
+**From the owner's phone, 2026-11-01:** *"Try your fixes also it didnt help. Also the bridge doesnt look right and
+characters dont walk over it they walk through it. The cows look bad too"* (and earlier, the top bar 2 px lower).
+- **The top bar's words.**
+  - They have a crisp one-pixel outline instead of the soft 6 px glow.
+  - The fights' light is no longer two page layers blended over Luminati's canvas (`plus-lighter`, a CSS blur). Those
+    are the likely reason Safari drew the words above them soft. It's drawn in Luminati's own render now, after its post
+    pass: Emberlit's emissive plane as a texture, added over the picture with a few taps of bloom, placed as Emberlit
+    composites its window.
+  - The old layers also never cleared a pixel once its light was gone (a bug: a stray comment had swallowed the line).
+- **Bridges.** A bridge is now Luminati's own, across our deck's line, the river left open under it.
+  - Its deck is a walk surface, so the figures stand on it as they cross: the hero's height over the Vale's first bridge
+    is 1.22, against the ground's 1.0.
+  - Before, it was our art stood up as a flat cut-out, which the figures passed through.
+- **The farm's beasts are alive.**
+  - Cows and sheep were frozen cut-outs from the level. Now they're figures in the frame Emberlit's animator chooses
+    (`render/beasts.js`: the tail swished, the head lifted to chew), at their foot, with their shadows.
+  - Hens are Luminati's own, pecking about.
+
+![The Vale's first bridge, the hero on its deck, the cows beyond](img/lumina/bridge.png)
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.

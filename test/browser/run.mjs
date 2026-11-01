@@ -1396,10 +1396,16 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
     const walked = await p.evaluate(() => { const s = globalThis.__sim, e = s.world.exits[0], w0 = s.world; s.commands.push({ type: 'tap', tx: Math.floor((e.x0 + e.x1) / 2), ty: Math.floor((e.y0 + e.y1) / 2) }); let n = 0; while (s.world === w0 && n < 4000) { s.tick(); n++; } return s.world.kind; });
     const vale = await built(2), offVale = vale ? await probe() : 99;
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD, in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
-      town && vale && walked === 'overland' && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+    // the Vale's first bridge (120, 142): Luminati's own, the hero standing on its deck as he crosses; the farm's beasts alive
+    const crossed = await p.evaluate(() => { const s = globalThis.__sim, P = s.state.player; P.x = P.px = 109; P.y = P.py = 142; s.commands.push({ type: 'tap', tx: 131, ty: 142 }); return true; });
+    let deck = 0, beasts = 0;
+    for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
+      return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
+      if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
+      town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
         && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
-      JSON.stringify({ town, vale, walked, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&renderer=luminati`);
@@ -1408,11 +1414,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(() => { const s = globalThis.__sim, w = s.world, P = s.state.player;
       const rooms = w.level.rooms.slice().sort((a, b) => Math.hypot(a.cx - P.x, a.cy - P.y) - Math.hypot(b.cx - P.x, b.cy - P.y));
       for (const rm of rooms) { s.commands.push({ type: 'tap', tx: Math.floor(rm.cx), ty: Math.floor(rm.cy) }); let n = 0; while (!s.battle && n < 1200) { s.tick(); n++; } if (s.battle) return; } });
-    let fight = { lit: 0, rings: 0, carry: 0, battle: false };
-    for (let f = 0; f < 600 && !(fight.lit > 100 && fight.rings >= 2); f++) fight = await p.evaluate((F) => { globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats;
-      return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, layer: getComputedStyle(document.getElementById('world3d-fx')).mixBlendMode }; }, fight);
-    check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world, a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
-      inDungeon && fight.battle && fight.lit > 100 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    let fight = { lit: 0, rings: 0, carry: 0, battle: false, light: 0 };
+    for (let f = 0; f < 600 && !(fight.lit > 100 && fight.rings >= 2 && fight.light); f++) fight = await p.evaluate((F) => { globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats;
+      return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, light: F.light || st.light, layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
+    check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
+      inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
     await ctx.close(); await b.close();
   }
