@@ -1411,6 +1411,23 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&renderer=luminati`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
     const inDungeon = await built(1);
+    // the effects' light leaves no trail (the owner, 2026-11-01: "the line cast by a projectile is leaving an ongoing visual
+    // artifact"; the page layer before 009d6bd never cleared a pixel once lit). A bright square of light laid over the
+    // world at one point, then moved on for a few frames: the point it left reads as it did before it was lit. Read
+    // straight off Luminati's drawing buffer in the frame's own task (its canvas keeps no buffer for a screenshot).
+    const trail = await p.evaluate(() => {
+      const W = globalThis.__world3d.world, cv = document.querySelector('#world3d canvas'), gl = cv.getContext('webgl2'), orig = W.frame;
+      const cx = innerWidth / 2, cy = innerHeight / 2, side = 40, px = 2, sq = new Uint8Array(side * side * 4).fill(255);
+      let at = null;
+      W.frame = (f) => orig({ ...f, light: at ? { emi: sq, w: side, h: side, x: at[0] - side, y: at[1] - side, px } : null });
+      const read = () => { const k = cv.width / cv.clientWidth, o = new Uint8Array(4); gl.readPixels(Math.round(cx * k), Math.round(cv.height - cy * k), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, o); return o[0] + o[1] + o[2]; };
+      const step = (where) => { at = where; globalThis.__frame(16.7); return read(); };
+      try {
+        const bare = step(null), lit = step([cx, cy]); let left = 0;
+        for (let i = 0; i < 5; i++) left = step([cx + 140, cy]);
+        return { bare, lit, left, light: W.stats.light };
+      } finally { W.frame = orig; }
+    });
     await p.evaluate(() => { const s = globalThis.__sim, w = s.world, P = s.state.player;
       const rooms = w.level.rooms.slice().sort((a, b) => Math.hypot(a.cx - P.x, a.cy - P.y) - Math.hypot(b.cx - P.x, b.cy - P.y));
       for (const rm of rooms) { s.commands.push({ type: 'tap', tx: Math.floor(rm.cx), ty: Math.floor(rm.cy) }); let n = 0; while (!s.battle && n < 1200) { s.tick(); n++; } if (s.battle) return; } });
@@ -1419,6 +1436,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, light: F.light || st.light, layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
     check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
       inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: the effects\' light leaves no trail: a point lit and then left reads as it did before (within the torches\' flicker: under a quarter of the light it had), and the light is drawn while lit',
+      trail.lit - trail.bare > 120 && Math.abs(trail.left - trail.bare) < (trail.lit - trail.bare) / 4 && trail.light === 1, JSON.stringify(trail));
     await p.evaluate(() => { try { localStorage.removeItem('emberfall.graphics'); } catch { /* */ } });
     await ctx.close(); await b.close();
   }

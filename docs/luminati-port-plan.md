@@ -507,6 +507,21 @@ characters dont walk over it they walk through it. The cows look bad too"* (and 
 
 ![The Vale's first bridge, the hero on its deck, the cows beyond](img/lumina/bridge.png)
 
+**From the owner's phone, 2026-11-01:** *"Combat effects especially the line cast by a projectile is leaving an ongoing
+visual artifact"*. Their two screenshots, in the Old Barrows and on the Vale at night, show every effect's path left
+behind in faint light:
+- a bolt's head as a chain of beads;
+- the impact sparks as fans;
+- the rising motes of a fallen foe as streaks.
+
+That was the old page layer's bug above. Those builds (a030930 to 5924677) never cleared a pixel once it was lit.
+009d6bd removed the layers, and the light is now drawn in Luminati's render each frame, over a picture its post pass
+draws whole. Measured in headless Chromium, a Barrows fight with a mage and a cleric left no trail at the phone's
+3× scale. The browser check now guards it: a bright square of light is laid over the world and then moved on for five
+frames. The point it left goes back to the bare picture, read straight off Luminati's drawing buffer (sum of RGB):
+bare 171, lit 765, left 187, the difference being the torches' flicker. Netlify keeps `src/` for five minutes, so a
+reload after that picks up the fix.
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.
