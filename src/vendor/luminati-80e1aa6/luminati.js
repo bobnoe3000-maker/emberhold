@@ -5458,7 +5458,7 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 		for (let e = i; e < Sa.length; e++) Sa[e]?.visible && (Sa[e].visible = !1);
 		Wa = e.ambient || null;
 		for (let e of oa) e.update(0, n);
-		Da(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)));
+		Da(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
 		X && sa(e, ba);

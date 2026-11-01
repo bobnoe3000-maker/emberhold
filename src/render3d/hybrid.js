@@ -178,6 +178,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient,
+        draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).
         // In Luminati's own render, not as page layers blended over it: those (plus-lighter, a CSS blur) left the top bar's

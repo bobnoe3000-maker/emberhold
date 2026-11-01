@@ -189,7 +189,7 @@ input.onTap((sx, sy) => {
 let last = performance.now();
 let acc = 0;
 const MAX_FRAME = 0.25;           // clamp after tab-away
-const TOD = DEV ? params.get('tod') : null;              // ?dev&tod=dawn|day|dusk|night|0..1: hold the light (look-dev; the sim's clock runs on)
+let TOD = DEV ? params.get('tod') : null;              // ?dev&tod=dawn|day|dusk|night|0..1: hold the light (look-dev; the sim's clock runs on)
 if (DEV && params.get('weather')) holdWeather(params.get('weather'));   // ?dev&weather=rain|fog|snow|wind|clear[:0..1]|sunny|partly: hold the weather (and the HUD's icon) (render/weatherfx.js)
 // dev slow motion (?dev&slow=8, or globalThis.__slow at runtime): the sim and the render
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
@@ -228,6 +228,8 @@ function frame(now) {
 // globalThis.__frame(ms) at exact intervals, so motion traces don't depend on the machine's speed
 const MANUAL = DEV && location.search.includes('manual');
 if (MANUAL) { let mt = performance.now(); last = mt; globalThis.__frame = (ms = 1000 / 60) => { mt += ms; frame(mt); }; }
+// dev: hold another hour without a reload (tools/capture/rig.mjs: every hour of a scene from one page) @param {string|null} v
+if (DEV) globalThis.__tod = (v) => { TOD = v ?? null; };
 else requestAnimationFrame(frame);
 
 // pause the clock when backgrounded (offline math covers gaps later)

@@ -374,7 +374,7 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -424,7 +424,7 @@ const api = {
     // placed, it kept the camera's angle before the camera was set, and the props read as thin leaning strips
     for (const s of envSprites) s.update(0, camera);
     setLight(f.light);
-    game.engine.step(Math.max(0, Math.min(0.1, f.dt)));
+    game.engine.step(Math.max(0, Math.min(0.1, f.dt)), { render: f.draw !== false });   // (draw false: stepped, not drawn: tools/capture/rig.mjs settling)
   },
   /** stand the converter's art again (a chest opened, a shrine used: hybrid.js), the level kept */
   sprites(list) { if (game) placeEnv(list, envRegion); },
