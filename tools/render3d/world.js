@@ -114,15 +114,22 @@ async function placeEnv(list, region) {
 // night near 45 % of its day; Luminati's were a bright blue noon and a bright blue night. The other regions keep
 // Luminati's palette (and the Reach's and the Heights' their climates') until the Vale is right (the owner, 2026-11-01).
 const grey = (hex, k) => { const c = new THREE.Color(hex), l = c.r * 0.299 + c.g * 0.587 + c.b * 0.114; c.r += (l - c.r) * k; c.g += (l - c.g) * k; c.b += (l - c.b) * k; return '#' + c.getHexString(); };
+const dim = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
 const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
   const night = f.night ?? 0;
-  return { ...f, top: grey(f.top, 0.35), horizon: grey(f.horizon, 0.4), bottom: grey(f.bottom, 0.35), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
-    sunI: f.sunI * 0.7, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * 1.2 };
+  // (darker, not whiter: greying the horizon also greyed the fog, and the Vale went milky)
+  return { ...f, top: dim(grey(f.top, 0.3), 0.8), horizon: dim(grey(f.horizon, 0.3), 0.72), bottom: dim(grey(f.bottom, 0.3), 0.75), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
+    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night) };
 });
+// and the picture graded as Emberlit's is: Luminati's game grades it a saturated 1.3 under a light vignette; Emberlit's
+// Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
+const VALE_GRADE = { saturation: 0.92, exposure: 0.9, contrast: 1.06, vignette: 0.78 };
+let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
-  const env = lv.environment || {};
+  const env = lv.environment || {}, G = game.postfx?.settings?.grade;
+  if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : {}); }
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)

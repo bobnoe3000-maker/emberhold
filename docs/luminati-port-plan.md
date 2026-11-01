@@ -584,6 +584,75 @@ drawn as the converter has them now.
   checks). On Luminati two of its fixed waits were too short for software GL (a few frames a second); they wait for
   the outcome now.
 
+**Step 3, dungeons dressed: done for the Vale** (2026-11-01; art critic pass 19).
+- **The stone.**
+  - Each kit's floor: the dig's earth, the bailey's cobbles, the cellar's bare rock, the nave's flags.
+  - Its walls: dressed stone (crag tops, stone-brick faces), or rock for the cave and the Cult's cut.
+  - Its pools: wet riverbed.
+  - Only a ring of wall stands round the floor; the rest of the level is void, black as Emberlit draws it. Before,
+    the whole level read as a lit sea of wall-tops.
+- **The light underground is Emberlit's** (`convert.js` `ambientOf`).
+  - Its dungeon ambient (`AMB_BASE`) through the kit's tint (`KIT_TINT`, moved to `palette.js` and shared), and no
+    sun, laid over Luminati's hemisphere light each frame.
+  - Luminati's lamps run at half, so a brazier is a small warm point, as in Emberlit, not a pool of orange.
+  - Luminati's own hour had lit every wall a saturated violet.
+- **The furniture**, as pass 18 dressed it:
+  - **In Luminati's 3D, where it has the thing:** stone braziers with real fire and a light each, crate stacks,
+    barrels, sacks, boulders, basalt stalagmites and pillars, bones, spoil and pews.
+  - **Our voxel props for the kits' own pieces** (`gsprite.js`, built in the page by `hybrid.js` as Emberlit builds
+    them, the same variant on the same tile): standards, banners, saints, the bound, the font, sarcophagi, urn shelves,
+    tents, bunks, chests, shrines.
+    - They stand facing the camera, as the figures do.
+    - An opened chest, a used shrine or a broken cage is stood again as it is now.
+    - The binding circle and bedrolls lie under the figures.
+  - A light at each prop Emberlit lights.
+- **Left:**
+  - Our props are flat, lit as the figures are. Emberlit's are normal-mapped.
+  - The two big caverns' far corners stay outside their level.
+
+**Step 4, Thornwick: done for the Vale.**
+- **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
+  camera (`renderer.js` `serviceAt` asks the other painter first).
+  - All five services hit in the browser check.
+  - Before, a tap had to land on Emberlit's invisible sprite.
+- **The plaques are Emberlit's**, over the world at each service's sign height. They sit near Luminati's roofs.
+- **The houses are each region's walls and roofs** (`REGION_LOOK`), sized to our footprints. Thornwick's are the
+  Vale's timber, plaster and thatch, with stone for the shrine and the forge.
+
+**Step 5, the light and the look: done for the Vale** (contact sheets in art critic pass 19).
+- **Luminati's 24 hours graded toward Emberlit's looks** (`daylight.js` `LOOKS`, the owner's standing direction):
+  - colours greyer;
+  - the sky darker, not whiter (greying the horizon also greyed the fog, and the Vale went milky);
+  - the sun 0.72×, the fill softer, the nights darker.
+- **The picture graded as Emberlit's.** Luminati's game grades at a saturated 1.3 under a light vignette. In the Vale
+  it's saturation 0.92, exposure 0.9 and a heavy vignette.
+- The other regions keep Luminati's palette and grade until the Vale is right.
+- **The sim's fog thickens Luminati's air.** Emberlit's overlay still drifts the fog banks and the wind; Luminati has
+  neither weather.
+
+**Step 6, the phone: measured, the gates wait for the owner's iPhone.**
+- Every Vale scene fetches about 700 KB of the bundle gzipped (Thornwick 698, the Vale 700, each Vale dungeon 698),
+  against §2's 450 KB.
+- The weight: the engine 195 KB, Luminati's small props 99, three.js 55, the props 38, the set-piece kit 37, the
+  sprite painters 59, the muted audio 19.
+- The trims left (stubbing the audio and the hidden UI's art) are a few per cent each, and touch modules Luminati's
+  game still calls. They wait for the frame rate, memory and build-time numbers from the phone, which decide what's
+  worth the risk.
+
+**Step 7, tests and tools: done for the Vale.**
+- The create → Fallen → temple → wipe → inn → reload flow runs on both renderers.
+- `tools/dungeon/capture.mjs` shoots either renderer and any floor (`RENDERER`, `FLOOR`, `PLACES`, `TOD`).
+- The Luminati block checks:
+  - Thornwick's taps;
+  - the Barrows fight (light, rings, the focus marker);
+  - walls hiding light;
+  - the stairs;
+  - no trails.
+- The Stage (the art review) stays on Emberlit.
+
+**Step 8, the cutover, waits for the owner's play-test** (the plan's own gate). The Vale is ready for it; the other
+regions are not yet.
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.
