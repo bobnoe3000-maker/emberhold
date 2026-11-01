@@ -1384,6 +1384,17 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     const probe = () => p.evaluate(() => { globalThis.__frame(16); const s = globalThis.__sim, q = s.state.player, h = globalThis.__world3d;
       return Math.max(...[[0, 0], [10, 0], [0, 10], [-12, -6], [8, -14]].map(([a, c]) => { const r = h.probe(q.x + a, q.y + c); return r ? Math.hypot(r.emberlit[0] - r.luminati[0], r.emberlit[1] - r.luminati[1]) : 99; })); });
     const town = await built(1), offTown = town ? await probe() : 99;
+    // (port step 4) a tap on a service's building as Luminati draws it opens that service: the middle of each named house
+    const doors = await p.evaluate(async () => {
+      const { convertWorld } = await import('/src/render3d/convert.js');
+      const w = globalThis.__sim.world, L = convertWorld(w, { region: 'vale' }).level, W = globalThis.__world3d.world, out = {};
+      for (const o of L.objects.filter((q) => q.type === 'house' && q.name)) {
+        const sv = w.services.find((v) => v.name === o.name), at = W.project(o.x, 2.4, o.z);
+        if (!sv || !at || at[0] < 0 || at[1] < 0 || at[0] > innerWidth || at[1] > innerHeight) continue;
+        out[sv.id] = globalThis.__renderer.serviceAt(at[0], at[1])?.id || null;
+      }
+      return out;
+    });
     for (let i = 0; i < 200 && !(await p.evaluate(() => { globalThis.__frame(16); return globalThis.__world3d.world.stats.actors > 0; })); i++) await p.waitForTimeout(100);   // (the figures' atlases load after the level)
     const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f);
       return { under: ['hud', 'vignette', 'menuBtn'].every((id) => !!(f.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING)) && cs.zIndex === 'auto', pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
@@ -1470,6 +1481,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
       return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!s.battle, light: F.light || st.light, focus: Math.max(F.focus, st.focus), layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
     check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the foe the party is set on marked, the hero\'s light taken, no page errors',
       inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && fight.focus === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: in Thornwick, a tap on a service\'s building as Luminati draws it opens that service',
+      Object.keys(doors).length >= 2 && Object.entries(doors).every(([id, got]) => id === got), JSON.stringify(doors));
     check('render3d: the effects\' light respects walls: over a wall\'s top, an effect whose owner is behind it is cut to under half of one in front',
       walled.front - walled.bare > 60 && walled.behind - walled.bare < (walled.front - walled.bare) / 2 && walled.depth === 1, JSON.stringify(walled));
     check('render3d: a dungeon floor\'s ways up and down are Luminati\'s stairs: the well sunk a whole unit under the floor, the flight up climbing over a unit above it',

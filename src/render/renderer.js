@@ -12,7 +12,7 @@
 // (The old Canvas2D and flat renderers were retired at M2.5; see git history.)
 
 import { materialAt, heightAt, resourceAt, propAt, isWalkable, DRESS } from '../sim/world.js';
-import { ELIT, EGLOW } from './palette.js';
+import { ELIT, EGLOW, KIT_TINT } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
 import { hash2, fbm, vnoise } from '../sim/rng.js';
@@ -78,12 +78,6 @@ const AMB = 0.62, WISP = 0.72, BLOOM = 0.55;
 // AMB) tinted, never brightened much, so the floors keep the dusk and still differ: the legion's cold blue in the
 // Barrows' galleries, the Redhand's fires in the Keep, the Cult's embers, Vat Seven's sick green.
 const AMB_BASE = [0.10 + 0.45 * AMB, 0.07 + 0.41 * AMB, 0.17 + 0.45 * AMB];
-const KIT_TINT = {
-  dig: [1.06, 0.98, 0.86], gallery: [0.88, 0.94, 1.12], muster: [0.84, 0.92, 1.16],
-  bailey: [1.1, 0.92, 0.84], barracks: [1.04, 0.96, 0.88], cellar: [0.9, 1.0, 0.98],
-  nave: [0.86, 0.98, 1.04], cultcut: [1.14, 0.88, 0.78], binding: [0.98, 0.86, 1.14],
-  mound: [0.96, 1.04, 0.86], locks: [0.88, 1.0, 1.0], vats: [0.86, 1.08, 0.84], abbey: [0.86, 0.96, 1.1],
-};
 
 
 /* ── shaders (verbatim from the Emberlit reference demo) ─────────────────── */
@@ -1790,7 +1784,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       return null;
     },
     serviceAt(sxPx, syPx) {
-      const w = sim.world; if (!w.services || !w.services.length || !envMeta) return null;
+      const w = sim.world; if (!w.services || !w.services.length) return null;
+      if (ext && ext.serviceAt) return ext.serviceAt(sxPx, syPx);   // (another painter's buildings: the one drawn under the tap)
+      if (!envMeta) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S, z = heightAt(w, 0, 0);
       let best = null;
       for (const sv of w.services) {

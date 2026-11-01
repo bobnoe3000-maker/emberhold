@@ -28,6 +28,10 @@ import { DAY_S } from '../sim/heroes.js';
 import { PART_S } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
 import { readGraphics } from './settings.js';
+import { buildProps } from '../render/gsprite.js';
+import { propAt } from '../sim/world.js';
+import { shrineKind } from '../sim/shrines.js';
+import { hash2 } from '../sim/rng.js';
 
 // the sim's four parts of the day (dawn · day · dusk · night, PART_S each) on Luminati's clock: where each part begins
 const PART_HOURS = [5, 7.5, 17.5, 20.5, 29];
@@ -39,6 +43,32 @@ export function hourOf(t) {
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // (iso.js: a tile's half-width 8 px; two tiles a unit)
 const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];   // (renderer.js: the party's gold, foes' red, the elite's orange)
 const CARRY = [0.45, 0, 0.6, 1];                              // the carry light by the part of the day (dawn, day, dusk, night)
+
+// ── a dungeon's furniture of ours (port step 3: convert.js names it by tile) ──────────────────────────────────────────
+// Built as Emberlit builds it (gsprite.js buildProps, the floor's seed), the same variant on the same tile, and the
+// same state: an opened chest with its lid back, a used shrine dark, a broken cage empty. Its albedo as a canvas, for
+// the world page to stand up facing the camera; lit there by Luminati's lights.
+let propSet = null, propSeed = -1;
+const propCanvases = new Map();
+function propSprite(w, it) {
+  if (propSeed !== w.seed) { propSeed = w.seed; propSet = buildProps(w.seed); propCanvases.clear(); }
+  const { tx, ty } = it, k = tx + ',' + ty, now = propAt(w, tx, ty), was = !now && w.props.get(k), md = w.mods.get(k);
+  const pk = now || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);
+  if (!pk) return null;
+  const key = pk === 'shrine' ? 'shrine_' + shrineKind(w, tx, ty) : pk, arr = propSet[key] || propSet.spire;
+  const v = arr.length === 1 ? 0 : (hash2(tx, ty, 5) * arr.length) | 0, id = `${key}#${v}`;
+  let c = propCanvases.get(id);
+  if (!c) {
+    const sp = arr[v]; c = document.createElement('canvas'); c.width = sp.w; c.height = sp.h;
+    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), im = g.createImageData(sp.w, sp.h);
+    for (let i = 0; i < sp.w * sp.h; i++) if (sp.mask[i]) { im.data[i * 4] = sp.alb[i * 3]; im.data[i * 4 + 1] = sp.alb[i * 3 + 1]; im.data[i * 4 + 2] = sp.alb[i * 3 + 2]; im.data[i * 4 + 3] = 255; }
+    g.putImageData(im, 0, 0); propCanvases.set(id, c);
+    Object.assign(c, { ax: sp.ax, ay: sp.ay });
+  }
+  return { id, x: it.x, z: it.z, canvas: c, ax: /** @type {any} */ (c).ax, ay: /** @type {any} */ (c).ay, flat: !!it.flat };
+}
+/** the furniture's state, for a change to rebuild it (a chest opened, a shrine used, a cage broken) */
+const propState = (w, list) => list.map((it) => propAt(w, it.tx, it.ty) || '-').join('|');
 
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
 export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
@@ -69,9 +99,25 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   if (game) game.after(box); else document.body.prepend(box);
   document.body.append(ui);
   document.body.classList.add('world3d');                      // (the top bar's backdrop: CSS above)
-  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null;
+  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '' };
   renderer.setExternal({
+    // a tap on a service's building, as Luminati draws it (renderer.js serviceAt): each named house's box (its footprint,
+    // its walls and roof) through Luminati's camera, the nearest of those under the finger
+    serviceAt: (sx, sy) => {
+      if (!api || built !== sim.world) return null;
+      let best = null;
+      for (const { o, sv } of houses) {
+        const hw = o.opts.width / 2, hd = o.opts.depth / 2, top = GROUND_Y + 2.4 * (o.opts.stories || 1) + 2;
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        for (const [dx, dz] of [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]]) for (const y of [GROUND_Y, top]) {
+          const q = api.project(o.x + dx, y, o.z + dz); if (!q) return null;
+          x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
+        }
+        if (sx >= x0 && sx <= x1 && sy >= y0 && sy <= y1 && (!best || o.x + o.z > best.k)) best = { sv, k: o.x + o.z };
+      }
+      return best ? best.sv : null;
+    },
     ready: (w) => {
       if (!api) return false;
       if (built === w) return true;
@@ -79,7 +125,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         building = w;
         const r = convertWorld(w, { region: w.region || region });
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
-        api.load(r.level, r.sprites, w.region || region).then((ok) => { if (ok && building === w) built = w; })
+        ours = r.sprites.filter((q) => q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
+        houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
+        const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean);
+        api.load(r.level, sprites, w.region || region).then((ok) => { if (ok && building === w) built = w; })
           .catch((err) => { state.failed = String(err?.message || err); console.error('[luminati]', err); built = w; });
       }
       return false;
@@ -87,6 +136,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
     frame: (draws, c) => {
       if (!api || built !== sim.world) return;
       lastC = c;
+      if (ours.length && ++oursCheck % 20 === 0) {                 // (a chest opened, a shrine used: its prop as it is now)
+        const st = propState(sim.world, ours);
+        if (st !== oursState) { oursState = st; api.sprites(ours.map((q) => propSprite(sim.world, q)).filter(Boolean)); }
+      }
       const now = c.now, dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60; last = now;
       // the ground point at the middle of the screen (iso.js unproject at the floor's height), in Luminati's units
       const cx = c.vw / (2 * c.S), cy = c.vh / (2 * c.S);
@@ -121,7 +174,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark,
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient,
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).
         // In Luminati's own render, not as page layers blended over it: those (plus-lighter, a CSS blur) left the top bar's

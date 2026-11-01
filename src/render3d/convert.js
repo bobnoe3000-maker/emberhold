@@ -19,6 +19,8 @@
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
 import { ENV_FOOT } from '../sim/envfoot.js';
 import { FLOOR_Z } from '../sim/level.js';
+import { PROP_LIGHT } from '../render/gsprite.js';
+import { KIT_TINT } from '../render/palette.js';
 
 /** the most of ours a level takes each way: 128 of Luminati's */
 export const MAX_TILES = 256;
@@ -49,6 +51,9 @@ export const LEGEND = {
   n: { top: 'snow_top', side: 'snow_side', walkable: true }, h: { top: 'snow_path', side: 'snow_side', walkable: true },
   R: { top: 'frost_cobble', side: 'stone_wall', walkable: true }, i: { top: 'ice_top', side: 'ice_cliff', walkable: true },
   I: { top: 'ice_top', side: 'ice_cliff', walkable: false }, N: { top: 'snow_top', side: 'snow_side', walkable: false },
+  // a dungeon's own stone (port step 3, by its kit): dressed walls, bare rock underfoot, standing water
+  B: { top: 'crag', side: 'stone_brick', walkable: false }, U: { top: 'crag', side: 'cliff', walkable: true },
+  P: { top: 'riverbed', side: 'cliff', walkable: true },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -100,7 +105,7 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
  * @param {{ region?: string }} [o]
- * @returns {{ level: any, sprites: { id: string, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
+ * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
   return w.kind === 'dungeon' ? dungeon(w) : outdoor(w, o.region || w.region || 'vale');
@@ -281,6 +286,52 @@ function stairs(w, x0, y0, W, D, tiles, heights) {
 }
 
 // ── a dungeon floor ─────────────────────────────────────────────────────────────────────────────────────────────────
+// Port step 3, "dungeons dressed" (the Vale first): each floor in its kit's stone, at its kit's hour, its furniture
+// stood as art critic pass 18 dressed it.
+//   · Luminati's own 3D, where it has the thing: the braziers (stone, real fire, a light each), crates, barrels, sacks,
+//     boulders, stalagmites, bones, spoil, pews and pillars;
+//   · our voxel props (render/gsprite.js), where the kit's piece is its own: standards, banners, saints, the bound,
+//     the font, sarcophagi, urn shelves, tents, bunks… `sprites` names them by tile, hybrid.js builds them as Emberlit
+//     does and the world page stands them up, facing the camera as the figures do. Chests, shrines and cages among
+//     them change as they're opened, used or broken.
+//   · a light at each prop Emberlit lights (gsprite.js PROP_LIGHT): lanterns, candles, the altar, the circle, the font.
+/** each kit's look: its floor (two tiles, the second a scatter), its walls, its hour (the light's colour underground;
+ *  renderer.js KIT_TINT's warm and cold read through Luminati's clock) */
+const KIT_LOOK = {
+  dig: { floor: ['d', 'k'], wall: 'B', hour: 19.3 }, gallery: { floor: ['k', 'm'], wall: 'B', hour: 21.4 }, muster: { floor: ['k', 'k'], wall: 'B', hour: 22.2 },
+  bailey: { floor: ['c', 'd'], wall: 'B', hour: 18.9 }, barracks: { floor: ['c', 'k'], wall: 'B', hour: 19.6 }, cellar: { floor: ['U', 'd'], wall: 'x', hour: 20.8 },
+  nave: { floor: ['k', 'm'], wall: 'B', hour: 21.0 }, cultcut: { floor: ['d', 'U'], wall: 'x', hour: 19.0 }, binding: { floor: ['k', 'm'], wall: 'B', hour: 22.6 },
+};
+const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 } };
+const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
+/** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
+const DRESS_3D = {
+  brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.7, smoke: false, light: true, seed: h % 997 } }),
+  crates: (x, z, h) => ({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 1 + (h % 3), size: 0.7, seed: h % 997 } }),
+  barrels: (x, z, h) => ({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 0.9, lying: h % 3 === 0 } }),
+  sacks: (x, z, h) => ({ type: 'sacks', x, z, rotation: (h % 5) * 0.4, opts: { count: 2 + (h % 3), seed: h % 997 } }),
+  boulder: (x, z, h) => ({ type: 'rock', x, z, opts: { size: 0.8 + (h % 5) * 0.1, seed: h % 97 } }),
+  stalagmite: (x, z, h) => ({ type: 'crag', x, z, rotation: (h % 11) * 0.5, opts: { kind: 'spire', stone: 'basalt', height: 1.5 + (h % 4) * 0.35, width: 0.6, seed: h % 997 } }),
+  bones: (x, z, h) => ({ type: 'debris', x, z, rotation: (h % 11) * 0.5, opts: { kind: 'bones', size: 0.32, charred: false, seed: h % 997 } }),
+  spoil: (x, z, h) => ({ type: 'debris', x, z, rotation: (h % 11) * 0.5, opts: { kind: 'rubble', size: 0.5, charred: false, seed: h % 997 } }),
+  pew: (x, z) => ({ type: 'bench', x, z, rotation: 0, opts: { length: 1.6, back: true } }),
+  pillar: (x, z, h) => ({ type: 'crag', x, z, rotation: (h % 7) * 0.4, opts: { kind: 'pillar', stone: 'basalt', height: 2.7, width: 0.8, seed: h % 997 } }),
+  brokenpillar: (x, z, h) => ({ type: 'crag', x, z, rotation: (h % 7) * 0.4, opts: { kind: 'pillar', stone: 'basalt', height: 0.9 + (h % 3) * 0.3, width: 0.8, seed: h % 997 } }),
+};
+/** our props laid on the floor rather than stood up (walked over: drawn under the figures) */
+const FLAT = new Set(['circle', 'bedroll']);
+const hex = (c) => { const m = Math.max(...c, 1e-6); return '#' + c.map((v) => Math.round((v / m) * 255).toString(16).padStart(2, '0')).join(''); };
+
+// The light underground is Emberlit's: its dungeon ambient (renderer.js AMB_BASE, a dim violet-grey) through the kit's
+// tint, no sun or moon, the braziers and lamps doing the rest. Luminati's own hour read its dusk and night palette and
+// lit every wall a saturated violet.
+const AMB_BASE = [0.379, 0.324, 0.449];
+/** the ambient a floor's kit wants: Luminati's hemisphere light's sky and ground colours (linear) and intensity */
+export function ambientOf(kit) {
+  const t = KIT_TINT[kit] || [1, 1, 1], c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
+  return { sky: c(0.42), ground: c(0.2), i: 1, sun: 0 };
+}
+
 function dungeon(w) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
@@ -292,33 +343,33 @@ function dungeon(w) {
   const both = Math.abs(up.x - dn.x) < MAX_TILES - 24 && Math.abs(up.y - dn.y) < MAX_TILES - 24;
   const { x0, y0, W, D } = crop(bx0 - 2, by0 - 2, bx1 + 2, by1 + 2, both ? (up.x + dn.x) / 2 : sp.x, both ? (up.y + dn.y) / 2 : sp.y);
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
-  const tiles = grid(W, D, 'x'), heights = grid(W, D, '6');
-  // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open)
+  const look = KIT_LOOK[w.kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
+  const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
+  // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    let floor = 0;
-    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const c = cells.get(`${x0 + 2 * i + dx},${y0 + 2 * j + dy}`); if (c && c.kind === 'floor') floor++; }
-    if (floor) { tiles[j][i] = hash('d', i, j) % 100 < 14 ? 'm' : 'k'; heights[j][i] = '2'; }
+    let floor = 0, wet = 0;
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+      const k = `${x0 + 2 * i + dx},${y0 + 2 * j + dy}`, c = cells.get(k);
+      if (c && c.kind === 'floor') floor++;
+      if (pools.has(k)) wet++;
+    }
+    if (floor) { tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < 18 ? look.floor[1] : look.floor[0]; heights[j][i] = '2'; }
   }
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
-  const objects = [], count = {};
+  const objects = [], count = {}, sprites = [];
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
   for (const l of stairLights) add({ type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
-    if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5) continue;
-    if (kind === 'brazier') add({ type: 'wallTorch', x, z, rotation: 0, dy: 0.9, opts: { embers: true } });   // (a standing flame: a campfire each was a bonfire field in the Barrows' rooms)
-    else if (kind === 'chest') add({ type: 'crate', x, z, rotation: 0.2, opts: {} });
-    else if (kind === 'shrine') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'top' } });
-    else if (kind === 'exit') add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } });   // (the stairs are the floor's own: stairs())
-  }
-  // a torch on the wall at each room's north side (the rooms' own light: Luminati's 12 lamps shared by distance)
-  for (const r of w.level.rooms || []) {
-    const cx = r.x ?? r.cx, cy = (r.y ?? r.cy) - (r.rh ?? r.h ?? 3);
-    if (cx === undefined || !Number.isFinite(cy)) continue;
-    const x = X(cx), z = Z(cy);
-    if (x > 1 && z > 1 && x < W - 1 && z < D - 1) add({ type: 'wallTorch', x, z, rotation: 0, dy: 1.4, opts: { embers: true } });
+    if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())
+    const h = hash('p', tx, ty);
+    if (kind === 'exit') { add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } }); continue; }
+    if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h));
+    else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
+    const lit = PROP_LIGHT[kind];
+    if (lit && kind !== 'brazier') add({ type: 'light', x, z, dy: 0.9, color: hex(lit), intensity: 3.2, distance: 4.5, flicker: 0.15, nightOnly: false });
   }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
-    environment: { timeOfDay: 19.4, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: 'void' } });
-  return { level, sprites: [], origin: { x: x0, y: y0 }, stats: { ...count, size: W * 1000 + D } };
+    environment: { timeOfDay: look.hour, border: 'none', outerScenery: false, godRays: false, interior: true, backdrop: 'void' } });
+  return { level, sprites, ambient: ambientOf(w.kit), origin: { x: x0, y: y0 }, stats: { ...count, ours: sprites.length, size: W * 1000 + D } };
 }

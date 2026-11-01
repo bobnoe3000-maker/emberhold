@@ -90,6 +90,7 @@ async function placeEnv(list, region) {
   const at = (id) => { for (let i = 0; i < sets.length; i++) { const m = all[i]?.sprites?.[id]; if (m) return [sets[i], m]; } return null; };
   const mine = levelId;
   for (const p of list) {
+    if (p.canvas) { standOurs(p); continue; }
     const f = at(p.id); if (!f) continue;
     const [set, m] = f, img = await image(`${ASSETS}env/${set}.alb.png`).catch(() => null);
     if (!img || mine !== levelId) return;
@@ -104,6 +105,26 @@ async function placeEnv(list, region) {
     game.engine.scene.add(s); envSprites.push(s);
     s.update(0, game.engine.camera);
   }
+}
+
+// a prop of ours built in the page (hybrid.js: a dungeon's furniture, gsprite.js), from its canvas: stood facing the
+// camera at its tile's middle with a soft shadow, or laid under the figures when it lies on the floor (a binding circle,
+// a bedroll: walked over)
+const ourSheets = new Map();
+function standOurs(p) {
+  let sheet = ourSheets.get(p.canvas);
+  if (!sheet) {
+    const tex = new THREE.CanvasTexture(p.canvas); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+    sheet = { texture: tex, frameWidth: p.canvas.width, frameHeight: p.canvas.height, columns: 1, rows: 1, pixelsPerUnit: NATIVE_PER_UNIT, anchor: [p.ax / p.canvas.width, 0],
+      animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: `ember-prop:${p.id}` };
+    ourSheets.set(p.canvas, sheet);
+  }
+  const s = new Sprite3D(sheet, { ...SPRITE_OPTS, emissiveIntensity: 0.3, castShadow: false, blobShadow: !p.flat });   // (a little of their own colour: lit only by the hemisphere and a far torch, they read as cut-outs)
+  s.name = `ember:prop:${p.id}`;
+  standAt(s, p.x, p.z, p.canvas.height - p.ay, NATIVE_PER_UNIT);
+  if (p.flat) s.traverse((o) => { o.renderOrder = -1; if (o.material) o.material.depthWrite = false; });
+  game.engine.scene.add(s); envSprites.push(s);
+  s.update(0, game.engine.camera);
 }
 
 // ── the farm's beasts, alive (the owner, 2026-11-01: "The cows look bad too") ─────────────────────────────────────
@@ -239,6 +260,12 @@ async function boot(level) {
   await game.warmedUp;
   game.engine.stop();                                         // (the game steps it: frame())
   game.engine.events.on('lateUpdate', () => { if (game) placeCamera(); });
+  // underground, the ambient is the game's (convert.js ambientOf), laid over the palette's after it updates
+  game.engine.events.on('update', () => {
+    const a = frameAmbient, L = game?.lighting; if (!a || !L?.hemi) return;
+    L.hemi.color.setRGB(a.sky[0], a.sky[1], a.sky[2]); L.hemi.groundColor.setRGB(a.ground[0], a.ground[1], a.ground[2]); L.hemi.intensity = a.i;
+    if (L.sun) L.sun.intensity *= a.sun;
+  });
   if (game.lighting) game.lighting._shadowExtent = Math.max(game.lighting._shadowExtent || 22, 34);   // (the view is wider than Luminati's: shadows reach the screen's top)
 }
 function hidePlayer() {
@@ -272,7 +299,7 @@ function placeGround(m, x, z, r, col, a) {
   m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
-let carryLight = null, carryLevel = -1, focusSpin = 0;
+let carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null;
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
@@ -305,7 +332,7 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, carry?: number }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number } | null, carry?: number }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -349,9 +376,12 @@ const api = {
       standAt(s, b.x, b.z, sh.below, NATIVE_PER_UNIT); s.update(0, camera);
     }
     for (let i = nb; i < beastPool.length; i++) if (beastPool[i]?.visible) beastPool[i].visible = false;
+    frameAmbient = f.ambient || null;
     setLight(f.light);
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)));
   },
+  /** stand the converter's art again (a chest opened, a shrine used: hybrid.js), the level kept */
+  sprites(list) { if (game) placeEnv(list, envRegion); },
   /** (for checks) a world point on the screen, CSS px, through this camera */
   project(x, y, z) {
     if (!game) return null;
@@ -362,7 +392,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
+    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

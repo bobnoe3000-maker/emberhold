@@ -113,3 +113,12 @@ export const EGLOW = {
   mend: [110, 235, 140], might: [255, 84, 64],   // (shrines.js: a green shrine's orb, a red one's)
   marsh: [190, 240, 200],                 // (M8) a bog-witch's marsh-light: cold green-white
 };
+
+// A dungeon floor's kit tints its light (art critic pass 18): never brighter, only colder or warmer, a channel at a
+// time. Emberlit's light pass (renderer.js) and Luminati's ambient underground (render3d/convert.js) both read it.
+export const KIT_TINT = {
+  dig: [1.06, 0.98, 0.86], gallery: [0.88, 0.94, 1.12], muster: [0.84, 0.92, 1.16],
+  bailey: [1.1, 0.92, 0.84], barracks: [1.04, 0.96, 0.88], cellar: [0.9, 1.0, 0.98],
+  nave: [0.86, 0.98, 1.04], cultcut: [1.14, 0.88, 0.78], binding: [0.98, 0.86, 1.14],
+  mound: [0.96, 1.04, 0.86], locks: [0.88, 1.0, 1.0], vats: [0.86, 1.08, 0.84], abbey: [0.86, 0.96, 1.1],
+};

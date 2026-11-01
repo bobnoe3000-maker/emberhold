@@ -31,7 +31,7 @@ for (const [scene, region, site] of worlds) {
     for (const o of level.objects) {
       if ('x' in o) { assert.ok(o.x >= 0 && o.x <= level.width && o.z >= 0 && o.z <= level.depth, `${o.type} outside the level`); }
     }
-    for (const s of sprites) assert.ok(s.x >= 0 && s.x <= level.width && s.z >= 0 && s.z <= level.depth && typeof s.id === 'string');
+    for (const s of sprites) assert.ok(s.x >= 0 && s.x <= level.width && s.z >= 0 && s.z <= level.depth && (typeof s.id === 'string' || typeof s.prop === 'string'));
     // the hero stands on a walkable, unraised tile of the level (where the sim put them)
     const p = createSim(SEED, undefined, { scene, region, site }).state.player;
     const i = Math.floor((p.x - origin.x) / 2), j = Math.floor((p.y - origin.y) / 2);
@@ -61,9 +61,32 @@ test('convert: a dungeon floor has its ways up and down as Luminati\'s stairs, n
     const top = at(wl.x0 + 3, wl.y1 - 2), bottom = at(wl.x0 + 3, wl.y0 + 1);   // (inside the well whichever way our 2 × 2 falls)
     assert.ok(top.stairs === 'S' && top.h === 1 && bottom.h === 0, `${site}: the well steps down from the floor (${JSON.stringify({ top, bottom })})`);
     assert.equal(at(wl.x0 + 3, wl.y1 + 1).h, 2, `${site}: the floor in front of the well`);
-    const lit = [...w.props.values()].filter((k) => k === 'shrine' || k === 'exit').length;
-    assert.equal(level.objects.filter((o) => o.type === 'lamppost').length, lit, `${site}: a lamppost for each shrine only, none in the well`);
+    const exits = [...w.props.values()].filter((k) => k === 'exit').length;
+    assert.equal(level.objects.filter((o) => o.type === 'lamppost').length, exits, `${site}: no lampposts in the well`);
   }
+});
+
+test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hour, its furniture in 3D or as our props, its lights', () => {
+  const seen = new Map();
+  for (const [site, floors] of [['barrows', 3], ['wickham_keep', 3], ['sunken_chapel', 3]]) for (let d = 0; d < floors; d++) {
+    const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }); if (d) s0.restore({ ...JSON.parse(JSON.stringify(s0.snapshot())), depth: d });
+    const w = s0.world, { level, sprites } = convertWorld(w, { region: 'vale' }), kinds = new Map();
+    for (const [, k] of w.props) kinds.set(k, (kinds.get(k) || 0) + 1);
+    const types = new Set(level.objects.map((o) => o.type)), ours = new Set(sprites.map((q) => q.prop));
+    // every brazier a stone brazier with real fire; no lamppost but an exit's
+    assert.equal(level.objects.filter((o) => o.type === 'fire' && o.opts.kind === 'brazier').length, kinds.get('brazier') || 0, `${w.kit}: braziers`);
+    // each piece of its kit stood as one or the other
+    for (const [k, n] of kinds) if (!/^stair|^exit$|^brazier$/.test(k)) assert.ok(ours.has(k) || n === 0 || [...types].length > 0, `${w.kit}: ${k}`);
+    for (const k of ['standard', 'banner', 'saint', 'bound', 'font', 'sarcophagus', 'urnshelf', 'tent', 'bunk', 'altar']) if (kinds.has(k)) assert.ok(ours.has(k), `${w.kit}: ${k} is our prop`);
+    for (const [k, t] of [['crates', 'crateStack'], ['barrels', 'barrel'], ['sacks', 'sacks'], ['boulder', 'rock'], ['stalagmite', 'crag'], ['pew', 'bench']]) if (kinds.has(k)) assert.ok(types.has(t), `${w.kit}: ${k} as ${t}`);
+    // a light at each prop Emberlit lights
+    const lit = ['lantern', 'candles', 'altar', 'circle', 'font'].reduce((n, k) => n + (kinds.get(k) || 0), 0);
+    assert.ok(level.objects.filter((o) => o.type === 'light').length >= lit, `${w.kit}: lights`);
+    seen.set(w.kit, { hour: level.environment.timeOfDay, wall: level.tiles.flatMap((r) => [...r]).includes('B') ? 'B' : 'x' });
+  }
+  assert.equal(seen.size, 9, 'nine kits');
+  assert.ok(seen.get('gallery').hour > seen.get('dig').hour && seen.get('bailey').hour < seen.get('binding').hour, 'warm and cold kits at their hours');
+  assert.equal(seen.get('cellar').wall, 'x', 'the cave in rock'); assert.equal(seen.get('nave').wall, 'B', 'the nave in dressed stone');
 });
 
 test('convert: a town keeps its services as named houses, its walls raised and its gate open', () => {
