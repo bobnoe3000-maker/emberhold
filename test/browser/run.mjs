@@ -133,6 +133,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await p.locator('#create .opt', { hasText: 'Redhand deserter' }).tap(); await p.locator('#create .nav .pri').tap();
     await p.fill('#create input', 'Brann<script>'); await p.locator('#create .nav .pri').tap();
     await p.locator('#create .nav .pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(600);
+    // (waited for: on Luminati the sim holds still while the town's level builds, slowly in software GL)
+    await p.waitForFunction(() => globalThis.__sim.state.created, null, { timeout: 30000 * SLOW, polling: 100 }).catch(() => null);
     const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created }; });
     check(M + ': created through the screens (name cleaned)', h.created && h.name === 'Brannscript' && h.cls === 'fighter' && h.actor === 'hero_barbarian' && h.origin === 'redhand_deserter', JSON.stringify(h));
     // hire at the tavern (the square's service bar)
@@ -200,7 +202,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await p.waitForSelector('#defeat.on', { timeout: 5000 * SLOW }).catch(() => null);
     const recap = await p.locator('#defeat').innerText().catch(() => '');
     check(M + ': the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party is beaten/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
-    await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
+    // (waited for: on Luminati the wake also builds the town's level, slowly in software GL)
+    await p.locator('#defeat button').tap(); await p.waitForFunction(() => !document.querySelector('#defeat.on'), null, { timeout: 20000 * SLOW, polling: 100 }).catch(() => null);
     check(M + ': "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
     await p.waitForTimeout(1100);
     const chip = await p.locator('#hudLine3 .chip', { hasText: 'weakened' }).innerText().catch(() => '');
