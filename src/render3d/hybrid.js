@@ -34,7 +34,9 @@ import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
 
 // the sim's four parts of the day (dawn · day · dusk · night, PART_S each) on Luminati's clock: where each part begins
-const PART_HOURS = [5, 7.5, 17.5, 20.5, 29];
+// (dusk is Luminati's golden hour and sunset: Emberlit's dusk is a warm low sun, the game's old fixed look; held across
+// Luminati's purple dusk it sat darker than its own night)
+const PART_HOURS = [5, 7.5, 17, 19.6, 29];
 /** the hour on Luminati's 24-hour clock for t seconds of play @param {number} t */
 export function hourOf(t) {
   const s = ((t % DAY_S) + DAY_S) % DAY_S, p = Math.floor(s / PART_S), u = (s - p * PART_S) / PART_S;

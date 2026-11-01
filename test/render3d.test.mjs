@@ -100,8 +100,8 @@ test('convert: a town keeps its services as named houses, its walls raised and i
 test('hour: the sim\'s four parts of the day land on Luminati\'s dawn, day, dusk and night', () => {
   assert.equal(hourOf(0), 5);                       // dawn breaking
   assert.equal(hourOf(PART_S), 7.5);                // day
-  assert.equal(hourOf(2 * PART_S), 17.5);           // dusk
-  assert.equal(hourOf(3 * PART_S), 20.5);           // night
+  assert.equal(hourOf(2 * PART_S), 17);             // dusk: Luminati's golden hour and sunset (Emberlit's dusk is a warm low sun)
+  assert.equal(hourOf(3 * PART_S), 19.6);           // night: from its blue hour
   assert.equal(hourOf(DAY_S), 5);                   // and round again
   for (let t = 0; t < DAY_S; t += 37) { const h = hourOf(t); assert.ok(h >= 0 && h < 24); }
 });

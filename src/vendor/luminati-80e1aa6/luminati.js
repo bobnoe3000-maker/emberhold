@@ -5121,8 +5121,8 @@ var ca = (e, t) => {
 		hemiSky: ca(e.hemiSky, .45),
 		hemiGround: ca(e.hemiGround, .3),
 		sunI: e.sunI * .72,
-		hemiI: e.hemiI * (.84 - .24 * t),
-		exp: e.exp * (.95 - .07 * t),
+		hemiI: e.hemiI * (.86 - .08 * t) * (e.t >= 18 && e.t <= 20.5 ? 1.4 : 1),
+		exp: e.exp * .97,
 		fog: e.fog * (.5 + .3 * t)
 	};
 }), da = {

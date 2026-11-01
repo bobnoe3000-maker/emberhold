@@ -119,7 +119,9 @@ const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
   const night = f.night ?? 0;
   // (darker, not whiter: greying the horizon also greyed the fog, and the Vale went milky)
   return { ...f, top: dim(grey(f.top, 0.3), 0.8), horizon: dim(grey(f.horizon, 0.3), 0.6), bottom: dim(grey(f.bottom, 0.3), 0.75), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
-    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * (0.5 + 0.3 * night) };   // (the far ground under a veil of the horizon's colour: thin by day, as Emberlit's day is clear)   // (the far ground under a veil of the horizon's colour: thinner)
+    // (dusk lifted, the nights only a little dimmer: graded harder, Luminati's dusk and night sat far darker than Emberlit's, whose
+    // dusk is the game's old fixed look and whose night is 0.8 of it)
+    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.86 - 0.08 * night) * (f.t >= 18 && f.t <= 20.5 ? 1.4 : 1), exp: f.exp * 0.97, fog: f.fog * (0.5 + 0.3 * night) };   // (the far ground under a veil of the horizon's colour: thin by day, as Emberlit's day is clear)   // (the far ground under a veil of the horizon's colour: thinner)
 });
 // and the picture graded as Emberlit's is: Luminati's game grades it a saturated 1.3 under a light vignette; Emberlit's
 // Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
