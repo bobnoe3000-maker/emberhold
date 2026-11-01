@@ -47,7 +47,16 @@ const CSS = `#world3d { position: fixed; inset: 0; pointer-events: none; backgro
 #world3d-fx, #world3d-glow { position: fixed; left: 0; top: 0; pointer-events: none; transform-origin: 0 0; mix-blend-mode: screen; }
 @supports (mix-blend-mode: plus-lighter) { #world3d-fx, #world3d-glow { mix-blend-mode: plus-lighter; } }
 #world3d-glow { filter: blur(5px); opacity: 0.85; }
-#world3d-ui { position: fixed; inset: 0; z-index: -1; visibility: hidden; pointer-events: none; overflow: hidden; }`;
+#world3d-ui { position: fixed; inset: 0; z-index: -1; visibility: hidden; pointer-events: none; overflow: hidden; }
+/* the top bar over Luminati's world (the owner, 2026-11-01: "At the top of the phone screen its a bit blurry washing out
+   the town name and gold and ember count"). Emberlit's halls and dusky squares were dark behind it; Luminati's day, and
+   its snow, are bright. A dusk-coloured fade behind the bar, drawn as its own backdrop so the bar's size (which places the
+   minimap) never changes, and a firmer shadow under its words. */
+body.world3d #hud { z-index: 0; }
+body.world3d #hud::before { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: -34px; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(12, 9, 18, 0.86) 0%, rgba(12, 9, 18, 0.7) 55%, rgba(12, 9, 18, 0) 100%); }
+body.world3d #hud, body.world3d #hud .stat { text-shadow: 0 1px 0 #0d0913, 0 0 6px rgba(8, 6, 12, 0.95); }
+body.world3d #hud .stat { color: #b4b0c6; }`;
 
 /**
  * Put Luminati under the game. Resolves to a small handle (for checks) once Luminati is loaded.
@@ -66,6 +75,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const game = document.getElementById('game');
   if (game) game.after(box, glow, fxc); else document.body.prepend(box, glow, fxc);
   document.body.append(ui);
+  document.body.classList.add('world3d');                      // (the top bar's backdrop: CSS above)
   let img = null, lit = false;
   /** Emberlit's emissive plane (RGBA bytes, native px) → the light layers, placed as Emberlit composites its window */
   const drawLight = (c) => {

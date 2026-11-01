@@ -477,6 +477,16 @@ Each step lands on main behind the Graphics switch, so the game stays playable i
   - Spell lights on bolts.
   - The dungeons' light (too blue and dark beside Emberlit's warm halls: step 3 and step 5).
 
+**The top bar over Luminati** (2026-11-01). The owner, on the phone: *"At the top of the phone screen its a bit blurry
+washing out the town name and gold and ember count."* Emberlit's halls and dusky squares were dark behind the bar, but
+Luminati's day and its snow are bright. With Luminati drawing (`body.world3d`):
+- the bar gets a dusk-coloured fade behind it, drawn as its own backdrop (`#hud::before`), so its size, which places
+  the minimap, never changes;
+- its words get a firmer shadow;
+- its grey stats are a step lighter.
+
+Emberlit's look is unchanged. Before and after: `docs/img/lumina/topbar.png`.
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.
