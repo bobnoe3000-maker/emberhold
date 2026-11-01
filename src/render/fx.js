@@ -101,14 +101,17 @@ export function createFX() {
     const i = y * B.W + x; if (!acc[i]) touched.push(i); if (a > acc[i]) acc[i] = a;
   }
   function flush(col, gain = 1) {
-    const { EMI, DEP, W, DPX } = B;
+    const { EMI, DEP, W, DPX, KEY } = B;
+    // (another painter, with no depth plane of ours: the alpha holds the owner's depth key instead, the nearest owner's
+    // where two overlap, for it to test against its own depth; KEY: { base, step })
+    const own = KEY ? Math.max(1, Math.min(255, Math.round((ctx.key - KEY.base) / KEY.step))) : 250;
     for (const i of touched) {
       let a = acc[i] * gain; acc[i] = 0;
       const py = (i / W) | 0, d = ctx.key + DPX * (ctx.h + Math.max(0, ctx.fy - py));
       if (DEP && DEP[i] > d + 0.05) a *= 0.22;                               // something nearer stands over it
       const j = i * 4;
       EMI[j] = Math.min(255, EMI[j] + col[0] * a * 0.24); EMI[j + 1] = Math.min(255, EMI[j + 1] + col[1] * a * 0.24); EMI[j + 2] = Math.min(255, EMI[j + 2] + col[2] * a * 0.24);
-      EMI[j + 3] = 250;                                                       // steady (no ember flicker)
+      EMI[j + 3] = KEY ? Math.max(EMI[j + 3], own) : 250;                     // steady (no ember flicker)
     }
     touched.length = 0;
   }

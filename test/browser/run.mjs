@@ -115,16 +115,16 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   }
 }
 // 3. M3 exit test: create → play → Fallen → temple → resurrect → wipe → temple → inn → reload
-{
+for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderers: docs/luminati-port-plan.md §13 step 2)
   const b = await launch(chromium, 'chromium');
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    const game = `${base}/index.html`;
+    const game = `${base}/index.html`, Q = R === 'luminati' ? '&renderer=luminati' : '', M = R === 'luminati' ? 'm3 on Luminati' : 'm3';
     const ready = () => booted(p);
     const S = (fn, arg) => p.evaluate(fn, arg);
-    await p.goto(game + '?dev&slot=1'); await S(() => { localStorage.clear(); indexedDB.deleteDatabase('emberfall'); });
-    await p.goto(game + '?dev&slot=1'); await ready();
+    await p.goto(game + '?dev&slot=1' + Q); await S(() => { localStorage.clear(); indexedDB.deleteDatabase('emberfall'); });
+    await p.goto(game + '?dev&slot=1' + Q); await ready();
     // create, through the screens
     await p.locator('#title button.pri', { hasText: 'Begin' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     await p.tap('#cine .skip'); await p.waitForSelector('#createWrap.on'); await p.waitForTimeout(300);   // the intro (section 4 plays it through)
@@ -134,7 +134,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.fill('#create input', 'Brann<script>'); await p.locator('#create .nav .pri').tap();
     await p.locator('#create .nav .pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(600);
     const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created }; });
-    check('m3: created through the screens (name cleaned)', h.created && h.name === 'Brannscript' && h.cls === 'fighter' && h.actor === 'hero_barbarian' && h.origin === 'redhand_deserter', JSON.stringify(h));
+    check(M + ': created through the screens (name cleaned)', h.created && h.name === 'Brannscript' && h.cls === 'fighter' && h.actor === 'hero_barbarian' && h.origin === 'redhand_deserter', JSON.stringify(h));
     // hire at the tavern (the square's service bar)
     // (the Lantern Guild's sellswords, GDD §6.2: each card shows its rank word, perks and fee; hiring pays it)
     await S(() => { globalThis.__sim.state.counters.gold = 2000; });
@@ -144,7 +144,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const want = await S(() => { const c = globalThis.__sim.heroes.roster()[1]; return { rank: c.rank, n: c.perks.length, fee: c.rank === 'wick' ? 30 * c.level : c.rank === 'lamp' ? 90 * c.level : c.rank === 'lantern' ? 250 * c.level : 600 * c.level }; });
     await p.locator('#hubSheet [data-hire="1"]').tap(); await p.waitForTimeout(300); await p.locator('#hubSheet .close').tap();
     const paid = 2000 - (await S(() => globalThis.__sim.state.counters.gold));
-    check('m3: hired a companion at the tavern: its card showed rank, perks and fee, and the Guild took the fee', (await S(() => globalThis.__sim.state.party.length)) === 2
+    check(M + ': hired a companion at the tavern: its card showed rank, perks and fee, and the Guild took the fee', (await S(() => globalThis.__sim.state.party.length)) === 2
       && new RegExp(want.rank, 'i').test(card) && new RegExp(`Fee ${want.fee} gold`).test(card) && paid === want.fee, `${want.rank} · fee ${want.fee} · paid ${paid}`);
     // wages on screen (GDD §6.2): the line under the gold, the card's tag, the Contract tab, and the Guild's terms
     await p.waitForTimeout(1200);
@@ -158,9 +158,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const contract = await p.locator('#gearSheet .ct').innerText().catch(() => '');
     // the ✕ is a thumb's size and clear of the member tabs (the owner, 2026-10-04: it overlapped the last tab by 3 px)
     const xb = await p.evaluate(() => { const x = document.querySelector('#gearSheet .x').getBoundingClientRect(), t = document.querySelector('#gearSheet .tabs').getBoundingClientRect(); return { w: x.width, h: x.height, gap: t.top - x.bottom }; });
-    check('character window: the close button is 44 px and clear of the member tabs', xb.w >= 44 && xb.h >= 44 && xb.gap >= 0, JSON.stringify(xb));
+    if (R === 'emberlit') check('character window: the close button is 44 px and clear of the member tabs', xb.w >= 44 && xb.h >= 44 && xb.gap >= 0, JSON.stringify(xb));
     await p.locator('#gearSheet [data-close]').tap(); await p.waitForTimeout(300);
-    check('m3: wages on screen: the gold line, the card tag, the Contract tab, the Guild\'s terms', /−\d+ · dawn \d+m/.test(wageLine) && /◆ \d+\/D/i.test(tag)
+    check(M + ': wages on screen: the gold line, the card tag, the Contract tab, the Guild\'s terms', /−\d+ · dawn \d+m/.test(wageLine) && /◆ \d+\/D/i.test(tag)
       && /The Guild.s terms/i.test(terms) && rows === 5 && /Loyalty/i.test(contract) && /gold a dawn/i.test(contract), `${wageLine} | ${tag} | rows ${rows} | ${contract.split('\n').slice(0, 3).join(' / ')}`);
     // play: into a dungeon room; the companion is Downed and left behind → Fallen (a ghost)
     const room = async (hp) => S(async (hp) => {
@@ -173,7 +173,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForFunction(() => { const c = globalThis.__sim.state.party[1]; c.hp = Math.min(c.hp, 1); return c.down; }, null, { timeout: 60000, polling: 50 });
     await S(() => { const s = globalThis.__sim, E = s.world.level.entrance; s.state.player.x = E.cx + 0.5; s.state.player.y = E.cy + 0.5; });
     await p.waitForTimeout(400);
-    check('m3: left behind while Downed → slain, shown as SLAIN', (await S(() => globalThis.__sim.state.party[1].fallen)) === true && (await p.locator('#party .card.fallen').count()) === 1 && /SLAIN/.test(await p.locator('#party .card.fallen').innerText()));
+    // (waited for, not timed: Luminati in software GL runs a few frames a second here, so 400 ms is barely a tick)
+    await p.waitForFunction(() => globalThis.__sim.state.party[1].fallen, null, { timeout: 20000 * SLOW, polling: 100 }).catch(() => null);
+    await p.waitForSelector('#party .card.fallen', { timeout: 5000 * SLOW }).catch(() => null);
+    check(M + ': left behind while Downed → slain, shown as SLAIN', (await S(() => globalThis.__sim.state.party[1].fallen)) === true && (await p.locator('#party .card.fallen').count()) === 1 && /SLAIN/.test(await p.locator('#party .card.fallen').innerText()));
     // back to town (dev shortcut for the walk), the temple raises them
     await S(() => { const s = globalThis.__sim, snap = s.snapshot(); snap.scene = 'town'; s.restore(snap); const a = s.world.arrivals.temple; s.state.player.x = a.x; s.state.player.y = a.y; });
     await p.waitForTimeout(800);
@@ -184,7 +187,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // (the raise is a command the sim takes on its next tick: wait for it, not a fixed time, on a loaded runner)
     const raised = await p.waitForFunction(() => { const c = globalThis.__sim.state.party[1]; return !c.fallen && c.hp > 0; }, null, { timeout: 15000 * SLOW, polling: 100 }).then(() => true, () => false);
     const g1 = await S(() => globalThis.__sim.state.counters.gold);
-    check('m3: the temple raises the slain (free: hero level 5 or lower, once a day)', raised && g1 === g0, JSON.stringify({ raised, g0, g1 }));
+    check(M + ': the temple raises the slain (free: hero level 5 or lower, once a day)', raised && g1 === g0, JSON.stringify({ raised, g0, g1 }));
     await p.locator('#hubSheet .close').tap();
     // a wipe: everyone at 1 HP in a room → wake at the temple, Weakened, a quarter of the gold gone
     await S(() => globalThis.__sim.bus.on('defeat', (d) => (window.__lost = d.lost)));
@@ -192,26 +195,27 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // (held at 1 HP while we wait: on a slow real-time clock the lull's regen could outlast the timeout)
     await p.waitForFunction(() => { const s = globalThis.__sim; if (s.state.scene === 'town') return true; for (const m of s.state.party) if (!m.down) m.hp = Math.min(m.hp, 1); return false; }, null, { timeout: 60000, polling: 50 });
     const w = await S(() => { const s = globalThis.__sim, a = s.world.arrivals.temple, p = s.state.player; return { near: Math.hypot(p.x - a.x, p.y - a.y) < 1.5, weak: s.state.party.every((m) => m.weakUntil > 0), fallen: s.state.party.some((m) => m.fallen), gold: s.state.counters.gold, lost: window.__lost }; });
-    check('m3: a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
+    check(M + ': a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
     // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
     await p.waitForSelector('#defeat.on', { timeout: 5000 * SLOW }).catch(() => null);
     const recap = await p.locator('#defeat').innerText().catch(() => '');
-    check('m3: the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party is beaten/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
+    check(M + ': the defeat screen says where the party fell, who struck the last blow, and what it cost', /The party is beaten/.test(recap) && /floor 1 · a level \d+ room · wave \d+/i.test(recap) && /went down last, to (an? |one of )/.test(recap) && /Weakened for 10 minutes/.test(recap) && new RegExp(`−${w.lost} gold`).test(recap), recap.replace(/\n/g, ' · ').slice(0, 220));
     await p.locator('#defeat button').tap(); await p.waitForTimeout(700);
-    check('m3: "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
+    check(M + ': "Wake at the temple" closes it, and the town is there', !(await p.locator('#defeat.on').count()));
     await p.waitForTimeout(1100);
     const chip = await p.locator('#hudLine3 .chip', { hasText: 'weakened' }).innerText().catch(() => '');
-    check('m3: the HUD says Weakened, with the minutes it has left', /^weakened · (10|9) min$/.test(chip.trim()), chip);
+    check(M + ': the HUD says Weakened, with the minutes it has left', /^weakened · (10|9) min$/.test(chip.trim()), chip);
     // the inn lifts Weakened
     await p.waitForTimeout(600);
     await p.locator('#hubBar button[data-k=inn]').tap(); await p.waitForTimeout(400);
     await p.locator('#hubSheet [data-go=rest]').tap(); await p.waitForTimeout(300); await p.locator('#hubSheet [data-rest]').tap(); await p.waitForTimeout(400);
-    check('m3: resting at the inn lifts Weakened', (await S(() => globalThis.__sim.state.party.every((m) => !m.weakUntil))) === true);
+    await p.waitForFunction(() => globalThis.__sim.state.party.every((m) => !m.weakUntil), null, { timeout: 15000 * SLOW, polling: 100 }).catch(() => null);
+    check(M + ': resting at the inn lifts Weakened', (await S(() => globalThis.__sim.state.party.every((m) => !m.weakUntil))) === true);
     // it all saved
     await S(() => window.dispatchEvent(new Event('pagehide'))); await p.evaluate(() => (window.__old = 1)); await p.reload(); await ready();
     const r = await S(() => { const s = globalThis.__sim.state; return { name: s.party[0].name, actor: s.party[0].actor, n: s.party.length, created: s.created }; });
-    check('m3: the hero and party survive a reload; the title offers Continue', r.created && r.name === 'Brannscript' && r.actor === 'hero_barbarian' && r.n === 2 && await p.locator('#title button.pri', { hasText: 'Continue' }).isVisible(), JSON.stringify(r));
-    check('m3: no page errors', errs.length === 0, errs.join(' | '));
+    check(M + ': the hero and party survive a reload; the title offers Continue', r.created && r.name === 'Brannscript' && r.actor === 'hero_barbarian' && r.n === 2 && await p.locator('#title button.pri', { hasText: 'Continue' }).isVisible(), JSON.stringify(r));
+    check(M + ': no page errors', errs.length === 0, errs.join(' | '));
     await b.close();
   }
 }
@@ -1428,6 +1432,24 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         return { bare, lit, left, light: W.stats.light };
       } finally { W.frame = orig; }
     });
+    // the effects' light respects walls (port step 2: Emberlit's depth plane, rebuilt from Luminati's depth buffer): over a
+    // wall's top, light whose owner stands behind the wall is cut, light whose owner stands in front is not
+    const walled = await p.evaluate(() => {
+      const H = globalThis.__world3d, W = H.world, cv = document.querySelector('#world3d canvas'), gl = cv.getContext('webgl2'), orig = W.frame, s = globalThis.__sim, P = s.state.player, o = H.origin, C = s.world.level.cells;
+      const floor = (x, y) => C.get(x + ',' + y)?.kind === 'floor';
+      let best = null;
+      for (let dy = -40; dy <= 40; dy++) for (let dx = -40; dx <= 40; dx++) {
+        const x = Math.floor(P.x) + dx, y = Math.floor(P.y) + dy, d = Math.hypot(dx, dy);
+        if (!floor(x, y) && (floor(x + 1, y) || floor(x, y + 1)) && (!best || d < best.d)) best = { x, y, d };
+      }
+      const at = W.project((best.x + 0.5 - o.x) / 2, 3.0, (best.y + 0.5 - o.y) / 2), side = 24, base = Math.floor(P.x + P.y) - 64;
+      let key = 0;
+      const plane = () => { const a = new Uint8Array(side * side * 4); for (let i = 0; i < a.length; i += 4) { a[i] = a[i + 1] = a[i + 2] = 60; a[i + 3] = key; } return a; };
+      W.frame = (f) => orig({ ...f, light: key ? { emi: plane(), w: side, h: side, x: at[0] - side, y: at[1] + 2 - side, px: 2, key: { base, step: 0.5, origin: o.x + o.y } } : null });
+      const read = () => { const k = cv.width / cv.clientWidth, px = new Uint8Array(4); gl.readPixels(Math.round(at[0] * k), Math.round(cv.height - (at[1] + 2) * k), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return px[0] + px[1] + px[2]; };
+      const step = (k) => { key = k; globalThis.__frame(16.7); return read(); };
+      try { return { bare: step(0), front: step(255), behind: step(1), depth: W.stats.lightDepth }; } finally { W.frame = orig; }
+    });
     // the floor's ways up and down (the owner, 2026-11-01: "Up and down stairs are missing from the dungeons"), as the
     // figures would stand on them in Luminati: the stairwell sunk under the floor, the flight up climbing over it
     const flights = await p.evaluate(async () => {
@@ -1440,11 +1462,16 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.evaluate(() => { const s = globalThis.__sim, w = s.world, P = s.state.player;
       const rooms = w.level.rooms.slice().sort((a, b) => Math.hypot(a.cx - P.x, a.cy - P.y) - Math.hypot(b.cx - P.x, b.cy - P.y));
       for (const rm of rooms) { s.commands.push({ type: 'tap', tx: Math.floor(rm.cx), ty: Math.floor(rm.cy) }); let n = 0; while (!s.battle && n < 1200) { s.tick(); n++; } if (s.battle) return; } });
-    let fight = { lit: 0, rings: 0, carry: 0, battle: false, light: 0 };
-    for (let f = 0; f < 600 && !(fight.lit > 100 && fight.rings >= 2 && fight.light); f++) fight = await p.evaluate((F) => { globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats;
-      return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!globalThis.__sim.battle, light: F.light || st.light, layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
-    check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the hero\'s light taken, no page errors',
-      inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    let fight = { lit: 0, rings: 0, carry: 0, battle: false, light: 0, focus: 0 };
+    for (let f = 0; f < 600 && !(fight.lit > 100 && fight.rings >= 2 && fight.light && fight.focus); f++) fight = await p.evaluate((F) => {
+      const s = globalThis.__sim, foe = s.battle && (s.world.enemies || []).find((e) => e.hp > 0 && !e.dead);
+      if (foe && s.focusId !== foe.id) s.commands.push({ type: 'focus', id: foe.id });   // (a tap on a foe: the party set on it)
+      globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats;
+      return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!s.battle, light: F.light || st.light, focus: Math.max(F.focus, st.focus), layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
+    check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the foe the party is set on marked, the hero\'s light taken, no page errors',
+      inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && fight.focus === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: the effects\' light respects walls: over a wall\'s top, an effect whose owner is behind it is cut to under half of one in front',
+      walled.front - walled.bare > 60 && walled.behind - walled.bare < (walled.front - walled.bare) / 2 && walled.depth === 1, JSON.stringify(walled));
     check('render3d: a dungeon floor\'s ways up and down are Luminati\'s stairs: the well sunk a whole unit under the floor, the flight up climbing over a unit above it',
       flights.floor - flights.well > 0.8 && flights.top - flights.floor > 1, JSON.stringify(flights));
     check('render3d: the effects\' light leaves no trail: a point lit and then left reads as it did before (within the torches\' flicker: under a quarter of the light it had), and the light is drawn while lit',

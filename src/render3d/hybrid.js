@@ -94,6 +94,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const mx = (a + b) / 2, my = (b - a) / 2;
       const ppu = (NATIVE_PER_UNIT * c.S) / c.k;              // CSS px a unit
       const actors = [], rings = [], beasts = [];
+      let mark = null;
       for (const d of draws) {
         if (d.env && !d.atl) {                                  // a farm beast, in the frame Emberlit chose (render/beasts.js)
           const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH;
@@ -106,7 +107,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
         actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0 });   // (cw: as drawn, a boss 1.3×)
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
-        if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
+        if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
+          rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
+          if (d.uid && d.uid === sim.focusId) mark = { x: X, z: Z };   // the foe a tap set the party on (battle.js focus)
+        }
       }
       // the ground a fight churns (battle.js hazards: the Toadking's mud, the Vatwarden's sluice), welling up and sinking away
       const hazards = [];
@@ -117,12 +121,15 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const p = sim.state.player, wx = sim.world.kind === 'dungeon' ? null : weatherNow(sim);
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts,
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark,
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).
         // In Luminati's own render, not as page layers blended over it: those (plus-lighter, a CSS blur) left the top bar's
         // words soft on a phone's Safari.
-        light: c.emi ? { emi: c.emi, w: c.nvw, h: c.nvh, x: (c.rx - c.ox) * (c.S / c.k), y: (c.ry - c.oy) * (c.S / c.k), px: c.S / c.k } : null,
+        // Its alpha holds each effect's owner's depth key (fx.js flush): Luminati dims an effect where a wall, a prop or
+        // a figure nearer the camera stands over it, as Emberlit's own depth plane did (key: a sim x + y, from base by step)
+        light: c.emi ? { emi: c.emi, w: c.nvw, h: c.nvh, x: (c.rx - c.ox) * (c.S / c.k), y: (c.ry - c.oy) * (c.S / c.k), px: c.S / c.k,
+          key: c.key ? { base: c.key.base, step: c.key.step, origin: origin.x + origin.y } : null } : null,
         // the hero's ember-wisp (Emberlit's carry light): a light at the shoulder, strong underground and by night, gone by day
         carry: sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
     },
@@ -132,6 +139,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   api.settings({ dof: readGraphics().dof });
   return {
     box, state,
+    /** (for checks) the level's origin: a sim point x is Luminati's (x − origin.x) / 2 */
+    get origin() { return origin; },
     /** the menu's depth of field, applied at once @param {'soft'|'off'} dof */
     setDof: (dof) => api && api.settings({ dof }),
     get world() { return api; },

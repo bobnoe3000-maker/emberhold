@@ -1232,10 +1232,11 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
     for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
     for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
-    } else sEMI.fill(0);                                           // (another painter: the effects alone, on black, for it to lay over its world as light)
+    } else sEMI.fill(0);
+    const fxKey = X ? { base: Math.floor(ix + iy) - 64, step: 0.5 } : null;    // (another painter tests the effects' depth itself: fx.js flush)                                           // (another painter: the effects alone, on black, for it to lay over its world as light)
     {
     // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
-    fx.target({ EMI: sEMI, DEP: X ? null : sDEP, W: nvw, H: nvh, DPX });
+    fx.target({ EMI: sEMI, DEP: X ? null : sDEP, W: nvw, H: nvh, DPX, KEY: fxKey });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
     for (const b of sim.world.projectiles || []) if (b.kind) boltFx(b, lerp(b, 'x'), lerp(b, 'y'), b.kind, fxProj);
@@ -1252,7 +1253,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
     }
     // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, battle: hb, rings });   // (t: the held look's, the title's dusk)
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings });   // (t: the held look's, the title's dusk)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     if (!X) {
     // upload the window G-buffer

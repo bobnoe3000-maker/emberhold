@@ -1284,6 +1284,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     step,
     get battle() { return battle; },
     focus(id) { focusId = id; },
+    /** the foe the party is set on (0: none), for presentation to mark */
+    get focusId() { return focusId; },
     /** the ground hazard's pull on the party at (x, y): HAZARD.slow in one, else 1 (core.js: the hero you steer) */
     slowAt(x, y) { return battle && hazardAt(battle, x, y) ? HAZARD.slow : 1; },
     reset() { const was = !!battle; if (battle && battle.tower) towerOut(); battle = null; focusId = 0; pending = []; calmT = 0; if (was) downedOut(true); placeCompanions(); },   // travel mid-fight = walking out

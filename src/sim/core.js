@@ -715,5 +715,5 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; } };
 }

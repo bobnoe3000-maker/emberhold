@@ -558,6 +558,32 @@ reload after that picks up the fix.
   - The far corners of those two caverns are still outside it. Rebuilding the level round the hero as they walk is
     for step 3, dungeons dressed.
 
+**The Vale first (the owner, 2026-11-01):** *"continue - run through all of these, validate - run art critics. The
+only modification to this plan - focus only on the Hollow Vale Map - we will continue to iterate until we get
+everything right - then expand to other areas."* So steps 2 to 7 are done for the Vale (Thornwick, the Hollow Vale,
+and its dungeons: the Old Barrows, Wickham Keep, the Sunken Chapel, the Ninth Milestone). The other regions wait,
+drawn as the converter has them now.
+
+**Step 2, fights: done for the Vale** (2026-11-01).
+- **Telegraphs.** Emberlit has none to port. A boss's ground (the mud, the sluice) was already drawn in step 2's
+  first cut, and the wind-ups are a fraction of a second.
+- **The foe the party is set on is marked.** Tapping a foe sets the party on it (`battle.js` focus), and nothing had
+  shown it. Now four turning arcs, in pale gold, sit just outside its ring.
+  - New in Luminati only.
+  - The sim exposes `focusId`, read-only (`core.js`).
+- **The effects respect walls.**
+  - fx.js writes each lit pixel's owner depth key (a sim x + y) into the light plane's alpha, when another painter
+    draws (`fx.target({ KEY })`).
+  - Luminati's light pass rebuilds each pixel's world point from its own depth buffer. Where a surface stands above
+    the floor and nearer the camera than the owner, the light is cut to Emberlit's 0.22.
+  - The floor never hides it, so sparks still fall onto the ground in front.
+  - Luminati's figures are billboards that write no depth, so a figure in front doesn't dim another's light.
+    Emberlit dimmed it.
+  - Measured over a wall's top (sum of RGB): bare 62, light whose owner stands in front 755, behind it 215.
+- **The create → Fallen → temple → wipe → inn → reload flow** now runs on both renderers in the browser suite (25
+  checks). On Luminati two of its fixed waits were too short for software GL (a few frames a second); they wait for
+  the outcome now.
+
 After step 1, Emberlit is still the game's eye for the overlay and taps. Moving the overlay itself (the minimap, names,
 plaques, bars) onto Luminati's camera is part of step 7. It's needed before Emberlit's code can ever be retired, and
 that isn't planned: Emberlit stays in reserve.

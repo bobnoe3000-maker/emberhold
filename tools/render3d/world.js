@@ -147,17 +147,33 @@ function beastSprite(n, sheet) {
 // CSS blur: on a phone's Safari the top bar's words above them came out soft.)
 const LIGHT_VS = `uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;
 void main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }`;
-const LIGHT_FS = `uniform sampler2D tEmi; uniform vec2 uTexel; varying vec2 vUv;
+// Each lit texel's alpha holds its owner's depth key (fx.js flush; 0: none): where the scene's own surface at that pixel
+// stands above the floor and nearer the camera than the owner (a wall, a pillar, a figure in front), the light is cut
+// to Emberlit's 0.22. The floor never hides it: sparks fall onto the ground in front. A key is a sim x + y, the
+// iso view's depth; the scene's is rebuilt from its depth buffer.
+const LIGHT_FS = `uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;
 void main() {
-  vec3 c = texture2D(tEmi, vUv).rgb * 2.4, g = vec3(0.0);
+  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;
   for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;
-    g += texture2D(tEmi, vUv + d * 2.0).rgb + texture2D(tEmi, vUv + d * 4.5).rgb * 0.6; }
-  gl_FragColor = vec4(c + g * 0.12, 1.0);
+    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }
+  float k = 1.0;
+  if (uKey.w > 0.5 && own > 0.002) {
+    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;
+    if (z < 1.0) {
+      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;
+      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;
+      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;
+    }
+  }
+  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);
 }`;
-const light = { scene: null, cam: null, mat: null, tex: null, on: false };
+const light = { scene: null, cam: null, mat: null, tex: null, on: false, keyed: false };
 function lightPass() {
   if (!light.on || !game) return;
-  const r = game.engine.renderer, ac = r.autoClear;
+  const r = game.engine.renderer, ac = r.autoClear, U = light.mat.uniforms, cam = game.engine.camera;
+  U.tDepth.value = game.postfx?.depthTexture || null; U.uKey.value.w = light.keyed && U.tDepth.value ? 1 : 0;
+  r.getDrawingBufferSize(U.uBuf.value);
+  U.uInvVP.value.multiplyMatrices(cam.matrixWorld, cam.projectionMatrixInverse);
   r.autoClear = false; r.setRenderTarget(null); r.render(light.scene, light.cam); r.autoClear = ac;
 }
 /** this frame's light: upload the plane only when anything is lit (a scan of its words), else draw nothing */
@@ -169,7 +185,8 @@ function setLight(L) {
   if (!light.scene) {
     light.scene = new THREE.Scene(); light.cam = new THREE.Camera();
     light.mat = new THREE.ShaderMaterial({ vertexShader: LIGHT_VS, fragmentShader: LIGHT_FS, transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending,
-      uniforms: { tEmi: { value: null }, uTexel: { value: new THREE.Vector2() }, uRect: { value: new THREE.Vector4() }, uView: { value: new THREE.Vector2() } } });
+      uniforms: { tEmi: { value: null }, uTexel: { value: new THREE.Vector2() }, uRect: { value: new THREE.Vector4() }, uView: { value: new THREE.Vector2() },
+        tDepth: { value: null }, uBuf: { value: new THREE.Vector2(1, 1) }, uInvVP: { value: new THREE.Matrix4() }, uKey: { value: new THREE.Vector4() }, uFloor: { value: 1.2 } } });   // (the floor of our levels is 1: convert.js GROUND_Y)
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0], 3)); geo.setIndex([0, 2, 1, 1, 2, 3]);
     const mesh = new THREE.Mesh(geo, light.mat); mesh.frustumCulled = false; light.scene.add(mesh);
     game.engine.events.on('afterRender', lightPass);
@@ -183,6 +200,8 @@ function setLight(L) {
   light.tex.needsUpdate = true;
   light.mat.uniforms.uRect.value.set(L.x, L.y, L.w * L.px, L.h * L.px);
   light.mat.uniforms.uView.value.set(innerWidth, innerHeight);
+  light.keyed = !!L.key;
+  if (L.key) light.mat.uniforms.uKey.value.set(L.key.base, L.key.step, L.key.origin, 1);
 }
 
 // ── the camera: Emberlit's ──────────────────────────────────────────────────────────────────────────────────────────
@@ -233,11 +252,19 @@ function hidePlayer() {
 // ground so the terrain never cuts it; the hazards a dark pool and its rim. Made once and reused: no material is made
 // in a fight (a new program mid-fight is a hitch).
 const RING_GEO = new THREE.RingGeometry(0.46, 0.6, 40), DISC_GEO = new THREE.CircleGeometry(1, 40), RIM_GEO = new THREE.RingGeometry(0.8, 1, 40);
+// the foe the party is set on (a tap on it: battle.js focus): four arcs round its ring, turning, a hand outside it
+const FOCUS_GEO = (() => { const g = []; for (let k = 0; k < 4; k++) g.push(new THREE.RingGeometry(0.7, 0.8, 10, 1, k * Math.PI / 2 + 0.25, Math.PI / 2 - 0.5)); return mergeGeo(g); })();
+function mergeGeo(list) {
+  const pos = [], idx = []; let base = 0;
+  for (const g of list) { const p = g.getAttribute('position'), ix = g.getIndex(); for (let i = 0; i < p.count; i++) pos.push(p.getX(i), p.getY(i), p.getZ(i)); for (let i = 0; i < ix.count; i++) idx.push(ix.getX(i) + base); base += p.count; g.dispose(); }
+  const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); m.setIndex(idx); return m;
+}
 const groundMat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
-const groundPools = { ring: [], disc: [], rim: [] };
+const groundPools = { ring: [], disc: [], rim: [], focus: [] };
+const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO };
 function groundMesh(kind, n) {
   const p = groundPools[kind];
-  while (p.length <= n) { const m = new THREE.Mesh(kind === 'ring' ? RING_GEO : kind === 'disc' ? DISC_GEO : RIM_GEO, groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
+  while (p.length <= n) { const m = new THREE.Mesh(GEO[kind], groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
   return p[n];
 }
 function placeGround(m, x, z, r, col, a) {
@@ -245,7 +272,7 @@ function placeGround(m, x, z, r, col, a) {
   m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
-let carryLight = null, carryLevel = -1;
+let carryLight = null, carryLevel = -1, focusSpin = 0;
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
@@ -278,7 +305,7 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], carry?: number }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, carry?: number }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -303,8 +330,9 @@ const api = {
     }
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
     // the fight's ground
-    const nk = { ring: 0, disc: 0, rim: 0 };
+    const nk = { ring: 0, disc: 0, rim: 0, focus: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
+    if (f.mark) { const m = groundMesh('focus', nk.focus++); placeGround(m, f.mark.x, f.mark.z, 1, [255, 226, 150], 0.7 + 0.2 * Math.sin(focusSpin * 4)); m.rotation.z = focusSpin; focusSpin += (f.dt || 0) * 0.9; }
     for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
@@ -334,7 +362,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
+    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };
