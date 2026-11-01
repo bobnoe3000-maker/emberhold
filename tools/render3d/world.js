@@ -123,13 +123,21 @@ const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
 });
 // and the picture graded as Emberlit's is: Luminati's game grades it a saturated 1.3 under a light vignette; Emberlit's
 // Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
+// By day greyer and dimmer (Emberlit's day is a grey ambient: daylight.js LOOKS.day), by night as night is
 const VALE_GRADE = { saturation: 0.92, exposure: 0.9, contrast: 1.06, vignette: 0.78 };
+let graded = false;
+function gradeByHour() {
+  const G = game?.postfx?.settings?.grade, n = game?.lighting?.state?.night ?? 1;
+  if (!graded || !G) return;
+  G.saturation = 0.74 + 0.18 * n; G.exposure = 0.84 + 0.06 * n;
+}
 let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
   const L = game?.lighting; if (!L) return;
   const env = lv.environment || {}, G = game.postfx?.settings?.grade;
   if (G) { if (!gradeOwn) gradeOwn = { ...G }; Object.assign(G, gradeOwn, region === 'vale' ? VALE_GRADE : {}); }
+  graded = region === 'vale' && !env.interior;
   if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
   const want = region === 'vale' ? 'dusky' : 'default';
   L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
@@ -289,6 +297,7 @@ async function boot(level) {
   game.engine.stop();                                         // (the game steps it: frame())
   game.engine.events.on('lateUpdate', () => { if (game) placeCamera(); });
   // underground, the ambient is the game's (convert.js ambientOf), laid over the palette's after it updates
+  game.engine.events.on('update', gradeByHour);
   game.engine.events.on('update', () => {
     const a = frameAmbient, L = game?.lighting; if (!a || !L?.hemi) return;
     L.hemi.color.setRGB(a.sky[0], a.sky[1], a.sky[2]); L.hemi.groundColor.setRGB(a.ground[0], a.ground[1], a.ground[2]); L.hemi.intensity = a.i;

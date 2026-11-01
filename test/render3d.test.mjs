@@ -115,6 +115,6 @@ test('biomes: the Reach is drawn in Luminati\'s desert, the Heights in its snow 
   assert.ok([...reach.trees].every((k) => ['juniper', 'deadwood'].includes(k)), [...reach.trees].join());
   assert.equal(heights.env.season, 'winter'); assert.ok(heights.t.n > heights.t.q && heights.t.I > 0 && heights.t.N > 0 && !heights.t['~'], JSON.stringify(heights.t));
   assert.ok([...heights.trees].every((k) => ['snowpine', 'bare'].includes(k)), [...heights.trees].join());
-  assert.ok(!vale.env.climate && !vale.env.season && vale.t.g > 0 && !vale.t.n && !vale.t.a);
+  assert.ok(!vale.env.climate && !vale.env.season && vale.t.G > vale.t.g && vale.t.g > 0 && !vale.t.n && !vale.t.a, JSON.stringify(vale.t));   // (the Vale mostly dark grass: Emberlit's is olive)
   for (const x of [reach, heights, vale]) for (const ch of Object.keys(x.t)) assert.ok(x.level.legend[ch], `'${ch}' in the legend`);
 });

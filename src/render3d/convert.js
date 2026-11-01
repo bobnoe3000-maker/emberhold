@@ -89,13 +89,15 @@ const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead
 /** @type {Record<string, { ground: Record<string, string>, water?: string, turf: (h: number) => string, trees: Record<string, string>, stone: string, mountain: string, env: Record<string, any> }>} */
 export const BIOMES = {
   grassland: { ground: {}, turf: (h) => (h < 12 ? 'G' : h < 16 ? 'f' : 'g'), trees: {}, stone: '', mountain: 'x', env: {} },
+  // the Hollow Vale's: mostly Luminati's dark grass (Emberlit's Vale is olive; its bright grass is a summer's), a little bright
+  vale: { ground: {}, turf: (h) => (h < 58 ? 'G' : h < 62 ? 'f' : 'g'), trees: {}, stone: '', mountain: 'x', env: {} },
   desert: { ground: { '.': 'e', c: 'Y', s: 'r', F: 'e', G: 'y', d: 'q', m: 'q' }, turf: (h) => (h < 52 ? 'a' : h < 76 ? 'y' : h < 90 ? 'e' : 'r'),
     trees: { oak: 'juniper', autumn: 'juniper', birch: 'deadwood', pine: 'juniper', deadwood: 'deadwood' }, stone: 'redrock', mountain: 'X', env: { climate: 'arid' } },
   snow: { ground: { '.': 'h', c: 'R', F: 'n', G: 'n', d: 'q', s: 'n' }, water: 'I', turf: (h) => (h < 82 ? 'n' : h < 93 ? 'h' : 'q'),   // (no green: Luminati's turf is a summer's)
     trees: { oak: 'bare', autumn: 'bare', birch: 'bare', pine: 'snowpine', deadwood: 'bare' }, stone: 'snow', mountain: 'N', env: { season: 'winter' } },
 };
 /** the biome a region draws in */
-export const BIOME_OF = { vale: 'grassland', fens: 'grassland', reach: 'desert', heights: 'snow' };
+export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'desert', heights: 'snow' };
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
 const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
@@ -196,7 +198,7 @@ function outdoor(w, region) {
   for (const s of w.structs) {
     const id = s.id, p = foot(s);
     if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
-      if (/^ug_flowers/.test(id) && B === BIOMES.grassland && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
+      if (/^ug_flowers/.test(id) && (B === BIOMES.grassland || B === BIOMES.vale) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
       continue;
     }
     const house = HOUSES.find(([re]) => re.test(id));
