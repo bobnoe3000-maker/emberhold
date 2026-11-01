@@ -118,8 +118,8 @@ const dim = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); r
 const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
   const night = f.night ?? 0;
   // (darker, not whiter: greying the horizon also greyed the fog, and the Vale went milky)
-  return { ...f, top: dim(grey(f.top, 0.3), 0.8), horizon: dim(grey(f.horizon, 0.3), 0.72), bottom: dim(grey(f.bottom, 0.3), 0.75), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
-    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night) };
+  return { ...f, top: dim(grey(f.top, 0.3), 0.8), horizon: dim(grey(f.horizon, 0.3), 0.6), bottom: dim(grey(f.bottom, 0.3), 0.75), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
+    sunI: f.sunI * 0.72, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * 0.75 };   // (the far ground under a veil of the horizon's colour: thinner)
 });
 // and the picture graded as Emberlit's is: Luminati's game grades it a saturated 1.3 under a light vignette; Emberlit's
 // Vale is olive grass and grey stone under a heavy one (daylight.js vig 0.85)
@@ -377,7 +377,7 @@ const api = {
     cam.x = f.focus[0]; cam.y = f.focus[1]; cam.z = f.focus[2]; cam.ppu = f.ppu;
     if (Number.isFinite(f.hour) && Math.abs((game.lighting?.timeOfDay ?? -1) - f.hour) > 0.004) game.setTime(f.hour);
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);
-    if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 2.4 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air thicker; underground, the lamps the game's)
+    if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 0.6 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air a little thicker, Emberlit's overlay drifting its banks over it; underground, the lamps the game's)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
     // the people: each atlas's pool filled in the order drawn; the rest hidden
     const used = new Map(), camera = game.engine.camera;

@@ -5115,14 +5115,15 @@ var ca = (e, t) => {
 	return {
 		...e,
 		top: la(ca(e.top, .3), .8),
-		horizon: la(ca(e.horizon, .3), .72),
+		horizon: la(ca(e.horizon, .3), .6),
 		bottom: la(ca(e.bottom, .3), .75),
 		sun: ca(e.sun, .3),
 		hemiSky: ca(e.hemiSky, .45),
 		hemiGround: ca(e.hemiGround, .3),
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.84 - .24 * t),
-		exp: e.exp * (.95 - .07 * t)
+		exp: e.exp * (.95 - .07 * t),
+		fog: e.fog * .75
 	};
 }), da = {
 	saturation: .92,
@@ -5394,7 +5395,7 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = {
 	},
 	frame(e) {
 		if (!X || !X.engine) return;
-		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), X.lighting?.settings && (X.lighting.settings.fogMul = 1 + 2.4 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (Aa(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
+		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (Aa(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
 		let t = /* @__PURE__ */ new Map(), n = X.engine.camera;
 		for (let r of e.actors) {
 			let e = ta(r.name);
