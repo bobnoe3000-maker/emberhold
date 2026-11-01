@@ -24,6 +24,7 @@ import { loadContentTables } from '../src/engine/i18n/ContentText.js';
 import { startFonts } from '../src/engine/ui/FontLoader.js';
 import { artScale } from '../src/engine/ui/UiScale.js';
 import { Sprite3D } from '../src/engine/sprite/Sprite3D.js';
+import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import './ground.js';
 
@@ -105,6 +106,26 @@ async function placeEnv(list, region) {
     game.engine.scene.add(s); envSprites.push(s);
     s.update(0, game.engine.camera);
   }
+}
+
+// ── the Vale's light outdoors (port step 5; the owner's standing direction: keep the game's dusky, gloomy tones) ─────
+// Luminati's 24 hours graded toward Emberlit's looks (render/daylight.js LOOKS): its colours greyer, the sun and the
+// fill softer, the nights darker, the air a little thicker. Emberlit's day is a grey ambient under a mild sun, and its
+// night near 45 % of its day; Luminati's were a bright blue noon and a bright blue night. The other regions keep
+// Luminati's palette (and the Reach's and the Heights' their climates') until the Vale is right (the owner, 2026-11-01).
+const grey = (hex, k) => { const c = new THREE.Color(hex), l = c.r * 0.299 + c.g * 0.587 + c.b * 0.114; c.r += (l - c.r) * k; c.g += (l - c.g) * k; c.b += (l - c.b) * k; return '#' + c.getHexString(); };
+const DUSKY = DEFAULT_KEYFRAMES.map((f) => {
+  const night = f.night ?? 0;
+  return { ...f, top: grey(f.top, 0.35), horizon: grey(f.horizon, 0.4), bottom: grey(f.bottom, 0.35), sun: grey(f.sun, 0.3), hemiSky: grey(f.hemiSky, 0.45), hemiGround: grey(f.hemiGround, 0.3),
+    sunI: f.sunI * 0.7, hemiI: f.hemiI * (0.84 - 0.24 * night), exp: f.exp * (0.95 - 0.07 * night), fog: f.fog * 1.2 };
+});
+let skyShown = 'default';
+function skyFor(lv, region) {
+  const L = game?.lighting; if (!L) return;
+  const env = lv.environment || {};
+  if (env.interior || env.climate || env.season) return;                 // (underground: the ambient's ours; a climate's sky its own)
+  const want = region === 'vale' ? 'dusky' : 'default';
+  L.setKeyframes(want === 'dusky' ? DUSKY : DEFAULT_KEYFRAMES); skyShown = want;   // (each outdoor level: a climate before may have set its own)
 }
 
 // a prop of ours built in the page (hybrid.js: a dungeon's furniture, gsprite.js), from its canvas: stood facing the
@@ -315,6 +336,7 @@ const api = {
       if (id !== levelId) return;
       hidePlayer();
       api.settings({ dof });
+      skyFor(lv, region);
       await placeEnv(sprites, region);
     })();
     await building;
@@ -330,7 +352,7 @@ const api = {
   },
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
-   * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, hero: number[] | null,
+   * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number } | null, carry?: number }} f
    */
@@ -339,6 +361,7 @@ const api = {
     cam.x = f.focus[0]; cam.y = f.focus[1]; cam.z = f.focus[2]; cam.ppu = f.ppu;
     if (Number.isFinite(f.hour) && Math.abs((game.lighting?.timeOfDay ?? -1) - f.hour) > 0.004) game.setTime(f.hour);
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);
+    if (game.lighting?.settings) game.lighting.settings.fogMul = 1 + 2.4 * (f.fog || 0);   // (the sim's fog: the air thicker)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
     // the people: each atlas's pool filled in the order drawn; the rest hidden
     const used = new Map(), camera = game.engine.camera;
@@ -392,7 +415,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

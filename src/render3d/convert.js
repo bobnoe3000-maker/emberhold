@@ -306,7 +306,7 @@ const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KI
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
-  brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.7, smoke: false, light: true, seed: h % 997 } }),
+  brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.45, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs)
   crates: (x, z, h) => ({ type: 'crateStack', x, z, rotation: (h % 7) * 0.2, opts: { count: 1 + (h % 3), size: 0.7, seed: h % 997 } }),
   barrels: (x, z, h) => ({ type: 'barrel', x, z, rotation: (h % 9) * 0.3, opts: { height: 0.9, lying: h % 3 === 0 } }),
   sacks: (x, z, h) => ({ type: 'sacks', x, z, rotation: (h % 5) * 0.4, opts: { count: 2 + (h % 3), seed: h % 997 } }),
@@ -354,6 +354,15 @@ function dungeon(w) {
       if (pools.has(k)) wet++;
     }
     if (floor) { tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < 18 ? look.floor[1] : look.floor[0]; heights[j][i] = '2'; }
+  }
+  // the rock beyond the walls is nothing, as Emberlit draws it: only the ring of wall round the floor stands, the rest
+  // void (black), not a sea of lit wall-tops
+  const open = (i, j) => i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2';
+  for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
+    if (heights[j][i] === '2') continue;
+    let near = false;
+    for (let dj = -1; dj <= 1 && !near; dj++) for (let di = -1; di <= 1 && !near; di++) near = open(i + di, j + dj);
+    if (!near) { tiles[j][i] = ' '; heights[j][i] = '0'; }
   }
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
   const objects = [], count = {}, sprites = [];
