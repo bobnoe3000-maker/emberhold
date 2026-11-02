@@ -39,6 +39,8 @@ export const LEGEND = {
   '.': { top: 'dirt_path', side: 'dirt_side', walkable: true }, d: { top: 'dirt', side: 'dirt_side', walkable: true },
   c: { top: 'cobblestone', side: 'stone_wall', walkable: true }, k: { top: 'stone_tiles', side: 'stone_wall', walkable: true },
   b: { top: 'wood_deck', side: 'wood_planks_dark', walkable: true },
+  // the earth bank a timber palisade stands on (Thornwick's: PALISADE below), turfed over, its earth showing at the sides
+  E: { top: 'grass_dark', side: 'dirt_side', lip: 'grass_side', walkable: true },
   '~': { top: 'riverbed', side: 'cliff', water: true, walkable: false }, o: { top: 'riverbed', side: 'cliff', water: true, walkable: false, flow: 0 },
   T: { top: 'grass_dark', side: 'cliff', lip: 'grass_side', walkable: false }, x: { top: 'moss_stone', side: 'cliff', walkable: false },
   ' ': { void: true },
@@ -58,6 +60,12 @@ export const LEGEND = {
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
 };
+// a town's walls by its region (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for
+// another town"): the Vale's are Thornwick's timber palisade on an earth bank, with its watchtowers and gatehouse (world
+// doc §3.1), as Emberlit draws them: our own baked pieces (town-vale's curtain, tower, gatehouse) stood on a bank one
+// step high. Luminati has no palisade (its wood runs as log-cabin courses, and its stakes are a battlefield's
+// barricade). Elsewhere the walls are raised in stone, as before.
+const PALISADE = new Set(['vale']);
 // a region's buildings in Luminati's walls and roofs, by our piece: the Vale's timber, plaster and thatch (stone for the
 // shrine and the forge), the Fens' dark planks and reed, the Reach's black slag-brick and slate, the Heights' stone
 /** @type {[RegExp, Record<string, any>][]} */
@@ -174,11 +182,11 @@ function outdoor(w, region) {
       if (cur < h) { tiles[j][i] = ch; heights[j][i] = h.toString(36); }
     }
   };
-  const gates = [];
+  const gates = [], timber = PALISADE.has(region);
   for (const s of w.structs) {
-    if (/_curtainy?_\d/.test(s.id)) raise(s, 6, 'k');
-    else if (/_tower_\d/.test(s.id)) raise(s, 8, 'k');
-    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, 8, 'k'); gates.push(s); }
+    if (/_curtainy?_\d/.test(s.id)) raise(s, timber ? 3 : 6, timber ? 'E' : 'k');
+    else if (/_tower_\d/.test(s.id)) raise(s, timber ? 3 : 8, timber ? 'E' : 'k');
+    else if (/_gatehousey?_\d/.test(s.id)) { raise(s, timber ? 3 : 8, timber ? 'E' : 'k'); gates.push(s); }
     else if (/^mountain_/.test(s.id)) raise(s, /massif/.test(s.id) ? 16 : 11, B.mountain, true);
   }
   // the roads through a gate stay open (the sim walks them)
@@ -197,6 +205,7 @@ function outdoor(w, region) {
   const look = REGION_LOOK[region] || {};
   for (const s of w.structs) {
     const id = s.id, p = foot(s);
+    if (timber && p && inside(p.cx, p.cz, -4) && /_curtainy?_\d|_tower_\d|_gatehousey?_\d/.test(id)) { sprites.push({ id, x: X(s.x), z: Z(s.y) }); continue; }   // (the palisade: ours, on its bank)
     if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
       if (/^ug_flowers/.test(id) && (B === BIOMES.grassland || B === BIOMES.vale) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
       continue;

@@ -729,6 +729,20 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 
 ![The townsfolk at dusk and night: Emberlit, Luminati before, after](img/lumina/vale-townsfolk.jpg)
 
+**The owner, 2026-11-02:** *"Can we bring back the wooden walls to thornwick? Save stone walls for another town."*
+- Thornwick's wall is a timber palisade on an earth bank, with watchtowers (world doc §3.1). Luminati had raised it as
+  stone, as it raises every town's.
+- Luminati has no palisade: its wood runs as log-cabin courses (tried first: a log wall read as a stockade of stacked
+  logs), and its stakes are a battlefield's barricade.
+- So the Vale's wall is our own baked art (`town-vale`'s curtain, tower and gatehouse, as Emberlit draws them), stood on
+  a bank one step high. The bank is turfed (`E`: dark grass over earth sides); bare dirt read as a pale slab round each
+  tower's foot.
+- The other lands' towns keep their walls raised in stone (`convert.js` `PALISADE`).
+- `test/render3d.test.mjs`: Thornwick's wall is a bank with no stone, and its palisade, towers and gatehouse stand;
+  Saltmere's walls are not ours stood up.
+
+![Thornwick's wall: Emberlit, Luminati before (stone), after (the palisade)](img/lumina/vale-palisade.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).

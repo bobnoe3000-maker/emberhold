@@ -94,12 +94,21 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
   assert.ok(seen.get('binding').dressed && seen.get('binding').rock, 'the Chapel\'s second floor: the cut and the crypt');
 });
 
-test('convert: a town keeps its services as named houses, its walls raised and its gate open', () => {
+test('convert: a town keeps its services as named houses, its walls raised (the Vale\'s a palisade on a bank) and its gate open', () => {
   const w = createSim(SEED, undefined, { scene: 'town', region: 'vale' }).world;
   const { level } = convertWorld(w);
   const named = level.objects.filter((o) => o.type === 'house' && o.name).map((o) => o.name).sort();
   assert.deepEqual(named, w.services.map((s) => s.name).sort());
-  assert.ok(level.heights.some((r) => /[6-8]/.test(r)), 'the curtain wall is raised');
+  assert.ok(level.heights.some((r) => /3/.test(r)), 'the curtain wall\'s bank is raised');
+  // (the owner, 2026-11-02: "bring back the wooden walls to thornwick? Save stone walls for another town") Thornwick's
+  // curtain, towers and gate are its timber palisade on an earth bank (world doc §3.1): our own baked pieces stood on a
+  // bank a step high, not raised stone; another land's town keeps its stone
+  const raised = (lv) => { const t = new Map(); lv.heights.forEach((r, j) => [...r].forEach((h, i) => { const n = parseInt(h, 36); if (n >= 3 && lv.tiles[j][i] !== 'T') t.set(lv.tiles[j][i] + n, (t.get(lv.tiles[j][i] + n) || 0) + 1); })); return t; };
+  const v = convertWorld(w, { region: 'vale' }), vale = raised(v.level), pieces = v.sprites.filter((q) => /^vale_(curtainy?|tower|gatehousey?)_\d/.test(q.id));
+  assert.ok(vale.get('E3') > 50 && ![...vale.keys()].some((k) => /^k/.test(k)), `Thornwick's bank of earth, no stone: ${JSON.stringify([...vale])}`);
+  assert.ok(pieces.some((q) => /curtain/.test(q.id)) && pieces.some((q) => /tower/.test(q.id)) && pieces.some((q) => /gatehouse/.test(q.id)), `its palisade, towers and gatehouse stood: ${pieces.length}`);
+  const fens = createSim(SEED, undefined, { scene: 'town', region: 'fens' }).world, f = convertWorld(fens, { region: 'fens' });
+  assert.ok(!f.sprites.some((q) => /_(curtainy?|tower|gatehousey?)_\d/.test(q.id)), 'another land\'s walls are not ours stood up');
 });
 
 test('hour: the sim\'s four parts of the day land on Luminati\'s dawn, day, dusk and night', () => {
