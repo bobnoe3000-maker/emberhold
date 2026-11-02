@@ -53,6 +53,24 @@ async function launch(type, name) {
     console.log(`SKIP ${name}: not installed here (CI runs it)`); return null;
   }
 }
+// The creation screens, a step at a time, each tap checked: an option is tapped until it's chosen, Next (or Begin) until
+// the step dots move on or the sheet closes. (CI's "creation screens' taps" flake, 2026-10-10; and run 270, 2026-11-01,
+// where the cause was the game's loop never starting under ?dev, main.js: a lost tap and a stopped sim look alike from
+// here, so the flow now fails at the step that didn't move.)
+const dots = (p) => p.evaluate(() => (document.querySelector('#createWrap.on') ? document.querySelectorAll('#create .dots i.on').length : 99));
+async function createStep(p, { pick, name, begin = false } = {}) {
+  if (pick) for (let k = 0; k < 4; k++) {
+    await p.locator('#create .opt', { hasText: pick }).first().tap();
+    if (await p.locator('#create .opt.on', { hasText: pick }).count()) break;
+    await p.waitForTimeout(250);
+  }
+  if (name !== undefined) await p.fill('#create input', name);
+  const at = await dots(p);
+  for (let k = 0; k < 4 && (await dots(p)) === at; k++) {
+    await p.locator('#create .nav .pri', begin ? { hasText: 'Begin' } : {}).tap();
+    await p.waitForFunction((n) => !document.querySelector('#createWrap.on') || document.querySelectorAll('#create .dots i.on').length !== n, at, { timeout: 5000 * SLOW }).catch(() => null);
+  }
+}
 const results = [];
 // a game page is up: the sim exists and, unless it's a preview, the boot (splash → loading) has
 // been tapped through to the title
@@ -128,11 +146,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     // create, through the screens
     await p.locator('#title button.pri', { hasText: 'Begin' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     await p.tap('#cine .skip'); await p.waitForSelector('#createWrap.on'); await p.waitForTimeout(300);   // the intro (section 4 plays it through)
-    await p.locator('#create .opt', { hasText: 'Fighter' }).tap(); await p.locator('#create .nav .pri').tap();
-    await p.locator('#create .opt', { hasText: 'Barbarian' }).tap(); await p.locator('#create .nav .pri').tap();
-    await p.locator('#create .opt', { hasText: 'Redhand deserter' }).tap(); await p.locator('#create .nav .pri').tap();
-    await p.fill('#create input', 'Brann<script>'); await p.locator('#create .nav .pri').tap();
-    await p.locator('#create .nav .pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(600);
+    await createStep(p, { pick: 'Fighter' }); await createStep(p, { pick: 'Barbarian' }); await createStep(p, { pick: 'Redhand deserter' });
+    await createStep(p, { name: 'Brann<script>' }); await createStep(p, { begin: true }); await p.waitForTimeout(600);
     // (waited for: on Luminati the sim holds still while the town's level builds, slowly in software GL)
     await p.waitForFunction(() => globalThis.__sim.state.created, null, { timeout: 30000 * SLOW, polling: 100 }).catch(() => null);
     const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created }; });
@@ -252,11 +267,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await p.waitForSelector('#createWrap.on', { timeout: 10000 * SLOW });
     check('intro: six cards in order, the Fall\'s music unbroken through cards 3–5', JSON.stringify(seen.slice(0, 6)) === JSON.stringify([['The Kindling', 'kindling'], ['The Solmere Empire', 'empire'], ['The Fall', 'fall'], ['The Long Dim', 'fall'], ['Year 301 of the Dim', 'fall'], ['Thornwick', 'thornwick']]), JSON.stringify(seen));
     check('intro: it closes on "Looks like it is up to you." and hands over to creation', seen[6].trim() === 'Looks like it is up to you.' && (await C(() => globalThis.__ui.cinema.playing)) === false);
-    await p.locator('#create .opt', { hasText: 'Rogue' }).first().tap(); await p.locator('#create .nav .pri').tap();
-    await p.locator('#create .nav .pri').tap();                                                                       // the look
-    await p.locator('#create .opt', { hasText: 'Thornwick' }).first().tap(); await p.locator('#create .nav .pri').tap();
-    await p.fill('#create input', 'Wick'); await p.locator('#create .nav .pri').tap();
-    await p.locator('#create .nav .pri', { hasText: 'Begin' }).tap(); await p.waitForTimeout(3000);
+    await createStep(p, { pick: 'Rogue' }); await createStep(p);                                                      // (the look as offered)
+    await createStep(p, { pick: 'Thornwick' }); await createStep(p, { name: 'Wick' }); await createStep(p, { begin: true }); await p.waitForTimeout(3000);
     check('intro: the music fades out into play', (await C(() => globalThis.__sim.state.created)) && (await C(() => globalThis.__ui.cinema.music)) === null);
     await p.tap('#menuBtn'); await p.locator('#title button', { hasText: 'The Chronicle' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     const replay = await C(() => globalThis.__ui.cinema.card);

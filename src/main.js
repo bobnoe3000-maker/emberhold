@@ -228,9 +228,10 @@ function frame(now) {
 // globalThis.__frame(ms) at exact intervals, so motion traces don't depend on the machine's speed
 const MANUAL = DEV && location.search.includes('manual');
 if (MANUAL) { let mt = performance.now(); last = mt; globalThis.__frame = (ms = 1000 / 60) => { mt += ms; frame(mt); }; }
-// dev: hold another hour without a reload (tools/capture/rig.mjs: every hour of a scene from one page) @param {string|null} v
-if (DEV) globalThis.__tod = (v) => { TOD = v ?? null; };
 else requestAnimationFrame(frame);
+// dev: hold another hour without a reload (tools/capture/rig.mjs: every hour of a scene from one page). (Kept clear of the
+// if/else above: put between them it took the else, and with ?dev and no manual clock the game loop never started.)
+if (DEV) globalThis.__tod = (/** @type {string|null} */ v) => { TOD = v ?? null; };
 
 // pause the clock when backgrounded (offline math covers gaps later)
 document.addEventListener('visibilitychange', () => {
