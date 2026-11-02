@@ -662,6 +662,24 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 ![Thornwick by brightness](img/lumina/vale-brightness-town.jpg)
 ![The Hollow Vale by brightness](img/lumina/vale-brightness-overland.jpg)
 
+- The owner asked to compare Luminati at means of 75, 55 and 45. Each was fitted per scene and hour (a log-log secant
+  over captures, three passes), and each landed within 1.5 of its target:
+
+  | | 75 | 55 | 45 |
+  |---|---|---|---|
+  | Thornwick, day | ×1.09 | ×0.67 | ×0.36 |
+  | Thornwick, dusk | ×3.85 | ×2.48 | ×1.87 |
+  | Thornwick, night | ×2.29 | ×1.53 | ×1.18 |
+  | The Vale, day | ×0.96 | ×0.57 | ×0.33 |
+  | The Vale, dusk | ×4.14 | ×2.77 | ×2.22 |
+  | The Vale, night | ×8.26 | ×5.20 | ×3.95 |
+
+  The Vale's night needs a far larger multiply than the town's, which has its windows and lamps. Past about ×3 the
+  overland's night turns a lit blue-green, not a darker one.
+
+![Thornwick at means 75, 55, 45](img/lumina/vale-target-town.jpg)
+![The Hollow Vale at means 75, 55, 45](img/lumina/vale-target-overland.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).
