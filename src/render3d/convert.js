@@ -332,7 +332,10 @@ const AMB_BASE = [0.379, 0.324, 0.449];
 export function ambientOf(kit) {
   // (the tint squared: at its own strength every floor read one navy; the dig wants its warmth, the gallery its cold)
   const t = (KIT_TINT[kit] || [1, 1, 1]).map((v) => v * v), c = (k) => AMB_BASE.map((v, i) => r2(v * t[i] * k));
-  return { sky: c(0.42), ground: c(0.2), i: 1, sun: 0, lamps: 0.5 };   // (lamps: Luminati's point lights ×: a brazier is a small warm point in Emberlit, a pool of orange at 1)
+  // (the owner on the phone, 2026-11-02: "The dungeons are too dark". At Emberlit's own brightness a room's floor away
+  // from the braziers was lost on a phone; the fill is nearly doubled and the lamps reach further: lamps is Luminati's
+  // point lights ×, a brazier a pool of orange at 1)
+  return { sky: c(1.0), ground: c(0.5), i: 1, sun: 0, lamps: 0.85 };
 }
 
 function dungeon(w) {

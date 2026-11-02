@@ -610,6 +610,22 @@ drawn as the converter has them now.
   - Our props are flat, lit as the figures are. Emberlit's are normal-mapped.
   - The two big caverns' far corners stay outside their level.
 
+**From the owner's phone, 2026-11-02:** *"The dungeons are too dark"*.
+- At Emberlit's own brightness, a room's floor away from the braziers was lost on a phone. The headless captures had
+  matched Emberlit's mean (about 12–22 of 255); the phone showed darker still.
+- Underground, the ambient fill is now 2.4× (`ambientOf`: sky 1.0, ground 0.5 of `AMB_BASE` × the kit's tint), and
+  the lamps 0.85× (from 0.5). The braziers stay small warm points.
+- Mean brightness of the room's band, Luminati before → after (`tools/capture/rig.mjs vale-dungeons`, the same seed
+  and rooms):
+
+  | Room | Before | After |
+  |---|---|---|
+  | The gallery | 17.3 | 28.1 |
+  | The bailey | 22.0 | 37.4 |
+  | The cellar | 17.0 | 26.4 |
+  | The nave | 17.3 | 26.4 |
+  | The binding | 17.8 | 28.0 |
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).
