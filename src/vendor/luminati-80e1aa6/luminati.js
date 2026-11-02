@@ -5065,7 +5065,7 @@ async function sa(e, t) {
 	}, a = Z;
 	for (let t of e) {
 		if (t.canvas) {
-			va(t);
+			ya(t);
 			continue;
 		}
 		let e = i(t.id);
@@ -5133,20 +5133,20 @@ var ca = (e, t) => {
 }, fa = !1;
 function pa() {
 	let e = X?.postfx?.settings?.grade, t = X?.lighting?.state?.night ?? 1;
-	fa && e && (e.saturation = .74 + .18 * t, e.exposure = .84 + .06 * t);
+	fa && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * ma);
 }
-var ma = null, ha = "default";
-function ga(e, t) {
+var ma = 1, ha = null, ga = "default";
+function _a(e, t) {
 	let n = X?.lighting;
 	if (!n) return;
 	let r = e.environment || {}, i = X.postfx?.settings?.grade;
-	if (i && (ma ||= { ...i }, Object.assign(i, ma, t === "vale" ? da : {})), fa = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
+	if (i && (ha ||= { ...i }, Object.assign(i, ha, t === "vale" ? da : {})), fa = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
 	let a = t === "vale" ? "dusky" : "default";
-	n.setKeyframes(a === "dusky" ? ua : me), ha = a;
+	n.setKeyframes(a === "dusky" ? ua : me), ga = a;
 }
-var _a = /* @__PURE__ */ new Map();
-function va(e) {
-	let t = _a.get(e.canvas);
+var va = /* @__PURE__ */ new Map();
+function ya(e) {
+	let t = va.get(e.canvas);
 	if (!t) {
 		let n = new x(e.canvas);
 		n.magFilter = n.minFilter = f, n.generateMipmaps = !1, n.colorSpace = _, t = {
@@ -5166,7 +5166,7 @@ function va(e) {
 				loop: !1
 			} },
 			name: `ember-prop:${e.id}`
-		}, _a.set(e.canvas, t);
+		}, va.set(e.canvas, t);
 	}
 	let n = new B(t, {
 		...Bi,
@@ -5178,11 +5178,11 @@ function va(e) {
 		e.renderOrder = -1, e.material && (e.material.depthWrite = !1);
 	}), X.engine.scene.add(n), oa.push(n), n.update(0, X.engine.camera);
 }
-var ya = /* @__PURE__ */ new Map(), ba = "vale";
-function xa(e) {
-	if (ya.has(e)) return ya.get(e);
-	ya.set(e, null);
-	let t = ["env", `town-${ba}`];
+var ba = /* @__PURE__ */ new Map(), xa = "vale";
+function Sa(e) {
+	if (ba.has(e)) return ba.get(e);
+	ba.set(e, null);
+	let t = ["env", `town-${xa}`];
 	return Promise.all(t.map((e) => $i(`${Y}env/${e}.json`))).then(async (n) => {
 		for (let r = 0; r < t.length; r++) {
 			let i = n[r]?.sprites?.[e];
@@ -5190,7 +5190,7 @@ function xa(e) {
 			let a = await Qi(`${Y}env/${t[r]}.alb.png`), o = document.createElement("canvas");
 			o.width = i.w, o.height = i.h, o.getContext("2d").drawImage(a, i.x, i.y, i.w, i.h, 0, 0, i.w, i.h);
 			let s = new x(o);
-			s.magFilter = s.minFilter = f, s.generateMipmaps = !1, s.colorSpace = _, ya.set(e, {
+			s.magFilter = s.minFilter = f, s.generateMipmaps = !1, s.colorSpace = _, ba.set(e, {
 				texture: s,
 				frameWidth: i.w,
 				frameHeight: i.h,
@@ -5211,15 +5211,15 @@ function xa(e) {
 			});
 			return;
 		}
-		ya.set(e, !1);
-	}).catch(() => ya.set(e, !1)), null;
+		ba.set(e, !1);
+	}).catch(() => ba.set(e, !1)), null;
 }
-var Sa = [];
-function Ca(e, t) {
-	let n = Sa[e];
-	return n && n.sheet !== t && (X.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new B(t, { ...Bi }), X.engine.scene.add(n), Sa[e] = n), n;
+var Ca = [];
+function wa(e, t) {
+	let n = Ca[e];
+	return n && n.sheet !== t && (X.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new B(t, { ...Bi }), X.engine.scene.add(n), Ca[e] = n), n;
 }
-var wa = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", Ta = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", Q = {
+var Ta = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", Ea = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", Q = {
 	scene: null,
 	cam: null,
 	mat: null,
@@ -5227,12 +5227,12 @@ var wa = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main()
 	on: !1,
 	keyed: !1
 };
-function Ea() {
+function Da() {
 	if (!Q.on || !X) return;
 	let e = X.engine.renderer, t = e.autoClear, n = Q.mat.uniforms, r = X.engine.camera;
 	n.tDepth.value = X.postfx?.depthTexture || null, n.uKey.value.w = Q.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(Q.scene, Q.cam), e.autoClear = t;
 }
-function Da(t) {
+function Oa(t) {
 	if (!t || !t.emi) {
 		Q.on = !1;
 		return;
@@ -5245,8 +5245,8 @@ function Da(t) {
 	if (Q.on = a, a) {
 		if (!Q.scene) {
 			Q.scene = new S(), Q.cam = new p(), Q.mat = new v({
-				vertexShader: wa,
-				fragmentShader: Ta,
+				vertexShader: Ta,
+				fragmentShader: Ea,
 				transparent: !0,
 				depthTest: !1,
 				depthWrite: !1,
@@ -5286,7 +5286,7 @@ function Da(t) {
 				3
 			]);
 			let n = new e(t, Q.mat);
-			n.frustumCulled = !1, Q.scene.add(n), X.engine.events.on("afterRender", Ea);
+			n.frustumCulled = !1, Q.scene.add(n), X.engine.events.on("afterRender", Da);
 		}
 		(!Q.tex || Q.tex.image.width !== t.w || Q.tex.image.height !== t.h || Q.tex.image.data !== t.emi) && (Q.tex?.dispose(), Q.tex = new E(t.emi, t.w, t.h, l), Q.tex.flipY = !1, Q.tex.magFilter = Q.tex.minFilter = n, Q.tex.generateMipmaps = !1, Q.mat.uniforms.tEmi.value = Q.tex, Q.mat.uniforms.uTexel.value.set(1 / t.w, 1 / t.h)), Q.tex.needsUpdate = !0, Q.mat.uniforms.uRect.value.set(t.x, t.y, t.w * t.px, t.h * t.px), Q.mat.uniforms.uView.value.set(innerWidth, innerHeight), Q.keyed = !!t.key, t.key && Q.mat.uniforms.uKey.value.set(t.key.base, t.key.step, t.key.origin, 1);
 	}
@@ -5298,13 +5298,13 @@ var $ = {
 	ppu: 22,
 	ready: !1
 };
-function Oa() {
+function ka() {
 	let e = X.rig, t = X.engine.camera, n = innerHeight / (2 * $.ppu * Math.tan(Ri / 2 * Math.PI / 180));
 	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = Ji * Math.PI / 180, e.pitch = e.pitchTarget = Yi * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set($.x, $.y, $.z), (Math.abs(t.fov - Ri) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Ri, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), ni(n - 7);
 	let r = X.postfx?.settings?.dof;
 	r && (r.autoFocus = !1, r.focusDistance = n);
 }
-async function ka(e) {
+async function Aa(e) {
 	await Ui, Object.assign(globalThis, {
 		__emberUiRoot: Gi,
 		__emberInputTarget: new EventTarget(),
@@ -5318,22 +5318,22 @@ async function ka(e) {
 		fonts: Hi,
 		look: "diorama"
 	}), await X.init(() => {}), X.audio && (X.audio.muted = !0), X._updatePlayCamera = () => {}, X._updateCameraBounds = () => {}, X.start(), await X.warmedUp, X.engine.stop(), X.engine.events.on("lateUpdate", () => {
-		X && Oa();
+		X && ka();
 	}), X.engine.events.on("update", pa), X.engine.events.on("update", () => {
-		let e = Wa, t = X?.lighting;
+		let e = Ga, t = X?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
 	}), X.lighting && (X.lighting._shadowExtent = Math.max(X.lighting._shadowExtent || 22, 34));
 }
-function Aa() {
+function ja() {
 	let e = X.player;
 	e && (e.sprite && (e.sprite.visible = !1), e.visible = !1);
 }
-var ja = new w(.46, .6, 40), Ma = new T(1, 40), Na = new w(.8, 1, 40), Pa = (() => {
+var Ma = new w(.46, .6, 40), Na = new T(1, 40), Pa = new w(.8, 1, 40), Fa = (() => {
 	let e = [];
 	for (let t = 0; t < 4; t++) e.push(new w(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
-	return Fa(e);
+	return Ia(e);
 })();
-function Fa(e) {
+function Ia(e) {
 	let t = [], n = [], r = 0;
 	for (let i of e) {
 		let e = i.getAttribute("position"), a = i.getIndex();
@@ -5344,50 +5344,50 @@ function Fa(e) {
 	let i = new C();
 	return i.setAttribute("position", new b(t, 3)), i.setIndex(n), i;
 }
-var Ia = () => new h({
+var La = () => new h({
 	transparent: !0,
 	depthWrite: !1,
 	polygonOffset: !0,
 	polygonOffsetFactor: -2,
 	polygonOffsetUnits: -2,
 	toneMapped: !1
-}), La = {
+}), Ra = {
 	ring: [],
 	disc: [],
 	rim: [],
 	focus: []
-}, Ra = {
-	ring: ja,
-	disc: Ma,
-	rim: Na,
-	focus: Pa
+}, za = {
+	ring: Ma,
+	disc: Na,
+	rim: Pa,
+	focus: Fa
 };
-function za(t, n) {
-	let r = La[t];
+function Ba(t, n) {
+	let r = Ra[t];
 	for (; r.length <= n;) {
-		let n = new e(Ra[t], Ia());
+		let n = new e(za[t], La());
 		n.rotation.x = -Math.PI / 2, n.renderOrder = 2, n.visible = !1, X.engine.scene.add(n), r.push(n);
 	}
 	return r[n];
 }
-function Ba(e, t, n, r, i, a) {
+function Va(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, X.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, _), e.material.opacity = a);
 }
-var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
+var Ha = null, Ua = -1, Wa = 0, Ga = null, Ka = !1, qa = {
 	ready: !1,
 	async load(e, t = [], n = "vale") {
 		let r = ++Z;
-		n !== ba && (ba = n, ya.clear());
+		n !== xa && (xa = n, ba.clear());
 		let i = ht(e).level;
 		return Ki = (async () => {
-			X ? await X.swapLevel(i, { spawn: i.spawn }) : await ka(i), r === Z && (Aa(), Ga = !!i.environment?.interior, Ka.settings({ dof: qi }), ga(i, n), await sa(t, n));
+			X ? await X.swapLevel(i, { spawn: i.spawn }) : await Aa(i), r === Z && (ja(), Ka = !!i.environment?.interior, qa.settings({ dof: qi }), _a(i, n), await sa(t, n));
 		})(), await Ki, r === Z;
 	},
 	settings(e = {}) {
-		e.dof && (qi = e.dof);
+		e.dof && (qi = e.dof), e.bright > 0 && (ma = e.bright);
 		let t = X?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: qi !== "off" && !Ga,
+			enabled: qi !== "off" && !Ka,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
@@ -5395,7 +5395,7 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 	},
 	frame(e) {
 		if (!X || !X.engine) return;
-		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (Aa(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
+		$.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (ja(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1]));
 		let t = /* @__PURE__ */ new Map(), n = X.engine.camera;
 		for (let r of e.actors) {
 			let e = ta(r.name);
@@ -5423,20 +5423,20 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 			rim: 0,
 			focus: 0
 		};
-		for (let t of e.rings || []) Ba(za("ring", r.ring++), t.x, t.z, 1, t.col, t.a);
+		for (let t of e.rings || []) Va(Ba("ring", r.ring++), t.x, t.z, 1, t.col, t.a);
 		if (e.mark) {
-			let t = za("focus", r.focus++);
-			Ba(t, e.mark.x, e.mark.z, 1, [
+			let t = Ba("focus", r.focus++);
+			Va(t, e.mark.x, e.mark.z, 1, [
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(Ua * 4)), t.rotation.z = Ua, Ua += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(Wa * 4)), t.rotation.z = Wa, Wa += (e.dt || 0) * .9;
 		}
-		for (let t of e.hazards || []) Ba(za("disc", r.disc++), t.x, t.z, t.r, t.col, .82 * t.a), Ba(za("rim", r.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
-		for (let e of Object.keys(La)) for (let t = r[e]; t < La[e].length; t++) La[e][t].visible = !1;
-		if (Ha !== Z && (Ha = Z, Va = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null), Va && e.hero) {
+		for (let t of e.hazards || []) Va(Ba("disc", r.disc++), t.x, t.z, t.r, t.col, .82 * t.a), Va(Ba("rim", r.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
+		for (let e of Object.keys(Ra)) for (let t = r[e]; t < Ra[e].length; t++) Ra[e][t].visible = !1;
+		if (Ua !== Z && (Ua = Z, Ha = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null), Ha && e.hero) {
 			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35;
-			Va.set(n, X.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
+			Ha.set(n, X.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
 				color: [
 					1.9,
 					1.15,
@@ -5450,18 +5450,18 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 		}
 		let i = 0;
 		for (let t of e.beasts || []) {
-			let e = xa(t.id);
+			let e = Sa(t.id);
 			if (!e) continue;
-			let r = Ca(i++, e);
+			let r = wa(i++, e);
 			r.visible = !0, aa(r, t.x, t.z, e.below, zi), r.update(0, n);
 		}
-		for (let e = i; e < Sa.length; e++) Sa[e]?.visible && (Sa[e].visible = !1);
-		Wa = e.ambient || null;
+		for (let e = i; e < Ca.length; e++) Ca[e]?.visible && (Ca[e].visible = !1);
+		Ga = e.ambient || null;
 		for (let e of oa) e.update(0, n);
-		Da(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
+		Oa(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
-		X && sa(e, ba);
+		X && sa(e, xa);
 	},
 	project(e, t, n) {
 		if (!X) return null;
@@ -5472,26 +5472,26 @@ var Va = null, Ha = -1, Ua = 0, Wa = null, Ga = !1, Ka = {
 		return X?.tileMap ? X.tileMap.getHeight(e, t) : null;
 	},
 	get stats() {
-		let e = (e) => La[e].filter((e) => e.visible).length;
+		let e = (e) => Ra[e].filter((e) => e.visible).length;
 		return {
-			beasts: Sa.filter((e) => e?.visible).length,
+			beasts: Ca.filter((e) => e?.visible).length,
 			light: +!!Q.on,
 			lightDepth: Q.on && Q.keyed && X?.postfx?.depthTexture ? 1 : 0,
 			rings: e("ring"),
 			hazards: e("disc"),
 			focus: e("focus"),
-			carry: +!!Va,
+			carry: +!!Ha,
 			level: Z,
 			actors: [...ra.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0),
 			atlases: ea.size,
 			env: oa.length,
-			sky: ha,
+			sky: ga,
 			ours: oa.filter((e) => e.name.startsWith("ember:prop:")).length,
 			programs: X?.engine?.renderer?.info?.programs?.length ?? null
 		};
 	}
 };
-function qa(e) {
+function Ja(e) {
 	if (Wi) throw Error("createWorld: one world a page");
 	return Wi = e.container, Gi = e.uiRoot, Y = e.assets, Vi = ut("en"), ge(), Hi = st({
 		lang: Vi,
@@ -5500,7 +5500,7 @@ function qa(e) {
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), Ui = bn(Vi, {}), Ka.ready = !0, Ka;
+	}), Ui = bn(Vi, {}), qa.ready = !0, qa;
 }
 //#endregion
-export { qa as createWorld };
+export { Ja as createWorld };

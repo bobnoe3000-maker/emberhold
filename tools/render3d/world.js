@@ -131,8 +131,11 @@ let graded = false;
 function gradeByHour() {
   const G = game?.postfx?.settings?.grade, n = game?.lighting?.state?.night ?? 1;
   if (!graded || !G) return;
-  G.saturation = 0.74 + 0.18 * n; G.exposure = 0.84 + 0.06 * n;
+  G.saturation = 0.74 + 0.18 * n; G.exposure = (0.84 + 0.06 * n) * bright;
 }
+// a brightness on top of the hour's grade (settings({ bright })): a post-tone-map multiply, so 1.2 is a picture a fifth
+// brighter at every hour. The owner tunes the Vale's day, dusk and night against captures at a few of these.
+let bright = 1;
 let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
@@ -364,6 +367,7 @@ const api = {
   /** the menu's Graphics: the depth of field */
   settings(o = {}) {
     if (o.dof) dof = o.dof;
+    if (o.bright > 0) bright = o.bright;
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp

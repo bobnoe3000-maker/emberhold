@@ -18,7 +18,8 @@
 // presets: vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
 // dungeon floors), vale-hours, vale-dungeons, smoke (one of each). A shots file is a JSON array of
 //   { "name": "barrows-f1", "scene": "dungeon", "site": "barrows", "floor": 1, "region": "vale",
-//     "tod": "dusk", "at": "room" | "medium" | "entrance" | "spawn" | [x, y], "hud": false }
+//     "tod": "dusk", "at": "room" | "medium" | "entrance" | "spawn" | [x, y], "hud": false, "bright": 1.2 }
+// (bright: Luminati's brightness on top of the Vale's grade, world.js settings({ bright }); 1 when left out)
 // Out: <out>/<renderer>/<name>.png, and with --sheet <out>/sheet.jpg (a row a shot, a column a renderer). With no
 // --base it serves the repo itself. Needs ?dev, so localhost only, as every dev hook.
 import { createServer } from 'node:http';
@@ -77,8 +78,9 @@ const PAGE = {
   },
   /** the hour held, the party stood (the spawn, or found as tools/dungeon/capture.mjs finds them: the first fighting room,
    *  a medium room), then a few frames to settle (a page function: each is sent to the page on its own) */
-  prep([tod, at, n]) {
+  prep([tod, at, n, bright]) {
     globalThis.__tod(tod);
+    globalThis.__world3d?.world?.settings({ bright: bright || 1 });
     const sim = globalThis.__sim, w = sim.world, P = sim.state.player;
     let x = P.x, y = P.y;
     if (Array.isArray(at)) [x, y] = at;
@@ -122,7 +124,7 @@ async function run(renderer) {
   await mkdir(join(OUT, renderer), { recursive: true });
   for (const s of SHOTS) {
     const ok = await p.evaluate(PAGE.goTo, s).catch((e) => (errs.push(String(e)), false));
-    await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE]);
+    await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE, s.bright || 1]);
     const file = join(OUT, renderer, `${s.name}.png`);
     if (s.hud) await p.screenshot({ path: file, timeout: 300000 });
     else await writeFile(file, Buffer.from((await p.evaluate(PAGE.take)).split(',')[1], 'base64'));

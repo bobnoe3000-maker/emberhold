@@ -636,6 +636,32 @@ surrounded by trees, boulders or other impassable objects"*.
 
 ![The Vale's west and south edges: Emberlit, Luminati before, after](img/lumina/vale-edges.jpg)
 
+**From the owner's phone, 2026-11-02:** *"Daytime seems too dark. Show me day, dusk, night so we can tune the
+brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 255).
+- A brightness knob on top of the Vale's grade: `world.js` `settings({ bright })`. It's a post-tone-map multiply on the
+  exposure, so ×1.25 is about +12 % of mean in sRGB at dusk and +13 % by day.
+- `tools/capture/rig.mjs` takes `"bright"` per shot.
+- The default is still 1, until the owner picks from the sheets below.
+- Mean of the world band (12–68 % of the screen; 390 × 844), Emberlit beside Luminati at ×1 / 1.25 / 1.5 / 1.8:
+
+  | | Emberlit | ×1 (now) | ×1.25 | ×1.5 | ×1.8 |
+  |---|---|---|---|---|---|
+  | Thornwick, day | 69 | 71 | 80 | 90 | 103 |
+  | Thornwick, dusk | 39 | 32 | 35 | 39 | 44 |
+  | Thornwick, night | 26 | 40 | 47 | 55 | 62 |
+  | The Vale, day | 67 | 77 | 90 | 103 | 118 |
+  | The Vale, dusk | 35 | 28 | 32 | 36 | 40 |
+  | The Vale, night | 22 | 19 | 21 | 23 | 26 |
+
+- What the numbers show:
+  - Luminati's day already matches Emberlit's.
+  - Its dusk is the dark one, a fifth below Emberlit's. In the town, dusk is darker than night: the windows and lamps
+    light only at night.
+  - Its townsfolk are dark silhouettes at dusk and night, where Emberlit's are lit.
+
+![Thornwick by brightness](img/lumina/vale-brightness-town.jpg)
+![The Hollow Vale by brightness](img/lumina/vale-brightness-overland.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).
