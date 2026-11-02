@@ -12,7 +12,7 @@
   "steps": [
     {
       "id": "muster",
-      "journal": "Go down to the Muster Hall, the Old Barrows' third floor, and put down the Quartermaster in its last hall. His broken ranks stand up while he does.",
+      "journal": "Go down to the Muster Hall, the Old Barrows' second floor, and put down the Quartermaster in its last hall. His broken ranks stand up while he does.",
       "objectives": [
         {
           "type": "boss",

@@ -67,6 +67,9 @@ test('out of a fight, a companion cut off behind a wall, not moving, comes round
   let pair = null;
   for (const [x, y, r] of floor) {
     if (r !== L.entrance.id) continue;
+    // (the hero clear of the walls: hugging one, a companion along the same wall reads as "behind" it from a line that only
+    // grazes it; the Barrow Mouth is dug, 2026-11-02)
+    if (![[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].every(([dx, dy]) => open(w, x + dx, y + dy))) continue;
     const f = floor.find(([cx, cy]) => { const d = Math.hypot(cx - x, cy - y); return d > 4 && d < 8 && !seen(x, y, cx, cy); });
     if (f) { pair = [x, y, f[0], f[1]]; break; }
   }

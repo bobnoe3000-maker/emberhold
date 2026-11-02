@@ -37,8 +37,8 @@ test('an Ashbound put down frees a soul; the living never count', () => {
 });
 
 test('the Standard falls: his lamp breaks once (240 souls), and the bound still standing in his hall lie down', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim, 12); sim.tick();   // (v1.48: he stands over the binding, the Chapel's third floor)
-  down(sim); down(sim); assert.equal(sim.state.depth, 2); assert.ok(!sim.world.stairsAt, 'the Chapel\'s last floor');
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim, 12); sim.tick();   // (v1.48: he stands over the binding; 2026-11-02: the Chapel's second floor, its last)
+  down(sim); assert.equal(sim.state.depth, 1); assert.ok(!sim.world.stairsAt, 'the Chapel\'s last floor');
   const ev = []; for (const k of ['bossWave', 'lampBroken', 'bossDown']) sim.bus.on(k, (e) => ev.push([k, e]));
   intoHall(sim);
   let before = null;

@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { createWorld, isWalkable, heightAt, propAt, materialAt, NONWALK, DRESS } from '../src/sim/world.js';
-import { hasFloorBelow } from '../src/sim/sites.js';
+import { hasFloorBelow, SITES } from '../src/sim/sites.js';
 
 const K = (x, y) => x + ',' + y;
 function reach(w) {
@@ -76,7 +76,8 @@ test('one or two standing obstacles in each fighting room, out on the floor with
 test('the floors with no stair up (a diamond-shaped entrance): a rectangular hall with its stair', () => {
   for (const [site, seed, depth] of [['sunken_chapel', 15838, 0], ['wickham_keep', 55433, 1], ['tithe_mill', 110866, 0], ['barrows', 87109, 0]]) {
     const { w, shut } = ways(site, seed, depth);
-    assert.equal(w.level.entrance.shape, 'rect'); assert.ok(w.exitAt, `${site} ${seed}: a stair up`);
+    if (!SITES[site].plan) assert.equal(w.level.entrance.shape, 'rect');   // (an authored entrance keeps a straight north and west wall: plans.js)
+    assert.ok(w.exitAt, `${site} ${seed}: a stair up`);
     assert.deepEqual(shut, [], `${site} ${seed} floor ${depth + 1}`);
   }
 });

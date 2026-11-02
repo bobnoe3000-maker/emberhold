@@ -1,6 +1,15 @@
 # Emberfall — World Summary
 
-**v1.34 · 2026-10-31 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.34 (§3.3, §3.4; the owner's
+**v1.35 · 2026-11-02 · Companion to [emberfall-gdd.md](./emberfall-gdd.md).** v1.35 (§3.1; the owner: "Same layout every
+visit, Skarn at 5, halls 10"; [vale-dungeons-plan.md](./vale-dungeons-plan.md)): **the Vale's dungeons as they are built.**
+Each is two floors, and its old parts are rooms now, named: the Old Barrows' Barrow Mouth, the Cutting (the Redhand's
+trench), the Breach (where the dig broke into the built barrow), the Robbed Tomb and the Barrow Door; below, the Long
+Gallery, the Clerk's Room, the Issue Room and the Muster Hall. Wickham Keep's Gatehouse, Horse Lines, Gate-Warden's
+Chapel, the Company's Camp and the Keep Yard, where Old Skarn haggles; below, the Undercroft Stair, the Barracks, the
+Paymaster's Strongroom, the Old Cellars and the Cave Under the Cellars, Garrow's. The Sunken Chapel's Dry Porch, Nave,
+Crossing (under the fallen tower), Lady Chapel and Chancel, the Robed Stranger's, the altar broken through; below, the
+Cut's Foot, the Cult's Cut, the Robed Men's Camp, the Hall of the Bound and the Binding Crypt. The Ninth Milestone's Shaft,
+Guardroom, Long Vault, Muniment Room and Strongroom. v1.34 (§3.3, §3.4; the owner's
 decision, "design Reach and Heights now"; [reach-heights-overlands.md](./reach-heights-overlands.md)): **the lie of the
 Reach and the Heights.** Three imperial roads meet at Ashgate's gate: the Wickham road from the Vale, the Kell road to
 Kell's Rest under the dead volcano, and the Solmere road east over the **Ashwater**, the river that comes down past the
@@ -324,23 +333,24 @@ it's where everyone starts.
     Its chief, Old Skarn, beats a drum in the deepest hall, and goblins come out of the walls when he does.
   - **The Ninth Milestone** (hidden): the legion's strongroom under the ninth milestone of the
     Wickham road, out where the old road runs on north-east past the Deepdelve mine (v1.18). Nobody knows it's there until the Chronicle says so.
-- **The Vale's three, and its secret (v1.32).** One dungeon a band of three levels, three floors each, none
-  overlapping another:
-  - **The Old Barrows** (1–3), a crypt: *the Barrow Mouth* (the Redhand's dig at the door, their spoil, their camp),
-    *the Long Gallery* (burial niches, the dead in rows), *the Muster Hall*, where **the Quartermaster** of the Third
+- **The Vale's three, and its secret (v1.32).** One dungeon a band of three levels, none overlapping another. (v1.35)
+  Two floors each, every room named (the list above, v1.35); the parts below are where they lie in them:
+  - **The Old Barrows** (1–3), a crypt: *the Barrow Mouth* (the Redhand's dig at the door, their spoil, their camp; the
+    first floor), *the Long Gallery* (burial niches, the dead in rows), *the Muster Hall* (the second floor), where **the Quartermaster** of the Third
     Legion still keeps the stores. He is the legion's issuing officer, and he still issues: every little while the
     most broken of his ranks stands up whole, re-armed from his racks. Thornwick's sexton, **Tobin Hask**, keeps a
     lantern at the barrow mouth and the dead's names in a book nobody asked him to keep. (v1.33) His errand, *The
     Last Chit*: while the Quartermaster (Gaius Venn, quartermaster-sergeant, in Tobin's book) issues, the Long Gallery's dead keep getting up whole; put him down, and the
     ones you put down stay down, and Tobin can stop crossing names out twice.
-  - **Wickham Keep** (4–6), a fort, then a cave: *the Bailey* (the Company's camp), *the Barracks* (bunks, the
-    armoury and the paymaster's strongroom), *the Old Cellars*, where the Redhand dug through the
+  - **Wickham Keep** (4–6), a fort, then a cave: *the Bailey* (the Company's camp; the first floor), *the Barracks*
+    (bunks, the armoury and the paymaster's strongroom), *the Old Cellars* (the second floor), where the Redhand dug through the
     imperial stone and broke into a cave under it: pools, stone teeth up out of the floor, the roof's water coming
     down. **Captain Garrow** holds the cellars, and keeps Brannoc there. **Old Skarn** and his band came down out of the hills with a cart of
     stolen hens to sell the Company, and are in the bailey haggling, drum and all. The Redhand hold **Ned Fallow**,
     the Tithe Mill's miller, in the bailey for Lord Pellam's ransom, which Lord Pellam hasn't paid.
   - **The Sunken Chapel** (7–9), a chapel the river has half swallowed: *the Nave* (pews under water, fallen saints,
-    the altar), *the Cult's Cut* (the dig; **the Robed Stranger**), *the Binding Crypt*, where the Third Legion was
+    the altar, where **the Robed Stranger** waits by the cut going down; the first floor), *the Cult's Cut* (the dig),
+    *the Binding Crypt* (the second floor), where the Third Legion was
     bound and its standard still stands over the binding: **the Standard of the Third Legion**. **Hester Lowe** keeps
     bees in the chapel's dry porch and watched the robed strangers come and go all spring.
   - **The Ninth Milestone** (secret, 9): opened by the Vale's Chronicle. Once it's cleared it seals itself for a

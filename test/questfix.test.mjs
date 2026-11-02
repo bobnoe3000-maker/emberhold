@@ -25,7 +25,7 @@ function placeOf(d) {
   return Math.max(...all.filter((o) => o.site && SITES[o.site] && SITES[o.site].band).map((o) => {
     const S = SITES[o.site], f = o.type === 'meet' && NPCS[o.npc] && NPCS[o.npc].found;
     if (f) return S.base + f.depth;                                             // (someone found on a floor: Wren in the Boat Hall)
-    if (o.type === 'boss') { const b = Object.entries(S.bosses || {}).find(([, x]) => x === o.boss); return S.base + (b ? +b[0] - 1 : 0); }
+    if (o.type === 'boss') { const b = Object.entries(S.bosses || {}).find(([, x]) => x === o.boss); return S.base + (b ? +b[0] - (S.plan ? 0 : 1) : 0); }   // (an authored floor's hall a level up: plans.js)
     return S.base + (o.type === 'reach' ? o.count : o.floor || 1) - 1;
   }), 0);
 }
@@ -36,7 +36,8 @@ test('every quest pays at the level its dungeon asks when it\'s done (they kept 
     const at = doneAt(d); if (!at) continue;
     assert.ok(Math.abs(d.rewards.lv - at) <= 1, `${id}: pays as if at ${d.rewards.lv}, done at ${at}`);
   }
-  assert.equal(bossAt('barrows', 2), 'quartermaster'); assert.equal(doneAt(QUESTS.tobin_last_chit), 3);
+  assert.equal(bossAt('barrows', 1), 'quartermaster'); assert.equal(doneAt(QUESTS.tobin_last_chit), 3);
+  assert.equal(doneAt(QUESTS.vale_hens_under_the_hill), 5); assert.equal(QUESTS.vale_hens_under_the_hill.rewards.lv, 5);   // (Old Skarn at 5, 2026-11-02)
   assert.equal(doneAt(QUESTS.ch1_the_standard), 9); assert.equal(doneAt(QUESTS.ch2_the_last_office), 18);
 });
 

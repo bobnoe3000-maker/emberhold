@@ -21,8 +21,9 @@ const { createSim } = await load('sim/core.js'), { statsFor } = await load('sim/
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
 const HL = +args[0], HOURS = +(args[1] || 1), seed = +(args[2] || 20260807);
 const sites = await load('sim/sites.js'), banded = Object.entries(sites.SITES).filter(([, S]) => S.band && !S.hidden && !S.parked);
-const home = banded.find(([, S]) => S.base <= HL && HL <= S.base + S.floors - 1) || (banded.length ? banded[banded.length - 1] : null);
-const SITE = home ? home[0] : 'barrows', DEPTH = home ? Math.min(home[1].floors - 1, Math.max(0, HL - home[1].base)) : HL <= 4 ? 0 : HL <= 7 ? 1 : 2;
+const home = banded.find(([, S]) => S.base <= HL && HL <= S.base + (S.span || S.floors) - 1) || (banded.length ? banded[banded.length - 1] : null);   // (an authored band spans three levels over two floors, 2026-11-02)
+// (an authored band, 2026-11-02: the floor whose hall is the hero's level: base and base + 1 the first, the band's top the second)
+const SITE = home ? home[0] : 'barrows', DEPTH = home ? (home[1].plan ? (HL - home[1].base >= 2 ? 1 : 0) : Math.min(home[1].floors - 1, Math.max(0, HL - home[1].base))) : HL <= 4 ? 0 : HL <= 7 ? 1 : 2;
 
 const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
 const sim = createSim(seed, undefined, { scene: 'dungeon' });

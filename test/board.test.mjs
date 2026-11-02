@@ -25,7 +25,8 @@ const events = (sim, names) => { const ev = []; for (const e of names) sim.bus.o
 // wanted at your level within the dungeon's band
 const BANDS = { vale: ['barrows', 'wickham_keep', 'sunken_chapel'], fens: ['toadking_mound', 'canal_locks', 'drowned_abbey'] };
 const yoursAt = (region, lv) => { const all = BANDS[region], i = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + 2); return i >= 0 ? i : lv < SITES[all[0]].base ? 0 : all.length - 1; };
-const placeLv = (j) => { const S = SITES[j.site]; return j.tpl === 'delve' || j.tpl === 'warden' ? S.base + j.floor - 1 : Math.max(S.base, Math.min(j.lv, S.base + 2)); };
+// (2026-11-02) an authored band's floor hall is a level up from its floor's first rooms (plans.js): floor 1's at base + 1
+const placeLv = (j) => { const S = SITES[j.site]; return j.tpl === 'warden' && S.plan ? S.base + j.floor : j.tpl === 'delve' || j.tpl === 'warden' ? S.base + j.floor - 1 : Math.max(S.base, Math.min(j.lv, S.base + 2)); };
 /** a job's site is its land's band for the level or the one below; its floor is in the site; it asks for nothing more
  * than two levels up; its skulls are its place's level against the hero's @param {any} j @param {string} region */
 const checkPlace = (j, region) => {
@@ -112,15 +113,18 @@ test('each kind of job counts from the sim\'s own events, in its site', async ()
   c.bus.emit('slain', { elite: false }); assert.equal(n(c, bty), 0);
   c.bus.emit('slain', { elite: true }); c.bus.emit('slain', { elite: true }); assert.equal(st(c, bty), QS.READY);
   // delve: going down counts the floor you reach; loading a save or arriving from outside doesn't
-  const dlv = findJob(8, 'delve', (j) => j.floor === 3), d = dungeon(dlv);
+  const dlv = findJob(8, 'delve', (j) => j.floor === 2), d = dungeon(dlv);   // (2026-11-02: the Vale's dungeons are two floors)
   const away = createSim(SEED, undefined, { scene: 'dungeon', site: dlv.site === 'barrows' ? 'wickham_keep' : 'barrows' }); setLv(away, dlv.lv); away.state.t = dlv.day * DAY_S; away.quests.begin(dlv.id);
   goDown(away); assert.equal(n(away, dlv), 0, 'another site\'s floors don\'t count');
-  goDown(d); assert.equal(n(d, dlv), 2); goDown(d); assert.equal(st(d, dlv), QS.READY);
+  goDown(d); assert.equal(n(d, dlv), 2); assert.equal(st(d, dlv), QS.READY);
   const d2 = dungeon(dlv); d2.bus.emit('levelChanged', { depth: 5, scene: 'dungeon' }); assert.equal(n(d2, dlv), 0);
-  // warden: only in a stairs-down hall, on its floor or deeper
-  const wdn = findJob(8, 'warden', (j) => j.floor === 2), e = dungeon(wdn), hall = () => e.world.level.descentRoom.id;
-  e.bus.emit('wave', { cleared: true, room: hall() }); assert.equal(n(e, wdn), 0, 'too shallow');
-  goDown(e); e.bus.emit('wave', { cleared: true, room: e.world.level.rooms.find((r) => r !== e.world.level.descentRoom && r !== e.world.level.entrance).id }); assert.equal(n(e, wdn), 0, 'not the hall');
+  // warden: only in a stairs-down hall, on its floor or deeper (2026-11-02: in the Vale, the Old Barrows' first-floor hall
+  // is the one with no boss in it; every other hall of the Vale's has one)
+  const wdn = findJob(2, 'warden', (j) => j.floor === 1), e = dungeon(wdn), hall = () => e.world.level.descentRoom.id;
+  assert.equal(wdn.site, 'barrows');
+  e.bus.emit('wave', { cleared: true, room: e.world.level.rooms.find((r) => r !== e.world.level.descentRoom && r !== e.world.level.entrance).id }); assert.equal(n(e, wdn), 0, 'not the hall');
+  const elsewhere = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); setLv(elsewhere, wdn.lv); elsewhere.state.t = wdn.day * DAY_S; elsewhere.quests.begin(wdn.id);
+  elsewhere.bus.emit('wave', { cleared: true, room: elsewhere.world.level.descentRoom.id }); assert.equal(n(elsewhere, wdn), 0, 'another site\'s hall');
   for (let i = 0; i < wdn.n; i++) e.bus.emit('wave', { cleared: true, room: hall() });
   assert.equal(st(e, wdn), QS.READY);
   assert.ok(isWalkable);
@@ -145,12 +149,12 @@ test('handed in at the board in town, when done, paid once; old jobs are let go'
 });
 
 test('the save keeps the board and its jobs by id; it refuses what it couldn\'t have earned', () => {
-  const sim = town(4), j = sim.board.offers()[1];
+  const sim = town(4), at = sim.board.offers().findIndex((x) => x.steps[0].objectives[0].count > 1), j = sim.board.offers()[at];   // (one count isn't the whole job)
   push(sim, { type: 'boardAccept', id: j.id }); sim.state.quests[j.id].n = [1];
   const data = JSON.parse(JSON.stringify(sim.snapshot()));
   assert.deepEqual(data.board, { day: 0, lv: 4, half: 0, region: 'vale' }); assert.deepEqual(data.quests[j.id], [QS.ACTIVE, 0, 1]);
   const b = town(1); b.restore(data); assert.deepEqual(b.state.board, { day: 0, lv: 4, half: 0, region: 'vale' }); assert.deepEqual(b.state.quests[j.id], { st: QS.ACTIVE, step: 0, n: [1] });
-  assert.equal(b.board.offers()[1].status, QS.ACTIVE);
+  assert.equal(b.board.offers()[at].status, QS.ACTIVE);
   b.restore({ ...data, quests: { ...data.quests, board_0_60_0: [1, 0, 0], board_9_4_0: [1, 0, 0], board_0d_4_0: [1, 0, 0] }, board: { day: 0, lv: 60 } });
   assert.deepEqual(Object.keys(b.state.quests), [j.id], 'a level above the hero, a day to come, a dusk not yet come: dropped'); assert.deepEqual(b.state.board, { day: -1, lv: 1, half: 0, region: 'vale' });
   b.restore({ ...data, board: { day: 0, lv: 4 } }); assert.deepEqual(b.state.board, { day: 0, lv: 4, half: 0, region: 'vale' }, 'v15: no half is dawn');

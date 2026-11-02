@@ -30,14 +30,19 @@
 // `themes` / `families` give a floor its own look and foes (by depth); `dress` its dressing kit (world.js DRESS: the
 // furniture, the pools, the light's tint), floor by floor.
 
-/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, mix: number }} SiteDef */
+import { PLANS } from './plans.js';
+
+/** @typedef {{ name: string, region: string, theme: string | null, base: number, perFloor: number, floors: number, span?: number, plan?: boolean, family: string, rooms: [number, number] | null, layout?: 'caverns' | 'halls', flat?: boolean, hidden?: boolean, minLevel?: number, bosses?: Record<number, string>, families?: string[], themes?: string[], dress?: string[], vault?: string, band?: boolean, secret?: boolean, parked?: boolean, mix: number }} SiteDef */
 /** @type {Record<string, SiteDef>} */
 export const SITES = {
   // the Hollow Vale, 1–9: a crypt, a fort that goes down into a cave, a drowned chapel; the Ninth Milestone its secret
-  barrows: { name: 'The Old Barrows', region: 'vale', theme: 'crypt', base: 1, perFloor: 1, floors: 3, family: 'ashbound', families: ['diggers', 'ashbound', 'ashbound'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 3: 'quartermaster' }, dress: ['dig', 'gallery', 'muster'], mix: 0 },
-  wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', themes: ['dread', 'dread', 'cave'], base: 4, perFloor: 1, floors: 3, family: 'redhand', families: ['redhand', 'redhand', 'diggers'], rooms: [6, 6], layout: 'halls', band: true, bosses: { 1: 'goblin_chief', 3: 'redhand_captain' }, dress: ['bailey', 'barracks', 'cellar'], mix: 0x7e40 },
-  sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'nave', themes: ['nave', 'cinder', 'crypt'], base: 7, perFloor: 1, floors: 3, family: 'chapel', rooms: [6, 6], layout: 'halls', band: true, bosses: { 2: 'robed_stranger', 3: 'standard' }, dress: ['nave', 'cultcut', 'binding'], mix: 0xc4a9 },
-  ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 9, perFloor: 0, floors: 1, family: 'ashbound', rooms: [4, 4], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'last_order', mix: 0x9e11 },
+  // (2026-11-02, docs/vale-dungeons-plan.md; the owner: "Same layout every visit, Skarn at 5, halls 10") each authored:
+  // `plan` builds its floors from plans.js, two floors at most, five spaces a floor; a band of three levels (`span`) over
+  // its two floors, a space's level its plan's (plans.js lv); the bosses each in their floor's last hall
+  barrows: { name: 'The Old Barrows', region: 'vale', theme: 'crypt', base: 1, perFloor: 1, floors: 2, span: 3, plan: true, family: 'ashbound', families: ['diggers', 'ashbound'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'quartermaster' }, dress: ['dig', 'gallery'], mix: 0 },
+  wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', themes: ['dread', 'cave'], base: 4, perFloor: 1, floors: 2, span: 3, plan: true, family: 'redhand', families: ['redhand', 'redhand'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'goblin_chief', 2: 'redhand_captain' }, dress: ['bailey', 'barracks'], mix: 0x7e40 },
+  sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'nave', themes: ['nave', 'cinder'], base: 7, perFloor: 1, floors: 2, span: 3, plan: true, family: 'chapel', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'robed_stranger', 2: 'standard' }, dress: ['nave', 'binding'], mix: 0xc4a9 },
+  ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 9, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'last_order', mix: 0x9e11 },
   // the Greywater Fens, 10–18: the Toadking's island of boats, the lock halls going down into the vats, the Abbey; the
   // Undercroft its secret. The Sickpools are the Locks' third floor, Vat Seven (they were a site of their own).
   toadking_mound: { name: "Toadking's Mound", region: 'fens', theme: 'mire', base: 10, perFloor: 1, floors: 3, family: 'reedmen', rooms: [6, 6], band: true, bosses: { 3: 'toadking' }, dress: ['mound', 'mound', 'mound'], mix: 0x70ad },
@@ -58,8 +63,10 @@ export const SITE_IDS = Object.keys(SITES);
 export const siteOf = (id) => SITES[id || 'barrows'] || SITES.barrows;
 /** is there a floor below this one? @param {string} id @param {number} depth (0 = the first floor) */
 export const hasFloorBelow = (id, depth) => { const s = siteOf(id); return !s.floors || depth + 1 < s.floors; };
-/** a band's top level @param {SiteDef} s */
-const bandTop = (s) => s.base + s.floors - 1;
+/** a band's top level (a planned band spans its three levels over two floors) @param {SiteDef} s */
+export const bandTop = (s) => s.base + (s.span || s.floors) - 1;
+/** a planned site's floor (plans.js), or null: generated as before @param {string} id @param {number} depth */
+export const planFloor = (id, depth) => { const s = siteOf(id), P = s.plan ? PLANS[id] : null; return (P && P.floors[depth]) || null; };
 /** a room's level in this site @param {string} id @param {number} depth @param {number} rank its walking order from the
  *  entrance (0 the nearest; the hall last) @param {number} [count] the floor's ranked rooms (its hall the last of them) */
 export function roomLevelAt(id, depth, rank, count = 0) {

@@ -4,7 +4,8 @@
 // chain → the fighter's trial → the Chronicle's last fragment off the Standard → the Ninth Milestone's
 // vault, which then seals itself for a while. Then the save round-trips it all. (v1.48, one dungeon a level: the
 // first chapter is the barrows' mouth, not the Tithe Mill, and reveals nothing; Garrow and Brannoc are on the Keep's
-// third floor, the paymaster's chests on its second; the Standard is the Sunken Chapel's third-floor boss. v1.49: Brannoc
+// last floor, the paymaster's chests on it; the Standard is the Sunken Chapel's last boss; 2026-11-02: each the second,
+// docs/vale-dungeons-plan.md. v1.49: Brannoc
 // stands with the legion in the Binding Crypt, and the Standard is Act I's fourth chapter, Ilse's.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,10 +58,10 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'turnin', 'ch1_smoke_over_the_vale');
   assert.ok(!sim.state.revealed.has('wickham_keep'), 'nothing to reveal: the Keep is open from the start');
 
-  // Act I, 2: Wickham Keep's third floor (the Old Cellars) and Garrow; Brannoc waits in the hall and joins (the party's full: the bench)
+  // Act I, 2: Wickham Keep's second floor (the Old Cellars) and Garrow; Brannoc waits in the hall and joins (the party's full: the bench)
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'accept', 'ch1_the_diggers');
-  go(sim, 'dungeon', 'wickham_keep', 0); const p = sim.state.player; down(sim); down(sim);
-  assert.equal(sim.state.depth, 2); assert.ok(fightIn(sim, () => st(sim, 'ch1_the_diggers') === QS.READY));
+  go(sim, 'dungeon', 'wickham_keep', 0); const p = sim.state.player; down(sim);
+  assert.equal(sim.state.depth, 1); assert.ok(fightIn(sim, () => st(sim, 'ch1_the_diggers') === QS.READY));
   assert.equal(sim.state.bosses.redhand_captain, 1);
   assert.ok(sim.state.fragments.includes('frag_vale_last_dispatch'), 'Garrow carried the Last Dispatch');
   const b = sim.world.npcs.find((n) => n.id === 'brannoc'); p.x = p.px = b.x + 1; p.y = p.py = b.y; sim.commands.push({ type: 'endTalk' }); sim.tick();
@@ -71,7 +72,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
 
   // Act I, 3: the Sunken Chapel and the Robed Stranger; the shard goes to Ilse
   talk(sim, 'osric_hale'); effect(sim, 'quest', 'accept', 'ch1_ember_in_the_fist');
-  go(sim, 'dungeon', 'sunken_chapel', 1); assert.ok(fightIn(sim, () => st(sim, 'ch1_ember_in_the_fist') === QS.READY));
+  go(sim, 'dungeon', 'sunken_chapel', 0); assert.ok(fightIn(sim, () => st(sim, 'ch1_ember_in_the_fist') === QS.READY));   // (the Chancel: the first floor's hall)
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch1_ember_in_the_fist');
 
   // Brannoc's chain, from his card: 3 sergeants in the Keep, 2 of the paymaster's chests on the Keep's second floor,
@@ -91,7 +92,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   }
   assert.equal(st(sim, 'brannoc_paymasters_box'), QS.READY, 'two chests on the Keep\'s second floor');
   card(); effect(sim, 'quest', 'turnin', 'brannoc_paymasters_box'); card(); effect(sim, 'quest', 'accept', 'brannoc_standing_down');
-  go(sim, 'dungeon', 'sunken_chapel', 2); assert.ok(fightIn(sim, () => st(sim, 'brannoc_standing_down') === QS.READY, firstRoom));
+  go(sim, 'dungeon', 'sunken_chapel', 1); assert.ok(fightIn(sim, () => st(sim, 'brannoc_standing_down') === QS.READY, firstRoom));
   card(); effect(sim, 'quest', 'turnin', 'brannoc_standing_down');
   assert.equal(sim.state.bag.filter((it) => it.name === 'The Broken Chain').length, 1);
 
@@ -107,7 +108,7 @@ test('M5 golden path: Act I, Brannoc and his chain, a trial, the whole Chronicle
   // Standard in the Chapel's crypt; the Ninth Milestone opens
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'accept', 'ch1_the_standard'); assert.equal(st(sim, 'ch1_the_standard'), QS.ACTIVE);
   sim.state.fragments = SETS.vale.filter((id) => id !== 'frag_vale_standards_ribbon');
-  go(sim, 'dungeon', 'sunken_chapel', 2); assert.ok(fightIn(sim, () => sim.state.fragments.length === 10), 'the Standard falls: its ribbon');
+  go(sim, 'dungeon', 'sunken_chapel', 1); assert.ok(fightIn(sim, () => sim.state.fragments.length === 10), 'the Standard falls: its ribbon');
   assert.equal(st(sim, 'ch1_the_standard'), QS.READY);
   talk(sim, 'sister_ilse'); effect(sim, 'quest', 'turnin', 'ch1_the_standard');
   assert.equal(sim.quests.status('ch2_fog_on_the_canal'), QS.AVAILABLE, 'Act I done: Act II is Ilse\'s next (the company is 12)');

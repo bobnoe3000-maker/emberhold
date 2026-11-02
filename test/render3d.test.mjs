@@ -68,7 +68,7 @@ test('convert: a dungeon floor has its ways up and down as Luminati\'s stairs, n
 
 test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hour, its furniture in 3D or as our props, its lights', () => {
   const seen = new Map();
-  for (const [site, floors] of [['barrows', 3], ['wickham_keep', 3], ['sunken_chapel', 3]]) for (let d = 0; d < floors; d++) {
+  for (const [site, floors] of [['barrows', 2], ['wickham_keep', 2], ['sunken_chapel', 2]]) for (let d = 0; d < floors; d++) {   // (2026-11-02: two floors each, authored)
     const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }); if (d) s0.restore({ ...JSON.parse(JSON.stringify(s0.snapshot())), depth: d });
     const w = s0.world, { level, sprites } = convertWorld(w, { region: 'vale' }), kinds = new Map();
     for (const [, k] of w.props) kinds.set(k, (kinds.get(k) || 0) + 1);
@@ -82,11 +82,16 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
     // a light at each prop Emberlit lights
     const lit = ['lantern', 'candles', 'altar', 'circle', 'font'].reduce((n, k) => n + (kinds.get(k) || 0), 0);
     assert.ok(level.objects.filter((o) => o.type === 'light').length >= lit, `${w.kit}: lights`);
-    seen.set(w.kit, { hour: level.environment.timeOfDay, wall: level.tiles.flatMap((r) => [...r]).includes('B') ? 'B' : 'x' });
+    const all = level.tiles.flatMap((r) => [...r]);
+    seen.set(w.kit, { hour: level.environment.timeOfDay, wall: all.includes('B') ? 'B' : 'x', rock: all.includes('x'), dressed: all.includes('B') });
   }
-  assert.equal(seen.size, 9, 'nine kits');
+  assert.deepEqual([...seen.keys()], ['dig', 'gallery', 'bailey', 'barracks', 'nave', 'binding'], 'six floors, each its kit');
   assert.ok(seen.get('gallery').hour > seen.get('dig').hour && seen.get('bailey').hour < seen.get('binding').hour, 'warm and cold kits at their hours');
-  assert.equal(seen.get('cellar').wall, 'x', 'the cave in rock'); assert.equal(seen.get('nave').wall, 'B', 'the nave in dressed stone');
+  assert.equal(seen.get('nave').wall, 'B', 'the nave in dressed stone');   // (its Chancel in the cult's rock: the cut goes down under the altar)
+  // a floor dressed room by room: the Keep's barracks in dressed stone and the cave under its cellars in rock; the Chapel's
+  // cut dug rough, its crypts built
+  assert.ok(seen.get('barracks').dressed && seen.get('barracks').rock, 'the Keep\'s second floor: stone and rock');
+  assert.ok(seen.get('binding').dressed && seen.get('binding').rock, 'the Chapel\'s second floor: the cut and the crypt');
 });
 
 test('convert: a town keeps its services as named houses, its walls raised and its gate open', () => {

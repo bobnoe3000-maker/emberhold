@@ -32,7 +32,7 @@ test('the Scrag Warren: parked for the Reach, no way in; its look and the goblin
   assert.equal(S.family, 'goblin'); assert.ok(S.parked); assert.equal(S.region, 'reach');
   assert.ok(!siteOpen('scrag_warren', new Set()) && !siteOpen('scrag_warren', new Set(['scrag_warren'])), 'no way in, found or not');
   assert.deepEqual([0, 1].map((d) => bossAt('scrag_warren', d)), [null, null], 'no chief of its own');
-  assert.deepEqual([0, 1, 2].map((d) => bossAt('wickham_keep', d)), ['goblin_chief', null, 'redhand_captain'], 'Skarn holds the Keep\'s first hall');
+  assert.deepEqual([0, 1].map((d) => bossAt('wickham_keep', d)), ['goblin_chief', 'redhand_captain'], 'Skarn holds the Keep\'s first hall (the Keep Yard), Garrow its last');
   assert.ok(!THEME_KEYS.includes('warren'), 'the Old Barrows never draw the warren\'s look');
   const F = FAMILIES.goblin;
   for (const k of [...F.melee, ...F.ranged, F.elite]) { assert.ok(ENEMY_KINDS.includes(k), k); assert.equal(F.undead(k), false, `${k} is no undead`); }

@@ -204,7 +204,7 @@ Nell takes your rogue up the Crossed Keys' stairs and back down again, twice, an
     -> hedda_topics
 
 == hedda_hens_active ==
-"Wickham Keep, the bailey, the first floor's last hall, where the drum is. Put the drummer down and the rest stop coming."
+"Wickham Keep, the Keep Yard, the first floor's last hall, where the drum is. Put the drummer down and the rest stop coming."
 -> hedda_topics
 
 == hedda_hens_turnin ==

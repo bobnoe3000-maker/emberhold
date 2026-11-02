@@ -95,6 +95,11 @@
 //       count. Older data (questsFor32): The Rolls under way starts again at its first step (the Choir, who counts at
 //       once if she's fallen); The Sickpools, ready before the Vatwarden was part of it, goes on to him; Standing Down's
 //       waves, held in the Old Barrows, start again in the Binding Crypt. Everything else carries over as it was.
+//   v33: the Hollow Vale's dungeons authored (docs/vale-dungeons-plan.md; the owner: "Same layout every visit, Skarn at
+//       5, halls 10"): the Old Barrows, Wickham Keep and the Sunken Chapel two floors each, built from their plans, the
+//       Ninth Milestone one. The shape is unchanged. Older data (plansFor33): a visit in a Vale dungeon starts again at
+//       its first floor's way in (its floors are new; a third floor is gone), and a Vale board job under way is let go
+//       (its posting is drawn anew from the new floors). Quests carry over: their floors moved with them.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -105,7 +110,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 32;
+export const SAVE_VERSION = 33;
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -126,7 +131,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -191,6 +196,14 @@ export function questsFor32(data) {
   if (Array.isArray(quests.ch2_the_sickpools) && quests.ch2_the_sickpools[0] === 2 && quests.ch2_the_sickpools[1] === 0) quests.ch2_the_sickpools = [1, 1, 0];
   if (Array.isArray(quests.brannoc_standing_down) && quests.brannoc_standing_down[0] === 1) quests.brannoc_standing_down = [1, 0, 0];
   return { ...data, quests };
+}
+/** v32 → v33: the Vale's dungeons authored (see v33 above) @param {any} data */
+export function plansFor33(data) {
+  if (!data || typeof data !== 'object') return data;
+  const quests = { ...(data.quests || {}) };
+  for (const [k, v] of Object.entries(quests)) if (/^board_/.test(k) && !/_fens$/.test(k) && !(Array.isArray(v) && v[0] === 3)) delete quests[k];   // (3: done)
+  const out = { ...data, quests };
+  return data.scene === 'dungeon' && SITES[data.site || 'barrows'] && SITES[data.site || 'barrows'].plan ? visitFor(out) : out;
 }
 /** sites gone in v31, and what took their place @type {Record<string, string>} */
 export const GONE_SITES = { tithe_mill: 'barrows', scrag_warren: 'wickham_keep', sickpools: 'canal_locks' };

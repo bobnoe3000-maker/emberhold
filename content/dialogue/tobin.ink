@@ -33,7 +33,7 @@ An old man in a rusty black coat sits on a coffin-lid laid over two stones, a la
 + [I'll be going.] -> tobin_bye
 
 == tobin_floors ==
-"Three floors, and they're older than the road. This is the Barrow Mouth, where the Redhand have been digging at the door for whatever they think the legion buried with its dead. Mostly they've found the dead."
+"Two floors, and they're older than the road. This is the Barrow Mouth, where the Redhand have been digging at the door for whatever they think the legion buried with its dead. Mostly they've found the dead."
 "Below is the Long Gallery: niches in the walls, a skull in every one, and the candles the families left still burning, which they shouldn't be. Below that, the Muster Hall."
 -> tobin_muster
 
@@ -70,7 +70,7 @@ He runs a finger down a column and stops at a name with three dates beside it.
     -> tobin_talk
 
 == tobin_chit_active ==
-"The Muster Hall, the third floor down. The Quartermaster, in the last hall. Him first, if you can; his lads after."
+"The Muster Hall, the second floor down, past the Long Gallery. The Quartermaster, in the last hall. Him first, if you can; his lads after."
 -> tobin_talk
 
 == tobin_chit_turnin ==

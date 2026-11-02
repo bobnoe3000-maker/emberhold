@@ -29,11 +29,11 @@ export const FRAGMENTS = {
   // the rest of the Vale set (world doc §7, v1.7)
   frag_vale_tithe_ledger: { set: 'vale', order: 4, site: 'wickham_keep', floor: 2, via: 'chest' },   // (v1.48: in the Keep's strongroom, with the paymaster's box; it was the Mill's)
   frag_vale_gate_warden_note: { set: 'vale', order: 5, site: 'wickham_keep', floor: 1, via: 'shrine' },
-  frag_vale_last_dispatch: { set: 'vale', order: 6, site: 'wickham_keep', floor: 3, via: 'boss' },        // Garrow had it, sealed (v1.48: he holds the Old Cellars)
+  frag_vale_last_dispatch: { set: 'vale', order: 6, site: 'wickham_keep', floor: 2, via: 'boss' },        // Garrow had it, sealed (v1.48: he holds the Old Cellars; 2026-11-02: the cave under them, the Keep's second floor)
   frag_vale_chaplains_prayer: { set: 'vale', order: 7, site: 'sunken_chapel', floor: 1, via: 'chest' },
   frag_vale_binding_rite: { set: 'vale', order: 8, site: 'sunken_chapel', floor: 2, via: 'shrine' },
-  frag_vale_chaplains_last_page: { set: 'vale', order: 9, site: 'sunken_chapel', floor: 2, via: 'boss' },  // under the Stranger's feet
-  frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'sunken_chapel', floor: 3, via: 'boss' },   // taken from the Standard (v1.48: over the binding in the Chapel's crypt)
+  frag_vale_chaplains_last_page: { set: 'vale', order: 9, site: 'sunken_chapel', floor: 1, via: 'boss' },  // under the Stranger's feet (2026-11-02: at the Chancel, the first floor's hall)
+  frag_vale_standards_ribbon: { set: 'vale', order: 10, site: 'sunken_chapel', floor: 2, via: 'boss' },   // taken from the Standard (v1.48: over the binding in the Chapel's crypt; 2026-11-02: its second floor)
   // the Fens set (world doc §7, v1.30; M8 slice 10): the lock-men, the vats, the Abbey, and the night the canal broke
   frag_fens_lock_tally: { set: 'fens', order: 1, site: 'canal_locks', floor: 1, via: 'chest' },
   frag_fens_canal_order: { set: 'fens', order: 2, site: 'canal_locks', floor: 1, via: 'shrine' },

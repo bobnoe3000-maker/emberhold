@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { createWorld } from '../src/sim/world.js';
-import { SITES, SITE_IDS, levelBand, hasFloorBelow, roomLevelAt, themeAt, familyAt, bossAt, siteOpen } from '../src/sim/sites.js';
+import { SITES, SITE_IDS, levelBand, hasFloorBelow, roomLevelAt, themeAt, familyAt, bossAt, siteOpen, bandTop } from '../src/sim/sites.js';
+import { PLANS } from '../src/sim/plans.js';
 
 const words = Object.fromEntries(readdirSync('content/sites').map((f) => { const j = JSON.parse(readFileSync(`content/sites/${f}`, 'utf8')); return [j.id, j]; }));
 const stairsOf = (w) => [...w.props.values()].includes('stairs');
@@ -31,7 +32,13 @@ test('every site builds each floor in its band; the last floor has no stairs dow
       if (themeAt(id, d)) assert.equal(w.theme, themeAt(id, d), `${id} floor ${d + 1} keeps its look`);
       if (S.rooms) assert.ok(w.level.rooms.length >= S.rooms[0] && w.level.rooms.length <= S.rooms[1], `${id}: ${w.level.rooms.length} rooms`);
       const lv = [...w.roomLevels.entries()].filter(([r]) => r !== w.level.entrance.id).map(([, v]) => v);
-      if (S.band) {
+      if (S.plan) {
+        // an authored floor (plans.js, 2026-11-02): each space at its plan's level, a band of three over two floors: the
+        // floor's first rooms at base + floor − 1, its hall a level up
+        const P = PLANS[id].floors[d], hall = w.roomLevels.get(w.level.descentRoom.id);
+        for (const r of w.level.rooms) if (r !== w.level.entrance) assert.equal(w.roomLevels.get(r.id), S.flat ? S.base : S.base + P.spaces[r.id].lv, `${id} floor ${d + 1} ${r.part}`);
+        if (!S.flat) { assert.equal(hall, S.base + d + 1, `${id} floor ${d + 1}: its hall a level up`); assert.ok(lv.every((v) => v === S.base + d || v === S.base + d + 1), `${id} floor ${d + 1}: levels ${lv}`); }
+      } else if (S.band) {
         // the floor's level everywhere, the hall too; the two rooms ranked before the hall one up, to the band's top
         const lo = S.base + d, top = Math.min(S.base + S.floors - 1, lo + 1), hall = w.roomLevels.get(w.level.descentRoom.id);
         assert.equal(hall, lo, `${id} floor ${d + 1}: its hall at the floor's level`);
@@ -50,9 +57,10 @@ test('every site builds each floor in its band; the last floor has no stairs dow
 test('one dungeon a level: the open bands run 1–18 in six, each level in exactly one; the room rule by rank', () => {
   const bands = SITE_IDS.filter((id) => SITES[id].band);
   assert.deepEqual(bands, ['barrows', 'wickham_keep', 'sunken_chapel', 'toadking_mound', 'canal_locks', 'drowned_abbey']);
-  for (const id of bands) assert.equal(SITES[id].floors, 3, `${id}: three floors`);
+  for (const id of bands) assert.equal(SITES[id].floors, SITES[id].plan ? 2 : 3, `${id}: ${SITES[id].plan ? 'two floors, authored (the Vale, 2026-11-02)' : 'three floors'}`);
+  for (const id of bands) assert.equal(bandTop(SITES[id]), SITES[id].base + 2, `${id}: a band of three levels`);
   for (let lv = 1; lv <= 18; lv++) {
-    const at = bands.filter((id) => SITES[id].base <= lv && lv <= SITES[id].base + SITES[id].floors - 1);
+    const at = bands.filter((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
     assert.equal(at.length, 1, `level ${lv}: ${at}`);
     assert.ok(!SITES[at[0]].hidden && !SITES[at[0]].parked, `level ${lv}: ${at[0]} is open`);
   }

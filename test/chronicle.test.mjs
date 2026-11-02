@@ -38,15 +38,15 @@ test('ten in reading order a set (the Vale\'s, the Fens\'); every one lies somew
 
 test('the bosses carry theirs: found when they fall on their floor; one who fell in an older save left it in his hall', () => {
   const sim = createSim(SEED, undefined, { scene: 'town' }), ev = events(sim, ['fragmentFound']);
-  at(sim, 'wickham_keep', 2);                                                                   // (v1.48: Garrow's hall is the Keep's third floor)
+  at(sim, 'wickham_keep', 1);                                                                   // (v1.48: Garrow's hall is the Keep's last floor; 2026-11-02: its second)
   sim.bus.emit('bossDown', { id: 'robed_stranger' }); assert.equal(ev.length, 0, 'the wrong boss');
   sim.bus.emit('bossDown', { id: 'goblin_chief' }); assert.equal(ev.length, 0, 'the Keep\'s other boss carries none');
   sim.state.bosses.redhand_captain = 1; sim.bus.emit('bossDown', { id: 'redhand_captain', first: true });
   assert.deepEqual(ev.map((e) => e.id), ['frag_vale_last_dispatch']);
-  at(sim, 'sunken_chapel', 2); sim.bus.emit('bossDown', { id: 'standard' }); assert.equal(ev.at(-1).id, 'frag_vale_standards_ribbon');   // (the Standard: the Chapel's third floor)
+  at(sim, 'sunken_chapel', 1); sim.bus.emit('bossDown', { id: 'standard' }); assert.equal(ev.at(-1).id, 'frag_vale_standards_ribbon');   // (the Standard: the Chapel's last floor, its second)
   // an older save: the Stranger already fell before his page was in the table
   const old = createSim(SEED, undefined, { scene: 'town' }), oev = events(old, ['fragmentFound']);
-  old.state.bosses.robed_stranger = 1; at(old, 'sunken_chapel', 1);
+  old.state.bosses.robed_stranger = 1; at(old, 'sunken_chapel', 0);   // (2026-11-02: the Chancel, the Chapel's first floor)
   assert.deepEqual(old.lore.holder('frag_vale_chaplains_last_page'), { via: 'hall' });
   const hall = old.world.level.descentRoom.id; old.bus.emit('battle', { on: true, room: hall });
   for (let i = 0; i < HALL_WAVES; i++) old.bus.emit('wave', { cleared: true, room: hall });
@@ -82,7 +82,7 @@ test('the Ninth Milestone\'s vault: a chest in its hall with The Last Order, onc
   const q = back.state.player; q.x = q.px = x + 0.5; q.y = q.py = y + 1.5;
   back.commands.push({ type: 'harvest', tx: x, ty: y }); back.tick();
   assert.equal(back.state.bag.filter((it) => it.name === 'The Last Order').length, 1, 'a later visit: an ordinary chest');
-  const none = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); at(none, 'wickham_keep', 2); assert.equal(none.world.vault, undefined, 'only a vault site');
+  const none = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); at(none, 'wickham_keep', 1); assert.equal(none.world.vault, undefined, 'only a vault site');
 });
 
 // (v1.48, one dungeon a level: GDD §3, world doc v1.32 §3.1; sites.js SECRET_REST, core.js) a secret site is a land's

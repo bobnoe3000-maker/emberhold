@@ -37,7 +37,7 @@ const WHAT = args[0] && !args[0].startsWith('--') ? args[0] : 'smoke';
 const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/rig'))), DPR = +opt('--dpr', 1), SETTLE = +opt('--settle', 40);
 const HOURS = ['dawn', 'day', 'dusk', 'night'];
-const FLOORS = [['barrows', 0], ['barrows', 1], ['wickham_keep', 0], ['wickham_keep', 2], ['sunken_chapel', 0], ['sunken_chapel', 2]];
+const FLOORS = [['barrows', 0], ['barrows', 1], ['wickham_keep', 0], ['wickham_keep', 1], ['sunken_chapel', 0], ['sunken_chapel', 1]];   // (the Vale's six floors, two a dungeon: plans.js)
 const PRESETS = {
   'vale-hours': ['town', 'overland'].flatMap((scene) => HOURS.map((tod) => ({ name: `${scene}-${tod}`, scene, region: 'vale', tod, at: 'spawn' }))),
   'vale-dungeons': FLOORS.map(([site, floor]) => ({ name: `${site}-f${floor}`, scene: 'dungeon', site, floor, region: 'vale', tod: 'dusk', at: 'room' })),

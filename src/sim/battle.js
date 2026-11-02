@@ -226,7 +226,13 @@ export function halved(tgt, foes) {
  * Turn Undead (`undead`) @param {any} A @param {any[]} foes @param {any} m */
 export const novaTargets = (A, foes, m) => foes.filter((o) => !o.dead && o.hp > 0 && !(o.spawn > 0) && (!A.undead || o.undead) && hypot(o.x - m.x, o.y - m.y) < A.radius);
 /** the family filling this floor's waves @param {any} w */
-export const familyOf = (w) => { const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound; };
+/** the foes of a floor, or of one of its rooms: an authored room (plans.js) names its own (the Cutting's diggers, the Keep
+ *  Yard's goblins), else the floor's @param {any} w @param {number} [room] */
+export const familyOf = (w, room) => {
+  const r = room !== undefined && w.level && w.level.plan ? w.level.rooms.find((q) => q.id === room) : null;
+  if (r && r.family && FAMILIES[r.family]) return FAMILIES[r.family];
+  const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound;
+};
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
@@ -257,7 +263,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
   const hero = () => state.party[0];
   // whose this fight's waves are: the floor's, or in the Mere Tower the block of ten the climb is in (tower.js)
-  const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : familyOf(w));
+  const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : familyOf(w, battle ? battle.room : undefined));
   const towerK = () => towerTough(Math.max(1, battle ? battle.wave : 1)) * (1 + PREMIUM * Math.max(0, TOWER.level - 3));
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
   // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
@@ -341,7 +347,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     const tough = (1 + b.tide) * (1 + PREMIUM * Math.max(0, lvl - 3));
     const ranged = Math.max(b.wave % 2, Math.floor(n / 3));   // one in every second wave at least: two melee foes alone never touched a kiting mage
-    const F = familyOf(w);
+    const F = familyOf(w, b.room);
     const kinds = Array.from({ length: n }, (_, i) => i < ranged ? F.ranged[rng() < 0.5 ? 0 : 1] : F.melee[rng() < 0.55 ? 0 : 1]);
     const cells = b.cells, p = state.player, g = b.grid, reach = field(p.x, p.y);
     const reachable = (c) => reach[(c[1] - g.y0) * g.gw + (c[0] - g.x0)] < 65535;       // never behind a pool or pillar ring

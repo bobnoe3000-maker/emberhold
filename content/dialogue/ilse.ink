@@ -290,7 +290,7 @@ Ilse takes the shard in a cloth, not her hand. It glows faintly through the clot
     -> ilse_topics
 
 == ilse_ch4_active ==
-"The Binding Crypt, the Sunken Chapel's third floor. The standard with the lamp on it. Break the lamp, and they lie down."
+"The Binding Crypt, the Sunken Chapel's second floor. The standard with the lamp on it. Break the lamp, and they lie down."
 -> ilse_topics
 
 == ilse_ch4_turnin ==

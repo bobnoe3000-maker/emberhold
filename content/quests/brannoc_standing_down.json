@@ -16,13 +16,13 @@
   "steps": [
     {
       "id": "crypt",
-      "journal": "Go down to the Binding Crypt, the Sunken Chapel's third floor, where the bound stand in rows, and hold five waves there with Brannoc.",
+      "journal": "Go down to the Binding Crypt, the Sunken Chapel's second floor, where the bound stand in rows, and hold five waves there with Brannoc.",
       "objectives": [
         {
           "type": "waves",
           "site": "sunken_chapel",
           "count": 5,
-          "floor": 3,
+          "floor": 2,
           "label": "Waves held in the Binding Crypt"
         }
       ]

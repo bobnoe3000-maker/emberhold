@@ -16,7 +16,7 @@
   "steps": [
     {
       "id": "strongroom",
-      "journal": "Open two chests in the Barracks, Wickham Keep's second floor, where the paymaster kept his strongroom.",
+      "journal": "Open two chests in the paymaster's strongroom, off the Barracks on Wickham Keep's second floor.",
       "objectives": [
         {
           "type": "loot",

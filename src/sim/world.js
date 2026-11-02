@@ -8,8 +8,8 @@
 import { hash2, fbm, streamSeed, mulberry32, STREAM } from './rng.js';
 import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
-import { hypot, atan2, sin } from './detmath.js';
-import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt, dressAt } from './sites.js';
+import { hypot, atan2, sin, cos } from './detmath.js';
+import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt, dressAt, planFloor } from './sites.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -50,12 +50,47 @@ export const DRESS = {
   vats:     { rooms: ['vats', 'ossuary', 'vats'], decor: ['vat', 'barrels', 'bones'], obstacles: ['vat', 'pillar', 'gibbet'], pools: 2, pool: 'poison' },           // Vat Seven
   abbey:    { rooms: ['nave', 'chancel', 'crypt'], decor: ['candles', 'urns', 'saint'], obstacles: ['pillar', 'brokenpillar', 'gibbet'], pools: 1, pool: 'bog' },
 };
+// An authored room (plans.js): its kit's theme first (the furniture loop below), then the pieces its plan names, in the
+// thirds and at the walls, the middle kept open for the fight. The pieces the game has no prop for yet (stalls, troughs,
+// hives, desks, the portcullis ...) are left to the dressing pass (docs/vale-dungeons-plan.md); they stand nowhere yet.
+const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding' };
+const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', rubble: 'spoil', timbers: 'scaffold', scaffold: 'scaffold', ladders: 'scaffold', crates: 'crates', casks: 'barrels', barrows: 'sacks', sacks: 'sacks', carts: 'crates', hay: 'sacks', hen_cart: 'crates', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', font: 'font', well: 'font', banners: 'banner', skulls: 'bones', grave_goods: 'urns', ledgers: 'candles', rolls: 'candles', desks: 'crates', cage: 'gibbet' };
+function dressPlanned(r, { putAt, pickEdge, place, prng, L, Wd }) {
+  const at = (n, gap, kind) => { for (let i = 0; i < n; i++) { const q = pickEdge(gap); if (q) place(q[0], q[1], kind); } };
+  // what stands along a wall stands against it, a tile in (the plan's niches are cut into the wall; the bunks, racks and
+  // the bound line it): standing in rows inside the room they fenced off its middle, and the fight had no room to move
+  const wall = Wd - 1.5;
+  for (const d of r.dress) {
+    if (d === 'niches') { for (const side of [-1, 1]) for (let u = -L * 0.8; u <= L * 0.8 + 0.01; u += 6) putAt(u, side * wall, 'urnshelf'); }
+    else if (d === 'colonnade') { for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 8) putAt(u, side * Wd * 0.5, 'pillar'); }
+    else if (d === 'ring_of_pillars') { for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.2832; putAt(cos(a) * L * 0.62, sin(a) * Wd * 0.62, 'pillar'); } }
+    else if (d === 'circle') putAt(0, 0, 'circle');
+    else if (d === 'pews') { for (const side of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, side * Wd * v, 'pew'); }
+    else if (d === 'bunks') { for (const side of [-1, 1]) for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) putAt(u, side * wall, 'bunk'); }
+    else if (d === 'tents') { for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 14) putAt(u, -(Wd - 3), 'tent'); }
+    else if (d === 'stalls') { for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 8) putAt(u, -wall, 'rack'); }
+    else if (d === 'racks') { for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 7) putAt(u, -wall, 'rack'); }
+    else if (d === 'standards') { for (const side of [-1, 1]) putAt(side * L * 0.6, -wall, 'standard'); }
+    else if (d === 'braziers' || d === 'cookfires' || d === 'camp') { for (const side of [-1, 1]) putAt(side * L * 0.4, d === 'braziers' ? -Wd * 0.4 : Wd * 0.1, 'brazier'); }
+    else if (d === 'sarcophagi') { for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 9) putAt(u, side * (Wd - 4), 'sarcophagus'); }
+    else if (d === 'sarcophagus_open') putAt(0, -Wd * 0.3, 'sarcophagus');
+    else if (d === 'guardians') { for (const side of [-1, 1]) putAt(side * L * 0.3, -Wd * 0.35, 'saint'); }
+    else if (d === 'bound') { for (const side of [-1, 1]) for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 5) putAt(u, side * wall, 'bound'); }
+    else if (d === 'stalagmites') at(6, 5, 'stalagmite');
+    else if (d === 'altar' || d === 'altar_small') putAt(L * 0.55, 0, 'altar');
+    else if (d === 'chest' || d === 'chests') at(d === 'chests' ? 2 : 1, 6, 'chest');
+    else if (d === 'shrine') { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
+    else if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'rubble' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
+  }
+  void prng;
+}
+
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
 export const FLAT_PROPS = new Set(['cage', 'circle']);
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
-  const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout });
+  const level = generateLevel(seed, th, { rooms: S.rooms, layout: S.layout, plan: planFloor(site, depth) });   // (an authored floor: plans.js)
   const world = {
     kind: 'dungeon', seed, theme: th, depth, level, site, siteName: S.name, kit,
     ss: streamSeed(seed, 131),            // floor-material selector
@@ -123,7 +158,11 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     const along = r.rw >= r.rh, L = along ? r.rw : r.rh, Wd = along ? r.rh : r.rw;
     const at = (u, v) => along ? [Math.round(r.cx + u), Math.round(r.cy + v)] : [Math.round(r.cx + v), Math.round(r.cy + u)];
     const putAt = (u, v, kind) => { const [x, y] = at(u, v); if (!nearDoor(x, y)) place(x, y, kind); };
-    if (r === level.descentRoom) {
+    if (r.dress) {                                                // an authored room (plans.js): its kit's theme, then the pieces it names
+      const theme = r === level.entrance ? null : PLAN_THEME[r.shape === 'cave' && r.kit === 'cellar' ? 'cave' : r.kit] || null;
+      r.theme = theme;
+      dressPlanned(r, { putAt, pickEdge, place, prng, L, Wd });
+    } else if (r === level.descentRoom) {
       const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
     } else if (r !== level.entrance) {
       const theme = themes[(prng() * 3) | 0];
@@ -207,6 +246,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
         if (place(x, y, OB[(orng() * OB.length) | 0])) got++;
       }
     }
+    if (r.dress) continue;                                        // (an authored room's chests, shrine and decor are its plan's)
     const nDecor = r === level.entrance ? 1 : 1 + ((prng() * 2) | 0);
     for (let i = 0; i < nDecor; i++) { const q = pickEdge(12); if (q) place(q[0], q[1], decor[(prng() * decor.length) | 0]); }
     if (prng() < 0.55) { const q = pickEdge(8); if (q) place(q[0], q[1], 'chest'); }
@@ -220,17 +260,17 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // single floor, the same every visit, and Brannoc's paymaster hid his coin in its chests): about one
   // a floor, now and then two or three.
   const keep = mulberry32(streamSeed(seed, 323)), chests = [...world.props].filter(([, kind]) => kind === 'chest').map(([k]) => k);
-  const kept = chests.filter(() => keep() < CHEST_KEEP);
+  const kept = level.plan ? chests : chests.filter(() => keep() < CHEST_KEEP);   // (an authored floor's chests are where its plan puts them)
   if (!kept.length && chests.length) kept.push(chests[Math.floor(keep() * chests.length)]);
   for (const k of chests) if (!kept.includes(k)) world.props.delete(k);
   // A kit's standing water (v1.48): a pool or two in a fighting room, shallow and walkable, on their own stream so the
   // rest of the floor stands where it did. Each a blob of open floor away from the doorways' mouths; never under a prop.
   world.pools = new Set();
-  if (KIT && KIT.pools) {
+  if ((KIT && KIT.pools) || level.plan) {
     const wrng = mulberry32(streamSeed(seed, 325));
     for (const r of level.rooms) {
-      if (r === level.entrance || r === level.descentRoom) continue;
-      const n = (wrng() * (KIT.pools + 1)) | 0;
+      if (level.plan ? !(r.dress && r.dress.includes('pools')) : r === level.entrance || r === level.descentRoom) continue;   // (authored: where the plan floods)
+      const n = level.plan ? 2 + ((wrng() * 2) | 0) : (wrng() * (KIT.pools + 1)) | 0;
       for (let i = 0; i < n; i++) {
         const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = 1.6 + wrng() * 1.8, ph = wrng() * 6.28;
         for (let y = Math.floor(cy - rad - 1); y <= Math.ceil(cy + rad + 1); y++) for (let x = Math.floor(cx - rad - 1); x <= Math.ceil(cx + rad + 1); x++) {
@@ -289,6 +329,11 @@ function rankRooms(level, depth, site) {
       const nk = K(x + dx, y + dy), n = cells.get(nk);
       if (n && n.kind === 'floor' && !dist.has(nk)) { dist.set(nk, d + 1); q.push(nk); }
     }
+  }
+  if (level.plan) {                                              // an authored floor: each space at its plan's level (plans.js lv)
+    const S = siteOf(site);
+    for (const r of rooms) out.set(r.id, r === entrance ? 0 : S.flat ? S.base : S.base + r.lv);
+    return out;
   }
   const ranked = rooms.filter((r) => r !== entrance)
     .sort((a, b) => (a === level.descentRoom) - (b === level.descentRoom) || (best.get(a.id) ?? 1e9) - (best.get(b.id) ?? 1e9) || a.id - b.id);

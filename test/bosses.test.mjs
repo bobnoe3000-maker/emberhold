@@ -1,7 +1,8 @@
 // Bosses (M5, docs/m5-plan.md §3): a floor's stairs-down hall opens with its boss; each has one
 // signature mechanic; once the boss falls the room goes quiet for the visit; a story boss falls for
 // good (the save keeps it), the Standard comes back every visit; a first fall leaves its heirloom. (v1.48, one dungeon a
-// level) Garrow holds the Keep's third floor; the Quartermaster, who re-issues his ranks, the Old Barrows' third.
+// level) Garrow holds the Keep's last floor; the Quartermaster, who re-issues his ranks, the Old Barrows' last. (2026-11-02:
+// the Vale's dungeons are two floors, authored: docs/vale-dungeons-plan.md.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
@@ -28,9 +29,9 @@ function fight(sim, until, secs = 240) {
   for (let i = 0; i < secs * 20 && !until(); i++) { for (const m of sim.state.party) if (!m.down) m.hp = Math.max(m.hp, statsFor(m).maxHp * 0.6); sim.tick(); }
 }
 
-test('Wickham Keep: Captain Garrow opens his hall on the third floor, calls his men twice, falls once and for good', () => {
+test('Wickham Keep: Captain Garrow opens his hall on the second floor, the last, calls his men twice, falls once and for good', () => {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); party(sim); sim.tick();
-  down(sim); down(sim); assert.equal(sim.state.depth, 2); assert.ok(!sim.world.stairsAt, 'the last floor: no way down');
+  down(sim); assert.equal(sim.state.depth, 1); assert.ok(!sim.world.stairsAt, 'the last floor: no way down');
   const ev = []; for (const k of ['bossWave', 'bossCall', 'bossDown', 'loot']) sim.bus.on(k, (e) => ev.push([k, e]));
   intoHall(sim); fight(sim, () => ev.some(([k]) => k === 'bossDown'));
   assert.deepEqual(ev.filter(([k]) => k === 'bossWave').map(([, e]) => e.id), ['redhand_captain']);
@@ -44,7 +45,7 @@ test('Wickham Keep: Captain Garrow opens his hall on the third floor, calls his 
   // a new visit: his hall fights as any other (he fell for good), and a reload keeps that
   const back = createSim(1); back.restore(JSON.parse(JSON.stringify(sim.snapshot()))); assert.equal(back.state.bosses.redhand_captain, 1);
   const again = createSim(SEED, undefined, { scene: 'dungeon', site: 'wickham_keep' }); again.restore(JSON.parse(JSON.stringify(sim.snapshot())));
-  assert.equal(again.state.depth, 2, 'back on his floor'); let spawned = false; again.bus.on('bossWave', () => { spawned = true; });
+  assert.equal(again.state.depth, 1, 'back on his floor'); let spawned = false; again.bus.on('bossWave', () => { spawned = true; });
   const p = again.state.player, a = again.world.level.entrance; p.x = p.px = a.cx + 0.5; p.y = p.py = a.cy + 0.5; again.tick();
   intoHall(again); fight(again, () => again.battle && again.battle.wave >= 2, 60);
   assert.ok(!spawned, 'no Garrow the second time');
@@ -61,19 +62,19 @@ test('half damage: Garrow while his called men stand; the Ashbound near a standi
 
 test('the Standard comes back every visit; the Stranger kindles the slain', () => {
   assert.ok(!BOSSES.standard.once && BOSSES.redhand_captain.once && BOSSES.robed_stranger.once);
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim); sim.tick(); down(sim);
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'sunken_chapel' }); party(sim); sim.tick();   // (the Stranger: the Chancel, the first floor's hall)
   const ev = []; for (const k of ['bossWave', 'bossKindle', 'bossDown']) sim.bus.on(k, (e) => ev.push(k));
   intoHall(sim); fight(sim, () => ev.includes('bossDown'), 300);
   assert.ok(ev.includes('bossWave') && ev.includes('bossDown'));
   assert.ok(ev.includes('bossKindle'), 'the fallen rose again at least once');
 });
 
-// (v1.48, one dungeon a level: GDD §17, world doc v1.32) the Old Barrows end in the Quartermaster's hall, on their third floor
+// (v1.48, one dungeon a level: GDD §17, world doc v1.32) the Old Barrows end in the Quartermaster's hall, on their last floor
 test('the Quartermaster: every 10 s the most hurt of his ranks stands up whole, never himself; he falls, and comes back', () => {
-  assert.deepEqual([0, 1, 2].map((d) => bossAt('barrows', d)), [null, null, 'quartermaster']);
+  assert.deepEqual([0, 1].map((d) => bossAt('barrows', d)), [null, 'quartermaster']);
   assert.ok(!BOSSES.quartermaster.once && BOSSES.quartermaster.undead);
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim); sim.tick();
-  down(sim); down(sim); assert.equal(sim.state.depth, 2); assert.ok(!sim.world.stairsAt, 'the last floor: no way down');
+  down(sim); assert.equal(sim.state.depth, 1); assert.ok(!sim.world.stairsAt, 'the last floor: no way down');
   const ev = []; for (const k of ['bossWave', 'bossIssue', 'bossDown']) sim.bus.on(k, (e) => ev.push([k, e]));
   const hold = () => { for (const m of sim.state.party) m.cd = 99; };                                  // (the party holds its blows while we watch)
   const Q = () => (sim.world.enemies || []).find((e) => e.boss === 'quartermaster' && e.hp > 0);
@@ -98,7 +99,7 @@ test('the Quartermaster: every 10 s the most hurt of his ranks stands up whole, 
   assert.equal(sim.state.bosses.quartermaster, 1);
   // a new visit: he's back in his hall (not a story boss)
   const again = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); again.restore(JSON.parse(JSON.stringify(sim.snapshot())));
-  assert.equal(again.state.depth, 2, 'back on his floor'); let back = null; again.bus.on('bossWave', (e) => { back = e.id; });
+  assert.equal(again.state.depth, 1, 'back on his floor'); let back = null; again.bus.on('bossWave', (e) => { back = e.id; });
   intoHall(again); fight(again, () => !!back, 60);
   assert.equal(back, 'quartermaster', 'the Quartermaster again');
 });

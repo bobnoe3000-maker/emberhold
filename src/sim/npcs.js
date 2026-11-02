@@ -50,7 +50,7 @@ export const NPCS = {
   jory: { region: 'vale', folk: true, spots: [['hub', [8, 17]], ['inn', [10, 9]]], day: [0, 1, 0, 1], knot: 'jory_hub', flags: ['met_jory'] },
   nell_tolley: { region: 'vale', folk: true, spots: [['inn', [-1, 5]], ['hub', [1, 22]]], day: [1, 0, 0, 0], knot: 'nell_hub', flags: ['met_nell'] },
   hedda: { region: 'vale', folk: true, spots: [['hub', [21, 14]], ['shop', [1, 14]]], day: [0, 0, 1, 1], knot: 'hedda_hub', flags: ['met_hedda'] },
-  brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 2, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
+  brannoc: { region: 'vale', found: { site: 'wickham_keep', depth: 1, boss: 'redhand_captain' }, spots: [], knot: 'brannoc_hub', flags: ['met_brannoc'] },
   // (M8, Act II; world doc v1.29 §3.2) Saltmere's people: Dace Pike by the Drowned Eel, Pim's handcart by the cistern,
   // Sister Orla and Mother Agnes by the chapel
   dace_pike: { region: 'fens', spots: [['tavern', [10, 2]]], knot: 'dace_hub', flags: ['met_dace'] },

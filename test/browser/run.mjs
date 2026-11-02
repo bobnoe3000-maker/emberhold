@@ -1469,10 +1469,13 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     const walled = await p.evaluate(() => {
       const H = globalThis.__world3d, W = H.world, cv = document.querySelector('#world3d canvas'), gl = cv.getContext('webgl2'), orig = W.frame, s = globalThis.__sim, P = s.state.player, o = H.origin, C = s.world.level.cells;
       const floor = (x, y) => C.get(x + ',' + y)?.kind === 'floor';
+      // (a wall standing full height: a knee-high stub, cut so the camera sees the floor behind it, hides nothing; the
+      // Vale's authored floors, 2026-11-02, put stubs nearer the fight than the generated ones did)
+      const tall = (x, y) => { const c = C.get(x + ',' + y); return !!c && c.kind === 'wall' && (c.wz ?? 7) >= 7; };
       let best = null;
       for (let dy = -40; dy <= 40; dy++) for (let dx = -40; dx <= 40; dx++) {
         const x = Math.floor(P.x) + dx, y = Math.floor(P.y) + dy, d = Math.hypot(dx, dy);
-        if (!floor(x, y) && (floor(x + 1, y) || floor(x, y + 1)) && (!best || d < best.d)) best = { x, y, d };
+        if (tall(x, y) && (floor(x + 1, y) || floor(x, y + 1)) && (!best || d < best.d)) best = { x, y, d };
       }
       const at = W.project((best.x + 0.5 - o.x) / 2, 3.0, (best.y + 0.5 - o.y) / 2), side = 24, base = Math.floor(P.x + P.y) - 64;
       let key = 0;

@@ -1,6 +1,6 @@
 // Act I, Smoke over the Vale (M5, docs/m5-plan.md §4; world doc §6): three chapters in order. The Redhand's
 // dig at the Old Barrows' mouth (its first floor; v1.48, it was the Tithe Mill) for Maudry, handed in to Osric;
-// Captain Garrow on Wickham Keep's third floor (open from the start since v1.48: nothing to reveal) for Osric; the
+// Captain Garrow on Wickham Keep's last floor (its second, 2026-11-02) (open from the start since v1.48: nothing to reveal) for Osric; the
 // Robed Stranger in the Sunken Chapel for Osric, handed in to Sister Ilse. Each is taken only from its
 // giver and handed in only to its taker, only in order; a chapter can't be abandoned; a boss who fell
 // before the chapter was taken still counts.
@@ -57,11 +57,10 @@ test('Act I from start to finish: the barrows, the Keep, the chapel, in order, e
   talk(sim, 'osric_hale'); say(sim, 'turnin', 'ch1_smoke_over_the_vale');
   assert.equal(st(sim, 'ch1_smoke_over_the_vale'), QS.DONE); assert.deepEqual(revealed, [], 'nothing to reveal: the Keep was never hidden (v1.48)');
 
-  // 2. The Diggers: Osric; down to the Keep's third floor (the Old Cellars), then Garrow
+  // 2. The Diggers: Osric; down to the Keep's second floor (the Old Cellars), then Garrow
   say(sim, 'accept', 'ch1_the_diggers'); assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE);
-  goTo(sim, 'wickham_keep'); down(sim); assert.equal(sim.state.depth, 1);
-  assert.equal(sim.state.quests.ch1_the_diggers.step, 0, 'the second floor is not the cellars');
-  down(sim); assert.equal(sim.state.depth, 2);
+  goTo(sim, 'wickham_keep'); assert.equal(sim.state.quests.ch1_the_diggers.step, 0, 'the Bailey is not the cellars');
+  down(sim); assert.equal(sim.state.depth, 1);
   assert.equal(sim.state.quests.ch1_the_diggers.step, 1, 'on to Garrow');
   fightIn(sim, (L) => L.descentRoom, () => st(sim, 'ch1_the_diggers') === QS.READY);
   assert.equal(st(sim, 'ch1_the_diggers'), QS.READY); assert.equal(sim.state.bosses.redhand_captain, 1);
@@ -69,7 +68,7 @@ test('Act I from start to finish: the barrows, the Keep, the chapel, in order, e
 
   // 3. An Ember in the Fist: from Osric, handed in to Sister Ilse
   say(sim, 'accept', 'ch1_ember_in_the_fist'); assert.equal(st(sim, 'ch1_ember_in_the_fist'), QS.ACTIVE);
-  goTo(sim, 'sunken_chapel'); down(sim);
+  goTo(sim, 'sunken_chapel');                                       // (2026-11-02: the Stranger at the Chancel, the first floor's hall)
   fightIn(sim, (L) => L.descentRoom, () => st(sim, 'ch1_ember_in_the_fist') === QS.READY);
   talk(sim, 'osric_hale'); say(sim, 'turnin', 'ch1_ember_in_the_fist'); assert.equal(st(sim, 'ch1_ember_in_the_fist'), QS.READY, 'not Osric: Ilse');
   talk(sim, 'sister_ilse'); say(sim, 'turnin', 'ch1_ember_in_the_fist'); assert.equal(st(sim, 'ch1_ember_in_the_fist'), QS.DONE);
@@ -84,9 +83,9 @@ test('a boss who fell before his chapter was taken still counts; Ink reads a cha
   sim.state.party[0].level = 5;
   sim.state.bosses.redhand_captain = 1;
   talk(sim, 'osric_hale'); say(sim, 'accept', 'ch1_the_diggers');
-  // the first step (reach floor 3) still wants walking; Garrow is counted when it's reached
+  // the first step (reach floor 2, the cellars) still wants walking; Garrow is counted when it's reached
   assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE);
-  goTo(sim, 'wickham_keep'); down(sim); assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE, 'the second floor is not enough');
+  goTo(sim, 'wickham_keep'); assert.equal(st(sim, 'ch1_the_diggers'), QS.ACTIVE, 'the first floor is not enough');
   down(sim);
   assert.equal(st(sim, 'ch1_the_diggers'), QS.READY, 'reaching the floor was the last thing left: Garrow already fell');
   let got = null; sim.bus.on('dialogue', (e) => { got = e.vars; });

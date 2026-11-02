@@ -355,15 +355,22 @@ function dungeon(w) {
   const X = (x) => r2((x - x0) / 2), Z = (y) => r2((y - y0) / 2);
   const look = KIT_LOOK[w.kit] || THEME_LOOK[w.theme] || DEFAULT_LOOK;
   const tiles = grid(W, D, look.wall), heights = grid(W, D, '6'), pools = w.pools || new Set();
+  // an authored floor (plans.js) is dressed room by room: each room in its own kit's stone (the Keep's barracks in dressed
+  // stone, its cellars' cave in rock), a dug room (a 'cave') walled in rock whatever its kit; the halls in the floor's
+  const L = w.level, roomLook = (c) => {
+    const r = L.plan && c && c.room >= 0 ? L.rooms[c.room] : null; if (!r) return look;
+    const k = KIT_LOOK[r.kit] || look; return r.shape === 'cave' ? { ...k, wall: 'x' } : k;
+  };
+  const looks = new Array(W * D).fill(null);
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
   for (let j = 0; j < D; j++) for (let i = 0; i < W; i++) {
-    let floor = 0, wet = 0;
+    let floor = 0, wet = 0, lk = null;
     for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
       const k = `${x0 + 2 * i + dx},${y0 + 2 * j + dy}`, c = cells.get(k);
-      if (c && c.kind === 'floor') floor++;
+      if (c && c.kind === 'floor') { floor++; if (!lk || c.room >= 0) lk = roomLook(c); }
       if (pools.has(k)) wet++;
     }
-    if (floor) { tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < 18 ? look.floor[1] : look.floor[0]; heights[j][i] = '2'; }
+    if (floor) { looks[j * W + i] = lk; tiles[j][i] = wet >= 2 ? 'P' : hash('d', i, j) % 100 < 18 ? lk.floor[1] : lk.floor[0]; heights[j][i] = '2'; }
   }
   // the rock beyond the walls is nothing, as Emberlit draws it: only the ring of wall round the floor stands, the rest
   // void (black), not a sea of lit wall-tops
@@ -372,7 +379,9 @@ function dungeon(w) {
     if (heights[j][i] === '2') continue;
     let near = false;
     for (let dj = -1; dj <= 1 && !near; dj++) for (let di = -1; di <= 1 && !near; di++) near = open(i + di, j + dj);
-    if (!near) { tiles[j][i] = ' '; heights[j][i] = '0'; }
+    if (!near) { tiles[j][i] = ' '; heights[j][i] = '0'; continue; }
+    // a wall in the stone of the room it stands by (an authored floor's rooms differ; elsewhere the floor's one look)
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const n = open(i + di, j + dj) ? looks[(j + dj) * W + i + di] : null; if (n && n !== look) { tiles[j][i] = n.wall; dj = di = 2; } }
   }
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
   const objects = [], count = {}, sprites = [];

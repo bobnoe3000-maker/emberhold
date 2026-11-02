@@ -1,6 +1,6 @@
 // The Redhand Company (M5, world doc §8): each site's waves come from its family (battle.js FAMILIES).
-// (v1.48, one dungeon a level) Bandits on Wickham Keep's first two floors, the diggers (bandits and the dead they dug
-// up) in its Old Cellars, its third floor, and at the Old Barrows' mouth, their first; the Ashbound below that; the
+// (v1.48, one dungeon a level) Bandits on Wickham Keep's floors, the diggers (bandits and the dead they dug up) in its
+// Old Cellars and the cave under them (2026-11-02: rooms of its second floor, plans.js), and at the Old Barrows' mouth; the Ashbound below that; the
 // Ashbound and the Cinder Cult's acolytes in the Sunken Chapel. Turn Undead reaches only the Ashbound.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,13 +36,20 @@ test('each site fills its waves from its own family, floor by floor', () => {
   assert.ok(chapel.size && [...chapel.keys()].every((k) => ['minion', 'warrior', 'rogue', 'acolyte'].includes(k)), `the chapel: ${[...chapel.keys()]}`);
 });
 
-test('the Keep\'s third floor (the Old Cellars) and the Barrows\' first are the diggers\'; a floor picks its family', () => {
+test('the Keep\'s Old Cellars and the cave under them, and the Barrows\' Cutting, are the diggers\'; a floor or a room picks its family', () => {
   assert.equal(familyOf({ site: 'wickham_keep', depth: 0 }), FAMILIES.redhand);
   assert.equal(familyOf({ site: 'wickham_keep', depth: 1 }), FAMILIES.redhand);
-  assert.equal(familyOf({ site: 'wickham_keep', depth: 2 }), FAMILIES.diggers);
   assert.equal(familyOf({ site: 'barrows', depth: 0 }), FAMILIES.diggers);
   assert.equal(familyOf({ site: 'barrows', depth: 1 }), FAMILIES.ashbound);
-  assert.equal(familyOf({ site: 'barrows', depth: 2 }), FAMILIES.ashbound);
+  // (2026-11-02) an authored room names its own: the diggers in the cellars and the cave, the bandits in the barracks; the
+  // dead from the Breach on, past the Redhand's Cutting; Old Skarn's goblins in the Keep Yard
+  const room = (site, depth, part) => { const w = createWorld(20260807, undefined, depth, site); return familyOf(w, w.level.rooms.find((r) => r.part === part).id); };
+  assert.equal(room('wickham_keep', 1, 'barracks'), FAMILIES.redhand);
+  assert.equal(room('wickham_keep', 1, 'old_cellars'), FAMILIES.diggers);
+  assert.equal(room('wickham_keep', 1, 'cellar_cave'), FAMILIES.diggers);
+  assert.equal(room('wickham_keep', 0, 'keep_yard'), FAMILIES.goblin);
+  assert.equal(room('barrows', 0, 'the_cutting'), FAMILIES.diggers);
+  assert.equal(room('barrows', 0, 'the_breach'), FAMILIES.ashbound);
   assert.ok(FAMILIES.diggers.undead('minion') && !FAMILIES.diggers.undead('cutthroat'));
 });
 

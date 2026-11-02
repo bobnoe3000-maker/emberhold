@@ -26,7 +26,7 @@ import { mulberry32, streamSeed, STREAM } from './rng.js';
 import { DAY_S } from './heroes.js';
 import { QS } from './quests.js';
 import { ROOM_LEVELS_PER_FLOOR } from './world.js';
-import { SITES, SITE_IDS } from './sites.js';
+import { SITES, SITE_IDS, bandTop } from './sites.js';
 import { levelShare } from './party.js';
 
 export const MAX_JOBS = 3;                 // board jobs open (active or ready) at once
@@ -103,8 +103,10 @@ export function boardOffers(seed, day, lv, half = 0) {
 // floor's stair hall. A floor's and a hall's level are the dungeon's own (sites.js roomLevelAt: a band's floor is its
 // base + floor − 1, and the hall keeps its floor's level). The Vale's posting keeps its stream and its ids; Saltmere's
 // has its own (M8), so nothing one land draws moves the other's.
+// (2026-11-02) an authored band (sites.js `plan`, plans.js) spans three levels over two floors: a floor's first rooms at
+// base + floor − 1, its hall a level up (floor 1's hall base + 1, floor 2's the band's top)
 const siteFloorLv = (S, f) => (S.band ? S.base + (f - 1) : S.base + S.perFloor * (f - 1));
-const siteHallLv = (S, f) => (S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
+const siteHallLv = (S, f) => (S.plan && S.band ? S.base + f : S.band ? siteFloorLv(S, f) : siteFloorLv(S, f) + Math.floor(((S.rooms ? S.rooms[1] : 6) - 2) / 2));
 const landSites = (region) => SITE_IDS.filter((id) => SITES[id].region === region && SITES[id].band && !SITES[id].hidden && !SITES[id].parked);
 /** @type {Record<string, (S: any, rng: () => number, lv: number) => ({ s: Size, target: number } | null)>} */
 const LAND_SIZE = {
@@ -120,7 +122,7 @@ const LAND_EFFORT = { hold: (s) => s.n, retrieve: (s) => 2 * s.n, bounty: (s) =>
 function landOffers(seed, day, lv, half, region) {
   const fens = region === 'fens';
   const rng = mulberry32(streamSeed(seed ^ Math.imul(day + 1, 0x9e3779b1) ^ (half ? 0x5d0c4e17 : 0) ^ (fens ? 0x7e55 : 0), STREAM.BOARD));
-  const all = landSites(region), at = all.findIndex((id) => SITES[id].base <= lv && lv <= SITES[id].base + SITES[id].floors - 1);
+  const all = landSites(region), at = all.findIndex((id) => SITES[id].base <= lv && lv <= bandTop(SITES[id]));
   const yours = at >= 0 ? at : lv < SITES[all[0]].base ? 0 : all.length - 1, sites = yours > 0 ? [all[yours], all[yours], all[yours - 1]] : [all[yours]];
   const pool = [...TEMPLATES];
   for (let i = pool.length - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }

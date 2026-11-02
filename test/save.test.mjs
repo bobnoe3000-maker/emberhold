@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { migrate, metaOf, SAVE_VERSION, SLOTS } from '../src/persist/save.js';
 import { createSim } from '../src/sim/core.js';
 
-test('three game slots, save v32', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 32); });
+test('three game slots, save v33', () => { assert.equal(SLOTS, 3); assert.equal(SAVE_VERSION, 33); });
 test('a v3 save migrates with its meta; junk is refused', () => {
   const data = createSim(7).snapshot();
   const m = migrate({ version: 3, savedAt: 5, data });
@@ -169,4 +169,29 @@ test('v31 → v32: the quests whose steps changed restart cleanly; finished ones
   assert.deepEqual(migrate({ version: 31, savedAt: 1, data: { ...base, quests: done } }).data.quests, done, 'finished, or ready, kept');
   const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
   assert.deepEqual(r.state.quests.ch2_the_sickpools, { st: 1, step: 1, n: [0] }, 'on to the Vatwarden');
+});
+
+// v33 (2026-11-02, docs/vale-dungeons-plan.md): the Vale's dungeons authored, two floors each. A visit in one starts again at
+// its first floor's way in (its floors are new; a third floor is gone); a Vale board job under way is let go, the Fens' kept;
+// a save anywhere else, and every quest, as it was
+test('v32 → v33: a visit in a Vale dungeon starts again at its first floor; Vale board jobs under way let go; the rest kept', async () => {
+  const { plansFor33 } = await import('../src/persist/save.js');
+  const base = JSON.parse(JSON.stringify(createSim(20260807, undefined, { scene: 'town' }).snapshot()));
+  const quests = { board_4_5_0: [1, 0, 2], board_4_5_1: [3, 0, 3], board_4_12_0_fens: [1, 0, 1], brannoc_standing_down: [1, 0, 3] };
+  for (const [site, depth] of [['wickham_keep', 2], ['barrows', 1], ['sunken_chapel', 2]]) {
+    const old = { ...base, scene: 'dungeon', site, region: 'vale', depth, quests, mods: [['10,10', { opened: true }]], discovered: [0, 1], floors: [[0, { mods: [], hp: [], discovered: [0], visited: [] }]], player: { ...base.player, x: 150, y: 150 } };
+    const m = migrate({ version: 32, savedAt: 1, data: old });
+    assert.equal(m.version, SAVE_VERSION);
+    assert.equal(m.data.depth, 0, `${site}: its first floor`); assert.deepEqual([m.data.mods, m.data.discovered, m.data.floors], [[], [], []], `${site}: a fresh visit`);
+    assert.deepEqual(m.data.quests, { board_4_5_1: [3, 0, 3], board_4_12_0_fens: [1, 0, 1], brannoc_standing_down: [1, 0, 3] }, `${site}: the Vale's job under way let go`);
+    const r = createSim(20260807, undefined, { scene: 'town' }); r.restore(m.data);
+    assert.equal(r.world.kind, 'dungeon'); assert.equal(r.world.site, site); assert.equal(r.world.depth, 0); assert.ok(r.world.level.plan, `${site}: built from its plan`);
+    const c = r.world.level.cells.get(Math.floor(r.state.player.x) + ',' + Math.floor(r.state.player.y));
+    assert.ok(c && c.room === r.world.level.entrance.id, `${site}: standing in its way in`);
+    assert.deepEqual(plansFor33(m.data), m.data, 'once');
+  }
+  const fens = migrate({ version: 32, savedAt: 1, data: { ...base, scene: 'dungeon', site: 'canal_locks', region: 'fens', depth: 2 } });
+  assert.equal(fens.data.depth, 2, 'a Fens visit as it was');
+  const town = migrate({ version: 32, savedAt: 1, data: { ...base } });
+  assert.equal(town.data.scene, base.scene);
 });

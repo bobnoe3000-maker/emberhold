@@ -146,8 +146,10 @@ if (snapped.tx !== 5 || snapped.ty !== 5 || lid.tx !== 5 || lid.ty !== 5) isoOk 
 import { STARTER } from './src/sim/items.js';
 import { makeHero, makeMember } from './src/sim/party.js';
 // The contract is measured against the Ashbound, as it always was: since v1.48 the Barrows' first floor is the Redhand's
-// dig (sites.js families), so the visit goes down to the Long Gallery, the Ashbound's first floor there.
-const ASHBOUND_FLOOR = 2;
+// dig (sites.js families), so the visit went down to the Long Gallery, the Ashbound's first floor there. (2026-11-02) The
+// Barrows are authored (plans.js): the dead stand up from the Breach on, on the first floor, a large room that isn't a
+// hall (the Long Gallery is a gallery now, 78 × 20; the second floor's large room is the Quartermaster's)
+const ASHBOUND_FLOOR = 1;
 function downStairs(sim) { const t = sim.world.stairsAt, p = sim.state.player; p.x = p.px = t.x + 0.5; p.y = p.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }
 function roomVisit({ seed = 20260807, classes = ['fighter'], lv = 1, rl = lv, gear = lv, rarity = 'common', secs = 300 }) {
   const sim = createSim(seed, undefined, { scene: 'dungeon' });
@@ -209,10 +211,11 @@ const band15Ok = solo15.every((v) => v.defeated && v.waves <= 2) && up15.every((
 console.log('a lone hero is down within 2 waves, and a room 3 up defeats the right party (L12/15):', band15Ok, [...solo15, ...up15].map(show).join(', '));
 const holdOk = solo1Ok && solo6Ok && rightOk && noHealOk && up3Ok && compOk && gearOk2 && right15Ok && band15Ok;
 const rl = createSim(20260807, undefined, { scene: 'dungeon' }).world, rlv = [...rl.roomLevels.values()];
-// (v1.48, one dungeon a level) the Old Barrows' first floor: its rooms level 1, the two before its hall level 2, its hall 1
-const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && Math.min(...rlv.filter(Boolean)) === 1 && Math.max(...rlv) === 2 && rl.roomLevels.get(rl.level.descentRoom.id) === 1
-  && rlv.filter((v) => v === 2).length === 2;
-console.log('room levels (entrance safe; floor 1 at 1, the two rooms before its hall at 2):', roomLvOk, rlv.join(','));
+// (2026-11-02, the Vale authored: plans.js) the Old Barrows' first floor: the Cutting and the Breach at 1, the Robbed Tomb
+// (the offshoot) and the hall a level up, at 2; the entrance safe
+const roomLvOk = rl.roomLevels.get(rl.level.entrance.id) === 0 && rl.roomLevels.get(rl.level.descentRoom.id) === 2
+  && rlv.filter((v) => v === 1).length === 2 && rlv.filter((v) => v === 2).length === 2;
+console.log('room levels (entrance safe; floor 1\'s rooms at 1, its offshoot and hall at 2):', roomLvOk, rlv.join(','));
 
 // Tap to move: tap a far room → the hero paths there; tap a distant chest → walks up and loots it.
 const tw = createSim(20260807, undefined, { scene: 'dungeon' }), twp = tw.state.player;

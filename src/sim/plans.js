@@ -10,7 +10,7 @@
 // tools/dungeon/vale-plans.mjs and held to their rules by test/plans.test.mjs.
 //
 // A floor is up to five SPACES (the entrance, the rooms, a large corridor such as the Long Gallery, an offshoot) joined
-// by HALLS, which are safe ground (GDD §3.1), 8 tiles wide or more, 8–14 long. Tiles are the sim's (two to Luminati's
+// by HALLS, which are safe ground (GDD §3.1), 10 tiles wide (the owner, 2026-11-02: "halls 10"), 8–14 long. Tiles are the sim's (two to Luminati's
 // unit). x runs east, y south; the camera looks from the south-east (+x+y), so a floor's entrance sits up-screen at its
 // north-west, its back walls standing for the stair up, and the way runs on down-screen to the descent room.
 //
@@ -27,7 +27,7 @@
 /** @typedef {{ name: string, spaces: Space[], halls: Hall[] }} Floor */
 /** @typedef {{ site: string, name: string, kind: string, base: number, flat?: boolean, floors: Floor[] }} Plan */
 
-export const PLAN_RULES = Object.freeze({ maxSpaces: 5, maxFloors: 2, hallMinW: 8, hallMaxLen: 14, small: [18, 26], medium: [28, 38], large: [40, 62], gallery: [60, 80] });
+export const PLAN_RULES = Object.freeze({ maxSpaces: 5, maxFloors: 2, hallMinW: 10, hallMaxLen: 14, small: [18, 26], medium: [28, 38], large: [40, 62], gallery: [60, 80] });
 
 /** @type {Record<string, Plan>} */
 export const PLANS = {
@@ -38,17 +38,17 @@ export const PLANS = {
         dress: ['camp', 'tents', 'spoil', 'lanterns', 'crates'], note: 'The Redhand\'s camp at the door: two tents, a cookfire, spoil heaps, their crates. The stair up is the dug ramp to daylight in the north wall.' },
       { id: 'the_cutting', name: 'The Cutting', role: 'room', x: 42, y: 0, w: 36, h: 30, shape: 'cave', lv: 0, kit: 'dig', foes: 'diggers',
         dress: ['timbers', 'spoil', 'lanterns', 'barrows'], note: 'The Redhand\'s trench through the mound: earth walls shored with timbers, barrows of spoil, lanterns on poles. The diggers still at it.' },
-      { id: 'the_breach', name: 'The Breach', role: 'room', x: 36, y: 40, w: 58, h: 24, shape: 'rect', lv: 0, kit: 'gallery', foes: 'ashbound',
+      { id: 'the_breach', name: 'The Breach', role: 'room', x: 36, y: 40, w: 56, h: 52, shape: 'rect', lv: 0, kit: 'gallery', foes: 'ashbound',
         dress: ['rubble', 'niches', 'candles', 'spoil'], note: 'Where the dig broke into the barrow\'s built passage: its west end raw earth and rubble, its east end dressed stone, the first niches, the first of the dead standing up.' },
       { id: 'robbed_tomb', name: 'The Robbed Tomb', role: 'offshoot', x: 80, y: 8, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'gallery', foes: 'ashbound',
-        dress: ['sarcophagus_open', 'grave_goods', 'candles', 'chest'], note: 'A burial chamber the Redhand found first: the lid off, the grave goods scattered, what they missed in a chest. A fragment of the Chronicle.' },
-      { id: 'barrow_door', name: 'The Barrow Door', role: 'descent', x: 46, y: 74, w: 48, h: 42, shape: 'rect', lv: 1, kit: 'gallery', foes: 'ashbound',
+        dress: ['sarcophagus_open', 'grave_goods', 'candles', 'chest', 'shrine'], note: 'A burial chamber the Redhand found first: the lid off, the grave goods scattered, what they missed in a chest. A fragment of the Chronicle.' },
+      { id: 'barrow_door', name: 'The Barrow Door', role: 'descent', x: 46, y: 102, w: 48, h: 42, shape: 'rect', lv: 1, kit: 'gallery', foes: 'ashbound',
         dress: ['guardians', 'braziers', 'niches', 'stair_down'], note: 'The inner door the legion sealed, broken in. Two great guardian statues either side of the stair down; braziers lit by nobody.' },
     ], halls: [
-      { from: 'barrow_mouth', to: 'the_cutting', x: 32, y: 10, w: 10, h: 8, rough: true },
-      { from: 'the_cutting', to: 'the_breach', x: 56, y: 30, w: 8, h: 10, rough: true },
-      { from: 'the_breach', to: 'robbed_tomb', x: 84, y: 30, w: 8, h: 10 },
-      { from: 'the_breach', to: 'barrow_door', x: 62, y: 64, w: 10, h: 10 },
+      { from: 'barrow_mouth', to: 'the_cutting', x: 32, y: 10, w: 10, h: 10, rough: true },
+      { from: 'the_cutting', to: 'the_breach', x: 56, y: 30, w: 10, h: 10, rough: true },
+      { from: 'the_breach', to: 'robbed_tomb', x: 82, y: 30, w: 10, h: 10 },
+      { from: 'the_breach', to: 'barrow_door', x: 62, y: 92, w: 10, h: 10 },
     ] },
     { name: 'The Long Gallery and the Muster Hall', spaces: [
       { id: 'stair_foot', name: 'The Stair Foot', role: 'entrance', x: 0, y: 0, w: 30, h: 28, shape: 'rect', lv: 1, kit: 'gallery',
@@ -56,15 +56,15 @@ export const PLANS = {
       { id: 'long_gallery', name: 'The Long Gallery', role: 'room', x: 0, y: 38, w: 78, h: 20, shape: 'rect', lv: 1, kit: 'gallery', foes: 'ashbound',
         dress: ['niches', 'candles', 'skulls', 'sarcophagi'], note: 'A large corridor: burial niches every six paces down both long walls, a skull and a family\'s candle in each, the dead in rows between. Maudry\'s errand and the bright-eyed officers.' },
       { id: 'clerks_room', name: 'The Clerk\'s Room', role: 'offshoot', x: 20, y: 68, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'muster', foes: 'ashbound',
-        dress: ['desks', 'rolls', 'candles', 'chest'], note: 'The legion\'s rolls on their desks, ink long dry; a chest; the muster roll for the Chronicle.' },
+        dress: ['desks', 'rolls', 'candles', 'chest', 'shrine'], note: 'The legion\'s rolls on their desks, ink long dry; a chest; the muster roll for the Chronicle.' },
       { id: 'issue_room', name: 'The Issue Room', role: 'room', x: 88, y: 28, w: 34, h: 34, shape: 'rect', lv: 2, kit: 'muster', foes: 'ashbound',
         dress: ['racks', 'crates', 'standards', 'braziers'], note: 'The Quartermaster\'s stores: racks of rusted kit along the walls, crates, the ranks waiting to be re-armed.' },
       { id: 'muster_hall', name: 'The Muster Hall', role: 'end', x: 80, y: 74, w: 58, h: 46, shape: 'rect', lv: 2, kit: 'muster', foes: 'ashbound', boss: 'quartermaster',
         dress: ['colonnade', 'racks', 'standards', 'braziers'], note: 'Two colonnades, the racks along the back wall, the legion\'s standards. The Quartermaster still issues.' },
     ], halls: [
       { from: 'stair_foot', to: 'long_gallery', x: 10, y: 28, w: 10, h: 10 },
-      { from: 'long_gallery', to: 'clerks_room', x: 28, y: 58, w: 8, h: 10 },
-      { from: 'long_gallery', to: 'issue_room', x: 78, y: 44, w: 10, h: 8 },
+      { from: 'long_gallery', to: 'clerks_room', x: 28, y: 58, w: 10, h: 10 },
+      { from: 'long_gallery', to: 'issue_room', x: 78, y: 44, w: 10, h: 10 },
       { from: 'issue_room', to: 'muster_hall', x: 100, y: 62, w: 10, h: 12 },
     ] },
   ] },
@@ -84,9 +84,9 @@ export const PLANS = {
       { id: 'keep_yard', name: 'The Keep Yard', role: 'descent', x: 106, y: 62, w: 52, h: 46, shape: 'rect', lv: 1, kit: 'bailey', foes: 'goblin', boss: 'goblin_chief',
         dress: ['well', 'carts', 'banners', 'stair_down'], note: 'The yard before the keep\'s door, cobbled, a well in it. Old Skarn haggles here, drum and all. The keep\'s cellar stair goes down from its south wall.' },
     ], halls: [
-      { from: 'gatehouse', to: 'horse_lines', x: 30, y: 42, w: 8, h: 8 },
-      { from: 'horse_lines', to: 'warden_chapel', x: 52, y: 18, w: 8, h: 10 },
-      { from: 'horse_lines', to: 'company_camp', x: 78, y: 40, w: 10, h: 8 },
+      { from: 'gatehouse', to: 'horse_lines', x: 30, y: 42, w: 8, h: 10 },
+      { from: 'horse_lines', to: 'warden_chapel', x: 52, y: 18, w: 10, h: 10 },
+      { from: 'horse_lines', to: 'company_camp', x: 78, y: 40, w: 10, h: 10 },
       { from: 'company_camp', to: 'keep_yard', x: 130, y: 52, w: 10, h: 10 },
     ] },
     { name: 'The Barracks and the Old Cellars', spaces: [
@@ -95,14 +95,14 @@ export const PLANS = {
       { id: 'barracks', name: 'The Barracks', role: 'room', x: 38, y: 0, w: 68, h: 22, shape: 'rect', lv: 1, kit: 'barracks', foes: 'redhand',
         dress: ['bunks', 'racks', 'banners', 'braziers'], note: 'A large corridor: bunks in a double row down both long walls, the armoury\'s racks at the far end. The Redhand\'s sergeants sleep here.' },
       { id: 'strongroom', name: 'The Paymaster\'s Strongroom', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'barracks', foes: 'redhand',
-        dress: ['iron_door', 'chests', 'ledger'], note: 'Behind an iron door: the paymaster\'s two chests (Brannoc\'s errand) and the Last Dispatch.' },
-      { id: 'old_cellars', name: 'The Old Cellars', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'cellar', foes: 'redhand',
+        dress: ['iron_door', 'chests', 'ledger', 'shrine'], note: 'Behind an iron door: the paymaster\'s two chests (Brannoc\'s errand) and the Last Dispatch.' },
+      { id: 'old_cellars', name: 'The Old Cellars', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'cellar', foes: 'diggers',
         dress: ['casks', 'scaffold', 'broken_floor', 'ladders'], note: 'The imperial cellars: casks along the walls, and in the south half the floor broken through where the Redhand dug, scaffolds and ladders going down.' },
-      { id: 'cellar_cave', name: 'The Cave Under the Cellars', role: 'end', x: 104, y: 46, w: 58, h: 48, shape: 'cave', lv: 2, kit: 'cellar', foes: 'redhand', boss: 'redhand_captain',
+      { id: 'cellar_cave', name: 'The Cave Under the Cellars', role: 'end', x: 104, y: 46, w: 58, h: 48, shape: 'cave', lv: 2, kit: 'cellar', foes: 'diggers', boss: 'redhand_captain',
         dress: ['pools', 'stalagmites', 'drips', 'garrows_table'], note: 'The cave the dig broke into: still pools, stone teeth up out of the floor, the roof\'s water coming down. Captain Garrow\'s table, and Brannoc chained to a stalagmite.' },
     ], halls: [
       { from: 'undercroft_stair', to: 'barracks', x: 28, y: 8, w: 10, h: 10 },
-      { from: 'barracks', to: 'strongroom', x: 52, y: 22, w: 8, h: 10 },
+      { from: 'barracks', to: 'strongroom', x: 52, y: 22, w: 10, h: 10 },
       { from: 'barracks', to: 'old_cellars', x: 106, y: 6, w: 10, h: 10 },
       { from: 'old_cellars', to: 'cellar_cave', x: 126, y: 34, w: 10, h: 12, rough: true },
     ] },
@@ -119,14 +119,14 @@ export const PLANS = {
       { id: 'the_crossing', name: 'The Crossing', role: 'room', x: 114, y: 36, w: 34, h: 34, shape: 'rect', lv: 0, kit: 'nave', foes: 'chapel',
         dress: ['rubble', 'pools', 'font', 'light_shaft'], note: 'Under the fallen tower: rubble, the font, daylight down the shaft where the roof was. The south transept is fallen in.' },
       { id: 'lady_chapel', name: 'The Lady Chapel', role: 'offshoot', x: 119, y: 2, w: 24, h: 24, shape: 'rect', lv: 1, kit: 'nave', foes: 'chapel',
-        dress: ['altar_small', 'candles', 'saints', 'chest'], note: 'The north transept\'s chapel, dry: a small altar, candles, and the chest with the Chaplain\'s Prayer.' },
+        dress: ['altar_small', 'candles', 'saints', 'chest', 'shrine'], note: 'The north transept\'s chapel, dry: a small altar, candles, and the chest with the Chaplain\'s Prayer.' },
       { id: 'the_chancel', name: 'The Chancel', role: 'descent', x: 158, y: 30, w: 46, h: 46, shape: 'rect', lv: 1, kit: 'cultcut', foes: 'chapel', boss: 'robed_stranger',
         dress: ['altar', 'candles', 'chains', 'stair_down'], note: 'The altar, broken through: the cult\'s cut goes down beneath it. The Robed Stranger waits by it.' },
     ], halls: [
       { from: 'dry_porch', to: 'the_nave', x: 28, y: 48, w: 10, h: 10 },
-      { from: 'the_nave', to: 'the_crossing', x: 104, y: 46, w: 10, h: 12 },
-      { from: 'the_crossing', to: 'lady_chapel', x: 127, y: 26, w: 8, h: 10 },
-      { from: 'the_crossing', to: 'the_chancel', x: 148, y: 46, w: 10, h: 14 },
+      { from: 'the_nave', to: 'the_crossing', x: 104, y: 46, w: 10, h: 10 },
+      { from: 'the_crossing', to: 'lady_chapel', x: 127, y: 26, w: 10, h: 10 },
+      { from: 'the_crossing', to: 'the_chancel', x: 148, y: 46, w: 10, h: 10 },
     ] },
     { name: 'The Cult\'s Cut and the Binding Crypt', spaces: [
       { id: 'cut_foot', name: 'The Cut\'s Foot', role: 'entrance', x: 0, y: 0, w: 28, h: 26, shape: 'cave', lv: 1, kit: 'cultcut',
@@ -136,12 +136,12 @@ export const PLANS = {
       { id: 'robed_camp', name: 'The Robed Men\'s Camp', role: 'offshoot', x: 44, y: 34, w: 26, h: 22, shape: 'cave', lv: 2, kit: 'cultcut', foes: 'chapel',
         dress: ['bedrolls', 'ledgers', 'candles', 'chest'], note: 'Where the robed strangers slept: bedrolls, their ledgers of what was paid to whom, a chest.' },
       { id: 'hall_of_bound', name: 'The Hall of the Bound', role: 'room', x: 112, y: 0, w: 34, h: 34, shape: 'rect', lv: 2, kit: 'binding', foes: 'chapel',
-        dress: ['bound', 'chains', 'candles'], note: 'Built crypt again: the legion\'s bound standing in rows, chained where they were put.' },
+        dress: ['bound', 'chains', 'candles', 'shrine'], note: 'Built crypt again: the legion\'s bound standing in rows, chained where they were put.' },
       { id: 'binding_crypt', name: 'The Binding Crypt', role: 'end', x: 106, y: 46, w: 50, h: 50, shape: 'round', lv: 2, kit: 'binding', foes: 'chapel', boss: 'standard',
         dress: ['circle', 'ring_of_pillars', 'bound', 'braziers'], note: 'Round, a ring of pillars, the binding circle in the floor, and the Standard of the Third Legion over it. Brannoc\'s Standing Down.' },
     ], halls: [
       { from: 'cut_foot', to: 'cults_cut', x: 28, y: 8, w: 10, h: 10, rough: true },
-      { from: 'cults_cut', to: 'robed_camp', x: 52, y: 24, w: 8, h: 10, rough: true },
+      { from: 'cults_cut', to: 'robed_camp', x: 52, y: 24, w: 10, h: 10, rough: true },
       { from: 'cults_cut', to: 'hall_of_bound', x: 102, y: 6, w: 10, h: 10, rough: true },
       { from: 'hall_of_bound', to: 'binding_crypt', x: 124, y: 34, w: 10, h: 12 },
     ] },
@@ -157,13 +157,13 @@ export const PLANS = {
       { id: 'long_vault', name: 'The Long Vault', role: 'room', x: 80, y: 4, w: 60, h: 18, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
         dress: ['pay_chests', 'bars', 'niches'], note: 'A large corridor of barred alcoves, the pay-chests in them long empty.' },
       { id: 'muniment_room', name: 'The Muniment Room', role: 'offshoot', x: 86, y: 32, w: 22, h: 20, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
-        dress: ['desks', 'rolls', 'chest'], note: 'The legion\'s orders filed in their pigeonholes, and a chest.' },
+        dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'The legion\'s orders filed in their pigeonholes, and a chest.' },
       { id: 'strongroom_vault', name: 'The Strongroom', role: 'end', x: 150, y: 0, w: 44, h: 40, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
         dress: ['vault_chest', 'standards', 'braziers'], note: 'The vault: its chest, and in it the Last Order.' },
     ], halls: [
-      { from: 'milestone_shaft', to: 'guardroom', x: 28, y: 8, w: 10, h: 8 },
-      { from: 'guardroom', to: 'long_vault', x: 70, y: 10, w: 10, h: 8 },
-      { from: 'long_vault', to: 'muniment_room', x: 92, y: 22, w: 8, h: 10 },
+      { from: 'milestone_shaft', to: 'guardroom', x: 28, y: 8, w: 10, h: 10 },
+      { from: 'guardroom', to: 'long_vault', x: 70, y: 10, w: 10, h: 10 },
+      { from: 'long_vault', to: 'muniment_room', x: 92, y: 22, w: 10, h: 10 },
       { from: 'long_vault', to: 'strongroom_vault', x: 140, y: 8, w: 10, h: 10 },
     ] },
   ] },
@@ -202,12 +202,13 @@ export function checkPlan(p) {
       if (!p.flat && (s.lv < fi || s.lv > fi + 1)) out.push(`${at} ${s.id}: level +${s.lv} outside the floor's +${fi}..+${fi + 1}`);
       for (const t of f.spaces) if (t !== s && s.x < t.x + t.w && t.x < s.x + s.w && s.y < t.y + t.h && t.y < s.y + s.h) out.push(`${at}: ${s.id} overlaps ${t.id}`);
     }
-    // halls: 8 wide or more, 8–14 long, each joining its two spaces across a shared edge, overlapping no other space
+    // halls: hallMinW wide or more, 8–14 long, each joining its two spaces across a shared edge, overlapping no other
+    // space. Wide and long are by the way it runs: a hall meeting its rooms at its east and west ends runs along x.
     const adj = new Map(f.spaces.map((s) => [s.id, /** @type {string[]} */ ([])]));
     for (const h of f.halls) {
       const a = byId.get(h.from), b = byId.get(h.to);
       if (!a || !b) { out.push(`${at}: a hall from ${h.from} to ${h.to}`); continue; }
-      const across = Math.min(h.w, h.h), long = Math.max(h.w, h.h);
+      const alongX = h.x + h.w === a.x || a.x + a.w === h.x, across = alongX ? h.h : h.w, long = alongX ? h.w : h.h;
       if (across < R.hallMinW) out.push(`${at}: the hall ${h.from} → ${h.to} is ${across} wide (at least ${R.hallMinW})`);
       if (long > R.hallMaxLen) out.push(`${at}: the hall ${h.from} → ${h.to} is ${long} long (at most ${R.hallMaxLen})`);
       const touches = (s) => {

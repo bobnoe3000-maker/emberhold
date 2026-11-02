@@ -77,7 +77,7 @@ export const QUESTS = {
   vale_hens_under_the_hill: {                        // Hedda's errand (world doc §5, v1.19): the goblins have her hens; tell their chief
     kind: 'errand', giver: 'hedda', region: 'vale', level: [4, 30],   // (v1.48: Old Skarn sells them to the Redhand in the Keep's bailey)
     steps: [{ id: 'bailey', objectives: [{ type: 'boss', site: 'wickham_keep', boss: 'goblin_chief', count: 1 }] }],
-    rewards: { share: 0.3, lv: 4, gold: 70 },
+    rewards: { share: 0.3, lv: 5, gold: 70 },   // (2026-11-02: Old Skarn at 5, the Keep Yard, floor 1's hall a level up)
   },
   // Act I, Smoke over the Vale (world doc §6, v1.7; docs/m5-plan.md §4): the Redhand's dig at the barrow mouth for
   // Maudry (v1.48: it was the Tithe Mill), then Wickham Keep and Captain Garrow for Osric, then the Sunken Chapel, where
@@ -89,7 +89,7 @@ export const QUESTS = {
   },
   ch1_the_diggers: {
     kind: 'chapter', giver: 'osric_hale', region: 'vale', level: [4, 30], after: ['ch1_smoke_over_the_vale'],
-    steps: [{ id: 'keep', objectives: [{ type: 'reach', site: 'wickham_keep', count: 3 }] },
+    steps: [{ id: 'keep', objectives: [{ type: 'reach', site: 'wickham_keep', count: 2 }] },   // (2026-11-02: the Old Cellars are the Keep's second floor, its last)
       { id: 'captain', objectives: [{ type: 'boss', site: 'wickham_keep', boss: 'redhand_captain', count: 1 }] }],
     rewards: { share: 0.45, lv: 6, gold: 150 },
   },
@@ -120,7 +120,7 @@ export const QUESTS = {
   },
   brannoc_standing_down: {
     kind: 'companion', giver: 'brannoc', companion: 'brannoc', region: 'vale', level: [1, 30], after: ['brannoc_paymasters_box'],
-    steps: [{ id: 'crypt', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 5, floor: 3 }] }],   // (v1.49: among the bound in the Binding Crypt, any room: the Standard's hall goes quiet once he falls)
+    steps: [{ id: 'crypt', objectives: [{ type: 'waves', site: 'sunken_chapel', count: 5, floor: 2 }] }],   // (v1.49: among the bound in the Binding Crypt, any room: the Standard's hall goes quiet once he falls; 2026-11-02: the Chapel's second floor, its last)
     rewards: { share: 0.45, lv: 9, gold: 100, item: 'broken_chain' },
   },
   // the class trials (world doc §5 v1.7; docs/m5-plan.md §6): at level 6, from Thornwick's people

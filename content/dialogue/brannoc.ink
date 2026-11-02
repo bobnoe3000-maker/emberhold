@@ -107,14 +107,14 @@ Brannoc is quiet for a while.
 "The paymaster kept the robes' coin in the Keep's strongroom, down in the Barracks, not with Garrow. He trusted nobody. Not Garrow, not the men, not himself. So two boxes, in two places."
 "I'd like to see whose seal is on the purses. Garrow never asked. I'm asking."
 + [We'll find the boxes. #mark: quest]
-    "Two chests in the Barracks, the Keep's second floor. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
+    "Two chests in the paymaster's strongroom, off the Barracks, the Keep's second floor. He'd hide them where he'd have to walk past them twice a day, to be sure they were still there." # quest: accept brannoc_paymasters_box
     -> brannoc_topics
 + [Not now.]
     "The coin's not going anywhere. That was always the paymaster's whole idea."
     -> brannoc_topics
 
 == brannoc_box_active ==
-"Two chests in the Barracks, the Keep's second floor. He'd keep them close to the doors, where he could count them on his way past."
+"Two chests in the paymaster's strongroom, off the Barracks, the Keep's second floor. He'd keep them close to the doors, where he could count them on his way past."
 -> brannoc_topics
 
 == brannoc_box_turnin ==
@@ -127,14 +127,14 @@ Brannoc tips a purse into his hand and holds the wax to the light. It's red, the
 "Osric says there's a legion under the Sunken Chapel, bound where it stood, that held a road for three hundred years because nobody told them to stop."
 "I left everything I was ever in. Twice. I'd like to stand somewhere once, with somebody who didn't. Even if they're dead. Especially if."
 + [We'll stand with them. #mark: quest]
-    "The Sunken Chapel. The Binding Crypt, the third floor, where they stand in rows the way they were stopped. Five waves, and nobody steps out. Sorry. I know you'll step out if you have to. I mean I won't." # quest: accept brannoc_standing_down
+    "The Sunken Chapel. The Binding Crypt, the second floor, where they stand in rows the way they were stopped. Five waves, and nobody steps out. Sorry. I know you'll step out if you have to. I mean I won't." # quest: accept brannoc_standing_down
     -> brannoc_topics
 + [Not now.]
     "They've waited a long time. They'll understand."
     -> brannoc_topics
 
 == brannoc_standing_active ==
-"The Sunken Chapel's Binding Crypt, the third floor, among the bound. Five waves. I've been practising standing still. It's harder than it looks."
+"The Sunken Chapel's Binding Crypt, the second floor, among the bound. Five waves. I've been practising standing still. It's harder than it looks."
 -> brannoc_topics
 
 == brannoc_standing_turnin ==

@@ -142,7 +142,7 @@ Osric opens the ledger to a fresh page, which for him is a ceremony.
 "Here's what I don't like. The carters say there's digging in the cellars of Wickham Keep. Bandits don't dig. Bandits take what somebody else dug up."
 "Somebody's paying them. I'd like to know who, and I'd like Garrow to stop collecting."
 + [I'll go to the Keep. #mark: quest]
-    "Down to the cellars, the third floor. That's where he'll be, counting. Take company, {hero_name}. Garrow doesn't fight alone. He never has." # quest: accept ch1_the_diggers
+    "Down to the cellars, the second floor. That's where he'll be, counting. Take company, {hero_name}. Garrow doesn't fight alone. He never has." # quest: accept ch1_the_diggers
     -> osric_topics
 + [Not yet.]
     "He's not going anywhere. That's rather the problem."

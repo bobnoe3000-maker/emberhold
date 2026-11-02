@@ -10,7 +10,8 @@
 // fighting room, against its family (sim/sites.js; default the Old Barrows). The class trials count as
 // done (the contract's assumption, M5). --floor N fights on that floor (it walks down the stairs); the Old Barrows'
 // default is 2, the Long Gallery, where the Ashbound the contract is measured against are (since v1.48 floor 1 is the
-// Redhand's dig), any other site's 1. --no-trials measures a company that hasn't done them yet.
+// Redhand's dig), any other site's 1; with the Vale's authored floors (2026-11-02) the Barrows' is 1, the Breach, where
+// the dead stand up: a large room that isn't a hall. --no-trials measures a company that hasn't done them yet.
 // --hero makes the main character that class (default the knight); --rogue arms every rogue with that
 // weapon base instead of the dagger (huntbow, longbow, handbow, heavybow: a two-handed one frees the off-hand).
 import { pathToFileURL } from 'node:url';
@@ -24,7 +25,7 @@ const GIVE = PERKS && PERKS !== 'keep' ? PERKS.split('/').map((s) => s.split(','
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const ti = args.indexOf('--site'), SITE = ti >= 0 ? args.splice(ti, 2)[1] : 'barrows';
-const fl = args.indexOf('--floor'), FLOOR = fl >= 0 ? +args.splice(fl, 2)[1] : SITE === 'barrows' ? 2 : 1;
+const fl = args.indexOf('--floor'), FLOOR_ARG = fl >= 0 ? +args.splice(fl, 2)[1] : null;
 // --size small|medium|large: fight in the first room of that size (level.js ROOM_SIZES); large by default, the contract's arena (an older checkout's rooms have no size: its first room)
 const zi = args.indexOf('--size'), SIZE = zi >= 0 ? args.splice(zi, 2)[1] : 'large';
 const ni = args.indexOf('--no-trials'), TRIALS = ni >= 0 ? (args.splice(ni, 1), {}) : { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
@@ -42,6 +43,10 @@ const items = await load('sim/items.js').catch(() => null);
 
 const [secs, RL, HL] = args.slice(0, 3).map(Number), hire = (args[3] || '').split(',').filter(Boolean).map(Number), seed = +(args[4] || 20260807);
 const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } s.state.counters.gold = 0; s.state.party.slice(1).forEach((m, i) => { if (PERKS !== 'keep') { m.perks = GIVE ? GIVE[i] || [] : []; m.hidden = null; } });   // (the contract: hires without perks)
+// the Old Barrows' default floor: 2, the Long Gallery, in a checkout with three generated floors; 1, the Breach, in one with
+// the Vale's authored floors (2026-11-02, plans.js: the dead stand up from the Breach on, a large room that isn't a hall)
+const planned = await load('sim/plans.js').then((m) => !!m.PLANS).catch(() => false);
+const FLOOR = FLOOR_ARG ?? (SITE === 'barrows' && !planned ? 2 : 1);
 const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }); sim.state.trials = TRIALS;   // (older checkouts ignore it)
 while (sim.state.depth < FLOOR - 1) { const t = sim.world.stairsAt, q = sim.state.player; q.x = q.px = t.x + 0.5; q.y = q.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }
 sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
@@ -51,7 +56,8 @@ for (const m of sim.state.party) {
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }
   m.hp = statsFor(m).maxHp; m.mp = undefined;
 }
-const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);
+// (a room of the size that isn't the floor's hall: an authored floor's last room is its boss's, a fight of its own)
+const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && !(L.plan && q === L.descentRoom) && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);
 { let best = null, bd = 1e9; for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } } p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; }
 const frac = () => { let a = 0, b = 0; for (const m of sim.state.party) { if (m.fallen) continue; a += m.down ? 0 : m.hp; b += statsFor(m).maxHp; } return a / b; };
 let def = false, low = 1, start = 1, fallen = 0; const costs = [], lows = [];

@@ -1,6 +1,8 @@
 # The Hollow Vale's dungeons: a plan
 
-**Proposal (2026-11-02), for the owner's sign-off.**
+**Implemented (2026-11-02).** The owner signed it off: *"Same layout every visit, Skarn at 5, halls 10, go ahead."* The
+sim builds the Vale's floors from `src/sim/plans.js` (`level.js` `planLevel`); what was built, and measured, is in
+[As built](#as-built) at the end.
 
 The owner, after playing the Luminati prototype's Old Barrows:
 
@@ -221,7 +223,7 @@ Dry ashlar, lamp light, iron and oak. New: **bars** across the alcoves.
    sheets, an art critic pass.
 5. **The other lands** when the owner says the Vale is right.
 
-## Decisions for the owner
+## Decisions for the owner (decided 2026-11-02: 1 authored, 2 Old Skarn at 5, 3 halls 10 wide throughout, 4 one floor)
 
 1. **Authored or seeded.** The plan makes every Vale floor the same each visit: its rooms are named, quests point at
    them, and a player learns them. The dressing, the foes and the chests' places still vary with the seed. *Recommended.*
@@ -231,3 +233,104 @@ Dry ashlar, lamp light, iron and oak. New: **bars** across the alcoves.
 3. **Hall widths.** 8 for the ways off to an offshoot, 10 for the main way (12 where a gate passage leads in).
    Wider (12 throughout) reads closer to the prototype, and the floors grow by about a tenth.
 4. **The Ninth Milestone stays one floor**, five spaces, all at 9.
+
+## As built
+
+**The sim** (save v33):
+- `src/sim/plans.js` holds the floors; `checkPlan` and `test/plans.test.mjs` hold them to the rules, now with every hall 10
+  wide.
+- `level.js` `planLevel` builds a floor from its plan:
+  - the spaces where drawn, centred in the level;
+  - a cave a squared blob eaten back by noise, its entrance keeping a straight north and west wall for the stair up;
+  - the round crypt an oval;
+  - the halls carried on into a dug or round room to meet its floor;
+  - the walls cut to stubs toward the camera, as `halls.js` does.
+- `sites.js`: the three Vale bands `plan`, two floors, `span` 3 (`bandTop`); the bosses on their new floors; `planFloor`.
+- `world.js`:
+  - each room at its plan's level;
+  - each room dressed from its kit and its plan's pieces (`dressPlanned`), with what lines a wall standing against it;
+  - an authored floor's chests and shrines where its plan puts them (one shrine a floor, in an offshoot, for the
+    Chronicle's shrine fragments);
+  - pools where the plan floods.
+- `battle.js` `familyOf(w, room)`: a room's own foes (the Cutting's diggers, the Keep Yard's goblins, the cellars' and
+  the cave's diggers).
+- `board.js`: a planned floor's hall a level up.
+- Quests, lore and Brannoc moved off third floors:
+  - *Standing Down*: floor 2;
+  - *The Diggers*: reach floor 2;
+  - the Last Dispatch and the Standard's ribbon: floor 2;
+  - the Chaplain's last page: floor 1;
+  - Brannoc: depth 1;
+  - *Hens Under the Hill* pays at 5.
+- `persist/save.js` v33 (`plansFor33`): a visit in a Vale dungeon starts again at its first floor's way in, and Vale board
+  jobs under way are let go.
+
+**The words**: the journals, Tobin, Osric, Ilse, Brannoc, the site summaries and the lore notes name the new floors and rooms
+(world doc v1.35, GDD v1.51).
+
+**The renderers**: Emberlit draws the cells as it draws any floor. The Luminati converter dresses an authored floor room by
+room: each room in its own kit's stone, a dug room walled in rock (the Keep's barracks in dressed stone, the cave under
+its cellars in rock).
+
+**The Breach** became the contract's arena: the large room of the Barrows' first floor where the dead stand up, the one
+that isn't a hall. It's 56 × 52; the plan drew it 58 × 24, then it was 56 × 40.
+- The smoke test and `tools/balance/roomlv.mjs` measure the contract there; before, they measured in the Long Gallery,
+  a generated large room on the second floor.
+- What lines a wall stands against it. In rows seven tiles in, the urn shelves fenced off the middle, and the level-15
+  party held 8 waves where it had held 14.
+
+**Measured**:
+
+| | Before (3 generated floors) | After (2 authored) |
+|---|---|---|
+| Rooms a floor | 6 | 5 |
+| Way in → hall, a floor (BFS tiles, 3 seeds) | 131 | 140–145 |
+| A whole dungeon's walk | 393 | 280–290 |
+| Floor area a floor | 11,076 | 6,382–7,381 |
+
+The balance contract (`smoke-test.mjs`, every gate holds), before → after:
+
+| | Before | After |
+|---|---|---|
+| The right party at L3 / 6 / 9 | 24, 17, 13 · 24, 16, 13 waves | 22, 16, 14 · 23, 17, 13 |
+| No healer at L6 | down at 16 and 12 waves | 17 and 16 |
+| A room three up | down at 4 and 5 waves | 4 and 7 |
+| Gear at level vs a level-1 kit, two up | 9 vs 6 waves | 9 vs 6 |
+| The right party at L12 / 15 | 12, 13 · 14, 14 waves | 14, 10 · 11, 12 |
+
+A spread of six seeds at level 15, a same-level room 300 s (`roomlv.mjs 300 15 15 1,3`):
+
+| | Waves | Mean |
+|---|---|---|
+| Before | 15, 10, 15, 15, 14, 15 | 14.0 |
+| After | 13, 13, 7, 12, 14, 13 | 12.0 |
+
+The Breach, bare of furniture, gives the same waves, so the difference is the arena and the fight's draws, not the
+dressing. The foes' numbers are unchanged.
+
+The headless farm (`tools/balance/loot.mjs <lv> 1`, an hour at a level, seed 20260807):
+- **Before:** levels 2, 5 and 8 on the band's second floor, 3, 6 and 9 on its third.
+- **After:** the floor whose hall is the hero's level (the base and base + 1 the first floor, the top the second; before
+  this, the tool sent a level-8 company to the Chapel's second floor, three of its four rooms a level up, and it wiped 6
+  times).
+
+| Level | Drops an hour before (common / fine / rare) | After | Waves, chests, wipes before | After |
+|---|---|---|---|---|
+| 2 | 8 / 1 / 0 | 6 / 0 / 1 | 303, 15, 0 | 325, 16, 0 |
+| 3 | 8 / 4 / 0 | 9 / 1 / 0 | 256, 12, 0 | 259, 16, 0 |
+| 5 | 9 / 0 / 0 | 10 / 1 / 0 | 245, 21, 0 | 212, 13, 0 |
+| 6 | 9 / 1 / 0 | 10 / 0 / 1 | 260, 11, 0 | 272, 34, 0 |
+| 8 | 7 / 1 / 0 | 7 / 1 / 1 | 196, 6, 0 | 249, 13, 0 |
+| 9 | 1 / 1 / 0 | 9 / 1 / 0 | 39, 2, 0 | 173, 11, 1 |
+
+The before hour at 9 held the Standard's hall for most of it (two visits). One hour a level, one seed: the drops move
+by a piece or two either way.
+
+![The six floors' first fighting rooms, Emberlit and Luminati](img/dungeon/vale-floors.jpg)
+
+*The first fighting room of each of the six floors, as the game draws it on both renderers (`tools/capture/rig.mjs
+vale-dungeons`), the room's level in its banner.*
+
+**Left for the dressing pass:** the pieces the game has no prop for yet stand nowhere: stalls, troughs, hives, desks and
+rolls, the portcullis and the iron door, the broken floor, bars, and the crossing's shaft of light. Each needs its piece
+built (our voxel props, or Luminati's furniture), then captures on both renderers and an art critic pass.

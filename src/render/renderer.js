@@ -297,7 +297,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     return a && a.cells ? a : null;
   };
   // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
-  const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; const F = familyOf(w); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };
+  const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; for (const id of [undefined, ...(w.level && w.level.plan ? w.level.rooms.map((r) => r.id) : [])]) { const F = familyOf(w, id); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); } const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };   // (an authored floor's rooms each their own foes)
   const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
   const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
   // An atlas is a JSON of rects plus PNGs, and a re-bake moves the rects. A browser (or host) that

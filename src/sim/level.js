@@ -10,7 +10,8 @@
 
 import { mulberry32, fbm } from './rng.js';
 import { hypot } from './detmath.js';
-import { generateHalls } from './halls.js';
+import { generateHalls, WALL_REACH } from './halls.js';
+import { sizeOf } from './plans.js';
 
 // Terrain themes. `floors` is a weighted bag sampled by noise for the base
 // ground; `hazard` is a material that pools across the floor (impassable);
@@ -77,8 +78,72 @@ export function sizesFor(n, rng) {
 // opts.layout: 'caverns' (here: rooms of any shape scattered in the abyss, corridors between) or 'halls' (halls.js:
 // one building of rectangular rooms and short straight halls; docs/dungeon-halls-proposal.md). A site's (sites.js).
 export function generateLevel(seed, theme, opts = {}) {
+  if (opts.plan) return planLevel(seed, theme, opts.plan);
   if (opts.layout === 'halls') return hallsLevel(seed, theme, opts);
   return cavernsLevel(seed, theme, opts);
+}
+
+// An authored floor (plans.js; the Hollow Vale's, docs/vale-dungeons-plan.md, the owner: "Same layout every visit"): its
+// spaces and halls where the plan draws them, centred in the level, the same every visit; the seed moves only the
+// dressing, the foes and the chests (world.js) and a cave's ragged edge. The same shape out as halls.js, and a room
+// carries its plan's `part` (id), name, kit, foes, dressing and level. A 'cave' space is dug: a squared blob inside its
+// box, its edge eaten back by noise (an entrance keeps its north and west walls straight, for the stair up); a 'round'
+// one is an oval. Where a hall meets a dug or round space, the floor is carried on in from the box's edge to meet it.
+function planLevel(seed, theme, floor) {
+  const th = THEMES[theme] || THEMES.dread;
+  const bx = Math.max(...floor.spaces.map((s) => s.x + s.w)), by = Math.max(...floor.spaces.map((s) => s.y + s.h));
+  const ox = Math.floor((W - bx) / 2), oy = Math.floor((H - by) / 2);
+  const cells = new Map();
+  const setFloor = (x, y, room, corridor) => { const k = key(x, y), c = cells.get(k); if (c) { if (corridor) c.corridor = true; return; } cells.set(k, { kind: 'floor', room, corridor: !!corridor }); };
+  const rooms = floor.spaces.map((s, i) => {
+    const x0 = ox + s.x, y0 = oy + s.y, x1 = x0 + s.w - 1, y1 = y0 + s.h - 1;
+    return { id: i, part: s.id, name: s.name, role: s.role, size: sizeOf(s), shape: s.shape === 'round' ? 'oval' : s.shape === 'cave' ? 'cave' : 'rect',
+      x0, y0, x1, y1, cx: Math.floor((x0 + x1) / 2), cy: Math.floor((y0 + y1) / 2), rw: Math.floor((x1 - x0) / 2), rh: Math.floor((y1 - y0) / 2),
+      lv: s.lv, kit: s.kit, family: s.foes || null, dress: s.dress.slice(), boss: s.boss || null };
+  });
+  for (const r of rooms) {
+    const hx = (r.x1 - r.x0) / 2, hy = (r.y1 - r.y0) / 2, mx = (r.x0 + r.x1) / 2, my = (r.y0 + r.y1) / 2;
+    for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) {
+      const u = (x - mx) / (hx + 0.5), v = (y - my) / (hy + 0.5);
+      if (r.shape === 'oval' && u * u + v * v > 1) continue;
+      if (r.shape === 'cave') {
+        const keepNW = r.role === 'entrance' && (u <= 0 || v <= 0);   // (the stair up stands against a straight north or west wall)
+        const uu = u * u, vv = v * v, sq = uu * uu + vv * vv;            // (a squared blob: |u|⁴ + |v|⁴, filling its box more than an ellipse)
+        if (!keepNW && sq > 1 - 0.55 * fbm(x * 0.14, y * 0.14, (seed ^ 0x2c4e) + r.id * 131)) continue;
+      }
+      setFloor(x, y, r.id, false);
+    }
+  }
+  const edges = [];
+  for (const h of floor.halls) {
+    const a = rooms.find((r) => r.part === h.from), b = rooms.find((r) => r.part === h.to);
+    const x0 = ox + h.x, y0 = oy + h.y, x1 = x0 + h.w - 1, y1 = y0 + h.h - 1;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setFloor(x, y, -1, true);
+    edges.push([a.id, b.id]);
+    // carried on into a dug or round space until its floor: the hall's span, from the box's edge in
+    for (const r of [a, b]) {
+      if (r.shape === 'rect') continue;
+      const alongX = x1 + 1 === r.x0 || r.x1 + 1 === x0, inward = alongX ? (x1 + 1 === r.x0 ? [1, 0] : [-1, 0]) : (y1 + 1 === r.y0 ? [0, 1] : [0, -1]);
+      const span = alongX ? [y0, y1] : [x0, x1];
+      for (let t = span[0]; t <= span[1]; t++) {
+        let x = alongX ? (inward[0] > 0 ? r.x0 : r.x1) : t, y = alongX ? t : (inward[1] > 0 ? r.y0 : r.y1);
+        for (let k = 0; k < Math.max(r.x1 - r.x0, r.y1 - r.y0) && !(cells.get(key(x, y)) && cells.get(key(x, y)).room === r.id); k++) { setFloor(x, y, r.id, false); x += inward[0]; y += inward[1]; }
+      }
+    }
+  }
+  // walls: a one-tile ring round every floor; cut to a knee-high stub where floor lies up-screen within WALL_REACH (as halls.js)
+  const floorAt = (x, y) => { const c = cells.get(key(x, y)); return !!c && c.kind === 'floor'; };
+  const ring = new Set();
+  for (const k of cells.keys()) { const [x, y] = k.split(',').map(Number); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && !cells.has(key(x + dx, y + dy))) ring.add(key(x + dx, y + dy)); }
+  for (const k of ring) {
+    const [x, y] = k.split(',').map(Number);
+    let hides = false;
+    for (let s = 1; s <= WALL_REACH && !hides; s++) for (let i = 0; i <= s && !hides; i++) { const fx = x - i, fy = y - (s - i); if (Math.abs((x - y) - (fx - fy)) <= 2 && floorAt(fx, fy)) hides = true; }
+    cells.set(k, { kind: 'wall', room: -1, corridor: false, wz: hides ? FLOOR_Z + 2 : WALL_Z });
+  }
+  const entrance = rooms.find((r) => r.role === 'entrance') || rooms[0];
+  const descentRoom = rooms.find((r) => r.role === 'descent' || r.role === 'end') || rooms[rooms.length - 1];
+  return { cells, rooms, edges, spawn: { x: entrance.cx + 0.5, y: entrance.cy + 0.5 }, entrance, descentRoom, W, H, theme, th, layout: 'halls', plan: true };
 }
 
 // The halls: the room count drawn as the caverns draw it, then the building (halls.js)

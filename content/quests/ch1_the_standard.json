@@ -15,7 +15,7 @@
   "steps": [
     {
       "id": "standard",
-      "journal": "Go down to the Binding Crypt, the Sunken Chapel's third floor, where the legion was bound, and break the Standard of the Third Legion in its last hall.",
+      "journal": "Go down to the Binding Crypt, the Sunken Chapel's second floor, where the legion was bound, and break the Standard of the Third Legion in its last hall.",
       "objectives": [
         {
           "type": "boss",
