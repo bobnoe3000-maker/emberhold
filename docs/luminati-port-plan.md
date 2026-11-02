@@ -704,6 +704,31 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 ![Thornwick tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-town.jpg)
 ![The Hollow Vale tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-overland.jpg)
 
+**The owner, 2026-11-02:** *"Fix the townsfolk silhouettes at dusk and night"*.
+- Emberlit's figures read in their own colours at every hour (their steady glow in the emissive plane). Luminati's
+  were lit only by the sky and the lamps, plus a fixed self-light of 0.2. At dusk and by night they went dark.
+- The figures' own light now rises as the light they stand in falls (`world.js` `figureGlow`, each frame):
+  - The light here is the luminance of the hemisphere × its intensity, plus half the sun's.
+  - The glow is `FIG_LIT` (1.6) less that, between 0.2 and `FIG_MAX` (1).
+  - It's set on the figures and the beasts, not on the scenery.
+- The light and the glow at each part's middle (the rig's `--stats`):
+
+  | | Day | Dawn | Dusk | Night | The Old Barrows |
+  |---|---|---|---|---|---|
+  | The light | 1.67 | 0.62 | 0.76 | 0.18 | 0.34 |
+  | The glow | 0.2 | 0.98 | 0.84 | 1.0 | 1.0 |
+
+- Four strengths were tried at dusk, by night and underground (`FIG_LIT` 0 / 1.3 / 1.6 / 2.0). At 2.0 the figures
+  read flat, as cut-outs.
+- The pixels the glow changed, mean luma before → after: Thornwick at dusk 54 → 77, by night 41 → 68; the Vale by
+  night 53 → 77; the Old Barrows 29 → 52. These are approximate: figures that moved between the shots count too.
+- The browser check holds the hour: the glow is 0.2 by day, 0.6 or more at dusk and 0.95 or more by night, as the
+  light falls.
+- `tools/capture/rig.mjs` takes `"set"` per shot (any `world.js` setting) and `--stats`.
+- Col's own clothes are dark, so he stays a darker figure than the rest, as he is in Emberlit.
+
+![The townsfolk at dusk and night: Emberlit, Luminati before, after](img/lumina/vale-townsfolk.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).

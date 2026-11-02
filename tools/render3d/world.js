@@ -137,6 +137,19 @@ function gradeByHour() {
 //   · brightHour: the game's, each frame (hybrid.js BRIGHT: the Vale's day, dusk and night as the owner set them);
 //   · bright: a further one from settings({ bright }), for tuning by captures (tools/capture/rig.mjs "bright").
 let bright = 1, brightHour = 1;
+
+// The figures' own light, against the light they stand in. Emberlit's figures read in their full colours at every hour
+// (their emissive alpha: a steady glow). Luminati's are lit only by the sky and the lamps, so at dusk and by night the
+// townsfolk went to dark silhouettes (the owner, 2026-11-02, from the phone). The glow fills the gap between the
+// light here (the hemisphere's and the sun's, by luminance) and a lit figure's FIG_LIT, from SPRITE_OPTS's 0.2 to at
+// most FIG_MAX. By day the sky alone is over FIG_LIT, so the glow stays 0.2.
+let FIG_LIT = 1.6, FIG_MAX = 1, figGlow = SPRITE_OPTS.emissiveIntensity, figLit = 0;
+const lumOf = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+function figureGlow() {
+  const L = game?.lighting, h = L?.hemi, sun = L?.sun;
+  figLit = (h ? lumOf(h.color) * h.intensity : 0) + (sun ? lumOf(sun.color) * sun.intensity * 0.5 : 0);
+  return Math.round(Math.min(FIG_MAX, Math.max(SPRITE_OPTS.emissiveIntensity, FIG_LIT - figLit)) * 100) / 100;
+}
 let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
@@ -200,6 +213,7 @@ function beastSprite(n, sheet) {
   let s = beastPool[n];
   if (s && s.sheet !== sheet) { game.engine.scene.remove(s); s.dispose?.(); s = null; }
   if (!s) { s = new Sprite3D(sheet, { ...SPRITE_OPTS }); game.engine.scene.add(s); beastPool[n] = s; }
+  if (s.material.emissiveIntensity !== figGlow) s.material.emissiveIntensity = figGlow;
   return s;
 }
 
@@ -369,6 +383,8 @@ const api = {
   settings(o = {}) {
     if (o.dof) dof = o.dof;
     if (o.bright > 0) bright = o.bright;
+    if (o.figLit > 0) FIG_LIT = o.figLit;
+    if (o.figMax > 0) FIG_MAX = o.figMax;
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
@@ -390,12 +406,14 @@ const api = {
     if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 0.6 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air a little thicker, Emberlit's overlay drifting its banks over it; underground, the lamps the game's)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
     // the people: each atlas's pool filled in the order drawn; the rest hidden
+    figGlow = figureGlow();
     const used = new Map(), camera = game.engine.camera;
     for (const a of f.actors) {
       const A = atlas(a.name); if (!A) continue;
       const k = a.cw ? a.cw / A.meta.cw : 1, sheet = sheetOf(A, k), n = used.get(sheet) || 0; used.set(sheet, n + 1);
       const s = spriteFor(sheet, n);
       s.visible = true;
+      if (s.material.emissiveIntensity !== figGlow) s.material.emissiveIntensity = figGlow;
       if (s._col !== a.col || s._row !== a.row) s.setFrame(a.col, a.row);
       standAt(s, a.x, a.z, (A.meta.ch - A.meta.ay) * k, sheet.pixelsPerUnit * k);
       const fl = a.flash || 0;                                 // (a hit's flash: Emberlit's look.flash, white over the figure)
@@ -444,7 +462,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };
