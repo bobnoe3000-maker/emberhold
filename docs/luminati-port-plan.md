@@ -626,6 +626,16 @@ drawn as the converter has them now.
   | The nave | 17.3 | 26.4 |
   | The binding | 17.8 | 28.0 |
 
+**From the owner's phone, 2026-11-02:** *"The edge of the map falls off a cliff, and is blank. The old maps were
+surrounded by trees, boulders or other impassable objects"*.
+- The Vale's overland is 260 × 260 of ours. A level holds 256, so the crop kept the playable land and dropped the sim's
+  forest ring, which stands in the margin past it.
+- Luminati's own forest border and outer scenery had been kept to town-sized maps.
+- Every outdoor map now has both, so the forest goes on past the edge. The god rays are still a town's only.
+- Left to the phone: whether the outer forest round a 128-unit level costs frames.
+
+![The Vale's west and south edges: Emberlit, Luminati before, after](img/lumina/vale-edges.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).

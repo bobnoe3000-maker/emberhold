@@ -247,9 +247,13 @@ function outdoor(w, region) {
     if (!inside(x, z)) continue;
     if (kind === 'brazier') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });   // (a core light: Luminati's monument brazier is The Bells of Evermere's and loads its kits)
   }
-  const outer = W * D <= 96 * 96;                               // (the outer scenery past the edge only round a town-sized map)
+  // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
+  // map (the owner, 2026-11-02: "The edge of the map falls off a cliff, and is blank. The old maps were surrounded by
+  // trees, boulders or other impassable objects". An overland is cropped to 256 of ours, and its forest ring in the
+  // sim's margin fell outside the crop; the outer scenery had been kept to town-sized maps)
+  const town = W * D <= 96 * 96;
   const level = frame({ name: w.name || 'Emberfall', W, D, tiles, heights, objects, spawn: { x: W / 2, z: D / 2, facing: 'down' },
-    environment: { timeOfDay: 17.9, border: outer ? 'forest' : 'none', outerScenery: outer, godRays: outer, interior: false, ...B.env } });
+    environment: { timeOfDay: 17.9, border: 'forest', outerScenery: true, godRays: town, interior: false, ...B.env } });
   return { level, sprites, origin: { x: x0, y: y0 }, stats: { ...count, sprites: sprites.length, size: W * 1000 + D } };
 }
 
