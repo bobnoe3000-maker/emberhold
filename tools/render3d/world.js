@@ -131,11 +131,12 @@ let graded = false;
 function gradeByHour() {
   const G = game?.postfx?.settings?.grade, n = game?.lighting?.state?.night ?? 1;
   if (!graded || !G) return;
-  G.saturation = 0.74 + 0.18 * n; G.exposure = (0.84 + 0.06 * n) * bright;
+  G.saturation = 0.74 + 0.18 * n; G.exposure = (0.84 + 0.06 * n) * bright * brightHour;
 }
-// a brightness on top of the hour's grade (settings({ bright })): a post-tone-map multiply, so 1.2 is a picture a fifth
-// brighter at every hour. The owner tunes the Vale's day, dusk and night against captures at a few of these.
-let bright = 1;
+// brightness on top of the hour's grade, a post-tone-map multiply:
+//   · brightHour: the game's, each frame (hybrid.js BRIGHT: the Vale's day, dusk and night as the owner set them);
+//   · bright: a further one from settings({ bright }), for tuning by captures (tools/capture/rig.mjs "bright").
+let bright = 1, brightHour = 1;
 let gradeOwn = null;
 let skyShown = 'default';
 function skyFor(lv, region) {
@@ -378,10 +379,11 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
+    brightHour = f.bright > 0 ? f.bright : 1;
     cam.x = f.focus[0]; cam.y = f.focus[1]; cam.z = f.focus[2]; cam.ppu = f.ppu;
     if (Number.isFinite(f.hour) && Math.abs((game.lighting?.timeOfDay ?? -1) - f.hour) > 0.004) game.setTime(f.hour);
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);

@@ -8,7 +8,7 @@ import { DAY_S } from '../src/sim/heroes.js';
 import { PART_S } from '../src/sim/npcs.js';
 
 // (hybrid.js touches the DOM only when it's attached: its hour mapping imports under node)
-const { hourOf } = await import('../src/render3d/hybrid.js');
+const { hourOf, brightAt, BRIGHT } = await import('../src/render3d/hybrid.js');
 
 const SEED = 20260807;
 const worlds = [
@@ -117,4 +117,17 @@ test('biomes: the Reach is drawn in Luminati\'s desert, the Heights in its snow 
   assert.ok([...heights.trees].every((k) => ['snowpine', 'bare'].includes(k)), [...heights.trees].join());
   assert.ok(!vale.env.climate && !vale.env.season && vale.t.G > vale.t.g && vale.t.g > 0 && !vale.t.n && !vale.t.a, JSON.stringify(vale.t));   // (the Vale mostly dark grass: Emberlit's is olive)
   for (const x of [reach, heights, vale]) for (const ch of Object.keys(x.t)) assert.ok(x.level.legend[ch], `'${ch}' in the legend`);
+});
+
+test('brightness: the Vale\'s parts of the day at the owner\'s levels, eased from one to the next', () => {
+  // (the owner, 2026-11-02: "Day 75, dusk 55 and night 40", fitted by captures: docs/luminati-port-plan.md §13)
+  for (const k of [BRIGHT.town, BRIGHT.overland]) {
+    for (let p = 0; p < 4; p++) assert.ok(Math.abs(brightAt(k, (p + 0.5) * PART_S) - k[p]) < 1e-9);   // each part's middle: its own
+    assert.ok(k[2] > k[1], 'dusk lifted above day (Luminati\'s dusk sat a fifth under Emberlit\'s)');
+    let last = brightAt(k, 0);
+    for (let t = 1; t <= DAY_S; t += 1) {                           // no jump at a part's edge: a second moves it under 0.3 %
+      const b = brightAt(k, t); assert.ok(b > 0 && Math.abs(Math.log(b / last)) < 0.003, `t ${t}: ${last} → ${b}`); last = b;
+    }
+  }
+  assert.ok(BRIGHT.overland[3] > BRIGHT.town[3], 'the overland\'s night has no windows and lamps: it takes the larger multiply');
 });

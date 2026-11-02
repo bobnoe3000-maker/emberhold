@@ -680,6 +680,30 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 ![Thornwick at means 75, 55, 45](img/lumina/vale-target-town.jpg)
 ![The Hollow Vale at means 75, 55, 45](img/lumina/vale-target-overland.jpg)
 
+**The owner's pick, 2026-11-02:** *"Day 75, dusk 55 and night 40"*. Dawn takes dusk's 55.
+- Set in `hybrid.js` `BRIGHT`, a multiply for each part of the day, passed in each frame (`world.js` `brightHour`).
+  - Each part's middle gets its own value.
+  - The value eases log-linearly to the next part's, so the ×2.5 dusk comes on over half a part.
+  - Only the Vale outdoors. The dungeons and the other regions keep 1.
+- Each value was fitted by captures to within 1 of its target:
+
+  | | Dawn | Day | Dusk | Night |
+  |---|---|---|---|---|
+  | Thornwick | ×1.445 | ×1.093 | ×2.406 | ×1.06 |
+  | The Vale | ×2.0 | ×0.941 | ×2.763 | ×3.391 |
+
+- Mean of the world band, played with no tuning knob (`tools/capture/rig.mjs`). Emberlit | Luminati before → after:
+
+  | | Dawn | Day | Dusk | Night |
+  |---|---|---|---|---|
+  | Thornwick | 52 \| 44 → 54 | 69 \| 70 → 74 | 39 \| 32 → 54 | 26 \| 40 → 42 |
+  | The Vale | 48 \| 38 → 55 | 66 \| 78 → 75 | 35 \| 29 → 55 | 22 \| 20 → 40 |
+
+- `test/render3d.test.mjs` checks each part's middle, that no second's step is over 0.3 %, and that dusk sits above day.
+
+![Thornwick tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-town.jpg)
+![The Hollow Vale tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-overland.jpg)
+
 **Step 4, Thornwick: done for the Vale.**
 - **A tap on a service's building opens it as Luminati draws it.** Each named house's box goes through Luminati's
   camera (`renderer.js` `serviceAt` asks the other painter first).
