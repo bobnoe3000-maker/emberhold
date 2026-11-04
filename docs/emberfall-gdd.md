@@ -191,7 +191,7 @@ Cutting is the Redhand's, the Breach the dead's). Dug rooms are caves inside the
   floor laid out by hand for what the place was (a crypt, a keep, a temple), the same every visit; the two below remain
   for the other lands. (v1.52, [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)) Each room is dressed as its place:
   the tall pieces on the back walls you see, only low ones on the near walls the camera looks over, a set piece on the
-  room's axis with a light of its own, the middle kept open for the fight. A doorway is lit as its place is (the dig's
+  room's axis with a light of its own, never twice in a room, and every count what the room would hold (one light at each doorway of a fighting room), the middle kept open for the fight. A doorway is lit as its place is (the dig's
   lanterns, the crypt's candles, the keep's torches, the chapel's candelabra); a floor's way in, its sanctuary, keeps its
   braziers. The Breach, the balance contract's arena, has its fallen columns authored, the same on every seed.
 - **Halls**, for what was built (the Tithe Mill, Wickham Keep, the Sunken Chapel, the Ninth Milestone, the Canal Locks,

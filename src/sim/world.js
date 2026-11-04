@@ -66,11 +66,23 @@ export const DRESS_PIECES = new Set(['stall', 'hay', 'trough', 'hen_cart', 'well
 // identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
 // barracks' torches, the cellars' lanterns, the chapel's candelabra, the cut's candles
 /** the Breach's fallen columns (u, v as fractions of the room's half-length and half-width) */
-const FALLEN = [[-0.3, 0.25], [0.3, -0.25]];   // (two columns down across the passage, either side of its middle: chosen among eight layouts by the balance contract, docs/vale-dungeon-dressing.md)
+const FALLEN = [[-0.4, 0.25], [0.25, -0.3]];   // (two columns down across the passage, one toward the dig's end, one toward the door: chosen among eight layouts against every gate of the balance contract and the room-level harness, docs/vale-dungeon-dressing.md)
+/** how many of a piece a room holds at most (the owner, 2026-11-04: "Dont repeat or duplicate set pieces in a room,
+ *  piece placement and counts should make sense"): a set piece once, a pair where the place has a pair (guardians either
+ *  side of the stair, a camp's two cookfires, the porch's two doors), the rest by what the room would hold */
+export const DRESS_CAP = { urns: 4, bones: 4, well: 1, hen_cart: 1, map_table: 1, stockade: 1, altar: 1, font: 1, shaft: 1, portcullis: 1, iron_door: 1, sarcophagus_open: 1, circle: 1, windlass: 1,
+  ledgers: 1, rug: 1, coins: 2, papers: 2, guardian: 2, cookfire: 2, desk: 2, cart: 2, fallen_door: 2, hives: 2, bench: 2, standard: 2, banner: 2, hay: 3, tent: 3,
+  saint: 2, lantern: 4, candles: 4, candelabra: 4, torch: 4, brazier: 4, ladder: 1, puddle: 4, scorch: 3, straw: 6, sacks: 3, crates: 2, barrels: 2, cracks: 6 };
+/** what stands out on an authored room's floor, by its place (not the kit's whole list: a gibbet in the stables and the
+ *  gate-warden's chapel, a monolith in the legion's vault, said nothing) */
+const PLAN_OB = { dig: ['spoil', 'brokenpillar'], gallery: ['pillar', 'brokenpillar'], muster: ['pillar'], bailey: ['pillar'], barracks: ['pillar'], cellar: ['stalagmite', 'boulder'], nave: ['pillar', 'brokenpillar'], cultcut: ['brokenpillar', 'spoil'], binding: ['pillar'] };
 const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles' };
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding' };
 const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones' };
-function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
+function dressPlanned(r, { putAt: put0, pickEdge, place: place0, L, Wd, along, count }) {
+  // every piece through the room's caps (CAP): a recipe can't stand a second well or a fifth torch
+  const room = (k) => !DRESS_CAP[k] || count(k) < DRESS_CAP[k];
+  const place = (x, y, k) => room(k) && place0(x, y, k), putAt = (u, v, k) => room(k) && put0(u, v, k);
   const at = (n, gap, kind) => { for (let i = 0; i < n; i++) { const q = pickEdge(gap); if (q) place(q[0], q[1], kind); } };
   const wall = Wd - 1.5, alongK = (k) => (ORIENT.has(k) && !along ? k + '_y' : k), acrossK = (k) => (ORIENT.has(k) && along ? k + '_y' : k);
   const row = (v, from, to, step, kind) => { for (let u = from; u <= to + 0.01; u += step) putAt(u, v, alongK(kind)); };
@@ -81,9 +93,9 @@ function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
     switch (d) {
       // ── the Old Barrows: the Redhand's dig, then the legion's crypt
       case 'camp': big(-L * 0.25, -Wd * 0.25, 'cookfire', 1, 1); for (const [a, b] of [[1, 0], [0, 1], [1, 1]]) putAt(-L * 0.25 + a, -Wd * 0.25 + b, 'scorch');
-        putAt(-L * 0.25 - 3, -Wd * 0.25 + 2, 'bedroll'); putAt(-L * 0.25 + 3, -Wd * 0.25 - 2, 'bedroll');
-        for (const s of [-1, 1]) putAt(s * L * 0.4, Wd * 0.1, 'brazier'); break;   // (the camp's fire-baskets either side: the way in is the dungeon's first look, and on the cookfire alone it was a third darker)
-      case 'tents': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 14) { putAt(u, -(Wd - 3), 'tent'); putAt(u + 3, -(Wd - 6), 'bedroll'); } break;
+        if (!has('tents')) { putAt(-L * 0.25 - 3, -Wd * 0.25 + 2, 'bedroll'); putAt(-L * 0.25 + 3, -Wd * 0.25 - 2, 'bedroll'); }   // (with tents, theirs)
+        break;   // (its light: the cookfire, the plan's lanterns, the sanctuary's door braziers)
+      case 'tents': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 14) { putAt(u, -(Wd - 3), 'tent'); putAt(u + 3, -(Wd - 6), 'bedroll'); } break;   // (a bedroll at each tent's door: the plan's bedrolls)
       case 'timbers': row(-wall, -L * 0.7, L * 0.7, 7, 'shoring'); for (const s of [-1, 1]) putAt(s * (L - 1.5), 0, acrossK('shoring')); putAt(L * 0.55, -(wall - 1), 'ladder'); break;
       case 'barrows': putAt(L * 0.3, Wd * 0.45, 'cart'); putAt(L * 0.3 + 2, Wd * 0.45, 'sacks'); putAt(-L * 0.4, Wd * 0.5, 'sacks'); break;
       // (the Breach, the contract's arena: where the dig broke through, the passage's columns down across the floor,
@@ -92,8 +104,10 @@ function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
         for (const [u, v] of FALLEN) putAt(u * L, v * Wd, 'brokenpillar'); break;
       // niches: the shelves cut in the back wall, every six paces; at the near wall the families' urns and candles, low
       // (tall shelves there stood between the camera and the fight). The same tiles either way.
-      case 'niches': row(-wall, -L * 0.8, L * 0.8, 6, 'urnshelf'); { let i = 0; for (let u = -L * 0.8; u <= L * 0.8 + 0.01; u += 6) putAt(u, wall, i++ % 2 ? 'candles' : 'urns'); } break;
-      case 'sarcophagi': for (const s of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 9) putAt(u, s * (Wd - 4), 'sarcophagus'); break;
+      // (at the near wall the families' urns and a skull by turns, a niche's width apart, every third left bare: nine
+      // jars in a row read as a potter's)
+      case 'niches': row(-wall, -L * 0.8, L * 0.8, 6, 'urnshelf'); { let i = 0; for (let u = -L * 0.8; u <= L * 0.8 + 0.01; u += 6, i++) if (i % 3 !== 2) putAt(u, wall, i % 3 ? 'bones' : 'urns'); } break;
+      case 'sarcophagi': for (const s of [-1, 1]) for (let u = -L * 0.6 + (s > 0 ? 6 : 0); u <= L * 0.6 + 0.01; u += 12) putAt(u, s * (Wd - 4), 'sarcophagus'); break;   // (staggered, every twelve paces: ten in two rows read as a store of coffins)
       case 'sarcophagus_open': putAt(0, -Wd * 0.35, 'sarcophagus_open'); putAt(1, -Wd * 0.35 + 2, 'coins'); putAt(-2, -Wd * 0.35 + 2, 'bones'); putAt(3, -Wd * 0.35 + 1, 'papers'); break;
       case 'grave_goods': putAt(-L * 0.45, -wall, 'urns'); putAt(L * 0.45, -wall, 'urns'); putAt(-2, -Wd * 0.1, 'coins'); putAt(L * 0.3, Wd * 0.3, 'coins'); break;
       case 'guardians': break;                                             // (flanking the stair down, once it's placed: createWorld)
@@ -104,12 +118,13 @@ function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
       case 'racks': row(-wall, -L * 0.7, L * 0.7, 7, 'rack'); if (has('crates')) break; putAt(L * 0.8, -wall + 2, 'crates'); break;
       case 'standards': for (const s of [-1, 1]) putAt(s * L * 0.6, -wall, alongK('standard')); break;
       case 'colonnade': for (const s of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 8) putAt(u, s * Wd * 0.5, 'pillar'); break;
-      case 'braziers': for (const s of [-1, 1]) putAt(s * L * 0.4, -Wd * 0.4, 'brazier'); break;
+      // (a way in has its doors' braziers, and a stair down its own pair: no third and fourth)
+      case 'braziers': if (r.role === 'entrance' || r.role === 'descent') break; for (const s of [-1, 1]) putAt(s * L * 0.4, -Wd * 0.4, 'brazier'); break;
       // ── Wickham Keep: the bailey, the barracks, the cellars and the cave under them
       case 'portcullis': putAt(-L * 0.55, -wall, alongK('portcullis')); for (const s of [-1, 1]) putAt(-L * 0.55 + s * 3, -wall + 1, 'torch'); break;
       case 'banners': for (const s of [-1, 1]) putAt(s * L * 0.5, -wall, alongK('banner')); break;
-      case 'stalls': for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, -wall, alongK('stall')); if (i % 2 === 0) putAt(u, -wall + 2, 'hay'); putAt(u + 1, -wall + 3, 'straw'); } break;
-      case 'hay': putAt(-(L - 2), Wd * 0.3, 'hay'); putAt(-(L - 2), -Wd * 0.1, 'hay'); break;
+      case 'stalls': for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, -wall, alongK('stall')); putAt(u + 1, -wall + 2.5, i % 2 ? 'straw' : 'hay'); } break;   // (hay and straw by turns in front of the stalls)
+      case 'hay': putAt(-(L - 2), Wd * 0.3, 'hay'); break;
       case 'troughs': row(wall, -L * 0.5, L * 0.5, 10, 'trough'); break;
       case 'hen_cart': big(L * 0.6, Wd * 0.15, 'hen_cart', 2, 1); putAt(L * 0.6 + 2, Wd * 0.15 + 1, 'sacks'); putAt(L * 0.6 - 1, Wd * 0.15 + 2, 'straw'); break;
       case 'benches': for (const s of [-1, 1]) putAt(s * L * 0.3, Wd * 0.35, alongK('bench')); break;
@@ -118,13 +133,13 @@ function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
       case 'well': big(-L * 0.45, -Wd * 0.3, 'well', 2, 2); putAt(-L * 0.45 + 2, -Wd * 0.3 + 1, 'puddle'); putAt(-L * 0.45 - 3, -Wd * 0.3 + 2, 'torch'); break;   // (each set piece its own key light: in the dark, unlit, it wasn't there)
       case 'carts': putAt(L * 0.6, -wall + 1, 'cart'); putAt(L * 0.6 + 2, -wall + 1, 'sacks'); putAt(-L * 0.7, wall - 1, 'cart'); for (const [u, v] of [[0.55, 0.1], [-0.65, 0.4]]) putAt(u * L, v * Wd, 'straw'); break;
       case 'casks': row(-wall, -L * 0.6, L * 0.6, 8, 'cask_rack'); putAt(L * 0.7, wall, 'barrels'); putAt(-L * 0.7, wall, 'barrels'); break;
-      case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) { putAt(u, s * wall, 'bunk'); putAt(u + 3, s * (wall - 2), 'straw'); } break;
+      case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, s * wall, 'bunk'); if (s < 0 && i % 3 === 1) putAt(u + 3, s * (wall - 2), 'straw'); } break;
       case 'iron_door': break;                                             // (at the doorway: dressRoom, which knows the openings)
-      case 'chests': at(2, 6, 'chest'); for (const s of [-1, 1]) putAt(s * L * 0.55, -wall, 'strongbox'); break;
+      case 'chests': at(2, 6, 'chest'); break;   // (the paymaster's two: Brannoc's errand)
       case 'ledger': putAt(L * 0.35, -Wd * 0.4, alongK('desk')); putAt(L * 0.35, -Wd * 0.4 + 2, 'papers'); break;
       case 'scaffold': row(-wall, -L * 0.55, 0, 9, 'scaffold'); break;
-      case 'broken_floor': for (let a = -1; a <= 1; a++) for (let b = 0; b <= 1; b++) putAt(L * 0.1 + a * 2, Wd * 0.35 + b * 2, 'pit'); putAt(L * 0.1 + 4, Wd * 0.35, 'ladder'); putAt(L * 0.1 - 4, Wd * 0.35 + 2, 'spoil'); putAt(L * 0.1 - 4, Wd * 0.35 - 1, 'lantern'); break;
-      case 'ladders': putAt(L * 0.75, -wall, 'ladder'); break;
+      case 'broken_floor': for (let a = -1; a <= 1; a++) for (let b = 0; b <= 1; b++) putAt(L * 0.1 + a * 2, Wd * 0.35 + b * 2, 'pit'); putAt(L * 0.1 - 4, Wd * 0.35 + 2, 'spoil'); putAt(L * 0.1 - 4, Wd * 0.35 - 1, 'lantern'); break;
+      case 'ladders': if (has('broken_floor')) putAt(L * 0.1 + 4, Wd * 0.35, 'ladder'); else putAt(L * 0.75, -wall, 'ladder'); break;   // (the one ladder: down the broken floor where there is one)
       case 'stalagmites': at(6, 5, 'stalagmite'); break;
       case 'drips': for (const [u, v] of [[-0.3, -0.2], [0.2, 0.3], [-0.6, 0.35], [0.5, -0.4]]) putAt(u * L, v * Wd, 'puddle'); break;
       case 'garrows_table': big(L * 0.4, -Wd * 0.35, 'map_table', 2, 1); putAt(L * 0.4 + 1, -Wd * 0.35 + 2, 'rug'); putAt(L * 0.4 - 3, -Wd * 0.35, 'lantern'); putAt(L * 0.4 + 4, -Wd * 0.35 - 1, 'chest');
@@ -135,18 +150,20 @@ function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
       case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, s * Wd * v, 'pew'); break;
       case 'font': putAt(L * 0.3, -Wd * 0.25, 'font'); break;
       // (the flags cracked in a ring where the tower came down, walked over: the fallen stone at the walls, out of the fight)
-      case 'light_shaft': putAt(0, 0, 'shaft'); for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.2832 + 0.4; putAt(cos(a) * 6, sin(a) * 6, 'cracks'); } for (const s of [-1, 1]) putAt(s * L * 0.7, Wd * 0.6, 'spoil'); break;
-      case 'altar': case 'altar_small': if (r.role === 'descent') break; putAt(L * 0.55, 0, 'altar'); for (const s of [-1, 1]) putAt(L * 0.55 - 1, s * 3, 'candelabra'); break;
+      case 'light_shaft': putAt(0, 0, 'shaft'); for (let i = 0; i < 5; i++) { const a = (i / 5) * 6.2832 + 0.4; putAt(cos(a) * 6, sin(a) * 6, 'cracks'); } for (const s of [-1, 1]) putAt(s * L * 0.7, Wd * 0.6, 'spoil'); break;
+      case 'altar': case 'altar_small': if (r.role === 'descent') break; putAt(L * 0.55, 0, 'altar'); for (const s of [-1, 1]) putAt(L * 0.55 - 1, s * 3, d === 'altar' ? 'candelabra' : 'candles'); break;   // (a side chapel's small altar: candles at its foot)
+      case 'candles': if (has('altar_small')) break; at(2, 6, 'candles'); break;   // (the side chapel's candles are its altar's)
       case 'ladders_cut': break;
-      case 'ledgers': putAt(L * 0.6, -Wd * 0.2, 'ledgers'); putAt(L * 0.6 - 2, -Wd * 0.2 + 2, 'papers'); putAt(-L * 0.6, -Wd * 0.3, 'ledgers'); break;
+      case 'ledgers': putAt(L * 0.6, -Wd * 0.2, 'ledgers'); putAt(L * 0.6 - 2, -Wd * 0.2 + 2, 'papers'); break;
       case 'bound': for (const s of [-1, 1]) for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 5) putAt(u, s * wall, 'bound'); break;
       case 'circle': putAt(0, 0, 'circle'); break;
       case 'ring_of_pillars': for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.2832; putAt(cos(a) * L * 0.62, sin(a) * Wd * 0.62, 'pillar'); } break;
       // ── the Ninth Milestone: the legion's strongroom
-      case 'pay_chests': for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) { putAt(u, -wall, 'strongbox'); putAt(u, wall, 'strongbox'); } break;
+      case 'pay_chests': for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) putAt(u, -wall, 'strongbox'); break;   // (one in each barred alcove, and no more)
       case 'bars': row(-(wall - 1), -L * 0.75, L * 0.75, 6, 'bars'); break;
       case 'chest': at(1, 6, 'chest'); break;
       case 'shrine': { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); } break;
+      case 'bedrolls': if (!has('tents')) at(3, 6, 'bedroll'); break;   // (where there are tents, a bedroll at each one's door)
       default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
     }
   }
@@ -203,10 +220,13 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // (an authored room's doorways lit as its place is: DOOR_LIGHT; a floor's way in, its sanctuary, keeps its braziers, so
     // the safe room reads warm and lit and the fighting rooms take their own place's light)
     const DL = r.dress && r !== level.entrance ? DOOR_LIGHT[r.kit] || 'brazier' : 'brazier';
-    for (const o of openings) {
+    // (one light a doorway in an authored fighting room, on alternate sides: a pair at each of three doorways stood six
+    // torches about the Horse Lines; a sanctuary keeps its pair)
+    const pair = !r.dress || r === level.entrance;
+    openings.forEach((o, oi) => {
       const ix = Math.round(o.x) - o.dx * 2, iy = Math.round(o.y) - o.dy * 2, px = o.dy, py = o.dx;   // two steps inside, perpendicular to the corridor
-      for (const s of [-1, 1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, DL)) break;
-    }
+      for (const s of pair ? [-1, 1] : [oi % 2 ? 1 : -1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, DL)) break;
+    });
     // the strongroom's iron door, hung open inside its doorway, against the wall it's set in
     if (r.dress && r.dress.includes('iron_door') && openings.length) { const o = openings[0], ix = Math.round(o.x) - o.dx, iy = Math.round(o.y) - o.dy; for (let w = 7; w <= 9; w++) if (place(ix + o.dy * w, iy + o.dx * w, o.dx ? 'iron_door_y' : 'iron_door')) break; }
     // wall-side cells: open floor within 2 tiles of the room's edge, away from doorways
@@ -232,11 +252,12 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // The descent room rings its gate with four pillars; the entrance stays a bare sanctuary.
     const along = r.rw >= r.rh, L = along ? r.rw : r.rh, Wd = along ? r.rh : r.rw;
     const at = (u, v) => along ? [Math.round(r.cx + u), Math.round(r.cy + v)] : [Math.round(r.cx + v), Math.round(r.cy + u)];
-    const putAt = (u, v, kind) => { const [x, y] = at(u, v); if (!nearDoor(x, y, r.dress ? 6.5 : 8)) place(x, y, kind); };   // (an authored room keeps its doorway's mouth clear, 10 wide: 8 took most of a small room)
+    const putAt = (u, v, kind) => { const [x, y] = at(u, v); return !nearDoor(x, y, r.dress ? 6.5 : 8) && place(x, y, kind); };   // (an authored room keeps its doorway's mouth clear, 10 wide: 8 took most of a small room)
     if (r.dress) {                                                // an authored room (plans.js): its kit's theme, then the pieces it names
       const theme = r === level.entrance ? null : PLAN_THEME[r.shape === 'cave' && r.kit === 'cellar' ? 'cave' : r.kit] || null;
       r.theme = theme;
-      dressPlanned(r, { putAt, pickEdge, place, L, Wd, along });
+      const count = (k) => { let n = 0; for (const [x, y] of cells) if (world.props.get(K(x, y)) === k) n++; return n; };   // (cells: this room's floor)
+      dressPlanned(r, { putAt, pickEdge, place, L, Wd, along, count });
     } else if (r === level.descentRoom) {
       const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
     } else if (r !== level.entrance) {
@@ -313,7 +334,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     if (r !== level.entrance && r !== level.descentRoom) {
       const n = 1 + (orr() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
       // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open)
-      const OBK = KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
+      const OBK = r.dress ? PLAN_OB[r.kit] || ['pillar'] : KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
       for (let i = 0, got = pre; i < 30 && got < n && mid.length; i++) {
         const [x, y] = mid[(orr() * mid.length) | 0];
         let clear = true;
@@ -321,7 +342,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
         const solid = (k) => { const p = world.props.get(k); return !!p && !FLAT_PROPS.has(p); };
         for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) { const c = level.cells.get(K(x + dx, y + dy)); if (!c || c.kind !== 'floor' || c.corridor || world.props.has(K(x + dx, y + dy))) { clear = false; break; } }
         if (!clear || [...world.props.keys()].some((k) => { if (!solid(k)) return false; const [a, b] = k.split(',').map(Number); return Math.abs(a - x) < 5 && Math.abs(b - y) < 5; })) continue;
-        const OB = KIT ? KIT.obstacles : OBSTACLES;
+        const OB = OBK;
         if (place(x, y, OB[(orr() * OB.length) | 0])) got++;
       }
     }

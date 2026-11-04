@@ -2,7 +2,7 @@
 
 **Implemented (2026-11-04).** The dressing pass that [vale-dungeons-plan.md](./vale-dungeons-plan.md) left open.
 The code:
-- the recipes: `src/sim/world.js` `dressPlanned`, `DOOR_LIGHT`, `FALLEN`, `DRESS_PIECES`;
+- the recipes: `src/sim/world.js` `dressPlanned`, `DRESS_CAP`, `PLAN_OB`, `DOOR_LIGHT`, `FALLEN`, `DRESS_PIECES`;
 - the pieces: `src/render/gsprite.js` (the dressing pass section);
 - Luminati: `src/render3d/convert.js` (`DRESS_3D`, `DRESS_3D_MORE`, `DOOR_POOL`, the kit walls);
 - the tools: `tools/dungeon/asbuilt.mjs` and `tools/capture/rig.mjs vale-rooms`.
@@ -59,7 +59,7 @@ The owner, 2026-11-04:
 
 - **Back walls and near walls.** Each recipe places by the room's own axes. The **back wall** (north or west, the one the
   camera sees) takes the tall pieces: stalls, shelves, niches, racks, the portcullis, bars, cask racks. The **near
-  wall** takes only low ones: urns and candles where the niches were, troughs, barrels, strongboxes.
+  wall** takes only low ones: urns and skulls by turns where the niches were, troughs, barrels.
 - **A set piece on the axis.** Each room has a focal piece with a key light of its own:
   - the Barrow Door's two guardians either side of the stair down, placed after the stairwell, so they flank it;
   - the Chancel's altar behind the stair down, broken through, a candelabrum either side;
@@ -70,18 +70,50 @@ The owner, 2026-11-04:
   obstacles. Flat pieces (straw, cracks, a rug, papers) are walked over, and they no longer crowd an obstacle out.
 - **Pieces run with the wall.** A piece along a wall comes as `<kind>` and `<kind>_y`, picked by the wall it's on.
 
+### Counts that make sense
+
+The owner, after the first pass: *"Dont repeat or duplicate set pieces in a room, piece placement and counts should
+make sense."*
+- **Caps.** Every piece goes through a room's caps (`DRESS_CAP`):
+  - a set piece at most once: the well, the hen cart, Garrow's table, the stockade, an altar, the font, the shaft, the
+    portcullis, the iron door, the opened sarcophagus, the ledgers, a ladder;
+  - a pair where the place has a pair: the guardians, the camp's two cookfires, the porch's two doors, two desks, two
+    benches, two standards;
+  - the rest by what the room would hold: at most 4 urns, 4 skulls, 4 candles, 4 torches, 3 hay.
+- **One light at each doorway.** A fighting room's doorway has one light, on alternate sides; a sanctuary keeps its
+  pair. Six torches had stood about the Horse Lines' three doorways, and the Breach had 11 candles. Now there are 3
+  torches and 4 candles.
+- **Recipes that doubled up, now once:**
+  - the Barrow Mouth's camp laid bedrolls beside its tents' own;
+  - the Company's Camp had 6 bedrolls for 3 tents, now one at each tent's door;
+  - the Long Vault had 14 strongboxes for 8 barred alcoves, now one in each;
+  - the Old Cellars had a ladder at the wall and one in the pit, now one, down the broken floor;
+  - the Robbed Men's Camp had two stacks of ledgers;
+  - the strongroom had strongboxes beside the paymaster's two chests;
+  - the Barrow Door and the Chancel had the plan's braziers on top of the stairwell's pair, and the Gatehouse six fires;
+  - the Lady Chapel's small altar had a pair of candelabra over its candles.
+- **Fewer repeats in a row.**
+  - The Long Gallery's sarcophagi: 6, staggered every twelve paces (ten in two rows read as a store of coffins).
+  - The near-wall niches: an urn, then a skull, every third left bare (nine jars in a row read as a potter's).
+  - The barracks' straw: 3, not 16.
+- **Mid-floor obstacles by place** (`PLAN_OB`): columns in the built rooms, spoil and broken columns in the dig and the
+  cut, stone teeth and boulders in the cellars. Before, a gibbet stood in the stables and the gate-warden's chapel, and
+  a monolith in the legion's vault.
+- **Checked.** `test/dressing.test.mjs` holds every authored room to its caps on three seeds. It also checks that each
+  named set piece stands in its room once and the guardians as a pair, and that a fighting room has one light at each
+  doorway.
+
 ### How it's lit
 
 - **Doorways lit by their place** (`DOOR_LIGHT`): lanterns on poles in the dig and the cellars, candles in the crypts
   and the cut, torches in the keep, the barracks and the vault, candelabra in the chapel.
 - **Each way in is a sanctuary.** A floor's entrance keeps a brazier at each doorway, so the safe room reads warm and lit.
-  The Barrow Mouth's camp keeps its fire-baskets.
 - **Light where the story is.** Lights now gather at the pieces, not at every doorway.
 
 ### Floors and walls tell the story
 
 Flat pieces you walk over:
-- straw in the stalls and under the bunks;
+- straw and hay by turns before the stalls, and a little under the bunks;
 - a fire's scorch round the cookfires;
 - cracked flags in a ring where the Crossing's tower came down, and at the Breach's west end;
 - spilled coin by the robbed sarcophagus;
@@ -97,18 +129,17 @@ under moss, the keep in stone brick.
   Skarn's cart of coops with Luminati's chickens about it.
 - **The Company's Camp:** cookfires, bedrolls by the tents, and Ned Fallow's stockade at the camp's end, broken open (he's
   at the gate now).
-- **The Paymaster's Strongroom** (Brannoc's errand): the iron door hung open in its doorway, the paymaster's
-  strongboxes, his desk.
+- **The Paymaster's Strongroom** (Brannoc's errand): the iron door hung open in its doorway, the paymaster's two chests,
+  his desk.
 - **The Old Cellars** (*The Diggers*): the floor broken through. Luminati sinks the tiles into a real hole; there are
-  ladders and a lantern at its edge, and cask racks along the back.
+  a ladder down it and a lantern at its edge, and cask racks along the back.
 - **The Cave Under the Cellars:** Garrow's table, Brannoc's chain post by a stone tooth, puddles under the drip.
 - **The Clerk's Room and the Muniment Room:** pigeonholes of rolls down the back and end walls, desks to the front, papers.
 - **The Robbed Tomb:** the sarcophagus with its lid off, coin, bones and papers about it.
 - **The Dry Porch:** Hester Lowe's hives on a plank bench, the chapel doors off their hinges.
 - **The Crossing:** a cold pool of daylight down the fallen tower's shaft. In Luminati it is a hard beam of #e4ecff
   with dust in it.
-- **The Long Vault:** iron bars along the back wall, an empty strongbox behind each, and more strongboxes on the near
-  wall.
+- **The Long Vault:** iron bars along the back wall, an empty strongbox behind each.
 
 ## The pieces
 
@@ -134,11 +165,11 @@ spaces:
 
 | | Before | After |
 |---|---|---|
-| Luminati | 27.1 | 27.8 |
-| Emberlit | 15.5 | 15.3 |
+| Luminati | 27.1 | 26.0 |
+| Emberlit | 15.5 | 15.4 |
 
 - The dungeons were already "too dark" for the owner (2026-11-02), so the doorway lights that replaced the braziers were
-  set to give the same light: `DOOR_POOL`.
+  set to give the same light (`DOOR_POOL`). With one light at each doorway, no room moved more than a fifth.
 - Emberlit's entrance shots include the floor's title card fading out, so they aren't comparable shot to shot (the Dry
   Porch reads 13.2 → 6.1 on it).
 
@@ -150,18 +181,22 @@ away. Earlier sheets' first shots were dark for this reason.
 
 | Gate | Before | After |
 |---|---|---|
-| The right party at L3 / 6 / 9 (two seeds) | 22, 16, 14 · 23, 17, 13 | 21, 17, 14 · 23, 17, 13 |
-| No healer at L6, worn down | at 283 s, 292 s | at 189 s, 236 s |
-| The right party at L12 / 15 | 14, 10 · 11, 12 | 13, 13 · 14, 14 |
-| A room three up defeats the right party | 4 and 7 waves | 8 and 4 waves |
-| Gear at level vs a level-1 kit, two up | 9 vs 6 waves | 6 vs 5 waves |
-| Companions: the same wave, XP a minute | 3/3, 420 vs 340 | 3/3, 404 vs 350 |
+| The right party at L3 / 6 / 9 (two seeds) | 22, 16, 14 · 23, 17, 13 | 23, 17, 13 · 23, 17, 13 |
+| No healer at L6, worn down | at 283 s, 292 s | at 189 s, 264 s |
+| The right party at L12 / 15 | 14, 10 · 11, 12 | 14, 14 · 14, 12 |
+| A room three up defeats the right party | 4 and 7 waves | 5 and 5 waves |
+| Gear at level vs a level-1 kit, two up | 9 vs 6 waves | 10 vs 5 waves |
+| Companions: the same wave, XP a minute | 3/3, 420 vs 340 | 3/3, 419 vs 341 |
 
 The Breach's columns:
-- **Authored.** Two columns lie across the passage, either side of its middle, at (−0.3, +0.25) and (+0.3, −0.25) of
-  its half-length and half-width.
-- **Chosen.** Eight layouts were tried against every gate (a 3-second harness of the smoke test's room visit). Three
-  passed; this one had the most margin.
+- **Authored.** Two columns lie across the passage, one toward the dig's end and one toward the door, at (−0.4, +0.25)
+  and (+0.25, −0.3) of its half-length and half-width.
+- **Chosen.** After the counts were made sensible, eight layouts were tried against every gate (a 3-second harness of the
+  smoke test's room visit) and then against the room-level harness at level 9 on five seeds.
+  - The first pass's layout no longer held the gear gate (6 vs 6 waves).
+  - Its mirror held every gate, but the level-9 party was worn down in 3 seeds of 5.
+  - This one holds every gate, and holds at level 9 as before the dressing did: 4 seeds of 5 for the full 300 s, the
+    fifth to 299 s after 14 waves.
 - **Why it mattered.** With the columns random, the first pass failed two gates. The right party held 9 waves at level
   15, and the no-healer party held 18 waves without going down.
 - **Each room on its own stream.** An authored room now draws its dressing from a random stream of its own, so a recipe
@@ -171,9 +206,9 @@ The Breach's columns:
 
 | Level | Solo | Fighter, rogue and cleric |
 |---|---|---|
-| 3 | 6 → 5 waves | 24 → 24 |
+| 3 | 6 → 5 waves | 24 → 23 |
 | 6 | 1 → 1 | 17 → 17 |
-| 9 | 0 → 0 | 13 → 13 |
+| 9 | 0 → 0 | 13 → 14 |
 
 **Replays.** The smoke test's honest session replays to its own hash, and every tamper case is still rejected.
 
@@ -181,7 +216,8 @@ The Breach's columns:
 - `test/render3d.test.mjs`: each place in its own walls; Luminati's own well, bench, shelves, campfire, table and
   chickens; a footprint draws nothing; the broken floor sunk.
 - `test/ways.test.mjs`: an authored set piece counts as a room's obstacle; every way stays open.
-- npm test: 486 pass.
+- `test/dressing.test.mjs`: the caps, each set piece once, one light at each doorway.
+- npm test: 489 pass.
 
 ## The sheets
 
