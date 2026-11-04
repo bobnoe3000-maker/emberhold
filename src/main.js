@@ -168,6 +168,7 @@ input.onTap((sx, sy) => {
   const npc = renderer.npcAt(sx, sy);                    // a named person: walk over and talk (the sim checks reach)
   if (npc) { sim.commands.push({ type: 'talk', npc: npc.id }); return; }
   const door = renderer.doorAt(sx, sy);                  // a way somewhere's sign (the Mere Tower's punt): walk to it, as its compass row does
+  if (door && door.stairs) { sim.commands.push({ type: 'tap', tx: door.tx, ty: door.ty }); return; }   // a stair's sign (renderer.js drawStairs): walk there and take them
   if (door) {
     const row = door.site && sim.destinations().find((d) => d.id === 'site:' + door.site && !d.off);
     if (row) sim.commands.push({ type: 'goto', tx: row.tx, ty: row.ty, near: 0, label: row.label, site: row.site, journey: row.journey || null });

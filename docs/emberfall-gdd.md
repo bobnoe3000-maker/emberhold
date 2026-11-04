@@ -166,7 +166,9 @@ stairs down, which go one floor deeper, arriving at the foot of that floor's sta
 down are a stone stairwell 6 tiles by 6 cut into the descent room's floor, a brazier either side
 of its top step, the flight going down to an arch lit violet (2026-09-30; before, a small marker
 on one tile: `docs/stairs-down-before-after.png`). Nothing walks over it; any tile of it takes
-you down from its rim. No stair
+you down from its rim. (v1.51, the owner: "The stairs arent obvious enough") A sign hangs over each stair, read across the
+room and tapped to walk there and take it: *▲ Way out* over a first floor's stair, *▲ Stairs up* deeper, *▼ Stairs down*
+over the well, its edge gold for up and violet for down; and the well's violet light rises out of it. No stair
 skips a floor. A site remembers every floor you've been on for the visit (chests opened, growths
 cut, the map uncovered), so going up and down can't refill them; leaving the site ends the visit.
 

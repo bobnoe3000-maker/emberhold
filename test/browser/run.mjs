@@ -665,6 +665,31 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await ctx.close(); await b.close();
   }
 }
+// 13b. The stairs, signed (the owner, 2026-11-04: "The stairs arent obvious enough"): on a floor, a "▲ Way out" sign over
+// the first floor's stair up, a "▼ Stairs down" sign over the well as you come near it (renderer.js drawStairs), each a
+// thumb's tap: the down sign tapped walks the party to the well and down a floor.
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=barrows`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
+    await p.waitForTimeout(800); await run(10);
+    const atSpawn = await p.evaluate(() => globalThis.__renderer.stairSigns);
+    await p.evaluate(() => { const s = globalThis.__sim, a = s.world.stairsDownArrive, pl = s.state.player; pl.x = pl.px = a.x; pl.y = pl.py = a.y; s.state.party.forEach((m) => { m.x = m.px = a.x; m.y = m.py = a.y; }); });
+    await run(20);
+    const near = await p.evaluate(() => ({ signs: globalThis.__renderer.stairSigns, at: globalThis.__sim.world.stairsAt }));
+    const down = near.signs.find((g) => g.kind === 'down');
+    if (down) { await p.touchscreen.tap((down.l + down.r) / 2, (down.t + down.b) / 2); for (let i = 0; i < 30 && (await p.evaluate(() => globalThis.__sim.state.depth)) === 0; i++) await run(20); }
+    const depth = await p.evaluate(() => globalThis.__sim.state.depth);
+    const tall = (g) => g && g.b - g.t >= 18 && g.r - g.l >= 60 && g.l >= 0 && g.r <= 390;
+    check('stairs: signed: "Way out" over the first floor\'s stair up, "Stairs down" over the well as you come near, on screen; the down sign tapped takes the party down a floor',
+      atSpawn.some((g) => g.kind === 'out') && tall(atSpawn.find((g) => g.kind === 'out')) && tall(down) && down.tx === near.at.x && down.ty === near.at.y && depth === 1 && errs.length === 0,
+      JSON.stringify({ atSpawn, down, depth }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    await ctx.close(); await b.close();
+  }
+}
 // 14. A skill learned from someone you talk to says so, the way a quest's reward does: hand Nell her trial
 // and the conversation window shows "New skill learned: Smoke Step", who knows it now and what it does.
 {

@@ -272,8 +272,14 @@ function outdoor(w, region) {
 // landing at the bottom. Before, both were lampposts (one on each of the well's 36 tiles). A tile of Luminati's is
 // 2 × 2 of ours, and one is in the flight when its middle is.
 const FLOOR = 2;
+// The ways up and down, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): besides the
+// torches, a glow of their own, the way up's at its head (daylight on a first floor, where it leads out; a warm lamp
+// deeper) and the well's violet light rising out of it (the arch below lit violet, GDD §3.1). Emberlit's overlay hangs a
+// sign over each as well (renderer.js drawStairs).
+const UP_GLOW = { out: { color: '#ffe6b0', intensity: 5, distance: 7 }, up: { color: '#ffc27a', intensity: 4, distance: 6 } };
+const DOWN_GLOW = { color: '#a274ff', intensity: 11, distance: 10 };
 function stairs(w, x0, y0, W, D, tiles, heights) {
-  const lights = [];                                           // torches (ours): beside the way up's top step, at the well's foot
+  const lights = [], up = (w.depth || 0) === 0 ? UP_GLOW.out : UP_GLOW.up;   // torches (ours) beside the way up's top step and at the well's foot; the glows
   const set = (i, j, ch, h) => { if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = ch; heights[j][i] = String(h); } };
   const cols = (a, b) => { const o = []; for (let i = 0; i < W; i++) { const c = x0 + 2 * i + 1; if (c >= a && c < b) o.push(i); } return o; };
   const rows = (a, b) => { const o = []; for (let j = 0; j < D; j++) { const c = y0 + 2 * j + 1; if (c >= a && c < b) o.push(j); } return o; };
@@ -281,11 +287,11 @@ function stairs(w, x0, y0, W, D, tiles, heights) {
     if (st.id === 'stairsup_0') {                                // against a north wall: x the middle of its 3, y its first row
       const x = Math.round(st.x - 0.5), y = Math.round(st.y - 3.1), js = rows(y, y + 6);
       for (const i of cols(x - 1, x + 2)) js.forEach((j, k) => set(i, j, '^', FLOOR + js.length - 1 - k));
-      lights.push({ x: x + 2.5, y: y + 0.5 });
+      lights.push({ x: x + 2.5, y: y + 0.5 }, { x: x + 0.5, y: y + 1, dy: 2.2, glow: up });
     } else if (st.id === 'stairsup_90') {                        // against a west wall
       const x = Math.round(st.x - 3.1), y = Math.round(st.y - 0.5), is = cols(x, x + 6);
       for (const j of rows(y - 1, y + 2)) is.forEach((i, k) => set(i, j, '<', FLOOR + is.length - 1 - k));
-      lights.push({ x: x + 0.5, y: y + 2.5 });
+      lights.push({ x: x + 0.5, y: y + 2.5 }, { x: x + 1, y: y + 0.5, dy: 2.2, glow: up });
     }
   }
   const wl = w.stairwell;
@@ -293,6 +299,7 @@ function stairs(w, x0, y0, W, D, tiles, heights) {
     const js = rows(wl.y0, wl.y1), n = js.length;                // from the far (−y) side: the landing, then the steps up
     for (const i of cols(wl.x0, wl.x1)) js.forEach((j, k) => k === 0 ? set(i, j, 'k', FLOOR - (n - 1)) : set(i, j, 'v', FLOOR - (n - k)));
     lights.push({ x: (wl.x0 + wl.x1) / 2, y: wl.y0 + 0.5, dy: 0.7 });   // (its bottom lit: unlit, the well read as more floor)
+    lights.push({ x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2, dy: 2.2, glow: DOWN_GLOW });   // (at the rim's height, over the well: inside it, its walls hid it)   // (the arch below lit violet, GDD §3.1)
   } else if (w.stairsAt) {                                       // no room for a well: one step down where the stairs are
     const i = Math.floor((w.stairsAt.x - x0) / 2), j = Math.floor((w.stairsAt.y - y0) / 2);
     set(i, j, 'v', FLOOR - 1);
@@ -395,7 +402,8 @@ function dungeon(w) {
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
   const objects = [], count = {}, sprites = [];
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
-  for (const l of stairLights) add({ type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
+  for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false }
+    : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });
   for (const [k, kind] of w.props || []) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())

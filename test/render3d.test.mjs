@@ -145,3 +145,17 @@ test('brightness: the Vale\'s parts of the day at the owner\'s levels, eased fro
   }
   assert.ok(BRIGHT.overland[3] > BRIGHT.town[3], 'the overland\'s night has no windows and lamps: it takes the larger multiply');
 });
+
+test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): a glow at the head of the way up, daylight on a first floor; the well lit violet', () => {
+  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
+    const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }), first = convertWorld(s0.world).level;
+    const glow = (lv, c) => lv.objects.filter((o) => o.type === 'light' && o.color === c);
+    assert.equal(glow(first, '#ffe6b0').length, 1, `${site}: the way out's daylight`);
+    assert.equal(glow(first, '#a274ff').length, 1, `${site}: the well's violet light`);
+    assert.ok(glow(first, '#a274ff')[0].intensity >= 10, `${site}: bright enough to read across the room`);
+    s0.restore({ ...JSON.parse(JSON.stringify(s0.snapshot())), depth: 1, floors: [] });
+    const last = convertWorld(s0.world).level;
+    assert.equal(glow(last, '#ffc27a').length, 1, `${site} floor 2: the way up's lamp, not daylight`);
+    assert.equal(glow(last, '#a274ff').length, 0, `${site} floor 2: the last, no well`);
+  }
+});
