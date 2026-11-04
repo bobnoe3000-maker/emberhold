@@ -28,6 +28,7 @@ import { DAY_S } from '../sim/heroes.js';
 import { PART_S } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
 import { readGraphics } from './settings.js';
+import { brightAt, brightFor } from './bright.js';
 import { buildProps } from '../render/gsprite.js';
 import { propAt } from '../sim/world.js';
 import { shrineKind } from '../sim/shrines.js';
@@ -45,19 +46,8 @@ export function hourOf(t) {
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // (iso.js: a tile's half-width 8 px; two tiles a unit)
 const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];   // (renderer.js: the party's gold, foes' red, the elite's orange)
 const CARRY = [0.45, 0, 0.6, 1];                              // the carry light by the part of the day (dawn, day, dusk, night)
-// The Vale's brightness outdoors, by the part of the day (dawn, day, dusk, night): a multiply on world.js's graded
-// exposure. The owner (2026-11-02, from the phone): "Day 75, dusk 55 and night 40". These are the mean brightness of
-// the world band at each part's middle (tools/capture/rig.mjs, 390 × 844, the spawn). Dawn takes dusk's 55.
-// Each value was fitted by captures; the numbers are in docs/luminati-port-plan.md §13. Thornwick and the overland
-// need different multiplies for the same mean: the town has its windows and lamps by night, the overland next to
-// nothing. The other regions and the dungeons keep 1.
-export const BRIGHT = { town: [1.445, 1.093, 2.406, 1.06], overland: [2, 0.941, 2.763, 3.391] };
-/** the brightness at t seconds of play, eased from each part's middle to the next's (log-linear, so a ×2.5 dusk comes on
- *  over half a part, not at the part's first second) @param {number[]} k dawn, day, dusk, night @param {number} t */
-export function brightAt(k, t) {
-  const x = ((((t % DAY_S) + DAY_S) % DAY_S) / PART_S + 3.5) % 4, i = Math.floor(x), u = x - i;
-  return Math.exp(Math.log(k[i]) + (Math.log(k[(i + 1) % 4]) - Math.log(k[i])) * u);
-}
+// the brightness outdoors, by the part of the day: the shipped look and the player's dial (render3d/bright.js)
+export { BRIGHT, brightAt } from './bright.js';
 
 // ── a dungeon's furniture of ours (port step 3: convert.js names it by tile) ──────────────────────────────────────────
 // Built as Emberlit builds it (gsprite.js buildProps, the floor's seed), the same variant on the same tile, and the
@@ -191,7 +181,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient,
-        bright: (sim.world.region || 'vale') === 'vale' && BRIGHT[sim.state.scene] ? brightAt(BRIGHT[sim.state.scene], c.t ?? sim.state.t) : 1,
+        bright: sim.world.kind === 'dungeon' ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its
         // picture as light, placed as Emberlit composites its window (CSS px: the plane's origin and a native px's size).
@@ -208,12 +198,15 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const mod = await import(vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof });
+  let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
     box, state,
     /** (for checks) the level's origin: a sim point x is Luminati's (x − origin.x) / 2 */
     get origin() { return origin; },
     /** the menu's depth of field, applied at once @param {'soft'|'off'} dof */
     setDof: (dof) => api && api.settings({ dof }),
+    /** the menu's Brightness dial, applied at once @param {import('./settings.js').Bright} b percentages by part (100: as shipped) */
+    setBright: (b) => { dial = b; },
     get world() { return api; },
     /** (for checks) a ground point of ours on the screen, CSS px: where Emberlit puts it (its overlay, its taps) and where
      * Luminati draws it; the two should agree to a pixel or two @param {number} x @param {number} y */

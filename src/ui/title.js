@@ -44,11 +44,12 @@ const CSS = `
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
- *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null }} o  onPlay: the title closes into play;
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null, tune?: (() => void) | null }} o  onPlay: the title closes into play;
  *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md; the Luminati prototype,
- *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js)
+ *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
+ *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null, tune = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -94,6 +95,10 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
         ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
       </div>
+      ${tune && html`<div class="tag">Brightness by the part of the day${r === 'luminati' ? '' : ' (with Luminati)'}</div>
+      <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
+        ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')
+        : 'once your hero is made'}</small></button>`}
       <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
     </div>`;
   }

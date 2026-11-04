@@ -1450,6 +1450,24 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
     await p.locator('#title button', { hasText: 'Off' }).click();
     const dofOff = await p.evaluate(() => window.__game?.postfx?.settings?.dof?.enabled === false);
+    // the menu's Brightness (the owner, 2026-11-04; ui/brightness.js): the menu closes into play with the tray along the
+    // bottom; Dusk holds the dusk light; + raises dusk 5 % and the world's multiply with it at once; Reset all and Done
+    await p.locator('#title button', { hasText: 'Brightness' }).click();
+    const tray = await p.evaluate(async () => {
+      const H = globalThis.__world3d, W = H.world, orig = W.frame, seen = []; W.frame = (f) => { seen.push(f.bright); return orig.call(W, f); };
+      const go = (n = 4) => { for (let i = 0; i < n; i++) globalThis.__frame(16); return seen[seen.length - 1]; };
+      const btn = (t) => [...document.querySelectorAll('#bright button')].find((el) => el.textContent.trim().startsWith(t));
+      try {
+        const open = document.getElementById('brightWrap').classList.contains('on') && !globalThis.__ui.title.isOpen;
+        btn('Dusk').click(); await new Promise((r) => setTimeout(r, 50)); const held = globalThis.__ui.brightness.part, k0 = go();
+        btn('+').click(); await new Promise((r) => setTimeout(r, 50)); const k1 = go(), label = document.querySelector('#bright .val b').textContent;
+        btn('Reset all').click(); await new Promise((r) => setTimeout(r, 50)); const k2 = go(), back = document.querySelector('#bright .val b').textContent;
+        btn('Done').click(); await new Promise((r) => setTimeout(r, 50));
+        return { open, held, ratio: +(k1 / k0).toFixed(4), reset: +(k2 / k0).toFixed(4), label, back, closed: !globalThis.__ui.brightness.isOpen && !document.getElementById('brightWrap').classList.contains('on') };
+      } finally { W.frame = orig; }
+    });
+    await p.evaluate(() => globalThis.__ui.title.open('pause'));
+    await p.locator('#title button', { hasText: 'Graphics' }).click();
     // the menu's Compare worlds: this game's two renderers, the prototype's five maps, Luminati's worlds and the Frontier
     await p.locator('#title button', { hasText: 'Back' }).click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
@@ -1463,10 +1481,11 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
       return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
       if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; its Brightness tray holds a part and dials it at once; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
       town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+        && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
         && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
-      JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+      JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&renderer=luminati`);

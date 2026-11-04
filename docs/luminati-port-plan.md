@@ -681,7 +681,7 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 ![The Hollow Vale at means 75, 55, 45](img/lumina/vale-target-overland.jpg)
 
 **The owner's pick, 2026-11-02:** *"Day 75, dusk 55 and night 40"*. Dawn takes dusk's 55.
-- Set in `hybrid.js` `BRIGHT`, a multiply for each part of the day, passed in each frame (`world.js` `brightHour`).
+- Set in `BRIGHT` (now `render3d/bright.js`, re-exported by `hybrid.js`), a multiply for each part of the day, passed in each frame (`world.js` `brightHour`).
   - Each part's middle gets its own value.
   - The value eases log-linearly to the next part's, so the ×2.5 dusk comes on over half a part.
   - Only the Vale outdoors. The dungeons and the other regions keep 1.
@@ -703,6 +703,25 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 
 ![Thornwick tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-town.jpg)
 ![The Hollow Vale tuned: Emberlit, Luminati before, after](img/lumina/vale-tuned-overland.jpg)
+
+**The owner, 2026-11-04:** *"In game add a setting for me to dial in brightness for day, dusk, dawn and night so i can
+better test and confirm settings"*.
+- Menu → Graphics → **Brightness** closes the menu and opens a tray along the bottom (`ui/brightness.js`), with the
+  world in view above it:
+  - Dawn, Day, Dusk and Night tabs. The chosen part's light is held at that part's middle while the tray is open (as
+    the title holds dusk), so each part is seen as it's set. The sim's clock runs on.
+  - − and + step that part by 5 %, from 25 % to 300 %; 100 % is the shipped look. Each step applies at once.
+  - The numbers: the part's percentage, the multiply it comes to here, and the shipped multiply; a line with all four
+    percentages; Reset all; Done.
+- The dial multiplies `BRIGHT` part by part (`bright.js` `brightFor`), and eases between parts as `BRIGHT` does.
+  It's kept per device with the other Graphics settings (`render3d/settings.js` `bright`), never in a save.
+- It's Luminati's and outdoors only, as `BRIGHT` is. The tray says so on Emberlit or underground.
+- A 5 % step is a 5 % multiply after the tone map. By the knob captures above (×1.25 ≈ +12 % of mean), a step moves the
+  world band's mean about 2.5 %: about 2 at a dusk of 55, about 2 by day at 75.
+- To pass a pick on: read off each part's percentage (or the "here" multiply), and the shipped `BRIGHT` is set to match.
+- Checks: `test/render3d.test.mjs` (the dial over `BRIGHT`, the store's clamp, steps and merge) and the browser suite
+  (the tray opens from Graphics with the menu closed, Dusk is held, + moves Luminati's multiply ×1.05 at once, Reset
+  all puts it back).
 
 **The owner, 2026-11-02:** *"Fix the townsfolk silhouettes at dusk and night"*.
 - Emberlit's figures read in their own colours at every hour (their steady glow in the emissive plane). Luminati's

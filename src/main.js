@@ -24,6 +24,7 @@ import { createTowerCard } from './ui/tower.js';
 import { createAway } from './ui/away.js';
 import { createDefeat } from './ui/defeat.js';
 import { createGuildTerms } from './ui/guildterms.js';
+import { createBrightness } from './ui/brightness.js';
 import { NPCS } from './sim/npcs.js';
 import { screenDirToWorld } from './render/iso.js';
 import { createAudio } from './audio/engine.js';
@@ -133,24 +134,29 @@ const BOOT = !PREVIEW && !params.has('notitle');
 let paused = BOOT;
 const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
+// Graphics (render3d/settings.js, per device): the world's renderer takes a reload (the slot saved first); the depth of
+// field and the brightness dial apply at once
+const graphics = { read: readGraphics, current: rendererFor, set: async (/** @type {any} */ patch) => {
+  const before = rendererFor(), next = writeGraphics(patch);
+  if (patch.dof && world3d) world3d.setDof(next.dof);
+  if (patch.bright && world3d) world3d.setBright(next.bright);
+  if (patch.renderer && patch.renderer !== before) {
+    if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {});
+    const u = new URL(location.href); u.searchParams.delete('renderer'); location.href = u.href;
+  }
+  return next;
+} };
+// the Brightness tray (ui/brightness.js; the owner, 2026-11-04): from Graphics, over play; the part being set is held
+let previewPart = /** @type {string|null} */ (null);
+const brightness = createBrightness({ sim, graphics, onHold: (p) => { previewPart = p; } });
 const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
-  onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); },   // the menu comes up over a clear screen
+  onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); if (brightness.isOpen) brightness.close(); },   // the menu comes up over a clear screen
   // the sandboxes (the Frontier, docs/frontier-proposal.md; the Luminati prototype, docs/lumina-prototype.md): pages of
   // their own that touch no save, the slot saved before the page goes
   openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; },
-  // Graphics (render3d/settings.js, per device): the world's renderer takes a reload (the slot saved first); the depth of
-  // field applies at once
-  graphics: { read: readGraphics, set: async (patch) => {
-    const before = rendererFor(), next = writeGraphics(patch);
-    if (patch.dof && world3d) world3d.setDof(next.dof);
-    if (patch.renderer && patch.renderer !== before) {
-      if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {});
-      const u = new URL(location.href); u.searchParams.delete('renderer'); location.href = u.href;
-    }
-    return next;
-  }, current: rendererFor } });
+  graphics, tune: () => brightness.open() });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 // offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title
@@ -158,7 +164,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, creation, partyScreen, slots, cinema, dialogue, journal, worldMap };
+if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /
@@ -222,7 +228,7 @@ function frame(now) {
     acc -= TICK_DT;
   }
 
-  renderer.holdSky(title.isOpen ? 'dusk' : STAGE ? TOD || 'dusk' : TOD);              // the title is always at dusk; play follows the clock
+  renderer.holdSky(title.isOpen ? 'dusk' : STAGE ? TOD || 'dusk' : previewPart || TOD);   // the title is always at dusk; the Brightness tray holds its part; play follows the clock
   if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath
 }
 // dev manual clock (?dev&manual): the page stops driving frames itself; a capture script calls

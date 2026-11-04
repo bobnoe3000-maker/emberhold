@@ -146,6 +146,32 @@ test('brightness: the Vale\'s parts of the day at the owner\'s levels, eased fro
   assert.ok(BRIGHT.overland[3] > BRIGHT.town[3], 'the overland\'s night has no windows and lamps: it takes the larger multiply');
 });
 
+test('the Brightness dial (the owner, 2026-11-04: "a setting for me to dial in brightness for day, dusk, dawn and night"): a percentage a part over the shipped look, kept per device', async () => {
+  const { brightFor, PARTS } = await import('../src/render3d/bright.js');
+  const { readGraphics, writeGraphics, BRIGHT_MIN, BRIGHT_MAX } = await import('../src/render3d/settings.js');
+  assert.deepEqual([...PARTS], ['dawn', 'day', 'dusk', 'night']);
+  assert.deepEqual(brightFor('vale', 'town', null), BRIGHT.town);                  // no dial: as shipped
+  assert.deepEqual(brightFor('vale', 'overland', { dawn: 100, day: 100, dusk: 100, night: 100 }), BRIGHT.overland);
+  const k = brightFor('vale', 'overland', { dawn: 100, day: 150, dusk: 50, night: 100 });
+  assert.ok(Math.abs(k[1] - BRIGHT.overland[1] * 1.5) < 1e-12 && Math.abs(k[2] - BRIGHT.overland[2] * 0.5) < 1e-12 && k[0] === BRIGHT.overland[0]);
+  assert.deepEqual(brightFor('fens', 'town', { dawn: 100, day: 200, dusk: 100, night: 100 }), [1, 2, 1, 1]);   // the other regions: 1, dialled the same
+  // the store: a fresh device reads 100 each; a part's patch keeps the others; values clamp to the range and whole steps
+  const mem = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
+  try {
+    assert.deepEqual(readGraphics().bright, { dawn: 100, day: 100, dusk: 100, night: 100 });
+    writeGraphics({ bright: /** @type {any} */ ({ dusk: 140 }) });
+    writeGraphics({ bright: /** @type {any} */ ({ night: 62 }) });
+    assert.deepEqual(readGraphics().bright, { dawn: 100, day: 100, dusk: 140, night: 60 });
+    writeGraphics({ bright: /** @type {any} */ ({ day: 9999, dawn: -3 }) });
+    assert.deepEqual(readGraphics().bright, { dawn: BRIGHT_MIN, day: BRIGHT_MAX, dusk: 140, night: 60 });
+    writeGraphics({ dof: 'off' });                                                // another setting leaves the dial be
+    assert.equal(readGraphics().bright.dusk, 140);
+    mem.set('emberfall.graphics', '{"bright":{"day":"x"}}');                      // unreadable: as shipped
+    assert.equal(readGraphics().bright.day, 100);
+  } finally { delete globalThis.localStorage; }
+});
+
 test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): a glow at the head of the way up, daylight on a first floor; the well lit violet', () => {
   for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
     const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }), first = convertWorld(s0.world).level;
