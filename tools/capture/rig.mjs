@@ -15,10 +15,10 @@
 //   node tools/capture/rig.mjs [preset|shots.json] [--renderer both|luminati|emberlit] [--out dir] [--dpr 1|2]
 //                              [--base http://localhost:8080] [--sheet] [--settle 40]
 //
-// presets: vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
+// presets: vale-rooms (every space of the Vale's authored dungeon floors, at: "part:<id>"), vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
 // dungeon floors), vale-hours, vale-dungeons, smoke (one of each). A shots file is a JSON array of
 //   { "name": "barrows-f1", "scene": "dungeon", "site": "barrows", "floor": 1, "region": "vale",
-//     "tod": "dusk", "at": "room" | "medium" | "entrance" | "spawn" | [x, y], "hud": false, "bright": 1.2 }
+//     "tod": "dusk", "at": "room" | "medium" | "entrance" | "spawn" | "part:<plan space id>" | [x, y], "hud": false, "bright": 1.2 }
 // (bright: Luminati's brightness on top of the Vale's grade, world.js settings({ bright }); 1 when left out. set: any
 // other world.js settings for the shot, e.g. { "figLit": 1.2 }. --stats: each shot's world.js stats in the log)
 // Out: <out>/<renderer>/<name>.png, and with --sheet <out>/sheet.jpg (a row a shot, a column a renderer). With no
@@ -38,7 +38,11 @@ const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : 
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/rig'))), DPR = +opt('--dpr', 1), SETTLE = +opt('--settle', 40);
 const HOURS = ['dawn', 'day', 'dusk', 'night'];
 const FLOORS = [['barrows', 0], ['barrows', 1], ['wickham_keep', 0], ['wickham_keep', 1], ['sunken_chapel', 0], ['sunken_chapel', 1]];   // (the Vale's six floors, two a dungeon: plans.js)
+// every space of the Vale's authored floors (plans.js), by its part id: the dressing pass's before and after
+const { PLANS } = await import('../../src/sim/plans.js');
+const ROOMS = Object.values(PLANS).flatMap((pl) => pl.floors.flatMap((f, floor) => f.spaces.map((sp) => ({ name: `${pl.site}-f${floor}-${sp.id}`, scene: 'dungeon', site: pl.site, floor, region: 'vale', tod: 'dusk', at: 'part:' + sp.id }))));
 const PRESETS = {
+  'vale-rooms': ROOMS,
   'vale-hours': ['town', 'overland'].flatMap((scene) => HOURS.map((tod) => ({ name: `${scene}-${tod}`, scene, region: 'vale', tod, at: 'spawn' }))),
   'vale-dungeons': FLOORS.map(([site, floor]) => ({ name: `${site}-f${floor}`, scene: 'dungeon', site, floor, region: 'vale', tod: 'dusk', at: 'room' })),
   smoke: [{ name: 'town-day', scene: 'town', region: 'vale', tod: 'day', at: 'spawn' }, { name: 'barrows-f0', scene: 'dungeon', site: 'barrows', floor: 0, tod: 'dusk', at: 'room' }],
@@ -87,7 +91,7 @@ const PAGE = {
     if (Array.isArray(at)) [x, y] = at;
     else if (w.kind === 'dungeon' && at !== 'spawn') {
       const L = w.level, lv = w.roomLevels;
-      const pick = at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)
+      const pick = typeof at === 'string' && at.startsWith('part:') ? L.rooms.find((r) => r.part === at.slice(5)) : at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)
         : L.rooms.filter((r) => r !== L.entrance).sort((a, b) => (lv.get(a.id) - lv.get(b.id)) || (Math.hypot(a.cx - L.entrance.cx, a.cy - L.entrance.cy) - Math.hypot(b.cx - L.entrance.cx, b.cy - L.entrance.cy)))[0];
       if (pick) { x = pick.cx + 0.5; y = pick.cy + 2.5; }
     }
@@ -123,6 +127,11 @@ async function run(renderer) {
   await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
   log(renderer, 'page up');
   await mkdir(join(OUT, renderer), { recursive: true });
+  // a warm-up shot, thrown away: the first frame shot after the page loads came out under-exposed (the Barrow Mouth read
+  // 13 first and 27 when shot again last in the same run: Luminati's lights and exposure still coming up)
+  await p.evaluate(PAGE.goTo, SHOTS[0]).catch(() => false);
+  await p.evaluate(PAGE.prep, [SHOTS[0].tod || null, SHOTS[0].at || 'spawn', SETTLE * 3, SHOTS[0].bright || 1, SHOTS[0].set || {}]);
+  await p.evaluate(PAGE.take);
   for (const s of SHOTS) {
     const ok = await p.evaluate(PAGE.goTo, s).catch((e) => (errs.push(String(e)), false));
     await p.evaluate(PAGE.prep, [s.tod || null, s.at || 'spawn', SETTLE, s.bright || 1, s.set || {}]);

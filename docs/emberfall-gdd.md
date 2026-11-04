@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.51 · 2026-11-02 · Plan of record for game design.** v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
+**v1.52 · 2026-11-04 · Plan of record for game design.** v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
 5, halls 10"; [vale-dungeons-plan.md](./vale-dungeons-plan.md)): **the Hollow Vale's dungeons are authored**: two floors
 each (the Ninth Milestone one), five spaces a floor at most (the entrance counted; a large corridor, the *gallery*, 60–80
 long, counts as one), halls 10 wide, the same rooms in the same places every visit (the seed moves the furniture, the foes'
@@ -189,7 +189,11 @@ Cutting is the Redhand's, the Breach the dead's). Dug rooms are caves inside the
 **Two layouts** (v1.46; [dungeon-halls-proposal.md](./dungeon-halls-proposal.md)). A site picks one:
 - (v1.51) **Authored**, for the Hollow Vale's (the Old Barrows, Wickham Keep, the Sunken Chapel, the Ninth Milestone): each
   floor laid out by hand for what the place was (a crypt, a keep, a temple), the same every visit; the two below remain
-  for the other lands.
+  for the other lands. (v1.52, [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)) Each room is dressed as its place:
+  the tall pieces on the back walls you see, only low ones on the near walls the camera looks over, a set piece on the
+  room's axis with a light of its own, the middle kept open for the fight. A doorway is lit as its place is (the dig's
+  lanterns, the crypt's candles, the keep's torches, the chapel's candelabra); a floor's way in, its sanctuary, keeps its
+  braziers. The Breach, the balance contract's arena, has its fallen columns authored, the same on every seed.
 - **Halls**, for what was built (the Tithe Mill, Wickham Keep, the Sunken Chapel, the Ninth Milestone, the Canal Locks,
   the Drowned Abbey, the Mere Tower, the Reedholm Undercroft): one building of rectangular rooms in rows, joined by
   short straight halls (8–12 tiles long, never a bare doorway: the hall is the safe ground out of a fight). Walls

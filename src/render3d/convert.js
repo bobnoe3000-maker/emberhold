@@ -56,6 +56,10 @@ export const LEGEND = {
   // a dungeon's own stone (port step 3, by its kit): dressed walls, bare rock underfoot, standing water
   B: { top: 'crag', side: 'stone_brick', walkable: false }, U: { top: 'crag', side: 'cliff', walkable: true },
   P: { top: 'riverbed', side: 'cliff', walkable: true },
+  // a built room's walls by what it was (the dressing pass): the dig's raw earth, the crypt's dressed limestone, the
+  // chapel's pale sandstone under moss (the keep's and the muster's stone brick stay B)
+  D: { top: 'dirt', side: 'dirt_side', walkable: false }, W: { top: 'crag', side: 'stone_wall', walkable: false },
+  C: { top: 'moss_stone', side: 'sandstone_brick', walkable: false },
   // a dungeon's stairs (Luminati's stair tiles, its own characters for them): each climbs one level toward its side
   '^': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'N', walkable: true }, v: { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'S', walkable: true },
   '>': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'E', walkable: true }, '<': { top: 'stone_tiles', side: 'stone_wall', riser: 'stone_wall', stairs: 'W', walkable: true },
@@ -320,9 +324,9 @@ function stairs(w, x0, y0, W, D, tiles, heights) {
 /** each kit's look: its floor (two tiles, the second a scatter), its walls, its hour (the light's colour underground;
  *  renderer.js KIT_TINT's warm and cold read through Luminati's clock) */
 const KIT_LOOK = {
-  dig: { floor: ['d', 'k'], wall: 'B', hour: 19.3 }, gallery: { floor: ['k', 'm'], wall: 'B', hour: 21.4 }, muster: { floor: ['k', 'k'], wall: 'B', hour: 22.2 },
+  dig: { floor: ['d', 'k'], wall: 'B', cave: 'D', hour: 19.3 }, gallery: { floor: ['k', 'm'], wall: 'W', hour: 21.4 }, muster: { floor: ['k', 'k'], wall: 'B', hour: 22.2 },
   bailey: { floor: ['c', 'd'], wall: 'B', hour: 18.9 }, barracks: { floor: ['c', 'k'], wall: 'B', hour: 19.6 }, cellar: { floor: ['U', 'd'], wall: 'x', hour: 20.8 },
-  nave: { floor: ['k', 'm'], wall: 'B', hour: 21.0 }, cultcut: { floor: ['d', 'U'], wall: 'x', hour: 19.0 }, binding: { floor: ['k', 'm'], wall: 'B', hour: 22.6 },
+  nave: { floor: ['k', 'm'], wall: 'C', hour: 21.0 }, cultcut: { floor: ['d', 'U'], wall: 'x', hour: 19.0 }, binding: { floor: ['k', 'm'], wall: 'W', hour: 22.6 },
 };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 } };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
@@ -339,9 +343,25 @@ const DRESS_3D = {
   pew: (x, z) => ({ type: 'bench', x, z, rotation: 0, opts: { length: 1.6, back: true } }),
   pillar: (x, z, h) => ({ type: 'crag', x, z, rotation: (h % 7) * 0.4, opts: { kind: 'pillar', stone: 'basalt', height: 2.7, width: 0.8, seed: h % 997 } }),
   brokenpillar: (x, z, h) => ({ type: 'crag', x, z, rotation: (h % 7) * 0.4, opts: { kind: 'pillar', stone: 'basalt', height: 0.9 + (h % 3) * 0.3, width: 0.8, seed: h % 997 } }),
+  // the dressing pass (docs/vale-dungeon-dressing.md): Luminati's own, where it has the thing
+  well: (x, z) => ({ type: 'well', x: x - 0.25, z: z - 0.25, rotation: 0, opts: { roof: 'wood_planks' } }),   // (over its 2 × 2 of ours: world.js big)
+  bench: (x, z, h, k) => ({ type: 'bench', x, z, rotation: k === 'bench_y' ? Math.PI / 2 : 0, opts: { length: 1.4, back: false } }),
+  shelf: (x, z, h, k) => ({ type: 'shelf', x, z, rotation: k === 'shelf_y' ? Math.PI / 2 : 0, opts: { kind: 'books', width: 1.6, height: 2.4, seed: h % 997 } }),
+  cookfire: (x, z) => ({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } }),
+  cart: (x, z, h) => ({ type: 'debris', x, z, rotation: (h % 9) * 0.35, opts: { kind: 'cart', size: 0.8, charred: false, seed: h % 997 } }),
+  map_table: (x, z) => ({ type: 'table', x: x - 0.25, z, rotation: 0, opts: { shape: 'rect', width: 1.6, depth: 0.9, cloth: false, items: true, candle: true, seed: 7 } }),
 };
+DRESS_3D.bench_y = DRESS_3D.bench; DRESS_3D.shelf_y = DRESS_3D.shelf;
+/** what a piece brings with it in Luminati: Old Skarn's hens about his cart, a stool at Garrow's table */
+const DRESS_3D_MORE = {
+  hen_cart: (x, z) => [{ type: 'critters', x: x + 0.6, z: z + 0.9, kind: 'chicken', count: 3, radius: 1.4 }],
+  map_table: (x, z) => [{ type: 'chair', x: x - 0.2, z: z + 0.8, rotation: Math.PI, opts: { style: 'stool', seed: 3 } }],
+};
+/** the light a doorway's lamp throws, intensity and reach (the dressing pass: they stand in for the braziers that lit every
+ *  doorway, and the rooms read 12 % darker by them at first) */
+const DOOR_POOL = { candelabra: [7, 7], lantern: [6, 6.5], candles: [6.5, 6.5] };
 /** our props laid on the floor rather than stood up (walked over: drawn under the figures) */
-const FLAT = new Set(['circle', 'bedroll']);
+const FLAT = new Set(['circle', 'bedroll', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle', 'pit']);
 const hex = (c) => { const m = Math.max(...c, 1e-6); return '#' + c.map((v) => Math.round((v / m) * 255).toString(16).padStart(2, '0')).join(''); };
 
 // The light underground is Emberlit's: its dungeon ambient (renderer.js AMB_BASE, a dim violet-grey) through the kit's
@@ -375,7 +395,7 @@ function dungeon(w) {
   // stone, its cellars' cave in rock), a dug room (a 'cave') walled in rock whatever its kit; the halls in the floor's
   const L = w.level, roomLook = (c) => {
     const r = L.plan && c && c.room >= 0 ? L.rooms[c.room] : null; if (!r) return look;
-    const k = KIT_LOOK[r.kit] || look; return r.shape === 'cave' ? { ...k, wall: 'x' } : k;
+    const k = KIT_LOOK[r.kit] || look; return r.shape === 'cave' ? (k.caveLook ||= { ...k, wall: k.cave || 'x' }) : k;
   };
   const looks = new Array(W * D).fill(null);
   // a tile is floor when any of its four of ours is (a corridor one of ours wide stays open); standing water where two are
@@ -399,6 +419,12 @@ function dungeon(w) {
     // a wall in the stone of the room it stands by (an authored floor's rooms differ; elsewhere the floor's one look)
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const n = open(i + di, j + dj) ? looks[(j + dj) * W + i + di] : null; if (n && n !== look) { tiles[j][i] = n.wall; dj = di = 2; } }
   }
+  // the Old Cellars' broken floor (world.js 'pit'): its tiles sunk two steps, rock at the bottom, a black hole to look into
+  for (const [k, kind] of w.props || []) {
+    if (kind !== 'pit') continue;
+    const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
+    if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
+  }
   const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
   const objects = [], count = {}, sprites = [];
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
@@ -409,10 +435,18 @@ function dungeon(w) {
     if (x < 0.5 || z < 0.5 || x > W - 0.5 || z > D - 0.5 || /^stair/.test(kind)) continue;   // (the stairs are the floor's own: stairs())
     const h = hash('p', tx, ty);
     if (kind === 'exit') { add({ type: 'lamppost', x, z, rotation: 0, opts: { style: 'arm' } }); continue; }
-    if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h));
+    if (kind === 'block') continue;                                 // (a big piece's footprint: world.js big)
+    if (DRESS_3D[kind]) add(DRESS_3D[kind](x, z, h, kind));
     else sprites.push({ prop: kind, tx, ty, x, z, ...(FLAT.has(kind) ? { flat: true } : {}) });
-    const lit = PROP_LIGHT[kind];
-    if (lit && kind !== 'brazier') add({ type: 'light', x, z, dy: 0.9, color: hex(lit), intensity: 3.2, distance: 4.5, flicker: 0.15, nightOnly: false });
+    for (const ob of DRESS_3D_MORE[kind] ? DRESS_3D_MORE[kind](x, z) : []) add(ob);
+    if (kind === 'shaft') {                                         // the Crossing's daylight: a cold beam from the fallen tower, dust in it
+      add({ type: 'light', x, z, dy: 2.6, color: '#e4ecff', intensity: 48, distance: 6.5, flicker: 0, nightOnly: false });   // (a tight hard pool: at 16 over 8 the cold light was lost on the blue stone)
+      add({ type: 'emitter', x, z, preset: 'dust', size: [2.4, 5, 2.4], dy: 2.5, count: 26 });
+      continue;
+    }
+    if (kind === 'torch') { add({ type: 'wallTorch', x, z, rotation: 0, dy: 1.15, opts: { embers: true } }); continue; }   // (a real flame on our pole: its own light)
+    const lit = PROP_LIGHT[kind], pool = DOOR_POOL[kind] || [3.2, 4.5];
+    if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
   const level = frame({ name: w.siteName || 'The Old Barrows', W, D, tiles, heights, objects, spawn: { x: X(sp.x), z: Z(sp.y), facing: 'up' },
     // (black beyond the walls, as Emberlit's: a backdrop colour, which the fog takes too, so the far rooms fade to it)

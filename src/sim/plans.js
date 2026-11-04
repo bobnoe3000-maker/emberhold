@@ -155,7 +155,7 @@ export const PLANS = {
       { id: 'guardroom', name: 'The Guardroom', role: 'room', x: 38, y: 0, w: 32, h: 28, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
         dress: ['racks', 'benches', 'braziers'], note: 'The last guard, still posted: racks, benches, a cold brazier.' },
       { id: 'long_vault', name: 'The Long Vault', role: 'room', x: 80, y: 4, w: 60, h: 18, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
-        dress: ['pay_chests', 'bars', 'niches'], note: 'A large corridor of barred alcoves, the pay-chests in them long empty.' },
+        dress: ['pay_chests', 'bars'], note: 'A large corridor of barred alcoves, the pay-chests in them long empty.' },
       { id: 'muniment_room', name: 'The Muniment Room', role: 'offshoot', x: 86, y: 32, w: 22, h: 20, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',
         dress: ['desks', 'rolls', 'chest', 'shrine'], note: 'The legion\'s orders filed in their pigeonholes, and a chest.' },
       { id: 'strongroom_vault', name: 'The Strongroom', role: 'end', x: 150, y: 0, w: 44, h: 40, shape: 'rect', lv: 0, kit: 'muster', foes: 'ashbound',

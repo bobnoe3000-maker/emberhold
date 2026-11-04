@@ -50,43 +50,110 @@ export const DRESS = {
   vats:     { rooms: ['vats', 'ossuary', 'vats'], decor: ['vat', 'barrels', 'bones'], obstacles: ['vat', 'pillar', 'gibbet'], pools: 2, pool: 'poison' },           // Vat Seven
   abbey:    { rooms: ['nave', 'chancel', 'crypt'], decor: ['candles', 'urns', 'saint'], obstacles: ['pillar', 'brokenpillar', 'gibbet'], pools: 1, pool: 'bog' },
 };
-// An authored room (plans.js): its kit's theme first (the furniture loop below), then the pieces its plan names, in the
-// thirds and at the walls, the middle kept open for the fight. The pieces the game has no prop for yet (stalls, troughs,
-// hives, desks, the portcullis ...) are left to the dressing pass (docs/vale-dungeons-plan.md); they stand nowhere yet.
+// An authored room (plans.js), dressed for what it was (the dressing pass: docs/vale-dungeon-dressing.md). Its plan's
+// `dress` names the pieces; each name is a small recipe here, placed by the room's own axes: u along its length, v
+// across it, v < 0 the back wall (north or west: the walls the camera sees, where the tall pieces stand) and v > 0 the
+// near wall (cut to stubs toward the camera: only low pieces, or they'd stand between the camera and the fight). The
+// middle is kept open for the fight; the pieces go in the thirds and at the walls, a focal piece on the room's axis.
+// A piece that runs along a wall comes in two (`<kind>` along x, `<kind>_y` along y: gsprite.js), picked by the wall it's
+// on. A big piece's footprint past its own tile is `block` (stands in the way, draws nothing).
+const ORIENT = new Set(['rack', 'urnshelf', 'standard', 'banner', 'scaffold', 'stall', 'trough', 'portcullis', 'iron_door', 'desk', 'shelf', 'shoring', 'hives', 'bench', 'fallen_door', 'bars', 'cask_rack']);
+/** the pieces the dressing pass added (keepTheWaysOpen clears them like any decor when they shut a way) */
+export const DRESS_PIECES = new Set(['stall', 'hay', 'trough', 'hen_cart', 'well', 'cart', 'portcullis', 'iron_door', 'desk', 'shelf', 'pit', 'ladder', 'shoring', 'hives', 'bench',
+  'fallen_door', 'bars', 'strongbox', 'map_table', 'ledgers', 'stockade', 'guardian', 'sarcophagus_open', 'cask_rack', 'torch', 'candelabra', 'cookfire', 'block',
+  ...[...ORIENT].map((k) => k + '_y')]);
+// what lights a doorway, by the room's kit (a brazier each side, before, in every room: the screen was a field of
+// identical fires; now the light says the place): the dig's lanterns on poles, the crypt's candles, the keep's and the
+// barracks' torches, the cellars' lanterns, the chapel's candelabra, the cut's candles
+/** the Breach's fallen columns (u, v as fractions of the room's half-length and half-width) */
+const FALLEN = [[-0.3, 0.25], [0.3, -0.25]];   // (two columns down across the passage, either side of its middle: chosen among eight layouts by the balance contract, docs/vale-dungeon-dressing.md)
+const DOOR_LIGHT = { dig: 'lantern', gallery: 'candles', muster: 'torch', bailey: 'torch', barracks: 'torch', cellar: 'lantern', nave: 'candelabra', cultcut: 'candles', binding: 'candles' };
 const PLAN_THEME = { dig: 'dig', gallery: 'gallery', muster: 'muster', bailey: 'bailey', barracks: 'barracks', cellar: 'cellar', cave: 'cave', nave: 'nave', cultcut: 'cultcut', binding: 'binding' };
-const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', rubble: 'spoil', timbers: 'scaffold', scaffold: 'scaffold', ladders: 'scaffold', crates: 'crates', casks: 'barrels', barrows: 'sacks', sacks: 'sacks', carts: 'crates', hay: 'sacks', hen_cart: 'crates', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', font: 'font', well: 'font', banners: 'banner', skulls: 'bones', grave_goods: 'urns', ledgers: 'candles', rolls: 'candles', desks: 'crates', cage: 'gibbet' };
-function dressPlanned(r, { putAt, pickEdge, place, prng, L, Wd }) {
+const PLAN_KIND = { candles: 'candles', lanterns: 'lantern', spoil: 'spoil', crates: 'crates', sacks: 'sacks', windlass: 'windlass', chains: 'chains', gibbets: 'gibbet', bedrolls: 'bedroll', saints: 'saint', skulls: 'bones' };
+function dressPlanned(r, { putAt, pickEdge, place, L, Wd, along }) {
   const at = (n, gap, kind) => { for (let i = 0; i < n; i++) { const q = pickEdge(gap); if (q) place(q[0], q[1], kind); } };
-  // what stands along a wall stands against it, a tile in (the plan's niches are cut into the wall; the bunks, racks and
-  // the bound line it): standing in rows inside the room they fenced off its middle, and the fight had no room to move
-  const wall = Wd - 1.5;
+  const wall = Wd - 1.5, alongK = (k) => (ORIENT.has(k) && !along ? k + '_y' : k), acrossK = (k) => (ORIENT.has(k) && along ? k + '_y' : k);
+  const row = (v, from, to, step, kind) => { for (let u = from; u <= to + 0.01; u += step) putAt(u, v, alongK(kind)); };
+  // a big piece and its footprint: the tiles behind it (toward the back, −x and −y, where its sprite stands over)
+  const big = (u, v, kind, w = 2, h = 2) => { putAt(u, v, kind); for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) if (a || b) putAt(along ? u - a : u - b, along ? v - b : v - a, 'block'); };
+  const has = (d) => r.dress.includes(d);
   for (const d of r.dress) {
-    if (d === 'niches') { for (const side of [-1, 1]) for (let u = -L * 0.8; u <= L * 0.8 + 0.01; u += 6) putAt(u, side * wall, 'urnshelf'); }
-    else if (d === 'colonnade') { for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 8) putAt(u, side * Wd * 0.5, 'pillar'); }
-    else if (d === 'ring_of_pillars') { for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.2832; putAt(cos(a) * L * 0.62, sin(a) * Wd * 0.62, 'pillar'); } }
-    else if (d === 'circle') putAt(0, 0, 'circle');
-    else if (d === 'pews') { for (const side of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, side * Wd * v, 'pew'); }
-    else if (d === 'bunks') { for (const side of [-1, 1]) for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) putAt(u, side * wall, 'bunk'); }
-    else if (d === 'tents') { for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 14) putAt(u, -(Wd - 3), 'tent'); }
-    else if (d === 'stalls') { for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 8) putAt(u, -wall, 'rack'); }
-    else if (d === 'racks') { for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 7) putAt(u, -wall, 'rack'); }
-    else if (d === 'standards') { for (const side of [-1, 1]) putAt(side * L * 0.6, -wall, 'standard'); }
-    else if (d === 'braziers' || d === 'cookfires' || d === 'camp') { for (const side of [-1, 1]) putAt(side * L * 0.4, d === 'braziers' ? -Wd * 0.4 : Wd * 0.1, 'brazier'); }
-    else if (d === 'sarcophagi') { for (const side of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 9) putAt(u, side * (Wd - 4), 'sarcophagus'); }
-    else if (d === 'sarcophagus_open') putAt(0, -Wd * 0.3, 'sarcophagus');
-    else if (d === 'guardians') { for (const side of [-1, 1]) putAt(side * L * 0.3, -Wd * 0.35, 'saint'); }
-    else if (d === 'bound') { for (const side of [-1, 1]) for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 5) putAt(u, side * wall, 'bound'); }
-    else if (d === 'stalagmites') at(6, 5, 'stalagmite');
-    else if (d === 'altar' || d === 'altar_small') putAt(L * 0.55, 0, 'altar');
-    else if (d === 'chest' || d === 'chests') at(d === 'chests' ? 2 : 1, 6, 'chest');
-    else if (d === 'shrine') { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); }
-    else if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'rubble' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
+    switch (d) {
+      // ── the Old Barrows: the Redhand's dig, then the legion's crypt
+      case 'camp': big(-L * 0.25, -Wd * 0.25, 'cookfire', 1, 1); for (const [a, b] of [[1, 0], [0, 1], [1, 1]]) putAt(-L * 0.25 + a, -Wd * 0.25 + b, 'scorch');
+        putAt(-L * 0.25 - 3, -Wd * 0.25 + 2, 'bedroll'); putAt(-L * 0.25 + 3, -Wd * 0.25 - 2, 'bedroll');
+        for (const s of [-1, 1]) putAt(s * L * 0.4, Wd * 0.1, 'brazier'); break;   // (the camp's fire-baskets either side: the way in is the dungeon's first look, and on the cookfire alone it was a third darker)
+      case 'tents': for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 14) { putAt(u, -(Wd - 3), 'tent'); putAt(u + 3, -(Wd - 6), 'bedroll'); } break;
+      case 'timbers': row(-wall, -L * 0.7, L * 0.7, 7, 'shoring'); for (const s of [-1, 1]) putAt(s * (L - 1.5), 0, acrossK('shoring')); putAt(L * 0.55, -(wall - 1), 'ladder'); break;
+      case 'barrows': putAt(L * 0.3, Wd * 0.45, 'cart'); putAt(L * 0.3 + 2, Wd * 0.45, 'sacks'); putAt(-L * 0.4, Wd * 0.5, 'sacks'); break;
+      // (the Breach, the contract's arena: where the dig broke through, the passage's columns down across the floor,
+      // authored, so the fight's ground is the same on every seed; the raw earth and the cracked flags at its west end)
+      case 'rubble': at(3, 6, 'spoil'); for (const [u, v] of [[-0.55, 0.2], [-0.4, -0.35], [-0.65, -0.1]]) putAt(u * L, v * Wd, 'cracks');
+        for (const [u, v] of FALLEN) putAt(u * L, v * Wd, 'brokenpillar'); break;
+      // niches: the shelves cut in the back wall, every six paces; at the near wall the families' urns and candles, low
+      // (tall shelves there stood between the camera and the fight). The same tiles either way.
+      case 'niches': row(-wall, -L * 0.8, L * 0.8, 6, 'urnshelf'); { let i = 0; for (let u = -L * 0.8; u <= L * 0.8 + 0.01; u += 6) putAt(u, wall, i++ % 2 ? 'candles' : 'urns'); } break;
+      case 'sarcophagi': for (const s of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 9) putAt(u, s * (Wd - 4), 'sarcophagus'); break;
+      case 'sarcophagus_open': putAt(0, -Wd * 0.35, 'sarcophagus_open'); putAt(1, -Wd * 0.35 + 2, 'coins'); putAt(-2, -Wd * 0.35 + 2, 'bones'); putAt(3, -Wd * 0.35 + 1, 'papers'); break;
+      case 'grave_goods': putAt(-L * 0.45, -wall, 'urns'); putAt(L * 0.45, -wall, 'urns'); putAt(-2, -Wd * 0.1, 'coins'); putAt(L * 0.3, Wd * 0.3, 'coins'); break;
+      case 'guardians': break;                                             // (flanking the stair down, once it's placed: createWorld)
+      // (the Clerk's Room and the Muniment Room are both come into through their back wall: the desks to the front, low,
+      // the pigeonholes down the back and the end walls)
+      case 'desks': for (const s of [-1, 1]) { putAt(s * L * 0.5, Wd * 0.25, alongK('desk')); putAt(s * L * 0.5 + 1, Wd * 0.25 + 2, 'papers'); } break;
+      case 'rolls': row(-wall, -L * 0.55, L * 0.55, 5.5, 'shelf'); for (const s of [-1, 1]) for (const v of [-Wd * 0.45, 0]) putAt(s * (L - 1.5), v, acrossK('shelf')); break;
+      case 'racks': row(-wall, -L * 0.7, L * 0.7, 7, 'rack'); if (has('crates')) break; putAt(L * 0.8, -wall + 2, 'crates'); break;
+      case 'standards': for (const s of [-1, 1]) putAt(s * L * 0.6, -wall, alongK('standard')); break;
+      case 'colonnade': for (const s of [-1, 1]) for (let u = -L * 0.6; u <= L * 0.6 + 0.01; u += 8) putAt(u, s * Wd * 0.5, 'pillar'); break;
+      case 'braziers': for (const s of [-1, 1]) putAt(s * L * 0.4, -Wd * 0.4, 'brazier'); break;
+      // ── Wickham Keep: the bailey, the barracks, the cellars and the cave under them
+      case 'portcullis': putAt(-L * 0.55, -wall, alongK('portcullis')); for (const s of [-1, 1]) putAt(-L * 0.55 + s * 3, -wall + 1, 'torch'); break;
+      case 'banners': for (const s of [-1, 1]) putAt(s * L * 0.5, -wall, alongK('banner')); break;
+      case 'stalls': for (let u = -L * 0.75, i = 0; u <= L * 0.75 + 0.01; u += 6, i++) { putAt(u, -wall, alongK('stall')); if (i % 2 === 0) putAt(u, -wall + 2, 'hay'); putAt(u + 1, -wall + 3, 'straw'); } break;
+      case 'hay': putAt(-(L - 2), Wd * 0.3, 'hay'); putAt(-(L - 2), -Wd * 0.1, 'hay'); break;
+      case 'troughs': row(wall, -L * 0.5, L * 0.5, 10, 'trough'); break;
+      case 'hen_cart': big(L * 0.6, Wd * 0.15, 'hen_cart', 2, 1); putAt(L * 0.6 + 2, Wd * 0.15 + 1, 'sacks'); putAt(L * 0.6 - 1, Wd * 0.15 + 2, 'straw'); break;
+      case 'benches': for (const s of [-1, 1]) putAt(s * L * 0.3, Wd * 0.35, alongK('bench')); break;
+      case 'cookfires': for (const s of [-1, 1]) { putAt(s * L * 0.35, -Wd * 0.05, 'cookfire'); putAt(s * L * 0.35 + 1, -Wd * 0.05 + 1, 'scorch'); putAt(s * L * 0.35 + 2, -Wd * 0.05 - 1, 'crates'); } break;
+      case 'cage': big(L * 0.8, -Wd * 0.25, 'stockade', 2, 2); putAt(L * 0.8 - 3, -Wd * 0.25 + 2, 'straw'); break;
+      case 'well': big(-L * 0.45, -Wd * 0.3, 'well', 2, 2); putAt(-L * 0.45 + 2, -Wd * 0.3 + 1, 'puddle'); putAt(-L * 0.45 - 3, -Wd * 0.3 + 2, 'torch'); break;   // (each set piece its own key light: in the dark, unlit, it wasn't there)
+      case 'carts': putAt(L * 0.6, -wall + 1, 'cart'); putAt(L * 0.6 + 2, -wall + 1, 'sacks'); putAt(-L * 0.7, wall - 1, 'cart'); for (const [u, v] of [[0.55, 0.1], [-0.65, 0.4]]) putAt(u * L, v * Wd, 'straw'); break;
+      case 'casks': row(-wall, -L * 0.6, L * 0.6, 8, 'cask_rack'); putAt(L * 0.7, wall, 'barrels'); putAt(-L * 0.7, wall, 'barrels'); break;
+      case 'bunks': for (const s of [-1, 1]) for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) { putAt(u, s * wall, 'bunk'); putAt(u + 3, s * (wall - 2), 'straw'); } break;
+      case 'iron_door': break;                                             // (at the doorway: dressRoom, which knows the openings)
+      case 'chests': at(2, 6, 'chest'); for (const s of [-1, 1]) putAt(s * L * 0.55, -wall, 'strongbox'); break;
+      case 'ledger': putAt(L * 0.35, -Wd * 0.4, alongK('desk')); putAt(L * 0.35, -Wd * 0.4 + 2, 'papers'); break;
+      case 'scaffold': row(-wall, -L * 0.55, 0, 9, 'scaffold'); break;
+      case 'broken_floor': for (let a = -1; a <= 1; a++) for (let b = 0; b <= 1; b++) putAt(L * 0.1 + a * 2, Wd * 0.35 + b * 2, 'pit'); putAt(L * 0.1 + 4, Wd * 0.35, 'ladder'); putAt(L * 0.1 - 4, Wd * 0.35 + 2, 'spoil'); putAt(L * 0.1 - 4, Wd * 0.35 - 1, 'lantern'); break;
+      case 'ladders': putAt(L * 0.75, -wall, 'ladder'); break;
+      case 'stalagmites': at(6, 5, 'stalagmite'); break;
+      case 'drips': for (const [u, v] of [[-0.3, -0.2], [0.2, 0.3], [-0.6, 0.35], [0.5, -0.4]]) putAt(u * L, v * Wd, 'puddle'); break;
+      case 'garrows_table': big(L * 0.4, -Wd * 0.35, 'map_table', 2, 1); putAt(L * 0.4 + 1, -Wd * 0.35 + 2, 'rug'); putAt(L * 0.4 - 3, -Wd * 0.35, 'lantern'); putAt(L * 0.4 + 4, -Wd * 0.35 - 1, 'chest');
+        putAt(-L * 0.45, -Wd * 0.45, 'stalagmite'); putAt(-L * 0.45 + 2, -Wd * 0.45 + 1, 'chains'); break;   // (Brannoc's stake: a chain post by a stone tooth)
+      // ── the Sunken Chapel: the drowned temple, the cult's cut, the binding crypt
+      case 'hives': row(-wall, -L * 0.5, L * 0.2, 7, 'hives'); break;
+      case 'doors': putAt(L * 0.55, -wall, alongK('fallen_door')); putAt(L * 0.55 + 3, -wall + 1, 'fallen_door'); break;
+      case 'pews': for (const s of [-1, 1]) for (const v of [0.28, 0.5]) for (let u = -L * 0.45; u <= L * 0.45 + 0.01; u += 5) putAt(u, s * Wd * v, 'pew'); break;
+      case 'font': putAt(L * 0.3, -Wd * 0.25, 'font'); break;
+      // (the flags cracked in a ring where the tower came down, walked over: the fallen stone at the walls, out of the fight)
+      case 'light_shaft': putAt(0, 0, 'shaft'); for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.2832 + 0.4; putAt(cos(a) * 6, sin(a) * 6, 'cracks'); } for (const s of [-1, 1]) putAt(s * L * 0.7, Wd * 0.6, 'spoil'); break;
+      case 'altar': case 'altar_small': if (r.role === 'descent') break; putAt(L * 0.55, 0, 'altar'); for (const s of [-1, 1]) putAt(L * 0.55 - 1, s * 3, 'candelabra'); break;
+      case 'ladders_cut': break;
+      case 'ledgers': putAt(L * 0.6, -Wd * 0.2, 'ledgers'); putAt(L * 0.6 - 2, -Wd * 0.2 + 2, 'papers'); putAt(-L * 0.6, -Wd * 0.3, 'ledgers'); break;
+      case 'bound': for (const s of [-1, 1]) for (let u = -L * 0.7; u <= L * 0.7 + 0.01; u += 5) putAt(u, s * wall, 'bound'); break;
+      case 'circle': putAt(0, 0, 'circle'); break;
+      case 'ring_of_pillars': for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.2832; putAt(cos(a) * L * 0.62, sin(a) * Wd * 0.62, 'pillar'); } break;
+      // ── the Ninth Milestone: the legion's strongroom
+      case 'pay_chests': for (let u = -L * 0.75; u <= L * 0.75 + 0.01; u += 6) { putAt(u, -wall, 'strongbox'); putAt(u, wall, 'strongbox'); } break;
+      case 'bars': row(-(wall - 1), -L * 0.75, L * 0.75, 6, 'bars'); break;
+      case 'chest': at(1, 6, 'chest'); break;
+      case 'shrine': { const q = pickEdge(8); if (q) place(q[0], q[1], 'shrine'); } break;
+      default: if (PLAN_KIND[d]) at(d === 'candles' || d === 'lanterns' ? 2 : d === 'spoil' || d === 'bedrolls' ? 3 : 1, 6, PLAN_KIND[d]);
+    }
   }
-  void prng;
 }
 
 // Props you walk over (flat on the floor, or underfoot): a dropped cage, a binding circle.
-export const FLAT_PROPS = new Set(['cage', 'circle']);
+export const FLAT_PROPS = new Set(['cage', 'circle', 'shaft', 'straw', 'rug', 'scorch', 'cracks', 'coins', 'papers', 'puddle']);
 export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const S = siteOf(site), FAM = familyAt(site, depth), kit = dressAt(site, depth), KIT = kit ? DRESS[kit] : null;   // (its furniture below: `human`, `themes`, or its kit)
   const th = theme || themeAt(site, depth) || THEME_KEYS[(seed >>> 0) % THEME_KEYS.length];
@@ -133,20 +200,28 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // group doorway cells into openings (a 6-wide corridor mouth) and flank each with braziers
     const openings = [];
     for (const d of doors) { const g = openings.find((o) => Math.abs(o.x - d[0]) + Math.abs(o.y - d[1]) < 9 && o.dx === d[2] && o.dy === d[3]); if (g) { g.pts.push(d); g.x = (g.x * (g.pts.length - 1) + d[0]) / g.pts.length; g.y = (g.y * (g.pts.length - 1) + d[1]) / g.pts.length; } else openings.push({ x: d[0], y: d[1], dx: d[2], dy: d[3], pts: [d] }); }
+    // (an authored room's doorways lit as its place is: DOOR_LIGHT; a floor's way in, its sanctuary, keeps its braziers, so
+    // the safe room reads warm and lit and the fighting rooms take their own place's light)
+    const DL = r.dress && r !== level.entrance ? DOOR_LIGHT[r.kit] || 'brazier' : 'brazier';
     for (const o of openings) {
       const ix = Math.round(o.x) - o.dx * 2, iy = Math.round(o.y) - o.dy * 2, px = o.dy, py = o.dx;   // two steps inside, perpendicular to the corridor
-      for (const s of [-1, 1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, 'brazier')) break;
+      for (const s of [-1, 1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, DL)) break;
     }
+    // the strongroom's iron door, hung open inside its doorway, against the wall it's set in
+    if (r.dress && r.dress.includes('iron_door') && openings.length) { const o = openings[0], ix = Math.round(o.x) - o.dx, iy = Math.round(o.y) - o.dy; for (let w = 7; w <= 9; w++) if (place(ix + o.dy * w, iy + o.dx * w, o.dx ? 'iron_door_y' : 'iron_door')) break; }
     // wall-side cells: open floor within 2 tiles of the room's edge, away from doorways
-    const nearDoor = (x, y) => openings.some((o) => hypot(x - o.x, y - o.y) < 8);
+    const nearDoor = (x, y, rr = 8) => openings.some((o) => hypot(x - o.x, y - o.y) < rr);
     const edge = cells.filter(([x, y, c]) => {
       if (c.corridor || nearDoor(x, y)) return false;
       let open = 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (!isFloor(x + dx, y + dy)) open++;
       return open > 0 && isFloor(x + 1, y) && isFloor(x - 1, y) && isFloor(x, y + 1) && isFloor(x, y - 1);
     });
     const taken = [];
+    // an authored room draws its dressing from a stream of its own (the dressing pass): a recipe changed in one room
+    // moved every room after it on the shared one, the contract's arena among them
+    const rr = r.dress ? mulberry32(streamSeed(seed, 3210 + r.id)) : prng, orr = r.dress ? mulberry32(streamSeed(seed, 3240 + r.id)) : orng;
     const pickEdge = (minGap, ok = null) => {
-      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(prng() * edge.length) | 0]; if ((!ok || ok(x, y)) && taken.every(([a, b]) => hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
+      for (let t = 0; t < 40 && edge.length; t++) { const [x, y] = edge[(rr() * edge.length) | 0]; if ((!ok || ok(x, y)) && taken.every(([a, b]) => hypot(a - x, b - y) >= minGap)) { taken.push([x, y]); return [x, y]; } }
       return null;
     };
     // room identity: every fighting room gets a layout theme, furniture kept to the thirds so
@@ -157,11 +232,11 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // The descent room rings its gate with four pillars; the entrance stays a bare sanctuary.
     const along = r.rw >= r.rh, L = along ? r.rw : r.rh, Wd = along ? r.rh : r.rw;
     const at = (u, v) => along ? [Math.round(r.cx + u), Math.round(r.cy + v)] : [Math.round(r.cx + v), Math.round(r.cy + u)];
-    const putAt = (u, v, kind) => { const [x, y] = at(u, v); if (!nearDoor(x, y)) place(x, y, kind); };
+    const putAt = (u, v, kind) => { const [x, y] = at(u, v); if (!nearDoor(x, y, r.dress ? 6.5 : 8)) place(x, y, kind); };   // (an authored room keeps its doorway's mouth clear, 10 wide: 8 took most of a small room)
     if (r.dress) {                                                // an authored room (plans.js): its kit's theme, then the pieces it names
       const theme = r === level.entrance ? null : PLAN_THEME[r.shape === 'cave' && r.kit === 'cellar' ? 'cave' : r.kit] || null;
       r.theme = theme;
-      dressPlanned(r, { putAt, pickEdge, place, prng, L, Wd });
+      dressPlanned(r, { putAt, pickEdge, place, L, Wd, along });
     } else if (r === level.descentRoom) {
       const k = Math.min(r.rw, r.rh) * 0.45; for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) putAt(a * k, b * k, 'pillar');
     } else if (r !== level.entrance) {
@@ -236,14 +311,18 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // (3 × 3 clear, 5 tiles from other furniture), never by a doorway, never in the entrance or the descent hall. On
     // their own stream, so the rest of a floor's dressing stands where it did.
     if (r !== level.entrance && r !== level.descentRoom) {
-      const n = 1 + (orng() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
-      for (let i = 0, got = 0; i < 30 && got < n && mid.length; i++) {
-        const [x, y] = mid[(orng() * mid.length) | 0];
+      const n = 1 + (orr() < 0.5 ? 1 : 0), mid = cells.filter(([x, y, c]) => !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4 && !nearDoor(x, y));
+      // (an authored room's own set piece out on the floor, the yard's well, a cart, stands for one: the middle stays open)
+      const OBK = KIT ? KIT.obstacles : OBSTACLES, pre = r.dress ? Math.min(n, cells.filter(([x, y, c]) => { const p = world.props.get(K(x, y)); return p && p !== 'block' && (DRESS_PIECES.has(p) || OBK.includes(p)) && !c.corridor && Math.abs(x - r.cx) <= r.rw * 0.45 && Math.abs(y - r.cy) <= r.rh * 0.45 && hypot(x - r.cx, y - r.cy) > 4; }).length) : 0;
+      for (let i = 0, got = pre; i < 30 && got < n && mid.length; i++) {
+        const [x, y] = mid[(orr() * mid.length) | 0];
         let clear = true;
+        // (what's laid flat on the floor, cracks, straw, is no furniture: it doesn't crowd an obstacle out)
+        const solid = (k) => { const p = world.props.get(k); return !!p && !FLAT_PROPS.has(p); };
         for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) { const c = level.cells.get(K(x + dx, y + dy)); if (!c || c.kind !== 'floor' || c.corridor || world.props.has(K(x + dx, y + dy))) { clear = false; break; } }
-        if (!clear || [...world.props.keys()].some((k) => { const [a, b] = k.split(',').map(Number); return Math.abs(a - x) < 5 && Math.abs(b - y) < 5; })) continue;
+        if (!clear || [...world.props.keys()].some((k) => { if (!solid(k)) return false; const [a, b] = k.split(',').map(Number); return Math.abs(a - x) < 5 && Math.abs(b - y) < 5; })) continue;
         const OB = KIT ? KIT.obstacles : OBSTACLES;
-        if (place(x, y, OB[(orng() * OB.length) | 0])) got++;
+        if (place(x, y, OB[(orr() * OB.length) | 0])) got++;
       }
     }
     if (r.dress) continue;                                        // (an authored room's chests, shrine and decor are its plan's)
@@ -274,7 +353,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
       for (let i = 0; i < n; i++) {
         const cx = r.cx + (wrng() - 0.5) * r.rw * 0.7, cy = r.cy + (wrng() - 0.5) * r.rh * 0.7, rad = 1.6 + wrng() * 1.8, ph = wrng() * 6.28;
         for (let y = Math.floor(cy - rad - 1); y <= Math.ceil(cy + rad + 1); y++) for (let x = Math.floor(cx - rad - 1); x <= Math.ceil(cx + rad + 1); x++) {
-          const c = level.cells.get(K(x, y)); if (!c || c.kind !== 'floor' || c.corridor || c.room !== r.id) continue;
+          const c = level.cells.get(K(x, y)); if (!c || c.kind !== 'floor' || c.corridor || c.room !== r.id || (level.plan && world.props.has(K(x, y)))) continue;   // (never under a piece: the water had drowned the Crossing's shaft of daylight)
           const a = atan2(y - cy, x - cx), rr = rad * (1 + 0.25 * sin(a * 3 + ph));
           if (hypot(x - cx, y - cy) < rr) world.pools.add(K(x, y));
         }
@@ -287,6 +366,13 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   world.structs = [];
   if (level.entrance) placeStairsUp(world, level);
   if (level.descentRoom && hasFloorBelow(site, depth)) placeStairsDown(world, level);   // (a site's last floor ends in its hall)
+  // the stair down's own set piece, once it's placed (docs/vale-dungeon-dressing.md): the Barrow Door's two guardians
+  // either side of it; the Chancel's altar behind it, broken through, the cult's cut going down beneath
+  if (world.stairwell && level.descentRoom.dress) {
+    const W0 = world.stairwell, dr = level.descentRoom, put = (x, y, kind) => { const c = level.cells.get(K(x, y)); if (c && c.kind === 'floor' && c.room === dr.id && !world.props.has(K(x, y))) world.props.set(K(x, y), kind); };
+    if (dr.dress.includes('guardians')) { put(W0.x0 - 3, W0.y0 + 1, 'guardian'); put(W0.x1 + 2, W0.y0 + 1, 'guardian'); }
+    if (dr.dress.includes('altar')) { const ax = (W0.x0 + W0.x1) >> 1; put(ax, W0.y0 - 2, 'altar'); put(W0.x0 - 1, W0.y0 - 2, 'candelabra'); put(W0.x1, W0.y0 - 2, 'candelabra'); for (const dx of [-2, 2]) put(ax + dx, W0.y0 - 1, 'cracks'); }
+  }
   if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
@@ -418,7 +504,7 @@ function keepTheWaysOpen(world, level) {
   if (world.vault) { const [x, y] = world.vault.key.split(',').map(Number); ends.push(around(x, y)); }
   for (const a of [world.exitAt, world.stairArrive, world.stairsDownArrive]) if (a) { const x = Math.floor(a.x), y = Math.floor(a.y); ends.push([[x, y], ...around(x, y)]); }   // (within reach is enough: core.js)
   const DECOR = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet',
-    'spoil', 'lantern', 'urnshelf', 'urns', 'candles', 'rack', 'standard', 'banner', 'tent', 'bunk', 'scaffold', 'stalagmite', 'boulder', 'altar', 'saint', 'chains', 'bound', 'font', 'boat', 'reeds', 'windlass', 'vat']);
+    'spoil', 'lantern', 'urnshelf', 'urns', 'candles', 'rack', 'standard', 'banner', 'tent', 'bunk', 'scaffold', 'stalagmite', 'boulder', 'altar', 'saint', 'chains', 'bound', 'font', 'boat', 'reeds', 'windlass', 'vat', ...DRESS_PIECES]);
   const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
   // a tile's cost to open: 0 walkable, 1 a pool or decor to clear, Infinity never (walls, the well, chests)
   const cost = (x, y) => {

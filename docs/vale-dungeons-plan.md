@@ -334,3 +334,4 @@ vale-dungeons`), the room's level in its banner.*
 **Left for the dressing pass:** the pieces the game has no prop for yet stand nowhere: stalls, troughs, hives, desks and
 rolls, the portcullis and the iron door, the broken floor, bars, and the crossing's shaft of light. Each needs its piece
 built (our voxel props, or Luminati's furniture), then captures on both renderers and an art critic pass.
+**Done (2026-11-04):** [vale-dungeon-dressing.md](./vale-dungeon-dressing.md), the critique, the pieces and the measures.

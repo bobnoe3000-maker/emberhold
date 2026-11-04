@@ -82,12 +82,21 @@ test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hou
     // a light at each prop Emberlit lights
     const lit = ['lantern', 'candles', 'altar', 'circle', 'font'].reduce((n, k) => n + (kinds.get(k) || 0), 0);
     assert.ok(level.objects.filter((o) => o.type === 'light').length >= lit, `${w.kit}: lights`);
-    const all = level.tiles.flatMap((r) => [...r]);
-    seen.set(w.kit, { hour: level.environment.timeOfDay, wall: all.includes('B') ? 'B' : 'x', rock: all.includes('x'), dressed: all.includes('B') });
+    const all = level.tiles.flatMap((r) => [...r]), built = ['B', 'W', 'C'].filter((c) => all.includes(c));
+    seen.set(w.kit, { hour: level.environment.timeOfDay, walls: built, earth: all.includes('D'), rock: all.includes('x'), dressed: built.length > 0 });
+    // the dressing pass: Luminati's own well, bench, shelves, campfire and table where it has them; a big piece's footprint
+    // is nothing drawn; the broken floor sunk
+    for (const [k, t] of [['well', 'well'], ['bench', 'bench'], ['shelf', 'shelf'], ['shelf_y', 'shelf'], ['cookfire', 'campfire'], ['map_table', 'table'], ['hen_cart', 'critters']]) if (kinds.has(k)) assert.ok(types.has(t), `${w.kit}: ${k} as ${t}`);
+    assert.ok(!ours.has('block'), `${w.kit}: a footprint draws nothing`);
+    if (kinds.has('pit')) assert.ok(level.heights.some((r) => r.includes('0') && /2/.test(r)), `${w.kit}: the broken floor sunk`);
   }
   assert.deepEqual([...seen.keys()], ['dig', 'gallery', 'bailey', 'barracks', 'nave', 'binding'], 'six floors, each its kit');
   assert.ok(seen.get('gallery').hour > seen.get('dig').hour && seen.get('bailey').hour < seen.get('binding').hour, 'warm and cold kits at their hours');
-  assert.equal(seen.get('nave').wall, 'B', 'the nave in dressed stone');   // (its Chancel in the cult's rock: the cut goes down under the altar)
+  // each place in its own stone (the dressing pass): the chapel's pale sandstone, the crypts' limestone, the dig's earth,
+  // the keep's stone brick (its Chancel in the cult's rock: the cut goes down under the altar)
+  assert.ok(seen.get('nave').walls.includes('C') && seen.get('nave').rock, 'the nave in pale sandstone, the chancel in rock');
+  assert.ok(seen.get('gallery').walls.includes('W') && seen.get('binding').walls.includes('W'), 'the crypts in dressed limestone');
+  assert.ok(seen.get('dig').earth && seen.get('bailey').walls.includes('B'), 'the dig in earth, the bailey in stone brick');
   // a floor dressed room by room: the Keep's barracks in dressed stone and the cave under its cellars in rock; the Chapel's
   // cut dug rough, its crypts built
   assert.ok(seen.get('barracks').dressed && seen.get('barracks').rock, 'the Keep\'s second floor: stone and rock');
