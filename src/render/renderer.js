@@ -23,6 +23,7 @@ import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from
 import { paintOutdoor } from './outdoorpaint.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
+import { createSkillFX } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
@@ -290,6 +291,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   let heroAtlas = null, outMap = null;
   const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
   const fx = createFX();                               // weapon trails / glints / cast shimmer + hit sparks (fx.js)
+  const sfx = createSkillFX(fx.primitives);            // each class skill's own effect, and what it leaves on people (skillfx.js)
   const skelAtlases = [], enemyAtlases = new Map();   // actor name → atlas, or a promise while it loads
   const enemyAtlas = (kind) => {
     const name = ENEMY_ACTOR[kind] || 'skeleton_minion', a = enemyAtlases.get(name);
@@ -1012,6 +1014,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     const P = proj(bx, by), pts = [];
     for (let k = 0; k < t.length; k += 2) { const q = proj(t[k], t[k + 1]); pts.push({ sx: q.sx, sy: q.sy - 18 }); }
     fx.trail(pts, BOLT_RGB[kind] || BOLT_RGB.bolt, P.key, P.sy, P.h, kind === 'arrow');
+    if (b.skill === 'firebolt') sfx.fireHead(pts, P.key, P.sy, P.h, clock());   // (the Firebolt's own head: skillfx.js)
     nextBolts.add(b);
   }
   function boltsLand(now) {                                     // a bolt gone since the last frame has landed: burst where it was
@@ -1023,7 +1026,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     const o = liveBolts; liveBolts = nextBolts; nextBolts = o; nextBolts.clear();
   }
   function stageApi(draws, ox, oy, now) {
-    return { now, ox, oy, draws, project, ZH, HW, HH, fx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE, BOLT_RGB,
+    return { now, ox, oy, draws, project, ZH, HW, HH, fx, skills: sfx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE, BOLT_RGB,
       // a bolt in flight as the game draws one (its sprite, and its trail, halo and floor glow in the effects pass); a new
       // `obj` each flight, so the last one lands (bursts) when it's let go
       bolt: (obj, x, y, kind) => { stageBolts.push(obj); obj.kind = kind; obj.bx = x; obj.by = y; },
@@ -1121,7 +1124,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a });
+      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H });
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
@@ -1131,7 +1134,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
       const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
-      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a });
+      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m });
     });
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
     // gesture now and then. Their playback state is presentation-only, kept here by NPC id.
@@ -1201,7 +1204,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id });   // (the living walk in out of the dark: a fade, not a rise)
+      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -1241,6 +1244,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       fx.soul(e.x, e.y, (fs && fs.spark) || [220, 220, 235], { now: clock(), big: !!(e.boss || e.elite) });
     }
     fx.particles(now, fxProj);
+    sfx.draw(now, fxProj, st && st.skillUnits ? st.skillUnits(fxProj) : draws.filter((dr) => dr.u).map((dr) => ({ u: dr.u, foe: !!dr.foe, sx: dr.fx, sy: dr.fy, h: dr.h, key: dr.k })));   // the skills' moments and auras (skillfx.js)
     if (st && st.afterFx) st.afterFx({ now, proj: fxProj, fx });   // (the art review's FX view: what draws straight into the light, the marsh-lights)
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
     if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
@@ -1564,6 +1568,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: clock(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
+  sim.bus.on('skill', (e) => sfx.event(e, clock()));   // a skill's moment (battle.js skillEv)
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clock() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: clock() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall

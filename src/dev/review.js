@@ -150,6 +150,30 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
       ['hero_mage', 'attack', 'mage · cast'], ['hero_mage', 'heavy', 'mage · fire'], ['hero_cleric', 'heavy', 'cleric · mace'], ['hero_shaman', 'attack', 'shaman · spirit'],
       ['skeleton_warrior', 'attack', 'skeleton · slash'], ['skeleton_mage', 'attack', 'skeleton mage'], ['redhand_brute', 'heavy', 'brute · heavy'], ['goblin_hexer', 'attack', 'hexer · cast']])
       H('Weapons', label, { actor: [atl, 0, clip] });
+    // (docs/combat-fx.md) each class skill's own moment, as the sim's 'skill' event starts it (battle.js skillEv): the
+    // caster in the cell, the target a tile and a half up the screen, two foes beside it; and what each leaves on someone
+    const CLS = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };
+    const sk = (id, cls, at, x, y, more = {}) => ({ id, at, cls, by: null, x, y, tid: null, ally: false, tx: x + 1.1, ty: y - 1.1, r: 0, reached: [{ id: null, x: x + 2.1, y: y - 0.6 }, { id: null, x: x + 0.5, y: y - 2 }], crit: false, ...more });
+    /** @type {[string, string, string, number][]} */
+    const SKILL_CELLS = [['fighter', 'cleave', 'Cleave', 1], ['fighter', 'shield_wall', 'Shield Wall', 2], ['fighter', 'second_wind', 'Second Wind', 1],
+      ['rogue', 'backstab', 'Backstab', 1], ['rogue', 'smoke_step', 'Smoke Step', 1], ['rogue', 'venom', 'Venom', 1],
+      ['mage', 'firebolt', 'Firebolt', 1], ['mage', 'frost_nova', 'Frost Nova', 2], ['mage', 'arcane_ward', 'Arcane Ward', 1],
+      ['cleric', 'mend', 'Mend', 1], ['cleric', 'bless', 'Bless', 1], ['cleric', 'turn_undead', 'Turn Undead', 2],
+      ['shaman', 'spirit_drain', 'Spirit Drain', 1], ['shaman', 'ancestors_breath', "Ancestors' Breath", 2], ['shaman', 'hex', 'Hex', 2]];
+    for (const [cls, id, label, span] of SKILL_CELLS) {
+      const self = ['shield_wall', 'second_wind', 'smoke_step', 'frost_nova', 'turn_undead', 'ancestors_breath', 'bless'].includes(id), ally = ['arcane_ward', 'mend'].includes(id);
+      H('Skills', label, { actor: [CLS[cls], 1, id === 'firebolt' || id === 'spirit_drain' ? 'attack' : 'heavy'], period: 2000, span, go: (a, x, y, now) => {
+        const more = self ? { tx: x, ty: y, ally: true, reached: id === 'bless' || id === 'ancestors_breath' ? [{ id: null, x, y }, { id: null, x: x + 1.4, y: y + 0.4 }, { id: null, x: x - 0.4, y: y + 1.3 }] : [{ id: null, x: x + 1.8, y: y - 1 }, { id: null, x: x - 1.6, y: y - 1.2 }] }
+          : ally ? { tx: x + 1.2, ty: y + 0.3, ally: true } : id === 'backstab' ? { crit: true } : {};
+        if (id === 'shield_wall') a.skills.event(sk(id, cls, 'cast', x, y, more), now);
+        a.skills.event(sk(id, cls, 'land', x, y, more), now + (id === 'shield_wall' ? 520 : id === 'firebolt' ? 160 : 0));
+      } });
+    }
+    const AURAS = [['fighter', 'Shield Wall', { buff: { wall: 5 } }, false], ['rogue', 'Smoke Step', { buff: { smoke: 5 } }, false], ['cleric', 'Bless', { buff: { bless: 5 } }, false],
+      ['shaman', "Ancestors' Breath", { buff: { breath: 5 } }, false], ['mage', 'Arcane Ward', { ward: 40 }, false],
+      [null, 'Frost Nova · chilled', { slow: 3, hp: 1 }, true], [null, 'Venom · poisoned', { poison: { t: 3 }, hp: 1 }, true], [null, 'Spirit Drain · 3 stacks', { drain: { n: 3, t: 3 }, hp: 1 }, true], [null, 'Hex · hexed', { hex: { t: 3 }, hp: 1 }, true]];
+    for (const [cls, label, u, foe] of AURAS) H('Skills · what they leave', label, { actor: [cls ? CLS[cls] : 'skeleton_warrior', foe ? 2 : 1, 'idle'], aura: { u, foe } });
+    st.skillUnits = (proj) => st.items.filter((c) => c.aura).map((c) => ({ u: c.aura.u, foe: c.aura.foe, ...proj(c.x, c.y) }));
     // the grid: a heading at each new family, the cells under it
     let col = 0, row = 0, head = '';
     const kindOfActor = (id) => (/^hero_/.test(id) ? 'party' : /^skeleton_/.test(id) ? 'undead' : 'human');

@@ -716,43 +716,52 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       } else if (A.kind === 'hex') { target = hexCentre(A, foes); if (!target) continue; }
       m.mp -= c.cost; m.act = 0.55; m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
       bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
+      skillEv(A, 'cast', m, target, true);
       const tg = target;
       pending.push({ t: WINDUP_HEAVY, fn: () => { if (alive(m)) utility(m, c, tg, w); } });
       return true;
     }
     return false;
   }
+  // A skill, for presentation (render/skillfx.js): its cast (the wind-up starting) and where it lands, with who cast it,
+  // at whom (a party member or a foe, by id), and those it reached. Events only: nothing here is state, so replays are
+  // as they were.
+  function skillEv(A, at, by, tgt, ally, reached = [], crit = false) {
+    bus.emit('skill', { id: A.id, at, cls: by.cls, by: by.id, x: by.x, y: by.y, tid: tgt ? tgt.id : null, ally: !!ally, tx: tgt ? tgt.x : by.x, ty: tgt ? tgt.y : by.y, r: A.radius || 0,
+      reached: reached.map((o) => ({ id: o.id, x: o.x, y: o.y })), crit: !!crit });
+  }
   function utility(m, { A, mult }, tgt, w) {
     if (A.kind === 'guard') {
       const b = m.buff || (m.buff = {});
       if (A.taunt) { b.wall = A.dur + (has(m, 'long_watch') ? FIGHT.wall : 0); b.wallK = A.def * mult; } else { b.smoke = A.dur + (has(m, 'smoke_artist') ? FIGHT.smoke : 0); b.smokeK = A.dodge * mult; }
-      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
+      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name }); skillEv(A, 'land', m, m, true);
     } else if (A.kind === 'heal') {
       const s = statsFor(m), n = Math.round(s.maxHp * A.heal * mult * healMod(m, state.party)); m.hp = Math.min(s.maxHp, m.hp + n);
-      bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n });
+      bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n }); skillEv(A, 'land', m, m, true);
     } else if (A.kind === 'mend') {
       if (!alive(tgt)) return;
       const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, state.party)); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
-      bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n });
+      bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n }); skillEv(A, 'land', m, tgt, true);
     } else if (A.kind === 'bless') {
       for (const q of state.party) if (alive(q)) { const b = q.buff || (q.buff = {}); b.bless = A.dur; b.blessK = A.buff * mult; }
-      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
+      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name }); skillEv(A, 'land', m, m, true, state.party.filter(alive));
     } else if (A.kind === 'ward') {
       if (!alive(tgt)) return;
       tgt.ward = Math.round(statsFor(tgt).maxHp * A.ward * mult);
-      bus.emit('combat', { t: 'ward', x: tgt.x, y: tgt.y, amount: tgt.ward });
+      bus.emit('combat', { t: 'ward', x: tgt.x, y: tgt.y, amount: tgt.ward }); skillEv(A, 'land', m, tgt, true);
     } else if (A.kind === 'breath') {
       const k = A.hot * mult * healMod(m, state.party);
       for (const q of state.party) if (alive(q)) { const b = q.buff || (q.buff = {}); b.breath = A.dur; b.breathK = k; b.breathAtk = A.buff * mult; }
-      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name });
+      bus.emit('combat', { t: 'guard', x: m.x, y: m.y, name: A.name }); skillEv(A, 'land', m, m, true, state.party.filter(alive));
     } else if (A.kind === 'hex') {
       if (!tgt) return;
       const k = Math.min(0.4, A.debuff * mult);
-      for (const o of w.enemies) if (!o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < A.radius) o.hex = { t: A.dur, k };
-      bus.emit('combat', { t: 'hex', x: tgt.x, y: tgt.y, party: false });
+      const hexed = []; for (const o of w.enemies) if (!o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < A.radius) { o.hex = { t: A.dur, k }; hexed.push(o); }
+      bus.emit('combat', { t: 'hex', x: tgt.x, y: tgt.y, party: false }); skillEv(A, 'land', m, tgt, false, hexed);
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
-      for (const o of novaTargets(A, w.enemies, m)) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
+      const hit = novaTargets(A, w.enemies, m); skillEv(A, 'land', m, m, true, hit);
+      for (const o of hit) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
       bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
     }
   }
@@ -781,19 +790,21 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (r.crit && isPartyAtt && att.cls === 'rogue' && hasPassive(att)) att.mp = Math.min(statsFor(att).maxMp, att.mp + 5);   // Opportunist
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
       const splash = ab ? ab.splash || (ab.id === 'firebolt' && has(att, 'kindler') ? FIGHT.kindle : 0) : 0;   // (a Kindler's Firebolt splashes)
-      if (splash) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, o, splash * c.mult), false, w);
+      const splashed = splash ? w.enemies.filter((o) => o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) : [];
+      if (ab) skillEv(ab, 'land', att, tgt, false, splashed, r.crit);
+      for (const o of splashed) applyHit(aStats, o, resolve(aStats, o, splash * c.mult), false, w);
       if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur + (has(att, 'venomous') ? FIGHT.venom : 0), dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
       if (ab && ab.drain && tgt.hp > 0) {                          // Spirit Drain: one more stack, and they all run again
         const d = tgt.drain || (tgt.drain = { n: 0, t: 0, acc: 0, dps: 0, by: att });
         d.n = Math.min(drainCap(att, ab), d.n + 1); d.t = ab.ddur + (has(att, 'deep_drinker') ? FIGHT.drink : 0); d.dps = aStats.atk * ab.drain * c.mult; d.by = att;
       }
     };
-    if (ab) bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name });
+    if (ab) { bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name }); skillEv(ab, 'cast', att, tgt, false); }
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
     const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
     pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
-      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, hit }); }
+      if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, skill: ab ? ab.id : null, hit }); }   // (skill: the renderer draws an ability's own bolt)
       else hit();
     } });
   }

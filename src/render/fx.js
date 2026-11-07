@@ -115,10 +115,20 @@ export function createFX() {
     }
     touched.length = 0;
   }
-  // soft disc: a · (1 − d/r)^p
+  // soft disc: a · (1 − d/r)^p. Its weights come from a kernel kept per (r, p), to a tenth of a pixel: the same marks as
+  // working each one out, without a hypot and a pow per pixel (the skills' rings stroke hundreds of discs a frame:
+  // docs/combat-fx.md: 4.1 → 1.0 ms at their worst, on the cloud box)
+  const kernels = new Map();
+  function kernel(r, p) {
+    const key = Math.round(r * 10) * 64 + Math.round(p * 10); let k = kernels.get(key); if (k) return k;
+    const rr = Math.round(r * 10) / 10, R = Math.ceil(rr), o = [];
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const d = Math.hypot(dx, dy) / rr; if (d < 1) o.push(dx, dy, Math.pow(1 - d, p)); }
+    k = new Float32Array(o); if (kernels.size < 4096) kernels.set(key, k); return k;
+  }
   function disc(x, y, r, a, p = 1.6) {
-    const R = Math.ceil(r);
-    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const d = Math.hypot(dx, dy) / r; if (d < 1) mark(x + dx, y + dy, a * Math.pow(1 - d, p)); }
+    if (a <= 0.004 || r <= 0) return;
+    const k = kernel(r, p);
+    for (let i = 0; i < k.length; i += 3) mark(x + k[i], y + k[i + 1], a * k[i + 2]);
   }
   // line, alpha ramped a0 → a1, optional half-width
   function seg(x0, y0, x1, y1, a0, a1 = a0, w = 0) {
