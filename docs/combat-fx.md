@@ -52,7 +52,7 @@ decay.
 | | Smoke Step | smoke thrown out in a ring at the feet, billowing and rising | wisps of smoke turning about them |
 | | Venom | a green splash, drops thrown out and falling, a ring at the feet | bubbles rising off the poisoned, a sick glow under them |
 | Mage: arcane blue, fire, frost | Firebolt | in flight, a roaring head with embers shed behind it; where it lands, a white-orange flash, a ring of fire, embers flung up and falling, smoke-light rising, the floor scorched | |
-| | Frost Nova | a ring of frost running out 2.8 tiles over the floor, ice spikes standing up behind it as it passes, a cold mist; each foe reached flashes white | rime at the chilled foe's feet, snow falling on them |
+| | Frost Nova | a cold streak from her staff to the thickest knot of foes, then a ring of frost running out 3.5 tiles over the floor there, ice spikes standing up behind it as it passes, a cold mist; each foe reached flashes white | rime at the chilled foe's feet, snow falling on them |
 | | Arcane Ward | runes drawn in round the ally, then the dome closing over them | the dome, a light running round it, facets twinkling |
 | Cleric: gold | Mend | a beam of gold from above onto the ally, a ring at their feet, a mark rising over their head, motes going up | |
 | | Bless | a rune circle turning at the cleric's feet, a halo settling over each of the party | the halo |
@@ -70,7 +70,7 @@ How it's built:
   the fight's hash, heard or not).
 - **Effects follow people.** A moment follows its caster and target by id while they move.
 - **Auras come from state.** They are read off the sim's state every frame: `buff.wall`, `smoke`, `bless`, `breath`,
-  `ward`, and a foe's `slow`, `poison`, `drain` and `hex`. They fade over their last second.
+  `ward`, and a foe's `slow`, `poison`, `drain` and `hex`. They fade over their last 0.8 s (a foe's over its last 0.6 s).
 - **Ground effects are on the ground.** Ground effects are true world circles: an ellipse of 11.3 × 5.7 px a tile,
   stroked a pixel at a time. They sit under the figures; the rest stands over them.
 
@@ -122,7 +122,7 @@ same marks without a `hypot` and a `pow` a pixel, and every older effect is fast
 
 - **The foes' own abilities.** The bosses' calls, the hexer's curse and the acolytes' fire still use the shared cast
   and bolt. They are next, in the same way: an event each, and a moment each.
-- **Timing against the clip.** Each moment starts on the sim's cast and landing (the wind-up is 0.55 s). The swing and
+- **Timing against the clip.** Each moment starts on the sim's cast and landing (a skill lands 0.38 s into its 0.55 s clip). The swing and
   the effect line up because both follow the sim; a skill-specific clip would sell them more.
 - **A ward breaking.** When a ward is spent, the dome goes out without a shatter. A 'warded' pulse and a break are
   worth adding.
