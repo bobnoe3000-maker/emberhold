@@ -75,6 +75,38 @@ function propSprite(w, it) {
 /** the furniture's state, for a change to rebuild it (a chest opened, a shrine used, a cage broken) */
 const propState = (w, list) => list.map((it) => propAt(w, it.tx, it.ty) || '-').join('|');
 
+// ── what Emberlit draws that has no atlas: Teague's lantern-cage held at his side, the bolts and arrows in flight ────
+// (the boss pass, docs/combat-fx.md: on Luminati they weren't drawn at all, only the bolts' light). Each sprite of
+// Emberlit's (renderer.js boltSprite, arrowSprite, gsprite's cage) as a canvas once, its glowing pixels lifted (Luminati
+// lights the canvas as a figure; a bolt is its own light), for the world page to stand up where Emberlit drew it.
+const bitCanvases = new WeakMap();
+function bitCanvas(sp, glow) {
+  let c = bitCanvases.get(sp);
+  if (!c) {
+    c = document.createElement('canvas'); c.width = sp.w; c.height = sp.h;
+    const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')), im = g.createImageData(sp.w, sp.h);
+    for (let i = 0; i < sp.w * sp.h; i++) if (sp.mask[i]) {
+      const k = glow && sp.emi && sp.emi[i] ? 1.25 : 1;
+      im.data[i * 4] = Math.min(255, sp.alb[i * 3] * k); im.data[i * 4 + 1] = Math.min(255, sp.alb[i * 3 + 1] * k); im.data[i * 4 + 2] = Math.min(255, sp.alb[i * 3 + 2] * k); im.data[i * 4 + 3] = 255;
+    }
+    g.putImageData(im, 0, 0); bitCanvases.set(sp, c);
+  }
+  return c;
+}
+// the Abbess's water (battle.js bells: each flooded tile, by its distance from the walls), as tile squares for the world
+// page to lay over its floor; built again only when the water comes further in
+let waterKey = '', waterCells = /** @type {number[]} */ ([]);
+function waterOf(b, origin) {
+  if (!(b && b.flood > 0 && b.edge)) { waterKey = ''; waterCells = []; return null; }
+  const key = `${b.room}:${b.flood}:${origin.x},${origin.y}`;
+  if (key !== waterKey) {
+    waterKey = key; waterCells = [];
+    const lim = b.flood * (b.floodStep || 1), shoreAt = (b.flood - 1) * (b.floodStep || 1);
+    for (const [k, d] of b.edge) { if (d > lim) continue; const c = k.indexOf(','), tx = +k.slice(0, c), ty = +k.slice(c + 1); waterCells.push((tx + 0.5 - origin.x) / 2, (ty + 0.5 - origin.y) / 2, d > shoreAt && d === lim ? 1 : 0); }
+  }
+  return { id: waterKey, cells: waterCells };
+}
+
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
 export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
 const CSS = `#world3d { position: fixed; inset: 0; pointer-events: none; background: #000; overflow: hidden; }
@@ -151,9 +183,14 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       const a = (cx - c.rx) / HW, b = (cy - c.ry + SIM_FLOOR * ZH) / HH;
       const mx = (a + b) / 2, my = (b - a) / 2;
       const ppu = (NATIVE_PER_UNIT * c.S) / c.k;              // CSS px a unit
-      const actors = [], rings = [], beasts = [];
+      const actors = [], rings = [], beasts = [], bits = [];
       let mark = null;
       for (const d of draws) {
+        if (d.lift !== undefined && d.sp && !d.atl) {             // a held or flying piece (Teague's cage, a bolt): its ground point, lifted
+          const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
+          bits.push({ canvas: bitCanvas(d.sp, !!d.glow), ax: d.sp.ax, ay: d.sp.ay, x: (x - origin.x) / 2, z: (y - origin.y) / 2, lift: d.lift, glow: d.glow ? 1 : 0, flash: (d.look && d.look.flash) || 0 });
+          continue;
+        }
         if (d.env && !d.atl) {                                  // a farm beast, in the frame Emberlit chose (render/beasts.js)
           const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH;
           beasts.push({ id: d.env, x: ((u + v) / 2 - origin.x) / 2, z: ((v - u) / 2 - origin.y) / 2 }); continue;
@@ -180,7 +217,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient,
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin),
         bright: sim.world.kind === 'dungeon' ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its

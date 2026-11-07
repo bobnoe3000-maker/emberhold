@@ -178,7 +178,10 @@ export const FAMILIES = {
 //   swarm  (Old Skarn, the Scrag Warren) while he stands he drums, and every SWARM_S s two goblins come out of the
 //          tunnels at the hall's far side, while fewer than SWARM_MAX of them are up: put him down and the drum stops
 // `once`: a story boss falls for good (state.bosses counts kills; his hall then fights as any other).
-// Events: 'bossWave' { id, name } · 'bossCall' { id } · 'bossKindle' { id, x, y } · 'bossSwarm' { id, x, y, n } · 'bossDown' { id, name, first, x, y, lvl }.
+// Events: 'bossWave' { id, name } · 'bossCall' { id, by, x, y, reached } · 'bossKindle' { id, by, tid, x, y } · 'bossSwarm' { id, by, x, y, n, reached }
+// · 'bossMud' { id, by, x, y, n, reached } · 'bossIssue' { id, by, tid, x, y } · 'bossVespers' { id, by, tid, x, y } · 'bossFlood' { id, by, level, x, y }
+// · 'bossDown' { id, name, first, x, y, lvl }. (by: the boss's id; tid / reached: those it raised, called, issued to: the
+// renderer's moments, render/skillfx.js, follow them. Presentation only: nothing reads them back.)
 // Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
 // which are paid, are not.
 export const GOLD_DROP = 0.7;
@@ -511,7 +514,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
     let dmg = r.dmg;
     if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
-    if (isParty && tgt.ward > 0) { const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a; if (!dmg) { bus.emit('combat', { t: 'warded', x: tgt.x, y: tgt.y }); return; } }   // Arcane Ward soaks it first
+    if (isParty && tgt.ward > 0) {                              // Arcane Ward soaks it first (spent: it breaks, for the renderer's shatter)
+      const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a;
+      if (!tgt.ward) bus.emit('combat', { t: 'wardBreak', x: tgt.x, y: tgt.y, id: tgt.id });
+      if (!dmg) { bus.emit('combat', { t: 'warded', x: tgt.x, y: tgt.y }); return; }
+    }
     if (isParty && tgt.main && dmg > 1) {                       // a Bodyguard close by takes a share of what's aimed at the hero
       const g = state.party.find((q) => q !== tgt && alive(q) && has(q, 'bodyguard') && hypot(q.x - tgt.x, q.y - tgt.y) <= FIGHT.bodyguardR);
       if (g) { const share = Math.max(1, Math.round(dmg * FIGHT.bodyguard)); dmg -= share; g.hp = Math.max(1, g.hp - share); g.flash = 0.12; }
@@ -1072,35 +1079,36 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const B = BOSSES[e.boss], F = fam(w), tough = battle && battle.tower ? towerK() : 1 + PREMIUM * Math.max(0, e.lvl - 3), esc = e.escort || B.escort;
     if (B.mech === 'call' && e.called < 2 && e.hp < e.maxHp * (2 - e.called) / 3) {
       e.called++;
-      e.guards = esc.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F).id; });
-      bus.emit('bossCall', { id: e.boss, x: e.x, y: e.y });
+      const called = esc.map((k, i) => { const [cx, cy] = onFloor(w, e.x + (i ? 1.3 : -1.3), e.y + 0.8, e.x, e.y); return foe(w, k, e.lvl, cx, cy, tough, false, F); });
+      e.guards = called.map((u) => u.id);
+      bus.emit('bossCall', { id: e.boss, by: e.id, x: e.x, y: e.y, reached: called.map((u) => ({ id: u.id, x: u.x, y: u.y })) });
     } else if (B.mech === 'kindle' && (e.kindleT += dt) >= KINDLE_S) {
       e.kindleT = 0;
       const at = battle && battle.lastSlain;
-      if (at) { const u = foe(w, 'minion', e.lvl, at.x, at.y, tough, false, FAMILIES.ashbound); u.undead = true; battle.lastSlain = null; bus.emit('bossKindle', { id: e.boss, x: at.x, y: at.y }); }
+      if (at) { const u = foe(w, 'minion', e.lvl, at.x, at.y, tough, false, FAMILIES.ashbound); u.undead = true; battle.lastSlain = null; bus.emit('bossKindle', { id: e.boss, by: e.id, tid: u.id, x: at.x, y: at.y }); }
     } else if (B.mech === 'swarm' && (e.swarmT += dt) >= SWARM_S) {
       // out of the tunnels: two of the escort's kinds at the hall cells furthest from him among four draws (the
       // battle's own stream; only this hall draws it), never more than SWARM_MAX of his up at once
       e.swarmT = 0;
-      const up = (w.enemies || []).filter((o) => o.swarm === e.id && o.hp > 0 && !o.dead).length, n = Math.min(2, SWARM_MAX - up), cells = battle ? battle.cells : [];
+      const up = (w.enemies || []).filter((o) => o.swarm === e.id && o.hp > 0 && !o.dead).length, n = Math.min(2, SWARM_MAX - up), cells = battle ? battle.cells : [], came = [];
       for (let i = 0; i < n && cells.length; i++) {
         let best = null, bd = -1;
         for (let t = 0; t < 4; t++) { const c = cells[(rng() * cells.length) | 0], d = hypot(c[0] + 0.5 - e.x, c[1] + 0.5 - e.y); if (d > bd && isWalkable(w, c[0] + 0.5, c[1] + 0.5)) { bd = d; best = c; } }
         if (!best) continue;
-        const u = foe(w, esc[i % esc.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id;
+        const u = foe(w, esc[i % esc.length], e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.swarm = e.id; came.push({ id: u.id, x: u.x, y: u.y });
       }
-      if (n > 0) bus.emit('bossSwarm', { id: e.boss, x: e.x, y: e.y, n });
+      if (n > 0) bus.emit('bossSwarm', { id: e.boss, by: e.id, x: e.x, y: e.y, n, reached: came });
     } else if (B.mech === 'mud' && battle && (e.mudT += dt) >= MUD_S) {
       // he stamps: mud comes up under each of the party standing (hazards.js), for MUD_T s
       e.mudT = 0;
       const at = state.party.map((m, i) => (alive(m) ? (i ? [m.x, m.y] : [state.player.x, state.player.y]) : null)).filter(Boolean);
       for (const [x, y] of at) battle.hazards.push({ kind: 'mud', x, y, r: MUD_R, from: state.t, until: state.t + MUD_T });
-      bus.emit('bossMud', { id: e.boss, x: e.x, y: e.y, n: at.length });
+      bus.emit('bossMud', { id: e.boss, by: e.id, x: e.x, y: e.y, n: at.length, reached: at.map(([x, y]) => ({ id: null, x, y })) });
     } else if (B.mech === 'issue' && battle && (e.issueT += dt) >= ISSUE_S) {
       // he issues: the most hurt of his ranks (alive, not himself) stands up whole
       e.issueT = 0;
       let worst = null; for (const o of w.enemies || []) if (o !== e && !o.boss && o.hp > 0 && !o.dead && !(o.spawn > 0) && o.hp < o.maxHp && (!worst || o.hp / o.maxHp < worst.hp / worst.maxHp)) worst = o;
-      if (worst) { worst.hp = worst.maxHp; bus.emit('bossIssue', { id: e.boss, x: worst.x, y: worst.y }); }
+      if (worst) { worst.hp = worst.maxHp; bus.emit('bossIssue', { id: e.boss, by: e.id, tid: worst.id, x: worst.x, y: worst.y }); }
     } else if (B.mech === 'sluice' && battle && (e.sluiceT += dt) >= SLUICE_S) {
       // he opens the sluice: a strip of sick water across the hall through the party's middle, along x, then along y
       e.sluiceT = 0; e.sluiceN++;
@@ -1128,14 +1136,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         e.vesT = 0;
         const cells = battle.cells; let best = null, bd = -1;
         for (let t = 0; t < 4 && cells.length; t++) { const c = cells[(rng() * cells.length) | 0], d = hypot(c[0] + 0.5 - state.player.x, c[1] + 0.5 - state.player.y); if (d > bd && isWalkable(w, c[0] + 0.5, c[1] + 0.5)) { bd = d; best = c; } }
-        if (best) { const u = foe(w, 'cantor', e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.singer = e.id; bus.emit('bossVespers', { id: e.boss, x: u.x, y: u.y }); }
+        if (best) { const u = foe(w, 'cantor', e.lvl, best[0] + 0.5, best[1] + 0.5, tough, false, F); u.singer = e.id; bus.emit('bossVespers', { id: e.boss, by: e.id, tid: u.id, x: u.x, y: u.y }); }
       } else if (singers >= 2) e.vesT = 0;
     } else if (B.mech === 'bells' && battle && (e.bellT += dt) >= BELL_S) {
       // a bell: the water comes a tile further in from the walls (hazards.js), to FLOOD_MAX
       e.bellT = 0;
       if (!battle.edge) { battle.edge = edgeDistances(battle.cells); let deep = 1; for (const d of battle.edge.values()) if (d > deep) deep = d; battle.floodStep = Math.max(1, Math.round(deep * FLOOD_STEP)); }   // (a bell's worth: a share of the way to the middle)
       if (battle.flood < FLOOD_MAX) battle.flood++;
-      bus.emit('bossFlood', { id: e.boss, level: battle.flood, x: e.x, y: e.y });
+      bus.emit('bossFlood', { id: e.boss, by: e.id, level: battle.flood, x: e.x, y: e.y });
     }
   }
 

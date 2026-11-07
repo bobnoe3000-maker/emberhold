@@ -4422,5 +4422,396 @@
   ],
   "face": "wren",
   "height": 0.88
+ },
+ {
+  "id": "CP2B",
+  "cls": "Companion",
+  "label": "Wren \u00b7 Saltmere smuggler, a hunting bow (black braid, tar-dark leathers)",
+  "model": "Rogue",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3a3a",
+     "#0e1414"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2e",
+     "#1a120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3424",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   }
+  ],
+  "face": "wren",
+  "height": 0.88,
+  "hold": {
+   "handslot.r": "huntbow"
+  },
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "CP2L",
+  "cls": "Companion",
+  "label": "Wren \u00b7 Saltmere smuggler, a yew longbow (black braid, tar-dark leathers)",
+  "model": "Rogue",
+  "show": [],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3a3a",
+     "#0e1414"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2e",
+     "#1a120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3424",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   }
+  ],
+  "face": "wren",
+  "height": 0.88,
+  "hold": {
+   "handslot.r": "longbow"
+  },
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "CP2X",
+  "cls": "Companion",
+  "label": "Wren \u00b7 Saltmere smuggler, a heavy crossbow (black braid, tar-dark leathers)",
+  "model": "Rogue",
+  "show": [
+   "2H_Crossbow"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3a3a",
+     "#0e1414"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2e",
+     "#1a120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3424",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   }
+  ],
+  "face": "wren",
+  "height": 0.88,
+  "pose": [
+   "2H_Ranged_Aiming",
+   0.5
+  ]
+ },
+ {
+  "id": "CP2H",
+  "cls": "Companion",
+  "label": "Wren \u00b7 Saltmere smuggler, a hand crossbow and a knife (black braid, tar-dark leathers)",
+  "model": "Rogue",
+  "show": [
+   "1H_Crossbow",
+   "Knife_Offhand"
+  ],
+  "swatches": [
+   {
+    "tile": [
+     0,
+     1
+    ],
+    "to": [
+     "#2e3a3a",
+     "#0e1414"
+    ]
+   },
+   {
+    "tile": [
+     1,
+     1
+    ],
+    "to": [
+     "#4a3a2e",
+     "#1a120c"
+    ]
+   },
+   {
+    "tile": [
+     7,
+     1
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   },
+   {
+    "tile": [
+     3,
+     2
+    ],
+    "to": [
+     "#3a2a1e",
+     "#120c08"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     2
+    ],
+    "to": [
+     "#5a4430",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     5,
+     0
+    ],
+    "to": [
+     "#5a3e2a",
+     "#1e140c"
+    ]
+   },
+   {
+    "tile": [
+     6,
+     0
+    ],
+    "to": [
+     "#4a3424",
+     "#1a100a"
+    ]
+   },
+   {
+    "tile": [
+     0,
+     0
+    ],
+    "to": [
+     "#2a2a2e",
+     "#0e0e10"
+    ]
+   }
+  ],
+  "face": "wren",
+  "height": 0.88,
+  "pose": [
+   "1H_Ranged_Aiming",
+   0.5
+  ]
  }
 ]

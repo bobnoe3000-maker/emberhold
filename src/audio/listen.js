@@ -10,7 +10,7 @@
 // (silent beyond HEAR tiles). The party is heard at full level, foes a little under, townsfolk quietly.
 // Catch-up is silent: a frame that ran many ticks (a resume) plays nothing it missed, and a world change starts clean.
 
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from './cues.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, skillCue, fightCue, ambienceFor, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from './cues.js';
 import { materialAt } from '../sim/world.js';
 import { partOf } from '../sim/npcs.js';
 import { weatherNow } from '../render/weatherfx.js';
@@ -43,6 +43,12 @@ export function createListener({ sim, audio, renderer }) {
       audio.play(c, at);
     });
   }
+  // a skill's own sound where it lands (its target; a guard or a heal on its caster), and a boss's mechanic or a ward
+  // breaking where it happens (cues.js skillCue, fightCue)
+  const at = (x, y) => (typeof x === 'number' ? { pan: panOf(screenX(x, y)), gain: Math.max(0.35, fall(x - view.ix, y - view.iy)) } : {});
+  sim.bus.on('skill', (e) => { for (const c of skillCue(e.id, e.at)) audio.play(c, at(e.tx, e.ty)); });
+  for (const name of ['bossIssue', 'bossCall', 'bossKindle', 'bossSwarm', 'bossVespers', 'bossFlood', 'bossMud']) sim.bus.on(name, (e) => { for (const c of fightCue(name, e)) audio.play(c, at(e && e.x, e && e.y)); });
+  sim.bus.on('combat', (e) => { if (e && e.t === 'wardBreak') for (const c of fightCue('wardBreak', e)) audio.play(c, at(e.x, e.y)); });
   // a blow lands: its body, and now and then the one it landed on cries out
   function hit(ev) {
     const g = fall(ev.x - view.ix, ev.y - view.iy); if (!g) return;

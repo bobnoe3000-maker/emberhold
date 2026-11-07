@@ -111,7 +111,7 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
   // ── show=fx ────────────────────────────────────────────────────────────────────────────────────────────
   if (show === 'fx') {
     const CW = Math.max(62, 17 * TXT), CH = 60; st.cell = [CW, CH]; const cols = Math.max(1, Math.floor(W / CW));   // (a cell holds its name: the longest are 17 characters)
-    /** @type {{ head: string, label: string, period?: number, go?: (api: any, x: number, y: number, now: number) => void, draw?: (api: any, x: number, y: number, now: number) => void, after?: (o: any, x: number, y: number) => void, actor?: any[], span?: number, mud?: boolean, flood?: boolean }[]} */
+    /** @type {{ head: string, label: string, period?: number, go?: (api: any, x: number, y: number, now: number) => void, draw?: (api: any, x: number, y: number, now: number) => void, after?: (o: any, x: number, y: number) => void, actor?: any[], span?: number, mud?: boolean, flood?: boolean, extra?: [string, number, number, number][], units?: (x: number, y: number) => any[], aura?: any }[]} */
     const cells = [];
     const H = (head, label, more) => cells.push({ head, label, ...more });
     const SPARK = [255, 232, 200];
@@ -173,7 +173,42 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
       ['shaman', "Ancestors' Breath", { buff: { breath: 5 } }, false], ['mage', 'Arcane Ward', { ward: 40 }, false],
       [null, 'Frost Nova · chilled', { slow: 3, hp: 1 }, true], [null, 'Venom · poisoned', { poison: { t: 3 }, hp: 1 }, true], [null, 'Spirit Drain · 3 stacks', { drain: { n: 3, t: 3 }, hp: 1 }, true], [null, 'Hex · hexed', { hex: { t: 3 }, hp: 1 }, true]];
     for (const [cls, label, u, foe] of AURAS) H('Skills · what they leave', label, { actor: [cls ? CLS[cls] : 'skeleton_warrior', foe ? 2 : 1, 'idle'], aura: { u, foe } });
-    st.skillUnits = (proj) => st.items.filter((c) => c.aura).map((c) => ({ u: c.aura.u, foe: c.aura.foe, ...proj(c.x, c.y) }));
+    // (the boss pass, docs/combat-fx.md) the fight's other moments, as the renderer starts them from the sim's events
+    // (renderer.js moment: a ward spent, a level gained, each boss's mechanic: the boss in the cell, those it raised, called
+    // or issued to beside him); and what holds through a boss fight, from the units' state as the sim keeps it
+    const fm = (id, x, y, more = {}) => ({ id, by: null, foeBy: true, tid: null, ally: false, x, y, tx: x, ty: y, reached: [], ...more });
+    const at2 = (x, y, d) => d.map(([dx, dy]) => ({ id: null, x: x + dx, y: y + dy }));
+    H('Moments', 'a ward breaks', { actor: ['hero_mage', 1, 'hit'], period: 1600, go: (a, x, y, now) => a.skills.moment(fm('ward_break', x, y, { foeBy: false, ally: true }), now) });
+    H('Moments', 'a level gained', { actor: ['hero_knight', 1, 'idle'], period: 2400, go: (a, x, y, now) => a.skills.moment(fm('level_up', x, y, { foeBy: false, ally: true }), now) });
+    /** @type {[string, string, string, [number, number][], string[], (x: number, y: number) => any][]} label, atlas, moment, the others' places, their atlases, the event's more */
+    const BOSS_CELLS = [
+      ['the Quartermaster issues', 'boss_quartermaster', 'boss_issue', [[1.7, -1.1]], ['skeleton_warrior'], (x, y) => ({ tx: x + 1.7, ty: y - 1.1 })],
+      ['Garrow calls his men', 'boss_garrow', 'boss_call', [[-1.3, 0.8], [1.3, 0.8]], ['redhand_cutthroat', 'redhand_crossbow'], (x, y) => ({ reached: at2(x, y, [[-1.3, 0.8], [1.3, 0.8]]) })],
+      ['the Stranger kindles', 'boss_stranger', 'boss_kindle', [[1.9, -1.1]], ['skeleton_minion'], (x, y) => ({ tx: x + 1.9, ty: y - 1.1 })],
+      ['Skarn drums', 'boss_skarn', 'boss_swarm', [[2.4, -1.6], [-2.3, -1.4]], ['goblin_skirmisher', 'goblin_archer'], (x, y) => ({ reached: at2(x, y, [[2.4, -1.6], [-2.3, -1.4]]) })],
+      ['a sister stands to sing', 'boss_choir', 'boss_vespers', [[2, -1.2]], ['drowned_cantor'], (x, y) => ({ tx: x + 2, ty: y - 1.2 })],
+      ["the Abbess's bell", 'boss_abbess', 'boss_bells', [], [], () => ({})],
+      ['the Toadking stamps', 'boss_toadking', 'boss_mud', [[1.6, -1], [-1.5, -0.6]], ['hero_knight', 'hero_rogue'], (x, y) => ({ reached: at2(x, y, [[1.6, -1], [-1.5, -0.6]]) })],
+    ];
+    for (const [label, atl, id, places, who, more] of BOSS_CELLS)
+      H('Bosses', label, { actor: [atl, 3, id === 'boss_issue' || id === 'boss_call' ? 'heavy' : 'attack'], extra: places.map(([dx, dy], i) => [who[i], dx, dy, /^hero_/.test(who[i]) ? 1 : 2]), span: 2, period: id === 'boss_bells' ? 2400 : 2000,
+        go: (a, x, y, now) => a.skills.moment(fm(id, x, y, more(x, y)), now) });
+    // what holds: the Standard's line over the dead near it, Teague's cage mending him, Garrow's men shielding him, the
+    // Choir's singing and the dead it mends (ids of the cell's own: the moments find them by these)
+    let uid = -1;
+    const U = (o) => ({ id: uid--, hp: 1, maxHp: 1, ...o });
+    /** @type {[string, string, [number, number][], string[], (x: number, y: number, ids: number[]) => any[]][]} */
+    const HOLDS = [
+      ["the Standard's line", 'boss_standard', [[1.8, -1], [-1.6, -1.4]], ['skeleton_warrior', 'skeleton_minion'], (x, y) => { const s = U({ boss: 'standard', x, y }); return [s, U({ undead: true, x: x + 1.8, y: y - 1 }), U({ undead: true, x: x - 1.6, y: y - 1.4 })]; }],
+      ["Teague's cage burns", 'boss_teague', [], [], (x, y) => { const t = U({ boss: 'teague', x, y, hp: 0.6 }); return [t, { ...U({ kind: 'lantern', owner: t.id, x: x + 0.7, y: y + 0.2 }), lift: 12 }]; }],
+      ["Garrow's men stand", 'boss_garrow', [[-1.4, 0.9], [1.4, 0.9]], ['redhand_cutthroat', 'redhand_crossbow'], (x, y) => { const m1 = U({ x: x - 1.4, y: y + 0.9 }), m2 = U({ x: x + 1.4, y: y + 0.9 }); return [U({ boss: 'redhand_captain', x, y, guards: [m1.id, m2.id] }), m1, m2]; }],
+      ['the Choir sings', 'boss_choir', [[1.7, -1], [-1.7, -0.9], [0.2, -2]], ['drowned_cantor', 'drowned_cantor', 'drowned_brother'], (x, y) => { const c = U({ boss: 'drowned_choir', undead: true, x, y });
+        return [c, U({ singer: c.id, undead: true, x: x + 1.7, y: y - 1 }), U({ singer: c.id, undead: true, x: x - 1.7, y: y - 0.9 }), U({ undead: true, x: x + 0.2, y: y - 2, hp: 0.5 })]; }],
+    ];
+    for (const [label, atl, places, who, units] of HOLDS) H('Bosses · what holds', label, { actor: [atl, 3, 'idle'], extra: places.map(([dx, dy], i) => [who[i], dx, dy, 2]), span: 2, units,
+      draw: label.startsWith('Teague') ? (a, x, y) => { const sp = a.props.cage && a.props.cage[0]; if (!sp) return; const q = a.at(x + 0.7, y + 0.2); a.draws.push({ d: x + y + 0.9, sp, fx: q.sx, fy: q.sy - 12, h: q.h + 12, k: x + y + 0.95, look: null }); } : undefined });   // (the lit cage at his side, as the game holds it up)
+    st.skillUnits = (proj) => [...st.items.filter((c) => c.aura).map((c) => ({ u: c.aura.u, foe: c.aura.foe, ...proj(c.x, c.y) })),
+      ...st.items.filter((c) => c.units).flatMap((c) => (c.unitList ||= c.units(c.x, c.y)).map((o) => { const q = proj(o.x, o.y); return { u: o, foe: true, ...q, sy: q.sy - (o.lift || 0) }; }))];
     // the grid: a heading at each new family, the cells under it
     let col = 0, row = 0, head = '';
     const kindOfActor = (id) => (/^hero_/.test(id) ? 'party' : /^skeleton_/.test(id) ? 'undead' : 'human');
@@ -185,6 +220,7 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
       col += span - 1;
       st.items.push({ ...c, ...p });
       if (c.actor) st.actors.push({ atlas: c.actor[0], label: '', kind: kindOfActor(c.actor[0]), scale: 1, x: p.x, y: p.y, dir: 1, team: c.actor[1], clip: c.actor[2], unit: { atkN: 0, hitN: 0, fidgetN: 0, lookN: 0 }, vx: 0, vy: 0, last: 0 });
+      for (const [atl, dx, dy, team] of c.extra || []) st.actors.push({ atlas: atl, label: '', kind: kindOfActor(atl), scale: 1, x: p.x + dx, y: p.y + dy, dir: 1, team, clip: 'idle', unit: { atkN: 0, hitN: 0, fidgetN: 0, lookN: 0 }, vx: 0, vy: 0, last: 0 });
       if (++col >= cols) { col = 0; row++; }
     }
     st.rings = true; st.total = st.items.length; st.of = cells.length;

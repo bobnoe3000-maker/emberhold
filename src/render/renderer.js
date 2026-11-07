@@ -549,7 +549,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // a rogue is drawn with what they shoot with (sim items.js `shot`; the atlases: actor-lab bake.json),
   // in their dagger look until that atlas has loaded
   const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
-  const memberAtlas = (m, base) => { const k = base === 'hero_rogue' && shotOf(m); return (k && partyAtlas(base + RANGED_LOOK[k])) || partyAtlas(base); };
+  // (Wren, the Fens' found rogue, has hers too: baked as the rogue's, from her own look; tools/actor-lab CP2B/L/X/H)
+  const memberAtlas = (m, base) => { const k = (base === 'hero_rogue' || base === 'hero_wren') && shotOf(m); return (k && partyAtlas(base + RANGED_LOOK[k])) || partyAtlas(base); };
   const partyPending = new Map();                     // name → its load, for `ready` (the restored party's looks load behind the loading screen)
   const partyAtlas = (name) => { if (!(name in partyAtlases)) { partyAtlases[name] = null; partyPending.set(name, loadActorAtlas(name).then((a) => { partyAtlases[name] = a; }).catch(() => {})); } return partyAtlases[name]; };
   const MEMBER_LOOK = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };
@@ -680,6 +681,20 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
   }
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+  // The Abbess's water under another painter (hybrid.js lays it as tile squares; the boss pass): the glints paintHazards
+  // puts in the bake's emissive, here as the effects' light, a few a frame where the water lies
+  const GLINT = [70, 170, 200];
+  function floodGlints(b, proj, now) {
+    const t = Math.floor(now / 500), lim = b.flood * (b.floodStep || 1), P = fx.primitives;
+    for (const [k, d] of b.edge) {
+      if (d > lim) continue;
+      const c = k.indexOf(','), tx = +k.slice(0, c), ty = +k.slice(c + 1);
+      if (((tx * 31 + ty * 17 + t * 7) % 23 + 23) % 23) continue;
+      const q = proj(tx + 0.25 + ((tx * 7 + t) % 5) * 0.12, ty + 0.25 + ((ty * 3 + t) % 5) * 0.12);
+      if (q.sx < -8 || q.sy < -8 || q.sx > nvw + 8 || q.sy > nvh + 8) continue;
+      P.depth(q.key - 0.3, q.sy, q.h); P.disc(q.sx, q.sy, 1.8, 0.9, 1); P.mark(q.sx, q.sy, 1.2); P.flush(GLINT);
+    }
+  }
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
     const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
     const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
@@ -1190,7 +1205,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       if (e.kind === 'lantern') {                                                 // Brother Teague's lit cage (battle.js): the harvester's cage, held up at his side
         const lx = lerp(e, 'x'), ly = lerp(e, 'y'), lz = heightAt(sim.world, Math.floor(lx), Math.floor(ly)), lp = project(lx, ly, lz), sp = props.cage && props.cage[0];
         if (!sp || e.hp <= 0) continue;
-        draws.push({ d: lx + ly + 0.05, sp, fx: ox + lp.sx, fy: oy + lp.sy - 12, h: lz * ZH + 12, k: lx + ly + 0.05, look: { flash: e.flash > 0 ? 0.36 : 0 }, uid: e.id });
+        draws.push({ d: lx + ly + 0.05, sp, fx: ox + lp.sx, fy: oy + lp.sy - 12, h: lz * ZH + 12, k: lx + ly + 0.05, look: { flash: e.flash > 0 ? 0.36 : 0 }, uid: e.id, u: e, foe: true, lift: 12 });   // (lift: another painter stands it at his side, held up: hybrid.js)
         continue;
       }
       const skelAtlas = enemyAtlas(e.kind);
@@ -1213,7 +1228,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       let sp;
       if (b.kind === 'arrow') { const vx = b.tgt.x - b.sx, vy = b.tgt.y - b.sy, a = Math.atan2((vx + vy) * HH, (vx - vy) * HW); sp = arrowSprite(((Math.round(a / (Math.PI / 8)) % 16) + 16) % 16); }
       else sp = boltSprite(b.kind);
-      draws.push({ d: bx + by + 0.2, sp, fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5 });
+      draws.push({ d: bx + by + 0.2, sp, fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5, lift: 18, glow: b.kind !== 'arrow' && b.kind !== 'bolt' });   // (lift, glow: hybrid.js stands it in Luminati's world, lit by its own light)
     }
     }
     if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
@@ -1244,6 +1259,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       fx.soul(e.x, e.y, (fs && fs.spark) || [220, 220, 235], { now: clock(), big: !!(e.boss || e.elite) });
     }
     fx.particles(now, fxProj);
+    if (X && hb && hb.flood > 0 && hb.edge) floodGlints(hb, fxProj, now);   // (another painter lays the water itself: its sparse glints as light)
     sfx.draw(now, fxProj, st && st.skillUnits ? st.skillUnits(fxProj) : draws.filter((dr) => dr.u).map((dr) => ({ u: dr.u, foe: !!dr.foe, sx: dr.fx, sy: dr.fy, h: dr.h, key: dr.k })));   // the skills' moments and auras (skillfx.js)
     if (st && st.afterFx) st.afterFx({ now, proj: fxProj, fx });   // (the art review's FX view: what draws straight into the light, the marsh-lights)
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
@@ -1562,6 +1578,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     else if (c.t === 'heal') addFloat(c.x, c.y, '+' + c.amount, '#8fe07a', 12, 20);
     else if (c.t === 'ward') addFloat(c.x, c.y, 'ward ' + c.amount, '#8fc8ff', 11, 20);
     else if (c.t === 'warded') addFloat(c.x, c.y, 'warded', '#8fc8ff', 10);
+    else if (c.t === 'wardBreak') moment('ward_break', { by: c.id, tid: c.id, x: c.x, y: c.y }, { foeBy: false, ally: true });   // a ward spent: it shatters (skillfx.js)
     else if (c.t === 'hex') addFloat(c.x, c.y, 'hexed', '#b8e070', 11, 20);
     else if (c.t === 'freed') fx.beam(c.x, c.y, SOUL_FREE, { now: clock(), life: 1.4 });   // a bound foe laid down by its lamp's breaking: its soul goes up
     else if (c.t === 'lifeline') addFloat(c.x, c.y, 'Lifeline', '#f0e0a0', 12, 24);
@@ -1569,6 +1586,21 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => sfx.event(e, clock()));   // a skill's moment (battle.js skillEv)
+  // the fight's other moments (skillfx.js, the boss pass): each boss's mechanic, from the boss (by) to those it raised,
+  // called or issued to (tid, reached), followed by id while they move; and a level gained, at the member who gained it
+  function moment(id, ev, more = {}) { sfx.moment({ id, by: ev.by ?? null, foeBy: true, tid: ev.tid ?? null, ally: false, x: ev.x, y: ev.y, tx: ev.tx ?? ev.x, ty: ev.ty ?? ev.y, reached: ev.reached || [], ...more }, clock()); }
+  sim.bus.on('bossIssue', (e) => moment('boss_issue', e));
+  sim.bus.on('bossCall', (e) => moment('boss_call', e));
+  sim.bus.on('bossKindle', (e) => moment('boss_kindle', e));
+  sim.bus.on('bossSwarm', (e) => moment('boss_swarm', e));
+  sim.bus.on('bossVespers', (e) => moment('boss_vespers', e));
+  sim.bus.on('bossMud', (e) => moment('boss_mud', e));
+  sim.bus.on('bossFlood', (e) => { if (e.level > 0) moment('boss_bells', e); });
+  sim.bus.on('levelUp', (l) => {
+    const i = sim.state.party.findIndex((q) => q.id === l.id), m = sim.state.party[i]; if (!m) return;   // (one on the bench isn't drawn)
+    const u = i === 0 ? sim.state.player : m; if (u.x === undefined) return;
+    moment('level_up', { by: l.id, tid: l.id, x: u.x, y: u.y }, { foeBy: false, ally: true });
+  });
   sim.bus.on('loot', (l) => { if (!l.salvaged) fx.beam(l.x, l.y, LOOT_RGB[l.item.r] || LOOT_RGB.common, { now: clock() }); });   // a drop: a column of light where it fell
   sim.bus.on('wave', (w) => { banner = { text: w.cleared ? `Wave ${w.wave} cleared` : `Wave ${w.wave}`, until: clock() + (w.cleared ? 1600 : 1300), small: true }; });
   // bosses (battle.js): who stands in the hall, what it does, and its fall
@@ -1773,6 +1805,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       for (const m of [...sim.state.party, ...sim.state.bench]) memberAtlas(m, m.actor && m.actor !== 'hero_knight' ? m.actor : m.main ? 'hero_knight' : MEMBER_LOOK[m.cls]);
       return Promise.allSettled([...firstLoads.filter(Boolean), ...partyPending.values()]);
     },
+    /** (for captures) a ground point of the sim's on the screen, CSS px, through this frame's camera @param {number} x @param {number} y */
+    screenAt(x, y) { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), P = project(x, y, z), k = S / (vw / window.innerWidth); return [(lastCam.rx + P.sx) * k, (lastCam.ry + P.sy) * k]; },
     enemyAt(sxPx, syPx) {                                  // the enemy under (or nearest to) a tap, for focus
       const w = sim.world; if (!w.enemies || !w.enemies.length) return null;
       const dpr = vw / window.innerWidth, nx = (sxPx * dpr) / S, ny = (syPx * dpr) / S;

@@ -208,6 +208,43 @@ function envSheet(id) {
   }).catch(() => envFrames.set(id, false));
   return null;
 }
+// ── what Emberlit draws without an atlas (hybrid.js bits): Teague's lantern-cage held at his side, the bolts and arrows
+// in flight; a sheet a canvas, pooled as the figures are (the pools' sweep hides what a frame doesn't use)
+const bitSheets = new WeakMap();
+function bitSheet(b) {
+  let sh = bitSheets.get(b.canvas);
+  if (!sh) {
+    const tex = new THREE.CanvasTexture(b.canvas); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+    sh = { texture: tex, frameWidth: b.canvas.width, frameHeight: b.canvas.height, columns: 1, rows: 1, pixelsPerUnit: NATIVE_PER_UNIT, anchor: [b.ax / b.canvas.width, 0],
+      animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: 'ember-bit' };
+    bitSheets.set(b.canvas, sh);
+  }
+  return sh;
+}
+function bitFor(sheet, n) {
+  let p = pools.get(sheet); if (!p) pools.set(sheet, (p = []));
+  while (p.length <= n) { const s = new Sprite3D(sheet, { ...SPRITE_OPTS, castShadow: false, blobShadow: false }); s.visible = false; game.engine.scene.add(s); p.push(s); }
+  return p[n];
+}
+// ── the Abbess's water (hybrid.js water): a dark teal square a flooded tile, the tide line a little lighter, laid over
+// the floor as Emberlit tints it (renderer.js paintHazards); one instanced draw, rebuilt only when the water comes in
+const WATER = { mesh: null, id: '', cap: 0 };
+function placeWater(w) {
+  if (!w || !w.cells.length) { if (WATER.mesh) WATER.mesh.visible = false; WATER.id = ''; return; }
+  if (w.id === WATER.id && WATER.mesh) { WATER.mesh.visible = true; return; }
+  const n = w.cells.length / 3;
+  if (!WATER.mesh || WATER.cap < n) {
+    if (WATER.mesh) { game.engine.scene.remove(WATER.mesh); WATER.mesh.geometry.dispose(); WATER.mesh.material.dispose(); }
+    const geo = new THREE.PlaneGeometry(0.5, 0.5); geo.rotateX(-Math.PI / 2);
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.72, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
+    WATER.cap = Math.max(256, Math.ceil(n * 1.5)); WATER.mesh = new THREE.InstancedMesh(geo, mat, WATER.cap); WATER.mesh.renderOrder = 2; WATER.mesh.frustumCulled = false;
+    game.engine.scene.add(WATER.mesh);
+  }
+  const m = new THREE.Matrix4(), deep = new THREE.Color().setRGB(16 / 255, 54 / 255, 64 / 255, THREE.SRGBColorSpace), shore = new THREE.Color().setRGB(40 / 255, 92 / 255, 104 / 255, THREE.SRGBColorSpace);
+  for (let i = 0; i < n; i++) { const x = w.cells[i * 3], z = w.cells[i * 3 + 1]; m.makeTranslation(x, game.tileMap.getHeight(x, z) + 0.035, z); WATER.mesh.setMatrixAt(i, m); WATER.mesh.setColorAt(i, w.cells[i * 3 + 2] ? shore : deep); }
+  WATER.mesh.count = n; WATER.mesh.instanceMatrix.needsUpdate = true; if (WATER.mesh.instanceColor) WATER.mesh.instanceColor.needsUpdate = true;
+  WATER.mesh.visible = true; WATER.id = w.id;
+}
 const beastPool = [];                                         // Sprite3D, re-sheeted as their frame changes
 function beastSprite(n, sheet) {
   let s = beastPool[n];
@@ -395,7 +432,8 @@ const api = {
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
-   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number }} f
+   *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
+   *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -422,12 +460,21 @@ const api = {
       if (Math.abs(s.opacity - op) > 0.01) s.opacity = op;
       s.update(0, camera);
     }
+    for (const b of f.bits || []) {                            // the cage at Teague's side, the bolts: lifted as Emberlit drew them
+      const sheet = bitSheet(b), n = used.get(sheet) || 0; used.set(sheet, n + 1);
+      const s = bitFor(sheet, n), em = b.glow ? 1.6 : 0.3;
+      s.visible = true; if (s.material.emissiveIntensity !== em) s.material.emissiveIntensity = em;
+      standAt(s, b.x, b.z, b.canvas.height - b.ay - b.lift, NATIVE_PER_UNIT);
+      const fl = b.flash || 0; if (s._emberFlash !== fl) { s._emberFlash = fl; const k = 1 + fl * 2.6; s.tint = new THREE.Color(k, k * 0.96, k * 0.9); }
+      s.update(0, camera);
+    }
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
     // the fight's ground
     const nk = { ring: 0, disc: 0, rim: 0, focus: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
     if (f.mark) { const m = groundMesh('focus', nk.focus++); placeGround(m, f.mark.x, f.mark.z, 1, [255, 226, 150], 0.7 + 0.2 * Math.sin(focusSpin * 4)); m.rotation.z = focusSpin; focusSpin += (f.dt || 0) * 0.9; }
     for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
+    placeWater(f.water);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
     if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
@@ -462,7 +509,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

@@ -99,7 +99,20 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 
 ## C. Gaps and quirks the survey found
 
-None of these is fixed by this doc. Each is a small, separate change for the next pass.
+**Fixed (2026-11-07, the boss pass: [combat-fx.md](combat-fx.md) "The boss pass"):**
+- everything under "Not drawn on the Luminati renderer" and "Mechanics that draw nothing";
+- the weapon styles, and Wren's bow;
+- a ward break and a level-up effect;
+- a sound for each skill.
+
+**Still open:**
+- the sim quirks below;
+- the docs' disagreements;
+- **found on the way: the Quartermaster never issues.** His escort is down by 9.1 s, his first issue due at 10 s, so in 3
+  × 90 s of fighting it never fired. Making it stand a fallen rank up, as the world doc reads and the prototype does, is a
+  rules change for the owner.
+
+What the survey found:
 
 **Not drawn on the Luminati renderer:**
 - The Abbess's flood: hybrid passes patch hazards only (`src/render3d/hybrid.js:175`).

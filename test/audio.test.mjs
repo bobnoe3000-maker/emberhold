@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { voiceOf, familyOf, swingOf, stepOf, eventCue, ambienceFor, dripGap, dripOf, DRIP_MIN, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from '../src/audio/cues.js';
+import { voiceOf, familyOf, swingOf, stepOf, eventCue, skillCue, fightCue, SKILL_SOUNDS, ambienceFor, dripGap, dripOf, DRIP_MIN, callsFor, callGap, callOf, CALL_MIN, RIVER_REACH } from '../src/audio/cues.js';
 import { cleanSettings, loadSettings, saveSettings, soundSettings, setSoundSettings, onSoundSettings, DEFAULTS, SOUND_KEY } from '../src/audio/settings.js';
 import { masterGain, musicLevel } from '../src/audio/engine.js';
 import { createAnimator } from '../src/render/anim.js';
@@ -52,9 +52,26 @@ test('swings by weapon and school, steps by ground and weight, events by kind: a
   assert.equal(stepOf('grass', false).cue, 'step_cloth'); assert.equal(stepOf('dirt', false).cue, 'step_leather'); assert.equal(stepOf('soil', true).cue, 'step_echo');
   assert.ok(stepOf('grass', false, 'goblin_skirmisher').rate > stepOf('grass', false, 'hero_knight').rate, 'goblins patter');
   for (const [m, d] of [['grass', false], ['dirt', false], ['cobble', false], ['bank', false], ['field', false], ['soil', true], ['bone', true], ['flesh', true], ['basalt', true]]) { assert.ok(has(stepOf(m, d)), m); assert.equal(stepOf(m, d).bus, 'steps'); }
-  for (const [n, ev] of [['combat', { t: 'heal' }], ['combat', { t: 'ward' }], ['combat', { t: 'guard' }], ['combat', { t: 'ability' }], ['combat', { t: 'hex' }], ['levelUp', {}], ['loot', {}], ['chestOpened', {}], ['descend', {}], ['traded', {}]]) {
+  for (const [n, ev] of [['combat', { t: 'heal' }], ['combat', { t: 'ward' }], ['combat', { t: 'hex' }], ['levelUp', {}], ['loot', {}], ['chestOpened', {}], ['descend', {}], ['traded', {}]]) {
     const c = eventCue(n, ev); assert.ok(has(c), `${n} ${ev.t || ''}`); assert.equal(c.bus, 'combat'); }
   assert.equal(eventCue('combat', { t: 'hit' }), null, 'a hit is the listener’s: it needs who was hit');
+});
+
+test('every class skill sounds its own (no more one war cry for all), from the bank’s one-shots; a boss’s mechanic and a ward breaking too', async () => {
+  const { SKILLS } = await import('../src/sim/skills.js');
+  const ids = Object.values(SKILLS).flat().map((A) => A.id);
+  assert.deepEqual([...SKILL_SOUNDS].sort(), [...ids].sort(), 'a sound for each class skill, and none for a skill that isn’t one');
+  const sig = new Set();
+  for (const id of ids) {
+    const land = skillCue(id, 'land'), cast = skillCue(id, 'cast'), cues = land.length ? land : cast;
+    assert.ok(cues.length >= 1 && !(land.length && cast.length), `${id}: one moment sounds`);
+    for (const c of cues) { assert.ok(bank.shots[c.cue], `${id}: ${c.cue} is a one-shot in the bank`); assert.equal(c.bus, 'combat'); }
+    sig.add(cues.map((c) => `${c.cue}@${c.rate}`).join('+'));
+  }
+  assert.equal(sig.size, ids.length, 'no two skills sound alike');
+  assert.equal(eventCue('combat', { t: 'ability' }), null, 'the cast itself is silent: the skill’s own sound plays where it lands');
+  for (const n of ['bossIssue', 'bossCall', 'bossKindle', 'bossSwarm', 'bossVespers', 'bossMud', 'wardBreak']) { const c = fightCue(n, {}); assert.ok(c.length && c.every((q) => bank.shots[q.cue]), n); }
+  assert.ok(fightCue('bossFlood', { level: 2 }).length && !fightCue('bossFlood', { level: 0 }).length, 'a bell as the water rises, not as it drains');
 });
 
 test('ambience: the creek louder the nearer it runs, silent out of reach; rain and wind by the weather; the dungeons’ draught', () => {

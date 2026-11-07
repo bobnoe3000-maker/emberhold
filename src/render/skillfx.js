@@ -26,8 +26,13 @@
 //   shaman  — spirit teal, hex green and violet: Spirit Drain a tether drawing motes from the foe, its stacks circling
 //             them; Ancestors' Breath a breath going out over the party and leaves spiralling up them; Hex a sigil drawn
 //             on the floor under the knot, a mark under each hexed foe.
+// The fight's other moments, in the same way (the boss pass, docs/combat-fx.md): a ward breaking, a level gained, and each
+// boss's mechanic (battle.js bossMech: the Quartermaster issuing, Garrow's call, the Stranger kindling, Skarn's drum, the
+// Choir raising a singer, the Abbess's bells, the Toadking's stamp); and what holds through a boss fight, read off its
+// state: the Standard's line, Teague's lit cage mending him, Garrow's men shielding him, the Choir's singing.
 // Presentation only: it reads the sim, never writes it. Math.random is fine here (not in the sim); each moment's
 // scatter comes from its own small hash so a replayed frame draws the same.
+import { LINE_R } from '../sim/battle.js';
 
 /** screen px per tile of world radius: a world circle is an ellipse of these semi-axes (iso.js HW, HH: 8, 4, × √2) */
 const EX = 11.31, EY = 5.66;
@@ -38,12 +43,19 @@ const C = {
   stab: [255, 52, 84], shadow: [110, 255, 165], smoke: [196, 186, 240], venom: [150, 255, 50],
   fire: [255, 116, 28], fireHot: [255, 214, 130], frost: [140, 210, 255], frostHot: [230, 248, 255], ward: [110, 150, 255], wardHot: [190, 215, 255],
   mend: [255, 230, 150], bless: [255, 210, 110], turn: [255, 246, 210], drain: [110, 240, 210], breath: [140, 255, 190], hex: [160, 255, 70], hexV: [190, 110, 255],
+  // (the boss pass) each boss in the colours fx.js gives his weapon, a level's gold
+  lvl: [255, 214, 120], lvlHot: [255, 246, 214], issue: [235, 196, 130], issueHot: [255, 238, 196], call: [255, 92, 70], callHot: [255, 196, 168],
+  kindle: [255, 128, 34], kindleHot: [255, 214, 140], drum: [255, 170, 90], dust: [200, 168, 120], sing: [130, 225, 235], singHot: [214, 248, 255],
+  bell: [170, 205, 255], bellHot: [226, 238, 255], mud: [214, 170, 96], line: [236, 214, 150], cage: [190, 150, 255], cageHot: [236, 220, 255],
 };
 /** how long each moment lasts, s */
 const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 0.9, frost_nova: 1.1,
   arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the skills with a moment of their own (for checks: every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze(Object.keys(LIFE));
+/** the fight's other moments: a ward breaking, a level gained, each boss's mechanic */
+const MORE = { ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
+export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
 const ease = (u) => 1 - (1 - u) * (1 - u), clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** a small deterministic scatter: the k-th number of a moment */
 const rnd = (seed, k) => { const x = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -54,7 +66,10 @@ const rnd = (seed, k) => { const x = Math.sin(seed * 12.9898 + k * 78.233) * 437
 export function createSkillFX(P) {
   const { depth, mark, disc, seg, star } = P;
   // (the light's strength: at fx.js's own gain the first pass read as dotted outlines beside the weapons' arcs)
-  const BOOST = 1.7, flush = (col, g = 1) => P.flush(col, g * BOOST);
+  // (the boss pass: a boss's moment and what holds through his fight are drawn in a melee, the party over them; at the
+  // skills' strength they read in the art review and were lost in a real fight: tools/capture/bosses.mjs)
+  const BOOST = 1.7, BOSS = 1.6; let gainK = 1;
+  const flush = (col, g = 1) => P.flush(col, g * BOOST * gainK);
   /** @type {{ e: any, t0: number, seed: number }[]} */
   const live = [];
   let n = 0;
@@ -267,6 +282,111 @@ export function createSkillFX(P) {
       under(Tq); pool(Tq, 0.55, 0.5 * k); flush(C.hexV);
       if (t > 0.2 && t < 0.8) { over(Tq, 0.2); const g = 0.7 * (1 - (t - 0.2) / 0.6); for (const q of R) seg(Tq.sx, Tq.sy, q.sx, q.sy - 4, g, g * 0.3, 0.4); flush(C.hexV); }
     },
+
+    // ── the fight's other moments ─────────────────────────────────────────────────────────────────────────────────
+    // a ward spent (battle.js 'wardBreak'): the dome flashes and shatters, its shards thrown out and falling, a ring at
+    // the feet (it went out with nothing before: docs/combat-fx.md's notes)
+    ward_break(ctx) {
+      const { t, k, Tq, seed } = ctx;
+      over(Tq, 0.8);
+      if (t < 0.12) { const f = 1 - t / 0.12; oval(Tq.sx, Tq.sy - 22, 13 + 3 * (1 - f), 21 + 3 * (1 - f), 1.4 * f, 1.3); star(Tq.sx, Tq.sy - 30, 11, 1.3 * f); }
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * TAU + rnd(seed, i) * 0.35, sp = 42 + 46 * rnd(seed, i + 5), x0 = Tq.sx + Math.cos(a) * 13, y0 = Tq.sy - 22 + Math.sin(a) * 21;
+        const x = x0 + Math.cos(a) * sp * t, y = y0 + Math.sin(a) * sp * 0.6 * t + 130 * t * t, sp2 = 1.2 + rnd(seed, i + 9), tw = Math.abs(Math.sin(t * 22 * sp2 + i));
+        seg(x, y, x - Math.cos(a + 1.3) * 4, y - Math.sin(a + 1.3) * 4, (0.6 + 0.6 * tw) * k, 0.3 * k, 0.5);
+      }
+      flush(C.wardHot, 1.1);
+      under(Tq); ring(Tq, 0.45 + 0.9 * ease(clamp01(t / 0.3)), 0.8 * k, 1.3); flush(C.ward);
+    },
+    // a level gained ('levelUp'): a column of gold going up from the feet, two rings out over the floor, motes spiralling
+    // up the column and a star breaking over the head (it was a banner and a sound)
+    level_up(ctx) {
+      const { t, k, Tq } = ctx, up = clamp01(t / 0.25), hold = t < 0.25 ? 1 : 1 - (t - 0.25) / 1.55;
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 86 * up, 4.5, 1.3 * hold); flush(C.lvl);
+      under(Tq); for (const d of [0, 0.35]) { const u = clamp01((t - d) / 0.65); if (u > 0 && u < 1) ring(Tq, 0.3 + 1.4 * ease(u), 1.1 * (1 - u), 1.6); } pool(Tq, 0.7, 0.5 * k); flush(C.lvl);
+      over(Tq, 0.7);
+      for (let i = 0; i < 14; i++) { const v = clamp01(t * 0.9 - i * 0.04); if (v <= 0 || v >= 1) continue; const a = v * 10 + (i * TAU) / 14; disc(Tq.sx + Math.cos(a) * 12 * (1 - v * 0.5), Tq.sy - 6 - v * 72 + Math.sin(a) * 4, 1.5, 1.1 * (1 - v), 1); }
+      if (t > 0.22 && t < 0.72) { const f = 1 - (t - 0.22) / 0.5; star(Tq.sx, Tq.sy - 64, 4 + 12 * f, 1.3 * f); }
+      flush(C.lvlHot);
+    },
+    // the Quartermaster issues ('bossIssue'): a brass streak from him to the most broken of his ranks, three blades of
+    // light closing on the man, a rack-light standing over him and a ring at his feet: he stands up whole
+    boss_issue(ctx) {
+      const { t, k, Cq, Tq } = ctx;
+      if (t < 0.3 && Math.hypot(Cq.sx - Tq.sx, Cq.sy - Tq.sy) > 6) {
+        const f = 1 - t / 0.3, u = clamp01(t / 0.18); over(Tq, 0.3);
+        seg(Cq.sx, Cq.sy - 32, Cq.sx + (Tq.sx - Cq.sx) * u, Cq.sy - 32 + (Tq.sy - 26 - (Cq.sy - 32)) * u, 0.2 * f, 1.0 * f, 0.8); star(Cq.sx, Cq.sy - 32, 6, 0.9 * f); flush(C.issueHot);
+      }
+      const s = clamp01((t - 0.15) / 0.2); if (s <= 0) return;
+      over(Tq, 0.6);
+      for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + (i - 1) * 1.15, r = 28 * (1 - s), x = Tq.sx + Math.cos(a) * r, y = Tq.sy - 26 + Math.sin(a) * r * 0.8; seg(x, y, x + Math.cos(a) * 9, y + Math.sin(a) * 7, 1.1 * k, 0.2 * k, 0.6); }
+      if (s >= 1 && t < 0.62) star(Tq.sx, Tq.sy - 26, 11, 1.3 * (1 - (t - 0.35) / 0.27));
+      flush(C.issueHot);
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 50 * s, 3, 0.95 * k); flush(C.issue);
+      under(Tq); ring(Tq, 0.3 + 0.8 * ease(s), 0.95 * k, 1.4); pool(Tq, 0.5, 0.45 * k); flush(C.issue);
+    },
+    // Garrow calls his men ('bossCall'): the call thrown out in red rings from him, a line to each man, and each one
+    // standing in a red flash at his post
+    boss_call(ctx) {
+      const { t, k, Cq, R } = ctx;
+      under(Cq); for (const d of [0, 0.18]) { const u = clamp01((t - d) / 0.5); if (u > 0 && u < 1) ring(Cq, 0.4 + 2.4 * ease(u), 1.2 * (1 - u), 1.6); } flush(C.call);
+      if (t < 0.45) { over(Cq, 0.5); star(Cq.sx, Cq.sy - 40, 9, 1.2 * (1 - t / 0.45)); flush(C.callHot); }
+      for (const q of R) {
+        const s = clamp01((t - 0.12) / 0.2); if (s <= 0) continue;
+        over(q, 0.3); if (t < 0.6) seg(Cq.sx, Cq.sy - 30, q.sx, q.sy - 24, 0.5 * (1 - t / 0.6), 0.15 * (1 - t / 0.6), 0.5);
+        column(q.sx, q.sy, 40 * s, 3, 0.9 * k); flush(C.call);
+        under(q); ring(q, 0.25 + 0.6 * ease(s), 1.0 * k, 1.3); flush(C.callHot);
+      }
+    },
+    // the Stranger kindles ('bossKindle'): a streak of fire from him to where the last of them fell, and a minion
+    // kindled there: a ring of fire on the floor, flames standing up, cinders going up the column
+    boss_kindle(ctx) {
+      const { t, k, Cq, Tq, seed } = ctx;
+      if (t < 0.3 && Math.hypot(Cq.sx - Tq.sx, Cq.sy - Tq.sy) > 6) { const f = 1 - t / 0.3, u = clamp01(t / 0.2); over(Tq, 0.3); seg(Cq.sx, Cq.sy - 34, Cq.sx + (Tq.sx - Cq.sx) * u, Cq.sy - 34 + (Tq.sy - 6 - (Cq.sy - 34)) * u, 0.2 * f, 1.1 * f, 0.9); flush(C.kindleHot); }
+      const s = clamp01((t - 0.15) / 0.3); if (s <= 0) return;
+      under(Tq); ring(Tq, 0.7 * ease(s), 1.1 * k, 1.6); pool(Tq, 0.75 * s, 0.55 * k); flush(C.kindle);
+      over(Tq, 0.5);
+      for (let i = 0; i < 7; i++) { const a = (i / 7) * TAU + rnd(seed, i) * 0.6, [x, y] = on(Tq, 0.55 * s, a), h = (10 + 12 * rnd(seed, i + 3)) * s * (0.7 + 0.3 * Math.sin(t * 20 + i)); for (let j = 0; j <= 6; j++) { const v = j / 6; disc(x + Math.sin(t * 16 + i + v * 4) * 1.5, y - v * h, 1.2, 0.9 * k * (1 - v * 0.8), 1); } }
+      flush(C.kindle, 1.05);
+      for (let i = 0; i < 10; i++) { const v = (t * 0.9 + i / 10) % 1; disc(Tq.sx + Math.sin(i * 2.4 + t * 5) * 7 * (1 - v), Tq.sy - 4 - v * 56 * s, 1.3, 1.1 * k * (1 - v), 1); }
+      flush(C.kindleHot);
+    },
+    // Skarn drums ('bossSwarm'): three beats thrown out over the floor from him, and dust going up where the goblins come
+    // out of the tunnels
+    boss_swarm(ctx) {
+      const { t, k, Cq, R, seed } = ctx;
+      under(Cq); for (const d of [0, 0.28, 0.56]) { const u = clamp01((t - d) / 0.42); if (u > 0 && u < 1) ring(Cq, 0.4 + 2.2 * ease(u), 1.15 * (1 - u), 1.7); } flush(C.drum);
+      over(Cq, 0.5); for (const d of [0, 0.28, 0.56]) { const u = (t - d) / 0.16; if (u > 0 && u < 1) star(Cq.sx, Cq.sy - 44, 8, 1.1 * (1 - u)); } flush(C.drum);
+      for (const q of R) {
+        const s = clamp01((t - 0.25) / 0.6); if (s <= 0 || s >= 1) continue;
+        over(q, 0.3); for (let i = 0; i < 9; i++) { const a = rnd(seed, i) * TAU, r = (0.3 + 0.7 * s) * (0.6 + 0.4 * rnd(seed, i + 4)), [x, y] = on(q, r, a, 6 + 18 * s * rnd(seed, i + 8)); disc(x, y, 3 + 3 * s, 0.32 * (1 - s), 2.2); }
+        flush(C.dust);
+      }
+      void k;
+    },
+    // the Choir raises another singer ('bossVespers'): a pale column where she stands up out of the stalls, a ring, and
+    // a thread of song from the Choir to her
+    boss_vespers(ctx) {
+      const { t, k, Cq, Tq } = ctx, s = clamp01(t / 0.3);
+      if (t < 0.7 && Math.hypot(Cq.sx - Tq.sx, Cq.sy - Tq.sy) > 6) { over(Tq, 0.2); const g = 0.5 * (1 - t / 0.7), dx = Tq.sx - Cq.sx, dy = Tq.sy - Cq.sy;
+        for (let i = 0; i <= 36; i++) { const u = i / 36, w = Math.sin(u * Math.PI * 4 - t * 14) * 3; mark(Cq.sx + dx * u - dy / 60 * w, Cq.sy - 30 + dy * u + dx / 60 * w - 6 * Math.sin(u * Math.PI), g); } flush(C.sing); }
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 70 * s, 3.5, 1.1 * k); flush(C.sing);
+      under(Tq); ring(Tq, 0.3 + 0.9 * ease(s), 1.0 * k, 1.4); pool(Tq, 0.55, 0.45 * k); flush(C.singHot);
+    },
+    // the Abbess's bell ('bossFlood'): a bell's shape flashing over her, and its toll in three pale rings going out over
+    // the floor (the water comes in after it)
+    boss_bells(ctx) {
+      const { t, k, Cq } = ctx;
+      if (t < 0.5) { const f = 1 - t / 0.5, sw = Math.sin(t * 26) * 3 * f; over(Cq, 0.6); oval(Cq.sx + sw, Cq.sy - 58, 7, 8, 1.1 * f, 1, Math.PI, TAU); seg(Cq.sx - 8 + sw, Cq.sy - 58, Cq.sx + 8 + sw, Cq.sy - 58, 1.1 * f, 1.1 * f); star(Cq.sx + sw, Cq.sy - 52, 8, 1.2 * f); flush(C.bellHot); }
+      under(Cq); for (const d of [0, 0.25, 0.5]) { const u = clamp01((t - d) / 1.0); if (u > 0 && u < 1) ring(Cq, 0.5 + 4.5 * ease(u), 1.05 * (1 - u), 1.5); } flush(C.bell);
+      void k;
+    },
+    // the Toadking stamps ('bossMud'): a ring off his foot, and one welling up under each of the party where the mud comes
+    boss_mud(ctx) {
+      const { t, k, Cq, R } = ctx;
+      under(Cq); { const u = ease(clamp01(t / 0.35)); ring(Cq, 0.4 + 1.8 * u, 1.1 * (1 - u), 1.8); } flush(C.mud);
+      for (const q of R) { const u = ease(clamp01((t - 0.1) / 0.5)); if (u <= 0) continue; under(q); ring(q, 0.4 + 1.2 * u, 0.8 * k, 1.3); flush(C.mud); }
+    },
   };
   // the firebolt in flight: a roaring head over the ordinary bolt's trail, embers shed behind it (renderer boltFx)
   function fireHead(pts, key, footY, baseH, now) {
@@ -318,21 +438,79 @@ export function createSkillFX(P) {
     }
   }
 
+  // ── what holds through a boss fight (the sim's state, every frame) ──────────────────────────────────────────────
+  //   the Standard's line: a ring of its reach turning on the floor round it, and over each of the Ashbound it covers
+  //     (battle.js halved: they take half) a small shield of its light, a thread back to it;
+  //   Teague's lit cage: the lantern burning, and while he's hurt its light drawn along a thread into him (he mends);
+  //   Garrow's men: while they stand, a red thread from each to him and a shield over him (he takes half);
+  //   the Choir's singing: notes going up off each singer, and the hall's dead mending in their light (motes rising).
+  function bossAuras(now, units, at) {
+    const t = now / 1000, up = (o) => o && o.u && o.u.hp > 0 && !o.u.dead;
+    const foes = units.filter((v) => v.foe && up(v));
+    for (const v of foes) {
+      const u = v.u;
+      if (u.boss === 'standard') {
+        under(v); for (let i = 0; i < 12; i++) { const a0 = (i * TAU) / 12 + t * 0.25; ring(v, LINE_R, 0.8, 1.4, 0, a0, a0 + TAU / 24); } flush(C.line);
+        for (const o of foes) {
+          if (o === v || o.u.boss || !o.u.undead || Math.hypot(o.u.x - u.x, o.u.y - u.y) >= LINE_R) continue;
+          over(o, 0.7); const y = o.sy - 50, x = o.sx, pu = 0.75 + 0.25 * Math.sin(t * 3 + o.u.id);
+          oval(x, y, 5, 6, 1.3 * pu, 1.1, -0.15, Math.PI + 0.15); seg(x - 5, y, x + 5, y, 1.3 * pu, 1.3 * pu, 0.5); seg(x, y - 1, x, y + 6, 0.9 * pu, 0.9 * pu);   // a small shield
+          seg(v.sx, v.sy - 56, o.sx, o.sy - 46, 0.45, 0.15, 0.4); flush(C.line);
+        }
+      }
+      if (u.kind === 'lantern') {
+        const owner = at.get('e' + u.owner);
+        over(v, 0.9); const b = 0.8 + 0.2 * Math.sin(t * 7) * Math.sin(t * 3.1); disc(v.sx, v.sy - 14, 11, 0.8 * b, 1.6); disc(v.sx, v.sy - 14, 3, 1.6 * b, 0.8); star(v.sx, v.sy - 14, 6, 0.7 * b); flush(C.cage);
+        if (up(owner)) {
+          const hurt = owner.u.hp < owner.u.maxHp, x0 = v.sx, y0 = v.sy - 14, x1 = owner.sx, y1 = owner.sy - 30;
+          over(owner, 0.9); seg(x0, y0, x1, y1, 0.45, 0.3, 0.4);
+          for (let i = 0; i < 6; i++) { const s = (t * (hurt ? 1.2 : 0.4) + i / 6) % 1; disc(x0 + (x1 - x0) * s, y0 + (y1 - y0) * s - Math.sin(s * Math.PI) * 6, 1.6, (hurt ? 1.3 : 0.5) * Math.sin(s * Math.PI), 1); }   // (faster and brighter while he mends)
+          if (hurt) { const p = (t % 0.9) / 0.9; oval(x1, y1 + 8, 9 + 6 * p, 12 + 6 * p, 0.9 * (1 - p), 1); }
+          flush(C.cageHot);
+        }
+      }
+      if (u.boss && u.guards && u.guards.length) {
+        const g = u.guards.map((id) => at.get('e' + id)).filter(up);
+        if (g.length) {
+          over(v, 0.3); for (const o of g) { const f = 0.3 + 0.12 * Math.sin(t * 4 + o.u.id); seg(o.sx, o.sy - 26, v.sx, v.sy - 34, f, f * 0.5, 0.3); }
+          const x = v.sx, y = v.sy - 66, pu = 0.8 + 0.2 * Math.sin(t * 5);
+          oval(x, y, 6, 7.5, 1.4 * pu, 1.1, -0.15, Math.PI + 0.15); seg(x - 6, y, x + 6, y, 1.4 * pu, 1.4 * pu, 0.5); flush(C.call);
+        }
+      }
+      if (u.singer != null && !(u.spawn > 0) && up(at.get('e' + u.singer))) {
+        over(v, 0.6); for (let i = 0; i < 4; i++) { const s = (t * 0.55 + i / 4) % 1, x = v.sx + Math.sin(s * 9 + i) * 7, y = v.sy - 40 - s * 38; disc(x, y, 1.8, 1.4 * Math.sin(s * Math.PI), 1); seg(x + 1.8, y, x + 1.8, y - 6, 1.1 * Math.sin(s * Math.PI), 0.4 * Math.sin(s * Math.PI)); }
+        flush(C.singHot); under(v); { const p = (t % 1.4) / 1.4; ring(v, 0.4 + 0.9 * p, 0.9 * (1 - p), 1.3); } flush(C.sing);   // (her song going out over the floor)
+      }
+    }
+    // the dead mending while one sings
+    const singing = foes.some((v) => v.u.singer != null && !(v.u.spawn > 0) && up(at.get('e' + v.u.singer)));
+    if (singing) for (const v of foes) {
+      if (!v.u.undead || v.u.hp >= v.u.maxHp) continue;
+      over(v, 0.5); for (let i = 0; i < 4; i++) { const s = (t * 0.7 + i / 4 + v.u.id * 0.13) % 1; disc(v.sx + (i - 1.5) * 5, v.sy - 6 - s * 38, 1.5, 1.1 * (1 - s), 1); } flush(C.sing);
+    }
+  }
+
   return {
     /** a skill's moment begins (the sim's 'skill' event) @param {any} e @param {number} now */
     event(e, now) { if (MOMENT[e.id]) { live.push({ e, t0: now, seed: (n++ % 997) + 1 }); if (live.length > 40) live.shift(); } },
+    /** the fight's other moments (a ward breaking, a level gained, a boss's mechanic): the renderer hands its event as a
+     *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
+     *  tx, ty, reached } @param {any} e @param {number} now */
+    moment(e, now) { this.event(e, now); },
     /** every moment under way and every aura, this frame. units: the figures drawn ({ u, foe, sx, sy, h, key }), for
      *  following who's in it and drawing what they carry @param {number} now @param {Function} proj @param {any[]} units */
     draw(now, proj, units) {
       const at = new Map(); for (const v of units) if (v.u && v.u.id != null) at.set((v.foe ? 'e' : 'p') + v.u.id, v);
       const foes = units.filter((v) => v.foe && v.u && !v.u.dead && v.u.hp > 0);
-      auras(now, units);
+      auras(now, units); gainK = BOSS; bossAuras(now, units, at); gainK = 1;
       for (let i = live.length - 1; i >= 0; i--) {
-        const L = live[i], e = L.e, t = (now - L.t0) / 1000, life = LIFE[e.id] || 1;
+        const L = live[i], e = L.e, t = (now - L.t0) / 1000, life = LIFE[e.id] || MORE[e.id] || 1;
         if (t >= life) { live.splice(i, 1); continue; } if (t < 0) continue;
-        const Cq = find(at, false, e.by, e.x, e.y, proj), Tq = find(at, !e.ally, e.tid, e.tx, e.ty, proj);
+        const Cq = find(at, !!e.foeBy, e.by, e.x, e.y, proj), Tq = find(at, !e.ally, e.tid, e.tx, e.ty, proj);
         const R = (e.reached || []).map((o) => find(at, e.id !== 'bless' && e.id !== 'ancestors_breath', o.id, o.x, o.y, proj));
+        gainK = e.id.startsWith('boss_') ? BOSS : 1;
         MOMENT[e.id]({ t, k: 1 - t / life, Cq, Tq, R, e, at: e.at, foes, seed: L.seed });
+        gainK = 1;
       }
     },
     fireHead,

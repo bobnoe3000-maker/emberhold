@@ -73,6 +73,25 @@ export const FX_STYLES = {
   boss_teague:       { col: [190, 160, 255], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [215, 200, 255], wide: 1.15 },
   boss_choir:        { col: [140, 220, 230], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [190, 235, 245] },
   boss_abbess:       { col: [190, 215, 255], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [210, 230, 255] },
+  // (the boss pass, docs/combat-fx.md) the found companions swung with nothing drawn, and so did the Mere Tower's wardens:
+  // Brannoc's sword in old iron; Wren's twin knives in Saltmere's sea-teal, her bows and crossbows (her ranged looks, baked
+  // as the rogue's); each warden in the colours of their bake (tools/actor-lab variants W1–W10)
+  hero_brannoc:      { col: [200, 214, 240], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 236, 205], wide: 1.15 },
+  hero_wren:         { col: [110, 232, 214], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [205, 250, 240], thin: true },
+  hero_wren_bow:     { col: [110, 232, 214], spark: [205, 250, 240] },
+  hero_wren_longbow: { col: [110, 232, 214], spark: [205, 250, 240] },
+  hero_wren_xbow:    { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [205, 250, 240] },
+  hero_wren_hxbow:   { col: MUZZLE, attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [205, 250, 240] },
+  boss_doorward:     { col: [140, 232, 190], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [205, 245, 225], wide: 1.2 },   // blackened iron, verdigris: the great sword
+  boss_mudlark:      { col: [220, 190, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [235, 215, 170], thin: true },   // bare-armed: the jab, then the hoe
+  boss_bellringer:   { col: [255, 196, 120], attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 215, 160], heavySpark: [255, 150, 60] },   // the bell's hammer and a lamp: he kindles
+  boss_lensman:      { col: [140, 190, 255], attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [200, 225, 255] },   // lamp-glass blue: the heavy crossbow
+  boss_hush:         { col: [200, 225, 255], attack: 'shot', attack2: 'shot', heavy: 'shot', spark: [225, 238, 255] },   // eyes like frost, not a sound
+  boss_twins:        { col: [226, 220, 255], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [240, 236, 255], wide: 1.3 },   // half pale, half dark: the great-axe
+  boss_hound:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 205, 150], wide: 1.1 },
+  boss_gatherer:     { col: [120, 222, 210], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [200, 245, 240], wide: 1.2 },   // drowned teal: the cage-pole
+  boss_watcher:      { col: [255, 190, 90], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [255, 215, 150] },   // amber eyes
+  boss_starroom:     { col: [170, 190, 255], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [220, 230, 255], wide: 1.2 },   // night-blue, star-pale: sword and shield
 };
 // combat events name the striker by its actor / class (party) or kind (the Ashbound)
 const CLASS_ACTOR = { fighter: 'hero_barbarian', rogue: 'hero_rogue', mage: 'hero_mage', cleric: 'hero_cleric', shaman: 'hero_shaman' };

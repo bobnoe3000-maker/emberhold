@@ -75,8 +75,7 @@ export function eventCue(name, ev) {
     switch (ev && ev.t) {
       case 'heal': return { cue: 'heal', bus: 'combat', gain: 0.55 };
       case 'ward': case 'warded': case 'lifeline': return { cue: 'ward', bus: 'combat', gain: 0.6 };
-      case 'guard': return { cue: 'guard', bus: 'combat', gain: 0.7 };
-      case 'ability': return { cue: 'warcry', bus: 'combat', gain: 0.55 };
+      case 'guard': case 'ability': return null;                // (a skill's own sound: skillCue, on its 'skill' event)
       case 'heavy': return { cue: 'swing', bus: 'combat', rate: 0.75, gain: 0.9 };
       case 'hex': return { cue: 'hex', bus: 'combat', gain: 0.6 };
       default: return null;
@@ -88,6 +87,54 @@ export function eventCue(name, ev) {
   if (name === 'descend') return { cue: 'stairs', bus: 'combat', gain: 0.7 };
   if (name === 'traded') return { cue: 'coins', bus: 'combat', gain: 0.7 };
   return null;
+}
+
+// ── each skill's own sound (the boss pass, docs/combat-fx.md: every one was the same war cry) ─────────────────────────
+// Built from the bank's one-shots as they are (no new samples): a cue pitched and layered so each reads apart, by class: the fighter's
+// steel and breath, the rogue's whip and hiss, the mage's fire and frost, the cleric's bell-gold, the shaman's spirit
+// and hex. Played on the skill's 'skill' event where it lands (Shield Wall's war cry on its cast); a heal's, a ward's and
+// a hex's own event still sounds under it ('heal', 'ward', 'hex').
+/** @type {Record<string, { at?: 'cast' | 'land', cues: [string, number, number][] }>} [cue, rate, gain] */
+const SKILL_SOUND = {
+  cleave: { cues: [['swing', 0.66, 0.95], ['guard', 1.45, 0.35]] },                 // a heavy sweep, steel ringing
+  shield_wall: { at: 'cast', cues: [['warcry', 0.92, 0.8], ['guard', 0.8, 0.7]] },   // the war cry, the shield set
+  second_wind: { cues: [['spirit', 0.78, 0.55], ['warcry', 1.25, 0.3]] },             // a breath drawn, a grunt
+  backstab: { cues: [['swing', 1.4, 0.75], ['bow', 1.7, 0.35]] },                      // a whip of a blade
+  smoke_step: { cues: [['fire', 0.62, 0.45], ['spirit', 1.5, 0.25]] },                // a hiss of smoke
+  venom: { cues: [['hex', 1.45, 0.5], ['drip', 1.3, 0.55]] },                          // a wet splash
+  firebolt: { cues: [['fire', 0.82, 0.95], ['quake', 1.6, 0.35]] },                   // the burst, a thump under it
+  frost_nova: { cues: [['ward', 1.55, 0.7], ['quake', 1.3, 0.45]] },                  // a cold ring, the floor cracking
+  arcane_ward: { cues: [['spirit', 1.6, 0.3]] },                                      // (its 'ward' sounds under it)
+  mend: { cues: [['levelup', 1.65, 0.3]] },                                           // a bright chime (and its 'heal')
+  bless: { cues: [['levelup', 1.22, 0.45], ['ward', 0.9, 0.3]] },                      // a bell, a hum
+  turn_undead: { cues: [['levelup', 0.8, 0.6], ['quake', 1.15, 0.4]] },               // a deep bell, the dead shaken
+  spirit_drain: { cues: [['spirit', 0.74, 0.6]] },                                    // a low draw
+  ancestors_breath: { cues: [['spirit', 1.28, 0.55], ['heal', 0.7, 0.25]] },       // a long breath out
+  hex: { cues: [['cult_cry', 1.45, 0.22]] },                                          // a whisper (and its 'hex')
+};
+/** the sound of a skill's moment, or [] (its event: battle.js skillEv) @param {string} id @param {'cast' | 'land'} at @returns {Cue[]} */
+export function skillCue(id, at) {
+  const S = SKILL_SOUND[id]; if (!S || (S.at || 'land') !== at) return [];
+  return S.cues.map(([cue, rate, gain]) => ({ cue, bus: 'combat', rate, gain }));
+}
+/** every skill with a sound of its own (for checks) */
+export const SKILL_SOUNDS = Object.freeze(Object.keys(SKILL_SOUND));
+// the bosses' mechanics, and a ward breaking: heard where they happen
+/** @type {Record<string, [string, number, number][]>} */
+const FIGHT_SOUND = {
+  bossIssue: [['guard', 0.7, 0.75], ['swing', 0.8, 0.5]],      // arms handed out, a blade drawn
+  bossCall: [['warcry', 0.72, 0.9]],                            // Garrow's shout
+  bossKindle: [['fire', 0.6, 0.8], ['bone_rise', 1, 0.5]],      // a fire caught, the dead getting up
+  bossSwarm: [['quake', 1.9, 0.6], ['swing', 0.45, 0.4]],       // the drum, a skin struck
+  bossVespers: [['spirit', 0.6, 0.6], ['cult_cry', 1.3, 0.3]],  // a voice joining the singing
+  bossFlood: [['levelup', 0.48, 0.8], ['drip', 0.6, 0.6]],   // a bell's toll, water
+  bossMud: [['quake', 1.2, 0.6]],                               // the stamp
+  wardBreak: [['ward', 1.75, 0.6], ['swing', 1.9, 0.35]],        // glass going
+};
+/** the sound of a boss's mechanic or a ward breaking, or [] @param {string} name @param {any} [ev] @returns {Cue[]} */
+export function fightCue(name, ev) {
+  if (name === 'bossFlood' && ev && !(ev.level > 0)) return [];
+  return (FIGHT_SOUND[name] || []).map(([cue, rate, gain]) => ({ cue, bus: 'combat', rate, gain }));
 }
 
 // ── calls: the sparse sounds, single and never closer than CALL_MIN s apart (the owner, 2026-10-03: "Drip sound should

@@ -1,6 +1,6 @@
 # Combat effects: every skill its own
 
-**Implemented (2026-11-07).** The code:
+**Implemented (2026-11-07), and the boss pass after it (below).** The code:
 - the effects: `src/render/skillfx.js`;
 - the events: `src/sim/battle.js` `skillEv`;
 - faster primitives: `src/render/fx.js` (disc kernels);
@@ -149,3 +149,121 @@ same marks without a `hypot` and a `pow` a pixel, and every older effect is fast
   is back near its margin before the dungeon dressing (283 s, 292 s). If it's too close, Frost Nova's power (0.8×) is
   the knob. `test/skillfx.test.mjs` holds the fix: with it, it goes off in a minute's fight and lands on a knot;
   without it, it never fires.
+
+## The boss pass: the gaps, and every boss's mechanic (2026-11-07)
+
+The owner, on the catalog's recommendation ([combat-catalog.md](combat-catalog.md) §C): "Yes go ahead with steps 1 and 2":
+1. fill the effect gaps;
+2. draw the boss mechanics.
+
+**How it was looked at.** `tools/capture/bosses.mjs` fights each boss in his own hall, on his own floor:
+- the party: the contract's fighter, rogue and cleric, at the hall's level, with every skill;
+- both renderers;
+- the frames: the first time his mechanic fires, at +0, 0.2, 0.4, 0.7, 1.0 and 1.4 s, cropped round where it happens;
+- the bosses whose mechanic holds through the fight (the Standard's line, Teague's cage, the Choir's singing): a moment 4 s
+  into the fight.
+
+The sim is deterministic: the before and the after fire on the same frames (the Quartermaster at 6.7 s, Skarn at 11.8 s,
+Garrow at 17.9 s, the Stranger at 13.8 s, the Abbess at 13.7 s).
+
+**The critique (before).**
+- **A boss's mechanic was a banner.** The art review shows what fx.js drew for each: nothing at all for
+  - the Quartermaster making a man whole;
+  - Garrow's call;
+  - the Stranger's kindle;
+  - Skarn's drum;
+  - the Choir raising a singer;
+  - the Abbess's bells.
+- **What holds through a fight couldn't be seen.** Nothing showed:
+  - which of the dead the Standard's line protects (they take half);
+  - that Teague's cage mends him;
+  - that Garrow's men shield him (only the boss bar's ⛨);
+  - that the Choir's singers mend the hall.
+- **A ward went out with nothing**, and a level gained was a banner and a sound.
+- **On Luminati:**
+  - Teague's cage wasn't drawn (it has no atlas);
+  - the bolts and arrows in flight were only their light;
+  - the Abbess's water wasn't drawn at all.
+- **Weapons with nothing drawn:** the ten Mere Tower wardens, Brannoc and Wren swung with no trail, default sparks and the
+  default soul colour. Wren never got her bow: there was no atlas for it.
+- **Every skill made the same sound,** a war cry.
+
+### The design (after)
+
+| Boss | The moment | What holds |
+|---|---|---|
+| The Quartermaster | a brass streak from him to the most broken of his ranks; three blades of light closing on the man; a rack-light over him and a ring at his feet: he stands up whole | |
+| Captain Garrow | the call thrown out in red rings; a line to each man; each standing in a red flash at his post | while his men stand: a red thread from each to him, and a shield over his head (he takes half) |
+| The Robed Stranger | a streak of fire to where the last of them fell; a ring of fire on the floor there; flames standing up; cinders going up as the minion kindles | |
+| Old Skarn | three drum beats thrown out over the floor, a star on each; dust going up where the goblins come out of the tunnels | |
+| The Standard | | a ring of its reach (4 tiles), dashed and turning on the floor round it; a small shield of its light over each of the dead it covers, a thread back to it |
+| Brother Teague | | the lantern burning; while he's hurt, its light drawn along a thread into him |
+| The Drowned Choir | a pale column where a sister stands up out of the stalls; a ring; a thread of song from the Choir to her | notes going up off each singer; the hall's dead mending in their light |
+| The Abbess Below | a bell's shape swinging over her; its toll in three pale rings going out over the floor | (the water, drawn on both renderers now) |
+| The Toadking | a ring off his foot; one welling up under each of the party where the mud comes | (the mud, as before) |
+
+And besides the bosses:
+- **A ward breaking** (a new sim event, `combat 'wardBreak'`): the dome flashes and shatters, its shards thrown out and
+  falling, a ring at the feet.
+- **A level gained:** a column of gold going up, two rings out over the floor, motes spiralling up and a star over the
+  head.
+- **Luminati:**
+  - Teague's cage, and the bolts and arrows in flight, stood where Emberlit draws them (`hybrid.js` bits; `world.js`, a
+    sheet a canvas). A bolt is lit by its own light.
+  - The Abbess's water: a square a flooded tile, the tide line lighter, in one instanced draw, rebuilt only as the water
+    comes in. Its glints are drawn as the effects' light.
+- **Weapons:**
+  - each warden in the colours of their bake, for example the Doorward's verdigris great sword, the Lensman's lamp-glass
+    crossbow and the Bellringer's bell-bronze kindling;
+  - Brannoc's sword in old iron;
+  - Wren's twin knives in Saltmere's sea-teal.
+  - Wren's ranged looks: four new atlases, `hero_wren_bow`, `_longbow`, `_xbow` and `_hxbow` (`tools/actor-lab` variants
+    CP2B, CP2L, CP2X, CP2H), worn as the rogue's are.
+- **Sound** (`audio/cues.js`): each skill its own, from the bank's one-shots pitched and layered (no new samples). For
+  example, Frost Nova is a cold ring with the floor cracking under it, and Turn Undead a deep bell. Each boss's mechanic
+  and a ward breaking are heard where they happen too. The cast is silent now, where every skill was the same war cry.
+
+How it's built, as the skills' moments are:
+- **The sim's boss events name who and whom.** `bossIssue`, `bossCall`, `bossKindle`, `bossSwarm`, `bossVespers`,
+  `bossMud` and `bossFlood` carry `by` (the boss's id) and `tid` or `reached` (those he raised, called or issued to). A
+  moment follows them by id while they move.
+- **Events only, never state.** A test holds the fight's hash, heard or not.
+- **The holds come from the sim's state each frame:** `halved` (LINE_R), the cage's `owner`, `guards` and `singer`.
+- **Tests:** `test/skillfx.test.mjs` checks:
+  - every one of these moments draws, and no two draw alike;
+  - each hold draws only with its state;
+  - a spent ward reports it broke;
+  - the Choir names herself and the singer she raised;
+  - the fight's hash is the same, heard or not.
+
+  `test/audio.test.mjs` checks every class skill sounds its own and no two sound alike.
+
+**Burst frames.** Before and after, on both renderers: `tools/capture/bosses.mjs`.
+
+![Before: a boss's mechanic was a banner](img/fx/bosses-before.jpg)
+![After: each boss's own](img/fx/bosses-after.jpg)
+
+*Closer: one moment of each, before and after, Emberlit then Luminati.*
+
+![Close-ups](img/fx/bosses-closeups.jpg)
+
+**Tuned after the first real-fight frames.** The holds and the bosses' moments were drawn at the skills' strength. They
+read in the art review but were lost in a melee: counted against the sim's state they drew 179 marks for the Standard's
+line, 12 for the singing and 3 for the cage. Each boss's light is now ×1.6; the line's ring, its shields and Garrow's are
+stronger; the cage's halo is larger, with its light always running into Teague (faster and brighter while he mends, a
+ring breathing round him); and each singer's song goes out over the floor in a ring.
+
+**Left.** In the thick of a fight, the Stranger's kindle and Garrow's call land where the party stands, and the figures
+over them hide part of it (the frames above). The Luminati side shows the bell and the issue strongly, and the rest more
+quietly than Emberlit: its own torchlight is brighter round them.
+
+### Found on the way: the Quartermaster never issues
+
+In his hall, against the contract's party, both of his escorts are down by 9.1 s, and his first issue is due at 10 s.
+There's nothing left to issue to: in 3 × 90 s of fighting at levels 1, 2 and 3 it never fired once.
+
+The world doc's line is that "the most broken of his ranks stands up whole, re-armed from his racks". The prototype's
+version (`tools/lumina/ember/issue.js`) stands a fallen one up first; ours only makes a living one whole. Making it work
+is a rules change and a balance run, so it's left for the owner. The capture stages the sim's own event for him (marked
+"staged") so the effect can be seen.
+

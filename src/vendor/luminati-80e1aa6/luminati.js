@@ -1,32 +1,32 @@
-import { $ as e, B as t, K as n, Mn as r, Nn as i, P as a, Q as o, R as s, Sn as c, St as l, T as u, a as d, at as f, c as p, d as m, et as h, f as g, fn as _, hn as v, jn as y, k as b, l as x, mn as S, o as C, sn as w, u as T, y as E, yn as D } from "./three.core-BsXWN4b8.js";
-import { C as O, E as ee, G as k, O as te, T as ne, U as A, W as j, b as re, x as ie } from "./SmallProps-DjD8mkZ7.js";
-import { a as M, c as N, f as P, l as F, n as ae, o as I, r as L, s as R, t as z, u as oe } from "./math-Du_SWpiD.js";
-import { r as se } from "./ThawField-CelnRTY2.js";
-import { D as ce, E as le, O as ue, _ as de, c as fe, d as pe, f as me, k as he, l as ge, p as _e, s as ve, t as ye, u as be, v as xe, y as B } from "./engine-hlzvTIM_.js";
-import { i as Se, n as Ce } from "./own-rp3p7qEo.js";
-import { t as we } from "./AudioSystem-BdBMAIIL.js";
-import { r as Te } from "./PixelCanvas-Dyge5vEE.js";
-import { a as Ee, r as De } from "./PropSprites-C53o7wJi.js";
-import { a as Oe, c as ke, i as Ae, o as je, s as Me, t as Ne } from "./CharacterSprites-Cc3aj-Z8.js";
-import { t as Pe } from "./Particles-2ONW48aT.js";
-import { a as Fe, c as Ie, d as Le, i as Re, l as ze, o as Be, r as Ve, s as He, u as Ue } from "./TileMap-DEgA4jsR.js";
-import { a as We, i as Ge, l as Ke, n as qe, o as Je, r as Ye } from "./Props-46nf18Wb.js";
-import { T as Xe, a as Ze, d as Qe, h as $e, n as et, o as tt, r as nt, s as rt, t as it, u as at, w as V, x as ot } from "./ObjectCatalog-CLBSNnc2.js";
-import { H as st, _t as ct } from "./core-C1cYbmwD.js";
-import { i as lt, l as ut, n as dt, s as ft, t as pt, u as H } from "./I18n-BeKB4FMa.js";
-import { f as mt } from "./minimap-CBFghrAn.js";
-import { r as ht } from "./LevelFormat-BJ0C9Ce4.js";
-import { a as gt, b as _t, c as vt, d as yt, f as bt, g as xt, h as St, i as Ct, l as wt, m as Tt, n as Et, o as Dt, p as Ot, r as kt, s as At, t as jt, u as Mt, v as Nt, x as Pt, y as Ft } from "./LevelLook-C3YksY85.js";
-import { r as It, t as Lt } from "./LevelMap-037nvhSa.js";
-import { r as Rt, t as zt } from "./Travel-4-idrvN5.js";
-import { a as Bt, c as Vt, i as Ht, n as Ut, o as Wt, r as Gt, s as Kt, t as qt } from "./config-DDHWC9jm.js";
-import { a as Jt, i as Yt, o as U, r as Xt, s as Zt } from "./SnowCover-C2xaJrtx.js";
-import { n as Qt, r as $t, t as en } from "./festival-DRJ-EDFG.js";
-import { _ as tn, a as nn, c as rn, d as an, f as on, g as sn, h as cn, i as ln, l as un, m as dn, n as fn, o as pn, p as mn, r as hn, s as gn, t as _n, u as vn } from "./WeatherLook-DQB2IdmK.js";
-import { a as W, i as yn, n as bn, r as G } from "./ContentText-nXIHgNO8.js";
-import { n as xn } from "./dialogue-D_zYka2G.js";
+import { $ as e, B as t, K as n, Mn as r, Nn as i, P as a, Q as o, R as s, Sn as c, St as l, T as u, a as d, at as f, c as p, d as m, et as h, f as g, fn as _, ft as v, hn as y, jn as b, k as x, l as S, mn as C, o as w, sn as T, u as E, y as D, yn as ee } from "./three.core-BsXWN4b8.js";
+import { C as te, E as O, G as ne, O as re, T as k, U as A, W as ie, b as ae, x as j } from "./SmallProps-DjD8mkZ7.js";
+import { a as M, c as N, f as P, l as oe, n as F, o as se, r as I, s as L, t as R, u as ce } from "./math-Du_SWpiD.js";
+import { r as le } from "./ThawField-CelnRTY2.js";
+import { D as ue, E as de, O as fe, _ as pe, c as me, d as he, f as ge, k as _e, l as ve, p as ye, s as be, t as xe, u as Se, v as Ce, y as z } from "./engine-hlzvTIM_.js";
+import { i as we, n as Te } from "./own-rp3p7qEo.js";
+import { t as Ee } from "./AudioSystem-BdBMAIIL.js";
+import { r as De } from "./PixelCanvas-Dyge5vEE.js";
+import { a as Oe, r as ke } from "./PropSprites-C53o7wJi.js";
+import { a as Ae, c as je, i as Me, o as Ne, s as Pe, t as Fe } from "./CharacterSprites-Cc3aj-Z8.js";
+import { t as Ie } from "./Particles-2ONW48aT.js";
+import { a as Le, c as Re, d as ze, i as Be, l as Ve, o as He, r as Ue, s as We, u as Ge } from "./TileMap-DEgA4jsR.js";
+import { a as Ke, i as qe, l as Je, n as Ye, o as Xe, r as Ze } from "./Props-46nf18Wb.js";
+import { T as Qe, a as $e, d as et, h as tt, n as nt, o as rt, r as it, s as at, t as ot, u as st, w as B, x as ct } from "./ObjectCatalog-CLBSNnc2.js";
+import { H as lt, _t as ut } from "./core-C1cYbmwD.js";
+import { i as dt, l as ft, n as pt, s as mt, t as ht, u as V } from "./I18n-BeKB4FMa.js";
+import { f as gt } from "./minimap-CBFghrAn.js";
+import { r as _t } from "./LevelFormat-BJ0C9Ce4.js";
+import { a as vt, b as yt, c as bt, d as xt, f as St, g as Ct, h as wt, i as Tt, l as Et, m as Dt, n as Ot, o as kt, p as At, r as jt, s as Mt, t as Nt, u as Pt, v as Ft, x as It, y as Lt } from "./LevelLook-C3YksY85.js";
+import { r as Rt, t as zt } from "./LevelMap-037nvhSa.js";
+import { r as Bt, t as Vt } from "./Travel-4-idrvN5.js";
+import { a as Ht, c as Ut, i as Wt, n as Gt, o as Kt, r as qt, s as Jt, t as Yt } from "./config-DDHWC9jm.js";
+import { a as Xt, i as Zt, o as H, r as Qt, s as $t } from "./SnowCover-C2xaJrtx.js";
+import { n as en, r as tn, t as nn } from "./festival-DRJ-EDFG.js";
+import { _ as rn, a as an, c as on, d as sn, f as cn, g as ln, h as un, i as dn, l as fn, m as pn, n as mn, o as hn, p as gn, r as _n, s as vn, t as yn, u as bn } from "./WeatherLook-DQB2IdmK.js";
+import { a as U, i as xn, n as Sn, r as W } from "./ContentText-nXIHgNO8.js";
+import { n as Cn } from "./dialogue-D_zYka2G.js";
 //#region src/engine/sprite/SpriteManager.js
-var Sn = class {
+var wn = class {
 	constructor(e) {
 		this.name = "SpriteManager", this.camera = e, this._sprites = [], this._cursor = -1;
 	}
@@ -52,7 +52,7 @@ var Sn = class {
 		if (e) for (let e of this._sprites.slice()) e.dispose?.();
 		this._sprites.length = 0;
 	}
-}, Cn = class {
+}, Tn = class {
 	constructor({ capacity: e = 256 } = {}) {
 		this.capacity = e, this.mesh = null, this.sprites = [], this._alpha = null;
 	}
@@ -70,7 +70,7 @@ var Sn = class {
 		let t = this._alpha.array, n = 0;
 		for (let r = 0; r < this.sprites.length && n < this.capacity; r++) {
 			let i = this.sprites[r].blob;
-			if (!i || !wn(i)) continue;
+			if (!i || !En(i)) continue;
 			let a = i.material.opacity;
 			a > .001 && (i.updateWorldMatrix(!0, !1), e.setMatrixAt(n, i.matrixWorld), t[n] = a, n++);
 		}
@@ -101,7 +101,7 @@ var Sn = class {
 		a.name = "BlobBatch", a.instanceMatrix.setUsage(u), a.count = 0, a.renderOrder = e.renderOrder, a.castShadow = !1, a.receiveShadow = !1, a.frustumCulled = !1, a.matrixAutoUpdate = !1, this.mesh = a;
 	}
 };
-function wn(e) {
+function En(e) {
 	for (let t = e; t; t = t.parent) {
 		if (!t.visible) return !1;
 		if (t.isScene) return !0;
@@ -110,13 +110,13 @@ function wn(e) {
 }
 //#endregion
 //#region src/game/Scenery.js
-var K = new r(), Tn = [
+var G = new r(), Dn = [
 	"position",
 	"aCenter",
 	"aSway",
 	"aPhase"
 ];
-function* En(t, { name: n = "trees", castShadow: r = !0, maxTriangles: i = Infinity, maxExtent: o = Infinity, minTriangles: s = 0, tags: c = null } = {}) {
+function* On(t, { name: n = "trees", castShadow: r = !0, maxTriangles: i = Infinity, maxExtent: o = Infinity, minTriangles: s = 0, tags: c = null } = {}) {
 	let l = /* @__PURE__ */ new Map(), u = !!c?.size, d = [];
 	for (let e of t) {
 		let t = e.object, n = u ? c.get(e) ?? null : null;
@@ -139,7 +139,7 @@ function* En(t, { name: n = "trees", castShadow: r = !0, maxTriangles: i = Infin
 			let p = d.getAttribute("aCenter");
 			if (p) {
 				let e = u.getAttribute("aCenter"), t = u.getAttribute("position"), n = d.getAttribute("position"), r = f.elements, i = Math.hypot(r[0], r[1], r[2]);
-				for (let r = 0; r < p.count; r++) K.fromBufferAttribute(e, r).applyMatrix4(f), p.setXYZ(r, K.x, K.y, K.z), n.setXYZ(r, K.x + (t.getX(r) - e.getX(r)) * i, K.y + (t.getY(r) - e.getY(r)) * i, K.z + (t.getZ(r) - e.getZ(r)) * i);
+				for (let r = 0; r < p.count; r++) G.fromBufferAttribute(e, r).applyMatrix4(f), p.setXYZ(r, G.x, G.y, G.z), n.setXYZ(r, G.x + (t.getX(r) - e.getX(r)) * i, G.y + (t.getY(r) - e.getY(r)) * i, G.z + (t.getZ(r) - e.getZ(r)) * i);
 			}
 			let m = d.getAttribute("aPhase");
 			if (m) for (let e = 0; e < m.count; e++) m.setX(e, m.getX(e) + i);
@@ -150,19 +150,19 @@ function* En(t, { name: n = "trees", castShadow: r = !0, maxTriangles: i = Infin
 	f.name = n;
 	let p = [];
 	for (let t of l.values()) {
-		let r = t.geos.map((e, t) => t), a = Number.isFinite(i) || Number.isFinite(o) ? Be(r, {
+		let r = t.geos.map((e, t) => t), a = Number.isFinite(i) || Number.isFinite(o) ? He(r, {
 			x: (e) => t.pos[e][0],
 			z: (e) => t.pos[e][1],
-			weight: (e) => ze(t.geos[e]),
+			weight: (e) => Ve(t.geos[e]),
 			maxWeight: i,
 			maxExtent: o,
 			minWeight: s
 		}) : [r];
-		u && (a = a.map((e) => Fe(e, (e) => t.tags[e])));
+		u && (a = a.map((e) => Le(e, (e) => t.tags[e])));
 		for (let r = 0; r < a.length; r++) {
-			let i = a[r], o = Le(i.map((e) => t.geos[e]), !1);
+			let i = a[r], o = ze(i.map((e) => t.geos[e]), !1);
 			if (!o) continue;
-			u && d.push(...Ie(o, i.map((e) => t.geos[e].attributes.position.count), i.map((e) => t.tags[e]), Tn)), o.computeBoundingSphere(), o.computeBoundingBox(), o.boundingSphere.radius += 1.8, o.boundingBox.expandByScalar(1.8);
+			u && d.push(...Re(o, i.map((e) => t.geos[e].attributes.position.count), i.map((e) => t.tags[e]), Dn)), o.computeBoundingSphere(), o.computeBoundingBox(), o.boundingSphere.radius += 1.8, o.boundingBox.expandByScalar(1.8);
 			let s = new e(o, t.material);
 			s.name = `${n}:${t.material.name || "mat"}${a.length > 1 ? `#${r}` : ""}`, s.castShadow = t.castShadow, s.receiveShadow = t.receiveShadow, t.depth && (s.customDepthMaterial = t.depth), s.matrixAutoUpdate = !1, f.add(s), p.push(s), yield;
 		}
@@ -178,7 +178,7 @@ function* En(t, { name: n = "trees", castShadow: r = !0, maxTriangles: i = Infin
 		}
 	};
 }
-var Dn = Object.freeze([
+var kn = Object.freeze([
 	"oak",
 	"pine",
 	"birch",
@@ -188,8 +188,8 @@ var Dn = Object.freeze([
 	"goldbirch",
 	"snowpine",
 	"bare"
-]), On = /* @__PURE__ */ new Set(["pine", "snowpine"]);
-function kn(e) {
+]), An = /* @__PURE__ */ new Set(["pine", "snowpine"]);
+function jn(e) {
 	let t = e?.forest && typeof e.forest == "object" && Array.isArray(e.forest.areas) ? e.forest.areas : [], n = [];
 	for (let e of t) {
 		if (!e || typeof e != "object" || ![
@@ -198,7 +198,7 @@ function kn(e) {
 			"minZ",
 			"maxZ"
 		].every((t) => Number.isFinite(e[t]))) continue;
-		let t = e.kinds && typeof e.kinds == "object" ? e.kinds : {}, r = Dn.map((e) => [e, Number.isFinite(t[e]) && t[e] > 0 ? t[e] : 0]).filter(([, e]) => e > 0), i = r.reduce((e, [, t]) => e + t, 0);
+		let t = e.kinds && typeof e.kinds == "object" ? e.kinds : {}, r = kn.map((e) => [e, Number.isFinite(t[e]) && t[e] > 0 ? t[e] : 0]).filter(([, e]) => e > 0), i = r.reduce((e, [, t]) => e + t, 0);
 		if (!(i > 0)) continue;
 		let a = 0, o = r.map(([e, t]) => [e, a += t / i]);
 		n.push({
@@ -211,15 +211,15 @@ function kn(e) {
 	}
 	return n;
 }
-function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i = 0, kindAreas: a = [], climate: o = null, season: s = null }) {
-	if (o === "arid") return yield* Fn({
+function* Mn({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i = 0, kindAreas: a = [], climate: o = null, season: s = null }) {
+	if (o === "arid") return yield* Ln({
 		tileMap: e,
 		heightAt: t,
 		seed: n,
 		avoid: r,
 		southGap: i
 	});
-	let c = s ? O()?.SEASON_LAND : null, l = c && Object.hasOwn(c.mix, s) ? c.mix[s] : null, u = e.width, d = e.depth, f = new L(n), p = [], m = [], h = [], g = 1.35, _ = /* @__PURE__ */ new Map(), v = (e, t) => `${Math.floor(e / g)},${Math.floor(t / g)}`, y = (e, t, n) => {
+	let c = s ? te()?.SEASON_LAND : null, l = c && Object.hasOwn(c.mix, s) ? c.mix[s] : null, u = e.width, d = e.depth, f = new I(n), p = [], m = [], h = [], g = 1.35, _ = /* @__PURE__ */ new Map(), v = (e, t) => `${Math.floor(e / g)},${Math.floor(t / g)}`, y = (e, t, n) => {
 		let i = Math.floor(e / g), a = Math.floor(t / g);
 		for (let r = -2; r <= 2; r++) for (let o = -2; o <= 2; o++) {
 			let s = _.get(`${i + o},${a + r}`);
@@ -246,7 +246,7 @@ function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i
 				return i.cumulative[i.cumulative.length - 1][0];
 			}
 		}
-		let i = t < 6, o = e > u * .72 && t > 8, s = R(e * .09, t * .09, {
+		let i = t < 6, o = e > u * .72 && t > 8, s = L(e * .09, t * .09, {
 			seed: n + 5,
 			octaves: 2
 		});
@@ -262,7 +262,7 @@ function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i
 		for (let a = 0; a < r; a++) {
 			let r = e + f.range(.1, .9), a = t + f.range(.1, .9), o = f.range(.85, 1.25);
 			if (!y(r, a, o)) continue;
-			let s = x(r, a, f.next()), c = (On.has(s) ? 5.4 : s === "birch" || s === "goldbirch" ? 5.2 : 5) * f.range(.85, 1.25) * (i === 1 ? .8 : 1);
+			let s = x(r, a, f.next()), c = (An.has(s) ? 5.4 : s === "birch" || s === "goldbirch" ? 5.2 : 5) * f.range(.85, 1.25) * (i === 1 ? .8 : 1);
 			i !== 2 && (b(r, a, o), p.push([
 				s,
 				r,
@@ -279,12 +279,12 @@ function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i
 		}
 		yield;
 	}
-	let C = Mn(e, jn);
+	let C = Pn(e, Nn);
 	for (let e = 0; e < 5200; e++) {
 		e % 400 == 399 && (yield);
 		let r = f.range(-34, u + 34), a = f.range(-44, d + 20.4), o = Math.max(0, -r, r - u), s = Math.max(0, -a, a - d), c = Math.hypot(o, s);
-		if (c < .6 || i > 0 && a > d && a < d + i || c < jn && C?.(r, a)) continue;
-		let l = R(r * .075 + 11, a * .075 - 4, {
+		if (c < .6 || i > 0 && a > d && a < d + i || c < Nn && C?.(r, a)) continue;
+		let l = L(r * .075 + 11, a * .075 - 4, {
 			seed: n + 2,
 			octaves: 3
 		}), p = 1 - P(4, 30, c), h = M((l - .42) * 2.6 + p * (a < 0 ? .35 : .75), 0, 1) * (1 - P(24, 34, c) * .85);
@@ -292,7 +292,7 @@ function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i
 		let g = f.range(.95, 1.5);
 		if (!y(r, a, g)) continue;
 		b(r, a, g);
-		let _ = x(r, a, f.next()), v = On.has(_) ? 5.8 : 5.2;
+		let _ = x(r, a, f.next()), v = An.has(_) ? 5.8 : 5.2;
 		m.push([
 			_,
 			r,
@@ -306,8 +306,8 @@ function* An({ tileMap: e, heightAt: t, seed: n = 77, avoid: r = [], southGap: i
 		outer: m
 	};
 }
-var jn = 2.5;
-function Mn(e, t) {
+var Nn = 2.5;
+function Pn(e, t) {
 	let n = e.width, r = e.depth, i = (t, n) => {
 		let r = e.tileAt(t, n);
 		return !!r && !r.water && !r.type?.void && (r.type?.walkable ?? !0) !== !1;
@@ -333,16 +333,16 @@ function Mn(e, t) {
 		return !1;
 	} : null;
 }
-var Nn = {
+var Fn = {
 	juniper: 3.4,
 	deadwood: 4,
 	crag: 3.4
 };
-function Pn(e) {
+function In(e) {
 	return e === "basalt" || e === "ash" || e === "scorched" ? "basalt" : e === "red_sand" || e === "redrock" ? "redrock" : "sandstone";
 }
-function* Fn({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
-	let a = e.width, o = e.depth, s = new L(n + 4111), c = [], l = [], u = 1.35, d = /* @__PURE__ */ new Map(), f = (e, t, n) => {
+function* Ln({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
+	let a = e.width, o = e.depth, s = new I(n + 4111), c = [], l = [], u = 1.35, d = /* @__PURE__ */ new Map(), f = (e, t, n) => {
 		let i = Math.floor(e / u), a = Math.floor(t / u);
 		for (let r = -2; r <= 2; r++) for (let o = -2; o <= 2; o++) {
 			let s = d.get(`${i + o},${a + r}`);
@@ -364,7 +364,7 @@ function* Fn({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
 		n,
 		r,
 		i,
-		Nn[e] * a
+		Fn[e] * a
 	];
 	for (let t = 0; t < o; t++) {
 		for (let n = 0; n < a; n++) {
@@ -373,17 +373,17 @@ function* Fn({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
 			let i = t >= 9 ? Math.min(n, a - 1 - n) : -1, l = t < 3 ? 1 : 2;
 			for (let e = 0; e < l; e++) {
 				let e = n + s.range(.1, .9), a = t + s.range(.1, .9), o = s.range(.95, 1.4), l = s.next(), u = s.range(.7, 1.35) * (i === 1 ? .78 : 1);
-				i === 2 || l > .72 || !f(e, a, o) || (p(e, a, o), c.push(h(m(t < 6, s.next()), Pn(r.type.top), e, r.h, a, u)));
+				i === 2 || l > .72 || !f(e, a, o) || (p(e, a, o), c.push(h(m(t < 6, s.next()), In(r.type.top), e, r.h, a, u)));
 			}
 		}
 		yield;
 	}
-	let g = Mn(e, jn);
+	let g = Pn(e, Nn);
 	for (let e = 0; e < 5200; e++) {
 		e % 400 == 399 && (yield);
 		let r = s.range(-34, a + 34), c = s.range(-44, o + 20.4), u = Math.max(0, -r, r - a), d = Math.max(0, -c, c - o), _ = Math.hypot(u, d);
-		if (_ < .6 || i > 0 && c > o && c < o + i || _ < jn && g?.(r, c)) continue;
-		let v = R(r * .08 + 31, c * .08 - 9, {
+		if (_ < .6 || i > 0 && c > o && c < o + i || _ < Nn && g?.(r, c)) continue;
+		let v = L(r * .08 + 31, c * .08 - 9, {
 			seed: n + 3,
 			octaves: 3
 		}), y = 1 - P(4, 30, _), b = M((v - .48) * 2.2 + y * .35, 0, 1) * .42 * (1 - P(22, 34, _) * .85);
@@ -391,7 +391,7 @@ function* Fn({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
 		let x = s.range(1.1, 1.7), S = t(r, c), C = m(c < 0, s.next()), w = s.range(.85, 1.4);
 		if (c < -5 && S > t(r, -1) + 3 && C !== "crag" || !f(r, c, x)) continue;
 		p(r, c, x);
-		let T = R(r * .05, c * .05, {
+		let T = L(r * .05, c * .05, {
 			seed: n + 6,
 			octaves: 2
 		}) > .58 ? "redrock" : "sandstone";
@@ -402,7 +402,7 @@ function* Fn({ tileMap: e, heightAt: t, seed: n, avoid: r, southGap: i }) {
 		outer: l
 	};
 }
-function In(e, [t, n, r, i, a]) {
+function Rn(e, [t, n, r, i, a]) {
 	return t.startsWith("crag:") ? e.crag(n, r, i, {
 		kind: "spire",
 		stone: t.slice(5),
@@ -414,8 +414,8 @@ function In(e, [t, n, r, i, a]) {
 		fallenLeaves: !1
 	});
 }
-function Ln(e, { climate: t = null, season: n = null } = {}) {
-	let r = t === "arid", i = n ? O()?.SEASON_LAND : null, a = e.width, o = e.depth, s = (t, n) => {
+function zn(e, { climate: t = null, season: n = null } = {}) {
+	let r = t === "arid", i = n ? te()?.SEASON_LAND : null, a = e.width, o = e.depth, s = (t, n) => {
 		let r = -Infinity;
 		for (let i of [-.5, .5]) for (let s of [-.5, .5]) {
 			let c = M(Math.floor(t + i), 0, a - 1), l = M(Math.floor(n + s), 0, o - 1), u = e.tileAt(c, l);
@@ -428,44 +428,44 @@ function Ln(e, { climate: t = null, season: n = null } = {}) {
 	return (t, c) => {
 		let l = M(t, 0, a), u = M(c, 0, o), d = t - l, f = c - u, p = Math.hypot(d, f), m = s(l, u) - .04;
 		if (p < 1e-6) return m;
-		let h = (R(t * .05, c * .05, {
+		let h = (L(t * .05, c * .05, {
 			seed: 91,
 			octaves: 3
 		}) - .5) * 3.2, g = P(0, 10, p), _ = m + h * g;
-		if (r) return Math.max(_ + zn(t, c, a, o), m - .6 * g);
+		if (r) return Math.max(_ + Vn(t, c, a, o), m - .6 * g);
 		let v = P(2, -30, c);
-		_ += v * (P(0, 40, -c) * 7 + R(t * .03, c * .04, {
+		_ += v * (P(0, 40, -c) * 7 + L(t * .03, c * .04, {
 			seed: 17,
 			octaves: 4
 		}) * 9 * P(-6, -40, c));
 		let y = P(-55, -120, c);
-		_ += y * (18 + R(t * .018, 3.1, {
+		_ += y * (18 + L(t * .018, 3.1, {
 			seed: 23,
 			octaves: 4
 		}) * 34);
 		let b = P(18, 90, Math.max(-t, t - a, c - o));
-		return _ += b * (4 + R(t * .02, c * .02, {
+		return _ += b * (4 + L(t * .02, c * .02, {
 			seed: 29,
 			octaves: 3
 		}) * 14), i && (_ += i.relief(n, e, t, c, l, u, p, v, y)), Math.max(_, m - .6 * g);
 	};
 }
-var Rn = (e, t, n, r = 4) => 1 - Math.abs(R(e, t, {
+var Bn = (e, t, n, r = 4) => 1 - Math.abs(L(e, t, {
 	seed: n,
 	octaves: r
 }) * 2 - 1);
-function zn(e, t, n, r) {
-	let i = 0, a = P(2, -30, t), o = (P(0, 36, -t) * 9 + Rn(e * .035, t * .045, 17) * 12 * P(-6, -40, t)) / 3, s = Math.floor(o);
+function Vn(e, t, n, r) {
+	let i = 0, a = P(2, -30, t), o = (P(0, 36, -t) * 9 + Bn(e * .035, t * .045, 17) * 12 * P(-6, -40, t)) / 3, s = Math.floor(o);
 	i += a * (s + P(.6, .95, o - s)) * 3;
 	let c = P(-46, -100, t);
-	i += c * (24 + Rn(e * .016, t * .022 + 4.1, 23, 5) * 62);
-	let l = P(16, 70, Math.max(-e, e - n, t - r)), u = R(e * .024, t * .024, {
+	i += c * (24 + Bn(e * .016, t * .022 + 4.1, 23, 5) * 62);
+	let l = P(16, 70, Math.max(-e, e - n, t - r)), u = L(e * .024, t * .024, {
 		seed: 29,
 		octaves: 3
 	}) * 4, d = Math.floor(u);
 	return i += l * (3 + (d + P(.72, .98, u - d)) * 6.5), i;
 }
-function* Bn(e, t, n) {
+function* Hn(e, t, n) {
 	let i = e.index, a = e.getAttribute("position"), o = new d(new Float32Array(a.count * 3), 3);
 	e.setAttribute("normal", o);
 	let s = new r(), c = new r(), l = new r(), u = new r(), f = new r(), p = new r(), m = new r(), h = new r(), g = 0;
@@ -474,11 +474,11 @@ function* Bn(e, t, n) {
 		s.fromBufferAttribute(a, n), c.fromBufferAttribute(a, r), l.fromBufferAttribute(a, d), m.subVectors(l, c), h.subVectors(s, c), m.cross(h), u.fromBufferAttribute(o, n), f.fromBufferAttribute(o, r), p.fromBufferAttribute(o, d), u.add(m), f.add(m), p.add(m), o.setXYZ(n, u.x, u.y, u.z), o.setXYZ(r, f.x, f.y, f.z), o.setXYZ(d, p.x, p.y, p.z), ++g === t && (g = 0, yield);
 	}
 	yield;
-	for (let e = 0, t = o.count; e < t; e++) K.fromBufferAttribute(o, e).normalize(), o.setXYZ(e, K.x, K.y, K.z), e % n === n - 1 && (yield);
+	for (let e = 0, t = o.count; e < t; e++) G.fromBufferAttribute(o, e).normalize(), o.setXYZ(e, G.x, G.y, G.z), e % n === n - 1 && (yield);
 	o.needsUpdate = !0;
 }
-function* Vn({ textures: t, tileMap: n, heightAt: r, extent: i = 170, rowsPerStep: a = 12, climate: o = null, season: s = null }) {
-	let c = o === "arid", l = !c && s ? O()?.SEASON_LAND : null, u = l && Object.hasOwn(l.outer, s) ? l.outer[s] : null, f = n.width, p = n.depth, m = (e, t) => {
+function* Un({ textures: t, tileMap: n, heightAt: r, extent: i = 170, rowsPerStep: a = 12, climate: o = null, season: s = null }) {
+	let c = o === "arid", l = !c && s ? te()?.SEASON_LAND : null, u = l && Object.hasOwn(l.outer, s) ? l.outer[s] : null, f = n.width, p = n.depth, m = (e, t) => {
 		let n = /* @__PURE__ */ new Set();
 		for (let t = e - i; t < e - 40; t += 10) n.add(t);
 		for (let t = e - 40; t < e - 16; t += 2) n.add(t);
@@ -486,54 +486,54 @@ function* Vn({ textures: t, tileMap: n, heightAt: r, extent: i = 170, rowsPerSte
 		for (let e = t + 16; e <= t + 40; e += 2) n.add(e);
 		for (let e = t + 40; e <= t + i; e += 10) n.add(e);
 		return [...n].sort((e, t) => e - t);
-	}, h = m(0, f), _ = m(0, p), v = h.length, y = _.length, b = new Float32Array(v * y * 3), x = new Float32Array(v * y * 2), S = new Float32Array(v * y * 3), w = new Float32Array(v * y);
+	}, h = m(0, f), _ = m(0, p), v = h.length, y = _.length, b = new Float32Array(v * y * 3), x = new Float32Array(v * y * 2), S = new Float32Array(v * y * 3), C = new Float32Array(v * y);
 	for (let e = 0; e < y; e++) {
 		for (let t = 0; t < v; t++) {
 			let n = h[t], i = _[e];
-			w[e * v + t] = r(n, i);
+			C[e * v + t] = r(n, i);
 		}
 		e % a === a - 1 && (yield);
 	}
-	let T = u ? u[0] : c ? "arid_dirt" : "grass_dark", E = t.meta(T).units, D = new g(), ee = new g(1, 1, 1), k = u ? new g(...u[1]) : c ? new g(1.04, .96, .88) : new g(.78, .86, .72), te = u ? new g(...u[2]) : c ? new g(1.02, .74, .6) : new g(.62, .6, .66), ne = new g(.92, .86, .84);
+	let T = u ? u[0] : c ? "arid_dirt" : "grass_dark", E = t.meta(T).units, D = new g(), ee = new g(1, 1, 1), O = u ? new g(...u[1]) : c ? new g(1.04, .96, .88) : new g(.78, .86, .72), ne = u ? new g(...u[2]) : c ? new g(1.02, .74, .6) : new g(.62, .6, .66), re = new g(.92, .86, .84);
 	for (let e = 0; e < y; e++) {
 		for (let t = 0; t < v; t++) {
-			let n = e * v + t, r = h[t], i = _[e], a = w[n];
+			let n = e * v + t, r = h[t], i = _[e], a = C[n];
 			b[n * 3] = r, b[n * 3 + 1] = a, b[n * 3 + 2] = i, x[n * 2] = r / E[0], x[n * 2 + 1] = -i / E[1];
-			let o = w[e * v + Math.max(0, t - 1)], s = w[e * v + Math.min(v - 1, t + 1)], l = w[Math.max(0, e - 1) * v + t], d = w[Math.min(y - 1, e + 1) * v + t], m = (s - o) / Math.max(.001, h[Math.min(v - 1, t + 1)] - h[Math.max(0, t - 1)]), g = (d - l) / Math.max(.001, _[Math.min(y - 1, e + 1)] - _[Math.max(0, e - 1)]), C = Math.hypot(m, g), T = Math.max(0, -r, r - f), O = Math.max(0, -i, i - p), A = Math.hypot(T, O);
-			D.copy(ee).lerp(k, P(20, 80, A)).lerp(te, P(.55, 1.2, C)), c && D.lerp(ne, P(26, 60, a));
-			let j = oe(u ? u[3] : c ? .8 : .62, 1, P(0, 14, A)) * (.9 + .2 * R(r * .11, i * .11, {
+			let o = C[e * v + Math.max(0, t - 1)], s = C[e * v + Math.min(v - 1, t + 1)], l = C[Math.max(0, e - 1) * v + t], d = C[Math.min(y - 1, e + 1) * v + t], m = (s - o) / Math.max(.001, h[Math.min(v - 1, t + 1)] - h[Math.max(0, t - 1)]), g = (d - l) / Math.max(.001, _[Math.min(y - 1, e + 1)] - _[Math.max(0, e - 1)]), w = Math.hypot(m, g), T = Math.max(0, -r, r - f), te = Math.max(0, -i, i - p), k = Math.hypot(T, te);
+			D.copy(ee).lerp(O, P(20, 80, k)).lerp(ne, P(.55, 1.2, w)), c && D.lerp(re, P(26, 60, a));
+			let A = ce(u ? u[3] : c ? .8 : .62, 1, P(0, 14, k)) * (.9 + .2 * L(r * .11, i * .11, {
 				seed: 4,
 				octaves: 2
 			}));
-			S[n * 3] = D.r * j, S[n * 3 + 1] = D.g * j, S[n * 3 + 2] = D.b * j;
+			S[n * 3] = D.r * A, S[n * 3 + 1] = D.g * A, S[n * 3 + 2] = D.b * A;
 		}
 		e % a === a - 1 && (yield);
 	}
-	let A = (e, t) => e > 0 && e < t, j = 0;
-	for (let e = 0; e < v - 1; e++) A((h[e] + h[e + 1]) / 2, f) && j++;
-	let re = 0;
-	for (let e = 0; e < y - 1; e++) A((_[e] + _[e + 1]) / 2, p) && re++;
-	let ie = (v - 1) * (y - 1) - j * re, M = v * y - 1 >= 65535 ? new Uint32Array(ie * 6) : new Uint16Array(ie * 6), N = 0;
+	let k = (e, t) => e > 0 && e < t, A = 0;
+	for (let e = 0; e < v - 1; e++) k((h[e] + h[e + 1]) / 2, f) && A++;
+	let ie = 0;
+	for (let e = 0; e < y - 1; e++) k((_[e] + _[e + 1]) / 2, p) && ie++;
+	let ae = (v - 1) * (y - 1) - A * ie, j = v * y - 1 >= 65535 ? new Uint32Array(ae * 6) : new Uint16Array(ae * 6), M = 0;
 	for (let e = 0; e < y - 1; e++) {
-		let t = A((_[e] + _[e + 1]) / 2, p);
+		let t = k((_[e] + _[e + 1]) / 2, p);
 		for (let n = 0; n < v - 1; n++) {
-			if (t && A((h[n] + h[n + 1]) / 2, f)) continue;
+			if (t && k((h[n] + h[n + 1]) / 2, f)) continue;
 			let r = e * v + n, i = r + 1, a = r + v, o = a + 1;
-			M[N++] = r, M[N++] = a, M[N++] = i, M[N++] = i, M[N++] = a, M[N++] = o;
+			j[M++] = r, j[M++] = a, j[M++] = i, j[M++] = i, j[M++] = a, j[M++] = o;
 		}
 		e % a === a - 1 && (yield);
 	}
-	let F = new C();
-	F.setAttribute("position", new d(b, 3)), F.setAttribute("uv", new d(x, 2)), F.setAttribute("color", new d(S, 3)), F.setIndex(new d(M, 1)), yield, yield* Bn(F, a * (v - 1) * 2, a * v), F.computeBoundingSphere();
-	let ae = t.material(T, {
+	let N = new w();
+	N.setAttribute("position", new d(b, 3)), N.setAttribute("uv", new d(x, 2)), N.setAttribute("color", new d(S, 3)), N.setIndex(new d(j, 1)), yield, yield* Hn(N, a * (v - 1) * 2, a * v), N.computeBoundingSphere();
+	let oe = t.material(T, {
 		vertexColors: !0,
 		normalScale: .35
-	}), I = new e(F, ae);
-	return I.name = "OuterGround", I.receiveShadow = !0, I.castShadow = !1, I.matrixAutoUpdate = !1, I.updateMatrix(), I;
+	}), F = new e(N, oe);
+	return F.name = "OuterGround", F.receiveShadow = !0, F.castShadow = !1, F.matrixAutoUpdate = !1, F.updateMatrix(), F;
 }
 //#endregion
 //#region src/game/Climate.js
-var Hn = Object.freeze([
+var Wn = Object.freeze([
 	{
 		t: 0,
 		name: "night",
@@ -782,8 +782,8 @@ var Hn = Object.freeze([
 		clouds: .12
 	}
 ]);
-function Un(e) {
-	return Dt(e) === "arid" ? {
+function Gn(e) {
+	return kt(e) === "arid" ? {
 		count: 190,
 		size: [.06, .14],
 		color: "#ffd596",
@@ -802,43 +802,43 @@ function Un(e) {
 		alpha: .75
 	} : {};
 }
-var Wn = /* @__PURE__ */ new WeakMap(), Gn = /* @__PURE__ */ new WeakMap(), Kn = null, qn = null;
-function Jn() {
-	return qn ??= import("./SeasonLook-DUZAkezu.js").then((e) => Kn = e, (e) => {
-		throw qn = null, e;
+var Kn = /* @__PURE__ */ new WeakMap(), qn = /* @__PURE__ */ new WeakMap(), Jn = null, Yn = null;
+function Xn() {
+	return Yn ??= import("./SeasonLook-DUZAkezu.js").then((e) => Jn = e, (e) => {
+		throw Yn = null, e;
 	});
 }
-function Yn() {
-	return Kn ? null : qn;
+function Zn() {
+	return Jn ? null : Yn;
 }
-function Xn(e, t, n = null) {
-	let r = t ?? (n && Kn ? n : null);
-	if ((Gn.get(e) ?? null) === r) return !1;
-	Wn.has(e) || Wn.set(e, e.keyframes);
-	let i = Wn.get(e);
-	return e.setKeyframes(r === "arid" ? Hn.map((e) => ({ ...e })) : r ? Kn.seasonKeyframes(i, r) : i), Gn.set(e, r), !0;
+function Qn(e, t, n = null) {
+	let r = t ?? (n && Jn ? n : null);
+	if ((qn.get(e) ?? null) === r) return !1;
+	Kn.has(e) || Kn.set(e, e.keyframes);
+	let i = Kn.get(e);
+	return e.setKeyframes(r === "arid" ? Wn.map((e) => ({ ...e })) : r ? Jn.seasonKeyframes(i, r) : i), qn.set(e, r), !0;
 }
-function Zn(e, t) {
-	let n = Ot(t);
-	if (Xn(e.lighting, Dt(t), n), e.season = null, e.lighting.sky.uniforms.uAurora.value = 0, mt(null), !n && !(Ct(t) > 0)) return;
+function $n(e, t) {
+	let n = At(t);
+	if (Qn(e.lighting, kt(t), n), e.season = null, e.lighting.sky.uniforms.uAurora.value = 0, gt(null), !n && !(Tt(t) > 0)) return;
 	let r = () => {
-		e.env === t && (Xn(e.lighting, Dt(t), n), e.season = Kn.createSeason(e));
+		e.env === t && (Qn(e.lighting, kt(t), n), e.season = Jn.createSeason(e));
 	};
-	Kn ? r() : Jn().then(r, (e) => console.warn("[Luminati] the season look did not load:", e));
+	Jn ? r() : Xn().then(r, (e) => console.warn("[Luminati] the season look did not load:", e));
 }
 //#endregion
 //#region src/game/AudioDirector.js
-var Qn = {
+var er = {
 	blaze: [1, 1],
 	bonfire: [.85, 1],
 	brazier: [0, .6],
 	embers: [0, .35]
-}, $n = .45;
-function er(e, t = null) {
+}, tr = .45;
+function nr(e, t = null) {
 	let n = e.opts && typeof e.opts == "object" ? e.opts : {}, r = Number(e.x), i = Number(e.z);
 	if (!Number.isFinite(r) || !Number.isFinite(i)) return null;
 	if (e.type === "fire") {
-		let [e, a] = Se(Qn, typeof n.kind == "string" ? n.kind : "blaze") ?? Qn.blaze, o = M(Number.isFinite(Number(n.size)) ? Number(n.size) : 1.5, .2, 6);
+		let [e, a] = we(er, typeof n.kind == "string" ? n.kind : "blaze") ?? er.blaze, o = M(Number.isFinite(Number(n.size)) ? Number(n.size) : 1.5, .2, 6);
 		return {
 			x: r,
 			z: i,
@@ -859,7 +859,7 @@ function er(e, t = null) {
 	}
 	return null;
 }
-var tr = class e {
+var rr = class e {
 	constructor({ audio: e, lighting: t, weather: n, tileMap: r, fires: i = [], falls: a = [], blazes: o = [], npcs: s = [], focus: c = null, env: l = null }) {
 		this.audio = e, this.lighting = t, this.weather = n, this.fires = i, this.falls = a, this.blazes = o, this.npcs = s, this.focus = c, this.env = l, this.enabled = !1, this._timer = 0;
 		let u = [];
@@ -898,7 +898,7 @@ var tr = class e {
 	_computeSiege(e) {
 		let t = this.levels, n = 0;
 		for (let t of this.npcs) {
-			let r = t.panicking ? 1 : t.cowering ? $n : 0;
+			let r = t.panicking ? 1 : t.cowering ? tr : 0;
 			if (!r) continue;
 			let i = Math.hypot(t.position.x - e.x, t.position.z - e.z);
 			n += r * (1 - P(4, 34, i));
@@ -918,15 +918,15 @@ var tr = class e {
 };
 //#endregion
 //#region src/game/GroundDetail.js
-function nr(e) {
-	let t = e.map(({ kind: e, seed: t }) => De(e, { seed: t })), n = Math.max(...t.map((e) => e.frameWidth)) + 2, r = Math.max(...t.map((e) => e.frameHeight)) + 1, i = document.createElement("canvas");
+function ir(e) {
+	let t = e.map(({ kind: e, seed: t }) => ke(e, { seed: t })), n = Math.max(...t.map((e) => e.frameWidth)) + 2, r = Math.max(...t.map((e) => e.frameHeight)) + 1, i = document.createElement("canvas");
 	i.width = n * t.length, i.height = r;
 	let a = i.getContext("2d");
 	return a.imageSmoothingEnabled = !1, t.forEach((e, t) => {
 		let i = t * n + Math.floor((n - e.frameWidth) / 2), o = r - e.frameHeight;
 		a.drawImage(e.canvas, 0, 0, e.frameWidth, e.frameHeight, i, o, e.frameWidth, e.frameHeight), e.dispose();
 	}), {
-		texture: Te(i, {
+		texture: De(i, {
 			wrap: "clamp",
 			mipmaps: !1,
 			srgb: !0,
@@ -939,17 +939,17 @@ function nr(e) {
 		frames: t.length
 	};
 }
-var rr = /* @__PURE__ */ new Set([
+var ar = /* @__PURE__ */ new Set([
 	"g",
 	"G",
 	"f"
-]), ir = [
+]), or = [
 	1,
 	2,
 	3,
 	1,
 	2
-], ar = {
+], sr = {
 	dry_grass: {
 		tufts: 3,
 		tall: .3,
@@ -1093,11 +1093,11 @@ var rr = /* @__PURE__ */ new Set([
 		pebbles: .05,
 		bones: .03
 	}
-}, or = /* @__PURE__ */ new Set([
+}, cr = /* @__PURE__ */ new Set([
 	"basalt",
 	"ash",
 	"scorched"
-]), sr = {
+]), lr = {
 	tufts: 2,
 	tall: .55,
 	shrub: .5,
@@ -1109,14 +1109,14 @@ var rr = /* @__PURE__ */ new Set([
 	],
 	pebbles: .05,
 	bones: 0
-}, cr = [
+}, ur = [
 	"#ffffff",
 	"#ffffff",
 	"#f4e6c8",
 	"#e4ecc0"
 ];
-function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i = [], clearings: o = [], flowerAreas: s = [], shrubAreas: c = [], cropAreas: l = [], maxInstances: u = Infinity }) {
-	let d = new L(n), f = new a();
+function* dr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i = [], clearings: o = [], flowerAreas: s = [], shrubAreas: c = [], cropAreas: l = [], maxInstances: u = Infinity }) {
+	let d = new I(n), f = new a();
 	f.name = "GroundDetail";
 	let p = [], m = [], h = [], g = [], _ = (e, t) => {
 		for (let n = 0; n < o.length; n++) {
@@ -1142,11 +1142,11 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 		shrubs: [],
 		clutter: [],
 		reeds: [],
-		rng: new L(n + 4099),
-		tints: cr,
+		rng: new I(n + 4099),
+		tints: ur,
 		reed: .6
-	}, x = O()?.SEASON_LAND ?? null, S = new L(n + 7351), C = {}, w = (e, r, i, a, o) => {
-		let s = o.rng, c = i.h, l = i.char === "T", u = R(e * .21 + 7, r * .21, {
+	}, x = te()?.SEASON_LAND ?? null, S = new I(n + 7351), C = {}, w = (e, r, i, a, o) => {
+		let s = o.rng, c = i.h, l = i.char === "T", u = L(e * .21 + 7, r * .21, {
 			seed: n + 11,
 			octaves: 3
 		}), d = (e, n) => l || t(e, n), f = a.tufts * (a.tufts >= 1 ? .8 + u * .5 : 1), p = Math.floor(f) + +(s.next() < f - Math.floor(f));
@@ -1182,7 +1182,7 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 				y: c,
 				z: n,
 				scale: s.range(.7, 1.1),
-				frame: o === b && or.has(i.type.top) ? 2 : 0
+				frame: o === b && cr.has(i.type.top) ? 2 : 0
 			});
 		}
 		if (s.next() < a.bones) {
@@ -1206,8 +1206,8 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 		}
 	}, T = (e, r, i) => {
 		let a = i.char, o = i.h, l = i.type.top;
-		if (l && Object.hasOwn(ar, l)) {
-			w(e, r, i, a === "T" ? sr : ar[l], b);
+		if (l && Object.hasOwn(sr, l)) {
+			w(e, r, i, a === "T" ? lr : sr[l], b);
 			return;
 		}
 		if (x && l && Object.hasOwn(x.growth, l)) {
@@ -1224,8 +1224,8 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 			return;
 		}
 		let u = a === "T";
-		if (rr.has(a) || u) {
-			let i = R(e * .23, r * .23, {
+		if (ar.has(a) || u) {
+			let i = L(e * .23, r * .23, {
 				seed: n + 1,
 				octaves: 3
 			}), l = u ? 2 : 3 + (i > .55 ? 2 : 0);
@@ -1242,7 +1242,7 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 					tint: l
 				});
 			}
-			let f = u ? 0 : a === "f" ? 3 : i > .6 ? 1 : +!!d.chance(.25), h = v(s, e, r)?.palette ?? ir;
+			let f = u ? 0 : a === "f" ? 3 : i > .6 ? 1 : +!!d.chance(.25), h = v(s, e, r)?.palette ?? or;
 			for (let n = 0; n < f; n++) {
 				let n = e + d.next(), i = r + d.next();
 				if (!t(n, i)) continue;
@@ -1333,7 +1333,7 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 	}
 	let E = (t, n) => {
 		let r = e.tileAt(Math.floor(t), Math.floor(n));
-		return r && rr.has(r.char) && !Object.hasOwn(ar, r.type.top) && !(x && Object.hasOwn(x.growth, r.type.top)) ? r : null;
+		return r && ar.has(r.char) && !Object.hasOwn(sr, r.type.top) && !(x && Object.hasOwn(x.growth, r.type.top)) ? r : null;
 	}, D = (e, n, r, i) => {
 		let a = E(e, n);
 		return !a || !t(e, n) || _(e, n) ? !1 : (g.push({
@@ -1395,15 +1395,15 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 			D(e.x + Math.cos(t) * n, e.z + Math.sin(t) * n, +!!d.chance(.6), d.range(.7, 1.05));
 		}
 	}
-	let ee = [], k = function* (e, t, r, i = {}) {
+	let ee = [], O = function* (e, t, r, i = {}) {
 		if (!r.length) return [];
-		let a = r.length > u ? yield* He(r, {
+		let a = r.length > u ? yield* We(r, {
 			x: (e) => e.x,
 			z: (e) => e.z,
 			maxWeight: u
 		}) : [r], o = a.map((t, n) => [a.length > 1 ? `${e}#${n}` : e, t]), s = [];
 		for (let [e, r] of o) {
-			let a = new xe({
+			let a = new Ce({
 				sprite: t,
 				instances: globalThis.__emberGround ? globalThis.__emberGround.foliage(r) : r,
 				name: e,
@@ -1413,29 +1413,29 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 			f.add(a.object), ee.push(a), s.push(a), yield;
 		}
 		return s;
-	}, te = nr([{ kind: "grass_tuft" }, { kind: "grass_tall" }]), ne = nr([
+	}, ne = ir([{ kind: "grass_tuft" }, { kind: "grass_tall" }]), re = ir([
 		{ kind: "flower_red" },
 		{ kind: "flower_yellow" },
 		{ kind: "flower_white" },
 		{ kind: "flower_blue" }
-	]), A = nr([
+	]), k = ir([
 		{ kind: "bush" },
 		{ kind: "fern" },
 		{ kind: "mushroom" },
 		{ kind: "rock_small" }
-	]), j = De("reeds");
-	yield, yield* k("Foliage:grass", te, p, { wind: 1 }), yield* k("Foliage:flowers", ne, m, { wind: 1.1 }), yield* k("Foliage:reeds", j, h, { wind: 1.4 });
-	let re = yield* k("Foliage:shrubs", A, g, {
+	]), A = ke("reeds");
+	yield, yield* O("Foliage:grass", ne, p, { wind: 1 }), yield* O("Foliage:flowers", re, m, { wind: 1.1 }), yield* O("Foliage:reeds", A, h, { wind: 1.4 });
+	let ie = yield* O("Foliage:shrubs", k, g, {
 		wind: .5,
 		rootDarken: .25
 	});
-	for (let e of re) e.castShadow = !0;
-	let ie = [], M = (e) => {
-		let t = nr(e);
-		return ie.push(t.texture), t;
+	for (let e of ie) e.castShadow = !0;
+	let ae = [], j = (e) => {
+		let t = ir(e);
+		return ae.push(t.texture), t;
 	};
-	if (b.grass.length && (yield* k("Foliage:arid-grass", M([{ kind: "dry_tuft" }, { kind: "dry_grass_tall" }]), b.grass, { wind: 1 })), b.shrubs.length) {
-		let e = yield* k("Foliage:arid-shrubs", M([
+	if (b.grass.length && (yield* O("Foliage:arid-grass", j([{ kind: "dry_tuft" }, { kind: "dry_grass_tall" }]), b.grass, { wind: 1 })), b.shrubs.length) {
+		let e = yield* O("Foliage:arid-shrubs", j([
 			{ kind: "scrub" },
 			{ kind: "agave" },
 			{ kind: "thornbush" },
@@ -1446,25 +1446,25 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 		});
 		for (let t of e) t.castShadow = !0;
 	}
-	b.clutter.length && (yield* k("Foliage:arid-clutter", M([
+	b.clutter.length && (yield* O("Foliage:arid-clutter", j([
 		{ kind: "pebbles" },
 		{ kind: "bones" },
 		{ kind: "cinders" }
 	]), b.clutter, {
 		wind: 0,
 		rootDarken: .1
-	})), b.reeds.length && (yield* k("Foliage:arid-reeds", j, b.reeds, { wind: 1.4 }));
-	let N = x ? yield* x.fields({
+	})), b.reeds.length && (yield* O("Foliage:arid-reeds", A, b.reeds, { wind: 1.4 }));
+	let M = x ? yield* x.fields({
 		fams: C,
 		cropAreas: l,
 		tileMap: e,
 		isFree: t,
 		inClearing: _,
 		seed: n,
-		add: k,
-		kinds: (e) => M(e.map((e) => ({ kind: e }))),
-		reedSprite: j
-	}) : {}, P = b.grass.length + b.shrubs.length + b.clutter.length ? {
+		add: O,
+		kinds: (e) => j(e.map((e) => ({ kind: e }))),
+		reedSprite: A
+	}) : {}, N = b.grass.length + b.shrubs.length + b.clutter.length ? {
 		aridGrass: b.grass.length,
 		aridShrubs: b.shrubs.length,
 		aridClutter: b.clutter.length
@@ -1477,22 +1477,22 @@ function* lr({ tileMap: e, isFree: t, seed: n = 2024, houses: r = [], trees: i =
 			flowers: m.length,
 			reeds: h.length + b.reeds.length,
 			shrubs: g.length,
-			...P,
-			...N
+			...N,
+			...M
 		},
 		dispose() {
 			for (let e of ee) e.dispose();
-			te.texture.dispose(), ne.texture.dispose(), A.texture.dispose(), j.dispose();
-			for (let e of ie) e.dispose();
+			ne.texture.dispose(), re.texture.dispose(), k.texture.dispose(), A.dispose();
+			for (let e of ae) e.dispose();
 		}
 	};
 }
-var ur = () => new Promise((e) => setTimeout(e, 0)), dr = /[^A-Za-z0-9_:.\-]+/;
-function fr(e) {
-	let t = vt(e)?.until ?? "";
-	return new Set(t.split(dr).filter((e) => e && !/^(and|or|not)$/i.test(e)));
+var fr = () => new Promise((e) => setTimeout(e, 0)), pr = /[^A-Za-z0-9_:.\-]+/;
+function mr(e) {
+	let t = bt(e)?.until ?? "";
+	return new Set(t.split(pr).filter((e) => e && !/^(and|or|not)$/i.test(e)));
 }
-var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
+var hr = /* @__PURE__ */ new Set(["tree", "waterfall"]), gr = Object.freeze({
 	terrainChunk: 32,
 	terrainTriangles: 48e3,
 	terrainExtent: 48,
@@ -1504,13 +1504,13 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 	minTriangles: 3e3,
 	casterTriangles: 96e3,
 	casterExtent: 64,
-	foliageInstances: jt,
+	foliageInstances: Nt,
 	shadowUp: 60,
 	shadowDown: 45,
 	particleCull: 34
-}), hr = class e {
+}), _r = class e {
 	constructor({ engine: e, textures: t, lighting: n, particles: r, godRays: i, level: o, lightPool: s = null, story: c = null, defer: l = !1 }) {
-		this.engine = e, this.scene = e.scene, this.textures = t, this.lighting = n, this.particles = r, this.godRays = i, this.level = o, this._sharedPool = s, this.vfxLights = null, this.story = c, this.storyGroups = /* @__PURE__ */ new Map(), this._emitterGroup = /* @__PURE__ */ new Map(), this._storyTags = /* @__PURE__ */ new Map(), this.storyRanges = new Ve(), this.env = o.environment ?? {}, this._pending = l ? [] : null, this.attached = !l, this.shafts = [], this._ownInteractables = 0, this.root = new a(), this.root.name = "World", this._defer(() => this.scene.add(this.root)), this.tileMap = null, this.water = null, this.terrain = null, this.builder = null, this.factory = null, this.built = [], this.results = [], this.updaters = [], this.waterfalls = [], this.interactables = [], this.emitters = Object.create(null), this.areaEmitters = [], this.propEmitters = [], this.lights = [], this.emissiveEntries = [], this.glassMaterial = null, this.fires = [], this._fireList = [], this.blazes = [], this._bells = [], this._warmth = [], this.falls = [], this.fallAnchors = [], this.anchors = {}, this.stats = {}, this.waterBase = null;
+		this.engine = e, this.scene = e.scene, this.textures = t, this.lighting = n, this.particles = r, this.godRays = i, this.level = o, this._sharedPool = s, this.vfxLights = null, this.story = c, this.storyGroups = /* @__PURE__ */ new Map(), this._emitterGroup = /* @__PURE__ */ new Map(), this._storyTags = /* @__PURE__ */ new Map(), this.storyRanges = new Ue(), this.env = o.environment ?? {}, this._pending = l ? [] : null, this.attached = !l, this.shafts = [], this._ownInteractables = 0, this.root = new a(), this.root.name = "World", this._defer(() => this.scene.add(this.root)), this.tileMap = null, this.water = null, this.terrain = null, this.builder = null, this.factory = null, this.built = [], this.results = [], this.updaters = [], this.waterfalls = [], this.interactables = [], this.emitters = Object.create(null), this.areaEmitters = [], this.propEmitters = [], this.lights = [], this.emissiveEntries = [], this.glassMaterial = null, this.fires = [], this._fireList = [], this.blazes = [], this._bells = [], this._warmth = [], this.falls = [], this.fallAnchors = [], this.anchors = {}, this.stats = {}, this.waterBase = null;
 	}
 	groundAt(e, t) {
 		return this.tileMap.getHeight(e, t);
@@ -1525,7 +1525,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		let t = this.buildSteps();
 		for (let n = t.next(); !n.done; n = t.next()) {
 			let t = n.value;
-			t && ("wait" in t ? await t.wait : (e(t.at, t.label), await ur()));
+			t && ("wait" in t ? await t.wait : (e(t.at, t.label), await fr()));
 		}
 	}
 	*buildSteps({ paced: t = !1 } = {}) {
@@ -1540,20 +1540,20 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 				label: t
 			}, a = performance.now();
 		}, c = function* (e, n) {
-			if (!t) return Ue(e);
+			if (!t) return Ge(e);
 			let r = e.next();
 			for (; !r.done;) o(n), yield, a = performance.now(), r = e.next();
 			return r.value;
 		}, l = this.level;
-		this.batching = e.isBigLevel(l) ? { ...mr } : null;
+		this.batching = e.isBigLevel(l) ? { ...gr } : null;
 		let u = this.batching;
-		if (!te() && ne(l) && (yield { wait: ee() }), !O() && re(l) && (yield { wait: ie() }), yield* s(.08, H("game.load.textures")), this.textures.preload(), o("textures"), yield* s(.18, H("game.load.land")), this.terrain = yield* c(_t(l, {
+		if (!re() && k(l) && (yield { wait: O() }), !te() && ae(l) && (yield { wait: j() }), yield* s(.08, V("game.load.textures")), this.textures.preload(), o("textures"), yield* s(.18, V("game.load.land")), this.terrain = yield* c(yt(l, {
 			textures: this.textures,
 			chunkSize: u ? u.terrainChunk : 64,
 			deferShore: !0
 		}), "terrain"), this.tileMap = this.terrain.tileMap, u) {
-			let e = this.tileMap.object.children.filter(Ye);
-			this.terrainCasters = yield* c(Je(e.map((e) => ({
+			let e = this.tileMap.object.children.filter(Ze);
+			this.terrainCasters = yield* c(Xe(e.map((e) => ({
 				geometry: e.geometry,
 				side: e.material.side
 			})), {
@@ -1573,30 +1573,30 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			}), "terrain");
 			this.stats.terrainMeshes = [e, e - t];
 		}
-		this.water = this.terrain.water, this.root.add(this.terrain.object), o("terrain"), yield* s(.3, H("game.load.village")), this.builder = new Ft({
+		this.water = this.terrain.water, this.root.add(this.terrain.object), o("terrain"), yield* s(.3, V("game.load.village")), this.builder = new Lt({
 			textures: this.textures,
 			seed: 42
 		}), this.factory = this.builder.factory, this.glassMaterial = this.factory.glassMaterial();
-		for (let e of this._buildProps(t ? 0 : 12)) o("props"), t ? (yield, a = performance.now()) : yield* s(.3 + .14 * e, H("game.load.village"));
-		o("props"), yield* s(.45, H("game.load.forest"));
+		for (let e of this._buildProps(t ? 0 : 12)) o("props"), t ? (yield, a = performance.now()) : yield* s(.3 + .14 * e, V("game.load.village"));
+		o("props"), yield* s(.45, V("game.load.forest"));
 		let d = yield* c(this._levelTreeSteps(), "trees"), f = (u || t) && this.water ? this.water.refreshAsync() : null;
-		yield* c(this._treeSteps(d, { paced: t }), "trees"), o("trees"), yield* s(.58, H("game.load.water")), this._buildWaterfalls(), f || this.water?.refresh(), o("water"), yield* s(.68, H("game.load.meadow")), yield* c(this._groundDetailSteps(), "foliage"), o("foliage"), yield* s(.8, H("game.load.lights")), this._defer(() => {
+		yield* c(this._treeSteps(d, { paced: t }), "trees"), o("trees"), yield* s(.58, V("game.load.water")), this._buildWaterfalls(), f || this.water?.refresh(), o("water"), yield* s(.68, V("game.load.meadow")), yield* c(this._groundDetailSteps(), "foliage"), o("foliage"), yield* s(.8, V("game.load.lights")), this._defer(() => {
 			this._wireLights(), this._buildAtmosphere();
-		}), o("lights"), yield* s(.88, H("game.load.merge")), this.merged = yield* c(this._mergeSteps(), "merge"), o("merge"), f && (yield { wait: f }, t && (a = performance.now()), this.water._waterColliderSignature() !== this.water._colliderSig && this.water.refresh(), o("shoreWait")), this.tileMap.object.traverse((e) => {
-			e.isMesh && Yt(e.material, "ground");
-		}), this.outerGround && Yt(this.outerGround.material, "ground");
-		for (let e of this.groundDetail.fields) Yt(e.material, "foliage");
+		}), o("lights"), yield* s(.88, V("game.load.merge")), this.merged = yield* c(this._mergeSteps(), "merge"), o("merge"), f && (yield { wait: f }, t && (a = performance.now()), this.water._waterColliderSignature() !== this.water._colliderSig && this.water.refresh(), o("shoreWait")), this.tileMap.object.traverse((e) => {
+			e.isMesh && Zt(e.material, "ground");
+		}), this.outerGround && Zt(this.outerGround.material, "ground");
+		for (let e of this.groundDetail.fields) Zt(e.material, "foliage");
 		if (this.merged.object.traverse((e) => {
-			e.isMesh && Xt.test(e.material?.name ?? "") && Yt(e.material, "ground");
-		}), this.env.frost && (Zt() || (yield { wait: Jt() }), Zt().prepareWorld(this)), o("snow"), u) {
+			e.isMesh && Qt.test(e.material?.name ?? "") && Zt(e.material, "ground");
+		}), this.env.frost && ($t() || (yield { wait: Xt() }), $t().prepareWorld(this)), o("snow"), u) {
 			let e = [
 				...this.tileMap.object.children.filter((e) => e.isMesh),
 				...this.merged.meshes,
 				...this.treeGroups.flatMap((e) => e.meshes)
 			], t = this.groundDetail.fields;
 			yield* c(function* () {
-				for (let t of e) Re(t), yield;
-				for (let e of t) Re(e.object, { pad: .8 }), yield;
+				for (let t of e) Be(t), yield;
+				for (let e of t) Be(e.object, { pad: .8 }), yield;
 			}(), "culling"), o("culling");
 		}
 		this._ownInteractables = this.interactables.length, this.stats.buildMs = Math.round(t ? Object.values(i).reduce((e, t) => e + t, 0) : performance.now() - n), this.stats.colliders = this.tileMap.colliders.length, this.stats.pointLights = this.lights.length, this.stats.objects = l.objects.length, this.stats.batching = !!u;
@@ -1681,7 +1681,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		return Math.max(e.width, e.depth) > 64;
 	}
 	_mergeProps() {
-		return Ue(this._mergeSteps());
+		return Ge(this._mergeSteps());
 	}
 	*_mergeSteps() {
 		let e = this.batching, t = yield* this.factory.mergeStaticSteps(this.results, {
@@ -1695,11 +1695,11 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			tags: this._storyTags.size ? this._storyTags : null
 		});
 		this.storyRanges.add(t.ranges), this.root.add(t.object);
-		let n = (te() ?? O())?.mergeFlames;
+		let n = (re() ?? te())?.mergeFlames;
 		return this.flames = n ? n(this.factory, this.results, { name: "village:flames" }) : null, this.flames && this.root.add(this.flames.object), t;
 	}
 	_storyGroupOf(e) {
-		if (!this.story || !Rt(e) || !zt.has(e.type) || !Ft.isBuildable(e.type) && e.type !== "emitter") return null;
+		if (!this.story || !Bt(e) || !Vt.has(e.type) || !Lt.isBuildable(e.type) && e.type !== "emitter") return null;
 		let t = `${String(e.when ?? "").trim()}\u0000${String(e.unless ?? "").trim()}${this._frostCell(e)}`, n = this.storyGroups.get(t);
 		return n || (n = {
 			key: t,
@@ -1718,10 +1718,10 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		}, this.storyGroups.set(t, n), n.present || this.storyRanges.setHidden(n, !0, { upload: !1 })), n;
 	}
 	_frostCell(e) {
-		let t = this._frostNames ??= fr(this.env);
+		let t = this._frostNames ??= mr(this.env);
 		if (!t.size) return "";
 		let n = e;
-		if (![n.when, n.unless].some((e) => e && String(e).split(dr).some((e) => t.has(e)))) return "";
+		if (![n.when, n.unless].some((e) => e && String(e).split(pr).some((e) => t.has(e)))) return "";
 		let r = Number.isFinite(n.x) ? n.x : (n.x0 + n.x1) / 2, i = Number.isFinite(n.z) ? n.z : (n.z0 + n.z1) / 2;
 		return Number.isFinite(r) && Number.isFinite(i) ? `\u0000${Math.floor(r / 8)},${Math.floor(i / 8)}` : "";
 	}
@@ -1734,7 +1734,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		}
 		if (!r) return null;
 		let i = this._storyGroupOf(e);
-		if (this.built.push(r), t && this.root.add(r.object), i && (r.propResult && this._storyTags.set(r.propResult, i), t && (i.objects.push(r.object), r.object.visible = i.present), Lt.has(e.type) && (i.mapped = !0), i.colliders.push(...r.colliders), i.walkRects.push(...r.walkRects), i.lights.push(...r.lights)), n && r.propResult && this.results.push(r.propResult), !i || i.present) {
+		if (this.built.push(r), t && this.root.add(r.object), i && (r.propResult && this._storyTags.set(r.propResult, i), t && (i.objects.push(r.object), r.object.visible = i.present), zt.has(e.type) && (i.mapped = !0), i.colliders.push(...r.colliders), i.walkRects.push(...r.walkRects), i.lights.push(...r.lights)), n && r.propResult && this.results.push(r.propResult), !i || i.present) {
 			for (let e of r.colliders) this.tileMap.addCollider(e);
 			for (let e of r.walkRects) this.tileMap.addWalkSurface(e);
 		}
@@ -1751,7 +1751,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 	_createEmitter(e) {
 		let t = this.particles.createEmitter(e.preset === "smoke" ? {
 			...e,
-			...kt
+			...jt
 		} : e);
 		return this.propEmitters.push(t), t;
 	}
@@ -1890,10 +1890,10 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		return c !== void 0 && (d.object = c), l !== void 0 && (d.prop = l), this.interactables.push(d), d;
 	}
 	static textPagesOf(e) {
-		let t = Xe(e.text);
+		let t = Qe(e.text);
 		return {
 			lines: t.map((e) => e.text),
-			keys: t.map((t) => ot(e, "text", t.i))
+			keys: t.map((t) => ct(e, "text", t.i))
 		};
 	}
 	*_buildProps(t = 12) {
@@ -1901,10 +1901,10 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		let n = this.level.objects, i = performance.now();
 		for (let a = 0; a < n.length; a++) {
 			let o = n[a];
-			if (performance.now() - i > t && (yield a / n.length, i = performance.now()), !Ft.isBuildable(o.type) || pr.has(o.type)) continue;
+			if (performance.now() - i > t && (yield a / n.length, i = performance.now()), !Lt.isBuildable(o.type) || hr.has(o.type)) continue;
 			let s = this._build(o);
 			if (!s) continue;
-			let c = this._storyGroupOf(o), l = er(o, c);
+			let c = this._storyGroupOf(o), l = nr(o, c);
 			l && this.blazes.push(l);
 			let u = s.propResult?.bell;
 			u && this._bells.push({
@@ -1924,7 +1924,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			let p = e.textPagesOf(o), m = p.lines;
 			switch (o.type) {
 				case "house": {
-					let e = s.interact?.position?.clone() ?? null, t = qe(s.colliders);
+					let e = s.interact?.position?.clone() ?? null, t = Ye(s.colliders);
 					t && this.houseFootprints.push({
 						...t,
 						door: e
@@ -2012,7 +2012,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		}
 	}
 	_buildLevelTrees() {
-		return Ue(this._levelTreeSteps());
+		return Ge(this._levelTreeSteps());
 	}
 	*_levelTreeSteps() {
 		let e = [];
@@ -2026,7 +2026,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		return e;
 	}
 	_buildTrees(e = this._buildLevelTrees()) {
-		Ue(this._treeSteps(e));
+		Ge(this._treeSteps(e));
 	}
 	*_treeSteps(e, { paced: t = !1 } = {}) {
 		let n = this.factory, r = this.tileMap, i = this.env, a = this.objectsOf("tree");
@@ -2035,9 +2035,9 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			border: 0,
 			outer: 0
 		};
-		let o = At(i), s = bt(i), c = [], l = [], u = Dt(i), d = Ot(i);
+		let o = Mt(i), s = St(i), c = [], l = [], u = kt(i), d = At(i);
 		if (o || s) {
-			this.outerHeight = Ln(r, {
+			this.outerHeight = zn(r, {
 				climate: u,
 				season: d
 			});
@@ -2045,22 +2045,22 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 				x: e.x,
 				z: e.z,
 				r: this.inMap(e.x, e.z) ? 1.2 : 1.8
-			})), t = xt(i);
-			({border: c, outer: l} = yield* An({
+			})), t = Ct(i);
+			({border: c, outer: l} = yield* Mn({
 				tileMap: r,
 				heightAt: this.outerHeight,
 				avoid: e,
 				southGap: t,
-				kindAreas: kn(i),
+				kindAreas: jn(i),
 				climate: u,
 				season: d
 			})), o || (c = []), s || (l = []);
 		}
 		let f = [];
-		for (let e of c) f.push(In(n, e)), yield;
+		for (let e of c) f.push(Rn(n, e)), yield;
 		let p = [];
-		for (let e of l) p.push(In(n, e)), yield;
-		let m = this._splitOpts("tree"), h = yield* En([...e, ...f], {
+		for (let e of l) p.push(Rn(n, e)), yield;
+		let m = this._splitOpts("tree"), h = yield* On([...e, ...f], {
 			name: "trees:map",
 			...m,
 			tags: this._storyTags.size ? this._storyTags : null
@@ -2078,7 +2078,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		});
 		for (let [e, t] of Object.entries(v)) {
 			if (!t.length) continue;
-			let n = yield* En(t, {
+			let n = yield* On(t, {
 				name: this.batching ? "trees:outer" : `trees:outer:${e}`,
 				castShadow: !1,
 				...m
@@ -2090,7 +2090,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			border: c.length,
 			outer: l.length
 		}, s) {
-			let e = yield* Vn({
+			let e = yield* Un({
 				textures: this.textures,
 				tileMap: r,
 				heightAt: this.outerHeight,
@@ -2106,7 +2106,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			let t = this._build(e, { merge: !1 });
 			if (!t) continue;
 			this.waterfalls.push(t);
-			let n = this._storyGroupOf(e), i = e.width ?? 2, a = Nt(e);
+			let n = this._storyGroupOf(e), i = e.width ?? 2, a = Ft(e);
 			this._defer(() => {
 				for (let e of t.emitters) this._groupEmitter(this._createEmitter({
 					...e,
@@ -2114,7 +2114,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 					alpha: a.alpha
 				}), n);
 			});
-			let o = Ke(e.facing), s = t.anchor.y, c = {
+			let o = Je(e.facing), s = t.anchor.y, c = {
 				id: e.id,
 				x: e.x,
 				z: e.z,
@@ -2130,14 +2130,14 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		}
 	}
 	_buildGroundDetail() {
-		Ue(this._groundDetailSteps());
+		Ge(this._groundDetailSteps());
 	}
 	*_groundDetailSteps() {
-		let e = yield* lr({
+		let e = yield* dr({
 			tileMap: this.tileMap,
 			isFree: (e, t) => this._isFreeForFoliage(e, t),
 			houses: this.houseFootprints,
-			...Mt(this.level),
+			...Pt(this.level),
 			maxInstances: this.batching?.foliageInstances ?? Infinity
 		});
 		this.groundDetail = e, this.root.add(e.object), this.stats.foliage = e.stats;
@@ -2146,8 +2146,8 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		return this.vfxLights?.acquire({ minor: e }) ?? null;
 	}
 	_wireLights() {
-		let e = this.storyGroups.size ? /* @__PURE__ */ new Map() : null, t = pe(this._lightDescs, { cache: e });
-		this._sharedPool && this._sharedPool.setDescriptors(t, { snap: !0 }), this.lightPool = this._sharedPool ?? new be(this.lighting, t, { size: 12 });
+		let e = this.storyGroups.size ? /* @__PURE__ */ new Map() : null, t = he(this._lightDescs, { cache: e });
+		this._sharedPool && this._sharedPool.setDescriptors(t, { snap: !0 }), this.lightPool = this._sharedPool ?? new Se(this.lighting, t, { size: 12 });
 		for (let t of this.storyGroups.values()) {
 			t.poolLights = t.lights.map((t) => e.get(t)).filter(Boolean);
 			for (let e of t.poolLights) this.lightPool.setHidden(e, !t.present, { instant: !0 });
@@ -2160,10 +2160,10 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 			preset: "dust",
 			bounds: {
 				center: n(i / 2, 2.5, a / 2),
-				size: n(Et.x, Et.y, Et.z)
+				size: n(Ot.x, Ot.y, Ot.z)
 			},
 			count: 120,
-			...Un(t)
+			...Gn(t)
 		}));
 		let o = (e, t, n, r) => Math.min(r, Math.max(n, Number.isFinite(Number(e)) && e !== null && e !== "" ? Number(e) : t));
 		for (let t of this.objectsOf("emitter")) {
@@ -2189,7 +2189,7 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 				emitter: s
 			}), t.id !== "dust" && (this.emitters[t.id] = s), this._groupEmitter(s, this._storyGroupOf(t));
 		}
-		for (let e of wt(t, this.level, this.tileMap)) this.shafts.push(...this.godRays.populate(e.bounds, e.count, e.seed));
+		for (let e of Et(t, this.level, this.tileMap)) this.shafts.push(...this.godRays.populate(e.bounds, e.count, e.seed));
 	}
 	_isFreeForFoliage(t, n) {
 		let r = this.tileMap.queryColliders(t - .2, n - .2, t + .2, n + .2, this._freeTmp ??= []);
@@ -2246,18 +2246,18 @@ var pr = /* @__PURE__ */ new Set(["tree", "waterfall"]), mr = Object.freeze({
 		for (let e of this.built) e.dispose();
 		this.terrain?.dispose(), this.builder?.dispose(), this.outerGround?.geometry.dispose(), this.root.removeFromParent();
 	}
-}, gr = 3.2, _r = 5.6, vr = .3, yr = .55, br = {
+}, vr = 3.2, yr = 5.6, br = .3, xr = .55, Sr = {
 	down: new r(0, 0, 1),
 	up: new r(0, 0, -1),
 	left: new r(-1, 0, 0),
 	right: new r(1, 0, 0)
 };
-function xr(e) {
+function Cr(e) {
 	let t = new h({
 		map: e,
 		color: new g("#d9ccff"),
 		transparent: !0,
-		opacity: yr,
+		opacity: xr,
 		depthWrite: !0,
 		depthFunc: 6,
 		fog: !1
@@ -2266,34 +2266,34 @@ function xr(e) {
 		e.vertexShader = e.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n	mvPosition.xyz *= max( 0.0, 1.0 - 1.3 / length( mvPosition.xyz ) );\n	gl_Position = projectionMatrix * mvPosition;"), e.fragmentShader = e.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n	if ( sampledDiffuseColor.a < 0.5 ) discard;\n	float silL = sqrt( dot( sampledDiffuseColor.rgb, vec3( 0.299, 0.587, 0.114 ) ) );\n	diffuseColor = vec4( diffuse * ( 0.42 + 0.8 * silL ), opacity );");
 	}, t.customProgramCacheKey = () => "emberfall-player-silhouette-v2", t;
 }
-function Sr(t, n, r) {
+function wr(t, n, r) {
 	let i = new e(t, n);
 	return i.name = r, i.renderOrder = 60, i.castShadow = !1, i.receiveShadow = !1, i;
 }
-function Cr(e, t, n = "traveler") {
-	let r = typeof e?.preset == "string" && Object.hasOwn(Ne, e.preset) ? e.preset : "traveler", i = e?.spec && typeof e.spec == "object" ? e.spec : {};
+function Tr(e, t, n = "traveler") {
+	let r = typeof e?.preset == "string" && Object.hasOwn(Fe, e.preset) ? e.preset : "traveler", i = e?.spec && typeof e.spec == "object" ? e.spec : {};
 	return {
-		...Ne[r],
+		...Fe[r],
 		preset: r,
 		...i,
 		...t ? { weapon: n === "bellwarden" ? "hammer" : "sword" } : {}
 	};
 }
-function wr({ level: e, look: t, combat: n, kit: r, records: i }) {
-	return je(e) || ke(Cr(t, n, r)) || (i ?? []).some((e) => ke(e?.spec)) ? Me() : null;
+function Er({ level: e, look: t, combat: n, kit: r, records: i }) {
+	return Ne(e) || je(Tr(t, n, r)) || (i ?? []).some((e) => je(e?.spec)) ? Pe() : null;
 }
-var Tr = class {
+var Dr = class {
 	constructor({ tileMap: e, rig: t, particles: n, audio: i, spawn: a, combat: o = !1, look: s = null, festival: c = !1, kit: l = "traveler" }) {
-		this.tileMap = e, this.rig = t, this.particles = n, this.audio = i, this.sheet = o ? Ae(Cr(s, o, l), { combat: !0 }) : c ? en("the player posed by the story").createFestivalSheet(Cr(s, !1)) : Ae(Cr(s, !1));
-		let u = typeof a.facing == "string" && Object.hasOwn(br, a.facing) ? a.facing : "down";
-		this.sprite = new B(this.sheet, o ? {
-			...Ut,
+		this.tileMap = e, this.rig = t, this.particles = n, this.audio = i, this.sheet = o ? Me(Tr(s, o, l), { combat: !0 }) : c ? nn("the player posed by the story").createFestivalSheet(Tr(s, !1)) : Me(Tr(s, !1));
+		let u = typeof a.facing == "string" && Object.hasOwn(Sr, a.facing) ? a.facing : "down";
+		this.sprite = new z(this.sheet, o ? {
+			...Gt,
 			direction: u,
 			combatFx: !0
 		} : {
-			...Ut,
+			...Gt,
 			direction: u
-		}), this.sprite.name = "Player", this.position = this.sprite.position, this.position.set(a.x, e.getHeight(a.x, a.z), a.z), this.facing = br[u].clone(), this.speed = 0, this.running = !1, this.frozen = !1, this.radius = vr, this.action = null, this.faceOverride = null, this.moveOverride = null, this.scripted = null, this.speedMul = 1, this._move = {
+		}), this.sprite.name = "Player", this.position = this.sprite.position, this.position.set(a.x, e.getHeight(a.x, a.z), a.z), this.facing = Sr[u].clone(), this.speed = 0, this.running = !1, this.frozen = !1, this.radius = br, this.action = null, this.faceOverride = null, this.moveOverride = null, this.scripted = null, this.speedMul = 1, this._move = {
 			x: 0,
 			z: 0
 		}, this._dir = new r(), this._stepToggle = !1, this._dustTimer = 0, this._basisDir = new r(), this.sprite.onFrameChange = (e, t) => {
@@ -2306,7 +2306,7 @@ var Tr = class {
 				volume: n ? .55 : .4,
 				pitch: i * (this._stepToggle ? 1 : .94)
 			}), n && this.particles.burst("footstep", this.position, 4);
-		}, this.sprite.play("idle"), this.silhouetteMaterial = xr(this.sprite.texture), this._silhouetteBase = this.silhouetteMaterial.color.clone(), this._silhouetteOn = !0, this._silhouetteFade = 1, this.silhouette = Sr(this.sprite.mesh.geometry, this.silhouetteMaterial, "Player.silhouette"), this.sprite.mesh.add(this.silhouette), this.talkSilhouetteMaterial = xr(this.sprite.texture), this.talkSilhouette = Sr(this.sprite.mesh.geometry, this.talkSilhouetteMaterial, "Player.talkSilhouette"), this.talkSprite = null;
+		}, this.sprite.play("idle"), this.silhouetteMaterial = Cr(this.sprite.texture), this._silhouetteBase = this.silhouetteMaterial.color.clone(), this._silhouetteOn = !0, this._silhouetteFade = 1, this.silhouette = wr(this.sprite.mesh.geometry, this.silhouetteMaterial, "Player.silhouette"), this.sprite.mesh.add(this.silhouette), this.talkSilhouetteMaterial = Cr(this.sprite.texture), this.talkSilhouette = wr(this.sprite.mesh.geometry, this.talkSilhouetteMaterial, "Player.talkSilhouette"), this.talkSprite = null;
 	}
 	setSilhouetteLevel(e) {
 		this.silhouetteMaterial.color.copy(this._silhouetteBase).multiplyScalar(e), this.talkSilhouetteMaterial.color.copy(this.silhouetteMaterial.color);
@@ -2320,7 +2320,7 @@ var Tr = class {
 	}
 	_applySilhouetteFade() {
 		let e = this.silhouetteMaterial, t = this._silhouetteFade;
-		e.opacity = yr * t;
+		e.opacity = xr * t;
 		let n = this._silhouetteOn && t > .001;
 		e.colorWrite = n, e.depthWrite = n;
 	}
@@ -2343,13 +2343,13 @@ var Tr = class {
 		this.position.set(e, this.tileMap.getHeight(e, t), t), this.speed = 0;
 	}
 	arrive(e) {
-		let t = typeof e.facing == "string" && Object.hasOwn(br, e.facing) ? e.facing : "down";
-		this.teleport(e.x, e.z), this.facing.copy(br[t]), this.sprite.setDirection(t), this.running = !1, this.frozen = !1, this.scripted = null, this.moveOverride = null, this.faceOverride = null, this.speedMul = 1, this.setTalkSilhouette(null), this.sprite.speed = 1, this.sprite.play("idle");
+		let t = typeof e.facing == "string" && Object.hasOwn(Sr, e.facing) ? e.facing : "down";
+		this.teleport(e.x, e.z), this.facing.copy(Sr[t]), this.sprite.setDirection(t), this.running = !1, this.frozen = !1, this.scripted = null, this.moveOverride = null, this.faceOverride = null, this.speedMul = 1, this.setTalkSilhouette(null), this.sprite.speed = 1, this.sprite.play("idle");
 	}
 	moveBy(e, t) {
 		let n = Math.hypot(e, t);
 		if (n < 1e-9) return 1;
-		let r = this.position, i = this.tileMap.move(r, e, t, vr, .55, this._move), a = Math.hypot(i.x - r.x, i.z - r.z);
+		let r = this.position, i = this.tileMap.move(r, e, t, br, .55, this._move), a = Math.hypot(i.x - r.x, i.z - r.z);
 		return r.x = i.x, r.z = i.z, Math.min(1, a / n);
 	}
 	update(e, t) {
@@ -2378,59 +2378,59 @@ var Tr = class {
 				t.set(0, 0, 0).addScaledVector(n, i).addScaledVector(e, a);
 			}
 			t.y = 0, t.normalize(), u && (o = !1), this.running = o;
-			let c = (o ? _r : gr) * l * this.speedMul, d = n.move(r, t.x * c * e, t.z * c * e, vr, .55, this._move), f = Math.hypot(d.x - r.x, d.z - r.z);
+			let c = (o ? yr : vr) * l * this.speedMul, d = n.move(r, t.x * c * e, t.z * c * e, br, .55, this._move), f = Math.hypot(d.x - r.x, d.z - r.z);
 			r.x = d.x, r.z = d.z, this.speed = e > 0 ? f / e : 0, u ? (this.facing.set(u.x, 0, u.z), this.sprite.faceVector(u.x, u.z)) : (this.facing.copy(t), this.sprite.faceVector(t.x, t.z));
 			let p = o ? "run" : "walk";
 			this.sprite.play(p), this.sprite.speed = M(.55 + .45 * (this.speed / Math.max(.01, c)), .55, 1) * Math.max(.6, l);
-		} else this.speed = 0, this.running = !1, this.sprite.play("idle"), this.sprite.speed = Gt[0] + .04, u && this.facing.set(u.x, 0, u.z), this.sprite.faceVector(this.facing.x, this.facing.z);
+		} else this.speed = 0, this.running = !1, this.sprite.play("idle"), this.sprite.speed = qt[0] + .04, u && this.facing.set(u.x, 0, u.z), this.sprite.faceVector(this.facing.x, this.facing.z);
 		this._followGround(e);
 	}
 	_followGround(e) {
-		let t = this.position, n = this.tileMap.getHeight(t.x, t.z), r = n > t.y ? I(22, e) : I(16, e);
+		let t = this.position, n = this.tileMap.getHeight(t.x, t.z), r = n > t.y ? se(22, e) : se(16, e);
 		t.y += (n - t.y) * r, Math.abs(n - t.y) < .001 && (t.y = n);
 	}
 	dispose() {
 		this.silhouetteMaterial.dispose(), this.talkSilhouette.removeFromParent(), this.talkSprite = null, this.talkSilhouetteMaterial.dispose(), this.sprite.dispose(), this.sheet.dispose?.();
 	}
-}, Er = .3, Dr = Object.freeze({
+}, Or = .3, kr = Object.freeze({
 	down: [0, 1],
 	up: [0, -1],
 	left: [-1, 0],
 	right: [1, 0]
-}), Or = .05, kr = Math.PI * 2, Ar = Object.freeze({
+}), Ar = .05, jr = Math.PI * 2, Mr = Object.freeze({
 	panic: [4.5, 9],
 	cower: [7, 13],
 	relief: [6, 12],
 	cheer: [8, 16]
-}), jr = 15, Mr = 45, Nr = 2.5, Pr = 6, Fr = /* @__PURE__ */ new WeakMap();
-function Ir(e) {
-	let t = Fr.get(e);
-	return t || Fr.set(e, t = {
+}), Nr = 15, Pr = 45, Fr = 2.5, Ir = 6, Lr = /* @__PURE__ */ new WeakMap();
+function Rr(e) {
+	let t = Lr.get(e);
+	return t || Lr.set(e, t = {
 		last: -Infinity,
 		recent: [],
 		routedFrame: -1,
 		routed: !1
 	}), t;
 }
-var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
+var zr = null, Br = null, Vr = 5.5, Hr = 1.4, Ur = class {
 	constructor({ def: e, tileMap: t, sheetCache: n }) {
-		this.def = e, this.id = e.id, this.name = e.name, this.tileMap = t, this.festival = Ze.includes(e.behaviour) || e.festival === !0;
+		this.def = e, this.id = e.id, this.name = e.name, this.tileMap = t, this.festival = $e.includes(e.behaviour) || e.festival === !0;
 		let i = JSON.stringify({
 			preset: e.preset,
 			...e.spec || {}
 		}) + (this.festival ? "|festival" : ""), a = n?.get(i);
 		if (!a) {
 			let t = {
-				...Ne[e.preset],
+				...Fe[e.preset],
 				preset: e.preset,
 				...e.spec || {}
 			};
-			a = this.festival ? en(`the villager "${e.id}"`).createFestivalSheet(t) : Ae(t), n?.set(i, a);
+			a = this.festival ? nn(`the villager "${e.id}"`).createFestivalSheet(t) : Me(t), n?.set(i, a);
 		}
-		this.sheet = a, this.sprite = new B(a, {
-			...Ut,
+		this.sheet = a, this.sprite = new z(a, {
+			...Gt,
 			direction: e.facing ?? "down"
-		}), this.sprite.name = `NPC:${e.id}`, this.home = new r(e.home[0], 0, e.home[1]), this.position = this.sprite.position, this.position.set(e.home[0], t.getHeight(e.home[0], e.home[1]), e.home[1]), this.wander = e.wander ?? 1.2, this.speed = e.speed ?? 1, this.behaviour = nt.includes(e.behaviour) ? e.behaviour : "wander";
+		}), this.sprite.name = `NPC:${e.id}`, this.home = new r(e.home[0], 0, e.home[1]), this.position = this.sprite.position, this.position.set(e.home[0], t.getHeight(e.home[0], e.home[1]), e.home[1]), this.wander = e.wander ?? 1.2, this.speed = e.speed ?? 1, this.behaviour = it.includes(e.behaviour) ? e.behaviour : "wander";
 		let o = Math.max(.5, this.wander);
 		this.chaseBounds = e.bounds ?? {
 			minX: e.home[0] - o,
@@ -2438,8 +2438,8 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 			minZ: e.home[1] - o,
 			maxZ: e.home[1] + o
 		}, this.homeFacing = e.facing ?? "down", this.facing = new r(0, 0, 1);
-		let s = Object.hasOwn(Dr, this.sprite.direction) ? Dr[this.sprite.direction] : Dr.down;
-		this.facing.set(s[0], 0, s[1]), this._faceYaw = null, this._faceRow = this.sprite.direction, this.talkRadius = e.talkRadius ?? 1.6, this.talkPoint = e.talkPoint ? new r(e.talkPoint[0], 0, e.talkPoint[1]) : null, this.rng = new L(F(e.id)), this.collider = t.addCollider({
+		let s = Object.hasOwn(kr, this.sprite.direction) ? kr[this.sprite.direction] : kr.down;
+		this.facing.set(s[0], 0, s[1]), this._faceYaw = null, this._faceRow = this.sprite.direction, this.talkRadius = e.talkRadius ?? 1.6, this.talkPoint = e.talkPoint ? new r(e.talkPoint[0], 0, e.talkPoint[1]) : null, this.rng = new I(oe(e.id)), this.collider = t.addCollider({
 			type: "circle",
 			x: this.position.x,
 			z: this.position.z,
@@ -2448,7 +2448,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 		}), this.state = "idle", this.timer = this.rng.range(.5, 3), this.target = new r(), this.talking = !1, this.present = !0, this.directed = !1, this.storyObj = null, this.storyTalk = null, this._out = {
 			x: 0,
 			z: 0
-		}, this._stuck = 0, this._lookTimer = 0, this.idleSpeed = this.rng.range(Gt[0], Gt[1]), this.festival && (this.barkRng = new L(F(`bark:${e.id}`)), this._barkT = this.barkRng.range(1.5, 9), this._calm = !1, this._reliefT = 0, this._spokeT = 0, this._threatT = this.rng.range(0, .25), this._danceSpeed = this.rng.range(.85, 1.15), this._runSpeed = Math.min(4.2, Math.max(2.6, this.speed * this.rng.range(2.9, 3.5)))), this._idle();
+		}, this._stuck = 0, this._lookTimer = 0, this.idleSpeed = this.rng.range(qt[0], qt[1]), this.festival && (this.barkRng = new I(oe(`bark:${e.id}`)), this._barkT = this.barkRng.range(1.5, 9), this._calm = !1, this._reliefT = 0, this._spokeT = 0, this._threatT = this.rng.range(0, .25), this._danceSpeed = this.rng.range(.85, 1.15), this._runSpeed = Math.min(4.2, Math.max(2.6, this.speed * this.rng.range(2.9, 3.5)))), this._idle();
 	}
 	_idle() {
 		this.sprite.play("idle", { speed: this.idleSpeed });
@@ -2470,17 +2470,17 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 	}
 	faceWorld(e, t) {
 		let n = Math.hypot(e, t);
-		n > 1e-6 && (this.facing.set(e / n, 0, t / n), this._applyFacing(se.uCameraYaw.value));
+		n > 1e-6 && (this.facing.set(e / n, 0, t / n), this._applyFacing(le.uCameraYaw.value));
 	}
 	faceDir(e) {
-		let t = Object.hasOwn(Dr, e) ? Dr[e] : null;
+		let t = Object.hasOwn(kr, e) ? kr[e] : null;
 		t && this.faceWorld(t[0], t[1]);
 	}
 	_applyFacing(e) {
 		this.sprite.faceVector(this.facing.x, this.facing.z, e), this._faceYaw = e, this._faceRow = this.sprite.direction;
 	}
 	_followCamera() {
-		let e = this.sprite, t = se.uCameraYaw.value;
+		let e = this.sprite, t = le.uCameraYaw.value;
 		if (e.direction !== this._faceRow) {
 			let n = e.direction === "right" ? 1 : e.direction === "left" ? -1 : 0, r = e.direction === "down" ? 1 : e.direction === "up" ? -1 : 0, i = Math.cos(t), a = Math.sin(t);
 			this.facing.set(n * i + r * a, 0, r * i - n * a), this._faceYaw = t, this._faceRow = e.direction;
@@ -2491,7 +2491,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 			return;
 		}
 		let n = t - this._faceYaw;
-		n -= Math.round(n / kr) * kr, (n > Or || n < -.05) && this._applyFacing(t);
+		n -= Math.round(n / jr) * jr, (n > Ar || n < -.05) && this._applyFacing(t);
 	}
 	_withoutSelf(e) {
 		let t = this.collider, n = t.x;
@@ -2520,7 +2520,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 		}
 		let l = Math.min(c, r * e), u = this.collider, d = u.x;
 		u.x = Infinity;
-		let f = this.tileMap.move(a, o / c * l, s / c * l, Er, .55, this._out);
+		let f = this.tileMap.move(a, o / c * l, s / c * l, Or, .55, this._out);
 		u.x = d;
 		let p = Math.hypot(f.x - a.x, f.z - a.z);
 		return a.x = f.x, a.z = f.z, this.faceWorld(o, s), this.sprite.play(r > 2.2 ? "run" : "walk"), this.sprite.speed = r > 2.2 ? .8 : Math.max(.45, r / 2.8), this._stuck = p < l * .25 ? this._stuck + e : 0, this._stuck > .4;
@@ -2583,7 +2583,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 		}
 		this._followCamera();
 		let i = this.tileMap.getHeight(r.x, r.z);
-		r.y += (i - r.y) * I(18, e), this.collider.x = r.x, this.collider.z = r.z;
+		r.y += (i - r.y) * se(18, e), this.collider.x = r.x, this.collider.z = r.z;
 	}
 	_updateWander(e, t, n = this.wander) {
 		if (this.state === "idle") this._idle(), this.timer -= e, Math.hypot(t.x - this.position.x, t.z - this.position.z) < 2.4 && (this._lookTimer -= e, this._lookTimer <= 0 && (this.faceWorld(t.x - this.position.x, t.z - this.position.z), this._lookTimer = .4), this.timer = Math.max(this.timer, .8)), this.timer <= 0 && n > .2 && (this._pickTarget(n), this.state = "walk", this.timer = 6);
@@ -2699,7 +2699,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 			let t = a[e];
 			if (!t.alive || !t.sprite.visible) continue;
 			let o = Math.hypot(t.position.x - n.x, t.position.z - n.z);
-			o < zr && o < i && (i = o, r = t.position);
+			o < Vr && o < i && (i = o, r = t.position);
 		}
 		let o = t._mk;
 		for (let e = 0; e < o.length; e++) {
@@ -2708,7 +2708,7 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 			let a = t.spec;
 			if (a.style !== "enemy" || a.shape !== "circle" && a.shape !== "ring") continue;
 			let s = Math.hypot(a.x - n.x, a.z - n.z);
-			s < a.r + Br && s - a.r < i && (i = s - a.r, r = a);
+			s < a.r + Hr && s - a.r < i && (i = s - a.r, r = a);
 		}
 		return r;
 	}
@@ -2759,30 +2759,30 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 		]))), this.state === "look" ? this._idle() : this.sprite.play("cower"), this._bark(e, t, "cower");
 	}
 	_calmed(e) {
-		let t = Hr(e.game, this.tileMap);
-		return t === this._calm ? t : (this._calm = t, t ? (this._reliefT = Mr, this._spokeT > 0 && e.game.ui.emotes?.clear(this.sprite), this.state = "relief", this.timer = this.rng.range(1.5, 3.5), this.faceWorld(e.player.x - this.position.x, e.player.z - this.position.z)) : (this.state = "idle", this.timer = 0), t);
+		let t = Wr(e.game, this.tileMap);
+		return t === this._calm ? t : (this._calm = t, t ? (this._reliefT = Pr, this._spokeT > 0 && e.game.ui.emotes?.clear(this.sprite), this.state = "relief", this.timer = this.rng.range(1.5, 3.5), this.faceWorld(e.player.x - this.position.x, e.player.z - this.position.z)) : (this.state = "idle", this.timer = 0), t);
 	}
 	_updateCalm(e, t) {
-		this.state === "relief" ? (this.sprite.play("cheer", { speed: this._danceSpeed }), this.timer -= e, this.timer <= 0 && (this.state = "idle", this.timer = this.rng.range(.4, 1.5), this._idle())) : this._updateWander(e, t.player, Math.min(this.wander, Nr)), this._reliefT > 0 && (this._reliefT -= e, this._bark(e, t, "relief"));
+		this.state === "relief" ? (this.sprite.play("cheer", { speed: this._danceSpeed }), this.timer -= e, this.timer <= 0 && (this.state = "idle", this.timer = this.rng.range(.4, 1.5), this._idle())) : this._updateWander(e, t.player, Math.min(this.wander, Fr)), this._reliefT > 0 && (this._reliefT -= e, this._bark(e, t, "relief"));
 	}
 	_bark(e, t, n) {
 		if (this._spokeT > 0 && (this._spokeT -= e), this._barkT -= e, this._barkT > 0) return;
-		let r = this.barkRng, [i, a] = Ar[n];
+		let r = this.barkRng, [i, a] = Mr[n];
 		this._barkT = r.range(i, a);
 		let o = t.game;
 		if (!o || o.mode !== "play" || o.ui.dialog.isOpen || o.story?.cardUp || o.ui.endCard?.active) return;
-		let s = Ir(this.tileMap), c = o.engine.time.elapsed;
+		let s = Rr(this.tileMap), c = o.engine.time.elapsed;
 		if (c - s.last < 1.7999990000000001) {
 			this._barkT = r.range(.5, 2);
 			return;
 		}
-		if (Math.hypot(t.player.x - this.position.x, t.player.z - this.position.z) > jr) return;
-		s.last = c, this._spokeT = Pr;
-		let l = en("a bark").SIEGE_BARKS[n], u = s.recent, d = r.pick(l);
+		if (Math.hypot(t.player.x - this.position.x, t.player.z - this.position.z) > Nr) return;
+		s.last = c, this._spokeT = Ir;
+		let l = nn("a bark").SIEGE_BARKS[n], u = s.recent, d = r.pick(l);
 		for (let e = 0; e < 4 && u.includes(d); e++) d = r.pick(l);
 		u.push(d), u.length > Math.min(4, l.length - 1) && u.shift();
 		let f = o.ui.emotes;
-		f && Ur(o) && f.bark(this.sprite, H(`siege.${d}`), void 0, { offsetY: this.def.preset === "child" ? 1.9 : 2.35 });
+		f && Gr(o) && f.bark(this.sprite, V(`siege.${d}`), void 0, { offsetY: this.def.preset === "child" ? 1.9 : 2.35 });
 	}
 	hush(e) {
 		this._spokeT > 0 && e?.clear(this.sprite);
@@ -2791,40 +2791,40 @@ var Lr = null, Rr = null, zr = 5.5, Br = 1.4, Vr = class {
 		this.tileMap.removeCollider(this.collider), this.sprite.dispose();
 	}
 };
-function Hr(e, t) {
+function Wr(e, t) {
 	let n = e?.combat;
 	if (!n) return !1;
-	let r = Ir(t), i = e.engine.time.frame;
+	let r = Rr(t), i = e.engine.time.frame;
 	if (r.routedFrame === i) return r.routed;
 	r.routedFrame = i;
 	let a = n.enemies, o = a.length > 0;
 	for (let e = 0; o && e < a.length; e++) a[e].alive && a[e].sprite.visible && (o = !1);
 	return r.routed = o, o;
 }
-function Ur(e) {
-	let t = dt();
-	if (Lr === t) return !0;
-	let { registerSiegeStrings: n, SIEGE_STRINGS: r } = en("a bark");
-	if (n(), !Rr) {
+function Gr(e) {
+	let t = pt();
+	if (zr === t) return !0;
+	let { registerSiegeStrings: n, SIEGE_STRINGS: r } = nn("a bark");
+	if (n(), !Br) {
 		let n = e.ui?.fonts, i = r[t] ?? r.en;
-		Rr = (n ? n.ensure(Object.values(i)) : Promise.resolve()).then(() => {
-			Lr = t, Rr = null;
+		Br = (n ? n.ensure(Object.values(i)) : Promise.resolve()).then(() => {
+			zr = t, Br = null;
 		});
 	}
 	return !1;
 }
 //#endregion
 //#region src/game/Critters.js
-var Wr = class {
+var Kr = class {
 	constructor({ sheet: e, tileMap: t, x: n, z: i, seed: a, bounds: o = null, radius: s = .15, speed: c = .9, opts: l = {} }) {
-		this.tileMap = t, this.sprite = new B(e, {
-			...Ut,
+		this.tileMap = t, this.sprite = new z(e, {
+			...Gt,
 			blobSize: [.55, .26],
 			...l
 		}), this.position = this.sprite.position, this.position.set(n, t.getHeight(n, i), i), this.home = new r(n, 0, i), this.start = {
 			x: n,
 			z: i
-		}, this.absent = !1, this.bounds = o, this.radius = s, this.speed = c, this.rng = new L(a), this.state = "idle", this.timer = this.rng.range(.2, 2.5), this.target = new r(n, 0, i), this._out = {
+		}, this.absent = !1, this.bounds = o, this.radius = s, this.speed = c, this.rng = new I(a), this.state = "idle", this.timer = this.rng.range(.2, 2.5), this.target = new r(n, 0, i), this._out = {
 			x: 0,
 			z: 0
 		}, this.sprite.setDirection(this.rng.pick([
@@ -2835,7 +2835,7 @@ var Wr = class {
 		])), this.sprite.play("idle");
 	}
 	reset() {
-		let { x: e, z: t } = Jr(this.tileMap, this.start.x, this.start.z);
+		let { x: e, z: t } = Xr(this.tileMap, this.start.x, this.start.z);
 		this.position.set(e, this.tileMap.getHeight(e, t), t), this.target.set(e, 0, t), this.state = "idle", this.timer = this.rng.range(.2, 2.5), this.sprite.speed = 1, this.sprite.opacity !== 1 && (this.sprite.opacity = 1), this.sprite.visible = !0, this.sprite.play("idle");
 	}
 	_clampTarget(e) {
@@ -2850,9 +2850,9 @@ var Wr = class {
 	}
 	_followGround(e) {
 		let t = this.position, n = this.tileMap.getHeight(t.x, t.z);
-		t.y += (n - t.y) * I(18, e);
+		t.y += (n - t.y) * se(18, e);
 	}
-}, Gr = class extends Wr {
+}, qr = class extends Kr {
 	update(e, t) {
 		let n = this.position, r = 0, i = 0;
 		for (let e of t) {
@@ -2875,7 +2875,7 @@ var Wr = class {
 		}
 		this._followGround(e);
 	}
-}, Kr = class extends Wr {
+}, Jr = class extends Kr {
 	constructor(e) {
 		super(e), this.roam = e.roam ?? 3.2;
 	}
@@ -2894,15 +2894,15 @@ var Wr = class {
 		}
 		this._followGround(e);
 	}
-}, qr = {
+}, Yr = {
 	chicken: {
-		cls: Gr,
+		cls: qr,
 		speed: .8,
 		radius: .15,
 		opts: { blobSize: [.5, .24] }
 	},
 	cat: {
-		cls: Kr,
+		cls: Jr,
 		speed: 1.1,
 		radius: .18,
 		sheet: {
@@ -2913,13 +2913,13 @@ var Wr = class {
 		opts: { blobSize: [.7, .3] }
 	},
 	dog: {
-		cls: Kr,
+		cls: Jr,
 		speed: 1.3,
 		radius: .22,
 		opts: { blobSize: [.8, .34] }
 	},
 	bird: {
-		cls: class extends Wr {
+		cls: class extends Kr {
 			constructor(e) {
 				super(e), this.vel = new r(), this.hidden = 0, this.roam = e.roam ?? 1.6;
 			}
@@ -2959,7 +2959,7 @@ var Wr = class {
 		}
 	}
 };
-function Jr(e, t, n) {
+function Xr(e, t, n) {
 	if (e.isWalkable(t, n)) return {
 		x: t,
 		z: n
@@ -2979,7 +2979,7 @@ function Jr(e, t, n) {
 		z: n
 	};
 }
-var Yr = class {
+var Zr = class {
 	constructor({ tileMap: e, scene: t, spriteManager: n, groups: r = [] }) {
 		this.tileMap = e, this.sheets = /* @__PURE__ */ new Map(), this.chickens = [], this.cats = [], this.birds = [], this.all = [], this.storyGroups = [];
 		for (let e of r) try {
@@ -2992,16 +2992,16 @@ var Yr = class {
 	}
 	_sheet(e) {
 		let t = this.sheets.get(e);
-		return t || (t = Oe(e, qr[e].sheet ?? {}), this.sheets.set(e, t)), t;
+		return t || (t = Ae(e, Yr[e].sheet ?? {}), this.sheets.set(e, t)), t;
 	}
 	_spawnGroup(e) {
-		let t = Ce(qr, e.kind) ? e.kind : "chicken", n = qr[t], r = this.tileMap, i = Number(e.x) || 0, a = Number(e.z) || 0, o = Math.max(.3, Number(e.radius) || 2.5), s = rt(e) ?? {
+		let t = Te(Yr, e.kind) ? e.kind : "chicken", n = Yr[t], r = this.tileMap, i = Number(e.x) || 0, a = Number(e.z) || 0, o = Math.max(.3, Number(e.radius) || 2.5), s = at(e) ?? {
 			minX: i - o,
 			maxX: i + o,
 			minZ: a - o,
 			maxZ: a + o
-		}, c = Number.isFinite(e.seedBase) ? e.seedBase : F(String(e.id ?? t)) % 1e4, l = this._sheet(t), u = tt(e, (e, t) => r.isWalkable(e, t)), d = [];
-		Rt(e) && this.storyGroups.push({
+		}, c = Number.isFinite(e.seedBase) ? e.seedBase : oe(String(e.id ?? t)) % 1e4, l = this._sheet(t), u = rt(e, (e, t) => r.isWalkable(e, t)), d = [];
+		Bt(e) && this.storyGroups.push({
 			obj: e,
 			critters: d,
 			present: !0
@@ -3027,7 +3027,7 @@ var Yr = class {
 			if (t.absent) continue;
 			let n = t.position;
 			if (!e(n.x, n.z) || t.tileMap.isWalkable(n.x, n.z)) continue;
-			let r = Jr(t.tileMap, n.x, n.z);
+			let r = Xr(t.tileMap, n.x, n.z);
 			n.set(r.x, t.tileMap.getHeight(r.x, r.z), r.z), t.target.set(r.x, 0, r.z);
 		}
 	}
@@ -3066,7 +3066,7 @@ var Yr = class {
 		for (let e of this.sheets.values()) e.dispose?.();
 		this.sheets.clear();
 	}
-}, Xr = [
+}, Qr = [
 	{
 		h: 6.5,
 		id: "dawn",
@@ -3092,7 +3092,7 @@ var Yr = class {
 		id: "night",
 		name: "Night"
 	}
-], Zr = class {
+], $r = class {
 	constructor({ lighting: e, particles: t, postfx: n, godRays: r, world: i }) {
 		this.lighting = e, this.particles = t, this.postfx = n, this.godRays = r, this.tuning = {
 			sunMul: 1,
@@ -3110,10 +3110,10 @@ var Yr = class {
 			mist: 1,
 			gradeTemperature: n.settings.grade.temperature,
 			gradeSaturation: n.settings.grade.saturation
-		}, this.zoomFog = 1, this.gust = 0, this._gust = 0, this.indoors = !1, this.snowHold = null, this.frostCover = 0, this.frostAmount = 0, this.snowFloor = 0, this.thaw = null, this.frozenMist = /* @__PURE__ */ new Set(), this.setWorld(i), U.value = 0, this.weather = "clear", this._w = { ...ln.clear }, this._transition = null, this.rain = t.createEmitter(cn("rain", { intensity: 0 })), this.snow = t.createEmitter(cn("snow", { intensity: 0 }));
+		}, this.zoomFog = 1, this.gust = 0, this._gust = 0, this.indoors = !1, this.snowHold = null, this.frostCover = 0, this.frostAmount = 0, this.snowFloor = 0, this.thaw = null, this.frozenMist = /* @__PURE__ */ new Set(), this.setWorld(i), H.value = 0, this.weather = "clear", this._w = { ...dn.clear }, this._transition = null, this.rain = t.createEmitter(un("rain", { intensity: 0 })), this.snow = t.createEmitter(un("snow", { intensity: 0 }));
 	}
 	setWorld(e) {
-		this.world = e, this.gust = this._gust = 0, this.frozenMist?.clear(), this._env = e?.level?.environment ?? {}, this.indoors = yt(this._env);
+		this.world = e, this.gust = this._gust = 0, this.frozenMist?.clear(), this._env = e?.level?.environment ?? {}, this.indoors = xt(this._env);
 		let t = Number(e?.level?.environment?.fogScale);
 		this.levelFog = Number.isFinite(t) && t > 0 ? t : 1;
 		let n = e.water;
@@ -3123,16 +3123,16 @@ var Yr = class {
 		} : null;
 	}
 	get shown() {
-		return Tt(this._env, this.weather);
+		return Dt(this._env, this.weather);
 	}
 	get time() {
 		return this.lighting.timeOfDay;
 	}
 	get snowCover() {
-		return Math.max(U.value, this.frostCover * this.frostAmount);
+		return Math.max(H.value, this.frostCover * this.frostAmount);
 	}
 	set snowCover(e) {
-		e = M(Number(e) || 0), this.frostCover > 0 ? this.frostAmount = M(e / this.frostCover) : U.value = e;
+		e = M(Number(e) || 0), this.frostCover > 0 ? this.frostAmount = M(e / this.frostCover) : H.value = e;
 	}
 	get transitioning() {
 		return !!this._transition;
@@ -3153,26 +3153,26 @@ var Yr = class {
 		};
 	}
 	cycleTime() {
-		let e = this._transition ? (this._transition.from + this._transition.delta) % 24 : this.lighting.timeOfDay, t = Xr.find((t) => t.h > e + .05);
-		return t ||= Xr[0], this.setTime(t.h, { duration: 2 }), t;
+		let e = this._transition ? (this._transition.from + this._transition.delta) % 24 : this.lighting.timeOfDay, t = Qr.find((t) => t.h > e + .05);
+		return t ||= Qr[0], this.setTime(t.h, { duration: 2 }), t;
 	}
 	setWeather(e, { instant: t = !1 } = {}) {
-		if (!Object.hasOwn(ln, e)) return this.weather;
+		if (!Object.hasOwn(dn, e)) return this.weather;
 		if (this.weather = e, t) {
 			let e = this.shown;
-			Object.assign(this._w, ln[e]), U.value = this._settled(e);
+			Object.assign(this._w, dn[e]), H.value = this._settled(e);
 		}
 		return e;
 	}
 	_settled(e) {
-		return Math.max(this.frostCover > 0 && e === "frost" ? 0 : tn(e), this.snowFloor);
+		return Math.max(this.frostCover > 0 && e === "frost" ? 0 : rn(e), this.snowFloor);
 	}
 	settleSnow() {
-		U.value = this._settled(this.shown);
+		H.value = this._settled(this.shown);
 	}
 	cycleWeather() {
-		let e = fn.indexOf(this.weather);
-		return this.setWeather(fn[(e + 1) % fn.length]);
+		let e = mn.indexOf(this.weather);
+		return this.setWeather(mn[(e + 1) % mn.length]);
 	}
 	factor(e) {
 		return this._w[e];
@@ -3184,22 +3184,22 @@ var Yr = class {
 			let n = P(0, 1, M(t.t / t.duration));
 			this.lighting.setTime(t.from + t.delta * n), t.t >= t.duration && (this._transition = null);
 		}
-		let n = this.shown, r = ln[n], i = I(1.1, e), a = this._w;
-		for (let e = 0; e < hn.length; e++) {
-			let t = hn[e];
+		let n = this.shown, r = dn[n], i = se(1.1, e), a = this._w;
+		for (let e = 0; e < _n.length; e++) {
+			let t = _n[e];
 			a[t] += (r[t] - a[t]) * i;
 		}
 		let o = this.tuning, s = this.lighting.settings;
-		un(s, a, o), s.fogMul = o.fogMul * a.fog * this.zoomFog * this.levelFog, this._gust += (this.gust - this._gust) * I(this.gust > this._gust ? 7 : 2.2, e), this._gust < .001 && !this.gust && (this._gust = 0), vn(a, o.windStrength, this._gust);
+		fn(s, a, o), s.fogMul = o.fogMul * a.fog * this.zoomFog * this.levelFog, this._gust += (this.gust - this._gust) * se(this.gust > this._gust ? 7 : 2.2, e), this._gust < .001 && !this.gust && (this._gust = 0), bn(a, o.windStrength, this._gust);
 		let c = this.postfx.settings.grade;
-		rn(c, a, o.gradeTemperature, o.gradeSaturation), c.saturation -= _n * this.lighting.nightFactor;
+		on(c, a, o.gradeTemperature, o.gradeSaturation), c.saturation -= yn * this.lighting.nightFactor;
 		let l = a.overcast;
-		gn(this.lighting, l), this.godRays.intensity = o.godRays * a.rays * mn(this.lighting.timeOfDay);
+		vn(this.lighting, l), this.godRays.intensity = o.godRays * a.rays * gn(this.lighting.timeOfDay);
 		let u = this.lighting.nightFactor, d = this.world, f = d.emitters;
 		f.dust && (f.dust.intensity = o.dust * a.dust);
 		let p = d.areaEmitters ?? [];
 		for (let e = 0; e < p.length; e++) {
-			let t = an(p[e].preset, a, o, u);
+			let t = sn(p[e].preset, a, o, u);
 			t !== null && (p[e].emitter.intensity = t);
 		}
 		let m = d.propEmitters;
@@ -3207,20 +3207,20 @@ var Yr = class {
 			let t = m[e], n = t.preset ?? t.config?.preset;
 			n === "smoke" ? t.intensity = o.smoke : n === "mist" && (t.intensity = this.frozenMist.has(t) ? 0 : o.mist);
 		}
-		pn(d.lights, d.lightPool ?? null, l), nn(d.emissiveEntries, l), d.glassMaterial && d.glassMaterial.color.setScalar(on(u, l));
+		hn(d.lights, d.lightPool ?? null, l), an(d.emissiveEntries, l), d.glassMaterial && d.glassMaterial.color.setScalar(cn(u, l));
 		let h = this._waterBase;
 		if (h) {
-			let e = d.water.uniforms, t = dn(u);
+			let e = d.water.uniforms, t = pn(u);
 			e.uBrightness.value = h.brightness * t.brightness, e.uGlint.value = h.glint * t.glint;
 		}
-		this.rain.intensity = sn(a.rain), this.snow.intensity = sn(a.snow);
-		let g = this._settled(n), _ = g > U.value ? 1 / 15 : 1 / 8;
-		U.value += M(g - U.value, -_ * e, _ * e), this.snowHold === null ? this.frostAmount > 0 && (this.frostAmount = Math.max(0, this.frostAmount - e / 8)) : this.frostAmount = Math.min(1, this.frostAmount + e / 3), this.thaw?.update(e);
+		this.rain.intensity = ln(a.rain), this.snow.intensity = ln(a.snow);
+		let g = this._settled(n), _ = g > H.value ? 1 / 15 : 1 / 8;
+		H.value += M(g - H.value, -_ * e, _ * e), this.snowHold === null ? this.frostAmount > 0 && (this.frostAmount = Math.max(0, this.frostAmount - e / 8)) : this.frostAmount = Math.min(1, this.frostAmount + e / 3), this.thaw?.update(e);
 	}
 	dispose() {
 		this.rain.dispose(), this.snow.dispose();
 	}
-}, Qr = class {
+}, ei = class {
 	constructor({ engine: e, postfx: t, maxPixelRatio: n = e.maxPixelRatio, pixelBudget: r = 21e5, slowMs: i = 13.5, fastMs: a = 8.5, minScale: o = .7 }) {
 		this.engine = e, this.postfx = t, this.maxPixelRatio = n, this.pixelBudget = r, this.slowMs = i, this.fastMs = a, this.minScale = o, this.enabled = !0, this.manual = !1, this.gpuMs = 0, this.medianMs = 0, this._w = -1, this._h = -1, this._timer = 0, this._cooldown = 2, this._slow = 0, this._fast = 0, this._samples = [], this._sorted = [], this._timings = t.enableTimings(!0);
 	}
@@ -3256,7 +3256,7 @@ var Yr = class {
 };
 //#endregion
 //#region src/game/DebugControls.js
-function $r(e) {
+function ti(e) {
 	let { ui: t, lighting: n, postfx: r, rig: i, weather: a, engine: o } = e, s = t.debug, c = s.addFolder("Time & Weather"), l = {
 		get hour() {
 			return n.timeOfDay;
@@ -3271,7 +3271,7 @@ function $r(e) {
 			e.setWeather(t);
 		}
 	};
-	c.add(l, "hour", 0, 24, .01).name("time of day").listen(), c.add(n, "timeSpeed", 0, 2, .01).name("speed (h / s)"), c.add(n, "paused").listen(), c.add(l, "weather", fn).listen(), c.add({ next: () => e.cycleTime() }, "next").name("next preset (T)");
+	c.add(l, "hour", 0, 24, .01).name("time of day").listen(), c.add(n, "timeSpeed", 0, 2, .01).name("speed (h / s)"), c.add(n, "paused").listen(), c.add(l, "weather", mn).listen(), c.add({ next: () => e.cycleTime() }, "next").name("next preset (T)");
 	let u = r.settings, d = s.addFolder("Post FX");
 	d.add(u, "enabled").name("post-processing");
 	let f = d.addFolder("Depth of field");
@@ -3309,7 +3309,7 @@ function $r(e) {
 		}
 	}, "wallBounce", 0, 3, .01).name("cliff bounce"), y.close();
 	let b = /* @__PURE__ */ new WeakMap(), x = (t) => {
-		i.pitchTarget = t * z;
+		i.pitchTarget = t * R;
 		let n = e.highGround;
 		if (n && e.player.position.y > n.minY) b.has(n) || b.set(n, n.pitch), n.pitch = t;
 		else {
@@ -3335,7 +3335,7 @@ function $r(e) {
 			i.fov = e;
 		},
 		get pitch() {
-			return i.pitchTarget * ae;
+			return i.pitchTarget * F;
 		},
 		set pitch(e) {
 			x(e);
@@ -3347,10 +3347,10 @@ function $r(e) {
 			i.distanceTarget = e;
 		},
 		get yaw() {
-			return i.yawTarget * ae;
+			return i.yawTarget * F;
 		},
 		set yaw(e) {
-			i.yawTarget = e * z;
+			i.yawTarget = e * R;
 		}
 	}, w = s.addFolder("Camera");
 	w.add(C, "fov", 10, 70, .1).listen(), w.add(C, "pitch", 8, 80, .1).listen(), w.add(C, "distance", i.minDistance, i.maxDistance, .1).listen(), w.add(C, "yaw", -180, 180, .1).listen(), w.add(i, "freeYaw").name("free yaw"), w.add(i, "lookAhead", 0, 3, .01), w.add(i, "followLambda", .5, 15, .1).name("follow speed"), w.add({ reset: () => {
@@ -3381,28 +3381,28 @@ function $r(e) {
 }
 //#endregion
 //#region src/game/AtmosphereFog.js
-var ei = "/* emberfall:fog-start */";
-function ti(e) {
-	if (e !== void 0 && ni(e), A.fog_vertex.includes(ei)) return;
-	let t = se.uFogStart;
+var ni = "/* emberfall:fog-start */";
+function ri(e) {
+	if (e !== void 0 && ii(e), A.fog_vertex.includes(ni)) return;
+	let t = le.uFogStart;
 	A.fog_pars_vertex = `${A.fog_pars_vertex}
 #ifdef USE_FOG
 	uniform vec2 uFogStart;
 #endif
-`, A.fog_vertex = `${ei}
+`, A.fog_vertex = `${ni}
 #ifdef USE_FOG
 	vFogDepth = max( 0.0, - mvPosition.z - uFogStart.x );
 #endif
 `;
-	for (let e of Object.values(j)) "fogDensity" in e.uniforms && (e.uniforms.uFogStart = t);
-	Object.assign(k.fog, { uFogStart: t }), c.clone({ uniform: t }).uniform.value !== t.value && console.warn("[Luminati] three.js copies typed-array uniforms: built-in materials keep the fog start they compiled with");
+	for (let e of Object.values(ie)) "fogDensity" in e.uniforms && (e.uniforms.uFogStart = t);
+	Object.assign(ne.fog, { uFogStart: t }), c.clone({ uniform: t }).uniform.value !== t.value && console.warn("[Luminati] three.js copies typed-array uniforms: built-in materials keep the fog start they compiled with");
 }
-function ni(e) {
-	se.uFogStart.value[0] = Number.isFinite(e) ? e : 0;
+function ii(e) {
+	le.uFogStart.value[0] = Number.isFinite(e) ? e : 0;
 }
 //#endregion
 //#region src/game/CinematicLook.js
-var ri = Object.freeze({
+var ai = Object.freeze({
 	dof: {
 		maxBlur: 15,
 		tiltShift: .5,
@@ -3468,7 +3468,7 @@ var ri = Object.freeze({
 		grainChroma: .3
 	}
 });
-function ii(e) {
+function oi(e) {
 	for (let t of [
 		"dof",
 		"bloom",
@@ -3476,29 +3476,29 @@ function ii(e) {
 		"cinematic"
 	]) {
 		let n = e[t];
-		for (let [e, r] of Object.entries(ri[t])) n[e] = Array.isArray(r) ? [...r] : r;
+		for (let [e, r] of Object.entries(ai[t])) n[e] = Array.isArray(r) ? [...r] : r;
 	}
 }
-function ai(e, t) {
-	let n = oi(t);
-	e.cinematic.streaks = n.streaks, e.cinematic.streakThreshold = n.streakThreshold, si.set(e, n);
+function si(e, t) {
+	let n = ci(t);
+	e.cinematic.streaks = n.streaks, e.cinematic.streakThreshold = n.streakThreshold, li.set(e, n);
 }
-function oi(e) {
+function ci(e) {
 	let t = e?.cinematic, n = t?.streaks, r = t?.streakThreshold;
 	return {
-		streaks: typeof n == "number" && Number.isFinite(n) ? n : ri.cinematic.streaks,
-		streakThreshold: typeof r == "number" && Number.isFinite(r) ? r : ri.cinematic.streakThreshold
+		streaks: typeof n == "number" && Number.isFinite(n) ? n : ai.cinematic.streaks,
+		streakThreshold: typeof r == "number" && Number.isFinite(r) ? r : ai.cinematic.streakThreshold
 	};
 }
-var si = /* @__PURE__ */ new WeakMap();
-function ci(e, t, n = null) {
+var li = /* @__PURE__ */ new WeakMap();
+function ui(e, t, n = null) {
 	if (!Array.isArray(t?.states) || !t.states.length) return !1;
-	let r = oi(t), i = si.get(e);
-	return i && i.streaks === r.streaks && i.streakThreshold === r.streakThreshold ? !1 : (ai(e, t), n && (n.base.streaks = r.streaks), !0);
+	let r = ci(t), i = li.get(e);
+	return i && i.streaks === r.streaks && i.streakThreshold === r.streakThreshold ? !1 : (si(e, t), n && (n.base.streaks = r.streaks), !0);
 }
 //#endregion
 //#region src/game/levels.js
-var li = Object.freeze([
+var di = Object.freeze([
 	Object.freeze({
 		value: "emberfall",
 		label: "Emberfall"
@@ -3523,7 +3523,7 @@ var li = Object.freeze([
 		value: "sample-hamlet",
 		label: "Willowmere"
 	})
-]), ui = [
+]), fi = [
 	{
 		keys: "WASD",
 		label: "Move",
@@ -3584,44 +3584,44 @@ var li = Object.freeze([
 		label: "Debug panel",
 		id: "debug"
 	}
-], di = {
+], pi = {
 	keys: "B",
 	label: "Journal",
 	id: "journal"
-}, fi = {
+}, mi = {
 	keys: "G",
 	label: "Party",
 	id: "party"
-}, pi = (e) => e.map((e) => ({
+}, hi = (e) => e.map((e) => ({
 	...e,
-	label: H(`game.controls.${e.id}`)
+	label: V(`game.controls.${e.id}`)
 }));
-function mi(e) {
-	if (e?.def?.unnamed) return H("game.default.villager");
-	let t = e?.name;
-	return typeof t == "string" ? W(t) : String(t ?? "");
-}
-function hi(e) {
-	let t = typeof e?.label == "string" ? e.label : String(e?.label ?? ""), n = $e(t);
-	if (n) return H(`game.prompt.${n}`);
-	let r = e?.object;
-	return r && (r.type === "exit" || r.type === "event") ? G(V(r, "label"), t, "label") : t;
-}
 function gi(e) {
+	if (e?.def?.unnamed) return V("game.default.villager");
+	let t = e?.name;
+	return typeof t == "string" ? U(t) : String(t ?? "");
+}
+function _i(e) {
+	let t = typeof e?.label == "string" ? e.label : String(e?.label ?? ""), n = tt(t);
+	if (n) return V(`game.prompt.${n}`);
+	let r = e?.object;
+	return r && (r.type === "exit" || r.type === "event") ? W(B(r, "label"), t, "label") : t;
+}
+function vi(e) {
 	let t = e?.def?.title;
 	if (typeof t != "string" || !t.trim()) return "";
 	let n = e.def.titleKey;
-	return G(typeof n == "string" ? n : "", t, "title");
+	return W(typeof n == "string" ? n : "", t, "title");
 }
-var _i = Object.freeze({
+var yi = Object.freeze({
 	en: "EN",
 	ja: "日本語",
 	zh: "中文"
-}), vi = 1.6, yi = .5, bi = {
+}), bi = 1.6, xi = .5, Si = {
 	x: 0,
 	z: 0
 };
-function xi(e) {
+function Ci(e) {
 	let t = e instanceof Element ? e : null;
 	if (!t) return !1;
 	if (t.isContentEditable || t.tagName === "TEXTAREA") return !0;
@@ -3639,16 +3639,16 @@ function xi(e) {
 		"range"
 	].includes(n);
 }
-function Si(e, t, n, r = bi) {
+function wi(e, t, n, r = Si) {
 	let i = e.a.x, a = e.a.z, o = e.b.x - i, s = e.b.z - a, c = o * o + s * s, l = c > 1e-12 ? Math.min(1, Math.max(0, ((t - i) * o + (n - a) * s) / c)) : 0;
 	return r.x = i + o * l, r.z = a + s * l, r;
 }
-var Ci = 42, wi = 4, Ti = .8, Ei = .4, Di = 5, Oi = 2, ki = (e) => new Promise((t) => setTimeout(t, e * 1e3)), q = (e, t) => Number.isFinite(Number(e)) && e !== null && e !== "" ? Number(e) : t, J = (e) => !!e && [
+var Ti = 42, Ei = 4, Di = .8, Oi = .4, ki = 5, Ai = 2, ji = (e) => new Promise((t) => setTimeout(t, e * 1e3)), K = (e, t) => Number.isFinite(Number(e)) && e !== null && e !== "" ? Number(e) : t, q = (e) => !!e && [
 	"minX",
 	"maxX",
 	"minZ",
 	"maxZ"
-].every((t) => Number.isFinite(e[t])), Ai = (e) => Array.isArray(e) && e.length >= 2 && Number.isFinite(e[0]) && Number.isFinite(e[1]), ji = {
+].every((t) => Number.isFinite(e[t])), Mi = (e) => Array.isArray(e) && e.length >= 2 && Number.isFinite(e[0]) && Number.isFinite(e[1]), Ni = {
 	near: {
 		x: 1.8,
 		north: .5,
@@ -3664,11 +3664,11 @@ var Ci = 42, wi = 4, Ti = .8, Ei = .4, Di = 5, Oi = 2, ki = (e) => new Promise((
 		north: 1,
 		south: 3
 	}
-}, Mi = /^\s*(?:\*\s+)?pose\s+(?:"([^"]+)"|(\S+))/;
-function Ni(e, t) {
+}, Pi = /^\s*(?:\*\s+)?pose\s+(?:"([^"]+)"|(\S+))/;
+function Fi(e, t) {
 	let n = /* @__PURE__ */ new Set(), r = (e) => {
 		for (let t of Array.isArray(e) ? e : []) {
-			let e = typeof t == "string" ? Mi.exec(t) : null;
+			let e = typeof t == "string" ? Pi.exec(t) : null;
 			e && n.add((e[1] ?? e[2]).toLowerCase());
 		}
 	};
@@ -3676,26 +3676,26 @@ function Ni(e, t) {
 	for (let e of Object.values(t?.scripts ?? {})) r(e?.lines);
 	return n;
 }
-function Pi(e, t) {
+function Ii(e, t) {
 	let n = e.x, r = e.z, i;
-	Ai(e.talkOffset) ? i = [n + e.talkOffset[0], r + e.talkOffset[1]] : Ai(e.talkPoint) && (i = [e.talkPoint[0], e.talkPoint[1]]);
+	Mi(e.talkOffset) ? i = [n + e.talkOffset[0], r + e.talkOffset[1]] : Mi(e.talkPoint) && (i = [e.talkPoint[0], e.talkPoint[1]]);
 	let a;
-	J(e.area) ? a = {
+	q(e.area) ? a = {
 		minX: n + e.area.minX,
 		maxX: n + e.area.maxX,
 		minZ: r + e.area.minZ,
 		maxZ: r + e.area.maxZ
-	} : J(e.bounds) && (a = { ...e.bounds });
+	} : q(e.bounds) && (a = { ...e.bounds });
 	let o = typeof e.name == "string" ? e.name : typeof e.name == "number" || typeof e.name == "boolean" ? String(e.name) : "";
 	return {
 		id: e.id,
 		name: o || "Villager",
 		...o ? {} : { unnamed: !0 },
-		preset: it.includes(e.preset) ? e.preset : "villager",
+		preset: ot.includes(e.preset) ? e.preset : "villager",
 		spec: e.spec && typeof e.spec == "object" ? e.spec : void 0,
 		home: [n, r],
-		wander: Math.max(0, q(e.wander, 1.2)),
-		speed: Math.max(.1, q(e.speed, 1)),
+		wander: Math.max(0, K(e.wander, 1.2)),
+		speed: Math.max(.1, K(e.speed, 1)),
 		facing: [
 			"down",
 			"up",
@@ -3703,12 +3703,12 @@ function Pi(e, t) {
 			"right"
 		].includes(e.facing) ? e.facing : "down",
 		behaviour: e.behaviour,
-		talkRadius: e.talkRadius == null ? void 0 : Math.max(.5, q(e.talkRadius, 1.6)),
+		talkRadius: e.talkRadius == null ? void 0 : Math.max(.5, K(e.talkRadius, 1.6)),
 		talkPoint: i,
 		bounds: a,
 		portraitColor: e.portraitColor || "#c9a45c",
 		title: typeof e.title == "string" && e.title.trim() ? e.title : void 0,
-		titleKey: typeof e.title == "string" && e.title.trim() && V(e, "title") || void 0,
+		titleKey: typeof e.title == "string" && e.title.trim() && B(e, "title") || void 0,
 		...t && [
 			e.id,
 			e.actor,
@@ -3716,7 +3716,7 @@ function Pi(e, t) {
 		].some((e) => typeof e == "string" && t.has(e.toLowerCase())) ? { festival: !0 } : {}
 	};
 }
-var Fi = class {
+var Li = class {
 	constructor({ container: e, level: t, autostart: n = !1, source: i = "", campaign: a = null, lang: o = void 0, fonts: s = null, look: c = "diorama" }) {
 		if (this.uiOptions = {
 			lang: o,
@@ -3730,7 +3730,7 @@ var Fi = class {
 		} : null, this.playerKit = l?.kit ?? "traveler", this.controls = Object.freeze({
 			time: a?.campaign.controls?.time !== !1,
 			weather: a?.campaign.controls?.weather !== !1
-		}), this._events = new he(), this.season = null, this.thaw = null, this._applyLevel(t), this.mode = "loading", this.photoMode = !1, this.mapOpen = !1, this.busy = !1, this.musicWanted = !0, this.inventory = Object.assign(Object.create(null), { apples: 0 }), this.visits = /* @__PURE__ */ new Map(), this._regionTimer = 0, this._burstTimer = 0, this._sparkleTimer = 0, this._talkCooldown = 0, this._tmp = new r(), this._focusPos = new r(), this._target = {
+		}), this._events = new _e(), this.season = null, this.thaw = null, this._applyLevel(t), this.mode = "loading", this.photoMode = !1, this.mapOpen = !1, this.busy = !1, this.musicWanted = !0, this.inventory = Object.assign(Object.create(null), { apples: 0 }), this.visits = /* @__PURE__ */ new Map(), this._regionTimer = 0, this._burstTimer = 0, this._sparkleTimer = 0, this._talkCooldown = 0, this._tmp = new r(), this._focusPos = new r(), this._target = {
 			kind: "",
 			npc: null,
 			it: null
@@ -3742,14 +3742,14 @@ var Fi = class {
 		this.level = e, this.env = e.environment ?? {};
 		let t = this.env.camera ?? {};
 		this.camera = Object.freeze({
-			...qt,
-			...gt(t)
-		}), ni(this.camera.distance - 7), this.cameraBounds = this._resolveCameraBounds(t.bounds);
+			...Yt,
+			...vt(t)
+		}), ii(this.camera.distance - 7), this.cameraBounds = this._resolveCameraBounds(t.bounds);
 		let n = this.env.highGround;
-		this.highGround = n && Number.isFinite(q(n.minY, NaN)) ? {
-			minY: q(n.minY, 0),
-			pitch: M(q(n.pitch, this.camera.pitch), 10, 80)
-		} : null, this.regions = e.objects.filter((e) => e.type === "region"), this._bannersShown = /* @__PURE__ */ new Set(), this._regionBanner = null, this.region = "", this.combatEnabled = at(e), this.envNow = this.env, this.levelStates = null, this._cine = {
+		this.highGround = n && Number.isFinite(K(n.minY, NaN)) ? {
+			minY: K(n.minY, 0),
+			pitch: M(K(n.pitch, this.camera.pitch), 10, 80)
+		} : null, this.regions = e.objects.filter((e) => e.type === "region"), this._bannersShown = /* @__PURE__ */ new Set(), this._regionBanner = null, this.region = "", this.combatEnabled = st(e), this.envNow = this.env, this.levelStates = null, this._cine = {
 			t: 0,
 			target: new r(),
 			...this._titleCamera()
@@ -3766,21 +3766,21 @@ var Fi = class {
 			minZ: Math.min(e.minZ, e.maxZ),
 			maxZ: Math.max(e.minZ, e.maxZ)
 		});
-		if (e && J(e.near) && J(e.mid) && J(e.far)) return {
+		if (e && q(e.near) && q(e.mid) && q(e.far)) return {
 			near: t(e.near),
 			mid: t(e.mid),
 			far: t(e.far)
 		};
-		if (J(e) || J(e?.mid)) {
-			let n = t(J(e) ? e : e.mid);
+		if (q(e) || q(e?.mid)) {
+			let n = t(q(e) ? e : e.mid);
 			return {
 				near: { ...n },
 				mid: { ...n },
 				far: { ...n }
 			};
 		}
-		let n = Pt(this.level, 0), r = (e, t, n, r) => t - e >= n + r ? [e + n, t - r] : [, ,].fill(e + (t - e) * (n / Math.max(1e-6, n + r))), i = {};
-		for (let [e, t] of Object.entries(ji)) {
+		let n = It(this.level, 0), r = (e, t, n, r) => t - e >= n + r ? [e + n, t - r] : [, ,].fill(e + (t - e) * (n / Math.max(1e-6, n + r))), i = {};
+		for (let [e, t] of Object.entries(Ni)) {
 			let [a, o] = r(n.minX, n.maxX, t.x, t.x), [s, c] = r(n.minZ, n.maxZ, t.north, t.south);
 			i[e] = {
 				minX: a,
@@ -3794,12 +3794,12 @@ var Fi = class {
 	_titleCamera() {
 		let e = this.env.titleCamera ?? {}, t = this.cameraBounds.mid, n = (t.minX + t.maxX) / 2, r = (t.minZ + t.maxZ) / 2, i = Math.max(this.level.width, this.level.depth);
 		return {
-			x: q(e.x, n),
-			z: q(e.z, r),
-			y: q(e.y, this._typicalGround() + .5),
-			driftX: q(e.driftX, Math.min(7, (t.maxX - t.minX) * .25)),
-			driftZ: q(e.driftZ, Math.min(5, (t.maxZ - t.minZ) * .25)),
-			distance: M(q(e.distance, Math.min(35, Math.max(22, i * .8))), 8, 80)
+			x: K(e.x, n),
+			z: K(e.z, r),
+			y: K(e.y, this._typicalGround() + .5),
+			driftX: K(e.driftX, Math.min(7, (t.maxX - t.minX) * .25)),
+			driftZ: K(e.driftZ, Math.min(5, (t.maxZ - t.minZ) * .25)),
+			distance: M(K(e.distance, Math.min(35, Math.max(22, i * .8))), 8, 80)
 		};
 	}
 	_typicalGround() {
@@ -3820,49 +3820,49 @@ var Fi = class {
 	async init(e = () => {}) {
 		let t = performance.now();
 		this._onContextMenu = (e) => {
-			xi(e.target) || e.preventDefault();
-		}, window.addEventListener("contextmenu", this._onContextMenu, !0), this.loadStats = {}, ti();
-		let n = new ue({
+			Ci(e.target) || e.preventDefault();
+		}, window.addEventListener("contextmenu", this._onContextMenu, !0), this.loadStats = {}, ri();
+		let n = new fe({
 			container: this.container,
 			maxPixelRatio: 1.25,
 			...globalThis.__emberInputTarget ? { inputTarget: globalThis.__emberInputTarget } : {}
 		});
 		this.engine = n;
 		let { scene: r, camera: i, renderer: a } = n;
-		this.textures = new Ee({
+		this.textures = new Oe({
 			seed: 1337,
 			anisotropy: 4
 		});
-		let o = me.map((e) => ({
+		let o = ge.map((e) => ({
 			...e,
-			...Ht[e.name] ?? {}
-		})), s = (q(this.env.timeOfDay, 17.2) % 24 + 24) % 24;
-		this.lighting = new _e(n, {
+			...Wt[e.name] ?? {}
+		})), s = (K(this.env.timeOfDay, 17.2) % 24 + 24) % 24;
+		this.lighting = new ye(n, {
 			timeOfDay: s,
 			shadowExtent: 26,
-			sunPath: Kt,
-			moonPath: Bt,
+			sunPath: Jt,
+			moonPath: Ht,
 			keyframes: o
-		}), this.lighting.sky.lowerClouds = .25, this._applyBackdrop(), this.lighting.timeSpeed = this.env.clock === !1 ? 0 : Vt, this.lighting.paused = !0, this.particles = new Pe(r), this.godRays = new de({ gain: .2 }), r.add(this.godRays.object), this.spriteManager = new Sn(i), this.rig = new ce(i, {
+		}), this.lighting.sky.lowerClouds = .25, this._applyBackdrop(), this.lighting.timeSpeed = this.env.clock === !1 ? 0 : Ut, this.lighting.paused = !0, this.particles = new Ie(r), this.godRays = new pe({ gain: .2 }), r.add(this.godRays.object), this.spriteManager = new wn(i), this.rig = new ue(i, {
 			...this.camera,
 			yaw: 0,
 			lookAhead: 1.3
 		}), this.rig.bounds = { ...this.cameraBounds.mid };
 		let c = Math.min(window.devicePixelRatio || 1, n.maxPixelRatio), l = window.innerWidth * window.innerHeight * c * c;
-		this.postfx = new le(a, r, i, {
+		this.postfx = new de(a, r, i, {
 			maxTaps: 64,
 			samples: l > 18e5 ? 2 : 4
-		}), this._tunePost(this.postfx.settings), n.events.on("resize", ({ width: e, height: t, pixelRatio: n }) => this.postfx.setSize(e, t, n)), this.resolution = new Qr({
+		}), this._tunePost(this.postfx.settings), n.events.on("resize", ({ width: e, height: t, pixelRatio: n }) => this.postfx.setSize(e, t, n)), this.resolution = new ei({
 			engine: n,
 			postfx: this.postfx
-		}), this.ui = new ye(globalThis.__emberUiRoot ?? document.body, this.uiOptions), this.audio = new we({ volume: .6 }), this.lightPool = this.campaign ? new be(this.lighting, [], {
+		}), this.ui = new xe(globalThis.__emberUiRoot ?? document.body, this.uiOptions), this.audio = new Ee({ volume: .6 }), this.lightPool = this.campaign ? new Se(this.lighting, [], {
 			size: 12,
 			fixed: !0
 		}) : null;
 		let { VfxLights: u } = await import("./VfxLights-BO8BqsLW.js");
-		this.vfxLights = new u(this.lighting), Zn(this, this.env), this.look === "cinematic" && (ai(this.postfx.settings, this.env), this.on("env", (e) => ci(this.postfx.settings, e, this.combat?.look)));
+		this.vfxLights = new u(this.lighting), $n(this, this.env), this.look === "cinematic" && (si(this.postfx.settings, this.env), this.on("env", (e) => ui(this.postfx.settings, e, this.combat?.look)));
 		let d = performance.now();
-		this.loadStats.engine = Math.round(d - t), (this.campaign || Qe(this.level)) && await this._createStory(), this._fontsPending = this.ui.fontsReady;
+		this.loadStats.engine = Math.round(d - t), (this.campaign || et(this.level)) && await this._createStory(), this._fontsPending = this.ui.fontsReady;
 		let { earlyCompile: f } = await this._buildLevel(e, { t0: d }), p = this.ui;
 		p.hud.showHelp(!1, { tab: !1 }), p.prompt.keyHint = "Space", p.dialog.speed = 55, p.dialog.onSound = (e) => this.audio.playSfx(e, { volume: .7 });
 		let m = 0;
@@ -3871,7 +3871,7 @@ var Fi = class {
 				volume: .22,
 				pitch: .94 + Math.random() * .12
 			});
-		}, $r(this), n.addSystem(this.lighting, -10), n.addSystem({
+		}, ti(this), n.addSystem(this.lighting, -10), n.addSystem({
 			name: "game",
 			update: (e, t) => this.update(e, t)
 		}, 0), n.addSystem(this.audio, 20), n.events.on("lateUpdate", (e) => this.ui.update(e, {
@@ -3882,19 +3882,19 @@ var Fi = class {
 			n && (t.focusCut = !1), this.postfx.setFocus(this.mode === "play" && !t?.ownsCamera ? this._playerFocusDistance() : this.rig.focusDistance, n), this.postfx.render(e);
 		}), n.events.on("afterRender", (e) => this.ui.debug.stats.update(a, e));
 		let h = performance.now();
-		this.loadStats.characters = Math.round(h - d - this.loadStats.world), e(.96, H("game.load.warmup")), await ki(0), this.rig.setTarget(this.player.sprite), this.rig.snap(), this.weather.rain.intensity = 1, this.weather.snow.intensity = 1, this.particles.update(1 / 60, i);
+		this.loadStats.characters = Math.round(h - d - this.loadStats.world), e(.96, V("game.load.warmup")), await ji(0), this.rig.setTarget(this.player.sprite), this.rig.snap(), this.weather.rain.intensity = 1, this.weather.snow.intensity = 1, this.particles.update(1 / 60, i);
 		let g = this._tmp.set(0, -1e3, 0);
 		this.world.falls.some((e) => e.splash) && (this.particles.burst("splash", g, 1), this.particles.burst("sparkle", g, 1, { size: [.2, .34] })), this.particles.burst("footstep", g, 1), this.combat?.warmup(g), await f, await this._compileScene(), this.postfx.warmup();
 		let _ = this._primeShadows();
-		this.warmedUp.then(() => _.dispose()), this.weather.rain.intensity = 0, this.weather.snow.intensity = 0, this.env.weather && this.env.weather !== "clear" && !yt(this.env) && this.weather.setWeather(this.env.weather, { instant: !0 }), this.campaign?.onStart(), this.applyLevelStates(), await this.syncParty(), this._exposeGlobal(), this.loadStats.compile = Math.round(performance.now() - h), e(1, H("game.load.ready"));
+		this.warmedUp.then(() => _.dispose()), this.weather.rain.intensity = 0, this.weather.snow.intensity = 0, this.env.weather && this.env.weather !== "clear" && !xt(this.env) && this.weather.setWeather(this.env.weather, { instant: !0 }), this.campaign?.onStart(), this.applyLevelStates(), await this.syncParty(), this._exposeGlobal(), this.loadStats.compile = Math.round(performance.now() - h), e(1, V("game.load.ready"));
 	}
 	async _buildLevel(e, { t0: t = performance.now(), spawn: n = this.level.spawn, prepared: r = null, kept: i = null } = {}) {
 		let a = this.engine, { scene: o } = a;
 		this.story?.setLevelId(this.campaign?.levelId ?? this._storyLevelId());
 		let s = this.level.environment;
-		!this.thaw && (s?.frost || s?.states) && (this.thaw = await import("./LevelStates-CZKGKwiP.js")), await Yn(), this.primeLevelMusic(this.level, "level");
+		!this.thaw && (s?.frost || s?.states) && (this.thaw = await import("./LevelStates-CZKGKwiP.js")), await Zn(), this.primeLevelMusic(this.level, "level");
 		let c = this._glyphsFor();
-		i ? (this.world = i.world, this.world.story = this.story ? { present: this.story.present } : null, this.world.attach()) : r?.world && r.level === this.level ? (this.world = r.world, await r.finish(), this.world.story = this.story ? { present: this.story.present } : null, this.world.attach()) : (this.world = new hr({
+		i ? (this.world = i.world, this.world.story = this.story ? { present: this.story.present } : null, this.world.attach()) : r?.world && r.level === this.level ? (this.world = r.world, await r.finish(), this.world.story = this.story ? { present: this.story.present } : null, this.world.attach()) : (this.world = new _r({
 			engine: a,
 			textures: this.textures,
 			lighting: this.lighting,
@@ -3908,19 +3908,19 @@ var Fi = class {
 		l ? this.lighting.setShadowDepthRange(l.shadowUp, l.shadowDown) : this.campaign && this.lighting.setShadowDepthRange(), this.loadStats.world = Math.round(performance.now() - t);
 		let u = this._compileScene();
 		if (i) {
-			this.posed = Ni(this.level, this.campaign?.story), $t(this.level, this.posed) && await Qt(), this.player = i.player, this.npcs = i.npcs, this._npcSheets = i.sheets, this.critters = i.critters;
+			this.posed = Fi(this.level, this.campaign?.story), tn(this.level, this.posed) && await en(), this.player = i.player, this.npcs = i.npcs, this._npcSheets = i.sheets, this.critters = i.critters;
 			for (let e of this._actorSprites()) o.add(e), this.spriteManager.add(e);
 			this.player.arrive(n), this.lighting.followTarget(this.player.sprite), this._ensureStandingSpawn({ quiet: n !== this.level.spawn });
 		} else {
-			e(.92, H("game.load.villagers")), await ki(0);
-			let t = Ni(this.level, this.campaign?.story);
-			this.posed = t, $t(this.level, t) && await Qt(), await wr({
+			e(.92, V("game.load.villagers")), await ji(0);
+			let t = Fi(this.level, this.campaign?.story);
+			this.posed = t, tn(this.level, t) && await en(), await Er({
 				level: this.level,
 				look: this.playerLook,
 				combat: this.combatEnabled,
 				kit: this.playerKit,
 				records: this.party?.records
-			}), this.player = new Tr({
+			}), this.player = new Dr({
 				tileMap: this.tileMap,
 				rig: this.rig,
 				particles: this.particles,
@@ -3934,16 +3934,16 @@ var Fi = class {
 			let r = /* @__PURE__ */ new Map();
 			this._npcSheets = r, this.npcs = [];
 			for (let e of this.level.objects) if (e.type === "npc") try {
-				let n = new Vr({
-					def: Pi(e, t),
+				let n = new Ur({
+					def: Ii(e, t),
 					tileMap: this.tileMap,
 					sheetCache: r
 				});
-				n.storyObj = e, n.talk = xn(e), n.storyFlag = typeof e.flag == "string" ? e.flag.trim() : "", o.add(n.sprite), this.spriteManager.add(n.sprite), this.npcs.push(n);
+				n.storyObj = e, n.talk = Cn(e), n.storyFlag = typeof e.flag == "string" ? e.flag.trim() : "", o.add(n.sprite), this.spriteManager.add(n.sprite), this.npcs.push(n);
 			} catch (t) {
 				console.warn(`[Luminati] could not create NPC "${e.id}":`, t);
 			}
-			this.critters = new Yr({
+			this.critters = new Zr({
 				tileMap: this.tileMap,
 				scene: o,
 				spriteManager: this.spriteManager,
@@ -3958,31 +3958,31 @@ var Fi = class {
 			player: this.player.position,
 			threats: this._threats
 		}, this._throttle = this.world.batching ? {
-			far2: Ci ** 2,
-			every: wi,
+			far2: Ti ** 2,
+			every: Ei,
 			frame: 0,
 			npcDt: new Float32Array(this.npcs.length)
 		} : null, this._throttle && (this.critters.throttle = {
 			focus: this.rig.focusPoint,
-			far2: Ci ** 2,
-			every: wi
+			far2: Ti ** 2,
+			every: Ei
 		}), await this._fontsIn(c), this.combatEnabled) {
-			e(.94, H("game.load.blades")), await ki(0);
+			e(.94, V("game.load.blades")), await ji(0);
 			let { CombatSystem: t } = await import("./CombatSystem-3hsoKuDG.js");
 			this.combat = new t({ game: this }), await this.combat.load();
 		}
 		let d = this.world.batching || !!this.combat;
-		this.blobs = i ? i.blobs : d ? new Cn() : null;
+		this.blobs = i ? i.blobs : d ? new Tn() : null;
 		let f = this._actorSprites();
 		this.combat && f.push(...this.combat.actorSprites), this._actorEmissives = [];
-		for (let e of f) this._actorEmissives.push(this.lighting.registerEmissive(e.material, Wt)), !i && (d && e.shadowProxy && Ge(e.shadowProxy, [this.lighting.sun]), this.blobs?.adopt(e));
-		this.blobs?.mesh && a.scene.add(this.blobs.mesh), this.weather ? this.weather.setWorld(this.world) : this.weather = new Zr({
+		for (let e of f) this._actorEmissives.push(this.lighting.registerEmissive(e.material, Kt)), !i && (d && e.shadowProxy && qe(e.shadowProxy, [this.lighting.sun]), this.blobs?.adopt(e));
+		this.blobs?.mesh && a.scene.add(this.blobs.mesh), this.weather ? this.weather.setWorld(this.world) : this.weather = new $r({
 			lighting: this.lighting,
 			particles: this.particles,
 			postfx: this.postfx,
 			godRays: this.godRays,
 			world: this.world
-		}), this.audioDirector = i?.audioDirector ?? new tr({
+		}), this.audioDirector = i?.audioDirector ?? new rr({
 			audio: this.audio,
 			lighting: this.lighting,
 			weather: this.weather,
@@ -4009,7 +4009,7 @@ var Fi = class {
 	}
 	_glyphsFor() {
 		let e = this.ui.fonts;
-		return !lt(dt()) || typeof e?.ensure != "function" ? null : e.ensure(yn(() => this._shownTexts()));
+		return !dt(pt()) || typeof e?.ensure != "function" ? null : e.ensure(xn(() => this._shownTexts()));
 	}
 	async _fontsIn(e) {
 		if (this._fontsPending) {
@@ -4024,22 +4024,22 @@ var Fi = class {
 	_shownTexts() {
 		let e = this.level, t = [...this._levelPlate()];
 		this.campaign || t.push(...Object.values(this._titleTexts()));
-		for (let n of e.objects) if (n.type === "region") t.push(W(n.name), G(V(n, "sub"), n.sub, "title"), G(V(n, "banner"), n.banner, "title"));
+		for (let n of e.objects) if (n.type === "region") t.push(U(n.name), W(B(n, "sub"), n.sub, "title"), W(B(n, "banner"), n.banner, "title"));
 		else if (n.type === "npc") {
-			let e = Pi(n);
-			t.push(mi({
+			let e = Ii(n);
+			t.push(gi({
 				name: e.name,
 				def: e
-			}), gi({ def: e }));
-		} else n.type === "signpost" ? t.push(n.speaker == null ? H("game.default.signpost") : W(n.speaker)) : (n.type === "exit" && this.campaign && n.mode === "use" || n.type === "event" && this.story && (n.on ?? "use") === "use") && typeof n.label == "string" && n.label.trim() && t.push(hi({
+			}), vi({ def: e }));
+		} else n.type === "signpost" ? t.push(n.speaker == null ? V("game.default.signpost") : U(n.speaker)) : (n.type === "exit" && this.campaign && n.mode === "use" || n.type === "event" && this.story && (n.on ?? "use") === "use") && typeof n.label == "string" && n.label.trim() && t.push(_i({
 			label: n.label.trim(),
 			object: n
 		}));
-		for (let e of li) t.push(W(e.label));
-		return t.push(...fe(dt())), t;
+		for (let e of di) t.push(U(e.label));
+		return t.push(...me(pt())), t;
 	}
 	prepareWorld(e, t) {
-		return new hr({
+		return new _r({
 			engine: this.engine,
 			textures: this.textures,
 			lighting: this.lighting,
@@ -4060,7 +4060,7 @@ var Fi = class {
 		} catch (e) {
 			console.warn("[Luminati] setting the level aside failed (it is released instead):", e);
 		}
-		this.source = n, this._applyLevel(e), this._applyBackdrop(), Zn(this, this.env), this.look === "cinematic" && ai(this.postfx.settings, this.env);
+		this.source = n, this._applyLevel(e), this._applyBackdrop(), $n(this, this.env), this.look === "cinematic" && si(this.postfx.settings, this.env);
 		let f = this.rig;
 		f.minDistance = this.camera.minDistance, f.maxDistance = this.camera.maxDistance, f.bounds = { ...this.cameraBounds.mid };
 		let p;
@@ -4079,12 +4079,12 @@ var Fi = class {
 			}
 			throw this._forget([u, a]), e;
 		}
-		if (d || this._disposeDetached(u), f.setTarget(this.player.sprite), f.setAngles(0, this.camera.pitch), f.distanceTarget = this.camera.distance, this._updateCameraBounds(), f.snap(), this.world.lightPool?.snap(), this.postfx.setFocus(this._playerFocusDistance(), !0), a) await p, await this._compileScene(), await this._frames(Oi);
+		if (d || this._disposeDetached(u), f.setTarget(this.player.sprite), f.setAngles(0, this.camera.pitch), f.distanceTarget = this.camera.distance, this._updateCameraBounds(), f.snap(), this.world.lightPool?.snap(), this.postfx.setFocus(this._playerFocusDistance(), !0), a) await p, await this._compileScene(), await this._frames(Ai);
 		else {
 			let e = this._tmp.set(0, -1e3, 0);
 			this.weather.rain.intensity = 1, this.weather.snow.intensity = 1, this.particles.update(1 / 60, this.engine.camera), this.world.falls.some((e) => e.splash) && (this.particles.burst("splash", e, 1), this.particles.burst("sparkle", e, 1, { size: [.2, .34] })), this.particles.burst("footstep", e, 1), this.combat?.warmup(e), await p, await this._compileScene();
 			let t = this._primeShadows();
-			await this._frames(Di), t.dispose(), this.weather.rain.intensity = 0, this.weather.snow.intensity = 0, this.combat?.endWarmup();
+			await this._frames(ki), t.dispose(), this.weather.rain.intensity = 0, this.weather.snow.intensity = 0, this.combat?.endWarmup();
 		}
 		return this.mode = s === "travel" ? "play" : s, this.mode === "play" && (this.player.setSilhouetteEnabled(!0), this.audioDirector.enabled = !0, this.audioDirector.update(1, this.player.position)), this._exposeGlobal(), this.loadStats.lastSwap = Math.round(performance.now() - c), { aside: d };
 	}
@@ -4164,7 +4164,7 @@ var Fi = class {
 		}
 	}
 	_primeShadows() {
-		let e = We(this.engine.scene, { lights: [this.lighting.sun] });
+		let e = Ke(this.engine.scene, { lights: [this.lighting.sun] });
 		return this.engine.scene.add(e.object), this.loadStats.shadowVariants = e.count, e;
 	}
 	_compileScene() {
@@ -4174,7 +4174,7 @@ var Fi = class {
 		return e.setRenderTarget(t), n;
 	}
 	_setupMaps(e = null) {
-		let t = performance.now(), n = this._mapPresence(), r = e?.levelMap && e.mapKey === n ? e.levelMap : It(this._mapLevel());
+		let t = performance.now(), n = this._mapPresence(), r = e?.levelMap && e.mapKey === n ? e.levelMap : Rt(this._mapLevel());
 		this.levelMap = r, this._mapKey = n;
 		let i = this.ui;
 		i.minimap.setMap(r, {
@@ -4196,7 +4196,7 @@ var Fi = class {
 	_mapLevel() {
 		let e = this.story;
 		if (!e) return this.level;
-		let t = this.level.objects.filter((t) => !Rt(t) || e.present(t));
+		let t = this.level.objects.filter((t) => !Bt(t) || e.present(t));
 		return t.length === this.level.objects.length ? this.level : {
 			...this.level,
 			objects: t
@@ -4206,13 +4206,13 @@ var Fi = class {
 		let e = this.story;
 		if (!e) return "";
 		let t = "";
-		for (let n of this.level.objects) Rt(n) && (t += e.present(n) ? "1" : "0");
+		for (let n of this.level.objects) Bt(n) && (t += e.present(n) ? "1" : "0");
 		return t;
 	}
 	repaintLevelMap() {
 		if (!this.levelMap || this.mode === "travel") return;
 		this.party?.dropNav();
-		let e = It(this._mapLevel());
+		let e = Rt(this._mapLevel());
 		this.levelMap = e, this._mapKey = this._mapPresence(), this.ui.minimap.setMap(e, {
 			view: 34,
 			level: this._mapLevel()
@@ -4224,7 +4224,7 @@ var Fi = class {
 	_setWorldMap(e, { campaignOnly: t = !1 } = {}) {
 		let n = (e) => Array.isArray(e) ? e.map((e) => e && typeof e == "object" ? {
 			...e,
-			name: W(e.name)
+			name: U(e.name)
 		} : e) : e, r = this.campaign?.worldMap(e, this.level) ?? null;
 		if (r) this.ui.worldMap.setMap(r.map, {
 			title: r.title,
@@ -4245,7 +4245,7 @@ var Fi = class {
 	}
 	toggleMap(e = !this.mapOpen) {
 		let t = this.ui;
-		return e && (this.mode !== "play" || this.busy || t.dialog.isOpen || this.photoMode || !this.levelMap || this.combat?.locksPlayer || this.partyMenuOpen) || e === this.mapOpen ? this.mapOpen : (this.mapOpen = e, e ? (this.combat?.onMapOpen(), t.worldMap.setRegion(W(this.region)), t.worldMap.open(), t.prompt.hide(), this.audio.playSfx("open", { volume: .45 })) : (t.worldMap.close(), this.audio.playSfx("close", { volume: .4 })), this.mapOpen);
+		return e && (this.mode !== "play" || this.busy || t.dialog.isOpen || this.photoMode || !this.levelMap || this.combat?.locksPlayer || this.partyMenuOpen) || e === this.mapOpen ? this.mapOpen : (this.mapOpen = e, e ? (this.combat?.onMapOpen(), t.worldMap.setRegion(U(this.region)), t.worldMap.open(), t.prompt.hide(), this.audio.playSfx("open", { volume: .45 })) : (t.worldMap.close(), this.audio.playSfx("close", { volume: .4 })), this.mapOpen);
 	}
 	_updateMaps(e) {
 		let t = this._map;
@@ -4279,10 +4279,10 @@ var Fi = class {
 				.05,
 				.15
 			]
-		}), this.look === "cinematic" && ii(e);
+		}), this.look === "cinematic" && oi(e);
 	}
 	start() {
-		this._warmFrames = Di, this.engine.start(), this.autostart ? this.enterGameplay({ instant: !0 }) : this.showTitle();
+		this._warmFrames = ki, this.engine.start(), this.autostart ? this.enterGameplay({ instant: !0 }) : this.showTitle();
 	}
 	async showTitle() {
 		this.mode = "title", this.player.setSilhouetteEnabled(!1), this.lighting.paused = !0;
@@ -4300,9 +4300,9 @@ var Fi = class {
 			...this._titleTexts(),
 			titleSource: t.title || this.level.name.toUpperCase(),
 			...n ? {
-				destinations: li.map((e) => ({
+				destinations: di.map((e) => ({
 					value: e.value,
-					label: W(e.label)
+					label: U(e.label)
 				})),
 				current: n
 			} : {},
@@ -4310,7 +4310,7 @@ var Fi = class {
 		};
 		if (await this.ui.title.show(r), this._disposed) return;
 		let i = n ? this.ui.title.destination : void 0;
-		if (i && i !== n && li.some((e) => e.value === i)) {
+		if (i && i !== n && di.some((e) => e.value === i)) {
 			let e = new URLSearchParams(window.location.search);
 			e.delete("autostart"), e.set("level", i), window.location.search = e.toString();
 			return;
@@ -4319,23 +4319,23 @@ var Fi = class {
 	}
 	_shippedSlug() {
 		let e = /^levels\/([^/]+)\.json$/.exec(this.source || "");
-		return e && li.some((t) => t.value === e[1]) ? e[1] : null;
+		return e && di.some((t) => t.value === e[1]) ? e[1] : null;
 	}
 	_languageOptions() {
 		return {
-			languages: pt.map((e) => ({
+			languages: ht.map((e) => ({
 				code: e,
-				label: _i[e] ?? e
+				label: yi[e] ?? e
 			})),
-			lang: dt(),
+			lang: pt(),
 			onLanguage: (e) => {
 				this.setLanguage(e);
 			}
 		};
 	}
 	setLanguage(e) {
-		let t = ft(e), n = new URLSearchParams(window.location.search), r = n.has("lang");
-		return !r && t === dt() ? t : (n.delete("lang"), r ? window.location.search = n.toString() : window.location.reload(), t);
+		let t = mt(e), n = new URLSearchParams(window.location.search), r = n.has("lang");
+		return !r && t === pt() ? t : (n.delete("lang"), r ? window.location.search = n.toString() : window.location.reload(), t);
 	}
 	enterGameplay({ instant: e = !1 } = {}) {
 		this.mode = "play", this.player.setSilhouetteEnabled(!0), this.lighting.paused = !1, this.campaign?.hasSave ? this.story?.resumePending() : this.story?.onArrive();
@@ -4384,28 +4384,28 @@ var Fi = class {
 		(this.party || this.story?.state.party?.length) && (await this.ensureParty()).syncFromState();
 	}
 	_controls() {
-		let e = this.party?.count ? [fi] : [], t = this._keysOn(ui), n = t.findIndex((e) => e.id === "map") + 1;
-		return this.story ? pi([
+		let e = this.party?.count ? [mi] : [], t = this._keysOn(fi), n = t.findIndex((e) => e.id === "map") + 1;
+		return this.story ? hi([
 			...t.slice(0, n),
-			di,
+			pi,
 			...e,
 			...t.slice(n)
-		]) : pi(e.length ? [
+		]) : hi(e.length ? [
 			...t.slice(0, n),
 			...e,
 			...t.slice(n)
 		] : t);
 	}
 	_legendExtra() {
-		return pi([
-			...this._togglesSplit() ? this._keysOn(ui.filter((e) => [
+		return hi([
+			...this._togglesSplit() ? this._keysOn(fi.filter((e) => [
 				"time",
 				"weather",
 				"photo",
 				"music"
 			].includes(e.id))) : [],
-			...this.story ? [di] : [],
-			...this.party?.count ? [fi] : []
+			...this.story ? [pi] : [],
+			...this.party?.count ? [mi] : []
 		]);
 	}
 	_togglesSplit() {
@@ -4415,13 +4415,13 @@ var Fi = class {
 		return e.filter((e) => (e.id !== "time" || this.controls.time) && (e.id !== "weather" || this.controls.weather));
 	}
 	_levelMusic() {
-		return this.envNow.soundtrack ? { track: St(this.envNow, "explore") } : void 0;
+		return this.envNow.soundtrack ? { track: wt(this.envNow, "explore") } : void 0;
 	}
 	primeLevelMusic(e, t) {
 		let n = e?.environment ?? {}, r = [];
 		if (n.music !== !1) {
 			let t = Array.isArray(n.states) ? n.states.filter((e) => e?.soundtrack && typeof e.soundtrack == "object") : [];
-			for (let i of [n, ...t.map((e) => ({ soundtrack: e.soundtrack }))]) r.push(St(i, "explore")), at(e) && (r.push(St(i, "battle")), e.objects.some((e) => e.type === "enemy" && !!Se(et, e.kind)?.boss) && r.push(St(i, "boss")));
+			for (let i of [n, ...t.map((e) => ({ soundtrack: e.soundtrack }))]) r.push(wt(i, "explore")), st(e) && (r.push(wt(i, "battle")), e.objects.some((e) => e.type === "enemy" && !!we(nt, e.kind)?.boss) && r.push(wt(i, "boss")));
 		}
 		let i = [...new Set(r)];
 		return this.audio.retainMusic(t, i), i.forEach((e, t) => t ? this.warmedUp.then(() => this.audio.primeMusic(e)) : this.audio.primeMusic(e)), i;
@@ -4440,7 +4440,7 @@ var Fi = class {
 		if (!e) return r.closeMenu(), !1;
 		if (this.partyMenuOpen) return !0;
 		if (this.mode !== "play" || !n && (this.busy || this.ui.dialog.isOpen || this.photoMode || this.mapOpen || this.journalOpen || this.combat?.locksPlayer || this.ui.cutscene || r.closedFrame === this.engine.time.frame)) return !1;
-		if (!r.count) return this.ui.hud.toast(H("game.toast.noParty"), 1.6), !1;
+		if (!r.count) return this.ui.hud.toast(V("game.toast.noParty"), 1.6), !1;
 		let i = r.openMenu(t);
 		return i && (this.ui.prompt.hide(), this.combat?.onMapOpen()), i;
 	}
@@ -4451,31 +4451,31 @@ var Fi = class {
 		n !== this._partyHudShown && (this._partyHudShown = n, t.setVisible(n), n || t.update([])), n && t.update(this.party.frames());
 	}
 	_levelPlate() {
-		return [W(this.level.name), G(V(this.level, "subtitle"), this.level.subtitle, "title")];
+		return [U(this.level.name), W(B(this.level, "subtitle"), this.level.subtitle, "title")];
 	}
 	_titleTexts() {
 		let e = this.env.title ?? {}, t = this.level;
 		return {
-			title: e.title ? G(V(t, "title.title"), e.title, "title") : W(t.name).toUpperCase(),
-			subtitle: e.subtitle == null ? t.subtitle ? G(V(t, "subtitle"), t.subtitle, "title") : H("game.default.subtitle") : G(V(t, "title.subtitle"), e.subtitle, "title"),
-			prompt: e.prompt ? G(V(t, "title.prompt"), e.prompt, "title") : H("game.default.prompt"),
-			credit: e.credit == null ? H("game.default.credit") : G(V(t, "title.credit"), e.credit, "title")
+			title: e.title ? W(B(t, "title.title"), e.title, "title") : U(t.name).toUpperCase(),
+			subtitle: e.subtitle == null ? t.subtitle ? W(B(t, "subtitle"), t.subtitle, "title") : V("game.default.subtitle") : W(B(t, "title.subtitle"), e.subtitle, "title"),
+			prompt: e.prompt ? W(B(t, "title.prompt"), e.prompt, "title") : V("game.default.prompt"),
+			credit: e.credit == null ? V("game.default.credit") : W(B(t, "title.credit"), e.credit, "title")
 		};
 	}
 	_examineText(e) {
 		let t = e.text;
 		return t?.lines?.length ? {
-			speaker: t.speakerDefault ? H(`game.default.${t.speakerDefault}`) : W(t.speaker),
+			speaker: t.speakerDefault ? V(`game.default.${t.speakerDefault}`) : U(t.speaker),
 			lines: t.lines.map((e, n) => {
 				if (typeof e != "string") return e;
-				if (t.linesDefault) return H(`game.default.${t.linesDefault}`);
+				if (t.linesDefault) return V(`game.default.${t.linesDefault}`);
 				if (!Array.isArray(t.keys)) return e;
 				let r = t.keys[n];
-				return G(typeof r == "string" ? r : "", e);
+				return W(typeof r == "string" ? r : "", e);
 			})
 		} : {
 			speaker: "",
-			lines: [H("game.default.nothing")]
+			lines: [V("game.default.nothing")]
 		};
 	}
 	_storyLevelId() {
@@ -4522,7 +4522,7 @@ var Fi = class {
 	}
 	cycleTime() {
 		let e = this.weather.cycleTime();
-		return this.ui.hud.toast(ve(e.id), 1.6), e.h;
+		return this.ui.hud.toast(be(e.id), 1.6), e.h;
 	}
 	applyLevelStates(e = this.level) {
 		this.thaw ? this.thaw.applyLevelStates(this, e) : this.emit("env", this.envNow = e.environment ?? {});
@@ -4544,13 +4544,13 @@ var Fi = class {
 	}
 	cycleWeather() {
 		let e = this.weather.cycleWeather();
-		return this.ui.hud.toast(H(`game.toast.${this.weather.indoors ? "outside" : "weather"}.${e}`), 1.6), e;
+		return this.ui.hud.toast(V(`game.toast.${this.weather.indoors ? "outside" : "weather"}.${e}`), 1.6), e;
 	}
 	setMusic(e) {
 		return this.musicWanted = !!e, e ? this.audio.startMusic(this.combat ? { track: this.combat.musicTrack } : this._levelMusic()) : this.audio.stopMusic(), this.audio.musicPlaying;
 	}
 	togglePhotoMode({ instant: e = !1 } = {}) {
-		return !this.photoMode && (this.busy || this.ui.dialog.isOpen || this.mode !== "play" || this.mapOpen || this.partyMenuOpen) ? this.photoMode : !this.photoMode && (this.combat?.engaged || this.combat?.locksPlayer) ? (this.ui.hud.toast(H("game.toast.foes"), 1.6), this.photoMode) : (this.photoMode = !this.photoMode, clearTimeout(this._photoTimer), this._timeouts.delete(this._photoTimer), this.photoMode ? (this.ui.prompt.hide(), e ? this.ui.setVisible(!1) : (this.ui.hud.toast(H("game.toast.photo"), 1.6), this._photoTimer = this._later(1.2, () => {
+		return !this.photoMode && (this.busy || this.ui.dialog.isOpen || this.mode !== "play" || this.mapOpen || this.partyMenuOpen) ? this.photoMode : !this.photoMode && (this.combat?.engaged || this.combat?.locksPlayer) ? (this.ui.hud.toast(V("game.toast.foes"), 1.6), this.photoMode) : (this.photoMode = !this.photoMode, clearTimeout(this._photoTimer), this._timeouts.delete(this._photoTimer), this.photoMode ? (this.ui.prompt.hide(), e ? this.ui.setVisible(!1) : (this.ui.hud.toast(V("game.toast.photo"), 1.6), this._photoTimer = this._later(1.2, () => {
 			this.photoMode && this.ui.setVisible(!1);
 		}))) : this.ui.setVisible(!0), this.photoMode);
 	}
@@ -4603,7 +4603,7 @@ var Fi = class {
 		try {
 			await this.ui.fader.fadeOut(1);
 			let e = this.campaign ? this.campaign.hour() : this.lighting.timeOfDay;
-			this.campaign && this.env.clock === !1 || this.weather.setTime(8), this.campaign?.onRest(), this.story?.rested(e), this.audio.playSfx("chime", { volume: .6 }), await ki(.7), await this.ui.fader.fadeIn(1.1), this.ui.hud.toast(H("game.toast.rested"), 2.2);
+			this.campaign && this.env.clock === !1 || this.weather.setTime(8), this.campaign?.onRest(), this.story?.rested(e), this.audio.playSfx("chime", { volume: .6 }), await ji(.7), await this.ui.fader.fadeIn(1.1), this.ui.hud.toast(V("game.toast.rested"), 2.2);
 		} finally {
 			this.busy = e;
 		}
@@ -4650,14 +4650,14 @@ var Fi = class {
 		for (let c = 0; c < s + o.length; c++) {
 			let l = c < s, u = l ? a[c] : o[c - s];
 			if (l ? !u.present : u.disabled) continue;
-			let d = l ? u.interactPoint : u.position, f = l ? u.talkRadius ?? vi : u.radius ?? vi, p = d.x - e.x, m = d.z - e.z, h = Math.hypot(p, m);
+			let d = l ? u.interactPoint : u.position, f = l ? u.talkRadius ?? bi : u.radius ?? bi, p = d.x - e.x, m = d.z - e.z, h = Math.hypot(p, m);
 			if (h > f || Math.abs(d.y - e.y) > 1.3) continue;
 			let g = h > .001 ? (p * t.x + m * t.z) / h : 1, _ = l ? null : u.area, v = !!_ && e.x >= _.minX && e.x <= _.maxX && e.z >= _.minZ && e.z <= _.maxZ, y = h <= .55 || g >= .25 ? h - g * .7 : v ? h + .7 : Infinity;
 			!l && u.storyEvent && (y -= .3);
 			let b = l ? null : u.lookSpan;
 			if (b) {
-				let n = Si(b, e.x, e.z), r = n.x - e.x, i = n.z - e.z, a = Math.hypot(r, i), o = a > .001 ? (r * t.x + i * t.z) / a : 1;
-				o >= yi && (y = Math.min(y, a - o * .7));
+				let n = wi(b, e.x, e.z), r = n.x - e.x, i = n.z - e.z, a = Math.hypot(r, i), o = a > .001 ? (r * t.x + i * t.z) / a : 1;
+				o >= xi && (y = Math.min(y, a - o * .7));
 			}
 			y < n && (n = y, r = l ? u : null, i = l ? null : u);
 		}
@@ -4684,11 +4684,11 @@ var Fi = class {
 				else {
 					let e = this.story?.state, t;
 					e ? t = e.visit(this.story.visitKey(n)) : (t = this.visits.get(n.id) ?? 0, this.visits.set(n.id, t + 1));
-					let r = gi(n);
+					let r = vi(n);
 					await n.talk({
 						say: (e, t = {}) => {
 							let i = t.speaker == null, a = {
-								speaker: i ? mi(n) : W(t.speaker),
+								speaker: i ? gi(n) : U(t.speaker),
 								lines: e,
 								portraitColor: n.def.portraitColor
 							};
@@ -4703,38 +4703,38 @@ var Fi = class {
 				}
 				n.storyFlag && (this.campaign ? this.campaign.setFlag(n.storyFlag) : this.story?.state.setFlag(n.storyFlag));
 			} else {
-				let e = r.lookSpan ? Si(r.lookSpan, this.player.position.x, this.player.position.z) : r.position;
+				let e = r.lookSpan ? wi(r.lookSpan, this.player.position.x, this.player.position.z) : r.position;
 				this.player.faceTowards(e.x, e.z), r.onInteract ? await r.onInteract(this, r) : (r.text?.sfx && r.text.lines?.length && this.audio.playSfx(r.text.sfx, { volume: .6 }), await this.ui.dialog.open(this._examineText(r)));
 			}
 		} catch (e) {
 			this._disposed || console.error("[Luminati] interaction failed:", e);
 		} finally {
-			t === "npc" && n.endTalk(), this.busy = !1, this._talkCooldown = Ti;
+			t === "npc" && n.endTalk(), this.busy = !1, this._talkCooldown = Di;
 		}
 	}
 	update(e) {
 		if (this.mode === "travel") return;
 		let { engine: t, ui: n, rig: r, player: i } = this, a = t.input, o = this.mode === "play", s = this.busy || n.dialog.isOpen;
-		this._talkCooldown > 0 && (this._talkCooldown -= e, !s && a.actionPressed("confirm") && (this._talkCooldown = Math.max(this._talkCooldown, Ei))), o && (a.actionPressed("debug") && n.debug.toggle(), this.mapOpen ? (a.actionPressed("map") || a.actionPressed("cancel")) && this.toggleMap(!1) : this.journalOpen ? (a.actionPressed("journal") || a.actionPressed("cancel")) && this.toggleJournal(!1) : this.partyMenuOpen ? (a.actionPressed("party") || a.actionPressed("cancel")) && (a.consumeAction?.("party"), this.togglePartyMenu(!1)) : !s && !this.photoMode && a.actionPressed("map") ? this.toggleMap(!0) : this.story && !s && !this.photoMode && a.actionPressed("journal") ? this.toggleJournal(!0) : this.party && !s && !this.photoMode && a.actionPressed("party") && (a.consumeAction?.("party"), this.togglePartyMenu(!0)));
+		this._talkCooldown > 0 && (this._talkCooldown -= e, !s && a.actionPressed("confirm") && (this._talkCooldown = Math.max(this._talkCooldown, Oi))), o && (a.actionPressed("debug") && n.debug.toggle(), this.mapOpen ? (a.actionPressed("map") || a.actionPressed("cancel")) && this.toggleMap(!1) : this.journalOpen ? (a.actionPressed("journal") || a.actionPressed("cancel")) && this.toggleJournal(!1) : this.partyMenuOpen ? (a.actionPressed("party") || a.actionPressed("cancel")) && (a.consumeAction?.("party"), this.togglePartyMenu(!1)) : !s && !this.photoMode && a.actionPressed("map") ? this.toggleMap(!0) : this.story && !s && !this.photoMode && a.actionPressed("journal") ? this.toggleJournal(!0) : this.party && !s && !this.photoMode && a.actionPressed("party") && (a.consumeAction?.("party"), this.togglePartyMenu(!0)));
 		let c = this.mapOpen || this.journalOpen || this.partyMenuOpen;
 		if (o && !c && (a.actionPressed("help") && n.hud.toggleHelp(), !s && ((a.actionPressed("photo") || this.photoMode && a.actionPressed("cancel")) && this.togglePhotoMode(), this.controls.time && a.actionPressed("time") && this.cycleTime(), this.controls.weather && a.actionPressed("weather") && this.cycleWeather(), a.actionPressed("music")))) {
 			let e = this.setMusic(!this.audio.musicPlaying);
-			n.hud.toast(H(e ? "game.toast.musicOn" : "game.toast.musicOff"), 1.4);
+			n.hud.toast(V(e ? "game.toast.musicOn" : "game.toast.musicOff"), 1.4);
 		}
 		let l = this.combat, u = o && !s && !c && !this.photoMode, d = !u && o && !c && !this.photoMode && !!this.story?.run;
-		i.frozen = !o || s || c || !!l && (this.photoMode || l.locksPlayer), l?.update(e, u, d), i.update(e, a), l?.afterPlayer(e, u, d), this.story?.update(e), o && !c && this.party?.update(e), i.setSilhouetteLevel(oe(1, .5, this.lighting.nightFactor));
+		i.frozen = !o || s || c || !!l && (this.photoMode || l.locksPlayer), l?.update(e, u, d), i.update(e, a), l?.afterPlayer(e, u, d), this.story?.update(e), o && !c && this.party?.update(e), i.setSilhouetteLevel(ce(1, .5, this.lighting.nightFactor));
 		let f = !!this.story && (this.story.ownsCamera || this.rig.framed);
 		(this.party || this.story) && i.fadeSilhouette(f || !!this.party?.coversPlayer, f ? 1 : e);
 		let p = s ? i.talkSprite : null;
 		if (o && !s && !this.photoMode && !c && !l?.locksPlayer) {
 			let e = this._findInteractable();
-			e ? (e.kind === "npc" ? (n.prompt.show(e.npc.sprite, H("game.prompt.talk"), { offsetY: e.npc.def.preset === "child" ? 1.9 : 2.35 }), p = e.npc.sprite) : n.prompt.show(e.it.prompt, hi(e.it)), this._talkCooldown <= 0 && a.actionPressed("confirm") && (a.consumeAction?.("confirm"), this._interact(e))) : n.prompt.hide();
+			e ? (e.kind === "npc" ? (n.prompt.show(e.npc.sprite, V("game.prompt.talk"), { offsetY: e.npc.def.preset === "child" ? 1.9 : 2.35 }), p = e.npc.sprite) : n.prompt.show(e.it.prompt, _i(e.it)), this._talkCooldown <= 0 && a.actionPressed("confirm") && (a.consumeAction?.("confirm"), this._interact(e))) : n.prompt.hide();
 		} else s || n.prompt.hide();
 		i.setTalkSilhouette(f ? null : p), this.campaign && o && this.campaign.update(e, { blocked: s || this.photoMode || c || !!l?.locksPlayer });
 		let m = i.position, h = this._npcCtx, g = this._throttle;
 		if (g) {
 			g.frame++;
-			let t = Math.max(Ci, r.distance * 1.15 + 4);
+			let t = Math.max(Ti, r.distance * 1.15 + 4);
 			g.far2 = t * t, this.critters.throttle && (this.critters.throttle.far2 = g.far2);
 			let n = r.focusPoint;
 			for (let t = 0; t < this.npcs.length; t++) {
@@ -4755,9 +4755,9 @@ var Fi = class {
 		let e = this.rig, t = this.player.position;
 		if (!this.photoMode && !e.framed) {
 			let n = this.highGround;
-			e.pitchTarget = (n && t.y > n.minY ? n.pitch : this.camera.pitch) * z;
+			e.pitchTarget = (n && t.y > n.minY ? n.pitch : this.camera.pitch) * R;
 			let r = this.level.width, i = Math.min(9, r / 5), a = 5 / 9 * i, o = P(r - i, r - a, t.x), s = P(i, a, t.x);
-			(o > 0 || s > 0) && (e.yawTarget = M(e.yawTarget, -(60 - 50 * s) * z, (60 - 50 * o) * z));
+			(o > 0 || s > 0) && (e.yawTarget = M(e.yawTarget, -(60 - 50 * s) * R, (60 - 50 * o) * R));
 		}
 		this._updateCameraBounds();
 	}
@@ -4765,7 +4765,7 @@ var Fi = class {
 		let e = this.rig.distance, t = this.camera, { near: n, mid: r, far: i } = this.cameraBounds, a, o, s;
 		e <= t.distance ? (a = n, o = r, s = M((e - t.minDistance) / Math.max(1e-6, t.distance - t.minDistance))) : (a = r, o = i, s = M((e - t.distance) / Math.max(1e-6, t.maxDistance - t.distance)));
 		let c = this.rig.bounds;
-		c.minX = oe(a.minX, o.minX, s), c.maxX = oe(a.maxX, o.maxX, s), c.minZ = oe(a.minZ, o.minZ, s), c.maxZ = oe(a.maxZ, o.maxZ, s);
+		c.minX = ce(a.minX, o.minX, s), c.maxX = ce(a.maxX, o.maxX, s), c.minZ = ce(a.minZ, o.minZ, s), c.maxZ = ce(a.maxZ, o.maxZ, s);
 	}
 	_playerFocusDistance() {
 		let e = this.player.position, t = this.engine.camera, n = this._focusPos.set(e.x, e.y + .9, e.z).applyMatrix4(t.matrixWorldInverse);
@@ -4775,7 +4775,7 @@ var Fi = class {
 		let t = this._cine;
 		t.t += e;
 		let n = t.t * .045;
-		t.target.set(t.x + Math.sin(n) * t.driftX, t.y, t.z + Math.sin(n * .7 + 1) * t.driftZ), this.rig.yawTarget = Math.sin(t.t * .05) * 18 * z, this.rig.distanceTarget = t.distance + Math.sin(t.t * .07) * 3;
+		t.target.set(t.x + Math.sin(n) * t.driftX, t.y, t.z + Math.sin(n * .7 + 1) * t.driftZ), this.rig.yawTarget = Math.sin(t.t * .05) * 18 * R, this.rig.distanceTarget = t.distance + Math.sin(t.t * .07) * 3;
 	}
 	_waterfallFx(e) {
 		this._burstTimer -= e, this._sparkleTimer -= e;
@@ -4804,10 +4804,10 @@ var Fi = class {
 		if (this._regionTimer -= e, this._regionTimer > 0 || this.mode !== "play") return;
 		this._regionTimer = .3;
 		let t = this.player.position, n = this.regions.find((e) => t.x >= e.minX && t.x < e.maxX && t.z >= e.minZ && t.z < e.maxZ && (e.minY == null || t.y > e.minY));
-		if (n && (n.name !== this.region && (this.region = n.name, this.ui.hud.setLocation(W(n.name), n.sub ? G(V(n, "sub"), n.sub, "title") : W(this.level.name))), n.banner && !this._bannersShown.has(n.name) && !this.story?.run)) {
+		if (n && (n.name !== this.region && (this.region = n.name, this.ui.hud.setLocation(U(n.name), n.sub ? W(B(n, "sub"), n.sub, "title") : U(this.level.name))), n.banner && !this._bannersShown.has(n.name) && !this.story?.run)) {
 			this._bannersShown.add(n.name);
-			let e = W(n.name);
-			this.ui.banner.show(e, G(V(n, "banner"), n.banner, "title"), { duration: 2.6 }), this._regionBanner = {
+			let e = U(n.name);
+			this.ui.banner.show(e, W(B(n, "banner"), n.banner, "title"), { duration: 2.6 }), this._regionBanner = {
 				name: n.name,
 				title: e,
 				at: this.engine.time.elapsed
@@ -4853,13 +4853,13 @@ var Fi = class {
 			pixelRatio: +this.engine.pixelRatio.toFixed(3),
 			gpuMs: +this.resolution.gpuMs.toFixed(2),
 			camera: {
-				yaw: +(this.rig.yaw / z).toFixed(1),
-				pitch: +(this.rig.pitch / z).toFixed(1),
+				yaw: +(this.rig.yaw / R).toFixed(1),
+				pitch: +(this.rig.pitch / R).toFixed(1),
 				distance: +this.rig.distance.toFixed(2),
 				focus: this.rig.focusPoint.toArray().map((e) => +e.toFixed(2))
 			},
 			inventory: { ...this.inventory },
-			lang: dt(),
+			lang: pt(),
 			fonts: this._fontsState()
 		};
 		this.combat?.loaded && (r.combat = this.combat.state());
@@ -4964,7 +4964,7 @@ var Fi = class {
 		}
 		window.__game?.game === this && delete window.__game;
 	}
-}, Ii = .25, Li = /* @__PURE__ */ new Set([
+}, Ri = .25, zi = /* @__PURE__ */ new Set([
 	"dust",
 	"fireflies",
 	"sparkle"
@@ -4973,48 +4973,48 @@ Object.assign(globalThis, { __emberGround: {
 	foliage(e) {
 		return this.scaled += e.length, e.map((e) => ({
 			...e,
-			scale: (e.scale ?? 1) * Ii
+			scale: (e.scale ?? 1) * Ri
 		}));
 	},
 	scaled: 0,
-	size: Ii,
-	keeps: (e) => e?.emberExhibit === !0 || !Li.has(e?.preset),
+	size: Ri,
+	keeps: (e) => e?.emberExhibit === !0 || !zi.has(e?.preset),
 	dust: !1
 } });
 //#endregion
 //#region ember3d/world.js
-var Y = "", Ri = 1, zi = 16 * Math.SQRT2, Bi = {
+var Bi = "", Vi = 1, J = 16 * Math.SQRT2, Hi = {
 	billboard: "spherical",
 	normalUp: .6,
 	wrap: .6,
 	roundness: .35,
 	emissive: "#ffe9d2",
 	emissiveIntensity: .2
-}, Vi = "en", Hi = null, Ui = null, Wi = null, Gi = null, X = null, Ki = null, Z = 0, qi = "soft", Ji = 45, Yi = 30, Xi = /* @__PURE__ */ new Map(), Zi = /* @__PURE__ */ new Map(), Qi = (e) => {
-	let t = Xi.get(e);
+}, Ui = "en", Wi = null, Gi = null, Ki = null, qi = null, Y = null, Ji = null, X = 0, Yi = "soft", Xi = 45, Zi = 30, Qi = /* @__PURE__ */ new Map(), $i = /* @__PURE__ */ new Map(), ea = (e) => {
+	let t = Qi.get(e);
 	return t || (t = new Promise((t, n) => {
 		let r = new Image();
 		r.decoding = "async", r.onload = () => t(r), r.onerror = n, r.src = e;
-	}), Xi.set(e, t)), t;
-}, $i = (e) => {
-	let t = Zi.get(e);
-	return t || (t = fetch(e).then((e) => e.ok ? e.json() : null).catch(() => null), Zi.set(e, t)), t;
-}, ea = /* @__PURE__ */ new Map();
-function ta(e) {
-	return ea.has(e) ? ea.get(e) : (ea.set(e, null), Promise.all([$i(`${Y}actors/${e}.json`), Qi(`${Y}actors/${e}.alb.png`)]).then(([t, n]) => {
+	}), Qi.set(e, t)), t;
+}, ta = (e) => {
+	let t = $i.get(e);
+	return t || (t = fetch(e).then((e) => e.ok ? e.json() : null).catch(() => null), $i.set(e, t)), t;
+}, na = /* @__PURE__ */ new Map();
+function ra(e) {
+	return na.has(e) ? na.get(e) : (na.set(e, null), Promise.all([ta(`${Bi}actors/${e}.json`), ea(`${Bi}actors/${e}.alb.png`)]).then(([t, n]) => {
 		if (!t) {
-			ea.set(e, !1);
+			na.set(e, !1);
 			return;
 		}
-		let r = new D(n);
-		r.magFilter = r.minFilter = f, r.generateMipmaps = !1, r.colorSpace = _, r.wrapS = r.wrapT = m, r.needsUpdate = !0, r.name = `ember-actor:${e}`, ea.set(e, {
+		let r = new ee(n);
+		r.magFilter = r.minFilter = f, r.generateMipmaps = !1, r.colorSpace = _, r.wrapS = r.wrapT = m, r.needsUpdate = !0, r.name = `ember-actor:${e}`, na.set(e, {
 			meta: t,
 			tex: r,
 			sheets: /* @__PURE__ */ new Map()
 		});
-	}).catch(() => ea.set(e, !1)), null);
+	}).catch(() => na.set(e, !1)), null);
 }
-function na(e, t) {
+function ia(e, t) {
 	let n = t.toFixed(3), r = e.sheets.get(n);
 	if (!r) {
 		let i = e.meta;
@@ -5024,7 +5024,7 @@ function na(e, t) {
 			frameHeight: i.ch,
 			columns: i.frames,
 			rows: i.dirs,
-			pixelsPerUnit: zi / t,
+			pixelsPerUnit: J / t,
 			anchor: [i.ax / i.cw, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -5039,42 +5039,42 @@ function na(e, t) {
 	}
 	return r;
 }
-var ra = /* @__PURE__ */ new Map();
-function ia(e, t) {
-	let n = ra.get(e);
-	for (n || ra.set(e, n = []); n.length <= t;) {
-		let t = new B(e, { ...Bi });
-		t.visible = !1, X.engine.scene.add(t), n.push(t);
+var aa = /* @__PURE__ */ new Map();
+function oa(e, t) {
+	let n = aa.get(e);
+	for (n || aa.set(e, n = []); n.length <= t;) {
+		let t = new z(e, { ...Hi });
+		t.visible = !1, Y.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function aa(e, t, n, r, i) {
-	let a = 2 * r / i / Math.SQRT2, o = X.tileMap, s = t + a, c = n + a;
+function sa(e, t, n, r, i) {
+	let a = 2 * r / i / Math.SQRT2, o = Y.tileMap, s = t + a, c = n + a;
 	e.position.set(s, o.getHeight(t, n), c);
 }
-var oa = [];
-async function sa(e, t) {
-	for (let e of oa) X.engine.scene.remove(e), e.dispose?.();
-	if (oa = [], !e?.length) return;
-	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => $i(`${Y}env/${e}.json`))), i = (e) => {
+var ca = [];
+async function la(e, t) {
+	for (let e of ca) Y.engine.scene.remove(e), e.dispose?.();
+	if (ca = [], !e?.length) return;
+	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => ta(`${Bi}env/${e}.json`))), i = (e) => {
 		for (let t = 0; t < n.length; t++) {
 			let i = r[t]?.sprites?.[e];
 			if (i) return [n[t], i];
 		}
 		return null;
-	}, a = Z;
+	}, a = X;
 	for (let t of e) {
 		if (t.canvas) {
-			Ea(t);
+			Oa(t);
 			continue;
 		}
 		let e = i(t.id);
 		if (!e) continue;
-		let [n, r] = e, o = await Qi(`${Y}env/${n}.alb.png`).catch(() => null);
-		if (!o || a !== Z) return;
+		let [n, r] = e, o = await ea(`${Bi}env/${n}.alb.png`).catch(() => null);
+		if (!o || a !== X) return;
 		let s = document.createElement("canvas");
 		s.width = r.w, s.height = r.h, s.getContext("2d").drawImage(o, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
-		let c = new x(s);
+		let c = new S(s);
 		c.magFilter = c.minFilter = f, c.generateMipmaps = !1, c.colorSpace = _;
 		let l = {
 			texture: c,
@@ -5082,7 +5082,7 @@ async function sa(e, t) {
 			frameHeight: r.h,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: zi,
+			pixelsPerUnit: J,
 			anchor: [r.ax / r.w, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -5096,71 +5096,71 @@ async function sa(e, t) {
 			dispose() {
 				c.dispose();
 			}
-		}, u = new B(l, {
-			...Bi,
+		}, u = new z(l, {
+			...Hi,
 			castShadow: !1,
 			blobShadow: !1
 		});
-		u.name = `ember:${n}:${t.id}`, aa(u, t.x, t.z, r.h - r.ay, zi), X.engine.scene.add(u), oa.push(u), u.update(0, X.engine.camera);
+		u.name = `ember:${n}:${t.id}`, sa(u, t.x, t.z, r.h - r.ay, J), Y.engine.scene.add(u), ca.push(u), u.update(0, Y.engine.camera);
 	}
 }
-var ca = (e, t) => {
+var ua = (e, t) => {
 	let n = new g(e), r = n.r * .299 + n.g * .587 + n.b * .114;
 	return n.r += (r - n.r) * t, n.g += (r - n.g) * t, n.b += (r - n.b) * t, "#" + n.getHexString();
-}, la = (e, t) => {
+}, da = (e, t) => {
 	let n = new g(e);
 	return n.multiplyScalar(t), "#" + n.getHexString();
-}, ua = me.map((e) => {
+}, fa = ge.map((e) => {
 	let t = e.night ?? 0;
 	return {
 		...e,
-		top: la(ca(e.top, .3), .8),
-		horizon: la(ca(e.horizon, .3), .6),
-		bottom: la(ca(e.bottom, .3), .75),
-		sun: ca(e.sun, .3),
-		hemiSky: ca(e.hemiSky, .45),
-		hemiGround: ca(e.hemiGround, .3),
+		top: da(ua(e.top, .3), .8),
+		horizon: da(ua(e.horizon, .3), .6),
+		bottom: da(ua(e.bottom, .3), .75),
+		sun: ua(e.sun, .3),
+		hemiSky: ua(e.hemiSky, .45),
+		hemiGround: ua(e.hemiGround, .3),
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.86 - .08 * t) * (e.t >= 18 && e.t <= 20.5 ? 1.4 : 1),
 		exp: e.exp * .97,
 		fog: e.fog * (.5 + .3 * t)
 	};
-}), da = {
+}), pa = {
 	saturation: .92,
 	exposure: .9,
 	contrast: 1.06,
 	vignette: .78
-}, fa = !1;
-function pa() {
-	let e = X?.postfx?.settings?.grade, t = X?.lighting?.state?.night ?? 1;
-	fa && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * ma * ha);
+}, ma = !1;
+function ha() {
+	let e = Y?.postfx?.settings?.grade, t = Y?.lighting?.state?.night ?? 1;
+	ma && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * ga * _a);
 }
-var ma = 1, ha = 1, ga = 1.6, _a = 1, va = Bi.emissiveIntensity, ya = 0, ba = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
-function xa() {
-	let e = X?.lighting, t = e?.hemi, n = e?.sun;
-	return ya = (t ? ba(t.color) * t.intensity : 0) + (n ? ba(n.color) * n.intensity * .5 : 0), Math.round(Math.min(_a, Math.max(Bi.emissiveIntensity, ga - ya)) * 100) / 100;
+var ga = 1, _a = 1, va = 1.6, ya = 1, ba = Hi.emissiveIntensity, xa = 0, Sa = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
+function Ca() {
+	let e = Y?.lighting, t = e?.hemi, n = e?.sun;
+	return xa = (t ? Sa(t.color) * t.intensity : 0) + (n ? Sa(n.color) * n.intensity * .5 : 0), Math.round(Math.min(ya, Math.max(Hi.emissiveIntensity, va - xa)) * 100) / 100;
 }
-var Sa = null, Ca = "default";
-function wa(e, t) {
-	let n = X?.lighting;
+var wa = null, Ta = "default";
+function Ea(e, t) {
+	let n = Y?.lighting;
 	if (!n) return;
-	let r = e.environment || {}, i = X.postfx?.settings?.grade;
-	if (i && (Sa ||= { ...i }, Object.assign(i, Sa, t === "vale" ? da : {})), fa = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
+	let r = e.environment || {}, i = Y.postfx?.settings?.grade;
+	if (i && (wa ||= { ...i }, Object.assign(i, wa, t === "vale" ? pa : {})), ma = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
 	let a = t === "vale" ? "dusky" : "default";
-	n.setKeyframes(a === "dusky" ? ua : me), Ca = a;
+	n.setKeyframes(a === "dusky" ? fa : ge), Ta = a;
 }
-var Ta = /* @__PURE__ */ new Map();
-function Ea(e) {
-	let t = Ta.get(e.canvas);
+var Da = /* @__PURE__ */ new Map();
+function Oa(e) {
+	let t = Da.get(e.canvas);
 	if (!t) {
-		let n = new x(e.canvas);
+		let n = new S(e.canvas);
 		n.magFilter = n.minFilter = f, n.generateMipmaps = !1, n.colorSpace = _, t = {
 			texture: n,
 			frameWidth: e.canvas.width,
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: zi,
+			pixelsPerUnit: J,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -5171,37 +5171,37 @@ function Ea(e) {
 				loop: !1
 			} },
 			name: `ember-prop:${e.id}`
-		}, Ta.set(e.canvas, t);
+		}, Da.set(e.canvas, t);
 	}
-	let n = new B(t, {
-		...Bi,
+	let n = new z(t, {
+		...Hi,
 		emissiveIntensity: .3,
 		castShadow: !1,
 		blobShadow: !e.flat
 	});
-	n.name = `ember:prop:${e.id}`, aa(n, e.x, e.z, e.canvas.height - e.ay, zi), e.flat && n.traverse((e) => {
+	n.name = `ember:prop:${e.id}`, sa(n, e.x, e.z, e.canvas.height - e.ay, J), e.flat && n.traverse((e) => {
 		e.renderOrder = -1, e.material && (e.material.depthWrite = !1);
-	}), X.engine.scene.add(n), oa.push(n), n.update(0, X.engine.camera);
+	}), Y.engine.scene.add(n), ca.push(n), n.update(0, Y.engine.camera);
 }
-var Da = /* @__PURE__ */ new Map(), Oa = "vale";
-function ka(e) {
-	if (Da.has(e)) return Da.get(e);
-	Da.set(e, null);
-	let t = ["env", `town-${Oa}`];
-	return Promise.all(t.map((e) => $i(`${Y}env/${e}.json`))).then(async (n) => {
+var ka = /* @__PURE__ */ new Map(), Aa = "vale";
+function ja(e) {
+	if (ka.has(e)) return ka.get(e);
+	ka.set(e, null);
+	let t = ["env", `town-${Aa}`];
+	return Promise.all(t.map((e) => ta(`${Bi}env/${e}.json`))).then(async (n) => {
 		for (let r = 0; r < t.length; r++) {
 			let i = n[r]?.sprites?.[e];
 			if (!i) continue;
-			let a = await Qi(`${Y}env/${t[r]}.alb.png`), o = document.createElement("canvas");
+			let a = await ea(`${Bi}env/${t[r]}.alb.png`), o = document.createElement("canvas");
 			o.width = i.w, o.height = i.h, o.getContext("2d").drawImage(a, i.x, i.y, i.w, i.h, 0, 0, i.w, i.h);
-			let s = new x(o);
-			s.magFilter = s.minFilter = f, s.generateMipmaps = !1, s.colorSpace = _, Da.set(e, {
+			let s = new S(o);
+			s.magFilter = s.minFilter = f, s.generateMipmaps = !1, s.colorSpace = _, ka.set(e, {
 				texture: s,
 				frameWidth: i.w,
 				frameHeight: i.h,
 				columns: 1,
 				rows: 1,
-				pixelsPerUnit: zi,
+				pixelsPerUnit: J,
 				anchor: [i.ax / i.w, 0],
 				below: i.h - i.ay,
 				animations: { idle_down: {
@@ -5216,15 +5216,90 @@ function ka(e) {
 			});
 			return;
 		}
-		Da.set(e, !1);
-	}).catch(() => Da.set(e, !1)), null;
+		ka.set(e, !1);
+	}).catch(() => ka.set(e, !1)), null;
 }
-var Aa = [];
-function ja(e, t) {
-	let n = Aa[e];
-	return n && n.sheet !== t && (X.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new B(t, { ...Bi }), X.engine.scene.add(n), Aa[e] = n), n.material.emissiveIntensity !== va && (n.material.emissiveIntensity = va), n;
+var Ma = /* @__PURE__ */ new WeakMap();
+function Na(e) {
+	let t = Ma.get(e.canvas);
+	if (!t) {
+		let n = new S(e.canvas);
+		n.magFilter = n.minFilter = f, n.generateMipmaps = !1, n.colorSpace = _, t = {
+			texture: n,
+			frameWidth: e.canvas.width,
+			frameHeight: e.canvas.height,
+			columns: 1,
+			rows: 1,
+			pixelsPerUnit: J,
+			anchor: [e.ax / e.canvas.width, 0],
+			animations: { idle_down: {
+				frames: [{
+					col: 0,
+					row: 0
+				}],
+				fps: 1,
+				loop: !1
+			} },
+			name: "ember-bit"
+		}, Ma.set(e.canvas, t);
+	}
+	return t;
 }
-var Ma = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", Na = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", Q = {
+function Pa(e, t) {
+	let n = aa.get(e);
+	for (n || aa.set(e, n = []); n.length <= t;) {
+		let t = new z(e, {
+			...Hi,
+			castShadow: !1,
+			blobShadow: !1
+		});
+		t.visible = !1, Y.engine.scene.add(t), n.push(t);
+	}
+	return n[t];
+}
+var Z = {
+	mesh: null,
+	id: "",
+	cap: 0
+};
+function Fa(e) {
+	if (!e || !e.cells.length) {
+		Z.mesh && (Z.mesh.visible = !1), Z.id = "";
+		return;
+	}
+	if (e.id === Z.id && Z.mesh) {
+		Z.mesh.visible = !0;
+		return;
+	}
+	let n = e.cells.length / 3;
+	if (!Z.mesh || Z.cap < n) {
+		Z.mesh && (Y.engine.scene.remove(Z.mesh), Z.mesh.geometry.dispose(), Z.mesh.material.dispose());
+		let e = new v(.5, .5);
+		e.rotateX(-Math.PI / 2);
+		let r = new h({
+			transparent: !0,
+			opacity: .72,
+			depthWrite: !1,
+			polygonOffset: !0,
+			polygonOffsetFactor: -2,
+			polygonOffsetUnits: -2,
+			toneMapped: !1
+		});
+		Z.cap = Math.max(256, Math.ceil(n * 1.5)), Z.mesh = new t(e, r, Z.cap), Z.mesh.renderOrder = 2, Z.mesh.frustumCulled = !1, Y.engine.scene.add(Z.mesh);
+	}
+	let r = new o(), i = new g().setRGB(16 / 255, 54 / 255, 64 / 255, _), a = new g().setRGB(40 / 255, 92 / 255, 104 / 255, _);
+	for (let t = 0; t < n; t++) {
+		let n = e.cells[t * 3], o = e.cells[t * 3 + 1];
+		r.makeTranslation(n, Y.tileMap.getHeight(n, o) + .035, o), Z.mesh.setMatrixAt(t, r), Z.mesh.setColorAt(t, e.cells[t * 3 + 2] ? a : i);
+	}
+	Z.mesh.count = n, Z.mesh.instanceMatrix.needsUpdate = !0, Z.mesh.instanceColor && (Z.mesh.instanceColor.needsUpdate = !0), Z.mesh.visible = !0, Z.id = e.id;
+}
+var Ia = [];
+function La(e, t) {
+	let n = Ia[e];
+	return n && n.sheet !== t && (Y.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new z(t, { ...Hi }), Y.engine.scene.add(n), Ia[e] = n), n.material.emissiveIntensity !== ba && (n.material.emissiveIntensity = ba), n;
+}
+var Ra = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", za = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", Q = {
 	scene: null,
 	cam: null,
 	mat: null,
@@ -5232,12 +5307,12 @@ var Ma = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main()
 	on: !1,
 	keyed: !1
 };
-function Pa() {
-	if (!Q.on || !X) return;
-	let e = X.engine.renderer, t = e.autoClear, n = Q.mat.uniforms, r = X.engine.camera;
-	n.tDepth.value = X.postfx?.depthTexture || null, n.uKey.value.w = Q.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(Q.scene, Q.cam), e.autoClear = t;
+function Ba() {
+	if (!Q.on || !Y) return;
+	let e = Y.engine.renderer, t = e.autoClear, n = Q.mat.uniforms, r = Y.engine.camera;
+	n.tDepth.value = Y.postfx?.depthTexture || null, n.uKey.value.w = Q.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(Q.scene, Q.cam), e.autoClear = t;
 }
-function Fa(t) {
+function Va(t) {
 	if (!t || !t.emi) {
 		Q.on = !1;
 		return;
@@ -5249,27 +5324,27 @@ function Fa(t) {
 	}
 	if (Q.on = a, a) {
 		if (!Q.scene) {
-			Q.scene = new S(), Q.cam = new p(), Q.mat = new v({
-				vertexShader: Ma,
-				fragmentShader: Na,
+			Q.scene = new C(), Q.cam = new p(), Q.mat = new y({
+				vertexShader: Ra,
+				fragmentShader: za,
 				transparent: !0,
 				depthTest: !1,
 				depthWrite: !1,
 				blending: 2,
 				uniforms: {
 					tEmi: { value: null },
-					uTexel: { value: new y() },
+					uTexel: { value: new b() },
 					uRect: { value: new i() },
-					uView: { value: new y() },
+					uView: { value: new b() },
 					tDepth: { value: null },
-					uBuf: { value: new y(1, 1) },
+					uBuf: { value: new b(1, 1) },
 					uInvVP: { value: new o() },
 					uKey: { value: new i() },
 					uFloor: { value: 1.2 }
 				}
 			});
-			let t = new C();
-			t.setAttribute("position", new b([
+			let t = new w();
+			t.setAttribute("position", new x([
 				0,
 				0,
 				0,
@@ -5291,9 +5366,9 @@ function Fa(t) {
 				3
 			]);
 			let n = new e(t, Q.mat);
-			n.frustumCulled = !1, Q.scene.add(n), X.engine.events.on("afterRender", Pa);
+			n.frustumCulled = !1, Q.scene.add(n), Y.engine.events.on("afterRender", Ba);
 		}
-		(!Q.tex || Q.tex.image.width !== t.w || Q.tex.image.height !== t.h || Q.tex.image.data !== t.emi) && (Q.tex?.dispose(), Q.tex = new E(t.emi, t.w, t.h, l), Q.tex.flipY = !1, Q.tex.magFilter = Q.tex.minFilter = n, Q.tex.generateMipmaps = !1, Q.mat.uniforms.tEmi.value = Q.tex, Q.mat.uniforms.uTexel.value.set(1 / t.w, 1 / t.h)), Q.tex.needsUpdate = !0, Q.mat.uniforms.uRect.value.set(t.x, t.y, t.w * t.px, t.h * t.px), Q.mat.uniforms.uView.value.set(innerWidth, innerHeight), Q.keyed = !!t.key, t.key && Q.mat.uniforms.uKey.value.set(t.key.base, t.key.step, t.key.origin, 1);
+		(!Q.tex || Q.tex.image.width !== t.w || Q.tex.image.height !== t.h || Q.tex.image.data !== t.emi) && (Q.tex?.dispose(), Q.tex = new D(t.emi, t.w, t.h, l), Q.tex.flipY = !1, Q.tex.magFilter = Q.tex.minFilter = n, Q.tex.generateMipmaps = !1, Q.mat.uniforms.tEmi.value = Q.tex, Q.mat.uniforms.uTexel.value.set(1 / t.w, 1 / t.h)), Q.tex.needsUpdate = !0, Q.mat.uniforms.uRect.value.set(t.x, t.y, t.w * t.px, t.h * t.px), Q.mat.uniforms.uView.value.set(innerWidth, innerHeight), Q.keyed = !!t.key, t.key && Q.mat.uniforms.uKey.value.set(t.key.base, t.key.step, t.key.origin, 1);
 	}
 }
 var $ = {
@@ -5303,42 +5378,42 @@ var $ = {
 	ppu: 22,
 	ready: !1
 };
-function Ia() {
-	let e = X.rig, t = X.engine.camera, n = innerHeight / (2 * $.ppu * Math.tan(Ri / 2 * Math.PI / 180));
-	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = Ji * Math.PI / 180, e.pitch = e.pitchTarget = Yi * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set($.x, $.y, $.z), (Math.abs(t.fov - Ri) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Ri, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), ni(n - 7);
-	let r = X.postfx?.settings?.dof;
+function Ha() {
+	let e = Y.rig, t = Y.engine.camera, n = innerHeight / (2 * $.ppu * Math.tan(Vi / 2 * Math.PI / 180));
+	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = Xi * Math.PI / 180, e.pitch = e.pitchTarget = Zi * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set($.x, $.y, $.z), (Math.abs(t.fov - Vi) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Vi, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), ii(n - 7);
+	let r = Y.postfx?.settings?.dof;
 	r && (r.autoFocus = !1, r.focusDistance = n);
 }
-async function La(e) {
-	await Ui, Object.assign(globalThis, {
-		__emberUiRoot: Gi,
+async function Ua(e) {
+	await Gi, Object.assign(globalThis, {
+		__emberUiRoot: qi,
 		__emberInputTarget: new EventTarget(),
 		__emberSilent: !0
-	}), X = new Fi({
-		container: Wi,
+	}), Y = new Li({
+		container: Ki,
 		level: e,
 		source: "emberfall",
 		autostart: !0,
-		lang: Vi,
-		fonts: Hi,
+		lang: Ui,
+		fonts: Wi,
 		look: "diorama"
-	}), await X.init(() => {}), X.audio && (X.audio.muted = !0), X._updatePlayCamera = () => {}, X._updateCameraBounds = () => {}, X.start(), await X.warmedUp, X.engine.stop(), X.engine.events.on("lateUpdate", () => {
-		X && Ia();
-	}), X.engine.events.on("update", pa), X.engine.events.on("update", () => {
-		let e = Qa, t = X?.lighting;
+	}), await Y.init(() => {}), Y.audio && (Y.audio.muted = !0), Y._updatePlayCamera = () => {}, Y._updateCameraBounds = () => {}, Y.start(), await Y.warmedUp, Y.engine.stop(), Y.engine.events.on("lateUpdate", () => {
+		Y && Ha();
+	}), Y.engine.events.on("update", ha), Y.engine.events.on("update", () => {
+		let e = io, t = Y?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
-	}), X.lighting && (X.lighting._shadowExtent = Math.max(X.lighting._shadowExtent || 22, 34));
+	}), Y.lighting && (Y.lighting._shadowExtent = Math.max(Y.lighting._shadowExtent || 22, 34));
 }
-function Ra() {
-	let e = X.player;
+function Wa() {
+	let e = Y.player;
 	e && (e.sprite && (e.sprite.visible = !1), e.visible = !1);
 }
-var za = new w(.46, .6, 40), Ba = new T(1, 40), Va = new w(.8, 1, 40), Ha = (() => {
+var Ga = new T(.46, .6, 40), Ka = new E(1, 40), qa = new T(.8, 1, 40), Ja = (() => {
 	let e = [];
-	for (let t = 0; t < 4; t++) e.push(new w(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
-	return Ua(e);
+	for (let t = 0; t < 4; t++) e.push(new T(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
+	return Ya(e);
 })();
-function Ua(e) {
+function Ya(e) {
 	let t = [], n = [], r = 0;
 	for (let i of e) {
 		let e = i.getAttribute("position"), a = i.getIndex();
@@ -5346,69 +5421,69 @@ function Ua(e) {
 		for (let e = 0; e < a.count; e++) n.push(a.getX(e) + r);
 		r += e.count, i.dispose();
 	}
-	let i = new C();
-	return i.setAttribute("position", new b(t, 3)), i.setIndex(n), i;
+	let i = new w();
+	return i.setAttribute("position", new x(t, 3)), i.setIndex(n), i;
 }
-var Wa = () => new h({
+var Xa = () => new h({
 	transparent: !0,
 	depthWrite: !1,
 	polygonOffset: !0,
 	polygonOffsetFactor: -2,
 	polygonOffsetUnits: -2,
 	toneMapped: !1
-}), Ga = {
+}), Za = {
 	ring: [],
 	disc: [],
 	rim: [],
 	focus: []
-}, Ka = {
-	ring: za,
-	disc: Ba,
-	rim: Va,
-	focus: Ha
+}, Qa = {
+	ring: Ga,
+	disc: Ka,
+	rim: qa,
+	focus: Ja
 };
-function qa(t, n) {
-	let r = Ga[t];
+function $a(t, n) {
+	let r = Za[t];
 	for (; r.length <= n;) {
-		let n = new e(Ka[t], Wa());
-		n.rotation.x = -Math.PI / 2, n.renderOrder = 2, n.visible = !1, X.engine.scene.add(n), r.push(n);
+		let n = new e(Qa[t], Xa());
+		n.rotation.x = -Math.PI / 2, n.renderOrder = 2, n.visible = !1, Y.engine.scene.add(n), r.push(n);
 	}
 	return r[n];
 }
-function Ja(e, t, n, r, i, a) {
-	e.visible = a > .01, e.visible && (e.position.set(t, X.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, _), e.material.opacity = a);
+function eo(e, t, n, r, i, a) {
+	e.visible = a > .01, e.visible && (e.position.set(t, Y.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, _), e.material.opacity = a);
 }
-var Ya = null, Xa = -1, Za = 0, Qa = null, $a = !1, eo = {
+var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 	ready: !1,
 	async load(e, t = [], n = "vale") {
-		let r = ++Z;
-		n !== Oa && (Oa = n, Da.clear());
-		let i = ht(e).level;
-		return Ki = (async () => {
-			X ? await X.swapLevel(i, { spawn: i.spawn }) : await La(i), r === Z && (Ra(), $a = !!i.environment?.interior, eo.settings({ dof: qi }), wa(i, n), await sa(t, n));
-		})(), await Ki, r === Z;
+		let r = ++X;
+		n !== Aa && (Aa = n, ka.clear());
+		let i = _t(e).level;
+		return Ji = (async () => {
+			Y ? await Y.swapLevel(i, { spawn: i.spawn }) : await Ua(i), r === X && (Wa(), ao = !!i.environment?.interior, oo.settings({ dof: Yi }), Ea(i, n), await la(t, n));
+		})(), await Ji, r === X;
 	},
 	settings(e = {}) {
-		e.dof && (qi = e.dof), e.bright > 0 && (ma = e.bright), e.figLit > 0 && (ga = e.figLit), e.figMax > 0 && (_a = e.figMax);
-		let t = X?.postfx?.settings;
+		e.dof && (Yi = e.dof), e.bright > 0 && (ga = e.bright), e.figLit > 0 && (va = e.figLit), e.figMax > 0 && (ya = e.figMax);
+		let t = Y?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: qi !== "off" && !$a,
+			enabled: Yi !== "off" && !ao,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
 		});
 	},
 	frame(e) {
-		if (!X || !X.engine) return;
-		ha = e.bright > 0 ? e.bright : 1, $.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((X.lighting?.timeOfDay ?? -1) - e.hour) > .004 && X.setTime(e.hour), e.weather && X.weather?.weather !== e.weather && X.setWeather(e.weather), X.lighting?.settings && (X.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), X.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && X.player && (Ra(), X.player.position.set(e.hero[0], X.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), va = xa();
-		let t = /* @__PURE__ */ new Map(), n = X.engine.camera;
+		if (!Y || !Y.engine) return;
+		_a = e.bright > 0 ? e.bright : 1, $.x = e.focus[0], $.y = e.focus[1], $.z = e.focus[2], $.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((Y.lighting?.timeOfDay ?? -1) - e.hour) > .004 && Y.setTime(e.hour), e.weather && Y.weather?.weather !== e.weather && Y.setWeather(e.weather), Y.lighting?.settings && (Y.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), Y.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && Y.player && (Wa(), Y.player.position.set(e.hero[0], Y.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), ba = Ca();
+		let t = /* @__PURE__ */ new Map(), n = Y.engine.camera;
 		for (let r of e.actors) {
-			let e = ta(r.name);
+			let e = ra(r.name);
 			if (!e) continue;
-			let i = r.cw ? r.cw / e.meta.cw : 1, a = na(e, i), o = t.get(a) || 0;
+			let i = r.cw ? r.cw / e.meta.cw : 1, a = ia(e, i), o = t.get(a) || 0;
 			t.set(a, o + 1);
-			let s = ia(a, o);
-			s.visible = !0, s.material.emissiveIntensity !== va && (s.material.emissiveIntensity = va), (s._col !== r.col || s._row !== r.row) && s.setFrame(r.col, r.row), aa(s, r.x, r.z, (e.meta.ch - e.meta.ay) * i, a.pixelsPerUnit * i);
+			let s = oa(a, o);
+			s.visible = !0, s.material.emissiveIntensity !== ba && (s.material.emissiveIntensity = ba), (s._col !== r.col || s._row !== r.row) && s.setFrame(r.col, r.row), sa(s, r.x, r.z, (e.meta.ch - e.meta.ay) * i, a.pixelsPerUnit * i);
 			let c = r.flash || 0;
 			if (s._emberFlash !== c) {
 				s._emberFlash = c;
@@ -5418,7 +5493,20 @@ var Ya = null, Xa = -1, Za = 0, Qa = null, $a = !1, eo = {
 			let l = 1 - (r.fade || 0);
 			Math.abs(s.opacity - l) > .01 && (s.opacity = l), s.update(0, n);
 		}
-		for (let [e, n] of ra) {
+		for (let r of e.bits || []) {
+			let e = Na(r), i = t.get(e) || 0;
+			t.set(e, i + 1);
+			let a = Pa(e, i), o = r.glow ? 1.6 : .3;
+			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), sa(a, r.x, r.z, r.canvas.height - r.ay - r.lift, J);
+			let s = r.flash || 0;
+			if (a._emberFlash !== s) {
+				a._emberFlash = s;
+				let e = 1 + s * 2.6;
+				a.tint = new g(e, e * .96, e * .9);
+			}
+			a.update(0, n);
+		}
+		for (let [e, n] of aa) {
 			let r = t.get(e) || 0;
 			for (let e = r; e < n.length; e++) n[e].visible && (n[e].visible = !1);
 		}
@@ -5428,20 +5516,21 @@ var Ya = null, Xa = -1, Za = 0, Qa = null, $a = !1, eo = {
 			rim: 0,
 			focus: 0
 		};
-		for (let t of e.rings || []) Ja(qa("ring", r.ring++), t.x, t.z, 1, t.col, t.a);
+		for (let t of e.rings || []) eo($a("ring", r.ring++), t.x, t.z, 1, t.col, t.a);
 		if (e.mark) {
-			let t = qa("focus", r.focus++);
-			Ja(t, e.mark.x, e.mark.z, 1, [
+			let t = $a("focus", r.focus++);
+			eo(t, e.mark.x, e.mark.z, 1, [
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(Za * 4)), t.rotation.z = Za, Za += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(ro * 4)), t.rotation.z = ro, ro += (e.dt || 0) * .9;
 		}
-		for (let t of e.hazards || []) Ja(qa("disc", r.disc++), t.x, t.z, t.r, t.col, .82 * t.a), Ja(qa("rim", r.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
-		for (let e of Object.keys(Ga)) for (let t = r[e]; t < Ga[e].length; t++) Ga[e][t].visible = !1;
-		if (Xa !== Z && (Xa = Z, Ya = X.world?.acquireSpellLight?.({ minor: !1 }) ?? null), Ya && e.hero) {
+		for (let t of e.hazards || []) eo($a("disc", r.disc++), t.x, t.z, t.r, t.col, .82 * t.a), eo($a("rim", r.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
+		Fa(e.water);
+		for (let e of Object.keys(Za)) for (let t = r[e]; t < Za[e].length; t++) Za[e][t].visible = !1;
+		if (no !== X && (no = X, to = Y.world?.acquireSpellLight?.({ minor: !1 }) ?? null), to && e.hero) {
 			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35;
-			Ya.set(n, X.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
+			to.set(n, Y.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
 				color: [
 					1.9,
 					1.15,
@@ -5455,59 +5544,61 @@ var Ya = null, Xa = -1, Za = 0, Qa = null, $a = !1, eo = {
 		}
 		let i = 0;
 		for (let t of e.beasts || []) {
-			let e = ka(t.id);
+			let e = ja(t.id);
 			if (!e) continue;
-			let r = ja(i++, e);
-			r.visible = !0, aa(r, t.x, t.z, e.below, zi), r.update(0, n);
+			let r = La(i++, e);
+			r.visible = !0, sa(r, t.x, t.z, e.below, J), r.update(0, n);
 		}
-		for (let e = i; e < Aa.length; e++) Aa[e]?.visible && (Aa[e].visible = !1);
-		Qa = e.ambient || null;
-		for (let e of oa) e.update(0, n);
-		Fa(e.light), X.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
+		for (let e = i; e < Ia.length; e++) Ia[e]?.visible && (Ia[e].visible = !1);
+		io = e.ambient || null;
+		for (let e of ca) e.update(0, n);
+		Va(e.light), Y.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
-		X && sa(e, Oa);
+		Y && la(e, Aa);
 	},
 	project(e, t, n) {
-		if (!X) return null;
-		let i = new r(e, t, n).project(X.engine.camera);
+		if (!Y) return null;
+		let i = new r(e, t, n).project(Y.engine.camera);
 		return [(i.x + 1) / 2 * innerWidth, (1 - i.y) / 2 * innerHeight];
 	},
 	ground(e, t) {
-		return X?.tileMap ? X.tileMap.getHeight(e, t) : null;
+		return Y?.tileMap ? Y.tileMap.getHeight(e, t) : null;
 	},
 	get stats() {
-		let e = (e) => Ga[e].filter((e) => e.visible).length;
+		let e = (e) => Za[e].filter((e) => e.visible).length;
 		return {
-			fig: va,
-			lit: Math.round(ya * 100) / 100,
-			beasts: Aa.filter((e) => e?.visible).length,
+			bits: [...aa.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
+			water: Z.mesh && Z.mesh.visible ? Z.mesh.count : 0,
+			fig: ba,
+			lit: Math.round(xa * 100) / 100,
+			beasts: Ia.filter((e) => e?.visible).length,
 			light: +!!Q.on,
-			lightDepth: Q.on && Q.keyed && X?.postfx?.depthTexture ? 1 : 0,
+			lightDepth: Q.on && Q.keyed && Y?.postfx?.depthTexture ? 1 : 0,
 			rings: e("ring"),
 			hazards: e("disc"),
 			focus: e("focus"),
-			carry: +!!Ya,
-			level: Z,
-			actors: [...ra.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0),
-			atlases: ea.size,
-			env: oa.length,
-			sky: Ca,
-			ours: oa.filter((e) => e.name.startsWith("ember:prop:")).length,
-			programs: X?.engine?.renderer?.info?.programs?.length ?? null
+			carry: +!!to,
+			level: X,
+			actors: [...aa.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0),
+			atlases: na.size,
+			env: ca.length,
+			sky: Ta,
+			ours: ca.filter((e) => e.name.startsWith("ember:prop:")).length,
+			programs: Y?.engine?.renderer?.info?.programs?.length ?? null
 		};
 	}
 };
-function to(e) {
-	if (Wi) throw Error("createWorld: one world a page");
-	return Wi = e.container, Gi = e.uiRoot, Y = e.assets, Vi = ut("en"), ge(), Hi = st({
-		lang: Vi,
-		px: ct({
+function so(e) {
+	if (Ki) throw Error("createWorld: one world a page");
+	return Ki = e.container, qi = e.uiRoot, Bi = e.assets, Ui = ft("en"), ve(), Wi = lt({
+		lang: Ui,
+		px: ut({
 			w: innerWidth,
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), Ui = bn(Vi, {}), eo.ready = !0, eo;
+	}), Gi = Sn(Ui, {}), oo.ready = !0, oo;
 }
 //#endregion
-export { to as createWorld };
+export { so as createWorld };
