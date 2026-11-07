@@ -126,5 +126,26 @@ same marks without a `hypot` and a `pow` a pixel, and every older effect is fast
   the effect line up because both follow the sim; a skill-specific clip would sell them more.
 - **A ward breaking.** When a ward is spent, the dome goes out without a shatter. A 'warded' pulse and a break are
   worth adding.
-- **Frost Nova's own conditions.** It needs two foes within 2.8 tiles of the mage, and the autobattle's mage keeps her
-  distance, so players will see it seldom. That's a balance and AI question for the GDD, not an art one.
+- **Frost Nova's own conditions: fixed (2026-11-07, GDD v1.53; the owner: "Yes fix frost nova range").** It had two
+  faults:
+  - It was cast round the mage, who keeps her distance.
+  - Its 2.8 tiles could never take in two foes, because they stand 2.8 apart (their melee reach round whoever they
+    fight).
+
+  It is now thrown onto the thickest knot of foes within the mage's reach (her bolt's 14 tiles), 3.5 tiles across as
+  Hex is. A cold streak runs from her staff to the knot, and the ring bursts there at its real radius. Measured, in 3 ×
+  3 minutes of fighting:
+
+  | | Before | After |
+  |---|---|---|
+  | Frost Nova cast, L6 mage, fighter, cleric | 0 | 4 |
+  | L9 fighter, rogue, mage | 0 | 13 |
+  | L15 fighter, rogue, mage | 2 | 16 |
+  | The contract's no-healer party at L6 (fighter, rogue, mage), worn down | at 189 s, 264 s | at 269 s, 292 s (the gate: within 300) |
+  | roomlv, a mage hero with a fighter and a rogue, L9 (two seeds) | down at 235 s, 260 s | held 300 s, 16 waves each |
+  | … at L15 | down at 217 s, 284 s | held 300 s, 16 and 15 waves |
+
+  Every contract gate still passes. The mage is clearly stronger now that her level-6 skill works. The no-healer gate
+  is back near its margin before the dungeon dressing (283 s, 292 s). If it's too close, Frost Nova's power (0.8×) is
+  the knob. `test/skillfx.test.mjs` holds the fix: with it, it goes off in a minute's fight and lands on a knot;
+  without it, it never fires.

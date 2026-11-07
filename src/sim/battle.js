@@ -224,6 +224,14 @@ export function halved(tgt, foes) {
 }
 /** the foes a nova reaches from `m`: within its radius, standing (not rising), and Ashbound only for
  * Turn Undead (`undead`) @param {any} A @param {any[]} foes @param {any} m */
+/** where a nova bursts: round the caster, or (a thrown one, Frost Nova: GDD v1.53) on the foe within `reach` with the
+ *  most others within its radius, two at least; null when there's no such knot @returns {{ x: number, y: number } | null} */
+export function novaCentre(A, foes, m, reach) {
+  if (!A.thrown) return novaTargets(A, foes, m).length >= 2 ? m : null;
+  let best = null, bn = 1;
+  for (const o of foes) { if (o.dead || o.hp <= 0 || o.spawn > 0 || hypot(o.x - m.x, o.y - m.y) > reach) continue; const n = novaTargets(A, foes, o).length; if (n > bn) { bn = n; best = o; } }
+  return best;
+}
 export const novaTargets = (A, foes, m) => foes.filter((o) => !o.dead && o.hp > 0 && !(o.spawn > 0) && (!A.undead || o.undead) && hypot(o.x - m.x, o.y - m.y) < A.radius);
 /** the family filling this floor's waves @param {any} w */
 /** the foes of a floor, or of one of its rooms: an authored room (plans.js) names its own (the Cutting's diggers, the Keep
@@ -708,7 +716,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (!target) continue;
       } else if (A.kind === 'bless') {
         if (foes.length < 2 || state.party.some((q) => q.buff && q.buff.bless > 0)) continue;
-      } else if (A.kind === 'nova') { if (novaTargets(A, foes, m).length < 2) continue; }
+      } else if (A.kind === 'nova') { target = novaCentre(A, foes, m, F.range); if (!target) continue; }
       else if (A.kind === 'breath') {                          // the party's hurt, and nobody's breathing it already
         if (state.party.some((q) => q.buff && q.buff.breath > 0)) continue;
         const hurt = state.party.filter((q) => alive(q) && q.hp < statsFor(q).maxHp * Math.min(0.85, ai.low + 0.25));
@@ -760,7 +768,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'hex', x: tgt.x, y: tgt.y, party: false }); skillEv(A, 'land', m, tgt, false, hexed);
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
-      const hit = novaTargets(A, w.enemies, m); skillEv(A, 'land', m, m, true, hit);
+      const at = A.thrown && tgt ? { x: tgt.x, y: tgt.y } : m, hit = novaTargets(A, w.enemies, at); skillEv(A, 'land', m, A.thrown ? tgt : m, !A.thrown, hit);   // (a thrown nova bursts where its knot stood when it was thrown)
       for (const o of hit) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
       bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
     }

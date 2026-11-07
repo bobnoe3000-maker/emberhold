@@ -161,10 +161,10 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
       ['cleric', 'mend', 'Mend', 1], ['cleric', 'bless', 'Bless', 1], ['cleric', 'turn_undead', 'Turn Undead', 2],
       ['shaman', 'spirit_drain', 'Spirit Drain', 1], ['shaman', 'ancestors_breath', "Ancestors' Breath", 2], ['shaman', 'hex', 'Hex', 2]];
     for (const [cls, id, label, span] of SKILL_CELLS) {
-      const self = ['shield_wall', 'second_wind', 'smoke_step', 'frost_nova', 'turn_undead', 'ancestors_breath', 'bless'].includes(id), ally = ['arcane_ward', 'mend'].includes(id);
+      const self = ['shield_wall', 'second_wind', 'smoke_step', 'turn_undead', 'ancestors_breath', 'bless'].includes(id), ally = ['arcane_ward', 'mend'].includes(id);
       H('Skills', label, { actor: [CLS[cls], 1, id === 'firebolt' || id === 'spirit_drain' ? 'attack' : 'heavy'], period: 2000, span, go: (a, x, y, now) => {
         const more = self ? { tx: x, ty: y, ally: true, reached: id === 'bless' || id === 'ancestors_breath' ? [{ id: null, x, y }, { id: null, x: x + 1.4, y: y + 0.4 }, { id: null, x: x - 0.4, y: y + 1.3 }] : [{ id: null, x: x + 1.8, y: y - 1 }, { id: null, x: x - 1.6, y: y - 1.2 }] }
-          : ally ? { tx: x + 1.2, ty: y + 0.3, ally: true } : id === 'backstab' ? { crit: true } : {};
+          : ally ? { tx: x + 1.2, ty: y + 0.3, ally: true } : id === 'backstab' ? { crit: true } : id === 'frost_nova' ? { tx: x + 2.6, ty: y - 1.4, reached: [{ id: null, x: x + 3.6, y: y - 1 }, { id: null, x: x + 2, y: y - 2.6 }] } : {};   // (Frost Nova thrown onto a knot, GDD v1.53)
         if (id === 'shield_wall') a.skills.event(sk(id, cls, 'cast', x, y, more), now);
         a.skills.event(sk(id, cls, 'land', x, y, more), now + (id === 'shield_wall' ? 520 : id === 'firebolt' ? 160 : 0));
       } });

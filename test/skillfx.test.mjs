@@ -50,3 +50,14 @@ test('the sim says when a skill is cast and where it lands, with who it reached;
   const bless = a.got.find((e) => e.id === 'bless' && e.at === 'land');
   assert.equal(bless.reached.length, 3, 'Bless reaches the whole party');
 });
+
+test('Frost Nova is thrown onto a knot of foes in the mage\'s reach (GDD v1.53: cast round her, who keeps her distance, it never went off)', () => {
+  const { got } = fight(['fighter', 'rogue', 'mage'], true);
+  const novas = got.filter((e) => e.id === 'frost_nova' && e.at === 'land');
+  assert.ok(novas.length >= 1, `Frost Nova in a minute: ${novas.length}`);
+  for (const e of novas) {
+    assert.ok(e.reached.length >= 1, 'it bursts on foes (two or more when thrown: the knot moves and dies in the wind-up)');
+    for (const o of e.reached) assert.ok(Math.hypot(o.x - e.tx, o.y - e.ty) < e.r + 1e-9, 'each within its reach of where it burst');
+  }
+  assert.ok(novas.some((e) => Math.hypot(e.tx - e.x, e.ty - e.y) > e.r), 'thrown: at least one bursts beyond the ring it would have had round her');
+});

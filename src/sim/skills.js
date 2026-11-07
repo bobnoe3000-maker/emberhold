@@ -36,7 +36,7 @@ export const SKILLS = {
   ],
   mage: [
     { id: 'firebolt', name: 'Firebolt', lv: 1, mp: 12, kind: 'strike', power: 1.8, text: '1.8× at range' },
-    { id: 'frost_nova', name: 'Frost Nova', lv: 6, trial: true, mp: 30, kind: 'nova', power: 0.8, radius: 2.8, slow: 3, text: '0.8× to every foe close by; slows them for 3 s' },
+    { id: 'frost_nova', name: 'Frost Nova', lv: 6, trial: true, mp: 30, kind: 'nova', power: 0.8, radius: 3.5, slow: 3, thrown: true, text: '0.8× to every foe in the thickest knot within reach; slows them for 3 s' },   // (v1.53 thrown, 3.5 tiles: round the mage, who keeps her distance, it never went off, and at 2.8 it could take no two foes: they stand 2.8 apart, their melee reach round whoever they fight)
     { id: 'arcane_ward', name: 'Arcane Ward', lv: 12, trial: true, mp: 25, kind: 'ward', ward: 0.3, text: 'shield the most hurt ally for 30 % of their max HP' },
   ],
   cleric: [

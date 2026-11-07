@@ -18,7 +18,8 @@
 //   rogue   — verdant, and a crimson cut: Backstab a shadow's streak and a crossed slash; Smoke Step a ring of smoke
 //             thrown out, wisps about them after; Venom a green splash, bubbles rising off the poisoned.
 //   mage    — arcane blue, fire and frost: Firebolt a roaring head with embers and an explosion that scorches the
-//             floor; Frost Nova a ring of frost running out and ice spikes standing up along it, rime on the chilled;
+//             floor; Frost Nova thrown onto a knot of foes, a ring of frost running out there and ice spikes standing up
+//             along it, rime on the chilled;
 //             Arcane Ward runes drawn in and a dome of light while it holds.
 //   cleric  — gold: Mend a beam from above and a mark rising; Bless a rune circle and halos settling; Turn Undead a
 //             sunburst, its rays running out over the floor, the dead it reaches flaring.
@@ -182,8 +183,9 @@ export function createSkillFX(P) {
     // the ring of frost running out from the mage over the floor, ice spikes standing up behind it as it passes, a cold
     // mist inside; each foe it reaches flashes white
     frost_nova(ctx) {
-      const { t, k, Cq, R, seed } = ctx; if (ctx.at !== 'land') return;
-      const RR = 2.8, u = ease(clamp01(t / 0.3)), rad = 0.3 + (RR - 0.3) * u;
+      const { t, k, Cq: M, Tq: Cq, R, seed } = ctx; if (ctx.at !== 'land') return;   // (thrown, GDD v1.53: it bursts on the knot, Tq)
+      if (t < 0.16 && Math.hypot(Cq.sx - M.sx, Cq.sy - M.sy) > 8) { over(Cq, 0.4); const f = 1 - t / 0.16; seg(M.sx, M.sy - 26, Cq.sx, Cq.sy - 10, 0.25 * f, 1.1 * f, 0.9); star(M.sx, M.sy - 26, 5, f); flush(C.frostHot); }   // the throw: a cold streak from the staff to the knot
+      const RR = ctx.e.r || 3.5, u = ease(clamp01(t / 0.3)), rad = 0.3 + (RR - 0.3) * u;   // (its real reach: skills.js radius)
       under(Cq); pool(Cq, rad, 0.28 * k, 0, 1.1); if (u < 1) { ring(Cq, rad, 1.25 * (1 - u * 0.4), 2.1); ring(Cq, rad * 0.86, 0.5 * (1 - u), 1.2); } flush(C.frost, 1.1);
       over(Cq, 0.3);
       for (let i = 0; i < 18; i++) { const ang = (i / 18) * TAU + rnd(seed, i) * 0.3, r0 = 0.6 + (RR - 0.6) * rnd(seed, i + 40); if (rad < r0) continue;
