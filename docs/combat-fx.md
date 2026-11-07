@@ -94,4 +94,37 @@ same marks without a `hypot` and a `pow` a pixel, and every older effect is fast
 
 `npm run check` passes: 491 tests, SMOKE_OK, RENDER_SMOKE_OK.
 
-**Burst frames.** Before and after, on both renderers: `tools/capture/skills.mjs`. The sheets follow below.
+**Burst frames.** Before and after, on both renderers: `tools/capture/skills.mjs`.
+- Each row is a skill's first cast, at +0, 0.2, 0.4, 0.6, 0.8, 1.1 and 1.6 s. Emberlit is on the left, Luminati on the
+  right.
+- The before has 12 rows: Venom, Frost Nova and Second Wind never came up in its two fights.
+- The after adds the third fight. Frost Nova is staged there (marked so): the sim's own event, sent with the foes
+  nearest the mage, because no fight here brings two foes within its 2.8 tiles.
+
+![Before: a skill was its name](img/fx/skills-before.jpg)
+![After: every skill its own](img/fx/skills-after.jpg)
+
+*Closer, at play scale. Rows: Cleave's crescent, Frost Nova (both renderers), Turn Undead's sunburst, Bless's halos
+(Luminati), Backstab's crossed cuts.*
+
+![Close-ups](img/fx/skills-closeups.jpg)
+
+## Tuned after the first real-fight frames
+
+- **Arcane Ward.** On two or three of the party at once, the dome read as a wall of ovals. It is held at about half the
+  light now.
+- **The Firebolt.** In flight it passed for the mage's plain bolt. Its head is now an 11 px halo with a 4 px core, and
+  it sheds 10 embers, not 7.
+- **Every stroke.** At fx.js's own gain the first pass read as dotted outlines. Rings are now stroked a pixel at a time
+  along their length, and the module's light is ×1.7.
+
+## Left, and the critic's notes for the next pass
+
+- **The foes' own abilities.** The bosses' calls, the hexer's curse and the acolytes' fire still use the shared cast
+  and bolt. They are next, in the same way: an event each, and a moment each.
+- **Timing against the clip.** Each moment starts on the sim's cast and landing (the wind-up is 0.55 s). The swing and
+  the effect line up because both follow the sim; a skill-specific clip would sell them more.
+- **A ward breaking.** When a ward is spent, the dome goes out without a shatter. A 'warded' pulse and a break are
+  worth adding.
+- **Frost Nova's own conditions.** It needs two foes within 2.8 tiles of the mage, and the autobattle's mage keeps her
+  distance, so players will see it seldom. That's a balance and AI question for the GDD, not an art one.
