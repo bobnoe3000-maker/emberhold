@@ -95,6 +95,13 @@ async function run(renderer) {
         await writeFile(join(OUT, renderer, `${c.name.toLowerCase().replace(/[^a-z]+/g, '_')}.png`), Buffer.from(strip.split(',')[1], 'base64'));
         console.log(`${renderer} ${classes.join('+')}: ${c.name} at ${c.t.toFixed(1)} s`);
       }
+      // Frost Nova wants two foes within 2.8 tiles of the mage, which no fight here sets up: past 20 s it's staged, the
+      // sim's own event sent with the foes nearest the mage (the effect as the game draws it, in the real scene; named so)
+      if (classes[0] === 'mage' && t >= 20000 && !(await p.evaluate(() => globalThis.__casts.some((c) => c.name.startsWith('Frost Nova'))))) {
+        await p.evaluate(() => { const s = globalThis.__sim, m = s.state.player, near = s.world.enemies.filter((e) => !e.dead && e.hp > 0).sort((a, b) => Math.hypot(a.x - m.x, a.y - m.y) - Math.hypot(b.x - m.x, b.y - m.y)).slice(0, 3);
+          globalThis.__casts.push({ name: 'Frost Nova (staged)', t: s.state.t, x: m.x, y: m.y });
+          s.bus.emit('skill', { id: 'frost_nova', at: 'land', cls: 'mage', by: m.id, x: m.x, y: m.y, tid: m.id, ally: true, tx: m.x, ty: m.y, r: 2.8, reached: near.map((e) => ({ id: e.id, x: e.x, y: e.y })), crit: false }); });
+      }
       if (await p.evaluate(() => globalThis.__sim.state.party.every((m) => m.down || m.fallen))) break;
     }
     if (errs.length) console.log(`${renderer}: page errors ${errs.slice(0, 2).join(' | ')}`);

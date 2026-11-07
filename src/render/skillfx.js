@@ -270,9 +270,9 @@ export function createSkillFX(P) {
   function fireHead(pts, key, footY, baseH, now) {
     const h = pts[pts.length - 1]; if (!h) return;
     depth(key + 0.25, footY, baseH);
-    disc(h.sx, h.sy, 8 + Math.sin(now / 40) * 1.2, 0.7, 1.7); disc(h.sx, h.sy, 3.2, 1.5, 0.8);
+    disc(h.sx, h.sy, 11 + Math.sin(now / 40) * 1.5, 0.85, 1.7); disc(h.sx, h.sy, 4.2, 1.8, 0.8);   // (larger than the plain bolt's: in a real fight at first it passed for one)
     const p = pts[0], dx = h.sx - p.sx, dy = h.sy - p.sy;
-    for (let i = 0; i < 7; i++) { const u = ((now / 260) + i / 7) % 1, wob = Math.sin(now / 50 + i * 2) * 3; disc(h.sx - dx * u * 1.4 + wob * 0.5, h.sy - dy * u * 1.4 + wob - u * 4, 1.2, 1.1 * (1 - u), 1); }
+    for (let i = 0; i < 10; i++) { const u = ((now / 260) + i / 10) % 1, wob = Math.sin(now / 50 + i * 2) * 3; disc(h.sx - dx * u * 1.6 + wob * 0.5, h.sy - dy * u * 1.6 + wob - u * 6, 1.4, 1.3 * (1 - u), 1); }
     flush(C.fire, 1.1);
     depth(key + 0.3, footY, baseH); star(h.sx, h.sy, 6, 0.9); flush(C.fireHot);
   }
@@ -296,7 +296,7 @@ export function createSkillFX(P) {
           for (let i = 0; i < 3; i++) { const v2 = ((t / 1.4) + i / 3) % 1, a = v2 * 8 + i * 2; disc(q.sx + Math.cos(a) * 9, q.sy - 4 - v2 * 46 + Math.sin(a) * 3, 1.3, 0.85 * f * (1 - v2), 1); }
           flush(C.breath); }
         if (u.ward > 0) { over(q, 0.7);   // the dome, a light running round it
-          const s = (t * 0.9) % 1; oval(q.sx, q.sy - 22, 13, 21, 0.45, 1.1); oval(q.sx, q.sy - 22, 13, 21, 1.0, 1.3, -Math.PI / 2 + s * TAU, -Math.PI / 2 + s * TAU + 1.1); oval(q.sx, q.sy - 4, 12, 4, 0.5, 1);
+          const s = (t * 0.9) % 1; oval(q.sx, q.sy - 22, 13, 21, 0.22, 1); oval(q.sx, q.sy - 22, 13, 21, 0.6, 1.1, -Math.PI / 2 + s * TAU, -Math.PI / 2 + s * TAU + 0.9); oval(q.sx, q.sy - 4, 12, 4, 0.3, 1);   // (held quiet: on two or three of the party at once, brighter read as a wall of ovals)
           for (let i = 0; i < 3; i++) { const tw = Math.max(0, Math.sin(t * 5 + i * 2.2)); if (tw > 0.6) star(q.sx + Math.cos(i * 2.1) * 8, q.sy - 22 + Math.sin(i * 2.1) * 13, 3, (tw - 0.6) * 2); }
           flush(C.ward); }
       } else {
