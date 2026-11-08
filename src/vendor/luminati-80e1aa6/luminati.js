@@ -7136,14 +7136,14 @@ var Qo = (e, t) => {
 			x: e.tx,
 			y: -500,
 			z: e.tz,
-			height: .75,
+			height: 1.4,
 			palette: 0,
 			seed: t.seed
 		})];
 		let p = t.bells[0];
 		return p >= 0 && r.bells.set(p, {
 			x: e.tx,
-			y: s + 1.75,
+			y: s + 2.3,
 			z: e.tz,
 			swing: .35 * Math.sin(u * Math.PI * 2) * Math.exp(-u * 2),
 			swingX: 1,
