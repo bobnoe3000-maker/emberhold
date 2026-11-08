@@ -110,6 +110,8 @@ const CSS = SW_CSS + `
 #hubSheet .merc.fallen .who b { color: #b8c4d8; }
 #hubSheet .merc .btn { min-height: 44px; }
 #hubSheet .merc.sw { align-items: flex-start; }
+#hubSheet .merc .btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
+#hubSheet .merc .who b .n { font: 600 12px ui-monospace, Menlo, monospace; color: #e8c37a; margin-left: 6px; }
 #hubSheet .merc .who .sub { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #c0b090; margin-top: 6px; }
 #hubSheet .merc .who .owed { display: block; font: 700 11px ui-monospace, Menlo, monospace; color: #ff9a8a; margin-top: 5px; }
 #hubSheet .merc .who .rl { display: block; font: italic 11.5px Georgia, serif; color: #a8a090; margin-top: 3px; }
@@ -177,6 +179,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     if (e.target.closest('[data-buyscroll]')) return send({ type: 'buyScroll' });
     const by = e.target.closest('[data-buy]'); if (by) return send({ type: 'buy', idx: +by.dataset.buy });
     const sl = e.target.closest('[data-sell]'); if (sl) return send({ type: 'sell', uid: sl.dataset.sell });
+    const sa = e.target.closest('[data-sellall]'); if (sa) { for (const uid of sa.dataset.sellall.split(',')) send({ type: 'sell', uid }); return; }   // (a stack: one sell command a piece, as one tap each would)
     const bb = e.target.closest('[data-buyback]'); if (bb) return send({ type: 'buyBack', uid: bb.dataset.buyback });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
@@ -286,7 +289,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const statLine = (it) => Object.entries(itemStats(it)).map(([k, v]) => `${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}`).join(' · ');
   const upName = (it) => `${esc(it.name)}${it.up ? ` +${it.up}` : ''}`;
   // name (in its rarity's colour, with the word), slot, who wears it or that it's in the bag
-  const itemHead = (it, where) => `<b style="color:${RC[it.r]}">${upName(it)}</b><em>${RW[it.r]} · ${SLOT_LABEL[BASES[it.base].slot]} · item level ${it.ilv}</em><span class="sub">${where}</span>`;
+  const itemHead = (it, where, n = 1) => `<b style="color:${RC[it.r]}">${upName(it)}${n > 1 ? `<span class="n">×${n}</span>` : ''}</b><em>${RW[it.r]} · ${SLOT_LABEL[BASES[it.base].slot]} · item level ${it.ilv}</em><span class="sub">${where}</span>`;
   const purse = () => { const C = sim.state.counters; return `<div class="purse">You have <b>${C.gold || 0}</b> gold · <b>✦ ${C.embers || 0}</b> cinders · <b>${C.wood || 0}</b> wood · <b>${C.stone || 0}</b> stone</div>`; };
   const costWords = (c) => [`${c.gold} gold`, c.cinders ? `✦ ${c.cinders}` : '', c.wood ? `${c.wood} wood` : '', c.stone ? `${c.stone} stone` : ''].filter(Boolean).join(' · ');
   const affords = (c) => { const C = sim.state.counters; return (C.gold || 0) >= c.gold && (C.embers || 0) >= (c.cinders || 0) && (C.wood || 0) >= (c.wood || 0) && (C.stone || 0) >= (c.stone || 0); };
@@ -323,6 +326,16 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       ${purse()}${tabs('ftab', forgeTab, [['upgrade', 'Upgrade'], ['reforge', 'Reforge'], ['salvage', 'Salvage', `${sim.state.bag.length} in the bag`]])}${body}`;
   }
 
+  // like items in the bag, stacked (the owner, 2026-11-08: "stack like items so the list is not so long"): pieces the same
+  // in every way but their uid (base, rarity, item level, upgrade, name, stats, traits, mod) share a row, in the bag's order
+  const likeKey = (it) => JSON.stringify([it.base, it.r, it.ilv, it.up || 0, it.name, it.st, it.aff || [], it.mod || null, it.flav || null]);
+  /** @param {any[]} bag @returns {{ it: any, uids: string[] }[]} */
+  function likeStacks(bag) {
+    const by = new Map();
+    for (const it of bag) { const k = likeKey(it); const g = by.get(k); if (g) g.uids.push(it.uid); else by.set(k, { it, uids: [it.uid] }); }
+    return [...by.values()];
+  }
+
   // the shop (Wendel's, Pim's): Buy (the day's plain gear at your level) · Sell (and buy back what you sold)
   function shop(tab) {
     view = 'shop'; if (tab) shopTab = tab;
@@ -334,9 +347,10 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       ${st.map((it, i) => { const done = S.shop.bought.includes(i), p = buyPrice(it), poor = p > gold();
         return `<div class="merc"><div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
         <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || `<p>${keeper()}’s shelves go up at dawn.</p>`}`
-      : `${S.bag.map((it) => { const p = sellPrice(it);
-        return `<div class="merc"><div class="who">${itemHead(it, 'in the bag')}<span>${statLine(it)}</span></div>
-        <button class="btn${p === null ? '' : ' ghost'}" data-sell="${it.uid}" ${p === null ? 'disabled' : ''}>${p === null ? 'Not for sale' : `Sell · ${p}`}</button></div>`; }).join('') || '<p>The bag is empty.</p>'}
+      : `${likeStacks(S.bag).map(({ it, uids }) => { const p = sellPrice(it), n = uids.length;   // (like items stacked: one row a kind, ×n)
+        return `<div class="merc"><div class="who">${itemHead(it, n > 1 ? `${n} in the bag` : 'in the bag', n)}<span>${statLine(it)}</span></div>
+        <div class="btns"><button class="btn${p === null ? '' : ' ghost'}" data-sell="${uids[0]}" ${p === null ? 'disabled' : ''}>${p === null ? 'Not for sale' : `Sell${n > 1 ? ' one' : ''} · ${p}`}</button>
+        ${n > 1 && p !== null ? `<button class="btn ghost" data-sellall="${uids.join(',')}">Sell all ${n} · ${p * n}</button>` : ''}</div></div>`; }).join('') || '<p>The bag is empty.</p>'}
       ${S.buyback.length ? `<h3>Sold here · buy back</h3>${S.buyback.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'sold')}<span>${statLine(it)}</span></div>
         <button class="btn" data-buyback="${it.uid}" ${it.sold > gold() ? 'disabled' : ''}>Buy back · ${it.sold}</button></div>`).join('')}` : ''}`;
     sheet.innerHTML = `${head('Shop', sv ? esc(sv.name) : 'The shop', `Plain arms and armour for your company, new each dawn, and a fair price for what you carry. ${keeper()} won’t take heirlooms.`)}

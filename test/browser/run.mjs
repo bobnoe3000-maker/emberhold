@@ -1032,6 +1032,15 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await p.locator('#hubSheet [data-sell="k6"]').tap(); await run(3);
     const shop = await p.evaluate(() => { const s = globalThis.__sim; return { bag: s.state.bag.map((q) => q.uid), buyback: s.state.buyback.map((q) => q.uid), gold: s.state.counters.gold }; });
     const back = await p.locator('#hubSheet [data-buyback="k6"]').innerText().catch(() => '');
+    // like items stacked (the owner, 2026-11-08): three plain kite shields share one row, ×3, and "Sell all" sells the three
+    await p.evaluate(async () => { const s = globalThis.__sim, { makeItem } = await import('/src/sim/items.js'); for (const u of ['s1', 's2', 's3']) s.state.bag.push(makeItem('kite', 4, 'common', { uid: u })); s.bus.emit('gearChanged', {}); });
+    await run(2);
+    const stackRow = await p.locator('#hubSheet .merc', { hasText: '×3' }).innerText().catch(() => '');
+    const rowsBefore = await p.locator('#hubSheet [data-sell]').count();
+    await p.locator('#hubSheet [data-sellall="s1,s2,s3"]').tap(); await run(4);
+    const stacked = await p.evaluate(() => ({ left: globalThis.__sim.state.bag.filter((q) => /^s\d$/.test(q.uid)).length, sold: globalThis.__sim.state.buyback.filter((q) => /^s\d$/.test(q.uid)).length }));
+    check('shop: like items stack in the Sell list (one row, ×3, Sell one and Sell all); Sell all sells every piece of the stack',
+      /×3/.test(stackRow) && /Sell all 3/.test(stackRow) && rowsBefore === shop.bag.length + 1 && stacked.left === 0 && stacked.sold === 3, JSON.stringify({ stackRow: stackRow.replace(/\n/g, ' · '), rowsBefore, stacked }));
     check('forge and shop: an upgrade takes 180 gold and ✦ 1 and offers the next; a too-small piece says No gain; buy from the day\'s four, sell the +1 piece, and it waits to be bought back',
       up.up === 1 && up.gold === 5000 - 180 && up.cinders === 9 && /Upgrade to \+2/.test(next) && /No gain/.test(small)
       && buys.length === 4 && buys.every((t) => /^Buy · \d+/.test(t)) && shop.bag.length === 1 && !shop.bag.includes('k6') && shop.buyback[0] === 'k6' && /\d/.test(back) && errs.length === 0,
