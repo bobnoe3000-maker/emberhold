@@ -84,7 +84,7 @@ export function createSkillFX(P) {
   const flush = (col, g = 1) => P.flush(col, g * BOOST * gainK);
   /** @type {{ e: any, t0: number, seed: number, lock?: any }[]} */
   const live = [];
-  let n = 0;
+  let n = 0, statusesOff = false;   // (statusesOff: Luminati draws the holds and roots itself, the tiers' looks)
   // ── shapes, on the screen (the iso ground's 2:1 built in) ───────────────────────────────────────────────────────
   // q: a point { sx, sy, h, key }; under the figures (the floor) or over them
   const under = (q) => depth(q.key - 0.25, q.sy, q.h), over = (q, k = 0.6) => depth(q.key + k, q.sy, q.h);
@@ -675,10 +675,10 @@ export function createSkillFX(P) {
       } else {
         if (u.dead || u.hp <= 0) continue;
         // (the proposed statuses, docs/skill-trees-proposal.md §2: drawn from the state once the sim keeps them)
-        if (u.stun > 0) { const f = Math.min(1, u.stun / 0.3); over(q, 0.9); for (let i = 0; i < 3; i++) { const a = t * 5 + i * TAU / 3; star(q.sx + Math.cos(a) * 9, q.sy - 50 + Math.sin(a) * 3, 3.2, 1.1 * f); } flush(C.stun, 1.3); }
-        if (u.frozen > 0) { const f = Math.min(1, u.frozen / 0.3); over(q, 0.95); oval(q.sx, q.sy - 22, 12, 24, 0.9 * f, 1.3); for (let i = 0; i < 4; i++) { const tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 2); star(q.sx - 8 + i * 5, q.sy - 40 + (i % 2) * 22, 3, tw * f); } flush(C.frostHot, 1.2); under(q); pool(q, 0.55, 0.45 * f); ring(q, 0.55, 0.8 * f, 1.3); flush(C.frost, 1.2); }
-        if (u.rooted > 0) { const f = Math.min(1, u.rooted / 0.3); under(q); ring(q, 0.45, 0.8 * f, 1.3); flush(C.root, 1.2); over(q, 0.4); for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + 0.4, [x, y] = on(q, 0.4, a); seg(x, y, x + Math.sin(t * 2 + i) * 3, y - 14, 1.0 * f, 0.3 * f, 0.5); } flush(C.root, 1.2); }
-        if (u.knocked > 0) { const f = Math.min(1, u.knocked / 0.3); under(q); pool(q, 0.6, 0.35 * f, 0, 1.2); flush(C.dust, 1.2); over(q, 0.9); for (let i = 0; i < 2; i++) { const a = t * 4 + i * Math.PI; star(q.sx + Math.cos(a) * 7, q.sy - 26 + Math.sin(a) * 3, 2.6, 0.9 * f); } flush(C.stun, 1.2); }
+        if (!statusesOff && u.stun > 0) { const f = Math.min(1, u.stun / 0.3); over(q, 0.9); for (let i = 0; i < 3; i++) { const a = t * 5 + i * TAU / 3; star(q.sx + Math.cos(a) * 9, q.sy - 50 + Math.sin(a) * 3, 3.2, 1.1 * f); } flush(C.stun, 1.3); }
+        if (!statusesOff && u.frozen > 0) { const f = Math.min(1, u.frozen / 0.3); over(q, 0.95); oval(q.sx, q.sy - 22, 12, 24, 0.9 * f, 1.3); for (let i = 0; i < 4; i++) { const tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 2); star(q.sx - 8 + i * 5, q.sy - 40 + (i % 2) * 22, 3, tw * f); } flush(C.frostHot, 1.2); under(q); pool(q, 0.55, 0.45 * f); ring(q, 0.55, 0.8 * f, 1.3); flush(C.frost, 1.2); }
+        if (!statusesOff && u.rooted > 0) { const f = Math.min(1, u.rooted / 0.3); under(q); ring(q, 0.45, 0.8 * f, 1.3); flush(C.root, 1.2); over(q, 0.4); for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + 0.4, [x, y] = on(q, 0.4, a); seg(x, y, x + Math.sin(t * 2 + i) * 3, y - 14, 1.0 * f, 0.3 * f, 0.5); } flush(C.root, 1.2); }
+        if (!statusesOff && u.knocked > 0) { const f = Math.min(1, u.knocked / 0.3); under(q); pool(q, 0.6, 0.35 * f, 0, 1.2); flush(C.dust, 1.2); over(q, 0.9); for (let i = 0; i < 2; i++) { const a = t * 4 + i * Math.PI; star(q.sx + Math.cos(a) * 7, q.sy - 26 + Math.sin(a) * 3, 2.6, 0.9 * f); } flush(C.stun, 1.2); }
         if (u.slow > 0) { const f = Math.min(1, u.slow / 0.6); under(q); ring(q, 0.45, 0.6 * f, 1.1); pool(q, 0.4, 0.25 * f); flush(C.frost);   // rime at the feet, snow falling on them
           over(q, 0.5); for (let i = 0; i < 5; i++) { const v2 = ((t * 0.7) + i / 5) % 1, x = q.sx - 9 + i * 4.5 + Math.sin(t * 2 + i) * 2.5, y = q.sy - 48 + v2 * 40;   // snowflakes falling on them, big enough to read (the owner, 2026-11-08: "bigger falling snow flakes")
             star(x, y, 2.6, 0.9 * f * (1 - v2 * 0.7)); disc(x, y, 1.2, 0.9 * f * (1 - v2 * 0.7), 1); } flush(C.frostHot, 1.2); }
@@ -754,6 +754,8 @@ export function createSkillFX(P) {
      *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
      *  tx, ty, reached } @param {any} e @param {number} now */
     moment(e, now) { this.event(e, now); },
+    /** the statuses' auras drawn by another painter (Luminati's pieces, the tiers' looks: renderer.js lumTiers) @param {boolean} on */
+    statusesElsewhere(on) { statusesOff = !!on; },
     /** a foe's wind-up cut (battle.js 'interrupt': a stun, a freeze, a knockdown): its warning goes, the blow never comes @param {number} by */
     cut(by) { for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === 'warn' && live[i].e.by === by) live.splice(i, 1); },
     /** every moment under way and every aura, this frame. units: the figures drawn ({ u, foe, sx, sy, h, key }), for

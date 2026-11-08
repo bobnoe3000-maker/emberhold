@@ -1061,6 +1061,15 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // spectral blades, Firebolt's ember bolt and flames; the dome and the ward ring follow the state: auras below)
   const LUM_SPELLS = new Set(['frost_nova', 'turn_undead', 'mend', 'bless', 'cleave']), LUM_ALSO = new Set(['firebolt', 'shield_wall']);
   const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9 }, spells = [];
+  // The tiers' skills (GDD v1.55) in Luminati's own looks (tools/render3d/world.js), for the owner to choose between them
+  // and Emberlit's light on Luminati: shown with ?tierlooks=luminati (the review's captures, tools/capture/tiers.mjs); until
+  // the owner chooses, Luminati draws them in Emberlit's light as before. With them, the statuses (a stun's stars, a
+  // freeze's ice shell, a root's grip) are Luminati's pieces too.
+  const TIER_LIFE = { vault: 1.0, cutting_wave: 0.9, earthshatter: 1.4, whirling_blades: 5.1, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9,
+    caltrops: 6, flare: 1.4, gather: 0.9, glacial_tomb: 2.9, blizzard: 6, sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, binding_roots: 2.6,
+    old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 };
+  const lumTiers = (() => { try { return new URLSearchParams(location.search).get('tierlooks') === 'luminati'; } catch { return false; } })();
+  if (lumTiers) { for (const id of Object.keys(TIER_LIFE)) LUM_SPELLS.add(id); Object.assign(SPELL_LIFE, TIER_LIFE); sfx.statusesElsewhere?.(true); }
   const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
@@ -1076,7 +1085,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const S = spells[i], age = (now - S.t0) / 1000, L = S.land == null ? null : (now - S.land) / 1000;
       if ((L ?? 0) >= SPELL_LIFE[S.e.id] || (L == null && age > 1.2)) { spells.splice(i, 1); continue; }   // (over, or cut down mid-cast)
       const by = S.e.cls ? memberById(S.e.by) : null;
-      out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, reached: S.e.reached || [] });
+      out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, fx: S.e.x, fy: S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, k: S.e.marks || 0, reached: S.e.reached || [] });   // (fx, fy: where it was cast from: a leap's, a dash's start)
     }
     // what holds, from the state: Shield Wall's dome over each walled member, Arcane Ward's ring under each warded one
     sim.state.party.forEach((m, i) => {
@@ -1085,6 +1094,13 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       if (b.wall > 0) out.push({ key: 'aura:wall:' + m.id, id: 'aura_wall', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: b.wall, reached: [] });
       if (m.ward > 0) out.push({ key: 'aura:ward:' + m.id, id: 'aura_ward', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: m.ward, reached: [] });
     });
+    // what holds on foes (battle.js crowd control), in Luminati's pieces with the tiers' looks: a stun's or a knockdown's
+    // stars, a freeze's ice shell, a root's grip
+    if (lumTiers) for (const f of sim.world.enemies || []) {
+      if (f.dead || f.hp <= 0) continue;
+      const k = f.frozen > 0 ? 'frozen' : f.stun > 0 || f.knocked > 0 ? 'stun' : f.rooted > 0 ? 'root' : null; if (!k) continue;
+      out.push({ key: `aura:${k}:${f.id}`, id: 'aura_' + k, seed: f.id, age: 0, land: null, x: f.x, y: f.y, tx: f.x, ty: f.y, r: 0, k: f.frozen || f.stun || f.knocked || f.rooted || 0, reached: [] });
+    }
     // a Firebolt in flight: Luminati's ember bolt riding it
     for (const b of sim.world.projectiles || []) if (b.skill === 'firebolt') {
       let id = boltIds.get(b); if (!id) boltIds.set(b, (id = ++boltN));

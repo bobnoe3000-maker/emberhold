@@ -12046,7 +12046,7 @@ var Mm = "​", Nm = (e) => {
 		"controls.map": "世界地图",
 		"controls.toggles": "时段／天气／拍照模式／音乐"
 	}
-}, Fm = { evermere: () => Promise.all([import("./core-Ckf3Dj8e.js"), import("./evermere-Rjw_F04A.js")]).then(([e, t]) => ({ register(n) {
+}, Fm = { evermere: () => Promise.all([import("./core-Ckf3Dj8e.js"), import("./evermere-DJ9uUOKv.js")]).then(([e, t]) => ({ register(n) {
 	e.register(n), t.register(n);
 } })) };
 function Im(e) {
@@ -14186,7 +14186,7 @@ var yg = class {
 		} catch (t) {
 			console.warn(`[combat] no sheet for "${e}":`, t);
 		}
-		this.game?.playerKit === "bellwarden" && (await import("./BellwardenFx-BLh2-Zbt.js")).registerBellFrames(Wm), this.atlas = oe(), this.atlasFrames = this.atlas.frames, this.quads = new se({
+		this.game?.playerKit === "bellwarden" && (await import("./BellwardenFx-DigbUCau.js")).registerBellFrames(Wm), this.atlas = oe(), this.atlasFrames = this.atlas.frames, this.quads = new se({
 			atlas: this.atlas,
 			capacity: $h
 		}), t.add(this.quads.object);
@@ -14227,11 +14227,11 @@ var yg = class {
 			sealed: !1
 		}, this._prevPos = new n().copy(this.player.position), this.ctx = this._makeContext();
 		let c = this.game, l = c?.campaign?.story, u = c?.party?.records ?? c?.story?.state?.party, d = c?.playerKit === "bellwarden", [f, p, m, h, g, _] = await Promise.all([
-			_h("icemage", i, l, u) ? import("./IceSpellFx-7t_UIclm.js") : null,
-			_h("cleric", i, l, u) ? import("./HolySpellFx-DOlVtKzY.js") : null,
-			_h("greatshield", i, l, u) ? import("./EarthSpellFx-Ck3S27MQ.js") : null,
+			_h("icemage", i, l, u) ? import("./IceSpellFx-C-zP-Zlj.js") : null,
+			_h("cleric", i, l, u) ? import("./HolySpellFx-Dc2lUJKp.js") : null,
+			_h("greatshield", i, l, u) ? import("./EarthSpellFx-BhiKOuRo.js") : null,
 			c?.playerKit === "swordmaster" ? import("./SwordmasterFx-CNiVA4rF.js") : null,
-			d ? import("./BellwardenFx-BLh2-Zbt.js") : null,
+			d ? import("./BellwardenFx-DigbUCau.js") : null,
 			d ? import("./bellwarden-DAbz8hPe.js") : null
 		]);
 		f && (this.ice = new f.IceStage(this)), p && (this.holy = new p.HolyStage(this)), m && (this.earth = new m.EarthStage(this)), h && (this.sword = new h.SwordStage(this)), g && (this.bell = new g.BellStage(this)), this.kitModule = _, this.looks = [

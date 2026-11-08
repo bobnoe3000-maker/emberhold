@@ -29,6 +29,8 @@ import { GroundFrost } from '../src/engine/fx/GroundFrost.js';
 import { FxQuads } from '../src/engine/fx/FxQuads.js';
 import { WardDome } from '../src/engine/fx/WardDome.js';
 import { SpectralBlades } from '../src/engine/fx/SpectralBlades.js';
+import { RockSpikes } from '../src/engine/fx/RockSpikes.js';
+import { SpectralBells } from '../src/engine/fx/SpectralBells.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
@@ -438,18 +440,20 @@ function spellKit() {
   const crystals = new IceCrystals({ capacity: 48 });
   const frost = new GroundFrost({ capacity: 4, heightField: { sample: (x, z) => game.tileMap.getHeight(x, z), surface: (x, z) => game.tileMap._surface(x, z), minX: 0, minZ: 0,
     get maxX() { return game.tileMap.width; }, get maxZ() { return game.tileMap.depth; } } });   // (read at each paint: the level of the moment)
-  const quads = new FxQuads({ atlas: createFxAtlas(), capacity: 128, name: 'ember:spells' });
-  const dome = new WardDome(), blades = new SpectralBlades({ capacity: 9 });
+  const quads = new FxQuads({ atlas: createFxAtlas(), capacity: 320, name: 'ember:spells' });
+  const dome = new WardDome(), blades = new SpectralBlades({ capacity: 15 }), rocks = new RockSpikes({ capacity: 24 }), bells = new SpectralBells({ capacity: 2 });
   quads.enableHalo();
-  scene.add(crystals.object); scene.add(frost.object); scene.add(quads.object); scene.add(dome.object); scene.add(blades.object);
-  crystals.warm(); frost.warm(); dome.warm(); blades.warm();
+  scene.add(crystals.object); scene.add(frost.object); scene.add(quads.object); scene.add(dome.object); scene.add(blades.object); scene.add(rocks.object); scene.add(bells.object);
+  crystals.warm(); frost.warm(); dome.warm(); blades.warm(); rocks.warm(); bells.warm();
   const wq = quads.alloc(); quads.set(wq, { frame: 'partyPillar', x: 0, y: -500, z: 0, mode: 'billboard', a: 1, halo: 1 });
-  SK = { crystals, frost, quads, dome, blades, warmQuad: wq, warmN: 4, domeOf: null };
+  SK = { crystals, frost, quads, dome, blades, rocks, bells, warmQuad: wq, warmN: 4, domeOf: null };
   return SK;
 }
 function q(h, o) { for (const k in qp) delete qp[k]; Object.assign(qp, o); SK.quads.set(h, qp); }
 function freeSpell(rec) {
   for (const h of rec.blades || []) SK.blades.free(h);
+  for (const h of rec.rocks || []) SK.rocks.free(h);
+  for (const h of rec.bells || []) SK.bells.free(h);
   if (rec.dome && SK.domeOf === rec) { SK.dome.hide(); SK.domeOf = null; }
   for (const h of rec.crystals) SK.crystals.free(h);
   for (const h of rec.quads) SK.quads.free(h);
@@ -459,7 +463,7 @@ function freeSpell(rec) {
 function placeSpells(spells, dt, lamps, fight) {
   if (!SK && !fight && !spells.length) return;                // (made as the first fight starts: warmed before anyone casts)
   const K = spellKit(); if (!K) return;
-  if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.dome.unwarm(); K.blades.unwarm(); K.quads.free(K.warmQuad); }
+  if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.dome.unwarm(); K.blades.unwarm(); K.rocks.unwarm(); K.bells.unwarm(); K.quads.free(K.warmQuad); }
   const seen = new Set(), H = (x, z) => game.tileMap.getHeight(x, z);
   game.engine.camera.getWorldDirection(camDir); const cl = Math.hypot(camDir.x, camDir.z) || 1, vx = -camDir.x / cl, vz = -camDir.z / cl;   // (toward the camera: a pillar stands a little in front of its foe)
   let light = null;
@@ -563,6 +567,9 @@ function placeSpells(spells, dt, lamps, fight) {
       rec.flames.forEach((h, i) => { const a = (i / 6) * Math.PI * 2 + (rec.seed % 5) * 0.3, rr = 0.45 + 0.15 * ((i * 3 + rec.seed) % 4) / 3;
         q(h, { frame: 'wallFlame', index: Math.floor(L * 10 + i) % 4, x: S.tx + Math.cos(a) * rr, y: yf + 0.55 * (0.8 + 0.3 * g), z: S.tz + Math.sin(a) * rr, mode: 'billboard', scale: 0.9 + 0.3 * g, r: FLAME[0], g: FLAME[1], b: FLAME[2], a: g, halo: 1 }); });
       q(rec.hit, { frame: 'impact', index: Math.min(3, Math.floor(L * 14)), x: S.tx + vx * 0.3, y: yf + 0.9, z: S.tz + vz * 0.3, mode: 'billboard', scale: 3, r: 1.8, g: 1.2, b: 0.5, a: L < 0.3 ? 1 : 0, halo: 1 });
+    } else if (TIER_LOOK[S.id]) {
+      const lt = TIER_LOOK[S.id](S, rec, L, K, H, vx, vz, dt);
+      if (lt && (!light || lt.k > light.k)) light = lt;
     }
   }
   for (const [key, rec] of spellLive) if (!seen.has(key)) { freeSpell(rec); spellLive.delete(key); }
@@ -571,8 +578,243 @@ function placeSpells(spells, dt, lamps, fight) {
     else spellLight.off();
   }
   if (K.domeOf && !spellLive.has(K.domeOf.key)) { K.dome.hide(); K.domeOf = null; }
-  K.crystals.update(dt); K.frost.update(dt); K.blades.update(dt); K.quads.update();
+  K.crystals.update(dt); K.frost.update(dt); K.blades.update(dt); K.rocks.update(dt); K.bells.update(dt); K.quads.update();
 }
+
+// ── the tiers' skills in Luminati's looks (GDD v1.55; for the owner's choice: renderer.js ?tierlooks=luminati) ──────
+// Each from the Luminati move or piece it was drawn from (docs/skill-trees-proposal.md §5): the swordmaster's falling
+// sword, wave, crest and cyclone; the greatshield's rock spikes; the ice mage's shells, crystals, frost and storm; the
+// cleric's glyphs and pillars; the bellwarden's bell. S: the spell (world units: a tile is 0.5); rec: its pieces; L: s
+// since it landed (null: still cast); returns its light, or null. Every quad, crystal, rock, blade and bell it takes is
+// put on rec, so freeSpell frees it.
+const STEEL = [1.6, 1.3, 0.85], STEEL_HOT = [2.0, 1.85, 1.45], CRIMSON = [1.7, 0.22, 0.32], VERDANT = [0.45, 1.5, 0.6], IRON = [0.75, 0.72, 0.8],
+  ARCANE = [0.55, 0.75, 1.7], FROST_C = [0.55, 0.95, 1.9], SPIRIT = [0.35, 1.45, 1.25], HEXG = [0.75, 1.55, 0.3], VIOLET = [1.15, 0.45, 1.65], DUSTC = [0.7, 0.58, 0.42];
+const col = (c, k = 1) => ({ r: c[0] * k, g: c[1] * k, b: c[2] * k });
+/** n quads on rec, allocated once */
+function quadsOf(rec, key, n) { if (!rec[key]) { rec[key] = []; for (let i = 0; i < n; i++) { const h = SK.quads.alloc(); if (h >= 0) { rec[key].push(h); rec.quads.push(h); } } } return rec[key]; }
+/** a flat directional frame (pointing along +U) laid along (dx, dz) */
+const along = (dx, dz) => { const l = Math.hypot(dx, dz) || 1; return { dirX: dz / l, dirZ: -dx / l }; };
+const TIER_LOOK = {
+  // FIGHTER · Vault (Skyfall Judgement): his sigil under the foe, the great sword falling onto it, the floor cracking, dust
+  vault(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [sig, sword, crack, hit, ...dust] = quadsOf(rec, 'q', 9), yf = H(S.tx, S.tz), fall = clamp01((L - 0.12) / 0.18);
+    q(sig, { frame: 'heroSigil', x: S.tx, y: yf + 0.04, z: S.tz, mode: 'flat', scale: 0.12 + 0.1 * smooth(L / 0.3), rot: L * 1.5, ...col(STEEL, 0.8), a: 0.9 * (1 - smooth((L - 0.5) / 0.4)) });
+    q(sword, { frame: 'heroSword', index: L < 0.3 ? 0 : 1, x: S.tx + vx * 0.25, y: yf + 2.4 + 3.2 * (1 - fall), z: S.tz + vz * 0.25, mode: 'billboard', scale: 0.4, ...col(STEEL_HOT), a: L < 0.12 ? 0 : 1 - smooth((L - 0.45) / 0.25), halo: 1 });
+    q(crack, { frame: 'heroCrack', x: S.tx, y: yf + 0.05, z: S.tz, mode: 'flat', scale: 0.55 * smooth((L - 0.3) / 0.12), ...col(STEEL, 0.9), a: L > 0.3 ? 1 - smooth((L - 0.6) / 0.35) : 0 });
+    q(hit, { frame: 'impact', index: Math.min(3, Math.floor((L - 0.3) * 14)), x: S.tx + vx * 0.3, y: yf + 0.7, z: S.tz + vz * 0.3, mode: 'billboard', scale: 3.2, ...col(STEEL_HOT), a: L > 0.3 && L < 0.6 ? 1 : 0, halo: 1 });
+    dust.forEach((h, i) => { const a = i * 1.2566 + (rec.seed % 5) * 0.2, t = L - 0.3, d = 0.3 + 0.6 * smooth(t / 0.4); q(h, { frame: 'dust', index: Math.min(2, Math.floor(t * 8)), x: S.tx + Math.cos(a) * d, y: yf + 0.2 + 0.2 * t, z: S.tz + Math.sin(a) * d, mode: 'billboard', scale: 2, ...col(DUSTC), a: t > 0 ? 1 - smooth(t / 0.5) : 0 }); });
+    return L > 0.28 ? { x: S.tx, z: S.tz, k: 2.6 * Math.exp(-(L - 0.3) / 0.2), color: [1.9, 1.5, 0.8] } : null;
+  },
+  // FIGHTER · Cutting Wave (Dragonfang Wave): the wave racing along its lane, the fang crest riding it
+  cutting_wave(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [w1, w2, crest] = quadsOf(rec, 'q', 3), dx = S.tx - S.fx, dz = S.tz - S.fz, l = Math.hypot(dx, dz) || 1, ux = dx / l, uz = dz / l, run = 3 * smooth(L / 0.35), out = 1 - smooth((L - 0.45) / 0.35);
+    const x = S.fx + ux * run, z = S.fz + uz * run, y = H(x, z), d = along(dx, dz);
+    q(w1, { frame: 'heroWaveLit', index: Math.floor(L * 24) % 4, x, y: y + 0.1, z, mode: 'flat', ...d, scale: 0.75, ...col(STEEL_HOT), a: out, halo: 1 });
+    q(w2, { frame: 'heroWave', index: (Math.floor(L * 24) + 2) % 4, x: x - ux * 0.5, y: y + 0.08, z: z - uz * 0.5, mode: 'flat', ...d, scale: 0.6, ...col(STEEL), a: 0.8 * out });
+    q(crest, { frame: 'heroFangCrestLit', index: Math.floor(L * 20) % 4, x: x + vx * 0.2, y: y + 0.55, z: z + vz * 0.2, mode: 'billboard', scale: 0.85, ...col(STEEL_HOT), a: out, halo: 1 });
+    return { x, z, k: 1.6 * out, color: [1.7, 1.4, 0.9] };
+  },
+  // FIGHTER · Earthshatter (the greatshield's): the floor cracks out from him, a ring of stone spikes erupts, crumbles, sinks
+  earthshatter(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const yf = H(S.x, S.z), [crack, ring, ...dust] = quadsOf(rec, 'q', 8);
+    if (!rec.rocks) { rec.rocks = []; rec.spec = [];
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + (rec.seed % 9) * 0.07, d = 0.5 + 0.9 * (((i * 37 + rec.seed) % 7) / 6), x = S.x + Math.cos(a) * d, z = S.z + Math.sin(a) * d;
+        const h = K.rocks.spawn({ x, y: H(x, z) - 0.02, z, height: 0.75 + 0.5 * (((i * 53 + rec.seed) % 5) / 4), radius: 0.2, yaw: a, tiltX: Math.cos(a) * 0.12, tiltZ: Math.sin(a) * 0.12, seed: rec.seed + i * 11, aspect: 0.7 });
+        if (h >= 0) { rec.rocks.push(h); rec.spec.push({ h, start: 0.12 + 0.02 * (i % 4) }); } } }
+    for (const sp of rec.spec) K.rocks.set(sp.h, { rise: riseAt((L - sp.start) / 0.14) * (1 - smooth((L - 1.0) / 0.35)), crack: smooth((L - 0.65) / 0.3) });
+    q(crack, { frame: 'partyCrack', x: S.x, y: yf + 0.05, z: S.z, mode: 'flat', scale: 0.35 * smooth(L / 0.15), rot: (rec.seed % 7) * 0.4, ...col(DUSTC, 1.1), a: 1 - smooth((L - 1.0) / 0.35) });
+    q(ring, { frame: 'partyRing', index: L < 0.15 ? 0 : 1, x: S.x, y: yf + 0.07, z: S.z, mode: 'flat', scale: 0.2 + 0.4 * smooth(L / 0.3), ...col(STEEL, 0.9), a: 1 - smooth((L - 0.1) / 0.3) });
+    dust.forEach((h, i) => { const a = i * 1.047 + 0.3, t = L - 0.12, d = 0.6 + 0.8 * smooth(t / 0.5); q(h, { frame: 'dust', index: Math.min(2, Math.floor(t * 6)), x: S.x + Math.cos(a) * d, y: yf + 0.25 + 0.3 * t, z: S.z + Math.sin(a) * d, mode: 'billboard', scale: 2.4, ...col(DUSTC), a: t > 0 ? 1 - smooth(t / 0.7) : 0 }); });
+    return { x: S.x, z: S.z, k: 2.2 * Math.exp(-L / 0.25), color: [1.7, 1.3, 0.8] };
+  },
+  // FIGHTER · Whirling Blades (Tempest Edge): three spectral swords circling him while it lasts, the cyclone's gust under them
+  whirling_blades(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    if (!rec.blades) rec.blades = [0, 1, 2].map((i) => K.blades.spawn({ x: S.x, y: -500, z: S.z, length: 0.95, width: 0.16, palette: 0, seed: rec.seed + i * 13 }));
+    const [gust] = quadsOf(rec, 'q', 1), yb = H(S.x, S.z) + 0.6, on = smooth(L / 0.25), off = smooth((L - 4.6) / 0.45), R = 0.8;
+    rec.blades.forEach((h, i) => { if (h < 0) return; const a = L * 5.2 + (i * Math.PI * 2) / 3, c = Math.cos(a), sn = Math.sin(a);
+      K.blades.set(h, { x: S.x + c * R, y: yb + 0.08 * Math.sin(L * 7 + i), z: S.z + sn * R, ax: -sn, ay: 0, az: c, nx: 0, ny: 1, nz: 0, glow: 1.4, runes: on, dissolve: Math.max(1 - on, off), dissolveDir: 1, ghost: 0.12 }); });
+    q(gust, { frame: 'heroCyclone', index: Math.floor(L * 18) % 4, x: S.x, y: H(S.x, S.z) + 0.15, z: S.z, mode: 'flat', scale: 0.32, rot: -L * 6, ...col(STEEL, 0.75), a: 0.75 * on * (1 - off) });
+    return { x: S.x, z: S.z, k: 0.9 * on * (1 - off), color: [1.6, 1.4, 1.0] };
+  },
+  // ROGUE · Kidney Shot: a short, hard blow (a crimson crit and a hit) and the foe reeling (its stun: aura_stun)
+  kidney_shot(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [crit, hit] = quadsOf(rec, 'q', 2), y = H(S.tx, S.tz);
+    q(crit, { frame: 'crit', index: Math.min(3, Math.floor(L * 12)), x: S.tx + vx * 0.3, y: y + 0.85, z: S.tz + vz * 0.3, mode: 'billboard', scale: 2.4, ...col(CRIMSON, 1.2), a: L < 0.35 ? 1 : 0, halo: 1 });
+    q(hit, { frame: 'impact', index: Math.min(3, Math.floor(L * 14)), x: S.tx + vx * 0.32, y: y + 0.8, z: S.tz + vz * 0.32, mode: 'billboard', scale: 2.8, r: 1.9, g: 1.5, b: 1.2, a: L < 0.28 ? 1 : 0, halo: 1 });
+    return { x: S.tx, z: S.tz, k: 1.4 * Math.exp(-L / 0.15), color: [1.8, 0.5, 0.5] };
+  },
+  // ROGUE · Fan of Knives: five knives thrown out in a fan, each a verdant streak, a hit where they find someone
+  fan_of_knives(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const ks = quadsOf(rec, 'q', 5), hits = quadsOf(rec, 'h', Math.min(4, S.reached.length)), a0 = Math.atan2(S.tz - S.z, S.tx - S.x), run = 3 * smooth(L / 0.28), y0 = H(S.x, S.z) + 0.6;
+    ks.forEach((h, i) => { const a = a0 + (i - 2) * 0.26, dx = Math.cos(a), dz = Math.sin(a); q(h, { frame: 'heroBlade', index: Math.floor(L * 20) % 2, x: S.x + dx * (0.3 + run), y: y0, z: S.z + dz * (0.3 + run), mode: 'flat', ...along(dx, dz), scale: 0.6, ...col(VERDANT, 1.2), a: L < 0.3 ? 1 : 0, halo: 1 }); });
+    hits.forEach((h, i) => { const o = S.reached[i], t = L - 0.12; q(h, { frame: 'impact', index: Math.min(3, Math.max(0, Math.floor(t * 14))), x: o.x + vx * 0.3, y: H(o.x, o.z) + 0.75, z: o.z + vz * 0.3, mode: 'billboard', scale: 2, ...col(VERDANT, 1.3), a: t > 0 && t < 0.28 ? 1 : 0, halo: 1 }); });
+    return null;
+  },
+  // ROGUE · Shadowstep: smoke where she stood and where she comes out, a crimson cross-cut and its crit on the foe
+  shadowstep(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const puffs = quadsOf(rec, 'p', 8), [cut, crit] = quadsOf(rec, 'q', 2), y = H(S.tx, S.tz);
+    puffs.forEach((h, i) => { const at = i < 4 ? { x: S.fx, z: S.fz, t: L } : { x: S.tx, z: S.tz, t: L - 0.1 }, a = i * 1.57 + 0.4, t = at.t, d = 0.15 + 0.35 * smooth(t / 0.5);
+      q(h, { frame: 'dust', index: Math.min(2, Math.max(0, Math.floor(t * 5))), x: at.x + Math.cos(a) * d, y: H(at.x, at.z) + 0.35 + 0.35 * t, z: at.z + Math.sin(a) * d, mode: 'billboard', scale: 2.6, r: 0.35, g: 0.32, b: 0.45, a: t > 0 ? 1 - smooth(t / 0.6) : 0 }); });
+    q(cut, { frame: 'slashBig', index: Math.min(3, Math.max(0, Math.floor((L - 0.12) * 16))), x: S.tx + vx * 0.3, y: y + 0.8, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.1, rot: 0.6, ...col(CRIMSON, 1.3), a: L > 0.12 && L < 0.4 ? 1 : 0, halo: 1 });
+    q(crit, { frame: 'crit', index: Math.min(3, Math.max(0, Math.floor((L - 0.14) * 12))), x: S.tx + vx * 0.32, y: y + 1.0, z: S.tz + vz * 0.32, mode: 'billboard', scale: 2.4, ...col(CRIMSON, 1.4), a: L > 0.14 && L < 0.5 ? 1 : 0, halo: 1 });
+    return L > 0.12 ? { x: S.tx, z: S.tz, k: 1.5 * Math.exp(-(L - 0.12) / 0.2), color: [1.8, 0.4, 0.5] } : null;
+  },
+  // ROGUE · Caltrops: a handful of iron points scattered on the knot, glinting while they lie, a dull crimson ring round them
+  caltrops(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const pts = quadsOf(rec, 'q', 14), [ring] = quadsOf(rec, 'r', 1), off = 1 - smooth((L - 5.4) / 0.6), R = Math.max(0.6, S.r);
+    pts.forEach((h, i) => { const a = ((i * 137.5 + rec.seed) % 360) * Math.PI / 180, d = R * 0.85 * Math.sqrt(((i * 61 + rec.seed) % 97) / 97), x = S.tx + Math.cos(a) * d, z = S.tz + Math.sin(a) * d, land = clamp01((L - i * 0.015) / 0.25), tw = 0.6 + 0.4 * Math.sin(L * 6 + i * 1.7);
+      q(h, { frame: 'partyIceShard', index: i % 4, x, y: H(x, z) + 0.06 + 0.8 * (1 - land) * Math.sin(land * Math.PI), z, mode: 'billboard', scale: 0.55, ...col(IRON, 0.8 + 0.6 * tw), a: land > 0 ? off : 0 }); });
+    q(ring, { frame: 'partyRing', index: 1, x: S.tx, y: H(S.tx, S.tz) + 0.05, z: S.tz, mode: 'flat', scale: (2 * R) / 6, ...col(CRIMSON, 0.5), a: 0.7 * smooth(L / 0.3) * off });
+    return null;
+  },
+  // MAGE · Flare: her sigil on the marked foe, then a pillar of fire bursting there, flames round its foot
+  flare(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [sig, body, core, hit, ...fl] = quadsOf(rec, 'q', 10), y = H(S.tx, S.tz), p = L - 0.7;
+    q(sig, { frame: 'heroSigil', x: S.tx, y: y + 0.04, z: S.tz, mode: 'flat', scale: 0.1 + 0.12 * smooth(L / 0.7), rot: L * 2.2, ...col(FLAME, 0.9), a: L < 0.7 ? 0.8 + 0.2 * Math.sin(L * 30) : 1 - smooth(p / 0.3) });
+    q(body, { frame: 'pillar', index: Math.floor(Math.max(0, p) * 12) % 4, x: S.tx + vx * 0.2, y: y + 1.6, z: S.tz + vz * 0.2, mode: 'billboard', scale: 1.4, ...col(FLAME, 1.1), a: p > 0 ? 1 - smooth((p - 0.25) / 0.3) : 0, halo: 1 });
+    q(core, { frame: 'partyPillar', index: 0, x: S.tx + vx * 0.22, y: y + 1.5, z: S.tz + vz * 0.22, mode: 'billboard', scale: 0.8, r: 2.0, g: 1.5, b: 0.7, a: p > 0 ? clamp01((0.25 - p) / 0.1) : 0, halo: 1 });
+    q(hit, { frame: 'impact', index: Math.min(3, Math.max(0, Math.floor(p * 14))), x: S.tx + vx * 0.3, y: y + 0.6, z: S.tz + vz * 0.3, mode: 'billboard', scale: 3.4, r: 2.0, g: 1.3, b: 0.5, a: p > 0 && p < 0.3 ? 1 : 0, halo: 1 });
+    fl.forEach((h, i) => { const a = i * 1.047, rr = 0.55; q(h, { frame: 'wallFlame', index: Math.floor(L * 10 + i) % 4, x: S.tx + Math.cos(a) * rr, y: y + 0.5, z: S.tz + Math.sin(a) * rr, mode: 'billboard', scale: 1, ...col(FLAME), a: p > 0 ? 1 - smooth((p - 0.25) / 0.35) : 0, halo: 1 }); });
+    return { x: S.tx, z: S.tz, k: p > 0 ? 3.2 * Math.exp(-p / 0.25) : 0.4 * smooth(L / 0.7), color: [1.9, 0.95, 0.35] };
+  },
+  // MAGE · Gather: an arcane whirl on the knot drawing inward, a streak from each foe it pulls
+  gather(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [sw1, sw2] = quadsOf(rec, 'q', 2), pulls = quadsOf(rec, 'p', Math.min(5, S.reached.length)), y = H(S.tx, S.tz), out = 1 - smooth((L - 0.5) / 0.35);
+    q(sw1, { frame: 'partySwirl', index: Math.floor(L * 8) % 2, x: S.tx, y: y + 0.08, z: S.tz, mode: 'flat', scale: (S.r * 2 / 5) * (1 - 0.6 * smooth(L / 0.5)), rot: L * 7, ...col(ARCANE, 1.1), a: out });
+    q(sw2, { frame: 'partySwirl', index: (Math.floor(L * 8) + 1) % 2, x: S.tx, y: y + 0.5, z: S.tz, mode: 'flat', scale: (S.r * 2 / 7) * (1 - 0.6 * smooth(L / 0.5)), rot: -L * 9, ...col(ARCANE, 1.4), a: 0.8 * out, halo: 1 });
+    pulls.forEach((h, i) => { const o = S.reached[i], u = smooth(L / 0.4), x = o.x + (S.tx - o.x) * 0.5 * u, z = o.z + (S.tz - o.z) * 0.5 * u; q(h, { frame: 'heroGaleLit', index: Math.floor(L * 20) % 4, x, y: H(x, z) + 0.4, z, mode: 'flat', ...along(S.tx - o.x, S.tz - o.z), scale: 0.45, ...col(ARCANE, 1.3), a: L < 0.45 ? 1 : 0 }); });
+    return { x: S.tx, z: S.tz, k: 1.4 * out, color: [0.6, 0.85, 1.9] };
+  },
+  // MAGE · Glacial Tomb (hers): frost over the knot, each foe it takes locked in an ice shell, crystals round them; it shatters
+  glacial_tomb(S, rec, L, K, H, vx, vz) {
+    if (rec.gf == null || rec.gf < 0) rec.gf = K.frost.add({ x: S.tx, z: S.tz, radius: Math.max(0.6, Math.min(4, S.r)), seed: rec.seed + 3 });
+    if (L == null) { if (rec.gf >= 0) K.frost.set(rec.gf, { spread: 0.1 * smooth(S.age / 0.38), cracks: 0, fade: 0, glow: 1 }); return { x: S.tx, z: S.tz, k: 0.25, color: [0.55, 0.95, 1.9] }; }
+    const shells = quadsOf(rec, 's', Math.min(5, S.reached.length)), brk = smooth((L - 2.4) / 0.3);
+    if (!rec.spikes) { rec.spikes = [];
+      for (const o of S.reached.slice(0, 5)) for (let j = 0; j < 2; j++) { const a = j * 2.6 + rec.seed * 0.01, x = o.x + Math.cos(a) * 0.32, z = o.z + Math.sin(a) * 0.32, h = K.crystals.spawn({ x, y: H(x, z) - 0.02, z, height: 0.55, radius: 0.13, yaw: a, tiltX: Math.cos(a) * 0.1, tiltZ: Math.sin(a) * 0.1, seed: rec.seed + j * 7 }); if (h >= 0) { rec.crystals.push(h); rec.spikes.push(h); } } }
+    rec.spikes.forEach((h) => K.crystals.set(h, { rise: riseAt(L / 0.13) * (1 - brk), crack: smooth((L - 2.1) / 0.3), glint: smooth(L / 0.4), glow: 1.1 }));
+    if (rec.gf >= 0) K.frost.set(rec.gf, { spread: 0.1 + 0.9 * smooth(L / 0.3), cracks: smooth((L - 0.1) / 0.5), fade: smooth((L - 2.3) / 0.6), glow: 1 + 0.6 * Math.exp(-L / 0.2) });
+    shells.forEach((h, i) => { const o = S.reached[i]; q(h, { frame: 'partyIceShellLit', index: L > 2.1 ? 1 : 0, x: o.x + vx * 0.12, y: H(o.x, o.z) + 0.6, z: o.z + vz * 0.12, mode: 'billboard', scale: 1.15 - 0.1 * smooth(L / 0.1), ...col(FROST_C, 0.85), a: (L > 0.05 ? 1 : 0) * (1 - brk), halo: 1 }); });
+    return { x: S.tx, z: S.tz, k: 0.4 + 2.4 * Math.exp(-L / 0.2) + 1.8 * Math.exp(-Math.abs(L - 2.5) / 0.1), color: [0.55, 0.95, 1.9] };
+  },
+  // MAGE · Blizzard (hers): two storm whirls turning over the knot, snow falling through them, frost on the floor under it
+  blizzard(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [sw1, sw2, floor] = quadsOf(rec, 'q', 3), flakes = quadsOf(rec, 'f', 18), y = H(S.tx, S.tz), on = smooth(L / 0.4) * (1 - smooth((L - 5.4) / 0.6)), R = Math.max(0.6, S.r);
+    q(floor, { frame: 'partyFrostFloor', x: S.tx, y: y + 0.04, z: S.tz, mode: 'flat', scale: (2 * R) / 4, rot: 0.3, ...col(FROST_C, 0.55), a: 0.8 * on });
+    q(sw1, { frame: 'partySwirl', index: Math.floor(L * 6) % 2, x: S.tx, y: y + 2.0, z: S.tz, mode: 'flat', scale: (2 * R) / 5 * 1.1, rot: L * 2.4, ...col(FROST_C, 0.9), a: 0.85 * on });
+    q(sw2, { frame: 'partySwirl', index: (Math.floor(L * 6) + 1) % 2, x: S.tx, y: y + 1.1, z: S.tz, mode: 'flat', scale: (2 * R) / 5 * 0.75, rot: -L * 3.6, ...col(FROST_C, 1.1), a: 0.85 * on, halo: 1 });
+    flakes.forEach((h, i) => { const ph = ((L * (0.55 + 0.07 * (i % 5)) + i * 0.137) % 1), a = i * 2.399 + L * 0.8, d = R * 0.9 * Math.sqrt(((i * 31) % 17) / 17), x = S.tx + Math.cos(a) * d, z = S.tz + Math.sin(a) * d;
+      q(h, { frame: 'partyIceFlake', index: i % 2, x, y: y + 2.1 * (1 - ph) + 0.05, z, mode: 'billboard', scale: 1.4, ...col(FROST_C, 1.3), a: on * (ph < 0.95 ? 1 : 0) }); });
+    return { x: S.tx, z: S.tz, k: 0.8 * on, color: [0.55, 0.95, 1.9] };
+  },
+  // CLERIC · Sanctuary (hers): her life-green glyph turning under them while it holds, motes rising, a ward-ring on each
+  sanctuary(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [glyph] = quadsOf(rec, 'q', 1), motes = quadsOf(rec, 'm', 8), rings = quadsOf(rec, 'r', Math.min(3, S.reached.length)), y = H(S.tx, S.tz), on = smooth(L / 0.3) * (1 - smooth((L - 3.5) / 0.5)), R = Math.max(0.6, S.r);
+    q(glyph, { frame: 'partyGlyphHoly', x: S.tx, y: y + 0.04, z: S.tz, mode: 'flat', scale: (2 * R) / 8, rot: L * 0.6, ...col(LIFE.core, 0.8), a: 0.9 * on, halo: 1 });
+    motes.forEach((h, i) => { const ph = (L * 0.6 + i / 8) % 1, a = i * 0.785 + L * 0.5, d = R * 0.7; q(h, { frame: 'partyHolyOrb', index: i % 2, x: S.tx + Math.cos(a) * d, y: y + 0.2 + 1.6 * ph, z: S.tz + Math.sin(a) * d, mode: 'billboard', scale: 0.9, ...col(LIFE.core), a: on * (1 - ph), halo: 1 }); });
+    rings.forEach((h, i) => { const o = S.reached[i]; q(h, { frame: 'partyWardRing', x: o.x, y: H(o.x, o.z) + 0.06, z: o.z, mode: 'flat', scale: 0.9, rot: L, ...col(LIFE.core, 0.9), a: on, halo: 1 }); });
+    return { x: S.tx, z: S.tz, k: 1.1 * on, color: [0.6, 1.8, 0.5] };
+  },
+  // CLERIC · Consecrate: holy ground: her gold glyph laid on the knot for as long as it holds, light rising off it
+  consecrate(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [glyph, ring] = quadsOf(rec, 'q', 2), shafts = quadsOf(rec, 's', 5), y = H(S.tx, S.tz), on = smooth(L / 0.4) * (1 - smooth((L - 7.4) / 0.6)), R = Math.max(0.6, S.r);
+    q(glyph, { frame: 'partyGlyphHoly', x: S.tx, y: y + 0.04, z: S.tz, mode: 'flat', scale: (2 * R) / 8, rot: -L * 0.3, ...col(HOLY.glyph, 1.0), a: 0.9 * on, halo: 1 });
+    q(ring, { frame: 'partyRing', index: 1, x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: (2 * R) / 6, ...col(HOLY.ring, 1.1), a: 0.8 * on });
+    shafts.forEach((h, i) => { const a = i * 1.2566 + L * 0.2, d = R * 0.6, ph = (L * 0.5 + i * 0.2) % 1; q(h, { frame: 'partyPillar', index: 1 + (i % 3), x: S.tx + Math.cos(a) * d, y: y + 1.2, z: S.tz + Math.sin(a) * d, mode: 'billboard', scale: 0.45, ...col(HOLY.body, 0.7), a: on * 0.6 * Math.sin(ph * Math.PI) }); });
+    return { x: S.tx, z: S.tz, k: 0.9 * on, color: [1.9, 1.4, 0.5] };
+  },
+  // CLERIC · Revive (hers): a pillar of gold coming down on the fallen, a burst at their feet, motes rising with them
+  revive(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [body, core, foot, over] = quadsOf(rec, 'q', 4), motes = quadsOf(rec, 'm', 6), y = H(S.tx, S.tz), sc = 0.9, lift = (96 / 2 / 16) * sc;
+    q(body, { frame: 'partyPillar', index: 1 + Math.min(2, Math.floor(L / 0.15)), x: S.tx + vx * 0.2, y: y + lift, z: S.tz + vz * 0.2, mode: 'billboard', scale: sc, ...col(HOLY.body), a: 0.95 * clamp01((1.0 - L) / 0.4) });
+    q(core, { frame: 'partyPillar', index: 0, x: S.tx + vx * 0.22, y: y + lift, z: S.tz + vz * 0.22, mode: 'billboard', scale: sc, ...col(HOLY.core), a: clamp01((0.5 - L) / 0.2), halo: 1 });
+    q(foot, { frame: 'partySunburst', index: Math.min(3, Math.floor(L / 0.1)), x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: 1.4, rot: L * 2, ...col(HOLY.burst), a: Math.max(0, 1 - L / 0.6), halo: 1 });
+    q(over, { frame: 'partySunburst', index: Math.min(3, Math.floor((L - 0.3) / 0.08)), x: S.tx + vx * 0.3, y: y + 1.6, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.4, ...col(HOLY.burst), a: L > 0.3 ? 1 - smooth((L - 0.45) / 0.25) : 0, halo: 1 });
+    motes.forEach((h, i) => { const ph = clamp01((L - i * 0.08) / 1.1), a = i * 1.047; q(h, { frame: 'partyHolyOrb', index: i % 2, x: S.tx + Math.cos(a) * 0.3, y: y + 0.2 + 1.8 * ph, z: S.tz + Math.sin(a) * 0.3, mode: 'billboard', scale: 0.9, ...col(HOLY.core), a: ph > 0 && ph < 1 ? 1 - ph : 0, halo: 1 }); });
+    return { x: S.tx, z: S.tz, k: 2.6 * Math.exp(-L / 0.5), color: [1.9, 1.4, 0.5] };
+  },
+  // CLERIC · Judgement (hers): her glyph under the foe, six pillars round it, then the great pillar on it
+  judgement(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [glyph, gBody, gCore, gFoot] = quadsOf(rec, 'q', 4), six = quadsOf(rec, 'six', 6), y = H(S.tx, S.tz), R = Math.max(0.6, S.r), p = L - 0.8;
+    q(glyph, { frame: 'partyGlyphHoly', x: S.tx, y: y + 0.04, z: S.tz, mode: 'flat', scale: ((2 * R) / 8) * (0.4 + 0.6 * smooth(L / 0.4)), rot: L * 1.2, ...col(HOLY.glyph), a: 0.9 * (1 - smooth((L - 1.2) / 0.4)), halo: 1 });
+    six.forEach((h, i) => { const a = i * 1.047 + 0.2, t = L - 0.1 - i * 0.05, x = S.tx + Math.cos(a) * R * 0.75, z = S.tz + Math.sin(a) * R * 0.75; q(h, { frame: 'partyPillar', index: 1 + Math.min(2, Math.max(0, Math.floor(t / 0.1))), x: x + vx * 0.1, y: H(x, z) + 1.5, z: z + vz * 0.1, mode: 'billboard', scale: 0.5, ...col(HOLY.body), a: t > 0 ? clamp01((0.35 - t) / 0.12) : 0, halo: 1 }); });
+    const sc = 1.3, lift = (96 / 2 / 16) * sc;
+    q(gBody, { frame: 'partyPillar', index: 1 + Math.min(2, Math.max(0, Math.floor(p / 0.12))), x: S.tx + vx * 0.25, y: y + lift, z: S.tz + vz * 0.25, mode: 'billboard', scale: sc, ...col(HOLY.body, 1.2), a: p > 0 ? clamp01((0.45 - p) / 0.15) : 0 });
+    q(gCore, { frame: 'partyPillar', index: 0, x: S.tx + vx * 0.27, y: y + lift, z: S.tz + vz * 0.27, mode: 'billboard', scale: sc, ...col(HOLY.core, 1.2), a: p > 0 ? clamp01((0.3 - p) / 0.1) : 0, halo: 1 });
+    q(gFoot, { frame: 'partySunburst', index: Math.min(3, Math.max(0, Math.floor(p / 0.08))), x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: 1.8, rot: p * 2, ...col(HOLY.burst), a: p > 0 ? Math.max(0, 1 - p / 0.45) : 0, halo: 1 });
+    return { x: S.tx, z: S.tz, k: p > 0 ? 3.4 * Math.exp(-p / 0.2) : 0.8 * smooth(L / 0.3), color: [1.9, 1.4, 0.5] };
+  },
+  // SHAMAN · Binding Roots: hex-green thorns thrusting up round each foe it takes, a ring of them on the ground (aura_root holds)
+  binding_roots(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [ring] = quadsOf(rec, 'q', 1), th = quadsOf(rec, 't', Math.min(15, S.reached.length * 3)), y = H(S.tx, S.tz), out = 1 - smooth((L - 2.1) / 0.4);
+    q(ring, { frame: 'partyRing', index: L < 0.15 ? 0 : 1, x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: (2 * Math.max(0.6, S.r)) / 6 * (0.4 + 0.6 * smooth(L / 0.25)), ...col(HEXG, 0.9), a: 1 - smooth((L - 0.3) / 0.4) });
+    th.forEach((h, i) => { const o = S.reached[Math.floor(i / 3)], a = (i % 3) * 2.094 + 0.5, x = o.x + Math.cos(a) * 0.22, z = o.z + Math.sin(a) * 0.22; q(h, { frame: 'partyIceSpike', index: Math.min(2, Math.floor(L * 10)), x: x + vx * 0.05, y: H(x, z) + 0.35 * smooth(L / 0.18), z: z + vz * 0.05, mode: 'billboard', scale: 0.9, r: 0.35, g: 0.9, b: 0.2, a: out }); });
+    return { x: S.tx, z: S.tz, k: 0.9 * Math.exp(-L / 0.3), color: [0.8, 1.6, 0.4] };
+  },
+  // SHAMAN · Old Marks: a rune struck over the foe a mark, and on the third, all of them breaking in violet
+  old_marks(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [rune, brk, burst] = quadsOf(rec, 'q', 3), y = H(S.tx, S.tz), n = S.k || 1;
+    q(rune, { frame: 'heroRunes', index: (n - 1) % 2, x: S.tx + vx * 0.3, y: y + 1.45 + 0.1 * L, z: S.tz + vz * 0.3, mode: 'billboard', scale: 0.7 + 0.15 * n, ...col(n >= 3 ? VIOLET : SPIRIT, 1.1 + 0.2 * n), a: 1 - smooth((L - 0.45) / 0.3), halo: 1 });
+    q(brk, { frame: 'crit', index: Math.min(3, Math.floor(L * 12)), x: S.tx + vx * 0.32, y: y + 0.85, z: S.tz + vz * 0.32, mode: 'billboard', scale: 2.6, ...col(VIOLET, 1.3), a: n >= 3 && L < 0.35 ? 1 : 0, halo: 1 });
+    q(burst, { frame: 'partySunburst', index: Math.min(3, Math.floor(L / 0.08)), x: S.tx + vx * 0.3, y: y + 0.9, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.3, ...col(VIOLET, 1.2), a: n >= 3 ? Math.max(0, 1 - L / 0.4) : 0, halo: 1 });
+    return n >= 3 ? { x: S.tx, z: S.tz, k: 1.6 * Math.exp(-L / 0.2), color: [1.3, 0.5, 1.8] } : null;
+  },
+  // SHAMAN · Spirit Totem (the bellwarden's bell): a spectral bell hanging by the party, tolling every 1.5 s, each toll a ring
+  // drawing the foes in; its guard ring under it
+  spirit_totem(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const y = H(S.tx, S.tz), on = smooth(L / 0.4), off = smooth((L - 7.4) / 0.6), toll = (L % 1.5) / 1.5, [guard, ring] = quadsOf(rec, 'q', 2);
+    if (!rec.bells) rec.bells = [K.bells.spawn({ x: S.tx, y: -500, z: S.tz, height: 0.75, palette: 0, seed: rec.seed })];
+    const h = rec.bells[0]; if (h >= 0) K.bells.set(h, { x: S.tx, y: y + 1.75, z: S.tz, swing: 0.35 * Math.sin(toll * Math.PI * 2) * Math.exp(-toll * 2), swingX: 1, swingZ: 0, spin: L * 0.3, dissolve: Math.max(1 - on, off), dissolveDir: 1, ghost: 0.15, glow: 1.2, strike: Math.exp(-toll * 6) });
+    q(guard, { frame: 'partyWardRing', x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: 2.2, rot: L * 0.4, ...col(SPIRIT, 0.8), a: 0.85 * on * (1 - off), halo: 1 });
+    q(ring, { frame: 'partyRing', index: toll < 0.15 ? 0 : 1, x: S.tx, y: y + 0.07, z: S.tz, mode: 'flat', scale: 0.3 + 0.7 * (1 - toll), ...col(SPIRIT, 1.2), a: on * (1 - off) * (1 - smooth(toll / 0.8)) });
+    return { x: S.tx, z: S.tz, k: (0.5 + 1.2 * Math.exp(-toll * 5)) * on * (1 - off), color: [0.5, 1.6, 1.4] };
+  },
+  // SHAMAN · Thunder Drum: a shock ring out from the hurt ally, a gust at each foe it throws back (their daze: aura_stun)
+  thunder_drum(S, rec, L, K, H, vx, vz) {
+    if (L == null) return null;
+    const [r1, r2, burst] = quadsOf(rec, 'q', 3), gusts = quadsOf(rec, 'g', Math.min(5, S.reached.length)), y = H(S.tx, S.tz), u = smooth(L / 0.3), R = Math.max(0.6, S.r);
+    q(r1, { frame: 'partyRing', index: L < 0.12 ? 0 : 1, x: S.tx, y: y + 0.06, z: S.tz, mode: 'flat', scale: ((2 * R) / 6) * (0.15 + 0.95 * u), ...col(SPIRIT, 1.4), a: 1 - smooth((L - 0.25) / 0.3), halo: 1 });
+    q(r2, { frame: 'partyRing', index: 1, x: S.tx, y: y + 0.6, z: S.tz, mode: 'flat', scale: ((2 * R) / 6) * (0.1 + 0.7 * u), ...col([1.6, 1.6, 1.9], 1), a: 0.7 * (1 - smooth((L - 0.15) / 0.25)) });
+    q(burst, { frame: 'partySunburst', index: Math.min(3, Math.floor(L / 0.07)), x: S.tx + vx * 0.3, y: y + 0.8, z: S.tz + vz * 0.3, mode: 'billboard', scale: 1.5, ...col(SPIRIT, 1.3), a: Math.max(0, 1 - L / 0.3), halo: 1 });
+    gusts.forEach((h, i) => { const o = S.reached[i], t = L - 0.08; q(h, { frame: 'heroGaleLit', index: Math.floor(L * 20) % 4, x: o.x, y: H(o.x, o.z) + 0.4, z: o.z, mode: 'flat', ...along(o.x - S.tx, o.z - S.tz), scale: 0.55, ...col(SPIRIT, 1.2), a: t > 0 && t < 0.4 ? 1 : 0 }); });
+    return { x: S.tx, z: S.tz, k: 2.4 * Math.exp(-L / 0.2), color: [0.6, 1.7, 1.6] };
+  },
+  // the holds on a foe (battle.js crowd control): Luminati's stun stars over its head (a stun, a knockdown), the ice mage's
+  // shell (a freeze), green thorns gripping its feet (a root)
+  aura_stun(S, rec, L, K, H, vx, vz, dt) {
+    const [st] = quadsOf(rec, 'q', 1); rec.t = (rec.t || 0) + dt;
+    q(st, { frame: 'stun', index: Math.floor(rec.t * 10) % 4, x: S.x + vx * 0.1, y: H(S.x, S.z) + 1.35, z: S.z + vz * 0.1, mode: 'billboard', scale: 1.1, r: 3.0, g: 2.6, b: 0.8, a: 1, halo: 1 });
+    return null;
+  },
+  aura_frozen(S, rec, L, K, H, vx, vz, dt) {
+    const [sh] = quadsOf(rec, 'q', 1); rec.t = (rec.t || 0) + dt;
+    q(sh, { frame: 'partyIceShellLit', index: 0, x: S.x + vx * 0.12, y: H(S.x, S.z) + 0.6, z: S.z + vz * 0.12, mode: 'billboard', scale: 1.1, ...col(FROST_C, 0.85), a: smooth(rec.t / 0.1), halo: 1 });
+    return null;
+  },
+  aura_root(S, rec, L, K, H, vx, vz, dt) {
+    const th = quadsOf(rec, 'q', 3); rec.t = (rec.t || 0) + dt;
+    th.forEach((h, i) => { const a = i * 2.094 + 0.5, x = S.x + Math.cos(a) * 0.22, z = S.z + Math.sin(a) * 0.22; q(h, { frame: 'partyIceSpike', index: 2, x: x + vx * 0.05, y: H(x, z) + 0.3, z: z + vz * 0.05, mode: 'billboard', scale: 0.8, r: 0.35, g: 0.9, b: 0.2, a: 1 }); });
+    return null;
+  },
+};
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
