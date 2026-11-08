@@ -1057,12 +1057,17 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   }
   // Frost Nova and Turn Undead on Luminati, in its ice mage's and cleric's looks (world.js placeSpells): from the cast (its
   // frost painted, her glyph drawn) to the landing and after; Emberlit draws them itself (skillfx.js)
-  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead']), SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2 }, spells = [];
+  // (the owner's review, 2026-11-08: Shield Wall's dome, Arcane Ward's ring, Mend and Bless in holy light, Cleave's
+  // spectral blades, Firebolt's ember bolt and flames; the dome and the ward ring follow the state: auras below)
+  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead', 'mend', 'bless', 'cleave']), LUM_ALSO = new Set(['firebolt', 'shield_wall']);
+  const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9 }, spells = [];
+  const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
     if (e.at === 'cast') { spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: null }); if (spells.length > 12) spells.shift(); return; }
+    if (e.id === 'shield_wall') e = { ...e, reached: (sim.world.enemies || []).filter((f) => f.hp > 0 && !f.dead && Math.hypot(f.x - e.x, f.y - e.y) < 7).map((f) => ({ id: f.id, x: f.x, y: f.y })) };   // (the foes it turns: battle.js taunt, 7 tiles)
     const S = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.land == null);
-    if (S) { S.land = now; S.e = { ...e, tx: S.e.tx, ty: S.e.ty }; } else spells.push({ e, key: `${e.id}:${++spellN}`, t0: now, land: now });
+    if (S) { S.land = now; S.e = { ...e, tx: S.e.tx, ty: S.e.ty }; } else spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: now });
   }
   /** @param {number} now */
   function spellsNow(now) {
@@ -1072,6 +1077,18 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       if ((L ?? 0) >= SPELL_LIFE[S.e.id] || (L == null && age > 1.2)) { spells.splice(i, 1); continue; }   // (over, or cut down mid-cast)
       const by = S.e.cls ? memberById(S.e.by) : null;
       out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, reached: S.e.reached || [] });
+    }
+    // what holds, from the state: Shield Wall's dome over each walled member, Arcane Ward's ring under each warded one
+    sim.state.party.forEach((m, i) => {
+      const u = i === 0 ? sim.state.player : m; if (!u || u.x === undefined || m.down) return;
+      const b = m.buff || {};
+      if (b.wall > 0) out.push({ key: 'aura:wall:' + m.id, id: 'aura_wall', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: b.wall, reached: [] });
+      if (m.ward > 0) out.push({ key: 'aura:ward:' + m.id, id: 'aura_ward', seed: 0, age: 0, land: null, x: u.x, y: u.y, tx: u.x, ty: u.y, r: 0, k: m.ward, reached: [] });
+    });
+    // a Firebolt in flight: Luminati's ember bolt riding it
+    for (const b of sim.world.projectiles || []) if (b.skill === 'firebolt') {
+      let id = boltIds.get(b); if (!id) boltIds.set(b, (id = ++boltN));
+      out.push({ key: 'fly:' + id, id: 'firebolt_fly', seed: id, age: b.t || 0, land: null, x: b.x, y: b.y, tx: b.x, ty: b.y, r: 0, reached: [] });
     }
     return out;
   }
@@ -1696,8 +1713,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
-    if (ext && LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (on Luminati, two skills in its own looks: tools/render3d/world.js)
-    else sfx.event(e, clock());
+    if (ext && LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (on Luminati, these skills in its own looks: tools/render3d/world.js)
+    else { sfx.event(e, clock()); if (ext && LUM_ALSO.has(e.id)) spellEvent(e, clock()); }   // (and these with its pieces beside our light)
     if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's
       blast(e.tx, e.ty, clock(), 0.55, 2.4);
       jolt('blast', e.tx, e.ty);

@@ -12046,7 +12046,7 @@ var Mm = "​", Nm = (e) => {
 		"controls.map": "世界地图",
 		"controls.toggles": "时段／天气／拍照模式／音乐"
 	}
-}, Fm = { evermere: () => Promise.all([import("./core-Ckf3Dj8e.js"), import("./evermere-C11_nC2D.js")]).then(([e, t]) => ({ register(n) {
+}, Fm = { evermere: () => Promise.all([import("./core-Ckf3Dj8e.js"), import("./evermere-Rjw_F04A.js")]).then(([e, t]) => ({ register(n) {
 	e.register(n), t.register(n);
 } })) };
 function Im(e) {
@@ -14227,10 +14227,10 @@ var yg = class {
 			sealed: !1
 		}, this._prevPos = new n().copy(this.player.position), this.ctx = this._makeContext();
 		let c = this.game, l = c?.campaign?.story, u = c?.party?.records ?? c?.story?.state?.party, d = c?.playerKit === "bellwarden", [f, p, m, h, g, _] = await Promise.all([
-			_h("icemage", i, l, u) ? import("./IceSpellFx-DGN8eCZ4.js") : null,
-			_h("cleric", i, l, u) ? import("./HolySpellFx-DJf4L2wo.js") : null,
-			_h("greatshield", i, l, u) ? import("./EarthSpellFx-CPc0XdCG.js") : null,
-			c?.playerKit === "swordmaster" ? import("./SwordmasterFx-CRFBgmXU.js") : null,
+			_h("icemage", i, l, u) ? import("./IceSpellFx-7t_UIclm.js") : null,
+			_h("cleric", i, l, u) ? import("./HolySpellFx-DOlVtKzY.js") : null,
+			_h("greatshield", i, l, u) ? import("./EarthSpellFx-Ck3S27MQ.js") : null,
+			c?.playerKit === "swordmaster" ? import("./SwordmasterFx-CNiVA4rF.js") : null,
 			d ? import("./BellwardenFx-BLh2-Zbt.js") : null,
 			d ? import("./bellwarden-DAbz8hPe.js") : null
 		]);

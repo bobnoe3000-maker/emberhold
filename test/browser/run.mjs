@@ -1603,16 +1603,20 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
       ev('frost_nova', 'cast', P.x, P.y, foe.x, foe.y, 3.5, []); ev('turn_undead', 'cast', P.x, P.y, P.x, P.y, 3, []);
       s.bus.emit('windup', { by: foe.id, tid: P.id, heavy: true, bolt: null, boss: false, x: foe.x, y: foe.y, tx: P.x, ty: P.y, wind: 0.38, fly: 0 });
       s.bus.emit('windup', { by: foe.id, tid: P.id, heavy: false, bolt: 'arrow', boss: false, x: foe.x, y: foe.y, tx: P.x, ty: P.y, wind: 0.18, fly: 0.2 });
-      const most = { spells: 0, crystals: 0, frost: 0, warns: 0, lanes: 0, spellLight: 0 }, max = () => { const st = globalThis.__world3d.world.stats; for (const k in most) most[k] = Math.max(most[k], st[k] || 0); };
+      const most = { spells: 0, crystals: 0, frost: 0, warns: 0, lanes: 0, spellLight: 0, dome: 0, blades: 0 }, max = () => { const st = globalThis.__world3d.world.stats; for (const k in most) most[k] = Math.max(most[k], st[k] || 0); };
       for (let i = 0; i < 20; i++) { globalThis.__frame(16.7); max(); }
       ev('frost_nova', 'land', P.x, P.y, foe.x, foe.y, 3.5, [{ id: foe.id, x: foe.x, y: foe.y }]); ev('turn_undead', 'land', P.x, P.y, P.x, P.y, 3, [{ id: foe.id, x: foe.x, y: foe.y }]);
+      // (the owner's review: Mend, Bless and Cleave in Luminati's pieces; Shield Wall's dome and Arcane Ward's ring from the state)
+      ev('mend', 'land', P.x, P.y, P.x + 1, P.y, 0, []); ev('bless', 'land', P.x, P.y, P.x, P.y, 0, [{ id: P.id, x: P.x, y: P.y }]); ev('cleave', 'land', P.x, P.y, foe.x, foe.y, 0, []);
+      const h0 = s.state.party[0]; h0.buff = { ...(h0.buff || {}), wall: 2 }; h0.ward = 30;
       for (let i = 0; i < 30; i++) { globalThis.__frame(16.7); max(); }
+      h0.ward = 0; if (h0.buff) h0.buff.wall = 0;   // (the ward spent, the wall over: their pieces go too)
       for (let i = 0; i < 200; i++) globalThis.__frame(16.7);
       const st = globalThis.__world3d.world.stats;
       return { most, after: { spells: st.spells, crystals: st.crystals, frost: st.frost } };   // (the fight goes on: its own warnings come and go)
     });
-    check('render3d: on Luminati Frost Nova is its ice (crystals standing up, frost on the ground) and Turn Undead its holy light, each with a spell light; a heavy blow\'s ring and a shot\'s lane on its ground; all of it gone after',
-      looks.most.spells === 2 && looks.most.crystals >= 7 && looks.most.frost === 1 && looks.most.spellLight === 1 && looks.most.warns >= 1 && looks.most.lanes >= 1
+    check('render3d: on Luminati Frost Nova is its ice (crystals standing up, frost on the ground), Turn Undead, Mend and Bless its holy light, Cleave its spectral swords, Shield Wall its ward dome (and Arcane Ward its ring), with spell lights; a heavy blow\'s ring and a shot\'s lane on its ground; all of it gone after',
+      looks.most.spells >= 5 && looks.most.dome === 1 && looks.most.blades >= 3 && looks.most.crystals >= 7 && looks.most.frost === 1 && looks.most.spellLight === 1 && looks.most.warns >= 1 && looks.most.lanes >= 1
         && Object.values(looks.after).every((n) => n === 0) && errs.length === 0, JSON.stringify(looks) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     check('render3d: in Thornwick, a tap on a service\'s building as Luminati draws it opens that service',
       Object.keys(doors).length >= 2 && Object.entries(doors).every(([id, got]) => id === got), JSON.stringify(doors));

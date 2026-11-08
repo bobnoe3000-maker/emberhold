@@ -409,6 +409,41 @@ spell light) and are all gone after; a heavy blow's ring and a shot's lane are l
   shares) now loads with it.
 - The Tomb's shatter (its shards flying) and the frozen foes' ice shells aren't used: our nova slows, it doesn't freeze.
 
+## Five more Luminati looks (2026-11-08)
+
+The owner's "do 1": on Luminati, five more of our skills in Luminati's own pieces (`tools/render3d/world.js` placeSpells,
+fed by `renderer.js` spellsNow → `hybrid.js`). Emberlit keeps its own. Presentation only; the sim is untouched.
+
+| Skill | Before (on Luminati) | After |
+|---|---|---|
+| **Cleave** | Emberlit's arc of light | three of the swordmaster's **spectral blades** (`SpectralBlades`) sweeping through the cut, dissolving behind it |
+| **Firebolt** | a dot of light, then the burst | the **ember bolt** in flight (FX atlas `emberBolt`), and as it lands six **flames** (`wallFlame`) round the foe and an impact, under a fire light |
+| **Arcane Ward** | a ring of light under the warded | Luminati's **ward ring** (`partyWardRing`) under each warded member while the ward holds |
+| **Shield Wall** | a glow, then nothing in the world | his **ward dome** (`WardDome`) rising over him, sweeping while the wall holds and dissolving as it ends; an amber ring snaps under each foe he taunts (within 7 tiles) |
+| **Mend** | a column of light | motes gathering, then a green **pillar** and a sunburst on the mended, under a green light |
+| **Bless** | rings of light | her **glyph** under her and a burst over each of the blessed |
+
+- Drawn **on top of** Emberlit's moment for Firebolt and Shield Wall (theirs carry the bolt's trail and the taunt's
+  lines); **instead of** it for Mend, Bless and Cleave, as for Frost Nova and Turn Undead.
+- The dome is one piece (one Shield Wall at a time is drawn; a second waits). The blades are a pool of nine (three
+  Cleaves at once). Both are made at the first fight and warmed, as the ice and the atlas are.
+- The bundle: `luminati.js` 214.3 → 221.3 kB, and two chunks load with it, `SpectralBlades` (18.8 kB) and `WardDome`
+  (6.6 kB).
+
+**Burst frames** (`node tools/capture/skills.mjs --renderer luminati --land`, the same moments on both trees; each pair
+of rows before, then after). Cleave, Firebolt and Arcane Ward:
+
+![Cleave, Firebolt and Arcane Ward on Luminati, before and after](img/fx/luminati-looks-1.jpg)
+
+Shield Wall, Mend and Bless:
+
+![Shield Wall, Mend and Bless on Luminati, before and after](img/fx/luminati-looks-2.jpg)
+
+**Checked** in the browser suite (the Luminati looks check): Mend, Bless and Cleave land, the wall and the ward are held,
+and five or more spells stand at once, with the dome up and three or more blades; all are gone once they end.
+
+**Left.** Cleave's blades are thin at the capture's crop; they read at play scale. Not yet timed on a phone.
+
 ## The feel of a hit (2026-11-08)
 
 The catalog's other presentation import ([combat-catalog.md](combat-catalog.md) §A recommendation 3, §F): Luminati's

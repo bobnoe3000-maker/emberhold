@@ -221,7 +221,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin),
         // Frost Nova and Turn Undead in Luminati's looks (renderer.js spellsNow): their reach at Emberlit's size, as the warnings
         spells: (c.spells || []).map((S) => ({ key: S.key, id: S.id, seed: S.seed, age: S.age, land: S.land, x: (S.x - origin.x) / 2, z: (S.y - origin.y) / 2,
-          tx: (S.tx - origin.x) / 2, tz: (S.ty - origin.y) / 2, r: (S.r * Math.SQRT2) / 2, reached: S.reached.map((o) => ({ x: (o.x - origin.x) / 2, z: (o.y - origin.y) / 2 })) })),
+          tx: (S.tx - origin.x) / 2, tz: (S.ty - origin.y) / 2, r: (S.r * Math.SQRT2) / 2, k: S.k || 0, reached: S.reached.map((o) => ({ x: (o.x - origin.x) / 2, z: (o.y - origin.y) / 2 })) })),
         // a foe's warning (renderer.js warnsNow): a heavy blow's ring at Emberlit's size (its circles drawn ×√2), a shot's lane
         warns: (c.warns || []).map((w) => ({ x: (w.x - origin.x) / 2, z: (w.y - origin.y) / 2, tx: (w.tx - origin.x) / 2, tz: (w.ty - origin.y) / 2,
           r: ((w.boss ? WARN_R.boss : WARN_R.heavy) * Math.SQRT2) / 2, w: ((w.heavy ? 0.6 : 0.4) * Math.SQRT2) / 2, p: w.p, hit: w.hit, heavy: w.heavy, lane: w.lane })),

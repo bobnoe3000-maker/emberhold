@@ -27,6 +27,8 @@ import { Sprite3D } from '../src/engine/sprite/Sprite3D.js';
 import { IceCrystals } from '../src/engine/fx/IceCrystals.js';
 import { GroundFrost } from '../src/engine/fx/GroundFrost.js';
 import { FxQuads } from '../src/engine/fx/FxQuads.js';
+import { WardDome } from '../src/engine/fx/WardDome.js';
+import { SpectralBlades } from '../src/engine/fx/SpectralBlades.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
@@ -422,7 +424,10 @@ let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameA
 // Made once, at the first fight, and warmed (their programs compiled behind the frames of a level being built); every
 // piece freed when its spell ends. Emberlit draws these two skills itself (skillfx.js); here they replace its light.
 const HOLY = { body: [1.15, 0.8, 0.16], core: [1.6, 1.25, 0.3], burst: [1.45, 1.08, 0.22], glyph: [0.85, 0.6, 0.12], ring: [0.8, 0.56, 0.1] };
-const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+// (the owner's review, 2026-11-08: the five Luminati looks) her heals' green-lime (HolySpellFx LIFE), a ward's azure, the
+// taunt's amber, fire
+const LIFE = { body: [0.32, 0.85, 0.1], core: [0.75, 1.65, 0.25] }, WARD = [0.45, 0.75, 1.4], TAUNT = [1.6, 0.85, 0.25], FLAME = [1.6, 0.8, 0.3];
+const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u)), clamp01 = (u) => (u < 0 ? 0 : u > 1 ? 1 : u);
 /** a crystal's eruption (IceSpellFx riseAt): up to 1.15 at 55 % of its rise, settling to 1 */
 const riseAt = (u) => (u <= 0 ? 0 : u < 0.55 ? 1.15 * (1 - (1 - u / 0.55) ** 3) : u < 1 ? 1.15 - 0.15 * smooth((u - 0.55) / 0.45) : 1);
 let SK = null, spellLight = null;
@@ -433,16 +438,19 @@ function spellKit() {
   const crystals = new IceCrystals({ capacity: 48 });
   const frost = new GroundFrost({ capacity: 4, heightField: { sample: (x, z) => game.tileMap.getHeight(x, z), surface: (x, z) => game.tileMap._surface(x, z), minX: 0, minZ: 0,
     get maxX() { return game.tileMap.width; }, get maxZ() { return game.tileMap.depth; } } });   // (read at each paint: the level of the moment)
-  const quads = new FxQuads({ atlas: createFxAtlas(), capacity: 96, name: 'ember:spells' });
+  const quads = new FxQuads({ atlas: createFxAtlas(), capacity: 128, name: 'ember:spells' });
+  const dome = new WardDome(), blades = new SpectralBlades({ capacity: 9 });
   quads.enableHalo();
-  scene.add(crystals.object); scene.add(frost.object); scene.add(quads.object);
-  crystals.warm(); frost.warm();
+  scene.add(crystals.object); scene.add(frost.object); scene.add(quads.object); scene.add(dome.object); scene.add(blades.object);
+  crystals.warm(); frost.warm(); dome.warm(); blades.warm();
   const wq = quads.alloc(); quads.set(wq, { frame: 'partyPillar', x: 0, y: -500, z: 0, mode: 'billboard', a: 1, halo: 1 });
-  SK = { crystals, frost, quads, warmQuad: wq, warmN: 4 };
+  SK = { crystals, frost, quads, dome, blades, warmQuad: wq, warmN: 4, domeOf: null };
   return SK;
 }
 function q(h, o) { for (const k in qp) delete qp[k]; Object.assign(qp, o); SK.quads.set(h, qp); }
 function freeSpell(rec) {
+  for (const h of rec.blades || []) SK.blades.free(h);
+  if (rec.dome && SK.domeOf === rec) { SK.dome.hide(); SK.domeOf = null; }
   for (const h of rec.crystals) SK.crystals.free(h);
   for (const h of rec.quads) SK.quads.free(h);
   if (rec.gf >= 0) SK.frost.free(rec.gf);
@@ -451,7 +459,7 @@ function freeSpell(rec) {
 function placeSpells(spells, dt, lamps, fight) {
   if (!SK && !fight && !spells.length) return;                // (made as the first fight starts: warmed before anyone casts)
   const K = spellKit(); if (!K) return;
-  if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.quads.free(K.warmQuad); }
+  if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.dome.unwarm(); K.blades.unwarm(); K.quads.free(K.warmQuad); }
   const seen = new Set(), H = (x, z) => game.tileMap.getHeight(x, z);
   game.engine.camera.getWorldDirection(camDir); const cl = Math.hypot(camDir.x, camDir.z) || 1, vx = -camDir.x / cl, vz = -camDir.z / cl;   // (toward the camera: a pillar stands a little in front of its foe)
   let light = null;
@@ -505,6 +513,56 @@ function placeSpells(spells, dt, lamps, fight) {
       }
       const k = L == null ? 0.4 * smooth(S.age / 0.38) : 0.4 + 3.4 * Math.exp(-L / 0.18);
       if (!light || k > light.k) light = { x: S.x, z: S.z, k, color: [1.9, 1.4, 0.5] };
+    } else if (S.id === 'mend' && L != null) {
+      // her Mend (HolySpellFx's): three orbs flying from her staff to the ally, then a pillar of green light on them
+      if (!rec.orbs) { rec.orbs = [0, 1, 2].map(() => K.quads.alloc()); rec.body = K.quads.alloc(); rec.core = K.quads.alloc(); rec.foot = K.quads.alloc(); rec.quads.push(...rec.orbs, rec.body, rec.core, rec.foot); }
+      const y0 = H(S.x, S.z) + 1.2, y1 = H(S.tx, S.tz) + 0.9;
+      rec.orbs.forEach((h, i) => { const u = clamp01((L - i * 0.05) / 0.3), arc = Math.sin(u * Math.PI) * 0.6;
+        q(h, { frame: 'partyHolyOrb', index: Math.floor(L * 12) % 2, x: S.x + (S.tx - S.x) * u + vx * 0.2, y: y0 + (y1 - y0) * u + arc, z: S.z + (S.tz - S.z) * u + vz * 0.2, mode: 'billboard', scale: 1.2, r: LIFE.core[0], g: LIFE.core[1], b: LIFE.core[2], a: u > 0 && u < 1 ? 1 : 0, halo: 1 }); });
+      const p = L - 0.3, yf = H(S.tx, S.tz), sc = 0.6, lift = (96 / 2 / 16) * sc;
+      q(rec.body, { frame: 'partyPillar', index: 1 + Math.min(2, Math.max(0, Math.floor(p / 0.13))), x: S.tx + vx * 0.3, y: yf + lift, z: S.tz + vz * 0.3, mode: 'billboard', scale: sc, r: LIFE.body[0], g: LIFE.body[1], b: LIFE.body[2], a: p > 0 ? 0.85 * clamp01((0.45 - p) / 0.18) : 0 });
+      q(rec.core, { frame: 'partyPillar', index: 0, x: S.tx + vx * 0.32, y: yf + lift, z: S.tz + vz * 0.32, mode: 'billboard', scale: sc, r: LIFE.core[0], g: LIFE.core[1], b: LIFE.core[2], a: p > 0 ? clamp01((0.28 - p) / 0.1) : 0, halo: 1 });
+      q(rec.foot, { frame: 'partySunburst', index: Math.min(3, Math.max(0, Math.floor(p / 0.08))), x: S.tx, y: yf + 0.05, z: S.tz, mode: 'flat', scale: 1, rot: p * 2, r: LIFE.core[0], g: LIFE.core[1], b: LIFE.core[2], a: p > 0 ? Math.max(0, 1 - p / 0.5) : 0, halo: 1 });
+      const k = p > 0 ? 2.6 * Math.exp(-p / 0.2) : 0.3;
+      if (!light || k > light.k) light = { x: S.tx, z: S.tz, k, color: [0.6, 1.8, 0.5] };
+    } else if (S.id === 'bless' && L != null) {
+      // her glyph turning under her (Sanctuary's, in gold), a burst over each of the party
+      if (!rec.glyph) { rec.glyph = K.quads.alloc(); rec.bursts = S.reached.slice(0, 4).map(() => K.quads.alloc()); rec.quads.push(rec.glyph, ...rec.bursts); }
+      const g = smooth(L / 0.3) * (1 - smooth((L - 0.9) / 0.5));
+      q(rec.glyph, { frame: 'partyGlyphHoly', x: S.x, y: H(S.x, S.z) + 0.04, z: S.z, mode: 'flat', scale: 0.32 + 0.14 * smooth(L / 0.3), rot: L * 0.8, r: HOLY.glyph[0], g: HOLY.glyph[1], b: HOLY.glyph[2], a: 0.9 * g });
+      rec.bursts.forEach((h, i) => { const o = S.reached[i], t = L - 0.15; q(h, { frame: 'partySunburst', index: Math.min(3, Math.max(0, Math.floor(t / 0.08))), x: o.x + vx * 0.2, y: H(o.x, o.z) + 1.7, z: o.z + vz * 0.2, mode: 'billboard', scale: 0.9, r: HOLY.burst[0], g: HOLY.burst[1], b: HOLY.burst[2], a: t > 0 ? Math.max(0, 1 - t / 0.4) : 0, halo: 1 }); });
+      const k = 1.8 * Math.exp(-L / 0.35);
+      if (!light || k > light.k) light = { x: S.x, z: S.z, k, color: [1.9, 1.4, 0.5] };
+    } else if (S.id === 'cleave' && L != null) {
+      // three spectral swords (the swordmaster's) swept round the fighter toward the foe and past, then gone
+      if (!rec.blades) rec.blades = [0, 1, 2].map((i) => K.blades.spawn({ x: S.x, y: -500, z: S.z, length: 1.1, width: 0.17, palette: 0, seed: rec.seed + i * 7 }));
+      const a0 = Math.atan2(S.tz - S.z, S.tx - S.x), sweep = -0.9 + 1.8 * smooth(L / 0.22), yb = H(S.x, S.z) + 0.75;
+      rec.blades.forEach((h, i) => { if (h < 0) return; const a = a0 + (i - 1) * 0.55 + sweep, c = Math.cos(a), sn = Math.sin(a), R = 1.05;
+        K.blades.set(h, { x: S.x + c * R, y: yb, z: S.z + sn * R, ax: -c, ay: 0.05, az: -sn, nx: 0, ny: 1, nz: 0, glow: 1.5, runes: smooth(L / 0.15), dissolve: smooth((L - 0.28) / 0.3), dissolveDir: 1, ghost: 0.15 }); });
+    } else if (S.id === 'shield_wall' && L != null) {
+      // the war cry's snap: an amber ring under each foe it turns (Bulwark's)
+      if (!rec.snaps) { rec.snaps = S.reached.slice(0, 8).map(() => K.quads.alloc()); rec.quads.push(...rec.snaps); }
+      rec.snaps.forEach((h, i) => { const o = S.reached[i], u = clamp01(L / 0.35); q(h, { frame: 'partyRing', index: u < 0.5 ? 0 : 1, x: o.x, y: H(o.x, o.z) + 0.05, z: o.z, mode: 'flat', scale: 0.25 + 0.2 * u, r: TAUNT[0], g: TAUNT[1], b: TAUNT[2], a: 1 - u }); });
+    } else if (S.id === 'aura_wall') {
+      // Bulwark's hex dome over the walled fighter while it lasts: rising as it begins, dissolving over its last 0.8 s (one dome)
+      if (!K.domeOf || !spellLive.has(K.domeOf.key)) { K.dome.show({ x: S.x, y: H(S.x, S.z), z: S.z, radius: 1.15 }); K.domeOf = rec; rec.key = S.key; rec.dome = true; rec.t = 0; }
+      if (K.domeOf === rec) { rec.t += dt; K.dome.object.position.set(S.x, H(S.x, S.z), S.z); K.dome.object.updateMatrix(); K.dome.object.updateMatrixWorld(true);
+        const sw = (rec.t * 0.6) % 1; K.dome.set({ rise: smooth(rec.t / 0.35), dissolve: 1 - clamp01(S.k / 0.8), sweepA: sw, sweepB: (sw + 0.5) % 1 }); }
+    } else if (S.id === 'aura_ward') {
+      // Arcane Ward's ring under the warded ally (it read better than a dome on three people), a slow pulse
+      if (!rec.ring) { rec.ring = K.quads.alloc(); rec.quads.push(rec.ring); rec.t = 0; } rec.t += dt;
+      q(rec.ring, { frame: 'partyWardRing', x: S.x, y: H(S.x, S.z) + 0.05, z: S.z, mode: 'flat', scale: 0.85 + 0.05 * Math.sin(rec.t * 4), rot: rec.t * 0.5, r: WARD[0], g: WARD[1], b: WARD[2], a: 0.9 * smooth(rec.t / 0.25), halo: 1 });
+    } else if (S.id === 'firebolt_fly') {
+      // the Firebolt in flight: Luminati's ember bolt riding it
+      if (!rec.bolt) { rec.bolt = K.quads.alloc(); rec.quads.push(rec.bolt); rec.t = 0; } rec.t += dt;
+      q(rec.bolt, { frame: 'emberBolt', index: Math.floor(rec.t * 12) % 2, x: S.x + vx * 0.2, y: H(S.x, S.z) + 1.0, z: S.z + vz * 0.2, mode: 'billboard', scale: 1.5, r: FLAME[0], g: FLAME[1], b: FLAME[2], a: 1, halo: 1 });
+    } else if (S.id === 'firebolt' && L != null) {
+      // where it lands: flames licking up round the blast (wallFlame), an impact at its heart (the light: the blast's)
+      if (!rec.flames) { rec.flames = [0, 1, 2, 3, 4, 5].map(() => K.quads.alloc()); rec.hit = K.quads.alloc(); rec.quads.push(...rec.flames, rec.hit); }
+      const g = smooth(L / 0.12) * (1 - smooth((L - 0.5) / 0.6)), yf = H(S.tx, S.tz);
+      rec.flames.forEach((h, i) => { const a = (i / 6) * Math.PI * 2 + (rec.seed % 5) * 0.3, rr = 0.45 + 0.15 * ((i * 3 + rec.seed) % 4) / 3;
+        q(h, { frame: 'wallFlame', index: Math.floor(L * 10 + i) % 4, x: S.tx + Math.cos(a) * rr, y: yf + 0.55 * (0.8 + 0.3 * g), z: S.tz + Math.sin(a) * rr, mode: 'billboard', scale: 0.9 + 0.3 * g, r: FLAME[0], g: FLAME[1], b: FLAME[2], a: g, halo: 1 }); });
+      q(rec.hit, { frame: 'impact', index: Math.min(3, Math.floor(L * 14)), x: S.tx + vx * 0.3, y: yf + 0.9, z: S.tz + vz * 0.3, mode: 'billboard', scale: 3, r: 1.8, g: 1.2, b: 0.5, a: L < 0.3 ? 1 : 0, halo: 1 });
     }
   }
   for (const [key, rec] of spellLive) if (!seen.has(key)) { freeSpell(rec); spellLive.delete(key); }
@@ -512,7 +570,8 @@ function placeSpells(spells, dt, lamps, fight) {
     if (light && light.k > 0.02) spellLight.set(light.x, H(light.x, light.z) + 1.4, light.z, { color: light.color, intensity: 2.6 * light.k / (lamps ?? 1), distance: 6.5, decay: 1.5, flicker: 0.08 });
     else spellLight.off();
   }
-  K.crystals.update(dt); K.frost.update(dt); K.quads.update();
+  if (K.domeOf && !spellLive.has(K.domeOf.key)) { K.dome.hide(); K.domeOf = null; }
+  K.crystals.update(dt); K.frost.update(dt); K.blades.update(dt); K.quads.update();
 }
 
 /** the frame's API, for src/render3d/hybrid.js */
@@ -555,7 +614,7 @@ const api = {
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,
-   *   spells?: { key: string, id: string, seed: number, age: number, land: number | null, x: number, z: number, tx: number, tz: number, r: number, reached: { x: number, z: number }[] }[],
+   *   spells?: { key: string, id: string, seed: number, age: number, land: number | null, x: number, z: number, tx: number, tz: number, r: number, k?: number, reached: { x: number, z: number }[] }[],
    *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[] }} f
    */
   frame(f) {
@@ -658,7 +717,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };
