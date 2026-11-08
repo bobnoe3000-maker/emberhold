@@ -159,3 +159,19 @@ test('a warning\'s marks: a ring filling under a heavy blow, a lane filling alon
   const held = draw({ heavy: false, bolt: 'soul', wind: 0.18, fly: 0.3, move: true }, [60, 300]), free = draw({ heavy: false, bolt: 'soul', wind: 0.18, fly: 0.3 }, [60, 300]);
   assert.equal(held.out[1], free.out[1], 'the shooter stepping off after the release moves nothing: the lane holds its start');
 });
+
+// the proposed skills (docs/skill-trees-proposal.md): each has a moment of its own, drawn for the owner's review
+test('the proposed skills each draw a moment of their own, and no two alike', async () => {
+  const { PROPOSED_MOMENTS } = await import('../src/render/skillfx.js');
+  assert.equal(PROPOSED_MOMENTS.length, 20);
+  const sig = new Map();
+  for (const id of PROPOSED_MOMENTS) {
+    const pts = [];
+    const P = { depth() {}, flush() {}, mark: (x, y, a) => { if (a > 0.01) pts.push(`${Math.round(x)},${Math.round(y)}`); }, disc: (x, y, r, a) => { if (a > 0.01) pts.push(`${Math.round(x)},${Math.round(y)}`); }, seg: (x0, y0, x1, y1, a0, a1) => { if (Math.max(a0, a1) > 0.01) pts.push(`${Math.round(x0)},${Math.round(y0)}-${Math.round(x1)},${Math.round(y1)}`); }, star: (x, y, r, a) => { if (a > 0.01) pts.push(`*${Math.round(x)},${Math.round(y)}`); } };
+    const fx = createSkillFX(P), proj = (x, y) => ({ sx: 200 + (x - y) * 8, sy: 200 + (x + y) * 4, h: 0, key: x + y });
+    fx.event({ id, at: 'land', cls: 'x', by: null, x: 3, y: 5, tid: null, ally: false, tx: 6, ty: 4, r: 3, reached: [{ id: null, x: 7, y: 5 }, { id: null, x: 5, y: 3 }], crit: false, marks: 3 }, 0);
+    for (const t of [60, 200, 420, 900, 1300]) fx.draw(t, proj, []);
+    assert.ok(pts.length >= 6, `${id} draws: ${pts.length}`);
+    const s = pts.join('|'); assert.ok(!sig.has(s), `${id} draws as ${sig.get(s)} does`); sig.set(s, id);
+  }
+});
