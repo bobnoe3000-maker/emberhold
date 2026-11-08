@@ -257,7 +257,7 @@ ring breathing round him); and each singer's song goes out over the floor in a r
 over them hide part of it (the frames above). The Luminati side shows the bell and the issue strongly, and the rest more
 quietly than Emberlit: its own torchlight is brighter round them.
 
-### Found on the way: the Quartermaster never issues
+### Found on the way: the Quartermaster never issued (fixed, GDD v1.54)
 
 In his hall, against the contract's party, both of his escorts are down by 9.1 s, and his first issue is due at 10 s.
 There's nothing left to issue to: in 3 × 90 s of fighting at levels 1, 2 and 3 it never fired once.
@@ -266,4 +266,19 @@ The world doc's line is that "the most broken of his ranks stands up whole, re-a
 version (`tools/lumina/ember/issue.js`) stands a fallen one up first; ours only makes a living one whole. Making it work
 is a rules change and a balance run, so it's left for the owner. The capture stages the sim's own event for him (marked
 "staged") so the effect can be seen.
+
+**Fixed (2026-11-08; the owner: "Yes fix the Quartermaster to raise a fallen rank").** Every 10 s the last of his ranks to
+fall stands up whole where it fell; with none down, the most hurt living one is made whole as before. One he stood up pays
+nothing when it falls again (no XP, coin, souls or count), so his hall is no farm. Measured with `tools/balance/boss.mjs
+barrows 3 1,2,3,4,5,6 --floor 2`, with `--src` for before:
+
+| | Before | After |
+|---|---|---|
+| issues in his hall, at his level | 0 | one every 10 s (11.7, 21.7, 31.7 … s) |
+| he falls in, at his level (L3) | 50–54 s | 60–67 s |
+| the party's lowest HP, at L3 | 76–82 %, nobody down | 73–83 %, nobody down |
+| a party a level under (L2) | 62–64 s, 73–79 %, nobody down | 73–92 s, 21–78 %, downed in two of three |
+
+`test/bosses.test.mjs` holds it: in his own hall he issues, stands a fallen rank up, and it pays nothing when it falls
+again. It fails without the fix (he never issues). The capture tool doesn't stage him any more.
 

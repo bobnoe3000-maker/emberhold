@@ -103,3 +103,26 @@ test('the Quartermaster: every 10 s the most hurt of his ranks stands up whole, 
   intoHall(again); fight(again, () => !!back, 60);
   assert.equal(back, 'quartermaster', 'the Quartermaster again');
 });
+
+// (GDD §17 v1.54; world doc §3.1: "the most broken of his ranks stands up whole, re-armed from his racks") his escort
+// was down by 9 s and his first issue due at 10: with only the living to make whole, it never once fired
+test('the Quartermaster stands his fallen ranks up again, the last to fall first; one he stood up pays nothing again', () => {
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 3); sim.tick();
+  down(sim);
+  const ev = []; for (const k of ['bossIssue', 'bossDown', 'slain']) sim.bus.on(k, (e) => ev.push([k, e, sim.state.tick]));
+  const paid = []; sim.bus.on('combat', (c) => { if (c.t === 'xp') paid.push([sim.state.tick, c.x, c.y]); });
+  intoHall(sim);
+  let watched = null, fellAt = -1;
+  fight(sim, () => {
+    if (!watched) watched = (sim.world.enemies || []).find((e) => e.issued && e.hp > 0 && !(e.spawn > 0)) || null;
+    else if (fellAt < 0 && watched.hp <= 0) fellAt = sim.state.tick;
+    return ev.some(([k]) => k === 'bossDown');
+  }, 300);
+  const issues = ev.filter(([k]) => k === 'bossIssue').map(([, e]) => e);
+  assert.ok(issues.length >= 2, `he issued in his own hall: ${issues.length}`);
+  assert.ok(issues.some((e) => e.raised), 'and stood a fallen rank up');
+  assert.ok(ev.some(([k]) => k === 'bossDown'), 'he falls');
+  assert.ok(watched && fellAt >= 0, 'a rank he stood up fell again');
+  assert.ok(!paid.some(([t, x, y]) => t === fellAt && x === watched.x && y === watched.y), 'it paid no XP the second time');
+  assert.ok(!ev.some(([k, , t]) => k === 'slain' && t === fellAt && !ev.some(([k2, e2, t2]) => k2 === 'bossDown' && t2 === t && e2)), 'nor counted as a kill');
+});

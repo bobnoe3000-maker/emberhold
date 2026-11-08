@@ -179,7 +179,7 @@ export const FAMILIES = {
 //          tunnels at the hall's far side, while fewer than SWARM_MAX of them are up: put him down and the drum stops
 // `once`: a story boss falls for good (state.bosses counts kills; his hall then fights as any other).
 // Events: 'bossWave' { id, name } · 'bossCall' { id, by, x, y, reached } · 'bossKindle' { id, by, tid, x, y } · 'bossSwarm' { id, by, x, y, n, reached }
-// · 'bossMud' { id, by, x, y, n, reached } · 'bossIssue' { id, by, tid, x, y } · 'bossVespers' { id, by, tid, x, y } · 'bossFlood' { id, by, level, x, y }
+// · 'bossMud' { id, by, x, y, n, reached } · 'bossIssue' { id, by, tid, x, y, raised? } · 'bossVespers' { id, by, tid, x, y } · 'bossFlood' { id, by, level, x, y }
 // · 'bossDown' { id, name, first, x, y, lvl }. (by: the boss's id; tid / reached: those it raised, called, issued to: the
 // renderer's moments, render/skillfx.js, follow them. Presentation only: nothing reads them back.)
 // Gold that drops, from a kill or a chest (core.js), is cut to 70 % (2026-10-03, GDD §8): quest and board rewards,
@@ -195,7 +195,8 @@ export const GOLD_DROP = 0.7;
 //           to its middle a bell (to FLOOD_MAX bells: about three quarters of the floor; hazards.js); it drains when she
 //           falls (her choir-lamp breaks with her: lamps.js)
 //   (v1.48, one dungeon a level)
-//   issue   (the Quartermaster) every ISSUE_S s the most hurt of his ranks (not himself) stands up whole, re-armed
+//   issue   (the Quartermaster) every ISSUE_S s the last of his ranks to fall stands up whole where it fell, re-armed
+//           (v1.54; none down: the most hurt living one, not himself, is made whole); one he stood up pays nothing again
 //   sluice  (the Vatwarden) every SLUICE_S s a strip of the vat's sick water (hazards.js, SLUICE_R patches for SLUICE_T
 //           s) runs across the hall through the party's middle, along one axis then the other
 /** @type {Record<string, { name: string, like: string, hp: number, atk: number, def: number, speed?: number, xp: number, gold: number, mech: 'call' | 'kindle' | 'line' | 'swarm' | 'mud' | 'cage' | 'vespers' | 'bells' | 'issue' | 'sluice', escort: string[], once?: boolean, undead?: boolean, heirloom?: string }>} */
@@ -214,7 +215,7 @@ export const BOSSES = {
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };
 export const KINDLE_S = 12, LINE_R = 4, SWARM_S = 10, SWARM_MAX = 4;
-export const STALL_R = 3, ISSUE_S = 10, SLUICE_S = 11, SLUICE_R = 1.5, SLUICE_T = 6, SLUICE_L = 8;
+export const STALL_R = 3, ISSUE_S = 10, FELL_MAX = 6, SLUICE_S = 11, SLUICE_R = 1.5, SLUICE_T = 6, SLUICE_L = 8;
 export const MUD_S = 9, MUD_R = 1.8, MUD_T = 6, CAGE_HP = 0.35, CAGE_MEND = 0.025, VESPERS_S = 12, VESPERS_MEND = 0.02, BELL_S = 12, FLOOD_MAX = 4, FLOOD_STEP = 0.12;
 /** does a blow on this foe land at half? A boss whose called men still stand; an Ashbound (not a boss)
  * within LINE_R of a standing Standard @param {any} tgt @param {any[]} foes */
@@ -547,6 +548,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const guardedHalf = (tgt, w) => halved(tgt, w.enemies);
   function reward(e) {
     if (e.inert) { freeing(e); return; }                         // Teague's cage: no XP, no coin, its soul goes free
+    // the Quartermaster's ranks (issue): a fallen one he can stand up again, the last to fall first (FELL_MAX kept);
+    // one he already stood up pays nothing again, no XP, coin, souls or count, so a hall he holds is no farm
+    if (battle && !e.boss && battle.boss && BOSSES[battle.boss].mech === 'issue') { (battle.fell ||= []).push({ kind: e.kind, x: e.x, y: e.y, elite: !!e.elite }); if (battle.fell.length > FELL_MAX) battle.fell.shift(); }
+    if (e.issued) { if (battle) battle.lastSlain = { x: e.x, y: e.y }; return; }
     if (battle && battle.tower) { towerReward(e); return; }
     const living = state.party.filter(alive);
     const xp = Math.round(e.xp * e.lvl), share = Math.max(1, Math.round(xp * XP_SHARE[Math.min(3, living.length)]));
@@ -1105,10 +1110,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       for (const [x, y] of at) battle.hazards.push({ kind: 'mud', x, y, r: MUD_R, from: state.t, until: state.t + MUD_T });
       bus.emit('bossMud', { id: e.boss, by: e.id, x: e.x, y: e.y, n: at.length, reached: at.map(([x, y]) => ({ id: null, x, y })) });
     } else if (B.mech === 'issue' && battle && (e.issueT += dt) >= ISSUE_S) {
-      // he issues: the most hurt of his ranks (alive, not himself) stands up whole
+      // he issues (GDD §17 v1.54; world doc §3.1: "the most broken of his ranks stands up whole, re-armed from his
+      // racks"): the last of his ranks to fall stands up whole where it fell; none down, the most hurt living one (not
+      // himself) is made whole. (Only the living, before v1.54: his escort was down by 9 s, his first issue due at 10,
+      // and it never once fired.) One he stood up pays nothing when it falls again (reward: `issued`).
       e.issueT = 0;
-      let worst = null; for (const o of w.enemies || []) if (o !== e && !o.boss && o.hp > 0 && !o.dead && !(o.spawn > 0) && o.hp < o.maxHp && (!worst || o.hp / o.maxHp < worst.hp / worst.maxHp)) worst = o;
-      if (worst) { worst.hp = worst.maxHp; bus.emit('bossIssue', { id: e.boss, by: e.id, tid: worst.id, x: worst.x, y: worst.y }); }
+      const f = battle.fell && battle.fell.pop();
+      if (f) {
+        const [x, y] = onFloor(w, f.x, f.y, e.x, e.y), u = foe(w, f.kind, e.lvl, x, y, tough, f.elite, F); u.issued = true;
+        bus.emit('bossIssue', { id: e.boss, by: e.id, tid: u.id, x: u.x, y: u.y, raised: true });
+      } else {
+        let worst = null; for (const o of w.enemies || []) if (o !== e && !o.boss && o.hp > 0 && !o.dead && !(o.spawn > 0) && o.hp < o.maxHp && (!worst || o.hp / o.maxHp < worst.hp / worst.maxHp)) worst = o;
+        if (worst) { worst.hp = worst.maxHp; bus.emit('bossIssue', { id: e.boss, by: e.id, tid: worst.id, x: worst.x, y: worst.y }); }
+      }
     } else if (B.mech === 'sluice' && battle && (e.sluiceT += dt) >= SLUICE_S) {
       // he opens the sluice: a strip of sick water across the hall through the party's middle, along x, then along y
       e.sluiceT = 0; e.sluiceN++;

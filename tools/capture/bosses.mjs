@@ -23,7 +23,7 @@ const AT = [0, 200, 400, 700, 1000, 1400];
 // each boss: its site and floor (sites.js bosses: floor n is depth n − 1), the event its mechanic fires, or a moment of
 // the fight for one that holds (`hold`, ms after the boss's wave)
 const CASES = [
-  { boss: 'quartermaster', site: 'barrows', depth: 1, ev: 'bossIssue', stage: true },   // (staged, below: his issue never fires)
+  { boss: 'quartermaster', site: 'barrows', depth: 1, ev: 'bossIssue' },   // (GDD v1.54: he issues on his own now; `stage: true` put on a case stages its event past 6 s)
   { boss: 'goblin_chief', site: 'wickham_keep', depth: 0, ev: 'bossSwarm' },
   { boss: 'redhand_captain', site: 'wickham_keep', depth: 1, ev: 'bossCall' },
   { boss: 'robed_stranger', site: 'sunken_chapel', depth: 0, ev: 'bossKindle' },

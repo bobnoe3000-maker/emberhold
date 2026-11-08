@@ -108,9 +108,8 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 **Still open:**
 - the sim quirks below;
 - the docs' disagreements;
-- **found on the way: the Quartermaster never issues.** His escort is down by 9.1 s, his first issue due at 10 s, so in 3
-  × 90 s of fighting it never fired. Making it stand a fallen rank up, as the world doc reads and the prototype does, is a
-  rules change for the owner.
+- ~~found on the way: the Quartermaster never issues~~ (fixed, GDD v1.54: he stands the last of his ranks to fall up
+  whole; [combat-fx.md](combat-fx.md)).
 
 What the survey found:
 

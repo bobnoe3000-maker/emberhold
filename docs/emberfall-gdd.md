@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.53 · 2026-11-07 · Plan of record for game design.** v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
+**v1.54 · 2026-11-08 · Plan of record for game design.** v1.54 (§17; the owner: "fix the Quartermaster to raise a fallen rank"): the Quartermaster's *Issue* stands the last of his ranks to fall up whole where it fell, every 10 s; with none down, the most hurt living one is made whole, as before. It never fired before: his escort was down by 9 s, his first issue due at 10. One he stood up pays nothing when it falls again. At his level he falls in 60–67 s (was 50–54), the party's lowest 73–83 %; a party a level under is downed now and then (it wasn't). v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
 5, halls 10"; [vale-dungeons-plan.md](./vale-dungeons-plan.md)): **the Hollow Vale's dungeons are authored**: two floors
 each (the Ninth Milestone one), five spaces a floor at most (the entrance counted; a large corridor, the *gallery*, 60–80
 long, counts as one), halls 10 wide, the same rooms in the same places every visit (the seed moves the furniture, the foes'
@@ -1647,7 +1647,7 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
 
   | Hall | Boss | Mechanic |
   |---|---|---|
-  | The Old Barrows, floor 3 (3) | **The Quartermaster** of the Third Legion | *Issue*: every 10 s the most hurt of his ranks (not himself) stands up whole, re-armed from his racks. Put him down first, or the hall never thins |
+  | The Old Barrows, floor 3 (3) | **The Quartermaster** of the Third Legion | *Issue* (v1.54): every 10 s the last of his ranks to fall stands up whole where it fell, re-armed from his racks; with none down, the most hurt living one (not himself) is made whole. One he stood up pays nothing again. Put him down first, or the hall never thins |
   | The Canal Locks, floor 3, Vat Seven (15) | **The Vatwarden**, the Cult's overseer at the vats | *Sluice*: every 11 s he opens the vat's sluice, and a strip of sick water (a ground hazard, §17 above) runs across the hall through the party for 6 s |
 
   The Fens' four keep their mechanics at their new halls: the Toadking on the Mound's third floor (12), Teague (16),
@@ -1659,7 +1659,7 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
 
   | Boss (hall level) | Falls in | Lowest HP |
   |---|---|---|
-  | The Quartermaster (3) | 52–55 s | 79–82 % |
+  | The Quartermaster (3) | 60–67 s (v1.54, six seeds; was 50–54) | 73–83 % (a party a level under: 73–92 s, 21–78 %, downed in two of three) |
   | Old Skarn (4) | 70–79 s | 55–75 % (five seeds) |
   | Captain Garrow (6) | 56–62 s | 58–67 % |
   | The Robed Stranger (8) | 55–58 s | 75–76 % |
