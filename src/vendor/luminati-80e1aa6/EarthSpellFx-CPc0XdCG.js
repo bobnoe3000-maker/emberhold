@@ -5,7 +5,7 @@ import { r as v } from "./ThawField-CelnRTY2.js";
 import "./engine-hlzvTIM_.js";
 import { r as te, t as ne } from "./PixelCanvas-Dyge5vEE.js";
 import { t as re } from "./glowSpots-q5RSKfDQ.js";
-import { a as y, i as b, n as x, r as S, t as C } from "./CombatSystem-3hsoKuDG.js";
+import { a as y, i as b, n as x, r as S, t as C } from "./CombatSystem-BkMpPO4j.js";
 //#region src/engine/fx/RockSpikes.js
 var w = 4, T = 4, E = 32, D = 64, O = {
 	part: 0,

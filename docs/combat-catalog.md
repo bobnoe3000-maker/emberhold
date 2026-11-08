@@ -77,8 +77,8 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 | A line or wave | none | ★ **Dragonfang Wave** (a piercing lane); **Peal** (a cone that detonates marks); Rime Lane (a foe's) | **A gap in ours.** No skill hits in a line; a fighter or rogue lane is a candidate. |
 | Leap or slam | none | ★ **Skyfall Judgement** (a leap, a falling sword, a 5.5 u slam); **Earthshatter** (rock spikes); **Carillon** | **A gap in ours.** A fighter level-20 or level-24 move. |
 | Fire at range | **Firebolt** (a roaring head, embers, a scorch); the mage's basic bolt | **Ember Bolt** (a splash); the mystic's bolt; ★ **Flare**, a burst 0.7 s after the cast on the target's spot | Flare's delayed burst would give the mage a second fire shape. |
-| Frost | **Frost Nova**: thrown onto a group, 3.5 tiles, slow 3 s; a frost ring, spikes, rime | ★ **Glacial Tomb** (a glyph, then 3D crystals; freeze 2.5 s); ★ **Blizzard** (a storm field, ticks, chill); **Frost Lance** (chill) | The Tomb's crystals and ground frost are the best look in either set for our Frost Nova on Luminati. Blizzard is a level-20 or rank idea. |
-| Holy area | **Turn Undead**: a sunburst round the cleric, undead only | ★ **Judgement**: a glyph, a ring of six pillars, then the great pillar; **Radiant Nova** | Judgement's pillars are a strong Luminati look for Turn Undead. |
+| Frost | **Frost Nova**: thrown onto a group, 3.5 tiles, slow 3 s; a frost ring, spikes, rime | ★ **Glacial Tomb** (a glyph, then 3D crystals; freeze 2.5 s); ★ **Blizzard** (a storm field, ticks, chill); **Frost Lance** (chill) | The Tomb's crystals and ground frost are the best look in either set for our Frost Nova on Luminati (adopted 2026-11-08). Blizzard is a level-20 or rank idea. |
+| Holy area | **Turn Undead**: a sunburst round the cleric, undead only | ★ **Judgement**: a glyph, a ring of six pillars, then the great pillar; **Radiant Nova** | Judgement's pillars are a strong Luminati look for Turn Undead (adopted 2026-11-08). |
 | Heal one | **Mend** (a column, a mark); **Second Wind** (wind strands) | The cleric's **Mend**: stars flying from the staff, then a green column; the **Healing Draught** | Close already. Their stars-to-target travel is a nice touch. |
 | Heal the party | **Ancestors' Breath**: heal over time plus ATK, rising leaves | ★ **Sanctuary**: a healing circle on the hurt, 8 ticks, and a ward on the party | A cleric idea. Ours heals continuously; theirs heals in ticks you can see. |
 | Raise | **Lifeline** (the passive: once a visit, holds at 1 HP; a float only) | ★ **Revive**: kneel, a pillar of light, rise at 40 % | No raise mid-fight in ours. Design question: the GDD keeps raising for temples. |
@@ -105,8 +105,10 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 - a ward break and a level-up effect;
 - a sound for each skill.
 
-**Adopted (2026-11-08):** the telegraph grammar for foes' heavy blows and shots, on both renderers ([combat-fx.md](combat-fx.md)
-"Attack warnings").
+**Adopted (2026-11-08):**
+- the telegraph grammar for foes' heavy blows and shots, on both renderers ([combat-fx.md](combat-fx.md) "Attack warnings");
+- on Luminati, Frost Nova in the Tomb's crystals and ground frost, Turn Undead in Judgement's pillars and glyph
+  ([combat-fx.md](combat-fx.md) "Frost Nova and Turn Undead on Luminati").
 
 **Still open:**
 - the sim quirks below;

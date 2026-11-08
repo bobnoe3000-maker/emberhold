@@ -365,3 +365,46 @@ fill and rim.
   so it's a balance question, not a drawing one.
 - Bosses' area mechanics (the Toadking's stamp, the Abbess's bell) still mark where they land only as it happens; a
   warning ring before them would need the sim to say so ahead of time.
+
+## Frost Nova and Turn Undead on Luminati (2026-11-08)
+
+The catalog's next import ([combat-catalog.md](combat-catalog.md) §B): our two area spells drawn on Luminati with its own
+ice mage's and cleric's pieces, the best looks in either set for them. Emberlit keeps its own (`skillfx.js`). Presentation
+only; the sim is untouched.
+
+**Before.** On Luminati both were Emberlit's light laid over its world: a ring of frost light and spikes of light for the
+nova, a sunburst of light for Turn Undead. Nothing stood in the world, and nothing lit it.
+
+**After** (`tools/render3d/world.js` placeSpells; `renderer.js` spells → `hybrid.js` → the frame's `spells`):
+- **Frost Nova**, in her Glacial Tomb's pieces:
+  - **Ground frost** (`GroundFrost`): painted from the cast (0.38 s before it lands; a patch takes a few frames to
+    paint), spreading over the nova's reach as it lands, its cracks racing out, then fading over a second.
+  - **3D ice crystals** (`IceCrystals`): a ring of seven round the edge and one under each foe it took (up to four).
+    They shoot up with the Tomb's overshoot, glint, crack and sink away by 1.2 s.
+  - **A cold spell light**: a flash as it lands, then a hold.
+- **Turn Undead**, in her Judgement's pieces (Luminati's FX atlas, `FxQuads`):
+  - her sun glyph drawn under her as she casts, turning;
+  - a shockwave out to its reach as it lands;
+  - a burst of rays over her;
+  - a pillar of light striking down on each of the dead it took (up to six, the near ones first), with a burst at its foot;
+  - a gold spell light.
+- **Made once, at the first fight**, and warmed (their programs compile while the fight starts, before anyone casts).
+  Every piece is freed when its spell ends. One of Luminati's four spell lights (the hero's, the blast's and this one: three).
+- **On Luminati these replace Emberlit's light for the two skills.** The chill they leave on foes (`skillfx.js` auras)
+  is still drawn.
+
+**Burst frames.** `node tools/capture/skills.mjs --renderer luminati --land --party 1` (Frost Nova lands at 18.1 s) and
+`--party 2` (Turn Undead at 32.1 s), the same moments on both trees; +0, 0.08, 0.16, 0.25, 0.35, 0.7 s; rows: Frost Nova
+before, after; Turn Undead before, after:
+
+![Frost Nova and Turn Undead on Luminati, before and after](img/fx/luminati-spells.jpg)
+
+**Checked** in the browser suite: both spells' pieces stand while they live (seven or more crystals, one frost patch, the
+spell light) and are all gone after; a heavy blow's ring and a shot's lane are laid on Luminati's ground.
+
+**Left.**
+- Not yet timed on a phone. GroundFrost's paint is 4–15 ms of CPU a patch by Luminati's own measure, spread over six
+  frames; the atlas is painted once, at the first fight.
+- The renderer's download grew: `luminati.js` 206.4 → 214.2 kB, and GroundFrost (48 kB, a chunk Luminati's own ice mage
+  shares) now loads with it.
+- The Tomb's shatter (its shards flying) and the frozen foes' ice shells aren't used: our nova slows, it doesn't freeze.

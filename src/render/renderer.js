@@ -1050,6 +1050,26 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
     return out;
   }
+  // Frost Nova and Turn Undead on Luminati, in its ice mage's and cleric's looks (world.js placeSpells): from the cast (its
+  // frost painted, her glyph drawn) to the landing and after; Emberlit draws them itself (skillfx.js)
+  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead']), SPELL_LIFE = { frost_nova: 2.2, turn_undead: 1.2 }, spells = [];
+  let spellN = 0;
+  function spellEvent(e, now) {
+    if (e.at === 'cast') { spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: null }); if (spells.length > 12) spells.shift(); return; }
+    const S = [...spells].reverse().find((q) => q.e.id === e.id && q.e.by === e.by && q.land == null);
+    if (S) { S.land = now; S.e = { ...e, tx: S.e.tx, ty: S.e.ty }; } else spells.push({ e, key: `${e.id}:${++spellN}`, t0: now, land: now });
+  }
+  /** @param {number} now */
+  function spellsNow(now) {
+    const out = [];
+    for (let i = spells.length - 1; i >= 0; i--) {
+      const S = spells[i], age = (now - S.t0) / 1000, L = S.land == null ? null : (now - S.land) / 1000;
+      if ((L ?? 0) >= SPELL_LIFE[S.e.id] || (L == null && age > 1.2)) { spells.splice(i, 1); continue; }   // (over, or cut down mid-cast)
+      const by = S.e.cls ? memberById(S.e.by) : null;
+      out.push({ key: S.key, id: S.e.id, seed: S.seed, age, land: L, x: by && by.x !== undefined ? by.x : S.e.x, y: by && by.y !== undefined ? by.y : S.e.y, tx: S.e.tx, ty: S.e.ty, r: S.e.r, reached: S.e.reached || [] });
+    }
+    return out;
+  }
   let liveBolts = new Set(), nextBolts = new Set();
   function boltFx(b, bx, by, kind, proj) {
     let t = trails.get(b); if (!t) trails.set(b, t = []);
@@ -1296,7 +1316,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
     }
     // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()), spells: spellsNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     if (!X) {
     // upload the window G-buffer
@@ -1617,7 +1637,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
-    sfx.event(e, clock());
+    if (ext && LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (on Luminati, two skills in its own looks: tools/render3d/world.js)
+    else sfx.event(e, clock());
     if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's
       blast(e.tx, e.ty, clock(), 0.55, 2.4);
       const pl = sim.state.player; if (Math.hypot(e.tx - pl.x, e.ty - pl.y) < 14) shake = { t0: clock(), amp: 2.8 };

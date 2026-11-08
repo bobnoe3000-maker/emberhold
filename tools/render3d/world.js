@@ -24,6 +24,10 @@ import { loadContentTables } from '../src/engine/i18n/ContentText.js';
 import { startFonts } from '../src/engine/ui/FontLoader.js';
 import { artScale } from '../src/engine/ui/UiScale.js';
 import { Sprite3D } from '../src/engine/sprite/Sprite3D.js';
+import { IceCrystals } from '../src/engine/fx/IceCrystals.js';
+import { GroundFrost } from '../src/engine/fx/GroundFrost.js';
+import { FxQuads } from '../src/engine/fx/FxQuads.js';
+import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import './ground.js';
@@ -409,6 +413,108 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
+// ── two skills in Luminati's own looks (renderer.js spells; docs/combat-fx.md "Frost Nova and Turn Undead on Luminati") ─
+// Frost Nova: Luminati's ice mage's pieces (her Glacial Tomb): frost spreading over the ground with its cracks racing out
+// (GroundFrost: painted from the cast, over a few frames, so it's ready as the nova lands), a ring of 3D ice crystals
+// shooting up round its edge and one under each foe it took, glinting, cracking and sinking away; a cold spell light.
+// Turn Undead: the cleric's (her Judgement): her sun glyph drawn under her as she casts, a shockwave out to its reach,
+// a pillar of light striking down on each of the dead it took with a burst at its foot, a burst over her; a gold light.
+// Made once, at the first fight, and warmed (their programs compiled behind the frames of a level being built); every
+// piece freed when its spell ends. Emberlit draws these two skills itself (skillfx.js); here they replace its light.
+const HOLY = { body: [1.15, 0.8, 0.16], core: [1.6, 1.25, 0.3], burst: [1.45, 1.08, 0.22], glyph: [0.85, 0.6, 0.12], ring: [0.8, 0.56, 0.1] };
+const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+/** a crystal's eruption (IceSpellFx riseAt): up to 1.15 at 55 % of its rise, settling to 1 */
+const riseAt = (u) => (u <= 0 ? 0 : u < 0.55 ? 1.15 * (1 - (1 - u / 0.55) ** 3) : u < 1 ? 1.15 - 0.15 * smooth((u - 0.55) / 0.45) : 1);
+let SK = null, spellLight = null;
+const spellLive = new Map(), qp = {}, camDir = new THREE.Vector3();
+function spellKit() {
+  if (SK || !game?.engine) return SK;
+  const scene = game.engine.scene;
+  const crystals = new IceCrystals({ capacity: 48 });
+  const frost = new GroundFrost({ capacity: 4, heightField: { sample: (x, z) => game.tileMap.getHeight(x, z), surface: (x, z) => game.tileMap._surface(x, z), minX: 0, minZ: 0,
+    get maxX() { return game.tileMap.width; }, get maxZ() { return game.tileMap.depth; } } });   // (read at each paint: the level of the moment)
+  const quads = new FxQuads({ atlas: createFxAtlas(), capacity: 96, name: 'ember:spells' });
+  quads.enableHalo();
+  scene.add(crystals.object); scene.add(frost.object); scene.add(quads.object);
+  crystals.warm(); frost.warm();
+  const wq = quads.alloc(); quads.set(wq, { frame: 'partyPillar', x: 0, y: -500, z: 0, mode: 'billboard', a: 1, halo: 1 });
+  SK = { crystals, frost, quads, warmQuad: wq, warmN: 4 };
+  return SK;
+}
+function q(h, o) { for (const k in qp) delete qp[k]; Object.assign(qp, o); SK.quads.set(h, qp); }
+function freeSpell(rec) {
+  for (const h of rec.crystals) SK.crystals.free(h);
+  for (const h of rec.quads) SK.quads.free(h);
+  if (rec.gf >= 0) SK.frost.free(rec.gf);
+}
+/** the frame's spells: start, animate, end @param {any[]} spells @param {number} dt @param {number} [lamps] @param {boolean} [fight] */
+function placeSpells(spells, dt, lamps, fight) {
+  if (!SK && !fight && !spells.length) return;                // (made as the first fight starts: warmed before anyone casts)
+  const K = spellKit(); if (!K) return;
+  if (K.warmN > 0 && --K.warmN === 0) { K.crystals.unwarm(); K.frost.unwarm(); K.quads.free(K.warmQuad); }
+  const seen = new Set(), H = (x, z) => game.tileMap.getHeight(x, z);
+  game.engine.camera.getWorldDirection(camDir); const cl = Math.hypot(camDir.x, camDir.z) || 1, vx = -camDir.x / cl, vz = -camDir.z / cl;   // (toward the camera: a pillar stands a little in front of its foe)
+  let light = null;
+  for (const S of spells) {
+    seen.add(S.key);
+    let rec = spellLive.get(S.key);
+    if (!rec) { rec = { crystals: [], quads: [], gf: -1, landed: false, seed: (S.seed >>> 0) % 8192 }; spellLive.set(S.key, rec); }
+    const L = S.land;                                         // s since it landed (null: still being cast)
+    if (S.id === 'frost_nova') {
+      if (rec.gf < 0) rec.gf = K.frost.add({ x: S.tx, z: S.tz, radius: Math.max(0.6, Math.min(7, S.r)), seed: rec.seed + 1 });
+      if (L != null && !rec.landed) {                         // the eruption: a ring round the edge, one under each foe taken
+        rec.landed = true; rec.spikes = [];
+        const N = 7;
+        for (let i = 0; i < N; i++) {
+          const a = (i / N) * Math.PI * 2 + (rec.seed % 7) * 0.13, d = S.r * (0.72 + 0.12 * ((i * 37 + rec.seed) % 5) / 4), x = S.tx + Math.cos(a) * d, z = S.tz + Math.sin(a) * d;
+          rec.spikes.push({ x, z, height: 0.75 + 0.35 * (((i * 53 + rec.seed) % 7) / 6), radius: 0.17, yaw: a, tiltX: Math.cos(a) * 0.18, tiltZ: Math.sin(a) * 0.18, start: 0.03 * i });
+        }
+        for (const o of S.reached.slice(0, 4)) rec.spikes.push({ x: o.x + 0.12, z: o.z - 0.18, height: 0.95, radius: 0.2, yaw: 0, tiltX: 0, tiltZ: 0, start: 0.05 });
+        for (const sp of rec.spikes) { sp.h = K.crystals.spawn({ x: sp.x, y: H(sp.x, sp.z) - 0.02, z: sp.z, height: sp.height, radius: sp.radius, yaw: sp.yaw, tiltX: sp.tiltX, tiltZ: sp.tiltZ, seed: rec.seed + sp.x * 7 }); if (sp.h >= 0) rec.crystals.push(sp.h); }
+      }
+      const flare = L != null ? Math.exp(-L / 0.15) : 0;
+      if (rec.gf >= 0) K.frost.set(rec.gf, { spread: L == null ? 0.08 * smooth(S.age / 0.38) : 0.08 + 0.92 * smooth(L / 0.3), cracks: L == null ? 0 : smooth((L - 0.04) / 0.5), fade: L == null ? 0 : smooth((L - 1.0) / 1.0), glow: 1 + 0.8 * flare });
+      if (rec.spikes) for (const sp of rec.spikes) {
+        if (sp.h < 0) continue;
+        const u = (L - sp.start) / 0.13, crack = smooth((L - 0.55) / 0.3), sink = smooth((L - 0.88) / 0.3);
+        K.crystals.set(sp.h, { rise: riseAt(u) * (1 - sink), crack, glint: smooth((L - 0.08 - sp.start) / 0.38), glow: 1 + 0.35 * Math.exp(-Math.max(0, L - sp.start - 0.07) / 0.1) + 0.2 * flare + 0.5 * crack });
+      }
+      const k = L == null ? 0.25 * smooth(S.age / 0.38) : 0.25 + 3.2 * flare + 0.6 * (1 - smooth((L - 0.4) / 0.6));
+      if (!light || k > light.k) light = { x: S.tx, z: S.tz, k, color: [0.55, 0.95, 1.9] };
+    } else if (S.id === 'turn_undead') {
+      // her glyph under her: drawn as she casts, burning out after the burst
+      if (!rec.glyph) { rec.glyph = K.quads.alloc(); rec.quads.push(rec.glyph); }
+      const g = L == null ? smooth(S.age / 0.38) : 1, out = L == null ? 1 : 1 - smooth((L - 0.35) / 0.5), y0 = H(S.x, S.z) + 0.04;
+      q(rec.glyph, { frame: 'partyGlyphHoly', x: S.x, y: y0, z: S.z, mode: 'flat', scale: (2 * S.r / 8) * (0.35 + 0.65 * g), rot: S.age * 0.9, r: HOLY.glyph[0], g: HOLY.glyph[1], b: HOLY.glyph[2], a: 0.85 * g * out * (L != null && L < 0.12 ? 1.25 : 1) });
+      if (L != null) {
+        if (!rec.landed) {                                    // the burst: the shockwave, a burst over her, a pillar on each of the dead
+          rec.landed = true;
+          rec.ring = K.quads.alloc(); rec.over = K.quads.alloc(); rec.quads.push(rec.ring, rec.over);
+          rec.dead = S.reached.slice(0, 6).map((o) => { const d = Math.hypot(o.x - S.x, o.z - S.z); const body = K.quads.alloc(), core = K.quads.alloc(), foot = K.quads.alloc(); rec.quads.push(body, core, foot); return { x: o.x, z: o.z, at: 0.06 + 0.12 * Math.min(1, d / Math.max(0.5, S.r)), body, core, foot }; });
+        }
+        const u = smooth(L / 0.32);
+        q(rec.ring, { frame: 'partyRing', index: L < 0.16 ? 0 : 1, x: S.x, y: y0 + 0.02, z: S.z, mode: 'flat', scale: (2.2 * S.r / 6) * (0.15 + 0.85 * u), r: HOLY.ring[0], g: HOLY.ring[1], b: HOLY.ring[2], a: 0.9 * (1 - smooth((L - 0.2) / 0.3)) });
+        q(rec.over, { frame: 'partySunburst', index: Math.min(3, Math.floor(L / 0.08)), x: S.x + vx * 0.3, y: y0 + 1.5, z: S.z + vz * 0.3, mode: 'billboard', scale: 1.5, r: HOLY.burst[0], g: HOLY.burst[1], b: HOLY.burst[2], a: 1 - smooth((L - 0.15) / 0.2), halo: 1 });
+        for (const D of rec.dead) {
+          const t = L - D.at, yf = H(D.x, D.z), sc = 0.85, lift = (96 / 2 / 16) * sc;
+          if (t < 0) { q(D.body, { frame: 'partyPillar', a: 0 }); q(D.core, { frame: 'partyPillar', a: 0 }); q(D.foot, { frame: 'partySunburst', a: 0 }); continue; }
+          q(D.body, { frame: 'partyPillar', index: 1 + Math.min(2, Math.floor(t / 0.107)), x: D.x + vx * 0.15, y: yf + lift, z: D.z + vz * 0.15, mode: 'billboard', scale: sc, r: HOLY.body[0], g: HOLY.body[1], b: HOLY.body[2], a: 0.9 * Math.max(0, Math.min(1, (0.32 - t) / 0.14)) });
+          q(D.core, { frame: 'partyPillar', index: 0, x: D.x + vx * 0.17, y: yf + lift, z: D.z + vz * 0.17, mode: 'billboard', scale: sc, r: HOLY.core[0], g: HOLY.core[1], b: HOLY.core[2], a: Math.max(0, Math.min(1, (0.24 - t) / 0.1)), halo: 1 });
+          q(D.foot, { frame: 'partySunburst', index: Math.min(3, Math.floor(t / 0.08)), x: D.x, y: yf + 0.05, z: D.z, mode: 'flat', scale: 1.1, rot: t * 2, r: HOLY.burst[0], g: HOLY.burst[1], b: HOLY.burst[2], a: Math.max(0, 1 - t / 0.4), halo: 1 });
+        }
+      }
+      const k = L == null ? 0.4 * smooth(S.age / 0.38) : 0.4 + 3.4 * Math.exp(-L / 0.18);
+      if (!light || k > light.k) light = { x: S.x, z: S.z, k, color: [1.9, 1.4, 0.5] };
+    }
+  }
+  for (const [key, rec] of spellLive) if (!seen.has(key)) { freeSpell(rec); spellLive.delete(key); }
+  if (spellLight) {
+    if (light && light.k > 0.02) spellLight.set(light.x, H(light.x, light.z) + 1.4, light.z, { color: light.color, intensity: 2.6 * light.k / (lamps ?? 1), distance: 6.5, decay: 1.5, flicker: 0.08 });
+    else spellLight.off();
+  }
+  K.crystals.update(dt); K.frost.update(dt); K.quads.update();
+}
+
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
   ready: false,
@@ -449,6 +555,7 @@ const api = {
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,
+   *   spells?: { key: string, id: string, seed: number, age: number, land: number | null, x: number, z: number, tx: number, tz: number, r: number, reached: { x: number, z: number }[] }[],
    *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[] }} f
    */
   frame(f) {
@@ -506,7 +613,12 @@ const api = {
     placeWater(f.water);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
-    if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; blastLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
+    if (carryLevel !== levelId) {
+      carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; blastLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      spellLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null;
+      for (const rec of spellLive.values()) if (SK) freeSpell(rec);
+      spellLive.clear();
+    }
     if (carryLight && f.hero) {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
       carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * k) / (f.ambient?.lamps ?? 1), distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
@@ -518,6 +630,7 @@ const api = {
       if (b && b.k > 0.01) blastLight.set(b.x, game.tileMap.getHeight(b.x, b.z) + 1.6, b.z, { color: [2.0, 0.95, 0.32], intensity: 9 * b.k / (f.ambient?.lamps ?? 1), distance: 7, decay: 1.6, flicker: 0.25 });
       else blastLight.off();
     }
+    placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length));
     // the farm's beasts, in the frame Emberlit chose
     let nb = 0;
     for (const b of f.beasts || []) {
@@ -545,7 +658,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

@@ -1549,6 +1549,25 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
       return { lit: Math.max(F.lit, globalThis.__renderer.emiLit), rings: Math.max(F.rings, st.rings), carry: st.carry, battle: !!s.battle, light: F.light || st.light, focus: Math.max(F.focus, st.focus), layers: document.querySelectorAll('#world3d-fx, #world3d-glow').length }; }, fight);
     check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the foe the party is set on marked, the hero\'s light taken, no page errors',
       inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && fight.focus === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // Frost Nova and Turn Undead in Luminati's looks, and a foe's warnings on its ground (renderer.js spells, warns; world.js):
+    // the sim's own events, said on its bus (presentation only), then the pieces counted while they live and after
+    const looks = await p.evaluate(() => {
+      const s = globalThis.__sim, P = s.state.player, foe = (s.world.enemies || []).find((e) => e.hp > 0 && !e.dead) || { id: -1, x: P.x + 2, y: P.y };
+      const ev = (id, at, x, y, tx, ty, r, reached) => s.bus.emit('skill', { id, at, cls: 'mage', by: P.id, x, y, tid: null, ally: false, tx, ty, r, reached, crit: false });
+      ev('frost_nova', 'cast', P.x, P.y, foe.x, foe.y, 3.5, []); ev('turn_undead', 'cast', P.x, P.y, P.x, P.y, 3, []);
+      s.bus.emit('windup', { by: foe.id, tid: P.id, heavy: true, bolt: null, boss: false, x: foe.x, y: foe.y, tx: P.x, ty: P.y, wind: 0.38, fly: 0 });
+      s.bus.emit('windup', { by: foe.id, tid: P.id, heavy: false, bolt: 'arrow', boss: false, x: foe.x, y: foe.y, tx: P.x, ty: P.y, wind: 0.18, fly: 0.2 });
+      const most = { spells: 0, crystals: 0, frost: 0, warns: 0, lanes: 0, spellLight: 0 }, max = () => { const st = globalThis.__world3d.world.stats; for (const k in most) most[k] = Math.max(most[k], st[k] || 0); };
+      for (let i = 0; i < 20; i++) { globalThis.__frame(16.7); max(); }
+      ev('frost_nova', 'land', P.x, P.y, foe.x, foe.y, 3.5, [{ id: foe.id, x: foe.x, y: foe.y }]); ev('turn_undead', 'land', P.x, P.y, P.x, P.y, 3, [{ id: foe.id, x: foe.x, y: foe.y }]);
+      for (let i = 0; i < 30; i++) { globalThis.__frame(16.7); max(); }
+      for (let i = 0; i < 200; i++) globalThis.__frame(16.7);
+      const st = globalThis.__world3d.world.stats;
+      return { most, after: { spells: st.spells, crystals: st.crystals, frost: st.frost } };   // (the fight goes on: its own warnings come and go)
+    });
+    check('render3d: on Luminati Frost Nova is its ice (crystals standing up, frost on the ground) and Turn Undead its holy light, each with a spell light; a heavy blow\'s ring and a shot\'s lane on its ground; all of it gone after',
+      looks.most.spells === 2 && looks.most.crystals >= 7 && looks.most.frost === 1 && looks.most.spellLight === 1 && looks.most.warns >= 1 && looks.most.lanes >= 1
+        && Object.values(looks.after).every((n) => n === 0) && errs.length === 0, JSON.stringify(looks) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     check('render3d: in Thornwick, a tap on a service\'s building as Luminati draws it opens that service',
       Object.keys(doors).length >= 2 && Object.entries(doors).every(([id, got]) => id === got), JSON.stringify(doors));
     check('render3d: the effects\' light respects walls: over a wall\'s top, an effect whose owner is behind it is cut to under half of one in front',
