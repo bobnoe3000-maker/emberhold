@@ -581,7 +581,7 @@ function placeSpells(spells, dt, lamps, fight) {
   K.crystals.update(dt); K.frost.update(dt); K.blades.update(dt); K.rocks.update(dt); K.bells.update(dt); K.quads.update();
 }
 
-// ── the tiers' skills in Luminati's looks (GDD v1.55; for the owner's choice: renderer.js ?tierlooks=luminati) ──────
+// ── the tiers' skills in Luminati's looks (GDD v1.55; the owner's picks: renderer.js TIER_LUM, the rest Emberlit's) ──
 // Each from the Luminati move or piece it was drawn from (docs/skill-trees-proposal.md §5): the swordmaster's falling
 // sword, wave, crest and cyclone; the greatshield's rock spikes; the ice mage's shells, crystals, frost and storm; the
 // cleric's glyphs and pillars; the bellwarden's bell. S: the spell (world units: a tile is 0.5); rec: its pieces; L: s
@@ -781,8 +781,9 @@ const TIER_LOOK = {
   spirit_totem(S, rec, L, K, H, vx, vz) {
     if (L == null) return null;
     const y = H(S.tx, S.tz), on = smooth(L / 0.4), off = smooth((L - 7.4) / 0.6), toll = (L % 1.5) / 1.5, [guard, ring] = quadsOf(rec, 'q', 2);
-    if (!rec.bells) rec.bells = [K.bells.spawn({ x: S.tx, y: -500, z: S.tz, height: 0.75, palette: 0, seed: rec.seed })];
-    const h = rec.bells[0]; if (h >= 0) K.bells.set(h, { x: S.tx, y: y + 1.75, z: S.tz, swing: 0.35 * Math.sin(toll * Math.PI * 2) * Math.exp(-toll * 2), swingX: 1, swingZ: 0, spin: L * 0.3, dissolve: Math.max(1 - on, off), dissolveDir: 1, ghost: 0.15, glow: 1.2, strike: Math.exp(-toll * 6) });
+    // (the owner, 2026-11-08: "make the yellow bell totem bigger": 0.75 → 1.4 tall, hung higher to keep its lip clear)
+    if (!rec.bells) rec.bells = [K.bells.spawn({ x: S.tx, y: -500, z: S.tz, height: 1.4, palette: 0, seed: rec.seed })];
+    const h = rec.bells[0]; if (h >= 0) K.bells.set(h, { x: S.tx, y: y + 2.3, z: S.tz, swing: 0.35 * Math.sin(toll * Math.PI * 2) * Math.exp(-toll * 2), swingX: 1, swingZ: 0, spin: L * 0.3, dissolve: Math.max(1 - on, off), dissolveDir: 1, ghost: 0.15, glow: 1.2, strike: Math.exp(-toll * 6) });
     q(guard, { frame: 'partyWardRing', x: S.tx, y: y + 0.05, z: S.tz, mode: 'flat', scale: 2.2, rot: L * 0.4, ...col(SPIRIT, 0.8), a: 0.85 * on * (1 - off), halo: 1 });
     q(ring, { frame: 'partyRing', index: toll < 0.15 ? 0 : 1, x: S.tx, y: y + 0.07, z: S.tz, mode: 'flat', scale: 0.3 + 0.7 * (1 - toll), ...col(SPIRIT, 1.2), a: on * (1 - off) * (1 - smooth(toll / 0.8)) });
     return { x: S.tx, z: S.tz, k: (0.5 + 1.2 * Math.exp(-toll * 5)) * on * (1 - off), color: [0.5, 1.6, 1.4] };

@@ -444,6 +444,22 @@ and five or more spells stand at once, with the dome up and three or more blades
 
 **Left.** Cleave's blades are thin at the capture's crop; they read at play scale. Not yet timed on a phone.
 
+## The tiers' skills on Luminati: the owner's picks (2026-11-08)
+
+The twenty skills of the tiers (GDD v1.55) each have a Luminati look of their own (`tools/render3d/world.js` `TIER_LOOK`),
+built from the Luminati piece the proposal named. The owner compared each with its look in Emberlit's light on the
+review page, *Tier Looks* (both recorded frame for frame in one fight: `tools/capture/tiers.mjs`), and chose:
+
+| Luminati's look | Kept in Emberlit's light |
+|---|---|
+| Vault (the swordmaster's sigil, falling great sword, crack) · Cutting Wave (the Dragonfang wave and crest) · Kidney Shot · Fan of Knives · Shadowstep · Caltrops · Flare (a sigil, then a pillar of fire) · Gather · Sanctuary · Consecrate · Revive · Judgement (six pillars, the great one) · Old Marks (runes) · Thunder Drum · **Spirit Totem** (the bellwarden's bell; "make the yellow bell totem bigger": 0.75 → 1.4 tall) | Earthshatter · Whirling Blades · Glacial Tomb · Blizzard · Binding Roots |
+
+- **The holds:** a stun's or knockdown's stars are Luminati's (its `stun` frame), so `skillfx.js` leaves them to it. A freeze's
+  shell and a root's grip stay Emberlit's, as their skills were kept (`renderer.js` `lumHolds`).
+- **Switches:** `?tierlooks=luminati` shows all twenty in Luminati's look, `?tierlooks=now` none (the review's two columns).
+- **Emberlit** draws all twenty in its own light, as before.
+- **The bundle:** `luminati.js` grew 221 → 242 kB, and the `RockSpikes` and `SpectralBells` chunks now load with it.
+
 ## The feel of a hit (2026-11-08)
 
 The catalog's other presentation import ([combat-catalog.md](combat-catalog.md) §A recommendation 3, §F): Luminati's

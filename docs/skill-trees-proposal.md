@@ -5,7 +5,7 @@ v1.55 §5.1 (the tiers' table, as built), §5.2 (crowd control), §17; `src/sim/
 `src/sim/battle.js` (`TIER`, the CC block, `battle.planted`), `src/sim/heroes.js` (`pickSkill`), save v35 (`picks`),
 `src/ui/sheet.js` (*The choices*), `src/render/skillfx.js` (their moments, the statuses' auras, a cut wind-up's warning
 gone), `src/audio/cues.js` (a sound each), `test/tiers.test.mjs`. **What the build changed, and what it measured: §7.**
-The trials (§1) and the Luminati pieces (§5) are still to come. The proposal as it was reviewed follows.
+The Luminati pieces (§5) are built and the owner chose fifteen (combat-fx.md); the trials (§1) are still to come. The proposal as it was reviewed follows.
 
 The owner, on the skills review page (2026-11-08), marked **Add it** on:
 - every Luminati move offered (Tempest Edge, Dragonfang Wave, Skyfall Judgement, Earthshatter, Flare, Glacial Tomb,
@@ -210,7 +210,7 @@ Second: the second (`--pick b`).
 
 **Still to come.**
 - The trials for the two tiers: a teacher a class, set in the Fens (§1).
-- The Luminati pieces (§5): the swordmaster's swords, the Tomb's crystals, Sanctuary's circle, the bell for the totem.
-  Until then, on Luminati these draw as Emberlit's light.
+- ~~The Luminati pieces (§5)~~: built (2026-11-08), and the owner chose fifteen of them, the rest kept in Emberlit's light
+  ([combat-fx.md](combat-fx.md), "The tiers' skills on Luminati").
 - The loadout of four (§17): every carried ability is cast until it comes.
 

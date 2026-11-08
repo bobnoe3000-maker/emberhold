@@ -1,4 +1,4 @@
-// tiers.mjs — the tiers' skills (GDD v1.55) on Luminati, as they are now (Emberlit's light over Luminati's world) and in
+// tiers.mjs — the tiers' skills (GDD v1.55) on Luminati, in Emberlit's light over Luminati's world (?tierlooks=now) and in
 // Luminati's own looks (renderer.js ?tierlooks=luminati, tools/render3d/world.js TIER_LOOK), frame for frame, for the
 // owner to choose between them. Each skill is staged in a real scene (the Old Barrows, a level-18 room, its wave on the
 // floor): the sim's own 'skill' events sent with the shapes battle.js gives them (the caster, where it lands, its reach,
@@ -114,7 +114,7 @@ async function run(look) {
     if (ONLY && !ONLY.includes(id)) continue;
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=barrows&renderer=luminati${look === 'luminati' ? '&tierlooks=luminati' : ''}`);
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=barrows&renderer=luminati&tierlooks=${look === 'luminati' ? 'luminati' : 'now'}`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
     for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) break; await p.waitForTimeout(50); }
     await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__tick = ${tick.toString()}; globalThis.__stage = ${stage.toString()};`);

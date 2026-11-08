@@ -1061,15 +1061,20 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // spectral blades, Firebolt's ember bolt and flames; the dome and the ward ring follow the state: auras below)
   const LUM_SPELLS = new Set(['frost_nova', 'turn_undead', 'mend', 'bless', 'cleave']), LUM_ALSO = new Set(['firebolt', 'shield_wall']);
   const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9 }, spells = [];
-  // The tiers' skills (GDD v1.55) in Luminati's own looks (tools/render3d/world.js), for the owner to choose between them
-  // and Emberlit's light on Luminati: shown with ?tierlooks=luminati (the review's captures, tools/capture/tiers.mjs); until
-  // the owner chooses, Luminati draws them in Emberlit's light as before. With them, the statuses (a stun's stars, a
-  // freeze's ice shell, a root's grip) are Luminati's pieces too.
+  // The tiers' skills (GDD v1.55) in Luminati's own looks (tools/render3d/world.js). The owner chose, skill by skill, on the
+  // review page (2026-11-08, "Tier Looks"; tools/capture/tiers.mjs): these fourteen and the Spirit Totem (its bell bigger)
+  // in Luminati's; Earthshatter, Whirling Blades, Glacial Tomb, Blizzard and Binding Roots kept in Emberlit's light. A stun's
+  // or knockdown's stars are Luminati's with them; a freeze's shell and a root's grip stay Emberlit's (their skills were
+  // kept). ?tierlooks=luminati shows all twenty in Luminati's (the review's), ?tierlooks=now none.
+  const TIER_LUM = ['vault', 'cutting_wave', 'kidney_shot', 'fan_of_knives', 'shadowstep', 'caltrops', 'flare', 'gather', 'sanctuary', 'consecrate', 'revive', 'judgement', 'old_marks', 'thunder_drum', 'spirit_totem'];
   const TIER_LIFE = { vault: 1.0, cutting_wave: 0.9, earthshatter: 1.4, whirling_blades: 5.1, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9,
     caltrops: 6, flare: 1.4, gather: 0.9, glacial_tomb: 2.9, blizzard: 6, sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, binding_roots: 2.6,
     old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 };
-  const lumTiers = (() => { try { return new URLSearchParams(location.search).get('tierlooks') === 'luminati'; } catch { return false; } })();
-  if (lumTiers) { for (const id of Object.keys(TIER_LIFE)) LUM_SPELLS.add(id); Object.assign(SPELL_LIFE, TIER_LIFE); sfx.statusesElsewhere?.(true); }
+  const tierLooks = (() => { try { return new URLSearchParams(location.search).get('tierlooks') || 'chosen'; } catch { return 'chosen'; } })();
+  const lumTier = new Set(tierLooks === 'luminati' ? Object.keys(TIER_LIFE) : tierLooks === 'now' ? [] : TIER_LUM);
+  const lumHolds = new Set(tierLooks === 'luminati' ? ['stun', 'frozen', 'root'] : tierLooks === 'now' ? [] : ['stun']);   // (the holds Luminati draws)
+  for (const id of lumTier) { LUM_SPELLS.add(id); SPELL_LIFE[id] = TIER_LIFE[id]; }
+  sfx.statusesElsewhere?.(lumHolds);
   const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
@@ -1096,9 +1101,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     });
     // what holds on foes (battle.js crowd control), in Luminati's pieces with the tiers' looks: a stun's or a knockdown's
     // stars, a freeze's ice shell, a root's grip
-    if (lumTiers) for (const f of sim.world.enemies || []) {
+    if (lumHolds.size) for (const f of sim.world.enemies || []) {
       if (f.dead || f.hp <= 0) continue;
-      const k = f.frozen > 0 ? 'frozen' : f.stun > 0 || f.knocked > 0 ? 'stun' : f.rooted > 0 ? 'root' : null; if (!k) continue;
+      const k = f.frozen > 0 ? 'frozen' : f.stun > 0 || f.knocked > 0 ? 'stun' : f.rooted > 0 ? 'root' : null; if (!k || !lumHolds.has(k)) continue;
       out.push({ key: `aura:${k}:${f.id}`, id: 'aura_' + k, seed: f.id, age: 0, land: null, x: f.x, y: f.y, tx: f.x, ty: f.y, r: 0, k: f.frozen || f.stun || f.knocked || f.rooted || 0, reached: [] });
     }
     // a Firebolt in flight: Luminati's ember bolt riding it
