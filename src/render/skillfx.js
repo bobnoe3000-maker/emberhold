@@ -47,15 +47,20 @@ const C = {
   lvl: [255, 214, 120], lvlHot: [255, 246, 214], issue: [235, 196, 130], issueHot: [255, 238, 196], call: [255, 92, 70], callHot: [255, 196, 168],
   kindle: [255, 128, 34], kindleHot: [255, 214, 140], drum: [255, 170, 90], dust: [200, 168, 120], sing: [130, 225, 235], singHot: [214, 248, 255],
   bell: [170, 205, 255], bellHot: [226, 238, 255], mud: [214, 170, 96], line: [236, 214, 150], cage: [190, 150, 255], cageHot: [236, 220, 255],
+  // a foe's warning: Luminati's enemy marker (its rim 2.6, 0.34, 0.12), and white as the blow lands
+  warn: [255, 70, 28], warnHot: [255, 236, 214],
 };
 /** how long each moment lasts, s */
 const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.1,
   arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the skills with a moment of their own (for checks: every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze(Object.keys(LIFE));
-/** the fight's other moments: a ward breaking, a level gained, each boss's mechanic */
-const MORE = { ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
+/** the fight's other moments: a foe's warning, a ward breaking, a level gained, each boss's mechanic (a warning's life is
+ *  its own: to the blow or the shot's landing, and a flash) */
+const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
 export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
+/** a heavy blow's warning ring, tiles (Emberlit's, and Luminati's from it: hybrid.js) */
+export const WARN_R = Object.freeze({ heavy: 1.4, boss: 1.7 });
 const ease = (u) => 1 - (1 - u) * (1 - u), clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** a small deterministic scatter: the k-th number of a moment */
 const rnd = (seed, k) => { const x = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
@@ -70,7 +75,7 @@ export function createSkillFX(P) {
   // skills' strength they read in the art review and were lost in a real fight: tools/capture/bosses.mjs)
   const BOOST = 1.7, BOSS = 1.6; let gainK = 1;
   const flush = (col, g = 1) => P.flush(col, g * BOOST * gainK);
-  /** @type {{ e: any, t0: number, seed: number }[]} */
+  /** @type {{ e: any, t0: number, seed: number, lock?: any }[]} */
   const live = [];
   let n = 0;
   // ── shapes, on the screen (the iso ground's 2:1 built in) ───────────────────────────────────────────────────────
@@ -309,6 +314,38 @@ export function createSkillFX(P) {
     },
 
     // ── the fight's other moments ─────────────────────────────────────────────────────────────────────────────────
+    // a foe's warning ('windup', battle.js attack: the telegraph grammar, docs/combat-fx.md), Luminati's markers drawn in
+    // our light. A heavy blow (an elite's, a boss's): a ring on the floor under the one it's meant for, its fill running
+    // out to the rim as the blow comes, the rim going white as it lands. A shot: a lane on the floor from the shooter to
+    // its mark, filling toward the mark until the shot lands; it follows both until the release, then its start holds
+    // (locked: its edges flash) while the end stays on the mark, as the bolt does. A light shot's lane is thinner and
+    // fainter, so a room of archers doesn't paint the floor; a light blow has none (Luminati marks nothing that small).
+    warn(ctx) {
+      const { t, Cq, Tq, e, mem } = ctx, wind = e.wind || 0.38, T = wind + (e.fly || 0), hit = t >= T, out = hit ? 1 - (t - T) / 0.16 : 1;
+      if (out <= 0) return;
+      const p = clamp01(t / T), g = e.heavy ? 1 : 0.62;
+      if (!e.bolt) {
+        const RR = e.boss ? WARN_R.boss : WARN_R.heavy, f = RR * ease(p);   // (wider than the feet's rings: at 0.95 a melee's figures hid it)
+        under(Tq); pool(Tq, f, (0.24 + 0.36 * p) * out, 0, 0.45); ring(Tq, f, 0.7 * out, 1.2); flush(C.warn);
+        under(Tq); ring(Tq, RR, (0.6 + 0.5 * p) * out, 1.8); flush(hit ? C.warnHot : C.warn, hit ? 1.5 : 1.1);
+        return;
+      }
+      if (t >= wind && !mem.lock) mem.lock = { sx: Cq.sx, sy: Cq.sy, h: Cq.h, key: Cq.key };
+      const A = mem.lock || Cq, B = Tq, dx = B.sx - A.sx, dy = B.sy - A.sy;
+      const wl = Math.hypot(dx / EX, dy / EY); if (wl < 0.3) return;
+      const hw = (e.heavy ? 0.3 : 0.2), nx = (-dy / EY / wl) * hw * EX, ny = (dx / EX / wl) * hw * EY, w = Math.max(1, Math.hypot(nx, ny) - 0.5);
+      const lock = mem.lock && t - wind < 0.09, N = 8;
+      for (let i = 0; i < N; i++) {                              // in pieces, each at its own depth along the floor
+        const u0 = i / N, u1 = (i + 1) / N, x0 = A.sx + dx * u0, y0 = A.sy + dy * u0, x1 = A.sx + dx * u1, y1 = A.sy + dy * u1;
+        depth(A.key + (B.key - A.key) * (u0 + u1) / 2 - 0.25, A.sy + dy * (u0 + u1) / 2, A.h + (B.h - A.h) * (u0 + u1) / 2);
+        if (u0 < p) { const s = Math.min(1, (p - u0) * N), a = (0.14 + 0.3 * p) * g * out; seg(x0, y0, x0 + (x1 - x0) * s, y0 + (y1 - y0) * s, a, a, w); }
+        flush(C.warn);
+        seg(x0 + nx, y0 + ny, x1 + nx, y1 + ny, 0.5 * g * out); seg(x0 - nx, y0 - ny, x1 - nx, y1 - ny, 0.5 * g * out);
+        flush(lock || hit ? C.warnHot : C.warn, lock ? 1.3 : 1);
+      }
+      if (p < 1) { const hx = A.sx + dx * p, hy = A.sy + dy * p; depth(A.key + (B.key - A.key) * p - 0.2, hy, A.h); disc(hx, hy, 2.2, 0.9 * g, 1); flush(C.warnHot); }   // the fill's front
+      under(B); ring(B, e.heavy ? 0.6 : 0.42, (hit ? 1.2 : 0.35 + 0.4 * p) * g * out, 1.2); flush(hit ? C.warnHot : C.warn);   // the mark, white as it lands
+    },
     // a ward spent (battle.js 'wardBreak'): the dome flashes and shatters, its shards thrown out and falling, a ring at
     // the feet (it went out with nothing before: docs/combat-fx.md's notes)
     ward_break(ctx) {
@@ -529,12 +566,12 @@ export function createSkillFX(P) {
       const foes = units.filter((v) => v.foe && v.u && !v.u.dead && v.u.hp > 0);
       auras(now, units); gainK = BOSS; bossAuras(now, units, at); gainK = 1;
       for (let i = live.length - 1; i >= 0; i--) {
-        const L = live[i], e = L.e, t = (now - L.t0) / 1000, life = LIFE[e.id] || MORE[e.id] || 1;
+        const L = live[i], e = L.e, t = (now - L.t0) / 1000, life = e.life || LIFE[e.id] || MORE[e.id] || 1;
         if (t >= life) { live.splice(i, 1); continue; } if (t < 0) continue;
         const Cq = find(at, !!e.foeBy, e.by, e.x, e.y, proj), Tq = find(at, !e.ally, e.tid, e.tx, e.ty, proj);
         const R = (e.reached || []).map((o) => find(at, e.id !== 'bless' && e.id !== 'ancestors_breath', o.id, o.x, o.y, proj));
         gainK = e.id.startsWith('boss_') ? BOSS : 1;
-        MOMENT[e.id]({ t, k: 1 - t / life, Cq, Tq, R, e, at: e.at, foes, seed: L.seed });
+        MOMENT[e.id]({ t, k: 1 - t / life, Cq, Tq, R, e, at: e.at, foes, seed: L.seed, mem: L });
         gainK = 1;
       }
     },

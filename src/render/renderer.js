@@ -1032,6 +1032,24 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     for (let i = blasts.length - 1; i >= 0; i--) { const b = blasts[i], a = (now - b.t0) / 1000 / b.life; if (a >= 1) { blasts.splice(i, 1); continue; } if (a < 0) continue; const k = b.amp * (1 - a) * (1 - a); if (k > bk) { bk = k; best = b; } }
     return best ? { x: best.x, y: best.y, k: bk } : null;
   }
+  // the warnings under way, for another painter's ground (Luminati's markers): where each is now, followed by id while the
+  // shooter and its mark move, the shot's start held from its release (as skillfx.js draws it)
+  const warns = [];
+  const foeById = (id) => (sim.world.enemies || []).find((q) => q.id === id) || null;
+  const memberById = (id) => { const i = sim.state.party.findIndex((q) => q.id === id); return i < 0 ? null : i === 0 ? sim.state.player : sim.state.party[i]; };
+  /** @param {number} now @returns {{ x: number, y: number, tx: number, ty: number, p: number, hit: number, heavy: boolean, lane: boolean, boss: boolean }[]} */
+  function warnsNow(now) {
+    const out = [];
+    for (let i = warns.length - 1; i >= 0; i--) {
+      const W = warns[i], e = W.e, t = (now - W.t0) / 1000, T = e.wind + e.fly;
+      if (t >= W.life) { warns.splice(i, 1); continue; } if (t < 0) continue;
+      const a = foeById(e.by), b = memberById(e.tid);
+      if (t >= e.wind && !W.lock) W.lock = a ? { x: a.x, y: a.y } : { x: e.x, y: e.y };
+      const A = W.lock || (a ? { x: a.x, y: a.y } : { x: e.x, y: e.y }), B = b && b.x !== undefined ? b : { x: e.tx, y: e.ty };
+      out.push({ x: A.x, y: A.y, tx: B.x, ty: B.y, p: Math.min(1, t / T), hit: t >= T ? 1 - (t - T) / 0.16 : 0, heavy: !!e.heavy, lane: !!e.bolt, boss: !!e.boss });
+    }
+    return out;
+  }
   let liveBolts = new Set(), nextBolts = new Set();
   function boltFx(b, bx, by, kind, proj) {
     let t = trails.get(b); if (!t) trails.set(b, t = []);
@@ -1278,7 +1296,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
     }
     // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     if (!X) {
     // upload the window G-buffer
@@ -1608,6 +1626,13 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // the fight's other moments (skillfx.js, the boss pass): each boss's mechanic, from the boss (by) to those it raised,
   // called or issued to (tid, reached), followed by id while they move; and a level gained, at the member who gained it
   function moment(id, ev, more = {}) { sfx.moment({ id, by: ev.by ?? null, foeBy: true, tid: ev.tid ?? null, ally: false, x: ev.x, y: ev.y, tx: ev.tx ?? ev.x, ty: ev.ty ?? ev.y, reached: ev.reached || [], ...more }, clock()); }
+  // a foe's warning (battle.js 'windup': the telegraph grammar): a heavy blow's ring, a shot's lane, in the light on both
+  // painters (skillfx.js warn), and kept here for another painter to lay on its own ground (warnsNow)
+  sim.bus.on('windup', (e) => {
+    const life = e.wind + e.fly + 0.16;
+    moment('warn', e, { foeBy: true, ally: true, life, wind: e.wind, fly: e.fly, heavy: e.heavy, bolt: e.bolt, boss: e.boss });
+    if (ext) { warns.push({ e, t0: clock(), life, lock: null }); if (warns.length > 24) warns.shift(); }
+  });
   sim.bus.on('bossIssue', (e) => moment('boss_issue', e));
   sim.bus.on('bossCall', (e) => moment('boss_call', e));
   sim.bus.on('bossKindle', (e) => moment('boss_kindle', e));

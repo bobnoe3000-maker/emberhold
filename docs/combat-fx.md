@@ -315,3 +315,53 @@ the screen, cropped round where it lands. It fires at 20.1 s on both trees, Embe
 
 ![The Firebolt's landing, before and after](img/fx/firebolt-explosion.jpg)
 
+
+## Attack warnings: the telegraph grammar (2026-11-08)
+
+The catalog's best single thing to adopt from Luminati ([combat-catalog.md](combat-catalog.md) §B, §F.3): a foe's heavy
+blows and shots marked on the ground before they land, on both renderers. Presentation only: the sim's timing, damage
+and balance are as they were (the state hash is the same with the warnings heard or not: `test/skillfx.test.mjs`).
+
+**Before.** A foe's attack showed nothing until it landed: the swing clip, then the hit. A boss's heavy blow and an
+archer's shot read the same as any other.
+
+**After.**
+- **The sim says what's coming** (`battle.js` attack): a `windup` event `{ by, tid, heavy, bolt, boss, x, y, tx, ty,
+  wind, fly }` when a foe starts a heavy blow (an elite's or a boss's) or any shot. `wind` is the time to the blow or
+  the release (WINDUP_HEAVY 0.38 s, WINDUP 0.18 s), `fly` the time the shot takes to land. A light melee blow says
+  nothing (Luminati marks nothing that small).
+- **A heavy blow:** a red-orange ring on the floor under the one it's meant for, 1.4 tiles across (1.7 for a boss's),
+  its fill running out to the rim as the blow comes. The rim goes white as it lands, then it's gone in 0.16 s.
+- **A shot:** a lane on the floor from the shooter to its mark, filling toward the mark until the shot lands, with a
+  white front and a ring at the mark that goes white at the landing. It follows both ends until the release; then its
+  start holds (its edges flash: locked) while the end stays on the mark, as the bolt does. A light shot's lane is
+  thinner and fainter, so a room of archers doesn't paint the floor.
+- **Emberlit:** drawn as light (`skillfx.js` warn), as every moment is, so it also shows over Luminati.
+- **Luminati:** Luminati's own enemy marker as well, laid on its ground (`world.js`: a filling disc and rim, the lane as a
+  stretched strip, in GroundMarkers' style-0 red-orange). A dark ink edge sits under each: on a firelit floor the red
+  alone was lost (the boss halls' braziers).
+
+**How often.** In 30 s of Skarn's hall at level 5, 18 heavy blows (his) and 13 arrows. In the Choir's hall at level 17,
+14 heavy shots (hers) and 28 cantors' shots.
+
+**Measured.** `node tools/capture/bosses.mjs --warn`, a new mode that finds a foe's first heavy blow, shot and heavy
+shot in three halls by its attack starting (the sim's `atkN`/`atkKind`, there before the warnings too). The moments fire
+at the same time on both trees (Skarn's blow 2.7 s, an archer 3.1 s, Garrow's blow 4.5 s, the Choir's shot 2.8 s).
+Skarn's blow at +0, 0.1, 0.2 and 0.4 s; rows: Emberlit before, after; Luminati before, after:
+
+![Skarn's heavy blow warned, before and after on both renderers](img/fx/warnings.jpg)
+
+The lanes, in the art review's own cells (`?dev&scene=stage&show=fx&match=warnings`), an archer's light shot and the
+Choir's heavy one, at four moments of their flight:
+
+![A shot's lane filling to its mark](img/fx/warnings-lanes.jpg)
+
+**Tuned.** The first ring was 0.95 tiles: in a melee the figures stood on it and hid it. It's 1.4 now, with a stronger
+fill and rim.
+
+**Left.**
+- The grammar asks for every wind-up to be at least 18 frames (0.3 s). Our heavy blows are 0.38 s and a shot from 4
+  tiles away about 0.33 s, but a light shot from 2 tiles is about 0.26 s. Lengthening it would change the sim's timing,
+  so it's a balance question, not a drawing one.
+- Bosses' area mechanics (the Toadking's stamp, the Abbess's bell) still mark where they land only as it happens; a
+  warning ring before them would need the sim to say so ahead of time.

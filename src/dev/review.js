@@ -180,6 +180,18 @@ export function createReview({ renderer, sim, params, CAST, makeAnim }) {
     const at2 = (x, y, d) => d.map(([dx, dy]) => ({ id: null, x: x + dx, y: y + dy }));
     H('Moments', 'a ward breaks', { actor: ['hero_mage', 1, 'hit'], period: 1600, go: (a, x, y, now) => a.skills.moment(fm('ward_break', x, y, { foeBy: false, ally: true }), now) });
     H('Moments', 'a level gained', { actor: ['hero_knight', 1, 'idle'], period: 2400, go: (a, x, y, now) => a.skills.moment(fm('level_up', x, y, { foeBy: false, ally: true }), now) });
+    // a foe's warning (battle.js 'windup', the telegraph grammar): a heavy blow's ring under the one it's meant for, a shot's
+    // lane to its mark; as the renderer starts it, with the sim's timing (wind to the blow or the release, fly to the landing)
+    /** @type {[string, string, number, number, any][]} label, the foe's atlas, the mark's place, the warning */
+    const WARN_CELLS = [
+      ['an elite\'s heavy blow', 'skeleton_warrior', 1.3, -1.1, { heavy: true, bolt: null, wind: 0.38, fly: 0 }],
+      ["Skarn's heavy blow", 'boss_skarn', 1.6, -1.3, { heavy: true, bolt: null, boss: true, wind: 0.38, fly: 0 }],
+      ["an archer's shot", 'goblin_archer', 3.4, -2.2, { heavy: false, bolt: 'arrow', wind: 0.18, fly: 4 / 26 }],
+      ["the Choir's heavy shot", 'boss_choir', 3.4, -2.2, { heavy: true, bolt: 'soul', boss: true, wind: 0.38, fly: 4 / 26 }],
+    ];
+    for (const [label, atl, dx, dy, w] of WARN_CELLS)
+      H('Moments · warnings', label, { actor: [atl, /^boss_/.test(atl) ? 3 : 2, w.bolt ? 'attack' : 'heavy'], extra: [['hero_knight', dx, dy, 1]], span: 2, period: 1400,
+        go: (a, x, y, now) => a.skills.moment(fm('warn', x, y, { ally: true, tx: x + dx, ty: y + dy, life: w.wind + w.fly + 0.16, ...w }), now) });
     /** @type {[string, string, string, [number, number][], string[], (x: number, y: number) => any][]} label, atlas, moment, the others' places, their atlases, the event's more */
     const BOSS_CELLS = [
       ['the Quartermaster issues', 'boss_quartermaster', 'boss_issue', [[1.7, -1.1]], ['skeleton_warrior'], (x, y) => ({ tx: x + 1.7, ty: y - 1.1 })],

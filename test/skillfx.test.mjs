@@ -108,3 +108,54 @@ test('a spent ward says it broke; the bosses name who did it and to whom; and sa
   const vs = a.got.find((e) => e.t === 'vespers'); assert.ok(vs && typeof vs.by === 'number' && typeof vs.tid === 'number', 'the Choir names herself and the singer she raised');
   const wb = a.got.filter((e) => e.t === 'wardBreak'); assert.ok(wb.length >= 1 && wb.every((e) => e.id != null && typeof e.x === 'number'), `a ward broke, on someone: ${wb.length}`);
 });
+
+// the telegraph grammar (docs/combat-fx.md, attack warnings): a foe's heavy blow or shot is said before it comes, with its
+// timing, for the renderers to mark on the ground; a light blow isn't; and saying so changes nothing
+test('a foe says what\'s coming: its heavy blows and shots, to whom and when; and saying so changes nothing', async () => {
+  const { WINDUP, WINDUP_HEAVY } = await import('../src/sim/battle.js');
+  const run = (listen) => {
+    const sim = createSim(7, undefined, { scene: 'dungeon', site: 'wickham_keep' });   // (Skarn's hall: his heavy blows, his archers' shots)
+    sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), scene: 'dungeon', site: 'wickham_keep', depth: 0 }); sim.tick();
+    const hall = sim.world.level.descentRoom, lv = sim.world.roomLevels.get(hall.id);
+    sim.state.party = ['fighter', 'mage', 'cleric'].map((c, i) => { const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; });
+    const P = sim.state.player; P.x = P.px = hall.cx + 0.5; P.y = P.py = hall.cy + 0.5;
+    const got = [], hits = [];
+    if (listen) { sim.bus.on('windup', (e) => got.push({ ...e, t: sim.state.t })); sim.bus.on('combat', (e) => { if (e.t === 'hit' && e.party) hits.push({ ...e, at: sim.state.t }); }); }
+    for (let t = 0; t < 20 * 30; t++) sim.tick();
+    return { got, hits, sim, hash: stateHash(sim.snapshot()) };
+  };
+  const a = run(true), b = run(false);
+  assert.equal(a.hash, b.hash, 'the same fight, warned or not');
+  const heavy = a.got.filter((e) => e.heavy && !e.bolt), shots = a.got.filter((e) => e.bolt);
+  assert.ok(heavy.length >= 3 && heavy.every((e) => e.boss), `Skarn's heavy blows are warned: ${heavy.length}`);
+  assert.ok(shots.length >= 3, `the archers' shots are warned: ${shots.length}`);
+  assert.ok(a.got.every((e) => e.heavy || e.bolt), 'a light blow says nothing');
+  const party = new Set(a.sim.state.party.map((m) => m.id));
+  for (const e of a.got) {
+    assert.ok(party.has(e.tid) && typeof e.by === 'number', 'from a foe, at one of the party');
+    assert.equal(e.wind, e.heavy ? WINDUP_HEAVY : WINDUP);
+    assert.ok(e.bolt ? e.fly > 0 : e.fly === 0, 'a shot says how long it flies');
+  }
+  // a heavy blow lands when it said it would (a hit on the one it named, wind s later, unless it missed or was cut down)
+  const landed = heavy.filter((e) => a.hits.some((h) => Math.abs(h.at - e.t - e.wind) < 0.06 && h.heavy));
+  assert.ok(landed.length >= 1, `a warned blow lands on time: ${landed.length} of ${heavy.length}`);
+});
+
+test('a warning\'s marks: a ring filling under a heavy blow, a lane filling along a shot that holds its start from the release, gone after its flash', () => {
+  const draw = (e, times) => {
+    const out = times.map(() => 0); let i = 0;
+    const P = { depth() {}, flush() {}, mark: () => out[i]++, disc: () => out[i]++, seg: () => out[i]++, star: () => out[i]++ };
+    const fx = createSkillFX(P), foe = { id: 1, x: 4, y: 4, hp: 5 }, hero = { id: 9, x: 9, y: 6, hp: 5 };
+    const units = [{ u: foe, foe: true, sx: 100, sy: 100, h: 0, key: 8 }, { u: hero, foe: false, sx: 140, sy: 120, h: 0, key: 15 }];
+    fx.moment({ id: 'warn', by: 1, foeBy: true, tid: 9, ally: true, x: 4, y: 4, tx: 9, ty: 6, reached: [], life: e.wind + e.fly + 0.16, ...e }, 0);
+    for (; i < times.length; i++) { if (e.move && times[i] > e.wind * 1000) units[0].sx += 30; fx.draw(times[i], (x, y) => ({ sx: x * 8, sy: y * 4, h: 0, key: x + y }), units); }
+    return { out, live: fx.live };
+  };
+  const ring = draw({ heavy: true, bolt: null, wind: 0.38, fly: 0 }, [50, 300, 450, 600]);
+  assert.ok(ring.out[0] > 0 && ring.out[1] > ring.out[0], `the ring fills: ${ring.out}`);
+  assert.equal(ring.out[3], 0, 'gone after its flash'); assert.equal(ring.live, 0);
+  const lane = draw({ heavy: false, bolt: 'soul', wind: 0.18, fly: 0.3 }, [60, 300, 460]);
+  assert.ok(lane.out[0] > 0 && lane.out[1] > lane.out[0], `the lane fills: ${lane.out}`);
+  const held = draw({ heavy: false, bolt: 'soul', wind: 0.18, fly: 0.3, move: true }, [60, 300]), free = draw({ heavy: false, bolt: 'soul', wind: 0.18, fly: 0.3 }, [60, 300]);
+  assert.equal(held.out[1], free.out[1], 'the shooter stepping off after the release moves nothing: the lane holds its start');
+});

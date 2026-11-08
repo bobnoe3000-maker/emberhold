@@ -33,6 +33,7 @@ import { buildProps } from '../render/gsprite.js';
 import { propAt } from '../sim/world.js';
 import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
+import { WARN_R } from '../render/skillfx.js';
 
 // the sim's four parts of the day (dawn · day · dusk · night, PART_S each) on Luminati's clock: where each part begins
 // (dusk is Luminati's golden hour and sunset: Emberlit's dusk is a warm low sun, the game's old fixed look; held across
@@ -218,6 +219,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin),
+        // a foe's warning (renderer.js warnsNow): a heavy blow's ring at Emberlit's size (its circles drawn ×√2), a shot's lane
+        warns: (c.warns || []).map((w) => ({ x: (w.x - origin.x) / 2, z: (w.y - origin.y) / 2, tx: (w.tx - origin.x) / 2, tz: (w.ty - origin.y) / 2,
+          r: ((w.boss ? WARN_R.boss : WARN_R.heavy) * Math.SQRT2) / 2, w: ((w.heavy ? 0.6 : 0.4) * Math.SQRT2) / 2, p: w.p, hit: w.hit, heavy: w.heavy, lane: w.lane })),
         blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
         bright: sim.world.kind === 'dungeon' ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)

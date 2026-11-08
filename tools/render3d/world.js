@@ -380,9 +380,14 @@ function mergeGeo(list) {
   for (const g of list) { const p = g.getAttribute('position'), ix = g.getIndex(); for (let i = 0; i < p.count; i++) pos.push(p.getX(i), p.getY(i), p.getZ(i)); for (let i = 0; i < ix.count; i++) idx.push(ix.getX(i) + base); base += p.count; g.dispose(); }
   const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); m.setIndex(idx); return m;
 }
+// a foe's warning (renderer.js warnsNow, battle.js 'windup'): Luminati's own enemy marker (GroundMarkers' style 0: a
+// red-orange rim, its fill 0.22 → 0.5 as the blow comes, the rim white as it lands), drawn as the rings are: a heavy
+// blow's disc filling out to its rim under the one it's meant for; a shot's lane, a bed the length of the shot and its
+// fill running along it to the mark. A lane is a unit strip from its start (x 0..1), turned and stretched to the shot.
+const WRIM_GEO = new THREE.RingGeometry(0.88, 1, 40), LANE_GEO = new THREE.PlaneGeometry(1, 1).translate(0.5, 0, 0);
 const groundMat = () => new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, toneMapped: false });
-const groundPools = { ring: [], disc: [], rim: [], focus: [] };
-const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO };
+const groundPools = { ring: [], disc: [], rim: [], focus: [], wfill: [], wrim: [], lane: [] };
+const GEO = { ring: RING_GEO, disc: DISC_GEO, rim: RIM_GEO, focus: FOCUS_GEO, wfill: DISC_GEO, wrim: WRIM_GEO, lane: LANE_GEO };
 function groundMesh(kind, n) {
   const p = groundPools[kind];
   while (p.length <= n) { const m = new THREE.Mesh(GEO[kind], groundMat()); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; game.engine.scene.add(m); p.push(m); }
@@ -393,6 +398,15 @@ function placeGround(m, x, z, r, col, a) {
   m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
+/** a lane on the ground from (x, z) toward (tx, tz), u (0..1) of the way, w wide */
+function placeLane(m, x, z, tx, tz, u, w, col, a) {
+  const dx = tx - x, dz = tz - z, len = Math.hypot(dx, dz) * u;
+  m.visible = a > 0.01 && len > 0.02; if (!m.visible) return;
+  m.position.set(x, Math.max(game.tileMap.getHeight(x, z), game.tileMap.getHeight(tx, tz)) + 0.05, z);
+  m.rotation.z = Math.atan2(-dz, dx); m.scale.set(len, w, 1);
+  m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
+}
+const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 /** the frame's API, for src/render3d/hybrid.js */
@@ -434,7 +448,8 @@ const api = {
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
-   *   blast?: { x: number, z: number, k: number } | null }} f
+   *   blast?: { x: number, z: number, k: number } | null,
+   *   warns?: { x: number, z: number, tx: number, tz: number, r: number, w: number, p: number, hit: number, heavy: boolean, lane: boolean }[] }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -471,10 +486,23 @@ const api = {
     }
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
     // the fight's ground
-    const nk = { ring: 0, disc: 0, rim: 0, focus: 0 };
+    const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
     if (f.mark) { const m = groundMesh('focus', nk.focus++); placeGround(m, f.mark.x, f.mark.z, 1, [255, 226, 150], 0.7 + 0.2 * Math.sin(focusSpin * 4)); m.rotation.z = focusSpin; focusSpin += (f.dt || 0) * 0.9; }
     for (const h of f.hazards || []) { placeGround(groundMesh('disc', nk.disc++), h.x, h.z, h.r, h.col, 0.82 * h.a); placeGround(groundMesh('rim', nk.rim++), h.x, h.z, h.r, h.rim, 0.42 * h.a); }
+    for (const w of f.warns || []) {                           // the foes' warnings
+      const g = w.heavy ? 1 : 0.62, out = w.hit > 0 ? w.hit : 1, e = 1 - (1 - w.p) * (1 - w.p);
+      if (!w.lane) {
+        placeGround(groundMesh('wrim', nk.wrim++), w.tx, w.tz, w.r * 1.1, WARN_INK, 0.5 * out);   // (a dark edge: on a firelit floor the red alone was lost)
+        placeGround(groundMesh('wfill', nk.wfill++), w.tx, w.tz, w.r * e, w.hit > 0 ? WARN_HOT : WARN, (0.26 + 0.3 * w.p) * out);
+        placeGround(groundMesh('wrim', nk.wrim++), w.tx, w.tz, w.r, w.hit > 0 ? WARN_HOT : WARN, (0.7 + 0.3 * w.p) * out);
+      } else {
+        placeLane(groundMesh('lane', nk.lane++), w.x, w.z, w.tx, w.tz, 1, w.w * 1.25, WARN_INK, 0.3 * g * out);
+        placeLane(groundMesh('lane', nk.lane++), w.x, w.z, w.tx, w.tz, 1, w.w, WARN, 0.16 * g * out);
+        placeLane(groundMesh('lane', nk.lane++), w.x, w.z, w.tx, w.tz, w.p, w.w * 0.7, w.hit > 0 ? WARN_HOT : WARN, (0.22 + 0.28 * w.p) * g * out);
+        placeGround(groundMesh('wrim', nk.wrim++), w.tx, w.tz, w.heavy ? 0.42 : 0.3, w.hit > 0 ? WARN_HOT : WARN, (0.35 + 0.4 * w.p) * g * out);
+      }
+    }
     placeWater(f.water);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
@@ -517,7 +545,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

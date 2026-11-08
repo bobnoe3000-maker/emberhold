@@ -822,6 +822,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (ab) { bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name }); skillEv(ab, 'cast', att, tgt, false); }
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
     const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
+    // a foe's warning (the telegraph grammar, docs/combat-fx.md): what's coming and when, for the renderers to mark on the
+    // ground (a heavy blow's ring filling under its target, a shot's lane filling to it); an event, no state: the sim's
+    // timing is as it was. wind: s to the blow or the release; fly: s the shot takes to land (as the projectile's dur)
+    if (!isPartyAtt && (heavy || bolt)) {
+      bus.emit('windup', { by: att.id, tid: tgt.id, heavy, bolt: bolt || null, boss: !!att.boss, x: att.x, y: att.y, tx: tgt.x, ty: tgt.y,
+        wind: heavy ? WINDUP_HEAVY : WINDUP, fly: bolt ? hypot(tgt.x - att.x, tgt.y - att.y) / BOLT_SPEED : 0 });
+    }
     pending.push({ t: heavy ? WINDUP_HEAVY : WINDUP, fn: () => {
       if (!standing()) return;                               // cut down mid-swing
       if (bolt) { const d = hypot(tgt.x - att.x, tgt.y - att.y); w.projectiles.push({ x: att.x, y: att.y, px: att.x, py: att.y, sx: att.x, sy: att.y, tgt, t: 0, dur: d / BOLT_SPEED, kind: ab && att.cls === 'mage' ? 'fire' : bolt, skill: ab ? ab.id : null, hit }); }   // (skill: the renderer draws an ability's own bolt)

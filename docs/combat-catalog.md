@@ -91,7 +91,7 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 | Party buff | **Bless** (halo), **Breath** | none, only wards | Ours alone. |
 | Something planted | none | ★ **Toll**: a spectral bell planted for 6 s that tolls every 1.5 s, pulls foes and is a safe zone | **A gap in ours.** A shaman totem fits Emberfall well. |
 | Crowd control | Slow only (Frost Nova). No stun, freeze or knockdown in the sim | Chill, freeze, stun, knockdown, pull, knockback, poise, guarded and exposed | Add one at a time as sim rules (§A recommendation 4). |
-| Foe telegraphs | Banners; hazard ground (mud, sluice, flood) | **A grammar**: every wind-up ≥ 18 f, markers that fill, lanes that track then lock, a white rim at the hit | Presentation only. The best single thing to adopt, on both renderers. |
+| Foe telegraphs | Banners; hazard ground (mud, sluice, flood); since 2026-11-08 a heavy blow's filling ring and a shot's lane (`battle.js` windup) | **A grammar**: every wind-up ≥ 18 f, markers that fill, lanes that track then lock, a white rim at the hit | Presentation only. Adopted on both renderers ([combat-fx.md](combat-fx.md) "Attack warnings"). |
 | Boss mechanics | call, kindle, line, swarm, mud, cage, vespers, bells, issue, sluice (§E.3b) | phases and roars, arenas with a gate, guarded and exposed, broken, submerge, the Hush toll and warmth (§F.3) | Most of ours **draw nothing** (§C). Their roar, push ring and exposed glow are a model. |
 | Hit feel | Sparks, a ground ring on heavy hits, a 160 ms camera jolt | Hit-stop (4–12 f), shake tables, the hit flash, kill and crit bonuses, combat colour grading (vignette, desaturation) | Presentation. Hit-stop must stay out of the sim clock. |
 
@@ -104,6 +104,9 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 - the weapon styles, and Wren's bow;
 - a ward break and a level-up effect;
 - a sound for each skill.
+
+**Adopted (2026-11-08):** the telegraph grammar for foes' heavy blows and shots, on both renderers ([combat-fx.md](combat-fx.md)
+"Attack warnings").
 
 **Still open:**
 - the sim quirks below;

@@ -3,7 +3,10 @@
 // level, with every skill learned, on Emberlit and on Luminati. The sim is deterministic, so the same mechanic fires at
 // the same moment on every checkout: a before and an after line up frame for frame.
 //
-//   node tools/capture/bosses.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 90] [--only id,id]
+//   node tools/capture/bosses.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]
+//
+// --warn: the foes' warnings instead (the telegraph grammar): the first heavy blow, archer's shot and heavy shot in three
+// halls, at +0 … 0.54 s (out tools/capture/out/warn/).
 //
 // For each boss, the first time its mechanic fires (its bus event: bossIssue, bossCall, …; for the ones that hold on
 // through the fight, the Standard's line, Teague's cage and the Choir's singing, a moment 4 s into the fight) it shoots
@@ -18,8 +21,9 @@ import { chromium } from 'playwright';
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
-const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/bosses'))), SECS = +opt('--secs', 90), ONLY = opt('--only', '');
-const AT = [0, 200, 400, 700, 1000, 1400];
+const WARN = args.includes('--warn');
+const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/' + (WARN ? 'warn' : 'bosses')))), SECS = +opt('--secs', 90), ONLY = opt('--only', '');
+const AT = WARN ? [0, 100, 200, 300, 400, 540] : [0, 200, 400, 700, 1000, 1400];
 // each boss: its site and floor (sites.js bosses: floor n is depth n − 1), the event its mechanic fires, or a moment of
 // the fight for one that holds (`hold`, ms after the boss's wave)
 const CASES = [
@@ -31,7 +35,16 @@ const CASES = [
   { boss: 'teague', site: 'drowned_abbey', depth: 0, hold: 4000 },
   { boss: 'drowned_choir', site: 'drowned_abbey', depth: 1, hold: 4000 },
   { boss: 'abbess_below', site: 'drowned_abbey', depth: 2, ev: 'bossFlood' },
-].filter((c) => !ONLY || ONLY.split(',').includes(c.boss));
+];
+// --warn (the telegraph grammar, docs/combat-fx.md): a foe's first heavy blow, shot or heavy shot in a hall, found by its
+// attack starting (the sim's atkN and atkKind, there on a checkout before the warnings too, so a before lines up)
+const WARNS = [
+  { boss: 'skarn_blow', site: 'wickham_keep', depth: 0, warn: 'heavy' },
+  { boss: 'skarn_archer', site: 'wickham_keep', depth: 0, warn: 'shot' },
+  { boss: 'garrow_blow', site: 'wickham_keep', depth: 1, warn: 'heavy' },
+  { boss: 'choir_shot', site: 'drowned_abbey', depth: 1, warn: 'heavyshot' },
+];
+const LIST = (WARN ? WARNS : CASES).filter((c) => !ONLY || ONLY.split(',').includes(c.boss));
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 let srv = null, base = opt('--base');
 if (!base) {
@@ -60,6 +73,23 @@ async function stagePage({ site, depth, ev }) {
   if (ev) sim.bus.on(ev, (e) => { if (!globalThis.__bossEv && (ev !== 'bossFlood' || e.level > 0)) globalThis.__bossEv = { t: sim.state.t, x: e.x ?? P.x, y: e.y ?? P.y }; });
   return { lv, hall: hall.id };
 }
+// step the fight a frame at a time until a foe starts the attack asked for: where it's meant to land (between the two for
+// a shot), or null
+function untilAttack(kind, ms) {
+  const s = globalThis.__sim, seen = new Map(), fit = (e) => (kind === 'heavy' ? e.atkKind === 'heavy' && !e.bolt : kind === 'shot' ? !!e.bolt && e.atkKind !== 'heavy' : !!e.bolt && e.atkKind === 'heavy');
+  for (const e of s.world.enemies || []) seen.set(e, e.atkN || 0);
+  globalThis.__lumDraw = false;
+  try {
+    for (let t = 0; t < ms; t += 33) {
+      globalThis.__frame(33);
+      for (const e of s.world.enemies || []) {
+        const n = e.atkN || 0, was = seen.get(e) ?? n; seen.set(e, n);
+        if (n > was && e.hp > 0 && fit(e) && e.aim) return { t: s.state.t, x: e.bolt ? (e.x + e.aim.x) / 2 : e.aim.x, y: e.bolt ? (e.y + e.aim.y) / 2 : e.aim.y };
+      }
+    }
+  } finally { globalThis.__lumDraw = true; }
+  return null;
+}
 function advance(ms) { globalThis.__lumDraw = false; for (let t = 0; t < ms; t += 33) globalThis.__frame(33); globalThis.__lumDraw = true; }
 // a 300 × 300 crop round a screen point (CSS px), from every full-window canvas
 function take(cx, cy) {
@@ -78,18 +108,19 @@ async function run(renderer) {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   await mkdir(join(OUT, renderer), { recursive: true });
   const rows = [];
-  for (const C of CASES) {
+  for (const C of LIST) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}${renderer === 'luminati' ? '&renderer=luminati' : ''}`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
-    await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()};`);
+    await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()}; globalThis.__untilAttack = ${untilAttack.toString()};`);
     const settle = async () => { for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) return; await p.waitForTimeout(100); } };
     await settle();
     const info = await p.evaluate(stagePage, C);
     await settle();
     let got = null;
     for (let t = 0; t < SECS * 1000 && !got; t += 250) {
+      if (C.warn) { got = await p.evaluate((k) => globalThis.__untilAttack(k, 250), C.warn); continue; }
       await p.evaluate((ms) => globalThis.__advance(ms), 250);
       got = await p.evaluate((C) => {
         const s = globalThis.__sim, P = s.state.player;
@@ -104,7 +135,7 @@ async function run(renderer) {
         if (!qm || !rank) return null; s.bus.emit('bossIssue', { id: 'quartermaster', by: qm.id, tid: rank.id, x: rank.x, y: rank.y }); return { t: s.state.t, x: rank.x, y: rank.y, staged: true }; });
       if (await p.evaluate(() => globalThis.__sim.state.party.every((m) => m.down || m.fallen))) break;
     }
-    if (!got) { console.log(`${renderer} ${C.boss}: no ${C.ev || 'hold'} in ${SECS} s (lv ${info.lv})`); await p.close(); continue; }
+    if (!got) { console.log(`${renderer} ${C.boss}: no ${C.warn || C.ev || 'hold'} in ${SECS} s (lv ${info.lv})`); await p.close(); continue; }
     const frames = []; let last = 0;
     for (const at of AT) {
       await p.evaluate((ms) => globalThis.__advance(ms), at - last); last = at;
@@ -114,7 +145,7 @@ async function run(renderer) {
     const strip = await p.evaluate(async (fr) => { const ims = await Promise.all(fr.map(async (u) => { const i = new Image(); i.src = u; await i.decode(); return i; }));
       const c = document.createElement('canvas'); c.width = ims[0].width * ims.length; c.height = ims[0].height; const g = c.getContext('2d'); ims.forEach((im, i) => g.drawImage(im, i * im.width, 0)); return c.toDataURL('image/png'); }, frames);
     await writeFile(join(OUT, renderer, `${C.boss}.png`), Buffer.from(strip.split(',')[1], 'base64'));
-    console.log(`${renderer} ${C.boss}: ${C.ev || 'hold'} at ${got.t.toFixed(1)} s (lv ${info.lv})${errs.length ? ' · page errors ' + errs.slice(0, 2).join(' | ') : ''}`);
+    console.log(`${renderer} ${C.boss}: ${C.warn || C.ev || 'hold'} at ${got.t.toFixed(1)} s (lv ${info.lv})${errs.length ? ' · page errors ' + errs.slice(0, 2).join(' | ') : ''}`);
     await p.close();
   }
   await b.close();
