@@ -100,6 +100,10 @@
 //       Ninth Milestone one. The shape is unchanged. Older data (plansFor33): a visit in a Vale dungeon starts again at
 //       its first floor's way in (its floors are new; a third floor is gone), and a Vale board job under way is let go
 //       (its posting is drawn anew from the new floors). Quests carry over: their floors moved with them.
+//   v34: an optional `dev`, a dev game (sim/dev.js). Nothing to migrate.
+//   v35: a member's optional `picks` (skills.js: its ability at 15 and at 18, the tiers; GDD §5.1 v1.55). Nothing to
+//       migrate: absent reads as the first of each tier's two. A member's `prio` may now hold fewer ids than it carries
+//       (priorityOf puts the rest after it).
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -110,7 +114,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 34;   // (v34: an optional `dev`, a dev game: sim/dev.js. Nothing to migrate: absent reads as not one)
+export const SAVE_VERSION = 35;   // (v35: a member's optional `picks`, its ability at each tier, skills.js. Nothing to migrate: absent reads as the first of each tier's two)
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

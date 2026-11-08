@@ -55,17 +55,17 @@ const C = {
 /** how long each moment lasts, s */
 const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.6,
   arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
-/** the skills with a moment of their own (for checks: every class skill has one) */
-export const SKILL_MOMENTS = Object.freeze(Object.keys(LIFE));
 /** the fight's other moments: a foe's warning, a ward breaking, a level gained, each boss's mechanic (a warning's life is
  *  its own: to the blow or the shot's landing, and a flash) */
 const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
 export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
-/** the proposed skills' moments (docs/skill-trees-proposal.md; for the owner's review: the sim doesn't cast them yet), life s */
+/** the tiers' moments (GDD §5.1 v1.55, docs/skill-trees-proposal.md: the owner reviewed them on the page), life s */
 const PROPOSED = { vault: 0.9, cutting_wave: 0.8, earthshatter: 1.0, whirling_blades: 5, kidney_shot: 0.7, fan_of_knives: 0.6, shadowstep: 0.8,
   caltrops: 6, flare: 1.3, gather: 0.8, glacial_tomb: 0.9, blizzard: 6, sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.6,
   binding_roots: 0.7, old_marks: 0.7, spirit_totem: 8, thunder_drum: 0.7 };
 export const PROPOSED_MOMENTS = Object.freeze(Object.keys(PROPOSED));
+/** the skills with a moment of their own (for checks: every class skill has one; the tiers' since GDD v1.55) */
+export const SKILL_MOMENTS = Object.freeze([...Object.keys(LIFE), ...Object.keys(PROPOSED)]);
 /** a heavy blow's warning ring, tiles (Emberlit's, and Luminati's from it: hybrid.js) */
 export const WARN_R = Object.freeze({ heavy: 1.4, boss: 1.7 });
 const ease = (u) => 1 - (1 - u) * (1 - u), clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -327,8 +327,8 @@ export function createSkillFX(P) {
       if (t > 0.2 && t < 0.9) { over(Tq, 0.2); const g = 1.0 * (1 - (t - 0.2) / 0.7); for (const q of R) { seg(Tq.sx, Tq.sy, q.sx, q.sy - 4, g, g * 0.4, 0.8); star(q.sx, q.sy - 24, 6, g); } flush(C.hexV, 1.3); }
     },
 
-    // ── the proposed skills (docs/skill-trees-proposal.md, tiers I and II): drawn for the owner's review before the sim
-    // has them; each in its class's colours. ctx.P projects a world point (where a leap or a dash began) ──────────
+    // ── the tiers (GDD §5.1 v1.55; docs/skill-trees-proposal.md, tiers I and II, the owner confirmed them on the review
+    // page): each in its class's colours. ctx.P projects a world point (where a leap or a dash began) ──────────
     // FIGHTER · Vault: up from where he stood in an amber arc, then a sword of light falls with him onto the foe: a slam
     vault(ctx) {
       const { t, k, Tq, e, P, seed } = ctx; if (ctx.at !== 'land') return;
@@ -754,6 +754,8 @@ export function createSkillFX(P) {
      *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
      *  tx, ty, reached } @param {any} e @param {number} now */
     moment(e, now) { this.event(e, now); },
+    /** a foe's wind-up cut (battle.js 'interrupt': a stun, a freeze, a knockdown): its warning goes, the blow never comes @param {number} by */
+    cut(by) { for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === 'warn' && live[i].e.by === by) live.splice(i, 1); },
     /** every moment under way and every aura, this frame. units: the figures drawn ({ u, foe, sx, sy, h, key }), for
      *  following who's in it and drawing what they carry @param {number} now @param {Function} proj @param {any[]} units */
     draw(now, proj, units) {

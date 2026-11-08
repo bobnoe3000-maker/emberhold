@@ -7,6 +7,9 @@
 //   setAutoAttrs{ id, on }                    Auto spends pending points on the class build
 //   rankSkill   { id, skill }                 one skill point into an unlocked ability
 //   setAutocast { id, skill, on } · setPriority { id, order } · setStance { id, stance }
+//   pickSkill   { id, tier, skill }           which of a tier's two (15, 18) the member carries (skills.js): the first
+//                                             choice anywhere, a change after that at a temple, free; the dropped
+//                                             one's ranks come back as points
 //   respec      { id }            town        attributes back to points (first free, then 20 g × level)
 //   resurrect   { id }            town        the temple (25 g × level; free once a day to level 5)
 //   rest        {}                town        the inn: full HP / MP, Weakened lifted (5 g × hero level)
@@ -34,7 +37,7 @@
 
 import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames, freeName } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
-import { skillsOf, skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES } from './skills.js';
+import { skillDef, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES, TIERS, tierSkills, pickOf, priorityOf } from './skills.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { makeItem } from './items.js';
 import { hired, feeOf, wageOf, loyaltyOf, retrainPerk, priceMod, PERKS, REVEAL_AT, SWORN_AT, ASK_COST, RETRAIN_COST, FOUND_PERKS } from './companions.js';
@@ -163,6 +166,7 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       case 'rankSkill': {
         const m = find(cmd.id), s = m && skillDef(m.cls, cmd.skill);
         if (!m || !s) return true;
+        if (s.tier && pickOf(m, s.tier) !== s.id) return refuse(`${m.name} carries ${skillDef(m.cls, pickOf(m, s.tier)).name} at ${s.tier}, not ${s.name}`);
         if (!unlocked(m, s, state.trials)) return refuse(m.level < s.lv ? `${s.name} unlocks at level ${s.lv}` : `${s.name} comes with the ${CLASSES[m.cls].label.toLowerCase()}'s ${s.lv >= 12 ? 'level-12 ' : ''}trial`);
         if (rankOf(m, s.id) >= MAX_RANK) return refuse(`${s.name} is at its highest rank`);
         if (pendingSkillPoints(m) < 1) return refuse('No skill points to spend');
@@ -177,9 +181,19 @@ export function createHeroes({ state, bus, getWorld, seed }) {
       }
       case 'setPriority': {
         const m = find(cmd.id); if (!m || !Array.isArray(cmd.order)) return true;
-        const ids = skillsOf(m.cls).map((s) => s.id);
+        const ids = priorityOf(m).map((s) => s.id);   // (the abilities it carries: a tier's other one has no place in the order)
         if (cmd.order.length !== ids.length || !ids.every((id) => cmd.order.includes(id))) return true;
         m.prio = ids.map((_, i) => String(cmd.order[i])); changed(); return true;
+      }
+      case 'pickSkill': {
+        const m = find(cmd.id); if (!m || !TIERS.includes(cmd.tier)) return true;
+        const s = tierSkills(m.cls, cmd.tier).find((q) => q.id === cmd.skill); if (!s) return true;
+        const was = pickOf(m, cmd.tier); if (was === s.id) { m.picks = { ...(m.picks || {}), [cmd.tier]: s.id }; changed(); return true; }
+        if (m.picks && m.picks[cmd.tier]) { const no = lacks('temple', `Change ${skillDef(m.cls, was).name} for ${s.name} at a town temple`); if (no) return refuse(no); }
+        const sk = { ...(m.skills || {}) }; delete sk[was]; m.skills = sk;                       // (its ranks come back as points)
+        m.picks = { ...(m.picks || {}), [cmd.tier]: s.id };
+        if (Array.isArray(m.prio)) m.prio = m.prio.map((id) => (id === was ? s.id : id));     // (it takes the dropped one's place)
+        bus.emit('skillPicked', { id: m.id, tier: cmd.tier, skill: s.id, was }); changed(); return true;
       }
       case 'setStance': {
         const m = find(cmd.id); if (!m || !STANCES.includes(cmd.stance)) return true;

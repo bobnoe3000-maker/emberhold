@@ -582,7 +582,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const CHEST_GOLD = [10, 5];
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
-    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp'];   // (exp: out on an expedition, v22)
+    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp', 'picks'];   // (exp: out on an expedition, v22; picks: a tier's ability, v35)
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;

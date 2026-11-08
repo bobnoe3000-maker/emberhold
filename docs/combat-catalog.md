@@ -281,6 +281,20 @@ Class traits: range 12, every 1.5 s, speed 6.5, fires a `spirit` bolt (bt:52).
 | `hex` | Hex | Lv 12 + `shaman12` | 22 | takes the turn | **Debuff** on every live foe within **3.5** of the centre: `hex = {t:8, k: min(0.4, 0.2×mult)}`. It cuts the foe's ATK when it swings and its DEF when it is struck (bt:499-501, bt:764-768, bt:796). Centre (`hexCentre`, bt:678-683): the foe with the most un-hexed foes within 3.5, needing ≥2 (a boss wins a tie); otherwise the first boss or elite that is not hexed. | When `hexCentre` returns a target | `hex` (sfx:259), life 1.4 s. A sigil drawn stroke by stroke on the floor (two rings and a pentagram, r 1.35), a violet pool, and violet lines to each reached foe (hex [160,255,70], hexV [190,110,255]). **Aura** (sfx:314): a ring with three beads under the foe, and violet motes sinking. The sim also emits combat `'hex'`, shown as the float "hexed" (rr:1565). |
 | passive | Old Ways | Lv 20 | – | – | Spirit Drain caps at 8 stacks (+3), and each tick returns 1 MP to the caster (sk:101, bt:676, bt:1274) | – | none |
 
+#### The tiers (GDD v1.55): each class's two at 15 and at 18
+A member carries one of each pair (`skills.js` `pickOf`; the first until it chooses). They're cast by `battle.js`
+`TIER` (pick: when; land: what). Each has a moment of its own (`skillfx.js`, PROPOSED's lives) and a sound
+(`cues.js`). Its MP and numbers are in GDD §5.1's table, its rules in [skill-trees-proposal.md](skill-trees-proposal.md)
+§7. Which Luminati move each comes from:
+
+| Class | 15 | 18 | From Luminati |
+|---|---|---|---|
+| Fighter | `vault` (leap), `cutting_wave` (wave) | `earthshatter` (slam), `whirling_blades` (blades) | Skyfall Judgement, Dragonfang Wave, Earthshatter, Tempest Edge |
+| Rogue | `kidney_shot` (kidney), `fan_of_knives` (fan) | `shadowstep` (step), `caltrops` (field) | stun, a line attack, a dash, something planted |
+| Mage | `flare` (flare), `gather` (gather) | `glacial_tomb` (tomb), `blizzard` (field) | Flare, pull, Glacial Tomb, Blizzard |
+| Cleric | `sanctuary` (field), `consecrate` (field) | `revive` (revive), `judgement` (judge) | Sanctuary, something planted, Revive, Judgement |
+| Shaman | `binding_roots` (roots), `old_marks` (strike: `marks`) | `spirit_totem` (field), `thunder_drum` (drum) | root, resonance marks, Toll, knockback |
+
 #### Sellsword perks that act in combat
 Defined in `src/sim/companions.js` (PERKS :42, FIGHT :86). None of them has its own effect drawn.
 
@@ -410,6 +424,11 @@ All of these are runtime fields. None is in `MEMBER_KEYS` (core.js:580), and all
 |---|---|---|---|---|
 | party | `buff.wall`, `wallK` | Shield Wall | DEF × (1 + wallK). Taunt: foes within 7 tiles target the holder (bt:283, bt:1251) | Aura of turning plates, plus a pulse (sfx:290) |
 | party | `buff.smoke`, `smokeK` | Smoke Step | +dodge. Foes lose the member (bt:1250) | Smoke wisps (sfx:293) |
+| foe | `stun`, `frozen`, `knocked` (s left) | Kidney Shot, Old Marks, Thunder Drum; Glacial Tomb; Vault, Earthshatter | **A hold** (v1.55): no step, no blow, no shot; a wind-up under way is cut (`windN`; the event `'interrupt'`). A boss gets half; then `ccImm` 2 s. A knockdown slides 0.6 tiles. A freeze strikes as it breaks (`thaw`) | stars circling the head; an ice shell; dust and stars |
+| foe | `rooted` (s left) | Binding Roots | Its feet stop; it still strikes and shoots | a green ring and roots |
+| foe | `fieldSlow` (per tick) | Caltrops ×0.5, Blizzard ×0.7 | Speed and swings, with Frost Nova's `slow` (the least counts) | the field's own moment |
+| foe | `marks` | Old Marks | The third breaks them all: 1.6× and a 1 s stun | the moment's count |
+| fight | `battle.planted` | Caltrops, Blizzard, Consecrate, Sanctuary, the Spirit Totem, Whirling Blades | Ticks each `every` s: damage, a heal, a pull; Consecrate's +DEF (`combatStats`), the totem's −20 % taken (`applyHit`) | each one's moment, which lasts as long |
 | party | `buff.bless`, `blessK` | Bless | ATK and DEF × (1 + k) | Halo (sfx:296) |
 | party | `buff.breath`, `breathK`, `breathAtk` | Ancestors' Breath | HoT and ATK × (1 + k) (bt:1172) | Rising leaves (sfx:297) |
 | party | `ward` (points) | Arcane Ward | Absorbs damage first; `'warded'` when a blow is fully soaked | Dome (sfx:300). Floats "ward N" and "warded" (rr:1563-1564). No break effect. |

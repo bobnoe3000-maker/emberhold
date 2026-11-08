@@ -111,6 +111,27 @@ const SKILL_SOUND = {
   spirit_drain: { cues: [['spirit', 0.74, 0.6]] },                                    // a low draw
   ancestors_breath: { cues: [['spirit', 1.28, 0.55], ['heal', 0.7, 0.25]] },       // a long breath out
   hex: { cues: [['cult_cry', 1.45, 0.22]] },                                          // a whisper (and its 'hex')
+  // the tiers (GDD §5.1 v1.55)
+  vault: { cues: [['warcry', 1.1, 0.5], ['quake', 1.0, 0.6]] },                      // a shout up, the landing's thud
+  cutting_wave: { cues: [['swing', 0.52, 0.9], ['ward', 1.9, 0.3]] },                 // a long sweep, a ringing edge
+  earthshatter: { cues: [['quake', 0.62, 0.95], ['guard', 0.6, 0.4]] },              // the floor breaking
+  whirling_blades: { cues: [['swing', 1.15, 0.6], ['swing', 0.88, 0.45]] },          // blades round, twice
+  kidney_shot: { cues: [['guard', 1.35, 0.6], ['man_hurt', 1.2, 0.25]] },           // a dull hard blow, a gasp
+  fan_of_knives: { cues: [['bow', 1.35, 0.6], ['swing', 1.75, 0.4]] },              // knives leaving
+  shadowstep: { cues: [['spirit', 1.9, 0.35], ['swing', 1.55, 0.7]] },              // a rush, a cut
+  caltrops: { cues: [['coins', 1.5, 0.55], ['drip', 0.8, 0.3]] },                    // iron scattered on stone
+  flare: { cues: [['fire', 0.6, 0.7], ['quake', 1.45, 0.45]] },                      // the pillar's roar
+  gather: { cues: [['spirit', 0.55, 0.5], ['ward', 0.7, 0.35]] },                    // a pull of air
+  glacial_tomb: { cues: [['ward', 1.25, 0.75], ['guard', 1.9, 0.3]] },              // ice closing
+  blizzard: { cues: [['spirit', 1.15, 0.4], ['fire', 1.85, 0.25]] },                // a wind, sleet
+  sanctuary: { cues: [['levelup', 1.45, 0.4], ['heal', 0.9, 0.35]] },              // a chime, a hum held
+  consecrate: { cues: [['levelup', 1.05, 0.4], ['ward', 0.6, 0.3]] },              // a low bell on the floor
+  revive: { cues: [['levelup', 0.95, 0.55], ['heal', 1.2, 0.45]] },                 // a bell, breath back
+  judgement: { cues: [['levelup', 0.7, 0.6], ['quake', 0.9, 0.55]] },              // a great bell, the pillar
+  binding_roots: { cues: [['hex', 0.7, 0.5], ['step_leather', 0.6, 0.5]] },         // creak and grip
+  old_marks: { cues: [['hex', 1.9, 0.35], ['bow', 0.8, 0.3]] },                      // a mark struck
+  spirit_totem: { cues: [['spirit', 0.95, 0.5], ['guard', 0.7, 0.35]] },           // the post set, a low hum
+  thunder_drum: { cues: [['quake', 1.25, 0.8], ['warcry', 0.6, 0.3]] },             // the drum's boom
 };
 /** the sound of a skill's moment, or [] (its event: battle.js skillEv) @param {string} id @param {'cast' | 'land'} at @returns {Cue[]} */
 export function skillCue(id, at) {

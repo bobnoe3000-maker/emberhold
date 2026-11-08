@@ -18,7 +18,7 @@ const SEED = 20260807;
 
 test('the shaman is a class like the others: table, kit, build, three abilities and a passive, a trial from Col, at creation and the tavern', () => {
   assert.ok(CLASSES.shaman && STARTER.shaman && BUILD.shaman && PASSIVES.shaman);
-  assert.deepEqual(SKILLS.shaman.map((s) => [s.lv, s.kind]), [[1, 'strike'], [6, 'breath'], [12, 'hex']]);
+  assert.deepEqual(SKILLS.shaman.map((s) => [s.lv, s.kind]), [[1, 'strike'], [6, 'breath'], [12, 'hex'], [15, 'roots'], [15, 'strike'], [18, 'field'], [18, 'drum']]);   // (and the tiers' two at 15 and 18, GDD v1.55)
   assert.ok(TRIAL_CLASSES.includes('shaman')); assert.equal(QUESTS.trial_old_roads.giver, 'col');
   assert.deepEqual(CLASS_IDS, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const slot of Object.values(STARTER.shaman)) assert.ok(classesOf(BASES[slot]).includes('shaman'), slot);

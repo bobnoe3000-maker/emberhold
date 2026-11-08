@@ -16,7 +16,7 @@
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
-import { pendingSkillPoints, skillsOf, unlocked, TRIAL_CLASSES } from '../sim/skills.js';
+import { pendingSkillPoints, skillsOf, unlocked, carries, TRIAL_CLASSES } from '../sim/skills.js';
 import { DEV_LEVEL_MAX } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
@@ -159,9 +159,9 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   function Developer() {
     const S = sim.state, all = TRIAL_CLASSES.length * 2, done = TRIAL_CLASSES.reduce((n, c) => n + (S.trials[c] ? 1 : 0) + (S.trials[c + '12'] ? 1 : 0), 0);
     const pts = (m) => { const a = pendingPoints(m), k = pendingSkillPoints(m); return a || k ? `${a ? `${a} stat point${a > 1 ? 's' : ''}` : ''}${a && k ? ' · ' : ''}${k ? `${k} skill point${k > 1 ? 's' : ''}` : ''} to spend` : 'no points to spend'; };
-    const open = (m) => skillsOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length;
+    const open = (m) => skillsOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length, carried = (m) => skillsOf(m.cls).filter((q) => carries(m, q)).length;   // (a tier's other one isn't carried: skills.js)
     const up = (m, n) => devDo(Array.from({ length: Math.min(n, DEV_LEVEL_MAX - m.level) }, () => ({ type: 'devLevel', id: m.id })),
-      () => `${m.name} is level ${m.level}: ${pts(m)} · ${open(m)} of ${skillsOf(m.cls).length} skills open`);
+      () => `${m.name} is level ${m.level}: ${pts(m)} · ${open(m)} of ${carried(m)} skills open`);
     return html`<div id="title" class="dev">
       <div class="mark" style="font-size:32px">DEVELOPER</div>
       <div class="devnote">For testing. A level comes as one fought for does: 3 stat points, a skill point at every even level, the HP it brings. Using either marks this slot a <b>dev game</b>${S.dev ? ' (it is one)' : ''}: it will never count as verified progress once saves go online.</div>
@@ -169,7 +169,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       <button disabled=${done >= all || !S.created} onClick=${() => devDo([{ type: 'devUnlockSkills' }], () => 'Every skill unlocked: each opens at its level (6, 12)')}>
         Unlock every skill<small>${done >= all ? 'done: every class’s level-6 and level-12 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
       ${S.created && S.party.map((m) => html`<div key=${m.id}>
-        <div class="devwho">${m.name}<small>${(CLASSES[m.cls] || CLASSES.fighter).label} · level ${m.level} · ${pts(m)} · ${open(m)} of ${skillsOf(m.cls).length} skills open</small></div>
+        <div class="devwho">${m.name}<small>${(CLASSES[m.cls] || CLASSES.fighter).label} · level ${m.level} · ${pts(m)} · ${open(m)} of ${carried(m)} skills open</small></div>
         <div class="row">
           <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 1)}>+1 level</button>
           <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 5)}>+5 levels</button>

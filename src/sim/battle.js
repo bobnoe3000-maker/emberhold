@@ -21,6 +21,12 @@
 // Defensive keeps companions near the leader and half the MP in reserve for guards and
 // heals; Aggressive lets them chase anything and heals late.
 //
+// The tiers (GDD §5.1 v1.55, skills.js): at 15 and 18 each member carries one of two abilities; TIER below says when
+// each is worth it and what it does. They bring crowd control (CC below): a stun, a freeze and a knockdown hold a foe
+// and cut the blow it's winding up; a root stops its feet; a pull or a knockback moves it, walls stopping it. A boss
+// takes half the time and is never moved; after a hold a foe can't be held again for CC_IMMUNE s. What's planted
+// (Caltrops, Blizzard, Consecrate, Sanctuary, the Spirit Totem) and Whirling Blades live in battle.planted, runtime (battle.fields is the flow fields' cache).
+//
 // Death (GDD §3.6): 0 HP is Downed; the Downed rise in the lull when the wave is cleared.
 // Downed a second time in one room visit, or still Downed when the party walks out, a
 // companion is Fallen: a ghost that follows, doesn't fight and earns nothing until a temple
@@ -266,6 +272,18 @@ const STATIONS = [[1, 0], [-1, 0], [0.8, 0.6], [-0.8, 0.6], [0.8, -0.6], [-0.8, 
 // 60 %: every wave started fresh and a room could be held forever). Companions who fell during a
 // wave get back up at 25 % HP when it's cleared.
 const REVIVE = 0.25, HERO_R = 0.32;   // HERO_R: the hero's collision radius (core.js PLAYER_RADIUS)
+// Crowd control (GDD §5.2 v1.55): the holds (a foe in one takes no step, strikes no blow, looses no shot, and the blow it
+// was winding up is cut), a boss's share of any hold or root, the breather after a hold, a knockdown's slide (tiles)
+export const HOLDS = /** @type {const} */ (['stun', 'frozen', 'knocked']), BOSS_CC = 0.5, CC_IMMUNE = 2, KNOCK_SLIDE = 0.6;
+/** how long a hold or a root of s seconds lasts on this foe: a boss half, an elite and the rest the full time @param {any} e @param {number} s */
+export const ccTime = (e, s) => (e.boss ? s * BOSS_CC : s);
+// the tiers' kinds that spend MP on damage or control: they wait on the MP a member keeps for its heals and guards (reserve)
+const SPENDS = new Set(['leap', 'wave', 'slam', 'blades', 'fan', 'step', 'field', 'flare', 'gather', 'tomb', 'judge', 'roots']);
+// Spare MP: a member holding SPARE_MP of its pool or more casts its tiers' damage and control on a single foe too (an area
+// on one, a gap closed, a stun struck), spending down to it and no further: foes stand 2.8 apart, round whoever they fight
+// (GDD v1.53), so two in an area came seldom, and the tiers' abilities were cast once or twice in a fight (seed 20260807, 18)
+export const SPARE_MP = 0.7;
+const COS_HALF = { 40: 0.9397, 60: 0.8660 };   // cos of half a fan's arc (detmath has no acos; a table, as XP_TABLE)
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
@@ -285,6 +303,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     const s = statsFor(m), b = m.buff, k = company(m);
     s.atk *= k.atk * boonK(state, 'atk'); s.def *= k.def * boonK(state, 'def');   // (a red / blue shrine's boon, shrines.js)
     if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } if (b.breath > 0) s.atk = s.atk * (1 + b.breathAtk); }
+    const holy = fieldAt('consecrate', m.x, m.y); if (holy) s.def = s.def * (1 + holy.A.defK);   // (standing on Consecrate)
     return s;
   };
 
@@ -503,11 +522,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hexed = (o) => o.hex && o.hex.t > 0;
   const hexAtk = (e) => (hexed(e) ? { ...e, atk: e.atk * (1 - e.hex.k) } : e);
   const hexDef = (e) => (hexed(e) ? { ...e, def: e.def * (1 - e.hex.k) } : e);
-  function resolve(att, def, power, bonusCrit = 0, critMul = 1) {
-    if (rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
+  function resolve(att, def, power, bonusCrit = 0, critMul = 1, sure = false) {   // (sure: a crit that can't miss, Shadowstep's)
+    if (!sure && rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
     const lvl = att.lvl || att.level || 1, mit = def.def / (def.def + 25 + 5 * lvl);
     let dmg = Math.max(1, att.atk * power * (1 - mit));
-    const crit = rng() * 100 < Math.min(60, att.crit + bonusCrit);
+    const crit = rng() * 100 < Math.min(60, att.crit + bonusCrit) || sure;
     if (crit) dmg *= 1.75 * critMul;
     return { dmg: Math.round(dmg), crit };
   }
@@ -515,6 +534,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (r.miss) { bus.emit('combat', { t: 'miss', x: tgt.x, y: tgt.y, party: isParty }); return; }
     let dmg = r.dmg;
     if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
+    if (isParty && battle) { const tot = fieldAt('totem', tgt.x, tgt.y); if (tot) dmg = Math.max(1, Math.round(dmg * (1 - tot.A.guardK))); }   // the Spirit Totem's guard
     if (isParty && tgt.ward > 0) {                              // Arcane Ward soaks it first (spent: it breaks, for the renderer's shatter)
       const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a;
       if (!tgt.ward) bus.emit('combat', { t: 'wardBreak', x: tgt.x, y: tgt.y, id: tgt.id });
@@ -680,7 +700,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // for the cheapest; Defensive always keeps half the pool
   function reserve(m, s) {
     const stance = stanceOf(m); if (stance === 'aggressive') return 0;
-    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && unlocked(m, A, state.trials) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
+    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && !SPENDS.has(A.kind) && unlocked(m, A, state.trials) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
     if (low === 1e9) return 0;
     if (stance === 'balanced') return state.party.some((q) => alive(q) && q.hp < statsFor(q).maxHp * STANCE_AI.balanced.low) ? low : 0;
     return Math.max(low, s.maxMp * STANCE_AI[stance].reserve);
@@ -693,9 +713,257 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (best && bn >= 2) return best;
     return foes.find((o) => (o.boss || o.elite) && !hexed(o) && !(o.spawn > 0)) || null;
   }
+  // ── the tiers (skills.js; GDD §5.1 v1.55) and the crowd control they bring ────────────────────────────────────
+  const up = (o) => !!o && !o.dead && o.hp > 0 && !(o.spawn > 0) && !o.inert;
+  const held = (e) => e.stun > 0 || e.frozen > 0 || e.knocked > 0;
+  /** hold a foe ('stun', 'frozen', 'knocked') for s seconds (a boss half): no step, no blow, no shot, and the blow it was
+   *  winding up is cut; a knockdown slides it KNOCK_SLIDE away from `from`. Refused in the breather after a hold. */
+  function hold(e, kind, s, from = null) {
+    if (!up(e) || e.ccImm > 0) return false;
+    e[kind] = Math.max(e[kind] || 0, ccTime(e, s)); e.moving = false;
+    if (e.wind > 0) { e.windN = (e.windN || 0) + 1; e.wind = 0; bus.emit('interrupt', { by: e.id, x: e.x, y: e.y }); }   // (the renderer drops its warning)
+    if (kind === 'knocked' && from) shove(e, from.x, from.y, -KNOCK_SLIDE);
+    return true;
+  }
+  /** root a foe's feet for s seconds (a boss half): it still strikes what's in reach, and shoots */
+  function root(e, s) { if (!up(e)) return false; e.rooted = Math.max(e.rooted || 0, ccTime(e, s)); return true; }
+  /** move a foe d tiles toward (x, y) (away, for d < 0), in steps a wall or the room's edge stops, and a pull no closer
+   *  than 0.9 tiles to the point; a boss isn't moved */
+  function shove(e, x, y, d) {
+    if (!battle || e.boss || !up(e)) return;
+    const w = getWorld(), dx = x - e.x, dy = y - e.y, l = hypot(dx, dy); if (l < 1e-3) return;
+    const go = d > 0 ? Math.min(d, Math.max(0, l - 0.9)) : d, n = Math.ceil(Math.abs(go) / 0.1); if (!n) return;
+    const sx = (dx / l) * (go / n), sy = (dy / l) * (go / n);
+    for (let i = 0; i < n; i++) { const nx = e.x + sx, ny = e.y + sy; if (!fits(w, nx, ny, e.rad || 0) || roomAt(w, nx, ny) !== battle.room) break; e.x = nx; e.y = ny; }
+  }
+  /** the point within `reach` of `from` with the most foes (`pred`'s) within r of it, a foe's spot or the midpoint of two;
+   *  null when fewer than `min` @returns {{x: number, y: number, n: number} | null} */
+  function knot(foes, from, reach, r, min, pred = (_o) => true) {
+    const fs = foes.filter((o) => up(o) && pred(o)); let best = null, bn = min - 1;
+    const at = (x, y) => { if (hypot(x - from.x, y - from.y) > reach) return; let n = 0; for (const o of fs) if (hypot(o.x - x, o.y - y) < r) n++; if (n > bn) { bn = n; best = { x, y, n }; } };
+    for (let i = 0; i < fs.length; i++) { at(fs[i].x, fs[i].y); for (let j = i + 1; j < fs.length; j++) if (hypot(fs[i].x - fs[j].x, fs[i].y - fs[j].y) < 2 * r) at((fs[i].x + fs[j].x) / 2, (fs[i].y + fs[j].y) / 2); }
+    return best;
+  }
+  const within = (list, x, y, r) => list.filter((o) => up(o) && hypot(o.x - x, o.y - y) < r);
+  const skillStats = (m) => ({ ...statsFor(m), lvl: m.level, src: m });
+  const strikeAt = (aS, o, power, w, heavy = true, sure = false) => { if (up(o)) applyHit(aS, o, resolve(aS, hexDef(o), power, 0, 1, sure), false, w, heavy); };
+  /** put a member at (x, y), or the open floor of this room nearest it (tile centres out to 3); the hero moves the player */
+  function placeAt(m, x, y, w) {
+    let at = fits(w, x, y, HERO_R) && roomAt(w, x, y) === battle.room ? [x, y] : null;
+    for (let r = 1; r <= 3 && !at; r++) { let bd = 1e9; const tx = Math.floor(x), ty = Math.floor(y);
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const cx = tx + dx + 0.5, cy = ty + dy + 0.5, d = hypot(cx - x, cy - y); if (d < bd && fits(w, cx, cy, HERO_R) && roomAt(w, cx, cy) === battle.room) { bd = d; at = [cx, cy]; } } }
+    if (!at) return;
+    if (m === hero()) { const p = state.player; p.x = at[0]; p.y = at[1]; p.vx = p.vy = 0; }
+    m.x = at[0]; m.y = at[1]; m.vx = m.vy = 0; m.moving = false;
+  }
+  /** a lane from (x, y) along (ux, uy), len long, half either side: the foes in it */
+  const lane = (foes, x, y, ux, uy, len, half) => foes.filter((o) => { if (!up(o)) return false; const ox = o.x - x, oy = o.y - y, t = ox * ux + oy * uy; return t >= 0 && t <= len && Math.abs(ox * uy - oy * ux) < half; });
+  /** a fan from (x, y) along (ux, uy): within len, and within its arc */
+  const fan = (foes, x, y, ux, uy, len, arc) => foes.filter((o) => { if (!up(o)) return false; const ox = o.x - x, oy = o.y - y, d = hypot(ox, oy); return d > 0.01 && d <= len && (ox * ux + oy * uy) / d >= COS_HALF[arc]; });
+  /** the way that takes the most: toward each foe in turn @returns {{x: number, y: number, ux: number, uy: number, n: number} | null} */
+  function aimBest(m, foes, len, count, min = 2) {
+    let best = null; for (const o of foes) { if (!up(o)) continue; const d = hypot(o.x - m.x, o.y - m.y); if (d < 0.01 || d > len) continue;
+      const ux = (o.x - m.x) / d, uy = (o.y - m.y) / d, n = count(ux, uy).length; if (n >= min && (!best || n > best.n)) best = { x: m.x + ux * len, y: m.y + uy * len, ux, uy, n }; }
+    return best;
+  }
+  // what's planted, and Whirling Blades: { id, x, y, r, t, A, mult, by, aS, acc, seen }
+  const fieldAt = (id, x, y) => (battle && battle.planted ? battle.planted.find((f) => f.id === id && hypot(x - f.x, y - f.y) < (id === 'totem' ? f.A.guard : f.r)) : null);
+  const fieldUp = (id, by = null) => !!(battle && battle.planted && battle.planted.some((f) => f.id === id && (!by || f.by === by)));
+  function plant(m, A, mult, x, y, id = A.field) { (battle.planted ||= []).push({ id, x, y, r: A.radius, t: A.dur, A, mult, by: m, aS: skillStats(m), acc: 0, seen: [] }); }
+  function tickFields(w, dt) {
+    for (const e of w.enemies) e.fieldSlow = 1;
+    if (!battle.planted || !battle.planted.length) return;
+    for (const f of battle.planted) {
+      const A = f.A; f.t -= dt; f.acc += dt;
+      if (f.id === 'blades') { if (!alive(f.by)) { f.t = 0; continue; } f.x = f.by.x; f.y = f.by.y; }   // (they circle their fighter)
+      if (A.slowK) for (const o of within(w.enemies, f.x, f.y, f.r)) o.fieldSlow = Math.min(o.fieldSlow, A.slowK);
+      if (f.id === 'sanctuary') for (const q of state.party) if (alive(q) && !f.seen.includes(q.id) && hypot(q.x - f.x, q.y - f.y) < f.r) {   // a ward as they step in
+        f.seen.push(q.id); const n = Math.round(statsFor(q).maxHp * A.ward * f.mult); if (n > (q.ward || 0)) { q.ward = n; bus.emit('combat', { t: 'ward', x: q.x, y: q.y, amount: n }); }
+      }
+      const every = A.every || 1;
+      while (f.acc >= every - 1e-9 && f.t > -1e-9) {
+        f.acc -= every;
+        if (f.id === 'sanctuary') {
+          for (const q of state.party) if (alive(q) && hypot(q.x - f.x, q.y - f.y) < f.r) { const qs = statsFor(q), n = Math.round(qs.maxHp * A.heal * f.mult * HEAL_BONUS * healMod(f.by, state.party)); if (q.hp < qs.maxHp) { q.hp = Math.min(qs.maxHp, q.hp + n); bus.emit('combat', { t: 'heal', x: q.x, y: q.y, amount: n }); } }
+        } else if (f.id === 'totem') for (const o of within(w.enemies, f.x, f.y, f.r)) shove(o, f.x, f.y, A.pull);
+        else for (const o of within(w.enemies, f.x, f.y, f.r)) strikeAt(f.aS, o, (f.id === 'consecrate' && o.undead ? A.undeadK : A.power) * f.mult, w, false);
+      }
+    }
+    battle.planted = battle.planted.filter((f) => f.t > 1e-9);
+  }
+  const hurtF = (q) => q.hp / statsFor(q).maxHp;
+  /** how many it takes: the ability's least (two, `min`), or one while the member has MP to spare */
+  const need = (m, A) => (!A.pair && m.mp >= statsFor(m).maxMp * SPARE_MP ? 1 : A.min || 2);   // (`pair`: never worth it on one: Fan of Knives, Binding Roots)
+  /** MP a member's strikes leave for the dearest of its tiers' abilities it carries (on auto): so one is there to cast
+   *  when it's worth it. (Cleave's 10 a swing had kept a level-18 fighter's 54 under any of them all fight.) */
+  function tierKeep(m) { let k = 0; for (const A of priorityOf(m)) if (A.tier && SPENDS.has(A.kind) && unlocked(m, A, state.trials) && autocastOn(m, A.id)) k = Math.max(k, cast(m, A).cost); return k; }
+  // pick(m, A, foes, w, F): whom or where it's worth casting on now (null: not now); land(m, A, mult, tgt, w): it lands
+  const TIER = {
+    // Vault: a foe on foot A.min–A.max off that's striking an ally (not him), or any when nothing's in his reach (never off a boss or an elite); the nearest
+    leap: {
+      pick: (m, A, foes, _w, F) => {
+        const reach = foes.filter((o) => up(o) && hypot(o.x - m.x, o.y - m.y) <= F.range + 0.25), free = !reach.length;   // (nothing in his reach: any gap is worth closing)
+        if (reach.some((o) => o.boss || o.elite)) return null;                                                             // (he stays on a boss or an elite)
+        return nearest(m, foes, (o) => { const d = hypot(o.x - m.x, o.y - m.y); if (!up(o) || d < A.min || d > A.max) return false; const a = o.aim; return free || (!o.bolt && !!a && a !== m && alive(a) && hypot(a.x - o.x, a.y - o.y) <= (o.range || 1.5) + 0.5); });   // (a foe on foot at an ally: not a shooter, who strikes from anywhere: he left the Drowned Choir for her cantors)
+      },
+      land(m, A, mult, tgt, w) {
+        skillEv(A, 'land', m, tgt, false, within(w.enemies, tgt.x, tgt.y, A.sr));   // (from where he stood: the arc's start)
+        m.act = Math.max(m.act, 0.4);
+        pending.push({ t: 0.3, fn: () => {
+          if (!alive(m) || !battle) return;
+          const d = hypot(m.x - tgt.x, m.y - tgt.y) || 1; placeAt(m, tgt.x + ((m.x - tgt.x) / d) * 1.1, tgt.y + ((m.y - tgt.y) / d) * 1.1, w);
+          const aS = skillStats(m); strikeAt(aS, tgt, A.power * mult, w); hold(tgt, 'knocked', A.knock, m);
+          for (const o of within(w.enemies, tgt.x, tgt.y, A.sr)) if (o !== tgt) strikeAt(aS, o, A.splash * mult, w, false);
+          bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: false });
+        } });
+      },
+    },
+    // Cutting Wave: the way with two or more in its lane
+    wave: {
+      pick: (m, A, foes) => aimBest(m, foes, A.len, (ux, uy) => lane(foes, m.x, m.y, ux, uy, A.len, A.half), need(m, A)),
+      land(m, A, mult, tgt, w) {
+        const a = aimBest(m, w.enemies, A.len, (ux, uy) => lane(w.enemies, m.x, m.y, ux, uy, A.len, A.half), 1) || tgt;                               // (re-aimed as it lands: they moved in the wind-up)
+        const hit = lane(w.enemies, m.x, m.y, a.ux, a.uy, A.len, A.half), aS = skillStats(m); tgt = a;
+        skillEv(A, 'land', m, { x: m.x + tgt.ux * A.len, y: m.y + tgt.uy * A.len }, false, hit);
+        for (const o of hit) strikeAt(aS, o, A.power * mult, w);
+      },
+    },
+    // Earthshatter: two or more round him (foes stand 2.8 apart, round whoever they fight: GDD v1.53)
+    slam: {
+      pick: (m, A, foes) => (within(foes, m.x, m.y, A.radius).length >= need(m, A) ? m : null),
+      land(m, A, mult, _t, w) {
+        const hit = within(w.enemies, m.x, m.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, m, true, hit);
+        for (const o of hit) { strikeAt(aS, o, A.power * mult, w); hold(o, 'knocked', A.knock, m); }
+        bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
+        pending.push({ t: 0.4, fn: () => { if (battle) for (const o of within(w.enemies, m.x, m.y, A.radius)) strikeAt(aS, o, A.spikes * mult, w, false); } });   // (the spikes)
+      },
+    },
+    // Whirling Blades: two or more round him, and his blades not already up
+    blades: {
+      pick: (m, A, foes) => (!fieldUp('blades', m) && within(foes, m.x, m.y, A.radius).length >= need(m, A) ? m : null),
+      land(m, A, mult, _t, w) { skillEv(A, 'land', m, m, true, within(w.enemies, m.x, m.y, A.radius)); plant(m, A, mult, m.x, m.y, 'blades'); },
+    },
+    // Kidney Shot: a foe in reach winding up a heavy blow (an elite's, a boss's) or a shot, with time left to cut it
+    kidney: {
+      pick: (m, A, foes, _w, F) => nearest(m, foes, (o) => up(o) && o.wind > WINDUP + 0.02 && (o.windHeavy || !!o.bolt) && !(o.ccImm > 0) && hypot(o.x - m.x, o.y - m.y) <= F.range + 0.25),
+      // …and in her turn: a stun on an elite or a boss in reach (not one held). (On any foe it took 37 of her swings at a
+      // level-18 room, 1.0× each for Backstab's 1.6×: the Drowned Choir outlasted the party's damage, seed 2)
+      turn: (m, A, foes, _w, F) => nearest(m, foes, (o) => up(o) && (o.elite || o.boss) && !held(o) && !(o.ccImm > 0) && hypot(o.x - m.x, o.y - m.y) <= F.range + 0.25),
+      land(m, A, mult, tgt, w) { if (!up(tgt)) return; skillEv(A, 'land', m, tgt, false); strikeAt(skillStats(m), tgt, A.power * mult, w); hold(tgt, 'stun', A.stun); },
+    },
+    // Fan of Knives: the way with two or more in its fan
+    fan: {
+      pick: (m, A, foes) => aimBest(m, foes, A.len, (ux, uy) => fan(foes, m.x, m.y, ux, uy, A.len, A.arc), need(m, A)),
+      land(m, A, mult, tgt, w) {
+        const a = aimBest(m, w.enemies, A.len, (ux, uy) => fan(w.enemies, m.x, m.y, ux, uy, A.len, A.arc), 1) || tgt;                                // (re-aimed as it lands)
+        const hit = fan(w.enemies, m.x, m.y, a.ux, a.uy, A.len, A.arc), aS = skillStats(m); tgt = a;
+        skillEv(A, 'land', m, { x: m.x + tgt.ux * A.len, y: m.y + tgt.uy * A.len }, false, hit);
+        for (const o of hit) strikeAt(aS, o, A.power * mult, w, false);
+      },
+    },
+    // Shadowstep: the most hurt shooter within reach
+    step: {
+      pick: (m, A, foes) => { let best = null; for (const o of foes) if (up(o) && o.bolt && hypot(o.x - m.x, o.y - m.y) <= A.reach && (!best || o.hp / o.maxHp < best.hp / best.maxHp)) best = o; return best; },
+      land(m, A, mult, tgt, w) {
+        if (!up(tgt)) return;
+        skillEv(A, 'land', m, tgt, false, [], true);                                   // (from where she stood: the smoke's)
+        const fl = hypot(tgt.fx || 0, tgt.fy || 0), bx = fl > 0.01 ? -(tgt.fx / fl) : (tgt.x - m.x) / (hypot(tgt.x - m.x, tgt.y - m.y) || 1), by = fl > 0.01 ? -(tgt.fy / fl) : (tgt.y - m.y) / (hypot(tgt.x - m.x, tgt.y - m.y) || 1);
+        placeAt(m, tgt.x + bx * 1.0, tgt.y + by * 1.0, w);
+        strikeAt(skillStats(m), tgt, A.power * mult, w, true, true);
+        const b = m.buff || (m.buff = {}); b.smoke = Math.max(b.smoke || 0, A.hide); b.smokeK = b.smokeK || 0;   // (foes lose her)
+      },
+    },
+    // planted: Caltrops, Blizzard, Consecrate on a knot of foes; Sanctuary under the hurt; the Spirit Totem by the party
+    field: {
+      pick(m, A, foes, w, F) {
+        if (fieldUp(A.field, m)) return null;
+        if (A.field === 'sanctuary') {
+          const hurt = state.party.filter((q) => alive(q) && hurtF(q) < 0.8); let best = null, bn = 1;
+          for (const h of hurt) { const n = hurt.filter((q) => hypot(q.x - h.x, q.y - h.y) < A.radius).length; if (n > bn || (n === bn && best && hurtF(h) < hurtF(best))) { bn = n; best = h; } }
+          return best && bn >= 2 ? { x: best.x, y: best.y } : null;
+        }
+        if (A.field === 'totem') {
+          const live = state.party.filter(alive); if (!live.length) return null;
+          const cx = live.reduce((a, q) => a + q.x, 0) / live.length, cy = live.reduce((a, q) => a + q.y, 0) / live.length;
+          if (within(foes, cx, cy, 6).length < need(m, A)) return null;
+          return isWalkable(w, cx, cy) && roomAt(w, cx, cy) === battle.room ? { x: cx, y: cy } : { x: hero().x, y: hero().y };
+        }
+        return knot(foes, m, Math.min(A.reach, F.range + 6), A.radius, need(m, A));
+      },
+      land(m, A, mult, tgt, w) {
+        skillEv(A, 'land', m, tgt, A.field === 'sanctuary' || A.field === 'totem', A.field === 'sanctuary' ? state.party.filter((q) => alive(q) && hypot(q.x - tgt.x, q.y - tgt.y) < A.radius) : within(w.enemies, tgt.x, tgt.y, A.radius));
+        plant(m, A, mult, tgt.x, tgt.y);
+      },
+    },
+    // Flare: a knot of two within reach, marked on the foe at its heart; it bursts A.delay s later where that foe stands
+    // (foes cross 2–3 tiles in that time: a pillar on the spot it was cast at took nobody, seed 20261108)
+    flare: {
+      pick: (m, A, foes, _w, F) => { const k = knot(foes, m, F.range, A.radius, need(m, A)); return k ? nearest(k, foes, up) : null; },
+      land(m, A, mult, tgt, w) {
+        skillEv(A, 'land', m, tgt, false, within(w.enemies, tgt.x, tgt.y, A.radius)); const aS = skillStats(m), at = { x: tgt.x, y: tgt.y };
+        pending.push({ t: A.delay, fn: () => {
+          if (!battle) return;
+          const on = up(tgt) ? tgt : nearest(at, w.enemies, (o) => up(o) && hypot(o.x - at.x, o.y - at.y) < 2 * A.radius);   // (marked one fallen: the nearest left in the knot)
+          if (on) { at.x = on.x; at.y = on.y; }
+          for (const o of within(w.enemies, at.x, at.y, A.radius)) strikeAt(aS, o, A.power * mult, w); bus.emit('combat', { t: 'heavy', x: at.x, y: at.y, party: false }); } });
+      },
+    },
+    // Gather: two or more within its reach of a knot, one of them out past 2 tiles (worth drawing in)
+    gather: {
+      pick: (m, A, foes, _w, F) => { const k = knot(foes, m, F.range, A.radius, 2); return k && within(foes, k.x, k.y, A.radius).some((o) => hypot(o.x - k.x, o.y - k.y) > 2) ? k : null; },   // (two at least, always: there's nobody to draw to one)
+      land(m, A, mult, tgt, w) {
+        const hit = within(w.enemies, tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, hit);
+        for (const o of hit) { shove(o, tgt.x, tgt.y, A.pull); strikeAt(aS, o, A.power * mult, w, false); o.slow = Math.max(o.slow || 0, A.slow); }
+      },
+    },
+    // Glacial Tomb: a knot of two within reach, or a boss or elite winding up a heavy blow
+    tomb: {
+      pick: (m, A, foes, _w, F) => knot(foes, m, F.range, A.radius, need(m, A)) || nearest(m, foes, (o) => up(o) && (o.boss || o.elite) && o.wind > 0.1 && o.windHeavy && !(o.ccImm > 0) && hypot(o.x - m.x, o.y - m.y) <= F.range),
+      land(m, A, mult, tgt, w) {
+        const hit = within(w.enemies, tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, hit);
+        for (const o of hit) if (hold(o, 'frozen', A.freeze)) o.thaw = { aS, power: A.power * mult };
+      },
+    },
+    // Revive: a member Downed (not the Slain) while the room isn't won; once a room visit
+    revive: {
+      pick: (m, A, foes) => (foes.length && !battle.revived ? state.party.find((q) => q !== m && q.down && !q.fallen) || null : null),
+      land(m, A, mult, tgt) {
+        if (!tgt.down || tgt.fallen || battle.revived) return;
+        battle.revived = true; tgt.down = false; tgt.hp = Math.max(1, Math.round(statsFor(tgt).maxHp * A.hp));
+        skillEv(A, 'land', m, tgt, true); bus.emit('combat', { t: 'rise', x: tgt.x, y: tgt.y, name: tgt.name });
+      },
+    },
+    // Judgement: a boss or elite within reach, else the foe at the heart of the thickest knot
+    judge: {
+      pick: (m, A, foes) => { const big = nearest(m, foes, (o) => up(o) && (o.boss || o.elite) && hypot(o.x - m.x, o.y - m.y) <= A.reach); if (big) return big; const k = knot(foes, m, A.reach, A.radius, 1); return k ? nearest(k, foes, up) : null; },   // (the great pillar is one foe's: any will do, the thickest knot first)
+      land(m, A, mult, tgt, w) {
+        if (!up(tgt)) return;
+        const ring = within(w.enemies, tgt.x, tgt.y, A.radius).filter((o) => o !== tgt), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, ring);
+        for (const o of ring) strikeAt(aS, o, A.ring * mult * (o.undead ? A.undeadK : 1), w, false);
+        pending.push({ t: A.delay, fn: () => { if (battle && up(tgt)) { strikeAt(aS, tgt, A.power * mult * (tgt.undead ? A.undeadK : 1), w); bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: false }); } } });
+      },
+    },
+    // Binding Roots: a knot of two or more foes on foot, one of them closing on someone (within 6 tiles, not yet in reach)
+    roots: {
+      pick(m, A, foes, _w, F) {
+        const foot = (o) => !o.bolt && !(o.rooted > 0), closing = (o) => foot(o) && !!o.aim && alive(o.aim) && ((d) => d > (o.range || 1.5) + 0.3 && d < 6)(hypot(o.aim.x - o.x, o.aim.y - o.y));
+        const k = knot(foes, m, F.range, A.radius, need(m, A), foot); return k && within(foes, k.x, k.y, A.radius).some(closing) ? k : null;
+      },
+      land(m, A, mult, tgt, w) { const hit = within(w.enemies, tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, false, hit); for (const o of hit) { root(o, A.root); strikeAt(aS, o, A.power * mult, w, false); } },
+    },
+    // Thunder Drum: an ally under half HP with two or more foes round them
+    drum: {
+      pick: (m, A, foes) => state.party.find((q) => alive(q) && hurtF(q) < 0.5 && within(foes, q.x, q.y, A.radius).length >= 2) || null,
+      land(m, A, mult, tgt, w) {
+        const hit = within(w.enemies, tgt.x, tgt.y, A.radius), aS = skillStats(m); skillEv(A, 'land', m, tgt, true, hit);
+        for (const o of hit) { strikeAt(aS, o, A.power * mult, w, false); shove(o, tgt.x, tgt.y, -A.push); hold(o, 'stun', A.stun); }
+      },
+    },
+  };
+
   // the strike to swing with (paid for here), or null for a basic attack
   function pickStrike(m, tgt) {
-    const s = statsFor(m), keep = reserve(m, s);
+    const s = statsFor(m), keep = Math.max(reserve(m, s), tierKeep(m));
     for (const A of priorityOf(m)) {
       if (A.kind !== 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       if (A.poison && tgt.poison && tgt.poison.t > 1) continue;                    // Venom: already poisoned
@@ -734,21 +1002,42 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const hurt = state.party.filter((q) => alive(q) && q.hp < statsFor(q).maxHp * Math.min(0.85, ai.low + 0.25));
         if (!(hurt.length >= 2 || hurt.some((q) => q.hp < statsFor(q).maxHp * ai.low))) continue;
       } else if (A.kind === 'hex') { target = hexCentre(A, foes); if (!target) continue; }
-      m.mp -= c.cost; m.act = 0.55; m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
-      bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
-      skillEv(A, 'cast', m, target, true);
-      const tg = target;
-      pending.push({ t: WINDUP_HEAVY, fn: () => { if (alive(m)) utility(m, c, tg, w); } });
+      else if (TIER[A.kind]) {
+        if (A.kind === 'kidney') { target = TIER.kidney.turn(m, A, foes, w, F); if (!target) continue; }   // (a wind-up to cut: out of turn, tryInterrupt)
+        else {
+        if (SPENDS.has(A.kind) && m.mp < c.cost + reserve(m, s)) continue;               // (damage waits on the MP kept for heals)
+        target = TIER[A.kind].pick(m, A, foes, w, F); if (!target) continue; }
+      }
+      begin(m, c, target, w, F);
       return true;
+    }
+    return false;
+  }
+  // the cast starts: paid, the wind-up (Kidney Shot's quick, Revive's a kneel), then it lands
+  function begin(m, c, target, w, F) {
+    const A = c.A, wind = A.kind === 'kidney' ? WINDUP : A.kind === 'revive' ? A.kneel : WINDUP_HEAVY;
+    m.mp -= c.cost; m.act = Math.max(0.55, wind); m.cd = F.interval; m.atkN = (m.atkN || 0) + 1; m.atkKind = 'heavy'; m.moving = false;
+    bus.emit('combat', { t: 'ability', x: m.x, y: m.y, name: A.name });
+    skillEv(A, 'cast', m, target, true);
+    const tg = target;
+    pending.push({ t: wind, fn: () => { if (alive(m)) utility(m, c, tg, w); } });
+  }
+  // Kidney Shot, out of turn (it needn't wait for the rogue's swing to come round: a wind-up is short)
+  function tryInterrupt(m, foes, w, F) {
+    for (const A of priorityOf(m)) {
+      if (A.kind !== 'kidney' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
+      const c = cast(m, A); if (m.mp < c.cost) continue;
+      const tgt = TIER.kidney.pick(m, A, foes, w, F); if (!tgt) continue;
+      begin(m, c, tgt, w, F); return true;
     }
     return false;
   }
   // A skill, for presentation (render/skillfx.js): its cast (the wind-up starting) and where it lands, with who cast it,
   // at whom (a party member or a foe, by id), and those it reached. Events only: nothing here is state, so replays are
   // as they were.
-  function skillEv(A, at, by, tgt, ally, reached = [], crit = false) {
-    bus.emit('skill', { id: A.id, at, cls: by.cls, by: by.id, x: by.x, y: by.y, tid: tgt ? tgt.id : null, ally: !!ally, tx: tgt ? tgt.x : by.x, ty: tgt ? tgt.y : by.y, r: A.radius || 0,
-      reached: reached.map((o) => ({ id: o.id, x: o.x, y: o.y })), crit: !!crit });
+  function skillEv(A, at, by, tgt, ally, reached = [], crit = false, more = null) {   // (tgt may be a point: a field's, a lane's end; more: Old Marks' count)
+    bus.emit('skill', { id: A.id, at, cls: by.cls, by: by.id, x: by.x, y: by.y, tid: tgt && tgt.id != null ? tgt.id : null, ally: !!ally, tx: tgt ? tgt.x : by.x, ty: tgt ? tgt.y : by.y, r: A.radius || 0,
+      reached: reached.map((o) => ({ id: o.id, x: o.x, y: o.y })), crit: !!crit, ...(more || {}) });
   }
   function utility(m, { A, mult }, tgt, w) {
     if (A.kind === 'guard') {
@@ -783,7 +1072,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const at = A.thrown && tgt ? { x: tgt.x, y: tgt.y } : m, hit = novaTargets(A, w.enemies, at); skillEv(A, 'land', m, A.thrown ? tgt : m, !A.thrown, hit);   // (a thrown nova bursts where its knot stood when it was thrown)
       for (const o of hit) { applyHit(aS, o, resolve(aS, o, A.power * mult), false, w, true); o.slow = A.slow; }
       bus.emit('combat', { t: 'heavy', x: m.x, y: m.y, party: false });
-    }
+    } else if (TIER[A.kind]) TIER[A.kind].land(m, A, mult, tgt, w);
   }
   function attack(att, tgt, isPartyAtt, w, fight, c = null) {
     let power = 1, bonus = 0;
@@ -811,8 +1100,13 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
       const splash = ab ? ab.splash || (ab.id === 'firebolt' && has(att, 'kindler') ? FIGHT.kindle : 0) : 0;   // (a Kindler's Firebolt splashes)
       const splashed = splash ? w.enemies.filter((o) => o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) : [];
-      if (ab) skillEv(ab, 'land', att, tgt, false, splashed, r.crit);
+      const mk = ab && ab.marks && !r.miss ? (tgt.marks || 0) + 1 : 0;           // Old Marks: this strike's mark
+      if (ab) skillEv(ab, 'land', att, tgt, false, splashed, r.crit, mk ? { marks: mk } : null);
       for (const o of splashed) applyHit(aStats, o, resolve(aStats, o, splash * c.mult), false, w);
+      if (mk && tgt.hp > 0) {                                      // …the third breaks them all
+        tgt.marks = mk >= ab.marks ? 0 : mk;
+        if (mk >= ab.marks) { applyHit(aStats, tgt, resolve(aStats, hexDef(tgt), ab.burst * c.mult), false, w, true); hold(tgt, 'stun', ab.stun); }
+      }
       if (ab && ab.poison && tgt.hp > 0) tgt.poison = { t: ab.pdur + (has(att, 'venomous') ? FIGHT.venom : 0), dps: aStats.atk * ab.poison * c.mult, acc: 0, by: att };
       if (ab && ab.drain && tgt.hp > 0) {                          // Spirit Drain: one more stack, and they all run again
         const d = tgt.drain || (tgt.drain = { n: 0, t: 0, acc: 0, dps: 0, by: att });
@@ -821,7 +1115,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     };
     if (ab) { bus.emit('combat', { t: 'ability', x: att.x, y: att.y, name: ab.name }); skillEv(ab, 'cast', att, tgt, false); }
     const bolt = isPartyAtt ? fight.bolt : att.bolt;
-    const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead);
+    // a foe's wind-up is counted (windN) so a hold can cut it: the blow it was winding never lands (CC)
+    const wn = isPartyAtt ? 0 : (att.windN = (att.windN || 0) + 1);
+    if (!isPartyAtt) { att.wind = heavy ? WINDUP_HEAVY : WINDUP; att.windHeavy = heavy; }
+    const standing = () => (isPartyAtt ? !att.down : att.hp > 0 && !att.dead && att.windN === wn);
     // a foe's warning (the telegraph grammar, docs/combat-fx.md): what's coming and when, for the renderers to mark on the
     // ground (a heavy blow's ring filling under its target, a shot's lane filling to it); an event, no state: the sim's
     // timing is as it was. wind: s to the blow or the release; fly: s the shot takes to land (as the projectile's dur)
@@ -1226,6 +1523,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         battle.lull -= dt;
         if (battle.lull <= 0 && !battle.quiet) { battle.between = false; spawnWave(w); }   // the room doesn't wait for you (but a hall whose boss fell is quiet)
       }
+      tickFields(w, dt);
       claims = new Map();
       bodies = [...(alive(H) ? [{ x: p.x, y: p.y, src: H }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => e.hp > 0 && !e.dead && !(e.spawn > 0))];   // (the Downed take up no room)
       const focus = focusId && foes.find((e) => e.id === focusId);
@@ -1250,6 +1548,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         const d = hypot(tgt.x - m.x, tgt.y - m.y);
         m.fx = tgt.x - m.x; m.fy = tgt.y - m.y;
         if (i === 0 && p.moving) return;                        // the hero is yours while you steer
+        if (m.act <= 0.12 && tryInterrupt(m, foes, w, F)) return;          // (Kidney Shot: whenever a wind-up's there to cut)
         if (m.cd <= 0 && m.act <= 0.12 && tryUtility(m, i, foes, w, F)) return;
         if (i === 0) {                                          // …and autobattles when you let go
           if ((p.steer ?? 1e9) < AUTO_DELAY || !moveHero) { if (d <= F.range + 0.25 && m.cd <= 0) attack(m, tgt, true, w, F, pickStrike(m, tgt)); return; }
@@ -1306,7 +1605,16 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           if (e.hp <= 0) continue;
         }
         if (e.hex) { e.hex.t -= dt; if (e.hex.t <= 0) e.hex = null; }
-        const slow = e.slow > 0 ? 0.5 : 1; if (e.slow > 0) e.slow -= dt;     // Frost Nova
+        if (e.wind > 0) e.wind -= dt;
+        if (e.ccImm > 0) e.ccImm -= dt;
+        if (e.rooted > 0) e.rooted -= dt;
+        if (held(e)) {                                                      // stunned, frozen or knocked down: nothing this tick
+          for (const k of HOLDS) if (e[k] > 0 && (e[k] -= dt) <= 0) { e[k] = 0; if (k === 'frozen' && e.thaw) { const th = e.thaw; e.thaw = null; applyHit(th.aS, e, resolve(th.aS, hexDef(e), th.power), false, w, true); } }
+          if (!held(e)) e.ccImm = CC_IMMUNE;
+          e.moving = false; continue;
+        }
+        const slow = Math.min(e.slow > 0 ? 0.5 : 1, e.fieldSlow || 1); if (e.slow > 0) e.slow -= dt;     // Frost Nova; Caltrops, Blizzard
+        const walk = (gx, gy) => (e.rooted > 0 ? (e.moving = false) : chase(e, gx, gy, e.speed * slow, dt, w));   // (a root stops its feet, not its blows)
         e.cd = Math.max(0, e.cd - dt * slow);
         const taunt = nearest(e, taunts, (q) => hypot(q.x - e.x, q.y - e.y) < 7);
         // melee skeletons pick the nearest party member with a free station (else the nearest)
@@ -1317,10 +1625,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         // Choir 3 of 3 down to 0 of 3 at 14, Old Skarn 3 of 3 to 1 of 3 at 5): the Choir's cantors sing in the stalls, at
         // its side, and what Skarn's drum brings out closes to half its reach before it shoots
         const sing = e.singer ? w.enemies.find((o) => o.id === e.singer && o.hp > 0 && !o.dead) : null;
-        if (sing && hypot(sing.x - e.x, sing.y - e.y) > STALL_R) { chase(e, sing.x, sing.y, e.speed * slow, dt, w); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
+        if (sing && hypot(sing.x - e.x, sing.y - e.y) > STALL_R) { walk(sing.x, sing.y); if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
         else if (sing) { e.moving = false; if (d <= e.range && e.cd <= 0) attack(e, t, false, w, e); }
-        else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) chase(e, t.x, t.y, e.speed * slow, dt, w); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
-        else melee(e, t, e, dt, w, false, (gx, gy) => chase(e, gx, gy, e.speed * slow, dt, w));
+        else if (e.bolt) { if (d > (e.swarm ? e.range / 2 : e.range)) walk(t.x, t.y); else { e.moving = false; if (e.cd <= 0) attack(e, t, false, w, e); } }
+        else melee(e, t, e, dt, w, false, walk);
       }
       separate([...(alive(H) ? [{ ...H, x: p.x, y: p.y, isHero: true }] : []), ...state.party.slice(1).filter(alive), ...w.enemies.filter((e) => !e.dead && e.spawn <= 0 && !e.inert)], w);   // (a Downed hero shoves nobody: it had held a boss and the last companion apart for good; Teague's cage is carried, not shoved)
     }

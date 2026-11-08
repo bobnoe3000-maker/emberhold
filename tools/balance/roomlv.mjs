@@ -1,7 +1,7 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--pick a|b] [--off id,id]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
@@ -36,10 +36,16 @@ const ri = args.indexOf('--rogue'), ROGUE = ri >= 0 ? args.splice(ri, 2)[1] : nu
 const fi = args.indexOf('--fresh'), FRESH = fi >= 0 ? (args.splice(fi, 1), true) : false;
 // --up N: every member's kit at the smith's +N (items.js UP_STEP a step on the base stats)
 const ui = args.indexOf('--up'), UP = ui >= 0 ? +args.splice(ui, 2)[1] : 0;
+// --pick a|b: every member carries the first (a, the default: what it carries until it chooses) or the second of each
+// tier's two at 15 and 18 (skills.js tierSkills; GDD §5.1 v1.55); an older checkout has no tiers and ignores it
+const ki = args.indexOf('--pick'), PICK = ki >= 0 ? args.splice(ki, 2)[1] : 'a';
+// --off id,id: those abilities' auto-use off for every member (to weigh one skill against the party without it)
+const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js').catch(() => null);
 const items = await load('sim/items.js').catch(() => null);
+const skills = await load('sim/skills.js').catch(() => null);
 
 const [secs, RL, HL] = args.slice(0, 3).map(Number), hire = (args[3] || '').split(',').filter(Boolean).map(Number), seed = +(args[4] || 20260807);
 const s = createSim(seed, undefined, { scene: 'town' }); for (const i of hire) { s.state.counters.gold = 1e9; s.commands.push({ type: 'hire', idx: i }); s.tick(); } s.state.counters.gold = 0; s.state.party.slice(1).forEach((m, i) => { if (PERKS !== 'keep') { m.perks = GIVE ? GIVE[i] || [] : []; m.hidden = null; } });   // (the contract: hires without perks)
@@ -55,6 +61,8 @@ for (const m of sim.state.party) {
   m.level = FRESH && !m.main ? Math.max(1, Math.ceil(HL / 2)) : HL; if (attrs) { m.attrs = null; attrs.autoAllocate(m); } if (items && items.starterKit) m.gear = items.starterKit(m); if (UP) for (const it of Object.values(m.gear || {})) if (it) it.up = UP;
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }
   m.hp = statsFor(m).maxHp; m.mp = undefined;
+  if (skills && skills.TIERS) m.picks = Object.fromEntries(skills.TIERS.map((t) => [t, (skills.tierSkills(m.cls, t)[PICK === 'b' ? 1 : 0] || {}).id]));
+  if (OFF.length) m.off = [...(m.off || []), ...OFF];
 }
 // (a room of the size that isn't the floor's hall: an authored floor's last room is its boss's, a fight of its own)
 const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && !(L.plan && q === L.descentRoom) && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);
@@ -63,10 +71,13 @@ const frac = () => { let a = 0, b = 0; for (const m of sim.state.party) { if (m.
 let def = false, low = 1, start = 1, fallen = 0; const costs = [], lows = [];
 sim.bus.on('wave', (d) => { if (d.cleared) { costs.push(start - low); lows.push(low); } else { low = start = frac(); } });
 let downs = 0; sim.bus.on('combat', (c) => { if (c.t === 'down') downs++; });
+// SKILLS=1: each ability's casts where it landed, and the foes (or allies) each reached on average
+const casts = {}; if (process.env.SKILLS) sim.bus.on('skill', (e) => { if (e.at !== 'land') return; const c = casts[e.id] || (casts[e.id] = { n: 0, reach: 0 }); c.n++; c.reach += (e.reached || []).length; });
 sim.bus.on('defeat', () => (def = true));
 // DMG=1: damage dealt and taken by each party member, and how much of the fight each spent shooting / swinging
 const dealt = {}, taken = {}; if (process.env.DMG) sim.bus.on('combat', (c) => { if (c.t !== 'hit') return; if (c.party) { const m = sim.state.party.find((q) => Math.abs(q.x - c.x) < 0.01 && Math.abs(q.y - c.y) < 0.01); if (m) taken[m.cls] = (taken[m.cls] || 0) + c.amount; } else dealt[c.src] = (dealt[c.src] || 0) + c.amount; }); sim.bus.on('fallen', () => fallen++);
 for (let t = 0; t < 20 * secs && !def; t++) { sim.tick(); if (sim.world.enemies.length) low = Math.min(low, frac()); }
 const avg = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
-console.log(`${SITE === 'barrows' ? '' : SITE + ' '}${GIVE ? `{${GIVE.map((g) => g.join('+') || '-').join(' / ')}} ` : ''}${HERO || ROGUE ? `[${sim.state.party.map((m) => m.cls + (m.cls === 'rogue' ? ':' + m.gear.weapon.base : '')).join(' ')}] ` : ''}room L${RL} hero L${HL}${hire.length ? ' +' + hire.length : ''}: ${def ? 'DEFEAT' : 'held'} ${sim.state.t.toFixed(0)}s · ${costs.length} waves · end lv ${sim.state.party.map((m) => m.level).join('/')} · cost/wave first10 ${Math.round(100 * avg(costs.slice(0, 10)))}% · lowest ${Math.round(100 * Math.min(1, ...lows))}% · downs ${downs} · fallen ${fallen} · gold ${sim.state.counters.gold}`);
+console.log(`${PICK === 'b' ? '(pick b) ' : ''}${SITE === 'barrows' ? '' : SITE + ' '}${GIVE ? `{${GIVE.map((g) => g.join('+') || '-').join(' / ')}} ` : ''}${HERO || ROGUE ? `[${sim.state.party.map((m) => m.cls + (m.cls === 'rogue' ? ':' + m.gear.weapon.base : '')).join(' ')}] ` : ''}room L${RL} hero L${HL}${hire.length ? ' +' + hire.length : ''}: ${def ? 'DEFEAT' : 'held'} ${sim.state.t.toFixed(0)}s · ${costs.length} waves · end lv ${sim.state.party.map((m) => m.level).join('/')} · cost/wave first10 ${Math.round(100 * avg(costs.slice(0, 10)))}% · lowest ${Math.round(100 * Math.min(1, ...lows))}% · downs ${downs} · fallen ${fallen} · gold ${sim.state.counters.gold}`);
 if (process.env.DMG) console.log('  dealt', JSON.stringify(dealt), '· taken', JSON.stringify(taken));
+if (process.env.SKILLS) console.log('  casts', Object.entries(casts).map(([id, c]) => `${id} ${c.n}${c.reach ? ` (${(c.reach / c.n).toFixed(1)} each)` : ''}`).join(' · '));

@@ -139,9 +139,9 @@ test('skill points at even levels; ranks need an unlocked ability; rank 5 is the
 });
 test('auto-cast, priority and stance commands are validated', () => {
   const sim = town(), h = sim.state.party[0];
-  run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: false }, { type: 'setPriority', id: 'you', order: ['second_wind', 'cleave', 'shield_wall'] },
+  run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: false }, { type: 'setPriority', id: 'you', order: ['second_wind', 'cleave', 'shield_wall', 'vault', 'earthshatter'] },
     { type: 'setPriority', id: 'you', order: ['cleave', 'cleave', 'cleave'] }, { type: 'setStance', id: 'you', stance: 'defensive' }, { type: 'setStance', id: 'you', stance: 'berserk' }]);
-  assert.deepEqual(h.off, ['cleave']); assert.deepEqual(h.prio, ['second_wind', 'cleave', 'shield_wall']); assert.equal(h.stance, 'defensive');
+  assert.deepEqual(h.off, ['cleave']); assert.deepEqual(h.prio, ['second_wind', 'cleave', 'shield_wall', 'vault', 'earthshatter']); assert.equal(h.stance, 'defensive');
   run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: true }]);
   assert.deepEqual(h.off, []);
 });

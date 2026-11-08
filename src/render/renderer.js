@@ -1731,6 +1731,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     moment('warn', e, { foeBy: true, ally: true, life, wind: e.wind, fly: e.fly, heavy: e.heavy, bolt: e.bolt, boss: e.boss });
     warns.push({ e, t0: clock(), life, lock: null }); if (warns.length > 24) warns.shift();   // (another painter's markers; both painters' wind-up glow)
   });
+  // a wind-up cut (battle.js 'interrupt', GDD v1.55: a stun, a freeze, a knockdown): its warning goes with it, on both painters
+  sim.bus.on('interrupt', (e) => { sfx.cut(e.by); for (let i = warns.length - 1; i >= 0; i--) if (warns[i].e.by === e.by) warns.splice(i, 1); });
   sim.bus.on('bossIssue', (e) => moment('boss_issue', e));
   sim.bus.on('bossCall', (e) => moment('boss_call', e));
   sim.bus.on('bossKindle', (e) => moment('boss_kindle', e));

@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.54 · 2026-11-08 · Plan of record for game design.** v1.54 (§17; the owner: "fix the Quartermaster to raise a fallen rank"): the Quartermaster's *Issue* stands the last of his ranks to fall up whole where it fell, every 10 s; with none down, the most hurt living one is made whole, as before. It never fired before: his escort was down by 9 s, his first issue due at 10. One he stood up pays nothing when it falls again. At his level he falls in 60–67 s (was 50–54), the party's lowest 73–83 %; a party a level under is downed now and then (it wasn't). v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
+**v1.55 · 2026-11-08 · Plan of record for game design.** v1.55 (§5.1, §5.2, §17; the owner confirmed every skill of [skill-trees-proposal.md](./skill-trees-proposal.md) on the review page, "Updated, proceed"): **the tiers.** At 15 and at 18 each class has two abilities and a member carries one of each, the first until it chooses; the first choice is free anywhere, a change after it free at a temple, the dropped one's ranks back as points. Twenty abilities (§5.1's table) and **crowd control** (§5.2): stun, freeze, knockdown (a hold: no step, no blow, the blow being wound up cut), root, pull and knockback; a boss half the time and never moved; 2 s after a hold before another. Measured: the right party holds a same-level room at 15 for 8 % more waves with the first of each pair, 3 % with the second; at 18 4 % and 3 %; the four bosses of 15–18 fall as before, held at most 19 % of a fight. v1.54 (§17; the owner: "fix the Quartermaster to raise a fallen rank"): the Quartermaster's *Issue* stands the last of his ranks to fall up whole where it fell, every 10 s; with none down, the most hurt living one is made whole, as before. It never fired before: his escort was down by 9 s, his first issue due at 10. One he stood up pays nothing when it falls again. At his level he falls in 60–67 s (was 50–54), the party's lowest 73–83 %; a party a level under is downed now and then (it wasn't). v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
 5, halls 10"; [vale-dungeons-plan.md](./vale-dungeons-plan.md)): **the Hollow Vale's dungeons are authored**: two floors
 each (the Ninth Milestone one), five spaces a floor at most (the entrance counted; a large corridor, the *gallery*, 60–80
 long, counts as one), halls 10 wide, the same rooms in the same places every visit (the seed moves the furniture, the foes'
@@ -597,6 +597,7 @@ Both slot in with the same stat block and ability format. No system changes are 
     Canal Locks' wave leaders), *Lamp Oil* (Pim Rushlight: 8 waves in the Canal Locks), *Vigil* (Mother Agnes: 6
     waves on the Mound's third floor), *The Old Water* (Col: 8 waves on Toadking's Mound's second floor). (Since
     v1.48 three of them were in rooms of 14–16, two to four levels up.) Each pays 30 % of level 12. A save from before them (v26) counts every class someone had at 12 as done;
+  - (v1.55) **the tiers**: at 15 and at 18, one of two (below);
   - the passive comes at level 20.
 - **Skill points:** 1 at every even level. Ranks 1–5; each rank adds +10 % power, and ranks
   3 and 5 also cost 1 MP less.
@@ -621,6 +622,44 @@ Both slot in with the same stat block and ability format. No system changes are 
   heal when hurt, a ward on the most hurt ally, a nova on two or more foes close by);
   otherwise a strike replaces the basic attack.
 - **Rare gear modifiers** (§8) stack with ranks.
+- **The tiers (v1.55):** at 15 and at 18 each class has two abilities, and a member carries one of each: the first of the
+  two until it chooses (`src/sim/skills.js` `pickOf`). The first choice is free anywhere; a change after it is free at a
+  temple, and the dropped one's ranks come back as points. They unlock at their level for now; their trials (a teacher a
+  class, in the Fens) come in a content pass, and then the level waits for them as the 6 and 12 do. In the Skills tab,
+  *The choices*, under the order; a new one goes last in the order until it's moved.
+
+  | Class | 15: first · second | 18: first · second |
+  |---|---|---|
+  | Fighter | **Vault** (14 MP): to a foe 3–8 tiles off that's striking an ally (or any, with none in reach; never off a boss or elite): 1.5× on it, 0.6× round it, knocked down 0.8 s · **Cutting Wave** (12): a lane 6 tiles long, 1.6× to every foe in it | **Earthshatter** (22): 1.2× to every foe within 3 tiles, knocked down 1.2 s, then spikes 0.5× · **Whirling Blades** (24): three swords for 5 s, 0.45× to every foe within 3 every 0.6 s |
+  | Rogue | **Kidney Shot** (10): 1.4× and a 1.5 s stun on a foe winding up a heavy blow or a shot (it never lands), or on an elite or boss · **Fan of Knives** (12): a 60° fan, 6 tiles, 1.0× to each (two or more) | **Shadowstep** (18): behind the most hurt shooter within 8, 1.4×, a sure crit; foes lose her 1.5 s · **Caltrops** (16): a field 2.5 tiles round for 6 s, slowed by half, 0.25× a second |
+  | Mage | **Flare** (16): a mark on the foe at a knot's heart; 0.7 s later a pillar where it stands (or the nearest left), 2.0× within 2.5 · **Gather** (14): every foe within 5 of a knot pulled 1.5 tiles in, 0.3×, slowed 1 s | **Glacial Tomb** (26): a knot frozen 2.5 s (or a boss or elite winding up), 1.0× as it breaks · **Blizzard** (28): a storm 2.5 round for 6 s, 0.3× a second, slowed 30 % |
+  | Cleric | **Sanctuary** (22): a circle 3 round under the hurt for 4 s, 4 % of max HP every 0.5 s and a ward of 10 % stepping in · **Consecrate** (20): holy ground 2.5 round for 8 s, the Ashbound 0.4× a second, the living 0.2×; allies on it +15 % DEF | **Revive** (30): kneels 1.2 s (cut if she's Downed), a Downed member up at 40 %; once a room visit (never the Slain) · **Judgement** (28): 0.5× to the foes within 3 of one, then 2.2× on it 0.8 s later; the Ashbound ×1.5 |
+  | Shaman | **Binding Roots** (14): a knot of foes on foot closing on the party rooted 2.5 s, 0.4× · **Old Marks** (9, a strike): 0.8× and a mark; the third breaks them all, 1.6× and a 1 s stun | **Spirit Totem** (22): a post by the party for 8 s, drawing the foes within 4 a tile in every 1.5 s; the party within 2.5 take 20 % less · **Thunder Drum** (18): round an ally under half HP, foes within 3 knocked back 2 tiles, 0.6×, stunned 1 s |
+
+  - **When the autobattle casts them** (`src/sim/battle.js` `TIER`): an area wants two foes in it (foes stand 2.8
+    apart, round whoever they fight: three seldom came), or one while the caster holds 70 % of its MP or more
+    (`SPARE_MP`); Fan of Knives and Binding Roots want two always. A member's strikes leave MP for the dearest of the
+    tier abilities it carries (`tierKeep`), and those that spend it on damage wait on the MP kept for heals and guards.
+  - **Their MP** is set so they do at least what the strike they take the place of would with it (dearer, the party
+    lost 8 % of its damage on the Drowned Choir).
+  - Re-aimed as they land (a lane, a fan): foes move in the wind-up.
+
+### 5.2 Crowd control (v1.55)
+Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the foe (`src/render/skillfx.js` auras):
+
+| Status | What it does | On a boss |
+|---|---|---|
+| **Stun** | a hold: no step, no blow, no shot, no spell; **a wind-up under way is cut** (its blow never lands, its warning goes) | half the time |
+| **Freeze** | a hold, in ice; Glacial Tomb strikes as it breaks | half the time |
+| **Knockdown** | a hold, and the foe slides 0.6 tiles back | half the time, no slide |
+| **Root** | its feet stop; it still strikes what's in reach, and shoots | half the time |
+| **Pull** | moved toward a point, no closer than 0.9 tiles to it | not moved |
+| **Knockback** | moved away from a point | not moved |
+
+- **The breather:** after a hold ends, the foe can't be held again for 2 s (`CC_IMMUNE`), so a party can't hold a boss
+  down: measured in the halls of 15–18, a boss stood held at most 19 % of his fight (`tools/balance/boss.mjs`, "held").
+- **Elites** take the full time. A boss's hall mechanic goes on while he's held.
+- Deterministic: no draws; times in the sim's seconds; a move stops at a wall or the room's edge as a step does.
 
 ---
 
@@ -1683,9 +1722,12 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
 
 **Skills.**
 - **One new active per class per region**, at 18, 33, 48 and 63, learned at a trial with a named teacher: the
-  company chooses one of two.
+  company chooses one of two. (v1.55) Emberfall's two come at **15 and 18** (§5.1, the tiers): its content runs to 18,
+  and a tier at 33 would come after the Reach opens; the later ones keep 33, 48 and 63. Each member chooses; the trials
+  come in a content pass.
 - **A second passive at 40**, which changes how the class plays and never touches gold.
-- **The loadout:** from the fifth active (L33) a member carries four into a fight; the rest wait in the book.
+- **The loadout:** from the fifth active (L33) a member carries four into a fight; the rest wait in the book. (v1.55:
+  the fifth now comes at 18; the loadout waits for its own change, and every carried ability is cast till then.)
 - **A free respec** at any temple.
 - Every skill states its **autocast test**; there's one "can't drop below 1 HP" effect in the game (the cleric's
   *Lifeline*). The **Healer** class is deferred.
