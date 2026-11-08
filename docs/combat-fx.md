@@ -520,6 +520,8 @@ what changed (`skillfx.js`):
 | Spirit Drain | "brighter fx" | a solid tether, bigger and brighter motes, a star at each end |
 | Ancestors' Breath | "brighter lighting" | the rings brighter and wider; a glow under each of the party; bigger leaves |
 | Hex | Bigger FX | the sigil 1.35 → 2.1 tiles, heavier strokes, a wider pool, the lines thicker and a star on each foe taken |
+| Arcane Ward | "Brighter" (second review) | bigger runes with longer trails, the dome heavier, a flash as it closes, a ring and a pool of blue underfoot |
+| Mend | "Green light" (second review) | the beam, the ring and the motes green (110, 255, 140), as its Luminati look; the mark over the head stays gold |
 
 Before over after, the same moments of each (0.75, 0.95, 1.3, 2.0 and 2.6 or 3.0 s into the loop):
 

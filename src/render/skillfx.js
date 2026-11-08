@@ -21,7 +21,7 @@
 //             floor; Frost Nova thrown onto a knot of foes, a ring of frost running out there and ice spikes standing up
 //             along it, rime on the chilled;
 //             Arcane Ward runes drawn in and a dome of light while it holds.
-//   cleric  — gold: Mend a beam from above and a mark rising; Bless a rune circle and halos settling; Turn Undead a
+//   cleric  — gold (Mend's light green, the owner's): Mend a beam from above and a mark rising; Bless a rune circle and halos settling; Turn Undead a
 //             sunburst, its rays running out over the floor, the dead it reaches flaring.
 //   shaman  — spirit teal, hex green and violet: Spirit Drain a tether drawing motes from the foe, its stacks circling
 //             them; Ancestors' Breath a breath going out over the party and leaves spiralling up them; Hex a sigil drawn
@@ -42,7 +42,7 @@ const C = {
   cleave: [255, 190, 100], cleaveHot: [255, 236, 190], wall: [255, 210, 130], taunt: [255, 84, 56], wind: [110, 255, 120], windHot: [200, 255, 190],
   stab: [255, 52, 84], shadow: [110, 255, 165], smoke: [196, 186, 240], venom: [150, 255, 50],
   fire: [255, 116, 28], fireHot: [255, 214, 130], ember: [220, 60, 18], frost: [140, 210, 255], frostHot: [230, 248, 255], ward: [110, 150, 255], wardHot: [190, 215, 255],
-  mend: [255, 230, 150], bless: [255, 210, 110], turn: [255, 246, 210], drain: [110, 240, 210], breath: [140, 255, 190], hex: [160, 255, 70], hexV: [190, 110, 255],
+  mend: [255, 230, 150], mendG: [110, 255, 140], bless: [255, 210, 110], turn: [255, 246, 210], drain: [110, 240, 210], breath: [140, 255, 190], hex: [160, 255, 70], hexV: [190, 110, 255],
   // (the boss pass) each boss in the colours fx.js gives his weapon, a level's gold
   lvl: [255, 214, 120], lvlHot: [255, 246, 214], issue: [235, 196, 130], issueHot: [255, 238, 196], call: [255, 92, 70], callHot: [255, 196, 168],
   kindle: [255, 128, 34], kindleHot: [255, 214, 140], drum: [255, 170, 90], dust: [200, 168, 120], sing: [130, 225, 235], singHot: [214, 248, 255],
@@ -254,21 +254,24 @@ export function createSkillFX(P) {
     arcane_ward(ctx) {
       const { t, k, Tq } = ctx; if (ctx.at !== 'land') return;
       over(Tq, 0.8);
-      if (t < 0.35) { const u = t / 0.35; for (let i = 0; i < 6; i++) { const a = i * 1.047 + t * 6, r = 22 - 12 * u; disc(Tq.sx + Math.cos(a) * r, Tq.sy - 22 + Math.sin(a) * r * 0.55, 1.6, 1.1, 1); seg(Tq.sx + Math.cos(a) * r, Tq.sy - 22 + Math.sin(a) * r * 0.55, Tq.sx + Math.cos(a + 0.4) * r, Tq.sy - 22 + Math.sin(a + 0.4) * r * 0.55, 0.6, 0.1); } }
-      else { const u = (t - 0.35) / 0.6; oval(Tq.sx, Tq.sy - 22, 13 + 4 * (1 - u), 21 + 4 * (1 - u), 1.2 * (1 - u), 1.2); }
-      flush(C.wardHot);
-      void k;
+      // (the owner, 2026-11-08: "Brighter": bigger runes and their trails, a heavier dome, a flash and a ring underfoot)
+      if (t < 0.35) { const u = t / 0.35; for (let i = 0; i < 6; i++) { const a = i * 1.047 + t * 6, r = 24 - 13 * u; disc(Tq.sx + Math.cos(a) * r, Tq.sy - 22 + Math.sin(a) * r * 0.55, 2.4, 1.5, 1.2); seg(Tq.sx + Math.cos(a) * r, Tq.sy - 22 + Math.sin(a) * r * 0.55, Tq.sx + Math.cos(a + 0.5) * r, Tq.sy - 22 + Math.sin(a + 0.5) * r * 0.55, 1.1, 0.2, 0.8); } }
+      else { const u = (t - 0.35) / 0.6; oval(Tq.sx, Tq.sy - 22, 13 + 4 * (1 - u), 21 + 4 * (1 - u), 1.7 * (1 - u), 1.8); if (u < 0.3) star(Tq.sx, Tq.sy - 30, 14, 1.5 * (1 - u / 0.3)); }
+      flush(C.wardHot, 1.5);
+      under(Tq); ring(Tq, 0.5 + 0.3 * ease(clamp01(t / 0.4)), 1.1 * k * (1 - clamp01((t - 0.5) / 0.45)), 1.5); pool(Tq, 0.55, 0.45 * k); flush(C.ward, 1.4);
     },
     // a beam of gold from above onto the ally, a ring at their feet, a mark rising over their head, motes going up
     mend(ctx) {
       const { t, k, Tq } = ctx; if (ctx.at !== 'land') return;
       const on2 = t < 0.12 ? t / 0.12 : 1;
-      over(Tq, 0.4); column(Tq.sx, Tq.sy, 74 * on2, 3.5, 1.5 * k); flush(C.mend);
-      under(Tq); ring(Tq, 0.25 + 0.7 * ease(clamp01(t / 0.45)), 1.0 * k, 1.3); pool(Tq, 0.5, 0.5 * k); flush(C.mend);
+      // (the owner, 2026-11-08: "Green light": the beam, the ring and the motes green, as on Luminati; the mark stays gold)
+      over(Tq, 0.4); column(Tq.sx, Tq.sy, 74 * on2, 3.5, 1.6 * k); flush(C.mendG, 1.3);
+      under(Tq); ring(Tq, 0.25 + 0.7 * ease(clamp01(t / 0.45)), 1.1 * k, 1.4); pool(Tq, 0.55, 0.6 * k); flush(C.mendG, 1.3);
       over(Tq, 0.8); const yy = Tq.sy - 50 - t * 14;
       seg(Tq.sx - 5, yy, Tq.sx + 5, yy, 1.2 * k, 1.2 * k, 0.8); seg(Tq.sx, yy - 5, Tq.sx, yy + 5, 1.2 * k, 1.2 * k, 0.8);
-      for (let i = 0; i < 7; i++) { const u2 = (t * 1.4 + i / 7) % 1; disc(Tq.sx + Math.sin(i * 2.3) * 8, Tq.sy - 4 - u2 * 46, 1.3, k * (1 - u2), 1); }
       flush(C.mend);
+      for (let i = 0; i < 7; i++) { const u2 = (t * 1.4 + i / 7) % 1; disc(Tq.sx + Math.sin(i * 2.3) * 8, Tq.sy - 4 - u2 * 46, 1.5, 1.2 * k * (1 - u2), 1); }
+      flush(C.mendG, 1.3);
     },
     // a rune circle turning at the cleric's feet, then a halo settling over each of the party (it stays: the aura)
     bless(ctx) {
