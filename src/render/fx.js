@@ -271,10 +271,13 @@ export function createFX() {
   }
   // where a bolt lands: a flash, a ring thrown out round the struck at its height, sparks in its colour (fire sheds
   // embers that fall)
+  // (a fire bolt, the mage's every shot: a small explosion, the owner 2026-11-08, "more explosion fx on hit": a bigger,
+  // longer flash, a ring over the floor as well as in the air, more embers)
   function burst(x, y, col, { now = performance.now(), size = 1, ember = false } = {}) {
-    flashes.push({ x, y, t0: now, life: 0.16, r: 5 * size, col, heavy: true });
+    flashes.push({ x, y, t0: now, life: ember ? 0.24 : 0.16, r: (ember ? 7.5 : 5) * size, col, heavy: true });
     rings.push({ x, y, t0: now, life: 0.32, r0: 3, r1: 14 * size, col, lift: 18, a: 1 });
-    const n = ember ? 12 : 8;
+    if (ember) { rings.push({ x, y, t0: now, life: 0.4, r0: 3, r1: 20 * size, col, lift: 0, a: 0.9 }); if (rings.length > 24) rings.shift(); }
+    const n = ember ? 18 : 8;
     for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2 + Math.random() * 0.5, sp = 60 + Math.random() * 70;
       parts.push({ x, y, ox: 0, oy: -18, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.6 - 40, t0: now, life: 0.28 + Math.random() * (ember ? 0.45 : 0.2), col, g: ember ? 260 : 340 }); }
     if (parts.length > 240) parts.splice(0, parts.length - 240);

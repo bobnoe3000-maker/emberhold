@@ -5400,7 +5400,7 @@ async function Ua(e) {
 	}), await Y.init(() => {}), Y.audio && (Y.audio.muted = !0), Y._updatePlayCamera = () => {}, Y._updateCameraBounds = () => {}, Y.start(), await Y.warmedUp, Y.engine.stop(), Y.engine.events.on("lateUpdate", () => {
 		Y && Ha();
 	}), Y.engine.events.on("update", ha), Y.engine.events.on("update", () => {
-		let e = io, t = Y?.lighting;
+		let e = ao, t = Y?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
 	}), Y.lighting && (Y.lighting._shadowExtent = Math.max(Y.lighting._shadowExtent || 22, 34));
 }
@@ -5453,21 +5453,21 @@ function $a(t, n) {
 function eo(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, Y.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, _), e.material.opacity = a);
 }
-var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
+var to = null, no = null, ro = -1, io = 0, ao = null, oo = !1, so = {
 	ready: !1,
 	async load(e, t = [], n = "vale") {
 		let r = ++X;
 		n !== Aa && (Aa = n, ka.clear());
 		let i = _t(e).level;
 		return Ji = (async () => {
-			Y ? await Y.swapLevel(i, { spawn: i.spawn }) : await Ua(i), r === X && (Wa(), ao = !!i.environment?.interior, oo.settings({ dof: Yi }), Ea(i, n), await la(t, n));
+			Y ? await Y.swapLevel(i, { spawn: i.spawn }) : await Ua(i), r === X && (Wa(), oo = !!i.environment?.interior, so.settings({ dof: Yi }), Ea(i, n), await la(t, n));
 		})(), await Ji, r === X;
 	},
 	settings(e = {}) {
 		e.dof && (Yi = e.dof), e.bright > 0 && (ga = e.bright), e.figLit > 0 && (va = e.figLit), e.figMax > 0 && (ya = e.figMax);
 		let t = Y?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: Yi !== "off" && !ao,
+			enabled: Yi !== "off" && !oo,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
@@ -5523,14 +5523,14 @@ var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(ro * 4)), t.rotation.z = ro, ro += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(io * 4)), t.rotation.z = io, io += (e.dt || 0) * .9;
 		}
 		for (let t of e.hazards || []) eo($a("disc", r.disc++), t.x, t.z, t.r, t.col, .82 * t.a), eo($a("rim", r.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
 		Fa(e.water);
 		for (let e of Object.keys(Za)) for (let t = r[e]; t < Za[e].length; t++) Za[e][t].visible = !1;
-		if (no !== X && (no = X, to = Y.world?.acquireSpellLight?.({ minor: !1 }) ?? null), to && e.hero) {
+		if (ro !== X && (ro = X, no = Y.world?.acquireSpellLight?.({ minor: !1 }) ?? null, to = Y.world?.acquireSpellLight?.({ minor: !1 }) ?? null), no && e.hero) {
 			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35;
-			to.set(n, Y.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
+			no.set(n, Y.tileMap.getHeight(e.hero[0], e.hero[1]) + 2.4, r, {
 				color: [
 					1.9,
 					1.15,
@@ -5542,6 +5542,20 @@ var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 				flicker: .12
 			});
 		}
+		if (to) {
+			let t = e.blast;
+			t && t.k > .01 ? to.set(t.x, Y.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
+				color: [
+					2,
+					.95,
+					.32
+				],
+				intensity: 9 * t.k / (e.ambient?.lamps ?? 1),
+				distance: 7,
+				decay: 1.6,
+				flicker: .25
+			}) : to.off();
+		}
 		let i = 0;
 		for (let t of e.beasts || []) {
 			let e = ja(t.id);
@@ -5550,7 +5564,7 @@ var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 			r.visible = !0, sa(r, t.x, t.z, e.below, J), r.update(0, n);
 		}
 		for (let e = i; e < Ia.length; e++) Ia[e]?.visible && (Ia[e].visible = !1);
-		io = e.ambient || null;
+		ao = e.ambient || null;
 		for (let e of ca) e.update(0, n);
 		Va(e.light), Y.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
@@ -5578,7 +5592,7 @@ var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 			rings: e("ring"),
 			hazards: e("disc"),
 			focus: e("focus"),
-			carry: +!!to,
+			carry: +!!no,
 			level: X,
 			actors: [...aa.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0),
 			atlases: na.size,
@@ -5589,7 +5603,7 @@ var to = null, no = -1, ro = 0, io = null, ao = !1, oo = {
 		};
 	}
 };
-function so(e) {
+function co(e) {
 	if (Ki) throw Error("createWorld: one world a page");
 	return Ki = e.container, qi = e.uiRoot, Bi = e.assets, Ui = ft("en"), ve(), Wi = lt({
 		lang: Ui,
@@ -5598,7 +5612,7 @@ function so(e) {
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), Gi = Sn(Ui, {}), oo.ready = !0, oo;
+	}), Gi = Sn(Ui, {}), so.ready = !0, so;
 }
 //#endregion
-export { so as createWorld };
+export { co as createWorld };

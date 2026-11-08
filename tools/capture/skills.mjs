@@ -3,7 +3,11 @@
 // Barrows, on Emberlit and on Luminati. The sim is deterministic, so the same skills fire at the same moments on
 // every checkout: a before and an after line up frame for frame.
 //
-//   node tools/capture/skills.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 150]
+//   node tools/capture/skills.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 150] [--party 1|2|3] [--land]
+//
+// --land: each skill's first landing on the screen instead (its 'skill' event, at: 'land'), cropped round where it lands, at +0, 0.08,
+// 0.16, 0.25, 0.35, 0.5, 0.7 and 1.0 s (an explosion is over in a second; a cast's crop round the middle of the screen
+// can miss where it lands)
 //
 // For each skill's first cast (its 'ability' event; a heal's or a guard's 'combat' event follows) it shoots frames at
 // +0, +0.2, +0.4, +0.6, +0.8, +1.1 and +1.6 s, cropped round the caster, and writes <out>/<renderer>/<skill>.png
@@ -18,10 +22,10 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/skills'))), SECS = +opt('--secs', 150);
-const AT = [0, 200, 400, 600, 800, 1100, 1600];
+const LAND = args.includes('--land'), AT = LAND ? [0, 80, 160, 250, 350, 500, 700, 1000] : [0, 200, 400, 600, 800, 1100, 1600];
 // (the third: the mage first, where the foes come, for Frost Nova; the rogue's Backstab off, for Venom; the fighter
 // starting hurt, for Second Wind)
-const PARTIES = [['fighter', 'rogue', 'mage'], ['cleric', 'shaman', 'fighter'], ['mage', 'rogue', 'fighter']];
+const PARTIES = [['fighter', 'rogue', 'mage'], ['cleric', 'shaman', 'fighter'], ['mage', 'rogue', 'fighter']].filter((_, i) => !opt('--party') || +opt('--party') === i + 1);   // (--party N: only that one)
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 let srv = null, base = opt('--base');
 if (!base) {
@@ -47,7 +51,10 @@ async function stagePage(classes) {
   P.x = P.px = r.cx + 0.5; P.y = P.py = r.cy + 0.5;
   sim.state.party.forEach((m, i) => { if (m !== P) { m.x = m.px = P.x + (i === 1 ? 1.2 : -1.2) - (third ? 4 : 0); m.y = m.py = P.y + 1 + (third ? 3 : 0); } });   // (the third: the mage alone in front, the foes on them)
   globalThis.__casts = []; const seen = new Set();
-  sim.bus.on('combat', (c) => { if (c.t === 'ability' && !seen.has(c.name)) { seen.add(c.name); globalThis.__casts.push({ name: c.name, t: sim.state.t, x: c.x, y: c.y }); } });
+  // (--land: the first landing on the screen: a mage's first Firebolt can land 14 tiles off, out of a phone's view)
+  const inView = (x, y) => { const [sx, sy] = globalThis.__renderer.screenAt(x, y); return sx > 90 && sx < innerWidth - 90 && sy > 120 && sy < innerHeight - 90; };
+  if (globalThis.__land) sim.bus.on('skill', (e) => { if (e.at === 'land' && !seen.has(e.id) && inView(e.tx, e.ty)) { seen.add(e.id); globalThis.__casts.push({ name: e.id + ' lands', t: sim.state.t, x: e.tx, y: e.ty }); } });
+  else sim.bus.on('combat', (c) => { if (c.t === 'ability' && !seen.has(c.name)) { seen.add(c.name); globalThis.__casts.push({ name: c.name, t: sim.state.t, x: c.x, y: c.y }); } });
   globalThis.__skillsLog = [];
   return true;
 }
@@ -76,6 +83,7 @@ async function run(renderer) {
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
     for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) break; await p.waitForTimeout(100); }
     await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()};`);
+    if (LAND) await p.evaluate(() => { globalThis.__land = true; });
     await p.evaluate(stagePage, classes);
     let done = 0;
     for (let t = 0; t < SECS * 1000; t += 250) {
@@ -86,7 +94,7 @@ async function run(renderer) {
         let last = 0;
         for (const at of AT) {
           await p.evaluate((ms) => globalThis.__advance(ms), at - last); last = at;
-          frames.push(await p.evaluate(() => globalThis.__take(innerWidth / 2, innerHeight * 0.47)));   // (the camera holds the party: the casters stand round the middle)
+          frames.push(await p.evaluate((c) => { if (globalThis.__land) { const [sx, sy] = globalThis.__renderer.screenAt(c.x, c.y); return globalThis.__take(sx, sy - 20); } return globalThis.__take(innerWidth / 2, innerHeight * 0.47); }, c));   // (the camera holds the party: the casters stand round the middle; --land: round where it lands)
         }
         t += last;
         rows.push({ party: classes.join('+'), name: c.name, frames });

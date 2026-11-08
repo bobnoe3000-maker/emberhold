@@ -218,6 +218,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
         hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin),
+        blast: c.blast ? { x: (c.blast.x - origin.x) / 2, z: (c.blast.y - origin.y) / 2, k: c.blast.k } : null,   // (a fire landing's light: renderer.js blasts)
         bright: sim.world.kind === 'dungeon' ? 1 : brightAt(brightFor(sim.world.region || 'vale', sim.state.scene, dial), c.t ?? sim.state.t),   // (bright.js: the shipped look × the player's dial)
         draw: globalThis.__lumDraw !== false,                   // (dev, tools/capture/rig.mjs: frames stepped and not drawn while a shot settles)
         // the fights' light: Emberlit's fx.js drawn on black into its emissive plane (native px), for Luminati to lay over its

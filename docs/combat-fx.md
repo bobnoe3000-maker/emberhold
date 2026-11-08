@@ -282,3 +282,36 @@ barrows 3 1,2,3,4,5,6 --floor 2`, with `--src` for before:
 `test/bosses.test.mjs` holds it: in his own hall he issues, stands a fallen rank up, and it pays nothing when it falls
 again. It fails without the fix (he never issues). The capture tool doesn't stage him any more.
 
+## The Firebolt's explosion (2026-11-08)
+
+The owner: "The mage fireball needs more explosion fx on hit".
+
+**Before.** Where the Firebolt landed: a flash, one ring of fire, 18 embers and a scorch, gone in 0.9 s. A mage's ordinary
+fire bolt landed in a small flash and 12 embers. Neither threw any light on the room. And the first Firebolt of a fight
+often lands where nobody sees it: the mage reaches 14 tiles, which is past the edge of a phone's view.
+
+**After.**
+- **The Firebolt lands as a blast** (`skillfx.js` firebolt, 1.3 s):
+  - a white core flash;
+  - a fireball billowing out from nine lobes round a growing middle, cooling white → orange → red as it grows;
+  - a fast shock ring over the floor and a slower, wider one;
+  - ten flame tongues licking up round the edge;
+  - 26 burning pieces flung out on arcs, trailing and bouncing once where they meet the floor;
+  - smoke-light going up;
+  - the floor left glowing and cooling.
+- **The light it throws:**
+  - **On Emberlit**, a moment of firelight on the room: the lighting pass's third slot while it lasts (`renderer.js`
+    blasts, 0.55 s; the nearer lamp keeps the second).
+  - **On Luminati**, one of its own spell lights (`world.js`, as the carry light is).
+- **A harder jolt** than a heavy blow's.
+- **A mage's ordinary fire bolt** (and a foe's) lands as a small explosion (`fx.js` burst):
+  - a longer, bigger flash;
+  - a ring over the floor as well as in the air;
+  - 18 embers;
+  - its own short flash of light.
+
+**Burst frames.** `node tools/capture/skills.mjs --party 1 --land`, a new mode that shoots each skill's first landing on
+the screen, cropped round where it lands. It fires at 20.1 s on both trees, Emberlit then Luminati, before over after:
+
+![The Firebolt's landing, before and after](img/fx/firebolt-explosion.jpg)
+

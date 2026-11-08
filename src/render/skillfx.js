@@ -41,7 +41,7 @@ const TAU = Math.PI * 2;
 const C = {
   cleave: [255, 190, 100], cleaveHot: [255, 236, 190], wall: [255, 210, 130], taunt: [255, 84, 56], wind: [190, 255, 150],
   stab: [255, 52, 84], shadow: [110, 255, 165], smoke: [196, 186, 240], venom: [150, 255, 50],
-  fire: [255, 116, 28], fireHot: [255, 214, 130], frost: [140, 210, 255], frostHot: [230, 248, 255], ward: [110, 150, 255], wardHot: [190, 215, 255],
+  fire: [255, 116, 28], fireHot: [255, 214, 130], ember: [220, 60, 18], frost: [140, 210, 255], frostHot: [230, 248, 255], ward: [110, 150, 255], wardHot: [190, 215, 255],
   mend: [255, 230, 150], bless: [255, 210, 110], turn: [255, 246, 210], drain: [110, 240, 210], breath: [140, 255, 190], hex: [160, 255, 70], hexV: [190, 110, 255],
   // (the boss pass) each boss in the colours fx.js gives his weapon, a level's gold
   lvl: [255, 214, 120], lvlHot: [255, 246, 214], issue: [235, 196, 130], issueHot: [255, 238, 196], call: [255, 92, 70], callHot: [255, 196, 168],
@@ -49,7 +49,7 @@ const C = {
   bell: [170, 205, 255], bellHot: [226, 238, 255], mud: [214, 170, 96], line: [236, 214, 150], cage: [190, 150, 255], cageHot: [236, 220, 255],
 };
 /** how long each moment lasts, s */
-const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 0.9, frost_nova: 1.1,
+const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.1,
   arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the skills with a moment of their own (for checks: every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze(Object.keys(LIFE));
@@ -180,20 +180,45 @@ export function createSkillFX(P) {
       star(Tq.sx, Tq.sy - 22, 6 * k + 2, 0.9 * k);
       flush(C.venom); under(Tq); ring(Tq, 0.25 + 0.6 * ease(clamp01(t / 0.4)), 0.8 * k, 1.2); flush(C.venom);
     },
-    // where the firebolt lands: a white-orange flash, a ring of fire thrown out at the target's height, the floor
-    // scorched in a ring, embers flung up and falling, a breath of smoke-light rising
+    // where the firebolt lands, an explosion (the owner, 2026-11-08: "The mage fireball needs more explosion fx on hit"),
+    // staged as a blast reads: a white core flash; the fireball billowing out and cooling white → orange → red as it
+    // grows; a fast shock ring and a slower one over the floor; flame tongues standing up round its edge; burning debris
+    // flung out on arcs, trailing, bouncing once; smoke-light going up; the floor left glowing and cooling. (The renderer
+    // adds the light it throws on the room, and a harder jolt: renderer.js blasts.)
     firebolt(ctx) {
       const { t, k, Tq, seed } = ctx; if (ctx.at !== 'land') return;
-      over(Tq, 0.8);
-      if (t < 0.18) { const f = 1 - t / 0.18; disc(Tq.sx, Tq.sy - 22, 11 * (0.7 + 0.5 * (1 - f)), 1.4 * f, 1.2); star(Tq.sx, Tq.sy - 22, 14, 1.3 * f); }
-      flush(C.fireHot, 1.1);
-      over(Tq, 0.7); const u = ease(clamp01(t / 0.35));
-      if (u < 1) ring(Tq, 0.35 + 1.4 * u, 1.2 * (1 - u), 1.6, 20);
-      for (let i = 0; i < 18; i++) { const a = rnd(seed, i) * TAU, sp = 40 + 60 * rnd(seed, i + 7), life = 0.5 + 0.4 * rnd(seed, i + 3); if (t > life) continue;
-        const x = Tq.sx + Math.cos(a) * sp * t, y = Tq.sy - 20 + Math.sin(a) * sp * 0.55 * t - 70 * t + 160 * t * t; seg(x - Math.cos(a) * 2, y + 1, x, y, 0.2 * (1 - t / life), 1.1 * (1 - t / life)); }
-      for (let i = 0; i < 6; i++) { const lift = 18 + t * 40 + i * 5; disc(Tq.sx + Math.sin(i * 2.1 + t * 3) * 5, Tq.sy - lift, 2.5, 0.35 * k * (1 - i / 6), 1.5); }
-      flush(C.fire);
-      under(Tq); ring(Tq, 0.25 + 0.9 * ease(clamp01(t / 0.25)), 0.75 * k, 1.8); pool(Tq, 0.8, 0.45 * k); flush(C.fire);
+      const X = Tq.sx, Y = Tq.sy - 18;
+      // the core: white, gone in a tenth of a second
+      if (t < 0.12) { const f = 1 - t / 0.12; over(Tq, 0.9); disc(X, Y, 9 + 10 * (1 - f), 1.8 * f, 0.9); star(X, Y, 22 + 8 * (1 - f), 1.5 * f); flush(C.fireHot, 1.2); }
+      // the fireball: lobes round a growing middle, hot inside and cooling outward and with age
+      const b = clamp01(t / 0.42); if (b < 1) {
+        const R = 6 + 16 * ease(b), fade = 1 - b;
+        over(Tq, 0.8); disc(X, Y - 4 * b, R * 0.55, 1.4 * fade * fade, 1.2); flush(b < 0.3 ? C.fireHot : C.fire, 1.15);
+        over(Tq, 0.75);
+        for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + rnd(seed, i + 50) * 0.7, rr = R * (0.45 + 0.35 * rnd(seed, i + 60)); disc(X + Math.cos(a) * rr, Y - 4 * b + Math.sin(a) * rr * 0.75 - 6 * b * rnd(seed, i + 70), R * (0.32 + 0.12 * rnd(seed, i + 80)), 0.9 * fade, 1.5); }
+        flush(b < 0.5 ? C.fire : C.ember, 1.05);
+      }
+      // the shock: a fast bright ring over the floor, then a slower, wider one
+      under(Tq); { const u = clamp01(t / 0.2); if (u < 1) ring(Tq, 0.3 + 2.2 * ease(u), 1.5 * (1 - u), 2); const v = clamp01((t - 0.06) / 0.5); if (v > 0 && v < 1) ring(Tq, 0.3 + 1.6 * ease(v), 0.8 * (1 - v), 1.4); } flush(C.fireHot);
+      // flame tongues round the blast's edge, licking up and dying down
+      if (t > 0.05 && t < 0.8) { const g = clamp01((t - 0.05) / 0.1) * (1 - clamp01((t - 0.35) / 0.45)); over(Tq, 0.6);
+        for (let i = 0; i < 10; i++) { const a = (i / 10) * TAU + rnd(seed, i + 90) * 0.5, [x, y] = on(Tq, 0.9 + 0.4 * rnd(seed, i + 91), a), h = (10 + 14 * rnd(seed, i + 92)) * g * (0.75 + 0.25 * Math.sin(t * 30 + i * 2));
+          for (let j = 0; j <= 7; j++) { const v = j / 7; disc(x + Math.sin(t * 22 + i + v * 5) * 2 * v, y - v * h, 1.5 * (1 - v * 0.6), 1.1 * g * (1 - v * 0.7), 1); } }
+        flush(C.fire, 1.05); }
+      // burning debris: out on arcs, a trail behind each, a bounce where it meets the floor
+      over(Tq, 0.7);
+      for (let i = 0; i < 26; i++) {
+        const a = rnd(seed, i) * TAU, sp = 50 + 90 * rnd(seed, i + 7), life = 0.55 + 0.5 * rnd(seed, i + 3); if (t > life) continue;
+        const vx = Math.cos(a) * sp, vy = Math.sin(a) * sp * 0.5 - 80 - 50 * rnd(seed, i + 11), g = 340, f = 1 - t / life;
+        const pos = (tt) => { let y = Y + vy * tt + 0.5 * g * tt * tt; const floor = Tq.sy + Math.sin(a) * sp * 0.5 * tt * 0.4; if (y > floor) y = floor - (y - floor) * 0.3; return [X + vx * tt, y]; };
+        const [x1, y1] = pos(t), [x0, y0] = pos(Math.max(0, t - 0.05)); seg(x0, y0, x1, y1, 0.2 * f, 1.2 * f, i % 4 ? 0 : 0.5);
+      }
+      flush(C.fire, 1.1);
+      // smoke-light going up off it
+      for (let i = 0; i < 8; i++) { const v = clamp01((t - 0.12 - i * 0.04) / 0.9); if (v <= 0 || v >= 1) continue; disc(X + Math.sin(i * 2.1 + t * 3) * (4 + 6 * v), Y - 8 - v * 46, 3 + 4 * v, 0.32 * (1 - v), 1.6); }
+      flush(C.ember, 0.9);
+      // the floor: a scorch glowing and cooling
+      under(Tq); pool(Tq, 1.1, 0.75 * k * k, 0, 1.3); ring(Tq, 0.95, 0.5 * k, 1.4); flush(t < 0.4 ? C.fire : C.ember);
     },
     // the ring of frost running out from the mage over the floor, ice spikes standing up behind it as it passes, a cold
     // mist inside; each foe it reaches flashes white

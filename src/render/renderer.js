@@ -1022,6 +1022,16 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // v1.47 (the owner: "fx should be a bit more dynamic visually like an arpg"): a bolt streaks (its last few points),
   // bursts where it lands, and a fallen foe's light goes up. Presentation only, keyed by the sim's own objects.
   const trails = new WeakMap(), gone = new WeakSet(), stageBolts = [];
+  // fire landing (the owner, 2026-11-08: "more explosion fx on hit"): a moment of light thrown on the room round it, in
+  // the lighting pass's third slot while it lasts (the nearer lamp keeps the second), and on Luminati one of its own lights
+  const blasts = [];
+  function blast(x, y, now, life, amp) { blasts.push({ x, y, t0: now, life, amp }); if (blasts.length > 6) blasts.shift(); }
+  /** the brightest blast now, with its strength 0..amp, or null */
+  function blastNow(now) {
+    let best = null, bk = 0;
+    for (let i = blasts.length - 1; i >= 0; i--) { const b = blasts[i], a = (now - b.t0) / 1000 / b.life; if (a >= 1) { blasts.splice(i, 1); continue; } if (a < 0) continue; const k = b.amp * (1 - a) * (1 - a); if (k > bk) { bk = k; best = b; } }
+    return best ? { x: best.x, y: best.y, k: bk } : null;
+  }
   let liveBolts = new Set(), nextBolts = new Set();
   function boltFx(b, bx, by, kind, proj) {
     let t = trails.get(b); if (!t) trails.set(b, t = []);
@@ -1037,6 +1047,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const t = trails.get(b); if (!t || !t.length) continue;
       const small = b.kind === 'arrow' || b.kind === 'bolt';
       fx.burst(t[t.length - 2], t[t.length - 1], BOLT_RGB[b.kind] || BOLT_RGB.bolt, { now, size: small ? 0.55 : 1, ember: b.kind === 'fire' });
+      if (b.kind === 'fire' && b.skill !== 'firebolt') blast(t[t.length - 2], t[t.length - 1], now, 0.3, 0.9);   // (a Firebolt's own: its 'skill' event)
     }
     const o = liveBolts; liveBolts = nextBolts; nextBolts = o; nextBolts.clear();
   }
@@ -1267,7 +1278,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
     }
     // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
-    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings });   // (t: the held look's, the title's dusk)
+    if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
     if (!X) {
     // upload the window G-buffer
@@ -1297,6 +1308,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const g = outdoor ? fl * sky.lamp : fl;                       // lamps and windows cast less by day
       LC[i + 1] = [s.color[0] * g, s.color[1] * g, s.color[2] * g];
     });
+    const bl = blastNow(clock());                                   // a fire landing: its light takes the third slot while it lasts
+    if (bl) { const bz = heightAt(sim.world, Math.floor(bl.x), Math.floor(bl.y)), bp = project(bl.x, bl.y, bz); L[2] = [ox + bp.sx, oy + bp.sy - 14, bz * ZH + 20]; LC[2] = [1.9 * bl.k, 0.95 * bl.k, 0.3 * bl.k]; }
 
     // PASS A — lighting at native resolution
     if (!X) {
@@ -1585,7 +1598,13 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: clock(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
-  sim.bus.on('skill', (e) => sfx.event(e, clock()));   // a skill's moment (battle.js skillEv)
+  sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
+    sfx.event(e, clock());
+    if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's
+      blast(e.tx, e.ty, clock(), 0.55, 2.4);
+      const pl = sim.state.player; if (Math.hypot(e.tx - pl.x, e.ty - pl.y) < 14) shake = { t0: clock(), amp: 2.8 };
+    }
+  });
   // the fight's other moments (skillfx.js, the boss pass): each boss's mechanic, from the boss (by) to those it raised,
   // called or issued to (tid, reached), followed by id while they move; and a level gained, at the member who gained it
   function moment(id, ev, more = {}) { sfx.moment({ id, by: ev.by ?? null, foeBy: true, tid: ev.tid ?? null, ally: false, x: ev.x, y: ev.y, tx: ev.tx ?? ev.x, ty: ev.ty ?? ev.y, reached: ev.reached || [], ...more }, clock()); }

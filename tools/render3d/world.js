@@ -393,7 +393,7 @@ function placeGround(m, x, z, r, col, a) {
   m.position.set(x, game.tileMap.getHeight(x, z) + 0.03, z); m.scale.setScalar(r);
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
-let carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
+let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
@@ -433,7 +433,8 @@ const api = {
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
    *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
-   *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null }} f
+   *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
+   *   blast?: { x: number, z: number, k: number } | null }} f
    */
   frame(f) {
     if (!game || !game.engine) return;
@@ -477,10 +478,17 @@ const api = {
     placeWater(f.water);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
-    if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
+    if (carryLevel !== levelId) { carryLevel = levelId; carryLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; blastLight = game.world?.acquireSpellLight?.({ minor: false }) ?? null; }
     if (carryLight && f.hero) {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
       carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * k) / (f.ambient?.lamps ?? 1), distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+    }
+    // a fire landing (renderer.js blasts: the Firebolt's explosion, a mage's bolt): a hot flash on the room round it, gone
+    // in half a second; one of Luminati's spell lights, as the carry light is
+    if (blastLight) {
+      const b = f.blast;
+      if (b && b.k > 0.01) blastLight.set(b.x, game.tileMap.getHeight(b.x, b.z) + 1.6, b.z, { color: [2.0, 0.95, 0.32], intensity: 9 * b.k / (f.ambient?.lamps ?? 1), distance: 7, decay: 1.6, flicker: 0.25 });
+      else blastLight.off();
     }
     // the farm's beasts, in the frame Emberlit chose
     let nb = 0;
