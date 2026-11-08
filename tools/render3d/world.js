@@ -473,7 +473,7 @@ function placeSpells(spells, dt, lamps, fight) {
         for (const sp of rec.spikes) { sp.h = K.crystals.spawn({ x: sp.x, y: H(sp.x, sp.z) - 0.02, z: sp.z, height: sp.height, radius: sp.radius, yaw: sp.yaw, tiltX: sp.tiltX, tiltZ: sp.tiltZ, seed: rec.seed + sp.x * 7 }); if (sp.h >= 0) rec.crystals.push(sp.h); }
       }
       const flare = L != null ? Math.exp(-L / 0.15) : 0;
-      if (rec.gf >= 0) K.frost.set(rec.gf, { spread: L == null ? 0.08 * smooth(S.age / 0.38) : 0.08 + 0.92 * smooth(L / 0.3), cracks: L == null ? 0 : smooth((L - 0.04) / 0.5), fade: L == null ? 0 : smooth((L - 1.0) / 1.0), glow: 1 + 0.8 * flare });
+      if (rec.gf >= 0) K.frost.set(rec.gf, { spread: L == null ? 0.08 * smooth(S.age / 0.38) : 0.08 + 0.92 * smooth(L / 0.3), cracks: L == null ? 0 : smooth((L - 0.04) / 0.5), fade: L == null ? 0 : smooth((L - 1.5) / 1.0), glow: 1 + 0.8 * flare });
       if (rec.spikes) for (const sp of rec.spikes) {
         if (sp.h < 0) continue;
         const u = (L - sp.start) / 0.13, crack = smooth((L - 0.55) / 0.3), sink = smooth((L - 0.88) / 0.3);

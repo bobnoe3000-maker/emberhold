@@ -1057,7 +1057,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   }
   // Frost Nova and Turn Undead on Luminati, in its ice mage's and cleric's looks (world.js placeSpells): from the cast (its
   // frost painted, her glyph drawn) to the landing and after; Emberlit draws them itself (skillfx.js)
-  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead']), SPELL_LIFE = { frost_nova: 2.2, turn_undead: 1.2 }, spells = [];
+  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead']), SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2 }, spells = [];
   let spellN = 0;
   function spellEvent(e, now) {
     if (e.at === 'cast') { spells.push({ e, key: `${e.id}:${++spellN}`, seed: (spellN * 7919) % 8192, t0: now, land: null }); if (spells.length > 12) spells.shift(); return; }

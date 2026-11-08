@@ -39,7 +39,7 @@ const EX = 11.31, EY = 5.66;
 const TAU = Math.PI * 2;
 // saturated on purpose, as fx.js's: bloom and the tonemap wash light toward white
 const C = {
-  cleave: [255, 190, 100], cleaveHot: [255, 236, 190], wall: [255, 210, 130], taunt: [255, 84, 56], wind: [190, 255, 150],
+  cleave: [255, 190, 100], cleaveHot: [255, 236, 190], wall: [255, 210, 130], taunt: [255, 84, 56], wind: [110, 255, 120], windHot: [200, 255, 190],
   stab: [255, 52, 84], shadow: [110, 255, 165], smoke: [196, 186, 240], venom: [150, 255, 50],
   fire: [255, 116, 28], fireHot: [255, 214, 130], ember: [220, 60, 18], frost: [140, 210, 255], frostHot: [230, 248, 255], ward: [110, 150, 255], wardHot: [190, 215, 255],
   mend: [255, 230, 150], bless: [255, 210, 110], turn: [255, 246, 210], drain: [110, 240, 210], breath: [140, 255, 190], hex: [160, 255, 70], hexV: [190, 110, 255],
@@ -51,7 +51,7 @@ const C = {
   warn: [255, 70, 28], warnHot: [255, 236, 214],
 };
 /** how long each moment lasts, s */
-const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.1,
+const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.6,
   arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the skills with a moment of their own (for checks: every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze(Object.keys(LIFE));
@@ -151,30 +151,33 @@ export function createSkillFX(P) {
       over(Cq, 0.3);
       for (let s = 0; s < 3; s++) for (let j = 0; j < 14; j++) {
         const u = j / 13, hgt = u * 54 * clamp01(t / 0.35 + 0.2), ang = t * 9 + s * 2.094 + u * 5.5, r = 11 * (1 - u * 0.35);
-        disc(Cq.sx + Math.cos(ang) * r, Cq.sy - hgt + Math.sin(ang) * r * 0.4, 1.4, k * (1 - u * 0.7) * (Math.sin(ang) > 0 ? 1 : 0.5), 1);
+        disc(Cq.sx + Math.cos(ang) * r, Cq.sy - hgt + Math.sin(ang) * r * 0.4, 2, 1.25 * k * (1 - u * 0.6) * (Math.sin(ang) > 0 ? 1 : 0.55), 1);
       }
-      flush(C.wind); under(Cq); ring(Cq, 0.3 + 1.1 * ease(clamp01(t / 0.5)), 0.9 * k, 1.3); flush(C.wind);
+      flush(C.wind, 1.5);
+      over(Cq, 0.2); column(Cq.sx, Cq.sy, 58 * clamp01(t / 0.3 + 0.2), 6, 0.55 * k); if (t < 0.3) star(Cq.sx, Cq.sy - 30, 10, 1.1 * (1 - t / 0.3)); flush(C.windHot, 1.2);   // (the owner, 2026-11-08: "brighter green lights")
+      under(Cq); ring(Cq, 0.3 + 1.1 * ease(clamp01(t / 0.5)), 1.2 * k, 1.6); pool(Cq, 0.8, 0.55 * k); flush(C.wind, 1.4);
     },
     // a shadow's streak from where the rogue stood, then two cuts crossing on the target, crimson; a crit a star
     backstab(ctx) {
       const { t, Cq, Tq, e } = ctx; if (ctx.at !== 'land') return;
-      if (t < 0.25) { over(Tq, 0.2); seg(Cq.sx, Cq.sy - 20, Tq.sx, Tq.sy - 22, 0, 0.55 * (1 - t / 0.25), 1); flush(C.shadow); }
+      if (t < 0.25) { over(Tq, 0.2); seg(Cq.sx, Cq.sy - 20, Tq.sx, Tq.sy - 22, 0, 0.95 * (1 - t / 0.25), 1.3); flush(C.shadow, 1.4); }   // (the owner, 2026-11-08: "brighter")
       const x = Tq.sx, y = Tq.sy - 24, k = t < 0.12 ? 1 : 1 - (t - 0.12) / 0.48;
       const s1 = clamp01(t / 0.05), s2 = clamp01((t - 0.04) / 0.05);
       over(Tq, 0.9);
-      seg(x - 9, y - 9, x - 9 + 18 * s1, y - 9 + 18 * s1, 1.2 * k, 1.2 * k, 0.9);
-      if (s2 > 0) seg(x + 9, y - 9, x + 9 - 18 * s2, y - 9 + 18 * s2, 1.2 * k, 1.2 * k, 0.9);
-      if (e.crit) star(x, y, 9 + 6 * (1 - k), 1.3 * k);
-      flush(C.stab, 1.1);
+      seg(x - 10, y - 10, x - 10 + 20 * s1, y - 10 + 20 * s1, 1.5 * k, 1.5 * k, 1.3);
+      if (s2 > 0) seg(x + 10, y - 10, x + 10 - 20 * s2, y - 10 + 20 * s2, 1.5 * k, 1.5 * k, 1.3);
+      if (e.crit) star(x, y, 11 + 7 * (1 - k), 1.6 * k);
+      flush(C.stab, 1.7);
+      if (t < 0.2) { over(Tq, 0.95); disc(x, y, 6 + 6 * (t / 0.2), 0.9 * (1 - t / 0.2), 1.2); flush(C.stab, 1.3); }
     },
     // smoke thrown out in a ring at the feet, billowing and rising, pale lilac in the dark
     smoke_step(ctx) {
       const { t, k, Cq, seed } = ctx; if (ctx.at !== 'land') return;
       over(Cq, 0.5);
       for (let i = 0; i < 16; i++) { const ang = (i / 16) * TAU + rnd(seed, i) * 0.4, u = ease(clamp01(t / 0.6)), R = 0.3 + 1.2 * u * (0.7 + 0.3 * rnd(seed, i + 30));
-        const [x, y] = on(Cq, R, ang, 4 + 14 * u * rnd(seed, i + 60)); disc(x, y, 4 + 5 * u, 0.32 * k, 2.2); }
-      for (let i = 0; i < 5; i++) { const ang = t * 3 + i * 1.26; disc(Cq.sx + Math.cos(ang) * 8, Cq.sy - 20 - t * 14 + Math.sin(ang) * 6, 1.4, 0.8 * k, 1); }
-      flush(C.smoke);
+        const [x, y] = on(Cq, R, ang, 4 + 14 * u * rnd(seed, i + 60)); disc(x, y, 4.5 + 6 * u, 0.5 * k, 2); }
+      for (let i = 0; i < 5; i++) { const ang = t * 3 + i * 1.26; disc(Cq.sx + Math.cos(ang) * 8, Cq.sy - 20 - t * 14 + Math.sin(ang) * 6, 1.8, 1.1 * k, 1); }
+      flush(C.smoke, 1.4);   // (the owner, 2026-11-08: "brighter"; and the smoke stays for the buff: the aura)
     },
     // a green splash off the struck: drops thrown out and falling, a ring of it at their feet
     venom(ctx) {
@@ -228,14 +231,15 @@ export function createSkillFX(P) {
     // the ring of frost running out from the mage over the floor, ice spikes standing up behind it as it passes, a cold
     // mist inside; each foe it reaches flashes white
     frost_nova(ctx) {
-      const { t, k, Cq: M, Tq: Cq, R, seed } = ctx; if (ctx.at !== 'land') return;   // (thrown, GDD v1.53: it bursts on the knot, Tq)
+      const { t, Cq: M, Tq: Cq, R, seed } = ctx; if (ctx.at !== 'land') return;   // (thrown, GDD v1.53: it bursts on the knot, Tq)
       if (t < 0.16 && Math.hypot(Cq.sx - M.sx, Cq.sy - M.sy) > 8) { over(Cq, 0.4); const f = 1 - t / 0.16; seg(M.sx, M.sy - 26, Cq.sx, Cq.sy - 10, 0.25 * f, 1.1 * f, 0.9); star(M.sx, M.sy - 26, 5, f); flush(C.frostHot); }   // the throw: a cold streak from the staff to the knot
       const RR = ctx.e.r || 3.5, u = ease(clamp01(t / 0.3)), rad = 0.3 + (RR - 0.3) * u;   // (its real reach: skills.js radius)
-      under(Cq); pool(Cq, rad, 0.28 * k, 0, 1.1); if (u < 1) { ring(Cq, rad, 1.25 * (1 - u * 0.4), 2.1); ring(Cq, rad * 0.86, 0.5 * (1 - u), 1.2); } flush(C.frost, 1.1);
+      const hold = t < 1.0 ? 1 : 1 - (t - 1.0) / 0.6;   // (the owner, 2026-11-08: "the ground effect lingers 0.5 sec longer": it holds a second, then fades)
+      under(Cq); pool(Cq, rad, 0.28 * hold, 0, 1.1); if (u < 1) { ring(Cq, rad, 1.25 * (1 - u * 0.4), 2.1); ring(Cq, rad * 0.86, 0.5 * (1 - u), 1.2); } flush(C.frost, 1.1);
       over(Cq, 0.3);
       for (let i = 0; i < 18; i++) { const ang = (i / 18) * TAU + rnd(seed, i) * 0.3, r0 = 0.6 + (RR - 0.6) * rnd(seed, i + 40); if (rad < r0) continue;
         const grow = clamp01((t - (r0 / RR) * 0.3) / 0.12), hgt = (6 + 9 * rnd(seed, i + 20)) * grow, [x, y] = on(Cq, r0, ang);
-        seg(x, y, x + (rnd(seed, i + 5) - 0.5) * 3, y - hgt, 0.9 * k, 1.3 * k, 0.6); if (grow >= 1 && t < 0.6) star(x, y - hgt, 3, 0.8 * (1 - t / 0.6)); }
+        seg(x, y, x + (rnd(seed, i + 5) - 0.5) * 3, y - hgt, 0.9 * hold, 1.3 * hold, 0.6); if (grow >= 1 && t < 0.6) star(x, y - hgt, 3, 0.8 * (1 - t / 0.6)); }
       flush(C.frostHot);
       if (t < 0.4) for (const q of R) { over(q); star(q.sx, q.sy - 24, 8, 1.2 * (1 - t / 0.4)); flush(C.frostHot); }
     },
@@ -285,32 +289,32 @@ export function createSkillFX(P) {
       const { t, k, Cq, Tq } = ctx; if (ctx.at !== 'land') return;
       const x0 = Tq.sx, y0 = Tq.sy - 24, x1 = Cq.sx, y1 = Cq.sy - 26, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
       over(Tq, 0.3);
-      for (let i = 0; i <= 28; i++) { const u = i / 28, w = Math.sin(u * Math.PI * 3 - t * 18) * 4 * Math.sin(u * Math.PI); mark(x0 + dx * u + nx * w, y0 + dy * u + ny * w, 0.45 * k); }
-      for (let i = 0; i < 7; i++) { const u = (t * 1.8 + i / 7) % 1, w = Math.sin(u * Math.PI * 3 - t * 18) * 4 * Math.sin(u * Math.PI); disc(x0 + dx * u + nx * w, y0 + dy * u + ny * w, 1.6, 1.1 * k, 1); }
-      star(x0, y0, 5, 0.8 * k);
-      flush(C.drain);
+      for (let i = 0; i <= 40; i++) { const u = i / 40, w = Math.sin(u * Math.PI * 3 - t * 18) * 4 * Math.sin(u * Math.PI); disc(x0 + dx * u + nx * w, y0 + dy * u + ny * w, 0.9, 0.8 * k, 1); }
+      for (let i = 0; i < 9; i++) { const u = (t * 1.8 + i / 9) % 1, w = Math.sin(u * Math.PI * 3 - t * 18) * 4 * Math.sin(u * Math.PI); disc(x0 + dx * u + nx * w, y0 + dy * u + ny * w, 2.3, 1.5 * k, 1); }
+      star(x0, y0, 8, 1.2 * k); star(x1, y1, 6, 0.9 * k);
+      flush(C.drain, 1.5);   // (the owner, 2026-11-08: "brighter fx")
     },
     // a breath going out over the floor from the shaman, and leaves of spirit-light spiralling up each of the party
     ancestors_breath(ctx) {
       const { t, k, Cq, R } = ctx; if (ctx.at !== 'land') return;
-      under(Cq); const u = ease(clamp01(t / 0.45)); if (u < 1) { ring(Cq, 0.3 + 2.8 * u, 0.9 * (1 - u), 1.6); ring(Cq, 0.2 + 2.2 * u, 0.4 * (1 - u), 1); } flush(C.breath);
-      for (const q of R) { over(q, 0.5);
-        for (let i = 0; i < 8; i++) { const v = clamp01(t * 1.1 - i * 0.05), a = v * 9 + i * 0.8; if (v <= 0 || v >= 1) continue;
-          disc(q.sx + Math.cos(a) * 10 * (1 - v * 0.3), q.sy - 4 - v * 50 + Math.sin(a) * 3.5, 1.5, k * (1 - v) * 1.1, 1); }
-        flush(C.breath); }
+      under(Cq); const u = ease(clamp01(t / 0.45)); if (u < 1) { ring(Cq, 0.3 + 2.8 * u, 1.3 * (1 - u), 2); ring(Cq, 0.2 + 2.2 * u, 0.7 * (1 - u), 1.3); } flush(C.breath, 1.4);   // (the owner, 2026-11-08: "brighter lighting")
+      for (const q of R) { under(q); pool(q, 0.7, 0.5 * k); flush(C.breath, 1.2); over(q, 0.5);
+        for (let i = 0; i < 10; i++) { const v = clamp01(t * 1.1 - i * 0.05), a = v * 9 + i * 0.8; if (v <= 0 || v >= 1) continue;
+          disc(q.sx + Math.cos(a) * 10 * (1 - v * 0.3), q.sy - 4 - v * 50 + Math.sin(a) * 3.5, 2, k * (1 - v) * 1.5, 1); }
+        flush(C.breath, 1.5); }
     },
     // a sigil drawn on the floor under the knot: two rings and a five-pointed star, stroke by stroke; a violet line out
     // to each foe it takes
     hex(ctx) {
       const { t, k, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const draw = clamp01(t / 0.35), RR = 1.35;
+      const draw = clamp01(t / 0.35), RR = 2.1;   // (the owner, 2026-11-08: "Bigger FX": 1.35 → 2.1 tiles, heavier strokes)
       under(Tq);
-      ring(Tq, RR, 0.9 * k, 1.2, 0, -Math.PI / 2, -Math.PI / 2 + TAU * draw); ring(Tq, RR * 0.82, 0.55 * k, 1, 0, Math.PI / 2, Math.PI / 2 + TAU * draw);
+      ring(Tq, RR, 1.2 * k, 1.7, 0, -Math.PI / 2, -Math.PI / 2 + TAU * draw); ring(Tq, RR * 0.82, 0.8 * k, 1.3, 0, Math.PI / 2, Math.PI / 2 + TAU * draw);
       const pts = []; for (let i = 0; i < 5; i++) pts.push(on(Tq, RR * 0.82, -Math.PI / 2 + i * TAU / 5));
-      for (let i = 0; i < 5; i++) { const s = clamp01(draw * 5 - i); if (s <= 0) break; const a = pts[(i * 2) % 5], b = pts[(i * 2 + 2) % 5]; seg(a[0], a[1], a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s, 0.9 * k, 0.9 * k, 0.4); }
-      flush(C.hex, 1.05);
-      under(Tq); pool(Tq, 0.55, 0.5 * k); flush(C.hexV);
-      if (t > 0.2 && t < 0.8) { over(Tq, 0.2); const g = 0.7 * (1 - (t - 0.2) / 0.6); for (const q of R) seg(Tq.sx, Tq.sy, q.sx, q.sy - 4, g, g * 0.3, 0.4); flush(C.hexV); }
+      for (let i = 0; i < 5; i++) { const s = clamp01(draw * 5 - i); if (s <= 0) break; const a = pts[(i * 2) % 5], b = pts[(i * 2 + 2) % 5]; seg(a[0], a[1], a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s, 1.2 * k, 1.2 * k, 0.8); }
+      flush(C.hex, 1.4);
+      under(Tq); pool(Tq, 1.1, 0.6 * k); flush(C.hexV, 1.2);
+      if (t > 0.2 && t < 0.9) { over(Tq, 0.2); const g = 1.0 * (1 - (t - 0.2) / 0.7); for (const q of R) { seg(Tq.sx, Tq.sy, q.sx, q.sy - 4, g, g * 0.4, 0.8); star(q.sx, q.sy - 24, 6, g); } flush(C.hexV, 1.3); }
     },
 
     // ── the fight's other moments ─────────────────────────────────────────────────────────────────────────────────
@@ -472,8 +476,9 @@ export function createSkillFX(P) {
         if (b.wall > 0) { const f = Math.min(1, b.wall / 0.8); under(q);   // a ring of plates at the fighter's feet, turning slowly, a pulse going out
           for (let i = 0; i < 6; i++) { const a0 = i * TAU / 6 + t * 0.6; ring(q, 0.66, 0.9 * f, 1.6, 0, a0, a0 + TAU / 6 - 0.22); const [x, y] = on(q, 0.66, a0 + 0.2); seg(x, y, x, y - 7, 0.8 * f, 0.1 * f); }
           const p = (t % 1.2) / 1.2; ring(q, 0.66 + p * 0.7, 0.6 * f * (1 - p), 1.2); flush(C.wall); }
-        if (b.smoke > 0) { const f = Math.min(1, b.smoke / 0.8); over(q, 0.4);   // wisps of smoke turning about them
-          for (let i = 0; i < 4; i++) { const a = t * 1.7 + i * 1.57; disc(q.sx + Math.cos(a) * 11, q.sy - 14 - ((t * 9 + i * 7) % 26) + Math.sin(a) * 4, 3.2, 0.22 * f, 2); }
+        if (b.smoke > 0) { const f = Math.min(1, b.smoke / 0.8);   // a cloud of smoke round them while it lasts (the owner, 2026-11-08: "smoke lingers for the duration of the buff, brighter")
+          under(q); pool(q, 0.85, 0.32 * f, 0, 0.9); flush(C.smoke, 1.2); over(q, 0.4);
+          for (let i = 0; i < 9; i++) { const a = t * 1.3 + i * 0.7, rr = 9 + 4 * Math.sin(t * 0.9 + i); disc(q.sx + Math.cos(a) * rr, q.sy - 8 - ((t * 8 + i * 5) % 34) + Math.sin(a) * 4, 4.6, 0.36 * f, 2); }
           flush(C.smoke); }
         if (b.bless > 0) { const f = Math.min(1, b.bless / 0.8); over(q, 0.8); oval(q.sx, q.sy - 52, 7.5, 2.6, (0.85 + 0.25 * Math.sin(t * 4)) * f, 1.1); flush(C.bless); }   // the halo
         if (b.breath > 0) { const f = Math.min(1, b.breath / 0.8); over(q, 0.5);   // leaves going up them
@@ -486,7 +491,8 @@ export function createSkillFX(P) {
       } else {
         if (u.dead || u.hp <= 0) continue;
         if (u.slow > 0) { const f = Math.min(1, u.slow / 0.6); under(q); ring(q, 0.45, 0.6 * f, 1.1); pool(q, 0.4, 0.25 * f); flush(C.frost);   // rime at the feet, snow falling on them
-          over(q, 0.5); for (let i = 0; i < 3; i++) { const v2 = ((t * 0.8) + i / 3) % 1; mark(q.sx - 6 + i * 6 + Math.sin(t * 2 + i) * 2, q.sy - 44 + v2 * 36, 0.9 * f * (1 - v2)); } flush(C.frostHot); }
+          over(q, 0.5); for (let i = 0; i < 5; i++) { const v2 = ((t * 0.7) + i / 5) % 1, x = q.sx - 9 + i * 4.5 + Math.sin(t * 2 + i) * 2.5, y = q.sy - 48 + v2 * 40;   // snowflakes falling on them, big enough to read (the owner, 2026-11-08: "bigger falling snow flakes")
+            star(x, y, 2.6, 0.9 * f * (1 - v2 * 0.7)); disc(x, y, 1.2, 0.9 * f * (1 - v2 * 0.7), 1); } flush(C.frostHot, 1.2); }
         if (u.poison && u.poison.t > 0) { const f = Math.min(1, u.poison.t / 0.6); over(q, 0.5);   // bubbles going up off them, a sick glow under
           for (let i = 0; i < 3; i++) { const v2 = ((t * 1.1) + i / 3) % 1; disc(q.sx - 5 + i * 5, q.sy - 30 - v2 * 18, 1.2 + v2, 0.8 * f * (1 - v2), 1); }
           flush(C.venom); under(q); pool(q, 0.35, 0.35 * f); flush(C.venom); }

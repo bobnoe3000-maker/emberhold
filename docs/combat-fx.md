@@ -470,3 +470,30 @@ the held ms; the camera jolts; he glows; with the Hit feel off, no hold and no j
 **Left.**
 - Not yet tried on a phone. Hit-stop is a matter of taste: the numbers are a first pass to tune by hand.
 - Luminati's world (its water, weather, flames) keeps moving through a hold; only our figures and effects stand.
+
+## The owner's review (2026-11-08)
+
+The owner marked each skill on the review page (its live player runs `fx.js` and `skillfx.js` unchanged). The notes, and
+what changed (`skillfx.js`):
+
+| Skill | The note | The change |
+|---|---|---|
+| Second Wind | "brighter green lights" | greener wind (190, 255, 150 → 110, 255, 120); fatter strands; a column of light up him and a flash; a glow at his feet |
+| Backstab | "brighter" | the shadow streak, the cuts and the crit star brighter and thicker; a flash where they cross |
+| Smoke Step | "smoke lingers for the duration of the buff, brighter" | the throw brighter; while the buff lasts, a cloud stays round the rogue (a pool at the feet, nine wisps turning) |
+| Frost Nova | "bigger falling snow flakes, the ground effect lingers 0.5 sec longer" | the chilled snow falls as five flakes (a small star each, was three points); the ground holds 1 s, then fades (life 1.1 → 1.6 s); on Luminati its ground frost fades from 1.5 s (was 1.0) |
+| Spirit Drain | "brighter fx" | a solid tether, bigger and brighter motes, a star at each end |
+| Ancestors' Breath | "brighter lighting" | the rings brighter and wider; a glow under each of the party; bigger leaves |
+| Hex | Bigger FX | the sigil 1.35 → 2.1 tiles, heavier strokes, a wider pool, the lines thicker and a star on each foe taken |
+
+Before over after, the same moments of each (0.75, 0.95, 1.3, 2.0 and 2.6 or 3.0 s into the loop):
+
+![Second Wind, Backstab, Smoke Step, Frost Nova: before over after](img/fx/owner-tweaks-1.jpg)
+
+![Spirit Drain, Ancestors' Breath, Hex: before over after](img/fx/owner-tweaks-2.jpg)
+
+Marked "Add it", for the next design pass (GDD first, then sim rules and balance runs): every Luminati move on the
+page (Tempest Edge, Dragonfang Wave, Skyfall Judgement, Earthshatter, Flare, Glacial Tomb, Blizzard, Sanctuary, Revive,
+resonance marks, a totem), crowd control, a leap, something planted, a raise in a fight, more skills a class
+("add more skills available to learn for each class"), and the five Luminati looks for Shield Wall, Arcane Ward, Mend
+and Bless, Cleave and Firebolt.

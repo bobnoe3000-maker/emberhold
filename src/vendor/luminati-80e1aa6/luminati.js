@@ -5617,7 +5617,7 @@ function ko(e, t, n, r) {
 			if (e.gf >= 0 && i.frost.set(e.gf, {
 				spread: n == null ? .08 * Z(t.age / .38) : .08 + .92 * Z(n / .3),
 				cracks: n == null ? 0 : Z((n - .04) / .5),
-				fade: n == null ? 0 : Z((n - 1) / 1),
+				fade: n == null ? 0 : Z((n - 1.5) / 1),
 				glow: 1 + .8 * r
 			}), e.spikes) for (let t of e.spikes) {
 				if (t.h < 0) continue;
