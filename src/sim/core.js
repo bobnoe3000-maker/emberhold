@@ -15,6 +15,7 @@ import { autoAllocate } from './attributes.js';
 import { createLoot } from './loot.js';
 import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
+import { createDev } from './dev.js';
 import { hash2, mulberry32, streamSeed } from './rng.js';
 import { RANKS, PERKS, TRAIT_PERK, FOUND_PERKS } from './companions.js';
 import { createBattle, BOSSES, GOLD_DROP } from './battle.js';
@@ -119,6 +120,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const expeditions = createExpeditions({ state, bus, getWorld: () => world, seed: baseSeed, give: (it, src) => loot.give(it, src) });   // the bench's road work (expeditions.js)
   // creation, points, skills, stance, the bench, the temple and the inn (heroes.js)
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
+  const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
   const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
@@ -369,6 +371,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (expeditions.command(cmd)) return;                  // expeditionSend (an inn)
     if (coach.command(cmd)) return;                        // coach (a town's square: coach.js)
     if (heroes.command(cmd)) return;                       // hero, party, bench, temple and inn commands
+    if (dev.command(cmd)) return;                          // devUnlockSkills / devLevel (the menu's Developer tools; state.dev)
     if (board.command(cmd)) return;                        // boardAccept / boardTurnIn (town)
     if (quests.command(cmd)) return;                       // track / questAbandon
     if (talk.command(cmd)) return;                         // talk / dialogueEffect / endTalk
@@ -590,6 +593,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       party: state.party.map(persistMember),
       bench: state.bench.map(persistMember),
       created: state.created, temple: { ...state.temple },
+      ...(state.dev ? { dev: true } : {}),   // (v34) a dev game: the menu's Developer tools were used (dev.js); absent otherwise, so no other save changes
       tavern: { ...state.tavern }, wageDay: state.wageDay, innDay: state.innDay,   // asked around (and when), the last dawn paid, the last inn night
       bag: state.bag.map((it) => ({ ...it })),
       mods: [...world.mods.entries()],   // [ "x,y", {cleared}|{opened} ]
@@ -651,6 +655,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     if (Array.isArray(data.party) && data.party.length) state.party = data.party.map((m) => ({ ...m }));
     state.bench = (data.bench ?? []).map((m) => ({ ...m }));
     state.created = data.created ?? true;                   // saves from before creation already had their hero
+    state.dev = data.dev === true;                          // (v34) a dev game (dev.js)
     state.temple = { freeDay: data.temple?.freeDay ?? -1 };
     for (const m of [...state.party, ...state.bench]) {
       if (!m.gear) m.gear = starterKit(m);                  // saves from before gear: the class kit

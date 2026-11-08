@@ -7,12 +7,17 @@
 // again), Sound (the volume, and a slider each for the music, ambience, attacks and spells, footsteps and foes' cries:
 // kept per device, audio/settings.js), Account (cloud saves arrive at M6) and Copy debug report (debugreport.js: the game's
 // state as text on the clipboard, to paste into a bug report; read only).
+// Developer (sim/dev.js; architecture A18): every skill unlocked and levels with their points, for testing; it marks
+// the slot a dev game, never verified.
 //
 // The sim doesn't tick while the title is up (main.js pauses the loop), so a battle behind
 // it waits. Preact + htm, like every M3 window.
 
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
+import { pendingPoints } from '../sim/attributes.js';
+import { pendingSkillPoints, skillsOf, unlocked, TRIAL_CLASSES } from '../sim/skills.js';
+import { DEV_LEVEL_MAX } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
 
@@ -39,17 +44,23 @@ const CSS = `
 #title .snd label > span { min-width: 0; }
 #title .snd small b { font-weight: 600; color: #f0c880; }
 #title .snd input[type=range] { width: 46%; height: 40px; accent-color: #e0a84a; flex: none; }
+#title .dev { max-height: calc(100vh - 120px); overflow-y: auto; }
+#title .devwho { text-align: left; margin: 0 0 6px; font: 600 15px Georgia, serif; color: #efe4cf; }
+#title .devwho small { display: block; font: 11px ui-monospace, Menlo, monospace; color: #b8aca0; margin-top: 2px; }
+#title .devnote { font: 11px ui-monospace, Menlo, monospace; color: #c8baa2; line-height: 1.45; margin: 0 0 12px; text-align: left; }
+#title .devsaid { font: 12px ui-monospace, Menlo, monospace; color: #f0c880; min-height: 1.4em; margin: 0 0 10px; }
 `;
 
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
- *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null, tune?: (() => void) | null }} o  onPlay: the title closes into play;
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null, tune?: (() => void) | null,
+ *   devApply?: ((cmds: any[]) => void) | null }} o  onPlay: the title closes into play;
  *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md; the Luminati prototype,
  *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null, tune = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null, tune = null, devApply = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -132,7 +143,40 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
+  // Developer (the owner, 2026-11-08: "Add a developer option in the menu to unlock skills, and add a level which includes
+  // appropriate skill points and stats"; on the site too, the owner's choice): every skill unlocked for the company, and
+  // a level for anyone in the party, by the sim's own commands (sim/dev.js), so a level brings its stat points, its skill
+  // point and its HP as one fought for does. Applied at once (main.js devApply: the menu holds the game still). Either
+  // marks this slot a dev game: never verified once saves go online.
+  let devSaid = '';
+  function devDo(cmds, say) { if (!devApply) return; devApply(cmds); devSaid = say(); draw(); }
+  function Developer() {
+    const S = sim.state, all = TRIAL_CLASSES.length * 2, done = TRIAL_CLASSES.reduce((n, c) => n + (S.trials[c] ? 1 : 0) + (S.trials[c + '12'] ? 1 : 0), 0);
+    const pts = (m) => { const a = pendingPoints(m), k = pendingSkillPoints(m); return a || k ? `${a ? `${a} stat point${a > 1 ? 's' : ''}` : ''}${a && k ? ' · ' : ''}${k ? `${k} skill point${k > 1 ? 's' : ''}` : ''} to spend` : 'no points to spend'; };
+    const open = (m) => skillsOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length;
+    const up = (m, n) => devDo(Array.from({ length: Math.min(n, DEV_LEVEL_MAX - m.level) }, () => ({ type: 'devLevel', id: m.id })),
+      () => `${m.name} is level ${m.level}: ${pts(m)} · ${open(m)} of ${skillsOf(m.cls).length} skills open`);
+    return html`<div id="title" class="dev">
+      <div class="mark" style="font-size:32px">DEVELOPER</div>
+      <div class="devnote">For testing. A level comes as one fought for does: 3 stat points, a skill point at every even level, the HP it brings. Using either marks this slot a <b>dev game</b>${S.dev ? ' (it is one)' : ''}: it will never count as verified progress once saves go online.</div>
+      <div class="devsaid" role="status">${devSaid}</div>
+      <button disabled=${done >= all || !S.created} onClick=${() => devDo([{ type: 'devUnlockSkills' }], () => 'Every skill unlocked: each opens at its level (6, 12)')}>
+        Unlock every skill<small>${done >= all ? 'done: every class’s level-6 and level-12 trials' : `every class’s trials, as if done (${done} of ${all} now): each skill opens at its level`}</small></button>
+      ${S.created && S.party.map((m) => html`<div key=${m.id}>
+        <div class="devwho">${m.name}<small>${(CLASSES[m.cls] || CLASSES.fighter).label} · level ${m.level} · ${pts(m)} · ${open(m)} of ${skillsOf(m.cls).length} skills open</small></div>
+        <div class="row">
+          <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 1)}>+1 level</button>
+          <button disabled=${m.level >= DEV_LEVEL_MAX} onClick=${() => up(m, 5)}>+5 levels</button>
+        </div></div>`)}
+      <div class="row">
+        <button disabled=${!S.created} onClick=${() => { devSaid = ''; close(); openParty(); }}>Party<small>spend the points</small></button>
+        <button class="pri" onClick=${() => { panel = ''; devSaid = ''; draw(); }}>Back</button>
+      </div>
+    </div>`;
+  }
+
   function Title() {
+    if (panel === 'dev' && devApply) return html`<${Developer} />`;
     if (panel === 'sound' && audio) return html`<${Sound} />`;
     if (panel === 'graphics' && graphics) return html`<${Graphics} />`;
     if (panel === 'worlds' && openPage) return html`<${Worlds} />`;
@@ -142,7 +186,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       <div class="mark">EMBER<em>FALL</em></div>
       <div class="tag">The heroes of this age are not available… Looks like it is up to you.</div>
       <div class="who">${made
-        ? html`Slot ${slot} · <b>${h.name}</b><br />${(CLASSES[h.cls] || CLASSES.fighter).label} · level ${h.level} · ${where}`
+        ? html`Slot ${slot} · <b>${h.name}</b><br />${(CLASSES[h.cls] || CLASSES.fighter).label} · level ${h.level} · ${where}${S.dev ? ' · dev game' : ''}`
         : html`Slot ${slot} · <b>no hero yet</b><br />a new party, a fresh Emberfall`}</div>
       ${made
         ? html`<button class="pri" onClick=${close}>${mode === 'pause' ? 'Resume' : 'Continue'}</button>`
@@ -163,6 +207,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>${graphics.current() === 'luminati' ? 'Luminati (trial)' : 'Emberlit'} · depth of field</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
+      ${devApply && made && html`<button onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer<small>unlock every skill · levels with their points${S.dev ? ' · a dev game' : ''}</small></button>`}
     </div>`;
   }
   const draw = () => render(html`<${Title} />`, wrap);

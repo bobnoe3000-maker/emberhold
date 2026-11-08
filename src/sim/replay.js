@@ -32,6 +32,10 @@ export function stateHash(snapshot) {
   return ((h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0'));
 }
 
+/** a game the menu's Developer tools touched (sim/dev.js: they grant levels and trials outside play): never verified
+ * @param {any} snapshot */
+export const isDevGame = (snapshot) => !!(snapshot && snapshot.dev === true);
+
 // Start recording on a FRESH sim (straight after createSim + load, before any tick): the
 // session begins from restore(start), exactly as the server's replay does.
 export function startSession(sim, meta = {}) {
@@ -74,7 +78,9 @@ export function verifySession(claim, { verified = null, elapsedMs = Infinity, sl
   if (verified !== null && stateHash(claim.start) !== verified) return { ok: false, reason: 'start state is not the hero\'s verified state' };
   if (claim.ticks < 0 || claim.log.some(([t], i) => t < claim.start.tick || t >= claim.start.tick + claim.ticks || (i && t < claim.log[i - 1][0]))) return { ok: false, reason: 'command log out of range or out of order' };
   if (claim.ticks * 50 > elapsedMs * slack) return { ok: false, reason: 'more game time than real time (sped-up client)' };
+  if (isDevGame(claim.start)) return { ok: false, reason: 'a dev game is never verified' };
   const r = replaySession(claim);
   if (r.hash !== claim.endHash) return { ok: false, reason: 'end state does not match the replay', hash: r.hash };
+  if (isDevGame(r.snapshot)) return { ok: false, reason: 'a dev game is never verified (the menu\'s Developer tools: sim/dev.js)' };
   return { ok: true, hash: r.hash, snapshot: r.snapshot };
 }

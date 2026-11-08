@@ -635,6 +635,10 @@ running the deterministic sim:
   - a 10× sped-up clock.
 - Dev hooks (`?dev`: the live sim on the page, slow motion, manual clock) work only on
   localhost, so a deployed build has no cheat console.
+- **The menu's Developer panel** (2026-11-08; the owner: on the site too, for testing on a phone) is
+  the one exception: every skill unlocked and a level with its points, as sim commands
+  (`src/sim/dev.js`) that mark the slot a dev game (`state.dev`). `verifySession` refuses a dev
+  game, so it can never become verified progress.
 - **Fixed on the way:** saving mid-battle silently failed, because runtime links made the
   snapshot circular. The snapshot now keeps only a member's durable fields.
 

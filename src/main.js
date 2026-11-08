@@ -156,7 +156,10 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   // the sandboxes (the Frontier, docs/frontier-proposal.md; the Luminati prototype, docs/lumina-prototype.md): pages of
   // their own that touch no save, the slot saved before the page goes
   openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; },
-  graphics, tune: () => brightness.open() });
+  graphics, tune: () => brightness.open(),
+  // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim
+  // while the menu holds the game still (it ticks nothing while paused), and the slot saved with them
+  devApply: (cmds) => { for (const c of cmds) sim.commands.push(c); sim.tick(); if (!PREVIEW && sim.state.created) writeSlot(SLOT, sim).catch(() => {}); } });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();
 // offline progress (ui/away.js): a slot's game picks up the time since it was last saved, once play starts (the title

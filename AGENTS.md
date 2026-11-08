@@ -101,7 +101,12 @@ in the same change that introduces it.
      can replay.
    - **Validate every new command** in the sim: ownership, reach, class, bag room, cooldowns,
      location. Invalid commands must do nothing.
-   - **Dev hooks** (`?dev`, globals, cheats for testing) stay localhost-only.
+   - **Dev hooks** (`?dev`, globals, cheats for testing) stay localhost-only. The one exception
+     is the menu's **Developer** panel (the owner, 2026-11-08: on the site too, for phone
+     testing): its tools are sim commands (`sim/dev.js`: every skill unlocked, a level with its
+     points) that mark the slot a **dev game** (`state.dev`, save v34), and `replay.js`
+     `verifySession` refuses a dev game. Any new progress-granting tool goes there, never
+     around it.
    - **Keep replays exact:** `smoke-test.mjs` must still replay a recorded session to the same
      hash and reject every tamper case.
 4. **The sim owns the save shape.** Anything that must survive a reload goes through

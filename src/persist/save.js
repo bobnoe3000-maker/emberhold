@@ -110,7 +110,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 33;
+export const SAVE_VERSION = 34;   // (v34: an optional `dev`, a dev game: sim/dev.js. Nothing to migrate: absent reads as not one)
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
