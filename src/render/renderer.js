@@ -696,7 +696,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
   }
   function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
-    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0;
+    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0, warn = flash ? 0 : look ? look.warn || 0 : 0;
     const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
     let flashEdge = false, hid = 0, shown = 0;
     for (let yy = 0; yy < sp.h; yy++) {
@@ -720,6 +720,11 @@ export function createRenderer(canvas, sim, input, opts = {}) {
           const k = edge ? Math.min(1, flash * 2.4) : flash * 0.35;
           ALB[i] += (255 - ALB[i]) * k; ALB[i + 1] += (205 - ALB[i + 1]) * k; ALB[i + 2] += (160 - ALB[i + 2]) * k;
           if (edge) { EMI[i] = 90 * k; EMI[i + 1] = 60 * k; EMI[i + 2] = 36 * k; EMI[i + 3] = 250; flashEdge = true; }
+        } else if (warn) {                              // winding up: a red-orange rim pulsing on the silhouette, a touch of it inside
+          const edge = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
+          const k = edge ? warn : warn * 0.18;
+          ALB[i] += (255 - ALB[i]) * k * 0.8; ALB[i + 1] += (120 - ALB[i + 1]) * k * 0.6; ALB[i + 2] *= 1 - k * 0.5;
+          if (edge) { EMI[i] = 110 * k; EMI[i + 1] = 40 * k; EMI[i + 2] = 14 * k; EMI[i + 3] = 250; flashEdge = true; }
         }
         if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
         let rim = false;
@@ -1070,6 +1075,18 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
     return out;
   }
+  // the wind-up glow (Luminati's wind-up highlight, Enemy.js: 0.45 ↔ 0.9 at 8 Hz): a foe winding up a heavy blow or shot
+  // pulses on its figure until it strikes, so the ring on the floor reads with the one making it. By foe id, each frame
+  const windGlow = new Map();
+  function windGlowNow(now) {
+    windGlow.clear();
+    for (let i = warns.length - 1; i >= 0; i--) {
+      const W = warns[i], e = W.e, t = (now - W.t0) / 1000;
+      if (t >= W.life) { if (!ext) warns.splice(i, 1); continue; }   // (another painter's frame prunes its own: warnsNow)
+      if (!e.heavy || t < 0 || t >= e.wind) continue;
+      windGlow.set(e.by, Math.max(windGlow.get(e.by) || 0, (0.45 + 0.45 * (0.5 + 0.5 * Math.sin(t * Math.PI * 16))) * Math.min(1, t / 0.06 + 0.3)));
+    }
+  }
   let liveBolts = new Set(), nextBolts = new Set();
   function boltFx(b, bx, by, kind, proj) {
     let t = trails.get(b); if (!t) trails.set(b, t = []);
@@ -1103,7 +1120,37 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
   // fixed framing, so the square sits still like a home screen while the hero moves in it.
-  let camT = 0, leadT = 0, shake = null;             // shake: a heavy blow's short camera jolt
+  let camT = 0, leadT = 0, shake = null;             // shake: a blow's short camera jolt (jolt below)
+  // The feel of a hit (the feel pass, docs/combat-fx.md; Luminati's hit-stop and shake tables, combat-catalog.md §F): each
+  // kind of moment its hold (ms of the world held still: main.js) and its jolt (px of the native window, ms). A blow's
+  // jolt is thrown along it, from the one who struck, then settles; the rest shake in place. Only near the hero (14
+  // tiles: on screen), and × the menu's Hit feel (feelK: full 1, light 0.5, off 0). A stronger jolt running is kept.
+  const FEEL = {
+    crit: { stop: 35, amp: 0.9, ms: 110 },            // our crit on a foe
+    heavy: { stop: 50, amp: 1.6, ms: 160 },           // our heavy blow (an ability)
+    heavyCrit: { stop: 75, amp: 2.0, ms: 170 },
+    struck: { stop: 0, amp: 1.2, ms: 120 },           // a foe's crit on one of us
+    struckHeavy: { stop: 65, amp: 2.2, ms: 180 },     // an elite's heavy blow on one of us
+    struckBoss: { stop: 90, amp: 3.0, ms: 240 },      // a boss's
+    nova: { stop: 45, amp: 1.8, ms: 170 },            // Frost Nova, Turn Undead bursting
+    blast: { stop: 60, amp: 2.8, ms: 220 },           // the Firebolt's explosion
+    stamp: { stop: 0, amp: 2.4, ms: 260 },            // the Toadking's stamp
+    bell: { stop: 0, amp: 1.4, ms: 420 },             // the Abbess's bell
+    down: { stop: 110, amp: 2.4, ms: 220 },           // one of us falls
+    bossDown: { stop: 140, amp: 3.2, ms: 320 },       // a boss falls
+  };
+  let feelMul = 1, stopMs = 0;
+  /** a moment's feel at (x, y), its blow from (ax, ay) when it has one @param {keyof FEEL} kind */
+  function jolt(kind, x, y, ax = null, ay = null) {
+    const F = FEEL[kind], pl = sim.state.player;
+    if (!F || !feelMul || Math.hypot(x - pl.x, y - pl.y) > 14) return;
+    stopMs = Math.max(stopMs, F.stop * feelMul);
+    const amp = F.amp * feelMul, now = clock();
+    if (shake) { const a = (now - shake.t0) / shake.ms; if (a < 1 && shake.amp * (1 - a) * (1 - a) >= amp) return; }
+    let ux = 0, uy = 0;
+    if (ax != null) { const dx = x - ax, dy = y - ay, sx = dx - dy, sy = (dx + dy) / 2, l = Math.hypot(sx, sy); if (l > 0.01) { ux = sx / l; uy = sy / l; } }   // (the blow's way on screen: iso)
+    shake = { t0: now, amp, ms: F.ms, ux, uy };
+  }
   function camera(ix, iy, pz) {
     const hub = sim.world.hub;
     let cx = ix, cy = iy;
@@ -1125,7 +1172,15 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     const C = project(cx, cy, pz), t = camT * camT * (3 - 2 * camT);
     const anchor = (sideL ? 0.52 : 0.47) + (0.56 - 0.47) * t;   // hero sits higher (party cards below; level with no cards there); the square keeps its framing
     let jx = 0, jy = 0;
-    if (shake) { const a = (clock() - shake.t0) / 160; if (a >= 1) shake = null; else { const k = shake.amp * (1 - a) * (1 - a); jx = Math.round(Math.sin(a * 37) * k); jy = Math.round(Math.cos(a * 29) * k * 0.6); } }
+    if (shake) {
+      const a = (clock() - shake.t0) / shake.ms;
+      if (a >= 1) shake = null;
+      else {
+        const k = shake.amp * (1 - a) * (1 - a), push = Math.cos(a * Math.PI * 3);   // (thrown along the blow, back past, settling)
+        jx = Math.round(shake.ux ? shake.ux * k * push + Math.sin(a * 37) * k * 0.3 : Math.sin(a * 37) * k);
+        jy = Math.round(shake.ux || shake.uy ? shake.uy * k * push * 0.7 + Math.cos(a * 29) * k * 0.25 : Math.cos(a * 29) * k * 0.6);
+      }
+    }
     // SUB-PIXEL SCROLL (critic pass 3: the world stepped in whole native pixels — 3 CSS px — in
     // an uneven 1-1-2 cadence, a judder over the whole screen). The window is rendered at the
     // camera rounded UP (ox, oy) and PASS B shifts the upscaled image back by the fraction
@@ -1153,6 +1208,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
 
     const t0 = performance.now();
+    windGlowNow(clock());
     if (X) {                                                       // (the other painter has the world: its level built is the bake)
       const ok = !!ext && ext.ready(sim.world);                    // (made external, before the painter's module is in: black)
       if (!ok && !terrValid && !transit) transit = { job: null, fadeFrom: 0 };
@@ -1268,7 +1324,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
+      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -1618,12 +1674,16 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       fx.impact(c.x, c.y, dx, dy, sc, { heavy: c.heavy, crit: c.crit, now: clock() });
       if (c.heavy || c.crit) fx.shock(c.x, c.y, sc, { now: clock(), big: !!(c.heavy && c.crit) });   // (v1.47) the blow thumps the ground
     }
-    if (c.t === 'hit') addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
+    if (c.t === 'hit') {
+      addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
+      const kind = c.party ? (c.boss ? 'struckBoss' : c.heavy ? 'struckHeavy' : c.crit ? 'struck' : null) : c.heavy ? (c.crit ? 'heavyCrit' : 'heavy') : c.crit ? 'crit' : null;
+      if (kind) jolt(kind, c.x, c.y, c.ax, c.ay);
+    }
     else if (c.t === 'miss') addFloat(c.x, c.y, 'miss', '#9a93a8', 10);
     else if (c.t === 'xp') addFloat(c.x, c.y, '+' + c.amount + ' xp', '#c8a0ff', 10, 30);
     else if (c.t === 'cinders') addFloat(c.x, c.y, '+' + c.amount + ' ✦', '#ff9440', 11, 36);   // an elite's or a boss's cinders, for the smith
     else if (c.t === 'ability') addFloat(c.x, c.y, c.name, '#ffb060', 11, 16);
-    else if (c.t === 'down') addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26);
+    else if (c.t === 'down') { addFloat(c.x, c.y, c.name + ' falls', '#ff6a5a', 12, 26); jolt('down', c.x, c.y); }
     else if (c.t === 'rise') addFloat(c.x, c.y, c.name + ' rises', '#8fd08f', 12, 26);
     else if (c.t === 'fallen') addFloat(c.x, c.y, c.name + ' is slain', '#b8c4d8', 12, 30);
     else if (c.t === 'heal') addFloat(c.x, c.y, '+' + c.amount, '#8fe07a', 12, 20);
@@ -1633,7 +1693,6 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     else if (c.t === 'hex') addFloat(c.x, c.y, 'hexed', '#b8e070', 11, 20);
     else if (c.t === 'freed') fx.beam(c.x, c.y, SOUL_FREE, { now: clock(), life: 1.4 });   // a bound foe laid down by its lamp's breaking: its soul goes up
     else if (c.t === 'lifeline') addFloat(c.x, c.y, 'Lifeline', '#f0e0a0', 12, 24);
-    else if (c.t === 'heavy') { const pl = sim.state.player; if (Math.hypot(c.x - pl.x, c.y - pl.y) < 14) shake = { t0: clock(), amp: c.party ? 2.2 : 1.6 }; }   // a heavy blow lands: a short camera jolt
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
@@ -1641,8 +1700,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     else sfx.event(e, clock());
     if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's
       blast(e.tx, e.ty, clock(), 0.55, 2.4);
-      const pl = sim.state.player; if (Math.hypot(e.tx - pl.x, e.ty - pl.y) < 14) shake = { t0: clock(), amp: 2.8 };
+      jolt('blast', e.tx, e.ty);
     }
+    if ((e.id === 'frost_nova' || e.id === 'turn_undead') && e.at === 'land') jolt('nova', e.tx, e.ty);
   });
   // the fight's other moments (skillfx.js, the boss pass): each boss's mechanic, from the boss (by) to those it raised,
   // called or issued to (tid, reached), followed by id while they move; and a level gained, at the member who gained it
@@ -1652,15 +1712,15 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   sim.bus.on('windup', (e) => {
     const life = e.wind + e.fly + 0.16;
     moment('warn', e, { foeBy: true, ally: true, life, wind: e.wind, fly: e.fly, heavy: e.heavy, bolt: e.bolt, boss: e.boss });
-    if (ext) { warns.push({ e, t0: clock(), life, lock: null }); if (warns.length > 24) warns.shift(); }
+    warns.push({ e, t0: clock(), life, lock: null }); if (warns.length > 24) warns.shift();   // (another painter's markers; both painters' wind-up glow)
   });
   sim.bus.on('bossIssue', (e) => moment('boss_issue', e));
   sim.bus.on('bossCall', (e) => moment('boss_call', e));
   sim.bus.on('bossKindle', (e) => moment('boss_kindle', e));
   sim.bus.on('bossSwarm', (e) => moment('boss_swarm', e));
   sim.bus.on('bossVespers', (e) => moment('boss_vespers', e));
-  sim.bus.on('bossMud', (e) => moment('boss_mud', e));
-  sim.bus.on('bossFlood', (e) => { if (e.level > 0) moment('boss_bells', e); });
+  sim.bus.on('bossMud', (e) => { moment('boss_mud', e); jolt('stamp', e.x, e.y); });
+  sim.bus.on('bossFlood', (e) => { if (e.level > 0) { moment('boss_bells', e); jolt('bell', e.x ?? sim.state.player.x, e.y ?? sim.state.player.y); } });
   sim.bus.on('levelUp', (l) => {
     const i = sim.state.party.findIndex((q) => q.id === l.id), m = sim.state.party[i]; if (!m) return;   // (one on the bench isn't drawn)
     const u = i === 0 ? sim.state.player : m; if (u.x === undefined) return;
@@ -1685,6 +1745,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   sim.bus.on('bossVespers', () => { banner = { text: 'Another sister stands to sing', sub: bossLine.vespers[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: clock() + 2000, small: true } : { text: 'The water goes down', until: clock() + 1800, small: true }; });
   sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossDown', (e) => { if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
   sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: clock() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: clock() + 1100 }; });
@@ -1853,6 +1914,12 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
   return {
     render, resize,
+    /** (for checks and tools/capture/feel.mjs) the camera's jolt now (native px) and the foes glowing as they wind up */
+    get feel() { return { jx: lastCam ? lastCam.rx : 0, jy: lastCam ? lastCam.ry : 0, shaking: !!shake, glow: windGlow.size }; },
+    /** the hit-stop asked for since the last call, ms (main.js holds the world) */
+    takeHitStop() { const h = stopMs; stopMs = 0; return h; },
+    /** the menu's Hit feel: hit-stop and jolt × k (0 off) @param {number} k */
+    setFeel(k) { feelMul = k; },
     /** hold the outdoor light at a look (a part's name or a fraction of the day, daylight.js holdT), or
      * null to follow the sim's clock; a change eases in. The title holds dusk; ?dev&tod= holds any. */
     holdSky(v) {

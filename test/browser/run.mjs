@@ -515,6 +515,43 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await ctx.close(); await b.close();
   }
 }
+// 8b. The feel of a hit (docs/combat-fx.md, the feel pass): in Skarn's hall the world holds on his heavy blows (the sim's
+// time stands still for exactly the held ms), the camera jolts, he glows as he winds up; the menu's Hit feel off: none of it
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const feelRun = async (feel) => {
+      const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
+      const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+      await p.addInitScript((f) => { try { localStorage.setItem('emberfall.graphics', JSON.stringify({ feel: f })); } catch { /* */ } }, feel);
+      await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=wickham_keep`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
+      await p.waitForTimeout(800);
+      const got = await p.evaluate(async () => {
+        const sim = globalThis.__sim, { makeHero, makeMember, statsFor } = await import('/src/sim/party.js'), { autoAllocate } = await import('/src/sim/attributes.js'), { starterKit } = await import('/src/sim/items.js');
+        for (let i = 0; i < 5; i++) globalThis.__frame(1000 / 60);
+        const hall = sim.world.level.descentRoom, lv = sim.world.roomLevels.get(hall.id);
+        sim.state.party = ['fighter', 'rogue', 'cleric'].map((c, i) => { const m = i ? makeMember('c' + i, 'C' + i, c, lv) : makeHero({ cls: c }); m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; });
+        const P = sim.state.player; P.x = P.px = hall.cx + 0.5; P.y = P.py = hall.cy + 0.5;
+        const t0 = sim.state.t, h0 = globalThis.__holds ? globalThis.__holds.ms : 0; let glow = 0, shook = 0, rx = null, jolt = 0;
+        for (let f = 0; f < 600; f++) {
+          globalThis.__frame(1000 / 60); const F = globalThis.__renderer.feel;
+          if (F.glow) glow++; if (F.shaking) shook++;
+          if (rx != null) jolt = Math.max(jolt, Math.abs(F.jx - rx)); rx = F.jx;
+        }
+        const H = globalThis.__holds || { n: 0, ms: 0 };
+        return { secs: Math.round((sim.state.t - t0) * 1000) / 1000, holds: H.n, heldMs: Math.round(H.ms - h0), glow, shook, jolt: Math.round(jolt * 10) / 10, battle: !!sim.battle };
+      });
+      await ctx.close();
+      return { ...got, errs };
+    };
+    const full = await feelRun('full'), off = await feelRun('off');
+    // 600 frames at 60 fps are 10 s; the sim ticks at 20 Hz, so the time it lost to holds is the held ms within a tick
+    check('feel: in a boss fight the world holds on the heavy blows (the sim\'s time behind by the held ms), the camera jolts, the boss glows as he winds up; Hit feel off: none, and no page errors',
+      full.holds >= 2 && Math.abs((10 - full.secs) * 1000 - full.heldMs) <= 60 && full.shook > 0 && full.glow > 0 && off.holds === 0 && off.shook === 0 && Math.abs(off.secs - 10) <= 0.05 && off.glow > 0 && full.errs.length + off.errs.length === 0,
+      JSON.stringify({ full: { ...full, errs: full.errs.length }, off: { ...off, errs: off.errs.length } }));
+    await b.close();
+  }
+}
 // 9. The way out of a fight: the room pill shows the tide, "Step out" pulses when low, a tap walks out
 {
   const b = await launch(chromium, 'chromium');
@@ -1448,7 +1485,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
     const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
-    await p.locator('#title button', { hasText: 'Off' }).click();
+    await p.locator('#title button', { hasText: 'everything sharp' }).click();   // (the depth of field's Off: the Hit feel has one too)
     const dofOff = await p.evaluate(() => window.__game?.postfx?.settings?.dof?.enabled === false);
     // the menu's Brightness (the owner, 2026-11-04; ui/brightness.js): the menu closes into play with the tray along the
     // bottom; Dusk holds the dusk light; + raises dusk 5 % and the world's multiply with it at once; Reset all and Done

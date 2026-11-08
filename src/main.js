@@ -30,7 +30,7 @@ import { screenDirToWorld } from './render/iso.js';
 import { createAudio } from './audio/engine.js';
 import { createListener } from './audio/listen.js';
 import { holdWeather } from './render/weatherfx.js';
-import { rendererFor, readGraphics, writeGraphics } from './render3d/settings.js';
+import { rendererFor, readGraphics, writeGraphics, feelK } from './render3d/settings.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -77,6 +77,7 @@ const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const LUMINATI = rendererFor() === 'luminati' && !STAGE;      // (the world drawn by Luminati: render3d/hybrid.js, below)
 const renderer = createRenderer(canvas, sim, input, { external: LUMINATI });
+renderer.setFeel(feelK(readGraphics().feel));   // (the menu's Hit feel: hit-stop and jolt, render3d/settings.js)
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 // the world in Luminati (docs/luminati-port-plan.md, the trial build): the menu's Graphics or ?renderer=luminati. Emberlit
 // stays the game's eye (its camera, its figures' frames, everything over the world, every tap); Luminati draws the world
@@ -140,6 +141,7 @@ const graphics = { read: readGraphics, current: rendererFor, set: async (/** @ty
   const before = rendererFor(), next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.bright && world3d) world3d.setBright(next.bright);
+  if (patch.feel) renderer.setFeel(feelK(next.feel));
   if (patch.renderer && patch.renderer !== before) {
     if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {});
     const u = new URL(location.href); u.searchParams.delete('renderer'); location.href = u.href;
@@ -205,16 +207,24 @@ if (DEV && params.get('weather')) holdWeather(params.get('weather'));   // ?dev&
 // clock run 8× slower — for inspecting animation and weapon effects frame by frame
 if (DEV) globalThis.__slow = Math.max(1, +(new URLSearchParams(location.search).get('slow') || 1));
 let vnow = performance.now(), slowed = false;
+// hit-stop (the feel pass, docs/combat-fx.md): a heavy blow, a crit, a boss's blow or a fall holds the world for a few
+// frames (renderer.js takeHitStop: its ms by the blow, × the menu's Hit feel). The game's clock stops (the sim's ticks and
+// every animation wait; the slow motion's virtual clock), so nothing in the sim changes, only when it happens. holdTo:
+// the real ms it holds until; a stop within STOP_GAP ms of the last one is let go, so a melee never stutters
+let holdFrom = 0, holdTo = 0;
+const STOP_GAP = 250;
 
 function frame(now) {
   // the next frame first: an error while drawing (a renderer bug) must not stop the loop — it
   // did once, and a missing class in a lookup froze the whole game at the first fight
   if (!MANUAL) requestAnimationFrame(frame);
   if (away.running) { last = now; return; }   // the time away is being played through (ui/away.js): no ticks, no drawing
-  const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1;
+  const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1, real = now;
   let dt = (now - last) / 1000 / SLOW;
+  const held = Math.max(0, Math.min(real, holdTo) - Math.max(last, holdFrom)) / 1000 / SLOW;   // (the part of this frame the world held)
   last = now;
-  if (SLOW !== 1 || slowed) { vnow += Math.min(dt, MAX_FRAME) * 1000; now = vnow; slowed = true; } else vnow = now;
+  dt = Math.max(0, dt - held);
+  if (SLOW !== 1 || slowed || held) { vnow += Math.min(dt, MAX_FRAME) * 1000; now = vnow; slowed = true; } else vnow = now;
   if (dt > MAX_FRAME) dt = MAX_FRAME;
   acc += dt;
 
@@ -230,6 +240,7 @@ function frame(now) {
     sim.tick();
     acc -= TICK_DT;
   }
+  { const h = renderer.takeHitStop(); if (h > 0 && real > holdTo + STOP_GAP) { holdFrom = real; holdTo = real + h * SLOW; if (DEV) { const H = (globalThis.__holds ||= { n: 0, ms: 0 }); H.n++; H.ms += h; } } }   // (dev: counted, for checks)
 
   renderer.holdSky(title.isOpen ? 'dusk' : STAGE ? TOD || 'dusk' : previewPart || TOD);   // the title is always at dusk; the Brightness tray holds its part; play follows the clock
   if (!cinema.playing) renderer.render(acc / TICK_DT, now);   // the intro covers the world: don't draw it underneath

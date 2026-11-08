@@ -5804,14 +5804,14 @@ var Ao = {
 			t.set(a, o + 1);
 			let s = ma(a, o);
 			s.visible = !0, s.material.emissiveIntensity !== Oa && (s.material.emissiveIntensity = Oa), (s._col !== r.col || s._row !== r.row) && s.setFrame(r.col, r.row), ha(s, r.x, r.z, (e.meta.ch - e.meta.ay) * i, a.pixelsPerUnit * i);
-			let c = r.flash || 0;
-			if (s._emberFlash !== c) {
-				s._emberFlash = c;
+			let c = r.flash || 0, l = c ? 0 : Math.round((r.warn || 0) * 20) / 20;
+			if (s._emberFlash !== c || s._emberWarn !== l) {
+				s._emberFlash = c, s._emberWarn = l;
 				let e = 1 + c * 2.6;
-				s.tint = new g(e, e * .96, e * .9);
+				s.tint = l ? new g(1 + .9 * l, 1 + .12 * l, 1 - .35 * l) : new g(e, e * .96, e * .9);
 			}
-			let l = 1 - (r.fade || 0);
-			Math.abs(s.opacity - l) > .01 && (s.opacity = l), s.update(0, n);
+			let u = 1 - (r.fade || 0);
+			Math.abs(s.opacity - u) > .01 && (s.opacity = u), s.update(0, n);
 		}
 		for (let r of e.bits || []) {
 			let e = Va(r), i = t.get(e) || 0;

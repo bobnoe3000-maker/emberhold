@@ -181,6 +181,19 @@ test('the Brightness dial (the owner, 2026-11-04: "a setting for me to dial in b
   } finally { delete globalThis.localStorage; }
 });
 
+test('the menu\'s Hit feel (the feel pass): full by default, light half, off none; kept per device, an unknown value read as full', async () => {
+  const { readGraphics, writeGraphics, feelK } = await import('../src/render3d/settings.js');
+  assert.deepEqual([feelK('full'), feelK('light'), feelK('off')], [1, 0.5, 0]);
+  const mem = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
+  try {
+    assert.equal(readGraphics().feel, 'full');
+    writeGraphics({ feel: 'off' }); assert.equal(readGraphics().feel, 'off');
+    writeGraphics({ dof: 'off' }); assert.equal(readGraphics().feel, 'off', 'another setting leaves it be');
+    mem.set('emberfall.graphics', '{"feel":"loud"}'); assert.equal(readGraphics().feel, 'full');
+  } finally { delete globalThis.localStorage; }
+});
+
 test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): a glow at the head of the way up, daylight on a first floor; the well lit violet', () => {
   for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
     const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }), first = convertWorld(s0.world).level;

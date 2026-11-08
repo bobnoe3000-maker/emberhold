@@ -7,14 +7,16 @@
 //   · the brightness outdoors by the part of the day (the owner, 2026-11-04: "In game add a setting for me to dial in
 //     brightness for day, dusk, dawn and night so i can better test and confirm settings"): a percentage a part, 100 the
 //     shipped look (render3d/bright.js), for the Luminati renderer (the menu's Brightness tray, ui/brightness.js).
+//   · the hit feel (the feel pass, docs/combat-fx.md): a blow's hit-stop and camera jolt, 'full', 'light' (half) or 'off',
+//     on both renderers, for anyone who'd rather the screen kept still.
 // ?renderer=emberlit|luminati overrides the stored choice for one page load (tests, captures, a link to try it).
 // Presentation only: nothing here reaches the sim or a save.
 
 const KEY = 'emberfall.graphics';
 /** @typedef {{ dawn: number, day: number, dusk: number, night: number }} Bright percentages, 100 the shipped look */
-/** @typedef {{ renderer: 'emberlit' | 'luminati', dof: 'soft' | 'off', bright: Bright }} Graphics */
+/** @typedef {{ renderer: 'emberlit' | 'luminati', dof: 'soft' | 'off', bright: Bright, feel: 'full' | 'light' | 'off' }} Graphics */
 /** @type {Graphics} */
-const DEFAULTS = { renderer: 'emberlit', dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 } };
+const DEFAULTS = { renderer: 'emberlit', dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 }, feel: 'full' };
 /** the dial's range and step, percent */
 export const BRIGHT_MIN = 25, BRIGHT_MAX = 300, BRIGHT_STEP = 5;
 /** a stored dial, each part a whole step within the range (100 where missing or unreadable) @param {any} b @returns {Bright} */
@@ -23,13 +25,15 @@ function brightOf(b) {
   for (const k of Object.keys(out)) { const v = b && +b[k]; if (Number.isFinite(v)) out[k] = Math.min(BRIGHT_MAX, Math.max(BRIGHT_MIN, Math.round(v / BRIGHT_STEP) * BRIGHT_STEP)); }
   return out;
 }
-const RENDERERS = ['emberlit', 'luminati'], DOFS = ['soft', 'off'];
+const RENDERERS = ['emberlit', 'luminati'], DOFS = ['soft', 'off'], FEELS = ['full', 'light', 'off'];
+/** the hit feel's strength: hit-stop and camera jolt × this @param {string} f */
+export const feelK = (f) => (f === 'off' ? 0 : f === 'light' ? 0.5 : 1);
 
 /** the stored settings (the defaults where storage is missing or unreadable) @returns {Graphics} */
 export function readGraphics() {
   let v;
   try { v = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { v = {}; }
-  return { renderer: RENDERERS.includes(v.renderer) ? v.renderer : DEFAULTS.renderer, dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright) };
+  return { renderer: RENDERERS.includes(v.renderer) ? v.renderer : DEFAULTS.renderer, dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright), feel: FEELS.includes(v.feel) ? v.feel : DEFAULTS.feel };
 }
 /** store a change (merged over what's stored) @param {Partial<Graphics>} patch @returns {Graphics} */
 export function writeGraphics(patch) {

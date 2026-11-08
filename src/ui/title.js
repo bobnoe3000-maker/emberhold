@@ -106,6 +106,12 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
         ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
       </div>
+      <div class="tag">Hit feel</div>
+      <div class="row">
+        ${choice('feel', 'full', 'Full', 'blows hold and jolt', g.feel === 'full')}
+        ${choice('feel', 'light', 'Light', 'half as much', g.feel === 'light')}
+        ${choice('feel', 'off', 'Off', 'the screen keeps still', g.feel === 'off')}
+      </div>
       ${tune && html`<div class="tag">Brightness by the part of the day${r === 'luminati' ? '' : ' (with Luminati)'}</div>
       <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
         ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')

@@ -408,3 +408,65 @@ spell light) and are all gone after; a heavy blow's ring and a shot's lane are l
 - The renderer's download grew: `luminati.js` 206.4 → 214.2 kB, and GroundFrost (48 kB, a chunk Luminati's own ice mage
   shares) now loads with it.
 - The Tomb's shatter (its shards flying) and the frozen foes' ice shells aren't used: our nova slows, it doesn't freeze.
+
+## The feel of a hit (2026-11-08)
+
+The catalog's other presentation import ([combat-catalog.md](combat-catalog.md) §A recommendation 3, §F): Luminati's
+hit-stop and shake tables, and its wind-up highlight, on both renderers. Presentation only: the sim's ticks are the same,
+only when they happen moves.
+
+**Before.** A heavy blow jolted the camera one way (1.6 px, or 2.2 when it landed on us, 2.8 for the Firebolt's blast; all
+160 ms, shaken in place). Nothing else: a crit, a boss's blow and a fall felt like any hit, and a foe winding up looked
+like any foe.
+
+**After.**
+- **Hit-stop** (`main.js`): the world holds for a few frames when a blow lands hard. The game's clock stops (the sim's ticks
+  and every animation wait, as dev slow motion does it), so nothing in the sim changes. A stop within 250 ms of the last
+  one is let go, so a melee never stutters.
+- **A shake table** (`renderer.js` FEEL, jolt): each moment its hold and its jolt. A blow's jolt is thrown along it, from
+  the one who struck, then settles; the rest shake in place. A stronger jolt running is kept. Only within 14 tiles of the
+  hero.
+
+  | Moment | Hold, ms | Jolt, native px / ms |
+  |---|---|---|
+  | our crit | 35 | 0.9 / 110 |
+  | our heavy blow (an ability) | 50 | 1.6 / 160 |
+  | our heavy crit | 75 | 2.0 / 170 |
+  | a foe's crit on us | 0 | 1.2 / 120 |
+  | an elite's heavy blow on us | 65 | 2.2 / 180 |
+  | a boss's blow on us | 90 | 3.0 / 240 |
+  | Frost Nova, Turn Undead | 45 | 1.8 / 170 |
+  | the Firebolt's blast | 60 | 2.8 / 220 |
+  | the Toadking's stamp | 0 | 2.4 / 260 |
+  | the Abbess's bell | 0 | 1.4 / 420 |
+  | one of us falls | 110 | 2.4 / 220 |
+  | a boss falls | 140 | 3.2 / 320 |
+
+- **The wind-up glow:** a foe winding up a heavy blow or shot pulses with a red-orange rim on its figure until it strikes
+  (Luminati's highlight: 0.45 ↔ 0.9 at 8 Hz), so the warning ring on the floor reads with the one making it. On Emberlit
+  a rim in the light (`stamp` look.warn); on Luminati its sprite tinted as Luminati's own highlight. It's information, so
+  it stays with the Hit feel off.
+- **The menu's Graphics: Hit feel**: full, light (half the hold and jolt) or off (the screen keeps still), per device
+  (`render3d/settings.js`).
+
+**Measured** (`node tools/capture/feel.mjs`, new: a motion trace on the manual clock through Skarn's first heavy blow at
+2.7 s, 60 fps, before and after on both renderers):
+
+| | Sim time over 0.9 s of frames | Holds | Camera's largest move, native px | Frames with a foe glowing |
+|---|---|---|---|---|
+| before | 0.900 s | 0 | 1.4 | 0 |
+| after, full | 0.800 s | 3 | 2.2 (3 on his blow) | 28 |
+| after, light | 0.800 s | 3 | 1.0 | 25 |
+| after, off | 0.900 s | 0 | 0 | 22 |
+
+(Luminati the same, its before's blow a frame later.) Burst frames, +0 … 0.5 s from the blow's start; rows: Emberlit
+before, after; Luminati before, after. After, Skarn's rim glows as he winds up, and the world holds as the blow lands:
+
+![Skarn's heavy blow, before and after](img/fx/feel.jpg)
+
+**Checked** in the browser suite: in Skarn's hall the world holds on the heavy blows, the sim's time behind by exactly
+the held ms; the camera jolts; he glows; with the Hit feel off, no hold and no jolt.
+
+**Left.**
+- Not yet tried on a phone. Hit-stop is a matter of taste: the numbers are a first pass to tune by hand.
+- Luminati's world (its water, weather, flames) keeps moving through a hold; only our figures and effects stand.

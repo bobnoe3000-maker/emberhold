@@ -526,7 +526,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
-    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy });
+    bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy, boss: !!by.boss });
     if (tgt.hp <= 0 && isParty && battle && !battle.lifeline && state.party.some((q) => q.cls === 'cleric' && alive(q) && hasPassive(q))) {
       tgt.hp = 1; battle.lifeline = true;                       // Lifeline: once a room visit, the blow that would down an ally doesn't
       bus.emit('combat', { t: 'lifeline', x: tgt.x, y: tgt.y, name: tgt.name });

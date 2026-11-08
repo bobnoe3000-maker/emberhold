@@ -551,7 +551,7 @@ const api = {
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
-   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number }[],
+   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number, warn?: number }[],
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,
@@ -577,8 +577,8 @@ const api = {
       if (s.material.emissiveIntensity !== figGlow) s.material.emissiveIntensity = figGlow;
       if (s._col !== a.col || s._row !== a.row) s.setFrame(a.col, a.row);
       standAt(s, a.x, a.z, (A.meta.ch - A.meta.ay) * k, sheet.pixelsPerUnit * k);
-      const fl = a.flash || 0;                                 // (a hit's flash: Emberlit's look.flash, white over the figure)
-      if (s._emberFlash !== fl) { s._emberFlash = fl; const k = 1 + fl * 2.6; s.tint = new THREE.Color(k, k * 0.96, k * 0.9); }   // (the sprite's colour lifted, lit as ever: Luminati's own hit flash, combatFx, drew our sheets as pale cut-outs)
+      const fl = a.flash || 0, wn = fl ? 0 : Math.round((a.warn || 0) * 20) / 20;   // (a hit's flash: Emberlit's look.flash, white over the figure; a wind-up's glow, Luminati's own highlight 1.6, 0.7, 0.3)
+      if (s._emberFlash !== fl || s._emberWarn !== wn) { s._emberFlash = fl; s._emberWarn = wn; const k = 1 + fl * 2.6; s.tint = wn ? new THREE.Color(1 + 0.9 * wn, 1 + 0.12 * wn, 1 - 0.35 * wn) : new THREE.Color(k, k * 0.96, k * 0.9); }   // (the sprite's colour lifted, lit as ever: Luminati's own hit flash, combatFx, drew our sheets as pale cut-outs)
       const op = 1 - (a.fade || 0);
       if (Math.abs(s.opacity - op) > 0.01) s.opacity = op;
       s.update(0, camera);

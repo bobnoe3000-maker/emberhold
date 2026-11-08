@@ -108,7 +108,9 @@ Each row puts what fills a role in Emberfall next to what fills it in Luminati. 
 **Adopted (2026-11-08):**
 - the telegraph grammar for foes' heavy blows and shots, on both renderers ([combat-fx.md](combat-fx.md) "Attack warnings");
 - on Luminati, Frost Nova in the Tomb's crystals and ground frost, Turn Undead in Judgement's pillars and glyph
-  ([combat-fx.md](combat-fx.md) "Frost Nova and Turn Undead on Luminati").
+  ([combat-fx.md](combat-fx.md) "Frost Nova and Turn Undead on Luminati"; architecture A19);
+- hit-stop, a shake table and the wind-up highlight, on both renderers, with a Hit feel setting
+  ([combat-fx.md](combat-fx.md) "The feel of a hit").
 
 **Still open:**
 - the sim quirks below;

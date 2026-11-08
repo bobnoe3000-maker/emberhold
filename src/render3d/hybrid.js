@@ -201,7 +201,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0 });   // (cw: as drawn, a boss 1.3×)
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0 });   // (cw: as drawn, a boss 1.3×)
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
           rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
