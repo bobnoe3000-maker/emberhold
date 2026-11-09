@@ -44,7 +44,7 @@ test('every foe kind has a baked look: the renderer names its atlas and the atla
   const actor = Object.fromEntries([...map.matchAll(/(\w+): '(\w+)'/g)].map((m) => [m[1], m[2]]));
   for (const k of ENEMY_KINDS) {
     assert.ok(actor[k], `ENEMY_ACTOR has ${k}`);
-    for (const ext of ['json', 'alb.png', 'nrm.png']) assert.ok(existsSync(new URL(`../assets/actors/${actor[k]}.${ext}`, import.meta.url)), `${actor[k]}.${ext}`);
+    for (const ext of ['json', 'alb.png']) assert.ok(existsSync(new URL(`../assets/actors/${actor[k]}.${ext}`, import.meta.url)), `${actor[k]}.${ext}`);
   }
   const stage = read('../src/dev/stage.js');
   for (const k of FENS) assert.ok(stage.includes(`'${actor[k]}'`), `the Stage lines up ${actor[k]}`);

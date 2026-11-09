@@ -1,12 +1,12 @@
 # Luminati only: what to remove and clean up (a proposal, 2026-11-09)
 
-**Status: Accepted; steps 1 and 2 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
+**Status: Accepted; steps 1–3 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
 and fx/asset combos in the current code, so what code/assets and game options should we remove or clean up?", then, on
 §4's four questions: "Go with your recommendations on all four, start step 1". Also decided the same day: the dungeons
 keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)). Decision row A21
 ([architecture.md](./architecture.md)).
 
-This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 3–5 are
+This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 4–5 are
 decided and not started.
 
 **In short:**
@@ -110,7 +110,7 @@ Each step ships on its own, with the browser suite green before the next.
 |---|---|---|
 | 1 ✓ | **Luminati the default and only choice**: the renderer row and `?renderer` out; a clear message if Luminati can't start (today a failed start leaves a black world and only logs) | The browser suite's ≈ 60 checks move onto Luminati: CI time (it took 48 of its 75 minutes before this) |
 | 2 ✓ | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
-| 3 | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
+| 3 ✓ | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
 | 4 | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
 | 5 | **Tools, tests and docs** to match | Low |
 
@@ -145,6 +145,20 @@ Each step ships on its own, with the browser suite green before the next.
   floating dots) now runs on the game's own Luminati Thornwick. The menu check finds the Frontier and no prototype.
 - **Docs:** `lumina-prototype.md` Superseded; A16 Superseded; CREDITS credit Luminati as the game's renderer; AGENTS.md's
   prototype and spike commands and URLs out.
+
+### 3.3 Step 3 as built (2026-11-09; the owner: "Ok go ahead")
+
+- **The loaders first** (`src/render/renderer.js`): `loadActorAtlas` and the env atlases fetch the albedo only. Luminati
+  never read the rest (its sprite figures and kept env sprites load `*.alb.png` themselves, `tools/render3d/world.js`);
+  Emberlit's painting, the developer's `?renderer=emberlit` until step 4, now lights every figure and structure with
+  one normal (`FLAT_NRM`), no glow, and stands a structure as a flat card (no depth key, no baked shadow, no lit windows).
+- **Then the files:** `assets/actors/*.nrm.png` (76), `*.emi.png` (25), `assets/env/*.nrm.png` and `*.key.png` (5 + 5):
+  111 files, **118.0 MB**, out of the repo and the deploy (`assets/actors` and `assets/env` are 84.6 MB now). A phone
+  in the game no longer downloads them either: see the commit for the boot's bytes before and after.
+- **Then the bakers:** `bake.cjs` writes the albedo only (the JSON's `img` hash from it) and removes a stale normal or
+  glow map; `bake-env.cjs` the albedo only. The lab still draws the passes; nothing is re-baked by this step.
+- **Tests:** the browser suite's atlas check also fails if a normal, glow or depth-key atlas is asked for;
+  `fens-foes.test.mjs` no longer requires a normal map.
 
 ## 4. Questions for the owner (answered 2026-11-09: the recommendations, all four)
 

@@ -68,8 +68,10 @@ directions** (row 0 = E, 1 = SE, 2 = S toward the camera, … clockwise) × ever
 
 Scale and camera are fixed from the idle pose so the figure never pulses between frames,
 and the rest pose is restored before each sample so the heroic pass never compounds.
-Outputs are `<name>.json` (cell size, foot anchor, clips, glow) plus `.alb/.nrm/.emi.png`,
-loaded by `loadActorAtlas()` in `src/render/renderer.js`.
+Outputs are `<name>.json` (cell size, foot anchor, clips, glow) plus `.alb.png`, loaded by `loadActorAtlas()` in
+`src/render/renderer.js` and by the Luminati world (`tools/render3d/world.js`, the sprite figures). The normal and
+emissive passes are still drawn by the lab but no longer written: only Emberlit's lighting read them
+(docs/luminati-only-cleanup.md step 3).
 
 **Weapon anchors.** Every held weapon is a rigid mesh under a hand slot (`handslotr` /
 `handslotl`; shields are skipped). `weaponRig()` finds its tip once, in slot space: the end

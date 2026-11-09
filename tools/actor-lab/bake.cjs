@@ -1,7 +1,6 @@
 // bake.cjs — bake the game's actor atlases from bake.json into assets/actors/:
 // <out>.json (cell size, foot anchor, clips, glow id) + <out>.alb.png (grim albedo,
-// alpha = mask) + <out>.nrm.png (screen-space normals) + <out>.emi.png (glow mask,
-// only when the figure has glowing parts), and for actors with `portrait: true` a lit head-and-
+// alpha = mask), and for actors with `portrait: true` a lit head-and-
 // shoulders <out>.face.png (96 × 112) for the windows; with `figure: { pose }` the whole lit figure
 // <out>.fig.png (352 × 408) for the character window. Needs `npm i` + `sh fetch-assets.sh`.
 //   node bake.cjs [actor…] [--anchors | --portraits]   (--anchors also refreshes each atlas's measured walk `stride`)
@@ -57,11 +56,12 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
     const t0 = Date.now(), r = await p.evaluate(async ([v, clips, g]) => await window.bakeAtlas(v, clips, g), [{ ...v, ...(a.grade || {}) }, a.clips, a.gain ?? spec.albedoGain ?? 1]);   // per-actor gain / grade overrides
     // img: the images' own hash. The game fetches them at a version of this JSON's text (renderer atlasMeta), and a
     // re-bake that changes only pixels (2026-10-03: Old Skarn's ears) left the JSON, and so the cached images, as they were
-    const img = require('crypto').createHash('sha1').update(r.alb).update(r.nrm).update(r.emi || '').digest('hex').slice(0, 10);
+    // (the normal and glow maps are no longer written: only Emberlit's lighting read them, docs/luminati-only-cleanup.md step 3)
+    const img = require('crypto').createHash('sha1').update(r.alb).digest('hex').slice(0, 10);
     const meta = { ...r.meta, glow: r.emi ? a.glow : 0, img, source: `KayKit CC0 · ${v.label} · heroic + grim · ${pxOf(a)}px` };
     fs.writeFileSync(path.join(OUT, `${a.out}.json`), JSON.stringify(meta) + '\n');
-    png(`${a.out}.alb.png`, r.alb); png(`${a.out}.nrm.png`, r.nrm);
-    const emi = path.join(OUT, `${a.out}.emi.png`); if (r.emi) png(`${a.out}.emi.png`, r.emi); else if (fs.existsSync(emi)) fs.unlinkSync(emi);
+    png(`${a.out}.alb.png`, r.alb);
+    for (const old of ['nrm', 'emi']) { const f = path.join(OUT, `${a.out}.${old}.png`); if (fs.existsSync(f)) fs.unlinkSync(f); }   // (a scratch tree's from before)
     console.log(`${a.out}: ${meta.frames} frames × 8 dirs, ${meta.cw}×${meta.ch} cells, glow ${meta.glow} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
     if (r.faceStats) console.log(`${a.out}: face ${JSON.stringify(r.faceStats)}`);   // (BAKE_PROTO=…,stats: the front idle cell's head box and feature pixels)
   }

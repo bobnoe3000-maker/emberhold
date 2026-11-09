@@ -1,5 +1,5 @@
 // bake-env.cjs — bake env.json + town.json (our own buildkit.js models) into the game's
-// environment atlases: assets/env/env.{alb,nrm,key}.png + env.json (per-sprite
+// environment atlases: assets/env/env.alb.png + env.json (per-sprite
 // rect, origin, footprint) + one town-<region> atlas per region (town.json), and src/sim/envfoot.js (footprints for collision —
 // the sim never reads renderer assets). Needs `npm i` only — every model is built in code.
 const fs = require('fs'), path = require('path');
@@ -21,7 +21,10 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
   const t0 = Date.now(), foot = {};
   for (const [name, l] of sets) {
     const r = await p.evaluate(async (l) => await window.bakeAll(l), l);
-    for (const c of ['alb', 'nrm', 'key']) fs.writeFileSync(path.join(OUT, `${name}.${c}.png`), Buffer.from(r[c].split(',')[1], 'base64'));
+    // (the albedo only: the normal-and-shadow and depth-key atlases went with Luminati only, docs/luminati-only-cleanup.md step 3;
+    // the bake still draws them, for the sprites' measures)
+    fs.writeFileSync(path.join(OUT, `${name}.alb.png`), Buffer.from(r.alb.split(',')[1], 'base64'));
+    for (const old of ['nrm', 'key']) { const f = path.join(OUT, `${name}.${old}.png`); if (fs.existsSync(f)) fs.unlinkSync(f); }
     fs.writeFileSync(path.join(OUT, `${name}.json`), JSON.stringify({ width: r.width, height: r.height, sprites: r.meta }) + '\n');
     for (const [k, m] of Object.entries(r.meta)) if (!k.includes('~')) foot[k] = m.foot;   // (id~frame: an idle frame of id, not a thing of its own)
     console.log(`  ${name}: ${l.length} sprites → ${r.width}×${r.height}`);

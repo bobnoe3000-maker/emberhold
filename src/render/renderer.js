@@ -309,6 +309,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193);
     return { meta: JSON.parse(t), v: (h >>> 0).toString(36) };
   });
+  const FLAT_NRM = [127, 160, 250];                    // a pixel facing the camera, a little up (as the bolts': below)
   const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
   // scale: how tall against a man (a boss 1.3×). The bake makes the bosses tall (73 px; art pass 9), so their atlas
   // loads as it is; an atlas baked smaller (88-px cells at 56 px, e.g. an older checkout's twin on the Stage) is
@@ -316,8 +317,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   async function loadActorAtlas(name, scale = 1, root = './assets/actors/') {   // root: the dev Stage's before/after twin loads another checkout's
     const base = root + name, { meta: m0, v } = await atlasMeta(base + '.json'), k = scale * 88 / m0.cw;
     const up = Math.abs(k - 1) > 0.04, meta = up ? scaledMeta(m0, k) : m0;
+    // (the albedo only: the normal and glow maps went with Luminati only, docs/luminati-only-cleanup.md step 3. Emberlit's
+    // painting, a developer's ?renderer=emberlit until step 4, lights every pixel with one normal, FLAT_NRM, and no glow)
     const alb = pixels(await loadImg(`${base}.alb.png?v=${v}`)), iw = acv.width;
-    const nrm = pixels(await loadImg(`${base}.nrm.png?v=${v}`)), emi = meta.glow ? pixels(await loadImg(`${base}.emi.png?v=${v}`)) : null;
     const { cw, ch, ax, ay } = m0, cells = [];
     for (let r = 0; r < meta.dirs; r++) {
       const row = [];
@@ -328,8 +330,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
           if (alb[i + 3] < 128) continue;
           sp.mask[j] = 1;
           sp.alb[j * 3] = alb[i]; sp.alb[j * 3 + 1] = alb[i + 1]; sp.alb[j * 3 + 2] = alb[i + 2];
-          sp.nrm[j * 3] = nrm[i]; sp.nrm[j * 3 + 1] = nrm[i + 1]; sp.nrm[j * 3 + 2] = nrm[i + 2];
-          if (emi && emi[i] > 128) sp.emi[j] = meta.glow;
+          sp.nrm.set(FLAT_NRM, j * 3);
         }
         row.push(sp);
       }
@@ -355,9 +356,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   SKELETONS.forEach((n, i) => firstLoads.push(loadActorAtlas(n).then((a) => { skelAtlases[i] = a; enemyAtlases.set(n, a); }).catch(() => {})));
 
   // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
-  // mountains baked by tools/actor-lab/bake-env.cjs — albedo, normal (+ shadow in its
-  // alpha), and a per-pixel depth key (+ lit-window flag). Sprites are sliced lazily,
-  // only when a scene first uses them.
+  // mountains baked by tools/actor-lab/bake-env.cjs — the albedo (its normal, shadow, depth key and lit windows went with
+  // Luminati only: docs/luminati-only-cleanup.md step 3; Emberlit's painting, a developer's escape until step 4, stands
+  // each as a flat card). Sprites are sliced lazily, only when a scene first uses them.
   // Two atlases are live at a time: the shared base ('env': trees, rocks, props) and the
   // current region's town buildings ('town-<region>': same shapes, the region's tones).
   let envMeta = null;                                  // { sprites: id → meta (+ .atlas) } merged across loaded atlases
@@ -367,9 +368,9 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     if (envAtlases.has(name)) return null;
     envAtlases.set(name, null);
     return atlasMeta(`./assets/env/${name}.json`)
-      .then(({ meta, v }) => Promise.all([meta, ...['alb', 'nrm', 'key'].map((c) => loadImg(`./assets/env/${name}.${c}.png?v=${v}`))]))
-      .then(([m, a, n, k]) => {
-        envAtlases.set(name, { a, n, k });
+      .then(({ meta, v }) => Promise.all([meta, loadImg(`./assets/env/${name}.alb.png?v=${v}`)]))
+      .then(([m, a]) => {
+        envAtlases.set(name, { a });
         envMeta = envMeta || { sprites: {} };
         for (const [id, sm] of Object.entries(m.sprites)) envMeta.sprites[id] = { ...sm, atlas: name };
         terrValid = false; outMap = null; envGen++;
@@ -383,7 +384,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     const m = envMeta && envMeta.sprites[id]; if (!m) return null;
     const envImgs = envAtlases.get(m.atlas); if (!envImgs) return null;
     const grab = (img) => { ecv.width = m.w; ecv.height = m.h; ectx.clearRect(0, 0, m.w, m.h); ectx.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h); return ectx.getImageData(0, 0, m.w, m.h).data; };
-    const A = grab(envImgs.a), N = grab(envImgs.n), K = grab(envImgs.k), U = m.up || 1, w = m.w * U, h = m.h * U, n = w * h;
+    const A = grab(envImgs.a), U = m.up || 1, w = m.w * U, h = m.h * U, n = w * h;
     // (m.up: baked at 1/up of the pixels, the mountain massifs; scaled back ×up, nearest, here: critic pass 10)
     const sp = { w, h, ax: m.ax * U, ay: m.ay * U, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
     for (let j = 0; j < n; j++) {
@@ -391,10 +392,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       if (A[i + 3] >= 128) {
         sp.mask[j] = 1;
         sp.alb[j * 3] = A[i]; sp.alb[j * 3 + 1] = A[i + 1]; sp.alb[j * 3 + 2] = A[i + 2];
-        sp.nrm[j * 3] = N[i]; sp.nrm[j * 3 + 1] = N[i + 1]; sp.nrm[j * 3 + 2] = N[i + 2];
-        sp.dep[j] = K[i] + K[i + 1] / 255 - 128;
-        sp.emi[j] = K[i + 2] > 128 ? m.glow || 9 : 0;   // its GLOW_ID: lit windows, or the stairwell's violet
-      } else if (N[i + 3] > 40) sp.mask[j] = 2;              // ground shadow only
+        sp.nrm.set(FLAT_NRM, j * 3);                   // (dep and emi stay 0: a flat card, no lit windows)
+      }
     }
     envCache.set(id, sp);
     return sp;
