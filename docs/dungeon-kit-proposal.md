@@ -229,5 +229,93 @@ The sim is untouched, so the balance contract and the replay hashes cannot move.
    would survey the other CC0 packs for painted stone first.
 2. **How bright:** keep the dusk and lift only the play area (0.20–0.26), or go toward the reference (0.32)?
 3. **The camera:** stay at 30°, or try 40–45° (the spike's fourth panel; the HUD, taps and minimap would follow)?
-4. **The figures:** stay sprites (re-baked at 2×), or move to the 3D models (§5.8)?
+4. **The figures:** stay sprites (re-baked at 2×), or move to the 3D models (§5.8)? Both are shown with our cast in §9.
 5. **Emberlit:** retire its dungeons once Luminati's are built, or keep it at parity with a bake of the kit?
+
+---
+
+## 9. Resolution, smoothness and the figures (2026-11-09)
+
+The owner: "What can we do to increase resolution and some smoothness to our existing assets, and show me what 4
+would look like with our characters."
+
+### 9.1 Where the softness comes from
+
+- **Luminati draws at 1.25× pixel density** (its `Game.js`: `maxPixelRatio: 1.25`). On a phone at 3× density, the
+  canvas is 487 × 1055 pixels for a 1170 × 2532 screen, and the browser stretches it 2.4×. That softens the whole
+  world, the figures included (panels 1 and 2 below).
+- **The figures are 56 px pixel art** (`bake.json` `px: 56`), sampled nearest, so each texel covers about three
+  screen pixels. At non-integer scales the blocks come out uneven, and they shimmer as a figure moves.
+- **The ground is Luminati's own pixel-art tiles** (16 px): the cobbles in panel 1.
+- Emberlit draws at a third of the screen's resolution and scales up 3×, by design.
+
+### 9.2 What we can do, cheapest first
+
+| # | Lever | Cost | Gain |
+|---|---|---|---|
+| 1 | **Render at the phone's density:** `maxPixelRatio` 1.25 → 2, with Luminati's `renderScale` lowered whenever a frame runs over budget (dynamic resolution). A Graphics setting: Sharp, Balanced, Battery. | 2.6× the pixels at 2, 5.8× at 3. Measured on the iPhone before it ships. | The biggest single step: everything is sharp (panel 2 → 3). A small change. |
+| 2 | **Sharp-bilinear sampling** for the pixel art: smooth the step between texels at non-integer scales without blurring them | A few lines in the sprite shader | No uneven blocks, no shimmer as figures move |
+| 3 | **Anti-aliasing** at the new density (MSAA, or FXAA in the post pass) | Small at 2× | Smooth mesh edges |
+| 4 | **Re-bake the atlases bigger** (`BAKE_PX`) and sample them smooth (panel 4a) | At 2×, four times the pixels (below). 1.5× (84 px) is a middle step. Compression (KTX2/Basis) would cut GPU memory 4–8×, with its own decision row. | Finer detail; still a flat card |
+| 5 | **The env sprites** (`bake-env.cjs`: houses, trees, rocks) re-baked the same way, or replaced by kit meshes | As 4 | As 4 |
+| 6 | **The figures as 3D models** (panel 4b) | The renderer work in §9.4 | Smooth at any size, lit and shadowed by the room, any facing, every frame |
+
+### 9.3 Option 4 with our cast
+
+The kit room (§4) with our party (Knight F1, Cleric C1, Rogue R2) against two skeletons (E1, E2), each at the same
+frame of the same clip, drawn three ways. It is shot on a phone at 3× density (`node tools/kit/spike.mjs --cast
+<bakeDir>`, `tools/actor-lab/kit-cast.html`).
+
+- **The cards** are lit as Luminati lights the game's figures: their normals lean 0.6 toward the sky, and
+  `figureGlow`'s self-light is 1.0 underground.
+- **The models** are built by `lab.js` itself (`labActor`): the heroic proportions, faces, gear and recolours the
+  bake uses. The room lights them, with 0.4 of the cards' self-light, and they cast shadows.
+- **The 2× re-bake** used `BAKE_PX=112` into a scratch folder: five actors in 3 min 55 s.
+
+![1 the game now; 2 the kit room with today's sprites at 1.25×; 3 the same at 3×; 4a sprites re-baked at 2×, smooth; 4b the models at 3× and at 1.5×](img/dungeon/cast-options.jpg)
+
+![The room with today's sprites, and with the models](img/dungeon/cast-room.jpg)
+
+- **4a, re-baked sprites:** smoother edges and finer detail (faces, buckles, the shield's rim), and the ink outline
+  thins. But it is still a card: it has no shadow of its own, light never catches its edges, it turns in 45° steps
+  (eight facings), and it animates at the baked 7–16 frames a second.
+- **4b, the models:** the same people, gear and colours, standing in the room. The torches light them, they cast
+  shadows on the floor, they are smooth at any zoom, and they could turn and animate continuously. At 1.5× (the last
+  panel) they still hold up, which leaves room in the frame budget.
+
+| | Today's sprites | Re-baked at 2× | 3D models |
+|---|---|---|---|
+| Download, one actor | 1.2–1.8 MB (atlas PNG) | 3.6–5.8 MB | Mesh about 330 KB; texture 13–16 KB. The animations (1.3–2.0 MB raw for 76–95 clips, of which we use about 11) are shared by every figure. |
+| GPU memory, one actor | About 24 MB (7,392 × 816 RGBA) | About 96 MB (14,700 × 1,640: wider than the 8,192 most phones take, so it would be split) | Under 1 MB |
+| All 76 actors' atlases | 80 MB of PNG | About 4× | n/a |
+| Draw calls, the five figures | 5 | 5 | 138 unmerged (about 27 a figure, one per part); 2–4 a figure merged |
+| Triangles, a figure | 2 | 2 | 6–7 k |
+| Facings and frames | 8, at 7–16 fps | 8, at 7–16 fps | Any facing, every frame |
+
+The port plan's budget is 64 MB of actor textures on a phone (§8). Re-baking at 2× breaks it four times over unless
+the atlases are compressed. The models fit it many times over.
+
+### 9.4 What 4b takes
+
+- **The renderer** draws each figure from its variant, as `lab.js` builds it (model, gear, face, recolour,
+  code-built props), instead of an atlas frame: the same code, run in the game rather than in the bake.
+- **The animator** hands over a clip, a time and a facing angle instead of a clip frame and an octant. The heroic
+  pass (bones lengthened after each pose is sampled) runs each frame, as the bake does: a few dozen bones a figure.
+- **What the atlases carry now moves:**
+  - the weapon anchors the effects use → the hand bones;
+  - the grim pass (desaturation, the ink outline) → a material grade, and an outline pass if wanted;
+  - the townsfolk's heights;
+  - the glowing eyes.
+- **Loading:** the shared animation set once, then a mesh per variant. Each figure's parts are merged to keep the
+  draw calls down.
+- **What stays baked:** the portraits, the character-window figures, and Emberlit's atlases (from the same
+  variants).
+- **The sim is untouched:** no balance, replay or save number can move.
+
+### 9.5 Recommendation
+
+1. **Now:** render at the phone's density (cap 2, dynamic) with sharp-bilinear sampling (levers 1–3). It is a small
+   change that sharpens everything, the existing art included. Measure the frame rate on the iPhone first.
+2. **The figures:** go to 3D (4b), alongside the kit, since it is the same renderer work. It is smoother, lit by the
+   room, and a quarter of a megabyte a figure where a 2× re-bake costs four times today's memory.
+3. Keep re-baking (4a) as a fallback for Emberlit, or for a phone that can't afford the models.

@@ -140,6 +140,16 @@ window.probeBone = async (v, bone, clip = 'Idle', t = 0) => {
   const ax = (x, y, z) => new THREE.Vector3(x, y, z).applyQuaternion(q).toArray().map((n) => +n.toFixed(2));
   return { pos: b.getWorldPosition(new THREE.Vector3()).toArray().map((n) => +n.toFixed(3)), x: ax(1, 0, 0), y: ax(0, 1, 0), z: ax(0, 0, 1), scale: s.toArray().map((n) => +n.toFixed(3)) };
 };
+// a variant built and posed in 3D as the bake sees it (heroic proportions, its face, gear and recolour), for a page that
+// stands our cast in a scene of its own (docs/dungeon-kit-proposal.md §9, the figures as models: tools/actor-lab/kit-cast.html).
+// Returns the root and `pose(clip, t)`, which re-poses it from rest so the heroic pass never compounds.
+window.labActor = async (v, { far = false } = {}) => {
+  const c = await build(v, { far }), bones = [];
+  c.root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+  const at = (clip, t) => { for (const [b, p, q, s] of bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); } pose(c, clip, t, true); };
+  at('Idle', 0); const idle = fitPpu(c.root, v);
+  return { root: c.root, pose: at, height: idle.box.max.y - idle.box.min.y, minY: idle.box.min.y };
+};
 function lights(s, side) {
   s.add(new THREE.HemisphereLight(0x9a8cc0, 0x1a1428, 1.5));
   const pl = new THREE.PointLight(0xffb070, 16, 0, 1.4); pl.position.set(side * 1.6, 1.9, 1.4); s.add(pl);
