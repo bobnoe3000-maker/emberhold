@@ -154,7 +154,15 @@ Each step ships on its own, with the browser suite green before the next.
   one normal (`FLAT_NRM`), no glow, and stands a structure as a flat card (no depth key, no baked shadow, no lit windows).
 - **Then the files:** `assets/actors/*.nrm.png` (76), `*.emi.png` (25), `assets/env/*.nrm.png` and `*.key.png` (5 + 5):
   111 files, **118.0 MB**, out of the repo and the deploy (`assets/actors` and `assets/env` are 84.6 MB now). A phone
-  in the game no longer downloads them either: see the commit for the boot's bytes before and after.
+  in the game no longer downloads them either. Measured on Luminati, the art a boot fetches from `assets/actors` and
+  `assets/env` (`?renderer=luminati`, settled), before (677dcba) → after:
+
+  | Scene | Before | After |
+  |---|---|---|
+  | Thornwick | 51 files, 37.0 MB (albedo 16.8, normals 18.3, keys 1.5, glow 0.4) | 24 files, 16.9 MB (−54 %) |
+  | The Old Barrows, floor 1 | 25 files, 26.5 MB (albedo 12.0, normals 13.1, keys 1.1, glow 0.3) | 11 files, 12.0 MB (−55 %) |
+
+  Nothing failed to load either way. The browser suite: 113 checks, all pass (the Emberlit-painted ones too, lit flat).
 - **Then the bakers:** `bake.cjs` writes the albedo only (the JSON's `img` hash from it) and removes a stale normal or
   glow map; `bake-env.cjs` the albedo only. The lab still draws the passes; nothing is re-baked by this step.
 - **Tests:** the browser suite's atlas check also fails if a normal, glow or depth-key atlas is asked for;
