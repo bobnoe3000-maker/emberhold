@@ -219,8 +219,11 @@ And besides the bosses:
   - Wren's twin knives in Saltmere's sea-teal.
   - Wren's ranged looks: four new atlases, `hero_wren_bow`, `_longbow`, `_xbow` and `_hxbow` (`tools/actor-lab` variants
     CP2B, CP2L, CP2X, CP2H), worn as the rogue's are.
-- **Sound** (`audio/cues.js`): each skill its own, from the bank's one-shots pitched and layered (no new samples). For
-  example, Frost Nova is a cold ring with the floor cracking under it, and Turn Undead a deep bell. Each boss's mechanic
+- **Sound** (`audio/cues.js`): each skill its own, from the bank's one-shots pitched and layered. For example, Turn
+  Undead is a deep bell. (2026-11-09, the owner: Frost Nova "sound like a horn? Should be more like ice crackling".
+  Its cold ring was the shield's chime pitched up, a stack of harmonics from 400 to 4800 Hz held 0.2 s: a horn. Now it
+  is ice cracking, made by `tools/audio/synth.mjs`: a split, a crunch, then about 90 brittle ticks thinning out over
+  0.9 s and a few glassy pings gone in 0.05 s. Glacial Tomb has the same ice, deeper, as it closes.) Each boss's mechanic
   and a ward breaking are heard where they happen too. The cast is silent now, where every skill was the same war cry.
 
 How it's built, as the skills' moments are:

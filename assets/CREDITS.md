@@ -69,6 +69,8 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
 - **Licence of the copies:** the adapted files in `assets/audio/` are shared under the same licence, CC-BY-SA 3.0.
   The share-alike covers the sound files, not the game's code.
 - **Synthesised in code** (`src/audio/engine.js`): the blows (filtered noise) and the crit's crack. These are ours.
+- **Synthesised by `tools/audio/synth.mjs`** (2026-11-09): `ice_1`–`ice_3.mp3`, ice cracking (Frost Nova, Glacial Tomb).
+  Made from seeded noise and sines, no recording: ours, CC0.
 
 ## The Luminati prototype — `lumina/`
 

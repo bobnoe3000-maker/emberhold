@@ -1,5 +1,5 @@
 {
- "_": "Sources for assets/audio (tools/audio/prep.mjs). Flare (flare-game, mods/fantasycore/soundfx, CC-BY-SA 3.0): one-shots are trimmed and peak-normalised, loops loudness-normalised. A cue lists its variants; the engine picks one, never the same twice running. A variant may be a cut from a longer file: { src, at, len } (seconds; the drips are single drops cut from the cave-droplets loop, which dripped 12 times in 10 s; the birds' and the owl's single calls are cut from their loops the same way), with `af` a filter and `in` a fade-in, s.",
+ "_": "Sources for assets/audio (tools/audio/prep.mjs). Flare (flare-game, mods/fantasycore/soundfx, CC-BY-SA 3.0): one-shots are trimmed and peak-normalised, loops loudness-normalised. A cue lists its variants; the engine picks one, never the same twice running. A variant may be a cut from a longer file: { src, at, len } (seconds; the drips are single drops cut from the cave-droplets loop, which dripped 12 times in 10 s; the birds' and the owl's single calls are cut from their loops the same way), with `af` a filter and `in` a fade-in, s. A variant `{ synth, seed }` is made by tools/audio/synth.mjs (ours, CC0): the ice cracking, which nothing in Flare's set does.",
  "shots": {
   "gob_cry": ["enemies/goblin_ment.ogg", "enemies/goblin_phys.ogg"],
   "gob_hurt": ["enemies/goblin_hit.ogg"],
@@ -17,6 +17,7 @@
   "bow": ["powers/shoot.ogg"],
   "fire": ["powers/fireball.ogg"],
   "spirit": ["powers/freeze.ogg"],
+  "ice": [{ "synth": "ice", "seed": 1 }, { "synth": "ice", "seed": 2 }, { "synth": "ice", "seed": 3 }],
   "hex": ["powers/shock.ogg"],
   "heal": ["powers/heal.ogg"],
   "ward": ["powers/shield.ogg"],

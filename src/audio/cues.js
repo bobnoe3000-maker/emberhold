@@ -90,7 +90,7 @@ export function eventCue(name, ev) {
 }
 
 // ── each skill's own sound (the boss pass, docs/combat-fx.md: every one was the same war cry) ─────────────────────────
-// Built from the bank's one-shots as they are (no new samples): a cue pitched and layered so each reads apart, by class: the fighter's
+// Built from the bank's one-shots (the ice made for it, tools/audio/synth.mjs; the rest as they are): a cue pitched and layered so each reads apart, by class: the fighter's
 // steel and breath, the rogue's whip and hiss, the mage's fire and frost, the cleric's bell-gold, the shaman's spirit
 // and hex. Played on the skill's 'skill' event where it lands (Shield Wall's war cry on its cast); a heal's, a ward's and
 // a hex's own event still sounds under it ('heal', 'ward', 'hex').
@@ -103,7 +103,7 @@ const SKILL_SOUND = {
   smoke_step: { cues: [['fire', 0.62, 0.45], ['spirit', 1.5, 0.25]] },                // a hiss of smoke
   venom: { cues: [['hex', 1.45, 0.5], ['drip', 1.3, 0.55]] },                          // a wet splash
   firebolt: { cues: [['fire', 0.82, 0.95], ['quake', 1.6, 0.35]] },                   // the burst, a thump under it
-  frost_nova: { cues: [['ward', 1.55, 0.7], ['quake', 1.3, 0.45]] },                  // a cold ring, the floor cracking
+  frost_nova: { cues: [['ice', 1, 0.95]] },                                         // ice cracking out (the owner: the chime was a horn)
   arcane_ward: { cues: [['spirit', 1.6, 0.3]] },                                      // (its 'ward' sounds under it)
   mend: { cues: [['levelup', 1.65, 0.3]] },                                           // a bright chime (and its 'heal')
   bless: { cues: [['levelup', 1.22, 0.45], ['ward', 0.9, 0.3]] },                      // a bell, a hum
@@ -122,7 +122,7 @@ const SKILL_SOUND = {
   caltrops: { cues: [['coins', 1.5, 0.55], ['drip', 0.8, 0.3]] },                    // iron scattered on stone
   flare: { cues: [['fire', 0.6, 0.7], ['quake', 1.45, 0.45]] },                      // the pillar's roar
   gather: { cues: [['spirit', 0.55, 0.5], ['ward', 0.7, 0.35]] },                    // a pull of air
-  glacial_tomb: { cues: [['ward', 1.25, 0.75], ['guard', 1.9, 0.3]] },              // ice closing
+  glacial_tomb: { cues: [['ice', 0.72, 0.9], ['guard', 1.9, 0.3]] },                // ice closing, deeper
   blizzard: { cues: [['spirit', 1.15, 0.4], ['fire', 1.85, 0.25]] },                // a wind, sleet
   sanctuary: { cues: [['levelup', 1.45, 0.4], ['heal', 0.9, 0.35]] },              // a chime, a hum held
   consecrate: { cues: [['levelup', 1.05, 0.4], ['ward', 0.6, 0.3]] },              // a low bell on the floor

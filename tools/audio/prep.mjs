@@ -5,28 +5,38 @@
 // MP3's padding never clicks).
 //   FFMPEG=/path/to/ffmpeg FLARE=/path/to/flare-game node tools/audio/prep.mjs
 //   (ffmpeg: any build with libmp3lame, e.g. `pip install imageio-ffmpeg`; FLARE: a checkout of flareteam/flare-game)
+//   … --only ice,other   rebuild just those one-shot cues into the bank as it stands (the rest and the loops kept; a
+//   synth-only cue needs no FLARE). A variant `{ "synth": name, "seed": N }` is made by synth.mjs, not read from Flare.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync, existsSync } from 'node:fs';
+import { writeSynth } from './synth.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..'), OUT = join(ROOT, 'assets', 'audio');
 const FF = process.env.FFMPEG || 'ffmpeg', SRC = join(process.env.FLARE || '', 'mods', 'fantasycore', 'soundfx');
 const spec = JSON.parse(readFileSync(join(ROOT, 'tools', 'audio', 'sounds.json'), 'utf8'));
-rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true });
+const oi = process.argv.indexOf('--only'), ONLY = oi > 0 ? new Set(process.argv[oi + 1].split(',')) : null;
+if (ONLY) for (const c of ONLY) if (!spec.shots[c]) throw new Error(`--only: no one-shot cue '${c}' in sounds.json`);
+if (!ONLY) rmSync(OUT, { recursive: true, force: true }); mkdirSync(OUT, { recursive: true });
 
 const ff = (args) => execFileSync(FF, ['-hide_banner', '-nostdin', '-y', ...args], { stdio: ['ignore', 'pipe', 'pipe'] }).toString();
 const measure = (file, filter) => spawnSync(FF, ['-hide_banner', '-nostdin', '-i', file, '-af', filter, '-f', 'null', '-'], { encoding: 'utf8' }).stderr;
 const durOf = (file) => { const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(spawnSync(FF, ['-hide_banner', '-i', file], { encoding: 'utf8' }).stderr); return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0; };
 
+const old = ONLY && existsSync(join(OUT, 'bank.json')) ? JSON.parse(readFileSync(join(OUT, 'bank.json'), 'utf8')) : null;
 const bank = { shots: {}, loops: {} }; let bytes = 0;
 const VOICE = /^(gob|bone|man|woman|cult)_/;
 const TRIM = 'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.005,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02,areverse';
 for (const [cue, list] of Object.entries(spec.shots)) {
+  if (ONLY && !ONLY.has(cue)) { if (old && old.shots[cue]) bank.shots[cue] = old.shots[cue]; continue; }
+  if (old && old.shots[cue]) for (const v of old.shots[cue]) rmSync(join(OUT, v.f), { force: true });
   bank.shots[cue] = [];
   list.forEach((v, i) => {
     // a variant: a file, or a cut from one ({ src, at, len }: a single drop out of a loop), faded out at its end
-    const cut = typeof v === 'object', inF = join(SRC, cut ? v.src : v), tmp = join(OUT, `_${cue}_${i}.wav`), out = join(OUT, `${cue}_${i + 1}.mp3`);
+    const syn = typeof v === 'object' && v.synth, synF = join(OUT, `_${cue}_${i}_synth.wav`);
+    if (syn) { writeSynth(v.synth, v.seed || 1, synF); v = synF; }
+    const cut = typeof v === 'object', inF = syn ? synF : join(SRC, cut ? v.src : v), tmp = join(OUT, `_${cue}_${i}.wav`), out = join(OUT, `${cue}_${i + 1}.mp3`);
     // (`af` filters a cut first, e.g. a bird's call high-passed off the field recording's rumble; `in` fades it in over
     // that many seconds, for a cut that starts inside the recording's own background)
     const span = cut ? ['-ss', String(v.at), '-t', String(v.len)] : [], fade = cut ? `${v.af ? ',' + v.af : ''}${v.in ? `,afade=t=in:d=${v.in}` : ''},afade=t=out:st=${Math.max(0, v.len - 0.12)}:d=0.12` : '';
@@ -36,11 +46,12 @@ for (const [cue, list] of Object.entries(spec.shots)) {
     // limited to −1 dBFS, and 3 dB off at 3.5 kHz, where a goblin's screech had nearly all its energy
     const voice = VOICE.test(cue), af = voice ? `equalizer=f=3500:t=q:w=1:g=-3,volume=${(-18 - mean).toFixed(2)}dB,alimiter=limit=0.89:level=false` : `volume=${(-1 - peak).toFixed(2)}dB`;
     ff(['-i', tmp, '-af', af, '-codec:a', 'libmp3lame', '-b:a', '80k', out]);
-    rmSync(tmp); bytes += statSync(out).size;
+    rmSync(tmp); if (syn) rmSync(synF); bytes += statSync(out).size;
     bank.shots[cue].push({ f: `${cue}_${i + 1}.mp3`, d: +durOf(out).toFixed(3) });
   });
 }
 for (const [cue, o] of Object.entries(spec.loops)) {
+  if (ONLY) { if (old && old.loops[cue]) bank.loops[cue] = old.loops[cue]; continue; }
   const inF = join(SRC, o.src), out = join(OUT, `${cue}.mp3`);
   const take = o.take ? ['-t', String(o.take)] : [];
   ff(['-i', inF, ...take, '-af', 'aformat=channel_layouts=mono,loudnorm=I=-20:TP=-2:LRA=11:linear=true', '-ar', '44100', '-codec:a', 'libmp3lame', '-b:a', '64k', out]);
@@ -48,4 +59,4 @@ for (const [cue, o] of Object.entries(spec.loops)) {
   bank.loops[cue] = { f: `${cue}.mp3`, d: +durOf(out).toFixed(3) };
 }
 writeFileSync(join(OUT, 'bank.json'), JSON.stringify(bank, null, 1) + '\n');
-console.log(`assets/audio: ${Object.keys(bank.shots).length} one-shot cues (${Object.values(bank.shots).flat().length} files), ${Object.keys(bank.loops).length} loops, ${(bytes / 1024).toFixed(0)} KB`);
+console.log(`assets/audio${ONLY ? ` (rebuilt ${[...ONLY]}; the KB theirs)` : ''}: ${Object.keys(bank.shots).length} one-shot cues (${Object.values(bank.shots).flat().length} files), ${Object.keys(bank.loops).length} loops, ${(bytes / 1024).toFixed(0)} KB`);
