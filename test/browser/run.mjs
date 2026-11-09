@@ -43,7 +43,13 @@ const SLOW = CI ? 3 : 1, PATIENT = 30000 * SLOW;
 function patient(b) {
   if (!b) return b;
   const ctx = b.newContext.bind(b);
-  b.newContext = async (o) => { const c = await ctx(o); c.setDefaultTimeout(PATIENT); c.setDefaultNavigationTimeout(PATIENT); return c; };   // (newPage makes its context through this)
+  // Luminati is the game's only renderer for players since 2026-11-09 (docs/luminati-only-cleanup.md step 1), but the
+  // checks that name no renderer still test Emberlit's painting, through its developer escape (render3d/settings.js
+  // rendererFor: sessionStorage), until the cleanup's step 4 moves them onto Luminati with a budget for CI's software GL;
+  // a check that passes ?renderer=luminati gets Luminati as before
+  b.newContext = async (o) => { const c = await ctx(o); c.setDefaultTimeout(PATIENT); c.setDefaultNavigationTimeout(PATIENT);
+    await c.addInitScript(() => { try { if (!sessionStorage.getItem('emberfall.renderer')) sessionStorage.setItem('emberfall.renderer', 'emberlit'); } catch { /* no storage */ } });
+    return c; };   // (newPage makes its context through this)
   return b;
 }
 async function launch(type, name) {
@@ -1455,6 +1461,30 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await ctx.close(); await b.close();
   }
 }
+// Luminati can't start (docs/luminati-only-cleanup.md step 1; the owner, 2026-11-09: a message and a Retry, no hidden
+// fallback): its module refused, as on a phone that can't load it, the game says so over the world (ui/worldfail.js), with
+// what went wrong in small print; the taps under it never reach the world; Retry reloads the page
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    await ctx.route(/\/src\/vendor\/luminati-/, (r) => r.abort());
+    await p.goto(`${base}/index.html?scene=town&notitle&renderer=luminati`);
+    const shown = await p.waitForSelector('#worldFail', { timeout: 30000 * SLOW }).then(() => true, () => false);
+    const box = shown ? await p.evaluate(() => { const el = document.getElementById('worldFail'), btn = el.querySelector('button'), r = btn.getBoundingClientRect(), cover = el.getBoundingClientRect();
+      return { text: el.textContent, role: el.getAttribute('role'), w: r.width, h: r.height, full: cover.width >= innerWidth && cover.height >= innerHeight }; }) : null;
+    let reached = false;
+    if (shown) {
+      await p.evaluate(() => { globalThis.__worldTap = 0; for (const ev of ['pointerdown', 'touchstart', 'mousedown']) addEventListener(ev, () => { globalThis.__worldTap++; }); });
+      await p.mouse.click(195, 200); reached = await p.evaluate(() => globalThis.__worldTap > 0);
+    }
+    const reload = shown ? await Promise.all([p.waitForEvent('load', { timeout: 30000 * SLOW }).then(() => true, () => false), p.locator('#worldFail button').click()]).then(([r]) => r) : false;
+    check('worldfail: when Luminati can\'t start, the game says so over the world with the reason in small print and a Retry (≥ 44 px) that reloads the page; the taps under it never reach the world',
+      shown && box.role === 'alertdialog' && /couldn’t be drawn/.test(box.text) && /Your game is safe/.test(box.text) && box.text.length > 120 && box.w >= 44 && box.h >= 44 && box.full && !reached && reload,
+      JSON.stringify({ shown, box, reached, reload }));
+    await b.close();
+  }
+}
 // the trial of Luminati as the game's world renderer (docs/luminati-port-plan.md, phase 0; src/render3d/): the game itself
 // with ?renderer=luminati. Thornwick is converted from the sim and built in the frame under the HUD; Luminati's camera
 // puts the ground where Emberlit's overlay and taps expect it (to a pixel or two); Luminati\'s canvas takes no pointer; the menu's
@@ -1503,10 +1533,12 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     check('render3d: the floating stick shows where the thumb is on Luminati, not in the top-left corner', stick.under > 0 && stick.was === 0, JSON.stringify(stick));
     const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f);
       return { under: ['hud', 'vignette', 'menuBtn'].every((id) => !!(f.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING)) && cs.zIndex === 'auto', pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
-    // the menu's Graphics: Luminati pressed, and the depth of field off at once
+    // the menu's Graphics: no choice of renderer any more (Luminati only, docs/luminati-only-cleanup.md step 1), the
+    // People line saying what Luminati draws them as, and the depth of field off at once
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
-    const pressed = await p.evaluate(() => [...document.querySelectorAll('#title button[aria-pressed="true"]')].map((el) => el.firstChild.textContent.trim()));
+    const pressed = await p.evaluate(() => ({ names: [...document.querySelectorAll('#title button')].map((el) => el.textContent).join(' | '), people: document.getElementById('figStatus')?.textContent || '' }));
+    const noChoice = !/Emberlit|Luminati/.test(pressed.names) && /^People: /.test(pressed.people);
     await p.locator('#title button', { hasText: 'everything sharp' }).click();   // (the depth of field's Off: the Hit feel has one too)
     const dofOff = await p.evaluate(() => window.__game?.postfx?.settings?.dof?.enabled === false);
     // the menu's Brightness (the owner, 2026-11-04; ui/brightness.js): the menu closes into play with the tray along the
@@ -1527,7 +1559,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     });
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
-    // the menu's Compare worlds: this game's two renderers, the prototype's five maps, Luminati's worlds and the Frontier
+    // the menu's Compare worlds: the prototype's maps, Luminati's worlds and the Frontier (this game's renderers no more)
     await p.locator('#title button', { hasText: 'Back' }).click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
     await p.evaluate(() => globalThis.__ui.title.close());
@@ -1540,10 +1572,10 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
       return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
       if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics shows Luminati and turns the depth of field off; its Brightness tray holds a part and dials it at once; Compare worlds lists this game\'s two renderers and the prototype\'s maps',
-      town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && pressed.includes('Luminati') && dofOff
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; Compare worlds lists the prototype\'s maps and no renderers',
+      town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && noChoice && dofOff
         && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
-        && ['Emberlit', 'Luminati', 'Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
+        && !worlds.includes('Emberlit') && !worlds.includes('Luminati') && ['Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken

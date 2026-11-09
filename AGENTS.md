@@ -14,7 +14,7 @@ that happens.
 | 3 | [`docs/emberfall-gdd.md`](docs/emberfall-gdd.md) | The rules and numbers |
 | 3 | [`docs/emberfall-world.md`](docs/emberfall-world.md) | Canon: names, history, factions |
 | 4 | [`docs/quest-lore-system.md`](docs/quest-lore-system.md) | Quests, lore, NPCs, dialogue |
-| 4 | [`docs/emberlit-tdd.md`](docs/emberlit-tdd.md) | The renderer |
+| 4 | [`docs/luminati-port-plan.md`](docs/luminati-port-plan.md), [`docs/luminati-only-cleanup.md`](docs/luminati-only-cleanup.md) | The renderer: Luminati draws the world (A21); [`docs/emberlit-tdd.md`](docs/emberlit-tdd.md) for the overlay, taps and the effects' light it still runs on |
 | 4 | [`tools/actor-lab/README.md`](tools/actor-lab/README.md) | Bakes |
 
 ## Commands
@@ -23,9 +23,9 @@ that happens.
 npm ci                                    # once: dev tooling only (the game itself has no build)
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
-#   ?tierlooks=luminati|now (with ?renderer=luminati: all twenty of the tiers' skills, and the holds, in Luminati's own looks, or none; default the owner's picks, renderer.js TIER_LUM; tools/capture/tiers.mjs)
-#   ?renderer=luminati|emberlit (the world drawn by Luminati under the same sim, HUD and taps: the port plan's trial, docs/luminati-port-plan.md §12; the menu's Graphics stores it per device, with the depth of field)
-#   ?figures=sprites (with ?renderer=luminati: the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
+#   ?tierlooks=luminati|now (on Luminati: all twenty of the tiers' skills, and the holds, in Luminati's own looks, or none; default the owner's picks, renderer.js TIER_LUM; tools/capture/tiers.mjs)
+#   ?renderer=emberlit (developer escape: Emberlit paints the world in this tab, kept until ?renderer=luminati; the game is Luminati only, docs/luminati-only-cleanup.md, A21; goes in the cleanup's step 4. The browser suite's checks that name no renderer use it)
+#   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
@@ -39,7 +39,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's views list everything, the Frontier's stick, lock and zoom, the Luminati trial renderer lined up with the HUD (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's views list everything, the Frontier's stick, lock and zoom, Luminati lined up with the HUD, and its message and Retry when it can't start (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--off id,id]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --off: those abilities' auto-use off for everyone; SKILLS=1: each ability's casts and reach; --fresh = hires at their hire level (half the hero's), not levelled up; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); --up N = every kit piece at the smith's +N; --size: fight in a room of that size (default large, the contract's arena); --floor N: on that floor (the Old Barrows' default 2, the Ashbound's, as the contract); DMG=1: damage by member
 node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman] [--floor N] [--off id,id]   # a boss hall vs fighter + rogue + cleric (or shaman) at a level (TRACE=1: a timeline); --floor: the hall on floor N (the Drowned Abbey has three); 'held N %': the share of the boss's fight he stood held (stun, freeze, knockdown)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level, in the dungeon whose band holds it (dev plan §2.7 targets)

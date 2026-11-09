@@ -12,7 +12,7 @@ import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
 const [SITE = 'wickham_keep', OUT = 'docs/img/dungeon', TAG = SITE, BASE = 'http://localhost:8080'] = process.argv.slice(2);
-const R = process.env.RENDERER === 'luminati' ? '&renderer=luminati' : '', FLOOR = +(process.env.FLOOR || 0), PLACES = process.env.PLACES ? process.env.PLACES.split(',') : null, TOD = process.env.TOD || 'day';
+const R = process.env.RENDERER === 'luminati' ? '&renderer=luminati' : '&renderer=emberlit', FLOOR = +(process.env.FLOOR || 0), PLACES = process.env.PLACES ? process.env.PLACES.split(',') : null, TOD = process.env.TOD || 'day';
 const want = (name) => !PLACES || PLACES.includes(name);
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });

@@ -1,15 +1,17 @@
 # Luminati only: what to remove and clean up (a proposal, 2026-11-09)
 
-**Status: Proposed.** The owner (2026-11-09): "we are going to stick with the Luminati version and fx/asset combos in the
-current code, so what code/assets and game options should we remove or clean up?" Also decided the same day: the dungeons
-keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)).
+**Status: Accepted; step 1 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
+and fx/asset combos in the current code, so what code/assets and game options should we remove or clean up?", then, on
+§4's four questions: "Go with your recommendations on all four, start step 1". Also decided the same day: the dungeons
+keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)). Decision row A21
+([architecture.md](./architecture.md)).
 
-This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). **Nothing has
-been removed yet.**
+This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 2–5 are
+decided and not started.
 
 **In short:**
-- **Luminati isn't the default yet.** `src/render3d/settings.js` still defaults to Emberlit, so a new player sees Emberlit
-  until they change Graphics. The first step makes Luminati the default and the only choice.
+- **Luminati is the default and the only choice (step 1, done).** Graphics has no renderer row; a stored Emberlit choice
+  is ignored; a failed start says so over the world with a Retry (§3).
 - **Emberlit can't simply be deleted.** In Luminati mode it is still the game's eye: the camera, the animator that times
   every figure's clip, every tap, the minimap and labels, the joystick, and the light of the blows and spells.
 - **What can go:** about 37 % of `renderer.js` (≈ 780 lines that paint the world), two whole modules (≈ 560 lines), the
@@ -106,13 +108,36 @@ Each step ships on its own, with the browser suite green before the next.
 
 | Step | What | Risk |
 |---|---|---|
-| 1 | **Luminati the default and only choice**: the renderer row and `?renderer` out; a clear message if Luminati can't start (today a failed start leaves a black world and only logs) | The browser suite's ≈ 60 checks move onto Luminati: CI time (it took 48 of its 75 minutes before this) |
+| 1 ✓ | **Luminati the default and only choice**: the renderer row and `?renderer` out; a clear message if Luminati can't start (today a failed start leaves a black world and only logs) | The browser suite's ≈ 60 checks move onto Luminati: CI time (it took 48 of its 75 minutes before this) |
 | 2 | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
 | 3 | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
 | 4 | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
 | 5 | **Tools, tests and docs** to match | Low |
 
-## 4. Questions for the owner
+### 3.1 Step 1 as built (2026-11-09)
+
+- **`src/render3d/settings.js`:** the Graphics settings hold no renderer; `rendererFor()` answers Luminati, but for a
+  developer's `?renderer=emberlit`, kept for that tab in `sessionStorage` (`?renderer=luminati` ends it). An old stored
+  `renderer` is ignored and dropped at the next write. The escape goes with Emberlit's painting in step 4.
+- **`src/ui/title.js`:** Graphics' renderer row and Compare worlds' "This game, drawn by" row are gone; the People line
+  (what Luminati draws the people as) stays.
+- **`src/ui/worldfail.js`, `main.js`:** if Luminati's module doesn't load, it throws starting, or it can't build a level
+  (`state.failed`), a full-screen message: "The world couldn't be drawn on this device. Your game is safe…", the error
+  in small print for a bug report, and **Retry** (140 × 48 px), which saves the slot and reloads. It takes the taps.
+- **The browser suite** (`test/browser/run.mjs`): to keep CI's time where it was, the checks that name no renderer still
+  test Emberlit's painting, through the escape (an init script in every context); they move onto Luminati, with a budget,
+  in step 4. A new check refuses Luminati's module and finds the message, its Retry reloading the page and no tap
+  reaching the world. The Graphics check finds no renderer to choose. `test/render3d.test.mjs`: the default, the old
+  stored choice ignored, the escape and its end.
+- **The capture tools** (`rig`, `skills`, `bosses`, `feel`, `tools/dungeon/capture.mjs`) pass `&renderer=emberlit` for an
+  Emberlit run, now that the default is Luminati.
+
+## 4. Questions for the owner (answered 2026-11-09: the recommendations, all four)
+
+The owner: "Go with your recommendations on all four". So: (1) a message and a Retry, no hidden fallback (step 1, built);
+(2) the prototype goes (step 2); (3) the Stage's env, props and fx views and the art review's are retired, the icons and
+faces views stay (step 5); (4) the tiers' looks are final: `?tierlooks` goes, `TIER_LUM` stays (step 4).
+
 
 1. **A fallback if Luminati can't start** (no WebGL2, a phone out of memory): a message and a Retry button (recommended,
    and what step 1 does), or keep Emberlit's painting as a hidden fallback (it keeps 780 lines and the 119 MB)?

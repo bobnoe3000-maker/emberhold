@@ -34,7 +34,7 @@ const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftsha
 const p = await b.newPage({ viewport: { width: 390, height: 844 } });
 const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
 await p.addInitScript((f) => { try { localStorage.setItem('emberfall.graphics', JSON.stringify({ feel: f })); } catch { /* */ } }, FEEL);
-await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${SITE}${R === 'luminati' ? '&renderer=luminati' : ''}`);
+await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${SITE}&renderer=${R === 'luminati' ? 'luminati' : 'emberlit'}`);
 await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
 const settle = async () => { for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) return; await p.waitForTimeout(100); } };
 await settle();

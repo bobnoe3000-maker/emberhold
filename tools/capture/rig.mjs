@@ -123,7 +123,7 @@ async function run(renderer) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: DPR });
   const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
   const first = SHOTS[0];
-  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}${renderer === 'luminati' ? '&renderer=luminati' : ''}`);
+  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}&renderer=${renderer === 'luminati' ? 'luminati' : 'emberlit'}`);
   await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
   log(renderer, 'page up');
   await mkdir(join(OUT, renderer), { recursive: true });

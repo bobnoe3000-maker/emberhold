@@ -111,7 +111,7 @@ async function run(renderer) {
   for (const C of LIST) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}${renderer === 'luminati' ? '&renderer=luminati' : ''}`);
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}&renderer=${renderer === 'luminati' ? 'luminati' : 'emberlit'}`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
     await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()}; globalThis.__untilAttack = ${untilAttack.toString()};`);
     const settle = async () => { for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) return; await p.waitForTimeout(100); } };

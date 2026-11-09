@@ -87,9 +87,9 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
-  // Graphics (render3d/settings.js, per device; docs/luminati-port-plan.md): the world drawn by Emberlit, the game's own,
-  // or by Luminati (the trial build: the same game, sim and screens, its world in Luminati's light); and the depth of
-  // field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off
+  // Graphics (render3d/settings.js, per device): the world is drawn by Luminati only (docs/luminati-only-cleanup.md); the
+  // depth of field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off; the hit
+  // feel, the frame rate on screen and the brightness tray
   const choice = (k, v, label, what, on) => html`<button key=${k + v} class=${on ? 'pri' : ''} aria-pressed=${on ? 'true' : 'false'}
     onClick=${async () => { await graphics.set({ [k]: v }); draw(); }}>${label}<small>${what}</small></button>`;
   // what Luminati is drawing the people as (docs/dungeon-kit-proposal.md §9.6): models or sprites, how many, and the density
@@ -107,13 +107,8 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     const g = graphics.read(), r = graphics.current();
     return html`<div id="title">
       <div class="mark" style="font-size:32px">GRAPHICS</div>
-      <div class="tag">The world is drawn by</div>
-      <div class="row">
-        ${choice('renderer', 'emberlit', 'Emberlit', 'the game’s own', r === 'emberlit')}
-        ${choice('renderer', 'luminati', 'Luminati', 'trial: light, shadow, depth', r === 'luminati')}
-      </div>
       ${r === 'luminati' && html`<div class="tag" id="figStatus">${figStatus()}</div>`}
-      <div class="tag">Depth of field${r === 'luminati' ? '' : ' (with Luminati)'}</div>
+      <div class="tag">Depth of field</div>
       <div class="row">
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
         ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
@@ -129,7 +124,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('fps', 'on', 'Show', 'frames a second, under ☰', g.fps === 'on')}
         ${choice('fps', 'off', 'Hide', 'for play', g.fps !== 'on')}
       </div>
-      ${tune && html`<div class="tag">Brightness by the part of the day${r === 'luminati' ? '' : ' (with Luminati)'}</div>
+      ${tune && html`<div class="tag">Brightness by the part of the day</div>
       <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
         ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')
         : 'once your hero is made'}</small></button>`}
@@ -138,24 +133,18 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   }
 
   // Compare worlds (the owner, 2026-10-31: "Keep these map options available from the menu so i can compare gameplay
-  // and world art"): this game drawn by Emberlit or by Luminati (the trial: Graphics' choice, here too), and the
-  // Luminati prototype's own maps (docs/lumina-prototype.md), each opened with your hero's look and Emberfall's view,
-  // with a way straight back (its ◂ Game). The game is saved before a page of the prototype opens (openPage).
+  // and world art"): the Luminati prototype's own maps (docs/lumina-prototype.md; the game itself is drawn by Luminati only
+  // since 2026-11-09, and the prototype goes in the cleanup's step 2), each opened with your hero's look, with a way straight back (its ◂ Game). The game is saved before a page of the prototype opens (openPage).
   const PROTO = [['thornwick', 'Thornwick', 'our town, in Luminati’s own play', ''], ['encounter', 'The Scrag Warren', 'a party of three against the hill goblins · Auto', '&auto=1'],
     ['barrows', 'The Old Barrows', 'the Ashbound and the Quartermaster · Auto', '&auto=1'], ['catalogue', 'The Catalogue', 'every world asset Luminati builds', ''],
     ['catalogue-art', 'The Catalogue: our art', 'every piece of Emberfall’s world art in Luminati’s light', ''],
     ['biomes', 'The Biomes', 'grassland, desert, snow and ice: the tiles the Vale, the Reach and the Heights are drawn in', '']];
   const PROTO_HEROES = ['hero_knight', 'hero_barbarian', 'hero_rogue', 'hero_mage', 'hero_cleric', 'hero_shaman', 'hero_wren', 'hero_brannoc'];
   function Worlds() {
-    const r = graphics ? graphics.current() : 'emberlit', look = sim.state.party[0]?.actor, hero = PROTO_HEROES.includes(look) ? look : 'hero_knight';
+    const look = sim.state.party[0]?.actor, hero = PROTO_HEROES.includes(look) ? look : 'hero_knight';
     const go = (slug, extra) => openPage(`./lumina/game.html?autostart=1&level=${slug}&hero=${hero}&from=game${extra}`);
     return html`<div id="title">
       <div class="mark" style="font-size:32px">WORLDS</div>
-      ${graphics && html`<div class="tag">This game, drawn by</div>
-      <div class="row">
-        ${choice('renderer', 'emberlit', 'Emberlit', 'the game’s own', r === 'emberlit')}
-        ${choice('renderer', 'luminati', 'Luminati', 'trial: the same game', r === 'luminati')}
-      </div>`}
       <div class="tag">Luminati’s prototype maps</div>
       ${PROTO.map(([slug, name, what, extra]) => html`<button key=${slug} onClick=${() => go(slug, extra)}>${name}<small>${what}</small></button>`)}
       <div class="row">
@@ -226,9 +215,9 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
         <button onClick=${() => openPage('./lumina/index.html')}>Another world<small>Luminati's dioramas, your people</small></button>
       </div>
-      <button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>this game in Emberlit or Luminati · the Scrag Warren · the Old Barrows · Thornwick · the catalogues, one tap each</small></button>`}
+      <button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>the prototype's Scrag Warren · the Old Barrows · Thornwick · the catalogues, one tap each</small></button>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
-      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>${graphics.current() === 'luminati' ? 'Luminati (trial)' : 'Emberlit'} · depth of field</small></button>`}
+      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · brightness · frame rate</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
       ${devApply && made && html`<button onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer<small>unlock every skill · levels with their points${S.dev ? ' · a dev game' : ''}</small></button>`}
     </div>`;
