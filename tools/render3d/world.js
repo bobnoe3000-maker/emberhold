@@ -34,10 +34,15 @@ import { SpectralBells } from '../src/engine/fx/SpectralBells.js';
 import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
+import { build as buildFigure, fitPpu, pose as poseFigure, compact } from './figure.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import './ground.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
 const FOV = 1;                                                // (degrees: near enough orthographic, see above)
+const PIXEL_RATIO = 3;                                        // (the most of the device's pixel ratio Luminati draws at: boot)
 const NATIVE_PER_UNIT = 16 * Math.SQRT2;                      // Emberlit's native px a unit: a tile's half-width 8 px, two tiles a unit
 const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundness: 0.35, emissive: '#ffe9d2', emissiveIntensity: 0.2 };   // (0.12: a figure outside a lamp's pool went to a black silhouette underground; Emberlit's always read)
 
@@ -86,6 +91,128 @@ function standAt(s, X, Z, belowPx, ppu) {
   const back = (2 * belowPx) / ppu / Math.SQRT2;
   const tm = game.tileMap, x = X + back, z = Z + back;
   s.position.set(x, tm.getHeight(X, Z), z);
+}
+
+// ── the people as models (docs/dungeon-kit-proposal.md §9, 4b; the owner, 2026-11-09: "Lets do just the character and
+// npc model change to 4b at 3x") ──────────────────────────────────────────────────────────────────────────────────────
+// Each figure Emberlit draws is stood here as its variant's KayKit model, built by the bake's own code (figure.js: the
+// same loadout, face, gear, repaint and heroic proportions as its atlas), at the atlas's size (the bake's pixels a unit),
+// posed at the clip and frame Emberlit's animator chose, played on smoothly between the baked frames, and turned smoothly
+// toward its octant. The animator stays the authority: when a swing lands, when a walk steps, which way they face. The
+// models come from assets/models (tools/actor-lab/models.mjs). A figure whose model isn't in yet, or ?figures=sprites
+// (settings figures), is drawn as its sprite, as before.
+let FIGURES = 'models';
+const _camDir = new THREE.Vector3();
+const FILL = 0.4;                                             // (the share of the sprites' self-light a model gets: the owner's 4b; it catches the room's light as a card can't)
+let cast = null, castAsked = false;                           // assets/models/cast.json: the actors' variants, sizes and clips
+const castOf = (name) => {
+  if (!castAsked) { castAsked = true; json(`${ASSETS}models/cast.json`).then((c) => { cast = c || false; }); }
+  return cast ? cast.actors[name] || false : cast === false ? false : null;
+};
+const gltfLoader = new GLTFLoader(), gltfs = new Map();
+// the bake's paths (./models/<file>) to the game's assets; each build gets its own copy of the scene (bones, meshes),
+// sharing geometry, textures and clips
+const loadModel = (u) => {
+  const url = `${ASSETS}models/${u.replace('./models/', '')}`;
+  let p = gltfs.get(url); if (!p) { p = gltfLoader.loadAsync(url); gltfs.set(url, p); }
+  return p.then((g) => ({ scene: cloneSkinned(g.scene), animations: g.animations }));
+};
+const metaOf = new Map();                                     // atlas name → its JSON (the clips' columns), once in
+const templates = new Map();                                  // atlas name → { root, clips, frame, ppu, minY } | null (building) | false
+function templateOf(name, def) {
+  const t = templates.get(name); if (t !== undefined) return t;
+  templates.set(name, null);
+  if (!metaOf.has(name)) json(`${ASSETS}actors/${name}.json`).then((m) => metaOf.set(name, m));
+  buildFigure(def.v, { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
+    const rest = []; c.root.traverse((b) => { if (b.isBone) rest.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+    poseFigure(c, 'Idle', 0, true);                           // (sized from the heroic idle, as the bake fits it)
+    const { box, ppu } = fitPpu(c.root, def.v, def.px);
+    for (const [b, p, q, s] of rest) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
+    const cut = compact(c.root, mergeGeometries);              // (once a figure: its copies share the merged parts)
+    templates.set(name, { root: c.root, clips: c.clips, frame: c.frame, ppu, minY: box.min.y, meshes: cut });
+  }).catch((e) => { console.warn('[luminati] figure', name, e); templates.set(name, false); });
+  return null;
+}
+const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
+let figSeen = 0;
+function figureFor(key, name, T) {
+  let f = figs.get(key);
+  if (f && f.name !== name) { game.engine.scene.remove(f.root); figs.delete(key); f = null; }
+  if (f) return f;
+  const root = cloneSkinned(T.root), mats = [];
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    o.material = o.material.clone();
+    // matte, as the atlases are (they're baked unlit): KayKit's sheen took the hero's carry light, a light at the shoulder,
+    // as a white blaze on the helmet
+    if (o.material.isMeshStandardMaterial) { o.material.metalness = 0; o.material.roughness = Math.max(o.material.roughness ?? 1, 0.92); }
+    // (the skeletons' eyes and a lantern's glass keep their own glow; an unlit material, a prop's MeshBasicMaterial, has
+    // no emissive: given one, three's uniforms threw mid-render)
+    const own = /Eyes/.test(o.name) || !!o.userData.glow || !o.material.emissive;
+    if (!own) { o.material.emissive = o.material.map ? new THREE.Color(0xffe9d2) : o.material.color.clone(); if (o.material.map) o.material.emissiveMap = o.material.map; }
+    // a compacted face (figure.js compact) is coloured by vertex: its fill is too, or every part of it glowed one white
+    if (!own && o.material.vertexColors) {
+      o.material.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n#ifdef USE_COLOR\n\ttotalEmissiveRadiance *= vColor.rgb;\n#endif'); };
+      o.material.customProgramCacheKey = () => 'ember-figure-vc';
+    }
+    mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null });
+  });
+  const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, look: '' };
+  game.engine.scene.add(root); figs.set(key, f);
+  return f;
+}
+const WARN_EMI = new THREE.Color(1, 0.45, 0.15);
+/** stand, pose and light a figure as a model: false while its model is still coming (draw the sprite) */
+function placeFigure(a, key, dt, camAz) {
+  if (FIGURES !== 'models') return false;
+  const def = castOf(a.name); if (!def) return false;
+  const T = templateOf(a.name, def), meta = metaOf.get(a.name); if (!T || !meta) return false;
+  // the clip and frame Emberlit chose: the atlas column's clip, its frame within it
+  let ck = null; for (const k in meta.clips) { const c = meta.clips[k]; if (a.col >= c.start && a.col < c.start + c.len) { ck = k; break; } }
+  const d = ck && def.clips[ck]; if (!d) return false;
+  const f = figureFor(key, a.name, T), mc = meta.clips[ck], n = d.frames, fr = a.col - mc.start;
+  // played on between the baked frames: the frame Emberlit chose is the floor, the next its ceiling (a walk, stepped by
+  // distance, waits there; a figure far off its frame is put back on it)
+  if (f.key !== ck) { f.key = ck; f.fpos = fr; }
+  else if (d.once) f.fpos = Math.min(Math.max(f.fpos + dt * mc.fps, fr), Math.min(fr + 0.999, n - 1));
+  else {
+    const p = f.fpos + dt * mc.fps, c = (((p - fr) % n) + n) % n;
+    f.fpos = c < 1 ? ((p % n) + n) % n : c > n / 2 ? fr : fr + 0.999;
+  }
+  const a0 = d.from ?? 0, a1 = d.to ?? 1, u = d.once ? a0 + (a1 - a0) * (f.fpos / Math.max(1, n - 1)) : a0 + (a1 - a0) * (f.fpos / n);
+  for (const [b, p, q, s] of f.bones) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
+  // facing: the octant's yaw as the bake turns it (135° − 45° a step, its camera at 45°), on the camera's yaw here
+  const want = (135 - 45 * a.row) * Math.PI / 180 + camAz - Math.PI / 4;
+  if (f.yaw === null || f.seen < figSeen - 1) f.yaw = want;
+  else { let df = want - f.yaw; df -= 2 * Math.PI * Math.round(df / (2 * Math.PI)); f.yaw += df * (1 - Math.exp(-dt * 16)); }
+  f.root.rotation.y = f.yaw;
+  poseFigure(f, d.clip, Math.min(0.999, u), true);
+  const k = (a.cw && meta.cw ? a.cw / meta.cw : 1) * T.ppu / NATIVE_PER_UNIT;
+  f.root.scale.setScalar(k);
+  f.root.position.set(a.x, game.tileMap.getHeight(a.x, a.z) - T.minY * k, a.z);
+  f.root.updateMatrixWorld(true);
+  // its light: a share of the sprites' self-light, a hit's white flash, a wind-up's ember glow (as the sprites' tint)
+  const fl = a.flash || 0, wn = fl ? 0 : Math.round((a.warn || 0) * 20) / 20, op = 1 - (a.fade || 0);
+  const look = `${figGlow}|${fl}|${wn}|${op.toFixed(2)}`;
+  if (f.look !== look) {
+    f.look = look;
+    for (const q of f.mats) {
+      if (!q.own) { if (wn) q.m.emissive.copy(q.base).lerp(WARN_EMI, Math.min(1, wn)); else q.m.emissive.copy(q.base); q.m.emissiveIntensity = figGlow * FILL + fl * 2.6 + wn * 0.9; }
+      const tr = op < 0.999; if (q.m.transparent !== tr) { q.m.transparent = tr; q.m.needsUpdate = true; } q.m.opacity = op;
+    }
+  }
+  f.root.visible = true; f.seen = figSeen;
+  return true;
+}
+/** the figures not drawn this frame hidden; one unseen for a minute let go */
+function sweepFigures() {
+  for (const [k, f] of figs) {
+    if (f.seen === figSeen) continue;
+    if (f.root.visible) f.root.visible = false;
+    if (figSeen - f.seen > 3600) { game.engine.scene.remove(f.root); figs.delete(k); }
+  }
 }
 
 // ── our own art kept by the converter: a sprite each from the env atlases ───────────────────────────────────────────
@@ -351,7 +478,9 @@ async function boot(level) {
   await tables;
   // (read by the build's tags in Game.js: its UI under a hidden root of ours, its input on a target nothing sends to, its
   // sound never unlocked)
-  Object.assign(globalThis, { __emberUiRoot: uiRoot, __emberInputTarget: new EventTarget(), __emberSilent: true });
+  // (and its pixel ratio: the phone's own, to 3×, where Luminati drew at 1.25× and the browser stretched it 2.4× on a 3×
+  // phone: the owner's 4b "at 3x", docs/dungeon-kit-proposal.md §9)
+  Object.assign(globalThis, { __emberUiRoot: uiRoot, __emberInputTarget: new EventTarget(), __emberSilent: true, __emberPixelRatio: PIXEL_RATIO });
   game = new Game({ container, level, source: 'emberfall', autostart: true, lang, fonts, look: 'diorama' });
   await game.init(() => {});
   if (game.audio) game.audio.muted = true;                    // (the game has its own sound: src/audio/)
@@ -844,6 +973,7 @@ const api = {
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;
     if (o.figMax > 0) FIG_MAX = o.figMax;
+    if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;   // (?figures=sprites: the atlases, as before 4b)
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
@@ -853,7 +983,7 @@ const api = {
   /**
    * one frame: the camera, the hour, the weather, who's where, then a step of Luminati and its picture
    * @param {{ dt: number, focus: number[], ppu: number, hour: number, weather: string, fog?: number, hero: number[] | null,
-   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number, warn?: number }[],
+   *   actors: { name: string, cw: number, col: number, row: number, x: number, z: number, fade: number, flash?: number, warn?: number, key?: number }[],   (key: the same figure from frame to frame, its model's)
    *   rings?: { x: number, z: number, col: number[], a: number }[], hazards?: { x: number, z: number, r: number, col: number[], rim: number[], a: number }[], mark?: { x: number, z: number } | null, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps?: number } | null, carry?: number, draw?: boolean, bright?: number,
    *   bits?: { canvas: HTMLCanvasElement, ax: number, ay: number, x: number, z: number, lift: number, glow: number, flash?: number }[], water?: { id: string, cells: number[] } | null,
    *   blast?: { x: number, z: number, k: number } | null,
@@ -868,10 +998,14 @@ const api = {
     if (f.weather && game.weather?.weather !== f.weather) game.setWeather(f.weather);
     if (game.lighting?.settings) { game.lighting.settings.fogMul = 1 + 0.6 * (f.fog || 0); game.lighting.settings.pointLightMul = f.ambient?.lamps ?? 1; }   // (the sim's fog: the air a little thicker, Emberlit's overlay drifting its banks over it; underground, the lamps the game's)
     if (f.hero && game.player) { hidePlayer(); game.player.position.set(f.hero[0], game.tileMap.getHeight(f.hero[0], f.hero[1]), f.hero[1]); }
-    // the people: each atlas's pool filled in the order drawn; the rest hidden
+    // the people: as models (placeFigure), or each atlas's pool filled in the order drawn; the rest hidden
     figGlow = figureGlow();
-    const used = new Map(), camera = game.engine.camera;
+    const used = new Map(), camera = game.engine.camera, order = new Map();
+    figSeen++;
+    camera.getWorldDirection(_camDir); const camAz = Math.atan2(-_camDir.x, -_camDir.z);
     for (const a of f.actors) {
+      const nth = order.get(a.name) || 0; order.set(a.name, nth + 1);
+      if (placeFigure(a, a.key ?? `${a.name}#${nth}`, Math.max(0, Math.min(0.1, f.dt || 0)), camAz)) continue;
       const A = atlas(a.name); if (!A) continue;
       const k = a.cw ? a.cw / A.meta.cw : 1, sheet = sheetOf(A, k), n = used.get(sheet) || 0; used.set(sheet, n + 1);
       const s = spriteFor(sheet, n);
@@ -894,6 +1028,7 @@ const api = {
       s.update(0, camera);
     }
     for (const [sheet, p] of pools) { const n = used.get(sheet) || 0; for (let i = n; i < p.length; i++) if (p[i].visible) p[i].visible = false; }
+    sweepFigures();
     // the fight's ground
     const nk = { ring: 0, disc: 0, rim: 0, focus: 0, wfill: 0, wrim: 0, lane: 0 };
     for (const r of f.rings || []) placeGround(groundMesh('ring', nk.ring++), r.x, r.z, 1, r.col, r.a);
@@ -923,7 +1058,10 @@ const api = {
     }
     if (carryLight && f.hero) {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
-      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + 2.4, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * k) / (f.ambient?.lamps ?? 1), distance: 6, decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+      // (above a model it hangs higher, and a little stronger, so the floor round the hero is as lit: at 2.4 it was a hand
+      // over the helmet, and a model's head, facing it, went white)
+      const up = FIGURES === 'models' ? 3.6 : 2.4, gain = FIGURES === 'models' ? 1.75 : 1;
+      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + up, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * gain * k) / (f.ambient?.lamps ?? 1), distance: 6 + (up - 2.4), decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
     }
     // a fire landing (renderer.js blasts: the Firebolt's explosion, a mage's bolt): a hot flash on the room round it, gone
     // in half a second; one of Luminati's spell lights, as the carry light is
@@ -960,7 +1098,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0), atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

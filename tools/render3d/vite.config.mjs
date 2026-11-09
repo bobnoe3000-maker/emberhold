@@ -6,7 +6,8 @@
 // What the build changes in Luminati, here only, never in their files (each a tag: the build stops if their code moved):
 //   · the ground cover at a quarter of its size, and no floating luminous dots (as the prototype: ember/ground.js);
 //   · Game.js: its UI under a root the game gives it (hidden), its input on a target nothing sends to, its sound never
-//     unlocked: in the game's own page its keys, taps and sound are the game's;
+//     unlocked: in the game's own page its keys, taps and sound are the game's; its pixel ratio the game's (world.js
+//     PIXEL_RATIO: the phone's own, to 3×, where it held 1.25×);
 //   · the Japanese and Chinese font slices left out (the game is in English).
 import { defineConfig } from 'vite';
 import { resolve, sep } from 'node:path';
@@ -19,7 +20,7 @@ const TAGS = [
   ['game/World.js', 'if (env.dust !== false) {', 'if (env.dust !== false && globalThis.__emberGround?.dust !== false) {'],
   ['game/World.js', "for (const obj of this.objectsOf('emitter')) {", "for (const obj of this.objectsOf('emitter')) { if (globalThis.__emberGround && !globalThis.__emberGround.keeps(obj)) continue;"],
   ['game/Game.js', 'this.ui = new UI(document.body, this.uiOptions);', 'this.ui = new UI(globalThis.__emberUiRoot ?? document.body, this.uiOptions);'],
-  ['game/Game.js', 'const engine = new Engine({ container: this.container, maxPixelRatio: 1.25 });', 'const engine = new Engine({ container: this.container, maxPixelRatio: 1.25, ...(globalThis.__emberInputTarget ? { inputTarget: globalThis.__emberInputTarget } : {}) });'],
+  ['game/Game.js', 'const engine = new Engine({ container: this.container, maxPixelRatio: 1.25 });', 'const engine = new Engine({ container: this.container, maxPixelRatio: globalThis.__emberPixelRatio ?? 1.25, ...(globalThis.__emberInputTarget ? { inputTarget: globalThis.__emberInputTarget } : {}) });'],
   ['game/Game.js', '  _armAudioUnlock() {\n', '  _armAudioUnlock() {\n    if (globalThis.__emberSilent) return;\n'],
 ];
 const CJK = /^@fontsource\/(?:noto-sans-jp|noto-sans-sc|dotgothic16)\//;

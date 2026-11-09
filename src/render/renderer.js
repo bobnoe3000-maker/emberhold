@@ -1018,7 +1018,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const z = heightAt(sim.world, Math.floor(a.x), Math.floor(a.y)), q = project(a.x, a.y, z);
       const sp = atl.cells[an.dir][an.frame], fx = ox + q.sx, fy = oy + q.sy, bb = spriteBox(sp);
       a.box = [Math.round(fx) - sp.ax + bb[0], Math.round(fy) - sp.ay + bb[1], Math.round(fx) - sp.ax + bb[2], Math.round(fy) - sp.ay + bb[3]];   // drawn bounds, native px (the overlap test)
-      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: a.team || 0, atl, a: an });
+      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: a.team || 0, atl, a: an, who: a });   // (who: the same figure frame to frame, for another painter's model: hybrid.js)
     }
     // the art review's other views (src/dev/stage.js: show=env · props · fx): what the Stage lays out besides figures,
     // drawn by the same stamping, light and effects as play. The Stage pushes sprite draws and calls effects through this.
@@ -1316,7 +1316,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       u.near = near;
       const walking = !!n.moving;
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
-      draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id });
+      draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id, who: u });
     }
     // the crowd (pass 11f): no id, so a tap never picks one
     { const crowd = crowdOf(sim.world); if (crowd.length) stepCrowd(sim.world, crowd, now);
@@ -1325,7 +1325,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
         const vz = heightAt(sim.world, Math.floor(v.x), Math.floor(v.y)), vp = project(v.x, v.y, vz), vx = ox + vp.sx, vy = oy + vp.sy;
         if (vx < -60 || vx > nvw + 60 || vy < -40 || vy > nvh + 120) continue;
         const a = pickAnim(v.u, atl, { now, x: v.x, y: v.y, moving: v.moving, faceX: v.fx, faceY: v.fy, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: v.u.seed });
-        draws.push({ d: v.x + v.y, sp: atl.cells[a.dir][a.frame], fx: vx, fy: vy, h: vz * ZH, k: v.x + v.y, look: CROWD_LOOK, team: 0, atl, a, noXray: true });
+        draws.push({ d: v.x + v.y, sp: atl.cells[a.dir][a.frame], fx: vx, fy: vy, h: vz * ZH, k: v.x + v.y, look: CROWD_LOOK, team: 0, atl, a, noXray: true, who: v.u });
       } }
     // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
     // up the road for the relief that never came. No ring, no bar: they aren't in a fight with you.
@@ -1334,7 +1334,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const qz = heightAt(sim.world, Math.floor(q.x), Math.floor(q.y)), qp = project(q.x, q.y, qz), qx = ox + qp.sx, qy = oy + qp.sy;
       if (qx < -60 || qx > nvw + 60 || qy < -40 || qy > nvh + 120) continue;
       const a = pickAnim(q, atl, { now, x: q.x, y: q.y, moving: false, faceX: -0.25, faceY: -1, facing: true, dir0: 2, stride: STRIDE.skel, seed: (q.x * 0.37 + q.y * 0.11) % 1 });
-      draws.push({ d: q.x + q.y, sp: atl.cells[a.dir][a.frame], fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a });
+      draws.push({ d: q.x + q.y, sp: atl.cells[a.dir][a.frame], fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a, who: q });
     }
     // the farm beasts, at their ease (beastFrame): no ring, no tap, and their ground shadow is in the bake
     for (const bst of beastList()) {

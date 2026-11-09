@@ -81,6 +81,10 @@ const propState = (w, list) => list.map((it) => propAt(w, it.tx, it.ty) || '-').
 // Emberlit's (renderer.js boltSprite, arrowSprite, gsprite's cage) as a canvas once, its glowing pixels lifted (Luminati
 // lights the canvas as a figure; a bolt is its own light), for the world page to stand up where Emberlit drew it.
 const bitCanvases = new WeakMap();
+// a figure's key, the same each frame (a unit, an NPC's presence, a crowd walker, a picket: renderer.js `u` / `who`), so
+// Luminati keeps its model, mid-clip and mid-turn (world.js placeFigure); a draw with none is keyed by order there
+const figKeys = new WeakMap(); let figKeyN = 0;
+const keyOf = (o) => { if (!o || typeof o !== 'object') return undefined; let k = figKeys.get(o); if (k === undefined) figKeys.set(o, (k = ++figKeyN)); return k; };
 function bitCanvas(sp, glow) {
   let c = bitCanvases.get(sp);
   if (!c) {
@@ -201,7 +205,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0 });   // (cw: as drawn, a boss 1.3×)
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
           rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });
@@ -243,7 +247,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   });
   const mod = await import(vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
-  api.settings({ dof: readGraphics().dof });
+  api.settings({ dof: readGraphics().dof, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models' });   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
   let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
     box, state,

@@ -11,6 +11,12 @@ pass and the "grim" colour pass, then packed into albedo / normal / emissive atl
 source models are downloaded by `tools/actor-lab/fetch-assets.sh` and are never
 committed.
 
+## Models — `assets/models/`
+The same KayKit packs (**Adventurers 1.0**, **Skeletons 1.0**, Kay Lousberg, **CC0 1.0**) as models for the Luminati
+renderer's figures (2026-11-09, architecture A20): the nine character models with only the animations our actors play
+kept, and the Skeletons pack's blade, shield, staff, crossbow and axe. Prepared by `tools/actor-lab/models.mjs`
+(nothing re-encoded); `cast.json` is ours.
+
 The cleric (`hero_cleric`) is the KayKit Mage with its robe, trim, stole and book swatches
 repainted (off-white vestments) and a flanged mace that is **our own**, built in code
 (`tools/actor-lab/props.js`); the same mace is the item icon `assets/items/mace.png`.

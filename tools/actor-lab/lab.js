@@ -14,9 +14,8 @@
 // 'lowerleg.l' → 'lowerlegl'); findNode()/applyHeroic() match both spellings.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { PROPS, repaint } from './props.js';
-import { buildFace, IRIS } from './faces.js';
-import { buildBody } from './body.js';
+import { IRIS } from './faces.js';
+import { setHeroicHead, fitPpu as fit, findNode, facePreset as preset, build as buildFig, pose } from './figure.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
 const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
@@ -26,114 +25,16 @@ R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; docum
 const loader = new GLTFLoader();
 const load = (u) => new Promise((res, rej) => loader.load(u, res, undefined, rej));
 
-// every toggleable accessory per model (anything not listed in a variant's `show` is hidden)
-const ACC = {
-  Knight: ['1H_Sword_Offhand', 'Badge_Shield', 'Rectangle_Shield', 'Round_Shield', 'Spike_Shield', '1H_Sword', '2H_Sword', 'Knight_Helmet', 'Knight_Cape'],
-  Barbarian: ['1H_Axe_Offhand', 'Barbarian_Round_Shield', '1H_Axe', '2H_Axe', 'Mug', 'Barbarian_Hat', 'Barbarian_Cape'],
-  Rogue: ['Knife_Offhand', '1H_Crossbow', '2H_Crossbow', 'Knife', 'Throwable', 'Rogue_Cape'],
-  Rogue_Hooded: ['Knife_Offhand', '1H_Crossbow', '2H_Crossbow', 'Knife', 'Throwable', 'Rogue_Cape'],
-  Mage: ['Spellbook', 'Spellbook_open', '1H_Wand', '2H_Staff', 'Mage_Hat', 'Mage_Cape'],
-};
-// "heroic" proportions: shrink the head, push joints outward to lengthen limbs/torso
-// (moving a child joint along its parent lengthens the segment without thickening it)
+// the variant builder is shared with the game's renderer (figure.js): the same figure in the atlas and in the world
 // (art pass 7: the face knobs, bake.cjs env BAKE_PROTO / BAKE_HEAD → ?proto=features,grade&head=0.72. The
 // shipped bake is 'eyes2,grade', A2b + B; ?proto= replaces the set, and proto=off bakes faces as before pass 7)
 const QS = new URLSearchParams(location.search), PROTO = new Set((QS.get('proto') ?? 'eyes2,grade').split(',').filter((s) => s && s !== 'off'));
-const HEROIC = { scale: { head: +(QS.get('head') || 0.62) }, reach: { spine: 1.2, chest: 1.18, head: 1.1,
-  lowerleg: 1.5, foot: 1.45, lowerarm: 1.3, wrist: 1.3 } };
-function applyHeroic(root) {
-  root.traverse((b) => { if (!b.isBone) return;
-    const base = b.name.replace(/\.?(l|r)$/, '');   // three sanitizes 'lowerleg.l' → 'lowerlegl'
-    if (HEROIC.scale[base]) b.scale.multiplyScalar(HEROIC.scale[base]);
-    if (HEROIC.reach[base]) b.position.multiplyScalar(HEROIC.reach[base]); });
-}
-// pixels per world unit: the figure, props and all, fills TARGET_PX. A variant with `height` (art pass 8: the
-// townsfolk, so they aren't all one size) is fitted by its body alone, held things left out (a sword or a book
-// raised overhead shrank the person under it), to TARGET_PX × height.
-const HELD = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
-function fitPpu(root, v) {
-  if (!v.height) { const box = new THREE.Box3().setFromObject(root); return { box, ppu: TARGET_PX / (box.max.y - box.min.y) }; }
-  const box = new THREE.Box3(), held = (o) => { for (let q = o; q; q = q.parent) if (q.userData.held || (q !== o && HELD.test(q.name)) || HELD.test(o.name)) return true; return false; };
-  root.updateMatrixWorld(true); root.traverse((o) => { if (o.isMesh && o.visible && !held(o)) box.expandByObject(o); });
-  return { box, ppu: TARGET_PX * v.height / (box.max.y - box.min.y) };
-}
-// GLTFLoader strips '.' from node names; match either spelling
-const findNode = (root, n) => root.getObjectByName(n) || root.getObjectByName(n.replace(/\./g, ''));
-function recolor(root, filter) {
-  const done = new Map();
-  root.traverse((o) => { if (!o.isMesh || /Eyes/.test(o.name) || !o.material.map) return;
-    let m = done.get(o.material);
-    if (!m) { const img = o.material.map.image, cv = document.createElement('canvas');
-      cv.width = img.width; cv.height = img.height; const x = cv.getContext('2d'); x.filter = filter; x.drawImage(img, 0, 0);
-      const t = new THREE.CanvasTexture(cv); t.flipY = o.material.map.flipY; t.colorSpace = o.material.map.colorSpace;
-      t.magFilter = o.material.map.magFilter; t.minFilter = o.material.map.minFilter; t.wrapS = o.material.map.wrapS; t.wrapT = o.material.map.wrapT;
-      m = o.material.clone(); m.map = t; done.set(o.material, m); }
-    o.material = m; });
-}
-// faces.json presets (faces.js): a variant's `face` is a preset name or an inline face
+setHeroicHead(+(QS.get('head') || 0.62));
+const fitPpu = (root, v) => fit(root, v, TARGET_PX);
 let FACES = null;
-const facePreset = async (f) => { if (typeof f !== 'string') return f; FACES ||= await (await fetch('./faces.json')).json(); if (!FACES[f]) throw new Error(`no face preset "${f}"`); return FACES[f]; };
-async function build(v, { far = false } = {}) {
-  const g = await load(`./models/${v.model}.glb`), root = g.scene;
-  const acc = ACC[v.model] || [];
-  root.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; if (acc.includes(o.name) && !(v.show || []).includes(o.name)) o.visible = false; } });
-  if (v.body) {                                          // mock-up: our own body, clothes and head on the KayKit rig (body.js)
-    const b = { ...v.body, face: await facePreset(v.body.face) };
-    if (v.body.shape) b.face = { ...b.face, shape: v.body.shape };
-    await buildBody(load, root, b, { far, findNode });
-  } else if (v.face) {                                   // a modular face replaces the KayKit head (faces.js)
-    const { head, replaces } = await buildFace(load, v.model, await facePreset(v.face), { far });
-    root.traverse((o) => { if (o.isMesh && replaces.includes(o.name)) o.visible = false; });
-    findNode(root, 'head').add(head);
-  }
-  for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
-  for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; p.userData.held = true; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons
-  for (const [bone, name] of Object.entries(v.wear || {})) findNode(root, bone)?.add(PROPS[name]());   // worn on a body bone (the smith's apron)
-  for (const n of v.hide || []) root.traverse((o) => { if (o.name === n) o.visible = false; });   // a kit mesh left off (the minion's cloak: skeleton-skull proposal)
-  // a skeleton's skull (skeleton-skull proposal): its eyes, cranium and jaw tagged for the part pass, so albSkull can
-  // draw the sockets the 4 × 4 average washed into the bone (the face kit's tags: eye red, skull as skin, jaw as hair)
-  if (v.skull) root.traverse((o) => { if (!o.isMesh) return; if (/_Eyes$/.test(o.name)) o.userData.part = 'eye'; else if (/_Head$/.test(o.name)) o.userData.part = 'skin'; else if (/_Jaw$/.test(o.name)) o.userData.part = 'hair'; });
-  if (v.swatches) repaint(root, v.swatches);
-  if (v.recolor) recolor(root, v.recolor);
-  if (v.eyes) root.traverse((o) => { if (o.isMesh && /Eyes/.test(o.name)) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(v.eyes); o.material.emissiveIntensity = 3; } });
-  return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations, frame: v.frame || null };
-}
-// a variant's own frame (M8, the fen ghoul; `body` is the body-kit mock-up's): `frame: { reach: { bone: k }, scale: { bone: k }, bend: { bone: [x, y, z] } }`,
-// after the heroic pass: reach lengthens a segment as the heroic pass does, scale grows a bone (and what hangs off it),
-// bend turns a bone by radians on top of the clip's pose (a hunch: the spine and chest bowed forward)
-function applyFrame(root, body) {
-  root.traverse((b) => { if (!b.isBone) return;
-    const base = b.name.replace(/\.?(l|r)$/, '');
-    if (body.scale && body.scale[base]) b.scale.multiplyScalar(body.scale[base]);
-    if (body.reach && body.reach[base]) b.position.multiplyScalar(body.reach[base]);
-    if (body.bend && body.bend[base]) { const [x, y, z] = body.bend[base]; b.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z))); } });
-}
-function pose(c, clipName, t, heroic) {
-  c.mixer.stopAllAction();
-  const clip = c.clips.find((a) => a.name === clipName) || c.clips.find((a) => a.name === 'Idle');
-  c.mixer.clipAction(clip).play(); c.mixer.setTime(t * clip.duration);
-  if (heroic) applyHeroic(c.root);                       // after sampling: clips key scale+translation
-  if (heroic && c.frame) applyFrame(c.root, c.frame);
-  c.root.updateMatrixWorld(true);
-  plumb(c.root);
-}
-// carried things hang plumb (art pass 6): a lantern, a basket or a hammer held at the side hangs from
-// the grip whatever the hand's angle, where a rigid prop stuck out like a pole. A prop with
-// userData.hang turns, every sampled pose, so its +y points straight down (a prop built along −y, the
-// whip, stands upright); it keeps the figure's yaw so it faces the way they do. hang: 'up' (art pass 9) stands it
-// on end instead: a staff carried upright, its head above the hand, where the rest pose held it head-down.
-const _q = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _down = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
-function plumb(root) {
-  const hung = []; root.traverse((o) => { if (o.userData.hang) hung.push(o); });
-  if (!hung.length) return;
-  const yaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), root.rotation.y);
-  for (const o of hung) {
-    o.parent.getWorldQuaternion(_qp);
-    _q.copy(yaw); if (o.userData.hang !== 'up') _q.multiply(_down);
-    o.quaternion.copy(_qp.invert().multiply(_q));
-  }
-  root.updateMatrixWorld(true);
-}
+const faces = async () => (FACES ||= await (await fetch('./faces.json')).json());
+const facePreset = (f) => preset(f, faces);
+const build = (v, { far = false } = {}) => buildFig(v, { far, load, faces });
 // dev probe: a bone's world position and axes in a pose (placing worn props)
 window.probeBone = async (v, bone, clip = 'Idle', t = 0) => {
   const c = await build(v); pose(c, clip, t, true); const b = findNode(c.root, bone), q = b.getWorldQuaternion(new THREE.Quaternion()), s = b.getWorldScale(new THREE.Vector3());

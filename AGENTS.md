@@ -25,6 +25,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
 #   ?tierlooks=luminati|now (with ?renderer=luminati: all twenty of the tiers' skills, and the holds, in Luminati's own looks, or none; default the owner's picks, renderer.js TIER_LUM; tools/capture/tiers.mjs)
 #   ?renderer=luminati|emberlit (the world drawn by Luminati under the same sim, HUD and taps: the port plan's trial, docs/luminati-port-plan.md §12; the menu's Graphics stores it per device, with the depth of field)
+#   ?figures=sprites (with ?renderer=luminati: the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
@@ -51,6 +52,7 @@ FFMPEG=… FLARE=… node tools/audio/prep.mjs [--only cue,cue]   # sound: tools
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
 node tools/actor-lab/bake.cjs [actor…]    # actor atlases (+ weapon anchors, + <actor>.face.png portraits and .fig.png character-window figures); --anchors (+ walk stride) / --portraits refresh only those
 BAKE_OUT=dir BAKE_PROTO=features|eyes1|eyes2,grade[,stats]|off BAKE_HEAD=0.74 BAKE_PX=72 node tools/actor-lab/bake.cjs [actor…]   # face knobs and prototype bakes into a scratch tree (docs/face-fidelity-proposal.md, art-critic-pass-7.md); the shipped faces are eyes2,grade
+node tools/actor-lab/models.mjs           # the people as models for the Luminati renderer (docs/dungeon-kit-proposal.md §9.6): the KayKit models in tools/actor-lab/models/ pruned to the clips bake.json plays, the skeletons' weapons, cast.json (every actor's variant, height and clips; the faces) → assets/models/ (committed; never edit, rerun with the bake; test/models.test.mjs checks it's current)
 node tools/actor-lab/faces.cjs            # the face board: every faces.json preset and every face part → tools/actor-lab/out/faces_board.png
 node tools/actor-lab/icons.cjs [ids]      # item icons
 node tools/actor-lab/bake-env.cjs         # buildings / trees / rocks (the undergrowth needs the nature pack's glTF in tools/actor-lab/models/nature/: actor-lab README)
@@ -245,7 +247,7 @@ in the same change that introduces it.
 
 ### Art pipeline
 
-- **Never hand-edit baked outputs** (`assets/actors`, `assets/items`, `assets/env`). Change
+- **Never hand-edit baked outputs** (`assets/actors`, `assets/items`, `assets/env`, `assets/models`). Change
   the bake config (`tools/actor-lab/*.json`) or the lab code and re-bake.
 - **Actors** are KayKit CC0 (credits in `assets/CREDITS.md`). A per-actor grade, gain or clip
   change goes in `bake.json`. `node bake.cjs <actor>` re-bakes one actor.

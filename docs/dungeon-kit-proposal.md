@@ -1,6 +1,6 @@
 # The dungeon and world kit: toward the owner's reference (a proposal, 2026-11-09)
 
-**Status: Proposed.** The owner (2026-11-09), with a reference frame: "Use this as an art reference that we should
+**Status: Proposed; §9's figures built** (2026-11-09: the people as models at 3×, §9.6). The owner (2026-11-09), with a reference frame: "Use this as an art reference that we should
 improve our existing dungeon assets to… look how smooth and addition dressing… propose an approach to design and build
 improved world and dungeon tile assets."
 
@@ -319,3 +319,65 @@ the atlases are compressed. The models fit it many times over.
 2. **The figures:** go to 3D (4b), alongside the kit, since it is the same renderer work. It is smoother, lit by the
    room, and a quarter of a megabyte a figure where a 2× re-bake costs four times today's memory.
 3. Keep re-baking (4a) as a fallback for Emberlit, or for a phone that can't afford the models.
+
+### 9.6 Built: the figures as models at 3× (2026-11-09)
+
+The owner: "Lets do just the character and npc model change to 4b at 3x." On the Luminati renderer every person is now
+their variant's KayKit model: the party, companions, foes, bosses, townsfolk, the crowd, the road's pickets. The world
+is drawn at the phone's own pixel density, up to 3×. The dungeon kit itself (§1–8) is not part of this.
+
+![Before: sprites at 1.25×; after: models at 3×, in the Old Barrows and Wickham Keep (390 × 844 at 3×, the same rig shots)](img/dungeon/figures-models.jpg)
+
+![Thornwick at dusk: the townsfolk as models](img/dungeon/figures-town.jpg)
+
+**How it's built:**
+
+- **One builder.** `tools/actor-lab/figure.js` is the variant builder lifted out of the bake: loadout, face, gear,
+  repaints, eyes, heroic proportions, plumb props. `lab.js` bakes with it (a re-bake of the cleric and the skeleton
+  warrior was byte-identical before and after the move). The game's renderer builds with it too, bundled into
+  `src/vendor/` by `tools/render3d/build.mjs`.
+- **The assets.** `tools/actor-lab/models.mjs` writes `assets/models/`. Each of the nine KayKit models keeps its
+  meshes, skin and textures as they are, and only the clips our actors play (7–23 of 76–95): the glTF pruned, nothing
+  re-encoded, 35.6 MB of packs → 8.7 MB (3.2 MB gzipped). The skeletons' five weapons are copied. `cast.json` holds
+  all 76 actors' variants, heights and clips, and the 51 face presets they wear. A scene loads only the models its
+  people use: Thornwick's square, five.
+- **The animator stays the authority.** Emberlit's animator picks the clip, frame and octant as before
+  (`src/render/anim.js`). `tools/render3d/world.js` (`placeFigure`) poses the model at that frame as the bake samples
+  it (`from`/`to`, once or looped) and plays on smoothly to the next frame, never past it. The impact frame still
+  lands on the sim's blow, and the walk still steps by distance. It turns smoothly to the octant's angle
+  (135° − 45° a step, on the camera's yaw) instead of snapping.
+- **A figure keeps its model** from frame to frame through a key (`hybrid.js` `keyOf`: the unit, the NPC's presence,
+  the crowd walker or the picket; `renderer.js` gives the draws that had none a `who`).
+- **Compacted.** `figure.js` `compact`, once per actor:
+  - the skinned body parts that share a texture become one skinned mesh;
+  - each bone's rigid parts become one mesh per kind (a face's parts by vertex colour).
+
+  The hero went from 30 meshes to 7; Thornwick's seventeen figures from 579 to 103.
+- **Lit as 4b.** The models are matte, as the baked atlases are, and get 0.4 of the sprites' self-light
+  (`figureGlow`), multiplied by the vertex colours on a compacted face. A hit's flash and a wind-up's glow land on the
+  material.
+- **The carry light.** It hangs at 3.6 over a model (it was 2.4, a hand over the helmet that turned the head white)
+  and is 1.75× stronger, so the floor around the hero is lit as before.
+- **3× density.** The build's tag on Luminati's `Game.js` now takes `maxPixelRatio` from the game (`world.js`
+  `PIXEL_RATIO = 3`). It was 1.25.
+- **The fallback.** `?figures=sprites` draws the atlases as before. A figure whose model is still loading is drawn as
+  its sprite.
+- **Unchanged:** the sim, the saves, the replay and Emberlit (the draws only gained a `who`).
+
+**Measured** (headless Chromium renders on the CPU here, so these are counts; frame rate needs the iPhone):
+
+| Scene | Figures | Meshes in view | Triangles | Shadow casters |
+|---|---|---|---|---|
+| Wickham Keep, the hero | 1 | 156 → 160 | 159 k → 166 k | 8 → 14 |
+| Thornwick at dusk | 17 | 333 sprites' scene → 456 | 541 k → 644 k | 29 → 154 |
+
+- **The bundle:** its entry is 103 KB gzipped (it was 71: the glTF loader and the builder).
+- **Draws:** about 6 a figure, and as many shadow draws. Without compaction it would have been 30 and 30.
+- **Density:** 3× is 5.8× the pixels of 1.25×. Luminati lowers its render scale by itself when frames run long
+  (the CPU renderer here settled at 2.5×).
+
+**The gate still open:** 60 fps in Thornwick's square at dusk on an iPhone 12-class phone (the port plan's §8). If it
+misses, the levers are:
+- the pixel-ratio cap (2× is 2.6× the pixels of today, not 5.8×);
+- shadows from the hero and the fighters only;
+- the figures' far-off level of detail.
