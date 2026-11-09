@@ -51,14 +51,18 @@ let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 let game = null, building = null, levelId = 0, dof = 'soft', yawDeg = 45, pitchDeg = 30;
 const images = new Map(), metas = new Map();
 const image = (url) => { let p = images.get(url); if (!p) { p = new Promise((res, rej) => { const i = new Image(); i.decoding = 'async'; i.onload = () => res(i); i.onerror = rej; i.src = url; }); images.set(url, p); } return p; };
-const json = (url) => { let p = metas.get(url); if (!p) { p = fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null); metas.set(url, p); } return p; };
+// An atlas is a JSON of rects plus a PNG, and a re-bake moves the rects: a browser (or host) that cached one and not the
+// other cuts from the wrong place (a stairwell drawn blank, 3494747). So the JSON is always revalidated, and its PNG is
+// asked for at a version hashed from its text (`_v`): renderer.js's atlasMeta, here since Luminati loads the images.
+const fnv = (t) => { let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193); return (h >>> 0).toString(36); };
+const json = (url) => { let p = metas.get(url); if (!p) { p = fetch(url, { cache: 'no-cache' }).then((r) => (r.ok ? r.text() : null)).then((t) => { if (!t) return null; const m = JSON.parse(t); Object.defineProperty(m, '_v', { value: fnv(t) }); return m; }).catch(() => null); metas.set(url, p); } return p; };
 
 // ── the actors: one texture an atlas (each frame a UV rectangle: nothing cut), a pool of sprites an atlas ───────────
 const atlases = new Map();                                    // name → { sheet, meta } | null while loading | false (failed)
 function atlas(name) {
   if (atlases.has(name)) return atlases.get(name);
   atlases.set(name, null);
-  Promise.all([json(`${ASSETS}actors/${name}.json`), image(`${ASSETS}actors/${name}.alb.png`)]).then(([meta, img]) => {
+  json(`${ASSETS}actors/${name}.json`).then((meta) => (meta ? image(`${ASSETS}actors/${name}.alb.png?v=${meta._v}`).then((img) => [meta, img]) : [null, null])).then(([meta, img]) => {
     if (!meta) { atlases.set(name, false); return; }
     const tex = new THREE.Texture(img);
     tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
@@ -229,7 +233,7 @@ async function placeEnv(list, region) {
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
     const f = at(p.id); if (!f) continue;
-    const [set, m] = f, img = await image(`${ASSETS}env/${set}.alb.png`).catch(() => null);
+    const [set, m] = f, img = await image(`${ASSETS}env/${set}.alb.png?v=${all[sets.indexOf(set)]._v}`).catch(() => null);
     if (!img || mine !== levelId) return;
     const c = document.createElement('canvas'); c.width = m.w; c.height = m.h;
     const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')); g.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h);
@@ -332,7 +336,7 @@ function envSheet(id) {
   Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`))).then(async (all) => {
     for (let i = 0; i < sets.length; i++) {
       const m = all[i]?.sprites?.[id]; if (!m) continue;
-      const img = await image(`${ASSETS}env/${sets[i]}.alb.png`);
+      const img = await image(`${ASSETS}env/${sets[i]}.alb.png?v=${all[i]._v}`);
       const c = document.createElement('canvas'); c.width = m.w; c.height = m.h;
       /** @type {CanvasRenderingContext2D} */ (c.getContext('2d')).drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h);
       const tex = new THREE.CanvasTexture(c); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;

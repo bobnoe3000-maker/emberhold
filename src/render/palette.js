@@ -1,27 +1,8 @@
-// palette.js — dark-mood token system. Generators reference names, never raw hex.
-// Phase 0 ships one biome: EMBERWOOD — a dusk-lit dark meadow. Torchlight carries the warmth.
+// palette.js — dark-mood token system. Generators reference names, never raw hex: the characters' tokens, ELIT's
+// material ramps (the props gsprite.js bakes, the dungeon minimap) and KIT_TINT (the converter's kit tints). (The
+// pre-Emberlit palettes, EMBERWOOD and DREAD, went with Emberlit's painting: docs/luminati-only-cleanup.md step 5.)
 
 export const INK = '#0d0913';
-
-export const EMBERWOOD = {
-  name: 'Emberwood',
-  // shade ramps: [highlight, base, shade, deep]
-  GRASS: ['#647c44', '#425833', '#2d3f27', '#1b281a'],
-  DIRT:  ['#8a6746', '#634830', '#453222', '#2d2015'],
-  WATER: ['#33586e', '#1e3a52', '#122638'],
-  ACCENT: '#b05a74',       // dusk flowers
-  ACCENT2: '#c9a14e',      // ember motes
-  CANOPY: ['#3a5a32', '#28421f', '#182a15'],
-  TRUNK:  ['#54402c', '#382a1c'],
-  ROCK:   ['#7c7c92', '#585868', '#3c3c4c', '#26262f'],
-};
-
-export const LIGHT = {
-  ambient: 'rgba(9, 7, 18, 0.52)',   // dusk veil over everything
-  torchInner: 'rgba(255, 176, 102, 0.16)',
-  torchRadius: 4.6,                  // tiles
-  flicker: 0.22,                     // radius jitter fraction
-};
 
 // ---- character tokens (shared with assetforge/doll.js) ----
 export const SKINS = [
@@ -46,17 +27,6 @@ export const METAL = {
 // ---- Dreadforge master palette (v0.4). Ramps as [r,g,b] for the native-buffer
 // renderer. Desaturated cold bases, one poison accent, ember reserved for eyes. ----
 const _hx = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-export const INK_RGB = [11, 9, 16];       // #0b0910 — the void ground
-export const DREAD = {
-  soil:   ['#120e1c', '#1f1830', '#2f2444', '#413156', '#554165'].map(_hx),  // ashen violet-gray
-  flesh:  ['#260e16', '#421a24', '#622834', '#843a44', '#a2545c'].map(_hx),  // organic growth
-  bone:   ['#332f28', '#524c40', '#756e5e', '#9c9482', '#c4bba6'].map(_hx),  // high shale
-  poison: ['#0c2010', '#1a3c1e', '#2c6229', '#4c9438', '#84d44c'].map(_hx),  // corruption
-  water:  ['#060410', '#0c091c', '#130e2a', '#1c1440'].map(_hx),             // void water
-  obsid:  ['#0e0a16', '#1c1526', '#2c2138', '#3e2f4e', '#554270'].map(_hx),  // spires / props
-};
-export const DGLOW = { poison: _hx('#c8ff7a'), violet: _hx('#be96ff'), ember: _hx('#ff785a'), water: _hx('#5a46b4') };
-
 // ---- Emberlit master palette (v0.5). Same materials, but the albedo ramps are
 // a touch BRIGHTER than DREAD: deferred lighting multiplies albedo by a low
 // ambient and adds dynamic light, so surfaces must carry headroom to relight.

@@ -284,9 +284,6 @@ export function createRenderer(canvas, sim, input) {
 
   const fol = [];                                     // smoothed companion draw positions
 
-  // DEPTH: distance toward the camera in tile units = ground x+y of the surface point + 0.0833 per px of height (0.5 per
-  // level): the effects' depth key (fx.js), which the painter tests against its own depth buffer (hybrid.js)
-  const DPX = 0.0833;
 
   // The Abbess's water under another painter (hybrid.js lays it as tile squares; the boss pass): the glints paintHazards
   // puts in the bake's emissive, here as the effects' light, a few a frame where the water lies
@@ -645,7 +642,7 @@ export function createRenderer(canvas, sim, input) {
     {
     // the effects alone, on black (the EMISSIVE plane), for the painter to lay over its world as light: weapon effects
     // over the figures, then the hit sparks
-    fx.target({ EMI: sEMI, DEP: null, W: nvw, H: nvh, DPX, KEY: fxKey });
+    fx.target({ EMI: sEMI, W: nvw, H: nvh, KEY: fxKey });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
     for (const b of sim.world.projectiles || []) if (b.kind) boltFx(b, lerp(b, 'x'), lerp(b, 'y'), b.kind, fxProj);

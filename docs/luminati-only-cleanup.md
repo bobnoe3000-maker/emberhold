@@ -1,13 +1,12 @@
 # Luminati only: what to remove and clean up (a proposal, 2026-11-09)
 
-**Status: Accepted; steps 1–4 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
+**Status: Implemented, all five steps (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
 and fx/asset combos in the current code, so what code/assets and game options should we remove or clean up?", then, on
 §4's four questions: "Go with your recommendations on all four, start step 1". Also decided the same day: the dungeons
 keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)). Decision row A21
 ([architecture.md](./architecture.md)).
 
-This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Step 5 (the rest of the docs) is
-decided and not started.
+This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). All five steps are done (§3.1–3.5).
 
 **In short:**
 - **Luminati is the default and the only choice (step 1, done).** Graphics has no renderer row; a stored Emberlit choice
@@ -112,7 +111,7 @@ Each step ships on its own, with the browser suite green before the next.
 | 2 ✓ | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
 | 3 ✓ | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
 | 4 ✓ | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
-| 5 | **Tools, tests and docs** to match | Low |
+| 5 ✓ | **Tools, tests and docs** to match | Low |
 
 ### 3.1 Step 1 as built (2026-11-09)
 
@@ -195,6 +194,29 @@ Each step ships on its own, with the browser suite green before the next.
   x-ray shares (Thornwick's townsfolk behind buildings; Saltmere's keeps its "everyone in view and tappable" half).
 - **The capture tools** (`rig`, `skills`, `bosses`, `feel`, `tools/dungeon/capture.mjs`) draw on Luminati only; they
   still pass `&renderer=luminati`, so a `--base` checkout from before draws on it too.
+
+### 3.5 Step 5 as built (2026-11-09; the owner: "start step 5")
+
+Most of the tools, tests and docs moved with the steps that needed them (§3.1–3.4: the capture tools, the browser
+suite's budget, AGENTS.md, A2 and A21, the superseded docs' notes). What was left:
+- **Dead code the renderer's removal stranded:** `gsprite.js`'s two sprite helpers (`spriteFromSheetFrame`,
+  `spriteFromCanvasData`) and their checks in `render-smoke-test.mjs` (its props checks stay); `palette.js`'s
+  pre-Emberlit palettes (`EMBERWOOD`, `LIGHT`, `DREAD`, `DGLOW`, `INK_RGB`); `iso.js`'s `ROWW` (the tile diamond's rows);
+  `fx.js`'s own depth test against Emberlit's depth plane (`DEP`, `DPX`: the painter tests the light's depth key itself).
+- **The atlases' versions moved to Luminati:** since step 4 the renderer reads only an atlas's JSON, and the images are
+  Luminati's to load (`world.js`), which asked for them unversioned: the stale-image bug of 3494747 (a re-bake moves the
+  rects, a browser holding the old PNG cuts blank) was open again. `world.js` now revalidates the JSON and asks for its
+  PNG at a version hashed from the text, as the renderer did; the browser check runs on Luminati (Thornwick, the people
+  as sprites) and the loading-screen check watches the hero's JSON.
+- **The browser suite after step 4:** 19.5 min on this machine for the whole suite (it was ~41 with Emberlit painting
+  the flow checks; the first unbudgeted try spent 207 s on the slots checks alone).
+- **Kept, on purpose:** `daylight.js` (the held sky and the hour: the overlay's weather and the marsh-lights read it),
+  `weatherfx.js`, `beasts.js`, `anim.js`, `gsprite.js`'s props (hybrid stands them), `palette.js`'s `ELIT` and
+  `KIT_TINT`; the bakers still draw their normal and glow passes (not written: the glow pass sets an actor's `glow` in
+  its JSON), and the sim's stage world (`outdoor.js` buildStage, under the art review's page).
+- **Docs:** this one Implemented; `emberlit-tdd.md` superseded for the world (what remains of Emberlit still follows
+  it), `emberlit-demo.html` a historical reference, `tile-styles.md` and `character-stage-proposal.md` superseded,
+  `art-review.md` current in part (icons and faces), `lumina-prototype.md` superseded.
 
 ## 4. Questions for the owner (answered 2026-11-09: the recommendations, all four)
 

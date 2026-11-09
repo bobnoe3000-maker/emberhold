@@ -9,7 +9,7 @@
 
 import { createSim } from './src/sim/core.js';
 import { createWorld, materialAt, heightAt } from './src/sim/world.js';
-import { buildProps, spriteFromSheetFrame, spriteFromCanvasData, norm3 } from './src/render/gsprite.js';
+import { buildProps, norm3 } from './src/render/gsprite.js';
 
 let bad = 0;
 function checkSprite(name, sp) {
@@ -31,21 +31,6 @@ for (const v of [[0, 0, 0], [1, 2, 3], [-5, 0, 0.001]]) {
 const props = buildProps(20260807);
 console.log('props:');
 for (const kind of ['spire', 'monolith', 'totem', 'stairs', 'chest', 'shrine', 'brazier']) checkSprite(kind, props[kind][0]);
-
-// creature from a synthetic RGBA sheet frame (a filled blob with a hole)
-const FW = 20, FH = 24, sheet = new Uint8Array(FW * FH * 4);
-for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) {
-  const solid = Math.hypot(x - 10, y - 12) < 8 && !(x > 8 && x < 12 && y > 4 && y < 8);
-  if (solid) { const i = (y * FW + x) * 4; sheet[i] = 90; sheet[i + 1] = 40; sheet[i + 2] = 50; sheet[i + 3] = 255; }
-}
-console.log('creature:');
-checkSprite('stain-frame', spriteFromSheetFrame(sheet, FW, 0, FW, FH, FW >> 1, FH - 1));
-
-// billboard from synthetic quantized doll data
-const DW = 24, DH = 36, doll = new Uint8Array(DW * DH * 4);
-for (let y = 6; y < 32; y++) for (let x = 8; x < 16; x++) { const i = (y * DW + x) * 4; doll[i] = 70; doll[i + 1] = 60; doll[i + 2] = 90; doll[i + 3] = 255; }
-console.log('hero:');
-checkSprite('doll', spriteFromCanvasData(doll, DW, DH, 12, 34));
 
 // world bake sanity: floor/wall/abyss present + elevation spans + deterministic
 const SEED = 20260807;

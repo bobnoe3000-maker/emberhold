@@ -34,7 +34,7 @@ const ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', rogue: '
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
   fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor' };
-// their names (the Stage's, src/dev/stage.js)
+// their names (as the battle bar shows them)
 export const KIND_NAME = { warrior: 'Ashbound warrior', minion: 'Ashbound minion', rogue: 'Ashbound archer', mage: 'Ashbound mage', cutthroat: 'Cutthroat', brute: 'Brute',
   crossbow: 'Crossbowman', acolyte: 'Acolyte', goblin: 'Goblin', bruiser: 'Bruiser', archer: 'Goblin archer', hexer: 'Hexer', fenghoul: 'Fen ghoul',
   reedcutter: 'Reed-cutter', fowler: 'Fowler', bogwitch: 'Bog-witch', harvester: 'Harvester', drowned: 'Drowned brother', cantor: 'Cantor' };

@@ -614,17 +614,18 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 // 11. Atlas versions: every atlas image is asked for at the version of its rects (renderer.js atlasMeta).
 // A re-bake moved the stairwell's rect (3494747) and a browser holding the old PNG drew it blank. And only the albedo
 // is asked for: the normal, glow and depth-key atlases are gone (docs/luminati-only-cleanup.md step 3), and a fetch of
-// one would fail and lose the figure or the env atlas (the minimap's buildings, the beasts)
+// one would fail and lose the figure or the env atlas. Since step 4 the images are Luminati's to load (world.js json,
+// `_v`), so on Luminati: Thornwick with its people as sprites (?figures=sprites: their atlases' albedo)
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const pngs = []; p.on('request', (r) => { const m = /\/assets\/(env|actors)\/([^/.]+)\.(alb|nrm|key|emi)\.png(\?v=(\w+))?$/.exec(r.url()); if (m) pngs.push({ dir: m[1], name: m[2], ch: m[3], v: m[5] }); });
-    await p.goto(`${base}/index.html?dev&notitle&scene=dungeon`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 }); await p.waitForTimeout(1500);
+    await p.goto(`${base}/index.html?dev&notitle&scene=town&world=on&figures=sprites`); await p.waitForFunction(() => !!globalThis.__world3d && globalThis.__world3d.state.loads >= 1, null, { timeout: 120000 * SLOW }); await p.waitForTimeout(3000);
     const fnv = (t) => { let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193); return (h >>> 0).toString(36); };
     const bad = pngs.filter((q) => q.v !== fnv(readFileSync(`assets/${q.dir}/${q.name}.json`, 'utf8')));
     const lit = pngs.filter((q) => q.ch !== 'alb');
-    check('atlases: every atlas image is fetched at its JSON\'s version, and only the albedo (no normal, glow or depth-key atlas)', pngs.some((q) => q.name === 'env') && bad.length === 0 && lit.length === 0,
+    check('atlases: every atlas image is fetched at its JSON\'s version, and only the albedo (no normal, glow or depth-key atlas)', pngs.some((q) => q.dir === 'actors') && bad.length === 0 && lit.length === 0,
       `${pngs.length} images` + (bad.length ? ' · stale: ' + bad.map((q) => q.name).join(', ') : '') + (lit.length ? ' · asked for: ' + lit.map((q) => `${q.name}.${q.ch}`).join(', ') : ''));
     await ctx.close(); await b.close();
   }
@@ -939,7 +940,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    const got = {}; p.on('response', (r) => { const m = r.url().match(/assets\/actors\/(hero_\w+)\.alb\.png/); if (m) got[m[1]] = Date.now(); });
+    const got = {}; p.on('response', (r) => { const m = r.url().match(/assets\/actors\/(hero_\w+)\.json/); if (m) got[m[1]] = Date.now(); });   // (the renderer reads an atlas's JSON only: step 4)
     await p.goto(`${base}/index.html?dev&manual&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__renderer, null, { timeout: 60000 });
     const t = await p.evaluate(async () => { const H = globalThis.__sim.state.party[0]; H.actor = 'hero_cleric'; H.cls = 'cleric'; await globalThis.__renderer.ready; return Date.now(); });
     check('ready: the loading screen waits for the hero\'s own look (a cleric), not only the knight; no page errors',

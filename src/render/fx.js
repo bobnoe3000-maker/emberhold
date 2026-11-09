@@ -103,16 +103,16 @@ export const styleOfSrc = (src, foe, foeActor = {}) => FX_STYLES[foe ? foeActor[
 export const raisedLook = (s) => s === undefined || s >= 1.6 ? null : s < 0.35 ? 'ghost' : 0.55 * (1 - (s - 0.35) / 1.25);
 
 export function createFX() {
-  let B = null;                                   // { EMI, DEP, W, H, DPX }
+  let B = null;                                   // { EMI, W, H, KEY }
   let acc = null, touched = [];                   // one shape's coverage (max-blended, so overlaps don't double up)
-  const ctx = { key: 0, fy: 0, h: 0 };            // depth context of the figure being drawn
+  const ctx = { key: 0 };                         // the depth key of the figure being drawn
   const parts = [], flashes = [], beams = [], rings = [];
 
   function target(buf) {
     B = buf;
     if (!acc || acc.length !== B.W * B.H) { acc = new Float32Array(B.W * B.H); touched = []; }
   }
-  function depth(key, footY, baseH) { ctx.key = key; ctx.fy = footY; ctx.h = baseH; }
+  function depth(key, footY, baseH) { ctx.key = key; }   // (footY, baseH: the figure's foot and height, which Emberlit's own depth test read)
 
   // ── primitives: mark coverage, then flush it as light of one colour ─────────
   function mark(x, y, a) {
@@ -120,14 +120,12 @@ export function createFX() {
     const i = y * B.W + x; if (!acc[i]) touched.push(i); if (a > acc[i]) acc[i] = a;
   }
   function flush(col, gain = 1) {
-    const { EMI, DEP, W, DPX, KEY } = B;
-    // (another painter, with no depth plane of ours: the alpha holds the owner's depth key instead, the nearest owner's
-    // where two overlap, for it to test against its own depth; KEY: { base, step })
+    const { EMI, KEY } = B;
+    // (the painter tests the light's depth against its own: the alpha holds the owner's depth key, the nearest owner's
+    // where two overlap; KEY: { base, step }. Emberlit's own depth plane went with its painting.)
     const own = KEY ? Math.max(1, Math.min(255, Math.round((ctx.key - KEY.base) / KEY.step))) : 250;
     for (const i of touched) {
       let a = acc[i] * gain; acc[i] = 0;
-      const py = (i / W) | 0, d = ctx.key + DPX * (ctx.h + Math.max(0, ctx.fy - py));
-      if (DEP && DEP[i] > d + 0.05) a *= 0.22;                               // something nearer stands over it
       const j = i * 4;
       EMI[j] = Math.min(255, EMI[j] + col[0] * a * 0.24); EMI[j + 1] = Math.min(255, EMI[j + 1] + col[1] * a * 0.24); EMI[j + 2] = Math.min(255, EMI[j + 2] + col[2] * a * 0.24);
       EMI[j + 3] = KEY ? Math.max(EMI[j + 3], own) : 250;                     // steady (no ember flicker)
