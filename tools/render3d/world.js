@@ -35,6 +35,8 @@ import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { buildLandmark, LANDMARK_OF } from './landmarks.js';
+import { makeBuilding } from './buildkit.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { build as buildFigure, fitPpu, pose as poseFigure, compact } from './figure.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -221,7 +223,12 @@ function sweepFigures() {
 }
 
 // ── our own art kept by the converter: a sprite each from the env atlases ───────────────────────────────────────────
-let envSprites = [];
+// (the Vale's three dungeon doors built instead, with ?landmarks=3d: landmarks.js, docs/vale-landmarks-proposal.md)
+let envSprites = [], LANDMARKS = 'sprites';
+// our own building kit's models (tools/actor-lab/buildkit.js: the same model the sprite is baked from, its design kept,
+// the owner, 2026-11-10: "the old design for the Keep actually looks OK - can we keep this"), stood in 3D, lit and shadowed
+// by the world: one kit unit is ten of our tiles, five of Luminati's units
+const KIT_PIECES = { vale_keep_1: { build: 'keep', style: 'vale', seed: 1 } }, KIT_UNIT = 5;
 async function placeEnv(list, region) {
   for (const s of envSprites) { game.engine.scene.remove(s); s.dispose?.(); }
   envSprites = [];
@@ -232,6 +239,20 @@ async function placeEnv(list, region) {
   const mine = levelId;
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
+    const kp = LANDMARKS === '3d' && KIT_PIECES[p.id];
+    if (kp) {
+      const g = makeBuilding(kp.build, kp.style, kp.seed, !!kp.faceX); g.name = `ember:kit:${p.id}`;
+      g.scale.setScalar(KIT_UNIT); g.position.set(p.x, game.tileMap.getHeight(p.x, p.z), p.z);
+      g.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = true; } });
+      g.dispose = () => g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+      game.engine.scene.add(g); envSprites.push(g); continue;
+    }
+    const lk = LANDMARKS === '3d' && (region || 'vale') === 'vale' && LANDMARK_OF[p.id], fac = game.world?.factory;
+    if (lk && fac) {
+      const g = buildLandmark(fac, lk, p.x, game.tileMap.getHeight(p.x, p.z), p.z, game.world.glassMaterial);
+      g.dispose = () => { for (const q of g.userData.geometries || []) q.dispose(); };
+      game.engine.scene.add(g); envSprites.push(g); continue;
+    }
     const f = at(p.id); if (!f) continue;
     const [set, m] = f, img = await image(`${ASSETS}env/${set}.alb.png?v=${all[sets.indexOf(set)]._v}`).catch(() => null);
     if (!img || mine !== levelId) return;
@@ -978,7 +999,8 @@ const api = {
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;
     if (o.figMax > 0) FIG_MAX = o.figMax;
-    if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;   // (?figures=sprites: the atlases, as before 4b)
+    if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
+    if (o.landmarks === '3d' || o.landmarks === 'sprites') LANDMARKS = o.landmarks;   // (?landmarks=3d: the Vale's dungeon doors built, landmarks.js)   // (?figures=sprites: the atlases, as before 4b)
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
@@ -1087,7 +1109,7 @@ const api = {
     frameAmbient = f.ambient || null;
     // our art kept standing (env, props) faces the camera: turned each frame as the figures are. Turned once, when it was
     // placed, it kept the camera's angle before the camera was set, and the props read as thin leaning strips
-    for (const s of envSprites) s.update(0, camera);
+    for (const s of envSprites) s.update?.(0, camera);
     setLight(f.light);
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)), { render: f.draw !== false });   // (draw false: stepped, not drawn: tools/capture/rig.mjs settling)
   },

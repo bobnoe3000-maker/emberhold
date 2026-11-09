@@ -37,6 +37,7 @@ const WHAT = args[0] && !args[0].startsWith('--') ? args[0] : 'smoke';
 // (Luminati only since 2026-11-09, docs/luminati-only-cleanup.md: --renderer is gone. The URL still says
 // &renderer=luminati, so a --base checkout from before draws on Luminati too, for a before and an after)
 const RENDERERS = ['luminati'];
+const QUERY = opt('--query', '');   // (more of the page's flags, e.g. landmarks=3d)
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/rig'))), DPR = +opt('--dpr', 1), SETTLE = +opt('--settle', 40);
 const HOURS = ['dawn', 'day', 'dusk', 'night'];
 const FLOORS = [['barrows', 0], ['barrows', 1], ['wickham_keep', 0], ['wickham_keep', 1], ['sunken_chapel', 0], ['sunken_chapel', 1]];   // (the Vale's six floors, two a dungeon: plans.js)
@@ -125,7 +126,7 @@ async function run(renderer) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: DPR });
   const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
   const first = SHOTS[0];
-  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}&renderer=luminati`);
+  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}&renderer=luminati${QUERY ? '&' + QUERY : ''}`);
   await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
   log(renderer, 'page up');
   await mkdir(join(OUT, renderer), { recursive: true });
