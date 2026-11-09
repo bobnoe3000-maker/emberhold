@@ -1,15 +1,17 @@
-# The Vale's landmarks: the dungeon doors to the new art standard (a proposal)
+# The Vale's landmarks: the dungeon doors to the new art standard
 
-**Status: Proposed (2026-11-10), with a spike** (`?landmarks=3d`; the game is unchanged without it). The owner: *"phone
-performance and looks are good. Let's continue to focus on the MVP with the Thornwick map, so we can extend the same
-standards and criteria (world assets like trees, relative placements, dungeon entrances/art, etc.) to other maps. First,
-the entrances to the dungeons dont look good and are not up to the new art standards (old barrow, keep, sunken chapel) -
-propose updated art for these buildings."* Then, seeing the spike: *"the old design for the Keep actually looks OK - can
-we keep this, and are those tile assets re-usable for our overall asset catalogue?"*
+**Status: Approved (2026-11-10); #1, #2 and #4 Implemented, #3 awaiting the owner's choice per piece** (§7, §8). The
+owner: *"phone performance and looks are good. Let's continue to focus on the MVP with the Thornwick map, so we can
+extend the same standards and criteria (world assets like trees, relative placements, dungeon entrances/art, etc.) to
+other maps. First, the entrances to the dungeons dont look good and are not up to the new art standards (old barrow,
+keep, sunken chapel) - propose updated art for these buildings."* Then, seeing the spike: *"the old design for the Keep
+actually looks OK - can we keep this, and are those tile assets re-usable for our overall asset catalogue?"* Then, on
+§6: *"Go with your recommendations on all four - but let me see your proposed changes to #3 before implementing - let
+me choose before or after."*
 
 ![Before and after, day and dusk](img/landmarks/entrances-before-after.jpg)
 
-*Left: the game as it is. Right: the spike. The Keep is our own kit's model stood in 3D. The Barrows and the Chapel are
+*The proposal's spike (kept for the record; §7 has the shipped doors). Left: the game as it was. Right: the spike. The Keep is our own kit's model stood in 3D. The Barrows and the Chapel are
 first passes at new designs. Captured in the game on the manual clock (`tools/capture/rig.mjs … --query landmarks=3d`).*
 
 ## 1. What's wrong now
@@ -135,12 +137,90 @@ Cost: the kit-in-the-world step is small (the spike works). The two redesigns ar
    in the same pass (recommended), or the three doors only first?
 4. **The chapel's marsh as real water tiles** (recommended)?
 
+## 7. As built: the three doors (#1, #2, #4)
+
+![The three doors before and after, dusk and day](img/landmarks/doors-before-after.jpg)
+
+*Left: the baked cards the game had. Right: the kit's models stood in 3D, graded as baked, in the game on the manual
+clock (`tools/capture/rig.mjs … --query landmarks=doors`).*
+
+- **One catalogue** (`tools/render3d/world.js` `kitPiece`, `placeEnv`). A Vale kit piece the converter keeps is built
+  from `tools/actor-lab/buildkit.js` and stood in the world: one kit unit to five of Luminati's, shadows cast and
+  taken, lit windows in the world's lantern glass.
+  - **Merged by material:** the Keep's 65 meshes draw as 8.
+  - **One model an id a scene,** its geometry shared by every copy (Thornwick's palisade is the same few pieces many
+    times).
+  - **Graded as its card** (`env.json` / `town.json`): toward the luma by `desat`, the warm `tint`, in the shader. The
+    bake's `gain` answers the bake's own bright lights, so in its place an albedo lift (`KIT_LIFT` 1.3). Wickham Keep
+    at dusk, luma over the keep: the card 64.5, the model at the bake's gain 39.9, ungraded 45.1, lifted 51.0. By day
+    the card is 63.5 and the lifted model 56.9.
+  - **On the ground round it,** not the tile under its middle (the chapel stands in water).
+  - **`?landmarks=doors|all|sprites`:** `doors` is the default (the three doors); `all` is every Vale kit piece (§8);
+    `sprites` is every piece as its card, as before.
+- **The Old Barrows** (`buildkit.js` `barrow`), as §4 designed it:
+  - a long, low turfed mound with a kerb round its foot;
+  - a portal of three rough faceted stones facing the exit, the Legion's shield on the lintel;
+  - the dry-stone forecourt and the dark passage;
+  - the Redhand's shoring, spoil and planks;
+  - Tobin's lantern, standing stones and a dead tree.
+  - Left out: the Redhand's tent (their fire by the mound is the sim's brazier).
+- **The Sunken Chapel** (`buildkit.js` `chapelruin`):
+  - sunk to its sills and leaning;
+  - pale ashlar over a green slime line, tall dark windows;
+  - the near end slate-roofed, an empty bell-cote on its gable, the far end open to its rafters (one fallen askew);
+  - the dry porch on its steps before a dark door going down;
+  - Hester's three skeps on a bench and her lantern;
+  - the robed men's planks across the water to a breach in the side wall, their spoil on the bank.
+- **The marsh as the world's water** (`src/render3d/convert.js`, `MARSH_FRONT`). The Sunken Chapel's footprint, up to 5
+  tiles in front of its middle, is laid as Luminati's still water (its riverbed 0.6 under the bank). The porch and the
+  approach stay dry. The sim never walks a footprint, so nobody wades, and nothing the sim walks, fights in or replays
+  changes.
+- **The budget** (§3.7), measured in the game's Vale:
+
+  | Door | Triangles | Draws |
+  |---|---|---|
+  | Wickham Keep | 952 | 8 |
+  | The Old Barrows | 1,346 | 10 |
+  | The Sunken Chapel | 1,306 | 12 |
+
+  `luminati.js` is 135 KB gzipped (108 before the kit).
+- **Checks:**
+  - the browser suite's new check that the three doors stand as kit meshes under 1,500 triangles and 12 draws, the
+    chapel in the world's water;
+  - `npm run check`.
+- **Not done here:**
+  - **The re-bake.** `bake-env.cjs` needs the nature pack's glTF, which this checkout lacks. So the barrow's and the
+    chapel's 2D sprites (the minimap, `?landmarks=sprites`) are still the old designs, and `envfoot.js` keeps their old
+    footprints. The next bake picks them up. The chapel's pool is `bakeOnly`, so its card keeps water.
+  - **The Keep's door torches** (Luminati's wall torch). The door's own lit windows and the brazier light it for now.
+
+## 8. #3: the rest of the Vale's cards, for the owner to choose
+
+The owner: *"let me see your proposed changes to #3 before implementing - let me choose before or after."* Nothing
+here is the default: `?landmarks=all` shows it.
+
+![The rest of the Vale's kit pieces, cards and models, at dusk](img/landmarks/vale-kit-choices-dusk.jpg)
+
+([by day](img/landmarks/vale-kit-choices-day.jpg))
+
+| # | Piece | Recommendation | Why |
+|---|---|---|---|
+| 1 | Thornwick from outside: the palisade, its towers and the gatehouse | **After** | The braziers light the gate's timbers and the posts take the light; it stands, where the card leans flat. The slate roofs still read blue at dusk, so a stronger desaturation goes on the roofs if chosen. |
+| 2 | The Tithe Mill | After | The same design, lit; its wheel in the race reads |
+| 3 | The lumber camp (the mill, the log stack, the stumps) | After | The log stack reads as logs and the stumps stand |
+| 4 | The mine | After (marginal) | The hill and its shed are in shade either way; lit from the sun's side |
+| 5 | The ninth milestone | Either | Small: the same stone |
+| 6 | The Scrag Warren | After | The adit's timbers and the torn boards read as depth, not paint |
+| 7 | Inside Thornwick: the palisade and a tower | **Before** | From inside, the wall's face to the camera is its shaded side, and the tower reads as a black block. The card shows the lit face. |
+| 8 | Inside Thornwick: the gatehouse | **Before** | As 7 |
+
+**The cost of `all`,** measured in the game (scene-wide, before the camera's culling):
+- **The Vale overland:** 32 kit pieces, 37,514 triangles, 236 draws.
+- **Thornwick:** 42 pieces, 43,700 triangles, 176 draws.
+
+A screen holds a few of them at a time. Before any of it becomes the default, it gets checked on a phone.
+
 ## The spike, in the code
 
-- `tools/render3d/landmarks.js`: the Barrows and the Chapel, built with Luminati's mesh builder and its base textures.
-  The Vale doesn't load Luminati's optional texture kits; the spike sticks to the base set.
-- `tools/render3d/world.js`: `KIT_PIECES` (the Keep from `buildkit.js`), `LANDMARK_OF`. Both only with
-  `?landmarks=3d` (`hybrid.js` passes it).
-- `tools/render3d/build.mjs` stages `landmarks.js` and `buildkit.js` into the vendor build; `luminati.js` is
-  108 → 132 KB gzipped with the kit in it.
-- `tools/capture/rig.mjs --query landmarks=3d` takes the shots.
+(The spike, superseded by §7: `tools/render3d/landmarks.js` built the Barrows and the Chapel a second way, with
+Luminati's mesh builder; it is gone, and its designs live in the kit. `rig.mjs --query` stays.)

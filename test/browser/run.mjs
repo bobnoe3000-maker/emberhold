@@ -1434,6 +1434,20 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
         && worlds.includes('The Frontier') && !['Compare worlds', 'Another world'].some((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the Vale's three dungeon doors (docs/vale-landmarks-proposal.md): our kit's models stood in 3D, not cards, each under
+    // the landmark standard's phone budget (§3.7: about 1,500 triangles, about 10 draws); the Sunken Chapel in the world's water
+    const doorsUp = await p.evaluate(async () => {
+      const ids = ['vale_keep_1', 'ruin', 'chapelruin_0'], out = {}, G = window.__game;
+      for (let i = 0; i < 100 && !ids.every((id) => G.engine.scene.getObjectByName(`ember:kit:${id}`)); i++) { globalThis.__frame(16); await new Promise((r) => setTimeout(r, 100)); }
+      for (const id of ids) { const g = G.engine.scene.getObjectByName(`ember:kit:${id}`); let tris = 0, draws = 0;
+        g?.traverse((m) => { if (m.isMesh) { draws++; tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; } });
+        out[id] = g ? { tris: Math.round(tris), draws } : null; }
+      const ch = globalThis.__sim.world.structs.find((s) => s.id === 'chapelruin_0'), gr = G.engine.scene.getObjectByName('ember:kit:chapelruin_0');
+      out.marsh = !!gr && G.tileMap.getHeight(gr.position.x, gr.position.z - 1) < gr.position.y - 0.5 && !!ch;
+      return out;
+    });
+    check('render3d: the Vale\'s dungeon doors (the Keep, the Old Barrows, the Sunken Chapel) stand as our kit\'s 3D models, each under 1,500 triangles and 12 draws, the chapel in the world\'s water (docs/vale-landmarks-proposal.md)',
+      ['vale_keep_1', 'ruin', 'chapelruin_0'].every((id) => doorsUp[id] && doorsUp[id].tris > 300 && doorsUp[id].tris < 1500 && doorsUp[id].draws <= 12) && doorsUp.marsh, JSON.stringify(doorsUp));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&world=on`);

@@ -233,7 +233,7 @@ function sweepFigures() {
 //   'all': every kit piece of the Vale's (the owner chooses the rest, before or after: the proposal's question 3);
 //   'sprites': the baked sprites, as before.
 let envSprites = [], LANDMARKS = 'doors';
-const KIT_UNIT = 5, KIT = new Map(), KIT_MADE = new Map();
+const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map(), KIT_MADE = new Map();
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
 for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
 const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
@@ -248,6 +248,20 @@ function kitPiece(e, x, y, z) {
   if (e.scale) src.scale.multiplyScalar(e.scale);
   src.updateMatrixWorld(true);
   const glass = game.world?.glassMaterial || null, by = new Map(), g = new THREE.Group();
+  // the bake's grade (envlab.js: toward the luma by desat, the warm tint) on the albedo, in the shader, so the piece
+  // takes its card's palette; not the bake's gain, which answers the bake's own bright lights: the world lights it
+  // here, and an albedo lift (KIT_LIFT) brings it to its card's brightness (Wickham Keep at dusk: luma 40 at the gain,
+  // 51 lifted, its card 64.5; saturation 0.59 → 0.57, the card 0.36)
+  const desat = e.desat ?? 0.3, gain = KIT_LIFT, tint = e.tint || [0.95, 0.92, 1.0], gkey = `kitgrade:${desat},${gain},${tint}`;
+  const grade = (m) => {
+    const c = m.clone();
+    c.onBeforeCompile = (sh) => {
+      sh.uniforms.uGrade = { value: new THREE.Vector4(desat, gain * tint[0], gain * tint[1], gain * tint[2]) };
+      sh.fragmentShader = 'uniform vec4 uGrade;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n  { float L = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(L), uGrade.x) * uGrade.yzw; }');
+    };
+    c.customProgramCacheKey = () => gkey;
+    return c;
+  };
   src.traverse((o) => {
     if (!o.isMesh || o.userData.mask || o.userData.bakeOnly) return;   // (bakeOnly: what the world draws itself, the chapel's water)
     const m = o.userData.glow && glass ? glass : o.material;
@@ -265,7 +279,7 @@ function kitPiece(e, x, y, z) {
     const merged = geos.length > 1 ? mergeGeometries(geos) : geos[0];
     if (!merged) continue;
     for (const q of geos) if (q !== merged) q.dispose();
-    const mesh = new THREE.Mesh(merged, m); mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+    const mesh = new THREE.Mesh(merged, m === glass ? m : grade(m)); mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
   }
   g.name = `ember:kit:${e.id}`; g.scale.setScalar(KIT_UNIT); KIT_MADE.set(e.id, g);
   const c = g.clone(); c.position.set(x, y, z); return c;
