@@ -27,9 +27,8 @@ const STAGE = join(LUM, 'ember3d');
 rmSync(STAGE, { recursive: true, force: true }); mkdirSync(STAGE, { recursive: true });
 cpSync(join(HERE, 'world.js'), join(STAGE, 'world.js'));
 cpSync(join(HERE, 'ground.js'), join(STAGE, 'ground.js'));
-cpSync(join(HERE, 'landmarks.js'), join(STAGE, 'landmarks.js'));
 // the bake's figure builder, so the people in the world are the atlases' people as models (world.js placeFigure)
-for (const f of ['figure.js', 'faces.js', 'props.js', 'body.js', 'buildkit.js']) cpSync(join(ROOT, 'tools', 'actor-lab', f), join(STAGE, f));
+for (const f of ['figure.js', 'faces.js', 'props.js', 'body.js', 'buildkit.js', 'env.json', 'town.json']) cpSync(join(ROOT, 'tools', 'actor-lab', f), join(STAGE, f));
 
 // 3. the library build
 rmSync(OUT, { recursive: true, force: true });

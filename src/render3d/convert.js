@@ -113,6 +113,7 @@ export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'desert', heig
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
 const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
+const MARSH_FRONT = 5;   // the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it)
 const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 
 /**
@@ -252,7 +253,15 @@ function outdoor(w, region) {
     }
     else if (/^hens_/.test(id)) add({ type: 'critters', x: p.cx, z: p.cz, kind: 'chicken', count: 4, radius: 1.6 });   // (Luminati's own hens, pecking about)
     else if (/^(cow|sheep)_/.test(id)) continue;               // (the farm's beasts are figures, alive: hybrid.js beasts, from Emberlit's animator)
-    else sprites.push({ id, x: X(s.x), z: Z(s.y) });            // ours: Luminati has nothing like it (or it's ours to keep)
+    else {
+      sprites.push({ id, x: X(s.x), z: Z(s.y) });              // ours: Luminati has nothing like it (or it's ours to keep)
+      // the Sunken Chapel's marsh (docs/vale-landmarks-proposal.md §4): the world's own still water under it, to the
+      // porch at its front; inside its footprint, which the sim never walks, so nobody wades (presentation only)
+      if (id === 'chapelruin_0' && region === 'vale') {
+        const f = p.f, i0 = Math.ceil((s.x + f[0] - x0) / 2 - 0.5), i1 = Math.floor((s.x + f[2] - x0) / 2 - 0.5), j0 = Math.ceil((s.y + f[1] - y0) / 2 - 0.5), j1 = Math.floor((s.y + MARSH_FRONT - y0) / 2 - 0.5);
+        for (let j = Math.max(0, j0); j <= Math.min(D - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(W - 1, i1); i++) { tiles[j][i] = 'o'; heights[j][i] = '0'; }
+      }
+    }
   }
   // the lit things on the ground (the town's braziers: a fire each, sharing Luminati's lamps)
   for (const [k, kind] of w.props || []) {

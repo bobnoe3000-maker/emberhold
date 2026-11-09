@@ -24,7 +24,7 @@ npm ci                                    # once: dev tooling only (the game its
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
 #   ?world=off|on (localhost only, kept for the tab: no world drawn, an empty painter in Luminati's place; the browser suite's flow checks run so, its world checks ask for &world=on: docs/luminati-only-cleanup.md step 4)
-#   ?landmarks=3d (the Vale's three dungeon doors built as 3D set-pieces, tools/render3d/landmarks.js: docs/vale-landmarks-proposal.md's spike)
+#   ?landmarks=doors|all|sprites (the Vale's kit pieces, tools/actor-lab/buildkit.js, stood in 3D: doors (default) the Keep, the Old Barrows and the Sunken Chapel; all every kit piece the converter keeps (the owner's choice, docs/vale-landmarks-proposal.md §6.3); sprites all as baked cards, as before)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)

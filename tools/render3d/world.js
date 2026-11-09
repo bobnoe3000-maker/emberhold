@@ -35,11 +35,12 @@ import { createFxAtlas } from '../src/engine/pixel/FxSprites.js';
 import { DEFAULT_KEYFRAMES } from '../src/engine/lighting/LightingSystem.js';
 import { setFogStart } from '../src/game/AtmosphereFog.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildLandmark, LANDMARK_OF } from './landmarks.js';
 import { makeBuilding } from './buildkit.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import ENV_LIST from './env.json';
+import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { build as buildFigure, fitPpu, pose as poseFigure, compact } from './figure.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import './ground.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
@@ -222,16 +223,58 @@ function sweepFigures() {
   }
 }
 
-// ── our own art kept by the converter: a sprite each from the env atlases ───────────────────────────────────────────
-// (the Vale's three dungeon doors built instead, with ?landmarks=3d: landmarks.js, docs/vale-landmarks-proposal.md)
-let envSprites = [], LANDMARKS = 'sprites';
-// our own building kit's models (tools/actor-lab/buildkit.js: the same model the sprite is baked from, its design kept,
-// the owner, 2026-11-10: "the old design for the Keep actually looks OK - can we keep this"), stood in 3D, lit and shadowed
-// by the world: one kit unit is ten of our tiles, five of Luminati's units
-const KIT_PIECES = { vale_keep_1: { build: 'keep', style: 'vale', seed: 1 } }, KIT_UNIT = 5;
+// ── our own art kept by the converter: our building kit's models stood in 3D, or a sprite each from the env atlases ───
+// Every piece the converter keeps (Luminati has no match for it) is a model of our own kit, tools/actor-lab/buildkit.js,
+// that the bake turns into a sprite (bake-env.cjs, its entry in env.json or town.json). Stood here as itself instead:
+// the same design, lit and shadowed by the world (docs/vale-landmarks-proposal.md; the owner, 2026-11-10: "the old
+// design for the Keep actually looks OK - can we keep this, and are those tile assets re-usable for our overall asset
+// catalogue?" — one catalogue). One kit unit is ten of our tiles, five of Luminati's units. Which pieces (?landmarks=):
+//   'doors' (the default): the Vale's three dungeon doors, the Keep, the Old Barrows and the Sunken Chapel;
+//   'all': every kit piece of the Vale's (the owner chooses the rest, before or after: the proposal's question 3);
+//   'sprites': the baked sprites, as before.
+let envSprites = [], LANDMARKS = 'doors';
+const KIT_UNIT = 5, KIT = new Map(), KIT_MADE = new Map();
+for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
+for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
+const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
+/** a kit piece as one mesh a material (its many boxes merged: a phone draws a few calls, not sixty), lit windows in the
+ * world's own glass (they light at dusk with the town's) */
+function kitPiece(e, x, y, z) {
+  // (one model an id a scene, its geometry shared by every copy: Thornwick's palisade is the same few pieces many times)
+  const hit = KIT_MADE.get(e.id);
+  if (hit) { const c = hit.clone(); c.position.set(x, y, z); return c; }
+  const src = makeBuilding(e.build, e.style, e.seed || 1, !!e.faceX);
+  if (e.rotY) src.rotation.y = e.rotY * Math.PI / 180;
+  if (e.scale) src.scale.multiplyScalar(e.scale);
+  src.updateMatrixWorld(true);
+  const glass = game.world?.glassMaterial || null, by = new Map(), g = new THREE.Group();
+  src.traverse((o) => {
+    if (!o.isMesh || o.userData.mask || o.userData.bakeOnly) return;   // (bakeOnly: what the world draws itself, the chapel's water)
+    const m = o.userData.glow && glass ? glass : o.material;
+    let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    geo.applyMatrix4(o.matrixWorld);
+    if (!geo.attributes.normal) geo.computeVertexNormals();
+    if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
+    for (const k of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(k) || (k === 'color' && !m.vertexColors)) geo.deleteAttribute(k);
+    // (the kit's vertex-coloured pieces, rocks and turf, each made its own material: one shared for all of them)
+    const key = m.vertexColors ? `vc|${m.flatShading}` : m.uuid;
+    if (!by.has(key)) by.set(key, { m, geos: [] });
+    by.get(key).geos.push(geo);
+  });
+  for (const { m, geos } of by.values()) {
+    const merged = geos.length > 1 ? mergeGeometries(geos) : geos[0];
+    if (!merged) continue;
+    for (const q of geos) if (q !== merged) q.dispose();
+    const mesh = new THREE.Mesh(merged, m); mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+  }
+  g.name = `ember:kit:${e.id}`; g.scale.setScalar(KIT_UNIT); KIT_MADE.set(e.id, g);
+  const c = g.clone(); c.position.set(x, y, z); return c;
+}
 async function placeEnv(list, region) {
   for (const s of envSprites) { game.engine.scene.remove(s); s.dispose?.(); }
   envSprites = [];
+  for (const g of KIT_MADE.values()) g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+  KIT_MADE.clear();
   if (!list?.length) return;
   const sets = ['env', `town-${region || 'vale'}`];
   const all = await Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`)));
@@ -239,18 +282,11 @@ async function placeEnv(list, region) {
   const mine = levelId;
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
-    const kp = LANDMARKS === '3d' && KIT_PIECES[p.id];
-    if (kp) {
-      const g = makeBuilding(kp.build, kp.style, kp.seed, !!kp.faceX); g.name = `ember:kit:${p.id}`;
-      g.scale.setScalar(KIT_UNIT); g.position.set(p.x, game.tileMap.getHeight(p.x, p.z), p.z);
-      g.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = true; } });
-      g.dispose = () => g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
-      game.engine.scene.add(g); envSprites.push(g); continue;
-    }
-    const lk = LANDMARKS === '3d' && (region || 'vale') === 'vale' && LANDMARK_OF[p.id], fac = game.world?.factory;
-    if (lk && fac) {
-      const g = buildLandmark(fac, lk, p.x, game.tileMap.getHeight(p.x, p.z), p.z, game.world.glassMaterial);
-      g.dispose = () => { for (const q of g.userData.geometries || []) q.dispose(); };
+    const kit = KIT.get(p.id), vale = (region || 'vale') === 'vale';
+    if (kit && vale && (LANDMARKS === 'all' || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
+      // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
+      const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
+      const g = kitPiece(kit, p.x, y, p.z);
       game.engine.scene.add(g); envSprites.push(g); continue;
     }
     const f = at(p.id); if (!f) continue;
@@ -1000,7 +1036,7 @@ const api = {
     if (o.figLit > 0) FIG_LIT = o.figLit;
     if (o.figMax > 0) FIG_MAX = o.figMax;
     if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
-    if (o.landmarks === '3d' || o.landmarks === 'sprites') LANDMARKS = o.landmarks;   // (?landmarks=3d: the Vale's dungeon doors built, landmarks.js)   // (?figures=sprites: the atlases, as before 4b)
+    if (['doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp
