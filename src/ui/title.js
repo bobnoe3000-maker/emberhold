@@ -54,7 +54,7 @@ const CSS = `
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
- *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string } | null, tune?: (() => void) | null,
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string, status?: () => any } | null, tune?: (() => void) | null,
  *   devApply?: ((cmds: any[]) => void) | null }} o  onPlay: the title closes into play;
  *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md; the Luminati prototype,
  *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
@@ -92,6 +92,17 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   // field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off
   const choice = (k, v, label, what, on) => html`<button key=${k + v} class=${on ? 'pri' : ''} aria-pressed=${on ? 'true' : 'false'}
     onClick=${async () => { await graphics.set({ [k]: v }); draw(); }}>${label}<small>${what}</small></button>`;
+  // what Luminati is drawing the people as (docs/dungeon-kit-proposal.md §9.6): models or sprites, how many, and the density
+  // it draws at; a model that failed says why (the owner saw sprites on a phone we can't test from here)
+  function figStatus() {
+    const s = graphics.status ? graphics.status() : null;
+    if (!s) return 'People: Luminati is still starting';
+    const at = s.pr ? ` · drawn at ${+s.pr.toFixed(2)}× (screen ${+(s.dpr || 1).toFixed(2)}×)` : '';
+    if (s.figures === 'sprites') return `People: sprites (?figures=sprites)${at}`;
+    if (s.figErr) return `People: sprites where a model failed (${s.figErr})${at}`;
+    if (s.actors > 0 && s.models === s.actors) return `People: 3D models, all ${s.models} in view${at}`;
+    return `People: ${s.models || 0} of ${s.actors || 0} in view as models, the rest still loading${at}`;
+  }
   function Graphics() {
     const g = graphics.read(), r = graphics.current();
     return html`<div id="title">
@@ -101,6 +112,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('renderer', 'emberlit', 'Emberlit', 'the game’s own', r === 'emberlit')}
         ${choice('renderer', 'luminati', 'Luminati', 'trial: light, shadow, depth', r === 'luminati')}
       </div>
+      ${r === 'luminati' && html`<div class="tag" id="figStatus">${figStatus()}</div>`}
       <div class="tag">Depth of field${r === 'luminati' ? '' : ' (with Luminati)'}</div>
       <div class="row">
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}

@@ -105,8 +105,9 @@ let FIGURES = 'models';
 const _camDir = new THREE.Vector3();
 const FILL = 0.4;                                             // (the share of the sprites' self-light a model gets: the owner's 4b; it catches the room's light as a card can't)
 let cast = null, castAsked = false;                           // assets/models/cast.json: the actors' variants, sizes and clips
+let figErr = '';                                              // (the first model that failed, and why: the menu's Graphics says so, for a phone we can't see)
 const castOf = (name) => {
-  if (!castAsked) { castAsked = true; json(`${ASSETS}models/cast.json`).then((c) => { cast = c || false; }); }
+  if (!castAsked) { castAsked = true; json(`${ASSETS}models/cast.json`).then((c) => { cast = c || false; if (!c) figErr ||= 'models/cast.json unreadable'; }); }
   return cast ? cast.actors[name] || false : cast === false ? false : null;
 };
 const gltfLoader = new GLTFLoader(), gltfs = new Map();
@@ -130,7 +131,7 @@ function templateOf(name, def) {
     for (const [b, p, q, s] of rest) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
     const cut = compact(c.root, mergeGeometries);              // (once a figure: its copies share the merged parts)
     templates.set(name, { root: c.root, clips: c.clips, frame: c.frame, ppu, minY: box.min.y, meshes: cut });
-  }).catch((e) => { console.warn('[luminati] figure', name, e); templates.set(name, false); });
+  }).catch((e) => { console.warn('[luminati] figure', name, e); figErr ||= `${name}: ${e?.message || e}`; templates.set(name, false); });
   return null;
 }
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
@@ -1098,7 +1099,7 @@ const api = {
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },
   get stats() {
     const shown = (k) => groundPools[k].filter((m) => m.visible).length;
-    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
+    return { bits: [...pools.entries()].filter(([sh]) => sh.name === 'ember-bit').reduce((n, [, p]) => n + p.filter((s) => s.visible).length, 0), water: WATER.mesh && WATER.mesh.visible ? WATER.mesh.count : 0, fig: figGlow, lit: Math.round(figLit * 100) / 100, beasts: beastPool.filter((s) => s?.visible).length, light: light.on ? 1 : 0, lightDepth: light.on && light.keyed && game?.postfx?.depthTexture ? 1 : 0, rings: shown('ring'), hazards: shown('disc'), warns: shown('wrim'), lanes: shown('lane'), spells: spellLive.size, dome: SK && SK.domeOf ? 1 : 0, blades: SK ? SK.blades.count - (SK.warmN > 0 ? 2 : 0) : 0, crystals: SK ? SK.crystals.count - (SK.warmN > 0 ? 1 : 0) : 0, frost: SK ? SK.frost.count - (SK.warmN > 0 ? 1 : 0) : 0, spellLight: spellLight && SK ? 1 : 0, focus: shown('focus'), carry: carryLight ? 1 : 0, level: levelId, actors: [...pools.values()].reduce((n, p) => n + p.filter((s) => s.visible).length, 0) + [...figs.values()].filter((q) => q.root.visible).length, models: [...figs.values()].filter((q) => q.root.visible).length, figErr, figFailed: [...templates.values()].filter((t) => t === false).length, pr: game?.engine?.pixelRatio ?? null, dpr: devicePixelRatio || 1, modelMeshes: [...templates.values()].filter(Boolean).map((t) => t.meshes.after).reduce((a, b) => a + b, 0), modelMeshesBefore: [...templates.values()].filter(Boolean).map((t) => t.meshes.before).reduce((a, b) => a + b, 0), figures: FIGURES, atlases: atlases.size, env: envSprites.length, sky: skyShown, ours: envSprites.filter((q) => q.name.startsWith('ember:prop:')).length,
       programs: game?.engine?.renderer?.info?.programs?.length ?? null };
   },
 };

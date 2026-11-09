@@ -137,7 +137,7 @@ const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
 // Graphics (render3d/settings.js, per device): the world's renderer takes a reload (the slot saved first); the depth of
 // field and the brightness dial apply at once
-const graphics = { read: readGraphics, current: rendererFor, set: async (/** @type {any} */ patch) => {
+const graphics = { read: readGraphics, current: rendererFor, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
   const before = rendererFor(), next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.bright && world3d) world3d.setBright(next.bright);
