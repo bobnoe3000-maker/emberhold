@@ -1,6 +1,6 @@
 # The dungeon and world kit: toward the owner's reference (a proposal, 2026-11-09)
 
-**Status: Proposed; §9's figures built** (2026-11-09: the people as models at 3×, §9.6). The owner (2026-11-09), with a reference frame: "Use this as an art reference that we should
+**Status: the walls and floors declined; §9's figures built** (2026-11-09). The owner: "dont change the dungeon walls and floors with KayKit - let's keep what we have": the dungeons keep Luminati's walls, floors and our dressing as they are, and §1–8's kit is not built (the spike in `tools/kit/` stands only as a record). The people as models at 3× (§9.6) are built and stay. The owner (2026-11-09), with a reference frame: "Use this as an art reference that we should
 improve our existing dungeon assets to… look how smooth and addition dressing… propose an approach to design and build
 improved world and dungeon tile assets."
 

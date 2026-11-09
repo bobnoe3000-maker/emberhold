@@ -31,6 +31,7 @@ import { createAudio } from './audio/engine.js';
 import { createListener } from './audio/listen.js';
 import { holdWeather } from './render/weatherfx.js';
 import { rendererFor, readGraphics, writeGraphics, feelK } from './render3d/settings.js';
+import { createFpsMeter } from './ui/fps.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -137,11 +138,13 @@ const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
 // Graphics (render3d/settings.js, per device): the world's renderer takes a reload (the slot saved first); the depth of
 // field and the brightness dial apply at once
+const fpsMeter = createFpsMeter(); fpsMeter.show(readGraphics().fps === 'on');   // (the menu's Frame rate: ui/fps.js)
 const graphics = { read: readGraphics, current: rendererFor, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
   const before = rendererFor(), next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.bright && world3d) world3d.setBright(next.bright);
   if (patch.feel) renderer.setFeel(feelK(next.feel));
+  if (patch.fps) fpsMeter.show(next.fps === 'on');
   if (patch.renderer && patch.renderer !== before) {
     if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {});
     const u = new URL(location.href); u.searchParams.delete('renderer'); location.href = u.href;
@@ -218,6 +221,7 @@ function frame(now) {
   // the next frame first: an error while drawing (a renderer bug) must not stop the loop — it
   // did once, and a missing class in a lookup froze the whole game at the first fight
   if (!MANUAL) requestAnimationFrame(frame);
+  fpsMeter.frame(now);
   if (away.running) { last = now; return; }   // the time away is being played through (ui/away.js): no ticks, no drawing
   const SLOW = DEV ? Math.max(1, globalThis.__slow || 1) : 1, real = now;
   let dt = (now - last) / 1000 / SLOW;

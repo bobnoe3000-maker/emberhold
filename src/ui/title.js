@@ -124,6 +124,11 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('feel', 'light', 'Light', 'half as much', g.feel === 'light')}
         ${choice('feel', 'off', 'Off', 'the screen keeps still', g.feel === 'off')}
       </div>
+      <div class="tag">Frame rate on screen</div>
+      <div class="row">
+        ${choice('fps', 'on', 'Show', 'frames a second, under ☰', g.fps === 'on')}
+        ${choice('fps', 'off', 'Hide', 'for play', g.fps !== 'on')}
+      </div>
       ${tune && html`<div class="tag">Brightness by the part of the day${r === 'luminati' ? '' : ' (with Luminati)'}</div>
       <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
         ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')

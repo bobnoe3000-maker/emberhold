@@ -194,6 +194,18 @@ test('the menu\'s Hit feel (the feel pass): full by default, light half, off non
   } finally { delete globalThis.localStorage; }
 });
 
+test('the menu\'s Frame rate (the owner, 2026-11-09): off by default, on when shown; kept per device, an unknown value read as off', async () => {
+  const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
+  const mem = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
+  try {
+    assert.equal(readGraphics().fps, 'off');
+    writeGraphics({ fps: 'on' }); assert.equal(readGraphics().fps, 'on');
+    writeGraphics({ feel: 'light' }); assert.equal(readGraphics().fps, 'on', 'another setting leaves it be');
+    mem.set('emberfall.graphics', '{"fps":"maybe"}'); assert.equal(readGraphics().fps, 'off');
+  } finally { delete globalThis.localStorage; }
+});
+
 test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): a glow at the head of the way up, daylight on a first floor; the well lit violet', () => {
   for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
     const s0 = createSim(SEED, undefined, { scene: 'dungeon', site }), first = convertWorld(s0.world).level;
