@@ -29,10 +29,10 @@ test('every class skill has a moment of its own, and no two draw alike', () => {
 });
 
 // the fight the capture tool stages (tools/capture/skills.mjs): a party of 15 with every skill, in a level-15 room
-function fight(classes, listen) {
+function fight(classes, listen, off = {}) {
   const sim = createSim(20260807, undefined, { scene: 'dungeon' }), got = [];
   sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
-  sim.state.party = classes.map((c, i) => { const m = i ? makeMember('c' + i, 'C' + i, c, 15) : makeHero({ cls: c }); m.level = 15; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; });
+  sim.state.party = classes.map((c, i) => { const m = i ? makeMember('c' + i, 'C' + i, c, 15) : makeHero({ cls: c }); m.level = 15; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; if (off[c]) m.off = off[c]; return m; });
   const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && q !== L.descentRoom && q.size === 'large'), P = sim.state.player;
   sim.world.roomLevels.set(r.id, 15); P.x = P.px = r.cx + 0.5; P.y = P.py = r.cy + 0.5;
   if (listen) sim.bus.on('skill', (e) => got.push(e));
@@ -52,7 +52,7 @@ test('the sim says when a skill is cast and where it lands, with who it reached;
 });
 
 test('Frost Nova is thrown onto a knot of foes in the mage\'s reach (GDD v1.53: cast round her, who keeps her distance, it never went off)', () => {
-  const { got } = fight(['fighter', 'rogue', 'mage'], true);
+  const { got } = fight(['fighter', 'rogue', 'mage'], true, { mage: ['flare'] });   // (Flare, the mage's level-3 since v1.56, would take the knots first)
   const novas = got.filter((e) => e.id === 'frost_nova' && e.at === 'land');
   assert.ok(novas.length >= 1, `Frost Nova in a minute: ${novas.length}`);
   for (const e of novas) {

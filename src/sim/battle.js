@@ -21,8 +21,10 @@
 // Defensive keeps companions near the leader and half the MP in reserve for guards and
 // heals; Aggressive lets them chase anything and heals late.
 //
-// The tiers (GDD §5.1 v1.55, skills.js): at 15 and 18 each member carries one of two abilities; TIER below says when
-// each is worth it and what it does. They bring crowd control (CC below): a stun, a freeze and a knockdown hold a foe
+// The skill trees' abilities (GDD §5.1 v1.55–v1.56, skills.js): TIER below says when each is worth it and what it does. A
+// member casts only the abilities it takes into the fight (skills.js inPlay: its loadout of four); its passives always
+// work (passiveVal: Hold the Line, Heavy Hand, Opportunist, Exploit, Frostbite, Lifeline, Devotion, Radiance, Old Ways,
+// Ancestral Guard and Deep Hex here; the stat ones in party.js). They bring crowd control (CC below): a stun, a freeze and a knockdown hold a foe
 // and cut the blow it's winding up; a root stops its feet; a pull or a knockback moves it, walls stopping it. A boss
 // takes half the time and is never moved; after a hold a foe can't be held again for CC_IMMUNE s. What's planted
 // (Caltrops, Blizzard, Consecrate, Sanctuary, the Spirit Totem) and Whirling Blades live in battle.planted, runtime (battle.fields is the flow fields' cache).
@@ -40,7 +42,7 @@ import { TOWER, WARDENS, towerTough, blockFamily, wardenWave, wardenAt, waveGold
 import { abilityMods, shotOf } from './items.js';
 import { has, companyMods, healMod, goldMod, sworn, FIGHT, SWORN_RISE } from './companions.js';
 import { DAY_S } from './heroes.js';
-import { priorityOf, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, hasPassive, HEAL_BONUS, DRAIN_MEND, OLD_WAYS_STACKS } from './skills.js';
+import { inPlay, unlocked, autocastOn, rankOf, skillMult, rankCost, stanceOf, passiveVal, HEAL_BONUS, DRAIN_MEND } from './skills.js';
 import { WEAK_S } from './heroes.js';
 import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
@@ -283,6 +285,8 @@ const SPENDS = new Set(['leap', 'wave', 'slam', 'blades', 'fan', 'step', 'field'
 // on one, a gap closed, a stun struck), spending down to it and no further: foes stand 2.8 apart, round whoever they fight
 // (GDD v1.53), so two in an area came seldom, and the tiers' abilities were cast once or twice in a fight (seed 20260807, 18)
 export const SPARE_MP = 0.7;
+// the passives' reach (GDD v1.56): Hold the Line and Radiance round their member, Ancestral Guard's low
+const HOLD_R = 3, GUARD_LOW = 0.3;
 const COS_HALF = { 40: 0.9397, 60: 0.8660 };   // cos of half a fan's arc (detmath has no acos; a table, as XP_TABLE)
 
 export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
@@ -525,6 +529,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   function resolve(att, def, power, bonusCrit = 0, critMul = 1, sure = false) {   // (sure: a crit that can't miss, Shadowstep's)
     if (!sure && rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
     const lvl = att.lvl || att.level || 1, mit = def.def / (def.def + 25 + 5 * lvl);
+    if (att.src && !def.cls) power *= edgeOn(att.src, def);    // (a party member's blow on a foe: its passives' edge)
     let dmg = Math.max(1, att.atk * power * (1 - mit));
     const crit = rng() * 100 < Math.min(60, att.crit + bonusCrit) || sure;
     if (crit) dmg *= 1.75 * critMul;
@@ -535,6 +540,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     let dmg = r.dmg;
     if (!isParty && battle && guardedHalf(tgt, w)) dmg = Math.max(1, Math.ceil(dmg / 2));   // Garrow's men stand / the Standard holds the line
     if (isParty && battle) { const tot = fieldAt('totem', tgt.x, tgt.y); if (tot) dmg = Math.max(1, Math.round(dmg * (1 - tot.A.guardK))); }   // the Spirit Totem's guard
+    if (isParty && battle) {                                    // the passives that guard: Hold the Line (a fighter near), Ancestral Guard (the low)
+      let k = 1; for (const q of state.party) { if (!alive(q) || q === tgt) continue;
+        const hl = passiveVal(q, 'hold_the_line'); if (hl && hypot(q.x - tgt.x, q.y - tgt.y) <= HOLD_R) k *= 1 - hl;
+        const ag = passiveVal(q, 'ancestral_guard'); if (ag && tgt.hp < statsFor(tgt).maxHp * GUARD_LOW) k *= 1 - ag; }
+      if (k < 1) dmg = Math.max(1, Math.round(dmg * k));
+    }
     if (isParty && tgt.ward > 0) {                              // Arcane Ward soaks it first (spent: it breaks, for the renderer's shatter)
       const a = Math.min(tgt.ward, dmg); tgt.ward -= a; dmg -= a;
       if (!tgt.ward) bus.emit('combat', { t: 'wardBreak', x: tgt.x, y: tgt.y, id: tgt.id });
@@ -547,8 +558,9 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     tgt.hp = Math.max(0, tgt.hp - dmg); tgt.flash = 0.12; tgt.hitN = (tgt.hitN || 0) + 1;
     const by = att.src || att;                                  // the striker (party stats are a copy): where the blow came from, who struck it — hit sparks
     bus.emit('combat', { t: 'hit', x: tgt.x, y: tgt.y, amount: dmg, crit: r.crit, party: isParty, ax: by.x, ay: by.y, src: by.actor || by.cls || by.kind, heavy, boss: !!by.boss });
-    if (tgt.hp <= 0 && isParty && battle && !battle.lifeline && state.party.some((q) => q.cls === 'cleric' && alive(q) && hasPassive(q))) {
-      tgt.hp = 1; battle.lifeline = true;                       // Lifeline: once a room visit, the blow that would down an ally doesn't
+    const lifeline = tgt.hp <= 0 && isParty && battle && !battle.lifeline ? state.party.find((q) => alive(q) && passiveVal(q, 'lifeline') > 0) : null;
+    if (lifeline) {
+      tgt.hp = Math.max(1, Math.round(statsFor(tgt).maxHp * passiveVal(lifeline, 'lifeline'))); battle.lifeline = true;   // Lifeline: once a room visit, the blow that would down an ally doesn't
       bus.emit('combat', { t: 'lifeline', x: tgt.x, y: tgt.y, name: tgt.name });
     }
     if (tgt.hp <= 0 && isParty && battle && sworn(tgt) && !(battle.sworn || []).includes(tgt.id)) {
@@ -700,12 +712,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // for the cheapest; Defensive always keeps half the pool
   function reserve(m, s) {
     const stance = stanceOf(m); if (stance === 'aggressive') return 0;
-    let low = 1e9; for (const A of priorityOf(m)) if (A.kind !== 'strike' && !SPENDS.has(A.kind) && unlocked(m, A, state.trials) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
+    let low = 1e9; for (const A of inPlay(m, state.trials)) if (A.kind !== 'strike' && !SPENDS.has(A.kind) && unlocked(m, A, state.trials) && autocastOn(m, A.id)) low = Math.min(low, cast(m, A).cost);
     if (low === 1e9) return 0;
     if (stance === 'balanced') return state.party.some((q) => alive(q) && q.hp < statsFor(q).maxHp * STANCE_AI.balanced.low) ? low : 0;
     return Math.max(low, s.maxMp * STANCE_AI[stance].reserve);
   }
-  const drainCap = (m, A) => A.dmax + (hasPassive(m) ? OLD_WAYS_STACKS : 0);
+  const drainCap = (m, A) => A.dmax + passiveVal(m, 'old_ways');   // (Old Ways: more stacks, by rank)
   // the knot a Hex goes on: the foe with the most others (not yet hexed) within its radius, or a lone boss or elite
   function hexCentre(A, foes) {
     let best = null, bn = 0;
@@ -784,7 +796,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       while (f.acc >= every - 1e-9 && f.t > -1e-9) {
         f.acc -= every;
         if (f.id === 'sanctuary') {
-          for (const q of state.party) if (alive(q) && hypot(q.x - f.x, q.y - f.y) < f.r) { const qs = statsFor(q), n = Math.round(qs.maxHp * A.heal * f.mult * HEAL_BONUS * healMod(f.by, state.party)); if (q.hp < qs.maxHp) { q.hp = Math.min(qs.maxHp, q.hp + n); bus.emit('combat', { t: 'heal', x: q.x, y: q.y, amount: n }); } }
+          for (const q of state.party) if (alive(q) && hypot(q.x - f.x, q.y - f.y) < f.r) { const qs = statsFor(q), n = Math.round(qs.maxHp * A.heal * f.mult * HEAL_BONUS * (1 + passiveVal(f.by, 'devotion')) * healMod(f.by, state.party)); if (q.hp < qs.maxHp) { q.hp = Math.min(qs.maxHp, q.hp + n); bus.emit('combat', { t: 'heal', x: q.x, y: q.y, amount: n }); } }
         } else if (f.id === 'totem') for (const o of within(w.enemies, f.x, f.y, f.r)) shove(o, f.x, f.y, A.pull);
         else for (const o of within(w.enemies, f.x, f.y, f.r)) strikeAt(f.aS, o, (f.id === 'consecrate' && o.undead ? A.undeadK : A.power) * f.mult, w, false);
       }
@@ -792,11 +804,20 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     battle.planted = battle.planted.filter((f) => f.t > 1e-9);
   }
   const hurtF = (q) => q.hp / statsFor(q).maxHp;
+  /** a party member's blow on a foe, by its passives (GDD v1.56): Exploit on one held or rooted, Frostbite on one slowed or
+   *  frozen, and anyone's on one a Deep Hex shaman hexed @param {any} m @param {any} e */
+  function edgeOn(m, e) {
+    let k = 1;
+    const ex = passiveVal(m, 'exploit'); if (ex && (held(e) || e.rooted > 0)) k *= 1 + ex;
+    const fb = passiveVal(m, 'frostbite'); if (fb && (e.slow > 0 || (e.fieldSlow || 1) < 1 || e.frozen > 0)) k *= 1 + fb;
+    const dh = e.hex && e.hex.t > 0 && e.hex.by ? passiveVal(e.hex.by, 'deep_hex') : 0; if (dh) k *= 1 + dh;
+    return k;
+  }
   /** how many it takes: the ability's least (two, `min`), or one while the member has MP to spare */
   const need = (m, A) => (!A.pair && m.mp >= statsFor(m).maxMp * SPARE_MP ? 1 : A.min || 2);   // (`pair`: never worth it on one: Fan of Knives, Binding Roots)
   /** MP a member's strikes leave for the dearest of its tiers' abilities it carries (on auto): so one is there to cast
    *  when it's worth it. (Cleave's 10 a swing had kept a level-18 fighter's 54 under any of them all fight.) */
-  function tierKeep(m) { let k = 0; for (const A of priorityOf(m)) if (A.tier && SPENDS.has(A.kind) && unlocked(m, A, state.trials) && autocastOn(m, A.id)) k = Math.max(k, cast(m, A).cost); return k; }
+  function tierKeep(m) { let k = 0; for (const A of inPlay(m, state.trials)) if (SPENDS.has(A.kind) && autocastOn(m, A.id)) k = Math.max(k, cast(m, A).cost); return k; }
   // pick(m, A, foes, w, F): whom or where it's worth casting on now (null: not now); land(m, A, mult, tgt, w): it lands
   const TIER = {
     // Vault: a foe on foot A.min–A.max off that's striking an ally (not him), or any when nothing's in his reach (never off a boss or an elite); the nearest
@@ -964,7 +985,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // the strike to swing with (paid for here), or null for a basic attack
   function pickStrike(m, tgt) {
     const s = statsFor(m), keep = Math.max(reserve(m, s), tierKeep(m));
-    for (const A of priorityOf(m)) {
+    for (const A of inPlay(m, state.trials)) {
       if (A.kind !== 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       if (A.poison && tgt.poison && tgt.poison.t > 1) continue;                    // Venom: already poisoned
       if (A.drain && tgt.drain && tgt.drain.n >= drainCap(m, A) && tgt.drain.t > 2) continue;   // Spirit Drain: stacked full, still running
@@ -976,7 +997,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // a guard, heal, ward or nova worth casting now (it takes the member's turn)
   function tryUtility(m, i, foes, w, F) {
     const s = statsFor(m), ai = STANCE_AI[stanceOf(m)], hpf = m.hp / s.maxHp;
-    for (const A of priorityOf(m)) {
+    for (const A of inPlay(m, state.trials)) {
       if (A.kind === 'strike' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       const c = cast(m, A); if (m.mp < c.cost) continue;
       let target = m;
@@ -1024,7 +1045,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   // Kidney Shot, out of turn (it needn't wait for the rogue's swing to come round: a wind-up is short)
   function tryInterrupt(m, foes, w, F) {
-    for (const A of priorityOf(m)) {
+    for (const A of inPlay(m, state.trials)) {
       if (A.kind !== 'kidney' || !unlocked(m, A, state.trials) || !autocastOn(m, A.id)) continue;
       const c = cast(m, A); if (m.mp < c.cost) continue;
       const tgt = TIER.kidney.pick(m, A, foes, w, F); if (!tgt) continue;
@@ -1049,7 +1070,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       bus.emit('combat', { t: 'heal', x: m.x, y: m.y, amount: n }); skillEv(A, 'land', m, m, true);
     } else if (A.kind === 'mend') {
       if (!alive(tgt)) return;
-      const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, state.party)); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
+      const s = statsFor(tgt), n = Math.round(s.maxHp * A.heal * mult * (m.cls === 'cleric' ? HEAL_BONUS : 1) * (1 + passiveVal(m, 'devotion')) * healMod(m, state.party)); tgt.hp = Math.min(s.maxHp, tgt.hp + n);
       bus.emit('combat', { t: 'heal', x: tgt.x, y: tgt.y, amount: n }); skillEv(A, 'land', m, tgt, true);
     } else if (A.kind === 'bless') {
       for (const q of state.party) if (alive(q)) { const b = q.buff || (q.buff = {}); b.bless = A.dur; b.blessK = A.buff * mult; }
@@ -1065,7 +1086,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     } else if (A.kind === 'hex') {
       if (!tgt) return;
       const k = Math.min(0.4, A.debuff * mult);
-      const hexed = []; for (const o of w.enemies) if (!o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < A.radius) { o.hex = { t: A.dur, k }; hexed.push(o); }
+      const hexed = []; for (const o of w.enemies) if (!o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < A.radius) { o.hex = { t: A.dur, k, by: m }; hexed.push(o); }
       bus.emit('combat', { t: 'hex', x: tgt.x, y: tgt.y, party: false }); skillEv(A, 'land', m, tgt, false, hexed);
     } else if (A.kind === 'nova') {
       const aS = { ...statsFor(m), lvl: m.level, src: m };
@@ -1096,8 +1117,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       }
       const r = resolve(isPartyAtt ? aStats : hexAtk(aStats), isPartyAtt ? hexDef(tgt) : combatStats(tgt), pw, bonus, critMul);   // the defender's guards count when the blow lands (a Hex: both ways)
       applyHit(aStats, tgt, r, !isPartyAtt, w, heavy);
-      if (r.crit && isPartyAtt && att.cls === 'rogue' && hasPassive(att)) att.mp = Math.min(statsFor(att).maxMp, att.mp + 5);   // Opportunist
+      if (r.crit && isPartyAtt && passiveVal(att, 'opportunist')) att.mp = Math.min(statsFor(att).maxMp, att.mp + passiveVal(att, 'opportunist'));   // Opportunist
       if (heavy) bus.emit('combat', { t: 'heavy', x: tgt.x, y: tgt.y, party: !isPartyAtt });   // the renderer's impact (shake + flash)
+      const hh = isPartyAtt && !ab ? passiveVal(att, 'heavy_hand') : 0;   // Heavy Hand: a plain blow strikes those beside the target too
+      if (hh) for (const o of w.enemies) if (o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) applyHit(aStats, o, resolve(aStats, hexDef(o), pw * hh), false, w);
       const splash = ab ? ab.splash || (ab.id === 'firebolt' && has(att, 'kindler') ? FIGHT.kindle : 0) : 0;   // (a Kindler's Firebolt splashes)
       const splashed = splash ? w.enemies.filter((o) => o !== tgt && !o.dead && o.hp > 0 && hypot(o.x - tgt.x, o.y - tgt.y) < 1.8) : [];
       const mk = ab && ab.marks && !r.miss ? (tgt.marks || 0) + 1 : 0;           // Old Marks: this strike's mark
@@ -1488,7 +1511,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) {
       if (m.down || m.fallen) continue;
       const s = statsFor(m), k = calm ? OUT_OF_BATTLE_REGEN : lull ? LULL_REGEN : 1;
-      const iron = m.cls === 'fighter' && m.hp < s.maxHp * 0.3 && hasPassive(m) ? 2 : 1;             // Iron Hide
+      const iron = m.hp < s.maxHp * 0.3 && passiveVal(m, 'iron_hide') ? 2 : 1;                      // Iron Hide
       m.hp = Math.min(s.maxHp, m.hp + s.hpr * k * iron * (battle ? company(m).hpr : 1) * dt);       // (an Old Campaigner's regen, in a fight)
       if (battle && has(m, 'field_medic') && (m.medicT = (m.medicT || 0) + dt) >= FIGHT.medicEvery) {   // a Field Medic sees to the most hurt
         m.medicT = 0; let low = null, lo = 1;
@@ -1496,6 +1519,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
         if (low) { const qs = statsFor(low), n = Math.round(qs.maxHp * FIGHT.medicHeal); low.hp = Math.min(qs.maxHp, low.hp + n); bus.emit('combat', { t: 'heal', x: low.x, y: low.y, amount: n }); }
       } m.mp = Math.min(s.maxMp, m.mp + s.mpr * k * dt);   // regen grows with the pool, plus gear regen
       if (m.buff && m.buff.breath > 0) m.hp = Math.min(s.maxHp, m.hp + s.maxHp * m.buff.breathK * dt);   // Ancestors' Breath
+      if (battle) { let rad = 0; for (const q of state.party) { const v = alive(q) ? passiveVal(q, 'radiance') : 0; if (v && hypot(q.x - m.x, q.y - m.y) <= HOLD_R) rad = Math.max(rad, v); }
+        if (rad) m.hp = Math.min(s.maxHp, m.hp + s.maxHp * rad * dt); }                                  // Radiance (a cleric near)
       if (m.buff) { m.buff.wall = Math.max(0, (m.buff.wall || 0) - dt); m.buff.smoke = Math.max(0, (m.buff.smoke || 0) - dt); m.buff.bless = Math.max(0, (m.buff.bless || 0) - dt); m.buff.breath = Math.max(0, (m.buff.breath || 0) - dt); }
       const mired = battle && hazardAt(battle, m === H ? p.x : m.x, m === H ? p.y : m.y) ? HAZARD.recover : 1;   // (in the mud or the water: slower to recover)
       m.cd = Math.max(0, m.cd - dt * mired); m.act = Math.max(0, m.act - dt); m.flash = Math.max(0, (m.flash || 0) - dt);
@@ -1599,7 +1624,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
             d.acc -= 1; const n = Math.max(1, Math.round(d.dps * d.n)); applyHit(d.by, e, { dmg: n, crit: false }, false, w);
             let low = null, lo = 1; for (const q of state.party) if (alive(q)) { const f = q.hp / statsFor(q).maxHp; if (f < lo) { lo = f; low = q; } }
             if (low) { const back = Math.max(1, Math.round(n * DRAIN_MEND)); low.hp = Math.min(statsFor(low).maxHp, low.hp + back); }
-            if (hasPassive(d.by) && !d.by.down) d.by.mp = Math.min(statsFor(d.by).maxMp, d.by.mp + 1);   // Old Ways
+            if (passiveVal(d.by, 'old_ways') && !d.by.down) d.by.mp = Math.min(statsFor(d.by).maxMp, d.by.mp + 1);   // Old Ways
           }
           if (e.drain && e.drain.t <= 0) e.drain = null;
           if (e.hp <= 0) continue;

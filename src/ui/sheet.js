@@ -11,7 +11,7 @@
 
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
-import { PASSIVES, STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, hasPassive, skillMult, HEAL_BONUS, DRAIN_MEND, OLD_WAYS_STACKS, TIERS, tierSkills, pickOf } from '../sim/skills.js';
+import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT } from '../sim/skills.js';
 import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
@@ -148,13 +148,10 @@ const CSS = SW_CSS + `
 #gearSheet .sbtns button.auto.off { border-color: #3a3346; color: #8a8498; }
 #gearSheet .sbtns button.auto:disabled { border-color: #2c2838; color: #3a3346; }
 #gearSheet .stance { display: flex; gap: 6px; margin: 4px 0 6px; }
-#gearSheet .tier { margin: 2px 0 10px; } #gearSheet .tier .th { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: #c8bca8; letter-spacing: 1px; margin: 0 2px 5px; }
-#gearSheet .tier .th small { margin-left: auto; color: #978c80; letter-spacing: 0; }
-#gearSheet .tier .two { display: flex; gap: 6px; }
-#gearSheet .tier .two button { flex: 1; min-width: 0; min-height: 64px; padding: 7px 8px; border-radius: 9px; border: 1px solid #2c2838; background: rgba(255,255,255,.02); color: #b8aca0; text-align: left; font: 11px/1.35 system-ui, sans-serif; }
-#gearSheet .tier .two button b { display: block; font: 600 14px Georgia, serif; color: #d8ccb8; margin-bottom: 2px; }
-#gearSheet .tier .two button.on { border-color: rgba(214,170,98,.75); background: rgba(214,170,98,.08); color: #d8ccb8; } #gearSheet .tier .two button.on b { color: #f0c880; }
-#gearSheet .tier .two button.on b::after { content: ' · carried'; font: 10px ui-monospace, Menlo, monospace; color: #8fe07a; letter-spacing: .5px; }
+#gearSheet .sbtns button.play { font: 700 12px ui-monospace, Menlo, monospace; line-height: 1.15; border-color: #3a3346; color: #8a8498; text-transform: uppercase; }
+#gearSheet .sbtns button.play small { display: block; font-size: 8px; font-weight: 400; letter-spacing: .5px; color: #978c80; text-transform: none; }
+#gearSheet .sbtns button.play.on { border-color: rgba(214,170,98,.75); color: #f0c880; }
+#gearSheet .arow.out { opacity: .72; }
 #gearSheet .stance button { flex: 1; min-height: 44px; border-radius: 8px; border: 1px solid #2c2838; background: none; color: #b8aca0; font: 600 13px Georgia, serif; }
 #gearSheet .stance button.on { border-color: #d8a040; color: #f0c880; background: rgba(216,160,64,.12); }
 #gearSheet .hint { font-size: 10.5px; color: #978c80; line-height: 1.45; margin: 4px 2px 10px; }
@@ -285,7 +282,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
       if (A.crit) e += `, +${A.crit} % crit chance`;
       if (A.marks) { e += `, and a mark; the ${A.marks === 3 ? 'third' : A.marks + 'th'} breaks them all: ${dmg(A.burst * k)} and a ${A.stun} s stun`; v += `, ${dmg(A.burst * k)} as they break`; }
       if (A.poison) { e += `, then poison: ${dmg(A.poison * k)} a second for ${A.pdur} s`; v += `, poison ${dmg(A.poison * k)} a second`; }
-      if (A.drain) { const cap = A.dmax + (hasPassive(m) ? OLD_WAYS_STACKS : 0); e += `, then a drain of ${dmg(A.drain * k)} a second a stack for ${A.ddur} s, up to ${cap} stacks; ${Math.round(DRAIN_MEND * 100)} % of it mends the most hurt ally`; v += `, drain ${dmg(A.drain * k)} a stack`; }
+      if (A.drain) { const cap = A.dmax + passiveVal(m, 'old_ways'); e += `, then a drain of ${dmg(A.drain * k)} a second a stack for ${A.ddur} s, up to ${cap} stacks; ${Math.round(DRAIN_MEND * 100)} % of it mends the most hurt ally`; v += `, drain ${dmg(A.drain * k)} a stack`; }
     } else if (A.kind === 'guard') { v = A.taunt ? `+${pct(A.def * k)} DEF` : `+${Math.round(A.dodge * k * 10) / 10} % DODGE`; e = `${v} for ${A.dur} s; ${A.taunt ? 'foes turn on you' : 'foes lose you'}`; }
     else if (A.kind === 'heal') { const h = A.heal * k * healMod(m, S.party); v = `heal ${pct(h)} of max HP (${Math.round(s.maxHp * h)} HP)`; e = v; }
     else if (A.kind === 'mend') { v = `heal ${pct(A.heal * k * (m.cls === 'cleric' ? HEAL_BONUS : 1) * healMod(m, S.party))} of their max HP`; e = `the most hurt ally: ${v}`; }
@@ -299,29 +296,37 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
   }
 
   // ── the Skills tab: ranks, auto-cast, priority, the passive, the stance (GDD §5.1) ──
+  // a passive's value as the tab says it (skills.js PASSIVES fmt) @param {any} P @param {number} v
+  const pv = (P, v) => (P.fmt === 'pct' ? `${Math.round(v * 1000) / 10} %` : P.fmt === 'pts' ? `${v} %` : `${v}`);
   function skillsView(m) {
-    const c = CLASSES[m.cls], n = pendingSkillPoints(m), order = priorityOf(m), P = PASSIVES[m.cls], st = stanceOf(m);
+    const c = CLASSES[m.cls], n = pendingSkillPoints(m), order = priorityOf(m), st = stanceOf(m);
+    const play = inPlay(m, S.trials).map((A) => A.id), full = play.length >= LOADOUT;
     const rows = order.map((A, i) => {
-      const r = rankOf(m, A.id), open = unlocked(m, A, S.trials), on = autocastOn(m, A.id);
+      const r = rankOf(m, A.id), open = unlocked(m, A, S.trials), on = autocastOn(m, A.id), inp = play.includes(A.id);
       const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
-      return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
+      return `<div class="arow${open ? '' : ' locked'}${open && !inp ? ' out' : ''}"><div class="nm2"><b>${A.name}</b> <span class="pips">${pips}</span>
           ${(() => { const now = effectAt(m, A, r), nx = open && r < MAX_RANK ? effectAt(m, A, r + 1) : null;
             const lock = open ? '' : `<span>${m.level < A.lv ? `unlocks at level ${A.lv}${A.trial ? `, with the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial` : ''}` : `the ${c.label.toLowerCase()}'s ${A.lv >= 12 ? 'second ' : ''}trial teaches it: ask ${(A.lv >= 12 ? TRIAL_GIVER_12 : TRIAL_GIVER)[m.cls]}`}</span>`;
             return `${lock}<span class="eff">Rank ${r}: ${now.mp} MP · ${now.e}</span>${nx ? `<span class="nx">Rank ${r + 1} → ${nx.mp !== now.mp ? `${nx.mp} MP · ` : ''}${nx.v}</span>` : open ? '<span class="nx">Top rank</span>' : ''}`; })()}</div>
         <div class="sbtns"><button data-rank="${A.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button>
-          <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>
-        <div class="sbtns"><button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;
+          <button class="auto${on ? '' : ' off'}" data-cast="${A.id}" aria-label="use ${A.name} automatically in combat: ${on ? 'on' : 'off'}" ${open && inp ? '' : 'disabled'}><small>Auto-use</small>${on ? 'On' : 'Off'}</button></div>
+        <div class="sbtns"><button class="play${inp ? ' on' : ''}" data-play="${A.id}" aria-pressed="${inp}" aria-label="${inp ? `take ${A.name} out of play` : `take ${A.name} into fights`}" ${open && (inp || !full) ? '' : 'disabled'}><small>In play</small>${inp ? 'Yes' : 'No'}</button>
+          <button data-up="${A.id}" aria-label="cast ${A.name} earlier" ${i ? '' : 'disabled'}>▲</button></div></div>`;
     }).join('');
-    // the tiers (GDD §5.1 v1.55): one of two at 15 and at 18; the first choice any time, a change after it free at a temple
-    const tiers = TIERS.map((t) => { const two = tierSkills(m.cls, t), cur = pickOf(m, t), chose = !!(m.picks && m.picks[t]);
-      return `<div class="tier"><div class="th">LEVEL ${t} · ONE OF TWO<small>${chose ? 'change at a temple, free' : m.level >= t ? 'choose any time' : `at level ${t}`}</small></div>
-        <div class="two">${two.map((A) => `<button data-pick="${A.id}" data-tier="${t}" class="${A.id === cur ? 'on' : ''}" aria-pressed="${A.id === cur}"><b>${A.name}</b>${A.mp} MP · ${A.text}</button>`).join('')}</div></div>`; }).join('');
+    // the passives (GDD §5.1 v1.56): always at work; ranked with skill points like the abilities
+    const passives = passivesOf(m.cls).map((P) => {
+      const r = rankOf(m, P.id), open = (m.level || 1) >= P.lv, v = P.val[0] + P.val[1] * (r - 1), nv = P.val[0] + P.val[1] * r;
+      const pips = '●'.repeat(r) + `<s>${'●'.repeat(MAX_RANK - r)}</s>`;
+      return `<div class="arow${open ? '' : ' locked'}"><div class="nm2"><b>${P.name}</b> <span class="pips">${pips}</span> <span class="pips">passive</span>
+          ${open ? '' : `<span>unlocks at level ${P.lv}</span>`}<span class="eff">Rank ${r}: ${P.text.replace('{v}', pv(P, v))}</span>${open && r < MAX_RANK ? `<span class="nx">Rank ${r + 1} → ${pv(P, nv)}</span>` : open ? '<span class="nx">Top rank</span>' : ''}</div>
+        <div class="sbtns"><button data-rank="${P.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button></div></div>`;
+    }).join('');
     return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
-      <div class="hint">In battle each turn goes to the first ability, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use On: the hero casts it in combat by themselves; Off: never. Each rank adds 10 % to an ability's strength; damage is shown before the foe's armour.</div>
+      <div class="ptsh">In play <b>${play.length}</b>&nbsp;of ${LOADOUT}<span class="sp">the abilities taken into a fight</span></div>
+      <div class="hint">A new skill opens every 3 levels; every third is a passive. Up to ${LOADOUT} abilities go into a fight (In play); in battle each turn goes to the first of them, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use Off: never cast. Each rank adds 10 % to an ability's strength; damage is shown before the foe's armour.</div>
       ${rows}
-      <div class="bagh" style="margin-top:14px">The choices</div>
-      ${tiers}
-      <div class="arow${hasPassive(m) ? '' : ' locked'}"><div class="nm2"><b>${P.name}</b> <span class="pips">passive</span><span>${hasPassive(m) ? P.text : `level ${P.lv}: ${P.text}`}</span></div></div>
+      <div class="bagh" style="margin-top:14px">Passives</div>
+      ${passives}
       <div class="bagh" style="margin-top:14px">Stance</div>
       <div class="stance">${STANCES.map((k) => `<button data-stance="${k}" class="${k === st ? 'on' : ''}">${STANCE_LABEL[k]}</button>`).join('')}</div>
       <div class="hint">${STANCE_TEXT[st]}</div>`;
@@ -386,7 +391,10 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     if ((t = q('[data-rank]'))) { sim.commands.push({ type: 'rankSkill', id: m.id, skill: t.dataset.rank }); return; }
     if ((t = q('[data-cast]'))) { sim.commands.push({ type: 'setAutocast', id: m.id, skill: t.dataset.cast, on: !autocastOn(m, t.dataset.cast) }); return; }
     if ((t = q('[data-stance]'))) { sim.commands.push({ type: 'setStance', id: m.id, stance: t.dataset.stance }); return; }
-    if ((t = q('[data-pick]'))) { sim.commands.push({ type: 'pickSkill', id: m.id, tier: +t.dataset.tier, skill: t.dataset.pick }); return; }
+    if ((t = q('[data-play]'))) {                                 // in play or out (GDD v1.56: four go into a fight)
+      const ids = inPlay(m, S.trials).map((A) => A.id), id = t.dataset.play;
+      sim.commands.push({ type: 'setLoadout', id: m.id, skills: ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id].slice(0, LOADOUT) }); return;
+    }
     if ((t = q('[data-up]'))) {
       const ids = priorityOf(m).map((A) => A.id), i = ids.indexOf(t.dataset.up);
       if (i > 0) { [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; sim.commands.push({ type: 'setPriority', id: m.id, order: ids }); }

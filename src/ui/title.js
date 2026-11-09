@@ -16,7 +16,7 @@
 import { html, render } from 'htm/preact';
 import { CLASSES } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
-import { pendingSkillPoints, skillsOf, unlocked, carries, TRIAL_CLASSES } from '../sim/skills.js';
+import { pendingSkillPoints, ladderOf, unlocked, TRIAL_CLASSES } from '../sim/skills.js';
 import { DEV_LEVEL_MAX } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
@@ -159,7 +159,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   function Developer() {
     const S = sim.state, all = TRIAL_CLASSES.length * 2, done = TRIAL_CLASSES.reduce((n, c) => n + (S.trials[c] ? 1 : 0) + (S.trials[c + '12'] ? 1 : 0), 0);
     const pts = (m) => { const a = pendingPoints(m), k = pendingSkillPoints(m); return a || k ? `${a ? `${a} stat point${a > 1 ? 's' : ''}` : ''}${a && k ? ' · ' : ''}${k ? `${k} skill point${k > 1 ? 's' : ''}` : ''} to spend` : 'no points to spend'; };
-    const open = (m) => skillsOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length, carried = (m) => skillsOf(m.cls).filter((q) => carries(m, q)).length;   // (a tier's other one isn't carried: skills.js)
+    const open = (m) => ladderOf(m.cls).filter((q) => unlocked(m, q, S.trials)).length, carried = (m) => ladderOf(m.cls).length;   // (abilities and passives: the ladder, skills.js)
     const up = (m, n) => devDo(Array.from({ length: Math.min(n, DEV_LEVEL_MAX - m.level) }, () => ({ type: 'devLevel', id: m.id })),
       () => `${m.name} is level ${m.level}: ${pts(m)} · ${open(m)} of ${carried(m)} skills open`);
     return html`<div id="title" class="dev">

@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.55 · 2026-11-08 · Plan of record for game design.** v1.55 (§5.1, §5.2, §17; the owner confirmed every skill of [skill-trees-proposal.md](./skill-trees-proposal.md) on the review page, "Updated, proceed"): **the tiers.** At 15 and at 18 each class has two abilities and a member carries one of each, the first until it chooses; the first choice is free anywhere, a change after it free at a temple, the dropped one's ranks back as points. Twenty abilities (§5.1's table) and **crowd control** (§5.2): stun, freeze, knockdown (a hold: no step, no blow, the blow being wound up cut), root, pull and knockback; a boss half the time and never moved; 2 s after a hold before another. Measured: the right party holds a same-level room at 15 for 8 % more waves with the first of each pair, 3 % with the second; at 18 4 % and 3 %; the four bosses of 15–18 fall as before, held at most 19 % of a fight. v1.54 (§17; the owner: "fix the Quartermaster to raise a fallen rank"): the Quartermaster's *Issue* stands the last of his ranks to fall up whole where it fell, every 10 s; with none down, the most hurt living one is made whole, as before. It never fired before: his escort was down by 9 s, his first issue due at 10. One he stood up pays nothing when it falls again. At his level he falls in 60–67 s (was 50–54), the party's lowest 73–83 %; a party a level under is downed now and then (it wasn't). v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
+**v1.56 · 2026-11-09 · Plan of record for game design.** v1.56 (§5, §5.1, §17; the owner: "One new skill every 3 levels opens up. No choice after 15. Also every 3rd skill is a passive… Players can also invest to increase passive skill strength just like active. Players can set up to 4 active skills for play."): **the ladder.** A class learns a skill at 1, 3, 6, 9, 12 … 27, every third a passive (9, 18, 27), nothing to choose between; the tiers' pairs (v1.55) all join the ladder. Passives take ranks 1–5 with the same skill points; three a class. A member sets up to **four abilities in play**; the rest wait. Flare at 3 is 1.5× for 18 MP (was 2.0×, 16), so a level-6 party with no healer is still worn down (§7.1). Measured (3 seeds, 300 s, the right party at a same-level room): 3: 23.3 waves (23.3 before), 6: 16.7 (16.7), 9: 13.0 (14.0), 12: 13.0 (14.0), 15: 13.3 (13.0), 18: 12.0 (12.3). Save v36. v1.55 (§5.1, §5.2, §17; the owner confirmed every skill of [skill-trees-proposal.md](./skill-trees-proposal.md) on the review page, "Updated, proceed"): **the tiers.** At 15 and at 18 each class has two abilities and a member carries one of each, the first until it chooses; the first choice is free anywhere, a change after it free at a temple, the dropped one's ranks back as points. Twenty abilities (§5.1's table) and **crowd control** (§5.2): stun, freeze, knockdown (a hold: no step, no blow, the blow being wound up cut), root, pull and knockback; a boss half the time and never moved; 2 s after a hold before another. Measured: the right party holds a same-level room at 15 for 8 % more waves with the first of each pair, 3 % with the second; at 18 4 % and 3 %; the four bosses of 15–18 fall as before, held at most 19 % of a fight. v1.54 (§17; the owner: "fix the Quartermaster to raise a fallen rank"): the Quartermaster's *Issue* stands the last of his ranks to fall up whole where it fell, every 10 s; with none down, the most hurt living one is made whole, as before. It never fired before: his escort was down by 9 s, his first issue due at 10. One he stood up pays nothing when it falls again. At his level he falls in 60–67 s (was 50–54), the party's lowest 73–83 %; a party a level under is downed now and then (it wasn't). v1.53 (§5; the owner: "fix frost nova range"): Frost Nova is thrown onto the thickest knot of foes within the mage's reach, two or more within its 3.5 tiles (was 2.8 round her: she keeps her distance, and the foes stand 2.8 apart, so it never went off). v1.52 (§3.1; the owner: "Go ahead with the dungeon dressing… Dungeons should have a theme and fit the specific dungeon type and quest", [vale-dungeon-dressing.md](./vale-dungeon-dressing.md)): the Vale's authored rooms dressed as their places, doorways lit by their kit, the way in a lit sanctuary, the Breach's columns authored. v1.51 (§3.1, §3.3; the owner: "Same layout every visit, Skarn at
 5, halls 10"; [vale-dungeons-plan.md](./vale-dungeons-plan.md)): **the Hollow Vale's dungeons are authored**: two floors
 each (the Ninth Milestone one), five spaces a floor at most (the entrance counted; a large corridor, the *gallery*, 60–80
 long, counts as one), halls 10 wide, the same rooms in the same places every visit (the seed moves the furniture, the foes'
@@ -366,7 +366,7 @@ breath (§3.3), so healing and sustain decide how long a party can stay.
   - the member follows as a ghost: no fighting, no XP;
   - they can be resurrected at a **Temple** (25 gold × level; free once a day for heroes at
     level 5 or lower), at a site **Shrine** (one use each), or with a rare **Phoenix Ember**.
-    A level-20 Cleric's *Lifeline* keeps one ally a room visit from going down at all.
+    A Cleric's *Lifeline* (9, v1.56) keeps one ally a room visit from going down at all.
 - **The hero** stays Downed, never Slain, while any companion stands.
 - **The lull** is 4 s at 1.5× regen, and the room doesn't wait (v1.5; it had waited until
   everyone was back over 60 %, which let a room be held forever).
@@ -455,8 +455,8 @@ Four attributes feed the derived stats above:
 
 ## 5. Classes
 
-Five classes. Each has **base stats at level 1**, **growth per level**, three abilities
-(unlocked at levels 1, 6 and 12) and a passive at level 20. The Cleric joined at M3 (sourced
+Five classes. Each has **base stats at level 1**, **growth per level**, a skill every
+three levels (v1.56, §5.1: seven abilities and three passives to 27). The Cleric joined at M3 (sourced
 from the Grey Sisters, world doc §4): playable at creation and hireable at every tavern. The
 **Shaman** joined at v1.19 (the Vale's hedge-callers, world doc §4), the same way.
 
@@ -473,7 +473,7 @@ from the Grey Sisters, world doc §4): playable at creation and hireable at ever
 | MP regen | 0.5 /s | 0.8 /s | **2.0 /s** | 1.5 /s | 1.7 /s |
 | Class bonus | +10 % DEF while carrying a shield | Crits from behind the target deal +25 % | Spells deal +20 % to a foe with two or more others within 2 tiles | Heals are +20 % stronger | A spirit bolt at range (12 tiles, every 1.5 s); stands off like the mage |
 | Abilities | **Cleave** (10 MP: 1.3× to target and adjacent) · **Shield Wall** (20 MP: +50 % DEF for 6 s, taunt) · **Second Wind** (25 MP: heal 25 % HP) | **Backstab** (10 MP: 1.6×, +25 % crit) · **Smoke Step** (15 MP: +30 % dodge for 5 s, drop aggro) · **Venom** (20 MP: poison over time) | **Firebolt** (12 MP: 1.8×) · **Frost Nova** (30 MP: 0.8× to every foe within 3.5 tiles of the thickest knot of them in the mage's reach, slowed 3 s; v1.53: thrown and 3.5 tiles, as Hex is. Cast round the mage, who keeps her distance, it never went off, and at 2.8 tiles it could take no two foes: they stand 2.8 apart, their melee reach round whoever they fight) · **Arcane Ward** (25 MP: shield an ally for 30 % of their max HP) | **Mend** (12 MP: heal the most hurt ally 22 % of max HP) · **Bless** (25 MP: the party +15 % ATK and DEF for 8 s) · **Turn Undead** (30 MP: 1.6× to every Ashbound within 3 tiles) | **Spirit Drain** (9 MP: 0.7×, then a drain of 0.12× ATK a second for 8 s that stacks to 5; each tick mends the most hurt ally for half of it) · **Ancestors' Breath** (22 MP: the party gets 5 % of max HP back a second and +10 % ATK for 6 s) · **Hex** (22 MP: the foes within 3.5 tiles of the thickest knot, or a lone boss or elite, −20 % ATK and DEF for 8 s) |
-| Passive (20) | *Iron Hide*: +10 % DEF, double HP regen below 30 % HP | *Opportunist*: crits restore 5 MP | *Kindled Mind*: +25 % MP regen | *Lifeline*: once a room visit, an ally who would be Downed holds on at 1 HP | *Old Ways*: Spirit Drain stacks to 8, and each tick gives back 1 MP |
+| Passives (v1.56) | *Iron Hide* (9), *Hold the Line* (18), *Heavy Hand* (27) | *Opportunist* (9), *Keen Edge* (18), *Exploit* (27) | *Kindled Mind* (9), *Arcane Focus* (18), *Frostbite* (27) | *Lifeline* (9), *Devotion* (18), *Radiance* (27) | *Old Ways* (9), *Ancestral Guard* (18), *Deep Hex* (27) |
 | Model (KayKit) | Knight / Barbarian | Rogue / Rogue Hooded | Mage | Mage, bareheaded, in off-white vestments with a grey stole, a flanged mace (our own model) and a chained psalter | Mage, bareheaded with a grey braid, in undyed wool and hide with a moss cape and a staff hung with bones |
 
 The class bonuses sit on top of the class table: a fighter in the class kit (with its round
@@ -597,10 +597,10 @@ Both slot in with the same stat block and ability format. No system changes are 
     Canal Locks' wave leaders), *Lamp Oil* (Pim Rushlight: 8 waves in the Canal Locks), *Vigil* (Mother Agnes: 6
     waves on the Mound's third floor), *The Old Water* (Col: 8 waves on Toadking's Mound's second floor). (Since
     v1.48 three of them were in rooms of 14–16, two to four levels up.) Each pays 30 % of level 12. A save from before them (v26) counts every class someone had at 12 as done;
-  - (v1.55) **the tiers**: at 15 and at 18, one of two (below);
-  - the passive comes at level 20.
-- **Skill points:** 1 at every even level. Ranks 1–5; each rank adds +10 % power, and ranks
-  3 and 5 also cost 1 MP less.
+  - (v1.56) **the ladder**: a skill every three levels, every third a passive (below); the 3, 15, 21 and 24 abilities
+    and the passives come with the level.
+- **Skill points:** 1 at every even level, into abilities or passives (v1.56). Ranks 1–5; each rank of an ability adds
+  +10 % power, and ranks 3 and 5 also cost 1 MP less; each rank of a passive adds its step (the table below).
   - **Power** multiplies the number that matters: damage for a strike or nova, the bonus for a
     guard or Bless, the amount for a heal or ward. Durations stay the same.
   - **The Skills tab says it in numbers** (`src/ui/sheet.js`, with `skillMult` in
@@ -622,24 +622,58 @@ Both slot in with the same stat block and ability format. No system changes are 
   heal when hurt, a ward on the most hurt ally, a nova on two or more foes close by);
   otherwise a strike replaces the basic attack.
 - **Rare gear modifiers** (§8) stack with ranks.
-- **The tiers (v1.55):** at 15 and at 18 each class has two abilities, and a member carries one of each: the first of the
-  two until it chooses (`src/sim/skills.js` `pickOf`). The first choice is free anywhere; a change after it is free at a
-  temple, and the dropped one's ranks come back as points. They unlock at their level for now; their trials (a teacher a
-  class, in the Fens) come in a content pass, and then the level waits for them as the 6 and 12 do. In the Skills tab,
-  *The choices*, under the order; a new one goes last in the order until it's moved.
+- **The ladder (v1.56; it replaces v1.55's tiers, the choice of one of two at 15 and at 18):** a class learns a skill
+  every three levels, at 1, then 3, 6, 9 … 27, and every third is a **passive**. Nothing to choose between: the ten skills
+  of v1.55's pairs all join the ladder (`src/sim/skills.js` `SKILLS`, `PASSIVES`, `ladderOf`). The 6 and 12 abilities keep
+  their trials; the rest come with the level. Laid out to 27 for now (the Fens' content runs to 18); the ladder goes on, a
+  skill every three levels, as the regions open (§17).
 
-  | Class | 15: first · second | 18: first · second |
-  |---|---|---|
-  | Fighter | **Vault** (14 MP): to a foe 3–8 tiles off that's striking an ally (or any, with none in reach; never off a boss or elite): 1.5× on it, 0.6× round it, knocked down 0.8 s · **Cutting Wave** (12): a lane 6 tiles long, 1.6× to every foe in it | **Earthshatter** (22): 1.2× to every foe within 3 tiles, knocked down 1.2 s, then spikes 0.5× · **Whirling Blades** (24): three swords for 5 s, 0.45× to every foe within 3 every 0.6 s |
-  | Rogue | **Kidney Shot** (10): 1.4× and a 1.5 s stun on a foe winding up a heavy blow or a shot (it never lands), or on an elite or boss · **Fan of Knives** (12): a 60° fan, 6 tiles, 1.0× to each (two or more) | **Shadowstep** (18): behind the most hurt shooter within 8, 1.4×, a sure crit; foes lose her 1.5 s · **Caltrops** (16): a field 2.5 tiles round for 6 s, slowed by half, 0.25× a second |
-  | Mage | **Flare** (16): a mark on the foe at a knot's heart; 0.7 s later a pillar where it stands (or the nearest left), 2.0× within 2.5 · **Gather** (14): every foe within 5 of a knot pulled 1.5 tiles in, 0.3×, slowed 1 s | **Glacial Tomb** (26): a knot frozen 2.5 s (or a boss or elite winding up), 1.0× as it breaks · **Blizzard** (28): a storm 2.5 round for 6 s, 0.3× a second, slowed 30 % |
-  | Cleric | **Sanctuary** (22): a circle 3 round under the hurt for 4 s, 4 % of max HP every 0.5 s and a ward of 10 % stepping in · **Consecrate** (20): holy ground 2.5 round for 8 s, the Ashbound 0.4× a second, the living 0.2×; allies on it +15 % DEF | **Revive** (30): kneels 1.2 s (cut if she's Downed), a Downed member up at 40 %; once a room visit (never the Slain) · **Judgement** (28): 0.5× to the foes within 3 of one, then 2.2× on it 0.8 s later; the Ashbound ×1.5 |
-  | Shaman | **Binding Roots** (14): a knot of foes on foot closing on the party rooted 2.5 s, 0.4× · **Old Marks** (9, a strike): 0.8× and a mark; the third breaks them all, 1.6× and a 1 s stun | **Spirit Totem** (22): a post by the party for 8 s, drawing the foes within 4 a tile in every 1.5 s; the party within 2.5 take 20 % less · **Thunder Drum** (18): round an ally under half HP, foes within 3 knocked back 2 tiles, 0.6×, stunned 1 s |
+  | Lv | Fighter | Rogue | Mage | Cleric | Shaman |
+  |---|---|---|---|---|---|
+  | 1 | Cleave | Backstab | Firebolt | Mend | Spirit Drain |
+  | 3 | Cutting Wave | Kidney Shot | Flare | Consecrate | Old Marks |
+  | 6 | Shield Wall (trial) | Smoke Step (trial) | Frost Nova (trial) | Bless (trial) | Ancestors' Breath (trial) |
+  | 9 | *Iron Hide* | *Opportunist* | *Kindled Mind* | *Lifeline* | *Old Ways* |
+  | 12 | Second Wind (trial) | Venom (trial) | Arcane Ward (trial) | Turn Undead (trial) | Hex (trial) |
+  | 15 | Vault | Fan of Knives | Gather | Sanctuary | Binding Roots |
+  | 18 | *Hold the Line* | *Keen Edge* | *Arcane Focus* | *Devotion* | *Ancestral Guard* |
+  | 21 | Earthshatter | Shadowstep | Glacial Tomb | Judgement | Thunder Drum |
+  | 24 | Whirling Blades | Caltrops | Blizzard | Revive | Spirit Totem |
+  | 27 | *Heavy Hand* | *Exploit* | *Frostbite* | *Radiance* | *Deep Hex* |
 
+  The abilities are v1.55's, with one change: **Flare** comes at 3 at **1.5× for 18 MP** (was 2.0× for 16, and a pair
+  ability, wanting two foes): at 2.0× a level-6 party with no healer held 16–17 waves where §7.1 wants it worn down;
+  now 10–13, as before Flare came so early.
+- **The passives (v1.56)** are always at work: no MP, no turn, no place in the loadout. Ranks 1–5, a step a rank:
+
+  | Passive | Lv | Rank 1 → 5 | What it does |
+  |---|---|---|---|
+  | Iron Hide | 9 | 8 → 16 % | +DEF; HP regen doubles below 30 % HP |
+  | Hold the Line | 18 | 5 → 9 % | allies within 3 tiles of the fighter take less damage |
+  | Heavy Hand | 27 | 20 → 40 % | a plain blow also strikes the foes beside its target, for that share |
+  | Opportunist | 9 | 3 → 7 MP | a critical hit gives MP back |
+  | Keen Edge | 18 | 4 → 8 | crit chance |
+  | Exploit | 27 | 15 → 35 % | more damage to a foe stunned, frozen, knocked down or rooted |
+  | Kindled Mind | 9 | 15 → 35 % | MP regen |
+  | Arcane Focus | 18 | 6 → 14 % | the mage's abilities stronger |
+  | Frostbite | 27 | 12 → 24 % | more damage to a foe slowed, chilled or frozen |
+  | Lifeline | 9 | 5 → 17 % | once a room visit, an ally who would be Downed holds on at that share of max HP (was 1 HP) |
+  | Devotion | 18 | 6 → 14 % | heals stronger |
+  | Radiance | 27 | 0.4 → 0.8 % a second | in a fight, allies within 3 tiles mend that share of max HP |
+  | Old Ways | 9 | +1 → +5 | Spirit Drain stacks higher, and each tick gives 1 MP back |
+  | Ancestral Guard | 18 | 8 → 16 % | allies under 30 % HP take less damage |
+  | Deep Hex | 27 | 8 → 16 % | foes the shaman hexes take more damage |
+
+  The v1.0 passives came at 20 (Iron Hide +10 %, Opportunist 5 MP, Kindled Mind +25 %, Lifeline 1 HP, Old Ways to 8):
+  at 9 they start a little under that and pass it by rank 3–5.
+- **The loadout (v1.56):** a member has **up to four abilities in play**; the rest wait in the book and are never cast.
+  Set in the Skills tab (*In play: Yes / No* on each ability; `setLoadout`, validated: four at most, its own class's,
+  learned). Until a member sets it, the first four of its priority order are in play, so a new ability goes last and waits
+  until it's moved up or put in play. Passives don't count against the four.
   - **When the autobattle casts them** (`src/sim/battle.js` `TIER`): an area wants two foes in it (foes stand 2.8
     apart, round whoever they fight: three seldom came), or one while the caster holds 70 % of its MP or more
     (`SPARE_MP`); Fan of Knives and Binding Roots want two always. A member's strikes leave MP for the dearest of the
-    tier abilities it carries (`tierKeep`), and those that spend it on damage wait on the MP kept for heals and guards.
+    v1.55 abilities it has in play (`tierKeep`), and those that spend it on damage wait on the MP kept for heals and guards.
   - **Their MP** is set so they do at least what the strike they take the place of would with it (dearer, the party
     lost 8 % of its damage on the Drowned Choir).
   - Re-aimed as they land (a lane, a fan): foes move in the wind-up.
@@ -1721,13 +1755,10 @@ The owner's decisions of 2026-10-04 ([world-map-proposal.md](./world-map-proposa
   After: the Choir at 17 wins 5 of 5 (76–123 s, lowest 69–72 %), Skarn at 4 wins 5 of 5 (70–79 s, lowest 55–75 %).
 
 **Skills.**
-- **One new active per class per region**, at 18, 33, 48 and 63, learned at a trial with a named teacher: the
-  company chooses one of two. (v1.55) Emberfall's two come at **15 and 18** (§5.1, the tiers): its content runs to 18,
-  and a tier at 33 would come after the Reach opens; the later ones keep 33, 48 and 63. Each member chooses; the trials
-  come in a content pass.
-- **A second passive at 40**, which changes how the class plays and never touches gold.
-- **The loadout:** from the fifth active (L33) a member carries four into a fight; the rest wait in the book. (v1.55:
-  the fifth now comes at 18; the loadout waits for its own change, and every carried ability is cast till then.)
+- **A skill every three levels (v1.56, §5.1, the ladder; it supersedes one new active per region at 18, 33, 48 and 63,
+  each a choice of one of two, and a second passive at 40):** every third a passive, nothing to choose between. Laid out
+  to 27; the regions past the Fens carry it on, and a passive never touches gold.
+- **The loadout (v1.56):** four abilities in play from the start; the rest wait in the book.
 - **A free respec** at any temple.
 - Every skill states its **autocast test**; there's one "can't drop below 1 HP" effect in the game (the cleric's
   *Lifeline*). The **Healer** class is deferred.

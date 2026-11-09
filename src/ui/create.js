@@ -11,7 +11,7 @@
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { CLASSES, LOOKS, LOOK_LABEL, NAME_MAX, cleanName, makeMember, statsFor } from '../sim/party.js';
-import { SKILLS, PASSIVES } from '../sim/skills.js';
+import { ladderOf } from '../sim/skills.js';
 import { drawFigure, swallow } from './actorart.js';
 
 const CSS = `
@@ -71,7 +71,7 @@ function Create({ data, onBegin, error }) {
     return html`<button key=${c} class=${'opt' + (c === cls ? ' on' : '')} onClick=${() => pickCls(c)}>
       <b>${C.label}</b><span class="r">${blurb.difficulty}</span><p>${blurb.role}</p>
       <div class="st">HP <b>${s.maxHp}</b> · MP <b>${s.maxMp}</b> · ATK <b>${s.atk}</b> · DEF <b>${s.def}</b> · CRIT <b>${s.crit}%</b> · DODGE <b>${s.dodge}%</b><br />
-        ${SKILLS[c].map((a) => `${a.name} (${a.lv})`).join(' · ')} · ${PASSIVES[c].name} (${PASSIVES[c].lv})</div></button>`; })}
+        ${ladderOf(c).filter((a) => a.lv <= 12).map((a) => `${a.name} (${a.lv}${a.passive ? ', passive' : ''})`).join(' · ')} · a new skill every 3 levels</div></button>`; })}
     ${data.creation.locked.map((l) => html`<button key=${l.id} class="opt" disabled><b>${l.name}</b><span class="r">locked</span><p>${l.hint}.</p></button>`)}`;
   else if (k === 'look') body = LOOKS[cls].map((l) => html`<button key=${l} class=${'opt' + (l === look ? ' on' : '')} onClick=${() => setLook(l)}><b>${LOOK_LABEL[l] || l}</b></button>`);
   else if (k === 'origin') body = data.origins.map((o) => html`<button key=${o.id} class=${'opt' + (o.id === origin ? ' on' : '')} onClick=${() => setOrigin(o.id)}>

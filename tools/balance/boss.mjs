@@ -5,7 +5,7 @@
 //
 //   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman] [--floor N]   (--healer: who's third, v1.19;
 //   --floor: the hall on floor N, for a site with a boss on more than one: the Drowned Abbey's 1–3; default the last;
-//   --pick a|b: the tiers' first or second ability for everyone; --off id,id: those abilities' auto-use off; 'held N %': the share of his fight the boss stood stunned, frozen or knocked down)
+//   --off id,id: those abilities' auto-use off; 'held N %': the share of his fight the boss stood stunned, frozen or knocked down)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
@@ -15,10 +15,7 @@ const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
-// --pick a|b: each member carries the first (a, the default) or second of each tier's two at 15 and 18 (GDD §5.1 v1.55)
-const ki = args.indexOf('--pick'), PICK = ki >= 0 ? args.splice(ki, 2)[1] : 'a';
 const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];   // --off id,id: those abilities' auto-use off for everyone
-const skills = await load('sim/skills.js').catch(() => null);
 const [site, HL] = [args[0], +args[1]], seeds = (args[2] || '20260807,777,4242').split(',').map(Number);
 
 for (const seed of seeds) {
@@ -27,7 +24,7 @@ for (const seed of seeds) {
   sim.state.trials = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };   // (the class trials done, as the contract assumes; older checkouts ignore it)
   sim.state.party.push(...t.state.party.slice(1).map((m) => ({ ...m })));
   sim.state.party[0].cls = 'fighter'; const want = ['fighter', 'rogue', HEALER];
-  sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; if (skills && skills.TIERS) m.picks = Object.fromEntries(skills.TIERS.map((t) => [t, (skills.tierSkills(m.cls, t)[PICK === 'b' ? 1 : 0] || {}).id])); if (OFF.length) m.off = OFF; });
+  sim.state.party.forEach((m, i) => { m.cls = want[i]; m.level = HL; m.attrs = null; attrs.autoAllocate(m); m.gear = items.starterKit(m); m.hp = statsFor(m).maxHp; m.mp = undefined; if (OFF.length) m.off = OFF; });
   if (sim.state.trials) for (const c of want) { sim.state.trials[c] = 1; sim.state.trials[c + '12'] = 1; }
   sim.tick();
   while (sim.world.stairsAt && !(FLOOR && sim.state.depth >= FLOOR - 1)) { const s = sim.world.stairsAt, p = sim.state.player; p.x = p.px = s.x + 0.5; p.y = p.py = s.y + 1.5; sim.commands.push({ type: 'harvest', tx: s.x, ty: s.y }); sim.tick(); if (site === 'barrows' && sim.state.depth >= 2) break; }
@@ -56,6 +53,6 @@ for (const seed of seeds) {
   const t0 = sim.state.t, hall = sim.world.roomLevels.get(r.id);
   for (let i = 0; i < 20 * 300 && !fell && !defeat; i++) { sim.tick(); if (!defeat) { low = Math.min(low, frac()); bossLeft(); }
     if (process.env.TRACE && i % 60 === 0 && !defeat) console.log('  ', (i / 20).toFixed(0) + 's', 'foes', (sim.world.enemies || []).filter((e) => e.hp > 0).map((e) => `${e.kind}${e.boss ? '*' : ''}:${Math.round(100 * e.hp / e.maxHp)}%@${e.x.toFixed(0)},${e.y.toFixed(0)}`).join(' '), '| party', sim.state.party.map((m) => `${m.cls}:${m.down ? 'D' : Math.round(100 * m.hp / statsFor(m).maxHp) + '%'}@${(m.x || 0).toFixed(0)},${(m.y || 0).toFixed(0)}`).join(' ')); }
-  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}${PICK === 'b' ? ' (pick b)' : ''}`);
+  console.log(`${site} ${who || '(no boss)'} hall L${hall} · party L${HL} seed ${seed}: ${fell ? 'BOSS DOWN' : defeat ? `DEFEAT (boss at ${Math.round(bossHp * 100)}%)` : 'still fighting'} ${(sim.state.t - t0).toFixed(0)}s · lowest ${Math.round(low * 100)}% · downs ${downs} · fallen ${fallen}${calls ? ' · calls ' + calls : ''}${mech ? ' · mechanic ×' + mech : ''}${heldT ? ` · held ${Math.round(100 * heldT / Math.max(0.05, bossT))} %` : ''}`);
   if (process.env.DMG) console.log('  dps', Object.entries(dealt).map(([k, v]) => `${k} ${(v / Math.max(1, sim.state.t - t0)).toFixed(1)}`).join(' · '));
 }

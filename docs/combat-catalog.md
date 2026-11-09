@@ -281,19 +281,27 @@ Class traits: range 12, every 1.5 s, speed 6.5, fires a `spirit` bolt (bt:52).
 | `hex` | Hex | Lv 12 + `shaman12` | 22 | takes the turn | **Debuff** on every live foe within **3.5** of the centre: `hex = {t:8, k: min(0.4, 0.2×mult)}`. It cuts the foe's ATK when it swings and its DEF when it is struck (bt:499-501, bt:764-768, bt:796). Centre (`hexCentre`, bt:678-683): the foe with the most un-hexed foes within 3.5, needing ≥2 (a boss wins a tie); otherwise the first boss or elite that is not hexed. | When `hexCentre` returns a target | `hex` (sfx:259), life 1.4 s. A sigil drawn stroke by stroke on the floor (two rings and a pentagram, r 1.35), a violet pool, and violet lines to each reached foe (hex [160,255,70], hexV [190,110,255]). **Aura** (sfx:314): a ring with three beads under the foe, and violet motes sinking. The sim also emits combat `'hex'`, shown as the float "hexed" (rr:1565). |
 | passive | Old Ways | Lv 20 | – | – | Spirit Drain caps at 8 stacks (+3), and each tick returns 1 MP to the caster (sk:101, bt:676, bt:1274) | – | none |
 
-#### The tiers (GDD v1.55): each class's two at 15 and at 18
-A member carries one of each pair (`skills.js` `pickOf`; the first until it chooses). They're cast by `battle.js`
-`TIER` (pick: when; land: what). Each has a moment of its own (`skillfx.js`, PROPOSED's lives) and a sound
-(`cues.js`). Its MP and numbers are in GDD §5.1's table, its rules in [skill-trees-proposal.md](skill-trees-proposal.md)
-§7. Which Luminati move each comes from:
+#### The ladder (GDD v1.56): the v1.55 skills, and the passives with ranks
+v1.55's ten pairs no longer ask for a choice: each joins the class's ladder (a skill every three levels, `skills.js`
+`SKILLS` in level order). They're cast by `battle.js` `TIER` (pick: when; land: what), but only while in the member's
+loadout of four (`inPlay`). Each has a moment of its own (`skillfx.js`, PROPOSED's lives) and a sound (`cues.js`). Their
+numbers are in GDD §5.1, their rules in [skill-trees-proposal.md](skill-trees-proposal.md) §7. Which Luminati move each
+comes from:
 
-| Class | 15 | 18 | From Luminati |
-|---|---|---|---|
-| Fighter | `vault` (leap), `cutting_wave` (wave) | `earthshatter` (slam), `whirling_blades` (blades) | Skyfall Judgement, Dragonfang Wave, Earthshatter, Tempest Edge |
-| Rogue | `kidney_shot` (kidney), `fan_of_knives` (fan) | `shadowstep` (step), `caltrops` (field) | stun, a line attack, a dash, something planted |
-| Mage | `flare` (flare), `gather` (gather) | `glacial_tomb` (tomb), `blizzard` (field) | Flare, pull, Glacial Tomb, Blizzard |
-| Cleric | `sanctuary` (field), `consecrate` (field) | `revive` (revive), `judgement` (judge) | Sanctuary, something planted, Revive, Judgement |
-| Shaman | `binding_roots` (roots), `old_marks` (strike: `marks`) | `spirit_totem` (field), `thunder_drum` (drum) | root, resonance marks, Toll, knockback |
+| Class | 3 | 15 | 21 | 24 | From Luminati |
+|---|---|---|---|---|---|
+| Fighter | `cutting_wave` (wave) | `vault` (leap) | `earthshatter` (slam) | `whirling_blades` (blades) | Dragonfang Wave, Skyfall Judgement, Earthshatter, Tempest Edge |
+| Rogue | `kidney_shot` (kidney) | `fan_of_knives` (fan) | `shadowstep` (step) | `caltrops` (field) | stun, a line attack, a dash, something planted |
+| Mage | `flare` (flare) | `gather` (gather) | `glacial_tomb` (tomb) | `blizzard` (field) | Flare, pull, Glacial Tomb, Blizzard |
+| Cleric | `consecrate` (field) | `sanctuary` (field) | `judgement` (judge) | `revive` (revive) | something planted, Sanctuary, Judgement, Revive |
+| Shaman | `old_marks` (strike: `marks`) | `binding_roots` (roots) | `thunder_drum` (drum) | `spirit_totem` (field) | resonance marks, root, knockback, Toll |
+
+The passives (9, 18, 27; ranks 1–5, `skills.js` `PASSIVES`, read by `passiveVal`): the v1.0 five moved to 9 (above,
+their numbers now by rank), and ten new: Hold the Line, Heavy Hand (fighter); Keen Edge, Exploit (rogue); Arcane Focus,
+Frostbite (mage); Devotion, Radiance (cleric); Ancestral Guard, Deep Hex (shaman). Where they act: `party.js` `statsFor`
+(Iron Hide, Kindled Mind, Keen Edge, Arcane Focus), `battle.js` `applyHit` (Hold the Line, Ancestral Guard, Lifeline),
+`resolve`'s `edgeOn` (Exploit, Frostbite, Deep Hex), the regen tick (Iron Hide, Radiance, Old Ways), the plain blow
+(Heavy Hand), the crit (Opportunist), the heals (Devotion). None has an effect drawn; Lifeline keeps its float.
 
 #### Sellsword perks that act in combat
 Defined in `src/sim/companions.js` (PERKS :42, FIGHT :86). None of them has its own effect drawn.

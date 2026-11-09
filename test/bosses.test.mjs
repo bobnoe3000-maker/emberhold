@@ -108,6 +108,7 @@ test('the Quartermaster: every 10 s the most hurt of his ranks stands up whole, 
 // was down by 9 s and his first issue due at 10: with only the living to make whole, it never once fired
 test('the Quartermaster stands his fallen ranks up again, the last to fall first; one he stood up pays nothing again', () => {
   const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); party(sim, 3); sim.tick();
+  for (const m of sim.state.party) m.off = ['cutting_wave', 'kidney_shot', 'flare', 'consecrate', 'old_marks'];   // (the level-3 skills of v1.56 off: the fight this was written for)
   down(sim);
   const ev = []; for (const k of ['bossIssue', 'bossDown', 'slain']) sim.bus.on(k, (e) => ev.push([k, e, sim.state.tick]));
   const paid = []; sim.bus.on('combat', (c) => { if (c.t === 'xp') paid.push([sim.state.tick, c.x, c.y]); });

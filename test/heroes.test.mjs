@@ -8,7 +8,7 @@ import { shrineKind } from '../src/sim/shrines.js';
 import { isWalkable } from '../src/sim/world.js';
 import { CLASSES, SHIELD_DEF, ORIGINS, ORIGIN_EDGE, statsFor, makeMember, cleanName, xpToNext } from '../src/sim/party.js';
 import { pendingPoints, autoAllocate, POINTS_PER_LEVEL } from '../src/sim/attributes.js';
-import { pendingSkillPoints, rankOf, rankCost, skillsOf } from '../src/sim/skills.js';
+import { pendingSkillPoints, rankOf, rankCost, skillsOf, passiveVal } from '../src/sim/skills.js';
 import { DAY_S, WEAK_S, BENCH_MAX } from '../src/sim/heroes.js';
 import { startSession, verifySession } from '../src/sim/replay.js';
 import { kitGrowth, STARTER, BASES } from '../src/sim/items.js';
@@ -72,13 +72,13 @@ test('origin edges: Redhand +1 ATK, Thornwick-born one more hireling', () => {
 // (gear carries part of the growth since 2026-09-30: the class grows the kit's extra less a level,
 // so a member in their kit at their level lands on the old class curve, give or take item rounding)
 test('the recommended build reproduces the class table (HP / MP / ATK / DEF) at every level', () => {
-  for (const cls of Object.keys(CLASSES)) for (let lv = 1; lv < 20; lv++) {            // (20+: the passives add on top)
+  for (const cls of Object.keys(CLASSES)) for (let lv = 1; lv < 20; lv++) {            // (Iron Hide, a passive at 9 since v1.56, adds on top)
     const m = makeMember('t', 'T', cls, lv), c = CLASSES[cls], L = lv - 1, s = statsFor(m), g = s.gear, kg = kitGrowth(cls);
     assert.equal(pendingPoints(m), 0);
     assert.equal(s.maxHp, Math.round(c.hp[0] + (c.hp[1] - kg.hp) * L + g.hp), `${cls} L${lv} hp`);
     assert.equal(s.maxMp, Math.round(c.mp[0] + (c.mp[1] - kg.mp) * L + g.mp), `${cls} L${lv} mp`);
     assert.ok(Math.abs(s.atk - (c.atk[0] + (c.atk[1] - kg.atk) * L + g.atk)) < 0.051, `${cls} L${lv} atk`);
-    assert.ok(Math.abs(s.def - (c.def[0] + (c.def[1] - kg.def) * L + g.def) * (cls === 'fighter' ? SHIELD_DEF : 1)) < 0.051, `${cls} L${lv} def`);   // (+ the fighter's shield bonus)
+    assert.ok(Math.abs(s.def - (c.def[0] + (c.def[1] - kg.def) * L + g.def) * (cls === 'fighter' ? SHIELD_DEF : 1) * (1 + passiveVal(m, 'iron_hide'))) < 0.051, `${cls} L${lv} def`);   // (+ the fighter's shield bonus)
     // in the kit at level: the old curve (class table + the kit at the one-× rate), within rounding
     const old = { hp: 0, mp: 0, atk: 0, def: 0 };
     for (const base of Object.values(STARTER[cls])) for (const [k, [a, b]] of Object.entries(BASES[base].st)) if (k in old) old[k] += a + b * lv;
@@ -139,9 +139,9 @@ test('skill points at even levels; ranks need an unlocked ability; rank 5 is the
 });
 test('auto-cast, priority and stance commands are validated', () => {
   const sim = town(), h = sim.state.party[0];
-  run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: false }, { type: 'setPriority', id: 'you', order: ['second_wind', 'cleave', 'shield_wall', 'vault', 'earthshatter'] },
+  run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: false }, { type: 'setPriority', id: 'you', order: ['second_wind', 'cleave', 'shield_wall', 'cutting_wave', 'vault', 'earthshatter', 'whirling_blades'] },
     { type: 'setPriority', id: 'you', order: ['cleave', 'cleave', 'cleave'] }, { type: 'setStance', id: 'you', stance: 'defensive' }, { type: 'setStance', id: 'you', stance: 'berserk' }]);
-  assert.deepEqual(h.off, ['cleave']); assert.deepEqual(h.prio, ['second_wind', 'cleave', 'shield_wall', 'vault', 'earthshatter']); assert.equal(h.stance, 'defensive');
+  assert.deepEqual(h.off, ['cleave']); assert.deepEqual(h.prio, ['second_wind', 'cleave', 'shield_wall', 'cutting_wave', 'vault', 'earthshatter', 'whirling_blades']); assert.equal(h.stance, 'defensive');
   run(sim, [{ type: 'setAutocast', id: 'you', skill: 'cleave', on: true }]);
   assert.deepEqual(h.off, []);
 });

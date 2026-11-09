@@ -8,7 +8,7 @@
 import { mulberry32, streamSeed } from './rng.js';
 import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate } from './attributes.js';
-import { STANCE_MOD, stanceOf, hasPassive } from './skills.js';
+import { STANCE_MOD, stanceOf, passiveVal } from './skills.js';
 import { has, STAT, rollSellsword } from './companions.js';
 
 // Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
@@ -63,18 +63,18 @@ export function statsFor(m) {
   const c = CLASSES[m.cls], L = m.level - 1, r1 = (v) => Math.round(v * 10) / 10, g = gearStats(m), a = attrStats(m), kg = kitGrowth(m.cls);
   const rg0 = recommendedGrowth(m.cls), rg = { hp: rg0.hp + kg.hp, mp: rg0.mp + kg.mp, atk: rg0.atk + kg.atk, def: rg0.def + kg.def };   // attributes and the kit's extra growth carry the rest
   const baseHp = c.hp[0] + (c.hp[1] - rg.hp) * L + a.hp, baseMp = c.mp[0] + (c.mp[1] - rg.mp) * L + a.mp;
-  const st = STANCE_MOD[stanceOf(m)], weak = m.weakUntil > 0 ? WEAK : 1, passive = hasPassive(m);
+  const st = STANCE_MOD[stanceOf(m)], weak = m.weakUntil > 0 ? WEAK : 1;
   const edge = m.origin === 'redhand_deserter' ? 1 : 0;                       // origins.js: +1 ATK
   // a sellsword's own perks (companions.js; dark while it's owed wages); the company's are fought out in battle.js
   const reck = has(m, 'reckless'), pk = (id, v) => (has(m, id) ? v : 1);
   const atk = (c.atk[0] + (c.atk[1] - rg.atk) * L + a.atk + edge + g.atk) * st.atk * weak * (reck ? STAT.reckless[0] : 1);
-  const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (passive && m.cls === 'fighter' ? 1.1 : 1)   // Iron Hide
+  const def = (c.def[0] + (c.def[1] - rg.def) * L + a.def + g.def) * st.def * weak * (1 + passiveVal(m, 'iron_hide'))   // Iron Hide (GDD v1.56: a passive at 9, ranked)
     * (m.cls === 'fighter' && hasShield(m) ? SHIELD_DEF : 1) * pk('stubborn', STAT.stubborn) * (reck ? STAT.reckless[1] : 1);     // the fighter's shield
-  const mpr = (c.mpr * (baseMp / c.mp[0]) + a.mpr + g.mpr) * (passive && m.cls === 'mage' ? 1.25 : 1);                              // Kindled Mind
+  const mpr = (c.mpr * (baseMp / c.mp[0]) + a.mpr + g.mpr) * (1 + passiveVal(m, 'kindled_mind'));                                  // Kindled Mind
   return {
     maxHp: Math.round((baseHp + g.hp) * weak * pk('hardy', STAT.hardy)), maxMp: Math.round((baseMp + g.mp) * weak), atk: r1(atk), def: r1(def),
-    crit: Math.min(60, r1(c.crit + a.crit + g.crit + (has(m, 'keen_eyed') ? STAT.keen_eyed : 0))), dodge: Math.max(0, Math.min(50, r1(c.dodge + a.dodge + g.dodge + (has(m, 'light_footed') ? STAT.light_footed : 0)))),
-    hpr: r1((c.hpr * (baseHp / c.hp[0]) + g.hpr) * pk('iron_lunged', STAT.iron_lunged)), mpr: r1(mpr), power: a.power, gear: g, attr: a,
+    crit: Math.min(60, r1(c.crit + a.crit + g.crit + (has(m, 'keen_eyed') ? STAT.keen_eyed : 0) + passiveVal(m, 'keen_edge'))), dodge: Math.max(0, Math.min(50, r1(c.dodge + a.dodge + g.dodge + (has(m, 'light_footed') ? STAT.light_footed : 0)))),
+    hpr: r1((c.hpr * (baseHp / c.hp[0]) + g.hpr) * pk('iron_lunged', STAT.iron_lunged)), mpr: r1(mpr), power: a.power + passiveVal(m, 'arcane_focus'), gear: g, attr: a,
   };
 }
 export function makeMember(id, name, cls, level = 1, trait = null) {

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSim } from '../src/sim/core.js';
 import { CLASSES, makeMember, statsFor } from '../src/sim/party.js';
-import { SKILLS, PASSIVES, TRIAL_CLASSES, OLD_WAYS_STACKS } from '../src/sim/skills.js';
+import { SKILLS, PASSIVES, TRIAL_CLASSES, passiveVal } from '../src/sim/skills.js';
 import { STARTER, CLASS_IDS, BASES, classesOf, rollItem } from '../src/sim/items.js';
 import { mulberry32 } from '../src/sim/rng.js';
 import { BUILD } from '../src/sim/attributes.js';
@@ -16,9 +16,10 @@ import { isWalkable } from '../src/sim/world.js';
 
 const SEED = 20260807;
 
-test('the shaman is a class like the others: table, kit, build, three abilities and a passive, a trial from Col, at creation and the tavern', () => {
+test('the shaman is a class like the others: table, kit, build, the ladder\'s abilities and passives, a trial from Col, at creation and the tavern', () => {
   assert.ok(CLASSES.shaman && STARTER.shaman && BUILD.shaman && PASSIVES.shaman);
-  assert.deepEqual(SKILLS.shaman.map((s) => [s.lv, s.kind]), [[1, 'strike'], [6, 'breath'], [12, 'hex'], [15, 'roots'], [15, 'strike'], [18, 'field'], [18, 'drum']]);   // (and the tiers' two at 15 and 18, GDD v1.55)
+  assert.deepEqual(SKILLS.shaman.map((s) => [s.lv, s.kind]), [[1, 'strike'], [3, 'strike'], [6, 'breath'], [12, 'hex'], [15, 'roots'], [21, 'drum'], [24, 'field']]);   // (the ladder, GDD v1.56)
+  assert.deepEqual(PASSIVES.shaman.map((s) => s.lv), [9, 18, 27]);
   assert.ok(TRIAL_CLASSES.includes('shaman')); assert.equal(QUESTS.trial_old_roads.giver, 'col');
   assert.deepEqual(CLASS_IDS, ['fighter', 'rogue', 'mage', 'cleric', 'shaman']);
   for (const slot of Object.values(STARTER.shaman)) assert.ok(classesOf(BASES[slot]).includes('shaman'), slot);
@@ -53,10 +54,11 @@ test('shaman gear drops the way all gear does: for a party without a shaman too,
   assert.ok(drops.some((it) => it.mod && it.mod.ab === 'Spirit Drain'));
 });
 
-test('Spirit Drain stacks on a foe (to 5; Old Ways to 8), ticks, and mends the most hurt ally as it does', () => {
+test('Spirit Drain stacks on a foe (to 5; Old Ways, a passive at 9 since v1.56, a stack a rank: 6, and 8 at rank 3), ticks, and mends the most hurt ally as it does', () => {
   for (const passive of [false, true]) {
     const sim = fight(12, passive), sh = sim.state.party.find((m) => m.cls === 'shaman');
-    sh.off = ['ancestors_breath', 'hex'];                       // (only the drain, for this)
+    sh.off = ['ancestors_breath', 'hex', 'old_marks'];          // (only the drain, for this)
+    if (passive) sh.skills = { old_ways: 3 };                   // (Old Ways at rank 3: three stacks more)
     let most = 0, mended = 0, mp0 = 0;
     for (let i = 0; i < 20 * 60; i++) {
       for (const m of sim.state.party) if (!m.down) m.hp = Math.min(m.hp, statsFor(m).maxHp * 0.7);   // someone's always hurt: the mend shows
@@ -66,7 +68,7 @@ test('Spirit Drain stacks on a foe (to 5; Old Ways to 8), ticks, and mends the m
       if (sim.state.party.reduce((a, m) => a + m.hp, 0) > before) mended++;
       mp0 = Math.max(mp0, sh.mp);
     }
-    assert.equal(most, 5 + (passive ? OLD_WAYS_STACKS : 0), `stacks peaked at ${most}`);
+    assert.equal(most, 5 + passiveVal(sh, 'old_ways'), `stacks peaked at ${most}`); assert.equal(passiveVal(sh, 'old_ways'), passive ? 3 : 1);
     assert.ok(mended > 0, 'the drain mended someone');
   }
 });

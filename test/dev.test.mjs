@@ -40,13 +40,13 @@ test('a dev level is a level fought for: its stat points, its skill point, its H
 });
 
 test('every skill unlocked: each class\'s level-6 and level-12 abilities open at their level, not before', () => {
-  const sim = game(), h = sim.state.party[0], [, six, twelve] = skillsOf('cleric');
+  const sim = game(), h = sim.state.party[0], [six, twelve] = skillsOf('cleric').filter((s) => s.trial);
   run(sim, Array.from({ length: 11 }, () => ({ type: 'devLevel', id: h.id })));
   assert.equal(h.level, 12);
   assert.ok(!unlocked(h, six, sim.state.trials) && !unlocked(h, twelve, sim.state.trials), 'before: the trials not done');
   run(sim, [{ type: 'devUnlockSkills' }]);
   assert.ok(unlocked(h, six, sim.state.trials) && unlocked(h, twelve, sim.state.trials), 'after: both open at level 12');
-  const lone = makeMember('c9', 'Low', 'rogue', 3);
+  const lone = makeMember('c9', 'Low', 'rogue', 2);   // (a skill at 3 since v1.56: before it)
   for (const s of skillsOf('rogue').slice(1)) assert.ok(!unlocked(lone, s, sim.state.trials), `${s.id} still wants its level`);
   for (const c of ['fighter', 'rogue', 'mage', 'cleric', 'shaman']) assert.ok(sim.state.trials[c] && sim.state.trials[c + '12'], c);
 });

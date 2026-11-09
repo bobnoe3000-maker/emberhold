@@ -1,6 +1,6 @@
 # The skill trees: a proposal (2026-11-08)
 
-**Status: Implemented** (2026-11-08): the owner marked all twenty **yes** on the review page ("Updated, proceed"). GDD
+**Status: Implemented, its choices superseded** (2026-11-09, GDD v1.56: the ladder; the owner: "One new skill every 3 levels opens up. No choice after 15."): the twenty skills stand, but none is chosen between now; they join each class's ladder at 3, 15, 21 and 24, with passives at 9, 18 and 27 and four abilities in play (GDD §5.1). `TIERS`, `pickOf`, `pickSkill` and `picks` are gone (save v36). Before that, **Implemented** (2026-11-08): the owner marked all twenty **yes** on the review page ("Updated, proceed"). GDD
 v1.55 §5.1 (the tiers' table, as built), §5.2 (crowd control), §17; `src/sim/skills.js` (`TIERS`, `pickOf`),
 `src/sim/battle.js` (`TIER`, the CC block, `battle.planted`), `src/sim/heroes.js` (`pickSkill`), save v35 (`picks`),
 `src/ui/sheet.js` (*The choices*), `src/render/skillfx.js` (their moments, the statuses' auras, a cut wind-up's warning

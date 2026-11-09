@@ -104,6 +104,10 @@
 //   v35: a member's optional `picks` (skills.js: its ability at 15 and at 18, the tiers; GDD §5.1 v1.55). Nothing to
 //       migrate: absent reads as the first of each tier's two. A member's `prio` may now hold fewer ids than it carries
 //       (priorityOf puts the rest after it).
+//   v36: the skill ladder (GDD §5.1 v1.56): a skill every 3 levels, nothing to choose between, passives at 9, 18 and 27
+//       with ranks, four abilities taken into a fight (a member's optional `loadout`). Older data (ladderFor36): `picks`
+//       dropped (every skill is learned now); ranks kept as they were (a passive's from nothing: rank 1). No loadout
+//       set: the first four the member can use, in its order (skills.js inPlay).
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -114,7 +118,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 35;   // (v35: a member's optional `picks`, its ability at each tier, skills.js. Nothing to migrate: absent reads as the first of each tier's two)
+export const SAVE_VERSION = 36;   // (v36: the skill ladder, GDD v1.56: a member's `picks` gone, an optional `loadout`; ladderFor36)
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';
@@ -135,7 +139,7 @@ export function metaOf(data) {
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object' || !raw.data) return null;
   if (raw.version === SAVE_VERSION) return raw;
-  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
+  if (raw.version >= 3 && raw.version < SAVE_VERSION) { let data = raw.version < 19 ? countFrom(raw.data) : raw.data; if (raw.version < 20) data = scrollFor(data); if (raw.version < 24) data = namesFor(data); if (raw.version < 25) data = xpFor(data); if (raw.version < 26) data = trials12For(data); if (raw.version < 27) data = xpFor27(data); if (raw.version < 28) data = reachedFor(data); if (raw.version < 29) data = shopsFor(data); if (raw.version < 30) data = visitFor(data); if (raw.version < 31) data = bandsFor(data); if (raw.version < 32) data = questsFor32(data); if (raw.version < 33) data = plansFor33(data); if (raw.version < 36) data = ladderFor36(data); return { version: SAVE_VERSION, savedAt: raw.savedAt || 0, meta: metaOf(data), data }; }
   return null;                       // unknown / newer / un-migratable
 }
 
@@ -200,6 +204,11 @@ export function questsFor32(data) {
   if (Array.isArray(quests.ch2_the_sickpools) && quests.ch2_the_sickpools[0] === 2 && quests.ch2_the_sickpools[1] === 0) quests.ch2_the_sickpools = [1, 1, 0];
   if (Array.isArray(quests.brannoc_standing_down) && quests.brannoc_standing_down[0] === 1) quests.brannoc_standing_down = [1, 0, 0];
   return { ...data, quests };
+}
+/** v35 → v36: the skill ladder (see v36 above): a member's `picks` dropped @param {any} data */
+export function ladderFor36(data) {
+  const drop = (m) => { if (m && m.picks !== undefined) { const { picks: _p, ...rest } = m; return rest; } return m; };
+  return { ...data, party: (data.party || []).map(drop), ...(data.bench ? { bench: data.bench.map(drop) } : {}) };
 }
 /** v32 → v33: the Vale's dungeons authored (see v33 above) @param {any} data */
 export function plansFor33(data) {

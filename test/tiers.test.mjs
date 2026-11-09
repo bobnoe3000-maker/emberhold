@@ -1,12 +1,14 @@
-// the tiers (GDD §5.1 v1.55, docs/skill-trees-proposal.md): each class's two abilities at 15 and at 18, the pick and its
-// change at a temple, and the crowd control they bring (battle.js CC), each cast in a real fight and checked by what it did
+// the skill ladder (GDD §5.1 v1.56): a skill every 3 levels, every third a passive with ranks, four abilities taken into a
+// fight (the loadout); the skill trees' abilities (v1.55) and the crowd control they bring (battle.js CC), each cast in a
+// real fight and checked by what it did; the passives at work
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { isWalkable } from '../src/sim/world.js';
 import { makeMember, statsFor } from '../src/sim/party.js';
 import { autoAllocate } from '../src/sim/attributes.js';
-import { SKILLS, TIERS, tierSkills, pickOf, carries, priorityOf, unlocked, pendingSkillPoints } from '../src/sim/skills.js';
+import { SKILLS, PASSIVES, ladderOf, passiveVal, inPlay, priorityOf, unlocked, pendingSkillPoints, skillDef, LOADOUT } from '../src/sim/skills.js';
+import { migrate, SAVE_VERSION } from '../src/persist/save.js';
 import { ccTime, BOSS_CC, CC_IMMUNE } from '../src/sim/battle.js';
 
 const SEED = 20261108, TRIALS = { fighter: 1, rogue: 1, mage: 1, cleric: 1, shaman: 1, fighter12: 1, rogue12: 1, mage12: 1, cleric12: 1, shaman12: 1 };
@@ -21,16 +23,16 @@ function inRoom(party, lv, site = 'canal_locks') {
 }
 const ready = (m) => { m.autoAttrs = true; autoAllocate(m); m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m; };
 const knight = (lv) => ready({ ...createSim(SEED).state.party[0], level: lv });
-/** a member of `cls` carrying only `skill` (the rest off), at 18; the knight leads unless it's the fighter's own */
-function party(cls, skill, lv = 18) {
-  const only = (m) => { m.picks = {}; for (const t of TIERS) m.picks[t] = tierSkills(cls, t).find((s) => s.id === skill) ? skill : pickOf(m, t); m.off = SKILLS[cls].map((s) => s.id).filter((id) => id !== skill); return m; };
+/** a member of `cls` with only `skill` in play, at its level (18 at least); the knight leads unless it's the fighter's own */
+function party(cls, skill, lv = Math.max(18, (skillDef(cls, skill) || { lv: 18 }).lv)) {
+  const only = (m) => { m.loadout = [skill]; return m; };
   if (cls === 'fighter') { const h = only(knight(lv)); return { h, m: h, list: [h, ready(makeMember('c1', 'Maren', 'cleric', lv))] }; }
   const h = knight(lv), m = only(ready(makeMember('x1', 'Tam', cls, lv)));
   return { h, m, list: cls === 'cleric' ? [h, m] : [h, m, ready(makeMember('c1', 'Maren', 'cleric', lv))] };
 }
 /** fight until `skill` lands (and `more` s after it), within `secs`; every 'skill', 'combat' and 'interrupt' event kept */
-function fight(cls, skill, { lv = 17, secs = 120, more = 0, each = null, site } = {}) {
-  const P = party(cls, skill), sim = inRoom(P.list, lv, site), log = { skill: [], combat: [], interrupt: [] };
+function fight(cls, skill, { lv, secs = 120, more = 0, each = null, site } = {}) {
+  const P = party(cls, skill), sim = inRoom(P.list, lv ?? P.m.level - 1, site), log = { skill: [], combat: [], interrupt: [] };
   let snap0 = null; sim.bus.on('skill', (e) => { log.skill.push({ ...e, time: sim.state.t }); if (!snap0 && e.id === skill && e.at === 'land') snap0 = (sim.world.enemies || []).map((o) => ({ id: o.id, x: o.x, y: o.y })); });   // (where they stood as it landed, before it moved them)
   sim.bus.on('combat', (c) => log.combat.push({ ...c, time: sim.state.t })); sim.bus.on('interrupt', (e) => log.interrupt.push({ ...e, time: sim.state.t }));   // (time: a combat event's t is its kind)
   let land = null;
@@ -44,36 +46,57 @@ function fight(cls, skill, { lv = 17, secs = 120, more = 0, each = null, site } 
   return { sim, P, land, log, foe, after: (t) => log.combat.filter((c) => c.time > land.time - 1e-9 && c.time <= land.time + t) };
 }
 
-test('each class has two abilities at 15 and two at 18; a member carries the first of each until it picks', () => {
-  for (const cls of Object.keys(SKILLS)) for (const t of TIERS) {
-    const two = tierSkills(cls, t); assert.equal(two.length, 2, `${cls} ${t}`); assert.ok(two.every((s) => s.lv === t));
-    const m = makeMember('x', 'X', cls, 18); assert.equal(pickOf(m, t), two[0].id);
-    assert.ok(carries(m, two[0]) && !carries(m, two[1]));
-    assert.ok(priorityOf(m).some((s) => s.id === two[0].id) && !priorityOf(m).some((s) => s.id === two[1].id));
-    m.picks = { [t]: two[1].id }; assert.ok(!unlocked(m, two[0], TRIALS) && unlocked(m, two[1], TRIALS));
-    assert.ok(!unlocked({ ...m, level: t - 1 }, two[1], TRIALS), 'not before its level');
+test('the ladder: the first ability at 1, a new skill every 3 levels, every third a passive (9, 18, 27), nothing to choose', () => {
+  for (const cls of Object.keys(SKILLS)) {
+    const L = ladderOf(cls);
+    assert.deepEqual(L.map((s) => s.lv), [1, 3, 6, 9, 12, 15, 18, 21, 24, 27], cls);
+    assert.deepEqual(L.filter((s) => s.passive).map((s) => s.lv), [9, 18, 27], cls);
+    assert.deepEqual(L.filter((s) => s.trial).map((s) => s.lv), [6, 12], `${cls}: the trials' two`);
+    const m = makeMember('x', 'X', cls, 27); assert.equal(priorityOf(m).length, 7, 'every ability in the order');
+    for (const s of L) { assert.ok(unlocked(m, s, TRIALS), `${s.id} learned at 27`); if (s.lv > 1) assert.ok(!unlocked({ ...m, level: s.lv - 1 }, s, TRIALS), `${s.id} not before ${s.lv}`); }
   }
 });
-test('the pick: the first anywhere, a change at a temple (free), the dropped one\'s ranks back as points, its place in the order kept', () => {
-  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }), h = sim.state.party[0]; h.level = 18; h.prio = ['vault', 'cleave'];
+test('the loadout: four abilities into a fight; until it\'s set, the first four of the order; set anywhere, refused past four or unlearned', () => {
+  const sim = createSim(SEED, undefined, { scene: 'dungeon', site: 'canal_locks' }), h = sim.state.party[0]; h.level = 15; sim.state.trials = { ...TRIALS };
+  assert.deepEqual(inPlay(h, TRIALS).map((s) => s.id), ['cleave', 'cutting_wave', 'shield_wall', 'second_wind'], 'the first four of the order');
   const refused = []; sim.bus.on('refused', (r) => refused.push(r.reason));
-  sim.commands.push({ type: 'rankSkill', id: h.id, skill: 'cutting_wave' }); sim.tick();
-  assert.match(refused.pop(), /carries Vault at 15, not Cutting Wave/);
-  sim.commands.push({ type: 'rankSkill', id: h.id, skill: 'vault' }); sim.commands.push({ type: 'rankSkill', id: h.id, skill: 'vault' }); sim.tick();
-  const pts = pendingSkillPoints(h); assert.equal(h.skills.vault, 3);
-  sim.commands.push({ type: 'pickSkill', id: h.id, tier: 15, skill: 'vault' }); sim.tick();     // (choosing what it carries is a choice made)
-  sim.commands.push({ type: 'pickSkill', id: h.id, tier: 15, skill: 'cutting_wave' }); sim.tick();
-  assert.match(refused.pop(), /at a town temple/); assert.equal(pickOf(h, 15), 'vault');
-  sim.commands.push({ type: 'pickSkill', id: h.id, tier: 18, skill: 'whirling_blades' }); sim.tick();   // the first choice at 18: anywhere
-  assert.equal(pickOf(h, 18), 'whirling_blades');
-  const town = createSim(SEED, undefined, { scene: 'town' }), t = town.state.party[0]; t.level = 18; t.skills = { vault: 3 }; t.picks = { 15: 'vault' }; t.prio = ['vault', 'cleave'];
-  const before = pendingSkillPoints(t);
-  town.commands.push({ type: 'pickSkill', id: t.id, tier: 15, skill: 'cutting_wave' }); town.tick();
-  assert.equal(pickOf(t, 15), 'cutting_wave'); assert.equal(t.skills.vault, undefined); assert.equal(pendingSkillPoints(t), before + 2);
-  assert.deepEqual(priorityOf(t).map((s) => s.id).slice(0, 2), ['cutting_wave', 'cleave']);
-  for (const bad of [{ tier: 16, skill: 'vault' }, { tier: 15, skill: 'flare' }, { tier: 15, skill: 'earthshatter' }]) { const was = JSON.stringify(t.picks); town.commands.push({ type: 'pickSkill', id: t.id, ...bad }); town.tick(); assert.equal(JSON.stringify(t.picks), was, JSON.stringify(bad)); }
-  assert.ok(pts >= 0);
-  const snap = town.snapshot(), back = createSim(SEED); back.restore(snap); assert.equal(pickOf(back.state.party[0], 15), 'cutting_wave', 'the pick is saved');
+  sim.commands.push({ type: 'setLoadout', id: h.id, skills: ['vault', 'cleave', 'shield_wall'] }); sim.tick();
+  assert.deepEqual(inPlay(h, TRIALS).map((s) => s.id), ['cleave', 'shield_wall', 'vault'], 'its four (three), in its order');
+  for (const bad of [['cleave', 'cutting_wave', 'shield_wall', 'second_wind', 'vault'], ['cleave', 'cleave'], ['firebolt'], ['iron_hide']]) { sim.commands.push({ type: 'setLoadout', id: h.id, skills: bad }); sim.tick(); }
+  sim.commands.push({ type: 'setLoadout', id: h.id, skills: ['earthshatter'] }); sim.tick();
+  assert.match(refused.pop(), /hasn't learned Earthshatter/);
+  assert.deepEqual(h.loadout, ['vault', 'cleave', 'shield_wall'], 'nothing else took');
+  assert.equal(LOADOUT, 4);
+  const snap = sim.snapshot(), back = createSim(SEED); back.restore(snap); assert.deepEqual(back.state.party[0].loadout, ['vault', 'cleave', 'shield_wall'], 'saved');
+  // in a fight: only what's in play is cast
+  const P = party('fighter', 'cutting_wave', 15); const f = inRoom(P.list, 14), cast = new Set(); f.bus.on('skill', (e) => { if (e.by === P.h.id) cast.add(e.id); });
+  for (let i = 0; i < 20 * 60; i++) f.tick();
+  assert.deepEqual([...cast], ['cutting_wave'], 'only its one in play');
+});
+test('the passives: at their level, ranked with skill points, their value growing a rank', () => {
+  const sim = createSim(SEED, undefined, { scene: 'town' }), h = sim.state.party[0];
+  h.level = 8; assert.equal(passiveVal(h, 'iron_hide'), 0, 'not before 9');
+  h.level = 9; assert.equal(passiveVal(h, 'iron_hide'), 0.08);
+  const def9 = statsFor(h).def, pts = pendingSkillPoints(h);
+  sim.commands.push({ type: 'rankSkill', id: h.id, skill: 'iron_hide' }); sim.tick();
+  assert.equal(h.skills.iron_hide, 2); assert.equal(pendingSkillPoints(h), pts - 1); assert.ok(Math.abs(passiveVal(h, 'iron_hide') - 0.1) < 1e-12);
+  assert.ok(statsFor(h).def > def9, 'more DEF at rank 2');
+  for (const cls of Object.keys(PASSIVES)) for (const P of PASSIVES[cls]) { const m = makeMember('x', 'X', cls, 27); m.skills = { [P.id]: 5 }; assert.ok(passiveVal(m, P.id) > P.val[0], `${P.id} grows by rank`); }
+  assert.equal(passiveVal(makeMember('r', 'R', 'rogue', 27), 'iron_hide'), 0, 'another class\'s: nothing');
+});
+test('a save from before the ladder (v35): picks dropped, ranks kept', () => {
+  const sim = createSim(SEED), snap = sim.snapshot(); snap.party[0].picks = { 15: 'cutting_wave' }; snap.party[0].skills = { cleave: 3 };
+  const out = migrate({ version: 35, savedAt: 1, data: snap });
+  assert.equal(out.version, SAVE_VERSION); assert.equal(out.data.party[0].picks, undefined); assert.deepEqual(out.data.party[0].skills, { cleave: 3 });
+});
+// the passives at work in a fight
+test('Hold the Line: an ally beside the fighter takes less, the more for its rank', () => {
+  const run = (rank) => { const h = knight(18), r = ready(makeMember('r1', 'Wren', 'rogue', 18)); h.skills = { hold_the_line: rank };
+    h.off = SKILLS.fighter.map((q) => q.id); r.off = SKILLS.rogue.map((q) => q.id);
+    const sim = inRoom([h, r], 17), P = sim.state.player; let took = 0, hits = 0; sim.bus.on('combat', (c) => { if (c.t === 'hit' && c.party && Math.abs(c.x - r.x) < 0.01 && Math.abs(c.y - r.y) < 0.01) { took += c.amount; hits++; } });
+    for (let i = 0; i < 20 * 40; i++) { r.x = P.x + 0.9; r.y = P.y + 0.4; r.hp = statsFor(r).maxHp; h.hp = statsFor(h).maxHp; sim.tick(); }   // (she stands by him: within the line's 3 tiles)
+    return took / Math.max(1, hits); };
+  const one = run(1), five = run(5); assert.ok(five < one, `a blow on her: ${five.toFixed(1)} at rank 5 against ${one.toFixed(1)} at rank 1`);
 });
 test('crowd control: a boss takes half of a hold, the rest the full time', () => {
   assert.equal(ccTime({ boss: 'garrow' }, 2), 2 * BOSS_CC); assert.equal(ccTime({ elite: true }, 2), 2); assert.equal(ccTime({}, 1.5), 1.5);

@@ -70,7 +70,7 @@ test('Bless raises the party\'s ATK and DEF for 8 s (level 6, with the cleric\'s
   assert.ok(h.buff && h.buff.bless > 7 && Math.abs(h.buff.blessK - 0.15 * (1 + statsFor(c).power)) < 1e-9, JSON.stringify(h.buff));
 });
 test('Turn Undead strikes every Ashbound close by (level 12)', () => {
-  const h = hero(12), c = cleric(12); c.off = ['mend', 'bless']; const sim = inRoom([h, c], 8, 'canal_locks'); const casts = events(sim, 'ability');   // (a room a pair of 12s outlasts; the Locks' first floor is the Ashbound's: v1.48 the Barrows' first is the Redhand's dig)
+  const h = hero(12), c = cleric(12); c.off = ['mend', 'bless', 'consecrate']; const sim = inRoom([h, c], 8, 'canal_locks'); const casts = events(sim, 'ability');   // (a room a pair of 12s outlasts; the Locks' first floor is the Ashbound's: v1.48 the Barrows' first is the Redhand's dig)
   sim.state.trials.cleric12 = 1;                                                    // (Mother Agnes's Vigil: M8)
   for (let i = 0; i < 20 * 60 && !casts.some((a) => a.name === 'Turn Undead'); i++) sim.tick();
   assert.ok(casts.some((a) => a.name === 'Turn Undead'));
