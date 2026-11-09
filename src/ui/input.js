@@ -60,10 +60,12 @@ export function createInput(canvas) {
 
   return {
     vec: () => (active && active.moved ? vec : null),
+    /** the floating stick where the thumb is, in CSS px (the painter scales it to its own canvas: with Luminati drawing
+     * the world, this canvas is only the taps' surface, never resized, and its width put the stick in the top-left
+     * corner, the owner's phone, 2026-11-09) */
     joystick: () => {
       if (!active || !active.moved) return null;
-      const dpr = canvas.width / window.innerWidth;
-      return { bx: active.bx * dpr, by: active.by * dpr, kx: active.kx * dpr, ky: active.ky * dpr };
+      return { bx: active.bx, by: active.by, kx: active.kx, ky: active.ky };
     },
     onTap(fn) { tapHandler = fn; },
   };

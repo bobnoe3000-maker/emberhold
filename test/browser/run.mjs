@@ -1488,6 +1488,19 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
       try { return { day: at('day'), dusk: at('dusk'), night: at('night') }; } finally { globalThis.__tod(null); } });
     check('render3d: the townsfolk glow in their own colours at dusk and by night as the light falls (world.js figureGlow), and by day are lit by the sky alone',
       glow.day.fig === 0.2 && glow.dusk.fig >= 0.6 && glow.night.fig >= 0.95 && glow.night.lit < glow.dusk.lit && glow.dusk.lit < glow.day.lit, JSON.stringify(glow));
+    // the floating stick where the thumb is (the owner's phone, 2026-11-09: with Luminati it showed in the top-left corner,
+    // scaled by the tap surface's width, which Luminati's mode never sizes): a drag from (260, 620), the knob drawn under the
+    // finger on the overlay (at 1× the old scaling drew it at 0.77× of the touch, (220, 490); on a 3× phone near the corner)
+    for (let i = 0; i < 300 && (await p.evaluate(() => { globalThis.__frame(16); return globalThis.__renderer.transiting; })); i++) await p.waitForTimeout(50);   // (a scene still fading in takes no stick)
+    await p.mouse.move(260, 620); await p.mouse.down(); await p.mouse.move(290, 640, { steps: 4 });
+    const stick = await p.evaluate(() => {
+      globalThis.__frame(16);
+      const ov = [...document.querySelectorAll('canvas')].find((c) => c.style.zIndex === '2' && c.style.pointerEvents === 'none'), k = ov.width / innerWidth, g = ov.getContext('2d');
+      const orange = (x, y, w, h) => { const d = g.getImageData(Math.round(x * k), Math.round(y * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40 && d[i] > 120 && d[i + 2] < 90 && d[i] > d[i + 2] + 60) n++; return n; };
+      return { under: orange(282, 632, 14, 14), was: orange(212, 482, 16, 16) };
+    });
+    await p.mouse.up();
+    check('render3d: the floating stick shows where the thumb is on Luminati, not in the top-left corner', stick.under > 0 && stick.was === 0, JSON.stringify(stick));
     const frame = await p.evaluate(() => { const f = document.getElementById('world3d'), cs = getComputedStyle(f);
       return { under: ['hud', 'vignette', 'menuBtn'].every((id) => !!(f.compareDocumentPosition(document.getElementById(id)) & Node.DOCUMENT_POSITION_FOLLOWING)) && cs.zIndex === 'auto', pe: cs.pointerEvents, z: cs.zIndex, frames: document.querySelectorAll('iframe').length, canvases: f.querySelectorAll('canvas').length, state: globalThis.__world3d.state, actors: globalThis.__world3d.world.stats.actors }; });
     // the menu's Graphics: Luminati pressed, and the depth of field off at once

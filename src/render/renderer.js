@@ -1507,10 +1507,10 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     drawBanner(now);
     const j = input.joystick();
     if (j) {
-      const k = vw / window.innerWidth;
+      const k = vw / window.innerWidth;                            // (the stick in CSS px, onto this overlay's own pixels)
       octx.strokeStyle = 'rgba(200,220,180,0.25)'; octx.lineWidth = 2;
-      octx.beginPath(); octx.arc(j.bx, j.by, 46 * k, 0, Math.PI * 2); octx.stroke();
-      octx.fillStyle = 'rgba(240,165,0,0.5)'; octx.beginPath(); octx.arc(j.kx, j.ky, 18 * k, 0, Math.PI * 2); octx.fill();
+      octx.beginPath(); octx.arc(j.bx * k, j.by * k, 46 * k, 0, Math.PI * 2); octx.stroke();
+      octx.fillStyle = 'rgba(240,165,0,0.5)'; octx.beginPath(); octx.arc(j.kx * k, j.ky * k, 18 * k, 0, Math.PI * 2); octx.fill();
     }
   }
 
