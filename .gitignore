@@ -10,3 +10,6 @@ tools/capture/out/
 
 # the Luminati prototype: its checkout and node_modules (tools/lumina/build.mjs)
 tools/lumina/.work/
+
+# the dungeon kit spike: downloaded KayKit pieces (tools/kit/fetch.sh)
+tools/kit/models/

@@ -1,0 +1,74 @@
+<!doctype html><html><head><style>html,body{margin:0;background:#07080c;overflow:hidden}</style>
+<script type="importmap">{"imports":{"three":"../actor-lab/node_modules/three/build/three.module.js","three/addons/":"../actor-lab/node_modules/three/examples/jsm/"}}</script></head><body>
+<script type="module">
+// spike-room.html — docs/dungeon-kit-proposal.md §4. A spike, not the game: one dungeon room from KayKit Dungeon Remastered (CC0), seen through Emberfall's camera (yaw 45°, pitch 30°,
+// orthographic), lit as a dusky room: a cool fill, warm torches, a cold light in the cells behind the gates. Needs
+// tools/kit/fetch.sh, tools/actor-lab/fetch-assets.sh and `npm i` in tools/actor-lab (three); shot by spike.mjs.
+// ?frame=game|wide (the phone at the game's zoom, or the room whole) · ?pitch=30 (the game's) · ?plain (no dressing)
+import * as THREE from 'three'; import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search), FRAME = q.get('frame') || 'wide', PITCH = +(q.get('pitch') || 30), PLAIN = q.has('plain');
+const K = 'models/';
+const W = innerWidth, H = innerHeight;
+const R = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); R.setSize(W, H); R.setPixelRatio(1);
+R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+R.outputColorSpace = THREE.SRGBColorSpace; document.body.appendChild(R.domElement);
+const S = new THREE.Scene(); S.background = new THREE.Color(0x07080c);
+const L = new GLTFLoader(), cache = {};
+async function get(n) { if (!cache[n]) { const ext = n === 'chest' || n === 'wall_doorway' ? '.glb' : '.gltf.glb'; const path = /^(Knight|Skeleton_Warrior)$/.test(n) ? `../actor-lab/models/${n}.glb` : K + n + ext; cache[n] = (await L.loadAsync(path)).scene; } return cache[n]; }
+async function put(n, x, z, ry = 0, y = 0, s = 1) {
+  const o = (await get(n)).clone(true); o.position.set(x, y, z); o.rotation.y = ry; o.scale.setScalar(s);
+  o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); S.add(o); return o; }
+let seed = 7; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+const RW = 24, RD = 20, HP = Math.PI / 2;
+// the floor: large slabs, here and there four small ones (broken, weeds, carved)
+for (let i = 0; i < RW / 4; i++) for (let j = 0; j < RD / 4; j++) {
+  const x = 2 + i * 4, z = 2 + j * 4, r = rnd();
+  if (PLAIN) { await put('floor_tile_large', x, z); continue; }
+  if (r < 0.28) { const sm = ['floor_tile_small', 'floor_tile_small_broken_A', 'floor_tile_small_broken_B', 'floor_tile_small_weeds_A', 'floor_tile_small_decorated', 'floor_tile_small'];
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) await put(sm[Math.floor(rnd() * sm.length)], x + dx, z + dz, Math.floor(rnd() * 4) * HP); }
+  else await put(r < 0.4 ? 'floor_tile_large_rocks' : 'floor_tile_large', x, z, Math.floor(rnd() * 4) * HP);
+}
+// the far walls, tall: the north with cells behind gates, the west with a doorway and a breach
+const north = PLAIN ? ['wall', 'wall', 'wall', 'wall', 'wall', 'wall'] : ['wall', 'wall_gated', 'wall_cracked', 'wall_pillar', 'wall_gated', 'wall'];
+for (let i = 0; i < 6; i++) await put(north[i], 2 + i * 4, 0);
+const west = PLAIN ? ['wall', 'wall', 'wall', 'wall', 'wall'] : ['wall', 'wall_doorway', 'wall', 'wall_broken', 'wall_cracked'];
+for (let j = 0; j < 5; j++) await put(west[j], 0, 2 + j * 4, HP);
+await put('pillar', 0, 0); await put('pillar', RW, 0); await put('pillar', 0, RD);
+// the near sides, low: a balustrade the camera looks over
+for (let i = 0; i < 6; i++) await put(i % 2 ? 'barrier_column' : 'barrier', 2 + i * 4, RD);
+for (let j = 0; j < 5; j++) await put(j % 2 ? 'barrier_column' : 'barrier', RW, 2 + j * 4, HP);
+await put('barrier_corner', RW, RD, Math.PI);
+const lights = [];
+const torch = (x, y, z, s = 1) => { const l = new THREE.PointLight(0xff9a4a, 26 * s, 15, 1.6); l.position.set(x, y, z); S.add(l); lights.push(l); return l; };
+if (!PLAIN) {
+  // the cells: a floor, a prisoner, a cold light
+  for (const cx of [6, 18]) { await put('floor_tile_large', cx, -4); const c = new THREE.PointLight(0x58c8ff, 30, 9, 1.6); c.position.set(cx, 2.4, -3.2); S.add(c); }
+  await put('Skeleton_Warrior', 6.4, -3.6, 0.4);
+  // torches on the walls, between the gates and by the door
+  await put('torch_mounted', 10, 0.5, 0, 2.3); torch(10, 3.1, 1.3);
+  await put('torch_mounted', 22, 0.5, 0, 2.3); torch(22, 3.1, 1.3);
+  await put('torch_mounted', 0.5, 10, HP, 2.3); torch(1.3, 3.1, 10);
+  // the dressing: tall things against the back walls, low things near, the middle open
+  await put('banner_patternA_red', 14, 0.55, 0, 0);
+  await put('barrel_large', 2.4, 2.6); await put('barrel_small_stack', 4.6, 1.8, 0.6); await put('keg', 2, 5, 1.2);
+  await put('crates_stacked', 21.5, 2.2, 0.3); await put('box_stacked', 19.4, 1.6, -0.4);
+  await put('rubble_large', 2.4, 14.6, 0.8); await put('rubble_half', 3.6, 17.2, 2.1); await put('rubble_half', 1.6, 12.4, 0.2);
+  await put('shelf_small_candles', 0.6, 18, HP, 0); torch(1.6, 2, 18, 0.35);
+  await put('pillar_decorated', 8, 9); await put('pillar_decorated', 16, 9);
+  await put('candle_triple', 9.4, 10.2); torch(9.4, 1.0, 10.2, 0.25);
+  await put('table_medium_broken', 20.5, 12.5, 0.5); await put('sword_shield_broken', 19, 14.5, 1.1);
+  await put('chest', 21.8, 6.4, -HP);
+  await put('Knight', 11, 13.2, -2.4); await put('Skeleton_Warrior', 13.4, 10.6, 0.75);
+} else { torch(10, 3.1, 1.3); torch(22, 3.1, 1.3); torch(1.3, 3.1, 10); await put('Knight', 11, 13.2, -2.4); await put('Skeleton_Warrior', 13.4, 10.6, 0.75); }
+// the cool fill: a moonlit shaft from above the camera's left, the only light that casts shadows
+S.add(new THREE.HemisphereLight(0x5a6c94, 0x1c140e, 0.55));
+const D = new THREE.DirectionalLight(0x8aa0d0, 0.9); D.position.set(20, 30, 26); D.target.position.set(12, 0, 10); S.add(D, D.target);
+D.castShadow = true; D.shadow.mapSize.set(2048, 2048); Object.assign(D.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24, near: 1, far: 90 }); D.shadow.bias = -0.0008; D.shadow.normalBias = 0.03;
+for (const l of lights.slice(0, 3)) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -0.002; }
+// Emberfall's camera: yaw 45°, pitch from ?pitch (the game's 30°), orthographic; ?frame=game is the phone at the game's zoom
+const yaw = Math.PI / 4, p = PITCH * Math.PI / 180, T = FRAME === 'game' ? new THREE.Vector3(11.5, 0, 11) : new THREE.Vector3(11.5, 0, 9.5);
+const viewH = FRAME === 'game' ? 35 * (H / 844) : 30, viewW = viewH * W / H;
+const C = new THREE.OrthographicCamera(-viewW / 2, viewW / 2, viewH / 2, -viewH / 2, 0.1, 400);
+C.position.set(T.x + 80 * Math.sin(yaw) * Math.cos(p), 80 * Math.sin(p), T.z + 80 * Math.cos(yaw) * Math.cos(p)); C.lookAt(T);
+R.render(S, C); const info = R.info.render; window.OUT = undefined; window.STATS = { calls: info.calls, tris: info.triangles }; console.log(JSON.stringify(window.STATS)); window.DONE = true;
+</script></body></html>
