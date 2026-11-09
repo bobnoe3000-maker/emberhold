@@ -322,7 +322,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
         <div class="sbtns"><button data-rank="${P.id}" ${open && n && r < MAX_RANK ? '' : 'disabled'}>${r >= MAX_RANK ? 'Max' : 'Rank +'}</button></div></div>`;
     }).join('');
     return `<div class="ptsh">Skill points <b>${n}</b><span class="sp">one at every even level</span></div>
-      <div class="ptsh">In play <b>${play.length}</b>&nbsp;of ${LOADOUT}<span class="sp">the abilities taken into a fight</span></div>
+      <div class="ptsh"><span>In play <b>${play.length}</b> of ${LOADOUT}</span><span class="sp">abilities taken into a fight</span></div>
       <div class="hint">A new skill opens every 3 levels; every third is a passive. Up to ${LOADOUT} abilities go into a fight (In play); in battle each turn goes to the first of them, top down, that is ready, affordable and worth it. ▲ moves one earlier. Auto-use Off: never cast. Each rank adds 10 % to an ability's strength; damage is shown before the foe's armour.</div>
       ${rows}
       <div class="bagh" style="margin-top:14px">Passives</div>
