@@ -1,1 +1,0 @@
-import{On as e,kn as t,u as n}from"./three.core-VtIcmFgG.js";var r={uTime:{value:0},uNight:{value:0},uWind:{value:new e(1,.35)},uWindStrength:{value:1},uCameraYaw:{value:0},uCameraPosition:{value:new t},uSunDirection:{value:new t(.4,.8,.45).normalize()},uSunColor:{value:new n(1,.9,.75)},uFogColor:{value:new n(.6,.65,.75)},uFogStart:{value:new Float32Array(2)}};export{r as t};

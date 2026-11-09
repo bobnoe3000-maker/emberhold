@@ -1370,97 +1370,6 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await ctx.close(); await b.close();
   }
 }
-// the Luminati prototype (docs/lumina-prototype.md): its front page lists the worlds and the heroes; Thornwick, converted
-// from our sim, boots with the hero and its nine townsfolk each in their own look; the encounter boots with the party
-// joined, its goblins drawn as ours and Auto on (software WebGL is slow: patient waits)
-{
-  const b = await launch(chromium, 'chromium');
-  if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
-    const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
-    await p.goto(`${base}/lumina/index.html`);
-    const front = await p.evaluate(() => ({ ours: [...document.querySelectorAll('#ours .world')].map((a) => new URL(a.href).searchParams.get('level')), worlds: document.querySelectorAll('#worlds .world').length,
-      views: document.querySelectorAll('#views button').length,
-      heroes: document.querySelectorAll('#heroes button').length, href: document.querySelector('#worlds .world')?.getAttribute('href') }));
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=thornwick&hero=hero_rogue&from=game`);   // (as the game's menu opens it: Compare worlds)
-    await p.waitForFunction(() => !!window.__game && !!window.__game.player && window.__game.npcs?.length > 0, null, { timeout: 180000 * SLOW });
-    const cast = await p.evaluate(() => ({ player: window.__game.player.sheet.name, npcs: window.__game.npcs.map((n) => n.sheet.name).sort(), talk: !!document.getElementById('ember-talk'),
-      back: [document.getElementById('ember-back')?.textContent, document.getElementById('ember-back')?.getAttribute('href')] }));
-    // the ground (ember/ground.js): the ground cover at a quarter of its size, and no floating luminous dots
-    const ground = await p.evaluate(() => { const w = window.__game.world, g = globalThis.__emberGround;
-      return { size: g?.size, scaled: g?.scaled, fields: w.groundDetail?.fields?.length ?? 0, dust: !!w.emitters.dust, areas: w.areaEmitters.map((e) => e.preset) }; });
-    check('lumina: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
-      ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
-    const FOLK = ['npc_bess', 'npc_col', 'npc_hedda', 'npc_ilse', 'npc_jory', 'npc_maudry', 'npc_nell', 'npc_osric', 'npc_wendel'].map((a) => `ember:${a}`);
-    check('lumina: the front page lists our six levels, six worlds and eight heroes; Thornwick boots with the hero and its nine townsfolk in their own looks, the Talk button, and (opened from the game\'s Compare worlds) a way straight back to the game',
-      front.ours.join() === 'thornwick,encounter,barrows,catalogue,catalogue-art,biomes' && front.worlds === 6 && front.views === 2 && front.heroes === 8 && /hero=/.test(front.href || '') && cast.player === 'ember:hero_rogue'
-        && cast.npcs.join() === FOLK.join() && cast.talk && cast.back[0] === '◂ Game' && cast.back[1] === '../index.html' && errs.length === 0,
-      JSON.stringify({ front, cast }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    // the main game's view (ember/view.js): our camera by default, and our eight facings — on the manual clock, the
-    // engine stopped and stepped unrendered: from the square, each stick direction draws that screen octant's row
-    const view = await p.evaluate(() => {
-      const G = window.__game, r = G.rig, deg = (v) => Math.round((v * 180) / Math.PI), E = G.engine, S = globalThis.__emberStick, V = globalThis.__emberView;
-      const cam = { yaw: deg(r.yaw), pitch: deg(r.pitch), fov: r.camera.fov }, step = (n) => { for (let i = 0; i < n; i++) E.step(1 / 60, { render: false }); };
-      E.stop(); const oct = [];
-      for (let k = 0; k < 8; k++) {
-        G.teleport(35, 37); S.on = false; S.x = S.y = 0; step(20);
-        S.on = true; S.x = Math.cos((k * Math.PI) / 4) * 0.6; S.y = Math.sin((k * Math.PI) / 4) * 0.6; step(45);
-        oct.push(V.octantOf(G.player.sprite));
-      }
-      S.on = false; S.x = S.y = 0; E.start();
-      return { cam, oct };
-    });
-    check('lumina: Emberfall\'s view by default (yaw 45°, pitch 30°, a 14° lens), and the stick\'s eight directions draw our eight octant rows',
-      view.cam.yaw === 45 && view.cam.pitch === 30 && view.cam.fov === 14 && view.oct.join() === '0,1,2,3,4,5,6,7' && errs.length === 0,
-      JSON.stringify(view) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    errs.length = 0;
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=encounter&hero=hero_knight&auto=1`);
-    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 2, null, { timeout: 180000 * SLOW });
-    const fight = await p.evaluate(() => { const C = window.__game.combat; return { allies: C.allies().map((a) => a.id), foes: [...new Set(C.system.enemies.map((e) => `${e.kind}:${e.sheet.frameWidth > 32 ? 'ours' : 'theirs'}`))].sort(),
-      auto: globalThis.__emberAuto?.on, button: document.getElementById('ember-auto')?.getAttribute('aria-pressed') }; });
-    check('lumina: the encounter boots with Wren and the Guild cleric in the party, its goblins drawn as ours, and Auto on',
-      fight.allies.join() === 'wren,guild_cleric' && fight.foes.join() === 'archer:ours,goblin:ours,shaman:ours' && fight.auto === true && fight.button === 'true' && errs.length === 0,
-      JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    // the first catalogue, the cast's 72 actors and all: it boots within a phone's canvas memory (iOS Safari killed it when
-    // every sheet held every clip in eight rows, ≈ 900 MB; sheets.js cuts what a figure can show)
-    errs.length = 0;
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=catalogue&hero=hero_mage`);
-    await p.waitForFunction(() => (window.__game?.npcs?.length ?? 0) === 72 && (globalThis.__emberSheets?.cuts.length ?? 0) >= 73, null, { timeout: 240000 * SLOW });
-    const mem = await p.evaluate(() => ({ MB: globalThis.__emberSheets.canvasMB, cuts: globalThis.__emberSheets.cuts.length }));
-    check('lumina: the first catalogue boots with its 72-actor cast within a phone\'s canvas memory (its sheets under 64 MB)', mem.MB < 64 && errs.length === 0,
-      JSON.stringify(mem) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    // the catalogue's second wing (levels.mjs catalogueArt, ember/props.js): all 290 pieces of Emberfall's own art stood up
-    errs.length = 0;
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=catalogue-art&hero=hero_knight`);
-    await p.waitForFunction(() => (globalThis.__emberProps?.placed ?? 0) >= 290, null, { timeout: 240000 * SLOW });
-    const art = await p.evaluate(() => { const ids = globalThis.__emberProps.ids; return { placed: ids.length,
-      has: ['env:sheep_1', 'env:cow_1~tl', 'town-vale:vale_tavern_1', 'town-fens:fens_abbey_1', 'town-heights:heights_tavern_1', 'item:sword_1h'].filter((i) => ids.includes(i)).length }; });
-    check('lumina: the catalogue\'s second wing stands all 290 pieces of Emberfall\'s art (its world art and item icons) in Luminati\'s world', art.placed === 290 && art.has === 6 && errs.length === 0,
-      JSON.stringify(art) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    // the dungeon (levels.mjs barrows): the party of three, each Ashbound group in its own look and the Quartermaster as
-    // himself, his ranks known to issue.js; our player cards (cards.js) instead of Luminati's vitals, in one row along
-    // the bottom upright and on its side; a fall wakes the party at Tobin's lantern
-    errs.length = 0;
-    await p.goto(`${base}/lumina/game.html?autostart=1&level=barrows&hero=hero_knight`);
-    await p.waitForFunction(() => !!window.__game?.combat && window.__game.combat.allies().length === 2 && document.body.classList.contains('ember-cards')
-      && document.querySelectorAll('#ember-party .card:not(.empty)').length === 3, null, { timeout: 180000 * SLOW });
-    const cardsAt = () => p.evaluate(() => [...document.querySelectorAll('#ember-party .card')].map((el) => { const r = el.getBoundingClientRect(); return { id: el.dataset.id, x: Math.round(r.left), top: Math.round(r.top), gap: Math.round(innerHeight - r.bottom) }; }));
-    const dungeon = await p.evaluate(() => { globalThis.__emberIssue.tick(); const C = window.__game.combat, I = globalThis.__emberIssue;
-      return { looks: [...new Set(C.system.enemies.map((e) => e.sheet.texture.name.replace(/^ember:|:combat$/g, '')))].sort(), issuers: I.issuers, ranks: I.ranks,
-        vitals: getComputedStyle(document.querySelector('.lu-vitals')).display }; });
-    const upright = await cardsAt();
-    await p.setViewportSize({ width: 844, height: 390 }); await p.waitForTimeout(2000 * SLOW);
-    const sideways = await cardsAt();
-    await p.setViewportSize({ width: 390, height: 844 });
-    const row = (cs) => cs.map((c) => c.id).join() === 'wren,you,guild_cleric' && cs.every((c) => c.top === cs[0].top && c.gap < 40) && cs[0].x < cs[1].x && cs[1].x < cs[2].x;
-    const woke = await p.evaluate(() => { const G = window.__game, C = G.combat; G.teleport(24, 40); C.respawn(); const q = G.player.position; return { checkpoint: C.state().player.checkpoint, d: +Math.hypot(q.x - 23, q.z - 62.6).toFixed(1) }; });
-    check('lumina: the Old Barrows boots with the party of three, the Ashbound and the Quartermaster in our looks, his ranks issued; our player cards replace Luminati\'s vitals in one row along the bottom upright and sideways; a fall wakes the party at Tobin\'s lantern',
-      dungeon.looks.join() === 'boss_quartermaster,skeleton_mage,skeleton_minion,skeleton_rogue,skeleton_warrior' && dungeon.issuers === 1 && dungeon.ranks === 14 && dungeon.vitals === 'none'
-        && row(upright) && row(sideways) && woke.checkpoint === 'waystone_mouth' && woke.d < 2.5 && errs.length === 0,
-      JSON.stringify({ dungeon, upright, sideways, woke }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    await ctx.close(); await b.close();
-  }
-}
 // Luminati can't start (docs/luminati-only-cleanup.md step 1; the owner, 2026-11-09: a message and a Retry, no hidden
 // fallback): its module refused, as on a phone that can't load it, the game says so over the world (ui/worldfail.js), with
 // what went wrong in small print; the taps under it never reach the world; Retry reloads the page
@@ -1500,6 +1409,12 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     const probe = () => p.evaluate(() => { globalThis.__frame(16); const s = globalThis.__sim, q = s.state.player, h = globalThis.__world3d;
       return Math.max(...[[0, 0], [10, 0], [0, 10], [-12, -6], [8, -14]].map(([a, c]) => { const r = h.probe(q.x + a, q.y + c); return r ? Math.hypot(r.emberlit[0] - r.luminati[0], r.emberlit[1] - r.luminati[1]) : 99; })); });
     const town = await built(1), offTown = town ? await probe() : 99;
+    // the ground (tools/render3d/ground.js, the owner, 2026-10-31): the ground cover at a quarter of its size, and no
+    // floating luminous dots (no camera dust, no firefly, dust or sparkle area); it was checked on the prototype's Thornwick
+    const ground = await p.evaluate(() => { const w = window.__game.world, g = globalThis.__emberGround;
+      return { size: g?.size, scaled: g?.scaled, fields: w.groundDetail?.fields?.length ?? 0, dust: !!w.emitters?.dust, areas: (w.areaEmitters || []).map((e) => e.preset) }; });
+    check('render3d: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
+      ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
     // (port step 4) a tap on a service's building as Luminati draws it opens that service: the middle of each named house
     const doors = await p.evaluate(async () => {
       const { convertWorld } = await import('/src/render3d/convert.js');
@@ -1559,8 +1474,8 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     });
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
-    // the menu's Compare worlds: the prototype's maps, Luminati's worlds and the Frontier (this game's renderers no more)
-    await p.locator('#title button', { hasText: 'Back' }).click(); await p.locator('#title button', { hasText: 'Compare worlds' }).click();
+    // the menu itself: the Frontier, and no prototype (Compare worlds and Another world went with it, the cleanup's step 2)
+    await p.locator('#title button', { hasText: 'Back' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
     await p.evaluate(() => globalThis.__ui.title.close());
     // out of the gate (the sim alone, ticked fast): the Vale converted and built, the camera still on Emberlit's
@@ -1572,10 +1487,10 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
       return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
       if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; Compare worlds lists the prototype\'s maps and no renderers',
+    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; the menu offers the Frontier and no prototype',
       town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && noChoice && dofOff
         && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
-        && !worlds.includes('Emberlit') && !worlds.includes('Luminati') && ['Thornwick', 'The Scrag Warren', 'The Old Barrows', 'The Catalogue', 'The Catalogue: our art', 'The Biomes', 'All of Luminati’s worlds', 'The Frontier'].every((w) => worlds.includes(w)) && errs.length === 0,
+        && worlds.includes('The Frontier') && !['Compare worlds', 'Another world'].some((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken

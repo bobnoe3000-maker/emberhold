@@ -56,8 +56,7 @@ const CSS = `
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
  *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string, status?: () => any } | null, tune?: (() => void) | null,
  *   devApply?: ((cmds: any[]) => void) | null }} o  onPlay: the title closes into play;
- *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md; the Luminati prototype,
- *   docs/lumina-prototype.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
+ *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
 export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null, tune = null, devApply = null }) {
@@ -132,29 +131,6 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     </div>`;
   }
 
-  // Compare worlds (the owner, 2026-10-31: "Keep these map options available from the menu so i can compare gameplay
-  // and world art"): the Luminati prototype's own maps (docs/lumina-prototype.md; the game itself is drawn by Luminati only
-  // since 2026-11-09, and the prototype goes in the cleanup's step 2), each opened with your hero's look, with a way straight back (its ◂ Game). The game is saved before a page of the prototype opens (openPage).
-  const PROTO = [['thornwick', 'Thornwick', 'our town, in Luminati’s own play', ''], ['encounter', 'The Scrag Warren', 'a party of three against the hill goblins · Auto', '&auto=1'],
-    ['barrows', 'The Old Barrows', 'the Ashbound and the Quartermaster · Auto', '&auto=1'], ['catalogue', 'The Catalogue', 'every world asset Luminati builds', ''],
-    ['catalogue-art', 'The Catalogue: our art', 'every piece of Emberfall’s world art in Luminati’s light', ''],
-    ['biomes', 'The Biomes', 'grassland, desert, snow and ice: the tiles the Vale, the Reach and the Heights are drawn in', '']];
-  const PROTO_HEROES = ['hero_knight', 'hero_barbarian', 'hero_rogue', 'hero_mage', 'hero_cleric', 'hero_shaman', 'hero_wren', 'hero_brannoc'];
-  function Worlds() {
-    const look = sim.state.party[0]?.actor, hero = PROTO_HEROES.includes(look) ? look : 'hero_knight';
-    const go = (slug, extra) => openPage(`./lumina/game.html?autostart=1&level=${slug}&hero=${hero}&from=game${extra}`);
-    return html`<div id="title">
-      <div class="mark" style="font-size:32px">WORLDS</div>
-      <div class="tag">Luminati’s prototype maps</div>
-      ${PROTO.map(([slug, name, what, extra]) => html`<button key=${slug} onClick=${() => go(slug, extra)}>${name}<small>${what}</small></button>`)}
-      <div class="row">
-        <button onClick=${() => openPage('./lumina/index.html')}>All of Luminati’s worlds<small>and its other views</small></button>
-        <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
-      </div>
-      <button class="pri" onClick=${() => { panel = ''; draw(); }}>Back</button>
-    </div>`;
-  }
-
   // Developer (the owner, 2026-11-08: "Add a developer option in the menu to unlock skills, and add a level which includes
   // appropriate skill points and stats"; on the site too, the owner's choice): every skill unlocked for the company, and
   // a level for anyone in the party, by the sim's own commands (sim/dev.js), so a level brings its stat points, its skill
@@ -191,7 +167,6 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     if (panel === 'dev' && devApply) return html`<${Developer} />`;
     if (panel === 'sound' && audio) return html`<${Sound} />`;
     if (panel === 'graphics' && graphics) return html`<${Graphics} />`;
-    if (panel === 'worlds' && openPage) return html`<${Worlds} />`;
     const S = sim.state, h = S.party[0], made = S.created;
     const where = sim.world.kind === 'dungeon' ? `${(sim.world.siteName || 'The Old Barrows').replace(/^The /, 'the ')} · depth ${S.depth + 1}` : sim.world.name || 'Emberfall';
     return html`<div id="title">
@@ -211,11 +186,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
-      ${openPage && html`<div class="row">
-        <button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>
-        <button onClick=${() => openPage('./lumina/index.html')}>Another world<small>Luminati's dioramas, your people</small></button>
-      </div>
-      <button onClick=${() => { panel = 'worlds'; draw(); }}>Compare worlds<small>the prototype's Scrag Warren · the Old Barrows · Thornwick · the catalogues, one tap each</small></button>`}
+      ${openPage && html`<button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · brightness · frame rate</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>

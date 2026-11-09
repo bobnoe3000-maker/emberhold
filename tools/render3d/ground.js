@@ -1,4 +1,5 @@
-// ground.js — what stands between the camera and our people in Luminati's world (docs/lumina-prototype.md §7). The owner,
+// ground.js — what stands between the camera and our people in Luminati's world (docs/lumina-prototype.md §7; staged by
+// tools/render3d/build.mjs into the game's Luminati, src/vendor/luminati-80e1aa6/; it was the prototype's). The owner,
 // 2026-10-31: "The grasses and ground cover hide the characters too much, what if those were at 25% of current size?
 // Other larger assets like trees, houses, are fine at current size. Also drop the floating luminous dots."
 //   · the ground cover: every grass tuft, tall grass, flower, bush, fern, mushroom, pebble and reed of Luminati's ground
@@ -6,9 +7,7 @@
 //     houses, rocks, crags and the forest border are other builders: unchanged.
 //   · the floating luminous dots: the camera's dust motes (World.js, environment.dust) are off, and a level's dust,
 //     firefly and sparkle areas are left out (World.js's emitter loop, tagged). The embers rising off a fire, the
-//     smoke, mist, leaves and petals stay. The catalogue's own exhibits of those three (levels.mjs, `emberExhibit`) stay,
-//     being what they show.
-// In every world and both views.
+//     smoke, mist, leaves and petals stay.
 
 /** the ground cover's size against Luminati's */
 export const GROUND_COVER = 0.25;

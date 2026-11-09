@@ -78,9 +78,10 @@ artists including rubberduck, Iwan "qubodup" Gabovitch and Ljudbank. They are li
 - **Synthesised by `tools/audio/synth.mjs`** (2026-11-09): `ice_1`–`ice_3.mp3`, ice cracking (Frost Nova, Glacial Tomb).
   Made from seeded noise and sines, no recording: ours, CC0.
 
-## The Luminati prototype — `lumina/`
+## The world renderer — `src/vendor/luminati-80e1aa6/`
 
-- **Luminati** (https://gitlab.com/stubborn-hug/lumina), © 2026 Luminati, MIT License (`lumina/LUMINATI-LICENSE.txt`):
-  the engine, its procedurally generated worlds, light, weather, UI and fonts' stylesheets, built into `lumina/` by
-  `tools/lumina/build.mjs` from commit `80e1aa6`. three.js r186 (MIT) inside the same build. The characters in it are
-  Emberfall's own actors (above), unchanged (docs/lumina-prototype.md).
+- **Luminati** (https://gitlab.com/stubborn-hug/lumina), © 2026 Luminati, MIT License
+  (`src/vendor/luminati-80e1aa6/LUMINATI-LICENSE.txt`): the engine, its world builders, light, weather and fonts, built
+  into `src/vendor/luminati-80e1aa6/` by `tools/render3d/build.mjs` from commit `80e1aa6`, with three.js r186 (MIT)
+  inside the same build. The game's world is drawn by it (docs/luminati-port-plan.md, docs/luminati-only-cleanup.md);
+  the people in it are Emberfall's own (above). (It was first used by the prototype `lumina/`, removed 2026-11-09.)

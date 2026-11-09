@@ -8,8 +8,6 @@ tools/actor-lab/models/
 tools/actor-lab/out/
 tools/capture/out/
 
-# the Luminati prototype: its checkout and node_modules (tools/lumina/build.mjs)
-tools/lumina/.work/
+# Luminati's checkout at its pin and its node_modules (tools/render3d/build.mjs)
+tools/render3d/.work/
 
-# the dungeon kit spike: downloaded KayKit pieces (tools/kit/fetch.sh)
-tools/kit/models/

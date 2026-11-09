@@ -2,8 +2,8 @@
 // Luminati's engine and world layers and three.js, built into src/vendor/luminati-80e1aa6/ (committed: the game has no
 // build; never edit it, rebuild). src/render3d/hybrid.js imports its luminati.js.
 //   node tools/render3d/build.mjs
-// Luminati's checkout at its pin is the prototype's (tools/lumina/.work/luminati): fetched and installed here too if
-// it isn't there yet.
+// Luminati's checkout at its pin (tools/render3d/.work/luminati, gitignored): fetched and installed here if it isn't
+// there yet. (It was the prototype's, tools/lumina/.work, until the prototype was removed: docs/luminati-only-cleanup.md.)
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -13,20 +13,20 @@ import { readFileSync } from 'node:fs';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '..', '..');
 const REPO = 'https://gitlab.com/stubborn-hug/lumina.git', PIN = '80e1aa6011159db7b88d52637d4b1112b1450ffa';
-const LUM = join(ROOT, 'tools', 'lumina', '.work', 'luminati'), OUT = join(ROOT, 'src', 'vendor', `luminati-${PIN.slice(0, 7)}`);
+const LUM = join(HERE, '.work', 'luminati'), OUT = join(ROOT, 'src', 'vendor', `luminati-${PIN.slice(0, 7)}`);
 const run = (cmd, args, cwd, env = {}) => execFileSync(cmd, args, { cwd, stdio: 'inherit', env: { ...process.env, ...env } });
 
-// 1. Luminati at its pin (shared with tools/lumina/build.mjs)
+// 1. Luminati at its pin
 mkdirSync(dirname(LUM), { recursive: true });
 if (!existsSync(join(LUM, '.git'))) run('git', ['clone', '--quiet', REPO, LUM], dirname(LUM));
 if (execFileSync('git', ['rev-parse', 'HEAD'], { cwd: LUM }).toString().trim() !== PIN) { run('git', ['fetch', '--quiet', 'origin'], LUM); run('git', ['checkout', '--quiet', PIN], LUM); }
 if (!existsSync(join(LUM, 'node_modules', 'vite'))) run('npm', ['ci', '--no-audit', '--no-fund'], LUM);
 
-// 2. our module and the prototype's ground (the same quarter-size ground cover, no floating dots) into its ember3d/
+// 2. our module and its ground (ground.js: the quarter-size ground cover, no floating dots) into its ember3d/
 const STAGE = join(LUM, 'ember3d');
 rmSync(STAGE, { recursive: true, force: true }); mkdirSync(STAGE, { recursive: true });
 cpSync(join(HERE, 'world.js'), join(STAGE, 'world.js'));
-cpSync(join(ROOT, 'tools', 'lumina', 'ember', 'ground.js'), join(STAGE, 'ground.js'));
+cpSync(join(HERE, 'ground.js'), join(STAGE, 'ground.js'));
 // the bake's figure builder, so the people in the world are the atlases' people as models (world.js placeFigure)
 for (const f of ['figure.js', 'faces.js', 'props.js', 'body.js']) cpSync(join(ROOT, 'tools', 'actor-lab', f), join(STAGE, f));
 

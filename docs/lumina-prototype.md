@@ -1,6 +1,6 @@
 # Another world: Luminati's dioramas, Emberfall's people (prototype)
 
-**Status: Prototype** (2026-10-31). The owner: *"Let's create an alternative game world using this repo for the world and
+**Status: Superseded — removed 2026-11-09** ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 2: the game itself is drawn by Luminati, A17 and A21; `lumina/`, `tools/lumina/`, the menu's Compare worlds and Another world are gone; the ground cover, §7, lives on as `tools/render3d/ground.js`). Kept as the record of what was tried. Was: **Prototype** (2026-10-31). The owner: *"Let's create an alternative game world using this repo for the world and
 environment. Let's keep our player and NPC character assets AS IS. https://gitlab.com/stubborn-hug/lumina. Create a
 prototype."*
 

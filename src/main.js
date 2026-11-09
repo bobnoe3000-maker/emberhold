@@ -157,8 +157,8 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); if (brightness.isOpen) brightness.close(); },   // the menu comes up over a clear screen
-  // the sandboxes (the Frontier, docs/frontier-proposal.md; the Luminati prototype, docs/lumina-prototype.md): pages of
-  // their own that touch no save, the slot saved before the page goes
+  // the sandbox (the Frontier, docs/frontier-proposal.md): a page of its own that touches no save, the slot saved
+  // before the page goes
   openPage: async (url) => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.href = url; },
   graphics, tune: () => brightness.open(),
   // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim

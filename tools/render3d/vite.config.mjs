@@ -1,10 +1,10 @@
 // vite.config.mjs — Luminati as a module the game imports (docs/luminati-port-plan.md §13 step 1; run by
 // tools/render3d/build.mjs, never by hand). A library build of tools/render3d/world.js (staged into Luminati's checkout
 // as ember3d/): Luminati's engine and world layers and three.js, as ES modules, into src/vendor/luminati-80e1aa6/. The
-// game has no build: this folder is committed, as the prototype's lumina/ is.
+// game has no build: this folder is committed.
 //
 // What the build changes in Luminati, here only, never in their files (each a tag: the build stops if their code moved):
-//   · the ground cover at a quarter of its size, and no floating luminous dots (as the prototype: ember/ground.js);
+//   · the ground cover at a quarter of its size, and no floating luminous dots (ground.js);
 //   · Game.js: its UI under a root the game gives it (hidden), its input on a target nothing sends to, its sound never
 //     unlocked: in the game's own page its keys, taps and sound are the game's; its pixel ratio the game's (world.js
 //     PIXEL_RATIO: the phone's own, to 3×, where it held 1.25×);

@@ -3,7 +3,7 @@
 // (2026-10-31): "Recreate each emberfall map in luminati." Every map the game has is built by the sim (towns, the
 // waystation, the overlands, every dungeon floor of every site, per save seed), so it is converted here at runtime, from
 // the world the sim is walking, and what you see is where the sim's walls are. It grew out of the prototype's build-time
-// Thornwick (tools/lumina/levels.mjs) and keeps its look tables.
+// Thornwick (docs/lumina-prototype.md, removed 2026-11-09) and keeps its look tables.
 //
 // A Luminati tile is two of ours each way (X = x/2, Z = y/2: a figure is 3.5 of our tiles and 1.75 of theirs). The
 // ground is ours: grass, dirt, cobble, fields, water and banks (outdoor.js G), a dungeon's floor and walls (level.js

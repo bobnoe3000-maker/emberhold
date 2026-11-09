@@ -1,12 +1,12 @@
 # Luminati only: what to remove and clean up (a proposal, 2026-11-09)
 
-**Status: Accepted; step 1 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
+**Status: Accepted; steps 1 and 2 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
 and fx/asset combos in the current code, so what code/assets and game options should we remove or clean up?", then, on
 §4's four questions: "Go with your recommendations on all four, start step 1". Also decided the same day: the dungeons
 keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)). Decision row A21
 ([architecture.md](./architecture.md)).
 
-This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 2–5 are
+This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 3–5 are
 decided and not started.
 
 **In short:**
@@ -109,7 +109,7 @@ Each step ships on its own, with the browser suite green before the next.
 | Step | What | Risk |
 |---|---|---|
 | 1 ✓ | **Luminati the default and only choice**: the renderer row and `?renderer` out; a clear message if Luminati can't start (today a failed start leaves a black world and only logs) | The browser suite's ≈ 60 checks move onto Luminati: CI time (it took 48 of its 75 minutes before this) |
-| 2 | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
+| 2 ✓ | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
 | 3 | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
 | 4 | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
 | 5 | **Tools, tests and docs** to match | Low |
@@ -131,6 +131,20 @@ Each step ships on its own, with the browser suite green before the next.
   stored choice ignored, the escape and its end.
 - **The capture tools** (`rig`, `skills`, `bosses`, `feel`, `tools/dungeon/capture.mjs`) pass `&renderer=emberlit` for an
   Emberlit run, now that the default is Luminati.
+
+### 3.2 Step 2 as built (2026-11-09; the owner: "start step 2")
+
+- **Removed:** `lumina/` (4.5 MB, 106 files), `tools/lumina/` (`build.mjs`, `levels.mjs`, its vite config, `ember/`), the
+  kit spike `tools/kit/` and `tools/actor-lab/kit-cast.html`, and `lab.js`'s `labActor`, which only they used: 124
+  tracked files. Its pictures in `docs/img/dungeon/` stay with the proposal.
+- **Moved:** the ground cover `tools/lumina/ember/ground.js` → `tools/render3d/ground.js`; Luminati's checkout
+  `tools/lumina/.work/` → `tools/render3d/.work/` (gitignored). `node tools/render3d/build.mjs` rebuilds
+  `src/vendor/luminati-80e1aa6/` byte for byte the same from the new places.
+- **The menu:** Compare worlds and Another world are gone; the Frontier keeps its button.
+- **Tests:** the prototype's browser section (six checks) is gone; its ground check (a quarter-size ground cover, no
+  floating dots) now runs on the game's own Luminati Thornwick. The menu check finds the Frontier and no prototype.
+- **Docs:** `lumina-prototype.md` Superseded; A16 Superseded; CREDITS credit Luminati as the game's renderer; AGENTS.md's
+  prototype and spike commands and URLs out.
 
 ## 4. Questions for the owner (answered 2026-11-09: the recommendations, all four)
 
