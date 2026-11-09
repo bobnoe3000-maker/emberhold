@@ -30,7 +30,7 @@ import { screenDirToWorld } from './render/iso.js';
 import { createAudio } from './audio/engine.js';
 import { createListener } from './audio/listen.js';
 import { holdWeather } from './render/weatherfx.js';
-import { rendererFor, readGraphics, writeGraphics, feelK } from './render3d/settings.js';
+import { readGraphics, writeGraphics, feelK } from './render3d/settings.js';
 import { createFpsMeter } from './ui/fps.js';
 import { createWorldFail } from './ui/worldfail.js';
 
@@ -45,8 +45,8 @@ const canvas = document.getElementById('game');
 // server — on a deployed build they'd be a one-line cheat console. (They can't make cheating
 // *possible*, only easy: progression is trusted only once the server replays it — replay.js.)
 const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-// ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick); ?dev&scene=stage is the
-// dev Stage (src/dev/stage.js: the cast in a lineup, for captures), refused off localhost.
+// ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick); ?dev&scene=stage is the art
+// review's icons and faces (src/dev/review.js), refused off localhost.
 const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAGE = SCENE0 === 'stage' && DEV;
 const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : SCENE0;
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
@@ -77,17 +77,26 @@ sim.bus.seal();
 if (DEV) globalThis.__away = away;
 const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
-const LUMINATI = rendererFor() === 'luminati' && !STAGE;      // (the world drawn by Luminati: render3d/hybrid.js, below)
-const renderer = createRenderer(canvas, sim, input, { external: LUMINATI });
+const renderer = createRenderer(canvas, sim, input);
 renderer.setFeel(feelK(readGraphics().feel));   // (the menu's Hit feel: hit-stop and jolt, render3d/settings.js)
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
-// the world in Luminati (docs/luminati-port-plan.md, the trial build): the menu's Graphics or ?renderer=luminati. Emberlit
-// stays the game's eye (its camera, its figures' frames, everything over the world, every tap); Luminati draws the world
-// under it (render3d/hybrid.js). Not on the dev Stage, which reviews Emberlit's own art.
+// the world in Luminati (docs/luminati-port-plan.md; Luminati only, A21): the renderer stays the game's eye (its camera,
+// its figures' frames, everything over the world, every tap); Luminati draws the world under it (render3d/hybrid.js).
+// Not on the art review's page (?dev&scene=stage), which is HTML over a hidden game.
 let world3d = null;
 // (Luminati only, docs/luminati-only-cleanup.md: a world it can't draw says so, with Retry, instead of staying black)
 const worldFail = createWorldFail({ retry: async () => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.reload(); } });
-if (LUMINATI) {
+// ?world=off (localhost only, kept for the tab: a slot's switch drops the URL's flags; ?world=on ends it): no world drawn,
+// an empty painter in Luminati's place, for the browser suite's flow checks (slots, menus, dialogue, quests). Luminati in
+// software on CI costs ~50 s a page load; the checks about the world itself ask for it (test/browser/run.mjs). Not a
+// fallback: nothing is drawn, and off localhost it's ignored.
+let WORLD_OFF = false;
+if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+  const q = params.get('world'), key = 'emberfall.world';
+  try { if (q === 'off' || q === 'on') sessionStorage.setItem(key, q); WORLD_OFF = (q || sessionStorage.getItem(key)) === 'off'; } catch { WORLD_OFF = q === 'off'; }
+}
+if (WORLD_OFF && !STAGE) renderer.setExternal({ ready: () => true, frame: () => {} });
+else if (!STAGE) {
   import('./render3d/hybrid.js').then(({ attachLuminati }) => attachLuminati({ renderer, sim, region: REGION }))
     .then((h) => { world3d = h; if (DEV) globalThis.__world3d = h; })
     .catch((err) => { console.error('[luminati] the world renderer failed to start:', err); worldFail.show(String(err?.message || err)); });
@@ -98,7 +107,7 @@ const audio = createAudio();
 createListener({ sim, audio, renderer });
 for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => audio.start(), { capture: true });
 if (DEV) globalThis.__audio = audio;
-if (STAGE) import('./dev/stage.js').then(async ({ createStage }) => { globalThis.__stage = await createStage({ renderer, sim, params }); });   // the lineup (docs/character-stage-proposal.md)
+if (STAGE) import('./dev/review.js').then(({ createReview }) => { globalThis.__stage = createReview({ params }); });   // the art review's icons and faces (docs/art-review.md)
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
@@ -142,7 +151,7 @@ const creation = createCreation({ sim, onDone: () => { paused = false; cinema.st
 // Graphics (render3d/settings.js, per device): the depth of field, the hit feel, the brightness dial and the frame rate,
 // each at once (the world is always Luminati's: docs/luminati-only-cleanup.md)
 const fpsMeter = createFpsMeter(); fpsMeter.show(readGraphics().fps === 'on');   // (the menu's Frame rate: ui/fps.js)
-const graphics = { read: readGraphics, current: rendererFor, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
+const graphics = { read: readGraphics, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
   const next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.bright && world3d) world3d.setBright(next.bright);

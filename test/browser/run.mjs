@@ -43,12 +43,11 @@ const SLOW = CI ? 3 : 1, PATIENT = 30000 * SLOW;
 function patient(b) {
   if (!b) return b;
   const ctx = b.newContext.bind(b);
-  // Luminati is the game's only renderer for players since 2026-11-09 (docs/luminati-only-cleanup.md step 1), but the
-  // checks that name no renderer still test Emberlit's painting, through its developer escape (render3d/settings.js
-  // rendererFor: sessionStorage), until the cleanup's step 4 moves them onto Luminati with a budget for CI's software GL;
-  // a check that passes ?renderer=luminati gets Luminati as before
+  // (the budget, docs/luminati-only-cleanup.md step 4: Luminati drawing in software costs ~50 s a page load here, so the
+  // flow checks run with no world drawn, main.js ?world=off, kept for the tab; the checks about the world itself, the
+  // M3 loop, Luminati's can't-start message and the render3d section, ask for it with &world=on)
   b.newContext = async (o) => { const c = await ctx(o); c.setDefaultTimeout(PATIENT); c.setDefaultNavigationTimeout(PATIENT);
-    await c.addInitScript(() => { try { if (!sessionStorage.getItem('emberfall.renderer')) sessionStorage.setItem('emberfall.renderer', 'emberlit'); } catch { /* no storage */ } });
+    await c.addInitScript(() => { try { if (!sessionStorage.getItem('emberfall.world')) sessionStorage.setItem('emberfall.world', 'off'); } catch { /* no storage */ } });
     return c; };   // (newPage makes its context through this)
   return b;
 }
@@ -132,19 +131,21 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const back = await p.evaluate(() => ({ name: globalThis.__sim.state.party[0].name, gold: globalThis.__sim.state.counters.gold }));
     check('slots: slot 1 intact after switching', back.name === 'Legacy' && back.gold === 123);
     await menu();
-    await p.locator('.slot button.del').first().tap(); await p.locator('.slot button.del').first().tap(); await p.waitForTimeout(400);
+    await p.locator('.slot button.del').first().tap(); await p.locator('.slot button.del').first().tap();
+    // (waited for, not a fixed 400 ms: with Luminati drawing the world in software on CI, the page's thread is busy)
+    await p.waitForFunction(() => document.querySelectorAll('.slot.empty').length === 2, null, { timeout: 15000 * SLOW }).catch(() => {});
     check('slots: slot 2 deleted', (await p.locator('.slot.empty').count()) === 2);
     check('slots: no page errors', errs.length === 0, errs.join(' | '));
     await b.close();
   }
 }
 // 3. M3 exit test: create → play → Fallen → temple → resurrect → wipe → temple → inn → reload
-for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderers: docs/luminati-port-plan.md §13 step 2)
+{   // (on Luminati, the only renderer: docs/luminati-only-cleanup.md; it ran on both, 2026-11-02 to 11-09)
   const b = await launch(chromium, 'chromium');
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    const game = `${base}/index.html`, Q = R === 'luminati' ? '&renderer=luminati' : '', M = R === 'luminati' ? 'm3 on Luminati' : 'm3';
+    const game = `${base}/index.html`, Q = '&world=on', M = 'm3';
     const ready = () => booted(p);
     const S = (fn, arg) => p.evaluate(fn, arg);
     await p.goto(game + '?dev&slot=1' + Q); await S(() => { localStorage.clear(); indexedDB.deleteDatabase('emberfall'); });
@@ -181,7 +182,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     const contract = await p.locator('#gearSheet .ct').innerText().catch(() => '');
     // the ✕ is a thumb's size and clear of the member tabs (the owner, 2026-10-04: it overlapped the last tab by 3 px)
     const xb = await p.evaluate(() => { const x = document.querySelector('#gearSheet .x').getBoundingClientRect(), t = document.querySelector('#gearSheet .tabs').getBoundingClientRect(); return { w: x.width, h: x.height, gap: t.top - x.bottom }; });
-    if (R === 'emberlit') check('character window: the close button is 44 px and clear of the member tabs', xb.w >= 44 && xb.h >= 44 && xb.gap >= 0, JSON.stringify(xb));
+    check('character window: the close button is 44 px and clear of the member tabs', xb.w >= 44 && xb.h >= 44 && xb.gap >= 0, JSON.stringify(xb));
     await p.locator('#gearSheet [data-close]').tap(); await p.waitForTimeout(300);
     check(M + ': wages on screen: the gold line, the card tag, the Contract tab, the Guild\'s terms', /−\d+ · dawn \d+m/.test(wageLine) && /◆ \d+\/D/i.test(tag)
       && /The Guild.s terms/i.test(terms) && rows === 5 && /Loyalty/i.test(contract) && /gold a dawn/i.test(contract), `${wageLine} | ${tag} | rows ${rows} | ${contract.split('\n').slice(0, 3).join(' / ')}`);
@@ -826,98 +827,35 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     await ctx.close(); await b.close();
   }
 }
-// 15c. The Stage (dev: docs/character-stage-proposal.md): the whole cast in a lineup at a phone's width (390 × 1400), every
-// atlas loaded, no two figures overlapping and none off the screen; walking in place, their frames change and
-// their spots don't.
-{
-  const b = await launch(chromium, 'chromium');
-  if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 1500 }, deviceScaleFactor: 2 }), p = await ctx.newPage();   // (a phone's width: 25 tiles across at DPR 2; a wide window is no taller in game pixels, and DPR 1 clamps the scale. 1180 tall since the Mere Tower's ten boss-sized wardens joined: 53 don't fit 844; 1300 with the Fens' four bosses; 1400 with Act II's six; 1500 with Wren's four ranged looks)
-    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&scene=stage&group=all&clip=walk&dir=1`);
-    await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 60000 });
-    for (let i = 0; i < 80 && !(await p.evaluate(() => globalThis.__renderer.stageReady)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
-    const snap = () => p.evaluate(() => { for (let i = 0; i < 10; i++) globalThis.__frame(1000 / 60); return globalThis.__stage.actors.map((a) => ({ id: a.atlas, box: a.box, x: a.x, y: a.y })); });
-    const s1 = await snap(), s2 = await snap(), v = await p.evaluate(() => globalThis.__renderer.view);
-    const meet = (a, c) => a[0] < c[2] && c[0] < a[2] && a[1] < c[3] && c[1] < a[3];
-    const overlaps = []; for (let i = 0; i < s1.length; i++) for (let j = i + 1; j < s1.length; j++) if (s1[i].box && s1[j].box && meet(s1[i].box, s1[j].box)) overlaps.push(`${s1[i].id}×${s1[j].id}`);
-    const off = s1.filter((a) => !a.box || a.box[0] < 0 || a.box[1] < 0 || a.box[2] > v.w || a.box[3] > v.h).map((a) => a.id);
-    const moved = s1.filter((a, i) => a.x !== s2[i].x || a.y !== s2[i].y).length, animating = s1.filter((a, i) => JSON.stringify(a.box) !== JSON.stringify(s2[i].box)).length;
-    const hud = await p.evaluate(() => [...document.body.children].filter((e) => e.tagName !== 'CANVAS' && e.id !== 'stagePanel' && e.tagName !== 'SCRIPT' && getComputedStyle(e).display !== 'none').map((e) => e.id || e.tagName));
-    check('stage: the whole cast lined up (72: M8 adds the Fens\' seven, the Mere Tower\'s ten wardens, the Fens\' four bosses and Act II\'s six; v1.48 the Quartermaster and the Vatwarden, and the three by the Vale\'s dungeons\' ways in; the boss pass Wren\'s four ranged looks), all loaded, none overlapping or off screen; walking in place (frames change, spots don\'t); no HUD',
-      s1.length === 72 && overlaps.length === 0 && off.length === 0 && moved === 0 && animating > 10 && hud.length === 0 && errs.length === 0,
-      JSON.stringify({ n: s1.length, overlaps: overlaps.slice(0, 3), off: off.slice(0, 3), moved, animating, hud }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    await ctx.close(); await b.close();
-  }
-}
-// 15c2. The art review's views (src/dev/review.js, docs/art-review.md): the environment (every atlas), the props, the
-// effects, the icons and the faces each open with no page error and list everything they should: every base sprite in
-// every environment atlas across their pages, every prop variant, every effect, every icon, and a face and a figure for
-// everyone a window shows (the party and the townsfolk), none of them missing.
+// 15c2. The art review's views (src/dev/review.js, docs/art-review.md): the icons and the faces each open with no page
+// error and list everything they should: every icon, and a face and a figure for everyone a window shows (the party and
+// the townsfolk), none of them missing. (The cast lineup and the env, props and fx views drew through Emberlit's
+// painting, and went with it: docs/luminati-only-cleanup.md step 4.)
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
     const got = {};
-    for (const show of ['env', 'props', 'fx', 'icons', 'faces']) {
+    for (const show of ['icons', 'faces']) {
       const ctx = await b.newContext({ viewport: { width: 1000, height: 900 } }), p = await ctx.newPage(), errs = [];
       p.on('pageerror', (e) => errs.push(e.message));
       // (only the navigation: DOMContentLoaded waits for the game's module scripts to run, and on CI's software WebGL that
       // passed 90 s at the icons, runs 232 and 235; the waits below are the view's own readiness)
       await p.goto(`${base}/index.html?dev&manual&scene=stage&show=${show}&set=all`, { waitUntil: 'commit' });
-      await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__stage, null, { timeout: 120000 * SLOW });
-      for (let i = 0; i < 120 && !(await p.evaluate(() => globalThis.__stage.ready)); i++) { await p.waitForTimeout(250); await p.evaluate(() => globalThis.__frame(16)); }
-      await p.evaluate(() => { for (let i = 0; i < 20; i++) globalThis.__frame(1000 / 60); });
-      if (show === 'icons' || show === 'faces') await p.waitForFunction(() => [...document.querySelectorAll('#reviewGrid img')].every((im) => im.complete), null, { timeout: 30000 });
+      await p.waitForFunction(() => !!globalThis.__stage && globalThis.__stage.ready, null, { timeout: 120000 * SLOW });
+      await p.waitForFunction(() => [...document.querySelectorAll('#reviewGrid img')].every((im) => im.complete), null, { timeout: 30000 });
       // (a face, figure or icon that didn't load is replaced by its note, or is an image with no width)
-      got[show] = await p.evaluate(() => ({ total: globalThis.__stage.total, of: globalThis.__stage.of, pages: globalThis.__stage.pages,
+      got[show] = await p.evaluate(() => ({ total: globalThis.__stage.total, of: globalThis.__stage.of,
         missing: [...document.querySelectorAll('#reviewGrid i')].length + [...document.querySelectorAll('#reviewGrid img')].filter((im) => !im.naturalWidth).length }));
-      // the numbers live 900 ms of the render clock, not the wall's: one every 600 ms leaves one or two up after 20 s of
-      // the manual clock, however long the frames took to draw (on the wall clock they died early: none were up, and a
-      // capture caught them at random: art critic pass 16)
-      if (show === 'fx') got.fx.floats = await p.evaluate(() => { for (let i = 0; i < 1200; i++) globalThis.__frame(1000 / 60); return globalThis.__renderer.floatCount; });
       got[show].errs = errs; await ctx.close();
     }
     await b.close();
-    check('art review: environment, props, effects, icons and faces each list every piece they should, with no page errors',
-      Object.values(got).every((v) => v.total > 0 && v.total === v.of && v.errs.length === 0 && !v.missing) && got.fx.floats >= 1 && got.fx.floats <= 2 && got.env.total >= 150, JSON.stringify(got));
+    check('art review: the icons and the faces each list every piece they should, with no page errors',
+      Object.values(got).every((v) => v.total > 0 && v.total === v.of && v.errs.length === 0 && !v.missing), JSON.stringify(got));
   }
 }
-// 15d. Thornwick's people stand in view (art critic pass 8): at each part of the day, with everyone on that
-// part's spot and the hero aside, no named person is drawn more than 5 % behind a building, the well or a roof
-// (the renderer's x-ray share, dev __xray). Nell stood 44 % behind the Mule, Jory 38 % and Ilse 26 % behind
-// Wendel's roof, and the well's roof cut across Osric's face.
-{
-  const b = await launch(chromium, 'chromium');
-  if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }), p = await ctx.newPage();
-    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=town&tod=day`);
-    await p.waitForFunction(() => !!globalThis.__sim && !!globalThis.__frame, null, { timeout: 60000 });
-    for (let i = 0; i < 40; i++) { await p.waitForTimeout(100); await p.evaluate(() => globalThis.__frame(16)); }   // (atlases load in real time)
-    const hidden = await p.evaluate(async () => {
-      const s = globalThis.__sim, w = s.world, { NPCS, PART_S } = await import('/src/sim/npcs.js'), out = {};
-      for (let part = 0; part < 4; part++) {
-        s.state.t = part * PART_S + 5;
-        for (const n of w.npcs) if (n.folk) { const k = NPCS[n.id].day[part] || 0, g = n.spots[k]; n.at = k; n.path = null; n.x = n.px = g.x; n.y = n.py = g.y; n.rest = 1e9; }
-        for (const n of w.npcs) {
-          const q = s.state.player; q.x = q.px = n.x + 4; q.y = q.py = n.y - 4;                  // aside: level with them on screen, to the right
-          for (const m of s.state.party.slice(1)) { m.x = m.px = q.x; m.y = m.py = q.y; }
-          for (let i = 0; i < 40; i++) globalThis.__frame(16);
-          globalThis.__xray = {}; globalThis.__frame(16);
-          const v = globalThis.__xray[n.id]; out[n.id] = Math.max(out[n.id] || 0, v == null ? 1 : v);
-        }
-      }
-      globalThis.__xray = null; return out;
-    });
-    const worst = Object.entries(hidden).filter(([, v]) => v > 0.05);
-    check('town: nobody stands behind a building, the well or a roof at any part of the day (≤ 5 % of their figure drawn as x-ray)',
-      Object.keys(hidden).length === 9 && worst.length === 0 && errs.length === 0,
-      JSON.stringify(Object.fromEntries(Object.entries(hidden).map(([k, v]) => [k, Math.round(v * 100)]))) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    await ctx.close(); await b.close();
-  }
-}
-// 15d1. Saltmere's square (its critic pass): on the home screen, as you wake, nobody of Saltmere's stands behind a building
-// (Mother Agnes stood in the Stilt House's footprint, drawn through it as a ghost), and every one of them is in view
+// 15d1. Saltmere's square (its critic pass): on the home screen, as you wake, every one of Saltmere's people is in view
+// and a tap finds them (Mother Agnes stood in the Stilt House's footprint; how hidden each was, Emberlit's x-ray share,
+// went with its painting: docs/luminati-only-cleanup.md step 4)
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -927,13 +865,12 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     for (let i = 0; i < 50; i++) { await p.waitForTimeout(100); await p.evaluate(() => { for (let j = 0; j < 3; j++) globalThis.__frame(1000 / 30); }); if (i > 20 && !(await p.evaluate(() => globalThis.__renderer.transiting))) break; }
     const seen = await p.evaluate(() => {
       for (let j = 0; j < 60; j++) globalThis.__frame(1000 / 30);
-      globalThis.__xray = {}; globalThis.__frame(16); const x = globalThis.__xray; globalThis.__xray = null;
       const w = globalThis.__sim.world, out = {};
-      for (const n of w.npcs) { let on = false; for (let y = 60; y < 640 && !on; y += 4) for (let sx = 4; sx < 390 && !on; sx += 4) on = globalThis.__renderer.npcAt(sx, y)?.id === n.id; out[n.id] = { xray: x[n.id] == null ? 1 : Math.round(x[n.id] * 100) / 100, on }; }
+      for (const n of w.npcs) { let on = false; for (let y = 60; y < 640 && !on; y += 4) for (let sx = 4; sx < 390 && !on; sx += 4) on = globalThis.__renderer.npcAt(sx, y)?.id === n.id; out[n.id] = { on }; }
       return out;
     });
-    const bad = Object.entries(seen).filter(([, v]) => v.xray > 0.05 || !v.on);
-    check('Saltmere: on the home screen nobody stands behind a building (≤ 5 % drawn as x-ray), and everyone is in view',
+    const bad = Object.entries(seen).filter(([, v]) => !v.on);
+    check('Saltmere: on the home screen everyone is in view, and a tap finds them',
       Object.keys(seen).length >= 4 && bad.length === 0 && errs.length === 0, JSON.stringify(seen) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
@@ -1382,7 +1319,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     await ctx.route(/\/src\/vendor\/luminati-/, (r) => r.abort());
-    await p.goto(`${base}/index.html?scene=town&notitle&renderer=luminati`);
+    await p.goto(`${base}/index.html?scene=town&notitle&world=on`);
     const shown = await p.waitForSelector('#worldFail', { timeout: 30000 * SLOW }).then(() => true, () => false);
     const box = shown ? await p.evaluate(() => { const el = document.getElementById('worldFail'), btn = el.querySelector('button'), r = btn.getBoundingClientRect(), cover = el.getBoundingClientRect();
       return { text: el.textContent, role: el.getAttribute('role'), w: r.width, h: r.height, full: cover.width >= innerWidth && cover.height >= innerHeight }; }) : null;
@@ -1399,7 +1336,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
   }
 }
 // the trial of Luminati as the game's world renderer (docs/luminati-port-plan.md, phase 0; src/render3d/): the game itself
-// with ?renderer=luminati. Thornwick is converted from the sim and built in the frame under the HUD; Luminati's camera
+// (Luminati only since 2026-11-09). Thornwick is converted from the sim and built in the frame under the HUD; Luminati's camera
 // puts the ground where Emberlit's overlay and taps expect it (to a pixel or two); Luminati\'s canvas takes no pointer; the menu's
 // Graphics shows the renderer and turns the depth of field off at once; walking out of the gate builds the Vale
 {
@@ -1407,7 +1344,7 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
     const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('response', (r) => { if (r.status() >= 400) errs.push(`${r.status()} ${r.url()}`); });
-    await p.goto(`${base}/index.html?scene=town&notitle&dev&manual&renderer=luminati`);
+    await p.goto(`${base}/index.html?scene=town&notitle&dev&manual&world=on`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
     const built = async (loads) => { for (let i = 0; i < 1200; i++) { if (await p.evaluate((n) => { globalThis.__frame(16); const h = globalThis.__world3d; return !!h && h.state.loads >= n && h.world?.stats.level >= n && !globalThis.__renderer.transiting; }, loads)) return true; await p.waitForTimeout(150); } return false; };
     const probe = () => p.evaluate(() => { globalThis.__frame(16); const s = globalThis.__sim, q = s.state.player, h = globalThis.__world3d;
@@ -1491,14 +1428,14 @@ for (const R of ['emberlit', 'luminati']) {   // (the same flow on both renderer
     for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
       return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
       if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
-    check('render3d: the game with ?renderer=luminati builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; the menu offers the Frontier and no prototype',
+    check('render3d: the game builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; the menu offers the Frontier and no prototype',
       town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && noChoice && dofOff
         && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
         && worlds.includes('The Frontier') && !['Compare worlds', 'Another world'].some((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
-    await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&renderer=luminati`);
+    await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&world=on`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
     const inDungeon = await built(1);
     // the effects' light leaves no trail (the owner, 2026-11-01: "the line cast by a projectile is leaving an ongoing visual

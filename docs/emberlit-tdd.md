@@ -1,5 +1,7 @@
 # Emberlit — Technical Design Document
 
+> **Superseded for the world (2026-11-09, A21).** Luminati draws the world and the people; the G-buffer bake, the tiles, the stamping and the WebGL light passes described here were removed ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4). What remains of Emberlit follows this doc still: the camera, the overlay, the taps and the effects' emissive plane (`renderer.js`, `fx.js`, `skillfx.js`), which Luminati lays over its world.
+
 **Hi-bit 2.5D rendering pipeline for Emberhold: pixel-art G-buffers + dynamic GPU lighting**
 Version 1.0 · Extends the Dreadforge TDD v1.0 (procedural bake layer) · Reference implementation: `emberlit2.html` · Grid constants unchanged: TW=16 / TH=8 / ZH=6 · Zero-build ES modules target, WebGL2, mobile-first, Netlify-deployable.
 

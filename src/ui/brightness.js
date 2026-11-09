@@ -38,7 +38,7 @@ const CSS = `
 const NAME = { dawn: 'Dawn', day: 'Day', dusk: 'Dusk', night: 'Night' };
 
 /**
- * @param {{ sim: any, graphics: { read: () => any, set: (patch: any) => Promise<any>, current: () => string }, onHold: (part: string | null) => void }} o
+ * @param {{ sim: any, graphics: { read: () => any, set: (patch: any) => Promise<any> }, onHold: (part: string | null) => void }} o
  *   onHold: the part whose light to hold while the tray is open (null: back to the clock)
  */
 export function createBrightness({ sim, graphics, onHold }) {
@@ -54,12 +54,12 @@ export function createBrightness({ sim, graphics, onHold }) {
   };
   const reset = async () => { await graphics.set({ bright: { dawn: 100, day: 100, dusk: 100, night: 100 } }); draw(); };
   function Tray() {
-    const g = graphics.read(), b = g.bright, w = sim.world, lum = graphics.current() === 'luminati', outdoors = w.kind !== 'dungeon';
+    const g = graphics.read(), b = g.bright, w = sim.world, outdoors = w.kind !== 'dungeon';
     const k = brightFor(w.region || 'vale', sim.state.scene, b), ship = brightFor(w.region || 'vale', sim.state.scene, null), i = PARTS.indexOf(/** @type {any} */ (part));
     const where = w.kind === 'dungeon' ? 'underground' : w.name || (sim.state.scene === 'town' ? 'the town' : 'the land');
     return html`<div id="bright">
       <div class="hd"><b>BRIGHTNESS</b><span>${where} · ${NAME[part].toLowerCase()} held</span></div>
-      ${!lum ? html`<div class="note">The dial is the Luminati renderer’s: choose Luminati in Graphics to see it.</div>` : !outdoors ? html`<div class="note">The dial is for outdoors: the town and the land. Step outside to see it.</div>` : null}
+      ${!outdoors ? html`<div class="note">The dial is for outdoors: the town and the land. Step outside to see it.</div>` : null}
       <div class="row" role="tablist">
         ${PARTS.map((p) => html`<button key=${p} role="tab" class=${p === part ? 'on' : ''} aria-selected=${p === part ? 'true' : 'false'} onClick=${() => pick(p)}>${NAME[p]}</button>`)}
       </div>

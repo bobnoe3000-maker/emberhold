@@ -1,5 +1,7 @@
 # Dungeon tile styles — 5 styles × 7 variants
 
+> **Superseded (2026-11-09).** Emberlit's tile painting (`src/render/tilestyles.js`) was removed when Luminati became the only renderer ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4); kept as the record.
+
 **Status: `cobble` is the default (2026-09-28).** Goal: less colour and pixel noise, with
 cleaner floor and wall tiles. Five structured styles are implemented in the real renderer
 (`src/render/tilestyles.js`); each comes in seven material **variants**. Low-poly was

@@ -1,29 +1,28 @@
-// renderer.js — Emberlit deferred renderer (art direction v0.5). The sim doesn't
-// know this file exists. Instead of painting final pixels, the CPU bakes a
-// G-BUFFER — albedo + normal + emissive + height — for a MARGIN-cached region of
-// the world (re-baked only when the camera crosses the margin). Each frame the
-// visible window is copied out, the moving actors are stamped into it, and two
-// WebGL2 passes relight it: Pass A adds dynamic point lights (a warm carry-light
-// on the hero + corruption flares) and HDR emissives at native resolution; Pass B
-// nearest-upscales to the display and layers trilinear-mip bloom + ACES + grade.
-//
-// Parity note (Emberlit TDD §12.1): the shaders + lighting math are the reference
-// demo's, unchanged; only the bake is driven from our infinite world.js. The old
-// (The old Canvas2D and flat renderers were retired at M2.5; see git history.)
+// renderer.js — the game's eye over Luminati's world (docs/luminati-only-cleanup.md; A17, A21). The sim doesn't know
+// this file exists. Luminati draws the world and the people (src/render3d/hybrid.js, the painter: setExternal); this
+// keeps everything around it, as Emberlit had it:
+//   · the camera (iso.js): it follows the hero, eases onto a town square's framing, jolts with a blow (the feel pass);
+//   · each frame's figures (`draws`): who stands where, with the clip, frame and facing the animator chose (anim.js), for
+//     the painter to pose its models from;
+//   · the fights' light (fx.js, skillfx.js): weapon trails, sparks, the skills' moments, drawn into an emissive plane on
+//     black that the painter lays over its world; and the state of what it draws in its own looks (spells, warnings,
+//     blasts);
+//   · the overlay canvas: the minimaps, names, plaques, stair and shrine signs, the goal ring, battle bars and numbers,
+//     the banner, the weather's fog and wind, the stick;
+//   · the taps: npcAt, enemyAt, doorAt, propAt, serviceAt, screenToTile.
+// Emberlit's own painting of the world (its G-buffer bake, tiles, stamping and WebGL light passes) was removed in the
+// cleanup's step 4; git history has it, and docs/emberlit-tdd.md describes it.
 
-import { materialAt, heightAt, resourceAt, propAt, isWalkable, DRESS } from '../sim/world.js';
-import { ELIT, EGLOW, KIT_TINT } from './palette.js';
+import { materialAt, heightAt, resourceAt, propAt, isWalkable } from '../sim/world.js';
+import { ELIT } from './palette.js';
 import { skyAt, makeSky, mixSky, holdT } from './daylight.js';
 import { weatherNow, weatherLight, drawWeather, lightOf } from './weatherfx.js';
-import { hash2, fbm, vnoise } from '../sim/rng.js';
 import { beastOf, beastFrame } from './beasts.js';
-import { TW, HW, HH, ZH, ROWW, project, unproject, resolveTap } from './iso.js';
-import { GLOW_ID, norm3, buildProps, PROP_LIGHT } from './gsprite.js';
-import { TILE_STYLES, N_UP, paintFloor, paintWall, variantFor, POOL_LIGHT } from './tilestyles.js';
-import { paintOutdoor } from './outdoorpaint.js';
+import { TW, HW, HH, ZH, project, resolveTap } from './iso.js';
+import { buildProps } from './gsprite.js';
 import { createAnimator } from './anim.js';
 import { createFX, styleOfSrc, raisedLook, BOLT_RGB } from './fx.js';
-import { createSkillFX } from './skillfx.js';
+import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
@@ -32,8 +31,6 @@ import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 import { shotOf } from '../sim/items.js';
 
-// hazard material → the point-light color it casts (lit dynamically as a flare)
-const HAZARD_LIGHT = { lava: [1.7, 0.8, 0.25], ember: [1.7, 0.85, 0.3], poison: [0.5, 1.5, 0.35], chasm: [0.7, 0.55, 1.7] };
 const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
 // 0=E, 1=SE, 2=S (toward the camera), 3=SW, 4=W, 5=NW, 6=N, 7=NE.
@@ -62,174 +59,36 @@ const NO_WEATHER = Object.freeze({ kind: 'clear', k: 0 });
 const WISPS = new WeakMap();
 const wispsOf = (w) => { let l = WISPS.get(w); if (!l) { l = (w.pools || []).filter((p) => p.rx >= 6 && p.ry >= 5).map((p, i) => ({ x: p.cx, y: p.cy, ph: i * 2.39 })); WISPS.set(w, l); } return l; };
 
-const MARGIN = 96;                 // native-px slack around the view held in the bake
-const TRIGGER = 24;                // start baking the next region (in the background) after this much drift
-const BAKE_BUDGET = 5;             // ms of background baking per frame
-// A scene change (town ↔ overland, stairs, a load): black while the new scene bakes in slices of
-// TRANSIT_BUDGET ms, then a fade in. Baking it in one frame stalled 0.4 s on a laptop and 1–2 s on a
-// phone, then cut hard to the new place: it read as a stutter and a jump.
-const TRANSIT_BUDGET = 24, TRANSIT_FADE = 320;
+// A scene change (town ↔ overland, stairs, a load): black until the painter has the new scene built, then a fade in
+const TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
-let viewTiles = VIEW_TILES;        // (the dev Stage zooms in: VIEW_TILES ÷ its integer zoom)
 const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per native px (≈ 0.98), the size of things elsewhere
-// Lighting look (was UI sliders in the demo; fixed here — the whole scene stays
-// visible via a raised ambient, and lights ADD warmth rather than veil).
-const AMB = 0.62, WISP = 0.72, BLOOM = 0.55;
-// A dungeon floor's light, by its dressing kit (v1.48, sim world.js DRESS): the ambient (the shader's dark-to-lit mix at
-// AMB) tinted, never brightened much, so the floors keep the dusk and still differ: the legion's cold blue in the
-// Barrows' galleries, the Redhand's fires in the Keep, the Cult's embers, Vat Seven's sick green.
-const AMB_BASE = [0.10 + 0.45 * AMB, 0.07 + 0.41 * AMB, 0.17 + 0.45 * AMB];
 
-
-/* ── shaders (verbatim from the Emberlit reference demo) ─────────────────── */
-const VS = `#version 300 es
-void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);gl_Position=vec4(p*2.0-1.0,0.0,1.0);}`;
-const LIGHT_FS = `#version 300 es
-precision highp float;
-uniform sampler2D uAlb,uNrm,uEmi;
-uniform vec2 uRes; uniform float uTime,uAmb,uWispA;
-uniform vec3 uL[3]; uniform vec3 uLC[3];
-uniform vec2 uWispPx;
-uniform vec3 uSunL, uSunC, uAmbC;   // outdoor scenes: directional sun + ambient colour by the time of day (zero in dungeons)
-uniform float uWin, uLift, uHaze;   // lit windows' glow ×; how far baked ground shadows lift; the violet haze × (daylight.js)
-out vec4 O;
-float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
-float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
-  float a=h21(i),b=h21(i+vec2(1,0)),c=h21(i+vec2(0,1)),d=h21(i+vec2(1,1));
-  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
-void main(){
-  vec2 uv=gl_FragCoord.xy/uRes;
-  vec4 A=texture(uAlb,uv);
-  // a baked ground shadow (ALB alpha 254, stampShadow) lifts toward the unshadowed ground by day
-  if(A.a>0.99&&A.a<0.998)A.rgb=mix(A.rgb,min(A.rgb/vec3(0.52,0.54,0.64),vec3(1.0)),uLift);
-  vec4 N=texture(uNrm,uv);
-  vec4 Et=texture(uEmi,uv); vec3 E=Et.rgb*3.2;
-  // a lit window (EMI alpha 254): by day its glow goes out and the glass reads dark (its baked albedo is
-  // the warm lamplight behind it); at dusk (uWin 1) it is as baked; by night it burns brighter
-  if(Et.a>0.993&&Et.a<0.998){E*=uWin;A.rgb*=mix(0.32,1.0,min(uWin,1.0));}
-  vec3 n=normalize(vec3(N.xy*2.0-1.0,max(N.z,0.02)));
-  float h=N.a*64.0;
-  vec2 p=gl_FragCoord.xy;
-  vec3 amb=dot(uAmbC,vec3(1.0))>0.0?uAmbC:mix(vec3(0.10,0.07,0.17),vec3(0.55,0.48,0.62),uAmb);
-  vec3 col=A.rgb*amb*(0.72+0.28*n.z);
-  col+=A.rgb*uSunC*max(dot(n,uSunL),0.0);
-  for(int i=0;i<3;i++){
-    vec3 lp=uL[i];
-    vec3 d=vec3(p.x-lp.x,(lp.y-p.y)*1.8,lp.z-h);
-    float dd=length(d);
-    vec3 L=d/max(dd,0.001);
-    float ndl=max(dot(n,vec3(L.x,-L.y*0.55,L.z)),0.0);
-    float att=1.0/(1.0+dd*dd*0.0016);
-    // figures (actor pixels carry EMI alpha 250) take the hero's own carry light at 55 %: at arm's
-    // length it flattened the knight's steel to a pink-white ghost; the floor keeps the full pool
-    float fig=(i==0&&Et.a>0.97&&Et.a<0.99)?0.55:1.0;
-    col+=A.rgb*uLC[i]*ndl*att*fig;
-    col+=uLC[i]*att*0.05*fig;
-  }
-  float ph=h21(floor(gl_FragCoord.xy))*6.28;
-  col+=E*(Et.a<0.99?1.0:0.55+0.45*sin(uTime*2.6+ph));   // EMI alpha < 1 marks steady (UI-like) glow: team rings
-  float wd=length(gl_FragCoord.xy-uWispPx);
-  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.16)*uWispA*0.85;      // a small ember mote, not a disc over the figure
-  col+=vec3(2.2,1.35,0.5)*exp(-wd*wd*0.02)*uWispA*0.16;
-  float fog=n2(uv*vec2(7.0,3.5)+vec2(uTime*0.05,uTime*0.02));
-  float fa=smoothstep(0.3,0.9,fog)*0.10*(1.0-uv.y*0.5)*uHaze;
-  col=mix(col,vec3(0.10,0.07,0.16),fa);
-  O=vec4(col,1.0);
-}`;
-const POST_FS = `#version 300 es
-precision highp float;
-uniform sampler2D uLit,uLitM,uAlbT,uNrmT,uEmiT;
-uniform vec2 uOut,uNative; uniform float uScale,uBloom,uTime,uVig,uSat;
-uniform vec2 uOff; uniform int uView;
-out vec4 O;
-float h21(vec2 p){p=fract(p*vec2(234.34,435.345));p+=dot(p,p+34.23);return fract(p.x*p.y);}
-vec3 aces(vec3 x){return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0);}
-void main(){
-  vec2 sp=vec2(gl_FragCoord.x,uOut.y-gl_FragCoord.y);
-  vec2 np=(sp-uOff)/uScale;
-  if(np.x<0.0||np.y<0.0||np.x>=uNative.x||np.y>=uNative.y){O=vec4(0.02,0.013,0.03,1.0);return;}
-  vec2 uv=vec2(np.x/uNative.x,np.y/uNative.y);
-  // sharp-bilinear: nearest inside each native pixel, a one-output-pixel blend at its
-  // edges, so a fractional scale stays crisp without uneven 2px/3px columns
-  vec2 cd=fract(np)-0.5,rr=vec2(0.5-0.5/uScale);
-  vec2 suv=(floor(np)+0.5+(cd-clamp(cd,-rr,rr))*uScale)/uNative;
-  if(uView==1){O=vec4(texture(uAlbT,uv).rgb,1.0);return;}
-  if(uView==2){O=vec4(texture(uNrmT,uv).rgb,1.0);return;}
-  if(uView==3){O=vec4(texture(uEmiT,uv).rgb*3.2,1.0);return;}
-  vec3 col=textureLod(uLitM,suv,0.0).rgb;
-  vec3 bl=vec3(0.0);
-  bl+=textureLod(uLitM,uv,2.0).rgb*0.34;
-  bl+=textureLod(uLitM,uv,3.0).rgb*0.30;
-  bl+=textureLod(uLitM,uv,4.0).rgb*0.22;
-  bl=max(bl-0.14,vec3(0.0));
-  col+=bl*uBloom*1.8;
-  col=aces(col*1.12);
-  col=pow(col,vec3(1.03,1.0,0.95));
-  col=max(mix(vec3(dot(col,vec3(0.2126,0.7152,0.0722))),col,uSat),vec3(0.0));   // the time of day's saturation grade (1 in the dungeons)
-  col+=vec3(0.010,0.002,0.020)*(1.0-col);
-  vec2 c=gl_FragCoord.xy/uOut-0.5;
-  col*=1.0-dot(c,c)*uVig;
-  col+=(h21(floor(gl_FragCoord.xy*0.5))-0.5)*0.008;   // a whisper of static grain (animated per-pixel grain crawled over small figures)
-  O=vec4(col,1.0);
-}`;
 
 /**
- * @param {HTMLCanvasElement} canvas @param {any} sim @param {any} input
- * @param {{ external?: boolean }} [opts]  external: another painter draws the world from the first frame (Luminati:
- *   src/render3d/hybrid.js, setExternal): the canvas is only the taps' surface, the light passes run on a 1 × 1 stub that
- *   never shows, and the bake's buffers (tens of MB on a phone) are never made
+ * @param {HTMLCanvasElement} canvas  the taps' surface (never drawn: Luminati draws the world, src/render3d/hybrid.js
+ *   setExternal) @param {any} sim @param {any} input
  */
-export function createRenderer(canvas, sim, input, opts = {}) {
-  const EXTERNAL = !!opts.external;
-  const gl = (EXTERNAL ? Object.assign(document.createElement('canvas'), { width: 1, height: 1 }) : canvas).getContext('webgl2', { antialias: false, alpha: false });
-  if (!gl) throw new Error('WebGL2 not available');
-  const hasF = gl.getExtension('EXT_color_buffer_float');
+export function createRenderer(canvas, sim, input) {
 
-  const compile = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
-  const link = (fs) => { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; };
-  const lightP = link(LIGHT_FS), postP = link(POST_FS);
-  const U = (p, n) => gl.getUniformLocation(p, n);
-
-  const mkTex = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); return t; };
-  const texAlb = mkTex(), texNrm = mkTex(), texEmi = mkTex();
-  const litTex = gl.createTexture(), litFbo = gl.createFramebuffer();
-  let useHDR = !!hasF;
-  const sampNearest = gl.createSampler(); gl.samplerParameteri(sampNearest, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.samplerParameteri(sampNearest, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  const sampMip = gl.createSampler(); gl.samplerParameteri(sampMip, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.samplerParameteri(sampMip, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-  // joystick + HUD overlay (GL owns the main canvas, so the 2D stick lives above it)
+  // the overlay: the minimap, names, bars, numbers, the banner and the joystick, over the painter's world
   const overlay = document.createElement('canvas');
   overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2;';
   document.body.appendChild(overlay);
   const octx = overlay.getContext('2d');
 
-  let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0, tbw = 0, tbh = 0;
+  let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0;
   // the time of day outdoors (daylight.js): the sim's clock, or a held look (the title's dusk, ?dev&tod=);
   // a change of hold eases over SKY_EASE ms instead of cutting
   const sky = makeSky(), skyNow = makeSky(), skyFrom = makeSky(), SKY_EASE = 1500;
   let skyHoldT = /** @type {number|null} */ (null), skyEase0 = -1e9, lastNow = 0;
-  let bALB, bNRM, bEMI, sALB, sNRM, sEMI;            // baked (margin) + scratch (window); b* point at the CURRENT bake target
-  let front = null, back = null, job = null;          // double-buffered bakes: render from front, bake the next region into back
-  let bDEP, sDEP, bSH;                               // depth toward the camera (tiles) + shadow flags
-  let bakeOx = 0, bakeOy = 0, terrValid = false, flares = [];
+  let sEMI;                                          // the window's emissive plane: the effects' light (native px)
+  let terrValid = false;                             // the painter has this scene built (render: ext.ready)
 
-  function setupLit() {
-    gl.bindTexture(gl.TEXTURE_2D, litTex);
-    if (useHDR) { try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, nvw, nvh, 0, gl.RGBA, gl.HALF_FLOAT, null); } catch (e) { useHDR = false; } }
-    if (!useHDR) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, litTex, 0);
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE && useHDR) { useHDR = false; setupLit(); return; }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  }
-
-  function target(set) { bALB = set.ALB; bNRM = set.NRM; bEMI = set.EMI; bDEP = set.DEP; bSH = set.SH; }
   function resize() {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     vw = Math.floor(window.innerWidth * dpr);
     vh = Math.floor(window.innerHeight * dpr);
-    if (!EXTERNAL) { canvas.width = vw; canvas.height = vh; }
     canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
     overlay.width = vw; overlay.height = vh;
     overlay.style.width = window.innerWidth + 'px'; overlay.style.height = window.innerHeight + 'px';
@@ -237,22 +96,14 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     // other screen keeps things about that size and shows more world, instead of blowing the same 25 tiles up to fill
     // a desktop window (the owner, 2026-10-03: "too zoomed in" there): the phone's own size on a touch screen (so
     // turning a phone sideways keeps the figures' size), a quarter larger with a mouse (a desk is viewed from further).
-    // The dev Stage's zoom (viewTiles < VIEW_TILES) scales either rule.
-    const cw = window.innerWidth, zk = VIEW_TILES / viewTiles, fit = cw / (viewTiles * TW);
+    const cw = window.innerWidth, fit = cw / (VIEW_TILES * TW);
     const touch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches), upright = touch && cw <= 500;
-    const css = upright ? fit : Math.min(fit, PHONE_CSS * (touch ? 1 : 1.25) * zk);
-    // Device px per native px: fractional, PASS B upscales sharp-bilinear; never under one (no downsampling). (Its floor
+    const css = upright ? fit : Math.min(fit, PHONE_CSS * (touch ? 1 : 1.25));
+    // Device px per native px: fractional; never under one. (Its floor
     // was 1.5, from when 25 tiles filled any window: on a 1× desktop that overrode the cap, 1.5 for 1.22, owner 2026-10-04.)
     S = Math.max(1, css * dpr);
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
-    tbw = nvw + 2 * MARGIN; tbh = nvh + 2 * MARGIN;
-    if (EXTERNAL) { sEMI = new Uint8Array(nvw * nvh * 4); terrValid = false; return; }   // (no bake: the other painter has the world; the fights' light still draws here, hybrid.js)
-    const mkSet = () => ({ ALB: new Uint8ClampedArray(tbw * tbh * 4), NRM: new Uint8ClampedArray(tbw * tbh * 4), EMI: new Uint8ClampedArray(tbw * tbh * 4), DEP: new Float32Array(tbw * tbh), SH: new Uint8Array(tbw * tbh) });
-    front = mkSet(); back = mkSet(); job = null; target(front);
-    sALB = new Uint8Array(nvw * nvh * 4); sNRM = new Uint8Array(nvw * nvh * 4); sEMI = new Uint8Array(nvw * nvh * 4);
-    sDEP = new Float32Array(nvw * nvh);
-    for (const t of [texAlb, texNrm, texEmi]) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, nvw, nvh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); }
-    setupLit();
+    sEMI = new Uint8Array(nvw * nvh * 4);   // (the fights' light, on black, for the painter to lay over its world: hybrid.js)
     terrValid = false;
   }
   window.addEventListener('resize', resize); resize();
@@ -280,14 +131,13 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
   /* ── load-time bakes: props ─────────────────────────────────────────────── */
   let props = buildProps(sim.world.seed);
-  const harvest = buildHarvest();
 
 
-  // ── Actor atlases: KayKit CC0 figures baked at 56 px (heroic + grim) by
-  // tools/actor-lab/bake.cjs into albedo / normal / emissive sheets, sliced here
-  // into per-(direction, frame) G-sprites with real 3D normals, so they relight in
-  // the deferred pass. Loaded async; until ready a figure isn't drawn (the boot's
-  // paper-doll and skeletons simply don't draw yet.
+  // ── Actor atlases (tools/actor-lab/bake.cjs): only their JSON here, the clips' columns and rows, the cell size, the
+  // weapon anchors and the walk's stride, which the animator (anim.js) and the weapons' effects (fx.js) read. The painter
+  // draws the people (as models, or from the same atlas's albedo: tools/render3d/world.js); this never decodes it (it
+  // did, every atlas into per-frame sprites, for Emberlit's painting: docs/luminati-only-cleanup.md step 4). Until its
+  // JSON is in, a figure isn't drawn.
   let heroAtlas = null, outMap = null;
   const pickAnim = createAnimator();                   // per-unit clip playback (anim.js)
   const fx = createFX();                               // weapon trails / glints / cast shimmer + hit sparks (fx.js)
@@ -296,12 +146,10 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   const enemyAtlas = (kind) => {
     const name = ENEMY_ACTOR[kind] || 'skeleton_minion', a = enemyAtlases.get(name);
     if (a === undefined) enemyAtlases.set(name, loadActorAtlas(name, name.startsWith('boss_') ? 1.3 : 1).then((x) => { enemyAtlases.set(name, x); return x; }).catch(() => { enemyAtlases.set(name, null); }));
-    return a && a.cells ? a : null;
+    return a && a.meta ? a : null;
   };
   // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
   const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; for (const id of [undefined, ...(w.level && w.level.plan ? w.level.rooms.map((r) => r.id) : [])]) { const F = familyOf(w, id); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); } const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };   // (an authored floor's rooms each their own foes)
-  const acv = document.createElement('canvas'), actx = acv.getContext('2d', { willReadFrequently: true });
-  const loadImg = (url) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
   // An atlas is a JSON of rects plus PNGs, and a re-bake moves the rects. A browser (or host) that
   // cached one half and not the other slices from the wrong place: a stairwell drawn blank. So the
   // small JSON is always revalidated, and the PNGs are asked for at a version hashed from it.
@@ -309,149 +157,36 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193);
     return { meta: JSON.parse(t), v: (h >>> 0).toString(36) };
   });
-  const FLAT_NRM = [127, 160, 250];                    // a pixel facing the camera, a little up (as the bolts': below)
-  const pixels = (img) => { acv.width = img.width; acv.height = img.height; actx.clearRect(0, 0, img.width, img.height); actx.drawImage(img, 0, 0); return actx.getImageData(0, 0, img.width, img.height).data; };
   // scale: how tall against a man (a boss 1.3×). The bake makes the bosses tall (73 px; art pass 9), so their atlas
-  // loads as it is; an atlas baked smaller (88-px cells at 56 px, e.g. an older checkout's twin on the Stage) is
-  // nearest-upscaled the rest of the way, its foot point and weapon anchors with it (they were left at 1×).
-  async function loadActorAtlas(name, scale = 1, root = './assets/actors/') {   // root: the dev Stage's before/after twin loads another checkout's
-    const base = root + name, { meta: m0, v } = await atlasMeta(base + '.json'), k = scale * 88 / m0.cw;
-    const up = Math.abs(k - 1) > 0.04, meta = up ? scaledMeta(m0, k) : m0;
-    // (the albedo only: the normal and glow maps went with Luminati only, docs/luminati-only-cleanup.md step 3. Emberlit's
-    // painting, a developer's ?renderer=emberlit until step 4, lights every pixel with one normal, FLAT_NRM, and no glow)
-    const alb = pixels(await loadImg(`${base}.alb.png?v=${v}`)), iw = acv.width;
-    const { cw, ch, ax, ay } = m0, cells = [];
-    for (let r = 0; r < meta.dirs; r++) {
-      const row = [];
-      for (let f = 0; f < meta.frames; f++) {
-        const sp = { w: cw, h: ch, ax, ay, mask: new Uint8Array(cw * ch), alb: new Uint8Array(cw * ch * 3), nrm: new Uint8Array(cw * ch * 3), emi: new Uint8Array(cw * ch) };
-        for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
-          const i = ((r * ch + y) * iw + f * cw + x) * 4, j = y * cw + x;
-          if (alb[i + 3] < 128) continue;
-          sp.mask[j] = 1;
-          sp.alb[j * 3] = alb[i]; sp.alb[j * 3 + 1] = alb[i + 1]; sp.alb[j * 3 + 2] = alb[i + 2];
-          sp.nrm.set(FLAT_NRM, j * 3);
-        }
-        row.push(sp);
-      }
-      cells.push(row);
-    }
-    if (up) for (const row of cells) for (let f = 0; f < row.length; f++) row[f] = upscale(row[f], k);
-    return { name, meta, cells };
+  // comes as it is; one baked smaller (88-px cells at 56 px) has its cell, foot point and weapon anchors scaled up to it
+  async function loadActorAtlas(name, scale = 1) {
+    const { meta: m0 } = await atlasMeta(`./assets/actors/${name}.json`), k = scale * 88 / m0.cw;
+    return { name, meta: Math.abs(k - 1) > 0.04 ? scaledMeta(m0, k) : m0 };
   }
   const scaledMeta = (m, k) => ({ ...m, cw: Math.round(m.cw * k), ch: Math.round(m.ch * k), ax: Math.round(m.ax * k), ay: Math.round(m.ay * k),
     ...(m.anchors ? { anchors: Object.fromEntries(Object.entries(m.anchors).map(([sl, A]) => [sl, A.map((n) => Math.round(n * k))])) } : {}) });
-  function upscale(sp, k) {
-    const w = Math.round(sp.w * k), h = Math.round(sp.h * k), o = { w, h, ax: Math.round(sp.ax * k), ay: Math.round(sp.ay * k), mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const j = Math.min(sp.h - 1, (y / k) | 0) * sp.w + Math.min(sp.w - 1, (x / k) | 0), i = y * w + x;
-      if (!sp.mask[j]) continue;
-      o.mask[i] = 1; o.emi[i] = sp.emi[j];
-      for (let c = 0; c < 3; c++) { o.alb[i * 3 + c] = sp.alb[j * 3 + c]; o.nrm[i * 3 + c] = sp.nrm[j * 3 + c]; }
-    }
-    return o;
-  }
   const firstLoads = [];                               // what the boot's loading screen waits for (`ready`)
   firstLoads.push(loadActorAtlas('hero_knight').then((a) => { heroAtlas = a; partyAtlases.hero_knight = a; }).catch(() => {}));   // the default look; a created hero's own look loads via partyAtlas
   SKELETONS.forEach((n, i) => firstLoads.push(loadActorAtlas(n).then((a) => { skelAtlases[i] = a; enemyAtlases.set(n, a); }).catch(() => {})));
 
-  // ── Environment atlas: KayKit Medieval Hexagon (CC0) buildings, trees, rocks and
-  // mountains baked by tools/actor-lab/bake-env.cjs — the albedo (its normal, shadow, depth key and lit windows went with
-  // Luminati only: docs/luminati-only-cleanup.md step 3; Emberlit's painting, a developer's escape until step 4, stands
-  // each as a flat card). Sprites are sliced lazily, only when a scene first uses them.
-  // Two atlases are live at a time: the shared base ('env': trees, rocks, props) and the
-  // current region's town buildings ('town-<region>': same shapes, the region's tones).
+  // ── Environment atlases (tools/actor-lab/bake-env.cjs): only their JSON here, each sprite's rect, foot and size, for
+  // the outdoor minimap's structures, a service's building under a tap and the farm beasts' frames. The painter stands
+  // the sprites it keeps from the albedo itself (tools/render3d/world.js placeEnv). Two are live at a time: the shared
+  // base ('env': trees, rocks, props) and the current region's town buildings ('town-<region>').
   let envMeta = null;                                  // { sprites: id → meta (+ .atlas) } merged across loaded atlases
   let envGen = 0;                                      // bumped as each atlas lands (the beasts' list is rebuilt)
-  const envAtlases = new Map(), envCache = new Map();
+  const envAtlases = new Set();
   function loadAtlas(name) {
     if (envAtlases.has(name)) return null;
-    envAtlases.set(name, null);
-    return atlasMeta(`./assets/env/${name}.json`)
-      .then(({ meta, v }) => Promise.all([meta, loadImg(`./assets/env/${name}.alb.png?v=${v}`)]))
-      .then(([m, a]) => {
-        envAtlases.set(name, { a });
-        envMeta = envMeta || { sprites: {} };
-        for (const [id, sm] of Object.entries(m.sprites)) envMeta.sprites[id] = { ...sm, atlas: name };
-        terrValid = false; outMap = null; envGen++;
-      }).catch(() => envAtlases.delete(name));
+    envAtlases.add(name);
+    return atlasMeta(`./assets/env/${name}.json`).then(({ meta: m }) => {
+      envMeta = envMeta || { sprites: {} };
+      for (const [id, sm] of Object.entries(m.sprites)) envMeta.sprites[id] = { ...sm, atlas: name };
+      outMap = null; envGen++;
+    }).catch(() => envAtlases.delete(name));
   }
   const wantAtlases = () => [loadAtlas('env'), sim.world.kind !== 'dungeon' ? loadAtlas('town-' + (sim.world.region || 'vale')) : null];   // env carries the dungeon's stair too
   firstLoads.push(...wantAtlases());
-  const ecv = document.createElement('canvas'), ectx = ecv.getContext('2d', { willReadFrequently: true });
-  function envSprite(id) {
-    if (envCache.has(id)) return envCache.get(id);
-    const m = envMeta && envMeta.sprites[id]; if (!m) return null;
-    const envImgs = envAtlases.get(m.atlas); if (!envImgs) return null;
-    const grab = (img) => { ecv.width = m.w; ecv.height = m.h; ectx.clearRect(0, 0, m.w, m.h); ectx.drawImage(img, m.x, m.y, m.w, m.h, 0, 0, m.w, m.h); return ectx.getImageData(0, 0, m.w, m.h).data; };
-    const A = grab(envImgs.a), U = m.up || 1, w = m.w * U, h = m.h * U, n = w * h;
-    // (m.up: baked at 1/up of the pixels, the mountain massifs; scaled back ×up, nearest, here: critic pass 10)
-    const sp = { w, h, ax: m.ax * U, ay: m.ay * U, mask: new Uint8Array(n), alb: new Uint8Array(n * 3), nrm: new Uint8Array(n * 3), dep: new Float32Array(n), emi: new Uint8Array(n) };
-    for (let j = 0; j < n; j++) {
-      const i = U === 1 ? j * 4 : (Math.floor(Math.floor(j / w) / U) * m.w + Math.floor((j % w) / U)) * 4;
-      if (A[i + 3] >= 128) {
-        sp.mask[j] = 1;
-        sp.alb[j * 3] = A[i]; sp.alb[j * 3 + 1] = A[i + 1]; sp.alb[j * 3 + 2] = A[i + 2];
-        sp.nrm.set(FLAT_NRM, j * 3);                   // (dep and emi stay 0: a flat card, no lit windows)
-      }
-    }
-    envCache.set(id, sp);
-    return sp;
-  }
-
-  // Composite the scene's structures into the bake: first every ground shadow (only
-  // onto ground-level pixels, once), then every sprite with the nearer-wins depth test.
-  function structList(bx, by, lights) {
-    const world = sim.world, list = [];
-    if (!envMeta || !world.structs) return list;
-    for (const st of world.structs) {
-      const sp = envSprite(st.id); if (!sp) continue;
-      const z = heightAt(world, Math.floor(st.x), Math.floor(st.y));
-      const P = project(st.x, st.y, z), x0 = Math.round(bx + P.sx) - sp.ax, y0 = Math.round(by + P.sy) - sp.ay;
-      if (x0 > tbw || y0 > tbh || x0 + sp.w < 0 || y0 + sp.h < 0) continue;
-      list.push({ sp, x0, y0, z, base: st.x + st.y + z * 0.5, walkOn: st.id.startsWith('bridge') || st.id.startsWith('stairsup'), hole: !!st.hole, beast: isBeast(st.id) });
-      const gl = envMeta.sprites[st.id].glow;
-      if (gl && lights.length < 30) lights.push(gl === 2 ? { x: st.x, y: st.y - 2.5, z: z - 1, color: PROP_LIGHT.stairs } : { x: st.x, y: st.y, z: z + 3, color: [1.1, 0.72, 0.36] });
-    }
-    return list;
-  }
-  function stampShadow({ sp, x0, y0, z }, by) {
-    const zp = z * ZH;
-    for (let yy = 0; yy < sp.h; yy++) {
-      const py = y0 + yy; if (py < 0 || py >= tbh) continue;
-      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;
-      for (let xx = 0; xx < sp.w; xx++) {
-        if (sp.mask[yy * sp.w + xx] !== 2) continue;
-        const px = x0 + xx; if (px < 0 || px >= tbw) continue;
-        const di = py * tbw + px; if (bSH[di] || bDEP[di] > ground) continue;
-        bSH[di] = 1; const i = di * 4;
-        bALB[i] *= 0.52; bALB[i + 1] *= 0.54; bALB[i + 2] *= 0.64; bALB[i + 3] = 254;   // marked, for the daylight lift
-      }
-    }
-  }
-  // A `hole` (the stairwell) is below the floor, so its keys are further than the floor's: it
-  // replaces floor pixels (the bake shows it through its mouth only) and gives way to anything
-  // standing nearer than the floor there (a pillar, a wall), the same test as a ground shadow.
-  function stampSprite({ sp, x0, y0, base, walkOn, hole, z }, by) {
-    const zp = z * ZH;
-    for (let yy = 0; yy < sp.h; yy++) {
-      const py = y0 + yy; if (py < 0 || py >= tbh) continue;
-      const ground = (py - by + zp) / HH + z * 0.5 + 0.35;
-      for (let xx = 0; xx < sp.w; xx++) {
-        const j = yy * sp.w + xx; if (sp.mask[j] !== 1) continue;
-        const px = x0 + xx; if (px < 0 || px >= tbw) continue;
-        const di = py * tbw + px, dep = base + sp.dep[j];
-        if (hole ? bDEP[di] > ground + 0.1 : dep < bDEP[di] - 0.05) continue;
-        if (!walkOn) bDEP[di] = dep;
-        const i = di * 4, hpx = Math.max(0, Math.min(63, (4 * (dep - z * 0.5) - (py - by + zp)) / 1.333));
-        bALB[i] = sp.alb[j * 3]; bALB[i + 1] = sp.alb[j * 3 + 1]; bALB[i + 2] = sp.alb[j * 3 + 2]; bALB[i + 3] = 255;
-        bNRM[i] = sp.nrm[j * 3]; bNRM[i + 1] = sp.nrm[j * 3 + 1]; bNRM[i + 2] = sp.nrm[j * 3 + 2]; bNRM[i + 3] = zp * 4 + hpx * 4 > 255 ? 255 : zp * 4 + hpx * 4;
-        const e = sp.emi[j];
-        if (e) { const g = GLOW_ID[e]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; } else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
-        bEMI[i + 3] = e === 9 ? 254 : 255;                // a lit window (flickers, and the time of day dims it)
-      }
-    }
-  }
   // bolts: tiny emissive sprites (firebolt ember, soul-bolt violet, a goblin's hex green, crossbow quarrel steel)
   const bolts = {};
   function boltSprite(kind) {
@@ -538,13 +273,6 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     beastWorld = sim.world; beastGen = envGen;
     return (beasts = (sim.world.structs || []).filter((st) => isBeast(st.id)).map(beastOf));
   }
-  const beastSp = new Map();                           // an env sprite as a figure (its shadow-only pixels dropped)
-  function beastSprite(id) {
-    let s = beastSp.get(id); if (s) return s;
-    const e = envSprite(id); if (!e) return null;
-    s = { w: e.w, h: e.h, ax: e.ax, ay: e.ay, mask: e.mask.map((v) => (v === 1 ? 1 : 0)), alb: e.alb, nrm: e.nrm, emi: e.emi };
-    beastSp.set(id, s); return s;
-  }
   // a rogue is drawn with what they shoot with (sim items.js `shot`; the atlases: actor-lab bake.json),
   // in their dagger look until that atlas has loaded
   const RANGED_LOOK = { bow: '_bow', longbow: '_longbow', crossbow: '_hxbow', heavy: '_xbow' };
@@ -556,130 +284,10 @@ export function createRenderer(canvas, sim, input, opts = {}) {
 
   const fol = [];                                     // smoothed companion draw positions
 
-  // Terrain painter: cobble by default; ?tiles=<style> picks another structured style
-  // from tilestyles.js, and ?tiles=classic restores the original per-pixel-noise look.
-  // ?tv=<variant> forces a material variant (plain/earth/rock/lava/poison/ice/water);
-  // otherwise each biome uses its default.
-  const qs = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
-  const tileKey = qs.get('tiles') || 'cobble', tileVariant = qs.get('tv') || '';
-  const tileStyle = tileKey === 'classic' ? null : (TILE_STYLES[tileKey] || TILE_STYLES.cobble);
-  // a site may keep its own style (the goblins' warren is dug, not laid: cavern; the Toadking's mire too; the Drowned
-  // Abbey is temple-checker, world doc §3.2; the lock-keepers' halls flagstone), unless ?tiles= says otherwise; a site
-  // built as halls (sim halls.js) is dressed stone, flagstones and ashlar courses, where its theme has no style of its own
-  const THEME_STYLE = { warren: 'cavern', mire: 'cavern', water: 'temple', sluice: 'flagstone', cave: 'cavern' };   // (v1.48: the Keep's cellars go down into rock)
-  const styleOf = (w) => (qs.has('tiles') ? tileStyle : THEME_STYLE[w.theme] ? TILE_STYLES[THEME_STYLE[w.theme]] : w.level && w.level.layout === 'halls' ? TILE_STYLES.flagstone : tileStyle);
-
-  /* ── G-buffer writers ───────────────────────────────────────────────────── */
-  // DEPTH (bDEP): distance toward the camera in tile units = ground x+y of the surface
-  // point + 0.0833 per px of height (0.5 per level). Terrain paints in painter's order and
-  // writes it; baked structures and actors composite against it ("nearer wins").
+  // DEPTH: distance toward the camera in tile units = ground x+y of the surface point + 0.0833 per px of height (0.5 per
+  // level): the effects' depth key (fx.js), which the painter tests against its own depth buffer (hybrid.js)
   const DPX = 0.0833;
-  // Terrain never changes within a level, so each tile's writes are RECORDED the first
-  // time it's painted (relative to its screen origin) and REPLAYED on later bakes.
-  let rec = null;
-  const tileCache = new Map();
-  const putG = (px, py, alb, n, hpx, emiId, dep = -1e9) => {
-    px |= 0; py |= 0;
-    if (rec) rec.push(px - rec.sx, py - rec.sy, alb[0], alb[1], alb[2], (n[0] * 0.5 + 0.5) * 255, (n[1] * 0.5 + 0.5) * 255, n[2] * 255, hpx * 4, emiId || 0, dep);
-    if (px < 0 || py < 0 || px >= tbw || py >= tbh) return;
-    bDEP[py * tbw + px] = dep;
-    const i = (py * tbw + px) * 4;
-    bALB[i] = alb[0]; bALB[i + 1] = alb[1]; bALB[i + 2] = alb[2]; bALB[i + 3] = 255;
-    bNRM[i] = (n[0] * 0.5 + 0.5) * 255; bNRM[i + 1] = (n[1] * 0.5 + 0.5) * 255; bNRM[i + 2] = n[2] * 255; bNRM[i + 3] = hpx * 4;
-    if (emiId) { const g = GLOW_ID[emiId]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; }
-    else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
-    bEMI[i + 3] = 255;
-  };
 
-  // Stamp a G-sprite (albedo/normal/emissive) into a target buffer at a foot point.
-  // footKey = ground x+y under the foot; test = depth-test against DEP (actors): pixels
-  // behind nearer geometry draw as a dim x-ray silhouette instead of vanishing.
-  // Contact shadow + team ring at a foot point, painted into the window G-buffer before the
-  // figures: an iso ellipse (2:1) that darkens the ground (only ground at or behind the
-  // foot, never a wall in front), and for team > 0 a thin tinted rim — party gold, the
-  // Ashbound red, elites ember-orange — so friend and foe read apart in a melee.
-  const TEAM_RGB = [null, [214, 176, 92], [196, 58, 46], [236, 128, 48]];
-  function footMark(fx, fy, h, team, fade) {
-    const gh = Math.min(255, h * 4), rx = 13, ry = 6.5, col = TEAM_RGB[team], keep = 1 - fade;
-    for (let dy = -8; dy <= 8; dy++) {
-      const py = fy + dy; if (py < 0 || py >= nvh) continue;
-      for (let dx = -15; dx <= 15; dx++) {
-        const px = fx + dx; if (px < 0 || px >= nvw) continue;
-        const di = py * nvw + px, i4 = di * 4; if (sNRM[i4 + 3] > gh + 8) continue;   // only ground at the foot's height, never a wall or prop face
-        const e = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry), i = i4;
-        if (e < 1) { const m = 1 - 0.5 * Math.pow(1 - e, 0.6) * keep; sALB[i] *= m; sALB[i + 1] *= m; sALB[i + 2] *= m; }
-        if (col && e > 0.72 && e < 1.2 && dy >= -2) {                  // the ring's near arc (the far arc hides behind the figure)
-          const a = 0.46 * keep; sALB[i] += (col[0] - sALB[i]) * a; sALB[i + 1] += (col[1] - sALB[i + 1]) * a; sALB[i + 2] += (col[2] - sALB[i + 2]) * a;
-          sEMI[i] = col[0] * 0.09; sEMI[i + 1] = col[1] * 0.09; sEMI[i + 2] = col[2] * 0.09; sEMI[i + 3] = 250;   // steady glow
-        }
-      }
-    }
-  }
-  // A figure's cast shadow (critic pass 11h: the reference puts a crisp shadow under every figure). Its silhouette
-  // laid on the ground along the baked sun's line (envlab.js SUN: the trees' shadows fall 0.80 px right and 0.11 px
-  // up a pixel of height; a figure's is cut to 0.55, so it stays under the figure), thickened two pixels each way
-  // for the body's depth (a flat silhouette laid down is a sliver). It's marked as a baked shadow (ALB alpha 254) but deeper (× 0.36–0.48:
-  // at the bake's 0.52 it read 15–23 % darker after the light pass, a smudge), so the day lifts it as it lifts theirs and a figure in a tree's shadow never darkens twice. Ground at the foot's
-  // height only, as footMark.
-  const CAST_X = 0.55, CAST_Y = -0.08, CAST_T = 2;
-  function castShadow(sp, footX, footY, h) {
-    const gh = Math.min(255, h * 4), x0 = Math.round(footX) - sp.ax, fy = Math.round(footY);
-    for (let yy = 0; yy < sp.h; yy++) {
-      const hgt = sp.ay - yy; if (hgt < 0) continue;
-      const sx = Math.round(hgt * CAST_X), sy = fy + Math.round(hgt * CAST_Y);
-      for (let xx = 0; xx < sp.w; xx++) {
-        if (!sp.mask[yy * sp.w + xx]) continue;
-        const px = x0 + xx + sx; if (px < 0 || px >= nvw) continue;
-        for (let py = sy - CAST_T; py <= sy + CAST_T; py++) {
-          if (py < 0 || py >= nvh) continue;
-          const i = (py * nvw + px) * 4; if (sALB[i + 3] === 254 || sNRM[i + 3] > gh + 8) continue;
-          sALB[i] *= 0.36; sALB[i + 1] *= 0.38; sALB[i + 2] *= 0.48; sALB[i + 3] = 254;
-        }
-      }
-    }
-  }
-  // The ground hazard (sim hazards.js), painted into the window G-buffer's ground before the figures: the Toadking's mud
-  // a dark, wet brown disc (dithered at the rim, as the floor's own edges are), the Abbess's water each flooded tile a
-  // deep teal with a faint steady sheen in the emissive plane that drifts, so it reads as water in the dark. Ground only
-  // (as footMark: nothing at a height over the floor's), no allocation (presentation only).
-  // (capture 1, 2026-10-05: mud tinted toward the mire's own brown vanished into it, and a rippling sheen drew the water as
-  // neon stripes; now the mud is near-black with a pale wet rim, and the water a deep teal with sparse glints)
-  const MUD_RGB = [26, 20, 14], MUD_RIM = [128, 104, 64], WATER_RGB = [16, 54, 64];
-  const SLUICE_RGB = [24, 40, 14], SLUICE_RIM = [104, 132, 52];   // (v1.48) the Vatwarden's sluice: the vat's sick water, green-black with a bilious rim
-  function tintGround(px, py, h, rgb, a, glint) {
-    if (px < 0 || py < 0 || px >= nvw || py >= nvh) return;
-    const i = (py * nvw + px) * 4; if (sNRM[i + 3] > Math.min(255, h * 4) + 8) return;
-    sALB[i] += (rgb[0] - sALB[i]) * a; sALB[i + 1] += (rgb[1] - sALB[i + 1]) * a; sALB[i + 2] += (rgb[2] - sALB[i + 2]) * a;
-    if (glint > 0) { sEMI[i] = Math.max(sEMI[i], 14 * glint); sEMI[i + 1] = Math.max(sEMI[i + 1], 34 * glint); sEMI[i + 2] = Math.max(sEMI[i + 2], 40 * glint); sEMI[i + 3] = 250; }
-  }
-  function paintHazards(b, ox, oy, now) {
-    const w = sim.world, t = now / 1000;
-    for (const hz of b.hazards || []) {
-      const z = heightAt(w, Math.floor(hz.x), Math.floor(hz.y)), P = project(hz.x, hz.y, z), cx = Math.round(ox + P.sx), cy = Math.round(oy + P.sy);
-      const rx = hz.r * HW * Math.SQRT2, ry = hz.r * HH * Math.SQRT2, fade = Math.min(1, (hz.until - sim.state.t) / 0.8, (sim.state.t - (hz.from ?? -1e9)) / 0.4);   // (wells up, then sinks away)
-      for (let dy = -Math.ceil(ry); dy <= Math.ceil(ry); dy++) for (let dx = -Math.ceil(rx); dx <= Math.ceil(rx); dx++) {
-        const e = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry); if (e >= 1) continue;
-        if (e > 0.82 && BAYER[((cy + dy) & 3) * 4 + ((cx + dx) & 3)] < (e - 0.82) * 5.5) continue;
-        const rim = e > 0.7, bubble = !rim && ((cx + dx) * 7 + (cy + dy) * 13 + Math.floor(t * 3)) % 97 === 0;
-        const sl = hz.kind === 'sluice';
-        tintGround(cx + dx, cy + dy, z * ZH, rim ? (sl ? SLUICE_RIM : MUD_RIM) : (sl ? SLUICE_RGB : MUD_RGB), (rim ? 0.42 : 0.82) * fade, bubble ? 0.5 * fade : 0);
-      }
-    }
-    if (b.flood > 0 && b.edge) {
-      for (const [k, d] of b.edge) {
-        if (d > b.flood * (b.floodStep || 1)) continue;
-        const c = k.indexOf(','), tx = +k.slice(0, c), ty = +k.slice(c + 1), z = heightAt(w, tx, ty), P = project(tx + 0.5, ty + 0.5, z), cx = Math.round(ox + P.sx), cy = Math.round(oy + P.sy);
-        if (cx < -HW || cx > nvw + HW || cy < -HH || cy > nvh + HH) continue;
-        const shore = d > (b.flood - 1) * (b.floodStep || 1) && d === b.flood * (b.floodStep || 1);   // the tide line: a touch lighter
-        for (let dy = -HH; dy <= HH; dy++) for (let dx = -HW; dx <= HW; dx++) {
-          if (Math.abs(dx) / HW + Math.abs(dy) / HH > 1) continue;
-          const gx = cx + dx, gy = cy + dy, glint = ((gx * 31 + gy * 17 + Math.floor(t * 2 + gx * 0.07)) % 53 === 0) ? 1 : 0;
-          tintGround(gx, gy, z * ZH, WATER_RGB, shore ? 0.55 : 0.72, glint);
-        }
-      }
-    }
-  }
-  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
   // The Abbess's water under another painter (hybrid.js lays it as tile squares; the boss pass): the glints paintHazards
   // puts in the bake's emissive, here as the effects' light, a few a frame where the water lies
   const GLINT = [70, 170, 200];
@@ -694,291 +302,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       P.depth(q.key - 0.3, q.sy, q.h); P.disc(q.sx, q.sy, 1.8, 0.9, 1); P.mark(q.sx, q.sy, 1.2); P.flush(GLINT);
     }
   }
-  function stamp(ALB, NRM, EMI, W, H, sp, footX, footY, baseH, DEP, footKey = 0, test = false, look = null) {
-    const flash = look ? look.flash || 0 : 0, fade = look ? look.fade || 0 : 0, dis = look ? look.dissolve || 0 : 0, ghost = look ? look.ghost || 0 : 0, warn = flash ? 0 : look ? look.warn || 0 : 0;
-    const x0 = Math.round(footX) - sp.ax, y0 = Math.round(footY) - sp.ay;
-    let flashEdge = false, hid = 0, shown = 0;
-    for (let yy = 0; yy < sp.h; yy++) {
-      const py = y0 + yy; if (py < 0 || py >= H) continue;
-      const hpx = baseH + (sp.h - yy) * 0.55;
-      const dep = footKey + DPX * (baseH + Math.max(0, sp.ay - yy));
-      for (let xx = 0; xx < sp.w; xx++) {
-        const j = yy * sp.w + xx; if (!sp.mask[j]) continue;
-        const px = x0 + xx; if (px < 0 || px >= W) continue;
-        if (dis && BAYER[(py & 3) * 4 + (px & 3)] < dis) continue;          // ordered-dither dissolve (the slain crumble away)
-        if (ghost && BAYER[(py & 3) * 4 + (px & 3)] < 0.4) continue;         // the Fallen: see-through (the floor shows between)
-        const i = (py * W + px) * 4;
-        if (DEP) {
-          const di = py * W + px;
-          if (test && dep < DEP[di] - 0.6) { if (test !== 2) { ALB[i] = ALB[i] * 0.5 + 34; ALB[i + 1] = ALB[i + 1] * 0.5 + 26; ALB[i + 2] = ALB[i + 2] * 0.5 + 52; } hid++; continue; }   // test 2: occluded, no x-ray
-          DEP[di] = dep;
-        }
-        ALB[i] = sp.alb[j * 3]; ALB[i + 1] = sp.alb[j * 3 + 1]; ALB[i + 2] = sp.alb[j * 3 + 2]; ALB[i + 3] = 255;
-        if (flash) {                                    // struck: a hot rim on the silhouette, a light warm tint inside (a full tint read as a pink haze on bone)
-          const edge = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
-          const k = edge ? Math.min(1, flash * 2.4) : flash * 0.35;
-          ALB[i] += (255 - ALB[i]) * k; ALB[i + 1] += (205 - ALB[i + 1]) * k; ALB[i + 2] += (160 - ALB[i + 2]) * k;
-          if (edge) { EMI[i] = 90 * k; EMI[i + 1] = 60 * k; EMI[i + 2] = 36 * k; EMI[i + 3] = 250; flashEdge = true; }
-        } else if (warn) {                              // winding up: a red-orange rim pulsing on the silhouette, a touch of it inside
-          const edge = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
-          const k = edge ? warn : warn * 0.18;
-          ALB[i] += (255 - ALB[i]) * k * 0.8; ALB[i + 1] += (120 - ALB[i + 1]) * k * 0.6; ALB[i + 2] *= 1 - k * 0.5;
-          if (edge) { EMI[i] = 110 * k; EMI[i + 1] = 40 * k; EMI[i + 2] = 14 * k; EMI[i + 3] = 250; flashEdge = true; }
-        }
-        if (fade) { ALB[i] *= 1 - fade * 0.75; ALB[i + 1] *= 1 - fade * 0.78; ALB[i + 2] *= 1 - fade * 0.6; }
-        let rim = false;
-        if (ghost) {                                    // a Fallen member's ghost: cold grey, with a steady pale rim
-          const l = ALB[i] * 0.3 + ALB[i + 1] * 0.59 + ALB[i + 2] * 0.11;
-          ALB[i] = l * 0.62 + 34; ALB[i + 1] = l * 0.7 + 42; ALB[i + 2] = l * 0.82 + 60;
-          rim = xx === 0 || yy === 0 || xx === sp.w - 1 || yy === sp.h - 1 || !sp.mask[j - 1] || !sp.mask[j + 1] || !sp.mask[j - sp.w] || !sp.mask[j + sp.w];
-        }
-        NRM[i] = sp.nrm[j * 3]; NRM[i + 1] = sp.nrm[j * 3 + 1]; NRM[i + 2] = sp.nrm[j * 3 + 2]; NRM[i + 3] = Math.min(255, hpx * 4);
-        const e = fade > 0.5 ? 0 : sp.emi[j];
-        if (flashEdge) flashEdge = false;
-        else if (rim) { EMI[i] = 34; EMI[i + 1] = 48; EMI[i + 2] = 66; }
-        else if (ghost) { EMI[i] = ALB[i] * 0.06; EMI[i + 1] = ALB[i + 1] * 0.06; EMI[i + 2] = ALB[i + 2] * 0.08; }
-        else if (e) { const g = GLOW_ID[e]; EMI[i] = g[0] / 3; EMI[i + 1] = g[1] / 3; EMI[i + 2] = g[2] / 3; }
-        else if (test) { const k = 0.045 * (1 - fade); EMI[i] = ALB[i] * k; EMI[i + 1] = ALB[i + 1] * k; EMI[i + 2] = ALB[i + 2] * k * 1.1; }   // actors: a faint self-light, so figures read in the dark
-        else { EMI[i] = 0; EMI[i + 1] = 0; EMI[i + 2] = 0; }
-        EMI[i + 3] = test && !e ? 250 : 255;          // actors' self-light is steady (alpha < 255): the shader's per-pixel ember flicker read as grain on figures
-        shown++;
-      }
-    }
-    return hid / Math.max(1, hid + shown);              // the share drawn as x-ray (behind nearer geometry)
-  }
 
-  // Terrain tile → G-buffer: cliff faces (SW/SE drops) then the top diamond,
-  // with material-gradient normals + sparse emissive specks (water / poison).
-  function replayTile(r, sx, sy) {
-    const P = r.p, D = r.d, n = D.length;
-    for (let k = 0; k < n; k++) {
-      const px = sx + P[k * 10], py = sy + P[k * 10 + 1]; if (px < 0 || py < 0 || px >= tbw || py >= tbh) continue;
-      const di = py * tbw + px, i = di * 4, o = k * 10;
-      bALB[i] = P[o + 2]; bALB[i + 1] = P[o + 3]; bALB[i + 2] = P[o + 4]; bALB[i + 3] = 255;
-      bNRM[i] = P[o + 5]; bNRM[i + 1] = P[o + 6]; bNRM[i + 2] = P[o + 7]; bNRM[i + 3] = P[o + 8];
-      const e = P[o + 9];
-      if (e) { const g = GLOW_ID[e]; bEMI[i] = g[0] / 3; bEMI[i + 1] = g[1] / 3; bEMI[i + 2] = g[2] / 3; } else { bEMI[i] = 0; bEMI[i + 1] = 0; bEMI[i + 2] = 0; }
-      bEMI[i + 3] = 255; bDEP[di] = D[k];
-    }
-  }
-  function drawTileG(bx, by, x, y) {
-    const world = sim.world;
-    const sx0 = bx + (x - y) * HW;
-    if (sx0 < -TW * 2 || sx0 > tbw + TW * 2) return;
-    const key = x + ',' + y, hit = tileCache.get(key);
-    if (hit) { if (hit !== 1) replayTile(hit, sx0, by + (x + y) * HH - hit.z * ZH); return; }
-    const m = materialAt(world, x, y);
-    if (m === 'abyss') { tileCache.set(key, 1); return; }        // the void: draw nothing
-    const z = heightAt(world, x, y);
-    const sx = sx0, sy = by + (x + y) * HH - z * ZH;
-    if (sy < -80 || sy > tbh + 20) return;
-    const raw = []; raw.sx = sx; rec = { sx, sy, push: (...v) => raw.push(...v) };
-    try { drawTileBody(sx, sy, x, y, z, m, world); } finally { rec = null; }
-    const cnt = raw.length / 11, P = new Int16Array(cnt * 10), D = new Float32Array(cnt);
-    for (let k = 0; k < cnt; k++) { for (let j = 0; j < 10; j++) P[k * 10 + j] = Math.round(raw[k * 11 + j]); D[k] = raw[k * 11 + 10]; }
-    if (tileCache.size > 60000) tileCache.clear();
-    tileCache.set(key, { p: P, d: D, z });
-  }
-  function drawTileBody(sx, sy, x, y, z, m, world) {
-    if (world.kind !== 'dungeon') return drawTileOutdoor(sx, sy, x, y, z);
-    if (tileStyle) return drawTileStyled(sx, sy, x, y, z, m);
-    const liq = m === 'water' || m === 'poison' || m === 'lava', hPix = z * ZH;
-    const ramp = ELIT[m] || ELIT.soil;
-    // cliff faces (walls tower over floors; floor lips fall into the abyss)
-    if (m !== 'water') {
-      const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
-      if (dSW > 0) faceG(sx, sy, dSW, ramp, 0, hPix, x, y);
-      if (dSE > 0) faceG(sx, sy, dSE, ramp, 1, hPix, x, y);
-    }
-    const zN = heightAt(world, x, y - 1), zW = heightAt(world, x - 1, y);
-    const nwHi = zW > z, neHi = zN > z, e = 0.35;
-    for (let py = 0; py < 8; py++) {
-      const w = ROWW[py], xs = sx - w / 2;
-      for (let dx = 0; dx < w; dx++) {
-        const X = xs + dx, u = (x + dx / 16) * 2.3, v = (y + py / 8) * 2.3;
-        const n0 = fbm(u, v, world.ss + 7);
-        let idx = Math.max(0, Math.min(ramp.length - 1, Math.floor(n0 * (ramp.length + 0.2))));
-        if (m === 'water') idx = Math.min(3, idx);
-        if (nwHi && py < 3 && dx < w / 2 && idx > 0) idx--;
-        if (neHi && py < 3 && dx >= w / 2 && idx > 0) idx--;
-        const gx = (fbm(u + e, v, world.ss + 7) - fbm(u - e, v, world.ss + 7)) * (liq ? 0.6 : 2.6);
-        const gy = (fbm(u, v + e, world.ss + 7) - fbm(u, v - e, world.ss + 7)) * (liq ? 0.6 : 2.6);
-        putG(X, sy + py, ramp[idx], norm3(gx, 0.30 + gy, 0.95), hPix, emissiveFor(m, X | 0, x, y, py, u, v, world), x + y + (py + 0.5) / HH + z * 0.5);
-      }
-    }
-  }
-  // Outdoor ground tile: every pixel samples the continuous ground features (outdoorpaint.js).
-  function drawTileOutdoor(sx, sy, x, y, z) {
-    const world = sim.world, hPix = z * ZH;
-    for (let py = 0; py < 8; py++) {
-      const w = ROWW[py], xs = sx - w / 2;
-      for (let dx = 0; dx < w; dx++) {
-        const X = xs + dx, a = (X + 0.5 - sx) / HW, b = (py + 0.5) / HH;
-        const u = Math.min(0.999, Math.max(0, (a + b) / 2)), v = Math.min(0.999, Math.max(0, (b - a) / 2));
-        const r = paintOutdoor(world, x + u, y + v, x, y, X + 0.5 - sx, py + 0.5);
-        putG(X, sy + py, r.c, r.n, hPix, r.e, x + y + b + z * 0.5);
-      }
-    }
-  }
-  // Structured-style tile: one floor ramp + one wall ramp per variant, painted from
-  // tile-local coordinates (no per-pixel noise). The biome's hazard tiles become
-  // the variant's pools (lava, poison, ice, water, mud, pits, rubble).
-  function drawTileStyled(sx, sy, x, y, z, m) {
-    const world = sim.world, th = world.level.th, cell = world.level.cells.get(x + ',' + y);
-    const isWall = !!cell && cell.kind === 'wall', hPix = z * ZH, seed = world.ss;
-    // a kit's shallow pools (sim world.pools: walkable, v1.48) paint as its water; the theme's hazard tiles as before
-    const kp = !isWall && world.pools && world.pools.has(x + ',' + y) && DRESS[world.kit], V0 = variantFor(world.theme, tileVariant);
-    const V = kp ? { ...V0, pool: kp.pool || V0.pool } : V0, pool = !isWall && (m === th.hazard || !!kp), ST = styleOf(world);
-    const fr = ELIT[V.floor], wr = ELIT[V.wall], accent = V.accent;
-    const dSW = z - heightAt(world, x, y + 1), dSE = z - heightAt(world, x + 1, y);
-    // wall faces sit one ramp step darker than floors/caps, so the play space reads first
-    const wd = [[wr[0][0] * 0.75, wr[0][1] * 0.75, wr[0][2] * 0.75], wr[0], wr[1], wr[2], wr[3]];
-    if (dSW > 0) faceStyled(sx, sy, dSW, 0, hPix, x, y, wd, seed, accent, V);
-    if (dSE > 0) faceStyled(sx, sy, dSE, 1, hPix, x, y, wd, seed, accent, V);
-    const nwHi = heightAt(world, x - 1, y) > z, neHi = heightAt(world, x, y - 1) > z;
-    for (let py = 0; py < 8; py++) {
-      const w = ROWW[py], xs = sx - w / 2;
-      for (let dx = 0; dx < w; dx++) {
-        const X = xs + dx, a = (X + 0.5 - sx) / HW, b = (py + 0.5) / HH;
-        const u = Math.min(0.999, Math.max(0, (a + b) / 2)), v = Math.min(0.999, Math.max(0, (b - a) / 2));
-        const c = { gx: x + u, gy: y + v, u, v, tx: x, ty: y, fr: isWall ? wr : fr, wr, seed, accent };
-        const r = paintFloor(ST, V, c, pool, isWall);
-        let col = r.c;
-        if ((nwHi && py < 3 && dx < w / 2) || (neHi && py < 3 && dx >= w / 2)) col = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72];
-        putG(X, sy + py, col, r.n || N_UP, hPix, r.e || 0, x + y + (py + 0.5) / HH + z * 0.5);
-      }
-    }
-  }
-  function faceStyled(sx, sy, drop, side, hTop, x, y, wr, seed, accent, V) {
-    const WS = styleOf(sim.world);
-    const h = Math.min(drop * ZH, 30), nb = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
-    for (let i = 0; i < 8; i++) {
-      const X = side === 0 ? sx - 8 + i : sx + i, yTop = side === 0 ? sy + 4 + ((i >> 1) + 1) : sy + 8 - (i >> 1);
-      const along = side === 0 ? x + (i + 0.5) / 8 : y + 1 - (i + 0.5) / 8;     // continuous along a wall run
-      for (let k = 0; k < h; k++) {
-        const r = paintWall(WS, V, { along, k, h, hz: hTop - k, side, tx: x, ty: y, wr, seed, accent });
-        const n = r.n ? norm3(nb[0] + r.n[0], nb[1] + r.n[1], nb[2] + r.n[2]) : nb;
-        putG(X, yTop + k, r.c, n, Math.max(0, hTop - k), r.e || 0, faceKey(x, y, side, i) + DPX * (hTop - k));
-      }
-    }
-  }
-  // Emissive pattern per terrain: sparse specks on water/poison, glowing crack
-  // veins on lava/chasm, scattered vents on ember. Returns a GLOW_ID (0 = none).
-  function emissiveFor(m, X, tx, ty, py, u, v, world) {
-    switch (m) {
-      case 'water':  return hash2(X, py + ty * 8, world.cs + 901) > 0.986 ? 4 : 0;
-      case 'poison': return hash2(X * 3, py + ty * 13, world.cs + 77) > 0.972 ? 1 : 0;
-      case 'lava':   return Math.abs(fbm(u * 0.8 + 3, v * 0.8, world.hs + 5) - 0.5) < 0.075 ? 5 : 0;
-      case 'ember':  return hash2(X, py + ty * 8, world.cs + 31) > 0.95 ? 3 : 0;
-      case 'chasm':  return Math.abs(fbm(u * 0.7 + 7, v * 0.7, world.hs + 9) - 0.5) < 0.05 ? 6 : 0;
-      default:       return 0;
-    }
-  }
-  // ground x+y along a tile's front edge for face column i (SW face: left→bottom vertex; SE: bottom→right)
-  const faceKey = (x, y, side, i) => x + y + (side === 0 ? 1 + (i + 0.5) / 8 : 2 - (i + 0.5) / 8);
-  function faceG(sx, sy, drop, ramp, side, hTop, tx, ty) {
-    const world = sim.world, h = Math.min(drop * ZH, 30);
-    const n = side === 0 ? norm3(-0.70, 0.45, 0.52) : norm3(0.70, 0.45, 0.52);
-    for (let i = 0; i < 8; i++) {
-      const X = side === 0 ? sx - 8 + i : sx + i;
-      const yTop = side === 0 ? sy + 4 + ((i >> 1) + 1) : sy + 8 - (i >> 1);
-      for (let k = 0; k < h; k++) {
-        const strat = fbm(X * 0.4, (yTop + k) * 0.35, world.hs + 13);
-        const idx = Math.max(0, Math.floor(strat * 3) - (side === 1 ? 1 : 0));
-        const wob = (vnoise(X * 0.8, (yTop + k) * 0.5, world.hs + 21) - 0.5) * 0.5;
-        putG(X, yTop + k, ramp[Math.min(idx, ramp.length - 1)], norm3(n[0] + wob, n[1], n[2]), Math.max(0, hTop - k), 0, faceKey(tx, ty, side, i) + DPX * (hTop - k));
-      }
-    }
-  }
-
-  // Bake the terrain + static props/resources for (viewport + margin), keyed to
-  // camera (ox, oy). Records up to two corruption flare anchors in the region.
-  // The bake runs as a JOB: begin (clear the target, list tiles), step (paint tiles, then
-  // stamp structures, then thin lights) until a time budget runs out, commit (make it
-  // current). Normally it runs in the background into the back buffers while you walk
-  // on the front ones, so crossing the margin never hitches.
-  function bakeBegin(ox, oy) {
-    bALB.fill(0); bNRM.fill(0); bEMI.fill(0); bDEP.fill(-1e9); bSH.fill(0);
-    const bx = MARGIN + ox, by = MARGIN + oy;
-    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
-    for (const cx of [-MARGIN, nvw + MARGIN]) for (const cy of [-MARGIN, nvh + MARGIN]) for (const zz of [0, 7]) {
-      const w = unproject(cx - ox, cy - oy, zz);
-      minX = Math.min(minX, w.x); maxX = Math.max(maxX, w.x); minY = Math.min(minY, w.y); maxY = Math.max(maxY, w.y);
-    }
-    minX = Math.floor(minX) - 1; minY = Math.floor(minY) - 1; maxX = Math.ceil(maxX) + 1; maxY = Math.ceil(maxY) + 1;
-    const tiles = [];
-    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) tiles.push(tx, ty);
-    const idx = Array.from({ length: tiles.length / 2 }, (_, i) => i).sort((a, b) => (tiles[a * 2] + tiles[a * 2 + 1]) - (tiles[b * 2] + tiles[b * 2 + 1]));
-    return { ox, oy, bx, by, tiles, idx, i: 0, phase: 0, hazards: [], lights: [], world: sim.world };
-  }
-  function bakeStep(j, deadline) {
-    const world = sim.world; if (j.world !== world) return false;
-    const { bx, by } = j;
-    while (j.phase === 0 && j.i < j.idx.length) {
-      const q = j.idx[j.i++], tx = j.tiles[q * 2], ty = j.tiles[q * 2 + 1];
-      drawTileG(bx, by, tx, ty);
-      const z = heightAt(world, tx, ty);
-      // static props / resources composite into the bake (depth order via the sort)
-      const was = !propAt(world, tx, ty) && world.props && world.props.get(tx + ',' + ty);
-      const md = world.mods.get(tx + ',' + ty);
-      const pk = propAt(world, tx, ty) || (was === 'chest' ? 'chestOpen' : was === 'shrine' ? 'shrineSpent' : md && md.cage ? 'cageOpen' : null);   // (an opened chest stays, lid back; a used shrine, its orb dark; a broken cage, empty)
-      if (pk && pk !== 'stairwell' && !(pk === 'stairs' && world.stairwell)) {   // (a stairwell's tiles: drawn by its structure, stairsdown_0, light and all)
-        const arr = props[pk === 'shrine' ? 'shrine_' + shrineKind(world, tx, ty) : pk] || props.spire, sp = arr.length === 1 ? arr[0] : arr[(hash2(tx, ty, 5) * arr.length) | 0];
-        stamp(bALB, bNRM, bEMI, tbw, tbh, sp, bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
-        const lk = pk === 'shrine' ? 'shrine_' + shrineKind(world, tx, ty) : pk;   // (a shrine's light is its orb's: shrines.js)
-        if (PROP_LIGHT[lk]) j.lights.push({ x: tx, y: ty, z, color: PROP_LIGHT[lk] });   // braziers / gate / shrine glow
-      }
-      const rk = resourceAt(world, tx, ty);
-      if (rk) stamp(bALB, bNRM, bEMI, tbw, tbh, harvest[rk], bx + (tx - ty) * HW, by + (tx + ty) * HH - z * ZH + HH, z * ZH, bDEP, tx + ty + 1);
-      if (world.kind === 'dungeon') {
-        const mm = materialAt(world, tx, ty);   // glowing hazard pools (lava / flame / poison / soul / ice / water)
-        const hl = tileStyle ? (mm === world.level.th.hazard ? POOL_LIGHT[variantFor(world.theme, tileVariant).pool] : null) : HAZARD_LIGHT[mm];
-        if (hl) j.hazards.push({ x: tx, y: ty, z, color: hl, s: hash2(tx, ty, 1234) });
-      }
-      if ((j.i & 15) === 0 && performance.now() > deadline) return false;
-    }
-    if (j.phase === 0) { j.phase = 1; if (performance.now() > deadline) return false; }
-    // structures: every ground shadow first, then every sprite (depth-tested), a few per slice
-    if (j.phase === 1) { j.list = structList(bx, by, j.lights); j.k = 0; j.phase = 2; }
-    while (j.phase === 2 && j.k < j.list.length) { stampShadow(j.list[j.k++], by); if (performance.now() > deadline) return false; }
-    if (j.phase === 2) { j.phase = 3; j.k = 0; }
-    while (j.phase === 3 && j.k < j.list.length) { const it = j.list[j.k++]; if (!it.beast) stampSprite(it, by); if (performance.now() > deadline) return false; }   // (a beast: its shadow only; it's drawn each frame)
-    // thin the hazard pools to a few representatives spread apart, then pool all
-    // candidates; render picks the two nearest the hero each frame.
-    j.hazards.sort((a, b) => b.s - a.s);
-    for (const h of j.hazards) { if (j.lights.length > 40) break; if (j.lights.every((o) => o.color !== h.color || Math.hypot(o.x - h.x, o.y - h.y) > 7)) j.lights.push(h); }
-    return true;
-  }
-  function bakeCommit(j) { bakeOx = j.ox; bakeOy = j.oy; flares = j.lights; terrValid = true; }
-  let lastOx = 0, lastOy = 0, velX = 0, velY = 0;
-  let transit = null;                                  // { job, fadeFrom }: see TRANSIT_BUDGET
-  function keepBaked(ox, oy, t0) {
-    velX = velX * 0.9 + (ox - lastOx) * 0.1; velY = velY * 0.9 + (oy - lastOy) * 0.1; lastOx = ox; lastOy = oy;
-    if (!terrValid && transit) {                                   // a scene change: bake in slices behind black
-      if (!transit.job || transit.job.world !== sim.world) { target(back); transit.job = bakeBegin(ox, oy); }
-      target(back);
-      if (bakeStep(transit.job, t0 + TRANSIT_BUDGET)) { const f = front; front = back; back = f; bakeCommit(transit.job); transit.job = null; transit.fadeFrom = t0; }
-      target(front);
-      return;
-    }
-    if (!terrValid) {                                              // first frame: bake now, in full
-      job = null; target(front); const j = bakeBegin(ox, oy); bakeStep(j, Infinity); bakeCommit(j);
-      if (globalThis.__rstats) globalThis.__rstats.bakes.push(performance.now() - t0);
-      return;
-    }
-    const drift = Math.max(Math.abs(bakeOx - ox), Math.abs(bakeOy - oy));
-    if (!job && drift > TRIGGER) {                                 // aim ahead of where the camera is heading
-      const lead = (v) => Math.max(-MARGIN * 0.45, Math.min(MARGIN * 0.45, v * 40));
-      target(back); job = bakeBegin(Math.round(ox + lead(velX)), Math.round(oy + lead(velY)));
-    }
-    if (job) {
-      target(back);
-      const urgent = drift > MARGIN - 10;                          // about to run off the baked area: finish now
-      const done = bakeStep(job, urgent ? Infinity : t0 + BAKE_BUDGET);
-      if (done) { const f = front; front = back; back = f; bakeCommit(job); job = null; if (globalThis.__rstats) globalThis.__rstats.swaps = (globalThis.__rstats.swaps || 0) + 1; }
-      target(front);
-    }
-  }
+  let transit = null;                                  // { fadeFrom }: a scene change, black until the painter has built it, then a fade in
 
   // the render clock (dev slow motion runs it slow, ?dev&manual steps it): everything timed on screen reads this, so a
   // capture on the manual clock is the same pixels every run (the numbers and the camera's jolt read the wall clock
@@ -991,41 +316,13 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   let banner = null;
   const sceneTitle = () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'The Old Barrows'} · depth ${sim.state.depth + 1}` : sim.world.name);
   const hiddenHere = (L) => !!L.site && !siteOpen(L.site, sim.state.revealed || []);   // a site not found yet has no name on the Vale
-  sim.bus.on('harvested', () => { terrValid = false; }); sim.bus.on('looted', () => { terrValid = false; });
-  sim.bus.on('cageDropped', () => { terrValid = false; }); sim.bus.on('cageBroken', () => { terrValid = false; });   // (lamps.js: a harvester's cage on the floor, then broken)
-  sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { job: null, fadeFrom: 0 }; tileCache.clear(); job = null; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
+  sim.bus.on('levelChanged', () => { liveBolts.clear(); transit = { fadeFrom: 0 }; fol.length = 0; props = withExit(buildProps(sim.world.seed)); terrValid = false; outMap = null; wantAtlases(); preloadFamily(); banner = { text: sceneTitle(), until: clock() + 2600 }; });
   preloadFamily();
   banner = { text: sceneTitle(), until: clock() + 2600 };
 
-  // ── The Stage (dev only: src/dev/stage.js, docs/character-stage-proposal.md) ──────────────────────
-  // A lineup of figures on the stage world, each standing on its spot and playing the clip the Stage
-  // asks for, drawn by the same stamping, light and upscale as play. The Stage owns the layout, the
-  // camera and each figure's playback inputs; the strides are the renderer's own, so a walk in place
-  // steps exactly as it does in the world.
-  let stage = null;
-  const stageAtlases = new Map();
-  const stageAtlas = (a) => {
-    const key = `${a.root || ''}|${a.atlas}|${a.scale || 1}`;
-    if (!stageAtlases.has(key)) { stageAtlases.set(key, null); loadActorAtlas(a.atlas, a.scale || 1, a.root || undefined).then((x) => stageAtlases.set(key, x)).catch(() => stageAtlases.set(key, false)); }
-    return stageAtlases.get(key);
-  };
-  function stageDraws(st, draws, ox, oy, now) {
-    for (const a of st.actors) {
-      const atl = stageAtlas(a); if (!atl) continue; a.meta = atl.meta;   // (the capture tool reads clip lengths)
-      const stride = a.kind === 'party' ? STRIDE.hero : a.kind === 'undead' ? STRIDE.skel : strideOf(atl, STRIDE.walk);
-      const o = st.anim(a, atl, now), an = pickAnim(a.unit, atl, { ...o, now, stride });
-      const z = heightAt(sim.world, Math.floor(a.x), Math.floor(a.y)), q = project(a.x, a.y, z);
-      const sp = atl.cells[an.dir][an.frame], fx = ox + q.sx, fy = oy + q.sy, bb = spriteBox(sp);
-      a.box = [Math.round(fx) - sp.ax + bb[0], Math.round(fy) - sp.ay + bb[1], Math.round(fx) - sp.ax + bb[2], Math.round(fy) - sp.ay + bb[3]];   // drawn bounds, native px (the overlap test)
-      draws.push({ d: a.x + a.y, sp, fx, fy, h: z * ZH, k: a.x + a.y, look: { flash: 0, fade: 0 }, team: a.team || 0, atl, a: an, who: a });   // (who: the same figure frame to frame, for another painter's model: hybrid.js)
-    }
-    // the art review's other views (src/dev/stage.js: show=env · props · fx): what the Stage lays out besides figures,
-    // drawn by the same stamping, light and effects as play. The Stage pushes sprite draws and calls effects through this.
-    if (st.frame) st.frame(stageApi(draws, ox, oy, now));
-  }
   // v1.47 (the owner: "fx should be a bit more dynamic visually like an arpg"): a bolt streaks (its last few points),
   // bursts where it lands, and a fallen foe's light goes up. Presentation only, keyed by the sim's own objects.
-  const trails = new WeakMap(), gone = new WeakSet(), stageBolts = [];
+  const trails = new WeakMap(), gone = new WeakSet();
   // fire landing (the owner, 2026-11-08: "more explosion fx on hit"): a moment of light thrown on the room round it, in
   // the lighting pass's third slot while it lasts (the nearer lamp keeps the second), and on Luminati one of its own lights
   const blasts = [];
@@ -1054,26 +351,14 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
     return out;
   }
-  // Frost Nova and Turn Undead on Luminati, in its ice mage's and cleric's looks (world.js placeSpells): from the cast (its
-  // frost painted, her glyph drawn) to the landing and after; Emberlit draws them itself (skillfx.js)
-  // (the owner's review, 2026-11-08: Shield Wall's dome, Arcane Ward's ring, Mend and Bless in holy light, Cleave's
-  // spectral blades, Firebolt's ember bolt and flames; the dome and the ward ring follow the state: auras below)
-  const LUM_SPELLS = new Set(['frost_nova', 'turn_undead', 'mend', 'bless', 'cleave']), LUM_ALSO = new Set(['firebolt', 'shield_wall']);
-  const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9 }, spells = [];
-  // The tiers' skills (GDD v1.55) in Luminati's own looks (tools/render3d/world.js). The owner chose, skill by skill, on the
-  // review page (2026-11-08, "Tier Looks"; tools/capture/tiers.mjs): these fourteen and the Spirit Totem (its bell bigger)
-  // in Luminati's; Earthshatter, Whirling Blades, Glacial Tomb, Blizzard and Binding Roots kept in Emberlit's light. A stun's
-  // or knockdown's stars are Luminati's with them; a freeze's shell and a root's grip stay Emberlit's (their skills were
-  // kept). ?tierlooks=luminati shows all twenty in Luminati's (the review's), ?tierlooks=now none.
-  const TIER_LUM = ['vault', 'cutting_wave', 'kidney_shot', 'fan_of_knives', 'shadowstep', 'caltrops', 'flare', 'gather', 'sanctuary', 'consecrate', 'revive', 'judgement', 'old_marks', 'thunder_drum', 'spirit_totem'];
-  const TIER_LIFE = { vault: 1.0, cutting_wave: 0.9, earthshatter: 1.4, whirling_blades: 5.1, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9,
-    caltrops: 6, flare: 1.4, gather: 0.9, glacial_tomb: 2.9, blizzard: 6, sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, binding_roots: 2.6,
-    old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 };
-  const tierLooks = (() => { try { return new URLSearchParams(location.search).get('tierlooks') || 'chosen'; } catch { return 'chosen'; } })();
-  const lumTier = new Set(tierLooks === 'luminati' ? Object.keys(TIER_LIFE) : tierLooks === 'now' ? [] : TIER_LUM);
-  const lumHolds = new Set(tierLooks === 'luminati' ? ['stun', 'frozen', 'root'] : tierLooks === 'now' ? [] : ['stun']);   // (the holds Luminati draws)
-  for (const id of lumTier) { LUM_SPELLS.add(id); SPELL_LIFE[id] = TIER_LIFE[id]; }
-  sfx.statusesElsewhere?.(lumHolds);
+  // the skills Luminati draws in its own looks (skillfx.js LUM_LOOKS: world.js placeSpells), from the cast (Frost Nova's
+  // frost painted, Turn Undead's glyph drawn) to the landing and after; Firebolt and Shield Wall in its pieces beside our
+  // light (LUM_ALSO: Shield Wall's dome and Arcane Ward's ring follow the state, auras below); and the holds it draws on
+  // foes (LUM_HOLDS: a stun's or a knockdown's stars). The owner's picks, final (2026-11-09: the ?tierlooks review went)
+  const LUM_SPELLS = new Set(LUM_LOOKS), LUM_ALSO = new Set(['firebolt', 'shield_wall']), lumHolds = new Set(LUM_HOLDS);
+  const SPELL_LIFE = { frost_nova: 2.7, turn_undead: 1.2, mend: 1.0, bless: 1.4, cleave: 0.8, firebolt: 1.2, shield_wall: 0.9,
+    vault: 1.0, cutting_wave: 0.9, kidney_shot: 0.8, fan_of_knives: 0.7, shadowstep: 0.9, caltrops: 6, flare: 1.4, gather: 0.9,
+    sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.7, old_marks: 0.8, spirit_totem: 8, thunder_drum: 0.9 }, spells = [];
   const boltIds = new WeakMap(); let boltN = 0;
   let spellN = 0;
   function spellEvent(e, now) {
@@ -1100,7 +385,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     });
     // what holds on foes (battle.js crowd control), in Luminati's pieces with the tiers' looks: a stun's or a knockdown's
     // stars, a freeze's ice shell, a root's grip
-    if (lumHolds.size) for (const f of sim.world.enemies || []) {
+    for (const f of sim.world.enemies || []) {
       if (f.dead || f.hp <= 0) continue;
       const k = f.frozen > 0 ? 'frozen' : f.stun > 0 || f.knocked > 0 ? 'stun' : f.rooted > 0 ? 'root' : null; if (!k || !lumHolds.has(k)) continue;
       out.push({ key: `aura:${k}:${f.id}`, id: 'aura_' + k, seed: f.id, age: 0, land: null, x: f.x, y: f.y, tx: f.x, ty: f.y, r: 0, k: f.frozen || f.stun || f.knocked || f.rooted || 0, reached: [] });
@@ -1143,17 +428,6 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     }
     const o = liveBolts; liveBolts = nextBolts; nextBolts = o; nextBolts.clear();
   }
-  function stageApi(draws, ox, oy, now) {
-    return { now, ox, oy, draws, project, ZH, HW, HH, fx, skills: sfx, float: addFloat, envSprite, envMeta, props, boltSprite, arrowSprite, LOOT_RGB, SOUL_FREE, BOLT_RGB,
-      // a bolt in flight as the game draws one (its sprite, and its trail, halo and floor glow in the effects pass); a new
-      // `obj` each flight, so the last one lands (bursts) when it's let go
-      bolt: (obj, x, y, kind) => { stageBolts.push(obj); obj.kind = kind; obj.bx = x; obj.by = y; },
-      at: (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, z }; } };
-  }
-  const boxes = new WeakMap();
-  const spriteBox = (sp) => { let b = boxes.get(sp); if (b) return b; let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
-    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.mask[y * sp.w + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    boxes.set(sp, (b = [x0, y0, x1 + 1, y1 + 1])); return b; };
 
   // Camera: follows the hero, but in a town square (world.hub) it eases onto the square's
   // fixed framing, so the square sits still like a home screen while the hero moves in it.
@@ -1236,52 +510,38 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
 
   function render(alpha, now) {
-    const X = !!ext || EXTERNAL;                                   // another painter draws the world (setExternal, opts.external)
     clockNow = now;
-    const p = sim.state.player, st = stage && sim.world.kind === 'stage' ? stage : null;
-    const ix = st ? st.cam.x : p.px + (p.x - p.px) * alpha, iy = st ? st.cam.y : p.py + (p.y - p.py) * alpha;   // the Stage frames its lineup, not the hero
+    const p = sim.state.player;
+    const ix = p.px + (p.x - p.px) * alpha, iy = p.py + (p.y - p.py) * alpha;
     const pz = heightAt(sim.world, Math.floor(ix), Math.floor(iy));
     const P = project(ix, iy, pz);
     const { ox, oy } = (lastCam = camera(ix, iy, pz)); lastDrawn = now;
 
     const t0 = performance.now();
     windGlowNow(clock());
-    if (X) {                                                       // (the other painter has the world: its level built is the bake)
-      const ok = !!ext && ext.ready(sim.world);                    // (made external, before the painter's module is in: black)
-      if (!ok && !terrValid && !transit) transit = { job: null, fadeFrom: 0 };
+    {                                                              // (the painter's level built is the scene's being ready)
+      const ok = !!ext && ext.ready(sim.world);                    // (before the painter's module is in, or its level built: black)
+      if (!ok && !terrValid && !transit) transit = { fadeFrom: 0 };
       if (ok && !terrValid) { terrValid = true; if (transit) transit.fadeFrom = t0; }
       if (!ok) terrValid = false;
-    } else keepBaked(ox, oy, t0);
-    if (transit && !terrValid) {                                   // the new scene is still baking: black, and the scene's name
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, vw, vh); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+    if (transit && !terrValid) {                                   // the new scene is still building: the scene's name
       octx.clearRect(0, 0, vw, vh); drawBanner(now);
       return;
     }
 
-    // copy the visible window out of the baked margin region (scratch x == native x)
-    const srcX = MARGIN + (bakeOx - ox), srcY = MARGIN + (bakeOy - oy);
-    if (!X) for (let y = 0; y < nvh; y++) {
-      const b0 = ((srcY + y) * tbw + srcX) * 4, s0 = (y * nvw) * 4, len = nvw * 4;
-      sALB.set(bALB.subarray(b0, b0 + len), s0);
-      sNRM.set(bNRM.subarray(b0, b0 + len), s0);
-      sEMI.set(bEMI.subarray(b0, b0 + len), s0);
-      sDEP.set(bDEP.subarray((srcY + y) * tbw + srcX, (srcY + y) * tbw + srcX + nvw), y * nvw);
-    }
-
-    // stamp actors (skeletons + hero) into the window G-buffer, depth-sorted by
-    // (x+y) so nearer figures overdraw farther ones.
+    // this frame's figures, depth-sorted by (x+y) so nearer ones come after farther ones: the painter's to draw
     const draws = [], party = sim.state.party, H = party[0];
     const lerp = (u, k) => (u['p' + k] === undefined ? u[k] : u['p' + k] + (u[k] - u['p' + k]) * alpha);   // between 20 Hz steps
     const lookOf = (u, fade = 0) => ({ flash: u.flash > 0 ? 0.32 : 0, fade });
     const GHOST = { ghost: 1 };
-    if (st) stageDraws(st, draws, ox, oy, now); else {               // the dev Stage: its lineup instead of the world's people
     // the hero
     const hAtl = H.actor && H.actor !== 'hero_knight' ? memberAtlas(H, H.actor) : heroAtlas;
     if (hAtl) {                                       // (until its atlas is in, the hero isn't drawn, as a companion isn't: the old paper doll read as a pink stand-in)
       const heroAtlas = hAtl;
       const tn = talkingTo && !p.moving && (sim.world.npcs || []).find((n) => n.id === talkingTo);   // in a conversation: face them
       const a = pickAnim(H, heroAtlas, { now, x: ix, y: iy, moving: p.moving, faceX: tn ? tn.x - ix : H.fx, faceY: tn ? tn.y - iy : H.fy, facing: H.act > 0 || !!tn, dead: H.down, stride: STRIDE.hero });
-      draws.push({ d: ix + iy + 0.01, sp: heroAtlas.cells[a.dir][a.frame], fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H });
+      draws.push({ d: ix + iy + 0.01, fx: ox + P.sx, fy: oy + P.sy, h: pz * ZH, k: ix + iy, look: lookOf(H, H.down ? 0.35 : 0), team: 1, atl: heroAtlas, a, u: H });
     }
     // companions: their sim positions (they follow you, or fight on their own)
     party.slice(1).forEach((m, i) => {
@@ -1291,7 +551,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const a = pickAnim(m, atl, { now, x: mx, y: my, moving: m.moving, faceX: m.fx, faceY: m.fy, facing: m.act > 0 || !m.moving, dead: m.down, sit: m.sitting && !m.moving, stride: STRIDE.hero, seed: 0.37 * (i + 1) });
       const up = raisedAt.get(m), rl = raisedLook(up === undefined ? undefined : (now - up) / 1000);   // just raised (fx.js)
       const look = m.fallen || rl === 'ghost' ? GHOST : rl !== null ? { flash: rl, fade: 0 } : lookOf(m, m.down ? 0.35 : 0);
-      draws.push({ d: mx + my, sp: atl.cells[a.dir][a.frame], fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m });
+      draws.push({ d: mx + my, fx: ox + cp.sx, fy: oy + cp.sy, h: cz * ZH, k: mx + my, look, team: m.fallen ? undefined : 1, atl, a, u: m.fallen ? null : m });
     });
     // named townsfolk (sim world.npcs): idle where they stand, turning to you as you come near, with a
     // gesture now and then. Their playback state is presentation-only, kept here by NPC id.
@@ -1315,7 +575,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       u.near = near;
       const walking = !!n.moving;
       const a = pickAnim(u, atl, { now, x: qx, y: qy, moving: walking, faceX: walking ? n.fx : near || talking ? ix - qx : -1, faceY: walking ? n.fy : near || talking ? iy - qy : 1, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: u.seed });
-      draws.push({ d: qx + qy, sp: atl.cells[a.dir][a.frame], fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id, who: u });
+      draws.push({ d: qx + qy, fx: nx, fy: ny, h: nz * ZH, k: qx + qy, look: lookOf(n), team: 0, atl, a, id: n.id, who: u });
     }
     // the crowd (pass 11f): no id, so a tap never picks one
     { const crowd = crowdOf(sim.world); if (crowd.length) stepCrowd(sim.world, crowd, now);
@@ -1324,7 +584,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
         const vz = heightAt(sim.world, Math.floor(v.x), Math.floor(v.y)), vp = project(v.x, v.y, vz), vx = ox + vp.sx, vy = oy + vp.sy;
         if (vx < -60 || vx > nvw + 60 || vy < -40 || vy > nvh + 120) continue;
         const a = pickAnim(v.u, atl, { now, x: v.x, y: v.y, moving: v.moving, faceX: v.fx, faceY: v.fy, facing: true, dir0: 2, stride: strideOf(atl, STRIDE.walk), seed: v.u.seed });
-        draws.push({ d: v.x + v.y, sp: atl.cells[a.dir][a.frame], fx: vx, fy: vy, h: vz * ZH, k: v.x + v.y, look: CROWD_LOOK, team: 0, atl, a, noXray: true, who: v.u });
+        draws.push({ d: v.x + v.y, fx: vx, fy: vy, h: vz * ZH, k: v.x + v.y, look: CROWD_LOOK, team: 0, atl, a, noXray: true, who: v.u });
       } }
     // the dead on the barrows road (sim road.js; world doc §3.1 v1.9): ranks standing at ease, facing north
     // up the road for the relief that never came. No ring, no bar: they aren't in a fight with you.
@@ -1333,14 +593,14 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const qz = heightAt(sim.world, Math.floor(q.x), Math.floor(q.y)), qp = project(q.x, q.y, qz), qx = ox + qp.sx, qy = oy + qp.sy;
       if (qx < -60 || qx > nvw + 60 || qy < -40 || qy > nvh + 120) continue;
       const a = pickAnim(q, atl, { now, x: q.x, y: q.y, moving: false, faceX: -0.25, faceY: -1, facing: true, dir0: 2, stride: STRIDE.skel, seed: (q.x * 0.37 + q.y * 0.11) % 1 });
-      draws.push({ d: q.x + q.y, sp: atl.cells[a.dir][a.frame], fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a, who: q });
+      draws.push({ d: q.x + q.y, fx: qx, fy: qy, h: qz * ZH, k: q.x + q.y, look: { flash: 0, dissolve: 0 }, team: 0, atl, a, who: q });
     }
-    // the farm beasts, at their ease (beastFrame): no ring, no tap, and their ground shadow is in the bake
+    // the farm beasts, at their ease (beastFrame): no ring, no tap; the painter stands the frame's sprite (env)
     for (const bst of beastList()) {
       const st = bst.st, bz = heightAt(sim.world, Math.floor(st.x), Math.floor(st.y)), bp = project(st.x, st.y, bz), bxs = ox + bp.sx, bys = oy + bp.sy;
       if (bxs < -60 || bxs > nvw + 60 || bys < -40 || bys > nvh + 80) continue;
-      const fid = st.id + beastFrame(bst, now), own = beastSprite(fid), sp = own || beastSprite(st.id); if (!sp) continue;
-      draws.push({ d: st.x + st.y, sp, fx: bxs, fy: bys, h: bz * ZH, k: st.x + st.y, look: null, noXray: true, env: own ? fid : st.id });   // (env: the frame's sprite id, for another painter)
+      const fid = st.id + beastFrame(bst, now), env = envMeta.sprites[fid] ? fid : envMeta.sprites[st.id] ? st.id : null; if (!env) continue;
+      draws.push({ d: st.x + st.y, fx: bxs, fy: bys, h: bz * ZH, k: st.x + st.y, look: null, env });   // (env: the frame's sprite id, for the painter)
     }
     // enemies: one atlas per kind (ENEMY_ACTOR); the Ashbound rise from the ground, and the slain collapse, lie, then fade
     for (const e of sim.world.enemies || []) {
@@ -1361,7 +621,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       const a = pickAnim(e, skelAtlas, { now, x: exi, y: eyi, moving: e.moving, faceX: e.fx, faceY: e.fy, facing: true, dead, deadT, dir0: 2,
         spawnP: e.spawn > 0 && undead ? 1 - e.spawn / 0.5 : undefined, stride: undead ? STRIDE.skel : strideOf(skelAtlas, STRIDE.walk), seed: (e.id * 0.37) % 1 });
       const fade = dead ? Math.max(0, (deadT - (DEATH_T - 0.35)) / 0.35) : 0;
-      draws.push({ d: exi + eyi, sp: skelAtlas.cells[a.dir][a.frame], fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
+      draws.push({ d: exi + eyi, fx: ex, fy: ey, h: ez * ZH, k: exi + eyi, look: { flash: e.flash > 0 ? 0.36 : 0, warn: dead ? 0 : windGlow.get(e.id) || 0, dissolve: dead ? fade : !undead && e.spawn > 0 ? e.spawn / 0.5 : 0 }, team: dead ? 0 : e.elite ? 3 : 2, atl: skelAtlas, a, uid: e.id, u: e, foe: true });   // (the living walk in out of the dark: a fade, not a rise)
     }
     // bolts in flight: small glowing sprites, a little above the ground
     for (const b of sim.world.projectiles || []) {
@@ -1372,131 +632,49 @@ export function createRenderer(canvas, sim, input, opts = {}) {
       else sp = boltSprite(b.kind);
       draws.push({ d: bx + by + 0.2, sp, fx: ox + bp.sx, fy: oy + bp.sy - 18, h: bz * ZH + 18, k: bx + by + 1.5, lift: 18, glow: b.kind !== 'arrow' && b.kind !== 'bolt' });   // (lift, glow: hybrid.js stands it in Luminati's world, lit by its own light)
     }
-    }
     if (globalThis.__trace) globalThis.__trace.push({ t: now, ox, oy, rx: lastCam.rx, ry: lastCam.ry, ix, iy, mv: p.moving,   // dev: motion trace (per rendered frame)
       party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]),
       foes: draws.filter((d) => d.team >= 2 && d.a && d.atl).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir, d.atl.name, d.uid]) });
     if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
-    // ground the figures: a soft contact shadow under each, and in battle a faint team ring
-    const hb = st ? st.hazard : sim.battle, rings = st ? !!st.rings : !!sim.battle;   // (the Stage's FX view paints its own hazard, and rings its figures)
-    if (!X) {
-    if (hb && (hb.hazards?.length || hb.flood > 0)) paintHazards(hb, ox, oy, now);   // the mud and the water, on the ground under the figures
-    if (sim.world.kind !== 'dungeon') for (const dr of draws) if (dr.team !== undefined && dr.sp && !(dr.look && (dr.look.ghost || dr.look.dissolve))) castShadow(dr.sp, dr.fx, dr.fy, dr.h);   // no sun underground
-    for (const dr of draws) if (dr.team !== undefined && dr.sp) footMark(Math.round(dr.fx), Math.round(dr.fy), dr.h, rings ? dr.team : 0, dr.look && dr.look.dissolve || 0);
-    for (const dr of draws) if (dr.sp) { const x = stamp(sALB, sNRM, sEMI, nvw, nvh, dr.sp, dr.fx, dr.fy, dr.h, sDEP, dr.k, dr.noXray ? 2 : true, dr.look); if (globalThis.__xray && dr.id) globalThis.__xray[dr.id] = x; }   // dev: how hidden each named person is
-    } else sEMI.fill(0);
-    const fxKey = X ? { base: Math.floor(ix + iy) - 64, step: 0.5 } : null;    // (another painter tests the effects' depth itself: fx.js flush)                                           // (another painter: the effects alone, on black, for it to lay over its world as light)
+    // the fight's ground (its hazards, the team rings) is the painter's, from the battle (ext.frame below)
+    const hb = sim.battle, rings = !!sim.battle;
+    sEMI.fill(0);
+    const fxKey = { base: Math.floor(ix + iy) - 64, step: 0.5 };   // (the painter tests the effects' depth itself: fx.js flush)
     {
-    // weapon effects over the figures (light only — the EMISSIVE plane), then the hit sparks
-    fx.target({ EMI: sEMI, DEP: X ? null : sDEP, W: nvw, H: nvh, DPX, KEY: fxKey });
+    // the effects alone, on black (the EMISSIVE plane), for the painter to lay over its world as light: weapon effects
+    // over the figures, then the hit sparks
+    fx.target({ EMI: sEMI, DEP: null, W: nvw, H: nvh, DPX, KEY: fxKey });
     for (const dr of draws) if (dr.atl && dr.a.atk) fx.weapon(dr.atl, dr.a, dr.fx, dr.fy, dr.h, dr.k);
     const fxProj = (x, y) => { const z = heightAt(sim.world, Math.floor(x), Math.floor(y)), q = project(x, y, z); return { sx: ox + q.sx, sy: oy + q.sy, h: z * ZH, key: x + y }; };
     for (const b of sim.world.projectiles || []) if (b.kind) boltFx(b, lerp(b, 'x'), lerp(b, 'y'), b.kind, fxProj);
-    for (const b of stageBolts) boltFx(b, b.bx, b.by, b.kind, fxProj);
-    stageBolts.length = 0; boltsLand(clock());
+    boltsLand(clock());
     for (const e of sim.world.enemies || []) if (e.dead && !gone.has(e) && e.kind !== 'lantern') {   // a foe goes out
       gone.add(e); const fs = styleOfSrc(e.kind, true, ENEMY_ACTOR);
       fx.soul(e.x, e.y, (fs && fs.spark) || [220, 220, 235], { now: clock(), big: !!(e.boss || e.elite) });
     }
     fx.particles(now, fxProj);
-    if (X && hb && hb.flood > 0 && hb.edge) floodGlints(hb, fxProj, now);   // (another painter lays the water itself: its sparse glints as light)
-    sfx.draw(now, fxProj, st && st.skillUnits ? st.skillUnits(fxProj) : draws.filter((dr) => dr.u).map((dr) => ({ u: dr.u, foe: !!dr.foe, sx: dr.fx, sy: dr.fy, h: dr.h, key: dr.k })));   // the skills' moments and auras (skillfx.js)
-    if (st && st.afterFx) st.afterFx({ now, proj: fxProj, fx });   // (the art review's FX view: what draws straight into the light, the marsh-lights)
+    if (hb && hb.flood > 0 && hb.edge) floodGlints(hb, fxProj, now);   // (the painter lays the water itself: its sparse glints as light)
+    sfx.draw(now, fxProj, draws.filter((dr) => dr.u).map((dr) => ({ u: dr.u, foe: !!dr.foe, sx: dr.fx, sy: dr.fy, h: dr.h, key: dr.k })));   // the skills' moments and auras (skillfx.js)
     // the Fens' marsh-lights over the meres, as the lamps come up (dusk, night): presentation only, one a mere, kept off the world
     if (sim.world.marsh) fx.wisps(now, fxProj, wispsOf(sim.world), Math.min(1.2, Math.max(0, (sky.lamp - 0.4) / 0.6)));
 
     }
-    // the other painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
+    // the painter's frame: the figures, the camera, the effects' light (EMI, native px) and the fight's ground
     if (ext) ext.frame(draws, { ox, oy, rx: lastCam.rx, ry: lastCam.ry, S, k: vw / window.innerWidth, vw, vh, nvw, nvh, pz, now, t: skyHoldT ?? sim.state.t, emi: sEMI, key: fxKey, battle: hb, rings, blast: blastNow(clock()), warns: warnsNow(clock()), spells: spellsNow(clock()) });   // (t: the held look's, the title's dusk; blast: a fire landing's light)
     if (globalThis.__rstats) globalThis.__rstats.cpu.push(performance.now() - t0);
-    if (!X) {
-    // upload the window G-buffer
-    gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sALB);
-    gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sNRM);
-    gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, nvw, nvh, gl.RGBA, gl.UNSIGNED_BYTE, sEMI);
-    }
-
-    const t = now / 1000;
-    // hero carry-light + corruption flares (all in native/scratch pixel space)
-    // the carry light rides with the ember wisp above the shoulder (critic pass 3: at chest height it
-    // sat inside the figure and blew the knight's armour out to a white ghost)
-    const hx = ox + P.sx, hy = oy + P.sy - 30, hz = pz * ZH + 46;
-    const L = [[hx + 8, hy, hz], [0, 0, 0], [0, 0, 0]];
     const outdoor = sim.world.kind !== 'dungeon';
     skyAt(skyHoldT ?? sim.state.t, skyNow); lastNow = now;
     const ease = Math.min(1, (now - skyEase0) / SKY_EASE); mixSky(sky, skyFrom, skyNow, ease * ease * (3 - 2 * ease));
-    const wx = outdoor && !st ? weatherNow(sim) : NO_WEATHER, wLight = lightOf(sky); weatherLight(sky, wx);   // rain, fog, snow: mostly in the light (weatherfx.js)
-    const hl = st ? 0 : outdoor ? 0.42 * sky.wisp : 1;              // outdoors the hero's ember-wisp is a glow at dusk, a torch at night (none on the Stage: even light)
-    const LC = [[1.9 * WISP * hl, 1.15 * WISP * hl, 0.42 * WISP * hl], [0, 0, 0], [0, 0, 0]];
-    // the two nearest hazard/prop lights to the hero cast this frame (shader has 3 slots)
-    const near = flares.map((s) => ({ s, d: Math.hypot(s.x - ix, s.y - iy) })).sort((a, b) => a.d - b.d).slice(0, 2);
-    near.forEach(({ s }, i) => {
-      const sp = project(s.x + 0.5, s.y + 0.5, s.z);
-      const fl = 0.6 + 0.4 * vnoise(t * (i === 0 ? 5.3 : 4.1), i === 0 ? 3.3 : 9.9, sim.world.seed);
-      L[i + 1] = [ox + sp.sx, oy + sp.sy, s.z * ZH + 12];
-      const g = outdoor ? fl * sky.lamp : fl;                       // lamps and windows cast less by day
-      LC[i + 1] = [s.color[0] * g, s.color[1] * g, s.color[2] * g];
-    });
-    const bl = blastNow(clock());                                   // a fire landing: its light takes the third slot while it lasts
-    if (bl) { const bz = heightAt(sim.world, Math.floor(bl.x), Math.floor(bl.y)), bp = project(bl.x, bl.y, bz); L[2] = [ox + bp.sx, oy + bp.sy - 14, bz * ZH + 20]; LC[2] = [1.9 * bl.k, 0.95 * bl.k, 0.3 * bl.k]; }
+    const wx = outdoor ? weatherNow(sim) : NO_WEATHER, wLight = lightOf(sky); weatherLight(sky, wx);   // rain, fog, snow: mostly in the light (weatherfx.js)
 
-    // PASS A — lighting at native resolution
-    if (!X) {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, litFbo);
-    gl.viewport(0, 0, nvw, nvh);
-    gl.useProgram(lightP);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.bindSampler(0, sampNearest);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.bindSampler(1, sampNearest);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.bindSampler(2, sampNearest);
-    gl.uniform1i(U(lightP, 'uAlb'), 0); gl.uniform1i(U(lightP, 'uNrm'), 1); gl.uniform1i(U(lightP, 'uEmi'), 2);
-    gl.uniform2f(U(lightP, 'uRes'), nvw, nvh);
-    gl.uniform1f(U(lightP, 'uTime'), t);
-    gl.uniform1f(U(lightP, 'uAmb'), AMB);
-    gl.uniform1f(U(lightP, 'uWispA'), st ? 0 : outdoor ? WISP * 0.6 * Math.min(1, sky.wisp) : WISP);
-    gl.uniform3fv(U(lightP, 'uL'), L.flat());
-    gl.uniform3fv(U(lightP, 'uLC'), LC.flat());
-    // the wisp floats beside the 56 px figure's shoulder (not over its torso), bobbing gently
-    gl.uniform3f(U(lightP, 'uSunL'), -0.72, 0.16, 0.67);                 // low sun from the upper left (matches the baked shadows)
-    const kt = !outdoor && !st && KIT_TINT[sim.world.kit];   // (a dungeon floor's kit tints its light)
-    if (outdoor) { gl.uniform3fv(U(lightP, 'uSunC'), sky.sun); gl.uniform3fv(U(lightP, 'uAmbC'), sky.amb); } else { gl.uniform3f(U(lightP, 'uSunC'), 0, 0, 0); if (kt) gl.uniform3f(U(lightP, 'uAmbC'), AMB_BASE[0] * kt[0], AMB_BASE[1] * kt[1], AMB_BASE[2] * kt[2]); else gl.uniform3f(U(lightP, 'uAmbC'), 0, 0, 0); }
-    gl.uniform1f(U(lightP, 'uWin'), outdoor ? sky.win : 1);
-    gl.uniform1f(U(lightP, 'uLift'), outdoor ? sky.lift : 0);
-    gl.uniform1f(U(lightP, 'uHaze'), outdoor ? sky.haze : 1);
-    gl.uniform2f(U(lightP, 'uWispPx'), hx + 19, oy + P.sy - 50 + Math.sin(t * 2.1) * 1.5);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.bindTexture(gl.TEXTURE_2D, litTex); gl.generateMipmap(gl.TEXTURE_2D);
-
-    // PASS B — crisp (sharp-bilinear) upscale + bloom + grade
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, vw, vh);
-    gl.useProgram(postP);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, litTex); gl.bindSampler(0, sampNearest);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, litTex); gl.bindSampler(1, sampMip);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, texAlb); gl.bindSampler(2, sampNearest);
-    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, texNrm); gl.bindSampler(3, sampNearest);
-    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, texEmi); gl.bindSampler(4, sampNearest);
-    gl.uniform1i(U(postP, 'uLit'), 0); gl.uniform1i(U(postP, 'uLitM'), 1);
-    gl.uniform1i(U(postP, 'uAlbT'), 2); gl.uniform1i(U(postP, 'uNrmT'), 3); gl.uniform1i(U(postP, 'uEmiT'), 4);
-    gl.uniform2f(U(postP, 'uOut'), vw, vh);
-    gl.uniform2f(U(postP, 'uNative'), nvw, nvh);
-    gl.uniform1f(U(postP, 'uScale'), S);
-    gl.uniform2f(U(postP, 'uOff'), (lastCam.rx - ox) * S, (lastCam.ry - oy) * S);   // the sub-pixel part of the camera
-    gl.uniform1f(U(postP, 'uBloom'), outdoor ? BLOOM * sky.bloom : BLOOM);
-    gl.uniform1f(U(postP, 'uVig'), outdoor ? sky.vig : 0.85); gl.uniform1f(U(postP, 'uSat'), outdoor ? sky.sat : 1);
-    gl.uniform1f(U(postP, 'uTime'), t);
-    gl.uniform1i(U(postP, 'uView'), 0);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    }
-
-    // 2D overlay (above the GL canvas): minimap + floating joystick
+    // the overlay (above the painter's world): the minimap, names, bars, numbers, the banner, the floating joystick
     octx.clearRect(0, 0, vw, vh);
     // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
     // doubled up, and fell over the top bar's words, this canvas being above it)
-    if (wx.k && !(X && (wx.kind === 'rain' || wx.kind === 'snow'))) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
-    if (st) st.overlay(octx, (x, y) => { const q = project(x, y, pz); return [(lastCam.rx + q.sx) * S, (lastCam.ry + q.sy) * S]; }, S);   // the Stage's names and headings
-    else if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
+    if (wx.k && !(wx.kind === 'rain' || wx.kind === 'snow')) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (transit) {                                                 // fading in from the scene change
@@ -1733,8 +911,8 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   });
   const LOOT_RGB = { common: [220, 208, 185], fine: [120, 235, 110], rare: [90, 160, 255], heirloom: [255, 165, 50] };
   sim.bus.on('skill', (e) => {                                  // a skill's moment (battle.js skillEv)
-    if (ext && LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (on Luminati, these skills in its own looks: tools/render3d/world.js)
-    else { sfx.event(e, clock()); if (ext && LUM_ALSO.has(e.id)) spellEvent(e, clock()); }   // (and these with its pieces beside our light)
+    if (LUM_SPELLS.has(e.id)) spellEvent(e, clock());   // (these skills in Luminati's own looks: tools/render3d/world.js)
+    else { sfx.event(e, clock()); if (LUM_ALSO.has(e.id)) spellEvent(e, clock()); }   // (and these with its pieces beside our light)
     if (e.id === 'firebolt' && e.at === 'land') {                // an explosion: its light on the room, and a harder jolt than a heavy blow's
       blast(e.tx, e.ty, clock(), 0.55, 2.4);
       jolt('blast', e.tx, e.ty);
@@ -1860,7 +1038,7 @@ export function createRenderer(canvas, sim, input, opts = {}) {
   // had no cleric: the first HP bar drawn in a fight threw, and the frame loop stopped (a freeze).
   const maxHpOf = (m) => statsFor(m).maxHp;
   function drawBanner(now) {
-    if (!banner || now > banner.until || stage) return;           // (the Stage has no scene title over its lineup)
+    if (!banner || now > banner.until) return;
     const k = vw / window.innerWidth, a = Math.min(1, (banner.until - now) / 600);
     const size = banner.small ? 16 : 20, y = (hudB + (banner.small ? 68 : 100)) * k;   // (under the room pill and a boss's bar)
     octx.font = `600 ${Math.round(size * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
@@ -2039,35 +1217,15 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     /** the sound's listener: called each frame with the figures drawn (audio/listen.js) @param {any} fn */
     onFrame(fn) { heard = fn; },
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },
-    /** dev: the Stage (src/dev/stage.js) — its lineup, camera and overlay; null to leave it */
-    setStage(s) { stage = s; },
     /** another painter for the world (src/render3d/hybrid.js), or null for Emberlit's own; the world is drawn by it from
      * the next frame, behind black until its level is built */
     setExternal(e) { ext = e || null; terrValid = false; transit = { job: null, fadeFrom: 0 }; },
-    /** dev: the art review loads every environment atlas it shows (env, town-<region>) @param {string[]} names */
-    stageLoad(names) { for (const n of names) loadAtlas(n); },
-    /** dev: which environment atlases have landed, and the sprite ids in one (null until it has) @param {string} name */
-    envIds(name) { const a = envAtlases.get(name); return a ? Object.entries((envMeta || { sprites: {} }).sprites).filter(([, m]) => m.atlas === name).map(([id]) => id) : null; },
-    /** dev: the prop kinds the renderer draws (gsprite.js buildProps), each with its variants' count */
-    get propKinds() { return Object.fromEntries(Object.entries(props).map(([k, v]) => [k, v.length])); },
     /** dev: how many native px of the window's emissive plane are lit (with another painter: the fights' light it lays over its world) */
     get emiLit() { let n = 0; if (sEMI) for (let i = 0; i < sEMI.length; i += 4) if (sEMI[i] | sEMI[i + 1] | sEMI[i + 2]) n++; return n; },
     /** dev: the floating numbers on screen now (they live 900 ms of the render clock: browser test §15c2) */
     get floatCount() { return floats.length; },
-    /** dev: the Stage's zoom (integer): fewer tiles across the screen, the same native-pixel look */
-    setZoom(z) { viewTiles = VIEW_TILES / Math.max(1, Math.round(z) || 1); resize(); },
-    /** dev: the native view size (px) and whether every stage atlas has loaded (or failed) */
+    /** dev: the native view size (px) */
     get view() { return { w: nvw, h: nvh, S }; },
-    /** dev: the lineup's bounds in CSS px (every figure's drawn box, and room under the feet for its name) */
-    stageBounds(pad = 8) {
-      if (!stage) return null; const dpr = vw / window.innerWidth, fx = lastCam.rx - lastCam.ox, fy = lastCam.ry - lastCam.oy;
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      for (const a of stage.actors) if (a.box) { x0 = Math.min(x0, a.box[0]); y0 = Math.min(y0, a.box[1]); x1 = Math.max(x1, a.box[2]); y1 = Math.max(y1, a.box[3]); }
-      if (!isFinite(x0)) return null;
-      const c = (v, f) => ((v + f) * S) / dpr, below = 36;   // (the name and a before / after tag)
-      return { x: Math.max(0, c(x0, fx) - pad), y: Math.max(0, c(y0, fy) - pad), x1: Math.min(window.innerWidth, c(x1, fx) + pad), y1: Math.min(window.innerHeight, c(y1, fy) + below + pad) };
-    },
-    get stageReady() { return !!stage && stage.actors.every((a) => stageAtlases.get(`${a.root || ''}|${a.atlas}|${a.scale || 1}`) !== null && stageAtlases.has(`${a.root || ''}|${a.atlas}|${a.scale || 1}`)); },
     screenToTile(sxPx, syPx, alpha) {
       const { rx: ox, ry: oy } = lastCam;
       const dpr = vw / window.innerWidth;
@@ -2080,20 +1238,4 @@ export function createRenderer(canvas, sim, input, opts = {}) {
     },
   };
 
-  // ---- small emissive-aware harvest sprites (bonegrowth / obsidian shard) ----
-  function buildHarvest() {
-    const mk = (w, h, ax, ay) => ({ w, h, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h), ax, ay });
-    const set = (sp, x, y, c, n, e) => { if (x < 0 || y < 0 || x >= sp.w || y >= sp.h) return; const i = y * sp.w + x; sp.mask[i] = 1; sp.alb[i * 3] = c[0]; sp.alb[i * 3 + 1] = c[1]; sp.alb[i * 3 + 2] = c[2]; sp.nrm[i * 3] = (n[0] * 0.5 + 0.5) * 254; sp.nrm[i * 3 + 1] = (n[1] * 0.5 + 0.5) * 254; sp.nrm[i * 3 + 2] = n[2] * 254; sp.emi[i] = e || 0; };
-    const out = {};
-    // bonegrowth: three pale stalks
-    const tree = mk(14, 18, 7, 17), br = ELIT.bone;
-    for (let s = 0; s < 3; s++) { const bx = 4 + s * 3, top = 4 + ((s * 7) % 5); for (let y = top; y < 16; y++) { set(tree, bx, y, br[2], norm3(-0.4, 0, 0.9), 0); set(tree, bx + 1, y, br[3], norm3(0.4, 0, 0.9), 0); } set(tree, bx, top - 1, br[4], norm3(0, -0.3, 0.9), 0); }
-    out.tree = tree;
-    // obsidian shard with a violet glint
-    const rock = mk(14, 18, 7, 17), ob = ELIT.obsid;
-    for (let y = 8; y < 16; y++) for (let x = 4; x < 10; x++) if (Math.abs(x - 7) + Math.abs(y - 13) < 5) set(rock, x, y, ob[x < 7 ? 2 : 3], norm3((x - 7) * 0.3, -0.2, 0.9), 0);
-    set(rock, 7, 6, ob[4], norm3(0, -0.4, 0.8), 2); set(rock, 7, 5, EGLOW.violet, norm3(0, -0.3, 0.9), 2);
-    out.rock = rock;
-    return out;
-  }
 }

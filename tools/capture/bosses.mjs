@@ -3,7 +3,7 @@
 // level, with every skill learned, on Emberlit and on Luminati. The sim is deterministic, so the same mechanic fires at
 // the same moment on every checkout: a before and an after line up frame for frame.
 //
-//   node tools/capture/bosses.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]
+//   node tools/capture/bosses.mjs [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]
 //
 // --warn: the foes' warnings instead (the telegraph grammar): the first heavy blow, archer's shot and heavy shot in three
 // halls, at +0 … 0.54 s (out tools/capture/out/warn/).
@@ -20,7 +20,9 @@ import { chromium } from 'playwright';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
+// (Luminati only since 2026-11-09, docs/luminati-only-cleanup.md: --renderer is gone. The URL still says
+// &renderer=luminati, so a --base checkout from before draws on Luminati too, for a before and an after)
+const RENDERERS = ['luminati'];
 const WARN = args.includes('--warn');
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/' + (WARN ? 'warn' : 'bosses')))), SECS = +opt('--secs', 90), ONLY = opt('--only', '');
 const AT = WARN ? [0, 100, 200, 300, 400, 540] : [0, 200, 400, 700, 1000, 1400];
@@ -111,7 +113,7 @@ async function run(renderer) {
   for (const C of LIST) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}&renderer=${renderer === 'luminati' ? 'luminati' : 'emberlit'}`);
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${C.site}&renderer=luminati`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
     await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()}; globalThis.__untilAttack = ${untilAttack.toString()};`);
     const settle = async () => { for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) return; await p.waitForTimeout(100); } };

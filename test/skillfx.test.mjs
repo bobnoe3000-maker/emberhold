@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SKILLS } from '../src/sim/skills.js';
-import { createSkillFX, SKILL_MOMENTS } from '../src/render/skillfx.js';
+import { createSkillFX, SKILL_MOMENTS, LUM_LOOKS } from '../src/render/skillfx.js';
 import { createSim } from '../src/sim/core.js';
 import { makeHero, makeMember, statsFor } from '../src/sim/party.js';
 import { autoAllocate } from '../src/sim/attributes.js';
@@ -13,10 +13,11 @@ import { stateHash } from '../src/sim/replay.js';
 
 const ALL = Object.values(SKILLS).flat().map((s) => s.id);
 
-test('every class skill has a moment of its own, and no two draw alike', () => {
-  assert.deepEqual([...SKILL_MOMENTS].sort(), [...ALL].sort());
+test('every class skill has a moment of its own, here or in Luminati\'s looks, and no two here draw alike', () => {
+  assert.deepEqual([...SKILL_MOMENTS, ...LUM_LOOKS].sort(), [...ALL].sort());
+  assert.ok(!SKILL_MOMENTS.some((id) => LUM_LOOKS.includes(id)), 'drawn in one place only');
   const sig = {};
-  for (const id of ALL) {
+  for (const id of SKILL_MOMENTS) {
     const pts = [];
     const P = { depth() {}, flush() {}, mark: (x, y, a) => { if (a > 0.01) pts.push(`${Math.round(x)},${Math.round(y)}`); }, disc: (x, y, r, a) => { if (a > 0.01) pts.push(`${Math.round(x)},${Math.round(y)}`); }, seg: (x0, y0, x1, y1, a0, a1) => { if (Math.max(a0, a1) > 0.01) pts.push(`${Math.round(x0)},${Math.round(y0)}-${Math.round(x1)},${Math.round(y1)}`); }, star: (x, y, r, a) => { if (a > 0.01) pts.push(`*${Math.round(x)},${Math.round(y)}`); } };
     const fx = createSkillFX(P), proj = (x, y) => ({ sx: 200 + (x - y) * 8, sy: 200 + (x + y) * 4, h: 0, key: x + y });
@@ -163,7 +164,7 @@ test('a warning\'s marks: a ring filling under a heavy blow, a lane filling alon
 // the proposed skills (docs/skill-trees-proposal.md): each has a moment of its own, drawn for the owner's review
 test('the proposed skills each draw a moment of their own, and no two alike', async () => {
   const { PROPOSED_MOMENTS } = await import('../src/render/skillfx.js');
-  assert.equal(PROPOSED_MOMENTS.length, 20);
+  assert.equal(PROPOSED_MOMENTS.length, 5);   // (the other fifteen in Luminati's looks: skillfx.js LUM_LOOKS)
   const sig = new Map();
   for (const id of PROPOSED_MOMENTS) {
     const pts = [];

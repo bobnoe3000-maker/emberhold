@@ -4,7 +4,7 @@
 // follow of the hero too) and the foes glowing as they wind up;
 // and burst frames of the blow. The sim is deterministic, so a before (--base: another checkout served elsewhere) lines up.
 //
-//   node tools/capture/feel.mjs [--renderer emberlit|luminati] [--site wickham_keep] [--depth 0] [--base url] [--out dir] [--feel full|light|off]
+//   node tools/capture/feel.mjs [--site wickham_keep] [--depth 0] [--base url] [--out dir] [--feel full|light|off]
 //
 // Out: <out>/<renderer>-trace.json (one row a frame: ms, sim t, camera x/y, shaking, glowing foes, holds) and
 // <out>/<renderer>-strip.png (the blow at +0 … 0.6 s). Needs ?dev, so localhost.
@@ -16,7 +16,8 @@ import { chromium } from 'playwright';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-const R = opt('--renderer', 'emberlit'), SITE = opt('--site', 'wickham_keep'), DEPTH = +opt('--depth', 0), FEEL = opt('--feel', 'full');
+const R = 'luminati',   // (Luminati only, docs/luminati-only-cleanup.md; &renderer=luminati below for a --base from before)
+   SITE = opt('--site', 'wickham_keep'), DEPTH = +opt('--depth', 0), FEEL = opt('--feel', 'full');
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/feel')));
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 let srv = null, base = opt('--base');
@@ -34,7 +35,7 @@ const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftsha
 const p = await b.newPage({ viewport: { width: 390, height: 844 } });
 const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
 await p.addInitScript((f) => { try { localStorage.setItem('emberfall.graphics', JSON.stringify({ feel: f })); } catch { /* */ } }, FEEL);
-await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${SITE}&renderer=${R === 'luminati' ? 'luminati' : 'emberlit'}`);
+await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=${SITE}&renderer=luminati`);
 await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
 const settle = async () => { for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) return; await p.waitForTimeout(100); } };
 await settle();

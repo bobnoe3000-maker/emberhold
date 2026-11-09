@@ -3,7 +3,7 @@
 // Barrows, on Emberlit and on Luminati. The sim is deterministic, so the same skills fire at the same moments on
 // every checkout: a before and an after line up frame for frame.
 //
-//   node tools/capture/skills.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 150] [--party 1|2|3] [--land]
+//   node tools/capture/skills.mjs [--out dir] [--base url] [--secs 150] [--party 1|2|3] [--land]
 //
 // --land: each skill's first landing on the screen instead (its 'skill' event, at: 'land'), cropped round where it lands, at +0, 0.08,
 // 0.16, 0.25, 0.35, 0.5, 0.7 and 1.0 s (an explosion is over in a second; a cast's crop round the middle of the screen
@@ -20,7 +20,9 @@ import { chromium } from 'playwright';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
+// (Luminati only since 2026-11-09, docs/luminati-only-cleanup.md: --renderer is gone. The URL still says
+// &renderer=luminati, so a --base checkout from before draws on Luminati too, for a before and an after)
+const RENDERERS = ['luminati'];
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/skills'))), SECS = +opt('--secs', 150);
 const LAND = args.includes('--land'), AT = LAND ? [0, 80, 160, 250, 350, 500, 700, 1000] : [0, 200, 400, 600, 800, 1100, 1600];
 // (the third: the mage first, where the foes come, for Frost Nova; the rogue's Backstab off, for Venom; the fighter
@@ -79,7 +81,7 @@ async function run(renderer) {
   for (const classes of PARTIES) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
-    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=barrows&renderer=${renderer === 'luminati' ? 'luminati' : 'emberlit'}`);
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=dungeon&site=barrows&renderer=luminati`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
     for (let i = 0; i < 600; i++) { if (await p.evaluate(() => { for (let k = 0; k < 4; k++) globalThis.__frame(16); return !globalThis.__renderer.transiting && (!globalThis.__world3d || globalThis.__world3d.world?.stats.level >= 1); })) break; await p.waitForTimeout(100); }
     await p.evaluate(`globalThis.__take = ${take.toString()}; globalThis.__advance = ${advance.toString()};`);

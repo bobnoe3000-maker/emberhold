@@ -23,27 +23,24 @@ that happens.
 npm ci                                    # once: dev tooling only (the game itself has no build)
 npm run serve                             # open http://localhost:8080 (ES modules need a server)
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
-#   ?tierlooks=luminati|now (on Luminati: all twenty of the tiers' skills, and the holds, in Luminati's own looks, or none; default the owner's picks, renderer.js TIER_LUM; tools/capture/tiers.mjs)
-#   ?renderer=emberlit (developer escape: Emberlit paints the world in this tab, kept until ?renderer=luminati; the game is Luminati only, docs/luminati-only-cleanup.md, A21; goes in the cleanup's step 4. The browser suite's checks that name no renderer use it)
+#   ?world=off|on (localhost only, kept for the tab: no world drawn, an empty painter in Luminati's place; the browser suite's flow checks run so, its world checks ask for &world=on: docs/luminati-only-cleanup.md step 4)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)
-#   ?dev&scene=stage[&group=party|town|foes|bosses|wardens|all&clip=idle|walk|attack|…&dir=0-7|turn|all&zoom=1-3&floor=grass|cobble&cmp=/before/]: the cast lined up, animated in place (docs/character-stage-proposal.md)
-#   ?dev&scene=stage&show=env|props|fx|icons|faces[&set=env|town-vale|town-fens|town-reach|town-heights|all&match=…&page=N&tod=…&zoom=1-3]: the art review, every sprite, prop, effect, icon and portrait as the game draws it (docs/art-review.md)
+#   ?dev&scene=stage&show=icons|faces[&match=…]: the art review, every item icon and every portrait and window figure as the UI shows them (docs/art-review.md; the Stage's cast lineup and env, props and fx views went with Emberlit's painting)
 #   /frontier.html[?lv=1-75&town=thornwick|ashgate|…&zoom=0.15-40] (the Frontier, docs/frontier-proposal.md: the Old Provinces as one land, a sandbox with its own sim; ?manual on localhost: globalThis.__frame(ms), __fr, __view)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
-npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's views list everything, the Frontier's stick, lock and zoom, Luminati lined up with the HUD, and its message and Retry when it can't start (WebKit: CI)
+npm run test:browser                      # replay parity Chromium/WebKit vs Node, game slots, M3 create→Fallen→temple→wipe, intro, fights, talk to Maudry, her errand in the Journal, the sky dial overlaps nothing, the World map and the Guild's coach, the square's menu the same in every town, nobody in Saltmere's square behind a building, the art review's icons and faces list everything, the Frontier's stick, lock and zoom, Luminati lined up with the HUD, and its message and Retry when it can't start (WebKit: CI)
 node tools/balance/roomlv.mjs 300 6 6 0,2 [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--off id,id]   # balance: secs roomLv heroLv hires (1,3 = fighter rogue cleric); --src = a before checkout; --off: those abilities' auto-use off for everyone; SKILLS=1: each ability's casts and reach; --fresh = hires at their hire level (half the hero's), not levelled up; --rogue huntbow = the rogue's weapon; --perks: the hires' sellsword perks (default none, as the contract measures); --up N = every kit piece at the smith's +N; --size: fight in a room of that size (default large, the contract's arena); --floor N: on that floor (the Old Barrows' default 2, the Ashbound's, as the contract); DMG=1: damage by member
 node tools/balance/boss.mjs wickham_keep 6 [seeds] [--src dir] [--healer shaman] [--floor N] [--off id,id]   # a boss hall vs fighter + rogue + cleric (or shaman) at a level (TRACE=1: a timeline); --floor: the hall on floor N (the Drowned Abbey has three); 'held N %': the share of the boss's fight he stood held (stun, freeze, knockdown)
 node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless farm: drops an hour of play at a level, in the dungeon whose band holds it (dev plan §2.7 targets)
 node tools/balance/tower.mjs 12 900 1,3 [--src dir]           # the Mere Tower headless: a party at a level climbs on at every landing; best wave, landings, what it banked
 node tools/balance/frontier.mjs 6 9 [mins 5] [spots 8] [seed]   # the Frontier headless (docs/frontier-proposal.md §6): a party at a level locked at camps of a ground level over the land; wipes, Downs, lowest HP, kills and XP a minute
-node tools/capture/stage.mjs [--group g] [--clip c] [--dir d] [--tod t] [--zoom z] [--size 390x844] [--cmp <checkout>] [--frames N] [--fps 12]   # Stage captures: frames cropped to the lineup, sheet.png, loop.html (tools/capture/out/); --cmp: before/after twins
-node tools/capture/stage.mjs --show env|props|fx|icons|faces [--set s] [--page N|all] [--match m] [--tod t] [--zoom z] [--size 1280x900] [--dpr 1]   # the art review's captures (docs/art-review.md): env/props page-NN.png; fx frames, loop.html and strips.png (each effect through time); icons/faces sheet.png
+node tools/capture/stage.mjs [--show icons|faces] [--match m] [--size 1280x900]   # the art review's sheets (docs/art-review.md): the whole grid in one tall still → tools/capture/out/<show>/sheet.png
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
 FFMPEG=… FLARE=… node tools/audio/prep.mjs [--only cue,cue]   # sound: tools/audio/sounds.json → assets/audio/*.mp3 + bank.json (ffmpeg with libmp3lame, e.g. pip imageio-ffmpeg; FLARE = a flare-game checkout); --only: just those cues into the bank as it stands (a synth cue, tools/audio/synth.mjs, needs no FLARE)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
@@ -62,12 +59,11 @@ node tools/worldmap/minimap.mjs           # the shipped scenes drawn from the si
 node tools/dungeon/plans.mjs [seeds] [--src dir]   # the dungeon layouts top-down at one scale, the caverns beside the halls, rooms marked by size (docs/dungeon-halls-proposal.md) → docs/img/dungeon/plans.png, and the numbers
 node tools/dungeon/asbuilt.mjs [site…] [--seed N] [--out dir]   # the Vale's authored floors as the sim builds them, top-down: every prop by kind, each room's open floor and largest open square (docs/vale-dungeon-dressing.md) → tools/capture/out/asbuilt-<site>.png
 node tools/dungeon/vale-plans.mjs [site…]   # the Hollow Vale's authored dungeon plans (src/sim/plans.js, docs/vale-dungeons-plan.md), each floor top-down at one scale with its levels, bosses and dressing, held to the plan's rules (checkPlan) → docs/img/dungeon/vale-<site>.png + .svg
-node tools/capture/rig.mjs [vale|vale-hours|vale-dungeons|vale-rooms|smoke|shots.json] [--renderer both|luminati|emberlit] [--sheet] [--out dir] [--dpr 1|2] [--base url] [--settle 40]   # many shots fast: a page a renderer kept open, worlds reached by restore (vale-rooms: every authored space, a shot's at "part:<id>"), hours by the dev hook __tod, frames driven in the page (Luminati stepped, not drawn, while it settles), the canvases copied in the frame's task; serves the repo itself; out tools/capture/out/rig/<renderer>/<name>.png (+ sheet.jpg)
-node tools/capture/skills.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 150] [--party 1|2|3] [--land]   # (--land: each skill's first landing, cropped round where it lands, +0…1.0 s) burst frames of every class skill in a real fight (docs/combat-fx.md): three parties of 15 with every skill, a level-15 room; each skill's first cast at +0…1.6 s, a strip a skill on each renderer and sheet.jpg (deterministic: a before and an after line up)
-node tools/capture/tiers.mjs [--out dir] [--only id,id] [--fps 12] [--base url] [--looks now,luminati]   # the tiers' twenty skills (GDD v1.55) on Luminati, in Emberlit's light over its world (?tierlooks=now) and in Luminati's own looks (?tierlooks=luminati, tools/render3d/world.js TIER_LOOK), staged frame for frame in a real scene: <out>/<look>/<skill>.webp strips + index.json, for the owner's choice
-node tools/capture/bosses.mjs [--renderer both|emberlit|luminati] [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]   # burst frames of every boss's mechanic in a real fight in his own hall (docs/combat-fx.md, the boss pass): the contract's party at the hall's level; the first time it fires (or 4 s in, for one that holds) at +0…1.4 s, a strip a boss on each renderer and sheet.jpg (deterministic: a before and an after line up) · --warn: the foes' warnings instead (a heavy blow's ring, a shot's lane: the first heavy blow, shot and heavy shot in three halls, +0…0.54 s; out tools/capture/out/warn/)
-node tools/capture/feel.mjs [--renderer emberlit|luminati] [--site wickham_keep] [--depth 0] [--base url] [--out dir] [--feel full|light|off]   # the feel of a hit (docs/combat-fx.md): a motion trace on the manual clock through a boss's first heavy blow (sim time, the camera, holds, foes glowing) and burst frames; --base: a before
-[RENDERER=luminati] [FLOOR=N] [PLACES=entrance,room,…] [TOD=dusk] node tools/dungeon/capture.mjs [site] [out] [tag] [base]   # a site's floor in the game (needs npm run serve; base: another checkout served elsewhere, for a before): entrance, hall, room, descent, a small and a medium room; on either renderer
+node tools/capture/rig.mjs [vale|vale-hours|vale-dungeons|vale-rooms|smoke|shots.json] [--sheet] [--out dir] [--dpr 1|2] [--base url] [--settle 40]   # many shots fast: a page kept open, worlds reached by restore (vale-rooms: every authored space, a shot's at "part:<id>"), hours by the dev hook __tod, frames driven in the page (Luminati stepped, not drawn, while it settles), the canvases copied in the frame's task; serves the repo itself; out tools/capture/out/rig/luminati/<name>.png (+ sheet.jpg)
+node tools/capture/skills.mjs [--out dir] [--base url] [--secs 150] [--party 1|2|3] [--land]   # (--land: each skill's first landing, cropped round where it lands, +0…1.0 s) burst frames of every class skill in a real fight (docs/combat-fx.md): three parties of 15 with every skill, a level-15 room; each skill's first cast at +0…1.6 s, a strip a skill and sheet.jpg (deterministic: a before and an after line up)
+node tools/capture/bosses.mjs [--out dir] [--base url] [--secs 90] [--only id,id] [--warn]   # burst frames of every boss's mechanic in a real fight in his own hall (docs/combat-fx.md, the boss pass): the contract's party at the hall's level; the first time it fires (or 4 s in, for one that holds) at +0…1.4 s, a strip a boss and sheet.jpg (deterministic: a before and an after line up) · --warn: the foes' warnings instead (a heavy blow's ring, a shot's lane: the first heavy blow, shot and heavy shot in three halls, +0…0.54 s; out tools/capture/out/warn/)
+node tools/capture/feel.mjs [--site wickham_keep] [--depth 0] [--base url] [--out dir] [--feel full|light|off]   # the feel of a hit (docs/combat-fx.md): a motion trace on the manual clock through a boss's first heavy blow (sim time, the camera, holds, foes glowing) and burst frames; --base: a before
+[FLOOR=N] [PLACES=entrance,room,…] [TOD=dusk] node tools/dungeon/capture.mjs [site] [out] [tag] [base]   # a site's floor in the game (needs npm run serve; base: another checkout served elsewhere, for a before): entrance, hall, room, descent, a small and a medium room
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push. Add a new command here
@@ -165,28 +161,24 @@ in the same change that introduces it.
   - Vendor into `src/vendor/` or map from a CDN with SRI; decide per package in its decision
     row.
 
-### Rendering, Emberlit (A2)
+### Rendering: Luminati's world, our eye (A17, A21)
 
+- **Who draws what:** Luminati draws the world and the people (`src/render3d/hybrid.js` hands it each frame;
+  `tools/render3d/world.js` is built into `src/vendor/luminati-80e1aa6/`: rebuild, never edit). `src/render/renderer.js`
+  is the game's eye: the camera, the figures' clips (`anim.js`), the overlay (minimaps, names, bars, numbers, the
+  stick), every tap, and the fights' light. Emberlit's own painting is gone (docs/luminati-only-cleanup.md).
 - **Presentation-only state:** the renderer reads sim state and interpolates (`p.px → p.x`
   by alpha). Presentation-only state (animation phase, effects, particles) lives in the
   renderer or animator, keyed by unit (`WeakMap`), never on sim objects.
-- **Hot loops:**
-  - No allocation per frame in stamping and lighting loops.
-  - Reuse typed arrays.
-  - Upload with `texSubImage2D`.
-  - Bake once and replay (tile recordings, atlases).
-- **G-buffer conventions** ([`docs/emberlit-tdd.md`](docs/emberlit-tdd.md)):
-  - EMI alpha < 255 = steady glow (actors, rings, effects); 255 = flickering embers.
-  - NRM alpha = height.
-  - DEP = depth key.
-  - Actors are stamped at `Math.round`.
-  - The camera is sub-pixel: ints for the window, `lastCam.rx/ry` for overlays and
-    hit-tests.
-- **Effects:** draw into the emissive plane through `fx.js` primitives, depth-tested against
-  their owner. New skill or spell effects reuse the primitives rather than adding new
-  passes.
-- **Context loss:** handle WebGL context loss when touching GL setup. Test on a real phone
-  before calling a renderer change done.
+- **Hot loops:** no allocation per frame in the effects' and the painter's per-frame loops; reuse typed arrays and
+  pooled sprites.
+- **The camera** is sub-pixel: ints for the window, `lastCam.rx/ry` for overlays and hit-tests; Luminati's camera is
+  set from it, so its ground lands where the overlay and taps expect (the browser suite checks ≤ 2 px).
+- **Effects:** a skill's light draws into the emissive plane through `fx.js` primitives (EMI alpha < 255 a steady
+  glow, 255 flickering), which the painter lays over its world; or, for the skills in `skillfx.js` `LUM_LOOKS`, in
+  Luminati's own looks (`world.js` placeSpells). New effects reuse one or the other rather than adding passes.
+- **A world that can't be drawn** says so (`ui/worldfail.js`: a message and Retry), never a black screen or a hidden
+  fallback. Test on a real phone before calling a renderer change done.
 
 ### UI and windows (A3)
 

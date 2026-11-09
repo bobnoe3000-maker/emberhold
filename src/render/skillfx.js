@@ -53,18 +53,25 @@ const C = {
   stun: [255, 236, 150], root: [130, 230, 90],
 };
 /** how long each moment lasts, s */
-const LIFE = { cleave: 0.55, shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3, frost_nova: 1.6,
-  arcane_ward: 0.95, mend: 1.1, bless: 1.2, turn_undead: 1.1, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
+const LIFE = { shield_wall: 0.95, second_wind: 1.2, backstab: 0.6, smoke_step: 1.3, venom: 0.8, firebolt: 1.3,
+  arcane_ward: 0.95, spirit_drain: 0.8, ancestors_breath: 1.3, hex: 1.4 };
 /** the fight's other moments: a foe's warning, a ward breaking, a level gained, each boss's mechanic (a warning's life is
  *  its own: to the blow or the shot's landing, and a flash) */
 const MORE = { warn: 0.6, ward_break: 0.7, level_up: 1.8, boss_issue: 1.3, boss_call: 1.1, boss_kindle: 1.4, boss_swarm: 1.2, boss_vespers: 1.3, boss_bells: 1.6, boss_mud: 0.8 };
 export const FIGHT_MOMENTS = Object.freeze(Object.keys(MORE));
 /** the tiers' moments (GDD §5.1 v1.55, docs/skill-trees-proposal.md: the owner reviewed them on the page), life s */
-const PROPOSED = { vault: 0.9, cutting_wave: 0.8, earthshatter: 1.0, whirling_blades: 5, kidney_shot: 0.7, fan_of_knives: 0.6, shadowstep: 0.8,
-  caltrops: 6, flare: 1.3, gather: 0.8, glacial_tomb: 0.9, blizzard: 6, sanctuary: 4, consecrate: 8, revive: 1.7, judgement: 1.6,
-  binding_roots: 0.7, old_marks: 0.7, spirit_totem: 8, thunder_drum: 0.7 };
+const PROPOSED = { earthshatter: 1.0, whirling_blades: 5, glacial_tomb: 0.9, blizzard: 6, binding_roots: 0.7 };
 export const PROPOSED_MOMENTS = Object.freeze(Object.keys(PROPOSED));
-/** the skills with a moment of their own (for checks: every class skill has one; the tiers' since GDD v1.55) */
+/** the skills Luminati draws in its own looks (tools/render3d/world.js placeSpells; renderer.js hands it their state):
+ *  the owner's review, 2026-11-08 (Frost Nova's ice, Turn Undead's, Mend's and Bless's holy light, Cleave's blades) and
+ *  the tiers' looks he chose, skill by skill ("Tier Looks", tools/capture/tiers.mjs, final 2026-11-09). Their Emberlit
+ *  moments went with Emberlit's painting (docs/luminati-only-cleanup.md step 4). (Firebolt and Shield Wall are drawn in
+ *  both: their moments stay, with Luminati's pieces beside them.) */
+export const LUM_LOOKS = Object.freeze(['frost_nova', 'turn_undead', 'mend', 'bless', 'cleave',
+  'vault', 'cutting_wave', 'kidney_shot', 'fan_of_knives', 'shadowstep', 'caltrops', 'flare', 'gather', 'sanctuary', 'consecrate', 'revive', 'judgement', 'old_marks', 'thunder_drum', 'spirit_totem']);
+/** the holds on foes Luminati draws (a stun's or a knockdown's stars); a freeze's shell and a root's grip are drawn here */
+export const LUM_HOLDS = Object.freeze(['stun']);
+/** the skills with a moment of their own here (for checks: with LUM_LOOKS, every class skill has one) */
 export const SKILL_MOMENTS = Object.freeze([...Object.keys(LIFE), ...Object.keys(PROPOSED)]);
 /** a heavy blow's warning ring, tiles (Emberlit's, and Luminati's from it: hybrid.js) */
 export const WARN_R = Object.freeze({ heavy: 1.4, boss: 1.7 });
@@ -84,7 +91,7 @@ export function createSkillFX(P) {
   const flush = (col, g = 1) => P.flush(col, g * BOOST * gainK);
   /** @type {{ e: any, t0: number, seed: number, lock?: any }[]} */
   const live = [];
-  let n = 0, holdsOff = new Set();   // (holdsOff: the holds Luminati draws itself, the owner's picks: renderer.js)
+  let n = 0;
   // ── shapes, on the screen (the iso ground's 2:1 built in) ───────────────────────────────────────────────────────
   // q: a point { sx, sy, h, key }; under the figures (the floor) or over them
   const under = (q) => depth(q.key - 0.25, q.sy, q.h), over = (q, k = 0.6) => depth(q.key + k, q.sy, q.h);
@@ -116,21 +123,6 @@ export function createSkillFX(P) {
   // ── the moments ───────────────────────────────────────────────────────────────────────────────────────────────
   // each draws from t (s since it began), k (1 → 0 over its life), Cq/Tq (caster, target), R (those reached)
   const MOMENT = {
-    // the blade's crescent, swept round the fighter toward the target and out past it, a white-hot edge; a spark on each
-    // foe beside the target
-    cleave(ctx) {
-      const { t, Cq, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const ph = Math.atan2((Tq.sy - Cq.sy) / EY, (Tq.sx - Cq.sx) / EX), head = -1.25 + 2.5 * clamp01(t / 0.11), fade = t < 0.11 ? 1 : 1 - (t - 0.11) / 0.44;
-      over(Cq, 0.4);
-      for (let u = -1.25; u <= head; u += 0.035) {
-        const age = (head - u) / 2.5, a = fade * Math.pow(1 - age, 1.4);
-        const [ox, oy] = on(Cq, 1.75, ph + u, 15), [ix, iy] = on(Cq, 1.05, ph + u, 13);
-        seg(ix, iy, ox, oy, a * 0.18, a * 0.9);
-      }
-      flush(C.cleave, 1.1);
-      if (t < 0.14) { const [ox, oy] = on(Cq, 1.75, ph + head, 15); star(ox, oy, 7, 1.2); over(Cq, 0.5); flush(C.cleaveHot); }
-      if (t < 0.3) for (const q of [Tq, ...R]) { over(q); star(q.sx, q.sy - 24, 6 + 6 * t, 1.1 * (1 - t / 0.3)); flush(C.cleaveHot); under(q); ring(q, 0.35 + t * 2.5, 0.8 * (1 - t / 0.3), 1.1); flush(C.cleave); }
-    },
     // the war cry: a red ring thrown out over the floor, a line from each foe it turns, then a shield of light standing
     // before the fighter
     shield_wall(ctx) {
@@ -235,21 +227,6 @@ export function createSkillFX(P) {
       // the floor: a scorch glowing and cooling
       under(Tq); pool(Tq, 1.1, 0.75 * k * k, 0, 1.3); ring(Tq, 0.95, 0.5 * k, 1.4); flush(t < 0.4 ? C.fire : C.ember);
     },
-    // the ring of frost running out from the mage over the floor, ice spikes standing up behind it as it passes, a cold
-    // mist inside; each foe it reaches flashes white
-    frost_nova(ctx) {
-      const { t, Cq: M, Tq: Cq, R, seed } = ctx; if (ctx.at !== 'land') return;   // (thrown, GDD v1.53: it bursts on the knot, Tq)
-      if (t < 0.16 && Math.hypot(Cq.sx - M.sx, Cq.sy - M.sy) > 8) { over(Cq, 0.4); const f = 1 - t / 0.16; seg(M.sx, M.sy - 26, Cq.sx, Cq.sy - 10, 0.25 * f, 1.1 * f, 0.9); star(M.sx, M.sy - 26, 5, f); flush(C.frostHot); }   // the throw: a cold streak from the staff to the knot
-      const RR = ctx.e.r || 3.5, u = ease(clamp01(t / 0.3)), rad = 0.3 + (RR - 0.3) * u;   // (its real reach: skills.js radius)
-      const hold = t < 1.0 ? 1 : 1 - (t - 1.0) / 0.6;   // (the owner, 2026-11-08: "the ground effect lingers 0.5 sec longer": it holds a second, then fades)
-      under(Cq); pool(Cq, rad, 0.28 * hold, 0, 1.1); if (u < 1) { ring(Cq, rad, 1.25 * (1 - u * 0.4), 2.1); ring(Cq, rad * 0.86, 0.5 * (1 - u), 1.2); } flush(C.frost, 1.1);
-      over(Cq, 0.3);
-      for (let i = 0; i < 18; i++) { const ang = (i / 18) * TAU + rnd(seed, i) * 0.3, r0 = 0.6 + (RR - 0.6) * rnd(seed, i + 40); if (rad < r0) continue;
-        const grow = clamp01((t - (r0 / RR) * 0.3) / 0.12), hgt = (6 + 9 * rnd(seed, i + 20)) * grow, [x, y] = on(Cq, r0, ang);
-        seg(x, y, x + (rnd(seed, i + 5) - 0.5) * 3, y - hgt, 0.9 * hold, 1.3 * hold, 0.6); if (grow >= 1 && t < 0.6) star(x, y - hgt, 3, 0.8 * (1 - t / 0.6)); }
-      flush(C.frostHot);
-      if (t < 0.4) for (const q of R) { over(q); star(q.sx, q.sy - 24, 8, 1.2 * (1 - t / 0.4)); flush(C.frostHot); }
-    },
     // runes drawn in round the ally, then the dome closes over them with a flash (the dome itself is the aura)
     arcane_ward(ctx) {
       const { t, k, Tq } = ctx; if (ctx.at !== 'land') return;
@@ -259,40 +236,6 @@ export function createSkillFX(P) {
       else { const u = (t - 0.35) / 0.6; oval(Tq.sx, Tq.sy - 22, 13 + 4 * (1 - u), 21 + 4 * (1 - u), 1.7 * (1 - u), 1.8); if (u < 0.3) star(Tq.sx, Tq.sy - 30, 14, 1.5 * (1 - u / 0.3)); }
       flush(C.wardHot, 1.5);
       under(Tq); ring(Tq, 0.5 + 0.3 * ease(clamp01(t / 0.4)), 1.1 * k * (1 - clamp01((t - 0.5) / 0.45)), 1.5); pool(Tq, 0.55, 0.45 * k); flush(C.ward, 1.4);
-    },
-    // a beam of gold from above onto the ally, a ring at their feet, a mark rising over their head, motes going up
-    mend(ctx) {
-      const { t, k, Tq } = ctx; if (ctx.at !== 'land') return;
-      const on2 = t < 0.12 ? t / 0.12 : 1;
-      // (the owner, 2026-11-08: "Green light": the beam, the ring and the motes green, as on Luminati; the mark stays gold)
-      over(Tq, 0.4); column(Tq.sx, Tq.sy, 74 * on2, 3.5, 1.6 * k); flush(C.mendG, 1.3);
-      under(Tq); ring(Tq, 0.25 + 0.7 * ease(clamp01(t / 0.45)), 1.1 * k, 1.4); pool(Tq, 0.55, 0.6 * k); flush(C.mendG, 1.3);
-      over(Tq, 0.8); const yy = Tq.sy - 50 - t * 14;
-      seg(Tq.sx - 5, yy, Tq.sx + 5, yy, 1.2 * k, 1.2 * k, 0.8); seg(Tq.sx, yy - 5, Tq.sx, yy + 5, 1.2 * k, 1.2 * k, 0.8);
-      flush(C.mend);
-      for (let i = 0; i < 7; i++) { const u2 = (t * 1.4 + i / 7) % 1; disc(Tq.sx + Math.sin(i * 2.3) * 8, Tq.sy - 4 - u2 * 46, 1.5, 1.2 * k * (1 - u2), 1); }
-      flush(C.mendG, 1.3);
-    },
-    // a rune circle turning at the cleric's feet, then a halo settling over each of the party (it stays: the aura)
-    bless(ctx) {
-      const { t, k, Cq, R } = ctx; if (ctx.at !== 'land') return;
-      under(Cq); const u = ease(clamp01(t / 0.3)), rr = 1.25 * u;
-      ring(Cq, rr, 1.1 * k, 1.3); ring(Cq, rr * 0.72, 0.7 * k, 1);
-      for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + t * 1.6, [x0, y0] = on(Cq, rr * 0.72, a), [x1, y1] = on(Cq, rr, a); seg(x0, y0, x1, y1, 0.9 * k, 0.9 * k); }
-      flush(C.bless);
-      for (const q of R) { over(q, 0.8); const drop = clamp01(t / 0.35), y = q.sy - 66 + 14 * ease(drop); oval(q.sx, y, 8, 2.6, 1.3 * k, 1); if (t < 0.35) star(q.sx, y, 5, 0.9); flush(C.bless); }
-    },
-    // the sunburst: rays running out over the floor from the cleric, a ring of light behind them, a flare on each of the
-    // dead they reach and their smoke going up
-    turn_undead(ctx) {
-      const { t, k, Cq, R, seed } = ctx; if (ctx.at !== 'land') return;
-      const u = ease(clamp01(t / 0.32)), RR = 3;
-      under(Cq);
-      for (let i = 0; i < 20; i++) { const a = (i / 20) * TAU + rnd(seed, i) * 0.12, [x0, y0] = on(Cq, 0.4, a), [x1, y1] = on(Cq, 0.4 + (RR - 0.4) * u * (0.8 + 0.2 * rnd(seed, i + 9)), a); seg(x0, y0, x1, y1, 1.0 * k, 0.15 * k, 0.6); }
-      if (u < 1) ring(Cq, 0.4 + (RR - 0.4) * u, 1.2 * (1 - u), 1.8); pool(Cq, 1.2 * u, 0.6 * k); flush(C.turn, 1.1);
-      over(Cq, 0.3); if (t < 0.25) { column(Cq.sx, Cq.sy, 60, 5, 1.3 * (1 - t / 0.25)); star(Cq.sx, Cq.sy - 30, 14, 1.2 * (1 - t / 0.25)); } flush(C.turn);
-      for (const q of R) { over(q, 0.6); if (t < 0.3) star(q.sx, q.sy - 26, 10, 1.3 * (1 - t / 0.3));
-        for (let i = 0; i < 5; i++) { const v = clamp01(t * 1.3 - i * 0.08); if (v > 0 && v < 1) disc(q.sx + Math.sin(i * 1.9 + t * 4) * 6, q.sy - 22 - v * 36, 2.2, 0.8 * (1 - v), 1.3); } flush(C.turn); }
     },
     // the tether: motes drawn along a wavering line from the foe to the shaman, the line itself faint
     spirit_drain(ctx) {
@@ -327,31 +270,6 @@ export function createSkillFX(P) {
       if (t > 0.2 && t < 0.9) { over(Tq, 0.2); const g = 1.0 * (1 - (t - 0.2) / 0.7); for (const q of R) { seg(Tq.sx, Tq.sy, q.sx, q.sy - 4, g, g * 0.4, 0.8); star(q.sx, q.sy - 24, 6, g); } flush(C.hexV, 1.3); }
     },
 
-    // ── the tiers (GDD §5.1 v1.55; docs/skill-trees-proposal.md, tiers I and II, the owner confirmed them on the review
-    // page): each in its class's colours. ctx.P projects a world point (where a leap or a dash began) ──────────
-    // FIGHTER · Vault: up from where he stood in an amber arc, then a sword of light falls with him onto the foe: a slam
-    vault(ctx) {
-      const { t, k, Tq, e, P, seed } = ctx; if (ctx.at !== 'land') return;
-      const A = P(e.x, e.y), u = clamp01(t / 0.35);
-      if (t < 0.5) { over(Tq, 0.6); const n = 18; for (let i = 0; i <= n; i++) { const v = (i / n) * u, x = A.sx + (Tq.sx - A.sx) * v, y = A.sy + (Tq.sy - A.sy) * v - 46 * Math.sin(v * Math.PI) - 20; disc(x, y, 1.6, (0.25 + 0.75 * (i / n)) * (t < 0.35 ? 1 : 1 - (t - 0.35) / 0.15), 1); } flush(C.cleave, 1.2); }
-      if (t < 0.12) { under(Tq); ring(Tq, 0.3 + 0.8 * (t / 0.12), 0.7, 1.2); flush(C.dust); }   // (the push off)
-      const s = (t - 0.3) / 0.12; if (s > 0 && s < 1.6) { over(Tq, 0.8); const yy = Tq.sy - 90 + 70 * clamp01(s); seg(Tq.sx, yy - 30, Tq.sx, yy + 4, 0.2 * (1.6 - s), 1.4 * (1.6 - s) / 1.6, 1.4); seg(Tq.sx - 7, yy - 18, Tq.sx + 7, yy - 18, 1.0 * (1.6 - s) / 1.6, 1.0 * (1.6 - s) / 1.6, 0.8); flush(C.cleaveHot, 1.3); }
-      if (t > 0.38) { const v = clamp01((t - 0.38) / 0.4); under(Tq); ring(Tq, 0.3 + 1.6 * ease(v), 1.4 * (1 - v), 2); for (let i = 0; i < 9; i++) { const a = (i / 9) * TAU + rnd(seed, i) * 0.5, [x0, y0] = on(Tq, 0.25, a), [x1, y1] = on(Tq, 0.4 + 1.1 * ease(v) * (0.6 + 0.4 * rnd(seed, i + 3)), a); seg(x0, y0, x1, y1, 1.0 * k, 0.2 * k, 0.6); } flush(C.cleave, 1.2);
-        if (t < 0.55) { over(Tq, 0.9); star(Tq.sx, Tq.sy - 18, 16, 1.4 * (1 - (t - 0.38) / 0.17)); flush(C.cleaveHot); } }
-    },
-    // FIGHTER · Cutting Wave: a crest of steel light rushes along the floor from him through the line of foes, a fading lane behind
-    cutting_wave(ctx) {
-      const { t, k, Cq, Tq, R, P, e } = ctx; if (ctx.at !== 'land') return;
-      // the lane in floor tiles: (wx, wy) a unit step along it, (−wy, wx) across it; W() puts a floor point on screen
-      const L = Math.hypot((Tq.sx - Cq.sx) / EX, (Tq.sy - Cq.sy) / EY) || 1, wx = (Tq.sx - Cq.sx) / EX / L, wy = (Tq.sy - Cq.sy) / EY / L;
-      const W = (/** @type {number} */ d, /** @type {number} */ o) => [Cq.sx + (wx * d - wy * o) * EX, Cq.sy + (wy * d + wx * o) * EY];
-      const len = 6, u = clamp01(t / 0.32), head = len * ease(u), fade = t < 0.32 ? 1 : 1 - clamp01((t - 0.32) / 0.45);
-      under(Cq); for (const o of [-0.45, 0, 0.45]) { const w = o ? 0.9 : 1.5, [ax, ay] = W(0.4, o), [bx, by] = W(Math.max(0.4, head - 2.4), o), [hx, hy] = W(head, o);
-        seg(ax, ay, bx, by, 0.35 * k * fade, 0.35 * k * fade, w); seg(bx, by, hx, hy, 0.35 * k * fade, 1.5 * k * fade, w); } flush(C.cleave, 1.6);
-      if (u < 1) { over(Cq, 0.4); for (let i = -3; i <= 3; i++) { const [x, y] = W(head - Math.abs(i) * 0.12, i * 0.18); seg(x, y, x, y - 16 + Math.abs(i) * 2.5, 1.3, 0.25, 0.7); } const [hx, hy] = W(head, 0); star(hx, hy - 8, 10, 1.3); flush(C.cleaveHot, 1.3); }
-      for (const q of R) { const d = Math.hypot((q.sx - Cq.sx) / EX, (q.sy - Cq.sy) / EY); if (head >= d * 0.9 && t < 0.6) { over(q, 0.8); seg(q.sx - 9, q.sy - 26, q.sx + 9, q.sy - 18, 1.2 * (1 - t / 0.6), 1.2 * (1 - t / 0.6), 0.9); flush(C.cleaveHot); } }
-      void P; void e;
-    },
     // FIGHTER · Earthshatter: the slam cracks the floor out from him, a shock ring; then a ring of stone spikes thrown up, crumbling
     earthshatter(ctx) {
       const { t, k, Cq, seed } = ctx; if (ctx.at !== 'land') return;
@@ -372,58 +290,6 @@ export function createSkillFX(P) {
       flush(C.cleaveHot, 1.6);
       under(Cq); ring(Cq, 1.6, 0.35 * f, 1.4); const p = (t % 0.6) / 0.6; if (p < 0.35) ring(Cq, 1.2 + 1.0 * p / 0.35, 1.2 * f * (1 - p / 0.35), 2); flush(C.cleave, 1.4);
     },
-    // ROGUE · Kidney Shot: a short heavy blow, a dull crimson thud and the stun's stars (the stun itself: the aura)
-    kidney_shot(ctx) {
-      const { t, k, Tq } = ctx; if (ctx.at !== 'land') return;
-      const x = Tq.sx, y = Tq.sy - 22; over(Tq, 0.9);
-      if (t < 0.18) { const f = 1 - t / 0.18; disc(x, y, 5 + 9 * (1 - f), 1.2 * f, 1.1); for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + 0.3; seg(x + Math.cos(a) * 5, y + Math.sin(a) * 4, x + Math.cos(a) * (12 + 8 * (1 - f)), y + Math.sin(a) * (9 + 6 * (1 - f)), 1.2 * f, 0.2 * f, 0.7); } }
-      star(x, y, 10, 1.3 * k); flush(C.stab, 1.5);
-    },
-    // ROGUE · Fan of Knives: five knives thrown out in a fan, glinting streaks; a cut on each foe they find
-    fan_of_knives(ctx) {
-      const { t, k, Cq, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const a0 = Math.atan2((Tq.sy - Cq.sy) / EY, (Tq.sx - Cq.sx) / EX), u = clamp01(t / 0.25), d = 6 * ease(u);
-      over(Cq, 0.6);
-      for (let i = -2; i <= 2; i++) { const a = a0 + i * 0.175, [x1, y1] = on(Cq, 0.5 + d, a, 18), [x0, y0] = on(Cq, Math.max(0.5, 0.5 + d - 1.4), a, 18); if (u < 1) { seg(x0, y0, x1, y1, 0.2, 1.7, 0.9); star(x1, y1, 5, 1.4); } }
-      flush(C.shadow, 1.8);
-      if (u < 1) { over(Cq, 0.6); for (let i = -2; i <= 2; i++) { const [x1, y1] = on(Cq, 0.5 + d, a0 + i * 0.175, 18); disc(x1, y1, 1.2, 1.2, 0.6); } flush(C.cleaveHot, 1.4); }   // (the steel's glint at each point)
-      for (const q of R) if (t > 0.12 && t < 0.5) { over(q, 0.8); const g = 1 - (t - 0.12) / 0.38; seg(q.sx - 7, q.sy - 28, q.sx + 7, q.sy - 18, 1.3 * g, 1.3 * g, 0.8); flush(C.stab, 1.3); }
-      void k;
-    },
-    // ROGUE · Shadowstep: a puff of smoke where she stood, a crimson streak, smoke again behind the foe, and a sure cut
-    shadowstep(ctx) {
-      const { t, k, Tq, e, P, seed } = ctx; if (ctx.at !== 'land') return;
-      const A = P(e.x, e.y);
-      for (const [Q, d] of [[A, 0], [Tq, 0.12]]) { const v = clamp01((t - d) / 0.5); if (v <= 0 || v >= 1) continue; over(Q, 0.4); for (let i = 0; i < 10; i++) { const a = rnd(seed, i + d * 100) * TAU, r = 6 + 12 * v * rnd(seed, i + 9); disc(Q.sx + Math.cos(a) * r, Q.sy - 14 + Math.sin(a) * r * 0.5 - 10 * v, 3.6 + 3 * v, 0.45 * (1 - v), 2); } flush(C.smoke, 1.3); }
-      if (t < 0.2) { over(Tq, 0.2); seg(A.sx, A.sy - 22, Tq.sx + 10, Tq.sy - 22, 0, 1.0 * (1 - t / 0.2), 1.2); flush(C.shadow, 1.4); }
-      if (t > 0.12) { const x = Tq.sx, y = Tq.sy - 24, s = clamp01((t - 0.12) / 0.06), g = t < 0.3 ? 1 : 1 - (t - 0.3) / 0.4; over(Tq, 0.9); seg(x - 10, y - 10, x - 10 + 20 * s, y - 10 + 20 * s, 1.5 * g, 1.5 * g, 1.2); seg(x + 10, y - 10, x + 10 - 20 * s, y - 10 + 20 * s, 1.5 * g, 1.5 * g, 1.2); star(x, y, 14, 1.5 * g); flush(C.stab, 1.6); }
-      void k;
-    },
-    // ROGUE · Caltrops: a handful thrown in an arc onto the knot; while it lies there, iron points glint on the floor and the ground stings
-    caltrops(ctx) {
-      const { t, Cq, Tq, seed } = ctx; if (ctx.at !== 'land') return;
-      const life = 6, f = Math.min(1, (life - t) / 0.6); if (f <= 0) return;
-      if (t < 0.3) { over(Tq, 0.4); for (let i = 0; i < 8; i++) { const v = clamp01(t / 0.3), a = rnd(seed, i) * TAU, r = 0.8 * rnd(seed, i + 5), [ex, ey] = on(Tq, r, a); disc(Cq.sx + (ex - Cq.sx) * v, Cq.sy - 20 + (ey - Cq.sy + 20) * v - 26 * Math.sin(v * Math.PI), 1.3, 1, 1); } flush(C.shadow, 1.2); }
-      if (t > 0.25) { under(Tq); ring(Tq, 0.85, 0.55 * f, 1.2); pool(Tq, 0.85, 0.22 * f, 0, 0.8); flush(C.venom, 1.1); under(Tq);
-        for (let i = 0; i < 16; i++) { const a = rnd(seed, i + 20) * TAU, r = 0.75 * Math.sqrt(rnd(seed, i + 30)), [x, y] = on(Tq, r, a), tw = 0.5 + 0.5 * Math.sin(t * 7 + i * 1.7); star(x, y - 1, 2.2, (0.4 + 0.8 * tw) * f); } flush(C.cleaveHot, 1.2); }
-    },
-    // MAGE · Flare: a burning rune marked on the floor under the knot, pulsing quicker, then a pillar of fire bursts up out of it
-    flare(ctx) {
-      const { t, k, Tq, seed } = ctx; if (ctx.at !== 'land') return;
-      const RR = 1.8;
-      if (t < 0.7) { const p = 0.5 + 0.5 * Math.sin(t * (10 + t * 30)); under(Tq); ring(Tq, RR, (0.5 + 0.5 * p) * clamp01(t / 0.15), 1.4); ring(Tq, RR * 0.6, 0.6 * clamp01(t / 0.25), 1); for (let i = 0; i < 6; i++) { const [x0, y0] = on(Tq, RR * 0.6, i * TAU / 6 + t), [x1, y1] = on(Tq, RR, i * TAU / 6 + t); seg(x0, y0, x1, y1, 0.6, 0.6); } flush(C.fire, 1.2); return; }
-      const s = t - 0.7, g = 1 - s / 0.6; if (g <= 0) return;
-      over(Tq, 0.7); column(Tq.sx, Tq.sy, 96 * ease(clamp01(s / 0.08)), 9 * g + 2, 1.6 * g); flush(C.fireHot, 1.3);
-      under(Tq); ring(Tq, 0.3 + RR * ease(clamp01(s / 0.2)), 1.4 * g, 2); pool(Tq, RR, 0.6 * g); flush(C.fire, 1.2);
-      over(Tq, 0.6); for (let i = 0; i < 14; i++) { const a = rnd(seed, i) * TAU, sp = 30 + 40 * rnd(seed, i + 4); disc(Tq.sx + Math.cos(a) * sp * s, Tq.sy - 20 - 60 * s + 90 * s * s + Math.sin(a) * sp * 0.4 * s, 1.4, 1.1 * g, 1); } flush(C.ember, 1.2); void k;
-    },
-    // MAGE · Gather: arcane threads spiral in on the knot's middle and draw the foes toward it (the pull: the sim's)
-    gather(ctx) {
-      const { t, k, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const u = clamp01(t / 0.5);
-      under(Tq); for (let s = 0; s < 4; s++) for (let j = 0; j <= 30; j++) { const v = j / 30, a = s * TAU / 4 + v * 4 - t * 6, r = 4 * (1 - v) * (1 - 0.6 * u); const [x, y] = on(Tq, r, a); mark(x, y, 0.9 * k * v); } ring(Tq, 4 * (1 - 0.75 * ease(u)), 0.8 * k, 1.4); flush(C.ward, 1.3);
-      over(Tq, 0.4); for (const q of R) if (t < 0.6) { seg(q.sx, q.sy - 18, Tq.sx + (q.sx - Tq.sx) * 0.4, Tq.sy - 18 + (q.sy - Tq.sy) * 0.4, 0.2 * k, 1.0 * k, 0.6); } star(Tq.sx, Tq.sy - 16, 10 * u, 1.2 * k); flush(C.wardHot, 1.2);
-    },
     // MAGE · Glacial Tomb: the frost glyph drawn under the knot, then ice stands up round each foe in it (the freeze: the aura)
     glacial_tomb(ctx) {
       const { t, k, Tq, R } = ctx; if (ctx.at !== 'land') return;
@@ -438,67 +304,12 @@ export function createSkillFX(P) {
       under(Tq); ring(Tq, RR, 0.7 * f, 1.3); pool(Tq, RR, 0.3 * f, 0, 0.8); flush(C.frost, 1.2);
       over(Tq, 0.5); for (let i = 0; i < 34; i++) { const a = rnd(seed, i) * TAU + t * (2.2 + rnd(seed, i + 5)), r = RR * Math.sqrt(rnd(seed, i + 9)), hh = ((t * (30 + 20 * rnd(seed, i + 13)) + rnd(seed, i + 17) * 50) % 50); const [x, y] = on(Tq, r, a, 50 - hh); disc(x, y, 1.2, 0.9 * f, 1); if (i % 4 === 0) seg(x, y, x - 4, y - 1, 0.6 * f, 0); } flush(C.frostHot, 1.2);
     },
-    // CLERIC · Sanctuary: a circle of green-gold light under the hurt, pulsing as it heals (8 pulses), motes going up the warded
-    sanctuary(ctx) {
-      const { t, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const life = 4, f = Math.min(1, t / 0.3) * Math.min(1, (life - t) / 0.4), RR = 1.25; if (f <= 0) return;
-      under(Tq); ring(Tq, RR, 1.0 * f, 1.6); ring(Tq, RR * 0.8, 0.5 * f, 1, 0, 0, TAU); pool(Tq, RR, 0.32 * f, 0, 0.7); flush(C.breath, 1.2);
-      const p = (t % 0.5) / 0.5; under(Tq); ring(Tq, RR * (0.2 + 0.8 * p), 0.8 * f * (1 - p), 1.3); flush(C.mend, 1.2);
-      for (const q of R) { over(q, 0.5); for (let i = 0; i < 4; i++) { const v = ((t * 0.9) + i / 4) % 1; disc(q.sx + Math.sin(i * 2.1 + t) * 7, q.sy - 6 - v * 44, 1.6, 1.0 * f * (1 - v), 1); } flush(C.breath, 1.3); }
-    },
-    // CLERIC · Consecrate: gold holy ground on the knot while it lasts, a cross of light in a ring, motes going up; the dead on it smoke
-    consecrate(ctx) {
-      const { t, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const life = 8, f = Math.min(1, t / 0.35) * Math.min(1, (life - t) / 0.6), RR = 1.0; if (f <= 0) return;
-      under(Tq); ring(Tq, RR, 1.0 * f, 1.5); pool(Tq, RR, 0.35 * f, 0, 0.8); for (const a of [0, Math.PI / 2]) { const [x0, y0] = on(Tq, RR * 0.85, a), [x1, y1] = on(Tq, RR * 0.85, a + Math.PI); seg(x0, y0, x1, y1, 0.9 * f, 0.9 * f, 0.7); } flush(C.bless, 1.3);
-      over(Tq, 0.4); for (let i = 0; i < 8; i++) { const v = ((t * 0.5) + i / 8) % 1, [x, y] = on(Tq, RR * 0.8 * ((i * 37) % 10) / 10, i * 2.4); disc(x, y - v * 40, 1.3, 0.9 * f * (1 - v), 1); } flush(C.turn, 1.2);
-      for (const q of R) { const p = (t % 1) ; if (p < 0.3) { over(q, 0.6); star(q.sx, q.sy - 24, 7, 1.1 * f * (1 - p / 0.3)); flush(C.turn); } }
-    },
-    // CLERIC · Revive: she kneels, a thread of gold from her to the Downed; then a pillar of light on them and they stand
-    revive(ctx) {
-      const { t, Cq, Tq } = ctx; if (ctx.at !== 'land') return;
-      if (t < 1.2) { const u = t / 1.2; under(Cq); ring(Cq, 0.5 + 0.2 * Math.sin(t * 8), 0.9, 1.3); flush(C.bless, 1.2); over(Tq, 0.3); const g = 0.4 + 0.6 * u; for (let i = 0; i <= 24; i++) { const v = i / 24; mark(Cq.sx + (Tq.sx - Cq.sx) * v, Cq.sy - 26 + (Tq.sy - 6 - (Cq.sy - 26)) * v - 10 * Math.sin(v * Math.PI), g * (0.4 + 0.6 * ((v * 6 - t * 4) % 1 + 1) % 1)); } under(Tq); pool(Tq, 0.6 * u, 0.6 * u); flush(C.mend, 1.3); return; }
-      const s = t - 1.2, g = 1 - s / 0.5; if (g <= 0) return;
-      over(Tq, 0.5); column(Tq.sx, Tq.sy, 90, 7, 1.7 * g); star(Tq.sx, Tq.sy - 40, 18, 1.5 * g); flush(C.turn, 1.4);
-      under(Tq); ring(Tq, 0.3 + 1.3 * ease(clamp01(s / 0.3)), 1.3 * g, 1.8); flush(C.mend, 1.3);
-    },
-    // CLERIC · Judgement: her glyph on the floor round the foe, six pillars striking down round it, then the great pillar on it
-    judgement(ctx) {
-      const { t, Tq, R } = ctx; if (ctx.at !== 'land') return;
-      const RR = 2.2, g0 = clamp01(t / 0.25), out = t < 1.2 ? 1 : 1 - (t - 1.2) / 0.4; if (out <= 0) return;
-      under(Tq); ring(Tq, RR, 0.9 * g0 * out, 1.4); ring(Tq, RR * 0.6, 0.6 * g0 * out, 1); for (let i = 0; i < 12; i++) { const a = i * TAU / 12 + t * 0.6, [x0, y0] = on(Tq, RR * 0.6, a), [x1, y1] = on(Tq, RR, a); seg(x0, y0, x1, y1, 0.6 * out, 0.6 * out); } flush(C.bless, 1.2);
-      for (let i = 0; i < 6; i++) { const at = 0.2 + i * 0.08, s = t - at; if (s < 0 || s > 0.4) continue; const [x, y] = on(Tq, RR * 0.8, i * TAU / 6 + 0.5), g = 1 - s / 0.4; over(Tq, 0.3); column(x, y, 70 * ease(clamp01(s / 0.06)), 3.5, 1.4 * g); flush(C.turn, 1.3); under(Tq); disc(x, y, 5, 0.9 * g, 1.2); flush(C.bless); }
-      const s = t - 0.8; if (s > 0 && s < 0.6) { const g = 1 - s / 0.6; over(Tq, 0.6); column(Tq.sx, Tq.sy, 110 * ease(clamp01(s / 0.07)), 10 * g + 3, 1.8 * g); star(Tq.sx, Tq.sy - 30, 22, 1.5 * g); flush(C.turn, 1.5); under(Tq); ring(Tq, 0.4 + 2.4 * ease(clamp01(s / 0.3)), 1.4 * g, 2); flush(C.bless, 1.3); for (const q of R) { over(q, 0.7); star(q.sx, q.sy - 24, 9, 1.2 * g); flush(C.turn); } }
-    },
     // SHAMAN · Binding Roots: green roots wind up out of the floor round each foe in the knot (the root itself: the aura)
     binding_roots(ctx) {
       const { t, k, Tq, R, seed } = ctx; if (ctx.at !== 'land') return;
       const u = ease(clamp01(t / 0.35));
       under(Tq); ring(Tq, 1.25 * u, 0.8 * k, 1.3); flush(C.hex, 1.2);
       over(Tq, 0.3); for (const q of R) for (let i = 0; i < 5; i++) { const a = i * TAU / 5 + rnd(seed, i) * 0.6, [x, y] = on(q, 0.42, a); let px = x, py = y; const h = 26 * u; for (let j = 1; j <= 6; j++) { const v = j / 6, nx = x + Math.sin(v * 7 + i + t * 3) * 4 * v, ny = y - h * v; seg(px, py, nx, ny, 1.1 * k, 1.1 * k * (1 - v * 0.5), 0.6); px = nx; py = ny; } } flush(C.hex, 1.4);
-    },
-    // SHAMAN · Old Marks: a strike that brands a mark on the foe (one, two, three hung over it); the third breaks them in a burst
-    old_marks(ctx) {
-      const { t, k, Tq, e } = ctx; if (ctx.at !== 'land') return;
-      const n = e.marks || 1; over(Tq, 0.8);
-      if (n < 3) { for (let i = 0; i < n; i++) { const x = Tq.sx + (i - (n - 1) / 2) * 9, y = Tq.sy - 44; oval(x, y, 3.2, 3.2, 1.3 * k, 1); seg(x, y - 3, x, y + 3, 1.1 * k, 1.1 * k); } star(Tq.sx, Tq.sy - 24, 7, 1.1 * k); flush(C.hexV, 1.4); return; }
-      const g = 1 - t / 0.6; if (g <= 0) return; for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + (i - 1) * 0.6, r = 9 + 26 * ease(clamp01(t / 0.3)); disc(Tq.sx + Math.cos(a) * r, Tq.sy - 44 + Math.sin(a) * r * 0.6, 3, 1.4 * g, 1); }
-      star(Tq.sx, Tq.sy - 30, 20 * (0.5 + 0.5 * g), 1.6 * g); flush(C.hexV, 1.5); under(Tq); ring(Tq, 0.3 + 1.4 * ease(clamp01(t / 0.3)), 1.3 * g, 1.8); flush(C.drain, 1.3);
-    },
-    // SHAMAN · Spirit Totem: a spirit post stands near the party while it lasts: its pull goes in in rings every 1.5 s, its ward a ring on the floor
-    spirit_totem(ctx) {
-      const { t, Tq } = ctx; if (ctx.at !== 'land') return;
-      const life = 8, f = Math.min(1, t / 0.3) * Math.min(1, (life - t) / 0.5); if (f <= 0) return;
-      over(Tq, 0.4); column(Tq.sx, Tq.sy, 40, 2, 1.0 * f); oval(Tq.sx, Tq.sy - 46, 6, 7, 1.2 * f, 1.2, Math.PI, TAU); seg(Tq.sx - 7, Tq.sy - 46, Tq.sx + 7, Tq.sy - 46, 1.2 * f, 1.2 * f); star(Tq.sx, Tq.sy - 40, 6, (0.6 + 0.4 * Math.sin(t * 5)) * f); flush(C.singHot, 1.3);
-      under(Tq); ring(Tq, 2.5, 0.55 * f, 1.3); pool(Tq, 2.5, 0.12 * f, 0, 0.6); flush(C.drain, 1.1);
-      const p = (t % 1.5) / 1.5; if (p < 0.6) { const v = p / 0.6; under(Tq); ring(Tq, 4 - 3.4 * ease(v), 1.0 * f * (1 - v), 1.6); flush(C.sing, 1.3); }
-    },
-    // SHAMAN · Thunder Drum: a drum's beat thrown out from the shaman in hard rings; each foe it reaches flung back, a flash on it
-    thunder_drum(ctx) {
-      const { t, k, Cq, R } = ctx; if (ctx.at !== 'land') return;
-      under(Cq); for (const d of [0, 0.12]) { const u = clamp01((t - d) / 0.3); if (u > 0 && u < 1) ring(Cq, 0.4 + 2.4 * ease(u), 1.5 * (1 - u), 2.2); } pool(Cq, 0.9, 0.5 * k); flush(C.drain, 1.4);
-      over(Cq, 0.5); if (t < 0.2) star(Cq.sx, Cq.sy - 42, 14, 1.4 * (1 - t / 0.2)); flush(C.singHot, 1.3);
-      for (const q of R) if (t > 0.08 && t < 0.5) { const g = 1 - (t - 0.08) / 0.42, dx = q.sx - Cq.sx, dy = q.sy - Cq.sy, l = Math.hypot(dx, dy) || 1; over(q, 0.6); seg(q.sx - dx / l * 14, q.sy - 20 - dy / l * 7, q.sx, q.sy - 20, 0.1, 1.2 * g, 0.8); star(q.sx, q.sy - 22, 8, 1.2 * g); flush(C.drain, 1.3); }
     },
 
     // ── the fight's other moments ─────────────────────────────────────────────────────────────────────────────────
@@ -675,10 +486,8 @@ export function createSkillFX(P) {
       } else {
         if (u.dead || u.hp <= 0) continue;
         // (the proposed statuses, docs/skill-trees-proposal.md §2: drawn from the state once the sim keeps them)
-        if (!holdsOff.has('stun') && u.stun > 0) { const f = Math.min(1, u.stun / 0.3); over(q, 0.9); for (let i = 0; i < 3; i++) { const a = t * 5 + i * TAU / 3; star(q.sx + Math.cos(a) * 9, q.sy - 50 + Math.sin(a) * 3, 3.2, 1.1 * f); } flush(C.stun, 1.3); }
-        if (!holdsOff.has('frozen') && u.frozen > 0) { const f = Math.min(1, u.frozen / 0.3); over(q, 0.95); oval(q.sx, q.sy - 22, 12, 24, 0.9 * f, 1.3); for (let i = 0; i < 4; i++) { const tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 2); star(q.sx - 8 + i * 5, q.sy - 40 + (i % 2) * 22, 3, tw * f); } flush(C.frostHot, 1.2); under(q); pool(q, 0.55, 0.45 * f); ring(q, 0.55, 0.8 * f, 1.3); flush(C.frost, 1.2); }
-        if (!holdsOff.has('root') && u.rooted > 0) { const f = Math.min(1, u.rooted / 0.3); under(q); ring(q, 0.45, 0.8 * f, 1.3); flush(C.root, 1.2); over(q, 0.4); for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + 0.4, [x, y] = on(q, 0.4, a); seg(x, y, x + Math.sin(t * 2 + i) * 3, y - 14, 1.0 * f, 0.3 * f, 0.5); } flush(C.root, 1.2); }
-        if (!holdsOff.has('stun') && u.knocked > 0) { const f = Math.min(1, u.knocked / 0.3); under(q); pool(q, 0.6, 0.35 * f, 0, 1.2); flush(C.dust, 1.2); over(q, 0.9); for (let i = 0; i < 2; i++) { const a = t * 4 + i * Math.PI; star(q.sx + Math.cos(a) * 7, q.sy - 26 + Math.sin(a) * 3, 2.6, 0.9 * f); } flush(C.stun, 1.2); }
+        if (u.frozen > 0) { const f = Math.min(1, u.frozen / 0.3); over(q, 0.95); oval(q.sx, q.sy - 22, 12, 24, 0.9 * f, 1.3); for (let i = 0; i < 4; i++) { const tw = 0.5 + 0.5 * Math.sin(t * 6 + i * 2); star(q.sx - 8 + i * 5, q.sy - 40 + (i % 2) * 22, 3, tw * f); } flush(C.frostHot, 1.2); under(q); pool(q, 0.55, 0.45 * f); ring(q, 0.55, 0.8 * f, 1.3); flush(C.frost, 1.2); }
+        if (u.rooted > 0) { const f = Math.min(1, u.rooted / 0.3); under(q); ring(q, 0.45, 0.8 * f, 1.3); flush(C.root, 1.2); over(q, 0.4); for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + 0.4, [x, y] = on(q, 0.4, a); seg(x, y, x + Math.sin(t * 2 + i) * 3, y - 14, 1.0 * f, 0.3 * f, 0.5); } flush(C.root, 1.2); }
         if (u.slow > 0) { const f = Math.min(1, u.slow / 0.6); under(q); ring(q, 0.45, 0.6 * f, 1.1); pool(q, 0.4, 0.25 * f); flush(C.frost);   // rime at the feet, snow falling on them
           over(q, 0.5); for (let i = 0; i < 5; i++) { const v2 = ((t * 0.7) + i / 5) % 1, x = q.sx - 9 + i * 4.5 + Math.sin(t * 2 + i) * 2.5, y = q.sy - 48 + v2 * 40;   // snowflakes falling on them, big enough to read (the owner, 2026-11-08: "bigger falling snow flakes")
             star(x, y, 2.6, 0.9 * f * (1 - v2 * 0.7)); disc(x, y, 1.2, 0.9 * f * (1 - v2 * 0.7), 1); } flush(C.frostHot, 1.2); }
@@ -754,8 +563,6 @@ export function createSkillFX(P) {
      *  moment's { id: 'ward_break' | 'level_up' | 'boss_…', by, foeBy (the one it starts from is a foe), tid, ally, x, y,
      *  tx, ty, reached } @param {any} e @param {number} now */
     moment(e, now) { this.event(e, now); },
-    /** the holds another painter draws ('stun' a stun's or knockdown's stars, 'frozen', 'root'), on Luminati: renderer.js lumHolds @param {Set<string>} which */
-    statusesElsewhere(which) { holdsOff = which || new Set(); },
     /** a foe's wind-up cut (battle.js 'interrupt': a stun, a freeze, a knockdown): its warning goes, the blow never comes @param {number} by */
     cut(by) { for (let i = live.length - 1; i >= 0; i--) if (live[i].e.id === 'warn' && live[i].e.by === by) live.splice(i, 1); },
     /** every moment under way and every aura, this frame. units: the figures drawn ({ u, foe, sx, sy, h, key }), for

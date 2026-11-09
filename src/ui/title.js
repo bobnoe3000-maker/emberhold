@@ -54,7 +54,7 @@ const CSS = `
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
- *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, current: () => string, status?: () => any } | null, tune?: (() => void) | null,
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any } | null, tune?: (() => void) | null,
  *   devApply?: ((cmds: any[]) => void) | null }} o  onPlay: the title closes into play;
  *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
@@ -103,10 +103,10 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     return `People: ${s.models || 0} of ${s.actors || 0} in view as models, the rest still loading${at}`;
   }
   function Graphics() {
-    const g = graphics.read(), r = graphics.current();
+    const g = graphics.read();
     return html`<div id="title">
       <div class="mark" style="font-size:32px">GRAPHICS</div>
-      ${r === 'luminati' && html`<div class="tag" id="figStatus">${figStatus()}</div>`}
+      <div class="tag" id="figStatus">${figStatus()}</div>
       <div class="tag">Depth of field</div>
       <div class="row">
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}

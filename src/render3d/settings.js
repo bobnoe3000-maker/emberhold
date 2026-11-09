@@ -3,17 +3,15 @@
 // The world is Luminati's (render3d/hybrid.js): the owner, 2026-11-09, "we are going to stick with the Luminati version"
 // (docs/luminati-only-cleanup.md, step 1). There's no choice of renderer any more; what's left to set:
 //   · the depth of field: Luminati's diorama blur, 'soft' (the prototype's eased blur) or 'off'. The owner: "Depth of
-//     field blur is a new menu setting." It applies to the Luminati renderer only (Emberlit has no lens).
+//     field blur is a new menu setting."
 //   · the brightness outdoors by the part of the day (the owner, 2026-11-04: "In game add a setting for me to dial in
 //     brightness for day, dusk, dawn and night so i can better test and confirm settings"): a percentage a part, 100 the
-//     shipped look (render3d/bright.js), for the Luminati renderer (the menu's Brightness tray, ui/brightness.js).
+//     shipped look (render3d/bright.js; the menu's Brightness tray, ui/brightness.js).
 //   · the hit feel (the feel pass, docs/combat-fx.md): a blow's hit-stop and camera jolt, 'full', 'light' (half) or 'off',
-//     on both renderers, for anyone who'd rather the screen kept still.
+//     for anyone who'd rather the screen kept still.
 //   · the frame rate on screen (the owner, 2026-11-09: "add a menu option to toggle on/off the frame rate so I can
 //     monitor"): 'off' or 'on' (ui/fps.js).
-// ?renderer=emberlit is a developer's escape until Emberlit's world painting is removed (the cleanup's step 4): Emberlit
-// paints the world in this tab, kept for its later loads (a slot's switch drops the URL's flags); ?renderer=luminati ends
-// it. The browser suite and the capture tools use it; no player sees it. A stored `renderer` from before is ignored.
+// A stored `renderer` from before (the choice there was, 2026-10-31 to 11-09) is ignored, and dropped at the next write.
 // Presentation only: nothing here reaches the sim or a save.
 
 const KEY = 'emberfall.graphics';
@@ -45,13 +43,4 @@ export function writeGraphics(patch) {
   delete /** @type {any} */ (next).renderer;   // (the choice there was before Luminati only)
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* private window: the change lasts this page */ }
   return next;
-}
-const ESCAPE = 'emberfall.renderer';
-/** the renderer this page load uses: Luminati, but for a developer's ?renderer=emberlit, kept for this tab (above)
- * @returns {'emberlit' | 'luminati'} */
-export function rendererFor(search = typeof location === 'undefined' ? '' : location.search) {
-  const q = new URLSearchParams(search).get('renderer');
-  let v = q === 'emberlit' || q === 'luminati' ? q : null;
-  try { if (v) sessionStorage.setItem(ESCAPE, v); else v = sessionStorage.getItem(ESCAPE); } catch { /* no storage: this load only */ }
-  return v === 'emberlit' ? 'emberlit' : 'luminati';
 }

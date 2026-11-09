@@ -1,12 +1,12 @@
 # Luminati only: what to remove and clean up (a proposal, 2026-11-09)
 
-**Status: Accepted; steps 1–3 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
+**Status: Accepted; steps 1–4 done (2026-11-09).** The owner (2026-11-09): "we are going to stick with the Luminati version
 and fx/asset combos in the current code, so what code/assets and game options should we remove or clean up?", then, on
 §4's four questions: "Go with your recommendations on all four, start step 1". Also decided the same day: the dungeons
 keep their walls and floors (no KayKit kit: [dungeon-kit-proposal.md](./dungeon-kit-proposal.md)). Decision row A21
 ([architecture.md](./architecture.md)).
 
-This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Steps 4–5 are
+This proposal is from an audit of the code as it stands (every claim below has a file and line behind it). Step 5 (the rest of the docs) is
 decided and not started.
 
 **In short:**
@@ -111,7 +111,7 @@ Each step ships on its own, with the browser suite green before the next.
 | 1 ✓ | **Luminati the default and only choice**: the renderer row and `?renderer` out; a clear message if Luminati can't start (today a failed start leaves a black world and only logs) | The browser suite's ≈ 60 checks move onto Luminati: CI time (it took 48 of its 75 minutes before this) |
 | 2 ✓ | **The prototype and the spikes out** (`lumina/`, `tools/lumina/` but `ground.js`, `tools/kit/`, kit-cast; Compare worlds and Another world) | Low: links and its own tests only |
 | 3 ✓ | **The atlases' lighting channels out**: loaders first, then the files, then the bakers | Low once the loaders are changed; a figure that fails to load is caught by the browser suite |
-| 4 | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
+| 4 ✓ | **renderer.js's world painting out**, `tilestyles.js`, `outdoorpaint.js`, the GL stub, the dead skill moments, `?tiles` and `?tierlooks` | Medium: a big file; the overlay and taps must not move (the suite's tap and HUD checks) |
 | 5 | **Tools, tests and docs** to match | Low |
 
 ### 3.1 Step 1 as built (2026-11-09)
@@ -167,6 +167,34 @@ Each step ships on its own, with the browser suite green before the next.
   glow map; `bake-env.cjs` the albedo only. The lab still draws the passes; nothing is re-baked by this step.
 - **Tests:** the browser suite's atlas check also fails if a normal, glow or depth-key atlas is asked for;
   `fens-foes.test.mjs` no longer requires a normal map.
+
+### 3.4 Step 4 as built (2026-11-09; the owner: "start step 4")
+
+- **`src/render/renderer.js`: 2,099 → about 1,250 lines.** Gone: the shaders and all WebGL (the 1 × 1 stub too: a phone
+  without WebGL2 no longer fails here, before the can't-start message), the G-buffer bake and its double buffers, tile
+  painting and recording, the ground shadows, figure stamping and the x-ray, the hazards' ground tint, passes A and B,
+  the lights' setup, `?tiles`/`?tv`, the harvest sprites and the Stage's hooks. What stays: the camera, the draws list,
+  the effects' emissive plane, the overlay and every tap. The actor and env atlases are read as JSON only now: the
+  painter loads the albedo itself, so nothing here decodes a sheet into per-frame sprites (it did, every atlas, at boot).
+- **`src/render/tilestyles.js`, `outdoorpaint.js`** deleted.
+- **The developer escape** (`?renderer=emberlit`, `settings.js` `rendererFor`) is gone; the renderer has no `external`
+  option: Luminati is always the painter.
+- **`?tierlooks`** is gone (the owner's decision 4). Which skills Luminati draws in its own looks is one list,
+  `skillfx.js` `LUM_LOOKS` (with `LUM_HOLDS`, a stun's stars), read by the renderer; those twenty skills' Emberlit
+  moments and the stun and knockdown holds were deleted (`skillfx.js` 781 → 588 lines). `tools/capture/tiers.mjs`,
+  which staged the review, is retired.
+- **The Stage** (decision 3): its cast lineup and the env, props and fx views drew through Emberlit's painting and are
+  retired (`src/dev/stage.js` deleted); the icons and faces views stay, plain HTML (`src/dev/review.js`, same URL),
+  and `tools/capture/stage.mjs` takes their sheets.
+- **The browser suite on Luminati, with a budget.** Luminati drawing in software costs ~50 s a page load on this
+  machine (the slots checks took 207 s on it, before the budget). The flow checks (slots, menus, dialogue, quests, the
+  HUD's layout) run with no world drawn: `?world=off` (localhost only, kept for the tab) stands an empty painter in
+  Luminati's place, so the camera, the figures' frames, the overlay and the taps run as in the game. The checks about
+  the world ask for it with `&world=on`: the M3 loop (now one run, on Luminati), Luminati's can't-start message and the
+  render3d section. Retired with Emberlit's painting: the Stage lineup check, the art review's env/props/fx, and the
+  x-ray shares (Thornwick's townsfolk behind buildings; Saltmere's keeps its "everyone in view and tappable" half).
+- **The capture tools** (`rig`, `skills`, `bosses`, `feel`, `tools/dungeon/capture.mjs`) draw on Luminati only; they
+  still pass `&renderer=luminati`, so a `--base` checkout from before draws on it too.
 
 ## 4. Questions for the owner (answered 2026-11-09: the recommendations, all four)
 

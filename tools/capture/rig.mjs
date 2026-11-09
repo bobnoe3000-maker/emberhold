@@ -12,7 +12,7 @@
 // onto one, in the frame's own task (Luminati's canvas keeps no buffer). Both renderers run side by side, a browser
 // each. A shot with `hud` is a Playwright screenshot after all, with the top bar and cards.
 //
-//   node tools/capture/rig.mjs [preset|shots.json] [--renderer both|luminati|emberlit] [--out dir] [--dpr 1|2]
+//   node tools/capture/rig.mjs [preset|shots.json] [--out dir] [--dpr 1|2]
 //                              [--base http://localhost:8080] [--sheet] [--settle 40]
 //
 // presets: vale-rooms (every space of the Vale's authored dungeon floors, at: "part:<id>"), vale (the Hollow Vale for art critic pass 19: Thornwick and the Vale at each hour, a fighting room on six
@@ -34,7 +34,9 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const flag = (k) => args.includes(k);
 const WHAT = args[0] && !args[0].startsWith('--') ? args[0] : 'smoke';
-const RENDERERS = (opt('--renderer', 'both') === 'both' ? 'emberlit,luminati' : opt('--renderer')).split(',');
+// (Luminati only since 2026-11-09, docs/luminati-only-cleanup.md: --renderer is gone. The URL still says
+// &renderer=luminati, so a --base checkout from before draws on Luminati too, for a before and an after)
+const RENDERERS = ['luminati'];
 const OUT = resolve(opt('--out', join(ROOT, 'tools/capture/out/rig'))), DPR = +opt('--dpr', 1), SETTLE = +opt('--settle', 40);
 const HOURS = ['dawn', 'day', 'dusk', 'night'];
 const FLOORS = [['barrows', 0], ['barrows', 1], ['wickham_keep', 0], ['wickham_keep', 1], ['sunken_chapel', 0], ['sunken_chapel', 1]];   // (the Vale's six floors, two a dungeon: plans.js)
@@ -123,7 +125,7 @@ async function run(renderer) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: DPR });
   const errs = []; p.on('pageerror', (e) => errs.push(String(e)));
   const first = SHOTS[0];
-  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}&renderer=${renderer === 'luminati' ? 'luminati' : 'emberlit'}`);
+  await p.goto(`${base}/index.html?dev&manual&notitle&scene=${first.scene}&region=${first.region || 'vale'}${first.site ? '&site=' + first.site : ''}&renderer=luminati`);
   await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__sim, null, { timeout: 120000 });
   log(renderer, 'page up');
   await mkdir(join(OUT, renderer), { recursive: true });

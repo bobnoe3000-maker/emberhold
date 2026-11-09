@@ -206,25 +206,16 @@ test('the menu\'s Frame rate (the owner, 2026-11-09): off by default, on when sh
   } finally { delete globalThis.localStorage; }
 });
 
-test('Luminati only (docs/luminati-only-cleanup.md step 1): every player gets Luminati, an old stored Emberlit choice is ignored; ?renderer=emberlit is a developer escape for that tab', async () => {
-  const { readGraphics, writeGraphics, rendererFor } = await import('../src/render3d/settings.js');
-  const mem = new Map(), ses = new Map();
+test('Luminati only (docs/luminati-only-cleanup.md): Graphics holds no renderer; a device that chose Emberlit before keeps its other settings, and the old choice is dropped at the next write', async () => {
+  const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
+  const mem = new Map();
   globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
-  globalThis.sessionStorage = /** @type {any} */ ({ getItem: (x) => ses.get(x) ?? null, setItem: (x, v) => ses.set(x, String(v)) });
   try {
     mem.set('emberfall.graphics', '{"renderer":"emberlit","dof":"off"}');   // (a device that chose Emberlit before)
-    assert.equal(rendererFor(''), 'luminati');
     assert.equal(readGraphics().dof, 'off', 'the other settings survive');
     assert.equal(/** @type {any} */ (readGraphics()).renderer, undefined);
     writeGraphics({ feel: 'light' }); assert.ok(!/renderer/.test(mem.get('emberfall.graphics')), 'the old choice is dropped on the next write');
-    assert.equal(rendererFor('?renderer=emberlit'), 'emberlit');
-    assert.equal(rendererFor(''), 'emberlit', 'the escape holds for the tab');
-    assert.equal(rendererFor('?renderer=luminati'), 'luminati');
-    assert.equal(rendererFor(''), 'luminati');
-    assert.equal(rendererFor('?renderer=sideways'), 'luminati');
-  } finally { delete globalThis.localStorage; delete globalThis.sessionStorage; }
-  assert.equal(rendererFor('?renderer=emberlit'), 'emberlit', 'no storage: this load only');
-  assert.equal(rendererFor(''), 'luminati');
+  } finally { delete globalThis.localStorage; }
 });
 
 test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent obvious enough"): a glow at the head of the way up, daylight on a first floor; the well lit violet', () => {

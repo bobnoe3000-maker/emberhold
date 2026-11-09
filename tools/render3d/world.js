@@ -711,7 +711,7 @@ function placeSpells(spells, dt, lamps, fight) {
   K.crystals.update(dt); K.frost.update(dt); K.blades.update(dt); K.rocks.update(dt); K.bells.update(dt); K.quads.update();
 }
 
-// ── the tiers' skills in Luminati's looks (GDD v1.55; the owner's picks: renderer.js TIER_LUM, the rest Emberlit's) ──
+// ── the tiers' skills in Luminati's looks (GDD v1.55; the owner's picks: skillfx.js LUM_LOOKS, the rest in our light) ──
 // Each from the Luminati move or piece it was drawn from (docs/skill-trees-proposal.md §5): the swordmaster's falling
 // sword, wave, crest and cyclone; the greatshield's rock spikes; the ice mage's shells, crystals, frost and storm; the
 // cleric's glyphs and pillars; the bellwarden's bell. S: the spell (world units: a tile is 0.5); rec: its pieces; L: s

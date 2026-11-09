@@ -1,5 +1,7 @@
 # The Stage — a lineup page for clean character captures (proposal)
 
+> **Superseded (2026-11-09).** The Stage's lineup drew through Emberlit's painting and was retired with it ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4; the owner's decision 3). `src/dev/stage.js` is gone; the art review's icons and faces stay ([art-review.md](./art-review.md)).
+
 **Implemented, 2026-10-02** (proposed the same day). This answers: is there a better way to get
 clean in-game shots of the players and NPCs? It's a separate page that draws them in lines,
 animated in place, none overlapping, through the real renderer.

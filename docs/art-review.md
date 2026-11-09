@@ -1,5 +1,7 @@
 # The art review: every piece of the game's art, drawn the way the game draws it
 
+> **In part (2026-11-09).** The icons and faces views stay (`?dev&scene=stage&show=icons|faces`, `src/dev/review.js`, `tools/capture/stage.mjs`); the env, props and fx views drew through Emberlit's painting and were retired with it ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4; the owner's decision 3).
+
 **Current (2026-10-10).** The owner: *"Make sure you have a bespoke in game rendering view of all game assets and
 character and enemy NPCs to easily critic review game art. Same for FX and animations. Use these to more quickly and
 reliably review and improve game art."* The first pass made with it is [pass 16](./art-critic-pass-16.md).

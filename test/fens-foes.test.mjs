@@ -11,7 +11,7 @@ import { FAMILIES, ENEMY_KINDS } from '../src/sim/battle.js';
 import { SITES } from '../src/sim/sites.js';
 import { hire } from './fixtures/hire.mjs';
 
-const SEED = 20260807, FENS = ['fenghoul', 'reedcutter', 'fowler', 'bogwitch', 'harvester', 'drowned', 'cantor'];
+const SEED = 20260807;
 const read = (f) => readFileSync(new URL(f, import.meta.url), 'utf8');
 
 test('the Fens\' families: every kind is the sim\'s and named for the defeat screen; only the drowned clergy and the Ashbound are undead', () => {
@@ -46,8 +46,10 @@ test('every foe kind has a baked look: the renderer names its atlas and the atla
     assert.ok(actor[k], `ENEMY_ACTOR has ${k}`);
     for (const ext of ['json', 'alb.png']) assert.ok(existsSync(new URL(`../assets/actors/${actor[k]}.${ext}`, import.meta.url)), `${actor[k]}.${ext}`);
   }
-  const stage = read('../src/dev/stage.js');
-  for (const k of FENS) assert.ok(stage.includes(`'${actor[k]}'`), `the Stage lines up ${actor[k]}`);
+  // (and Luminati stands it as a model: assets/models/cast.json, tools/actor-lab/models.mjs; the Stage that lined them up
+  // went with Emberlit's painting, docs/luminati-only-cleanup.md step 4)
+  const cast = JSON.parse(read('../assets/models/cast.json')).actors;
+  for (const k of ENEMY_KINDS) assert.ok(cast[actor[k]], `a model for ${actor[k]}`);
 });
 
 // a room in each site fills with its own family and nothing else (fought with a party kept on its feet); (v1.48) the

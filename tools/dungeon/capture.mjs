@@ -4,7 +4,7 @@
 // on. 390 × 844 @2, the manual clock, held at day. Needs a server.
 //
 //   node tools/dungeon/capture.mjs [site=wickham_keep] [out=docs/img/dungeon] [tag=site] [base=http://localhost:8080]
-//   RENDERER=luminati FLOOR=2 PLACES=entrance,room,medium TOD=dusk node tools/dungeon/capture.mjs …
+//   FLOOR=2 PLACES=entrance,room,medium TOD=dusk node tools/dungeon/capture.mjs …
 //
 // (base: another checkout served elsewhere, for a before; files come out <out>/<tag>-<n>-<place>.png. RENDERER: the
 // world drawn by Luminati, docs/luminati-port-plan.md; FLOOR: a deeper floor (0 the first); PLACES: only those)
@@ -12,7 +12,8 @@ import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
 const [SITE = 'wickham_keep', OUT = 'docs/img/dungeon', TAG = SITE, BASE = 'http://localhost:8080'] = process.argv.slice(2);
-const R = process.env.RENDERER === 'luminati' ? '&renderer=luminati' : '&renderer=emberlit', FLOOR = +(process.env.FLOOR || 0), PLACES = process.env.PLACES ? process.env.PLACES.split(',') : null, TOD = process.env.TOD || 'day';
+const R = '&renderer=luminati',   // (Luminati only; the flag for a base checkout from before)
+  FLOOR = +(process.env.FLOOR || 0), PLACES = process.env.PLACES ? process.env.PLACES.split(',') : null, TOD = process.env.TOD || 'day';
 const want = (name) => !PLACES || PLACES.includes(name);
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
