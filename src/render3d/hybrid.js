@@ -141,7 +141,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   if (game) game.after(box); else document.body.prepend(box);
   document.body.append(ui);
   document.body.classList.add('world3d');                      // (the top bar's backdrop: CSS above)
-  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
+  let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
   const state = { level: null, sprites: 0, loads: 0, failed: '' };
   renderer.setExternal({
     // a tap on a service's building, as Luminati draws it (renderer.js serviceAt): each named house's box (its footprint,
@@ -165,9 +165,9 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (built === w) return true;
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
-        const r = convertWorld(w, { region: w.region || region });
+        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '' });   // (?stairs=arch: docs/dungeon-stairs-proposal.md's spike)
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
-        ours = r.sprites.filter((q) => q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
+        ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
         const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean);
         api.load(r.level, sprites, w.region || region).then((ok) => { if (ok && building === w) built = w; })
@@ -180,7 +180,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       lastC = c;
       if (ours.length && ++oursCheck % 20 === 0) {                 // (a chest opened, a shrine used: its prop as it is now)
         const st = propState(sim.world, ours);
-        if (st !== oursState) { oursState = st; api.sprites(ours.map((q) => propSprite(sim.world, q)).filter(Boolean)); }
+        // (with the rest it was placed with: alone, a chest opening took the kit's models and the stairs' arches away)
+        if (st !== oursState) { oursState = st; api.sprites([...kept, ...ours.map((q) => propSprite(sim.world, q)).filter(Boolean)]); }
       }
       const now = c.now, dt = last ? Math.min(0.1, (now - last) / 1000) : 1 / 60; last = now;
       // the ground point at the middle of the screen (iso.js unproject at the floor's height), in Luminati's units

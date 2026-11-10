@@ -66,6 +66,24 @@ test('convert: a dungeon floor has its ways up and down as Luminati\'s stairs, n
   }
 });
 
+// the stairs proposal's spike (docs/dungeon-stairs-proposal.md, ?stairs=arch): the way up three tiles wide, never over a
+// wall, an arch over each way in the floor's stone, lit gold up and violet down; without it, the floor as it was
+test('convert: with stairs=arch the way up is three tiles wide and each way stands under an arch; without it nothing changes', () => {
+  for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
+    const w = createSim(SEED, undefined, { scene: 'dungeon', site }).world;
+    const plain = convertWorld(w, { region: 'vale' }), arch = convertWorld(w, { region: 'vale', stairs: 'arch' });
+    assert.deepEqual(convertWorld(w, { region: 'vale', stairs: '' }), plain, `${site}: no flag, the same level`);
+    assert.equal(plain.sprites.filter((q) => q.arch).length, 0, `${site}: no arch without the flag`);
+    const arches = arch.sprites.filter((q) => q.arch).map((q) => q.arch), up = arches.find((a) => a.kind === 'up'), down = arches.find((a) => a.kind === 'down');
+    assert.ok(up && up.span === 3 && up.level === 4 && up.glow, `${site}: the way up three tiles wide under its arch at its head (${JSON.stringify(up)})`);
+    assert.ok(down && down.span === 3 && down.level === 2 && down.glow === '#a274ff', `${site}: the well under a violet arch (${JSON.stringify(down)})`);
+    const rising = (L) => L.tiles.join('').split('').filter((ch) => ch === '^' || ch === '<').length;
+    assert.ok(rising(arch.level) > rising(plain.level), `${site}: more of the flight (${rising(plain.level)} -> ${rising(arch.level)} tiles)`);
+    const walls = (L) => L.tiles.join('').split('').filter((ch) => !L.legend[ch].walkable && !L.legend[ch].water).length;
+    assert.equal(walls(arch.level), walls(plain.level), `${site}: the wider flight is laid on floor, never a wall`);
+  }
+});
+
 test('convert: each Vale dungeon floor is dressed in its kit: its stone, its hour, its furniture in 3D or as our props, its lights', () => {
   const seen = new Map();
   for (const [site, floors] of [['barrows', 2], ['wickham_keep', 2], ['sunken_chapel', 2]]) for (let d = 0; d < floors; d++) {   // (2026-11-02: two floors each, authored)

@@ -121,11 +121,11 @@ const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 /**
  * The world the sim is in, as a Luminati level, and the pieces of our own art to stand in it.
  * @param {any} w the sim's world (sim.world)
- * @param {{ region?: string }} [o]
+ * @param {{ region?: string, stairs?: string }} [o]
  * @returns {{ level: any, ambient?: { sky: number[], ground: number[], i: number, sun: number, lamps: number }, sprites: { id?: string, prop?: string, tx?: number, ty?: number, flat?: boolean, x: number, z: number }[], origin: { x: number, y: number }, stats: Record<string, number> }}
  */
 export function convertWorld(w, o = {}) {
-  return w.kind === 'dungeon' ? dungeon(w) : outdoor(w, o.region || w.region || 'vale');
+  return w.kind === 'dungeon' ? dungeon(w, o) : outdoor(w, o.region || w.region || 'vale');
 }
 
 /** a crop of ours, its tiles even and at most MAX_TILES a side, round a middle */
@@ -300,20 +300,30 @@ const FLOOR = 2;
 // sign over each as well (renderer.js drawStairs).
 const UP_GLOW = { out: { color: '#ffe6b0', intensity: 5, distance: 7 }, up: { color: '#ffc27a', intensity: 4, distance: 6 } };
 const DOWN_GLOW = { color: '#a274ff', intensity: 11, distance: 10 };
-function stairs(w, x0, y0, W, D, tiles, heights) {
-  const lights = [], up = (w.depth || 0) === 0 ? UP_GLOW.out : UP_GLOW.up;   // torches (ours) beside the way up's top step and at the well's foot; the glows
+function stairs(w, x0, y0, W, D, tiles, heights, arch = false) {
+  /** @type {any[] & { arches?: any[] }} */
+  const lights = [], arches = [];
+  lights.arches = arches;
+  const up = (w.depth || 0) === 0 ? UP_GLOW.out : UP_GLOW.up;   // torches (ours) beside the way up's top step and at the well's foot; the glows
   const set = (i, j, ch, h) => { if (i >= 0 && j >= 0 && i < W && j < D) { tiles[j][i] = ch; heights[j][i] = String(h); } };
   const cols = (a, b) => { const o = []; for (let i = 0; i < W; i++) { const c = x0 + 2 * i + 1; if (c >= a && c < b) o.push(i); } return o; };
   const rows = (a, b) => { const o = []; for (let j = 0; j < D; j++) { const c = y0 + 2 * j + 1; if (c >= a && c < b) o.push(j); } return o; };
   for (const st of w.structs || []) {
+    // (the spike: the flight three tiles wide, two abreast, over the sim's own footprint for the stairs, 5.2 of ours
+    // across, and only where the room's floor is: never over a wall)
+    const open = (i, j) => heights[j]?.[i] === String(FLOOR);
     if (st.id === 'stairsup_0') {                                // against a north wall: x the middle of its 3, y its first row
       const x = Math.round(st.x - 0.5), y = Math.round(st.y - 3.1), js = rows(y, y + 6);
-      for (const i of cols(x - 1, x + 2)) js.forEach((j, k) => set(i, j, '^', FLOOR + js.length - 1 - k));
-      lights.push({ x: x + 2.5, y: y + 0.5 }, { x: x + 0.5, y: y + 1, dy: 2.2, glow: up });
+      const is = (arch ? cols(x - 2, x + 4) : cols(x - 1, x + 2)).filter((i) => !arch || js.every((j) => open(i, j)));
+      for (const i of is) js.forEach((j, k) => set(i, j, '^', FLOOR + js.length - 1 - k));
+      lights.push({ x: x + 2.5 + (arch ? 1 : 0), y: y + 0.5 }, { x: x + 0.5, y: y + 1, dy: 2.2, glow: up });
+      if (arch && is.length) arches.push({ kind: 'up', x: (is[0] + is[is.length - 1]) / 2 + 0.5, z: js[0], rot: 0, span: is.length, level: FLOOR + js.length - 1, glow: up.color });
     } else if (st.id === 'stairsup_90') {                        // against a west wall
       const x = Math.round(st.x - 3.1), y = Math.round(st.y - 0.5), is = cols(x, x + 6);
-      for (const j of rows(y - 1, y + 2)) is.forEach((i, k) => set(i, j, '<', FLOOR + is.length - 1 - k));
-      lights.push({ x: x + 0.5, y: y + 2.5 }, { x: x + 1, y: y + 0.5, dy: 2.2, glow: up });
+      const js = (arch ? rows(y - 2, y + 4) : rows(y - 1, y + 2)).filter((j) => !arch || is.every((i) => open(i, j)));
+      for (const j of js) is.forEach((i, k) => set(i, j, '<', FLOOR + is.length - 1 - k));
+      lights.push({ x: x + 0.5, y: y + 2.5 + (arch ? 1 : 0) }, { x: x + 1, y: y + 0.5, dy: 2.2, glow: up });
+      if (arch && js.length) arches.push({ kind: 'up', x: is[0], z: (js[0] + js[js.length - 1]) / 2 + 0.5, rot: Math.PI / 2, span: js.length, level: FLOOR + is.length - 1, glow: up.color });
     }
   }
   const wl = w.stairwell;
@@ -321,7 +331,8 @@ function stairs(w, x0, y0, W, D, tiles, heights) {
     const js = rows(wl.y0, wl.y1), n = js.length;                // from the far (−y) side: the landing, then the steps up
     for (const i of cols(wl.x0, wl.x1)) js.forEach((j, k) => k === 0 ? set(i, j, 'k', FLOOR - (n - 1)) : set(i, j, 'v', FLOOR - (n - k)));
     lights.push({ x: (wl.x0 + wl.x1) / 2, y: wl.y0 + 0.5, dy: 0.7 });   // (its bottom lit: unlit, the well read as more floor)
-    lights.push({ x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2, dy: 2.2, glow: DOWN_GLOW });   // (at the rim's height, over the well: inside it, its walls hid it)   // (the arch below lit violet, GDD §3.1)
+    lights.push({ x: (wl.x0 + wl.x1) / 2, y: (wl.y0 + wl.y1) / 2, dy: 2.2, glow: DOWN_GLOW });
+    { const is = cols(wl.x0, wl.x1); if (arch && is.length && js.length) arches.push({ kind: 'down', x: (is[0] + is[is.length - 1]) / 2 + 0.5, z: js[0], rot: 0, span: is.length, level: FLOOR, glow: DOWN_GLOW.color }); }   // (over the well's far edge, its landing below: the way down framed from the room)   // (at the rim's height, over the well: inside it, its walls hid it)   // (the arch below lit violet, GDD §3.1)
   } else if (w.stairsAt) {                                       // no room for a well: one step down where the stairs are
     const i = Math.floor((w.stairsAt.x - x0) / 2), j = Math.floor((w.stairsAt.y - y0) / 2);
     set(i, j, 'v', FLOOR - 1);
@@ -396,7 +407,8 @@ export function ambientOf(kit) {
   return { sky: c(1.0), ground: c(0.5), i: 1, sun: 0, lamps: 0.85 };
 }
 
-function dungeon(w) {
+/** @param {any} w @param {{ region?: string, stairs?: string }} [o] */
+function dungeon(w, o = {}) {
   const cells = w.level.cells;
   let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
   for (const k of cells.keys()) { const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1); if (x < bx0) bx0 = x; if (y < by0) by0 = y; if (x + 1 > bx1) bx1 = x + 1; if (y + 1 > by1) by1 = y + 1; }
@@ -443,8 +455,11 @@ function dungeon(w) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
-  const stairLights = stairs(w, x0, y0, W, D, tiles, heights);
+  const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs === 'arch');
   const objects = [], count = {}, sprites = [];
+  // (the stairs proposal's spike, ?stairs=arch: an arch over each way, built by world.js in the floor's own stone)
+  const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
+  for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };
   for (const l of stairLights) add(l.glow ? { type: 'light', x: X(l.x), z: Z(l.y), dy: l.dy, color: l.glow.color, intensity: l.glow.intensity, distance: l.glow.distance, flicker: 0.08, nightOnly: false }
     : { type: 'wallTorch', x: X(l.x), z: Z(l.y), rotation: 0, dy: l.dy ?? 1.4, opts: { embers: true } });

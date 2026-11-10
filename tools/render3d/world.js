@@ -288,6 +288,37 @@ function kitPiece(e, x, y, z) {
   g.name = `ember:kit:${e.id}`; g.scale.setScalar(KIT_UNIT); KIT_MADE.set(e.id, g);
   const c = g.clone(); c.position.set(x, y, z); return c;
 }
+/** The stairs proposal's spike (docs/dungeon-stairs-proposal.md, ?stairs=arch; the owner, 2026-11-10: "the up and down
+ * stairs are too narrow - make them wider and add an arch that slightly glows so its more obvious"): a stone arch over
+ * a floor's way up (at its head, against the wall, a dark doorway in it) or its way down (over the well's far edge),
+ * in the floor's own wall stone (Luminati's builder: its textures and ambient occlusion), its inner edge a soft glow in
+ * the way's own light (warm up, violet down: GDD §3.1), the world's bloom giving it a halo.
+ * a: { kind, x, z (Luminati's units: the arch's middle on its face), rot, span (tiles across), level, glow, stone } */
+const ARCH_GLOW = 1.7;   // (the glow's colour over 1: bloom's halo picks it up; a lamp's glass reads about 2.4)
+function buildArch(a) {
+  const f = game.world.factory, b = f.builder(), W = a.span, PH = a.kind === 'up' ? 1.55 : 1.35, PW = 0.42, D = 0.5, R = W / 2 + PW / 2;
+  const stone = a.stone || 'stone_brick', dark = [0.05, 0.045, 0.06];
+  for (const sx of [-1, 1]) {                                     // the piers, a plinth and an impost each
+    b.box(stone, [PW + 0.1, 0.22, D + 0.1], { at: [sx * R, 0.11, 0] });
+    b.box(stone, [PW, PH, D], { at: [sx * R, PH / 2, 0] });
+    b.box(stone, [PW + 0.12, 0.12, D + 0.08], { at: [sx * R, PH - 0.06, 0] });
+  }
+  const N = 9;                                                     // the voussoirs round the half circle, the keystone proud
+  for (let k = 0; k < N; k++) {
+    const t = ((k + 0.5) / N) * Math.PI, key = k === (N - 1) / 2, c = Math.cos(t), sn = Math.sin(t);
+    b.box(stone, [key ? 0.52 : 0.42, (Math.PI * R) / N * 0.96, key ? D + 0.1 : D], { at: [c * R, PH + sn * R, 0], rot: [0, 0, t] });
+  }
+  if (a.kind === 'up') b.tinted(dark, () => b.box(stone, [W, PH + R * 0.92, 0.3], { at: [0, (PH + R * 0.92) / 2, -0.2] }));   // the doorway's dark, into the wall
+  const g = f.finish(b, `ember:arch:${a.kind}`, a.x, a.level * 0.5, a.z + (a.kind === 'up' ? 0.25 : 0), a.rot || 0);
+  // the glow: a thin band round the opening's inner edge, up the piers and over the arch, unlit, a little over white
+  const col = new THREE.Color(a.glow).multiplyScalar(ARCH_GLOW), m = new THREE.MeshBasicMaterial({ color: col, fog: false });
+  const ri = R - PW / 2 - 0.02, band = new THREE.Mesh(new THREE.TorusGeometry(ri, 0.045, 5, 28, Math.PI), m);
+  band.position.set(0, PH, D / 2 + 0.02); g.add(band);
+  for (const sx of [-1, 1]) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.09, PH - 0.22, 0.09), m); s.position.set(sx * ri, 0.22 + (PH - 0.22) / 2, D / 2 + 0.02); g.add(s); }
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = o.material !== m; o.receiveShadow = true; } });
+  g.dispose = () => g.traverse((o) => { if (o.isMesh && o.material === m) o.geometry.dispose(); });
+  return g;
+}
 async function placeEnv(list, region) {
   for (const s of envSprites) { game.engine.scene.remove(s); s.dispose?.(); }
   envSprites = [];
@@ -300,6 +331,7 @@ async function placeEnv(list, region) {
   const mine = levelId;
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
+    if (p.arch) { const g = buildArch(p.arch); game.engine.scene.add(g); envSprites.push(g); continue; }
     const kit = KIT.get(p.id), vale = (region || 'vale') === 'vale';
     if (kit && vale && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
