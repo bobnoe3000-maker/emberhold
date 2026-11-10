@@ -11,6 +11,12 @@
 //        [--site barrows] [--floor 0] [--room big|entrance|<part>] [--size 900x700] [--dpr 2] [--labels 0]
 //     --at: how far through each clip it's held (0–1; default 0.5); --frames N: one clip (the first of --clips) at N
 //     moments through it instead, a column each
+//   --show fx (src/dev/stage.js show=fx): the live effects, a real fight with only the chosen skills in play; for each
+//     skill, from its first cast in view, frames at +0, 0.15, 0.3, 0.5, 0.8, 1.2 s cropped round it
+//     → <out>/<skill>.png strips and <out>/sheet.jpg (a row a skill)
+//   node tools/capture/stage.mjs --show fx [--skills all|<id>,…] [--cls mage] [--lv 15] [--with fighter,cleric] [--wait 40]
+//        [--site barrows] [--floor 0] [--room big] [--size 600x700] [--dpr 1]
+//     --wait: the most sim seconds given a skill to fire before it's skipped (noted on the sheet)
 //
 // Needs Chromium (playwright's, or /opt/pw-browsers/chromium where `playwright install` can't run).
 import { createServer } from 'node:http';
@@ -22,8 +28,8 @@ import { chromium } from 'playwright';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const show = ['faces', 'cast'].includes(arg('show', 'icons')) ? arg('show', 'icons') : 'icons', match = arg('match', '');
-const [W, H] = arg('size', show === 'cast' ? '900x700' : '1280x900').split('x').map(Number), DPR = +arg('dpr', show === 'cast' ? '2' : '1');
+const show = ['faces', 'cast', 'fx'].includes(arg('show', 'icons')) ? arg('show', 'icons') : 'icons', match = arg('match', '');
+const [W, H] = arg('size', show === 'cast' ? '900x700' : show === 'fx' ? '600x700' : '1280x900').split('x').map(Number), DPR = +arg('dpr', show === 'cast' ? '2' : '1');
 const out = resolve(arg('out', join(ROOT, 'tools/capture/out', `${show}${match ? '-' + match : ''}`)));
 await mkdir(out, { recursive: true });
 const t0 = Date.now(), secs = () => ((Date.now() - t0) / 1000).toFixed(1) + ' s';
@@ -38,12 +44,60 @@ await new Promise((r) => srv.listen(0, '127.0.0.1', r));
 const base = `http://localhost:${srv.address().port}`;
 const exe = ['/opt/pw-browsers/chromium'].find((p) => existsSync(p));
 // (the cast is drawn by Luminati: WebGL in software where there's no GPU)
-const b = await chromium.launch({ ...(exe ? { executablePath: exe } : {}), ...(show === 'cast' ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {}) });
+const b = await chromium.launch({ ...(exe ? { executablePath: exe } : {}), ...(show === 'cast' || show === 'fx' ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {}) });
 const page = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
 page.setDefaultTimeout(180000);
 const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 
-if (show !== 'cast') {
+if (show === 'fx') {
+  const { SKILLS } = await import('../../src/sim/skills.js');
+  const cls = arg('cls', ''), wanted = arg('skills', 'all');
+  const ids = cls ? SKILLS[cls].map((q) => q.id) : wanted === 'all' ? Object.values(SKILLS).flat().map((q) => q.id) : wanted.split(',');
+  const AT = [0, 150, 300, 500, 800, 1200], WAIT = +arg('wait', '40'), CW = 300, CH = 260;
+  const q = new URLSearchParams({ skill: ids[0], lv: arg('lv', '15'), with: arg('with', 'fighter,cleric'), site: arg('site', 'barrows'), floor: arg('floor', '0'), room: arg('room', 'big') });
+  await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=fx&${q}`);
+  await page.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready);
+  await page.evaluate(async () => { const end = performance.now() + 180000; globalThis.__lumDraw = false;
+    while (!(globalThis.__world3d?.world && !globalThis.__renderer.transiting && globalThis.__world3d.world.stats.level >= 1) && performance.now() < end) { for (let i = 0; i < 4; i++) globalThis.__frame(16); await new Promise((r) => setTimeout(r, 0)); } });
+  // (stepped, not drawn, between shots; a shot's frame drawn and taken in one task, cropped round the effect)
+  const advance = (ms) => page.evaluate((ms) => { globalThis.__lumDraw = false; for (let t = 0; t < ms; t += 33) globalThis.__frame(33); globalThis.__lumDraw = true; }, ms);
+  const take = (c) => page.evaluate(([c, CW, CH]) => {
+    globalThis.__frame(16);
+    const R = globalThis.__renderer, a = R.screenAt(c.x, c.y), b = R.screenAt(c.tx, c.ty), cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2 - 20, d = devicePixelRatio;
+    const cv0 = document.createElement('canvas'); cv0.width = CW * d; cv0.height = CH * d; const g = cv0.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv0.width, cv0.height);
+    for (const cv of document.querySelectorAll('canvas')) { const st = getComputedStyle(cv), r = cv.getBoundingClientRect(); if (cv === cv0 || st.display === 'none' || r.width * r.height < innerWidth * innerHeight * 0.5) continue; g.drawImage(cv, (r.left - (cx - CW / 2)) * d, (r.top - (cy - CH / 2)) * d, r.width * d, r.height * d); }
+    return cv0.toDataURL('image/png');
+  }, [c, CW, CH]);
+  const inView = (c) => page.evaluate((c) => { const [sx, sy] = globalThis.__renderer.screenAt(c.x, c.y); return sx > 60 && sx < innerWidth - 60 && sy > 80 && sy < innerHeight - 60; }, c);
+  const rows = [];
+  for (const id of ids) {
+    await page.evaluate((id) => globalThis.__stage.set({ skill: id }), id);
+    let c = null;
+    for (let t = 0; t < WAIT * 1000 && !c; t += 250) {
+      await advance(250);
+      const got = await page.evaluate((id) => globalThis.__stage.casts.find((q) => q.id === id && q.at === 'cast') || globalThis.__stage.casts.find((q) => q.id === id), id);
+      if (got && await inView(got)) c = got;
+    }
+    if (!c) { console.log(`${secs().padStart(8)}  ${id}: didn't fire in ${WAIT} s`); rows.push({ id, frames: [] }); continue; }
+    const frames = []; let last = 0;
+    for (const at of AT) { await advance(at - last); last = at; frames.push(await take(c)); }
+    const strip = await page.evaluate(async (fr) => { const ims = await Promise.all(fr.map(async (u) => { const i = new Image(); i.src = u; await i.decode(); return i; }));
+      const c = document.createElement('canvas'); c.width = ims[0].width * ims.length; c.height = ims[0].height; const g = c.getContext('2d'); ims.forEach((im, i) => g.drawImage(im, i * im.width, 0)); return c.toDataURL('image/png'); }, frames);
+    await writeFile(join(out, `${id}.png`), Buffer.from(strip.split(',')[1], 'base64'));
+    rows.push({ id, frames });
+    console.log(`${secs().padStart(8)}  ${id}: cast at ${c.t.toFixed(1)} s (sim)`);
+  }
+  const jpg = await page.evaluate(async ([rows, AT]) => {
+    const lab = 150, d = devicePixelRatio, w = 300 * d, h = 260 * d, c = document.createElement('canvas'); c.width = lab + AT.length * w; c.height = 24 + rows.length * h;
+    const g = c.getContext('2d'); g.fillStyle = '#14121a'; g.fillRect(0, 0, c.width, c.height); g.font = '14px sans-serif'; g.fillStyle = '#ddd';
+    AT.forEach((a, i) => g.fillText(`+${(a / 1000).toFixed(2)} s`, lab + i * w + 6, 17));
+    for (const [r, row] of rows.entries()) { g.fillStyle = '#ddd'; g.fillText(row.id, 6, 24 + r * h + h / 2); if (!row.frames.length) { g.fillStyle = '#887'; g.fillText("didn't fire", lab + 6, 24 + r * h + h / 2); }
+      for (const [i, u] of row.frames.entries()) { const im = new Image(); im.src = u; await im.decode(); g.drawImage(im, lab + i * w, 24 + r * h); } }
+    return c.toDataURL('image/jpeg', 0.85);
+  }, [rows, AT]);
+  await writeFile(join(out, 'sheet.jpg'), Buffer.from(jpg.split(',')[1], 'base64'));
+  console.log(`fx: ${out}/sheet.jpg (${rows.filter((r) => r.frames.length).length} of ${ids.length} skills) in ${secs()}${errs.length ? ' · ERRORS ' + errs.join(' | ') : ''}`);
+} else if (show !== 'cast') {
   await page.goto(`${base}/index.html?dev&scene=stage&${new URLSearchParams({ show, match, panel: '0' })}`);
   await page.waitForFunction(() => !!globalThis.__stage && globalThis.__stage.ready);
   await page.waitForFunction(() => [...document.querySelectorAll('#reviewGrid img')].every((im) => im.complete));

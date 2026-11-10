@@ -854,8 +854,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       Object.values(got).every((v) => v.total > 0 && v.total === v.of && v.errs.length === 0 && !v.missing), JSON.stringify(got));
   }
 }
-// 15c3. The Stage's cast on Luminati (src/dev/stage.js, docs/art-review.md; the owner, 2026-11-10): the vermin and the
-// knight lined up in a real room, each standing as its model, held in its attack; the sim held still (no wave, no clock)
+// 15c3. The Stage on Luminati (src/dev/stage.js, docs/art-review.md; the owner, 2026-11-10): the cast (the vermin and the
+// knight lined up in a real room, each standing as its model, held in its attack; the sim held still), and the live effects
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -870,7 +870,26 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       const s = st() || {};
       return { names: S.names, models: s.modelNames || [], figErr: s.figErr || '', room: S.room, still: sim.state.t === t0, battle: !!sim.battle };
     }, 120000 * SLOW);
-    await ctx.close(); await b.close();
+    await ctx.close();
+    // the live effects (show=fx): a real fight with Frost Nova alone in the mage's play; it fires on its own rules, in
+    // Luminati's ice (crystals standing up), and the party is kept on its feet
+    const c2 = await b.newContext({ viewport: { width: 600, height: 700 } }), p2 = await c2.newPage(), errs2 = [];
+    p2.on('pageerror', (e) => errs2.push(e.message));
+    await p2.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=fx&skill=frost_nova&lv=12&world=on`, { waitUntil: 'commit' });
+    await p2.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready, null, { timeout: 120000 * SLOW });
+    const live = await p2.evaluate(async (ms) => {
+      const S = globalThis.__stage, sim = globalThis.__sim, end = performance.now() + ms; let crystals = 0, i = 0;
+      while (performance.now() < end && !(S.casts.some((c) => c.at === 'land') && crystals > 0)) {
+        globalThis.__lumDraw = i++ % 4 === 0; globalThis.__frame(33); crystals = Math.max(crystals, globalThis.__world3d?.world?.stats.crystals || 0);
+        if (i % 8 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+      globalThis.__lumDraw = true;
+      return { party: S.party, casts: S.casts.map((c) => c.id + ':' + c.at), crystals, battle: !!sim.battle, standing: sim.state.party.every((m) => !m.down && !m.fallen), t: +sim.state.t.toFixed(1) };
+    }, 180000 * SLOW);
+    await c2.close(); await b.close();
+    check('stage: the live effects (show=fx) run a real fight with Frost Nova alone in the mage\'s play; it fires on its own rules in Luminati\'s ice, the party on its feet, no page errors',
+      live.party[0] === 'mage' && live.battle && live.casts.includes('frost_nova:land') && live.casts.every((c) => c.startsWith('frost_nova')) && live.crystals > 0 && live.standing && errs2.length === 0,
+      JSON.stringify(live) + (errs2.length ? ' · ' + errs2.join(' | ') : ''));
     check('stage: the cast lined up on Luminati (the vermin and the knight, held in their attacks) each stands as its model in a real room, the sim held still, no page errors',
       cast.names.length === 5 && cast.names.every((n) => cast.models.includes(n)) && !cast.figErr && !!cast.room && cast.still && !cast.battle && errs.length === 0,
       JSON.stringify(cast) + (errs.length ? ' · ' + errs.join(' | ') : ''));

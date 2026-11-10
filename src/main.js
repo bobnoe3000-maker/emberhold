@@ -48,9 +48,9 @@ const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\]
 // ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick); ?dev&scene=stage is the art
 // review's icons and faces (src/dev/review.js), refused off localhost.
 const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAGE = SCENE0 === 'stage' && DEV;
-// the Stage on Luminati (src/dev/stage.js; show=cast): the cast lined up in a real dungeon room, the world drawn; the
+// the Stage on Luminati (src/dev/stage.js; show=cast|fx): the cast lined up, or the live effects, in a real dungeon room; the
 // review's icons and faces (show=icons|faces) are HTML over a hidden game
-const STAGE3D = STAGE && ['cast'].includes(new URLSearchParams(location.search).get('show') || ''), REVIEW = STAGE && !STAGE3D;
+const STAGE3D = STAGE && ['cast', 'fx'].includes(new URLSearchParams(location.search).get('show') || ''), REVIEW = STAGE && !STAGE3D;
 const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : STAGE3D ? 'dungeon' : SCENE0;
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
 // ?scene=overland its overland (the Reach's and the Heights' are previews: docs/reach-heights-overlands.md).

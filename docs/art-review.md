@@ -1,10 +1,13 @@
 # The art review: every piece of the game's art, drawn the way the game draws it
 
-> **The cast back, on Luminati (2026-11-10).** The owner: *"recreate the cast lineup and live fx page."* `show=cast`
-> lines the cast up in a real dungeon room and draws it the game's own way: the renderer's draws (`renderer.js`
-> `setStage`), `hybrid.js`, Luminati's figures (`world.js`, `figure.js`, the creature kit). Each actor at a clip, looping
-> or held at a moment; the sim held still. `src/dev/stage.js`; `tools/capture/stage.mjs --show cast` takes a sheet, a
-> row a clip. See [The cast on Luminati](#the-cast-on-luminati) below.
+> **The cast and the live effects back, on Luminati (2026-11-10).** The owner: *"recreate the cast lineup and live fx
+> page."* Both in `src/dev/stage.js`, drawn the game's own way:
+> - `show=cast` lines the cast up in a real dungeon room: the renderer's draws (`renderer.js` `setStage`), `hybrid.js`,
+>   Luminati's figures (`world.js`, `figure.js`, the creature kit). Each actor at a clip, looping or held at a moment;
+>   the sim held still. See [The cast on Luminati](#the-cast-on-luminati).
+> - `show=fx` runs a real fight with only the chosen skills in play, the party kept on its feet, so every effect comes
+>   from the sim's own events. See [The live effects](#the-live-effects).
+> - `tools/capture/stage.mjs --show cast|fx` takes their sheets.
 >
 > **In part (2026-11-09).** The icons and faces views stay (`?dev&scene=stage&show=icons|faces`, `src/dev/review.js`, `tools/capture/stage.mjs`); the env, props and fx views drew through Emberlit's painting and were retired with it ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4; the owner's decision 3).
 
@@ -51,6 +54,44 @@ http://localhost:8080/?dev&manual&scene=stage&show=cast&cast=bosses&per=6&clip=h
   last word on timing and feel.
 - **The browser suite** checks that the vermin and the knight each stand as their models on the Stage, with the sim
   held still.
+
+## The live effects
+
+![The mage's seven skills on the Stage, each from its first cast, +0 to +1.2 s](img/art-review/fx-mage.jpg)
+
+*`node tools/capture/stage.mjs --show fx --cls mage`: all seven of the mage's skills in 40 s (DPR 1, software GL).*
+
+```
+http://localhost:8080/?dev&scene=stage&show=fx&skill=frost_nova,cleave
+http://localhost:8080/?dev&scene=stage&show=fx&cls=shaman&lv=24
+http://localhost:8080/?dev&scene=stage&show=fx&skill=turn_undead&floor=2
+http://localhost:8080/?dev&scene=stage&show=fx                       (a plain fight: fighter, rogue, cleric)
+```
+
+- **A real fight, not made-up events.** Many effects read the sim's state as well as its events: a field, a leap, a
+  flare's mark, the whirling blades. So the Stage doesn't send events of its own. It sets up a fight that makes them:
+  - a party with only the chosen skills on and in its loadout of four (`skill=` ids, or `cls=` a class's all), each
+    caster's class joined by `with=` (fighter and cleric by default) to three;
+  - everyone at `lv=` (15), raised to the level the chosen skills open at, every trial done, the starter kit;
+  - a room of that level (the floor's biggest), the waves coming as they do;
+  - kept on its feet (a member under 20 % is put back to 50 %, so a heal or a guard still has a reason) and its MP full.
+  The skills fire on their own rules, again and again. `globalThis.__stage.casts` lists each one as it comes.
+- **Special cases:** Revive wants someone down, so with it chosen the last of the party is left to fall. Turn Undead
+  wants undead: the Old Barrows' `floor=2` (the Ashbound).
+- **No skill named** is a plain fight: fighter, rogue and cleric with every skill the game's way (the old idea of a
+  `show=fight`).
+- **Measured (DPR 1, software GL):**
+
+  | | Wall time | What it caught |
+  |---|---|---|
+  | `skills.mjs --party 3` (a real fight at 15, 150 s) | 67 s | 11 skills of three classes; 4 of the mage's 7, Frost Nova only staged at first |
+  | `stage.mjs --show fx --cls mage` | 40 s | all 7 of the mage's, each from its first cast |
+  | `stage.mjs --show fx --skills all` | 127 s | 31 of the 35 class skills. The four it missed fire now: Revive (someone left to fall), Turn Undead (`--floor 2`), Binding Roots and Smoke Step (`--wait 90`) |
+
+- **The bosses' mechanics** stay with `tools/capture/bosses.mjs`, which fights each boss in his own hall. The foes'
+  warnings (a heavy blow's ring, a shot's lane) show in any Stage fight.
+- **The browser suite** checks that Frost Nova alone in the mage's play fires on its own rules in Luminati's ice, with
+  the party standing.
 
 ## The views (as they were, before Luminati)
 

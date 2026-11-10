@@ -33,6 +33,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)
 #   ?dev&scene=stage&show=icons|faces[&match=…]: the art review, every item icon and every portrait and window figure as the UI shows them (docs/art-review.md)
 #   ?dev&scene=stage&show=cast[&cast=party,town,foes,bosses,vermin,all|<actor>,…&clip=idle|walk|attack|…&t=s|at=0..1&dir=0..7&per=12&page=N&site=…&floor=N&room=big|entrance|<part>]: the Stage on Luminati, the cast lined up in a real dungeon room, each at a clip, the sim held still (src/dev/stage.js, docs/art-review.md)
+#   ?dev&scene=stage&show=fx[&skill=id,…|cls=mage&lv=15&with=fighter,cleric&site=…&floor=N&room=…]: the Stage's live effects, a real fight with only those skills in play, the party kept standing, MP full (no skill: a plain fight)
 npm run check                             # everything CI runs except browsers:
 #   typecheck (tsc, JSDoc; files opt in with // @ts-check) · lint (incl. sim determinism rules)
 #   content (JSON Schema + Ink compile) · test (node:test) · smoke (SMOKE_OK + RENDER_SMOKE_OK)
@@ -43,6 +44,7 @@ node tools/balance/loot.mjs 6 1 [seed] [--src dir]            # the headless far
 node tools/balance/tower.mjs 12 900 1,3 [--src dir]           # the Mere Tower headless: a party at a level climbs on at every landing; best wave, landings, what it banked
 node tools/capture/stage.mjs [--show icons|faces] [--match m] [--size 1280x900]   # the art review's sheets (docs/art-review.md): the whole grid in one tall still → tools/capture/out/<show>/sheet.png
 node tools/capture/stage.mjs --show cast [--cast vermin,party|…] [--clips idle,walk,attack,…] [--at 0.5 | --frames N] [--per 8] [--dir 2] [--site s --floor N --room r] [--dpr 2]   # the Stage's cast sheet on Luminati: each clip held at a moment (or one clip through N moments), every page → tools/capture/out/cast/sheet.jpg (a row a clip)
+node tools/capture/stage.mjs --show fx [--skills all|id,…] [--cls mage] [--lv 15] [--with fighter,cleric] [--floor N] [--wait 40]   # the Stage's live effects: each skill from its first cast, +0…1.2 s, a strip a skill → tools/capture/out/fx/sheet.jpg (a row a skill)
 node tools/content/ink.mjs                # compile content/dialogue/*.ink → .json (commit both; --check = CI)
 FFMPEG=… FLARE=… node tools/audio/prep.mjs [--only cue,cue]   # sound: tools/audio/sounds.json → assets/audio/*.mp3 + bank.json (ffmpeg with libmp3lame, e.g. pip imageio-ffmpeg; FLARE = a flare-game checkout); --only: just those cues into the bank as it stands (a synth cue, tools/audio/synth.mjs, needs no FLARE)
 cd tools/actor-lab && npm i && sh fetch-assets.sh    # once, for bakes
