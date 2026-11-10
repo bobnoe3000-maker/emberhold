@@ -66,8 +66,13 @@ const CSS = SW_CSS + `
 #gearSheet .fig .xpb i { position: absolute; left: 0; top: 0; bottom: 0; background: #d8a040; }
 .gslot { position: relative; width: 58px; height: 58px; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border: 1.5px solid #2c2838; display: grid; place-items: center; cursor: pointer; padding: 0; }
 .gslot img { width: 48px; height: 48px; pointer-events: none; }
-.gslot.common { border-color: #5a5448; } .gslot.fine { border-color: #72d06c; box-shadow: inset 0 0 12px rgba(114,208,108,.22); }
-.gslot.rare { border-color: #5aa8ff; box-shadow: inset 0 0 14px rgba(90,168,255,.28); } .gslot.heirloom { border-color: #f2a33c; box-shadow: inset 0 0 16px rgba(242,163,60,.32); }
+/* rarity: the border's colour, and a glow round it that grows with it, none for common to the most for heirloom (the
+   owner, 2026-11-10: "the gear border in inventory and the rarer an item, there is a faint to slightly stronger glow");
+   the word is on the item's card, never the colour alone */
+.gslot.common { border-color: #5a5448; }
+.gslot.fine { border-color: #72d06c; box-shadow: 0 0 4px rgba(114,208,108,.28), inset 0 0 8px rgba(114,208,108,.14); }
+.gslot.rare { border-color: #5aa8ff; box-shadow: 0 0 7px 1px rgba(90,168,255,.38), inset 0 0 11px rgba(90,168,255,.22); }
+.gslot.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); }
 .gslot.sel { outline: 2px solid #f0c880; outline-offset: 2px; }
 .gslot.empty { border-style: dashed; cursor: default; }
 .gslot .lbl { position: absolute; bottom: -14px; left: -10px; right: -10px; text-align: center; font-size: 8px; letter-spacing: 1.2px; color: #7c748a; text-transform: uppercase; }

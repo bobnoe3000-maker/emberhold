@@ -14842,11 +14842,14 @@ var Du = (e, t) => Lc(e, t), Ou = {
 	],
 	boots: ["LegLeft", "LegRight"]
 }, Pu = (e) => e.replace(/_Hooded$/, ""), Fu = {
-	common: null,
-	fine: null,
-	rare: ["#5aa8ff", .14],
-	heirloom: ["#f2a33c", .3]
-}, Iu = "#ffd28a", Lu = .03, Ru = /* @__PURE__ */ new Map();
+	common: 0,
+	fine: .07,
+	rare: .13,
+	heirloom: .21
+}, Iu = {
+	rare: !0,
+	heirloom: !0
+}, Lu = .02, Ru = /* @__PURE__ */ new Map();
 async function zu(e, t) {
 	if (e.prop) {
 		let t = Pc[e.prop]();
@@ -14861,14 +14864,11 @@ async function zu(e, t) {
 	return a.visible = !0, a.position.copy(i.position), a.quaternion.copy(i.quaternion), a.scale.copy(i.scale), a;
 }
 function Bu(e, t) {
-	let n = Fu[t.r] || null, r = Math.max(0, Math.min(5, t.up || 0));
-	(n || r || t.r === "fine") && e.traverse((e) => {
-		if (!e.isMesh || !e.material) return;
-		let i = e.material = e.material.clone();
-		if (t.r === "fine" && i.color && i.color.multiplyScalar(1.1), (n || r) && i.emissive) {
-			let t = new M(n ? n[0] : Iu), a = (n ? n[1] : 0) + r * Lu;
-			n && r && t.lerp(new M(Iu), .25), i.emissive = t, i.emissiveIntensity = a, i.emissiveMap = null, n && (i.userData.shine = a), e.userData.glow = !0;
-		}
+	let n = Math.max(0, Math.min(5, t.up || 0)), r = (Fu[t.r] || 0) + n * Lu;
+	r && e.traverse((e) => {
+		if (!e.isMesh || !e.material || !e.material.emissive) return;
+		let n = e.material = e.material.clone();
+		n.map ? (n.emissive = new M(1, 1, 1), n.emissiveMap = n.map) : n.emissive = (n.color || new M(1, 1, 1)).clone(), n.emissiveIntensity = r, n.userData.rarity = r, Iu[t.r] && (n.userData.shine = r), e.userData.glow = !0;
 	});
 }
 async function Vu(e, t, n, r, i = {}) {
@@ -15388,14 +15388,15 @@ function rf(e, t, n) {
 	i.traverse((e) => {
 		if (!e.isMesh) return;
 		e.castShadow = !0, e.receiveShadow = !0, e.frustumCulled = !1, e.material = e.material.clone(), e.material.isMeshStandardMaterial && (e.material.metalness = 0, e.material.roughness = Math.max(e.material.roughness ?? 1, .92));
-		let t = /Eyes/.test(e.name) || !!e.userData.glow || !e.material.emissive;
+		let t = /Eyes/.test(e.name) || !!e.userData.glow && !e.material.userData.rarity || !e.material.emissive;
 		t || (e.material.emissive = e.material.map ? new M(16771538) : e.material.color.clone(), e.material.map && (e.material.emissiveMap = e.material.map)), !t && e.material.vertexColors && (e.material.onBeforeCompile = (e) => {
 			e.fragmentShader = e.fragmentShader.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n#ifdef USE_COLOR\n	totalEmissiveRadiance *= vColor.rgb;\n#endif");
 		}, e.material.customProgramCacheKey = () => "ember-figure-vc"), a.push({
 			m: e.material,
 			own: t,
 			base: e.material.emissive ? e.material.emissive.clone() : null,
-			shine: e.material.userData.shine || 0
+			add: e.material.userData.rarity || 0,
+			shine: !!e.material.userData.shine
 		});
 	});
 	let o = [];
@@ -15416,6 +15417,7 @@ function rf(e, t, n) {
 		look: n.look,
 		bones: o,
 		mats: a,
+		shines: a.some((e) => e.shine),
 		yaw: null,
 		key: "",
 		fpos: 0,
@@ -15463,12 +15465,15 @@ function of(e, t, n, r) {
 	if (l.lit !== S) {
 		l.lit = S;
 		for (let e of l.mats) {
-			e.own || (b ? e.m.emissive.copy(e.base).lerp(af, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = kf * Ud + y * 2.6 + b * .9);
+			e.own || (b ? e.m.emissive.copy(e.base).lerp(af, Math.min(1, b)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = kf * Ud + e.add + y * 2.6 + b * .9);
 			let t = x < .999;
 			e.m.transparent !== t && (e.m.transparent = t, e.m.needsUpdate = !0), e.m.opacity = x;
 		}
 	}
-	for (let e of l.mats) e.shine && (e.m.emissiveIntensity = e.shine * (.75 + .25 * Math.sin(performance.now() * .0026 + l.root.id)));
+	if (l.shines) {
+		let e = .75 + .25 * Math.sin(performance.now() * .0026 + l.root.id);
+		for (let t of l.mats) t.shine && (t.m.emissiveIntensity = kf * Ud + t.add * e + y * 2.6 + b * .9);
+	}
 	return l.root.visible = !0, l.seen = nf, !0;
 }
 function sf() {

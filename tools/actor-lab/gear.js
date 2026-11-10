@@ -14,13 +14,14 @@
 // vestments and the shaman's hide the Mage's in their own colours), boots the legs. A piece the figure already wears in
 // its own colours (the class's own kit) is left as built, so every class's look is as it was until it changes clothes.
 //
-// The look by what it is (§7), from fields the item already has: nothing new saved, nothing drawn:
-//   · common: the piece as made; fine: a little brighter;
-//   · rare: a faint light of the rarity's own colour that breathes (the word is on the card as well, never the colour alone);
-//   · heirloom: a warm glow of its own, breathing too;
-//   · the smith's +1…+5: a little more light each step, warm, up to a rare's at +5.
-// Kept dusky: under the figure's own light, the world's bloom carrying the heirloom's. A piece with a light keeps a
-// material of its own (userData.glow: compact leaves it out, world.js doesn't relight it): one draw more, no more.
+// The look by what it is (§7), from fields the item already has: nothing new saved, nothing drawn. Never a colour of
+// its own (the owner, 2026-11-10: "gear doesn't need to be a different color… the rarer an item, there is a faint to
+// slightly stronger glow"): the piece in its own colours, lit a little from within (RARITY_GLOW):
+//   · common: as made; fine: a faint glow; rare: a little more, breathing; heirloom: the most, breathing too;
+//   · the smith's +1…+5: a little more each step.
+// The rarity's colour is the bag's and the card's (the slot's border and its glow, and the word). Kept dusky: in play
+// the glow is added over the figure's own fill, so a lit piece is never darker than the rest. A piece with a light keeps
+// a material of its own (userData.glow: compact leaves it out): one draw more, no more.
 import * as THREE from 'three';
 import { PROPS, repaint } from './props.js';
 const repaintOne = (m, list) => repaint(m, list);
@@ -59,9 +60,11 @@ export const BODY = {
 export const BODY_SWATCHES = { CLERIC, SHAMAN };
 const PARTS = { armor: ['Body', 'ArmLeft', 'ArmRight'], boots: ['LegLeft', 'LegRight'] };
 const kitOf = (model) => model.replace(/_Hooded$/, '');   // (the hooded rogue's body is the rogue's)
-/** the light each rarity gives its piece: [colour, intensity] (heirloom the most; fine and common none) */
-export const RARITY_LIGHT = { common: null, fine: null, rare: ['#5aa8ff', 0.14], heirloom: ['#f2a33c', 0.3] };   // (rare 0.2 drowned a helm in blue at a dungeon's dusk)
-const UP_LIGHT = '#ffd28a', UP_STEP = 0.03;
+/** the light each rarity gives its piece, in the piece's own colours (the owner, 2026-11-10: "gear doesn't need to be a
+ * different color… the rarer an item, there is a faint to slightly stronger glow"): none for common, faint for fine, a
+ * little more for rare, the most for heirloom; rare and heirloom breathe it */
+export const RARITY_GLOW = { common: 0, fine: 0.07, rare: 0.13, heirloom: 0.21 };
+const SHIMMER = { rare: true, heirloom: true }, UP_STEP = 0.02;
 
 const pieces = new Map();                                   // [model, node] → the node, once (its copies share its geometry)
 async function pieceOf(G, load) {
@@ -73,22 +76,20 @@ async function pieceOf(G, load) {
   const c = src.clone(); c.visible = true; c.position.copy(src.position); c.quaternion.copy(src.quaternion); c.scale.copy(src.scale);
   return c;
 }
-/** an item's look on its piece: brighter for fine, a light of the rarity's colour for rare and heirloom, a warm edge per
- * smith's step @param {THREE.Object3D} piece @param {{ r?: string, up?: number }} it */
+/** an item's look on its piece: its own colours, lit a little from within by its rarity and the smith's steps (never
+ * tinted: the rarity's colour is the card's and the slot's, with its word) @param {THREE.Object3D} piece
+ * @param {{ r?: string, up?: number }} it */
 export function lookOn(piece, it) {
-  const L = RARITY_LIGHT[it.r] || null, up = Math.max(0, Math.min(5, it.up || 0));
-  if (!L && !up && it.r !== 'fine') return;
+  const up = Math.max(0, Math.min(5, it.up || 0)), k = (RARITY_GLOW[it.r] || 0) + up * UP_STEP;
+  if (!k) return;
   piece.traverse((o) => {
-    if (!o.isMesh || !o.material) return;
+    if (!o.isMesh || !o.material || !o.material.emissive) return;
     const m = o.material = o.material.clone();
-    if (it.r === 'fine' && m.color) m.color.multiplyScalar(1.1);
-    if ((L || up) && m.emissive) {
-      const c = new THREE.Color(L ? L[0] : UP_LIGHT), k = (L ? L[1] : 0) + up * UP_STEP;
-      if (L && up) c.lerp(new THREE.Color(UP_LIGHT), 0.25);
-      m.emissive = c; m.emissiveIntensity = k; m.emissiveMap = null;     // (an even light of its colour over the piece: through the texture it was lost on a dark one)
-      if (L) m.userData.shine = k;                                       // (rare and heirloom shimmer: world.js and the preview breathe it, ±25 %)
-      o.userData.glow = true;
-    }
+    if (m.map) { m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; }   // (its own texture as its light: the same colours, brighter)
+    else m.emissive = (m.color || new THREE.Color(1, 1, 1)).clone();
+    m.emissiveIntensity = k; m.userData.rarity = k;                  // (world.js adds it over a figure's fill, so a lit piece is never darker)
+    if (SHIMMER[it.r]) m.userData.shine = k;                          // (world.js and the preview breathe it, ±25 %)
+    o.userData.glow = true;
   });
 }
 /** a key for what's worn (a template a look: world.js) @param {any} gear */

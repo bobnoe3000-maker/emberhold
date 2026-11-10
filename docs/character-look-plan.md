@@ -160,9 +160,14 @@ KayKit piece or a code-built one), the bone it hangs from, its swatch map, and t
 
 ## 7. Each item's look: colours, light and effects
 
-**Built** (2026-11-10): `gear.js` `lookOn`: fine a little brighter; rare an even blue light (0.14), heirloom a warm one
-(0.3), each breathing ±25 % (world.js and the preview); each smith's step +0.03 of warm light. A piece with a light
-keeps its own material (one draw more). The icons' rebake in each rarity's palette is still to come.
+**Built** (2026-11-10), then **changed** the same day (the owner: "For rarity, gear doesn't need to be a different
+color - rather the gear border in inventory and the rarer an item, there is a faint to slightly stronger glow"): a worn
+piece is never tinted. `gear.js` `lookOn` lights it from within in its own colours (its texture as its emissive),
+`RARITY_GLOW` common 0, fine 0.07, rare 0.13, heirloom 0.21, rare and heirloom breathing ±25 %, each smith's step +0.02;
+in play it's added over the figure's own fill (`world.js`), so a lit piece is never darker than the rest. The rarity's
+colour is the bag's: each slot's border in it, with a glow round the border that grows with the rarity (none for
+common; `sheet.js` `.gslot`), the word on the item's card. A piece with a light keeps its own material (one draw more).
+The table below was the first plan; the colours in it are superseded by the above.
 
 An item's look comes from fields it already has, so no new saved state, no new random draw, and replays exactly as
 now: its **base** (the mesh), its **rarity**, its **upgrade** (`up`, the smith's +N) and whether it is an

@@ -162,19 +162,19 @@ function figureFor(key, name, T) {
     if (o.material.isMeshStandardMaterial) { o.material.metalness = 0; o.material.roughness = Math.max(o.material.roughness ?? 1, 0.92); }
     // (the skeletons' eyes and a lantern's glass keep their own glow; an unlit material, a prop's MeshBasicMaterial, has
     // no emissive: given one, three's uniforms threw mid-render)
-    const own = /Eyes/.test(o.name) || !!o.userData.glow || !o.material.emissive;
+    const own = /Eyes/.test(o.name) || (!!o.userData.glow && !o.material.userData.rarity) || !o.material.emissive;
     if (!own) { o.material.emissive = o.material.map ? new THREE.Color(0xffe9d2) : o.material.color.clone(); if (o.material.map) o.material.emissiveMap = o.material.map; }
     // a compacted face (figure.js compact) is coloured by vertex: its fill is too, or every part of it glowed one white
     if (!own && o.material.vertexColors) {
       o.material.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n#ifdef USE_COLOR\n\ttotalEmissiveRadiance *= vColor.rgb;\n#endif'); };
       o.material.customProgramCacheKey = () => 'ember-figure-vc';
     }
-    mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null, shine: o.material.userData.shine || 0 });
+    mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null, add: o.material.userData.rarity || 0, shine: !!o.material.userData.shine });   // (add: a piece's rarity, its own colours lit over the fill: gear.js lookOn)
   });
   const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
   // heroes' heroic pass shrank a creature's head to 0.62 in the world, the atlases had it as built)
-  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, lit: '' };
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '' };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }
@@ -215,11 +215,12 @@ function placeFigure(a, key, dt, camAz) {
   if (f.lit !== lit) {
     f.lit = lit;
     for (const q of f.mats) {
-      if (!q.own) { if (wn) q.m.emissive.copy(q.base).lerp(WARN_EMI, Math.min(1, wn)); else q.m.emissive.copy(q.base); q.m.emissiveIntensity = figGlow * FILL + fl * 2.6 + wn * 0.9; }
+      if (!q.own) { if (wn) q.m.emissive.copy(q.base).lerp(WARN_EMI, Math.min(1, wn)); else q.m.emissive.copy(q.base); q.m.emissiveIntensity = figGlow * FILL + q.add + fl * 2.6 + wn * 0.9; }
       const tr = op < 0.999; if (q.m.transparent !== tr) { q.m.transparent = tr; q.m.needsUpdate = true; } q.m.opacity = op;
     }
   }
-  for (const q of f.mats) if (q.shine) q.m.emissiveIntensity = q.shine * (0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id));   // (a rare or heirloom piece's light breathes: gear.js)
+  if (f.shines) { const br = 0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id);   // (a rare or heirloom piece's light breathes: gear.js)
+    for (const q of f.mats) if (q.shine) q.m.emissiveIntensity = figGlow * FILL + q.add * br + fl * 2.6 + wn * 0.9; }
   f.root.visible = true; f.seen = figSeen;
   return true;
 }
