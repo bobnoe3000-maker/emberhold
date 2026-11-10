@@ -7,16 +7,16 @@
 //   the stairs both ways.
 // A subject passes when at least SEEN of it is in view (the rules: 0.5; a person half behind a corner still reads). Prints
 // each map's subjects, the hidden ones with what hid them, and the totals; exit 1 if any is under the bar (--warn: 0).
-//   node tools/capture/visibility.mjs [vale-town fens-town vale fens reach heights barrows-f1 … | all] [--seen 0.5] [--warn] [--json out.json]
+//   node tools/capture/visibility.mjs [vale-town fens-town vale fens reach heights barrows-f1 … | all] [--seen 0.5] [--warn] [--json out.json] [--shots dir]
 import { createServer } from 'node:http';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : d; };
-const SEEN = +opt('--seen', 0.5), JSON_OUT = opt('--json', ''), WARN = args.includes('--warn');
+const SEEN = +opt('--seen', 0.5), JSON_OUT = opt('--json', ''), SHOTS = opt('--shots', ''), WARN = args.includes('--warn');
 // the maps: a scene, its land, and for a dungeon its site and floor (0 the first)
 export const MAPS = {
   'vale-town': { scene: 'town', region: 'vale' }, 'fens-town': { scene: 'town', region: 'fens' },
@@ -84,6 +84,13 @@ for (const name of names) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), page = await ctx.newPage(), errs = [];
   page.on('pageerror', (e) => errs.push(e.message));
   const r = await survey(page, name).catch((e) => ({ name, error: String(e.message || e).split('\n')[0] }));
+  if (SHOTS && r.subjects) {   // (--shots dir: a picture of each subject under the bar, the hero stood there)
+    await mkdir(SHOTS, { recursive: true });
+    for (const q of r.subjects.filter((q) => q.seen !== null && q.seen < SEEN)) {
+      await page.evaluate(({ x, y }) => { const P = globalThis.__sim.state.player; P.x = P.px = x; P.y = P.py = y; for (let i = 0; i < 8; i++) globalThis.__frame(16); }, q);
+      await page.screenshot({ path: join(SHOTS, `${name}-${q.id.replace(/[^a-z0-9_-]+/gi, '_')}.png`), timeout: 240000 }).catch(() => {});
+    }
+  }
   await ctx.close();
   if (errs.length) r.errors = errs;
   all.push(r);
