@@ -82,6 +82,10 @@ const input = createInput(canvas);
 watchSafeArea();   // the notch's side on a phone held sideways (--safe-l / --safe-r)
 const renderer = createRenderer(canvas, sim, input);
 renderer.setFeel(feelK(readGraphics().feel));   // (the menu's Hit feel: hit-stop and jolt, render3d/settings.js)
+// the camera's zoom (the owner, 2026-11-10): the stored one at boot; a pinch or the wheel sets it at once and stores it
+// when the gesture ends (render3d/settings.js; the Graphics row too)
+renderer.setZoom(readGraphics().zoom / 100);
+input.onZoom({ get: () => renderer.zoom, set: (z) => { renderer.setZoom(z); }, done: () => { writeGraphics({ zoom: Math.round(renderer.zoom * 100) }); } });
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 // the world in Luminati (docs/luminati-port-plan.md; Luminati only, A21): the renderer stays the game's eye (its camera,
 // its figures' frames, everything over the world, every tap); Luminati draws the world under it (render3d/hybrid.js).
@@ -162,6 +166,7 @@ const graphics = { read: readGraphics, status: () => (world3d ? world3d.world?.s
   if (patch.bright && world3d) world3d.setBright(next.bright);
   if (patch.feel) renderer.setFeel(feelK(next.feel));
   if (patch.fps) fpsMeter.show(next.fps === 'on');
+  if (patch.zoom) renderer.setZoom(next.zoom / 100);
   return next;
 } };
 // the Brightness tray (ui/brightness.js; the owner, 2026-11-04): from Graphics, over play; the part being set is held

@@ -20,6 +20,7 @@ import { pendingSkillPoints, ladderOf, unlocked, TRIAL_CLASSES } from '../sim/sk
 import { DEV_LEVEL_MAX } from '../sim/dev.js';
 import { swallow } from './actorart.js';
 import { debugReport } from './debugreport.js';
+import { ZOOM_PCT_MIN, ZOOM_PCT_MAX } from '../render3d/settings.js';
 
 const CSS = `
 #titleWrap { position: fixed; inset: 0; z-index: 11; display: none; background: linear-gradient(rgba(8,6,12,.35), rgba(8,6,12,.55) 40%, rgba(8,6,12,.94) 72%); }
@@ -89,6 +90,9 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   // Graphics (render3d/settings.js, per device): the world is drawn by Luminati only (docs/luminati-only-cleanup.md); the
   // depth of field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off; the hit
   // feel, the frame rate on screen and the brightness tray
+  // (the zoom, a step at a time from where it is: render3d/settings.js; a pinch or the wheel set it finer)
+  const zoomStep = (label, what, d, off) => html`<button key=${'zoom' + d} disabled=${off}
+    onClick=${async () => { const z = graphics.read().zoom; await graphics.set({ zoom: Math.min(ZOOM_PCT_MAX, Math.max(ZOOM_PCT_MIN, Math.round((z + d) / 10) * 10)) }); draw(); }}>${label}<small>${what}</small></button>`;
   const choice = (k, v, label, what, on) => html`<button key=${k + v} class=${on ? 'pri' : ''} aria-pressed=${on ? 'true' : 'false'}
     onClick=${async () => { await graphics.set({ [k]: v }); draw(); }}>${label}<small>${what}</small></button>`;
   // what Luminati is drawing the people as (docs/dungeon-kit-proposal.md §9.6): models or sprites, how many, and the density
@@ -117,6 +121,12 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('feel', 'full', 'Full', 'blows hold and jolt', g.feel === 'full')}
         ${choice('feel', 'light', 'Light', 'half as much', g.feel === 'light')}
         ${choice('feel', 'off', 'Off', 'the screen keeps still', g.feel === 'off')}
+      </div>
+      <div class="tag">Zoom · ${g.zoom} % (pinch the world, or the mouse wheel)</div>
+      <div class="row">
+        ${zoomStep('Further', 'see more around you', -10, g.zoom <= ZOOM_PCT_MIN)}
+        ${choice('zoom', 100, 'Default', 'as it was', g.zoom === 100)}
+        ${zoomStep('Closer', 'see them bigger', 10, g.zoom >= ZOOM_PCT_MAX)}
       </div>
       <div class="tag">Frame rate on screen</div>
       <div class="row">
@@ -187,7 +197,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
-      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · brightness · frame rate</small></button>`}
+      ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · zoom · brightness · frame rate</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>
       ${devApply && made && html`<button onClick=${() => { panel = 'dev'; devSaid = ''; draw(); }}>Developer<small>unlock every skill · levels with their points${S.dev ? ' · a dev game' : ''}</small></button>`}
     </div>`;

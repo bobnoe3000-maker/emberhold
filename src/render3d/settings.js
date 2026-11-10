@@ -11,14 +11,21 @@
 //     for anyone who'd rather the screen kept still.
 //   · the frame rate on screen (the owner, 2026-11-09: "add a menu option to toggle on/off the frame rate so I can
 //     monitor"): 'off' or 'on' (ui/fps.js).
+//   · the camera's zoom (the owner, 2026-11-10: "let me zoom in and out by the current default camera zoom by at least
+//     33%"): a percentage of the default, ZOOM_PCT_MIN..ZOOM_PCT_MAX (render/renderer.js ZOOM_MIN..ZOOM_MAX); set by a
+//     pinch, the wheel or the Graphics row.
 // A stored `renderer` from before (the choice there was, 2026-10-31 to 11-09) is ignored, and dropped at the next write.
 // Presentation only: nothing here reaches the sim or a save.
 
 const KEY = 'emberfall.graphics';
 /** @typedef {{ dawn: number, day: number, dusk: number, night: number }} Bright percentages, 100 the shipped look */
-/** @typedef {{ dof: 'soft' | 'off', bright: Bright, feel: 'full' | 'light' | 'off', fps: 'off' | 'on' }} Graphics */
+/** @typedef {{ dof: 'soft' | 'off', bright: Bright, feel: 'full' | 'light' | 'off', fps: 'off' | 'on', zoom: number }} Graphics */
 /** @type {Graphics} */
-const DEFAULTS = { dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 }, feel: 'full', fps: 'off' };
+const DEFAULTS = { dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 }, feel: 'full', fps: 'off', zoom: 100 };
+/** the zoom's range, percent of the default (render/renderer.js ZOOM_MIN, ZOOM_MAX) */
+export const ZOOM_PCT_MIN = 67, ZOOM_PCT_MAX = 150;
+/** a stored zoom, a whole percent within the range (100 where missing or unreadable) @param {any} z */
+const zoomOf = (z) => (Number.isFinite(+z) && z !== null && z !== '' ? Math.min(ZOOM_PCT_MAX, Math.max(ZOOM_PCT_MIN, Math.round(+z))) : DEFAULTS.zoom);
 /** the dial's range and step, percent */
 export const BRIGHT_MIN = 25, BRIGHT_MAX = 300, BRIGHT_STEP = 5;
 /** a stored dial, each part a whole step within the range (100 where missing or unreadable) @param {any} b @returns {Bright} */
@@ -35,11 +42,11 @@ export const feelK = (f) => (f === 'off' ? 0 : f === 'light' ? 0.5 : 1);
 export function readGraphics() {
   let v;
   try { v = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { v = {}; }
-  return { dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright), feel: FEELS.includes(v.feel) ? v.feel : DEFAULTS.feel, fps: FPS.includes(v.fps) ? v.fps : DEFAULTS.fps };
+  return { dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright), feel: FEELS.includes(v.feel) ? v.feel : DEFAULTS.feel, fps: FPS.includes(v.fps) ? v.fps : DEFAULTS.fps, zoom: zoomOf(v.zoom) };
 }
 /** store a change (merged over what's stored) @param {Partial<Graphics>} patch @returns {Graphics} */
 export function writeGraphics(patch) {
-  const cur = readGraphics(), next = { ...cur, ...patch, bright: brightOf({ ...cur.bright, ...(patch.bright || {}) }) };
+  const cur = readGraphics(), next = { ...cur, ...patch, bright: brightOf({ ...cur.bright, ...(patch.bright || {}) }), zoom: zoomOf(patch.zoom ?? cur.zoom) };
   delete /** @type {any} */ (next).renderer;   // (the choice there was before Luminati only)
   try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* private window: the change lasts this page */ }
   return next;

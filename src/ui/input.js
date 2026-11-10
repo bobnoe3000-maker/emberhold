@@ -1,5 +1,7 @@
 // input.js — one thumb, two verbs.
 // Drag anywhere = floating joystick (move). Quick tap = context interact (harvest).
+// (2026-11-10, the owner: "let me zoom in and out") A second finger down = a pinch: the stick lets go, and the spread of
+// the two fingers zooms the camera until they lift (no tap from them); with a mouse, the wheel.
 // Emits nothing itself; main.js reads state each tick and pushes commands.
 
 const TAP_MS = 220;
@@ -12,13 +14,21 @@ export function createInput(canvas) {
 
   const vec = { x: 0, y: 0 };
 
+  let pinch = null;          // { d0, z0 } while two fingers are down
+  let zoomer = null;        // { get, set } (onZoom)
+  const spread = (e) => { const [a, b] = e.touches; return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1; };
   function down(e) {
+    if (e.touches && e.touches.length >= 2 && zoomer) {   // (a second finger: a pinch, the stick let go)
+      pinch = { d0: spread(e), z0: zoomer.get() }; active = null; vec.x = 0; vec.y = 0; e.preventDefault(); return;
+    }
+    if (pinch) return;
     if (active) return;
     const t = e.changedTouches ? e.changedTouches[0] : e;
     active = { id: t.identifier ?? 'mouse', bx: t.clientX, by: t.clientY, kx: t.clientX, ky: t.clientY, t0: performance.now(), moved: false };
     e.preventDefault();
   }
   function move(e) {
+    if (pinch) { if (e.touches && e.touches.length >= 2) zoomer.set(pinch.z0 * spread(e) / pinch.d0); e.preventDefault(); return; }
     if (!active) return;
     const t = pick(e);
     if (!t) return;
@@ -35,6 +45,7 @@ export function createInput(canvas) {
     e.preventDefault();
   }
   function up(e) {
+    if (pinch) { if (!e.touches || e.touches.length === 0) { pinch = null; if (zoomer.done) zoomer.done(); } e.preventDefault(); return; }   // (no tap, no stick, until every finger is up)
     if (!active) return;
     const t = pick(e);
     if (!t) return;
@@ -57,6 +68,7 @@ export function createInput(canvas) {
   canvas.addEventListener('mousedown', down);
   window.addEventListener('mousemove', move);
   window.addEventListener('mouseup', up);
+  canvas.addEventListener('wheel', (e) => { if (!zoomer) return; zoomer.set(zoomer.get() * Math.exp(-e.deltaY * 0.0015)); if (zoomer.done) zoomer.done(); e.preventDefault(); }, { passive: false });
 
   return {
     vec: () => (active && active.moved ? vec : null),
@@ -68,5 +80,8 @@ export function createInput(canvas) {
       return { bx: active.bx, by: active.by, kx: active.kx, ky: active.ky };
     },
     onTap(fn) { tapHandler = fn; },
+    /** the camera's zoom for a pinch and the wheel: get() the factor now, set(z) a new one, done() when a gesture ends
+     * @param {{ get: () => number, set: (z: number) => void, done?: () => void }} z */
+    onZoom(z) { zoomer = z; },
   };
 }

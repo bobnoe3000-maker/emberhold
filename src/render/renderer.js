@@ -65,6 +65,8 @@ const wispsOf = (w) => { let l = WISPS.get(w); if (!l) { l = (w.pools || []).fil
 // A scene change (town ↔ overland, stairs, a load): black until the painter has the new scene built, then a fade in
 const TRANSIT_FADE = 320;
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
+/** the player's zoom range, a factor on the default (pinch, the wheel, Graphics): a third and more each way */
+export const ZOOM_MIN = 0.67, ZOOM_MAX = 1.5;
 const PHONE_CSS = 390 / (VIEW_TILES * 16); // an iPhone 13 upright: CSS px per native px (≈ 0.98), the size of things elsewhere
 
 
@@ -80,7 +82,7 @@ export function createRenderer(canvas, sim, input) {
   document.body.appendChild(overlay);
   const octx = overlay.getContext('2d');
 
-  let S = 3, vw = 0, vh = 0, nvw = 0, nvh = 0;
+  let S = 3, baseS = 3, zoom = 1, vw = 0, vh = 0, nvw = 0, nvh = 0;
   // the time of day outdoors (daylight.js): the sim's clock, or a held look (the title's dusk, ?dev&tod=);
   // a change of hold eases over SKY_EASE ms instead of cutting
   const sky = makeSky(), skyNow = makeSky(), skyFrom = makeSky(), SKY_EASE = 1500;
@@ -104,9 +106,15 @@ export function createRenderer(canvas, sim, input) {
     const css = upright ? fit : Math.min(fit, PHONE_CSS * (touch ? 1 : 1.25));
     // Device px per native px: fractional; never under one. (Its floor
     // was 1.5, from when 25 tiles filled any window: on a 1× desktop that overrode the cap, 1.5 for 1.22, owner 2026-10-04.)
-    S = Math.max(1, css * dpr);
+    baseS = Math.max(1, css * dpr);
+    scaleTo();
+  }
+  // the player's zoom (the owner, 2026-11-10: "let me zoom in and out by the current default camera zoom by at least
+  // 33%"): a factor on the scale, ZOOM_MIN..ZOOM_MAX of the default; Luminati's camera, the overlay and every tap follow S
+  function scaleTo() {
+    S = baseS * zoom;
     nvw = Math.ceil(vw / S) + 2; nvh = Math.ceil(vh / S) + 2;
-    sEMI = new Uint8Array(nvw * nvh * 4);   // (the fights' light, on black, for the painter to lay over its world: hybrid.js)
+    if (!sEMI || sEMI.length !== nvw * nvh * 4) sEMI = new Uint8Array(nvw * nvh * 4);   // (the fights' light, on black, for the painter to lay over its world: hybrid.js)
     terrValid = false;
   }
   window.addEventListener('resize', resize); resize();
@@ -1247,6 +1255,9 @@ export function createRenderer(canvas, sim, input) {
     get floatCount() { return floats.length; },
     /** dev: the native view size (px) */
     get view() { return { w: nvw, h: nvh, S }; },
+    /** the player's zoom, a factor on the default scale (clamped to ZOOM_MIN..ZOOM_MAX) @param {number} z @returns {number} */
+    setZoom(z) { const k = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +z || 1)); if (k !== zoom) { zoom = k; scaleTo(); } return zoom; },
+    get zoom() { return zoom; },
     screenToTile(sxPx, syPx, alpha) {
       const { rx: ox, ry: oy } = lastCam;
       const dpr = vw / window.innerWidth;

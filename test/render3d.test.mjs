@@ -252,3 +252,21 @@ test('the stairs, seen across the room (the owner, 2026-11-04: "The stairs arent
     assert.equal(glow(last, '#a274ff').length, 0, `${site} floor 2: the last, no well`);
   }
 });
+
+test('the camera\'s zoom (the owner: "zoom in and out … by at least 33%"): 100 % by default, a third and more each way, kept per device, clamped', async () => {
+  const { readGraphics, writeGraphics, ZOOM_PCT_MIN, ZOOM_PCT_MAX } = await import('../src/render3d/settings.js');
+  const src = (await import('node:fs')).readFileSync('src/render/renderer.js', 'utf8');
+  const [, lo, hi] = /ZOOM_MIN = ([\d.]+), ZOOM_MAX = ([\d.]+)/.exec(src) || [];
+  assert.ok(+lo <= 0.67 && +hi >= 1.33, `the renderer's range ${lo}–${hi}: at least a third each way`);
+  assert.equal(ZOOM_PCT_MIN, Math.round(+lo * 100)); assert.equal(ZOOM_PCT_MAX, Math.round(+hi * 100));
+  const mem = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
+  try {
+    assert.equal(readGraphics().zoom, 100);
+    writeGraphics({ zoom: 133.4 }); assert.equal(readGraphics().zoom, 133);
+    writeGraphics({ dof: 'off' }); assert.equal(readGraphics().zoom, 133, 'another setting leaves the zoom be');
+    writeGraphics({ zoom: 500 }); assert.equal(readGraphics().zoom, ZOOM_PCT_MAX);
+    writeGraphics({ zoom: 10 }); assert.equal(readGraphics().zoom, ZOOM_PCT_MIN);
+    mem.set('emberfall.graphics', '{"zoom":"x"}'); assert.equal(readGraphics().zoom, 100, 'unreadable: the default');
+  } finally { delete globalThis.localStorage; }
+});
