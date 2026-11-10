@@ -53,13 +53,13 @@ const CSS = `
 
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
- *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void, openPage?: (url: string) => void,
+ *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void,
  *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any } | null, tune?: (() => void) | null,
  *   devApply?: ((cmds: any[]) => void) | null }} o  onPlay: the title closes into play;
- *   openPage: a sandbox page of its own (the Frontier, docs/frontier-proposal.md), the game saved first; graphics: the Graphics panel (src/render3d/settings.js); tune: the
+ *   graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
  */
-export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, openPage = null, graphics = null, tune = null, devApply = null }) {
+export function createTitle({ sim, slot, audio = null, setPaused, openSlots, openParty, openCreate, openChronicle, onOpen = () => {}, onPlay = () => {}, graphics = null, tune = null, devApply = null }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement('div'); wrap.id = 'titleWrap'; document.body.appendChild(wrap);
   swallow(wrap);
@@ -186,7 +186,6 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         <button onClick=${() => { hide(); openChronicle(mode); }}>The Chronicle<small>watch the intro</small></button>
         <button disabled>Account<small>cloud saves with M6</small></button>
       </div>
-      ${openPage && html`<button onClick=${() => openPage('./frontier.html')}>The Frontier<small>the Old Provinces as one land</small></button>`}
       ${audio && html`<button onClick=${() => { panel = 'sound'; draw(); }}>Sound<small>volume · music · ambient · attacks and spells · footsteps · foes</small></button>`}
       ${graphics && html`<button onClick=${() => { panel = 'graphics'; draw(); }}>Graphics<small>depth of field · hit feel · brightness · frame rate</small></button>`}
       <button onClick=${copyReport}>${copied || 'Copy debug report'}<small>stats, state and quests, for a bug report</small></button>

@@ -1,6 +1,10 @@
 # The Frontier: the Old Provinces as one overland (proof of concept)
 
-**Status: Proposal, with a playable proof of concept** (2026-10-20). The owner: *"a proof of concept for an overland
+**Status: Retired (2026-11-10).** The owner: *"retire the Frontier prototype and remove from the game."* The page, its sim
+(`src/sim/frontier/`), its view (`src/frontier/`), its test, its harness and the menu's row are gone; the code is in git
+history before the retiring commit. What follows is the proposal as it was.
+
+**Was: Proposal, with a playable proof of concept** (2026-10-20). The owner: *"a proof of concept for an overland
 map that is 100x the current size suitable for an mmo style exploration. Let me zoom in and out. When moving with the
 thumb stick the players explore and move. Lifting then the map area is locked and the characters autobattle in the
 area selected. Pay special attention to the map features, terrain and NPC difficulty and respawn."*

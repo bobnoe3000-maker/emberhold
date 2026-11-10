@@ -1280,38 +1280,6 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   }
 }
 
-// the Frontier (docs/frontier-proposal.md): its page boots, the stick runs the party, letting go locks the screen's area, the wheel
-// zooms out through the map to the Guild's wall map, all without a page error
-{
-  const b = await launch(chromium, 'chromium');
-  if (b) {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage();
-    const errs = []; p.on('pageerror', (e) => errs.push(e.message));
-    // the way in: the game's menu has a row for it, and it goes there
-    await p.goto(`${base}/index.html?dev&notitle&scene=town`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 });
-    await p.locator('#menuBtn').click(); await p.locator('#title button', { hasText: 'The Frontier' }).click();
-    await p.waitForURL(/frontier\.html/, { timeout: 30000 * SLOW });
-    const viaMenu = /frontier\.html$/.test(p.url());
-    await p.goto(`${base}/frontier.html?manual&lv=3`); await p.waitForFunction(() => !!globalThis.__frame && !!globalThis.__fr, null, { timeout: 60000 });
-    const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(50); }, n);
-    await run(10);
-    const x0 = await p.evaluate(() => globalThis.__fr.state.party[0].x);
-    await p.mouse.move(195, 620); await p.mouse.down(); await p.mouse.move(225, 620, { steps: 3 }); await p.mouse.move(255, 620, { steps: 3 });
-    await run(20);
-    const ran = await p.evaluate(() => ({ dx: globalThis.__fr.state.party[0].x, mode: globalThis.__fr.state.mode }));
-    await p.mouse.up(); await run(4);
-    const held = await p.evaluate(() => ({ mode: globalThis.__fr.state.mode, lock: !!globalThis.__fr.state.lock && Math.abs(globalThis.__fr.state.lock.hw * 2 * globalThis.__view.cam.s - innerWidth) < 2 && Math.abs(globalThis.__fr.state.lock.hh * 2 * globalThis.__view.cam.s - innerHeight) < 2, card: document.getElementById('lockCard').classList.contains('on') }));
-    await run(4);
-    const card = await p.evaluate(() => document.getElementById('lockCard').innerText);
-    const s0 = await p.evaluate(() => globalThis.__view.cam.s);
-    for (let i = 0; i < 6; i++) { await p.mouse.wheel(0, 400); await run(3); }
-    const s1 = await p.evaluate(() => globalThis.__view.cam.s);
-    check('frontier: the game\'s menu goes there; the stick runs the party, letting go holds the screen with its card, the wheel zooms out to the wall map',
-      viaMenu && ran.dx - x0 > 5 && ran.mode === 'explore' && held.mode === 'lock' && held.lock && /Holding/.test(card) && s1 < 1.5 && s1 < s0 && errs.length === 0,
-      JSON.stringify({ viaMenu, ran: +(ran.dx - x0).toFixed(1), held, card: card.replace(/\n/g, ' | '), s0, s1 }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
-    await ctx.close(); await b.close();
-  }
-}
 // Luminati can't start (docs/luminati-only-cleanup.md step 1; the owner, 2026-11-09: a message and a Retry, no hidden
 // fallback): its module refused, as on a phone that can't load it, the game says so over the world (ui/worldfail.js), with
 // what went wrong in small print; the taps under it never reach the world; Retry reloads the page
@@ -1424,7 +1392,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     });
     await p.evaluate(() => globalThis.__ui.title.open('pause'));
     await p.locator('#title button', { hasText: 'Graphics' }).click();
-    // the menu itself: the Frontier, and no prototype (Compare worlds and Another world went with it, the cleanup's step 2)
+    // the menu itself: no prototype and no Frontier (Compare worlds and Another world went with the cleanup's step 2; the Frontier retired, 2026-11-10)
     await p.locator('#title button', { hasText: 'Back' }).click();
     const worlds = await p.evaluate(() => [...document.querySelectorAll('#title button')].map((el) => el.firstChild.textContent.trim()));
     await p.evaluate(() => globalThis.__ui.title.close());
@@ -1437,10 +1405,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     for (let f = 0; f < 140; f++) { const r = await p.evaluate(() => { globalThis.__frame(16.7); const G = window.__game, P = globalThis.__sim.state.player, st = globalThis.__world3d.world.stats;
       return { x: P.x, y: G.player.position.y, beasts: st.beasts, bridges: (G.world.objectsOf?.('bridge') || []).length }; });
       if (r.x > 117 && r.x < 123) deck = Math.max(deck, r.y); beasts = Math.max(beasts, r.beasts); }
-    check('render3d: the game builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; the menu offers the Frontier and no prototype',
+    check('render3d: the game builds Thornwick and the Vale from the sim in Luminati under the HUD (the hero on a bridge\'s deck, the farm\'s beasts alive), in the game\'s own page (no frame), under the top bar and its ☰; the ground lands where Emberlit\'s overlay and taps expect it (≤ 2 px); Luminati\'s canvas takes no pointer; Graphics offers no renderer (Luminati only), says what the people are drawn as and turns the depth of field off; its Brightness tray holds a part and dials it at once; the menu offers no prototype and no Frontier',
       town && vale && walked === 'overland' && crossed && deck > 1.05 && beasts > 0 && offTown <= 2 && offVale <= 2 && frame.under && frame.pe === 'none' && frame.frames === 0 && frame.canvases === 1 && frame.actors > 0 && noChoice && dofOff
         && tray.open && tray.held === 'dusk' && Math.abs(tray.ratio - 1.05) < 0.002 && tray.reset === 1 && /Dusk 105 %/.test(tray.label) && /Dusk 100 %/.test(tray.back) && tray.closed
-        && worlds.includes('The Frontier') && !['Compare worlds', 'Another world'].some((w) => worlds.includes(w)) && errs.length === 0,
+        && !['Compare worlds', 'Another world', 'The Frontier'].some((w) => worlds.includes(w)) && errs.length === 0,
       JSON.stringify({ town, vale, walked, deck: +deck.toFixed(2), beasts, offTown: +offTown.toFixed(2), offVale: +offVale.toFixed(2), frame, pressed, dofOff, tray, worlds }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the Vale's three dungeon doors (docs/vale-landmarks-proposal.md): our kit's models stood in 3D, not cards, each under
     // the landmark standard's phone budget (§3.7: about 1,500 triangles, about 10 draws); the Sunken Chapel in the world's water

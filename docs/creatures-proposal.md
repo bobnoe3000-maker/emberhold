@@ -28,7 +28,7 @@ The answers to §6: the kit in code (1); the spiders in Wickham Keep's Old Cella
     - `cutting` = `{ melee: ['cutthroat', 'rat'], ranged: ['crossbow', 'rogue'], elite: 'gutter' }`: the Old Barrows'
       Cutting (`the_cutting`, floor 1). The rat takes the risen minion's place beside the diggers.
   - None undead (Turn Undead does nothing to them). The board's bounty counts Old Gutter as the Barrows' elite he is.
-  - Names for the defeat screen and the Frontier: `content/foes.json`, `src/frontier/view.js`.
+  - Names for the defeat screen: `content/foes.json`.
 - **The art:**
   - `variants.json`: VR1 the rat (height 0.47, a fifth over the spike's), VR2 the spider (0.54), VR3 the spinner (the
     spider smaller and paler, 0.41), VR4 Old Gutter (the rat greyer, 0.61). `bake.json`: `vermin_rat`, `vermin_spider`,
