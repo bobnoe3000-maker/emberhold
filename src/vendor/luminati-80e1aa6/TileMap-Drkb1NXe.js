@@ -99,19 +99,74 @@ function C(e, t) {
 	}
 	return console.error("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unknown draw mode:", t), e;
 }
+function w(e, t = Math.PI / 3) {
+	let n = e.index ? e.toNonIndexed() : e, i = n.attributes.position, a = i.count, o;
+	if (i.isBufferAttribute === !0 && i.itemSize === 3 && i.normalized === !1) o = i.array;
+	else {
+		o = new Float64Array(a * 3);
+		for (let e = 0; e < a; e++) o[3 * e + 0] = i.getX(e), o[3 * e + 1] = i.getY(e), o[3 * e + 2] = i.getZ(e);
+	}
+	let s = Math.cos(t), c = (1 + 1e-10) * 100, l = a / 3, u = new Float64Array(l * 3);
+	for (let e = 0; e < l; e++) {
+		let t = 9 * e, n = o[t + 0], r = o[t + 1], i = o[t + 2], a = o[t + 3], s = o[t + 4], c = o[t + 5], l = o[t + 6], d = o[t + 7], f = o[t + 8], p = l - a, m = d - s, h = f - c, g = n - a, _ = r - s, v = i - c, y = m * v - h * _, b = h * g - p * v, x = p * _ - m * g, S = 1 / (Math.sqrt(y * y + b * b + x * x) || 1);
+		u[3 * e + 0] = y * S, u[3 * e + 1] = b * S, u[3 * e + 2] = x * S;
+	}
+	let d = new Int32Array(a), f = new Float64Array(a * 3), p = 1;
+	for (; p < a * 2;) p <<= 1;
+	let m = p - 1, h = new Int32Array(p), g = 0;
+	for (let e = 0; e < a; e++) {
+		let t = 3 * e, n = Math.trunc(o[t + 0] * c), r = Math.trunc(o[t + 1] * c), i = Math.trunc(o[t + 2] * c), a = (Math.imul(n, 73856093) ^ Math.imul(r, 19349663) ^ Math.imul(i, 83492791)) & m;
+		for (;;) {
+			let t = h[a];
+			if (t === 0) {
+				let t = 3 * g;
+				f[t + 0] = n, f[t + 1] = r, f[t + 2] = i, h[a] = g + 1, d[e] = g++;
+				break;
+			}
+			let o = 3 * (t - 1);
+			if (f[o + 0] === n && f[o + 1] === r && f[o + 2] === i) {
+				d[e] = t - 1;
+				break;
+			}
+			a = a + 1 & m;
+		}
+	}
+	let _ = new Int32Array(g + 1);
+	for (let e = 0; e < a; e++) _[d[e] + 1]++;
+	for (let e = 0; e < g; e++) _[e + 1] += _[e];
+	let v = new Int32Array(a), y = _.slice(0, g);
+	for (let e = 0; e < l; e++) {
+		let t = 3 * e;
+		v[y[d[t + 0]]++] = e, v[y[d[t + 1]]++] = e, v[y[d[t + 2]]++] = e;
+	}
+	let b = new Float32Array(a * 3);
+	for (let e = 0; e < l; e++) {
+		let t = 3 * e, n = u[t + 0], r = u[t + 1], i = u[t + 2];
+		for (let e = 0; e < 3; e++) {
+			let a = t + e, o = d[a], c = 0, l = 0, f = 0;
+			for (let e = _[o], t = _[o + 1]; e < t; e++) {
+				let t = 3 * v[e], a = u[t + 0], o = u[t + 1], d = u[t + 2];
+				n * a + r * o + i * d > s && (c += a, l += o, f += d);
+			}
+			let p = 1 / (Math.sqrt(c * c + l * l + f * f) || 1);
+			b[3 * a + 0] = c * p, b[3 * a + 1] = l * p, b[3 * a + 2] = f * p;
+		}
+	}
+	return n.setAttribute("normal", new r(b, 3, !1)), n;
+}
 //#endregion
 //#region src/engine/utils/steps.js
-function w(e) {
+function T(e) {
 	let t = e.next();
 	for (; !t.done;) t = e.next();
 	return t.value;
 }
 //#endregion
 //#region src/engine/world/SpatialSplit.js
-function T(e, t) {
-	return w(E(e, t));
+function E(e, t) {
+	return T(D(e, t));
 }
-function* E(e, { x: t, z: n, weight: r = () => 1, maxWeight: i = Infinity, maxExtent: a = Infinity, minWeight: o = 0 }) {
+function* D(e, { x: t, z: n, weight: r = () => 1, maxWeight: i = Infinity, maxExtent: a = Infinity, minWeight: o = 0 }) {
 	if (!e.length) return [];
 	let s = e.length, c = new Float64Array(s), l = new Float64Array(s), u = new Float64Array(s);
 	for (let i = 0; i < s; i++) c[i] = t(e[i]), l[i] = n(e[i]), u[i] = Math.max(0, r(e[i]) || 0);
@@ -129,7 +184,7 @@ function* E(e, { x: t, z: n, weight: r = () => 1, maxWeight: i = Infinity, maxEx
 			f.push(e);
 			continue;
 		}
-		let h = D(e, r - n >= d - s ? c : l), g = 0, _ = 1;
+		let h = O(e, r - n >= d - s ? c : l), g = 0, _ = 1;
 		for (let e = 0; e < h.length - 1 && (g += u[h[e]], _ = e + 1, !(g >= t / 2)); e++);
 		p.push(h.slice(_), h.slice(0, _)), yield;
 	}
@@ -137,7 +192,7 @@ function* E(e, { x: t, z: n, weight: r = () => 1, maxWeight: i = Infinity, maxEx
 	for (let t of f) m.push(Array.from(Int32Array.from(t).sort(), (t) => e[t])), yield;
 	return m;
 }
-function D(e, t) {
+function O(e, t) {
 	let n = e.length, r = Int32Array.from(e), i = new Float64Array(n);
 	for (let a = 0; a < n; a++) {
 		let n = t[r[a]];
@@ -166,7 +221,7 @@ function D(e, t) {
 	}
 	return Array.from(r);
 }
-function O(e, t) {
+function k(e, t) {
 	let n = /* @__PURE__ */ new Map(), r = [];
 	for (let i of e) {
 		let e = t(i);
@@ -180,7 +235,7 @@ function O(e, t) {
 	for (let e of n.values()) r.push(...e);
 	return r;
 }
-function k(e, t, n, r) {
+function A(e, t, n, r) {
 	let i = r.filter((t) => e.getAttribute(t)), a = [], o = 0, s = null;
 	for (let r = 0; r < t.length; r++) {
 		let c = n[r] ?? null;
@@ -194,7 +249,7 @@ function k(e, t, n, r) {
 	}
 	return a;
 }
-var A = class {
+var ee = class {
 	constructor() {
 		this._byTag = /* @__PURE__ */ new Map(), this._hidden = /* @__PURE__ */ new Set();
 	}
@@ -268,7 +323,7 @@ function M(e, { pad: t = 0, only: n = null } = {}) {
 }
 //#endregion
 //#region src/engine/world/TileMap.js
-var N = 4, P = u / N, F = 1, I = 4, L = .35, R = .4, z = 1e-4, B = 311573446, V = 2, ee = 16, H = 256, U = {
+var N = 4, P = u / N, F = 1, I = 4, L = .35, R = .4, z = 1e-4, te = 311573446, B = 2, ne = 16, V = 256, H = {
 	N: {
 		key: "N",
 		dx: 0,
@@ -309,17 +364,17 @@ var N = 4, P = u / N, F = 1, I = 4, L = .35, R = .4, z = 1e-4, B = 311573446, V 
 		rz: 1,
 		idx: 3
 	}
-}, W = [
+}, U = [
 	"N",
 	"E",
 	"S",
 	"W"
-], G = {
+], W = {
 	N: "S",
 	S: "N",
 	E: "W",
 	W: "E"
-}, te = /* @__PURE__ */ new Set([
+}, re = /* @__PURE__ */ new Set([
 	"grass",
 	"grass_dark",
 	"grass_flowers",
@@ -334,12 +389,12 @@ var N = 4, P = u / N, F = 1, I = 4, L = .35, R = .4, z = 1e-4, B = 311573446, V 
 	"scorched",
 	"ash",
 	"basalt"
-]), K = /* @__PURE__ */ new Set([
+]), G = /* @__PURE__ */ new Set([
 	"grass",
 	"grass_dark",
 	"grass_flowers",
 	"dry_grass"
-]), ne = /* @__PURE__ */ new Set([
+]), K = /* @__PURE__ */ new Set([
 	"dirt",
 	"dirt_path",
 	"cobblestone",
@@ -359,38 +414,38 @@ var N = 4, P = u / N, F = 1, I = 4, L = .35, R = .4, z = 1e-4, B = 311573446, V 
 	dry_grass: 2,
 	grass_flowers: 1
 };
-function re({ organic: e = [], grass: t = [], receivers: n = [], priority: r = {} }) {
-	for (let t of e) te.add(t);
-	for (let e of t) K.add(e);
-	for (let e of n) ne.add(e);
+function ie({ organic: e = [], grass: t = [], receivers: n = [], priority: r = {} }) {
+	for (let t of e) re.add(t);
+	for (let e of t) G.add(e);
+	for (let e of n) K.add(e);
 	Object.assign(q, r);
 }
-var ie = [], ae = [];
-for (let e = 0; e < 8; e++) ie.push(Math.cos(e * Math.PI / 4)), ae.push(Math.sin(e * Math.PI / 4));
-var oe = [
+var ae = [], oe = [];
+for (let e = 0; e < 8; e++) ae.push(Math.cos(e * Math.PI / 4)), oe.push(Math.sin(e * Math.PI / 4));
+var se = [
 	.22,
 	.45,
 	.8,
 	1.25
-], se = 1.75, J = 8, ce = [], le = [];
-for (let e = 0; e < J; e++) ce.push(Math.cos(e * Math.PI * 2 / J)), le.push(Math.sin(e * Math.PI * 2 / J));
+], ce = 1.75, J = 8, le = [], ue = [];
+for (let e = 0; e < J; e++) le.push(Math.cos(e * Math.PI * 2 / J)), ue.push(Math.sin(e * Math.PI * 2 / J));
 var Y = 64, X = 48, Z = {
 	stripA: 1,
 	stripB: 9,
 	brim: 17,
 	skirt: 22,
 	corner: 33
-}, ue = 10, de = 6, Q = 6 / 16, $ = 3 / 16, fe = 7 / 16, pe = 1 / 16, me = "\nuniform vec2 lmUnits;\nuniform float lmVarSeed;\nfloat lmVHash(vec2 p) {\n  vec3 p3 = fract(vec3(p.xyx) * 0.1031);\n  p3 += dot(p3, p3.yzx + 33.33);\n  return fract((p3.x + p3.y) * p3.z);\n}\nfloat lmVNoise(vec2 p) {\n  vec2 i = floor(p);\n  vec2 f = fract(p);\n  vec2 u = f * f * (3.0 - 2.0 * f);\n  return mix(mix(lmVHash(i), lmVHash(i + vec2(1.0, 0.0)), u.x), mix(lmVHash(i + vec2(0.0, 1.0)), lmVHash(i + vec2(1.0, 1.0)), u.x), u.y);\n}\nvec2 lmVApply(vec2 d, float r, float fl) {\n  d.x = fl > 0.5 ? -d.x : d.x;\n  return r < 0.5 ? d : r < 1.5 ? vec2(-d.y, d.x) : r < 2.5 ? -d : vec2(d.y, -d.x);\n}\nvec2 lmVariedUv(vec2 uv, out mat2 A) {\n  vec2 w = vec2(uv.x * lmUnits.x, -uv.y * lmUnits.y);\n  vec2 pw = (floor(w * 16.0) + 0.5) / 16.0;\n  vec2 o = vec2(lmVNoise(pw * 1.35 + lmVarSeed), lmVNoise(pw * 1.35 - lmVarSeed + 41.3)) - 0.5;\n  o += (vec2(lmVNoise(pw * 4.1 + 7.7), lmVNoise(pw * 4.1 - 3.1)) - 0.5) * 0.35;\n  vec2 cell = floor(pw + o * 0.95);\n  float h = lmVHash(cell + vec2(lmVarSeed * 0.37, 11.7));\n  float r = floor(h * 4.0);\n  float fl = step(0.5, fract(h * 7.31));\n  vec2 c = cell + 0.5;\n  vec2 w2 = c + lmVApply(w - c, r, fl);\n  vec2 eu = lmVApply(vec2(1.0, 0.0), r, fl);\n  vec2 ev = lmVApply(vec2(0.0, -1.0), r, fl);\n  A = mat2(vec2(eu.x, -eu.y), vec2(ev.x, -ev.y));\n  return vec2(w2.x / lmUnits.x, -w2.y / lmUnits.y);\n}\n", he = "\n#ifdef USE_MAP\n  mat2 lmA;\n  vec2 lmUv = lmVariedUv( vMapUv, lmA );\n  vec2 lmGx = lmA * dFdx( vMapUv );\n  vec2 lmGy = lmA * dFdy( vMapUv );\n  vec4 sampledDiffuseColor = textureGrad( map, lmUv, lmGx, lmGy );\n  diffuseColor *= sampledDiffuseColor;\n#endif\n", ge = "\n#if defined( USE_NORMALMAP_TANGENTSPACE ) && defined( USE_MAP )\n  vec3 mapN = textureGrad( normalMap, lmUv, lmGx, lmGy ).xyz * 2.0 - 1.0;\n  mapN.xy = transpose( lmA ) * mapN.xy;\n  mapN.xy *= normalScale;\n  normal = normalize( tbn * mapN );\n#elif defined( USE_NORMALMAP_TANGENTSPACE )\n  vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;\n  mapN.xy *= normalScale;\n  normal = normalize( tbn * mapN );\n#endif\n", _e = "\n#ifdef USE_ALPHAMAP\n  vec4 lmDecalMask = texture2D( alphaMap, vAlphaMapUv );\n  diffuseColor.a *= lmDecalMask.g;\n  diffuseColor.rgb *= lmDecalMask.r * ( 255.0 / 170.0 );\n#endif\n", ve = "\nuniform float uLmBounce;\nuniform vec3 uSunColor;\nuniform vec3 uSunDirection;\n", ye = "\n#include <lights_fragment_maps>\n{\n  vec3 lmWN = inverseTransformDirection( normalize( vNormal ), viewMatrix );\n  float lmSide = clamp( 1.0 - abs( lmWN.y ), 0.0, 1.0 );\n  irradiance += uSunColor * ( max( uSunDirection.y, 0.0 ) * 0.44 * uLmBounce * lmSide );\n}\n";
-function be(e, t) {
+}, de = 10, fe = 6, Q = 6 / 16, $ = 3 / 16, pe = 7 / 16, me = 1 / 16, he = "\nuniform vec2 lmUnits;\nuniform float lmVarSeed;\nfloat lmVHash(vec2 p) {\n  vec3 p3 = fract(vec3(p.xyx) * 0.1031);\n  p3 += dot(p3, p3.yzx + 33.33);\n  return fract((p3.x + p3.y) * p3.z);\n}\nfloat lmVNoise(vec2 p) {\n  vec2 i = floor(p);\n  vec2 f = fract(p);\n  vec2 u = f * f * (3.0 - 2.0 * f);\n  return mix(mix(lmVHash(i), lmVHash(i + vec2(1.0, 0.0)), u.x), mix(lmVHash(i + vec2(0.0, 1.0)), lmVHash(i + vec2(1.0, 1.0)), u.x), u.y);\n}\nvec2 lmVApply(vec2 d, float r, float fl) {\n  d.x = fl > 0.5 ? -d.x : d.x;\n  return r < 0.5 ? d : r < 1.5 ? vec2(-d.y, d.x) : r < 2.5 ? -d : vec2(d.y, -d.x);\n}\nvec2 lmVariedUv(vec2 uv, out mat2 A) {\n  vec2 w = vec2(uv.x * lmUnits.x, -uv.y * lmUnits.y);\n  vec2 pw = (floor(w * 16.0) + 0.5) / 16.0;\n  vec2 o = vec2(lmVNoise(pw * 1.35 + lmVarSeed), lmVNoise(pw * 1.35 - lmVarSeed + 41.3)) - 0.5;\n  o += (vec2(lmVNoise(pw * 4.1 + 7.7), lmVNoise(pw * 4.1 - 3.1)) - 0.5) * 0.35;\n  vec2 cell = floor(pw + o * 0.95);\n  float h = lmVHash(cell + vec2(lmVarSeed * 0.37, 11.7));\n  float r = floor(h * 4.0);\n  float fl = step(0.5, fract(h * 7.31));\n  vec2 c = cell + 0.5;\n  vec2 w2 = c + lmVApply(w - c, r, fl);\n  vec2 eu = lmVApply(vec2(1.0, 0.0), r, fl);\n  vec2 ev = lmVApply(vec2(0.0, -1.0), r, fl);\n  A = mat2(vec2(eu.x, -eu.y), vec2(ev.x, -ev.y));\n  return vec2(w2.x / lmUnits.x, -w2.y / lmUnits.y);\n}\n", ge = "\n#ifdef USE_MAP\n  mat2 lmA;\n  vec2 lmUv = lmVariedUv( vMapUv, lmA );\n  vec2 lmGx = lmA * dFdx( vMapUv );\n  vec2 lmGy = lmA * dFdy( vMapUv );\n  vec4 sampledDiffuseColor = textureGrad( map, lmUv, lmGx, lmGy );\n  diffuseColor *= sampledDiffuseColor;\n#endif\n", _e = "\n#if defined( USE_NORMALMAP_TANGENTSPACE ) && defined( USE_MAP )\n  vec3 mapN = textureGrad( normalMap, lmUv, lmGx, lmGy ).xyz * 2.0 - 1.0;\n  mapN.xy = transpose( lmA ) * mapN.xy;\n  mapN.xy *= normalScale;\n  normal = normalize( tbn * mapN );\n#elif defined( USE_NORMALMAP_TANGENTSPACE )\n  vec3 mapN = texture2D( normalMap, vNormalMapUv ).xyz * 2.0 - 1.0;\n  mapN.xy *= normalScale;\n  normal = normalize( tbn * mapN );\n#endif\n", ve = "\n#ifdef USE_ALPHAMAP\n  vec4 lmDecalMask = texture2D( alphaMap, vAlphaMapUv );\n  diffuseColor.a *= lmDecalMask.g;\n  diffuseColor.rgb *= lmDecalMask.r * ( 255.0 / 170.0 );\n#endif\n", ye = "\nuniform float uLmBounce;\nuniform vec3 uSunColor;\nuniform vec3 uSunDirection;\n", be = "\n#include <lights_fragment_maps>\n{\n  vec3 lmWN = inverseTransformDirection( normalize( vNormal ), viewMatrix );\n  float lmSide = clamp( 1.0 - abs( lmWN.y ), 0.0, 1.0 );\n  irradiance += uSunColor * ( max( uSunDirection.y, 0.0 ) * 0.44 * uLmBounce * lmSide );\n}\n";
+function xe(e, t) {
 	return .0015 + .0025 * (q[e] ?? 0) + 5e-4 * t;
 }
-function xe(e) {
+function Se(e) {
 	if (!e) return 0;
 	let t = e.charCodeAt(0);
 	return t >= 48 && t <= 57 ? t - 48 : t >= 97 && t <= 122 ? t - 87 : t >= 65 && t <= 90 ? t - 55 : 0;
 }
-function Se(e, t, n, r, i) {
-	let a = xe(n), o = !!t.water;
+function Ce(e, t, n, r, i) {
+	let a = Se(n), o = !!t.water;
 	return {
 		char: e,
 		type: t,
@@ -400,16 +455,16 @@ function Se(e, t, n, r, i) {
 		i: r,
 		j: i,
 		water: o,
-		stairs: y(U, t.stairs) ? t.stairs : null,
+		stairs: y(H, t.stairs) ? t.stairs : null,
 		blocked: !1,
 		waterSurface: null,
 		waterSource: null
 	};
 }
-function Ce(e, t, n) {
+function we(e, t, n) {
 	return e === "N" ? 1 - n : e === "S" ? n : e === "E" ? t : 1 - t;
 }
-var we = class {
+var Te = class {
 	constructor(e = !1) {
 		this.pos = [], this.nrm = [], this.uv = [], this.uv1 = e ? [] : null, this.col = [], this.idx = [], this.count = 0;
 	}
@@ -428,7 +483,7 @@ var we = class {
 		return t.setAttribute("position", new e(this.pos, 3)), t.setAttribute("normal", new e(this.nrm, 3)), t.setAttribute("uv", new e(this.uv, 2)), this.uv1 && t.setAttribute("uv1", new e(this.uv1, 2)), t.setAttribute("color", new e(this.col, 3)), t.setIndex(this.count > 65535 ? new c(this.idx, 1) : new o(this.idx, 1)), t.computeBoundingBox(), t.computeBoundingSphere(), t;
 	}
 };
-function Te(e = 1) {
+function Ee(e = 1) {
 	let t = new b(Y, X, [
 		0,
 		0,
@@ -468,8 +523,8 @@ function Te(e = 1) {
 		}
 	}
 	let a = Z.corner;
-	for (let i = 0; i < de; i++) {
-		let o = i * ue + 1, s = 3.4 + r(i, 7, 41) * 2;
+	for (let i = 0; i < fe; i++) {
+		let o = i * de + 1, s = 3.4 + r(i, 7, 41) * 2;
 		for (let t = 0; t < 8; t++) for (let r = 0; r < 8; r++) {
 			let c = Math.atan2(t + .5, r + .5), l = (f(Math.floor(c * 6), i, e + 43) - .5) * 2.2, u = Math.hypot(r + .5, t + .5), d = s + l;
 			u < d && n(o + r, a + t, u > d - 1 ? 136 : 170);
@@ -485,9 +540,9 @@ function Te(e = 1) {
 	]) for (let n = 0; n < Y; n++) t.set(n, e - 1, t.get(n, e));
 	return t;
 }
-var Ee = class {
+var De = class {
 	constructor(e, n = {}) {
-		let { textures: r, seed: i = e?.name == null ? B : m(String(e.name)), baseDepth: a = 2, chunkSize: o = 32, uvVariation: s = !0, fringes: c = !0, overhangs: l = !0, aoStrength: d = 1.1, tintStrength: f = 1, sideVariation: p = !1, wallBounce: h = 1, deferBuild: g = !1 } = n;
+		let { textures: r, seed: i = e?.name == null ? te : m(String(e.name)), baseDepth: a = 2, chunkSize: o = 32, uvVariation: s = !0, fringes: c = !0, overhangs: l = !0, aoStrength: d = 1.1, tintStrength: f = 1, sideVariation: p = !1, wallBounce: h = 1, deferBuild: g = !1 } = n;
 		if (!r) throw Error("TileMap: opts.textures (TextureLibrary) is required");
 		this.textures = r, this.map = e, this.name = e.name ?? "", this.seed = i >>> 0, this.options = {
 			baseDepth: a,
@@ -516,7 +571,7 @@ var Ee = class {
 					continue;
 				}
 				if (a.void) continue;
-				let o = Se(i, a, n[r], r, e), s = o.h;
+				let o = Ce(i, a, n[r], r, e), s = o.h;
 				this._tiles[e * this.width + r] = o, x = Math.min(x, s), S = Math.max(S, s + (o.stairs ? u : 0));
 			}
 		}
@@ -587,12 +642,12 @@ var Ee = class {
 		};
 	}
 	_stairRamp(e, t, n) {
-		let r = Ce(e.stairs, t, n);
+		let r = we(e.stairs, t, n);
 		return d(e.h + P * .5 + r * u, e.h, e.h + u);
 	}
 	_topAt(e, t, n) {
 		if (!e.stairs) return e.h;
-		let r = Math.min(3, Math.floor(Ce(e.stairs, t, n) * N));
+		let r = Math.min(3, Math.floor(we(e.stairs, t, n) * N));
 		return e.h + (r + 1) * P;
 	}
 	_surface(e, t) {
@@ -634,7 +689,7 @@ var Ee = class {
 		}
 		let s = ++o.stamp, c = o.scratch;
 		c.length = 0;
-		let l = Math.max(0, Math.floor((e - o.ox) / V)), u = Math.min(o.nx - 1, Math.floor((n - o.ox) / V)), d = Math.max(0, Math.floor((t - o.oz) / V)), f = Math.min(o.nz - 1, Math.floor((r - o.oz) / V));
+		let l = Math.max(0, Math.floor((e - o.ox) / B)), u = Math.min(o.nx - 1, Math.floor((n - o.ox) / B)), d = Math.max(0, Math.floor((t - o.oz) / B)), f = Math.min(o.nz - 1, Math.floor((r - o.oz) / B));
 		for (let e = d; e <= f; e++) for (let t = l; t <= u; t++) {
 			let n = o.cells[e * o.nx + t];
 			n && this._collectIndices(o, n, s, c);
@@ -651,10 +706,10 @@ var Ee = class {
 	}
 	_colliderGrid() {
 		let e = this.colliders;
-		if (e.length < ee) return null;
+		if (e.length < ne) return null;
 		let t = this._cgrid;
 		if (t && !this._cgridDirty && t.count === e.length) return t;
-		let n = Math.max(1, Math.ceil((this.width + 32) / V)), r = Math.max(1, Math.ceil((this.depth + 32) / V));
+		let n = Math.max(1, Math.ceil((this.width + 32) / B)), r = Math.max(1, Math.ceil((this.depth + 32) / B));
 		t = {
 			ox: -16,
 			oz: -16,
@@ -672,8 +727,8 @@ var Ee = class {
 			if (!a) continue;
 			let o, s, c, l;
 			a.type === "circle" ? (o = a.x - a.r, s = a.x + a.r, c = a.z - a.r, l = a.z + a.r) : (o = a.minX, s = a.maxX, c = a.minZ, l = a.maxZ);
-			let u = Math.floor((o - -16) / V), d = Math.floor((s - -16) / V), f = Math.floor((c - -16) / V), p = Math.floor((l - -16) / V);
-			if (a.dynamic || !(Number.isFinite(u) && Number.isFinite(d) && Number.isFinite(f) && Number.isFinite(p)) || u < 0 || f < 0 || d >= n || p >= r || (d - u + 1) * (p - f + 1) > H) {
+			let u = Math.floor((o - -16) / B), d = Math.floor((s - -16) / B), f = Math.floor((c - -16) / B), p = Math.floor((l - -16) / B);
+			if (a.dynamic || !(Number.isFinite(u) && Number.isFinite(d) && Number.isFinite(f) && Number.isFinite(p)) || u < 0 || f < 0 || d >= n || p >= r || (d - u + 1) * (p - f + 1) > V) {
 				t.always.push(i);
 				continue;
 			}
@@ -685,7 +740,7 @@ var Ee = class {
 		return this._cgrid = t, this._cgridDirty = !1, t;
 	}
 	_nextPush(e, t, n, r, i) {
-		let a = Infinity, o = Math.max(0, Math.floor((t - r - e.ox) / V)), s = Math.min(e.nx - 1, Math.floor((t + r - e.ox) / V)), c = Math.max(0, Math.floor((n - r - e.oz) / V)), l = Math.min(e.nz - 1, Math.floor((n + r - e.oz) / V));
+		let a = Infinity, o = Math.max(0, Math.floor((t - r - e.ox) / B)), s = Math.min(e.nx - 1, Math.floor((t + r - e.ox) / B)), c = Math.max(0, Math.floor((n - r - e.oz) / B)), l = Math.min(e.nz - 1, Math.floor((n + r - e.oz) / B));
 		for (let u = c; u <= l; u++) for (let c = o; c <= s; c++) {
 			let o = e.cells[u * e.nx + c];
 			o && (a = this._firstPush(o, t, n, r, i, a));
@@ -726,7 +781,7 @@ var Ee = class {
 	_pointInCollider(e, t) {
 		let n = this.colliders, r = this._colliderGrid();
 		if (r) {
-			let n = Math.floor((e - r.ox) / V), i = Math.floor((t - r.oz) / V), a = n >= 0 && i >= 0 && n < r.nx && i < r.nz ? r.cells[i * r.nx + n] : null;
+			let n = Math.floor((e - r.ox) / B), i = Math.floor((t - r.oz) / B), a = n >= 0 && i >= 0 && n < r.nx && i < r.nz ? r.cells[i * r.nx + n] : null;
 			return !!a && this._pointInList(e, t, a) || this._pointInList(e, t, r.always);
 		}
 		for (let r = 0; r < n.length; r++) {
@@ -763,7 +818,7 @@ var Ee = class {
 		let a = this._standHeight(e, t, r, i);
 		if (a !== a) return !1;
 		for (let r = 0; r < J; r++) {
-			let o = this._standHeight(e + ce[r] * n, t + le[r] * n, a, i);
+			let o = this._standHeight(e + le[r] * n, t + ue[r] * n, a, i);
 			if (o !== o) return !1;
 		}
 		return !0;
@@ -829,7 +884,7 @@ var Ee = class {
 		return i.u = t / r[0], i.v = -n / r[1], i;
 	}
 	_varies(e) {
-		if (!this.options.uvVariation || !te.has(e)) return !1;
+		if (!this.options.uvVariation || !re.has(e)) return !1;
 		let t = this.textures.meta(e).units;
 		return Math.abs(t[0] - t[1]) < 1e-6;
 	}
@@ -837,8 +892,8 @@ var Ee = class {
 		let i = n ? this.textures.meta(t).units : null, a = this.seed % 997 * .731 + 3.17, o = this._bounceUniform;
 		e.onBeforeCompile = (e) => {
 			e.uniforms.uLmBounce = o, e.uniforms.uSunColor = v.uSunColor, e.uniforms.uSunDirection = v.uSunDirection;
-			let t = e.fragmentShader.replace("#include <common>", `#include <common>\n${ve}${n ? me : ""}`).replace("#include <lights_fragment_maps>", ye);
-			n && (e.uniforms.lmUnits = { value: new s(i[0], i[1]) }, e.uniforms.lmVarSeed = { value: a }, t = t.replace("#include <map_fragment>", he).replace("#include <normal_fragment_maps>", ge)), r && (t = t.replace("#include <alphamap_fragment>", _e)), e.fragmentShader = t;
+			let t = e.fragmentShader.replace("#include <common>", `#include <common>\n${ye}${n ? he : ""}`).replace("#include <lights_fragment_maps>", be);
+			n && (e.uniforms.lmUnits = { value: new s(i[0], i[1]) }, e.uniforms.lmVarSeed = { value: a }, t = t.replace("#include <map_fragment>", ge).replace("#include <normal_fragment_maps>", _e)), r && (t = t.replace("#include <alphamap_fragment>", ve)), e.fragmentShader = t;
 		}, e.customProgramCacheKey = () => `luminati-tilemap${n ? "-var" : ""}${r ? "-decal" : ""}`;
 	}
 	get wallBounce() {
@@ -885,10 +940,10 @@ var Ee = class {
 		let r = 0;
 		for (let i = 0; i < 8; i++) {
 			let a = 0;
-			for (let r = 0; r < oe.length; r++) {
-				let o = oe[r], s = this._surface(e + ie[i] * o, t + ae[i] * o) - n;
+			for (let r = 0; r < se.length; r++) {
+				let o = se[r], s = this._surface(e + ae[i] * o, t + oe[i] * o) - n;
 				if (s > .02) {
-					let e = s / Math.sqrt(o * o + s * s) * (1 - o / se);
+					let e = s / Math.sqrt(o * o + s * s) * (1 - o / ce);
 					e > a && (a = e);
 				}
 			}
@@ -911,7 +966,7 @@ var Ee = class {
 	}
 	_builder(e, t, n = !1) {
 		let r = this.options.chunkSize, i = `${Math.floor(t.i / r)},${Math.floor(t.j / r)}`, a = `${e}@${i}`, o = this._builders.get(a);
-		return o || (o = new we(n), o.key = e, o.chunk = i, this._builders.set(a, o)), o;
+		return o || (o = new Te(n), o.key = e, o.chunk = i, this._builders.set(a, o)), o;
 	}
 	_terrainMaterial(e, t = !1) {
 		let n = `terrain:${e}${t ? ":var" : ""}`, r = this._materials.get(n);
@@ -924,7 +979,7 @@ var Ee = class {
 	}
 	_maskTex() {
 		if (!this._maskTexture) {
-			this._maskPixels = Te(this.seed + 9001);
+			this._maskPixels = Ee(this.seed + 9001);
 			let e = this._maskPixels.toTexture({
 				wrap: "repeat",
 				mipmaps: !1,
@@ -951,7 +1006,7 @@ var Ee = class {
 		}), a && (r.normalMap = a, r.normalScale = new s(o, o)), r.name = `TileMap:decal:${e}${t ? ":var" : ""}`, this._patchMaterial(r, e, t, !0), this._materials.set(n, r), r;
 	}
 	_build() {
-		w(this.buildSteps());
+		T(this.buildSteps());
 	}
 	*buildSteps() {
 		let e = this.width;
@@ -967,10 +1022,10 @@ var Ee = class {
 	}
 	_emitTile(e) {
 		e.stairs ? this._emitStairs(e) : this._emitTop(e);
-		for (let t of W) this._emitSides(e, U[t]);
+		for (let t of U) this._emitSides(e, H[t]);
 	}
 	_flushBuilders() {
-		return w(this._flushBuilderSteps());
+		return T(this._flushBuilderSteps());
 	}
 	*_flushBuilderSteps() {
 		let e = [];
@@ -984,7 +1039,7 @@ var Ee = class {
 		return this.object.updateMatrixWorld(!0), this._builders.clear(), e;
 	}
 	consolidateChunks(e = {}) {
-		return w(this.consolidateChunkSteps(e));
+		return T(this.consolidateChunkSteps(e));
 	}
 	*consolidateChunkSteps({ maxTriangles: e = 48e3, maxExtent: t = Infinity, minTriangles: r = 0 } = {}) {
 		let i = this.options.chunkSize, a = /* @__PURE__ */ new Map();
@@ -996,7 +1051,7 @@ var Ee = class {
 		let o = this.object.children.length, s = (e) => e.userData.chunk.split(",").map((e) => (Number(e) + .5) * i);
 		for (let i of a.values()) {
 			if (i.length < 2) continue;
-			let a = T(i, {
+			let a = E(i, {
 				x: (e) => s(e)[0],
 				z: (e) => s(e)[1],
 				weight: (e) => j(e.geometry),
@@ -1031,7 +1086,7 @@ var Ee = class {
 		let d = e.legend ?? {}, f = e.heights ?? [], p = /* @__PURE__ */ new Map();
 		for (let e = c; e <= l; e++) for (let t = o; t <= s; t++) {
 			let n = a[e][t] ?? " ", i = d[n];
-			p.set(e * r + t, i && !i.void ? Se(n, i, (f[e] ?? "")[t], t, e) : null);
+			p.set(e * r + t, i && !i.void ? Ce(n, i, (f[e] ?? "")[t], t, e) : null);
 		}
 		let m = Infinity, h = -Infinity;
 		for (let e = 0; e < this._tiles.length; e++) {
@@ -1122,7 +1177,7 @@ var Ee = class {
 		let t = e.type.top;
 		if (!t) return;
 		let n = e.stairs;
-		U[n];
+		H[n];
 		let r = this.textures.meta(t).units, i = e.type.riser || t, a = this.textures.meta(i).units, o = this._builder(`top:${t}`, e), s = this._builder(`side:${i}`, e), c = this._tmpUV;
 		for (let t = 0; t < N; t++) {
 			let i = e.h + (t + 1) * P, l = t / N, u = (t + 1) / N, d = 0, f = 1, p = 0, m = 1;
@@ -1131,22 +1186,22 @@ var Ee = class {
 			for (let a = 0; a <= g; a++) for (let s = 0; s <= h; s++) {
 				let u = e.i + _(d, f, s / h), v = e.j + _(p, m, a / g);
 				this._topUV(e, u, v, r, c);
-				let y = Ce(n, u - e.i, v - e.j), b = Math.abs(y - l) < 1e-4, x = this._aoTop(u, v, i);
+				let y = we(n, u - e.i, v - e.j), b = Math.abs(y - l) < 1e-4, x = this._aoTop(u, v, i);
 				!b && t < 3 && (x *= .68);
 				let S = b ? 1.22 : 1;
-				De(o, u, i, v, 0, 1, 0, c.u, c.v, x * S);
+				Oe(o, u, i, v, 0, 1, 0, c.u, c.v, x * S);
 			}
 			let y = h + 1;
 			for (let e = 0; e < g; e++) for (let t = 0; t < h; t++) {
 				let n = v + e * y + t;
 				o.quadN(n, n + y, n + y + 1, n + 1, 0, 1, 0);
 			}
-			let b = U[G[n]], x = e.h + t * P, S = e.i + .5, C = e.j + .5;
+			let b = H[W[n]], x = e.h + t * P, S = e.i + .5, C = e.j + .5;
 			n === "N" ? C = e.j + 1 - l : n === "S" ? C = e.j + l : S = n === "E" ? e.i + l : e.i + 1 - l;
 			let w = S - b.rx * .5, T = C - b.rz * .5, E = s.count;
 			for (let e = 0; e <= I; e++) {
 				let t = e / I, n = w + b.rx * t, r = T + b.rz * t, o = (n * b.rx + r * b.rz) / a[0];
-				De(s, n, x, r, b.nx, 0, b.nz, o, x / a[1], .5), De(s, n, i, r, b.nx, 0, b.nz, o, i / a[1], .9);
+				Oe(s, n, x, r, b.nx, 0, b.nz, o, x / a[1], .5), Oe(s, n, i, r, b.nx, 0, b.nz, o, i / a[1], .9);
 			}
 			for (let e = 0; e < I; e++) {
 				let t = E + e * 2;
@@ -1156,7 +1211,7 @@ var Ee = class {
 	}
 	_edgeProfile(e, t, n) {
 		if (!e) return n[0] = n[1] = n[2] = n[3] = this.baseY, n;
-		if (!e.stairs || G[e.stairs] === t) return n[0] = n[1] = n[2] = n[3] = e.h, n;
+		if (!e.stairs || W[e.stairs] === t) return n[0] = n[1] = n[2] = n[3] = e.h, n;
 		for (let r = 0; r < 4; r++) {
 			let i = (r + .5) / 4, a, o;
 			t === "N" ? (a = i, o = .001) : t === "S" ? (a = i, o = .999) : t === "E" ? (a = .999, o = i) : (a = .001, o = i), n[r] = this._topAt(e, a, o);
@@ -1169,7 +1224,7 @@ var Ee = class {
 			0,
 			0,
 			0
-		]), i = this._edgeProfile(n, G[t.key], this._ep1 ||= [
+		]), i = this._edgeProfile(n, W[t.key], this._ep1 ||= [
 			0,
 			0,
 			0,
@@ -1204,7 +1259,7 @@ var Ee = class {
 	_emitFace(e, t, n, r, i, a, o, s = null) {
 		let c = e.type, l = c.lip || null, u = c.side || l || c.top;
 		if (!u) return;
-		let d = l ? Math.max(i, a - F) : a, f = K.has(c.top) && !e.stairs && c.overhang !== !1, p = this.options.overhangs && f && l && a - i >= .24 && Math.abs(a - e.h) < z, m = p ? a : null;
+		let d = l ? Math.max(i, a - F) : a, f = G.has(c.top) && !e.stairs && c.overhang !== !1, p = this.options.overhangs && f && l && a - i >= .24 && Math.abs(a - e.h) < z, m = p ? a : null;
 		s !== null && (s < i || s > a + .2) && (s = null), l && this._faceBand(e, t, n, r, d, a, l, !0, a, i, o, m, s), d > i + z && this._faceBand(e, t, n, r, i, d, u, !1, a, i, o, m, s), p && this._emitOverhang(e, t, n, r, a, a - i);
 	}
 	_faceBand(e, t, n, r, i, a, o, s, c, l, u, d, m = null) {
@@ -1214,17 +1269,17 @@ var Ee = class {
 		y.push(a), y.sort((e, t) => e - t);
 		let b = 0;
 		this.options.sideVariation && (b = Math.floor(f(e.i * 4 + t.idx, e.j, this.seed + 303) * h.px[0]) / h.px[0]);
-		let x = this._edgePoint(e, t, n), S = x.x, C = x.z, w = this._edgePoint(e, t, r), T = w.x, E = w.z, D = S * t.rx + C * t.rz, O = T * t.rx + E * t.rz, k = D <= O ? S : T, A = D <= O ? C : E, j = D <= O ? T : S, M = D <= O ? E : C, N = Math.max(1, Math.round((r - n) * I)), P = v.count;
-		for (let e = 0; e <= N; e++) {
-			let n = e / N, r = _(k, j, n), i = _(A, M, n), a = (r * t.rx + i * t.rz) / g[0] + b;
+		let x = this._edgePoint(e, t, n), S = x.x, C = x.z, w = this._edgePoint(e, t, r), T = w.x, E = w.z, D = S * t.rx + C * t.rz, O = T * t.rx + E * t.rz, k = D <= O ? S : T, A = D <= O ? C : E, ee = D <= O ? T : S, j = D <= O ? E : C, M = Math.max(1, Math.round((r - n) * I)), N = v.count;
+		for (let e = 0; e <= M; e++) {
+			let n = e / M, r = _(k, ee, n), i = _(A, j, n), a = (r * t.rx + i * t.rz) / g[0] + b;
 			for (let e = 0; e < y.length; e++) {
 				let n = y[e], o = s ? (n - c) / g[1] + 1 : n / g[1], f = this._aoWall(r, n, i, t, l, u, d), h = this._sideTint(r, n, i, c, d !== null), _ = m === null ? 0 : n <= m + z ? .3 : .3 * (1 - p(m, m + .14, n));
 				v.v(r, n, i, t.nx, 0, t.nz, a, o, h[0] * f ** 1.06 * (1 - _), h[1] * f * (1 - _ * .9), h[2] * f ** .92 * (1 - _ * .6));
 			}
 		}
-		let F = y.length;
-		for (let e = 0; e < N; e++) for (let t = 0; t < F - 1; t++) {
-			let n = P + e * F + t, r = P + (e + 1) * F + t;
+		let P = y.length;
+		for (let e = 0; e < M; e++) for (let t = 0; t < P - 1; t++) {
+			let n = N + e * P + t, r = N + (e + 1) * P + t;
 			v.quad(n, r, r + 1, n + 1);
 		}
 	}
@@ -1235,38 +1290,38 @@ var Ee = class {
 	_emitOverhang(e, t, n, r, i, a) {
 		let o = e.type.top, s = this.textures.meta(o).units, c = e.type.uvVariation === !1 ? "X" : "", l = this._builder(`brim${c}:${o}`, e, !0), u = this._tmpUV, d = +(t.dx === 0), f = t.dx === 0 ? 0 : 1, p = n === 0 && this._convexEnd(e, t, -1, i), m = r === 1 && this._convexEnd(e, t, 1, i), h = $, g = this._edgePoint(e, t, n), v = g.x, y = g.z;
 		g = this._edgePoint(e, t, r);
-		let b = g.x, x = g.z, S = v - (p ? d * h : 0), C = y - (p ? f * h : 0), w = b + (m ? d * h : 0), T = x + (m ? f * h : 0), E = t.dx === 0 ? S : v, D = t.dx === 0 ? C : y, O = t.dx === 0 ? w : b, k = t.dx === 0 ? T : x, A = Math.max(1, Math.round(Math.hypot(O - E, k - D) * I)), j = 1 - (Z.brim - pe * 16) / X, M = 1 - (Z.brim + $ * 16) / X, N = l.count;
+		let b = g.x, x = g.z, S = v - (p ? d * h : 0), C = y - (p ? f * h : 0), w = b + (m ? d * h : 0), T = x + (m ? f * h : 0), E = t.dx === 0 ? S : v, D = t.dx === 0 ? C : y, O = t.dx === 0 ? w : b, k = t.dx === 0 ? T : x, A = Math.max(1, Math.round(Math.hypot(O - E, k - D) * I)), ee = 1 - (Z.brim - me * 16) / X, j = 1 - (Z.brim + $ * 16) / X, M = l.count;
 		for (let n = 0; n <= A; n++) {
 			let r = n / A, a = _(E, O, r), o = _(D, k, r), c = a * d + o * f, p = this._tint(a, o);
 			for (let n = 0; n < 2; n++) {
-				let r = n ? $ : -pe, d = a + t.nx * r, f = o + t.nz * r;
-				this._topUV(e, d, f, s, u), l.v(d, i + 6e-4 * (t.idx + 1), f, 0, 1, 0, u.u, u.v, p[0], p[1], p[2], c / 4, n ? M : j);
+				let r = n ? $ : -me, d = a + t.nx * r, f = o + t.nz * r;
+				this._topUV(e, d, f, s, u), l.v(d, i + 6e-4 * (t.idx + 1), f, 0, 1, 0, u.u, u.v, p[0], p[1], p[2], c / 4, n ? j : ee);
 			}
 		}
 		for (let e = 0; e < A; e++) {
-			let t = N + e * 2;
+			let t = M + e * 2;
 			l.quadN(t, t + 1, t + 3, t + 2, 0, 1, 0);
 		}
-		let P = Math.min(fe, a * .72), F = t.nx * $, L = t.nz * $, R = S * t.rx + C * t.rz, z = w * t.rx + T * t.rz, B = (R <= z ? S : w) + F, V = (R <= z ? C : T) + L, ee = (R <= z ? w : S) + F, H = (R <= z ? T : C) + L, U = Math.max(1, Math.round(Math.hypot(ee - B, H - V) * I));
-		l = this._builder(`skirt:${o}`, e, !0), N = l.count;
-		for (let e = 0; e <= U; e++) {
-			let n = e / U, r = _(B, ee, n), a = _(V, H, n), o = (r * t.rx + a * t.rz) / s[0], c = (r - F) * d + (a - L) * f, u = this._tint(r, a);
+		let N = Math.min(pe, a * .72), P = t.nx * $, F = t.nz * $, L = S * t.rx + C * t.rz, R = w * t.rx + T * t.rz, z = (L <= R ? S : w) + P, te = (L <= R ? C : T) + F, B = (L <= R ? w : S) + P, ne = (L <= R ? T : C) + F, V = Math.max(1, Math.round(Math.hypot(B - z, ne - te) * I));
+		l = this._builder(`skirt:${o}`, e, !0), M = l.count;
+		for (let e = 0; e <= V; e++) {
+			let n = e / V, r = _(z, B, n), a = _(te, ne, n), o = (r * t.rx + a * t.rz) / s[0], c = (r - P) * d + (a - F) * f, u = this._tint(r, a);
 			for (let e = 0; e < 2; e++) {
-				let n = e ? i : i - P, d = 1 - (Z.skirt + (e ? 0 : P * 16)) / X, f = e ? 1 : .82;
+				let n = e ? i : i - N, d = 1 - (Z.skirt + (e ? 0 : N * 16)) / X, f = e ? 1 : .82;
 				l.v(r, n, a, t.nx, 0, t.nz, o, -n / s[1], u[0] * f, u[1] * f, u[2] * f, c / 4, d);
 			}
 		}
-		for (let e = 0; e < U; e++) {
-			let n = N + e * 2;
+		for (let e = 0; e < V; e++) {
+			let n = M + e * 2;
 			l.quadN(n, n + 2, n + 3, n + 1, t.nx, 0, t.nz);
 		}
 	}
 	_isGrassSource(e, t) {
 		if (!e || e.stairs || e.water || e.type.fringe === !1 || Math.abs(e.h - t.h) > z) return !1;
 		let n = e.type.top;
-		if (!K.has(n)) return !1;
+		if (!G.has(n)) return !1;
 		let r = t.type.top;
-		return ne.has(r) ? !0 : K.has(r) && (q[n] ?? 0) > (q[r] ?? 0);
+		return K.has(r) ? !0 : G.has(r) && (q[n] ?? 0) > (q[r] ?? 0);
 	}
 	_emitFringes() {
 		this.forEachTile((e, t, n) => this._emitFringesAt(e, t, n));
@@ -1274,20 +1329,20 @@ var Ee = class {
 	_emitFringesAt(e, t, n) {
 		let r = this._tmpUV;
 		{
-			if (n.stairs || n.water || n.type.fringe === !1 || !ne.has(n.type.top) && !K.has(n.type.top)) return;
+			if (n.stairs || n.water || n.type.fringe === !1 || !K.has(n.type.top) && !G.has(n.type.top)) return;
 			let i = [];
-			for (let r of W) {
-				let a = U[r], o = this.tileAt(e + a.dx, t + a.dz);
+			for (let r of U) {
+				let a = H[r], o = this.tileAt(e + a.dx, t + a.dz);
 				i.push(this._isGrassSource(o, n) ? o : null);
 			}
 			for (let a = 0; a < 4; a++) {
 				let o = i[a];
 				if (!o) continue;
-				let s = U[W[a]], c = o.type.top, l = this.textures.meta(c).units, u = this._builder(`fringe${o.type.uvVariation === !1 ? "X" : ""}:${c}`, n, !0), d = +(s.dx === 0), p = s.dx === 0 ? 0 : 1, m = f(e + s.idx * 7, t, this.seed + 404) < .5 ? Z.stripA : Z.stripB, h = n.h + be(c, s.idx), g = this._edgePoint(n, s, 0), _ = g.x, v = g.z, y = u.count;
+				let s = H[U[a]], c = o.type.top, l = this.textures.meta(c).units, u = this._builder(`fringe${o.type.uvVariation === !1 ? "X" : ""}:${c}`, n, !0), d = +(s.dx === 0), p = s.dx === 0 ? 0 : 1, m = f(e + s.idx * 7, t, this.seed + 404) < .5 ? Z.stripA : Z.stripB, h = n.h + xe(c, s.idx), g = this._edgePoint(n, s, 0), _ = g.x, v = g.z, y = u.count;
 				for (let e = 0; e <= I; e++) {
 					let t = e / I;
 					for (let e = 0; e < 2; e++) {
-						let i = e ? Q : -pe, a = _ + d * t - s.nx * i, c = v + p * t - s.nz * i;
+						let i = e ? Q : -me, a = _ + d * t - s.nx * i, c = v + p * t - s.nz * i;
 						this._topUV(o, a, c, l, r);
 						let f = a * d + c * p, g = this._aoTop(a, c, n.h), y = this._tint(a, c), b = 1 - (m + i * 16) / X;
 						u.v(a, h, c, 0, 1, 0, r.u, r.v, y[0] * g ** 1.08, y[1] * g, y[2] * g ** .9, f / 4, b);
@@ -1329,7 +1384,7 @@ var Ee = class {
 				if (i[l] || i[u]) continue;
 				let d = this.tileAt(e + s, t + c);
 				if (!this._isGrassSource(d, n)) continue;
-				let p = d.type.top, m = this.textures.meta(p).units, h = this._builder(`fringe${d.type.uvVariation === !1 ? "X" : ""}:${p}`, n, !0), g = e + +(s > 0), _ = t + +(c > 0), v = Math.floor(f(e, t, this.seed + 505 + o) * de) * ue + 1, y = n.h + be(p, 4), b = h.count;
+				let p = d.type.top, m = this.textures.meta(p).units, h = this._builder(`fringe${d.type.uvVariation === !1 ? "X" : ""}:${p}`, n, !0), g = e + +(s > 0), _ = t + +(c > 0), v = Math.floor(f(e, t, this.seed + 505 + o) * fe) * de + 1, y = n.h + xe(p, 4), b = h.count;
 				for (let e = 0; e < 2; e++) for (let t = 0; t < 2; t++) {
 					let i = t * Q, a = e * Q, o = g - s * i, l = _ - c * a;
 					this._topUV(d, o, l, m, r);
@@ -1359,8 +1414,8 @@ var Ee = class {
 		this._materials.clear(), this._maskTexture?.dispose(), this._maskTexture = null, this.object.removeFromParent(), this.object.clear();
 	}
 };
-function De(e, t, n, r, i, a, o, s, c, l) {
+function Oe(e, t, n, r, i, a, o, s, c, l) {
 	return e.v(t, n, r, i, a, o, s, c, l ** 1.06, l, l ** .92);
 }
 //#endregion
-export { O as a, k as c, x as d, C as f, M as i, j as l, re as n, T as o, A as r, E as s, Ee as t, w as u };
+export { k as a, A as c, x as d, w as f, M as i, j as l, ie as n, E as o, C as p, ee as r, D as s, De as t, T as u };

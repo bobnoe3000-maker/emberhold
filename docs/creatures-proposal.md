@@ -17,17 +17,18 @@ fire beetle, the goblin, the graveyard wraith (1.5×), the stone golem (2×), th
 
 *In the game (`stage.mjs --show cast`): the knight for scale, the vermin, the four new foes and the two bosses.*
 
-- **Built in code** (`tools/actor-lab/creatures.js`), in the kit's style (faceted, vertex-coloured, flat-shaded, the
-  KayKit cast's proportions and light), four new body plans and two bosses:
+- **Built in code** (`tools/actor-lab/creatures.js`), in the kit's style (vertex-coloured, shaded smooth with creased
+  edges at the KayKit cast's density since round S1 below, the cast's proportions and light), four new body plans and
+  two bosses:
 
   | | Body plan | Triangles · bones | Its look |
   |---|---|---|---|
-  | Red fire beetle | the hexapod (tripod gait) | 2,428 · 28 | a lacquered crimson dome going black at the tips, fire-glands over the eyes and at the tail; the cases fly wide on a glowing belly to spit; dies flipped, legs kicking |
-  | Goblin | the small biped | 2,184 · 18 | a quarter of its height head, ears past its shoulders, a hooked nose, a pauldron, a rusted cleaver (extruded: a blade, not a block) |
-  | Graveyard wraith | the floating shroud | 2,080 · 27 | 1.5 men; a deep cowl with two cold lights, a body that narrows and trails off behind like smoke in four bones, rags and loose motes, a soul burning behind its ribs, a manacle and chain; dies into a heap of rags |
-  | Stone golem | the heavy biped | 7,692 · 16 | 2 men; chiselled blocks of blue-grey stone, a carved chest disc, a horned block head, manacles and trailing chains, lichen veins and tufts (after the owner's reference, below); falls apart when it dies |
-  | The Rat King | the rat, crowned | 4,404 · 22 | a crown of bent nails, a ruff, a purple cape over the back, long incisors, and the knot: six rats grown together by their tails, riding the tail's last bones |
-  | The Spider Queen | the spider, a brood-mother | 2,552 · 31 | an egg-sac abdomen ringed in bone with a bone hourglass, green eggs glowing under its skin, a crown of spines, long raised forelegs, sickle fangs |
+  | Red fire beetle | the hexapod (tripod gait) | 5,880 · 28 | a lacquered crimson dome going black at the tips, fire-glands over the eyes and at the tail; the cases fly wide on a glowing belly to spit; dies flipped, legs kicking |
+  | Goblin | the small biped | 10,884 · 18 | after the owner's reference (below): a big bald head a third of its height, bat ears ringed in brass, a scowl, red eyes sunk deep, a wide grin of teeth; a red scarf on a leather mantle, a belt of pouches, a red loincloth, leather wraps; big clawed hands, no weapon |
+  | Graveyard wraith | the floating shroud | 7,800 · 33 | 1.5 men; after the owner's reference (below): a skull under a hood crowned with three horns, arms flung wide in bell sleeves, clawed hands, a shroud twisting down to a point and six tendrils curling up off it like flames; dies into a heap of rags |
+  | Stone golem | the heavy biped | 10,672 · 16 | 2 men; chiselled blocks of blue-grey stone, a carved chest disc, a horned block head, manacles and trailing chains, lichen veins and tufts (after the owner's reference, below); falls apart when it dies |
+  | The Rat King | the rat, crowned | 13,114 · 22 | a crown of bent nails, a ruff, a purple cape over the back, long incisors, and the knot: six rats grown together by their tails, riding the tail's last bones |
+  | The Spider Queen | the spider, a brood-mother | 6,716 · 31 | an egg-sac abdomen ringed in bone with a bone hourglass, green eggs glowing under its skin, a crown of spines, long raised forelegs, sickle fangs |
 
 - **The kit grew for them:** scale tracks (the wraith fading, the heap); `hull()`, one lathed body skinned across
   bones with blended weights (the rat's body, critic round 4); `rock()` (hashed icosahedra: the golem); glow strength a
@@ -104,8 +105,62 @@ stacked block legs; yellow-green lichen in veins down the stone and in fuzzy tuf
 | G2 | Lichen painted every top face yellow; tufts thin sticks; veins lost; the stone beige under the torches; the head too high | Lichen only in patches on the tops, in thick zigzag veins and in tufts; tufts fuzzy balls (a core and a burst of short blades); the stone blue-grey; the head lower between the shoulders; cheaper chain links |
 | G3 (in the game) | The tufts little stars at the game's size; the stone near-white under the game's figure light | Tufts nearly twice the size and more of them (the shoulders, the chest, the forearms, the fists, the knees); the stone a quarter darker than the reference's, so it lands on its pale blue-grey in the game |
 
-7,692 triangles in two draws (the chains are a third of it): the heaviest of the bestiary, for a figure twice a man's
-height that comes one at a time.
+7,692 triangles in two draws when it was built (the chains a third of it; 10,672 since round S1 below): for a figure
+twice a man's height that comes one at a time.
+
+### Smooth, at the cast's density, and the goblin after the owner's reference
+
+The owner, with a picture of a goblin miniature (not kept here): *"Here is a reference image for the goblin model. Make
+sure your poly counts are high enough for all these new creatures to match the similar detail and smoothness like the
+kaykit models. Keep going on critic passes on all of these as if you were a 3d character designer and professional
+artist."*
+
+**The kit (round S1).** The KayKit adventurers are about 6,400–7,000 triangles each, shaded smooth; ours were 1,900–3,200
+(the golem 7,700), every facet flat and given its own random shade, which read as a crumpled paper model beside them.
+Now:
+
+- **Creased normals** per part (`toCreasedNormals`): smooth across faces that meet under 50°, hard past it (a blade's
+  rim, a cylinder's cap). The golem's rig creases at 28°, so its chiselled blocks keep their cut edges.
+- **No per-facet shade.** A gentle mottle by position instead (±10 %, a vertex's shade the same on every face that
+  shares it), and the material shaded smooth (`flatShading` off).
+- **Denser:** every sphere and limb a part names drawn at 1.6× its segments, floored at what reads round shaded smooth;
+  the rat's hull lathe 16 → 28.
+- **`tube()`:** one swept tapering tube through points, skinned along its bones and blended across the joints. The
+  wraith's tendrils use it: a string of capped limbs read as stacked logs once it was shaded smooth.
+
+![Flat-shaded before, smooth after: the rat, the beetle, the wraith, the golem (creased), the spider, the Queen, the King](img/creatures/smooth-before-after.jpg)
+
+| Creature | Triangles before → after |
+|---|---|
+| Giant rat, Old Gutter | 3,180 → 6,758 |
+| Giant spider, spinner | 1,876 → 4,982 |
+| Red fire beetle | 2,428 → 5,880 |
+| Goblin (rebuilt) | 2,184 → 10,884 |
+| Graveyard wraith | 2,624 → 7,800 |
+| Stone golem | 7,692 → 10,672 |
+| The Rat King | 6,024 → 13,114 |
+| The Spider Queen | 2,552 → 6,716 |
+
+Still two draws each. A room of six goblins is about 65,000 skinned triangles, which a phone holds; the heaviest two
+come alone.
+
+**The goblin's reference:** two-thirds of a man, hunched; a big bald head, a third of its height; huge bat ears out wide
+and up, frayed, brass rings through them; a heavy brow over deep-set red eyes, a big nose, a wide grin of sharp teeth;
+skinny with a little pot belly, long arms, big long-fingered hands, big bare feet; a ragged red scarf over a dark leather
+mantle (a V down the back), a belt of round pouches and a buckle, a ragged red loincloth, leather wound round the wrists
+and shins; bright green. No weapon: it fights with its claws, so Attack is a raking swipe, Attack2 a jab, Heavy a leap
+with both claws, and Cast a cackle with both claws up.
+
+![The goblin's rounds on the model sheet: the cleaver goblin before, G1, G2, and the last from the front, casting and from the side](img/creatures/goblin-reference-rounds.jpg)
+
+![All ten in the game after the rounds (the Stage, idle, at the game's scale)](img/creatures/smooth-in-game.jpg)
+
+| Round | Seen | Done |
+|---|---|---|
+| G1 (sheet) | Rebuilt to the reference. The fingers long straight rakes; the brow one band round the skull (a cap's visor); 21,000 triangles | Fingers shorter and thicker, curled down at the tips like claws, a thumb; the brow two ridges low at the nose (a scowl); small parts at small segment counts (→ 11,000) |
+| S2 (in the game) | The goblin lime and its head small from the camera. The beetle an orange blob. The golem pale with neon veins. The Queen's hourglass a white blotch. The Rat King's cape a purple shell. The rats' crest quills | The goblin's green darker, its head a tenth bigger. The beetle a deeper crimson. The golem's stone and lichen darker. The hourglass narrower. The cape flatter and darker. The rats' fur blades pressed flat to the body and laid lower |
+| S3 (in the game) | The goblin's ears small beside the reference's | A quarter bigger, the rings with them |
+| S4 (sheet) | Shaded smooth, the wraith's tendrils stacked logs and its bell sleeves capped pipes. The rat's face a teddy bear's | The tendrils one swept tube each (`tube()`); the sleeves' mouths dark inside; the rat's brow two ridges, a scowl |
 
 ### In the sim, unplaced
 

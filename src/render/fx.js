@@ -66,7 +66,7 @@ export const FX_STYLES = {
   vermin_gutter:     { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.15 },
   vermin_spider:     { col: [205, 225, 150], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [225, 240, 180], wide: 1.2 },
   vermin_spinner:    { col: [232, 230, 214], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [240, 238, 225] },
-  // (v1.59) the bestiary: the beetle's spat fire and its mandibles, the goblin's cleaver, the wraith's cold claws, the
+  // (v1.59) the bestiary: the beetle's spat fire and its mandibles, the goblin's raking claws, the wraith's cold claws, the
   // golem's stone fists (grit, and its core's fire in a heavy blow), the Rat King's teeth, the Spider Queen's fangs
   creature_firebeetle: { col: [255, 150, 70], attack: 'cast', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 170, 90], heavySpark: [255, 110, 30], burn: true },
   creature_goblin:   { col: [235, 215, 180], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [245, 225, 195], thin: true },

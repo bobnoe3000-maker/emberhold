@@ -1,5 +1,5 @@
 import { J as e, M as t, R as n, St as r, Un as i, X as a, Yn as o, Yt as s, bt as c, ir as l, l as u, mr as d, pr as f, wt as p, yt as m } from "./three.core-CDiAvzro.js";
-import { G as h } from "./SmallProps-CaKHfoZ6.js";
+import { G as h } from "./SmallProps-Bhy5ZjLW.js";
 import { c as g, r as _ } from "./math-Du_SWpiD.js";
 import { r as v } from "./ThawField-BqwvXI8W.js";
 import { r as y, t as b } from "./PixelCanvas-BggARGih.js";

@@ -9,6 +9,7 @@
 // +Z, as the KayKit models do. Deterministic: a seed for the fur's facets, nothing drawn at random.
 // Clips (the cast maps the game's clips onto them): Idle, Walk, Attack, Attack2, Heavy, Hit, Death, Cast.
 import * as THREE from 'three';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const rng = (seed) => { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -16,7 +17,7 @@ const UP = V(0, 1, 0);
 
 // ── a rig: bones placed at their bind positions (world, no rotation), parts rigid on them ──────────────────────────────
 class Rig {
-  constructor(seed) { this.bones = []; this.by = new Map(); this.parts = []; this.r = rng(seed); }
+  constructor(seed) { this.bones = []; this.by = new Map(); this.parts = []; this.r = rng(seed); this.crease = CREASE; this.mottle = 0.1; }
   bone(name, parent, p) {
     const b = new THREE.Bone(); b.name = name; b.userData.at = p.clone();
     b.position.copy(parent ? p.clone().sub(parent.userData.at) : p);
@@ -24,7 +25,9 @@ class Rig {
     this.bones.push(b); this.by.set(name, b); return b;
   }
   /** a geometry in bind (world) space on a bone; colour a THREE.Color or (p, n) => THREE.Color; glow: the eyes' mesh */
-  part(geo, bone, colour, glow = false) { this.parts.push({ geo: geo.index ? geo.toNonIndexed() : geo, bone: typeof bone === 'function' ? bone : this.bones.indexOf(this.by.get(bone)), colour, glow }); }
+  /** crease: the angle (radians) past which two faces meet in a hard edge; under it the surface is shaded smooth (the
+   *  rig's own by default: a chiselled golem's lower) */
+  part(geo, bone, colour, glow = false, crease = this.crease) { this.parts.push({ geo: geo.index ? geo.toNonIndexed() : geo, bone: typeof bone === 'function' ? bone : this.bones.indexOf(this.by.get(bone)), colour, glow, crease }); }
   /** a weight function for a part bent across bones: (p) → [[bone, w], [bone, w]] by where the vertex is */
   skin(fn) { return (p) => fn(p).map(([b, w]) => [this.bones.indexOf(this.by.get(b)), w]); }
   mesh(glowColour, glowK = 1.6) {
@@ -32,31 +35,33 @@ class Rig {
       let n = 0; for (const q of parts) n += q.geo.attributes.position.count;
       const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
       let o = 0; const p = new THREE.Vector3(), nm = new THREE.Vector3(), c = new THREE.Color();
+      const nrm = new Float32Array(n * 3);
       for (const q of parts) {
-        q.geo.computeVertexNormals();
-        const P = q.geo.attributes.position, N = q.geo.attributes.normal;
-        for (let i = 0; i < P.count; i += 3) {
-          const k = 0.86 + this.r() * 0.26;                     // (each facet its own shade: a hide, not a plastic)
-          for (let v = i; v < i + 3 && v < P.count; v++) {
-            p.fromBufferAttribute(P, v); nm.fromBufferAttribute(N, v);
-            if (typeof q.colour === 'function') c.copy(q.colour(p, nm)); else c.copy(q.colour);
-            if (!q.glow) c.multiplyScalar(k);
-            pos.set([p.x, p.y, p.z], o * 3); col.set([c.r, c.g, c.b], o * 3);
-            if (typeof q.bone === 'function') { const w = q.bone(p), a = w[0], b = w[1] || [0, 0]; si.set([a[0], b[0], 0, 0], o * 4); sw.set([a[1], b[1], 0, 0], o * 4); }
-            else { si.set([q.bone, 0, 0, 0], o * 4); sw.set([1, 0, 0, 0], o * 4); }
-            o++;
-          }
+        // (smooth, as KayKit's are: each part's normals averaged across the faces that meet at a gentle angle and kept hard
+        // where they meet past its crease, a block's cut edge, a blade's rim; round S1, the owner's 2026-11-10 "the same
+        // detail and smoothness as the KayKit models": the facets each shaded flat with their own shade read as a crumpled
+        // paper model beside the cast)
+        const geo = toCreasedNormals(q.geo, q.crease), P = geo.attributes.position, N = geo.attributes.normal;
+        for (let v = 0; v < P.count; v++) {
+          p.fromBufferAttribute(P, v); nm.fromBufferAttribute(N, v);
+          if (typeof q.colour === 'function') c.copy(q.colour(p, nm)); else c.copy(q.colour);
+          // (a hand-painted mottle, smooth over the surface: a vertex's shade by where it is, so the faces that share it agree)
+          if (!q.glow && this.mottle) c.multiplyScalar(1 - this.mottle + 2 * this.mottle * hash3(Math.round(p.x * 60), Math.round(p.y * 60), Math.round(p.z * 60), 3));
+          pos.set([p.x, p.y, p.z], o * 3); col.set([c.r, c.g, c.b], o * 3); nrm.set([nm.x, nm.y, nm.z], o * 3);
+          if (typeof q.bone === 'function') { const w = q.bone(p), a = w[0], b = w[1] || [0, 0]; si.set([a[0], b[0], 0, 0], o * 4); sw.set([a[1], b[1], 0, 0], o * 4); }
+          else { si.set([q.bone, 0, 0, 0], o * 4); sw.set([1, 0, 0, 0], o * 4); }
+          o++;
         }
       }
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
       g.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
-      g.computeVertexNormals();
+      g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
       return new THREE.SkinnedMesh(g, mat);
     };
     const root = new THREE.Group(), skeleton = new THREE.Skeleton(this.bones);
     root.add(this.bones[0]); root.updateMatrixWorld(true);
-    const body = make(this.parts.filter((q) => !q.glow), new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95, metalness: 0 }));
+    const body = make(this.parts.filter((q) => !q.glow), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
     body.name = 'Body'; root.add(body); body.bind(skeleton);
     const eyes = this.parts.filter((q) => q.glow);
     if (eyes.length) {
@@ -69,12 +74,34 @@ class Rig {
 }
 
 // ── shapes, in bind space ────────────────────────────────────────────────────────────────────────────────────────────
-function blob(c, r, seg = [8, 6], tilt = 0) {
+// (segments: round S1 raised them all to the KayKit cast's density, a sphere 16 × 12 and a limb 10 round, and every
+// count a part names is scaled by SEG and floored at what reads round shaded smooth)
+const SEG = 1.6, CREASE = (50 * Math.PI) / 180;
+const segs = (n, lo) => Math.max(lo, Math.round(n * SEG));
+function blob(c, r, seg = [10, 8], tilt = 0) {
+  seg = [segs(seg[0], 8), segs(seg[1], 6)];
   const g = new THREE.SphereGeometry(1, seg[0], seg[1]); g.scale(r[0], r[1], r[2]); if (tilt) g.rotateX(tilt); g.translate(c.x, c.y, c.z); return g;
 }
-function limb(a, b, r0, r1, radial = 5) {                       // a tapered segment from a to b
+function limb(a, b, r0, r1, radial = 6) {                       // a tapered segment from a to b
+  radial = segs(radial, 5);
   const d = b.clone().sub(a), len = d.length(), g = new THREE.CylinderGeometry(r1, r0, len, radial, 1);
   g.translate(0, len / 2, 0); g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(UP, d.normalize())); g.translate(a.x, a.y, a.z); return g;
+}
+
+// a swept tube: one smooth tapering body through the points (a tendril, a tail), its radius eased between theirs; no caps
+// between segments to show as rings (round S4: a string of capped limbs read as logs once shaded smooth). Returns the
+// geometry and a skin: each vertex on the bones of the stretch it lies along, blended across the joints.
+function tube(pts, rad, bones, radial = 8, steps = 24) {
+  const curve = new THREE.CatmullRomCurve3(pts), g = new THREE.TubeGeometry(curve, steps, 1, segs(radial, 6), false), P = g.attributes.position, c = V(0, 0, 0), v = V(0, 0, 0);
+  const rOf = (u) => { const x = u * (rad.length - 1), i = Math.min(rad.length - 2, Math.floor(x)), f = x - i; return rad[i] + (rad[i + 1] - rad[i]) * f; };
+  const R1 = segs(radial, 6) + 1, at = [];
+  for (let i = 0; i <= steps; i++) { const u = i / steps; curve.getPointAt(u, c); at.push([c.clone(), u]); for (let j = 0; j < R1; j++) { const k = i * R1 + j; v.fromBufferAttribute(P, k).sub(c).multiplyScalar(rOf(u)).add(c); P.setXYZ(k, v.x, v.y, v.z); } }
+  const skin = (p) => {   // (the nearest point of the spine: how far along it the vertex is)
+    let best = 0, bd = Infinity; for (const [q, u] of at) { const d = q.distanceToSquared(p); if (d < bd) { bd = d; best = u; } }
+    const x = best * bones.length - 0.5, i = Math.max(0, Math.min(bones.length - 1, Math.floor(x))), j = Math.min(bones.length - 1, i + 1), f = Math.max(0, Math.min(1, x - i));
+    return i === j ? [[bones[i], 1]] : [[bones[i], 1 - f], [bones[j], f]];
+  };
+  return { g, skin };
 }
 
 // ── clips keyed in code: fn(t 0..1) → { bone: Quaternion } and { bone: Vector3 (a position offset) } ───────────────────
@@ -134,16 +161,19 @@ function rat(o = {}) {
   const along = (z, pts) => { for (let i = 0; i < pts.length - 1; i++) { const [z0, a] = pts[i], [z1, b] = pts[i + 1]; if (z <= z1) { const k = Math.max(0, Math.min(1, (z - z0) / (z1 - z0))); return k < 0.5 ? [[a, 1 - k], [b, k]] : [[b, k], [a, 1 - k]]; } } return [[pts[pts.length - 1][1], 1]]; };
   const bodyW = R.skin((p) => along(p.z, [[-0.2, 'pelvis'], [-0.06, 'pelvis'], [0.05, 'root'], [0.12, 'root'], [0.2, 'chest'], [0.24, 'chest'], [0.3, 'neck']]));
   const rOf = (z) => { for (let i = 0; i < prof.length - 1; i++) if (z <= prof[i + 1][0]) { const [z0, r0] = prof[i], [z1, r1] = prof[i + 1]; return r0 + (r1 - r0) * (z - z0) / Math.max(1e-6, z1 - z0); } return 0; };
-  R.part(hull(prof, 16, cy, 0.92), bodyW, furC);
+  R.part(hull(prof, 28, cy, 0.92), bodyW, furC);
   // the coat: a few big ragged clumps where the reference's shag is heaviest, the hull smooth between them (the kit's
   // chunky style: critic round R2, a coat of shingles read as a pine cone): a crest bristling along the spine, a ruff over
   // the shoulders and neck, clumps on the haunches and flanks, each a broad blade of fur lighter at its tip
   const clump = (z, a, len, w, lift = 0.35, back = 0.9) => {
     const r = rOf(z) * 0.9, at = V(Math.sin(a) * r, cy(z) + Math.cos(a) * r * 0.92, z), out = V(Math.sin(a), Math.cos(a) * 0.92, 0).normalize();
     const dir = out.clone().multiplyScalar(lift).add(V(0, -0.1, -back)).normalize(), tip = at.clone().add(dir.clone().multiplyScalar(len));
-    R.part(limb(at.clone().add(out.clone().multiplyScalar(-0.01)), tip, w, 0.003, 4), bodyW, (p, n) => (p.distanceTo(at) > len * 0.55 ? furTop : mixC(fur, furTop, 0.15)));
+    // (a blade of fur, not a quill: the cone pressed flat against the body, round S2)
+    const g = limb(at.clone().add(out.clone().multiplyScalar(-0.01)), tip, w, 0.003, 4), P = g.attributes.position, ax = out.clone().sub(dir.clone().multiplyScalar(out.dot(dir))).normalize(), v = V(0, 0, 0);
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const d = v.clone().sub(at).dot(ax); v.addScaledVector(ax, -0.55 * d); P.setXYZ(i, v.x, v.y, v.z); }
+    R.part(g, bodyW, (p, n) => (p.distanceTo(at) > len * 0.55 ? furTop : mixC(fur, furTop, 0.15)));
   };
-  for (let i = 0; i < 9; i++) { const z = -0.24 + i * 0.05, h = hash3(i, 7, 1, 5); clump(z, (i % 2 ? 0.12 : -0.12) + (h - 0.5) * 0.15, (0.055 + 0.03 * h) * (z > 0.05 ? 0.6 : 1), 0.03, z > 0.05 ? 0.2 : 0.4); }   // the crest (low at the front: the head shows over it)
+  for (let i = 0; i < 9; i++) { const z = -0.24 + i * 0.05, h = hash3(i, 7, 1, 5); clump(z, (i % 2 ? 0.12 : -0.12) + (h - 0.5) * 0.15, (0.048 + 0.025 * h) * (z > 0.05 ? 0.6 : 1), 0.036, z > 0.05 ? 0.12 : 0.22); }   // (round S2: shaded smooth, the crest read as quills from the camera: laid flatter)   // the crest (low at the front: the head shows over it)
   for (const s of [1, -1]) {
     for (let i = 0; i < 4; i++) { const h = hash3(i, s, 2, 6); clump(0.1 + i * 0.03, s * (0.8 + 0.3 * i), 0.055 + 0.02 * h, 0.03, 0.25, 0.85); }   // the ruff, at the shoulders' sides (low: the head over it)
     for (let i = 0; i < 4; i++) { const h = hash3(i, s, 4, 7); clump(-0.22 + i * 0.09, s * (0.95 + 0.25 * (i % 2)), 0.06 + 0.03 * h, 0.03, 0.3, 0.9); }   // the flanks
@@ -153,7 +183,7 @@ function rat(o = {}) {
   // the head: big, the brow heavy, the eyes small coals under it, the snout blunt, the mouth open on its teeth
   R.part(blob(V(0, 0.262, 0.31), [0.1, 0.09, 0.1], [12, 9]), 'head', furC);
   for (const s of [1, -1]) for (const [y, z] of [[0.245, 0.31], [0.28, 0.29], [0.215, 0.33]]) R.part(limb(V(0.075 * s, y, z), V(0.125 * s, y - 0.015, z - 0.055), 0.024, 0.002, 3), 'head', furTop);   // cheek tufts
-  R.part(blob(V(0, 0.302, 0.36), [0.078, 0.022, 0.04], [8, 4]), 'head', fur);              // the brow
+  for (const s of [1, -1]) R.part(blob(V(0, 0, 0), [0.04, 0.016, 0.03], [8, 5]).rotateZ(-0.42 * s).translate(0.036 * s, 0.3, 0.362), 'head', fur);   // the brow: two ridges low at the snout, a scowl (round S4: one band read as a teddy bear's)
   R.part(limb(V(0, 0.258, 0.36), V(0, 0.24, 0.47), 0.06, 0.03, 8), 'head', furC);         // the snout, blunt
   R.part(blob(V(0, 0.246, 0.472), [0.02, 0.016, 0.013], [6, 4]), 'head', skin);           // the nose
   R.part(blob(V(0, 0.21, 0.4), [0.04, 0.024, 0.06], [8, 6]), 'head', maw);             // the open mouth
@@ -226,7 +256,7 @@ function rat(o = {}) {
 // its yellow incisors long, and behind it the knot: rats grown together by their tails, dragged where it goes, their eyes
 // lit. The knot rides the tail's last bones, so it swings and bumps as the tail does.
 function king(R, tail) {
-  const rust = new THREE.Color('#8a5a24'), brass = new THREE.Color('#9a7a34'), cloak = new THREE.Color('#361830'), cloakHi = new THREE.Color('#4e2646');   /* (darker: in the game's light it glowed magenta) */
+  const rust = new THREE.Color('#8a5a24'), brass = new THREE.Color('#9a7a34'), cloak = new THREE.Color('#2a1226'), cloakHi = new THREE.Color('#3c1c36');   /* (darker: in the game's light it glowed magenta) */
   const tooth = new THREE.Color('#d8c27a'), scar = new THREE.Color('#b07a72'), tailC = new THREE.Color('#8a6460'), fur = new THREE.Color('#3a342e'), furHi = new THREE.Color('#5a534a');
   // the crown: a ring and seven bent nails standing out of it
   R.part(new THREE.TorusGeometry(0.047, 0.009, 4, 12).rotateX(Math.PI / 2 - 0.25).translate(0, 0.315, 0.3), 'head', brass);
@@ -243,7 +273,7 @@ function king(R, tail) {
   for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, d = V(Math.sin(a), Math.cos(a) * 0.8, 0), b = V(0, 0.26, 0.25).add(d.clone().multiplyScalar(0.075)); R.part(limb(b, b.clone().add(d.clone().multiplyScalar(0.05)).add(V(0, 0, -0.04)), 0.02, 0.003, 3), 'neck', i % 3 ? fur : furHi); }
   // the cape: a rag of purple over the shoulders, hanging down both flanks and over the haunches in tatters, a clasp at the throat
   const capeC = (p, n) => (n.y > 0.5 ? cloakHi : cloak);
-  R.part(blob(V(0, 0.29, 0.02), [0.172, 0.1, 0.22], [12, 8]), 'root', capeC);   // (wider than the back: it hangs down the flanks)
+  R.part(blob(V(0, 0.275, 0.02), [0.172, 0.075, 0.22], [12, 8]), 'root', capeC);   // (round S2: a rounder one read as a shell)   // (wider than the back: it hangs down the flanks)
   for (let i = 0; i < 10; i++) { const a = (i / 9) * Math.PI - Math.PI / 2, z = 0.02 + 0.21 * Math.sin(a); for (const s of [1, -1]) { const top = V(0.165 * s * Math.cos(a * 0.85), 0.22, z); R.part(limb(top, top.clone().add(V(0.012 * s, -0.04 - 0.02 * (i % 2), -0.01)), 0.022, 0.003, 3), 'root', cloak); } }
   R.part(blob(V(0, 0.255, 0.33), [0.016, 0.016, 0.01], [6, 4]), 'neck', brass);
   // the knot: the tails tangled (a torus knot) and six rats round it, heads out, on the tail's last two bones
@@ -270,7 +300,7 @@ function king(R, tail) {
 // and glowing with the eggs packed under its skin; a crown of bone spines; forelegs long and raised; fangs like sickles.
 function queen(R, { dark, band, mark }) {
   const bone = new THREE.Color('#d6ccb2'), egg = new THREE.Color('#9ccc5a');
-  const sac = (p, n) => { const zc = (p.z + 0.4) / 0.3, ring = Math.sin((p.z + 0.4) * 30) > 0.72; return n.y > 0.5 && Math.abs(zc) < 0.95 && Math.abs(p.x) < 0.025 + 0.085 * Math.abs(zc) ? mark : ring ? band : dark; };   // (an hourglass, in bone)
+  const sac = (p, n) => { const zc = (p.z + 0.4) / 0.3, ring = Math.sin((p.z + 0.4) * 30) > 0.72; return n.y > 0.62 && Math.abs(zc) < 0.9 && Math.abs(p.x) < 0.014 + 0.05 * Math.abs(zc) ? mark : ring ? band : dark; };   // (an hourglass, in bone)
   R.part(blob(V(0, 0.4, -0.4), [0.25, 0.22, 0.38], [14, 10], -0.3), 'abdomen', sac);
   R.part(limb(V(0, 0.3, -0.74), V(0, 0.25, -0.8), 0.04, 0.014), 'abdomen', band);
   // the eggs, glowing under the skin of its flanks and back: a cluster each side and a line along the top
@@ -350,7 +380,7 @@ function spider(o = {}) {
 // the wing-cases its belly smoulders: they lift for its charge and fly wide when it spits.
 function beetle(o = {}) {
   const R = new Rig(o.seed || 31);
-  const shell = new THREE.Color(o.shell || '#84200f'), shellHi = new THREE.Color(o.shellHi || '#c4462a'), shellLo = new THREE.Color('#3a0b07'), tipC = new THREE.Color('#160a08');
+  const shell = new THREE.Color(o.shell || '#5e0e10'), shellHi = new THREE.Color(o.shellHi || '#8c1e1c')   /* (round S2: shaded smooth, the brighter read as an orange blob in the game) */, shellLo = new THREE.Color('#3a0b07'), tipC = new THREE.Color('#160a08');
   const chit = new THREE.Color(o.body || '#2a1510'), chitHi = new THREE.Color('#5a2a1c'), leg = new THREE.Color('#1b110d'), legHi = new THREE.Color('#4e2c1e'), ember = new THREE.Color('#ffb050');
   const shellC = (p, n) => (p.z < -0.27 ? tipC : n.y > 0.8 ? shellHi : n.y > 0.45 ? shell : n.y < 0.05 ? shellLo : mixC(shellLo, shell, n.y * 2.2));
   const chitC = (p, n) => (n.y > 0.7 ? chitHi : chit);
@@ -421,87 +451,135 @@ function beetle(o = {}) {
 }
 
 // ── the goblin (the small biped) ───────────────────────────────────────────────────────────────────────────────────────
-// A goblin built for the part (the KayKit goblins are men in green): two-thirds of a man and hunched, a head a quarter
-// of its height with ears out past its shoulders and a long hooked nose, a wide mouth of teeth, eyes like lamp-flames,
-// arms to its knees, big flat feet; a leather pauldron and rags; a rusted cleaver in its right fist.
+// After the owner's reference (2026-11-10): two-thirds of a man and hunched, a big bald head a third of its height, bat
+// ears out wide and up, ragged at their edges and ringed in brass; a heavy brow over small red eyes sunk deep, a big
+// nose, a wide grin of sharp teeth; skinny, a little pot belly, long arms to big long-fingered hands, big bare feet. A
+// ragged red scarf over its shoulders on a leather mantle, a belt of round pouches and a buckle, a red rag of a
+// loincloth, leather wound round its wrists and shins. No weapon: it fights with its claws.
 function goblin(o = {}) {
   const R = new Rig(o.seed || 41);
-  const skin = new THREE.Color(o.skin || '#4f5b36'), skinHi = new THREE.Color(o.skinHi || '#6f7b4c'), skinLo = new THREE.Color('#2f3722');   // (olive gone grey: the dusk's, not a lime)
-  const skinC = (p, n) => (n.y > 0.65 ? skinHi : n.y < -0.45 ? skinLo : skin);
-  const leather = new THREE.Color(o.leather || '#4c3222'), leatherHi = new THREE.Color('#70503a'), rag = new THREE.Color(o.rag || '#5a4634'), inner = new THREE.Color('#8e5a4c');
-  const tooth = new THREE.Color('#d8cc98'), mouth = new THREE.Color('#1a0c0a'), iron = new THREE.Color('#5a524a'), rust = new THREE.Color('#7a4426'), edge = new THREE.Color('#b8ad98'), brass = new THREE.Color('#a08038');
-  R.bone('root', null, V(0, 0.3, 0)); R.bone('spine', R.by.get('root'), V(0, 0.38, 0.02)); R.bone('chest', R.by.get('spine'), V(0, 0.46, 0.06));
-  R.bone('neck', R.by.get('chest'), V(0, 0.52, 0.1)); R.bone('head', R.by.get('neck'), V(0, 0.58, 0.13)); R.bone('jaw', R.by.get('head'), V(0, 0.56, 0.17));
+  // (green, darker than the reference's: the game's figure light lifts it, and a bright green read lime: round W4's lesson)
+  const skin = new THREE.Color(o.skin || '#3a5022'), skinHi = new THREE.Color(o.skinHi || '#56702e'), skinLo = new THREE.Color('#203012');   // (round S2: '#47622a' read lime in the game)
+  const skinC = (p, n) => (n.y > 0.55 ? mixC(skin, skinHi, (n.y - 0.55) * 2.2) : n.y < -0.4 ? skinLo : skin);
+  const red = new THREE.Color(o.rag || '#7e1c14'), redHi = new THREE.Color('#a8321e'), redLo = new THREE.Color('#4a100c');
+  const redC = (p, n) => (n.y > 0.6 ? redHi : n.y < -0.3 ? redLo : red);
+  const leather = new THREE.Color(o.leather || '#3a2618'), leatherHi = new THREE.Color('#5c3e26'), leatherC = (p, n) => (n.y > 0.5 ? leatherHi : leather);
+  const wrap = new THREE.Color('#6a4a30'), wrapLo = new THREE.Color('#4a3220');
+  const tooth = new THREE.Color('#e2d6a8'), nail = new THREE.Color('#cfc29a'), mouth = new THREE.Color('#1c0806'), socket = new THREE.Color('#141a0c'), inner = new THREE.Color('#6e3a2c'), brass = new THREE.Color('#b08a3a');
+  R.bone('root', null, V(0, 0.3, 0)); R.bone('spine', R.by.get('root'), V(0, 0.37, 0.01)); R.bone('chest', R.by.get('spine'), V(0, 0.45, 0.03));
+  R.bone('neck', R.by.get('chest'), V(0, 0.5, 0.06)); R.bone('head', R.by.get('neck'), V(0, 0.56, 0.08)); R.bone('jaw', R.by.get('head'), V(0, 0.545, 0.13));
   for (const s of [1, -1]) {
-    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.1 * s, 0.49, 0.06)), l = R.bone(`armL${s}`, u, V(0.15 * s, 0.37, 0.08)); R.bone(`hand${s}`, l, V(0.15 * s, 0.26, 0.12));
-    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.06 * s, 0.29, 0)), k = R.bone(`legL${s}`, h, V(0.075 * s, 0.17, 0.05)); R.bone(`foot${s}`, k, V(0.07 * s, 0.045, -0.01));
+    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.1 * s, 0.475, 0.03)), l = R.bone(`armL${s}`, u, V(0.15 * s, 0.36, 0.05)); R.bone(`hand${s}`, l, V(0.165 * s, 0.25, 0.08));
+    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.055 * s, 0.29, 0)), k = R.bone(`legL${s}`, h, V(0.07 * s, 0.17, 0.045)); R.bone(`foot${s}`, k, V(0.07 * s, 0.045, -0.01));
   }
-  // the body: a pot belly on scrawny hips, a narrow chest, hunched shoulders
-  R.part(blob(V(0, 0.3, 0.0), [0.08, 0.06, 0.065]), 'root', leather);
-  R.part(blob(V(0, 0.22, 0.068), [0.05, 0.075, 0.012], [6, 4]), 'root', rag); R.part(blob(V(0, 0.23, -0.06), [0.055, 0.07, 0.012], [6, 4]), 'root', rag);
-  R.part(new THREE.TorusGeometry(0.078, 0.012, 4, 12).rotateX(Math.PI / 2).translate(0, 0.33, 0.012), 'spine', leatherHi);
-  R.part(blob(V(0.075, 0.31, 0.04), [0.025, 0.03, 0.02], [6, 4]), 'spine', leather);              // the pouch
-  R.part(blob(V(0, 0.375, 0.045), [0.082, 0.078, 0.078], [10, 8]), 'spine', skinC);              // the belly
-  R.part(blob(V(0, 0.46, 0.045), [0.095, 0.062, 0.068], [10, 8]), 'chest', skinC);
-  R.part(limb(V(-0.08, 0.5, 0.09), V(0.07, 0.36, 0.1), 0.012, 0.012, 4), 'chest', leather);      // a strap
-  R.part(blob(V(0.11, 0.505, 0.05), [0.058, 0.036, 0.058], [8, 6]), 'chest', (p, n) => (n.y > 0.5 ? leatherHi : leather));   // the pauldron
-  for (let i = 0; i < 3; i++) R.part(limb(V(0.09 + i * 0.022, 0.535, 0.05), V(0.09 + i * 0.026, 0.565, 0.045), 0.006, 0.001, 3), 'chest', iron);
-  R.part(limb(V(0, 0.5, 0.09), V(0, 0.56, 0.13), 0.025, 0.022), 'neck', skin);
-  // the head: a big skull, a heavy brow, the long nose, the wide mouth, the ears out past the shoulders
-  R.part(blob(V(0, 0.6, 0.125), [0.088, 0.08, 0.088], [12, 9]), 'head', skinC);
-  R.part(blob(V(0, 0.62, 0.095), [0.08, 0.07, 0.08], [10, 7]), 'head', skinC);
-  R.part(blob(V(0, 0.627, 0.19), [0.072, 0.017, 0.03], [8, 4]), 'head', skinLo);
-  R.part(limb(V(0, 0.605, 0.205), V(0, 0.567, 0.29), 0.022, 0.008, 6), 'head', skinC);
-  R.part(limb(V(0, 0.567, 0.29), V(0, 0.55, 0.292), 0.008, 0.004, 4), 'head', skin);
-  R.part(new THREE.BoxGeometry(0.09, 0.013, 0.02).translate(0, 0.556, 0.198), 'head', mouth);
-  for (const x of [-0.035, -0.015, 0.012, 0.034]) R.part(limb(V(x, 0.551, 0.206), V(x, 0.566, 0.209), 0.005, 0.001, 3), 'jaw', tooth);
-  R.part(blob(V(0, 0.54, 0.17), [0.058, 0.024, 0.048], [8, 5]), 'jaw', skinC);
+  // the body: skinny, a little pot belly, a narrow chest under the mantle
+  R.part(blob(V(0, 0.3, 0.005), [0.068, 0.05, 0.058], [8, 6]), 'root', skinC);
+  R.part(blob(V(0, 0.375, 0.04), [0.07, 0.068, 0.068], [9, 7]), 'spine', skinC);                     // the belly
+  R.part(blob(V(0, 0.445, 0.03), [0.08, 0.06, 0.058], [8, 6]), 'chest', skinC);
+  for (const s of [1, -1]) R.part(limb(V(0.025 * s, 0.45, 0.085), V(0.03 * s, 0.415, 0.088), 0.007, 0.004), 'chest', skinLo);   // (ribs showing under the skin)
+  R.part(limb(V(0, 0.47, 0.05), V(0, 0.55, 0.085), 0.03, 0.026), 'neck', skinC);
+  // the mantle and the scarf: dark leather over the shoulders, a V down the back; over it the red scarf wound round the
+  // neck in a thick roll and hanging in rags down the chest and the back
+  R.part(blob(V(0, 0.478, 0.025), [0.125, 0.04, 0.088], [9, 6]), 'chest', leatherC);
+  R.part(limb(V(0, 0.49, -0.04), V(0, 0.4, -0.06), 0.06, 0.004, 4), 'chest', leather);           // (the V at the back)
+  for (const s of [1, -1]) R.part(limb(V(0.1 * s, 0.47, 0.0), V(0.12 * s, 0.43, 0.0), 0.04, 0.006, 4), 'chest', leather);
+  R.part(new THREE.TorusGeometry(0.062, 0.03, 10, 20).rotateX(Math.PI / 2 - 0.25).scale(1.25, 1, 1.1).translate(0, 0.505, 0.045), 'chest', redC);   // the roll round the neck
+  const rag = (a, b, w, bone, c = redC) => R.part(limb(a, b, w, 0.004, 4).scale(1, 1, 1), bone, c);
+  for (const [x, l, z] of [[-0.05, 0.1, 0.1], [-0.01, 0.13, 0.11], [0.035, 0.09, 0.105]]) rag(V(x, 0.49, z), V(x * 1.2, 0.49 - l, z + 0.012), 0.024, 'chest');   // down the chest
+  for (const [x, l] of [[-0.06, 0.1], [-0.02, 0.14], [0.03, 0.12], [0.07, 0.09]]) rag(V(x, 0.5, -0.02), V(x * 1.15, 0.5 - l, -0.06), 0.026, 'chest');           // down the back
+  for (const s of [1, -1]) rag(V(0.11 * s, 0.49, 0.03), V(0.14 * s, 0.43, 0.03), 0.03, 'chest');
+  // the belt: a strap round the waist, a buckle, round pouches at its sides and back
+  R.part(new THREE.TorusGeometry(0.072, 0.012, 6, 20).rotateX(Math.PI / 2).scale(1, 1, 1.05).translate(0, 0.325, 0.025), 'root', leatherC);
+  R.part(new THREE.BoxGeometry(0.034, 0.03, 0.014).translate(0, 0.325, 0.104), 'root', brass);
+  R.part(new THREE.BoxGeometry(0.018, 0.014, 0.016).translate(0, 0.325, 0.106), 'root', leather);
+  for (const [x, z, k] of [[0.07, 0.05, 1], [-0.075, 0.03, 0.9], [0.04, -0.06, 0.8]]) {
+    R.part(blob(V(x, 0.3, z), [0.026 * k, 0.03 * k, 0.022 * k], [7, 5]), 'root', leatherC);
+    R.part(blob(V(x, 0.322, z), [0.024 * k, 0.008, 0.02 * k], [7, 3]), 'root', leather);                  // (its flap)
+  }
+  // the loincloth: a red rag hanging front and back from the belt, its hem torn
+  const cloth = (z, dir) => {
+    const pts = [[-0.045, 0], [0.045, 0], [0.04, -0.07], [0.022, -0.085], [0.012, -0.11], [-0.004, -0.09], [-0.022, -0.115], [-0.035, -0.08], [-0.045, -0.075]];
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), { depth: 0.008, bevelEnabled: false });
+    g.translate(0, 0, -0.004).rotateX(0.15 * dir).translate(0, 0.32, z); R.part(g, 'root', redC);
+  };
+  cloth(0.085, -1); cloth(-0.06, 1);
+  // the head: big and bald, a heavy brow, the eyes sunk under it, a big nose, a wide grin of sharp teeth
+  R.part(blob(V(0, 0.625, 0.07), [0.112, 0.102, 0.108]), 'head', skinC);                     // the skull
+  R.part(blob(V(0, 0.58, 0.125), [0.088, 0.058, 0.07], [9, 7]), 'head', skinC);                      // the face, the cheeks
+  for (const s of [1, -1]) R.part(blob(V(0.058 * s, 0.57, 0.155), [0.03, 0.026, 0.026], [8, 6]), 'head', skinC);   // (cheeks pushed up by the grin)
+  // (the brow: two heavy ridges over the eyes, low at the nose, a scowl; round G1's one band round the skull read as a cap)
+  for (const s of [1, -1]) R.part(blob(V(0, 0, 0), [0.042, 0.019, 0.03], [8, 6]).rotateZ(-0.38 * s).translate(0.038 * s, 0.632, 0.168), 'head', skinC);
+  R.part(limb(V(0, 0.625, 0.19), V(0, 0.58, 0.235), 0.022, 0.02), 'head', skinC);               // the nose, big and hooked
+  R.part(blob(V(0, 0.575, 0.232), [0.024, 0.022, 0.022], [8, 6]), 'head', skinC);
   for (const s of [1, -1]) {
-    R.part(limb(V(0.075 * s, 0.61, 0.11), V(0.26 * s, 0.665, 0.03), 0.042, 0.003, 4), 'head', skinC);
-    R.part(limb(V(0.09 * s, 0.612, 0.118), V(0.22 * s, 0.655, 0.05), 0.018, 0.002, 3), 'head', inner);
-    R.part(blob(V(0.036 * s, 0.606, 0.198), [0.015, 0.011, 0.008], [6, 4]), 'head', new THREE.Color('#ffe080'), true);   // the eyes
-    // the arms, long and thin; the big hands
-    R.part(limb(V(0.1 * s, 0.49, 0.06), V(0.15 * s, 0.37, 0.08), 0.026, 0.02), `armU${s}`, skinC);
-    R.part(limb(V(0.15 * s, 0.37, 0.08), V(0.15 * s, 0.26, 0.12), 0.021, 0.017), `armL${s}`, skinC);
-    R.part(limb(V(0.15 * s, 0.3, 0.1), V(0.15 * s, 0.27, 0.115), 0.024, 0.024, 5), `armL${s}`, leather);   // a wrist-wrap
-    R.part(blob(V(0.15 * s, 0.235, 0.13), [0.034, 0.03, 0.04], [8, 6]), `hand${s}`, skinC);
-    for (const f of [-1, 0, 1]) R.part(limb(V((0.15 + f * 0.018) * s, 0.215, 0.15), V((0.15 + f * 0.022) * s, 0.195, 0.175), 0.008, 0.002, 3), `hand${s}`, tooth);
-    // the legs, bent; the big flat feet
-    R.part(limb(V(0.06 * s, 0.29, 0), V(0.075 * s, 0.17, 0.05), 0.03, 0.022), `legU${s}`, skinC);
-    R.part(limb(V(0.075 * s, 0.17, 0.05), V(0.07 * s, 0.045, -0.01), 0.022, 0.016), `legL${s}`, skinC);
-    R.part(limb(V(0.073 * s, 0.13, 0.035), V(0.072 * s, 0.09, 0.02), 0.026, 0.024, 5), `legL${s}`, rag);
-    R.part(blob(V(0.07 * s, 0.022, 0.04), [0.034, 0.02, 0.075], [8, 5]), `foot${s}`, skinC);
-    for (const f of [-1, 0, 1]) R.part(limb(V((0.07 + f * 0.018) * s, 0.015, 0.1), V((0.07 + f * 0.02) * s, 0.008, 0.125), 0.008, 0.002, 3), `foot${s}`, tooth);
+    R.part(blob(V(0.04 * s, 0.608, 0.178), [0.022, 0.016, 0.012], [6, 4]), 'head', socket);         // the sockets, deep
+    R.part(blob(V(0.04 * s, 0.608, 0.186), [0.011, 0.009, 0.006], [6, 4]), 'head', new THREE.Color('#ff3a20'), true);   // the eyes, red
   }
-  R.part(new THREE.TorusGeometry(0.012, 0.003, 3, 8).rotateY(Math.PI / 2).translate(0.2, 0.635, 0.05), 'head', brass);   // a ring in one ear
-  // the cleaver, in the right fist (−x), its blade forward: a rusted slab, notched, its edge bright
-  R.part(limb(V(-0.15, 0.235, 0.1), V(-0.15, 0.235, 0.24), 0.012, 0.011, 5), 'hand-1', leather);
-  // (a blade: thin, longer than the arm's reach, widening to a squared tip, the edge along its bottom bright)
-  const slab = new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(0.24, 0.29), new THREE.Vector2(0.24, 0.232), new THREE.Vector2(0.46, 0.212), new THREE.Vector2(0.47, 0.3), new THREE.Vector2(0.4, 0.31)]), { depth: 0.012, bevelEnabled: false });
-  slab.rotateY(-Math.PI / 2).translate(-0.144, 0, 0);
-  R.part(slab, 'hand-1', (p) => (p.y < 0.232 ? edge : p.y > 0.295 ? iron : rust));
-  R.part(new THREE.BoxGeometry(0.016, 0.016, 0.016).translate(-0.15, 0.285, 0.43), 'hand-1', mouth);   // (a hole near the tip, for a nail)
-  // a scraggle of black hair over the crown
-  for (const [x, z, a] of [[-0.02, 0.07, -0.3], [0.015, 0.06, 0.2], [0.0, 0.1, 0.0], [0.035, 0.08, 0.5]]) R.part(limb(V(x, 0.675, z), V(x + a * 0.05, 0.725, z - 0.05), 0.012, 0.002, 3), 'head', new THREE.Color('#1c1814'));
-  const root3 = R.mesh(o.eyes || '#ffd040');
-  // poses: a crouch (always), a stride
+  // the grin: a dark mouth wide across the face, teeth along both its lips (the lower on the jaw), the jaw under it
+  const arc = (x) => 0.195 - 1.6 * x * x;
+  R.part(blob(V(0, 0.548, 0.172), [0.07, 0.016, 0.032], [9, 4]), 'head', mouth);
+  for (let i = -4; i <= 4; i++) { const x = i * 0.0145; R.part(limb(V(x, 0.556, arc(x)), V(x, 0.538, arc(x) + 0.003), 0.0065, 0.001, 4), 'head', tooth); }
+  for (let i = -3; i <= 3; i++) { const x = i * 0.016 + 0.007; R.part(limb(V(x, 0.534, arc(x) - 0.004), V(x, 0.55, arc(x)), 0.006, 0.001, 4), 'jaw', tooth); }
+  R.part(blob(V(0, 0.527, 0.14), [0.07, 0.028, 0.058], [8, 6]), 'jaw', skinC);                        // the jaw, the chin
+  // the ears: bat's, out wide and up, ragged along their lower edges, the inside darker; brass rings through them
+  const EAR = [[0, -0.04], [0.05, -0.05], [0.07, -0.036], [0.095, -0.048], [0.13, -0.034], [0.145, -0.022], [0.175, -0.024], [0.215, 0.002], [0.25, 0.03], [0.2, 0.034], [0.15, 0.042], [0.09, 0.05], [0.03, 0.05], [0, 0.04]];
+  const EK = 1.25;   // (round S3: in the game they read small beside the reference's)
+  const earXf = (g, s) => g.rotateZ(0.5 * s).rotateY(0.45 * s).translate(0.085 * s, 0.635, 0.05);
+  for (const s of [1, -1]) {
+    const shape = (k, dz) => { const g = new THREE.ExtrudeGeometry(new THREE.Shape(EAR.map(([x, y]) => new THREE.Vector2(x * k * s * EK, y * k * EK))), { depth: 0.012, bevelEnabled: false }); return g.translate(0, 0, dz); };
+    R.part(earXf(shape(1, -0.006), s), 'head', skinC);
+    R.part(earXf(shape(0.78, 0.004).translate(0.02 * s, 0.002, 0), s), 'head', inner);
+    for (const [x, y] of s > 0 ? [[0.07, -0.046], [0.12, -0.04]] : [[0.1, -0.046]]) R.part(earXf(new THREE.TorusGeometry(0.016, 0.004, 4, 10).rotateY(Math.PI / 2).translate(x * s * EK, y * EK, 0), s), 'head', brass);
+  }
+  // the arms: long and thin, knobbed at the elbow, leather round the wrist; the hands big, long-fingered, clawed
+  for (const s of [1, -1]) {
+    R.part(blob(V(0.1 * s, 0.47, 0.03), [0.03, 0.028, 0.03], [7, 5]), `armU${s}`, skinC);
+    R.part(limb(V(0.1 * s, 0.475, 0.03), V(0.15 * s, 0.36, 0.05), 0.022, 0.017), `armU${s}`, skinC);
+    R.part(blob(V(0.15 * s, 0.36, 0.05), [0.02, 0.02, 0.02], [6, 4]), `armL${s}`, skinC);
+    R.part(limb(V(0.15 * s, 0.36, 0.05), V(0.165 * s, 0.25, 0.08), 0.018, 0.016), `armL${s}`, skinC);
+    for (const [y, r] of [[0.3, 0.021], [0.282, 0.022], [0.264, 0.021]]) R.part(limb(V(0.158 * s, y + 0.008, 0.066), V(0.16 * s, y - 0.008, 0.07), r, r, 7), `armL${s}`, (p, n) => (n.y > 0.2 ? wrap : wrapLo));
+    const at = V(0.168 * s, 0.226, 0.09);
+    R.part(blob(at, [0.034, 0.028, 0.038], [8, 6]), `hand${s}`, skinC);
+    for (let f = 0; f < 4; f++) {   // (long, splayed a little, the tips curled down and under: a claw; round G1's straight ones read as a rake)
+      const a = (f - 1.5) * 0.22, d = V(Math.sin(a) * 0.5 * s, -0.55, 0.65).normalize(), d2 = V(Math.sin(a) * 0.4 * s, -0.95, 0.15).normalize();
+      const b = at.clone().add(V((f - 1.5) * 0.015 * s, -0.008, 0.026)), m = b.clone().add(d.clone().multiplyScalar(0.034 - Math.abs(f - 1.5) * 0.004)), e = m.clone().add(d2.clone().multiplyScalar(0.026));
+      R.part(limb(b, m, 0.0105, 0.009, 4), `hand${s}`, skinC); R.part(blob(m, [0.0095, 0.0095, 0.0095], [5, 4]), `hand${s}`, skinC);
+      R.part(limb(m, e, 0.009, 0.0065, 4), `hand${s}`, skinC); R.part(limb(e, e.clone().add(V(0, -0.012, -0.008)), 0.0065, 0.0008, 4), `hand${s}`, nail);
+    }
+    { const b = at.clone().add(V(-0.022 * s, -0.004, 0.018)), e = b.clone().add(V(-0.016 * s, -0.022, 0.026)); R.part(limb(b, e, 0.01, 0.008, 4), `hand${s}`, skinC); R.part(limb(e, e.clone().add(V(-0.002 * s, -0.012, 0.004)), 0.006, 0.0008, 4), `hand${s}`, nail); }   // the thumb
+    // the legs: thin, the knee a knob, leather wound round the shin; the feet big and bare, long-toed
+    R.part(limb(V(0.055 * s, 0.29, 0), V(0.07 * s, 0.17, 0.045), 0.027, 0.02), `legU${s}`, skinC);
+    R.part(blob(V(0.07 * s, 0.17, 0.045), [0.024, 0.024, 0.024], [6, 4]), `legL${s}`, skinC);
+    R.part(limb(V(0.07 * s, 0.17, 0.045), V(0.07 * s, 0.045, -0.01), 0.02, 0.016), `legL${s}`, skinC);
+    for (const [y, r] of [[0.14, 0.023], [0.12, 0.024], [0.1, 0.023], [0.08, 0.021]]) { const k = (0.17 - y) / 0.125; R.part(limb(V(0.07 * s, y + 0.009, 0.045 - 0.055 * k), V(0.07 * s, y - 0.009, 0.045 - 0.055 * (k + 0.07)), r, r, 7), `legL${s}`, (p, n) => (n.y > 0.2 ? wrap : wrapLo)); }
+    R.part(blob(V(0.07 * s, 0.026, 0.04), [0.036, 0.02, 0.068], [8, 6]), `foot${s}`, skinC);
+    R.part(blob(V(0.07 * s, 0.035, -0.02), [0.022, 0.022, 0.026], [6, 4]), `foot${s}`, skinC);          // the heel
+    for (let f = 0; f < 4; f++) { const x = (0.07 + (f - 1.5) * 0.017) * s, b = V(x, 0.016, 0.09), e = V(x * 1.06, 0.01, 0.132 - Math.abs(f - 1.2) * 0.007);
+      R.part(limb(b, e, 0.011, 0.008, 4), `foot${s}`, skinC); R.part(limb(e, e.clone().add(V(0, -0.005, 0.014)), 0.007, 0.001, 4), `foot${s}`, nail); }
+  }
+  // (round S2: from the game's camera the head read a quarter of it, the reference's is a third: the head and all on it a
+  // tenth bigger about its middle, the jaw's bone with it)
+  { const hb = [R.bones.indexOf(R.by.get('head')), R.bones.indexOf(R.by.get('jaw'))], hc = V(0, 0.59, 0.1), K = 1.12;
+    for (const q of R.parts) if (hb.includes(q.bone)) q.geo.translate(-hc.x, -hc.y, -hc.z).scale(K, K, K).translate(hc.x, hc.y, hc.z);
+    const jw = R.by.get('jaw'); jw.userData.at.sub(hc).multiplyScalar(K).add(hc); jw.position.copy(jw.userData.at).sub(R.by.get('head').userData.at); }
+  const root3 = R.mesh(o.eyes || '#ff3a20', 1.5);
+  // poses: a crouch (always), the claws ready, a stride
   const crouch = (k = 1) => ({ legU1: qe(-0.35 * k, 0, 0.05), 'legU-1': qe(-0.35 * k, 0, -0.05), legL1: qe(0.6 * k, 0, 0), 'legL-1': qe(0.6 * k, 0, 0) });
-  const ready = { armU1: qe(-0.35, 0, 0.15), armL1: qe(-0.5, 0, 0), 'armU-1': qe(-0.5, 0, -0.1), 'armL-1': qe(-0.8, 0, 0) };   // (the cleaver up)
+  const ready = { armU1: qe(-0.45, 0, 0.18), armL1: qe(-0.55, 0, 0), 'armU-1': qe(-0.45, 0, -0.18), 'armL-1': qe(-0.55, 0, 0), hand1: qe(0.3, 0, 0), 'hand-1': qe(0.3, 0, 0) };   // (the claws up and out)
   const run = (t, A = 1) => {
     const q = {};
-    for (const s of [1, -1]) { const ph = s > 0 ? 0 : 0.5, sw = S(t + ph), up = Math.max(0, -C(t + ph)); q[`legU${s}`] = qe(-0.35 - 0.6 * A * sw, 0, 0.05 * s); q[`legL${s}`] = qe(0.55 + 1.0 * A * up, 0, 0); q[`foot${s}`] = qe(-0.3 * A * up, 0, 0); }
-    q.armU1 = qe(-0.3 + 0.55 * A * S(t), 0, 0.15); q.armL1 = qe(-0.7, 0, 0); q['armU-1'] = qe(-0.55 - 0.35 * A * S(t), 0, -0.1); q['armL-1'] = qe(-0.9, 0, 0);
+    for (const s of [1, -1]) { const ph = s > 0 ? 0 : 0.5, sw = S(t + ph), up = Math.max(0, -C(t + ph)); q[`legU${s}`] = qe(-0.35 - 0.6 * A * sw, 0, 0.05 * s); q[`legL${s}`] = qe(0.55 + 1.0 * A * up, 0, 0); q[`foot${s}`] = qe(-0.3 * A * up, 0, 0); q[`armU${s}`] = qe(-0.35 + 0.6 * A * sw, 0, 0.15 * s); q[`armL${s}`] = qe(-0.7, 0, 0); }
     return q;
   };
   const clips = [
-    clip(R, 'Idle', 1.8, (t) => { const look = Math.max(-1, Math.min(1, 2.2 * S(t))); return { q: { ...crouch(), ...ready, spine: qe(0.25 + 0.03 * S(t * 2), 0, 0), chest: qe(0.05 * S(t * 2), 0, 0), head: qe(-0.2, 0.45 * look, 0.06 * look), jaw: qe(0.15 * Math.max(0, S(t * 3)), 0, 0), 'armU-1': qe(-0.5 - 0.08 * S(t * 2), 0, -0.1) }, p: { root: V(0, -0.035 + 0.006 * S(t * 2), 0) } }; }),
+    clip(R, 'Idle', 1.8, (t) => { const look = Math.max(-1, Math.min(1, 2.2 * S(t))); return { q: { ...crouch(), ...ready, spine: qe(0.25 + 0.03 * S(t * 2), 0, 0), chest: qe(0.05 * S(t * 2), 0, 0), head: qe(-0.2, 0.45 * look, 0.06 * look), jaw: qe(0.12 * Math.max(0, S(t * 3)), 0, 0), hand1: qe(0.3 + 0.2 * S(t * 4), 0, 0), 'hand-1': qe(0.3 + 0.2 * S(t * 4 + 0.3), 0, 0) }, p: { root: V(0, -0.035 + 0.006 * S(t * 2), 0) } }; }),   // (the fingers working)
     clip(R, 'Walk', 0.5, (t) => ({ q: { ...run(t), spine: qe(0.4, 0.12 * S(t), 0), head: qe(-0.35 + 0.08 * S(t * 2), -0.12 * S(t), 0), root: qe(0, -0.15 * S(t), 0) }, p: { root: V(0, -0.04 + 0.025 * Math.abs(S(t)), 0) } })),
-    clip(R, 'Attack', 0.6, (t) => { const w = bell(0, 0.3, 0.42, t), k = bell(0.36, 0.48, 0.85, t); return { q: { ...crouch(1 + 0.3 * k), ...ready, spine: qe(0.2 - 0.25 * w + 0.45 * k, 0.35 * w - 0.25 * k, 0), 'armU-1': qe(-0.5 - 2.3 * w + 1.5 * k, 0, -0.25 * w), 'armL-1': qe(-0.8 - 0.6 * w + 0.6 * k, 0, 0), head: qe(-0.2 + 0.25 * k, 0, 0), jaw: qe(0.4 * w, 0, 0) }, p: { root: V(0, -0.035 - 0.02 * k, 0.06 * k) } }; }),
-    clip(R, 'Attack2', 0.5, (t) => { const w = bell(0, 0.25, 0.38, t), k = bell(0.32, 0.42, 0.8, t); return { q: { ...crouch(1 + 0.4 * k), ...ready, spine: qe(0.25 + 0.3 * k, -0.3 * w + 0.3 * k, 0), 'armU-1': qe(-0.3 + 0.4 * w - 1.2 * k, 0.3 * k, -0.1), 'armL-1': qe(-1.4 * w - 0.1 * k, 0, 0) }, p: { root: V(0, -0.04, -0.03 * w + 0.12 * k) } }; }),
-    clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.22, 0.32, t), a = bell(0.25, 0.45, 0.62, t), k = bell(0.55, 0.65, 0.95, t); return { q: { ...crouch(1 + 0.8 * c - 0.6 * a + 0.5 * k), spine: qe(0.3 * c - 0.3 * a + 0.6 * k, 0, 0), armU1: qe(-0.3 - 2.6 * a + 1.8 * k, 0, 0.2), 'armU-1': qe(-0.5 - 2.6 * a + 2.0 * k, 0, -0.2), armL1: qe(-0.5 - 0.3 * a, 0, 0), 'armL-1': qe(-0.8 - 0.3 * a, 0, 0), jaw: qe(0.5 * a, 0, 0), head: qe(-0.3 * a + 0.2 * k, 0, 0) }, p: { root: V(0, -0.035 - 0.05 * c + 0.16 * a - 0.03 * k, 0.3 * ease(0.25, 0.65, t)) } }; }),
+    clip(R, 'Attack', 0.6, (t) => { const w = bell(0, 0.3, 0.42, t), k = bell(0.36, 0.48, 0.85, t); return { q: { ...crouch(1 + 0.3 * k), ...ready, spine: qe(0.2 - 0.25 * w + 0.45 * k, 0.35 * w - 0.35 * k, 0), 'armU-1': qe(-0.45 - 2.1 * w + 1.6 * k, 0, -0.18 - 0.3 * w + 0.3 * k), 'armL-1': qe(-0.55 - 0.4 * w + 0.5 * k, 0, 0), 'hand-1': qe(-0.4 * w + 0.6 * k, 0, 0), head: qe(-0.2 + 0.25 * k, 0, 0), jaw: qe(0.4 * w, 0, 0) }, p: { root: V(0, -0.035 - 0.02 * k, 0.06 * k) } }; }),   // (a raking swipe, right claw)
+    clip(R, 'Attack2', 0.5, (t) => { const w = bell(0, 0.25, 0.38, t), k = bell(0.32, 0.42, 0.8, t); return { q: { ...crouch(1 + 0.4 * k), ...ready, spine: qe(0.25 + 0.3 * k, 0.3 * w - 0.3 * k, 0), armU1: qe(-0.45 + 0.4 * w - 1.2 * k, -0.3 * k, 0.18), armL1: qe(-1.3 * w - 0.1 * k, 0, 0), jaw: qe(0.3 * k, 0, 0) }, p: { root: V(0, -0.04, -0.03 * w + 0.12 * k) } }; }),   // (a jab, left claw)
+    clip(R, 'Heavy', 0.9, (t) => { const c = bell(0, 0.22, 0.32, t), a = bell(0.25, 0.45, 0.62, t), k = bell(0.55, 0.65, 0.95, t); return { q: { ...crouch(1 + 0.8 * c - 0.6 * a + 0.5 * k), spine: qe(0.3 * c - 0.3 * a + 0.6 * k, 0, 0), armU1: qe(-0.45 - 2.4 * a + 1.8 * k, 0, 0.3), 'armU-1': qe(-0.45 - 2.4 * a + 1.8 * k, 0, -0.3), armL1: qe(-0.5 - 0.3 * a, 0, 0), 'armL-1': qe(-0.5 - 0.3 * a, 0, 0), jaw: qe(0.5 * a, 0, 0), head: qe(-0.3 * a + 0.2 * k, 0, 0) }, p: { root: V(0, -0.035 - 0.05 * c + 0.16 * a - 0.03 * k, 0.3 * ease(0.25, 0.65, t)) } }; }),   // (a leap, both claws down on it)
     clip(R, 'Hit', 0.4, (t) => { const k = bell(0, 0.2, 1, t); return { q: { ...crouch(), ...ready, spine: qe(0.2 - 0.35 * k, 0.15 * k, 0), head: qe(-0.2 - 0.4 * k, -0.3 * k, 0), jaw: qe(0.3 * k, 0, 0) }, p: { root: V(0, -0.035, -0.05 * k) } }; }),
     clip(R, 'Death', 1.1, (t) => { const k = ease(0, 0.65, t); return { q: { ...crouch(1 - 0.5 * k), root: qe(-1.45 * k, 0, 0.1 * k), spine: qe(0.2 - 0.3 * k, 0, 0), head: qe(-0.3 - 0.5 * k, 0.4 * k, 0), jaw: qe(0.5 * k, 0, 0), armU1: qe(-0.3 - 1.2 * k, 0, 0.7 * k), 'armU-1': qe(-0.5 - 1.4 * k, 0, -0.6 * k), armL1: qe(-0.3, 0, 0), 'armL-1': qe(-0.4, 0, 0) }, p: { root: V(0, -0.035 - 0.18 * k, -0.12 * k) } }; }),   // (on its back, arms flung out)
-    clip(R, 'Cast', 0.9, (t) => { const k = bell(0.05, 0.3, 0.85, t), h = Math.max(0, S(t * 4)); return { q: { ...crouch(1 - 0.3 * k), ...ready, spine: qe(0.2 - 0.3 * k, 0, 0), head: qe(-0.2 - 0.5 * k, 0.1 * S(t * 2), 0), jaw: qe(0.6 * k * (0.5 + 0.5 * h), 0, 0), 'armU-1': qe(-0.5 - 2.4 * k, 0, -0.3 * k), 'armL-1': qe(-0.8 + 0.5 * k, 0, 0), armU1: qe(-0.3 - 0.6 * k, 0, 0.6 * k) }, p: { root: V(0, -0.035 + 0.04 * k * h, 0) } }; }),   // (a jeer: the cleaver up, the head back, cackling)
+    clip(R, 'Cast', 0.9, (t) => { const k = bell(0.05, 0.3, 0.85, t), h = Math.max(0, S(t * 4)); return { q: { ...crouch(1 - 0.3 * k), ...ready, spine: qe(0.2 - 0.3 * k, 0, 0), head: qe(-0.2 - 0.5 * k, 0.1 * S(t * 2), 0), jaw: qe(0.6 * k * (0.5 + 0.5 * h), 0, 0), 'armU-1': qe(-0.45 - 2.2 * k, 0, -0.18 - 0.4 * k), armU1: qe(-0.45 - 2.2 * k, 0, 0.18 + 0.4 * k), armL1: qe(-0.55 + 0.3 * k, 0, 0), 'armL-1': qe(-0.55 + 0.3 * k, 0, 0) }, p: { root: V(0, -0.035 + 0.04 * k * h, 0) } }; }),   // (a jeer: both claws up, the head back, cackling)
   ];
   return { root: root3, clips };
 }
@@ -537,7 +615,7 @@ function wraith(o = {}) {
     let tb = R.by.get('root'); const names = [];
     for (let k = 0; k < 3; k++) { tb = R.bone(`tend${i}${k}`, tb, P[k]); names.push(`tend${i}${k}`); }
     const rad = [0.09, 0.08, 0.06, 0.035, 0.002];
-    for (let k = 0; k < 4; k++) R.part(limb(P[k], P[k + 1], rad[k], rad[k + 1], 5), names[Math.min(2, k)], robeC);
+    const tb2 = tube(P, rad, names, 8, 20); R.part(tb2.g, R.skin(tb2.skin), robeC);
     tend.push(names);
   }
   // the shroud over the shoulders, and its tatters hanging over the chest and back
@@ -573,7 +651,8 @@ function wraith(o = {}) {
   for (let i = -2; i <= 2; i++) R.part(limb(V(i * 0.013, 1.34, 0.243 - Math.abs(i) * 0.005), V(i * 0.013, 1.36, 0.244 - Math.abs(i) * 0.005), 0.006, 0.002, 3), 'jaw', claw);
   // the arms: the sleeve's drape hanging under each, gaunt forearms, hands with long splayed clawed fingers
   for (const s of [1, -1]) {
-    R.part(limb(V(0.17 * s, 1.27, 0.04), V(0.43 * s, 1.35, 0.1), 0.07, 0.11, 7), `armU${s}`, robeC);   // (a bell sleeve: round W3, a pipe)
+    { const d = V(0.26 * s, 0.08, 0.06).normalize();   // (a bell sleeve: round W3, a pipe; its mouth dark inside, round S4: shaded smooth its end read as a capped pipe)
+      R.part(limb(V(0.17 * s, 1.27, 0.04), V(0.43 * s, 1.35, 0.1), 0.07, 0.11, 7), `armU${s}`, (p, n) => (n.dot(d) > 0.7 ? voidC : robeC(p, n))); }
     // the sleeve: a wide drape hanging under the arm to the elbow and past it, its edge in rags (round W1: a scarecrow's sleeve)
     for (let k = 0; k < 6; k++) { const x = (0.2 + k * 0.05) * s, y = 1.27 + k * 0.016, len = 0.3 + 0.12 * hash3(k, s, 4, 2) - k * 0.015; R.part(limb(V(x, y, 0.06 + k * 0.01), V(x * 1.04, y - len, 0.03 + k * 0.012), 0.055, 0.004, 3), `armU${s}`, robeC); }
     for (let k = 0; k < 3; k++) { const x = (0.45 + k * 0.05) * s, y = 1.36 + k * 0.025; R.part(limb(V(x, y, 0.1 + k * 0.01), V(x * 1.02, y - 0.16 - 0.05 * k, 0.09 + k * 0.012), 0.04, 0.003, 3), `armL${s}`, robeC); }
@@ -619,9 +698,9 @@ function block(c, h, seed = 0, k = 0.22, rot = [0, 0, 0]) {
   g.rotateX(rot[0]).rotateY(rot[1]).rotateZ(rot[2]); g.translate(c.x, c.y, c.z); return g;
 }
 function golem(o = {}) {
-  const R = new Rig(o.seed || 67), sd = o.seed || 67;
-  const stone = new THREE.Color(o.stone || '#53606c'), stoneHi = new THREE.Color(o.stoneHi || '#6e7b88'), stoneLo = new THREE.Color('#343e48');   // (blue-grey, darker than the reference's: the game's figure light lifts it, round G3; under the torches a greyer one read beige)
-  const moss = new THREE.Color(o.moss || '#748424'), mossHi = new THREE.Color('#9aa832'), vein = new THREE.Color('#8a9a22'), rust = new THREE.Color('#5e3a20'), rustHi = new THREE.Color('#84552c');
+  const R = new Rig(o.seed || 67), sd = o.seed || 67; R.crease = (28 * Math.PI) / 180;   // (its blocks' cut edges stay hard: an octagon's faces meet at 45°)
+  const stone = new THREE.Color(o.stone || '#46525e'), stoneHi = new THREE.Color(o.stoneHi || '#5a6774'), stoneLo = new THREE.Color('#2c343e');   // (blue-grey, darker than the reference's: the game's figure light lifts it, round G3; under the torches a greyer one read beige)
+  const moss = new THREE.Color(o.moss || '#5e6c1e'), mossHi = new THREE.Color('#7e8c2a'), vein = new THREE.Color('#68761a')   /* (round S2: shaded smooth it read pale blue and its veins neon) */, rust = new THREE.Color('#5e3a20'), rustHi = new THREE.Color('#84552c');
   const hole = new THREE.Color('#121416'), ember = new THREE.Color('#ffb24a');
   // (stone, lichen on what faces up in patches: the reference's)
   const stoneC = (p, n) => (n.y > 0.8 && hash3(Math.round(p.x * 18), Math.round(p.y * 18), Math.round(p.z * 18), sd) > 0.72 ? moss : n.y > 0.35 ? mixC(stone, stoneHi, (n.y - 0.35) * 2) : n.y < -0.35 ? stoneLo : stone);

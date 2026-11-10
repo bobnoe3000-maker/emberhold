@@ -12,6 +12,7 @@ const SHOTS = [['Idle', [0.3]], ['Walk', [0, 0.25, 0.5, 0.75]], ['Attack', [0.45
 const ROWS = [
   { name: 'Stone golem · front', key: 'golemf', spec: { kind: 'golem' }, height: 2.0, cy: 1.0, half: 1.1, yaw: 0.55, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
   { name: 'Giant rat · front', key: 'ratf', spec: { kind: 'rat' }, height: 0.47, cy: 0.22, half: 0.34, yaw: 0.4, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Goblin · front', key: 'goblinf', spec: { kind: 'goblin' }, height: 0.72, cy: 0.4, half: 0.36, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
   { name: 'Graveyard wraith · front', key: 'wraithf', spec: { kind: 'wraith' }, height: 1.5, cy: 0.8, half: 0.85, yaw: 0.78, shots: [['Idle', [0.3]], ['Attack', [0.45]], ['Heavy', [0.4]]] },
   { name: 'Giant rat', key: 'rat', spec: { kind: 'rat' }, height: 0.47, cy: 0.2, half: 0.42, yaw: -0.7, shots: SHOTS.filter(([c]) => c !== 'Cast') },
   { name: 'Giant spider', key: 'spider', spec: { kind: 'spider' }, height: 0.54, cy: 0.25, half: 0.55, yaw: -0.6, shots: SHOTS },

@@ -1,5 +1,5 @@
 import { pr as e, wt as t } from "./three.core-CDiAvzro.js";
-import { D as n, F as r, I as i, L as a, N as o, P as s, S as c } from "./SmallProps-CaKHfoZ6.js";
+import { D as n, F as r, I as i, L as a, N as o, P as s, S as c } from "./SmallProps-Bhy5ZjLW.js";
 import { t as l } from "./Palette-D7TB3xJk.js";
 import { a as u, c as d, f, i as p, r as m, s as h, t as ee } from "./math-Du_SWpiD.js";
 import { i as te } from "./own-rp3p7qEo.js";

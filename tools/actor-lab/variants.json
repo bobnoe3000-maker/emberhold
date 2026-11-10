@@ -4872,7 +4872,7 @@
  {
   "id": "CR2",
   "cls": "Creature",
-  "label": "Goblin \u00b7 built for the part, two-thirds of a man, a rusted cleaver (creatures.js goblin)",
+  "label": "Goblin \u00b7 after the owner's reference: a big bald head, bat ears ringed in brass, a red scarf, claws (creatures.js goblin)",
   "creature": {
    "kind": "goblin"
   },
