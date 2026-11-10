@@ -17,7 +17,7 @@
 // The look by what it is (§7), from fields the item already has: nothing new saved, nothing drawn. Never a colour of
 // its own (the owner, 2026-11-10: "gear doesn't need to be a different color… the rarer an item, there is a faint to
 // slightly stronger glow"): the piece in its own colours, lit a little from within (RARITY_GLOW):
-//   · common: as made; fine: a faint glow; rare: a little more, breathing; heirloom: the most, breathing too;
+//   · common: as made; fine: a faint glow; rare: a little more; heirloom: the most, and a slight pulse;
 //   · the smith's +1…+5: a little more each step.
 // The rarity's colour is the bag's and the card's (the slot's border and its glow, and the word). Kept dusky: in play
 // the glow is added over the figure's own fill, so a lit piece is never darker than the rest. A piece with a light keeps
@@ -62,9 +62,9 @@ const PARTS = { armor: ['Body', 'ArmLeft', 'ArmRight'], boots: ['LegLeft', 'LegR
 const kitOf = (model) => model.replace(/_Hooded$/, '');   // (the hooded rogue's body is the rogue's)
 /** the light each rarity gives its piece, in the piece's own colours (the owner, 2026-11-10: "gear doesn't need to be a
  * different color… the rarer an item, there is a faint to slightly stronger glow"): none for common, faint for fine, a
- * little more for rare, the most for heirloom; rare and heirloom breathe it */
+ * little more for rare, the most for heirloom, where a slight pulse is added */
 export const RARITY_GLOW = { common: 0, fine: 0.07, rare: 0.13, heirloom: 0.21 };
-const SHIMMER = { rare: true, heirloom: true }, UP_STEP = 0.02;
+const SHIMMER = { heirloom: true }, UP_STEP = 0.02;   // (the owner: "heirloom is where the slight pulse is added")
 
 const pieces = new Map();                                   // [model, node] → the node, once (its copies share its geometry)
 async function pieceOf(G, load) {

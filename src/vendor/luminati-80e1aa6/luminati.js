@@ -14846,10 +14846,7 @@ var Du = (e, t) => Lc(e, t), Ou = {
 	fine: .07,
 	rare: .13,
 	heirloom: .21
-}, Iu = {
-	rare: !0,
-	heirloom: !0
-}, Lu = .02, Ru = /* @__PURE__ */ new Map();
+}, Iu = { heirloom: !0 }, Lu = .02, Ru = /* @__PURE__ */ new Map();
 async function zu(e, t) {
 	if (e.prop) {
 		let t = Pc[e.prop]();

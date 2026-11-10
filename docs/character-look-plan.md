@@ -163,10 +163,10 @@ KayKit piece or a code-built one), the bone it hangs from, its swatch map, and t
 **Built** (2026-11-10), then **changed** the same day (the owner: "For rarity, gear doesn't need to be a different
 color - rather the gear border in inventory and the rarer an item, there is a faint to slightly stronger glow"): a worn
 piece is never tinted. `gear.js` `lookOn` lights it from within in its own colours (its texture as its emissive),
-`RARITY_GLOW` common 0, fine 0.07, rare 0.13, heirloom 0.21, rare and heirloom breathing ±25 %, each smith's step +0.02;
+`RARITY_GLOW` common 0, fine 0.07, rare 0.13, heirloom 0.21, and heirloom alone with a slight pulse (±25 %; the owner: "fine faint glow, rare, more glow, heirloom is where the slight pulse is added"), each smith's step +0.02;
 in play it's added over the figure's own fill (`world.js`), so a lit piece is never darker than the rest. The rarity's
 colour is the bag's: each slot's border in it, with a glow round the border that grows with the rarity (none for
-common; `sheet.js` `.gslot`), the word on the item's card. A piece with a light keeps its own material (one draw more).
+common; heirloom's pulsing slightly too, still for reduced motion; `sheet.js` `.gslot`), the word on the item's card. A piece with a light keeps its own material (one draw more).
 The table below was the first plan; the colours in it are superseded by the above.
 
 An item's look comes from fields it already has, so no new saved state, no new random draw, and replays exactly as

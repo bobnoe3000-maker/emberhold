@@ -219,7 +219,7 @@ function placeFigure(a, key, dt, camAz) {
       const tr = op < 0.999; if (q.m.transparent !== tr) { q.m.transparent = tr; q.m.needsUpdate = true; } q.m.opacity = op;
     }
   }
-  if (f.shines) { const br = 0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id);   // (a rare or heirloom piece's light breathes: gear.js)
+  if (f.shines) { const br = 0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id);   // (an heirloom's light pulses: gear.js)
     for (const q of f.mats) if (q.shine) q.m.emissiveIntensity = figGlow * FILL + q.add * br + fl * 2.6 + wn * 0.9; }
   f.root.visible = true; f.seen = figSeen;
   return true;

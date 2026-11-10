@@ -72,7 +72,9 @@ const CSS = SW_CSS + `
 .gslot.common { border-color: #5a5448; }
 .gslot.fine { border-color: #72d06c; box-shadow: 0 0 4px rgba(114,208,108,.28), inset 0 0 8px rgba(114,208,108,.14); }
 .gslot.rare { border-color: #5aa8ff; box-shadow: 0 0 7px 1px rgba(90,168,255,.38), inset 0 0 11px rgba(90,168,255,.22); }
-.gslot.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); }
+.gslot.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); animation: heirloomPulse 3.2s ease-in-out infinite; }
+@keyframes heirloomPulse { 50% { box-shadow: 0 0 13px 3px rgba(242,163,60,.6), inset 0 0 16px rgba(242,163,60,.36); } }   /* (heirloom alone pulses, slightly, as on the figure) */
+@media (prefers-reduced-motion: reduce) { .gslot.heirloom { animation: none; } }
 .gslot.sel { outline: 2px solid #f0c880; outline-offset: 2px; }
 .gslot.empty { border-style: dashed; cursor: default; }
 .gslot .lbl { position: absolute; bottom: -14px; left: -10px; right: -10px; text-align: center; font-size: 8px; letter-spacing: 1.2px; color: #7c748a; text-transform: uppercase; }
