@@ -13,6 +13,7 @@ import { mulberry32, streamSeed, fbm } from './rng.js';
 import { FLOOR_Z } from './level.js';
 import { ENV_FOOT } from './envfoot.js';
 import { hypot, sin, cos } from './detmath.js';
+import { campsOf } from './camps.js';
 
 // ground codes (pixel + tile)
 // (M8: the Fens' swamp ground, docs/region-towns-proposal.md: MARSH is wet peat and reeds you can walk; POOL still bog
@@ -1062,10 +1063,15 @@ function buildStage(seed, floor) {
 // 'stage' takes its floor in `region`'s place (grass · cobble)
 export function createOutdoor(seed, kind, region = 'vale') {
   if (kind === 'stage') return buildStage(seed, region);
-  if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : buildFens(seed);   // (M8: Saltmere, the Fens)
-  if (kind === 'overland' && region === 'reach') return buildReach(seed);
-  if (kind === 'overland' && region === 'heights') return buildHeights(seed);
-  return kind === 'town' ? buildTown(seed, region) : buildOverland(seed);
+  if (region === 'fens') return kind === 'town' ? buildWaystation(seed, 'fens') : dressCamps(buildFens(seed), 'fens');   // (M8: Saltmere, the Fens)
+  if (kind === 'overland' && region === 'reach') return dressCamps(buildReach(seed), 'reach');
+  if (kind === 'overland' && region === 'heights') return dressCamps(buildHeights(seed), 'heights');
+  return kind === 'town' ? buildTown(seed, region) : dressCamps(buildOverland(seed), 'vale');
+}
+// a land's spawn points dressed (camps.js, GDD §10.3): each piece on its tile, solid (the fire, the dead cow, the burrow…)
+function dressCamps(o, region) {
+  for (const c of campsOf(region)) for (const [kind, dx, dy] of c.dress || []) putProp(o, kind, c.x + dx, c.y + dy);
+  return o;
 }
 
 // ── world API (dispatched from world.js) ─────────────────────────────────────

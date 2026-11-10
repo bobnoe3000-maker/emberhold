@@ -21,9 +21,14 @@ const SPIT = CAMP_BY.vale_spit, DITCH = CAMP_BY.vale_ditch;
 test('the spawn points stand on open ground, their posts and holes walkable, each arena clear of the others', () => {
   const sim = land(), w = sim.world;
   for (const c of CAMPS.filter((q) => q.region === 'vale')) {
-    assert.ok(isWalkable(w, c.x, c.y) || c.kind === 'camp', `${c.id}: its middle is open ground`);
-    for (const [dx, dy] of c.posts || []) assert.ok(isWalkable(w, c.x + dx, c.y + dy), `${c.id}: a post at ${dx},${dy} is open`);
-    if (c.hole) assert.ok(isWalkable(w, c.x + c.hole[0], c.y + c.hole[1]), `${c.id}: its hole is open`);
+    const own = new Set((c.dress || []).map(([, dx, dy]) => `${Math.floor(c.x + dx)},${Math.floor(c.y + dy)}`));
+    assert.ok(isWalkable(w, c.x, c.y) || own.has(`${Math.floor(c.x)},${Math.floor(c.y)}`), `${c.id}: its middle is open ground or its own dressing`);
+    for (const [kind, dx, dy] of c.dress || []) assert.equal(w.props.get(`${Math.floor(c.x + dx)},${Math.floor(c.y + dy)}`), kind, `${c.id}: its ${kind} stands`);
+    const foot = [...(c.posts || []), ...(c.hole ? [c.hole] : [])];
+    for (const [dx, dy] of foot) {
+      assert.ok(isWalkable(w, c.x + dx, c.y + dy), `${c.id}: a post or hole at ${dx},${dy} is open`);
+      assert.ok(!own.has(`${Math.floor(c.x + dx)},${Math.floor(c.y + dy)}`), `${c.id}: nothing of its dressing on a post or hole`);
+    }
     assert.ok(c.reach < c.arena, `${c.id}: its reach inside its arena`);
     for (const o of CAMPS) if (o !== c && o.region === c.region) assert.ok(hypot(o.x - c.x, o.y - c.y) > o.arena + c.arena, `${c.id} and ${o.id} apart`);
   }

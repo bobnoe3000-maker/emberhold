@@ -397,6 +397,38 @@ export function voxTent() {
   for (let z = 28; z < 34; z++) put(c, c, z, 3);                                                // the pole's top
   return bakeVox(vox, S, S, H, ELIT.sand, 0, ELIT.wood);
 }
+// (v1.63, the Spit: GDD §10.3) Col's cow, dead beside the goblins' fire: lying on its side, its legs out stiff, the near
+// haunch carved to the red where they've been at it. Its hide the bone ramp (the Vale's pale cattle), the cut flesh.
+// (The owner, 2026-11-10: "does not have to be a cow on a spit … it can be a dead cow, next to the fire".)
+export function voxCarcass() {
+  const SX = 40, SY = 26, H = 15, { vox, put } = vgrid(SX, SY, H), cy = 13, cz = 6.5;
+  for (let z = 0; z < H; z++) for (let y = 0; y < SY; y++) for (let x = 0; x < SX; x++) {
+    const bx = (x - 19) / 12.5, by = (y - cy) / 6.2, bz = (z - cz) / 6.4;                  // the barrel, on its side along x
+    // (the near flank carved to the ribs: bars of bone across the cut, the hide's dark between)
+    if (bx * bx + by * by + bz * bz <= 1) put(x, y, z, x > 17 && x < 27 && y > cy + 1 && z > 3 ? (x % 3 ? 3 : 0) : 1);
+    const hx = (x - 34) / 4.4, hy = (y - (cy - 1)) / 3.4, hz = (z - 4) / 3.6;              // the head, laid down, a little up the slope
+    if (hx * hx + hy * hy + hz * hz <= 1) put(x, y, z, 1);
+  }
+  for (const [x, y] of [[33, cy - 4], [32, cy - 5], [31, cy - 6], [35, cy + 3], [35, cy + 4], [36, cy + 5]]) put(x, y, 6, 3);   // the horns
+  for (const [lx, lz] of [[11, 5], [14, 8], [24, 5], [27, 8]])                                // the legs, out stiff toward the camera
+    for (let y = cy + 5; y < SY - 1; y++) for (let z = lz - 1; z <= lz; z++) for (let x = lx - 1; x <= lx; x++) put(x, y, z, y >= SY - 3 ? 3 : 1);
+  for (let y = cy - 1; y <= cy; y++) for (let x = 3; x < 8; x++) put(x, y, 4, 1);           // the tail, flat on the ground
+  return bakeVox(vox, SX, SY, H, ELIT.wood, 0, ELIT.bone);   // (a red-brown hide, bone at the ribs, the horns and the hooves)
+}
+// (v1.63, the ditch burrow) a rats' hole in the bank: a mound of thrown-up earth, a dark mouth in it facing the camera,
+// a spill of spoil before it
+export function voxBurrow() {
+  const S = 22, H = 9, { vox, put } = vgrid(S, S, H), c = (S - 1) / 2;
+  for (let z = 0; z < H; z++) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const d = Math.hypot(x - c, y - c), top = 8.5 * (1 - d / 10.5) + (hash2(x, y, 31) - 0.5) * 1.4;
+    if (d > 10.5 || z > top) continue;
+    const mouth = Math.hypot(x - (c + 4), y - (c + 4), (z - 2.5) * 1.3) < 3.3;              // the hole, on the camera's side
+    if (mouth) { if (Math.hypot(x - (c + 4), y - (c + 4), (z - 2.5) * 1.3) > 2.4) put(x, y, z, 3); continue; }
+    put(x, y, z, 1);
+  }
+  for (let i = 0; i < 14; i++) { const x = Math.round(c + 6 + hash2(i, 1, 7) * 5), y = Math.round(c + 6 + hash2(i, 2, 7) * 5); if (x < S && y < S) put(x, y, 0, 1); }   // the spoil thrown out
+  return bakeVox(vox, S, S, H, ELIT.earth, 0, ELIT.pit);
+}
 // A barracks bunk: two tiers of timber and straw ticks, chest high and head high.
 export function voxBunk() {
   const SX = 8, SY = 16, SZ = 30, { vox, put } = vgrid(SX, SY, SZ);
@@ -819,6 +851,7 @@ export function buildProps(seed) {
     standard: [0, 1].map((v) => voxStandard(mulberry32((seed * 61 + v * 73 + 37) >>> 0))),
     banner: [0, 1].map((v) => voxBanner(mulberry32((seed * 67 + v * 79 + 41) >>> 0))),
     tent: [voxTent()],
+    carcass: [voxCarcass()], burrow: [voxBurrow()],   // (v1.63: the Spit's dead cow, the ditch burrow)
     bunk: [voxBunk()],
     scaffold: [voxScaffold()],
     stalagmite: [0, 1, 2].map((v) => voxStalagmite(mulberry32((seed * 71 + v * 83 + 43) >>> 0))),

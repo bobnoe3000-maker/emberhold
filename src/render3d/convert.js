@@ -277,6 +277,11 @@ function outdoor(w, region) {
     const [tx, ty] = k.split(',').map(Number), x = X(tx + 0.5), z = Z(ty + 0.5);
     if (!inside(x, z)) continue;
     if (kind === 'brazier') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });   // (a core light: Luminati's monument brazier is The Bells of Evermere's and loads its kits)
+    // (v1.63, GDD §10.3: a spawn point's dressing, sim/camps.js) the camp's fire Luminati's own; crates, sacks and bones its
+    // own pieces as underground; the rest ours (gsprite.js: the tent, the dead cow, the burrow), stood as a dungeon's are
+    else if (kind === 'cookfire') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });
+    else if (kind === 'crates' || kind === 'sacks' || kind === 'bones') add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
+    else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
   // map (the owner, 2026-11-02: "The edge of the map falls off a cliff, and is blank. The old maps were surrounded by
@@ -359,6 +364,8 @@ const KIT_LOOK = {
 };
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 } };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
+/** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
+const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow']);
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
   brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.36, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs, at 0.45 still big)

@@ -121,7 +121,7 @@ Col doesn't breathe on your shaman's hand this time. He takes a pinch of road du
 // ── his cow (content/quests/vale_bramble.json; world doc §3.1 v1.39) ──
 == col_bramble_offer ==
 "A cow. Brown one. Bramble. I stopped to water the horse on the Greyholt road and when I turned round there was a rope going off into the reeds with nothing on the end of it."
-"Goblins. Three of them. Skarn's lot that didn't go with Skarn. They've a fire by the river, above the bridge, and they've got her on a spit. You can smell it from the road. I could, anyway. I went and looked."
+"Goblins. Three of them. Skarn's lot that didn't go with Skarn. They've a fire by the river, above the bridge, and they've got her by it, half carved. You can smell it from the road. I could, anyway. I went and looked."
 "I'm not asking you to bring her back. I'm not daft. Just make them go. And there's a bell on her collar, if they haven't eaten that too."
 + [We'll see to it. #mark: quest]
     "Above the bridge, east bank. Follow your nose." # quest: accept vale_bramble
@@ -160,22 +160,22 @@ Col takes the bell and turns it over. It's blackened, and the clapper's bent. He
 + [Carry on, Jory.] -> END
 
 == jory_ditch_offer ==
-"Rats. In the bank under the north wall, where the midden goes over. Big ones, the barrows kind. Hedda told me. Then Nell told me. Then Bess told me, and she told me twice."
+"Rats. In the bank under the south wall, where the midden goes over. Big ones, the barrows kind. Hedda told me. Then Nell told me. Then Bess told me, and she told me twice."
 "I went and looked. One came out at me. I came back. The Captain says the Watch doesn't run. I walked very quickly."
 "If you'd go round and clear the hole, I'd write it down as seen to. They'll come back. But I'll have written it down."
 + [We'll clear it. #mark: quest]
-    "Out the gate and left, along the wall. Mind the midden." # quest: accept vale_the_ditch
+    "Out the gate and right, round the town to the far corner. Mind the midden." # quest: accept vale_the_ditch
     -> jory_topics
 + [Not now.]
     "I'll tell Hedda you said not now. She'll tell me again."
     -> jory_topics
 
 == jory_ditch_active ==
-"The north wall, outside, where the farm lane runs under it. There's a hole in the bank. That's the one."
+"The south wall, outside, right at the far corner tower, where the wheat comes up. There's a hole in the bank. That's the one."
 -> jory_topics
 
 == jory_ditch_turnin ==
-Jory writes it in a little book with a pencil he has to lick first. *North wall. Rats. Seen to.* He underlines *seen to*.
+Jory writes it in a little book with a pencil he has to lick first. *South wall. Rats. Seen to.* He underlines *seen to*.
 "The Captain'll see that. He reads everything I write. Here, the Watch's thanks. It isn't much. The Watch isn't much." # quest: turnin vale_the_ditch
 -> jory_topics
 
