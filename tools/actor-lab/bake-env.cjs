@@ -10,7 +10,10 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
   const list = JSON.parse(fs.readFileSync(path.join(DIR, 'env.json')));
   // the undergrowth and rocks are Quaternius' Stylized Nature MegaKit (CC0): its glTF folder unzipped into models/nature/
   const missing = list.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf'))).map((e) => e.gltf);
-  if (missing.length) { console.error(`FAIL missing ${missing.join(', ')}: unzip the Stylized Nature MegaKit's glTF folder into tools/actor-lab/models/nature/ (README, "The nature pack")`); process.exit(1); }
+  // --keep-missing: bake what's here and carry the rest over from the atlas as it stands (pixels, origin, footprint),
+  // for a checkout without the nature pack; a sprite carried over is reported, so the next full bake isn't forgotten
+  const KEEP = process.argv.includes('--keep-missing');
+  if (missing.length && !KEEP) { console.error(`FAIL missing ${missing.join(', ')}: unzip the Stylized Nature MegaKit's glTF folder into tools/actor-lab/models/nature/ (README, "The nature pack")`); process.exit(1); }
   const srv = await serve(DIR), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROME, args: GL });
   const p = await b.newPage(); p.on('pageerror', (e) => console.log('PAGEERR', e.message));
@@ -20,7 +23,15 @@ const DIR = __dirname, ROOT = path.join(DIR, '..', '..'), OUT = path.join(ROOT, 
   fs.mkdirSync(OUT, { recursive: true });
   const t0 = Date.now(), foot = {};
   for (const [name, l] of sets) {
-    const r = await p.evaluate(async (l) => await window.bakeAll(l), l);
+    let kept = null;
+    const gone = l.filter((e) => e.gltf && !fs.existsSync(path.join(DIR, 'models', e.gltf + '.gltf')));
+    if (gone.length) {
+      const prev = JSON.parse(fs.readFileSync(path.join(OUT, `${name}.json`))).sprites, sprites = {};
+      for (const e of gone) { if (!prev[e.id]) throw new Error(`${e.id}: no source (${e.gltf}) and nothing baked before to keep`); sprites[e.id] = prev[e.id]; }
+      kept = { atlas: 'data:image/png;base64,' + fs.readFileSync(path.join(OUT, `${name}.alb.png`)).toString('base64'), sprites };
+      console.log(`  ${name}: kept as baked (no source here): ${gone.map((e) => e.id).join(' ')}`);
+    }
+    const r = await p.evaluate(async ([l, kept]) => await window.bakeAll(l, 2048, kept), [l, kept]);
     // (the albedo only: the normal-and-shadow and depth-key atlases went with Luminati only, docs/luminati-only-cleanup.md step 3;
     // the bake still draws them, for the sprites' measures)
     fs.writeFileSync(path.join(OUT, `${name}.alb.png`), Buffer.from(r.alb.split(',')[1], 'base64'));

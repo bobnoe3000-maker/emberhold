@@ -974,14 +974,16 @@ Object.assign(TYPES, {
     for (const sx of [-1, 1]) { const up = new THREE.Mesh(faceted(new THREE.BoxGeometry(0.12, 0.43, 0.13, 1, 3, 1), r, 0.02, stoneCol), vmat()); up.position.set(0.08 + sx * 0.18, 0.215, 0.4); up.rotation.z = sx * 0.04; g.add(up); }
     const lintel = new THREE.Mesh(faceted(new THREE.BoxGeometry(0.56, 0.1, 0.16, 3, 1, 1), r, 0.02, stoneCol), vmat()); lintel.position.set(0.08, 0.47, 0.4); lintel.rotation.z = 0.02; g.add(lintel);
     const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.012, 10), mat(null, '#7a7062')); shield.rotation.x = Math.PI / 2; shield.position.set(0.08, 0.47, 0.485); g.add(shield);
-    box(0.28, 0.02, 0.22, mat(tex('field', '#6e6a60', 22)), 0.08, 0, 0.56, g);                   // the threshold, worn
+    // (what the people walk on or past at the mouth, the threshold, the planks and Tobin's post, is dressing: the doorway
+    // stays open, the footprint the mound's and the portal's: bake-env.cjs, envfoot.js)
+    dress(box(0.28, 0.02, 0.22, mat(tex('field', '#6e6a60', 22)), 0.08, 0, 0.56, g));             // the threshold, worn
     // the Redhand's shoring in the door, their spoil heap, planks laid over the mud
     for (const sx of [-1, 1]) box(0.028, 0.37, 0.028, S.m.beam, 0.08 + sx * 0.105, 0, 0.42, g).rotation.z = sx * 0.05;
     box(0.25, 0.028, 0.035, S.m.beam, 0.08, 0.37, 0.42, g);
-    const spoil = new THREE.Mesh(faceted(solidCone(0.24, 0.17, 9), r, 0.03, (ny, y, q) => tint(C3('#5a4a38'), 0.85 + q * 0.25)), vmat()); spoil.position.set(0.58, 0.085, 0.5); g.add(spoil);
-    for (let i = 0; i < 3; i++) box(0.065, 0.01, 0.34, S.m.wood, 0.0 + i * 0.075, 0, 0.74, g).rotation.y = (r() - 0.5) * 0.12;
+    const spoil = new THREE.Mesh(faceted(solidCone(0.24, 0.17, 9), r, 0.03, (ny, y, q) => tint(C3('#5a4a38'), 0.85 + q * 0.25)), vmat()); spoil.position.set(0.6, 0.085, 0.36); g.add(spoil);   // (beside the forecourt, out of the way in)
+    for (let i = 0; i < 3; i++) dress(box(0.065, 0.01, 0.34, S.m.wood, 0.0 + i * 0.075, 0, 0.74, g)).rotation.y = (r() - 0.5) * 0.12;
     // Tobin's lantern on its post, by the mouth
-    box(0.025, 0.36, 0.025, S.m.beam, -0.3, 0, 0.6, g); box(0.1, 0.018, 0.018, S.m.beam, -0.26, 0.34, 0.6, g); lantern(g, S, -0.22, 0.3, 0.6);
+    { const n = g.children.length; box(0.025, 0.36, 0.025, S.m.beam, -0.3, 0, 0.6, g); box(0.1, 0.018, 0.018, S.m.beam, -0.26, 0.34, 0.6, g); lantern(g, S, -0.22, 0.3, 0.6); g.children.slice(n).forEach(dress); }
     // a leaning stone on the ridge, two out on the grass, the dead tree behind
     standingStone(g, r, -0.35, -0.3, 0.28, 0.1).position.y = 0.2;
     for (const [x, z, h, l] of [[-0.82, 0.32, 0.3, 0.12], [0.78, -0.55, 0.34, 0.06]]) standingStone(g, r, x, z, h, l);

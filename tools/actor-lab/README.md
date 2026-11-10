@@ -49,7 +49,9 @@ The undergrowth (`ug_*`) and the scatter's rocks (`rock_F`, `rock_G`, `rock_H`) 
 Nature MegaKit** (CC0), graded in the bake to the Vale's trees (`docs/nature-pack-proposal.md`).
 - **Getting it:** download its glTF folder (from quaternius.com or itch.io) and unzip it into
   `models/nature/`. Like `models/`, it isn't committed.
-- **Without it:** `bake-env.cjs` stops and says so.
+- **Without it:** `bake-env.cjs` stops and says so; `bake-env.cjs --keep-missing` bakes every model that's here and
+  carries the undergrowth and those rocks over from the atlas as it stands (pixels, origin, footprint), naming them.
+  Our own kit (`buildkit.js`) needs nothing downloaded, so a change to it can always be baked.
 
 ## Game atlases (`bake.cjs` + `bake.json`)
 

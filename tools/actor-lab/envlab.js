@@ -246,9 +246,21 @@ window.bakeEnv = async (name, o = {}) => {
 };
 // Bake a whole manifest and shelf-pack it into three atlases (albedo RGBA, normal +
 // shadow alpha, depth-key hi/lo + emissive flag). Returns atlas PNGs + per-sprite meta.
-window.bakeAll = async (list, width = 2048) => {
+// kept: { atlas (the old atlas's albedo, a data URL), sprites: { id: its old meta } }: those sprites aren't baked but
+// carried over as they were (bake-env.cjs --keep-missing: a model whose source isn't here, the nature pack's glTF).
+window.bakeAll = async (list, width = 2048, kept = null) => {
   const items = [];
-  for (const e of list) { const r = await window.bakeEnv(e.model, { ...e, raw: true, windowSwatches: e.windows ? [14] : [] }); items.push({ e, r }); await new Promise((q) => setTimeout(q, 0)); }
+  let old = null;
+  if (kept) { const im = new Image(); im.src = kept.atlas; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; old = c.getContext('2d', { willReadFrequently: true }); old.drawImage(im, 0, 0); }
+  for (const e of list) {
+    const m = kept?.sprites[e.id];
+    if (m) {                                       // (carried over: its pixels, origin, footprint and top as they were)
+      const A = old.getImageData(m.x, m.y, m.w, m.h), blank = new ImageData(m.w, m.h);
+      items.push({ e, r: { w: m.w, h: m.h, ax: m.ax, ay: m.ay, foot: m.foot, top: m.top, A, N: blank, K: blank, glowKept: m.glow || 0 } });
+      continue;
+    }
+    const r = await window.bakeEnv(e.model, { ...e, raw: true, windowSwatches: e.windows ? [14] : [] }); items.push({ e, r }); await new Promise((q) => setTimeout(q, 0));
+  }
   const order = items.map((_, i) => i).sort((p, q) => items[q].r.h - items[p].r.h);
   let x = 0, y = 0, rowH = 0; const pos = [];
   for (const i of order) { const r = items[i].r; if (x + r.w > width) { x = 0; y += rowH + 1; rowH = 0; } pos[i] = [x, y]; x += r.w + 1; rowH = Math.max(rowH, r.h); }
@@ -258,7 +270,7 @@ window.bakeAll = async (list, width = 2048) => {
   const meta = {};
   items.forEach(({ e, r }, i) => { const [px, py] = pos[i];
     xa.putImageData(r.A, px, py); xn.putImageData(r.N, px, py); xk.putImageData(r.K, px, py);
-    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.emi ? (e.glowId || 9) : 0, ...(e.up > 1 ? { up: e.up } : {}) }; });   // glow: its GLOW_ID (9 lit windows; 2 violet)
+    meta[e.id] = { x: px, y: py, w: r.w, h: r.h, ax: r.ax, ay: r.ay, foot: r.foot, top: r.top, glow: r.glowKept ?? (r.emi ? (e.glowId || 9) : 0), ...(e.up > 1 ? { up: e.up } : {}) }; });   // glow: its GLOW_ID (9 lit windows; 2 violet)
   return { meta, width, height: H, alb: ca.toDataURL('image/png'), nrm: cn.toDataURL('image/png'), key: ck.toDataURL('image/png') };
 };
 window.ready = true;

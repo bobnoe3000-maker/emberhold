@@ -189,9 +189,14 @@ clock (`tools/capture/rig.mjs … --query landmarks=doors`).*
     chapel in the world's water;
   - `npm run check`.
 - **Not done here:**
-  - **The re-bake.** `bake-env.cjs` needs the nature pack's glTF, which this checkout lacks. So the barrow's and the
-    chapel's 2D sprites (the minimap, `?landmarks=sprites`) are still the old designs, and `envfoot.js` keeps their old
-    footprints. The next bake picks them up. The chapel's pool is `bakeOnly`, so its card keeps water.
+  - **The re-bake** (done since, 2026-11-10): `bake-env.cjs --keep-missing` bakes our kit without the nature pack, carrying
+    the undergrowth over as baked. The barrow's and the chapel's cards, the minimap's sprites and the Frontier's are
+    now the new designs. `envfoot.js` changed only for those two:
+    - the barrow `[-9.37,-9.66,9.14,6.89]` → `[-9.65,-8.78,8.92,5.9]` (its threshold, planks and Tobin's post are
+      dressing, so the doorway stays open, a tile more than before);
+    - the chapel `[-6.67,-5.7,7.63,8.85]` → `[-7.17,-6.65,7.57,8.35]`.
+
+    Every other footprint and all four town atlases came out the same. `npm run check` passes.
   - **The Keep's door torches** (Luminati's wall torch). The door's own lit windows and the brazier light it for now.
 
 ## 8. #3: the rest of the Vale's cards, as the owner chose
