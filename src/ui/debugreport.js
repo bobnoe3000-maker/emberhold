@@ -37,7 +37,8 @@ function memberLines(m, i) {
 
 /**
  * @param {any} sim the running sim (core.js createSim)
- * @param {{ slot?: number, when?: string, ua?: string, view?: string }} [page]
+ * @param {{ slot?: number, when?: string, ua?: string, view?: string, render?: any }} [page] (render: Luminati's stats, world.js
+ *   `stats`: how the people are drawn, which as models, and the first model that failed and why)
  * @returns {string}
  */
 export function debugReport(sim, page = {}) {
@@ -49,6 +50,11 @@ export function debugReport(sim, page = {}) {
   L.push('EMBERFALL DEBUG REPORT');
   L.push(`save v${SAVE_VERSION} · slot ${page.slot ?? '?'} · seed ${sim.seed} · ${page.when || ''}`.trim());
   if (page.ua) L.push(`device: ${page.ua}${page.view ? ' · ' + page.view : ''}`);
+  // (the people as Luminati drew them this frame: the owner, 2026-11-10, "the rats and rat king are invisible", from a
+  // browser we can't run here; a figure neither a model nor a sprite would show as drawn < in view)
+  const R = page.render;
+  if (R) L.push(`RENDER: people as ${R.figures || '?'} · ${R.models ?? 0} models of ${R.actors ?? 0} drawn · kinds ${(R.modelNames || []).join(', ') || '—'}` +
+    ` · failed ${R.figFailed ?? 0}${R.figErr ? ' (' + R.figErr + ')' : ''} · at ${R.pr ?? '?'}× · figure light ${R.fig ?? '?'}`);
   L.push('');
   L.push(`WHERE: ${W.kind} · ${where}${W.region ? ' · region ' + W.region : ''} · at ${r1(p.x ?? 0)}, ${r1(p.y ?? 0)}`);
   L.push(`TIME: day ${day}, ${part} (t ${Math.round(t)} s) · tick ${S.tick}`);

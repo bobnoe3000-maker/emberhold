@@ -206,7 +206,7 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   // the report to the clipboard; the label says how it went (a HUD toast would sit under this menu)
   let copied = '';
   async function copyReport() {
-    const text = debugReport(sim, { slot, when: new Date().toISOString(), ua: navigator.userAgent, view: `${innerWidth}×${innerHeight} @${devicePixelRatio}x` });
+    const text = debugReport(sim, { slot, when: new Date().toISOString(), ua: navigator.userAgent, view: `${innerWidth}×${innerHeight} @${devicePixelRatio}x`, render: graphics && graphics.status ? graphics.status() : null });
     let ok;
     try { await navigator.clipboard.writeText(text); ok = true; } catch {
       const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0';

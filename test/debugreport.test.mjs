@@ -23,3 +23,10 @@ test('the debug report: where, party, quests, and the snapshot as JSON; reading 
   const json = JSON.parse(r.slice(r.indexOf('SNAPSHOT (save-shaped JSON)\n') + 28));
   assert.deepEqual(json, JSON.parse(JSON.stringify(sim.snapshot())));
 });
+
+test('the debug report says how Luminati drew the people (a model that failed, and why)', () => {
+  const sim = createSim(20260807, undefined, { scene: 'town' });
+  const r = debugReport(sim, { slot: 1, render: { figures: 'models', models: 3, actors: 4, modelNames: ['hero_knight', 'creature_wraith'], figFailed: 1, figErr: 'vermin_rat: boom', pr: 1.5, fig: 0.9 } });
+  assert.match(r, /RENDER: people as models · 3 models of 4 drawn · kinds hero_knight, creature_wraith · failed 1 \(vermin_rat: boom\) · at 1\.5× · figure light 0\.9/);
+  assert.doesNotMatch(debugReport(sim, { slot: 1 }), /RENDER:/, 'no line without the renderer');
+});
