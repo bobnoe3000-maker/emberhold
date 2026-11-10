@@ -351,7 +351,27 @@ The balance harness's rooms were unchanged by it (`roomlv.mjs` at Canal Locks 13
 after: 13 and 12 waves, the same to the gold). Two skill tests that fight in a Canal Locks room were given longer, to
 wait for the foes to stand where their rules want them.
 
-### 4.4 The kits: each place's brief
+### 4.4 What stays clear: the stairs, the doorways, the lights (new, enforced)
+
+The owner, 2026-11-10, with a screenshot of a floor's way up (two heaps of barrels against the stair, a light on it, a
+brazier in the doorway to the next room): *"need rules to prevent things like barrels blocking the stairway, or a torch in
+the middle of a hallway or entrance to another room."* Three rules, `src/sim/keepclear.js`, kept by `world.js` on every
+floor, authored or generated:
+
+| Rule | What it keeps clear | How |
+|---|---|---|
+| **The stairs** | nothing on a stair or within 2 tiles of it: the way up's flight, its foot and the run out to where you arrive; the way down's well and rim, and three rows in front | the dressing is laid before the stairs are placed, so once they are, the dressing on their ground is taken up (`clearStairs`). The stairs' own pieces stay: the stairwell's two lights, its set piece (the Barrow Door's guardians, the Chancel's altar and candelabras), a chest, a shrine. |
+| **The doorways** | nothing within 1.5 tiles of a doorway (a room's floor where a corridor comes in) | `place()` refuses it. Corridors were already kept clear. |
+| **The lights** | a brazier, torch, lantern, candelabra or candles stands by a wall: at its foot or a step out (a wall within 2 tiles), never in a room's open middle, a hallway's middle or a doorway | `place()` refuses it. A doorway's light now stands against the wall the corridor comes through, just past the opening's edge; it stood two steps inside and out in the floor. |
+
+Measured (`node tools/dungeon/dress-audit.mjs --clear --seeds 3`: every site's floors, 60 floors): before, 843 pieces
+where the rules say no (795 lights in the open, 406 of them a doorway's, 38 on the stairs, 11 in doorways); after, 0. The
+floors hold 4 % fewer pieces and 9 % fewer lights (901 → 819: the ones that stood in the open). Doorway lights placed:
+646 of 887 before, 635 of 904 after. `test/keepclear.test.mjs` holds every floor to it.
+
+![Two floors' ways up at dusk, before and after: the Old Barrows' second floor (a shelf of urns by the stair, a brazier out in the room) and Wickham Keep's first (torches on and against the stair, a brazier in the open)](img/dungeon/keepclear-before-after.jpg)
+
+### 4.5 The kits: each place's brief
 
 | Kit | The place | Its pieces (back walls · clusters · set piece · obstacles) | Its light |
 |---|---|---|---|

@@ -10,7 +10,8 @@ import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt, dressAt, planFloor } from './sites.js';
-import { mayPlace, REPEAT as REPEAT_CAPPED } from './dresscaps.js';
+import { mayPlace, REPEAT as REPEAT_CAPPED, LIGHT } from './dresscaps.js';
+import { mouths, againstWall, stairZone, STAIR_OWN } from './keepclear.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -204,8 +205,13 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // (docs/level-design-rules.md §4.3: a room holds as many of a piece as its size allows, dresscaps.js; the owner,
   // 2026-11-10: "dont repeat with 6+ torches unless the room is large". A piece past its cap isn't set down)
   const roomHas = new Map(), roomSize = new Map(level.rooms.map((r) => [r.id, r.size || 'large']));
+  // (docs/level-design-rules.md §4.4, keepclear.js; the owner, 2026-11-10: "need rules to prevent things like barrels
+  // blocking the stairway, or a torch in the middle of a hallway or entrance to another room": nothing in a doorway's
+  // mouth, and a light only by a wall. The stairs, placed after, clear their own ground: below)
+  const MOUTHS = mouths(level);
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
+    if (MOUTHS.has(k) || (LIGHT.has(kind) && !againstWall(level, px, py))) return false;
     if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) {
       if (c.room >= 0 && REPEAT_CAPPED.has(kind)) {
         let has = roomHas.get(c.room); if (!has) roomHas.set(c.room, (has = new Map()));
@@ -234,9 +240,16 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     // (one light a doorway in an authored fighting room, on alternate sides: a pair at each of three doorways stood six
     // torches about the Horse Lines; a sanctuary keeps its pair)
     const pair = !r.dress || r === level.entrance;
+    // (against the wall the corridor comes through, just past the opening's edge, a step in at most: §4.4. They stood two
+    // steps inside and out in the floor, a light in the way in: the owner, 2026-11-10)
     openings.forEach((o, oi) => {
-      const ix = Math.round(o.x) - o.dx * 2, iy = Math.round(o.y) - o.dy * 2, px = o.dy, py = o.dx;   // two steps inside, perpendicular to the corridor
-      for (const s of pair ? [-1, 1] : [oi % 2 ? 1 : -1]) for (let w = 4; w <= 6; w++) if (place(ix + px * s * w, iy + py * s * w, DL)) break;
+      const px = o.dy, py = o.dx;   // along the wall the opening is in
+      const side = (s) => {
+        const e = o.pts.reduce((a, q) => (s * (q[0] * px + q[1] * py) > s * (a[0] * px + a[1] * py) ? q : a));   // the opening's end on this side
+        for (let j = 0; j <= 1; j++) for (let w = 2; w <= 6; w++) if (place(e[0] + px * s * w - o.dx * j, e[1] + py * s * w - o.dy * j, DL)) return true;
+        return false;
+      };
+      if (pair) { side(-1); side(1); } else { const s0 = oi % 2 ? 1 : -1; if (!side(s0)) side(-s0); }   // (one side, else the other)
     });
     // the strongroom's iron door, hung open inside its doorway, against the wall it's set in
     if (r.dress && r.dress.includes('iron_door') && openings.length) { const o = openings[0], ix = Math.round(o.x) - o.dx, iy = Math.round(o.y) - o.dy; for (let w = 7; w <= 9; w++) if (place(ix + o.dy * w, iy + o.dx * w, o.dx ? 'iron_door_y' : 'iron_door')) break; }
@@ -395,16 +408,17 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // Every floor's way back up, one floor at a time: a stone stair built against the entrance
   // room's back wall (north or west, the walls you see), climbing into it. Walk up its bottom
   // steps: on the first floor it leads out to the surface, deeper to the floor above (core.js).
-  world.structs = [];
+  world.structs = []; world.stairOwn = new Set();   // (the stairs' own pieces: their lights and set piece, never cleared from round them)
   if (level.entrance) placeStairsUp(world, level);
   if (level.descentRoom && hasFloorBelow(site, depth)) placeStairsDown(world, level);   // (a site's last floor ends in its hall)
   // the stair down's own set piece, once it's placed (docs/vale-dungeon-dressing.md): the Barrow Door's two guardians
   // either side of it; the Chancel's altar behind it, broken through, the cult's cut going down beneath
   if (world.stairwell && level.descentRoom.dress) {
-    const W0 = world.stairwell, dr = level.descentRoom, put = (x, y, kind) => { const c = level.cells.get(K(x, y)); if (c && c.kind === 'floor' && c.room === dr.id && !world.props.has(K(x, y))) world.props.set(K(x, y), kind); };
+    const W0 = world.stairwell, dr = level.descentRoom, put = (x, y, kind) => { const c = level.cells.get(K(x, y)); if (c && c.kind === 'floor' && c.room === dr.id && !world.props.has(K(x, y))) { world.props.set(K(x, y), kind); world.stairOwn.add(K(x, y)); } };
     if (dr.dress.includes('guardians')) { put(W0.x0 - 3, W0.y0 + 1, 'guardian'); put(W0.x1 + 2, W0.y0 + 1, 'guardian'); }
     if (dr.dress.includes('altar')) { const ax = (W0.x0 + W0.x1) >> 1; put(ax, W0.y0 - 2, 'altar'); put(W0.x0 - 1, W0.y0 - 2, 'candelabra'); put(W0.x1, W0.y0 - 2, 'candelabra'); for (const dx of [-2, 2]) put(ax + dx, W0.y0 - 1, 'cracks'); }
   }
+  clearStairs(world);
   if (level.descentRoom && S.vault && !hasFloorBelow(site, depth)) placeVault(world, level, S.vault);
   // coming back up from the floor below, you arrive in the corridor nearest this floor's stairs
   // down: corridors are safe, and the descent room holds the floor's boss (GDD §3.1)
@@ -627,11 +641,23 @@ function placeStairsDown(world, level) {
   const [x0, y0] = at, x1 = x0 + WELL, y1 = y0 + WELL;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) world.props.set(K(x, y), 'stairwell');
   for (let x = x0; x < x1; x++) world.props.delete(K(x, y1));
-  world.props.set(K(x0 - 1, y1 - 1), 'brazier'); world.props.set(K(x1, y1 - 1), 'brazier');
+  world.props.set(K(x0 - 1, y1 - 1), 'brazier'); world.props.set(K(x1, y1 - 1), 'brazier'); world.stairOwn.add(K(x0 - 1, y1 - 1)); world.stairOwn.add(K(x1, y1 - 1));
   world.stairsAt = { x: x0 + WELL / 2, y: y1 - 1 };
   world.props.set(K(world.stairsAt.x, world.stairsAt.y), 'stairs');
   world.stairwell = { x0, y0, x1, y1 };                                  // the opening, in tiles
   world.structs.push({ id: 'stairsdown_0', x: x0 + WELL / 2, y: y0 + WELL / 2, hole: true });
+}
+
+// The stairs' ground cleared (docs/level-design-rules.md §4.4, keepclear.js stairZone): every piece of dressing on a stair,
+// within STAIR_CLEAR of it or on its approach is taken up (the dressing is laid before the stairs are placed, and a heap of
+// barrels stood on the way up). What isn't dressing stays: the stairs themselves, their own lights and set piece, a chest,
+// a shrine, a lamp, the found.
+const DRESSING = (kind) => LIGHT.has(kind) || REPEAT_CAPPED.has(kind) || DRESS_PIECES.has(kind) || STAIR_CLEARS.has(kind);
+const STAIR_CLEARS = new Set(['spire', 'monolith', 'totem', 'crates', 'barrels', 'sacks', 'bedroll', 'pillar', 'brokenpillar', 'sarcophagus', 'bones', 'pew', 'gibbet', 'spoil',
+  'urnshelf', 'urns', 'rack', 'standard', 'banner', 'tent', 'bunk', 'scaffold', 'stalagmite', 'boulder', 'saint', 'chains', 'bound', 'font', 'boat', 'reeds', 'windlass', 'vat',
+  'scorch', 'cracks', 'puddle', 'straw', 'hay', 'rug', 'coins', 'papers', 'cookfire', 'web', 'cobweb', 'rubble']);
+function clearStairs(world) {
+  for (const k of stairZone(world)) { const p = world.props.get(k); if (p && !STAIR_OWN.has(p) && !world.stairOwn.has(k) && DRESSING(p)) world.props.delete(k); }
 }
 
 // Find a stretch of the entrance room's north (−y) or west (−x) wall with room for the
