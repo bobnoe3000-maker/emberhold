@@ -118,10 +118,11 @@ const castOf = (name) => {
   return cast ? cast.actors[name] || false : cast === false ? false : null;
 };
 const gltfLoader = new GLTFLoader(), gltfs = new Map();
-// the bake's paths (./models/<file>) to the game's assets; each build gets its own copy of the scene (bones, meshes),
-// sharing geometry, textures and clips
+// the bake's paths (./models/<file>) to the game's assets, at cast.json's version (a model re-made with the cast, so a
+// browser's old copy of a .glb isn't used against the new cast; cast.json itself is always revalidated, json above); each
+// build gets its own copy of the scene (bones, meshes), sharing geometry, textures and clips
 const loadModel = (u) => {
-  const url = `${ASSETS}models/${u.replace('./models/', '')}`;
+  const url = `${ASSETS}models/${u.replace('./models/', '')}${cast && cast._v ? `?v=${cast._v}` : ''}`;
   let p = gltfs.get(url); if (!p) { p = gltfLoader.loadAsync(url); gltfs.set(url, p); }
   return p.then((g) => ({ scene: cloneSkinned(g.scene), animations: g.animations }));
 };

@@ -14864,7 +14864,7 @@ function ud(e, t, n, r, i) {
 var dd = "models", fd = new j(), pd = .4, md = null, hd = !1, gd = "", _d = (e) => (hd || (hd = !0, id(`${zu}models/cast.json`).then((e) => {
 	md = e || !1, e || (gd ||= "models/cast.json unreadable");
 })), md ? md.actors[e] || !1 : md !== !1 && null), vd = new So(), yd = /* @__PURE__ */ new Map(), bd = (e) => {
-	let t = `${zu}models/${e.replace("./models/", "")}`, n = yd.get(t);
+	let t = `${zu}models/${e.replace("./models/", "")}${md && md._v ? `?v=${md._v}` : ""}`, n = yd.get(t);
 	return n || (n = vd.loadAsync(t), yd.set(t, n)), n.then((e) => ({
 		scene: bo(e.scene),
 		animations: e.animations

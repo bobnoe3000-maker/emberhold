@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, statSync, writeFile
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), ROOT = resolve(HERE, '..', '..');
@@ -43,6 +44,10 @@ writeFileSync(join(OUT, 'BUILD.txt'), `Built by tools/render3d/build.mjs from Lu
 tools/render3d/world.js. Do not edit: rebuild. Imported by src/render3d/hybrid.js (docs/luminati-port-plan.md §13).
 ${files.length} modules, ${(all / 1048576).toFixed(2)} MB (${(allGz / 1024).toFixed(0)} KB gzipped); luminati.js ${(entryGz / 1024).toFixed(0)} KB gzipped.
 `);
+// the entry's version (hybrid.js imports luminati.js?v=…, asking for this file afresh each start): the chunks are named by
+// their content, the entry isn't, and a browser that kept an old entry for a few minutes after a release built its people
+// from the old code against a fresh cast.json (the owner, 2026-11-10: the wraiths and rats unseen until a retest)
+writeFileSync(join(OUT, 'version.json'), JSON.stringify({ v: createHash('sha1').update(readFileSync(join(OUT, 'luminati.js'))).digest('hex').slice(0, 12) }) + '\n');
 const size = (p) => statSync(p).isDirectory() ? readdirSync(p).reduce((s, f) => s + size(join(p, f)), 0) : statSync(p).size;
 console.log(`${OUT.slice(ROOT.length + 1)}: ${files.length} modules, ${(size(OUT) / 1048576).toFixed(2)} MB on disk, ${(allGz / 1024).toFixed(0)} KB gzipped in all, the entry ${(entryGz / 1024).toFixed(0)} KB`);
 for (const [f, b, g] of sizes.sort((a, b) => b[2] - a[2]).slice(0, 8)) console.log(`  ${f}: ${(b / 1024).toFixed(0)} KB, ${(g / 1024).toFixed(0)} KB gz`);

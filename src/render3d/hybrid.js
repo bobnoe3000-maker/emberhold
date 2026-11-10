@@ -246,7 +246,10 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         carry: sim.world.kind === 'dungeon' ? 1 : CARRY[Math.floor((((c.t ?? sim.state.t) % DAY_S) + DAY_S) % DAY_S / PART_S)] });
     },
   });
-  const mod = await import(vendor);
+  // (the bundle's entry at its build's version, version.json asked for afresh: a browser that kept an old entry built the
+  // people from old code against a fresh cast.json, tools/render3d/build.mjs; without it, the entry as it is)
+  const at = new URL(vendor, import.meta.url), ver = await fetch(new URL('version.json', at), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const mod = await import(ver && ver.v ? `${at.href}?v=${ver.v}` : vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
     landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
