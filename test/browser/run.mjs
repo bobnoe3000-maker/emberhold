@@ -621,7 +621,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
   if (b) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
     const pngs = []; p.on('request', (r) => { const m = /\/assets\/(env|actors)\/([^/.]+)\.(alb|nrm|key|emi)\.png(\?v=(\w+))?$/.exec(r.url()); if (m) pngs.push({ dir: m[1], name: m[2], ch: m[3], v: m[5] }); });
-    await p.goto(`${base}/index.html?dev&notitle&scene=town&world=on&figures=sprites`); await p.waitForFunction(() => !!globalThis.__world3d && globalThis.__world3d.state.loads >= 1, null, { timeout: 120000 * SLOW }); await p.waitForTimeout(3000);
+    await p.goto(`${base}/index.html?dev&notitle&scene=town&world=on&figures=sprites`); await p.waitForFunction(() => !!globalThis.__world3d && globalThis.__world3d.state.loads >= 1, null, { timeout: 120000 * SLOW });
+    // (until the first figure's atlas is asked for, up to 30 s, then a moment for the rest: a fixed 3 s after the world
+    // loaded saw only the env's two on a slow runner, CI runs 342-349, while it passed between them)
+    for (let i = 0; i < 60 * SLOW && !pngs.some((q) => q.dir === 'actors'); i++) await p.waitForTimeout(500);
+    await p.waitForTimeout(3000);
     const fnv = (t) => { let h = 0x811c9dc5; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 0x01000193); return (h >>> 0).toString(36); };
     const bad = pngs.filter((q) => q.v !== fnv(readFileSync(`assets/${q.dir}/${q.name}.json`, 'utf8')));
     const lit = pngs.filter((q) => q.ch !== 'alb');
