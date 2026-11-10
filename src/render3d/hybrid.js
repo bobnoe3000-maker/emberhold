@@ -165,7 +165,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (built === w) return true;
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
-        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '' });   // (?stairs=arch: docs/dungeon-stairs-proposal.md's spike)
+        const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);

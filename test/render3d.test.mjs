@@ -31,7 +31,10 @@ for (const [scene, region, site] of worlds) {
     for (const o of level.objects) {
       if ('x' in o) { assert.ok(o.x >= 0 && o.x <= level.width && o.z >= 0 && o.z <= level.depth, `${o.type} outside the level`); }
     }
-    for (const s of sprites) assert.ok(s.x >= 0 && s.x <= level.width && s.z >= 0 && s.z <= level.depth && (typeof s.id === 'string' || typeof s.prop === 'string'));
+    for (const s of sprites) {
+      const at = s.arch || s;                                   // (a stair's arch, GDD v1.57: its place on its face, its kind)
+      assert.ok(at.x >= 0 && at.x <= level.width && at.z >= 0 && at.z <= level.depth && (typeof s.id === 'string' || typeof s.prop === 'string' || ['up', 'down'].includes(s.arch?.kind)), JSON.stringify(s));
+    }
     // the hero stands on a walkable, unraised tile of the level (where the sim put them)
     const p = createSim(SEED, undefined, { scene, region, site }).state.player;
     const i = Math.floor((p.x - origin.x) / 2), j = Math.floor((p.y - origin.y) / 2);
@@ -66,14 +69,14 @@ test('convert: a dungeon floor has its ways up and down as Luminati\'s stairs, n
   }
 });
 
-// the stairs proposal's spike (docs/dungeon-stairs-proposal.md, ?stairs=arch): the way up three tiles wide, never over a
-// wall, an arch over each way in the floor's stone, lit gold up and violet down; without it, the floor as it was
-test('convert: with stairs=arch the way up is three tiles wide and each way stands under an arch; without it nothing changes', () => {
+// the stairs under arches (GDD v1.57, docs/dungeon-stairs-proposal.md): the way up three tiles wide, never over a wall, an
+// arch over each way in the floor's stone, lit gold up and violet down; ?stairs=plain the floor as it was
+test('convert: a dungeon floor\'s way up is three tiles wide and each way stands under an arch; stairs=plain has neither', () => {
   for (const site of ['barrows', 'wickham_keep', 'sunken_chapel']) {
     const w = createSim(SEED, undefined, { scene: 'dungeon', site }).world;
-    const plain = convertWorld(w, { region: 'vale' }), arch = convertWorld(w, { region: 'vale', stairs: 'arch' });
-    assert.deepEqual(convertWorld(w, { region: 'vale', stairs: '' }), plain, `${site}: no flag, the same level`);
-    assert.equal(plain.sprites.filter((q) => q.arch).length, 0, `${site}: no arch without the flag`);
+    const plain = convertWorld(w, { region: 'vale', stairs: 'plain' }), arch = convertWorld(w, { region: 'vale' });
+    assert.deepEqual(convertWorld(w, { region: 'vale', stairs: '' }), arch, `${site}: no flag, the arches (the default)`);
+    assert.equal(plain.sprites.filter((q) => q.arch).length, 0, `${site}: no arch with stairs=plain`);
     const arches = arch.sprites.filter((q) => q.arch).map((q) => q.arch), up = arches.find((a) => a.kind === 'up'), down = arches.find((a) => a.kind === 'down');
     assert.ok(up && up.span === 3 && up.level === 4 && up.glow, `${site}: the way up three tiles wide under its arch at its head (${JSON.stringify(up)})`);
     assert.ok(down && down.span === 3 && down.level === 2 && down.glow === '#a274ff', `${site}: the well under a violet arch (${JSON.stringify(down)})`);

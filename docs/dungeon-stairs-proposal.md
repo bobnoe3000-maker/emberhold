@@ -1,8 +1,18 @@
-# The dungeon stairs: wider, under a softly glowing arch (a proposal)
+# The dungeon stairs: wider, under a softly glowing arch
 
-**Status: Proposed (2026-11-10), with a spike** (`?stairs=arch`; the game is unchanged without it). The owner: *"the up
-and down stairs are too narrow - make them wider and add an arch that slightly glows so its more obvious. Propose a new
-design."*
+**Status: Implemented (2026-11-10), option A** (GDD v1.57). The owner: *"the up and down stairs are too narrow - make
+them wider and add an arch that slightly glows so its more obvious. Propose a new design."* Then, on the sheet below:
+*"Option A with the current brightness."*
+
+- **As built:** A, as the spike drew it, is now the default. `?stairs=plain` shows the stairs as they were.
+  - The way up is three tiles wide.
+  - An arch stands over each way, its glow at the spike's `ARCH_GLOW` 1.7.
+  - The way down's arch is over the well's far edge.
+- **B is not taken:** the well stays 6 × 6 in the sim, and nothing the sim does changed.
+- **Checks:**
+  - `test/render3d.test.mjs`: the way up three tiles wide, each way under its arch, never over a wall; `stairs=plain`
+    without either;
+  - the browser suite: a Barrows floor's two arches stand, lit gold-white and violet.
 
 ![The ways up and down on each Vale dungeon's first floor: today, option A, option B](img/dungeon/stairs-before-after.jpg)
 
@@ -77,7 +87,7 @@ arch over it. Measured in a scratch checkout:
     models and the arches away. It now re-places them with the rest.
 - `tools/capture/rig.mjs`: `at: "stairsup" | "stairsdown"`.
 
-## 4. Questions for the owner
+## 4. Questions for the owner (answered: A, the glow as it is, the down arch where the spike put it)
 
 1. **A or B?** A widens the way up and frames both. B also widens the well, a sim change (the numbers above). Recommended:
    **B**, because the way down is the one that's hard to see, and its arch is bigger over the wider well.

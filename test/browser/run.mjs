@@ -1463,6 +1463,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&world=on`);
     await p.waitForFunction(() => typeof globalThis.__frame === 'function', null, { timeout: 60000 * SLOW });
     const inDungeon = await built(1);
+    // the stairs under arches (GDD v1.57, docs/dungeon-stairs-proposal.md): the floor's way up and its way down each stand
+    // under a stone arch, its inner edge lit (gold-white up, violet down)
+    const arches = await p.evaluate(async () => { const G = window.__game, got = {};
+      for (let i = 0; i < 60 && Object.keys(got).length < 2; i++) { globalThis.__frame(16); await new Promise((r) => setTimeout(r, 100)); G.engine.scene.traverse((o) => { const m = /^ember:arch:(up|down)$/.exec(o.name); if (m) got[m[1]] = o; }); }
+      const glow = (g) => { let c = null; g?.traverse((o) => { if (o.isMesh && o.material?.type === 'MeshBasicMaterial') c = o.material.color; }); return c ? [c.r, c.g, c.b].map((v) => +v.toFixed(2)) : null; };
+      return { up: glow(got.up), down: glow(got.down) }; });
+    check('render3d: a dungeon floor\'s ways up and down stand under stone arches, their inner edges lit (gold-white up, violet down: GDD v1.57)',
+      !!arches.up && !!arches.down && arches.up[0] > 1 && arches.down[2] > arches.down[1], JSON.stringify(arches));
     // the effects' light leaves no trail (the owner, 2026-11-01: "the line cast by a projectile is leaving an ongoing visual
     // artifact"; the page layer before 009d6bd never cleared a pixel once lit). A bright square of light laid over the
     // world at one point, then moved on for a few frames: the point it left reads as it did before it was lit. Read

@@ -309,7 +309,7 @@ function stairs(w, x0, y0, W, D, tiles, heights, arch = false) {
   const cols = (a, b) => { const o = []; for (let i = 0; i < W; i++) { const c = x0 + 2 * i + 1; if (c >= a && c < b) o.push(i); } return o; };
   const rows = (a, b) => { const o = []; for (let j = 0; j < D; j++) { const c = y0 + 2 * j + 1; if (c >= a && c < b) o.push(j); } return o; };
   for (const st of w.structs || []) {
-    // (the spike: the flight three tiles wide, two abreast, over the sim's own footprint for the stairs, 5.2 of ours
+    // (GDD v1.57: the flight three tiles wide, two abreast, over the sim's own footprint for the stairs, 5.2 of ours
     // across, and only where the room's floor is: never over a wall)
     const open = (i, j) => heights[j]?.[i] === String(FLOOR);
     if (st.id === 'stairsup_0') {                                // against a north wall: x the middle of its 3, y its first row
@@ -455,9 +455,10 @@ function dungeon(w, o = {}) {
     const [tx, ty] = k.split(',').map(Number), i = Math.floor((tx - x0) / 2), j = Math.floor((ty - y0) / 2);
     if (i >= 0 && j >= 0 && i < W && j < D && heights[j][i] === '2') { heights[j][i] = '0'; tiles[j][i] = 'U'; }
   }
-  const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs === 'arch');
+  const stairLights = stairs(w, x0, y0, W, D, tiles, heights, o.stairs !== 'plain');
   const objects = [], count = {}, sprites = [];
-  // (the stairs proposal's spike, ?stairs=arch: an arch over each way, built by world.js in the floor's own stone)
+  // (an arch over each way, built by world.js in the floor's own stone: GDD v1.57, docs/dungeon-stairs-proposal.md;
+  // ?stairs=plain the stairs as they were)
   const archStone = (LEGEND[look.wall]?.side && !/cliff|dirt/.test(LEGEND[look.wall].side)) ? LEGEND[look.wall].side : 'stone_brick';
   for (const a of stairLights.arches || []) sprites.push({ arch: { ...a, stone: archStone } });
   const add = (ob) => { count[ob.type] = (count[ob.type] || 0) + 1; objects.push({ id: `${ob.type}_${count[ob.type]}`, ...ob }); };

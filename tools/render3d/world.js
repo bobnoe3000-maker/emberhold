@@ -288,8 +288,9 @@ function kitPiece(e, x, y, z) {
   g.name = `ember:kit:${e.id}`; g.scale.setScalar(KIT_UNIT); KIT_MADE.set(e.id, g);
   const c = g.clone(); c.position.set(x, y, z); return c;
 }
-/** The stairs proposal's spike (docs/dungeon-stairs-proposal.md, ?stairs=arch; the owner, 2026-11-10: "the up and down
- * stairs are too narrow - make them wider and add an arch that slightly glows so its more obvious"): a stone arch over
+/** The stairs under arches (GDD v1.57, docs/dungeon-stairs-proposal.md option A; the owner, 2026-11-10: "the up and down
+ * stairs are too narrow - make them wider and add an arch that slightly glows so its more obvious", then "Option A with
+ * the current brightness"; ?stairs=plain the stairs before them): a stone arch over
  * a floor's way up (at its head, against the wall, a dark doorway in it) or its way down (over the well's far edge),
  * in the floor's own wall stone (Luminati's builder: its textures and ambient occlusion), its inner edge a soft glow in
  * the way's own light (warm up, violet down: GDD §3.1), the world's bloom giving it a halo.

@@ -25,7 +25,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?slot=1|2|3 (game slot)  ?scene=town|overland|dungeon (preview: starts fresh, never saves)
 #   ?world=off|on (localhost only, kept for the tab: no world drawn, an empty painter in Luminati's place; the browser suite's flow checks run so, its world checks ask for &world=on: docs/luminati-only-cleanup.md step 4)
 #   ?landmarks=doors|all|sprites (which of the Vale's kit pieces, tools/actor-lab/buildkit.js, stand in 3D; default: the owner's choice, every one but Thornwick's palisade seen from inside the town, docs/vale-landmarks-proposal.md §8; doors the three dungeon doors alone; all every piece; sprites all as baked cards, as before)
-#   ?stairs=arch (a dungeon floor's way up three tiles wide and an arch over each way, its inner edge glowing: docs/dungeon-stairs-proposal.md's spike)
+#   ?stairs=plain (a dungeon floor's stairs as they were before their arches; the default since GDD v1.57: the way up three tiles wide, an arch over each way, its inner edge glowing: docs/dungeon-stairs-proposal.md)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
