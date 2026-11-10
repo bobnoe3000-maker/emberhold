@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { PROPS, repaint } from './props.js';
 import { buildFace } from './faces.js';
 import { buildBody } from './body.js';
+import { buildCreature } from './creatures.js';
 
 // every toggleable accessory per model (anything not listed in a variant's `show` is hidden)
 export const ACC = {
@@ -71,6 +72,7 @@ export async function facePreset(f, faces) {
  * @returns {Promise<{ root: THREE.Object3D, mixer: THREE.AnimationMixer, clips: THREE.AnimationClip[], frame: any }>}
  */
 export async function build(v, o) {
+  if (v.creature) return buildCreature(v.creature);    // a beast KayKit has no model for, built in code (creatures.js, docs/creatures-proposal.md)
   const { far = false, load } = o, g = await load(`./models/${v.model}.glb`), root = g.scene;
   const acc = ACC[v.model] || [];
   root.traverse((m) => { if (m.isMesh) { m.frustumCulled = false; if (acc.includes(m.name) && !(v.show || []).includes(m.name)) m.visible = false; } });
@@ -110,7 +112,7 @@ export function pose(c, clipName, t, heroic) {
   c.mixer.stopAllAction();
   const clip = c.clips.find((a) => a.name === clipName) || c.clips.find((a) => a.name === 'Idle');
   c.mixer.clipAction(clip).play(); c.mixer.setTime(t * clip.duration);
-  if (heroic) applyHeroic(c.root);                       // after sampling: clips key scale+translation
+  if (heroic && !c.creature) applyHeroic(c.root);        // after sampling: clips key scale+translation (a creature's own proportions: no man's)
   if (heroic && c.frame) applyFrame(c.root, c.frame);
   c.root.updateMatrixWorld(true);
   plumb(c.root);

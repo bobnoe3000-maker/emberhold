@@ -6521,7 +6521,7 @@ function Ts(e, t, n, r, i, a = 4, o = .08) {
 	let s = new D(new j((t / 2 + o) * (a === 4 ? Math.SQRT2 : 1), r, a, 1), i);
 	return s.position.y = n + r / 2, a === 4 && (s.rotation.y = Math.PI / 4), e.add(s), s;
 }
-function z(e, t, n, r, i, a = .12, o = .16, s = {}) {
+function Es(e, t, n, r, i, a = .12, o = .16, s = {}) {
 	let { wallW: c, wallD: l } = n, u = .025, d = (t, a) => {
 		n.side === "z" ? t.position.set(r, i, l / 2 + a) : (t.position.set(c / 2 + a, i, r), t.rotation.y = Math.PI / 2), e.add(t);
 	};
@@ -6531,49 +6531,49 @@ function z(e, t, n, r, i, a = .12, o = .16, s = {}) {
 		let e = new D(new j(a / 2 + .02, .09, 4, 1), t.m.trim);
 		e.rotation.z = 0, e.scale.z = .25, d(e, .004), e.position.y = i + o / 2 + .045, e.rotation.y += Math.PI / 4;
 	}
-	if (s.flowers && js(e, t, d, n, r, i - o / 2 - .03, a), s.shutters) for (let e of [-1, 1]) {
+	if (s.flowers && Ms(e, t, d, n, r, i - o / 2 - .03, a), s.shutters) for (let e of [-1, 1]) {
 		let r = new D(new A(a * .5, o + .02, u), t.m.shutter);
 		d(r, .01), n.side === "z" ? r.position.x += a * .78 * e : r.position.z += a * .78 * e;
 	}
 }
-var Es = [
+var Ds = [
 	"#9a3a50",
 	"#c8c0c8",
 	"#b89040",
 	"#7a5098",
 	"#a85a34"
-], Ds = [
+], Os = [
 	"#2e4420",
 	"#3a5226",
 	"#46602a"
-], Os = /* @__PURE__ */ new Map(), ks = (e) => (Os.has(e) || Os.set(e, Xs(e)), Os.get(e));
-function As(e) {
+], ks = /* @__PURE__ */ new Map(), As = (e) => (ks.has(e) || ks.set(e, Zs(e)), ks.get(e));
+function js(e) {
 	return e.userData.dress = !0, e;
 }
-function js(e, t, n, r, i, a, o) {
+function Ms(e, t, n, r, i, a, o) {
 	let s = t.frnd, c = (e, t) => {
 		r.side === "z" ? e.position.x += t : e.position.z += t;
-	}, l = As(new D(new A(o + .05, .035, .045), t.m.wood));
+	}, l = js(new D(new A(o + .05, .035, .045), t.m.wood));
 	n(l, .03), l.position.y = a;
-	let u = Es[s() * Es.length | 0];
+	let u = Ds[s() * Ds.length | 0];
 	for (let e = 0; e < 7; e++) {
-		let t = -o / 2 - .01 + (o + .02) * (e + .5) / 7, r = As(new D(new _(.026 + s() * .01, 0), ks(Ds[s() * 3 | 0])));
+		let t = -o / 2 - .01 + (o + .02) * (e + .5) / 7, r = js(new D(new _(.026 + s() * .01, 0), As(Os[s() * 3 | 0])));
 		if (n(r, .04 + s() * .012), r.position.y = a + .026, c(r, t), s() < .5) {
-			let e = As(new D(new _(.02, 0), ks(Ds[s() * 3 | 0])));
+			let e = js(new D(new _(.02, 0), As(Os[s() * 3 | 0])));
 			n(e, .055), e.position.y = a - .03 - s() * .03, c(e, t);
 		}
-		let i = As(new D(new _(.019 + s() * .007, 0), ks(s() < .7 ? u : Es[s() * Es.length | 0])));
+		let i = js(new D(new _(.019 + s() * .007, 0), As(s() < .7 ? u : Ds[s() * Ds.length | 0])));
 		n(i, .05 + s() * .015), i.position.y = a + .045 + s() * .02, c(i, t + (s() - .5) * .02);
 	}
 }
-function Ms(e, t, n, r, i) {
+function Ns(e, t, n, r, i) {
 	let a = t.frnd, o = (n.side === "z" ? n.wallD : n.wallW) / 2;
 	for (let t = 0, s = 26 + (a() * 10 | 0); t < s; t++) {
-		let c = t / s, l = c * i, u = .12 * (1 - c * .6), d = r + (a() - .5) * u * 2, f = As(new D(new _(.045 * (1 - c * .4) + a() * .012, 0), ks(Ds[a() * 3 | 0])));
+		let c = t / s, l = c * i, u = .12 * (1 - c * .6), d = r + (a() - .5) * u * 2, f = js(new D(new _(.045 * (1 - c * .4) + a() * .012, 0), As(Os[a() * 3 | 0])));
 		n.side === "z" ? f.position.set(d, l + .02, o + .012) : f.position.set(o + .012, l + .02, d), f.scale.set(n.side === "z" ? 1 : .45, 1, n.side === "z" ? .45 : 1), e.add(f);
 	}
 }
-function Ns(e, t, n, r, i = .2, a = .42, o = !0) {
+function Ps(e, t, n, r, i = .2, a = .42, o = !0) {
 	let s = .03, c = new D(new A(i, a, s), t.m.door), l = new D(new A(i + .05, a + .04, s * .8), t.m.trim);
 	for (let [t, i] of [[l, .004], [c, .014]]) n.side === "z" ? t.position.set(r, a / 2, n.wallD / 2 + i) : (t.position.set(n.wallW / 2 + i, a / 2, r), t.rotation.y = Math.PI / 2), e.add(t);
 	if (o) {
@@ -6581,7 +6581,7 @@ function Ns(e, t, n, r, i = .2, a = .42, o = !0) {
 		o.rotation.x = Math.PI / 2, o.rotation.z = Math.PI / 2, n.side === "z" ? (o.position.set(r, a, n.wallD / 2 + .004), o.rotation.set(Math.PI / 2, 0, Math.PI / 2)) : (o.position.set(n.wallW / 2 + .004, a, r), o.rotation.set(0, 0, 0), o.rotation.x = Math.PI / 2, o.rotation.y = Math.PI / 2, o.rotation.z = 0), e.add(o);
 	}
 }
-function Ps(e, t, n, r, i, a = 3, o = !0) {
+function Fs(e, t, n, r, i, a = 3, o = !0) {
 	let s = n.side === "z" ? n.wallW : n.wallD, c = (n.side === "z" ? n.wallD : n.wallW) / 2 + .012, l = (r, i, a, o, s = 0) => {
 		let l = new D(new A(r, i, .03), t.m.beam);
 		n.side === "z" ? (l.position.set(a, o, c), l.rotation.z = s) : (l.position.set(c, o, a), l.rotation.y = Math.PI / 2, l.rotation.x = -s, l.rotation.order = "YXZ", l.rotation.set(0, Math.PI / 2, 0), l.rotateZ(s)), e.add(l);
@@ -6592,39 +6592,39 @@ function Ps(e, t, n, r, i, a = 3, o = !0) {
 		l(.035, Math.hypot(t, (i - r) / 2), -s / 2 + t * (e + .5), r + (i - r) * .25, Math.atan2(t, (i - r) / 2) * (e % 4 ? 1 : -1));
 	}
 }
-function Fs(e, t, n, r, i, a) {
+function Is(e, t, n, r, i, a) {
 	R(.1, a, .1, t.m.stone, n, i, r, e), R(.13, .03, .13, t.m.stoneDark, n, i + a, r, e);
 }
-function Is(e, t, n, r, i, a = t.m.stone, o = .07) {
+function Ls(e, t, n, r, i, a = t.m.stone, o = .07) {
 	let s = o * 2;
 	for (let t = -n / 2 + o / 2; t <= n / 2; t += s) for (let n of [-r / 2 + o / 2, r / 2 - o / 2]) R(o, o, o, a, t, i, n, e);
 	for (let t = -r / 2 + o / 2 + s; t <= r / 2 - s; t += s) for (let r of [-n / 2 + o / 2, n / 2 - o / 2]) R(o, o, o, a, r, i, t, e);
 }
-function Ls(e, t, n, r, i, a = "z", o = .3) {
+function Rs(e, t, n, r, i, a = "z", o = .3) {
 	let s = new D(new A(.1, o, .012), t.m.banner);
 	a === "z" ? s.position.set(n, r - o / 2, i) : (s.position.set(n, r - o / 2, i), s.rotation.y = Math.PI / 2), e.add(s);
 	let c = new D(new A(.14, .015, .015), t.m.trim);
 	c.position.set(s.position.x, r, s.position.z), c.rotation.y = s.rotation.y, e.add(c);
 }
-function Rs(e, t, n, r, i) {
+function zs(e, t, n, r, i) {
 	let a = new D(new A(.02, .02, .16), t.m.trim);
 	a.position.set(n, r, i + .08), e.add(a);
 	let o = new D(new A(.02, .1, .12), t.m.signboard);
 	o.position.set(n, r - .07, i + .12), e.add(o);
 }
-function zs(e, t, n, r) {
+function Bs(e, t, n, r) {
 	let i = new D(new T(.05, .05, .12, 8), t.m.wood);
 	i.position.set(n, .06, r), e.add(i);
 	let a = new D(new T(.052, .052, .012, 8), t.m.trim);
 	a.position.set(n, .09, r), e.add(a);
 }
-function Bs(e, t, n, r, i = .09) {
+function Vs(e, t, n, r, i = .09) {
 	let a = new D(new T(i, i * 1.1, i * 1.3, 8), t.m.hay);
 	a.position.set(n, i * .65, r), e.add(a);
 	let o = new D(new j(i * 1.05, i * .7, 8), t.m.hay);
 	o.position.set(n, i * 1.3 + i * .35, r), e.add(o);
 }
-function Vs(e, t, n, r, i, a) {
+function Hs(e, t, n, r, i, a) {
 	let o = Math.hypot(i - n, a - r), s = Math.max(2, Math.round(o / .14)), c = Math.atan2(i - n, a - r);
 	for (let o = 0; o <= s; o++) {
 		let c = o / s;
@@ -6635,7 +6635,7 @@ function Vs(e, t, n, r, i, a) {
 		l.position.set((n + i) / 2, s, (r + a) / 2), l.rotation.y = c, e.add(l);
 	}
 }
-var Hs = {
+var Us = {
 	A: {
 		key: "A",
 		name: "Timber & Slate",
@@ -6689,20 +6689,20 @@ var Hs = {
 		timber: !1,
 		gothic: !0
 	}
-}, Us = {
+}, Ws = {
 	roofRise: 1.05,
 	jetty: .04,
 	timber: !0
 };
-Object.assign(Hs, {
+Object.assign(Us, {
 	vale: {
-		...Hs.A,
+		...Us.A,
 		key: "vale",
 		roof: ["tile", "#434856"],
 		dress: !0
 	},
 	fens: {
-		...Us,
+		...Ws,
 		key: "fens",
 		lower: ["rubble", "#5b5f57"],
 		upper: ["plaster", "#98a089"],
@@ -6716,7 +6716,7 @@ Object.assign(Hs, {
 		signboard: "#4a463a"
 	},
 	reach: {
-		...Us,
+		...Ws,
 		key: "reach",
 		lower: ["field", "#4c4542"],
 		upper: ["plaster", "#8c7d70"],
@@ -6730,7 +6730,7 @@ Object.assign(Hs, {
 		signboard: "#4a3226"
 	},
 	heights: {
-		...Us,
+		...Ws,
 		key: "heights",
 		lower: ["ashlar", "#8a8984"],
 		upper: ["plaster", "#c9c7bf"],
@@ -6744,8 +6744,8 @@ Object.assign(Hs, {
 		signboard: "#4a4a52"
 	}
 });
-function Ws(e, t = 1) {
-	let n = Hs[e], r = new E(), i = {
+function Gs(e, t = 1) {
+	let n = Us[e], r = new E(), i = {
 		lower: L(I(n.lower[0], n.lower[1], t)),
 		upper: L(I(n.upper[0], n.upper[1], t + 1)),
 		roof: L(I(n.roof[0], n.roof[1], t + 2)),
@@ -6775,7 +6775,7 @@ function Ws(e, t = 1) {
 		g: r
 	};
 }
-function Gs(e, t, n, r, i, a, o, s, c = {}) {
+function Ks(e, t, n, r, i, a, o, s, c = {}) {
 	let l = R(n, a, r, o, 0, i, 0, t), u = {
 		side: "z",
 		wallW: n,
@@ -6789,30 +6789,30 @@ function Gs(e, t, n, r, i, a, o, s, c = {}) {
 		let o = Math.max(1, Math.round(n / .32)), s = Math.max(1, Math.round(r / .32));
 		for (let r = 0; r < o; r++) {
 			let s = -n / 2 + n * (r + .5) / o;
-			c.doorZ !== void 0 && Math.abs(s - c.doorZ) < .16 || z(t, e, u, s, i + a * .55, .11, .15, {
+			c.doorZ !== void 0 && Math.abs(s - c.doorZ) < .16 || Es(t, e, u, s, i + a * .55, .11, .15, {
 				pointed: e.gothic,
 				shutters: !e.gothic && !e.thatch && r % 2 == 0,
 				flowers: e.dress && e.frnd() < .45
 			});
 		}
-		for (let n = 0; n < s; n++) z(t, e, d, -r / 2 + r * (n + .5) / s, i + a * .55, .11, .15, {
+		for (let n = 0; n < s; n++) Es(t, e, d, -r / 2 + r * (n + .5) / s, i + a * .55, .11, .15, {
 			pointed: e.gothic,
 			flowers: e.dress && e.frnd() < .45
 		});
 		let l = new E();
 		l.rotation.y = Math.PI, t.add(l);
-		for (let t = 0; t < o; t++) z(l, e, u, -n / 2 + n * (t + .5) / o, i + a * .55, .11, .15, { pointed: e.gothic });
-		for (let t = 0; t < s; t++) z(l, e, d, -r / 2 + r * (t + .5) / s, i + a * .55, .11, .15, { pointed: e.gothic });
+		for (let t = 0; t < o; t++) Es(l, e, u, -n / 2 + n * (t + .5) / o, i + a * .55, .11, .15, { pointed: e.gothic });
+		for (let t = 0; t < s; t++) Es(l, e, d, -r / 2 + r * (t + .5) / s, i + a * .55, .11, .15, { pointed: e.gothic });
 	}
-	if (e.dress && i < .01) for (let [i, o] of [[u, n], [d, r]]) e.frnd() < .5 && Ms(t, e, i, (e.frnd() < .5 ? -1 : 1) * (o / 2 - .07), a * (.6 + e.frnd() * .5));
+	if (e.dress && i < .01) for (let [i, o] of [[u, n], [d, r]]) e.frnd() < .5 && Ns(t, e, i, (e.frnd() < .5 ? -1 : 1) * (o / 2 - .07), a * (.6 + e.frnd() * .5));
 	if (c.timber && e.timber) {
-		Ps(t, e, u, i, i + a, Math.max(2, Math.round(n / .25))), Ps(t, e, d, i, i + a, Math.max(2, Math.round(r / .25)));
+		Fs(t, e, u, i, i + a, Math.max(2, Math.round(n / .25))), Fs(t, e, d, i, i + a, Math.max(2, Math.round(r / .25)));
 		let o = new E();
-		o.rotation.y = Math.PI, t.add(o), Ps(o, e, u, i, i + a, Math.max(2, Math.round(n / .25))), Ps(o, e, d, i, i + a, Math.max(2, Math.round(r / .25)));
+		o.rotation.y = Math.PI, t.add(o), Fs(o, e, u, i, i + a, Math.max(2, Math.round(n / .25))), Fs(o, e, d, i, i + a, Math.max(2, Math.round(r / .25)));
 	}
 	return l;
 }
-function Ks(e, t, n, r, i, a, o = !0) {
+function qs(e, t, n, r, i, a, o = !0) {
 	let s = new E();
 	t.add(s), o || (s.rotation.y = Math.PI / 2);
 	let [c, l] = o ? [n, r] : [r, n];
@@ -6824,44 +6824,44 @@ function Ks(e, t, n, r, i, a, o = !0) {
 		let n = new D(new j(.025, .14, 4), e.m.trim);
 		n.position.set(t * c / 2, i + a * l / 2 + .06, 0), s.add(n);
 	}
-	return e.key === "heights" && (hc(s, c, l, i, a, e.m.upper), t.userData.snowed = !0), s;
+	return e.key === "heights" && (_c(s, c, l, i, a, e.m.upper), t.userData.snowed = !0), s;
 }
-function qs(e, t, n, r, i, a = .06) {
+function Js(e, t, n, r, i, a = .06) {
 	let o = new j((t / 2 + a) * Math.SQRT2, r, 4, 1);
 	o.rotateY(Math.PI / 4);
 	let s = new D(o, i);
 	return s.position.y = n + r / 2, e.add(s), s;
 }
-function Js(e, t, n, r, i) {
+function Ys(e, t, n, r, i) {
 	for (let a = 0; a <= 2; a++) {
 		let o = -n / 2 + n * a / 2;
 		R(.07, i * .75, .1, e.m.stone, o, 0, r / 2 + .04, t);
 	}
 	for (let a = 1; a <= 1; a++) R(.1, i * .75, .07, e.m.stone, n / 2 + .04, 0, -r / 2 + r * a / 2, t);
 }
-var Ys = {
+var Xs = {
 	house(e, t, n) {
 		let r = .72, i = .58, a = .52, o = e.timber && (e.key === "vale" || e.key === "fens");
-		o && R(.75, .1, .61, e.m.stone, 0, 0, 0, t), Gs(e, t, r, i, 0, a, o ? e.m.upper : e.m.lower, !0, {
+		o && R(.75, .1, .61, e.m.stone, 0, 0, 0, t), Ks(e, t, r, i, 0, a, o ? e.m.upper : e.m.lower, !0, {
 			doorZ: -.12,
 			timber: o
-		}), Ns(t, e, {
+		}), Ps(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, -.12, .17, .36, !e.timber), Ks(e, t, r, i, a, e.roofRise * 1.1), Fs(t, e, r / 2 - .12, -.58 / 4, a, .32 + e.roofRise * .2), _c(e, t, r, i, a, e.roofRise * 1.1, n), e.gothic && Js(e, t, r, i, a);
+		}, -.12, .17, .36, !e.timber), qs(e, t, r, i, a, e.roofRise * 1.1), Is(t, e, r / 2 - .12, -.58 / 4, a, .32 + e.roofRise * .2), yc(e, t, r, i, a, e.roofRise * 1.1, n), e.gothic && Ys(e, t, r, i, a);
 	},
 	tavern(e, t, n) {
 		let r = .7, i = .55;
-		Gs(e, t, 1, r, 0, i, e.m.lower, !0, { doorZ: .05 }), Ns(t, e, {
+		Ks(e, t, 1, r, 0, i, e.m.lower, !0, { doorZ: .05 }), Ps(t, e, {
 			side: "z",
 			wallW: 1,
 			wallD: r
 		}, .05, .22, .4, !0);
 		let a = e.jetty;
-		Gs(e, t, 1 + a * 2, r + a * 2, i, .48, e.thatch ? e.m.lower : e.m.upper, !0, { timber: !0 }), Ks(e, t, 1 + a * 2, r + a * 2, 1.03, e.roofRise);
+		Ks(e, t, 1 + a * 2, r + a * 2, i, .48, e.thatch ? e.m.lower : e.m.upper, !0, { timber: !0 }), qs(e, t, 1 + a * 2, r + a * 2, 1.03, e.roofRise);
 		let o = new E();
-		o.position.set(-.3, 0, -.55), t.add(o), Gs(e, o, .5, .45, 0, .5, e.m.lower, !1), Ks(e, o, .5, .45, .5, e.roofRise, !1), Fs(t, e, .34, -.12, 1.03, .45), Fs(t, e, -.38, .1, 1.03, .4), Rs(t, e, .32, .5, r / 2), zs(t, e, .62, .3), zs(t, e, .62, .16);
+		o.position.set(-.3, 0, -.55), t.add(o), Ks(e, o, .5, .45, 0, .5, e.m.lower, !1), qs(e, o, .5, .45, .5, e.roofRise, !1), Is(t, e, .34, -.12, 1.03, .45), Is(t, e, -.38, .1, 1.03, .4), zs(t, e, .32, .5, r / 2), Bs(t, e, .62, .3), Bs(t, e, .62, .16);
 		let s = new E();
 		s.position.set(.12, 0, .52), t.add(s);
 		for (let t of [-.26, .4]) R(.035, .42, .035, e.m.beam, t, 0, .14, s);
@@ -6872,7 +6872,7 @@ var Ys = {
 			for (let n of [-.06, .06]) R(.018, .1, .018, e.m.beam, t + n, 0, .05, s);
 			R(.16, .015, .035, e.m.wood, t, .06, .12, s);
 		}
-		H(s, e, -.26, .38, .17), H(s, e, .4, .38, .17);
+		ac(s, e, -.26, .38, .17), ac(s, e, .4, .38, .17);
 		let l = new E();
 		l.position.set(-.46, 0, .44999999999999996), t.add(l);
 		for (let t of [-1, 1]) R(.025, .34, .025, e.m.beam, t * .13, 0, 0, l);
@@ -6884,29 +6884,29 @@ var Ys = {
 			[-.03, .16],
 			[.08, .16]
 		]) R(.05, .06, .03, e.m.paper, t, n, .004, l);
-		e.gothic && Js(e, t, 1, r, i);
+		e.gothic && Ys(e, t, 1, r, i);
 	},
 	inn(e, t, n) {
 		let r = 1.2, i = .66, a = [.54, .48], o = 0;
 		a.forEach((n, a) => {
-			Gs(e, t, r + (a ? e.jetty * 2 : 0), i + (a ? e.jetty * 2 : 0), o, n, a ? e.thatch ? e.m.lower : e.m.upper : e.m.lower, !0, {
+			Ks(e, t, r + (a ? e.jetty * 2 : 0), i + (a ? e.jetty * 2 : 0), o, n, a ? e.thatch ? e.m.lower : e.m.upper : e.m.lower, !0, {
 				doorZ: .3,
 				timber: a > 0
 			}), o += n;
-		}), Ns(t, e, {
+		}), Ps(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, .3, .24, .42, !0), Ks(e, t, r + e.jetty * 2, i + e.jetty * 2, o, e.roofRise);
+		}, .3, .24, .42, !0), qs(e, t, r + e.jetty * 2, i + e.jetty * 2, o, e.roofRise);
 		for (let n of [-.3, .3]) {
 			let r = new E();
-			r.position.set(n, o + .05, i / 4), t.add(r), Gs(e, r, .2, .2, 0, .16, e.m.upper, !1), z(r, e, {
+			r.position.set(n, o + .05, i / 4), t.add(r), Ks(e, r, .2, .2, 0, .16, e.m.upper, !1), Es(r, e, {
 				side: "z",
 				wallW: .2,
 				wallD: .2
-			}, 0, .09, .09, .1), Ks(e, r, .2, .22, .16, e.roofRise, !1);
+			}, 0, .09, .09, .1), qs(e, r, .2, .22, .16, e.roofRise, !1);
 		}
-		Fs(t, e, -.5, 0, o, .42), Fs(t, e, .52, -.1, o, .38);
+		Is(t, e, -.5, 0, o, .42), Is(t, e, .52, -.1, o, .38);
 		let s = new E();
 		s.position.set(.82, 0, .05), t.add(s);
 		for (let [t, n] of [
@@ -6915,35 +6915,35 @@ var Ys = {
 			[.18, -.25]
 		]) R(.04, .4, .04, e.m.beam, t, 0, n, s);
 		let c = R(.46, .04, .62, e.m.roof, 0, .42, 0, s);
-		c.rotation.x = 0, c.rotation.z = -.25, Bs(s, e, .05, .05, .08), Rs(t, e, -.2, .52, i / 2);
+		c.rotation.x = 0, c.rotation.z = -.25, Vs(s, e, .05, .05, .08), zs(t, e, -.2, .52, i / 2);
 	},
 	shop(e, t, n) {
 		let r = .62, i = .62, a = .56;
-		Gs(e, t, r, i, 0, a, e.m.lower, !1), Ns(t, e, {
+		Ks(e, t, r, i, 0, a, e.m.lower, !1), Ps(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, -.16, .17, .36, !1), z(t, e, {
+		}, -.16, .17, .36, !1), Es(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, .12, .26, .2, .14), z(t, e, {
+		}, .12, .26, .2, .14), Es(t, e, {
 			side: "x",
 			wallW: r,
 			wallD: i
-		}, 0, .3, .16, .14), e.timber && (Ps(t, e, {
+		}, 0, .3, .16, .14), e.timber && (Fs(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, .38, a, 3, !1), Ps(t, e, {
+		}, .38, a, 3, !1), Fs(t, e, {
 			side: "x",
 			wallW: r,
 			wallD: i
-		}, .38, a, 3, !1)), Ks(e, t, .66, .66, a, e.roofRise * 1.15, !1);
+		}, .38, a, 3, !1)), qs(e, t, .66, .66, a, e.roofRise * 1.15, !1);
 		let o = R(.36, .02, .2, e.m.banner, .1, .44, .41000000000000003, t);
 		o.rotation.x = .35, R(.34, .12, .12, e.m.wood, .1, 0, .41000000000000003, t);
 		for (let n = 0; n < 4; n++) R(.05, .04, .05, n % 2 ? e.m.hay : e.m.banner, -.02 + n * .08, .12, .41000000000000003, t);
-		zs(t, e, .38, .3), Fs(t, e, -.2, -.2, a, .42), ac(t, e, .12, .1, .12, .41000000000000003, .18), ac(t, e, .1, .08, .1, .43, .05, !0), oc(t, e, .51, .3), Rs(t, e, -.2, .46, i / 2);
+		Bs(t, e, .38, .3), Is(t, e, -.2, -.2, a, .42), sc(t, e, .12, .1, .12, .41000000000000003, .18), sc(t, e, .1, .08, .1, .43, .05, !0), cc(t, e, .51, .3), zs(t, e, -.2, .46, i / 2);
 	},
 	temple(e, t, n) {
 		let r = .72, i = 1.25, a = e.gothic ? .98 : .86, o = e.m.ashlar, s = {
@@ -6955,7 +6955,7 @@ var Ys = {
 			wallW: r,
 			wallD: i
 		};
-		R(r, a, i, o, 0, 0, 0, t), R(.78, .06, 1.31, e.m.stoneDark, 0, 0, 0, t), R(.38, .035, .14, e.m.stoneDark, .06, 0, .6950000000000001, t), R(.32, .035, .08, e.m.stoneDark, .06, .035, .665, t), Ns(t, e, s, .06, .26, .5, !0);
+		R(r, a, i, o, 0, 0, 0, t), R(.78, .06, 1.31, e.m.stoneDark, 0, 0, 0, t), R(.38, .035, .14, e.m.stoneDark, .06, 0, .6950000000000001, t), R(.32, .035, .08, e.m.stoneDark, .06, .035, .665, t), Ps(t, e, s, .06, .26, .5, !0);
 		let l = new D(new T(.115, .115, .02, 14), e.m.trim);
 		l.rotation.x = Math.PI / 2, l.position.set(.06, a * .8, .631), t.add(l);
 		let u = new D(new T(.09, .09, .02, 14), e.m.glass);
@@ -6969,18 +6969,18 @@ var Ys = {
 			r.rotation.z = n * Math.PI / 3;
 		}
 		R(.08, a * .85, .08, o, r / 2 - .02, 0, .645, t);
-		for (let n = 0; n < 3; n++) z(t, e, c, -1.25 / 2 + i * (n + .5) / 3, a * .5, .09, .34, {
+		for (let n = 0; n < 3; n++) Es(t, e, c, -1.25 / 2 + i * (n + .5) / 3, a * .5, .09, .34, {
 			pointed: !0,
 			lit: !0
 		});
 		for (let e = 0; e <= 3; e++) R(.09, a * .8, .08, o, .40499999999999997, 0, -1.25 / 2 + i * e / 3, t);
 		let d = new E();
 		d.rotation.y = Math.PI, t.add(d);
-		for (let t = 0; t < 3; t++) z(d, e, c, -1.25 / 2 + i * (t + .5) / 3, a * .5, .09, .34, {
+		for (let t = 0; t < 3; t++) Es(d, e, c, -1.25 / 2 + i * (t + .5) / 3, a * .5, .09, .34, {
 			pointed: !0,
 			lit: !0
 		});
-		Ks(e, t, r, i, a, e.roofRise * 1.2, !1);
+		qs(e, t, r, i, a, e.roofRise * 1.2, !1);
 		let f = .34, p = a + .6, m = new E();
 		m.position.set(-.45, 0, .475), t.add(m);
 		let h = new T(f * .56, f * .6, p, 16, 1), g = h.attributes.uv;
@@ -6998,11 +6998,11 @@ var Ys = {
 			wallW: f,
 			wallD: f
 		};
-		z(m, e, y, 0, a * .45, .08, .2, {
+		Es(m, e, y, 0, a * .45, .08, .2, {
 			pointed: !0,
 			lit: !0
 		});
-		for (let t of [y, b]) z(m, e, t, 0, p - .17, .12, .2, {
+		for (let t of [y, b]) Es(m, e, t, 0, p - .17, .12, .2, {
 			pointed: !0,
 			lit: !1
 		});
@@ -7015,7 +7015,7 @@ var Ys = {
 			i.position.y = p + (e.gothic ? .45 : .36), m.add(i);
 		}
 		let x = new E();
-		x.position.set(0, p + (e.gothic ? .9 : .72) + .01, 0), m.add(x), R(.02, .16, .02, e.m.trim, 0, 0, 0, x), R(.09, .02, .02, e.m.trim, 0, .1, 0, x), H(t, e, -.16, .36, .675), H(t, e, .28, .36, .675);
+		x.position.set(0, p + (e.gothic ? .9 : .72) + .01, 0), m.add(x), R(.02, .16, .02, e.m.trim, 0, 0, 0, x), R(.09, .02, .02, e.m.trim, 0, .1, 0, x), ac(t, e, -.16, .36, .675), ac(t, e, .28, .36, .675);
 	},
 	smith(e, t, n) {
 		let r = .78, i = .6, a = .46, o = e.m.stone;
@@ -7025,28 +7025,28 @@ var Ys = {
 			[-.36, i / 2 - .03],
 			[r / 2 - .03, -.02]
 		]) R(.06, a, .06, e.m.beam, n, 0, o, t);
-		R(r, .05, .06, e.m.beam, 0, .41000000000000003, i / 2 - .03, t), Ks(e, t, .9, .72, a, e.roofRise * .85), R(.28, .17, .26, o, -.2, 0, -.06, t);
+		R(r, .05, .06, e.m.beam, 0, .41000000000000003, i / 2 - .03, t), qs(e, t, .9, .72, a, e.roofRise * .85), R(.28, .17, .26, o, -.2, 0, -.06, t);
 		let s = R(.22, .025, .2, e.m.glass, -.2, .17, -.06, t);
 		s.userData.glow = !0;
 		let c = R(.16, .08, .012, e.m.glass, -.2, .04, .075, t);
-		c.userData.glow = !0, R(.24, .14, .16, o, -.2, .3, -.16, t), Fs(t, e, -.2, -.2, a, .62), R(.06, .09, .06, e.m.wood, .12, 0, .1, t), R(.14, .05, .06, e.m.dark, .12, .09, .1, t), R(.05, .03, .04, e.m.dark, .2, .1, .1, t), R(.22, .08, .09, e.m.wood, .2, 0, -.16, t), R(.19, .012, .06, L(null, "#1d3040"), .2, .08, -.16, t);
+		c.userData.glow = !0, R(.24, .14, .16, o, -.2, .3, -.16, t), Is(t, e, -.2, -.2, a, .62), R(.06, .09, .06, e.m.wood, .12, 0, .1, t), R(.14, .05, .06, e.m.dark, .12, .09, .1, t), R(.05, .03, .04, e.m.dark, .2, .1, .1, t), R(.22, .08, .09, e.m.wood, .2, 0, -.16, t), R(.19, .012, .06, L(null, "#1d3040"), .2, .08, -.16, t);
 		let l = new E();
 		l.position.set(.51, 0, .12), t.add(l);
 		for (let t of [-.12, .12]) R(.025, .3, .025, e.m.beam, 0, 0, t, l);
 		R(.025, .025, .28, e.m.beam, 0, .26, 0, l);
 		for (let t = 0; t < 4; t++) R(.012, .22, .03, e.m.trim, .02, .04, -.09 + t * .06, l);
-		Rs(t, e, r / 2 - .05, .4, i / 2);
+		zs(t, e, r / 2 - .05, .4, i / 2);
 	},
 	keep(e, t, n) {
 		if (e.thatch) {
 			let n = new D(new T(.55, .85, .3, 10), L(I("rubble", "#5a5040", 9)));
 			n.position.y = .15, t.add(n);
 			let r = new E();
-			r.position.y = .3, t.add(r), R(.6, .9, .6, e.m.palisade, 0, 0, 0, r), R(.72, .2, .72, e.m.wood, 0, .9, 0, r), z(r, e, {
+			r.position.y = .3, t.add(r), R(.6, .9, .6, e.m.palisade, 0, 0, 0, r), R(.72, .2, .72, e.m.wood, 0, .9, 0, r), Es(r, e, {
 				side: "z",
 				wallW: .72,
 				wallD: .72
-			}, 0, 1, .1, .08), z(r, e, {
+			}, 0, 1, .1, .08), Es(r, e, {
 				side: "x",
 				wallW: .72,
 				wallD: .72
@@ -7055,11 +7055,11 @@ var Ys = {
 				let r = n / 18 * Math.PI * 2;
 				n !== 2 && (R(.07, .36, .07, e.m.palisade, Math.cos(r) * .95, 0, Math.sin(r) * .95, t).rotation.y = -r);
 			}
-			Ls(t, e, .05, 1.95, 0);
+			Rs(t, e, .05, 1.95, 0);
 			return;
 		}
 		let r = .95, i = e.gothic ? 1.9 : 1.6;
-		R(r, i, r, e.m.stone, 0, 0, 0, t), R(1.03, .06, 1.03, e.m.stoneDark, 0, i, 0, t), Is(t, e, 1.01, 1.01, i + .06, e.m.stone, .08);
+		R(r, i, r, e.m.stone, 0, 0, 0, t), R(1.03, .06, 1.03, e.m.stoneDark, 0, i, 0, t), Ls(t, e, 1.01, 1.01, i + .06, e.m.stone, .08);
 		let a = {
 			side: "z",
 			wallW: r,
@@ -7069,8 +7069,8 @@ var Ys = {
 			wallW: r,
 			wallD: r
 		};
-		Ns(t, e, a, 0, .24, .44, !0);
-		for (let n of [.75, 1.2]) for (let r of [-.25, .25]) z(t, e, a, r, n, .07, .14, { pointed: e.gothic }), z(t, e, o, r, n, .07, .14, { pointed: e.gothic });
+		Ps(t, e, a, 0, .24, .44, !0);
+		for (let n of [.75, 1.2]) for (let r of [-.25, .25]) Es(t, e, a, r, n, .07, .14, { pointed: e.gothic }), Es(t, e, o, r, n, .07, .14, { pointed: e.gothic });
 		for (let [n, a] of [
 			[-1, -1],
 			[1, -1],
@@ -7080,11 +7080,11 @@ var Ys = {
 			let o = new D(new T(.14, .15, i + .3, 10), e.m.stone);
 			o.position.set(n * r / 2, (i + .3) / 2, a * r / 2), t.add(o), Ts(t, .3, i + .3, e.gothic ? .6 : .4, e.m.roof, 10, .02).position.set(n * r / 2, i + .3 + (e.gothic ? .3 : .2), a * r / 2);
 		}
-		Ls(t, e, .2, i - .1, .495), Ls(t, e, .495, i - .1, -.2, "x"), e.gothic && Js(e, t, r, r, i * .7);
+		Rs(t, e, .2, i - .1, .495), Rs(t, e, .495, i - .1, -.2, "x"), e.gothic && Ys(e, t, r, r, i * .7);
 	},
 	curtain(e, t, n) {
 		let r = .74;
-		R(2, .08, .32, e.m.stoneDark, 0, 0, 0, t), R(2, r, .26, e.m.stone, 0, 0, 0, t), R(2, .03, .3, e.m.stoneDark, 0, .71, 0, t), Is(t, e, 2, .28, r, e.m.stone, .07);
+		R(2, .08, .32, e.m.stoneDark, 0, 0, 0, t), R(2, r, .26, e.m.stone, 0, 0, 0, t), R(2, .03, .3, e.m.stoneDark, 0, .71, 0, t), Ls(t, e, 2, .28, r, e.m.stone, .07);
 		for (let n of [
 			-.7,
 			0,
@@ -7104,7 +7104,7 @@ var Ys = {
 			let r = R(.03, .13, .02, e.m.dark, Math.sin(n) * .325, .46, Math.cos(n) * .325, t);
 			r.rotation.y = n;
 		}
-		Ls(t, e, 0, 1.1, .34, "z", .24);
+		Rs(t, e, 0, 1.1, .34, "z", .24);
 	},
 	gatehouse(e, t, n) {
 		let r = .56, i = 1.1, a = .56;
@@ -7116,14 +7116,14 @@ var Ys = {
 		}
 		R(a, .12, .03, e.m.dark, 0, .48, r / 2 - .06, t);
 		for (let n = 0; n < 6; n++) R(.012, .16, .012, e.m.dark, -.56 / 2 + .05 + n * .4600000000000001 / 5, .38, r / 2 - .06, t);
-		R(1.04, .04, .6000000000000001, e.m.stoneDark, 0, 1.06, 0, t), Is(t, e, 1, r, i, e.m.stone, .07);
+		R(1.04, .04, .6000000000000001, e.m.stoneDark, 0, 1.06, 0, t), Ls(t, e, 1, r, i, e.m.stone, .07);
 		for (let n of [-1, 1]) {
 			let i = new E();
 			i.position.set(n * (1 / 2 - .06), 0, r / 2 - .02), t.add(i);
 			let a = new D(new T(.2, .22, 1.26, 12), e.m.stone);
-			a.position.y = 1.26 / 2, i.add(a), Ts(i, .42, 1.26, .38, e.m.roof, 12, .05), R(.025, .11, .02, e.m.dark, 0, .55, .205, i), H(t, e, n * .31000000000000005, .42, .32);
+			a.position.y = 1.26 / 2, i.add(a), Ts(i, .42, 1.26, .38, e.m.roof, 12, .05), R(.025, .11, .02, e.m.dark, 0, .55, .205, i), ac(t, e, n * .31000000000000005, .42, .32);
 		}
-		Ls(t, e, 0, 1.04, .30000000000000004, "z", .3);
+		Rs(t, e, 0, 1.04, .30000000000000004, "z", .3);
 	},
 	palisade(e, t, n) {
 		let r = L(I("palisade", "#6e5a44", 41));
@@ -7166,7 +7166,7 @@ var Ys = {
 		for (let n of [-1, 1]) R(.025, .82, .025, e.m.beam, .12 + n * .06, 0, .34, t);
 		for (let n = .1; n < .8; n += .11) R(.12, .018, .018, e.m.beam, .12, n, .34, t);
 		for (let n of [-.15, .15]) R(.03, .1, .01, e.m.dark, n, .95, .35300000000000004, t), R(.01, .1, .03, e.m.dark, .35300000000000004, .95, n, t);
-		qs(t, a, 1.14, .36, e.m.roof), Ls(t, e, 0, 1.12, .37000000000000005, "z", .24);
+		Js(t, a, 1.14, .36, e.m.roof), Rs(t, e, 0, 1.12, .37000000000000005, "z", .24);
 	},
 	timbergate(e, t, n) {
 		let r = .6, i = .34, a = .42, o = L(I("palisade", "#6e5a44", 53));
@@ -7187,7 +7187,7 @@ var Ys = {
 				let r = .64 + n() * .05, i = new D(new T(.034, .036, r, 7), o);
 				i.position.set(t, r / 2, -.42 / 2 + a * (e + .5) / 7), c.add(i);
 			}
-			R(.46, .3, .54, e.m.wood, 0, .84, 0, c), R(.46, .04, .54, e.m.beam, 0, .8, 0, c), R(.03, .1, .01, e.m.dark, 0, .95, .273, c), qs(c, .46, 1.14, .34, e.m.roof, .05), H(t, e, s * (r / 2 - .02), .44, .26);
+			R(.46, .3, .54, e.m.wood, 0, .84, 0, c), R(.46, .04, .54, e.m.beam, 0, .8, 0, c), R(.03, .1, .01, e.m.dark, 0, .95, .273, c), Js(c, .46, 1.14, .34, e.m.roof, .05), ac(t, e, s * (r / 2 - .02), .44, .26);
 		}
 		R(r, .05, a, e.m.beam, 0, .66, 0, t), R(r, .22, .04, e.m.wood, 0, .7, a / 2 - .02, t), R(r, .22, .04, e.m.wood, 0, .7, -.19, t);
 		let s = new E();
@@ -7196,7 +7196,7 @@ var Ys = {
 			let i = R(r / 2 - .02, .56, .04, e.m.door, 0, 0, 0, t);
 			i.geometry.translate(n * (r / 4 - .01), 0, 0), i.position.set(n * (r / 2 - .01), .28, a / 2 - .02), i.rotation.y = n * 1.35;
 		}
-		Ls(t, e, 0, .9, .22, "z", .22);
+		Rs(t, e, 0, .9, .22, "z", .22);
 	},
 	wall(e, t, n) {
 		let r = 2.2, i = e.thatch ? .5 : .62;
@@ -7212,19 +7212,19 @@ var Ys = {
 			R(.56, .08, .3, e.m.wood, 0, .82, .05, t), R(.5, .2, .26, e.m.palisade, 0, .9, .05, t), Ts(t, .5, 1.1, .22, e.m.roof);
 			return;
 		}
-		for (let n of [-1, 1]) R(r / 2 - .3, i, .2, e.m.stone, n * .7000000000000001, 0, 0, t), Is(t, e, r / 2 - .3, .001, i, e.m.stone, .07);
+		for (let n of [-1, 1]) R(r / 2 - .3, i, .2, e.m.stone, n * .7000000000000001, 0, 0, t), Ls(t, e, r / 2 - .3, .001, i, e.m.stone, .07);
 		t.children.slice(-0).forEach(() => {});
 		let a = new E();
 		t.add(a);
-		for (let t of [-1, 1]) R(.26, i + .35, .34, e.m.stone, t * .26, 0, .02, a), Is(a, e, .001, .001, 0, e.m.stone);
-		R(.78, .2, .34, e.m.stone, 0, i + .15, .02, a), Is(a, e, .78, .34, i + .35, e.m.stone, .07);
+		for (let t of [-1, 1]) R(.26, i + .35, .34, e.m.stone, t * .26, 0, .02, a), Ls(a, e, .001, .001, 0, e.m.stone);
+		R(.78, .2, .34, e.m.stone, 0, i + .15, .02, a), Ls(a, e, .78, .34, i + .35, e.m.stone, .07);
 		let o = new D(new A(.26, .45, .04), e.m.door);
 		if (o.position.set(0, .225, .19), a.add(o), e.gothic) for (let t of [-1, 1]) Ts(a, .26, i + .35, .5, e.m.roof, 4, .03).position.set(t * .26, i + .6, .02);
-		Ls(a, e, 0, i + .3, .2), z(a, e, {
+		Rs(a, e, 0, i + .3, .2), Es(a, e, {
 			side: "z",
 			wallW: .78,
 			wallD: .34
-		}, -.26, i + .1, .06, .1, { pointed: e.gothic }), z(a, e, {
+		}, -.26, i + .1, .06, .1, { pointed: e.gothic }), Es(a, e, {
 			side: "z",
 			wallW: .78,
 			wallD: .34
@@ -7242,20 +7242,20 @@ var Ys = {
 	},
 	farm(e, t, n) {
 		let r = new E();
-		r.position.set(-.25, 0, -.2), t.add(r), R(.95, .5, .6, e.gothic ? e.m.stone : e.m.wood, 0, 0, 0, r), Ks(e, r, .95, .6, .5, e.roofRise * .9);
+		r.position.set(-.25, 0, -.2), t.add(r), R(.95, .5, .6, e.gothic ? e.m.stone : e.m.wood, 0, 0, 0, r), qs(e, r, .95, .6, .5, e.roofRise * .9);
 		let i = new D(new A(.3, .36, .03), e.m.door);
 		i.position.set(.05, .18, .31), r.add(i);
 		let a = new E();
-		a.position.set(.55, 0, .3), t.add(a), Gs(e, a, .45, .42, 0, .44, e.m.lower, !0, { doorZ: -.08 }), Ns(a, e, {
+		a.position.set(.55, 0, .3), t.add(a), Ks(e, a, .45, .42, 0, .44, e.m.lower, !0, { doorZ: -.08 }), Ps(a, e, {
 			side: "z",
 			wallW: .45,
 			wallD: .42
-		}, -.08, .14, .3, !1), Ks(e, a, .45, .42, .44, e.roofRise, !1), Fs(a, e, .12, -.05, .44, .3), Bs(t, e, -.72, .35), Bs(t, e, -.5, .48, .08), Bs(t, e, .9, -.3, .07), Vs(t, e, -.95, .75, .25, .75), Vs(t, e, -.95, .75, -.95, -.2), zs(t, e, .2, .55);
+		}, -.08, .14, .3, !1), qs(e, a, .45, .42, .44, e.roofRise, !1), Is(a, e, .12, -.05, .44, .3), Vs(t, e, -.72, .35), Vs(t, e, -.5, .48, .08), Vs(t, e, .9, -.3, .07), Hs(t, e, -.95, .75, .25, .75), Hs(t, e, -.95, .75, -.95, -.2), Bs(t, e, .2, .55);
 	}
-}, Xs = (e) => new l({
+}, Zs = (e) => new l({
 	color: new O(e),
 	flatShading: !0
-}), Zs = {
+}), Qs = {
 	pine: [
 		"#1f2b22",
 		"#243226",
@@ -7299,18 +7299,18 @@ new l({
 	flatShading: !0,
 	roughness: 1
 });
-function Qs(e, t, n, r, i = 1) {
+function $s(e, t, n, r, i = 1) {
 	let a = new E();
 	a.position.set(n, 0, r), a.scale.setScalar(i), e.add(a);
-	let o = Xs(Zs.dead), s = new D(new T(.025, .05, .8, 5), o);
+	let o = Zs(Qs.dead), s = new D(new T(.025, .05, .8, 5), o);
 	s.position.y = .4, s.rotation.z = (t() - .5) * .15, a.add(s);
 	for (let e = 0; e < 5; e++) {
 		let n = new D(new T(.008, .018, .3, 4), o), r = .35 + e * .09, i = t() * 6.28;
 		n.position.set(Math.cos(i) * .1, r + .1, Math.sin(i) * .1), n.rotation.set(Math.sin(i) * .9, 0, -Math.cos(i) * .9), a.add(n);
 	}
 }
-var $s = (e) => new O(e);
-function ec(e, t, n, r) {
+var ec = (e) => new O(e);
+function tc(e, t, n, r) {
 	let i = e.index ? e.toNonIndexed() : e, a = i.attributes.position, o = (e, t, n) => `${e.toFixed(3)},${t.toFixed(3)},${n.toFixed(3)}`, s = (e, t, n) => `${Math.round(e * 1e3)},${Math.round(t * 1e3)},${Math.round(n * 1e3)}`, c = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Map();
 	for (let e = 0; e < a.count; e++) {
 		let r = o(a.getX(e), a.getY(e), a.getZ(e)), i = s(a.getX(e), a.getY(e), a.getZ(e));
@@ -7330,43 +7330,43 @@ function ec(e, t, n, r) {
 	}
 	return i.setAttribute("color", new Se(u, 3)), i;
 }
-var tc = () => new l({
+var nc = () => new l({
 	vertexColors: !0,
 	flatShading: !0
-}), nc = (e, t, n, r = 1) => new T(1e-4, e, t, n, r), B = {
-	base: $s("#5b564b"),
-	dark: $s("#433f37"),
-	light: $s("#6f685a"),
-	moss: $s("#4a5233"),
-	grass: $s("#46502f"),
-	snow: $s("#d4d6da"),
-	scree: $s("#524d44")
-}, V = (e, t) => e.clone().multiplyScalar(t);
-function rc(e, t, n = .6) {
-	let r = ec(new Fe(t, 0), e, t * .35, (e, t, n) => e > .6 && n < .8 ? V(B.moss, .9 + n * .2) : e > .3 ? V(B.light, .9 + n * .15) : V(B.base, .85 + n * .2)), i = new D(r, tc());
+}), rc = (e, t, n, r = 1) => new T(1e-4, e, t, n, r), z = {
+	base: ec("#5b564b"),
+	dark: ec("#433f37"),
+	light: ec("#6f685a"),
+	moss: ec("#4a5233"),
+	grass: ec("#46502f"),
+	snow: ec("#d4d6da"),
+	scree: ec("#524d44")
+}, B = (e, t) => e.clone().multiplyScalar(t);
+function ic(e, t, n = .6) {
+	let r = tc(new Fe(t, 0), e, t * .35, (e, t, n) => e > .6 && n < .8 ? B(z.moss, .9 + n * .2) : e > .3 ? B(z.light, .9 + n * .15) : B(z.base, .85 + n * .2)), i = new D(r, nc());
 	return i.scale.y = n, i.position.y = t * n * .55, i;
 }
-function H(e, t, n, r, i) {
+function ac(e, t, n, r, i) {
 	R(.02, .22, .02, t.m.beam, n, r - .22, i, e);
 	let a = new D(new A(.05, .06, .05), t.m.glass);
 	a.userData.glow = !0, a.position.set(n, r + .02, i), e.add(a), R(.07, .015, .07, t.m.trim, n, r + .05, i, e);
 }
-function ic(e, t, n, r, i, a = 0) {
-	let o = ec(new A(.1, i, .07, 1, 2, 1), t, .03, (e, t, n) => e > .6 ? V(B.moss, .9 + n * .2) : V(B.base, .8 + n * .25));
+function oc(e, t, n, r, i, a = 0) {
+	let o = tc(new A(.1, i, .07, 1, 2, 1), t, .03, (e, t, n) => e > .6 ? B(z.moss, .9 + n * .2) : B(z.base, .8 + n * .25));
 	o.translate(0, i / 2, 0);
-	let s = new D(o, tc());
+	let s = new D(o, nc());
 	return s.position.set(n, 0, r), s.rotation.set(a, t() * 3, a * .5), e.add(s), s;
 }
-Object.assign(Ys, {
+Object.assign(Xs, {
 	barrow(e, t, n) {
 		let r = new ge(.6, 18, 7, 0, Math.PI * 2, 0, Math.PI / 2);
 		r.scale(1.42, .5, 1);
-		let i = new D(ec(r, n, .03, (e, t, n) => e > .25 ? V(B.grass, .82 + n * .22) : V($s("#4a4034"), .85 + n * .2)), tc());
+		let i = new D(tc(r, n, .03, (e, t, n) => e > .25 ? B(z.grass, .82 + n * .22) : B(ec("#4a4034"), .85 + n * .2)), nc());
 		i.position.set(-.04, 0, -.22), t.add(i);
 		for (let e = 0; e < 18; e++) {
 			let r = e / 18 * Math.PI * 2, i = -.04 + Math.cos(r) * .87, a = -.22 + Math.sin(r) * .61;
 			if (a > .18 && Math.abs(i - .08) < .42) continue;
-			let o = rc(n, .05 + n() * .025, .55);
+			let o = ic(n, .05 + n() * .025, .55);
 			o.position.set(i, o.position.y - .02, a), t.add(o);
 		}
 		let a = L(I("field", "#6a6458", 21));
@@ -7375,25 +7375,25 @@ Object.assign(Ys, {
 			R(.18, s, .11, a, i, 0, o, t).rotation.y = -e * (.25 + r * .55);
 		}
 		R(.25, .4, .4, L(null, "#0a090d"), .08, 0, .2, t);
-		let o = (e, t, n) => e > .6 ? V(B.moss, .95 + n * .2) : V($s("#8a8478"), .85 + n * .25);
+		let o = (e, t, n) => e > .6 ? B(z.moss, .95 + n * .2) : B(ec("#8a8478"), .85 + n * .25);
 		for (let e of [-1, 1]) {
-			let r = new D(ec(new A(.12, .43, .13, 1, 3, 1), n, .02, o), tc());
+			let r = new D(tc(new A(.12, .43, .13, 1, 3, 1), n, .02, o), nc());
 			r.position.set(.08 + e * .18, .215, .4), r.rotation.z = e * .04, t.add(r);
 		}
-		let s = new D(ec(new A(.56, .1, .16, 3, 1, 1), n, .02, o), tc());
+		let s = new D(tc(new A(.56, .1, .16, 3, 1, 1), n, .02, o), nc());
 		s.position.set(.08, .47, .4), s.rotation.z = .02, t.add(s);
 		let c = new D(new T(.035, .035, .012, 10), L(null, "#7a7062"));
-		c.rotation.x = Math.PI / 2, c.position.set(.08, .47, .485), t.add(c), As(R(.28, .02, .22, L(I("field", "#6e6a60", 22)), .08, 0, .56, t));
+		c.rotation.x = Math.PI / 2, c.position.set(.08, .47, .485), t.add(c), js(R(.28, .02, .22, L(I("field", "#6e6a60", 22)), .08, 0, .56, t));
 		for (let n of [-1, 1]) R(.028, .37, .028, e.m.beam, .08 + n * .105, 0, .42, t).rotation.z = n * .05;
 		R(.25, .028, .035, e.m.beam, .08, .37, .42, t);
-		let l = new D(ec(nc(.24, .17, 9), n, .03, (e, t, n) => V($s("#5a4a38"), .85 + n * .25)), tc());
+		let l = new D(tc(rc(.24, .17, 9), n, .03, (e, t, n) => B(ec("#5a4a38"), .85 + n * .25)), nc());
 		l.position.set(.6, .085, .36), t.add(l);
-		for (let r = 0; r < 3; r++) As(R(.065, .01, .34, e.m.wood, 0 + r * .075, 0, .74, t)).rotation.y = (n() - .5) * .12;
+		for (let r = 0; r < 3; r++) js(R(.065, .01, .34, e.m.wood, 0 + r * .075, 0, .74, t)).rotation.y = (n() - .5) * .12;
 		{
 			let n = t.children.length;
-			R(.025, .36, .025, e.m.beam, -.3, 0, .6, t), R(.1, .018, .018, e.m.beam, -.26, .34, .6, t), H(t, e, -.22, .3, .6), t.children.slice(n).forEach(As);
+			R(.025, .36, .025, e.m.beam, -.3, 0, .6, t), R(.1, .018, .018, e.m.beam, -.26, .34, .6, t), ac(t, e, -.22, .3, .6), t.children.slice(n).forEach(js);
 		}
-		ic(t, n, -.35, -.3, .28, .1).position.y = .2;
+		oc(t, n, -.35, -.3, .28, .1).position.y = .2;
 		for (let [e, r, i, a] of [[
 			-.82,
 			.32,
@@ -7404,21 +7404,21 @@ Object.assign(Ys, {
 			-.55,
 			.34,
 			.06
-		]]) ic(t, n, e, r, i, a);
-		Qs(t, n, -.62, -.5, 1);
+		]]) oc(t, n, e, r, i, a);
+		$s(t, n, -.62, -.5, 1);
 	},
 	mine(e, t, n) {
 		let r = new E();
 		r.position.set(-.2, 0, -.25), t.add(r);
-		let i = (e, t, n) => e > .6 && t < .35 ? V(B.grass, .8 + n * .3) : e > .35 ? V(B.light, .85 + n * .2) : V(B.base, .8 + n * .25), a = (e, t, a, o, s) => {
-			let c = nc(a, o, s, 3);
+		let i = (e, t, n) => e > .6 && t < .35 ? B(z.grass, .8 + n * .3) : e > .35 ? B(z.light, .85 + n * .2) : B(z.base, .8 + n * .25), a = (e, t, a, o, s) => {
+			let c = rc(a, o, s, 3);
 			c.translate(0, o / 2, 0);
-			let l = new D(ec(c, n, a * .3, i), tc());
+			let l = new D(tc(c, n, a * .3, i), nc());
 			l.position.set(e, 0, t), l.rotation.y = n() * 6, r.add(l);
 		};
 		a(0, 0, .85, .42, 10), a(-.25, -.2, .5, .78, 7), a(.22, -.28, .42, .62, 7), a(-.05, .1, .4, .55, 7);
 		for (let e = 0; e < 3; e++) {
-			let e = n() * 6.28, r = rc(n, .18 + n() * .1, .8);
+			let e = n() * 6.28, r = ic(n, .18 + n() * .1, .8);
 			r.position.set(Math.cos(e) * .6 - .2, 0, Math.sin(e) * .5 - .25), t.add(r);
 		}
 		let o = new E();
@@ -7426,7 +7426,7 @@ Object.assign(Ys, {
 		for (let t of [-1, 1]) R(.05, .4, .05, e.m.beam, t * .19, 0, .08, o);
 		R(.46, .06, .07, e.m.beam, 0, .4, .08, o);
 		let s = R(.52, .03, .22, e.m.wood, 0, .47, .05, o);
-		s.rotation.x = .35, H(o, e, -.24, .36, .14);
+		s.rotation.x = .35, ac(o, e, -.24, .36, .14);
 		for (let n = 0; n < 7; n++) R(.22, .015, .035, e.m.wood, .05, 0, .5 + n * .09, t);
 		for (let n of [-1, 1]) R(.015, .02, .66, e.m.trim, .05 + n * .07, .015, .78, t);
 		let c = new E();
@@ -7440,9 +7440,9 @@ Object.assign(Ys, {
 			let r = new D(new T(.03, .03, .02, 8), e.m.trim);
 			r.rotation.z = Math.PI / 2, r.position.set(t, .03, n), c.add(r);
 		}
-		let l = new D(ec(new Fe(.08, 0), n, .03, () => V($s("#5c5750"), 1)), tc());
+		let l = new D(tc(new Fe(.08, 0), n, .03, () => B(ec("#5c5750"), 1)), nc());
 		l.position.y = .14, l.scale.y = .6, c.add(l);
-		let u = new D(ec(nc(.3, .12, 8, 2).translate(0, .06, 0), n, .04, (e, t, n) => V(B.scree, .62 + n * .2)), tc());
+		let u = new D(tc(rc(.3, .12, 8, 2).translate(0, .06, 0), n, .04, (e, t, n) => B(z.scree, .62 + n * .2)), nc());
 		u.position.set(.55, 0, .5), t.add(u);
 		let d = new E();
 		d.position.set(.5, 0, -.1), t.add(d);
@@ -7454,7 +7454,7 @@ Object.assign(Ys, {
 		]) R(.03, .62, .03, e.m.beam, t, 0, n, d);
 		R(.32, .04, .28, e.m.beam, 0, .62, 0, d);
 		let f = new D(new T(.06, .06, .03, 10), e.m.wood);
-		f.rotation.x = Math.PI / 2, f.position.set(0, .7, 0), d.add(f), R(.008, .45, .008, e.m.trim, .06, .2, 0, d), H(t, e, .32, .46, .62), zs(t, e, -.35, .55), zs(t, e, -.45, .5);
+		f.rotation.x = Math.PI / 2, f.position.set(0, .7, 0), d.add(f), R(.008, .45, .008, e.m.trim, .06, .2, 0, d), ac(t, e, .32, .46, .62), Bs(t, e, -.35, .55), Bs(t, e, -.45, .5);
 	},
 	stilthouse(e, t, n) {
 		let r = .2, i = .58 + n() * .12, a = .5, o = .4, s = i + .24, c = .72;
@@ -7472,14 +7472,14 @@ Object.assign(Ys, {
 		}
 		R(s + .04, .03, .76, e.m.wood, 0, r, 0, t);
 		let l = new E();
-		l.position.set(-.03, .23, -.04), t.add(l), Gs(e, l, i, a, 0, o, n() < .5 ? e.m.upper : e.m.lower, !0, { doorZ: .08 }), Ns(l, e, {
+		l.position.set(-.03, .23, -.04), t.add(l), Ks(e, l, i, a, 0, o, n() < .5 ? e.m.upper : e.m.lower, !0, { doorZ: .08 }), Ps(l, e, {
 			side: "z",
 			wallW: i,
 			wallD: a
-		}, .08, .15, .3, !1), Ks(e, l, i, a, o, e.roofRise * 1.3, n() < .5), n() < .6 && Fs(l, e, -i / 2 + .1, -.5 / 4, o, .28);
+		}, .08, .15, .3, !1), qs(e, l, i, a, o, e.roofRise * 1.3, n() < .5), n() < .6 && Is(l, e, -i / 2 + .1, -.5 / 4, o, .28);
 		for (let n = 0; n < 5; n++) R(.11, .012, .018, e.m.wood, .06, .16 - n * .045, .39, t);
 		for (let n of [0, .12]) R(.012, .23, .012, e.m.beam, n, -.02, .39, t);
-		H(t, e, .2, .5, c / 2 - .02), R(.2, .16, .006, L(null, "#4a4a3a"), s / 2 - .12, .26, .37, t);
+		ac(t, e, .2, .5, c / 2 - .02), R(.2, .16, .006, L(null, "#4a4a3a"), s / 2 - .12, .26, .37, t);
 		let u = new D(new T(.035, .02, .09, 7), L(null, "#6a5a38"));
 		u.position.set(s / 2 + .02, .14, .05), t.add(u);
 	},
@@ -7488,16 +7488,16 @@ Object.assign(Ys, {
 		for (let n = 0; n < 4; n++) for (let r of [-1.04 / 2, o / 2]) R(.05, .19999999999999998, .05, e.m.beam, -1.3 / 2 + a * n / 3, -.02, r, t);
 		R(1.34, .035, 1.08, e.m.wood, 0, .18, 0, t);
 		let s = new E();
-		s.position.set(-.02, .215, -.08), t.add(s), Gs(e, s, 1, r, 0, i, e.m.lower, !0, { doorZ: .05 }), Ns(s, e, {
+		s.position.set(-.02, .215, -.08), t.add(s), Ks(e, s, 1, r, 0, i, e.m.lower, !0, { doorZ: .05 }), Ps(s, e, {
 			side: "z",
 			wallW: 1,
 			wallD: r
-		}, .05, .22, .38, !0), Gs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, i, .4, e.m.upper, !0, { timber: !0 }), Ks(e, s, 1 + e.jetty * 2, r + e.jetty * 2, .8600000000000001, e.roofRise * 1.1), Fs(s, e, .34, -.12, .8600000000000001, .42), Rs(s, e, .32, .48, r / 2);
+		}, .05, .22, .38, !0), Ks(e, s, 1 + e.jetty * 2, r + e.jetty * 2, i, .4, e.m.upper, !0, { timber: !0 }), qs(e, s, 1 + e.jetty * 2, r + e.jetty * 2, .8600000000000001, e.roofRise * 1.1), Is(s, e, .34, -.12, .8600000000000001, .42), zs(s, e, .32, .48, r / 2);
 		let c = new E();
 		c.position.set(.1, .215, .41), t.add(c);
 		for (let t of [-.3, .42]) R(.035, .4, .035, e.m.beam, t, 0, .1, c);
 		let l = R(.8, .03, .3, e.m.roof, .06, .41, 0, c);
-		l.rotation.x = .3, R(.36, .03, .08, e.m.wood, .02, .09, .08, c), H(c, e, -.3, .36, .13), H(c, e, .42, .36, .13);
+		l.rotation.x = .3, R(.36, .03, .08, e.m.wood, .02, .09, .08, c), ac(c, e, -.3, .36, .13), ac(c, e, .42, .36, .13);
 		let u = new E();
 		u.position.set(-.44, .215, .41), t.add(u);
 		for (let t of [-1, 1]) R(.025, .32, .025, e.m.beam, t * .13, 0, 0, u);
@@ -7508,7 +7508,7 @@ Object.assign(Ys, {
 			[.09, .24],
 			[-.02, .15]
 		]) R(.05, .06, .03, e.m.paper, t, n, .004, u);
-		zs(t, e, a / 2 - .08, o / 2 - .05);
+		Bs(t, e, a / 2 - .08, o / 2 - .05);
 	},
 	stiltinn(e, t, n) {
 		let r = .2, i = 1.22, a = .56, o = .4, s = 1.48, c = .92;
@@ -7519,11 +7519,11 @@ Object.assign(Ys, {
 		}
 		R(1.52, .035, .9600000000000001, e.m.wood, 0, r, 0, t);
 		let l = new E();
-		l.position.set(0, .23500000000000001, -.1), t.add(l), Gs(e, l, i, a, 0, o, e.m.lower, !0, { doorZ: -.2 }), Ns(l, e, {
+		l.position.set(0, .23500000000000001, -.1), t.add(l), Ks(e, l, i, a, 0, o, e.m.lower, !0, { doorZ: -.2 }), Ps(l, e, {
 			side: "z",
 			wallW: i,
 			wallD: a
-		}, -.2, .2, .34, !1), Gs(e, l, i + e.jetty * 2, a + e.jetty * 2, o, .34, e.m.upper, !0, { timber: !0 }), Ks(e, l, i + e.jetty * 2, a + e.jetty * 2, .74, e.roofRise * 1.25), Fs(l, e, -.42, -.1, .74, .4), Fs(l, e, .44, -.1, .74, .34), Rs(l, e, -.46, .46, a / 2), R(.02, .06, .012, L(null, "#e8d8a8"), -.46, .43, .34, l);
+		}, -.2, .2, .34, !1), Ks(e, l, i + e.jetty * 2, a + e.jetty * 2, o, .34, e.m.upper, !0, { timber: !0 }), qs(e, l, i + e.jetty * 2, a + e.jetty * 2, .74, e.roofRise * 1.25), Is(l, e, -.42, -.1, .74, .4), Is(l, e, .44, -.1, .74, .34), zs(l, e, -.46, .46, a / 2), R(.02, .06, .012, L(null, "#e8d8a8"), -.46, .43, .34, l);
 		let u = new E();
 		u.position.set(0, .23500000000000001, a / 2 - .02), t.add(u);
 		for (let t of [
@@ -7532,7 +7532,7 @@ Object.assign(Ys, {
 			.36,
 			.6
 		]) R(.03, .2, .03, e.m.beam, t, 0, .12, u);
-		R(1.2, .025, .025, e.m.beam, .02, .18, .12, u), R(.4, .03, .08, e.m.wood, .2, .09, .02, u), H(u, e, -.2, .36, .1), H(u, e, .6, .36, .1);
+		R(1.2, .025, .025, e.m.beam, .02, .18, .12, u), R(.4, .03, .08, e.m.wood, .2, .09, .02, u), ac(u, e, -.2, .36, .1), ac(u, e, .6, .36, .1);
 		for (let n = 0; n < 5; n++) R(.11, .012, .018, e.m.wood, s / 2 - .16, .16 - n * .045, .49, t);
 		for (let n of [s / 2 - .22, s / 2 - .1]) R(.012, .23, .012, e.m.beam, n, -.02, .49, t);
 		R(.22, .012, .1, L(null, "#6a4a3a"), -.3, .6600000000000001, .4, t);
@@ -7572,7 +7572,7 @@ Object.assign(Ys, {
 	landing(e, t, n) {
 		let r = .25;
 		for (let n of [-1, 1]) {
-			R(.06, .62, .06, e.m.beam, 0, -.02, n * r, t), R(.09, .03, .09, e.m.trim, 0, .6, n * r, t), H(t, e, .02, .8200000000000001, n * r);
+			R(.06, .62, .06, e.m.beam, 0, -.02, n * r, t), R(.09, .03, .09, e.m.trim, 0, .6, n * r, t), ac(t, e, .02, .8200000000000001, n * r);
 			let i = R(.025, .2, .025, e.m.beam, 0, .4, n * .16999999999999998, t);
 			i.rotation.x = n * .7;
 		}
@@ -7585,7 +7585,7 @@ Object.assign(Ys, {
 	ferrystage(e, t, n) {
 		let r = .86, i = .22;
 		for (let n of [-1, 1]) {
-			R(.07, r, .07, e.m.beam, n * i, r / 2 - .02, 0, t), R(.1, .03, .1, e.m.trim, n * i, .85, 0, t), H(t, e, n * i, 1.06, 0), H(t, e, n * .28, .46, .02);
+			R(.07, r, .07, e.m.beam, n * i, r / 2 - .02, 0, t), R(.1, .03, .1, e.m.trim, n * i, .85, 0, t), ac(t, e, n * i, 1.06, 0), ac(t, e, n * .28, .46, .02);
 			let a = R(.025, .2, .025, e.m.beam, n * .14, .6599999999999999, 0, t);
 			a.rotation.z = -n * .7;
 		}
@@ -7596,9 +7596,9 @@ Object.assign(Ys, {
 		a.scale.set(.045, .06, .045), a.position.set(.32, .72, 0), t.add(a);
 	},
 	boathall(e, t, n) {
-		let r = (e, t, n) => e > .5 ? V(B.grass, .72 + n * .2) : V($s("#3e352a"), .8 + n * .2), i = new ge(.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2);
+		let r = (e, t, n) => e > .5 ? B(z.grass, .72 + n * .2) : B(ec("#3e352a"), .8 + n * .2), i = new ge(.8, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2);
 		i.scale(1.2, .3, 1);
-		let a = new D(ec(i, n, .05, r), tc());
+		let a = new D(tc(i, n, .05, r), nc());
 		a.position.set(-.05, 0, -.1), t.add(a);
 		let o = (r, i, a, o, s, c, l = 0, u = 1) => {
 			let d = new E();
@@ -7628,7 +7628,7 @@ Object.assign(Ys, {
 			[-.035, .035],
 			[.035, .035]
 		]) R(.016, .04, .016, c, .3 + e, .69, .32 + n, t);
-		H(t, e, -.2, .34, .3), o(-.72, .1, .2, .36, .13, .9, 1.25, .8), o(.72, .1, -.3, .32, .12, -.5, -1.2, .75), o(-.5, .08, -.7, .3, .12, .2, 1.3, .7), R(.16, .025, .44, e.m.wood, .6, 0, .42, t).rotation.y = -.6;
+		ac(t, e, -.2, .34, .3), o(-.72, .1, .2, .36, .13, .9, 1.25, .8), o(.72, .1, -.3, .32, .12, -.5, -1.2, .75), o(-.5, .08, -.7, .3, .12, .2, 1.3, .7), R(.16, .025, .44, e.m.wood, .6, 0, .42, t).rotation.y = -.6;
 		for (let [r, i, a] of [
 			[
 				-.62,
@@ -7662,13 +7662,13 @@ Object.assign(Ys, {
 	},
 	lockhall(e, t, n) {
 		let r = .7, i = .56, a = e.m.ashlar;
-		R(.7799999999999999, .06, .64, e.m.stoneDark, 0, 0, 0, t), Gs(e, t, r, i, .06, .5, a, !0, { doorZ: -.08 }), Ns(t, e, {
+		R(.7799999999999999, .06, .64, e.m.stoneDark, 0, 0, 0, t), Ks(e, t, r, i, .06, .5, a, !0, { doorZ: -.08 }), Ps(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, -.08, .2, .36, !0), Ks(e, t, r, i, .56, e.roofRise * .9, !0), Fs(t, e, .2, -.12, .56, .3);
+		}, -.08, .2, .36, !0), qs(e, t, r, i, .56, e.roofRise * .9, !0), Is(t, e, .2, -.12, .56, .3);
 		let o = new E();
-		o.position.set(-.7 / 2 - .02, 0, -.56 / 2 + .12), t.add(o), R(.24, .82, .24, a, 0, 0, 0, o), Ts(o, .28, .82, .22, e.m.roof), z(o, e, {
+		o.position.set(-.7 / 2 - .02, 0, -.56 / 2 + .12), t.add(o), R(.24, .82, .24, a, 0, 0, 0, o), Ts(o, .28, .82, .22, e.m.roof), Es(o, e, {
 			side: "z",
 			wallW: .24,
 			wallD: .24
@@ -7691,7 +7691,7 @@ Object.assign(Ys, {
 			.25,
 			.42
 		]) R(.42, .03, .05, e.m.trim, 0, t, 0, u);
-		H(t, e, .14, .34, .32), zs(t, e, -.3, .4);
+		ac(t, e, .14, .34, .32), Bs(t, e, -.3, .4);
 	},
 	vats(e, t, r) {
 		let i = e.m.ashlar, a = L(null, "#5a8a3a"), o = L(null, "#0e0c0c");
@@ -7723,7 +7723,7 @@ Object.assign(Ys, {
 		let l = new D(new n(.05, .008, 4, 10), e.m.trim);
 		l.position.set(0, .33, -.33), t.add(l), R(.02, .62, .02, e.m.beam, .12, .02, .5, t);
 		let u = new D(new T(.04, .04, .08, 6, 1, !0), e.m.trim);
-		u.position.set(.12, .6, .54), t.add(u), H(t, e, -.42, .34, .4);
+		u.position.set(.12, .6, .54), t.add(u), ac(t, e, -.42, .34, .4);
 		let d = L(null, "#5e6a3a");
 		for (let [e, n] of [
 			[-.66, .36],
@@ -7737,7 +7737,7 @@ Object.assign(Ys, {
 	abbey(e, t, n) {
 		let r = e.m.ashlar, i = .7, a = 1.3, o = .86, s = new E();
 		s.position.set(.05, -.1, -.2), s.rotation.set(.03, 0, -.04), t.add(s), R(i, o, a, r, 0, 0, 0, s);
-		for (let t = 0; t < 4; t++) z(s, e, {
+		for (let t = 0; t < 4; t++) Es(s, e, {
 			side: "x",
 			wallW: i,
 			wallD: a
@@ -7745,27 +7745,27 @@ Object.assign(Ys, {
 			pointed: !0,
 			lit: t === 1
 		});
-		Js(e, s, i, a, o), ws(s, i, a, o, e.roofRise * i / 2 * 1.5, e.m.roof, r, .06, .04);
+		Ys(e, s, i, a, o), ws(s, i, a, o, e.roofRise * i / 2 * 1.5, e.m.roof, r, .06, .04);
 		let c = new E();
-		c.position.set(-.1, -.08, a / 2 - .1), c.rotation.z = .03, t.add(c), R(.36, 1.36, .34, r, 0, 0, 0, c), Ns(c, e, {
+		c.position.set(-.1, -.08, a / 2 - .1), c.rotation.z = .03, t.add(c), R(.36, 1.36, .34, r, 0, 0, 0, c), Ps(c, e, {
 			side: "z",
 			wallW: .36,
 			wallD: .34
-		}, 0, .18, .36, !0), z(c, e, {
+		}, 0, .18, .36, !0), Es(c, e, {
 			side: "z",
 			wallW: .36,
 			wallD: .34
 		}, 0, .98, .1, .2, {
 			pointed: !0,
 			lit: !1
-		}), z(c, e, {
+		}), Es(c, e, {
 			side: "x",
 			wallW: .36,
 			wallD: .34
 		}, 0, .98, .1, .2, {
 			pointed: !0,
 			lit: !1
-		}), Is(c, e, .36, .34, 1.36, r, .06);
+		}), Ls(c, e, .36, .34, 1.36, r, .06);
 		let l = new D(new T(.04, .07, .09, 10), L(null, "#6a5a3a"));
 		l.position.set(0, 1, .12), c.add(l);
 		let u = new E();
@@ -7797,16 +7797,16 @@ Object.assign(Ys, {
 			let a = new D(new T(.5, .5, .004, 18), d);
 			a.scale.set(r, 1, i), a.position.set(e, .002, n), t.add(a);
 		}
-		Qs(t, n, -.62, .35, .9), R(.03, .34, .03, e.m.beam, .14, 0, .62, t), H(t, e, .14, .36, .62);
+		$s(t, n, -.62, .35, .9), R(.03, .34, .03, e.m.beam, .14, 0, .62, t), ac(t, e, .14, .36, .62);
 	},
 	priory(e, t, n) {
 		let r = e.m.ashlar, i = new ge(.9, 12, 4, 0, Math.PI * 2, 0, Math.PI / 2);
-		i.scale(1.15, .16, 1), t.add(new D(ec(i, n, .03, (e, t, n) => e > .6 ? V(B.grass, .72 + n * .18) : V(B.base, .78 + n * .2)), tc()));
+		i.scale(1.15, .16, 1), t.add(new D(tc(i, n, .03, (e, t, n) => e > .6 ? B(z.grass, .72 + n * .18) : B(z.base, .78 + n * .2)), nc()));
 		let a = new E();
 		a.position.set(-.12, .1, -.05), t.add(a);
 		let o = .46, s = .8, c = .5;
 		R(o, c, s, r, 0, 0, 0, a);
-		for (let t = 0; t < 3; t++) z(a, e, {
+		for (let t = 0; t < 3; t++) Es(a, e, {
 			side: "x",
 			wallW: o,
 			wallD: s
@@ -7814,7 +7814,7 @@ Object.assign(Ys, {
 			pointed: !0,
 			lit: t === 2
 		});
-		z(a, e, {
+		Es(a, e, {
 			side: "z",
 			wallW: o,
 			wallD: s
@@ -7826,7 +7826,7 @@ Object.assign(Ys, {
 		for (let e of [-1, 1]) R(.04, .22, .06, r, e * .12, -.04, .44, a);
 		for (let e = 0; e < 3; e++) R(.26, .025, .07, r, 0, -.08 + e * .03, .56 - e * .05, a);
 		let l = new E();
-		l.position.set(.42, .1, -.26), t.add(l), Gs(e, l, .36, .5, 0, .36, e.m.upper, !0, {}), Ks(e, l, .36, .5, .36, e.roofRise, !1);
+		l.position.set(.42, .1, -.26), t.add(l), Ks(e, l, .36, .5, 0, .36, e.m.upper, !0, {}), qs(e, l, .36, .5, .36, e.roofRise, !1);
 		for (let [e, n, i, a] of [
 			[
 				.42,
@@ -7847,15 +7847,15 @@ Object.assign(Ys, {
 				Math.PI / 2
 			]
 		]) R(i, .12, .05, r, e, .08, n, t).rotation.y = a;
-		H(t, e, .12, .42, .42), Qs(t, n, .66, -.62, .8);
+		ac(t, e, .12, .42, .42), $s(t, n, .66, -.62, .8);
 	},
 	watermill(e, t, r) {
 		let i = .62, a = .5, o = .36;
-		Gs(e, t, i, a, 0, o, e.m.stone, !0, { doorZ: -.1 }), Gs(e, t, i, a, o, .3, e.m.upper, !0, { timber: !0 }), Ns(t, e, {
+		Ks(e, t, i, a, 0, o, e.m.stone, !0, { doorZ: -.1 }), Ks(e, t, i, a, o, .3, e.m.upper, !0, { timber: !0 }), Ps(t, e, {
 			side: "z",
 			wallW: i,
 			wallD: a
-		}, -.1, .16, .3, !0), Ks(e, t, i, a, .6599999999999999, e.roofRise * 1.25, !0), Fs(t, e, -.18, -.1, .6599999999999999, .34);
+		}, -.1, .16, .3, !0), qs(e, t, i, a, .6599999999999999, e.roofRise * 1.25, !0), Is(t, e, -.18, -.1, .6599999999999999, .34);
 		let s = new E();
 		s.position.set(.4, .2, .02), t.add(s);
 		let c = .24, l = e.m.wood;
@@ -7893,7 +7893,7 @@ Object.assign(Ys, {
 				.36,
 				1
 			]
-		]) oc(t, e, n, r, i * 1.2, i * 2);
+		]) cc(t, e, n, r, i * 1.2, i * 2);
 		let d = new E();
 		d.position.set(-.46, 0, .3), d.rotation.y = .5, t.add(d);
 		let f = L(null, "#221a16");
@@ -7902,7 +7902,7 @@ Object.assign(Ys, {
 			let t = new D(new n(.06, .012, 4, 10), f);
 			t.position.set(.02, .06, e * .09), d.add(t);
 		}
-		R(.012, .44, .012, e.m.beam, .3, 0, .34, t), R(.1, .06, .006, L(null, "#8a2a20"), .35, .36, .34, t), H(t, e, -.24, .3, .3);
+		R(.012, .44, .012, e.m.beam, .3, 0, .34, t), R(.1, .06, .006, L(null, "#8a2a20"), .35, .36, .34, t), ac(t, e, -.24, .3, .3);
 	},
 	chapelruin(e, t, n) {
 		let r = -.12, i = .56, a = .92, o = .86, s = L(I("ashlar", "#a29c8e", 31)), c = L(I("rubble", "#4e5a3c", 32)), l = L(I("slate", "#454a55", 33)), u = L(null, "#08080b"), d = new D(new T(.5, .5, .004, 18), L(null, "#1e2c30"));
@@ -7948,11 +7948,11 @@ Object.assign(Ys, {
 			r.rotation.y = .55;
 		}
 		for (let e = 0; e < 5; e++) {
-			let e = rc(n, .025 + n() * .02, .6);
+			let e = ic(n, .025 + n() * .02, .6);
 			e.position.set(.36 + n() * .12, r, 0 + n() * .2), t.add(e);
 		}
 		{
-			let e = new D(ec(nc(.14, .09, 7, 2), n, .02, (e, t, n) => V($s("#4a4034"), .85 + n * .2)), tc());
+			let e = new D(tc(rc(.14, .09, 7, 2), n, .02, (e, t, n) => B(ec("#4a4034"), .85 + n * .2)), nc());
 			e.position.set(.62, .045, .62), t.add(e);
 		}
 		R(.2, .014, .06, e.m.wood, -.33, .07, .66, t);
@@ -7962,7 +7962,7 @@ Object.assign(Ys, {
 			let n = new D(new ge(.035, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), v);
 			n.scale.set(1, 1.25, 1), n.position.set(-.4 + e * .07, .084, .66), t.add(n);
 		}
-		H(t, e, .21, .24, .8);
+		ac(t, e, .21, .24, .8);
 		let y = L(null, "#5e6e3e");
 		for (let [e, i] of [
 			[.68, 0],
@@ -8023,30 +8023,30 @@ Object.assign(Ys, {
 				t.rotation.x = Math.PI / 2, t.position.y = e, c.add(t);
 			}
 		}
-		oc(t, e, -.06, .26, 1.1, 1.3), oc(t, e, .34, .22, .9, .4);
+		cc(t, e, -.06, .26, 1.1, 1.3), cc(t, e, .34, .22, .9, .4);
 		let u = R(.09, .07, .09, i, -.2, 0, .24, t);
 		u.rotation.y = .5;
 		for (let e = 0; e < 4; e++) {
-			let e = rc(r, .015 + r() * .01, .5);
+			let e = ic(r, .015 + r() * .01, .5);
 			e.position.set(-.3 + r() * .7, 0, -.2 + r() * .5), t.add(e);
 		}
 	},
 	warren(e, t, n) {
 		let r = new E();
 		r.rotation.y = .45, t.add(r);
-		let i = (e, t, n) => e > .62 ? V(B.grass, .78 + n * .22) : e > .3 ? V(B.light, .82 + n * .14) : V(B.base, .78 + n * .16), a = (e, t, a, o, s, c, l, u = i, d = r) => {
-			let f = ec(new A(e, t, a, 2, 2, 1), n, l, u), p = new D(f, tc());
+		let i = (e, t, n) => e > .62 ? B(z.grass, .78 + n * .22) : e > .3 ? B(z.light, .82 + n * .14) : B(z.base, .78 + n * .16), a = (e, t, a, o, s, c, l, u = i, d = r) => {
+			let f = tc(new A(e, t, a, 2, 2, 1), n, l, u), p = new D(f, nc());
 			return p.position.set(o, s + t / 2, c), d.add(p), p;
 		}, o = (e, t, i, a, o, s = 1.25) => {
-			let c = nc(i, a, o, 3);
+			let c = rc(i, a, o, 3);
 			c.translate(0, a / 2, 0);
-			let l = new D(ec(c, n, i * .14, (e, t, n) => e > .8 || e > .7 && n > .4 ? V(B.grass, .82 + n * .2) : V(B.base, .8 + n * .16)), tc());
+			let l = new D(tc(c, n, i * .14, (e, t, n) => e > .8 || e > .7 && n > .4 ? B(z.grass, .82 + n * .2) : B(z.base, .8 + n * .16)), nc());
 			l.position.set(e, 0, t), l.rotation.y = n() * 6, l.scale.set(s, 1, 1), r.add(l);
 		};
 		{
 			let e = new ge(1, 10, 4, 0, Math.PI * 2, 0, Math.PI / 2);
 			e.scale(1.15, .84, .9);
-			let t = new D(ec(e, n, .1, (e, t, n) => e > .78 || e > .66 && n > .45 ? V(B.grass, .82 + n * .2) : V(B.base, .8 + n * .16)), tc());
+			let t = new D(tc(e, n, .1, (e, t, n) => e > .78 || e > .66 && n > .45 ? B(z.grass, .82 + n * .2) : B(z.base, .8 + n * .16)), nc());
 			t.position.set(0, 0, -1.22), r.add(t);
 		}
 		o(-.74, -.86, .6, .56, 8, 1.1), o(.76, -.9, .62, .6, 8, 1.1);
@@ -8056,7 +8056,7 @@ Object.assign(Ys, {
 				.74,
 				.92,
 				.8
-			][l++ % 4], u = a(t - e, i - .012, .3 + n() * .08, (e + t) / 2, r, o - .17, .034, (e, t, n) => e > .62 ? V(B.grass, .82 + n * .2) : V(B.base, c + n * .12));
+			][l++ % 4], u = a(t - e, i - .012, .3 + n() * .08, (e + t) / 2, r, o - .17, .034, (e, t, n) => e > .62 ? B(z.grass, .82 + n * .2) : B(z.base, c + n * .12));
 			u.rotation.z = s;
 		};
 		for (let [e, t, n] of [[
@@ -8161,10 +8161,10 @@ Object.assign(Ys, {
 			n.rotation.z = Math.PI / 2, n.position.set(e * 1.6, -.11, t), S.add(n);
 		}
 		for (let e = 0; e < 6; e++) {
-			let e = rc(n, .025 + n() * .015, .6);
+			let e = ic(n, .025 + n() * .015, .6);
 			e.position.set(.28 + n() * .16, 0, .5 + n() * .16), r.add(e);
 		}
-		let ee = new D(ec(nc(.42, .24, 9, 2).translate(0, .12, 0), n, .05, (e, t, n) => t > .16 && e > .6 ? V(B.grass, .8 + n * .2) : V(B.scree, .7 + n * .18)), tc());
+		let ee = new D(tc(rc(.42, .24, 9, 2).translate(0, .12, 0), n, .05, (e, t, n) => t > .16 && e > .6 ? B(z.grass, .8 + n * .2) : B(z.scree, .7 + n * .18)), nc());
 		ee.position.set(.86, 0, .22), ee.scale.set(1, 1, .75), r.add(ee);
 		let te = new E();
 		te.position.set(-.6, 0, .2), te.rotation.y = .25, r.add(te);
@@ -8205,7 +8205,7 @@ Object.assign(Ys, {
 			a.position.set(e, n / 2, t), a.rotation.set(.3, 0, i), r.add(a);
 		}
 		for (let e = 0; e < 7; e++) {
-			let t = e / 7 * Math.PI * 2, i = rc(n, .026, .6);
+			let t = e / 7 * Math.PI * 2, i = ic(n, .026, .6);
 			i.position.set(-.32 + Math.cos(t) * .08, 0, .66 + Math.sin(t) * .06), r.add(i);
 		}
 		let oe = new D(new A(.06, .03, .05), e.m.glass);
@@ -8215,7 +8215,7 @@ Object.assign(Ys, {
 			e.rotation.y = n() * 3;
 		}
 		for (let e = 0; e < 5; e++) {
-			let e = n() * 6.28, t = rc(n, .07 + n() * .06, .7);
+			let e = n() * 6.28, t = ic(n, .07 + n() * .06, .7);
 			t.position.set(Math.cos(e) * .95, 0, -.2 + Math.sin(e) * .35), r.add(t);
 		}
 	},
@@ -8232,7 +8232,7 @@ Object.assign(Ys, {
 		}
 		R(.22, .02, .18, r, .04, 0, .2, t).rotation.set(.06, .2, .03);
 		for (let e = 0; e < 3; e++) {
-			let r = rc(n, .03 + n() * .02, .6);
+			let r = ic(n, .03 + n() * .02, .6);
 			r.position.set(-.14 + e * .12, 0, -.14 + n() * .05), t.add(r);
 		}
 	},
@@ -8247,7 +8247,7 @@ Object.assign(Ys, {
 			[0, -.3],
 			[0, .3]
 		]) R(.05, .55, .05, e.m.beam, t, 0, n, r);
-		R(.95, .04, .05, e.m.beam, 0, .53, .3, r), R(.95, .04, .05, e.m.beam, 0, .53, -.3, r), R(.95, .5, .03, e.m.wood, 0, .05, -.31, r), Ks(e, r, .95, .62, .55, e.roofRise * .8), R(.55, .14, .14, e.m.wood, 0, 0, .02, r);
+		R(.95, .04, .05, e.m.beam, 0, .53, .3, r), R(.95, .04, .05, e.m.beam, 0, .53, -.3, r), R(.95, .5, .03, e.m.wood, 0, .05, -.31, r), qs(e, r, .95, .62, .55, e.roofRise * .8), R(.55, .14, .14, e.m.wood, 0, 0, .02, r);
 		let i = new D(new T(.06, .065, .62, 8), L(null, "#5a4430"));
 		i.rotation.z = Math.PI / 2, i.position.set(0, .2, .02), r.add(i);
 		let a = new D(new T(.11, .11, .01, 16), L(null, "#8a8a90"));
@@ -8268,11 +8268,11 @@ Object.assign(Ys, {
 		for (let n = 0; n < 4; n++) R(.5, .025, .12, e.m.wood, -.72, n * .027, .42, t);
 		for (let n = 0; n < 3; n++) R(.5, .025, .12, e.m.wood, -.72, n * .027, .56, t);
 		let c = new E();
-		c.position.set(-.75, 0, -.45), t.add(c), Gs(e, c, .42, .38, 0, .4, e.m.wood, !0, { doorZ: .1 }), Ns(c, e, {
+		c.position.set(-.75, 0, -.45), t.add(c), Ks(e, c, .42, .38, 0, .4, e.m.wood, !0, { doorZ: .1 }), Ps(c, e, {
 			side: "z",
 			wallW: .42,
 			wallD: .38
-		}, .1, .13, .28, !1), Ks(e, c, .42, .38, .4, e.roofRise), Fs(c, e, -.1, -.05, .4, .28);
+		}, .1, .13, .28, !1), qs(e, c, .42, .38, .4, e.roofRise), Is(c, e, -.1, -.05, .4, .28);
 		for (let [e, n] of [
 			[.25, .7],
 			[.5, .82],
@@ -8283,10 +8283,10 @@ Object.assign(Ys, {
 			let i = new D(new T(.058, .058, .005, 8), L(null, "#9a7a52"));
 			i.position.set(e, .083, n), t.add(i);
 		}
-		R(.02, .16, .02, e.m.beam, .5, .08, .82, t).rotation.z = .5, H(t, e, .5, .5, .36);
+		R(.02, .16, .02, e.m.beam, .5, .08, .82, t).rotation.z = .5, ac(t, e, .5, .5, .36);
 	}
 });
-function ac(e, t, n, r, i, a = 0, o = 0, s = !1) {
+function sc(e, t, n, r, i, a = 0, o = 0, s = !1) {
 	let c = new E();
 	c.position.set(a, 0, o), e.add(c), R(n, r, i, s ? t.m.door : t.m.wood, 0, 0, 0, c);
 	let l = .018, u = t.m.beam;
@@ -8300,7 +8300,7 @@ function ac(e, t, n, r, i, a = 0, o = 0, s = !1) {
 	let d = R(Math.hypot(n, r) * .92, l * .8, l * .6, u, 0, r / 2 - l / 2, i / 2 + .004, c);
 	return d.rotation.z = Math.atan2(r, n), c;
 }
-function oc(e, t, n, r, i = 1, a = 0) {
+function cc(e, t, n, r, i = 1, a = 0) {
 	let o = [
 		[0, 0],
 		[.05, .005],
@@ -8313,7 +8313,7 @@ function oc(e, t, n, r, i = 1, a = 0) {
 	].map(([e, t]) => new ke(e * i, t * i)), s = new D(new Qe(o, 8), L(I("plaster", "#8a7858", 21)));
 	s.position.set(n, 0, r), s.rotation.set(.15, a, 0), s.scale.set(1, 1, .8), e.add(s), R(.03 * i, .01 * i, .03 * i, t.m.trim, n, .105 * i, r, e);
 }
-Object.assign(Ys, {
+Object.assign(Xs, {
 	barrel(e, t) {
 		let n = [
 			[0, 0],
@@ -8333,23 +8333,23 @@ Object.assign(Ys, {
 		i.position.y = .21, t.add(i);
 	},
 	crate_A_big(e, t) {
-		ac(t, e, .22, .21, .22);
+		sc(t, e, .22, .21, .22);
 	},
 	crate_A_small(e, t) {
-		ac(t, e, .14, .14, .14);
+		sc(t, e, .14, .14, .14);
 	},
 	crate_B_big(e, t) {
-		ac(t, e, .22, .2, .22, 0, 0, !0), ac(t, e, .13, .12, .13, .02, .01).position.y = .2;
+		sc(t, e, .22, .2, .22, 0, 0, !0), sc(t, e, .13, .12, .13, .02, .01).position.y = .2;
 	},
 	crate_long_A(e, t) {
-		ac(t, e, .4, .14, .2, 0, 0, !0);
+		sc(t, e, .4, .14, .2, 0, 0, !0);
 		for (let e = 0; e < 3; e++) {
 			let n = new D(new T(.012, .012, .38, 5), L(null, "#7a7a80"));
 			n.rotation.z = Math.PI / 2, n.position.set(0, .15, -.05 + e * .05), t.add(n);
 		}
 	},
 	sack(e, t) {
-		oc(t, e, 0, 0, 1), oc(t, e, .07, .06, .8, 1.2);
+		cc(t, e, 0, 0, 1), cc(t, e, .07, .06, .8, 1.2);
 	},
 	wheelbarrow(e, t) {
 		let r = new E();
@@ -8368,7 +8368,7 @@ Object.assign(Ys, {
 			r.rotation.x = -.12, R(.018, .1, .018, e.m.beam, n * .08, 0, -.14, t);
 		}
 		for (let e = 0; e < 3; e++) {
-			let n = rc(vs(40 + e), .035, .7);
+			let n = ic(vs(40 + e), .035, .7);
 			n.position.set(-.05 + e * .05, .1, .02 + e % 2 * .04), t.add(n);
 		}
 	},
@@ -8501,7 +8501,7 @@ Object.assign(Ys, {
 		}
 		for (let r of [.1, .22]) R(.02, .03, n, e.m.wood, .02, r, 0, t);
 	}
-}), Object.assign(Ys, {
+}), Object.assign(Xs, {
 	stairsup(e, t) {
 		let n = .36, r = .62, i = .43, a = L(I("ashlar", "#4c4852", 31)), o = L(null, "#221f27");
 		for (let e = 0; e < 8; e++) {
@@ -8546,53 +8546,53 @@ Object.assign(Ys, {
 		S(.98, b, .30000000000000004 / 2, .47), S(x, .64, -.3 - x / 2, -.04 / 2), S(b, .64, .47, -.04 / 2), S(.98, x, .30000000000000004 / 2, -.3 - x / 2);
 	}
 });
-var sc = Xs("#e6e8ec"), cc = Xs("#1e1a18"), lc = Xs("#151318"), uc = Xs("#4a4a3a"), dc = Xs("#6a5a38"), fc = L(I("thatch", "#635c44", 61)), pc = Xs("#5a4430"), mc = Xs("#a8865a");
-function hc(e, t, n, r, i, a) {
+var lc = Zs("#e6e8ec"), uc = Zs("#1e1a18"), dc = Zs("#151318"), fc = Zs("#4a4a3a"), pc = Zs("#6a5a38"), mc = L(I("thatch", "#635c44", 61)), hc = Zs("#5a4430"), gc = Zs("#a8865a");
+function _c(e, t, n, r, i, a) {
 	let o = n / 2 + .07, s = i * n / 2, c = s * (n * .3 + .03) / o;
-	ws(e, t + .03, n * .6, r + s - c + .012, c, sc, a, .03, .02);
+	ws(e, t + .03, n * .6, r + s - c + .012, c, lc, a, .03, .02);
 }
-function gc(e, t, n, r = 3, i = .22, a = !0) {
+function vc(e, t, n, r = 3, i = .22, a = !0) {
 	for (let o = 0; o < r; o++) for (let s = 0; s < r - o; s++) {
-		let c = new D(new T(.028, .03, i, 6), pc), l = (s - (r - o - 1) / 2) * .058, u = .03 + o * .05;
+		let c = new D(new T(.028, .03, i, 6), hc), l = (s - (r - o - 1) / 2) * .058, u = .03 + o * .05;
 		a ? (c.rotation.z = Math.PI / 2, c.position.set(t, u, n + l)) : (c.rotation.x = Math.PI / 2, c.position.set(t + l, u, n)), e.add(c);
 		for (let r of [-1, 1]) {
-			let o = new D(new T(.026, .026, .004, 6), mc);
+			let o = new D(new T(.026, .026, .004, 6), gc);
 			a ? (o.rotation.z = Math.PI / 2, o.position.set(t + r * i / 2, u, n + l)) : (o.rotation.x = Math.PI / 2, o.position.set(t + l, u, n + r * i / 2)), e.add(o);
 		}
 	}
 }
-function _c(e, t, n, r, i, a, o) {
+function yc(e, t, n, r, i, a, o) {
 	if (e.key === "fens") {
-		R(.18, .14, .006, uc, n / 2 - .14, .12, r / 2 + .012, t);
-		let e = new D(new T(.035, .022, .09, 7), dc);
+		R(.18, .14, .006, fc, n / 2 - .14, .12, r / 2 + .012, t);
+		let e = new D(new T(.035, .022, .09, 7), pc);
 		e.position.set(n / 2 + .05, .045, r / 2 - .1), t.add(e);
 	} else if (e.key === "reach") {
-		R(.1, i * .8, .01, cc, n / 2 - .12, i * .2, -r / 2 - .006, t), R(.14, .08, .1, e.m.wood, n / 2 + .09, 0, r / 2 - .12, t);
-		let a = new D(new Fe(.05, 0), lc);
+		R(.1, i * .8, .01, uc, n / 2 - .12, i * .2, -r / 2 - .006, t), R(.14, .08, .1, e.m.wood, n / 2 + .09, 0, r / 2 - .12, t);
+		let a = new D(new Fe(.05, 0), dc);
 		a.scale.y = .5, a.position.set(n / 2 + .09, .09, r / 2 - .12), t.add(a);
-	} else e.key === "heights" && (t.userData.snowed || hc(t, n, r, i, a, e.m.lower), gc(t, n / 2 + .06, -.02, 3, .36, !1));
+	} else e.key === "heights" && (t.userData.snowed || _c(t, n, r, i, a, e.m.lower), vc(t, n / 2 + .06, -.02, 3, .36, !1));
 }
-function vc(e) {
-	return e.key === "fens" ? fc : e.m.roof;
+function bc(e) {
+	return e.key === "fens" ? mc : e.m.roof;
 }
-function yc(e, t, n, r, i, a, o = !0) {
+function xc(e, t, n, r, i, a, o = !0) {
 	let s = new E();
 	t.add(s), o || (s.rotation.y = Math.PI / 2);
 	let [c, l] = o ? [n, r] : [r, n], u = e.key === "fens";
-	if (ws(s, c, l, i, a * l / 2, vc(e), e.key === "vale" || e.key === "fens" ? e.m.upper : e.m.lower, u ? .1 : .07, u ? .08 : .04), u) {
-		let e = new D(new T(.05, .05, c + .18, 8), fc);
+	if (ws(s, c, l, i, a * l / 2, bc(e), e.key === "vale" || e.key === "fens" ? e.m.upper : e.m.lower, u ? .1 : .07, u ? .08 : .04), u) {
+		let e = new D(new T(.05, .05, c + .18, 8), mc);
 		e.rotation.z = Math.PI / 2, e.position.y = i + a * l / 2 + .01, s.add(e);
 	}
-	return e.key === "heights" && (hc(s, c, l, i, a, e.m.lower), t.userData.snowed = !0), s;
+	return e.key === "heights" && (_c(s, c, l, i, a, e.m.lower), t.userData.snowed = !0), s;
 }
-function bc(e, t, n, r, i, a) {
+function Sc(e, t, n, r, i, a) {
 	let o = e.key === "vale" || e.key === "fens";
-	o && R(n + .03, .1, r + .03, e.m.stone, 0, 0, 0, t), Gs(e, t, n, r, 0, i, o ? e.m.upper : e.m.lower, !0, {
+	o && R(n + .03, .1, r + .03, e.m.stone, 0, 0, 0, t), Ks(e, t, n, r, 0, i, o ? e.m.upper : e.m.lower, !0, {
 		doorZ: a,
 		timber: o
 	});
 }
-function xc(e, t, n, r, i) {
+function Cc(e, t, n, r, i) {
 	for (let [a, o] of [
 		[-n / 2, -r / 2],
 		[n / 2, -r / 2],
@@ -8604,38 +8604,38 @@ function xc(e, t, n, r, i) {
 	R(n + .06, .025, r + .08, e.m.wood, 0, i, .02, t);
 	for (let n = 0; n < 2; n++) R(.14, .02, .05, e.m.wood, -.1, i * (.3 + n * .35), r / 2 + .06 + (1 - n) * .05, t);
 }
-Object.assign(Ys, {
+Object.assign(Xs, {
 	cottage(e, t, n) {
 		let r = e.key === "fens", i = r ? .07 : 0, a = .58, o = .48, s = .46, c = new E();
-		c.position.y = i, t.add(c), r && xc(e, t, a, o, i), bc(e, c, a, o, s, .1), Ns(c, e, {
+		c.position.y = i, t.add(c), r && Cc(e, t, a, o, i), Sc(e, c, a, o, s, .1), Ps(c, e, {
 			side: "z",
 			wallW: a,
 			wallD: o
-		}, .1, .16, .34, !e.timber), yc(e, c, a, o, s, e.roofRise * 1.15), Fs(c, e, -.58 / 2 + .1, -.48 / 4, s, .3), _c(e, c, a, o, s, e.roofRise * 1.15, n), e.key === "vale" && (Vs(t, e, -.58 / 2 - .02, .44, -.04, .44), Bs(t, e, -.58 / 2 + .06, .33999999999999997, .05));
+		}, .1, .16, .34, !e.timber), xc(e, c, a, o, s, e.roofRise * 1.15), Is(c, e, -.58 / 2 + .1, -.48 / 4, s, .3), yc(e, c, a, o, s, e.roofRise * 1.15, n), e.key === "vale" && (Hs(t, e, -.58 / 2 - .02, .44, -.04, .44), Vs(t, e, -.58 / 2 + .06, .33999999999999997, .05));
 	},
 	longhouse(e, t, n) {
 		let r = e.key === "fens", i = r ? .07 : 0, a = 1.08, o = .5, s = .46, c = new E();
-		c.position.y = i, t.add(c), r && xc(e, t, a, o, i), bc(e, c, a, o, s, -.28);
-		for (let t of [-.28, .3]) Ns(c, e, {
+		c.position.y = i, t.add(c), r && Cc(e, t, a, o, i), Sc(e, c, a, o, s, -.28);
+		for (let t of [-.28, .3]) Ps(c, e, {
 			side: "z",
 			wallW: a,
 			wallD: o
 		}, t, .16, .34, !e.timber);
-		yc(e, c, a, o, s, e.roofRise * 1.05), Fs(c, e, -.12, -.5 / 4, s, .28), Fs(c, e, a / 2 - .1, -.5 / 4, s, .28), _c(e, c, a, o, s, e.roofRise * 1.05, n), e.key === "reach" && R(.12, .07, .09, e.m.wood, -1.08 / 2 - .08, 0, o / 2 - .1, c);
+		xc(e, c, a, o, s, e.roofRise * 1.05), Is(c, e, -.12, -.5 / 4, s, .28), Is(c, e, a / 2 - .1, -.5 / 4, s, .28), yc(e, c, a, o, s, e.roofRise * 1.05, n), e.key === "reach" && R(.12, .07, .09, e.m.wood, -1.08 / 2 - .08, 0, o / 2 - .1, c);
 	},
 	workshop(e, t, n) {
 		let r = .56, i = .52, a = .48;
-		bc(e, t, r, i, a, -.08), Ns(t, e, {
+		Sc(e, t, r, i, a, -.08), Ps(t, e, {
 			side: "z",
 			wallW: r,
 			wallD: i
-		}, -.08, .2, .36, !1), yc(e, t, r, i, a, e.roofRise), Fs(t, e, -.56 / 2 + .1, -.52 / 4, a, .3);
+		}, -.08, .2, .36, !1), xc(e, t, r, i, a, e.roofRise), Is(t, e, -.56 / 2 + .1, -.52 / 4, a, .3);
 		let o = new E();
 		o.position.set(.48000000000000004, 0, 0), t.add(o);
 		for (let [t, n] of [[.17, i / 2 - .02], [.17, -.52 / 2 + .02]]) R(.035, .34, .035, e.m.beam, t, 0, n, o);
-		let s = R(.44, .03, .6, vc(e), 0, .36, 0, o);
+		let s = R(.44, .03, .6, bc(e), 0, .36, 0, o);
 		if (s.rotation.z = -.32, e.key === "heights") {
-			let e = R(.4, .015, i * .9, sc, -.01, .39, 0, o);
+			let e = R(.4, .015, i * .9, lc, -.01, .39, 0, o);
 			e.rotation.z = -.32;
 		}
 		if (e.key === "vale") {
@@ -8659,10 +8659,10 @@ Object.assign(Ys, {
 			t.userData.glow = !0, R(.1, .06, .05, e.m.dark, .02, 0, .14, o);
 		}
 		if (e.key === "heights") {
-			let e = new D(new T(.06, .07, .1, 8), pc);
-			e.position.set(0, .05, .08), o.add(e), gc(o, 0, -.12, 3, .3, !0);
+			let e = new D(new T(.06, .07, .1, 8), hc);
+			e.position.set(0, .05, .08), o.add(e), vc(o, 0, -.12, 3, .3, !0);
 		}
-		Rs(t, e, r / 2 - .08, .42, i / 2);
+		zs(t, e, r / 2 - .08, .42, i / 2);
 	},
 	windmill(e, t, n) {
 		let r = new E();
@@ -8670,7 +8670,7 @@ Object.assign(Ys, {
 		let i = new D(new T(.24, .28, .42, 12), e.m.stone);
 		i.position.y = .21, r.add(i);
 		let a = new D(new T(.26, .26, .03, 12), e.m.stoneDark);
-		a.position.y = .42, r.add(a), Ns(r, e, {
+		a.position.y = .42, r.add(a), Ps(r, e, {
 			side: "z",
 			wallW: .5,
 			wallD: .5
@@ -8678,26 +8678,26 @@ Object.assign(Ys, {
 		let o = new E();
 		o.position.y = .44, r.add(o), R(.34, .42, .38, e.m.wood, 0, 0, 0, o);
 		let s = new E();
-		s.position.y = .42, o.add(s), ws(s, .38, .38, 0, .18, e.m.roof, e.m.wood, .04, .03), z(o, e, {
+		s.position.y = .42, o.add(s), ws(s, .38, .38, 0, .18, e.m.roof, e.m.wood, .04, .03), Es(o, e, {
 			side: "x",
 			wallW: .34,
 			wallD: .38
 		}, 0, .26, .07, .08, { lit: !0 });
 		let c = new E();
 		c.position.set(0, .3, .23), o.add(c);
-		let l = As(new D(new T(.03, .03, .08, 8), e.m.beam));
+		let l = js(new D(new T(.03, .03, .08, 8), e.m.beam));
 		l.rotation.x = Math.PI / 2, c.add(l);
 		let u = new E();
 		u.position.z = .05, u.rotation.z = .35, c.add(u);
-		let d = Xs("#cfc4a8");
+		let d = Zs("#cfc4a8");
 		for (let t = 0; t < 4; t++) {
 			let n = new E();
-			n.rotation.z = t * Math.PI / 2, u.add(n), n.add(As(R(.025, .62, .02, e.m.beam, 0, 0, 0)));
-			let r = As(R(.12, .46, .01, d, .075, .14, .008));
+			n.rotation.z = t * Math.PI / 2, u.add(n), n.add(js(R(.025, .62, .02, e.m.beam, 0, 0, 0)));
+			let r = js(R(.12, .46, .01, d, .075, .14, .008));
 			n.add(r);
-			for (let t = 0; t < 6; t++) n.add(As(R(.14, .01, .014, e.m.beam, .07, .16 + t * .08, .012)));
+			for (let t = 0; t < 6; t++) n.add(js(R(.14, .01, .014, e.m.beam, .07, .16 + t * .08, .012)));
 		}
-		let f = As(R(.03, .03, .5, e.m.beam, 0, .06, -.38));
+		let f = js(R(.03, .03, .5, e.m.beam, 0, .06, -.38));
 		f.rotation.x = -.5, o.add(f);
 	},
 	cart(e, t, r) {
@@ -8723,7 +8723,7 @@ Object.assign(Ys, {
 			let s = new D(new T(.02, .02, .04, 8), e.m.beam);
 			s.rotation.z = Math.PI / 2, i.add(s);
 		}
-		Bs(i, e, -.03, -.05, .08), Bs(i, e, .05, .08, .07), oc(i, e, .06, -.12, .8);
+		Vs(i, e, -.03, -.05, .08), Vs(i, e, .05, .08, .07), cc(i, e, .06, -.12, .8);
 	},
 	handcart(e, t, n) {
 		let r = new E();
@@ -8733,7 +8733,7 @@ Object.assign(Ys, {
 			let r = new D(new T(.06, .06, .02, 10), e.m.wood);
 			r.rotation.z = Math.PI / 2, r.position.set(n * .1, .06, -.04), t.add(r);
 		}
-		ac(r, e, .09, .08, .09, -.02, -.03), oc(r, e, .04, .05, .7, .4);
+		sc(r, e, .09, .08, .09, -.02, -.03), cc(r, e, .04, .05, .7, .4);
 	},
 	table(e, t, n) {
 		R(.36, .02, .14, e.m.wood, 0, .12, 0, t);
@@ -8745,7 +8745,7 @@ Object.assign(Ys, {
 			R(.34, .016, .05, e.m.wood, 0, .07, n * .12, t);
 			for (let r of [-1, 1]) R(.016, .07, .04, e.m.beam, r * .13, 0, n * .12, t);
 		}
-		let r = Xs("#7a6a5a"), i = Xs("#a8804a");
+		let r = Zs("#7a6a5a"), i = Zs("#a8804a");
 		for (let [e, n] of [
 			[-.1, -.03],
 			[.04, .04],
@@ -8767,10 +8767,10 @@ Object.assign(Ys, {
 		i.scale.x = .6, i.position.x = 0;
 	},
 	boxes(e, t, n) {
-		ac(t, e, .18, .16, .18, -.08, -.04), ac(t, e, .13, .12, .13, -.08, -.04, !0).position.y = .16, ac(t, e, .14, .12, .14, .11, -.06, !0), Ys.barrel(e, (() => {
+		sc(t, e, .18, .16, .18, -.08, -.04), sc(t, e, .13, .12, .13, -.08, -.04, !0).position.y = .16, sc(t, e, .14, .12, .14, .11, -.06, !0), Xs.barrel(e, (() => {
 			let e = new E();
 			return e.position.set(.12, 0, .12), e.scale.setScalar(.9), t.add(e), e;
-		})()), oc(t, e, -.04, .12, .9), oc(t, e, -.14, .1, .8, 1);
+		})()), cc(t, e, -.04, .12, .9), cc(t, e, -.14, .1, .8, 1);
 	},
 	foodstand(e, t, n) {
 		let r = .42, i = .24;
@@ -8811,15 +8811,15 @@ Object.assign(Ys, {
 			"#a8804a"
 		];
 		for (let e = 0; e < 3; e++) {
-			let r = -.13 + e * .13, a = new D(new T(.05, .04, .04, 8), dc);
+			let r = -.13 + e * .13, a = new D(new T(.05, .04, .04, 8), pc);
 			a.position.set(r, .15, i / 2 - .04), t.add(a);
 			for (let a = 0; a < 5; a++) {
-				let a = new D(new _(.018, 0), Xs(o[e]));
+				let a = new D(new _(.018, 0), Zs(o[e]));
 				a.position.set(r + (n() - .5) * .05, .18 + n() * .01, i / 2 - .04 + (n() - .5) * .05), t.add(a);
 			}
 		}
-		for (let n = 0; n < 4; n++) R(.025, .07, .02, Xs(e.key === "fens" ? "#4a5048" : "#8a5a3a"), -.42 / 2 + .07 + n * .1, .25, -.09, t);
-		oc(t, e, .27, .04, .8), Ys.barrel(e, (() => {
+		for (let n = 0; n < 4; n++) R(.025, .07, .02, Zs(e.key === "fens" ? "#4a5048" : "#8a5a3a"), -.42 / 2 + .07 + n * .1, .25, -.09, t);
+		cc(t, e, .27, .04, .8), Xs.barrel(e, (() => {
 			let e = new E();
 			return e.position.set(-.42 / 2 - .07, 0, -.02), e.scale.setScalar(.8), t.add(e), e;
 		})());
@@ -8851,7 +8851,7 @@ Object.assign(Ys, {
 				.18
 			]
 		]) R(i, .15, a, e.m.stone, n, 0, r, t);
-		R(.18, .005, .18, Xs("#1d3040"), 0, .1, 0, t);
+		R(.18, .005, .18, Zs("#1d3040"), 0, .1, 0, t);
 		for (let n of [-1, 1]) {
 			let r = R(.024, .4, .024, e.m.beam, n * .14, 0, 0, t);
 			r.rotation.z = n * .12;
@@ -8859,7 +8859,7 @@ Object.assign(Ys, {
 		let r = new D(new T(.035, .035, .26, 8), e.m.wood);
 		r.rotation.z = Math.PI / 2, r.position.y = .36, t.add(r), R(.012, .012, .08, e.m.trim, .16, .36, .04, t), R(.012, .05, .012, e.m.trim, .16, .36, .08, t), R(.006, .14, .006, e.m.trim, 0, .22, 0, t);
 		let i = new D(new T(.035, .028, .05, 8), e.m.wood);
-		i.position.set(0, .2, 0), t.add(i), e.key === "heights" && R(.27, .012, .27, sc, 0, .15, 0, t);
+		i.position.set(0, .2, 0), t.add(i), e.key === "heights" && R(.27, .012, .27, lc, 0, .15, 0, t);
 	},
 	lamppost(e, t, n) {
 		R(.07, .05, .07, e.m.stone, 0, 0, 0, t), R(.025, .56, .025, e.m.beam, 0, .05, 0, t), R(.012, .012, .12, e.m.trim, 0, .58, .05, t);
@@ -8876,24 +8876,24 @@ Object.assign(Ys, {
 		R(.36, .03, .14, e.m.stone, 0, 0, 0, t);
 		for (let n of [-1, 1]) R(.36, .1, .025, e.m.stone, 0, 0, n * .0575, t);
 		for (let n of [-1, 1]) R(.025, .1, .09, e.m.stone, n * .1675, 0, 0, t);
-		R(.31, .006, .09, Xs("#2a4458"), 0, .07, 0, t), R(.03, .14, .03, e.m.beam, .2, 0, -.04, t), R(.012, .012, .06, e.m.trim, .2, .13, -.01, t);
+		R(.31, .006, .09, Zs("#2a4458"), 0, .07, 0, t), R(.03, .14, .03, e.m.beam, .2, 0, -.04, t), R(.012, .012, .06, e.m.trim, .2, .13, -.01, t);
 	},
 	woodpile(e, t, n) {
-		gc(t, 0, 0, 4, .34, !1);
+		vc(t, 0, 0, 4, .34, !1);
 		for (let n of [-1, 1]) R(.025, .3, .025, e.m.beam, n * .14, 0, .04, t);
 		let r = R(.36, .018, .22, e.m.wood, 0, .3, 0, t);
 		r.rotation.x = -.25;
 	}
-}), Object.keys(Ys);
-function Sc(e, t, n = 1, r = !1) {
-	let { S: i, g: a } = Ws(t, n);
-	return Ys[e](i, a, vs(n)), r && (a.rotation.y = Math.PI / 2), a.traverse((e) => {
+}), Object.keys(Xs);
+function wc(e, t, n = 1, r = !1) {
+	let { S: i, g: a } = Gs(t, n);
+	return Xs[e](i, a, vs(n)), r && (a.rotation.y = Math.PI / 2), a.traverse((e) => {
 		e.isMesh && (e.frustumCulled = !1);
 	}), a;
 }
 //#endregion
 //#region ember3d/env.json
-var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_2\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_3\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_4\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_5\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":5,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_6\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":6,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_1\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_2\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_3\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_4\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_1\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_2\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_3\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_1\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_2\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_3\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"dead_1\",\"model\":\"dead\",\"tree\":\"dead\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"dead_2\",\"model\":\"dead\",\"tree\":\"dead\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_1\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_2\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_3\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_4\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_5\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":5,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_6\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":6,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bridge_0\",\"model\":\"bridge\",\"nature\":\"bridge\",\"seed\":1,\"rotY\":0,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bridge_90\",\"model\":\"bridge\",\"nature\":\"bridge\",\"seed\":1,\"rotY\":90,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_A\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":1,\"variant\":0,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_B\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":2,\"variant\":1,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_C\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":3,\"variant\":2,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_D\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":4,\"variant\":3,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_E\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":5,\"variant\":4,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"mountain_A_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":1,\"variant\":0,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_B_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":2,\"variant\":1,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_C_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":3,\"variant\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_A\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":4,\"variant\":3,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_B\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":5,\"variant\":4,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_A\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":10,\"variant\":0,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_B\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":11,\"variant\":1,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_C\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":12,\"variant\":2,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"ruin\",\"model\":\"barrow\",\"build\":\"barrow\",\"style\":\"vale\",\"seed\":3,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"mine_0\",\"model\":\"mine\",\"build\":\"mine\",\"style\":\"vale\",\"seed\":4,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"lumbermill_90\",\"model\":\"lumbermill\",\"build\":\"lumbermill\",\"style\":\"vale\",\"seed\":5,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"barrel\",\"model\":\"barrel\",\"build\":\"barrel\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_A_big\",\"model\":\"crate_A_big\",\"build\":\"crate_A_big\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_A_small\",\"model\":\"crate_A_small\",\"build\":\"crate_A_small\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_B_big\",\"model\":\"crate_B_big\",\"build\":\"crate_B_big\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_long_A\",\"model\":\"crate_long_A\",\"build\":\"crate_long_A\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"sack\",\"model\":\"sack\",\"build\":\"sack\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"wheelbarrow\",\"model\":\"wheelbarrow\",\"build\":\"wheelbarrow\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"weaponrack\",\"model\":\"weaponrack\",\"build\":\"weaponrack\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"bucket_water\",\"model\":\"bucket_water\",\"build\":\"bucket_water\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"resource_lumber\",\"model\":\"resource_lumber\",\"build\":\"resource_lumber\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"resource_stone\",\"model\":\"resource_stone\",\"build\":\"resource_stone\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"flag_red\",\"model\":\"flag_red\",\"build\":\"flag_red\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"stump\",\"model\":\"stump\",\"build\":\"stump\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"fence_0\",\"model\":\"fence\",\"build\":\"fence\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"fence_90\",\"model\":\"fence\",\"build\":\"fence\",\"style\":\"vale\",\"seed\":1,\"rotY\":90,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"drywall_0\",\"model\":\"drywall\",\"build\":\"drywall\",\"style\":\"vale\",\"seed\":3,\"rotY\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"drywall_90\",\"model\":\"drywall\",\"build\":\"drywall\",\"style\":\"vale\",\"seed\":3,\"rotY\":90,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"stairsup_0\",\"model\":\"stairsup\",\"build\":\"stairsup\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0]},{\"id\":\"stairsup_90\",\"model\":\"stairsup\",\"build\":\"stairsup\",\"style\":\"vale\",\"seed\":1,\"rotY\":90,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0]},{\"id\":\"stairsdown_0\",\"model\":\"stairsdown\",\"build\":\"stairsdown\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0],\"below\":0.27,\"shadow\":false,\"glowId\":2},{\"id\":\"watermill_0\",\"model\":\"watermill\",\"build\":\"watermill\",\"style\":\"vale\",\"seed\":6,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"chapelruin_0\",\"model\":\"chapelruin\",\"build\":\"chapelruin\",\"style\":\"vale\",\"seed\":7,\"gain\":0.64,\"desat\":0.18,\"tint\":[0.95,0.97,1.0]},{\"id\":\"milestone_0\",\"model\":\"milestone\",\"build\":\"milestone\",\"style\":\"vale\",\"seed\":8,\"gain\":0.7,\"desat\":0.1,\"tint\":[1.0,0.97,0.92]},{\"id\":\"warren_0\",\"model\":\"warren\",\"build\":\"warren\",\"style\":\"vale\",\"seed\":12,\"gain\":0.62,\"desat\":0.14,\"tint\":[0.98,0.97,0.94]},{\"id\":\"wagon_0\",\"model\":\"wagon\",\"build\":\"wagon\",\"style\":\"vale\",\"seed\":9,\"gain\":0.95,\"desat\":0.12,\"tint\":[1.0,0.97,0.93]},{\"id\":\"ug_bush\",\"model\":\"ug_bush\",\"gltf\":\"nature/Bush_Common_Flowers\",\"scale\":0.22,\"gain\":0.6,\"desat\":0.5,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_fern\",\"model\":\"ug_fern\",\"gltf\":\"nature/Fern_1\",\"scale\":0.08,\"gain\":0.5,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_plant\",\"model\":\"ug_plant\",\"gltf\":\"nature/Plant_1_Big\",\"scale\":0.14,\"gain\":0.5,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_flowers_1\",\"model\":\"ug_flowers_1\",\"gltf\":\"nature/Flower_3_Group\",\"scale\":0.14,\"gain\":0.6,\"desat\":0.2,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_flowers_2\",\"model\":\"ug_flowers_2\",\"gltf\":\"nature/Flower_4_Group\",\"scale\":0.14,\"gain\":0.6,\"desat\":0.2,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_grass_1\",\"model\":\"ug_grass_1\",\"gltf\":\"nature/Grass_Wispy_Tall\",\"scale\":0.2,\"gain\":0.72,\"desat\":0.4,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_grass_2\",\"model\":\"ug_grass_2\",\"gltf\":\"nature/Grass_Common_Tall\",\"scale\":0.2,\"gain\":0.72,\"desat\":0.4,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_clover\",\"model\":\"ug_clover\",\"gltf\":\"nature/Clover_2\",\"scale\":0.2,\"gain\":0.45,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_mushroom\",\"model\":\"ug_mushroom\",\"gltf\":\"nature/Mushroom_Laetiporus\",\"scale\":0.25,\"gain\":0.6,\"desat\":0.25,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_F\",\"model\":\"rock_F\",\"gltf\":\"nature/Rock_Medium_1\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_G\",\"model\":\"rock_G\",\"gltf\":\"nature/Rock_Medium_2\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_H\",\"model\":\"rock_H\",\"gltf\":\"nature/Rock_Medium_3\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"wheat_1\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":20,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"wheat_2\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":21,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"wheat_3\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":22,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"cow_1\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"cow_1~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"tail\":-1}},{\"id\":\"cow_1~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"tail\":1}},{\"id\":\"cow_1~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"head\":1}},{\"id\":\"cow_2\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60},{\"id\":\"cow_2~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"tail\":-1}},{\"id\":\"cow_2~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"tail\":1}},{\"id\":\"cow_2~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"head\":1}},{\"id\":\"cow_3\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50},{\"id\":\"cow_3~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"tail\":-1}},{\"id\":\"cow_3~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"tail\":1}},{\"id\":\"cow_3~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"head\":1}},{\"id\":\"sheep_1\",\"model\":\"sheep\",\"nature\":\"sheep\",\"seed\":37,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"sheep_2\",\"model\":\"sheep\",\"nature\":\"sheep\",\"seed\":38,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hens_1\",\"model\":\"hens\",\"nature\":\"hens\",\"seed\":36,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"pumpkins_1\",\"model\":\"pumpkins\",\"nature\":\"pumpkins\",\"seed\":40,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hay_1\",\"model\":\"hay\",\"nature\":\"hay\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hay_2\",\"model\":\"hay\",\"nature\":\"hay\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"planter_1\",\"model\":\"planter\",\"nature\":\"planter\",\"seed\":39,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"alder_1\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":61,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"alder_2\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":62,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"alder_3\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":63,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"willow_1\",\"model\":\"willow\",\"tree\":\"willow\",\"seed\":71,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"willow_2\",\"model\":\"willow\",\"tree\":\"willow\",\"seed\":72,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"carr_1\",\"model\":\"carr\",\"tree\":\"carr\",\"seed\":81,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"carr_2\",\"model\":\"carr\",\"tree\":\"carr\",\"seed\":82,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"windmill_0\",\"model\":\"windmill\",\"build\":\"windmill\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"cart_0\",\"model\":\"cart\",\"build\":\"cart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"cart_90\",\"model\":\"cart\",\"build\":\"cart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0],\"faceX\":true},{\"id\":\"handcart_0\",\"model\":\"handcart\",\"build\":\"handcart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"table_0\",\"model\":\"table\",\"build\":\"table\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"boxes_0\",\"model\":\"boxes\",\"build\":\"boxes\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"lamppost_0\",\"model\":\"lamppost\",\"build\":\"lamppost\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bench_0\",\"model\":\"bench\",\"build\":\"bench\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"trough_0\",\"model\":\"trough\",\"build\":\"trough\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"woodpile_0\",\"model\":\"woodpile\",\"build\":\"woodpile\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]}]"), wc = {
+var Tc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_2\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_3\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_4\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_5\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":5,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"pine_6\",\"model\":\"pine\",\"tree\":\"pine\",\"seed\":6,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_1\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_2\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_3\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"oak_4\",\"model\":\"oak\",\"tree\":\"oak\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_1\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_2\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"autumn_3\",\"model\":\"autumn\",\"tree\":\"autumn\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_1\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_2\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"birch_3\",\"model\":\"birch\",\"tree\":\"birch\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"dead_1\",\"model\":\"dead\",\"tree\":\"dead\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"dead_2\",\"model\":\"dead\",\"tree\":\"dead\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_1\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_2\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_3\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":3,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_4\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":4,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_5\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":5,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"grove_6\",\"model\":\"grove\",\"tree\":\"grove\",\"seed\":6,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bridge_0\",\"model\":\"bridge\",\"nature\":\"bridge\",\"seed\":1,\"rotY\":0,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bridge_90\",\"model\":\"bridge\",\"nature\":\"bridge\",\"seed\":1,\"rotY\":90,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_A\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":1,\"variant\":0,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_B\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":2,\"variant\":1,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_C\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":3,\"variant\":2,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_D\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":4,\"variant\":3,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_E\",\"model\":\"rock\",\"nature\":\"rock\",\"seed\":5,\"variant\":4,\"gain\":0.64,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"mountain_A_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":1,\"variant\":0,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_B_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":2,\"variant\":1,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_C_grass_trees\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":3,\"variant\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_A\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":4,\"variant\":3,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_B\",\"model\":\"mountain\",\"nature\":\"mountain\",\"seed\":5,\"variant\":4,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_A\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":10,\"variant\":0,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_B\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":11,\"variant\":1,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"mountain_massif_C\",\"model\":\"mountain\",\"nature\":\"massif\",\"seed\":12,\"variant\":2,\"up\":2,\"gain\":0.8,\"desat\":0.1,\"tint\":[0.96,0.98,1.04]},{\"id\":\"ruin\",\"model\":\"barrow\",\"build\":\"barrow\",\"style\":\"vale\",\"seed\":3,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"mine_0\",\"model\":\"mine\",\"build\":\"mine\",\"style\":\"vale\",\"seed\":4,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"lumbermill_90\",\"model\":\"lumbermill\",\"build\":\"lumbermill\",\"style\":\"vale\",\"seed\":5,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"barrel\",\"model\":\"barrel\",\"build\":\"barrel\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_A_big\",\"model\":\"crate_A_big\",\"build\":\"crate_A_big\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_A_small\",\"model\":\"crate_A_small\",\"build\":\"crate_A_small\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_B_big\",\"model\":\"crate_B_big\",\"build\":\"crate_B_big\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"crate_long_A\",\"model\":\"crate_long_A\",\"build\":\"crate_long_A\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"sack\",\"model\":\"sack\",\"build\":\"sack\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"wheelbarrow\",\"model\":\"wheelbarrow\",\"build\":\"wheelbarrow\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"weaponrack\",\"model\":\"weaponrack\",\"build\":\"weaponrack\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"bucket_water\",\"model\":\"bucket_water\",\"build\":\"bucket_water\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"resource_lumber\",\"model\":\"resource_lumber\",\"build\":\"resource_lumber\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"resource_stone\",\"model\":\"resource_stone\",\"build\":\"resource_stone\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"flag_red\",\"model\":\"flag_red\",\"build\":\"flag_red\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"stump\",\"model\":\"stump\",\"build\":\"stump\",\"style\":\"vale\",\"seed\":1,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"fence_0\",\"model\":\"fence\",\"build\":\"fence\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"fence_90\",\"model\":\"fence\",\"build\":\"fence\",\"style\":\"vale\",\"seed\":1,\"rotY\":90,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"drywall_0\",\"model\":\"drywall\",\"build\":\"drywall\",\"style\":\"vale\",\"seed\":3,\"rotY\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"drywall_90\",\"model\":\"drywall\",\"build\":\"drywall\",\"style\":\"vale\",\"seed\":3,\"rotY\":90,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"stairsup_0\",\"model\":\"stairsup\",\"build\":\"stairsup\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0]},{\"id\":\"stairsup_90\",\"model\":\"stairsup\",\"build\":\"stairsup\",\"style\":\"vale\",\"seed\":1,\"rotY\":90,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0]},{\"id\":\"stairsdown_0\",\"model\":\"stairsdown\",\"build\":\"stairsdown\",\"style\":\"vale\",\"seed\":1,\"rotY\":0,\"gain\":0.62,\"desat\":0.2,\"tint\":[0.95,0.94,1.0],\"below\":0.27,\"shadow\":false,\"glowId\":2},{\"id\":\"watermill_0\",\"model\":\"watermill\",\"build\":\"watermill\",\"style\":\"vale\",\"seed\":6,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,0.96,0.9]},{\"id\":\"chapelruin_0\",\"model\":\"chapelruin\",\"build\":\"chapelruin\",\"style\":\"vale\",\"seed\":7,\"gain\":0.64,\"desat\":0.18,\"tint\":[0.95,0.97,1.0]},{\"id\":\"milestone_0\",\"model\":\"milestone\",\"build\":\"milestone\",\"style\":\"vale\",\"seed\":8,\"gain\":0.7,\"desat\":0.1,\"tint\":[1.0,0.97,0.92]},{\"id\":\"warren_0\",\"model\":\"warren\",\"build\":\"warren\",\"style\":\"vale\",\"seed\":12,\"gain\":0.62,\"desat\":0.14,\"tint\":[0.98,0.97,0.94]},{\"id\":\"wagon_0\",\"model\":\"wagon\",\"build\":\"wagon\",\"style\":\"vale\",\"seed\":9,\"gain\":0.95,\"desat\":0.12,\"tint\":[1.0,0.97,0.93]},{\"id\":\"ug_bush\",\"model\":\"ug_bush\",\"gltf\":\"nature/Bush_Common_Flowers\",\"scale\":0.22,\"gain\":0.6,\"desat\":0.5,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_fern\",\"model\":\"ug_fern\",\"gltf\":\"nature/Fern_1\",\"scale\":0.08,\"gain\":0.5,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_plant\",\"model\":\"ug_plant\",\"gltf\":\"nature/Plant_1_Big\",\"scale\":0.14,\"gain\":0.5,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_flowers_1\",\"model\":\"ug_flowers_1\",\"gltf\":\"nature/Flower_3_Group\",\"scale\":0.14,\"gain\":0.6,\"desat\":0.2,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_flowers_2\",\"model\":\"ug_flowers_2\",\"gltf\":\"nature/Flower_4_Group\",\"scale\":0.14,\"gain\":0.6,\"desat\":0.2,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_grass_1\",\"model\":\"ug_grass_1\",\"gltf\":\"nature/Grass_Wispy_Tall\",\"scale\":0.2,\"gain\":0.72,\"desat\":0.4,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_grass_2\",\"model\":\"ug_grass_2\",\"gltf\":\"nature/Grass_Common_Tall\",\"scale\":0.2,\"gain\":0.72,\"desat\":0.4,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_clover\",\"model\":\"ug_clover\",\"gltf\":\"nature/Clover_2\",\"scale\":0.2,\"gain\":0.45,\"desat\":0.3,\"tint\":[1.0,1.0,1.0]},{\"id\":\"ug_mushroom\",\"model\":\"ug_mushroom\",\"gltf\":\"nature/Mushroom_Laetiporus\",\"scale\":0.25,\"gain\":0.6,\"desat\":0.25,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_F\",\"model\":\"rock_F\",\"gltf\":\"nature/Rock_Medium_1\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_G\",\"model\":\"rock_G\",\"gltf\":\"nature/Rock_Medium_2\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"rock_H\",\"model\":\"rock_H\",\"gltf\":\"nature/Rock_Medium_3\",\"scale\":0.12,\"gain\":0.62,\"desat\":0.1,\"tint\":[1.0,1.0,1.0]},{\"id\":\"wheat_1\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":20,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"wheat_2\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":21,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"wheat_3\",\"model\":\"wheat\",\"nature\":\"wheat\",\"seed\":22,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"shadow\":false},{\"id\":\"cow_1\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"cow_1~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"tail\":-1}},{\"id\":\"cow_1~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"tail\":1}},{\"id\":\"cow_1~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"pose\":{\"head\":1}},{\"id\":\"cow_2\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60},{\"id\":\"cow_2~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"tail\":-1}},{\"id\":\"cow_2~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"tail\":1}},{\"id\":\"cow_2~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":60,\"pose\":{\"head\":1}},{\"id\":\"cow_3\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50},{\"id\":\"cow_3~tl\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"tail\":-1}},{\"id\":\"cow_3~tr\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"tail\":1}},{\"id\":\"cow_3~hd\",\"model\":\"cow\",\"nature\":\"cow\",\"seed\":37,\"variant\":2,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9],\"rotY\":-50,\"pose\":{\"head\":1}},{\"id\":\"sheep_1\",\"model\":\"sheep\",\"nature\":\"sheep\",\"seed\":37,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"sheep_2\",\"model\":\"sheep\",\"nature\":\"sheep\",\"seed\":38,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hens_1\",\"model\":\"hens\",\"nature\":\"hens\",\"seed\":36,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"pumpkins_1\",\"model\":\"pumpkins\",\"nature\":\"pumpkins\",\"seed\":40,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hay_1\",\"model\":\"hay\",\"nature\":\"hay\",\"seed\":35,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"hay_2\",\"model\":\"hay\",\"nature\":\"hay\",\"seed\":36,\"variant\":1,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"planter_1\",\"model\":\"planter\",\"nature\":\"planter\",\"seed\":39,\"variant\":0,\"gain\":0.72,\"desat\":0.1,\"tint\":[1.0,0.96,0.9]},{\"id\":\"alder_1\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":61,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"alder_2\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":62,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"alder_3\",\"model\":\"alder\",\"tree\":\"alder\",\"seed\":63,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"willow_1\",\"model\":\"willow\",\"tree\":\"willow\",\"seed\":71,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"willow_2\",\"model\":\"willow\",\"tree\":\"willow\",\"seed\":72,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"carr_1\",\"model\":\"carr\",\"tree\":\"carr\",\"seed\":81,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"carr_2\",\"model\":\"carr\",\"tree\":\"carr\",\"seed\":82,\"gain\":0.66,\"desat\":0.14,\"tint\":[0.96,1.0,0.97]},{\"id\":\"windmill_0\",\"model\":\"windmill\",\"build\":\"windmill\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"cart_0\",\"model\":\"cart\",\"build\":\"cart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"cart_90\",\"model\":\"cart\",\"build\":\"cart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0],\"faceX\":true},{\"id\":\"handcart_0\",\"model\":\"handcart\",\"build\":\"handcart\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"table_0\",\"model\":\"table\",\"build\":\"table\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"boxes_0\",\"model\":\"boxes\",\"build\":\"boxes\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"lamppost_0\",\"model\":\"lamppost\",\"build\":\"lamppost\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"bench_0\",\"model\":\"bench\",\"build\":\"bench\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"trough_0\",\"model\":\"trough\",\"build\":\"trough\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]},{\"id\":\"woodpile_0\",\"model\":\"woodpile\",\"build\":\"woodpile\",\"style\":\"vale\",\"seed\":7,\"gain\":0.68,\"desat\":0.12,\"tint\":[1.0,1.0,1.0]}]"), Ec = {
 	vale: [
 		{
 			id: "vale_tavern_1",
@@ -10669,15 +10669,15 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 			]
 		}
 	]
-}, U = (e, t, n) => new l({
+}, V = (e, t, n) => new l({
 	color: e,
 	metalness: t,
 	roughness: n
-}), Tc = {
+}), Dc = {
 	mace: () => {
 		let e = new E();
 		e.name = "Mace";
-		let t = U(4862754, 0, .85), n = U(3022616, 0, .9), r = U(12095548, .8, .35), i = U(10133670, .85, .35), a = (t, n, r, i) => {
+		let t = V(4862754, 0, .85), n = V(3022616, 0, .9), r = V(12095548, .8, .35), i = V(10133670, .85, .35), a = (t, n, r, i) => {
 			let a = new D(t, n);
 			return a.position.y = r, a.name = i, e.add(a), a;
 		};
@@ -10703,7 +10703,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	sword: () => {
 		let e = new E();
 		e.name = "Sword";
-		let t = U(13159634, .9, .3), n = U(12095548, .8, .35), r = U(3810328, 0, .9), i = new D(new T(.02, .1, 1.2, 4, 1), t);
+		let t = V(13159634, .9, .3), n = V(12095548, .8, .35), r = V(3810328, 0, .9), i = new D(new T(.02, .1, 1.2, 4, 1), t);
 		i.scale.set(1, 1, .3), i.rotation.y = Math.PI / 4, i.position.y = .78, i.name = "Sword_Blade", e.add(i);
 		let a = new D(new A(.46, .07, .1), n);
 		a.position.y = .16, e.add(a);
@@ -10715,7 +10715,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	dagger: () => {
 		let e = new E();
 		e.name = "Dagger";
-		let t = U(12633290, .9, .3), n = U(2760736, .2, .7), r = new D(new T(.012, .07, .62, 4, 1), t);
+		let t = V(12633290, .9, .3), n = V(2760736, .2, .7), r = new D(new T(.012, .07, .62, 4, 1), t);
 		r.scale.set(1, 1, .3), r.rotation.y = Math.PI / 4, r.position.y = .45, e.add(r);
 		let i = new D(new A(.26, .05, .08), n);
 		i.position.y = .12, e.add(i);
@@ -10725,7 +10725,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	staff: () => {
 		let e = new E();
 		e.name = "Staff", e.userData.hang = "up";
-		let t = U(5913122, 0, .85), r = U(12095548, .8, .35), i = new l({
+		let t = V(5913122, 0, .85), r = V(12095548, .8, .35), i = new l({
 			color: 16752704,
 			emissive: 12599312,
 			emissiveIntensity: 1.2,
@@ -10744,7 +10744,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	shield: () => {
 		let e = new E();
 		e.name = "Shield";
-		let t = U(8007202, 0, .8), r = U(10133670, .85, .35), i = U(13146688, .8, .35), a = new D(new T(.42, .42, .08, 20), t);
+		let t = V(8007202, 0, .8), r = V(10133670, .85, .35), i = V(13146688, .8, .35), a = new D(new T(.42, .42, .08, 20), t);
 		a.rotation.x = Math.PI / 2, a.position.z = .16, e.add(a);
 		let o = new D(new n(.42, .035, 6, 24), r);
 		o.position.z = .2, e.add(o);
@@ -10754,7 +10754,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	book: () => {
 		let e = new E();
 		e.name = "Book";
-		let t = U(5906464, 0, .8), n = U(15260864, 0, .9), r = U(13146688, .8, .35), i = new D(new A(.2, .42, .46), t);
+		let t = V(5906464, 0, .8), n = V(15260864, 0, .9), r = V(13146688, .8, .35), i = new D(new A(.2, .42, .46), t);
 		i.position.y = .27, e.add(i);
 		let a = new D(new A(.16, .38, .47), n);
 		a.position.y = .27, a.position.x = .012, e.add(a);
@@ -10764,7 +10764,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	standard: () => {
 		let e = new E();
 		e.name = "Standard";
-		let t = U(3811868, 0, .9), n = U(11042874, .8, .4), r = U(8004632, 0, .95), i = new l({
+		let t = V(3811868, 0, .9), n = V(11042874, .8, .4), r = V(8004632, 0, .95), i = new l({
 			color: 15773776,
 			emissive: 10506256,
 			emissiveIntensity: 1,
@@ -10823,7 +10823,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	mug: () => {
 		let e = new E();
 		e.name = "Mug";
-		let t = U(7106676, .75, .45), r = U(13144106, .1, .35), i = U(14209212, 0, .9), a = new D(new T(.2, .18, .4, 14, 1, !0), t);
+		let t = V(7106676, .75, .45), r = V(13144106, .1, .35), i = V(14209212, 0, .9), a = new D(new T(.2, .18, .4, 14, 1, !0), t);
 		a.position.set(.22, .22, 0), a.name = "Mug_Body", e.add(a);
 		let o = new D(new T(.19, .19, .04, 14), t);
 		o.position.set(.22, .03, 0), o.name = "Mug_Base", e.add(o);
@@ -10837,7 +10837,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	lantern: () => {
 		let e = new E();
 		e.name = "Lantern", e.userData.hang = !0;
-		let t = U(3814964, .7, .5), r = U(10123834, .8, .4), i = new l({
+		let t = V(3814964, .7, .5), r = V(10123834, .8, .4), i = new l({
 			color: 16760944,
 			emissive: 12607504,
 			emissiveIntensity: 1.2,
@@ -10858,7 +10858,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	hammer: () => {
 		let e = new E();
 		e.name = "Smith_Hammer", e.userData.hang = !0;
-		let t = U(6965802, 0, .8), n = U(5593182, .85, .4), r = U(3022616, 0, .9), i = new D(new T(.045, .055, .62, 8), t);
+		let t = V(6965802, 0, .8), n = V(5593182, .85, .4), r = V(3022616, 0, .9), i = new D(new T(.045, .055, .62, 8), t);
 		i.position.y = .2, e.add(i);
 		let a = new D(new T(.062, .062, .26, 8), r);
 		a.position.y = -.02, e.add(a);
@@ -10872,7 +10872,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	basket: () => {
 		let e = new E();
 		e.name = "Egg_Basket", e.userData.hang = !0;
-		let t = U(10517060, 0, .9), r = U(14209728, 0, .95), i = U(15919832, 0, .6), a = new D(new n(.2, .025, 6, 14, Math.PI), t);
+		let t = V(10517060, 0, .9), r = V(14209728, 0, .95), i = V(15919832, 0, .6), a = new D(new n(.2, .025, 6, 14, Math.PI), t);
 		a.rotation.z = Math.PI, a.position.y = .2, e.add(a);
 		let o = new D(new T(.26, .19, .24, 10), t);
 		o.position.y = .36, e.add(o);
@@ -10891,7 +10891,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	keys: () => {
 		let e = new E();
 		e.name = "Key_Ring", e.userData.hang = !0;
-		let t = U(6972512, .85, .4), r = U(11569728, .8, .4), i = new D(new n(.12, .022, 6, 16), t);
+		let t = V(6972512, .85, .4), r = V(11569728, .8, .4), i = new D(new n(.12, .022, 6, 16), t);
 		i.position.y = .14, e.add(i);
 		for (let [i, a, o] of [
 			[
@@ -10924,7 +10924,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	whip: () => {
 		let e = new E();
 		e.name = "Carter_Whip", e.userData.hang = !0;
-		let t = U(5913122, 0, .85), n = U(2759184, 0, .9), r = new D(new T(.022, .04, 1.6, 6), t);
+		let t = V(5913122, 0, .85), n = V(2759184, 0, .9), r = new D(new T(.022, .04, 1.6, 6), t);
 		r.position.y = -.62, e.add(r);
 		let i = [
 			[0, -1.42],
@@ -10939,7 +10939,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	hoe: () => {
 		let e = new E();
 		e.name = "Hoe", e.userData.hang = !0;
-		let t = U(9069112, 0, .85), n = U(5921888, .8, .45), r = new D(new T(.03, .036, 1.5, 6), t);
+		let t = V(9069112, 0, .85), n = V(5921888, .8, .45), r = new D(new T(.03, .036, 1.5, 6), t);
 		r.position.y = -.6, e.add(r);
 		let i = new D(new A(.3, .05, .2), n);
 		return i.position.set(.1, -1.36, 0), i.rotation.z = .25, e.add(i), e;
@@ -10947,7 +10947,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	pail: () => {
 		let e = new E();
 		e.name = "Pail", e.userData.hang = !0;
-		let t = U(9068084, 0, .85), r = U(4078136, .7, .5), i = U(15788760, 0, .5), a = new D(new n(.17, .018, 6, 14, Math.PI), r);
+		let t = V(9068084, 0, .85), r = V(4078136, .7, .5), i = V(15788760, 0, .5), a = new D(new n(.17, .018, 6, 14, Math.PI), r);
 		a.rotation.z = Math.PI, a.position.y = .16, e.add(a);
 		let o = new D(new T(.2, .16, .3, 10), t);
 		o.position.y = .36, e.add(o);
@@ -10961,7 +10961,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	flour: () => {
 		let e = new E();
 		e.name = "Flour_Sack", e.userData.hang = !0;
-		let t = U(14208174, 0, .95), r = U(6965802, 0, .9), i = new D(new T(.05, .08, .16, 8), t);
+		let t = V(14208174, 0, .95), r = V(6965802, 0, .9), i = new D(new T(.05, .08, .16, 8), t);
 		i.position.y = .12, e.add(i);
 		let a = new D(new n(.06, .016, 4, 10), r);
 		a.rotation.x = Math.PI / 2, a.position.y = .1, e.add(a);
@@ -10971,7 +10971,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	apron: () => {
 		let e = new E();
 		e.name = "Apron";
-		let t = U(6964264, 0, .85), n = U(3022616, 0, .9), r = new D(new A(.32, .4, .04), t);
+		let t = V(6964264, 0, .85), n = V(3022616, 0, .9), r = new D(new A(.32, .4, .04), t);
 		r.position.set(0, .32, .33), r.rotation.x = -.08, r.name = "Apron_Bib", e.add(r);
 		for (let n of [-.1, .1]) {
 			let r = new D(new A(.19, .3, .04), t);
@@ -10983,7 +10983,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	kettle: () => {
 		let e = new E();
 		e.name = "Kettle_Hat";
-		let t = U(7828334, .6, .55), n = U(5657166, .6, .6), r = U(10103326, 0, .9), i = new D(new ge(.6, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), t);
+		let t = V(7828334, .6, .55), n = V(5657166, .6, .6), r = V(10103326, 0, .9), i = new D(new ge(.6, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), t);
 		i.scale.set(1, .72, 1), i.position.set(0, .6, .02), e.add(i);
 		let a = new D(new T(.62, .9, .12, 16, 1, !0), n);
 		a.position.set(0, .56, .02), e.add(a);
@@ -10997,7 +10997,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	reedhat: () => {
 		let e = new E();
 		e.name = "Reed_Hat";
-		let t = U(10521170, 0, .95), n = U(4872756, 0, .9), r = new D(new j(1, .42, 14, 1, !0), t);
+		let t = V(10521170, 0, .95), n = V(4872756, 0, .9), r = new D(new j(1, .42, 14, 1, !0), t);
 		r.position.set(0, .78, .02), e.add(r);
 		let i = new D(new j(1, .42, 14, 1, !0), t.clone());
 		i.material.side = 1, i.position.copy(r.position), e.add(i);
@@ -11009,7 +11009,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	rag: () => {
 		let e = new E();
 		e.name = "Rag";
-		let t = U(12610120, 0, .95), n = U(8667178, 0, .95), r = (r, i, a, o, s, c = 0) => s.forEach((l, u) => {
+		let t = V(12610120, 0, .95), n = V(8667178, 0, .95), r = (r, i, a, o, s, c = 0) => s.forEach((l, u) => {
 			let d = new D(new A(i / s.length, l, .03), u % 3 == 1 ? n : t);
 			d.position.set(r + (u + .5) * (i / s.length) - i / 2, o - l / 2, a), d.rotation.x = c, d.name = "Rag_Cloth", e.add(d);
 		});
@@ -11040,7 +11040,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	billhook: () => {
 		let e = new E();
 		e.name = "Billhook";
-		let t = U(6967862, 0, .85), r = U(5593180, .8, .45), i = new D(new T(.04, .05, 1.9, 7), t);
+		let t = V(6967862, 0, .85), r = V(5593180, .8, .45), i = new D(new T(.04, .05, 1.9, 7), t);
 		i.position.y = .45, e.add(i);
 		let a = new D(new A(.06, .46, .2), r);
 		a.position.set(0, 1.5, .08), e.add(a);
@@ -11050,7 +11050,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	cagepole: () => {
 		let e = new E();
 		e.name = "Cagepole";
-		let t = U(3023904, 0, .85), n = U(3814964, .75, .45), r = new l({
+		let t = V(3023904, 0, .85), n = V(3814964, .75, .45), r = new l({
 			color: 13154559,
 			emissive: 7360720,
 			emissiveIntensity: 1.3,
@@ -11071,7 +11071,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	boathook: () => {
 		let e = new E();
 		e.name = "Boathook";
-		let t = U(4076070, 0, .85), r = U(4869198, .8, .45), i = U(9075282, 0, .95), a = new D(new T(.045, .055, 2.1, 7), t);
+		let t = V(4076070, 0, .85), r = V(4869198, .8, .45), i = V(9075282, 0, .95), a = new D(new T(.045, .055, 2.1, 7), t);
 		a.position.y = .5, e.add(a);
 		let o = new D(new j(.06, .34, 6), r);
 		o.position.y = 1.72, e.add(o);
@@ -11083,7 +11083,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	choirlamp: () => {
 		let e = new E();
 		e.name = "Choirlamp", e.userData.hang = !0;
-		let t = U(12106944, .7, .4), r = new l({
+		let t = V(12106944, .7, .4), r = new l({
 			color: 14741759,
 			emissive: 6328528,
 			emissiveIntensity: 1.4,
@@ -11104,7 +11104,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	marshlamp: () => {
 		let e = new E();
 		e.name = "Marshlamp", e.userData.hang = !0;
-		let t = U(4866096, 0, .9), r = new l({
+		let t = V(4866096, 0, .9), r = new l({
 			color: 14217416,
 			emissive: 7385200,
 			emissiveIntensity: 1.3,
@@ -11122,7 +11122,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	crook: () => {
 		let e = new E();
 		e.name = "Crook", e.userData.hang = "up";
-		let t = U(4864552, 0, .9), r = new D(new T(.035, .045, 1.8, 6), t);
+		let t = V(4864552, 0, .9), r = new D(new T(.035, .045, 1.8, 6), t);
 		r.position.y = .3, r.rotation.z = .04, e.add(r);
 		let i = new D(new n(.13, .035, 5, 10, Math.PI * 1.2), t);
 		return i.position.set(.12, 1.22, 0), e.add(i), e;
@@ -11130,7 +11130,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 	habit: () => {
 		let e = new E();
 		e.name = "Habit";
-		let t = U(9079940, 0, .95), r = U(6185050, 0, .95), i = U(4876850, 0, .9), a = new D(new n(.24, .09, 6, 12), t);
+		let t = V(9079940, 0, .95), r = V(6185050, 0, .95), i = V(4876850, 0, .9), a = new D(new n(.24, .09, 6, 12), t);
 		a.rotation.x = Math.PI / 2, a.position.y = .2, a.name = "Habit_Cloth", e.add(a);
 		for (let [n, i] of [[.22, .1], [-.24, -.08]]) for (let a = 0; a < 5; a++) {
 			let o = .62 + a * 7 % 5 * .06, s = new D(new A(.1, o, .03), a % 2 ? r : t);
@@ -11163,7 +11163,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 		}
 		return e;
 	},
-	huntbow: () => Ec({
+	huntbow: () => Oc({
 		name: "Hunting_Bow",
 		half: .7,
 		draw: .2,
@@ -11172,7 +11172,7 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 		nock: 3022616,
 		r: .045
 	}),
-	longbow: () => Ec({
+	longbow: () => Oc({
 		name: "Yew_Longbow",
 		half: 1,
 		draw: .24,
@@ -11182,10 +11182,10 @@ var Cc = /*#__PURE__*/ JSON.parse("[{\"id\":\"pine_1\",\"model\":\"pine\",\"tree
 		r: .042
 	})
 };
-function Ec({ name: e, half: t, draw: n, curl: r, wood: i, nock: a, r: o }) {
+function Oc({ name: e, half: t, draw: n, curl: r, wood: i, nock: a, r: o }) {
 	let s = new E();
 	s.name = e;
-	let c = U(i, 0, .75), l = U(a, .1, .5), u = U(3022616, 0, .9), d = U(15129800, 0, .8), f = (i) => {
+	let c = V(i, 0, .75), l = V(a, .1, .5), u = V(3022616, 0, .9), d = V(15129800, 0, .8), f = (i) => {
 		let a = [
 			0,
 			.25,
@@ -11206,7 +11206,7 @@ function Ec({ name: e, half: t, draw: n, curl: r, wood: i, nock: a, r: o }) {
 	let g = new D(new T(.008, .008, p.distanceTo(m), 4), d);
 	return g.position.set((p.x + m.x) / 2, 0, 0), g.name = e + "_String", s.add(g), s;
 }
-function Dc(e, t) {
+function kc(e, t) {
 	let n = document.createElement("canvas");
 	n.width = e.width, n.height = e.height;
 	let r = n.getContext("2d", { willReadFrequently: !0 });
@@ -11230,13 +11230,13 @@ function Dc(e, t) {
 	}
 	return n;
 }
-function Oc(e, t) {
+function Ac(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
 		if (!e.isMesh || !e.material.map || /Eyes/.test(e.name)) return;
 		let r = n.get(e.material);
 		if (!r) {
-			let i = e.material.map, a = new Oe(Dc(i.image, t));
+			let i = e.material.map, a = new Oe(kc(i.image, t));
 			a.flipY = i.flipY, a.colorSpace = i.colorSpace, a.magFilter = i.magFilter, a.minFilter = i.minFilter, a.wrapS = i.wrapS, a.wrapT = i.wrapT, r = e.material.clone(), r.map = a, n.set(e.material, r);
 		}
 		e.material = r;
@@ -11244,19 +11244,19 @@ function Oc(e, t) {
 }
 //#endregion
 //#region ember3d/faces.js
-var kc = /* @__PURE__ */ e({
-	HAIR: () => Nc,
-	IRIS: () => Pc,
-	SHAPES: () => Zc,
-	SKIN: () => Mc,
-	buildFace: () => xl,
-	kkHead: () => Lc,
-	shellOf: () => Qc
-}), Ac = (e, t) => `${Math.floor(e * 8)},${Math.floor(t * 4)}`, jc = (e, t = .8, n = 0) => new l({
+var jc = /* @__PURE__ */ e({
+	HAIR: () => Fc,
+	IRIS: () => Ic,
+	SHAPES: () => $c,
+	SKIN: () => Pc,
+	buildFace: () => Cl,
+	kkHead: () => zc,
+	shellOf: () => el
+}), Mc = (e, t) => `${Math.floor(e * 8)},${Math.floor(t * 4)}`, Nc = (e, t = .8, n = 0) => new l({
 	color: e,
 	roughness: t,
 	metalness: n
-}), Mc = {
+}), Pc = {
 	porcelain: "#f2d2bc",
 	fair: "#e8b896",
 	rose: "#dca088",
@@ -11264,7 +11264,7 @@ var kc = /* @__PURE__ */ e({
 	tan: "#b07850",
 	umber: "#8a5a3a",
 	deep: "#6c4430"
-}, Nc = {
+}, Fc = {
 	black: "#1c1612",
 	soot: "#2e2620",
 	brown: "#5a3a22",
@@ -11276,16 +11276,16 @@ var kc = /* @__PURE__ */ e({
 	ash: "#8a8278",
 	grey: "#a8a49c",
 	white: "#e4e0d8"
-}, Pc = {
+}, Ic = {
 	brown: "#5a3218",
 	hazel: "#7a6a30",
 	green: "#4a7a3a",
 	blue: "#4a74b0",
 	grey: "#7a8894",
 	amber: "#b07820"
-}, Fc = (e, t, n) => new O(e[t] || t || n), Ic = /* @__PURE__ */ new Map();
-async function Lc(e, t) {
-	if (Ic.has(t)) return Ic.get(t);
+}, Lc = (e, t, n) => new O(e[t] || t || n), Rc = /* @__PURE__ */ new Map();
+async function zc(e, t) {
+	if (Rc.has(t)) return Rc.get(t);
 	let n = await e(`./models/${t}.glb`);
 	n.scene.updateMatrixWorld(!0);
 	let r = null;
@@ -11299,7 +11299,7 @@ async function Lc(e, t) {
 			let i = f(e * 3 + r);
 			t += u.getX(i) / 3, n += u.getY(i) / 3;
 		}
-		(h[Ac(t, n)] ||= []).push(e);
+		(h[Mc(t, n)] ||= []).push(e);
 	}
 	let g = new k(), _ = new k(), v = {};
 	for (let [e, t] of Object.entries(h)) {
@@ -11316,9 +11316,9 @@ async function Lc(e, t) {
 		material: r.material,
 		headName: r.name
 	};
-	return Ic.set(t, y), y;
+	return Rc.set(t, y), y;
 }
-function Rc(e, t, n = null, r = !0) {
+function Bc(e, t, n = null, r = !0) {
 	let i = e.attributes.position, a = e.attributes.normal, o = e.attributes.uv, s = [], c = [], l = [], u = new k(), d = new k(), f = new k(), p = new k(), m = new k();
 	for (let e = 0; e < i.count; e += 3) {
 		d.set(0, 0, 0);
@@ -11328,7 +11328,7 @@ function Rc(e, t, n = null, r = !0) {
 	let h = new Re();
 	return h.setAttribute("position", new ae(s, 3)), h.setAttribute("normal", new ae(c, 3)), o && h.setAttribute("uv", new ae(l, 2)), n && r && h.computeVertexNormals(), h;
 }
-function zc(...e) {
+function Vc(...e) {
 	let t = {};
 	for (let n of [
 		"position",
@@ -11345,25 +11345,25 @@ function zc(...e) {
 	for (let [e, r] of Object.entries(t)) n.setAttribute(e, r);
 	return n;
 }
-var Bc = null, Vc = (e) => Math.abs(e.x) < .11 && e.y > .17 && e.y < .46 && e.z > .44, Hc = (e, t) => Math.abs(e.x) < .17 && e.y > .1 && e.y < .2 && e.z > .34 && e.z < .5 && t.y > .35;
-async function Uc(e) {
-	if (Bc) return Bc;
-	let t = await Lc(e, "Knight"), n = await Lc(e, "Barbarian"), r = zc(Rc(t.parts["0,0"], (e) => e.z > .05 && e.y < .6), Rc(n.parts["0,0"], (e) => !(Math.abs(e.x) < .36 && e.z > .2 && e.y < .5)));
-	return Bc = {
-		skin: Rc(r, (e, t) => !Hc(e, t)),
-		wedge: Rc(r, Hc),
+var Hc = null, Uc = (e) => Math.abs(e.x) < .11 && e.y > .17 && e.y < .46 && e.z > .44, Wc = (e, t) => Math.abs(e.x) < .17 && e.y > .1 && e.y < .2 && e.z > .34 && e.z < .5 && t.y > .35;
+async function Gc(e) {
+	if (Hc) return Hc;
+	let t = await zc(e, "Knight"), n = await zc(e, "Barbarian"), r = Vc(Bc(t.parts["0,0"], (e) => e.z > .05 && e.y < .6), Bc(n.parts["0,0"], (e) => !(Math.abs(e.x) < .36 && e.z > .2 && e.y < .5)));
+	return Hc = {
+		skin: Bc(r, (e, t) => !Wc(e, t)),
+		wedge: Bc(r, Wc),
 		whole: r,
-		nose: Rc(r, Vc),
-		noNose: Rc(r, (e, t) => !Hc(e, t) && !Vc(e))
-	}, Bc;
+		nose: Bc(r, Uc),
+		noNose: Bc(r, (e, t) => !Wc(e, t) && !Uc(e))
+	}, Hc;
 }
-var Wc = new k(0, .42, -.02), Gc = (e) => (t) => {
+var Kc = new k(0, .42, -.02), qc = (e) => (t) => {
 	let n = typeof e == "function" ? e(t) : e;
-	t.sub(Wc).multiplyScalar(1 + n).add(Wc);
-}, Kc = (e) => e.z > .3 && e.y > .4 && e.y < .62 && Math.abs(e.x) < .38, qc = (e) => Math.abs(e.x) > .46 && e.y > .12 && e.y < .52 && e.z > -.2 && e.z < .2, Jc = (e, t, n) => {
+	t.sub(Kc).multiplyScalar(1 + n).add(Kc);
+}, Jc = (e) => e.z > .3 && e.y > .4 && e.y < .62 && Math.abs(e.x) < .38, Yc = (e) => Math.abs(e.x) > .46 && e.y > .12 && e.y < .52 && e.z > -.2 && e.z < .2, Xc = (e, t, n) => {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
-}, Yc = (e, t, n) => e + (t - e) * n, Xc = (e, t, n) => Math.exp(-((e - t) / n) * ((e - t) / n)), Zc = {
+}, Zc = (e, t, n) => e + (t - e) * n, Qc = (e, t, n) => Math.exp(-((e - t) / n) * ((e - t) / n)), $c = {
 	normal: null,
 	thin: (e) => {
 		e.x *= .86, e.z = -.02 + (e.z + .02) * .97;
@@ -11372,16 +11372,16 @@ var Wc = new k(0, .42, -.02), Gc = (e) => (t) => {
 		e.x *= 1.15, e.z = -.02 + (e.z + .02) * 1.05;
 	},
 	round: (e) => {
-		e.x *= 1.08 * (1 + .07 * Xc(e.y, .25, .22)), e.y = .5 + (e.y - .5) * .92;
+		e.x *= 1.08 * (1 + .07 * Qc(e.y, .25, .22)), e.y = .5 + (e.y - .5) * .92;
 	},
 	oblong: (e) => {
 		e.y *= 1.13, e.x *= .92;
 	},
 	pear: (e) => {
-		e.x *= Yc(1.17, .85, Jc(.02, .95, e.y));
+		e.x *= Zc(1.17, .85, Xc(.02, .95, e.y));
 	}
-}, Qc = (e, t, n) => Rc(e, t, Gc(n));
-function $c(e) {
+}, el = (e, t, n) => Bc(e, t, qc(n));
+function tl(e) {
 	let t = new D(e, new it({ side: 2 })), n = new i();
 	return (e, r, i = new k(0, 0, -1)) => {
 		n.set(new k(e, r, 0).addScaledVector(i, -3), i);
@@ -11397,21 +11397,21 @@ function $c(e) {
 		};
 	};
 }
-var el = (e, t) => (e.quaternion.setFromUnitVectors(new k(0, 0, 1), t), e);
-function tl(e, t, n, r, i = .012, a = 5) {
+var nl = (e, t) => (e.quaternion.setFromUnitVectors(new k(0, 0, 1), t), e);
+function rl(e, t, n, r, i = .012, a = 5) {
 	let o = t.map(([t, n]) => {
 		let r = e(t, n);
 		return r.p.addScaledVector(r.n, i);
 	}), s = new qe(o), c = new Ee(s, Math.max(4, t.length * 2), n, a, !1), l = new D(c, r);
 	return l.scale.set(1, 1, 1), l;
 }
-var nl = (e, t, n, r = 7) => Array.from({ length: r }, (i, a) => {
+var il = (e, t, n, r = 7) => Array.from({ length: r }, (i, a) => {
 	let o = -1 + 2 * a / (r - 1);
 	return [o * e, t + n(o)];
-}), rl = {
+}), al = {
 	x: .17,
 	y: .365
-}, il = {
+}, ol = {
 	round: {
 		w: 1,
 		h: 1,
@@ -11443,10 +11443,10 @@ var nl = (e, t, n, r = 7) => Array.from({ length: r }, (i, a) => {
 		lash: 1.2
 	}
 };
-function al(e, t, r, i) {
-	let a = new E(), o = il[t.eyes] || il.round, s = .068;
+function sl(e, t, r, i) {
+	let a = new E(), o = ol[t.eyes] || ol.round, s = .068;
 	for (let t of [-1, 1]) {
-		let { p: c, n: l } = e(t * rl.x, rl.y), u = el(new E(), l);
+		let { p: c, n: l } = e(t * al.x, al.y), u = nl(new E(), l);
 		if (u.position.copy(c), u.rotation.z += t * o.tilt, i) {
 			let e = new D(new ge(s, 10, 6), r.lash);
 			e.scale.set(1.15 * o.w, 1.1 * Math.min(1, o.h + .1), .4), u.add(e), e.userData.part = t < 0 ? "eyeA" : "eyeB", a.add(u);
@@ -11476,7 +11476,7 @@ function al(e, t, r, i) {
 	}
 	return a;
 }
-var ol = {
+var cl = {
 	straight: {
 		y: (e) => 0,
 		r: .022
@@ -11502,18 +11502,18 @@ var ol = {
 		r: .012
 	}
 };
-function sl(e, t, n) {
-	let r = new E(), i = ol[t.brows] || ol.straight;
+function ll(e, t, n) {
+	let r = new E(), i = cl[t.brows] || cl.straight;
 	for (let a of [-1, 1]) {
 		let o = Array.from({ length: 5 }, (e, t) => {
 			let n = t / 4;
 			return [a * (.07 + .2 * n), .475 + i.y(n)];
 		});
-		r.add(tl(e, o, i.r * (t.browWeight ?? 1), n.brow, .018));
+		r.add(rl(e, o, i.r * (t.browWeight ?? 1), n.brow, .018));
 	}
 	return r;
 }
-var cl = {
+var ul = {
 	line: {
 		w: .1,
 		f: (e) => 0
@@ -11545,16 +11545,16 @@ var cl = {
 		f: (e) => 0,
 		open: 1
 	}
-}, ll = .168;
-function ul(e, t, n, r) {
-	let i = new E(), a = cl[t.mouth] || cl.line, o = a.w * (t.mouthWidth ?? 1);
-	if (i.add(tl(e, nl(o, ll, a.f, 7), r ? .011 : a.thin ? .012 : .017, n.mouth, .016)), a.open) {
-		let { p: t, n: r } = e(0, .156), s = el(new D(new ge(o * .55, 10, 6), n.pupil), r);
+}, dl = .168;
+function fl(e, t, n, r) {
+	let i = new E(), a = ul[t.mouth] || ul.line, o = a.w * (t.mouthWidth ?? 1);
+	if (i.add(rl(e, il(o, dl, a.f, 7), r ? .011 : a.thin ? .012 : .017, n.mouth, .016)), a.open) {
+		let { p: t, n: r } = e(0, .156), s = nl(new D(new ge(o * .55, 10, 6), n.pupil), r);
 		s.position.copy(t), s.scale.set(1, .42 * a.open, .25), i.add(s);
 	}
 	return i;
 }
-function dl(e) {
+function pl(e) {
 	let t = new b(.3, .36, 8, 10), n = t.attributes.position;
 	for (let t = 0; t < n.count; t++) {
 		let r = n.getX(t), i = n.getY(t) + .31, a = (e(-.16, i).p.z + e(.16, i).p.z) / 2;
@@ -11562,7 +11562,7 @@ function dl(e) {
 	}
 	return t.computeVertexNormals(), t.toNonIndexed();
 }
-var fl = {
+var ml = {
 	button: {
 		tipY: .27,
 		out: .065,
@@ -11602,8 +11602,8 @@ var fl = {
 		up: .025
 	}
 };
-function pl(e, t, n) {
-	let r = new E(), i = fl[t.nose];
+function hl(e, t, n) {
+	let r = new E(), i = ml[t.nose];
 	if (!i) return r;
 	let a = e(0, .43).p, o = e(0, i.tipY).p, s = new k(0, i.tipY + (i.up || 0) - (i.droop || 0), o.z + i.out), c = (e, t, r, i) => {
 		let a = new D(new T(r, i, e.distanceTo(t), 6), n.skin);
@@ -11623,33 +11623,33 @@ function pl(e, t, n) {
 	}
 	return r;
 }
-function ml(e, t, n) {
+function gl(e, t, n) {
 	return (r) => {
-		if (qc(r)) return !1;
-		let i = Jc(-.25, .3, r.z), a = Yc(n, Yc(t, e, Jc(.15, .38, r.z)), i);
+		if (Yc(r)) return !1;
+		let i = Xc(-.25, .3, r.z), a = Zc(n, Zc(t, e, Xc(.15, .38, r.z)), i);
 		return r.y > a;
 	};
 }
-var hl = {
+var _l = {
 	bald: null,
 	crop: {
-		line: ml(.72, .44, .1),
+		line: gl(.72, .44, .1),
 		grow: .035
 	},
 	short: {
-		line: ml(.66, .4, .05),
-		grow: (e) => .04 + .03 * Jc(.6, .95, e.y)
+		line: gl(.66, .4, .05),
+		grow: (e) => .04 + .03 * Xc(.6, .95, e.y)
 	},
 	receding: {
-		line: (e) => ml(.86, .44, .1)(e) && !(e.z > .2 && e.y < .9 && Math.abs(e.x) < .3 + (e.y - .72) * 1.2),
+		line: (e) => gl(.86, .44, .1)(e) && !(e.z > .2 && e.y < .9 && Math.abs(e.x) < .3 + (e.y - .72) * 1.2),
 		grow: .03
 	},
 	crest: {
-		line: (e) => Math.abs(e.x) < .14 && e.y > .5 && !qc(e),
-		grow: (e) => .03 + .14 * Jc(.55, .95, e.y)
+		line: (e) => Math.abs(e.x) < .14 && e.y > .5 && !Yc(e),
+		grow: (e) => .03 + .14 * Xc(.55, .95, e.y)
 	},
 	bun: {
-		line: ml(.7, .42, .12),
+		line: gl(.7, .42, .12),
 		grow: .04,
 		knot: {
 			at: [
@@ -11661,7 +11661,7 @@ var hl = {
 		}
 	},
 	topknot: {
-		line: ml(.72, .44, .1),
+		line: gl(.72, .44, .1),
 		grow: .03,
 		knot: {
 			at: [
@@ -11673,7 +11673,7 @@ var hl = {
 		}
 	},
 	braid: {
-		line: ml(.7, .42, .08),
+		line: gl(.7, .42, .08),
 		grow: .04,
 		braid: !0
 	},
@@ -11684,19 +11684,19 @@ var hl = {
 	},
 	swept: { kk: "Knight" }
 };
-async function gl(e, t, r, i, a = null) {
+async function vl(e, t, r, i, a = null) {
 	let o = (e) => {
 		let t = new k(...e);
 		return a && a(t), t;
-	}, s = new E(), c = hl[r.hair ?? "crop"];
+	}, s = new E(), c = _l[r.hair ?? "crop"];
 	if (!c) return s;
 	if (c.kk) {
-		let t = await Lc(e, c.kk);
-		return s.add(new D(Rc(t.parts["1,0"], (e) => !Kc(e), (e) => {
-			a && a(e), Gc(.05)(e);
-		}), i.hair)), c.tie && t.parts["1,1"] && s.add(new D(a ? Rc(t.parts["1,1"], () => !0, a) : t.parts["1,1"], i.tie)), s;
+		let t = await zc(e, c.kk);
+		return s.add(new D(Bc(t.parts["1,0"], (e) => !Jc(e), (e) => {
+			a && a(e), qc(.05)(e);
+		}), i.hair)), c.tie && t.parts["1,1"] && s.add(new D(a ? Bc(t.parts["1,1"], () => !0, a) : t.parts["1,1"], i.tie)), s;
 	}
-	if (s.add(new D(Rc(t, c.line, Gc(c.grow)), i.hair)), c.knot) {
+	if (s.add(new D(Bc(t, c.line, qc(c.grow)), i.hair)), c.knot) {
 		let e = new D(new _(c.knot.r, 1), i.hair);
 		e.position.copy(o(c.knot.at)), s.add(e);
 		let t = new D(new n(c.knot.r * .62, .025, 4, 10), i.tie);
@@ -11742,22 +11742,22 @@ async function gl(e, t, r, i, a = null) {
 	}
 	return s;
 }
-var _l = (e) => e.y < .3 && e.z > -.22 && !qc(e) && !(Math.abs(e.x) < .14 && e.y > .1 && e.y < .26 && e.z > .3);
-async function vl(e, t, n, r, i, a = null) {
+var yl = (e) => e.y < .3 && e.z > -.22 && !Yc(e) && !(Math.abs(e.x) < .14 && e.y > .1 && e.y < .26 && e.z > .3);
+async function bl(e, t, n, r, i, a = null) {
 	let o = new E(), s = r.beard;
 	if (!s) return o;
-	if (s === "stubble" && o.add(new D(Rc(t, _l, Gc(.008)), i.stubble)), (s === "short" || s === "goatee") && o.add(new D(Rc(t, s === "goatee" ? (e) => _l(e) && Math.abs(e.x) < .16 && e.y < .14 && e.z > .2 : _l, Gc((e) => .04 + .05 * Jc(.2, -.05, e.y))), i.beard)), s === "full") {
-		let t = await Lc(e, "Barbarian");
-		o.add(new D(Rc(t.parts["1,0"], (e) => !Kc(e), (e) => {
-			a && a(e), Gc(.01)(e);
+	if (s === "stubble" && o.add(new D(Bc(t, yl, qc(.008)), i.stubble)), (s === "short" || s === "goatee") && o.add(new D(Bc(t, s === "goatee" ? (e) => yl(e) && Math.abs(e.x) < .16 && e.y < .14 && e.z > .2 : yl, qc((e) => .04 + .05 * Xc(.2, -.05, e.y))), i.beard)), s === "full") {
+		let t = await zc(e, "Barbarian");
+		o.add(new D(Bc(t.parts["1,0"], (e) => !Jc(e), (e) => {
+			a && a(e), qc(.01)(e);
 		}), i.beard));
 	}
-	return (s === "short" || s === "goatee" || s === "mustache") && o.add(tl(n, nl(.13, .225, (e) => -.035 * e * e + (s === "mustache" ? -.02 * e * e * e * e : 0), 7), .028, i.beard, .02)), o;
+	return (s === "short" || s === "goatee" || s === "mustache") && o.add(rl(n, il(.13, .225, (e) => -.035 * e * e + (s === "mustache" ? -.02 * e * e * e * e : 0), 7), .028, i.beard, .02)), o;
 }
-function yl(e, t, r) {
+function xl(e, t, r) {
 	let i = new E();
 	for (let a of t.marks || []) {
-		if (a === "scar" && i.add(tl(e, [[.1, .58], [.13, .5]], .012, r.scar, .02, 4), tl(e, [[.2, .3], [.24, .2]], .012, r.scar, .016, 4)), a === "scar_cheek" && i.add(tl(e, [
+		if (a === "scar" && i.add(rl(e, [[.1, .58], [.13, .5]], .012, r.scar, .02, 4), rl(e, [[.2, .3], [.24, .2]], .012, r.scar, .016, 4)), a === "scar_cheek" && i.add(rl(e, [
 			[-.32, .3],
 			[-.26, .25],
 			[-.2, .21]
@@ -11769,28 +11769,28 @@ function yl(e, t, r) {
 			[.3, .28],
 			[.18, .3]
 		]) for (let a of [-1, 1]) {
-			let { p: o, n: s } = e(a * t, n), c = el(new D(new Be(.011, 5), r.freckle), s);
+			let { p: o, n: s } = e(a * t, n), c = nl(new D(new Be(.011, 5), r.freckle), s);
 			c.position.copy(o).addScaledVector(s, .006), i.add(c);
 		}
 		if (a === "blush") for (let t of [-1, 1]) {
-			let { p: n, n: a } = e(t * .25, .235), o = el(new D(new Be(.06, 10), r.blush), a);
+			let { p: n, n: a } = e(t * .25, .235), o = nl(new D(new Be(.06, 10), r.blush), a);
 			o.position.copy(n).addScaledVector(a, .004), o.scale.y = .6, i.add(o);
 		}
 		if (a === "wrinkles") {
-			for (let t of [-1, 1]) i.add(tl(e, [[t * .262, rl.y - .015], [t * .292, rl.y - .035]], .005, r.crease, .01, 3));
-			i.add(tl(e, nl(.14, .62, (e) => .01 * (1 - e * e)), .005, r.crease, .01, 3));
-			for (let t of [-1, 1]) i.add(tl(e, [
+			for (let t of [-1, 1]) i.add(rl(e, [[t * .262, al.y - .015], [t * .292, al.y - .035]], .005, r.crease, .01, 3));
+			i.add(rl(e, il(.14, .62, (e) => .01 * (1 - e * e)), .005, r.crease, .01, 3));
+			for (let t of [-1, 1]) i.add(rl(e, [
 				[t * .1, .26],
 				[t * .14, .2],
 				[t * .145, .16]
 			], .006, r.crease, .01, 3));
 		}
 		if (a === "eyepatch") {
-			let { p: t, n } = e(.17, rl.y), a = el(new D(new Be(.1, 10), r.patch), n);
-			a.position.copy(t).addScaledVector(n, .05), a.scale.y = .85, i.add(a), i.add(tl(e, [
+			let { p: t, n } = e(.17, al.y), a = nl(new D(new Be(.1, 10), r.patch), n);
+			a.position.copy(t).addScaledVector(n, .05), a.scale.y = .85, i.add(a), i.add(rl(e, [
 				[-.4, .62],
 				[-.1, .55],
-				[.17, rl.y + .05],
+				[.17, al.y + .05],
 				[.44, .35]
 			], .013, r.patch, .03, 4));
 		}
@@ -11801,7 +11801,7 @@ function yl(e, t, r) {
 	}
 	return i;
 }
-function bl(e, t, n) {
+function Sl(e, t, n) {
 	let r = new E();
 	if (e.ears !== "pointed") return r;
 	let i = e.earSize || 1.2, a = .62 * i, o = .15 * i;
@@ -11816,46 +11816,46 @@ function bl(e, t, n) {
 	}
 	return r;
 }
-Object.keys(hl), Object.keys(il), Object.keys(ol), Object.keys(cl), [...Object.keys(fl)], Object.keys(Mc), Object.keys(Pc), Object.keys(Zc);
-async function xl(e, t, n, { far: r = !1 } = {}) {
-	let i = n.skull === "own", a = i ? await Lc(e, t) : null, o = await Lc(e, t), s = Fc(Mc, n.skin, Mc.fair), c = Fc(Nc, n.hairColor, Nc.brown), l = {
-		skin: jc(s, .72),
-		hair: jc(c, .85),
-		brow: jc(Fc(Nc, n.browColor, c.clone().multiplyScalar(.72)), .9),
-		beard: jc(Fc(Nc, n.beardColor, c), .9),
-		stubble: jc(s.clone().multiplyScalar(.7).lerp(Fc(Nc, n.beardColor, c), .35), 1),
-		white: jc("#f2ece2", .35),
-		iris: jc(Fc(Pc, n.iris, Pc.brown), .3),
-		pupil: jc("#120c0a", .4),
+Object.keys(_l), Object.keys(ol), Object.keys(cl), Object.keys(ul), [...Object.keys(ml)], Object.keys(Pc), Object.keys(Ic), Object.keys($c);
+async function Cl(e, t, n, { far: r = !1 } = {}) {
+	let i = n.skull === "own", a = i ? await zc(e, t) : null, o = await zc(e, t), s = Lc(Pc, n.skin, Pc.fair), c = Lc(Fc, n.hairColor, Fc.brown), l = {
+		skin: Nc(s, .72),
+		hair: Nc(c, .85),
+		brow: Nc(Lc(Fc, n.browColor, c.clone().multiplyScalar(.72)), .9),
+		beard: Nc(Lc(Fc, n.beardColor, c), .9),
+		stubble: Nc(s.clone().multiplyScalar(.7).lerp(Lc(Fc, n.beardColor, c), .35), 1),
+		white: Nc("#f2ece2", .35),
+		iris: Nc(Lc(Ic, n.iris, Ic.brown), .3),
+		pupil: Nc("#120c0a", .4),
 		glint: new it({ color: "#ffffff" }),
-		lash: jc("#1c120e", .8),
-		lid: jc(s.clone().multiplyScalar(.94), .72),
-		crease: jc(s.clone().multiplyScalar(.78), .95),
-		mouth: jc(s.clone().lerp(new O("#3a1210"), .7), .95),
-		lip: jc(s.clone().multiplyScalar(.86).lerp(new O("#a04a40"), .22), .95),
-		scar: jc(s.clone().multiplyScalar(.72).lerp(new O("#a04a44"), .35), .9),
-		freckle: jc(s.clone().lerp(new O("#6a2a10"), .5), .9),
-		blush: jc(s.clone().lerp(new O("#e05a58"), .4), .8),
-		patch: jc("#1a1414", .7),
-		gold: jc("#d8a848", .3, .8),
-		tie: jc(Fc(Nc, n.tieColor, "#6a3a22"), .8),
-		earIn: jc(s.clone().multiplyScalar(.62).lerp(new O("#7a3a34"), .25), .9)
+		lash: Nc("#1c120e", .8),
+		lid: Nc(s.clone().multiplyScalar(.94), .72),
+		crease: Nc(s.clone().multiplyScalar(.78), .95),
+		mouth: Nc(s.clone().lerp(new O("#3a1210"), .7), .95),
+		lip: Nc(s.clone().multiplyScalar(.86).lerp(new O("#a04a40"), .22), .95),
+		scar: Nc(s.clone().multiplyScalar(.72).lerp(new O("#a04a44"), .35), .9),
+		freckle: Nc(s.clone().lerp(new O("#6a2a10"), .5), .9),
+		blush: Nc(s.clone().lerp(new O("#e05a58"), .4), .8),
+		patch: Nc("#1a1414", .7),
+		gold: Nc("#d8a848", .3, .8),
+		tie: Nc(Lc(Fc, n.tieColor, "#6a3a22"), .8),
+		earIn: Nc(s.clone().multiplyScalar(.62).lerp(new O("#7a3a34"), .25), .9)
 	}, u = new E();
 	u.name = "Face";
-	let d = Zc[n.shape], f = (e) => d && e ? Rc(e, () => !0, d, !1) : e, p = i ? null : await Uc(e), m = p && {
+	let d = $c[n.shape], f = (e) => d && e ? Bc(e, () => !0, d, !1) : e, p = i ? null : await Gc(e), m = p && {
 		skin: f(p.skin),
 		wedge: f(p.wedge),
 		whole: f(p.whole),
 		noNose: f(p.noNose)
-	}, h = i ? f(a.parts["0,0"]) : m.whole, g = i || !fl[n.nose], _ = g ? null : f(dl($c(p.whole))), v = (e, t) => (e.traverse((e) => {
+	}, h = i ? f(a.parts["0,0"]) : m.whole, g = i || !ml[n.nose], _ = g ? null : f(pl(tl(p.whole))), v = (e, t) => (e.traverse((e) => {
 		e.isMesh && !e.userData.part && (e.userData.part = t);
 	}), e);
 	if (u.add(v(new D(i ? h : g ? m.skin : m.noNose, l.skin), "skin")), _ && u.add(v(new D(_, l.skin), "skin")), m && u.add(v(new D(m.wedge, r ? l.skin : l.lip), "skin")), i) for (let e of n.keep || ["1,1"]) a.parts[e] && u.add(new D(f(a.parts[e]), a.material));
-	let y = $c(g ? h : zc(m.noNose, m.wedge, _)), b = d ? (e, t, n) => {
+	let y = tl(g ? h : Vc(m.noNose, m.wedge, _)), b = d ? (e, t, n) => {
 		let r = new k(e, t, .45);
 		return d(r), y(r.x, r.y, n);
 	} : y;
-	return u.add(v(al(b, n, l, r), "eye"), v(sl(b, n, l), "brow"), v(ul(b, n, l, r), "mouth"), v(pl(b, n, l), "skin"), v(await vl(e, h, b, n, l, d), "hair")), u.add(v(bl(n, l, d), "skin")), r || u.add(yl(b, n, l)), i || u.add(v(await gl(e, h, n, l, d), "hair")), u.traverse((e) => {
+	return u.add(v(sl(b, n, l, r), "eye"), v(ll(b, n, l), "brow"), v(fl(b, n, l, r), "mouth"), v(hl(b, n, l), "skin"), v(await bl(e, h, b, n, l, d), "hair")), u.add(v(Sl(n, l, d), "skin")), r || u.add(xl(b, n, l)), i || u.add(v(await vl(e, h, n, l, d), "hair")), u.traverse((e) => {
 		e.isMesh && (e.frustumCulled = !1, e.userData.face = !0);
 	}), {
 		head: u,
@@ -11866,14 +11866,14 @@ async function xl(e, t, n, { far: r = !1 } = {}) {
 }
 //#endregion
 //#region ember3d/body.js
-var W = (e, t, n) => new k(e, t, n), Sl = (e, t, n) => {
+var H = (e, t, n) => new k(e, t, n), wl = (e, t, n) => {
 	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
 	return r * r * (3 - 2 * r);
-}, Cl = (e, t, n) => e + (t - e) * n, wl = (e, t = .8, n = 0) => new l({
+}, Tl = (e, t, n) => e + (t - e) * n, El = (e, t = .8, n = 0) => new l({
 	color: e,
 	roughness: t,
 	metalness: n
-}), Tl = {
+}), Dl = {
 	thin: {
 		w: .76,
 		d: .8,
@@ -11895,7 +11895,7 @@ var W = (e, t, n) => new k(e, t, n), Sl = (e, t, n) => {
 		belly: .12,
 		hip: 1.22
 	}
-}, El = class {
+}, Ol = class {
 	constructor(e) {
 		this.bones = e, this.P = [], this.SI = [], this.SW = [], this.idx = [];
 	}
@@ -11910,7 +11910,7 @@ var W = (e, t, n) => new k(e, t, n), Sl = (e, t, n) => {
 		return n;
 	}
 	p(e) {
-		return W(this.P[e * 3], this.P[e * 3 + 1], this.P[e * 3 + 2]);
+		return H(this.P[e * 3], this.P[e * 3 + 1], this.P[e * 3 + 2]);
 	}
 	tri(e, t, n, r) {
 		let i = this.p(e);
@@ -11923,7 +11923,7 @@ var W = (e, t, n) => new k(e, t, n), Sl = (e, t, n) => {
 		return i.bind(t, n), i.frustumCulled = !1, i.userData.body = !0, i;
 	}
 };
-function Dl(e, t, n, r, i, a, o, s, c = 0) {
+function kl(e, t, n, r, i, a, o, s, c = 0) {
 	let l = [];
 	for (let u = 0; u < o; u++) {
 		let d = 2 * Math.PI * u / o, f = Math.sin(d), p = t.clone().addScaledVector(n, Math.cos(d) * i).addScaledVector(r, f * a + (f > 0 ? c * f : 0));
@@ -11931,41 +11931,41 @@ function Dl(e, t, n, r, i, a, o, s, c = 0) {
 	}
 	return l;
 }
-function Ol(e, t, n, r, i) {
+function Al(e, t, n, r, i) {
 	let a = t.length, o = r.clone().add(i).multiplyScalar(.5);
 	for (let r = 0; r < a; r++) {
 		let i = (r + 1) % a;
 		e.tri(t[r], t[i], n[i], o), e.tri(t[r], n[i], n[r], o);
 	}
 }
-function kl(e, t, n, r, i) {
+function jl(e, t, n, r, i) {
 	let a = e.v(n, r), o = n.clone().sub(i.clone().multiplyScalar(.1));
 	for (let n = 0; n < t.length; n++) e.tri(a, t[n], t[(n + 1) % t.length], o);
 }
-function Al(e, t, n, r, i = 8, { caps: a = [!0, !0], steps: o = 3 } = {}) {
+function Ml(e, t, n, r, i = 8, { caps: a = [!0, !0], steps: o = 3 } = {}) {
 	let s = null, c = null, l = (a, o) => {
-		let s = t[a], c = t[Math.min(a + 1, t.length - 1)], l = s.p.clone().lerp(c.p, o), u = [Cl(s.r[0], c.r[0], o), Cl(s.r[1], c.r[1], o)], d = [[s.bone, 1]];
+		let s = t[a], c = t[Math.min(a + 1, t.length - 1)], l = s.p.clone().lerp(c.p, o), u = [Tl(s.r[0], c.r[0], o), Tl(s.r[1], c.r[1], o)], d = [[s.bone, 1]];
 		if (a + 1 < t.length - 1 || a + 1 === t.length - 1 && t[a + 1].bone !== s.bone) {
-			let e = Sl(.62, 1, o) * .5;
+			let e = wl(.62, 1, o) * .5;
 			d[0][1] -= e, d.push([c.bone, e]);
 		}
 		if (a > 0) {
-			let e = (1 - Sl(0, .38, o)) * .5;
+			let e = (1 - wl(0, .38, o)) * .5;
 			d[0][1] -= e, d.push([t[a - 1].bone, e]);
 		}
 		return {
 			c: l,
-			r: Dl(e, l, n, r, u[0], u[1], i, d),
+			r: kl(e, l, n, r, u[0], u[1], i, d),
 			w: d
 		};
 	}, u = [];
 	for (let e = 0; e < t.length - 1; e++) for (let t = 0; t < o; t++) u.push(l(e, t / o));
 	u.push(l(t.length - 2, 1));
-	for (let t of u) s && Ol(e, s.r, t.r, c, t.c), s = t, c = t.c;
+	for (let t of u) s && Al(e, s.r, t.r, c, t.c), s = t, c = t.c;
 	let d = t[t.length - 1].p.clone().sub(t[0].p).normalize();
-	a[0] && kl(e, u[0].r, u[0].c, u[0].w, d.clone().negate()), a[1] && kl(e, u[u.length - 1].r, u[u.length - 1].c, u[u.length - 1].w, d);
+	a[0] && jl(e, u[0].r, u[0].c, u[0].w, d.clone().negate()), a[1] && jl(e, u[u.length - 1].r, u[u.length - 1].c, u[u.length - 1].w, d);
 }
-var jl = [
+var Nl = [
 	[
 		.36,
 		.23,
@@ -12006,132 +12006,132 @@ var jl = [
 		.1,
 		.09
 	]
-], Ml = (e) => {
+], Pl = (e) => {
 	if (e < .55) return [["hips", 1]];
 	if (e < .78) {
-		let t = Sl(.55, .78, e);
+		let t = wl(.55, .78, e);
 		return [["hips", 1 - t], ["spine", t]];
 	}
 	if (e < .98) {
-		let t = Sl(.78, .98, e);
+		let t = wl(.78, .98, e);
 		return [["spine", 1 - t], ["chest", t]];
 	}
 	return [["chest", 1]];
 };
-function Nl(e, t, { y0: n = .36, y1: r = 1.25, grow: i = 0, seg: a = 12, capBottom: o = !0, capTop: s = !0, flare: c = 0 } = {}) {
-	let l = jl.filter(([e]) => e >= n - 1e-6 && e <= r + 1e-6), u = W(1, 0, 0), d = W(0, 0, 1), f = null, p = null, m = null;
+function Fl(e, t, { y0: n = .36, y1: r = 1.25, grow: i = 0, seg: a = 12, capBottom: o = !0, capTop: s = !0, flare: c = 0 } = {}) {
+	let l = Nl.filter(([e]) => e >= n - 1e-6 && e <= r + 1e-6), u = H(1, 0, 0), d = H(0, 0, 1), f = null, p = null, m = null;
 	for (let [n, r, o] of l) {
-		let s = t.belly * Sl(.55, .7, n) * (1 - Sl(.85, 1, n)), l = n < .7 ? Cl(t.hip, t.w, Sl(.46, .7, n)) : t.w, h = W(0, n, 0), g = Dl(e, h, u, d, r * l + i + (n < .5 ? c : 0), o * t.d + i, a, Ml(n), s);
-		f && Ol(e, f.r, g, f.c, h), f = {
+		let s = t.belly * wl(.55, .7, n) * (1 - wl(.85, 1, n)), l = n < .7 ? Tl(t.hip, t.w, wl(.46, .7, n)) : t.w, h = H(0, n, 0), g = kl(e, h, u, d, r * l + i + (n < .5 ? c : 0), o * t.d + i, a, Pl(n), s);
+		f && Al(e, f.r, g, f.c, h), f = {
 			r: g,
 			c: h
 		}, p ||= f, m = f;
 	}
-	o && kl(e, p.r, p.c, Ml(p.c.y), W(0, -1, 0)), s && kl(e, m.r, m.c, Ml(m.c.y), W(0, 1, 0));
+	o && jl(e, p.r, p.c, Pl(p.c.y), H(0, -1, 0)), s && jl(e, m.r, m.c, Pl(m.c.y), H(0, 1, 0));
 }
-function Pl(e, t, { y0: n = .62, y1: r = .1, flare: i = .14, seg: a = 16, grow: o = .02 } = {}) {
-	let s = null, [, c, l] = jl.find(([e]) => e >= n) || jl[2];
+function Il(e, t, { y0: n = .62, y1: r = .1, flare: i = .14, seg: a = 16, grow: o = .02 } = {}) {
+	let s = null, [, c, l] = Nl.find(([e]) => e >= n) || Nl[2];
 	for (let u = 0; u <= 5; u++) {
-		let d = u / 5, f = Cl(n, r, d), p = W(0, f, 0), m = c * t.hip + o + i * d, h = l * t.d + o + i * d * .8, g = [];
+		let d = u / 5, f = Tl(n, r, d), p = H(0, f, 0), m = c * t.hip + o + i * d, h = l * t.d + o + i * d * .8, g = [];
 		for (let t = 0; t < a; t++) {
-			let n = 2 * Math.PI * t / a, r = Math.cos(n) * m, i = Math.sin(n) * h, o = Sl(-.1, .1, r), s = 1 - Sl(.42, .62, f);
-			g.push(e.v(W(r, f, i), [
+			let n = 2 * Math.PI * t / a, r = Math.cos(n) * m, i = Math.sin(n) * h, o = wl(-.1, .1, r), s = 1 - wl(.42, .62, f);
+			g.push(e.v(H(r, f, i), [
 				["hips", 1 - s],
 				["upperlegl", s * o],
 				["upperlegr", s * (1 - o)]
 			]));
 		}
-		s && Ol(e, s.ids, g, s.c, p), s = {
+		s && Al(e, s.ids, g, s.c, p), s = {
 			ids: g,
 			c: p
 		};
 	}
 }
-function Fl(e, t, n, r, i, a, o, s = 4, c = 6) {
+function Ll(e, t, n, r, i, a, o, s = 4, c = 6) {
 	let l = [];
 	for (let u = 0; u <= c; u++) {
-		let d = Cl(r, i, u / c), f = [];
+		let d = Tl(r, i, u / c), f = [];
 		for (let r = 0; r <= s; r++) {
-			let i = Cl(t, n, r / s);
-			f.push(e.v(W(i, d, a(i, d)), o(i, d)));
+			let i = Tl(t, n, r / s);
+			f.push(e.v(H(i, d, a(i, d)), o(i, d)));
 		}
 		l.push(f);
 	}
-	let u = W(0, (r + i) / 2, 0);
+	let u = H(0, (r + i) / 2, 0);
 	for (let t = 0; t < c; t++) for (let n = 0; n < s; n++) e.tri(l[t][n], l[t][n + 1], l[t + 1][n + 1], u), e.tri(l[t][n], l[t + 1][n + 1], l[t + 1][n], u);
 }
-function Il(e, t, n, r = 0) {
+function Rl(e, t, n, r = 0) {
 	let i = t.limb, a = r;
 	for (let r of [1, -1]) {
-		let o = r > 0 ? "l" : "r", s = W(0, 1, 0), c = W(0, 0, 1), l = W(1, 0, 0);
-		n.arms && Al(e, [
+		let o = r > 0 ? "l" : "r", s = H(0, 1, 0), c = H(0, 0, 1), l = H(1, 0, 0);
+		n.arms && Ml(e, [
 			{
-				p: W(r * .2, 1.11, 0),
+				p: H(r * .2, 1.11, 0),
 				r: [.11 * i + a, .1 * i + a],
 				bone: "upperarm" + o
 			},
 			{
-				p: W(r * .45, 1.11, 0),
+				p: H(r * .45, 1.11, 0),
 				r: [.088 * i + a, .085 * i + a],
 				bone: "lowerarm" + o
 			},
 			{
-				p: W(r * n.armTo, 1.11, 0),
+				p: H(r * n.armTo, 1.11, 0),
 				r: [.072 * i + a, .07 * i + a],
 				bone: "wrist" + o
 			}
-		].slice(0, n.armTo > .6 ? 3 : 2), s, c, 8, { caps: [!0, !0] }), n.hands && Al(e, [
+		].slice(0, n.armTo > .6 ? 3 : 2), s, c, 8, { caps: [!0, !0] }), n.hands && Ml(e, [
 			{
-				p: W(r * .7, 1.11, 0),
+				p: H(r * .7, 1.11, 0),
 				r: [.075 * i + a, .07 * i + a],
 				bone: "wrist" + o
 			},
 			{
-				p: W(r * .8, 1.11, 0),
+				p: H(r * .8, 1.11, 0),
 				r: [.088 * i + a, .075 * i + a],
 				bone: "hand" + o
 			},
 			{
-				p: W(r * .92, 1.09, 0),
+				p: H(r * .92, 1.09, 0),
 				r: [.06 * i + a, .055 * i + a],
 				bone: "hand" + o
 			}
-		], s, c, 8), n.legs && Al(e, [
+		], s, c, 8), n.legs && Ml(e, [
 			{
-				p: W(r * .16, .56, 0),
+				p: H(r * .16, .56, 0),
 				r: [.13 * i * t.hip + a, .13 * i + a],
 				bone: "upperleg" + o
 			},
 			{
-				p: W(r * .17, .29, .01),
+				p: H(r * .17, .29, .01),
 				r: [.1 * i + a, .1 * i + a],
 				bone: "lowerleg" + o
 			},
 			{
-				p: W(r * .17, n.legTo, -.01),
+				p: H(r * .17, n.legTo, -.01),
 				r: [.08 * i + a, .082 * i + a],
 				bone: "foot" + o
 			}
-		], l, c, 8, { caps: [!1, !0] }), n.feet && Al(e, [
+		], l, c, 8, { caps: [!1, !0] }), n.feet && Ml(e, [
 			{
-				p: W(r * .17, .065, -.08),
+				p: H(r * .17, .065, -.08),
 				r: [.085 * i + a, .07 + a],
 				bone: "foot" + o
 			},
 			{
-				p: W(r * .17, .065, .05),
+				p: H(r * .17, .065, .05),
 				r: [.09 * i + a, .07 + a],
 				bone: "toes" + o
 			},
 			{
-				p: W(r * .17, .055, .19),
+				p: H(r * .17, .055, .19),
 				r: [.075 * i + a, .055 + a],
 				bone: "toes" + o
 			}
-		], l, W(0, 1, 0), 8);
+		], l, H(0, 1, 0), 8);
 	}
 }
-var Ll = {
+var zl = {
 	fighter: {
 		top: "#4a3a34",
 		sleeves: "#4a3a34",
@@ -12217,7 +12217,7 @@ var Ll = {
 		robeTo: .2
 	}
 };
-async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
+async function Bl(e, t, n, { far: r = !1, findNode: i } = {}) {
 	let a = null;
 	t.traverse((e) => {
 		e.isSkinnedMesh && /Body/.test(e.name) && (a = e);
@@ -12226,7 +12226,7 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 	t.traverse((e) => {
 		e.isMesh && (e.visible = !1);
 	});
-	let u = Object.fromEntries(o.bones.map((e, t) => [e.name, t])), d = Tl[n.build] || Tl.normal, f = Ll[n.outfit] || Ll.fighter, p = f.colors || {}, m = { ...n.face }, h = n.headgear === void 0 ? f.headgear : n.headgear;
+	let u = Object.fromEntries(o.bones.map((e, t) => [e.name, t])), d = Dl[n.build] || Dl.normal, f = zl[n.outfit] || zl.fighter, p = f.colors || {}, m = { ...n.face }, h = n.headgear === void 0 ? f.headgear : n.headgear;
 	h && h !== "hat" && ![
 		"crop",
 		"short",
@@ -12234,40 +12234,40 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 		void 0
 	].includes(m.hair) && (m.hair = "crop");
 	let g = m.skin, _ = (e, t) => {
-		let n = new El(u);
-		e(n), n.idx.length && c.add(n.mesh(wl(t, .8), o, s));
-	}, { SKIN: v } = await Promise.resolve().then(() => kc), y = v[g] || g || v.fair;
-	_((e) => Nl(e, d), f.top), _((e) => Il(e, d, {
+		let n = new Ol(u);
+		e(n), n.idx.length && c.add(n.mesh(El(t, .8), o, s));
+	}, { SKIN: v } = await Promise.resolve().then(() => jc), y = v[g] || g || v.fair;
+	_((e) => Fl(e, d), f.top), _((e) => Rl(e, d, {
 		arms: !0,
 		armTo: .7
-	}), f.sleeves), _((e) => Il(e, d, { hands: !0 }), f.hands || y), _((e) => Il(e, d, {
+	}), f.sleeves), _((e) => Rl(e, d, { hands: !0 }), f.hands || y), _((e) => Rl(e, d, {
 		legs: !0,
 		legTo: .1
-	}), f.legs), _((e) => Il(e, d, { feet: !0 }), f.boots), _((e) => Al(e, [
+	}), f.legs), _((e) => Rl(e, d, { feet: !0 }), f.boots), _((e) => Ml(e, [
 		{
-			p: W(0, 1.18, 0),
+			p: H(0, 1.18, 0),
 			r: [.09 * d.limb, .085 * d.limb],
 			bone: "chest"
 		},
 		{
-			p: W(0, 1.3, .01),
+			p: H(0, 1.3, .01),
 			r: [.085 * d.limb, .08 * d.limb],
 			bone: "head"
 		},
 		{
-			p: W(0, 1.36, .01),
+			p: H(0, 1.36, .01),
 			r: [.08 * d.limb, .075 * d.limb],
 			bone: "head"
 		}
-	], W(1, 0, 0), W(0, 0, 1), 8), y);
+	], H(1, 0, 0), H(0, 0, 1), 8), y);
 	for (let e of f.extras || []) {
-		let t = (e) => (t, n) => (jl.find(([e]) => e >= n) || jl[jl.length - 1])[2] * d.d + e + d.belly * Sl(.55, .7, n) * (1 - Sl(.85, 1, n));
-		if (e === "breastplate" && _((e) => Nl(e, d, {
+		let t = (e) => (t, n) => (Nl.find(([e]) => e >= n) || Nl[Nl.length - 1])[2] * d.d + e + d.belly * wl(.55, .7, n) * (1 - wl(.85, 1, n));
+		if (e === "breastplate" && _((e) => Fl(e, d, {
 			y0: .62,
 			y1: 1.18,
 			grow: .03,
 			capBottom: !1
-		}), p.steel), e === "belt" && _((e) => Nl(e, d, {
+		}), p.steel), e === "belt" && _((e) => Fl(e, d, {
 			y0: .46,
 			y1: .62,
 			grow: .035,
@@ -12275,67 +12275,67 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 			capTop: !1,
 			seg: 14
 		}), p.belt), e === "pauldrons" && _((e) => {
-			for (let t of [1, -1]) Al(e, [{
-				p: W(t * .2, 1.12, 0),
+			for (let t of [1, -1]) Ml(e, [{
+				p: H(t * .2, 1.12, 0),
 				r: [.16 * d.limb, .16 * d.d],
 				bone: t > 0 ? "upperarml" : "upperarmr"
 			}, {
-				p: W(t * .36, 1.1, 0),
+				p: H(t * .36, 1.1, 0),
 				r: [.14 * d.limb, .14 * d.d],
 				bone: t > 0 ? "upperarml" : "upperarmr"
-			}], W(0, 1, 0), W(0, 0, 1), 10);
+			}], H(0, 1, 0), H(0, 0, 1), 10);
 		}, p.steel), e === "vambraces" && _((e) => {
-			for (let t of [1, -1]) Al(e, [{
-				p: W(t * .5, 1.11, 0),
+			for (let t of [1, -1]) Ml(e, [{
+				p: H(t * .5, 1.11, 0),
 				r: [.1 * d.limb, .098 * d.limb],
 				bone: t > 0 ? "lowerarml" : "lowerarmr"
 			}, {
-				p: W(t * .69, 1.11, 0),
+				p: H(t * .69, 1.11, 0),
 				r: [.085 * d.limb, .083 * d.limb],
 				bone: t > 0 ? "lowerarml" : "lowerarmr"
-			}], W(0, 1, 0), W(0, 0, 1), 8);
+			}], H(0, 1, 0), H(0, 0, 1), 8);
 		}, p.steel), e === "greaves" && _((e) => {
-			for (let t of [1, -1]) Al(e, [{
-				p: W(t * .17, .31, .01),
+			for (let t of [1, -1]) Ml(e, [{
+				p: H(t * .17, .31, .01),
 				r: [.115 * d.limb, .117 * d.limb],
 				bone: t > 0 ? "lowerlegl" : "lowerlegr"
 			}, {
-				p: W(t * .17, .12, -.01),
+				p: H(t * .17, .12, -.01),
 				r: [.1 * d.limb, .1 * d.limb],
 				bone: t > 0 ? "lowerlegl" : "lowerlegr"
-			}], W(1, 0, 0), W(0, 0, 1), 8);
+			}], H(1, 0, 0), H(0, 0, 1), 8);
 		}, p.steel), e === "pouches" && _((e) => {
-			for (let t of [1, -1]) Al(e, [{
-				p: W(t * .27 * d.hip, .5, .12),
+			for (let t of [1, -1]) Ml(e, [{
+				p: H(t * .27 * d.hip, .5, .12),
 				r: [.06, .05],
 				bone: "hips"
 			}, {
-				p: W(t * .27 * d.hip, .4, .12),
+				p: H(t * .27 * d.hip, .4, .12),
 				r: [.06, .05],
 				bone: "hips"
-			}], W(1, 0, 0), W(0, 0, 1), 6);
+			}], H(1, 0, 0), H(0, 0, 1), 6);
 		}, p.belt), e === "mantle" && _((e) => {
-			let t = W(1, 0, 0), n = W(0, 0, 1);
-			Ol(e, Dl(e, W(0, 1.24, 0), t, n, .16 * d.w, .14 * d.d, 14, [["chest", 1]]), Dl(e, W(0, 1.02, 0), t, n, .4 * d.w, .3 * d.d, 14, [["chest", 1]]), W(0, 1.24, 0), W(0, 1.02, 0));
-		}, p.cloth), e === "robe" && _((e) => Pl(e, d, {
+			let t = H(1, 0, 0), n = H(0, 0, 1);
+			Al(e, kl(e, H(0, 1.24, 0), t, n, .16 * d.w, .14 * d.d, 14, [["chest", 1]]), kl(e, H(0, 1.02, 0), t, n, .4 * d.w, .3 * d.d, 14, [["chest", 1]]), H(0, 1.24, 0), H(0, 1.02, 0));
+		}, p.cloth), e === "robe" && _((e) => Il(e, d, {
 			y1: f.robeTo ?? .08,
 			flare: .13
 		}), p.robe), e === "tabard") {
-			let e = (e, t) => t > .62 ? Ml(t) : [["hips", 1]];
-			_((n) => Fl(n, -.15, .15, .28, 1.08, t(.05), e), p.cloth), _((n) => {
-				Fl(n, -.17, -.14, .28, 1.08, t(.055), e, 1, 6), Fl(n, .14, .17, .28, 1.08, t(.055), e, 1, 6);
+			let e = (e, t) => t > .62 ? Pl(t) : [["hips", 1]];
+			_((n) => Ll(n, -.15, .15, .28, 1.08, t(.05), e), p.cloth), _((n) => {
+				Ll(n, -.17, -.14, .28, 1.08, t(.055), e, 1, 6), Ll(n, .14, .17, .28, 1.08, t(.055), e, 1, 6);
 			}, p.trim);
 		}
-		e === "cape" && _((e) => Fl(e, -.3 * d.w, .3 * d.w, .18, 1.16, (e, t) => -((jl.find(([e]) => e >= t) || jl[jl.length - 1])[2] * d.d) - .06 - (1.16 - t) * .12, (e, t) => Ml(Math.max(t, .5)), 5, 7), p.cloth);
+		e === "cape" && _((e) => Ll(e, -.3 * d.w, .3 * d.w, .18, 1.16, (e, t) => -((Nl.find(([e]) => e >= t) || Nl[Nl.length - 1])[2] * d.d) - .06 - (1.16 - t) * .12, (e, t) => Pl(Math.max(t, .5)), 5, 7), p.cloth);
 	}
-	let b = i(t, "head"), x = await xl(e, "Knight", m, { far: r });
+	let b = i(t, "head"), x = await Cl(e, "Knight", m, { far: r });
 	b.add(x.head);
-	let S = new E(), C = x.skull, ee = (e, t = .8, n = 0) => wl(e, t, n);
+	let S = new E(), C = x.skull, ee = (e, t = .8, n = 0) => El(e, t, n);
 	C.computeBoundingBox();
 	let te = C.boundingBox, w = (te.max.x - te.min.x) / 2, ne = te.max.y;
 	if (h === "helm") {
 		let e = ee(p.steel, .4, .3);
-		S.add(new D(Qc(C, (e) => e.y > .14 && !(e.z > .12 && e.y < .64 && Math.abs(e.x) < .4), .17), e)), S.add(new D(Qc(C, (e) => e.y > .08 && e.y < .55 && Math.abs(e.x) > .3 && e.z > -.15, .2), e)), S.add(new D(Qc(C, (e) => e.y > .56 && e.y < .68, .2), ee(p.trim, .5, .4)));
+		S.add(new D(el(C, (e) => e.y > .14 && !(e.z > .12 && e.y < .64 && Math.abs(e.x) < .4), .17), e)), S.add(new D(el(C, (e) => e.y > .08 && e.y < .55 && Math.abs(e.x) > .3 && e.z > -.15, .2), e)), S.add(new D(el(C, (e) => e.y > .56 && e.y < .68, .2), ee(p.trim, .5, .4)));
 		let t = new D(new A(.07, .3, .07), e), n = x.on(0, .5).p;
 		t.position.set(0, .47, n.z + .14), S.add(t);
 		let r = new D(new A(.07, .14, .9), ee(p.trim, .5, .4));
@@ -12347,7 +12347,7 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 			roughness: .9,
 			side: 2
 		});
-		S.add(new D(Qc(C, (e) => !(e.z > 0 && e.y < .84 && Math.abs(e.x) < .42), .26), e));
+		S.add(new D(el(C, (e) => !(e.z > 0 && e.y < .84 && Math.abs(e.x) < .42), .26), e));
 		let t = new D(new T(w * 1.2, w * 1.55, .5, 16, 1, !0, .7, Math.PI * 2 - 1.4), e);
 		t.position.set(0, -.12, -.04), S.add(t);
 		let n = new D(new j(.22, .7, 8), e);
@@ -12359,10 +12359,10 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 			roughness: .95,
 			side: 2
 		});
-		S.add(new D(Qc(C, (e) => !(e.z > .04 && e.y < .72 && Math.abs(e.x) < .4), .12), e));
+		S.add(new D(el(C, (e) => !(e.z > .04 && e.y < .72 && Math.abs(e.x) < .4), .12), e));
 		let t = new D(new T(w * 1.08, w * 1.45, .46, 16, 1, !0, .9, Math.PI * 2 - 1.8), e);
 		t.position.set(0, -.1, -.02), S.add(t);
-		let n = new D(Qc(C, (e) => e.y > .66 && e.y < .74 && e.z > -.1, .135), ee(p.trim, .5, .4));
+		let n = new D(el(C, (e) => e.y > .66 && e.y < .74 && e.z > -.1, .135), ee(p.trim, .5, .4));
 		S.add(n);
 	}
 	if (h === "hat") {
@@ -12384,8 +12384,523 @@ async function Rl(e, t, n, { far: r = !1, findNode: i } = {}) {
 	}), b.add(S);
 }
 //#endregion
+//#region ember3d/creatures.js
+var Vl = (e) => {
+	let t = e >>> 0 || 1;
+	return () => (t = Math.imul(t, 1664525) + 1013904223 >>> 0, t / 4294967296);
+}, U = (e, t, n) => new k(e, t, n), Hl = U(0, 1, 0), Ul = class {
+	constructor(e) {
+		this.bones = [], this.by = /* @__PURE__ */ new Map(), this.parts = [], this.r = Vl(e);
+	}
+	bone(e, t, n) {
+		let r = new be();
+		return r.name = e, r.userData.at = n.clone(), r.position.copy(t ? n.clone().sub(t.userData.at) : n), t && t.add(r), this.bones.push(r), this.by.set(e, r), r;
+	}
+	part(e, t, n, r = !1) {
+		this.parts.push({
+			geo: e.index ? e.toNonIndexed() : e,
+			bone: this.bones.indexOf(this.by.get(t)),
+			colour: n,
+			glow: r
+		});
+	}
+	mesh(e) {
+		let t = (e, t) => {
+			let n = 0;
+			for (let t of e) n += t.geo.attributes.position.count;
+			let r = new Float32Array(n * 3), i = new Float32Array(n * 3), a = new Uint16Array(n * 4), o = new Float32Array(n * 4), s = 0, c = new k(), l = new k(), u = new O();
+			for (let t of e) {
+				t.geo.computeVertexNormals();
+				let e = t.geo.attributes.position, n = t.geo.attributes.normal;
+				for (let d = 0; d < e.count; d += 3) {
+					let f = .86 + this.r() * .26;
+					for (let p = d; p < d + 3 && p < e.count; p++) c.fromBufferAttribute(e, p), l.fromBufferAttribute(n, p), typeof t.colour == "function" ? u.copy(t.colour(c, l)) : u.copy(t.colour), t.glow || u.multiplyScalar(f), r.set([
+						c.x,
+						c.y,
+						c.z
+					], s * 3), i.set([
+						u.r,
+						u.g,
+						u.b
+					], s * 3), a.set([
+						t.bone,
+						0,
+						0,
+						0
+					], s * 4), o.set([
+						1,
+						0,
+						0,
+						0
+					], s * 4), s++;
+				}
+			}
+			let d = new Re();
+			return d.setAttribute("position", new Se(r, 3)), d.setAttribute("color", new Se(i, 3)), d.setAttribute("skinIndex", new Se(a, 4)), d.setAttribute("skinWeight", new Se(o, 4)), d.computeVertexNormals(), new Ye(d, t);
+		}, n = new E(), r = new v(this.bones);
+		n.add(this.bones[0]), n.updateMatrixWorld(!0);
+		let i = t(this.parts.filter((e) => !e.glow), new l({
+			vertexColors: !0,
+			flatShading: !0,
+			roughness: .95,
+			metalness: 0
+		}));
+		i.name = "Body", n.add(i), i.bind(r);
+		let a = this.parts.filter((e) => e.glow);
+		if (a.length) {
+			let i = t(a, new l({
+				vertexColors: !0,
+				roughness: .4,
+				emissive: new O(e),
+				emissiveIntensity: 2
+			}));
+			i.name = "Eyes", i.userData.glow = !0, n.add(i), i.bind(r);
+		}
+		return n.traverse((e) => {
+			e.isMesh && (e.frustumCulled = !1);
+		}), n;
+	}
+};
+function Wl(e, t, n = [8, 6], r = 0) {
+	let i = new ge(1, n[0], n[1]);
+	return i.scale(t[0], t[1], t[2]), r && i.rotateX(r), i.translate(e.x, e.y, e.z), i;
+}
+function Gl(e, t, n, r, i = 5) {
+	let a = t.clone().sub(e), o = a.length(), s = new T(r, n, o, i, 1);
+	return s.translate(0, o / 2, 0), s.applyQuaternion(new p().setFromUnitVectors(Hl, a.normalize())), s.translate(e.x, e.y, e.z), s;
+}
+var W = (e, t, n) => new p().setFromEuler(new C(e, t, n)), Kl = (e, t) => new p().setFromAxisAngle(e, t);
+function ql(e, t, n, r, i = 24) {
+	let a = Math.max(2, Math.round(n * i) + 1), o = [], s = /* @__PURE__ */ new Map(), c = /* @__PURE__ */ new Map();
+	for (let e = 0; e < a; e++) {
+		let t = e / (a - 1);
+		o.push(t * n);
+		let i = r(t);
+		for (let [t, n] of Object.entries(i.q || {})) s.has(t) || s.set(t, Array(a)), s.get(t)[e] = n;
+		for (let [t, n] of Object.entries(i.p || {})) c.has(t) || c.set(t, Array(a)), c.get(t)[e] = n;
+	}
+	let l = [];
+	for (let [e, t] of s) l.push(new ue(`${e}.quaternion`, o, t.flatMap((e) => (e || new p()).toArray())));
+	for (let [t, n] of c) {
+		let r = e.by.get(t).position;
+		l.push(new Ne(`${t}.position`, o, n.flatMap((e) => r.clone().add(e || U(0, 0, 0)).toArray())));
+	}
+	return new Ue(t, n, l);
+}
+var Jl = Math.PI * 2, Yl = (e) => Math.sin(Jl * e), Xl = (e) => Math.cos(Jl * e), Zl = (e, t, n) => {
+	let r = Math.max(0, Math.min(1, (n - e) / (t - e)));
+	return r * r * (3 - 2 * r);
+}, Ql = (e, t, n, r) => r < t ? Zl(e, t, r) : 1 - Zl(t, n, r);
+function $l(e = {}) {
+	let t = new Ul(e.seed || 11), n = new O(e.fur || "#4a4038"), r = new O(e.belly || "#6e6152"), i = new O("#9a6a64"), a = (e, t) => t.y < -.35 ? r : n, o = t.bone("root", null, U(0, .2, 0)), s = t.bone("pelvis", o, U(0, .21, -.17)), c = t.bone("chest", o, U(0, .22, .14)), l = t.bone("neck", c, U(0, .24, .25)), u = t.bone("head", l, U(0, .26, .31));
+	t.bone("jaw", u, U(0, .235, .36));
+	let d = s, f = [
+		U(0, .18, -.3),
+		U(0, .12, -.44),
+		U(.03, .06, -.58),
+		U(.08, .025, -.7)
+	];
+	f.forEach((e, n) => {
+		d = t.bone(`tail${n + 1}`, d, e);
+	});
+	for (let e of [1, -1]) {
+		let n = t.bone(`armU${e}`, c, U(.075 * e, .19, .16)), r = t.bone(`armL${e}`, n, U(.085 * e, .1, .19));
+		t.bone(`paw${e}`, r, U(.085 * e, .025, .2));
+		let i = t.bone(`legU${e}`, s, U(.09 * e, .18, -.17)), a = t.bone(`legL${e}`, i, U(.1 * e, .1, -.1));
+		t.bone(`foot${e}`, a, U(.1 * e, .035, -.2));
+	}
+	t.part(Wl(U(0, .205, -.13), [
+		.125,
+		.125,
+		.15
+	], [12, 9]), "pelvis", a), t.part(Wl(U(0, .215, 0), [
+		.11,
+		.12,
+		.22
+	], [12, 9]), "root", a), t.part(Wl(U(0, .215, .15), [
+		.085,
+		.09,
+		.1
+	], [10, 8]), "chest", a);
+	for (let e = 0; e < 7; e++) {
+		let r = -.17 + e * .05, i = .3 + .03 * Math.sin(e / 6 * Math.PI) + (e < 3 ? .03 : 0);
+		t.part(Gl(U(0, i, r), U(0, i + .035, r - .03), .018, .002, 4), e < 3 ? "pelvis" : e < 6 ? "root" : "chest", n);
+	}
+	t.part(Wl(U(0, .255, .31), [
+		.06,
+		.06,
+		.07
+	], [10, 8]), "head", n), t.part(Gl(U(0, .25, .34), U(0, .228, .47), .045, .012, 7), "head", n), t.part(Wl(U(0, .232, .475), [
+		.013,
+		.012,
+		.012
+	]), "head", i);
+	for (let e of [1, -1]) t.part(Wl(U(.05 * e, .31, .295), [
+		.04,
+		.042,
+		.01
+	], [8, 6]).rotateY(0).translate(0, 0, 0), "head", i);
+	t.part(Wl(U(0, .222, .4), [
+		.024,
+		.012,
+		.05
+	]), "jaw", n), t.part(new A(.014, .022, .006).translate(0, .215, .455), "jaw", new O("#c8b878"));
+	let p = [
+		U(0, .2, -.27),
+		...f,
+		U(0, .04, -.88)
+	], m = new O("#7e5e58");
+	p.push(U(.13, .015, -.8), U(.16, .012, -.9));
+	for (let e = 0; e < p.length - 1; e++) t.part(Gl(p[e], p[e + 1], .024 - e * .003, .021 - e * .003, 6), `tail${Math.min(4, e)}`.replace("tail0", "pelvis"), m);
+	for (let e of [1, -1]) t.part(Gl(U(.075 * e, .19, .16), U(.085 * e, .1, .19), .03, .02), `armU${e}`, n), t.part(Gl(U(.085 * e, .1, .19), U(.085 * e, .025, .2), .018, .014), `armL${e}`, n), t.part(Wl(U(.085 * e, .012, .225), [
+		.02,
+		.012,
+		.03
+	], [6, 4]), `paw${e}`, i), t.part(Gl(U(.09 * e, .18, -.17), U(.1 * e, .1, -.1), .05, .03), `legU${e}`, a), t.part(Gl(U(.1 * e, .1, -.1), U(.1 * e, .035, -.2), .022, .016), `legL${e}`, n), t.part(Wl(U(.1 * e, .012, -.15), [
+		.022,
+		.012,
+		.05
+	], [6, 4]), `foot${e}`, i), t.part(Wl(U(.036 * e, .278, .375), [
+		.012,
+		.012,
+		.01
+	], [6, 4]), "head", new O("#ff5530"), !0);
+	let h = t.mesh(e.eyes || "#ff4020"), g = (e, t = 1) => {
+		let n = {};
+		for (let r of [1, -1]) for (let [i, a, o] of [[
+			`armU${r}`,
+			`armL${r}`,
+			r > 0 ? 0 : .5
+		], [
+			`legU${r}`,
+			`legL${r}`,
+			r > 0 ? .5 : 0
+		]]) {
+			let r = Yl(e + o), s = Math.max(0, Xl(e + o));
+			n[i] = W(-.55 * t * r, 0, 0), n[a] = W((i.startsWith("arm") ? .9 : -.9) * t * s, 0, 0);
+		}
+		return n;
+	}, _ = (e, t = .25, n = 1) => Object.fromEntries([
+		1,
+		2,
+		3,
+		4
+	].map((r) => [`tail${r}`, W(0, t * Yl(n * e - r * .12), 0)]));
+	return {
+		root: h,
+		clips: [
+			ql(t, "Idle", 2, (e) => ({
+				q: {
+					..._(e, .15),
+					head: W(.08 * Yl(e * 4) * Ql(.2, .35, .5, e), .15 * Yl(e), 0),
+					jaw: W(.15 * Math.max(0, Yl(e * 6)) * Ql(.2, .35, .5, e), 0, 0),
+					chest: W(.02 * Yl(e), 0, 0)
+				},
+				p: { root: U(0, .004 * Yl(e * 2), 0) }
+			})),
+			ql(t, "Walk", .42, (e) => ({
+				q: {
+					...g(e),
+					..._(e, .3, 1),
+					pelvis: W(0, .08 * Yl(e), 0),
+					chest: W(0, -.06 * Yl(e), 0),
+					head: W(.06 * Yl(e * 2), 0, 0)
+				},
+				p: { root: U(0, .012 * Math.abs(Yl(e)), 0) }
+			})),
+			ql(t, "Attack", .6, (e) => {
+				let t = Ql(.15, .45, .85, e), n = Ql(0, .15, .3, e);
+				return {
+					q: {
+						..._(e, .3, 2),
+						root: W(-.15 * n + .12 * t, 0, 0),
+						chest: W(.2 * t, 0, 0),
+						neck: W(.25 * t - .3 * n, 0, 0),
+						head: W(-.35 * t, 0, 0),
+						jaw: W(.85 * Ql(.15, .36, .5, e), 0, 0),
+						armU1: W(-.6 * t, 0, 0),
+						"armU-1": W(-.6 * t, 0, 0)
+					},
+					p: { root: U(0, .02 * n - .02 * t, .16 * t - .03 * n) }
+				};
+			}),
+			ql(t, "Attack2", .55, (e) => {
+				let t = Ql(.1, .35, .8, e);
+				return {
+					q: {
+						..._(e, .2),
+						root: W(-.35 * t, 0, 0),
+						armU1: W(-1.3 * Ql(.2, .4, .6, e), 0, .2),
+						"armU-1": W(-1.3 * Ql(.35, .55, .75, e), 0, -.2),
+						jaw: W(.5 * t, 0, 0)
+					},
+					p: { root: U(0, .03 * t, .03 * t) }
+				};
+			}),
+			ql(t, "Heavy", .9, (e) => {
+				let t = Ql(0, .25, .4, e), n = Ql(.3, .55, .8, e);
+				return {
+					q: {
+						...g(e * .5, .6 * n),
+						..._(e, .4),
+						root: W(.15 * t - .25 * n, 0, 0),
+						jaw: W(.7 * n, 0, 0)
+					},
+					p: { root: U(0, -.04 * t + .14 * n, .28 * Zl(.3, .8, e)) }
+				};
+			}),
+			ql(t, "Hit", .4, (e) => {
+				let t = Ql(0, .25, 1, e);
+				return {
+					q: {
+						..._(e, .5, 2),
+						head: W(-.35 * t, .3 * t, 0),
+						chest: W(-.15 * t, 0, 0)
+					},
+					p: { root: U(0, 0, -.05 * t) }
+				};
+			}),
+			ql(t, "Death", 1, (e) => {
+				let t = Zl(0, .6, e);
+				return {
+					q: {
+						root: W(0, 0, 1.45 * t),
+						head: W(.3 * t, 0, 0),
+						jaw: W(.4 * t, 0, 0),
+						armU1: W(-.6 * t, 0, 0),
+						"armU-1": W(.4 * t, 0, 0),
+						legU1: W(.5 * t, 0, 0),
+						"legU-1": W(-.3 * t, 0, 0),
+						..._(0, 0)
+					},
+					p: { root: U(0, -.07 * t, 0) }
+				};
+			}),
+			ql(t, "Cast", .8, (e) => {
+				let t = Ql(.1, .5, .9, e);
+				return {
+					q: {
+						root: W(-.5 * t, 0, 0),
+						head: W(-.4 * t, 0, 0),
+						jaw: W(.8 * t, 0, 0),
+						..._(e, .3)
+					},
+					p: { root: U(0, .05 * t, 0) }
+				};
+			})
+		]
+	};
+}
+function eu(e = {}) {
+	let t = new Ul(e.seed || 23), n = new O(e.body || "#241d1a"), r = new O(e.band || "#5e4b3a"), i = new O(e.mark || "#b8ab8e"), a = t.bone("root", null, U(0, .28, 0)), o = t.bone("ceph", a, U(0, .29, .1));
+	t.bone("abdomen", a, U(0, .31, -.08));
+	for (let e of [1, -1]) t.bone(`fang${e}`, o, U(.035 * e, .25, .27)), t.bone(`palp${e}`, o, U(.06 * e, .27, .24));
+	let s = [
+		[38, 1.15],
+		[72, 1],
+		[108, .95],
+		[142, 1.1]
+	], c = [];
+	for (let e of [1, -1]) s.forEach(([i, a], s) => {
+		let l = i * Math.PI / 180, u = U(Math.sin(l) * e, 0, Math.cos(l)), d = U(0, .29, .1).add(u.clone().multiplyScalar(.085)), f = d.clone().add(u.clone().multiplyScalar(.25 * a)).add(U(0, .19 * a, 0)), p = f.clone().add(u.clone().multiplyScalar(.27 * a)).add(U(0, -.3 * a, 0)), m = p.clone().add(u.clone().multiplyScalar(.13 * a));
+		m.y = .005;
+		let h = t.bone(`leg${e}${s}a`, o, d), g = t.bone(`leg${e}${s}b`, h, f);
+		t.bone(`leg${e}${s}c`, g, p), c.push({
+			s: e,
+			i: s,
+			d: u,
+			k: u.clone().cross(Hl).normalize(),
+			name: `leg${e}${s}`
+		}), t.part(Gl(d, f, .03 * a, .025 * a), `leg${e}${s}a`, n), t.part(Wl(f, [
+			.03 * a,
+			.03 * a,
+			.03 * a
+		], [6, 4]), `leg${e}${s}b`, r), t.part(Gl(f, p, .024 * a, .017 * a), `leg${e}${s}b`, n), t.part(Wl(p, [
+			.02 * a,
+			.02 * a,
+			.02 * a
+		], [6, 4]), `leg${e}${s}c`, r), t.part(Gl(p, m, .016 * a, .005), `leg${e}${s}c`, n);
+	});
+	t.part(Wl(U(0, .3, .1), [
+		.115,
+		.07,
+		.135
+	]), "ceph", n), t.part(Wl(U(0, .315, .225), [
+		.07,
+		.055,
+		.055
+	]), "ceph", n), t.part(Wl(U(0, .36, -.29), [
+		.19,
+		.165,
+		.25
+	], [12, 9], -.25), "abdomen", (e, t) => t.y > .55 && Math.abs(e.x) < .012 + .03 * Math.max(0, Math.sin((e.z + .29) * 22)) ? i : n), t.part(Gl(U(0, .27, -.5), U(0, .24, -.54), .03, .012), "abdomen", r);
+	for (let e of [1, -1]) {
+		t.part(Gl(U(.035 * e, .27, .26), U(.032 * e, .22, .3), .022, .016), `fang${e}`, n), t.part(Gl(U(.032 * e, .22, .3), U(.025 * e, .17, .29), .013, .003), `fang${e}`, new O("#1a1012")), t.part(Gl(U(.06 * e, .27, .24), U(.075 * e, .24, .33), .012, .009), `palp${e}`, r), t.part(Gl(U(.075 * e, .24, .33), U(.07 * e, .19, .36), .009, .006), `palp${e}`, n);
+		for (let [n, r, i, a] of [
+			[
+				.018,
+				.335,
+				.272,
+				.014
+			],
+			[
+				.045,
+				.34,
+				.258,
+				.01
+			],
+			[
+				.03,
+				.358,
+				.25,
+				.009
+			],
+			[
+				.055,
+				.322,
+				.252,
+				.008
+			]
+		]) t.part(Wl(U(n * e, r, i), [
+			a,
+			a,
+			a
+		], [6, 4]), "ceph", new O("#e8ff90"), !0);
+	}
+	let l = t.mesh(e.eyes || "#b8e060"), u = (e, t, n, r = 0) => ({
+		[`${e.name}a`]: Kl(Hl, -e.s * t).multiply(Kl(e.k, n)),
+		[`${e.name}b`]: Kl(e.k, -r),
+		[`${e.name}c`]: Kl(e.k, -r * .6)
+	}), d = (e, t = 1) => {
+		let n = {};
+		for (let r of c) {
+			let i = (r.i + (r.s > 0 ? 0 : 1)) % 2 * .5, a = Yl(e + i), o = Math.max(0, Xl(e + i));
+			n = {
+				...n,
+				...u(r, .28 * t * a, .32 * t * o, .25 * t * o)
+			};
+		}
+		return n;
+	}, f = (e) => ({
+		fang1: W(-.6 * e, 0, .35 * e),
+		"fang-1": W(-.6 * e, 0, -.35 * e)
+	}), p = (e) => ({
+		palp1: W(.3 * Yl(e * 3), 0, 0),
+		"palp-1": W(.3 * Yl(e * 3 + .5), 0, 0)
+	}), m = (e, t = 0) => Object.assign({}, ...c.filter((e) => e.i === 0).map((n) => u(n, .25 * e, (.9 + t) * e, -.4 * e)));
+	return {
+		root: l,
+		clips: [
+			ql(t, "Idle", 2.4, (e) => ({
+				q: {
+					...d(0, 0),
+					...p(e),
+					...f(.2 * Math.max(0, Yl(e * 2))),
+					abdomen: W(.04 * Yl(e), 0, 0),
+					...Object.assign({}, ...c.filter((e) => e.i === 1).map((t) => u(t, .06 * Yl(e + t.s * .25), .05 * Math.max(0, Yl(e * 2)))))
+				},
+				p: { root: U(0, .006 * Yl(e), 0) }
+			})),
+			ql(t, "Walk", .55, (e) => ({
+				q: {
+					...d(e),
+					...p(e),
+					abdomen: W(.05 * Yl(e * 2), .06 * Yl(e), 0)
+				},
+				p: { root: U(.008 * Yl(e), .01 * Math.abs(Yl(e * 2)), 0) }
+			})),
+			ql(t, "Attack", .7, (e) => {
+				let t = Ql(0, .3, .55, e), n = Ql(.35, .5, .85, e);
+				return {
+					q: {
+						...d(0, 0),
+						...m(t - .3 * n),
+						...f(t * .8 + n),
+						root: W(-.45 * t + .25 * n, 0, 0)
+					},
+					p: { root: U(0, .05 * t, .12 * n) }
+				};
+			}),
+			ql(t, "Attack2", .5, (e) => {
+				let t = Ql(.1, .35, .8, e);
+				return {
+					q: {
+						...d(e * .5, .4),
+						...f(t * 1.2),
+						root: W(.12 * t, 0, 0)
+					},
+					p: { root: U(0, -.02 * t, .09 * t) }
+				};
+			}),
+			ql(t, "Heavy", 1, (e) => {
+				let t = Ql(0, .25, .4, e), n = Ql(.3, .55, .85, e);
+				return {
+					q: {
+						...d(0, 0),
+						...Object.assign({}, ...c.map((e) => u(e, (e.i < 2 ? .3 : -.25) * n, -.25 * t + .4 * n, .4 * t))),
+						...m(n, .3),
+						...f(n),
+						root: W(-.3 * n, 0, 0)
+					},
+					p: { root: U(0, -.06 * t + .18 * n, .4 * Zl(.3, .85, e)) }
+				};
+			}),
+			ql(t, "Hit", .45, (e) => {
+				let t = Ql(0, .2, 1, e);
+				return {
+					q: {
+						...Object.assign({}, ...c.map((e) => u(e, 0, .3 * t, .2 * t))),
+						root: W(-.2 * t, .15 * t, 0),
+						...f(.6 * t)
+					},
+					p: { root: U(0, .02 * t, -.06 * t) }
+				};
+			}),
+			ql(t, "Death", 1.2, (e) => {
+				let t = Zl(0, .7, e);
+				return {
+					q: {
+						...Object.assign({}, ...c.map((e) => u(e, 0, .7 * t, 1.9 * t))),
+						...f(.4 * t),
+						abdomen: W(.25 * t, 0, 0)
+					},
+					p: { root: U(0, -.16 * t, 0) }
+				};
+			}),
+			ql(t, "Cast", .8, (e) => {
+				let t = Ql(0, .35, .6, e), n = Ql(.45, .55, .8, e);
+				return {
+					q: {
+						...d(0, 0),
+						...m(t * .7),
+						...f(.4 + n),
+						root: W(-.35 * t + .15 * n, 0, 0),
+						abdomen: W(.5 * t, 0, 0)
+					},
+					p: { root: U(0, .04 * t, .04 * n) }
+				};
+			})
+		]
+	};
+}
+var tu = {
+	rat: $l,
+	spider: eu
+};
+Object.keys(tu);
+function nu(e) {
+	let { root: t, clips: n } = tu[e.kind](e);
+	return {
+		root: t,
+		mixer: new Xe(t),
+		clips: n,
+		frame: null,
+		creature: e.kind
+	};
+}
+//#endregion
 //#region ember3d/figure.js
-var zl = {
+var ru = {
 	Knight: [
 		"1H_Sword_Offhand",
 		"Badge_Shield",
@@ -12430,7 +12945,7 @@ var zl = {
 		"Mage_Hat",
 		"Mage_Cape"
 	]
-}, Bl = {
+}, iu = {
 	scale: { head: .62 },
 	reach: {
 		spine: 1.2,
@@ -12442,15 +12957,15 @@ var zl = {
 		wrist: 1.3
 	}
 };
-function Vl(e) {
+function au(e) {
 	e.traverse((e) => {
 		if (!e.isBone) return;
 		let t = e.name.replace(/\.?(l|r)$/, "");
-		Bl.scale[t] && e.scale.multiplyScalar(Bl.scale[t]), Bl.reach[t] && e.position.multiplyScalar(Bl.reach[t]);
+		iu.scale[t] && e.scale.multiplyScalar(iu.scale[t]), iu.reach[t] && e.position.multiplyScalar(iu.reach[t]);
 	});
 }
-var Hl = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
-function Ul(e, t, n) {
+var ou = /Sword|Axe|Shield|Crossbow|Knife|Throwable|Spellbook|Wand|Staff|Mug/;
+function su(e, t, n) {
 	if (!t.height) {
 		let t = new Ge().setFromObject(e);
 		return {
@@ -12459,7 +12974,7 @@ function Ul(e, t, n) {
 		};
 	}
 	let r = new Ge(), i = (e) => {
-		for (let t = e; t; t = t.parent) if (t.userData.held || t !== e && Hl.test(t.name) || Hl.test(e.name)) return !0;
+		for (let t = e; t; t = t.parent) if (t.userData.held || t !== e && ou.test(t.name) || ou.test(e.name)) return !0;
 		return !1;
 	};
 	return e.updateMatrixWorld(!0), e.traverse((e) => {
@@ -12469,8 +12984,8 @@ function Ul(e, t, n) {
 		ppu: n * t.height / (r.max.y - r.min.y)
 	};
 }
-var Wl = (e, t) => e.getObjectByName(t) || e.getObjectByName(t.replace(/\./g, ""));
-function Gl(e, t) {
+var cu = (e, t) => e.getObjectByName(t) || e.getObjectByName(t.replace(/\./g, ""));
+function lu(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	e.traverse((e) => {
 		if (!e.isMesh || /Eyes/.test(e.name) || !e.material.map) return;
@@ -12486,49 +13001,50 @@ function Gl(e, t) {
 		e.material = r;
 	});
 }
-async function Kl(e, t) {
+async function uu(e, t) {
 	if (typeof e != "string") return e;
 	let n = await t();
 	if (!n[e]) throw Error(`no face preset "${e}"`);
 	return n[e];
 }
-async function ql(e, t) {
-	let { far: n = !1, load: r } = t, i = await r(`./models/${e.model}.glb`), a = i.scene, o = zl[e.model] || [];
+async function du(e, t) {
+	if (e.creature) return nu(e.creature);
+	let { far: n = !1, load: r } = t, i = await r(`./models/${e.model}.glb`), a = i.scene, o = ru[e.model] || [];
 	if (a.traverse((t) => {
 		t.isMesh && (t.frustumCulled = !1, o.includes(t.name) && !(e.show || []).includes(t.name) && (t.visible = !1));
 	}), e.body) {
 		let i = {
 			...e.body,
-			face: await Kl(e.body.face, t.faces)
+			face: await uu(e.body.face, t.faces)
 		};
 		e.body.shape && (i.face = {
 			...i.face,
 			shape: e.body.shape
-		}), await Rl(r, a, i, {
+		}), await Bl(r, a, i, {
 			far: n,
-			findNode: Wl
+			findNode: cu
 		});
 	} else if (e.face) {
-		let { head: i, replaces: o } = await xl(r, e.model, await Kl(e.face, t.faces), { far: n });
+		let { head: i, replaces: o } = await Cl(r, e.model, await uu(e.face, t.faces), { far: n });
 		a.traverse((e) => {
 			e.isMesh && o.includes(e.name) && (e.visible = !1);
-		}), Wl(a, "head").add(i);
+		}), cu(a, "head").add(i);
 	}
 	for (let [t, n] of Object.entries(e.attach || {})) {
 		let e = await r(`./models/${n}`);
-		Wl(a, t)?.add(e.scene);
+		cu(a, t)?.add(e.scene);
 	}
 	for (let [t, n] of Object.entries(e.hold || {})) {
-		let e = Tc[n]();
-		e.position.y = .033, e.userData.held = !0, Wl(a, t)?.add(e);
+		let e = Dc[n]();
+		e.position.y = .033, e.userData.held = !0, cu(a, t)?.add(e);
 	}
-	for (let [t, n] of Object.entries(e.wear || {})) Wl(a, t)?.add(Tc[n]());
+	for (let [t, n] of Object.entries(e.wear || {})) cu(a, t)?.add(Dc[n]());
 	for (let t of e.hide || []) a.traverse((e) => {
 		e.name === t && (e.visible = !1);
 	});
 	return e.skull && a.traverse((e) => {
 		e.isMesh && (/_Eyes$/.test(e.name) ? e.userData.part = "eye" : /_Head$/.test(e.name) ? e.userData.part = "skin" : /_Jaw$/.test(e.name) && (e.userData.part = "hair"));
-	}), e.swatches && Oc(a, e.swatches), e.recolor && Gl(a, e.recolor), e.eyes && a.traverse((t) => {
+	}), e.swatches && Ac(a, e.swatches), e.recolor && lu(a, e.recolor), e.eyes && a.traverse((t) => {
 		t.isMesh && /Eyes/.test(t.name) && (t.material = t.material.clone(), t.material.emissive = new O(e.eyes), t.material.emissiveIntensity = 3);
 	}), {
 		root: a,
@@ -12537,7 +13053,7 @@ async function ql(e, t) {
 		frame: e.frame || null
 	};
 }
-function Jl(e, t) {
+function fu(e, t) {
 	e.traverse((e) => {
 		if (!e.isBone) return;
 		let n = e.name.replace(/\.?(l|r)$/, "");
@@ -12547,23 +13063,23 @@ function Jl(e, t) {
 		}
 	});
 }
-function Yl(e, t, n, r) {
+function pu(e, t, n, r) {
 	e.mixer.stopAllAction();
 	let i = e.clips.find((e) => e.name === t) || e.clips.find((e) => e.name === "Idle");
-	e.mixer.clipAction(i).play(), e.mixer.setTime(n * i.duration), r && Vl(e.root), r && e.frame && Jl(e.root, e.frame), e.root.updateMatrixWorld(!0), eu(e.root);
+	e.mixer.clipAction(i).play(), e.mixer.setTime(n * i.duration), r && !e.creature && au(e.root), r && e.frame && fu(e.root, e.frame), e.root.updateMatrixWorld(!0), vu(e.root);
 }
-var Xl = new p(), Zl = new p(), Ql = new p().setFromAxisAngle(new k(1, 0, 0), Math.PI), $l = new k(0, 1, 0);
-function eu(e) {
+var mu = new p(), hu = new p(), gu = new p().setFromAxisAngle(new k(1, 0, 0), Math.PI), _u = new k(0, 1, 0);
+function vu(e) {
 	let t = [];
 	if (e.traverse((e) => {
 		e.userData.hang && t.push(e);
 	}), !t.length) return;
-	let n = new p().setFromAxisAngle($l, e.rotation.y);
-	for (let e of t) e.parent.getWorldQuaternion(Zl), Xl.copy(n), e.userData.hang !== "up" && Xl.multiply(Ql), e.quaternion.copy(Zl.invert().multiply(Xl));
+	let n = new p().setFromAxisAngle(_u, e.rotation.y);
+	for (let e of t) e.parent.getWorldQuaternion(hu), mu.copy(n), e.userData.hang !== "up" && mu.multiply(gu), e.quaternion.copy(hu.invert().multiply(mu));
 	e.updateMatrixWorld(!0);
 }
-var tu = new at();
-function nu(e, t, n, r) {
+var yu = new at();
+function bu(e, t, n, r) {
 	let i = e.geometry.index ? e.geometry.toNonIndexed() : e.geometry.clone();
 	for (let e of Object.keys(i.attributes)) [
 		"position",
@@ -12578,7 +13094,7 @@ function nu(e, t, n, r) {
 	}
 	return i;
 }
-function ru(e, t) {
+function xu(e, t) {
 	e.updateMatrixWorld(!0);
 	let n = (e) => {
 		for (let t = e; t; t = t.parent) if (!t.visible) return !1;
@@ -12632,7 +13148,7 @@ function ru(e, t) {
 	}
 	for (let { bone: e, kind: n, list: r } of s.values()) {
 		if (r.length < 2 && n.startsWith("map")) continue;
-		let i = tu.copy(e.matrixWorld).invert(), a = n.startsWith("map"), o = r.map((e) => nu(e, new at().multiplyMatrices(i, e.matrixWorld), a, !a));
+		let i = yu.copy(e.matrixWorld).invert(), a = n.startsWith("map"), o = r.map((e) => bu(e, new at().multiplyMatrices(i, e.matrixWorld), a, !a));
 		if (o.some((e) => !e)) continue;
 		let s = t(o);
 		if (!s) continue;
@@ -12658,7 +13174,7 @@ function ru(e, t) {
 }
 //#endregion
 //#region ember3d/ground.js
-var iu = .25, au = /* @__PURE__ */ new Set([
+var Su = .25, Cu = /* @__PURE__ */ new Set([
 	"dust",
 	"fireflies",
 	"sparkle"
@@ -12667,56 +13183,56 @@ Object.assign(globalThis, { __emberGround: {
 	foliage(e) {
 		return this.scaled += e.length, e.map((e) => ({
 			...e,
-			scale: (e.scale ?? 1) * iu
+			scale: (e.scale ?? 1) * Su
 		}));
 	},
 	scaled: 0,
-	size: iu,
-	keeps: (e) => e?.emberExhibit === !0 || !au.has(e?.preset),
+	size: Su,
+	keeps: (e) => e?.emberExhibit === !0 || !Cu.has(e?.preset),
 	dust: !1
 } });
 //#endregion
 //#region ember3d/world.js
-var ou = "", su = 1, cu = 3, lu = 16 * Math.SQRT2, uu = {
+var wu = "", Tu = 1, Eu = 3, Du = 16 * Math.SQRT2, Ou = {
 	billboard: "spherical",
 	normalUp: .6,
 	wrap: .6,
 	roundness: .35,
 	emissive: "#ffe9d2",
 	emissiveIntensity: .2
-}, du = "en", fu = null, pu = null, mu = null, hu = null, G = null, gu = null, _u = 0, vu = "soft", yu = 45, bu = 30, xu = /* @__PURE__ */ new Map(), Su = /* @__PURE__ */ new Map(), Cu = (e) => {
-	let t = xu.get(e);
+}, ku = "en", Au = null, ju = null, Mu = null, Nu = null, G = null, Pu = null, Fu = 0, Iu = "soft", Lu = 45, Ru = 30, zu = /* @__PURE__ */ new Map(), Bu = /* @__PURE__ */ new Map(), Vu = (e) => {
+	let t = zu.get(e);
 	return t || (t = new Promise((t, n) => {
 		let r = new Image();
 		r.decoding = "async", r.onload = () => t(r), r.onerror = n, r.src = e;
-	}), xu.set(e, t)), t;
-}, wu = (e) => {
+	}), zu.set(e, t)), t;
+}, Hu = (e) => {
 	let t = 2166136261;
 	for (let n = 0; n < e.length; n++) t = Math.imul(t ^ e.charCodeAt(n), 16777619);
 	return (t >>> 0).toString(36);
-}, Tu = (e) => {
-	let t = Su.get(e);
+}, Uu = (e) => {
+	let t = Bu.get(e);
 	return t || (t = fetch(e, { cache: "no-cache" }).then((e) => e.ok ? e.text() : null).then((e) => {
 		if (!e) return null;
 		let t = JSON.parse(e);
-		return Object.defineProperty(t, "_v", { value: wu(e) }), t;
-	}).catch(() => null), Su.set(e, t)), t;
-}, Eu = /* @__PURE__ */ new Map();
-function Du(e) {
-	return Eu.has(e) ? Eu.get(e) : (Eu.set(e, null), Tu(`${ou}actors/${e}.json`).then((t) => t ? Cu(`${ou}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, n]) => {
+		return Object.defineProperty(t, "_v", { value: Hu(e) }), t;
+	}).catch(() => null), Bu.set(e, t)), t;
+}, Wu = /* @__PURE__ */ new Map();
+function Gu(e) {
+	return Wu.has(e) ? Wu.get(e) : (Wu.set(e, null), Uu(`${wu}actors/${e}.json`).then((t) => t ? Vu(`${wu}actors/${e}.alb.png?v=${t._v}`).then((e) => [t, e]) : [null, null]).then(([t, n]) => {
 		if (!t) {
-			Eu.set(e, !1);
+			Wu.set(e, !1);
 			return;
 		}
 		let r = new _e(n);
-		r.magFilter = r.minFilter = w, r.generateMipmaps = !1, r.colorSpace = o, r.wrapS = r.wrapT = Me, r.needsUpdate = !0, r.name = `ember-actor:${e}`, Eu.set(e, {
+		r.magFilter = r.minFilter = w, r.generateMipmaps = !1, r.colorSpace = o, r.wrapS = r.wrapT = Me, r.needsUpdate = !0, r.name = `ember-actor:${e}`, Wu.set(e, {
 			meta: t,
 			tex: r,
 			sheets: /* @__PURE__ */ new Map()
 		});
-	}).catch(() => Eu.set(e, !1)), null);
+	}).catch(() => Wu.set(e, !1)), null);
 }
-function Ou(e, t) {
+function Ku(e, t) {
 	let n = t.toFixed(3), r = e.sheets.get(n);
 	if (!r) {
 		let i = e.meta;
@@ -12726,7 +13242,7 @@ function Ou(e, t) {
 			frameHeight: i.ch,
 			columns: i.frames,
 			rows: i.dirs,
-			pixelsPerUnit: lu / t,
+			pixelsPerUnit: Du / t,
 			anchor: [i.ax / i.cw, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -12741,34 +13257,34 @@ function Ou(e, t) {
 	}
 	return r;
 }
-var ku = /* @__PURE__ */ new Map();
-function Au(e, t) {
-	let n = ku.get(e);
-	for (n || ku.set(e, n = []); n.length <= t;) {
-		let t = new Vt(e, { ...uu });
+var qu = /* @__PURE__ */ new Map();
+function Ju(e, t) {
+	let n = qu.get(e);
+	for (n || qu.set(e, n = []); n.length <= t;) {
+		let t = new Vt(e, { ...Ou });
 		t.visible = !1, G.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function ju(e, t, n, r, i) {
+function Yu(e, t, n, r, i) {
 	let a = 2 * r / i / Math.SQRT2, o = G.tileMap, s = t + a, c = n + a;
 	e.position.set(s, o.getHeight(t, n), c);
 }
-var Mu = "models", Nu = new k(), Pu = .4, Fu = null, Iu = !1, Lu = "", Ru = (e) => (Iu || (Iu = !0, Tu(`${ou}models/cast.json`).then((e) => {
-	Fu = e || !1, e || (Lu ||= "models/cast.json unreadable");
-})), Fu ? Fu.actors[e] || !1 : Fu !== !1 && null), zu = new yo(), Bu = /* @__PURE__ */ new Map(), Vu = (e) => {
-	let t = `${ou}models/${e.replace("./models/", "")}`, n = Bu.get(t);
-	return n || (n = zu.loadAsync(t), Bu.set(t, n)), n.then((e) => ({
+var Xu = "models", Zu = new k(), Qu = .4, $u = null, ed = !1, td = "", nd = (e) => (ed || (ed = !0, Uu(`${wu}models/cast.json`).then((e) => {
+	$u = e || !1, e || (td ||= "models/cast.json unreadable");
+})), $u ? $u.actors[e] || !1 : $u !== !1 && null), rd = new yo(), id = /* @__PURE__ */ new Map(), ad = (e) => {
+	let t = `${wu}models/${e.replace("./models/", "")}`, n = id.get(t);
+	return n || (n = rd.loadAsync(t), id.set(t, n)), n.then((e) => ({
 		scene: _o(e.scene),
 		animations: e.animations
 	}));
-}, Hu = /* @__PURE__ */ new Map(), Uu = /* @__PURE__ */ new Map();
-function Wu(e, t) {
-	let n = Uu.get(e);
-	return n === void 0 ? (Uu.set(e, null), Hu.has(e) || Tu(`${ou}actors/${e}.json`).then((t) => Hu.set(e, t)), ql(t.v, {
+}, od = /* @__PURE__ */ new Map(), sd = /* @__PURE__ */ new Map();
+function cd(e, t) {
+	let n = sd.get(e);
+	return n === void 0 ? (sd.set(e, null), od.has(e) || Uu(`${wu}actors/${e}.json`).then((t) => od.set(e, t)), du(t.v, {
 		far: !1,
-		load: Vu,
-		faces: async () => Fu.faces
+		load: ad,
+		faces: async () => $u.faces
 	}).then((n) => {
 		let r = [];
 		n.root.traverse((e) => {
@@ -12778,11 +13294,11 @@ function Wu(e, t) {
 				e.quaternion.clone(),
 				e.scale.clone()
 			]);
-		}), Yl(n, "Idle", 0, !0);
-		let { box: i, ppu: a } = Ul(n.root, t.v, t.px);
+		}), pu(n, "Idle", 0, !0);
+		let { box: i, ppu: a } = su(n.root, t.v, t.px);
 		for (let [e, t, n, i] of r) e.position.copy(t), e.quaternion.copy(n), e.scale.copy(i);
-		let o = ru(n.root, rn);
-		Uu.set(e, {
+		let o = xu(n.root, rn);
+		sd.set(e, {
 			root: n.root,
 			clips: n.clips,
 			frame: n.frame,
@@ -12791,13 +13307,13 @@ function Wu(e, t) {
 			meshes: o
 		});
 	}).catch((t) => {
-		console.warn("[luminati] figure", e, t), Lu ||= `${e}: ${t?.message || t}`, Uu.set(e, !1);
+		console.warn("[luminati] figure", e, t), td ||= `${e}: ${t?.message || t}`, sd.set(e, !1);
 	}), null) : n;
 }
-var Gu = /* @__PURE__ */ new Map(), Ku = 0;
-function qu(e, t, n) {
-	let r = Gu.get(e);
-	if (r && r.name !== t && (G.engine.scene.remove(r.root), Gu.delete(e), r = null), r) return r;
+var ld = /* @__PURE__ */ new Map(), ud = 0;
+function dd(e, t, n) {
+	let r = ld.get(e);
+	if (r && r.name !== t && (G.engine.scene.remove(r.root), ld.delete(e), r = null), r) return r;
 	let i = _o(n.root), a = [];
 	i.traverse((e) => {
 		if (!e.isMesh) return;
@@ -12832,14 +13348,14 @@ function qu(e, t, n) {
 		fpos: 0,
 		seen: 0,
 		look: ""
-	}, G.engine.scene.add(i), Gu.set(e, r), r;
+	}, G.engine.scene.add(i), ld.set(e, r), r;
 }
-var Ju = new O(1, .45, .15);
-function Yu(e, t, n, r) {
-	if (Mu !== "models") return !1;
-	let i = Ru(e.name);
+var fd = new O(1, .45, .15);
+function pd(e, t, n, r) {
+	if (Xu !== "models") return !1;
+	let i = nd(e.name);
 	if (!i) return !1;
-	let a = Wu(e.name, i), o = Hu.get(e.name);
+	let a = cd(e.name, i), o = od.get(e.name);
 	if (!a || !o) return !1;
 	let s = null;
 	for (let t in o.clips) {
@@ -12851,7 +13367,7 @@ function Yu(e, t, n, r) {
 	}
 	let c = s && i.clips[s];
 	if (!c) return !1;
-	let l = qu(t, e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
+	let l = dd(t, e.name, a), u = o.clips[s], d = c.frames, f = e.col - u.start;
 	if (l.key !== s) l.key = s, l.fpos = f;
 	else if (c.once) l.fpos = Math.min(Math.max(l.fpos + n * u.fps, f), Math.min(f + .999, d - 1));
 	else {
@@ -12861,45 +13377,45 @@ function Yu(e, t, n, r) {
 	let p = c.from ?? 0, m = c.to ?? 1, h = c.once ? p + (m - p) * (l.fpos / Math.max(1, d - 1)) : p + (m - p) * (l.fpos / d);
 	for (let [e, t, n, r] of l.bones) e.position.copy(t), e.quaternion.copy(n), e.scale.copy(r);
 	let g = (135 - 45 * e.row) * Math.PI / 180 + r - Math.PI / 4;
-	if (l.yaw === null || l.seen < Ku - 1) l.yaw = g;
+	if (l.yaw === null || l.seen < ud - 1) l.yaw = g;
 	else {
 		let e = g - l.yaw;
 		e -= 2 * Math.PI * Math.round(e / (2 * Math.PI)), l.yaw += e * (1 - Math.exp(-n * 16));
 	}
-	l.root.rotation.y = l.yaw, Yl(l, c.clip, Math.min(.999, h), !0);
-	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / lu;
+	l.root.rotation.y = l.yaw, pu(l, c.clip, Math.min(.999, h), !0);
+	let _ = (e.cw && o.cw ? e.cw / o.cw : 1) * a.ppu / Du;
 	l.root.scale.setScalar(_), l.root.position.set(e.x, G.tileMap.getHeight(e.x, e.z) - a.minY * _, e.z), l.root.updateMatrixWorld(!0);
-	let v = e.flash || 0, y = v ? 0 : Math.round((e.warn || 0) * 20) / 20, b = 1 - (e.fade || 0), x = `${vd}|${v}|${y}|${b.toFixed(2)}`;
+	let v = e.flash || 0, y = v ? 0 : Math.round((e.warn || 0) * 20) / 20, b = 1 - (e.fade || 0), x = `${Id}|${v}|${y}|${b.toFixed(2)}`;
 	if (l.look !== x) {
 		l.look = x;
 		for (let e of l.mats) {
-			e.own || (y ? e.m.emissive.copy(e.base).lerp(Ju, Math.min(1, y)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = vd * Pu + v * 2.6 + y * .9);
+			e.own || (y ? e.m.emissive.copy(e.base).lerp(fd, Math.min(1, y)) : e.m.emissive.copy(e.base), e.m.emissiveIntensity = Id * Qu + v * 2.6 + y * .9);
 			let t = b < .999;
 			e.m.transparent !== t && (e.m.transparent = t, e.m.needsUpdate = !0), e.m.opacity = b;
 		}
 	}
-	return l.root.visible = !0, l.seen = Ku, !0;
+	return l.root.visible = !0, l.seen = ud, !0;
 }
-function Xu() {
-	for (let [e, t] of Gu) t.seen !== Ku && (t.root.visible && (t.root.visible = !1), Ku - t.seen > 3600 && (G.engine.scene.remove(t.root), Gu.delete(e)));
+function md() {
+	for (let [e, t] of ld) t.seen !== ud && (t.root.visible && (t.root.visible = !1), ud - t.seen > 3600 && (G.engine.scene.remove(t.root), ld.delete(e)));
 }
-var Zu = [], Qu = "chosen", $u = 5, ed = 1.3, td = /* @__PURE__ */ new Map(), nd = /* @__PURE__ */ new Map();
-for (let e of Cc) e.build && td.set(e.id, e);
-for (let e of Object.values(wc)) for (let t of e) t.build && td.set(t.id, t);
-var rd = /* @__PURE__ */ new Set([
+var hd = [], gd = "chosen", _d = 5, vd = 1.3, yd = /* @__PURE__ */ new Map(), bd = /* @__PURE__ */ new Map();
+for (let e of Tc) e.build && yd.set(e.id, e);
+for (let e of Object.values(Ec)) for (let t of e) t.build && yd.set(t.id, t);
+var xd = /* @__PURE__ */ new Set([
 	"vale_keep_1",
 	"ruin",
 	"chapelruin_0"
 ]);
-function id(e, t, n, r) {
-	let i = nd.get(e.id);
+function Sd(e, t, n, r) {
+	let i = bd.get(e.id);
 	if (i) {
 		let e = i.clone();
 		return e.position.set(t, n, r), e;
 	}
-	let a = Sc(e.build, e.style, e.seed || 1, !!e.faceX);
+	let a = wc(e.build, e.style, e.seed || 1, !!e.faceX);
 	e.rotY && (a.rotation.y = e.rotY * Math.PI / 180), e.scale && a.scale.multiplyScalar(e.scale), a.updateMatrixWorld(!0);
-	let o = G.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new E(), l = e.desat ?? .3, u = ed, d = e.tint || [
+	let o = G.world?.glassMaterial || null, s = /* @__PURE__ */ new Map(), c = new E(), l = e.desat ?? .3, u = vd, d = e.tint || [
 		.95,
 		.92,
 		1
@@ -12932,12 +13448,12 @@ function id(e, t, n, r) {
 		let r = new D(n, e === o ? e : p(e));
 		r.castShadow = r.receiveShadow = !0, c.add(r);
 	}
-	c.name = `ember:kit:${e.id}`, c.scale.setScalar($u), nd.set(e.id, c);
+	c.name = `ember:kit:${e.id}`, c.scale.setScalar(_d), bd.set(e.id, c);
 	let m = c.clone();
 	return m.position.set(t, n, r), m;
 }
-var ad = 1.7;
-function od(e) {
+var Cd = 1.7;
+function wd(e) {
 	let t = G.world.factory, r = t.builder(), i = e.span, a = e.kind === "up" ? 1.55 : 1.35, o = .42, s = .5, c = i / 2 + o / 2, l = e.stone || "stone_brick", u = [
 		.05,
 		.045,
@@ -12996,7 +13512,7 @@ function od(e) {
 		(a + c * .92) / 2,
 		-.2
 	] }));
-	let d = t.finish(r, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), f = new O(e.glow).multiplyScalar(ad), p = new it({
+	let d = t.finish(r, `ember:arch:${e.kind}`, e.x, e.level * .5, e.z + (e.kind === "up" ? .25 : 0), e.rot || 0), f = new O(e.glow).multiplyScalar(Cd), p = new it({
 		color: f,
 		fog: !1
 	}), m = c - o / 2 - .02, h = new D(new n(m, .045, 5, 28, Math.PI), p);
@@ -13011,40 +13527,40 @@ function od(e) {
 		e.isMesh && e.material === p && e.geometry.dispose();
 	}), d;
 }
-async function sd(e, t) {
-	for (let e of Zu) G.engine.scene.remove(e), e.dispose?.();
-	Zu = [];
-	for (let e of nd.values()) e.traverse((e) => {
+async function Td(e, t) {
+	for (let e of hd) G.engine.scene.remove(e), e.dispose?.();
+	hd = [];
+	for (let e of bd.values()) e.traverse((e) => {
 		e.isMesh && e.geometry.dispose();
 	});
-	if (nd.clear(), !e?.length) return;
-	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => Tu(`${ou}env/${e}.json`))), i = (e) => {
+	if (bd.clear(), !e?.length) return;
+	let n = ["env", `town-${t || "vale"}`], r = await Promise.all(n.map((e) => Uu(`${wu}env/${e}.json`))), i = (e) => {
 		for (let t = 0; t < n.length; t++) {
 			let i = r[t]?.sprites?.[e];
 			if (i) return [n[t], i];
 		}
 		return null;
-	}, a = _u;
+	}, a = Fu;
 	for (let s of e) {
 		if (s.canvas) {
-			Ed(s);
+			Wd(s);
 			continue;
 		}
 		if (s.arch) {
-			let e = od(s.arch);
-			G.engine.scene.add(e), Zu.push(e);
+			let e = wd(s.arch);
+			G.engine.scene.add(e), hd.push(e);
 			continue;
 		}
-		let e = td.get(s.id);
-		if (e && (t || "vale") === "vale" && (Qu === "all" || Qu === "chosen" && !s.card || Qu === "doors" && rd.has(s.id))) {
-			let t = (e, t) => G.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = id(e, s.x, n, s.z);
-			G.engine.scene.add(r), Zu.push(r);
+		let e = yd.get(s.id);
+		if (e && (t || "vale") === "vale" && (gd === "all" || gd === "chosen" && !s.card || gd === "doors" && xd.has(s.id))) {
+			let t = (e, t) => G.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = Sd(e, s.x, n, s.z);
+			G.engine.scene.add(r), hd.push(r);
 			continue;
 		}
 		let c = i(s.id);
 		if (!c) continue;
-		let [l, u] = c, d = await Cu(`${ou}env/${l}.alb.png?v=${r[n.indexOf(l)]._v}`).catch(() => null);
-		if (!d || a !== _u) return;
+		let [l, u] = c, d = await Vu(`${wu}env/${l}.alb.png?v=${r[n.indexOf(l)]._v}`).catch(() => null);
+		if (!d || a !== Fu) return;
 		let f = document.createElement("canvas");
 		f.width = u.w, f.height = u.h, f.getContext("2d").drawImage(d, u.x, u.y, u.w, u.h, 0, 0, u.w, u.h);
 		let p = new Oe(f);
@@ -13055,7 +13571,7 @@ async function sd(e, t) {
 			frameHeight: u.h,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: lu,
+			pixelsPerUnit: Du,
 			anchor: [u.ax / u.w, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -13070,61 +13586,61 @@ async function sd(e, t) {
 				p.dispose();
 			}
 		}, h = new Vt(m, {
-			...uu,
+			...Ou,
 			castShadow: !1,
 			blobShadow: !1
 		});
-		h.name = `ember:${l}:${s.id}`, ju(h, s.x, s.z, u.h - u.ay, lu), G.engine.scene.add(h), Zu.push(h), h.update(0, G.engine.camera);
+		h.name = `ember:${l}:${s.id}`, Yu(h, s.x, s.z, u.h - u.ay, Du), G.engine.scene.add(h), hd.push(h), h.update(0, G.engine.camera);
 	}
 }
-var cd = (e, t) => {
+var Ed = (e, t) => {
 	let n = new O(e), r = n.r * .299 + n.g * .587 + n.b * .114;
 	return n.r += (r - n.r) * t, n.g += (r - n.g) * t, n.b += (r - n.b) * t, "#" + n.getHexString();
-}, ld = (e, t) => {
+}, Dd = (e, t) => {
 	let n = new O(e);
 	return n.multiplyScalar(t), "#" + n.getHexString();
-}, ud = Mt.map((e) => {
+}, Od = Mt.map((e) => {
 	let t = e.night ?? 0;
 	return {
 		...e,
-		top: ld(cd(e.top, .3), .8),
-		horizon: ld(cd(e.horizon, .3), .6),
-		bottom: ld(cd(e.bottom, .3), .75),
-		sun: cd(e.sun, .3),
-		hemiSky: cd(e.hemiSky, .45),
-		hemiGround: cd(e.hemiGround, .3),
+		top: Dd(Ed(e.top, .3), .8),
+		horizon: Dd(Ed(e.horizon, .3), .6),
+		bottom: Dd(Ed(e.bottom, .3), .75),
+		sun: Ed(e.sun, .3),
+		hemiSky: Ed(e.hemiSky, .45),
+		hemiGround: Ed(e.hemiGround, .3),
 		sunI: e.sunI * .72,
 		hemiI: e.hemiI * (.86 - .08 * t) * (e.t >= 18 && e.t <= 20.5 ? 1.4 : 1),
 		exp: e.exp * .97,
 		fog: e.fog * (.5 + .3 * t)
 	};
-}), dd = {
+}), kd = {
 	saturation: .92,
 	exposure: .9,
 	contrast: 1.06,
 	vignette: .78
-}, fd = !1;
-function pd() {
+}, Ad = !1;
+function jd() {
 	let e = G?.postfx?.settings?.grade, t = G?.lighting?.state?.night ?? 1;
-	fd && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * md * hd);
+	Ad && e && (e.saturation = .74 + .18 * t, e.exposure = (.84 + .06 * t) * Md * Nd);
 }
-var md = 1, hd = 1, gd = 1.6, _d = 1, vd = uu.emissiveIntensity, yd = 0, bd = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
-function xd() {
+var Md = 1, Nd = 1, Pd = 1.6, Fd = 1, Id = Ou.emissiveIntensity, Ld = 0, Rd = (e) => .2126 * e.r + .7152 * e.g + .0722 * e.b;
+function zd() {
 	let e = G?.lighting, t = e?.hemi, n = e?.sun;
-	return yd = (t ? bd(t.color) * t.intensity : 0) + (n ? bd(n.color) * n.intensity * .5 : 0), Math.round(Math.min(_d, Math.max(uu.emissiveIntensity, gd - yd)) * 100) / 100;
+	return Ld = (t ? Rd(t.color) * t.intensity : 0) + (n ? Rd(n.color) * n.intensity * .5 : 0), Math.round(Math.min(Fd, Math.max(Ou.emissiveIntensity, Pd - Ld)) * 100) / 100;
 }
-var Sd = null, Cd = "default";
-function wd(e, t) {
+var Bd = null, Vd = "default";
+function Hd(e, t) {
 	let n = G?.lighting;
 	if (!n) return;
 	let r = e.environment || {}, i = G.postfx?.settings?.grade;
-	if (i && (Sd ||= { ...i }, Object.assign(i, Sd, t === "vale" ? dd : {})), fd = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
+	if (i && (Bd ||= { ...i }, Object.assign(i, Bd, t === "vale" ? kd : {})), Ad = t === "vale" && !r.interior, r.interior || r.climate || r.season) return;
 	let a = t === "vale" ? "dusky" : "default";
-	n.setKeyframes(a === "dusky" ? ud : Mt), Cd = a;
+	n.setKeyframes(a === "dusky" ? Od : Mt), Vd = a;
 }
-var Td = /* @__PURE__ */ new Map();
-function Ed(e) {
-	let t = Td.get(e.canvas);
+var Ud = /* @__PURE__ */ new Map();
+function Wd(e) {
+	let t = Ud.get(e.canvas);
 	if (!t) {
 		let n = new Oe(e.canvas);
 		n.magFilter = n.minFilter = w, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -13133,7 +13649,7 @@ function Ed(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: lu,
+			pixelsPerUnit: Du,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -13144,37 +13660,37 @@ function Ed(e) {
 				loop: !1
 			} },
 			name: `ember-prop:${e.id}`
-		}, Td.set(e.canvas, t);
+		}, Ud.set(e.canvas, t);
 	}
 	let n = new Vt(t, {
-		...uu,
+		...Ou,
 		emissiveIntensity: .3,
 		castShadow: !1,
 		blobShadow: !e.flat
 	});
-	n.name = `ember:prop:${e.id}`, ju(n, e.x, e.z, e.canvas.height - e.ay, lu), e.flat && n.traverse((e) => {
+	n.name = `ember:prop:${e.id}`, Yu(n, e.x, e.z, e.canvas.height - e.ay, Du), e.flat && n.traverse((e) => {
 		e.renderOrder = -1, e.material && (e.material.depthWrite = !1);
-	}), G.engine.scene.add(n), Zu.push(n), n.update(0, G.engine.camera);
+	}), G.engine.scene.add(n), hd.push(n), n.update(0, G.engine.camera);
 }
-var Dd = /* @__PURE__ */ new Map(), Od = "vale";
-function kd(e) {
-	if (Dd.has(e)) return Dd.get(e);
-	Dd.set(e, null);
-	let t = ["env", `town-${Od}`];
-	return Promise.all(t.map((e) => Tu(`${ou}env/${e}.json`))).then(async (n) => {
+var Gd = /* @__PURE__ */ new Map(), Kd = "vale";
+function qd(e) {
+	if (Gd.has(e)) return Gd.get(e);
+	Gd.set(e, null);
+	let t = ["env", `town-${Kd}`];
+	return Promise.all(t.map((e) => Uu(`${wu}env/${e}.json`))).then(async (n) => {
 		for (let r = 0; r < t.length; r++) {
 			let i = n[r]?.sprites?.[e];
 			if (!i) continue;
-			let a = await Cu(`${ou}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
+			let a = await Vu(`${wu}env/${t[r]}.alb.png?v=${n[r]._v}`), s = document.createElement("canvas");
 			s.width = i.w, s.height = i.h, s.getContext("2d").drawImage(a, i.x, i.y, i.w, i.h, 0, 0, i.w, i.h);
 			let c = new Oe(s);
-			c.magFilter = c.minFilter = w, c.generateMipmaps = !1, c.colorSpace = o, Dd.set(e, {
+			c.magFilter = c.minFilter = w, c.generateMipmaps = !1, c.colorSpace = o, Gd.set(e, {
 				texture: c,
 				frameWidth: i.w,
 				frameHeight: i.h,
 				columns: 1,
 				rows: 1,
-				pixelsPerUnit: lu,
+				pixelsPerUnit: Du,
 				anchor: [i.ax / i.w, 0],
 				below: i.h - i.ay,
 				animations: { idle_down: {
@@ -13189,12 +13705,12 @@ function kd(e) {
 			});
 			return;
 		}
-		Dd.set(e, !1);
-	}).catch(() => Dd.set(e, !1)), null;
+		Gd.set(e, !1);
+	}).catch(() => Gd.set(e, !1)), null;
 }
-var Ad = /* @__PURE__ */ new WeakMap();
-function jd(e) {
-	let t = Ad.get(e.canvas);
+var Jd = /* @__PURE__ */ new WeakMap();
+function Yd(e) {
+	let t = Jd.get(e.canvas);
 	if (!t) {
 		let n = new Oe(e.canvas);
 		n.magFilter = n.minFilter = w, n.generateMipmaps = !1, n.colorSpace = o, t = {
@@ -13203,7 +13719,7 @@ function jd(e) {
 			frameHeight: e.canvas.height,
 			columns: 1,
 			rows: 1,
-			pixelsPerUnit: lu,
+			pixelsPerUnit: Du,
 			anchor: [e.ax / e.canvas.width, 0],
 			animations: { idle_down: {
 				frames: [{
@@ -13214,15 +13730,15 @@ function jd(e) {
 				loop: !1
 			} },
 			name: "ember-bit"
-		}, Ad.set(e.canvas, t);
+		}, Jd.set(e.canvas, t);
 	}
 	return t;
 }
-function Md(e, t) {
-	let n = ku.get(e);
-	for (n || ku.set(e, n = []); n.length <= t;) {
+function Xd(e, t) {
+	let n = qu.get(e);
+	for (n || qu.set(e, n = []); n.length <= t;) {
 		let t = new Vt(e, {
-			...uu,
+			...Ou,
 			castShadow: !1,
 			blobShadow: !1
 		});
@@ -13235,7 +13751,7 @@ var K = {
 	id: "",
 	cap: 0
 };
-function Nd(e) {
+function Zd(e) {
 	if (!e || !e.cells.length) {
 		K.mesh && (K.mesh.visible = !1), K.id = "";
 		return;
@@ -13267,12 +13783,12 @@ function Nd(e) {
 	}
 	K.mesh.count = t, K.mesh.instanceMatrix.needsUpdate = !0, K.mesh.instanceColor && (K.mesh.instanceColor.needsUpdate = !0), K.mesh.visible = !0, K.id = e.id;
 }
-var Pd = [];
-function Fd(e, t) {
-	let n = Pd[e];
-	return n && n.sheet !== t && (G.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Vt(t, { ...uu }), G.engine.scene.add(n), Pd[e] = n), n.material.emissiveIntensity !== vd && (n.material.emissiveIntensity = vd), n;
+var Qd = [];
+function $d(e, t) {
+	let n = Qd[e];
+	return n && n.sheet !== t && (G.engine.scene.remove(n), n.dispose?.(), n = null), n || (n = new Vt(t, { ...Ou }), G.engine.scene.add(n), Qd[e] = n), n.material.emissiveIntensity !== Id && (n.material.emissiveIntensity = Id), n;
 }
-var Id = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", Ld = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", q = {
+var ef = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main() { vUv = position.xy; vec2 p = uRect.xy + position.xy * uRect.zw; gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0); }", tf = "uniform sampler2D tEmi, tDepth; uniform vec2 uTexel, uBuf; uniform mat4 uInvVP; uniform vec4 uKey; uniform float uFloor; varying vec2 vUv;\nvoid main() {\n  vec4 e = texture2D(tEmi, vUv); vec3 c = e.rgb * 2.4, g = vec3(0.0); float own = e.a;\n  for (int i = 0; i < 8; i++) { float a = float(i) * 0.785398; vec2 d = vec2(cos(a), sin(a)) * uTexel;\n    vec4 n = texture2D(tEmi, vUv + d * 2.0), f = texture2D(tEmi, vUv + d * 4.5); g += n.rgb + f.rgb * 0.6; own = max(own, max(n.a, f.a)); }\n  float k = 1.0;\n  if (uKey.w > 0.5 && own > 0.002) {\n    vec2 suv = gl_FragCoord.xy / uBuf; float z = texture2D(tDepth, suv).x;\n    if (z < 1.0) {\n      vec4 w = uInvVP * vec4(suv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0); w.xyz /= w.w;\n      float scene = 2.0 * (w.x + w.z) + uKey.z, eff = uKey.x + own * 255.0 * uKey.y;\n      if (w.y > uFloor && scene > eff + 1.5) k = 0.22;\n    }\n  }\n  gl_FragColor = vec4((c + g * 0.12) * k, 1.0);\n}", q = {
 	scene: null,
 	cam: null,
 	mat: null,
@@ -13280,12 +13796,12 @@ var Id = "uniform vec4 uRect; uniform vec2 uView; varying vec2 vUv;\nvoid main()
 	on: !1,
 	keyed: !1
 };
-function Rd() {
+function nf() {
 	if (!q.on || !G) return;
 	let e = G.engine.renderer, t = e.autoClear, n = q.mat.uniforms, r = G.engine.camera;
 	n.tDepth.value = G.postfx?.depthTexture || null, n.uKey.value.w = q.keyed && n.tDepth.value ? 1 : 0, e.getDrawingBufferSize(n.uBuf.value), n.uInvVP.value.multiplyMatrices(r.matrixWorld, r.projectionMatrixInverse), e.autoClear = !1, e.setRenderTarget(null), e.render(q.scene, q.cam), e.autoClear = t;
 }
-function zd(e) {
+function rf(e) {
 	if (!e || !e.emi) {
 		q.on = !1;
 		return;
@@ -13298,8 +13814,8 @@ function zd(e) {
 	if (q.on = n, n) {
 		if (!q.scene) {
 			q.scene = new f(), q.cam = new we(), q.mat = new le({
-				vertexShader: Id,
-				fragmentShader: Ld,
+				vertexShader: ef,
+				fragmentShader: tf,
 				transparent: !0,
 				depthTest: !1,
 				depthWrite: !1,
@@ -13339,55 +13855,55 @@ function zd(e) {
 				3
 			]);
 			let t = new D(e, q.mat);
-			t.frustumCulled = !1, q.scene.add(t), G.engine.events.on("afterRender", Rd);
+			t.frustumCulled = !1, q.scene.add(t), G.engine.events.on("afterRender", nf);
 		}
 		(!q.tex || q.tex.image.width !== e.w || q.tex.image.height !== e.h || q.tex.image.data !== e.emi) && (q.tex?.dispose(), q.tex = new se(e.emi, e.w, e.h, he), q.tex.flipY = !1, q.tex.magFilter = q.tex.minFilter = ze, q.tex.generateMipmaps = !1, q.mat.uniforms.tEmi.value = q.tex, q.mat.uniforms.uTexel.value.set(1 / e.w, 1 / e.h)), q.tex.needsUpdate = !0, q.mat.uniforms.uRect.value.set(e.x, e.y, e.w * e.px, e.h * e.px), q.mat.uniforms.uView.value.set(innerWidth, innerHeight), q.keyed = !!e.key, e.key && q.mat.uniforms.uKey.value.set(e.key.base, e.key.step, e.key.origin, 1);
 	}
 }
-var Bd = {
+var af = {
 	x: 0,
 	y: 1,
 	z: 0,
 	ppu: 22,
 	ready: !1
 };
-function Vd() {
-	let e = G.rig, t = G.engine.camera, n = innerHeight / (2 * Bd.ppu * Math.tan(su / 2 * Math.PI / 180));
-	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = yu * Math.PI / 180, e.pitch = e.pitchTarget = bu * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(Bd.x, Bd.y, Bd.z), (Math.abs(t.fov - su) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = su, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), Pa(n - 7);
+function of() {
+	let e = G.rig, t = G.engine.camera, n = innerHeight / (2 * af.ppu * Math.tan(Tu / 2 * Math.PI / 180));
+	e.target = null, e.bounds = null, e.lift = 0, e.minDistance = 1, e.maxDistance = 1e6, e.minPitch = 0, e.maxPitch = Math.PI / 2, e.freeYaw = !0, e.yaw = e.yawTarget = Lu * Math.PI / 180, e.pitch = e.pitchTarget = Ru * Math.PI / 180, e.distance = e.distanceTarget = n, e.focusPoint.set(af.x, af.y, af.z), (Math.abs(t.fov - Tu) > 1e-6 || Math.abs(t.far - (n + 600)) > 1) && (t.fov = Tu, t.near = Math.max(1, n - 300), t.far = n + 600, t.updateProjectionMatrix()), e._apply(0), Pa(n - 7);
 	let r = G.postfx?.settings?.dof;
 	r && (r.autoFocus = !1, r.focusDistance = n);
 }
-async function Hd(e) {
-	await pu, Object.assign(globalThis, {
-		__emberUiRoot: hu,
+async function sf(e) {
+	await ju, Object.assign(globalThis, {
+		__emberUiRoot: Nu,
 		__emberInputTarget: new EventTarget(),
 		__emberSilent: !0,
-		__emberPixelRatio: cu
+		__emberPixelRatio: Eu
 	}), G = new go({
-		container: mu,
+		container: Mu,
 		level: e,
 		source: "emberfall",
 		autostart: !0,
-		lang: du,
-		fonts: fu,
+		lang: ku,
+		fonts: Au,
 		look: "diorama"
 	}), await G.init(() => {}), G.audio && (G.audio.muted = !0), G._updatePlayCamera = () => {}, G._updateCameraBounds = () => {}, G.start(), await G.warmedUp, G.engine.stop(), G.engine.events.on("lateUpdate", () => {
-		G && Vd();
-	}), G.engine.events.on("update", pd), G.engine.events.on("update", () => {
-		let e = df, t = G?.lighting;
+		G && of();
+	}), G.engine.events.on("update", jd), G.engine.events.on("update", () => {
+		let e = kf, t = G?.lighting;
 		e && t?.hemi && (t.hemi.color.setRGB(e.sky[0], e.sky[1], e.sky[2]), t.hemi.groundColor.setRGB(e.ground[0], e.ground[1], e.ground[2]), t.hemi.intensity = e.i, t.sun && (t.sun.intensity *= e.sun));
 	}), G.lighting && (G.lighting._shadowExtent = Math.max(G.lighting._shadowExtent || 22, 34));
 }
-function Ud() {
+function cf() {
 	let e = G.player;
 	e && (e.sprite && (e.sprite.visible = !1), e.visible = !1);
 }
-var Wd = new u(.46, .6, 40), Gd = new Be(1, 40), Kd = new u(.8, 1, 40), qd = (() => {
+var lf = new u(.46, .6, 40), uf = new Be(1, 40), df = new u(.8, 1, 40), ff = (() => {
 	let e = [];
 	for (let t = 0; t < 4; t++) e.push(new u(.7, .8, 10, 1, t * Math.PI / 2 + .25, Math.PI / 2 - .5));
-	return Jd(e);
+	return pf(e);
 })();
-function Jd(e) {
+function pf(e) {
 	let t = [], n = [], r = 0;
 	for (let i of e) {
 		let e = i.getAttribute("position"), a = i.getIndex();
@@ -13398,14 +13914,14 @@ function Jd(e) {
 	let i = new Re();
 	return i.setAttribute("position", new ae(t, 3)), i.setIndex(n), i;
 }
-var Yd = new u(.88, 1, 40), Xd = new b(1, 1).translate(.5, 0, 0), Zd = () => new it({
+var mf = new u(.88, 1, 40), hf = new b(1, 1).translate(.5, 0, 0), gf = () => new it({
 	transparent: !0,
 	depthWrite: !1,
 	polygonOffset: !0,
 	polygonOffsetFactor: -2,
 	polygonOffsetUnits: -2,
 	toneMapped: !1
-}), Qd = {
+}), _f = {
 	ring: [],
 	disc: [],
 	rim: [],
@@ -13413,43 +13929,43 @@ var Yd = new u(.88, 1, 40), Xd = new b(1, 1).translate(.5, 0, 0), Zd = () => new
 	wfill: [],
 	wrim: [],
 	lane: []
-}, $d = {
-	ring: Wd,
-	disc: Gd,
-	rim: Kd,
-	focus: qd,
-	wfill: Gd,
-	wrim: Yd,
-	lane: Xd
+}, vf = {
+	ring: lf,
+	disc: uf,
+	rim: df,
+	focus: ff,
+	wfill: uf,
+	wrim: mf,
+	lane: hf
 };
-function ef(e, t) {
-	let n = Qd[e];
+function yf(e, t) {
+	let n = _f[e];
 	for (; n.length <= t;) {
-		let t = new D($d[e], Zd());
+		let t = new D(vf[e], gf());
 		t.rotation.x = -Math.PI / 2, t.renderOrder = 2, t.visible = !1, G.engine.scene.add(t), n.push(t);
 	}
 	return n[t];
 }
-function tf(e, t, n, r, i, a) {
+function bf(e, t, n, r, i, a) {
 	e.visible = a > .01, e.visible && (e.position.set(t, G.tileMap.getHeight(t, n) + .03, n), e.scale.setScalar(r), e.material.color.setRGB(i[0] / 255, i[1] / 255, i[2] / 255, o), e.material.opacity = a);
 }
-function nf(e, t, n, r, i, a, s, c, l) {
+function xf(e, t, n, r, i, a, s, c, l) {
 	let u = r - t, d = i - n, f = Math.hypot(u, d) * a;
 	e.visible = l > .01 && f > .02, e.visible && (e.position.set(t, Math.max(G.tileMap.getHeight(t, n), G.tileMap.getHeight(r, i)) + .05, n), e.rotation.z = Math.atan2(-d, u), e.scale.set(f, s, 1), e.material.color.setRGB(c[0] / 255, c[1] / 255, c[2] / 255, o), e.material.opacity = l);
 }
-var rf = [
+var Sf = [
 	255,
 	86,
 	30
-], af = [
+], Cf = [
 	255,
 	238,
 	220
-], of = [
+], wf = [
 	24,
 	6,
 	4
-], sf = null, cf = null, lf = -1, uf = 0, df = null, ff = !1, J = {
+], Tf = null, Ef = null, Df = -1, Of = 0, kf = null, Af = !1, J = {
 	body: [
 		1.15,
 		.8,
@@ -13475,7 +13991,7 @@ var rf = [
 		.56,
 		.1
 	]
-}, pf = {
+}, jf = {
 	body: [
 		.32,
 		.85,
@@ -13486,20 +14002,20 @@ var rf = [
 		1.65,
 		.25
 	]
-}, mf = [
+}, Mf = [
 	.45,
 	.75,
 	1.4
-], hf = [
+], Nf = [
 	1.6,
 	.85,
 	.25
-], gf = [
+], Pf = [
 	1.6,
 	.8,
 	.3
-], Y = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), _f = (e) => e < 0 ? 0 : e > 1 ? 1 : e, vf = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * Y((e - .55) / .45) : 1, X = null, yf = null, bf = /* @__PURE__ */ new Map(), xf = {}, Sf = new k();
-function Cf() {
+], Y = (e) => e <= 0 ? 0 : e >= 1 ? 1 : e * e * (3 - 2 * e), Ff = (e) => e < 0 ? 0 : e > 1 ? 1 : e, If = (e) => e <= 0 ? 0 : e < .55 ? 1.15 * (1 - (1 - e / .55) ** 3) : e < 1 ? 1.15 - .15 * Y((e - .55) / .45) : 1, X = null, Lf = null, Rf = /* @__PURE__ */ new Map(), zf = {}, Bf = new k();
+function Vf() {
 	if (X || !G?.engine) return X;
 	let e = G.engine.scene, t = new qr({ capacity: 48 }), n = new Jr({
 		capacity: 4,
@@ -13544,10 +14060,10 @@ function Cf() {
 	}, X;
 }
 function Z(e, t) {
-	for (let e in xf) delete xf[e];
-	Object.assign(xf, t), X.quads.set(e, xf);
+	for (let e in zf) delete zf[e];
+	Object.assign(zf, t), X.quads.set(e, zf);
 }
-function wf(e) {
+function Hf(e) {
 	for (let t of e.blades || []) X.blades.free(t);
 	for (let t of e.rocks || []) X.rocks.free(t);
 	for (let t of e.bells || []) X.bells.free(t);
@@ -13556,24 +14072,24 @@ function wf(e) {
 	for (let t of e.quads) X.quads.free(t);
 	e.gf >= 0 && X.frost.free(e.gf);
 }
-function Tf(e, t, n, r) {
+function Uf(e, t, n, r) {
 	if (!X && !r && !e.length) return;
-	let i = Cf();
+	let i = Vf();
 	if (!i) return;
 	i.warmN > 0 && --i.warmN === 0 && (i.crystals.unwarm(), i.frost.unwarm(), i.dome.unwarm(), i.blades.unwarm(), i.rocks.unwarm(), i.bells.unwarm(), i.quads.free(i.warmQuad));
 	let a = /* @__PURE__ */ new Set(), o = (e, t) => G.tileMap.getHeight(e, t);
-	G.engine.camera.getWorldDirection(Sf);
-	let s = Math.hypot(Sf.x, Sf.z) || 1, c = -Sf.x / s, l = -Sf.z / s, u = null;
+	G.engine.camera.getWorldDirection(Bf);
+	let s = Math.hypot(Bf.x, Bf.z) || 1, c = -Bf.x / s, l = -Bf.z / s, u = null;
 	for (let n of e) {
 		a.add(n.key);
-		let e = bf.get(n.key);
+		let e = Rf.get(n.key);
 		e || (e = {
 			crystals: [],
 			quads: [],
 			gf: -1,
 			landed: !1,
 			seed: (n.seed >>> 0) % 8192
-		}, bf.set(n.key, e));
+		}, Rf.set(n.key, e));
 		let r = n.land;
 		if (n.id === "frost_nova") {
 			if (e.gf < 0 && (e.gf = i.frost.add({
@@ -13628,7 +14144,7 @@ function Tf(e, t, n, r) {
 				if (n.h < 0) continue;
 				let e = (r - n.start) / .13, a = Y((r - .55) / .3), o = Y((r - .88) / .3);
 				i.crystals.set(n.h, {
-					rise: vf(e) * (1 - o),
+					rise: If(e) * (1 - o),
 					crack: a,
 					glint: Y((r - .08 - n.start) / .38),
 					glow: 1 + .35 * Math.exp(-Math.max(0, r - n.start - .07) / .1) + .2 * t + .5 * a
@@ -13775,7 +14291,7 @@ function Tf(e, t, n, r) {
 			].map(() => i.quads.alloc()), e.body = i.quads.alloc(), e.core = i.quads.alloc(), e.foot = i.quads.alloc(), e.quads.push(...e.orbs, e.body, e.core, e.foot));
 			let t = o(n.x, n.z) + 1.2, a = o(n.tx, n.tz) + .9;
 			e.orbs.forEach((e, i) => {
-				let o = _f((r - i * .05) / .3), s = Math.sin(o * Math.PI) * .6;
+				let o = Ff((r - i * .05) / .3), s = Math.sin(o * Math.PI) * .6;
 				Z(e, {
 					frame: "partyHolyOrb",
 					index: Math.floor(r * 12) % 2,
@@ -13784,9 +14300,9 @@ function Tf(e, t, n, r) {
 					z: n.z + (n.tz - n.z) * o + l * .2,
 					mode: "billboard",
 					scale: 1.2,
-					r: pf.core[0],
-					g: pf.core[1],
-					b: pf.core[2],
+					r: jf.core[0],
+					g: jf.core[1],
+					b: jf.core[2],
 					a: +(o > 0 && o < 1),
 					halo: 1
 				});
@@ -13800,10 +14316,10 @@ function Tf(e, t, n, r) {
 				z: n.tz + l * .3,
 				mode: "billboard",
 				scale: f,
-				r: pf.body[0],
-				g: pf.body[1],
-				b: pf.body[2],
-				a: s > 0 ? .85 * _f((.45 - s) / .18) : 0
+				r: jf.body[0],
+				g: jf.body[1],
+				b: jf.body[2],
+				a: s > 0 ? .85 * Ff((.45 - s) / .18) : 0
 			}), Z(e.core, {
 				frame: "partyPillar",
 				index: 0,
@@ -13812,10 +14328,10 @@ function Tf(e, t, n, r) {
 				z: n.tz + l * .32,
 				mode: "billboard",
 				scale: f,
-				r: pf.core[0],
-				g: pf.core[1],
-				b: pf.core[2],
-				a: s > 0 ? _f((.28 - s) / .1) : 0,
+				r: jf.core[0],
+				g: jf.core[1],
+				b: jf.core[2],
+				a: s > 0 ? Ff((.28 - s) / .1) : 0,
 				halo: 1
 			}), Z(e.foot, {
 				frame: "partySunburst",
@@ -13826,9 +14342,9 @@ function Tf(e, t, n, r) {
 				mode: "flat",
 				scale: 1,
 				rot: s * 2,
-				r: pf.core[0],
-				g: pf.core[1],
-				b: pf.core[2],
+				r: jf.core[0],
+				g: jf.core[1],
+				b: jf.core[2],
 				a: s > 0 ? Math.max(0, 1 - s / .5) : 0,
 				halo: 1
 			});
@@ -13922,7 +14438,7 @@ function Tf(e, t, n, r) {
 				});
 			});
 		} else if (n.id === "shield_wall" && r != null) e.snaps || (e.snaps = n.reached.slice(0, 8).map(() => i.quads.alloc()), e.quads.push(...e.snaps)), e.snaps.forEach((e, t) => {
-			let i = n.reached[t], a = _f(r / .35);
+			let i = n.reached[t], a = Ff(r / .35);
 			Z(e, {
 				frame: "partyRing",
 				index: a < .5 ? 0 : 1,
@@ -13931,14 +14447,14 @@ function Tf(e, t, n, r) {
 				z: i.z,
 				mode: "flat",
 				scale: .25 + .2 * a,
-				r: hf[0],
-				g: hf[1],
-				b: hf[2],
+				r: Nf[0],
+				g: Nf[1],
+				b: Nf[2],
 				a: 1 - a
 			});
 		});
 		else if (n.id === "aura_wall") {
-			if ((!i.domeOf || !bf.has(i.domeOf.key)) && (i.dome.show({
+			if ((!i.domeOf || !Rf.has(i.domeOf.key)) && (i.dome.show({
 				x: n.x,
 				y: o(n.x, n.z),
 				z: n.z,
@@ -13948,7 +14464,7 @@ function Tf(e, t, n, r) {
 				let r = e.t * .6 % 1;
 				i.dome.set({
 					rise: Y(e.t / .35),
-					dissolve: 1 - _f(n.k / .8),
+					dissolve: 1 - Ff(n.k / .8),
 					sweepA: r,
 					sweepB: (r + .5) % 1
 				});
@@ -13961,9 +14477,9 @@ function Tf(e, t, n, r) {
 			mode: "flat",
 			scale: .85 + .05 * Math.sin(e.t * 4),
 			rot: e.t * .5,
-			r: mf[0],
-			g: mf[1],
-			b: mf[2],
+			r: Mf[0],
+			g: Mf[1],
+			b: Mf[2],
 			a: .9 * Y(e.t / .25),
 			halo: 1
 		});
@@ -13975,9 +14491,9 @@ function Tf(e, t, n, r) {
 			z: n.z + l * .2,
 			mode: "billboard",
 			scale: 1.5,
-			r: gf[0],
-			g: gf[1],
-			b: gf[2],
+			r: Pf[0],
+			g: Pf[1],
+			b: Pf[2],
 			a: 1,
 			halo: 1
 		});
@@ -14001,9 +14517,9 @@ function Tf(e, t, n, r) {
 					z: n.tz + Math.sin(s) * c,
 					mode: "billboard",
 					scale: .9 + .3 * t,
-					r: gf[0],
-					g: gf[1],
-					b: gf[2],
+					r: Pf[0],
+					g: Pf[1],
+					b: Pf[2],
 					a: t,
 					halo: 1
 				});
@@ -14021,61 +14537,61 @@ function Tf(e, t, n, r) {
 				a: +(r < .3),
 				halo: 1
 			});
-		} else if (Rf[n.id]) {
-			let a = Rf[n.id](n, e, r, i, o, c, l, t);
+		} else if (np[n.id]) {
+			let a = np[n.id](n, e, r, i, o, c, l, t);
 			a && (!u || a.k > u.k) && (u = a);
 		}
 	}
-	for (let [e, t] of bf) a.has(e) || (wf(t), bf.delete(e));
-	yf && (u && u.k > .02 ? yf.set(u.x, o(u.x, u.z) + 1.4, u.z, {
+	for (let [e, t] of Rf) a.has(e) || (Hf(t), Rf.delete(e));
+	Lf && (u && u.k > .02 ? Lf.set(u.x, o(u.x, u.z) + 1.4, u.z, {
 		color: u.color,
 		intensity: 2.6 * u.k / (n ?? 1),
 		distance: 6.5,
 		decay: 1.5,
 		flicker: .08
-	}) : yf.off()), i.domeOf && !bf.has(i.domeOf.key) && (i.dome.hide(), i.domeOf = null), i.crystals.update(t), i.frost.update(t), i.blades.update(t), i.rocks.update(t), i.bells.update(t), i.quads.update();
+	}) : Lf.off()), i.domeOf && !Rf.has(i.domeOf.key) && (i.dome.hide(), i.domeOf = null), i.crystals.update(t), i.frost.update(t), i.blades.update(t), i.rocks.update(t), i.bells.update(t), i.quads.update();
 }
-var Ef = [
+var Wf = [
 	1.6,
 	1.3,
 	.85
-], Df = [
+], Gf = [
 	2,
 	1.85,
 	1.45
-], Of = [
+], Kf = [
 	1.7,
 	.22,
 	.32
-], kf = [
+], qf = [
 	.45,
 	1.5,
 	.6
-], Af = [
+], Jf = [
 	.75,
 	.72,
 	.8
-], jf = [
+], Yf = [
 	.55,
 	.75,
 	1.7
-], Mf = [
+], Xf = [
 	.55,
 	.95,
 	1.9
-], Nf = [
+], Zf = [
 	.35,
 	1.45,
 	1.25
-], Pf = [
+], Qf = [
 	.75,
 	1.55,
 	.3
-], Ff = [
+], $f = [
 	1.15,
 	.45,
 	1.65
-], If = [
+], ep = [
 	.7,
 	.58,
 	.42
@@ -14094,16 +14610,16 @@ function $(e, t, n) {
 	}
 	return e[t];
 }
-var Lf = (e, t) => {
+var tp = (e, t) => {
 	let n = Math.hypot(e, t) || 1;
 	return {
 		dirX: t / n,
 		dirZ: -e / n
 	};
-}, Rf = {
+}, np = {
 	vault(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l, u, ...d] = $(t, "q", 9), f = i(e.tx, e.tz), p = _f((n - .12) / .18);
+		let [s, c, l, u, ...d] = $(t, "q", 9), f = i(e.tx, e.tz), p = Ff((n - .12) / .18);
 		return Z(s, {
 			frame: "heroSigil",
 			x: e.tx,
@@ -14112,7 +14628,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: .12 + .1 * Y(n / .3),
 			rot: n * 1.5,
-			...Q(Ef, .8),
+			...Q(Wf, .8),
 			a: .9 * (1 - Y((n - .5) / .4))
 		}), Z(c, {
 			frame: "heroSword",
@@ -14122,7 +14638,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .25,
 			mode: "billboard",
 			scale: .4,
-			...Q(Df),
+			...Q(Gf),
 			a: n < .12 ? 0 : 1 - Y((n - .45) / .25),
 			halo: 1
 		}), Z(l, {
@@ -14132,7 +14648,7 @@ var Lf = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .55 * Y((n - .3) / .12),
-			...Q(Ef, .9),
+			...Q(Wf, .9),
 			a: n > .3 ? 1 - Y((n - .6) / .35) : 0
 		}), Z(u, {
 			frame: "impact",
@@ -14142,7 +14658,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 3.2,
-			...Q(Df),
+			...Q(Gf),
 			a: +(n > .3 && n < .6),
 			halo: 1
 		}), d.forEach((r, i) => {
@@ -14155,7 +14671,7 @@ var Lf = (e, t) => {
 				z: e.tz + Math.sin(a) * s,
 				mode: "billboard",
 				scale: 2,
-				...Q(If),
+				...Q(ep),
 				a: o > 0 ? 1 - Y(o / .5) : 0
 			});
 		}), n > .28 ? {
@@ -14171,7 +14687,7 @@ var Lf = (e, t) => {
 	},
 	cutting_wave(e, t, n, r, i, a, o) {
 		if (n == null) return null;
-		let [s, c, l] = $(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * Y(n / .35), g = 1 - Y((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = Lf(u, d);
+		let [s, c, l] = $(t, "q", 3), u = e.tx - e.fx, d = e.tz - e.fz, f = Math.hypot(u, d) || 1, p = u / f, m = d / f, h = 3 * Y(n / .35), g = 1 - Y((n - .45) / .35), _ = e.fx + p * h, v = e.fz + m * h, y = i(_, v), b = tp(u, d);
 		return Z(s, {
 			frame: "heroWaveLit",
 			index: Math.floor(n * 24) % 4,
@@ -14181,7 +14697,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .75,
-			...Q(Df),
+			...Q(Gf),
 			a: g,
 			halo: 1
 		}), Z(c, {
@@ -14193,7 +14709,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			...b,
 			scale: .6,
-			...Q(Ef),
+			...Q(Wf),
 			a: .8 * g
 		}), Z(l, {
 			frame: "heroFangCrestLit",
@@ -14203,7 +14719,7 @@ var Lf = (e, t) => {
 			z: v + o * .2,
 			mode: "billboard",
 			scale: .85,
-			...Q(Df),
+			...Q(Gf),
 			a: g,
 			halo: 1
 		}), {
@@ -14242,7 +14758,7 @@ var Lf = (e, t) => {
 			}
 		}
 		for (let e of t.spec) r.rocks.set(e.h, {
-			rise: vf((n - e.start) / .14) * (1 - Y((n - 1) / .35)),
+			rise: If((n - e.start) / .14) * (1 - Y((n - 1) / .35)),
 			crack: Y((n - .65) / .3)
 		});
 		return Z(c, {
@@ -14253,7 +14769,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: .35 * Y(n / .15),
 			rot: t.seed % 7 * .4,
-			...Q(If, 1.1),
+			...Q(ep, 1.1),
 			a: 1 - Y((n - 1) / .35)
 		}), Z(l, {
 			frame: "partyRing",
@@ -14263,7 +14779,7 @@ var Lf = (e, t) => {
 			z: e.z,
 			mode: "flat",
 			scale: .2 + .4 * Y(n / .3),
-			...Q(Ef, .9),
+			...Q(Wf, .9),
 			a: 1 - Y((n - .1) / .3)
 		}), u.forEach((t, r) => {
 			let i = r * 1.047 + .3, a = n - .12, o = .6 + .8 * Y(a / .5);
@@ -14275,7 +14791,7 @@ var Lf = (e, t) => {
 				z: e.z + Math.sin(i) * o,
 				mode: "billboard",
 				scale: 2.4,
-				...Q(If),
+				...Q(ep),
 				a: a > 0 ? 1 - Y(a / .7) : 0
 			});
 		}), {
@@ -14333,7 +14849,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: .32,
 			rot: -n * 6,
-			...Q(Ef, .75),
+			...Q(Wf, .75),
 			a: .75 * l * (1 - u)
 		}), {
 			x: e.x,
@@ -14357,7 +14873,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 2.4,
-			...Q(Of, 1.2),
+			...Q(Kf, 1.2),
 			a: +(n < .35),
 			halo: 1
 		}), Z(c, {
@@ -14396,9 +14912,9 @@ var Lf = (e, t) => {
 				y: d,
 				z: e.z + o * (.3 + u),
 				mode: "flat",
-				...Lf(a, o),
+				...tp(a, o),
 				scale: .6,
-				...Q(kf, 1.2),
+				...Q(qf, 1.2),
 				a: +(n < .3),
 				halo: 1
 			});
@@ -14412,7 +14928,7 @@ var Lf = (e, t) => {
 				z: s.z + o * .3,
 				mode: "billboard",
 				scale: 2,
-				...Q(kf, 1.3),
+				...Q(qf, 1.3),
 				a: +(c > 0 && c < .28),
 				halo: 1
 			});
@@ -14453,7 +14969,7 @@ var Lf = (e, t) => {
 			mode: "billboard",
 			scale: 1.1,
 			rot: .6,
-			...Q(Of, 1.3),
+			...Q(Kf, 1.3),
 			a: +(n > .12 && n < .4),
 			halo: 1
 		}), Z(l, {
@@ -14464,7 +14980,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.4,
-			...Q(Of, 1.4),
+			...Q(Kf, 1.4),
 			a: +(n > .14 && n < .5),
 			halo: 1
 		}), n > .12 ? {
@@ -14482,7 +14998,7 @@ var Lf = (e, t) => {
 		if (n == null) return null;
 		let s = $(t, "q", 14), [c] = $(t, "r", 1), l = 1 - Y((n - 5.4) / .6), u = Math.max(.6, e.r);
 		return s.forEach((r, a) => {
-			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = _f((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
+			let o = (a * 137.5 + t.seed) % 360 * Math.PI / 180, s = u * .85 * Math.sqrt((a * 61 + t.seed) % 97 / 97), c = e.tx + Math.cos(o) * s, d = e.tz + Math.sin(o) * s, f = Ff((n - a * .015) / .25), p = .6 + .4 * Math.sin(n * 6 + a * 1.7);
 			Z(r, {
 				frame: "partyIceShard",
 				index: a % 4,
@@ -14491,7 +15007,7 @@ var Lf = (e, t) => {
 				z: d,
 				mode: "billboard",
 				scale: .55,
-				...Q(Af, .8 + .6 * p),
+				...Q(Jf, .8 + .6 * p),
 				a: f > 0 ? l : 0
 			});
 		}), Z(c, {
@@ -14502,7 +15018,7 @@ var Lf = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * u / 6,
-			...Q(Of, .5),
+			...Q(Kf, .5),
 			a: .7 * Y(n / .3) * l
 		}), null;
 	},
@@ -14517,7 +15033,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: .1 + .12 * Y(n / .7),
 			rot: n * 2.2,
-			...Q(gf, .9),
+			...Q(Pf, .9),
 			a: n < .7 ? .8 + .2 * Math.sin(n * 30) : 1 - Y(p / .3)
 		}), Z(c, {
 			frame: "pillar",
@@ -14527,7 +15043,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .2,
 			mode: "billboard",
 			scale: 1.4,
-			...Q(gf, 1.1),
+			...Q(Pf, 1.1),
 			a: p > 0 ? 1 - Y((p - .25) / .3) : 0,
 			halo: 1
 		}), Z(l, {
@@ -14541,7 +15057,7 @@ var Lf = (e, t) => {
 			r: 2,
 			g: 1.5,
 			b: .7,
-			a: p > 0 ? _f((.25 - p) / .1) : 0,
+			a: p > 0 ? Ff((.25 - p) / .1) : 0,
 			halo: 1
 		}), Z(u, {
 			frame: "impact",
@@ -14566,7 +15082,7 @@ var Lf = (e, t) => {
 				z: e.tz + Math.sin(i) * a,
 				mode: "billboard",
 				scale: 1,
-				...Q(gf),
+				...Q(Pf),
 				a: p > 0 ? 1 - Y((p - .25) / .35) : 0,
 				halo: 1
 			});
@@ -14593,7 +15109,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 5 * (1 - .6 * Y(n / .5)),
 			rot: n * 7,
-			...Q(jf, 1.1),
+			...Q(Yf, 1.1),
 			a: d
 		}), Z(c, {
 			frame: "partySwirl",
@@ -14604,7 +15120,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: e.r * 2 / 7 * (1 - .6 * Y(n / .5)),
 			rot: -n * 9,
-			...Q(jf, 1.4),
+			...Q(Yf, 1.4),
 			a: .8 * d,
 			halo: 1
 		}), l.forEach((t, r) => {
@@ -14616,9 +15132,9 @@ var Lf = (e, t) => {
 				y: i(s, c) + .4,
 				z: c,
 				mode: "flat",
-				...Lf(e.tx - a.x, e.tz - a.z),
+				...tp(e.tx - a.x, e.tz - a.z),
 				scale: .45,
-				...Q(jf, 1.3),
+				...Q(Yf, 1.3),
 				a: +(n < .45)
 			});
 		}), {
@@ -14672,7 +15188,7 @@ var Lf = (e, t) => {
 			}
 		}
 		return t.spikes.forEach((e) => r.crystals.set(e, {
-			rise: vf(n / .13) * (1 - c),
+			rise: If(n / .13) * (1 - c),
 			crack: Y((n - 2.1) / .3),
 			glint: Y(n / .4),
 			glow: 1.1
@@ -14691,7 +15207,7 @@ var Lf = (e, t) => {
 				z: s.z + o * .12,
 				mode: "billboard",
 				scale: 1.15 - .1 * Y(n / .1),
-				...Q(Mf, .85),
+				...Q(Xf, .85),
 				a: +(n > .05) * (1 - c),
 				halo: 1
 			});
@@ -14717,7 +15233,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 4,
 			rot: .3,
-			...Q(Mf, .55),
+			...Q(Xf, .55),
 			a: .8 * f
 		}), Z(s, {
 			frame: "partySwirl",
@@ -14728,7 +15244,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * 1.1,
 			rot: n * 2.4,
-			...Q(Mf, .9),
+			...Q(Xf, .9),
 			a: .85 * f
 		}), Z(c, {
 			frame: "partySwirl",
@@ -14739,7 +15255,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: 2 * p / 5 * .75,
 			rot: -n * 3.6,
-			...Q(Mf, 1.1),
+			...Q(Xf, 1.1),
 			a: .85 * f,
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -14752,7 +15268,7 @@ var Lf = (e, t) => {
 				z: c,
 				mode: "billboard",
 				scale: 1.4,
-				...Q(Mf, 1.3),
+				...Q(Xf, 1.3),
 				a: f * +(i < .95)
 			});
 		}), {
@@ -14777,7 +15293,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: 2 * f / 8,
 			rot: n * .6,
-			...Q(pf.core, .8),
+			...Q(jf.core, .8),
 			a: .9 * d,
 			halo: 1
 		}), c.forEach((t, r) => {
@@ -14790,7 +15306,7 @@ var Lf = (e, t) => {
 				z: e.tz + Math.sin(a) * o,
 				mode: "billboard",
 				scale: .9,
-				...Q(pf.core),
+				...Q(jf.core),
 				a: d * (1 - i),
 				halo: 1
 			});
@@ -14804,7 +15320,7 @@ var Lf = (e, t) => {
 				mode: "flat",
 				scale: .9,
 				rot: n,
-				...Q(pf.core, .9),
+				...Q(jf.core, .9),
 				a: d,
 				halo: 1
 			});
@@ -14879,7 +15395,7 @@ var Lf = (e, t) => {
 			mode: "billboard",
 			scale: p,
 			...Q(J.body),
-			a: .95 * _f((1 - n) / .4)
+			a: .95 * Ff((1 - n) / .4)
 		}), Z(c, {
 			frame: "partyPillar",
 			index: 0,
@@ -14889,7 +15405,7 @@ var Lf = (e, t) => {
 			mode: "billboard",
 			scale: p,
 			...Q(J.core),
-			a: _f((.5 - n) / .2),
+			a: Ff((.5 - n) / .2),
 			halo: 1
 		}), Z(l, {
 			frame: "partySunburst",
@@ -14915,7 +15431,7 @@ var Lf = (e, t) => {
 			a: n > .3 ? 1 - Y((n - .45) / .25) : 0,
 			halo: 1
 		}), d.forEach((t, r) => {
-			let i = _f((n - r * .08) / 1.1), a = r * 1.047;
+			let i = Ff((n - r * .08) / 1.1), a = r * 1.047;
 			Z(t, {
 				frame: "partyHolyOrb",
 				index: r % 2,
@@ -14964,7 +15480,7 @@ var Lf = (e, t) => {
 				mode: "billboard",
 				scale: .5,
 				...Q(J.body),
-				a: c > 0 ? _f((.35 - c) / .12) : 0,
+				a: c > 0 ? Ff((.35 - c) / .12) : 0,
 				halo: 1
 			});
 		});
@@ -14978,7 +15494,7 @@ var Lf = (e, t) => {
 			mode: "billboard",
 			scale: h,
 			...Q(J.body, 1.2),
-			a: m > 0 ? _f((.45 - m) / .15) : 0
+			a: m > 0 ? Ff((.45 - m) / .15) : 0
 		}), Z(l, {
 			frame: "partyPillar",
 			index: 0,
@@ -14988,7 +15504,7 @@ var Lf = (e, t) => {
 			mode: "billboard",
 			scale: h,
 			...Q(J.core, 1.2),
-			a: m > 0 ? _f((.3 - m) / .1) : 0,
+			a: m > 0 ? Ff((.3 - m) / .1) : 0,
 			halo: 1
 		}), Z(u, {
 			frame: "partySunburst",
@@ -15024,7 +15540,7 @@ var Lf = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * Math.max(.6, e.r) / 6 * (.4 + .6 * Y(n / .25)),
-			...Q(Pf, .9),
+			...Q(Qf, .9),
 			a: 1 - Y((n - .3) / .4)
 		}), c.forEach((t, r) => {
 			let s = e.reached[Math.floor(r / 3)], c = r % 3 * 2.094 + .5, l = s.x + Math.cos(c) * .22, d = s.z + Math.sin(c) * .22;
@@ -15063,7 +15579,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: .7 + .15 * d,
-			...Q(d >= 3 ? Ff : Nf, 1.1 + .2 * d),
+			...Q(d >= 3 ? $f : Zf, 1.1 + .2 * d),
 			a: 1 - Y((n - .45) / .3),
 			halo: 1
 		}), Z(c, {
@@ -15074,7 +15590,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .32,
 			mode: "billboard",
 			scale: 2.6,
-			...Q(Ff, 1.3),
+			...Q($f, 1.3),
 			a: +(d >= 3 && n < .35),
 			halo: 1
 		}), Z(l, {
@@ -15085,7 +15601,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.3,
-			...Q(Ff, 1.2),
+			...Q($f, 1.2),
 			a: d >= 3 ? Math.max(0, 1 - n / .4) : 0,
 			halo: 1
 		}), d >= 3 ? {
@@ -15132,7 +15648,7 @@ var Lf = (e, t) => {
 			mode: "flat",
 			scale: 2.2,
 			rot: n * .4,
-			...Q(Nf, .8),
+			...Q(Zf, .8),
 			a: .85 * c * (1 - l),
 			halo: 1
 		}), Z(f, {
@@ -15143,7 +15659,7 @@ var Lf = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: .3 + .7 * (1 - u),
-			...Q(Nf, 1.2),
+			...Q(Zf, 1.2),
 			a: c * (1 - l) * (1 - Y(u / .8))
 		}), {
 			x: e.tx,
@@ -15167,7 +15683,7 @@ var Lf = (e, t) => {
 			z: e.tz,
 			mode: "flat",
 			scale: 2 * p / 6 * (.15 + .95 * f),
-			...Q(Nf, 1.4),
+			...Q(Zf, 1.4),
 			a: 1 - Y((n - .25) / .3),
 			halo: 1
 		}), Z(c, {
@@ -15192,7 +15708,7 @@ var Lf = (e, t) => {
 			z: e.tz + o * .3,
 			mode: "billboard",
 			scale: 1.5,
-			...Q(Nf, 1.3),
+			...Q(Zf, 1.3),
 			a: Math.max(0, 1 - n / .3),
 			halo: 1
 		}), u.forEach((t, r) => {
@@ -15204,9 +15720,9 @@ var Lf = (e, t) => {
 				y: i(a.x, a.z) + .4,
 				z: a.z,
 				mode: "flat",
-				...Lf(a.x - e.tx, a.z - e.tz),
+				...tp(a.x - e.tx, a.z - e.tz),
 				scale: .55,
-				...Q(Nf, 1.2),
+				...Q(Zf, 1.2),
 				a: +(o > 0 && o < .4)
 			});
 		}), {
@@ -15247,7 +15763,7 @@ var Lf = (e, t) => {
 			z: e.z + o * .12,
 			mode: "billboard",
 			scale: 1.1,
-			...Q(Mf, .85),
+			...Q(Xf, .85),
 			a: Y(t.t / .1),
 			halo: 1
 		}), null;
@@ -15271,26 +15787,26 @@ var Lf = (e, t) => {
 			});
 		}), null;
 	}
-}, zf = {
+}, rp = {
 	ready: !1,
 	async load(e, t = [], n = "vale") {
-		let r = ++_u;
-		n !== Od && (Od = n, Dd.clear());
+		let r = ++Fu;
+		n !== Kd && (Kd = n, Gd.clear());
 		let i = Rn(e).level;
-		return gu = (async () => {
-			G ? await G.swapLevel(i, { spawn: i.spawn }) : await Hd(i), r === _u && (Ud(), ff = !!i.environment?.interior, zf.settings({ dof: vu }), wd(i, n), await sd(t, n));
-		})(), await gu, r === _u;
+		return Pu = (async () => {
+			G ? await G.swapLevel(i, { spawn: i.spawn }) : await sf(i), r === Fu && (cf(), Af = !!i.environment?.interior, rp.settings({ dof: Iu }), Hd(i, n), await Td(t, n));
+		})(), await Pu, r === Fu;
 	},
 	settings(e = {}) {
-		e.dof && (vu = e.dof), e.bright > 0 && (md = e.bright), e.figLit > 0 && (gd = e.figLit), e.figMax > 0 && (_d = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Mu = e.figures), [
+		e.dof && (Iu = e.dof), e.bright > 0 && (Md = e.bright), e.figLit > 0 && (Pd = e.figLit), e.figMax > 0 && (Fd = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Xu = e.figures), [
 			"chosen",
 			"doors",
 			"all",
 			"sprites"
-		].includes(e.landmarks) && (Qu = e.landmarks);
+		].includes(e.landmarks) && (gd = e.landmarks);
 		let t = G?.postfx?.settings;
 		t?.dof && Object.assign(t.dof, {
-			enabled: vu !== "off" && !ff,
+			enabled: Iu !== "off" && !Af,
 			focusRange: 16,
 			tiltShift: .14,
 			tiltWidth: .62
@@ -15298,19 +15814,19 @@ var Lf = (e, t) => {
 	},
 	frame(e) {
 		if (!G || !G.engine) return;
-		hd = e.bright > 0 ? e.bright : 1, Bd.x = e.focus[0], Bd.y = e.focus[1], Bd.z = e.focus[2], Bd.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((G.lighting?.timeOfDay ?? -1) - e.hour) > .004 && G.setTime(e.hour), e.weather && G.weather?.weather !== e.weather && G.setWeather(e.weather), G.lighting?.settings && (G.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), G.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && G.player && (Ud(), G.player.position.set(e.hero[0], G.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), vd = xd();
+		Nd = e.bright > 0 ? e.bright : 1, af.x = e.focus[0], af.y = e.focus[1], af.z = e.focus[2], af.ppu = e.ppu, Number.isFinite(e.hour) && Math.abs((G.lighting?.timeOfDay ?? -1) - e.hour) > .004 && G.setTime(e.hour), e.weather && G.weather?.weather !== e.weather && G.setWeather(e.weather), G.lighting?.settings && (G.lighting.settings.fogMul = 1 + .6 * (e.fog || 0), G.lighting.settings.pointLightMul = e.ambient?.lamps ?? 1), e.hero && G.player && (cf(), G.player.position.set(e.hero[0], G.tileMap.getHeight(e.hero[0], e.hero[1]), e.hero[1])), Id = zd();
 		let t = /* @__PURE__ */ new Map(), n = G.engine.camera, r = /* @__PURE__ */ new Map();
-		Ku++, n.getWorldDirection(Nu);
-		let i = Math.atan2(-Nu.x, -Nu.z);
+		ud++, n.getWorldDirection(Zu);
+		let i = Math.atan2(-Zu.x, -Zu.z);
 		for (let a of e.actors) {
 			let o = r.get(a.name) || 0;
-			if (r.set(a.name, o + 1), Yu(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
-			let s = Du(a.name);
+			if (r.set(a.name, o + 1), pd(a, a.key ?? `${a.name}#${o}`, Math.max(0, Math.min(.1, e.dt || 0)), i)) continue;
+			let s = Gu(a.name);
 			if (!s) continue;
-			let c = a.cw ? a.cw / s.meta.cw : 1, l = Ou(s, c), u = t.get(l) || 0;
+			let c = a.cw ? a.cw / s.meta.cw : 1, l = Ku(s, c), u = t.get(l) || 0;
 			t.set(l, u + 1);
-			let d = Au(l, u);
-			d.visible = !0, d.material.emissiveIntensity !== vd && (d.material.emissiveIntensity = vd), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), ju(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
+			let d = Ju(l, u);
+			d.visible = !0, d.material.emissiveIntensity !== Id && (d.material.emissiveIntensity = Id), (d._col !== a.col || d._row !== a.row) && d.setFrame(a.col, a.row), Yu(d, a.x, a.z, (s.meta.ch - s.meta.ay) * c, l.pixelsPerUnit * c);
 			let f = a.flash || 0, p = f ? 0 : Math.round((a.warn || 0) * 20) / 20;
 			if (d._emberFlash !== f || d._emberWarn !== p) {
 				d._emberFlash = f, d._emberWarn = p;
@@ -15321,10 +15837,10 @@ var Lf = (e, t) => {
 			Math.abs(d.opacity - m) > .01 && (d.opacity = m), d.update(0, n);
 		}
 		for (let r of e.bits || []) {
-			let e = jd(r), i = t.get(e) || 0;
+			let e = Yd(r), i = t.get(e) || 0;
 			t.set(e, i + 1);
-			let a = Md(e, i), o = r.glow ? 1.6 : .3;
-			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), ju(a, r.x, r.z, r.canvas.height - r.ay - r.lift, lu);
+			let a = Xd(e, i), o = r.glow ? 1.6 : .3;
+			a.visible = !0, a.material.emissiveIntensity !== o && (a.material.emissiveIntensity = o), Yu(a, r.x, r.z, r.canvas.height - r.ay - r.lift, Du);
 			let s = r.flash || 0;
 			if (a._emberFlash !== s) {
 				a._emberFlash = s;
@@ -15333,11 +15849,11 @@ var Lf = (e, t) => {
 			}
 			a.update(0, n);
 		}
-		for (let [e, n] of ku) {
+		for (let [e, n] of qu) {
 			let r = t.get(e) || 0;
 			for (let e = r; e < n.length; e++) n[e].visible && (n[e].visible = !1);
 		}
-		Xu();
+		md();
 		let a = {
 			ring: 0,
 			disc: 0,
@@ -15347,30 +15863,30 @@ var Lf = (e, t) => {
 			wrim: 0,
 			lane: 0
 		};
-		for (let t of e.rings || []) tf(ef("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
+		for (let t of e.rings || []) bf(yf("ring", a.ring++), t.x, t.z, 1, t.col, t.a);
 		if (e.mark) {
-			let t = ef("focus", a.focus++);
-			tf(t, e.mark.x, e.mark.z, 1, [
+			let t = yf("focus", a.focus++);
+			bf(t, e.mark.x, e.mark.z, 1, [
 				255,
 				226,
 				150
-			], .7 + .2 * Math.sin(uf * 4)), t.rotation.z = uf, uf += (e.dt || 0) * .9;
+			], .7 + .2 * Math.sin(Of * 4)), t.rotation.z = Of, Of += (e.dt || 0) * .9;
 		}
-		for (let t of e.hazards || []) tf(ef("disc", a.disc++), t.x, t.z, t.r, t.col, .82 * t.a), tf(ef("rim", a.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
+		for (let t of e.hazards || []) bf(yf("disc", a.disc++), t.x, t.z, t.r, t.col, .82 * t.a), bf(yf("rim", a.rim++), t.x, t.z, t.r, t.rim, .42 * t.a);
 		for (let t of e.warns || []) {
 			let e = t.heavy ? 1 : .62, n = t.hit > 0 ? t.hit : 1, r = 1 - (1 - t.p) * (1 - t.p);
-			t.lane ? (nf(ef("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, of, .3 * e * n), nf(ef("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, rf, .16 * e * n), nf(ef("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? af : rf, (.22 + .28 * t.p) * e * n), tf(ef("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? af : rf, (.35 + .4 * t.p) * e * n)) : (tf(ef("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, of, .5 * n), tf(ef("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? af : rf, (.26 + .3 * t.p) * n), tf(ef("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? af : rf, (.7 + .3 * t.p) * n));
+			t.lane ? (xf(yf("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w * 1.25, wf, .3 * e * n), xf(yf("lane", a.lane++), t.x, t.z, t.tx, t.tz, 1, t.w, Sf, .16 * e * n), xf(yf("lane", a.lane++), t.x, t.z, t.tx, t.tz, t.p, t.w * .7, t.hit > 0 ? Cf : Sf, (.22 + .28 * t.p) * e * n), bf(yf("wrim", a.wrim++), t.tx, t.tz, t.heavy ? .42 : .3, t.hit > 0 ? Cf : Sf, (.35 + .4 * t.p) * e * n)) : (bf(yf("wrim", a.wrim++), t.tx, t.tz, t.r * 1.1, wf, .5 * n), bf(yf("wfill", a.wfill++), t.tx, t.tz, t.r * r, t.hit > 0 ? Cf : Sf, (.26 + .3 * t.p) * n), bf(yf("wrim", a.wrim++), t.tx, t.tz, t.r, t.hit > 0 ? Cf : Sf, (.7 + .3 * t.p) * n));
 		}
-		Nd(e.water);
-		for (let e of Object.keys(Qd)) for (let t = a[e]; t < Qd[e].length; t++) Qd[e][t].visible = !1;
-		if (lf !== _u) {
-			lf = _u, cf = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null, sf = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null, yf = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
-			for (let e of bf.values()) X && wf(e);
-			bf.clear();
+		Zd(e.water);
+		for (let e of Object.keys(_f)) for (let t = a[e]; t < _f[e].length; t++) _f[e][t].visible = !1;
+		if (Df !== Fu) {
+			Df = Fu, Ef = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null, Tf = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null, Lf = G.world?.acquireSpellLight?.({ minor: !1 }) ?? null;
+			for (let e of Rf.values()) X && Hf(e);
+			Rf.clear();
 		}
-		if (cf && e.hero) {
-			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = Mu === "models" ? 3.6 : 2.4, a = Mu === "models" ? 1.75 : 1;
-			cf.set(n, G.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
+		if (Ef && e.hero) {
+			let t = Math.max(0, Math.min(1, e.carry ?? 0)), n = e.hero[0] + .35, r = e.hero[1] + .35, i = Xu === "models" ? 3.6 : 2.4, a = Xu === "models" ? 1.75 : 1;
+			Ef.set(n, G.tileMap.getHeight(e.hero[0], e.hero[1]) + i, r, {
 				color: [
 					1.9,
 					1.15,
@@ -15382,9 +15898,9 @@ var Lf = (e, t) => {
 				flicker: .12
 			});
 		}
-		if (sf) {
+		if (Tf) {
 			let t = e.blast;
-			t && t.k > .01 ? sf.set(t.x, G.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
+			t && t.k > .01 ? Tf.set(t.x, G.tileMap.getHeight(t.x, t.z) + 1.6, t.z, {
 				color: [
 					2,
 					.95,
@@ -15394,23 +15910,23 @@ var Lf = (e, t) => {
 				distance: 7,
 				decay: 1.6,
 				flicker: .25
-			}) : sf.off();
+			}) : Tf.off();
 		}
-		Tf(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length));
+		Uf(e.spells || [], e.dt || 0, e.ambient?.lamps, !!(e.rings && e.rings.length));
 		let o = 0;
 		for (let t of e.beasts || []) {
-			let e = kd(t.id);
+			let e = qd(t.id);
 			if (!e) continue;
-			let r = Fd(o++, e);
-			r.visible = !0, ju(r, t.x, t.z, e.below, lu), r.update(0, n);
+			let r = $d(o++, e);
+			r.visible = !0, Yu(r, t.x, t.z, e.below, Du), r.update(0, n);
 		}
-		for (let e = o; e < Pd.length; e++) Pd[e]?.visible && (Pd[e].visible = !1);
-		df = e.ambient || null;
-		for (let e of Zu) e.update?.(0, n);
-		zd(e.light), G.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
+		for (let e = o; e < Qd.length; e++) Qd[e]?.visible && (Qd[e].visible = !1);
+		kf = e.ambient || null;
+		for (let e of hd) e.update?.(0, n);
+		rf(e.light), G.engine.step(Math.max(0, Math.min(.1, e.dt)), { render: e.draw !== !1 });
 	},
 	sprites(e) {
-		G && sd(e, Od);
+		G && Td(e, Kd);
 	},
 	project(e, t, n) {
 		if (!G) return null;
@@ -15421,55 +15937,55 @@ var Lf = (e, t) => {
 		return G?.tileMap ? G.tileMap.getHeight(e, t) : null;
 	},
 	get stats() {
-		let e = (e) => Qd[e].filter((e) => e.visible).length;
+		let e = (e) => _f[e].filter((e) => e.visible).length;
 		return {
-			bits: [...ku.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
+			bits: [...qu.entries()].filter(([e]) => e.name === "ember-bit").reduce((e, [, t]) => e + t.filter((e) => e.visible).length, 0),
 			water: K.mesh && K.mesh.visible ? K.mesh.count : 0,
-			fig: vd,
-			lit: Math.round(yd * 100) / 100,
-			beasts: Pd.filter((e) => e?.visible).length,
+			fig: Id,
+			lit: Math.round(Ld * 100) / 100,
+			beasts: Qd.filter((e) => e?.visible).length,
 			light: +!!q.on,
 			lightDepth: q.on && q.keyed && G?.postfx?.depthTexture ? 1 : 0,
 			rings: e("ring"),
 			hazards: e("disc"),
 			warns: e("wrim"),
 			lanes: e("lane"),
-			spells: bf.size,
+			spells: Rf.size,
 			dome: X && X.domeOf ? 1 : 0,
 			blades: X ? X.blades.count - (X.warmN > 0 ? 2 : 0) : 0,
 			crystals: X ? X.crystals.count - +(X.warmN > 0) : 0,
 			frost: X ? X.frost.count - +(X.warmN > 0) : 0,
-			spellLight: yf && X ? 1 : 0,
+			spellLight: Lf && X ? 1 : 0,
 			focus: e("focus"),
-			carry: +!!cf,
-			level: _u,
-			actors: [...ku.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...Gu.values()].filter((e) => e.root.visible).length,
-			models: [...Gu.values()].filter((e) => e.root.visible).length,
-			figErr: Lu,
-			figFailed: [...Uu.values()].filter((e) => e === !1).length,
+			carry: +!!Ef,
+			level: Fu,
+			actors: [...qu.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...ld.values()].filter((e) => e.root.visible).length,
+			models: [...ld.values()].filter((e) => e.root.visible).length,
+			figErr: td,
+			figFailed: [...sd.values()].filter((e) => e === !1).length,
 			pr: G?.engine?.pixelRatio ?? null,
 			dpr: devicePixelRatio || 1,
-			modelMeshes: [...Uu.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
-			modelMeshesBefore: [...Uu.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
-			figures: Mu,
-			atlases: Eu.size,
-			env: Zu.length,
-			sky: Cd,
-			ours: Zu.filter((e) => e.name.startsWith("ember:prop:")).length,
+			modelMeshes: [...sd.values()].filter(Boolean).map((e) => e.meshes.after).reduce((e, t) => e + t, 0),
+			modelMeshesBefore: [...sd.values()].filter(Boolean).map((e) => e.meshes.before).reduce((e, t) => e + t, 0),
+			figures: Xu,
+			atlases: Wu.size,
+			env: hd.length,
+			sky: Vd,
+			ours: hd.filter((e) => e.name.startsWith("ember:prop:")).length,
 			programs: G?.engine?.renderer?.info?.programs?.length ?? null
 		};
 	}
 };
-function Bf(e) {
-	if (mu) throw Error("createWorld: one world a page");
-	return mu = e.container, hu = e.uiRoot, ou = e.assets, du = Nn("en"), Ft(), fu = An({
-		lang: du,
+function ip(e) {
+	if (Mu) throw Error("createWorld: one world a page");
+	return Mu = e.container, Nu = e.uiRoot, wu = e.assets, ku = Nn("en"), Ft(), Au = An({
+		lang: ku,
 		px: jn({
 			w: innerWidth,
 			h: innerHeight,
 			dpr: devicePixelRatio || 1
 		}).px
-	}), pu = Wr(du, {}), zf.ready = !0, zf;
+	}), ju = Wr(ku, {}), rp.ready = !0, rp;
 }
 //#endregion
-export { Bf as createWorld };
+export { ip as createWorld };
