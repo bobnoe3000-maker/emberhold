@@ -657,6 +657,7 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
+const OCC_RAY = new THREE.Raycaster();   // (occluded(): the visibility check's ray)
 let CARRY_UP = 6, CARRY_GAIN = 1.6;   // (the carry light over the models: its height and strength; settings({ carryUp, carryGain }) for look-dev)
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
@@ -1213,6 +1214,40 @@ const api = {
     if (!game) return null;
     const v = new THREE.Vector3(x, y, z).project(game.engine.camera);
     return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight];
+  },
+  /** (for checks: docs/level-design-rules.md §5, the browser suite's visibility check) whether each point of Luminati's
+   * is hidden from the camera by the world: a ray from the point toward the camera, against what's drawn and could hide
+   * someone (houses, walls, trees, rocks, kit pieces, the cards of the world), not the people, the beasts, the ground's
+   * rings or the effects. A card's hit near its edges is let through (a card's corners are clear). Returns, for each point,
+   * the hiding piece's name, or null where it's in view. @param {[number, number, number][]} pts */
+  occluded(pts) {
+    if (!game) return pts.map(() => null);
+    const cam = game.engine.camera, skip = new Set(), list = [];
+    for (const f of figs.values()) skip.add(f.root);
+    for (const p of pools.values()) for (const q of p) skip.add(q);
+    for (const q of beastPool) if (q) skip.add(q);
+    for (const k of Object.keys(groundPools)) for (const m of groundPools[k]) skip.add(m);
+    const walk = (o) => {
+      if (skip.has(o) || !o.visible) return;
+      if (o.parent && o.parent.shadowProxy === o) return;
+      const m = o.material, mm = Array.isArray(m) ? m[0] : m;
+      if ((o.isMesh || o.isInstancedMesh) && !o.isPoints && mm && mm.colorWrite !== false && mm.depthWrite !== false && !(mm.transparent && mm.opacity < 0.5)) list.push(o);
+      for (const c of o.children) walk(c);
+    };
+    walk(game.engine.scene);
+    const ray = OCC_RAY, at = new THREE.Vector3(), to = new THREE.Vector3(), dir = new THREE.Vector3();
+    ray.camera = cam;
+    return pts.map(([x, y, z]) => {
+      at.set(x, y, z);
+      if (cam.isOrthographicCamera) { cam.getWorldDirection(dir).multiplyScalar(-1); ray.far = 400; }
+      else { cam.getWorldPosition(to); dir.copy(to).sub(at); ray.far = dir.length(); dir.normalize(); }
+      ray.set(at.clone().addScaledVector(dir, 0.05), dir);
+      for (const h of ray.intersectObjects(list, false)) {
+        if (h.object.name === 'Sprite3D.mesh' && h.uv && (h.uv.x < 0.15 || h.uv.x > 0.85 || h.uv.y > 0.92)) continue;   // (a card's clear margin)
+        return h.object.name || h.object.parent?.name || h.object.type;
+      }
+      return null;
+    });
   },
   /** (for checks) the ground's height at a point of Luminati's, as its figures stand on it (a stair's step, a bridge's deck) */
   ground(x, z) { return game?.tileMap ? game.tileMap.getHeight(x, z) : null; },

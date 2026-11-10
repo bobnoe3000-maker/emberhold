@@ -10,6 +10,7 @@ import { generateLevel, THEME_KEYS, FLOOR_Z, WALL_Z } from './level.js';
 import { oHeightAt, oMaterialAt, oIsWalkable } from './outdoor.js';
 import { hypot, atan2, sin, cos } from './detmath.js';
 import { siteOf, roomLevelAt, hasFloorBelow, themeAt, familyAt, dressAt, planFloor } from './sites.js';
+import { mayPlace, REPEAT as REPEAT_CAPPED } from './dresscaps.js';
 
 export const CHUNK = 32;
 export const TILE = 16;
@@ -200,9 +201,19 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const human = FAM === 'redhand' || FAM === 'reedmen' || FAM === 'diggers', gob = FAM === 'goblin';
   const decor = KIT ? KIT.decor : human ? ['crates', 'barrels', 'sacks'] : gob ? ['sacks', 'totem', 'crates'] : ['spire', 'monolith', 'totem'];
   const themes = KIT ? KIT.rooms : human ? ['storehouse', 'camp', 'colonnade'] : gob ? ['camp', 'storehouse', 'ossuary'] : FAM === 'chapel' || FAM === 'drowned' ? ['nave', 'crypt', 'ossuary'] : ['colonnade', 'crypt', 'ossuary'];
+  // (docs/level-design-rules.md §4.3: a room holds as many of a piece as its size allows, dresscaps.js; the owner,
+  // 2026-11-10: "dont repeat with 6+ torches unless the room is large". A piece past its cap isn't set down)
+  const roomHas = new Map(), roomSize = new Map(level.rooms.map((r) => [r.id, r.size || 'large']));
   const place = (px, py, kind) => {
     const k = K(px, py), c = level.cells.get(k);
-    if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) { world.props.set(k, kind); return true; }
+    if (c && c.kind === 'floor' && !c.corridor && !world.props.has(k) && NONWALK_OK(world, px, py)) {
+      if (c.room >= 0 && REPEAT_CAPPED.has(kind)) {
+        let has = roomHas.get(c.room); if (!has) roomHas.set(c.room, (has = new Map()));
+        if (!mayPlace(kind, roomSize.get(c.room) || 'large', has)) return false;
+        has.set(kind, (has.get(kind) || 0) + 1);
+      }
+      world.props.set(k, kind); return true;
+    }
     return false;
   };
   const isFloor = (x, y) => { const c = level.cells.get(K(x, y)); return c && c.kind === 'floor'; };

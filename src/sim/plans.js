@@ -4,9 +4,9 @@
 // 5 rooms or large corridors total per floor. There can be hallways but perhaps at least 8 wide. No more than 2 levels
 // down. Dressing and even layout should fit to the dungeon type").
 //
-// A PROPOSAL, not yet built from: level.js still generates every floor (halls.js, the caverns). When the owner signs the
-// plan off, generateLevel builds a Vale floor from its plan here instead (the same shape out: cells, rooms, edges, spawn,
-// entrance, descentRoom), and sites.js takes its floors, levels and bosses from it. Until then the plans are drawn by
+// Built (2026-11-02, the owner: "Same layout every visit"; docs/level-design-rules.md §4.1): level.js generateLevel
+// builds a Vale floor from its plan here (the same shape out as halls.js: cells, rooms, edges, spawn, entrance,
+// descentRoom), and sites.js takes its floors, levels and bosses from it. The plans are drawn by
 // tools/dungeon/vale-plans.mjs and held to their rules by test/plans.test.mjs.
 //
 // A floor is up to five SPACES (the entrance, the rooms, a large corridor such as the Long Gallery, an offshoot) joined

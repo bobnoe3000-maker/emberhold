@@ -262,6 +262,16 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
     get world() { return api; },
     /** (for checks) a ground point of ours on the screen, CSS px: where Emberlit puts it (its overlay, its taps) and where
      * Luminati draws it; the two should agree to a pixel or two @param {number} x @param {number} y */
+    /** (for checks: docs/level-design-rules.md §5) how much of someone standing at a point of ours (sim tiles) the world
+     * hides from the camera: six points up a man's height (feet, waist and head, either side), each hidden or not; the
+     * share in view and what hid the rest @param {number} x @param {number} y @param {number} [tall] units (a man ≈ 1.75) */
+    sees(x, y, tall = 1.75) {
+      if (!api || !api.occluded) return null;
+      const lx = (x - origin.x) / 2, lz = (y - origin.y) / 2, g = api.ground(lx, lz) ?? GROUND_Y, pts = [];
+      for (const h of [0.25, 0.5, 0.9]) for (const s of [-0.18, 0.18]) pts.push([lx + s, g + h * tall, lz + s * 0.3]);
+      const hid = api.occluded(pts), n = hid.filter((q) => q === null).length;
+      return { seen: n / pts.length, by: [...new Set(hid.filter(Boolean))] };
+    },
     probe(x, y) {
       if (!lastC || !api) return null;
       const q = project(x, y, SIM_FLOOR), k = lastC.S / lastC.k;

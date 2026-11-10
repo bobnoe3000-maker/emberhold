@@ -128,7 +128,7 @@ test('Kidney Shot: on a foe winding up a blow or a shot; the blow is cut, the fo
   const f = foe(land.tid); assert.ok(log.interrupt.some((e) => e.by === land.tid), 'a wind-up cut'); assert.ok(!f || f.stun > 0 || f.hp <= 0, 'stunned');
 });
 test('Fan of Knives: cast on two or more in its fan (never one: `pair`), re-aimed as it lands', () => {
-  const { land, log } = fight('rogue', 'fan_of_knives'); assert.ok(land.reached.length >= 1); assert.ok(log.skill.some((e) => e.id === 'fan_of_knives' && e.at === 'cast'));
+  const { land, log } = fight('rogue', 'fan_of_knives', { secs: 240 }); /* (240: the rooms' dressing capped, v1.62, moved the foes; it waits for two in its fan) */ assert.ok(land.reached.length >= 1); assert.ok(log.skill.some((e) => e.id === 'fan_of_knives' && e.at === 'cast'));
 });
 test('Shadowstep: behind the most hurt shooter, a sure crit', () => {
   const { land, P, foe, after } = fight('rogue', 'shadowstep', { more: 0.05 }); const f = foe(land.tid);
@@ -182,7 +182,7 @@ test('Binding Roots: the foes closing in rooted where they stand', () => {
   const { land, foe } = fight('shaman', 'binding_roots', { more: 0.05 }); assert.ok(land.reached.some((o) => (foe(o.id) || {}).rooted > 0));
 });
 test('Old Marks: a mark a strike; the third breaks them, a burst and a stun', () => {
-  const { log, foe, sim } = fight('shaman', 'old_marks', { more: 25 });
+  const { log, foe, sim } = fight('shaman', 'old_marks', { more: 60 });   // (60: with the rooms' dressing capped, v1.62, its first target fell before a third mark in 25)
   const marks = log.skill.filter((e) => e.id === 'old_marks' && e.at === 'land').map((e) => e.marks); assert.ok(marks.includes(1) && marks.includes(2) && marks.includes(3), JSON.stringify(marks));
   const third = log.skill.find((e) => e.id === 'old_marks' && e.marks === 3); assert.ok(third); assert.ok(sim && (foe(third.tid) === undefined || true));
 });

@@ -895,6 +895,17 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify(cast) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }
+// 15d0. Seen (docs/level-design-rules.md §1.1): from the game's camera, what the player needs is at least half in view
+// wherever they meet it: Thornwick's spawn, its people, the step before each service's door and the gate; the Old
+// Barrows' first floor's way in, each room's middle and its stairs. The tool's own run (tools/capture/visibility.mjs:
+// a ray from six points up a man's height toward the camera, against the houses, walls, trees, rocks and cards)
+{
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, ['tools/capture/visibility.mjs', 'vale-town', 'barrows-f1'], { cwd: ROOT, encoding: 'utf8', timeout: 600000 * SLOW });
+  const out = (r.stdout || '').trim().split('\n'), last = out[out.length - 1] || String(r.error || r.stderr || '');
+  check('visibility: in Thornwick and on the Old Barrows\' first floor, the hero, the people, the service doors, the gate, each room and the stairs are at least half in view from the camera (docs/level-design-rules.md §1.1)',
+    r.status === 0 && /0 under/.test(last), out.filter((l) => /under|%/.test(l)).slice(0, 8).join(' · '));
+}
 // 15d1. Saltmere's square (its critic pass): on the home screen, as you wake, every one of Saltmere's people is in view
 // and a tap finds them (Mother Agnes stood in the Stilt House's footprint; how hidden each was, Emberlit's x-ray share,
 // went with its painting: docs/luminati-only-cleanup.md step 4)
