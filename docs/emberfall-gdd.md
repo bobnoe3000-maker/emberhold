@@ -769,8 +769,11 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
     little more warm light on it. **Armour and boots are worn too** (v1.65, the owner: "do the armour and boots on the
     body next"): armour is the body and arms of the kit it's made like (plate the knight's, fur the barbarian's,
     leathers the rogue's, robes the mage's; the cleric's vestments and the shaman's hide in their own cloth), boots the
-    legs, so a mage in plate looks it. A class in its own kit looks as it always did. Presentation only: the sim's gear
-    is as it was;
+    legs, so a cleric in plate looks it. What a class may wear is as it was (plate the fighter's and the cleric's, robes
+    the mage's: a mage can't put on plate). A class in its own kit looks as it always did. Presentation only: the sim's
+    gear is as it was. **The party card's portrait is the member's own** (v1.65, the owner: "do the party card portraits
+    next"): their face, hair and build under the helm and armour they wear, rendered as the baked portraits are, the
+    baked one shown while they look as their class was made;
   - **the Barbarian sets out as a barbarian** (v1.65): an axe, a targe, a fur hood, fur mail and fur boots, where the
     Knight has the sword, shield, great helm, plate and sabatons. It's even: at level 1 HP 146 and ATK 13 against 140
     and 12, crit 4 % against 5 %, dodge 6 % against 5 %. Measured (`roomlv.mjs --look hero_barbarian`, seed 20260807):

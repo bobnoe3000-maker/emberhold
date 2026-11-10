@@ -40,7 +40,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import ENV_LIST from './env.json';
 import TOWN_SETS from './town.json';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
-import { build as buildFigure, fitPpu, pose as poseFigure, compact } from './figure.js';
+import { build as buildFigure, fitPpu, pose as poseFigure, compact, findNode } from './figure.js';
 import './ground.js';
 
 let ASSETS = '';                                              // (the game's assets/: createWorld's `assets`)
@@ -1384,4 +1384,52 @@ export function createPreview(canvas, o) {
   // the context going takes this canvas's copies of them with it)
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (!dead) o.onError?.(new Error('preview: the WebGL context was lost')); });   // (close() lets it go on purpose: no error then)
   return api;
+}
+
+// ── a member's portrait (the party cards, the sheet's tabs: GDD v1.65, the owner: "do the party card portraits next"):
+// their own face, as the bake renders <actor>.face.png (tools/actor-lab/lab.js renderPortrait: the same three lights, the
+// three-quarter turn, the frame fixed to the head bone, supersampled and area-averaged, a light grade, the 1 px ink line),
+// from the same build as their figure in play: their look and what they wear on head and body. One small offscreen
+// renderer for every portrait, made at the first and kept (a portrait is drawn again only when the look changes).
+const PORT_W = 96, PORT_H = 112, PORT_SS = 3, PORT_INK = [8, 5, 14];
+let portR = null;
+/** @param {string} actor @param {any} look { appearance, gear } @param {{ assets?: string }} [o] @returns {Promise<HTMLCanvasElement|null>} */
+export async function renderPortrait(actor, look = null, o = {}) {
+  if (!ASSETS && o.assets) ASSETS = o.assets;
+  const c = await json(`${ASSETS}models/cast.json`); if (c && !cast) cast = c;
+  const def = c && c.actors[actor]; if (!def) return null;
+  const fig = await buildFigure(withLook(def.v, look), { far: false, load: loadModel, faces: async () => cast.faces });
+  fig.root.traverse((q) => { if (q.isMesh && q.material && q.material.isMeshStandardMaterial) { q.material = q.material.clone(); q.material.metalness = 0; q.material.roughness = Math.max(q.material.roughness ?? 1, 0.92); } });
+  poseFigure(fig, 'Idle', 0, true);
+  const L = fig.look; if (L) fig.root.scale.set(L.w, L.h, L.w);
+  fig.root.rotation.y = THREE.MathUtils.degToRad(22); fig.root.updateMatrixWorld(true);
+  const head = findNode(fig.root, 'head'); if (!head) return null;
+  const top = head.localToWorld(new THREE.Vector3(0, 1.08, 0)), chin = head.localToWorld(new THREE.Vector3(0, 0, 0.1));
+  const hh = top.y - chin.y, span = hh / 0.6, cy = top.y + hh * 0.1 - span / 2, cx = (top.x + chin.x) / 2, pitch = THREE.MathUtils.degToRad(8);
+  const cam = new THREE.OrthographicCamera(-(span * PORT_W / PORT_H) / 2, (span * PORT_W / PORT_H) / 2, span / 2, -span / 2, 0.1, 100);
+  cam.position.set(cx, cy + 20 * Math.sin(pitch), 20 * Math.cos(pitch)); cam.lookAt(cx, cy, 0); cam.updateMatrixWorld(true);
+  const s = new THREE.Scene(); s.add(fig.root);
+  s.add(new THREE.HemisphereLight(0xb8a8d8, 0x2a2030, 1.25));
+  const key = new THREE.DirectionalLight(0xffd4a8, 2.3); key.position.set(-1.6, 1.8, 2.4); s.add(key);
+  const fill = new THREE.DirectionalLight(0x8fa4ff, 0.55); fill.position.set(2.2, 0.4, 1.2); s.add(fill);
+  const rim = new THREE.DirectionalLight(0xc0a0ff, 1.6); rim.position.set(1.5, 2.2, -2.6); s.add(rim);
+  if (!portR) { portR = new THREE.WebGLRenderer({ alpha: true, antialias: false, preserveDrawingBuffer: true }); portR.outputColorSpace = THREE.SRGBColorSpace; portR.toneMapping = THREE.ACESFilmicToneMapping; portR.toneMappingExposure = 1; }
+  const BW = PORT_W * PORT_SS, BH = PORT_H * PORT_SS; portR.setPixelRatio(1); portR.setSize(BW, BH, false); portR.setClearColor(0, 0);
+  portR.render(s, cam);
+  const big = document.createElement('canvas'); big.width = BW; big.height = BH; const bx = big.getContext('2d', { willReadFrequently: true }); bx.drawImage(portR.domElement, 0, 0);
+  const b = bx.getImageData(0, 0, BW, BH).data, d = new Uint8ClampedArray(PORT_W * PORT_H * 4), SS = PORT_SS;
+  for (let y = 0; y < PORT_H; y++) for (let x = 0; x < PORT_W; x++) {
+    let n = 0, r = 0, g = 0, bl = 0;
+    for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) { const i = ((y * SS + sy) * BW + x * SS + sx) * 4; if (b[i + 3] < 128) continue; n++; r += b[i] * b[i]; g += b[i + 1] * b[i + 1]; bl += b[i + 2] * b[i + 2]; }
+    if (n * 2 < SS * SS) continue;
+    const j = (y * PORT_W + x) * 4; d[j] = Math.sqrt(r / n); d[j + 1] = Math.sqrt(g / n); d[j + 2] = Math.sqrt(bl / n); d[j + 3] = 255;
+  }
+  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;   // (the bake's grade for a portrait: a little desaturated, a gentle contrast)
+    const r = d[i], g = d[i + 1], bl = d[i + 2], Lm = 0.3 * r + 0.59 * g + 0.11 * bl, k = (v) => Math.max(0, Math.min(255, 128 + (v - 128) * 1.08));
+    d[i] = k(r + (Lm - r) * 0.14) * 0.9; d[i + 1] = k(g + (Lm - g) * 0.14) * 0.91; d[i + 2] = k(bl + (Lm - bl) * 0.14) * 0.98; }
+  const ink = new Uint8ClampedArray(d), solid = (x, y) => x >= 0 && y >= 0 && x < PORT_W && y < PORT_H && d[(y * PORT_W + x) * 4 + 3] > 0;
+  for (let y = 0; y < PORT_H; y++) for (let x = 0; x < PORT_W; x++) { const i = (y * PORT_W + x) * 4;
+    if (!d[i + 3] && y < PORT_H - 1 && (solid(x + 1, y) || solid(x - 1, y) || solid(x, y + 1) || solid(x, y - 1))) { ink[i] = PORT_INK[0]; ink[i + 1] = PORT_INK[1]; ink[i + 2] = PORT_INK[2]; ink[i + 3] = 255; } }
+  const cv = document.createElement('canvas'); cv.width = PORT_W; cv.height = PORT_H; cv.getContext('2d').putImageData(new ImageData(ink, PORT_W, PORT_H), 0, 0);
+  return cv;
 }

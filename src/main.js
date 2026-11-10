@@ -34,6 +34,7 @@ import { holdWeather } from './render/weatherfx.js';
 import { readGraphics, writeGraphics, feelK } from './render3d/settings.js';
 import { createFpsMeter } from './ui/fps.js';
 import { createWorldFail } from './ui/worldfail.js';
+import { setPortraitModels } from './ui/portraits.js';
 
 const WORLD_SEED = 20260807;                      // slot 1's world (and every pre-slots save)
 const params = new URLSearchParams(location.search);
@@ -117,6 +118,7 @@ for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => audio.st
 if (DEV) globalThis.__audio = audio;
 if (REVIEW) import('./dev/review.js').then(({ createReview }) => { globalThis.__stage = createReview({ params }); });   // the art review's icons and faces (docs/art-review.md)
 const hud = createHud(sim);
+setPortraitModels(!WORLD_OFF && !/sprites/.test(params.get('figures') || ''));   // (each member's own face on their card: not with no world, or ?figures=sprites)
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
 const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for its sellswords (GDD §6.2): from the tavern and a Contract tab

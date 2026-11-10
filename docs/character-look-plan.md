@@ -38,8 +38,12 @@ Much of the parked proposal is now cheaper, because the world has since moved to
 **Built** (2026-11-10, GDD §6.1 v1.65): `src/sim/appearance.js` (the choices, validation, a sellsword's own look; save
 v39), `createHero` `appearance`, the temple's `restyle` (40 gold); `figure.js` lays the parts over the variant's face;
 `ui/lookpicker.js` (a row a part, the marks, a face at random) in creation's Look step and the temple's Change a look,
-on the model bareheaded. The new parts below (more eyes, noses, mouths, brows, shapes, ears) are still to come; the
-party card's portrait is still the look's own.
+on the model bareheaded. The new parts below (more eyes, noses, mouths, brows, shapes, ears) are still to come.
+**The portrait** (2026-11-10): `ui/portraits.js` keys a member's portrait by their actor and, once they've an appearance
+or a helm or armour not their kit's, by those too; that one is rendered by `world.js` `renderPortrait` (the bake's
+recipe: the head bone framed, the portrait lights, 3× supersampled, its grade and ink) in one kept offscreen renderer,
+cached, and copied into the party card and the character window's tab. The baked `.face.png` stands until it's ready,
+and wherever models are off.
 
 - **What's chosen** (each from a list, nothing typed):
   - face shape;

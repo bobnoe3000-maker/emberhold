@@ -27,3 +27,9 @@ export async function openPreview(canvas, onError) {
     return m.createPreview(canvas, { assets: new URL('../../assets/', import.meta.url).href, onError });
   } catch (e) { onError(e); return null; }
 }
+/** a member's own portrait (world.js renderPortrait), or null where none can be had @param {string} actor @param {any} look
+ * @returns {Promise<HTMLCanvasElement|null>} */
+export async function portraitOf(actor, look) {
+  try { const m = await bundle(); return m.renderPortrait ? await m.renderPortrait(actor, look, { assets: new URL('../../assets/', import.meta.url).href }) : null; }
+  catch (e) { console.warn('[portrait]', e); return null; }
+}

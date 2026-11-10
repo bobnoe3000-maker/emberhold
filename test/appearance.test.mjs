@@ -92,3 +92,31 @@ test('every choice has its word (content/looks.json), every part its place in th
   for (const [k, list] of Object.entries(PARTS)) { assert.ok(w.parts[k], k); for (const v of list) assert.ok(w.parts[k].names[String(v)], `${k}: ${v}`); }
   for (const m of MARKS) assert.ok(w.marks.names[m], m);
 });
+
+test("gear stays the class's: a mage can't put on plate, a fighter can; the figure only ever wears what equip allowed", async () => {
+  const { makeItem } = await import('../src/sim/items.js');
+  const sim = town(), no = []; sim.bus.on('gearRefused', (r) => no.push(r.reason)); make(sim, {});   // (a mage: make's default; the bag's refusals are gearRefused)
+  sim.state.bag.push(makeItem('plate', 1, 'common', { uid: 'p1' }), makeItem('robes', 1, 'fine', { uid: 'r1' }));
+  sim.commands.push({ type: 'equip', member: 'you', uid: 'p1' }); sim.tick();
+  assert.match(no.at(-1), /can't use/); assert.equal(sim.state.party[0].gear.armor.base, 'robes', 'still in robes');
+  sim.commands.push({ type: 'equip', member: 'you', uid: 'r1' }); sim.tick();
+  assert.equal(sim.state.party[0].gear.armor.r, 'fine', 'robes are a mage\'s');
+  const f = town(); f.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Tam' }); f.tick();
+  f.state.bag.push(makeItem('plate', 1, 'rare', { uid: 'p2' })); f.commands.push({ type: 'equip', member: 'you', uid: 'p2' }); f.tick();
+  assert.equal(f.state.party[0].gear.armor.r, 'rare');
+});
+
+test("a card's portrait: the baked one while a member looks as baked; their own once their look, helm or armour isn't the kit's", async () => {
+  const { portraitKey, setPortraitModels } = await import('../src/ui/portraits.js');
+  const { makeItem } = await import('../src/sim/items.js');
+  const sim = town(); sim.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Tam' }); sim.tick();
+  const m = sim.state.party[0];
+  assert.equal(portraitKey(m), 'hero_knight', 'as made: the bake');
+  m.gear.weapon = makeItem('greatsword', 3, 'rare', { uid: 'w' }); assert.equal(portraitKey(m), 'hero_knight', "a weapon doesn't show in a head-and-shoulders");
+  const k0 = portraitKey({ ...m, gear: { ...m.gear, helm: null } }); assert.match(k0, /^hero_knight#/, 'the helm off: their own');
+  const up = { ...m, gear: { ...m.gear, armor: { ...m.gear.armor, r: 'heirloom', up: 4 } } }; assert.equal(portraitKey(up), 'hero_knight', 'the same armour finer: the same portrait');
+  m.appearance = look(); const k1 = portraitKey(m); assert.match(k1, /^hero_knight#/);
+  assert.notEqual(k1, portraitKey({ ...m, appearance: look({ hair: look().hair === 'bald' ? 'braid' : 'bald' }) }), 'each look its own');
+  assert.equal(k1, portraitKey({ ...m, appearance: look() }), 'the same look, the same portrait');
+  setPortraitModels(false); assert.equal(portraitKey(m), 'hero_knight', 'no models: the bake'); setPortraitModels(true);
+});

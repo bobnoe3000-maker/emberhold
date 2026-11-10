@@ -9,7 +9,8 @@
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { pendingPoints } from '../sim/attributes.js';
 import { pendingSkillPoints } from '../sim/skills.js';
-import { esc, drawPortrait, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { esc, PORTRAIT_W, PORTRAIT_H } from './actorart.js';
+import { portraitKey, paintPortrait } from './portraits.js';
 import { wageOf, hired } from '../sim/companions.js';
 import { RANK_COL } from './sellswords.js';
 
@@ -73,17 +74,7 @@ const CSS = `
 `;
 const LANDSCAPE = '(orientation: landscape) and (max-height: 540px)';
 
-// one painted portrait per actor (actorart.js), copied into every card that shows it: cards re-render
-// often, and a copy is instant where a fresh paint would flash
-const portraitCache = new Map();
-function portrait(actor) {
-  if (portraitCache.has(actor)) return portraitCache.get(actor);
-  const c = document.createElement('canvas'); c.width = PORTRAIT_W; c.height = PORTRAIT_H;
-  drawPortrait(c, actor, () => { for (const el of document.querySelectorAll(`canvas[data-actor="${actor}"]`)) { const y = el.getContext('2d'); y.clearRect(0, 0, el.width, el.height); y.drawImage(c, 0, 0); } });
-  portraitCache.set(actor, c);
-  return c;
-}
-
+// a member's portrait (portraits.js): the baked one, or their own face once they've a look of their own
 export function createPartyPanel(sim) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const el = document.createElement('div'); el.id = 'party'; document.body.appendChild(el);
@@ -92,14 +83,14 @@ export function createPartyPanel(sim) {
   let onCard = null, badge = () => false;                  // set by the character sheet (sheet.js)
   const card = (m, idx) => {
     if (!m) return `<div class="card empty">empty slot<br> hire at a<br> town tavern</div>`;
-    const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level), actor = m.actor || c.actor;
+    const c = CLASSES[m.cls], s = statsFor(m), need = xpToNext(m.level);
     const hp = Math.max(0, Math.round(m.hp));
     const pts = pendingPoints(m) + pendingSkillPoints(m);
     // a companion's rank and wage (GDD §6.2): ◆ 72/d, ◆ OWED, or ◆ free for a found one; the word, not just the colour
     const col = RANK_COL[m.rank] || '#c8bcae', wg = m.main || !m.rank ? '' : m.owed > 0 ? '<span class="wg owed">◆ OWED</span>'
       : `<span class="wg" style="color:${col};border-color:${col}">◆ ${hired(m) ? `${wageOf(m, false)}/d` : 'free'}</span>`;
     return `<div class="card${m.main ? ' main' : ''}${m.down ? ' down' : ''}${m.fallen ? ' fallen' : ''}${m.weakUntil > 0 ? ' weak' : ''}" data-idx="${idx}">${badge(m) ? '<span class="upb">▲ UPGRADE</span>' : ''}${pts ? `<span class="ptb">+${pts}</span>` : ''}
-      <div class="top"><div class="pf"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${actor}"></canvas><div class="lv">L${m.level}</div></div>
+      <div class="top"><div class="pf"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${portraitKey(m)}" data-idx="${idx}"></canvas><div class="lv">L${m.level}</div></div>
         <div style="min-width:0"><div class="nm">${esc(m.name)}</div><div class="cl">${c.label.toUpperCase()}${m.weakUntil > 0 ? ' · WEAK' : ''}</div></div></div>
       <div class="hp"><i style="width:${Math.round((100 * hp) / s.maxHp)}%"></i><span>${m.fallen ? 'SLAIN' : m.down ? 'DOWN' : hp + '/' + s.maxHp}</span></div>
       <div class="st"><span>ATK</span><b class="${m.cls === 'mage' ? 'hi' : ''}">${s.atk}</b><span>DEF</span><b>${s.def}</b>
@@ -109,13 +100,13 @@ export function createPartyPanel(sim) {
   function draw() {
     const [you, a, b] = sim.state.party;
     el.innerHTML = card(a, 1) + card(you, 0) + card(b, 2);
-    for (const cv of el.querySelectorAll('canvas[data-actor]')) { const src = portrait(cv.dataset.actor); const x = cv.getContext('2d'); x.clearRect(0, 0, cv.width, cv.height); x.drawImage(src, 0, 0); }
+    for (const cv of el.querySelectorAll('canvas[data-actor]')) { const m = sim.state.party[+cv.dataset.idx]; if (m) paintPortrait(cv, m); }
   }
   sim.bus.on('partyChanged', draw);
   // live: HP / XP / level move in battle — redraw a few times a second when anything changed
   let sig = '';
   const gearSig = () => (sim.state.bag || []).length + ':' + sim.state.party.map((m) => Object.values(m.gear || {}).map((it) => (it ? it.uid : '-')).join('.')).join('/');
-  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${m.actor}|${m.name}|${m.rank || ''}|${m.owed || 0}|${hired(m) ? wageOf(m, false) : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
+  setInterval(() => { const n = sim.state.party.map((m) => `${Math.round(m.hp)}|${m.xp}|${m.level}|${m.down ? 1 : 0}|${m.fallen ? 1 : 0}|${m.weakUntil > 0 ? 1 : 0}|${pendingPoints(m) + pendingSkillPoints(m)}|${portraitKey(m)}|${m.name}|${m.rank || ''}|${m.owed || 0}|${hired(m) ? wageOf(m, false) : 0}`).join(',') + gearSig(); if (n !== sig) { sig = n; draw(); } }, 180);
   draw();
   // tap a card: that member's character sheet. The cards re-render several times a second
   // in battle (HP ticks), so the press and the release can land on two copies of the same

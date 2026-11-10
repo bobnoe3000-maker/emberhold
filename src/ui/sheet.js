@@ -12,7 +12,8 @@
 import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT } from '../sim/skills.js';
-import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
+import { esc, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
+import { portraitKey, paintPortrait } from './portraits.js';
 import { openPreview } from '../render3d/preview.js';
 import { lookOf } from '../render3d/looks.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
@@ -202,7 +203,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
   function render() {
     if (!open) return;
     const m = member(), s = statsFor(m), g = m.gear || {}, c = CLASSES[m.cls];
-    const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${actorOf(p)}"></canvas>`
+    const tabs = S.party.map((p, i) => `<div class="tab${i === who ? ' on' : ''}" data-who="${i}"><canvas width="${PORTRAIT_W}" height="${PORTRAIT_H}" data-actor="${portraitKey(p)}" data-idx="${i}"></canvas>`
       + `<div style="min-width:0"><b>${esc(p.name)}</b><span>${(CLASSES[p.cls] || CLASSES.fighter).label.toUpperCase()} · L${p.level}${p.fallen ? ' · SLAIN' : ''}</span></div>${hasUpgrade(p) || pendingPoints(p) || pendingSkillPoints(p) ? '<span class="dot"></span>' : ''}</div>`).join('');
     const col = (slots) => slots.map((sl) => slotHtml(g[sl], { slot: sl, lbl: SLOT_LABEL[sl] })).join('');
     const G = s.gear, stat = (k, v, gv) => `<div class="stat">${STAT_LABEL[k].toUpperCase()}<b>${v}</b><u class="${gv ? '' : 'z'}">${gv ? fmt(k, gv) : '—'}</u></div>`;
@@ -247,7 +248,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     figWait.then((p) => p && p.show(actorOf(m), look && look.appearance, { gear: look && look.gear }).then((ok) => { if (figGl && member() === m) { figGl.style.visibility = ok ? '' : 'hidden'; still.style.visibility = ok ? 'hidden' : ''; } }));
   }
   function dropFig() { if (figPv) figPv.close(); figPv = null; figWait = null; if (figGl) figGl.remove(); figGl = null; }
-  function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawPortrait(cv, cv.dataset.actor); }
+  function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) { const p = S.party[+cv.dataset.idx]; if (p) paintPortrait(cv, p); } }
 
   // ── the Stats tab: attributes and points (GDD §4.1) ─────────────────────────
   function statsView(m, s) {
