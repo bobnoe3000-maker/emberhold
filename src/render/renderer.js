@@ -144,11 +144,12 @@ export function createRenderer(canvas, sim, input) {
   const fx = createFX();                               // weapon trails / glints / cast shimmer + hit sparks (fx.js)
   const sfx = createSkillFX(fx.primitives);            // each class skill's own effect, and what it leaves on people (skillfx.js)
   const skelAtlases = [], enemyAtlases = new Map();   // actor name → atlas, or a promise while it loads
-  const enemyAtlas = (kind) => {
-    const name = ENEMY_ACTOR[kind] || 'skeleton_minion', a = enemyAtlases.get(name);
+  const actorAtlas = (name) => {                       // any actor's atlas by name, loaded on first ask (null until it's in)
+    const a = enemyAtlases.get(name);
     if (a === undefined) enemyAtlases.set(name, loadActorAtlas(name, name.startsWith('boss_') ? 1.3 : 1).then((x) => { enemyAtlases.set(name, x); return x; }).catch(() => { enemyAtlases.set(name, null); }));
     return a && a.meta ? a : null;
   };
+  const enemyAtlas = (kind) => actorAtlas(ENEMY_ACTOR[kind] || 'skeleton_minion');
   // a floor's family, loaded before its first wave (battle.js FAMILIES): no enemy pops in undrawn
   const preloadFamily = () => { const w = sim.world; if (w.kind === 'overland') { for (const q of w.pickets || []) enemyAtlas(q.kind); return; } if (w.kind !== 'dungeon') return; for (const id of [undefined, ...(w.level && w.level.plan ? w.level.rooms.map((r) => r.id) : [])]) { const F = familyOf(w, id); for (const k of [...F.melee, ...F.ranged, F.elite]) enemyAtlas(k); } const b = bossAt(w.site, w.depth || 0); if (b) enemyAtlas(b); };   // (an authored floor's rooms each their own foes)
   // An atlas is a JSON of rects plus PNGs, and a re-bake moves the rects. A browser (or host) that
@@ -503,6 +504,11 @@ export function createRenderer(canvas, sim, input) {
   // stick) and every tap test stay as they are. null: Emberlit draws the world itself.
   /** @type {null | { ready: (world: any) => boolean, frame: (draws: any[], cam: any) => void }} */
   let ext = null;
+  // dev: the Stage's lineup (src/dev/stage.js, ?dev&scene=stage&show=cast|fx): a function of the render clock giving
+  // figures to draw as any actor at a clip and a moment, through the same draws as the game's own people (only: the
+  // game's own not drawn)
+  /** @type {null | ((now: number) => { only?: boolean, figures: { actor: string, x: number, y: number, dir?: number, clip?: string, t?: number, at?: number, seed?: number, team?: number }[] })} */
+  let stageFn = null;
   let lastCam = { ox: 0, oy: 0, rx: 0, ry: 0 }, lastDrawn = 0;   // (lastDrawn: the frame's clock, so npcAt knows a drawn position is current)
   /** @type {((draws: any[], view: { hx: number, hy: number, nvw: number, ix: number, iy: number }) => void) | null} */
   let heard = null;                                   // a listener for each frame's figures (the sound); reads, never writes
@@ -634,6 +640,17 @@ export function createRenderer(canvas, sim, input) {
       party: draws.filter((d) => d.team === 1 && d.a).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir]),
       foes: draws.filter((d) => d.team >= 2 && d.a && d.atl).map((d) => [d.fx, d.fy, d.a.frame, d.a.dir, d.atl.name, d.uid]) });
     if (heard) heard(draws, { hx: ox + P.sx, hy: oy + P.sy, nvw, ix, iy });   // the sound's listener (audio/listen.js): steps, swings, who's where
+    if (stageFn) {                                                 // dev: the Stage's figures (after the sound's listener: they make none)
+      const S0 = stageFn(now);
+      if (S0.only) draws.length = 0;
+      for (const q of S0.figures) {
+        const atl = actorAtlas(q.actor); if (!atl) continue;
+        const C = atl.meta.clips, c = C[q.clip || 'idle'] || C.idle, held = q.t !== undefined || q.at !== undefined, t = q.at !== undefined ? q.at * (c.len / c.fps) : q.t ?? (now / 1000 + (q.seed || 0) * (c.len / c.fps));
+        const frame = c.start + (held || c.once ? Math.min(c.len - 1, Math.max(0, Math.floor(t * c.fps))) : Math.floor(t * c.fps) % c.len);
+        const z = heightAt(sim.world, Math.floor(q.x), Math.floor(q.y)), pp = project(q.x, q.y, z);
+        draws.push({ d: q.x + q.y, fx: ox + pp.sx, fy: oy + pp.sy, h: z * ZH, k: q.x + q.y, look: { flash: 0, fade: 0 }, team: q.team, atl, a: { dir: q.dir ?? 2, frame, atk: null }, u: q });
+      }
+    }
     if (globalThis.__noactors) draws.length = 0;   // dev: tools/actor-lab backdrop capture
     draws.sort((a, b) => a.d - b.d);
     // the fight's ground (its hazards, the team rings) is the painter's, from the battle (ext.frame below)
@@ -1212,6 +1229,8 @@ export function createRenderer(canvas, sim, input) {
       return best;
     },
     /** the chest, shrine or stairs drawn under a tap (its whole sprite, not its floor tile), or null */
+    /** dev: the Stage's lineup (src/dev/stage.js), or null @param {typeof stageFn} fn */
+    setStage(fn) { stageFn = fn || null; },
     /** the sound's listener: called each frame with the figures drawn (audio/listen.js) @param {any} fn */
     onFrame(fn) { heard = fn; },
     propAt(sxPx, syPx) { const dpr = vw / window.innerWidth; return propUnder((sxPx * dpr) / S - lastCam.rx, (syPx * dpr) / S - lastCam.ry); },

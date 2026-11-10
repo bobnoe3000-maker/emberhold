@@ -5,7 +5,7 @@
 //   show=icons   every item icon (assets/items) by base, at the bag's size and three times it, with its slot and name
 //   show=faces   every portrait and character-window figure (assets/actors/<actor>.face.png, .fig.png)
 //   match=…      only those whose id holds it · panel=0 hides the panel (captures)
-// The Stage's cast lineup and its env, props and fx views drew through Emberlit's painting, and were retired with it
+// The Stage's cast is on Luminati now (src/dev/stage.js, show=cast); its env, props and fx views drew through Emberlit's painting, and were retired with it
 // (docs/luminati-only-cleanup.md step 4; the owner, 2026-11-09). Nothing here touches the sim or the renderer.
 
 import { BASES } from '../sim/items.js';

@@ -830,8 +830,8 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 }
 // 15c2. The art review's views (src/dev/review.js, docs/art-review.md): the icons and the faces each open with no page
 // error and list everything they should: every icon, and a face and a figure for everyone a window shows (the party and
-// the townsfolk), none of them missing. (The cast lineup and the env, props and fx views drew through Emberlit's
-// painting, and went with it: docs/luminati-only-cleanup.md step 4.)
+// the townsfolk), none of them missing. (The env, props and fx views drew through Emberlit's painting, and went with it:
+// docs/luminati-only-cleanup.md step 4; the cast is back on Luminati, §15c3.)
 {
   const b = await launch(chromium, 'chromium');
   if (b) {
@@ -852,6 +852,28 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await b.close();
     check('art review: the icons and the faces each list every piece they should, with no page errors',
       Object.values(got).every((v) => v.total > 0 && v.total === v.of && v.errs.length === 0 && !v.missing), JSON.stringify(got));
+  }
+}
+// 15c3. The Stage's cast on Luminati (src/dev/stage.js, docs/art-review.md; the owner, 2026-11-10): the vermin and the
+// knight lined up in a real room, each standing as its model, held in its attack; the sim held still (no wave, no clock)
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 900, height: 700 } }), p = await ctx.newPage(), errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&cast=vermin,hero_knight&clip=attack&at=0.5&world=on`, { waitUntil: 'commit' });
+    await p.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready, null, { timeout: 120000 * SLOW });
+    const cast = await p.evaluate(async (ms) => {
+      const S = globalThis.__stage, sim = globalThis.__sim, t0 = sim.state.t, end = performance.now() + ms;
+      const st = () => globalThis.__world3d?.world?.stats;
+      while (performance.now() < end && !(st() && S.names.every((n) => st().modelNames.includes(n)))) { for (let i = 0; i < 4; i++) globalThis.__frame(16); await new Promise((r) => setTimeout(r, 0)); }
+      const s = st() || {};
+      return { names: S.names, models: s.modelNames || [], figErr: s.figErr || '', room: S.room, still: sim.state.t === t0, battle: !!sim.battle };
+    }, 120000 * SLOW);
+    await ctx.close(); await b.close();
+    check('stage: the cast lined up on Luminati (the vermin and the knight, held in their attacks) each stands as its model in a real room, the sim held still, no page errors',
+      cast.names.length === 5 && cast.names.every((n) => cast.models.includes(n)) && !cast.figErr && !!cast.room && cast.still && !cast.battle && errs.length === 0,
+      JSON.stringify(cast) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }
 // 15d1. Saltmere's square (its critic pass): on the home screen, as you wake, every one of Saltmere's people is in view

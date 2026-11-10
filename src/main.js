@@ -48,7 +48,10 @@ const DEV = location.search.includes('dev') && /^(localhost|127\.0\.0\.1|\[::1\]
 // ?scene=town|overland|dungeon picks where a fresh game starts (default: Thornwick); ?dev&scene=stage is the art
 // review's icons and faces (src/dev/review.js), refused off localhost.
 const SCENE0 = new URLSearchParams(location.search).get('scene') || 'town', STAGE = SCENE0 === 'stage' && DEV;
-const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : SCENE0;
+// the Stage on Luminati (src/dev/stage.js; show=cast): the cast lined up in a real dungeon room, the world drawn; the
+// review's icons and faces (show=icons|faces) are HTML over a hidden game
+const STAGE3D = STAGE && ['cast'].includes(new URLSearchParams(location.search).get('show') || ''), REVIEW = STAGE && !STAGE3D;
+const SCENE = SCENE0 === 'stage' && !DEV ? 'town' : STAGE3D ? 'dungeon' : SCENE0;
 // ?region=vale|fens|reach|heights previews another region's hub town (same buildings, its own tones), or with
 // ?scene=overland its overland (the Reach's and the Heights' are previews: docs/reach-heights-overlands.md).
 const REGION = new URLSearchParams(location.search).get('region') || 'vale';
@@ -63,7 +66,7 @@ const SLOT = params.has('slot') ? Math.max(1, Math.min(SLOTS, +params.get('slot'
 if (params.has('slot')) setActiveSlot(SLOT);
 const saved = PREVIEW ? null : await readSlot(SLOT);
 const SEED = saved ? saved.data.seed >>> 0 : SLOT === 1 ? WORLD_SEED : crypto.getRandomValues(new Uint32Array(1))[0];
-const sim = createSim(SEED, THEME, { scene: SCENE, region: STAGE ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
+const sim = createSim(SEED, THEME, { scene: SCENE, region: REVIEW ? (params.get('floor') || 'grass') : REGION, site: SITE });   // (the Stage's floor in region's place: outdoor.js)
 if (DEV) globalThis.__sim = sim;   // dev inspection hook
 // offline progress (ui/away.js; GDD §12): made before anything presentational listens, then the bus is sealed, so while
 // the time away plays through (the bus quiet) only the sim's own listeners and its collector hear the hours of fighting
@@ -82,7 +85,7 @@ renderer.setFeel(feelK(readGraphics().feel));   // (the menu's Hit feel: hit-sto
 if (DEV) globalThis.__renderer = renderer;   // dev: hit-tests for captures and browser tests
 // the world in Luminati (docs/luminati-port-plan.md; Luminati only, A21): the renderer stays the game's eye (its camera,
 // its figures' frames, everything over the world, every tap); Luminati draws the world under it (render3d/hybrid.js).
-// Not on the art review's page (?dev&scene=stage), which is HTML over a hidden game.
+// Not on the art review's icons and faces (?dev&scene=stage&show=icons|faces), HTML over a hidden game; on the Stage's cast, yes.
 let world3d = null;
 // (Luminati only, docs/luminati-only-cleanup.md: a world it can't draw says so, with Retry, instead of staying black)
 const worldFail = createWorldFail({ retry: async () => { if (!PREVIEW && sim.state.created) await writeSlot(SLOT, sim).catch(() => {}); location.reload(); } });
@@ -96,7 +99,7 @@ if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
   try { if (q === 'off' || q === 'on') sessionStorage.setItem(key, q); WORLD_OFF = (q || sessionStorage.getItem(key)) === 'off'; } catch { WORLD_OFF = q === 'off'; }
 }
 if (WORLD_OFF && !STAGE) renderer.setExternal({ ready: () => true, frame: () => {} });
-else if (!STAGE) {
+else if (!REVIEW) {
   import('./render3d/hybrid.js').then(({ attachLuminati }) => attachLuminati({ renderer, sim, region: REGION }))
     .then((h) => { world3d = h; if (DEV) globalThis.__world3d = h; })
     .catch((err) => { console.error('[luminati] the world renderer failed to start:', err); worldFail.show(String(err?.message || err)); });
@@ -107,7 +110,7 @@ const audio = createAudio();
 createListener({ sim, audio, renderer });
 for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => audio.start(), { capture: true });
 if (DEV) globalThis.__audio = audio;
-if (STAGE) import('./dev/review.js').then(({ createReview }) => { globalThis.__stage = createReview({ params }); });   // the art review's icons and faces (docs/art-review.md)
+if (REVIEW) import('./dev/review.js').then(({ createReview }) => { globalThis.__stage = createReview({ params }); });   // the art review's icons and faces (docs/art-review.md)
 const hud = createHud(sim);
 const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
@@ -146,6 +149,8 @@ const slots = createSlotsWindow({ active: SLOT, saveNow: () => (PREVIEW || !sim.
 // into play. ?notitle (tests, captures) and previews skip all of it and play straight away.
 const BOOT = !PREVIEW && !params.has('notitle');
 let paused = BOOT;
+// the Stage's lineup (src/dev/stage.js): the cast in a real room, the sim held still
+if (STAGE3D) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ sim, renderer, params, setPaused: (on) => { paused = on; } }); });
 const cinema = createCinema();
 const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
 // Graphics (render3d/settings.js, per device): the depth of field, the hit feel, the brightness dial and the frame rate,

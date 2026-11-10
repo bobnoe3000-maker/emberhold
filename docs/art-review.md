@@ -1,5 +1,11 @@
 # The art review: every piece of the game's art, drawn the way the game draws it
 
+> **The cast back, on Luminati (2026-11-10).** The owner: *"recreate the cast lineup and live fx page."* `show=cast`
+> lines the cast up in a real dungeon room and draws it the game's own way: the renderer's draws (`renderer.js`
+> `setStage`), `hybrid.js`, Luminati's figures (`world.js`, `figure.js`, the creature kit). Each actor at a clip, looping
+> or held at a moment; the sim held still. `src/dev/stage.js`; `tools/capture/stage.mjs --show cast` takes a sheet, a
+> row a clip. See [The cast on Luminati](#the-cast-on-luminati) below.
+>
 > **In part (2026-11-09).** The icons and faces views stay (`?dev&scene=stage&show=icons|faces`, `src/dev/review.js`, `tools/capture/stage.mjs`); the env, props and fx views drew through Emberlit's painting and were retired with it ([luminati-only-cleanup.md](./luminati-only-cleanup.md) step 4; the owner's decision 3).
 
 **Current (2026-10-10).** The owner: *"Make sure you have a bespoke in game rendering view of all game assets and
@@ -14,7 +20,39 @@ on the same dev-only page (`?dev&scene=stage`, localhost only), through the same
 *Clockwise from the top left: `show=env` (the Vale's town set, page 2 of 20), `show=props` at zoom 3, the portraits
 (`show=faces`), and the effects at night at zoom 2 (`show=fx`).*
 
-## The views
+## The cast on Luminati
+
+![The vermin through their clips on the Stage, each held halfway through, in the Old Barrows' Breach](img/art-review/cast-vermin.jpg)
+
+*`node tools/capture/stage.mjs --show cast --cast vermin --per 4`: seven clips of four actors in 50 s at DPR 2 (the
+page up and the floor built in 20 s, then 2–4 s a clip).*
+
+```
+http://localhost:8080/?dev&scene=stage&show=cast&cast=vermin,party&clip=walk
+http://localhost:8080/?dev&manual&scene=stage&show=cast&cast=bosses&per=6&clip=heavy&at=0.6&dir=1
+```
+
+| Option | What it does |
+|---|---|
+| `cast=` | Actors and groups, comma separated, in that order: `party`, `town`, `foes`, `bosses`, `vermin`, `all`, or an actor's name (`hero_mage`). From `assets/models/cast.json`, so a new actor is there when it's baked |
+| `match=` | Only actors whose name holds it |
+| `per=12`, `page=1`, `cols=4`, `gap=4.5` | A page of the lineup, in a grid square to the screen (tiles apart) |
+| `clip=` | `idle`, `walk`, `attack`, `attack2`, `heavy`, `hit`, `death`, or any clip the atlas has (`cast`, `spawn`…) |
+| `t=` / `at=` | Held that many seconds in, or that far through the clip (0–1); neither: looping |
+| `dir=0..7` | The facing (2 faces the camera) |
+| `site=barrows`, `floor=0`, `room=big` | Where: the floor's biggest room, `entrance`, or an authored room (`old_cellars`) |
+| `labels=0` | No names under the figures |
+
+- **The game's own path.** The figures are the renderer's draws (as the game's people are), so the models, their clips,
+  the light, the bloom and the depth of field are the game's. Nothing is drawn a second way for the Stage.
+- **Against a real fight.** The same check of the vermin from a real fight in the Old Cellars (the hero kept standing
+  until they came) took 26 s for four frames of whatever each was doing, and Old Gutter never comes there. The Stage
+  took 50 s for 28 chosen poses, the same every run. A real fight (`skills.mjs`, `bosses.mjs`, `feel.mjs`) stays the
+  last word on timing and feel.
+- **The browser suite** checks that the vermin and the knight each stand as their models on the Stage, with the sim
+  held still.
+
+## The views (as they were, before Luminati)
 
 | `show=` | What it lists | Drawn by |
 |---|---|---|
