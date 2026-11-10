@@ -113,7 +113,9 @@ export const BIOME_OF = { vale: 'vale', fens: 'grassland', reach: 'desert', heig
 // our ground (outdoor.js G: grass dirt cobble water bank field marsh pool deck, the Reach's and the Heights' scree and
 // snow) as Luminati's tile and height (snow as its pale sand: Luminati's snow stone is The Bells of Evermere's own)
 const GROUND = [['g', '2'], ['.', '2'], ['c', '2'], ['~', '0'], ['s', '1'], ['F', '2'], ['G', '2'], ['o', '0'], ['b', '2'], ['d', '2'], ['s', '2']];
-const MARSH_FRONT = 5;   // the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it)
+// MARSH_FRONT: the Sunken Chapel's water reaches this far in front of its middle (sim tiles; its porch stands dry past it).
+// KEEP_FACE: Wickham Keep's door face before its middle (sim tiles: buildkit keep's front wall, 0.475 kit units, and the torch's plate).
+const MARSH_FRONT = 5, KEEP_FACE = 4.8;
 const RANK = { c: 4, b: 4, '~': 5, o: 5, '.': 3, F: 2, s: 2, d: 2, G: 1, g: 0 };
 
 /**
@@ -259,6 +261,11 @@ function outdoor(w, region) {
       sprites.push({ id, x: X(s.x), z: Z(s.y) });              // ours: Luminati has nothing like it (or it's ours to keep)
       // the Sunken Chapel's marsh (docs/vale-landmarks-proposal.md §4): the world's own still water under it, to the
       // porch at its front; inside its footprint, which the sim never walks, so nobody wades (presentation only)
+      // Wickham Keep's door (docs/vale-landmarks-proposal.md §4): a wall torch either side of it on the keep's south face
+      // (the kit model's door, buildkit keep: centred, its face KEEP_FACE tiles out), Luminati's own, burning day and
+      // night with its own light, so the way in reads at dusk and the ground before it is lit
+      if (id === 'vale_keep_1' && region === 'vale' && !w.hub)
+        for (const sx of [-1, 1]) add({ type: 'wallTorch', x: X(s.x + sx * 2), z: Z(s.y + KEEP_FACE), rotation: 0, dy: 1.7, opts: { embers: true } });
       if (id === 'chapelruin_0' && region === 'vale') {
         const f = p.f, i0 = Math.ceil((s.x + f[0] - x0) / 2 - 0.5), i1 = Math.floor((s.x + f[2] - x0) / 2 - 0.5), j0 = Math.ceil((s.y + f[1] - y0) / 2 - 0.5), j1 = Math.floor((s.y + MARSH_FRONT - y0) / 2 - 0.5);
         for (let j = Math.max(0, j0); j <= Math.min(D - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(W - 1, i1); i++) { tiles[j][i] = 'o'; heights[j][i] = '0'; }

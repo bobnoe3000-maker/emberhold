@@ -1453,10 +1453,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       const ch = globalThis.__sim.world.structs.find((s) => s.id === 'chapelruin_0'), gr = G.engine.scene.getObjectByName('ember:kit:chapelruin_0');
       out.marsh = !!gr && G.tileMap.getHeight(gr.position.x, gr.position.z - 1) < gr.position.y - 0.5 && !!ch;
       out.gate = !!G.engine.scene.getObjectByName('ember:kit:vale_gatehousey_1') && !!G.engine.scene.getObjectByName('ember:kit:watermill_0');   // (outside, Thornwick's gate and the rest of the kit in 3D too)
+      out.torches = (G.world.objectsOf?.('wallTorch') || []).length;   // (Wickham Keep's door: a wall torch either side, convert.js KEEP_FACE)
       return out;
     });
-    check('render3d: the Vale\'s dungeon doors (the Keep, the Old Barrows, the Sunken Chapel) stand as our kit\'s 3D models, each under 1,500 triangles and 12 draws, the chapel in the world\'s water; outside, Thornwick\'s gate and the mill in 3D too (docs/vale-landmarks-proposal.md)',
-      ['vale_keep_1', 'ruin', 'chapelruin_0'].every((id) => doorsUp[id] && doorsUp[id].tris > 300 && doorsUp[id].tris < 1500 && doorsUp[id].draws <= 12) && doorsUp.marsh && doorsUp.gate, JSON.stringify(doorsUp));
+    check('render3d: the Vale\'s dungeon doors (the Keep, the Old Barrows, the Sunken Chapel) stand as our kit\'s 3D models, each under 1,500 triangles and 12 draws, the chapel in the world\'s water; outside, Thornwick\'s gate and the mill in 3D too, and the Keep\'s door between two wall torches (docs/vale-landmarks-proposal.md)',
+      ['vale_keep_1', 'ruin', 'chapelruin_0'].every((id) => doorsUp[id] && doorsUp[id].tris > 300 && doorsUp[id].tris < 1500 && doorsUp[id].draws <= 12) && doorsUp.marsh && doorsUp.gate && doorsUp.torches === 2, JSON.stringify(doorsUp));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&world=on`);

@@ -92,6 +92,8 @@ const PAGE = {
     const sim = globalThis.__sim, w = sim.world, P = sim.state.player;
     let x = P.x, y = P.y;
     if (Array.isArray(at)) [x, y] = at;
+    else if (w.kind === 'dungeon' && at === 'stairsup' && w.stairArrive) [x, y] = [w.stairArrive.x, w.stairArrive.y - 1];   // (where you arrive, at the way up's foot)
+    else if (w.kind === 'dungeon' && at === 'stairsdown' && w.stairsAt) [x, y] = [w.stairsAt.x + 0.5, w.stairsAt.y + 3.5];   // (just before the stairwell's open edge)
     else if (w.kind === 'dungeon' && at !== 'spawn') {
       const L = w.level, lv = w.roomLevels;
       const pick = typeof at === 'string' && at.startsWith('part:') ? L.rooms.find((r) => r.part === at.slice(5)) : at === 'entrance' ? L.entrance : at === 'medium' ? L.rooms.find((r) => r.size === 'medium' && r !== L.entrance && r !== L.descentRoom)

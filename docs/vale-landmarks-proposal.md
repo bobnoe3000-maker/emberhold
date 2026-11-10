@@ -197,8 +197,9 @@ clock (`tools/capture/rig.mjs … --query landmarks=doors`).*
     - the chapel `[-6.67,-5.7,7.63,8.85]` → `[-7.17,-6.65,7.57,8.35]`.
 
     Every other footprint and all four town atlases came out the same. `npm run check` passes.
-  - **The Keep's door torches** (Luminati's wall torch). The door's own lit windows and the brazier light it for now.
-
+  - **The Keep's door torches** (done since, 2026-11-10): a Luminati wall torch either side of the door
+    (`convert.js` `KEEP_FACE`), burning day and night with its own light (intensity 7, reach 7), so the way in and the
+    ground before it are lit at dusk. ![Wickham Keep's door before and after its torches](img/landmarks/keep-torches.jpg)
 ## 8. #3: the rest of the Vale's cards, as the owner chose
 
 The owner: *"let me see your proposed changes to #3 before implementing - let me choose before or after."* Then, on the
