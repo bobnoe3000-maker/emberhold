@@ -15,6 +15,7 @@ import { PROPS, repaint } from './props.js';
 import { buildFace } from './faces.js';
 import { buildBody } from './body.js';
 import { buildCreature, applyFit } from './creatures.js';
+import { dressGear } from './gear.js';
 
 // every toggleable accessory per model (anything not listed in a variant's `show` is hidden)
 export const ACC = {
@@ -109,6 +110,7 @@ export async function build(v, o) {
   // a skeleton's skull (skeleton-skull proposal): its eyes, cranium and jaw tagged for the part pass, so albSkull can
   // draw the sockets the 4 × 4 average washed into the bone (the face kit's tags: eye red, skull as skin, jaw as hair)
   if (v.skull) root.traverse((m) => { if (!m.isMesh) return; if (/_Eyes$/.test(m.name)) m.userData.part = 'eye'; else if (/_Head$/.test(m.name)) m.userData.part = 'skin'; else if (/_Jaw$/.test(m.name)) m.userData.part = 'hair'; });
+  if (v.gear) await dressGear(root, v.gear, load, findNode);   // what a member has equipped, worn (gear.js: GDD v1.65)
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((m) => { if (m.isMesh && /Eyes/.test(m.name)) { m.material = m.material.clone(); m.material.emissive = new THREE.Color(v.eyes); m.material.emissiveIntensity = 3; } });
@@ -189,6 +191,7 @@ export function compact(root, merge) {
     const geos = list.map((o) => { const g = o.geometry.clone(); for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'skinIndex', 'skinWeight'].includes(k)) g.deleteAttribute(k); return g; });
     const g = merge(geos); if (!g) continue;
     const m = new THREE.SkinnedMesh(g, list[0].material); m.castShadow = list[0].castShadow; m.name = list.map((o) => o.name).join('+');
+    (root.userData.ownGeos ||= []).push(g);                     // (its own: let go with the figure's template, world.js)
     m.position.copy(list[0].position); m.quaternion.copy(list[0].quaternion); m.scale.copy(list[0].scale); m.frustumCulled = false;
     list[0].parent.add(m); m.bind(list[0].skeleton, list[0].bindMatrix);
     for (const o of list) o.parent.remove(o);
@@ -213,6 +216,7 @@ export function compact(root, merge) {
     const mat = textured ? src.clone() : kind === 'basic' ? new THREE.MeshBasicMaterial({ vertexColors: true, transparent: src.transparent, opacity: src.opacity })
       : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: src.roughness ?? 1, metalness: src.metalness ?? 0 });
     const m = new THREE.Mesh(g, mat); m.name = `${bone.name}:${kind.split('|')[0]}`; m.frustumCulled = false;
+    (root.userData.ownGeos ||= []).push(g);
     bone.add(m);
     for (const o of list) o.parent.remove(o);
   }

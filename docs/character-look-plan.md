@@ -123,6 +123,11 @@ still to come, the same call.
 
 ## 6. Gear on the figure
 
+**Built for the weapon, the off-hand and the helm** (2026-11-10, GDD §6.1 v1.65): `tools/actor-lab/gear.js` (each base's
+piece: a KayKit mesh from any of the Adventurers, a skeleton's weapon, or one of our props; the hair under a helm),
+`figure.js` `gear`, `hybrid.js` `lookOf` (a member's look and worn gear, keyed), `world.js` (a template a look; a look
+nobody wears let go after two minutes, with its own merged geometry). Armour and boots: still the model's own body.
+
 **Each base names its pieces** (`tools/actor-lab/gear.json`, presentation only, beside `icons.json`): its mesh (a
 KayKit piece or a code-built one), the bone it hangs from, its swatch map, and the variants of its look (§7).
 
@@ -145,6 +150,10 @@ KayKit piece or a code-built one), the bone it hangs from, its swatch map, and t
 **Fair play:** what's worn changes nothing in the sim. The figure only reads what's equipped.
 
 ## 7. Each item's look: colours, light and effects
+
+**Built** (2026-11-10): `gear.js` `lookOn`: fine a little brighter; rare an even blue light (0.14), heirloom a warm one
+(0.3), each breathing ±25 % (world.js and the preview); each smith's step +0.03 of warm light. A piece with a light
+keeps its own material (one draw more). The icons' rebake in each rarity's palette is still to come.
 
 An item's look comes from fields it already has, so no new saved state, no new random draw, and replays exactly as
 now: its **base** (the mesh), its **rarity**, its **upgrade** (`up`, the smith's +N) and whether it is an
@@ -231,3 +240,8 @@ So the 17 figures as models cost 185 draws and 206,000 triangles a frame, about 
 shadows included, and 43 MB. The kinds after compact: 103 meshes (579 before). Every step after this one is held to it:
 a face, a build and worn gear may not add draws to a figure beyond what its new pieces need, and nothing seen in play
 may be cut to pay for it.
+
+**After the faces, builds and worn gear** (2026-11-10, the same box): the square 463 draws, 740,000 triangles (the
+same); a Barrows fight 105 draws, 209,000 triangles (the same). Nothing added a draw: a worn piece takes the place of
+the kit's own on its bone, and compact merges it as it merged that. Only a piece with a light (rare, heirloom, a +N) is
+a draw of its own. Frame times within the box's noise (1,283 ms and 333 ms medians against 1,217 and 317).

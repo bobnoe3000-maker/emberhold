@@ -378,7 +378,7 @@ export async function buildFace(load, model, f, { far = false } = {}) {
   head.add(tag(eyes(on, f, M, far), 'eye'), tag(brows(on, f, M), 'brow'), tag(mouth(on, f, M, far), 'mouth'), tag(nose(on, f, M), 'skin'), tag(await beard(load, skull, on, f, M, S), 'hair'));
   head.add(tag(ears(f, M, S), 'skin'));
   if (!far) head.add(marks(on, f, M));
-  if (!own) head.add(tag(await hair(load, skull, f, M, S), 'hair'));
+  if (!own) { const hr = await hair(load, skull, f, M, S); hr.name = 'Hair'; head.add(tag(hr, 'hair')); }   // (named: a helm worn hides it, gear.js)
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
   return { head, replaces: [mine.headName], skull, on };
 }

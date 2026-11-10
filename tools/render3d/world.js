@@ -128,13 +128,15 @@ const loadModel = (u) => {
 };
 const metaOf = new Map();                                     // atlas name → its JSON (the clips' columns), once in
 const templates = new Map();                                  // atlas name → { root, clips, frame, ppu, minY } | null (building) | false
+/** a variant as a member wears it: their face and build (appearance), what they have equipped (gear) @param {any} v @param {any} look */
+const withLook = (v, look) => (!look ? v : { ...v, ...(look.appearance ? { appearance: look.appearance } : {}), ...(look.gear ? { gear: look.gear } : {}) });
 // (GDD v1.65) a member with a look of their own (a.look: its appearance, a.lk its key) has a template of its own, its
 // atlas's clips and size, its face and build its own: one build a look, its copies sharing it as any figure's do
 function templateOf(name, def, look = null, lk = '') {
   const tk = lk ? `${name}#${lk}` : name, t = templates.get(tk); if (t !== undefined) return t;
   templates.set(tk, null);
   if (!metaOf.has(name)) json(`${ASSETS}actors/${name}.json`).then((m) => metaOf.set(name, m));
-  buildFigure(look ? { ...def.v, appearance: look } : def.v, { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
+  buildFigure(withLook(def.v, look), { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
     const rest = []; c.root.traverse((b) => { if (b.isBone) rest.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
     poseFigure(c, 'Idle', 0, true);                           // (sized from the heroic idle, as the bake fits it)
     const { box, ppu } = fitPpu(c.root, def.v, def.px);
@@ -167,7 +169,7 @@ function figureFor(key, name, T) {
       o.material.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n#ifdef USE_COLOR\n\ttotalEmissiveRadiance *= vColor.rgb;\n#endif'); };
       o.material.customProgramCacheKey = () => 'ember-figure-vc';
     }
-    mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null });
+    mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null, shine: o.material.userData.shine || 0 });
   });
   const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
@@ -182,6 +184,7 @@ function placeFigure(a, key, dt, camAz) {
   if (FIGURES !== 'models') return false;
   const def = castOf(a.name); if (!def) return false;
   const T = templateOf(a.name, def, a.look || null, a.lk || ''), meta = metaOf.get(a.name); if (!T || !meta) return false;
+  T.used = figSeen;
   // the clip and frame Emberlit chose: the atlas column's clip, its frame within it
   let ck = null; for (const k in meta.clips) { const c = meta.clips[k]; if (a.col >= c.start && a.col < c.start + c.len) { ck = k; break; } }
   const d = ck && def.clips[ck]; if (!d) return false;
@@ -216,6 +219,7 @@ function placeFigure(a, key, dt, camAz) {
       const tr = op < 0.999; if (q.m.transparent !== tr) { q.m.transparent = tr; q.m.needsUpdate = true; } q.m.opacity = op;
     }
   }
+  for (const q of f.mats) if (q.shine) q.m.emissiveIntensity = q.shine * (0.75 + 0.25 * Math.sin(performance.now() * 0.0026 + f.root.id));   // (a rare or heirloom piece's light breathes: gear.js)
   f.root.visible = true; f.seen = figSeen;
   return true;
 }
@@ -225,6 +229,16 @@ function sweepFigures() {
     if (f.seen === figSeen) continue;
     if (f.root.visible) f.root.visible = false;
     if (figSeen - f.seen > 3600) { game.engine.scene.remove(f.root); figs.delete(k); }
+  }
+  // a member's look nobody wears any more (a restyle, a piece taken off: GDD v1.65) let go after two minutes, with the
+  // geometry its build merged for itself (the models' own are shared, and stay); so a long evening at the smith doesn't
+  // grow the page. A template a frame: the check is a counter and a map's size.
+  if (figSeen % 120 === 0) for (const [tk, T] of templates) {
+    if (!T || !tk.includes('#') || figSeen - (T.used || 0) < 7200) continue;
+    let worn = false; for (const f of figs.values()) if (f.name === tk) { worn = true; break; }
+    if (worn) continue;
+    for (const g of T.root.userData.ownGeos || []) g.dispose();
+    templates.delete(tk);
   }
 }
 
@@ -1285,7 +1299,7 @@ export function createWorld(o) {
 // needn't be up: it reads the same assets/ (the first of createWorld's and this one's `assets` to arrive).
 /**
  * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void }} o
- * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
+ * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean, gear?: any }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
  */
 export function createPreview(canvas, o) {
   if (!ASSETS) ASSETS = o.assets;
@@ -1315,6 +1329,7 @@ export function createPreview(canvas, o) {
       else poseFigure(c, A.clip, act.t / clip.duration, true);
     }
     if (!act) { const clip = c.clips.find((q) => q.name === (idle ? idle.clip : 'Idle')) || c.clips[0]; poseFigure(c, clip.name, (clock % clip.duration) / clip.duration, true); }
+    for (const m of cur.shine) m.emissiveIntensity = m.userData.shine * (0.75 + 0.25 * Math.sin(now * 0.0026));
     renderer.render(scene, cam);
     if (!document.hidden && canvas.isConnected) raf = requestAnimationFrame(frame);
   }
@@ -1329,14 +1344,15 @@ export function createPreview(canvas, o) {
     get actor() { return name; },
     /** stand this actor: true once it's built (false: no model for it, the caller keeps its still) */
     async show(actor, look = null, o2 = {}) {
-      const id = `${actor}#${look ? JSON.stringify(look) : ''}#${o2.bare ? 'bare' : ''}`;
+      const id = `${actor}#${look ? JSON.stringify(look) : ''}#${o2.bare ? 'bare' : ''}#${o2.gear ? JSON.stringify(o2.gear) : ''}`;
       if (id === name && cur) return true;
       const n = ++wantN; name = id;
       const c = await json(`${ASSETS}models/cast.json`); if (c && !cast) cast = c;
       const def = c && c.actors[actor]; if (!def || dead || n !== wantN) return false;
       try {
         // (bare: the helm or hat off, while a face is being chosen: GDD v1.65)
-        const v = { ...def.v, ...(look ? { appearance: look } : {}), ...(o2.bare && def.v.show ? { show: def.v.show.filter((n) => !/Helmet|Hat|Hood/.test(n)) } : {}) };
+        const v = { ...withLook(def.v, { appearance: look, gear: o2.gear || null }), ...(o2.bare && def.v.show ? { show: def.v.show.filter((n) => !/Helmet|Hat|Hood/.test(n)) } : {}) };
+        if (o2.bare && v.gear) v.gear = { ...v.gear, helm: null };
         const fig = await buildFigure(v, { far: false, load: loadModel, faces: async () => cast.faces });
         if (dead || n !== wantN) return false;
         poseFigure(fig, 'Idle', 0, true);
@@ -1345,7 +1361,8 @@ export function createPreview(canvas, o) {
         const pin = new THREE.Group(); pin.add(fig.root); fig.root.position.set(-cx, -box.min.y, -cz); pin.scale.set(L.w, L.h, L.w);   // (a build's girth, a height's stature: framed for the average, so a tall one stands taller)
         const h = h0 * 1.06;
         if (cur) turn.remove(cur.pin);
-        turn.add(pin); cur = { fig, def, pin };
+        const shine = []; fig.root.traverse((q) => { if (q.isMesh && q.material && q.material.userData && q.material.userData.shine) shine.push(q.material); });
+        turn.add(pin); cur = { fig, def, pin, shine };
         const d = (h * 0.62) / Math.tan((cam.fov * Math.PI) / 360);                 // (the figure about four fifths of the canvas's height)
         cam.position.set(0, h * 0.62, d); cam.lookAt(0, h * 0.47, 0);
         clock = 0; act = null; nextAct = 3; wake();
