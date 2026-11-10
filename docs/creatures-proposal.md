@@ -25,7 +25,7 @@ fire beetle, the goblin, the graveyard wraith (1.5×), the stone golem (2×), th
   |---|---|---|---|
   | Red fire beetle | the hexapod (tripod gait) | 5,880 · 28 | a lacquered crimson dome going black at the tips, fire-glands over the eyes and at the tail; the cases fly wide on a glowing belly to spit; dies flipped, legs kicking |
   | Goblin | the small biped | 10,884 · 18 | after the owner's reference (below): a big bald head a third of its height, bat ears ringed in brass, a scowl, red eyes sunk deep, a wide grin of teeth; a red scarf on a leather mantle, a belt of pouches, a red loincloth, leather wraps; big clawed hands, no weapon |
-  | Graveyard wraith | the floating shroud | 7,800 · 33 | 1.5 men; after the owner's reference (below): a skull under a hood crowned with three horns, arms flung wide in bell sleeves, clawed hands, a shroud twisting down to a point and six tendrils curling up off it like flames; dies into a heap of rags |
+  | Graveyard wraith | the floating shroud | 9,844 · 35 | 1.5 men; after the owner's reference (below): a skull under a hood crowned with three horns, long gaunt arms in bell sleeves (a man's, moving as one's: below), clawed hands, a shroud twisting down to a point and six tendrils curling up off it like flames; dies into a heap of rags |
   | Stone golem | the heavy biped | 10,672 · 16 | 2 men; chiselled blocks of blue-grey stone, a carved chest disc, a horned block head, manacles and trailing chains, lichen veins and tufts (after the owner's reference, below); falls apart when it dies |
   | The Rat King | the rat, crowned | 13,114 · 22 | a crown of bent nails, a ruff, a purple cape over the back, long incisors, and the knot: six rats grown together by their tails, riding the tail's last bones |
   | The Spider Queen | the spider, a brood-mother | 6,716 · 31 | an egg-sac abdomen ringed in bone with a bone hourglass, green eggs glowing under its skin, a crown of spines, long raised forelegs, sickle fangs |
@@ -161,6 +161,37 @@ with both claws, and Cast a cackle with both claws up.
 | S2 (in the game) | The goblin lime and its head small from the camera. The beetle an orange blob. The golem pale with neon veins. The Queen's hourglass a white blotch. The Rat King's cape a purple shell. The rats' crest quills | The goblin's green darker, its head a tenth bigger. The beetle a deeper crimson. The golem's stone and lichen darker. The hourglass narrower. The cape flatter and darker. The rats' fur blades pressed flat to the body and laid lower |
 | S3 (in the game) | The goblin's ears small beside the reference's | A quarter bigger, the rings with them |
 | S4 (sheet) | Shaded smooth, the wraith's tendrils stacked logs and its bell sleeves capped pipes. The rat's face a teddy bear's | The tendrils one swept tube each (`tube()`); the sleeves' mouths dark inside; the rat's brow two ridges, a scowl |
+
+### The wraith's arms, a man's (2026-11-10)
+
+The owner: *"wraith arms are always stuck out wide, they should move, and be more like human arm movements"*. The bind
+pose was the reference's spread, and every clip was a few degrees off it.
+
+- **At rest, a man's arms:** they hang from slack shoulders a little out from the body, so from the game's camera they
+  don't vanish against the robe. The elbows are bent, and long gaunt forearms bring big clawed hands forward to the
+  hips. Your reference's spread is now the peak of the Heavy, and of the Cast's lift.
+- **Joints:** the sleeve's top is shared with the chest and the forearm's root with the sleeve, so a raised arm stays
+  joined. A `claw` bone at each hand's knuckles curls the fingers and splays them. The sleeve is a bell from shoulder to
+  elbow, its mouth dark, its hem in rags.
+- **Clips:** the shoulder leads, the elbow follows a beat later and the claws last, and the two arms are never mirrored.
+
+  | Clip | Motion |
+  |---|---|
+  | Idle | breathing in the shoulders; the right hand rises and curls, the left a beat behind |
+  | Walk | the arms trailing back, swinging a little against each other |
+  | Attack | a rake: cocked over the head, then down across the body, the elbow snapping straight, the claws shutting after |
+  | Attack2 | a two-handed lunge and grab |
+  | Heavy | the spread and the shriek, then the dive |
+  | Hit | the arms snapping in, elbows up |
+  | Death | a last reach upward, then slack |
+  | Cast | both clawed hands lifted out at the sides, trembling |
+
+- **Round A2** (`creatures-sheet.cjs --only wraithf,wraith --clips … --frames 6`, new for reading a motion): the arms
+  were short and the hands small, so the forearms are longer and the hands bigger. The Cast crossed the hands before its
+  face, so it now lifts them out to the sides.
+- **Cost:** 9,844 triangles, 35 bones, still two draws.
+
+![The wraith's arms now (top: the rake cocked, the spread, the cast, at rest, the rake from the side) and before (bottom: stuck out wide)](img/creatures/wraith-arms.jpg)
 
 ### The Proving Pens: a trial dungeon to fight them in (GDD v1.60)
 

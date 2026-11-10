@@ -598,8 +598,18 @@ function wraith(o = {}) {
   const skullC = (p, n) => (n.y < -0.3 ? skullLo : skull);
   R.bone('root', null, V(0, 0.85, 0)); R.bone('spine', R.by.get('root'), V(0, 1.0, 0.0)); R.bone('chest', R.by.get('spine'), V(0, 1.2, 0.03));
   R.bone('neck', R.by.get('chest'), V(0, 1.32, 0.07)); R.bone('head', R.by.get('neck'), V(0, 1.4, 0.1)); R.bone('jaw', R.by.get('head'), V(0, 1.375, 0.15));
-  for (const s of [1, -1]) {   // (flung wide and a little up, as the reference's: the bind pose is the pose)
-    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.18 * s, 1.27, 0.04)), l = R.bone(`armL${s}`, u, V(0.42 * s, 1.35, 0.1)); R.bone(`hand${s}`, l, V(0.62 * s, 1.47, 0.15));
+  // (the owner, 2026-11-10: "wraith arms are always stuck out wide, they should move, and be more like human arm movements".
+  // The bind pose was the reference's spread, every clip a few degrees off it. Now a man's arms at rest: hanging from slack
+  // shoulders a little out from the body (from the game's camera arms at the sides vanish against the robe), the elbows
+  // bent, gaunt forearms bringing the claws forward to the hips, reaching; the reference's spread is the peak of its
+  // Heavy and its Cast. Each hand has a `claw` bone at the knuckles, so the fingers curl and splay.)
+  const ARM = {};
+  for (const s of [1, -1]) {
+    const Sh = V(0.2 * s, 1.27, 0.04), El = V(0.3 * s, 0.99, 0.12), Wr = V(0.35 * s, 0.7, 0.29);   // (round A2: longer, gaunt, the reference's)
+    const up = El.clone().sub(Sh).normalize(), fore = Wr.clone().sub(El).normalize(), hinge = up.clone().cross(fore).normalize();   // (the elbow's hinge)
+    const palm = V(-s, 0, 0.25).normalize(), spread = palm.clone().cross(fore).normalize(), Kn = Wr.clone().add(fore.clone().multiplyScalar(0.07));
+    const u = R.bone(`armU${s}`, R.by.get('chest'), Sh), l = R.bone(`armL${s}`, u, El), h = R.bone(`hand${s}`, l, Wr); R.bone(`claw${s}`, h, Kn);
+    ARM[s] = { Sh, El, Wr, Kn, up, fore, hinge, palm, spread };
   }
   // the column: the shroud below the waist twisting down to a point (three bones), and six tendrils curling up off it
   const colP = [V(0, 0.95, 0.0), V(0.03, 0.66, -0.02), V(-0.03, 0.4, 0.0), V(0.01, 0.15, 0.03)], colR = [0.13, 0.15, 0.11, 0.06];   // (a waist, then the shroud's fall)
@@ -649,35 +659,101 @@ function wraith(o = {}) {
   for (let i = -3; i <= 3; i++) R.part(limb(V(i * 0.012, 1.374, 0.238 - Math.abs(i) * 0.005), V(i * 0.012, 1.352, 0.24 - Math.abs(i) * 0.005), 0.006, 0.002, 3), 'head', claw);
   R.part(blob(V(0, 1.33, 0.205), [0.058, 0.024, 0.045], [8, 5]), 'jaw', skullC);
   for (let i = -2; i <= 2; i++) R.part(limb(V(i * 0.013, 1.34, 0.243 - Math.abs(i) * 0.005), V(i * 0.013, 1.36, 0.244 - Math.abs(i) * 0.005), 0.006, 0.002, 3), 'jaw', claw);
-  // the arms: the sleeve's drape hanging under each, gaunt forearms, hands with long splayed clawed fingers
+  // the arms: a bell sleeve from the shoulder to the elbow, its mouth dark inside and its hem in rags; gaunt forearms; big
+  // hands with long clawed fingers. The sleeve's top is shared with the chest and the forearm's root with the sleeve, so a
+  // raised arm stays joined at the shoulder and bends at the elbow (round A1: rigid pieces broke apart when they moved)
   for (const s of [1, -1]) {
-    { const d = V(0.26 * s, 0.08, 0.06).normalize();   // (a bell sleeve: round W3, a pipe; its mouth dark inside, round S4: shaded smooth its end read as a capped pipe)
-      R.part(limb(V(0.17 * s, 1.27, 0.04), V(0.43 * s, 1.35, 0.1), 0.07, 0.11, 7), `armU${s}`, (p, n) => (n.dot(d) > 0.7 ? voidC : robeC(p, n))); }
-    // the sleeve: a wide drape hanging under the arm to the elbow and past it, its edge in rags (round W1: a scarecrow's sleeve)
-    for (let k = 0; k < 6; k++) { const x = (0.2 + k * 0.05) * s, y = 1.27 + k * 0.016, len = 0.3 + 0.12 * hash3(k, s, 4, 2) - k * 0.015; R.part(limb(V(x, y, 0.06 + k * 0.01), V(x * 1.04, y - len, 0.03 + k * 0.012), 0.055, 0.004, 3), `armU${s}`, robeC); }
-    for (let k = 0; k < 3; k++) { const x = (0.45 + k * 0.05) * s, y = 1.36 + k * 0.025; R.part(limb(V(x, y, 0.1 + k * 0.01), V(x * 1.02, y - 0.16 - 0.05 * k, 0.09 + k * 0.012), 0.04, 0.003, 3), `armL${s}`, robeC); }
-    R.part(limb(V(0.42 * s, 1.35, 0.1), V(0.62 * s, 1.47, 0.15), 0.032, 0.024, 6), `armL${s}`, flesh);
-    R.part(blob(V(0.66 * s, 1.49, 0.16), [0.048, 0.032, 0.05], [6, 5]), `hand${s}`, flesh);
-    for (let f = 0; f < 5; f++) {
-      const a = (f - 2) * 0.32, d = V(Math.cos(a) * s, Math.sin(a) * 0.9 + 0.25, 0.25 + 0.15 * (f === 0 ? -1 : 0)).normalize();
-      const b = V(0.67 * s, 1.49, 0.16).add(d.clone().multiplyScalar(0.04)), m = b.clone().add(d.clone().multiplyScalar(0.085)), e = m.clone().add(d.clone().multiplyScalar(0.075)).add(V(0, -0.03, 0.015));
-      R.part(limb(b, m, 0.013, 0.01, 4), `hand${s}`, flesh); R.part(limb(m, e, 0.01, 0.001, 3), `hand${s}`, claw);
+    const A = ARM[s], U = `armU${s}`, Lb = `armL${s}`, H = `hand${s}`, Cl = `claw${s}`;
+    const shoulderW = R.skin((p) => { const k = Math.max(0, Math.min(1, p.distanceTo(A.Sh) / 0.1)); return k >= 1 ? [[U, 1]] : [[U, 0.45 + 0.55 * k], ['chest', 0.55 - 0.55 * k]]; });
+    const elbowW = R.skin((p) => { const k = Math.max(0, Math.min(1, p.distanceTo(A.El) / 0.06)); return k >= 1 ? [[Lb, 1]] : [[Lb, 0.5 + 0.5 * k], [U, 0.5 - 0.5 * k]]; });
+    R.part(blob(A.Sh.clone().add(V(0, 0.01, 0)), [0.075, 0.065, 0.075]), shoulderW, robeC);               // (the shoulder, rounded under the drape)
+    R.part(limb(A.Sh, A.El.clone().add(A.up.clone().multiplyScalar(0.03)), 0.065, 0.12, 9), shoulderW, (p, n) => (n.dot(A.up) > 0.7 ? voidC : robeC(p, n)));
+    for (let k = 0; k < 7; k++) {   // (the hem: rags hanging from the sleeve's mouth, longest at the back and under)
+      const a = (k / 7) * TAU + 0.4, r = 0.105, m = A.El.clone().add(A.up.clone().multiplyScalar(0.03)), side = V(s, 0, 0), fw = V(0, 0, 1);
+      const at = m.clone().add(side.clone().multiplyScalar(Math.cos(a) * r)).add(fw.clone().multiplyScalar(Math.sin(a) * r * 0.9));
+      const len = 0.1 + 0.09 * hash3(k, s, 6, 3) + (Math.sin(a) < 0 ? 0.06 : 0);
+      R.part(limb(at, at.clone().add(V(0.01 * s * Math.cos(a), -len, -0.02)), 0.032, 0.003, 3), U, robeC);
     }
+    R.part(limb(A.El.clone().add(A.up.clone().multiplyScalar(-0.02)), A.Wr, 0.034, 0.025, 7), elbowW, flesh);   // the forearm, gaunt
+    R.part(blob(A.El, [0.032, 0.03, 0.032], [6, 5]), elbowW, flesh);                                                // (the elbow's knob)
+    R.part(blob(A.Wr.clone().add(A.fore.clone().multiplyScalar(0.035)), [0.05, 0.055, 0.04], [7, 5]), H, flesh);   // the palm (round A2: the reference's big hands)
+    for (let f = 0; f < 4; f++) {   // (long, a little splayed, curled in toward the palm at their tips)
+      const ang = (f - 1.5) * 0.24, d = A.fore.clone().multiplyScalar(Math.cos(ang)).add(A.spread.clone().multiplyScalar(Math.sin(ang))).normalize();
+      const b = A.Kn.clone().add(A.spread.clone().multiplyScalar((f - 1.5) * 0.022)), len = 0.1 - Math.abs(f - 1.5) * 0.01;
+      const m = b.clone().add(d.clone().multiplyScalar(len)), d2 = d.clone().add(A.palm.clone().multiplyScalar(0.45)).normalize(), e = m.clone().add(d2.clone().multiplyScalar(len * 0.8));
+      const d3 = d2.clone().add(A.palm.clone().multiplyScalar(0.5)).normalize();
+      R.part(limb(b, m, 0.015, 0.012, 5), Cl, flesh); R.part(blob(m, [0.013, 0.013, 0.013], [5, 4]), Cl, flesh);
+      R.part(limb(m, e, 0.012, 0.009, 5), Cl, flesh); R.part(limb(e, e.clone().add(d3.multiplyScalar(0.065)), 0.009, 0.001, 4), Cl, claw);
+    }
+    { const b = A.Wr.clone().add(A.fore.clone().multiplyScalar(0.025)).add(A.palm.clone().multiplyScalar(0.025)).add(A.spread.clone().multiplyScalar(-0.03)), d = A.fore.clone().multiplyScalar(0.5).add(A.palm.clone().multiplyScalar(0.55)).add(A.spread.clone().multiplyScalar(-0.45)).normalize(), e = b.clone().add(d.clone().multiplyScalar(0.07));
+      R.part(limb(b, e, 0.012, 0.009, 5), H, flesh); R.part(limb(e, e.clone().add(d.add(A.palm.clone().multiplyScalar(0.4)).normalize().multiplyScalar(0.04)), 0.008, 0.001, 4), H, claw); }   // the thumb
   }
   const root3 = R.mesh(o.glow || '#5ff0a0', 1.3);
   const writhe = (t, a = 1, trail = 0) => ({
     ...Object.fromEntries([0, 1, 2].map((i) => [`shroud${i}`, qe(trail * (0.12 + 0.08 * i) + 0.05 * a * S(t - i * 0.2), 0.15 * a * S(t * 0.5 - i * 0.25), 0.05 * a * C(t - i * 0.2))])),
     ...Object.fromEntries(tend.flatMap((n, i) => n.map((b, k) => [b, qe(trail * 0.3 + 0.16 * a * S(t + i / T + k * 0.15), 0.1 * a * C(t * 0.5 + i / T), 0.14 * a * S(t * 1.3 + i / T - k * 0.2))]))) });
-  const armQ = (s, fwd, down, twist = 0) => qe(twist, -s * fwd, -s * down);   // (forward toward the face, down toward the floor)
+  // an arm's pose, as a man's: `fwd` raises it forward (up over the head at about 2.6), `out` swings it out to the side
+  // (the reference's spread at about 1.6; under 0 across the body), `bend` flexes the elbow (under 0 straightens it),
+  // `curl` closes the claws (under 0 splays them), `wrist` cocks the hand; `twist` turns the arm in its socket
+  const X = V(1, 0, 0), Z = V(0, 0, 1);
+  const arm = (s, { fwd = 0, out = 0, bend = 0, curl = 0, wrist = 0, twist = 0 } = {}) => {
+    const A = ARM[s];
+    return { [`armU${s}`]: qa(UP, -twist * s).multiply(qa(Z, out * s)).multiply(qa(X, -fwd)), [`armL${s}`]: qa(A.hinge, -bend), [`hand${s}`]: qa(A.hinge, -wrist), [`claw${s}`]: qa(A.spread, curl * s) };
+  };
+  const arms = (l, r) => ({ ...arm(1, l), ...arm(-1, r) });   // (its left, its right: the right is −x, facing +z)
+  const lag = (f, t, d) => f(t - d);                          // (overlap: the elbow a beat after the shoulder, the claws after that)
   const clips = [
-    clip(R, 'Idle', 3.0, (t) => ({ q: { ...writhe(t), armU1: armQ(1, 0.15 + 0.08 * S(t), 0.1 * S(t + 0.2)), 'armU-1': armQ(-1, 0.15 + 0.08 * S(t + 0.4), 0.1 * S(t + 0.6)), armL1: armQ(1, 0.15, 0.05 * S(t)), 'armL-1': armQ(-1, 0.15, 0.05 * S(t + 0.3)), head: qe(0.08 * S(t + 0.2), 0.15 * S(t * 0.5), 0.05 * S(t)), jaw: qe(0.3 + 0.12 * Math.max(0, S(t * 2)), 0, 0), spine: qe(0.06 + 0.03 * S(t), 0, 0) }, p: { root: V(0, 0.04 * S(t), 0) } })),
-    clip(R, 'Walk', 1.2, (t) => ({ q: { ...writhe(t * 2, 1.3, 0.45), root: qe(0.2, 0, 0.05 * S(t)), armU1: armQ(1, -0.25, 0.35 + 0.08 * S(t)), 'armU-1': armQ(-1, -0.25, 0.35 + 0.08 * S(t + 0.5)), armL1: armQ(1, 0.2, 0.1), 'armL-1': armQ(-1, 0.2, 0.1), jaw: qe(0.3, 0, 0) }, p: { root: V(0, 0.03 * S(t * 2), 0) } })),
-    clip(R, 'Attack', 0.7, (t) => { const w = bell(0, 0.3, 0.45, t), k = bell(0.38, 0.52, 0.9, t); return { q: { ...writhe(t, 1.5, 0.2 * k), chest: qe(0.15 * k, 0.4 * w - 0.5 * k, 0), 'armU-1': armQ(-1, -0.6 * w + 1.4 * k, -0.3 * w + 0.3 * k), 'armL-1': armQ(-1, 0.6 * k, 0.2 * k), armU1: armQ(1, 0.2, 0), jaw: qe(0.3 + 0.4 * k, 0, 0), head: qe(0.15 * k, -0.25 * k, 0) }, p: { root: V(0, 0.04 * w, 0.12 * k) } }; }),
-    clip(R, 'Attack2', 0.75, (t) => { const w = bell(0, 0.35, 0.5, t), k = bell(0.42, 0.56, 0.92, t); return { q: { ...writhe(t, 1.5, 0.3 * k), armU1: armQ(1, -0.4 * w + 1.3 * k, -0.4 * w + 0.4 * k), 'armU-1': armQ(-1, -0.4 * w + 1.3 * k, -0.4 * w + 0.4 * k), armL1: armQ(1, 0.5 * k, 0), 'armL-1': armQ(-1, 0.5 * k, 0), spine: qe(-0.2 * w + 0.4 * k, 0, 0), jaw: qe(0.3 + 0.5 * w, 0, 0) }, p: { root: V(0, 0.08 * w - 0.04 * k, 0.1 * k) } }; }),
-    clip(R, 'Heavy', 1.1, (t) => { const r = bell(0, 0.35, 0.55, t), d = bell(0.5, 0.62, 0.95, t); return { q: { ...writhe(t * 1.5, 2, 0.6 * d), armU1: armQ(1, -0.5 * r + 1.2 * d, -0.6 * r + 0.3 * d), 'armU-1': armQ(-1, -0.5 * r + 1.2 * d, -0.6 * r + 0.3 * d), spine: qe(-0.35 * r + 0.5 * d, 0, 0), head: qe(-0.5 * r + 0.3 * d, 0, 0), jaw: qe(0.3 + 0.6 * r, 0, 0) }, p: { root: V(0, 0.18 * r - 0.08 * d, 0.38 * ease(0.5, 0.8, t)) } }; }),   // (it rises, spreads wider and shrieks, then dives)
-    clip(R, 'Hit', 0.45, (t) => { const k = bell(0, 0.2, 1, t); return { q: { ...writhe(t * 2, 1 + 2 * k, -0.3 * k), armU1: armQ(1, -0.3 * k, 0.2 * k), 'armU-1': armQ(-1, -0.3 * k, 0.2 * k), spine: qe(-0.3 * k, 0.2 * k, 0), head: qe(-0.35 * k, -0.2 * k, 0), jaw: qe(0.3 + 0.3 * k, 0, 0) }, p: { root: V(0, 0.03 * k, -0.08 * k) } }; }),
-    clip(R, 'Death', 1.6, (t) => { const r = bell(0, 0.18, 0.4, t), k = ease(0.2, 0.9, t), f = 1 - 0.72 * k; return { q: { ...writhe(t * 2, 2 * r + 0.3, -0.5 * k), spine: qe(0.15 * k - 0.3 * r, 0, 0), head: qe(-0.5 * r + 0.5 * k, 0, 0), jaw: qe(0.3 + 0.6 * r, 0, 0), armU1: armQ(1, 0.2 * k, -0.4 * r + 0.9 * k), 'armU-1': armQ(-1, 0.2 * k, -0.4 * r + 0.9 * k) }, p: { root: V(0, 0.1 * r - 0.74 * k, 0) }, s: { root: V(1 + 0.3 * k, f, 1 + 0.3 * k) } }; }),   // (a last shriek, then the shroud empties and settles, a heap of rags)
-    clip(R, 'Cast', 1.0, (t) => { const k = bell(0.05, 0.4, 0.9, t); return { q: { ...writhe(t * 1.5, 1.5, -0.2 * k), armU1: armQ(1, 0.3 * k, -0.7 * k), 'armU-1': armQ(-1, 0.3 * k, -0.7 * k), spine: qe(-0.25 * k, 0, 0), head: qe(-0.45 * k, 0, 0), jaw: qe(0.3 + 0.5 * k, 0, 0) }, p: { root: V(0, 0.1 * k, 0) } }; }),   // (arms raised, head back, jaw wide: the drain)
+    // breathing in the shoulders; its right hand slowly rising to the chest, the claws curling, the left a beat behind it
+    clip(R, 'Idle', 3.0, (t) => {
+      const rise = (u) => bell(0.25, 0.48, 0.78, ((u % 1) + 1) % 1), b = 0.06 * S(t);
+      return { q: { ...writhe(t), ...arms(
+        { fwd: 0.06 + b + 0.35 * lag(rise, t, 0.5), out: 0.05, bend: 0.1 + 0.45 * lag(rise, t, 0.56), curl: 0.15 + 0.5 * lag(rise, t, 0.62) },
+        { fwd: 0.06 + b + 0.75 * rise(t), out: 0.05 + 0.1 * rise(t), bend: 0.1 + 1.0 * lag(rise, t, 0.05), curl: 0.15 + 0.85 * lag(rise, t, 0.12) - 0.4 * lag(rise, t, 0.35) * 0, wrist: 0.25 * lag(rise, t, 0.08) }),
+        head: qe(0.08 * S(t + 0.2), 0.15 * S(t * 0.5), 0.05 * S(t)), jaw: qe(0.3 + 0.12 * Math.max(0, S(t * 2)), 0, 0), spine: qe(0.06 + 0.03 * S(t), 0, 0) }, p: { root: V(0, 0.04 * S(t), 0) } };
+    }),
+    // drifting: the arms trailing back with it, swinging a little against each other, the forearms lagging
+    clip(R, 'Walk', 1.2, (t) => ({ q: { ...writhe(t * 2, 1.3, 0.45), root: qe(0.2, 0, 0.05 * S(t)), ...arms(
+      { fwd: -0.4 + 0.18 * S(t), out: 0.12, bend: 0.3 + 0.12 * S(t - 0.1), curl: 0.3 + 0.1 * S(t - 0.2) },
+      { fwd: -0.4 + 0.18 * S(t + 0.5), out: 0.12, bend: 0.3 + 0.12 * S(t + 0.4), curl: 0.3 + 0.1 * S(t + 0.3) }), jaw: qe(0.3, 0, 0) }, p: { root: V(0, 0.03 * S(t * 2), 0) } })),
+    // a rake with the right claw: the arm cocked up behind the head, the body wound back; then raked down across it, the
+    // elbow snapping straight, the claws closing after it and the follow-through past the left hip
+    clip(R, 'Attack', 0.7, (t) => {
+      const w = bell(0, 0.3, 0.45, t), k = bell(0.38, 0.52, 0.9, t), we = bell(0, 0.33, 0.48, t), ke = bell(0.4, 0.55, 0.9, t), c = bell(0.46, 0.6, 0.95, t);
+      return { q: { ...writhe(t, 1.5, 0.2 * k), chest: qe(0.15 * k, -0.45 * w + 0.5 * k, 0), ...arms(
+        { fwd: 0.1 + 0.3 * w - 0.25 * k, out: 0.2 * w, bend: 0.25 + 0.4 * we, curl: 0.2 },
+        { fwd: 0.05 + 2.5 * w + 0.6 * k, out: 0.45 * w - 0.55 * k, bend: 0.1 + 1.3 * we - 0.45 * ke, curl: -0.45 * w + 1.1 * c, wrist: 0.5 * we - 0.5 * ke }),
+        jaw: qe(0.3 + 0.4 * k, 0, 0), head: qe(0.15 * k, 0.25 * k, 0) }, p: { root: V(0, 0.04 * w, 0.12 * k) } };
+    }),
+    // a two-handed lunge: both arms drawn back, then thrown forward at head height, the claws open, and shut on it
+    clip(R, 'Attack2', 0.75, (t) => {
+      const w = bell(0, 0.35, 0.5, t), k = bell(0.42, 0.56, 0.92, t), ke = bell(0.46, 0.6, 0.92, t), g = bell(0.52, 0.64, 0.96, t);
+      const one = (o) => ({ fwd: -0.45 * w + 1.55 * k, out: 0.3 * w - 0.2 * k + o, bend: 0.2 + 0.8 * w - 0.55 * ke, curl: 0.2 - 0.6 * w - 0.2 * k + 1.3 * g });
+      return { q: { ...writhe(t, 1.5, 0.3 * k), ...arms(one(0), one(0.04)), spine: qe(-0.2 * w + 0.4 * k, 0, 0), jaw: qe(0.3 + 0.5 * w, 0, 0) }, p: { root: V(0, 0.08 * w - 0.04 * k, 0.1 * k) } };
+    }),
+    // it rises and flings its arms wide and up (the reference's spread), shrieking; then dives, both sweeping forward and down
+    clip(R, 'Heavy', 1.1, (t) => {
+      const r = bell(0, 0.35, 0.55, t), d = bell(0.5, 0.62, 0.95, t), re = bell(0, 0.4, 0.6, t);
+      const one = (o) => ({ fwd: 0.45 * r + 1.3 * d, out: 1.65 * r + o - 0.1 * d, bend: 0.2 - 0.55 * re + 0.15 * d, curl: 0.2 - 0.8 * re + 1.0 * d, wrist: -0.3 * re });
+      return { q: { ...writhe(t * 1.5, 2, 0.6 * d), ...arms(one(0), one(0.06)), spine: qe(-0.35 * r + 0.5 * d, 0, 0), head: qe(-0.5 * r + 0.3 * d, 0, 0), jaw: qe(0.3 + 0.6 * r, 0, 0) }, p: { root: V(0, 0.18 * r - 0.08 * d, 0.38 * ease(0.5, 0.8, t)) } };
+    }),
+    // struck: the arms snap in to the chest, elbows up, the head thrown back
+    clip(R, 'Hit', 0.45, (t) => {
+      const k = bell(0, 0.2, 1, t), ke = bell(0, 0.26, 1, t);
+      const one = { fwd: 0.85 * k, out: -0.45 * k, bend: 0.1 + 1.5 * ke, curl: 0.2 + 0.8 * ke };
+      return { q: { ...writhe(t * 2, 1 + 2 * k, -0.3 * k), ...arms(one, one), spine: qe(-0.3 * k, 0.2 * k, 0), head: qe(-0.35 * k, -0.2 * k, 0), jaw: qe(0.3 + 0.3 * k, 0, 0) }, p: { root: V(0, 0.03 * k, -0.08 * k) } };
+    }),
+    // a last reach upward, a shriek; then the arms go slack and fold in as the shroud empties into a heap
+    clip(R, 'Death', 1.6, (t) => {
+      const r = bell(0, 0.18, 0.42, t), k = ease(0.2, 0.9, t), f = 1 - 0.72 * k;
+      const one = (o) => ({ fwd: 2.3 * r + 0.35 * k, out: 0.4 * r - 0.3 * k + o, bend: 0.1 - 0.35 * r + 0.6 * k, curl: -0.5 * r + 0.9 * k });
+      return { q: { ...writhe(t * 2, 2 * r + 0.3, -0.5 * k), ...arms(one(0), one(0.1)), spine: qe(0.15 * k - 0.3 * r, 0, 0), head: qe(-0.5 * r + 0.5 * k, 0, 0), jaw: qe(0.3 + 0.6 * r, 0, 0) }, p: { root: V(0, 0.1 * r - 0.74 * k, 0) }, s: { root: V(1 + 0.3 * k, f, 1 + 0.3 * k) } };
+    }),
+    // the drain: arms lifted wide and forward, palms to its prey, the fingers splayed and trembling, the head back
+    clip(R, 'Cast', 1.0, (t) => {
+      const k = bell(0.05, 0.4, 0.9, t), ke = bell(0.1, 0.45, 0.92, t), tr = 0.06 * S(t * 11) * k;
+      const one = (o) => ({ fwd: 0.85 * k + tr, out: 1.3 * k + o, bend: 0.15 - 0.4 * ke, curl: 0.15 - 0.75 * ke + tr * 2, wrist: -0.45 * ke });   // (round A2: narrower, the hands crossed before its face)
+      return { q: { ...writhe(t * 1.5, 1.5, -0.2 * k), ...arms(one(0), one(0.05)), spine: qe(-0.25 * k, 0, 0), head: qe(-0.45 * k, 0, 0), jaw: qe(0.3 + 0.5 * k, 0, 0) }, p: { root: V(0, 0.1 * k, 0) } };
+    }),
   ];
   return { root: root3, clips };
 }

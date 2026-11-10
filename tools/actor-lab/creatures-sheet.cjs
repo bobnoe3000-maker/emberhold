@@ -1,4 +1,4 @@
-// creatures-sheet.cjs — the creatures' model sheet (docs/creatures-proposal.md): node tools/actor-lab/creatures-sheet.cjs [out.jpg] [--only rat,golem,…]
+// creatures-sheet.cjs — the creatures' model sheet (docs/creatures-proposal.md): node tools/actor-lab/creatures-sheet.cjs [out.jpg] [--only rat,golem,…] [--clips Attack,Heavy [--frames N]]
 // → each creature beside the knight and through its clips, from the game's camera, one row a kind, and its triangles,
 // draws, bones and clips. Serves this folder and drives the bake's Chromium (render.cjs).
 const fs = require('fs'), path = require('path');
@@ -25,6 +25,9 @@ const ROWS = [
   { name: 'The Rat King (boss)', key: 'ratking', spec: { kind: 'ratking' }, height: 0.75 * 1.3, cy: 0.42, half: 1.05, yaw: -1.0, shots: SHOTS },
   { name: 'The Spider Queen (boss)', key: 'spiderqueen', spec: { kind: 'spiderqueen' }, height: 0.8 * 1.3, cy: 0.45, half: 1.15, yaw: -0.6, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));
+// --clips Attack,Heavy [--frames N]: each row through those clips instead, N moments of each (default 6), for reading a
+// motion (the wraith's arms, 2026-11-10); the 'beside a man' cell stays first
+if (arg('clips')) { const N = +(arg('frames') || 6); for (const r of ROWS) r.shots = arg('clips').split(',').map((c) => [c, Array.from({ length: N }, (_, i) => +(i / (N - 1)).toFixed(3))]); }
 (async () => {
   const srv = await serve(__dirname), port = srv.address().port;
   const b = await chromium.launch({ executablePath: CHROME, args: GL }), p = await b.newPage({ viewport: { width: 440, height: 400 } });
