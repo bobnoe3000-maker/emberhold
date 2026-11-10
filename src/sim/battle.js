@@ -461,7 +461,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   }
   // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire (a camp's stand up where
   // they sat: no rising) or out of the burrow (a nest's come up out of it); an elite in one fill of four, its last foe.
-  // One wave: the spawn point is quiet after it, and cleared when it falls (step)
+  // Each band a wave: cleared when it falls (step), and the next one after the spawn point's respawn if the party stays
   function spawnCamp(w, b) {
     const c = b.camp, F = FAMILIES[c.family], band = bandOf(seed, c, campState(state, c.id).n);
     band.kinds.forEach((k, i) => {
@@ -469,8 +469,8 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const u = foe(w, elite ? F.elite : k, b.level, ox, oy, 1 + PREMIUM * Math.max(0, b.level - 3), elite, F);
       if (c.kind === 'camp') u.spawn = 0;
     });
-    b.wave = 1; b.quiet = true;
-    bus.emit('wave', { wave: 1, level: b.level, tide: 0, camp: c.id });
+    b.wave += 1;
+    bus.emit('wave', { wave: b.wave, level: b.level, tide: 0, camp: c.id });
   }
   // the Mere Tower's next wave (tower.js): a level-12 room's, TOUGH[n] strong, of its block's kind; every tenth a warden
   // and an escort of the block's. Its strength shows on the room pill as a tide would (b.tide).
@@ -1629,7 +1629,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       // waves
       if (!foes.length && !w.enemies.some((e) => e.dead > 0 || e.spawn > 0)) {
         if (battle.wave > 0 && !battle.between) {               // a wave just fell: start the lull
-          battle.between = true; battle.lull = LULL;
+          battle.between = true; battle.lull = battle.camp ? battle.camp.respawn : LULL;   // (a spawn point's next band after its respawn: twice a room's lull)
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room, tower: !!battle.tower });
           if (battle.tower) towerCleared();                        // the Mere Tower pays by the wave, and banks at a landing
           else onDrop('wave', battle.level, p.x, p.y);             // now and then a fallen wave leaves something behind

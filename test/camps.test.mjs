@@ -56,6 +56,21 @@ test('the Spit: three goblins idle at the fire, a fight of level 2 in reach, cle
   assert.equal(sim.world.enemies.filter((e) => e.idle === 'vale_spit').length, 3, 'back after its respawn');
 });
 
+test("stay in the arena and the next band comes on after the respawn, twice a dungeon room's lull; reach and arena wider", async () => {
+  const { RESPAWN } = await import('../src/sim/camps.js');
+  assert.equal(RESPAWN, 8, "twice the dungeon's 4 s lull (the owner: half as fast as in the dungeons)");
+  assert.ok(SPIT.reach >= 12 && DITCH.reach >= 10, 'seen from further off (it was 7 and 5)');
+  assert.ok(hypot(SPIT.x - 52, SPIT.y - 150) > 100, 'the Spit out past the crossroads, over 100 tiles from the gate');
+  const sim = land(), ev = [];
+  for (const k of ['campCleared', 'wave']) sim.bus.on(k, (d) => ev.push({ k, t: sim.state.t, ...d }));
+  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  for (let i = 0; i < 20 * 120 && ev.filter((e) => e.k === 'campCleared').length < 2; i++) { for (const e of living(sim)) e.hp = Math.min(e.hp, 1); for (const m of sim.state.party) m.hp = 9999; sim.tick(); }
+  const cl = ev.filter((e) => e.k === 'campCleared'), waves = ev.filter((e) => e.k === 'wave' && !e.cleared);
+  assert.equal(cl.length, 2, 'cleared twice without leaving'); assert.equal(waves.length, 2, 'a second band came on');
+  const gap = waves[1].t - cl[0].t; assert.ok(gap >= RESPAWN - 0.1 && gap <= RESPAWN + 0.2, `the next band ${gap.toFixed(2)} s after the last fell`);
+  assert.equal(cl[1].n, 2, 'counted');
+});
+
 test('walked away from mid-fight, the band is back whole at its posts', () => {
   const sim = land();
   stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();

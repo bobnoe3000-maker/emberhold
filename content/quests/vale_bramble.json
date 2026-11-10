@@ -8,11 +8,11 @@
     2,
     30
   ],
-  "summary": "Col's brown cow, Bramble, was taken off the Greyholt road while he watered the horse. Three of Old Skarn's stragglers have her by their fire on the river above the Thornwick bridge. Col wants them gone, and the bell off her collar back.",
+  "summary": "Col's brown cow, Bramble, was taken off the Greyholt road while he watered the horse. Three of Old Skarn's stragglers have her by their fire in the meadow past the crossroads. Col wants them gone, and the bell off her collar back.",
   "steps": [
     {
       "id": "spit",
-      "journal": "Go to the Spit, the goblins' fire on the river's east bank above the Thornwick bridge, and put the three round it down.",
+      "journal": "Go to the Spit, the goblins' fire in the meadow past the crossroads, south of the east road, and put the three round it down.",
       "objectives": [
         {
           "type": "camp",
