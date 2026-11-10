@@ -1275,3 +1275,86 @@ export function createWorld(o) {
   api.ready = true;
   return api;
 }
+
+// ── a figure on its own: the windows' live preview (docs/character-look-plan.md §5; GDD §6.1 v1.64, creation) ──────
+// The same model as in play, built the same way (figure.js, cast.json, the models' versions), in a small canvas with its
+// own WebGL context: the actor idling, one of its attacks every few seconds or on a tap, a drag to turn it. It draws
+// only while it's shown and there's something to move, and lets go of its context and models when closed. A world
+// needn't be up: it reads the same assets/ (the first of createWorld's and this one's `assets` to arrive).
+/**
+ * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void }} o
+ * @returns {{ show: (actor: string) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
+ */
+export function createPreview(canvas, o) {
+  if (!ASSETS) ASSETS = o.assets;
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(26, 1, 0.05, 100), turn = new THREE.Group();
+  scene.add(turn);
+  scene.add(new THREE.HemisphereLight(0xfff0dc, 0x2a2036, 1.35));                    // (the creation stage's dusk: warm from above, violet below)
+  const key = new THREE.DirectionalLight(0xffd29a, 2.4); key.position.set(2.2, 4, 3.2); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9db0ff, 1.1); rim.position.set(-3, 2.5, -2.5); scene.add(rim);
+  let cur = null, name = '', wantN = 0, yaw = 0.42, spin = 0, drag = null, raf = 0, dead = false, last = 0, clock = 0, act = null, nextAct = 4;
+  const size = () => { const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height; renderer.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); };
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null; ro?.observe(canvas); size();
+  const clipOf = (k) => cur && cur.def.clips && cur.def.clips[k];
+  function frame(now) {
+    raf = 0; if (dead || !cur) return;
+    const dt = Math.min(0.1, last ? (now - last) / 1000 : 0); last = now; clock += dt;
+    if (!drag) { yaw += spin * dt; spin *= Math.max(0, 1 - 3 * dt); }
+    turn.rotation.y = yaw;
+    if (!act && clock >= nextAct) act = { k: clock % 2 < 1 ? 'attack' : 'attack2', t: 0 };
+    const idle = clipOf('idle'), c = cur.fig;
+    if (act) {
+      const A = clipOf(act.k) || clipOf('attack'), clip = A && c.clips.find((q) => q.name === A.clip);
+      act.t += dt;
+      if (!clip || act.t >= clip.duration * (A.to || 1)) { act = null; nextAct = clock + 5 + (clock % 3); }
+      else poseFigure(c, A.clip, act.t / clip.duration, true);
+    }
+    if (!act) { const clip = c.clips.find((q) => q.name === (idle ? idle.clip : 'Idle')) || c.clips[0]; poseFigure(c, clip.name, (clock % clip.duration) / clip.duration, true); }
+    renderer.render(scene, cam);
+    if (!document.hidden && canvas.isConnected) raf = requestAnimationFrame(frame);
+  }
+  const wake = () => { if (!raf && !dead && cur) { last = 0; raf = requestAnimationFrame(frame); } };
+  document.addEventListener('visibilitychange', wake);
+  // a drag turns them; a tap plays an attack
+  const down = (e) => { drag = { x: e.clientX, y0: yaw, moved: 0, t: performance.now() }; canvas.setPointerCapture?.(e.pointerId); };
+  const move = (e) => { if (!drag) return; const dx = e.clientX - drag.x; drag.moved = Math.max(drag.moved, Math.abs(dx)); const ny = drag.y0 + dx * 0.012; spin = (ny - yaw) * 30; yaw = ny; wake(); };
+  const up = () => { if (!drag) return; if (drag.moved < 6) api.attack(); drag = null; wake(); };
+  canvas.addEventListener('pointerdown', down); canvas.addEventListener('pointermove', move); canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+  const api = {
+    get actor() { return name; },
+    /** stand this actor: true once it's built (false: no model for it, the caller keeps its still) */
+    async show(actor) {
+      if (actor === name && cur) return true;
+      const n = ++wantN; name = actor;
+      const c = await json(`${ASSETS}models/cast.json`); if (c && !cast) cast = c;
+      const def = c && c.actors[actor]; if (!def || dead || n !== wantN) return false;
+      try {
+        const fig = await buildFigure(def.v, { far: false, load: loadModel, faces: async () => cast.faces });
+        if (dead || n !== wantN) return false;
+        poseFigure(fig, 'Idle', 0, true);
+        const box = new THREE.Box3(); fig.root.updateMatrixWorld(true); fig.root.traverse((q) => { if (q.isMesh && q.visible) box.expandByObject(q); });
+        const h = box.max.y - box.min.y, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+        fig.root.position.set(-cx, -box.min.y, -cz);
+        if (cur) turn.remove(cur.fig.root);
+        turn.add(fig.root); cur = { fig, def };
+        const d = (h * 0.62) / Math.tan((cam.fov * Math.PI) / 360);                 // (the figure about four fifths of the canvas's height)
+        cam.position.set(0, h * 0.62, d); cam.lookAt(0, h * 0.47, 0);
+        clock = 0; act = null; nextAct = 3; wake();
+        return true;
+      } catch (e) { o.onError?.(e); return false; }
+    },
+    attack() { if (cur && !act) { act = { k: 'attack', t: 0 }; wake(); } },
+    close() {
+      dead = true; if (raf) cancelAnimationFrame(raf); raf = 0; ro?.disconnect(); document.removeEventListener('visibilitychange', wake);
+      canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move); canvas.removeEventListener('pointerup', up); canvas.removeEventListener('pointercancel', up);
+      if (cur) turn.remove(cur.fig.root); cur = null; renderer.dispose(); renderer.forceContextLoss();
+    },
+  };
+  // (nothing of the figure is disposed: its geometry, textures and materials may be the world's too, the models shared;
+  // the context going takes this canvas's copies of them with it)
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); o.onError?.(new Error('preview: the WebGL context was lost')); });
+  return api;
+}

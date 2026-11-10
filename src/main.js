@@ -13,6 +13,7 @@ import { SLOTS, activeSlot, setActiveSlot, readSlot, writeSlot, migrateLegacy, c
 import { createSlotsWindow } from './ui/slots.js';
 import { createTitle } from './ui/title.js';
 import { createCreation } from './ui/create.js';
+import { createFirstSteps } from './ui/firststeps.js';
 import { createPartyScreen } from './ui/partyscreen.js';
 import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
@@ -156,7 +157,16 @@ let paused = BOOT;
 // the Stage's lineup (src/dev/stage.js): the cast in a real room, the sim held still
 if (STAGE3D) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ sim, renderer, params, setPaused: (on) => { paused = on; } }); });
 const cinema = createCinema();
-const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); } });
+// the first steps (ui/firststeps.js, GDD §6.1 v1.64): after Ready, once the square is up and the HUD on it, one card at a time
+const firstSteps = createFirstSteps({ slot: SLOT, setPaused: (on) => { paused = on; } });
+function stepsWhenReady() {
+  let n = 0; const t = setInterval(() => {
+    if (++n > 240) return clearInterval(t);                                        // (a minute: a world that never came up has its own message)
+    if (renderer.transiting || !document.querySelector('#party .card') || paused) return;
+    clearInterval(t); firstSteps.open();
+  }, 250);
+}
+const creation = createCreation({ sim, onDone: () => { paused = false; cinema.stopMusic(); stepsWhenReady(); }, models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // (the look as its model: not with no world, or ?figures=sprites)
 // Graphics (render3d/settings.js, per device): the depth of field, the hit feel, the brightness dial and the frame rate,
 // each at once (the world is always Luminati's: docs/luminati-only-cleanup.md)
 const fpsMeter = createFpsMeter(); fpsMeter.show(readGraphics().fps === 'on');   // (the menu's Frame rate: ui/fps.js)
@@ -176,7 +186,7 @@ const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused 
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
   openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); if (brightness.isOpen) brightness.close(); },   // the menu comes up over a clear screen
-  graphics, tune: () => brightness.open(),
+  graphics, tune: () => brightness.open(), openSteps: () => firstSteps.open(true),
   // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim
   // while the menu holds the game still (it ticks nothing while paused), and the slot saved with them
   devApply: (cmds) => { for (const c of cmds) sim.commands.push(c); sim.tick(); if (!PREVIEW && sim.state.created) writeSlot(SLOT, sim).catch(() => {}); } });
@@ -187,7 +197,7 @@ else document.getElementById('bootSplash')?.remove();
 let awaySecs = saved && !PREVIEW ? Math.max(0, (Date.now() - (saved.savedAt || Date.now())) / 1000) : 0, hiddenAt = 0;
 function catchUp(secs = awaySecs) { awaySecs = 0; if (secs >= AWAY_MIN && sim.state.created && !PREVIEW) away.run(secs); }
 if (!BOOT) renderer.ready.then(() => catchUp());
-if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap };
+if (DEV) globalThis.__ui = { title, brightness, creation, partyScreen, slots, cinema, dialogue, journal, worldMap, firstSteps };
 
 
 // tap: a named person → talk; a service → its menu; an enemy → focus; anything else → walk there (and use a chest /

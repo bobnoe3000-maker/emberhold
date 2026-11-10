@@ -1,0 +1,51 @@
+{
+  "$comment": "First steps (GDD §6.1 v1.64): the opening square's cards, one at a time, each pointing at what it's about (`at`: a CSS selector the card rings; none: the world itself). Shown once a game slot after Ready; the menu's First steps shows them again. Plan for the services' first-open cards: docs/first-steps-plan.md.",
+  "steps": [
+    {
+      "id": "move",
+      "title": "Walking",
+      "text": "Put a thumb down anywhere and drag: a stick comes up under it and your hero walks. Tap the ground to walk there, or a door, a person or a chest to go and use it. Pinch with two fingers to look closer or further."
+    },
+    {
+      "id": "hero",
+      "at": "#party .card[data-idx=\"0\"]",
+      "title": "Your hero",
+      "text": "This is you, with your health under you. Tap it for your windows: Gear (what you wear, and the bag), Stats (the points each level brings, and what you were born with) and Skills (a new one every three levels; four go into a fight). Companions you hire get a card of their own beside yours."
+    },
+    {
+      "id": "compass",
+      "at": "#compassBtn",
+      "title": "The compass",
+      "text": "Tap it and pick a place: the square's services, the land's dungeons, the quest you're following. Your hero walks there by themselves. Drag or tap the ground to stop."
+    },
+    {
+      "id": "journal",
+      "at": "#journalBtn",
+      "title": "The Journal",
+      "text": "Every errand you've taken, its steps and who to go back to. The one you're following shows under it, and the compass knows the way."
+    },
+    {
+      "id": "map",
+      "at": "#mapBtn",
+      "title": "The World map",
+      "text": "This land and the Old Provinces round it: where you've been, where the dungeons are, and the Guild's coach between the towns you've walked to."
+    },
+    {
+      "id": "menu",
+      "at": "#menuBtn",
+      "title": "The menu",
+      "text": "Pause, your game slots, sound, graphics and brightness, and these first steps again. The game keeps itself as you go: nothing to save by hand."
+    },
+    {
+      "id": "square",
+      "at": "#hubBar",
+      "title": "The square",
+      "text": "While you stand in a town's square its services are a tap away: the tavern for companions and the board, the inn to rest, the shop, the smith and the temple."
+    },
+    {
+      "id": "errand",
+      "title": "Your first errand",
+      "text": "Maudry Fenn keeps the Tired Mule, here on the square, and she has work for someone new. A gold mark hangs over anyone with work for you. Walk up to her and tap her."
+    }
+  ]
+}

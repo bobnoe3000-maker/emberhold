@@ -76,6 +76,18 @@ async function createStep(p, { pick, name, begin = false } = {}) {
     await p.waitForFunction((n) => !document.querySelector('#createWrap.on') || document.querySelectorAll('#create .dots i.on').length !== n, at, { timeout: 5000 * SLOW }).catch(() => null);
   }
 }
+// the first steps (ui/firststeps.js, GDD §6.1 v1.64): up once the square is, after creation; each card read through with
+// Next (or let go with Skip). Returns the cards seen: [id, rang something] each.
+async function firstSteps(p, { skip = false } = {}) {
+  const up = await p.waitForSelector('#steps.on', { timeout: 60000 * SLOW }).then(() => true).catch(() => false);
+  if (!up) return null;
+  const seen = [];
+  for (let k = 0; k < 20 && (await p.locator('#steps.on').count()); k++) {
+    seen.push(await p.evaluate(() => [globalThis.__ui.firstSteps.step, !document.querySelector('#steps .ring.none')]));
+    await p.locator(skip ? '#steps .skip' : '#steps .pri').tap(); await p.waitForTimeout(200);
+  }
+  return seen;
+}
 const results = [];
 // a game page is up: the sim exists and, unless it's a preview, the boot (splash → loading) has
 // been tapped through to the title
@@ -153,12 +165,18 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     // create, through the screens
     await p.locator('#title button.pri', { hasText: 'Begin' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     await p.tap('#cine .skip'); await p.waitForSelector('#createWrap.on'); await p.waitForTimeout(300);   // the intro (section 4 plays it through)
-    await createStep(p, { pick: 'Fighter' }); await createStep(p, { pick: 'Barbarian' }); await createStep(p, { pick: 'Redhand deserter' });
+    await createStep(p, { pick: 'Fighter' }); await createStep(p, { pick: 'Barbarian' }); await createStep(p); await createStep(p, { pick: 'Redhand deserter' });   // (the third: Born, the roll as offered)
     await createStep(p, { name: 'Brann<script>' }); await createStep(p, { begin: true }); await p.waitForTimeout(600);
+    {   // the first steps over the square, once it's up: the eight cards in order, all but the first and last ringing what they're about
+      const st = await firstSteps(p), ids = (st || []).map((q) => q[0]).join(',');
+      check(M + ': the first steps after Ready, each card on what it is about, the sim held, then gone', ids === 'move,hero,compass,journal,map,menu,square,errand'
+        && st.slice(1, -1).every((q) => q[1]) && !(await p.locator('#steps.on').count()), JSON.stringify(st));
+    }
     // (waited for: on Luminati the sim holds still while the town's level builds, slowly in software GL)
     await p.waitForFunction(() => globalThis.__sim.state.created, null, { timeout: 30000 * SLOW, polling: 100 }).catch(() => null);
-    const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created }; });
+    const h = await S(() => { const q = globalThis.__sim.state.party[0]; return { name: q.name, cls: q.cls, actor: q.actor, origin: q.origin, created: globalThis.__sim.state.created, born: q.born, perks: q.perks }; });
     check(M + ': created through the screens (name cleaned)', h.created && h.name === 'Brannscript' && h.cls === 'fighter' && h.actor === 'hero_barbarian' && h.origin === 'redhand_deserter', JSON.stringify(h));
+    check(M + ': born with the roll the Born step showed (six points, a trait: GDD §6.1 v1.64)', !!h.born && Object.values(h.born).reduce((a, b) => a + b, 0) === 6 && Array.isArray(h.perks) && h.perks.length >= 1, JSON.stringify({ born: h.born, perks: h.perks }));
     // hire at the tavern (the square's service bar)
     // (the Lantern Guild's sellswords, GDD §6.2: each card shows its rank word, perks and fee; hiring pays it)
     await S(() => { globalThis.__sim.state.counters.gold = 2000; });
@@ -274,8 +292,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.waitForSelector('#createWrap.on', { timeout: 10000 * SLOW });
     check('intro: six cards in order, the Fall\'s music unbroken through cards 3–5', JSON.stringify(seen.slice(0, 6)) === JSON.stringify([['The Kindling', 'kindling'], ['The Solmere Empire', 'empire'], ['The Fall', 'fall'], ['The Long Dim', 'fall'], ['Year 301 of the Dim', 'fall'], ['Thornwick', 'thornwick']]), JSON.stringify(seen));
     check('intro: it closes on "Looks like it is up to you." and hands over to creation', seen[6].trim() === 'Looks like it is up to you.' && (await C(() => globalThis.__ui.cinema.playing)) === false);
-    await createStep(p, { pick: 'Rogue' }); await createStep(p);                                                      // (the look as offered)
+    await createStep(p, { pick: 'Rogue' }); await createStep(p); await createStep(p);                                 // (the look and the roll as offered)
     await createStep(p, { pick: 'Thornwick' }); await createStep(p, { name: 'Wick' }); await createStep(p, { begin: true }); await p.waitForTimeout(3000);
+    await firstSteps(p, { skip: true });                                              // (let go: Skip)
     check('intro: the music fades out into play', (await C(() => globalThis.__sim.state.created)) && (await C(() => globalThis.__ui.cinema.music)) === null);
     await p.tap('#menuBtn'); await p.locator('#title button', { hasText: 'The Chronicle' }).tap(); await p.waitForSelector('#cine .skip:not([hidden])');
     const replay = await C(() => globalThis.__ui.cinema.card);

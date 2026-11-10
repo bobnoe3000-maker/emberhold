@@ -239,6 +239,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
     return `<div class="ptsh">Points to spend <b>${n}</b><span class="sp"></span><button class="tog${auto ? ' on' : ''}" data-auto>${auto ? 'Auto · on' : 'Auto · off'}</button></div>
       <div class="hint">${auto ? `Auto spends each level’s 3 points on the ${CLASSES[m.cls].label.toLowerCase()} build. Turn it off to choose.` : 'Each level brings 3 points. Respec at a town temple: the first is free, then 20 gold × level.'}</div>
       ${weak}${rows}
+      ${m.born ? `<div class="hint">Born with ${ATTRS.map((k) => `${ATTR_LABEL[k]} ${m.born[k]}`).join(' · ')}: yours for good, a respec leaves them (counted in what attributes add).</div>` : ''}
       <div class="hint">From attributes: ${share || 'nothing yet'}${s.power ? ` · ability power +${Math.round(s.power * 1000) / 10}%` : ''}</div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="hint" style="margin-top:10px">${m.origin ? `Origin: ${esc(originName(m.origin))} · ` : ''}${Array.isArray(m.perks) && m.perks.length ? `${esc(m.perks.map((id) => perkWord(id).name).join(', '))} · ` : ''}stance: ${STANCE_LABEL[stanceOf(m)]} (green: what gear adds)</div>`;

@@ -87,6 +87,11 @@ Much of the parked proposal is now cheaper, because the world has since moved to
 
 ## 5. The live preview
 
+**Implemented in creation** (2026-11-10, GDD §6.1 v1.64): `tools/render3d/world.js` `createPreview` (built into the
+bundle), `src/render3d/preview.js`, `src/ui/create.js` `Preview`: the look as its model, idling, an attack every few
+seconds or on a tap, a drag to turn, the still under it until it stands and wherever it can't. The character tab's is
+still to come, the same call.
+
 - **Where:**
   - the character tab (the Gear tab's figure);
   - creation (the look being made);
