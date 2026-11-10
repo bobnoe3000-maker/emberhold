@@ -60,3 +60,20 @@ test('no "Stairs down" on a last floor: the compass offers the last hall instead
     }
   }
 });
+
+// the owner, 2026-11-10: "manually walking towards thorn wick and through the gates from the main map, did not take me to
+// the thorn wick map. I had to select the compass". A tap inside the walls, on the gate, at its mouth or on a house
+// inside walked the overland's model of the town: the way in lay 3 tiles inside the gate, and a walk that had to pass
+// through a way in passed it by. Now each goes in.
+test("walking up to Thornwick's gate, or tapping anywhere inside its walls, goes into town", async () => {
+  const { createSim: mk } = await import('../src/sim/core.js');
+  for (const [tx, ty, what] of [[40, 150, 'inside the walls'], [56, 150, 'the gate'], [58, 149, 'the gate mouth'], [30, 160, 'a house inside']]) {
+    const sim = mk(20260807, undefined, { scene: 'overland', region: 'vale' }); sim.tick();
+    sim.commands.push({ type: 'goto', tx, ty });
+    for (let i = 0; i < 20 * 20 && sim.world.kind === 'overland'; i++) sim.tick();
+    assert.equal(sim.world.kind, 'town', `a tap at ${what} takes you into Thornwick`);
+  }
+  const sim = mk(20260807, undefined, { scene: 'overland', region: 'vale' }); sim.tick();
+  for (let i = 0; i < 20 * 20 && sim.world.kind === 'overland'; i++) { sim.commands.push({ type: 'move', x: -1, y: 0 }); sim.tick(); }
+  assert.equal(sim.world.kind, 'town', 'the stick, west up the road and through the gate');
+});

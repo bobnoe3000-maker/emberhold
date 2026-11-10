@@ -217,12 +217,17 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     };
     // outdoors, a walk keeps out of every exit zone but the one it's heading for: leaving the
     // barrows for town, the straight line north ran back through the barrows' mouth. (A walk that
-    // can only be made through one still goes, and followPath's exit check below lets it pass.)
+    // can only be made through one still goes, and takes it: below.)
     const goalZone = world.kind !== 'dungeon' ? oExitAt(world, tx + 0.5, ty + 0.5) : null;
     const clear = (x, y, fx, fy) => { const e = oExitAt(world, x + 0.5, y + 0.5); return (!e || e === goalZone) && stand(x, y, fx, fy); };
     const path = (world.kind !== 'dungeon' && world.exits.length && findPath(p.x, p.y, tx, ty, clear, { near, weight })) || findPath(p.x, p.y, tx, ty, stand, { near, weight });
     if (!path) { bus.emit('noPath', { tx, ty }); return false; }
-    p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0; p.goalZone = goalZone;
+    // a walk that could only be made through an exit zone goes through it (the owner, 2026-11-10: "walking towards
+    // thornwick and through the gates from the main map, did not take me to the thornwick map": a tap inside the walls
+    // walked the overland's model of the town, the gate's zone passed by); the first zone on the path is the one taken
+    let zone = goalZone;
+    if (!zone && world.kind !== 'dungeon') for (const [x, y] of path) { const e = oExitAt(world, x + 0.5, y + 0.5); if (e) { zone = e; break; } }
+    p.path = path.slice(1); p.goal = { x: tx + 0.5, y: ty + 0.5 }; p.then = then; p.pathStuck = 0; p.goalZone = zone;
     p.dest = opts.label ? { label: opts.label, tx, ty, then, near, room: opts.room ?? -1, fromRoom: battle.battle ? battle.battle.room : -1 } : null;   // fromRoom: a fight you're walking out of doesn't stop you
     if (!p.path.length) arrive();
     return true;

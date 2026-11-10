@@ -822,7 +822,7 @@ function buildOverland(seed) {
     return nearWater(x, y) ? 0.55 : (f > 0.5 && f < 0.6) || (wood > 0 && wood < 0.35) ? 0.4 : fbm(x * 0.08, y * 0.08, o.seed + 13) > 0.68 ? 0.45 : 0;
   });
 
-  o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 1, y1: town[1] + 4, to: 'town', arrive: 'overland' });
+  o.exits.push({ x0: town[0] - 6, y0: town[1] - 4, x1: town[0] + 7, y1: town[1] + 4, to: 'town', arrive: 'overland' });   // (out to the gate's mouth: a walk up to the gate goes in; it began 3 tiles inside it)
   // walk into the barrow's doorway (around the glowing stairs) to go down into the dungeon
   o.exits.push({ x0: barrows[0] - 2, y0: barrows[1] + 6, x1: barrows[0] + 4, y1: barrows[1] + 9, to: 'dungeon', site: 'barrows' });
   // the other sites' ways in (M5, sites.js): the keep's door, the chapel's door across the pools, a slab at the milestone's
