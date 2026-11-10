@@ -229,10 +229,12 @@ function sweepFigures() {
 // the same design, lit and shadowed by the world (docs/vale-landmarks-proposal.md; the owner, 2026-11-10: "the old
 // design for the Keep actually looks OK - can we keep this, and are those tile assets re-usable for our overall asset
 // catalogue?" — one catalogue). One kit unit is ten of our tiles, five of Luminati's units. Which pieces (?landmarks=):
-//   'doors' (the default): the Vale's three dungeon doors, the Keep, the Old Barrows and the Sunken Chapel;
-//   'all': every kit piece of the Vale's (the owner chooses the rest, before or after: the proposal's question 3);
+//   'chosen' (the default, the owner's choices: the proposal's §8): every kit piece of the Vale's but the ones convert.js
+//     marks `card` (Thornwick's palisade, towers and gatehouse seen from inside the town);
+//   'doors': the Vale's three dungeon doors alone, the Keep, the Old Barrows and the Sunken Chapel;
+//   'all': every kit piece of the Vale's, cards and all;
 //   'sprites': the baked sprites, as before.
-let envSprites = [], LANDMARKS = 'doors';
+let envSprites = [], LANDMARKS = 'chosen';
 const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map(), KIT_MADE = new Map();
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
 for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
@@ -252,6 +254,8 @@ function kitPiece(e, x, y, z) {
   // takes its card's palette; not the bake's gain, which answers the bake's own bright lights: the world lights it
   // here, and an albedo lift (KIT_LIFT) brings it to its card's brightness (Wickham Keep at dusk: luma 40 at the gain,
   // 51 lifted, its card 64.5; saturation 0.59 → 0.57, the card 0.36)
+  // (The slate roofs' blue at dusk is the world's dusk light and air, not their albedo: a stronger desaturation or a warm
+  // tint on a roof moved Thornwick's gatehouse roof, blue over red 1.90, not at all; Luminati's own roofs take it too.)
   const desat = e.desat ?? 0.3, gain = KIT_LIFT, tint = e.tint || [0.95, 0.92, 1.0], gkey = `kitgrade:${desat},${gain},${tint}`;
   const grade = (m) => {
     const c = m.clone();
@@ -297,7 +301,7 @@ async function placeEnv(list, region) {
   for (const p of list) {
     if (p.canvas) { standOurs(p); continue; }
     const kit = KIT.get(p.id), vale = (region || 'vale') === 'vale';
-    if (kit && vale && (LANDMARKS === 'all' || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
+    if (kit && vale && (LANDMARKS === 'all' || (LANDMARKS === 'chosen' && !p.card) || (LANDMARKS === 'doors' && DOORS.has(p.id)))) {
       // (on the ground round it, not the tile under its middle: the chapel stands in water the converter laid under it)
       const H = (dx, dz) => game.tileMap.getHeight(p.x + dx, p.z + dz), y = Math.max(H(0, 0), H(0, 3), H(0, -3), H(3, 0), H(-3, 0));
       const g = kitPiece(kit, p.x, y, p.z);
@@ -1050,7 +1054,7 @@ const api = {
     if (o.figLit > 0) FIG_LIT = o.figLit;
     if (o.figMax > 0) FIG_MAX = o.figMax;
     if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
-    if (['doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
+    if (['chosen', 'doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
     const S = game?.postfx?.settings;
     // 'soft': the prototype's eased lens (its view.js): a band most of the screen tall, 16 units of depth in focus, so the
     // square is sharp and the far roofs and the near hedges a little soft; 'off': everything sharp

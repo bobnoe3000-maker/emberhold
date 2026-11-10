@@ -248,7 +248,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const mod = await import(vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
   api.settings({ dof: readGraphics().dof, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
-    landmarks: ['all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'doors' });   // (?landmarks=all|sprites: our kit's pieces in 3D, docs/vale-landmarks-proposal.md)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
+    landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
   let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
     box, state,

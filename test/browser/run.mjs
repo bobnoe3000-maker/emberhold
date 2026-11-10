@@ -1357,6 +1357,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       return { size: g?.size, scaled: g?.scaled, fields: w.groundDetail?.fields?.length ?? 0, dust: !!w.emitters?.dust, areas: (w.areaEmitters || []).map((e) => e.preset) }; });
     check('render3d: Thornwick\'s ground cover is at a quarter of its size and it has no floating luminous dots (no camera dust, no firefly, dust or sparkle area)',
       ground.size === 0.25 && ground.scaled > 1000 && ground.fields > 0 && !ground.dust && !ground.areas.some((a) => ['dust', 'fireflies', 'sparkle'].includes(a)), JSON.stringify(ground));
+    // the owner's choice of the Vale's kit pieces (docs/vale-landmarks-proposal.md §8): in Thornwick, its palisade, towers
+    // and gatehouse stay cards (from inside, the model shows its shaded face) and the rest of the kit stands in 3D
+    const kitTown = await p.evaluate(async () => { const G = window.__game; let kit = 0, wall = 0;
+      for (let i = 0; i < 60 && !kit; i++) { globalThis.__frame(16); await new Promise((r) => setTimeout(r, 100)); G.engine.scene.traverse((o) => { if (/^ember:kit:/.test(o.name)) kit++; }); }
+      G.engine.scene.traverse((o) => { if (/^ember:kit:vale_(curtainy?|tower|gatehousey?)_/.test(o.name)) wall++; });
+      return { kit, wall }; });
+    check('render3d: in Thornwick its palisade, towers and gatehouse stay cards and the rest of the Vale\'s kit stands in 3D (the owner\'s choice, docs/vale-landmarks-proposal.md §8)',
+      kitTown.kit > 0 && kitTown.wall === 0, JSON.stringify(kitTown));
     // (port step 4) a tap on a service's building as Luminati draws it opens that service: the middle of each named house
     const doors = await p.evaluate(async () => {
       const { convertWorld } = await import('/src/render3d/convert.js');
@@ -1444,10 +1452,11 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         out[id] = g ? { tris: Math.round(tris), draws } : null; }
       const ch = globalThis.__sim.world.structs.find((s) => s.id === 'chapelruin_0'), gr = G.engine.scene.getObjectByName('ember:kit:chapelruin_0');
       out.marsh = !!gr && G.tileMap.getHeight(gr.position.x, gr.position.z - 1) < gr.position.y - 0.5 && !!ch;
+      out.gate = !!G.engine.scene.getObjectByName('ember:kit:vale_gatehousey_1') && !!G.engine.scene.getObjectByName('ember:kit:watermill_0');   // (outside, Thornwick's gate and the rest of the kit in 3D too)
       return out;
     });
-    check('render3d: the Vale\'s dungeon doors (the Keep, the Old Barrows, the Sunken Chapel) stand as our kit\'s 3D models, each under 1,500 triangles and 12 draws, the chapel in the world\'s water (docs/vale-landmarks-proposal.md)',
-      ['vale_keep_1', 'ruin', 'chapelruin_0'].every((id) => doorsUp[id] && doorsUp[id].tris > 300 && doorsUp[id].tris < 1500 && doorsUp[id].draws <= 12) && doorsUp.marsh, JSON.stringify(doorsUp));
+    check('render3d: the Vale\'s dungeon doors (the Keep, the Old Barrows, the Sunken Chapel) stand as our kit\'s 3D models, each under 1,500 triangles and 12 draws, the chapel in the world\'s water; outside, Thornwick\'s gate and the mill in 3D too (docs/vale-landmarks-proposal.md)',
+      ['vale_keep_1', 'ruin', 'chapelruin_0'].every((id) => doorsUp[id] && doorsUp[id].tris > 300 && doorsUp[id].tris < 1500 && doorsUp[id].draws <= 12) && doorsUp.marsh && doorsUp.gate, JSON.stringify(doorsUp));
     // a fight (step 2 of the port): into a room of the Old Barrows until a wave comes, then on until blows land; Emberlit's
     // effects drawn as light over Luminati's world, the fighters' rings on its ground, the hero's light taken
     await p.goto(`${base}/index.html?scene=dungeon&site=barrows&notitle&dev&manual&world=on`);

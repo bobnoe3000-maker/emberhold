@@ -12879,7 +12879,7 @@ function Yu(e, t, n, r) {
 function Xu() {
 	for (let [e, t] of Gu) t.seen !== Ku && (t.root.visible && (t.root.visible = !1), Ku - t.seen > 3600 && (G.engine.scene.remove(t.root), Gu.delete(e)));
 }
-var Zu = [], Qu = "doors", $u = 5, ed = 1.3, td = /* @__PURE__ */ new Map(), nd = /* @__PURE__ */ new Map();
+var Zu = [], Qu = "chosen", $u = 5, ed = 1.3, td = /* @__PURE__ */ new Map(), nd = /* @__PURE__ */ new Map();
 for (let e of Cc) e.build && td.set(e.id, e);
 for (let e of Object.values(wc)) for (let t of e) t.build && td.set(t.id, t);
 var rd = /* @__PURE__ */ new Set([
@@ -12952,7 +12952,7 @@ async function ad(e, t) {
 			continue;
 		}
 		let e = td.get(s.id);
-		if (e && (t || "vale") === "vale" && (Qu === "all" || Qu === "doors" && rd.has(s.id))) {
+		if (e && (t || "vale") === "vale" && (Qu === "all" || Qu === "chosen" && !s.card || Qu === "doors" && rd.has(s.id))) {
 			let t = (e, t) => G.tileMap.getHeight(s.x + e, s.z + t), n = Math.max(t(0, 0), t(0, 3), t(0, -3), t(3, 0), t(-3, 0)), r = id(e, s.x, n, s.z);
 			G.engine.scene.add(r), Zu.push(r);
 			continue;
@@ -15199,6 +15199,7 @@ var Ff = (e, t) => {
 	},
 	settings(e = {}) {
 		e.dof && (vu = e.dof), e.bright > 0 && (fd = e.bright), e.figLit > 0 && (md = e.figLit), e.figMax > 0 && (hd = e.figMax), (e.figures === "models" || e.figures === "sprites") && (Mu = e.figures), [
+			"chosen",
 			"doors",
 			"all",
 			"sprites"

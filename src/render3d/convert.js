@@ -210,7 +210,9 @@ function outdoor(w, region) {
   const look = REGION_LOOK[region] || {};
   for (const s of w.structs) {
     const id = s.id, p = foot(s);
-    if (timber && p && inside(p.cx, p.cz, -4) && /_curtainy?_\d|_tower_\d|_gatehousey?_\d/.test(id)) { sprites.push({ id, x: X(s.x), z: Z(s.y) }); continue; }   // (the palisade: ours, on its bank)
+    // (the palisade: ours, on its bank; inside a town a card, the owner's choice: from inside, the model shows its shaded
+    // face and its tower reads as a block: docs/vale-landmarks-proposal.md §8)
+    if (timber && p && inside(p.cx, p.cz, -4) && /_curtainy?_\d|_tower_\d|_gatehousey?_\d/.test(id)) { sprites.push({ id, x: X(s.x), z: Z(s.y), ...(w.hub ? { card: true } : {}) }); continue; }
     if (!p || !inside(p.cx, p.cz) || /_curtainy?_\d|_tower_\d|_gatehousey?_\d|^mountain_|^ug_/.test(id)) {
       if (/^ug_flowers/.test(id) && (B === BIOMES.grassland || B === BIOMES.vale) && p && inside(p.cx, p.cz) && !raised(p.cx, p.cz)) tiles[Math.floor(p.cz)][Math.floor(p.cx)] = 'f';
       continue;

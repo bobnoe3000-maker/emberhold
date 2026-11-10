@@ -1,6 +1,6 @@
 # The Vale's landmarks: the dungeon doors to the new art standard
 
-**Status: Approved (2026-11-10); #1, #2 and #4 Implemented, #3 awaiting the owner's choice per piece** (§7, §8). The
+**Status: Implemented (2026-11-10): all four, #3 as the owner chose it per piece** (§7, §8). The
 owner: *"phone performance and looks are good. Let's continue to focus on the MVP with the Thornwick map, so we can
 extend the same standards and criteria (world assets like trees, relative placements, dungeon entrances/art, etc.) to
 other maps. First, the entrances to the dungeons dont look good and are not up to the new art standards (old barrow,
@@ -155,8 +155,8 @@ clock (`tools/capture/rig.mjs … --query landmarks=doors`).*
     at dusk, luma over the keep: the card 64.5, the model at the bake's gain 39.9, ungraded 45.1, lifted 51.0. By day
     the card is 63.5 and the lifted model 56.9.
   - **On the ground round it,** not the tile under its middle (the chapel stands in water).
-  - **`?landmarks=doors|all|sprites`:** `doors` is the default (the three doors); `all` is every Vale kit piece (§8);
-    `sprites` is every piece as its card, as before.
+  - **`?landmarks=chosen|doors|all|sprites`:** `chosen` is the default (the owner's choice, §8); `doors` is the three
+    doors alone; `all` is every Vale kit piece; `sprites` is every piece as its card, as before.
 - **The Old Barrows** (`buildkit.js` `barrow`), as §4 designed it:
   - a long, low turfed mound with a kerb round its foot;
   - a portal of three rough faceted stones facing the exit, the Legion's shield on the lintel;
@@ -194,31 +194,55 @@ clock (`tools/capture/rig.mjs … --query landmarks=doors`).*
     footprints. The next bake picks them up. The chapel's pool is `bakeOnly`, so its card keeps water.
   - **The Keep's door torches** (Luminati's wall torch). The door's own lit windows and the brazier light it for now.
 
-## 8. #3: the rest of the Vale's cards, for the owner to choose
+## 8. #3: the rest of the Vale's cards, as the owner chose
 
-The owner: *"let me see your proposed changes to #3 before implementing - let me choose before or after."* Nothing
-here is the default: `?landmarks=all` shows it.
+The owner: *"let me see your proposed changes to #3 before implementing - let me choose before or after."* Then, on the
+sheets: *"Go with your recommendations on #3."*
 
-![The rest of the Vale's kit pieces, cards and models, at dusk](img/landmarks/vale-kit-choices-dusk.jpg)
+![The rest of the Vale's kit pieces, cards and as chosen, at dusk](img/landmarks/vale-kit-chosen-dusk.jpg)
 
-([by day](img/landmarks/vale-kit-choices-day.jpg))
+([by day](img/landmarks/vale-kit-chosen-day.jpg); the sheets the owner chose from, with every piece in 3D:
+[dusk](img/landmarks/vale-kit-choices-dusk.jpg), [day](img/landmarks/vale-kit-choices-day.jpg))
 
-| # | Piece | Recommendation | Why |
+| # | Piece | Chosen | Why |
 |---|---|---|---|
-| 1 | Thornwick from outside: the palisade, its towers and the gatehouse | **After** | The braziers light the gate's timbers and the posts take the light; it stands, where the card leans flat. The slate roofs still read blue at dusk, so a stronger desaturation goes on the roofs if chosen. |
-| 2 | The Tithe Mill | After | The same design, lit; its wheel in the race reads |
-| 3 | The lumber camp (the mill, the log stack, the stumps) | After | The log stack reads as logs and the stumps stand |
-| 4 | The mine | After (marginal) | The hill and its shed are in shade either way; lit from the sun's side |
-| 5 | The ninth milestone | Either | Small: the same stone |
-| 6 | The Scrag Warren | After | The adit's timbers and the torn boards read as depth, not paint |
-| 7 | Inside Thornwick: the palisade and a tower | **Before** | From inside, the wall's face to the camera is its shaded side, and the tower reads as a black block. The card shows the lit face. |
-| 8 | Inside Thornwick: the gatehouse | **Before** | As 7 |
+| 1 | Thornwick from outside: the palisade, its towers and the gatehouse | **3D** | The braziers light the gate's timbers and the posts take the light; it stands, where the card leans flat |
+| 2 | The Tithe Mill | 3D | The same design, lit; its wheel in the race reads |
+| 3 | The lumber camp (the mill, the log stack, the stumps) | 3D | The log stack reads as logs and the stumps stand |
+| 4 | The mine | 3D | Marginal: the hill and its shed are in shade either way |
+| 5 | The ninth milestone | 3D | Either would do; 3D for one catalogue |
+| 6 | The Scrag Warren | 3D | The adit's timbers and the torn boards read as depth, not paint |
+| 7 | Inside Thornwick: the palisade and a tower | **Card** | From inside, the wall's face to the camera is its shaded side, and the tower reads as a black block; the card shows the lit face |
+| 8 | Inside Thornwick: the gatehouse | **Card** | As 7 |
 
-**The cost of `all`,** measured in the game (scene-wide, before the camera's culling):
-- **The Vale overland:** 32 kit pieces, 37,514 triangles, 236 draws.
-- **Thornwick:** 42 pieces, 43,700 triangles, 176 draws.
+**As built:**
+- `?landmarks=` now defaults to `chosen`: every Vale kit piece in 3D except the ones `convert.js` marks `card`.
+  Those are Thornwick's palisade, towers and gatehouse in the town's own scene (a world with a `hub`).
+- Thornwick's other kit pieces (the carts, the trough, the woodpile) stand in 3D too.
+- `doors`, `all` and `sprites` stay for comparison.
+- The browser suite checks both halves: in Thornwick the palisade pieces are cards and the rest of the kit stands in
+  3D; outside, the gate and the mill stand in 3D.
 
-A screen holds a few of them at a time. Before any of it becomes the default, it gets checked on a phone.
+**The slate roofs at dusk.** The 3D slate roofs look bluer at dusk than their cards. On Thornwick's gatehouse roof,
+blue over red is 1.90 against the card's 1.46. Neither more desaturation nor a warm tint on the roof's albedo moved it
+(1.90 → 1.90), so it is the world's dusk light and air, which Luminati's own roofs take too, not the roof's colour.
+It is left as the world draws it.
+
+**The cost,** measured in the game:
+- **Scene-wide:**
+  - the Vale overland: 32 kit pieces, 37,514 triangles, 236 draws;
+  - Thornwick: 10 pieces, 4,908 triangles, 41 draws. With every piece in 3D it was 42 pieces, 43,700 triangles and
+    176 draws.
+- **On screen** (the overland, at the phone's 390 × 844, meshes whose middle is in view):
+
+  | Where | Pieces | Triangles | Draws |
+  |---|---|---|---|
+  | Thornwick's gate | 5 | 11,666 | 53 |
+  | The lumber camp | 4 | 4,480 | 41 |
+  | Wickham Keep | 2 | 3,222 | 36 |
+  | The Sunken Chapel | 4 | 3,562 | 44 |
+
+**To check on a real phone,** the owner's: walking out of Thornwick's gate, the overland's busiest view.
 
 ## The spike, in the code
 
