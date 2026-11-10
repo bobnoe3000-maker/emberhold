@@ -1357,6 +1357,8 @@ export function createPreview(canvas, o) {
         if (o2.bare && v.gear) v.gear = { ...v.gear, helm: null };
         const fig = await buildFigure(v, { far: false, load: loadModel, faces: async () => cast.faces });
         if (dead || n !== wantN) return false;
+        // matte, as in play (figureFor): KayKit's sheen on a dark skin caught every curve of the face as a pale blotch
+        fig.root.traverse((q) => { if (q.isMesh && q.material && q.material.isMeshStandardMaterial) { q.material.metalness = 0; q.material.roughness = Math.max(q.material.roughness ?? 1, 0.92); } });
         poseFigure(fig, 'Idle', 0, true);
         const box = new THREE.Box3(); fig.root.updateMatrixWorld(true); fig.root.traverse((q) => { if (q.isMesh && q.visible) box.expandByObject(q); });
         const L = fig.look || { w: 1, h: 1 }, h0 = box.max.y - box.min.y, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;

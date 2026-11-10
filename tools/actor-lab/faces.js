@@ -29,6 +29,11 @@ export const SKIN = { porcelain: '#f2d2bc', fair: '#e8b896', rose: '#dca088', ol
 export const HAIR = { black: '#1c1612', soot: '#2e2620', brown: '#5a3a22', chestnut: '#6e3e24', auburn: '#7e3a1e', copper: '#a65428', straw: '#c8a060', flax: '#e0c88a', ash: '#8a8278', grey: '#a8a49c', white: '#e4e0d8' };
 export const IRIS = { brown: '#5a3218', hazel: '#7a6a30', green: '#4a7a3a', blue: '#4a74b0', grey: '#7a8894', amber: '#b07820' };
 const col = (table, v, dflt) => new THREE.Color(table[v] || v || dflt);
+// a mark's or a lip's colour on this skin: the skin turned toward a hue by k, at the skin's own lightness × light, so a
+// blush or a scar sits in the face at every tone (mixed toward one fixed colour, a blush was a bright rose blot on deep
+// skin: the owner, 2026-11-10, "dark skin, shows up blotchy")
+const lumOf = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+const toned = (skin, hex, k, light = 1) => { const c = skin.clone().lerp(new THREE.Color(hex), k), l = lumOf(c); return l > 0 ? c.multiplyScalar((lumOf(skin) * light) / l) : c; };
 
 // ── the KayKit heads, split by swatch into head-bone space (loaded once per model) ──
 const kk = new Map();
@@ -308,7 +313,7 @@ function marks(on, f, M) {
     }
     if (m === 'eyepatch') {
       const { p, n } = on(0.17, EYE.y), d = orient(new THREE.Mesh(new THREE.CircleGeometry(0.1, 10), M.patch), n); d.position.copy(p).addScaledVector(n, 0.05); d.scale.y = 0.85; g.add(d);
-      g.add(strokeOn(on, [[-0.4, 0.62], [-0.1, 0.55], [0.17, EYE.y + 0.05], [0.44, 0.35]], 0.013, M.patch, 0.03, 4));
+      if (f.skull !== 'own') g.add(strokeOn(on, [[-0.4, 0.62], [-0.1, 0.55], [0.17, EYE.y + 0.05], [0.44, 0.35]], 0.013, M.patch, 0.03, 4));   // (the strap round a bare head; under a hood it was a stray line on the cloth)
     }
     if (m === 'earring') { const r = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.012, 5, 10), M.gold); r.position.set(0.52, 0.18, 0.02); r.rotation.y = Math.PI / 2; g.add(r); }
   }
@@ -353,9 +358,9 @@ export async function buildFace(load, model, f, { far = false } = {}) {
     beard: std(col(HAIR, f.beardColor, hairC), 0.9), stubble: std(skin.clone().multiplyScalar(0.7).lerp(col(HAIR, f.beardColor, hairC), 0.35), 1),
     white: std('#f2ece2', 0.35), iris: std(col(IRIS, f.iris, IRIS.brown), 0.3), pupil: std('#120c0a', 0.4), glint: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
     lash: std('#1c120e', 0.8), lid: std(skin.clone().multiplyScalar(0.94), 0.72), crease: std(skin.clone().multiplyScalar(0.78), 0.95),
-    mouth: std(skin.clone().lerp(new THREE.Color('#3a1210'), 0.7), 0.95), lip: std(skin.clone().multiplyScalar(0.86).lerp(new THREE.Color('#a04a40'), 0.22), 0.95),
-    scar: std(skin.clone().multiplyScalar(0.72).lerp(new THREE.Color('#a04a44'), 0.35), 0.9), freckle: std(skin.clone().lerp(new THREE.Color('#6a2a10'), 0.5), 0.9),
-    blush: std(skin.clone().lerp(new THREE.Color('#e05a58'), 0.4), 0.8), patch: std('#1a1414', 0.7), gold: std('#d8a848', 0.3, 0.8), tie: std(col(HAIR, f.tieColor, '#6a3a22'), 0.8),
+    mouth: std(skin.clone().lerp(new THREE.Color('#3a1210'), 0.7), 0.95), lip: std(toned(skin, '#a04a40', 0.3, 0.86), 0.95),
+    scar: std(toned(skin, '#a04a44', 0.35, 0.8), 0.9), freckle: std(toned(skin, '#6a2a10', 0.5, 0.74), 0.9),
+    blush: std(toned(skin, '#e05a58', 0.3, 1.02), 0.8), patch: std('#1a1414', 0.7), gold: std('#d8a848', 0.3, 0.8), tie: std(col(HAIR, f.tieColor, '#6a3a22'), 0.8),
     earIn: std(skin.clone().multiplyScalar(0.62).lerp(new THREE.Color('#7a3a34'), 0.25), 0.9),
   };
   const head = new THREE.Group(); head.name = 'Face';

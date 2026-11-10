@@ -256,8 +256,12 @@ export function kitGrowth(cls) {
   for (const base of Object.values(STARTER[cls] || {})) for (const [k, [a, b]] of Object.entries(BASES[base].st)) if (k in g && a >= 0) g[k] += (GEAR_GROWTH - 1) * b;
   return g;
 }
+// (GDD §6.1 v1.65) a look with a kit of its own: the Barbarian sets out as a barbarian, now that what's worn is what's
+// seen (the knight's helm and plate on him otherwise). Fair either way: the axe hits harder where the sword finds a
+// crit, the fur holds more HP where plate holds more DEF.
+export const STARTER_LOOK = { hero_barbarian: { weapon: 'axe', off: 'targe', helm: 'furhood', armor: 'furmail', boots: 'furboots' } };
 export function starterKit(m) {
-  const g = {}, kit = STARTER[m.cls] || {};
+  const g = {}, kit = (m.actor && STARTER_LOOK[m.actor]) || STARTER[m.cls] || {};
   for (const s of SLOTS) g[s] = kit[s] ? makeItem(kit[s], Math.max(1, m.level), 'common', { uid: `${m.id}:${s}` }) : null;
   return g;
 }

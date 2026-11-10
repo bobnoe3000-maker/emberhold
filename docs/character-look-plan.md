@@ -126,8 +126,12 @@ rebuilt only when the look or what's worn changes, let go when the window closes
 
 **Built for the weapon, the off-hand and the helm** (2026-11-10, GDD §6.1 v1.65): `tools/actor-lab/gear.js` (each base's
 piece: a KayKit mesh from any of the Adventurers, a skeleton's weapon, or one of our props; the hair under a helm),
-`figure.js` `gear`, `hybrid.js` `lookOf` (a member's look and worn gear, keyed), `world.js` (a template a look; a look
-nobody wears let go after two minutes, with its own merged geometry). Armour and boots: still the model's own body.
+`figure.js` `gear`, `looks.js` `lookOf` (a member's look and worn gear, keyed), `world.js` (a template a look; a look
+nobody wears let go after two minutes, with its own merged geometry). **Armour and boots too** (2026-11-10): `gear.js`
+`BODY`, `dressBody`: the five Adventurers share one skeleton (41 joints, one order), so a kit's body and arms (armour)
+or legs (boots) are bound to the figure's own bones in place of its own; the cleric's vestments and the shaman's hide
+are the Mage's in their own swatches; the class's own kit in its own colours is left as built. A body from another kit
+is one mesh more (its texture): 107 draws in a fight against 105.
 
 **Each base names its pieces** (`tools/actor-lab/gear.json`, presentation only, beside `icons.json`): its mesh (a
 KayKit piece or a code-built one), the bone it hangs from, its swatch map, and the variants of its look (§7).

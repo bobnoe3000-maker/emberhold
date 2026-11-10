@@ -8,7 +8,7 @@ const worn = (it) => (it ? { base: it.base, r: it.r || 'common', up: it.up || 0 
 /** @param {any} m @returns {{ a: any, k: string } | null} */
 export function lookOf(m) {
   if (!m || !m.gear || !m.cls) return null;                 // (a company member's: a foe is drawn with its unit too, and is as built)
-  const g = m.gear, a = { appearance: m.appearance || null, gear: { weapon: worn(g.weapon), off: worn(g.off), helm: worn(g.helm) } };
+  const g = m.gear, a = { appearance: m.appearance || null, gear: { weapon: worn(g.weapon), off: worn(g.off), helm: worn(g.helm), armor: worn(g.armor), boots: worn(g.boots) } };
   const j = JSON.stringify(a), c = looks.get(m); if (c && c.j === j) return c;
   let h = 0x811c9dc5; for (let i = 0; i < j.length; i++) h = Math.imul(h ^ j.charCodeAt(i), 0x01000193);
   const o = { j, a, k: (h >>> 0).toString(36) }; looks.set(m, o); return o;

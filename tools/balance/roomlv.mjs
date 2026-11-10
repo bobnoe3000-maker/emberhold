@@ -1,7 +1,7 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--part id] [--off id,id] [--born m,g,f,fo] [--trait id,id]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--part id] [--off id,id] [--born m,g,f,fo] [--trait id,id] [--look actor]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
@@ -44,6 +44,8 @@ const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',
 // --trait id,id: the hero born with those perks (a roll's trait). Without them: the class table, the contract's runs.
 const bi = args.indexOf('--born'), BORN = bi >= 0 ? args.splice(bi, 2)[1].split(',').map(Number) : null;
 const tri = args.indexOf('--trait'), TRAIT = tri >= 0 ? args.splice(tri, 2)[1].split(',') : null;
+// --look actor: the hero in that look, with its own kit where it has one (items.js STARTER_LOOK: the Barbarian's furs, GDD v1.65)
+const lki = args.indexOf('--look'), LOOK = lki >= 0 ? args.splice(lki, 2)[1] : null;
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js').catch(() => null);
@@ -61,6 +63,7 @@ sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
 if (HERO) sim.state.party[0].cls = HERO;
 if (BORN) sim.state.party[0].born = { might: BORN[0], grit: BORN[1], finesse: BORN[2], focus: BORN[3] };
 if (TRAIT) sim.state.party[0].perks = TRAIT;
+if (LOOK) sim.state.party[0].actor = LOOK;
 for (const m of sim.state.party) {
   m.level = FRESH && !m.main ? Math.max(1, Math.ceil(HL / 2)) : HL; if (attrs) { m.attrs = null; attrs.autoAllocate(m); } if (items && items.starterKit) m.gear = items.starterKit(m); if (UP) for (const it of Object.values(m.gear || {})) if (it) it.up = UP;
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }

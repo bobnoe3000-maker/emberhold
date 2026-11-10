@@ -110,7 +110,7 @@ export async function build(v, o) {
   // a skeleton's skull (skeleton-skull proposal): its eyes, cranium and jaw tagged for the part pass, so albSkull can
   // draw the sockets the 4 × 4 average washed into the bone (the face kit's tags: eye red, skull as skin, jaw as hair)
   if (v.skull) root.traverse((m) => { if (!m.isMesh) return; if (/_Eyes$/.test(m.name)) m.userData.part = 'eye'; else if (/_Head$/.test(m.name)) m.userData.part = 'skin'; else if (/_Jaw$/.test(m.name)) m.userData.part = 'hair'; });
-  if (v.gear) await dressGear(root, v.gear, load, findNode);   // what a member has equipped, worn (gear.js: GDD v1.65)
+  if (v.gear) await dressGear(root, v.gear, load, findNode, v);   // what a member has equipped, worn (gear.js: GDD v1.65)
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((m) => { if (m.isMesh && /Eyes/.test(m.name)) { m.material = m.material.clone(); m.material.emissive = new THREE.Color(v.eyes); m.material.emissiveIntensity = 3; } });

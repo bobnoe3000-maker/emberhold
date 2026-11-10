@@ -7,7 +7,12 @@
 // variant's own piece on that bone: the weapon in the right hand, the off-hand in the left, the helm on the head (the
 // face's hair under it). A slot left out of `gear` keeps the variant's own; a null one is empty. Each base is a piece
 // KayKit has (on any of the Adventurers: one skeleton, one set of hand slots, so a knight can hold a barbarian's axe), a
-// skeleton's weapon (its own file) or one of ours (props.js). Armour and boots stay the model's own body for now (§6).
+// skeleton's weapon (its own file) or one of ours (props.js).
+// Armour and boots (§6, the owner, 2026-11-10: "do the armour and boots on the body next"): the Adventurers share one
+// skeleton, 41 joints in one order, so any kit's body is bound to any figure's bones. Armour is the torso and arms of
+// the kit it's made like (plate the Knight's, fur the Barbarian's, leathers the Rogue's, robes the Mage's; the cleric's
+// vestments and the shaman's hide the Mage's in their own colours), boots the legs. A piece the figure already wears in
+// its own colours (the class's own kit) is left as built, so every class's look is as it was until it changes clothes.
 //
 // The look by what it is (§7), from fields the item already has: nothing new saved, nothing drawn:
 //   · common: the piece as made; fine: a little brighter;
@@ -17,7 +22,8 @@
 // Kept dusky: under the figure's own light, the world's bloom carrying the heirloom's. A piece with a light keeps a
 // material of its own (userData.glow: compact leaves it out, world.js doesn't relight it): one draw more, no more.
 import * as THREE from 'three';
-import { PROPS } from './props.js';
+import { PROPS, repaint } from './props.js';
+const repaintOne = (m, list) => repaint(m, list);
 
 /** where each base hangs and what it is: mesh: [model, node] in assets/models, file: a skeleton's weapon, prop: props.js */
 export const GEAR = {
@@ -39,6 +45,20 @@ export const GEAR = {
   spiritstaff: { mesh: ['Mage', '2H_Staff'] }, antlerrod: { mesh: ['Mage', '1H_Wand'] }, fetish: { keep: true }, hidecowl: { keep: true },
 };
 const SLOT_BONE = { weapon: 'handslot.r', off: 'handslot.l', helm: 'head' };
+// the cleric's and the shaman's cloth (variants.json hero_cleric, hero_shaman: their own swatches, kept in step by
+// test/gearlook.test.mjs), worn by whoever wears their vestments, hide and boots
+const CLERIC = [{ tile: [0, 1], to: ['#f2ecdd', '#a39883'] }, { tile: [7, 1], to: ['#cfa65c', '#6a5022'] }, { tile: [2, 1], to: ['#b6bec9', '#5c6474'] }, { tile: [2, 2], to: ['#ecd07a', '#8a6424'] }, { tile: [1, 2], to: ['#8a5a3a', '#3a2016'] }];
+const SHAMAN = [{ tile: [0, 1], to: ['#8a7a5e', '#2e2618'] }, { tile: [1, 1], to: ['#7a6a50', '#262016'] }, { tile: [2, 1], to: ['#6a5034', '#22160c'] }, { tile: [1, 2], to: ['#cfc3a4', '#5a5040'] }, { tile: [7, 1], to: ['#4a5a3a', '#16200e'] }, { tile: [2, 2], to: ['#4a5a3a', '#16200e'] }];
+/** the body each armour and the legs each pair of boots are: a kit's parts, and the colours they're worn in */
+export const BODY = {
+  plate: { kit: 'Knight' }, furmail: { kit: 'Barbarian' }, leathers: { kit: 'Rogue' }, robes: { kit: 'Mage' },
+  vestments: { kit: 'Mage', swatches: CLERIC }, hiderobes: { kit: 'Mage', swatches: SHAMAN },
+  sabatons: { kit: 'Knight' }, furboots: { kit: 'Barbarian' }, softboots: { kit: 'Rogue' }, slippers: { kit: 'Mage' },
+  pilgrimboots: { kit: 'Mage', swatches: CLERIC }, wrapboots: { kit: 'Mage', swatches: SHAMAN },
+};
+export const BODY_SWATCHES = { CLERIC, SHAMAN };
+const PARTS = { armor: ['Body', 'ArmLeft', 'ArmRight'], boots: ['LegLeft', 'LegRight'] };
+const kitOf = (model) => model.replace(/_Hooded$/, '');   // (the hooded rogue's body is the rogue's)
 /** the light each rarity gives its piece: [colour, intensity] (heirloom the most; fine and common none) */
 export const RARITY_LIGHT = { common: null, fine: null, rare: ['#5aa8ff', 0.14], heirloom: ['#f2a33c', 0.3] };   // (rare 0.2 drowned a helm in blue at a dungeon's dusk)
 const UP_LIGHT = '#ffd28a', UP_STEP = 0.03;
@@ -72,11 +92,12 @@ export function lookOn(piece, it) {
   });
 }
 /** a key for what's worn (a template a look: world.js) @param {any} gear */
-export const gearKey = (gear) => !gear ? '' : Object.keys(SLOT_BONE).map((s) => (s in gear ? (gear[s] ? `${gear[s].base}.${gear[s].r || 'common'}.${gear[s].up || 0}` : '-') : '')).join('|');
+export const gearKey = (gear) => !gear ? '' : [...Object.keys(SLOT_BONE), 'armor', 'boots'].map((s) => (s in gear ? (gear[s] ? `${gear[s].base}.${gear[s].r || 'common'}.${gear[s].up || 0}` : '-') : '')).join('|');
 
 /** dress the figure in its gear: each slot given, the variant's own piece on that bone off and the gear's on
  * @param {THREE.Object3D} root @param {any} gear @param {(u: string) => Promise<any>} load @param {(r: THREE.Object3D, n: string) => THREE.Object3D|undefined} findNode */
-export async function dressGear(root, gear, load, findNode) {
+export async function dressGear(root, gear, load, findNode, v = {}) {
+  for (const slot of ['armor', 'boots']) if (slot in gear) await dressBody(root, slot, gear[slot], load, v);
   for (const [slot, bone] of Object.entries(SLOT_BONE)) {
     if (!(slot in gear)) continue;
     const it = gear[slot], G = it && GEAR[it.base];
@@ -87,5 +108,26 @@ export async function dressGear(root, gear, load, findNode) {
     if (!G) continue;
     const p = await pieceOf(G, load); if (!p) continue;
     lookOn(p, it); B.add(p);
+  }
+}
+
+/** a body slot worn: the kit's parts bound to the figure's own skeleton in place of its own (or its own left, when it's
+ * the same kit in the same colours) @param {THREE.Object3D} root @param {'armor'|'boots'} slot @param {any} it @param {(u: string) => Promise<any>} load @param {any} v the variant */
+async function dressBody(root, slot, it, load, v) {
+  const B = it && BODY[it.base]; if (!B || !v.model) return;
+  const own = kitOf(v.model), same = B.kit === own && JSON.stringify(B.swatches || null) === JSON.stringify(v.swatches || null);
+  if (same) return;
+  const mine = new Map(); root.traverse((o) => { if (o.isSkinnedMesh) mine.set(o.name, o); });
+  const ref = [...mine.values()][0]; if (!ref) return;
+  const src = (await load(`./models/${B.kit}.glb`)).scene;
+  for (const part of PARTS[slot]) {
+    const theirs = src.getObjectByName(`${B.kit}_${part}`), ours = mine.get(`${own}_${part}`);
+    if (!theirs || !theirs.isSkinnedMesh || !ours) continue;
+    const m = new THREE.SkinnedMesh(theirs.geometry, theirs.material); m.name = theirs.name;
+    m.position.copy(theirs.position); m.quaternion.copy(theirs.quaternion); m.scale.copy(theirs.scale);
+    m.castShadow = ours.castShadow; m.frustumCulled = false; m.userData.foreign = true;   // (the variant's own swatches aren't for it: props.js repaint)
+    ours.parent.add(m); m.bind(new THREE.Skeleton(ref.skeleton.bones, theirs.skeleton.boneInverses), theirs.bindMatrix.clone());
+    ours.visible = false;
+    if (B.swatches) { m.userData.foreign = false; repaintOne(m, B.swatches); m.userData.foreign = true; }
   }
 }

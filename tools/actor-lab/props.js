@@ -380,7 +380,7 @@ export function swatches(img, list) {
 // swap every textured material under `root` for one whose map has the swatches repainted
 export function repaint(root, list) {
   const done = new Map();
-  root.traverse((o) => { if (!o.isMesh || !o.material.map || /Eyes/.test(o.name)) return;
+  root.traverse((o) => { if (!o.isMesh || !o.material.map || /Eyes/.test(o.name) || o.userData.foreign) return;   // (a body from another kit, gear.js: its own texture, its own colours)
     let m = done.get(o.material);
     if (!m) { const src = o.material.map, t = new THREE.CanvasTexture(swatches(src.image, list));
       t.flipY = src.flipY; t.colorSpace = src.colorSpace; t.magFilter = src.magFilter; t.minFilter = src.minFilter; t.wrapS = src.wrapS; t.wrapT = src.wrapT;

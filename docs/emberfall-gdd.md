@@ -766,8 +766,16 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
     off-hand in the other, the helm on the head (the hair under it), on every member of the company, in play and in the
     preview, the moment it's put on. Its look tells its rarity, as the card's word does: common as made, fine a little
     brighter, **rare a faint blue light and heirloom a warm one, each breathing slowly**, and each of the smith's steps a
-    little more warm light on it. Armour and boots stay the class's own body for now. Presentation only: the sim's gear
+    little more warm light on it. **Armour and boots are worn too** (v1.65, the owner: "do the armour and boots on the
+    body next"): armour is the body and arms of the kit it's made like (plate the knight's, fur the barbarian's,
+    leathers the rogue's, robes the mage's; the cleric's vestments and the shaman's hide in their own cloth), boots the
+    legs, so a mage in plate looks it. A class in its own kit looks as it always did. Presentation only: the sim's gear
     is as it was;
+  - **the Barbarian sets out as a barbarian** (v1.65): an axe, a targe, a fur hood, fur mail and fur boots, where the
+    Knight has the sword, shield, great helm, plate and sabatons. It's even: at level 1 HP 146 and ATK 13 against 140
+    and 12, crit 4 % against 5 %, dodge 6 % against 5 %. Measured (`roomlv.mjs --look hero_barbarian`, seed 20260807):
+    a lone level-1 hero down in wave 4 (the Knight 4); the right party at 6 holds 18 waves (17); a lone level-6 hero
+    down in the first (the first);
   - **the sellswords** each come with a face and build of their own, drawn from who they are (the same sellsword, the
     same face), so no two at the tavern look alike; a found companion (Brannoc, Wren) keeps the face they have, until the
     temple. The townsfolk keep theirs: they're who they are;

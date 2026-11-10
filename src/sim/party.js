@@ -6,7 +6,7 @@
 // the stance, the level-20 passive and Weakened (after a wipe) on top.
 
 import { mulberry32, streamSeed } from './rng.js';
-import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
+import { gearStats, starterKit, kitGrowth, BASES, STARTER_LOOK } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate, ATTRS, BUILD, BORN_POINTS } from './attributes.js';
 import { STANCE_MOD, stanceOf, passiveVal } from './skills.js';
 import { has, STAT, rollSellsword, rollPerks } from './companions.js';
@@ -110,6 +110,7 @@ export function cleanName(name) {
 /** @param {{ cls?: string, look?: string, origin?: string|null, name?: string, born?: Record<string, number>, perks?: string[] }} [o] */
 export function makeHero({ cls = 'fighter', look, origin = null, name = 'Aldric', born, perks } = {}) {
   const m = { ...makeMember('you', name, cls), actor: look || LOOKS[cls][0], main: true, autoAttrs: false, origin };
+  if (STARTER_LOOK[m.actor]) m.gear = starterKit(m);           // (a look's own kit: the Barbarian's furs)
   if (born) m.born = { ...born };
   if (perks && perks.length) m.perks = [...perks];
   m.hp = statsFor(m).maxHp;
