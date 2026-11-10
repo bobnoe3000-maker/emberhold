@@ -1,6 +1,6 @@
 # The character's look: faces, bodies, a live preview, and gear on the figure (a plan)
 
-**Status: Proposed (2026-11-10).** Nothing here is built. It supersedes the parked
+**Status: Building (2026-11-10;** the owner: "Lets enhance the character model engine… face shape, eyes, eyebrows, mouth, nose, ears, hair color, body size/shape (during character creation AND later if I want in the temple for a gold fee)… gear should have more variability… characters should show what they have equipped… evaluate performance… optimize without any visual quality degradation - especially in gameplay"**).** The live preview is in creation (§5); the rest is being built in §9's order, measured as in §11. It supersedes the parked
 [character-customization-proposal.md](./character-customization-proposal.md) (2026-09-29), whose findings it keeps.
 
 The owner: *"create a plan to enhance the kaykit characters so that players can customize the face (types of eyes, nose,
@@ -205,3 +205,20 @@ Each step ships alone, behind nothing. A step that fails its measure on the phon
 - **The builds and heights:** four builds and three heights, or fewer?
 - **Armour:** bind the other models' bodies now (fast, KayKit's look), or wait for our own sets (slower, ours)?
 - **The new bases** in §8: which, and when (each needs its numbers in the GDD and a balance run).
+
+## 11. Performance: the measure (`node tools/capture/figperf.mjs`)
+
+Every WebGL draw counted at the context (all of Luminati's passes), real frames, Chromium in software GL on the cloud box
+(slow in absolute terms: only a before against an after on the same box means anything). The baseline, 2026-11-10,
+before any of §9's steps 2–7:
+
+| Scene | Figures | Draws a frame | Triangles a frame | Frame (median) | JS heap |
+|---|---|---|---|---|---|
+| Thornwick's square, people as models | 17 (14 kinds) | 463 | 740,000 | 1,217 ms | 125 MB |
+| the same, people as sprites (`?figures=sprites`) | 17 | 278 | 534,000 | 1,033 ms | 82 MB |
+| a Barrows fight, models | 2 | 105 | 210,000 | 317 ms | 87 MB |
+
+So the 17 figures as models cost 185 draws and 206,000 triangles a frame, about 11 draws and 12,000 triangles each,
+shadows included, and 43 MB. The kinds after compact: 103 meshes (579 before). Every step after this one is held to it:
+a face, a build and worn gear may not add draws to a figure beyond what its new pieces need, and nothing seen in play
+may be cut to pay for it.
