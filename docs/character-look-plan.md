@@ -1,0 +1,202 @@
+# The character's look: faces, bodies, a live preview, and gear on the figure (a plan)
+
+**Status: Proposed (2026-11-10).** Nothing here is built. It supersedes the parked
+[character-customization-proposal.md](./character-customization-proposal.md) (2026-09-29), whose findings it keeps.
+
+The owner: *"create a plan to enhance the kaykit characters so that players can customize the face (types of eyes, nose,
+mouth, eyebrows and shape), body types (shape); and also on the character tab the character preview should be a live
+image (idle, attack movements); and also all of the gear items should be expandable - different colors and luminosity or
+other fx for special gear; gear items should show equipped in play and in the character preview model, propose any
+missing gear items that need to be created"*.
+
+## 1. Where we are
+
+Much of the parked proposal is now cheaper, because the world has since moved to 3D models (4b, A20).
+
+| | Today | Source |
+|---|---|---|
+| **Faces** | Built in code on a bald skull, in 3D, on the figures in play. They come from named presets only (51), not from a choice. The parts: 5 eye shapes, 6 brows, 7 mouths, 6 noses (KayKit's and 5), 6 face shapes, 11 hair styles × 11 colours, 7 skins, 6 irises, 5 beards, 7 marks, 2 ears | `tools/actor-lab/faces.js` `OPTIONS`; `figure.js` `facePreset`; `world.js` figureFor |
+| **Bodies** | The KayKit Adventurers (Knight, Barbarian, Mage, Rogue, Rogue_Hooded) on one shared skeleton. A heroic proportion for everyone (head 0.62, longer limbs); per-variant reach, scale and height. Builds (thin, normal, thick) exist only in the mock-up | `figure.js` `HEROIC`, `applyFrame`; `body.js` |
+| **A character's look** | The member's `actor` → the bake's actor → a variant → its model, accessories and face preset. Creation offers class, look (`LOOKS`), origin and name. Nothing about the face or body is the player's | `party.js` `LOOKS`; `ui/create.js` |
+| **The character tab** | A still image (`<actor>.fig.png`, baked), the six slots round it. It never changes with gear | `ui/sheet.js`, `ui/actorart.js` `drawCharacter` |
+| **Gear on the figure** | None. The figure wears its variant's fixed kit, whatever is equipped. The one exception: the rogue's bow or crossbow swaps in another baked figure | `party.js` (starter kit "what the model already wears"); `renderer.js` |
+| **Gear's look** | An icon per base (46), a rarity colour on the slot's border, a light column over a drop. No colour, glow or effect on the item itself | `items.js`; `icons.json`; `sheet.js` `RC`; `fx.js` |
+| **three.js** | Already shipped, inside Luminati's bundle (`src/vendor/luminati-80e1aa6/`), with `figure.js`, `faces.js` and `buildFigure` | `tools/render3d/build.mjs` |
+
+## 2. What we're building
+
+1. **The player shapes their character's face and body** at creation, and later at the temple or a barber.
+2. **The character tab shows the character live:** idling, attacking now and then, turned by a drag, wearing what's
+   equipped, in the same model as in play.
+3. **Every item has a look,** its colours and its light by rarity and by what it is, special gear with its own effects.
+4. **What's equipped is worn:** weapon, off-hand, helm, armour and boots on the figure, in play and in the preview. A
+   trinket shows as a glint or an amulet.
+5. **The gaps in the gear filled:** the missing pieces listed in §8.
+
+## 3. Faces: the player's choice
+
+- **What's chosen** (each from a list, nothing typed):
+  - face shape;
+  - eyes and their colour;
+  - brows (and their weight);
+  - nose;
+  - mouth (and its width);
+  - hair and its colour;
+  - skin;
+  - a beard;
+  - a mark (a scar, a tattoo, freckles);
+  - ears.
+- **More parts** to give real choice, built in `faces.js` and held to the face board (`node tools/actor-lab/faces.cjs`)
+  and a critic pass:
+  - eyes +3 (almond, hooded, deep-set);
+  - noses +2 (aquiline, crooked);
+  - mouths +2 (pout, gap-tooth);
+  - brows +2 (bushy, scarred);
+  - face shapes +3 (square, heart, long jaw).
+  - That makes about 8 of each, against KayKit's single face.
+- **How it's held:** a durable member field `appearance`, holding these ids. It's cosmetic only, so no stat reads it.
+  - The sim checks every id against the allowed lists (`src/sim/appearance.js`, the sim's own table, kept in step with
+    `faces.js` by a test) at `createHero` and at a change command, and refuses any other.
+  - It goes in `MEMBER_KEYS`, with a save bump and a migration: an old member gets its look's preset as its
+    appearance, so nothing changes until the player changes it.
+  - Replays stay exact, because the choice is a command like any other.
+- **Built where it's seen:**
+  - `figure.js` builds the face inline from the appearance instead of a preset.
+  - The figures in play (`world.js`) cache each member's model by the look and the appearance, so a change rebuilds
+    only that one.
+  - The portrait (`.face.png`) becomes a render of the same head, drawn into the party card when the appearance
+    changes and cached.
+  - Townsfolk keep their presets.
+- **Hired companions** come with their own face (their preset), which the player may change once hired.
+
+## 4. Bodies: the player's build
+
+- **Builds:** thin, normal, broad, heavy.
+- **Heights:** 0.94, 1.0, 1.06 of the class's. Height changes the figure's reach on screen, not the sim's footprint.
+- **How it's made (recommended):** scales on KayKit's own bones, so every clip still fits and every model's armour
+  follows.
+  - **Girth:** x and z on the spine, the chest, the upper arms and the thighs.
+  - **A belly** on the spine for heavy.
+  - **Shoulders:** the clavicles' spread for broad.
+  - **Height:** y on the legs and the spine.
+  - Measured against the clips on the model sheet: no hand through a hip at thin, no shield through the chest at
+    heavy.
+- **Later, optional:** the parked proposal's code-built bodies on KayKit's skeleton (`body.js`), once the art pass
+  brings them to KayKit's finish. That is a bigger piece of work, and a style decision of its own.
+- **Held** in the same `appearance` (`build`, `height`).
+
+## 5. The live preview
+
+- **Where:**
+  - the character tab (the Gear tab's figure);
+  - creation (the look being made);
+  - the temple or barber where the look is changed.
+- **How:** a small canvas with its own WebGL context, opened with the window and released when it closes. It uses
+  three.js and `buildFigure` from Luminati's bundle (exported from `tools/render3d/world.js`'s build), so the preview is
+  the same model as in play, built the same way.
+  - It draws only while visible: 30 frames a second while it moves, none while still.
+  - The baked `.fig.png` stays as the loading image and the fallback. If no context is to be had, or one is lost,
+    the still image shows, the same rule as the world's (`ui/worldfail.js`).
+- **What it shows:**
+  - The member idling: the class's own idle from `cast.json`.
+  - Every few seconds, one of its attacks with the weapon equipped (a sword's swing, a bow's draw, a staff's cast).
+  - A tap plays an attack; a drag turns them.
+  - A slot changing re-dresses the figure at once, so the item is tried on before it's kept.
+- **Measured before it ships, on a real phone:** first open (the model pack and the figure), memory, frame time
+  with the world behind it paused, and context loss.
+- **Architecture:** decision A14 (three.js in the windows) becomes "the windows use Luminati's bundle's three.js and
+  figure builder": no second library, no new download beyond the shared chunk. One decision-log row.
+
+## 6. Gear on the figure
+
+**Each base names its pieces** (`tools/actor-lab/gear.json`, presentation only, beside `icons.json`): its mesh (a
+KayKit piece or a code-built one), the bone it hangs from, its swatch map, and the variants of its look (§7).
+
+| Slot | On the figure | Made from |
+|---|---|---|
+| **Weapon** | in the right hand (both for two-handers); a bow drawn from the left, its quiver on the back | KayKit's weapons (`1H_Sword`, `2H_Axe`, crossbows, staffs, wands…), code-built where KayKit has none (§8) |
+| **Off-hand** | the left hand: a shield on the forearm, a tome, a psalter on its chain, a dagger, a fetish | KayKit's shields and books; `1H_Sword_Offhand`, `1H_Axe_Offhand`, `Spellbook_open` (unused today) |
+| **Helm** | the head, the hair hidden or trimmed under it, shaped to the face's skull (the mock-up's way) | KayKit's helmets and hats, code-built hoods and cowls |
+| **Armour** | the body. Every Adventurer shares one skeleton, so any model's torso, arms and legs can be bound to any hero. Plate is the Knight's, leathers the Rogue's, fur and hide the Barbarian's, robes and vestments the Mage's. Our face and head stay | the KayKit bodies, then our own sets (§8) |
+| **Boots** | the feet and shins of the armour's legs, recoloured, or the boot's own mesh where it differs (sabatons, fur) | KayKit legs; code-built cuffs |
+| **Trinket** | an amulet on the chest, a charm at the belt; a ring as a glint on the hand (too small to model at 54 pt) | code-built |
+
+**In play:**
+- `world.js` builds each member's figure from its look, its appearance and its equipped gear, and rebuilds it on an
+  `equip` event.
+- `compact()` merges it to a few draws (a figure stays under its budget of 12 draws). An item's glow keeps a material
+  of its own.
+- The sprite path (`?figures=sprites`) keeps today's baked figures, without gear (documented).
+
+**Fair play:** what's worn changes nothing in the sim. The figure only reads what's equipped.
+
+## 7. Each item's look: colours, light and effects
+
+An item's look comes from fields it already has, so no new saved state, no new random draw, and replays exactly as
+now: its **base** (the mesh), its **rarity**, its **upgrade** (`up`, the smith's +N) and whether it is an
+**heirloom**.
+
+| | Its colours | Its light | Its effect |
+|---|---|---|---|
+| **Common** | the base's material: iron, leather, wood, cloth | none | none |
+| **Fine** | the material bettered: steel, dyed leather, a coloured trim | none | none |
+| **Rare** | an enamel or a dye in the rarity's colour (paired with the word, as every rarity is) | a faint rim light | a soft trail on the weapon's swing (the trail exists: `fx.js` weapon trails) |
+| **Heirloom** | its own palette, one per heirloom (the Last Order's legion red and bronze, Vespers' drowned green) | a glow of its own colour | its own motes or embers on the figure, at most one effect per figure at a time |
+| **The smith's +1…+5** | none | each step a little more light on the edge or the inlay, up to the rare's rim at +5 | none |
+
+- **Kept dusky:** a glow stays under the figure's own light. A heavy glow is for the heirloom alone, and the world's
+  bloom carries it.
+- **Later, a dye at the smith:** a sim command, paid in gold, its colour from a list, held on the item (a save bump).
+  It's a cosmetic the sim validates, never a reward.
+- **The drop's light column, the slot's border and the icon** take the same colours. Icons render the item's look:
+  `icons.cjs` bakes each base in its rarity's palette.
+
+## 8. Gear to create
+
+Today's gaps (found against the catalogue, `items.js` `BASES`, and the assets):
+
+| Missing | For | Why |
+|---|---|---|
+| **A cleric's helm**: a coif and wimple; a mitre for rare | the cleric | the cleric borrows the fighter's Great Helm; the Mage model has no helm |
+| **The Hide Cowl's mesh** | the shaman | it uses the rogue's hood icon; no mesh |
+| **A hood as its own mesh** | the rogue | the hood is part of the Rogue_Hooded head |
+| **The Antler Rod**, **the Bone Fetish**, **the Spirit Staff** | the shaman | they reuse the wand, the charm and the staff |
+| **The Book of Hours**, **the Chapel Sword** | the cleric | they reuse the tome and the plain sword |
+| **The Chained Psalter's chain** | the cleric | its icon only |
+| **An amulet and a charm on the body** | everyone (trinkets) | icons only |
+| **Armour sets** of each material, with their boots: plate, mail, leather, hide, robes, vestments | every class | armour is the model's own body today; mail and vestments have none of their own |
+| **A mesh for each heirloom weapon and shield** | the heirlooms | they take a base's look |
+| **The Ashbound weapons** (falx, cleaver, buckler, arbalest, staff) **in a hero's hand** | the classes that can use them | the skeletons hold them; no hero does |
+| **A quiver** | bows and crossbows | none |
+| **Capes**, as part of an armour set's or an heirloom's look (not a slot) | the sets | KayKit has four, unused |
+
+New bases to propose, to fill the classes' gaps (each needs its GDD numbers and the balance contract: these are
+proposals, not decided):
+- **Off-hands:** an off-hand sword and an off-hand axe for the fighter (KayKit's `1H_*_Offhand`, unused); a throwing
+  knife for the rogue (`Throwable`).
+- **Mage:** a circlet for the helm slot, as an alternative to the hat.
+- **Shaman:** a bone-and-feather headdress for the helm slot.
+- **Everyone:** a mail shirt, between leather and plate; a lantern as an off-hand for the dark (a light that walks with
+  you, cosmetic).
+
+## 9. Order of work
+
+| Step | What | Measured by |
+|---|---|---|
+| 1 | **The live preview** on the character tab, with today's look: the model, the idle and an attack, drag to turn, the still as fallback; A14's row | first open and memory on a phone; the browser suite (the preview draws, falls back, takes no tap from the world) |
+| 2 | **Gear on the figure:** weapon, off-hand and helm first (they're separate meshes today), in the preview and in play | the model sheet per class × each weapon; draw counts in play |
+| 3 | **Each item's look:** §7's table, icons rebaked, the trails and the glow | contact sheets per rarity; a critic pass |
+| 4 | **Faces chosen:** `appearance`, its validation, its save bump; creation and the temple's barber; the new parts | the face board; `node:test` for validation and the save round trip |
+| 5 | **Bodies chosen:** builds and heights by bone scale | the model sheet through every clip at each build |
+| 6 | **Armour sets on the figure**, by binding the other models' bodies, then our own sets | per class × material sheets; draws |
+| 7 | **The missing gear** (§8), mesh by mesh | the icon sheet; the model sheet |
+
+Each step ships alone, behind nothing. A step that fails its measure on the phone stops the next.
+
+## 10. To decide
+
+- **Steps 1–3 first** (no save change), then the appearance (step 4, a save bump)?
+- **Where the look is changed** after creation: at the temple (a barber's chair), free, or for a few coins?
+- **The builds and heights:** four builds and three heights, or fewer?
+- **Armour:** bind the other models' bodies now (fast, KayKit's look), or wait for our own sets (slower, ours)?
+- **The new bases** in §8: which, and when (each needs its numbers in the GDD and a balance run).
