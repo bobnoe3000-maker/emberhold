@@ -13,6 +13,8 @@ import { CLASSES, statsFor, xpToNext } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/attributes.js';
 import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT } from '../sim/skills.js';
 import { esc, drawPortrait, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
+import { openPreview } from '../render3d/preview.js';
+import { lookOf } from '../render3d/looks.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
 import { BAG_SIZE, bagStacks } from '../sim/loot.js';
 import { classIcon, classColor } from './classicons.js';
@@ -55,6 +57,7 @@ const CSS = SW_CSS + `
   background: radial-gradient(ellipse 58% 62% at 50% -4%, rgba(255,214,150,.16), rgba(0,0,0,0) 72%),
     radial-gradient(circle at 50% 46%, var(--glow, rgba(201,210,224,.14)), rgba(0,0,0,0) 44%),
     radial-gradient(ellipse 52% 16% at 50% 84%, rgba(216,160,64,.26), rgba(0,0,0,0) 100%), radial-gradient(ellipse at 50% 40%, #1b1624, #0c0a12 72%); }
+#gearSheet .fig canvas.gl { position: absolute; inset: 0; left: 0; top: 0; width: 100%; height: 100%; transform: none; margin: 0; touch-action: none; }   /* the live model (GDD v1.65), over the still */
 #gearSheet .fig .gnd { position: absolute; left: 50%; top: 188px; width: 108px; height: 20px; margin-left: -54px; border-radius: 50%; background: radial-gradient(closest-side, rgba(4,2,8,.72), rgba(4,2,8,0)); }
 #gearSheet .fig canvas { position: absolute; left: 50%; top: 8px; width: 176px; height: 204px; margin-left: -88px; }
 #gearSheet .fig .nm { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 10px; color: #f0c880; letter-spacing: 1.5px; }
@@ -164,7 +167,7 @@ const icon = (it) => `./assets/items/${BASES[it.base].icon}.png`;
 const fmt = (k, v) => (k === 'crit' || k === 'dodge' ? `${v > 0 ? '+' : ''}${v}%` : k === 'hpr' || k === 'mpr' ? `${v > 0 ? '+' : ''}${v}/s` : `${v > 0 ? '+' : ''}${v}`);
 const classNames = (B, lower) => { const l = classesOf(B).map((c) => CLASSES[c].label).join(' / ') || 'Any class'; return lower ? l.replace('Any class', 'any class') : l; };
 
-export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
+export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models = true }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const sheet = document.createElement('div'); sheet.id = 'gearSheet';
   const card = document.createElement('div'); card.id = 'gearCard';
@@ -223,8 +226,27 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {} }) {
       <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
     paintTabs();
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawCharacter(fc, fc.dataset.fig);
+    liveFig(m, fc);
     renderCard();
   }
+  // The character as the model they are (docs/character-look-plan.md §5; GDD v1.65: "characters should show what they
+  // have equipped"): their face, build and worn gear, idling, an attack now and then, a drag to turn them. One canvas,
+  // moved into each render's figure box (a canvas moved keeps its context), its model built again only when the look or
+  // what's worn changes (render3d/preview.js keys it); the still stays under it until it stands, and wherever there's
+  // none to be had. Let go when the window closes.
+  let figGl = null, figPv = null, figWait = null;
+  function liveFig(m, still) {
+    const box = sheet.querySelector('.fig'); if (!models || !box || !still) return;
+    if (!figGl) {
+      figGl = document.createElement('canvas'); figGl.className = 'gl'; figGl.setAttribute('aria-label', 'your character: drag to turn, tap to swing');
+      figWait = openPreview(figGl, (e) => { console.warn('[sheet] the live figure:', e); if (figGl) figGl.style.visibility = 'hidden'; }).then((p) => (figPv = p));
+    }
+    box.insertBefore(figGl, box.querySelector('.nm'));
+    const L = lookOf(m), look = L ? L.a : null;
+    figGl.style.visibility = figPv && figPv.actor.startsWith(actorOf(m) + '#') ? '' : 'hidden';   // (another member's model up: the still until theirs stands)
+    figWait.then((p) => p && p.show(actorOf(m), look && look.appearance, { gear: look && look.gear }).then((ok) => { if (figGl && member() === m) { figGl.style.visibility = ok ? '' : 'hidden'; still.style.visibility = ok ? 'hidden' : ''; } }));
+  }
+  function dropFig() { if (figPv) figPv.close(); figPv = null; figWait = null; if (figGl) figGl.remove(); figGl = null; }
   function paintTabs() { for (const cv of sheet.querySelectorAll('canvas[data-actor]')) drawPortrait(cv, cv.dataset.actor); }
 
   // ── the Stats tab: attributes and points (GDD §4.1) ─────────────────────────
@@ -435,7 +457,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
   sim.bus.on('levelUp', render);
 
   function openSheet(i = 0, v = 'gear') { who = i; view = v; sel = null; note = null; open = true; sheet.classList.add('on'); hideToast(); render(); }
-  function close() { open = false; sel = null; note = null; sheet.classList.remove('on'); card.classList.remove('on'); fresh.clear(); partyPanel.refresh && partyPanel.refresh(); }
+  function close() { dropFig(); open = false; sel = null; note = null; sheet.classList.remove('on'); card.classList.remove('on'); fresh.clear(); partyPanel.refresh && partyPanel.refresh(); }
 
   // ── loot toast ─────────────────────────────────────────────────────────────
   let toastTimer = null, toastItem = null;

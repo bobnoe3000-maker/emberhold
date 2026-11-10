@@ -1315,8 +1315,10 @@ export function createPreview(canvas, o) {
   const size = () => { const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height; renderer.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); };
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null; ro?.observe(canvas); size();
   const clipOf = (k) => cur && cur.def.clips && cur.def.clips[k];
+  let cw = -1, ch = -1;
   function frame(now) {
     raf = 0; if (dead || !cur) return;
+    if (canvas.clientWidth !== cw || canvas.clientHeight !== ch) { cw = canvas.clientWidth; ch = canvas.clientHeight; size(); }   // (moved into a box, or made before it was in one: framed to the box it's in)
     const dt = Math.min(0.1, last ? (now - last) / 1000 : 0); last = now; clock += dt;
     if (!drag) { yaw += spin * dt; spin *= Math.max(0, 1 - 3 * dt); }
     turn.rotation.y = yaw;

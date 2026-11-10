@@ -128,7 +128,7 @@ createShrineCard({ sim });             // a shrine's blessing, offered: Use or C
 createTowerCard({ sim });              // the Mere Tower's landings: Climb on or Home with Wenna (GDD §17)
 createDefeat({ sim });                // a wipe: what happened, before you wake at the Shrine (ui/defeat.js)
 createCompass(sim, { partyPanel, inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // compass travel (docs/compass-mockup.html)
-const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open() });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
+const gearSheet = createGearSheet(sim, { partyPanel, openTerms: () => guildTerms.open(), models: !WORLD_OFF && !/sprites/.test(params.get('figures') || '') });   // tap a party card: gear, stats, the bag (docs/gear-mockup.html)
 hud.onWage(() => { if (sim.world.kind !== 'town') return false; townMenu.openHire(); return true; });   // the wage line under the gold
 if (DEV) globalThis.__gear = gearSheet;
 // named NPCs (M4): their look, name and Ink file from content/npcs/; tap one to talk (dialogue.js)

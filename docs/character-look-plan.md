@@ -98,8 +98,9 @@ the head kept to its own width, a broad one's shoulders out), in play (`world.js
 
 **Implemented in creation** (2026-11-10, GDD §6.1 v1.64): `tools/render3d/world.js` `createPreview` (built into the
 bundle), `src/render3d/preview.js`, `src/ui/create.js` `Preview`: the look as its model, idling, an attack every few
-seconds or on a tap, a drag to turn, the still under it until it stands and wherever it can't. The character tab's is
-still to come, the same call.
+seconds or on a tap, a drag to turn, the still under it until it stands and wherever it can't. **And the character tab**
+(`ui/sheet.js` liveFig): the member in their look and worn gear, one canvas moved into each render (its context kept),
+rebuilt only when the look or what's worn changes, let go when the window closes.
 
 - **Where:**
   - the character tab (the Gear tab's figure);
