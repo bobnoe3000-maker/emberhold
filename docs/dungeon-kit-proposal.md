@@ -357,7 +357,17 @@ is drawn at the phone's own pixel density, up to 3×. The dungeon kit itself (§
   (`figureGlow`), multiplied by the vertex colours on a compacted face. A hit's flash and a wind-up's glow land on the
   material.
 - **The carry light.** It hangs at 3.6 over a model (it was 2.4, a hand over the helmet that turned the head white)
-  and is 1.75× stronger, so the floor around the hero is lit as before.
+  and is 1.75× stronger, so the floor around the hero is lit as before. (2026-11-10, the owner: *"at dusk, and perhaps
+  night - the shining light on the characters is too bright - it washes out the center character"*.) It now hangs at
+  6 and is 1.6× (`world.js` `CARRY_UP`, `CARRY_GAIN`, and `settings({ carryUp, carryGain })` for look-dev), its reach
+  `hypot(6.2, up)` so it lights as wide a ground. Measured on the Vale at the spawn, one shot a run (the rig carries
+  state from shot to shot), on the knight's pixels:
+
+  | | Near-white | Mean | Ground round him |
+  |---|---|---|---|
+  | Night, before → after | 28 % → 8.8 % | 0.59 → 0.49 | 0.48 → 0.38 |
+  | Dusk, before → after | 1.8 % → 0.25 % | 0.44 → 0.34 | 0.37 → 0.29 |
+  | Day (no carry light) | 0 % | 0.34 | 0.38 |
 - **3× density.** The build's tag on Luminati's `Game.js` now takes `maxPixelRatio` from the game (`world.js`
   `PIXEL_RATIO = 3`). It was 1.25.
 - **The fallback.** `?figures=sprites` draws the atlases as before. A figure whose model is still loading is drawn as

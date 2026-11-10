@@ -657,6 +657,7 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
   m.material.color.setRGB(col[0] / 255, col[1] / 255, col[2] / 255, THREE.SRGBColorSpace); m.material.opacity = a;
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
+let CARRY_UP = 6, CARRY_GAIN = 1.6;   // (the carry light over the models: its height and strength; settings({ carryUp, carryGain }) for look-dev)
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
 // ── two skills in Luminati's own looks (renderer.js spells; docs/combat-fx.md "Frost Nova and Turn Undead on Luminati") ─
@@ -1085,6 +1086,8 @@ const api = {
     if (o.dof) dof = o.dof;
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;
+    if (o.carryUp > 0) CARRY_UP = o.carryUp;
+    if (o.carryGain > 0) CARRY_GAIN = o.carryGain;
     if (o.figMax > 0) FIG_MAX = o.figMax;
     if (o.figures === 'models' || o.figures === 'sprites') FIGURES = o.figures;
     if (['chosen', 'doors', 'all', 'sprites'].includes(o.landmarks)) LANDMARKS = o.landmarks;   // (?landmarks=: our kit's pieces in 3D, placeEnv)   // (?figures=sprites: the atlases, as before 4b)
@@ -1174,8 +1177,11 @@ const api = {
       const k = Math.max(0, Math.min(1, f.carry ?? 0)), hx = f.hero[0] + 0.35, hz = f.hero[1] + 0.35;
       // (above a model it hangs higher, and a little stronger, so the floor round the hero is as lit: at 2.4 it was a hand
       // over the helmet, and a model's head, facing it, went white)
-      const up = FIGURES === 'models' ? 3.6 : 2.4, gain = FIGURES === 'models' ? 1.75 : 1;
-      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + up, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * gain * k) / (f.ambient?.lamps ?? 1), distance: 6 + (up - 2.4), decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+      // (the owner, 2026-11-10: "at dusk, and perhaps night - the shining light on the characters is too bright - it washes
+      // out the center character": at 3.6 a hand over the head, 48 % of the knight's pixels went white at night. Hung higher,
+      // its falloff flatter across the party: the ground round them lit as before, a head under it far less)
+      const up = FIGURES === 'models' ? CARRY_UP : 2.4, gain = FIGURES === 'models' ? CARRY_GAIN : 1;
+      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + up, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * gain * k) / (f.ambient?.lamps ?? 1), distance: FIGURES === 'models' ? Math.hypot(6.2, up) : 6 + (up - 2.4), decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
     }
     // a fire landing (renderer.js blasts: the Firebolt's explosion, a mage's bolt): a hot flash on the room round it, gone
     // in half a second; one of Luminati's spell lights, as the carry light is
