@@ -25,7 +25,7 @@ fire beetle, the goblin, the graveyard wraith (1.5×), the stone golem (2×), th
   | Red fire beetle | the hexapod (tripod gait) | 2,428 · 28 | a lacquered crimson dome going black at the tips, fire-glands over the eyes and at the tail; the cases fly wide on a glowing belly to spit; dies flipped, legs kicking |
   | Goblin | the small biped | 2,184 · 18 | a quarter of its height head, ears past its shoulders, a hooked nose, a pauldron, a rusted cleaver (extruded: a blade, not a block) |
   | Graveyard wraith | the floating shroud | 2,080 · 27 | 1.5 men; a deep cowl with two cold lights, a body that narrows and trails off behind like smoke in four bones, rags and loose motes, a soul burning behind its ribs, a manacle and chain; dies into a heap of rags |
-  | Stone golem | the heavy biped | 1,144 · 16 | 2 men; mossed boulders, a head sunk between the shoulders, an ember core with cracks of light, runes in its forearms; falls apart when it dies |
+  | Stone golem | the heavy biped | 7,692 · 16 | 2 men; chiselled blocks of blue-grey stone, a carved chest disc, a horned block head, manacles and trailing chains, lichen veins and tufts (after the owner's reference, below); falls apart when it dies |
   | The Rat King | the rat, crowned | 4,404 · 22 | a crown of bent nails, a ruff, a purple cape over the back, long incisors, and the knot: six rats grown together by their tails, riding the tail's last bones |
   | The Spider Queen | the spider, a brood-mother | 2,552 · 31 | an egg-sac abdomen ringed in bone with a bone hourglass, green eggs glowing under its skin, a crown of spines, long raised forelegs, sickle fangs |
 
@@ -86,6 +86,26 @@ the rat and wraith… keep on iterating until the 3d models look like this but i
 | W2 | Too green (a cactus); a barrel ringed in spikes | Green on the top edges only; a waist, the shroud hanging from the shoulders in a V and long down the back |
 | W3 | Pipe sleeves | Bell sleeves |
 | W4 (in the game) | The green lifted to lime by the game's light | A darker, greyer green: the reference's rim, not a colour |
+
+### Against the owner's reference: the stone golem
+
+The owner, with a picture of a painted miniature (not kept here): *"Use this as the reference model for the stone golem.
+Continue in critic passes until our new 3d models look just as good for the game."* The reference: a golem of
+chiselled, bevelled blocks of pale blue-grey stone; a carved disc on the chest, a ring cut round a hole at its heart; a
+small block head between the shoulders with two stub horns, round eye holes, a dark mouth; long segmented arms, boxy
+fists to the knees, rusted manacles on the forearms and broken chains trailing on the floor; a narrow waist-block over
+stacked block legs; yellow-green lichen in veins down the stone and in fuzzy tufts on its tops.
+
+![The golem's rounds on the model sheet, and in the game beside the knight and a goblin](img/creatures/golem-reference-rounds.jpg)
+
+| Round | Seen | Done |
+|---|---|---|
+| G1 | The old golem round boulders, not the reference's cut blocks | Rebuilt: `block()`, a chiselled block (an octagonal prism with its edges and rims cut, its corners nudged by a hash, so it looks worked by hand); the chest disc with its ring, hole and a faint ember far back in it; the horned block head with eye holes and a mouth slot; the manacles and their chains (links off the cuff, down and along the floor); stacked block legs; lichen veins and tufts |
+| G2 | Lichen painted every top face yellow; tufts thin sticks; veins lost; the stone beige under the torches; the head too high | Lichen only in patches on the tops, in thick zigzag veins and in tufts; tufts fuzzy balls (a core and a burst of short blades); the stone blue-grey; the head lower between the shoulders; cheaper chain links |
+| G3 (in the game) | The tufts little stars at the game's size; the stone near-white under the game's figure light | Tufts nearly twice the size and more of them (the shoulders, the chest, the forearms, the fists, the knees); the stone a quarter darker than the reference's, so it lands on its pale blue-grey in the game |
+
+7,692 triangles in two draws (the chains are a third of it): the heaviest of the bestiary, for a figure twice a man's
+height that comes one at a time.
 
 ### In the sim, unplaced
 

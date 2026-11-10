@@ -95,14 +95,8 @@ function clip(rig, name, dur, fn, fps = 24) {
   for (const [b, ss] of scl) tracks.push(new THREE.VectorKeyframeTrack(`${b}.scale`, times, ss.flatMap((s) => (s || V(1, 1, 1)).toArray())));
   return new THREE.AnimationClip(name, dur, tracks);
 }
-// a chunk of stone: an icosahedron, its corners pushed in and out by a hash of where they are (the same corner the same
-// way on every face it's on, so the rock stays closed), faceted as the rest of the kit is
+// a hash of a place (the same corner the same way on every face it's on: a carved block stays closed)
 const hash3 = (x, y, z, s = 0) => { const h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + s * 19.19) * 43758.5453; return h - Math.floor(h); };
-function rock(c, r, seed = 0, detail = 0, rough = 0.22) {
-  const g = new THREE.IcosahedronGeometry(1, detail), P = g.attributes.position, v = new THREE.Vector3();
-  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const k = 1 + (hash3(Math.round(v.x * 1e3), Math.round(v.y * 1e3), Math.round(v.z * 1e3), seed) - 0.5) * 2 * rough; P.setXYZ(i, v.x * k, v.y * k, v.z * k); }
-  g.scale(r[0], r[1], r[2]); g.translate(c.x, c.y, c.z); return g;
-}
 // a body as one hull: a profile of [z, radius] turned round the z axis (a lathe), its cross-section `ry` as tall as wide,
 // its centre line raised by cy(z) (an arched back): one smooth body, not a string of blobs
 function hull(profile, seg, cy, ry = 1) {
@@ -610,43 +604,98 @@ function wraith(o = {}) {
 }
 
 // ── the stone golem (the heavy biped) ──────────────────────────────────────────────────────────────────────────────────
-// Twice a man: boulders fitted into a body, the back humped, the head a small block sunk under a brow, fists that hang to
-// its knees. Moss on everything that faces up. An ember core in its chest with the light coming out through the cracks,
-// two slits of it for eyes, and runes cut in its forearms. It falls apart when it dies.
+// After the owner's reference (2026-11-10): twice a man, built of chiselled blocks of pale blue-grey stone. A great chest
+// with a carved disc on it, a ring cut round a hole at its heart; a small block of a head between the shoulders, two
+// stub horns on it, round holes for eyes, a dark slot of a mouth; shoulders like cut boulders; long arms in segments,
+// boxy fists hanging to the knees, rusted manacles on the forearms and their broken chains trailing on the floor; a
+// narrow waist-block over stacked block legs. Yellow-green lichen in veins down the stone and in tufts on its tops. It
+// falls apart when it dies.
+// a chiselled block: an octagonal prism (its edges cut) with its top and bottom rims cut too, turned so its faces meet
+// the axes, its corners nudged by a hash so it looks worked by hand; half-extents h, the cut k (a fraction)
+function block(c, h, seed = 0, k = 0.22, rot = [0, 0, 0]) {
+  const prof = [[0, -1], [1 - k, -1], [1, -1 + k], [1, 1 - k], [1 - k, 1], [0, 1]].map(([r, y]) => new THREE.Vector2(Math.max(1e-4, r), y));
+  const g = new THREE.LatheGeometry(prof, 8).rotateY(Math.PI / 8), P = g.attributes.position, v = new THREE.Vector3(), co = 1 / Math.cos(Math.PI / 8);
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i); const j = 1 + (hash3(Math.round(v.x * 1e3), Math.round(v.y * 1e3), Math.round(v.z * 1e3), seed) - 0.5) * 0.12; P.setXYZ(i, v.x * h[0] * co * j, v.y * h[1] * j, v.z * h[2] * co * j); }
+  g.rotateX(rot[0]).rotateY(rot[1]).rotateZ(rot[2]); g.translate(c.x, c.y, c.z); return g;
+}
 function golem(o = {}) {
   const R = new Rig(o.seed || 67), sd = o.seed || 67;
-  const stone = new THREE.Color(o.stone || '#4c4842'), stoneHi = new THREE.Color(o.stoneHi || '#67625a'), stoneLo = new THREE.Color('#2a2724'), moss = new THREE.Color(o.moss || '#4a5c32'), mossHi = new THREE.Color('#66783f');   // (darker: the game's figure light lifts it, critic round 1 in the game)
-  const stoneC = (p, n) => (n.y > 0.7 ? (hash3(Math.round(p.x * 40), Math.round(p.y * 40), Math.round(p.z * 40), sd) > 0.4 ? (n.y > 0.9 ? mossHi : moss) : stoneHi) : n.y > 0.3 ? mixC(stone, stoneHi, (n.y - 0.3) * 2) : n.y < -0.35 ? stoneLo : stone);
-  const core = new THREE.Color('#ffb24a');
-  R.bone('root', null, V(0, 0.62, 0)); R.bone('spine', R.by.get('root'), V(0, 0.86, 0)); R.bone('chest', R.by.get('spine'), V(0, 1.25, 0.02)); R.bone('head', R.by.get('chest'), V(0, 1.5, 0.3));
+  const stone = new THREE.Color(o.stone || '#53606c'), stoneHi = new THREE.Color(o.stoneHi || '#6e7b88'), stoneLo = new THREE.Color('#343e48');   // (blue-grey, darker than the reference's: the game's figure light lifts it, round G3; under the torches a greyer one read beige)
+  const moss = new THREE.Color(o.moss || '#748424'), mossHi = new THREE.Color('#9aa832'), vein = new THREE.Color('#8a9a22'), rust = new THREE.Color('#5e3a20'), rustHi = new THREE.Color('#84552c');
+  const hole = new THREE.Color('#121416'), ember = new THREE.Color('#ffb24a');
+  // (stone, lichen on what faces up in patches: the reference's)
+  const stoneC = (p, n) => (n.y > 0.8 && hash3(Math.round(p.x * 18), Math.round(p.y * 18), Math.round(p.z * 18), sd) > 0.72 ? moss : n.y > 0.35 ? mixC(stone, stoneHi, (n.y - 0.35) * 2) : n.y < -0.35 ? stoneLo : stone);
+  R.bone('root', null, V(0, 0.62, 0)); R.bone('spine', R.by.get('root'), V(0, 0.84, 0)); R.bone('chest', R.by.get('spine'), V(0, 1.22, 0.02)); R.bone('head', R.by.get('chest'), V(0, 1.5, 0.12));
   for (const s of [1, -1]) {
-    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.5 * s, 1.5, 0)), l = R.bone(`armL${s}`, u, V(0.63 * s, 1.1, 0.08)); R.bone(`fist${s}`, l, V(0.6 * s, 0.66, 0.2));
-    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.2 * s, 0.6, 0)), k = R.bone(`legL${s}`, h, V(0.24 * s, 0.33, 0.04)); R.bone(`foot${s}`, k, V(0.24 * s, 0.1, 0.02));
+    const u = R.bone(`armU${s}`, R.by.get('chest'), V(0.48 * s, 1.48, 0)), l = R.bone(`armL${s}`, u, V(0.6 * s, 1.08, 0.05)); R.bone(`fist${s}`, l, V(0.6 * s, 0.62, 0.14));
+    const h = R.bone(`legU${s}`, R.by.get('root'), V(0.19 * s, 0.58, 0)), k = R.bone(`legL${s}`, h, V(0.21 * s, 0.33, 0.03)); R.bone(`foot${s}`, k, V(0.21 * s, 0.09, 0.02));
   }
-  let n = 0; const RK = (c, r, bone, det = 0, rough = 0.22) => R.part(rock(c, r, sd + ++n, det, rough), bone, stoneC);
-  RK(V(0, 0.66, 0), [0.3, 0.17, 0.22], 'root'); RK(V(0, 0.92, 0.04), [0.3, 0.21, 0.25], 'spine');
-  RK(V(0, 1.25, 0.0), [0.46, 0.32, 0.32], 'chest', 1, 0.14); RK(V(0, 1.47, -0.14), [0.33, 0.21, 0.23], 'chest');
-  for (const s of [1, -1]) RK(V(0.2 * s, 1.3, 0.2), [0.2, 0.15, 0.13], 'chest');
-  // (the head low and forward between the shoulders, under a heavy brow: a block, not another boulder on top)
-  RK(V(0, 1.52, 0.33), [0.14, 0.12, 0.13], 'head'); R.part(rock(V(0, 1.6, 0.42), [0.16, 0.045, 0.07], sd + 90, 0, 0.15), 'head', stoneLo); RK(V(0, 1.43, 0.4), [0.1, 0.05, 0.07], 'head');
-  for (const s of [1, -1]) R.part(new THREE.BoxGeometry(0.055, 0.02, 0.02).translate(0.06 * s, 1.545, 0.46), 'head', core, true);   // the eyes
-  // the core: an ember set in the chest, the light coming out through cracks in the stone round it
-  R.part(rock(V(0, 1.18, 0.31), [0.11, 0.11, 0.05], sd + 91, 1, 0.12), 'chest', core, true);
-  for (const [a, l] of [[0.6, 0.16], [2.4, 0.18], [3.9, 0.13], [5.3, 0.15]]) {
-    const d = V(Math.cos(a), Math.sin(a), 0), b = V(0, 1.18, 0.34).add(d.clone().multiplyScalar(0.09)), e = b.clone().add(d.clone().multiplyScalar(l)); e.z = 0.31 - 0.08 * l;
-    R.part(limb(b, e, 0.018, 0.004, 3), 'chest', core, true);
-  }
+  let n = 0; const B = (c, h, bone, k = 0.22, rot = [0, 0, 0]) => R.part(block(c, h, sd + ++n, k, rot), bone, stoneC);
+  // the trunk: the belt over the hips, a narrow waist, the great chest and its plates, the back
+  B(V(0, 0.62, 0), [0.25, 0.08, 0.17], 'root', 0.3); B(V(0, 0.78, 0.01), [0.2, 0.1, 0.16], 'spine', 0.3);
+  B(V(0, 1.18, 0), [0.38, 0.25, 0.25], 'chest', 0.28); B(V(0, 1.38, -0.12), [0.3, 0.14, 0.15], 'chest', 0.3);
+  for (const s of [1, -1]) { B(V(0.2 * s, 1.34, 0.17), [0.15, 0.1, 0.08], 'chest', 0.3, [0.1, 0, 0.08 * s]); B(V(0.22 * s, 1.02, 0.15), [0.13, 0.08, 0.08], 'chest', 0.3, [-0.1, 0, -0.06 * s]); }
+  // the disc: carved, a ring cut round a hole at its heart (an ember far back in it)
+  R.part(new THREE.CylinderGeometry(0.17, 0.19, 0.08, 10).rotateX(Math.PI / 2).translate(0, 1.16, 0.25), 'chest', stoneC);
+  R.part(new THREE.TorusGeometry(0.115, 0.016, 4, 14).translate(0, 1.16, 0.293), 'chest', stoneLo);
+  R.part(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 8).rotateX(Math.PI / 2).translate(0, 1.16, 0.282), 'chest', hole);
+  R.part(blob(V(0, 1.16, 0.27), [0.022, 0.022, 0.01], [6, 4]), 'chest', ember, true);
+  for (const [x, y] of [[-0.07, 1.25], [0.08, 1.09], [0.1, 1.23]]) R.part(blob(V(x, y, 0.295), [0.012, 0.012, 0.006], [5, 3]), 'chest', hole);   // pocks in the stone
+  // the head: a block between the shoulders, its stub horns, round eye holes, the slot of a mouth
+  B(V(0, 1.54, 0.15), [0.13, 0.11, 0.12], 'head', 0.25);
   for (const s of [1, -1]) {
-    RK(V(0.5 * s, 1.52, 0), [0.23, 0.2, 0.23], `armU${s}`, 1, 0.16); RK(V(0.58 * s, 1.3, 0.04), [0.14, 0.2, 0.14], `armU${s}`);
-    RK(V(0.63 * s, 1.1, 0.08), [0.12, 0.11, 0.12], `armL${s}`); RK(V(0.62 * s, 0.88, 0.14), [0.17, 0.25, 0.17], `armL${s}`);
-    RK(V(0.6 * s, 0.6, 0.22), [0.2, 0.17, 0.2], `fist${s}`, 1, 0.16);
-    for (const f of [-1, 0, 1]) RK(V((0.6 + f * 0.08) * s, 0.58, 0.39), [0.06, 0.06, 0.06], `fist${s}`);
-    // runes cut in the forearm, lit from inside
-    const rz = 0.3; for (const [y0, y1, x0, x1] of [[0.98, 0.82, 0, 0], [0.94, 0.88, -0.04, 0.04], [0.86, 0.8, 0.04, -0.02]]) R.part(limb(V((0.62 + x0) * s, y0, rz), V((0.62 + x1) * s, y1, rz + 0.01), 0.008, 0.008, 3), `armL${s}`, core, true);
-    RK(V(0.21 * s, 0.47, 0.02), [0.16, 0.17, 0.15], `legU${s}`); RK(V(0.24 * s, 0.24, 0.04), [0.14, 0.16, 0.14], `legL${s}`);
-    RK(V(0.24 * s, 0.07, 0.08), [0.17, 0.08, 0.21], `foot${s}`);
+    B(V(0.1 * s, 1.69, 0.13), [0.05, 0.075, 0.05], 'head', 0.3, [0, 0, -0.35 * s]);
+    R.part(blob(V(0.052 * s, 1.565, 0.268), [0.026, 0.026, 0.012], [6, 4]), 'head', hole);
+    R.part(blob(V(0.052 * s, 1.565, 0.272), [0.011, 0.011, 0.005], [5, 3]), 'head', ember, true);
   }
-  const root3 = R.mesh(o.glow || '#ff8418', 1.15);
+  R.part(new THREE.BoxGeometry(0.11, 0.035, 0.02).translate(0, 1.485, 0.266), 'head', hole);
+  // the arms: cut boulders for shoulders, the upper arm, the elbow, the great forearm and its manacle, the fist
+  for (const s of [1, -1]) {
+    B(V(0.48 * s, 1.5, 0), [0.17, 0.15, 0.16], `armU${s}`, 0.28, [0, 0, 0.15 * s]);
+    B(V(0.55 * s, 1.27, 0.02), [0.11, 0.14, 0.11], `armU${s}`, 0.25);
+    B(V(0.6 * s, 1.08, 0.05), [0.1, 0.07, 0.1], `armL${s}`, 0.3);
+    B(V(0.6 * s, 0.86, 0.09), [0.14, 0.19, 0.14], `armL${s}`, 0.25);
+    B(V(0.6 * s, 0.58, 0.14), [0.13, 0.1, 0.13], `fist${s}`, 0.3);
+    for (const f of [-1, 0, 1]) B(V((0.6 + f * 0.075) * s, 0.5, 0.2), [0.035, 0.04, 0.045], `fist${s}`, 0.35);
+    // the manacle, rusted, and its chain: off the cuff, down to the floor and trailing along it
+    R.part(new THREE.TorusGeometry(0.165, 0.035, 5, 12).rotateX(Math.PI / 2).translate(0.6 * s, 0.76, 0.09), `armL${s}`, (p, nn) => (nn.y > 0.3 ? rustHi : rust));
+    const pts = [V((0.6 + 0.13) * s, 0.72, 0.16), V((0.68) * s, 0.42, 0.22), V((0.66) * s, 0.12, 0.28), V(0.6 * s, 0.03, 0.4), V(0.45 * s, 0.03, 0.5)];
+    let link = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1], len = a.distanceTo(b), steps = Math.max(2, Math.round(len / 0.055));
+      for (let k = 0; k < steps; k++) {
+        const c = a.clone().lerp(b, (k + 0.5) / steps), d = b.clone().sub(a).normalize();
+        const g = new THREE.TorusGeometry(0.03, 0.01, 3, 6).scale(1, 1.5, 1);
+        if (link++ % 2) g.rotateY(Math.PI / 2);
+        g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(UP, d)).translate(c.x, c.y, c.z);
+        R.part(g, `armL${s}`, (p, nn) => (nn.y > 0.3 ? rustHi : rust));
+      }
+    }
+    // the legs: stacked blocks, the knees cut, the feet broad
+    B(V(0.19 * s, 0.47, 0.02), [0.12, 0.11, 0.12], `legU${s}`, 0.28);
+    B(V(0.21 * s, 0.33, 0.04), [0.1, 0.06, 0.1], `legL${s}`, 0.3);
+    B(V(0.21 * s, 0.2, 0.04), [0.11, 0.1, 0.11], `legL${s}`, 0.28);
+    B(V(0.21 * s, 0.055, 0.08), [0.13, 0.055, 0.17], `foot${s}`, 0.3);
+  }
+  // the lichen: veins of it down the stone (thin strokes on its faces), and tufts on its tops
+  const veins = [['chest', V(-0.25, 1.4, 0.21), V(-0.12, 1.02, 0.25)], ['chest', V(0.3, 1.32, 0.2), V(0.18, 0.98, 0.22)], ['chest', V(-0.05, 1.34, 0.25), V(0.04, 1.27, 0.27)],
+    ['spine', V(0.1, 0.86, 0.17), V(0.05, 0.7, 0.17)], ['head', V(-0.08, 1.64, 0.25), V(-0.05, 1.5, 0.27)]];
+  for (const s of [1, -1]) veins.push([`armL${s}`, V(0.68 * s, 1.0, 0.2), V(0.62 * s, 0.7, 0.24)], [`legU${s}`, V(0.25 * s, 0.56, 0.13), V(0.2 * s, 0.4, 0.14)], [`armU${s}`, V(0.4 * s, 1.62, 0.12), V(0.5 * s, 1.4, 0.16)]);
+  veins.push(['chest', V(0.05, 1.42, 0.22), V(0.25, 1.24, 0.24)], ['chest', V(-0.3, 1.08, 0.2), V(-0.1, 0.96, 0.2)]);
+  for (const s of [1, -1]) veins.push([`legL${s}`, V(0.25 * s, 0.29, 0.14), V(0.18 * s, 0.1, 0.15)], [`armU${s}`, V(0.58 * s, 1.38, 0.13), V(0.52 * s, 1.16, 0.13)]);
+  for (const [bone, a, b] of veins) {   // (zigzags, thick enough to read: round G1's were lost)
+    const m1 = a.clone().lerp(b, 0.33).add(V(0.025, 0, 0.01)), m2 = a.clone().lerp(b, 0.66).add(V(-0.02, 0, 0.01));
+    R.part(limb(a, m1, 0.018, 0.016, 3), bone, vein); R.part(limb(m1, m2, 0.016, 0.013, 3), bone, vein); R.part(limb(m2, b, 0.013, 0.004, 3), bone, vein);
+  }
+  // (fuzzy balls of it, as the reference's: a core and a burst of short blades; round G1's were sticks)
+  const tuft = (c, bone, r = 1) => {
+    R.part(blob(c.clone().add(V(0, 0.015 * r, 0)), [0.03 * r, 0.025 * r, 0.03 * r], [6, 4]), bone, moss);
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU + (i % 2) * 0.3, e = 0.35 + 0.5 * ((i * 7) % 5) / 5, d = V(Math.cos(a) * Math.cos(e), Math.sin(e) + 0.3, Math.sin(a) * Math.cos(e)).normalize(); R.part(limb(c.clone().add(V(0, 0.012 * r, 0)), c.clone().add(d.clone().multiplyScalar((0.045 + 0.015 * (i % 3)) * r)), 0.016 * r, 0.002, 3), bone, i % 3 ? mossHi : moss); }
+  };
+  // (round G2: the tufts read as little stars at the game's size; the reference's are big fuzzy clumps)
+  for (const s of [1, -1]) { tuft(V(0.11 * s, 1.77, 0.13), 'head', 1.5); tuft(V(0.46 * s, 1.66, 0.02), `armU${s}`, 1.9); tuft(V(0.62 * s, 1.0, 0.18), `armL${s}`, 1.6); tuft(V(0.21 * s, 0.4, 0.12), `legU${s}`, 1.3); tuft(V(0.66 * s, 0.6, 0.12), `fist${s}`, 1.2); }
+  tuft(V(-0.2, 1.44, 0.12), 'chest', 1.8); tuft(V(0.16, 0.71, 0.08), 'root', 1.3); tuft(V(0.27, 1.3, 0.22), 'chest', 1.3);
+  const root3 = R.mesh(o.glow || '#ff8418', 1.0);
   const stance = { armU1: qe(-0.1, 0, 0.12), 'armU-1': qe(-0.1, 0, -0.12), armL1: qe(-0.25, 0, 0), 'armL-1': qe(-0.25, 0, 0) };
   const clips = [
     clip(R, 'Idle', 3.2, (t) => ({ q: { ...stance, chest: qe(0.06 + 0.03 * S(t), 0.06 * S(t * 0.5), 0), head: qe(0.05 * S(t), 0.25 * S(t * 0.5 + 0.2), 0), armU1: qe(-0.1 + 0.04 * S(t), 0, 0.12), 'armU-1': qe(-0.1 + 0.04 * S(t + 0.3), 0, -0.12) }, p: { root: V(0, -0.012 + 0.008 * S(t), 0) } })),
