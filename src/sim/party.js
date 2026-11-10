@@ -10,6 +10,7 @@ import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
 import { attrStats, recommendedGrowth, autoAllocate, ATTRS, BUILD, BORN_POINTS } from './attributes.js';
 import { STANCE_MOD, stanceOf, passiveVal } from './skills.js';
 import { has, STAT, rollSellsword, rollPerks } from './companions.js';
+import { drawAppearance } from './appearance.js';
 
 // Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
 // STARTER), so a fresh character in their kit has exactly the GDD numbers; beyond that,
@@ -190,7 +191,7 @@ export function tavernRoster(seed, region, day, heroLevel, extra = 0, ask = 0) {
     const lv = hireLevel(heroLevel), id = ask ? `${region}-${day}.${ask}-${i}` : `${region}-${day}-${i}`;
     const m = makeMember(id, name, cls, lv);
     const { rank, perks, hidden } = rollSellsword(seed, id, cls);
-    Object.assign(m, { rank, perks, hidden, bond: 0, owed: 0 }); m.hp = statsFor(m).maxHp;
+    Object.assign(m, { rank, perks, hidden, bond: 0, owed: 0, appearance: drawAppearance(seed, id) }); m.hp = statsFor(m).maxHp;   // (v1.65: a face and build of their own, their own stream)
     return m;
   });
 }

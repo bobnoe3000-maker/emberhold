@@ -11,6 +11,7 @@
 //   setLoadout  { id, skills }                the abilities (up to four, skills.js LOADOUT) the member takes into a fight:
 //                                             its own class's, ones it has learned; anywhere (GDD §5.1 v1.56)
 //   respec      { id }            town        attributes back to points (first free, then 20 g × level)
+//   restyle     { id, appearance } town       a new face and build (appearance.js), at a temple, RESTYLE_COST gold
 //   resurrect   { id }            town        the temple (25 g × level; free once a day to level 5)
 //   rest        {}                town        the inn: full HP / MP, Weakened lifted (5 g × hero level)
 //   hire        { idx }           town        a tavern sellsword → the party, or the bench when full; pays the Guild's fee
@@ -36,6 +37,7 @@
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
 import { nameRefusal } from './names.js';
+import { validAppearance, cleanAppearance, sameAppearance, RESTYLE_COST } from './appearance.js';
 import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, rollHero, ROLL_MAX, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames, freeName } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillDef, skillsOf, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES, LOADOUT, priorityOf } from './skills.js';
@@ -139,7 +141,9 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         { const no = nameRefusal(name); if (no) return refuse(no); }
         const roll = cmd.roll;
         if (roll !== undefined && !(Number.isInteger(roll) && roll >= 0 && roll < ROLL_MAX)) return refuse('That roll is not one of yours');
+        if (cmd.appearance !== undefined && !validAppearance(cmd.appearance)) return refuse('That look is not one of the choices');
         state.party[0] = makeHero({ cls, look, origin, name, ...(roll !== undefined ? rollHero(seed, cls, roll) : {}) });
+        if (cmd.appearance !== undefined) state.party[0].appearance = cleanAppearance(cmd.appearance);   // (v1.65: the face and build chosen; absent, the look's own)
         state.created = true;
         // every company sets out with one Homeward Scroll (GDD §8 v1.30; the owner, 2026-10-04): a sim rule, once
         state.counters.uidN = (state.counters.uidN || 0) + 1; state.bag.push(makeItem('homeward', 1, 'common', { uid: 'i' + state.counters.uidN }));
@@ -166,6 +170,15 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (!pay(respecCost(m))) return refuse('Not enough gold');
         m.attrs = { might: 0, grit: 0, finesse: 0, focus: 0 }; m.respecs = (m.respecs || 0) + 1; m.autoAttrs = false;
         clampPools(m); bus.emit('respec', { id: m.id }); changed(); return true;
+      }
+      case 'restyle': {                                   // (v1.65) a new face and build at the temple, for RESTYLE_COST
+        const m = find(cmd.id); if (!m) return true;
+        { const no = lacks('temple', 'Change your look at a town temple'); if (no) return refuse(no); }
+        if (!validAppearance(cmd.appearance)) return refuse('That look is not one of the choices');
+        if (sameAppearance(m.appearance, cmd.appearance)) return refuse('That is the look they have');
+        if (!pay(RESTYLE_COST)) return refuse('Not enough gold');
+        m.appearance = cleanAppearance(cmd.appearance);
+        bus.emit('restyled', { id: m.id }); changed(); return true;
       }
       case 'rankSkill': {
         const m = find(cmd.id), s = m && skillDef(m.cls, cmd.skill);

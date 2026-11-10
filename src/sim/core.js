@@ -12,6 +12,7 @@ import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
 import { makeHero, statsFor } from './party.js';
 import { starterKit, refreshItem, isUsable, BASES } from './items.js';
 import { autoAllocate, validBorn } from './attributes.js';
+import { validAppearance } from './appearance.js';
 import { createLoot } from './loot.js';
 import { createSmith } from './smith.js';
 import { createHeroes, DAY_S } from './heroes.js';
@@ -584,7 +585,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const CHEST_GOLD = [10, 5];
   const MEMBER_KEYS = ['id', 'name', 'cls', 'level', 'xp', 'trait', 'hp', 'mp', 'gear', 'actor', 'main', 'down',
     'attrs', 'autoAttrs', 'origin', 'skills', 'off', 'prio', 'stance', 'fallen', 'weakUntil', 'respecs',
-    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp', 'loadout', 'born'];   // (exp: out on an expedition, v22; loadout: the abilities taken into a fight, v36; born: the hero's roll, v38)
+    'rank', 'perks', 'hidden', 'bond', 'owed', 'retrains', 'exp', 'loadout', 'born', 'appearance'];   // (exp: out on an expedition, v22; loadout: the abilities taken into a fight, v36; born: the hero's roll, v38)
   const persistMember = (m) => { const o = {}; for (const k of MEMBER_KEYS) if (m[k] !== undefined) o[k] = m[k]; return o; };
   function snapshot() {
     const p = state.player;
@@ -664,6 +665,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       if (!m.gear) m.gear = starterKit(m);                  // saves from before gear: the class kit
       if (!m.attrs) { m.autoAttrs = !m.main; autoAllocate(m); }   // saves from before attributes: the class build (same stats as then)
       if (m.born !== undefined && !(m.main && validBorn(m.born))) delete m.born;   // (v38) only a hero's, and only a spread the roll could make
+      if (m.appearance !== undefined && !validAppearance(m.appearance)) delete m.appearance;   // (v39) a look the choices allow, or the look's own
       if (!m.main) sellsword(m);
     }
     state.tavern = { day: data.tavern?.day ?? 0, ask: data.tavern?.ask ?? 0 };
