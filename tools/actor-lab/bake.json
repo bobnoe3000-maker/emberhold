@@ -4827,8 +4827,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 12,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -4890,8 +4890,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 12,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -4953,8 +4953,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 12,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -5016,8 +5016,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 12,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -5079,8 +5079,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 12,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -5334,8 +5334,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 15,
+          "fps": 3
         },
         {
           "key": "walk",
@@ -5398,8 +5398,8 @@
         {
           "key": "idle",
           "clip": "Idle",
-          "frames": 8,
-          "fps": 7
+          "frames": 15,
+          "fps": 3
         },
         {
           "key": "walk",

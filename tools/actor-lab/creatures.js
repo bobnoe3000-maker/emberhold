@@ -143,7 +143,7 @@ const bell = (a, m, b, t) => (t < m ? ease(a, m, t) : 1 - ease(m, b, t));
 function rat(o = {}) {
   // (the owner's reference, 2026-11-10: a heavy, hunched, shaggy grave rat, a big snarling head on long incisors, big
   // clawed hands, a thick ringed tail; grey. In the kit's low poly: the coat as raked tufts over one hull)
-  const R = new Rig(o.seed || 11), fur = new THREE.Color(o.fur || '#3c3b3a'), belly = new THREE.Color(o.belly || '#4c4a48'), skin = new THREE.Color(o.skin || '#8e7672');   // (grey, cool: the reference's)
+  const K = !!o.king, R = new Rig(o.seed || 11), fur = new THREE.Color(o.fur || '#3c3b3a'), belly = new THREE.Color(o.belly || '#4c4a48'), skin = new THREE.Color(o.skin || '#8e7672');   // (grey, cool: the reference's)
   const furTop = new THREE.Color(o.furTop || '#64625e')   /* (the game's light lifts it: round R6) */, furC = (p, n) => (n.y < -0.35 ? belly : n.y > 0.62 ? mixC(fur, furTop, 0.45) : fur);
   const claw = new THREE.Color('#d8cdb4'), tooth = new THREE.Color('#e0cf8a'), maw = new THREE.Color('#3a1214'), tailC = new THREE.Color(o.tail || '#8e706a'), ring = new THREE.Color('#5a4642');
   const root = R.bone('root', null, V(0, 0.2, 0.0)), pelvis = R.bone('pelvis', root, V(0, 0.21, -0.17)), chest = R.bone('chest', root, V(0, 0.22, 0.14));
@@ -240,7 +240,21 @@ function rat(o = {}) {
   };
   const tailSway = (t, a = 0.25, k = 1) => Object.fromEntries([1, 2, 3, 4].map((i) => [`tail${i}`, qe(0, a * S(k * t - i * 0.12), 0)]));
   const clips = [
-    clip(R, 'Idle', 2.0, (t) => ({ q: { ...tailSway(t, 0.15), head: qe(-0.08 + 0.08 * S(t * 4) * bell(0.2, 0.35, 0.5, t), 0.15 * S(t), 0), jaw: qe(0.25 + 0.2 * Math.max(0, S(t * 6)) * bell(0.2, 0.35, 0.5, t), 0, 0), chest: qe(0.02 * S(t), 0, 0) }, p: { root: V(0, 0.004 * S(t * 2), 0) } })),   // (a snarl, the jaw hanging open)
+    // (the owner, 2026-11-10: "non humanoid NPCs should also have some idle movements": a loop of four seconds, a rat's
+    // business in it: breathing, a sniff with the head up and the nose working, a look round, a paw wiped over the face,
+    // the tail sweeping and flicking. The king, heavier, five: no grooming, a longer look and a snarl, the knot dragged)
+    clip(R, 'Idle', K ? 5.0 : 4.0, (t) => {
+      const sn = bell(0.06, 0.14, 0.34, t), lk = bell(0.38, 0.46, 0.7, t), turn = S((t - 0.38) / 0.32 * 0.5 + 0.25) * lk, gr = K ? 0 : bell(0.72, 0.8, 0.94, t), fl = bell(0.52, 0.55, 0.6, t);
+      const br = S(t * (K ? 5 : 6)), tw = 0.05 * S(t * 32) * sn, snarl = K ? bell(0.72, 0.8, 0.95, t) : 0;
+      return { q: {
+        ...Object.fromEntries([1, 2, 3, 4].map((i) => [`tail${i}`, qe(0, 0.2 * S(t * 2 - i * 0.1) + 0.5 * fl * (i > 2 ? 1 : 0.3), 0.04 * S(t * 2 - i * 0.1))])),
+        chest: qe(0.03 * br - 0.1 * sn, 0.15 * turn, 0), pelvis: qe(-0.015 * br, -0.06 * turn, 0.03 * S(t)),
+        neck: qe(-0.2 * sn + 0.25 * gr, 0.25 * turn, 0), head: qe(-0.15 * sn + tw + 0.15 * gr - 0.1 * snarl, 0.35 * turn + 0.2 * gr, 0.1 * turn + 0.25 * gr),
+        jaw: qe(0.2 + 0.15 * Math.max(0, S(t * 16)) * sn + 0.55 * snarl, 0, 0),
+        root: qe(-0.3 * gr, 0, 0), armU1: qe(-1.5 * gr, 0, 0.25 * gr), armL1: qe(1.4 * gr, 0, 0), paw1: qe(-0.6 * gr * (1 + 0.3 * S(t * 24)), 0, 0), 'armU-1': qe(-0.35 * gr, 0, 0),
+        legU1: qe(0.06 * sn, 0, 0), 'legU-1': qe(0.06 * sn, 0, 0) },
+        p: { root: V(0, 0.004 * br + 0.022 * sn + 0.02 * gr, -0.01 * sn - 0.04 * gr) } };   // (grooming, it sits back on its haunches)
+    }),
     clip(R, 'Walk', 0.42, (t) => ({ q: { ...legs(t), ...tailSway(t, 0.3, 1), pelvis: qe(0, 0.08 * S(t), 0), chest: qe(0, -0.06 * S(t), 0), head: qe(0.06 * S(t * 2), 0, 0) }, p: { root: V(0, 0.012 * Math.abs(S(t)), 0) } })),
     clip(R, 'Attack', 0.6, (t) => { const k = bell(0.15, 0.45, 0.85, t), w = bell(0, 0.15, 0.3, t); return { q: { ...tailSway(t, 0.3, 2), root: qe(-0.15 * w + 0.12 * k, 0, 0), chest: qe(0.2 * k, 0, 0), neck: qe(0.25 * k - 0.3 * w, 0, 0), head: qe(-0.35 * k, 0, 0), jaw: qe(0.85 * bell(0.15, 0.36, 0.5, t), 0, 0), armU1: qe(-0.6 * k, 0, 0), 'armU-1': qe(-0.6 * k, 0, 0) }, p: { root: V(0, 0.02 * w - 0.02 * k, 0.16 * k - 0.03 * w) } }; }),
     clip(R, 'Attack2', 0.55, (t) => { const k = bell(0.1, 0.35, 0.8, t); return { q: { ...tailSway(t, 0.2), root: qe(-0.35 * k, 0, 0), armU1: qe(-1.3 * bell(0.2, 0.4, 0.6, t), 0, 0.2), 'armU-1': qe(-1.3 * bell(0.35, 0.55, 0.75, t), 0, -0.2), jaw: qe(0.5 * k, 0, 0) }, p: { root: V(0, 0.03 * k, 0.03 * k) } }; }),
@@ -362,7 +376,21 @@ function spider(o = {}) {
   const palps = (t) => ({ palp1: qe(0.3 * S(t * 3), 0, 0), 'palp-1': qe(0.3 * S(t * 3 + 0.5), 0, 0) });
   const front = (k, extra = 0) => Object.assign({}, ...legs.filter((L) => L.i === 0).map((L) => legQ(L, 0.25 * k, (0.9 + extra) * k, -0.4 * k)));
   const clips = [
-    clip(R, 'Idle', 2.4, (t) => ({ q: { ...walk(0, 0), ...palps(t), ...fangs(0.2 * Math.max(0, S(t * 2))), abdomen: qe(0.04 * S(t), 0, 0), ...Object.assign({}, ...legs.filter((L) => L.i === 1).map((L) => legQ(L, 0.06 * S(t + L.s * 0.25), 0.05 * Math.max(0, S(t * 2)))) ) }, p: { root: V(0, 0.006 * S(t), 0) } })),
+    // (idle, four seconds: breathing in the abdomen, the palps never still, the fangs flexing; one leg at a time lifted and
+    // set down, the forelegs feeling ahead, the body turning a little on them. The queen's forelegs raised and weaving, her
+    // sac swelling with the eggs)
+    clip(R, 'Idle', Q ? 5.0 : 4.0, (t) => {
+      const seq = [[0, 1, 0.06], [1, -1, 0.2], [0, -1, 0.34], [2, 1, 0.48], [1, 1, 0.6], [3, -1, 0.72], [2, -1, 0.82], [3, 1, 0.9]];
+      let q = { ...walk(0, 0) };
+      for (const L of legs) {
+        const st = seq.find(([i, s]) => i === L.i && s === L.s), u = bell(st[2], st[2] + 0.04, st[2] + 0.1, t), feel = L.i === 0 ? 1 : 0.45;
+        const raise = Q && L.i === 0 ? 0.55 + 0.15 * S(t * 3 + L.s * 0.25) : 0;
+        q = { ...q, ...legQ(L, 0.12 * u * feel + (Q && L.i === 0 ? 0.2 : 0) + 0.04 * S(t + L.s * 0.25), (0.35 * u + 0.08 * u * S(t * 20)) * feel + raise, 0.25 * u - (raise ? 0.3 : 0)) };
+      }
+      const br = S(t * (Q ? 4 : 5)), fg = bell(0.42, 0.48, 0.58, t);
+      return { q: { ...q, ...palps(t * 4), ...fangs(0.15 + 0.5 * fg * (0.6 + 0.4 * S(t * 24))), abdomen: qe(0.05 * br, 0.04 * S(t), 0), root: qe(0.02 * S(t * 2), 0.07 * S(t), 0.015 * S(t)) },
+        p: { root: V(0, 0.005 * br, 0) }, s: { abdomen: V(1 + (Q ? 0.04 : 0.025) * br, 1 + (Q ? 0.05 : 0.03) * br, 1 + (Q ? 0.03 : 0.02) * br) } };
+    }),
     clip(R, 'Walk', 0.55, (t) => ({ q: { ...walk(t), ...palps(t), abdomen: qe(0.05 * S(t * 2), 0.06 * S(t), 0) }, p: { root: V(0.008 * S(t), 0.01 * Math.abs(S(t * 2)), 0) } })),
     clip(R, 'Attack', 0.7, (t) => { const r = bell(0, 0.3, 0.55, t), s = bell(0.35, 0.5, 0.85, t); return { q: { ...walk(0, 0), ...front(r - 0.3 * s), ...fangs(r * 0.8 + s), root: qe(-0.45 * r + 0.25 * s, 0, 0) }, p: { root: V(0, 0.05 * r, 0.12 * s) } }; }),
     clip(R, 'Attack2', 0.5, (t) => { const s = bell(0.1, 0.35, 0.8, t); return { q: { ...walk(t * 0.5, 0.4), ...fangs(s * 1.2), root: qe(0.12 * s, 0, 0) }, p: { root: V(0, -0.02 * s, 0.09 * s) } }; }),
@@ -438,7 +466,17 @@ function beetle(o = {}) {
   const cases = (k, spread = 0) => ({ elytra1: qe(0, 0.3 * spread, 1.05 * k), 'elytra-1': qe(0, -0.3 * spread, -1.05 * k) });
   const feel = (t, a = 1) => ({ ant1: qe(0.25 * a * S(t * 2), 0.3 * a * S(t), 0), 'ant-1': qe(0.25 * a * S(t * 2 + 0.3), -0.3 * a * S(t + 0.2), 0) });
   const clips = [
-    clip(R, 'Idle', 2.2, (t) => ({ q: { ...walk(0, 0), ...feel(t), ...mand(0.25 * Math.max(0, S(t * 3)) * bell(0.4, 0.55, 0.75, t)), head: qe(0.05 * S(t), 0.1 * S(t), 0), ...cases(0.03 * Math.max(0, S(t * 2))) }, p: { root: V(0, 0.004 * S(t * 2), 0) } })),
+    // (idle, four seconds: the feelers sweeping and stopping, the mandibles clacking twice, one leg after another shifted,
+    // the head turned to look; and once a loop the wing-cases lifted and fluttered, the smoulder under them showing)
+    clip(R, 'Idle', 4.0, (t) => {
+      const seq = [[0, 1, 0.08], [2, -1, 0.2], [1, 1, 0.3], [0, -1, 0.44], [2, 1, 0.82], [1, -1, 0.9]];
+      let q = { ...walk(0, 0) };
+      for (const L of legs) { const st = seq.find(([i, s]) => i === L.i && s === L.s), u = bell(st[2], st[2] + 0.035, st[2] + 0.08, t); q = { ...q, ...legQ(L, 0.15 * u * S(st[2] * 7), 0.3 * u, 0.2 * u) }; }
+      const cl = bell(0.14, 0.17, 0.2, t) + bell(0.22, 0.25, 0.28, t), fl = bell(0.58, 0.64, 0.76, t), lk = bell(0.32, 0.4, 0.56, t), pause = 1 - 0.8 * lk;
+      return { q: { ...q, ...feel(t * 4, pause), ...mand(0.15 + 0.7 * cl), head: qe(0.04 * S(t * 2), 0.3 * lk * S((t - 0.32) * 1.6), 0.08 * lk), thorax: qe(-0.04 * fl, 0, 0),
+        ...cases(0.03 * Math.max(0, S(t * 5)) + fl * (0.42 + 0.08 * S(t * 40)), 0.2 * fl), abdomen: qe(-0.06 * fl, 0, 0), root: qe(0.015 * S(t * 2), 0.03 * S(t), 0) },
+        p: { root: V(0, 0.004 * S(t * 5) + 0.008 * fl, 0) } };
+    }),
     clip(R, 'Walk', 0.42, (t) => ({ q: { ...walk(t), ...feel(t * 2, 0.6), abdomen: qe(0, 0.05 * S(t), 0), head: qe(0, -0.05 * S(t), 0) }, p: { root: V(0.006 * S(t), 0.008 * Math.abs(S(t * 2)), 0) } })),
     clip(R, 'Attack', 0.6, (t) => { const w = bell(0, 0.25, 0.45, t), k = bell(0.3, 0.45, 0.8, t); return { q: { ...walk(0, 0), ...mand(1.0 * w - 0.25 * k), ...feel(t, 0.4), root: qe(-0.12 * w + 0.12 * k, 0, 0), head: qe(-0.2 * w + 0.25 * k, 0, 0) }, p: { root: V(0, 0.015 * w, -0.03 * w + 0.12 * k) } }; }),
     clip(R, 'Attack2', 0.55, (t) => { const w = bell(0, 0.3, 0.5, t), k = bell(0.35, 0.5, 0.85, t); return { q: { ...walk(t * 0.5, 0.3), ...mand(0.4 * w), root: qe(0.12 * w - 0.2 * k, 0.12 * k, 0), thorax: qe(-0.2 * k, 0, 0) }, p: { root: V(0, 0.03 * k, 0.1 * k) } }; }),

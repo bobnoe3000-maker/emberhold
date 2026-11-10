@@ -225,6 +225,26 @@ characters. Idle should fit with the type."*
 
 ![Before (top: the kit's own clips) and after (bottom: KayKit's), the goblin, the wraith and the golem through their clips](img/creatures/kaykit-rig-before-after.jpg)
 
+### The beasts' idles (2026-11-10)
+
+The owner: *"Other non humanoid NPCs should also have some idle movements."* Before, the beasts' idles were small
+sways: a few hundredths of a radian, 2.0–2.4 s long. They were played over the bake's 8 frames at 7 fps, so in the game
+they ran 1.75–2.1× fast and read as a jitter. Now each is a loop of a beast's own business, at its own length:
+
+| | Loop | In it |
+|---|---|---|
+| Rat, Old Gutter | 4 s | breathing; a sniff, the head up and the nose working; a look round, the chest turning with it; up on its haunches to wipe a paw over its face; the tail sweeping and once flicking |
+| Rat King | 5 s | the same, heavier, with no grooming; a longer look and a snarl, the knot dragged on the tail |
+| Spider, spinner | 4 s | the abdomen breathing (swelling as it turns); the palps never still; the fangs flexing in a bout; one leg at a time lifted and set down, the forelegs feeling ahead; the body turning a little on its legs |
+| Spider Queen | 5 s | the same, her forelegs held raised and weaving, her egg-sac swelling more |
+| Fire beetle | 4 s | the feelers sweeping, stopping while it looks; the mandibles clacking twice; one leg after another shifted; once a loop the wing-cases lifted and fluttered, the smoulder under them showing |
+
+The bake holds each idle at its length: 12 frames at 3 fps for 4 s, 15 for 5 s (bake.json), so in the game it plays at
+true speed. The model plays smoothly between the frames, and each foe starts its loop at its own point. The atlases
+grow by 4 frames (7 for the bosses) a direction, the widest 6,954 px. No change to triangles, draws or bones.
+
+![The beasts' idles through a loop: the rat, the spider, the fire beetle, the Rat King, the Spider Queen](img/creatures/beast-idles.jpg)
+
 ### The Proving Pens: a trial dungeon to fight them in (GDD v1.60)
 
 The owner: *"Add a test dungeon to thornvale, one room with each of the new creatures.. level 4"*. **The Proving Pens**
