@@ -35,6 +35,12 @@ Much of the parked proposal is now cheaper, because the world has since moved to
 
 ## 3. Faces: the player's choice
 
+**Built** (2026-11-10, GDD §6.1 v1.65): `src/sim/appearance.js` (the choices, validation, a sellsword's own look; save
+v39), `createHero` `appearance`, the temple's `restyle` (40 gold); `figure.js` lays the parts over the variant's face;
+`ui/lookpicker.js` (a row a part, the marks, a face at random) in creation's Look step and the temple's Change a look,
+on the model bareheaded. The new parts below (more eyes, noses, mouths, brows, shapes, ears) are still to come; the
+party card's portrait is still the look's own.
+
 - **What's chosen** (each from a list, nothing typed):
   - face shape;
   - eyes and their colour;
@@ -70,6 +76,9 @@ Much of the parked proposal is now cheaper, because the world has since moved to
 - **Hired companions** come with their own face (their preset), which the player may change once hired.
 
 ## 4. Bodies: the player's build
+
+**Built** (2026-11-10): four builds and three heights (`figure.js` BUILDS, HEIGHTS: the figure's girth and stature,
+the head kept to its own width, a broad one's shoulders out), in play (`world.js`, a template a look) and in the preview.
 
 - **Builds:** thin, normal, broad, heavy.
 - **Heights:** 0.94, 1.0, 1.06 of the class's. Height changes the figure's reach on screen, not the sim's footprint.

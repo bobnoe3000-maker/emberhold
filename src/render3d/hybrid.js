@@ -114,6 +114,17 @@ function waterOf(b, origin) {
 
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
 export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
+// a member's look for the world (GDD §6.1 v1.65): their appearance and a short key for it, made again only when it
+// changes (a restyle at the temple), so the world builds a figure a look and keeps it
+/** @type {WeakMap<object, { j: string, a: any, k: string }>} */
+const looks = new WeakMap();
+/** @param {any} m @returns {{ a: any, k: string } | null} */
+export function lookOf(m) {
+  if (!m || !m.appearance) return null;
+  const j = JSON.stringify(m.appearance), c = looks.get(m); if (c && c.j === j) return c;
+  let h = 0x811c9dc5; for (let i = 0; i < j.length; i++) h = Math.imul(h ^ j.charCodeAt(i), 0x01000193);
+  const o = { j, a: m.appearance, k: (h >>> 0).toString(36) }; looks.set(m, o); return o;
+}
 const CSS = `#world3d { position: fixed; inset: 0; pointer-events: none; background: #000; overflow: hidden; }
 #world3d canvas { display: block; width: 100%; height: 100%; }
 #world3d-ui { position: fixed; inset: 0; z-index: -1; visibility: hidden; pointer-events: none; overflow: hidden; }
@@ -206,7 +217,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
         const u = (d.fx - c.ox) / HW, v = (d.fy - c.oy + d.h) / HH, x = (u + v) / 2, y = (v - u) / 2;
         const fade = d.look ? Math.max(d.look.fade || 0, d.look.dissolve || 0, d.look.ghost ? 0.55 : 0) : 0;
         const X = (x - origin.x) / 2, Z = (y - origin.y) / 2;
-        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who) });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
+        const lk = d.u ? lookOf(d.u) : null;                   // (GDD v1.65: a member's own face and build)
+        actors.push({ name: d.atl.name, cw: d.atl.meta.cw, col: d.a.frame, row: d.a.dir, x: X, z: Z, fade, flash: (d.look && d.look.flash) || 0, warn: (d.look && d.look.warn) || 0, key: keyOf(d.u || d.who), look: lk && lk.a, lk: lk ? lk.k : '' });   // (cw: as drawn, a boss 1.3×; key: the same figure each frame, its model's)
         // in a fight, a ring at each fighter's feet in its side's colour (Emberlit's footMark), on the ground in 3D
         if (c.rings && d.team !== undefined && TEAM_RGB[d.team] && !(d.look && (d.look.ghost || d.look.dissolve))) {
           rings.push({ x: X, z: Z, col: TEAM_RGB[d.team], a: 0.55 });

@@ -30,7 +30,7 @@ const SERVICES = {
   },
   temple: {
     label: 'Temple', blurb: 'Raise the slain, set a body and mind back to how they began, take a blessing before the road, and read the Chronicle of the Fall.',
-    actions: [['Raise the slain', 'companions who were slain, back on their feet'], ['Respec', 'unlearn your attribute points and spend them again'], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
+    actions: [['Raise the slain', 'companions who were slain, back on their feet'], ['Respec', 'unlearn your attribute points and spend them again'], ['Change a look', `a new face and build for anyone in your company · ${RESTYLE_COST} gold`], ['Blessings', 'a boon for your next expedition'], ['The Chronicle', 'lore fragments you’ve found, by region']],
     icon: '<path d="M12 3c2 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z"/>',
   },
 };
@@ -49,8 +49,16 @@ import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, SHOPKEEP } fr
 import { townOf } from '../sim/coach.js';
 import { isUsable, SCROLL_PRICE } from '../sim/items.js';
 import { EXPEDITIONS, expeditionPay } from '../sim/expeditions.js';
+import { html, render } from 'htm/preact';
+import { useState } from 'preact/hooks';
+import { RESTYLE_COST, sameAppearance } from '../sim/appearance.js';
+import { LookPicker, FigurePreview, LOOK_CSS, anyLook } from './lookpicker.js';
 
-const CSS = SW_CSS + `
+const CSS = SW_CSS + LOOK_CSS + `
+#hubSheet .lookstage { position: relative; height: 210px; margin: 4px 0 8px; border-radius: 12px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.22), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1d1726, #0b0910 72%); overflow: hidden; }
+#hubSheet .lookstage canvas { position: absolute; left: 50%; bottom: 4px; height: 92%; aspect-ratio: 88 / 102; transform: translateX(-50%); image-rendering: pixelated; }
+#hubSheet .lookstage canvas.gl { bottom: 0; height: 100%; width: 100%; aspect-ratio: auto; image-rendering: auto; touch-action: none; }
+
 #hubBar { position: fixed; left: var(--party-side, 0px); right: var(--safe-r, 0px); bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   display: flex; justify-content: center; gap: 8px; padding: 0 10px; transform: translateY(24px); opacity: 0; visibility: hidden; pointer-events: none;
   transition: transform .28s ease, opacity .2s ease, visibility 0s linear .28s; z-index: 5; }
@@ -135,7 +143,8 @@ const CSS = SW_CSS + `
   background: transparent; color: #e0c8a0; font-size: 18px; line-height: 30px; }
 `;
 
-export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerms = () => {}, openMap = () => {} } = {}) {
+export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerms = () => {}, openMap = () => {}, models = true } = {}) {
+  const lookModels = models;   // (the look's model in the temple: not with no world, or ?figures=sprites)
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const bar = document.createElement('div'); bar.id = 'hubBar';
   const sheet = document.createElement('div'); sheet.id = 'hubSheet';
@@ -155,7 +164,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) open(b.dataset.k); });
   sheet.addEventListener('click', (e) => {
     if (e.target.closest('.close')) return close();
-    if (e.target.closest('.back')) { note = ''; return view === 'retrain' ? hire() : open(current); }
+    if (e.target.closest('.back')) { note = ''; leaveLook(); return view === 'retrain' ? hire() : view === 'look' && lookFor ? (lookFor = null, VIEWS.look()) : open(current); }
     const go = e.target.closest('[data-go]');
     if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } if (v === 'coach') { close(); openMap(); return; } return VIEWS[v](t); }
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
@@ -183,6 +192,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     const bb = e.target.closest('[data-buyback]'); if (bb) return send({ type: 'buyBack', uid: bb.dataset.buyback });
     const r = e.target.closest('[data-raise]'); if (r) return send({ type: 'resurrect', id: r.dataset.raise });
     const q = e.target.closest('[data-respec]'); if (q) return send({ type: 'respec', id: q.dataset.respec });
+    const lf = e.target.closest('[data-lookfor]'); if (lf) { note = ''; return VIEWS.look(lf.dataset.lookfor); }
     const ex = e.target.closest('[data-exp]'); if (ex) return send({ type: 'expeditionSend', id: ex.dataset.who, kind: ex.dataset.exp });
     const tk = e.target.closest('[data-take]'); if (tk) return send({ type: 'boardAccept', id: tk.dataset.take });
     const hi = e.target.closest('[data-handin]'); if (hi) return send({ type: 'boardTurnIn', id: hi.dataset.handin });
@@ -196,9 +206,10 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   sim.bus.on('refused', (r) => { if (!sheet.classList.contains('on')) return; note = r.reason; redraw(); });
   let current = null, view = null, note = '', restDone = false, retrainId = null, hireTab = null, forgeTab = 'upgrade', shopTab = 'buy', armUid = null, armRel = null;   // (armRel: a bench member's Dismiss for good, tapped once)
 
-  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'The Guild’s coach': 'coach', 'Raise the slain': 'raise', Respec: 'respec', Rest: 'rest', 'Party & bench': 'party',
+  const LIVE = { 'Quest board': 'board', 'Hire companions': 'hire', 'The Guild’s coach': 'coach', 'Raise the slain': 'raise', Respec: 'respec', 'Change a look': 'look', Rest: 'rest', 'Party & bench': 'party',
     Expeditions: 'expeditions', Upgrade: 'smith:upgrade', Reforge: 'smith:reforge', Salvage: 'smith:salvage', Buy: 'shop:buy', Sell: 'shop:sell' };   // actions that work today
   function open(kind) {
+    leaveLook();
     const w = sim.world, sv = (w.services || []).find((s) => s.kind === kind), S = SERVICES[kind];
     if (!S) return;
     current = kind; view = kind; note = '';
@@ -412,8 +423,43 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
       }).join('') || '<p>Nobody is on the bench. Companions you dismiss at the inn wait here, and can go out on the road.</p>'}`;
   }
   setInterval(() => { if (view !== 'expeditions' || !sheet.classList.contains('on')) return; for (const el of sheet.querySelectorAll('[data-until]')) el.textContent = mins(+el.dataset.until - sim.state.t); }, 1000);
-  const VIEWS = { board, hire, raise, respec, rest, retrain, smith, shop, expeditions };
-  function close() { sheet.classList.remove('on'); }
+  // The temple: a member's look (GDD §6.1 v1.65): their face and build chosen a part at a time on the model they'll be,
+  // RESTYLE_COST gold to keep it (the sim's restyle). Rendered by Preact into its own mount, kept across the sheet's
+  // redraws (a gold change, a refusal), so the model isn't built again under a finger; let go when the sheet moves on.
+  let lookFor = null, lookDraft = null, lookWords = null, lookMount = null;
+  fetch('./content/looks.json').then((r) => r.json()).then((w) => { lookWords = w; redraw(); }).catch(() => {});
+  const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
+  function leaveLook() { if (lookMount) { render(null, lookMount); lookMount = null; } }
+  function LookSheet({ m, models }) {
+    const [a, setA] = useState(lookDraft), same = sameAppearance(m.appearance, a);
+    lookDraft = a;
+    return html`<div class="lookstage"><${FigurePreview} actor=${actorOf(m)} appearance=${a} models=${models} bare=${true} /></div>
+      <${LookPicker} words=${lookWords} value=${a} onChange=${setA} />
+      <div class="row go" data-restyle style=${same ? 'opacity:.5' : ''}><div><b>${same ? 'The look they have' : `Keep this look · ${RESTYLE_COST} gold`}</b><span>you have ${gold()} gold</span></div><div class="go-arrow">›</div></div>`;
+  }
+  function look(t) {
+    view = 'look';
+    if (t) { lookFor = t; lookDraft = null; }
+    const S = sim.state, all = [...S.party, ...S.bench], m = all.find((q) => q.id === lookFor);
+    if (!m) {
+      leaveLook();
+      sheet.innerHTML = `${head('Temple', 'Change a look', `The Sisters keep a mirror and a pair of shears. A new face and build for anyone in your company, ${RESTYLE_COST} gold.`)}
+        ${all.map((q) => `<div class="merc"><div class="who"><b>${esc(q.name)}</b><em>L${q.level} ${CLASSES[q.cls].label}</em><span>${q.appearance ? 'a look of their own' : 'the look they came with'}</span></div>
+          <button class="btn" data-lookfor="${q.id}">Choose</button></div>`).join('')}`;
+      return;
+    }
+    if (!lookDraft) lookDraft = m.appearance ? { ...m.appearance, marks: [...m.appearance.marks] } : anyLook();
+    if (!lookMount || !sheet.contains(lookMount)) {
+      sheet.innerHTML = `${head('Temple', `${esc(m.name)}’s look`, 'A part at a time, on the figure. Drag to turn them.')}<div class="lookmount"></div>`;
+      lookMount = sheet.querySelector('.lookmount');
+    } else { const n = sheet.querySelector('.note'); if (n) n.textContent = note; else if (note) sheet.querySelector('h2')?.insertAdjacentHTML('afterend', `<div class="note">${esc(note)}</div>`); }
+    render(html`<${LookSheet} m=${m} models=${lookModels} />`, lookMount);
+  }
+  sheet.addEventListener('click', (e) => { if (view === 'look' && e.target.closest('[data-restyle]') && lookFor && lookDraft) { note = ''; sim.commands.push({ type: 'restyle', id: lookFor, appearance: lookDraft }); } });
+  sim.bus.on('restyled', (r) => { if (view === 'look') { note = 'The Sisters stand back. It suits them.'; look(); } });
+  const VIEWS0 = { board, hire, raise, respec, rest, retrain, smith, shop, expeditions, look };
+  const VIEWS = Object.fromEntries(Object.entries(VIEWS0).map(([k, f]) => [k, (/** @type {any} */ t) => { if (k !== 'look') leaveLook(); return f(t); }]));
+  function close() { leaveLook(); sheet.classList.remove('on'); }
 
   // show the service bar while the hero is in a town square
   let wasIn = false;

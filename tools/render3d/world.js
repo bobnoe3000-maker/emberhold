@@ -128,18 +128,20 @@ const loadModel = (u) => {
 };
 const metaOf = new Map();                                     // atlas name → its JSON (the clips' columns), once in
 const templates = new Map();                                  // atlas name → { root, clips, frame, ppu, minY } | null (building) | false
-function templateOf(name, def) {
-  const t = templates.get(name); if (t !== undefined) return t;
-  templates.set(name, null);
+// (GDD v1.65) a member with a look of their own (a.look: its appearance, a.lk its key) has a template of its own, its
+// atlas's clips and size, its face and build its own: one build a look, its copies sharing it as any figure's do
+function templateOf(name, def, look = null, lk = '') {
+  const tk = lk ? `${name}#${lk}` : name, t = templates.get(tk); if (t !== undefined) return t;
+  templates.set(tk, null);
   if (!metaOf.has(name)) json(`${ASSETS}actors/${name}.json`).then((m) => metaOf.set(name, m));
-  buildFigure(def.v, { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
+  buildFigure(look ? { ...def.v, appearance: look } : def.v, { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
     const rest = []; c.root.traverse((b) => { if (b.isBone) rest.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
     poseFigure(c, 'Idle', 0, true);                           // (sized from the heroic idle, as the bake fits it)
     const { box, ppu } = fitPpu(c.root, def.v, def.px);
     for (const [b, p, q, s] of rest) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
     const cut = compact(c.root, mergeGeometries);              // (once a figure: its copies share the merged parts)
-    templates.set(name, { root: c.root, clips: c.clips, frame: c.frame, creature: c.creature || null, ppu, minY: box.min.y, meshes: cut });
-  }).catch((e) => { console.warn('[luminati] figure', name, e); figErr ||= `${name}: ${e?.message || e}`; templates.set(name, false); });
+    templates.set(tk, { root: c.root, clips: c.clips, frame: c.frame, creature: c.creature || null, look: c.look || null, ppu, minY: box.min.y, meshes: cut });
+  }).catch((e) => { console.warn('[luminati] figure', tk, e); figErr ||= `${tk}: ${e?.message || e}`; templates.set(tk, false); });
   return null;
 }
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
@@ -170,7 +172,7 @@ function figureFor(key, name, T) {
   const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
   // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
   // heroes' heroic pass shrank a creature's head to 0.62 in the world, the atlases had it as built)
-  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, look: '' };
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, lit: '' };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }
@@ -179,11 +181,11 @@ const WARN_EMI = new THREE.Color(1, 0.45, 0.15);
 function placeFigure(a, key, dt, camAz) {
   if (FIGURES !== 'models') return false;
   const def = castOf(a.name); if (!def) return false;
-  const T = templateOf(a.name, def), meta = metaOf.get(a.name); if (!T || !meta) return false;
+  const T = templateOf(a.name, def, a.look || null, a.lk || ''), meta = metaOf.get(a.name); if (!T || !meta) return false;
   // the clip and frame Emberlit chose: the atlas column's clip, its frame within it
   let ck = null; for (const k in meta.clips) { const c = meta.clips[k]; if (a.col >= c.start && a.col < c.start + c.len) { ck = k; break; } }
   const d = ck && def.clips[ck]; if (!d) return false;
-  const f = figureFor(key, a.name, T), mc = meta.clips[ck], n = d.frames, fr = a.col - mc.start;
+  const f = figureFor(key, a.lk ? `${a.name}#${a.lk}` : a.name, T), mc = meta.clips[ck], n = d.frames, fr = a.col - mc.start;   // (a new look: a new figure)
   // played on between the baked frames: the frame Emberlit chose is the floor, the next its ceiling (a walk, stepped by
   // distance, waits there; a figure far off its frame is put back on it)
   if (f.key !== ck) { f.key = ck; f.fpos = fr; }
@@ -201,14 +203,14 @@ function placeFigure(a, key, dt, camAz) {
   f.root.rotation.y = f.yaw;
   poseFigure(f, d.clip, Math.min(0.999, u), true);
   const k = (a.cw && meta.cw ? a.cw / meta.cw : 1) * T.ppu / NATIVE_PER_UNIT;
-  f.root.scale.setScalar(k);
-  f.root.position.set(a.x, game.tileMap.getHeight(a.x, a.z) - T.minY * k, a.z);
+  const L = T.look; if (L) f.root.scale.set(k * L.w, k * L.h, k * L.w); else f.root.scale.setScalar(k);   // (a build's girth, a height's stature)
+  f.root.position.set(a.x, game.tileMap.getHeight(a.x, a.z) - T.minY * k * (L ? L.h : 1), a.z);
   f.root.updateMatrixWorld(true);
   // its light: a share of the sprites' self-light, a hit's white flash, a wind-up's ember glow (as the sprites' tint)
   const fl = a.flash || 0, wn = fl ? 0 : Math.round((a.warn || 0) * 20) / 20, op = 1 - (a.fade || 0);
-  const look = `${figGlow}|${fl}|${wn}|${op.toFixed(2)}`;
-  if (f.look !== look) {
-    f.look = look;
+  const lit = `${figGlow}|${fl}|${wn}|${op.toFixed(2)}`;
+  if (f.lit !== lit) {
+    f.lit = lit;
     for (const q of f.mats) {
       if (!q.own) { if (wn) q.m.emissive.copy(q.base).lerp(WARN_EMI, Math.min(1, wn)); else q.m.emissive.copy(q.base); q.m.emissiveIntensity = figGlow * FILL + fl * 2.6 + wn * 0.9; }
       const tr = op < 0.999; if (q.m.transparent !== tr) { q.m.transparent = tr; q.m.needsUpdate = true; } q.m.opacity = op;
@@ -1283,7 +1285,7 @@ export function createWorld(o) {
 // needn't be up: it reads the same assets/ (the first of createWorld's and this one's `assets` to arrive).
 /**
  * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void }} o
- * @returns {{ show: (actor: string) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
+ * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
  */
 export function createPreview(canvas, o) {
   if (!ASSETS) ASSETS = o.assets;
@@ -1326,20 +1328,24 @@ export function createPreview(canvas, o) {
   const api = {
     get actor() { return name; },
     /** stand this actor: true once it's built (false: no model for it, the caller keeps its still) */
-    async show(actor) {
-      if (actor === name && cur) return true;
-      const n = ++wantN; name = actor;
+    async show(actor, look = null, o2 = {}) {
+      const id = `${actor}#${look ? JSON.stringify(look) : ''}#${o2.bare ? 'bare' : ''}`;
+      if (id === name && cur) return true;
+      const n = ++wantN; name = id;
       const c = await json(`${ASSETS}models/cast.json`); if (c && !cast) cast = c;
       const def = c && c.actors[actor]; if (!def || dead || n !== wantN) return false;
       try {
-        const fig = await buildFigure(def.v, { far: false, load: loadModel, faces: async () => cast.faces });
+        // (bare: the helm or hat off, while a face is being chosen: GDD v1.65)
+        const v = { ...def.v, ...(look ? { appearance: look } : {}), ...(o2.bare && def.v.show ? { show: def.v.show.filter((n) => !/Helmet|Hat|Hood/.test(n)) } : {}) };
+        const fig = await buildFigure(v, { far: false, load: loadModel, faces: async () => cast.faces });
         if (dead || n !== wantN) return false;
         poseFigure(fig, 'Idle', 0, true);
         const box = new THREE.Box3(); fig.root.updateMatrixWorld(true); fig.root.traverse((q) => { if (q.isMesh && q.visible) box.expandByObject(q); });
-        const h = box.max.y - box.min.y, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
-        fig.root.position.set(-cx, -box.min.y, -cz);
-        if (cur) turn.remove(cur.fig.root);
-        turn.add(fig.root); cur = { fig, def };
+        const L = fig.look || { w: 1, h: 1 }, h0 = box.max.y - box.min.y, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+        const pin = new THREE.Group(); pin.add(fig.root); fig.root.position.set(-cx, -box.min.y, -cz); pin.scale.set(L.w, L.h, L.w);   // (a build's girth, a height's stature: framed for the average, so a tall one stands taller)
+        const h = h0 * 1.06;
+        if (cur) turn.remove(cur.pin);
+        turn.add(pin); cur = { fig, def, pin };
         const d = (h * 0.62) / Math.tan((cam.fov * Math.PI) / 360);                 // (the figure about four fifths of the canvas's height)
         cam.position.set(0, h * 0.62, d); cam.lookAt(0, h * 0.47, 0);
         clock = 0; act = null; nextAct = 3; wake();
@@ -1350,11 +1356,11 @@ export function createPreview(canvas, o) {
     close() {
       dead = true; if (raf) cancelAnimationFrame(raf); raf = 0; ro?.disconnect(); document.removeEventListener('visibilitychange', wake);
       canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move); canvas.removeEventListener('pointerup', up); canvas.removeEventListener('pointercancel', up);
-      if (cur) turn.remove(cur.fig.root); cur = null; renderer.dispose(); renderer.forceContextLoss();
+      if (cur) turn.remove(cur.pin); cur = null; renderer.dispose(); renderer.forceContextLoss();
     },
   };
   // (nothing of the figure is disposed: its geometry, textures and materials may be the world's too, the models shared;
   // the context going takes this canvas's copies of them with it)
-  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); o.onError?.(new Error('preview: the WebGL context was lost')); });
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (!dead) o.onError?.(new Error('preview: the WebGL context was lost')); });   // (close() lets it go on purpose: no error then)
   return api;
 }

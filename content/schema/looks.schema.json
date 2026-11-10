@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A character's look: the word for each choice (GDD \u00a76.1 v1.65)",
+  "type": "object",
+  "required": [
+    "order",
+    "parts",
+    "marks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$comment": {
+      "type": "string"
+    },
+    "order": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "parts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "names"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 16
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 16
+            }
+          }
+        }
+      }
+    },
+    "marks": {
+      "type": "object",
+      "required": [
+        "label",
+        "none",
+        "names"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "none": {
+          "type": "string"
+        },
+        "names": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 16
+          }
+        }
+      }
+    }
+  }
+}

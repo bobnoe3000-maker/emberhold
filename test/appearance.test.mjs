@@ -85,3 +85,10 @@ test('the look is saved (v39); a bad one is dropped on load', () => {
   const b = createSim(1); b.restore(snap); assert.deepEqual(b.state.party[0].appearance, look());
   snap.party[0].appearance = { ...look(), hair: 'mohawk' }; const c = createSim(1); c.restore(snap); assert.equal(c.state.party[0].appearance, undefined);
 });
+
+test('every choice has its word (content/looks.json), every part its place in the order', () => {
+  const w = JSON.parse(readFileSync(new URL('../content/looks.json', import.meta.url), 'utf8'));
+  assert.deepEqual([...w.order].sort(), [...KEYS].sort());
+  for (const [k, list] of Object.entries(PARTS)) { assert.ok(w.parts[k], k); for (const v of list) assert.ok(w.parts[k].names[String(v)], `${k}: ${v}`); }
+  for (const m of MARKS) assert.ok(w.marks.names[m], m);
+});

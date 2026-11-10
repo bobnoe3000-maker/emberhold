@@ -14,16 +14,16 @@
 // name it will take) and answers with 'heroCreated' or 'refused'. Nothing here writes game state.
 
 import { html, render } from 'htm/preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { CLASSES, LOOKS, LOOK_LABEL, NAME_MAX, ROLL_MAX, cleanName, makeHero, rollHero, statsFor } from '../sim/party.js';
 import { ATTRS, ATTR_LABEL } from '../sim/attributes.js';
 import { PERKS } from '../sim/companions.js';
 import { nameRefusal } from '../sim/names.js';
 import { ladderOf } from '../sim/skills.js';
-import { drawFigure, swallow } from './actorart.js';
-import { openPreview } from '../render3d/preview.js';
+import { swallow } from './actorart.js';
+import { LookPicker, FigurePreview, LOOK_CSS, anyLook } from './lookpicker.js';
 
-const CSS = `
+const CSS = LOOK_CSS + `
 #createWrap { position: fixed; inset: 0; z-index: 11; display: none; background: #0b0910; }
 #createWrap.on { display: block; }
 #create { position: absolute; inset: 0; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; font-family: ui-monospace, Menlo, monospace; color: #efe4cf; }
@@ -70,28 +70,10 @@ const CSS = `
 #create .sum b { font: 600 22px Georgia, serif; color: #f0c880; display: block; margin-bottom: 2px; }
 `;
 const STEPS = ['class', 'look', 'born', 'origin', 'name', 'begin'];
-const TITLES = { class: ['Class', 'How you fight. Companions fill the other roles.'], look: ['Look', 'How you look on the road. Faces and builds come with the look maker.'],
+const TITLES = { class: ['Class', 'How you fight. Companions fill the other roles.'], look: ['Look', 'Your face and build, a part at a time. The temple can change it later, for a fee.'],
   born: ['Born', 'What you were born with: six points over the four, and a trait. Roll again as often as you like.'],
   origin: ['Origin', 'Where you come from. People will remember it, and it gives you a small edge.'], name: ['Name', 'Short and plain wears best in Emberfall.'],
   begin: ['Ready', 'This hero is yours for this game slot.'] };
-
-// The stage: the look as the model you'll play (render3d/preview.js, Luminati's own figure builder), the atlas's still
-// under it until the model stands and wherever one can't be had (no WebGL, ?world=off, ?figures=sprites). A drag turns
-// them, a tap plays an attack; the context is let go when creation closes.
-function Preview({ look, models }) {
-  const cv = useRef(/** @type {HTMLCanvasElement|null} */ (null)), gl = useRef(/** @type {HTMLCanvasElement|null} */ (null));
-  const pv = useRef(/** @type {any} */ (null)), [live, setLive] = useState(false);
-  useEffect(() => { if (cv.current) drawFigure(cv.current, look); }, [look]);
-  useEffect(() => {
-    if (!models || !gl.current) return undefined;
-    let gone = false;
-    openPreview(gl.current, (e) => { console.warn('[create] the preview:', e); if (!gone) setLive(false); }).then((p) => { if (gone) { p?.close(); return; } pv.current = p; if (p) p.show(look).then((ok) => !gone && setLive(ok)); });
-    return () => { gone = true; pv.current?.close(); pv.current = null; };
-  }, [models]);
-  useEffect(() => { const p = pv.current; if (p) { setLive(false); p.show(look).then((ok) => setLive(ok && p.actor === look)); } }, [look]);
-  return html`<canvas ref=${cv} width="88" height="102" style=${live ? 'visibility:hidden' : ''}></canvas>
-    ${models ? html`<canvas ref=${gl} class="gl" style=${live ? '' : 'visibility:hidden'} aria-label="your hero: drag to turn, tap to swing"></canvas>` : ''}`;
-}
 
 // (the UI's own chance, not the sim's: which roll to show first and which names to suggest are the screen's choice;
 // what a roll holds is the sim's, from the seed)
@@ -119,7 +101,7 @@ function Roll({ data, cls, look, roll, n }) {
 function Create({ data, seed, models, onBegin, error }) {
   const [step, setStep] = useState(0), [cls, setCls] = useState('fighter'), [look, setLook] = useState(LOOKS.fighter[0]);
   const [origin, setOrigin] = useState(data.origins[0].id), [name, setName] = useState('');
-  const [rollN, setRollN] = useState(anyRoll), [rolls, setRolls] = useState(1);
+  const [rollN, setRollN] = useState(anyRoll), [rolls, setRolls] = useState(1), [face, setFace] = useState(anyLook);
   const [shown, setShown] = useState(() => fiveOf(data.creation.names[data.origins[0].id] || []));
   const k = STEPS[step], clean = cleanName(name), O = data.origins.find((o) => o.id === origin), roll = rollHero(seed, cls, rollN);
   const refusal = clean ? nameRefusal(clean) : null;
@@ -136,7 +118,8 @@ function Create({ data, seed, models, onBegin, error }) {
       <div class="st">HP <b>${s.maxHp}</b> · MP <b>${s.maxMp}</b> · ATK <b>${s.atk}</b> · DEF <b>${s.def}</b> · CRIT <b>${s.crit}%</b> · DODGE <b>${s.dodge}%</b><br />
         ${ladderOf(c).filter((a) => a.lv <= 12).map((a) => `${a.name} (${a.lv}${a.passive ? ', passive' : ''})`).join(' · ')} · a new skill every 3 levels</div></button>`; })}
     ${data.creation.locked.map((l) => html`<button key=${l.id} class="opt" disabled><b>${l.name}</b><span class="r">locked</span><p>${l.hint}.</p></button>`)}`;
-  else if (k === 'look') body = LOOKS[cls].map((l) => html`<button key=${l} class=${'opt' + (l === look ? ' on' : '')} onClick=${() => setLook(l)}><b>${LOOK_LABEL[l] || l}</b></button>`);
+  else if (k === 'look') body = html`${LOOKS[cls].length > 1 ? LOOKS[cls].map((l) => html`<button key=${l} class=${'opt' + (l === look ? ' on' : '')} onClick=${() => setLook(l)}><b>${LOOK_LABEL[l] || l}</b></button>`) : ''}
+    <${LookPicker} words=${data.looks} value=${face} onChange=${setFace} />`;
   else if (k === 'born') body = html`<${Roll} data=${data} cls=${cls} look=${look} roll=${roll} n=${rolls} />`;   // (Roll again: in the nav, where it stays put whatever the roll holds)
   else if (k === 'origin') body = data.origins.map((o) => html`<button key=${o.id} class=${'opt' + (o.id === origin ? ' on' : '')} onClick=${() => pickOrigin(o.id)}>
       <b>${o.name}</b><p>${o.background}</p><div class="edge">${o.edge.text}</div></button>`);
@@ -150,14 +133,14 @@ function Create({ data, seed, models, onBegin, error }) {
       Born with ${ATTRS.map((a) => `${ATTR_LABEL[a]} ${roll.born[a]}`).join(', ')}; ${roll.perks.map((p) => perkName(data, p)).join(' and ')}<br />
       ${O.name}: ${O.edge.text}<br /><i>${O.background}</i></div>
     ${error ? html`<div class="err">${error}</div>` : ''}`;
-  return html`<div id="create"><div class="stage"><div class="cap">New hero</div><${Preview} look=${look} models=${models} /></div>
+  return html`<div id="create"><div class="stage"><div class="cap">New hero</div><${FigurePreview} actor=${look} appearance=${face} models=${models} bare=${k === 'look'} /></div>
     <div class="sheet"><div class="dots">${STEPS.map((s, i) => html`<i key=${s} class=${i <= step ? 'on' : ''}></i>`)}</div>
       <h2>${TITLES[k][0]}</h2><div class="sub">${TITLES[k][1]}</div>
       <div class="body">${body}</div>
       <div class="nav">${step > 0 ? html`<button onClick=${() => setStep(step - 1)}>Back</button>` : ''}
         ${k === 'born' ? html`<button class="roll" onClick=${reroll}>⚄ Roll again</button>` : ''}
         ${k === 'begin'
-          ? html`<button class="pri" onClick=${() => onBegin({ cls, look, origin, name: clean, roll: rollN })}>Begin</button>`
+          ? html`<button class="pri" onClick=${() => onBegin({ cls, look, origin, name: clean, roll: rollN, appearance: face })}>Begin</button>`
           : html`<button class="pri" disabled=${!canNext} onClick=${() => setStep(step + 1)}>Next</button>`}</div></div></div>`;
 }
 
@@ -167,8 +150,8 @@ export function createCreation({ sim, onDone, models = true }) {
   const wrap = document.createElement('div'); wrap.id = 'createWrap'; document.body.appendChild(wrap);
   swallow(wrap);
   /** @type {any} */ let data = null, error = '';
-  const load = () => data ? Promise.resolve(data) : Promise.all(['creation', 'origins', 'companions'].map((f) => fetch(`./content/${f}.json`).then((r) => r.json())))
-    .then(([creation, o, words]) => (data = { creation, origins: o.origins, words }));
+  const load = () => data ? Promise.resolve(data) : Promise.all(['creation', 'origins', 'companions', 'looks'].map((f) => fetch(`./content/${f}.json`).then((r) => r.json())))
+    .then(([creation, o, words, looks]) => (data = { creation, origins: o.origins, words, looks }));
   const draw = () => render(html`<${Create} data=${data} seed=${sim.seed} models=${models} error=${error} onBegin=${begin} />`, wrap);
   function begin(pick) { error = ''; sim.commands.push({ type: 'createHero', ...pick }); }
   sim.bus.on('heroCreated', () => { if (!wrap.classList.contains('on')) return; wrap.classList.remove('on'); render(null, wrap); onDone(); });

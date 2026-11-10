@@ -59,6 +59,22 @@ function recolor(root, filter) {
       m = o.material.clone(); m.map = t; done.set(o.material, m); }
     o.material = m; });
 }
+// A member's own look (GDD §6.1 v1.65, src/sim/appearance.js `appearance`): its face's parts laid over the variant's face
+// (so a hood stays a hood), its build as the figure's girth (the root wider in x and z, the head kept to its own width,
+// a broad one's shoulders out) and its height as its stature. Scales on the whole and on KayKit's own bones only, so
+// every clip and every model's kit still fits.
+export const BUILDS = { thin: { w: 0.9, arm: 0.97 }, normal: { w: 1, arm: 1 }, broad: { w: 1.08, arm: 1.12 }, heavy: { w: 1.17, arm: 1.07 } };
+export const HEIGHTS = { short: 0.94, average: 1, tall: 1.06 };
+const FACE_PARTS = ['shape', 'skin', 'eyes', 'iris', 'brows', 'nose', 'mouth', 'ears', 'hair', 'hairColor', 'beard', 'marks'];
+/** the figure's girth and stature for an appearance (none: as built) @param {any} a */
+export function lookScale(a) { const b = (a && BUILDS[a.build]) || BUILDS.normal; return { w: b.w, h: (a && HEIGHTS[a.height]) || 1, arm: b.arm }; }
+/** the build on the bones, after each pose: the head back to its own width, the shoulders out @param {THREE.Object3D} root @param {{ w: number, arm: number }} L */
+export function applyLook(root, L) {
+  if (L.w === 1 && L.arm === 1) return;
+  root.traverse((b) => { if (!b.isBone) return; const base = b.name.replace(/\.?(l|r)$/, '');
+    if (base === 'head') { b.scale.x /= L.w; b.scale.z /= L.w; }
+    else if (base === 'upperarm') b.position.x *= L.arm; });
+}
 /** faces.json presets (faces.js): a variant's `face` is a preset name or an inline face @param {() => Promise<any>} faces the presets */
 export async function facePreset(f, faces) {
   if (typeof f !== 'string') return f;
@@ -80,8 +96,9 @@ export async function build(v, o) {
     const b = { ...v.body, face: await facePreset(v.body.face, o.faces) };
     if (v.body.shape) b.face = { ...b.face, shape: v.body.shape };
     await buildBody(load, root, b, { far, findNode });
-  } else if (v.face) {                                   // a modular face replaces the KayKit head (faces.js)
-    const { head, replaces } = await buildFace(load, v.model, await facePreset(v.face, o.faces), { far });
+  } else if (v.face || v.appearance) {                   // a modular face replaces the KayKit head (faces.js); a member's own parts over it
+    const f0 = v.face ? await facePreset(v.face, o.faces) : {}, f = v.appearance ? { ...f0, ...Object.fromEntries(FACE_PARTS.map((k) => [k, v.appearance[k]])) } : f0;
+    const { head, replaces } = await buildFace(load, v.model, f, { far });
     root.traverse((m) => { if (m.isMesh && replaces.includes(m.name)) m.visible = false; });
     findNode(root, 'head').add(head);
   }
@@ -95,7 +112,7 @@ export async function build(v, o) {
   if (v.swatches) repaint(root, v.swatches);
   if (v.recolor) recolor(root, v.recolor);
   if (v.eyes) root.traverse((m) => { if (m.isMesh && /Eyes/.test(m.name)) { m.material = m.material.clone(); m.material.emissive = new THREE.Color(v.eyes); m.material.emissiveIntensity = 3; } });
-  return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations, frame: v.frame || null };
+  return { root, mixer: new THREE.AnimationMixer(root), clips: g.animations, frame: v.frame || null, look: v.appearance ? lookScale(v.appearance) : null };
 }
 // a variant's own frame (M8, the fen ghoul; `body` is the body-kit mock-up's): `frame: { reach: { bone: k }, scale: { bone: k }, bend: { bone: [x, y, z] } }`,
 // after the heroic pass: reach lengthens a segment as the heroic pass does, scale grows a bone (and what hangs off it),
@@ -115,6 +132,7 @@ export function pose(c, clipName, t, heroic) {
   if (c.creature) applyFit(c.root);                      // (a creature on KayKit's rig: the clip's pose on its own joints)
   if (heroic && !c.creature) applyHeroic(c.root);        // after sampling: clips key scale+translation (a creature's own proportions: no man's)
   if (heroic && c.frame) applyFrame(c.root, c.frame);
+  if (heroic && c.look && !c.creature) applyLook(c.root, c.look);   // (a member's build: GDD v1.65)
   c.root.updateMatrixWorld(true);
   plumb(c.root);
 }

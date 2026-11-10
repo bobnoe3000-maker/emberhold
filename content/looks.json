@@ -1,0 +1,179 @@
+{
+  "$comment": "A character's look (GDD §6.1 v1.65): the word for each choice of each part (src/sim/appearance.js PARTS and MARKS; test/appearance.test.mjs keeps them in step). null choices are keyed \"null\".",
+  "order": [
+    "build",
+    "height",
+    "skin",
+    "shape",
+    "hair",
+    "hairColor",
+    "eyes",
+    "iris",
+    "brows",
+    "nose",
+    "mouth",
+    "ears",
+    "beard",
+    "marks"
+  ],
+  "parts": {
+    "shape": {
+      "label": "Face",
+      "names": {
+        "normal": "Even",
+        "thin": "Narrow",
+        "thick": "Strong",
+        "round": "Round",
+        "oblong": "Long",
+        "pear": "Heavy-jawed"
+      }
+    },
+    "skin": {
+      "label": "Skin",
+      "names": {
+        "porcelain": "Porcelain",
+        "fair": "Fair",
+        "rose": "Rose",
+        "olive": "Olive",
+        "tan": "Tan",
+        "umber": "Umber",
+        "deep": "Deep"
+      }
+    },
+    "eyes": {
+      "label": "Eyes",
+      "names": {
+        "round": "Round",
+        "wide": "Wide",
+        "narrow": "Narrow",
+        "tired": "Tired",
+        "sharp": "Sharp"
+      }
+    },
+    "iris": {
+      "label": "Eye colour",
+      "names": {
+        "brown": "Brown",
+        "hazel": "Hazel",
+        "green": "Green",
+        "blue": "Blue",
+        "grey": "Grey",
+        "amber": "Amber"
+      }
+    },
+    "brows": {
+      "label": "Brows",
+      "names": {
+        "straight": "Straight",
+        "arched": "Arched",
+        "heavy": "Heavy",
+        "angry": "Stern",
+        "worried": "Worried",
+        "thin": "Thin"
+      }
+    },
+    "nose": {
+      "label": "Nose",
+      "names": {
+        "kk": "Plain",
+        "button": "Button",
+        "long": "Long",
+        "hook": "Hooked",
+        "broad": "Broad",
+        "snub": "Snub"
+      }
+    },
+    "mouth": {
+      "label": "Mouth",
+      "names": {
+        "line": "Set",
+        "smile": "Smiling",
+        "grin": "Grinning",
+        "frown": "Frowning",
+        "smirk": "Smirking",
+        "grim": "Grim",
+        "open": "Open"
+      }
+    },
+    "ears": {
+      "label": "Ears",
+      "names": {
+        "null": "Round",
+        "pointed": "Pointed"
+      }
+    },
+    "hair": {
+      "label": "Hair",
+      "names": {
+        "bald": "Bald",
+        "crop": "Cropped",
+        "short": "Short",
+        "receding": "Receding",
+        "crest": "Crest",
+        "bun": "Bun",
+        "topknot": "Topknot",
+        "braid": "Braid",
+        "long": "Long",
+        "ponytail": "Ponytail",
+        "swept": "Swept back"
+      }
+    },
+    "hairColor": {
+      "label": "Hair colour",
+      "names": {
+        "black": "Black",
+        "soot": "Soot",
+        "brown": "Brown",
+        "chestnut": "Chestnut",
+        "auburn": "Auburn",
+        "copper": "Copper",
+        "straw": "Straw",
+        "flax": "Flaxen",
+        "ash": "Ash",
+        "grey": "Grey",
+        "white": "White"
+      }
+    },
+    "beard": {
+      "label": "Beard",
+      "names": {
+        "null": "None",
+        "stubble": "Stubble",
+        "short": "Short",
+        "goatee": "Goatee",
+        "mustache": "Moustache",
+        "full": "Full"
+      }
+    },
+    "build": {
+      "label": "Build",
+      "names": {
+        "thin": "Lean",
+        "normal": "Middling",
+        "broad": "Broad",
+        "heavy": "Heavy"
+      }
+    },
+    "height": {
+      "label": "Height",
+      "names": {
+        "short": "Short",
+        "average": "Middling",
+        "tall": "Tall"
+      }
+    }
+  },
+  "marks": {
+    "label": "Marks",
+    "none": "None",
+    "names": {
+      "scar": "Scar",
+      "scar_cheek": "Cheek scar",
+      "freckles": "Freckles",
+      "blush": "Ruddy",
+      "wrinkles": "Lined",
+      "eyepatch": "Eyepatch",
+      "earring": "Earring"
+    }
+  }
+}
