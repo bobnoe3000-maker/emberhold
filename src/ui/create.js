@@ -27,7 +27,7 @@ const CSS = `
 #createWrap { position: fixed; inset: 0; z-index: 11; display: none; background: #0b0910; }
 #createWrap.on { display: block; }
 #create { position: absolute; inset: 0; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; font-family: ui-monospace, Menlo, monospace; color: #efe4cf; }
-#create .stage { position: relative; flex: 0 0 34%; min-height: 170px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.28), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1d1726, #0b0910 72%); }
+#create .stage { position: relative; flex: 0 0 24%; min-height: 136px; background: radial-gradient(ellipse at 50% 88%, rgba(216,160,64,.28), rgba(0,0,0,0) 55%), radial-gradient(ellipse at 50% 40%, #1d1726, #0b0910 72%); }
 #create .stage canvas { position: absolute; left: 50%; bottom: 6px; height: 92%; aspect-ratio: 88 / 102; transform: translateX(-50%); image-rendering: pixelated; }
 #create .stage canvas.gl { bottom: 0; height: 100%; width: 100%; aspect-ratio: auto; image-rendering: auto; touch-action: none; }
 #create .stage .cap { position: absolute; left: 14px; top: calc(env(safe-area-inset-top, 0px) + 12px); font: 600 12px Georgia, serif; letter-spacing: 3px; color: #a08a6a; text-transform: uppercase; }
@@ -65,6 +65,7 @@ const CSS = `
 #create .nav button { flex: 1; min-height: 50px; border-radius: 10px; font: 600 15px Georgia, serif; border: 1px solid rgba(214,170,98,.5); background: none; color: #f0c880; }
 #create .nav button.pri { flex: 2; background: linear-gradient(#e0a84a, #b67c2a); color: #1a1208; border-color: #f0c880; }
 #create .nav button:disabled { opacity: .45; }
+#create .nav button.roll { flex: 2; border-style: dashed; font: 600 14px Georgia, serif; white-space: nowrap; padding: 0 6px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 #create .sum { padding: 12px; border: 1px solid rgba(214,170,98,.45); border-radius: 12px; background: rgba(216,160,64,.06); font-size: 12px; line-height: 1.7; color: #c8bca8; }
 #create .sum b { font: 600 22px Georgia, serif; color: #f0c880; display: block; margin-bottom: 2px; }
 `;
@@ -112,7 +113,7 @@ function Roll({ data, cls, look, roll, n }) {
       <i class=${v > 0 ? 'up' : v < 0 ? 'dn' : ''}>${v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '='}</i></div>`; })}</div>
     <div class="born">Born with: ${ATTRS.map((a, i) => html`<span key=${a}>${i ? ' · ' : ''}${ATTR_LABEL[a]} <b>${roll.born[a]}</b></span>`)}</div>
     ${roll.perks.map((p) => html`<div key=${p} class="trait"><b>${perkName(data, p)}</b><span>${PERKS[p]?.fam === 'quirk' ? 'quirk' : 'trait'}</span><p>${perkText(data, p)}</p></div>`)}
-    <div class="sub" style="margin:8px 0 0">Roll ${n}. Under each number: against the class as its build would have it (= the same). Points you earn by levelling come on top.</div>`;
+    <div class="sub" style="margin:8px 0 0">Roll ${n}. Under each number: against the class's own (= the same). Levels bring their points on top.</div>`;
 }
 
 function Create({ data, seed, models, onBegin, error }) {
@@ -136,8 +137,7 @@ function Create({ data, seed, models, onBegin, error }) {
         ${ladderOf(c).filter((a) => a.lv <= 12).map((a) => `${a.name} (${a.lv}${a.passive ? ', passive' : ''})`).join(' · ')} · a new skill every 3 levels</div></button>`; })}
     ${data.creation.locked.map((l) => html`<button key=${l.id} class="opt" disabled><b>${l.name}</b><span class="r">locked</span><p>${l.hint}.</p></button>`)}`;
   else if (k === 'look') body = LOOKS[cls].map((l) => html`<button key=${l} class=${'opt' + (l === look ? ' on' : '')} onClick=${() => setLook(l)}><b>${LOOK_LABEL[l] || l}</b></button>`);
-  else if (k === 'born') body = html`<${Roll} data=${data} cls=${cls} look=${look} roll=${roll} n=${rolls} />
-    <button class="dice" onClick=${reroll}>⚄ Roll again</button>`;
+  else if (k === 'born') body = html`<${Roll} data=${data} cls=${cls} look=${look} roll=${roll} n=${rolls} />`;   // (Roll again: in the nav, where it stays put whatever the roll holds)
   else if (k === 'origin') body = data.origins.map((o) => html`<button key=${o.id} class=${'opt' + (o.id === origin ? ' on' : '')} onClick=${() => pickOrigin(o.id)}>
       <b>${o.name}</b><p>${o.background}</p><div class="edge">${o.edge.text}</div></button>`);
   else if (k === 'name') body = html`<input value=${name} maxLength=${NAME_MAX} placeholder="Your name" autocomplete="off" autocapitalize="words" spellcheck=${false}
@@ -155,6 +155,7 @@ function Create({ data, seed, models, onBegin, error }) {
       <h2>${TITLES[k][0]}</h2><div class="sub">${TITLES[k][1]}</div>
       <div class="body">${body}</div>
       <div class="nav">${step > 0 ? html`<button onClick=${() => setStep(step - 1)}>Back</button>` : ''}
+        ${k === 'born' ? html`<button class="roll" onClick=${reroll}>⚄ Roll again</button>` : ''}
         ${k === 'begin'
           ? html`<button class="pri" onClick=${() => onBegin({ cls, look, origin, name: clean, roll: rollN })}>Begin</button>`
           : html`<button class="pri" disabled=${!canNext} onClick=${() => setStep(step + 1)}>Next</button>`}</div></div></div>`;

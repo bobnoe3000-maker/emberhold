@@ -121,7 +121,7 @@ const partyPanel = createPartyPanel(sim);
 const partyScreen = createPartyScreen({ sim, openSheet: (i) => gearSheet.open(i) });   // the three hero slots and the bench
 const guildTerms = createGuildTerms({ sim });   // the Lantern Guild's terms for its sellswords (GDD §6.2): from the tavern and a Contract tab
 const townMenu = createTownMenu(sim, partyPanel, { openParty: () => partyScreen.open(), openTerms: () => guildTerms.open(), openMap: () => worldMap.open('world') });   // subscribe before restore, so a loaded counters event repaints
-const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms, key) => hud.show(m, ms, key), partyPanel });   // quests (M4): the Journal, tracker and toasts
+const journal = createJournal({ sim, npcName: (id) => (cast[id] ? cast[id].name : id), toast: (m, ms, key, o) => hud.show(m, ms, key, o), partyPanel });   // quests (M4): the Journal, tracker and toasts
 const worldMap = createWorldMap({ sim, toast: (m, ms) => hud.show(m, ms), inSquare: () => townMenu.inSquare(), questTitle: (id) => journal.title(id) });   // the World map and the Guild's coach (docs/worldmap-travel-proposal.md)
 createStepOut({ sim, partyPanel });   // the way out of a fight (GDD §7.1)
 createShrineCard({ sim });             // a shrine's blessing, offered: Use or Close (GDD §3.6)

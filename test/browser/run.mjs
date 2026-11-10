@@ -1004,6 +1004,13 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('raise: the temple raises a slain companion; the toast names them on one line, over the open sheet, on screen; no page errors',
       !!name && r.fallen === false && r.on && r.text.includes(name) && /^Raised/.test(r.text) && r.left >= 0 && r.right <= 390 && r.h < r.line * 1.6 && r.z > r.sheetZ && errs.length === 0,
       JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // a quest's notice waits for its ✕ (the owner, 2026-11-10: "the pop up disappears to fast… let me 'X' close them"); a count still goes by itself
+    await p.evaluate(() => { const s = globalThis.__sim; s.bus.emit('questChanged', { id: 'vale_bramble', state: 1, step: 0, progress: [0] }); });
+    await p.waitForTimeout(3500);
+    const kept = await p.evaluate(() => [...document.querySelectorAll('#hudToast .t.keep span')].map((q) => q.textContent));
+    await p.locator('#hudToast .t.keep button').first().tap(); await p.waitForTimeout(200);
+    const after = await p.evaluate(() => document.querySelectorAll('#hudToast .t.keep').length);
+    check('notices: "Quest accepted" waits past its old 2.2 s, and its ✕ closes it', kept.some((t) => /^Quest accepted/.test(t)) && after === 0, JSON.stringify({ kept, after }));
     await ctx.close(); await b.close();
   }
 }

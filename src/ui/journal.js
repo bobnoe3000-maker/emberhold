@@ -179,7 +179,7 @@ function Journal({ sim, defOf, npcName, onClose, lore, story }) {
   </div>`;
 }
 
-/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number, key?: string) => void, partyPanel?: { height: () => number } }} o */
+/** @param {{ sim: any, npcName: (id: string) => string, toast: (msg: string, ms?: number, key?: string, o?: { keep?: boolean }) => void, partyPanel?: { height: () => number } }} o */
 export function createJournal({ sim, npcName, toast, partyPanel }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
   const btn = document.createElement('button'); btn.id = 'journalBtn'; btn.setAttribute('aria-label', 'Journal'); btn.innerHTML = BOOK;
@@ -237,22 +237,22 @@ export function createJournal({ sim, npcName, toast, partyPanel }) {
   const seen = new Map();                       // id → the state and counts last seen (so a repaint never repeats a toast)
   sim.bus.on('questChanged', (e) => {
     const def = e.id && defOf(e.id), was = e.id && seen.get(e.id), n = e.progress || [];
-    if (def && e.state === QS.ACTIVE && !was) { toast(`Quest accepted · ${def.title}`, 2200); btn.classList.add('due'); }
+    if (def && e.state === QS.ACTIVE && !was) { toast(`Quest accepted · ${def.title}`, 2200, undefined, { keep: true }); btn.classList.add('due'); }
     else if (def && e.state === QS.ACTIVE && was && was.step === e.step) {
       const i = n.findIndex((v, k) => v > (was.n[k] || 0)), o = i >= 0 && def.steps[e.step].objectives[i];
       if (o) toast(`${o.label} ${n[i]}/${o.count}`, 2200, `q:${e.id}:${i}`);   // one line per objective, its count updated in place
-    } else if (def && e.state === QS.READY && (!was || was.st !== QS.READY)) toast(`Quest complete · ${def.ready}`, 2600);
+    } else if (def && e.state === QS.READY && (!was || was.st !== QS.READY)) toast(`Quest complete · ${def.ready}`, 2600, undefined, { keep: true });
     if (e.id) seen.set(e.id, { st: e.state, step: e.step, n: n.slice() });
     paintTracker(); paint();
   });
-  sim.bus.on('questReward', (r) => { const d = defOf(r.id); if (d) toast(`${d.title} · +${r.xp} XP · +${r.gold} gold`, 2600); });
+  sim.bus.on('questReward', (r) => { const d = defOf(r.id); if (d) toast(`${d.title} · +${r.xp} XP · +${r.gold} gold`, 2600, undefined, { keep: true }); });
   sim.bus.on('questTracked', () => { paintTracker(); paint(); });
   // (a fragment comes out of a chest or a hall's last wave: the HUD's "chest opened" says so first, then this)
-  sim.bus.on('fragmentFound', (f) => { const w = lore[f.id]; setTimeout(() => toast(`Fragment found · ${w ? w.title : 'the Chronicle'} (${f.found} of ${f.of}) · +${f.xp} XP`, 3000), 1400); btn.classList.add('due'); paint(); });
-  sim.bus.on('setComplete', (e) => toast(`${SET_NAME[e.set] || e.set}: the set is whole. Sister Ilse will want to read it.`, 3200));
+  sim.bus.on('fragmentFound', (f) => { const w = lore[f.id]; setTimeout(() => toast(`Fragment found · ${w ? w.title : 'the Chronicle'} (${f.found} of ${f.of}) · +${f.xp} XP`, 3000, undefined, { keep: true }), 1400); btn.classList.add('due'); paint(); });
+  sim.bus.on('setComplete', (e) => toast(`${SET_NAME[e.set] || e.set}: the set is whole. Sister Ilse will want to read it.`, 3200, undefined, { keep: true }));
   // sites (sim/sites.js): a hidden one found, or its way in still shut (its words: content/sites)
   const sites = {};
-  sim.bus.on('siteRevealed', (e) => toast(`${(sites[e.site] || e).name} is open to you. It's on the compass now.`, 3200));
+  sim.bus.on('siteRevealed', (e) => toast(`${(sites[e.site] || e).name} is open to you. It's on the compass now.`, 3200, undefined, { keep: true }));
   sim.bus.on('siteShut', (e) => { const w = sites[e.site]; if (w && w.shut) toast(w.shut, 2800); });
   // (v1.48) a secret site rests after it was cleared, then can be walked again (sim core.js state.secrets)
   sim.bus.on('secretSealed', (e) => toast(`${(sites[e.site] || { name: 'It' }).name} seals itself behind you. It will open again in two hours.`, 3600));

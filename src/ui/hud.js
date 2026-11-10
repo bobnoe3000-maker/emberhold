@@ -199,22 +199,40 @@ export function createHud(sim) {
   // or a hire, replaced it at once): each line is its own backed pill with its own timer, newest on top, at most
   // TOAST_MAX. A line given a key (a quest objective's count) updates in place rather than stacking. The stack sits
   // under the loot card while that's up (sheet.js #lootToast), so neither covers the other.
-  const TOAST_MAX = 3;
-  /** @type {Map<HTMLElement, { key: string | null, timer: any }>} */
+  // (2026-11-10, the owner: "the pop up disappears to fast… let me 'X' close them vs auto close") A notice shown with
+  // `keep` (the journal's: a quest taken, done or paid, a fragment, a set, a site) has an ✕ and waits for it; the
+  // passing lines (a count, not enough MP) still go by themselves. At most KEEP_MAX wait at once, the oldest let go.
+  const TOAST_MAX = 3, KEEP_MAX = 4;
+  /** @type {Map<HTMLElement, { key: string | null, timer: any, keep: boolean }>} */
   const lines = new Map();
   const place = () => {
     const loot = document.getElementById('lootToast'), lr = loot && loot.classList.contains('on') ? loot.getBoundingClientRect() : null;
     toast.style.top = lr ? `${Math.round(lr.bottom + 8)}px` : '';
   };
   const drop = (el) => { const l = lines.get(el); if (!l) return; clearTimeout(l.timer); lines.delete(el); el.remove(); if (!lines.size) toast.classList.remove('on'); };
-  /** @param {string} msg @param {number} [ms] @param {string} [key] a line to update in place (the same objective's count) */
-  function show(msg, ms = 1000, key) {
+  const oldest = (keep) => { let last = null; for (const [e, l] of lines) if (l.keep === keep) last = e; return last; };
+  const count = (keep) => { let n = 0; for (const l of lines.values()) if (l.keep === keep) n++; return n; };
+  /** @param {string} msg @param {number} [ms] @param {string} [key] a line to update in place (the same objective's count)
+   * @param {{ keep?: boolean }} [o] keep: wait for its ✕ instead of going after ms */
+  function show(msg, ms = 1000, key, o = {}) {
+    const keep = !!o.keep;
     let el = null;
-    for (const [e, l] of lines) if ((key && l.key === key) || e.textContent === msg) { el = e; break; }
-    if (!el) { el = document.createElement('div'); el.className = 't'; lines.set(el, { key: key || null, timer: null }); }
-    el.textContent = msg; toast.prepend(el);
-    const l = lines.get(el); clearTimeout(l.timer); l.timer = setTimeout(() => drop(el), ms);
-    while (lines.size > TOAST_MAX) drop(/** @type {HTMLElement} */ (toast.lastElementChild));
+    for (const [e, l] of lines) if ((key && l.key === key) || (l.keep === keep && (e.dataset.msg === msg))) { el = e; break; }
+    if (!el) {
+      el = document.createElement('div'); el.className = keep ? 't keep' : 't'; lines.set(el, { key: key || null, timer: null, keep });
+      if (keep) {
+        const span = document.createElement('span'), x = document.createElement('button');
+        x.textContent = '✕'; x.setAttribute('aria-label', 'close'); x.addEventListener('click', () => drop(el));
+        for (const ev of ['pointerdown', 'touchstart', 'mousedown']) el.addEventListener(ev, (e) => e.stopPropagation());   // (the world mustn't get the tap: AGENTS.md overlays)
+        el.append(span, x);
+      }
+    }
+    el.dataset.msg = msg;
+    if (keep) el.firstChild.textContent = msg; else el.textContent = msg;              // (text, never HTML)
+    toast.prepend(el);
+    const l = lines.get(el); clearTimeout(l.timer); if (!keep) l.timer = setTimeout(() => drop(el), ms);
+    while (count(false) > TOAST_MAX) drop(oldest(false));
+    while (count(true) > KEEP_MAX) drop(oldest(true));
     place(); toast.classList.add('on');
   }
   setInterval(() => { if (lines.size) place(); }, 250);   // the loot card comes and goes on its own
