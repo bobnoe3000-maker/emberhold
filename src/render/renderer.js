@@ -44,7 +44,9 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   rat: 'vermin_rat', spider: 'vermin_spider', spinner: 'vermin_spinner', gutter: 'vermin_gutter',   // (v1.58) the vermin, built in code (tools/actor-lab/creatures.js)
   redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn',
   toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess',   // (M8.6: the Fens' four)
-  quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden' };   // (v1.48)
+  quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden',   // (v1.48)
+  firebeetle: 'creature_firebeetle', gob: 'creature_goblin', wraith: 'creature_wraith', golem: 'creature_golem',   // (v1.59) the bestiary, built in code
+  rat_king: 'boss_ratking', spider_queen: 'boss_spiderqueen' };
 // the Mere Tower's wardens (sim tower.js): baked tall as the bosses are (tools/actor-lab variants W1–W10), named on the boss bar
 for (const id of Object.keys(WARDENS)) ENEMY_ACTOR[id] = 'boss_' + id.slice('warden_'.length);
 const UNDEAD_LOOK = new Set(SKELETONS.concat(['boss_standard', 'boss_quartermaster', 'drowned_brother', 'drowned_cantor', 'boss_bellringer', 'boss_hush', 'boss_watcher', 'boss_starroom', 'boss_choir', 'boss_abbess']));   // (they rise from the ground and shamble)
@@ -194,7 +196,7 @@ export function createRenderer(canvas, sim, input) {
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : kind === 'web' ? [232, 230, 214] : [210, 210, 220], glow = kind === 'fire' ? 5 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : kind === 'web' ? [232, 230, 214] : kind === 'firespit' ? [255, 120, 40] : [210, 210, 220], glow = kind === 'fire' || kind === 'firespit' ? 5 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       // a round orb, a hot core in a coloured rim (a 2.9 radius took the whole 5 × 5 square and read as a square tile at
       // any zoom: art critic pass 16, the effects' strips)
@@ -902,7 +904,9 @@ export function createRenderer(canvas, sim, input) {
       let dx = b.sx - a.sx, dy = b.sy - a.sy; const l = Math.hypot(dx, dy); if (l > 1e-3) { dx /= l; dy /= l; } else { dx = 0; dy = -1; }
       const sc = (st && ((c.heavy && st.heavySpark) || st.spark)) || [255, 232, 200];
       fx.impact(c.x, c.y, dx, dy, sc, { heavy: c.heavy, crit: c.crit, now: clock() });
-      if (c.heavy || c.crit) fx.shock(c.x, c.y, sc, { now: clock(), big: !!(c.heavy && c.crit) });   // (v1.47) the blow thumps the ground
+      if (c.heavy || c.crit) fx.shock(c.x, c.y, sc, { now: clock(), big: !!(c.heavy && c.crit) || !!(st && st.quake && c.heavy) });   // (v1.47) the blow thumps the ground
+      if (st && st.quake && c.heavy) jolt('stamp', c.x, c.y);                // (v1.59) a golem's heavy blow shakes the room
+      if (st && st.burn) blast(c.x, c.y, clock(), 0.22, 1.3);                // (v1.59) a fire beetle's spit bursts into light where it lands
     }
     if (c.t === 'hit') {
       addFloat(c.x, c.y, (c.crit ? c.amount + '!' : '' + c.amount), c.party ? '#ff6a5a' : c.crit ? '#ffd24a' : '#f2ece0', c.crit ? 15 : 12);
@@ -968,8 +972,8 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossWave', ({ id, name }) => { const B = BOSSES[id]; banner = { text: name, sub: bossLine[B.mech][1], until: clock() + 3200 }; });
   // (named from the boss: the Mere Tower's wardens call, drum and kindle too)
   const bossName = (id) => ({ redhand_captain: 'Garrow', goblin_chief: 'Skarn', robed_stranger: 'The Stranger' })[id] || (BOSSES[id] ? BOSSES[id].name : 'The warden');
-  sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : 'for help'}`, sub: bossLine.call[1], until: clock() + 2200, small: true }; });
-  sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: clock() + 2000, small: true }; });
+  sim.bus.on('bossCall', ({ id }) => { banner = { text: `${bossName(id)} calls ${id === 'redhand_captain' ? 'his men' : id === 'spider_queen' ? 'her brood' : 'for help'}`, sub: bossLine.call[1], until: clock() + 2200, small: true }; });
+  sim.bus.on('bossSwarm', ({ id }) => { banner = { text: id === 'goblin_chief' ? 'Skarn drums: goblins pour out' : id === 'rat_king' ? 'The knot squeals: rats pour out' : `${bossName(id)} calls more out of the dark`, sub: bossLine.swarm[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossIssue', ({ id }) => { banner = { text: `${bossName(id)} issues arms`, sub: 'one of his ranks stands up whole', until: clock() + 1800, small: true }; });
   sim.bus.on('bossSluice', ({ id }) => { banner = { text: `${bossName(id)} opens the sluice`, sub: bossLine.sluice[1], until: clock() + 1800, small: true }; });
   sim.bus.on('bossMud', ({ id }) => { banner = { text: `${bossName(id)} stamps`, sub: bossLine.mud[1], until: clock() + 1800, small: true }; });

@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { buildCreature } from './creatures.js';
-import { build, pose, fitPpu } from './figure.js';
+import { build, pose } from './figure.js';
 
 const W = 220, H = 200, gl = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 gl.setSize(W, H); gl.setPixelRatio(2); gl.outputColorSpace = THREE.SRGBColorSpace; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.15;
@@ -26,11 +26,14 @@ window.sheet = async (rows) => {
   const out = [], knight = await build({ model: 'Knight', show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'] }, { load, faces: async () => ({}) });
   pose(knight, 'Idle', 0, true); const kb = new THREE.Box3().setFromObject(knight.root), kh = kb.max.y - kb.min.y; show(knight);
   for (const row of rows) {
-    const c = buildCreature(row.spec); show(c); c.root.scale.setScalar(kh); scene.add(c.root);   // (a man stands 1: at the knight's height)
+    const c = buildCreature(row.spec); show(c);
+    // (its height in the game, in men: the variant's `height`, as fitPpu sizes it against the cast; else as built, a man 1)
+    pose(c, 'Idle', 0, false); const ob = new THREE.Box3().setFromObject(c.root), own = ob.max.y - ob.min.y;
+    c.root.scale.setScalar(row.height ? (kh * row.height) / own : kh); scene.add(c.root);
     const frames = [];
     // the lineup: the knight and the creature, side by side
-    knight.root.position.set(-0.55 * kh, 0, -0.3 * kh); scene.add(knight.root); c.root.position.set(0.35 * kh, 0, 0); c.root.rotation.y = -0.5;
-    pose(c, 'Idle', 0, false); aim(0, 0.45 * kh, 0.62 * kh); frames.push({ label: 'beside a man', img: shoot() });
+    const gap = Math.max(1, row.height || 0); knight.root.position.set(-0.55 * kh * gap, 0, -0.3 * kh); scene.add(knight.root); c.root.position.set(0.35 * kh * gap, 0, 0); c.root.rotation.y = -0.5;
+    pose(c, 'Idle', 0, false); const big = Math.max(1, row.height || 0); aim(0, 0.45 * kh * big, 0.62 * kh * big); frames.push({ label: 'beside a man', img: shoot() });
     scene.remove(knight.root); c.root.position.set(0, 0, 0); c.root.rotation.y = row.yaw ?? -0.6;
     for (const [clipName, ts] of row.shots) for (const t of ts) { pose(c, clipName, t, false); aim(0, row.cy * kh, row.half * kh); frames.push({ label: `${clipName} ${t.toFixed(2)}`, img: shoot() }); }
     scene.remove(c.root);

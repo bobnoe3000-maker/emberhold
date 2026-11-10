@@ -20,9 +20,9 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
   // baked tall rather than nearest-upscaled at load) reopens it at that height; BAKE_PX scales everyone alike
   let open = 0;
   const pxOf = (a) => Math.round((a.px || spec.px) * (process.env.BAKE_PX ? +process.env.BAKE_PX / spec.px : 1));
-  const lab = async (px) => {
-    if (open === px) return; open = px;
-    await p.goto(`http://127.0.0.1:${port}/lab.html?px=${px}${process.env.BAKE_PROTO ? '&proto=' + process.env.BAKE_PROTO : ''}${process.env.BAKE_HEAD ? '&head=' + process.env.BAKE_HEAD : ''}`);
+  const lab = async (px, tall = 1) => {
+    if (open === px + ':' + tall) return; open = px + ':' + tall;   // (tall: a figure taller than a man, a taller cell: lab.js)
+    await p.goto(`http://127.0.0.1:${port}/lab.html?px=${px}${tall > 1 ? '&tall=' + tall : ''}${process.env.BAKE_PROTO ? '&proto=' + process.env.BAKE_PROTO : ''}${process.env.BAKE_HEAD ? '&head=' + process.env.BAKE_HEAD : ''}`);
     await p.waitForFunction(() => window.ready === true, { timeout: 60000 });   // (BAKE_PROTO / BAKE_HEAD / BAKE_PX: art pass 7 prototypes)
   };
   fs.mkdirSync(OUT, { recursive: true });
@@ -32,7 +32,7 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
   const pick = process.argv.slice(2).filter((x) => !x.startsWith('--'));   // node bake.cjs hero_knight … bakes just those
   for (const a of spec.actors) {
     if (pick.length && !pick.includes(a.out)) continue;
-    await lab(pxOf(a));
+    await lab(pxOf(a), a.tall || 1);
     if (a.portrait) {                                      // head-and-shoulders portrait for the windows (lab.js renderPortrait)
       const v = vars[a.variant];
       png(`${a.out}.face.png`, await p.evaluate(async (v) => await window.renderPortrait(v), v));

@@ -7,7 +7,7 @@
 //
 //   node tools/capture/stage.mjs [--show icons|faces] [--match s] [--size 1280x900] [--out dir]
 //   node tools/capture/stage.mjs --show cast [--cast vermin,party|town|foes|bosses|all|<actor>,…] [--match s]
-//        [--clips idle,walk,attack,attack2,heavy,hit,death] [--at 0.5] [--frames N] [--per 8] [--cols 4] [--dir 2]
+//        [--clips idle,walk,attack,attack2,heavy,hit,death] [--at 0.5] [--frames N] [--per 8] [--cols 4] [--gap 4.5] [--dir 2]
 //        [--site barrows] [--floor 0] [--room big|entrance|<part>] [--size 900x700] [--dpr 2] [--labels 0]
 //     --at: how far through each clip it's held (0–1; default 0.5); --frames N: one clip (the first of --clips) at N
 //     moments through it instead, a column each
@@ -17,6 +17,9 @@
 //   node tools/capture/stage.mjs --show fx [--skills all|<id>,…] [--cls mage] [--lv 15] [--with fighter,cleric] [--wait 40]
 //        [--site barrows] [--floor 0] [--room big] [--size 600x700] [--dpr 1]
 //     --wait: the most sim seconds given a skill to fire before it's skipped (noted on the sheet)
+//   --show fx --foes firebeetle,golem,…  a row a kind: a room of that kind alone against a plain party, from its first
+//     heavy blow or shot (else a blow) · --bosses rat_king,spider_queen: a row a boss in a hall, from his mechanic (else
+//     a heavy blow). A page a row (the room's family is set as the page starts)
 //
 // Needs Chromium (playwright's, or /opt/pw-browsers/chromium where `playwright install` can't run).
 import { createServer } from 'node:http';
@@ -51,19 +54,27 @@ const errs = []; page.on('pageerror', (e) => errs.push(e.message));
 
 if (show === 'fx') {
   const { SKILLS } = await import('../../src/sim/skills.js');
-  const cls = arg('cls', ''), wanted = arg('skills', 'all');
-  const ids = cls ? SKILLS[cls].map((q) => q.id) : wanted === 'all' ? Object.values(SKILLS).flat().map((q) => q.id) : wanted.split(',');
+  const cls = arg('cls', ''), wanted = arg('skills', 'all'), FOES = arg('foes', ''), BOSSES = arg('bosses', '');
+  const ids = FOES ? FOES.split(',') : BOSSES ? BOSSES.split(',') : cls ? SKILLS[cls].map((q) => q.id) : wanted === 'all' ? Object.values(SKILLS).flat().map((q) => q.id) : wanted.split(',');
+  const rowQuery = (id) => FOES ? { foes: id } : BOSSES ? { boss: id } : null;   // (a page a row: its own room)
+  // which of a row's moments to shoot: a creature's heavy blow or shot before a plain one; a boss's mechanic first
+  const pickOf = (id) => (FOES ? (L) => L.find((q) => q.id === id + ':heavy' || q.id === id + ':shot') || L.find((q) => q.id.startsWith(id + ':'))
+    : BOSSES ? (L) => L.find((q) => q.id === id + ':swarm' || q.id === id + ':call') || L.find((q) => q.id === id + ':heavy')
+      : (L) => L.find((q) => q.id === id && q.at === 'cast') || L.find((q) => q.id === id));
   const AT = [0, 150, 300, 500, 800, 1200], WAIT = +arg('wait', '40'), CW = 300, CH = 260;
-  const q = new URLSearchParams({ skill: ids[0], lv: arg('lv', '15'), with: arg('with', 'fighter,cleric'), site: arg('site', 'barrows'), floor: arg('floor', '0'), room: arg('room', 'big') });
-  await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=fx&${q}`);
-  await page.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready);
-  await page.evaluate(async () => { const end = performance.now() + 180000; globalThis.__lumDraw = false;
-    while (!(globalThis.__world3d?.world && !globalThis.__renderer.transiting && globalThis.__world3d.world.stats.level >= 1) && performance.now() < end) { for (let i = 0; i < 4; i++) globalThis.__frame(16); await new Promise((r) => setTimeout(r, 0)); } });
+  const open = async (extra) => {
+    const q = new URLSearchParams({ ...(extra ? {} : { skill: ids[0], with: arg('with', 'fighter,cleric') }), lv: arg('lv', extra ? '6' : '15'), site: arg('site', 'barrows'), ...(arg('floor') ? { floor: arg('floor') } : extra && extra.boss ? {} : { floor: '0' }), room: arg('room', 'big'), ...(extra || {}) });
+    await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=fx&${q}`);
+    await page.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready);
+    await page.evaluate(async () => { const end = performance.now() + 180000; globalThis.__lumDraw = false;
+      while (!(globalThis.__world3d?.world && !globalThis.__renderer.transiting && globalThis.__world3d.world.stats.level >= 1) && performance.now() < end) { for (let i = 0; i < 4; i++) globalThis.__frame(16); await new Promise((r) => setTimeout(r, 0)); } });
+  };
+  if (!FOES && !BOSSES) await open(null);
   // (stepped, not drawn, between shots; a shot's frame drawn and taken in one task, cropped round the effect)
   const advance = (ms) => page.evaluate((ms) => { globalThis.__lumDraw = false; for (let t = 0; t < ms; t += 33) globalThis.__frame(33); globalThis.__lumDraw = true; }, ms);
   const take = (c) => page.evaluate(([c, CW, CH]) => {
     globalThis.__frame(16);
-    const R = globalThis.__renderer, a = R.screenAt(c.x, c.y), b = R.screenAt(c.tx, c.ty), cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2 - 20, d = devicePixelRatio;
+    const R = globalThis.__renderer, a = R.screenAt(c.x, c.y), b = R.screenAt(c.tx, c.ty), f = c.id.endsWith(':shot') ? 0.55 : c.id.includes(':') ? 0.3 : 0.5, cx = a[0] + (b[0] - a[0]) * f, cy = a[1] + (b[1] - a[1]) * f - (c.id.includes(':') ? 40 : 20), d = devicePixelRatio;   // (a creature's: round the striker, it's what's being looked at)
     const cv0 = document.createElement('canvas'); cv0.width = CW * d; cv0.height = CH * d; const g = cv0.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv0.width, cv0.height);
     for (const cv of document.querySelectorAll('canvas')) { const st = getComputedStyle(cv), r = cv.getBoundingClientRect(); if (cv === cv0 || st.display === 'none' || r.width * r.height < innerWidth * innerHeight * 0.5) continue; g.drawImage(cv, (r.left - (cx - CW / 2)) * d, (r.top - (cy - CH / 2)) * d, r.width * d, r.height * d); }
     return cv0.toDataURL('image/png');
@@ -71,11 +82,12 @@ if (show === 'fx') {
   const inView = (c) => page.evaluate((c) => { const [sx, sy] = globalThis.__renderer.screenAt(c.x, c.y); return sx > 60 && sx < innerWidth - 60 && sy > 80 && sy < innerHeight - 60; }, c);
   const rows = [];
   for (const id of ids) {
-    await page.evaluate((id) => globalThis.__stage.set({ skill: id }), id);
-    let c = null;
+    if (rowQuery(id)) await open(rowQuery(id)); else await page.evaluate((id) => globalThis.__stage.set({ skill: id }), id);
+    let c = null; const pick = pickOf(id);
     for (let t = 0; t < WAIT * 1000 && !c; t += 250) {
       await advance(250);
-      const got = await page.evaluate((id) => globalThis.__stage.casts.find((q) => q.id === id && q.at === 'cast') || globalThis.__stage.casts.find((q) => q.id === id), id);
+      const L = await page.evaluate(() => globalThis.__stage.casts), late = t > WAIT * 700;   // (a creature's heavy blow or shot, waited for; a plain blow only late)
+      const got = (FOES || BOSSES) && !late ? L.find((q) => q.id === id + (BOSSES ? ':swarm' : ':heavy') || q.id === id + (BOSSES ? ':call' : ':shot')) : pick(L.slice().reverse());   // (late: the latest, where they are now)
       if (got && await inView(got)) c = got;
     }
     if (!c) { console.log(`${secs().padStart(8)}  ${id}: didn't fire in ${WAIT} s`); rows.push({ id, frames: [] }); continue; }
@@ -84,8 +96,8 @@ if (show === 'fx') {
     const strip = await page.evaluate(async (fr) => { const ims = await Promise.all(fr.map(async (u) => { const i = new Image(); i.src = u; await i.decode(); return i; }));
       const c = document.createElement('canvas'); c.width = ims[0].width * ims.length; c.height = ims[0].height; const g = c.getContext('2d'); ims.forEach((im, i) => g.drawImage(im, i * im.width, 0)); return c.toDataURL('image/png'); }, frames);
     await writeFile(join(out, `${id}.png`), Buffer.from(strip.split(',')[1], 'base64'));
-    rows.push({ id, frames });
-    console.log(`${secs().padStart(8)}  ${id}: cast at ${c.t.toFixed(1)} s (sim)`);
+    rows.push({ id: FOES || BOSSES ? c.id : id, frames });
+    console.log(`${secs().padStart(8)}  ${FOES || BOSSES ? c.id : id}: at ${c.t.toFixed(1)} s (sim)`);
   }
   const jpg = await page.evaluate(async ([rows, AT]) => {
     const lab = 150, d = devicePixelRatio, w = 300 * d, h = 260 * d, c = document.createElement('canvas'); c.width = lab + AT.length * w; c.height = 24 + rows.length * h;
@@ -111,7 +123,7 @@ if (show === 'fx') {
   const clips = arg('clips', 'idle,walk,attack,attack2,heavy,hit,death').split(','), frames = +arg('frames', 0), at = +arg('at', 0.5);
   // the columns: each clip held at --at, or one clip at --frames moments through it
   const cols = frames ? Array.from({ length: frames }, (_, i) => ({ clip: clips[0], at: frames === 1 ? at : i / (frames - 1) * 0.999, label: `${clips[0]} ${Math.round((i / Math.max(1, frames - 1)) * 100)} %` })) : clips.map((c) => ({ clip: c, at, label: c }));
-  const q = new URLSearchParams({ cast: arg('cast', 'vermin,party'), match, per: arg('per', '8'), cols: arg('cols', '4'), dir: arg('dir', '2'), site: arg('site', 'barrows'), floor: arg('floor', '0'), room: arg('room', 'big'), labels: arg('labels', '1') });
+  const q = new URLSearchParams({ cast: arg('cast', 'vermin,party'), match, per: arg('per', '8'), cols: arg('cols', '4'), gap: arg('gap', '4.5'), dir: arg('dir', '2'), site: arg('site', 'barrows'), floor: arg('floor', '0'), room: arg('room', 'big'), labels: arg('labels', '1') });
   await page.goto(`${base}/index.html?dev&manual&notitle&scene=stage&show=cast&${q}`);
   await page.waitForFunction(() => typeof globalThis.__frame === 'function' && globalThis.__stage && globalThis.__stage.ready);
   // frames until the floor is built and every figure on the page stands as its model (stepped, not drawn: a software

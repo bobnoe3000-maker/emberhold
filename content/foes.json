@@ -76,6 +76,20 @@
     "gutter": {
       "a": "Old Gutter",
       "elite": "Old Gutter, or this week's"
+    },
+    "firebeetle": {
+      "a": "a red fire beetle"
+    },
+    "gob": {
+      "a": "a goblin"
+    },
+    "wraith": {
+      "a": "a graveyard wraith",
+      "elite": "a wraith with its grave still on it"
+    },
+    "golem": {
+      "a": "a stone golem",
+      "elite": "a golem with the moss burnt off it"
     }
   }
 }

@@ -4853,10 +4853,65 @@
   "creature": {
    "kind": "rat",
    "seed": 13,
-   "fur": "#5a5650",
-   "belly": "#7a7268",
-   "eyes": "#ff6a30"
+   "fur": "#4a4640",
+   "belly": "#625c54",
+   "eyes": "#ff6a30",
+   "furTop": "#6c675e"
   },
   "height": 0.61
+ },
+ {
+  "id": "CR1",
+  "cls": "Creature",
+  "label": "Red fire beetle \u00b7 a lacquered crimson dome, fire-glands over the eyes, a smouldering belly under the cases (creatures.js beetle)",
+  "creature": {
+   "kind": "beetle"
+  },
+  "height": 0.42
+ },
+ {
+  "id": "CR2",
+  "cls": "Creature",
+  "label": "Goblin \u00b7 built for the part, two-thirds of a man, a rusted cleaver (creatures.js goblin)",
+  "creature": {
+   "kind": "goblin"
+  },
+  "height": 0.72
+ },
+ {
+  "id": "CR3",
+  "cls": "Creature",
+  "label": "Graveyard wraith \u00b7 a man and a half, a grave-shroud trailing off like smoke (creatures.js wraith)",
+  "creature": {
+   "kind": "wraith"
+  },
+  "height": 1.5
+ },
+ {
+  "id": "CR4",
+  "cls": "Creature",
+  "label": "Stone golem \u00b7 twice a man, mossed boulders round an ember core (creatures.js golem)",
+  "creature": {
+   "kind": "golem"
+  },
+  "height": 2.0
+ },
+ {
+  "id": "CR5",
+  "cls": "Boss",
+  "label": "The Rat King \u00b7 crowned, caped, dragging the knot (creatures.js ratking; a boss: drawn 1.3\u00d7)",
+  "creature": {
+   "kind": "ratking"
+  },
+  "height": 0.75
+ },
+ {
+  "id": "CR6",
+  "cls": "Boss",
+  "label": "The Spider Queen \u00b7 an egg-sac abdomen ringed in bone, a crown of spines (creatures.js spiderqueen; a boss: drawn 1.3\u00d7)",
+  "creature": {
+   "kind": "spiderqueen"
+  },
+  "height": 0.8
  }
 ]

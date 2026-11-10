@@ -168,6 +168,17 @@ Object.assign(ENEMIES, {
   spinner: { hp: 34, atk: 8.4, def: 3, crit: 9, dodge: 9, interval: 1.7, range: 12.0, speed: 3.4, xp: 12, gold: 1, bolt: 'web' },
   gutter:  { hp: 56, atk: 9.6, def: 5, crit: 8, dodge: 7, interval: 1.3, range: 2.8, speed: 3.6, xp: 14, gold: 3 },
 });
+// The bestiary (GDD v1.59, the owner: "Create new creatures… We can worry about where they go location wise and lore
+// later"): built in code (tools/actor-lab/creatures.js), not yet in any family, so no wave fills with them until one is
+// given a place. The same mirror: the fire beetle a rogue's (it spits fire at a short range from under its shell),
+// the goblin a minion's (quick, hard to hit), the wraith a warrior's (long-armed, hard to pin down) and the golem a
+// warrior's (stone: slow, heavy, its DEF high).
+Object.assign(ENEMIES, {
+  firebeetle: { hp: 38, atk: 8.6, def: 5, crit: 8, dodge: 6,  interval: 1.7, range: 8.0, speed: 3.2, xp: 12, gold: 2, bolt: 'firespit' },
+  gob:        { hp: 32, atk: 7.4, def: 3, crit: 8, dodge: 12, interval: 1.0, range: 2.6, speed: 3.9, xp: 10, gold: 3 },
+  wraith:     { hp: 50, atk: 10,  def: 4, crit: 6, dodge: 10, interval: 1.5, range: 3.4, speed: 3.1, xp: 15, gold: 2 },
+  golem:      { hp: 62, atk: 10.5, def: 9, crit: 3, dodge: 0, interval: 1.9, range: 3.6, speed: 2.3, xp: 16, gold: 3 },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -233,6 +244,11 @@ export const BOSSES = {
   abbess_below: { name: 'The Abbess Below', like: 'drowned', hp: 36, atk: 2.5, def: 1.9, speed: 2.5, xp: 14, gold: 32, mech: 'bells', escort: ['drowned', 'cantor'], undead: true, heirloom: 'the_last_office' },
   // (v1.48, GDD §17, world doc v1.32) the Old Barrows' Quartermaster, and the Vatwarden at Vat Seven (the Locks' third floor)
   quartermaster: { name: 'The Quartermaster', like: 'warrior', hp: 24, atk: 1.9, def: 1.6, speed: 2.6, xp: 12, gold: 22, mech: 'issue', escort: ['warrior', 'minion'], undead: true },
+  // (v1.59, the bestiary's bosses, not yet in any hall: each mirrors the boss whose mechanic it takes, the same HP, ATK
+  // and DEF at its level) the Rat King swarms as Old Skarn does, rats in place of goblins; the Spider Queen calls her
+  // brood at 2/3 and 1/3 as Captain Garrow calls his men, and hides behind them
+  rat_king: { name: 'The Rat King', like: 'gutter', hp: 26, atk: 2.08, def: 1.8, speed: 3.0, xp: 12, gold: 28, mech: 'swarm', escort: ['rat', 'rat'] },
+  spider_queen: { name: 'The Spider Queen', like: 'spider', hp: 23.2, atk: 2.3, def: 1.33, speed: 2.8, xp: 12, gold: 30, mech: 'call', escort: ['spider', 'spinner'] },
   vatwarden: { name: 'The Vatwarden', like: 'harvester', hp: 20, atk: 2.2, def: 1.6, speed: 2.7, xp: 13, gold: 30, mech: 'sluice', escort: ['fenghoul', 'bogwitch'] },
   ...WARDENS,   // the Mere Tower's (tower.js): a warden every tenth wave
 };

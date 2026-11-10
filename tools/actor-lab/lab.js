@@ -18,7 +18,10 @@ import { IRIS } from './faces.js';
 import { setHeroicHead, fitPpu as fit, findNode, facePreset as preset, build as buildFig, pose } from './figure.js';
 // figure height in native px (?px=, default 46); the cell scales with it, feet sit 6px above the bottom
 const TARGET_PX = +(new URLSearchParams(location.search).get('px') || 46);
-const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46);
+// (?tall=: a cell that much taller for a figure taller than a man, the golem's 2, the wraith's 1.5: its width, and so its
+// scale in the renderer, as everyone's; the feet where everyone's are)
+const TALL = Math.max(1, +(new URLSearchParams(location.search).get('tall') || 1));
+const W = Math.round(72 * TARGET_PX / 46), H = Math.round(84 * TARGET_PX / 46 * TALL);
 const R = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
 R.setPixelRatio(1); R.setSize(W, H); R.outputColorSpace = THREE.SRGBColorSpace;
 R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; document.body.appendChild(R.domElement);

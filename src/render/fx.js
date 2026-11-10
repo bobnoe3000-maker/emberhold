@@ -25,7 +25,7 @@ const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], 
 const REDHAND = [255, 92, 70], EMBER = [255, 140, 40];   // (art pass 9) the Company's red; the Cult's ember
 
 // a projectile's colour by its kind (the sim's bolt kinds: battle.js), for its trail, halo, floor glow and burst
-export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200], web: [232, 230, 214] };   // (web: v1.58, a spinner's spat silk)
+export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200], web: [232, 230, 214], firespit: [255, 110, 30] };   // (web: v1.58, a spinner's spat silk)
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
@@ -66,6 +66,14 @@ export const FX_STYLES = {
   vermin_gutter:     { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.15 },
   vermin_spider:     { col: [205, 225, 150], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [225, 240, 180], wide: 1.2 },
   vermin_spinner:    { col: [232, 230, 214], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [240, 238, 225] },
+  // (v1.59) the bestiary: the beetle's spat fire and its mandibles, the goblin's cleaver, the wraith's cold claws, the
+  // golem's stone fists (grit, and its core's fire in a heavy blow), the Rat King's teeth, the Spider Queen's fangs
+  creature_firebeetle: { col: [255, 150, 70], attack: 'cast', attack2: 'stab', heavy: 'arc', heavyCol: FIRE, spark: [255, 170, 90], heavySpark: [255, 110, 30], burn: true },
+  creature_goblin:   { col: [235, 215, 180], attack: 'arc', attack2: 'stab', heavy: 'arc', spark: [245, 225, 195], thin: true },
+  creature_wraith:   { col: [140, 240, 210], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [175, 250, 225], heavySpark: [120, 240, 200], wide: 1.3 },
+  creature_golem:    { col: [205, 195, 175], attack: 'arc', attack2: 'arc', heavy: 'arc', heavyCol: EMBER, spark: [215, 205, 185], heavySpark: [255, 160, 70], wide: 1.6, quake: true },
+  boss_ratking:      { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.3 },
+  boss_spiderqueen:  { col: [180, 230, 120], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [210, 240, 160], wide: 1.35 },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
   boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },

@@ -1,8 +1,76 @@
 # New creatures: giant rats and giant spiders (a proposal)
 
-**Status: Implemented (2026-11-10)** (GDD v1.58, world doc v1.36). The owner: *"Design the best way to model and create
+**Status: Implemented (2026-11-10)** (GDD v1.58–v1.59, world doc v1.36–v1.37; the bestiary below). The owner: *"Design the best way to model and create
 new NPC types - giant spiders and giant rats."* Then: *"Go with your recommendations, spiders in Wickham Keep's cellars..
 rats should be 20% bigger."*
+
+## The bestiary (2026-11-10)
+
+The owner: *Create new creatures, red fire beetle, goblin, and a graveyard wraith (1.5x size of humanoid), stone golem (2x size of a humanoid)… Also a rat king and spider queen as boss archetypes. We can worry about where they go location wise and lore later."* And: *"Run art and fx critic rounds in these and the new rat and spiders. AAA quality fitting with the aesthetic we have now."*
+
+![The six new: beside a man, idle, attack, heavy, death](img/creatures/bestiary-sheet.jpg)
+
+*The model sheet (`node tools/actor-lab/creatures-sheet.cjs`), each at its height in the game beside the knight: the red
+fire beetle, the goblin, the graveyard wraith (1.5×), the stone golem (2×), the Rat King and the Spider Queen.*
+
+![All ten in the game on the Stage, idle and attacking, at the game's scale](img/creatures/bestiary-in-game.jpg)
+
+*In the game (`stage.mjs --show cast`): the knight for scale, the vermin, the four new foes and the two bosses.*
+
+- **Built in code** (`tools/actor-lab/creatures.js`), in the kit's style (faceted, vertex-coloured, flat-shaded, the
+  KayKit cast's proportions and light), four new body plans and two bosses:
+
+  | | Body plan | Triangles · bones | Its look |
+  |---|---|---|---|
+  | Red fire beetle | the hexapod (tripod gait) | 2,428 · 28 | a lacquered crimson dome going black at the tips, fire-glands over the eyes and at the tail; the cases fly wide on a glowing belly to spit; dies flipped, legs kicking |
+  | Goblin | the small biped | 2,184 · 18 | a quarter of its height head, ears past its shoulders, a hooked nose, a pauldron, a rusted cleaver (extruded: a blade, not a block) |
+  | Graveyard wraith | the floating shroud | 2,080 · 27 | 1.5 men; a deep cowl with two cold lights, a body that narrows and trails off behind like smoke in four bones, rags and loose motes, a soul burning behind its ribs, a manacle and chain; dies into a heap of rags |
+  | Stone golem | the heavy biped | 1,144 · 16 | 2 men; mossed boulders, a head sunk between the shoulders, an ember core with cracks of light, runes in its forearms; falls apart when it dies |
+  | The Rat King | the rat, crowned | 4,404 · 22 | a crown of bent nails, a ruff, a purple cape over the back, long incisors, and the knot: six rats grown together by their tails, riding the tail's last bones |
+  | The Spider Queen | the spider, a brood-mother | 2,552 · 31 | an egg-sac abdomen ringed in bone with a bone hourglass, green eggs glowing under its skin, a crown of spines, long raised forelegs, sickle fangs |
+
+- **The kit grew for them:** scale tracks (the wraith fading, the heap); `hull()`, one lathed body skinned across
+  bones with blended weights (the rat's body, critic round 4); `rock()` (hashed icosahedra: the golem); glow strength a
+  creature (over ~1.6 it burned out white); `lab.js` `?tall=` for a cell taller than a man's (bake.json `tall`: the
+  golem 2.1, the wraith 1.6), so the atlas holds them.
+
+### Art critic rounds
+
+![Before and after: the rat, the beetle, the wraith, the golem, the Rat King](img/creatures/critic-before-after.jpg)
+
+| Round | Seen | Done |
+|---|---|---|
+| 1 (sheet) | The beetle two flat pancakes on stilts. The goblin's cleaver a block, its green lime. The wraith a straight cone, its hem fangs, its arms rakes, its death a toppled log. The golem's core and cracks white scribbles, its head lost. The Rat King a banded grub in a beret. Every glow burnt out white | One high dome, short legs close in, a duskier red. An extruded blade, olive-grey skin, hair. Darker highlights. A bigger orange core, four thick cracks, the head low and forward. Glow per creature (1.15–1.6) |
+| 2 (sheet) | The wraith a barrel; its hood read as cat's ears. The Rat King's cape strips a comb of red spikes. The Queen's eggs still white | The shroud a smoke-trail in four bones; a deep cowl. A draped blanket with a ragged hem. A sick green, and a bone hourglass on the sac |
+| 3–4 (sheet) | The wraith's hood a pale mushroom. The rat a long banded loaf with a dinosaur's ridge; then a bottle with a flat rump | Darker hood. One lathed hull, pear-shaped, its rump round, skinned across four bones; a raked ridge; bigger pink ears |
+| 5 (in the game) | The golem near-white under the game's figure light. Old Gutter white. The spiders' legs lost on the dark floor | The golem's stone darker (twice). Gutter grey, not pale. The spiders' legs a shade lighter than their bodies |
+
+### Effects critic rounds
+
+![The Rat King's swarm and the Spider Queen's call, in a hall, from the moment it fires](img/creatures/bestiary-bosses-fx.jpg)
+
+- **Round 1** (`stage.mjs --show fx --foes …`): the party's own skills (the cleric's columns) buried the creatures'
+  effects. The Stage now fights them with a **quiet** party (its skills off), cropped on the striker. Each creature's
+  blows spark in its own colour (`fx.js` styles: the beetle's fire, the wraith's cold green, the golem's grit), its
+  heavy blows and shots warned on the ground as every foe's are.
+- **Round 2:** the golem's heavy blow had no weight for a giant of stone, and the beetle's spit landed as a plain
+  spark. Now the golem's heavy blow shakes the room (a big shock ring and the Toadking's stamp jolt: style `quake`),
+  and the beetle's spit bursts into fire-light where it lands (`blast`: style `burn`). The bosses' mechanics read: the
+  Rat King's swarm (the knot behind him), the Spider Queen's brood called in.
+- **Left for a later pass:** the goblin's and the wraith's crops in the capture (the camera holds the party; a creature
+  on the room's edge falls out of a 300 px crop). Their sparks and swings are the game's grammar.
+
+### In the sim, unplaced
+
+- `battle.js`: `firebeetle` (rogue: a `firespit` bolt, 8 tiles), `gob` (minion), `wraith` (warrior), `golem` (warrior,
+  DEF 9, speed 2.3); `rat_king` (`swarm`, escort rats) and `spider_queen` (`call`, a spider and a spinner), at their
+  mirrors' HP, ATK and DEF. No family or hall names them yet.
+- Names (`content/foes.json`), actors (`renderer.js` `ENEMY_ACTOR`), bolt look, banners, voices (`audio/cues.js`).
+- **The Stage fights them:** `?dev&scene=stage&show=fx&foes=firebeetle,golem` (a family of those alone for the room),
+  `&boss=rat_king` (that boss in the floor's hall), `&quiet=0` to let the party's skills run.
+- **Balance:** `tools/balance/boss.mjs wickham_keep 5 --floor 1 --boss rat_king` and `… 6 --floor 2 --boss spider_queen`
+  (GDD v1.59's numbers). `test/bestiary.test.mjs`: the mirrors, the bosses' stats against their mirrors', every actor
+  cast as a creature.
 
 ## As built
 

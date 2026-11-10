@@ -24,12 +24,19 @@
 //                 class's skills; neither: a plain fight, every skill the game's way   with=fighter,cleric: the rest of the
 //                 party, to three (a plain fight's: fighter, rogue, cleric)
 //   lv=15         the party's level and the room's (raised to the level the chosen skills open at)                site= · floor= · room= as above
-// globalThis.__stage.casts: each chosen skill's 'skill' events as they come ({ id, at, by, x, y, tx, ty, t }).
+//   foes=firebeetle,golem   the waves of these kinds alone (the bestiary, not yet in any family: a family of its own for the
+//                 room, `__stage`, made here; a dev page's, never a game's)
+//   quiet=1        the party strikes plainly, its skills off (the default with foes= or boss=: their effects alone; quiet=0)
+//   boss=rat_king  that boss in the floor's hall (the site's own put aside for the page: dev only), the party in the hall
+// globalThis.__stage.casts: each chosen skill's 'skill' events as they come ({ id, at, by, x, y, tx, ty, t }); with foes=
+// or boss=, their wind-ups too ('golem:heavy', 'firebeetle:shot', 'wraith:blow') and the boss's mechanic ('rat_king:swarm').
 
 import { makeHero, makeMember, statsFor } from '../sim/party.js';
 import { autoAllocate } from '../sim/attributes.js';
 import { starterKit } from '../sim/items.js';
 import { SKILLS } from '../sim/skills.js';
+import { ENEMIES, FAMILIES } from '../sim/battle.js';
+import { siteOf } from '../sim/sites.js';
 
 const GROUPS = {
   party: (n) => n.startsWith('hero_'),
@@ -81,15 +88,16 @@ export function createStage({ sim, renderer, params, setPaused }) {
     });
     const p = sim.state.player; p.x = p.px = C.x; p.y = p.py = C.y;            // the camera's: it follows the hero (not drawn)
     for (const [, el] of tags) el.remove(); tags.clear();
-    if (opt.labels) for (const f of st.figures) { const el = document.createElement('div'); el.style.cssText = 'position:absolute;transform:translate(-50%,0);white-space:nowrap'; el.textContent = f.actor.replace(/^(hero|npc|boss|vermin)_/, ''); box.append(el); tags.set(f, el); }
+    if (opt.labels) for (const f of st.figures) { const el = document.createElement('div'); el.style.cssText = 'position:absolute;transform:translate(-50%,0);white-space:nowrap'; el.textContent = f.actor.replace(/^(hero|npc|boss|vermin|creature)_/, ''); box.append(el); tags.set(f, el); }
   }
   // the live effects (show=fx): the party for the chosen skills, in a room at their level, the fight let run
-  const fx = { skills: (P.skill || '').split(',').filter(Boolean), cls: P.cls || '', with: P.with ? P.with.split(',').filter(Boolean) : null, lv: +(P.lv || 15) };
+  const fx = { skills: (P.skill || '').split(',').filter(Boolean), cls: P.cls || '', with: P.with ? P.with.split(',').filter(Boolean) : null, lv: +(P.lv || 15),
+    foes: (P.foes || '').split(',').filter((k) => ENEMIES[k]), boss: P.boss || '' };
   const classOf = (id) => Object.keys(SKILLS).find((c) => SKILLS[c].some((q) => q.id === id)) || null;
   let fxWant = new Set();
   function fxSetup() {
     // (no skill and no class named: a plain fight, every member's own skills as the game picks them)
-    const plain = !fx.cls && !fx.skills.length, want = fxWant = new Set(fx.cls ? SKILLS[fx.cls].map((q) => q.id) : fx.skills);
+    const quiet = P.quiet === '1' || ((fx.foes.length || !!fx.boss) && P.quiet !== '0'), plain = !fx.cls && !fx.skills.length, want = fxWant = new Set(fx.cls ? SKILLS[fx.cls].map((q) => q.id) : fx.skills);
     const classes = [...new Set([...(fx.cls ? [fx.cls] : fx.skills.map(classOf).filter(Boolean)), ...(fx.with || (plain ? ['fighter', 'rogue', 'cleric'] : ['fighter', 'cleric']))])].slice(0, 3);
     // (at least the level the chosen skills open at, and the room with it)
     const lv = Math.max(fx.lv, ...Object.values(SKILLS).flat().filter((q) => want.has(q.id)).map((q) => q.lv));   // (Math.max of fx.lv alone: a plain fight)
@@ -97,20 +105,33 @@ export function createStage({ sim, renderer, params, setPaused }) {
     sim.state.party = classes.map((c, i) => {
       const m = i ? makeMember('stage' + i, ['Wren', 'Tam'][i - 1], c, lv) : makeHero({ cls: c });
       m.level = lv; m.attrs = null; m.autoAttrs = true; autoAllocate(m); m.gear = starterKit(m);
-      if (!plain) {
+      if (quiet) m.off = SKILLS[c].map((q) => q.id);                              // (quiet: the party's own effects out of the way)
+      else if (!plain) {
         m.off = SKILLS[c].map((q) => q.id).filter((id) => !want.has(id));          // (only the chosen skills in play: on, and in
         m.loadout = SKILLS[c].map((q) => q.id).filter((id) => want.has(id)).slice(0, 4);   // its loadout of four, skills.js inPlay)
       }
       m.hp = statsFor(m).maxHp; m.mp = statsFor(m).maxMp; return m;
     });
     st.party = classes;
-    const w = sim.world, C = centre(), room = w.level.rooms.find((r) => (r.part || String(r.id)) === st.room);
+    const w = sim.world;
+    if (fx.boss) { const S = siteOf(w.site); S.bosses = { ...(S.bosses || {}), [(w.depth || 0) + 1]: fx.boss }; opt.room = w.level.descentRoom ? (w.level.descentRoom.part || String(w.level.descentRoom.id)) : opt.room; }
+    const C = centre(), room = w.level.rooms.find((r) => (r.part || String(r.id)) === st.room);
     if (room) w.roomLevels.set(room.id, lv);
+    if (room && fx.foes.length) {                                // (the room's waves: these kinds alone)
+      const two = (a) => [a[0], a[1] ?? a[0]], melee = fx.foes.filter((k) => !ENEMIES[k].bolt), ranged = fx.foes.filter((k) => ENEMIES[k].bolt);
+      /** @type {any} */ (FAMILIES).__stage = { melee: two(melee.length ? melee : ranged), ranged: two(ranged.length ? ranged : melee), elite: fx.foes[fx.foes.length - 1], undead: (k) => k === 'wraith' };
+      room.family = '__stage';
+    }
     const p = sim.state.player; p.x = p.px = C.x; p.y = p.py = C.y;
     sim.state.party.forEach((m, i) => { m.x = m.px = C.x + (i ? (i === 1 ? 1.2 : -1.2) : 0); m.y = m.py = C.y + (i ? 1 : 0); });
     st.casts = [];
   }
-  sim.bus.on('skill', (e) => { if (FX && st.ready && (fx.cls ? classOf(e.id) === fx.cls : !fx.skills.length || fx.skills.includes(e.id))) { st.casts.push({ id: e.id, at: e.at, by: e.by, x: e.x, y: e.y, tx: e.tx, ty: e.ty, t: sim.state.t }); if (st.casts.length > 200) st.casts.shift(); } });
+  const foeLog = (id, e) => { if (FX && st.ready) { st.casts.push({ id, at: 'cast', by: e.by, x: e.x, y: e.y, tx: e.tx ?? e.x, ty: e.ty ?? e.y, t: sim.state.t }); if (st.casts.length > 200) st.casts.shift(); } };
+  sim.bus.on('windup', (e) => { const f = (sim.world.enemies || []).find((o) => o.id === e.by); if (f && (fx.foes.includes(f.kind) || (fx.boss && f.boss === fx.boss))) foeLog(`${f.boss || f.kind}:${e.bolt ? 'shot' : e.heavy ? 'heavy' : 'blow'}`, e); });
+  // (a plain blow has no wind-up event, the telegraph grammar's: it's logged as it lands, from the striker to the struck)
+  sim.bus.on('combat', (c) => { if (c.t === 'hit' && c.party && (fx.foes.includes(c.src) || (fx.boss && c.boss))) foeLog(`${c.boss ? fx.boss : c.src}:blow`, { by: null, x: c.ax ?? c.x, y: c.ay ?? c.y, tx: c.x, ty: c.y }); });
+  for (const [ev, m] of [['bossSwarm', 'swarm'], ['bossCall', 'call']]) sim.bus.on(ev, (e) => { if (fx.boss && e.id === fx.boss) foeLog(`${e.id}:${m}`, e); });
+  sim.bus.on('skill', (e) => { if (FX && st.ready && !fx.foes.length && !fx.boss && (fx.cls ? classOf(e.id) === fx.cls : !fx.skills.length || fx.skills.includes(e.id))) { st.casts.push({ id: e.id, at: e.at, by: e.by, x: e.x, y: e.y, tx: e.tx, ty: e.ty, t: sim.state.t }); if (st.casts.length > 200) st.casts.shift(); } });
   renderer.setStage(() => {
     if (FX) {                                                    // (kept on its feet, its MP full: the skills fire on their own rules)
       // (Revive wants someone down: with it chosen, the last of the party is left to fall)
@@ -125,7 +146,8 @@ export function createStage({ sim, renderer, params, setPaused }) {
 
   fetch('./assets/models/cast.json').then((r) => r.json()).then((c) => {
     all = Object.keys(c.actors);
-    const w = sim.world, want = +(P.floor || 0);
+    // (a boss: the floor with the site's hall on it, unless one's asked for)
+    const w = sim.world, halls = Object.keys(siteOf(w.site).bosses || {}).map(Number), want = P.floor !== undefined ? +P.floor : fx.boss && halls.length ? halls[halls.length - 1] - 1 : 0;
     if (w.kind === 'dungeon' && (w.depth || 0) !== want) sim.restore({ ...JSON.parse(JSON.stringify(sim.snapshot())), depth: want, floors: [] });
     if (FX) { centre(); fxSetup(); } else layout();
     st.ready = true;

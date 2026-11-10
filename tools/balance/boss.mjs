@@ -5,7 +5,7 @@
 //
 //   node tools/balance/boss.mjs <site> <heroLv> [seeds e.g. 1,2,3] [--src dir] [--healer cleric|shaman] [--floor N]   (--healer: who's third, v1.19;
 //   --floor: the hall on floor N, for a site with a boss on more than one: the Drowned Abbey's 1–3; default the last;
-//   --off id,id: those abilities' auto-use off; 'held N %': the share of his fight the boss stood stunned, frozen or knocked down)
+//   --boss id: that boss in the hall in place of its own (one not yet given a hall); --off id,id: those abilities' auto-use off; 'held N %': the share of his fight the boss stood stunned, frozen or knocked down)
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 const PERKS = process.argv.includes('--perks'); if (PERKS) process.argv.splice(process.argv.indexOf('--perks'), 1);   // --perks: the hires keep the perks the tavern rolled them (without it: none, as the contract measures)
@@ -16,7 +16,9 @@ const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js'), items = await load('sim/items.js');
 const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];   // --off id,id: those abilities' auto-use off for everyone
+const bi = args.indexOf('--boss'), BOSS = bi >= 0 ? args.splice(bi, 2)[1] : null;   // --boss id: that boss in the hall in place of its own (a boss not yet given a hall: v1.59's)
 const [site, HL] = [args[0], +args[1]], seeds = (args[2] || '20260807,777,4242').split(',').map(Number);
+if (BOSS) { const { siteOf } = await load('sim/sites.js'), S = siteOf(site), at = FLOOR || Math.max(...Object.keys(S.bosses || { 1: 0 }).map(Number)); S.bosses = { ...(S.bosses || {}), [at]: BOSS }; }
 
 for (const seed of seeds) {
   const t = createSim(seed, undefined, { scene: 'town' }); for (const i of [0, 2]) { t.state.counters.gold = 1e9; t.commands.push({ type: 'hire', idx: i }); t.tick(); } t.state.counters.gold = 0; for (const m of t.state.party) if (!m.main && !PERKS) { m.perks = []; m.hidden = null; }   // (the contract: hires without rolled perks; --perks keeps them)
