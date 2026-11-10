@@ -4813,5 +4813,50 @@
    "1H_Ranged_Aiming",
    0.5
   ]
+ },
+ {
+  "id": "VR1",
+  "cls": "Vermin",
+  "label": "Grave rat \u00b7 the size of a dog (creatures.js; GDD v1.58: 20 % over the proposal's)",
+  "creature": {
+   "kind": "rat"
+  },
+  "height": 0.47
+ },
+ {
+  "id": "VR2",
+  "cls": "Vermin",
+  "label": "Giant spider \u00b7 the Old Cellars' (creatures.js)",
+  "creature": {
+   "kind": "spider"
+  },
+  "height": 0.54
+ },
+ {
+  "id": "VR3",
+  "cls": "Vermin",
+  "label": "Spinner \u00b7 a smaller, paler spider that spits its web (creatures.js)",
+  "creature": {
+   "kind": "spider",
+   "seed": 29,
+   "body": "#3a302a",
+   "band": "#7a6650",
+   "mark": "#d8ccb0",
+   "eyes": "#c8f070"
+  },
+  "height": 0.41
+ },
+ {
+  "id": "VR4",
+  "cls": "Vermin",
+  "label": "Old Gutter \u00b7 the biggest grave rat, greyer (creatures.js)",
+  "creature": {
+   "kind": "rat",
+   "seed": 13,
+   "fur": "#5a5650",
+   "belly": "#7a7268",
+   "eyes": "#ff6a30"
+  },
+  "height": 0.61
  }
 ]

@@ -58,7 +58,7 @@ const DIR = __dirname, OUT = process.env.BAKE_OUT || path.join(DIR, '..', '..', 
     // re-bake that changes only pixels (2026-10-03: Old Skarn's ears) left the JSON, and so the cached images, as they were
     // (the normal and glow maps are no longer written: only Emberlit's lighting read them, docs/luminati-only-cleanup.md step 3)
     const img = require('crypto').createHash('sha1').update(r.alb).digest('hex').slice(0, 10);
-    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, img, source: `KayKit CC0 · ${v.label} · heroic + grim · ${pxOf(a)}px` };
+    const meta = { ...r.meta, glow: r.emi ? a.glow : 0, img, source: `${v.creature ? "ours, built in code (creatures.js)" : "KayKit CC0"} · ${v.label} · heroic + grim · ${pxOf(a)}px` };
     fs.writeFileSync(path.join(OUT, `${a.out}.json`), JSON.stringify(meta) + '\n');
     png(`${a.out}.alb.png`, r.alb);
     for (const old of ['nrm', 'emi']) { const f = path.join(OUT, `${a.out}.${old}.png`); if (fs.existsSync(f)) fs.unlinkSync(f); }   // (a scratch tree's from before)

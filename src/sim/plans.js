@@ -36,8 +36,8 @@ export const PLANS = {
     { name: 'The Barrow Mouth', spaces: [
       { id: 'barrow_mouth', name: 'The Barrow Mouth', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'cave', lv: 0, kit: 'dig',
         dress: ['camp', 'tents', 'spoil', 'lanterns', 'crates'], note: 'The Redhand\'s camp at the door: two tents, a cookfire, spoil heaps, their crates. The stair up is the dug ramp to daylight in the north wall.' },
-      { id: 'the_cutting', name: 'The Cutting', role: 'room', x: 42, y: 0, w: 36, h: 30, shape: 'cave', lv: 0, kit: 'dig', foes: 'diggers',
-        dress: ['timbers', 'spoil', 'lanterns', 'barrows'], note: 'The Redhand\'s trench through the mound: earth walls shored with timbers, barrows of spoil, lanterns on poles. The diggers still at it.' },
+      { id: 'the_cutting', name: 'The Cutting', role: 'room', x: 42, y: 0, w: 36, h: 30, shape: 'cave', lv: 0, kit: 'dig', foes: 'cutting',
+        dress: ['timbers', 'spoil', 'lanterns', 'barrows'], note: 'The Redhand\'s trench through the mound: earth walls shored with timbers, barrows of spoil, lanterns on poles. The diggers still at it. (v1.58) Grave rats come up with the spoil, and Old Gutter leads them.' },
       { id: 'the_breach', name: 'The Breach', role: 'room', x: 36, y: 40, w: 56, h: 52, shape: 'rect', lv: 0, kit: 'gallery', foes: 'ashbound',
         dress: ['rubble', 'niches', 'candles', 'spoil'], note: 'Where the dig broke into the barrow\'s built passage: its west end raw earth and rubble, its east end dressed stone, the first niches, the first of the dead standing up.' },
       { id: 'robbed_tomb', name: 'The Robbed Tomb', role: 'offshoot', x: 80, y: 8, w: 24, h: 22, shape: 'rect', lv: 1, kit: 'gallery', foes: 'ashbound',
@@ -96,8 +96,8 @@ export const PLANS = {
         dress: ['bunks', 'racks', 'banners', 'braziers'], note: 'A large corridor: bunks in a double row down both long walls, the armoury\'s racks at the far end. The Redhand\'s sergeants sleep here.' },
       { id: 'strongroom', name: 'The Paymaster\'s Strongroom', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 2, kit: 'barracks', foes: 'redhand',
         dress: ['iron_door', 'chests', 'ledger', 'shrine'], note: 'Behind an iron door: the paymaster\'s two chests (Brannoc\'s errand) and the Last Dispatch.' },
-      { id: 'old_cellars', name: 'The Old Cellars', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'cellar', foes: 'diggers',
-        dress: ['casks', 'scaffold', 'broken_floor', 'ladders'], note: 'The imperial cellars: casks along the walls, and in the south half the floor broken through where the Redhand dug, scaffolds and ladders going down.' },
+      { id: 'old_cellars', name: 'The Old Cellars', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 2, kit: 'cellar', foes: 'cellar',
+        dress: ['casks', 'scaffold', 'broken_floor', 'ladders'], note: 'The imperial cellars: casks along the walls, and in the south half the floor broken through where the Redhand dug, scaffolds and ladders going down. (v1.58) Gone to the giant spiders: the casks webbed over, spinners in the rafters, grave rats under the casks.' },
       { id: 'cellar_cave', name: 'The Cave Under the Cellars', role: 'end', x: 104, y: 46, w: 58, h: 48, shape: 'cave', lv: 2, kit: 'cellar', foes: 'diggers', boss: 'redhand_captain',
         dress: ['pools', 'stalagmites', 'drips', 'garrows_table'], note: 'The cave the dig broke into: still pools, stone teeth up out of the floor, the roof\'s water coming down. Captain Garrow\'s table, and Brannoc chained to a stalagmite.' },
     ], halls: [

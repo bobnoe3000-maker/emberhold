@@ -1,7 +1,61 @@
 # New creatures: giant rats and giant spiders (a proposal)
 
-**Status: Proposed (2026-11-10), with a spike** (`tools/actor-lab/creatures.js`; no creature is in the game yet). The
-owner: *"Design the best way to model and create new NPC types - giant spiders and giant rats."*
+**Status: Implemented (2026-11-10)** (GDD v1.58, world doc v1.36). The owner: *"Design the best way to model and create
+new NPC types - giant spiders and giant rats."* Then: *"Go with your recommendations, spiders in Wickham Keep's cellars..
+rats should be 20% bigger."*
+
+## As built
+
+The answers to §6: the kit in code (1); the spiders in Wickham Keep's Old Cellars (2); the web damage only, no new rule
+(3); Old Gutter in now, the Cutting's elite (4); the look as on the sheet (5), the rats a fifth bigger.
+
+![The vermin in a real fight at dusk: the Old Cellars' spiders, a spinner and a rat; a grave rat in the Cutting](img/creatures/vermin-in-game.jpg)
+
+*In the game on the manual clock: the hero kept standing in each room until its vermin were up, four frames 0.2 s apart.*
+
+- **The sim** (`src/sim/battle.js`):
+
+  | Kind | Mirrors | HP / ATK / DEF | Its difference |
+  |---|---|---|---|
+  | `rat` (grave rat) | minion | 31 / 7.2 / 3 | dodge 12, speed 4.0, reach 2.4; 1 gold |
+  | `spider` (giant spider) | warrior | 55 / 9.5 / 6 | chitin, speed 3.0; the cellars' elite |
+  | `spinner` | rogue | 34 / 8.4 / 3 | a `web` bolt at range 12 (damage only) |
+  | `gutter` (Old Gutter) | warrior | 56 / 9.6 / 5 | the Cutting's elite, every fifth wave as any elite |
+
+  - **Two families, not one `vermin`,** because each room mixes the vermin with what's already there:
+    - `cellar` = `{ melee: ['rat', 'spider'], ranged: ['spinner', 'spinner'], elite: 'spider' }`: Wickham Keep's Old
+      Cellars (`plans.js` `old_cellars`, floor 2);
+    - `cutting` = `{ melee: ['cutthroat', 'rat'], ranged: ['crossbow', 'rogue'], elite: 'gutter' }`: the Old Barrows'
+      Cutting (`the_cutting`, floor 1). The rat takes the risen minion's place beside the diggers.
+  - None undead (Turn Undead does nothing to them). The board's bounty counts Old Gutter as the Barrows' elite he is.
+  - Names for the defeat screen and the Frontier: `content/foes.json`, `src/frontier/view.js`.
+- **The art:**
+  - `variants.json`: VR1 the rat (height 0.47, a fifth over the spike's), VR2 the spider (0.54), VR3 the spinner (the
+    spider smaller and paler, 0.41), VR4 Old Gutter (the rat greyer, 0.61). `bake.json`: `vermin_rat`, `vermin_spider`,
+    `vermin_spinner`, `vermin_gutter`, their clips mapped to the kit's.
+  - Baked: `assets/actors/vermin_*` (atlases) and `cast.json` (no GLB: the game builds them from the kit). `lab.js` bakes
+    a creature's vertex colours and its own glowing eyes.
+  - `renderer.js` `ENEMY_ACTOR` maps the kinds; the web's orb is a pale silk (`fx.js` `BOLT_RGB.web`).
+  - Voices: the rats a goblin's squeal pitched up, the spiders a cultist's hiss pitched down (`audio/cues.js`).
+- **Balance** (`tools/balance/roomlv.mjs --part`, 3 seeds, 300 s; before = the same rooms with the diggers and the cult):
+
+  | Room | Party | Before | After |
+  |---|---|---|---|
+  | the Cutting at 3 | the right party at 3 | 28 waves | 28 waves |
+  | the Cutting at 5 (two up) | the right party at 3 | 18.3 | 18.3 |
+  | the Cutting at 1 | hero 1 and a hire | 16.0 | 19.7 |
+  | the Old Cellars at 6 | the right party at 6 | 19.7 (held 3 of 3) | 17.3 (held 2 of 3, nobody Fallen) |
+  | the Old Cellars at 8 (two up) | the right party at 6 | 7.7 | 9.0 |
+  | the Old Cellars at 6 | the hero alone | 5.7 | 5.3 |
+
+  The contract's room (the Breach) is untouched; `smoke-test.mjs` passes with its replay.
+- **Checks:**
+  - `test/vermin.test.mjs`: every kind named, none undead; each within 15 % of its role's HP and ATK; each room fills with
+    its own and nothing else;
+  - `test/redhand.test.mjs`, `test/models.test.mjs` (a creature names no model, its clips the kit's);
+  - the browser suite: a grave rat in the Cutting stands as its model (`world.js` `stats.modelNames`).
+
+*The proposal as it was put follows.*
 
 ![The giant rat and the giant spider, built in code, beside the KayKit knight and through their clips](img/creatures/creatures-spike.jpg)
 

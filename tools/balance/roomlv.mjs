@@ -1,12 +1,13 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--off id,id]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--part id] [--off id,id]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
 // power since 2026-09-30: a level-1 kit on a level-6 hero measures the kit, not the level).
-// --src points at another checkout's src/ for before/after runs. --site fights in that site's first
+// --src points at another checkout's src/ for before/after runs. --part id fights in that authored room (plans.js), its own
+// family. --site fights in that site's first
 // fighting room, against its family (sim/sites.js; default the Old Barrows). The class trials count as
 // done (the contract's assumption, M5). --floor N fights on that floor (it walks down the stairs); the Old Barrows'
 // default is 2, the Long Gallery, where the Ashbound the contract is measured against are (since v1.48 floor 1 is the
@@ -25,6 +26,7 @@ const GIVE = PERKS && PERKS !== 'keep' ? PERKS.split('/').map((s) => s.split(','
 const args = process.argv.slice(2), si = args.indexOf('--src');
 const SRC = si >= 0 ? path.resolve(args.splice(si, 2)[1]) : path.resolve(import.meta.dirname, '../../src');
 const ti = args.indexOf('--site'), SITE = ti >= 0 ? args.splice(ti, 2)[1] : 'barrows';
+const pti = args.indexOf('--part'), PART = pti >= 0 ? args.splice(pti, 2)[1] : '';   // (--part id: fight in that authored room, plans.js: the Keep's old_cellars, the Barrows' the_cutting)
 const fl = args.indexOf('--floor'), FLOOR_ARG = fl >= 0 ? +args.splice(fl, 2)[1] : null;
 // --size small|medium|large: fight in the first room of that size (level.js ROOM_SIZES); large by default, the contract's arena (an older checkout's rooms have no size: its first room)
 const zi = args.indexOf('--size'), SIZE = zi >= 0 ? args.splice(zi, 2)[1] : 'large';
@@ -60,7 +62,7 @@ for (const m of sim.state.party) {
   if (OFF.length) m.off = [...(m.off || []), ...OFF];
 }
 // (a room of the size that isn't the floor's hall: an authored floor's last room is its boss's, a fight of its own)
-const L = sim.world.level, r = L.rooms.find((q) => q !== L.entrance && !(L.plan && q === L.descentRoom) && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);
+const L = sim.world.level, r = (PART && L.rooms.find((q) => q.part === PART)) || L.rooms.find((q) => q !== L.entrance && !(L.plan && q === L.descentRoom) && (!q.size || q.size === SIZE)) || L.rooms.find((q) => q !== L.entrance), p = sim.state.player; sim.world.roomLevels.set(r.id, RL);
 { let best = null, bd = 1e9; for (const [k, c] of L.cells) { if (c.kind !== 'floor' || c.room !== r.id) continue; const [x, y] = k.split(',').map(Number); const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd && isWalkable(sim.world, x + 0.5, y + 0.5)) { bd = d; best = [x, y]; } } p.x = p.px = best[0] + 0.5; p.y = p.py = best[1] + 0.5; }
 const frac = () => { let a = 0, b = 0; for (const m of sim.state.party) { if (m.fallen) continue; a += m.down ? 0 : m.hp; b += statsFor(m).maxHp; } return a / b; };
 let def = false, low = 1, start = 1, fallen = 0; const costs = [], lows = [];

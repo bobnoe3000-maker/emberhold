@@ -25,7 +25,7 @@ const SOUL = [120, 255, 150], BILE = [190, 230, 110], MUZZLE = [255, 200, 120], 
 const REDHAND = [255, 92, 70], EMBER = [255, 140, 40];   // (art pass 9) the Company's red; the Cult's ember
 
 // a projectile's colour by its kind (the sim's bolt kinds: battle.js), for its trail, halo, floor glow and burst
-export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200] };
+export const BOLT_RGB = { fire: [255, 130, 40], soul: [170, 130, 255], hex: [150, 240, 90], spirit: [120, 235, 215], marsh: [190, 240, 200], bolt: [200, 210, 230], arrow: [235, 225, 200], web: [232, 230, 214] };   // (web: v1.58, a spinner's spat silk)
 
 // per atlas: effect per attack clip, colours; spark = the colour of the sparks its blows raise
 export const FX_STYLES = {
@@ -61,6 +61,11 @@ export const FX_STYLES = {
   cult_harvester:    { col: [190, 160, 255], attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [215, 200, 255], wide: 1.2 },
   drowned_brother:   { col: [140, 220, 230], attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [200, 240, 245] },
   drowned_cantor:    { col: [140, 220, 230], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [190, 235, 245] },
+  // (v1.58) the vermin: a rat's teeth and claws, a spider's fangs, a spinner's silk spat
+  vermin_rat:        { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], thin: true },
+  vermin_gutter:     { col: [230, 205, 180], attack: 'stab', attack2: 'arc', heavy: 'arc', spark: [240, 220, 200], wide: 1.15 },
+  vermin_spider:     { col: [205, 225, 150], attack: 'stab', attack2: 'stab', heavy: 'arc', spark: [225, 240, 180], wide: 1.2 },
+  vermin_spinner:    { col: [232, 230, 214], attack: 'cast', attack2: 'cast', heavy: 'cast', spark: [240, 238, 225] },
   boss_skarn:        { col: WARM, attack: 'arc', attack2: 'arc', heavy: 'arc', spark: [255, 200, 130], wide: 1.25 },
   boss_garrow:       { col: REDHAND, attack: 'arc', attack2: 'arc', heavy: 'stab', spark: [255, 210, 170], wide: 1.15 },
   boss_stranger:     { col: EMBER, attack: 'cast', attack2: 'cast', heavy: 'cast', heavyCol: FIRE, spark: [255, 170, 80], heavySpark: [255, 120, 40] },

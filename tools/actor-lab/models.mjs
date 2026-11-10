@@ -69,7 +69,8 @@ const plays = new Map(), attach = new Set(), presets = new Set(), actors = {};
 for (const a of bake.actors) {
   const v = variants[a.variant]; if (!v) throw new Error(`${a.out}: no variant ${a.variant}`);
   if (v.body) throw new Error(`${a.out}: a body mock-up (body.js) isn't shipped as a model`);
-  const set = plays.get(v.model) || new Set(['Idle']); plays.set(v.model, set);
+  // (a creature, creatures.js, is built in code: no KayKit model to prune, only its cast entry)
+  const set = v.creature ? new Set() : plays.get(v.model) || new Set(['Idle']); if (!v.creature) plays.set(v.model, set);
   const clips = {};
   for (const k of a.clips) { set.add(k.clip); clips[k.key] = { clip: k.clip, frames: k.frames, ...(k.once ? { once: true } : {}), ...(k.from != null ? { from: k.from } : {}), ...(k.to != null ? { to: k.to } : {}) }; }
   for (const f of Object.values(v.attach || {})) attach.add(f);

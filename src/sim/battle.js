@@ -158,6 +158,16 @@ Object.assign(ENEMIES, {
   drowned:    { hp: 37, atk: 7, def: 4, crit: 5, dodge: 4, interval: 1.2, range: 2.8, speed: 3.1, xp: 10, gold: 1 },
   cantor:     { hp: 34, atk: 10.5, def: 2, crit: 5, dodge: 5, interval: 2.0, range: 14.0, speed: 2.7, xp: 14, gold: 3, bolt: 'soul' },
 });
+// The vermin (GDD v1.58, world doc v1.36; docs/creatures-proposal.md): the Vale's first beasts, built in code
+// (tools/actor-lab/creatures.js). The same mirror: the grave rat a minion's strength (quicker and lighter, a short reach),
+// the giant spider a warrior's (chitin; the cellars' elite), the spinner a rogue's (its web spat at range, damage only),
+// and Old Gutter, the biggest grave rat, a warrior's (the Cutting's elite).
+Object.assign(ENEMIES, {
+  rat:     { hp: 31, atk: 7.2, def: 3, crit: 7, dodge: 12, interval: 1.0, range: 2.4, speed: 4.0, xp: 10, gold: 1 },
+  spider:  { hp: 55, atk: 9.5, def: 6, crit: 6, dodge: 4, interval: 1.5, range: 3.0, speed: 3.0, xp: 14, gold: 2 },
+  spinner: { hp: 34, atk: 8.4, def: 3, crit: 9, dodge: 9, interval: 1.7, range: 12.0, speed: 3.4, xp: 12, gold: 1, bolt: 'web' },
+  gutter:  { hp: 56, atk: 9.6, def: 5, crit: 8, dodge: 7, interval: 1.3, range: 2.8, speed: 3.6, xp: 14, gold: 3 },
+});
 export const ENEMY_KINDS = Object.keys(ENEMIES);
 // Who fills a site's waves (sites.js `family`): the melee pair and the ranged pair a wave draws from
 // (the same draws for every family, so the Old Barrows' waves are as they were), the elite's kind,
@@ -170,6 +180,10 @@ export const FAMILIES = {
   diggers: { melee: ['cutthroat', 'minion'], ranged: ['crossbow', 'rogue'], elite: 'brute', undead: (k) => k === 'minion' || k === 'rogue' },
   chapel: { melee: ['minion', 'warrior'], ranged: ['rogue', 'acolyte'], elite: 'warrior', undead: (k) => k !== 'acolyte' },
   goblin: { melee: ['goblin', 'bruiser'], ranged: ['archer', 'hexer'], elite: 'bruiser', undead: () => false },
+  // (v1.58) the vermin: Wickham Keep's Old Cellars, gone to the spiders; the Old Barrows' Cutting, the diggers and the grave
+  // rats come up with their spoil (the risen minion's place the rat's), Old Gutter leading
+  cellar: { melee: ['rat', 'spider'], ranged: ['spinner', 'spinner'], elite: 'spider', undead: () => false },
+  cutting: { melee: ['cutthroat', 'rat'], ranged: ['crossbow', 'rogue'], elite: 'gutter', undead: (k) => k === 'rogue' },
   // the Fens (M8, sites.js): the Toadking's men and the ghouls they keep off; the Cult's harvest with the bound lock-men
   // under it, at the Sickpools with the ghouls and the witches, and among the drowned clergy at the Abbey
   reedmen: { melee: ['fenghoul', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },

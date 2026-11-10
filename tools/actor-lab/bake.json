@@ -4818,6 +4818,258 @@
           "fps": 5
         }
       ]
+    },
+    {
+      "out": "vermin_rat",
+      "variant": "VR1",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 14
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 7
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "vermin_spider",
+      "variant": "VR2",
+      "glow": 1,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 13
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 8
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 10,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "vermin_spinner",
+      "variant": "VR3",
+      "glow": 1,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 13
+        },
+        {
+          "key": "attack",
+          "clip": "Cast",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 4
+        },
+        {
+          "key": "attack2",
+          "clip": "Cast",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Cast",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 5
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 10,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
+    },
+    {
+      "out": "vermin_gutter",
+      "variant": "VR4",
+      "glow": 3,
+      "clips": [
+        {
+          "key": "idle",
+          "clip": "Idle",
+          "frames": 8,
+          "fps": 7
+        },
+        {
+          "key": "walk",
+          "clip": "Walk",
+          "frames": 10,
+          "fps": 14
+        },
+        {
+          "key": "attack",
+          "clip": "Attack",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "attack2",
+          "clip": "Attack2",
+          "frames": 7,
+          "fps": 16,
+          "once": true,
+          "impact": 3
+        },
+        {
+          "key": "heavy",
+          "clip": "Heavy",
+          "frames": 10,
+          "fps": 13,
+          "once": true,
+          "impact": 7
+        },
+        {
+          "key": "hit",
+          "clip": "Hit",
+          "frames": 4,
+          "fps": 14,
+          "once": true,
+          "to": 0.8
+        },
+        {
+          "key": "death",
+          "clip": "Death",
+          "frames": 8,
+          "fps": 12,
+          "once": true
+        }
+      ],
+      "gain": 1.0,
+      "grade": {
+        "desat": 0.1,
+        "contrast": 1.15
+      }
     }
   ]
 }

@@ -41,6 +41,7 @@ const ENEMY_ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', ro
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
   fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
+  rat: 'vermin_rat', spider: 'vermin_spider', spinner: 'vermin_spinner', gutter: 'vermin_gutter',   // (v1.58) the vermin, built in code (tools/actor-lab/creatures.js)
   redhand_captain: 'boss_garrow', robed_stranger: 'boss_stranger', standard: 'boss_standard', goblin_chief: 'boss_skarn',
   toadking: 'boss_toadking', teague: 'boss_teague', drowned_choir: 'boss_choir', abbess_below: 'boss_abbess',   // (M8.6: the Fens' four)
   quartermaster: 'boss_quartermaster', vatwarden: 'boss_vatwarden' };   // (v1.48)
@@ -192,7 +193,7 @@ export function createRenderer(canvas, sim, input) {
   function boltSprite(kind) {
     if (bolts[kind]) return bolts[kind];
     const w = 7, h = 7, sp = { w, h, ax: 3, ay: 3, mask: new Uint8Array(w * h), alb: new Uint8Array(w * h * 3), nrm: new Uint8Array(w * h * 3), emi: new Uint8Array(w * h) };
-    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : [210, 210, 220], glow = kind === 'fire' ? 5 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
+    const col = kind === 'fire' ? [255, 170, 80] : kind === 'soul' ? [190, 150, 255] : kind === 'hex' ? [160, 235, 110] : kind === 'spirit' ? [150, 235, 215] : kind === 'marsh' ? [200, 240, 205] : kind === 'web' ? [232, 230, 214] : [210, 210, 220], glow = kind === 'fire' ? 5 : kind === 'soul' ? 2 : kind === 'hex' ? 1 : kind === 'spirit' ? 8 : kind === 'marsh' ? 10 : 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       // a round orb, a hot core in a coloured rim (a 2.9 radius took the whole 5 × 5 square and read as a square tile at
       // any zoom: art critic pass 16, the effects' strips)

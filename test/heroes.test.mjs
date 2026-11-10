@@ -147,16 +147,18 @@ test('auto-cast, priority and stance commands are validated', () => {
 });
 test('stance changes battle behaviour, measurably', () => {
   const measure = (stance) => {
-    const sim = inRoom([hero({ level: 6, stance })], 6); let dealt = 0, taken = 0, casts = 0;
-    sim.bus.on('combat', (c) => { if (c.t === 'hit') c.party ? (taken += c.amount) : (dealt += c.amount); if (c.t === 'ability') casts++; });
+    const sim = inRoom([hero({ level: 6, stance })], 6); let dealt = 0, taken = 0, struck = 0, casts = 0;
+    sim.bus.on('combat', (c) => { if (c.t === 'hit') c.party ? (taken += c.amount, struck++) : (dealt += c.amount); if (c.t === 'ability') casts++; });
     autoAllocate(sim.state.party[0]); sim.state.party[0].hp = statsFor(sim.state.party[0]).maxHp;
     ticks(sim, 20 * 60);
-    return { dealt, taken, casts, atk: statsFor(sim.state.party[0]).atk, def: statsFor(sim.state.party[0]).def };
+    return { dealt, taken, struck, casts, atk: statsFor(sim.state.party[0]).atk, def: statsFor(sim.state.party[0]).def };
   };
   const a = measure('aggressive'), b = measure('balanced'), d = measure('defensive');
   assert.ok(a.atk > b.atk && b.atk > d.atk && d.def > b.def && b.def > a.def);
   assert.ok(a.dealt > d.dealt, `aggressive dealt ${a.dealt} vs defensive ${d.dealt}`);
-  assert.ok(a.casts !== d.casts || a.taken !== d.taken);
+  // (the blows taken, counted as well as summed: in the Cutting's grave rats (v1.58) the defensive hero took one blow more,
+  // each lighter, to the same 241 in all)
+  assert.ok(a.casts !== d.casts || a.taken !== d.taken || a.struck !== d.struck, JSON.stringify({ a, d }));
 });
 test('an auto-cast toggle keeps an ability out of battle', () => {
   const casts = (off) => {

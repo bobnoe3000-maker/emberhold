@@ -189,8 +189,9 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     // eyes glow only on figures that ask for it (skeletons); heroes keep their painted eyes —
     // a flat white eye mesh read as a white "grin" through the knight's visor
     // (a prop part with userData.glow, Wendel's lantern glass, glows too: art pass 6)
-    const lit = !eyes && o.userData.glow, glow = (eyes && v.eyes) || lit;
-    mats.alb.set(o, glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color }));
+    // (a creature, creatures.js: coloured by vertex, its eyes a glowing mesh of their own colours)
+    const lit = !eyes && o.userData.glow, own = eyes && !v.eyes && o.userData.glow, glow = (eyes && v.eyes) || lit || own;
+    mats.alb.set(o, own ? new THREE.MeshBasicMaterial({ vertexColors: true }) : glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color, vertexColors: !!m.vertexColors }));
     mats.emi.set(o, glow ? white : black); });
   // (pass 7) what each pixel is: face features (eye, brow, mouth) red, skin green, hair and beard blue
   // (A2 tells the features apart by red: the two eyes, the brows, the mouth)

@@ -62,6 +62,20 @@
     },
     "cantor": {
       "a": "a drowned cantor"
+    },
+    "rat": {
+      "a": "a grave rat"
+    },
+    "spider": {
+      "a": "a giant spider",
+      "elite": "a giant spider as wide as a cart"
+    },
+    "spinner": {
+      "a": "a spinner"
+    },
+    "gutter": {
+      "a": "Old Gutter",
+      "elite": "Old Gutter, or this week's"
     }
   }
 }

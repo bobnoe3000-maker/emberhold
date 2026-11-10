@@ -26,9 +26,9 @@ test('each site fills its waves from its own family, floor by floor', () => {
   const keep = kindsIn('wickham_keep');
   assert.ok(keep.size && [...keep.keys()].every((k) => ['cutthroat', 'brute', 'crossbow'].includes(k)), `the Keep's bailey: ${[...keep.keys()]}`);
   assert.ok([...keep.values()].every((u) => u === false), 'the living');
-  const mouth = kindsIn('barrows');                                   // the Redhand's dig at the barrow mouth: the diggers
-  assert.ok(mouth.size && [...mouth.keys()].every((k) => ['cutthroat', 'minion', 'crossbow', 'rogue', 'brute'].includes(k)), `the barrow mouth: ${[...mouth.keys()]}`);
-  for (const [k, u] of mouth) assert.equal(u, FAMILIES.diggers.undead(k), `${k}: the diggers' dead and living`);
+  const mouth = kindsIn('barrows');                                   // the Redhand's dig at the barrow mouth, the Cutting: the diggers and the grave rats (v1.58)
+  assert.ok(mouth.size && [...mouth.keys()].every((k) => ['cutthroat', 'rat', 'crossbow', 'rogue', 'gutter'].includes(k)), `the barrow mouth: ${[...mouth.keys()]}`);
+  for (const [k, u] of mouth) assert.equal(u, FAMILIES.cutting.undead(k), `${k}: the Cutting's dead and living`);
   const barrows = kindsIn('barrows', 1);
   assert.ok(barrows.size && [...barrows.keys()].every((k) => ['minion', 'warrior', 'rogue', 'mage'].includes(k)), `the barrows' second floor: ${[...barrows.keys()]}`);
   assert.ok([...barrows.values()].every((u) => u === true), 'the dead');
@@ -36,7 +36,7 @@ test('each site fills its waves from its own family, floor by floor', () => {
   assert.ok(chapel.size && [...chapel.keys()].every((k) => ['minion', 'warrior', 'rogue', 'acolyte'].includes(k)), `the chapel: ${[...chapel.keys()]}`);
 });
 
-test('the Keep\'s Old Cellars and the cave under them, and the Barrows\' Cutting, are the diggers\'; a floor or a room picks its family', () => {
+test('the cave under the Keep\'s cellars is the diggers\', the Old Cellars the spiders\' and the Barrows\' Cutting the grave rats\' (v1.58); a floor or a room picks its family', () => {
   assert.equal(familyOf({ site: 'wickham_keep', depth: 0 }), FAMILIES.redhand);
   assert.equal(familyOf({ site: 'wickham_keep', depth: 1 }), FAMILIES.redhand);
   assert.equal(familyOf({ site: 'barrows', depth: 0 }), FAMILIES.diggers);
@@ -45,10 +45,10 @@ test('the Keep\'s Old Cellars and the cave under them, and the Barrows\' Cutting
   // dead from the Breach on, past the Redhand's Cutting; Old Skarn's goblins in the Keep Yard
   const room = (site, depth, part) => { const w = createWorld(20260807, undefined, depth, site); return familyOf(w, w.level.rooms.find((r) => r.part === part).id); };
   assert.equal(room('wickham_keep', 1, 'barracks'), FAMILIES.redhand);
-  assert.equal(room('wickham_keep', 1, 'old_cellars'), FAMILIES.diggers);
+  assert.equal(room('wickham_keep', 1, 'old_cellars'), FAMILIES.cellar);
   assert.equal(room('wickham_keep', 1, 'cellar_cave'), FAMILIES.diggers);
   assert.equal(room('wickham_keep', 0, 'keep_yard'), FAMILIES.goblin);
-  assert.equal(room('barrows', 0, 'the_cutting'), FAMILIES.diggers);
+  assert.equal(room('barrows', 0, 'the_cutting'), FAMILIES.cutting);
   assert.equal(room('barrows', 0, 'the_breach'), FAMILIES.ashbound);
   assert.ok(FAMILIES.diggers.undead('minion') && !FAMILIES.diggers.undead('cutthroat'));
 });

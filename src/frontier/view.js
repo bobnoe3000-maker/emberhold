@@ -33,11 +33,13 @@ const NEAR_RGB = Object.fromEntries(Object.entries(NEAR).map(([k, v]) => [k, rgb
 const ACTOR = { warrior: 'skeleton_warrior', minion: 'skeleton_minion', rogue: 'skeleton_rogue', mage: 'skeleton_mage',
   cutthroat: 'redhand_cutthroat', brute: 'redhand_brute', crossbow: 'redhand_crossbow', acolyte: 'cinder_acolyte',
   goblin: 'goblin_skirmisher', bruiser: 'goblin_bruiser', archer: 'goblin_archer', hexer: 'goblin_hexer',
-  fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor' };
+  fenghoul: 'fen_ghoul', reedcutter: 'reed_cutter', fowler: 'reed_fowler', bogwitch: 'bog_witch', harvester: 'cult_harvester', drowned: 'drowned_brother', cantor: 'drowned_cantor',
+  rat: 'vermin_rat', spider: 'vermin_spider', spinner: 'vermin_spinner', gutter: 'vermin_gutter' };
 // their names (as the battle bar shows them)
 export const KIND_NAME = { warrior: 'Ashbound warrior', minion: 'Ashbound minion', rogue: 'Ashbound archer', mage: 'Ashbound mage', cutthroat: 'Cutthroat', brute: 'Brute',
   crossbow: 'Crossbowman', acolyte: 'Acolyte', goblin: 'Goblin', bruiser: 'Bruiser', archer: 'Goblin archer', hexer: 'Hexer', fenghoul: 'Fen ghoul',
-  reedcutter: 'Reed-cutter', fowler: 'Fowler', bogwitch: 'Bog-witch', harvester: 'Harvester', drowned: 'Drowned brother', cantor: 'Cantor' };
+  reedcutter: 'Reed-cutter', fowler: 'Fowler', bogwitch: 'Bog-witch', harvester: 'Harvester', drowned: 'Drowned brother', cantor: 'Cantor',
+  rat: 'Grave rat', spider: 'Giant spider', spinner: 'Spinner', gutter: 'Old Gutter' };
 const TREE = { oak: ['oak_1', 'oak_2', 'oak_3', 'oak_4'], birch: ['birch_1', 'birch_2', 'birch_3'], autumn: ['autumn_1', 'autumn_2', 'autumn_3'], grove: ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'],
   pine: ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6'], dead: ['dead_1', 'dead_2'], willow: ['willow_1', 'willow_2'], carr: ['carr_1', 'carr_2'],
   rock: ['rock_C', 'rock_E', 'rock_D'], stone: ['rock_A', 'rock_B', 'rock_F', 'rock_G'], slag: ['rock_H', 'rock_E'], reeds: ['ug_grass_1', 'ug_grass_2', 'ug_fern'],

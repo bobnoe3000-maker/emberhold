@@ -25,7 +25,10 @@ test('cast.json holds every baked actor with its variant, its size and the clips
 
 test('each model carries exactly the clips its actors play, and the weapons they attach are shipped', () => {
   const cast = read('assets/models/cast.json'), plays = new Map();
+  // (a creature, v1.58, is built in code, tools/actor-lab/creatures.js: no model shipped; its clips are the kit's own)
+  const KIT_CLIPS = ['Idle', 'Walk', 'Attack', 'Attack2', 'Heavy', 'Hit', 'Death', 'Cast'];
   for (const c of Object.values(cast.actors)) {
+    if (c.v.creature) { for (const k of Object.values(c.clips)) assert.ok(KIT_CLIPS.includes(k.clip), `${c.v.id}: ${k.clip} is a clip the kit keys`); assert.ok(!c.v.model, `${c.v.id}: a creature names no model`); continue; }
     const s = plays.get(c.v.model) || new Set(['Idle']); plays.set(c.v.model, s);
     for (const k of Object.values(c.clips)) s.add(k.clip);
     for (const f of Object.values(c.v.attach || {})) assert.ok(existsSync(at(`assets/models/${f}`)), `${f} is shipped`);

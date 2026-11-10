@@ -15961,6 +15961,7 @@ var tp = (e, t) => {
 			level: Fu,
 			actors: [...qu.values()].reduce((e, t) => e + t.filter((e) => e.visible).length, 0) + [...ld.values()].filter((e) => e.root.visible).length,
 			models: [...ld.values()].filter((e) => e.root.visible).length,
+			modelNames: [...new Set([...ld.values()].filter((e) => e.root.visible).map((e) => e.name))],
 			figErr: td,
 			figFailed: [...sd.values()].filter((e) => e === !1).length,
 			pr: G?.engine?.pixelRatio ?? null,

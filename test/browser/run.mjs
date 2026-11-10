@@ -1562,6 +1562,21 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('render3d: on Luminati Frost Nova is its ice (crystals standing up, frost on the ground), Turn Undead, Mend and Bless its holy light, Cleave its spectral swords, Shield Wall its ward dome (and Arcane Ward its ring), with spell lights; a heavy blow\'s ring and a shot\'s lane on its ground; all of it gone after',
       looks.most.spells >= 5 && looks.most.dome === 1 && looks.most.blades >= 3 && looks.most.crystals >= 7 && looks.most.frost === 1 && looks.most.spellLight === 1 && looks.most.warns >= 1 && looks.most.lanes >= 1
         && Object.values(looks.after).every((n) => n === 0) && errs.length === 0, JSON.stringify(looks) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // the vermin (GDD v1.58, docs/creatures-proposal.md): the party in the Cutting until a grave rat is up, then frames until
+    // it stands as its model, built in code (tools/actor-lab/creatures.js), not a KayKit man
+    const rat = await p.evaluate(async () => {
+      const s = globalThis.__sim, L = s.world.level, r = L.rooms.find((q) => q.part === 'the_cutting'), P = s.state.player;
+      if (!r) return { room: false };
+      P.x = P.px = r.cx + 0.5; P.y = P.py = r.cy + 0.5;
+      const keep = () => { for (const m of s.state.party) { m.hp = 9999; m.down = false; } };
+      let up = false;
+      for (let i = 0; i < 20 * 120 && !up; i++) { keep(); s.tick(); up = (s.world.enemies || []).some((e) => e.kind === 'rat' && e.hp > 0); }
+      let st = globalThis.__world3d.world.stats;
+      for (let i = 0; i < 100 && up && !st.modelNames.includes('vermin_rat'); i++) { keep(); globalThis.__frame(16.7); await new Promise((q) => setTimeout(q, 100)); st = globalThis.__world3d.world.stats; }
+      return { room: true, up, names: st.modelNames, figErr: st.figErr, figFailed: st.figFailed };
+    });
+    check('render3d: a grave rat in the Old Barrows\' Cutting stands as its model, built in code (creatures.js), no figure failed (GDD v1.58)',
+      rat.room && rat.up && rat.names.includes('vermin_rat') && !rat.figErr && rat.figFailed === 0 && errs.length === 0, JSON.stringify(rat) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     check('render3d: in Thornwick, a tap on a service\'s building as Luminati draws it opens that service',
       Object.keys(doors).length >= 2 && Object.entries(doors).every(([id, got]) => id === got), JSON.stringify(doors));
     check('render3d: the effects\' light respects walls: over a wall\'s top, an effect whose owner is behind it is cut to under half of one in front',
