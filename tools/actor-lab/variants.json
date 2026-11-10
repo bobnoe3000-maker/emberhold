@@ -4853,10 +4853,10 @@
   "creature": {
    "kind": "rat",
    "seed": 13,
-   "fur": "#4a4640",
-   "belly": "#625c54",
+   "fur": "#3a3836",
+   "belly": "#4a4744",
    "eyes": "#ff6a30",
-   "furTop": "#6c675e"
+   "furTop": "#55524d"
   },
   "height": 0.61
  },

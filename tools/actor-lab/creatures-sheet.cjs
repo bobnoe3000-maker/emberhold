@@ -10,6 +10,8 @@ const SHOTS = [['Idle', [0.3]], ['Walk', [0, 0.25, 0.5, 0.75]], ['Attack', [0.45
 // height: as the game stands it (the variant's, in men; a boss's ×1.3, as the renderer draws a boss); cy, half: the
 // camera's aim and half-height, in men
 const ROWS = [
+  { name: 'Giant rat · front', key: 'ratf', spec: { kind: 'rat' }, height: 0.47, cy: 0.22, half: 0.34, yaw: 0.4, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Graveyard wraith · front', key: 'wraithf', spec: { kind: 'wraith' }, height: 1.5, cy: 0.8, half: 0.85, yaw: 0.78, shots: [['Idle', [0.3]], ['Attack', [0.45]], ['Heavy', [0.4]]] },
   { name: 'Giant rat', key: 'rat', spec: { kind: 'rat' }, height: 0.47, cy: 0.2, half: 0.42, yaw: -0.7, shots: SHOTS.filter(([c]) => c !== 'Cast') },
   { name: 'Giant spider', key: 'spider', spec: { kind: 'spider' }, height: 0.54, cy: 0.25, half: 0.55, yaw: -0.6, shots: SHOTS },
   { name: 'Spinner', key: 'spinner', spec: { kind: 'spider', seed: 29, body: '#3a302a', band: '#7a6650', mark: '#d8ccb0', eyes: '#c8f070' }, height: 0.41, cy: 0.2, half: 0.45, yaw: -0.6, shots: SHOTS },

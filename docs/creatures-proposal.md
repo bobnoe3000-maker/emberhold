@@ -60,6 +60,33 @@ fire beetle, the goblin, the graveyard wraith (1.5×), the stone golem (2×), th
 - **Left for a later pass:** the goblin's and the wraith's crops in the capture (the camera holds the party; a creature
   on the room's edge falls out of a 300 px crop). Their sparks and swings are the game's grammar.
 
+### Against the owner's references: the rat and the wraith
+
+The owner, with two pictures of miniatures (not kept here: they're another's work): *"Use these as reference models for
+the rat and wraith… keep on iterating until the 3d models look like this but in our low poly style like the other NPCs."*
+
+- **The rat's reference:** heavy, hunched, shaggy grave rats, their heads big and snarling on long incisors, big
+  clawed hands, thick ringed tails, grey.
+- **The wraith's:** a skull under a hood crowned with three horns, its jaw open and its sockets lit; arms flung wide,
+  gaunt, the fingers long and clawed; a shroud hanging in tatters; below the waist, flames of it twisting up round a
+  point; dark, with green light on its edges.
+
+![The rounds on the model sheet: the rat's first (quills) and last, rearing; the wraith's first, second and last](img/creatures/reference-rounds.jpg)
+
+![In the game, close: the rats and the Rat King head-on and from the side; the wraith beside the knight](img/creatures/reference-in-game.jpg)
+
+| Round | Seen | Done |
+|---|---|---|
+| R1 | A porcupine: the coat stood out in quills; brown; the head small; stick legs | The coat laid back; a cool grey; the head bigger; the forelegs thicker |
+| R2 | A pine cone: an even grid of shingles | In the kit's chunky style: a few big ragged clumps where the shag is heaviest (a crest, a ruff, the flanks, the haunches), the hull smooth between |
+| R3–R4 | The head still small; a long loaf from the side | The head bigger again; the forelegs thick and furred, the hands big; the body a tenth shorter |
+| R5 (in the game) | A hedgehog from the camera's height: the hump and ruff hid a head hung low | The head raised over the shoulders, a thick neck; the hump and the front of the crest lower |
+| R6 (in the game) | The face small under the back; the grey lifted to tan by the game's light | The head a quarter bigger again; a darker grey (and Old Gutter's); the Rat King's cape widened over the new hull, darker (it glowed magenta) |
+| W1 | Rebuilt to the reference: the skull, the horned crown, the arms flung wide, the tendrils. But the skull small in the hood, scarecrow sleeves, the tendrils sticks with lit dots (spider legs) | A bigger skull forward under a brim; wide ragged sleeve drapes; big hands, long fingers; the tendrils broad tongues of flame rising off the base; the dots gone |
+| W2 | Too green (a cactus); a barrel ringed in spikes | Green on the top edges only; a waist, the shroud hanging from the shoulders in a V and long down the back |
+| W3 | Pipe sleeves | Bell sleeves |
+| W4 (in the game) | The green lifted to lime by the game's light | A darker, greyer green: the reference's rim, not a colour |
+
 ### In the sim, unplaced
 
 - `battle.js`: `firebeetle` (rogue: a `firespit` bolt, 8 tiles), `gob` (minion), `wraith` (warrior), `golem` (warrior,
