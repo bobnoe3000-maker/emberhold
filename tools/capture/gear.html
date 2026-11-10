@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>gear sheet</title>
+<style>body{margin:0;background:#16121c;color:#d8ccb8;font:11px ui-monospace,monospace}#g{display:flex;flex-wrap:wrap;gap:6px;padding:6px}
+.c{width:200px}.c canvas{width:200px;height:250px;display:block;background:radial-gradient(circle at 50% 40%,#2a2234,#120e18);border-radius:6px}.c b{display:block;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style>
+<div id="g"></div>
+<script type="module">
+// gear.html — tools/capture/gear.mjs's page: each case a figure in the game's own preview (src/render3d/preview.js,
+// Luminati's figure builder), wearing that gear. window.__show(cases) lays them out and resolves when all stand.
+import { openPreview } from '../../src/render3d/preview.js';
+window.__show = async (cases) => {
+  const g = document.getElementById('g'); g.innerHTML = ''; const pv = [];
+  for (const c of cases) { const d = document.createElement('div'); d.className = 'c'; d.innerHTML = `<canvas></canvas><b></b>`; d.querySelector('b').textContent = c.label; g.append(d);
+    const p = await openPreview(d.querySelector('canvas'), (e) => console.warn('[gear]', e), { yaw: c.yaw }); pv.push(p);
+    await p.show(c.actor, c.appearance || null, { gear: c.gear }); }
+  window.__pv = pv; return pv.length;
+};
+window.__close = () => { for (const p of window.__pv || []) p.close(); window.__pv = []; };
+</script>

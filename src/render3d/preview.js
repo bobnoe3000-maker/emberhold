@@ -18,13 +18,13 @@ function bundle() {
   }
   return mod;
 }
-/** open a preview on `canvas` @param {HTMLCanvasElement} canvas @param {(e: any) => void} onError
+/** open a preview on `canvas` @param {HTMLCanvasElement} canvas @param {(e: any) => void} onError @param {{ yaw?: number }} [opts]
  * @returns {Promise<{ show: (actor: string) => Promise<boolean>, attack: () => void, close: () => void } | null>} null: none to be had */
-export async function openPreview(canvas, onError) {
+export async function openPreview(canvas, onError, opts = {}) {
   try {
     const m = await bundle();
     if (!m.createPreview) return null;                    // (an older bundle)
-    return m.createPreview(canvas, { assets: new URL('../../assets/', import.meta.url).href, onError });
+    return m.createPreview(canvas, { assets: new URL('../../assets/', import.meta.url).href, onError, ...opts });
   } catch (e) { onError(e); return null; }
 }
 /** a member's own portrait (world.js renderPortrait), or null where none can be had @param {string} actor @param {any} look

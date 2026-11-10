@@ -1299,7 +1299,7 @@ export function createWorld(o) {
 // only while it's shown and there's something to move, and lets go of its context and models when closed. A world
 // needn't be up: it reads the same assets/ (the first of createWorld's and this one's `assets` to arrive).
 /**
- * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void }} o
+ * @param {HTMLCanvasElement} canvas  @param {{ assets: string, onError?: (e: any) => void, yaw?: number }} o  yaw: the turn it opens at (the gear sheet's back views)
  * @returns {{ show: (actor: string, look?: any, o?: { bare?: boolean, gear?: any }) => Promise<boolean>, attack: () => void, close: () => void, readonly actor: string }}
  */
 export function createPreview(canvas, o) {
@@ -1312,7 +1312,7 @@ export function createPreview(canvas, o) {
   scene.add(new THREE.HemisphereLight(0xfff0dc, 0x2a2036, 1.35));                    // (the creation stage's dusk: warm from above, violet below)
   const key = new THREE.DirectionalLight(0xffd29a, 2.4); key.position.set(2.2, 4, 3.2); scene.add(key);
   const rim = new THREE.DirectionalLight(0x9db0ff, 1.1); rim.position.set(-3, 2.5, -2.5); scene.add(rim);
-  let cur = null, name = '', wantN = 0, yaw = 0.42, spin = 0, drag = null, raf = 0, dead = false, last = 0, clock = 0, act = null, nextAct = 4;
+  let cur = null, name = '', wantN = 0, yaw = o.yaw ?? 0.42, spin = 0, drag = null, raf = 0, dead = false, last = 0, clock = 0, act = null, nextAct = 4;
   const size = () => { const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height; renderer.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.updateProjectionMatrix(); };
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : null; ro?.observe(canvas); size();
   const clipOf = (k) => cur && cur.def.clips && cur.def.clips[k];

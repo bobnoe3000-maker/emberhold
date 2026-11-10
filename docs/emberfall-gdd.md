@@ -779,6 +779,11 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
     gear is as it was. **The party card's portrait is the member's own** (v1.65, the owner: "do the party card portraits
     next"): their face, hair and build under the helm and armour they wear, rendered as the baked portraits are, the
     baked one shown while they look as their class was made;
+  - **each class's gear its own** (v1.65; the owner: "do 1"): the cleric's Chapel Sword, Book of Hours, Chained
+    Psalter and a new helm, the **Chapel Coif** (the Grey Sisters' wimple; the Great Helm's numbers, so the balance holds),
+    the shaman's Spirit Staff, Antler Rod, Bone Fetish and Hide Cowl each look as they are, not borrowed; an amulet is
+    worn at the chest and a charm at the hip; a bow brings a quiver and a crossbow a bolt case; staves are carried
+    upright;
   - **the Barbarian sets out as a barbarian** (v1.65): an axe, a targe, a fur hood, fur mail and fur boots, where the
     Knight has the sword, shield, great helm, plate and sabatons. It's even: at level 1 HP 146 and ATK 13 against 140
     and 12, crit 4 % against 5 %, dodge 6 % against 5 %. Measured (`roomlv.mjs --look hero_barbarian`, seed 20260807):

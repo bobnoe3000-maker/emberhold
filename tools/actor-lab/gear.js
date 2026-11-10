@@ -35,15 +35,17 @@ export const GEAR = {
   spiked: { mesh: ['Knight', 'Spike_Shield'] }, targe: { mesh: ['Barbarian', 'Barbarian_Round_Shield'] }, bonebuckler: { file: 'Skeleton_Shield_Small_A.gltf' },
   greathelm: { mesh: ['Knight', 'Knight_Helmet'] }, furhood: { mesh: ['Barbarian', 'Barbarian_Hat'] },
   // the rogue's (a bow is a figure of its own, the bake's: hero_rogue_bow…; here its prop)
-  dagger: { mesh: ['Rogue', 'Knife'] }, handbow: { mesh: ['Rogue', '1H_Crossbow'] }, heavybow: { mesh: ['Rogue', '2H_Crossbow'] }, bonebow: { file: 'Skeleton_Crossbow.gltf' },
-  huntbow: { prop: 'huntbow' }, longbow: { prop: 'longbow' }, offdagger: { mesh: ['Rogue', 'Knife_Offhand'] },
-  hood: { keep: true },                                       // (the hood is the hooded rogue's own head: worn as it is)
+  dagger: { mesh: ['Rogue', 'Knife'] }, handbow: { mesh: ['Rogue', '1H_Crossbow'], quiver: 'boltcase' }, heavybow: { mesh: ['Rogue', '2H_Crossbow'], quiver: 'boltcase' }, bonebow: { file: 'Skeleton_Crossbow.gltf', quiver: 'boltcase' },
+  huntbow: { prop: 'huntbow', quiver: 'quiver' }, longbow: { prop: 'longbow', quiver: 'quiver' }, offdagger: { mesh: ['Rogue', 'Knife_Offhand'] },
+  hood: { prop: 'hood', keepOn: 'Rogue_Hooded' },            // (the hooded rogue's hood is their own head: worn as it is; on any other, ours)
   // the mage's
-  wand: { mesh: ['Mage', '1H_Wand'] }, staff: { mesh: ['Mage', '2H_Staff'] }, bonestaff: { file: 'Skeleton_Staff.gltf' }, tome: { mesh: ['Mage', 'Spellbook'] },
+  wand: { mesh: ['Mage', '1H_Wand'], hang: 'up', scale: 1.35 }, staff: { mesh: ['Mage', '2H_Staff'], hang: 'up', lift: 0.32 }, bonestaff: { file: 'Skeleton_Staff.gltf', hang: 'up', lift: 0.32 }, tome: { mesh: ['Mage', 'Spellbook'] },
   witchhat: { mesh: ['Mage', 'Mage_Hat'] },
-  // the cleric's and the shaman's (pieces of their own to come: §8; until then the nearest)
-  mace: { prop: 'mace' }, chapelsword: { mesh: ['Knight', '1H_Sword'] }, psalter: { prop: 'book' }, hours: { mesh: ['Mage', 'Spellbook'] },
-  spiritstaff: { mesh: ['Mage', '2H_Staff'] }, antlerrod: { mesh: ['Mage', '1H_Wand'] }, fetish: { keep: true }, hidecowl: { keep: true },
+  // the cleric's and the shaman's, their own (props.js; character-look-plan §8, built 2026-11-10)
+  mace: { prop: 'mace' }, chapelsword: { prop: 'chapelsword' }, psalter: { prop: 'psalter' }, hours: { prop: 'hours' }, coif: { prop: 'coif' },
+  spiritstaff: { prop: 'spiritstaff' }, antlerrod: { prop: 'antlerrod', hang: 'up', scale: 1.3 }, fetish: { prop: 'fetish' }, hidecowl: { prop: 'hidecowl' },
+  // worn on the body: the amulet round the neck, the charm at the belt (a ring is too small to be seen)
+  amulet: { prop: 'amulet', bone: 'chest' }, charm: { prop: 'charm', bone: 'hips' },
 };
 const SLOT_BONE = { weapon: 'handslot.r', off: 'handslot.l', helm: 'head' };
 // the cleric's and the shaman's cloth (variants.json hero_cleric, hero_shaman: their own swatches, kept in step by
@@ -68,7 +70,7 @@ const SHIMMER = { heirloom: true }, UP_STEP = 0.02;   // (the owner: "heirloom i
 
 const pieces = new Map();                                   // [model, node] → the node, once (its copies share its geometry)
 async function pieceOf(G, load) {
-  if (G.prop) { const p = PROPS[G.prop](); p.position.y = 0.033; p.userData.held = true; return p; }   // (sits like the kits' 1H weapons)
+  if (G.prop) { const p = PROPS[G.prop](); if (!G.bone && !G.head) { p.position.y = 0.033; p.userData.held = true; } return p; }   // (in a hand: sits like the kits' 1H weapons)
   if (G.file) return (await load(`./models/${G.file}`)).scene;
   const k = G.mesh.join('/'); let n = pieces.get(k);
   if (!n) { n = load(`./models/${G.mesh[0]}.glb`).then((g) => g.scene.getObjectByName(G.mesh[1]) || null); pieces.set(k, n); }
@@ -93,7 +95,7 @@ export function lookOn(piece, it) {
   });
 }
 /** a key for what's worn (a template a look: world.js) @param {any} gear */
-export const gearKey = (gear) => !gear ? '' : [...Object.keys(SLOT_BONE), 'armor', 'boots'].map((s) => (s in gear ? (gear[s] ? `${gear[s].base}.${gear[s].r || 'common'}.${gear[s].up || 0}` : '-') : '')).join('|');
+export const gearKey = (gear) => !gear ? '' : [...Object.keys(SLOT_BONE), 'armor', 'boots', 'trinket'].map((s) => (s in gear ? (gear[s] ? `${gear[s].base}.${gear[s].r || 'common'}.${gear[s].up || 0}` : '-') : '')).join('|');
 
 /** dress the figure in its gear: each slot given, the variant's own piece on that bone off and the gear's on
  * @param {THREE.Object3D} root @param {any} gear @param {(u: string) => Promise<any>} load @param {(r: THREE.Object3D, n: string) => THREE.Object3D|undefined} findNode */
@@ -102,11 +104,26 @@ export async function dressGear(root, gear, load, findNode, v = {}) {
   for (const [slot, bone] of Object.entries(SLOT_BONE)) {
     if (!(slot in gear)) continue;
     const it = gear[slot], G = it && GEAR[it.base];
-    if (G && G.keep) continue;                               // (worn as the model is: the hood, the cowl, a fetish)
+    if (G && (G.keep || (G.keepOn && v.model === G.keepOn))) continue;   // (worn as the model is: the hooded rogue's hood)
     const B = findNode(root, bone); if (!B) continue;
     for (const c of B.children) if (!c.userData.face && c.name !== 'Face') c.visible = false;   // the variant's own piece off (the face stays)
     if (slot === 'helm') { const hair = root.getObjectByName('Hair'); if (hair && G) hair.visible = false; }   // (the hair under a helm)
     if (!G) continue;
+    let p = await pieceOf(slot === 'helm' ? { ...G, head: true } : G, load); if (!p) continue;
+    if (G.scale) p.scale.multiplyScalar(G.scale);            // (a wand that read as a nub at the knee: the critic's pass)
+    if (G.hang) {                                            // carried upright (figure.js plumb): a staff, a wand, a rod
+      const w = new THREE.Group(); w.position.copy(p.position); p.position.set(0, G.lift || 0, 0); w.add(p); w.userData.hang = G.hang; p = w;   // (lift: its foot at the soles, not through the floor)
+    }
+    lookOn(p, it); B.add(p);
+  }
+  // what's worn on the body: a trinket (the amulet at the neck, the charm at the belt), and a quiver for a bow, a bolt
+  // case for a crossbow. Each its own small piece on its bone, the rarity's light on a trinket as on any piece
+  const extra = [];
+  if ('trinket' in gear && gear.trinket && GEAR[gear.trinket.base] && GEAR[gear.trinket.base].bone) extra.push([GEAR[gear.trinket.base], gear.trinket]);
+  const W = gear.weapon && GEAR[gear.weapon.base];
+  if (W && W.quiver) extra.push([{ prop: W.quiver, bone: W.quiver === 'quiver' ? 'chest' : 'hips' }, { r: 'common' }]);
+  for (const [G, it] of extra) {
+    const B = findNode(root, G.bone); if (!B) continue;
     const p = await pieceOf(G, load); if (!p) continue;
     lookOn(p, it); B.add(p);
   }

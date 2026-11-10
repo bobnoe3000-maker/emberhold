@@ -82,14 +82,15 @@ export const BASES = {
   mace:        { name: 'Mace', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'mace', kind: 'mace', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
   psalter:     { name: 'Chained Psalter', slot: 'off', cls: 'cleric', icon: 'psalter', kind: 'prayer book', st: { def: [1.2, 0.32] } },
   vestments:   { name: 'Vestments', slot: 'armor', cls: 'cleric', icon: 'armor_vestments', kind: 'robes', st: { def: [1, 0.35], hp: [5, 2] } },
+  coif:        { name: 'Chapel Coif', slot: 'helm', cls: 'cleric', icon: 'coif', kind: 'cloth', st: { def: [0.5, 0.15], hp: [3, 1.2] } },   // (GDD v1.65: the Great Helm's numbers, the Sisters' own look)
   pilgrimboots: { name: 'Pilgrim Boots', slot: 'boots', cls: 'cleric', icon: 'boots_mage', kind: 'leather', st: { def: [0.5, 0.15] } },
-  chapelsword: { name: 'Chapel Sword', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'sword_1h', kind: 'sword', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
-  hours:       { name: 'Book of Hours', slot: 'off', cls: 'cleric', icon: 'tome', kind: 'prayer book', st: { mp: [4, 1.4], def: [0.3, 0.1] } },
+  chapelsword: { name: 'Chapel Sword', slot: 'weapon', cls: 'cleric', hands: 1, icon: 'sword_chapel', kind: 'sword', st: { atk: [0.9, 0.32], mp: [2, 0.8] }, metal: true },
+  hours:       { name: 'Book of Hours', slot: 'off', cls: 'cleric', icon: 'book_hours', kind: 'prayer book', st: { mp: [4, 1.4], def: [0.3, 0.1] } },
   // ── shaman (v1.19, the hedge-callers): a staff hung with bones, or a rod and a fetish; undyed wool and hide
-  spiritstaff: { name: 'Spirit Staff', slot: 'weapon', cls: 'shaman', hands: 2, icon: 'staff', kind: 'staff', st: { atk: [1.6, 0.58], mp: [4, 1.4] } },
-  antlerrod:   { name: 'Antler Rod', slot: 'weapon', cls: 'shaman', hands: 1, icon: 'wand', kind: 'rod', st: { atk: [1, 0.36], mp: [3, 1] } },
-  fetish:      { name: 'Bone Fetish', slot: 'off', cls: 'shaman', icon: 'charm', kind: 'fetish', st: { mp: [3, 1.2], def: [0.4, 0.12] } },
-  hidecowl:    { name: 'Hide Cowl', slot: 'helm', cls: 'shaman', icon: 'hood_rogue', kind: 'hide', st: { def: [0.3, 0.1], mp: [2, 0.8] } },
+  spiritstaff: { name: 'Spirit Staff', slot: 'weapon', cls: 'shaman', hands: 2, icon: 'staff_spirit', kind: 'staff', st: { atk: [1.6, 0.58], mp: [4, 1.4] } },
+  antlerrod:   { name: 'Antler Rod', slot: 'weapon', cls: 'shaman', hands: 1, icon: 'rod_antler', kind: 'rod', st: { atk: [1, 0.36], mp: [3, 1] } },
+  fetish:      { name: 'Bone Fetish', slot: 'off', cls: 'shaman', icon: 'fetish', kind: 'fetish', st: { mp: [3, 1.2], def: [0.4, 0.12] } },
+  hidecowl:    { name: 'Hide Cowl', slot: 'helm', cls: 'shaman', icon: 'cowl_hide', kind: 'hide', st: { def: [0.3, 0.1], mp: [2, 0.8] } },
   hiderobes:   { name: 'Hide Robes', slot: 'armor', cls: 'shaman', icon: 'armor_leather', kind: 'hide', st: { def: [0.6, 0.2], hp: [3, 1.2], mp: [2, 0.8] } },
   wrapboots:   { name: 'Wrapped Boots', slot: 'boots', cls: 'shaman', icon: 'boots_leather', kind: 'hide', st: { def: [0.3, 0.08], mpr: [0.1, 0.02] } },
   // ── trinkets (any class)

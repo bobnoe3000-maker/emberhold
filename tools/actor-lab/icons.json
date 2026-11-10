@@ -45,6 +45,13 @@
     {"id": "hood_rogue", "file": "Rogue_Hooded.glb", "mesh": "Rogue_Head_Hooded", "swatches": ["R2", {"tile": [0, 0], "to": ["#7a5e50", "#2a1c16"]}], "sat": 0.7},
     {"id": "mace", "proc": "mace"},
     {"id": "psalter", "file": "Mage.glb", "mesh": "Spellbook", "swatches": "C1", "rim": 0.15},
-    {"id": "armor_vestments", "file": "Mage.glb", "mesh": "Mage_Body", "swatches": "C1"}
+    {"id": "armor_vestments", "file": "Mage.glb", "mesh": "Mage_Body", "swatches": "C1"},
+    {"id": "sword_chapel", "prop": "chapelsword"},
+    {"id": "book_hours", "prop": "hours", "rot": [10, -60, 0], "rim": 0.15},
+    {"id": "staff_spirit", "prop": "spiritstaff"},
+    {"id": "rod_antler", "prop": "antlerrod"},
+    {"id": "fetish", "prop": "fetish", "rot": [0, 30, 180]},
+    {"id": "coif", "prop": "coif", "rot": [12, 30, 0]},
+    {"id": "cowl_hide", "prop": "hidecowl", "rot": [12, 30, 0]}
   ]
 }

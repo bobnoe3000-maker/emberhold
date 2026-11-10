@@ -54,6 +54,7 @@ const PROC = {
 // the accessory as a standalone group (its meshes re-expressed relative to the node)
 async function part(spec) {
   if (spec.proc) return PROC[spec.proc]();
+  if (spec.prop) { const g = new THREE.Group(), o = PROPS[spec.prop](); o.updateMatrixWorld(true); g.add(o); return g; }   // (the very piece the figure wears: props.js)
   const out = await kitPart(spec); if (spec.swatches) repaint(out, spec.swatches); return out;
 }
 async function kitPart(spec) {

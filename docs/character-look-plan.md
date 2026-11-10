@@ -193,6 +193,20 @@ now: its **base** (the mesh), its **rarity**, its **upgrade** (`up`, the smith's
 
 ## 8. Gear to create
 
+**Built** (2026-11-10, the owner: "do 1… critic and validate"): code-built pieces in `tools/actor-lab/props.js`, worn
+through `gear.js`, their icons from the very same pieces (`iconlab.js` `prop`): the **Chapel Coif** (a new cleric helm,
+the Great Helm's numbers: a warm off-white wimple, a gilt brow band), the **Hide Cowl**, a **Hood** for a rogue whose head
+has none, the **Chapel Sword**, the **Book of Hours** (small, blue), the **Chained Psalter** (oxblood and brass, its chain
+hanging plumb), the **Spirit Staff**, the **Antler Rod**, the **Bone Fetish** (hanging from the fist); the **Amulet** worn
+at the chest and the **Charm** at the outer hip (a ring is too small to be seen); a **quiver** on the back with a bow and
+a **bolt case** at the hip with a crossbow. Staves, wands and the rod are carried upright (figure.js plumb), their feet
+at the soles: before, a staff pointed at the camera and read as a green egg at the belly. Judged on the gear sheet
+(`node tools/capture/gear.mjs`, every piece on its class in the game's own preview) by an independent critic pass, its
+fixes taken (the coif fitted with a real wimple, the books in their icons' colours and smaller, the staff lighter and
+thicker, the rod, fetish and charm larger, the chain in dull gold, bolt ends on the case). Play's cost unchanged
+(figperf: the square 463 draws, a fight 105, as before). Still to come: armour sets of our own, heirloom meshes, capes,
+the Ashbound weapons' hold (a crossbow rests low in the kit's idle).
+
 Today's gaps (found against the catalogue, `items.js` `BASES`, and the assets):
 
 | Missing | For | Why |
