@@ -120,3 +120,19 @@ test("a card's portrait: the baked one while a member looks as baked; their own 
   assert.equal(k1, portraitKey({ ...m, appearance: look() }), 'the same look, the same portrait');
   setPortraitModels(false); assert.equal(portraitKey(m), 'hero_knight', 'no models: the bake'); setPortraitModels(true);
 });
+
+test('the helm hidden (showHelm): cosmetic, anywhere, saved (v40); still worn and counted; a bad value does nothing', async () => {
+  const { lookOf } = await import('../src/render3d/looks.js');
+  const { statsFor } = await import('../src/sim/party.js');
+  const sim = createSim(SEED, undefined, { scene: 'overland' });
+  sim.commands.push({ type: 'createHero', cls: 'fighter', look: 'hero_knight', origin: 'thornwick_born', name: 'Tam' }); sim.tick();
+  const m = sim.state.party[0], def0 = statsFor(m).def; assert.ok(m.gear.helm, 'a knight sets out helmed');
+  assert.equal(lookOf(m).a.gear.helm.base, m.gear.helm.base);
+  for (const on of ['no', 0, null]) { sim.commands.push({ type: 'showHelm', id: 'you', on }); sim.tick(); assert.equal(m.hideHelm, undefined, String(on)); }
+  sim.commands.push({ type: 'showHelm', id: 'you', on: false }); sim.tick();
+  assert.equal(m.hideHelm, true); assert.equal(lookOf(m).a.gear.helm, null, 'the figure bareheaded');
+  assert.ok(m.gear.helm, 'the helm still worn'); assert.equal(statsFor(m).def, def0, 'and still counts');
+  const snap = JSON.parse(JSON.stringify(sim.snapshot())); const b = createSim(1); b.restore(snap); assert.equal(b.state.party[0].hideHelm, true);
+  snap.party[0].hideHelm = 'yes'; const c = createSim(1); c.restore(snap); assert.equal(c.state.party[0].hideHelm, undefined);
+  sim.commands.push({ type: 'showHelm', id: 'you', on: true }); sim.tick(); assert.equal(m.hideHelm, undefined); assert.ok(lookOf(m).a.gear.helm);
+});

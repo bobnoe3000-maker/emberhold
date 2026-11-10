@@ -44,6 +44,9 @@ or a helm or armour not their kit's, by those too; that one is rendered by `worl
 recipe: the head bone framed, the portrait lights, 3× supersampled, its grade and ink) in one kept offscreen renderer,
 cached, and copied into the party card and the character window's tab. The baked `.face.png` stands until it's ready,
 and wherever models are off.
+**The helm hidden** (2026-11-10, the owner: "lets add a hide helm option for players"): a member's `hideHelm` (save
+v40, `heroes.js` `showHelm`), toggled on the figure in the character window; `looks.js` and `portraits.js` draw them
+bareheaded, the sim's gear untouched.
 
 - **What's chosen** (each from a list, nothing typed):
   - face shape;

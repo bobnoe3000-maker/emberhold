@@ -114,6 +114,8 @@
 //       points it was born with (its trait is a perk, in `perks`). Nothing to migrate: absent is the class table, as before.
 //   v39: a member's look (GDD §6.1 v1.65, sim/appearance.js): an optional `appearance`, the face's parts and the build
 //       chosen (or a sellsword's own). Nothing to migrate: absent is the look's own face and the class's build, as before.
+//   v40: a member's `hideHelm` (GDD §6.1 v1.65, heroes.js showHelm): true, the helm not drawn on the figure. Nothing to
+//       migrate: absent is the helm shown, as before.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -124,7 +126,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 39;   // (v39: a member's look, GDD §6.1 v1.65: an optional `appearance`; nothing to migrate)
+export const SAVE_VERSION = 40;   // (v40: a member's `hideHelm`, the helm not drawn; nothing to migrate)
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

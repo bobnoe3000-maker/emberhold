@@ -75,6 +75,8 @@ const CSS = SW_CSS + `
 .gslot.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); animation: heirloomPulse 3.2s ease-in-out infinite; }
 @keyframes heirloomPulse { 50% { box-shadow: 0 0 13px 3px rgba(242,163,60,.6), inset 0 0 16px rgba(242,163,60,.36); } }   /* (heirloom alone pulses, slightly, as on the figure) */
 @media (prefers-reduced-motion: reduce) { .gslot.heirloom { animation: none; } }
+.helmt { position: absolute; top: 6px; right: 6px; z-index: 2; min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid #3a3346; background: rgba(18,14,24,.78); color: #978c80; font: 10.5px ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; }
+.helmt.on { color: #f0c880; border-color: rgba(216,160,64,.55); }
 .gslot.sel { outline: 2px solid #f0c880; outline-offset: 2px; }
 .gslot.empty { border-style: dashed; cursor: default; }
 .gslot .lbl { position: absolute; bottom: -14px; left: -10px; right: -10px; text-align: center; font-size: 8px; letter-spacing: 1.2px; color: #7c748a; text-transform: uppercase; }
@@ -227,7 +229,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     if (view === 'contract') { sheet.innerHTML = head + contractView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
-        <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div><canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
+        <div class="fig" style="--glow:${classColor(m.cls, 0.16)}"><div class="gnd"></div>${g.helm ? `<button class="helmt${m.hideHelm ? '' : ' on'}" data-helm aria-pressed="${!m.hideHelm}" aria-label="Show the helm on ${esc(m.name)}">Helm ${m.hideHelm ? 'hidden' : 'shown'}</button>` : ''}<canvas width="${FIGURE_W}" height="${FIGURE_H}" data-fig="${actorOf(m)}"></canvas><div class="nm">${esc(m.name.toUpperCase())} · ${c.label.toUpperCase()} · LV ${m.level}</div><div class="xpb"><i style="width:${Math.min(100, Math.round(100 * m.xp / need))}%"></i></div></div>
         <div class="col">${col(['helm', 'armor', 'boots'])}</div></div>
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} cinders</i></span></div>
@@ -421,6 +423,7 @@ const originName = (id) => ({ thornwick_born: 'Thornwick-born', redhand_deserter
     if (q('[data-auto]')) { sim.commands.push({ type: 'setAutoAttrs', id: m.id, on: !m.autoAttrs }); return; }
     if ((t = q('[data-rank]'))) { sim.commands.push({ type: 'rankSkill', id: m.id, skill: t.dataset.rank }); return; }
     if ((t = q('[data-cast]'))) { sim.commands.push({ type: 'setAutocast', id: m.id, skill: t.dataset.cast, on: !autocastOn(m, t.dataset.cast) }); return; }
+    if (q('[data-helm]')) { sim.commands.push({ type: 'showHelm', id: m.id, on: !!m.hideHelm }); return; }
     if ((t = q('[data-stance]'))) { sim.commands.push({ type: 'setStance', id: m.id, stance: t.dataset.stance }); return; }
     if ((t = q('[data-play]'))) {                                 // in play or out (GDD v1.56: four go into a fight)
       const ids = inPlay(m, S.trials).map((A) => A.id), id = t.dataset.play;

@@ -18,7 +18,7 @@ const actorOf = (m) => m.actor || CLASSES[m.cls].actor;
 const worn = (it) => (it ? it.base : null);
 /** what shows in a head-and-shoulders: the face and build, the helm, the armour */
 function lookOf(m) {
-  const kit = STARTER_LOOK[actorOf(m)] || STARTER[m.cls] || {}, g = m.gear || {};
+  const kit = STARTER_LOOK[actorOf(m)] || STARTER[m.cls] || {}, g = m.hideHelm ? { ...m.gear, helm: null } : (m.gear || {});   // (hideHelm: bareheaded)
   const own = !m.appearance && worn(g.helm) === (kit.helm || null) && worn(g.armor) === (kit.armor || null);
   if (own) return null;                                                     // (as baked)
   const it = (x) => (x ? { base: x.base, r: 'common', up: 0 } : null);     // (a portrait's helm and armour as made: no light)

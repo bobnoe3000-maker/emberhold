@@ -761,6 +761,9 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
     sim's footprint. The choices are the face kit's (`src/sim/appearance.js`, kept in step with
     `tools/actor-lab/faces.js`); the sim refuses any other;
   - **changed later at a temple** (v1.65) for **40 gold**, any member of the company; the same look again is refused;
+  - **the helm hidden** (v1.65; the owner: "lets add a hide helm option for players"): a toggle on each member's
+    figure in the character window, free and anywhere. The figure goes bareheaded and so does their portrait; the helm
+    is still worn and still counts. Saved (v40);
   - **what's equipped is worn** (v1.65; the owner: "characters should show what they have equipped… gear should have
     more variability - color, shimmering/lighting/glowing - that better indicates rarity"): the weapon in the hand, the
     off-hand in the other, the helm on the head (the hair under it), on every member of the company, in play and in the

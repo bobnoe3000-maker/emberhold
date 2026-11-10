@@ -8,6 +8,8 @@
 //   setAutoAttrs{ id, on }                    Auto spends pending points on the class build
 //   rankSkill   { id, skill }                 one skill point into an unlocked ability or passive (GDD v1.56)
 //   setAutocast { id, skill, on } · setPriority { id, order } · setStance { id, stance }
+//   showHelm    { id, on }                    the helm shown on the figure or not (GDD §6.1 v1.65): cosmetic, anywhere,
+//                                             free; the helm is still worn and counts
 //   setLoadout  { id, skills }                the abilities (up to four, skills.js LOADOUT) the member takes into a fight:
 //                                             its own class's, ones it has learned; anywhere (GDD §5.1 v1.56)
 //   respec      { id }            town        attributes back to points (first free, then 20 g × level)
@@ -207,6 +209,12 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (new Set(ids).size !== ids.length) return true;
         for (const id of ids) { const s = mine.find((q) => q.id === id); if (!s) return true; if (!unlocked(m, s, state.trials)) return refuse(`${m.name} hasn't learned ${s.name} yet`); }
         m.loadout = ids; changed(); return true;
+      }
+      case 'showHelm': {                                  // (v1.65) cosmetic: the figure bareheaded, the helm still worn
+        const m = find(cmd.id); if (!m || typeof cmd.on !== 'boolean') return true;
+        if (cmd.on === !m.hideHelm) return true;
+        if (cmd.on) delete m.hideHelm; else m.hideHelm = true;
+        changed(); return true;
       }
       case 'setStance': {
         const m = find(cmd.id); if (!m || !STANCES.includes(cmd.stance)) return true;
