@@ -223,7 +223,7 @@ export function createHud(sim) {
       if (keep) {
         const span = document.createElement('span'), x = document.createElement('button');
         x.textContent = '✕'; x.setAttribute('aria-label', 'close'); x.addEventListener('click', () => drop(el));
-        for (const ev of ['pointerdown', 'touchstart', 'mousedown']) el.addEventListener(ev, (e) => e.stopPropagation());   // (the world mustn't get the tap: AGENTS.md overlays)
+        for (const ev of ['pointerdown', 'touchstart', 'mousedown']) x.addEventListener(ev, (e) => e.stopPropagation());    // (the ✕'s tap isn't the world's: AGENTS.md overlays; the rest of the pill lets taps through)
         el.append(span, x);
       }
     }

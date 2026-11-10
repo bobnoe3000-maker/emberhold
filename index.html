@@ -58,7 +58,7 @@
   #hudToast {
     position: fixed; left: 50%; top: 22%; display: flex; flex-direction: column; align-items: center; gap: 6px;
     transform: translateX(-50%) translateY(6px);
-    width: max-content; max-width: calc(100vw - 136px); text-align: center;   /* (left: 50% alone squeezed it to half the screen: every long toast wrapped ragged; 136: clear of the compass, Journal and map column on the right, so a notice waiting for its ✕ never covers them) */
+    width: max-content; max-width: calc(100vw - 32px); text-align: center;   /* (left: 50% alone squeezed it to half the screen: every long toast wrapped ragged) */
     opacity: 0; transition: opacity .18s, transform .18s;
     pointer-events: none; z-index: 10;   /* over the menu sheets: the temple's raise list is open when it speaks */
   }
@@ -66,10 +66,10 @@
   #hudToast .t { font-size: 13px; color: #ffb066; letter-spacing: .5px; padding: 6px 12px; border-radius: 9px;
     background: rgba(18,14,24,.9); border: 1px solid rgba(214,170,98,.4); box-shadow: 0 4px 14px rgba(0,0,0,.5); }
   #hudToast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
-  /* a notice that waits for its ✕ (the owner, 2026-11-10: "the pop up disappears too fast… let me 'X' close them"): quests, the Chronicle, a site found */
-  #hudToast .t.keep { pointer-events: auto; display: flex; align-items: center; gap: 4px; padding: 0 0 0 12px; color: #f0c880; border-color: rgba(240,200,128,.65); min-height: 44px; }
+  /* a notice that waits for its ✕ (the owner, 2026-11-10: "the pop up disappears too fast… let me 'X' close them"): quests, the Chronicle, a site found. Only its ✕ takes a tap (the world and the HUD under it keep theirs), and it stays clear of the compass, Journal and map column (136) */
+  #hudToast .t.keep { pointer-events: none; max-width: calc(100vw - 136px); display: flex; align-items: center; gap: 4px; padding: 0 0 0 12px; color: #f0c880; border-color: rgba(240,200,128,.65); min-height: 44px; }
   #hudToast .t.keep span { padding: 8px 0; }
-  #hudToast .t.keep button { flex: none; width: 44px; height: 44px; border: 0; background: none; color: #d8ccb8; font: 18px/1 Georgia, serif; cursor: pointer; }
+  #hudToast .t.keep button { pointer-events: auto; flex: none; width: 44px; height: 44px; border: 0; background: none; color: #d8ccb8; font: 18px/1 Georgia, serif; cursor: pointer; }
   /* the studio splash, up before any script runs; the boot (src/cutscene/player.js) takes over */
   #bootSplash { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
     background: #050407; color: #d9cdb8; font: 600 12px ui-monospace, Menlo, monospace; letter-spacing: .4em; text-transform: uppercase; }
