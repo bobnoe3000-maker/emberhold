@@ -7,9 +7,9 @@
 
 import { mulberry32, streamSeed } from './rng.js';
 import { gearStats, starterKit, kitGrowth, BASES } from './items.js';
-import { attrStats, recommendedGrowth, autoAllocate } from './attributes.js';
+import { attrStats, recommendedGrowth, autoAllocate, ATTRS, BUILD, BORN_POINTS } from './attributes.js';
 import { STANCE_MOD, stanceOf, passiveVal } from './skills.js';
-import { has, STAT, rollSellsword } from './companions.js';
+import { has, STAT, rollSellsword, rollPerks } from './companions.js';
 
 // Level-1 values here are the GDD table MINUS the class's level-1 starting kit (items.js
 // STARTER), so a fresh character in their kit has exactly the GDD numbers; beyond that,
@@ -106,11 +106,29 @@ export function cleanName(name) {
   return String(name ?? '').replace(/[^A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F -]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
 }
 // The main character. The defaults are the pre-creation knight (previews and old saves).
-/** @param {{ cls?: string, look?: string, origin?: string|null, name?: string }} [o] */
-export function makeHero({ cls = 'fighter', look, origin = null, name = 'Aldric' } = {}) {
+/** @param {{ cls?: string, look?: string, origin?: string|null, name?: string, born?: Record<string, number>, perks?: string[] }} [o] */
+export function makeHero({ cls = 'fighter', look, origin = null, name = 'Aldric', born, perks } = {}) {
   const m = { ...makeMember('you', name, cls), actor: look || LOOKS[cls][0], main: true, autoAttrs: false, origin };
+  if (born) m.born = { ...born };
+  if (perks && perks.length) m.perks = [...perks];
   m.hp = statsFor(m).maxHp;
   return m;
+}
+
+// ── the roll (GDD §6.1 v1.64): what a hero is born with ─────────────────────
+// Six attribute points (attributes.js BORN_POINTS, against the class build's share of them) and a trait: a Wick
+// sellsword's perks, from the companions' own table (companions.js rollPerks), so a perk added there is one a hero can
+// be born with. Not the ones about the hero from outside or about a wage. One roll per (seed, class, n): the client
+// chooses n, re-rolling as often as it likes, and never what the roll holds; createHero rolls it again.
+export const NOT_BORN = new Set(['bodyguard', 'thrifty', 'greedy', 'hometown', 'deserters_bond', 'sisters_ward', 'delvers_eyes']);
+export const ROLL_MAX = 1_000_000;
+/** a hero's roll @param {number} seed @param {string} cls @param {number} n @returns {{ born: Record<string, number>, perks: string[] }} */
+export function rollHero(seed, cls, n) {
+  const rng = mulberry32(streamSeed((seed ^ Math.imul(n + 1, 0x9e3779b1)) >>> 0, 6500));
+  const build = BUILD[cls] || BUILD.fighter, born = { might: 0, grit: 0, finesse: 0, focus: 0 };
+  for (let i = 0; i < BORN_POINTS; i++) { const k = rng() < 0.5 ? build[i % build.length] : ATTRS[Math.floor(rng() * ATTRS.length)]; born[k] += 1; }
+  const { perks } = rollPerks(rng, cls, 'wick', (id) => !NOT_BORN.has(id));
+  return { born, perks };
 }
 
 // (Brannoc was a fighter's name here; he's a found companion now, M5, and there's only one of him)

@@ -126,22 +126,23 @@ export function rollRank(rng) {
   for (const id of RANK_IDS) { r -= RANKS[id].odds; if (r < 0) return id; }
   return 'wick';
 }
-/** a sellsword's perks, to its rank's budget @param {() => number} rng @param {string} cls @param {string} rank
- * @returns {{ perks: string[], hidden: string|null }} */
-export function rollPerks(rng, cls, rank) {
-  const R = RANKS[rank], out = [];
+/** a sellsword's perks, to its rank's budget (allow: which perks may be drawn at all; a new hero's, party.js
+ * rollHero, leaves out the ones about a hire) @param {() => number} rng @param {string} cls @param {string} rank
+ * @param {(id: string) => boolean} [allow] @returns {{ perks: string[], hidden: string|null }} */
+export function rollPerks(rng, cls, rank, allow = () => true) {
+  const R = RANKS[rank], out = [], ok = (id, c) => fits(id, c) && allow(id);
   let budget = R.budget;
-  if (rng() < QUIRK_CHANCE) { const q = PERK_IDS.filter((id) => PERKS[id].fam === 'quirk' && fits(id, cls)); out.push(pick(rng, q)); budget += 1; }
+  if (rng() < QUIRK_CHANCE) { const q = PERK_IDS.filter((id) => PERKS[id].fam === 'quirk' && ok(id, cls)); if (q.length) { out.push(pick(rng, q)); budget += 1; } }
   if (R.aura) { const a = pick(rng, PERK_IDS.filter((id) => PERKS[id].fam === 'aura')); out.push(a); budget -= PERKS[a].cost; }
   const shown = () => out.filter((id) => PERKS[id].fam !== 'quirk').length;
   while (shown() < R.perks) {
     const left = R.perks - shown() - 1;                                          // keep a point for every slot still to fill
-    const pool = PERK_IDS.filter((id) => { const P = PERKS[id]; return P.fam !== 'quirk' && P.fam !== 'aura' && fits(id, cls) && !out.includes(id) && P.cost <= budget - left; });
+    const pool = PERK_IDS.filter((id) => { const P = PERKS[id]; return P.fam !== 'quirk' && P.fam !== 'aura' && ok(id, cls) && !out.includes(id) && P.cost <= budget - left; });
     if (!pool.length) break;
     const p = pick(rng, pool); out.push(p); budget -= PERKS[p].cost;
   }
   let hidden = null;
-  if (R.hidden) { const pool = PERK_IDS.filter((id) => { const P = PERKS[id]; return P.fam !== 'quirk' && P.fam !== 'aura' && fits(id, cls) && !out.includes(id) && P.cost <= 2; }); hidden = pool.length ? pick(rng, pool) : null; }
+  if (R.hidden) { const pool = PERK_IDS.filter((id) => { const P = PERKS[id]; return P.fam !== 'quirk' && P.fam !== 'aura' && ok(id, cls) && !out.includes(id) && P.cost <= 2; }); hidden = pool.length ? pick(rng, pool) : null; }
   return { perks: out, hidden };
 }
 /** a sellsword's rank and perks: their own stream, so the names and levels the tavern drew before

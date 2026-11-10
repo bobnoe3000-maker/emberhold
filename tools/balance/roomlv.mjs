@@ -1,7 +1,7 @@
 // roomlv.mjs — the room-level balance harness (AGENTS.md rule 6). Puts a party of a given
 // level in a room of a given level and lets it autobattle, reporting HP cost per wave.
 //
-//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--part id] [--off id,id]
+//   node tools/balance/roomlv.mjs <secs> <roomLv> <heroLv> [hires e.g. 0,2] [seed] [--src dir] [--site id] [--no-trials] [--hero cls] [--rogue base] [--perks keep|a,b/c,d] [--fresh] [--up N] [--size small|medium|large] [--floor N] [--part id] [--off id,id] [--born m,g,f,fo] [--trait id,id]
 //
 // Every member is on its class's recommended build (attributes.js) and wears its class kit at its
 // level (common), so the numbers compare with the class-table curve (gear carries a real share of
@@ -40,6 +40,10 @@ const fi = args.indexOf('--fresh'), FRESH = fi >= 0 ? (args.splice(fi, 1), true)
 const ui = args.indexOf('--up'), UP = ui >= 0 ? +args.splice(ui, 2)[1] : 0;
 // --off id,id: those abilities' auto-use off for every member (to weigh one skill against the party without it)
 const oi = args.indexOf('--off'), OFF = oi >= 0 ? args.splice(oi, 2)[1].split(',') : [];
+// --born m,g,f,fo: the hero born with those (a roll's six attribute points, GDD §6.1 v1.64: might, grit, finesse, focus);
+// --trait id,id: the hero born with those perks (a roll's trait). Without them: the class table, the contract's runs.
+const bi = args.indexOf('--born'), BORN = bi >= 0 ? args.splice(bi, 2)[1].split(',').map(Number) : null;
+const tri = args.indexOf('--trait'), TRAIT = tri >= 0 ? args.splice(tri, 2)[1].split(',') : null;
 const load = (f) => import(pathToFileURL(path.join(SRC, f)).href);
 const { createSim } = await load('sim/core.js'), { isWalkable } = await load('sim/world.js'), { statsFor } = await load('sim/party.js');
 const attrs = await load('sim/attributes.js').catch(() => null);
@@ -55,6 +59,8 @@ const sim = createSim(seed, undefined, { scene: 'dungeon', site: SITE }); sim.st
 while (sim.state.depth < FLOOR - 1) { const t = sim.world.stairsAt, q = sim.state.player; q.x = q.px = t.x + 0.5; q.y = q.py = t.y + 1.5; sim.commands.push({ type: 'harvest', tx: t.x, ty: t.y }); sim.tick(); }
 sim.state.party.push(...s.state.party.slice(1).map((m) => ({ ...m })));
 if (HERO) sim.state.party[0].cls = HERO;
+if (BORN) sim.state.party[0].born = { might: BORN[0], grit: BORN[1], finesse: BORN[2], focus: BORN[3] };
+if (TRAIT) sim.state.party[0].perks = TRAIT;
 for (const m of sim.state.party) {
   m.level = FRESH && !m.main ? Math.max(1, Math.ceil(HL / 2)) : HL; if (attrs) { m.attrs = null; attrs.autoAllocate(m); } if (items && items.starterKit) m.gear = items.starterKit(m); if (UP) for (const it of Object.values(m.gear || {})) if (it) it.up = UP;
   if (ROGUE && m.cls === 'rogue') { m.gear.weapon = items.makeItem(ROGUE, HL, 'common', { uid: m.id + ':bow' }); if (items.isTwoHanded(m.gear.weapon)) m.gear.off = null; }

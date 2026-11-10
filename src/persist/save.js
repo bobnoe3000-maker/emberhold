@@ -110,6 +110,8 @@
 //       set: the first four the member can use, in its order (skills.js inPlay).
 //   v37: the overland's spawn points (GDD §10.3 v1.63, sim/camps.js): an optional `camps`, { [id]: { at, n } }, when each
 //       is full again and how often it has been cleared. Nothing to migrate: absent reads as every spawn point full.
+//   v38: a hero's roll (GDD §6.1 v1.64, sim/party.js rollHero): a main character's optional `born`, the six attribute
+//       points it was born with (its trait is a perk, in `perks`). Nothing to migrate: absent is the class table, as before.
 
 import * as idb from './idb.js';
 import { TICK_HZ } from '../sim/core.js';
@@ -120,7 +122,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES } from '../sim/sites.js';
 
-export const SAVE_VERSION = 37;   // (v37: the overland's spawn points, GDD §10.3 v1.63: an optional `camps`; nothing to migrate)
+export const SAVE_VERSION = 38;   // (v38: a hero's roll, GDD §6.1 v1.64: an optional member `born`; nothing to migrate)
 export const SLOTS = 3;
 const AUTOSAVE_MS = 15000;
 const LEGACY_KEY = 'emberhold.save', ACTIVE_KEY = 'emberfall.activeSlot', BACKUP = 'emberfall.backup.slot';

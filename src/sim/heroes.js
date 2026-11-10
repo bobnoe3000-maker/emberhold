@@ -2,7 +2,8 @@
 // heroes.js — the M3 hero commands (GDD §3.6, §4.1, §5.1, §6.1; development plan §2.3–§2.4,
 // §2.10). Headless: core.js hands it every command first, like loot.js.
 //
-//   createHero  { cls, look, origin, name }   once per game, before anything else counts
+//   createHero  { cls, look, origin, name, roll? }   once per game, before anything else counts (roll: which of the
+//               hero's rolls, party.js rollHero; absent: none, the class table as before v1.64)
 //   spendPoint  { id, attr }                  one attribute point
 //   setAutoAttrs{ id, on }                    Auto spends pending points on the class build
 //   rankSkill   { id, skill }                 one skill point into an unlocked ability or passive (GDD v1.56)
@@ -34,7 +35,8 @@
 // Every command is validated (ownership, place, class, cost, points); an invalid one does
 // nothing but emit 'refused' { reason } for the UI. Nothing here grants XP, items or gold.
 
-import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames, freeName } from './party.js';
+import { nameRefusal } from './names.js';
+import { CLASSES, LOOKS, ORIGINS, ORIGIN_EDGE, MAX_COMPANIONS, makeHero, rollHero, ROLL_MAX, makeMember, cleanName, statsFor, tavernRoster, hireLevel, distinctNames, freeName } from './party.js';
 import { ATTRS, pendingPoints, autoAllocate } from './attributes.js';
 import { skillDef, skillsOf, unlocked, rankOf, pendingSkillPoints, MAX_RANK, STANCES, LOADOUT, priorityOf } from './skills.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
@@ -134,11 +136,14 @@ export function createHeroes({ state, bus, getWorld, seed }) {
         if (!LOOKS[cls].includes(look)) return refuse('That look is not for this class');
         if (!ORIGINS.includes(origin)) return refuse('Unknown origin');
         if (!name) return refuse('Your hero needs a name');
-        state.party[0] = makeHero({ cls, look, origin, name });
+        { const no = nameRefusal(name); if (no) return refuse(no); }
+        const roll = cmd.roll;
+        if (roll !== undefined && !(Number.isInteger(roll) && roll >= 0 && roll < ROLL_MAX)) return refuse('That roll is not one of yours');
+        state.party[0] = makeHero({ cls, look, origin, name, ...(roll !== undefined ? rollHero(seed, cls, roll) : {}) });
         state.created = true;
         // every company sets out with one Homeward Scroll (GDD §8 v1.30; the owner, 2026-10-04): a sim rule, once
         state.counters.uidN = (state.counters.uidN || 0) + 1; state.bag.push(makeItem('homeward', 1, 'common', { uid: 'i' + state.counters.uidN }));
-        bus.emit('heroCreated', { cls, look, origin, name }); changed(); return true;
+        bus.emit('heroCreated', { cls, look, origin, name, roll: roll ?? null }); changed(); return true;
       }
       case 'spendPoint': {
         const m = find(cmd.id);
