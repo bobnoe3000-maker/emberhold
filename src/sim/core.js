@@ -27,6 +27,7 @@ import { TRIAL_CLASSES } from './skills.js';
 import { createBoard } from './board.js';
 import { createLore, SET_REVEALS } from './lore.js';
 import { siteOf, siteOpen, SITES, SECRET_REST } from './sites.js';
+import { campsFrom } from './camps.js';
 import { restoreCount, credit } from './lamps.js';
 import { SHRINES, shrineKind, boonsOf, restoreBoons } from './shrines.js';
 import { towerOf, restoreTower, inTower, bracketOf, BRACKETS } from './tower.js';
@@ -98,6 +99,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     sitesEntered: new Set(),          // dungeon sites ever entered (compass: "nearest unexplored")
     revealed: new Set(),              // hidden sites found (sites.js): a chapter's reward, or the Chronicle's
     secrets: {},                      // (v31) a secret site's seal: { [site]: sealed until state.t } (sites.js SECRET_REST)
+    camps: {},                        // (v37) the overland's spawn points: { [id]: { at: full again at state.t, n: times cleared } } (camps.js)
     party: [makeHero()],                                   // [your main character, …up to two companions]
     bench: [],                        // recruited companions waiting at the inn (heroes.js)
     created: false,                   // has this game's main character been made? (createHero, once)
@@ -603,6 +605,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       sitesEntered: [...state.sitesEntered],
       revealed: [...state.revealed],
       secrets: { ...state.secrets },     // (v31)
+      camps: Object.fromEntries(Object.entries(state.camps || {}).map(([k, v]) => [k, { at: v.at, n: v.n }])),   // (v37) camps.js
       flags: { ...state.flags },
       bosses: { ...state.bosses },
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
@@ -670,6 +673,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     for (const m of [...state.party, ...state.bench]) for (const s of Object.keys(m.gear || {})) if (m.gear[s]) m.gear[s] = refreshItem({ ...m.gear[s] });   // st from (base, ilv, rarity): the current formula
     state.sitesEntered = new Set((data.sitesEntered ?? []).filter((k) => SITES[k]));
     state.secrets = {}; for (const [k, v] of Object.entries(data.secrets ?? {})) if (SITES[k] && SITES[k].secret && Number.isFinite(v)) state.secrets[k] = v;   // (v31)
+    state.camps = campsFrom(data.camps);                                    // (v37) absent: every spawn point full
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet

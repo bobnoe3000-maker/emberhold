@@ -1,0 +1,38 @@
+{
+  "id": "vale_bramble",
+  "kind": "errand",
+  "title": "Bramble",
+  "giver": "col",
+  "region": "vale",
+  "level": [
+    2,
+    30
+  ],
+  "summary": "Col's brown cow, Bramble, was taken off the Greyholt road while he watered the horse. Three of Old Skarn's stragglers have her on a spit by the river above the Thornwick bridge. Col wants them gone, and the bell off her collar back.",
+  "steps": [
+    {
+      "id": "spit",
+      "journal": "Go to the Spit, the goblins' fire on the river's east bank above the Thornwick bridge, and put the three round it down.",
+      "objectives": [
+        {
+          "type": "camp",
+          "camp": "vale_spit",
+          "count": 1,
+          "label": "The Spit cleared"
+        }
+      ]
+    }
+  ],
+  "ready": "The Spit is quiet, and the bell was in the ashes. Take it back to Col in Thornwick's square.",
+  "done": "Col took the bell and didn't ring it. More goblins will come for the smell; the bell, at least, is home.",
+  "rewards": {
+    "share": 0.25,
+    "lv": 2,
+    "gold": 35
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "col_bramble_offer",
+    "turnin": "col_bramble_turnin"
+  }
+}

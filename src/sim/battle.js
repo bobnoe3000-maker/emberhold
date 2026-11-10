@@ -48,6 +48,7 @@ import { hypot, sin, cos, exp } from './detmath.js';
 import { siteOf, bossAt } from './sites.js';
 import { LAMPS, lampOf, CAGE_KINDS, CAGE_PICKUP_S, CAGE_REACH, countOf, credit } from './lamps.js';
 import { HAZARD, hazardAt, openGround, edgeDistances, ageHazards } from './hazards.js';
+import { campsOf, campNear, campUp, campState, bandOf, postOf, clearCamp, CAMP_ROOM } from './camps.js';
 
 // class combat traits (stats are in party.js / the GDD tables; abilities in skills.js). v1.47 (the owner: "Ranged
 // combat is too close, double the current target range"): every shooter's reach is twice what it was, here, under SHOT
@@ -331,11 +332,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   let rng = mulberry32(streamSeed(seed, 0xb477));
   let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0;   // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
 
-  // a room tile keeps its room id even where a corridor was carved through it
-  const roomAt = (w, x, y) => { const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1; };
+  // a room tile keeps its room id even where a corridor was carved through it; on the overland, a spawn point's arena
+  // is its room (camps.js, GDD §10.3: a fight there is bounded as a room's is)
+  const roomAt = (w, x, y) => {
+    if (w.kind === 'overland') { const h = campNear(campsOf(w.region), x, y); return h ? CAMP_ROOM(h.i) : -1; }
+    const c = w.level && w.level.cells.get(Math.floor(x) + ',' + Math.floor(y)); return c && c.kind === 'floor' && c.room >= 0 ? c.room : -1;
+  };
   const hero = () => state.party[0];
   // whose this fight's waves are: the floor's, or in the Mere Tower the block of ten the climb is in (tower.js)
-  const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : familyOf(w, battle ? battle.room : undefined));
+  const fam = (w) => (battle && battle.tower ? FAMILIES[blockFamily(battle.wave || 1)] : battle && battle.camp ? FAMILIES[battle.camp.family] : familyOf(w, battle ? battle.room : undefined));
   const towerK = () => towerTough(Math.max(1, battle ? battle.wave : 1)) * (1 + PREMIUM * Math.max(0, TOWER.level - 3));
   const alive = (u) => u && !u.down && !u.fallen && u.hp > 0;
   // stats in the fight: statsFor plus the guards up right now (Shield Wall, Smoke Step)
@@ -436,6 +441,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
       const c = cells.find(ok) || cells.find(reachable) || [Math.floor(p.x), Math.floor(p.y)]; return [c[0] + 0.5, c[1] + 0.5];
     };
     if (b.tower) { spawnTower(w, b, spot); return; }            // the Mere Tower's own waves (below)
+    if (b.camp) { spawnCamp(w, b); return; }                     // a spawn point's band (below)
     if (b.boss && !b.bossUp) {                                   // the hall opens with its boss and an escort (no tide yet)
       const B = BOSSES[b.boss], [bx, by] = spot();
       const boss = foe(w, b.boss, lvl, bx, by, 1 + PREMIUM * Math.max(0, lvl - 3), false, F, B);
@@ -452,6 +458,19 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     }
     b.wave += 1;
     bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
+  }
+  // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire (a camp's stand up where
+  // they sat: no rising) or out of the burrow (a nest's come up out of it); an elite in one fill of four, its last foe.
+  // One wave: the spawn point is quiet after it, and cleared when it falls (step)
+  function spawnCamp(w, b) {
+    const c = b.camp, F = FAMILIES[c.family], band = bandOf(seed, c, campState(state, c.id).n);
+    band.kinds.forEach((k, i) => {
+      const elite = band.elite && i === band.kinds.length - 1, [x, y] = postOf(c, i), [ox, oy] = isWalkable(w, x, y) ? [x, y] : openNear(w, x, y);
+      const u = foe(w, elite ? F.elite : k, b.level, ox, oy, 1 + PREMIUM * Math.max(0, b.level - 3), elite, F);
+      if (c.kind === 'camp') u.spawn = 0;
+    });
+    b.wave = 1; b.quiet = true;
+    bus.emit('wave', { wave: 1, level: b.level, tide: 0, camp: c.id });
   }
   // the Mere Tower's next wave (tower.js): a level-12 room's, TOUGH[n] strong, of its block's kind; every tenth a warden
   // and an escort of the block's. Its strength shows on the room pill as a tide would (b.tide).
@@ -527,6 +546,38 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     w.enemies = []; w.projectiles = [];
     rng = mulberry32(streamSeed(seed ^ (room * 7919 + (w.depth || 0) * 104729), 0xb477));
     bus.emit('battle', { on: true, room, level: battle.level });
+  }
+  // a spawn point's fight (camps.js): its arena's open tiles, its own flat level, its band up at once
+  function startCamp(w, c, i) {
+    const cells = [], R = Math.ceil(c.arena);
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const x = Math.floor(c.x) + dx, y = Math.floor(c.y) + dy; if (hypot(x + 0.5 - c.x, y + 0.5 - c.y) <= c.arena) cells.push([x, y]); }
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const [x, y] of cells) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    const gw = x1 - x0 + 1, gh = y1 - y0 + 1, walk = new Uint8Array(gw * gh);
+    for (const [x, y] of cells) if (isWalkable(w, x + 0.5, y + 0.5)) walk[(y - y0) * gw + (x - x0)] = 1;
+    pending = [];
+    for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }
+    const room = CAMP_ROOM(i);
+    battle = { room, camp: c, t0: state.t, lastBlow: null, level: c.level, wave: 0, lull: 0, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
+      tide: 0, boss: null, bossUp: false, quiet: false, lastSlain: null, hazards: [], flood: 0, edge: null, size: 'large' };
+    w.enemies = []; w.projectiles = [];
+    rng = mulberry32(streamSeed(seed ^ (room * 7919), 0xb477));
+    bus.emit('battle', { on: true, room, level: battle.level, camp: c.id });
+    spawnCamp(w, battle);
+  }
+  // a camp's band at its posts while it's full and nobody's fighting it (presentation only: no stats, no AI; battle.js
+  // never fights an idle one, startCamp puts the band itself in its place): what the party sees before it's seen
+  function idleCamps(w) {
+    const list = campsOf(w.region);
+    w.enemies = (w.enemies || []).filter((e) => !e.idle || list.some((c) => c.id === e.idle && campUp(state, c)));
+    for (const c of list) {
+      if (c.kind !== 'camp' || !campUp(state, c) || w.enemies.some((e) => e.idle === c.id)) continue;
+      const band = bandOf(seed, c, campState(state, c.id).n), F = FAMILIES[c.family], [fx, fy] = c.face || [0, 0];
+      band.kinds.forEach((k, i) => {
+        const [x, y] = postOf(c, i), dx = c.x + fx - x, dy = c.y + fy - y, d = hypot(dx, dy) || 1, elite = band.elite && i === band.kinds.length - 1;
+        w.enemies.push({ id: nextId++, kind: elite ? F.elite : k, idle: c.id, elite, lvl: c.level, x, y, px: x, py: y, hp: 1, maxHp: 1, dead: 0, spawn: 0, moving: false, fx: dx / d, fy: dy / d, dir: 2, flash: 0 });
+      });
+    }
   }
   function endBattle(w, why) {
     if (battle && battle.tower && why !== 'defeat') towerOut();
@@ -723,7 +774,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   // 'defeat' event carries a recap for the defeat screen (ui/defeat.js): where, how far in, who struck
   // the last blow, what's left standing. Presentation reads it; nothing in it feeds back into the sim.
   function defeat(w) {
-    const b = battle, recap = b ? { site: w.site || 'barrows', siteName: siteOf(w.site).name, floor: (w.depth || 0) + 1, level: b.level, wave: b.wave,
+    const b = battle, recap = b ? { site: b.camp ? b.camp.id : w.site || 'barrows', siteName: b.camp ? b.camp.name : siteOf(w.site).name, floor: b.camp ? 0 : (w.depth || 0) + 1, camp: !!b.camp, level: b.level, wave: b.wave,
       secs: Math.round(state.t - (b.t0 ?? state.t)), foesLeft: w.enemies.filter((e) => !e.dead && e.hp > 0).length,
       killer: b.lastBlow ? { ...b.lastBlow, bossName: b.lastBlow.boss && BOSSES[b.lastBlow.boss] ? BOSSES[b.lastBlow.boss].name : '' } : null,
       party: state.party.map((m) => m.name) } : null;
@@ -1536,13 +1587,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) { m.px = m.x; m.py = m.y; }
     for (const e of w.enemies || []) { e.px = e.x; e.py = e.y; }
     for (const b of w.projectiles || []) { b.px = b.x; b.py = b.y; }
-    const inDungeon = w.kind === 'dungeon';
-    const room = inDungeon ? roomAt(w, p.x, p.y) : -1;
+    const inDungeon = w.kind === 'dungeon', onLand = w.kind === 'overland';
+    const room = inDungeon || (onLand && battle) ? roomAt(w, p.x, p.y) : -1;
     if (battle && room !== battle.room) endBattle(w, 'left');
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
     // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
     const waiting = hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]));
     if (!battle && inDungeon && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);
+    if (!battle && onLand && alive(H)) {                            // a spawn point on the overland: within its reach and full (camps.js)
+      const list = campsOf(w.region), h = campNear(list, p.x, p.y, 'reach');
+      if (h && campUp(state, h.c)) startCamp(w, h.c, h.i);
+    }
+    if (!battle && onLand) idleCamps(w);
 
     // regen: ×5 out of a fight (corridors, the overland, towns); a room's lulls are a breath (×1.5 for 4 s)
     const calm = !battle, lull = !!battle && battle.between;
@@ -1577,6 +1633,10 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room, tower: !!battle.tower });
           if (battle.tower) towerCleared();                        // the Mere Tower pays by the wave, and banks at a landing
           else onDrop('wave', battle.level, p.x, p.y);             // now and then a fallen wave leaves something behind
+          if (battle.camp) {                                        // a spawn point cleared: empty until its respawn (camps.js)
+            clearCamp(state, battle.camp);
+            bus.emit('campCleared', { id: battle.camp.id, kind: battle.camp.kind, name: battle.camp.name, n: campState(state, battle.camp.id).n, at: campState(state, battle.camp.id).at });
+          }
           for (const m of state.party) if (alive(m) && m.downs && (m.stood = (m.stood || 0) + 1) >= WIND) { m.downs = 0; m.stood = 0; }
           for (const m of state.party) if (m.down) {                // the fallen get back up in the lull
             m.down = false; m.hp = Math.max(1, Math.round(statsFor(m).maxHp * REVIVE));

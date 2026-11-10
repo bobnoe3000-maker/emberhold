@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "A quest (quest-lore-system \u00a74.1): its words, and the shape the sim counts and pays. The sim keeps its own table of the shape (src/sim/quests.js QUESTS); a test keeps the two in step.",
+  "title": "A quest (quest-lore-system §4.1): its words, and the shape the sim counts and pays. The sim keeps its own table of the shape (src/sim/quests.js QUESTS); a test keeps the two in step.",
   "type": "object",
   "required": [
     "id",
@@ -332,6 +332,35 @@
                     },
                     "site": {
                       "type": "string"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 48
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "camp",
+                    "count",
+                    "label"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "type": {
+                      "const": "camp"
+                    },
+                    "camp": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$",
+                      "description": "a spawn point on the overland (src/sim/camps.js, GDD §10.3 v1.63), counted on each clear"
                     },
                     "count": {
                       "type": "integer",

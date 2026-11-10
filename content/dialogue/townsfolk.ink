@@ -22,6 +22,8 @@ VAR q_trial_cold_weather = -1
 VAR q_vale_hens_under_the_hill = -1
 VAR q_trial_old_roads = -1
 VAR q_trial_the_old_water = -1
+VAR q_vale_bramble = -1
+VAR q_vale_the_ditch = -1
 
 == wendel_hub ==
 { flag_met_wendel == 0:
@@ -58,11 +60,14 @@ VAR q_trial_the_old_water = -1
 - else:
     {&"The horse still shies at the mounds. So do I. Neither of us will say so."|"A day out of the way, both ways, for a month. Somebody ought to pay me for that day. Nobody will."|"Saw one standing in the road at dusk last week. It saluted. I didn't."|"That's my wagon on its side by the barrows road. They didn't hurt me. They just stood in front of the horse till it went over. Then they went back to facing north."}
 }
-{ (q_trial_old_roads >= 0 && q_trial_old_roads <= 2) || (q_trial_the_old_water >= 0 && q_trial_the_old_water <= 2): -> col_topics }
+{ (q_trial_old_roads >= 0 && q_trial_old_roads <= 2) || (q_trial_the_old_water >= 0 && q_trial_the_old_water <= 2) || (q_vale_bramble >= 0 && q_vale_bramble <= 2): -> col_topics }
 -> END
 
 // ── the shaman's trial (content/quests/trial_old_roads.json; world doc v1.19) ──
 == col_topics ==
++ { q_vale_bramble == 2 } [The Spit's quiet. Here's her bell. #mark: quest ready] -> col_bramble_turnin
++ { q_vale_bramble == 0 } [You look like you've lost something. #mark: quest] -> col_bramble_offer
++ { q_vale_bramble == 1 } [About Bramble… #mark: quest active] -> col_bramble_active
 + { q_trial_old_roads == 2 } [The Scrag's quiet. Six waves. #mark: quest ready] -> col_trial_turnin
 + { q_trial_old_roads == 0 } [You leave ale out by the wheel. #mark: quest] -> col_trial_offer
 + { q_trial_old_roads == 1 } [About the long way round… #mark: quest active] -> col_trial_active
@@ -113,6 +118,27 @@ Col doesn't breathe on your shaman's hand this time. He takes a pinch of road du
 "That's what she did to a man she didn't want near her. Not a curse. Just a little weight. They feel it, the ones you put it on. Go on. Leave something by your wheel." # quest: turnin trial_the_old_water
 -> col_topics
 
+// ── his cow (content/quests/vale_bramble.json; world doc §3.1 v1.39) ──
+== col_bramble_offer ==
+"A cow. Brown one. Bramble. I stopped to water the horse on the Greyholt road and when I turned round there was a rope going off into the reeds with nothing on the end of it."
+"Goblins. Three of them. Skarn's lot that didn't go with Skarn. They've a fire by the river, above the bridge, and they've got her on a spit. You can smell it from the road. I could, anyway. I went and looked."
+"I'm not asking you to bring her back. I'm not daft. Just make them go. And there's a bell on her collar, if they haven't eaten that too."
++ [We'll see to it. #mark: quest]
+    "Above the bridge, east bank. Follow your nose." # quest: accept vale_bramble
+    -> col_topics
++ [Not now.]
+    "She's not getting any less cooked."
+    -> col_topics
+
+== col_bramble_active ==
+"The Spit, they're calling it now. Above the bridge, east side of the river. Three of them and a fire."
+-> col_topics
+
+== col_bramble_turnin ==
+Col takes the bell and turns it over. It's blackened, and the clapper's bent. He doesn't ring it.
+"She'd come to that bell from the far end of the field. Never once to my whistle. Thank you. More of them'll come down for the smell, mind. Hills are full of them." # quest: turnin vale_bramble
+-> col_topics
+
 == jory_hub ==
 { flag_met_jory == 0:
     "Jory. The Watch. Well, the rest of the Watch. The Captain's the Watch; I'm the running about." # flag: set met_jory
@@ -123,7 +149,36 @@ Col doesn't breathe on your shaman's hand this time. He takes a pinch of road du
         {&"The Captain paid me this week. Out of his own purse. Don't tell him I told you. He writes it down anyway."|"If you're going down, go down with friends. That's not the Captain talking. That's me."|"I've never seen a bright-eyed one. I'd like to keep it that way."}
     }
 }
+{ q_vale_the_ditch >= 0 && q_vale_the_ditch <= 2: -> jory_topics }
 -> END
+
+// ── the rats in the bank (content/quests/vale_the_ditch.json; world doc §3.1 v1.39) ──
+== jory_topics ==
++ { q_vale_the_ditch == 2 } [The burrow's quiet. #mark: quest ready] -> jory_ditch_turnin
++ { q_vale_the_ditch == 0 } [Everyone's telling you something. #mark: quest] -> jory_ditch_offer
++ { q_vale_the_ditch == 1 } [About the rats… #mark: quest active] -> jory_ditch_active
++ [Carry on, Jory.] -> END
+
+== jory_ditch_offer ==
+"Rats. In the bank under the north wall, where the midden goes over. Big ones, the barrows kind. Hedda told me. Then Nell told me. Then Bess told me, and she told me twice."
+"I went and looked. One came out at me. I came back. The Captain says the Watch doesn't run. I walked very quickly."
+"If you'd go round and clear the hole, I'd write it down as seen to. They'll come back. But I'll have written it down."
++ [We'll clear it. #mark: quest]
+    "Out the gate and left, along the wall. Mind the midden." # quest: accept vale_the_ditch
+    -> jory_topics
++ [Not now.]
+    "I'll tell Hedda you said not now. She'll tell me again."
+    -> jory_topics
+
+== jory_ditch_active ==
+"The north wall, outside, where the farm lane runs under it. There's a hole in the bank. That's the one."
+-> jory_topics
+
+== jory_ditch_turnin ==
+Jory writes it in a little book with a pencil he has to lick first. *North wall. Rats. Seen to.* He underlines *seen to*.
+"The Captain'll see that. He reads everything I write. Here, the Watch's thanks. It isn't much. The Watch isn't much." # quest: turnin vale_the_ditch
+-> jory_topics
+
 
 == nell_hub ==
 { flag_met_nell == 0:

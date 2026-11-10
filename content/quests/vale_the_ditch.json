@@ -1,0 +1,38 @@
+{
+  "id": "vale_the_ditch",
+  "kind": "errand",
+  "title": "The Ditch",
+  "giver": "jory",
+  "region": "vale",
+  "level": [
+    1,
+    30
+  ],
+  "summary": "Grave rats from the barrows dig have burrowed into Thornwick's palisade bank under the north wall, where the midden goes over. Everyone in town has told Jory to see to it.",
+  "steps": [
+    {
+      "id": "burrow",
+      "journal": "Go out of the gate and round to the north wall, where the farm lane runs under the palisade. Clear the rats out of the ditch burrow.",
+      "objectives": [
+        {
+          "type": "camp",
+          "camp": "vale_ditch",
+          "count": 1,
+          "label": "The ditch burrow cleared"
+        }
+      ]
+    }
+  ],
+  "ready": "The burrow's quiet for now. Tell Jory, on his rounds in Thornwick.",
+  "done": "Jory wrote it down for the Captain: rats, the north wall, seen to. They'll be back. He'll write that down too.",
+  "rewards": {
+    "share": 0.2,
+    "lv": 1,
+    "gold": 20
+  },
+  "dialogue": {
+    "file": "townsfolk",
+    "offer": "jory_ditch_offer",
+    "turnin": "jory_ditch_turnin"
+  }
+}

@@ -19,6 +19,7 @@ import { heightAt, isWalkable } from './world.js';
 import { hypot } from './detmath.js';
 import { SITES, siteOpen, levelBand, hasFloorBelow } from './sites.js';
 import { LANDS, landId } from './regions.js';
+import { campsOf, campUp, campState } from './camps.js';
 
 
 export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
@@ -157,6 +158,12 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   for (const d of sites.sort((a, b) => a.steps - b.steps)) {
     const fresh = !sitesEntered.has(d.site);
     out.push({ id: 'site:' + d.site, site: d.site, icon: fresh ? 'unexplored' : 'dungeon', label: SITES[d.site].name, sub: `${fresh ? 'never entered' : 'dungeon'} · ${d.steps} steps`, levelRange: levelBand(d.site), tx: d.tx, ty: d.ty, near: 0, steps: d.steps, journey: 'delve' });
+  }
+  // the land's spawn points (camps.js, GDD §10.3): a camp or a nest, full or quiet till it fills again
+  for (const c of campsOf(world.region || state.region)) {
+    const t = standOn(c.x, c.y, 6), steps = t && pathLen(t.tx, t.ty, 3); if (steps == null) continue;
+    const up = campUp(state, c), back = Math.max(1, Math.ceil((campState(state, c.id).at - state.t) / 60));
+    out.push({ id: 'camp:' + c.id, icon: 'landmark', label: c.name, sub: `${c.kind === 'camp' ? 'a camp' : 'a nest'} · ${up ? `${steps} steps` : `quiet for ${back} min`}`, tx: t.tx, ty: t.ty, near: 2, steps, camp: c.id });
   }
   const used = new Set(out.map((o) => o.label).concat(Object.values(SITES).map((q) => q.name)));
   const marks = (world.labels || []).filter((l) => !used.has(l.text) && !l.service).map((l) => ({ ...(standOn(l.x, l.y + 8, 10) || {}), name: l.text, near: 3 })).filter((m) => m.tx !== undefined);

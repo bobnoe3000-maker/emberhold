@@ -7,9 +7,9 @@ import { QS } from '../src/sim/quests.js';
 
 const town = (lv = 1) => { const s = createSim(20260807, undefined, { scene: 'town' }); s.state.party[0].level = lv; s.tick(); return s; };
 
-test('a new game: Maudry and Sister Ilse have something; Osric\'s bounty waits for level 2', () => {
-  assert.deepEqual(town(1).quests.marks(), { maudry_fenn: 'new', sister_ilse: 'new' });
-  assert.equal(town(2).quests.marks().osric_hale, 'new');
+test('a new game: Maudry, Sister Ilse and Jory (the ditch burrow, v1.63) have something; Osric\'s bounty and Col\'s cow wait for level 2', () => {
+  assert.deepEqual(town(1).quests.marks(), { maudry_fenn: 'new', sister_ilse: 'new', jory: 'new' });
+  assert.equal(town(2).quests.marks().osric_hale, 'new'); assert.equal(town(2).quests.marks().col, 'new');
 });
 
 test('a quest to hand in shows on whoever takes it in, and wins over a new one', () => {

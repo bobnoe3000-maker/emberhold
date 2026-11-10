@@ -23,6 +23,7 @@
 //   reach   the deepest floor reached (count = the floor, 1 = the first), going down after taking it
 //   fragment  Chronicle fragments found (lore.js 'fragmentFound')
 //   boss      a named boss put down in its site (battle.js 'bossDown'); one who already fell counts on accept
+//   camp      a spawn point on the overland cleared (camps.js, battle.js 'campCleared'), each clear counted
 // Chapters and chains (M5): `after` names the quests that must be done first; `turnin` names who takes
 // it in (default: its giver); `reveal` names hidden sites its hand-in reveals (sites.js). A found
 // companion's chain (Brannoc's) is given and taken in by him (`companion`: only while he's with you, in
@@ -37,6 +38,7 @@ import { gainXp, levelShare } from './party.js';
 import { FRAGMENTS } from './lore.js';
 import { NPCS } from './npcs.js';
 import { SITES } from './sites.js';
+import { CAMP_BY } from './camps.js';
 import { trialKey } from './skills.js';
 
 export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
@@ -48,7 +50,7 @@ export const QS = { LOCKED: -1, AVAILABLE: 0, ACTIVE: 1, READY: 2, DONE: 3 };
 export const questXp = (r, level) => levelShare(Math.min(level, r.lv), r.share);
 // (M8, Act II) two more kinds: `meet` (a conversation opened with `npc`: in a town of `region`, or in a dungeon at `site`)
 // and `cages` (full lantern-cages broken at `site`, lamps.js); `loot` can want a floor too
-/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string }} Objective */
+/** @typedef {{ type: 'waves' | 'loot' | 'elites' | 'reach' | 'fragment' | 'boss' | 'meet' | 'cages' | 'camp', site?: string, count: number, hall?: boolean, floor?: number, boss?: string, npc?: string, region?: string, camp?: string }} Objective */
 /** @typedef {{ kind: string, giver: string, region: string, level: [number, number], steps: { id: string, objectives: Objective[] }[], rewards: { share?: number, lv?: number, xp?: number, gold: number, item?: string }, turnin?: string, after?: string[], reveal?: string[], companion?: string, trial?: string, trialLv?: number }} QuestDef */
 /** @type {Record<string, QuestDef>} */
 export const QUESTS = {
@@ -73,6 +75,16 @@ export const QUESTS = {
     kind: 'errand', giver: 'sister_ilse', region: 'vale', level: [1, 9],
     steps: [{ id: 'barrows', objectives: [{ type: 'fragment', site: 'barrows', count: 1 }] }],
     rewards: { share: 0.2, lv: 1, gold: 25 },
+  },
+  vale_bramble: {                                    // Col's errand (world doc §3.1 v1.39, GDD §10.3): the Spit's goblins have his cow
+    kind: 'errand', giver: 'col', region: 'vale', level: [2, 30],
+    steps: [{ id: 'spit', objectives: [{ type: 'camp', camp: 'vale_spit', count: 1 }] }],
+    rewards: { share: 0.25, lv: 2, gold: 35 },
+  },
+  vale_the_ditch: {                                  // Jory's errand (world doc §3.1 v1.39, GDD §10.3): the rats in the palisade bank
+    kind: 'errand', giver: 'jory', region: 'vale', level: [1, 30],
+    steps: [{ id: 'burrow', objectives: [{ type: 'camp', camp: 'vale_ditch', count: 1 }] }],
+    rewards: { share: 0.2, lv: 1, gold: 20 },
   },
   vale_hens_under_the_hill: {                        // Hedda's errand (world doc §5, v1.19): the goblins have her hens; tell their chief
     kind: 'errand', giver: 'hedda', region: 'vale', level: [4, 30],   // (v1.48: Old Skarn sells them to the Redhand in the Keep's bailey)
@@ -275,6 +287,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   bus.on('slain', (e) => { if (e.elite) count((o, n) => (o.type === 'elites' && siteHere(o.site) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('fragmentFound', () => count((o, n) => (o.type === 'fragment' && siteHere(o.site) ? Math.max(n + 1, heldAt(o.site)) : n)));
   bus.on('bossDown', (e) => count((o, n) => (o.type === 'boss' && o.boss === e.id && siteHere(o.site) ? n + 1 : n)));
+  bus.on('campCleared', (e) => count((o, n) => (o.type === 'camp' && o.camp === e.id ? n + 1 : n)));   // (v1.63) a spawn point on the overland cleared (camps.js)
   // a floor change inside a site (arriving from the overland or loading a save carry a scene, and don't count)
   bus.on('levelChanged', (e) => { if (!('scene' in e)) count((o, n) => (o.type === 'reach' && siteHere(o.site) ? Math.max(n, floorHere()) : n)); });
 
@@ -370,7 +383,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     const pick = (...ids) => ids.map((k) => rows.find((r) => r.id === k && !r.off)).find(Boolean);
     let base = null;
     // (M8) somewhere in another land: out of town, out of the dungeon, or along the road to it (travel.js land:<id>)
-    const here = world.region || state.region || 'vale', regionOf = (o) => (o.site && SITES[o.site] ? SITES[o.site].region : o.region || (NPCS[o.npc] || {}).region || here);
+    const here = world.region || state.region || 'vale', regionOf = (o) => (o.site && SITES[o.site] ? SITES[o.site].region : o.camp && CAMP_BY[o.camp] ? CAMP_BY[o.camp].region : o.region || (NPCS[o.npc] || {}).region || here);
     const away = (r) => (world.kind === 'town' ? pick('road-out') : world.kind === 'dungeon' ? pick('exit') : pick('land:' + r));
     const talkTo = (npc) => { const n = (world.npcs || []).find((x) => x.id === npc); return n ? { tx: Math.floor(n.x), ty: Math.floor(n.y), near: 1, then: { type: 'talk', npc: n.id }, sub: world.kind === 'town' ? 'in town' : 'here', steps: 0 } : null; };
     const takerRegion = (NPCS[takerOf(d)] || {}).region;
@@ -397,6 +410,7 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       else if (there && there.type === 'meet' && inSite && NPCS[there.npc] && NPCS[there.npc].found && floorHere() >= NPCS[there.npc].found.depth + 1) base = talkTo(there.npc) || pick('next-room');   // (someone in the dungeon: on their floor)
       else if (there && there.type === 'meet' && inSite) base = pick('stairs-down') || pick('next-room');
       else if (world.kind === 'town') base = pick('road-out');
+      else if (there && there.type === 'camp') base = world.kind === 'dungeon' ? pick('exit') : pick('camp:' + there.camp);   // (v1.63) a spawn point on the land (camps.js)
       else if (world.kind !== 'dungeon') base = site ? pick('site:' + site) : null;           // the site it wants (sites.js)
       else if (!inSite) base = pick('exit');                                                  // the wrong dungeon: out first
       else {
