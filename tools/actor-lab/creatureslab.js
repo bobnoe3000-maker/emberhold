@@ -26,7 +26,7 @@ window.sheet = async (rows) => {
   const out = [], knight = await build({ model: 'Knight', show: ['1H_Sword', 'Round_Shield', 'Knight_Helmet', 'Knight_Cape'] }, { load, faces: async () => ({}) });
   pose(knight, 'Idle', 0, true); const kb = new THREE.Box3().setFromObject(knight.root), kh = kb.max.y - kb.min.y; show(knight);
   for (const row of rows) {
-    const c = buildCreature(row.spec); show(c);
+    const c = await buildCreature(row.spec, load); show(c);
     // (its height in the game, in men: the variant's `height`, as fitPpu sizes it against the cast; else as built, a man 1)
     pose(c, 'Idle', 0, false); const ob = new THREE.Box3().setFromObject(c.root), own = ob.max.y - ob.min.y;
     c.root.scale.setScalar(row.height ? (kh * row.height) / own : kh); scene.add(c.root);

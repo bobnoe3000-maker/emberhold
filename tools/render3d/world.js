@@ -138,7 +138,7 @@ function templateOf(name, def) {
     const { box, ppu } = fitPpu(c.root, def.v, def.px);
     for (const [b, p, q, s] of rest) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
     const cut = compact(c.root, mergeGeometries);              // (once a figure: its copies share the merged parts)
-    templates.set(name, { root: c.root, clips: c.clips, frame: c.frame, ppu, minY: box.min.y, meshes: cut });
+    templates.set(name, { root: c.root, clips: c.clips, frame: c.frame, creature: c.creature || null, ppu, minY: box.min.y, meshes: cut });
   }).catch((e) => { console.warn('[luminati] figure', name, e); figErr ||= `${name}: ${e?.message || e}`; templates.set(name, false); });
   return null;
 }
@@ -168,7 +168,9 @@ function figureFor(key, name, T) {
     mats.push({ m: o.material, own, base: o.material.emissive ? o.material.emissive.clone() : null });
   });
   const bones = []; root.traverse((b) => { if (b.isBone) bones.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
-  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, look: '' };
+  // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
+  // heroes' heroic pass shrank a creature's head to 0.62 in the world, the atlases had it as built)
+  f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, bones, mats, yaw: null, key: '', fpos: 0, seen: 0, look: '' };
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }

@@ -193,6 +193,38 @@ pose was the reference's spread, and every clip was a few degrees off it.
 
 ![The wraith's arms now (top: the rake cocked, the spread, the cast, at rest, the rake from the side) and before (bottom: stuck out wide)](img/creatures/wraith-arms.jpg)
 
+### The humanoids on KayKit's rig (2026-11-10)
+
+The owner: *"goblin and other humanoids NPCs should use the same rigging, movement and idle like player and NPC
+characters. Idle should fit with the type."*
+
+- **The rig:** the goblin, the wraith and the golem now stand on the cast's skeleton (KayKit's Rig_Medium, loaded from
+  `Skeleton_Warrior.glb`, the pack with the most clips). Each keeps its own body, built in code as before. KayKit's
+  joints are moved onto the creature's own, so its proportions stay: the goblin's short legs and big head, the golem's
+  long arms. The body is bound where it stands in KayKit's idle, and KayKit's clips drive it (`creatures.js onKayKit`,
+  the variant's `creature.rig`).
+- **Their own bones:** the bones KayKit hasn't ride on their KayKit parent and keep the motion the kit keyed for them,
+  retimed to each clip. That is the jaw, the wraith's claws, its shroud and its six tendrils.
+- **Fitting each pose:** each sampled pose is put back on the creature's joints (`applyFit`), since KayKit keys every
+  bone's translation. The hips' sway is scaled to the creature's height, and the wraith's by a further 0.35, so it
+  floats rather than steps.
+
+| | Idle | Walk | Attack · Attack2 | Heavy | Hit | Death | Cast |
+|---|---|---|---|---|---|---|---|
+| Goblin | Unarmed_Idle (a crouched brawler) | Running_B (the goblin skirmishers') | Unarmed punches A and B (the claws) | Dualwield chop (both claws down) | Hit_A | Death_A | Taunt (the jeer) |
+| Wraith | Idle_B (the skeletons' looming idle) | Walking_D_Skeletons (the undead's reaching walk) | 1H slice (the rake) · Dualwield stab (the lunge) | Spellcast_Summon, to half (the spread) | Hit_B | Death_C_Skeletons (it sinks) | Spellcasting (the drain) |
+| Golem | 2H_Melee_Idle (a heavy stance) | Walking_C (the slow one) | Unarmed punches A and B | 2H chop (both fists down) | Hit_B | Death_B (it topples) | Taunt_Longer (the roar) |
+
+- **Timing:** the heavy blows land on frame 5 of 10, as the cast's KayKit swings do (bake.json), and the summon is
+  trimmed to its first half, as the skeleton mage's is.
+- **Cost:** the same triangles and draws. Bones: the goblin 42 (KayKit's 41 and its jaw), the wraith 65, the golem 41.
+  `Skeleton_Warrior.glb` keeps 22 of its 95 clips, up from 9 (785 KB → 1.47 MB).
+- **A fix on the way:** in the world, a creature figure didn't carry its `creature` flag, so the heroes' heroic pass
+  shrank its head to 0.62 and stretched its spine (`world.js` figureFor). The atlases always had it as built, and the
+  world now does too.
+
+![Before (top: the kit's own clips) and after (bottom: KayKit's), the goblin, the wraith and the golem through their clips](img/creatures/kaykit-rig-before-after.jpg)
+
 ### The Proving Pens: a trial dungeon to fight them in (GDD v1.60)
 
 The owner: *"Add a test dungeon to thornvale, one room with each of the new creatures.. level 4"*. **The Proving Pens**

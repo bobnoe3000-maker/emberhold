@@ -4874,7 +4874,20 @@
   "cls": "Creature",
   "label": "Goblin \u00b7 after the owner's reference: a big bald head, bat ears ringed in brass, a red scarf, claws (creatures.js goblin)",
   "creature": {
-   "kind": "goblin"
+   "kind": "goblin",
+   "rig": {
+    "model": "Skeleton_Warrior",
+    "clips": {
+     "Idle": "Unarmed_Idle",
+     "Walk": "Running_B",
+     "Attack": "Unarmed_Melee_Attack_Punch_A",
+     "Attack2": "Unarmed_Melee_Attack_Punch_B",
+     "Heavy": "Dualwield_Melee_Attack_Chop",
+     "Hit": "Hit_A",
+     "Death": "Death_A",
+     "Cast": "Taunt"
+    }
+   }
   },
   "height": 0.72
  },
@@ -4883,7 +4896,21 @@
   "cls": "Creature",
   "label": "Graveyard wraith \u00b7 a man and a half, a grave-shroud trailing off like smoke (creatures.js wraith)",
   "creature": {
-   "kind": "wraith"
+   "kind": "wraith",
+   "rig": {
+    "model": "Skeleton_Warrior",
+    "hips": 0.35,
+    "clips": {
+     "Idle": "Idle_B",
+     "Walk": "Walking_D_Skeletons",
+     "Attack": "1H_Melee_Attack_Slice_Diagonal",
+     "Attack2": "Dualwield_Melee_Attack_Stab",
+     "Heavy": "Spellcast_Summon",
+     "Hit": "Hit_B",
+     "Death": "Death_C_Skeletons",
+     "Cast": "Spellcasting"
+    }
+   }
   },
   "height": 1.5
  },
@@ -4892,7 +4919,20 @@
   "cls": "Creature",
   "label": "Stone golem \u00b7 twice a man, mossed boulders round an ember core (creatures.js golem)",
   "creature": {
-   "kind": "golem"
+   "kind": "golem",
+   "rig": {
+    "model": "Skeleton_Warrior",
+    "clips": {
+     "Idle": "2H_Melee_Idle",
+     "Walk": "Walking_C",
+     "Attack": "Unarmed_Melee_Attack_Punch_A",
+     "Attack2": "Unarmed_Melee_Attack_Punch_B",
+     "Heavy": "2H_Melee_Attack_Chop",
+     "Hit": "Hit_B",
+     "Death": "Death_B",
+     "Cast": "Taunt_Longer"
+    }
+   }
   },
   "height": 2.0
  },

@@ -28,7 +28,15 @@ test('each model carries exactly the clips its actors play, and the weapons they
   // (a creature, v1.58, is built in code, tools/actor-lab/creatures.js: no model shipped; its clips are the kit's own)
   const KIT_CLIPS = ['Idle', 'Walk', 'Attack', 'Attack2', 'Heavy', 'Hit', 'Death', 'Cast'];
   for (const c of Object.values(cast.actors)) {
-    if (c.v.creature) { for (const k of Object.values(c.clips)) assert.ok(KIT_CLIPS.includes(k.clip), `${c.v.id}: ${k.clip} is a clip the kit keys`); assert.ok(!c.v.model, `${c.v.id}: a creature names no model`); continue; }
+    if (c.v.creature) {
+      for (const k of Object.values(c.clips)) assert.ok(KIT_CLIPS.includes(k.clip), `${c.v.id}: ${k.clip} is a clip the kit keys`);
+      assert.ok(!c.v.model, `${c.v.id}: a creature names no model`);
+      // (a humanoid on KayKit's rig, creatures.js onKayKit: its clips are its rig model's, kept in that model's .glb)
+      const rig = c.v.creature.rig; if (!rig) continue;
+      const s = plays.get(rig.model) || new Set(['Idle']); plays.set(rig.model, s); s.add(rig.clips.Idle);
+      for (const k of Object.values(c.clips)) { assert.ok(rig.clips[k.clip], `${c.v.id}: its rig plays ${k.clip}`); s.add(rig.clips[k.clip]); }
+      continue;
+    }
     const s = plays.get(c.v.model) || new Set(['Idle']); plays.set(c.v.model, s);
     for (const k of Object.values(c.clips)) s.add(k.clip);
     for (const f of Object.values(c.v.attach || {})) assert.ok(existsSync(at(`assets/models/${f}`)), `${f} is shipped`);

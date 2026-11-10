@@ -870,8 +870,79 @@ const ratking = (o = {}) => rat({ fur: '#3a342e', belly: '#5a5048', furTop: '#54
 const spiderqueen = (o = {}) => spider({ body: '#1e1622', band: '#6a4864', mark: '#e2d8c2', eyes: '#78c038', seed: 37, ...o, queen: true });
 const KINDS = { rat, spider, beetle, goblin, wraith, golem, ratking, spiderqueen };
 export const CREATURE_KINDS = Object.keys(KINDS);
-/** a creature as figure.js builds a figure: { root, mixer, clips, frame } @param {{ kind: string, [k: string]: any }} spec */
-export function buildCreature(spec) {
+
+// ── the humanoids on KayKit's rig (the owner, 2026-11-10: "goblin and other humanoids NPCs should use the same rigging,
+// movement and idle like player and NPC characters. Idle should fit with the type") ────────────────────────────────────
+// A variant's `creature.rig: { model, clips: { ours: KayKit's }, hips }` stands the creature on the KayKit skeleton of
+// that model (Rig_Medium, the cast's): its joints moved to the creature's own (its proportions kept: the goblin's short
+// legs, the golem's long arms), the body built above bound to them as it stands, and its clips KayKit's own, by the name
+// the cast plays (Idle, Walk, Attack…: bake.json unchanged). A clip is sampled at the creature's joints: every bone's
+// keyed translation put back to its own place after each pose (figure.js applyFit), the hips' sway scaled to its height
+// (× `hips`: a floating wraith barely bobs). The bones KayKit hasn't (a jaw, a wraith's claws, its shroud and tendrils)
+// ride on their KayKit parent and keep the motion the kit keyed for them, the clip's of the same name, retimed to it.
+const KK_LIMB = { armU: 'upperarm', armL: 'lowerarm', hand: 'hand', fist: 'hand', legU: 'upperleg', legL: 'lowerleg', foot: 'foot' };
+const KK_TRUNK = { root: 'hips', spine: 'spine', chest: 'chest', neck: 'chest', head: 'head' };   // (no neck in KayKit's: ours rides the chest)
+/** our bone's KayKit bone (as GLTFLoader names it: no dots), or null for one of our own */
+const kkOf = (n) => { const m = /^(armU|armL|hand|fist|legU|legL|foot)(-?1)$/.exec(n); return m ? KK_LIMB[m[1]] + (m[2] === '1' ? 'l' : 'r') : KK_TRUNK[n] || null; };
+async function onKayKit(made, rig, load) {
+  const g = await load(`./models/${rig.model}.glb`), kk = g.scene;
+  let src = null; kk.traverse((o) => { if (o.isSkinnedMesh && !src) src = o; });
+  const kb = src.skeleton.bones, kn = new Map(kb.map((b) => [b.name.replace(/\./g, ''), b]));
+  { const ms = []; kk.traverse((o) => { if (o.isMesh) ms.push(o); }); for (const m of ms) m.parent.remove(m); }   // (KayKit's meshes: never drawn)
+  // KayKit's idle at its first frame is the bind: the creature stands in it as built
+  const clipOf = (n) => { const c = g.animations.find((a) => a.name === n); if (!c) throw new Error(`${rig.model}: no clip ${n}`); return c; };
+  const mx = new THREE.AnimationMixer(kk); mx.clipAction(clipOf(rig.clips.Idle)).play(); mx.setTime(0);   // (not stopped: a stopped action puts its bones back as they were)
+  kk.updateMatrixWorld(true);
+  const ours = []; made.root.traverse((o) => { if (o.isBone) ours.push(o); });
+  const hips = kn.get('hips'), hipsRest = hips.position.clone();
+  // the joints moved, parents first: each mapped bone to ours, the wrist to our hand (KayKit's hand on it)
+  const want = new Map();
+  for (const b of ours) { const k = kkOf(b.name); if (!k || b.name === 'neck') continue; want.set(k, b.userData.at); if (k.startsWith('hand')) want.set('wrist' + k.slice(-1), b.userData.at); }
+  kk.traverse((o) => { if (!o.isBone) return; const n = o.name.replace(/\./g, ''), at = want.get(n); if (!at) return;
+    o.parent.updateMatrixWorld(true); o.position.copy(o.parent.worldToLocal(at.clone())); o.updateMatrixWorld(true); o.userData.fit = o.position.toArray(); });
+  hips.userData.fitHips = { rest: hipsRest.toArray(), k: (hips.position.length() / Math.max(1e-6, hipsRest.length())) * (rig.hips ?? 1) };
+  // our own bones on their KayKit parent, turned so they stand as built (their keyed turns are in our bind's frame)
+  const node = new Map(), q0 = new Map(), _q = new THREE.Quaternion();
+  for (const b of ours) {   // (traverse order: a parent before its children)
+    const k = kkOf(b.name); if (k) { node.set(b.name, kn.get(k)); continue; }
+    const p = node.get(b.parent.name), e = new THREE.Bone(); e.name = b.name; p.add(e); p.updateMatrixWorld(true);
+    e.position.copy(p.worldToLocal(b.userData.at.clone())); p.getWorldQuaternion(_q); e.quaternion.copy(_q.invert()); e.updateMatrixWorld(true);
+    node.set(b.name, e); q0.set(b.name, e.quaternion.clone());
+  }
+  const root = new THREE.Group(); root.add(kk); root.updateMatrixWorld(true);
+  const bones = [...kb, ...[...q0.keys()].map((n) => node.get(n))], skeleton = new THREE.Skeleton(bones);
+  made.root.traverse((o) => { if (!o.isSkinnedMesh) return;
+    const old = o.skeleton.bones, re = old.map((b) => bones.indexOf(node.get(b.name))), SI = o.geometry.attributes.skinIndex, si = new Uint16Array(SI.count * 4);
+    for (let i = 0; i < SI.count; i++) for (let j = 0; j < 4; j++) si[i * 4 + j] = re[SI.getComponent(i, j)];
+    const geo = o.geometry.clone(); geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4));
+    const m = new THREE.SkinnedMesh(geo, o.material); m.name = o.name; m.userData = { ...o.userData }; m.frustumCulled = false; root.add(m); m.updateMatrixWorld(true); m.bind(skeleton, m.matrixWorld);
+  });
+  // the clips: KayKit's, named as ours, with our own bones' turns from ours of the same name laid in
+  const clips = Object.entries(rig.clips).map(([name, from]) => {
+    const c = clipOf(from).clone(), mine = made.clips.find((a) => a.name === name); c.name = name;
+    if (mine) for (const t of mine.tracks) {
+      const [bn, prop] = t.name.split('.'); if (prop !== 'quaternion' || !q0.has(bn)) continue;
+      const Q = q0.get(bn), v = t.values.slice(), q = new THREE.Quaternion();
+      for (let i = 0; i < v.length; i += 4) { q.fromArray(v, i); q.premultiply(Q).toArray(v, i); }
+      c.tracks.push(new THREE.QuaternionKeyframeTrack(t.name, Array.from(t.times, (x) => (x * c.duration) / mine.duration), v));
+    }
+    return c;
+  });
+  return { root, mixer: new THREE.AnimationMixer(root), clips, frame: null, creature: made.kind, rig: rig.model };
+}
+/** a creature as figure.js builds a figure: { root, mixer, clips, frame }; one with a `rig` stands on KayKit's skeleton
+ *  (onKayKit), loaded by `load` (figure.js build's: the bake's paths) @param {{ kind: string, rig?: any, [k: string]: any }} spec
+ *  @param {(url: string) => Promise<any>} [load] */
+export async function buildCreature(spec, load) {
   const { root, clips } = KINDS[spec.kind](spec);
+  if (spec.rig && load) return onKayKit({ root, clips, kind: spec.kind }, spec.rig, load);
   return { root, mixer: new THREE.AnimationMixer(root), clips, frame: null, creature: spec.kind };
+}
+/** a pose sampled from KayKit's clips put back on the creature's joints (onKayKit): every moved bone to its place, the
+ *  hips' keyed sway scaled to its height @param {THREE.Object3D} root */
+export function applyFit(root) {
+  root.traverse((b) => { if (!b.isBone) return;
+    const h = b.userData.fitHips, f = b.userData.fit;
+    if (h) { const r = h.rest; b.position.set(f[0] + (b.position.x - r[0]) * h.k, f[1] + (b.position.y - r[1]) * h.k, f[2] + (b.position.z - r[2]) * h.k); }
+    else if (f) b.position.set(f[0], f[1], f[2]); });
 }

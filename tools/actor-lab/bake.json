@@ -5173,7 +5173,7 @@
           "frames": 10,
           "fps": 13,
           "once": true,
-          "impact": 7
+          "impact": 5
         },
         {
           "key": "hit",
@@ -5236,7 +5236,8 @@
           "frames": 10,
           "fps": 13,
           "once": true,
-          "impact": 6
+          "impact": 5,
+          "to": 0.5
         },
         {
           "key": "hit",
@@ -5300,7 +5301,7 @@
           "frames": 10,
           "fps": 10,
           "once": true,
-          "impact": 6
+          "impact": 5
         },
         {
           "key": "hit",

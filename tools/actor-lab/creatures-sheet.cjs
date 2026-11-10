@@ -6,22 +6,24 @@ const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
 const arg = (k) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : null; };
 const OUT = arg('out') || (process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : path.join(__dirname, 'out', 'creatures.jpg'));
+// (the humanoids' specs as the cast has them, variants.json: on KayKit's rig)
+const VAR = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(__dirname, 'variants.json'), 'utf8')).filter((v) => v.creature).map((v) => [v.creature.kind + (v.creature.seed ? v.creature.seed : ''), v.creature]));
 const SHOTS = [['Idle', [0.3]], ['Walk', [0, 0.25, 0.5, 0.75]], ['Attack', [0.45]], ['Heavy', [0.55]], ['Cast', [0.5]], ['Hit', [0.25]], ['Death', [0.99]]];
 // height: as the game stands it (the variant's, in men; a boss's ×1.3, as the renderer draws a boss); cy, half: the
 // camera's aim and half-height, in men
 const ROWS = [
-  { name: 'Stone golem · front', key: 'golemf', spec: { kind: 'golem' }, height: 2.0, cy: 1.0, half: 1.1, yaw: 0.55, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
+  { name: 'Stone golem · front', key: 'golemf', spec: VAR.golem, height: 2.0, cy: 1.0, half: 1.1, yaw: 0.55, shots: [['Idle', [0.3]], ['Heavy', [0.42]], ['Death', [0.99]]] },
   { name: 'Giant rat · front', key: 'ratf', spec: { kind: 'rat' }, height: 0.47, cy: 0.22, half: 0.34, yaw: 0.4, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
-  { name: 'Goblin · front', key: 'goblinf', spec: { kind: 'goblin' }, height: 0.72, cy: 0.4, half: 0.36, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
-  { name: 'Graveyard wraith · front', key: 'wraithf', spec: { kind: 'wraith' }, height: 1.5, cy: 0.8, half: 0.85, yaw: 0.78, shots: [['Idle', [0.3]], ['Attack', [0.45]], ['Heavy', [0.4]]] },
+  { name: 'Goblin · front', key: 'goblinf', spec: VAR.goblin, height: 0.72, cy: 0.4, half: 0.36, yaw: 0.3, shots: [['Idle', [0.3]], ['Attack', [0.4]], ['Cast', [0.5]]] },
+  { name: 'Graveyard wraith · front', key: 'wraithf', spec: VAR.wraith, height: 1.5, cy: 0.8, half: 0.85, yaw: 0.78, shots: [['Idle', [0.3]], ['Attack', [0.45]], ['Heavy', [0.4]]] },
   { name: 'Giant rat', key: 'rat', spec: { kind: 'rat' }, height: 0.47, cy: 0.2, half: 0.42, yaw: -0.7, shots: SHOTS.filter(([c]) => c !== 'Cast') },
   { name: 'Giant spider', key: 'spider', spec: { kind: 'spider' }, height: 0.54, cy: 0.25, half: 0.55, yaw: -0.6, shots: SHOTS },
   { name: 'Spinner', key: 'spinner', spec: { kind: 'spider', seed: 29, body: '#3a302a', band: '#7a6650', mark: '#d8ccb0', eyes: '#c8f070' }, height: 0.41, cy: 0.2, half: 0.45, yaw: -0.6, shots: SHOTS },
   { name: 'Old Gutter', key: 'gutter', spec: { kind: 'rat', seed: 13, fur: '#4a4640', belly: '#625c54', furTop: '#6c675e', eyes: '#ff6a30' }, height: 0.61, cy: 0.26, half: 0.5, yaw: -0.7, shots: SHOTS.filter(([c]) => c !== 'Cast') },
   { name: 'Red fire beetle', key: 'beetle', spec: { kind: 'beetle' }, height: 0.42, cy: 0.2, half: 0.42, yaw: -0.6, shots: SHOTS },
-  { name: 'Goblin', key: 'goblin', spec: { kind: 'goblin' }, height: 0.72, cy: 0.38, half: 0.5, yaw: -0.5, shots: SHOTS },
-  { name: 'Graveyard wraith', key: 'wraith', spec: { kind: 'wraith' }, height: 1.5, cy: 0.8, half: 0.95, yaw: -0.5, shots: SHOTS },
-  { name: 'Stone golem', key: 'golem', spec: { kind: 'golem' }, height: 2.0, cy: 1.0, half: 1.2, yaw: -0.5, shots: SHOTS },
+  { name: 'Goblin', key: 'goblin', spec: VAR.goblin, height: 0.72, cy: 0.38, half: 0.5, yaw: -0.5, shots: SHOTS },
+  { name: 'Graveyard wraith', key: 'wraith', spec: VAR.wraith, height: 1.5, cy: 0.8, half: 0.95, yaw: -0.5, shots: SHOTS },
+  { name: 'Stone golem', key: 'golem', spec: VAR.golem, height: 2.0, cy: 1.0, half: 1.2, yaw: -0.5, shots: SHOTS },
   { name: 'The Rat King (boss)', key: 'ratking', spec: { kind: 'ratking' }, height: 0.75 * 1.3, cy: 0.42, half: 1.05, yaw: -1.0, shots: SHOTS },
   { name: 'The Spider Queen (boss)', key: 'spiderqueen', spec: { kind: 'spiderqueen' }, height: 0.8 * 1.3, cy: 0.45, half: 1.15, yaw: -0.6, shots: SHOTS },
 ].filter((r) => !arg('only') || arg('only').split(',').includes(r.key));

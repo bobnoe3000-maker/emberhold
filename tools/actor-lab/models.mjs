@@ -69,10 +69,17 @@ const plays = new Map(), attach = new Set(), presets = new Set(), actors = {};
 for (const a of bake.actors) {
   const v = variants[a.variant]; if (!v) throw new Error(`${a.out}: no variant ${a.variant}`);
   if (v.body) throw new Error(`${a.out}: a body mock-up (body.js) isn't shipped as a model`);
-  // (a creature, creatures.js, is built in code: no KayKit model to prune, only its cast entry)
-  const set = v.creature ? new Set() : plays.get(v.model) || new Set(['Idle']); if (!v.creature) plays.set(v.model, set);
+  // (a creature, creatures.js, is built in code: no KayKit model to prune, only its cast entry; one on KayKit's rig,
+  // creature.rig, plays its model's clips under its own names: those kept in that model's .glb)
+  const rig = v.creature && v.creature.rig, model = rig ? rig.model : v.model;
+  const set = v.creature && !rig ? new Set() : plays.get(model) || new Set(['Idle']); if (!v.creature || rig) plays.set(model, set);
   const clips = {};
-  for (const k of a.clips) { set.add(k.clip); clips[k.key] = { clip: k.clip, frames: k.frames, ...(k.once ? { once: true } : {}), ...(k.from != null ? { from: k.from } : {}), ...(k.to != null ? { to: k.to } : {}) }; }
+  for (const k of a.clips) {
+    if (rig && !rig.clips[k.clip]) throw new Error(`${a.out}: its rig has no clip for ${k.clip}`);
+    set.add(rig ? rig.clips[k.clip] : k.clip);
+    clips[k.key] = { clip: k.clip, frames: k.frames, ...(k.once ? { once: true } : {}), ...(k.from != null ? { from: k.from } : {}), ...(k.to != null ? { to: k.to } : {}) };
+  }
+  if (rig) set.add(rig.clips.Idle);   // (its bind: the idle's first frame, creatures.js onKayKit)
   for (const f of Object.values(v.attach || {})) attach.add(f);
   if (typeof v.face === 'string') presets.add(v.face);
   actors[a.out] = { v, px: a.px || bake.px, clips };
