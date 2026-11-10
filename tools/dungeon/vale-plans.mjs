@@ -19,6 +19,7 @@ const LOOK = {
   crypt: { rect: ['#4a4652', '#8e8798'], cave: ['#4c4033', '#7d6a52'], round: ['#4a4652', '#8e8798'], light: '#9fb4d8', strip: [['#4a4652', 'cold limestone flags'], ['#4c4033', 'dug earth, timber'], ['#9fb4d8', 'candle and cold light'], ['#d08a3a', 'the Redhand\'s fires']] },
   keep: { rect: ['#4e4a40', '#9a9078'], cave: ['#33403f', '#5f7a76'], round: ['#4e4a40', '#9a9078'], light: '#e8a456', strip: [['#4e4a40', 'cobbles, flags'], ['#6b4a2e', 'timber, straw'], ['#33403f', 'wet cave rock'], ['#e8a456', 'firelight']] },
   temple: { rect: ['#46504c', '#a3aca2'], cave: ['#3d3646', '#6e6280'], round: ['#3f3a4a', '#9a8fae'], light: '#c9d6b0', strip: [['#46504c', 'pale stone, moss'], ['#2f4a52', 'standing water'], ['#3d3646', 'the cult\'s cut'], ['#c9a0ff', 'the binding\'s glow']] },
+  pen: { rect: ['#4e4a40', '#9a9078'], cave: ['#4c4033', '#7d6a52'], round: ['#4e4a40', '#9a9078'], light: '#e8a456', strip: [['#4c4033', 'the adit\'s dug rock'], ['#4e4a40', 'the pens\' flags'], ['#e8a456', 'lantern light']] },   // (v1.60: the Proving Pens, a trial)
   vault: { rect: ['#44464e', '#8a8e9a'], cave: ['#44464e', '#8a8e9a'], round: ['#44464e', '#8a8e9a'], light: '#d8c890', strip: [['#44464e', 'dry ashlar'], ['#d8c890', 'lamp light'], ['#8a6a3a', 'iron and oak']] },
 };
 const ROLE = { entrance: '#6fae7a', room: '#d8c39a', offshoot: '#a8c8e8', descent: '#e0905a', end: '#e06a5a' };
@@ -183,7 +184,7 @@ function planSvg(p) {
   const legend = Object.entries(ROLE).map(([k, c], i) => `<rect x="${PAD + i * 120}" y="${HEAD + H + 10}" width="12" height="12" fill="${c}"/><text x="${PAD + i * 120 + 17}" y="${HEAD + H + 21}" font-size="11" fill="#cfc6b6">${{ entrance: 'entrance (safe)', room: 'room', offshoot: 'offshoot (dashed)', descent: 'descent room', end: 'last hall' }[k]}</text>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${HEAD + H + FOOT + 10}" font-family="Georgia, 'DejaVu Serif', serif">
 <rect width="100%" height="100%" fill="#14121a"/>
-<text x="${PAD}" y="30" font-size="22" font-weight="700" fill="#f6ecd6">${esc(p.name)} · ${p.flat ? `secret, level ${p.base}` : `levels ${p.base}–${p.base + 2}`} · a ${esc(p.kind)}</text>${strip}
+<text x="${PAD}" y="30" font-size="22" font-weight="700" fill="#f6ecd6">${esc(p.name)} · ${p.flat ? `${p.kind === 'pen' ? 'a trial' : 'secret'}, level ${p.base}` : `levels ${p.base}–${p.base + 2}`} · a ${esc(p.kind)}</text>${strip}
 ${parts.join('\n')}${legend}<text x="${PAD}" y="${HEAD + H + 42}" font-size="11" fill="#8a8274">4 px a tile · halls marked with their width · src/sim/plans.js</text></svg>`;
 }
 

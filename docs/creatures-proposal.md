@@ -162,11 +162,62 @@ with both claws, and Cast a cackle with both claws up.
 | S3 (in the game) | The goblin's ears small beside the reference's | A quarter bigger, the rings with them |
 | S4 (sheet) | Shaded smooth, the wraith's tendrils stacked logs and its bell sleeves capped pipes. The rat's face a teddy bear's | The tendrils one swept tube each (`tube()`); the sleeves' mouths dark inside; the rat's brow two ridges, a scowl |
 
-### In the sim, unplaced
+### The Proving Pens: a trial dungeon to fight them in (GDD v1.60)
+
+The owner: *"Add a test dungeon to thornvale, one room with each of the new creatures.. level 4"*. **The Proving Pens**
+(`sites.js` `proving_pens`, `plans.js`) are on the Hollow Vale behind the Scrag Warren's old adit under the north range,
+its boards off again, at the end of the warren's track. Its name is over the door, and it is on the World map. They
+are a trial, not canon (world doc v1.38), and will go or get a story when the creatures are placed.
+
+- **Flat at 4**, like a secret dungeon or the Mere Tower, so it is no band and Wickham Keep keeps 4–6 as its own. It
+  pays as any level-4 room does.
+- **Two authored floors of five,** laid out on the Barrows' first floor and the Keep's second, so the plan rules hold.
+  Each pen names its own family (`battle.js`):
+
+  | Floor | Space | Who |
+  |---|---|---|
+  | 1 | The Adit Mouth | the way in (safe) |
+  | 1 | The Beetle Pen | red fire beetles alone (`beetles`) |
+  | 1 | The Goblin Pen | goblins alone (`gobs`) |
+  | 1 | The Wraith Pen (offshoot) | graveyard wraiths alone (`wraiths`: undead, so Turn Undead reaches them) |
+  | 1 | The Rat King's Hall | **the Rat King** and his swarm, the vermin's waves (`vermin`); the way down |
+  | 2 | The Pens' Stair | the way in (safe) |
+  | 2 | The Mixed Pen | all four new together: goblins and golems up front, beetles behind, a wraith the elite (`bestiary`) |
+  | 2 | The Vermin Pen (offshoot) | rats, spiders and spinners, Old Gutter leading (`vermin`) |
+  | 2 | The Golem Pen | stone golems alone (`golems`) |
+  | 2 | The Spider Queen's Hall | **the Spider Queen** and her brood, the cellars' waves (`cellar`) |
+
+![The Proving Pens' two floors, to scale](img/dungeon/vale-proving_pens.png)
+
+**Balance** (`roomlv.mjs 300 4 4 1,3 --site proving_pens --floor F --part P`: fighter, rogue and cleric at 4 in gear,
+five minutes; `boss.mjs proving_pens 4 --floor F`, three seeds):
+
+| Room | Waves held | Lowest | Downs |
+|---|---|---|---|
+| Wickham Keep's first floor (for comparison) | 21 | 75 % | 0 |
+| The Beetle Pen | 23 | 72 % | 0 |
+| The Goblin Pen | 22 | 75 % | 0 |
+| The Wraith Pen | 20 | 52 % | 0 |
+| The Mixed Pen | 19 | 76 % | 0 |
+| The Vermin Pen | 22 | 70 % | 0 |
+| The Golem Pen | 17 | 70 % | 0 |
+| The Rat King (his hall) | down in 74–87 s | 74–76 % | 0 |
+| The Spider Queen (her hall) | down in 56–61 s | 64–81 % | 0 |
+
+The wraiths cut deepest (52 %) and the golems last longest (17 waves). Every pen holds well past the contract's ten
+waves at the level, as the Keep's rooms do.
+
+`test/pens.test.mjs` checks the following:
+- the site and its plan;
+- each pen fills with its own kind and nothing else, at 4;
+- the two bosses open their halls;
+- the way in from the Vale and out to it.
+
+### In the sim (unplaced but for the Pens)
 
 - `battle.js`: `firebeetle` (rogue: a `firespit` bolt, 8 tiles), `gob` (minion), `wraith` (warrior), `golem` (warrior,
   DEF 9, speed 2.3); `rat_king` (`swarm`, escort rats) and `spider_queen` (`call`, a spider and a spinner), at their
-  mirrors' HP, ATK and DEF. No family or hall names them yet.
+  mirrors' HP, ATK and DEF. No family of the game's own lands names them yet: only the Proving Pens' (above).
 - Names (`content/foes.json`), actors (`renderer.js` `ENEMY_ACTOR`), bolt look, banners, voices (`audio/cues.js`).
 - **The Stage fights them:** `?dev&scene=stage&show=fx&foes=firebeetle,golem` (a family of those alone for the room),
   `&boss=rat_king` (that boss in the floor's hall), `&quiet=0` to let the party's skills run.

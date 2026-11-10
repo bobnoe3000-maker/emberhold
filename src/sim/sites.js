@@ -42,6 +42,10 @@ export const SITES = {
   barrows: { name: 'The Old Barrows', region: 'vale', theme: 'crypt', base: 1, perFloor: 1, floors: 2, span: 3, plan: true, family: 'ashbound', families: ['diggers', 'ashbound'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 2: 'quartermaster' }, dress: ['dig', 'gallery'], mix: 0 },
   wickham_keep: { name: 'Wickham Keep', region: 'vale', theme: 'dread', themes: ['dread', 'cave'], base: 4, perFloor: 1, floors: 2, span: 3, plan: true, family: 'redhand', families: ['redhand', 'redhand'], rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'goblin_chief', 2: 'redhand_captain' }, dress: ['bailey', 'barracks'], mix: 0x7e40 },
   sunken_chapel: { name: 'The Sunken Chapel', region: 'vale', theme: 'nave', themes: ['nave', 'cinder'], base: 7, perFloor: 1, floors: 2, span: 3, plan: true, family: 'chapel', rooms: [5, 5], layout: 'halls', band: true, bosses: { 1: 'robed_stranger', 2: 'standard' }, dress: ['nave', 'binding'], mix: 0xc4a9 },
+  // (v1.60, the owner: "Add a test dungeon to thornvale, one room with each of the new creatures.. level 4") a trial site
+  // behind the Scrag Warren's old adit: the bestiary in pens, flat at 4 (no band: the Keep keeps 4–6), the Rat King and the
+  // Spider Queen in its halls. Not canon (world doc v1.38): it goes, or gets a story, when the creatures are placed.
+  proving_pens: { name: 'The Proving Pens', region: 'vale', theme: 'cave', base: 4, perFloor: 0, floors: 2, plan: true, family: 'bestiary', rooms: [5, 5], layout: 'halls', flat: true, bosses: { 1: 'rat_king', 2: 'spider_queen' }, dress: ['dig', 'cellar'], mix: 0x9e57 },
   ninth_milestone: { name: 'The Ninth Milestone', region: 'vale', theme: 'chasm', base: 9, perFloor: 0, floors: 1, plan: true, family: 'ashbound', rooms: [5, 5], layout: 'halls', flat: true, hidden: true, secret: true, vault: 'last_order', mix: 0x9e11 },
   // the Greywater Fens, 10–18: the Toadking's island of boats, the lock halls going down into the vats, the Abbey; the
   // Undercroft its secret. The Sickpools are the Locks' third floor, Vat Seven (they were a site of their own).

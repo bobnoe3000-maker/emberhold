@@ -731,6 +731,7 @@ function buildOverland(seed) {
   o.labels.push({ x: town[0] + 4, y: town[1], id: B('gatehousey'), text: 'Thornwick' }, { x: keep[0], y: keep[1], id: B('keep'), text: 'Wickham Keep', site: 'wickham_keep' }, { x: barrows[0], y: barrows[1], id: 'ruin', text: 'The Old Barrows', site: 'barrows' },
     { x: mill[0], y: mill[1], id: 'watermill_0', text: 'The Tithe Mill' }, { x: chapel[0], y: chapel[1], id: 'chapelruin_0', text: 'The Sunken Chapel', site: 'sunken_chapel' },   // (v1.48: the Tithe Mill a working mill again, a landmark)
     { x: stone[0], y: stone[1], id: 'milestone_0', text: 'The Ninth Milestone', site: 'ninth_milestone' },   // (v1.48: the Scrag Warren's adit is boarded up again: no label)
+    { x: warren[0], y: warren[1], id: 'warren_0', text: 'The Proving Pens', site: 'proving_pens' },   // (v1.60: the adit's boards off again, for a trial: the bestiary's pens)
     { x: mine[0], y: mine[1], id: 'mine_0', text: 'Deepdelve Mine' }, { x: camp[0], y: camp[1], id: 'lumbermill_90', text: 'Lumber camp' });
 
   // THE RANGES (critic pass 10: mountains smaller than the keep, on a 15-tile lattice, 11 of them on the meadow).
@@ -829,9 +830,10 @@ function buildOverland(seed) {
   o.exits.push({ x0: keep[0] - 3, y0: keep[1] + 6.5, x1: keep[0] + 3, y1: keep[1] + 9.5, to: 'dungeon', site: 'wickham_keep' });   // the keep's own door (the owner removed its curtain wall)
   o.exits.push({ x0: chapel[0] - 2, y0: chapel[1] + 11, x1: chapel[0] + 4, y1: chapel[1] + 14, to: 'dungeon', site: 'sunken_chapel' });
   o.exits.push({ x0: stone[0] - 2, y0: stone[1] + 4, x1: stone[0] + 3, y1: stone[1] + 7, to: 'dungeon', site: 'ninth_milestone' });
+  o.exits.push({ x0: warren[0], y0: warren[1] + 6, x1: warren[0] + 5, y1: warren[1] + 9, to: 'dungeon', site: 'proving_pens' });   // (v1.60) the adit's mouth, where the track ends
   o.arrivals = { default: { x: town[0] + 30.5, y: town[1] + 0.5 }, thornwick: { x: town[0] + 30.5, y: town[1] + 0.5 }, barrows: { x: barrows[0] + 1.5, y: barrows[1] + 13.5 },
     tithe_mill: { x: mill[0] - 0.5, y: mill[1] + 15.5 }, wickham_keep: { x: keep[0] + 0.5, y: keep[1] + 27.5 }, sunken_chapel: { x: chapel[0] + 1.5, y: chapel[1] + 19.5 }, ninth_milestone: { x: stone[0] + 0.5, y: stone[1] + 11.5 },
-    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 } };
+    scrag_warren: { x: warren[0] + 4, y: warren[1] + 13.5 }, proving_pens: { x: warren[0] + 2.5, y: warren[1] + 13.5 }, fens: { x: 38.5, y: 255.5 } };
   // the canal road leaves the Vale at its south edge, for the Fens (regions.js); shut, with a word, until Act I is done
   o.exits.push({ x0: 30, y0: 263, x1: 47, y1: 271, to: 'overland', region: 'fens', arrive: 'vale_road',
     shut: "The canal road's under water past the barrows. Sister Ilse says there's a way through, when you've a reason to go." });

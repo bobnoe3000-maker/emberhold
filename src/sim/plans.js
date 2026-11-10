@@ -147,6 +147,45 @@ export const PLANS = {
     ] },
   ] },
 
+  // ── The Proving Pens (a trial, 4: GDD v1.60): the bestiary penned behind the old adit, a pen a kind, the bosses in the
+  //    halls. Laid out as the Barrows' first floor and the Keep's second (their shapes are the rules' proven ones).
+  proving_pens: { site: 'proving_pens', name: 'The Proving Pens', kind: 'pen', base: 4, flat: true, floors: [
+    { name: 'The Upper Pens', spaces: [
+      { id: 'adit_mouth', name: 'The Adit Mouth', role: 'entrance', x: 0, y: 0, w: 32, h: 28, shape: 'cave', lv: 0, kit: 'dig',
+        dress: ['spoil', 'lanterns', 'crates'], note: 'The old lead level behind the boards: rusted rails, the spoil grassed over at the door, lanterns hung for whoever comes to look.' },
+      { id: 'beetle_pen', name: 'The Beetle Pen', role: 'room', x: 42, y: 0, w: 36, h: 30, shape: 'cave', lv: 0, kit: 'dig', foes: 'beetles',
+        dress: ['timbers', 'spoil', 'lanterns'], note: 'The red fire beetles, alone: a dug pen, its timbers scorched.' },
+      { id: 'goblin_pen', name: 'The Goblin Pen', role: 'room', x: 36, y: 40, w: 56, h: 52, shape: 'rect', lv: 0, kit: 'bailey', foes: 'gobs',
+        dress: ['crates', 'cookfires', 'banners'], note: 'The goblins, alone: a big square pen, their crates and their fires.' },
+      { id: 'wraith_pen', name: 'The Wraith Pen', role: 'offshoot', x: 80, y: 8, w: 24, h: 22, shape: 'rect', lv: 0, kit: 'gallery', foes: 'wraiths',
+        dress: ['niches', 'candles', 'chest'], note: 'The graveyard wraiths, alone: a cut crypt, candles in its niches.' },
+      { id: 'rat_kings_hall', name: 'The Rat King\'s Hall', role: 'descent', x: 46, y: 102, w: 48, h: 42, shape: 'rect', lv: 0, kit: 'cellar', foes: 'vermin', boss: 'rat_king',
+        dress: ['casks', 'scaffold', 'stair_down'], note: 'The Rat King and his swarm, casks gnawed through, the way down at the back.' },
+    ], halls: [
+      { from: 'adit_mouth', to: 'beetle_pen', x: 32, y: 10, w: 10, h: 10, rough: true },
+      { from: 'beetle_pen', to: 'goblin_pen', x: 56, y: 30, w: 10, h: 10, rough: true },
+      { from: 'goblin_pen', to: 'wraith_pen', x: 82, y: 30, w: 10, h: 10 },
+      { from: 'goblin_pen', to: 'rat_kings_hall', x: 62, y: 92, w: 10, h: 10 },
+    ] },
+    { name: 'The Lower Pens', spaces: [
+      { id: 'pens_stair', name: 'The Pens\' Stair', role: 'entrance', x: 0, y: 0, w: 28, h: 26, shape: 'rect', lv: 0, kit: 'barracks',
+        dress: ['casks', 'lanterns', 'stair_up'], note: 'The foot of the stair down from the Rat King\'s Hall.' },
+      { id: 'mixed_pen', name: 'The Mixed Pen', role: 'room', x: 38, y: 0, w: 68, h: 22, shape: 'rect', lv: 0, kit: 'barracks', foes: 'bestiary',
+        dress: ['racks', 'banners', 'braziers'], note: 'A large corridor: all four new together, the goblins and the golems up front, the beetles spitting behind, a wraith leading.' },
+      { id: 'vermin_pen', name: 'The Vermin Pen', role: 'offshoot', x: 44, y: 32, w: 24, h: 22, shape: 'rect', lv: 0, kit: 'cellar', foes: 'vermin',
+        dress: ['casks', 'chest'], note: 'The grave rats, the spiders and the spinners together, Old Gutter leading.' },
+      { id: 'golem_pen', name: 'The Golem Pen', role: 'room', x: 116, y: 0, w: 36, h: 34, shape: 'rect', lv: 0, kit: 'cellar', foes: 'golems',
+        dress: ['scaffold', 'broken_floor', 'ladders'], note: 'The stone golems, alone: the floor cracked under them.' },
+      { id: 'spider_queens_hall', name: 'The Spider Queen\'s Hall', role: 'end', x: 104, y: 46, w: 58, h: 48, shape: 'cave', lv: 0, kit: 'cellar', foes: 'cellar', boss: 'spider_queen',
+        dress: ['pools', 'stalagmites', 'drips'], note: 'The Spider Queen and her brood, in the cave at the bottom.' },
+    ], halls: [
+      { from: 'pens_stair', to: 'mixed_pen', x: 28, y: 8, w: 10, h: 10 },
+      { from: 'mixed_pen', to: 'vermin_pen', x: 52, y: 22, w: 10, h: 10 },
+      { from: 'mixed_pen', to: 'golem_pen', x: 106, y: 6, w: 10, h: 10 },
+      { from: 'golem_pen', to: 'spider_queens_hall', x: 126, y: 34, w: 10, h: 12, rough: true },
+    ] },
+  ] },
+
   // ── The Ninth Milestone (secret, 9): the legion's strongroom under the milestone. One floor, all at 9.
   ninth_milestone: { site: 'ninth_milestone', name: 'The Ninth Milestone', kind: 'vault', base: 9, flat: true, floors: [
     { name: 'The Strongroom', spaces: [

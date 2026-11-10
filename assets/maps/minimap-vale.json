@@ -39,6 +39,12 @@
    "y": 45.5
   },
   {
+   "kind": "site",
+   "id": "proving_pens",
+   "x": 110.5,
+   "y": 25.5
+  },
+  {
    "kind": "land",
    "id": "fens",
    "x": 38.5,

@@ -195,6 +195,14 @@ export const FAMILIES = {
   // rats come up with their spoil (the risen minion's place the rat's), Old Gutter leading
   cellar: { melee: ['rat', 'spider'], ranged: ['spinner', 'spinner'], elite: 'spider', undead: () => false },
   cutting: { melee: ['cutthroat', 'rat'], ranged: ['crossbow', 'rogue'], elite: 'gutter', undead: (k) => k === 'rogue' },
+  // (v1.60) the Proving Pens (sites.js, a trial site at 4): each of the bestiary in a pen of its own, the vermin together,
+  // and all four new together; the wraith undead wherever it stands (Turn Undead reaches it)
+  beetles: { melee: ['firebeetle', 'firebeetle'], ranged: ['firebeetle', 'firebeetle'], elite: 'firebeetle', undead: () => false },
+  gobs: { melee: ['gob', 'gob'], ranged: ['gob', 'gob'], elite: 'gob', undead: () => false },
+  wraiths: { melee: ['wraith', 'wraith'], ranged: ['wraith', 'wraith'], elite: 'wraith', undead: () => true },
+  golems: { melee: ['golem', 'golem'], ranged: ['golem', 'golem'], elite: 'golem', undead: () => false },
+  vermin: { melee: ['rat', 'spider'], ranged: ['spinner', 'spinner'], elite: 'gutter', undead: () => false },
+  bestiary: { melee: ['gob', 'golem'], ranged: ['firebeetle', 'firebeetle'], elite: 'wraith', undead: (k) => k === 'wraith' },
   // the Fens (M8, sites.js): the Toadking's men and the ghouls they keep off; the Cult's harvest with the bound lock-men
   // under it, at the Sickpools with the ghouls and the witches, and among the drowned clergy at the Abbey
   reedmen: { melee: ['fenghoul', 'reedcutter'], ranged: ['fowler', 'bogwitch'], elite: 'reedcutter', undead: () => false },

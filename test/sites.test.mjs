@@ -151,6 +151,6 @@ test('into a Fens site and back out: you are in the Fens, out at its door; the U
 test('the Drowned Abbey: three floors of four rooms, 16–18; every site\'s band', () => {
   assert.equal(SITES.drowned_abbey.floors, 3); assert.deepEqual(SITES.drowned_abbey.rooms, [4, 4]);
   assert.deepEqual(Object.fromEntries(SITE_IDS.filter((id) => !SITES[id].parked).map((id) => [id, levelBand(id)])), {
-    barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', ninth_milestone: '9',
+    barrows: '1–3', wickham_keep: '4–6', sunken_chapel: '7–9', proving_pens: '4', ninth_milestone: '9',
     toadking_mound: '10–12', canal_locks: '13–15', drowned_abbey: '16–18', mere_tower: '12', reedholm_undercroft: '18' });
 });

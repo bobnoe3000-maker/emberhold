@@ -78,10 +78,12 @@
       "elite": "Old Gutter, or this week's"
     },
     "firebeetle": {
-      "a": "a red fire beetle"
+      "a": "a red fire beetle",
+      "elite": "a fire beetle the size of a hearth"
     },
     "gob": {
-      "a": "a goblin"
+      "a": "a goblin",
+      "elite": "a goblin in somebody's good boots"
     },
     "wraith": {
       "a": "a graveyard wraith",

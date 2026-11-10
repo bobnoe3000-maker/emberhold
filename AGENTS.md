@@ -28,7 +28,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?stairs=plain (a dungeon floor's stairs as they were before their arches; the default since GDD v1.57: the way up three tiles wide, an arch over each way, its inner edge glowing: docs/dungeon-stairs-proposal.md)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
-#   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
+#   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)
 #   ?dev&slow=8 (slow motion) · ?dev&manual (you drive frames: globalThis.__frame(ms)) · ?dev&tod=dawn|day|dusk|night|0..1 (hold the light)
 #   ?dev&scene=stage&show=icons|faces[&match=…]: the art review, every item icon and every portrait and window figure as the UI shows them (docs/art-review.md)
