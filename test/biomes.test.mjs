@@ -19,12 +19,12 @@ test('the Vale: meadow and mixed wood, no marsh trees, everything on grass', () 
   assert.ok([...V.trees, ...V.ug].every((s) => V.on(s) === G.GRASS || V.on(s) === G.FIELD), 'on grass');
 });
 
-test("the Fens: alder and carr thickets, willows and the dead at the water's edge and never on the marsh, less wooded than the Vale", () => {
+test("the Fens: alder and carr thickets, willows and the dead at the water's edge and never out on the open marsh, less wooded than the Vale", () => {
   const F = land('fens');
   assert.ok(!F.trees.some((s) => /birch|autumn|grove|oak/.test(s.id)), 'none of the Vale’s round, cheerful trees (fens critic pass 2)');
   const edge = F.trees.filter((s) => /willow|dead/.test(s.id));
   assert.ok(edge.length >= 8, `willows and the dead: ${edge.length}`);
-  assert.equal(edge.filter((s) => F.on(s) === G.MARSH).length, 0, 'none on the marsh');
+  assert.equal(edge.filter((s) => F.on(s) === G.MARSH && !water(F.o, s.x, s.y, 3)).length, 0, 'none out on the open marsh (on it only at the water’s lip, 3 tiles)');
   assert.ok(edge.every((s) => water(F.o, s.x, s.y, 9)), "each by the water's edge");
   assert.ok(F.cover >= 0.15 && F.cover <= 0.25 && F.cover < V.cover, `cover ${(F.cover * 100).toFixed(1)} % (the Vale ${(V.cover * 100).toFixed(1)} %)`);
 });

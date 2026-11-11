@@ -235,20 +235,20 @@ function waterEdge(o, keepOut) {
       const i = gi(o, tx, ty); if (i < 0 || o.occ[i] === 1) return false;
       if (o.occ[i] === 2 && roadish.has(groundAt(o, tx + 0.5, ty + 0.5).g)) return false;
     }
-    const t = groundAt(o, x, y).g; return t === G.GRASS || t === G.BANK; };   // (the trunk on the bank or the grass)
+    const t = groundAt(o, x, y).g; return t === G.GRASS || t === G.BANK || (t === G.MARSH && waterNear(o, x, y, 3)); };   // (the trunk on the bank or the grass, or the marsh at the water's lip: never out on the open marsh)
   const plant = (x, y) => {
     if (x < 4 || y < 4 || x > o.W - 4 || y > o.H - 4 || keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 20)) return;
     const id = rng() < 0.78 ? pick(rng, ['willow_1', 'willow_2']) : pick(rng, ['dead_1', 'dead_2']);
     if (fitsOver(id, x, y)) put(o, id, x, y, 'round', 0.35);
   };
   for (const q of o.pools) for (let a = rng() * 0.6; a < Math.PI * 2; a += 0.42 + rng() * 0.3) {
-    if (rng() > 0.45) continue;
-    const k = 1 + (2.5 + rng() * 2) / Math.max(q.rx, q.ry); plant(q.cx + cos(a) * q.rx * k, q.cy + sin(a) * q.ry * k);
+    if (rng() > 0.7) continue;
+    const k = 1 + (1.5 + rng() * 1.5) / Math.max(q.rx, q.ry);   // (the trunk a tile and a half to three out: at the edge, the art critic) plant(q.cx + cos(a) * q.rx * k, q.cy + sin(a) * q.ry * k);
   }
   for (const r of o.rivers) for (let i = 1; i < r.pts.length; i++) {
     const [ax, ay] = r.pts[i - 1], [bx, by] = r.pts[i], L = hypot(bx - ax, by - ay), nx = -(by - ay) / L, ny = (bx - ax) / L;
-    for (let t = rng() * 10; t < L; t += 10 + rng() * 8) for (const sd of [-1, 1]) if (rng() < 0.35) {
-      const d = r.w / 2 + 3 + rng() * 2; plant(ax + (bx - ax) * t / L + nx * sd * d, ay + (by - ay) * t / L + ny * sd * d);
+    for (let t = rng() * 8; t < L; t += 7 + rng() * 6) for (const sd of [-1, 1]) if (rng() < 0.5) {
+      const d = r.w / 2 + 2 + rng() * 1.5; plant(ax + (bx - ax) * t / L + nx * sd * d, ay + (by - ay) * t / L + ny * sd * d);
     }
   }
 }
@@ -1074,8 +1074,10 @@ function buildHeights(seed) {
     const low = y > 140 && (x < 110 || x > 180), n = fbm(x * 0.035, y * 0.035, o.seed + 65);
     const id = low && n > 0.42 ? (rng() < 0.8 ? pick(rng, PINES) : 'dead_1')
       : n > 0.62 ? (rng() < 0.5 ? pick(rng, PINES) : pick(rng, ['rock_A', 'rock_C', 'rock_D', 'rock_E'])) : rng() < 0.03 ? pick(rng, ['rock_C', 'rock_D', 'rock_B', 'dead_2']) : null;
-    // (§3.6: living pines only below the snow line; on the snow and the scree, rock and the odd dead pine)
-    if (id && /pine/.test(id)) { const g = groundAt(o, x, y).g; if (g === G.SNOW || g === G.SCREE) return (Math.floor(x) + Math.floor(y)) % 5 ? 'rock_C' : 'dead_1'; }
+    // (§3.6: living pines only below the snow line; on the snow and the scree, rock and the odd dead pine: of a stand
+    // that would have been, a dead pine one in five, a rock one in three, the rest bare. One for one, a stand became a
+    // ring of rocks: the foliage critic, round 3. By the tile, no draw: nothing else on the map moves for it.)
+    if (id && /pine/.test(id)) { const g = groundAt(o, x, y).g; if (g === G.SNOW || g === G.SCREE) { const k = (Math.floor(x) * 7 + Math.floor(y) * 3) % 15; return k < 3 ? 'dead_1' : k < 8 ? 'rock_C' : null; } }
     return id;
   });
   forestRing(o, rng, 6, PINES, [...PINES, 'dead_1']);
@@ -1085,7 +1087,7 @@ function buildHeights(seed) {
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });
   o.exits.push({ x0: 142, y0: 263, x1: 159, y1: 271, to: 'overland', closed: true, shut: 'The road down the Sol goes to Solmere. Nobody climbs this far to turn round.' });
-  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 4.5 } };
+  o.arrivals = { default: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, frosthold: { x: gate[0] + 22.5, y: gate[1] + 0.5 }, hospice: { x: hospice[0] - 1.5, y: hospice[1] + 10.5 } };
   o.spawn = o.arrivals.default;
   return o;
 }

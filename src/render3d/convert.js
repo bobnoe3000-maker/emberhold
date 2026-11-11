@@ -18,6 +18,7 @@
 // §5; the overlands lose a few tiles of their edges).
 // Pure: reads the world, writes nothing to it (presentation only, AGENTS.md rule 2).
 import { ENV_FOOT } from '../sim/envfoot.js';
+import { G } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
 import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
@@ -91,7 +92,7 @@ const REGION_LOOK = {
   reach: { wall: 'stone_brick', upperWall: 'brick', roof: 'roof_slate' },
   heights: { wall: 'stone_brick', upperWall: '', roof: 'roof_slate' },
 };
-const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'deadwood' };
+const TREES = { oak: 'oak', autumn: 'autumn', birch: 'birch', pine: 'pine', dead: 'deadwood', alder: 'oak', willow: 'birch', carr: 'oak' };   // (carr, a living alder thicket, was deadwood: bare trees out on the marsh, against §3.6: the foliage critic, round 3)
 // The biomes (the owner, 2026-10-31: "create assets/tiles in the new engine to cover desert/grassland, and icy/snowy
 // areas"): a region's look in Luminati's own tile sets. `ground` redraws our ground's tile (outdoor.js G, by the
 // grassland's character), `turf` scatters the open ground, `trees` and `stone` are the region's kinds, `mountain` the tile
@@ -232,7 +233,13 @@ function outdoor(w, region) {
       if (raised(p.cx, p.cz)) continue;
       const h = hash(id, s.x, s.y), tk0 = kind === 'grove' ? ['oak', 'oak', 'pine', 'autumn', 'deadwood'][h % 5] : TREES[kind], tk = B.trees[tk0] || tk0;
       add({ type: 'tree', x: p.cx, z: p.cz, collider: false, opts: { kind: tk, height: r2(clamp(Math.max(p.w, p.d) * 0.62, 2.6, 6.2)), seed: h % 997 } });
-    } else if (/^rock_/.test(id)) add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6)), ...(B.stone ? { stone: B.stone } : {}), seed: hash(id, s.x) % 97 } });
+    } else if (/^rock_/.test(id)) {
+      // (a rock on snow is basalt showing through it: the land's own snow stone, white on white, hid the rocks that stand
+      // where a pine would have on the Heights' snow: level-design-rules.md §3.6, the foliage critic)
+      const onSnow = B.stone === 'snow' && tm(Math.floor(s.x), Math.floor(s.y)) === G.SNOW, stone = onSnow ? 'basalt' : B.stone;
+      const size = onSnow ? clamp(Math.max(p.w, p.d) * 0.3, 0.4, 0.8) : clamp(Math.max(p.w, p.d) * 0.55, 0.6, 1.6);   // (and small: stones through the snow, not boulders: round 3)
+      add({ type: 'rock', x: p.cx, z: p.cz, opts: { size: r2(size), ...(stone ? { stone } : {}), seed: hash(id, s.x) % 97 } });
+    }
     else if (/^(fence|drywall)_/.test(id)) {
       const f = p.f, horiz = f[2] - f[0] > f[3] - f[1];
       add(horiz ? { type: 'fence', x0: X(s.x + f[0]), z0: p.cz, x1: X(s.x + f[2]), z1: p.cz, opts: {} } : { type: 'fence', x0: p.cx, z0: Z(s.y + f[1]), x1: p.cx, z1: Z(s.y + f[3]), opts: {} });

@@ -715,6 +715,26 @@ function placeLane(m, x, z, tx, tz, u, w, col, a) {
 }
 const WARN = [255, 86, 30], WARN_HOT = [255, 238, 220], WARN_INK = [24, 6, 4];
 const OCC_RAY = new THREE.Raycaster();   // (occluded(): the visibility check's ray)
+// (occluded(): a card's pixel alpha where a ray met it, 0..255, read from its texture as Sprite3D samples it, offset +
+// uv × repeat, flipped in y; null where the image can't be read. Each image is copied once into a canvas, for checks only.)
+const cardPx = new WeakMap();
+function cardAlpha(mat, uv) {
+  const t = mat && mat.map, img = t && t.image;
+  if (!uv || !img || !img.width) return null;
+  let d = cardPx.get(img);
+  if (!d) {
+    try {
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d', { willReadFrequently: true })); g.drawImage(img, 0, 0);
+      d = { w: c.width, h: c.height, px: g.getImageData(0, 0, c.width, c.height).data };
+    } catch { return null; }
+    cardPx.set(img, d);
+  }
+  let u = t.offset.x + uv.x * t.repeat.x, v = t.offset.y + uv.y * t.repeat.y;
+  u -= Math.floor(u); v -= Math.floor(v);
+  const x = Math.min(d.w - 1, Math.floor(u * d.w)), y = Math.min(d.h - 1, Math.floor((t.flipY ? 1 - v : v) * d.h));
+  return d.px[(y * d.w + x) * 4 + 3];
+}
 let CARRY_UP = 6, CARRY_GAIN = 1.6;   // (the carry light over the models: its height and strength; settings({ carryUp, carryGain }) for look-dev)
 let blastLight = null, carryLight = null, carryLevel = -1, focusSpin = 0, frameAmbient = null, inside = false;
 
@@ -1300,7 +1320,11 @@ const api = {
       else { cam.getWorldPosition(to); dir.copy(to).sub(at); ray.far = dir.length(); dir.normalize(); }
       ray.set(at.clone().addScaledVector(dir, 0.05), dir);
       for (const h of ray.intersectObjects(list, false)) {
-        if (h.object.name === 'Sprite3D.mesh' && h.uv && (h.uv.x < 0.15 || h.uv.x > 0.85 || h.uv.y > 0.92)) continue;   // (a card's clear margin)
+        if (h.object.name === 'Sprite3D.mesh') {   // a card: solid only where its own pixel is (as it's drawn: alphaTest 0.5)
+          const a = cardAlpha(h.object.material, h.uv);
+          if (a === null ? (h.uv && (h.uv.x < 0.15 || h.uv.x > 0.85 || h.uv.y > 0.92)) : a < 128) continue;   // (unreadable: the old margin)
+          return h.object.parent?.name || 'card';
+        }
         return h.object.name || h.object.parent?.name || h.object.type;
       }
       return null;

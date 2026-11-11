@@ -36,6 +36,23 @@ const base = `http://127.0.0.1:${srv.address().port}`;
 const GL = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const b = await chromium.launch({ args: GL });
 
+// Where the hero (and so the camera) stands to look at a point: the point itself, unless it's in a way out (a gate, a
+// road off the map, a site's door; a floor's way up, within 1.6 of its top step: core.js), where standing would travel
+// and every later subject be measured in the next map. Then the hero steps back toward where he arrived until clear of
+// every way, half a tile at a time; the point tested stays where it is. A way itself is seen if its middle or its step
+// is: the arrival beside it (within 8 tiles: where the hero stands coming out of it), else 3 tiles on from that stepped-back
+// point, its approach (a gate's middle is under its arch, a site's door inside its building's card). (In the page: globalThis.__clearOfWays.)
+const STAND = () => {
+  globalThis.__clearOfWays = (w, q, home) => {
+    const inWay = (x, y) => w.kind === 'dungeon' ? !!w.exitAt && Math.hypot(x - w.exitAt.x, y - w.exitAt.y) < 2.2
+      : (w.exits || []).some((e) => x >= e.x0 - 1 && x <= e.x1 + 1 && y >= e.y0 - 1 && y <= e.y1 + 1);
+    let x = q.x, y = q.y;
+    const L = Math.hypot(home.x - x, home.y - y) || 1, dx = (home.x - x) / L, dy = (home.y - y) / L;
+    for (let i = 0; i < 80 && inWay(x, y); i++) { x += dx * 0.5; y += dy * 0.5; }
+    return { x, y };
+  };
+};
+
 /** survey one map: its subjects and how much of each is in view @param {string} name */
 export async function survey(page, name) {
   const m = MAPS[name], q = new URLSearchParams({ scene: m.scene, ...(m.region ? { region: m.region } : {}), ...(m.site ? { site: m.site } : {}) });
@@ -44,8 +61,9 @@ export async function survey(page, name) {
   const built = async (n) => { for (let i = 0; i < 1600; i++) { if (await page.evaluate((n) => { globalThis.__frame(16); const h = globalThis.__world3d; return !!h && h.state.loads >= n && h.world?.stats.level >= n && !globalThis.__renderer.transiting; }, n)) return true; await page.waitForTimeout(120); } return false; };
   if (!(await built(1))) return { name, error: 'the world never built' };
   if (m.floor) { await page.evaluate((d) => { const s = globalThis.__sim; s.restore({ ...JSON.parse(JSON.stringify(s.snapshot())), depth: d, floors: [] }); }, m.floor); if (!(await built(2))) return { name, error: 'the floor never built' }; }
+  await page.evaluate(STAND);
   return page.evaluate(async () => {
-    const s = globalThis.__sim, w = s.world, h = globalThis.__world3d, P = s.state.player, subj = [];
+    const s = globalThis.__sim, w = s.world, h = globalThis.__world3d, P = s.state.player, subj = [], clearOfWays = globalThis.__clearOfWays;
     const add = (id, x, y) => { if (Number.isFinite(x) && Number.isFinite(y)) subj.push({ id, x, y }); };
     add('spawn', P.x, P.y);
     if (w.kind === 'town') {
@@ -60,7 +78,7 @@ export async function survey(page, name) {
       }
       for (const e of w.exits || []) add(`way:${e.to}${e.region ? ':' + e.region : ''}`, (e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);
     } else if (w.kind === 'overland') {
-      for (const e of w.exits || []) add(`way:${e.site || e.to}${e.region ? ':' + e.region : ''}`, (e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);   // (in the way itself: a gate faces east, a road leaves off the map's edge)
+      for (const e of w.exits || []) add(`way:${e.site || e.to}${e.region ? ':' + e.region : ''}`, (e.x0 + e.x1) / 2, (e.y0 + e.y1) / 2);   // (its middle, or its step)
       for (const [k, a] of Object.entries(w.arrivals || {})) if (k !== 'default') add(`arrive:${k}`, a.x, a.y);
     } else {
       const L = w.level;
@@ -68,14 +86,22 @@ export async function survey(page, name) {
       if (w.stairsAt) add('stair down', w.stairsAt.x + 0.5, w.stairsAt.y + 1.5);
       for (const r of L.rooms) if (r !== L.entrance) add(`room:${r.part || r.id}`, r.cx + 0.5, r.cy + 0.5);
     }
-    const out = [];
+    const out = [], home = { x: P.x, y: P.y };
     for (const q of subj) {
-      P.x = P.px = q.x; P.y = P.py = q.y;
+      const at = clearOfWays(w, q, home); P.x = P.px = at.x; P.y = P.py = at.y;
       for (let i = 0; i < 6; i++) globalThis.__frame(16);
-      const v = h.sees(q.x, q.y);
-      out.push({ ...q, x: Math.round(q.x * 10) / 10, y: Math.round(q.y * 10) / 10, seen: v ? v.seen : null, by: v ? v.by : [] });
+      let t = q, v = h.sees(q.x, q.y);
+      if (q.id.startsWith('way:') && v && v.seen < 1) {   // (a way: its middle or its step, the arrival beside it where there's one)
+        const L = Math.hypot(home.x - at.x, home.y - at.y) || 1, k = Math.min(3, L) / L;   // (else 3 tiles on from clear: a gate's approach, not its arch)
+        const st = Object.values(w.arrivals || {}).filter((a) => Math.hypot(a.x - q.x, a.y - q.y) < 8).sort((a, b) => Math.hypot(a.x - q.x, a.y - q.y) - Math.hypot(b.x - q.x, b.y - q.y))[0]
+          || { x: at.x + (home.x - at.x) * k, y: at.y + (home.y - at.y) * k };
+        const u = h.sees(st.x, st.y); if (u && u.seen > v.seen) { t = st; v = u; }
+      }
+      out.push({ ...q, x: Math.round(t.x * 10) / 10, y: Math.round(t.y * 10) / 10, seen: v ? v.seen : null, by: v ? v.by : [] });
     }
-    return { subjects: out };
+    P.x = P.px = home.x; P.y = P.py = home.y;
+    if (s.world !== w) return { error: `left for ${s.world.name} mid-survey (a subject in a way out?)` };
+    return { subjects: out, home };
   }).then((r) => ({ name, ...r }));
 }
 
@@ -87,7 +113,7 @@ for (const name of names) {
   if (SHOTS && r.subjects) {   // (--shots dir: a picture of each subject under the bar, the hero stood there)
     await mkdir(SHOTS, { recursive: true });
     for (const q of r.subjects.filter((q) => q.seen !== null && q.seen < SEEN)) {
-      await page.evaluate(({ x, y }) => { const P = globalThis.__sim.state.player; P.x = P.px = x; P.y = P.py = y; for (let i = 0; i < 8; i++) globalThis.__frame(16); }, q);
+      await page.evaluate(({ q, home }) => { const s = globalThis.__sim, P = s.state.player, at = globalThis.__clearOfWays(s.world, q, home); P.x = P.px = at.x; P.y = P.py = at.y; for (let i = 0; i < 8; i++) globalThis.__frame(16); }, { q, home: r.home });
       await page.screenshot({ path: join(SHOTS, `${name}-${q.id.replace(/[^a-z0-9_-]+/gi, '_')}.png`), timeout: 240000 }).catch(() => {});
     }
   }

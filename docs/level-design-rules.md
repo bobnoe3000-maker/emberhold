@@ -168,8 +168,10 @@ on. What the code does today is set against each profile below; the "to change" 
   (*test*: biomes.test.mjs); reeds on most of the water's edge.
 - **Never:** birch, autumn trees, mixed groves (the fens critic pass 2: they read round and cheerful here).
 - **Today** (the foliage pass, 2026-11-11): alders and carr on the raised ground and the marsh; willows and the dead only
-  at the water's edge, never on the marsh (`outdoor.js` `waterEdge`: round every mere and along the canal, a crown may
-  lean over the water, never a road); cover 21.6 % (the Vale 26.4 %). The reeds along the edges are Luminati's own: it
+  at the water's edge, never out on the open marsh (`outdoor.js` `waterEdge`: round every mere and along the canal, the
+  trunk 1.5–3 tiles from the water, on the bank, the grass or the marsh's lip within 3 tiles; a crown may lean over the
+  water, never a road); cover 20.6 % (the Vale 26.4 %). On Luminati the carr is drawn living (`convert.js` `TREES`: it
+  was `deadwood`, so bare trees stood out on the marsh) and the willow as birch, the one light crown it has. The reeds along the edges are Luminati's own: it
   grows them on every land tile beside water (*test*: biomes.test.mjs).
 
 **The Cinder Reach: cinder badlands.**
@@ -183,7 +185,8 @@ on. What the code does today is set against each profile below; the "to change" 
   - Most of the ground is bare.
 - **Densities:** trees under 3 % cover, rocks 5–10 %, dry grass in a few patches.
 - **Never:** flowers, ferns, clover, mushrooms, leafy trees.
-- **Today** (2026-11-11): no pine on scree (its red rock stands there instead); dead trees and rock; cover 9.5 %
+- **Today** (2026-11-11): no pine on scree (its red rock stands there instead; the old build had none in the playable
+  area, so this changes the margin only); dead trees and rock; cover 9.5 %
   (*test*: biomes.test.mjs: no pine on scree, no leafy growth, cover 12 % at most).
 
 **The Pale Heights: alpine.**
@@ -196,8 +199,10 @@ on. What the code does today is set against each profile below; the "to change" 
   - The map's edge is pines.
 - **Densities:** pines 15–25 % cover below the treeline, none above; no undergrowth on snow or scree.
 - **Never:** green undergrowth on snow; marsh plants; leafy trees.
-- **Today** (2026-11-11): living pines only below the snow line; on snow and scree, rock and one dead pine in five; no
-  undergrowth on snow, scree or marsh (*test*: biomes.test.mjs).
+- **Today** (2026-11-11): living pines only below the snow line; where a stand would have run onto snow or scree, a
+  dead pine one in five, a rock one in three, the rest bare (one for one, a stand became a ring of rocks); no undergrowth
+  on snow, scree or marsh; cover 17.0 % (*test*: biomes.test.mjs). A rock on snow is drawn small, in basalt (`convert.js`):
+  the land's snow stone, white on white, hid them (the foliage critic, rounds 2 and 3).
 
 **Lands to come** (Solmere, the Tidemark, the Greenwood): a profile each, written here before the map is built. The
 Greenwood is deep forest, its open ground the exception: glades and paths cut through closed canopy, so §1.1 matters
@@ -416,9 +421,29 @@ floors hold 4 % fewer pieces and 9 % fewer lights (901 → 819: the ones that st
 - **`node tools/dungeon/dress-audit.mjs [site…] [--over]`** lists every authored room's pieces against §4.3.
 - **The node tests** named in each table above.
 
-**The first survey** (2026-11-10, every map in §1.1, default zoom, day):
+**The first survey** (2026-11-11, every map in §1.1, default zoom, day): **143 subjects on 17 maps, 5 under half in
+view**. Twelve maps clear: Thornwick, the Hollow Vale, the Greywater Fens, the Cinder Reach, both floors of the Old
+Barrows, Wickham Keep and the Sunken Chapel, the Pens' second floor, the Drowned Abbey.
 
-*The survey is running; its results land here with the next commit.*
+| Map | Subject | In view | Hidden by | Verdict |
+|---|---|---|---|---|
+| Saltmere | the Drowned Eel's door step | 33 % | the Eel's own card | **Open.** The card draws its stilt deck in front of its footprint, so the step falls under the deck. Fix: build the tavern in 3D, or grow its footprint to the deck. |
+| Pale Heights | the road down the Sol (closed, to Solmere) | 0 % | Luminati's border pines | **Open.** The border scatter (Luminati's `scatterForest`) avoids hand-placed trees, not roads. It wants a gap where a road leaves the map. |
+| Proving Pens, floor 1 | the Wraith Pen's middle | 33 % | the near wall (basalt) | **Open, minor.** The legs are hidden by the near wall's top; the hero reads. §7: "the near walls' low pieces only". |
+| Canal Locks, floor 1 | room 4's middle | 17 % | the near wall (basalt) | **Open, minor.** The same. |
+| Toadking's Mound, floor 1 | room 5's middle | 0 % | — (never drawn) | **Open, a bug.** The cavern runs past 256 of ours, so the level is cropped round its two stairs (convert.js), and room 5 (x ≈ 294) falls outside: a reachable room drawn black. Fix: hold a generated cavern to 252 a side. |
+
+Fixed in the same pass: the Frozen Hospice's arrival stood behind its well-house (17 %). It moved six tiles south onto
+the road, in front (100 %).
+
+**What the survey taught the check** (tools/capture/visibility.mjs, world.js `occluded`):
+- **Standing in a way out travels.** A gate, a road off the map, a site's door, or a floor's stair up (within 1.6
+  of its top step) moved the hero to the next map, and every later subject was measured there. The first run's 17
+  "failures" were mostly that. The hero now stands clear of every way, and a map that's left mid-survey is an error.
+- **A way is seen at its middle or its step.** The step is the arrival beside it, else its approach 3 tiles out. A
+  gate's middle is under its arch; a site's door is inside its building's card.
+- **A card hides only where it's drawn.** A ray through a sprite card reads the card's own pixel, as the card is drawn
+  (alpha 0.5), instead of a fixed margin. It names the piece (`ember:town-fens:…`), not `Sprite3D.mesh`.
 
 ## 6. Where the docs and the code disagreed (the code wins)
 
@@ -432,6 +457,11 @@ floors hold 4 % fewer pieces and 9 % fewer lights (901 → 819: the ones that st
 | A room's caps | `DRESS_CAP` by kind, any size | `DRESS_CAP` and, by size, `dresscaps.js` (§4.3) |
 
 ## 7. Not yet enforced, and the next work
+
+**To fix (from the first survey, §5):**
+- The Toadking's Mound's room 5, outside the drawn level.
+- Saltmere's Drowned Eel door step.
+- A gap in the border where a road leaves the map.
 
 **To test:**
 - The near walls' low pieces only.
