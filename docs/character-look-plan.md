@@ -170,6 +170,11 @@ piece is never tinted. `gear.js` `lookOn` lights it from within in its own colou
 in play it's added over the figure's own fill (`world.js`), so a lit piece is never darker than the rest. The rarity's
 colour is the bag's: each slot's border in it, with a glow round the border that grows with the rarity (none for
 common; heirloom's pulsing slightly too, still for reduced motion; `sheet.js` `.gslot`), the word on the item's card. A piece with a light keeps its own material (one draw more).
+**The heirloom's flourish** (2026-11-11, the owner: "do 4"): a figure wearing an heirloom has a few warm embers drifting
+up round it (`world.js` `heirMotes`: seven points, one shared geometry and material, their rise in the shader, a child
+of the figure so it moves and turns with them; one effect a figure however many heirlooms; at least 3 px so they read
+at play's distance). In play and in the character window. Measured on the manual clock: 479 draws a frame before, 480
+with an heirloom on (one draw, the figure's embers), nothing for any figure without one.
 The table below was the first plan; the colours in it are superseded by the above.
 
 An item's look comes from fields it already has, so no new saved state, no new random draw, and replays exactly as

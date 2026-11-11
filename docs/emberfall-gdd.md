@@ -770,7 +770,7 @@ Six statuses, sim rules (`src/sim/battle.js`, the CC block), each drawn on the f
     preview, the moment it's put on. Its rarity is in its light, never its colour (the owner, 2026-11-10: "gear doesn't
     need to be a different color - rather the gear border in inventory and the rarer an item, there is a faint to
     slightly stronger glow"): a piece in its own colours, common as made, **fine a faint glow, rare a little more,
-    heirloom the most, and a slight pulse**, each of the smith's steps a little more. In the bag each slot's border is
+    heirloom the most, and a slight pulse, with a few faint embers drifting up round whoever wears one**, each of the smith's steps a little more. In the bag each slot's border is
     in the rarity's colour with a glow round it that grows the same way (heirloom's pulsing too), the word on the item's card. **Armour and boots are worn too** (v1.65, the owner: "do the armour and boots on the
     body next"): armour is the body and arms of the kit it's made like (plate the knight's, fur the barbarian's,
     leathers the rogue's, robes the mage's; the cleric's vestments and the shaman's hide in their own cloth), boots the
