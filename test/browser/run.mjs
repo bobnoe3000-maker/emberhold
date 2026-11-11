@@ -771,7 +771,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const run = (n) => p.evaluate((n) => { for (let i = 0; i < n; i++) globalThis.__frame(1000 / 30); }, n);
     await p.waitForTimeout(800); await run(10);
     const atSpawn = await p.evaluate(() => globalThis.__renderer.stairSigns);
-    await p.evaluate(() => { const s = globalThis.__sim, a = s.world.stairsDownArrive, pl = s.state.player; pl.x = pl.px = a.x; pl.y = pl.py = a.y; s.state.party.forEach((m) => { m.x = m.px = a.x; m.y = m.py = a.y; }); });
+    await p.evaluate(() => { const s = globalThis.__sim, a = s.world.stairsDownArrive, pl = s.state.player; if (s.world.gate) { s.state.gates.add(s.world.gate.id); s.world.gateShut = null; s.world._openCache = null; } /* the floor's gate (GDD §3.3b) down: this checks the signs */ pl.x = pl.px = a.x; pl.y = pl.py = a.y; s.state.party.forEach((m) => { m.x = m.px = a.x; m.y = m.py = a.y; }); });
     await run(20);
     const near = await p.evaluate(() => ({ signs: globalThis.__renderer.stairSigns, at: globalThis.__sim.world.stairsAt }));
     const down = near.signs.find((g) => g.kind === 'down');
