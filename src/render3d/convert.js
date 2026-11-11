@@ -280,7 +280,7 @@ function outdoor(w, region) {
     // (v1.63, GDD §10.3: a spawn point's dressing, sim/camps.js) the camp's fire Luminati's own; crates, sacks and bones its
     // own pieces as underground; the rest ours (gsprite.js: the tent, the dead cow, the burrow), stood as a dungeon's are
     else if (kind === 'cookfire') add({ type: 'campfire', x, z, rotation: 0, opts: { seat: false } });
-    else if (kind === 'crates' || kind === 'sacks' || kind === 'bones') add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
+    else if (OVERLAND_3D.has(kind)) add(DRESS_3D[kind](x, z, hash(kind, tx, ty)));
     else if (OVERLAND_OURS.has(kind)) sprites.push({ prop: kind, tx, ty, x, z });
   }
   // the land goes on past the edge: Luminati's forest border on the blocked ring and its outer scenery beyond, round every
@@ -365,7 +365,9 @@ const KIT_LOOK = {
 const THEME_LOOK = { crypt: KIT_LOOK.gallery, dread: KIT_LOOK.barracks, cave: KIT_LOOK.cellar, nave: KIT_LOOK.nave, cinder: KIT_LOOK.cultcut, chasm: { floor: ['U', 'm'], wall: 'x', hour: 22.8 } };
 const DEFAULT_LOOK = { floor: ['k', 'm'], wall: 'x', hour: 19.4 };
 /** an overland prop of ours (gsprite.js), a spawn point's dressing (sim/camps.js) */
-const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow']);
+const OVERLAND_OURS = new Set(['tent', 'carcass', 'burrow', 'rack', 'banner', 'standard', 'bedroll', 'reeds', 'boat', 'bound', 'urns', 'candles', 'saint']);   // (v1.68: every land's spawn points' dressing)
+/** a spawn point's dressing Luminati builds itself, as underground (DRESS_3D) */
+const OVERLAND_3D = new Set(['crates', 'sacks', 'bones', 'barrels', 'boulder', 'spoil', 'pillar', 'brokenpillar']);
 /** the furniture Luminati builds itself (h: a hash of the tile, for its size and turn) */
 const DRESS_3D = {
   brazier: (x, z, h) => ({ type: 'fire', x, z, opts: { kind: 'brazier', size: 0.36, smoke: false, light: true, seed: h % 997 } }),   // (Emberlit's are small warm points: at 0.7 they bloomed into blobs, at 0.45 still big)

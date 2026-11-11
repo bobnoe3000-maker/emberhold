@@ -25,6 +25,8 @@ import { hypot } from './detmath.js';
 // a band back RESPAWN after it falls, twice a dungeon room's 4 s lull between waves (battle.js LULL), whether the party
 // waits in the arena, as in a room, or walks off and comes back)
 export const RESPAWN = 8;
+/** the reach of each land's spawn points but the Spit's own 36 (v1.68: "similar wider aggro/chase radius") */
+export const REACH_WIDE = 26;
 /** every land's spawn points (each region's overland, outdoor.js; the Vale's two: GDD §10.3, world doc §3.1 v1.39)
  * @type {Camp[]} */
 export const CAMPS = [
@@ -42,8 +44,38 @@ export const CAMPS = [
   // goes over the wheat; one or two come out of the hole at whoever passes. (Here: the camera looks from the south-east,
   // and by the north and west walls the town stood in front of the fight, by the south wall's middle a grove; the east
   // wall is the compass's way in from the barrows, and the rats stopped every walk to town: level-design-rules.md §1.1)
-  { id: 'vale_ditch', region: 'vale', kind: 'nest', name: 'The ditch burrow', x: 23, y: 177, reach: 10, arena: 14, level: 1,
+  { id: 'vale_ditch', region: 'vale', kind: 'nest', name: 'The ditch burrow', x: 23, y: 177, reach: 18, arena: 22, level: 1,
     family: 'vermin', band: ['rat', 'rat'], min: 1, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2], dress: [['burrow', 0, 0], ['bones', 2.2, 1.6]] },
+  // ── the rest of each land's (GDD §10.3 v1.68; the owner, 2026-11-11: "each region or overworld map should also have 3
+  // or 4 NPC spawn locations … with appropriate site dressing and appropriate NPC difficulty just like the 3 or so
+  // dungeons per map … also ensure similar wider aggro/chase radius"). One at each of the land's bands, by the dungeon of
+  // that band, well off every road (more than REACH_WIDE from any: a higher band's mustn't ambush a lower band's walk to its
+// dungeon, as the first tries did), so each is a fight you choose, as a dungeon is; each sees you from REACH_WIDE, its
+// arena 4 past it; none reaches a way in or out, or where anyone arrives.
+  // the Redhand picket: three of Garrow's men camped on the hill east of the keep under a red banner, watching the old
+  // road (the Keep's band, 4–6: level 5)
+  { id: 'vale_picket', region: 'vale', kind: 'camp', name: "Garrow's picket", x: 202, y: 54, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 5,
+    family: 'redhand', band: ['cutthroat', 'crossbow', 'brute'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.6], [2.2, 1.2], [0.2, -2.4]], face: [0, 0],
+    dress: [['cookfire', 0, 0], ['tent', -4.4, -3.4], ['banner', 3.4, -3.8], ['rack', 4.6, 1.8], ['barrels', -4.2, 2.8], ['crates', 5.2, -1.2], ['bedroll', -1.6, 3.8]] },
+  // the old picket: Ashbound of the Third Legion still standing a picket at the river's southern bend, where the legion's
+  // last picket fell, their standard in the ground ("Standing order 14: the Third Legion holds the Wickham road until
+  // relieved"; the Chapel's band, 7–9: level 8)
+  { id: 'vale_oldpicket', region: 'vale', kind: 'camp', name: 'The old picket', x: 118, y: 234, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 8,
+    family: 'ashbound', band: ['warrior', 'minion', 'rogue'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.4], [2.4, 0.6], [0, -2.6]], face: [0, 0],
+    dress: [['standard', 0, -0.4], ['bones', -3.6, 2.4], ['bones', 3.2, 3.4], ['spoil', -4.4, -2.2], ['brokenpillar', 4.6, -2.6], ['rack', -1.4, -4.4], ['boulder', 5.4, 1.6]] },
+  // the Fens' (10–18): the spinner beds, giant spiders in the reeds south-west of the Canal Locks (the Mound's band,
+  // 10–12: level 11); the old stones, stone golems among standing stones north-east of Saltmere (the Locks' band, 13–15:
+  // level 14); the drowned graves, graveyard wraiths over the binding clergy's sunk graves east of the Abbey, toward
+  // Reedholm (the Abbey's band, 16–18: level 17)
+  { id: 'fens_spinners', region: 'fens', kind: 'nest', name: 'The spinner beds', x: 60, y: 166, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 11,
+    family: 'cellar', band: ['spider', 'spinner', 'spider'], min: 2, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2],
+    dress: [['reeds', -3.2, -2.4], ['reeds', 3.6, -1.6], ['reeds', -4.2, 2.6], ['boat', 4.4, 3.2], ['bound', -1.8, -4.2], ['bones', 2.4, 4.2], ['bones', -3.6, 0.4]] },
+  { id: 'fens_stones', region: 'fens', kind: 'camp', name: 'The old stones', x: 126, y: 80, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 14,
+    family: 'golems', band: ['golem', 'golem'], elite: 0.25, respawn: RESPAWN, posts: [[-2.4, 0.4], [2.4, 0.4]], face: [0, 0],
+    dress: [['pillar', -4.4, -3.2], ['pillar', 4.2, -3.6], ['brokenpillar', -5.2, 2.2], ['pillar', 4.8, 2.8], ['brokenpillar', 0.4, -5.2], ['boulder', -1.6, 4.6], ['boulder', 2.2, 5.0]] },
+  { id: 'fens_graves', region: 'fens', kind: 'camp', name: 'The drowned graves', x: 204, y: 168, reach: REACH_WIDE, arena: REACH_WIDE + 4, level: 17,
+    family: 'wraiths', band: ['wraith', 'wraith', 'wraith'], elite: 0.25, respawn: RESPAWN, posts: [[-2.6, 0.4], [2.6, 0.6], [0, -2.8]], face: [0, 0],
+    dress: [['saint', 0, -4.6], ['urns', -4.4, -2.4], ['candles', -3.0, 3.2], ['brokenpillar', 4.6, -2.0], ['urns', 4.2, 3.0], ['bones', -1.2, 4.4], ['candles', 2.0, -4.4]] },
 ];
 export const CAMP_BY = Object.fromEntries(CAMPS.map((c) => [c.id, c]));
 /** a land's spawn points @param {string} region */

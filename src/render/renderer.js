@@ -30,6 +30,7 @@ import { familyOf, BOSSES, halved } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 import { shotOf } from '../sim/items.js';
+import { campsOf, campUp } from '../sim/camps.js';
 
 const INTERACT = new Set(['chest', 'shrine', 'stairs', 'stairwell']);   // props a tap can target
 // Actor atlases (tools/actor-lab/bake.cjs) store one row per screen octant:
@@ -699,7 +700,7 @@ export function createRenderer(canvas, sim, input) {
     // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
     // doubled up, and fell over the top bar's words, this canvas being above it)
     if (wx.k && !(wx.kind === 'rain' || wx.kind === 'snow')) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
-    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); }   // no minimap on the town's home screen
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (transit) {                                                 // fading in from the scene change
@@ -1077,6 +1078,28 @@ export function createRenderer(canvas, sim, input) {
   // along the remaining path; gone the moment the hero arrives or the stick takes over.
   let goalT0 = 0, lastGoal = null;
   const partyH = () => { const el = document.getElementById('party'); return el ? el.getBoundingClientRect().height : 0; };
+  // a spawn point's edge as a dashed ring on the ground (GDD §10.3 v1.68; the owner: "show as a dotted line when
+  // encountered"): coming up on a full one, its reach (where it sees you: amber dashes, fading in from 14 tiles out); in its
+  // fight, its arena (where it'll chase you to: red; out past it and the fight's off). Each dot on the ground's height.
+  function drawCampRings(ox, oy, hx, hy, now) {
+    const b = sim.battle, k = vw / window.innerWidth;
+    for (const c of campsOf(sim.world.region)) {
+      const fighting = b && b.camp === c, d = Math.hypot(hx - c.x, hy - c.y);
+      const r = fighting ? c.arena : c.reach, a = fighting ? 0.7 : campUp(sim.state, c) ? Math.max(0, Math.min(1, (c.reach + 14 - d) / 10)) * 0.75 : 0;
+      if (a <= 0.02) continue;
+      const n = Math.max(64, Math.round(2 * Math.PI * r / 0.8)), sp = now / 4000;   // (a point every 0.8 tile round it, the dashes creeping slowly)
+      octx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const t = (i / n) * Math.PI * 2, x = c.x + Math.cos(t) * r, y = c.y + Math.sin(t) * r;
+        const P = project(x, y, heightAt(sim.world, Math.floor(x), Math.floor(y))), sx = (ox + P.sx) * S, sy = (oy + P.sy) * S;
+        if (i) octx.lineTo(sx, sy); else octx.moveTo(sx, sy);
+      }
+      octx.save(); octx.setLineDash([9 * k, 7 * k]); octx.lineDashOffset = -(sp % 1) * 16 * k; octx.lineCap = 'round';
+      octx.lineWidth = 4.5 * k; octx.strokeStyle = `rgba(12,8,4,${(0.5 * a).toFixed(3)})`; octx.stroke();   // (a dark edge under it, as the goal ring has: it reads on grass and on road)
+      octx.lineWidth = 2.4 * k; octx.strokeStyle = fighting ? `rgba(232,96,66,${a.toFixed(3)})` : `rgba(242,198,112,${a.toFixed(3)})`; octx.stroke();
+      octx.restore();
+    }
+  }
   function drawGoal(ox, oy, now) {
     const p = sim.state.player, g = p.goal;
     if (!g || !p.path) { lastGoal = null; return; }
