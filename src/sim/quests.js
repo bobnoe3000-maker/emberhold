@@ -460,7 +460,24 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
     }
     return out;
   }
+  /** the markers as the renderer draws them (the owner, 2026-11-11: "Quest indicators.. stay yellow for non main quests.
+   * Change to blue for open or in progress main quests. Keep the green color for any type of completed quests"): by NPC
+   * id, what the marker says and whether it's the main story's (a chapter quest). 'ready' a quest to hand in to them, any
+   * kind; 'new' one they'd give you now; 'going' a main quest under way that they'll take in. One a person, in that
+   * order: a hand-in first, then a new main quest, a new side quest, a main quest under way.
+   * @returns {Record<string, { mark: 'new'|'ready'|'going', main: boolean }>} */
+  function markKinds() {
+    const out = {}, rank = (q) => (q.mark === 'ready' ? 4 : q.mark === 'new' ? (q.main ? 3 : 2) : 1);
+    const put = (id, q) => { if (id && (!out[id] || rank(q) > rank(out[id]))) out[id] = q; };
+    for (const id of Object.keys(QUESTS)) {
+      const d = QUESTS[id], st = status(id), main = d.kind === 'chapter';
+      if (st === QS.READY) put(takerOf(d), { mark: 'ready', main });
+      else if (st === QS.AVAILABLE) put(d.giver, { mark: 'new', main });
+      else if (st === QS.ACTIVE && main) put(takerOf(d), { mark: 'going', main });
+    }
+    return out;
+  }
   /** after a load (lore restored after quests: core.js): settle every active quest against what's held now */
   function settleAll() { for (const id of Object.keys(state.quests)) if (state.quests[id].st === QS.ACTIVE) { settle(id); changed(id); } }
-  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, settleAll, status, marks, def: defOf };
+  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, settleAll, status, marks, markKinds, def: defOf };
 }

@@ -370,9 +370,16 @@ It is pure:
   - `#mark: quest ready` is one to hand in here: **Hand in** and the Journal's green.
 - **In the world, over their head** (2026-10-01): anyone with a quest for you carries a marker
   you can see from across the square (40 tiles).
-  - **A gold ◆ with "!":** one you can take now.
-  - **A green ◆ with "?":** one to hand in, on whoever takes it in, which isn't always who gave
-    it. A hand-in wins over a new one.
+  - **A gold ◆ with "!":** a side quest you can take now.
+  - **A blue ◆ with "!", doubled (an inner outline):** a main-story quest (a chapter) you can take now (2026-11-11, the
+    owner: *"stay yellow for non main quests. Change to blue for open or in progress main quests. Keep the green color
+    for any type of completed quests"*).
+  - **A dimmer blue ◆ with "?", doubled:** a main-story quest under way, on whoever takes it in, so you can see where
+    it leads. A side quest under way carries none.
+  - **A green ◆ with "?":** any quest to hand in, on whoever takes it in, which isn't always who gave
+    it.
+  - **One a person,** in this order: a hand-in, a new main quest, a new side quest, a main quest under way
+    (`quests.markKinds()`; `quests.marks()` keeps the old new/ready answer).
   - **Same rules as the conversation:** the sim's `quests.marks()` uses the gates that decide
     the conversation's choices (level, the quests before it, a companion with you, a trial still
     to do), so the marker and the choice always agree.

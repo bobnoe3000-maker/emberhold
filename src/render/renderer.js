@@ -65,6 +65,8 @@ const wispsOf = (w) => { let l = WISPS.get(w); if (!l) { l = (w.pools || []).fil
 
 // A scene change (town ↔ overland, stairs, a load): black until the painter has the new scene built, then a fade in
 const TRANSIT_FADE = 320;
+// the quest markers' colours (quests.js markKinds): a side quest's gold, the main story's blue, any quest done green
+const QUEST_SIDE = '#ffc840', QUEST_MAIN = '#6fb4ff', QUEST_DONE = '#8fe07a';
 const VIEW_TILES = 25;             // tiles across the screen (was ~16, then 20; each step zooms out 20%)
 /** the player's zoom range, a factor on the default (pinch, the wheel, Graphics): a third and more each way */
 export const ZOOM_MIN = 0.67, ZOOM_MAX = 1.5;
@@ -801,21 +803,28 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(8,5,14,${0.75 * a})`; octx.fillText(def.name, sx + k, sy + k);
       octx.fillStyle = `rgba(255,226,160,${a})`; octx.fillText(def.name, sx, sy);
     }
-    // who has a quest for you (sim quests.js marks): a gold "!" for one to take, a green "?" for one to hand
-    // in, bobbing over their head and seen from across the square. The symbol says which, not just the colour.
-    const QM = sim.quests && sim.quests.marks ? sim.quests.marks() : {}, bob = Math.sin(clock() / 380) * 2;
+    // who has a quest for you (sim quests.js markKinds), bobbing over their head and seen from across the square: a "!"
+    // for one to take, a "?" for one to hand in, the symbol saying which, not just the colour (the owner, 2026-11-11:
+    // "stay yellow for non main quests. Change to blue for open or in progress main quests. Keep the green color for any
+    // type of completed quests"):
+    //   · a side quest to take: gold "!"     · a main quest to take: blue "!"   · a main quest under way: blue "?" at who
+    //     takes it in, dimmer               · any quest to hand in: green "?"
+    // A main quest's diamond is doubled (an inner outline), so main and side differ by shape as well as colour.
+    const QM = sim.quests && sim.quests.markKinds ? sim.quests.markKinds() : {}, bob = Math.sin(clock() / 380) * 2;
     for (const n of sim.world.npcs || []) {
-      const m = QM[n.id], d = Math.hypot(n.x - ix, n.y - iy); if (!m || d > 40 || !cast[n.id]) continue;
+      const q = QM[n.id], d = Math.hypot(n.x - ix, n.y - iy); if (!q || d > 40 || !cast[n.id]) continue;
       const nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, nz);
       const sx = (ox + P.sx) * S, sy = (oy + P.sy - (d <= 12 ? 80 : 68) + bob) * S, r = 12 * k;   // (over the name when it shows)
       if (sx < -20 * k || sx > vw + 20 * k || sy < (hudB + 14) * k || sy > vh) continue;
-      const col = m === 'ready' ? '#8fe07a' : '#ffc840';
-      octx.beginPath(); octx.moveTo(sx, sy - r * 1.25); octx.lineTo(sx + r, sy); octx.lineTo(sx, sy + r * 1.25); octx.lineTo(sx - r, sy); octx.closePath();
-      octx.shadowColor = col; octx.shadowBlur = 8 * k; octx.fillStyle = 'rgba(16,12,22,0.9)'; octx.fill(); octx.shadowBlur = 0;
+      const col = q.mark === 'ready' ? QUEST_DONE : q.main ? QUEST_MAIN : QUEST_SIDE, going = q.mark === 'going';
+      const diamond = (rr) => { octx.beginPath(); octx.moveTo(sx, sy - rr * 1.25); octx.lineTo(sx + rr, sy); octx.lineTo(sx, sy + rr * 1.25); octx.lineTo(sx - rr, sy); octx.closePath(); };
+      octx.globalAlpha = going ? 0.72 : 1;
+      diamond(r); octx.shadowColor = col; octx.shadowBlur = (going ? 4 : 8) * k; octx.fillStyle = 'rgba(16,12,22,0.9)'; octx.fill(); octx.shadowBlur = 0;
       octx.lineWidth = Math.max(2, 2 * k); octx.strokeStyle = col; octx.stroke();
-      octx.font = `800 ${Math.round(17 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
-      octx.fillStyle = col; octx.fillText(m === 'ready' ? '?' : '!', sx, sy + 0.5 * k);
-      octx.textBaseline = 'alphabetic';
+      if (q.main) { diamond(r * 0.74); octx.lineWidth = Math.max(1, 1.1 * k); octx.stroke(); }
+      octx.font = `800 ${Math.round((q.main ? 15 : 17) * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center'; octx.textBaseline = 'middle';
+      octx.fillStyle = col; octx.fillText(q.mark === 'new' ? '!' : '?', sx, sy + 0.5 * k);
+      octx.textBaseline = 'alphabetic'; octx.globalAlpha = 1;
     }
   }
   // The props a tap can use (a chest, a shrine, the stairs gate), each matched against its sprite as drawn

@@ -23,3 +23,23 @@ test('a quest to hand in shows on whoever takes it in, and wins over a new one',
   s.state.quests.vale_long_way_round.st = QS.DONE; s.state.quests.ch1_smoke_over_the_vale.st = QS.DONE;
   assert.equal(s.quests.marks().maudry_fenn, undefined, 'nothing left with her');
 });
+
+// the markers' kinds (quests.js markKinds; the owner, 2026-11-11: "stay yellow for non main quests. Change to blue for
+// open or in progress main quests. Keep the green color for any type of completed quests"): the main story's a chapter
+// quest, offered or under way; a side quest only when offered; any quest to hand in
+test('main or side: Maudry offers the main story (blue), Ilse and Jory side quests (gold); under way it shows at who takes it in; ready, any kind (green)', () => {
+  const s = town(1);
+  assert.deepEqual(s.quests.markKinds(), { maudry_fenn: { mark: 'new', main: true }, sister_ilse: { mark: 'new', main: false }, jory: { mark: 'new', main: false } });
+  s.quests.begin('ch1_smoke_over_the_vale');                                  // (Maudry gives it; Osric takes it in)
+  let m = s.quests.markKinds();
+  assert.deepEqual(m.osric_hale, { mark: 'going', main: true }, 'under way: at Osric, who takes it in');
+  assert.deepEqual(m.maudry_fenn, { mark: 'new', main: false }, 'her own errand still hers to give, a side quest');
+  s.state.quests.ch1_smoke_over_the_vale.st = QS.READY;
+  assert.deepEqual(s.quests.markKinds().osric_hale, { mark: 'ready', main: true });
+  s.quests.begin('vale_the_ditch'); s.state.quests.vale_the_ditch.st = QS.ACTIVE;
+  assert.equal(s.quests.markKinds().jory, undefined, 'a side quest under way: no marker');
+  s.state.quests.vale_the_ditch.st = QS.READY;
+  assert.deepEqual(s.quests.markKinds().jory, { mark: 'ready', main: false }, 'any kind, green when it can be handed in');
+  s.state.quests.ch1_smoke_over_the_vale.st = QS.DONE;
+  assert.equal(s.quests.markKinds().osric_hale, undefined, 'handed in: gone');
+});
