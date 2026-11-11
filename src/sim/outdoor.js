@@ -224,6 +224,41 @@ const pick = (rng, a) => a[(rng() * a.length) | 0];
 
 // scatter trees / rocks in a region with a density mask; never on roads, water or buildings,
 // and never overlapping one another (trees keep a tile of verge from roads; mountains may crowd)
+// The Fens' water's edge (level-design-rules.md §3.6: "willows and the dead at the edges of the water"): round every mere
+// and along the canal's banks, a willow leaning over the water now and then, a dead tree standing in its shallows. A
+// crown may hang over the water (the scatter's trees can't: their whole footprint must be on land), never over a road,
+// a building or a way in. Its own stream: nothing else on the map moves for it.
+function waterEdge(o, keepOut) {
+  const rng = mulberry32(streamSeed(o.seed, 4434)), roadish = new Set([G.DIRT, G.COBBLE, G.DECK]);
+  const fitsOver = (id, x, y) => { const [x0, y0, x1, y1] = footRect(id, x, y);
+    for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
+      const i = gi(o, tx, ty); if (i < 0 || o.occ[i] === 1) return false;
+      if (o.occ[i] === 2 && roadish.has(groundAt(o, tx + 0.5, ty + 0.5).g)) return false;
+    }
+    const t = groundAt(o, x, y).g; return t === G.GRASS || t === G.BANK; };   // (the trunk on the bank or the grass)
+  const plant = (x, y) => {
+    if (x < 4 || y < 4 || x > o.W - 4 || y > o.H - 4 || keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 20)) return;
+    const id = rng() < 0.78 ? pick(rng, ['willow_1', 'willow_2']) : pick(rng, ['dead_1', 'dead_2']);
+    if (fitsOver(id, x, y)) put(o, id, x, y, 'round', 0.35);
+  };
+  for (const q of o.pools) for (let a = rng() * 0.6; a < Math.PI * 2; a += 0.42 + rng() * 0.3) {
+    if (rng() > 0.45) continue;
+    const k = 1 + (2.5 + rng() * 2) / Math.max(q.rx, q.ry); plant(q.cx + cos(a) * q.rx * k, q.cy + sin(a) * q.ry * k);
+  }
+  for (const r of o.rivers) for (let i = 1; i < r.pts.length; i++) {
+    const [ax, ay] = r.pts[i - 1], [bx, by] = r.pts[i], L = hypot(bx - ax, by - ay), nx = -(by - ay) / L, ny = (bx - ax) / L;
+    for (let t = rng() * 10; t < L; t += 10 + rng() * 8) for (const sd of [-1, 1]) if (rng() < 0.35) {
+      const d = r.w / 2 + 3 + rng() * 2; plant(ax + (bx - ax) * t / L + nx * sd * d, ay + (by - ay) * t / L + ny * sd * d);
+    }
+  }
+}
+/** is there open water (a pool, the canal, a river or its bank) within r tiles of (x, y)? (the Fens' edges: §3.6) */
+function waterNear(o, x, y, r) {
+  for (const [dx, dy] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r], [r * 0.7, r * 0.7], [-r * 0.7, r * 0.7], [r * 0.7, -r * 0.7], [-r * 0.7, -r * 0.7]]) {
+    const g = groundAt(o, x + dx, y + dy).g; if (g === G.POOL || g === G.WATER || g === G.BANK) return true;
+  }
+  return false;
+}
 function scatter(o, rng, x0, y0, x1, y1, step, fn) {
   for (let y = y0; y < y1; y += step) for (let x = x0; x < x1; x += step) {
     const jx = x + (rng() - 0.5) * step * 0.9, jy = y + (rng() - 0.5) * step * 0.9, id = fn(jx, jy);
@@ -510,9 +545,14 @@ function buildFens(seed) {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 18) || inFrontOf(keepOut, x, y, 26, 14)) return null;
     const n = fbm(x * 0.03, y * 0.03, o.seed + 41), out = Math.max(-x, x - 240, -y, y - 240);
     if (out > 0) return rng() < 0.8 ? pick(rng, ['carr_1', 'carr_2', 'dead_1', 'willow_1']) : null;
-    return n > 0.58 ? pick(rng, ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'willow_2']) : rng() < 0.05 ? pick(rng, ['dead_1', 'dead_2']) : null;
+    // (level-design-rules.md §3.6, the foliage pass: the willows and the dead at the water's edge and off the marsh; a
+    // thicket's alders and carr on the raised ground. The same draws as before, only the kind they come out as)
+    const g = groundAt(o, x, y).g, edge = g !== G.MARSH && waterNear(o, x, y, 8);   // (8: a willow's crown is 7 across, and stands back from the water it leans over)
+    const id = n > 0.61 ? pick(rng, edge ? ['willow_1', 'willow_2', 'alder_1', 'willow_2', 'dead_1'] : ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'carr_2']) : rng() < (edge ? 0.12 : 0.05) ? pick(rng, ['dead_1', 'dead_2']) : null;
+    return id && /willow|dead/.test(id) && !edge ? null : id;
   });
   forestRing(o, rng, 6, FENS_CLUSTER, FENS_SINGLE);
+  waterEdge(o, keepOut);
   const ways = [mound, lockhall, pools, abbey, reedholm].map((p) => door(p, 8));
   undergrowth(o, -10, -10, 250, 250, 4, (x, y) => {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || ways.some(([kx, ky]) => hypot(x - kx, y - ky) < 8)) return -1;
@@ -932,7 +972,8 @@ function buildReach(seed) {
     if (!clear(x, y, 14)) return null;
     if (x > 140 && x < 220 && y > 30 && y < 104 && rng() < 0.35) return pick(rng, HEAP);           // the works' heaps
     const n = fbm(x * 0.04, y * 0.04, o.seed + 61), hill = y < 70 && x < 140;
-    if (n > 0.6 || (hill && rng() < 0.2)) return rng() < 0.6 ? pick(rng, RED) : hill ? pick(rng, ['pine_2', 'pine_4', 'dead_2']) : pick(rng, ['dead_1', 'dead_2']);
+    if (n > 0.6 || (hill && rng() < 0.2)) { const id = rng() < 0.6 ? pick(rng, RED) : hill ? pick(rng, ['pine_2', 'pine_4', 'dead_2']) : pick(rng, ['dead_1', 'dead_2']);
+      return /pine/.test(id) && groundAt(o, x, y).g === G.SCREE ? 'rock_B' : id; }   // (§3.6: the pines on the hills' feet, none on scree: its red rock there)
     return rng() < 0.03 ? pick(rng, RED) : null;
   });
   forestRing(o, rng, 6, ['rock_E', 'rock_C', 'dead_1', 'rock_D'], ['dead_1', 'dead_2', 'rock_A', 'rock_B']);
@@ -1031,11 +1072,15 @@ function buildHeights(seed) {
     if (out > 0) return rng() < 0.7 ? pick(rng, PINES) : null;
     if (!clear(x, y, 14)) return null;
     const low = y > 140 && (x < 110 || x > 180), n = fbm(x * 0.035, y * 0.035, o.seed + 65);
-    if (low && n > 0.42) return rng() < 0.8 ? pick(rng, PINES) : 'dead_1';
-    return n > 0.62 ? (rng() < 0.5 ? pick(rng, PINES) : pick(rng, ['rock_A', 'rock_C', 'rock_D', 'rock_E'])) : rng() < 0.03 ? pick(rng, ['rock_C', 'rock_D', 'rock_B', 'dead_2']) : null;
+    const id = low && n > 0.42 ? (rng() < 0.8 ? pick(rng, PINES) : 'dead_1')
+      : n > 0.62 ? (rng() < 0.5 ? pick(rng, PINES) : pick(rng, ['rock_A', 'rock_C', 'rock_D', 'rock_E'])) : rng() < 0.03 ? pick(rng, ['rock_C', 'rock_D', 'rock_B', 'dead_2']) : null;
+    // (§3.6: living pines only below the snow line; on the snow and the scree, rock and the odd dead pine)
+    if (id && /pine/.test(id)) { const g = groundAt(o, x, y).g; if (g === G.SNOW || g === G.SCREE) return (Math.floor(x) + Math.floor(y)) % 5 ? 'rock_C' : 'dead_1'; }
+    return id;
   });
   forestRing(o, rng, 6, PINES, [...PINES, 'dead_1']);
-  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 67) > 0.64 ? 0.35 : 0.04),
+  undergrowth(o, -10, -10, 270, 270, 5, (x, y) => { const g = groundAt(o, x, y).g;
+    return keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || g === G.SNOW || g === G.SCREE || g === G.MARSH ? -1 : fbm(x * 0.07, y * 0.07, o.seed + 67) > 0.64 ? 0.35 : 0.04; },   // (§3.6: nothing green on snow, scree or marsh)
     { low: ['ug_grass_1', 'ug_grass_2', 'ug_fern'], solid: ['rock_A', 'rock_B'], foot: ['ug_grass_2', 'ug_fern'] });
 
   o.exits.push({ x0: gate[0] - 8, y0: gate[1] - 4, x1: gate[0] - 1, y1: gate[1] + 4, to: 'town', arrive: 'overland' });

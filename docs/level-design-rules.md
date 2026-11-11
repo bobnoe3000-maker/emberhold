@@ -62,7 +62,7 @@ everywhere, so the menu never moves.
 | **Services stand 8+ tiles apart**, every door inside the square's frame (\|Δ(x−y)\| < 22, Δ(x+y) −93…50 of the focus) | *test* town.test.mjs |
 | **The plaques hang at set heights** (temple 23.5, tavern 15.1, shop 13.4, smith 11.1, inn 18.7 tiles), not at the roofs, within ±17 of the centre; the drawn plaques match within 1 px and clear the buttons | *test* town.test.mjs, browser §15d2 |
 | **The walls are closed, the gate the only way out.** The curtain leaves ±7 tiles at the gate, the gate itself ±3 walkable; walls in 20-tile runs | *test* town.test.mjs |
-| **The square stays open 10 tiles round the well** (no house, prop or tree) | *prose* (to test, §7) |
+| **The square stays open 10 tiles round the well**: no house or tree (its table, its bucket and its people may stand there; a waystation's deck square, with no well, is exempt) | *test*: layout.test.mjs |
 | **Tall at the back, low at the front.** Houses fill the north and west quarters; nothing taller than one storey stands between the square and the camera; a home never stands south of what it opens onto | *prose*; the visibility check catches the result (§1.1) |
 | **Every door can be walked to** from where you wake (a flood fill); the town set stays off the roads (no footprint within a road's half-width) and 2+ tiles off the straight walk from each arrival to each door | *test* town.test.mjs (seed 1: more seeds, §7) |
 | **Doorstep props** (a bench, a barrel, a cart) go only on the +x/+y faces and never inside the hub; the back quarters' trees stand up-screen of the square | *code* outdoor.js |
@@ -92,9 +92,11 @@ everywhere, so the menu never moves.
   - the bridge's ramps (±9.2 tiles) on land;
   - no road in the river except at a bridge;
   - the mill's wheel within a tile of the water.
-- **Must, new: a bridge's ends stay clear.** Nothing solid within 4 tiles of either ramp's foot; no undergrowth on the
-  deck or within 2 tiles of it. *prose*, to test (§7).
-- **Should, new: the banks are planted for the biome** (§3.6). Reeds and willows at the Fens' water's edge; in the
+- **Must, new: a bridge's ends stay clear.** Past either end of its deck, 3 tiles across and 2 deep stay walkable
+  (*test*: layout.test.mjs, every bridge on all four lands). (Written first as "nothing solid within 4 tiles of the
+  ramp's foot": the test holds what a walk needs, the code's.)
+- **Should, new: the banks are planted for the biome** (§3.6). Reeds and willows at the Fens' water's edge (*test*:
+  biomes.test.mjs); in the
   Vale, the undergrowth thickens along the banks (it does: 0.55 density within 2.5 tiles of water). Trees stand 2+
   tiles back from open water except the biome's water trees.
 
@@ -162,10 +164,13 @@ on. What the code does today is set against each profile below; the "to change" 
   - Reeds in ribbons along every water edge.
   - The map's edge is a ring of carr.
   - Open water and marsh stay open: the Fens read as wide and wet, not wooded.
-- **Densities:** trees cover 10–20 % (less than the Vale); reeds on most of the water's edge.
+- **Densities:** cover (the share of the map within 8 tiles of a tree, as the Vale's) 15–25 %, less than the Vale's
+  (*test*: biomes.test.mjs); reeds on most of the water's edge.
 - **Never:** birch, autumn trees, mixed groves (the fens critic pass 2: they read round and cheerful here).
-- **Today:** species right. Trees stand on marsh ground as well as grass (167 on marsh). **To change:** keep the trees
-  but the willows and the dead off marsh, and run the reeds along the water's edges, which aren't placed by edge today.
+- **Today** (the foliage pass, 2026-11-11): alders and carr on the raised ground and the marsh; willows and the dead only
+  at the water's edge, never on the marsh (`outdoor.js` `waterEdge`: round every mere and along the canal, a crown may
+  lean over the water, never a road); cover 21.6 % (the Vale 26.4 %). The reeds along the edges are Luminati's own: it
+  grows them on every land tile beside water (*test*: biomes.test.mjs).
 
 **The Cinder Reach: cinder badlands.**
 - **Species:** red rock outcrops and their rubble, slag heaps round the works, dead trees, a few pines on the hills'
@@ -178,8 +183,8 @@ on. What the code does today is set against each profile below; the "to change" 
   - Most of the ground is bare.
 - **Densities:** trees under 3 % cover, rocks 5–10 %, dry grass in a few patches.
 - **Never:** flowers, ferns, clover, mushrooms, leafy trees.
-- **Today:** as above (dry grass and stones). Trees stand on scree (74 pieces). **To change:** pines only on the hills'
-  feet, none on scree.
+- **Today** (2026-11-11): no pine on scree (its red rock stands there instead); dead trees and rock; cover 9.5 %
+  (*test*: biomes.test.mjs: no pine on scree, no leafy growth, cover 12 % at most).
 
 **The Pale Heights: alpine.**
 - **Species:** pines in stands, dead pines at the treeline, scree fans, boulders. Ground: grasses and fern below the
@@ -191,8 +196,8 @@ on. What the code does today is set against each profile below; the "to change" 
   - The map's edge is pines.
 - **Densities:** pines 15–25 % cover below the treeline, none above; no undergrowth on snow or scree.
 - **Never:** green undergrowth on snow; marsh plants; leafy trees.
-- **Today:** pines stand on snow (177) and undergrowth grows on snow (29), on scree and on marsh (3). **To change:**
-  no undergrowth on snow, scree or marsh; living pines only below the snow line; dead pines and rock above it.
+- **Today** (2026-11-11): living pines only below the snow line; on snow and scree, rock and one dead pine in five; no
+  undergrowth on snow, scree or marsh (*test*: biomes.test.mjs).
 
 **Lands to come** (Solmere, the Tidemark, the Greenwood): a profile each, written here before the map is built. The
 Greenwood is deep forest, its open ground the exception: glades and paths cut through closed canopy, so §1.1 matters
@@ -207,6 +212,23 @@ most there. The Tidemark is a coast: dune grass, wind-bent pines and rock, no tr
 5. The undergrowth is placed last, on its own random stream, so nothing it adds moves a tree, a rock or a house
    (*test*).
 6. The edge of the map is a ring the player can't walk through, in the biome's own trees or rock (`forestRing`).
+
+### 3.6b Spawn points (new, GDD §10.3 v1.68)
+
+A land's fights away from its dungeons (`src/sim/camps.js`). The owner: *"each region or overworld map should also have
+3 or 4 NPC spawn locations … with appropriate site dressing and appropriate NPC difficulty just like the 3 or so dungeons
+per map … wider aggro/chase radius (show as a dotted line when encountered)"*.
+
+| Rule | Why | Enforced |
+|---|---|---|
+| Three or four a land, at least one at each of its dungeons' bands | a fight on the land for every stage of it | *test*: camps.test.mjs |
+| The first band's may stand by a road; a higher band's stands more than its reach from every road | a walk to a lower band's dungeon never meets a fight it can't win (the first try put a level-5 picket by the keep road, and a level-1 walk to the Keep died to it) | *test* |
+| None reaches a way in or out, or where anyone arrives | you never come out of a door into a fight | *test* |
+| Open ground under it: its middle, its posts and its hole walkable, its dressing on its own tiles, no other's arena overlapping | the band stands and fights where it's drawn | *test* |
+| Away from the map's edge by 25 tiles or more | the border's forest stands between the camera (south-east) and anything at the edge | *prose* (the old picket was moved for it) |
+| Dressed as what it is (a camp's fire, tent and banner; a nest's burrow; the stones' pillars; the graves' saint and urns) | read from afar before it sees you | *prose* |
+| Its band idles at its posts or its hole while it's full | seen before it sees you (a nest too, v1.67) | *test* |
+| Its reach shows as a dashed amber ring on the ground as you come up on it, its arena a red one in its fight | where it'll see you, and where you can run past (renderer.js `drawCampRings`) | *code* |
 
 ### 3.7 Rocks, fields and beasts
 
@@ -412,19 +434,13 @@ floors hold 4 % fewer pieces and 9 % fewer lights (901 → 819: the ones that st
 ## 7. Not yet enforced, and the next work
 
 **To test:**
-- The square open 10 tiles round the well.
 - The near walls' low pieces only.
 - The lanes from each doorway.
-- A bridge's ends clear.
 - The town checks on more seeds.
 - The doorway light by kit, in every room.
 - A shrine against a far wall.
 
-**To build:** the foliage pass to the biome profiles (§3.6):
-- Undergrowth by ground.
-- The Fens' reeds along the water's edges.
-- The Heights' snow line and the Reach's pines kept off scree.
-- A cover test per biome.
+**Built** (2026-11-11): the foliage pass to the biome profiles (§3.6), and its test per biome (`test/biomes.test.mjs`).
 
 **To write:** a profile for each land to come, before it's built.
 
