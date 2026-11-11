@@ -1,7 +1,10 @@
 # First steps and first-open cards (a plan)
 
 **Status:** the opening square's cards are **Implemented** (2026-11-10, GDD §6.1 v1.64: `src/ui/firststeps.js`,
-`content/firststeps.json`). The services' first-open cards (§3) are **Proposed**.
+`content/firststeps.json`). The first-open cards (§3) are **Implemented** too (2026-11-10, the owner: "do 3"):
+`firststeps.js` `firstOpen(id)`, the text in `content/firststeps.json` `once`, all twelve of §3's table, its drafts
+corrected by a critic pass against the code (skill points come every second level, the board's jobs, the tavern's
+ask-around, what slays a companion) and cut to one use each.
 
 The owner, 2026-11-10: "After Ready - create a few focus screen, tool tips/tutorials - Opening square: How to move, how
 to view your character and whats on those screens, compass navigation, quest log, and world menu and main menu. how to
@@ -52,7 +55,7 @@ After Ready, once the town's square is up and the HUD is on it, eight cards. `co
 The browser suite reads the eight through, in order, each but the first and last ringing its thing
 (`test/browser/run.mjs`, the M3 flow).
 
-## 3. The services' first-open cards (proposed)
+## 3. The services' first-open cards (implemented)
 
 The first time a window opens in a game slot, one card over it says what the window is for and how it works. Each is
 one card, not a set. Its rows are the window's own (`townmenu.js` SERVICES), so the card never repeats them.
@@ -72,7 +75,10 @@ one card, not a set. Its rows are the window's own (`townmenu.js` SERVICES), so 
 | **A dungeon's first room** | entering one | "The room is the fight: foes come in waves while you stay in it. Walk out through a doorway and it's over, the room as it was. The stairs go down to harder floors." | the room's doorways |
 | **Fallen** | the first time a hero falls | "Fallen: back at the temple, weakened for a while. A companion who falls in a fight is slain until the temple raises them." | the temple's row |
 
-How it's built, when it is:
+How it's built (as planned; the drafts above are the first ones, the shipped text is the JSON's). Two things learned in
+building: the cards are off under `?notitle` (tests and captures: a card held the fight in every dungeon capture), and
+the browser suite's flows switch them off for the tab (sessionStorage `emberfall.firstopen`), its own check on.
+A card waits for the window it rings to slide up before it rings it.
 
 - **One module, two kinds of set.** `firststeps.js` gains `once(id, card)`: show this one card the first time `id` is
   asked, ringing `at` if it's on screen.

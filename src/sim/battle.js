@@ -5,7 +5,7 @@
 // spawns away from the party, the party fights on its own, a lull follows each cleared
 // wave, then the next wave comes — for as long as you stay. Every room has a fixed
 // level (world.roomLevels: deeper from the entrance and deeper floors are harder), and
-// its waves never escalate: wave 40 is as hard as wave 1. Enemies are leashed to their
+// its waves rise with a tide, each a little tougher than the last (GDD §3). Enemies are leashed to their
 // room. Walk out of the room to end it (the room resets). If the whole party falls,
 // you're carried to town.
 //

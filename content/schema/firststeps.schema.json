@@ -2,19 +2,76 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "First steps (GDD §6.1 v1.64): the opening square's cards, each pointing at what it's about",
   "type": "object",
-  "required": ["steps"],
+  "required": [
+    "steps"
+  ],
   "additionalProperties": false,
   "properties": {
-    "$comment": { "type": "string" },
+    "$comment": {
+      "type": "string"
+    },
     "steps": {
-      "type": "array", "minItems": 1,
+      "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object", "required": ["id", "title", "text"], "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "text"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "at": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1, "maxLength": 32 },
-          "text": { "type": "string", "minLength": 1, "maxLength": 320 }
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "at": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 320
+          }
+        }
+      }
+    },
+    "once": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "text"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "at": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 320
+          }
         }
       }
     }

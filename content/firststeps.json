@@ -1,5 +1,5 @@
 {
-  "$comment": "First steps (GDD §6.1 v1.64): the opening square's cards, one at a time, each pointing at what it's about (`at`: a CSS selector the card rings; none: the world itself). Shown once a game slot after Ready; the menu's First steps shows them again. Plan for the services' first-open cards: docs/first-steps-plan.md.",
+  "$comment": "First steps (GDD §6.1 v1.64): the opening square's cards, one at a time, each pointing at what it's about (`at`: a CSS selector the card rings; none: the world itself). Shown once a game slot after Ready; the menu's First steps shows them again. Plan for the services' first-open cards: docs/first-steps-plan.md. `once`: the first-open cards (docs/first-steps-plan.md §3), one card the first time a window opens in a slot.",
   "steps": [
     {
       "id": "move",
@@ -46,6 +46,76 @@
       "id": "errand",
       "title": "Your first errand",
       "text": "Maudry Fenn keeps the Tired Mule, here on the square, and she has work for someone new. A gold mark hangs over anyone with work for you. Walk up to her and tap her."
+    }
+  ],
+  "once": [
+    {
+      "id": "shop",
+      "at": "#hubSheet [data-go=\"shop:buy\"]",
+      "title": "The shop",
+      "text": "Plain arms and armour at your level, new every dawn: buy for anyone in your company. Sell what you carry, and buy it back if you change your mind. A Homeward Scroll is always on the shelf; it takes you home from a dungeon."
+    },
+    {
+      "id": "smith",
+      "at": "#hubSheet [data-go=\"smith:upgrade\"]",
+      "title": "The smith",
+      "text": "The forge makes what you wear better. Upgrade a piece a step at a time to +5, for gold and cinders (wood and stone from +3). Cinders come from salvaging gear you won't use."
+    },
+    {
+      "id": "tavern",
+      "at": "#hubSheet [data-go=\"hire\"]",
+      "title": "The tavern",
+      "text": "The Lantern Guild's room. Most come to hire: sellswords who fight beside you, new faces every dawn. The quest board, the coach and the rumours are the other rows."
+    },
+    {
+      "id": "hire",
+      "at": "#hubSheet .merc",
+      "title": "Sellswords",
+      "text": "Two slots beside you; more wait on the bench. A sellsword costs a fee to sign and a wage every dawn, wherever you are. Unpaid, their perks go dark until you settle. Paid while they fight with you, they grow loyal, and a Lantern or a Beacon shows a perk it kept back."
+    },
+    {
+      "id": "inn",
+      "at": "#hubSheet [data-go=\"rest\"]",
+      "title": "The inn",
+      "text": "Rest to be whole again; it lifts Weakened. Companions you aren't taking wait here on the bench at half wages, and can be sent on the road for XP and gold while you're away."
+    },
+    {
+      "id": "temple",
+      "at": "#hubSheet [data-go=\"raise\"]",
+      "title": "The temple",
+      "text": "The Grey Sisters raise companions who were slain: free once a day while you're level 5 or under, for gold after. Spending your attribute points again, or a new look, is here too."
+    },
+    {
+      "id": "board",
+      "at": "#hubSheet .job",
+      "title": "The board",
+      "text": "Small jobs for this land: hold a room so many waves, open chests, put down elites, reach a floor. Take one and it goes in your Journal; bring it back to a board for the pay. Three at a time; new jobs go up at dawn and dusk."
+    },
+    {
+      "id": "coach",
+      "title": "The coach",
+      "text": "The Guild's coach runs between towns you've walked to, ten gold a day of road. Pick a town on the map and you're there; it leaves from a square."
+    },
+    {
+      "id": "bag",
+      "at": "#gearSheet .bag",
+      "title": "The bag",
+      "text": "What the company carries, and what each of you wears. Tap a piece for its card: wear it, give it to someone, salvage it. A green number is what gear adds; the border's colour and glow are its rarity."
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "text": "A new skill every three levels, a passive every ninth; some wait on your class's trial. A point every second level raises a rank. Four skills go into a fight, passives always: pick them here, and they're used when the fight wants them."
+    },
+    {
+      "id": "room",
+      "title": "A dungeon's room",
+      "text": "The room is the fight: foes come in waves while you stay in it, each a little tougher. Walk out through a doorway and it's over, the room as it was. The stairs go down to harder floors."
+    },
+    {
+      "id": "fallen",
+      "title": "Fallen",
+      "text": "Downed, you get up when the wave falls. A companion Downed twice in one room, or left Downed when you walk out, is slain: a ghost until a temple raises them. If the whole company goes down, you wake at the temple, Weakened a while, a quarter of your gold gone."
     }
   ]
 }

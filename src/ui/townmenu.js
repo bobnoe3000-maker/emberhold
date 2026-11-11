@@ -39,6 +39,7 @@ import { CLASSES, statsFor, MAX_COMPANIONS, hireLevel } from '../sim/party.js';
 import { BENCH_MAX, FREE_RES_LEVEL } from '../sim/heroes.js';
 import { pointsSpent } from '../sim/attributes.js';
 import { esc } from './actorart.js';
+import { firstOpen } from './firststeps.js';
 import { MAX_JOBS } from '../sim/board.js';
 import { QS } from '../sim/quests.js';
 import { boardWords, boardReady, SKULLS } from './boardwords.js';
@@ -166,7 +167,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     if (e.target.closest('.close')) return close();
     if (e.target.closest('.back')) { note = ''; leaveLook(); return view === 'retrain' ? hire() : view === 'look' && lookFor ? (lookFor = null, VIEWS.look()) : open(current); }
     const go = e.target.closest('[data-go]');
-    if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } if (v === 'coach') { close(); openMap(); return; } return VIEWS[v](t); }
+    if (go) { const [v, t] = go.dataset.go.split(':'); note = ''; if (v === 'party') { close(); openParty(); return; } if (v === 'coach') { close(); openMap(); firstOpen('coach'); return; } return VIEWS[v](t); }
     const send = (cmd) => { note = ''; sim.commands.push(cmd); };
     const h = e.target.closest('[data-hire]'); if (h) return send({ type: 'hire', idx: +h.dataset.hire });
     if (e.target.closest('[data-ask]')) return send({ type: 'askAround' });
@@ -219,6 +220,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
         ? `<div class="row go" data-go="${LIVE[t]}"><div><b>${t}</b><span>${d}</span></div><div class="go-arrow">›</div></div>`
         : `<div class="row"><div><b>${t}</b><span>${d}</span></div><div class="soon">soon</div></div>`).join('')}`;
     sheet.classList.add('on');
+    firstOpen(kind);                                          // (its card, the first time: docs/first-steps-plan.md §3)
   }
   const line = (m) => { const s = statsFor(m); return `HP ${s.maxHp} · ATK ${s.atk} · DEF ${s.def} · CRT ${s.crit}% · DDG ${s.dodge}%`; };
   const head = (kind, title, blurb) => `<button class="close" aria-label="close">×</button><button class="back">‹ back</button>
@@ -229,6 +231,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   // how hard (skulls, with the word) and what it pays; and every finished job you're holding, from
   // any day, to hand in. Up to MAX_JOBS open at once; the sim checks every take and hand-in.
   function board() {
+    firstOpen('board');
     view = 'board';
     const S = sim.state, offers = sim.world.kind === 'town' ? sim.board.offers() : [], open = sim.board.open();
     const nx = sim.board.nextPosting(), mins = Math.max(1, Math.ceil(nx.secs / 60));
@@ -260,6 +263,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   // (Ask around and today's sellswords). With the party full a hire reads "Add to roster": the
   // sellsword joins the company on the bench at the inn.
   function hire(tab) {
+    firstOpen('hire');
     view = 'hire';
     const w = sim.world, S = sim.state, party = S.party, full = party.length > MAX_COMPANIONS, benchFull = S.bench.length >= BENCH_MAX;
     const roster = w.kind === 'town' ? sim.heroes.roster() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60));

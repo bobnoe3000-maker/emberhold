@@ -14,6 +14,7 @@ import { ATTRS, ATTR_LABEL, ATTR_TEXT, attrsOf, pendingPoints } from '../sim/att
 import { STANCES, STANCE_LABEL, STANCE_TEXT, MAX_RANK, priorityOf, unlocked, rankOf, rankCost, autocastOn, pendingSkillPoints, stanceOf, skillMult, HEAL_BONUS, DRAIN_MEND, passivesOf, passiveVal, inPlay, LOADOUT } from '../sim/skills.js';
 import { esc, drawCharacter, PORTRAIT_W, PORTRAIT_H, FIGURE_W, FIGURE_H } from './actorart.js';
 import { portraitKey, paintPortrait } from './portraits.js';
+import { firstOpen } from './firststeps.js';
 import { openPreview } from '../render3d/preview.js';
 import { lookOf } from '../render3d/looks.js';
 import { BASES, classesOf, SLOT_LABEL, STAT_LABEL, SALVAGE, itemStats, canWear, isTwoHanded, upgradeScore, modText, ABILITY_OF, abilityMods, isUsable } from '../sim/items.js';
@@ -225,7 +226,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
     const talk = NPCS[m.id] && NPCS[m.id].found && !m.main ? `<button class="talkb" data-talk="${esc(m.id)}"${m.down || m.fallen ? ' disabled' : ''}>Talk to ${esc(m.name)}</button>` : '';
     const head = `<div class="grab"></div><button class="x" data-close>✕</button><div class="tabs">${tabs}</div>${views}${talk}`;
     if (view === 'stats') { sheet.innerHTML = head + statsView(m, s); card.classList.remove('on'); sel = null; paintTabs(); return; }
-    if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
+    if (view === 'skills') { sheet.innerHTML = head + skillsView(m); card.classList.remove('on'); sel = null; paintTabs(); firstOpen('skills'); return; }
     if (view === 'contract') { sheet.innerHTML = head + contractView(m); card.classList.remove('on'); sel = null; paintTabs(); return; }
     sheet.innerHTML = `${head}
       <div class="doll"><div class="col">${col(['weapon', 'off', 'trinket'])}</div>
@@ -234,7 +235,7 @@ export function createGearSheet(sim, { partyPanel, openTerms = () => {}, models 
       <div class="stats">${stat('hp', s.maxHp, G.hp)}${stat('mp', s.maxMp, G.mp)}${stat('atk', s.atk, G.atk)}${stat('def', s.def, G.def)}${stat('crit', s.crit + '%', G.crit)}${stat('dodge', s.dodge + '%', G.dodge)}${stat('hpr', s.hpr + '/s', G.hpr)}${stat('mpr', s.mpr + '/s', G.mpr)}</div>
       <div class="bagh">Party bag · ${stacks.length}/${BAG_SIZE}<span class="cur">${S.counters.gold || 0} gold<i>✦ ${S.counters.embers || 0} cinders</i></span></div>
       <div class="bag">${stacks.map((st) => slotHtml(st.find((x) => sel && x.uid === sel.uid) || st[0], { m, n: st.length, isNew: st.some((x) => fresh.has(x.uid)) })).join('')}${Array.from({ length: Math.max(0, BAG_SIZE - stacks.length) }, () => '<div class="gslot empty"></div>').join('')}</div>`;
-    paintTabs();
+    paintTabs(); if (open) firstOpen('bag');   // (the bag's card, the first time: docs/first-steps-plan.md §3)
     const fc = sheet.querySelector('canvas[data-fig]'); if (fc) drawCharacter(fc, fc.dataset.fig);
     liveFig(m, fc);
     renderCard();

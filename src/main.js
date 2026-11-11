@@ -13,7 +13,7 @@ import { SLOTS, activeSlot, setActiveSlot, readSlot, writeSlot, migrateLegacy, c
 import { createSlotsWindow } from './ui/slots.js';
 import { createTitle } from './ui/title.js';
 import { createCreation } from './ui/create.js';
-import { createFirstSteps } from './ui/firststeps.js';
+import { createFirstSteps, firstOpen } from './ui/firststeps.js';
 import { createPartyScreen } from './ui/partyscreen.js';
 import { createCinema } from './cutscene/player.js';
 import { createDialogue } from './ui/dialogue.js';
@@ -160,7 +160,12 @@ let paused = BOOT;
 if (STAGE3D) import('./dev/stage.js').then(({ createStage }) => { globalThis.__stage = createStage({ sim, renderer, params, setPaused: (on) => { paused = on; } }); });
 const cinema = createCinema();
 // the first steps (ui/firststeps.js, GDD §6.1 v1.64): after Ready, once the square is up and the HUD on it, one card at a time
-const firstSteps = createFirstSteps({ slot: SLOT, setPaused: (on) => { paused = on; } });
+const firstSteps = createFirstSteps({ slot: SLOT, setPaused: (on) => { paused = on; }, cards: !params.has('notitle') });   // (?notitle: tests and captures, no first-open card over them)
+// the first-open cards for what isn't a window (docs/first-steps-plan.md §3): a dungeon's first room (the fight held
+// while it's read), the first fall (after the defeat screen has gone)
+sim.bus.on('battle', (b) => { if (b.on && sim.world.kind === 'dungeon') firstOpen('room', { pause: true }); });
+sim.bus.on('fallen', () => firstOpen('fallen', { pause: true }));
+sim.bus.on('defeat', () => { const t = setInterval(() => { if (document.querySelector('#defeat.on')) return; clearInterval(t); firstOpen('fallen'); }, 400); });
 function stepsWhenReady() {
   let n = 0; const t = setInterval(() => {
     if (++n > 240) return clearInterval(t);                                        // (a minute: a world that never came up has its own message)

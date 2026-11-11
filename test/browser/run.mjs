@@ -47,7 +47,7 @@ function patient(b) {
   // flow checks run with no world drawn, main.js ?world=off, kept for the tab; the checks about the world itself, the
   // M3 loop, Luminati's can't-start message and the render3d section, ask for it with &world=on)
   b.newContext = async (o) => { const c = await ctx(o); c.setDefaultTimeout(PATIENT); c.setDefaultNavigationTimeout(PATIENT);
-    await c.addInitScript(() => { try { if (!sessionStorage.getItem('emberfall.world')) sessionStorage.setItem('emberfall.world', 'off'); } catch { /* no storage */ } });
+    await c.addInitScript(() => { try { if (!sessionStorage.getItem('emberfall.world')) sessionStorage.setItem('emberfall.world', 'off'); if (!sessionStorage.getItem('emberfall.firstopen')) sessionStorage.setItem('emberfall.firstopen', 'off'); } catch { /* no storage */ } });   // (firstopen: the windows' first-open cards off for the flows; their own check turns them on)
     return c; };   // (newPage makes its context through this)
   return b;
 }
@@ -323,6 +323,28 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       await ctx.close();
     }
     await b.close();
+  }
+}
+// 5b. the first-open cards (docs/first-steps-plan.md §3; the flows run with them off): each service's card the first time
+// it opens, ringing its row, and none the second time
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }), p = await ctx.newPage();
+    await p.addInitScript(() => { try { sessionStorage.setItem('emberfall.firstopen', 'on'); } catch { /* */ } });
+    await p.goto(`${base}/index.html?dev&slot=3&scene=town`); await p.evaluate(() => localStorage.clear());
+    await p.goto(`${base}/index.html?dev&slot=3&scene=town`); await p.waitForFunction(() => !!globalThis.__sim, null, { timeout: 60000 });
+    await p.waitForSelector('#hubBar.on', { timeout: 60000 }).catch(() => null);
+    const out = [];
+    for (const k of ['shop', 'smith', 'tavern', 'inn', 'temple']) for (const pass of [1, 2]) {
+      await p.locator(`#hubBar button[data-k=${k}]`).tap(); await p.waitForTimeout(600);
+      const [id, rung] = await p.evaluate(() => [globalThis.__ui.firstSteps.card, !document.querySelector('#steps .ring.none')]);
+      out.push(pass === 1 ? id === k && rung : id === null);
+      if (id) { await p.locator('#steps .pri').tap(); await p.waitForTimeout(200); }
+      await p.locator('#hubSheet .close').tap(); await p.waitForTimeout(300);
+    }
+    check("first-open cards: each service's card the first time it opens, ringing its row; none the second time", out.every(Boolean), JSON.stringify(out));
+    await ctx.close(); await b.close();
   }
 }
 // 6. talk to Maudry: tap → walk over → dialogue → choices → flag → the hiring board
