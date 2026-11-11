@@ -434,6 +434,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   const reach = keepTheWaysOpen(world, level);
   pruneUnreachable(world, reach);
   if (![...world.props.values()].includes('chest')) placeOneChest(world, level, keep, reach);
+  seeChests(world, level, reach);
 
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.
@@ -499,6 +500,31 @@ function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y));
 // Chronicle fragment in the hall while Ilse's errand said "the chests on the first floor"). One goes against a wall
 // of a fighting room you can walk to, clear of the doorways and the furniture, drawn on the keep stream: every
 // floor that kept a chest is the same as before.
+// A chest is seen whole (the owner, 2026-11-11: "Chests should always be visible to the player not tucked against a
+// southern wall so you can barely see the top"; level-design-rules.md §4.4): the camera looks from the south-east, so a
+// wall on a chest's near side (+x, +y, within two tiles) stood between them and showed its lid at most, as it had a
+// shrine's (whose placement has kept the near side clear since 2026-10-01). Every chest placed (a room's plan, the
+// dressing, a floor's one at least) is moved, if it must be, to the nearest free tile of its room that's clear there and
+// reachable; a vault's key goes with it. No draw: nothing else on the floor moves.
+/** is the near side of a tile open (+x, +y: toward the camera), two tiles out? */
+export const nearClear = (level, x, y) => [[1, 0], [2, 0], [0, 1], [0, 2], [1, 1], [2, 1], [1, 2]].every(([dx, dy]) => { const c = level.cells.get(K(x + dx, y + dy)); return !!c && c.kind === 'floor'; });
+function seeChests(world, level, reach) {
+  for (const [k, kind] of [...world.props]) {
+    if (kind !== 'chest') continue;
+    const [x, y] = k.split(',').map(Number), c0 = level.cells.get(k);
+    if (!c0 || nearClear(level, x, y)) continue;
+    let best = null, bd = Infinity;
+    for (const [q, c] of level.cells) {
+      if (c.kind !== 'floor' || c.corridor || c.room !== c0.room || world.props.has(q)) continue;
+      const [tx, ty] = q.split(',').map(Number), d = (tx - x) * (tx - x) + (ty - y) * (ty - y);
+      if (d >= bd || !reach(tx, ty) || !NONWALK_OK(world, tx, ty) || resourceAt(world, tx, ty) || !nearClear(level, tx, ty)) continue;
+      bd = d; best = q;
+    }
+    if (!best) continue;                                          // (no such tile in the room: it stays)
+    world.props.delete(k); world.props.set(best, 'chest');
+    if (world.vault && world.vault.key === k) world.vault.key = best;
+  }
+}
 function placeOneChest(world, level, keep, reach) {
   const floorAt = (x, y) => { const c = level.cells.get(K(x, y)); return !!c && c.kind === 'floor'; };
   const spots = [], loose = [], ent = level.entrance ? level.entrance.id : -1;

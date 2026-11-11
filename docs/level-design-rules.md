@@ -398,6 +398,15 @@ floors hold 4 % fewer pieces and 9 % fewer lights (901 → 819: the ones that st
 
 ![Two floors' ways up at dusk, before and after: the Old Barrows' second floor (a shelf of urns by the stair, a brazier out in the room) and Wickham Keep's first (torches on and against the stair, a brazier in the open)](img/dungeon/keepclear-before-after.jpg)
 
+**A chest is seen whole** (the owner, 2026-11-11: *"Chests should always be visible to the player not tucked against a
+southern wall so you can barely see the top"*). The camera looks from the south-east, so a wall on a chest's near side
+(+x, +y, within two tiles) showed its lid at most. That's the rule the shrines have kept since 2026-10-01.
+- **How:** every chest (a room's plan, the dressing, a floor's one at least) is moved, if it must be, to the nearest free
+  tile of its room that's clear there and reachable (`world.js` `seeChests`, `nearClear`). A vault's key goes with it.
+  No draw, so nothing else on the floor moves.
+- **Measured** (every site's floors, four seeds): 86 of 195 chests had a wall on their near side before; 0 after.
+- **Test:** `test/chestview.test.mjs`.
+
 ### 4.5 The kits: each place's brief
 
 | Kit | The place | Its pieces (back walls · clusters · set piece · obstacles) | Its light |

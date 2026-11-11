@@ -242,8 +242,9 @@ function waterEdge(o, keepOut) {
     if (fitsOver(id, x, y)) put(o, id, x, y, 'round', 0.35);
   };
   for (const q of o.pools) for (let a = rng() * 0.6; a < Math.PI * 2; a += 0.42 + rng() * 0.3) {
-    if (rng() > 0.7) continue;
-    const k = 1 + (1.5 + rng() * 1.5) / Math.max(q.rx, q.ry);   // (the trunk a tile and a half to three out: at the edge, the art critic) plant(q.cx + cos(a) * q.rx * k, q.cy + sin(a) * q.ry * k);
+    if (rng() > 0.3) continue;
+    const k = 1 + (1.5 + rng() * 1.5) / Math.max(q.rx, q.ry);   // (the trunk a tile and a half to three out: at the edge, the art critic)
+    plant(q.cx + cos(a) * q.rx * k, q.cy + sin(a) * q.ry * k);
   }
   for (const r of o.rivers) for (let i = 1; i < r.pts.length; i++) {
     const [ax, ay] = r.pts[i - 1], [bx, by] = r.pts[i], L = hypot(bx - ax, by - ay), nx = -(by - ay) / L, ny = (bx - ax) / L;
@@ -546,9 +547,9 @@ function buildFens(seed) {
     const n = fbm(x * 0.03, y * 0.03, o.seed + 41), out = Math.max(-x, x - 240, -y, y - 240);
     if (out > 0) return rng() < 0.8 ? pick(rng, ['carr_1', 'carr_2', 'dead_1', 'willow_1']) : null;
     // (level-design-rules.md §3.6, the foliage pass: the willows and the dead at the water's edge and off the marsh; a
-    // thicket's alders and carr on the raised ground. The same draws as before, only the kind they come out as)
+    // thicket's alders and carr on the raised ground. The same draws as before, only the kind they come out as; the thicket at 0.67 of the noise, 0.61 before the pools' edges were planted: cover 23 %)
     const g = groundAt(o, x, y).g, edge = g !== G.MARSH && waterNear(o, x, y, 8);   // (8: a willow's crown is 7 across, and stands back from the water it leans over)
-    const id = n > 0.61 ? pick(rng, edge ? ['willow_1', 'willow_2', 'alder_1', 'willow_2', 'dead_1'] : ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'carr_2']) : rng() < (edge ? 0.12 : 0.05) ? pick(rng, ['dead_1', 'dead_2']) : null;
+    const id = n > 0.67 ? pick(rng, edge ? ['willow_1', 'willow_2', 'alder_1', 'willow_2', 'dead_1'] : ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'carr_2']) : rng() < (edge ? 0.12 : 0.05) ? pick(rng, ['dead_1', 'dead_2']) : null;
     return id && /willow|dead/.test(id) && !edge ? null : id;
   });
   forestRing(o, rng, 6, FENS_CLUSTER, FENS_SINGLE);
