@@ -1,6 +1,9 @@
 # Emberfall — Game Design Document
 
-**v1.70 · 2026-11-11 · Plan of record for game design.** v1.70 (§3.3b, the owner: "A gate prevents a player from
+**v1.71 · 2026-11-11 · Plan of record for game design.** v1.71 (the owner: "Reduce the trees in Hollow Vale by 25%"): the Hollow
+Vale's trees on the land a quarter fewer by crown cover (19,429 → 14,576 tiles; 100 → 67 trees, 42 → 33 groves), the forest ring
+past its edge kept whole as its wall, every spawn point's fire and posts kept clear of crowns (sim/outdoor.js TREE_KEEP;
+docs/level-design-rules.md densities). v1.70 (§3.3b, the owner: "A gate prevents a player from
 moving to the next room until they have survived 20 waves… Once open, always open for that game slot"): every floor's
 last hall behind a gate, dropped by 20 waves held in the room before it, for good in the slot (save v41). v1.69 (the owner, 2026-11-11): §3.3 an ordinary room's tide
 tops out at wave 20, not 18 ("Room waves should be 20 to reach foes at +100% not 18"); §10.3 every spawn point's reach a

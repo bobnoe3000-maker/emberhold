@@ -211,6 +211,7 @@ function putWall(o, id, alongX, at, a, b) {
 function putProp(o, kind, x, y) { o.props.set(Math.floor(x) + ',' + Math.floor(y), kind); const i = gi(o, x, y); if (i >= 0) o.occ[i] = 1; }
 
 const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6', 'oak_1', 'oak_2', 'oak_3', 'oak_4', 'autumn_1', 'autumn_2', 'autumn_3', 'birch_1', 'birch_2', 'birch_3', 'dead_1', 'dead_2'];   // (birches: critic pass 11d)
+const TREE_KEEP = 0.36;   // a draw per tree on the Hollow Vale's land (v1.71): crown cover 19,429 → 14,576 tiles (−25 %), trees 100 → 67; low because a tree let go frees room another pass fills
 const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'];
 // the Fens' (M8, fens critic pass 2): alder carr and willows, low and dark, and the drowned dead
 const FENS_CLUSTER = ['carr_1', 'carr_2'], FENS_SINGLE = ['alder_1', 'alder_2', 'alder_3', 'willow_1', 'willow_2', 'dead_1', 'dead_2'];
@@ -792,12 +793,17 @@ function buildOverland(seed) {
   }
   for (let x = -60; x < 330; x += 20 + mrng() * 14) { const id = pick(mrng, SHOULDER), f = F(id); if (x + f[2] > GORGE[0] && x + f[0] < GORGE[1]) continue; put(o, id, x, -6 - f[3] - mrng() * 6, 'round', 0.35); }   // shoulders before the range
   for (let y = -40; y < 320; y += 20 + mrng() * 10) { const id = pick(mrng, SHOULDER), f = F(id); put(o, id, 268 - f[0] + mrng() * 16, y, 'round', 0.35); }   // the east: lower, further out
+  // the owner, 2026-11-11: "Reduce the trees in Hollow Vale by 25%". Every tree on the land (the foothills, the woods,
+  // the meadow clumps, the canal road's verges; not the forest ring past the edge, the Vale's wall) is kept on a draw
+  // of its own stream, so the thinning moves nothing else: the trees left stand where they stood.
+  const thinT = mulberry32(streamSeed(seed, 4419)), keepTree = () => thinT() < TREE_KEEP;
   const FOOT_ROCK = ['rock_A', 'rock_B', 'rock_C', 'rock_D', 'rock_E'];
   scatter(o, mrng, -60, -30, 330, 320, 5, (x, y) => {                // the foothills: thick at the range, thinning to the meadow
     const d = Math.min(Math.max(0, y + 12), Math.max(0, 270 - x)), belt = 1 - d / 18;
     if (belt <= 0 || mrng() > belt * 0.7) return null;
     const k = mrng();
-    return k < 0.35 ? pick(mrng, FOOT_ROCK) : k < 0.75 ? pick(mrng, ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6']) : k < 0.9 ? pick(mrng, TREE_CLUSTER) : pick(mrng, ['dead_1', 'dead_2']);
+    const id = k < 0.35 ? pick(mrng, FOOT_ROCK) : k < 0.75 ? pick(mrng, ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6']) : k < 0.9 ? pick(mrng, TREE_CLUSTER) : pick(mrng, ['dead_1', 'dead_2']);
+    return k < 0.35 || keepTree() ? id : null;
   });
 
   // WOODS AND CLUMPS (pass 10: 42 trees on the walked map, 13 % of it within 8 tiles of a tree, a lumber camp in
@@ -809,6 +815,7 @@ function buildOverland(seed) {
   const clear = (x, y, id) => {
     if (hypot(x - town[0] + 16, y - town[1]) < 40 || hypot(x - cross[0], y - cross[1]) < 18) return false;
     for (const c of sites) if (hypot(x - c[0], y - c[1]) < (c === camp || c === warren ? 16 : 24)) return false;
+    for (const c of campsOf('vale')) if (hypot(x - c.x, y - c.y) < (/grove/.test(id) ? 16 : 10)) return false;   // a spawn point's fire and posts on open ground (camps.js; v1.71 the thinning let a grove in over the Spit's)
     return !inFrontOf(sights, x, y, /grove/.test(id) ? 80 : /rock/.test(id) ? 30 : 62, 32) && !inFrontOf([warren], x, y, 40, 26);   // (the adit's spoil and its wreckage reach wider than the old hole did)
   };
   const WOODS = [{ x: 30, y: 48, r: 30 }, { x: 74, y: 16, r: 24 }, { x: 212, y: 24, r: 22 }, { x: 236, y: 182, r: 26 }, { x: 24, y: 240, r: 22 }, { x: 240, y: 104, r: 16 }];
@@ -818,7 +825,7 @@ function buildOverland(seed) {
     let wood = 0; for (const w of WOODS) wood = Math.max(wood, 1 - hypot(jx - w.x, jy - w.y) / w.r);
     const f = fbm(jx * 0.022, jy * 0.022, o.seed + 7), core = wood > 0.4 || f > 0.6;
     const id = core ? (trng() < 0.7 ? pick(trng, TREE_CLUSTER) : pick(trng, TREE_SINGLE)) : (wood > 0 || f > 0.52) && trng() < 0.45 ? pick(trng, TREE_SINGLE) : null;
-    if (!id) continue;
+    if (!id || !keepTree()) continue;
     // crowns may close over each other, never over a road: one that would steps 4 tiles aside (fixed steps, no draws)
     for (const [dx, dy] of [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]]) {
       const tx = jx + dx, ty = jy + dy;
@@ -831,7 +838,7 @@ function buildOverland(seed) {
     const cx = x + trng() * 12, cy = y + trng() * 12;
     for (let k = 0, n = 2 + Math.floor(trng() * 3); k < n; k++) {
       const id = pick(trng, TREE_SINGLE), tx = cx + (trng() - 0.5) * 9, ty = cy + (trng() - 0.5) * 9;
-      if (clear(tx, ty, id) && fits(o, id, tx, ty, 0.6)) put(o, id, tx, ty, 'round', 0.35);
+      if (keepTree() && clear(tx, ty, id) && fits(o, id, tx, ty, 0.6)) put(o, id, tx, ty, 'round', 0.35);
     }
   }
   // the canal road's verges: oaks either side every 6 tiles, crowns closing over the wood's edge where it meets the
@@ -841,7 +848,7 @@ function buildOverland(seed) {
       const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = hypot(bx - ax, by - ay), nx = -(by - ay) / l, ny = (bx - ax) / l;
       for (; next < run + l; next += 6) for (const s of [-11, 11]) {
         const t = next - run, id = Math.floor(next / 6) % 3 ? 'oak_1' : 'autumn_2', x = ax + (bx - ax) * t / l + nx * s, y = ay + (by - ay) * t / l + ny * s;
-        if (y < 258 && clear(x, y, id) && fits(o, id, x, y, -3) && offRoad(o, id, x, y)) put(o, id, x, y, 'round', 0.35);
+        if (y < 258 && keepTree() && clear(x, y, id) && fits(o, id, x, y, -3) && offRoad(o, id, x, y)) put(o, id, x, y, 'round', 0.35);
       }
       run += l;
     } }

@@ -26,11 +26,13 @@ test('no mountain on the walked map; the north range stands twice the keep', () 
   assert.ok(m.some((s) => s.id === 'mountain_massif_A'), 'a great massif in the range');
 });
 
-test('woods where you walk: 25–35 % of the map within 8 tiles of a tree, 40+ groves on it', () => {
+// v1.71 (the owner, 2026-11-11: "Reduce the trees in Hollow Vale by 25%"): crown cover 19,429 → 14,576 tiles, this
+// measure 25.5 → 17.8 %, groves 42 → 33. It was 25–35 % with 40+ groves (art critic pass 10).
+test('woods where you walk: 15–25 % of the map within 8 tiles of a tree, 30+ groves on it', () => {
   const tr = o.structs.filter((s) => /^(pine|oak|autumn|dead|grove)/.test(s.id));
   let near = 0, n = 0; for (let y = 0; y < 260; y += 4) for (let x = 0; x < 260; x += 4) { n++; if (tr.some((s) => Math.hypot(s.x - x, s.y - y) < 8)) near++; }
-  assert.ok(near / n >= 0.25 && near / n <= 0.35, `cover ${(near / n * 100).toFixed(1)} %`);
-  assert.ok(tr.filter((s) => inMap(s) && /grove/.test(s.id)).length >= 40);
+  assert.ok(near / n >= 0.15 && near / n <= 0.25, `cover ${(near / n * 100).toFixed(1)} %`);
+  assert.ok(tr.filter((s) => inMap(s) && /grove/.test(s.id)).length >= 30);
   assert.ok(o.structs.filter((s) => /^rock_[FGH]$/.test(s.id) && inMap(s)).length <= 30, 'rocks mostly off the meadow');
 });
 

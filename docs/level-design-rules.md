@@ -149,7 +149,7 @@ on. What the code does today is set against each profile below; the "to change" 
   - The canal road has a verge of oaks every 6 tiles.
   - The foothills are pines, scree and the range's rocks.
   - Undergrowth is thick at the woods' edges and along the banks, in patches in the meadow.
-- **Densities:** tree cover 25–35 % of the map within 8 tiles of a tree, with 40 or more groves (*test*). Rocks about
+- **Densities:** tree cover 15–25 % of the map within 8 tiles of a tree, with 30 or more groves (*test*; GDD v1.71, the owner: the Vale's trees a quarter fewer; it was 25–35 % and 40+). Rocks about
   1 % of the meadow (*test*: ≤30 on the map).
 - **Never:** marsh trees (alder carr, willow); bare desert rock on the meadow.
 - **Today:** as above. Every tree and undergrowth piece stands on grass (survey, seed 20260807: 290 trees, 214
