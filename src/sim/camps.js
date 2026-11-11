@@ -2,7 +2,8 @@
 // camps.js — spawn points on the overland (GDD §10.3, v1.63; the owner, 2026-11-10: "a MVP of some overlap NPC spawn
 // points that each map should have"). A land's map has small fights of its own between its town and its dungeons:
 //   · a CAMP: a band at a fire, seen before it sees you (idle at its posts while it's full);
-//   · a NEST: a burrow, nothing to see until the party comes near and its foes come out of it.
+//   · a NEST: a burrow, its foes out at the hole while it's full (v1.67: the owner, "the rat nest should have already
+//     pre-spawned rats out, like the goblin camp - so its obvious where it is"), on the party when it comes near;
 // Each fights its band in an ARENA round it (battle.js fights it the way it fights a dungeon room: walk out and it's
 // off, the band back whole). Cleared, it stands empty for its RESPAWN (sim seconds), then fills again, the next band
 // coming on as a room's next wave does if the party is still in the arena; one fill
@@ -27,11 +28,12 @@ export const RESPAWN = 8;
 /** every land's spawn points (each region's overland, outdoor.js; the Vale's two: GDD §10.3, world doc §3.1 v1.39)
  * @type {Camp[]} */
 export const CAMPS = [
-  // the Spit: three of Old Skarn's stragglers round a fire in the meadow past the crossroads, south of the east road,
-  // Col's cow dead by it (the owner, 2026-11-10: "Move the goblin camp out further": 112 tiles from Thornwick's gate,
-  // where it was 75 on the river above the bridge; open ground 17 tiles round, 18 from the nearest road). Posts round
-  // the fire (offsets from x, y), each facing it.
-  { id: 'vale_spit', region: 'vale', kind: 'camp', name: 'The Spit', x: 164, y: 156, reach: 12, arena: 16, level: 2,
+  // the Spit: three of Old Skarn's stragglers round a fire at the Vale's far east, just off the east road, Col's cow
+  // dead by it (the owner, 2026-11-11: "move the goblin camp too the far east side of the map just off the road",
+  // "triple the agro radius of the goblin camp": 194 tiles from Thornwick's gate, 6 north of the road, so the camera,
+  // from the south-east, sees it across the road; they see you from 36 tiles, 12 before. First on the river above the
+  // bridge (75 out), then past the crossroads (112)). Posts round the fire (offsets from x, y), each facing it.
+  { id: 'vale_spit', region: 'vale', kind: 'camp', name: 'The Spit', x: 246, y: 142, reach: 36, arena: 40, level: 2,
     family: 'gobs', band: ['gob', 'gob', 'gob'], elite: 0.25, respawn: RESPAWN, posts: [[-2.2, 0.9], [2.1, 1.1], [0.3, -2.3]], face: [0, 0],
     // (its dressing, outdoor.js dressCamps: the fire in the middle, Col's cow dead beside it, a tent of somebody's sacking, what
     // fell off the carts, the bones of the last one; the owner: "it can be a dead cow, next to the fire")

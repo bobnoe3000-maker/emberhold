@@ -121,17 +121,17 @@ Col doesn't breathe on your shaman's hand this time. He takes a pinch of road du
 // ── his cow (content/quests/vale_bramble.json; world doc §3.1 v1.39) ──
 == col_bramble_offer ==
 "A cow. Brown one. Bramble. I stopped to water the horse on the Greyholt road and when I turned round there was a rope going off into the reeds with nothing on the end of it."
-"Goblins. Three of them. Skarn's lot that didn't go with Skarn. They've a fire out in the meadow past the crossroads, and they've got her by it, half carved. You can smell it from the east road. I could, anyway. I went and looked."
+"Goblins. Three of them. Skarn's lot that didn't go with Skarn. They've dragged her clean across the Vale, out the east road nearly to the Reach, and they've a fire there with her by it, half carved. I could, anyway. I went and looked."
 "I'm not asking you to bring her back. I'm not daft. Just make them go. And there's a bell on her collar, if they haven't eaten that too."
 + [We'll see to it. #mark: quest]
-    "Over the bridge, past the crossroads, south of the east road. Follow your nose." # quest: accept vale_bramble
+    "East road, all the way out. Follow your nose." # quest: accept vale_bramble
     -> col_topics
 + [Not now.]
     "She's not getting any less cooked."
     -> col_topics
 
 == col_bramble_active ==
-"The Spit, they're calling it now. Past the crossroads, south of the east road. Three of them and a fire."
+"The Spit, they're calling it now. Out the east road, as far as the Vale goes. Three of them and a fire."
 -> col_topics
 
 == col_bramble_turnin ==

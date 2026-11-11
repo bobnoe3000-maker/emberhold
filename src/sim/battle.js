@@ -459,15 +459,15 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     b.wave += 1;
     bus.emit('wave', { wave: b.wave, level: lvl, tide: b.tide });
   }
-  // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire (a camp's stand up where
-  // they sat: no rising) or out of the burrow (a nest's come up out of it); an elite in one fill of four, its last foe.
+  // a spawn point's band (camps.js, GDD §10.3): this fill's kinds at their posts round the fire or at the burrow's hole,
+  // where they idled (no rising: already out); an elite in one fill of four, its last foe.
   // Each band a wave: cleared when it falls (step), and the next one after the spawn point's respawn if the party stays
   function spawnCamp(w, b) {
     const c = b.camp, F = FAMILIES[c.family], band = bandOf(seed, c, campState(state, c.id).n);
     band.kinds.forEach((k, i) => {
       const elite = band.elite && i === band.kinds.length - 1, [x, y] = postOf(c, i), [ox, oy] = isWalkable(w, x, y) ? [x, y] : openNear(w, x, y);
       const u = foe(w, elite ? F.elite : k, b.level, ox, oy, 1 + PREMIUM * Math.max(0, b.level - 3), elite, F);
-      if (c.kind === 'camp') u.spawn = 0;
+      u.spawn = 0;                                             // (already out, at their posts or the hole: no rising)
     });
     b.wave += 1;
     bus.emit('wave', { wave: b.wave, level: b.level, tide: 0, camp: c.id });
@@ -565,13 +565,14 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('battle', { on: true, room, level: battle.level, camp: c.id });
     spawnCamp(w, battle);
   }
-  // a camp's band at its posts while it's full and nobody's fighting it (presentation only: no stats, no AI; battle.js
+  // a spawn point's band at its posts (a camp's round its fire, a nest's at its hole) while it's full and nobody's fighting
+  // it (presentation only: no stats, no AI; battle.js
   // never fights an idle one, startCamp puts the band itself in its place): what the party sees before it's seen
   function idleCamps(w) {
     const list = campsOf(w.region);
     w.enemies = (w.enemies || []).filter((e) => !e.idle || list.some((c) => c.id === e.idle && campUp(state, c)));
     for (const c of list) {
-      if (c.kind !== 'camp' || !campUp(state, c) || w.enemies.some((e) => e.idle === c.id)) continue;
+      if (!campUp(state, c) || w.enemies.some((e) => e.idle === c.id)) continue;   // (a nest's out at its hole too: the owner, "the rat nest should have already pre-spawned rats out, like the goblin camp")
       const band = bandOf(seed, c, campState(state, c.id).n), F = FAMILIES[c.family], [fx, fy] = c.face || [0, 0];
       band.kinds.forEach((k, i) => {
         const [x, y] = postOf(c, i), dx = c.x + fx - x, dy = c.y + fy - y, d = hypot(dx, dy) || 1, elite = band.elite && i === band.kinds.length - 1;

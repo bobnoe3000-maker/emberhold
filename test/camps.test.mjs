@@ -37,11 +37,11 @@ test('the spawn points stand on open ground, their posts and holes walkable, eac
 test('the Spit: three goblins idle at the fire, a fight of level 2 in reach, cleared and quiet, back after its respawn', () => {
   const sim = land(), ev = [];
   for (const k of ['battle', 'campCleared', 'wave']) sim.bus.on(k, (d) => ev.push({ k, ...d }));
-  stand(sim, SPIT.x + SPIT.arena + 4, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.arena - 4, SPIT.y); sim.tick();
   const idle = sim.world.enemies.filter((e) => e.idle === 'vale_spit');
   assert.equal(idle.length, 3, 'three round the fire'); assert.ok(idle.every((e) => e.kind === 'gob'), 'goblins');
   assert.equal(sim.battle, null, 'no fight before it sees you');
-  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.reach + 0.5, SPIT.y); sim.tick();
   assert.ok(sim.battle && sim.battle.camp === SPIT, 'in reach: the fight is on');
   assert.equal(living(sim).length, 3); assert.ok(living(sim).every((e) => e.lvl === 2), 'level 2');
   assert.equal(sim.world.enemies.filter((e) => e.idle).length, 0, 'the idle band gave way to the fighting one');
@@ -49,21 +49,21 @@ test('the Spit: three goblins idle at the fire, a fight of level 2 in reach, cle
   const c = ev.find((e) => e.k === 'campCleared'); assert.ok(c, 'cleared'); assert.equal(c.id, 'vale_spit'); assert.equal(c.n, 1);
   assert.equal(ev.filter((e) => e.k === 'wave' && !e.cleared).length, 1, 'one wave, no more');
   assert.ok(Math.abs(sim.state.camps.vale_spit.at - (sim.state.t + SPIT.respawn)) < 2, 'empty for its respawn');
-  stand(sim, SPIT.x + SPIT.arena + 4, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.arena - 4, SPIT.y); sim.tick();
   assert.equal(sim.battle, null, 'walked out: over'); assert.equal(sim.world.enemies.filter((e) => e.idle === 'vale_spit' || !e.idle).length, 0, 'nobody at the fire');
   stand(sim, SPIT.x + 1, SPIT.y + 3); sim.tick(); assert.equal(sim.battle, null, 'nothing to fight while it is empty');
-  stand(sim, SPIT.x + SPIT.arena + 4, SPIT.y); sim.state.t = sim.state.camps.vale_spit.at + 1; sim.tick();
+  stand(sim, SPIT.x - SPIT.arena - 4, SPIT.y); sim.state.t = sim.state.camps.vale_spit.at + 1; sim.tick();
   assert.equal(sim.world.enemies.filter((e) => e.idle === 'vale_spit').length, 3, 'back after its respawn');
 });
 
 test("stay in the arena and the next band comes on after the respawn, twice a dungeon room's lull; reach and arena wider", async () => {
   const { RESPAWN } = await import('../src/sim/camps.js');
   assert.equal(RESPAWN, 8, "twice the dungeon's 4 s lull (the owner: half as fast as in the dungeons)");
-  assert.ok(SPIT.reach >= 12 && DITCH.reach >= 10, 'seen from further off (it was 7 and 5)');
-  assert.ok(hypot(SPIT.x - 52, SPIT.y - 150) > 100, 'the Spit out past the crossroads, over 100 tiles from the gate');
+  assert.equal(SPIT.reach, 36, 'the Spit sees you from 36 tiles (the owner: triple the agro radius: 12 → 36)'); assert.ok(DITCH.reach >= 10);
+  assert.ok(hypot(SPIT.x - 52, SPIT.y - 150) > 180 && SPIT.x > 240, "the Spit at the Vale's far east");
   const sim = land(), ev = [];
   for (const k of ['campCleared', 'wave']) sim.bus.on(k, (d) => ev.push({ k, t: sim.state.t, ...d }));
-  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.reach + 0.5, SPIT.y); sim.tick();
   for (let i = 0; i < 20 * 120 && ev.filter((e) => e.k === 'campCleared').length < 2; i++) { for (const e of living(sim)) e.hp = Math.min(e.hp, 1); for (const m of sim.state.party) m.hp = 9999; sim.tick(); }
   const cl = ev.filter((e) => e.k === 'campCleared'), waves = ev.filter((e) => e.k === 'wave' && !e.cleared);
   assert.equal(cl.length, 2, 'cleared twice without leaving'); assert.equal(waves.length, 2, 'a second band came on');
@@ -73,9 +73,9 @@ test("stay in the arena and the next band comes on after the respawn, twice a du
 
 test('walked away from mid-fight, the band is back whole at its posts', () => {
   const sim = land();
-  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.reach + 0.5, SPIT.y); sim.tick();
   living(sim)[0].hp = 1; sim.tick();
-  stand(sim, SPIT.x + SPIT.arena + 4, SPIT.y); sim.tick(); sim.tick();
+  stand(sim, SPIT.x - SPIT.arena - 4, SPIT.y); sim.tick(); sim.tick();
   assert.equal(sim.battle, null); assert.equal(sim.state.camps.vale_spit, undefined, 'not cleared');
   const idle = sim.world.enemies.filter((e) => e.idle === 'vale_spit'); assert.equal(idle.length, 3, 'all three back');
 });
@@ -88,17 +88,19 @@ test('one fill in four has an elite; a nest sends one or two; both drawn from th
   assert.deepEqual(bandOf(SEED, SPIT, 7), bandOf(SEED, SPIT, 7), 'the same fill, the same band');
   const n = [...Array(40).keys()].find((k) => bandOf(SEED, SPIT, k).elite), sim = land();
   sim.state.camps = { vale_spit: { at: 0, n } };
-  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.reach + 0.5, SPIT.y); sim.tick();
   const el = living(sim).filter((e) => e.elite); assert.equal(el.length, 1, 'the elite in its fill'); assert.ok(el[0].maxHp > living(sim).find((e) => !e.elite).maxHp * 2, '×2.5 HP');
 });
 
-test('the ditch burrow: nobody to see, rats out of the hole in reach, level 1', () => {
+test('the ditch burrow: its rats out at the hole while it is full (seen from afar, as the Spit is), on you in reach, level 1', () => {
   const sim = land();
   stand(sim, DITCH.x, DITCH.y - DITCH.arena - 3); sim.tick();
-  assert.equal(sim.world.enemies.filter((e) => e.idle === "vale_ditch").length, 0, "a nest shows nothing");
+  const idle = sim.world.enemies.filter((e) => e.idle === 'vale_ditch');
+  assert.ok(idle.length >= 1 && idle.length <= 2, "one or two rats waiting out at the hole: it's plain where it is");
+  assert.ok(idle.every((e) => Math.abs(e.x - DITCH.x) < 2.5 && Math.abs(e.y - DITCH.y) < 3), 'by the hole');
   stand(sim, DITCH.x, DITCH.y - DITCH.reach + 0.5); sim.tick();
-  const f = living(sim); assert.ok(f.length >= 1 && f.length <= 2, 'one or two'); assert.ok(f.every((e) => ['rat', 'gutter'].includes(e.kind) && e.lvl === 1));
-  assert.ok(f.every((e) => e.spawn > 0), 'coming up out of it');
+  const f = living(sim); assert.equal(f.length, idle.length, 'the ones waiting are the ones that fight'); assert.ok(f.every((e) => ['rat', 'gutter'].includes(e.kind) && e.lvl === 1));
+  assert.ok(f.every((e) => !(e.spawn > 0)), 'already out: no rising');
 });
 
 test('when each is full again is saved (v37), and a bad entry is dropped', () => {
@@ -116,7 +118,7 @@ test("Col's errand counts a clear of the Spit; Jory's the burrow; the compass le
   sim.state.tracked = 'vale_bramble';
   const rows = sim.destinations ? sim.destinations() : null;
   if (rows) { const r = rows.find((q) => q.id === 'quest'); assert.ok(r && r.tx !== undefined, 'the compass has a way'); assert.ok(rows.some((q) => q.id === 'camp:vale_spit'), 'the Spit on the compass'); }
-  stand(sim, SPIT.x + SPIT.reach - 0.5, SPIT.y); sim.tick();
+  stand(sim, SPIT.x - SPIT.reach + 0.5, SPIT.y); sim.tick();
   for (let i = 0; i < 20 * 60 && sim.state.quests.vale_bramble.st !== QS.READY; i++) { for (const e of living(sim)) e.hp = Math.min(e.hp, 1); for (const m of sim.state.party) m.hp = 9999; sim.tick(); }
   assert.equal(sim.state.quests.vale_bramble.st, QS.READY, 'the Spit cleared: back to Col');
   assert.equal(sim.state.quests.vale_the_ditch.st, QS.ACTIVE, 'the burrow is its own');
