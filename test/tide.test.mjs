@@ -1,5 +1,5 @@
-// The tide (GDD §7.1): each wave of a room visit is 6 % tougher than the last up to a top (+100 %
-// in an ordinary room), and the wave after the top is back at the start, so a room cycles and a
+// The tide (GDD §7.1): each wave of a room visit is a step tougher than the last up to a top (+100 %
+// in an ordinary room, at wave 20: a nineteenth a wave; a hall 6 %), and the wave after the top is back at the start, so a room cycles and a
 // party strong enough for its top can farm it as long as it likes. A floor's stairs-down hall climbs
 // to +150 %. Leaving ends the visit; the next one starts at the bottom.
 import { test } from 'node:test';
@@ -20,19 +20,19 @@ function tides(pickRoom, waves) {
   for (let i = 0; i < 20 * 60 * 30 && out.length < waves; i++) { h.hp = statsFor(h).maxHp; h.down = false; sim.tick(); }
   return { out, turned, sim };
 }
-const climb = (cap, n) => { const a = []; let t = 0; for (let i = 0; i < n; i++) { if (i) t = t >= cap - 1e-9 ? 0 : Math.min(cap, t + 0.06); a.push(Math.round(t * 100)); } return a; };
+const climb = (cap, n, step) => { const a = []; let t = 0; for (let i = 0; i < n; i++) { if (i) t = t >= cap - 1e-9 ? 0 : Math.min(cap, t + step); a.push(Math.round(t * 100)); } return a; };
 
-test('an ordinary room: +6 % a wave up to +100 %, then back to the start, and again', () => {
-  assert.deepEqual(TIDES.room, { step: 0.06, cap: 1.0 });
-  const { out, turned } = tides((L, w) => L.rooms.find((q) => w.roomLevels.get(q.id) === 1), 40);
-  assert.deepEqual(out, climb(1.0, 40));
+test('an ordinary room: a nineteenth a wave up to +100 % at wave 20, then back to the start, and again', () => {
+  assert.deepEqual(TIDES.room, { step: 1 / 19, cap: 1.0 });
+  const { out, turned } = tides((L, w) => L.rooms.find((q) => w.roomLevels.get(q.id) === 1), 44);
+  assert.deepEqual(out, climb(1.0, 44, 1 / 19));
   assert.equal(Math.max(...out), 100, 'never above the top');
-  assert.deepEqual(out.slice(16, 20), [96, 100, 0, 6], 'wave 18 is the top, wave 19 starts over');
-  assert.deepEqual(turned, [19, 37]);
+  assert.deepEqual(out.slice(18, 22), [95, 100, 0, 5], 'wave 20 is the top, wave 21 starts over');
+  assert.deepEqual(turned, [21, 41]);
 });
 
 test('a floor\'s stairs-down hall is a special room: it climbs to +150 %', () => {
   const { out } = tides((L) => L.descentRoom, 30);
-  assert.deepEqual(out, climb(1.5, 30));
+  assert.deepEqual(out, climb(1.5, 30, 0.06));
   assert.equal(Math.max(...out), 150);
 });

@@ -85,7 +85,8 @@ test('the Spit: three goblins idle at the fire, a fight of level 2 in reach, cle
 test("stay in the arena and the next band comes on after the respawn, twice a dungeon room's lull; reach and arena wider", async () => {
   const { RESPAWN } = await import('../src/sim/camps.js');
   assert.equal(RESPAWN, 8, "twice the dungeon's 4 s lull (the owner: half as fast as in the dungeons)");
-  assert.equal(SPIT.reach, 36, 'the Spit sees you from 36 tiles (the owner: triple the agro radius: 12 → 36)'); assert.ok(DITCH.reach >= 10);
+  assert.equal(SPIT.reach, 29, 'the Spit sees you from 29 tiles (the owner: triple the agro radius, 12 → 36; then a fifth less, v1.69)'); assert.equal(DITCH.reach, 14, 'the burrow from 14 (18, a fifth less)');
+  for (const c of CAMPS) if (c.id !== 'vale_spit' && c.id !== 'vale_ditch') assert.equal(c.reach, 21, `${c.id}: 21 (26, a fifth less)`);
   assert.ok(hypot(SPIT.x - 52, SPIT.y - 150) > 180 && SPIT.x > 240, "the Spit at the Vale's far east");
   const sim = land(), ev = [];
   for (const k of ['campCleared', 'wave']) sim.bus.on(k, (d) => ev.push({ k, t: sim.state.t, ...d }));

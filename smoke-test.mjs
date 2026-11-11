@@ -185,9 +185,10 @@ console.log('a lone L6 hero needs company at L6:', solo6Ok, solo6.map(show).join
 const right = []; for (const seed of [20260807, 777]) for (const lv of [3, 6, 9]) right.push(roomVisit({ seed, classes: FRC, lv }));
 const rightOk = right.every((v) => v.waves >= 10 && !v.fallenEarly);
 console.log('the right party holds same-level rooms (L3/6/9):', rightOk, right.map(show).join(', '));
-// 4. the wrong party (no healer) at level 6 is worn down within five minutes
-const noHeal = [20260807, 777].map((seed) => roomVisit({ seed, classes: ['fighter', 'rogue', 'mage'], lv: 6 }));
-const noHealOk = noHeal.every((v) => v.defeated);
+// 4. the wrong party (no healer) at level 6 is worn down on the first climb, before the top (wave 20 since GDD v1.69: the
+// climb a nineteenth a wave, 18 waves in five minutes; so seven and a half, and down before wave 20)
+const noHeal = [20260807, 777].map((seed) => roomVisit({ seed, classes: ['fighter', 'rogue', 'mage'], lv: 6, secs: 450 }));
+const noHealOk = noHeal.every((v) => v.defeated && v.waves < 20);
 console.log('a party with no healer is worn down at L6:', noHealOk, noHeal.map(show).join(', '));
 // 5. a room three levels up defeats even the right party
 const up3 = [roomVisit({ classes: FRC, lv: 6, rl: 9 }), roomVisit({ classes: FRC, lv: 9, rl: 12 })];

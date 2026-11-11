@@ -104,14 +104,20 @@ export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl 
 // room (33 waves at 3 against 24 in a large one, 23 at 6 against 17).
 export const SIZE_CAP = { small: 4 };
 export const PREMIUM = 0.05;
+/** a party's ATK and DEF against a foe above the hero's level: this much less a level of the gap (GDD §7, v1.69: resolve) */
+export const UNDER_K = 0.1;
+/** what's left of a member's ATK and DEF against a foe of foeLvl, the hero at heroLvl: 1 at or under it, 0.9 one up, … 0
+ * ten up @param {number} heroLvl @param {number} foeLvl */
+export const underBy = (heroLvl, foeLvl) => { const gap = (foeLvl || 1) - (heroLvl || 1); return gap > 0 ? Math.max(0, 1 - UNDER_K * gap) : 1; };
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
-// top (`cap`: +100 % in an ordinary room). A wave at the top is followed by one back at the start,
+// top (`cap`: +100 % in an ordinary room, at wave 20: a nineteenth a wave; the owner, 2026-11-11: "Room waves should be
+// 20 to reach foes at +100% not 18"). A wave at the top is followed by one back at the start,
 // and the climb begins again: a room cycles, so a party strong enough for its top can farm it for as
 // long as it likes, and one that isn't is worn down by the first climb. Special rooms keep their own
 // profile: a floor's stairs-down hall (its boss room) climbs higher.
 /** @type {Record<string, { step: number, cap: number }>} */
 export const TIDES = {
-  room: { step: 0.06, cap: 1.0 },
+  room: { step: 1 / 19, cap: 1.0 },
   hall: { step: 0.06, cap: 1.5 },
 };
 /** which tide a room keeps: a room may name its own profile (room.tide), a floor's stairs-down hall is a hall @param {any} w @param {number} room */
@@ -351,6 +357,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     s.atk *= k.atk * boonK(state, 'atk'); s.def *= k.def * boonK(state, 'def');   // (a red / blue shrine's boon, shrines.js)
     if (b) { if (b.wall > 0) s.def = s.def * (1 + b.wallK); if (b.smoke > 0) s.dodge += b.smokeK; if (b.bless > 0) { s.atk = s.atk * (1 + b.blessK); s.def = s.def * (1 + b.blessK); } if (b.breath > 0) s.atk = s.atk * (1 + b.breathAtk); }
     const holy = fieldAt('consecrate', m.x, m.y); if (holy) s.def = s.def * (1 + holy.A.defK);   // (standing on Consecrate)
+    s.party = true;                                             // (a member's: resolve's level gap)
     return s;
   };
 
@@ -616,10 +623,18 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hexed = (o) => o.hex && o.hex.t > 0;
   const hexAtk = (e) => (hexed(e) ? { ...e, atk: e.atk * (1 - e.hex.k) } : e);
   const hexDef = (e) => (hexed(e) ? { ...e, def: e.def * (1 - e.hex.k) } : e);
+  // Under a foe's level (GDD §7, v1.69; the owner, 2026-11-11: "A 10% attack and defense penalty to player and party
+  // companions for each level under the main player only is under vs their targets NPC foes level"): every member, the
+  // hero and the companions alike, strikes a foe above the hero's level at UNDER_K less ATK a level of the gap, and takes
+  // its blows at UNDER_K less DEF a level; at the gap's tenth level there's nothing left (a blow still does 1). The
+  // hero's level alone sets the gap: a companion levelled past him pays the hero's. A foe at or below it, nothing.
+  const underK = (foeLvl) => { const h = state.party.find((m) => m.main) || state.party[0]; return underBy(h && h.level, foeLvl); };
   function resolve(att, def, power, bonusCrit = 0, critMul = 1, sure = false) {   // (sure: a crit that can't miss, Shadowstep's)
     if (!sure && rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
-    const lvl = att.lvl || att.level || 1, mit = def.def / (def.def + 25 + 5 * lvl);
-    if (att.src && !def.cls) power *= edgeOn(att.src, def);    // (a party member's blow on a foe: its passives' edge)
+    const partyHits = !!att.src && !def.party, foeHits = !!def.party && !att.src;
+    const dDef = foeHits ? def.def * underK(att.lvl) : def.def;   // (struck by a foe above the hero: DEF the less)
+    const lvl = att.lvl || att.level || 1, mit = dDef / (dDef + 25 + 5 * lvl);
+    if (partyHits) power *= edgeOn(att.src, def) * underK(def.lvl);   // (a party member's blow on a foe: its passives' edge; ATK the less against one above the hero)
     let dmg = Math.max(1, att.atk * power * (1 - mit));
     const crit = rng() * 100 < Math.min(60, att.crit + bonusCrit) || sure;
     if (crit) dmg *= 1.75 * critMul;

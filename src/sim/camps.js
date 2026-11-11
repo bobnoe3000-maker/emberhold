@@ -25,17 +25,19 @@ import { hypot } from './detmath.js';
 // a band back RESPAWN after it falls, twice a dungeon room's 4 s lull between waves (battle.js LULL), whether the party
 // waits in the arena, as in a room, or walks off and comes back)
 export const RESPAWN = 8;
-/** the reach of each land's spawn points but the Spit's own 36 (v1.68: "similar wider aggro/chase radius") */
-export const REACH_WIDE = 26;
+/** the reach of each land's spawn points but the Spit's and the burrow's own (v1.68: "similar wider aggro/chase radius"; v1.69,
+ * the owner, 2026-11-11: "Reduce the overland aggro radius for the rats, goblins and other NPCs by 20%": every reach 0.8 of
+ * what it was, to the tile, 26 → 21; each arena, the leash, 4 past it as before) */
+export const REACH_WIDE = 21;
 /** every land's spawn points (each region's overland, outdoor.js; the Vale's two: GDD §10.3, world doc §3.1 v1.39)
  * @type {Camp[]} */
 export const CAMPS = [
   // the Spit: three of Old Skarn's stragglers round a fire at the Vale's far east, just off the east road, Col's cow
   // dead by it (the owner, 2026-11-11: "move the goblin camp too the far east side of the map just off the road",
   // "triple the agro radius of the goblin camp": 194 tiles from Thornwick's gate, 6 north of the road, so the camera,
-  // from the south-east, sees it across the road; they see you from 36 tiles, 12 before. First on the river above the
+  // from the south-east, sees it across the road; they see you from 29 tiles (36, less a fifth: v1.69), 12 before. First on the river above the
   // bridge (75 out), then past the crossroads (112)). Posts round the fire (offsets from x, y), each facing it.
-  { id: 'vale_spit', region: 'vale', kind: 'camp', name: 'The Spit', x: 246, y: 142, reach: 36, arena: 40, level: 2,
+  { id: 'vale_spit', region: 'vale', kind: 'camp', name: 'The Spit', x: 246, y: 142, reach: 29, arena: 33, level: 2,
     family: 'gobs', band: ['gob', 'gob', 'gob'], elite: 0.25, respawn: RESPAWN, posts: [[-2.2, 0.9], [2.1, 1.1], [0.3, -2.3]], face: [0, 0],
     // (its dressing, outdoor.js dressCamps: the fire in the middle, Col's cow dead beside it, a tent of somebody's sacking, what
     // fell off the carts, the bones of the last one; the owner: "it can be a dead cow, next to the fire")
@@ -44,7 +46,7 @@ export const CAMPS = [
   // goes over the wheat; one or two come out of the hole at whoever passes. (Here: the camera looks from the south-east,
   // and by the north and west walls the town stood in front of the fight, by the south wall's middle a grove; the east
   // wall is the compass's way in from the barrows, and the rats stopped every walk to town: level-design-rules.md §1.1)
-  { id: 'vale_ditch', region: 'vale', kind: 'nest', name: 'The ditch burrow', x: 23, y: 177, reach: 18, arena: 22, level: 1,
+  { id: 'vale_ditch', region: 'vale', kind: 'nest', name: 'The ditch burrow', x: 23, y: 177, reach: 14, arena: 18, level: 1,
     family: 'vermin', band: ['rat', 'rat'], min: 1, elite: 0.25, respawn: RESPAWN, hole: [0, 1.2], dress: [['burrow', 0, 0], ['bones', 2.2, 1.6]] },
   // ── the rest of each land's (GDD §10.3 v1.68; the owner, 2026-11-11: "each region or overworld map should also have 3
   // or 4 NPC spawn locations … with appropriate site dressing and appropriate NPC difficulty just like the 3 or so
