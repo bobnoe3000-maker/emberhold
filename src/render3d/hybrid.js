@@ -32,6 +32,7 @@ import { readGraphics } from './settings.js';
 import { brightAt, brightFor } from './bright.js';
 import { buildProps } from '../render/gsprite.js';
 import { propAt } from '../sim/world.js';
+import { createOutdoor } from '../sim/outdoor.js';
 import { shrineKind } from '../sim/shrines.js';
 import { hash2 } from '../sim/rng.js';
 import { WARN_R } from '../render/skillfx.js';
@@ -143,8 +144,14 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   if (game) game.after(box); else document.body.prepend(box);
   document.body.append(ui);
   document.body.classList.add('world3d');                      // (the top bar's backdrop: CSS above)
+  // the level next door (a town's overland, an overland's town), built ahead once this one has been up a while (AHEAD_S):
+  // the world as the sim would build it (createOutdoor, pure: the same land, seed and region; a found companion or a
+  // townsman don't reach the converted level), converted and handed to Luminati to build in slices (world.js prepare).
+  // A trip there then skips its build; if the sim's world converts to anything else, it's built as before.
+  const AHEAD_S = 1.5;
+  let aheadFor = null, builtAt = 0;
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
-  const state = { level: null, sprites: 0, loads: 0, failed: '' };
+  const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };   // (timing: the last load's parts, ms, for checks)
   renderer.setExternal({
     // a tap on a service's building, as Luminati draws it (renderer.js serviceAt): each named house's box (its footprint,
     // its walls and roof) through Luminati's camera, the nearest of those under the finger
@@ -167,12 +174,15 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       if (built === w) return true;
       if (building !== w) {                                   // a new world: convert it and build it behind black
         building = w;
+        const t0 = performance.now();
         const r = convertWorld(w, { region: w.region || region, stairs: new URLSearchParams(location.search).get('stairs') || '' });   // (?stairs=plain: the stairs before their arches, docs/dungeon-stairs-proposal.md)
+        const t1 = performance.now(); state.timing = { convert: Math.round(t1 - t0), load: 0, sprites: 0 };
         origin = r.origin; state.level = `${r.level.width}×${r.level.depth}`; state.sprites = r.sprites.length; state.loads++;
         ours = r.sprites.filter((q) => q.prop); kept = r.sprites.filter((q) => !q.prop); oursState = propState(w, ours); ambient = r.ambient || null;
         houses = r.level.objects.filter((o) => o.type === 'house' && o.name).map((o) => ({ o, sv: (w.services || []).find((v) => v.name === o.name) })).filter((q) => q.sv);
-        const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean);
-        api.load(r.level, sprites, w.region || region).then((ok) => { if (ok && building === w) built = w; })
+        const sprites = r.sprites.map((q) => (q.prop ? propSprite(w, q) : q)).filter(Boolean), t2 = performance.now();
+        state.timing.sprites = Math.round(t2 - t1);
+        api.load(r.level, sprites, w.region || region).then((ok) => { state.timing.load = Math.round(performance.now() - t2); if (ok && building === w) { built = w; builtAt = performance.now(); } })
           .catch((err) => { state.failed = String(err?.message || err); console.error('[luminati]', err); built = w; });
       }
       return false;
@@ -180,6 +190,16 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
     frame: (draws, c) => {
       if (!api || built !== sim.world) return;
       lastC = c;
+      if (aheadFor !== built && performance.now() - builtAt > AHEAD_S * 1000) {   // the level next door, built ahead
+        const w = built; aheadFor = w;
+        const to = w.kind === 'town' ? 'overland' : w.kind === 'overland' ? 'town' : '';
+        if (to && w.region && api.prepare) {
+          try {
+            const r = convertWorld(createOutdoor(w.seed, to, w.region), { region: w.region, stairs: new URLSearchParams(location.search).get('stairs') || '' });
+            api.prepare(r.level, w.region);
+          } catch (err) { console.warn('[luminati] the level next door:', err); }
+        }
+      }
       if (ours.length && ++oursCheck % 20 === 0) {                 // (a chest opened, a shrine used: its prop as it is now)
         const st = propState(sim.world, ours);
         // (with the rest it was placed with: alone, a chest opening took the kit's models and the stairs' arches away)

@@ -940,6 +940,39 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify(cast) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }
+// 15c4. Load times (the owner, 2026-11-11: "Load times from town to the main map takes up to 5-6 seconds"): Thornwick's
+// overland built ahead while you stand in the square (world.js prepare) and taken by the trip out; the trip back finds
+// Thornwick set aside and re-attaches it, as does the next trip out the overland, building nothing; and no shader
+// program is compiled for a level already met (the fixed light pool: every level the same lights)
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 700 } }), p = await ctx.newPage(), errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&manual&notitle&world=on&tod=day&scene=town&region=vale`, { waitUntil: 'commit' });
+    await p.waitForFunction(() => typeof globalThis.__frame === 'function' && !!globalThis.__sim, null, { timeout: 120000 * SLOW });
+    const trips = await p.evaluate(async (ms) => {
+      const end = performance.now() + ms, h = () => globalThis.__world3d, sim = globalThis.__sim;
+      const settle = async (n) => { while (performance.now() < end) { globalThis.__frame(16); if (h() && h().state.loads >= n && !globalThis.__renderer.transiting) return true; await new Promise((r) => setTimeout(r, 0)); } return false; };
+      const ahead = async () => { while (performance.now() < end) { globalThis.__frame(16); if (h().world.loadStats().ahead === 'ready') return true; await new Promise((r) => setTimeout(r, 30)); } return false; };
+      const trip = async () => {
+        const w = sim.world, P = sim.state.player, e = w.kind === 'town' ? w.exits.find((q) => q.to === 'overland') : w.exits.find((q) => q.to === 'town'), n = h().state.loads + 1;
+        P.x = P.px = (e.x0 + e.x1) / 2; P.y = P.py = (e.y0 + e.y1) / 2;
+        const ok = await settle(n), st = h().world.loadStats();
+        return { to: sim.world.kind, ok, last: st.last, swap: st.swap, programs: st.programs };
+      };
+      if (!(await settle(1))) return { err: 'Thornwick never built' };
+      const ready = await ahead();
+      const out = [await trip(), await trip(), await trip(), await trip()];
+      return { ready, out };
+    }, 300000 * SLOW);
+    await ctx.close(); await b.close();
+    const t = trips.out || [];
+    check('load times: the overland is built ahead in Thornwick and taken by the trip out; every trip after re-attaches the level set aside (building nothing) and compiles no new shader program, no page errors',
+      !!trips.ready && t.length === 4 && t.every((q) => q.ok) && t[0].to === 'overland' && t[0].last === 'ahead' && t.slice(1).every((q) => q.last === 'kept') && t[3].programs === t[2].programs && errs.length === 0,
+      JSON.stringify(trips) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+  }
+}
 // 15d0. Seen (docs/level-design-rules.md §1.1): from the game's camera, what the player needs is at least half in view
 // wherever they meet it: Thornwick's spawn, its people, the step before each service's door and the gate; the Old
 // Barrows' first floor's way in, each room's middle and its stairs. The tool's own run (tools/capture/visibility.mjs:

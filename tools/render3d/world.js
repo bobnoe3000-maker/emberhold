@@ -17,6 +17,8 @@
 // The depth of field is the menu's (Graphics: soft or off).
 import * as THREE from 'three';
 import { Game } from '../src/game/Game.js';
+import { LightPool } from '../src/engine/lighting/LightPool.js';
+import { MAX_POINT_LIGHTS } from '../src/game/World.js';
 import { normalizeLevel } from '../src/engine/level/LevelFormat.js';
 import { setLang } from '../src/engine/i18n/I18n.js';
 import { registerCoreStrings } from '../src/engine/i18n/strings/index.js';
@@ -52,6 +54,44 @@ const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundnes
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
 let game = null, building = null, levelId = 0, dof = 'soft', yawDeg = 45, pitchDeg = 30;
+// The levels set aside on leaving (Luminati's swapLevel `keep`), by their content (levelKey): going back re-attaches
+// one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
+// times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
+// models), kept out of the scene meanwhile. Two at most: the overland, a town and a dungeon's floor are the round trips.
+const aside = new Map(), ASIDE_MAX = 2;
+let curKey = '', curEnvKey = '', loading = false, lastWay = '';   // (lastWay: how the last level came: 'built', 'ahead', 'kept')
+// The level next door built ahead (api.prepare: a town's overland, an overland's town), in slices (PREP_MS of work, then
+// PREP_GAP ms for the frames) while this one plays, as Luminati builds a campaign's next level (prepareWorld, buildSteps
+// paced); a swap to it takes it (swapLevel `prepared`), so the first trip there skips the build too. One at a time. Its
+// own timer, not the frames': a slow frame (a phone's busy square) mustn't starve it.
+let prep = null;
+const PREP_MS = 5, PREP_GAP = 10;
+function prepPump() { if (!prep || prep.done) return; prepStep(PREP_MS); setTimeout(prepPump, prep?.wait || loading ? 60 : PREP_GAP); }
+function dropPrep() { if (!prep) return; try { prep.world.dispose(); } catch (err) { console.warn('[luminati] a level built ahead:', err); } prep = null; }
+/** a slice of the level built ahead: its steps for about ms, or until it waits on its worker */
+function prepStep(ms) {
+  const p = prep;
+  if (!p || p.done || p.wait || loading) return;
+  const end = performance.now() + ms;
+  try {
+    for (;;) {
+      const r = p.steps.next();
+      if (r.done) { p.done = true; return; }
+      if (r.value && 'wait' in r.value) { p.wait = r.value.wait; const off = () => { p.wait = null; }; p.wait.then(off, off); return; }
+      if (performance.now() >= end) return;
+    }
+  } catch (err) { console.warn('[luminati] building a level ahead:', err); if (prep === p) prep = null; }
+}
+/** what a swap takes of a level built ahead: its world, its level, and its last steps run */
+const preparedOf = (p) => ({ world: p.world, level: p.level, async finish() {
+  for (;;) {
+    if (p.wait) await p.wait;
+    if (p.done) return;
+    const r = p.steps.next();
+    if (r.done) { p.done = true; return; }
+    if (r.value && 'wait' in r.value) await r.value.wait;
+  }
+} });
 const images = new Map(), metas = new Map();
 const image = (url) => { let p = images.get(url); if (!p) { p = new Promise((res, rej) => { const i = new Image(); i.decoding = 'async'; i.onload = () => res(i); i.onerror = rej; i.src = url; }); images.set(url, p); } return p; };
 // An atlas is a JSON of rects plus a PNG, and a re-bake moves the rects: a browser (or host) that cached one and not the
@@ -292,7 +332,8 @@ function sweepFigures() {
 //   'all': every kit piece of the Vale's, cards and all;
 //   'sprites': the baked sprites, as before.
 let envSprites = [], LANDMARKS = 'chosen';
-const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map(), KIT_MADE = new Map();
+const KIT_UNIT = 5, KIT_LIFT = 1.3, KIT = new Map();
+let KIT_MADE = new Map();   // (a level's: set aside with it, load())
 for (const e of ENV_LIST) if (e.build) KIT.set(e.id, e);
 for (const list of Object.values(TOWN_SETS)) for (const e of list) if (e.build) KIT.set(e.id, e);
 const DOORS = new Set(['vale_keep_1', 'ruin', 'chapelruin_0']);
@@ -377,11 +418,15 @@ function buildArch(a) {
   g.dispose = () => g.traverse((o) => { if (o.isMesh && o.material === m) o.geometry.dispose(); });
   return g;
 }
+/** our art of a level gone for good: its cards (and their sheets' textures, which Sprite3D's dispose leaves: a texture a
+ * card leaked every load, 199 → 288 over four trips), its arches and its kit models */
+function dropEnv(list, made) {
+  for (const s of list) { game.engine.scene.remove(s); s.dispose?.(); s.userData?.sheet?.dispose?.(); }
+  for (const g of made.values()) g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+}
 async function placeEnv(list, region) {
-  for (const s of envSprites) { game.engine.scene.remove(s); s.dispose?.(); }
-  envSprites = [];
-  for (const g of KIT_MADE.values()) g.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
-  KIT_MADE.clear();
+  dropEnv(envSprites, KIT_MADE);
+  envSprites = []; KIT_MADE = new Map();
   if (!list?.length) return;
   const sets = ['env', `town-${region || 'vale'}`];
   const all = await Promise.all(sets.map((n) => json(`${ASSETS}env/${n}.json`)));
@@ -406,7 +451,7 @@ async function placeEnv(list, region) {
     const sheet = { texture: tex, frameWidth: m.w, frameHeight: m.h, columns: 1, rows: 1, pixelsPerUnit: NATIVE_PER_UNIT, anchor: [m.ax / m.w, 0],
       animations: { idle_down: { frames: [{ col: 0, row: 0 }], fps: 1, loop: false } }, name: `ember-env:${p.id}`, dispose() { tex.dispose(); } };
     const s = new Sprite3D(sheet, { ...SPRITE_OPTS, castShadow: false, blobShadow: false });
-    s.name = `ember:${set}:${p.id}`;
+    s.name = `ember:${set}:${p.id}`; s.userData.sheet = sheet;
     standAt(s, p.x, p.z, m.h - m.ay, NATIVE_PER_UNIT);
     game.engine.scene.add(s); envSprites.push(s);
     s.update(0, game.engine.camera);
@@ -652,6 +697,12 @@ async function boot(level) {
   // phone: the owner's 4b "at 3x", docs/dungeon-kit-proposal.md §9)
   Object.assign(globalThis, { __emberUiRoot: uiRoot, __emberInputTarget: new EventTarget(), __emberSilent: true, __emberPixelRatio: PIXEL_RATIO });
   game = new Game({ container, level, source: 'emberfall', autostart: true, lang, fonts, look: 'diorama' });
+  // one fixed pool of point lights for every level, as Luminati gives a campaign (its init makes one only for those): the
+  // light count, and with it every lit program, the same from level to level, so a level's swap compiles no program the
+  // last one had; and a level left can be set aside (swapLevel `keep` needs the shared pool). Its init writes null here.
+  let pool = null;
+  Object.defineProperty(game, 'lightPool', { configurable: true, enumerable: true, get: () => pool,
+    set: (v) => { pool = v || pool || (game.lighting ? new LightPool(game.lighting, [], { size: MAX_POINT_LIGHTS, fixed: true }) : null); } });
   await game.init(() => {});
   if (game.audio) game.audio.muted = true;                    // (the game has its own sound: src/audio/)
   game._updatePlayCamera = () => {};                          // (the camera is the game's: placeCamera)
@@ -659,6 +710,16 @@ async function boot(level) {
   game.start();
   await game.warmedUp;
   game.engine.stop();                                         // (the game steps it: frame())
+  // a swap's warm-up frames, drawn here: Luminati's swapLevel waits for a few (`_frames`: the new level's programs finish
+  // at their first draw), counting its engine's frames; that stopped, and the game stepping it only once a level is built
+  // (hybrid.js frame), every swap waited out its one-second fallback. Now those few are drawn at once, back to back,
+  // behind the overlay's black (renderer.js transit): a level set aside is back in two frames (7–10 ms each), not 1 s.
+  game._frames = (n) => {
+    for (let i = 0; i < n; i++) {
+      try { game.engine.step(1 / 60); } catch (err) { console.warn('[luminati] a warm-up frame:', err); break; }
+    }
+    return Promise.resolve(undefined);
+  };
   game.engine.events.on('lateUpdate', () => { if (game) placeCamera(); });
   // underground, the ambient is the game's (convert.js ambientOf), laid over the palette's after it updates
   game.engine.events.on('update', gradeByHour);
@@ -1138,25 +1199,79 @@ const TIER_LOOK = {
   },
 };
 
+/** a level's (or a list's) content as a short key: FNV-1a over its JSON (an overland's in a few ms) */
+function levelKey(o) {
+  const t = JSON.stringify(o); let h = 0x811c9dc5, g = 0x01000193;
+  for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); h = Math.imul(h ^ c, 0x01000193); g = Math.imul(g ^ c, 0x85ebca6b) ^ (g >>> 13); }
+  return `${t.length}.${(h >>> 0).toString(36)}.${(g >>> 0).toString(36)}`;
+}
+
+/** our art's list as a key: what stands where (a chest opened is another prop's canvas, an id of its own: hybrid.js) */
+const envKeyOf = (list) => levelKey(list.map((q) => [q.id, q.x, q.z, q.prop || '', q.arch ? 1 : 0]));
+
 /** the frame's API, for src/render3d/hybrid.js */
 const api = {
   ready: false,
+  /** build a level ahead, while this one plays (the one next door: hybrid.js), unless it's this one, set aside or already
+   * being built @param {any} level @param {string} region */
+  prepare(level, region = 'vale') {
+    if (!game || loading) return false;
+    const lv = normalizeLevel(level).level, key = `${region}|${levelKey(lv)}`;
+    if (key === curKey || aside.has(key) || prep?.key === key) return false;
+    dropPrep();
+    try {
+      const world = game.prepareWorld(lv, () => true);
+      prep = { key, level: lv, world, steps: world.buildSteps({ paced: true }), wait: null, done: false, t0: performance.now() };
+      setTimeout(prepPump, PREP_GAP);
+    } catch (err) { console.warn('[luminati] building a level ahead:', err); prep = null; return false; }
+    return true;
+  },
+  /** (for checks) Luminati's game */
+  get game() { return game; },
+  /** (for checks: the load times) Luminati's last level swap (ms), three.js's compiled programs and what's on the GPU */
+  loadStats() {
+    const R = game?.engine?.renderer;
+    return { swap: game?.loadStats?.lastSwap ?? null, programs: R?.info?.programs?.length ?? 0, geometries: R?.info?.memory?.geometries ?? 0, textures: R?.info?.memory?.textures ?? 0, kept: aside.size, ahead: prep ? (prep.done ? 'ready' : 'building') : '', last: lastWay };
+  },
   /** build a level (the sim's world, converted), then stand our art in it; resolves when it's drawn */
   async load(level, sprites = [], region = 'vale') {
     const id = ++levelId;
     if (region !== envRegion) { envRegion = region; envFrames.clear(); }
-    const lv = normalizeLevel(level).level;
+    const lv = normalizeLevel(level).level, key = `${region}|${levelKey(lv)}`, envKey = envKeyOf(sprites);
+    loading = true;
     building = (async () => {
-      if (!game) await boot(lv);
-      else await game.swapLevel(lv, { spawn: lv.spawn });
+      let back = null;
+      if (!game) { await boot(lv); lastWay = 'built'; }
+      else {
+        back = aside.get(key) || null; if (back) aside.delete(key);
+        const ahead = !back && prep && prep.key === key ? prep : null; if (ahead) prep = null;
+        const to = back ? back.kept.level : ahead ? ahead.level : lv;
+        lastWay = back ? 'kept' : ahead ? 'ahead' : 'built';
+        const { aside: left } = await game.swapLevel(to, { spawn: lv.spawn, keep: true, kept: back ? back.kept : null, prepared: ahead ? preparedOf(ahead) : null });
+        if (left && curKey) {                                     // the level left, with our art in it, out of the scene
+          for (const o of envSprites) game.engine.scene.remove(o);
+          aside.set(curKey, { kept: left, env: envSprites, made: KIT_MADE, envKey: curEnvKey });
+          envSprites = []; KIT_MADE = new Map();
+          while (aside.size > ASIDE_MAX) { const [k, v] = aside.entries().next().value; aside.delete(k); game.disposeKept(v.kept); dropEnv(v.env, v.made); }
+        }
+      }
+      curKey = key;
       if (id !== levelId) return;
       hidePlayer();
       inside = !!lv.environment?.interior;
       api.settings({ dof });
       skyFor(lv, region);
-      await placeEnv(sprites, region);
+      if (back && back.envKey === envKey) {                       // its art as it was: stood back in
+        dropEnv(envSprites, KIT_MADE);
+        envSprites = back.env; KIT_MADE = back.made;
+        for (const o of envSprites) { game.engine.scene.add(o); o.update?.(0, game.engine.camera); }
+      } else {
+        if (back) dropEnv(back.env, back.made);
+        await placeEnv(sprites, region);
+      }
+      curEnvKey = envKey;
     })();
-    await building;
+    try { await building; } finally { loading = false; }
     return id === levelId;
   },
   /** the menu's Graphics: the depth of field */
@@ -1285,7 +1400,7 @@ const api = {
     game.engine.step(Math.max(0, Math.min(0.1, f.dt)), { render: f.draw !== false });   // (draw false: stepped, not drawn: tools/capture/rig.mjs settling)
   },
   /** stand the converter's art again (a chest opened, a shrine used: hybrid.js), the level kept */
-  sprites(list) { if (game) placeEnv(list, envRegion); },
+  sprites(list) { if (game) { curEnvKey = envKeyOf(list); placeEnv(list, envRegion); } },
   /** (for checks) a world point on the screen, CSS px, through this camera */
   project(x, y, z) {
     if (!game) return null;

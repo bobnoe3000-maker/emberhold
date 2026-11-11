@@ -84,6 +84,48 @@ The game has no build step (A1), and that holds. Luminati is source we pin, so:
   The renderer loads behind the title screen (the title is DOM and the intro is its own canvas), so it costs no time
   to the first paint. Target: **≤ 450 KB gzipped for the renderer**, measured each phase.
 
+### 2.1 Changing scenes (2026-11-11)
+
+The owner: *"Load times from town to the main map takes up to 5-6 seconds, can we improve this?"* A scene change
+built Luminati's level from nothing every time. Four changes, all in our bridge (`tools/render3d/world.js`,
+`src/render3d/hybrid.js`); Luminati itself is unchanged:
+
+1. **One fixed pool of point lights for every level.** Luminati gives one to a campaign only. Without it, a level had as
+   many lights as its lamps, so every lit shader program was compiled again on each swap. The pool is handed to
+   Luminati's init before the first level is built.
+2. **The level left is set aside.** It goes back without a rebuild (`swapLevel` `keep` / `kept`, which needs that
+   shared pool), together with our art stood in it. Two levels are kept, keyed by their converted content, so a level
+   that changed is built again rather than reused stale. Town → overland → town re-attaches.
+3. **The level next door is built ahead.** About 1.5 s after you arrive in a town or on an overland, the other one is
+   prepared: `createOutdoor` (pure; it converts to the same level the sim's trip would, tested on the Vale and the Fens)
+   is handed to `prepareWorld`, and its paced build steps run 5 ms at a time between frames. The trip there takes it
+   (`prepared`). Thornwick's overland was ready after 3.4 s in the square.
+4. **The swap's warm-up frames are drawn at once.** Luminati's swap waits for a few drawn frames. The game steps its
+   engine only once a level is built, so every swap waited out the one-second fallback. Those frames are now stepped
+   back to back, behind the overlay's black.
+
+Also fixed: a texture leaked for every building card on every load, because Sprite3D's dispose leaves its sheet's
+texture.
+
+**Measured** (Chromium, software GL, Thornwick ⇄ the Hollow Vale; Luminati's own swap time, `loadStats().swap`):
+
+| Trip | Before | After |
+|---|---|---|
+| Thornwick → the Vale, the first time | build 1.75 s + 1 s wait + first draw | build 0.13 s (built ahead) + first draw |
+| Any trip back (the Vale → Thornwick, Thornwick → the Vale) | 1.6–2.8 s | 0.05–0.13 s |
+| Shader programs after a few trips | 172 | 88 |
+
+The whole wait here (9–13 s before, 2–4 s after) is dominated by software GL's slow frames: a Thornwick frame takes
+850 ms here and milliseconds on a phone. On a phone, a trip back is two frames.
+
+**Still paid:** the first draw of a level never seen before, which uploads its geometry and compiles its own few
+programs. A phone's real GPU wasn't measured here.
+
+**Memory:** about 700 geometries with two levels kept and one built ahead, against about 360 for one.
+
+**Test:** the browser suite (15c4) checks the overland is taken ahead from Thornwick, every trip after re-attaches,
+and no program is compiled for a level already met.
+
 ---
 
 ## 3. The renderer contract
