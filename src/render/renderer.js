@@ -26,7 +26,7 @@ import { createSkillFX, LUM_LOOKS, LUM_HOLDS } from './skillfx.js';
 import { siteOpen, bossAt } from '../sim/sites.js';
 import { shrineKind } from '../sim/shrines.js';
 import { WARDENS } from '../sim/tower.js';
-import { familyOf, BOSSES, halved } from '../sim/battle.js';
+import { familyOf, BOSSES, halved, bossAway, BOSS_BACK } from '../sim/battle.js';
 import { DEATH_T } from '../sim/battle.js';
 import { statsFor } from '../sim/party.js';
 import { shotOf } from '../sim/items.js';
@@ -705,6 +705,7 @@ export function createRenderer(canvas, sim, input) {
     if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
+    if (!sim.battle) drawHallAway();
     if (transit) {                                                 // fading in from the scene change
       const a = 1 - (t0 - transit.fadeFrom) / TRANSIT_FADE;
       if (a <= 0) transit = null; else { octx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`; octx.fillRect(0, 0, vw, vh); }
@@ -1000,7 +1001,7 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossFlood', ({ level }) => { banner = level ? { text: 'A bell · the water rises', sub: bossLine.bells[1], until: clock() + 2000, small: true } : { text: 'The water goes down', until: clock() + 1800, small: true }; });
   sim.bus.on('bossKindle', ({ id }) => { banner = { text: `${bossName(id)} kindles the dead`, sub: bossLine.kindle[1], until: clock() + 2000, small: true }; });
   sim.bus.on('bossDown', (e) => { if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
-  sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: clock() + 3200 }; });
+  sim.bus.on('bossDown', ({ name, first, tower }) => { const back = `the hall stands empty · back in ${Math.round(BOSS_BACK / 60)} min`; banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? `${back} · something was left behind` : back, until: clock() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
   sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: gateRoom() ? `${dangerWord(b.level)} · hold ${sim.world.gate.waves} waves to drop the gate` : dangerWord(b.level), until: clock() + (gateRoom() ? 2200 : 1100) }; });
   // the floor's gate (sim world.js gateOf, GDD §3.4 v1.70): this room's waves win it while it's up; down, a banner
@@ -1028,6 +1029,28 @@ export function createRenderer(canvas, sim, input) {
   const DANGER = [['#f0c880', 'even match'], ['#ffc060', 'a step up'], ['#ff9a50', 'dangerous'], ['#ff5a4a', 'deadly']];
   const dangerOf = (lv) => DANGER[Math.max(0, Math.min(3, lv - sim.state.party[0].level))];
   const dangerColor = (lv) => dangerOf(lv)[0], dangerWord = (lv) => dangerOf(lv)[1];
+  // a boss away (sim battle.js bossAway, GDD v1.73): standing in his hall, its pill says who holds it and when he's back,
+  // a game-time clock (it stands still while the game is closed)
+  function hallAway() {
+    const w = sim.world; if (!w || w.kind !== 'dungeon' || !w.level || !w.level.descentRoom) return null;
+    const pl = sim.state.player, c = w.level.cells.get(Math.floor(pl.x) + ',' + Math.floor(pl.y));
+    if (!c || c.room !== w.level.descentRoom.id) return null;
+    const a = bossAway(sim.state, w.site, w.depth); if (!a) return null;
+    const s = Math.ceil(a.left), m = Math.floor(s / 60);
+    return { name: BOSSES[a.id].name, clock: `${m}:${String(s % 60).padStart(2, '0')}` };
+  }
+  function drawHallAway() {
+    const A = hallAway(); if (!A) return;
+    const k = vw / window.innerWidth, txt = `${A.name.toUpperCase()}  ·  BACK IN ${A.clock}`, dc = '#c8b8a0';
+    octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
+    const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;
+    const px = Math.max(tw / 2 + 10 * k, Math.min(vw / 2, mmL - tw / 2)), py = (hudB + 16) * k;
+    octx.fillStyle = 'rgba(14,10,18,0.82)'; octx.strokeStyle = dc; octx.lineWidth = Math.max(1, k);
+    octx.beginPath(); octx.roundRect(px - tw / 2, py - 13 * k, tw, 19 * k, 9 * k); octx.fill(); octx.stroke();
+    octx.fillStyle = dc; octx.fillText(txt, px, py + 1 * k);
+    octx.font = `italic ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.fillStyle = 'rgba(220,206,186,0.85)';
+    octx.fillText('the hall stands empty till then', px, py + 19 * k);
+  }
   function drawBattle(ox, oy, ix, iy, pz, now) {
     const k = vw / window.innerWidth, w = sim.world, b = sim.battle, party = sim.state.party;
     const scr = (x, y, lift = 0) => { const z = heightAt(w, Math.floor(x), Math.floor(y)), P = project(x, y, z); return [(ox + P.sx) * S, (oy + P.sy - lift) * S]; };
@@ -1043,7 +1066,8 @@ export function createRenderer(canvas, sim, input) {
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
       const T = b.tower && sim.state.tower, sat = T ? `  ·  ${T.satchel.gold}g ${T.satchel.cinders}✦` : '';   // (the Mere Tower: its wave, its strength, the satchel at risk)
       const G = gateRoom() ? sim.world.gate : null, held = G ? Math.min(G.waves, b.between ? b.wave : Math.max(0, b.wave - 1)) : 0;   // (the gate: waves held this visit)
-      const txt = `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
+      const A = b.quiet && !T ? hallAway() : null;   // (the boss just fell: his hall's timer, v1.73)
+      const txt = A ? `${A.name.toUpperCase()}  ·  BACK IN ${A.clock}` : `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;

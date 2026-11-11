@@ -1,6 +1,14 @@
 # Emberfall — Game Design Document
 
-**v1.72 · 2026-11-11 · Plan of record for game design.** v1.72 (§10, the owner: "The mini map replaces the world menu
+**v1.73 · 2026-11-11 · Plan of record for game design.** v1.73 (bosses, the owner: "after the boss is defeated.. regular
+npcs can still spawn. Show the timer for when the boss will reappear"; 30 minutes, story bosses too): a boss put down is away
+for 30 minutes of game time (sim/battle.js BOSS_BACK, state.bossBack, save v42) and his hall stands empty meanwhile: no
+waves (it had fought ordinary waves after a story boss fell, and a boss was back the moment you stepped in again). Then he
+holds it again. A story boss (Garrow, the Robed Stranger, Brother Teague) comes back too; only his first fall is the
+story's and pays his heirloom, and a found companion waiting in his hall still keeps it quiet till he's joined you. One
+exception: a quest under way that asks you to hold that hall (Wren's Settled) gets its ordinary waves there. In the hall a
+pill says who and when ("THE QUARTERMASTER · BACK IN 23:39"); his fall's banner says the hall stands empty for 30 min;
+the map's dungeon card names a boss away with his minutes. v1.72 (§10, the owner: "The mini map replaces the world menu
 button ... Let me click in the minimap to also walk to a location ... the region button on the left and the old provinces on
 the right. Rename old provinces to World"): the minimap in the top bar is the map's button (the globe gone; the town square's
 home screen, with no minimap, opens it from the tavern's coach row as before); the map's tabs are the land you're in, then

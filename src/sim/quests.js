@@ -280,6 +280,15 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
       changed(id);
     }
   }
+  /** does a quest under way ask for waves in this floor's hall? (battle.js: a boss away leaves his hall empty, but
+   * not while you've taken on holding it: Wren's Settled, after Brother Teague; GDD v1.73) @param {string} site @param {number} depth */
+  function wantsHall(site, depth) {
+    for (const id of Object.keys(state.quests)) {
+      const q = state.quests[id], d = defOf(id); if (q.st !== QS.ACTIVE || !d) continue;
+      if (d.steps[q.step].objectives.some((o, i) => o.type === 'waves' && o.hall && o.site === site && (!o.floor || depth + 1 >= o.floor) && (q.n[i] || 0) < target(o))) return true;
+    }
+    return false;
+  }
   bus.on('wave', (e) => { if (e.cleared) count((o, n) => (o.type === 'waves' && siteHere(o.site) && (!o.hall || hallHere(e.room)) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('looted', (e) => { if (e.kind === 'chest') count((o, n) => (o.type === 'loot' && siteHere(o.site) && (!o.floor || floorHere() >= o.floor) ? n + 1 : n)); });
   bus.on('dialogue', (e) => count((o, n) => (o.type === 'meet' && o.npc === e.npc ? n + 1 : n)));          // (M8) a word with someone
@@ -479,5 +488,5 @@ export function createQuests({ state, bus, getWorld, extraDef = () => null, reve
   }
   /** after a load (lore restored after quests: core.js): settle every active quest against what's held now */
   function settleAll() { for (const id of Object.keys(state.quests)) if (state.quests[id].st === QS.ACTIVE) { settle(id); changed(id); } }
-  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, settleAll, status, marks, markKinds, def: defOf };
+  return { command, effect, begin, finish, varsFor, compass, snapshot, restore, settleAll, status, marks, markKinds, wantsHall, def: defOf };
 }

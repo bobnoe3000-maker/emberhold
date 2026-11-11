@@ -111,7 +111,8 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     created: false,                   // has this game's main character been made? (createHero, once)
     temple: { freeDay: -1 },          // the in-game day the temple last raised someone for free
     flags: {},                        // story flags set by conversations (npcs.js): { [name]: number }
-    bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss falls once)
+    bosses: {},                       // bosses put down: { [id]: times } (battle.js BOSSES; a story boss's first fall is the story's)
+    bossBack: {},                     // a boss put down is away till then: { [id]: state.t he's back } (battle.js BOSS_BACK, v1.73)
     count: { lamps: 0, souls: 0 },    // lamps broken and souls freed (lamps.js; only its rules add to it)
     lampsBroken: [],                  // the lamps broken, once each (lamps.js LAMPS)
     away: null,                       // the time away being played through (offline progress, above): runtime only
@@ -130,7 +131,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   const heroes = createHeroes({ state, bus, getWorld: () => world, seed: baseSeed });
   const dev = createDev({ state, bus });                  // the menu's Developer tools: they mark the game a dev game (dev.js)
   // room battles (battle.js): waves, party AI, damage, XP / gold, defeat → back to town
-  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'),
+  const battle = createBattle({ state, bus, getWorld: () => world, seed: baseSeed, isWalkable, onDefeat: () => travel('town', 'temple'), hallWanted: (site, d) => quests.wantsHall(site, d),
     onDrop: (src, ilv, x, y) => loot.drop(src, { ilv, x, y }),
     moveHero: (dx, dy) => { const p = state.player; tryMove(p, dx, dy); const l = hypot(dx, dy) || 1; p.moving = true; p.fx = dx / l; p.fy = dy / l; p.vx = p.vy = 0; face(p, dx, dy); } });
 
@@ -620,6 +621,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
       gates: [...gatesOpen],             // (v41) the floors' gates opened
       flags: { ...state.flags },
       bosses: { ...state.bosses },
+      bossBack: { ...state.bossBack },
       count: { ...state.count }, lampsBroken: [...state.lampsBroken],   // (v19)
       boons: { ...boonsOf(state) },     // (v20)
       tower: JSON.parse(JSON.stringify(towerOf(state))),   // (v21)
@@ -693,6 +695,7 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
     state.revealed = new Set((data.revealed ?? []).filter((k) => SITES[k] && SITES[k].hidden));
     state.flags = {}; for (const [k, v] of Object.entries(data.flags ?? {})) if (typeof v === 'number') state.flags[k] = v;   // v5 and older: none yet
     state.bosses = {}; for (const [k, v] of Object.entries(data.bosses ?? {})) if (BOSSES[k] && Number.isInteger(v) && v > 0) state.bosses[k] = v;   // v11 and older: none yet
+    state.bossBack = {}; for (const [k, v] of Object.entries(data.bossBack ?? {})) if (BOSSES[k] && Number.isFinite(v) && v > 0) state.bossBack[k] = v;   // v41 and older: none away (save v42)
     { const r = restoreCount(data); state.count = r.count; state.lampsBroken = r.lampsBroken; }   // v18 and older: migrated (persist/save.js)
     state.boons = restoreBoons(data);   // v19 and older: none
     state.tower = restoreTower(data);   // v20 and older: no climb

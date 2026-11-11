@@ -298,6 +298,16 @@ export const familyOf = (w, room) => {
   if (r && r.family && FAMILIES[r.family]) return FAMILIES[r.family];
   const S = siteOf(w.site); return FAMILIES[(S.families && S.families[w.depth || 0]) || S.family] || FAMILIES.ashbound;
 };
+// A boss away (GDD v1.73, the owner: "after the boss is defeated.. regular npcs can still spawn. Show the timer for when
+// the boss will reappear"): a boss put down is gone for BOSS_BACK seconds of game time (state.bossBack: id → state.t he's back),
+// and his hall stands empty meanwhile, no waves; then he holds it again. A story boss (`once`) comes back too: only his
+// first fall counts for the story (state.bosses, bossDown's `first`) and pays his heirloom.
+export const BOSS_BACK = 30 * 60;
+/** the hall's boss while he's away: { id, left } (seconds), or null @param {any} state @param {string} site @param {number} depth */
+export function bossAway(state, site, depth) {
+  const id = site && bossAt(site, depth || 0), at = id && state.bossBack ? state.bossBack[id] : 0;
+  return id && at > state.t ? { id, left: at - state.t } : null;
+}
 const LULL = 4, OUT_OF_BATTLE_REGEN = 5, LULL_REGEN = 1.5, BOLT_SPEED = 26, AUTO_DELAY = 0.5;
 // Animation timing the sim honours so hits land on the swing: a blow (or a bolt's release)
 // comes WINDUP s after the attack starts (the baked attack clip's impact frame); a slain
@@ -334,7 +344,7 @@ export const SPARE_MP = 0.7;
 const HOLD_R = 3, GUARD_LOW = 0.3;
 const COS_HALF = { 40: 0.9397, 60: 0.8660 };   // cos of half a fan's arc (detmath has no acos; a table, as XP_TABLE)
 
-export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero }) {
+export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat, onDrop = () => {}, moveHero, hallWanted = () => false }) {
   let rng = mulberry32(streamSeed(seed, 0xb477));
   let battle = null, nextId = 1, focusId = 0, pending = [], calmT = 0;   // calmT: seconds with no foe standing (pickCages)   // pending: blows and releases waiting on their wind-up
 
@@ -545,7 +555,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     for (const m of state.party) { m.downs = 0; m.stood = 0; m.buff = null; m.ward = 0; }   // a new room visit
     const hall = w.level.descentRoom && w.level.descentRoom.id === room, bid = hall ? bossAt(w.site, w.depth || 0) : null;
     battle = { room, t0: state.t, lastBlow: null, level: (w.roomLevels && w.roomLevels.get(room)) || 1 + (w.depth || 0), wave: 0, lull: 1.2, cells, grid: { x0, y0, gw, gh, walk }, fields: new Map(),
-      tide: 0, boss: bid && !(BOSSES[bid].once && (state.bosses || {})[bid]) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
+      tide: 0, boss: bid && !bossAway(state, w.site, w.depth) ? bid : null, bossUp: false, quiet: false, lastSlain: null,
       hazards: [], flood: 0, edge: null, size: (w.level.rooms.find((r) => r.id === room) || {}).size || 'large' };       // the ground hazard (hazards.js); the room's size (SIZE_CAP)
     if (w.site === TOWER.site) {                                 // the Mere Tower's stair hall: its own climb, carried on where it was (tower.js)
       const T = towerOf(state); Object.assign(battle, { tower: true, level: TOWER.level, wave: T.wave, boss: null, quiet: T.atLanding, between: T.wave > 0, tide: towerTough(Math.max(1, T.wave)) - 1 });   // (between: the last wave was paid for already)
@@ -703,6 +713,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     bus.emit('combat', { t: 'xp', x: e.x, y: e.y, amount: share });
     if (e.boss) bossGone(e);
     if (e.boss) { const first = !(state.bosses || {})[e.boss]; (state.bosses ||= {})[e.boss] = ((state.bosses || {})[e.boss] || 0) + 1; if (battle) battle.quiet = true;
+      (state.bossBack ||= {})[e.boss] = state.t + BOSS_BACK;   // (gone for BOSS_BACK: his hall empty till then)
       bus.emit('bossDown', { id: e.boss, name: BOSSES[e.boss].name, first, x: e.x, y: e.y, lvl: e.lvl }); }   // (core.js pays its heirloom / loot; the room goes quiet)
     else if (battle) battle.lastSlain = { x: e.x, y: e.y };
     if (e.elite && !e.boss) onDrop('elite', e.lvl, e.x, e.y);           // elites often carry gear
@@ -1608,7 +1619,7 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
     if (battle && room !== battle.room) endBattle(w, 'left');
     // (a hall where a found companion still waits, his captor fallen, is quiet: the Company left him there
     // (npcs.js placeFound); and for the rest of the visit once he's walked out of it with you)
-    const waiting = hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]));
+    const waiting = hallHere(w, room) && (w.freedHall === room || (w.npcs || []).some((n) => n.found && (state.bosses || {})[n.boss]) || (!!bossAway(state, w.site, w.depth) && !hallWanted(w.site || 'barrows', w.depth || 0)));   // (or its boss away: the hall empty till he's back, unless a quest asks you to hold it)
     if (!battle && inDungeon && room >= 0 && w.level.entrance && room !== w.level.entrance.id && alive(H) && !waiting) startBattle(w, room);
     if (!battle && onLand && alive(H)) {                            // a spawn point on the overland: within its reach and full (camps.js)
       const list = campsOf(w.region), h = campNear(list, p.x, p.y, 'reach');

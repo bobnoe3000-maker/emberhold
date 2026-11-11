@@ -97,9 +97,13 @@ test('the Quartermaster: every 10 s the most hurt of his ranks stands up whole, 
   fight(sim, () => ev.some(([k]) => k === 'bossDown'));
   assert.ok(ev.some(([k, e]) => k === 'bossDown' && e.id === 'quartermaster'), 'he falls');
   assert.equal(sim.state.bosses.quartermaster, 1);
-  // a new visit: he's back in his hall (not a story boss)
+  // a new visit straight after: his hall stands empty while he's away (GDD v1.73, BOSS_BACK); his time run out, he's back
   const again = createSim(SEED, undefined, { scene: 'dungeon', site: 'barrows' }); again.restore(JSON.parse(JSON.stringify(sim.snapshot())));
   assert.equal(again.state.depth, 1, 'back on his floor'); let back = null; again.bus.on('bossWave', (e) => { back = e.id; });
+  intoHall(again); fight(again, () => !!back, 10);
+  assert.equal(back, null, 'away: nobody in his hall'); assert.equal(again.battle, null, 'no fight there');
+  again.state.bossBack.quartermaster = again.state.t;                                                    // (his half hour up)
+  const p = again.state.player; p.x = p.px = again.world.level.entrance.cx; p.y = p.py = again.world.level.entrance.cy; again.tick();
   intoHall(again); fight(again, () => !!back, 60);
   assert.equal(back, 'quartermaster', 'the Quartermaster again');
 });

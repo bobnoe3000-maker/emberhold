@@ -116,6 +116,8 @@
 //       chosen (or a sellsword's own). Nothing to migrate: absent is the look's own face and the class's build, as before.
 //   v40: a member's `hideHelm` (GDD §6.1 v1.65, heroes.js showHelm): true, the helm not drawn on the figure. Nothing to
 //       migrate: absent is the helm shown, as before.
+//   v42: the bosses away (GDD v1.73, sim/battle.js BOSS_BACK): `bossBack`, each boss put down → the game time he's back. Older
+//        saves have none, so every boss holds his hall again; restore() reads a missing field as empty, no migration needed.
 //   v41: the floors' gates (GDD §3.4 v1.70, sim/world.js gateOf): `gates`, the `site:depth` of each opened (for good). Older
 //       data (gatesFor41): a floor's gate is open where its hall's boss is down, and above the floor a save was made on.
 
@@ -128,7 +130,7 @@ import { dedupeNames, xpToNext } from '../sim/party.js';
 import { reachedOf } from '../sim/coach.js';
 import { SITES, bossAt } from '../sim/sites.js';
 
-export const SAVE_VERSION = 41;   // (v41: the floors' gates opened, `gates`; an old save's floors already passed open: gatesFor41)
+export const SAVE_VERSION = 42;   // (v42: the bosses away, `bossBack`; an old save has none: every boss in his hall)
 /** v40 and older (v41: the floors' gates): an old save comes back with the gates it has been through open, as far as the save
  * tells: every floor whose hall's boss is down (sites.js bossAt; state.bosses), and every floor above the one it was made
  * on. A generated hall with no boss, passed and left: its gate stands (its twenty waves again). @param {any} data */

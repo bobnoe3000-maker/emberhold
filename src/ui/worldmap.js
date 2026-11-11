@@ -16,7 +16,7 @@ import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
 import { LANDS } from '../sim/regions.js';
 import { COACH, days, fare, townOf } from '../sim/coach.js';
 import { SITES, siteOpen, levelBand } from '../sim/sites.js';
-import { BOSSES } from '../sim/battle.js';
+import { BOSSES, bossAway } from '../sim/battle.js';
 import { NPCS } from '../sim/npcs.js';
 import { QS } from '../sim/quests.js';
 import { swallow } from './actorart.js';
@@ -313,7 +313,8 @@ export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
     }
     if (p.kind === 'site') {
       const s = SITES[p.id], fl = s.floors ? `${NUM[s.floors] || s.floors} floor${s.floors === 1 ? '' : 's'}` : 'floors without end';
-      const boss = Object.values(s.bosses || {}).map((b) => (BOSSES[b] ? BOSSES[b].name : '')).filter(Boolean).join(', ');
+      // (a boss away, battle.js bossAway v1.73: when he's back, in minutes of game time)
+      const boss = Object.entries(s.bosses || {}).map(([d, b]) => { if (!BOSSES[b]) return ''; const a = bossAway(S(), p.id, Number(d) - 1); return BOSSES[b].name + (a ? ` (back in ${Math.max(1, Math.ceil(a.left / 60))} min)` : ''); }).filter(Boolean).join(', ');
       card.append(el('h3', '', s.name), el('div', 'sub', `levels ${levelBand(p.id)} · ${fl}${boss ? ' · ' + boss : ''}`));
       card.append(el('div', 'sub', (S().sitesEntered.has(p.id) ? 'you’ve been in' : 'never entered') + (s.minLevel ? ` · takes a company from level ${s.minLevel}` : '')));
     } else if (p.kind === 'town') card.append(el('h3', '', LANDS[r].town), el('div', 'sub', STOP[townOf(r)] || 'a town'));
