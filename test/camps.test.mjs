@@ -162,3 +162,19 @@ test('the errands match their JSON and their Ink knots', () => {
     assert.ok(ink.includes(`# quest: accept ${id}`) && ink.includes(`# quest: turnin ${id}`));
   }
 });
+
+// the owner, 2026-11-11: "Step out does nothing in the overland when in combat with NPCs in the ring". The button
+// (ui/stepout.js) walks to the compass's 'step-out' row, which only a dungeon room had; a spawn point's fight now
+// has one too, a tile past the edge of its arena, and walking there ends the fight.
+test('Step out in a spawn point\'s fight: the compass has the way out of the arena, and the walk there ends the fight', () => {
+  for (const camp of [SPIT, DITCH, CAMP_BY.vale_picket]) {
+    const sim = land(); stand(sim, camp.x - camp.reach + 0.5, camp.y); sim.tick();
+    assert.ok(sim.battle && sim.battle.camp === camp, `${camp.id}: the fight is on`);
+    const row = sim.destinations().find((r) => r.id === 'step-out');
+    assert.ok(row, `${camp.id}: a Step out row`);
+    assert.ok(hypot(row.tx + 0.5 - camp.x, row.ty + 0.5 - camp.y) > camp.arena, `${camp.id}: it leads past the arena's edge`);
+    sim.commands.push({ type: 'goto', tx: row.tx, ty: row.ty, near: row.near, then: null, label: 'Step out' });
+    let t = 0; for (; t < 20 * 30 && sim.battle; t++) { for (const m of sim.state.party) m.hp = 9999; sim.tick(); }
+    assert.equal(sim.battle, null, `${camp.id}: walked out, the fight is over (${t} ticks)`);
+  }
+});

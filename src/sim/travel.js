@@ -5,7 +5,7 @@
 //
 //   dungeon  — (in a fight) step out · next unexplored room · room at your level · unopened chest /
 //              shrine · stairs down (greyed until found) · stairs up (the first floor's: out to the surface)
-//   overland — the region's town · every site you can go into (site:<id>, nearest first; a hidden one only
+//   overland — (in a spawn point's fight) step out, past its arena's edge · the region's town · every site you can go into (site:<id>, nearest first; a hidden one only
 //              once revealed) · landmarks
 //   town     — town square (not while you're in it) · nearest dungeon (by the road out) · road out
 //
@@ -16,10 +16,13 @@
 
 import { findPath } from './path.js';
 import { heightAt, isWalkable } from './world.js';
-import { hypot } from './detmath.js';
+import { hypot, sin, cos } from './detmath.js';
 import { SITES, siteOpen, levelBand, hasFloorBelow } from './sites.js';
 import { LANDS, landId } from './regions.js';
-import { campsOf, campUp, campState } from './camps.js';
+import { campsOf, campUp, campState, CAMP_ROOM } from './camps.js';
+
+// sixteen ways out of a spawn point's arena, as unit steps (detmath: the sim's own trig)
+const OUT16 = Array.from({ length: 16 }, (_, i) => [cos(i * Math.PI / 8), sin(i * Math.PI / 8)]);
 
 
 export function listDestinations({ world, state, standable, heroLevel, sitesEntered, inSquare, battleRoom = -1 }) {
@@ -147,6 +150,25 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
       out.push({ id: 'road-out', icon: 'next', label: 'Road out', sub: `to ${LANDS[landId(state.region)].name.replace(/^The /, 'the ')} · ${steps} steps`, tx: t.tx, ty: t.ty, near: 0, steps });
     }
     return out;
+  }
+
+  // overland, in a spawn point's fight (camps.js): the way out is past the edge of its arena, where the fight ends
+  // (battle.js: the hero off its arena, as off a room's floor). The tile just past the edge on the hero's side first,
+  // then round the ring: the nearest by the walk of the first few that can be reached.
+  if (battleRoom >= CAMP_ROOM(0)) {
+    const camps = campsOf(world.region || state.region), c = camps[battleRoom - CAMP_ROOM(0)];
+    if (c) {
+      const ax = p.x - c.x, ay = p.y - c.y, ad = hypot(ax, ay) || 1, R = c.arena + 1.5;
+      const ways = OUT16.map(([ux, uy]) => ({ ux, uy, dot: (ux * ax + uy * ay) / ad })).sort((a, b) => b.dot - a.dot);
+      let best = null, tried = 0;
+      for (const { ux, uy } of ways) {
+        const t = standOn(c.x + ux * R, c.y + uy * R, 2); if (!t || hypot(t.tx + 0.5 - c.x, t.ty + 0.5 - c.y) <= c.arena + 0.5) continue;
+        const steps = pathLen(t.tx, t.ty); if (steps == null) continue;
+        if (!best || steps < best.steps) best = { ...t, steps };
+        if (++tried >= 3) break;
+      }
+      if (best) out.push({ id: 'step-out', icon: 'exit', label: 'Step out', sub: `out of ${c.name.replace(/^The /, 'the ')} · ${best.steps} steps`, tx: best.tx, ty: best.ty, near: 0, steps: best.steps });
+    }
   }
 
   // overland: the town, every site you can go into (nearest first), landmarks
