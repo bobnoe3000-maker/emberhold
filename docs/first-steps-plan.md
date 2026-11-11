@@ -47,7 +47,7 @@ After Ready, once the town's square is up and the HUD is on it, eight cards. `co
 | 2 | Your hero | your card (`#party`) | tap for your windows: Gear and the bag, Stats (the points, what you were born with), Skills (every three levels, four in a fight); companions get cards beside yours |
 | 3 | The compass | `#compassBtn` | pick a place and your hero walks there; drag or tap to stop |
 | 4 | The Journal | `#journalBtn` | the errands, their steps, who to go back to; the tracked one under it |
-| 5 | The World map | `#mapBtn` | the land and the Old Provinces; the Guild's coach between towns you've walked to |
+| 5 | The map | `#mapBtn` (laid over the minimap, v1.72) | the land and the World; a tap on open ground walks there; the Guild's coach between towns you've walked to |
 | 6 | The menu | `#menuBtn` | pause, slots, sound, graphics, brightness, these first steps again; the game keeps itself |
 | 7 | The square | `#hubBar` | the services a tap away while you stand in a square |
 | 8 | Your first errand | (the world) | Maudry Fenn at the Tired Mule has work; the gold mark over anyone with work for you; walk up and tap her |

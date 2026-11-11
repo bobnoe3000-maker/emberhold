@@ -168,9 +168,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await createStep(p, { pick: 'Fighter' }); await createStep(p, { pick: 'Barbarian' }); await createStep(p); await createStep(p, { pick: 'Redhand deserter' });   // (the third: Born, the roll as offered)
     await createStep(p, { name: 'Brann<script>' }); await createStep(p, { begin: true }); await p.waitForTimeout(600);
     {   // the first steps over the square, once it's up: the eight cards in order, all but the first and last ringing what they're about
+        // (but the map's: its button is the minimap, v1.72, and the square's home screen has none, so it rings only out of the square)
       const st = await firstSteps(p), ids = (st || []).map((q) => q[0]).join(',');
       check(M + ': the first steps after Ready, each card on what it is about, the sim held, then gone', ids === 'move,hero,compass,journal,map,menu,square,errand'
-        && st.slice(1, -1).every((q) => q[1]) && !(await p.locator('#steps.on').count()), JSON.stringify(st));
+        && st.slice(1, -1).every((q) => q[1] || q[0] === 'map') && !(await p.locator('#steps.on').count()), JSON.stringify(st));
     }
     // (waited for: on Luminati the sim holds still while the town's level builds, slowly in software GL)
     await p.waitForFunction(() => globalThis.__sim.state.created, null, { timeout: 30000 * SLOW, polling: 100 }).catch(() => null);
@@ -1333,7 +1334,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
 // shift the mini map and buttons below up" and "account for the shrine buff text"): line 1 the place and the purse, the
 // purse ending on the minimap's right edge; line 2 the sky dial and wages, line 3 (only while lit) the boons and
 // Weakened, both stopping short of the minimap; the minimap 6 px under line 1, the compass and Journal 8 and 60 px
-// under it, the World map's globe 22 px under the Journal, every right edge at 12 px. Checked at 360/390/430 on the Fens with six-figure gold and wages owed, with
+// under it, the map's button laid over the minimap itself (v1.72: the globe gone), every right edge at 12 px. Checked at 360/390/430 on the Fens with six-figure gold and wages owed, with
 // both boons and Weakened lit, and in a fight underground: nothing of the bar under the minimap or off screen, no tap
 // pad on it, and the place name keeps its room (two boons had squeezed it to nothing).
 {
@@ -1370,7 +1371,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
         if (Math.abs(r.mm.t - (r.l1.b + 6)) > 1) probs.push(`minimap at ${r.mm.t} (line 1 ends ${r.l1.b})`);
         if (Math.abs(r.money.r - r.mm.r) > 1 || Math.abs(r.compass.r - r.mm.r) > 1 || Math.abs(r.journal.r - r.mm.r) > 1) probs.push(`right edges ${r.money.r}/${r.mm.r}/${r.compass.r}/${r.journal.r}`);
         if (Math.abs(r.compass.t - (r.mm.b + 8)) > 1 || Math.abs(r.journal.t - (r.mm.b + 60)) > 1) probs.push(`buttons at ${r.compass.t}/${r.journal.t} under a minimap ending ${r.mm.b}`);
-        if (Math.abs(r.globe.r - r.mm.r) > 1 || Math.abs(r.globe.t - (r.journal.b + 22)) > 1 || r.globe.r - r.globe.l < 44 || r.globe.b - r.globe.t < 44) probs.push(`the globe at ${JSON.stringify(r.globe)}, the Journal ending ${r.journal.b}`);   // (22 px under the Journal: the owner, "too close")
+        if (['l', 't', 'r', 'b'].some((k) => Math.abs(r.globe[k] - r.mm[k]) > 1) || r.globe.r - r.globe.l < 44 || r.globe.b - r.globe.t < 44) probs.push(`the map's button at ${JSON.stringify(r.globe)}, not on the minimap ${JSON.stringify(r.mm)}`);   // (v1.72: the minimap is the map's button)
       }
       if (r.texts.some((q) => q.l < 0 || q.r > r.vw)) probs.push('off screen');
       if (hit(r.place, r.money)) probs.push('the place name runs into the purse');
@@ -1404,13 +1405,14 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('#hubBar button[data-k="tavern"]').tap(); await p.locator('#hubSheet [data-go="coach"]').tap();
     await p.waitForSelector('#mapWrap.on #worldmap .map img', { timeout: 10000 * SLOW }); await p.waitForTimeout(600);
     const tabs = await p.evaluate(() => [...document.querySelectorAll('#worldmap .tabs button')].map((e) => ({ t: e.textContent, on: e.classList.contains('on'), h: e.getBoundingClientRect().height })));
+    const head = await p.evaluate(() => document.querySelector('#worldmap h2').textContent);
     const pin = await p.evaluate(([px, py]) => { const m = document.querySelector('#worldmap .map'), r = m.getBoundingClientRect(), k = m.clientWidth / 1200; return { x: r.left + px * k, y: r.top + py * k }; }, PLACES.saltmere);
     await p.touchscreen.tap(pin.x, pin.y); await p.waitForTimeout(500);
     const cardText = await p.evaluate(() => document.querySelector('#worldmap .card.on')?.innerText || '');
     const go = await p.evaluate(() => { const q = document.querySelector('#worldmap .card .go'); const r = q.getBoundingClientRect(); return { w: r.width, h: r.height, off: q.disabled }; });
-    check('world map: the tavern\'s coach row opens the Old Provinces; Saltmere\'s card offers the coach, a day and 10 gold',
-      tabs[0].on && /Old Provinces/i.test(tabs[0].t) && tabs.every((t) => t.h >= 44) && /Saltmere/.test(cardText) && /a day on the road · 10 gold/.test(cardText) && go.w >= 44 && go.h >= 44 && !go.off,
-      JSON.stringify({ tabs, cardText: cardText.replace(/\n/g, ' | '), go }));
+    check('world map: the tavern\'s coach row opens the World tab (on the right, the land\'s on the left: v1.72), headed The Old Provinces; Saltmere\'s card offers the coach, a day and 10 gold',
+      tabs.length === 2 && tabs[0].t === 'The Hollow Vale' && !tabs[0].on && tabs[1].t === 'World' && tabs[1].on && head === 'The Old Provinces' && tabs.every((t) => t.h >= 44) && /Saltmere/.test(cardText) && /a day on the road · 10 gold/.test(cardText) && go.w >= 44 && go.h >= 44 && !go.off,
+      JSON.stringify({ tabs, head, cardText: cardText.replace(/\n/g, ' | '), go }));
     await p.locator('#worldmap .card .go').tap(); await run(3);
     const card = await p.evaluate(() => document.querySelector('#coachCard.on')?.innerText || '');
     await p.waitForTimeout(800); await run(20);
@@ -1430,6 +1432,33 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('world map: on the Fens, the land tab\'s Toadking\'s Mound (levels, floors, its boss) → Walk there walks you to it',
       land.title === 'The Greywater Fens' && /Toadking's Mound/.test(land.card) && /levels 10–12/.test(land.card) && /The Toadking/.test(land.card) && walk.dest === "Toadking's Mound" && !walk.open && errs.length === 0,
       JSON.stringify({ land: { ...land, card: land.card.replace(/\n/g, ' | ') }, walk }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    // v1.72 (the owner: "The mini map replaces the world menu button ... Let me click in the minimap to also walk to a
+    // location"): a tap on the minimap opens the map and doesn't walk the hero (the walk under way goes on); the land's tab
+    // first; a tap on its open ground drops a mark and a card, and Walk here walks there
+    await run(3);
+    const mm = await p.evaluate(() => globalThis.__renderer.minimapRect);
+    const before = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return pl.dest && pl.dest.label; });
+    if (mm) await p.touchscreen.tap((mm.l + mm.r) / 2, (mm.t + mm.b) / 2);
+    await p.waitForSelector('#worldmap .view.land .map img', { timeout: 10000 * SLOW }).catch(() => {}); await p.waitForTimeout(600);
+    const opened = await p.evaluate(() => ({ open: document.querySelector('#mapWrap').classList.contains('on'), tabs: [...document.querySelectorAll('#worldmap .tabs button')].map((e) => e.textContent + (e.classList.contains('on') ? '*' : '')),
+      dest: (globalThis.__sim.state.player.dest || {}).label || null }));
+    // open ground: a spot the sim says you can stand on, a third of the land across from where you are, tapped where the map draws it
+    const at = await p.evaluate(async () => { const L = await (await fetch('./assets/maps/minimap-fens.json')).json(), s = globalThis.__sim, pl = s.state.player;
+      const v = document.querySelector('#worldmap .view'), m = document.querySelector('#worldmap .map'), k = m.clientWidth / L.w;
+      for (const [fx, fy] of [[0.5, 0.35], [0.35, 0.5], [0.65, 0.5], [0.5, 0.6]]) {
+        const sp = s.spotNear(L.x0 + L.w * fx, L.y0 + L.h * fy); if (!sp || Math.hypot(sp.tx - pl.x, sp.ty - pl.y) < 20) continue;
+        const want = m.getBoundingClientRect().top + (sp.ty + 0.5 - L.y0) * k; v.scrollTop += want - (v.getBoundingClientRect().top + v.clientHeight * 0.35);
+        const r = m.getBoundingClientRect(); return { x: r.left + (sp.tx + 0.5 - L.x0) * k, y: r.top + (sp.ty + 0.5 - L.y0) * k, sp };
+      } return null; });
+    if (at) await p.touchscreen.tap(at.x, at.y); await p.waitForTimeout(300);
+    const spot = await p.evaluate(() => ({ card: document.querySelector('#worldmap .card.on')?.innerText || '', mark: !!document.querySelector('#worldmap .pin.spot') }));
+    if (/Walk here/.test(spot.card)) await p.locator('#worldmap .card .go').tap();
+    let went = null;
+    for (let i = 0; i < 20 && !(went && went.dest === 'Walk here'); i++) { await run(3); went = await p.evaluate(() => { const pl = globalThis.__sim.state.player; return { dest: pl.dest && pl.dest.label, to: pl.dest && [pl.dest.tx, pl.dest.ty], open: document.querySelector('#mapWrap').classList.contains('on') }; }); }
+    check('world map (v1.72): the minimap is its button: a tap opens the land\'s tab first (then World) and doesn\'t walk the hero; a tap on open ground marks it, and Walk here walks there',
+      !!mm && opened.open && opened.tabs[0] === 'The Greywater Fens*' && opened.tabs[1] === 'World' && opened.dest === before && !!at && spot.mark && /This spot/.test(spot.card) && /about \d+ steps/.test(spot.card)
+        && went && went.dest === 'Walk here' && went.to[0] === at.sp.tx && went.to[1] === at.sp.ty && !went.open && errs.length === 0,
+      JSON.stringify({ mm, before, opened, at, spot: { ...spot, card: spot.card.replace(/\n/g, ' | ') }, went }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();
   }
 }

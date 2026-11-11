@@ -1,6 +1,12 @@
 # Emberfall — Game Design Document
 
-**v1.71 · 2026-11-11 · Plan of record for game design.** v1.71 (the owner: "Reduce the trees in Hollow Vale by 25%"): the Hollow
+**v1.72 · 2026-11-11 · Plan of record for game design.** v1.72 (§10, the owner: "The mini map replaces the world menu
+button ... Let me click in the minimap to also walk to a location ... the region button on the left and the old provinces on
+the right. Rename old provinces to World"): the minimap in the top bar is the map's button (the globe gone; the town square's
+home screen, with no minimap, opens it from the tavern's coach row as before); the map's tabs are the land you're in, then
+World (headed The Old Provinces); on the land's tab a tap on open ground marks the nearest spot you can stand on, its card
+says how far, and Walk here is a plain goto there (sim travel.js walkSpot, read-only; on the land you stand on only: "Climb
+out first" underground, "Take the road out first" in town). ui/worldmap.js. v1.71 (the owner: "Reduce the trees in Hollow Vale by 25%"): the Hollow
 Vale's trees on the land a quarter fewer by crown cover (19,429 → 14,576 tiles; 100 → 67 trees, 42 → 33 groves), the forest ring
 past its edge kept whole as its wall, every spawn point's fire and posts kept clear of crowns (sim/outdoor.js TREE_KEEP;
 docs/level-design-rules.md densities). v1.70 (§3.3b, the owner: "A gate prevents a player from

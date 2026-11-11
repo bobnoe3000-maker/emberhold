@@ -79,3 +79,22 @@ test("walking up to Thornwick's gate, or tapping anywhere inside its walls, goes
   for (let i = 0; i < 20 * 20 && sim.world.kind === 'overland'; i++) { sim.commands.push({ type: 'move', x: -1, y: 0 }); sim.tick(); }
   assert.equal(sim.world.kind, 'town', 'the stick, west up the road and through the gate');
 });
+
+// v1.72 (the World map's land tab: a tap on open ground walks there): sim.spotNear snaps the tap to the nearest tile
+// you can stand on and prices the walk; nothing off the land or underground; the walk is a plain goto that gets there
+test('spotNear: the World map\'s tap on open ground, snapped to a spot you can stand on, and the goto there arrives', async () => {
+  const { isWalkable } = await import('../src/sim/world.js');
+  const sim = createSim(20260807, undefined, { scene: 'overland', region: 'vale' }); sim.tick();
+  const w = sim.world, p = sim.state.player;
+  // the river: some water tile on the land, snapped out of it onto the bank
+  let wet = null; for (let y = 40; y < 220 && !wet; y += 2) for (let x = 40; x < 220 && !wet; x += 2) if (!isWalkable(w, x + 0.5, y + 0.5) && !(w.props && w.props.get(`${x},${y}`))) wet = [x, y];
+  const s = sim.spotNear(wet[0], wet[1]);
+  assert.ok(s, 'a spot near it'); assert.ok(isWalkable(w, s.tx + 0.5, s.ty + 0.5), 'one you can stand on');
+  assert.ok(Math.max(Math.abs(s.tx - wet[0]), Math.abs(s.ty - wet[1])) <= 8, 'near where you tapped'); assert.ok(s.steps > 0, 'the walk priced');
+  assert.equal(sim.spotNear(-60, -60), null, 'past the edge: nowhere');
+  sim.commands.push({ type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: 'Walk here' });
+  for (let i = 0; i < 20 * 120 && (p.path || i === 0); i++) sim.tick();
+  assert.ok(Math.hypot(p.x - (s.tx + 0.5), p.y - (s.ty + 0.5)) < 1.5, `arrived (${p.x.toFixed(1)}, ${p.y.toFixed(1)} for ${s.tx}, ${s.ty})`);
+  const dun = createSim(20260807, undefined, { scene: 'dungeon' }); dun.tick();
+  assert.equal(dun.spotNear(10, 10), null, 'underground: the land map walks nowhere');
+});

@@ -27,8 +27,8 @@
     {
       "id": "map",
       "at": "#mapBtn",
-      "title": "The World map",
-      "text": "This land and the Old Provinces round it: where you've been, where the dungeons are, and the Guild's coach between the towns you've walked to."
+      "title": "The map",
+      "text": "Out of the square, the minimap at the top right is the map: tap it for this land and the World round it, where the dungeons are, a tap on open ground to walk there, and the Guild's coach between the towns you've walked to."
     },
     {
       "id": "menu",

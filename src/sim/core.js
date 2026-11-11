@@ -7,7 +7,7 @@
 
 import { createWorld, isWalkable, hitResource, heightAt, propAt, resourceAt, CONSUMABLE_PROP } from './world.js';
 import { findPath } from './path.js';
-import { listDestinations } from './travel.js';
+import { listDestinations, walkSpot } from './travel.js';
 import { createOutdoor, oExitAt, oBlock } from './outdoor.js';
 import { makeHero, statsFor } from './party.js';
 import { starterKit, refreshItem, isUsable, BASES } from './items.js';
@@ -736,9 +736,11 @@ export function createSim(seed, theme, { scene = 'dungeon', region = 'vale', sit
   function destinations({ inSquare = false } = {}) {
     return quests.compass(listDestinations({ world, state, standable, heroLevel: state.party[0].level, sitesEntered: state.sitesEntered, inSquare, battleRoom: battle.battle ? battle.battle.room : -1 }), world, battle.battle);   // the tracked quest's next place first
   }
+  /** the World map's tap on open ground: the nearest spot to stand on and the walk there (read-only; travel.js) @param {number} tx @param {number} ty */
+  function spotNear(tx, ty) { return walkSpot({ world, state, standable }, tx, ty); }
   /** is this land open to you? (regions.js: its chapter done) @param {string} id */
   function landOpen(id) { const L = LANDS[landId(id)]; return !L.opens || (state.quests && state.quests[L.opens] && state.quests[L.opens].st === QS.DONE) || false; }
   /** a hidden site found (a chapter's reward, the Chronicle): its way in opens on the Vale @param {string} id */
   function reveal(id) { if (SITES[id] && SITES[id].hidden && !state.revealed.has(id)) { state.revealed.add(id); bus.emit('siteRevealed', { site: id, name: SITES[id].name }); } }
-  return { state, bus, commands, tick, snapshot, restore, destinations, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; } };
+  return { state, bus, commands, tick, snapshot, restore, destinations, spotNear, heroes, quests, board, lore, smith, reveal, landOpen, seed: baseSeed, get world() { return world; }, get battle() { return battle.battle; }, get focusId() { return battle.focusId; } };
 }

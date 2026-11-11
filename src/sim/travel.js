@@ -200,3 +200,20 @@ export function listDestinations({ world, state, standable, heroLevel, sitesEnte
   }
   return out;
 }
+
+/** The World map's land tab (ui/worldmap.js, GDD v1.72): a tap on open ground walks there. The nearest tile you can stand
+ * on to (tx, ty), within 8 tiles of it, and the walk's length in steps; null when there's none or no way there.
+ * Pure, as listDestinations: it reads the world and state, never writes them, and the walk is a plain `goto` the sim
+ * checks like any other.
+ * @param {{ world: any, state: any, standable: Function }} o @param {number} tx @param {number} ty
+ * @returns {{ tx: number, ty: number, steps: number } | null} */
+export function walkSpot({ world, state, standable }, tx, ty) {
+  if (world.kind !== 'overland') return null;
+  const p = state.player; tx = Math.floor(tx); ty = Math.floor(ty);
+  for (let d = 0; d <= 8; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== d || !standable(tx + dx, ty + dy, tx + dx, ty + dy)) continue;
+    const path = findPath(p.x, p.y, tx + dx, ty + dy, standable, { near: 0, maxNodes: 80000 });
+    return path ? { tx: tx + dx, ty: ty + dy, steps: path.length - 1 } : null;   // (the nearest you can stand on decides: no hunting further for a way round)
+  }
+  return null;
+}

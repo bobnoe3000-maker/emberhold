@@ -1,12 +1,15 @@
 // @ts-check
-// worldmap.js — the World map (docs/worldmap-travel-proposal.md; GDD §10 v1.43): a globe button under the Journal's,
-// and a sheet with two tabs.
-//   The Old Provinces: the Lantern Guild's wall map (wallmap.js), fogged past the lands you can walk. The coach's
+// worldmap.js — the World map (docs/worldmap-travel-proposal.md; GDD §10 v1.43, v1.72): the minimap in the top bar is its
+// button (the owner, 2026-11-11: "The mini map replaces the world menu button"), and a sheet with two tabs, the land
+// you're in on the left, the World on the right.
+//   World (headed The Old Provinces): the Lantern Guild's wall map (wallmap.js), fogged past the lands you can walk. The coach's
 //     towns are pinned: lit once you've stood in one, dim until then; "you are here"; a ★ by the town whose land the
 //     tracked quest leads to. A town's card offers the Guild's coach there (sim/coach.js), from a town's square.
 //   The land you're in: its overland drawn from the sim (tools/worldmap/minimap.mjs → assets/maps/), with its town,
 //     its sites and its roads out. A pin's card says what's there, and Walk there pushes the compass's own goto (from
-//     town: the road out, walking on to the site), so nothing new reaches the sim but the coach.
+//     town: the road out, walking on to the site), so nothing new reaches the sim but the coach. A tap on open ground
+//     (v1.72: "Let me click in the minimap to also walk to a location") drops a mark there, snapped to the nearest spot
+//     you can stand on (sim.spotNear), and its card's Walk here is a plain goto there.
 // It only reads state and pushes commands; the sim checks every one. Text renders as text (textContent), never HTML.
 
 import { WALL, PLACES, LAND_AREA, FOG_WORDS } from './wallmap.js';
@@ -19,11 +22,12 @@ import { QS } from '../sim/quests.js';
 import { swallow } from './actorart.js';
 
 const CSS = `
-/* the fourth button in the right-hand column, set a little apart from the Journal's (the owner: "too close") */
-#mapBtn { position: fixed; right: calc(12px + var(--safe-r, env(safe-area-inset-right, 0px))); top: calc(var(--hud-l1, 30px) + 240px); z-index: 5; width: 44px; height: 44px; border-radius: 22px; padding: 0;
-  background: rgba(16,12,22,0.92); border: 1px solid rgba(214,170,98,0.45); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
-#mapBtn svg { width: 24px; height: 24px; fill: none; stroke: #e0a85a; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
-#mapBtn .dot { position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; border-radius: 5px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }
+/* the button: no face of its own, laid over the minimap as the renderer draws it (renderer.minimapRect), hidden where
+   there's none (the town square's home screen: the tavern's coach row opens the map there) */
+#mapBtn { position: fixed; z-index: 5; padding: 0; margin: 0; border: 0; border-radius: 8px; background: none; display: none; -webkit-tap-highlight-color: transparent; }
+#mapBtn.on { display: block; }
+#mapBtn:active { background: rgba(240,200,128,.14); }
+#mapBtn .dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 6px; background: #8fe07a; box-shadow: 0 0 8px rgba(143,224,122,.7); display: none; }
 #mapBtn.due .dot { display: block; }
 #mapWrap { position: fixed; inset: 0; z-index: 12; background: rgba(6,4,10,.62); display: none; }
 #mapWrap.on { display: block; }
@@ -45,6 +49,7 @@ const CSS = `
 #worldmap .pin.dim, #worldmap .pin.fresh { background: rgba(246,236,210,.35); border-style: dashed; }
 #worldmap .pin.off { border-color: #6e6456; background: #b8ad98; }
 #worldmap .pin.sel { outline: 3px solid #f0c880; outline-offset: 3px; }
+#worldmap .pin.spot { width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 2.5px solid #2e5a22; background: #bfe8a8; box-shadow: 0 0 0 3px rgba(240,228,200,.8); }
 #worldmap .here { position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px; border-radius: 16px; border: 2px solid #f0c880; box-shadow: 0 0 0 4px rgba(240,200,128,.3); pointer-events: none; }
 #worldmap .tag { position: absolute; font: italic 12px Georgia, serif; color: #2a2018; background: rgba(240,228,200,.92); padding: 1px 6px; border-radius: 5px; white-space: nowrap; pointer-events: none; }
 #worldmap .tag.me { color: #3b2208; font-weight: 600; }
@@ -68,8 +73,6 @@ const CSS = `
 #coachCard b { display: block; font: 600 18px Georgia, serif; color: #f0c880; margin-bottom: 6px; }
 #coachCard span { display: block; font: italic 14px/1.5 Georgia, serif; color: #d8ccb8; }
 `;
-// a globe: the world, not a page of it (the owner: "use a globe icon")
-const GLOBE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4c2.5 2.4 3.7 5.3 3.7 8.6s-1.2 6.2-3.7 8.6c-2.5-2.4-3.7-5.3-3.7-8.6s1.2-6.2 3.7-8.6z"/><path d="M5.2 7.4c1.9.9 4.2 1.4 6.8 1.4s4.9-.5 6.8-1.4M5.2 16.6c1.9-.9 4.2-1.4 6.8-1.4s4.9.5 6.8 1.4"/></svg><i class="dot"></i>';
 // what each coach stop is (sim/coach.js COACH; outdoor.js builds them)
 const STOP = { thornwick: 'a walled town · five services', saltmere: 'a waystation · tavern, shop, inn and chapel' };
 const NUM = ['no', 'one', 'two', 'three', 'four', 'five'];
@@ -83,11 +86,11 @@ const WALL_ZOOM = 1.7, WALL_MIN = 800;
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
 /**
- * @param {{ sim: any, toast: (msg: string, ms?: number) => void, inSquare: () => boolean, questTitle: (id: string) => string }} o
+ * @param {{ sim: any, toast: (msg: string, ms?: number) => void, inSquare: () => boolean, questTitle: (id: string) => string, minimap: () => ({ l: number, t: number, r: number, b: number } | null) }} o
  */
-export function createWorldMap({ sim, toast, inSquare, questTitle }) {
+export function createWorldMap({ sim, toast, inSquare, questTitle, minimap }) {
   const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
-  const btn = el('button'); btn.id = 'mapBtn'; btn.setAttribute('aria-label', 'World map'); btn.innerHTML = GLOBE;
+  const btn = el('button'); btn.id = 'mapBtn'; btn.setAttribute('aria-label', 'Map'); btn.append(el('span', 'dot'));
   const wrap = el('div'); wrap.id = 'mapWrap';
   const coachCard = el('div'); coachCard.id = 'coachCard'; coachCard.setAttribute('aria-live', 'polite');
   document.body.append(btn, wrap, coachCard);
@@ -96,7 +99,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   const sheet = el('div'); sheet.id = 'worldmap'; wrap.append(sheet);
   const title = el('h2'), x = el('button', 'x', '✕'); x.setAttribute('aria-label', 'Close');
   const top = el('div', 'top'); top.append(title, x);
-  const tabW = el('button'), tabL = el('button'), tabs = el('div', 'tabs'); tabs.append(tabW, tabL);
+  const tabW = el('button'), tabL = el('button'), tabs = el('div', 'tabs'); tabs.append(tabL, tabW);   // (the land you're in first, the World after: v1.72)
   const view = el('div', 'view'), card = el('div', 'card');
   sheet.append(top, tabs, view, card);
   x.addEventListener('click', close);
@@ -109,6 +112,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   fetch('./assets/maps/old-provinces.json').then((q) => q.json()).then((j) => { coast = j.coast; const f = view.querySelector('svg.fog'); if (open && tab === 'world' && f) f.replaceWith(fogSvg()); }).catch(() => {});
   const landData = (/** @type {string} */ r) => lands[r] || (lands[r] = fetch(`./assets/maps/minimap-${r}.json`).then((q) => q.json()).catch(() => null));
   let open = false, tab = 'world', sel = '', pins = /** @type {any[]} */ ([]), scrolled = false;
+  /** @type {{ w: number, x0: number, y0: number } | null} */ let frame = null;   // the land tab's map: its units across and its origin (for a tap on open ground)
 
   const region = () => (LANDS[sim.state.region] ? sim.state.region : 'vale');
   const S = () => sim.state;
@@ -127,7 +131,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   function show(/** @type {string} */ t) {
     tab = t; sel = ''; scrolled = false;
     const r = region();
-    tabW.textContent = 'The Old Provinces'; tabL.textContent = LANDS[r].name;
+    tabW.textContent = 'World'; tabL.textContent = LANDS[r].name;   // (the tab says World; its heading keeps the map's own name)
     tabW.classList.toggle('on', t === 'world'); tabL.classList.toggle('on', t === 'land');
     title.textContent = t === 'world' ? 'The Old Provinces' : LANDS[r].name;
     view.className = 'view' + (t === 'land' ? ' land' : '');
@@ -137,7 +141,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   // ── the map: pins (in the map's own units), drawn over the image at its scale ──────────────────────────────────────
   function paint() {
     if (!open) return;
-    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = '';
+    view.textContent = ''; card.classList.remove('on'); view.style.paddingBottom = ''; frame = null;
     const map = el('div', 'map'), img = /** @type {HTMLImageElement} */ (el('img'));
     img.alt = ''; map.append(img); view.append(map);
     if (tab === 'world') {
@@ -157,7 +161,7 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       landData(r).then((L) => {
         if (!open || tab !== 'land' || !L) return;
         img.src = `./assets/maps/land-${r}.jpg`;   // (the overland in the wall map's hand: tools/worldmap/minimap.mjs) img.width = L.w * L.px; img.height = L.h * L.px;
-        pins = landPins(r, L);
+        pins = landPins(r, L); frame = { w: L.w, x0: L.x0, y0: L.y0 };
         place(map, pins, L.w, L.x0, L.y0);
       });
     }
@@ -165,7 +169,15 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       const b = map.getBoundingClientRect(), mx = e.clientX - b.left, my = e.clientY - b.top;
       let best = null, bd = 30;                              // a thumb's reach: the nearest pin within 30 px
       for (const p of pins) { if (!p.tap) continue; const d = Math.hypot(p.sx - mx, p.sy - my); if (d < bd) { bd = d; best = p; } }
-      sel = best ? best.key : ''; mark(map); paintCard(); if (best) inView(best);
+      const old = pins.findIndex((p) => p.kind === 'spot'); if (old >= 0) pins.splice(old, 1);   // (pins is the list place() lays: changed in place)
+      if (!best && tab === 'land' && frame) {
+        // open ground: a mark there, snapped to the nearest spot you can stand on, and a card to walk to it
+        const k = map.clientWidth / frame.w, ux = frame.x0 + mx / k, uy = frame.y0 + my / k, w = sim.world;
+        const s = w.kind === 'overland' && w.region === region() ? sim.spotNear(ux, uy) : null;
+        best = { key: 'spot', kind: 'spot', x: s ? s.tx + 0.5 : ux, y: s ? s.ty + 0.5 : uy, tap: false, cls: 'spot', here: '', label: '', star: false, spot: s };
+        pins.push(best);
+      }
+      sel = best ? best.key : ''; relay(); paintCard(); if (best) inView(best);
     });
   }
   // the pins at the map's current size (screen px a map unit: its width over the units it spans); each pin remembers
@@ -210,7 +222,6 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
     const top = y < 40 || y > h - 30 ? Math.max(0, p.sy - h / 2) : view.scrollTop, left = xx < 30 || xx > view.clientWidth - 30 ? Math.max(0, p.sx - view.clientWidth / 2) : view.scrollLeft;
     if (top !== view.scrollTop || left !== view.scrollLeft) view.scrollTo({ top, left, behavior: 'smooth' });
   }
-  const mark = (/** @type {HTMLElement} */ map) => { for (const n of map.querySelectorAll('.pin')) n.classList.toggle('sel', /** @type {HTMLElement} */ (n).dataset.key === sel); };
 
   // the fog: the whole map but the open lands (even-odd: the lands don't overlap), and its words
   // (art critic pass 13: the lit land was a die-cut box, a ruled edge across land and sea, the Vale and the Fens split
@@ -292,6 +303,14 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
       return;
     }
     const r = region();
+    if (p.kind === 'spot') {                               // a tap on open ground (v1.72): the walk there, a plain goto
+      const w = sim.world, s = p.spot;
+      card.append(el('h3', '', 'This spot'), el('div', 'sub', `open ground in ${lower(LANDS[r].name)}`));
+      const why = w.kind === 'dungeon' ? 'Climb out first.' : w.kind === 'town' ? 'Take the road out first.' : !s ? 'No way there from here.' : '';
+      if (s) info.append('The way', el('br'), el('em', '', `about ${s.steps} steps`));
+      button('Walk here', 'walk', why, () => { if (s) sim.commands.push({ type: 'goto', tx: s.tx, ty: s.ty, near: 0, then: null, label: 'Walk here' }); close(); });
+      return;
+    }
     if (p.kind === 'site') {
       const s = SITES[p.id], fl = s.floors ? `${NUM[s.floors] || s.floors} floor${s.floors === 1 ? '' : 's'}` : 'floors without end';
       const boss = Object.values(s.bosses || {}).map((b) => (BOSSES[b] ? BOSSES[b].name : '')).filter(Boolean).join(', ');
@@ -323,6 +342,16 @@ export function createWorldMap({ sim, toast, inSquare, questTitle }) {
   }
   function close() { open = false; wrap.classList.remove('on'); view.textContent = ''; card.classList.remove('on'); }
   btn.addEventListener('click', () => (open ? close() : openMap('')));
+  // the button sits on the minimap as drawn this frame, and only while there is one
+  let seatKey = '';
+  (function seat() {
+    const m = minimap(), key = m ? `${m.l},${m.t},${m.r},${m.b}` : '';
+    if (key !== seatKey) {
+      seatKey = key; btn.classList.toggle('on', !!m);
+      if (m) Object.assign(btn.style, { left: `${m.l}px`, top: `${m.t}px`, width: `${m.r - m.l}px`, height: `${m.b - m.t}px` });
+    }
+    requestAnimationFrame(seat);
+  })();
   addEventListener('resize', () => { if (open) relay(); });
   sim.bus.on('levelChanged', () => { if (open) show(tab); });
   sim.bus.on('questTracked', () => { if (open) show(tab); });
