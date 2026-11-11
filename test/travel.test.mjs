@@ -3,7 +3,9 @@
 // north crossed it) and back into the dungeon.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSim } from '../src/sim/core.js';
+import { createSim as createSim0 } from '../src/sim/core.js';
+import { openAllGates } from './gates.mjs';
+const createSim = (...a) => openAllGates(createSim0(...a));   // (the floors' gates open: this file tests something else, test/gate.test.mjs the gates)
 
 const outFromBarrows = (seed) => { const sim = createSim(seed, undefined, { scene: 'overland' }), a = sim.world.arrivals.barrows, p = sim.state.player; p.x = p.px = a.x; p.y = p.py = a.y; return sim; };
 const walk = (sim, id) => {

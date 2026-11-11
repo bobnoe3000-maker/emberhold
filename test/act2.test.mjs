@@ -6,7 +6,9 @@
 // Toadking's Mound → Wren → back to Dace.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSim } from '../src/sim/core.js';
+import { createSim as createSim0 } from '../src/sim/core.js';
+import { openAllGates } from './gates.mjs';
+const createSim = (...a) => openAllGates(createSim0(...a));   // (the floors' gates open: this file tests something else, test/gate.test.mjs the gates)
 import { QUESTS, QS, questXp } from '../src/sim/quests.js';
 import { NPCS } from '../src/sim/npcs.js';
 import { FOUND } from '../src/sim/heroes.js';

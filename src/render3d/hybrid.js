@@ -114,6 +114,25 @@ function waterOf(b, origin) {
   return { id: waterKey, cells: waterCells };
 }
 
+// the floor's gate (sim world.js gateOf, GDD §3.4 v1.70): its tiles in Luminati's units and how far it has sunk, 0 up, 1
+// gone. Up while shut; once its twentieth wave falls (the sim's gateOpened) it sinks over GATE_DROP_MS; one opened
+// before this floor was built isn't drawn at all. Keyed by its id, so a floor's is built once.
+const GATE_DROP_MS = 1400;
+let gateDropAt = new Map();                                    // gate id → when it began to sink (performance.now())
+function gateOf(w, origin, now) {
+  const G = w && w.gate; if (!G) return null;
+  const t0 = gateDropAt.get(G.id);
+  if (!w.gateShut && t0 === undefined) return null;             // (down before this floor: nothing to draw)
+  const drop = w.gateShut ? 0 : Math.min(1, (now - t0) / GATE_DROP_MS);
+  // each tile with its way into the hall (dx, dy): the bars stand on that edge, across the corridor
+  const L = w.level, hall = L.descentRoom && L.descentRoom.id;
+  return { id: G.id, drop, cells: G.cells.map((k) => {
+    const c = k.indexOf(','), x = +k.slice(0, c), y = +k.slice(c + 1);
+    let dx = 0, dy = 0; for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = L.cells.get(`${x + ax},${y + ay}`); if (n && n.room === hall) { dx = ax; dy = ay; break; } }
+    return [(x + 0.5 - origin.x) / 2, (y + 0.5 - origin.y) / 2, dx, dy];
+  }) };
+}
+
 /** the bundle (tools/render3d/build.mjs; its folder is named for Luminati's pin) */
 export const VENDOR = '../vendor/luminati-80e1aa6/luminati.js';
 export { lookOf } from './looks.js';   // (a member's look for the world: looks.js)
@@ -151,7 +170,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const AHEAD_S = 1.5;
   let aheadFor = null, builtAt = 0;
   let api = null, built = null, building = null, last = 0, origin = { x: 0, y: 0 }, lastC = null, ours = [], kept = [], oursState = '', oursCheck = 0, houses = [], ambient = null;
-  const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };   // (timing: the last load's parts, ms, for checks)
+  const state = { level: null, sprites: 0, loads: 0, failed: '', timing: { convert: 0, sprites: 0, load: 0 } };
+  sim.bus.on('gateOpened', (e) => { gateDropAt.set(e.id, last || performance.now()); });   // (it sinks from the frame it fell on: the frames' clock)   // (timing: the last load's parts, ms, for checks)
   renderer.setExternal({
     // a tap on a service's building, as Luminati draws it (renderer.js serviceAt): each named house's box (its footprint,
     // its walls and roof) through Luminati's camera, the nearest of those under the finger
@@ -246,7 +266,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
       api.frame({ dt, focus: [(mx - origin.x) / 2, GROUND_Y, (my - origin.y) / 2], ppu, hour: hourOf(c.t ?? sim.state.t),
         weather: wx && wx.k > 0.3 && (wx.kind === 'rain' || wx.kind === 'snow') ? wx.kind : 'clear',
         fog: wx && wx.kind === 'fog' ? wx.k : 0,                    // (Luminati has no fog weather: its air thickened; Emberlit's overlay drifts the banks)
-        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin),
+        hero: [(p.x - origin.x) / 2, (p.y - origin.y) / 2], actors, rings, hazards, beasts, mark, ambient, bits, water: waterOf(c.battle, origin), gate: gateOf(sim.world, origin, now),
         // Frost Nova and Turn Undead in Luminati's looks (renderer.js spellsNow): their reach at Emberlit's size, as the warnings
         spells: (c.spells || []).map((S) => ({ key: S.key, id: S.id, seed: S.seed, age: S.age, land: S.land, x: (S.x - origin.x) / 2, z: (S.y - origin.y) / 2,
           tx: (S.tx - origin.x) / 2, tz: (S.ty - origin.y) / 2, r: (S.r * Math.SQRT2) / 2, k: S.k || 0, reached: S.reached.map((o) => ({ x: (o.x - origin.x) / 2, z: (o.y - origin.y) / 2 })),

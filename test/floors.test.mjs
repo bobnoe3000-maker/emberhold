@@ -6,7 +6,9 @@
 // with no stairs down. 2026-11-02: two floors, authored: docs/vale-dungeons-plan.md.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSim } from '../src/sim/core.js';
+import { createSim as createSim0 } from '../src/sim/core.js';
+import { openAllGates } from './gates.mjs';
+const createSim = (...a) => openAllGates(createSim0(...a));   // (the floors' gates open: this file tests something else, test/gate.test.mjs the gates)
 import { isWalkable } from '../src/sim/world.js';
 import { SITES } from '../src/sim/sites.js';
 

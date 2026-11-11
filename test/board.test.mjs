@@ -7,7 +7,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createSim } from '../src/sim/core.js';
+import { createSim as createSim0 } from '../src/sim/core.js';
+import { openAllGates } from './gates.mjs';
+const createSim = (...a) => openAllGates(createSim0(...a));   // (the floors' gates open: this file tests something else, test/gate.test.mjs the gates)
 import { boardOffers, jobOf, TEMPLATES, MAX_JOBS, KEEP_DONE, skullsFor } from '../src/sim/board.js';
 import { SITES } from '../src/sim/sites.js';
 import { QS } from '../src/sim/quests.js';

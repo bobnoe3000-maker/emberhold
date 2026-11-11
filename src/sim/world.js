@@ -426,7 +426,9 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
     const d = level.descentRoom; let best = null, bd = Infinity;
     for (const [k, c] of level.cells) {
       if (c.kind !== 'floor' || !c.corridor || c.room >= 0) continue;   // (a room keeps its tiles where a corridor cuts in: those start its fight)
-      const [x, y] = k.split(',').map(Number), dd = (x - d.cx) * (x - d.cx) + (y - d.cy) * (y - d.cy);
+      const [x, y] = k.split(',').map(Number);
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ox, oy]) => { const n = level.cells.get(K(x + ox, y + oy)); return n && n.room === d.id; })) continue;   // (a step back from the hall's door: its gate stands on the tiles that touch it, gateOf)
+      const dd = (x - d.cx) * (x - d.cx) + (y - d.cy) * (y - d.cy);
       if (dd < bd && isWalkable(world, x + 0.5, y + 0.5)) { bd = dd; best = { x: x + 0.5, y: y + 0.5 }; }
     }
     world.stairsDownArrive = best;
@@ -439,6 +441,7 @@ export function createWorld(seed, theme, depth = 0, site = 'barrows') {
   // Enemies arrive in waves when the party enters a room (battle.js). Each room has a
   // fixed level: the further you walk from the entrance, the harder it is.
   world.roomLevels = rankRooms(level, depth, site);
+  world.gate = gateOf(level, world.roomLevels, site, depth);
   world.enemies = []; world.projectiles = [];
   return world;
 }
@@ -500,6 +503,40 @@ function NONWALK_OK(world, x, y) { return !NONWALK.has(materialAt(world, x, y));
 // Chronicle fragment in the hall while Ilse's errand said "the chests on the first floor"). One goes against a wall
 // of a fighting room you can walk to, clear of the doorways and the furniture, drawn on the keep stream: every
 // floor that kept a chest is the same as before.
+// The floor's gate (GDD §3.4, v1.70; the owner, 2026-11-11: "A gate prevents a player from moving to the next room until
+// they have survived 20 waves. Then the gate drops down into the ground and disappears. Once open, always open for that
+// game slot"): across every way into the floor's last hall (its stairs down, or a last floor's end), the corridor's tiles
+// that touch the hall. The rooms it's won in are the ones those corridors lead back to (not the entrance: it has no
+// waves); a hall straight off the entrance, the floor's hardest rooms. Their twentieth wave held in one visit opens it (battle.js), for good in this slot (state.gates, by `id`); shut,
+// its tiles can't be walked (isWalkable, world.gateShut: core.js sets it from the slot on every floor built). No such
+// room (the Mere Tower's landings): no gate. Pure: the same floor gives the same gate.
+export const GATE_WAVES = 20;
+/** @returns {{ id: string, cells: string[], rooms: number[], waves: number } | null} */
+export function gateOf(level, roomLevels, site, depth) {
+  const D = level.descentRoom; if (!D || D === level.entrance) return null;
+  const cells = [];
+  for (const [k, c] of level.cells) {
+    if (c.kind !== 'floor' || c.room !== D.id) continue;
+    const [x, y] = k.split(',').map(Number);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const q = K(x + dx, y + dy), n = level.cells.get(q); if (n && n.kind === 'floor' && n.room < 0 && !cells.includes(q)) cells.push(q); }
+  }
+  if (!cells.length) return null;
+  const seen = new Set(cells), Q = [...cells], rooms = [];
+  while (Q.length) {
+    const [x, y] = Q.shift().split(',').map(Number);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const q = K(x + dx, y + dy), n = level.cells.get(q);
+      if (!n || n.kind !== 'floor' || seen.has(q) || n.room === D.id) continue;
+      if (n.room >= 0) { if (n.room !== (level.entrance && level.entrance.id) && (roomLevels.get(n.room) || 0) > 0 && !rooms.includes(n.room)) rooms.push(n.room); continue; }
+      seen.add(q); Q.push(q);
+    }
+  }
+  // (a hall straight off the entrance, its corridor leading nowhere else: the floor's hardest room wins it, wherever it is)
+  if (!rooms.length) { let top = 0; for (const r of level.rooms) { const lv = roomLevels.get(r.id) || 0; if (r === D || r === level.entrance || lv <= 0) continue; if (lv > top) { top = lv; rooms.length = 0; } if (lv === top) rooms.push(r.id); } }
+  if (!rooms.length) return null;                                  // (the Mere Tower: its landings are its waves)
+  return { id: `${site}:${depth}`, cells, rooms, waves: GATE_WAVES };
+}
+
 // A chest is seen whole (the owner, 2026-11-11: "Chests should always be visible to the player not tucked against a
 // southern wall so you can barely see the top"; level-design-rules.md §4.4): the camera looks from the south-east, so a
 // wall on a chest's near side (+x, +y, within two tiles) stood between them and showed its lid at most, as it had a
@@ -780,6 +817,7 @@ export function isWalkable(world, x, y, fromZ) {
   if (fromZ !== undefined && heightAt(world, tx, ty) - fromZ > MAX_CLIMB) return false;
   if (resourceAt(world, tx, ty)) return false;
   const pr = propAt(world, tx, ty); if (pr && !FLAT_PROPS.has(pr)) return false;   // (a dropped cage, a binding circle: underfoot, never in the way)
+  if (world.gateShut && world.gateShut.has(K(tx, ty))) return false;              // (the floor's gate, still up: gateOf)
   return true;
 }
 

@@ -234,12 +234,16 @@ console.log('tap to move (walk a path; walk up to a chest and loot it):', walked
 // Compass travel: context-sensitive destinations, and a pick auto-walks the party there.
 const cDun = createSim(20260807, undefined, { scene: 'dungeon' }); cDun.tick();
 const dd = cDun.destinations(), ids = dd.map((o) => o.id);
+// the floor's gate (GDD §3.3b) stands before the last hall: the compass points at it, and at the stairs once it's down
+const gateRow = ids.includes('gate') && !ids.includes('stairs-down');
+cDun.state.gates.add(cDun.world.gate.id); cDun.world.gateShut = null; cDun.world._openCache = null;
+const idsOpen = cDun.destinations().map((o) => o.id);
 const nextRoom = dd.find((o) => o.id === 'next-room');
 cDun.commands.push({ type: 'goto', ...nextRoom });
 let reachedRoom = false; for (let t = 0; t < 20 * 40 && !reachedRoom; t++) { cDun.tick(); reachedRoom = !!cDun.battle || !cDun.state.player.path; }
 const cOv = createSim(20260807, undefined, { scene: 'overland' }); cOv.tick();
 const od = cOv.destinations().map((o) => o.id);
-const compassOk = ids.includes('next-room') && ids.includes('exit') && ids.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('site:barrows') && od.includes('site:wickham_keep') && !od.includes('site:tithe_mill') && !od.includes('site:ninth_milestone');   // (v1.48: the Keep open, the Mill gone, the secret shut)
+const compassOk = ids.includes('next-room') && ids.includes('exit') && gateRow && idsOpen.includes('stairs-down') && reachedRoom && od.includes('town') && od.includes('site:barrows') && od.includes('site:wickham_keep') && !od.includes('site:tithe_mill') && !od.includes('site:ninth_milestone');   // (v1.48: the Keep open, the Mill gone, the secret shut)
 console.log('compass destinations + auto-walk:', compassOk, ids.join(','), '|', od.join(','));
 
 // Gear and loot (GDD §8): six slots with class kits, seeded drops, equip rules, stats, saves.

@@ -1002,7 +1002,10 @@ export function createRenderer(canvas, sim, input) {
   sim.bus.on('bossDown', (e) => { if (e.x !== undefined) jolt('bossDown', e.x, e.y); else jolt('bossDown', sim.state.player.x, sim.state.player.y); });
   sim.bus.on('bossDown', ({ name, first, tower }) => { banner = { text: `${name} falls`, sub: tower ? `a landing · the satchel is banked${first ? ' · something was left behind' : ''}` : first ? 'the room is quiet · something was left behind' : 'the room is quiet', until: clock() + 3200 }; });
   sim.bus.on('tideTurned', () => { banner = { text: 'The room falls back', sub: 'the tide turns: the next climb starts here', until: clock() + 2200, small: true }; });
-  sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: dangerWord(b.level), until: clock() + 1100 }; });
+  sim.bus.on('battle', (b) => { if (b.on) banner = sim.world.site === 'mere_tower' ? { text: 'The Mere Tower', sub: `the stair hall · wave ${(sim.state.tower || {}).wave + 1}`, until: clock() + 1600 } : { text: `Level ${b.level} room`, sub: gateRoom() ? `${dangerWord(b.level)} · hold ${sim.world.gate.waves} waves to drop the gate` : dangerWord(b.level), until: clock() + (gateRoom() ? 2200 : 1100) }; });
+  // the floor's gate (sim world.js gateOf, GDD §3.4 v1.70): this room's waves win it while it's up; down, a banner
+  const gateRoom = () => { const w = sim.world, G = w.gate, bt = sim.battle; return !!(G && w.gateShut && bt && G.rooms.includes(bt.room) && !bt.camp && !bt.tower); };
+  sim.bus.on('gateOpened', () => { banner = { text: 'The gate is down', sub: 'it sinks into the floor · the way to the hall is open', until: clock() + 3200 }; });
   sim.bus.on('levelUp', (l) => { banner = { text: `${l.name} reaches level ${l.level}`, until: clock() + 2200, small: true }; });
   sim.bus.on('defeat', (d) => { banner = { text: 'Your party is beaten', sub: `you wake at the temple · Weakened${d.lost ? ` · lost ${d.lost} gold` : ''}`, until: clock() + 3600 }; });
   // one of the slain raised: the column of holy light over them where they stand (fx.rise), and their ghost turning solid
@@ -1039,7 +1042,8 @@ export function createRenderer(canvas, sim, input) {
       // the room-level · wave pill under the HUD, tinted by how far the room is above you
       // …and, from the second wave, how far the tide has lifted the foes (GDD §7.1: each wave of a visit is tougher)
       const T = b.tower && sim.state.tower, sat = T ? `  ·  ${T.satchel.gold}g ${T.satchel.cinders}✦` : '';   // (the Mere Tower: its wave, its strength, the satchel at risk)
-      const txt = `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
+      const G = gateRoom() ? sim.world.gate : null, held = G ? Math.min(G.waves, b.between ? b.wave : Math.max(0, b.wave - 1)) : 0;   // (the gate: waves held this visit)
+      const txt = `${T ? 'MERE TOWER' : `ROOM LV ${b.level}`}  ·  WAVE ${b.wave}${b.tide > 0.005 ? `  ·  FOES +${Math.round(b.tide * 100)}%` : ''}${G ? `  ·  GATE ${held}/${G.waves}` : ''}${sat}`, dc = T ? '#c8b0ff' : dangerColor(b.level);
       octx.font = `700 ${Math.round(11 * k)}px ui-monospace, Menlo, monospace`; octx.textAlign = 'center';
       // under the HUD row (hudB: the phone's safe area included), centred, but never under the minimap
       const tw = octx.measureText(txt).width + 18 * k, mmL = vw - (MM_CSS + 2 * MM_PAD + MM_RIGHT + safeR + 8) * k;

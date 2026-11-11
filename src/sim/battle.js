@@ -1649,6 +1649,12 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
           bus.emit('wave', { wave: battle.wave, level: battle.level, cleared: true, room: battle.room, tower: !!battle.tower });
           if (battle.tower) towerCleared();                        // the Mere Tower pays by the wave, and banks at a landing
           else onDrop('wave', battle.level, p.x, p.y);             // now and then a fallen wave leaves something behind
+          // the floor's gate (world.js gateOf, GDD §3.4 v1.70): its twentieth wave held in one visit of a room behind it,
+          // and it's down, for good in this slot
+          if (!battle.camp && !battle.tower && w.gate && w.gateShut && w.gate.rooms.includes(battle.room) && battle.wave >= w.gate.waves) {
+            state.gates.add(w.gate.id); w.gateShut = null; w._openCache = null;   // (the compass's walkable tiles, cached on the floor: travel.js)
+            bus.emit('gateOpened', { id: w.gate.id, room: battle.room, cells: w.gate.cells });
+          }
           if (battle.camp) {                                        // a spawn point cleared: empty until its respawn (camps.js)
             clearCamp(state, battle.camp);
             bus.emit('campCleared', { id: battle.camp.id, kind: battle.camp.kind, name: battle.camp.name, n: campState(state, battle.camp.id).n, at: campState(state, battle.camp.id).at });

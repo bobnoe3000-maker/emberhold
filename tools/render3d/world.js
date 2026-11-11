@@ -580,6 +580,39 @@ function bitFor(sheet, n) {
 // ── the Abbess's water (hybrid.js water): a dark teal square a flooded tile, the tide line a little lighter, laid over
 // the floor as Emberlit tints it (renderer.js paintHazards); one instanced draw, rebuilt only when the water comes in
 const WATER = { mesh: null, id: '', cap: 0 };
+// the floor's gate (hybrid.js gateOf; GDD §3.4 v1.70): an iron portcullis across each way into the floor's last hall,
+// three bars and two rails a tile on the tile's hall-side edge, stood up across the corridor; one instanced mesh, built
+// once a gate. As it opens it sinks into the floor (drop 0 → 1, eased in: it starts slow, then goes), and it's gone.
+const GATE_H = 2.3, GATE_BAR = 0.07;
+let gateMesh = null, gateId = '';
+const GATE_GEO = new THREE.BoxGeometry(1, 1, 1);
+function placeGate(g) {
+  if (!g || !game) { if (gateMesh) gateMesh.visible = false; return; }
+  if (g.id !== gateId || !gateMesh || !gateMesh.parent) {
+    if (gateMesh) { gateMesh.removeFromParent(); gateMesh.material.dispose(); gateMesh.dispose?.(); }
+    const n = g.cells.length * 5, mat = new THREE.MeshStandardMaterial({ color: 0x2c2a2f, roughness: 0.48, metalness: 0.65, emissive: 0x120d08 });
+    gateMesh = new THREE.InstancedMesh(GATE_GEO, mat, n); gateMesh.name = 'ember:gate'; gateMesh.castShadow = true; gateMesh.frustumCulled = false;
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), P = new THREE.Vector3(), Sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    let i = 0;
+    for (const [x, z, dx, dz] of g.cells) {
+      const y = game.tileMap.getHeight(x, z), ex = x + dx * 0.22, ez = z + dz * 0.22, ang = dx ? Math.PI / 2 : 0;   // (on the hall's side; the bars along the edge)
+      Q.setFromAxisAngle(up, ang);
+      for (const o of [-0.17, 0, 0.17]) {                       // the bars
+        P.set(ex + (dx ? 0 : o), y + GATE_H / 2, ez + (dx ? o : 0)); Sc.set(GATE_BAR, GATE_H, GATE_BAR);
+        M.compose(P, Q, Sc); gateMesh.setMatrixAt(i++, M);
+      }
+      for (const hy of [0.55, 1.75]) {                          // the rails across, a tile wide
+        P.set(ex, y + hy, ez); Sc.set(0.52, GATE_BAR * 1.4, GATE_BAR * 1.2);
+        M.compose(P, Q, Sc); gateMesh.setMatrixAt(i++, M);
+      }
+    }
+    gateMesh.instanceMatrix.needsUpdate = true;
+    game.engine.scene.add(gateMesh); gateId = g.id;
+  }
+  const d = Math.max(0, Math.min(1, g.drop));
+  gateMesh.visible = d < 1;
+  gateMesh.position.y = -(GATE_H + 0.1) * d * d;                // (into the floor: the floor hides what's sunk)
+}
 function placeWater(w) {
   if (!w || !w.cells.length) { if (WATER.mesh) WATER.mesh.visible = false; WATER.id = ''; return; }
   if (w.id === WATER.id && WATER.mesh) { WATER.mesh.visible = true; return; }
@@ -1359,6 +1392,7 @@ const api = {
       }
     }
     placeWater(f.water);
+    placeGate(f.gate);
     for (const kind of Object.keys(groundPools)) for (let i = nk[kind]; i < groundPools[kind].length; i++) groundPools[kind][i].visible = false;
     // the hero's ember-wisp: one of Luminati's spell lights (never a lamp), taken again after each level is built
     if (carryLevel !== levelId) {

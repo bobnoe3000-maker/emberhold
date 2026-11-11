@@ -6,7 +6,9 @@
 // there was no walking out of the floor.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSim } from '../src/sim/core.js';
+import { createSim as createSim0 } from '../src/sim/core.js';
+import { openAllGates } from './gates.mjs';
+const createSim = (...a) => openAllGates(createSim0(...a));   // (the floors' gates open: this file tests something else, test/gate.test.mjs the gates)
 import { createWorld, isWalkable, heightAt, propAt, materialAt, NONWALK, DRESS, DRESS_PIECES, FLAT_PROPS } from '../src/sim/world.js';
 import { hasFloorBelow, SITES } from '../src/sim/sites.js';
 
