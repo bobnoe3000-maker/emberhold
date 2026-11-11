@@ -59,6 +59,7 @@ let game = null, building = null, levelId = 0, dof = 'soft', yawDeg = 45, pitchD
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
 // models), kept out of the scene meanwhile. Two at most: the overland, a town and a dungeon's floor are the round trips.
 const aside = new Map(), ASIDE_MAX = 2;
+const CALM_FLICKER = 0.12;                                    // (frame(): underground, no light flickers more than this)
 let curKey = '', curEnvKey = '', loading = false, lastWay = '';   // (lastWay: how the last level came: 'built', 'ahead', 'kept')
 // The level next door built ahead (api.prepare: a town's overland, an overland's town), in slices (PREP_MS of work, then
 // PREP_GAP ms for the frames) while this one plays, as Luminati builds a campaign's next level (prepareWorld, buildSteps
@@ -1374,7 +1375,7 @@ const api = {
       // out the center character": at 3.6 a hand over the head, 48 % of the knight's pixels went white at night. Hung higher,
       // its falloff flatter across the party: the ground round them lit as before, a head under it far less)
       const up = FIGURES === 'models' ? CARRY_UP : 2.4, gain = FIGURES === 'models' ? CARRY_GAIN : 1;
-      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + up, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * gain * k) / (f.ambient?.lamps ?? 1), distance: FIGURES === 'models' ? Math.hypot(6.2, up) : 6 + (up - 2.4), decay: 1.4, flicker: 0.12 });   // (a glow round the hero, not a floodlight: 16 washed the figure out)
+      carryLight.set(hx, game.tileMap.getHeight(f.hero[0], f.hero[1]) + up, hz, { color: [1.9, 1.15, 0.42], intensity: (4.5 * gain * k) / (f.ambient?.lamps ?? 1), distance: FIGURES === 'models' ? Math.hypot(6.2, up) : 6 + (up - 2.4), decay: 1.4, flicker: 0 });   // (steady: hung a hand over the figures, a flicker of 0.12 made them pulse while the floor held still, the owner, 2026-11-11: "Player and npc characters flicker in the dungeon not overland"; the torches round the walls flicker for it)   // (a glow round the hero, not a floodlight: 16 washed the figure out)
     }
     // a fire landing (renderer.js blasts: the Firebolt's explosion, a mage's bolt): a hot flash on the room round it, gone
     // in half a second; one of Luminati's spell lights, as the carry light is
@@ -1384,6 +1385,12 @@ const api = {
       else blastLight.off();
     }
     placeSpells(f.spells || [], f.dt || 0, f.ambient?.lamps, !!(f.rings && f.rings.length));
+    // underground, the lights' flicker held to CALM_FLICKER (the owner, 2026-11-11: "Player and npc characters flicker in
+    // the dungeon not overland. Probably due to torch lighting effect"): Luminati's wall torch swings its light ±38 %
+    // (flicker 0.45) 2.6 times a second, and a figure by a wall, close to it, took the whole swing while the floor beyond
+    // hardly moved. The flames still dance; their light steadies. Each frame, as the pool hands its lights on (LightPool
+    // sets a light's flicker from the torch it's given).
+    if (inside) for (const h of game.lighting?._pointLights || []) if (h.flicker > CALM_FLICKER) h.flicker = CALM_FLICKER;
     // the farm's beasts, in the frame Emberlit chose
     let nb = 0;
     for (const b of f.beasts || []) {

@@ -216,7 +216,9 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
     copied = ok ? `Copied ✓ (${Math.round(text.length / 1024)} KB)` : 'Copy failed: no clipboard here'; draw();
     setTimeout(() => { copied = ''; if (wrap.classList.contains('on')) draw(); }, 2500);
   }
-  function open(m = 'title') { mode = m; panel = ''; onOpen(); wrap.classList.add('on'); setPaused(true); draw(); }
+  // the title holds the game still; the menu in play (☰, 'pause') doesn't: a fight goes on under it (the owner, 2026-11-11:
+  // "Fighting should continue while i have the menu open")
+  function open(m = 'title') { mode = m; panel = ''; onOpen(); wrap.classList.add('on'); setPaused(m !== 'pause'); draw(); }
   function hide() { wrap.classList.remove('on'); render(null, wrap); }
   function close() { hide(); setPaused(false); onPlay(); }
   const btn = document.getElementById('menuBtn');

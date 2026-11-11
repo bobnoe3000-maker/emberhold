@@ -191,11 +191,11 @@ let previewPart = /** @type {string|null} */ (null);
 const brightness = createBrightness({ sim, graphics, onHold: (p) => { previewPart = p; } });
 const title = createTitle({ sim, slot: SLOT, audio, setPaused: (on) => { paused = on; }, openSlots: () => slots.open(),
   openParty: () => partyScreen.open(), openCreate: () => cinema.intro(() => { paused = false; creation.open(); }),
-  openChronicle: (mode) => cinema.intro(() => title.open(mode)), onPlay: () => { cinema.stopMusic(); catchUp(); },
+  openChronicle: (mode) => { paused = true; cinema.intro(() => title.open(mode)); }, /* (the film holds the game; the menu it goes back to doesn't) */ onPlay: () => { cinema.stopMusic(); catchUp(); },
   onOpen: () => { townMenu.close(); gearSheet.close(); partyScreen.close(); worldMap.close(); if (brightness.isOpen) brightness.close(); },   // the menu comes up over a clear screen
   graphics, tune: () => brightness.open(), openSteps: () => firstSteps.open(true),
   // the menu's Developer tools (sim/dev.js: commands that mark the slot a dev game): applied at once, a tick of the sim
-  // while the menu holds the game still (it ticks nothing while paused), and the slot saved with them
+  // (the game runs on under the menu in play), and the slot saved with them
   devApply: (cmds) => { for (const c of cmds) sim.commands.push(c); sim.tick(); if (!PREVIEW && sim.state.created) writeSlot(SLOT, sim).catch(() => {}); } });
 if (BOOT) cinema.boot(renderer.ready, () => title.open('title'));
 else document.getElementById('bootSplash')?.remove();

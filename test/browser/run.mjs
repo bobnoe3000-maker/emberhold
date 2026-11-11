@@ -973,6 +973,23 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       JSON.stringify(trips) + (errs.length ? ' · ' + errs.join(' | ') : ''));
   }
 }
+// 15c5. The menu in play (☰) holds nothing still (the owner, 2026-11-11: "Fighting should continue while i have the menu
+// open"): the sim's clock runs on under it; the title at the start still holds the game
+{
+  const b = await launch(chromium, 'chromium');
+  if (b) {
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true }), p = await ctx.newPage(), errs = [];
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${base}/index.html?dev&notitle&world=off&scene=town&region=vale`, { waitUntil: 'commit' });
+    await p.waitForFunction(() => !!globalThis.__sim && globalThis.__sim.state.t > 0.5, null, { timeout: 120000 * SLOW });
+    await p.tap('#menuBtn'); await p.waitForSelector('#titleWrap.on', { timeout: 10000 * SLOW });
+    const t0 = await p.evaluate(() => globalThis.__sim.state.t);
+    await p.waitForTimeout(2000);
+    const r = await p.evaluate((t0) => ({ open: !!document.querySelector('#titleWrap.on'), ran: +(globalThis.__sim.state.t - t0).toFixed(2) }), t0);
+    await ctx.close(); await b.close();
+    check('the menu in play: the game runs on under it (two seconds open, the sim\'s clock moved), no page errors', r.open && r.ran > 0.5 && errs.length === 0, JSON.stringify(r) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+  }
+}
 // 15d0. Seen (docs/level-design-rules.md §1.1): from the game's camera, what the player needs is at least half in view
 // wherever they meet it: Thornwick's spawn, its people, the step before each service's door and the gate; the Old
 // Barrows' first floor's way in, each room's middle and its stairs. The tool's own run (tools/capture/visibility.mjs:
