@@ -12390,27 +12390,33 @@ var Il = "mesh", Ll = (e) => {
 	jowl: 0,
 	occ: 0,
 	flat: 0,
-	flatK: .06
+	flatK: .06,
+	muzzle: 0,
+	cheekF: 0,
+	nape: .12,
+	lowF: 0
 }, Ul = {
 	shield: {
-		w: .41,
-		d: .56,
+		w: .43,
+		d: .52,
 		sq: 2.1,
 		top: 2.1,
 		low: 2.6,
-		jaw: .72,
+		lowF: 4.2,
+		jaw: .76,
 		jawTo: .48,
 		front: 1,
-		back: 1.06,
-		flat: .66,
-		flatK: .04,
-		brow: .008,
-		socket: .004,
-		bridge: 0,
+		back: .86,
+		nape: .36,
+		brow: .016,
+		socket: .012,
+		bridge: .03,
 		cheek: .012,
+		cheekF: .02,
+		muzzle: .035,
 		temple: .012,
-		lips: 0,
-		chin: .008
+		lips: .008,
+		chin: .018
 	},
 	oval: {},
 	heart: {
@@ -12648,20 +12654,23 @@ var Wl = Object.fromEntries(Object.entries(Ul).map(([e, t]) => [e, {
 	...t
 }])), Gl = (e, t) => Math.sign(e) * Math.abs(e) ** +t, Kl = (e, t) => Math.exp(-(e / t) * (e / t)), ql = 1.6;
 function Jl(e, t, n, r = new P()) {
-	let i = Wl[n.head] || Wl.shield, a = 2 * t - 1, o = a > 0 ? i.top : i.low, s = Math.max(0, 1 - Math.abs(a) ** +o) ** (1 / o), c = Gl(Math.sin(e), 2 / i.sq) * s, l = Gl(Math.cos(e), 2 / i.sq) * s;
-	c *= cl(i.jaw, 1, sl(0, i.jawTo, t)), l *= l > 0 ? i.front * cl(.92, 1, sl(0, .45, t)) * (1 - i.slope * sl(.55, 1, t)) : i.back, i.flat && l > 0 && (l = (l + i.flat - Math.sqrt((l - i.flat) * (l - i.flat) + i.flatK * i.flatK)) / 2);
+	let i = Wl[n.head] || Wl.shield, a = 2 * t - 1, o = a > 0 ? i.top : i.lowF ? cl(i.low, i.lowF, Math.max(0, Math.cos(e)) ** 2) : i.low, s = Math.max(0, 1 - Math.abs(a) ** +o) ** (1 / o), c = Gl(Math.sin(e), 2 / i.sq) * s, l = Gl(Math.cos(e), 2 / i.sq) * s;
+	c *= cl(i.jaw, 1, sl(0, i.jawTo, t)), l *= l > 0 ? i.front * cl(.92, 1, sl(0, .45, t)) * (1 - i.slope * sl(.55, 1, t)) : i.back * cl(1 - i.nape, 1, sl(0, .45, t)), i.flat && l > 0 && (l = (l + i.flat - Math.sqrt((l - i.flat) * (l - i.flat) + i.flatK * i.flatK)) / 2);
 	let u = Math.max(0, 1 - t / .24);
 	r.set(c * i.w, Bl.cy + a * Bl.ay - i.chinL * u * u + i.tall * sl(.5, 1, t), Bl.cz + l * i.d);
-	let d = Math.abs(e), f = Math.sin(e), p = Math.cos(e), m = Math.max(0, p), h = (cu.y - Rl) / zl, g = h + .1 / zl, _ = i.brow * Kl(t - g, .04) * Kl(e, .62) * m - i.socket * Kl(t - h, .045) * Kl(d - .38, .16) + i.bridge * Kl(e, .08) * sl(.28, .33, t) * sl(g, h, t) + i.lips * Kl(t - .18, .035) * Kl(e, .3) + i.chin * Kl(t - .06, .06) * Kl(e, .32) * m - i.cleft * Kl(t - .06, .045) * Kl(e, .05), v = i.cheek * Kl(t - .37, .07) * Kl(d - .8, .3) - i.hollow * Kl(t - .22, .065) * Kl(d - .95, .32) + i.gonion * Kl(t - .11, .07) * Kl(d - 1.35, .35) - i.temple * Kl(t - .64, .08) * Kl(d - 1.3, .32) + i.jowl * Kl(t - .1, .07) * Kl(d - .95, .35) + i.occ * Kl(t - .6, .16) * Kl(d - Math.PI, .9);
+	let d = Math.abs(e), f = Math.sin(e), p = Math.cos(e), m = Math.max(0, p), h = (cu.y - Rl) / zl, g = h + .1 / zl, _ = i.brow * Kl(t - g, .04) * Kl(e, .62) * m - i.socket * Kl(t - h, .045) * Kl(d - .38, .16) + i.bridge * Kl(e, .07 + .05 * sl(.45, .28, t)) * sl(.24, .3, t) * sl(g + .02, h - .02, t) * cl(1, .45, sl(.3, h, t)) + i.lips * Kl(t - .18, .035) * Kl(e, .3) + i.chin * Kl(t - .06, .06) * Kl(e, .32) * m + i.muzzle * Kl(t - .19, .1) * Kl(e, .5) * m + i.cheekF * Kl(t - .32, .08) * Kl(d - .5, .25) - i.cleft * Kl(t - .06, .045) * Kl(e, .05), v = i.cheek * Kl(t - .37, .07) * Kl(d - .8, .3) - i.hollow * Kl(t - .22, .065) * Kl(d - .95, .32) + i.gonion * Kl(t - .11, .07) * Kl(d - 1.35, .35) - i.temple * Kl(t - .64, .08) * Kl(d - 1.3, .32) + i.jowl * Kl(t - .1, .07) * Kl(d - .95, .35) + i.occ * Kl(t - .6, .16) * Kl(d - Math.PI, .9);
 	r.x += ql * v * f, r.z += ql * (_ + v * p), r.y -= i.jowl * .6 * Kl(t - .1, .07) * Kl(d - .95, .35);
 	let [y, b, x, S, C] = Vl[n.nose] || Vl.kk, w = r.x / y, T = (t - S) * zl / b, E = w * w + T * T;
 	return p > 0 && (r.z += x * Math.exp(C ? -E * E : -E) * (n.nose === "snub" && T > 0 ? .8 : 1)), n.nose === "hook" && p > 0 && (r.y -= .02 * Math.exp(-w * w - T * T)), r;
 }
 function Yl(e, t) {
 	let n = [], r = [], i = new P();
-	for (let r = 0; r <= 44; r++) for (let a = 0; a <= 64; a++) Jl(-Math.PI + 2 * Math.PI * a / 64, r / 44, e, i), t && t(i), n.push(i.x, i.y, i.z);
-	for (let e = 0; e < 44; e++) for (let t = 0; t < 64; t++) {
-		let n = e * 65 + t, i = n + 1, a = n + 64 + 1, o = a + 1;
+	for (let r = 0; r <= 52; r++) for (let a = 0; a <= 72; a++) {
+		let o = -1 + 2 * a / 72;
+		Jl(Math.PI * (.45 * o + .55 * o * o * o), r / 52, e, i), t && t(i), n.push(i.x, i.y, i.z);
+	}
+	for (let e = 0; e < 52; e++) for (let t = 0; t < 72; t++) {
+		let n = e * 73 + t, i = n + 1, a = n + 72 + 1, o = a + 1;
 		r.push(n, i, a, i, o, a);
 	}
 	let a = new Fe();
@@ -12670,12 +12679,12 @@ function Yl(e, t) {
 var Xl = 1.15, Zl = .06, Ql = .006;
 function $l(e, t) {
 	let n = [], r = [], i = [], a = new P(), o = new P(), s = new P(), c = new P(), l = .004;
-	for (let i = 0; i <= 24; i++) for (let u = 0; u <= 28; u++) {
-		let d = -1.15 + 2 * Xl * u / 28, f = Zl + .78 * i / 24, p = (n, r, i) => (Jl(n, r, e, i), t && t(i), i);
+	for (let i = 0; i <= 48; i++) for (let u = 0; u <= 56; u++) {
+		let d = -1.15 + 2 * Xl * u / 56, f = Zl + .78 * i / 48, p = (n, r, i) => (Jl(n, r, e, i), t && t(i), i);
 		p(d, f, a), c.crossVectors(p(d, f + l, o).sub(p(d, f - l, s)), p(d + l, f, s).sub(p(d - l, f, c.clone()))).normalize(), c.z < 0 && Math.abs(d) < 1.4 && c.negate(), r.push(tu(a.x), nu(a.y)), a.addScaledVector(c, Ql), n.push(a.x, a.y, a.z);
 	}
-	for (let e = 0; e < 24; e++) for (let t = 0; t < 28; t++) {
-		let n = e * 29 + t, r = n + 1, a = n + 28 + 1, o = a + 1;
+	for (let e = 0; e < 48; e++) for (let t = 0; t < 56; t++) {
+		let n = e * 57 + t, r = n + 1, a = n + 56 + 1, o = a + 1;
 		i.push(n, r, a, r, o, a);
 	}
 	let u = new Fe();
@@ -12947,7 +12956,7 @@ async function mu(e, t, r) {
 	if (r.ears === "pointed") u.add(d(Fl(r, c, a), "skin"));
 	else for (let e of [-1, 1]) {
 		let t = Jl(e * Math.PI / 2, .355, r), i = new A();
-		a && a(t), i.position.set(t.x + e * .025, t.y, t.z - .05), i.rotation.y = -e * .6;
+		a && a(t), i.position.set(t.x + e * .012, t.y, t.z - .05), i.rotation.y = -e * .6;
 		let o = new M(new j(.1, 18, 14), c.skin);
 		o.scale.set(.32, 1.35, .95), i.add(o);
 		let s = new M(new n(.082, .024, 8, 28, Math.PI * 1.55), c.skin);

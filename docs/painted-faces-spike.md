@@ -41,7 +41,7 @@ What the pack does (studied from its product images; none of its art is in the r
   | pass | what changed | RMS |
   |---|---|---|
   | — | the oval / the pack's box, as they were | 0.060 / 0.112 |
-  | 1 | a flat face plane (`flat`, a soft min on the front), the reference's eyes (small dark ovals with a glint), thick round-ended brows, a wide thin mouth | 0.089 |
+  | 1 | a flat face plane (`flat`, a soft min on the front; gone again at pass 10), the reference's eyes (small dark ovals with a glint), thick round-ended brows, a wide thin mouth | 0.089 |
   | 2 | narrower (0.41), a rounder crown, a broader jaw; a ball nose; big ears | 0.030 |
   | 3 | a squarer crown; the ears lower, with a rim (a C open toward the face); the eyes and brows lowered to the reference's heights, the sockets and brow ridge with them | 0.037 |
   | 4 | the ears turned to flare forward and stand clear of the hair; the nose a mesh of its own (the skull's grid is too coarse for a round one) | 0.059 |
@@ -50,6 +50,21 @@ What the pack does (studied from its product images; none of its art is in the r
   | 7 | the picture laid by where a point is, not its angle (a narrow head kept its features squeezed: the mouth half the reference's) | 0.036 |
   | 8 | a hairline by the angle round the head (`lineRound`: the KayKit blend never reached this flatter front); the forelock two tapered ribbons on the brow; a bigger nose | 0.038 |
   | 9 | the nape; the nose an oval | 0.037 |
+
+  Then the owner (2026-11-12): *"The front face is flat, it needs to push out just like a real face and nose. In the side
+  profile the back of the head pushes too far back, it should curve in a little like the sides just at the bottom"*. The
+  passes now add a bald three-quarter (50°) and a bald side profile (90°), the side measured too (its depth over its
+  height):
+
+  | pass | what changed | RMS (front) | side depth at mid height |
+  |---|---|---|---|
+  | 9 | as committed: a flat face plate, the back deep | 0.037 | 0.92 |
+  | 10 | the flat plane gone; the face pushed out (`muzzle`: the mouth's and jaw's front; `cheekF`: the cheeks under the eyes), the chin and brow fuller, a nose bridge from the brow widening to the tip; the back shallower (1.0) and curving in toward the neck (`nape`, as the jaw does at the sides); the skull's grid packed toward the face (twice as fine there, 72 × 52) and the mask finer (56 × 48) to carry it | 0.046 | 0.96 |
+  | 11 | the face's front squarer at its bottom than the back (`lowF`: the chin forward under the mouth, not sloping back from it); the width and jaw back (0.43, 0.76) | 0.042 | 0.96 |
+  | 12 | the back shallower again (0.86), its curve in kept to the bottom | 0.043 | 0.92 (with the nose; the crown 0.75 at 0.8 up, the nape 0.65 at 0.1) |
+  | 13 | the ears closer in (the cheeks' fullness had widened the face at the ears' height) | 0.038 | 0.92 |
+
+  ![before and after: three-quarter and side](img/faces/ref-head-volume.jpg) (pass 9, then pass 13)
 
   What's left is the hair's top (the reference's is chunkier, its peak to the front) and the light (the reference is lit
   from the front; our portraits keep the game's dusky key from the side). The eyes, brows, nose, ears and mouth apply to

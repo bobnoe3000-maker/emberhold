@@ -414,12 +414,12 @@ const BUMP = { kk: [0.08, 0.064, 0, 0.27, 'ball'], button: [0.075, 0.06, 0.027, 
 // the skull, a sloped forehead, a long jaw (chinL) or a tall crown (tall). Every shape stays inside KayKit's head
 // (x ±0.54, z −0.57…0.5, chin 0 to crown 1.05), so its helms and hoods and our hair shells still fit.
 const HEAD0 = { w: 0.47, d: 0.55, sq: 2.3, top: 2.1, low: 2.5, jaw: 0.72, jawTo: 0.5, front: 0.93, back: 1.08, slope: 0, tall: 0, chinL: 0,
-  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06 };
+  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06, muzzle: 0, cheekF: 0, nape: 0.12, lowF: 0 };
 /** the twenty heads (and the pack's rounded box, the spike's first): each the numbers that differ from HEAD0 */
 export const HEADS = {
   // the owner's reference head (2026-11-12: "Map this closely and critic pass until you get it right"), the default: a flat face
   // plane, the sides turning back from it, the widest at the cheekbones, a broad jaw straight to a rounded chin
-  shield:    { w: 0.41, d: 0.56, sq: 2.1, top: 2.1, low: 2.6, jaw: 0.72, jawTo: 0.48, front: 1, back: 1.06, flat: 0.66, flatK: 0.04, brow: 0.008, socket: 0.004, bridge: 0, cheek: 0.012, temple: 0.012, lips: 0, chin: 0.008 },
+  shield:    { w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
   oval:      {},
   heart:     { w: 0.48, jaw: 0.52, low: 1.9, cheek: 0.02, temple: -0.006, chin: 0.012 },
   square:    { w: 0.48, sq: 3.1, low: 4, jaw: 0.95, gonion: 0.022, brow: 0.02, chin: 0.006 },
@@ -449,10 +449,12 @@ const spow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e), G = (d, w) => Ma
 const DEPTH = 1.6;                                                 // the sculpting's strength over the numbers (the first board's read too faint)
 /** a point on the painted skull: th the angle round it (0 the front, +x to the right as you face it), s the height (0 the chin, 1 the crown) */
 function eggAt(th, s, f, out = new THREE.Vector3()) {
-  const H = HEADQ[f.head] || HEADQ.shield, yU = 2 * s - 1, m = yU > 0 ? H.top : H.low, r = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(yU), m)), 1 / m);
+  const H = HEADQ[f.head] || HEADQ.shield, yU = 2 * s - 1, m = yU > 0 ? H.top : H.lowF ? lerp(H.low, H.lowF, Math.max(0, Math.cos(th)) ** 2) : H.low,
+    r = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(yU), m)), 1 / m);
+  // (lowF: the face's front squarer at the bottom than the back, the chin forward under the mouth)
   let x = spow(Math.sin(th), 2 / H.sq) * r, z = spow(Math.cos(th), 2 / H.sq) * r;
   x *= lerp(H.jaw, 1, smooth(0.0, H.jawTo, s));                                          // the jaw drawn in toward the chin
-  z *= z > 0 ? H.front * lerp(0.92, 1, smooth(0.0, 0.45, s)) * (1 - H.slope * smooth(0.55, 1, s)) : H.back;   // the face's front (a forehead sloped back), the skull's back
+  z *= z > 0 ? H.front * lerp(0.92, 1, smooth(0.0, 0.45, s)) * (1 - H.slope * smooth(0.55, 1, s)) : H.back * lerp(1 - H.nape, 1, smooth(0.0, 0.45, s));   // (the back of the skull curving in toward the neck, as the jaw does at the sides)   // the face's front (a forehead sloped back), the skull's back
   if (H.flat && z > 0) z = (z + H.flat - Math.sqrt((z - H.flat) * (z - H.flat) + H.flatK * H.flatK)) / 2;   // a flat face plane, the sides turning back from it (a soft min)
   const lo = Math.max(0, 1 - s / 0.24);
   out.set(x * H.w, EGG.cy + yU * EGG.ay - H.chinL * lo * lo + H.tall * smooth(0.5, 1, s), EGG.cz + z * H.d);
@@ -460,9 +462,11 @@ function eggAt(th, s, f, out = new THREE.Vector3()) {
   const a = Math.abs(th), sx = Math.sin(th), cz = Math.cos(th), front = Math.max(0, cz), eS = (PE.y - CHIN) / HH, bS = eS + 0.1 / HH;   // (the eye line's and the brows' heights)
   const dz = H.brow * G(s - bS, 0.04) * G(th, 0.62) * front       // the brow ridge over the eyes
     - H.socket * G(s - eS, 0.045) * G(a - 0.38, 0.16)              // the eyes set in
-    + H.bridge * G(th, 0.08) * smooth(0.28, 0.33, s) * smooth(bS, eS, s)   // the nose's bridge up to the brow
+    + H.bridge * G(th, 0.07 + 0.05 * smooth(0.45, 0.28, s)) * smooth(0.24, 0.3, s) * smooth(bS + 0.02, eS - 0.02, s) * lerp(1, 0.45, smooth(0.3, eS, s))   // the nose's bridge, widening to its tip, down from the brow
     + H.lips * G(s - 0.18, 0.035) * G(th, 0.3)                       // the lips' fullness
     + H.chin * G(s - 0.06, 0.06) * G(th, 0.32) * front               // the chin's point
+    + H.muzzle * G(s - 0.19, 0.1) * G(th, 0.5) * front              // the mouth's and the jaw's front pushed out, as a face's is
+    + H.cheekF * G(s - 0.32, 0.08) * G(a - 0.5, 0.25)                 // the cheeks' fullness under the eyes
     - H.cleft * G(s - 0.06, 0.045) * G(th, 0.05);                    // a cleft in it
   const side = H.cheek * G(s - 0.37, 0.07) * G(a - 0.8, 0.3)        // cheekbones under the eyes' outer corners
     - H.hollow * G(s - 0.22, 0.065) * G(a - 0.95, 0.32)              // the hollows under them
@@ -478,8 +482,8 @@ function eggAt(th, s, f, out = new THREE.Vector3()) {
 }
 /** the painted skull (a triangle soup, as the kit's shells want), shaped by the face's shape */
 function eggSkull(f, S) {
-  const NT = 64, NS = 44, P = [], I = [], v = new THREE.Vector3();
-  for (let j = 0; j <= NS; j++) for (let i = 0; i <= NT; i++) { eggAt(-Math.PI + (2 * Math.PI * i) / NT, j / NS, f, v); if (S) S(v); P.push(v.x, v.y, v.z); }
+  const NT = 72, NS = 52, P = [], I = [], v = new THREE.Vector3(), A = 0.45;   // (the angles packed toward the face: twice the grid there, for the nose and the face's volume)
+  for (let j = 0; j <= NS; j++) for (let i = 0; i <= NT; i++) { const t = -1 + (2 * i) / NT; eggAt(Math.PI * (A * t + (1 - A) * t * t * t), j / NS, f, v); if (S) S(v); P.push(v.x, v.y, v.z); }
   for (let j = 0; j < NS; j++) for (let i = 0; i < NT; i++) { const a = j * (NT + 1) + i, b = a + 1, c = a + NT + 1, d = c + 1; I.push(a, b, c, b, d, c); }   // (wound outward: the kit's shells grow off it and keep its facing)
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals();
   return g.toNonIndexed();
@@ -487,7 +491,7 @@ function eggSkull(f, S) {
 // the mask: the front of the skull from TH left to TH right and S0 to S1 up, a little proud of it; its picture's u and v
 const TH = 1.15, S0 = 0.06, S1 = 0.84, LIFT = 0.006;
 function faceMask(f, S) {
-  const NU = 28, NV = 24, P = [], U = [], I = [], v = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3(), e = 0.004;
+  const NU = 56, NV = 48, P = [], U = [], I = [], v = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), n = new THREE.Vector3(), e = 0.004;
   for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) {
     const th = -TH + (2 * TH * i) / NU, s = S0 + ((S1 - S0) * j) / NV, at = (t, q, o) => { eggAt(t, q, f, o); if (S) S(o); return o; };
     at(th, s, v); n.crossVectors(at(th, s + e, a).sub(at(th, s - e, b)), at(th + e, s, b).sub(at(th - e, s, n.clone()))).normalize();
@@ -617,7 +621,7 @@ async function paintedFace(load, model, f) {
   if (f.ears === 'pointed') head.add(tag(ears(f, M, S), 'skin'));
   else for (const sd of [-1, 1]) {                                // the pack's ears: flat, a fair size, set back at the eyes' and nose's height
     const p = eggAt(sd * Math.PI / 2, 0.355, f), ear = new THREE.Group(); if (S) S(p);
-    ear.position.set(p.x + sd * 0.025, p.y, p.z - 0.05); ear.rotation.y = -sd * 0.6;   // (big, flared out and forward, standing clear of the hair: the reference's)
+    ear.position.set(p.x + sd * 0.012, p.y, p.z - 0.05); ear.rotation.y = -sd * 0.6;   // (big, flared out and forward, standing clear of the hair: the reference's)
     const plate = new THREE.Mesh(new THREE.SphereGeometry(0.1, 18, 14), M.skin); plate.scale.set(0.32, 1.35, 0.95); ear.add(plate);
     const rim = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.024, 8, 28, Math.PI * 1.55), M.skin);   // the rim, a C open toward the face
     rim.scale.set(0.95, 1.32, 1); rim.position.x = sd * 0.018; rim.rotation.set(0, sd * Math.PI / 2, sd > 0 ? Math.PI * 1.225 : Math.PI * 0.225); ear.add(rim);
