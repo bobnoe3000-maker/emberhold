@@ -18,7 +18,9 @@ import { PART_S } from '../sim/npcs.js';
 
 export const PARTS = /** @type {const} */ (['dawn', 'day', 'dusk', 'night']);
 /** @type {Record<string, number[]>} the shipped multiply a part (dawn, day, dusk, night), by scene, in the Vale */
-export const BRIGHT = { town: [1.445, 1.093, 2.406, 1.06], overland: [2, 0.941, 2.763, 3.391] };
+// (the owner, 2026-11-12: "Inside the town looks too dark at night. Outside of the town night brightness seems ok": the town's
+// night 1.06 → 1.59, ×1.5; the world band's mean at night's middle 41.6 → 57.7, the overland's 48.1, a lit town a little over it)
+export const BRIGHT = { town: [1.445, 1.093, 2.406, 1.59], overland: [2, 0.941, 2.763, 3.391] };
 const ONE = [1, 1, 1, 1];
 
 /** the brightness at t seconds of play, eased from each part's middle to the next's (log-linear, so a ×2.5 dusk comes on

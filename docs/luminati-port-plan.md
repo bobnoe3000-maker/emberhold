@@ -731,7 +731,7 @@ brightness"* (a screenshot of Thornwick's square at dusk, in rain: mean 29 of 25
 
   | | Dawn | Day | Dusk | Night |
   |---|---|---|---|---|
-  | Thornwick | ×1.445 | ×1.093 | ×2.406 | ×1.06 |
+  | Thornwick | ×1.445 | ×1.093 | ×2.406 | ×1.59 (×1.06 until 2026-11-12: the owner, "Inside the town looks too dark at night": the night's mean 41.6 → 57.7, the overland's 48.1) |
   | The Vale | ×2.0 | ×0.941 | ×2.763 | ×3.391 |
 
 - Mean of the world band, played with no tuning knob (`tools/capture/rig.mjs`). Emberlit | Luminati before → after:
