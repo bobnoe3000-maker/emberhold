@@ -103,7 +103,17 @@ What the pack does (studied from its product images; none of its art is in the r
   parts on the side of the mouth"*): the face beside the mouth and down along the jaw widened, at most 15 % at the mouth's
   height (s 0.13), easing out above and below, the back of the head left. Measured bald from the front: the outline
   13–14 % wider at and just below the mouth (0.574 → 0.653 of the head's height at 0.15 up, 0.487 → 0.548 at 0.1), the
-  same from the ears up. Off by default. ![as now and the jaw 15 % wider](img/faces/jaw-compare.jpg)
+  same from the ears up. **On** (the owner, 2026-11-12: *"I like that go with the wider jaw"*): 0.15 on the reference head
+  and its softer sister. ![as now and the jaw 15 % wider](img/faces/jaw-compare.jpg)
+- **The hoods** (the owner, 2026-11-12: *"The hoods looked funny, too much like a sphere, not more ovalish like they
+  should be"*): the hood, the coif and the hide cowl share one cloth shell (`props.js` `hoodShell`), a sphere until now.
+  Its form is now an oval about the head (`hoodForm`): taller than wide, round over the crown and a little up and back,
+  clear of the ears, flaring at the bottom onto the shoulders; the face's window an oval too (narrow at the brow and the
+  chin, widest at the cheeks); the rogue's hood's point falls down the back (it stood up as a spike); the coif's gilt band
+  crosses the brow from ear to ear (it was a ring floating round the outside); the cowl's beads sit on its brow. On today's
+  faces as on the painted head. On the painted head the cloth comes down to its lower crown and is set back 0.08 (its
+  window's edge stood ahead of this face's cheeks and hid the near one at a turn), what sits on the face (the band, the
+  beads) kept there. ![the hoods, before and after](img/faces/hoods-before-after.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
   a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the

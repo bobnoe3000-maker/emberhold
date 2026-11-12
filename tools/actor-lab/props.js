@@ -428,7 +428,8 @@ export const PROPS = {
   coif: () => {
     const rzBand = 0.665, g = hoodShell({ name: 'Chapel_Coif', cloth: 0xd8ccb0, shade: 0xa89a7e, open: 0.78, rz: 0.66, tip: 0 });   // (warmer than the vestments, so the two part)
     const gilt = mat(0xcfa65c, 0.85, 0.32), cloth = mat(0xd8ccb0, 0, 0.9);
-    const band = new THREE.Mesh(new THREE.TorusGeometry(1, 0.04, 5, 32), gilt); band.rotation.x = Math.PI / 2 + 0.24; band.scale.set(0.585, rzBand - 0.02, 1); band.position.set(0, 0.64, -0.08); band.name = 'Chapel_Coif_Band'; g.add(band);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(1, 0.04, 5, 32, Math.PI), gilt), R = hoodRing(0.66, 0.7);   // (the gilt band across the brow, ear to ear, on the cloth)
+    band.rotation.x = Math.PI / 2 + 0.12; band.scale.set(R.hx * 0.97, 0.505 - R.cz, 1); band.position.set(0, 0.68, R.cz); band.name = 'Chapel_Coif_Band'; band.userData.onFace = true; g.add(band);   // (its front on the brow, under the cloth at the temples)
     const chin = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.72, 0.3, 22, 1, true), new THREE.MeshStandardMaterial({ color: 0xd8ccb0, roughness: 0.92, side: THREE.DoubleSide })); chin.position.set(0, -0.08, -0.03); chin.name = 'Chapel_Coif_Wimple'; g.add(chin);   // (the wimple: a short flared skirt from the chin onto the shoulders)
     const veil = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.72, 0.9, 16, 1, true, Math.PI * 0.6, Math.PI * 0.8), cloth); veil.position.set(0, 0.2, -0.12); veil.name = 'Chapel_Coif_Veil'; g.add(veil);
     return g;
@@ -442,7 +443,7 @@ export const PROPS = {
       const a = k / 14 * Math.PI * 2; if (Math.abs(Math.sin(a) - 1) < 0.2) continue;   // (none in front of the chin)
       const t = new THREE.Mesh(new THREE.IcosahedronGeometry(0.13, 0), fur); t.position.set(Math.cos(a) * 0.52, -0.16 + (k % 2) * 0.05, Math.sin(a) * 0.5 - 0.06); t.scale.set(1, 0.8, 1); t.rotation.set(k, k * 2, 0); t.name = 'Hide_Cowl_Ruff'; g.add(t);
     }
-    for (let k = -3; k <= 3; k++) { const a = Math.PI / 2 + k * 0.2, b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), bone); b.position.set(Math.cos(a) * 0.62, 0.86 - Math.abs(k) * 0.025, Math.sin(a) * 0.62 - 0.06); g.add(b); }
+    for (let k = -3; k <= 3; k++) { const a = Math.PI / 2 + k * 0.2, b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), bone); const y = 0.8 - Math.abs(k) * 0.025, R = hoodRing(0.72, y); b.position.set(Math.cos(a) * (R.hx + 0.02), y, Math.sin(a) * (R.hz + 0.02) + R.cz); b.userData.onFace = true; g.add(b); }   // (on the cowl's brow, its form's ring there)
     return g;
   },
   // the Hood (the rogue's), for a rogue whose head has none of its own: dark leather-brown, a point falling behind
@@ -515,18 +516,49 @@ function book({ name, w, h, t, cover, edge, pages, clasp, boss, corners }) {
 }
 
 // a hood about the head (the head bone's space): a shell over the crown, the sides and the back, open at the face,
-// falling to the shoulders; `tip` a point hanging behind. Kept off the head (±0.55 wide, its back to −0.75)
+// falling to the shoulders; `tip` a point hanging behind. Kept off the head (±0.56 wide, its back to −0.75).
+// Its form (the owner, 2026-11-12: "The hoods looked funny, too much like a sphere, not more ovalish like they should
+// be"): a sphere bent into an oval about the head, taller than wide, narrowing to a soft point up and back at the crown
+// and flaring at the bottom where the cloth falls onto the shoulders. hoodForm maps a point of the unit sphere onto it.
+const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const hoodForm = (rz, inset = 0) => (x, y, z, out = new THREE.Vector3()) => {
+  const top = sm(0.35, 1, y), low = sm(-0.3, -1, y), ears = Math.exp(-(((y + 0.05) / 0.3) ** 2)), k = (1 - 0.1 * top) * (1 + 0.3 * low) * (1 - inset);
+  return out.set(x * (0.56 + 0.04 * ears) * k, 0.48 + y * 0.72 * (1 - inset * 0.5), -0.08 + (z * k - 0.08 * top) * rz);   // (round over the crown, a little up and back; clear of the ears)
+};
+/** the hood's ring at a height y (head-bone space): its half-width, half-depth and middle, for what sits on it */
+export function hoodRing(rz, y) {
+  const F = hoodForm(rz); let lo = -1, hi = 1; for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (F(0, m, 0).y < y) lo = m; else hi = m; }
+  const yn = (lo + hi) / 2, r = Math.sqrt(Math.max(0, 1 - yn * yn)), c = F(0, yn, 0);
+  return { hx: F(r, yn, 0).x, hz: F(0, yn, r).z - c.z, cz: c.z };
+}
+// win: the face's window made an oval, the unit sphere's angles bent before the form: its half-angle `a` at the cheeks,
+// narrowing toward the brow and the chin (within the window's span of the sphere, t0 to t1 down from the top)
+function formed(geo, form, win = null) {
+  const p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    if (win) {
+      const th = Math.acos(Math.max(-1, Math.min(1, y))), r = Math.sqrt(x * x + z * z), u = Math.max(0, Math.min(1, (th - win.t0) / (win.t1 - win.t0)));
+      let d = Math.atan2(z, -x) - Math.PI / 2; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+      const aw = win.a * (0.45 + 0.55 * Math.sin(Math.PI * Math.min(1, u * 1.08))), m = Math.abs(d), m2 = aw + ((m - win.a) * (Math.PI - aw)) / (Math.PI - win.a), ph = Math.PI / 2 + Math.sign(d || 1) * m2;
+      x = -Math.cos(ph) * r; z = Math.sin(ph) * r;
+    }
+    form(x, y, z, v); p.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals(); return geo;
+}
 function hoodShell({ name, cloth, shade, open, rz, tip }) {
-  const g = new THREE.Group(); g.name = name; g.userData.helm = true;
-  const C = new THREE.MeshStandardMaterial({ color: cloth, roughness: 0.92, metalness: 0, side: THREE.DoubleSide });
-  const crown = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI * 0.32), C); crown.scale.set(0.6, 0.62, rz); crown.position.set(0, 0.5, -0.08); crown.name = name + '_Cloth'; g.add(crown);
+  const g = new THREE.Group(); g.name = name; g.userData.helm = true; g.userData.hoodRz = rz;
+  const C = new THREE.MeshStandardMaterial({ color: cloth, roughness: 0.92, metalness: 0, side: THREE.DoubleSide }), F = hoodForm(rz);
+  const crown = new THREE.Mesh(formed(new THREE.SphereGeometry(1, 32, 12, 0, Math.PI * 2, 0, Math.PI * 0.32), F), C); crown.name = name + '_Cloth'; g.add(crown);
   // the sides and back, the face's window cut out of the front (three's sphere: z = sin φ, so the front +z is φ = π/2)
-  const a = open, side = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14, Math.PI / 2 + a, Math.PI * 2 - 2 * a, Math.PI * 0.3, Math.PI * 0.6), C);
-  side.scale.set(0.6, 0.64, rz); side.position.set(0, 0.5, -0.08); side.name = name + '_Cloth'; g.add(side);
+  const a = open, win = { a, t0: Math.PI * 0.3, t1: Math.PI * 0.96 }, side = new THREE.Mesh(formed(new THREE.SphereGeometry(1, 40, 22, Math.PI / 2 + a, Math.PI * 2 - 2 * a, Math.PI * 0.3, Math.PI * 0.66), F, win), C);
+  side.name = name + '_Cloth'; g.add(side);
   // the inside, in the shade, so the window reads as depth round the face
-  const inner = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, Math.PI / 2 + a, Math.PI * 2 - 2 * a, Math.PI * 0.3, Math.PI * 0.6), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade).multiplyScalar(0.55), roughness: 1, side: THREE.BackSide }));
-  inner.scale.set(0.59, 0.63, rz - 0.01); inner.position.copy(side.position); g.add(inner);
-  if (tip) { const t = new THREE.Mesh(new THREE.ConeGeometry(0.3, tip + 0.45, 10), C); t.position.set(0, 0.86, -0.08 - rz * 0.55); t.rotation.x = -Math.PI / 2 - 0.55; g.add(t); }   // (a soft point at the crown, falling back)
+  const inner = new THREE.Mesh(formed(new THREE.SphereGeometry(1, 36, 18, Math.PI / 2 + a, Math.PI * 2 - 2 * a, Math.PI * 0.3, Math.PI * 0.66), hoodForm(rz, 0.015), win), new THREE.MeshStandardMaterial({ color: new THREE.Color(shade).multiplyScalar(0.55), roughness: 1, side: THREE.BackSide }));
+  g.add(inner);
+  if (tip) { const len = tip + 0.35, t = new THREE.Mesh(new THREE.ConeGeometry(0.2, len, 12), C), at = F(0, 0.62, -0.78), dir = new THREE.Vector3(0, -0.8, -0.6).normalize();   // (the hood's point, falling down the back)
+    t.position.copy(at).addScaledVector(dir, len * 0.42); t.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().negate()); t.scale.set(1, 1, 0.65); g.add(t); }
   return g;
 }
 

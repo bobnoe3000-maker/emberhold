@@ -117,7 +117,7 @@ export async function dressGear(root, gear, load, findNode, v = {}) {
     if (slot === 'helm') {                                   // (on a painted head, lower and narrower than KayKit's: the helm brought to it)
       const F = B.children.find((c) => c.name === 'Face' && c.userData.fit)?.userData.fit;
       const k = F && (p.userData.helm ? new THREE.Vector3(1, F.sy, 1) : new THREE.Vector3(F.sx, F.sy, F.sz));   // (a cloth hood, kept off the head, only comes down: brought in, its window crowds the face)
-      if (k) { p.scale.multiply(k); p.position.multiply(k); }
+      if (k) { p.scale.multiply(k); p.position.multiply(k); if (p.userData.helm) { p.position.z -= 0.08; for (const c of p.children) if (c.userData.onFace) { if (c.name.endsWith('_Band')) c.scale.y += 0.08; else c.position.z += 0.08; } } }   // (what sits on the face stays there: a band's front reaches forward, its ends under the cloth)   // (and set back: its window's edge stood ahead of this face's cheeks, hiding the near one at a turn)
     }
     lookOn(p, it); B.add(p);
   }

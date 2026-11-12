@@ -455,8 +455,8 @@ const capOf = (f) => (HEADQ[f.head] || HEADQ.shield).cap;
 export const HEADS = {
   // the owner's reference head (2026-11-12: "Map this closely and critic pass until you get it right"), the default: a flat face
   // plane, the sides turning back from it, the widest at the cheekbones, a broad jaw straight to a rounded chin
-  shield:    { w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, cap: 0.85, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
-  shieldF:   { w: 0.42, d: 0.51, sq: 2.05, top: 2.1, low: 2.4, lowF: 3.4, cap: 0.85, jaw: 0.66, jawTo: 0.5, front: 1, back: 0.86, nape: 0.36, brow: 0.006, socket: 0.012, bridge: 0.02, cheek: 0.016, cheekF: 0.024, muzzle: 0.026, temple: 0.01, lips: 0.01, chin: 0.012 },   // (the same, softer: a narrower jaw and chin, a lighter brow)
+  shield:    { jawWide: 0.15, w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, cap: 0.85, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
+  shieldF:   { jawWide: 0.15, w: 0.42, d: 0.51, sq: 2.05, top: 2.1, low: 2.4, lowF: 3.4, cap: 0.85, jaw: 0.66, jawTo: 0.5, front: 1, back: 0.86, nape: 0.36, brow: 0.006, socket: 0.012, bridge: 0.02, cheek: 0.016, cheekF: 0.024, muzzle: 0.026, temple: 0.01, lips: 0.01, chin: 0.012 },   // (the same, softer: a narrower jaw and chin, a lighter brow)
   oval:      {},
   heart:     { w: 0.48, jaw: 0.52, low: 1.9, cheek: 0.02, temple: -0.006, chin: 0.012 },
   square:    { w: 0.48, sq: 3.1, low: 4, jaw: 0.95, gonion: 0.022, brow: 0.02, chin: 0.006 },
