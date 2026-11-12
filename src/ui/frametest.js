@@ -19,6 +19,7 @@ const CSS = `
 #ftCard td { padding: 6px 4px; border-bottom: 1px solid #2c2838; }
 #ftCard td.n { text-align: right; white-space: nowrap; }
 #ftCard tr.base td { color: #f0c880; }
+#ftCard td.js { color: #b8ac98; }
 #ftCard .saves { color: #8fe07a; }
 #ftCard .costs { color: #ff8a7a; }
 #ftCard .acts { display: flex; gap: 8px; margin-top: 12px; }
@@ -38,13 +39,14 @@ export function createFrameTest(o) {
     for (const k of ['pointerdown', 'touchstart', 'mousedown']) wrap.addEventListener(k, swallow);
     const c = el('div'); c.id = 'ftCard'; wrap.appendChild(c);
     c.appendChild(el('h2', '', 'Frame test'));
-    c.appendChild(el('div', 'about', `${where} · ${r.about}`));
+    c.appendChild(el('div', 'about', `${where} · ${r.about} · JS: the JavaScript's ms a frame (Copy has its split)`));
     const base = (r.rows[0].ms + r.rows[r.rows.length - 1].ms) / 2, t = el('table');
     for (const x of r.rows) {
       const tr = el('tr', x.id.startsWith('base') ? 'base' : ''), d = base - x.ms;
       tr.appendChild(el('td', '', x.label));
       tr.appendChild(el('td', 'n', x.frames ? `${x.ms.toFixed(1)} ms` : 'no frames'));
       tr.appendChild(el('td', 'n', `${x.fps.toFixed(0)} fps`));
+      tr.appendChild(el('td', 'n js', `JS ${x.js.toFixed(1)}`));
       // saved or cost, in words as well as colour (AGENTS.md A3)
       tr.appendChild(el('td', 'n ' + (x.id.startsWith('base') ? '' : d >= 0.5 ? 'saves' : d <= -0.5 ? 'costs' : ''), x.id.startsWith('base') ? '' : `${d >= 0 ? 'saves' : 'adds'} ${Math.abs(d).toFixed(1)}`));
       t.appendChild(tr);

@@ -10,7 +10,7 @@
 // not the cost), then its frames are timed; the world as it is is timed first and last, so a phone warming up shows.
 
 /** @typedef {{ id: string, label: string, on: (w: any) => void, off: (w: any) => void }} Variant */
-/** @typedef {{ id: string, label: string, ms: number, fps: number, frames: number }} Row */
+/** @typedef {{ id: string, label: string, ms: number, fps: number, frames: number, js: number, world: number, draw: number }} Row */
 
 const SETTLE_MS = 1500, MEASURE_MS = 4000;
 
@@ -37,6 +37,11 @@ export function variants(cur) {
     off: (w) => { for (const o of keep || []) o.visible = true; keep = null; recompile(w.game); } });
   return [
     { id: 'base', label: 'As it is', on: () => {}, off: () => {} },
+    // the two that say whether the GPU is the limit at all: the world's every piece hidden (its passes still run, on
+    // nothing), and Luminati not drawing (it still steps: the picture holds)
+    hide('empty', 'Nothing drawn (all hidden)', (o) => o.parent?.isScene && !o.isCamera),
+    (() => { /** @type {any} */ let wf = null; return /** @type {Variant} */ ({ id: 'nodraw', label: 'Luminati not drawing',
+      on: (w) => { wf = w.frame; w.frame = function (f) { return wf.call(this, { ...f, draw: false }); }; }, off: (w) => { if (wf) w.frame = wf; wf = null; } }); })(),
     { id: 'dof', label: 'Depth of field off', on: (w) => w.settings({ dof: 'off' }), off: (w) => w.settings({ dof: cur.dof }) },
     { id: 'bloom', label: 'Bloom off', on: (w) => { w.game.postfx.settings.bloom.enabled = false; }, off: (w) => { w.game.postfx.settings.bloom.enabled = true; } },
     { id: 'grade', label: 'Sharpen, grain, colour fringe off', on: (w) => { const g = w.game.postfx.settings.grade; keep = { sharpen: g.sharpen, grain: g.grain, chromaticAberration: g.chromaticAberration }; Object.assign(g, { sharpen: 0, grain: 0, chromaticAberration: 0 }); },
@@ -60,18 +65,21 @@ export function variants(cur) {
 }
 
 /** the median frame time of the browser's own frames: after `settle` and three frames (a change of lights or shadows
- * compiles shaders, and that frame is the compile, not the cost), at least `ms` and twelve frames, at most 15 s more
- * @returns {Promise<{ ms: number, frames: number }>} */
-function timeFrames(settle, ms) {
+ * compiles shaders, and that frame is the compile, not the cost), at least `ms` and twelve frames, at most 15 s more;
+ * and over the same frames, the JavaScript's time a frame (the CPU's share: `cpu` counts it, see runFrameTest)
+ * @param {{ js: number, world: number, draw: number }} [cpu]
+ * @returns {Promise<{ ms: number, frames: number, js: number, world: number, draw: number }>} */
+function timeFrames(settle, ms, cpu) {
   return new Promise((done) => {
     const f = /** @type {number[]} */ ([]); let last = 0, seen = 0, t1 = 0; const t0 = performance.now();
     const tick = (now) => {
       seen++;
-      if (now - t0 > settle && seen > 3) { if (!t1) t1 = now; if (last) f.push(now - last); last = now; }
+      if (now - t0 > settle && seen > 3) { if (!t1) { t1 = now; if (cpu) cpu.js = cpu.world = cpu.draw = 0; } if (last) f.push(now - last); last = now; }
       const enough = t1 && now - t1 >= ms && f.length >= 12, late = now - t0 > settle + ms + 15000;
-      if (!ms && now - t0 > settle) return done({ ms: 0, frames: 0 });
+      if (!ms && now - t0 > settle) return done({ ms: 0, frames: 0, js: 0, world: 0, draw: 0 });
       if (!enough && !late) return void requestAnimationFrame(tick);
-      f.sort((a, b) => a - b); done({ ms: f.length ? f[Math.floor(f.length / 2)] : 0, frames: f.length });
+      const n = Math.max(1, f.length + 1); f.sort((a, b) => a - b);
+      done({ ms: f.length ? f[Math.floor(f.length / 2)] : 0, frames: f.length, js: cpu ? cpu.js / n : 0, world: cpu ? cpu.world / n : 0, draw: cpu ? cpu.draw / n : 0 });
     };
     requestAnimationFrame(tick);
   });
@@ -84,13 +92,22 @@ function timeFrames(settle, ms) {
  */
 export async function runFrameTest(world, cur, onStep) {
   const V = variants(cur), rows = /** @type {Row[]} */ ([]);
-  for (let i = 0; i < V.length; i++) {
-    const v = V[i]; onStep(i, V.length, v.label);
-    /** @type {{ ms: number, frames: number }} */ let r;
-    try { v.on(world); r = await timeFrames(SETTLE_MS, MEASURE_MS); } finally { try { v.off(world); } catch { /* put back as far as it goes */ } }
-    rows.push({ id: v.id, label: v.label, ms: r.ms, fps: r.ms ? 1000 / r.ms : 0, frames: r.frames });
-    await timeFrames(400, 0);                      // (a moment as it was before the next)
-  }
+  // the CPU's share: every animation-frame callback's time (the game's loop: the sim, the overlay, the UI; and Luminati's
+  // frame within it), Luminati's frame (world.frame: its update, then three.js's draw calls) and the draw calls alone
+  // (postfx.render); put back after
+  const cpu = { js: 0, world: 0, draw: 0 }, pf = world.game.postfx, raf = globalThis.requestAnimationFrame, wf = world.frame, pr = pf.render;
+  const timed = (fn, k) => function (...a) { const t = performance.now(); try { return fn.apply(this, a); } finally { cpu[k] += performance.now() - t; } };
+  globalThis.requestAnimationFrame = (cb) => raf((t) => { const a = performance.now(); try { cb(t); } finally { cpu.js += performance.now() - a; } });
+  world.frame = timed(wf, 'world'); pf.render = timed(pr, 'draw');
+  try {
+    for (let i = 0; i < V.length; i++) {
+      const v = V[i]; onStep(i, V.length, v.label);
+      /** @type {{ ms: number, frames: number, js: number, world: number, draw: number }} */ let r;
+      try { v.on(world); r = await timeFrames(SETTLE_MS, MEASURE_MS, cpu); } finally { try { v.off(world); } catch { /* put back as far as it goes */ } }
+      rows.push({ id: v.id, label: v.label, ms: r.ms, fps: r.ms ? 1000 / r.ms : 0, frames: r.frames, js: r.js, world: r.world, draw: r.draw });
+      await timeFrames(400, 0);                      // (a moment as it was before the next)
+    }
+  } finally { globalThis.requestAnimationFrame = raf; world.frame = wf; pf.render = pr; }
   const G = world.game, R = G.engine.renderer, gl = R.getContext(), dbg = gl.getExtension('WEBGL_debug_renderer_info');
   const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
   let lights = 0; each(G, (o) => o.isPointLight && o.visible, () => { lights++; });
@@ -102,6 +119,7 @@ export async function runFrameTest(world, cur, onStep) {
 /** the table as plain text (to paste into a message) @param {{ rows: Row[], about: string }} r @param {string} where */
 export function frameTestText(r, where) {
   const base = (r.rows[0].ms + r.rows[r.rows.length - 1].ms) / 2;
-  const lines = r.rows.map((x) => `${x.label.padEnd(40)} ${x.frames ? x.ms.toFixed(1).padStart(6) : '     —'} ms ${x.fps.toFixed(0).padStart(4)} fps ${String(x.frames).padStart(4)} frames ${x.id.startsWith('base') ? '' : `${(base - x.ms) >= 0 ? '−' : '+'}${Math.abs(base - x.ms).toFixed(1)} ms`}`);
-  return `Frame test · ${where}\n${r.about}\n${lines.join('\n')}`;
+  const lines = r.rows.map((x) => `${x.label.padEnd(36)} ${x.frames ? x.ms.toFixed(1).padStart(5) : '    —'} ms ${x.fps.toFixed(0).padStart(3)} fps ${String(x.frames).padStart(4)} fr`
+    + ` · JS ${x.js.toFixed(1).padStart(4)} (Luminati ${x.world.toFixed(1).padStart(4)}, draw calls ${x.draw.toFixed(1).padStart(4)}) ${x.id.startsWith('base') ? '' : `${(base - x.ms) >= 0 ? '−' : '+'}${Math.abs(base - x.ms).toFixed(1)} ms`}`);
+  return `Frame test · ${where}\n${r.about}\nframe ms · fps · frames · JS ms a frame (Luminati's update and draw calls within it; the draw calls alone)\n${lines.join('\n')}`;
 }
