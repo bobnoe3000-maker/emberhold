@@ -24,14 +24,36 @@ What the pack does (studied from its product images; none of its art is in the r
   some depth or detail that i can choose from"*). Each is its sections' squareness, the crown's and chin's curves, its
   width and depth, the jaw drawn in toward the chin, a long jaw or a tall crown, then sculpted: the brow ridge, the eyes
   set in, the nose's bridge, cheekbones and the hollows under them, the lips, the chin's point and cleft, the jaw's
-  corners, the temples, jowls, the back of the skull, a sloped forehead. Oval, heart, square, round, long, diamond, pear,
+  corners, the temples, jowls, the back of the skull, a sloped forehead. The reference head (below), then oval, heart, square, round, long, diamond, pear,
   rugged, gaunt, broad, elfin, brute, noble, cherub, wedge, jowly, hawk, moon, chiselled, dome; the pack's box kept as
   `pack`. Each stays inside KayKit's head, so its helms and hoods and our hair shells still fit (KayKit's long cuts pushed
-  out to clear it). A face's `head` picks one (oval without). Our six noses are six soft bumps (`BUMP`) low, just over
+  out to clear it). A face's `head` picks one (the reference head, `shield`, without). Our six noses are six soft bumps (`BUMP`) low, just over
   the mouth; our six face shapes deform it as they did KayKit's (`SHAPES`); flat ears set back at the eyes' and nose's
   height, or our pointed ones. The board: `node tools/actor-lab/faces-spike.cjs --heads` → `out/faces_heads.png`, each
   bald from the front, three-quarter and turned, and with hair at play's size.
   ![twenty heads](img/faces/heads-board.jpg) (the pack's box, the board before: ![three-quarter](img/faces/spike-head-3q.jpg))
+- **The reference head** (`HEADS.shield`, the default; the owner, 2026-11-12, with a picture of a stylised head: *"None of
+  these match the shape of this ref image. Map this closely and critic pass until you get it right"*; the picture is the
+  owner's and is not in the repo). Mapped in nine passes, each a render beside the reference at its turn (18°), bald and
+  side on, and the silhouette measured (the head's width over its height at 21 heights, chin to crown, its RMS against
+  the reference's):
+
+  | pass | what changed | RMS |
+  |---|---|---|
+  | — | the oval / the pack's box, as they were | 0.060 / 0.112 |
+  | 1 | a flat face plane (`flat`, a soft min on the front), the reference's eyes (small dark ovals with a glint), thick round-ended brows, a wide thin mouth | 0.089 |
+  | 2 | narrower (0.41), a rounder crown, a broader jaw; a ball nose; big ears | 0.030 |
+  | 3 | a squarer crown; the ears lower, with a rim (a C open toward the face); the eyes and brows lowered to the reference's heights, the sockets and brow ridge with them | 0.037 |
+  | 4 | the ears turned to flare forward and stand clear of the hair; the nose a mesh of its own (the skull's grid is too coarse for a round one) | 0.059 |
+  | 5 | the ears in and lower; the crown rounder; the hair cut along its line (`clipTris`: no more steps at the hairline), smooth normals | 0.037 |
+  | 6 | the temples in; the painted head's own short cut (a thick cap, sideburns, a forelock) | 0.036 |
+  | 7 | the picture laid by where a point is, not its angle (a narrow head kept its features squeezed: the mouth half the reference's) | 0.036 |
+  | 8 | a hairline by the angle round the head (`lineRound`: the KayKit blend never reached this flatter front); the forelock two tapered ribbons on the brow; a bigger nose | 0.038 |
+  | 9 | the nape; the nose an oval | 0.037 |
+
+  What's left is the hair's top (the reference's is chunkier, its peak to the front) and the light (the reference is lit
+  from the front; our portraits keep the game's dusky key from the side). The eyes, brows, nose, ears and mouth apply to
+  every head, so the twenty were redrawn with them. ![passes](img/faces/ref-head-passes.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
   a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the
@@ -61,6 +83,8 @@ What the pack does (studied from its product images; none of its art is in the r
   keeps the glint. To do: a lighter brow and an eye rim on dark skin.
 - **The pixel look at play's size** is crisp but a little ragged (no mipmaps); a hand-drawn far picture (the eyes as two
   clean blocks) may read better.
+- **KayKit's long cuts** (long, ponytail, swept) were made for its wider head and sit wide on the narrower reference head;
+  they want painted-head cuts of their own, as the short cut has.
 - **Hats and hoods** cover the eye line on some (the mage's brim): the eye line sits lower than KayKit's; the brims
   may want a little lift.
 - **Perf** is to be measured with `tools/capture/figperf.mjs` (one textured mask a head in place of ~20 merged parts;

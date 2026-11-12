@@ -499,6 +499,7 @@ window.renderPortrait = async (v, o = {}) => {
   const c = await build(v), pw = o.w || PW, ph = o.h || PH, ss = o.ss || PSS;
   pose(c, 'Idle', o.t ?? 0, o.heroic ?? true);
   c.root.rotation.y = THREE.MathUtils.degToRad(o.yaw ?? 22); c.root.updateMatrixWorld(true);
+  if (o.headOnly) c.root.traverse((m) => { if (m.isMesh && !m.userData.face) m.visible = false; });   // (the head alone: a silhouette to measure)
   const head = findNode(c.root, 'head');
   const top = head.localToWorld(new THREE.Vector3(0, 1.08, 0)), chin = head.localToWorld(new THREE.Vector3(0, 0, 0.1));
   const hh = top.y - chin.y, span = hh / (o.head ?? 0.6);                           // the head is ~60 % of the frame's height
@@ -609,7 +610,7 @@ window.renderHeadShapes = async (o = {}) => {
   const W = pad + cols * (cellW + pad), rows = Math.ceil(names.length / cols), H = pad + 30 + rows * (cellH + pad);
   const board = document.createElement('canvas'); board.width = W; board.height = H;
   const x = board.getContext('2d'); x.fillStyle = '#17131e'; x.fillRect(0, 0, W, H);
-  x.fillStyle = '#f0c880'; x.font = '600 18px Georgia, serif'; x.fillText('Twenty heads: front, three-quarter, turned, and with hair at play\'s size (4x)', pad, pad + 18);
+  x.fillStyle = '#f0c880'; x.font = '600 18px Georgia, serif'; x.fillText(`${names.length} heads (1: the reference's): front, three-quarter, turned, and with hair at play's size (4x)`, pad, pad + 18);
   for (let i = 0; i < names.length; i++) {
     const cx0 = pad + (i % cols) * (cellW + pad), cy0 = pad + 30 + Math.floor(i / cols) * (cellH + pad);
     x.fillStyle = '#221c2c'; x.fillRect(cx0, cy0, cellW, cellH);
