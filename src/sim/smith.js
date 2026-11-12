@@ -3,7 +3,7 @@
 // counters.embers in the save) go. No draughts: what keeps a party standing is who's in it.
 //
 // The forge (in town):
-//   upgrade { uid }         +1 a step up to +5 (items.js UP_STEP more on the base stats a step), for
+//   upgrade { uid }         +1 a step up to +5 (items.js UP_STEP more on the base stats a step, UP_TRAIT on the traits), for
 //                           UP_GOLD[n] × item level gold (−10 % for a Deepdelver-fostered hero) and UP_CINDERS[n] cinders (no wood or stone since v1.75)
 //   reforge { uid, aff }    reroll one affix of a Fine or better item: a different kind, rolled fresh at the
 //                           item's level on the REFORGE stream (the item's uid and how often it's been
@@ -34,6 +34,8 @@ import { townOf, COACH } from './coach.js';
 
 export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn };
 export const REFORGE_GOLD = 50, REFORGE_CINDERS = 3;     // × item level, doubling with each reforge of the item
+// a reforged trait rolls 1.0–1.2× its usual size, never under it (v1.76, the owner: "Never a weak roll"; a drop's: 0.8–1.2×)
+export const REFORGE_LO = 1.0;
 export const BUY = 40, STOCK_N = 4, BUYBACK_N = 5;
 export const SELL = { common: 6, fine: 15, rare: 40 };   // × item level (heirlooms aren't sold)
 const hashStr = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
@@ -112,7 +114,7 @@ export function createSmith({ state, bus, getWorld, seed }) {
         const cost = reforgeCost(it), no = short(cost); if (no) return refuse(`Not enough ${no}`);
         pay(cost);
         const rng = mulberry32(streamSeed(seed ^ hashStr(String(it.uid)) ^ Math.imul((it.rf || 0) + 1, 0x9e3779b1), STREAM.REFORGE));
-        it.aff[i] = rollAffix(rng, it.ilv, it.aff.map((a) => a[0]));   // (a different kind from all it has)
+        it.aff[i] = rollAffix(rng, it.ilv, it.aff.map((a) => a[0]), REFORGE_LO);   // (a different kind from all it has, never a weak roll)
         it.rf = (it.rf || 0) + 1;
         bus.emit('forged', { uid: it.uid, what: 'reforge', aff: i }); counters(); gear(); return true;
       }

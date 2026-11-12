@@ -322,10 +322,10 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   function smith(tab) {
     view = 'smith'; if (tab) forgeTab = tab;
     const H = holdings(), sv = (sim.world.services || []).find((q) => q.kind === 'smith');
-    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 8 % to an item's base stats (not its traits).</p>
+    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 20 % to an item's base stats and 10 % to its traits.</p>
       ${H.map(([it, where]) => { const c = upgradeCost(it, sim.state.party[0].origin);
         if (!c) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span></div><button class="btn" disabled>+${UP_MAX} · done</button></div>`;
-        if (gainsAt(it) > UP_MAX) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="sub">Too small a piece to gain from the forge: 8 % of its stats rounds away even at +${UP_MAX}.</span></div><button class="btn" disabled>No gain</button></div>`;
+        if (gainsAt(it) > UP_MAX) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="sub">Too small a piece to gain from the forge: what a step adds rounds away even at +${UP_MAX}.</span></div><button class="btn" disabled>No gain</button></div>`;
         const ok = affords(c); return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="nx">${nextStep(it)}</span><span class="sub">${costWords(c)}</span></div>
         <button class="btn" data-upgrade="${it.uid}" ${ok ? '' : 'disabled'}>Upgrade to +${(it.up || 0) + 1}${ok ? '' : '<small>not enough</small>'}</button></div>`; }).join('') || '<p>Nothing to upgrade.</p>'}`
       : forgeTab === 'reforge' ? `<p class="hint2">Bess rerolls one trait into a different one, at the item's level. Each reforge of the same piece costs double.</p>

@@ -3,8 +3,8 @@
 //
 // An item is plain JSON, rolled once and stored whole:
 //   { uid, base, r, ilv, name, st: { atk: 4, … }, aff: [['crit', 2]], mod?, flav?, up?, rf? }
-// up = the smith's upgrade, +1 to +5 (smith.js): each step is UP_STEP more on the base stats (st),
-// not on the affixes; rf = how many times the smith has reforged it (the next costs double).
+// up = the smith's upgrade, +1 to +5 (smith.js): each step is UP_STEP more on the base stats (st) and UP_TRAIT
+// more on the affixes (v1.76); rf = how many times the smith has reforged it (the next costs double).
 // st = the base's stats at that item level and rarity, a pure function of (base, ilv, r): a load
 // re-derives it (refreshItem), so a formula change reaches old loot the same as new. What was
 // rolled (aff, mod, name, flav) is kept as it fell. aff = rolled affixes (Fine 1, Rare 2);
@@ -24,7 +24,10 @@ export const STAT_LABEL = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', crit: 'C
 export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
 export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // cinders (✦; counters.embers in the save)
-export const UP_MAX = 5, UP_STEP = 0.08;                                     // the smith's +1…+5: +8 % base stats a step (GDD §8)
+// the smith's +1…+5 (GDD §8; v1.76, the owner, asked: "20% and traits too"): +20 % base stats and +10 % traits a step. At 8 %
+// on the base alone a +5 kit held one wave more than none (the right party at 6 in a room one up, 11 → 12); measured at 20 %
+// base alone, 15 waves, and two up 3 → 6, a room three up still winning (5 waves).
+export const UP_MAX = 5, UP_STEP = 0.2, UP_TRAIT = 0.1;
 // what each step costs at the smith (smith.js): gold × item level and cinders (v1.75, the owner: "Drop the wood and stone reqs
 // for upgrades": from +3 it took 8, 12, 16 of each too)
 export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [1, 2, 4, 6, 10];
@@ -216,9 +219,9 @@ export const modText = (m) => (m.k === 'cost' ? `${m.ab} costs ${m.v} less MP` :
 
 /** a fresh roll of one affix at an item level, not one of `taken` (the smith's reforge: smith.js)
  * @param {() => number} rng @param {number} ilv @param {string[]} taken @returns {[string, number]} */
-export function rollAffix(rng, ilv, taken) {
+export function rollAffix(rng, ilv, taken, lo = 0.8) {   // lo: the bottom of its size, × the usual (a reforge's: 1.0, v1.76)
   const keys = Object.keys(AFFIX).filter((k) => !taken.includes(k)), k = pick(rng, keys), [a, b] = AFFIX[k];
-  return [k, round(k, (a + b * ilv) * (0.8 + rng() * 0.4))];
+  return [k, round(k, (a + b * ilv) * (lo + rng() * (1.2 - lo)))];
 }
 
 // an item's stats: base (+ the smith's upgrade on it) + affixes
@@ -227,7 +230,7 @@ export function itemStats(it) {
   // (rounded: on a small piece a step's gain can round away. Rounding up instead let a +5 level-3 kit hold
   // a room three levels up for 300 s, against the balance contract; the forge says when a gain won't show)
   if (up) for (const k of Object.keys(s)) if (s[k] > 0) s[k] = round(k, s[k] * (1 + UP_STEP * up));
-  for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + v) * 10) / 10;
+  for (const [k, v] of it.aff || []) s[k] = Math.round(((s[k] || 0) + (v > 0 ? v * (1 + UP_TRAIT * up) : v)) * 10) / 10;   // (a trait: UP_TRAIT a step)
   return s;
 }
 export const canWear = (m, it) => { const B = BASES[it.base]; return B.cls === 'any' || B.cls === m.cls || (B.also || []).includes(m.cls); };

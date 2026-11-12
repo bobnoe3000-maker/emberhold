@@ -1,6 +1,12 @@
 # Emberfall — Game Design Document
 
-**v1.75 · 2026-11-12 · Plan of record for game design.** v1.75 (§8, the owner: "Drop the wood and stone reqs for
+**v1.76 · 2026-11-12 · Plan of record for game design.** v1.76 (§8, the owner: "Propose a balance increase for upgrades
+and reforges"; asked: "20% and traits too", "Never a weak roll"): a smith's upgrade step adds 20 % to an item's base stats
+(it was 8 %) and 10 % to its traits (none before), so +5 doubles the base and adds half again to the traits; prices are as
+they were. A reforged trait rolls 1.0–1.2× its usual size at the item's level (a drop's 0.8–1.2×), never a weak roll; its
+price still doubles each time. Measured, the right party at 6 with every piece +5 (plain kit, no traits): one level up 11
+waves at +0, 12 at the old step, 15 now; two up 3, 4, 6; three up 2 at the old step, 5 now, the room still winning.
+v1.75 (§8, the owner: "Drop the wood and stone reqs for
 upgrades"): a smith's upgrade costs gold × item level and cinders only (it took 8, 12, 16 wood and stone for +3, +4, +5).
 Wood and stone are still gathered, for nothing at the forge now. v1.74 (§12, the owner: "Offline progress on a lvl 3 room..
 characters went from level 4 to 6 in 2 hours. I would like them to only increase 1 level"; asked, the owner chose half XP

@@ -14,11 +14,11 @@ const town = (gold = 1e6) => { const s = createSim(SEED, undefined, { scene: 'to
 const run = (s, cmd) => { s.commands.push(cmd); s.tick(); };
 const refusals = (s) => { const r = []; s.bus.on('refused', (e) => r.push(e.reason)); return r; };
 
-test('an upgrade: +8 % a step on the base stats (not the traits), its price by step in gold and cinders (no wood or stone, v1.75), to +5', () => {
+test('an upgrade: +20 % a step on the base stats and +10 % on the traits (v1.76), its price by step in gold and cinders (no wood or stone, v1.75), to +5', () => {
   const it = makeItem('sword', 6, 'fine', { uid: 'x', aff: [['crit', 2]] }), base = itemStats(it);
   const at5 = itemStats({ ...it, up: 5 });
-  assert.ok(at5.atk > base.atk && at5.atk <= Math.round(it.st.atk * 1.4) + 1, `${base.atk} → ${at5.atk}`);
-  assert.equal(at5.crit - itemStats({ ...it, up: 0 }).crit, Math.round(it.st.crit * 1.4) - it.st.crit, 'the affix crit is not scaled');
+  assert.ok(at5.atk > base.atk && Math.abs(at5.atk - it.st.atk * 2) <= 1, `${base.atk} → ${at5.atk} (×2 at +5)`);
+  assert.equal(at5.crit, Math.round(((it.st.crit ? Math.round(it.st.crit * 2) : 0) + 2 * 1.5) * 10) / 10, 'the base crit ×2, the trait\'s 2 ×1.5');
   assert.deepEqual([0, 1, 2, 3, 4].map((up) => upgradeCost({ ...it, up })), [0, 1, 2, 3, 4].map((n) => ({ gold: UP_GOLD[n] * 6, cinders: UP_CINDERS[n] })));
   assert.equal(upgradeCost({ ...it, up: UP_MAX }), null);
   const s = town(), w = s.state.party[0].gear.weapon, C = s.state.counters, g0 = C.gold, c0 = C.embers;
@@ -44,6 +44,19 @@ test('a reforge rerolls the chosen trait into a different kind, the same for eve
   assert.deepEqual(ra.aff, rb.aff, 'deterministic'); assert.ok(!['atk', 'def'].includes(ra.aff[0][0]), JSON.stringify(ra.aff)); assert.equal(ra.aff[1][0], 'def');
   assert.equal(g0 - C.gold, reforgeCost({ ilv: 5, rf: 0 }).gold); assert.equal(reforgeCost(ra).gold, 2 * reforgeCost({ ilv: 5, rf: 0 }).gold);
   run(a, { type: 'reforge', uid: 'r1', aff: 9 }); assert.equal(ra.rf, 1, 'no such trait: nothing');
+});
+
+// v1.76 (the owner: "Never a weak roll"): a reforged trait is 1.0–1.2× its usual size at the item's level, never under it
+test('a reforge never rolls a weak trait: each new one at least its usual size for the item level', async () => {
+  const { AFFIX } = await import('../src/sim/items.js');
+  const s = town(), C = s.state.counters; s.state.bag.push(makeItem('ring', 12, 'rare', { uid: 'r2', aff: [['atk', 2], ['def', 2]] }));
+  const it = s.state.bag.at(-1);
+  for (let i = 0; i < 24; i++) {
+    C.gold = 1e12; C.embers = 1e6; run(s, { type: 'reforge', uid: 'r2', aff: i % 2 });
+    const [k, v] = it.aff[i % 2], [a, b] = AFFIX[k], usual = a + b * 12;
+    assert.ok(v >= usual - 0.05 - (k === 'crit' || k === 'dodge' || k === 'hpr' || k === 'mpr' ? 0.05 : 0.5) && v <= usual * 1.2 + 0.5, `${k} ${v} for a usual ${usual.toFixed(2)}`);
+  }
+  assert.equal(it.rf, 24);
 });
 
 test("salvage gives half an upgrade's cinders back; every plain Common goes, upgraded ones stay", () => {
