@@ -1,6 +1,9 @@
 # Emberfall — Game Design Document
 
-**v1.77 · 2026-11-12 · Plan of record for game design.** v1.77 (§8, the owner: "In this balance pass increase embers
+**v1.78 · 2026-11-12 · Plan of record for game design.** v1.78 (the owner: "Thin the Fens trees by 25% too"): the Greywater
+Fens' trees on the land a quarter fewer by crown cover (10,083 → 7,548 tiles of its 240²; 71 → 48 trees), the fen's scatter
+and the willows at the water's edge alike, each on a draw of its own stream (sim/outdoor.js FENS_KEEP); the ring past its edge
+kept whole. v1.77 (§8, the owner: "In this balance pass increase embers
 required"): an upgrade's cinders ×2.5 with the step's gain, +1…+5 at 2, 5, 10, 15, 25 (57 an item to +5; it was 1, 2, 4, 6,
 10 = 23), and a reforge's 6 (it was 3). The right party at 6 earns ~60 cinders an hour (48 from elites, ~12 salvaging its
 drops), so +5 on a piece is about an hour's. Salvage gives back half, as before. v1.76 (§8, the owner: "Propose a balance increase for upgrades

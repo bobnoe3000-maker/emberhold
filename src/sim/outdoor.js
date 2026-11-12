@@ -214,6 +214,7 @@ const TREE_SINGLE = ['pine_1', 'pine_2', 'pine_3', 'pine_4', 'pine_5', 'pine_6',
 const TREE_KEEP = 0.36;   // a draw per tree on the Hollow Vale's land (v1.71): crown cover 19,429 → 14,576 tiles (−25 %), trees 100 → 67; low because a tree let go frees room another pass fills
 const TREE_CLUSTER = ['grove_1', 'grove_2', 'grove_3', 'grove_4', 'grove_5', 'grove_6'];
 // the Fens' (M8, fens critic pass 2): alder carr and willows, low and dark, and the drowned dead
+const FENS_KEEP = 0.55;   // the share of the Fens' trees on the land that stand (v1.78): crown cover 10,083 → 7,548 tiles of its 240² (−25 %); low because a tree let go frees room another fills
 const FENS_CLUSTER = ['carr_1', 'carr_2'], FENS_SINGLE = ['alder_1', 'alder_2', 'alder_3', 'willow_1', 'willow_2', 'dead_1', 'dead_2'];
 const ROCKS = ['rock_F', 'rock_G', 'rock_H'];        // the nature pack's (docs/nature-pack-proposal.md); rock_A..E stay at the barrows
 // The undergrowth (Quaternius' Stylized Nature MegaKit, CC0): LOW is walked through (flowers, grass, ferns, clover,
@@ -229,7 +230,7 @@ const pick = (rng, a) => a[(rng() * a.length) | 0];
 // and along the canal's banks, a willow leaning over the water now and then, a dead tree standing in its shallows. A
 // crown may hang over the water (the scatter's trees can't: their whole footprint must be on land), never over a road,
 // a building or a way in. Its own stream: nothing else on the map moves for it.
-function waterEdge(o, keepOut) {
+function waterEdge(o, keepOut, keep = () => true) {   // (keep: the Fens' thinning, v1.78)
   const rng = mulberry32(streamSeed(o.seed, 4434)), roadish = new Set([G.DIRT, G.COBBLE, G.DECK]);
   const fitsOver = (id, x, y) => { const [x0, y0, x1, y1] = footRect(id, x, y);
     for (let ty = Math.floor(y0); ty <= Math.floor(y1); ty++) for (let tx = Math.floor(x0); tx <= Math.floor(x1); tx++) {
@@ -240,7 +241,7 @@ function waterEdge(o, keepOut) {
   const plant = (x, y) => {
     if (x < 4 || y < 4 || x > o.W - 4 || y > o.H - 4 || keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 20)) return;
     const id = rng() < 0.78 ? pick(rng, ['willow_1', 'willow_2']) : pick(rng, ['dead_1', 'dead_2']);
-    if (fitsOver(id, x, y)) put(o, id, x, y, 'round', 0.35);
+    if (keep() && fitsOver(id, x, y)) put(o, id, x, y, 'round', 0.35);
   };
   for (const q of o.pools) for (let a = rng() * 0.6; a < Math.PI * 2; a += 0.42 + rng() * 0.3) {
     if (rng() > 0.3) continue;
@@ -542,6 +543,9 @@ function buildFens(seed) {
     { x: reedholm[0], y: reedholm[1], id: B('priory'), text: 'Reedholm' },
     { x: salt[0] + 10, y: salt[1] + 9, id: B('ferrystage'), text: 'The Mere Tower · Wenna’s punt', site: 'mere_tower', door: true });   // door: a plaque a tap walks you to (renderer doorAt)
   // the fen's trees: alder carr and willows, low and dark, dead trees standing in the water's edge; never on a road
+  // (v1.78, the owner: "Thin the Fens trees by 25% too": each on the land, and each willow at the water's edge, kept on a draw
+  // of its own stream, as the Vale's (TREE_KEEP); the ring past the edge whole, the Fens' wall)
+  const thinF = mulberry32(streamSeed(o.seed, 4439)), keepFen = () => thinF() < FENS_KEEP;
   // (fens critic pass 2: the Vale's birches and mixed groves read round and cheerful here; the same draws, the Fens' kinds)
   scatter(o, rng, -60, -60, 300, 300, 7, (x, y) => {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 18) || inFrontOf(keepOut, x, y, 26, 14)) return null;
@@ -551,10 +555,10 @@ function buildFens(seed) {
     // thicket's alders and carr on the raised ground. The same draws as before, only the kind they come out as; the thicket at 0.67 of the noise, 0.61 before the pools' edges were planted: cover 23 %)
     const g = groundAt(o, x, y).g, edge = g !== G.MARSH && waterNear(o, x, y, 8);   // (8: a willow's crown is 7 across, and stands back from the water it leans over)
     const id = n > 0.67 ? pick(rng, edge ? ['willow_1', 'willow_2', 'alder_1', 'willow_2', 'dead_1'] : ['alder_1', 'alder_2', 'alder_3', 'carr_1', 'carr_2']) : rng() < (edge ? 0.12 : 0.05) ? pick(rng, ['dead_1', 'dead_2']) : null;
-    return id && /willow|dead/.test(id) && !edge ? null : id;
+    return id && /willow|dead/.test(id) && !edge ? null : id && keepFen() ? id : null;
   });
   forestRing(o, rng, 6, FENS_CLUSTER, FENS_SINGLE);
-  waterEdge(o, keepOut);
+  waterEdge(o, keepOut, keepFen);
   const ways = [mound, lockhall, pools, abbey, reedholm].map((p) => door(p, 8));
   undergrowth(o, -10, -10, 250, 250, 4, (x, y) => {
     if (keepOut.some(([kx, ky]) => hypot(x - kx, y - ky) < 12) || ways.some(([kx, ky]) => hypot(x - kx, y - ky) < 8)) return -1;
