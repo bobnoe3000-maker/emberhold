@@ -23,7 +23,7 @@ test('an upgrade: +20 % a step on the base stats and +10 % on the traits (v1.76)
   assert.equal(upgradeCost({ ...it, up: UP_MAX }), null);
   const s = town(), w = s.state.party[0].gear.weapon, C = s.state.counters, g0 = C.gold, c0 = C.embers;
   for (let i = 0; i < 6; i++) run(s, { type: 'upgrade', uid: w.uid });
-  assert.equal(w.up, 5); assert.equal(g0 - C.gold, UP_GOLD.reduce((a, b) => a + b, 0) * w.ilv); assert.equal(c0 - C.embers, 23);
+  assert.equal(w.up, 5); assert.equal(g0 - C.gold, UP_GOLD.reduce((a, b) => a + b, 0) * w.ilv); assert.equal(c0 - C.embers, 57);
   assert.equal(C.wood, 500); assert.equal(C.stone, 500, 'no wood or stone taken');
 });
 
@@ -61,11 +61,11 @@ test('a reforge never rolls a weak trait: each new one at least its usual size f
 
 test("salvage gives half an upgrade's cinders back; every plain Common goes, upgraded ones stay", () => {
   const s = town(), C = s.state.counters;
-  const up = { ...makeItem('dagger', 4, 'common', { uid: 'u1' }), up: 3 };   // 1 + 2 + 4 cinders went in
+  const up = { ...makeItem('dagger', 4, 'common', { uid: 'u1' }), up: 3 };   // 2 + 5 + 10 cinders went in
   s.state.bag.push(up, makeItem('dagger', 4, 'common', { uid: 'c1' }), makeItem('hood', 4, 'common', { uid: 'c2' }), makeItem('ring', 4, 'fine', { uid: 'f1', aff: [['hp', 5]] }));
   const e0 = C.embers; run(s, { type: 'salvageCommons' });
   assert.deepEqual(s.state.bag.map((it) => it.uid), ['u1', 'f1']); assert.equal(C.embers - e0, 2);
-  assert.equal(salvageOf(up), 1 + 3); run(s, { type: 'salvage', uid: 'u1' }); assert.equal(C.embers - e0, 2 + 4);
+  assert.equal(salvageOf(up), 1 + 8); run(s, { type: 'salvage', uid: 'u1' }); assert.equal(C.embers - e0, 2 + 9);
 });
 
 test("the shop: a day's stock at the hero's level, bought once each; sell for gold (not heirlooms), buy back what you sold", () => {

@@ -30,7 +30,9 @@ export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // 
 export const UP_MAX = 5, UP_STEP = 0.2, UP_TRAIT = 0.1;
 // what each step costs at the smith (smith.js): gold × item level and cinders (v1.75, the owner: "Drop the wood and stone reqs
 // for upgrades": from +3 it took 8, 12, 16 of each too)
-export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [1, 2, 4, 6, 10];
+// (v1.77, the owner: "increase embers required": ×2.5 with the step's 2.5× gain, from 1, 2, 4, 6, 10 = 23 an item to 57; the right
+// party at 6 earns ~60 an hour, 48 from elites and ~12 salvaging its drops, so +5 on a piece is about an hour's cinders)
+export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [2, 5, 10, 15, 25];
 /** the cinders an item's upgrades took @param {any} it */
 export const cindersIn = (it) => UP_CINDERS.slice(0, Math.max(0, Math.min(UP_MAX, it.up || 0))).reduce((x, y) => x + y, 0);
 /** what salvaging it gives: its rarity's cinders and half of what its upgrades took @param {any} it */

@@ -33,7 +33,7 @@ import { ORIGIN_EDGE } from './party.js';
 import { townOf, COACH } from './coach.js';
 
 export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn };
-export const REFORGE_GOLD = 50, REFORGE_CINDERS = 3;     // × item level, doubling with each reforge of the item
+export const REFORGE_GOLD = 50, REFORGE_CINDERS = 6;     // gold × item level, doubling with each reforge of the item (cinders: 3 until v1.77)
 // a reforged trait rolls 1.0–1.2× its usual size, never under it (v1.76, the owner: "Never a weak roll"; a drop's: 0.8–1.2×)
 export const REFORGE_LO = 1.0;
 export const BUY = 40, STOCK_N = 4, BUYBACK_N = 5;
