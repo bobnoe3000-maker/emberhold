@@ -551,7 +551,7 @@ window.renderFaceBoard = async (o = {}) => {
 // and both at the size a head is in play (a 56 px figure's head is ~18 px), drawn up 4× so the pixels show
 window.faceSpikeDebug = async (f) => {
   const K = await import('./faces.js'), pic = K.facePictureOf(f).toDataURL('image/png');
-  const big = await window.renderPortrait({ id: 'dbg', model: 'Rogue', show: [], face: f }, { w: 300, h: 340, ss: 2, yaw: 0 });
+  const big = await window.renderPortrait({ id: 'dbg', model: 'Rogue', show: [], face: f }, { w: 300, h: 340, ss: 2, yaw: 30 });
   return { pic, big };
 };
 window.renderFaceSpike = async (o = {}) => {

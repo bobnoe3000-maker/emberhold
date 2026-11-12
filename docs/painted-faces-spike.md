@@ -19,11 +19,16 @@ What the pack does (studied from its product images; none of its art is in the r
 
 ## What the spike builds (`tools/actor-lab/faces.js`, *the painted head*)
 
-- **The skull** (`eggSkull`, `eggAt`): an egg of our own fitted inside KayKit's head (x ±0.55, chin −0.01 to crown 1.05,
-  z −0.6…0.5), so its helms and hoods and our hair shells still fit; a broad round jaw and full cheeks; our six noses as
-  six bumps (`BUMP`); our six face shapes deform it as they did KayKit's (`SHAPES`); small round ears, or our pointed ones.
+- **The skull** (`eggSkull`, `eggAt`): the pack's head shape (the owner, 2026-11-12: *"Match this head shape"*) — a
+  rounded box, not an egg: its sections superellipses (across 2.9, the crown's curve 2.3, the chin's 3.4), so the face is
+  a flat front turning sharply into flat sides, the crown deep behind, the jaw a little in from the cheeks (0.8) and wide
+  almost to the bottom, ending in a broad flat-bottomed chin; a little taller than wide (x ±0.49, chin −0.01 to crown
+  1.05). Fitted inside KayKit's head, so its helms and hoods and our hair shells still fit (KayKit's long cuts pushed out
+  to clear the fuller crown). Our six noses are six soft bumps (`BUMP`) low, just over the mouth; our six face shapes
+  deform it as they did KayKit's (`SHAPES`); flat ears of a fair size, set back at the eyes' and nose's height, or our
+  pointed ones. ![three-quarter](img/faces/spike-head-3q.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
-  a hair (0.006) proud of it, its picture's u and v across it.
+  a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.45, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the
   pack's proportions: the eye line low, big dark eyes (an iris ring in its colour, a pupil, a glint and a small second one),
   thick tapered brows in the hair's colour, a short mouth line, a hint of the lower lip. Transparent between the features
