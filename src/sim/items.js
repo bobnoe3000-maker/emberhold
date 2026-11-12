@@ -25,8 +25,9 @@ export const RARITIES = ['common', 'fine', 'rare', 'heirloom'];
 const RMULT = { common: 1, fine: 1.15, rare: 1.3, heirloom: 1.45 };
 export const SALVAGE = { common: 1, fine: 2, rare: 5, heirloom: 12 };        // cinders (✦; counters.embers in the save)
 export const UP_MAX = 5, UP_STEP = 0.08;                                     // the smith's +1…+5: +8 % base stats a step (GDD §8)
-// what each step costs at the smith (smith.js): gold × item level, cinders, and from +3 wood and stone each
-export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [1, 2, 4, 6, 10], UP_MATS = [0, 0, 8, 12, 16];
+// what each step costs at the smith (smith.js): gold × item level and cinders (v1.75, the owner: "Drop the wood and stone reqs
+// for upgrades": from +3 it took 8, 12, 16 of each too)
+export const UP_GOLD = [30, 60, 120, 240, 480], UP_CINDERS = [1, 2, 4, 6, 10];
 /** the cinders an item's upgrades took @param {any} it */
 export const cindersIn = (it) => UP_CINDERS.slice(0, Math.max(0, Math.min(UP_MAX, it.up || 0))).reduce((x, y) => x + y, 0);
 /** what salvaging it gives: its rarity's cinders and half of what its upgrades took @param {any} it */

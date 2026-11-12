@@ -15,7 +15,7 @@ const SERVICES = {
   },
   smith: {
     label: 'Smith', blurb: 'The forge: upgrade your gear, reforge its traits, and salvage what you can’t use.',
-    actions: [['Upgrade', '+1 to +5 at the forge · gold, cinders, wood, stone'], ['Reforge', 'reroll one trait on a Fine or better piece'], ['Salvage', 'turn gear you won’t use into cinders']],
+    actions: [['Upgrade', '+1 to +5 at the forge · gold and cinders'], ['Reforge', 'reroll one trait on a Fine or better piece'], ['Salvage', 'turn gear you won’t use into cinders']],
     icon: '<path d="M3 9h11l3-3h4v3l-3 2v2H9l-2 3H5l1-3H3z"/>',
   },
   tavern: {
@@ -305,7 +305,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const upName = (it) => `${esc(it.name)}${it.up ? ` +${it.up}` : ''}`;
   // name (in its rarity's colour, with the word), slot, who wears it or that it's in the bag
   const itemHead = (it, where, n = 1) => `<b style="color:${RC[it.r]}">${upName(it)}${n > 1 ? `<span class="n">×${n}</span>` : ''}</b><em>${RW[it.r]} · ${SLOT_LABEL[BASES[it.base].slot]} · item level ${it.ilv}</em><span class="sub">${where}</span>`;
-  const purse = () => { const C = sim.state.counters; return `<div class="purse">You have <b>${C.gold || 0}</b> gold · <b>✦ ${C.embers || 0}</b> cinders · <b>${C.wood || 0}</b> wood · <b>${C.stone || 0}</b> stone</div>`; };
+  const purse = () => { const C = sim.state.counters; return `<div class="purse">You have <b>${C.gold || 0}</b> gold · <b>✦ ${C.embers || 0}</b> cinders</div>`; };   // (no wood or stone at the forge since v1.75)
   const costWords = (c) => [`${c.gold} gold`, c.cinders ? `✦ ${c.cinders}` : '', c.wood ? `${c.wood} wood` : '', c.stone ? `${c.stone} stone` : ''].filter(Boolean).join(' · ');
   const affords = (c) => { const C = sim.state.counters; return (C.gold || 0) >= c.gold && (C.embers || 0) >= (c.cinders || 0) && (C.wood || 0) >= (c.wood || 0) && (C.stone || 0) >= (c.stone || 0); };
   const tabs = (attr, cur, list) => `<div class="subtabs" role="tablist">${list.map(([k, l, n]) => `<button role="tab" aria-selected="${cur === k}" data-${attr}="${k}" class="${cur === k ? 'on' : ''}">${l}${n !== undefined ? `<small>${n}</small>` : ''}</button>`).join('')}</div>`;
@@ -322,7 +322,7 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   function smith(tab) {
     view = 'smith'; if (tab) forgeTab = tab;
     const H = holdings(), sv = (sim.world.services || []).find((q) => q.kind === 'smith');
-    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 8 % to an item's base stats (not its traits). From +3 it takes wood and stone too.</p>
+    const body = forgeTab === 'upgrade' ? `<p class="hint2">Each step adds 8 % to an item's base stats (not its traits).</p>
       ${H.map(([it, where]) => { const c = upgradeCost(it, sim.state.party[0].origin);
         if (!c) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span></div><button class="btn" disabled>+${UP_MAX} · done</button></div>`;
         if (gainsAt(it) > UP_MAX) return `<div class="merc"><div class="who">${itemHead(it, where)}<span>${statLine(it)}</span><span class="sub">Too small a piece to gain from the forge: 8 % of its stats rounds away even at +${UP_MAX}.</span></div><button class="btn" disabled>No gain</button></div>`;

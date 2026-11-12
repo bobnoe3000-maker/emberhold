@@ -4,7 +4,7 @@
 //
 // The forge (in town):
 //   upgrade { uid }         +1 a step up to +5 (items.js UP_STEP more on the base stats a step), for
-//                           UP_GOLD[n] × item level gold (−10 % for a Deepdelver-fostered hero), UP_CINDERS[n] cinders and, from +3, wood and stone
+//                           UP_GOLD[n] × item level gold (−10 % for a Deepdelver-fostered hero) and UP_CINDERS[n] cinders (no wood or stone since v1.75)
 //   reforge { uid, aff }    reroll one affix of a Fine or better item: a different kind, rolled fresh at the
 //                           item's level on the REFORGE stream (the item's uid and how often it's been
 //                           reforged), so it's the same for everyone who does the same; each reforge of
@@ -26,13 +26,13 @@
 // 'traded' { what: 'buy' | 'sell' | 'buyBack', uid, gold }.
 
 import { mulberry32, streamSeed, STREAM } from './rng.js';
-import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, UP_MATS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS, makeItem, isUsable, SCROLL_PRICE } from './items.js';
+import { BASES, SALVAGE, UP_MAX, UP_GOLD, UP_CINDERS, rollItem, rollAffix, refreshItem, salvageOf, cindersIn, CLASS_IDS, makeItem, isUsable, SCROLL_PRICE } from './items.js';
 import { bagStacks, BAG_SIZE } from './loot.js';
 import { DAY_S } from './heroes.js';
 import { ORIGIN_EDGE } from './party.js';
 import { townOf, COACH } from './coach.js';
 
-export { UP_GOLD, UP_CINDERS, UP_MATS, salvageOf, cindersIn };
+export { UP_GOLD, UP_CINDERS, salvageOf, cindersIn };
 export const REFORGE_GOLD = 50, REFORGE_CINDERS = 3;     // × item level, doubling with each reforge of the item
 export const BUY = 40, STOCK_N = 4, BUYBACK_N = 5;
 export const SELL = { common: 6, fine: 15, rare: 40 };   // × item level (heirlooms aren't sold)
@@ -41,11 +41,11 @@ const hashStr = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) 
 export const SHOPKEEP = { thornwick: 'Wendel', saltmere: 'Pim' };
 
 /** the next upgrade's price, or null at +5; a Deepdelver-fostered hero's gold is 10 % less (ORIGIN_EDGE)
- * @param {any} it @param {string} [origin] the hero's @returns {{ gold: number, cinders: number, wood: number, stone: number } | null} */
+ * @param {any} it @param {string} [origin] the hero's @returns {{ gold: number, cinders: number } | null} */
 export function upgradeCost(it, origin) {
   const n = it.up || 0; if (n >= UP_MAX) return null;
   const e = origin ? ORIGIN_EDGE[origin] : null, off = e && e.kind === 'smithDiscount' ? e.value : 0;
-  return { gold: Math.round(UP_GOLD[n] * it.ilv * (1 - off)), cinders: UP_CINDERS[n], wood: UP_MATS[n], stone: UP_MATS[n] };
+  return { gold: Math.round(UP_GOLD[n] * it.ilv * (1 - off)), cinders: UP_CINDERS[n] };
 }
 /** the next reforge's price @param {any} it */
 export const reforgeCost = (it) => ({ gold: REFORGE_GOLD * it.ilv * (1 << Math.min(10, it.rf || 0)), cinders: REFORGE_CINDERS });

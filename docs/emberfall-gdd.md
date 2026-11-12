@@ -1,6 +1,8 @@
 # Emberfall — Game Design Document
 
-**v1.74 · 2026-11-12 · Plan of record for game design.** v1.74 (§12, the owner: "Offline progress on a lvl 3 room..
+**v1.75 · 2026-11-12 · Plan of record for game design.** v1.75 (§8, the owner: "Drop the wood and stone reqs for
+upgrades"): a smith's upgrade costs gold × item level and cinders only (it took 8, 12, 16 wood and stone for +3, +4, +5).
+Wood and stone are still gathered, for nothing at the forge now. v1.74 (§12, the owner: "Offline progress on a lvl 3 room..
 characters went from level 4 to 6 in 2 hours. I would like them to only increase 1 level"; asked, the owner chose half XP
 offline over a slower curve for all play): while the time away is played through, a foe slain pays half its XP
 (sim/battle.js AWAY_XP 0.5); the level curve and live play are as they were. Measured, the right party at 4 in a level-3

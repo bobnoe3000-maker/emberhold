@@ -1,12 +1,12 @@
 // The forge and the shop (GDD §8 v1.13, sim/smith.js): upgrades +1…+5 on base stats for gold, cinders and
-// (from +3) wood and stone; a reforge rerolls one affix into a different kind, the same for everyone;
+// (no wood or stone since v1.75); a reforge rerolls one affix into a different kind, the same for everyone;
 // salvage gives back half an upgrade's cinders; the shop's day stock, selling and buying back; cinders from
 // elites and bosses; every command checked (the town, the purse, the bag) and kept in the save.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSim } from '../src/sim/core.js';
 import { makeItem, itemStats, UP_MAX } from '../src/sim/items.js';
-import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, shopStock, UP_GOLD, UP_CINDERS, UP_MATS, BUYBACK_N } from '../src/sim/smith.js';
+import { upgradeCost, reforgeCost, salvageOf, sellPrice, buyPrice, shopStock, UP_GOLD, UP_CINDERS, BUYBACK_N } from '../src/sim/smith.js';
 import { ELITE_CINDERS, BOSS_CINDERS } from '../src/sim/battle.js';
 
 const SEED = 20260807;
@@ -14,17 +14,17 @@ const town = (gold = 1e6) => { const s = createSim(SEED, undefined, { scene: 'to
 const run = (s, cmd) => { s.commands.push(cmd); s.tick(); };
 const refusals = (s) => { const r = []; s.bus.on('refused', (e) => r.push(e.reason)); return r; };
 
-test('an upgrade: +8 % a step on the base stats (not the traits), its price by step, wood and stone from +3, to +5', () => {
+test('an upgrade: +8 % a step on the base stats (not the traits), its price by step in gold and cinders (no wood or stone, v1.75), to +5', () => {
   const it = makeItem('sword', 6, 'fine', { uid: 'x', aff: [['crit', 2]] }), base = itemStats(it);
   const at5 = itemStats({ ...it, up: 5 });
   assert.ok(at5.atk > base.atk && at5.atk <= Math.round(it.st.atk * 1.4) + 1, `${base.atk} → ${at5.atk}`);
   assert.equal(at5.crit - itemStats({ ...it, up: 0 }).crit, Math.round(it.st.crit * 1.4) - it.st.crit, 'the affix crit is not scaled');
-  assert.deepEqual([0, 1, 2, 3, 4].map((up) => upgradeCost({ ...it, up })), [0, 1, 2, 3, 4].map((n) => ({ gold: UP_GOLD[n] * 6, cinders: UP_CINDERS[n], wood: UP_MATS[n], stone: UP_MATS[n] })));
+  assert.deepEqual([0, 1, 2, 3, 4].map((up) => upgradeCost({ ...it, up })), [0, 1, 2, 3, 4].map((n) => ({ gold: UP_GOLD[n] * 6, cinders: UP_CINDERS[n] })));
   assert.equal(upgradeCost({ ...it, up: UP_MAX }), null);
   const s = town(), w = s.state.party[0].gear.weapon, C = s.state.counters, g0 = C.gold, c0 = C.embers;
   for (let i = 0; i < 6; i++) run(s, { type: 'upgrade', uid: w.uid });
   assert.equal(w.up, 5); assert.equal(g0 - C.gold, UP_GOLD.reduce((a, b) => a + b, 0) * w.ilv); assert.equal(c0 - C.embers, 23);
-  assert.equal(C.wood, 500 - 36); assert.equal(C.stone, 500 - 36);
+  assert.equal(C.wood, 500); assert.equal(C.stone, 500, 'no wood or stone taken');
 });
 
 test('upgrades and reforges only in town, and only when you can pay; nothing changes otherwise', () => {
