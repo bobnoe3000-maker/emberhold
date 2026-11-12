@@ -502,22 +502,35 @@ Maudry wipes a mug that was already clean. "Something on your mind, {hero_name}?
 
 ## 8. The Journal (player log window)
 
-**Implemented (M4 slice 2):**
-- `src/ui/journal.js` is the window, opened from the book button under the compass or by
-  tapping the tracker. It has two tabs:
-  - **Active:** the kind badge, title, giver and level window, the current step text (or
-    "go back to …"), each objective with a bar and a count, the reward, **Track** and
-    **Abandon**;
-  - **Completed:** the title, a closing line and what it earned.
+**Implemented (M4 slice 2; reorganised 2026-11-12, the owner: "at the top tabs - Main, Secondary, and Chronicle -
+clicking on each then displays the additional tabs/filters - active, done"):**
+- `src/ui/journal.js` is the window, opened from the book button under the compass or by tapping the tracker (which
+  opens it on the tracked quest, its tab chosen and the quest open). Three levels, never mixed:
+  - **Main · Side · Chronicle** across the top, each with its count under it (*chapter 5*, *5 · 1 ready*, *1 of 20*);
+  - **Active · Done** under Main and Side (each tab keeps its own), *Found* under the Chronicle;
+  - under Side, once there are five or more to sort, chips for the kinds present (*All · Errands · Bounties · Trials
+    · Companions · Board*).
+- **A quest is a compact row:** a *Ready* or *Tracked* badge, the title, kind · giver · level (skulls for a board
+  job), a bar for the objective it's on, and a 44 px pin to track it. Tapped open: why it was given (the summary), the
+  step (*Now:*), every objective with a bar, the reward, **Track** and **Abandon** (side quests only; asked again
+  inline). A finished one opens on its closing line.
+- **Side, Active** lists the ones to hand in first, then the tracked one, then by level; **Done** the last finished
+  first (`sideOrder`).
+- **Main, Active** is the story as a track, by act (*Act I · The Hollow Vale*, *Act II · The Greywater Fens*): the
+  chapters told before the last folded into one line (*Chapters 1–3 told · see Done*), the last told, the one in hand
+  (or what's needed to be given it: `storystatus.js`, content/story.json), the next one locked with the level it
+  opens at, *and N more chapters after it*; then, while no chapter's in hand, what's still open where the company
+  stands. **Main, Done** lists the chapters told, the last first.
+- **The Chronicle**: the lamps and souls count, then each set with *n of m found* and a bar; found fragments in
+  full, missing ones by where they were lost.
 - The tracker line sits just above the party cards (and above the town's service bar) and shows
   the tracked quest's title and its counts. It used to sit under the top HUD, where it covered the
   minimap; the compass's walk chip stacks above it.
 - Toasts: *Quest accepted*, each objective step (*Waves held … 2/4*), *Quest complete · go
   back to …*, and the reward.
-- The Chronicle tab shipped with the fragments (§7). The Available and Discoveries tabs come with
-  their systems. (Completed is labelled *Done* so three tabs fit on a phone.)
+- The Chronicle tab shipped with the fragments (§7). Available and Discoveries come with their systems.
 
-A bottom sheet with tabs, opened from a book icon under the minimap and from the party
+The original plan (the shipped layout above supersedes its tabs): a bottom sheet with tabs, opened from a book icon under the minimap and from the party
 card's menu:
 
 | Tab | Content |

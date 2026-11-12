@@ -76,3 +76,11 @@ function trialLeads(status, lv) {
     .map((id) => { const d = QUESTS[id]; return { id: 'trial', cls: d.trial, giver: d.giver, town: LANDS[(NPCS[d.giver] || d).region || 'vale'].town }; });
 }
 
+/** the side quests in the order the Journal lists them: active, the ones to hand in first, then the tracked one, then
+ * by level (the lowest first); done, the last finished first (the Journal, quest-lore-system §8; state.quests keeps the order they were taken in)
+ * @template {[string, { st: number }]} E @param {E[]} list @param {'active' | 'done'} filter @param {string | null} tracked
+ * @param {(id: string) => number} level @returns {E[]} */
+export function sideOrder(list, filter, tracked, level) {
+  if (filter === 'done') return list.slice().reverse();
+  return list.slice().sort(([a, qa], [b, qb]) => (Number(qb.st === QS.READY) - Number(qa.st === QS.READY)) || (Number(b === tracked) - Number(a === tracked)) || (level(a) - level(b)));
+}
