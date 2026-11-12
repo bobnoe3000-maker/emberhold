@@ -1,6 +1,6 @@
 # Emberfall — Game Design Document
 
-**v1.80 · 2026-11-12 · Plan of record for game design.** v1.80 (§6.2, §5.1; the owner: "im getting notifications that companions not in my party (benched) are leveling up - they should not be"): **the bench earns no XP.** Only the party in the field gains from fights and quests; a benched companion levels only on the road, by an expedition (§6.3), which is sent for that. The bench still draws half wage. v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
+**v1.81 · 2026-11-12 · Plan of record for game design.** v1.81 (§7.1; the owner: "The ~10% attack and defence penalty per level you're under a foe - we are dropping this entirely"): **no penalty for a foe above the hero's level**; v1.69's 10 % a level of ATK and DEF is gone (battle.js), and a room three up still defeats the right party, in 7½ minutes rather than 5. v1.80 (§6.2, §5.1; the owner: "im getting notifications that companions not in my party (benched) are leveling up - they should not be"): **the bench earns no XP.** Only the party in the field gains from fights and quests; a benched companion levels only on the road, by an expedition (§6.3), which is sent for that. The bench still draws half wage. v1.79 (§6.1, the owner: "Ok lets incorporate this into the game",
 after the painted-faces spike, docs/painted-faces-spike.md): every face is the **painted head** (a sculpted skull, the
 whole face one painted picture on it: small dark eyes with a glint, thick brows, a ball nose, big ears, a wider jaw), the
 hero's, the company's and the townsfolk's, in play, in the previews and in the baked portraits; two new parts of a
@@ -1107,21 +1107,10 @@ about level 17 a long round paid more levels than playing for the same four hour
 | A party with no healer, level 6+ | Worn down on the first climb, before the top (v1.69: within 7½ minutes, before wave 20; was 5 minutes, when the top was wave 18) | Composition matters. |
 | Any party, a room 3 levels up | Defeated | |
 
-**Under the foe's level (v1.69).** The owner: *"A 10% attack and defense penalty to player and party companions for
-each level under the main player only is under vs their targets NPC foes level."*
-- **The gap** is the foe's level less the hero's (the main character's). A companion's own level doesn't count: one
-  levelled past the hero still pays the hero's gap.
-- **Each level of the gap costs 10 % ATK and DEF** for every member:
-  - ATK on their blows against that foe;
-  - DEF against that foe's blows.
-- **The scale:** 0.9 at one level up, 0.7 at three, nothing at ten (a blow still does 1).
-- **No penalty, and no bonus,** for a foe at or under the hero's level.
-- **Where it applies:** in the sim (`battle.js` `underBy`, applied in `resolve`). A boss's fixed-damage mechanics are
-  untouched.
-- **Measured:** the same level-6 party against the same level-9 foes lands its blows at 0.70 of what it does with no gap
-  (`test/underlevel.test.mjs`).
-- **The contract still holds.** A room three up fell sooner already; gear still outlasts a level-1 kit two up, since both
-  pay the same gap.
+**Under the foe's level: none (v1.81).** v1.69 cut every member's ATK and DEF 10 % a level a foe stood above the hero;
+the owner dropped it (2026-11-12: *"we are dropping this entirely"*). A foe's own level is the whole of its edge: a room
+three up still defeats the right party, later than with the cut (wave 4–12, 107–318 s, over 4–5 waves and 108–160 s), so
+the contract's visit for it is 7½ minutes, as the no-healer party's.
 
 **Why companions help:**
 - The wave is the room's, the same for a lone hero and a party of three (it had grown with the

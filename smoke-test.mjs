@@ -190,8 +190,9 @@ console.log('the right party holds same-level rooms (L3/6/9):', rightOk, right.m
 const noHeal = [20260807, 777].map((seed) => roomVisit({ seed, classes: ['fighter', 'rogue', 'mage'], lv: 6, secs: 450 }));
 const noHealOk = noHeal.every((v) => v.defeated && v.waves < 20);
 console.log('a party with no healer is worn down at L6:', noHealOk, noHeal.map(show).join(', '));
-// 5. a room three levels up defeats even the right party
-const up3 = [roomVisit({ classes: FRC, lv: 6, rl: 9 }), roomVisit({ classes: FRC, lv: 9, rl: 12 })];
+// 5. a room three levels up defeats even the right party, within the visit the no-healer party has (GDD v1.81: with no
+// penalty for a foe above the hero, the level-9 party in a level-12 room goes down at 318 s, wave 12; it had at 154 s)
+const up3 = [roomVisit({ classes: FRC, lv: 6, rl: 9, secs: 450 }), roomVisit({ classes: FRC, lv: 9, rl: 12, secs: 450 })];
 const up3Ok = up3.every((v) => v.defeated);
 console.log('a room three levels up defeats the right party:', up3Ok, up3.map(show).join(', '));
 // 6. companions never make a room harder (the wave is the room's) and a party member earns 80 %+ of a lone hero's XP a minute (a room two below, where solo is short-lived too)

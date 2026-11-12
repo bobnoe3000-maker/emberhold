@@ -109,11 +109,6 @@ export const waveSize = (lvl) => (lvl <= 3 ? 2 : Math.min(5, 1 + Math.floor(lvl 
 // room (33 waves at 3 against 24 in a large one, 23 at 6 against 17).
 export const SIZE_CAP = { small: 4 };
 export const PREMIUM = 0.05;
-/** a party's ATK and DEF against a foe above the hero's level: this much less a level of the gap (GDD §7, v1.69: resolve) */
-export const UNDER_K = 0.1;
-/** what's left of a member's ATK and DEF against a foe of foeLvl, the hero at heroLvl: 1 at or under it, 0.9 one up, … 0
- * ten up @param {number} heroLvl @param {number} foeLvl */
-export const underBy = (heroLvl, foeLvl) => { const gap = (foeLvl || 1) - (heroLvl || 1); return gap > 0 ? Math.max(0, 1 - UNDER_K * gap) : 1; };
 // The tide (GDD §7.1): each wave of a visit is `step` tougher than the last (HP and ATK), up to a
 // top (`cap`: +100 % in an ordinary room, at wave 20: a nineteenth a wave; the owner, 2026-11-11: "Room waves should be
 // 20 to reach foes at +100% not 18"). A wave at the top is followed by one back at the start,
@@ -638,18 +633,11 @@ export function createBattle({ state, bus, getWorld, seed, isWalkable, onDefeat,
   const hexed = (o) => o.hex && o.hex.t > 0;
   const hexAtk = (e) => (hexed(e) ? { ...e, atk: e.atk * (1 - e.hex.k) } : e);
   const hexDef = (e) => (hexed(e) ? { ...e, def: e.def * (1 - e.hex.k) } : e);
-  // Under a foe's level (GDD §7, v1.69; the owner, 2026-11-11: "A 10% attack and defense penalty to player and party
-  // companions for each level under the main player only is under vs their targets NPC foes level"): every member, the
-  // hero and the companions alike, strikes a foe above the hero's level at UNDER_K less ATK a level of the gap, and takes
-  // its blows at UNDER_K less DEF a level; at the gap's tenth level there's nothing left (a blow still does 1). The
-  // hero's level alone sets the gap: a companion levelled past him pays the hero's. A foe at or below it, nothing.
-  const underK = (foeLvl) => { const h = state.party.find((m) => m.main) || state.party[0]; return underBy(h && h.level, foeLvl); };
   function resolve(att, def, power, bonusCrit = 0, critMul = 1, sure = false) {   // (sure: a crit that can't miss, Shadowstep's)
     if (!sure && rng() * 100 < Math.min(50, def.dodge)) return { miss: true };
-    const partyHits = !!att.src && !def.party, foeHits = !!def.party && !att.src;
-    const dDef = foeHits ? def.def * underK(att.lvl) : def.def;   // (struck by a foe above the hero: DEF the less)
-    const lvl = att.lvl || att.level || 1, mit = dDef / (dDef + 25 + 5 * lvl);
-    if (partyHits) power *= edgeOn(att.src, def) * underK(def.lvl);   // (a party member's blow on a foe: its passives' edge; ATK the less against one above the hero)
+    const partyHits = !!att.src && !def.party;
+    const lvl = att.lvl || att.level || 1, mit = def.def / (def.def + 25 + 5 * lvl);
+    if (partyHits) power *= edgeOn(att.src, def);   // (a party member's blow on a foe: its passives' edge)
     let dmg = Math.max(1, att.atk * power * (1 - mit));
     const crit = rng() * 100 < Math.min(60, att.crit + bonusCrit) || sure;
     if (crit) dmg *= 1.75 * critMul;
