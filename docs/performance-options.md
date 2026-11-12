@@ -56,6 +56,20 @@ painted heads 28,000 more than KayKit's. And the pixels: Luminati draws the main
 down when the GPU's timer says a frame is slow, **never acts on iOS** (no timer queries in Safari): the phone draws every
 frame at the whole budget, then the shadow map and the post passes (bloom's chain, the depth of field) over it.
 
+**The owner's phone, measured by the Frame test** (2026-11-12, Thornwick's square at dusk, iPhone, *Apple GPU*, the menu's
+Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow 2048, 16 lamp lights):
+- **First run:** 28 ms as it was, 30 ms at the end; no piece alone moved it more than ~3 ms (post passes off, no lamp
+  lights, shadows off, people hidden: 25–27 ms), within that drift.
+- **Second run** (with the JavaScript's share): 25 ms as it was (40 fps), **JS 5.6 ms a frame** (Luminati's update and
+  draw calls 5.1, the draw calls alone 3.2); **nothing drawn: 17 ms** (59 fps, the screen's 60 cap), and Luminati not
+  drawing the same. Each piece alone: 0–2 ms (post passes off and no lamp lights 2, bloom, shadows off, the ground's
+  edges, the trees round the map 1; depth of field, antialiasing, shadow 1024, 8 lamps, the grass, the land round the
+  map, the people 0).
+- **So:** the GPU is the limit, not the JavaScript, and its cost is spread over every piece of the picture, none of which
+  is the frame alone. The frame is a little over 16.7 ms of GPU work, so it misses every other vsync (25 ms, 40 fps);
+  some 3–4 ms saved together should hold 60. The next run times combinations, with the mean frame time and the share of
+  frames at 60 (a median rounded to a millisecond hides a shift between 17 and 33 ms frames).
+
 ## Done
 
 - **The painted head built for play** (`tools/actor-lab/faces.js` `LOD`; `world.js` builds every figure in the world with
