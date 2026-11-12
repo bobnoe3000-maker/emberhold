@@ -1,3 +1,3 @@
 Built by tools/render3d/build.mjs from Luminati 80e1aa6011159db7b88d52637d4b1112b1450ffa (https://gitlab.com/stubborn-hug/lumina.git, MIT: LUMINATI-LICENSE.txt) and Emberfall's
 tools/render3d/world.js. Do not edit: rebuild. Imported by src/render3d/hybrid.js (docs/luminati-port-plan.md §13).
-71 modules, 4.95 MB (1426 KB gzipped); luminati.js 170 KB gzipped.
+71 modules, 4.96 MB (1427 KB gzipped); luminati.js 171 KB gzipped.

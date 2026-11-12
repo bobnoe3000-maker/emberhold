@@ -598,6 +598,31 @@ window.renderFaceSpike = async (o = {}) => {
   }
   return board.toDataURL('image/png');
 };
+// the twenty head shapes (faces-spike.cjs --heads, 2026-11-12: the owner, "Build 20 different head shapes with some depth
+// or detail that i can choose from"): each bald from the front, three-quarter and side, numbered, then each with hair and
+// a face at play's size drawn 4x
+window.renderHeadShapes = async (o = {}) => {
+  const K = await import('./faces.js'), names = K.HEAD_SHAPES, sc = o.scale || 2, cw = 84, ch = 100, pad = 8, lab = 22, cols = o.cols || 4;
+  const look = { style: 'painted', skin: 'fair', hair: 'bald', hairColor: 'brown', brows: 'straight', eyes: 'round', iris: 'brown', mouth: 'line' };
+  const haired = { ...look, hair: 'short', hairColor: 'auburn' }, body = { id: 'heads', model: 'Rogue', show: [] };
+  const views = [0, 32, 70], cellW = views.length * cw * sc + 2 * pad + 44, cellH = lab + ch * sc + pad * 2;
+  const W = pad + cols * (cellW + pad), rows = Math.ceil(names.length / cols), H = pad + 30 + rows * (cellH + pad);
+  const board = document.createElement('canvas'); board.width = W; board.height = H;
+  const x = board.getContext('2d'); x.fillStyle = '#17131e'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#f0c880'; x.font = '600 18px Georgia, serif'; x.fillText('Twenty heads: front, three-quarter, turned, and with hair at play\'s size (4x)', pad, pad + 18);
+  for (let i = 0; i < names.length; i++) {
+    const cx0 = pad + (i % cols) * (cellW + pad), cy0 = pad + 30 + Math.floor(i / cols) * (cellH + pad);
+    x.fillStyle = '#221c2c'; x.fillRect(cx0, cy0, cellW, cellH);
+    x.fillStyle = '#f0c880'; x.font = '600 16px Georgia, serif'; x.fillText(`${i + 1}  ${names[i]}`, cx0 + 8, cy0 + 17);
+    for (let v = 0; v < views.length; v++) {
+      const img = new Image(); img.src = await window.renderPortrait({ ...body, face: { ...look, head: names[i] } }, { w: cw * sc, h: ch * sc, ss: 2, yaw: views[v], head: 0.66 }); await img.decode();
+      x.drawImage(img, cx0 + pad + v * cw * sc, cy0 + lab, cw * sc, ch * sc);
+    }
+    const sm = new Image(); sm.src = await window.renderPortrait({ ...body, face: { ...haired, head: names[i] } }, { w: 11, h: 13, ss: 1, yaw: 22, head: 0.66 }); await sm.decode();
+    x.imageSmoothingEnabled = false; x.drawImage(sm, cx0 + cellW - 44 - pad / 2, cy0 + lab + ch * sc - 52 - pad, 44, 52); x.imageSmoothingEnabled = true;
+  }
+  return board.toDataURL('image/png');
+};
 // dev probe: the head mesh and the head-bone accessories, as boxes in head-bone space (bind pose)
 window.probeHead = async (model) => {
   const g = await load(`./models/${model}.glb`), root = g.scene; root.updateMatrixWorld(true);

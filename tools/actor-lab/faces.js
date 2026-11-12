@@ -357,26 +357,76 @@ const CHIN = -0.01, CROWN = 1.05, HH = CROWN - CHIN;              // the egg's h
 const EGG = { cy: (CHIN + CROWN) / 2, cz: -0.03, ax: 0.49, ay: HH / 2, az: 0.55 };   // (KayKit's head fills x ±0.54, z −0.57…0.5: helms fit)
 // the nose, a bump in the skull's front: width (x), height (y), depth (z), its middle's height (s: 0 the chin, 1 the crown)
 const BUMP = { kk: [0.085, 0.07, 0.03, 0.29], button: [0.075, 0.06, 0.027, 0.28], long: [0.07, 0.095, 0.036, 0.3], hook: [0.075, 0.085, 0.042, 0.31], broad: [0.11, 0.065, 0.027, 0.28], snub: [0.07, 0.056, 0.024, 0.29] };   // (low, just over the mouth: the pack's)
+// The head's shape (the owner, 2026-11-12, after the pack's rounded box: "I dont like the shape of the head or the big
+// eyes. Build 20 different head shapes with some depth or detail that i can choose from"): one skull built from numbers,
+// HEADS the twenty to choose from. Its sections are superellipses (sq: 2 an ellipse, more a box), the crown's and the
+// chin's curves (top, low), the jaw drawn in toward the chin (jaw, to the height jawTo), the face's front and the back of
+// the skull (front, back); then sculpted: the brow ridge, the eye sockets, the nose's bridge, the cheekbones and the
+// hollows under them, the lips' fullness, the chin's point and cleft, the jaw's corners, the temples, jowls, the back of
+// the skull, a sloped forehead, a long jaw (chinL) or a tall crown (tall). Every shape stays inside KayKit's head
+// (x ±0.54, z −0.57…0.5, chin 0 to crown 1.05), so its helms and hoods and our hair shells still fit.
+const HEAD0 = { w: 0.47, d: 0.55, sq: 2.3, top: 2.1, low: 2.5, jaw: 0.72, jawTo: 0.5, front: 0.93, back: 1.08, slope: 0, tall: 0, chinL: 0,
+  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0 };
+/** the twenty heads (and the pack's rounded box, the spike's first): each the numbers that differ from HEAD0 */
+export const HEADS = {
+  oval:      {},
+  heart:     { w: 0.48, jaw: 0.52, low: 1.9, cheek: 0.02, temple: -0.006, chin: 0.012 },
+  square:    { w: 0.48, sq: 3.1, low: 4, jaw: 0.95, gonion: 0.022, brow: 0.02, chin: 0.006 },
+  round:     { w: 0.5, sq: 2.05, top: 2, low: 2.1, jaw: 0.86, front: 0.97, cheek: 0.016, brow: 0.006, socket: 0.004, chin: 0.004 },
+  long:      { w: 0.44, chinL: 0.09, tall: 0.03, jaw: 0.74, low: 2.4, cheek: 0.008, chin: 0.012 },
+  diamond:   { w: 0.47, jaw: 0.56, low: 2.0, cheek: 0.028, temple: 0.022, hollow: 0.008, chin: 0.01 },
+  pear:      { w: 0.45, jaw: 1.0, jawTo: 0.35, low: 3.2, temple: 0.02, gonion: 0.026, jowl: 0.01, cheek: 0.004 },
+  rugged:    { w: 0.48, sq: 2.7, low: 3.4, jaw: 0.9, brow: 0.042, socket: 0.014, cheek: 0.016, hollow: 0.014, chin: 0.026, cleft: 0.008, gonion: 0.016 },
+  gaunt:     { w: 0.45, sq: 2.4, jaw: 0.7, cheek: 0.024, hollow: 0.03, temple: 0.02, socket: 0.016, brow: 0.024, chin: 0.012 },
+  broad:     { w: 0.54, sq: 2.6, chinL: -0.05, jaw: 0.9, low: 3, cheek: 0.012, gonion: 0.012, brow: 0.02 },
+  elfin:     { w: 0.45, jaw: 0.42, low: 1.7, cheek: 0.022, hollow: 0.01, chin: 0.008, tall: 0.02, brow: 0.006, socket: 0.006 },
+  brute:     { w: 0.52, d: 0.56, sq: 2.8, low: 4, jaw: 1.04, jawTo: 0.4, slope: 0.12, brow: 0.055, socket: 0.016, chin: 0.03, gonion: 0.03, cheek: 0.012 },
+  noble:     { w: 0.45, tall: 0.04, chinL: 0.05, jaw: 0.76, low: 2.6, chin: 0.024, cheek: 0.016, hollow: 0.008, brow: 0.018, bridge: 0.014 },
+  cherub:    { w: 0.51, sq: 2.0, top: 1.9, low: 1.9, jaw: 0.64, front: 0.96, back: 1.18, chinL: -0.05, cheek: 0.02, brow: 0.002, socket: 0.003, chin: 0.004, lips: 0.01 },
+  wedge:     { w: 0.47, sq: 3.4, low: 1.75, jaw: 0.55, cheek: 0.02, hollow: 0.014, chin: 0.016, brow: 0.024 },
+  jowly:     { w: 0.5, sq: 2.4, low: 2.8, jaw: 0.98, jowl: 0.03, cheek: 0.008, brow: 0.018, socket: 0.012, chin: 0.004, lips: 0.004 },
+  hawk:      { w: 0.44, chinL: 0.06, chin: -0.02, slope: 0.14, brow: 0.036, socket: 0.014, bridge: 0.026, cheek: 0.012, hollow: 0.012, jaw: 0.68 },
+  moon:      { w: 0.54, sq: 2.2, front: 0.82, jaw: 0.88, low: 2.3, chinL: -0.05, cheek: 0.012, brow: 0.006, socket: 0.004, bridge: 0.002 },
+  chiselled: { w: 0.47, sq: 2.8, low: 3.2, jaw: 0.84, brow: 0.026, socket: 0.012, cheek: 0.022, hollow: 0.02, chin: 0.02, cleft: 0.005, gonion: 0.018 },
+  dome:      { w: 0.46, top: 1.8, tall: 0.07, jaw: 0.68, low: 2.2, back: 1.16, occ: 0.02, brow: 0.01, chin: 0.008 },
+  pack:      { w: 0.49, sq: 2.9, top: 2.3, low: 3.4, jaw: 0.8, front: 0.95, back: 1.1, brow: 0, socket: 0, bridge: 0, cheek: 0, lips: 0, chin: 0 },
+};
+/** the twenty, in the board's order (the pack's box left out) */
+export const HEAD_SHAPES = Object.keys(HEADS).filter((k) => k !== 'pack');
+const HEADQ = Object.fromEntries(Object.entries(HEADS).map(([k, v]) => [k, { ...HEAD0, ...v }]));
+const spow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e), G = (d, w) => Math.exp(-(d / w) * (d / w));
+const DEPTH = 1.6;                                                 // the sculpting's strength over the numbers (the first board's read too faint)
 /** a point on the painted skull: th the angle round it (0 the front, +x to the right as you face it), s the height (0 the chin, 1 the crown) */
-// (the owner, 2026-11-12, of the pack's heads: "Match this head shape": a rounded box, not an egg. Its sections are
-// superellipses, so the face is a flat front turning sharply into flat sides, the crown deep behind; the jaw stays wide
-// almost to the bottom and ends in a broad flat-bottomed chin)
-const spow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e);
-const BOX_H = 2.9, BOX_TOP = 2.3, BOX_LOW = 3.4;                  // across (front/sides), the crown's curve, the chin's
 function eggAt(th, s, f, out = new THREE.Vector3()) {
-  const yU = 2 * s - 1, m = yU > 0 ? BOX_TOP : BOX_LOW, r = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(yU), m)), 1 / m);
-  let x = spow(Math.sin(th), 2 / BOX_H) * r, z = spow(Math.cos(th), 2 / BOX_H) * r;
-  x *= lerp(0.8, 1, smooth(0.0, 0.5, s));                                               // the jaw a little in from the cheeks, still wide
-  z *= z > 0 ? lerp(0.9, 0.95, smooth(0.0, 0.45, s)) : 1.1;                              // a flat face, the crown deep behind
-  out.set(x * EGG.ax, EGG.cy + yU * EGG.ay, EGG.cz + z * EGG.az);
+  const H = HEADQ[f.head] || HEADQ.oval, yU = 2 * s - 1, m = yU > 0 ? H.top : H.low, r = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(yU), m)), 1 / m);
+  let x = spow(Math.sin(th), 2 / H.sq) * r, z = spow(Math.cos(th), 2 / H.sq) * r;
+  x *= lerp(H.jaw, 1, smooth(0.0, H.jawTo, s));                                          // the jaw drawn in toward the chin
+  z *= z > 0 ? H.front * lerp(0.92, 1, smooth(0.0, 0.45, s)) * (1 - H.slope * smooth(0.55, 1, s)) : H.back;   // the face's front (a forehead sloped back), the skull's back
+  const lo = Math.max(0, 1 - s / 0.24);
+  out.set(x * H.w, EGG.cy + yU * EGG.ay - H.chinL * lo * lo + H.tall * smooth(0.5, 1, s), EGG.cz + z * H.d);
+  // the sculpting: a push along the face (z) at the front, outward round the sides (x and z), each a soft hill or dent
+  const a = Math.abs(th), sx = Math.sin(th), cz = Math.cos(th), front = Math.max(0, cz);
+  const dz = H.brow * G(s - 0.555, 0.04) * G(th, 0.62) * front       // the brow ridge over the eyes
+    - H.socket * G(s - 0.455, 0.045) * G(a - 0.38, 0.16)              // the eyes set in
+    + H.bridge * G(th, 0.08) * smooth(0.28, 0.36, s) * smooth(0.56, 0.48, s)   // the nose's bridge up to the brow
+    + H.lips * G(s - 0.18, 0.035) * G(th, 0.3)                       // the lips' fullness
+    + H.chin * G(s - 0.06, 0.06) * G(th, 0.32) * front               // the chin's point
+    - H.cleft * G(s - 0.06, 0.045) * G(th, 0.05);                    // a cleft in it
+  const side = H.cheek * G(s - 0.37, 0.07) * G(a - 0.8, 0.3)        // cheekbones under the eyes' outer corners
+    - H.hollow * G(s - 0.22, 0.065) * G(a - 0.95, 0.32)              // the hollows under them
+    + H.gonion * G(s - 0.11, 0.07) * G(a - 1.35, 0.35)               // the jaw's corners
+    - H.temple * G(s - 0.64, 0.08) * G(a - 1.3, 0.32)                // the temples drawn in
+    + H.jowl * G(s - 0.1, 0.07) * G(a - 0.95, 0.35)                  // jowls
+    + H.occ * G(s - 0.6, 0.16) * G(a - Math.PI, 0.9);               // the back of the skull, fuller
+  out.x += DEPTH * side * sx; out.z += DEPTH * (dz + side * cz); out.y -= H.jowl * 0.6 * G(s - 0.1, 0.07) * G(a - 0.95, 0.35);
   const [w, h, d, ns] = BUMP[f.nose] || BUMP.kk, dx = out.x / w, dy = (s - ns) * HH / h;
-  if (z > 0) out.z += d * Math.exp(-dx * dx - dy * dy) * (f.nose === 'snub' && dy > 0 ? 0.8 : 1);
-  if (f.nose === 'hook' && z > 0) out.y -= 0.02 * Math.exp(-dx * dx - dy * dy);
+  if (cz > 0) out.z += d * Math.exp(-dx * dx - dy * dy) * (f.nose === 'snub' && dy > 0 ? 0.8 : 1);
+  if (f.nose === 'hook' && cz > 0) out.y -= 0.02 * Math.exp(-dx * dx - dy * dy);
   return out;
 }
 /** the painted skull (a triangle soup, as the kit's shells want), shaped by the face's shape */
 function eggSkull(f, S) {
-  const NT = 48, NS = 30, P = [], I = [], v = new THREE.Vector3();
+  const NT = 64, NS = 44, P = [], I = [], v = new THREE.Vector3();
   for (let j = 0; j <= NS; j++) for (let i = 0; i <= NT; i++) { eggAt(-Math.PI + (2 * Math.PI * i) / NT, j / NS, f, v); if (S) S(v); P.push(v.x, v.y, v.z); }
   for (let j = 0; j < NS; j++) for (let i = 0; i < NT; i++) { const a = j * (NT + 1) + i, b = a + 1, c = a + NT + 1, d = c + 1; I.push(a, b, c, b, d, c); }   // (wound outward: the kit's shells grow off it and keep its facing)
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(I); g.computeVertexNormals();
@@ -401,8 +451,8 @@ function faceMask(f, S) {
 const PX = 512, toU = (x) => (Math.asin(Math.max(-0.98, Math.min(0.98, x / 0.52))) + TH) / (2 * TH), toV = (y) => ((y - CHIN) / HH - S0) / (S1 - S0);
 const cx = (x) => toU(x) * PX, cy = (y) => (1 - toV(y)) * PX, kx = PX / (2 * TH * 0.5), ky = PX / ((S1 - S0) * HH);   // (px a unit across, up)
 const hex = (c) => '#' + c.getHexString();
-// the pack's proportions: the eye line low on a full skull, big eyes far apart
-const PE = { x: 0.2, y: 0.45, rx: 0.08, ry: 0.105 };
+// the eyes (the owner, 2026-11-12: "I dont like … the big eyes"): a modest almond with its white, at the head's middle
+const PE = { x: 0.175, y: 0.46, rx: 0.062, ry: 0.054 };
 const PEYES = { round: { w: 1, h: 1, tilt: 0 }, wide: { w: 1.1, h: 1.12, tilt: 0, white: true }, narrow: { w: 1.08, h: 0.72, tilt: 0.04, lash: true }, tired: { w: 1, h: 0.95, tilt: -0.08, lid: 0.32, bags: true }, sharp: { w: 1.12, h: 0.8, tilt: 0.22, lash: true } };
 const PBROWS = { straight: { w: 0.12, t: 0.046, arch: 0.006, tilt: 0 }, arched: { w: 0.12, t: 0.042, arch: 0.034, tilt: 0 }, heavy: { w: 0.13, t: 0.066, arch: 0.008, tilt: 0.05 }, angry: { w: 0.12, t: 0.052, arch: 0.004, tilt: 0.2 }, worried: { w: 0.115, t: 0.044, arch: 0.012, tilt: -0.2 }, thin: { w: 0.11, t: 0.026, arch: 0.016, tilt: 0 } };
 // an expression: the brows turned (+ inner end down), raised, lids, and the mouth it wears (null: the face's own)
@@ -436,12 +486,20 @@ function facePicture(f) {
     if (patched && sd > 0) continue;
     const [ex0, ey0] = P(sd * PE.x, PE.y + ex.lift * 0.4), rx = PE.rx * E.w * kx, ry = PE.ry * E.h * ky * (ex.small ? 1.08 : 1), tilt = sd * E.tilt;
     g.save(); g.translate(ex0, ey0); g.rotate(-tilt);
-    if (E.white || ex.small) { g.fillStyle = '#f4efe6'; g.beginPath(); g.ellipse(0, 0, rx * 1.12, ry * 1.06, 0, 0, Math.PI * 2); g.fill(); }
-    g.fillStyle = ink; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = hex(irisC); g.beginPath(); g.ellipse(0, ry * 0.12, rx * 0.72, ry * 0.7, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = ink; g.beginPath(); g.ellipse(0, ry * 0.12, rx * 0.42, ry * 0.44, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(sd * rx * 0.32, -ry * 0.38, rx * 0.3, ry * 0.24, 0, 0, Math.PI * 2); g.fill();
-    g.globalAlpha = 0.85; g.beginPath(); g.ellipse(-sd * rx * 0.28, ry * 0.42, rx * 0.12, ry * 0.09, 0, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    const eye = () => { g.beginPath(); g.moveTo(-rx, ry * 0.08); g.bezierCurveTo(-rx * 0.5, -ry * 1.15, rx * 0.5, -ry * 1.15, rx, -ry * 0.1); g.bezierCurveTo(rx * 0.5, ry * 0.95, -rx * 0.5, ry * 0.95, -rx, ry * 0.08); g.closePath(); };
+    g.save(); eye(); g.clip();                                    // the white, the iris and pupil inside the almond
+    g.fillStyle = '#ece4d6'; g.fillRect(-rx * 1.2, -ry * 1.4, rx * 2.4, ry * 2.8);
+    const ir = ry * (ex.small ? 0.66 : 0.86);
+    g.fillStyle = hex(irisC.clone().multiplyScalar(0.55)); g.beginPath(); g.arc(0, ry * 0.02, ir, 0, Math.PI * 2); g.fill();
+    g.fillStyle = hex(irisC); g.beginPath(); g.arc(0, ry * 0.06, ir * 0.8, 0, Math.PI * 2); g.fill();
+    g.fillStyle = ink; g.beginPath(); g.arc(0, ry * 0.04, ir * 0.42, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(sd * ir * 0.32, -ir * 0.34, ir * 0.24, 0, Math.PI * 2); g.fill();
+    g.fillStyle = hex(skin.clone().multiplyScalar(0.55)); g.globalAlpha = 0.35; g.fillRect(-rx * 1.2, -ry * 1.4, rx * 2.4, ry * 0.95); g.globalAlpha = 1;   // the lid's shadow on the eye's top
+    g.restore();
+    g.strokeStyle = ink; g.lineCap = 'round'; g.lineWidth = ry * 0.32;   // the upper lid's line, the lashes' dark: what reads far
+    g.beginPath(); g.moveTo(-rx * 1.02, ry * 0.08); g.bezierCurveTo(-rx * 0.5, -ry * 1.15, rx * 0.5, -ry * 1.15, rx * 1.05, -ry * 0.12); g.stroke();
+    g.strokeStyle = hex(skin.clone().multiplyScalar(0.68)); g.lineWidth = ry * 0.12;   // the crease over it
+    g.beginPath(); g.moveTo(-rx * 0.8, -ry * 0.95); g.quadraticCurveTo(0, -ry * 1.75, rx * 0.95, -ry * 0.9); g.stroke();
     const lid = Math.max(E.lid || 0, ex.lid) * (ex.oneBrow && sd < 0 ? 0.25 : 1);
     if (lid > 0) {                                                // the lid over the eye's top, in the skin, its edge a dark line
       const ly = -ry + 2 * ry * lid, slant = sd * (ex.brow > 0 ? 0.25 : ex.brow < 0 ? -0.2 : 0) * ry;
@@ -454,16 +512,16 @@ function facePicture(f) {
     g.restore();
   }
   if (patched) {                                                 // a patch over the right eye, its strap across the brow
-    const [x, y] = P(PE.x, PE.y); g.fillStyle = '#1c1616'; g.beginPath(); g.ellipse(x, y, PE.rx * 1.35 * kx, PE.ry * 1.15 * ky, 0, 0, Math.PI * 2); g.fill();
+    const [x, y] = P(PE.x, PE.y); g.fillStyle = '#1c1616'; g.beginPath(); g.ellipse(x, y, PE.rx * 1.6 * kx, PE.ry * 2.1 * ky, 0, 0, Math.PI * 2); g.fill();
     g.strokeStyle = '#1c1616'; g.lineWidth = 0.018 * ky; g.beginPath(); g.moveTo(...P(-0.5, 0.68)); g.lineTo(...P(0.5, 0.36)); g.stroke();
   }
   // the brows: thick tapered strokes in the hair's colour, turned by the mood
   const B = PBROWS[f.brows] || PBROWS.straight, browC = hex(hairC.clone().multiplyScalar(dark ? 0.9 : 0.78));
   for (const sd of [-1, 1]) {
-    const tilt = B.tilt + ex.brow * (ex.oneBrow && sd < 0 ? -0.6 : 1), y0 = PE.y + 0.145 + ex.lift + (ex.oneBrow && sd < 0 ? 0.02 : 0);
-    const inner = [sd * 0.075, y0 - tilt * 0.05], outer = [sd * (0.075 + B.w * 1.35), y0 + tilt * 0.03 - B.arch * 0.3], mid = [sd * (0.075 + B.w * 0.65), y0 + B.arch + tilt * 0.005];
+    const tilt = B.tilt + ex.brow * (ex.oneBrow && sd < 0 ? -0.6 : 1), y0 = PE.y + 0.1 + ex.lift + (ex.oneBrow && sd < 0 ? 0.02 : 0);
+    const inner = [sd * 0.07, y0 - tilt * 0.05], outer = [sd * (0.07 + B.w * 1.3), y0 + tilt * 0.03 - B.arch * 0.3], mid = [sd * (0.07 + B.w * 0.62), y0 + B.arch + tilt * 0.005];
     g.fillStyle = browC; g.beginPath();
-    const [ix, iy] = P(...inner), [mx, my] = P(...mid), [ox, oy] = P(...outer), t = B.t * ky;
+    const [ix, iy] = P(...inner), [mx, my] = P(...mid), [ox, oy] = P(...outer), t = B.t * 0.75 * ky;
     g.moveTo(ix, iy - t * 0.55); g.quadraticCurveTo(mx, my - t * 1.1, ox, oy - t * 0.1); g.quadraticCurveTo(mx, my + t * 0.2, ix, iy + t * 0.6); g.closePath(); g.fill();
   }
   if (ex.creases) { g.strokeStyle = browC; g.lineWidth = 0.008 * ky; for (const d of [-0.02, 0.02]) { g.beginPath(); g.moveTo(...P(d - 0.01, PE.y + 0.07)); g.lineTo(...P(d * 1.4, PE.y + 0.13)); g.stroke(); } }   // a scowl's lines between the brows

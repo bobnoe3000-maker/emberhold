@@ -19,18 +19,23 @@ What the pack does (studied from its product images; none of its art is in the r
 
 ## What the spike builds (`tools/actor-lab/faces.js`, *the painted head*)
 
-- **The skull** (`eggSkull`, `eggAt`): the pack's head shape (the owner, 2026-11-12: *"Match this head shape"*) — a
-  rounded box, not an egg: its sections superellipses (across 2.9, the crown's curve 2.3, the chin's 3.4), so the face is
-  a flat front turning sharply into flat sides, the crown deep behind, the jaw a little in from the cheeks (0.8) and wide
-  almost to the bottom, ending in a broad flat-bottomed chin; a little taller than wide (x ±0.49, chin −0.01 to crown
-  1.05). Fitted inside KayKit's head, so its helms and hoods and our hair shells still fit (KayKit's long cuts pushed out
-  to clear the fuller crown). Our six noses are six soft bumps (`BUMP`) low, just over the mouth; our six face shapes
-  deform it as they did KayKit's (`SHAPES`); flat ears of a fair size, set back at the eyes' and nose's height, or our
-  pointed ones. ![three-quarter](img/faces/spike-head-3q.jpg)
+- **The skull** (`eggSkull`, `eggAt`, `HEADS`): built from numbers, twenty heads to choose from (the owner, 2026-11-12,
+  after the pack's rounded box: *"I dont like the shape of the head or the big eyes. Build 20 different head shapes with
+  some depth or detail that i can choose from"*). Each is its sections' squareness, the crown's and chin's curves, its
+  width and depth, the jaw drawn in toward the chin, a long jaw or a tall crown, then sculpted: the brow ridge, the eyes
+  set in, the nose's bridge, cheekbones and the hollows under them, the lips, the chin's point and cleft, the jaw's
+  corners, the temples, jowls, the back of the skull, a sloped forehead. Oval, heart, square, round, long, diamond, pear,
+  rugged, gaunt, broad, elfin, brute, noble, cherub, wedge, jowly, hawk, moon, chiselled, dome; the pack's box kept as
+  `pack`. Each stays inside KayKit's head, so its helms and hoods and our hair shells still fit (KayKit's long cuts pushed
+  out to clear it). A face's `head` picks one (oval without). Our six noses are six soft bumps (`BUMP`) low, just over
+  the mouth; our six face shapes deform it as they did KayKit's (`SHAPES`); flat ears set back at the eyes' and nose's
+  height, or our pointed ones. The board: `node tools/actor-lab/faces-spike.cjs --heads` → `out/faces_heads.png`, each
+  bald from the front, three-quarter and turned, and with hair at play's size.
+  ![twenty heads](img/faces/heads-board.jpg) (the pack's box, the board before: ![three-quarter](img/faces/spike-head-3q.jpg))
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
-  a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.45, the mouth at 0.18.
+  a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the
-  pack's proportions: the eye line low, big dark eyes (an iris ring in its colour, a pupil, a glint and a small second one),
+  eyes made smaller after the owner's *"I dont like … the big eyes"*: a modest almond with its white, the iris in its colour, a pupil, a glint, the upper lid's dark line and a crease over it,
   thick tapered brows in the hair's colour, a short mouth line, a hint of the lower lip. Transparent between the features
   (the skull's skin shows; a painted skin showed as a patch of another tone in the game's light) and drawn as a cutout
   (`alphaTest`: the game's figure fade sets `transparent` from the figure's opacity). No mipmaps: at a 20 px head the
@@ -62,6 +67,9 @@ What the pack does (studied from its product images; none of its art is in the r
   a 512² picture a distinct face, shared by every face drawn alike).
 
 ## Next (not in the spike)
+
+0. **The owner picks heads** from the twenty: `head` a part of the appearance (sim `PARTS`, the kit's `OPTIONS`), with the
+   expression, in one save version bump.
 
 1. **Expression at creation:** `expression` a part of the appearance (sim `PARTS`, the kit's `OPTIONS`), chosen on the
    creation's Look step and at the temple; a save version bump with a migration (an old look: neutral).

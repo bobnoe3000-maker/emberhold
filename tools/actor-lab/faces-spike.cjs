@@ -1,6 +1,6 @@
 // faces-spike.cjs — the face spike's board (lab.js renderFaceSpike): today's faces and the painted head side by side.
 // on one plain figure, rendered as the game's portraits are → out/faces_spike.png.
-//   node faces.cjs [--scale 2]
+//   node faces-spike.cjs [--scale 2] [--heads: the twenty head shapes → out/faces_heads.png]
 const fs = require('fs'), path = require('path');
 const { chromium } = require('playwright-core');
 const { serve, CHROME, GL } = require('./render.cjs');
@@ -12,9 +12,9 @@ const DIR = __dirname, SI = process.argv.indexOf('--scale'), scale = SI > 0 ? +p
   const p = await (await b.newContext({ viewport: { width: 300, height: 300 } })).newPage();
   p.on('pageerror', (e) => console.log('PAGEERR', e.message));
   await p.goto(`http://127.0.0.1:${port}/lab.html?px=56`); await p.waitForFunction(() => window.ready === true, { timeout: 60000 });
-  const t0 = Date.now(), url = await p.evaluate(async (scale) => await window.renderFaceSpike({ scale }), scale);
+  const heads = process.argv.includes('--heads'), t0 = Date.now(), url = await p.evaluate(async ([scale, heads]) => await (heads ? window.renderHeadShapes : window.renderFaceSpike)({ scale }), [scale, heads]);
   fs.mkdirSync(path.join(DIR, 'out'), { recursive: true });
-  const f = path.join(DIR, 'out', 'faces_spike.png'); fs.writeFileSync(f, Buffer.from(url.split(',')[1], 'base64'));
+  const f = path.join(DIR, 'out', heads ? 'faces_heads.png' : 'faces_spike.png'); fs.writeFileSync(f, Buffer.from(url.split(',')[1], 'base64'));
   console.log(`face spike → ${path.relative(DIR, f)} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
   await b.close(); srv.close();
 })().catch((e) => { console.error('FAIL', e.message); process.exit(1); });
