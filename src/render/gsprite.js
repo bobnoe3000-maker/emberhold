@@ -119,10 +119,9 @@ export function voxPortal() {
 const CHEST_K = 2;
 // The chests' look (the owner, 2026-11-12: "Chests, the color and texture makes them hard to see. Show me options to make
 // these more obvious", then "go with 1 - gold"): a closed chest is honey oak under gold bands with a bright gold lock (the
-// dark oak and iron sank into a dungeon's floor as a red-brown lump). ?chest=plain draws them as before, for a before;
-// the other options shown stay to try: lit, a warm light of its own (render3d/convert.js), glint, a twinkle over a closed
-// one, and ring, a gold ring on the floor under it (render/renderer.js).
-export const CHEST_LOOK = (() => { try { const v = new URLSearchParams(globalThis.location?.search || '').get('chest'); return v === 'plain' ? 'none' : ['lit', 'glint', 'ring'].includes(v) ? v : 'gold'; } catch { return 'gold'; } })();
+// dark oak and iron sank into a dungeon's floor as a red-brown lump). ?chest=plain draws them as before, for a before.
+// (The other options shown, a light of its own, a glint over it, a ring under it, went once gold was picked.)
+export const CHEST_LOOK = (() => { try { return new URLSearchParams(globalThis.location?.search || '').get('chest') === 'plain' ? 'none' : 'gold'; } catch { return 'gold'; } })();
 const HONEY = ['#4a2a12', '#6e4220', '#93592c', '#b8743a', '#d9944e'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 const GOLD = ['#5a3a10', '#8a5e1a', '#b8862a', '#e0b44a', '#f6dc8a'].map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 function chestVox(open) {

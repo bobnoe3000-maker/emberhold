@@ -20,7 +20,7 @@
 import { ENV_FOOT } from '../sim/envfoot.js';
 import { G } from '../sim/outdoor.js';
 import { FLOOR_Z } from '../sim/level.js';
-import { PROP_LIGHT, CHEST_LOOK } from '../render/gsprite.js';
+import { PROP_LIGHT } from '../render/gsprite.js';
 import { KIT_TINT } from '../render/palette.js';
 
 /** the most of ours a level takes each way: 128 of Luminati's */
@@ -495,9 +495,6 @@ function dungeon(w, o = {}) {
       continue;
     }
     if (kind === 'torch') { add({ type: 'wallTorch', x, z, rotation: 0, dy: 1.15, opts: { embers: true } }); continue; }   // (a real flame on our pole: its own light)
-    // (?chest=lit: a closed chest's own warm light, a small gold pool on the floor round it: render/gsprite.js CHEST_LOOK;
-    // as the level's light it stays when the chest is opened, which the shipped version would put out)
-    if (kind === 'chest' && CHEST_LOOK === 'lit' && !w.mods?.get(k)?.opened) add({ type: 'light', x, z, dy: 0.7, color: '#ffc45a', intensity: 4.5, distance: 3.2, flicker: 0.05, nightOnly: false });
     const lit = PROP_LIGHT[kind], pool = DOOR_POOL[kind] || [3.2, 4.5];
     if (lit && kind !== 'brazier' && kind !== 'cookfire') add({ type: 'light', x, z, dy: kind === 'candelabra' ? 1.7 : 0.9, color: hex(lit), intensity: pool[0], distance: pool[1], flicker: 0.15, nightOnly: false });
   }
