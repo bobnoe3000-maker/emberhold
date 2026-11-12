@@ -55,7 +55,7 @@ const CSS = `
 /**
  * @param {{ sim: any, slot: number, audio?: any, setPaused: (on: boolean) => void, openSlots: () => void, openParty: () => void, openCreate: () => void,
  *   openChronicle: (mode: string) => void, onOpen?: () => void, onPlay?: () => void,
- *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any } | null, tune?: (() => void) | null,
+ *   graphics?: { read: () => any, set: (patch: any) => Promise<any>, status?: () => any, frameTest?: () => Promise<boolean> } | null, tune?: (() => void) | null,
  *   devApply?: ((cmds: any[]) => void) | null, openSteps?: (() => void) | null }} o  onPlay: the title closes into play; openSteps: the first steps again (ui/firststeps.js);
  *   graphics: the Graphics panel (src/render3d/settings.js); tune: the
  *   Brightness tray (ui/brightness.js), opened over play with the menu closed
@@ -139,6 +139,8 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('fps', 'on', 'Show', 'frames a second, under ☰', g.fps === 'on')}
         ${choice('fps', 'off', 'Hide', 'for play', g.fps !== 'on')}
       </div>
+      ${graphics.frameTest && html`<div class="tag">Frame rate test</div>
+      <button onClick=${() => { close(); setTimeout(() => graphics.frameTest(), 600); }}>Frame test<small>about a minute and a half, hands off: each part of the picture timed on this device, a table to copy</small></button>`}
       ${tune && html`<div class="tag">Brightness by the part of the day</div>
       <button disabled=${!(mode === 'pause' || sim.state.created)} onClick=${() => { hide(); setPaused(false); onPlay(); tune(); }}>Brightness<small>${mode === 'pause' || sim.state.created
         ? ['dawn', 'day', 'dusk', 'night'].map((p) => `${p} ${g.bright ? g.bright[p] : 100} %`).join(' · ')

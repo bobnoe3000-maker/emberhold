@@ -10,6 +10,14 @@ Add to it whenever a performance question is answered.
 - **The phone is the measure.** This box draws with software GL (SwiftShader): its frame times swing ± 7 % between
   identical runs, more than most single changes move them. Here, count what the GPU is asked to do (draws, triangles,
   corners shaded) and leave the frame rate to a real phone.
+- **The Frame test** (Graphics → *Frame test*; `src/render3d/frametest.js`, `src/ui/frametest.js`): on the device, in
+  whatever scene is in view, the world as it is and then each piece of its picture off or down in turn (depth of field,
+  bloom, the grade's extras, every post pass, antialiasing, the shadow map at 1024 and off, the lamp lights at 8 and none,
+  the grass and flowers, the ground's edges, the trees and land round the map, the people, Balanced and Fast), each timed
+  over at least four seconds and twelve frames after it settles (a shader compile is the first frame, not the cost), the
+  world put back after each; the world as it is timed first and last, so a warming phone shows. A table of median frame
+  times and what each saved, with Copy. This box's software GL can't time a phone's frame (a frame at 3× takes minutes
+  here); the phone's table is the measure for what to change.
 - **The frame rate on the phone:** Graphics → *the frame rate on screen* (the `fps · ms` chip under the HUD); the Graphics
   panel's status line says how the people are drawn (models or sprites) and at what pixel density (`drawn at N×`).
 - **`node tools/capture/figperf.mjs`** (docs/character-look-plan.md §11): draws and triangles a frame counted at the WebGL

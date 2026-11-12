@@ -33,6 +33,7 @@ import { createListener } from './audio/listen.js';
 import { holdWeather } from './render/weatherfx.js';
 import { readGraphics, writeGraphics, feelK } from './render3d/settings.js';
 import { createFpsMeter } from './ui/fps.js';
+import { createFrameTest } from './ui/frametest.js';
 import { createWorldFail } from './ui/worldfail.js';
 import { setPortraitModels } from './ui/portraits.js';
 
@@ -177,7 +178,10 @@ const creation = createCreation({ sim, onDone: () => { paused = false; cinema.st
 // Graphics (render3d/settings.js, per device): the depth of field, the hit feel, the brightness dial and the frame rate,
 // each at once (the world is always Luminati's: docs/luminati-only-cleanup.md)
 const fpsMeter = createFpsMeter(); fpsMeter.show(readGraphics().fps === 'on');   // (the menu's Frame rate: ui/fps.js)
-const graphics = { read: readGraphics, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
+// the Frame test (ui/frametest.js, render3d/frametest.js): each piece of the world's picture timed on this device, from Graphics
+const frameTest = createFrameTest({ world: () => (world3d ? world3d.world : null), graphics: () => readGraphics(),
+  where: () => (sim.world.kind === 'dungeon' ? `${sim.world.siteName || 'a dungeon'} floor ${sim.state.depth + 1}` : sim.world.name || sim.world.kind) });
+const graphics = { frameTest: () => frameTest.run(), read: readGraphics, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
   const next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.res && world3d) world3d.setRes(next.res);
