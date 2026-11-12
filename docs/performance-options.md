@@ -78,6 +78,10 @@ Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow
   without it the walls, doors and people lose their warm pools ([as it is](img/perf/town-dusk-as-it-is.jpg), [no lamps,
   no shadows](img/perf/town-dusk-no-lamps.jpg)). The next run asks how few lamps keep most of it (4, 2, 1 of 16) and
   whether a sharp-edged shadow (one tap of the map, not PCF's five) is the shadow's cost.
+  The looks side by side ([town-dusk-options.jpg](img/perf/town-dusk-options.jpg), the square at dusk): hard-edged
+  shadows can hardly be told from the soft at play's size; the test's 4 and 2 lamps hide whichever come last in the
+  scene's order, here the ones by the square's doors, so they look nearly as dark as none: a real choice would keep the
+  pool's nearest (Luminati's LightPool ranks by nearness to the focus), not these.
 
 ## Done
 
