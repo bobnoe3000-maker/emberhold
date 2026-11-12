@@ -216,7 +216,15 @@ What the pack does (studied from its product images; none of its art is in the r
     at the game's pitch, front on, and at play's size ×4). Re-baked: the mage's, Brannoc's, Col's and Jory's portraits
     and figures; the knight's and barbarian's (their own helms now fitted to the painted head as a worn helm is: a touch
     narrower).
-- **Still to do:** a real phone's frame time (the owner's); the KayKit sprite atlases (`?figures=sprites`) not re-baked.
+- **The sprite atlases re-baked** (the owner, 2026-11-12: "re-bake the sprite atlases"): the 62 actors who wear a face
+  (`?figures=sprites`, and the baked figures wherever they're drawn), with the painted head, the fitted helms and hat
+  and the brows above. The first bake came out with a black patch for every face: the atlas's pixel-art face pass
+  (`lab.js` albParts, built for KayKit's face parts) took the painted face's mask, tagged an eye, for one whole eye and
+  painted it dark, and the albedo pass copied its material without the mask's cutout, so its clear parts drew black too.
+  `lab.js`: the albedo copy keeps the cutout (and the mask's depth offset), and the part pass reads the mask as skin, so
+  the picture's own eyes and brows come through. Checked on the atlases' cells, old against new, before the full bake
+  ([before | after](img/faces/atlas-before-after.jpg): idle, three facings, ×3).
+- **Still to do:** a real phone's frame time (the owner's).
 
 ## Next (not in the spike)
 

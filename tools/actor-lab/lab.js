@@ -194,12 +194,15 @@ window.bakeAtlas = async (v, clips, gain = 1) => {
     // (a prop part with userData.glow, Wendel's lantern glass, glows too: art pass 6)
     // (a creature, creatures.js: coloured by vertex, its eyes a glowing mesh of their own colours)
     const lit = !eyes && o.userData.glow, own = eyes && !v.eyes && o.userData.glow, glow = (eyes && v.eyes) || lit || own;
-    mats.alb.set(o, own ? new THREE.MeshBasicMaterial({ vertexColors: true }) : glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color, vertexColors: !!m.vertexColors }));
+    mats.alb.set(o, own ? new THREE.MeshBasicMaterial({ vertexColors: true }) : glow ? new THREE.MeshBasicMaterial({ color: lit || v.eyes }) : new THREE.MeshBasicMaterial({ map: m.map, color: m.color, vertexColors: !!m.vertexColors, alphaTest: m.alphaTest || 0, polygonOffset: !!m.polygonOffset, polygonOffsetFactor: m.polygonOffsetFactor || 0, polygonOffsetUnits: m.polygonOffsetUnits || 0 }));   // (a cutout kept: the painted face's picture, faces.js, is clear but for its features; copied without it, its clear parts drew black)
     mats.emi.set(o, glow ? white : black); });
   // (pass 7) what each pixel is: face features (eye, brow, mouth) red, skin green, hair and beard blue
   // (A2 tells the features apart by red: the two eyes, the brows, the mouth)
   const PART = { eye: 0xfa0000, eyeA: 0xfa0000, eyeB: 0xd20000, brow: 0xaa0000, mouth: 0x820000, skin: 0x00ff00, hair: 0x0000ff };
-  mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[o.userData.part] ?? 0 })); });
+  // (the painted head's face, faces.js FaceMask, is one picture over the skin, its features painted in it: skin to this pass,
+  // its own eyes and brows coming through the albedo; tagged an eye, the whole face was taken for one and painted dark)
+  const partOf = (o) => (o.name === 'FaceMask' ? 'skin' : o.userData.part);
+  mats.part = new Map(); c.root.traverse((o) => { if (o.isMesh) mats.part.set(o, new THREE.MeshBasicMaterial({ color: PART[partOf(o)] ?? 0 })); });
   let hasFace = false; c.root.traverse((o) => { if (o.isMesh && o.userData.part) hasFace = true; });   // (no face, no part pass: skeletons bake as before)
   const nrmMat = new THREE.MeshNormalMaterial();
   const frames = clips.reduce((n, k) => n + k.frames, 0), cols = frames, rows = 8;
