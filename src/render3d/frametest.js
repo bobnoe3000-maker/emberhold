@@ -150,7 +150,7 @@ export async function runFrameTest(world, cur, onStep, set = 'focus') {
   const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
   let lights = 0; each(G, (o) => o.isPointLight && o.visible, () => { lights++; });
   const about = `${R.domElement.width}×${R.domElement.height} drawn · screen ${(globalThis.devicePixelRatio || 1).toFixed(2)}× · ${gpu} · ${lights} lamp lights · `
-    + `antialiasing ${G.postfx?.samples ?? '?'}× · shadow ${G.lighting?.sun?.shadow?.mapSize?.x ?? '?'} · DOF ${cur.dof} · resolution ${cur.res}`;
+    + `antialiasing ${G.postfx?.samples ?? '?'}× · shadow ${G.lighting?.sun?.shadow?.mapSize?.x ?? '?'} ${R.shadowMap.type === 0 ? 'sharp' : 'soft'} · DOF ${cur.dof} · resolution ${cur.res}`;
   return { rows, about };
 }
 

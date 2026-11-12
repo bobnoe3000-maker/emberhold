@@ -82,6 +82,12 @@ Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow
   shadows can hardly be told from the soft at play's size; the test's 4 and 2 lamps hide whichever come last in the
   scene's order, here the ones by the square's doors, so they look nearly as dark as none: a real choice would keep the
   pool's nearest (Luminati's LightPool ranks by nearness to the focus), not these.
+- **Fourth run** (lamps and the shadow's edge): 27.2 ms as it was (37 fps; the phone warmer than before). **The shadow
+  sharp-edged −2.4 ms** (off −2.8); lamp lights 8 −0.8, 4 −2.7, 2 −3.0, 1 −3.4, none −3.3. Together with the light trims
+  (no grain or sharpen, bloom, the ground's edges, the trees round the map): 4 lamps −4.6 (44 fps); 4 lamps and sharp
+  shadows −5.8 (47 fps, 29 % at 60); 2 lamps and sharp shadows −7.4 (50 fps, 43 %); 1 lamp −8.0 (52 fps); none and no
+  shadows −8.4 (53 fps, 56 %). Nothing that keeps the dusk holds a steady 60 on this phone; sharp shadows are the free
+  part, taken (below).
 
 ## Done
 
@@ -108,6 +114,12 @@ Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow
 - **The heads out of the shadow pass** (`world.js`, `figure.js compact` keeps a merged head tagged): −34 draws and
   −70,000 triangles in the square; the body's shadow is the figure's. `?headshadow=1` puts them back.
 
+- **Sharp shadow edges on phones** (the fourth run above): Graphics → *Shadow edges*, Soft (as they were: PCF's five taps
+  of the shadow map a pixel) or Sharp (one tap, three.js BasicShadowMap); Sharp by default on a touch screen
+  (`settings.js` `(pointer: coarse)`), Soft elsewhere (`world.js` settings `shadow`, applied at boot and at each level;
+  a change recompiles the lit programs once). −2.4 ms of 27 in the square at dusk ★, and at play's size it can hardly be
+  told from soft ([town-dusk-options.jpg](img/perf/town-dusk-options.jpg), the second).
+
 ## Options not taken yet
 
 Ranked by what they should buy for what they cost. ★ = measured; ☆ = an estimate.
@@ -124,6 +136,8 @@ Ranked by what they should buy for what they cost. ★ = measured; ☆ = an esti
 | 8 | **Figure culling**: figures are `frustumCulled = false` (a skinned figure's bounds go stale as it animates); a bounding sphere of our own from its root would let off-screen people skip | everything a figure costs, for those out of view ☆ (the square is mostly on screen; the overland and big dungeon floors gain more) | medium; a sphere big enough for every clip (a raised staff) |
 | 9 | **Far people as sprites**: the baked atlases exist (`?figures=sprites` draws everyone so); a hybrid: models near, sprites beyond a distance | large on crowded scenes ☆ | medium–large; the switch between them must not pop; sprites have the old faces until re-baked |
 | 10 | ~~A pixel-density cap on phones~~ **taken as a choice** (Graphics → Resolution, above); still open: Balanced as the phones' default | on a 3× phone 37 % of the pixels ★ (Balanced), 65 % (Fast) | the owner's call: the frame rate it buys on the phone first |
+| 12 | **The nearest few lamps only, on phones**: Luminati's pool keeps 12 lamp lights plus 4 for effects, every one in every lit shader; a pool of 2–4 (ranked by nearness, as it already ranks), the 4 effect lights kept | 4 lamps −2.7 ms, 2 −3.0 ★ (the test's pick of lamps; with the 4 effect lights kept a little less ☆) | medium: the pool's size is fixed at boot (a change recompiles); the lamps away from the hero lose their pools, the doors by him keep theirs |
+| 13 | **Lamp light baked into the town's ground and walls**: the static lamps' pools in a light map, the live lights only for the people and effects | most of the lamps' 3.3 ms ☆ with the look kept | large: a bake per town and hour, a shader of Luminati's changed |
 | 11 | **Depth of field off by default on phones** (Graphics → Depth of field: soft or off) | a full-screen blur pass ☆ | none to build; the look's softness is the owner's choice |
 
 ## Learned on the way

@@ -294,7 +294,7 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
   const at = new URL(vendor, import.meta.url), ver = await fetch(new URL('version.json', at), { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const mod = await import(ver && ver.v ? `${at.href}?v=${ver.v}` : vendor);
   api = mod.createWorld({ container: box, uiRoot: ui, assets: new URL('../../assets/', import.meta.url).href });
-  api.settings({ dof: readGraphics().dof, res: readGraphics().res, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
+  api.settings({ dof: readGraphics().dof, res: readGraphics().res, shadow: readGraphics().shadow, figures: new URLSearchParams(location.search).get('figures') === 'sprites' ? 'sprites' : 'models',
     landmarks: ['doors', 'all', 'sprites'].includes(new URLSearchParams(location.search).get('landmarks')) ? new URLSearchParams(location.search).get('landmarks') : 'chosen' });   // (?landmarks=doors|all|sprites: which of our kit's pieces stand in 3D, docs/vale-landmarks-proposal.md §8)   // (?figures=sprites: the atlases, as before the models: docs/dungeon-kit-proposal.md §9)
   let dial = readGraphics().bright;                              // (the menu's Brightness tray: a percentage a part, ui/brightness.js)
   return {
@@ -305,6 +305,8 @@ export async function attachLuminati({ renderer, sim, region = 'vale', vendor = 
     setDof: (dof) => api && api.settings({ dof }),
     /** the menu's resolution, applied at once @param {'sharp'|'balanced'|'fast'} res */
     setRes: (res) => api && api.settings({ res }),
+    /** the menu's shadow edges, applied at once @param {'soft'|'sharp'} shadow */
+    setShadow: (shadow) => api && api.settings({ shadow }),
     /** the menu's Brightness dial, applied at once @param {import('./settings.js').Bright} b percentages by part (100: as shipped) */
     setBright: (b) => { dial = b; },
     get world() { return api; },

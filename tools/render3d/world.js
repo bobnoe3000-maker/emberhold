@@ -56,7 +56,7 @@ const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundnes
 
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
-let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', resSet = 'sharp', yawDeg = 45, pitchDeg = 30;
+let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', resSet = 'sharp', shadowEdge = 'soft', yawDeg = 45, pitchDeg = 30;
 // The levels set aside on leaving (Luminati's swapLevel `keep`), by their content (levelKey): going back re-attaches
 // one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
@@ -734,6 +734,7 @@ async function boot(level) {
     if (L.sun) L.sun.intensity *= a.sun;
   });
   if (game.lighting) game.lighting._shadowExtent = Math.max(game.lighting._shadowExtent || 22, 34);   // (the view is wider than Luminati's: shadows reach the screen's top)
+  api.settings({});   // (what the menu set before the game was up: the shadows' edges, the resolution; a level swap applies them again)
 }
 function hidePlayer() {
   const p = game.player; if (!p) return;
@@ -1297,6 +1298,18 @@ const api = {
       if (game.resolution) game.resolution.manual = cap > 0;
       E.renderScale = cap > 0 ? Math.min(1, cap / top) : 1;
       resSet = res;
+    }
+    // the shadows' edges (settings.js; the owner's phone, the Frame test: soft's five taps of the map a pixel were 2.4 ms
+    // of 27 in the square at dusk): sharp, one tap (three.js BasicShadowMap). A change of type recompiles every lit program
+    // once; a level built after it compiles with it
+    if (o.shadow === 'soft' || o.shadow === 'sharp') shadowEdge = o.shadow;
+    const SR = game?.engine?.renderer;
+    if (SR) {
+      const t = shadowEdge === 'sharp' ? THREE.BasicShadowMap : THREE.PCFShadowMap;
+      if (SR.shadowMap.type !== t) {
+        SR.shadowMap.type = t; SR.shadowMap.needsUpdate = true;
+        game.engine.scene.traverse((q) => { if (q.material) for (const m of [].concat(q.material)) m.needsUpdate = true; });
+      }
     }
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;

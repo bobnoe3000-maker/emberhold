@@ -122,6 +122,11 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
         ${choice('res', 'balanced', 'Balanced', 'at most 2×: quicker', g.res === 'balanced')}
         ${choice('res', 'fast', 'Fast', 'at most 1.5×: softer', g.res === 'fast')}
       </div>
+      <div class="tag">Shadow edges</div>
+      <div class="row">
+        ${choice('shadow', 'soft', 'Soft', 'as they were', g.shadow === 'soft')}
+        ${choice('shadow', 'sharp', 'Sharp', 'quicker on a phone', g.shadow === 'sharp')}
+      </div>
       <div class="tag">Hit feel</div>
       <div class="row">
         ${choice('feel', 'full', 'Full', 'blows hold and jolt', g.feel === 'full')}

@@ -185,6 +185,7 @@ const graphics = { frameTest: () => frameTest.run(), read: readGraphics, status:
   const next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
   if (patch.res && world3d) world3d.setRes(next.res);
+  if (patch.shadow && world3d) world3d.setShadow(next.shadow);
   if (patch.bright && world3d) world3d.setBright(next.bright);
   if (patch.feel) renderer.setFeel(feelK(next.feel));
   if (patch.fps) fpsMeter.show(next.fps === 'on');
