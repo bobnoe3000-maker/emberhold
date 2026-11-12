@@ -15,7 +15,7 @@ import { PROPS, repaint } from './props.js';
 import { buildFace } from './faces.js';
 import { buildBody } from './body.js';
 import { buildCreature, applyFit } from './creatures.js';
-import { dressGear } from './gear.js';
+import { dressGear, fitHelm } from './gear.js';
 
 // every toggleable accessory per model (anything not listed in a variant's `show` is hidden)
 export const ACC = {
@@ -101,7 +101,11 @@ export async function build(v, o) {
     const f0 = v.face ? await facePreset(v.face, o.faces) : {}, f = v.appearance ? { ...f0, ...Object.fromEntries(FACE_PARTS.map((k) => [k, v.appearance[k]])) } : f0;
     const { head, replaces } = await buildFace(load, v.model, f, { far, lod });
     root.traverse((m) => { if (m.isMesh && replaces.includes(m.name)) m.visible = false; });
-    findNode(root, 'head').add(head);
+    const hb = findNode(root, 'head'), F = head.userData.fit;
+    const own = F ? [...hb.children].filter((c) => c.isMesh && c.visible && !c.userData.face) : [];
+    for (const c of own) fitHelm(c, F);                  // (the variant's own helm or hat, the mage's: brought to the painted head as a worn one is, gear.js)
+    if (own.length) { const hair = head.getObjectByName('Hair'); if (hair) hair.visible = false; }   // (the hair under it, as under a worn helm: it poked through the hat's crown)
+    hb.add(head);
   }
   for (const [bone, file] of Object.entries(v.attach || {})) { const w = await load(`./models/${file}`); findNode(root, bone)?.add(w.scene); }
   for (const [bone, name] of Object.entries(v.hold || {})) { const p = PROPS[name](); p.position.y = 0.033; p.userData.held = true; findNode(root, bone)?.add(p); }   // sits like the kits' 1H weapons

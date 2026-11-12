@@ -202,8 +202,21 @@ What the pack does (studied from its product images; none of its art is in the r
   onto the skull (a ray grid each) and painting the picture; caching both by head and cut would halve it. The face's
   picture is 512² and unmipped, one a distinct face (17 in the square, ~1 MB each on the GPU); 256² with mipmaps for play
   would quarter that. A lighter play skull still (28 × 20: some 600 triangles a head fewer) is the next geometry step.
-- **Still to do:** a real phone's frame time (the owner's); dark skin's brows; the mage's brim over the eyes from the game's camera;
-  the KayKit sprite atlases (`?figures=sprites`) not re-baked.
+- **The mage's hat and dark skins' brows** (the owner, 2026-11-12: "do 2 and 3"):
+  - *The hat:* from the game's camera (30° down) KayKit's wide witch hat, set level on the painted head, covered the eyes
+    and nose; at play's size the figure read as a hat on a coat. `gear.js fitHelm` (one fit for a helm worn as gear and
+    for a variant's own, `figure.js`: the mage's and the bog-witch's hat had never been brought to the painted head) tips
+    it back 0.24 rad and lifts it 0.05 (`HAT_SET`); a variant's own helm hides the hair under it as a worn one does (it
+    poked through the crown). The face now shows at the game's pitch, front on, and at play's size.
+  - *The brows:* a dark brow on a dark skin (black on umber or deep) all but vanished. `facePicture`: a dark brow on a
+    dark skin goes darker still (×0.35 of the hair's colour, was ×0.9), and on the two darkest skins the brow ridge's
+    light is painted under it (the skin's own colour, lifted, two soft strokes below the brow) so its edge reads; a light
+    brow (grey, flax) on a dark skin stays light, as it read before.
+  - Boards: [before](img/faces/hat-brows-before.jpg), [after](img/faces/hat-brows-after.jpg) (each look as a portrait,
+    at the game's pitch, front on, and at play's size ×4). Re-baked: the mage's, Brannoc's, Col's and Jory's portraits
+    and figures; the knight's and barbarian's (their own helms now fitted to the painted head as a worn helm is: a touch
+    narrower).
+- **Still to do:** a real phone's frame time (the owner's); the KayKit sprite atlases (`?figures=sprites`) not re-baked.
 
 ## Next (not in the spike)
 

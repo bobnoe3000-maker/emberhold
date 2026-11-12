@@ -78,6 +78,21 @@ async function pieceOf(G, load) {
   const c = src.clone(); c.visible = true; c.position.copy(src.position); c.quaternion.copy(src.quaternion); c.scale.copy(src.scale);
   return c;
 }
+// a hat worn pushed back on the painted head (the owner, 2026-11-12: the mage's brim hid the face): from the game's camera,
+// 30° down, KayKit's wide brim set level covered the eyes and nose (at play's size, a hat on a coat). Tipped back about the
+// head bone (its brim's front up), and moved to stay on the crown: rx (rad, − tips back), dy, dz in head-bone units
+export const HAT_SET = { Mage_Hat: { rx: -0.24, dy: 0.05, dz: 0 } };
+/** a helm made for KayKit's head brought to the painted one (faces.js head.userData.fit): lower and narrower; a cloth hood
+ * (props.js, userData.helm) only comes down, and is set back, what sits on the face kept there; a wide hat pushed back.
+ * Used for a helm worn as gear and for the variant's own (figure.js: the mage's hat) @param {THREE.Object3D} p
+ * @param {{ sx: number, sy: number, sz: number }} F */
+export function fitHelm(p, F) {
+  const cloth = p.userData.helm, k = cloth ? new THREE.Vector3(1, F.sy, 1) : new THREE.Vector3(F.sx, F.sy, F.sz);   // (a cloth hood, kept off the head, only comes down: brought in, its window crowds the face)
+  p.scale.multiply(k); p.position.multiply(k);
+  if (cloth) { p.position.z -= 0.08; for (const c of p.children) if (c.userData.onFace) { if (c.name.endsWith('_Band')) c.scale.y += 0.08; else c.position.z += 0.08; } }   // (set back: its window's edge stood ahead of this face's cheeks, hiding the near one at a turn; what sits on the face stays there: a band's front reaches forward, its ends under the cloth)
+  const h = HAT_SET[p.name];
+  if (h) { p.rotateX(h.rx); p.position.y += h.dy; p.position.z += h.dz; }
+}
 /** an item's look on its piece: its own colours, lit a little from within by its rarity and the smith's steps (never
  * tinted: the rarity's colour is the card's and the slot's, with its word) @param {THREE.Object3D} piece
  * @param {{ r?: string, up?: number }} it */
@@ -114,11 +129,8 @@ export async function dressGear(root, gear, load, findNode, v = {}) {
     if (G.hang) {                                            // carried upright (figure.js plumb): a staff, a wand, a rod
       const w = new THREE.Group(); w.position.copy(p.position); p.position.set(0, G.lift || 0, 0); w.add(p); w.userData.hang = G.hang; p = w;   // (lift: its foot at the soles, not through the floor)
     }
-    if (slot === 'helm') {                                   // (on a painted head, lower and narrower than KayKit's: the helm brought to it)
-      const F = B.children.find((c) => c.name === 'Face' && c.userData.fit)?.userData.fit;
-      const k = F && (p.userData.helm ? new THREE.Vector3(1, F.sy, 1) : new THREE.Vector3(F.sx, F.sy, F.sz));   // (a cloth hood, kept off the head, only comes down: brought in, its window crowds the face)
-      if (k) { p.scale.multiply(k); p.position.multiply(k); if (p.userData.helm) { p.position.z -= 0.08; for (const c of p.children) if (c.userData.onFace) { if (c.name.endsWith('_Band')) c.scale.y += 0.08; else c.position.z += 0.08; } } }   // (what sits on the face stays there: a band's front reaches forward, its ends under the cloth)   // (and set back: its window's edge stood ahead of this face's cheeks, hiding the near one at a turn)
-    }
+    if (slot === 'helm') { const F = B.children.find((c) => c.name === 'Face' && c.userData.fit)?.userData.fit; if (F) fitHelm(p, F); }
+
     lookOn(p, it); B.add(p);
   }
   // what's worn on the body: a trinket (the amulet at the neck, the charm at the belt), and a quiver for a bow, a bolt

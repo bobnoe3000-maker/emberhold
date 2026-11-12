@@ -617,12 +617,21 @@ function facePicture(f) {
     g.strokeStyle = '#1c1616'; g.lineWidth = 0.018 * ky; g.beginPath(); g.moveTo(...P(-0.5, 0.68)); g.lineTo(...P(0.5, 0.36)); g.stroke();
   }
   // the brows: thick tapered strokes in the hair's colour, turned by the mood
-  const B = PBROWS[f.brows] || PBROWS.straight, browC = hex(hairC.clone().multiplyScalar(dark ? 0.9 : 0.5));
+  // (on a dark skin, a brow darker than it lost itself, black on deep brown under the game's dusk: the owner, 2026-11-12.
+  // A light brow, grey or flax, stays light and reads; a dark one goes darker still, and on the darkest skins (umber, deep)
+  // the brow ridge's catch of light is painted under it in the skin's own colour, lifted, so its edge reads at play's size)
+  const B = PBROWS[f.brows] || PBROWS.straight, lightBrow = dark && lumOf(hairC) > lumOf(skin), browC = hex(hairC.clone().multiplyScalar(lightBrow ? 0.9 : dark ? 0.35 : 0.5));
+  const lift = dark && !lightBrow && lumOf(skin) < 0.16 ? hex(toned(skin, '#f0c8a0', 0.25, 1.9)) : null;
   for (const sd of [-1, 1]) {
     const tilt = B.tilt + ex.brow * (ex.oneBrow && sd < 0 ? -0.6 : 1), y0 = PE.y + 0.1 + ex.lift + (ex.oneBrow && sd < 0 ? 0.02 : 0);
     const inner = [sd * 0.075, y0 - tilt * 0.05], outer = [sd * (0.075 + B.w * 1.15), y0 + tilt * 0.03 - B.arch * 0.3], mid = [sd * (0.075 + B.w * 0.6), y0 + B.arch + tilt * 0.005];
     const [ix, iy] = P(...inner), [mx, my] = P(...mid), [ox, oy] = P(...outer), t = B.t * 1.25 * ky;   // a thick stroke, round at both ends
-    g.strokeStyle = browC; g.lineCap = 'round'; g.lineWidth = t; g.beginPath(); g.moveTo(ix, iy); g.quadraticCurveTo(mx, my - t * 0.25, ox, oy); g.stroke();
+    g.lineCap = 'round';
+    if (lift) for (const [w, a] of [[1.7, 0.22], [1.25, 0.4]]) {   // the light under the brow: two soft strokes, a little below it
+      g.strokeStyle = lift; g.globalAlpha = a; g.lineWidth = t * w; const d = t * 0.55;
+      g.beginPath(); g.moveTo(ix, iy + d); g.quadraticCurveTo(mx, my - t * 0.25 + d, ox, oy + d); g.stroke();
+    }
+    g.globalAlpha = 1; g.strokeStyle = browC; g.lineWidth = t; g.beginPath(); g.moveTo(ix, iy); g.quadraticCurveTo(mx, my - t * 0.25, ox, oy); g.stroke();
   }
   if (ex.creases) { g.strokeStyle = browC; g.lineWidth = 0.008 * ky; for (const d of [-0.02, 0.02]) { g.beginPath(); g.moveTo(...P(d - 0.01, PE.y + 0.07)); g.lineTo(...P(d * 1.4, PE.y + 0.13)); g.stroke(); } }   // a scowl's lines between the brows
   // the mouth: a short line, curved for the mood; teeth or fangs where it shows them
