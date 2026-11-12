@@ -296,7 +296,7 @@ const lineRound = (pts) => (c) => { const a = Math.abs(Math.atan2(c.x, c.z + 0.0
   const [a0, y0] = pts[i], [a1, y1] = pts[i + 1]; return c.y > lerp(y0, y1, smooth(a0, a1, a)); };
 const HAIRS_PAINTED = {
   short: { line: lineRound([[0, 0.72], [0.55, 0.75], [0.95, 0.7], [1.15, 0.42], [1.42, 0.4], [1.62, 0.44], [1.95, 0.16], [Math.PI, 0.04]]),
-    grow: (v) => 0.035 + 0.06 * smooth(0.5, 0.9, v.y) + 0.02 * smooth(0.85, 1.05, v.y), lock: true },
+    grow: (v) => 0.035 + 0.07 * smooth(0.5, 0.85, v.y) + 0.06 * smooth(0.75, 0.97, v.y), lock: true },   // (the reference's height is its hair's: a thick crown)
 };
 /** a lock of hair: a ribbon tapering along a curve lying on the face, a little proud of it */
 function lockMesh(pts, w0, mat) {
@@ -309,8 +309,9 @@ function lockMesh(pts, w0, mat) {
   return new THREE.Mesh(g, mat);
 }
 async function hair(load, skull, f, M, S = null, clean = false) {
-  const at = (a) => { const v = new THREE.Vector3(...a); if (S) S(v); return v; };
-  const g = new THREE.Group(), st = (clean && HAIRS_PAINTED[f.hair ?? 'crop']) || HAIRS[f.hair ?? 'crop']; if (!st) return g;
+  const k = clean ? capOf(f) : 1, at = (a) => { const v = new THREE.Vector3(...a); v.y = squashY(v.y, k); if (S) S(v); return v; };
+  const g = new THREE.Group(), st0 = (clean && HAIRS_PAINTED[f.hair ?? 'crop']) || HAIRS[f.hair ?? 'crop']; if (!st0) return g;
+  const q = new THREE.Vector3(), st = k === 1 ? st0 : { ...st0, line: (c, n) => st0.line(q.set(c.x, unsquashY(c.y, k), c.z), n) };   // (the line drawn for a full crown, read on a lower one)
   if (st.kk) {
     const h = await kkHead(load, st.kk);
     g.add(new THREE.Mesh(filterTris(h.parts['1,0'], (c) => !isBrow(c), (v) => { if (S) S(v); grow(0.05)(v); }), M.hair));   // grown to clear the skull's crown (it sits higher than theirs)
@@ -324,7 +325,7 @@ async function hair(load, skull, f, M, S = null, clean = false) {
     const sp = skull.attributes.position, frontZ = (x, y) => { let best = 1e9, z = 0.4; for (let i = 0; i < sp.count; i++) { if (sp.getZ(i) < 0) continue; const d = (sp.getX(i) - x) ** 2 + (sp.getY(i) - y) ** 2; if (d < best) { best = d; z = sp.getZ(i); } } return z; };
     const mat = M.hair.clone(); mat.side = THREE.DoubleSide;
     for (const [x0, y0, x1, y1, w] of [[0.09, 0.78, 0.13, 0.55, 0.075], [0.17, 0.77, 0.2, 0.6, 0.055]]) {   // (from inside the hairline, curving down over the brow)
-      const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8, x = lerp(x0, x1, t) - 0.03 * Math.sin(Math.PI * t), y = lerp(y0, y1, t); pts.push([x, y, frontZ(x, y) + 0.008 + 0.03 * (1 - t) * (1 - t)]); }
+      const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8, x = lerp(x0, x1, t) - 0.03 * Math.sin(Math.PI * t), y = squashY(lerp(y0, y1, t), k); pts.push([x, y, frontZ(x, y) + 0.008 + 0.03 * (1 - t) * (1 - t)]); }
       g.add(lockMesh(pts, w, mat));
     }
   }
@@ -414,12 +415,16 @@ const BUMP = { kk: [0.08, 0.064, 0, 0.27, 'ball'], button: [0.075, 0.06, 0.027, 
 // the skull, a sloped forehead, a long jaw (chinL) or a tall crown (tall). Every shape stays inside KayKit's head
 // (x ±0.54, z −0.57…0.5, chin 0 to crown 1.05), so its helms and hoods and our hair shells still fit.
 const HEAD0 = { w: 0.47, d: 0.55, sq: 2.3, top: 2.1, low: 2.5, jaw: 0.72, jawTo: 0.5, front: 0.93, back: 1.08, slope: 0, tall: 0, chinL: 0,
-  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06, muzzle: 0, cheekF: 0, nape: 0.12, lowF: 0 };
+  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06, muzzle: 0, cheekF: 0, nape: 0.12, lowF: 0, cap: 1 };
+// (cap: the cranium above the brow line, CAP_Y, kept to that share of its height; everything up there, the hairline, the
+// forelock and KayKit's cuts, comes down with it)
+const CAP_Y = 0.47, squashY = (y, k) => (y > CAP_Y ? CAP_Y + (y - CAP_Y) * k : y), unsquashY = (y, k) => (y > CAP_Y ? CAP_Y + (y - CAP_Y) / k : y);
+const capOf = (f) => (HEADQ[f.head] || HEADQ.shield).cap;
 /** the twenty heads (and the pack's rounded box, the spike's first): each the numbers that differ from HEAD0 */
 export const HEADS = {
   // the owner's reference head (2026-11-12: "Map this closely and critic pass until you get it right"), the default: a flat face
   // plane, the sides turning back from it, the widest at the cheekbones, a broad jaw straight to a rounded chin
-  shield:    { w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
+  shield:    { w: 0.43, d: 0.52, sq: 2.1, top: 2.1, low: 2.6, lowF: 4.2, cap: 0.85, jaw: 0.76, jawTo: 0.48, front: 1, back: 0.86, nape: 0.36, brow: 0.016, socket: 0.012, bridge: 0.03, cheek: 0.012, cheekF: 0.02, muzzle: 0.035, temple: 0.012, lips: 0.008, chin: 0.018 },
   oval:      {},
   heart:     { w: 0.48, jaw: 0.52, low: 1.9, cheek: 0.02, temple: -0.006, chin: 0.012 },
   square:    { w: 0.48, sq: 3.1, low: 4, jaw: 0.95, gonion: 0.022, brow: 0.02, chin: 0.006 },
@@ -457,7 +462,7 @@ function eggAt(th, s, f, out = new THREE.Vector3()) {
   z *= z > 0 ? H.front * lerp(0.92, 1, smooth(0.0, 0.45, s)) * (1 - H.slope * smooth(0.55, 1, s)) : H.back * lerp(1 - H.nape, 1, smooth(0.0, 0.45, s));   // (the back of the skull curving in toward the neck, as the jaw does at the sides)   // the face's front (a forehead sloped back), the skull's back
   if (H.flat && z > 0) z = (z + H.flat - Math.sqrt((z - H.flat) * (z - H.flat) + H.flatK * H.flatK)) / 2;   // a flat face plane, the sides turning back from it (a soft min)
   const lo = Math.max(0, 1 - s / 0.24);
-  out.set(x * H.w, EGG.cy + yU * EGG.ay - H.chinL * lo * lo + H.tall * smooth(0.5, 1, s), EGG.cz + z * H.d);
+  out.set(x * H.w, squashY(EGG.cy + yU * EGG.ay - H.chinL * lo * lo + H.tall * smooth(0.5, 1, s), H.cap), EGG.cz + z * H.d);
   // the sculpting: a push along the face (z) at the front, outward round the sides (x and z), each a soft hill or dent
   const a = Math.abs(th), sx = Math.sin(th), cz = Math.cos(th), front = Math.max(0, cz), eS = (PE.y - CHIN) / HH, bS = eS + 0.1 / HH;   // (the eye line's and the brows' heights)
   const dz = H.brow * G(s - bS, 0.04) * G(th, 0.62) * front       // the brow ridge over the eyes
@@ -632,7 +637,7 @@ async function paintedFace(load, model, f) {
   head.add(tag(await beard(load, skull, on, f, M, S), 'hair'));
   if ((f.marks || []).includes('earring')) head.add(marks(on, { ...f, marks: ['earring'] }, M));
   const hr = await hair(load, skull, f, M, S, true); hr.name = 'Hair'; head.add(tag(hr, 'hair'));
-  if (HAIRS[f.hair]?.kk) hr.traverse((o) => { if (o.isMesh) o.geometry = filterTris(o.geometry, () => true, (v) => { v.x *= 1.06; grow(0.12)(v); }); });   // (KayKit's own long cuts were made for its smaller crown: out over ours)
+  if (HAIRS[f.hair]?.kk) hr.traverse((o) => { if (o.isMesh) o.geometry = filterTris(o.geometry, () => true, (v) => { v.x *= 1.06; v.y = squashY(v.y, capOf(f)); grow(0.12)(v); }); });   // (KayKit's own long cuts were made for its smaller crown: out over ours)
   head.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.userData.face = true; } });
   return { head, replaces: [mine.headName], skull, on };
 }

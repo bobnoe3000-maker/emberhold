@@ -66,6 +66,14 @@ What the pack does (studied from its product images; none of its art is in the r
 
   ![before and after: three-quarter and side](img/faces/ref-head-volume.jpg) (pass 9, then pass 13)
 
+  Then the owner: *"The shape is much better but the face sits a little low and the forehead is huge maybe the part above
+  the head is too tall by 15%"*. Pass 14: the cranium above the brow line (y 0.47) kept to 85 % of its height (`cap`: the
+  crown at 0.96, was 1.05), everything up there brought down with it (the hairline read on the full crown it was drawn for,
+  the forelock, KayKit's cuts); the face now sits higher in the head (the eye line from 0.36 of the height to about 0.39).
+  The reference's height is its thick hair's, so the short cut's crown is thicker (0.165 at the top, was 0.115). The front
+  silhouette's RMS against the reference 0.056 (0.070 before the thicker crown): the head now reads wider for its height
+  than the reference, the owner's call over the picture's. ![before and after, with hair and side on](img/faces/ref-head-cap.jpg)
+
   What's left is the hair's top (the reference's is chunkier, its peak to the front) and the light (the reference is lit
   from the front; our portraits keep the game's dusky key from the side). The eyes, brows, nose, ears and mouth apply to
   every head, so the twenty were redrawn with them. ![passes](img/faces/ref-head-passes.jpg)
