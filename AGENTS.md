@@ -28,6 +28,7 @@ npm run serve                             # open http://localhost:8080 (ES modul
 #   ?stairs=plain (a dungeon floor's stairs as they were before their arches; the default since GDD v1.57: the way up three tiles wide, an arch over each way, its inner edge glowing: docs/dungeon-stairs-proposal.md)
 #   ?figures=sprites (the people as their atlas sprites, as before they were models: docs/dungeon-kit-proposal.md §9.6)
 #   ?faces=mesh (the faces as their 3D parts, as before the painted head: GDD v1.79, docs/painted-faces-spike.md)
+#   ?headshadow=1 (the figures' heads in the shadow pass, as the painted head first shipped: docs/painted-faces-spike.md)
 #   ?notitle (skip the splash, loading screen and title and play at once; tests and captures)
 #   ?region=vale|fens|reach|heights  ?site=barrows|wickham_keep|sunken_chapel|proving_pens|ninth_milestone|toadking_mound|canal_locks|drowned_abbey|… (with ?scene=dungeon; sim/sites.js)
 #   ?dev (localhost only: globalThis.__sim)

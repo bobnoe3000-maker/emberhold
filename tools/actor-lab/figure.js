@@ -90,7 +90,7 @@ export async function facePreset(f, faces) {
  */
 export async function build(v, o) {
   if (v.creature) return buildCreature(v.creature, o.load);   // a beast KayKit has no model for, built in code (creatures.js, docs/creatures-proposal.md); a humanoid on KayKit's rig
-  const { far = false, load } = o, g = await load(`./models/${v.model}.glb`), root = g.scene;
+  const { far = false, load, lod = 'full' } = o, g = await load(`./models/${v.model}.glb`), root = g.scene;
   const acc = ACC[v.model] || [];
   root.traverse((m) => { if (m.isMesh) { m.frustumCulled = false; if (acc.includes(m.name) && !(v.show || []).includes(m.name)) m.visible = false; } });
   if (v.body) {                                          // mock-up: our own body, clothes and head on the KayKit rig (body.js)
@@ -99,7 +99,7 @@ export async function build(v, o) {
     await buildBody(load, root, b, { far, findNode });
   } else if (v.face || v.appearance) {                   // a modular face replaces the KayKit head (faces.js); a member's own parts over it
     const f0 = v.face ? await facePreset(v.face, o.faces) : {}, f = v.appearance ? { ...f0, ...Object.fromEntries(FACE_PARTS.map((k) => [k, v.appearance[k]])) } : f0;
-    const { head, replaces } = await buildFace(load, v.model, f, { far });
+    const { head, replaces } = await buildFace(load, v.model, f, { far, lod });
     root.traverse((m) => { if (m.isMesh && replaces.includes(m.name)) m.visible = false; });
     findNode(root, 'head').add(head);
   }
@@ -216,6 +216,7 @@ export function compact(root, merge) {
     const mat = textured ? src.clone() : kind === 'basic' ? new THREE.MeshBasicMaterial({ vertexColors: true, transparent: src.transparent, opacity: src.opacity })
       : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: src.roughness ?? 1, metalness: src.metalness ?? 0 });
     const m = new THREE.Mesh(g, mat); m.name = `${bone.name}:${kind.split('|')[0]}`; m.frustumCulled = false;
+    if (list.some((o) => o.userData.face)) m.userData.face = true;   // (the head's parts merged: still the head, world.js's shadow pass)
     (root.userData.ownGeos ||= []).push(g);
     bone.add(m);
     for (const o of list) o.parent.remove(o);

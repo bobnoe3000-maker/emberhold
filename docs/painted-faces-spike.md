@@ -170,7 +170,39 @@ What the pack does (studied from its product images; none of its art is in the r
   72 × 52 → 56 × 40, the mask 56 × 48 → 36 × 30, the ears and nose lighter); the median frame (software GL) 1.18–1.27 s
   → 1.35–1.42 s; the JS heap noisy run to run (150 → 190–228 MB in the square, 104 → 82 in a fight). A Barrows fight
   209,000 → 224,000 triangles.
-- **Still to do:** a real phone's frame time; dark skin's brows; the mage's brim over the eyes from the game's camera;
+- **The phone's frame rate** (the owner, 2026-11-12: *"FPS dropped from mid 30s to 15s.. evaluate performance improvement
+  options"*). The cause: the head's vertices. A head as shipped was a triangle soup (the skull kept unwelded so the hair
+  shells could be cut from it, the shells unwelded too), so the GPU shaded 17,000–24,000 corners a head against KayKit's
+  3,600–4,000, six times over, for 17 figures, twice a frame (the shadow pass). Measured a head at a time
+  (`lab.js headCost`):
+
+  | a head | meshes | triangles | corners shaded |
+  |---|---|---|---|
+  | KayKit's (the 3D parts), short hair | 16 | 1,954 | 3,604 |
+  | painted as shipped, short hair | 12 | 10,446 | 22,712 |
+  | **painted for play**, short hair | 10 | 4,144 | **2,357** |
+  | KayKit's, long hair | 16 | 2,063 | 3,931 |
+  | painted as shipped, long hair (KayKit's cut, carried) | 10 | 8,420 | 16,772 |
+  | **painted for play**, long hair | 8 | 3,472 | **2,966** |
+  | KayKit's, crop and a full beard | 17 | 2,095 | 4,027 |
+  | painted as shipped, crop and a full beard | 11 | 10,722 | 23,678 |
+  | **painted for play**, crop and a full beard | 9 | 4,338 | **2,840** |
+
+  What was done (`faces.js` `LOD`, `world.js`): a figure in the world builds its head **for play** (a coarser skull
+  36 × 26 and mask 22 × 18, the face still the finer for the angles packed toward it; the skull drawn and the hair
+  welded so each corner is shaded once; the ears without their rim, a C some 3 px tall; a lighter nose), the portraits,
+  previews and boards the full head; and **the head is out of the shadow pass** (the body's shadow is the figure's;
+  `?headshadow=1` puts it back). The town square (figperf): 463 → 429 draws, 1,000,000 → 725,000 triangles a frame
+  (KayKit's faces 740,000), the play head with its shadow 795,000; a Barrows fight 224,000 → 210,000 (KayKit's 210,000).
+  At play's size the play head can't be told from the full one (an in-play capture of both). Frame times on this box's
+  software GL sit within their run-to-run noise (± 7 %) for all of these, so the phone is the measure: `?faces=mesh` for
+  the 3D parts beside it.
+- **More, if the phone wants it** (not done; each measured or estimated here): a head's build is 389 ms median to
+  KayKit's 188 (once a look, when a figure first stands: a hitch, not the frame rate), most of it carrying KayKit's cuts
+  onto the skull (a ray grid each) and painting the picture; caching both by head and cut would halve it. The face's
+  picture is 512² and unmipped, one a distinct face (17 in the square, ~1 MB each on the GPU); 256² with mipmaps for play
+  would quarter that. A lighter play skull still (28 × 20: some 600 triangles a head fewer) is the next geometry step.
+- **Still to do:** a real phone's frame time (the owner's); dark skin's brows; the mage's brim over the eyes from the game's camera;
   the KayKit sprite atlases (`?figures=sprites`) not re-baked.
 
 ## Next (not in the spike)

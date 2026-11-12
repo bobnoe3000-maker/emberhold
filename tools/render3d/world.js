@@ -180,7 +180,7 @@ function templateOf(name, def, look = null, lk = '') {
   const tk = lk ? `${name}#${lk}` : name, t = templates.get(tk); if (t !== undefined) return t;
   templates.set(tk, null);
   if (!metaOf.has(name)) json(`${ASSETS}actors/${name}.json`).then((m) => metaOf.set(name, m));
-  buildFigure(withLook(def.v, look), { far: false, load: loadModel, faces: async () => cast.faces }).then((c) => {
+  buildFigure(withLook(def.v, look), { far: false, load: loadModel, faces: async () => cast.faces, lod: 'play' }).then((c) => {   // (the head as play draws it: faces.js LOD)
     const rest = []; c.root.traverse((b) => { if (b.isBone) rest.push([b, b.position.clone(), b.quaternion.clone(), b.scale.clone()]); });
     poseFigure(c, 'Idle', 0, true);                           // (sized from the heroic idle, as the bake fits it)
     const { box, ppu } = fitPpu(c.root, def.v, def.px);
@@ -194,6 +194,7 @@ function templateOf(name, def, look = null, lk = '') {
 // "Stop adding the sparkles around a character when they wear Heirloom items". An heirloom shows as its piece does, and by
 // its amber frame in the bag.)
 
+const HEAD_SHADOW = typeof location !== 'undefined' && new URLSearchParams(location.search).get('headshadow') === '1';
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
 let figSeen = 0;
 function figureFor(key, name, T) {
@@ -203,7 +204,7 @@ function figureFor(key, name, T) {
   const root = cloneSkinned(T.root), mats = [];
   root.traverse((o) => {
     if (!o.isMesh) return;
-    o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    o.castShadow = !o.userData.face || HEAD_SHADOW; o.receiveShadow = true; o.frustumCulled = false;   // (the head out of the shadow pass: the body's shadow is the figure's)
     o.material = o.material.clone();
     // matte, as the atlases are (they're baked unlit): KayKit's sheen took the hero's carry light, a light at the shoulder,
     // as a white blaze on the helmet

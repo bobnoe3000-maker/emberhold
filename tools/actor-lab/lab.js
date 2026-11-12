@@ -682,4 +682,11 @@ window.probeHead = async (model) => {
     out[o.name] = [box.min.toArray().map((n) => +n.toFixed(3)), box.max.toArray().map((n) => +n.toFixed(3))]; });
   return out;
 };
+// what a head costs (perf, docs/painted-faces-spike.md): its meshes, triangles and the corners the GPU shades, by detail
+window.headCost = async (f, lod = 'full') => {
+  const K = await import('./faces.js'), { head } = await K.buildFace(load, 'Rogue', f, { lod });
+  let meshes = 0, tris = 0, verts = 0;
+  head.traverse((o) => { if (!o.isMesh || !o.visible) return; meshes++; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; verts += g.attributes.position.count; });
+  return { meshes, tris: Math.round(tris), verts };
+};
 window.ready = true;
