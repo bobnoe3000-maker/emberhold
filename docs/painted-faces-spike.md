@@ -94,6 +94,11 @@ What the pack does (studied from its product images; none of its art is in the r
   - **Pointed ears** where this head's ears sit.
 
   ![twenty looks](img/faces/looks-board.jpg)
+- **Fuller cheeks** (`cheekFat`, a head's or a face's own; the owner, 2026-11-12: *"Show me a comparison of this vs
+  fatter cheeks by 15%"*): the skull widened between the mouth and the eyes, a little forward too, at most 15 % at its
+  fullest (s 0.25, between the mouth and the nose), easing out above and below and toward the back. Measured bald from the
+  front: the outline up to 8 % wider where it shows below the ears (0.644 → 0.694 of the head's height at 0.2 up); the
+  ears cover its fullest. Off by default, awaiting the owner's choice. ![as now and 15 % fuller](img/faces/cheeks-compare.jpg)
 - **The mask** (`faceMask`): the skull's front from 66° left to 66° right and from just above the chin to the brow line,
   a hair (0.006) proud of it, its picture's u and v across it. The eye line sits at y 0.46, the mouth at 0.18.
 - **The picture** (`facePicture`, 512 px, one per distinct face, cached): drawn on a canvas in the head's own units — the

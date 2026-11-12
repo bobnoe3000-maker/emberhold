@@ -446,7 +446,7 @@ const BUMP = { kk: [0.08, 0.064, 0, 0.27, 'ball'], button: [0.058, 0.05, 0, 0.27
 // the skull, a sloped forehead, a long jaw (chinL) or a tall crown (tall). Every shape stays inside KayKit's head
 // (x ±0.54, z −0.57…0.5, chin 0 to crown 1.05), so its helms and hoods and our hair shells still fit.
 const HEAD0 = { w: 0.47, d: 0.55, sq: 2.3, top: 2.1, low: 2.5, jaw: 0.72, jawTo: 0.5, front: 0.93, back: 1.08, slope: 0, tall: 0, chinL: 0,
-  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06, muzzle: 0, cheekF: 0, nape: 0.12, lowF: 0, cap: 1 };
+  brow: 0.014, socket: 0.008, bridge: 0.006, cheek: 0.01, hollow: 0, lips: 0.006, chin: 0.01, cleft: 0, gonion: 0, temple: 0, jowl: 0, occ: 0, flat: 0, flatK: 0.06, muzzle: 0, cheekF: 0, nape: 0.12, lowF: 0, cap: 1, cheekFat: 0 };
 // (cap: the cranium above the brow line, CAP_Y, kept to that share of its height; everything up there, the hairline, the
 // forelock and KayKit's cuts, comes down with it)
 const CAP_Y = 0.47, squashY = (y, k) => (y > CAP_Y ? CAP_Y + (y - CAP_Y) * k : y), unsquashY = (y, k) => (y > CAP_Y ? CAP_Y + (y - CAP_Y) / k : y);
@@ -486,11 +486,12 @@ const spow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e), G = (d, w) => Ma
 const DEPTH = 1.6;                                                 // the sculpting's strength over the numbers (the first board's read too faint)
 /** a point on the painted skull: th the angle round it (0 the front, +x to the right as you face it), s the height (0 the chin, 1 the crown) */
 function eggAt(th, s, f, out = new THREE.Vector3()) {
-  const H = HEADQ[f.head] || HEADQ.shield, yU = 2 * s - 1, m = yU > 0 ? H.top : H.lowF ? lerp(H.low, H.lowF, Math.max(0, Math.cos(th)) ** 2) : H.low,
+  const H0 = HEADQ[f.head] || HEADQ.shield, H = f.cheekFat == null ? H0 : { ...H0, cheekFat: f.cheekFat }, yU = 2 * s - 1, m = yU > 0 ? H.top : H.lowF ? lerp(H.low, H.lowF, Math.max(0, Math.cos(th)) ** 2) : H.low,
     r = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(yU), m)), 1 / m);
   // (lowF: the face's front squarer at the bottom than the back, the chin forward under the mouth)
   let x = spow(Math.sin(th), 2 / H.sq) * r, z = spow(Math.cos(th), 2 / H.sq) * r;
   x *= lerp(H.jaw, 1, smooth(0.0, H.jawTo, s));                                          // the jaw drawn in toward the chin
+  if (H.cheekFat) { const c = H.cheekFat * Math.exp(-(((s - 0.25) / 0.11) ** 2)) * smooth(-0.4, 0.4, Math.cos(th)); x *= 1 + c; if (z > 0) z *= 1 + 0.35 * c; }   // (fuller cheeks: the face wider between the mouth and the eyes, a little forward)
   z *= z > 0 ? H.front * lerp(0.92, 1, smooth(0.0, 0.45, s)) * (1 - H.slope * smooth(0.55, 1, s)) : H.back * lerp(1 - H.nape, 1, smooth(0.0, 0.45, s));   // (the back of the skull curving in toward the neck, as the jaw does at the sides)   // the face's front (a forehead sloped back), the skull's back
   if (H.flat && z > 0) z = (z + H.flat - Math.sqrt((z - H.flat) * (z - H.flat) + H.flatK * H.flatK)) / 2;   // a flat face plane, the sides turning back from it (a soft min)
   const lo = Math.max(0, 1 - s / 0.24);
