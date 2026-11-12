@@ -56,7 +56,7 @@ const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundnes
 
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
-let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', yawDeg = 45, pitchDeg = 30;
+let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', resSet = 'sharp', yawDeg = 45, pitchDeg = 30;
 // The levels set aside on leaving (Luminati's swapLevel `keep`), by their content (levelKey): going back re-attaches
 // one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
@@ -1288,11 +1288,15 @@ const api = {
     // the full budget, 22 fps in the square at dusk). Sharp: as that is, the controller free; balanced: at most 2× (on that
     // phone 63 % of the pixels), fast: at most 1.5× (35 %), by the engine's render scale, the controller held off so it
     // can't step back up (the canvas's CSS size is untouched: the overlay and taps agree)
+    // (settings() runs again at every level built: Sharp leaves the engine's scale and controller as they are, touching
+    // them only on the way back from a cap; forcing the scale to 1 at each level undid the controller's step down where it
+    // can see the GPU, and CI's software GL ran a frame a second slower: the M3 check's fight timed out, run 412)
     if (o.res === 'sharp' || o.res === 'balanced' || o.res === 'fast') res = o.res;
-    if (game?.engine) {
+    if (game?.engine && (res !== 'sharp' || resSet !== 'sharp')) {
       const E = game.engine, top = Math.min(globalThis.devicePixelRatio || 1, E.maxPixelRatio || PIXEL_RATIO), cap = res === 'fast' ? 1.5 : res === 'balanced' ? 2 : 0;
       if (game.resolution) game.resolution.manual = cap > 0;
       E.renderScale = cap > 0 ? Math.min(1, cap / top) : 1;
+      resSet = res;
     }
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;

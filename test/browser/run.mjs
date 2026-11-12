@@ -213,7 +213,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
       s.state.player.x = best[0] + 0.5; s.state.player.y = best[1] + 0.5; for (const [i, v] of hp.entries()) if (v !== null) s.state.party[i].hp = v;
     }, hp);
     await room([null, 1]);
-    await p.waitForFunction(() => { const c = globalThis.__sim.state.party[1]; c.hp = Math.min(c.hp, 1); return c.down; }, null, { timeout: 60000, polling: 50 });
+    // (a live fight on the real clock: 11.6 s of the sim, 44-49 s here at a few frames a second in software GL, longer on
+    // CI's runner, so given the CI allowance the waits after it have; run 412 timed out at the plain minute)
+    await p.waitForFunction(() => { const c = globalThis.__sim.state.party[1]; c.hp = Math.min(c.hp, 1); return c.down; }, null, { timeout: 60000 * SLOW, polling: 50 });
     await S(() => { const s = globalThis.__sim, E = s.world.level.entrance; s.state.player.x = E.cx + 0.5; s.state.player.y = E.cy + 0.5; });
     await p.waitForTimeout(400);
     // (waited for, not timed: Luminati in software GL runs a few frames a second here, so 400 ms is barely a tick)
@@ -236,7 +238,7 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await S(() => globalThis.__sim.bus.on('defeat', (d) => (window.__lost = d.lost)));
     await room([1, 1]);
     // (held at 1 HP while we wait: on a slow real-time clock the lull's regen could outlast the timeout)
-    await p.waitForFunction(() => { const s = globalThis.__sim; if (s.state.scene === 'town') return true; for (const m of s.state.party) if (!m.down) m.hp = Math.min(m.hp, 1); return false; }, null, { timeout: 60000, polling: 50 });
+    await p.waitForFunction(() => { const s = globalThis.__sim; if (s.state.scene === 'town') return true; for (const m of s.state.party) if (!m.down) m.hp = Math.min(m.hp, 1); return false; }, null, { timeout: 60000 * SLOW, polling: 50 });
     const w = await S(() => { const s = globalThis.__sim, a = s.world.arrivals.temple, p = s.state.player; return { near: Math.hypot(p.x - a.x, p.y - a.y) < 1.5, weak: s.state.party.every((m) => m.weakUntil > 0), fallen: s.state.party.some((m) => m.fallen), gold: s.state.counters.gold, lost: window.__lost }; });
     check(M + ': a wipe wakes the party at the temple, Weakened, a quarter of the gold gone', w.near && w.weak && !w.fallen && w.lost > 0 && w.lost === Math.floor((w.gold + w.lost) * 0.25), JSON.stringify(w));
     // the defeat screen stands between the fight and the town: where, the last blow, the cost; OK to wake
