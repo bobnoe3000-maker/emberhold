@@ -183,45 +183,13 @@ function templateOf(name, def, look = null, lk = '') {
     const { box, ppu } = fitPpu(c.root, def.v, def.px);
     for (const [b, p, q, s] of rest) { b.position.copy(p); b.quaternion.copy(q); b.scale.copy(s); }
     const cut = compact(c.root, mergeGeometries);              // (once a figure: its copies share the merged parts)
-    templates.set(tk, { root: c.root, clips: c.clips, frame: c.frame, creature: c.creature || null, look: c.look || null, ppu, minY: box.min.y, meshes: cut, heir: heirOf(look) });
+    templates.set(tk, { root: c.root, clips: c.clips, frame: c.frame, creature: c.creature || null, look: c.look || null, ppu, minY: box.min.y, meshes: cut });
   }).catch((e) => { console.warn('[luminati] figure', tk, e); figErr ||= `${tk}: ${e?.message || e}`; templates.set(tk, false); });
   return null;
 }
-// ── an heirloom's flourish (docs/character-look-plan.md §7; the owner, 2026-11-10: "do 4"): a few faint embers drifting
-// up round a figure wearing an heirloom, one effect a figure however many it wears. One shared geometry and material
-// (their rise worked out in the shader from the time: nothing per frame on the CPU), a Points child of the figure's
-// root, so it moves, turns and scales with them; one draw for such a figure, none for any other. Kept dusky: small,
-// warm, additive, at most half lit, each mote in and out over its rise.
-const MOTES = 7, moteGeo = (() => {   // (each a little out from the body, 0.62–0.92: inside it most were hidden)
-  const g = new THREE.BufferGeometry(), pos = new Float32Array(MOTES * 3), seed = new Float32Array(MOTES), off = new Float32Array(MOTES * 2);
-  for (let i = 0; i < MOTES; i++) { const a = i * 2.39996, r = 0.62 + 0.3 * ((i * 0.618) % 1); seed[i] = (i * 0.381966) % 1; off[i * 2] = Math.cos(a) * r; off[i * 2 + 1] = Math.sin(a) * r; }
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('seed', new THREE.BufferAttribute(seed, 1)); g.setAttribute('off', new THREE.BufferAttribute(off, 2));
-  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0), 2.5); return g;
-})();
-const moteMat = new THREE.ShaderMaterial({
-  uniforms: { uT: { value: 0 }, uHalfH: { value: 400 }, uSize: { value: 0.15 }, uCol: { value: new THREE.Color(0xffc070) }, uOp: { value: 0.75 } },
-  vertexShader: `attribute float seed; attribute vec2 off; uniform float uT, uHalfH, uSize; varying float vA;
-    void main() {
-      float ph = fract(uT * 0.16 + seed);
-      vec3 p = vec3(off.x + sin(uT * 0.9 + seed * 20.0) * 0.09, 0.55 + ph * 2.1, off.y + cos(uT * 0.7 + seed * 13.0) * 0.09);
-      vA = smoothstep(0.0, 0.18, ph) * (1.0 - smoothstep(0.55, 1.0, ph));
-      vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
-      float sc = length(modelMatrix[0].xyz);                                   // (the figure's own scale: the motes its size)
-      float px = uSize * sc * projectionMatrix[1][1] * uHalfH;
-      gl_PointSize = max(3.0, projectionMatrix[3][3] > 0.5 ? px : px / max(0.01, -mv.z));   // (3 px at least: at play's distance they were lost)
-    }`,
-  fragmentShader: `uniform vec3 uCol; uniform float uOp; varying float vA;
-    void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.05, d) * vA * uOp; if (a < 0.01) discard; gl_FragColor = vec4(mix(uCol, vec3(1.0, 0.95, 0.8), smoothstep(0.25, 0.0, d)), a); }`,
-  transparent: true, depthWrite: false,   // (normal blending: additive read brown on the preview's clear canvas)
-});
-const _db = new THREE.Vector2();
-/** an heirloom's embers, for a figure's root */
-function heirMotes() {
-  const p = new THREE.Points(moteGeo, moteMat); p.name = 'Heirloom_Motes'; p.frustumCulled = false; p.renderOrder = 2;
-  p.onBeforeRender = (r) => { r.getDrawingBufferSize(_db); moteMat.uniforms.uHalfH.value = _db.y / 2; moteMat.uniforms.uT.value = performance.now() / 1000; };
-  return p;
-}
-const heirOf = (look) => !!(look && look.gear && Object.values(look.gear).some((g) => g && g.r === 'heirloom'));
+// (an heirloom's flourish, embers drifting up round a figure wearing one, was here from 2026-11-10; the owner, 2026-11-12:
+// "Stop adding the sparkles around a character when they wear Heirloom items". An heirloom shows as its piece does, and by
+// its amber frame in the bag.)
 
 const figs = new Map();                                       // a figure's key (hybrid.js) → its model, posed
 let figSeen = 0;
@@ -252,7 +220,6 @@ function figureFor(key, name, T) {
   // (creature: a creature keeps its own proportions, figure.js pose, and one on KayKit's rig its joints; without it the
   // heroes' heroic pass shrank a creature's head to 0.62 in the world, the atlases had it as built)
   f = { name, root, mixer: new THREE.AnimationMixer(root), clips: T.clips, frame: T.frame, creature: T.creature, look: T.look, bones, mats, shines: mats.some((q) => q.shine), yaw: null, key: '', fpos: 0, seen: 0, lit: '' };
-  if (T.heir) root.add(heirMotes());                           // (an heirloom worn: its embers, one effect a figure)
   game.engine.scene.add(root); figs.set(key, f);
   return f;
 }
@@ -1579,7 +1546,6 @@ export function createPreview(canvas, o) {
         fig.root.traverse((q) => { if (q.isMesh && q.material && q.material.isMeshStandardMaterial) { q.material.metalness = 0; q.material.roughness = Math.max(q.material.roughness ?? 1, 0.92); } });
         poseFigure(fig, 'Idle', 0, true);
         const box = new THREE.Box3(); fig.root.updateMatrixWorld(true); fig.root.traverse((q) => { if (q.isMesh && q.visible) box.expandByObject(q); });
-        if (heirOf({ gear: v.gear })) fig.root.add(heirMotes());       // (an heirloom worn: its embers, as in play)
         const L = fig.look || { w: 1, h: 1 }, h0 = box.max.y - box.min.y, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
         const pin = new THREE.Group(); pin.add(fig.root); fig.root.position.set(-cx, -box.min.y, -cz); pin.scale.set(L.w, L.h, L.w);   // (a build's girth, a height's stature: framed for the average, so a tall one stands taller)
         const h = h0 * 1.06;
