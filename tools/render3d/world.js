@@ -56,7 +56,7 @@ const SPRITE_OPTS = { billboard: 'spherical', normalUp: 0.6, wrap: 0.6, roundnes
 
 let lang = 'en', fonts = null, tables = null, container = null, uiRoot = null;
 
-let game = null, building = null, levelId = 0, dof = 'soft', yawDeg = 45, pitchDeg = 30;
+let game = null, building = null, levelId = 0, dof = 'soft', res = 'sharp', yawDeg = 45, pitchDeg = 30;
 // The levels set aside on leaving (Luminati's swapLevel `keep`), by their content (levelKey): going back re-attaches
 // one, its programs compiled and its buffers on the GPU, instead of building it again (the owner, 2026-11-11: "Load
 // times from town to the main map takes up to 5-6 seconds"). Each with our art stood in it (its env sprites and kit
@@ -1282,6 +1282,18 @@ const api = {
   /** the menu's Graphics: the depth of field */
   settings(o = {}) {
     if (o.dof) dof = o.dof;
+    // the resolution (the menu's: settings.js). Luminati draws at the screen's density up to PIXEL_RATIO within a budget of
+    // 2.1 million pixels (its resolution controller: 2.53× on a 390 × 844 phone), and steps its render scale down when the
+    // GPU's timer says a frame is slow, which iOS never tells it (no timer queries: the owner's phone drew every frame at
+    // the full budget, 22 fps in the square at dusk). Sharp: as that is, the controller free; balanced: at most 2× (on that
+    // phone 63 % of the pixels), fast: at most 1.5× (35 %), by the engine's render scale, the controller held off so it
+    // can't step back up (the canvas's CSS size is untouched: the overlay and taps agree)
+    if (o.res === 'sharp' || o.res === 'balanced' || o.res === 'fast') res = o.res;
+    if (game?.engine) {
+      const E = game.engine, top = Math.min(globalThis.devicePixelRatio || 1, E.maxPixelRatio || PIXEL_RATIO), cap = res === 'fast' ? 1.5 : res === 'balanced' ? 2 : 0;
+      if (game.resolution) game.resolution.manual = cap > 0;
+      E.renderScale = cap > 0 ? Math.min(1, cap / top) : 1;
+    }
     if (o.bright > 0) bright = o.bright;
     if (o.figLit > 0) FIG_LIT = o.figLit;
     if (o.carryUp > 0) CARRY_UP = o.carryUp;

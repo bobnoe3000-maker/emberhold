@@ -180,6 +180,7 @@ const fpsMeter = createFpsMeter(); fpsMeter.show(readGraphics().fps === 'on');  
 const graphics = { read: readGraphics, status: () => (world3d ? world3d.world?.stats ?? null : null), set: async (/** @type {any} */ patch) => {
   const next = writeGraphics(patch);
   if (patch.dof && world3d) world3d.setDof(next.dof);
+  if (patch.res && world3d) world3d.setRes(next.res);
   if (patch.bright && world3d) world3d.setBright(next.bright);
   if (patch.feel) renderer.setFeel(feelK(next.feel));
   if (patch.fps) fpsMeter.show(next.fps === 'on');

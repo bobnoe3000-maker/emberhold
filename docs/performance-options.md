@@ -29,8 +29,24 @@ Add to it whenever a performance question is answered.
 | **the painted head for play, out of the shadow pass (now)** | **429** | **725,000** |
 
 A Barrows fight: 210,000 triangles (KayKit's faces 210,000). The owner's phone: mid 30s fps before the painted head, 15
-with it as first shipped, **45 fps** on Wickham Keep's second floor after the fix below (a dungeon floor; the town square,
-the busiest scene, still to read).
+with it as first shipped, **45 fps** on Wickham Keep's second floor after the fix below, and **22 fps (59 ms) in
+Thornwick's square at dusk** (the busiest scene, 17 people).
+
+**What the square's frame is made of** (one frame at dusk, its draws split by render target at the WebGL context, a 390 ×
+844 phone at 2×; the scratch probe split the main view's triangles by shader):
+
+| | main view: draws · triangles | shadow map (2048²): draws · triangles |
+|---|---|---|
+| the people as models (now) | 281 · 595,000 | 151 · 132,000 |
+| KayKit's faces (`?faces=mesh`) | 281 · 567,000 | 151 · 132,000 |
+| the people as sprites (`?figures=sprites`) | 206 · 464,000 | 76 · 72,000 |
+
+The world is most of it: the grass ground 156,000 triangles, the cliffs 49,000, trees (bark, pines, leaves) 100,000, the
+grass decals and dark grass 81,000, the ground cover 36,000 (18,056 instances). All 17 people are about 130,000; the
+painted heads 28,000 more than KayKit's. And the pixels: Luminati draws the main view at the screen's density within a
+**2.1-million-pixel budget** (2.53× on a 390-wide phone at 3×), and its dynamic resolution, which steps the render scale
+down when the GPU's timer says a frame is slow, **never acts on iOS** (no timer queries in Safari): the phone draws every
+frame at the whole budget, then the shadow map and the post passes (bloom's chain, the depth of field) over it.
 
 ## Done
 
@@ -46,6 +62,14 @@ the busiest scene, still to read).
   (the knight) and 10,600 (the cleric) in play, not the ~2,500 measured on the head alone. Kept indexed (a soup given a
   plain index): the knight's merged head 11,403 → 3,168 corners, the cleric's 10,596 → 1,995, the cleric's weapon hand
   1,872 → 831 ★. Same triangles, same draws, same look.
+- **A Resolution choice in Graphics** (the owner's 22 fps in the square; option 10 below, taken as a choice): Sharp (as
+  it was: the whole budget, the engine's own controller free), Balanced (at most 2×) and Fast (at most 1.5×), by the
+  engine's render scale with its controller held off so it can't step back (`world.js` settings `res`,
+  `render3d/settings.js`, `ui/title.js`). On a 390 × 844 phone at 3× ★: the main view 985 × 2131 (2.10M pixels), 780 ×
+  1688 (1.32M, 63 %), 585 × 1266 (0.74M, 35 %); the overlay and taps on the world within 1.64 px at all three (the
+  browser suite allows 2). At the phone's own pixels Balanced can hardly be told from Sharp; Fast is a little softer on
+  the cobbles and the figures' edges ([the square at each, 1:1](img/perf/resolution-square.jpg)). Default Sharp: the
+  look is the owner's to change.
 - **The heads out of the shadow pass** (`world.js`, `figure.js compact` keeps a merged head tagged): −34 draws and
   −70,000 triangles in the square; the body's shadow is the figure's. `?headshadow=1` puts them back.
 
@@ -64,10 +88,16 @@ Ranked by what they should buy for what they cost. ★ = measured; ☆ = an esti
 | 7 | **Fewer shadow casters**: the party and the nearest N people cast; the rest don't | the shadow pass's draws and triangles for crowded scenes ☆ | small; townsfolk without shadows can look pasted on: try N = 6 |
 | 8 | **Figure culling**: figures are `frustumCulled = false` (a skinned figure's bounds go stale as it animates); a bounding sphere of our own from its root would let off-screen people skip | everything a figure costs, for those out of view ☆ (the square is mostly on screen; the overland and big dungeon floors gain more) | medium; a sphere big enough for every clip (a raised staff) |
 | 9 | **Far people as sprites**: the baked atlases exist (`?figures=sprites` draws everyone so); a hybrid: models near, sprites beyond a distance | large on crowded scenes ☆ | medium–large; the switch between them must not pop; sprites have the old faces until re-baked |
-| 10 | **A pixel-density cap on phones** (the Graphics panel shows `drawn at N×`): 1.5× in place of 2× | fragment work by ~44 % ☆ (2.25 vs 4 pixels per point) | small; a softer picture: a Graphics choice, not a default |
+| 10 | ~~A pixel-density cap on phones~~ **taken as a choice** (Graphics → Resolution, above); still open: Balanced as the phones' default | on a 3× phone 37 % of the pixels ★ (Balanced), 65 % (Fast) | the owner's call: the frame rate it buys on the phone first |
 | 11 | **Depth of field off by default on phones** (Graphics → Depth of field: soft or off) | a full-screen blur pass ☆ | none to build; the look's softness is the owner's choice |
 
 ## Learned on the way
+
+- **Look at the whole frame before the newest thing in it.** The square's 22 fps came after the painted heads, but the
+  heads are 28,000 of the frame's 780,000 triangles; the world and the pixel budget are the frame. Split it by pass and
+  by shader first (draws counted at the context, per framebuffer).
+- **What the engine adapts on one machine it may not on another**: Luminati's dynamic resolution needs GPU timer
+  queries, which iOS Safari doesn't have; on the phone it never moved.
 
 - **Corners shaded, not triangles, is what a phone feels** from a mesh: an unwelded soup costs three corners a triangle.
   `headCost` counts both; check new procedural geometry (`clipTris`, `filterTris`, `toNonIndexed`) for welding before it

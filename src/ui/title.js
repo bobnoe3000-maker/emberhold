@@ -88,8 +88,8 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
   }
 
   // Graphics (render3d/settings.js, per device): the world is drawn by Luminati only (docs/luminati-only-cleanup.md); the
-  // depth of field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off; the hit
-  // feel, the frame rate on screen and the brightness tray
+  // depth of field (the owner: "Depth of field Blur is a new menu setting"), Luminati's lens blur, soft or off; the
+  // resolution (sharp, balanced, fast: the most of the screen's pixel density it draws at); the hit feel, the frame rate on screen and the brightness tray
   // (the zoom, a step at a time from where it is: render3d/settings.js; a pinch or the wheel set it finer)
   const zoomStep = (label, what, d, off) => html`<button key=${'zoom' + d} disabled=${off}
     onClick=${async () => { const z = graphics.read().zoom; await graphics.set({ zoom: Math.min(ZOOM_PCT_MAX, Math.max(ZOOM_PCT_MIN, Math.round((z + d) / 10) * 10)) }); draw(); }}>${label}<small>${what}</small></button>`;
@@ -115,6 +115,12 @@ export function createTitle({ sim, slot, audio = null, setPaused, openSlots, ope
       <div class="row">
         ${choice('dof', 'soft', 'Soft blur', 'far and near a little soft', g.dof === 'soft')}
         ${choice('dof', 'off', 'Off', 'everything sharp', g.dof === 'off')}
+      </div>
+      <div class="tag">Resolution</div>
+      <div class="row">
+        ${choice('res', 'sharp', 'Sharp', 'as it was', g.res === 'sharp')}
+        ${choice('res', 'balanced', 'Balanced', 'at most 2×: quicker', g.res === 'balanced')}
+        ${choice('res', 'fast', 'Fast', 'at most 1.5×: softer', g.res === 'fast')}
       </div>
       <div class="tag">Hit feel</div>
       <div class="row">

@@ -227,6 +227,19 @@ test('the menu\'s Frame rate (the owner, 2026-11-09): off by default, on when sh
   } finally { delete globalThis.localStorage; }
 });
 
+test('the menu\'s Graphics: the resolution, sharp unless chosen; kept per device, apart from the other settings; an unreadable one is sharp', async () => {
+  const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
+  const mem = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (x) => mem.get(x) ?? null, setItem: (x, v) => mem.set(x, String(v)) });
+  try {
+    assert.equal(readGraphics().res, 'sharp');
+    writeGraphics({ res: 'balanced' }); assert.equal(readGraphics().res, 'balanced');
+    writeGraphics({ dof: 'off' }); assert.equal(readGraphics().res, 'balanced', 'another setting leaves it be');
+    writeGraphics({ res: 'fast' }); assert.equal(readGraphics().res, 'fast');
+    mem.set('emberfall.graphics', '{"res":"ultra"}'); assert.equal(readGraphics().res, 'sharp');
+  } finally { delete globalThis.localStorage; }
+});
+
 test('Luminati only (docs/luminati-only-cleanup.md): Graphics holds no renderer; a device that chose Emberlit before keeps its other settings, and the old choice is dropped at the next write', async () => {
   const { readGraphics, writeGraphics } = await import('../src/render3d/settings.js');
   const mem = new Map();

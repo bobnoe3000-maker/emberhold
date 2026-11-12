@@ -11,6 +11,9 @@
 //     for anyone who'd rather the screen kept still.
 //   · the frame rate on screen (the owner, 2026-11-09: "add a menu option to toggle on/off the frame rate so I can
 //     monitor"): 'off' or 'on' (ui/fps.js).
+//   · the resolution (the owner's phone, 2026-11-12: 22 fps in Thornwick's square at dusk): the most pixel density the
+//     world is drawn at, 'sharp' (as it was: the screen's, within Luminati's 2.1-million-pixel budget, 2.53× on a 390-wide
+//     phone), 'balanced' (at most 2×: 63 % of those pixels there) or 'fast' (at most 1.5×: 35 %) (world.js settings res).
 //   · the camera's zoom (the owner, 2026-11-10: "let me zoom in and out by the current default camera zoom by at least
 //     33%"): a percentage of the default, ZOOM_PCT_MIN..ZOOM_PCT_MAX (render/renderer.js ZOOM_MIN..ZOOM_MAX); set by a
 //     pinch, the wheel or the Graphics row.
@@ -19,9 +22,9 @@
 
 const KEY = 'emberfall.graphics';
 /** @typedef {{ dawn: number, day: number, dusk: number, night: number }} Bright percentages, 100 the shipped look */
-/** @typedef {{ dof: 'soft' | 'off', bright: Bright, feel: 'full' | 'light' | 'off', fps: 'off' | 'on', zoom: number }} Graphics */
+/** @typedef {{ dof: 'soft' | 'off', bright: Bright, feel: 'full' | 'light' | 'off', fps: 'off' | 'on', zoom: number, res: 'sharp' | 'balanced' | 'fast' }} Graphics */
 /** @type {Graphics} */
-const DEFAULTS = { dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 }, feel: 'full', fps: 'off', zoom: 100 };
+const DEFAULTS = { dof: 'soft', bright: { dawn: 100, day: 100, dusk: 100, night: 100 }, feel: 'full', fps: 'off', zoom: 100, res: 'sharp' };
 /** the zoom's range, percent of the default (render/renderer.js ZOOM_MIN, ZOOM_MAX) */
 export const ZOOM_PCT_MIN = 67, ZOOM_PCT_MAX = 150;
 /** a stored zoom, a whole percent within the range (100 where missing or unreadable) @param {any} z */
@@ -34,7 +37,7 @@ function brightOf(b) {
   for (const k of Object.keys(out)) { const v = b && +b[k]; if (Number.isFinite(v)) out[k] = Math.min(BRIGHT_MAX, Math.max(BRIGHT_MIN, Math.round(v / BRIGHT_STEP) * BRIGHT_STEP)); }
   return out;
 }
-const DOFS = ['soft', 'off'], FEELS = ['full', 'light', 'off'], FPS = ['off', 'on'];
+const DOFS = ['soft', 'off'], FEELS = ['full', 'light', 'off'], FPS = ['off', 'on'], RES = ['sharp', 'balanced', 'fast'];
 /** the hit feel's strength: hit-stop and camera jolt × this @param {string} f */
 export const feelK = (f) => (f === 'off' ? 0 : f === 'light' ? 0.5 : 1);
 
@@ -42,7 +45,7 @@ export const feelK = (f) => (f === 'off' ? 0 : f === 'light' ? 0.5 : 1);
 export function readGraphics() {
   let v;
   try { v = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { v = {}; }
-  return { dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright), feel: FEELS.includes(v.feel) ? v.feel : DEFAULTS.feel, fps: FPS.includes(v.fps) ? v.fps : DEFAULTS.fps, zoom: zoomOf(v.zoom) };
+  return { dof: DOFS.includes(v.dof) ? v.dof : DEFAULTS.dof, bright: brightOf(v.bright), feel: FEELS.includes(v.feel) ? v.feel : DEFAULTS.feel, fps: FPS.includes(v.fps) ? v.fps : DEFAULTS.fps, zoom: zoomOf(v.zoom), res: RES.includes(v.res) ? v.res : DEFAULTS.res };
 }
 /** store a change (merged over what's stored) @param {Partial<Graphics>} patch @returns {Graphics} */
 export function writeGraphics(patch) {
