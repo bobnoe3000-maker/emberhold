@@ -69,6 +69,15 @@ Fast and depth of field off: the main view 642 × 1318, antialiasing 2×, shadow
   is the frame alone. The frame is a little over 16.7 ms of GPU work, so it misses every other vsync (25 ms, 40 fps);
   some 3–4 ms saved together should hold 60. The next run times combinations, with the mean frame time and the share of
   frames at 60 (a median rounded to a millisecond hides a shift between 17 and 33 ms frames).
+- **Third run** (combinations, the mean and the share of frames at 60): 25.3 ms as it was, 0 % at 60. **No lamp lights
+  −3.3 ms alone** (8 of 16 only −0.4); the trims that hardly change the look (shadow 1024, 8 lamps, no grain or sharpen)
+  nothing; those with bloom, the ground's edges and the trees round the map off −2.7 (44 fps, 6 % at 60); **those with
+  shadows and lamps off 17.6 ms, 57 fps, 64 % at 60**; every post pass, shadow, lamp, edge and tree off 16.8 (83 %). The
+  buildings hidden and the ground's tops hidden: nothing. (People hidden read 0 in all three runs: it hid nothing, a
+  figure's root being shown again each frame; fixed by hiding their materials.) But the lamps' light is the dusk town:
+  without it the walls, doors and people lose their warm pools ([as it is](img/perf/town-dusk-as-it-is.jpg), [no lamps,
+  no shadows](img/perf/town-dusk-no-lamps.jpg)). The next run asks how few lamps keep most of it (4, 2, 1 of 16) and
+  whether a sharp-edged shadow (one tap of the map, not PCF's five) is the shadow's cost.
 
 ## Done
 

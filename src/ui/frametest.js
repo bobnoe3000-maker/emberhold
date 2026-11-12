@@ -68,7 +68,9 @@ export function createFrameTest(o) {
       const line = el('div'); line.id = 'ftLine'; document.body.appendChild(line);
       const where = o.where();
       try {
-        const r = await runFrameTest(w, o.graphics(), (i, n, label) => { line.textContent = `Frame test ${i + 1}/${n} · ${label} · hands off`; });
+        // (?frametest=all: every piece of the picture; else the question open now: render3d/frametest.js variants)
+        const set = new URLSearchParams(location.search).get('frametest') === 'all' ? 'all' : 'focus';
+        const r = await runFrameTest(w, o.graphics(), (i, n, label) => { line.textContent = `Frame test ${i + 1}/${n} · ${label} · hands off`; }, set);
         card(r, where);
       } catch (err) {
         line.textContent = `Frame test stopped: ${err && err.message ? err.message : err}`; await new Promise((ok) => setTimeout(ok, 4000));

@@ -45,6 +45,12 @@ function pieces(cur) {
     shadow1k: shadowAt(1024),
     noshadow: { label: 'Shadows off', on: (w) => { w.game.engine.renderer.shadowMap.enabled = false; recompile(w.game); }, off: (w) => { w.game.engine.renderer.shadowMap.enabled = true; recompile(w.game); } },
     lights8: lamps('Lamp lights 8 (of 16)', 8),
+    lights4: lamps('Lamp lights 4 (of 16)', 4),
+    lights2: lamps('Lamp lights 2 (of 16)', 2),
+    lights1: lamps('Lamp lights 1 (of 16)', 1),
+    // the sun's shadow sharp-edged: one tap of the shadow map a pixel, not PCF's five (three.js BasicShadowMap 0)
+    hardshadow: { label: 'Shadows hard-edged (1 tap, not 5)', on: (w, st) => { const R = w.game.engine.renderer; st.t = R.shadowMap.type; R.shadowMap.type = 0; R.shadowMap.needsUpdate = true; recompile(w.game); },
+      off: (w, st) => { const R = w.game.engine.renderer; R.shadowMap.type = st.t ?? 1; R.shadowMap.needsUpdate = true; recompile(w.game); } },
     nolights: lamps('No lamp lights', 0),
     cover: hideBy('Grass and flowers off', (o) => o.name === 'GroundDetail'),
     edges: hideBy('Ground edges off (fringe, brim, skirt)', (o) => /^(fringe|brim|skirt):/.test(o.name)),
@@ -52,20 +58,37 @@ function pieces(cur) {
     village: hideBy('Buildings hidden', (o) => /^village:/.test(o.name)),
     trees: hideBy('Trees round the map off', (o) => o.name === 'trees:outer'),
     outer: hideBy('Land round the map off', (o) => o.name === 'OuterGround'),
-    people: hideBy('People hidden', isFigure),
+    // (by their materials: world.js shows a figure's root again every frame it's placed)
+    people: { label: 'People hidden', on: (w, st) => { st.m = []; each(w.game, isFigure, (r) => r.traverse((o) => { if (o.isMesh) for (const m of [].concat(o.material)) if (m.visible) { m.visible = false; st.m.push(m); } })); },
+      off: (w, st) => { for (const m of st.m || []) m.visible = true; } },
     balanced: { label: 'Resolution Balanced', on: (w) => w.settings({ res: 'balanced' }), off: (w) => w.settings({ res: cur.res }) },
     fast: { label: 'Resolution Fast', on: (w) => w.settings({ res: 'fast' }), off: (w) => w.settings({ res: cur.res }) },
   };
 }
 
-/** @param {{ dof: string, res: string }} cur the menu's Graphics as set now (put back after each) @returns {Variant[]} */
-export function variants(cur) {
+/** @param {{ dof: string, res: string }} cur the menu's Graphics as set now (put back after each)
+ * @param {'focus' | 'all'} [set] focus: the question open now (the lamps and the shadow, 2026-11-12); all: every piece
+ * @returns {Variant[]} */
+export function variants(cur, set = 'focus') {
   const P = pieces(cur);
   const one = (id) => { const p = P[id], st = {}; return /** @type {Variant} */ ({ id, label: p.label, on: (w) => p.on(w, st), off: (w) => p.off(w, st) }); };
   // a combination: its pieces on in order, off in reverse (each keeps its own state)
   const all = (id, label, ids) => { const ps = ids.map((k) => ({ p: P[k], st: {} })); return /** @type {Variant} */ ({ id, label,
     on: (w) => { for (const q of ps) q.p.on(w, q.st); }, off: (w) => { for (const q of ps.slice().reverse()) { try { q.p.off(w, q.st); } catch { /* the rest still */ } } } }); };
   const trims = ['shadow1k', 'lights8', 'grade'], more = [...trims, 'bloom', 'edges', 'trees'];
+  // the owner's third table (2026-11-12): no lamp lights saved 3.3 ms alone, 8 of 16 only 0.4; the trims that hardly
+  // change the look, 2.7 together; those with shadows and lamps off held 57 fps, but the town lost its dusk. So: how
+  // few lamps keep most of it, and whether a sharp-edged shadow is the shadow's cost
+  const light = ['grade', 'bloom', 'edges', 'trees'];
+  if (set !== 'all') return [
+    one('base'), ...['nolights', 'lights8', 'lights4', 'lights2', 'lights1', 'hardshadow', 'noshadow'].map(one),
+    all('l4', 'Together: 4 lamps, no grain/sharpen, bloom, edges, outer trees', ['lights4', ...light]),
+    all('l2h', 'Together: 2 lamps, hard shadows, and those', ['lights2', 'hardshadow', ...light]),
+    all('l1h', 'Together: 1 lamp, hard shadows, and those', ['lights1', 'hardshadow', ...light]),
+    all('l4h', 'Together: 4 lamps, hard shadows, and those', ['lights4', 'hardshadow', ...light]),
+    all('lean3', 'Together: no lamps, no shadows, and those', [...more, 'noshadow', 'nolights']),
+    { id: 'base2', label: 'As it is (again)', on: () => {}, off: () => {} },
+  ];
   return [
     one('base'), one('empty'), one('nodraw'),
     ...['dof', 'bloom', 'grade', 'post', 'msaa', 'shadow1k', 'noshadow', 'lights8', 'nolights', 'cover', 'edges', 'tops', 'village', 'trees', 'outer', 'people', 'balanced', 'fast'].map(one),
@@ -102,11 +125,11 @@ function timeFrames(settle, ms, cpu) {
 
 /**
  * Run the test on the world in view. @param {any} world the world module's api (hybrid.js world3d.world)
- * @param {{ dof: string, res: string }} cur @param {(i: number, n: number, label: string) => void} onStep
+ * @param {{ dof: string, res: string }} cur @param {(i: number, n: number, label: string) => void} onStep @param {'focus' | 'all'} [set]
  * @returns {Promise<{ rows: Row[], about: string }>}
  */
-export async function runFrameTest(world, cur, onStep) {
-  const V = variants(cur), rows = /** @type {Row[]} */ ([]);
+export async function runFrameTest(world, cur, onStep, set = 'focus') {
+  const V = variants(cur, set), rows = /** @type {Row[]} */ ([]);
   // the CPU's share: every animation-frame callback's time (the game's loop: the sim, the overlay, the UI; and Luminati's
   // frame within it), Luminati's frame (world.frame: its update, then three.js's draw calls) and the draw calls alone
   // (postfx.render); put back after
