@@ -702,7 +702,7 @@ export function createRenderer(canvas, sim, input) {
     // (under the minimap and labels; with another painter, its own rain and snow fall in its world, so ours don't: they
     // doubled up, and fell over the top bar's words, this canvas being above it)
     if (wx.k && !(wx.kind === 'rain' || wx.kind === 'snow')) drawWeather(octx, wx, { vw, vh, S, camX: -lastCam.rx, camY: -lastCam.ry, now, light: wLight });
-    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
+    if (sim.world.kind === 'dungeon') { drawShrines(lastCam.rx, lastCam.ry, ix, iy); drawStairs(lastCam.rx, lastCam.ry, ix, iy); drawNames(lastCam.rx, lastCam.ry, ix, iy); drawMinimap(ix, iy); } else { if (camT < 0.5) drawOutdoorMinimap(ix, iy); drawLabels(lastCam.rx, lastCam.ry, ix, iy); if (sim.world.kind === 'overland') drawCampRings(lastCam.rx, lastCam.ry, ix, iy, now); }   // no minimap on the town's home screen
     drawGoal(lastCam.rx, lastCam.ry, now);                 // overlays use the exact camera: glued to the gliding world
     drawBattle(lastCam.rx, lastCam.ry, ix, iy, pz, now);
     if (!sim.battle) drawHallAway();
@@ -796,7 +796,14 @@ export function createRenderer(canvas, sim, input) {
       octx.fillStyle = `rgba(8,5,14,${0.7 * a})`; octx.fillText(L.text, sx + k, sy + k);
       octx.fillStyle = `rgba(236,214,170,${0.92 * a})`; octx.fillText(L.text, sx, sy);
     }
-    // named people: their name over their head as you come near (tap them to talk)
+    drawNames(ox, oy, ix, iy);
+  }
+  // named people: their name over their head as you come near (tap them to talk); in a dungeon too (the owner, 2026-11-12,
+  // of Brannoc chained in Wickham Keep's hall: "seems to be a stuck NPC in the wall. I cant attack and he isnt attacking":
+  // a found companion with no name over him read as a foe that wouldn't fight)
+  function drawNames(ox, oy, ix, iy) {
+    const k = vw / window.innerWidth;
+    octx.font = `600 ${Math.round(11 * k)}px Georgia, 'Times New Roman', serif`; octx.textAlign = 'center';
     for (const n of sim.world.npcs || []) {
       const d = Math.hypot(n.x - ix, n.y - iy), def = cast[n.id]; if (d > 12 || !def) continue;
       const a = Math.max(0, Math.min(1, (12 - d) / 4)), nz = heightAt(sim.world, Math.floor(n.x), Math.floor(n.y)), P = project(n.x, n.y, nz);

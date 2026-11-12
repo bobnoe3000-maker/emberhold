@@ -193,3 +193,20 @@ test('the Ink: chained and short while Garrow lives; asks to come once he\'s fal
   const topics = (await play('brannoc_hub', { ...w, q_brannoc_old_debts: -1 }, [])).choices;
   assert.ok(!topics.some((t) => /settle/.test(t)), 'nothing offered that the sim would refuse');
 });
+
+test('he waits at the back of the hall a tile clear of its wall, so he reads as a man chained there, not one stood in the stone; reached and talked to from across the hall', () => {
+  // (the owner, 2026-11-12, of the cave hall's back corner: "seems to be a stuck NPC in the wall. I cant attack and he
+  // isnt attacking")
+  for (const seed of [SEED, 1, 42, 777, 9001]) {
+    const sim = createSim(seed); goTo(sim, 'dungeon', 'wickham_keep', 1);
+    const n = him(sim), w = sim.world, r = w.level.descentRoom; assert.ok(n, `seed ${seed}: he's in the hall`);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) assert.ok(isWalkable(w, n.x + dx, n.y + dy), `seed ${seed}: open at ${dx},${dy} about him`);
+    const edge = Math.min(...[...w.level.cells].filter(([, c]) => c.room === r.id && c.kind === 'floor').map(([k]) => k.split(',').reduce((a, v) => a + +v, 0)));
+    assert.ok(Math.floor(n.x) + Math.floor(n.y) <= edge + 4, `seed ${seed}: still at the back (x + y ${Math.floor(n.x) + Math.floor(n.y)}, the hall's edge ${edge})`);
+    const p = sim.state.player; p.x = p.px = r.cx + 0.5; p.y = p.py = r.cy + 0.5;
+    if (!isWalkable(w, p.x, p.y)) { const [k] = [...w.level.cells].find(([kk, c]) => c.room === r.id && c.kind === 'floor' && isWalkable(w, +kk.split(',')[0] + 0.5, +kk.split(',')[1] + 0.5)); [p.x, p.y] = k.split(',').map((v) => +v + 0.5); p.px = p.x; p.py = p.y; }
+    const said = events(sim, ['dialogue']); sim.commands.push({ type: 'talk', npc: 'brannoc' });
+    for (let i = 0; i < 900 && !said.length; i++) sim.tick();
+    assert.equal(said[0] && said[0].npc, 'brannoc', `seed ${seed}: walked over and talking`);
+  }
+});

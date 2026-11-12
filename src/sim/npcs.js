@@ -138,8 +138,10 @@ export function placeNpcs(world, isWalkable, block, part = 0) {
   for (const n of world.npcs) if (n.folk) n.rest = 2 + n.rng() * 6;
   return world;
 }
-/** a found companion still waiting (sites.js hall of his floor): at the back of the hall (the
- * walkable tile furthest up the screen, least x + y), chained to the wall. world.npcs gets him.
+/** a found companion still waiting (sites.js hall of his floor): at the back of the hall (the walkable tile furthest up
+ * the screen, least x + y), chained to the wall, a tile clear of it all round (the owner, 2026-11-12: "seems to be a stuck
+ * NPC in the wall": on the edge tile a cave hall's rounded stones swallowed him); a hall too tight for that, the edge as
+ * before. world.npcs gets him.
  * @param {any} world @param {(w: any, x: number, y: number) => boolean} isWalkable @param {(id: string) => boolean} waiting */
 export function placeFound(world, isWalkable, waiting) {
   if (world.kind !== 'dungeon' || !world.level || !world.level.descentRoom) return world;
@@ -153,7 +155,8 @@ export function placeFound(world, isWalkable, waiting) {
       const [x, y] = k.split(',').map(Number), q = { x: x + 0.5, y: y + 0.5 };
       const open = [[0, 0], [1, 0], [0, 1], [1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // room to walk up beside him
       if (n.found.entrance && world.level.spawn && hypot(q.x - world.level.spawn.x, q.y - world.level.spawn.y) < 3) continue;   // (not where you arrive: you'd stand in him)
-      const key = n.found.entrance ? hypot(x - r.cx, y - r.cy) : x + y;
+      const clear = [[-1, -1], [0, -1], [1, -1], [-1, 0], [-1, 1]].every(([dx, dy]) => isWalkable(world, q.x + dx, q.y + dy));   // (a tile clear of the wall all round: with open's, the 3 × 3 about him)
+      const key = n.found.entrance ? hypot(x - r.cx, y - r.cy) : (clear ? 0 : 1000) + x + y;
       if (open && (!best || key < best.k || (key === best.k && x < best.x - 0.5))) best = { ...q, k: key };
     }
     if (best) world.npcs.push({ id, found: true, visitor: !!n.visitor, boss: n.found.boss, x: best.x, y: best.y, px: best.x, py: best.y });
