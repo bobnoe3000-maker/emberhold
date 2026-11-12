@@ -1130,8 +1130,10 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     await p.locator('button', { hasText: 'Shop' }).first().tap(); await run(2);
     await p.locator('#hubSheet [data-go="shop:buy"]').tap(); await run(2);
     const buys = await p.locator('#hubSheet [data-buy]').allInnerTexts();
+    const buyTiles = await p.evaluate((() => { const rows = [...document.querySelectorAll('#hubSheet .merc')]; return { rows: rows.length, tiles: rows.filter((r) => { const i = r.querySelector('.gtile img'); return i && /assets\/items\/.+\.png$/.test(i.getAttribute('src')); }).length }; }));   // (each row the piece's icon, as in the bag: the owner, 2026-11-12)
     await p.locator('#hubSheet [data-buy]').first().tap(); await run(3);
     await p.locator('#hubSheet [data-ptab="sell"]').tap(); await run(2);
+    const sellTiles = await p.evaluate((() => { const rows = [...document.querySelectorAll('#hubSheet .merc')]; return { rows: rows.length, tiles: rows.filter((r) => { const i = r.querySelector('.gtile img'); return i && /assets\/items\/.+\.png$/.test(i.getAttribute('src')); }).length }; }));
     await p.locator('#hubSheet [data-sell="k6"]').tap(); await run(3);
     const shop = await p.evaluate(() => { const s = globalThis.__sim; return { bag: s.state.bag.map((q) => q.uid), buyback: s.state.buyback.map((q) => q.uid), gold: s.state.counters.gold }; });
     const back = await p.locator('#hubSheet [data-buyback="k6"]').innerText().catch(() => '');
@@ -1144,8 +1146,9 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     const stacked = await p.evaluate(() => ({ left: globalThis.__sim.state.bag.filter((q) => /^s\d$/.test(q.uid)).length, sold: globalThis.__sim.state.buyback.filter((q) => /^s\d$/.test(q.uid)).length }));
     check('shop: like items stack in the Sell list (one row, ×3, Sell one and Sell all); Sell all sells every piece of the stack',
       /×3/.test(stackRow) && /Sell all 3/.test(stackRow) && rowsBefore === shop.bag.length + 1 && stacked.left === 0 && stacked.sold === 3, JSON.stringify({ stackRow: stackRow.replace(/\n/g, ' · '), rowsBefore, stacked }));
-    check('forge and shop: an upgrade takes 180 gold and ✦ 1 and offers the next; a too-small piece says No gain; buy from the day\'s four, sell the +1 piece, and it waits to be bought back',
-      up.up === 1 && up.gold === 5000 - 180 && up.cinders === 9 && /Upgrade to \+2/.test(next) && /No gain/.test(small)
+    check('shop: every row of Buy and Sell shows the piece\'s own icon in its rarity\'s frame, as the bag does', buyTiles.rows >= 5 && buyTiles.tiles === buyTiles.rows && sellTiles.rows >= 1 && sellTiles.tiles === sellTiles.rows, JSON.stringify({ buyTiles, sellTiles }));
+    check('forge and shop: an upgrade takes 180 gold and ✦ 2 (v1.77) and offers the next; a small piece says when its gain shows ("shows at +3" since the 20 % step, v1.76; No gain where it never does); buy from the day\'s four, sell the +1 piece, and it waits to be bought back',
+      up.up === 1 && up.gold === 5000 - 180 && up.cinders === 8 && /Upgrade to \+2/.test(next) && (/shows at \+\d/.test(small) || /No gain/.test(small))
       && buys.length === 4 && buys.every((t) => /^Buy · \d+/.test(t)) && shop.bag.length === 1 && !shop.bag.includes('k6') && shop.buyback[0] === 'k6' && /\d/.test(back) && errs.length === 0,
       JSON.stringify({ up, next, small: small.slice(-40), buys: buys.slice(0, 1), shop, back }) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     await ctx.close(); await b.close();

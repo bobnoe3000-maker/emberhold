@@ -85,6 +85,14 @@ const CSS = SW_CSS + LOOK_CSS + `
 #hubSheet h3 { font: 11px ui-monospace, Menlo, monospace; letter-spacing: 2px; color: #a08a6a; text-transform: uppercase; margin: 14px 0 7px; }
 #hubSheet .merc { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 7px; background: rgba(255,255,255,0.035); border: 1px solid rgba(214,170,98,0.18); border-radius: 9px; }
 #hubSheet .merc .who { flex: 1; min-width: 0; }
+/* the piece itself in a shop row (the owner, 2026-11-12: "Add gear models to the shop for buy and sell.. same as used in
+   inventory"): the inventory's tile (sheet.js .gslot), its icon in a frame by rarity, +N where the smith has upgraded it */
+#hubSheet .merc .gtile { position: relative; flex: none; width: 52px; height: 52px; border-radius: 8px; background: radial-gradient(circle at 50% 40%, #221c2c, #120e18); border: 1.5px solid #5a5448; display: grid; place-items: center; }
+#hubSheet .merc .gtile img { width: 44px; height: 44px; pointer-events: none; }
+#hubSheet .merc .gtile.fine { border-color: #72d06c; box-shadow: 0 0 4px rgba(114,208,108,.28), inset 0 0 8px rgba(114,208,108,.14); }
+#hubSheet .merc .gtile.rare { border-color: #5aa8ff; box-shadow: 0 0 7px 1px rgba(90,168,255,.38), inset 0 0 11px rgba(90,168,255,.22); }
+#hubSheet .merc .gtile.heirloom { border-color: #f2a33c; box-shadow: 0 0 10px 2px rgba(242,163,60,.48), inset 0 0 14px rgba(242,163,60,.3); }
+#hubSheet .merc .gtile .up { position: absolute; bottom: 1px; right: 3px; color: #8fe07a; font: 700 11px ui-monospace, Menlo, monospace; text-shadow: 0 1px 0 #000; }
 #hubSheet .merc .who b { font-size: 15px; color: #efe4cf; font-weight: 600; }
 #hubSheet .merc .who em { font-style: normal; font: 10.5px ui-monospace, Menlo, monospace; color: #c09a50; margin-left: 6px; }
 #hubSheet .merc .who span { display: block; font: 10.5px ui-monospace, Menlo, monospace; color: #978c80; margin-top: 3px; }
@@ -304,6 +312,8 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
   const statLine = (it) => Object.entries(itemStats(it)).map(([k, v]) => `${STAT_LABEL[k] || k} ${v > 0 ? '+' : ''}${v}${k === 'crit' || k === 'dodge' ? ' %' : ''}`).join(' · ');
   const upName = (it) => `${esc(it.name)}${it.up ? ` +${it.up}` : ''}`;
   // name (in its rarity's colour, with the word), slot, who wears it or that it's in the bag
+  // the piece's own icon, as the inventory draws it (sheet.js: assets/items/<BASES icon>.png in a frame by rarity)
+  const gearTile = (it) => { const B = BASES[it.base]; return B ? `<div class="gtile ${it.r}"><img src="./assets/items/${B.icon}.png" alt="">${it.up ? `<span class="up">+${it.up}</span>` : ''}</div>` : ''; };
   const itemHead = (it, where, n = 1) => `<b style="color:${RC[it.r]}">${upName(it)}${n > 1 ? `<span class="n">×${n}</span>` : ''}</b><em>${RW[it.r]} · ${SLOT_LABEL[BASES[it.base].slot]} · item level ${it.ilv}</em><span class="sub">${where}</span>`;
   const purse = () => { const C = sim.state.counters; return `<div class="purse">You have <b>${C.gold || 0}</b> gold · <b>✦ ${C.embers || 0}</b> cinders</div>`; };   // (no wood or stone at the forge since v1.75)
   const costWords = (c) => [`${c.gold} gold`, c.cinders ? `✦ ${c.cinders}` : '', c.wood ? `${c.wood} wood` : '', c.stone ? `${c.stone} stone` : ''].filter(Boolean).join(' · ');
@@ -356,17 +366,17 @@ export function createTownMenu(sim, partyPanel, { openParty = () => {}, openTerm
     view = 'shop'; if (tab) shopTab = tab;
     const S = sim.state, st = sim.world.kind === 'town' ? sim.smith.stock() : [], mins = Math.max(1, Math.ceil(sim.board.nextDawn() / 60)), sv = (sim.world.services || []).find((q) => q.kind === 'shop');
     const who = (it) => { const c = classesOf(BASES[it.base]); return c.length ? c.map((k) => CLASSES[k].label).join(', ') : 'anyone'; };
-    const scrollRow = `<div class="merc"><div class="who"><b>Homeward Scroll</b><em>always on the shelf · ${S.bag.filter(isUsable).length} in the bag</em><span>Read it anywhere out of town and you're on ${esc(sim.world.name || 'the town')}'s square. Once.</span></div>
+    const scrollRow = `<div class="merc">${gearTile({ base: 'homeward', r: 'common' })}<div class="who"><b>Homeward Scroll</b><em>always on the shelf · ${S.bag.filter(isUsable).length} in the bag</em><span>Read it anywhere out of town and you're on ${esc(sim.world.name || 'the town')}'s square. Once.</span></div>
       <button class="btn" data-buyscroll ${SCROLL_PRICE > gold() ? 'disabled' : ''}>Buy · ${SCROLL_PRICE}${SCROLL_PRICE > gold() ? '<small>not enough gold</small>' : ''}</button></div>`;
     const body = shopTab === 'buy' ? `${scrollRow}<h3>Today's stock · new at dawn, in ${mins} min</h3>
       ${st.map((it, i) => { const done = S.shop.bought.includes(i), p = buyPrice(it), poor = p > gold();
-        return `<div class="merc"><div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
+        return `<div class="merc">${gearTile(it)}<div class="who">${itemHead(it, `for ${who(it)}`)}<span>${statLine(it)}</span></div>
         <button class="btn" data-buy="${i}" ${done || poor ? 'disabled' : ''}>${done ? 'Bought' : `Buy · ${p}`}${!done && poor ? '<small>not enough gold</small>' : ''}</button></div>`; }).join('') || `<p>${keeper()}’s shelves go up at dawn.</p>`}`
       : `${likeStacks(S.bag).map(({ it, uids }) => { const p = sellPrice(it), n = uids.length;   // (like items stacked: one row a kind, ×n)
-        return `<div class="merc"><div class="who">${itemHead(it, n > 1 ? `${n} in the bag` : 'in the bag', n)}<span>${statLine(it)}</span></div>
+        return `<div class="merc">${gearTile(it)}<div class="who">${itemHead(it, n > 1 ? `${n} in the bag` : 'in the bag', n)}<span>${statLine(it)}</span></div>
         <div class="btns"><button class="btn${p === null ? '' : ' ghost'}" data-sell="${uids[0]}" ${p === null ? 'disabled' : ''}>${p === null ? 'Not for sale' : `Sell${n > 1 ? ' one' : ''} · ${p}`}</button>
         ${n > 1 && p !== null ? `<button class="btn ghost" data-sellall="${uids.join(',')}">Sell all ${n} · ${p * n}</button>` : ''}</div></div>`; }).join('') || '<p>The bag is empty.</p>'}
-      ${S.buyback.length ? `<h3>Sold here · buy back</h3>${S.buyback.map((it) => `<div class="merc"><div class="who">${itemHead(it, 'sold')}<span>${statLine(it)}</span></div>
+      ${S.buyback.length ? `<h3>Sold here · buy back</h3>${S.buyback.map((it) => `<div class="merc">${gearTile(it)}<div class="who">${itemHead(it, 'sold')}<span>${statLine(it)}</span></div>
         <button class="btn" data-buyback="${it.uid}" ${it.sold > gold() ? 'disabled' : ''}>Buy back · ${it.sold}</button></div>`).join('')}` : ''}`;
     sheet.innerHTML = `${head('Shop', sv ? esc(sv.name) : 'The shop', `Plain arms and armour for your company, new each dawn, and a fair price for what you carry. ${keeper()} won’t take heirlooms.`)}
       <div class="purse">You have <b>${gold()}</b> gold · the bag ${S.bag.length} items</div>
