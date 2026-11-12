@@ -41,6 +41,11 @@ the busiest scene, still to read).
   angles packed toward it; skull and hair welded (each corner shaded once); the ears without their rim; a lighter nose.
   A head now shades 2,400–3,000 corners (fewer than KayKit's) for 3,500–4,300 triangles. At play's size it can't be told
   from the full head (in-play captures, docs/painted-faces-spike.md).
+- **The merge keeps the weld** (`figure.js compact` `geoFor`): merging a figure's rigid parts into one mesh a bone used
+  to un-index them (`toNonIndexed`), which threw the play head's weld away again: the merged head shaded 11,400 corners
+  (the knight) and 10,600 (the cleric) in play, not the ~2,500 measured on the head alone. Kept indexed (a soup given a
+  plain index): the knight's merged head 11,403 → 3,168 corners, the cleric's 10,596 → 1,995, the cleric's weapon hand
+  1,872 → 831 ★. Same triangles, same draws, same look.
 - **The heads out of the shadow pass** (`world.js`, `figure.js compact` keeps a merged head tagged): −34 draws and
   −70,000 triangles in the square; the body's shadow is the figure's. `?headshadow=1` puts them back.
 
@@ -66,7 +71,7 @@ Ranked by what they should buy for what they cost. ★ = measured; ☆ = an esti
 
 - **Corners shaded, not triangles, is what a phone feels** from a mesh: an unwelded soup costs three corners a triangle.
   `headCost` counts both; check new procedural geometry (`clipTris`, `filterTris`, `toNonIndexed`) for welding before it
-  goes in play.
+  goes in play, and measure it as the game holds it (after `compact`), not only as built: the merge undid the weld once.
 - **The shadow pass doubles a figure's geometry**: anything small on a figure (heads, props) can usually stay out of it.
 - **Full detail where it's seen big** (portraits, the creation and temple previews, the boards) and a play build for the
   world: the same parts at two levels of detail, chosen where the figure is built (`lod`), never two looks.

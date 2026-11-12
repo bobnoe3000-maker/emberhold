@@ -1684,15 +1684,16 @@ for (const [type, name] of [[chromium, 'chromium'], [webkit, 'webkit']]) {
     check('render3d: a fight in the Old Barrows on Luminati: the blows\' and spells\' light laid over its world in its own render (no page layers), a ring at each fighter\'s feet on its ground, the foe the party is set on marked, the hero\'s light taken, no page errors',
       inDungeon && fight.battle && fight.lit > 100 && fight.light === 1 && fight.layers === 0 && fight.rings >= 2 && fight.carry === 1 && fight.focus === 1 && errs.length === 0, JSON.stringify(fight) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // the people as models (docs/dungeon-kit-proposal.md §9, the owner's 4b): each figure its variant's KayKit model, built
-    // by the bake's own code (figure.js) and compacted (its face's parts merged: the hero 30 meshes → 7); the models load
-    // after the level, so a few frames are given them
+    // by the bake's own code (figure.js) and compacted (its face's parts merged: the hero 30 meshes → 7 with KayKit's faces,
+    // 17 → 7 with the painted head, which comes in fewer parts: so a budget a figure, not a ratio); the models load after
+    // the level, so a few frames are given them
     let figs = { actors: 0, models: 0 };
     for (let i = 0; i < 300 && !(figs.models >= 2 && figs.models === figs.actors); i++) {
       figs = await p.evaluate(() => { globalThis.__frame(16.7); const st = globalThis.__world3d.world.stats; return { actors: st.actors, models: st.models, figures: st.figures, meshes: [st.modelMeshesBefore, st.modelMeshes] }; });
       if (!(figs.models >= 2 && figs.models === figs.actors)) await p.waitForTimeout(100);
     }
-    check('render3d: the people are models on Luminati (the owner\'s 4b): every fighter in the Barrows stands as its variant\'s KayKit model, compacted to under a third of its parts\' meshes, no page errors',
-      figs.figures === 'models' && figs.models >= 2 && figs.models === figs.actors && figs.meshes[1] * 3 <= figs.meshes[0] && errs.length === 0, JSON.stringify(figs) + (errs.length ? ' · ' + errs.join(' | ') : ''));
+    check('render3d: the people are models on Luminati (the owner\'s 4b): every fighter in the Barrows stands as its variant\'s KayKit model, compacted to at most 8 meshes a figure and under half its parts\' meshes, no page errors',
+      figs.figures === 'models' && figs.models >= 2 && figs.models === figs.actors && figs.meshes[1] <= 8 * figs.models && figs.meshes[1] * 2 <= figs.meshes[0] && errs.length === 0, JSON.stringify(figs) + (errs.length ? ' · ' + errs.join(' | ') : ''));
     // Frost Nova and Turn Undead in Luminati's looks, and a foe's warnings on its ground (renderer.js spells, warns; world.js):
     // the sim's own events, said on its bus (presentation only), then the pieces counted while they live and after
     const looks = await p.evaluate(() => {

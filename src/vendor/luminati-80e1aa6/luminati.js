@@ -16546,7 +16546,12 @@ function cf(e) {
 }
 var lf = new rt();
 function uf(e, t, n, r) {
-	let i = e.geometry.index ? e.geometry.toNonIndexed() : e.geometry.clone();
+	let i = e.geometry.clone();
+	if (!i.index) {
+		let e = i.attributes.position.count, t = e > 65535 ? new Uint32Array(e) : new Uint16Array(e);
+		for (let n = 0; n < e; n++) t[n] = n;
+		i.setIndex(new ve(t, 1));
+	}
 	for (let e of Object.keys(i.attributes)) [
 		"position",
 		"normal",

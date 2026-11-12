@@ -165,7 +165,10 @@ export function plumb(root) {
 // The look is the same; the draws are fewer.
 const _m = new THREE.Matrix4();
 function geoFor(o, toBone, withUv, colour) {
-  let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+  // kept indexed (a soup given the plain 0…n index): a welded part (the painted head's skull and hair, faces.js weld) stays
+  // welded when merged, each corner shaded once; unwelded, the play head shaded four times its corners (11,400 v 2,800)
+  const g = o.geometry.clone();
+  if (!g.index) { const n = g.attributes.position.count, ix = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) ix[i] = i; g.setIndex(new THREE.BufferAttribute(ix, 1)); }
   for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
   if (!g.attributes.normal) g.computeVertexNormals();
   if (!withUv && g.attributes.uv) g.deleteAttribute('uv');
