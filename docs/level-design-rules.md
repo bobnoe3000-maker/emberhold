@@ -405,7 +405,17 @@ southern wall so you can barely see the top"*). The camera looks from the south-
   tile of its room that's clear there and reachable (`world.js` `seeChests`, `nearClear`). A vault's key goes with it.
   No draw, so nothing else on the floor moves.
 - **Measured** (every site's floors, four seeds): 86 of 195 chests had a wall on their near side before; 0 after.
-- **Test:** `test/chestview.test.mjs`.
+- **And its line to the camera clear** (the owner, 2026-11-12, of one on the Old Barrows' second floor still out of
+  sight): two tiles weren't enough. A dungeon's walls stand about two units over its floor and the camera looks down at
+  30°, so the line from a chest's middle clears a wall's top only some four tiles back along the camera's line. A chest
+  keeps that band (+x+y, three cells wide) open `SIGHT` = 4 tiles out, of walls and of furniture a tile wider (a long
+  piece, the clerks' shelves, is one prop tile with a longer model): `world.js` `sightRun`. Where a room has no such tile
+  its chest takes the longest band it has.
+- **Measured in the game** (`tools/capture/visibility.mjs`, which now counts each closed chest at a chest's height, its
+  own card not counted as hiding it), eleven floors of the Vale's and the Fens' sites: four of thirteen chests were under
+  half in view before (33 % each, behind a wall), every one 67-100 % after; the Barrows' second floor's 33 % → 67 %, its
+  gold lid and front over the shelves. Over every site, two seeds, three floors: 100 of 100 chests have the full band.
+- **Test:** `test/chestview.test.mjs` (fails without the band).
 
 ### 4.5 The kits: each place's brief
 

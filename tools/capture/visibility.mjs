@@ -4,7 +4,7 @@
 // from each toward the camera against the houses, walls, trees, rocks, the kit and the world's cards).
 //   subjects: a town's spawn, each of its people where they stand and the step before each service's door; an
 //   overland's spawn, each way in (its middle) and each arrival; a dungeon floor's way in, each room's middle and
-//   the stairs both ways.
+//   the stairs both ways, and each closed chest at a chest's height (0.8 units: the owner, 2026-11-12).
 // A subject passes when at least SEEN of it is in view (the rules: 0.5; a person half behind a corner still reads). Prints
 // each map's subjects, the hidden ones with what hid them, and the totals; exit 1 if any is under the bar (--warn: 0).
 //   node tools/capture/visibility.mjs [vale-town fens-town vale fens reach heights barrows-f1 … | all] [--seen 0.5] [--warn] [--json out.json] [--shots dir]
@@ -64,7 +64,7 @@ export async function survey(page, name) {
   await page.evaluate(STAND);
   return page.evaluate(async () => {
     const s = globalThis.__sim, w = s.world, h = globalThis.__world3d, P = s.state.player, subj = [], clearOfWays = globalThis.__clearOfWays;
-    const add = (id, x, y) => { if (Number.isFinite(x) && Number.isFinite(y)) subj.push({ id, x, y }); };
+    const add = (id, x, y, tall) => { if (Number.isFinite(x) && Number.isFinite(y)) subj.push({ id, x, y, ...(tall ? { tall } : {}) }); };
     add('spawn', P.x, P.y);
     if (w.kind === 'town') {
       const { ENV_FOOT } = await import('/src/sim/envfoot.js'), TOWN = await (await fetch('/tools/actor-lab/town.json')).json();
@@ -85,12 +85,20 @@ export async function survey(page, name) {
       if (w.exitAt) add('stair up', w.exitAt.x, w.exitAt.y + 1);
       if (w.stairsAt) add('stair down', w.stairsAt.x + 0.5, w.stairsAt.y + 1.5);
       for (const r of L.rooms) if (r !== L.entrance) add(`room:${r.part || r.id}`, r.cx + 0.5, r.cy + 0.5);
+      // (each closed chest, at a chest's height, not a man's: the owner, 2026-11-12, of one on the Old Barrows' second floor out of sight)
+      for (const [k, kind] of w.props || []) if (kind === 'chest' && !w.mods.get(k)?.opened) { const [cx, cy] = k.split(',').map(Number); add(`chest:${k}`, cx + 0.5, cy + 0.5, 0.8); }
     }
     const out = [], home = { x: P.x, y: P.y };
     for (const q of subj) {
       const at = clearOfWays(w, q, home); P.x = P.px = at.x; P.y = P.py = at.y;
       for (let i = 0; i < 6; i++) globalThis.__frame(16);
-      let t = q, v = h.sees(q.x, q.y);
+      let t = q, v = h.sees(q.x, q.y, q.tall);
+      if (q.id.startsWith('chest:') && h.world?.occluded) {   // (a chest's own card stands over the points inside it: a ray that hits it sees it)
+        const o = h.origin, lx = (q.x - o.x) / 2, lz = (q.y - o.y) / 2, g = h.world.ground(lx, lz) ?? 0, pts = [];
+        for (const hh of [0.25, 0.5, 0.9]) for (const sd of [-0.18, 0.18]) pts.push([lx + sd, g + hh * q.tall, lz + sd * 0.3]);
+        const hid = h.world.occluded(pts).map((b) => (b && /^ember:prop:chest/.test(b) ? null : b)), n = hid.filter((b) => b === null).length;
+        v = { seen: n / pts.length, by: [...new Set(hid.filter(Boolean))] };
+      }
       if (q.id.startsWith('way:') && v && v.seen < 1) {   // (a way: its middle or its step, the arrival beside it where there's one)
         const L = Math.hypot(home.x - at.x, home.y - at.y) || 1, k = Math.min(3, L) / L;   // (else 3 tiles on from clear: a gate's approach, not its arch)
         const st = Object.values(w.arrivals || {}).filter((a) => Math.hypot(a.x - q.x, a.y - q.y) < 8).sort((a, b) => Math.hypot(a.x - q.x, a.y - q.y) - Math.hypot(b.x - q.x, b.y - q.y))[0]

@@ -545,17 +545,35 @@ export function gateOf(level, roomLevels, site, depth) {
 // reachable; a vault's key goes with it. No draw: nothing else on the floor moves.
 /** is the near side of a tile open (+x, +y: toward the camera), two tiles out? */
 export const nearClear = (level, x, y) => [[1, 0], [2, 0], [0, 1], [0, 2], [1, 1], [2, 1], [1, 2]].every(([dx, dy]) => { const c = level.cells.get(K(x + dx, y + dy)); return !!c && c.kind === 'floor'; });
+// (the owner, 2026-11-12, of one on the Old Barrows' second floor still out of sight: two tiles weren't enough. A
+// dungeon's walls stand four steps over its floor, about two units, and the camera looks down at 30°: the line from a
+// chest's middle clears a wall's top only some four tiles back along the camera's line. So a chest also has the band
+// along that line open, SIGHT tiles out (sightRun), or, where its room has no such tile, the longest it has. Measured
+// on eleven floors, tools/capture/visibility.mjs: four chests under half in view before, every one nearly whole after.)
+export const SIGHT = 4;
+/** how far the band along the camera's line (+x+y, three cells wide) runs open from a tile, up to n: floor, and nothing
+ * stood on it (the Barrows' clerks' desks hid the chest behind them as a wall had) @param {any} world @param {any} level
+ * @param {number} x @param {number} y */
+export function sightRun(world, level, x, y, n = SIGHT) {
+  const fl = (a, b) => { const c = level.cells.get(K(a, b)); return !!c && c.kind === 'floor'; };
+  // (furniture a tile wider: a long piece is one prop tile, its model longer, the shelves beside that same chest)
+  const bare = (i) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const k = K(x + i + a, y + i + b); if ((a || b || i) && k !== K(x, y) && world.props.has(k)) return false; } return true; };
+  let i = 0; while (i < n && fl(x + i + 1, y + i + 1) && fl(x + i, y + i + 1) && fl(x + i + 1, y + i) && bare(i + 1)) i++;
+  return i;
+}
 function seeChests(world, level, reach) {
   for (const [k, kind] of [...world.props]) {
     if (kind !== 'chest') continue;
     const [x, y] = k.split(',').map(Number), c0 = level.cells.get(k);
-    if (!c0 || nearClear(level, x, y)) continue;
-    let best = null, bd = Infinity;
+    if (!c0 || (nearClear(level, x, y) && sightRun(world, level, x, y) >= SIGHT)) continue;
+    let best = null, bd = Infinity, br = nearClear(level, x, y) ? sightRun(world, level, x, y) : -1;   // (better than it stands, or it stays)
     for (const [q, c] of level.cells) {
       if (c.kind !== 'floor' || c.corridor || c.room !== c0.room || world.props.has(q)) continue;
       const [tx, ty] = q.split(',').map(Number), d = (tx - x) * (tx - x) + (ty - y) * (ty - y);
-      if (d >= bd || !reach(tx, ty) || !NONWALK_OK(world, tx, ty) || resourceAt(world, tx, ty) || !nearClear(level, tx, ty)) continue;
-      bd = d; best = q;
+      if (!reach(tx, ty) || !NONWALK_OK(world, tx, ty) || resourceAt(world, tx, ty) || !nearClear(level, tx, ty)) continue;
+      const r = sightRun(world, level, tx, ty);
+      if (r < br || (r === br && d >= bd)) continue;
+      br = r; bd = d; best = q;
     }
     if (!best) continue;                                          // (no such tile in the room: it stays)
     world.props.delete(k); world.props.set(best, 'chest');
